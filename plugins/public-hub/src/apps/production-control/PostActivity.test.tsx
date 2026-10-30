@@ -316,9 +316,9 @@ describe("PostActivityCard", () => {
       sessionCtx("identified"),
     );
     await waitFor(() =>
-      expect(screen.getByText(/1 motivo pendente/)).toBeInTheDocument(),
+      expect(screen.getByText(/1 sem motivo/)).toBeInTheDocument(),
     );
-    expect(screen.getByText("Atividade do posto")).toBeInTheDocument();
+    expect(screen.getByText("Paradas do posto")).toBeInTheDocument();
     expect(screen.getByText("1")).toBeInTheDocument(); // badge
   });
 
@@ -332,12 +332,12 @@ describe("PostActivityCard", () => {
       sessionCtx("identified"),
     );
     await waitFor(() =>
-      expect(screen.getByText(/1 motivo pendente/)).toBeInTheDocument(),
+      expect(screen.getByText(/1 sem motivo/)).toBeInTheDocument(),
     );
     await waitFor(() =>
       expect(screen.getByText("Parada")).toBeInTheDocument(),
     );
-    // Um único GET /today alimenta as duas superfícies (Etapa 4).
+    // Um único GET /today alimenta as duas superfícies.
     expect(
       calls.filter((c) => c.url.includes("/mes/work-centers/today")).length,
     ).toBe(1);
@@ -350,14 +350,14 @@ describe("PostActivityCard", () => {
       sessionCtx("anonymous"),
     );
     expect(
-      screen.getByText(/Identifique-se para ver paradas/),
+      screen.getByText(/Identifique-se para ver as paradas/),
     ).toBeInTheDocument();
     expect(calls.length).toBe(0);
   });
 });
 
 describe("PostActivityPage", () => {
-  it("renders official summary and a classifiable pending stop", async () => {
+  it("AC-01/02: lists only stopped events with pending classification CTA", async () => {
     stubFetch(() => ok(TODAY));
     renderWithSession(
       <PostActivityPage {...PAGE_PROPS} />,
@@ -366,17 +366,123 @@ describe("PostActivityPage", () => {
     await waitFor(() =>
       expect(screen.getByText("Parada")).toBeInTheDocument(),
     );
-    // resumo vem da API, não de soma local
-    expect(screen.getByText("02:00:00")).toBeInTheDocument(); // producing
-    expect(screen.getAllByText("00:30:00").length).toBeGreaterThan(0); // stopped
-    expect(screen.getByText(/sem motivo/)).toBeInTheDocument();
+    expect(screen.getByText("Paradas do posto · Filial 02")).toBeInTheDocument();
+    // Sem indicador «Produzindo» nem eventos producing na lista.
+    expect(screen.queryByText("Produzindo")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Linha do tempo/)).not.toBeInTheDocument();
+    expect(screen.getByText("Paradas")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Sem motivo/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText(/·\s*sem motivo/)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Informar motivo" }),
     ).toBeInTheDocument();
     expect(screen.getAllByText(/OP-10/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/automática/)).toBeInTheDocument();
   });
 
-  it("classifies by runId + downtimeId and refreshes", async () => {
+  it("AC-07: empty state when there are no stops", async () => {
+    stubFetch(() =>
+      ok({
+        ...TODAY,
+        summary: {
+          producingSeconds: 7200,
+          stoppedSeconds: 0,
+          stopCount: 0,
+          pendingReasonCount: 0,
+        },
+        items: [TODAY.items[0]],
+      }),
+    );
+    renderWithSession(
+      <PostActivityPage {...PAGE_PROPS} />,
+      sessionCtx("identified"),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Nenhuma parada registrada neste posto hoje/),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Parada")).not.toBeInTheDocument();
+  });
+
+  it("AC-03: classified stop can change reason and note", async () => {
+    const classified = {
+      ...TODAY,
+      summary: {
+        ...TODAY.summary,
+        pendingReasonCount: 0,
+      },
+      items: [
+        {
+          ...TODAY.items[1],
+          downtime: {
+            id: "dt-1",
+            reasonCode: "setup",
+            reasonLabel: "Setup de máquina",
+            category: "setup",
+            note: "Troca de ferramental",
+            confirmed: true,
+            source: "operator",
+            pendingReason: false,
+          },
+        },
+      ],
+    };
+    const calls = stubFetch((url) => {
+      if (url.includes("/downtime-reasons")) {
+        return ok({
+          items: [
+            {
+              code: "setup",
+              label: "Setup de máquina",
+              category: "setup",
+              requiresNote: false,
+            },
+            {
+              code: "maintenance",
+              label: "Manutenção",
+              category: "x",
+              requiresNote: false,
+            },
+          ],
+        });
+      }
+      if (url.includes("/classify")) {
+        return ok({ id: "dt-1", reasonCode: "maintenance", confirmed: true });
+      }
+      return ok(classified);
+    });
+    renderWithSession(
+      <PostActivityPage {...PAGE_PROPS} />,
+      sessionCtx("identified"),
+    );
+    const alterBtn = await screen.findByRole("button", {
+      name: "Alterar motivo",
+    });
+    fireEvent.click(alterBtn);
+    expect(
+      await screen.findByRole("heading", {
+        name: "Alterar motivo da parada",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Motivo atual:/)).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Troca de ferramental")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("option", { name: "Manutenção" }));
+    fireEvent.click(screen.getByRole("button", { name: "Salvar alteração" }));
+    await waitFor(() =>
+      expect(
+        calls.some(
+          (c) =>
+            c.url.includes("/runs/run-1/downtimes/dt-1/classify") &&
+            c.init?.method === "POST",
+        ),
+      ).toBe(true),
+    );
+  });
+
+  it("AC-04/06: classifies by runId + downtimeId and refreshes", async () => {
     const calls = stubFetch((url) => {
       if (url.includes("/downtime-reasons")) {
         return ok({ items: [{ code: "maintenance", label: "Manutenção", category: "x", requiresNote: false }] });
@@ -412,6 +518,63 @@ describe("PostActivityPage", () => {
     expect(classifyCall?.init?.headers).toMatchObject({
       "X-Delpi-Bench-Session": "sess-1",
     });
+    expect(
+      calls.filter((c) => c.url.includes("/mes/work-centers/today")).length,
+    ).toBeGreaterThanOrEqual(2);
+  });
+
+  it("AC-04: autonomous stop (no OP) classifies by downtime identity", async () => {
+    const calls = stubFetch((url) => {
+      if (url.includes("/downtime-reasons")) {
+        return ok({
+          items: [
+            {
+              code: "maintenance",
+              label: "Manutenção",
+              category: "x",
+              requiresNote: false,
+            },
+          ],
+        });
+      }
+      if (url.includes("/classify")) {
+        return ok({ id: "dt-auto", reasonCode: "maintenance", confirmed: true });
+      }
+      return ok({
+        ...TODAY,
+        items: [
+          {
+            ...TODAY.items[1],
+            runId: null,
+            productionOrder: null,
+            operationCode: null,
+            downtime: {
+              ...TODAY.items[1].downtime,
+              id: "dt-auto",
+            },
+          },
+        ],
+      });
+    });
+    renderWithSession(
+      <PostActivityPage {...PAGE_PROPS} />,
+      sessionCtx("identified"),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Informar motivo" }),
+    );
+    fireEvent.click(await screen.findByRole("option", { name: "Manutenção" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar motivo" }));
+    await waitFor(() =>
+      expect(
+        calls.some(
+          (c) =>
+            c.url.includes("/mes/downtimes/dt-auto/classify") &&
+            c.init?.method === "POST",
+        ),
+      ).toBe(true),
+    );
+    expect(screen.getByText(/Sem OP vinculada/)).toBeInTheDocument();
   });
 
   it("stopped without downtime shows no classify action", async () => {
@@ -431,11 +594,14 @@ describe("PostActivityPage", () => {
       expect(screen.getByText("Motivo não disponível")).toBeInTheDocument(),
     );
     expect(
-      screen.queryByRole("button", { name: /motivo/i }),
+      screen.queryByRole("button", { name: "Informar motivo" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Alterar motivo" }),
     ).not.toBeInTheDocument();
   });
 
-  it("totvs renders the controlled notice", async () => {
+  it("AC-08: totvs renders the controlled notice", async () => {
     stubFetch(() => ok(TOTVS));
     renderWithSession(
       <PostActivityPage {...PAGE_PROPS} />,
@@ -498,7 +664,7 @@ describe("PostActivityPage", () => {
     expect(screen.queryByText(/· sem motivo/)).not.toBeInTheDocument();
   });
 
-  it("open-stop timer advances — serverNow anchors the offset once", async () => {
+  it("AC-05: open stop shows Em andamento and advancing timer", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(Date.parse("2026-10-19T16:00:00Z"));
     stubFetch((url) =>
@@ -522,18 +688,69 @@ describe("PostActivityPage", () => {
     await act(async () => {
       await Promise.resolve();
     });
+    expect(screen.getByText("Em andamento")).toBeInTheDocument();
+    expect(screen.getByText(/· em andamento/)).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Informar motivo" }),
     );
     await act(async () => {
       await Promise.resolve();
     });
-    // Parada aberta desde 13:00Z; "agora" do servidor = 16:00Z.
     const timer = screen.getByRole("timer");
     expect(timer.textContent).toBe("03:00:00");
     await act(async () => {
       vi.advanceTimersByTime(2000);
     });
     expect(timer.textContent).toBe("03:00:02");
+  });
+
+  it("filter Todas reveals classified stops after pending-first open", async () => {
+    stubFetch(() =>
+      ok({
+        ...TODAY,
+        summary: {
+          producingSeconds: 7200,
+          stoppedSeconds: 2400,
+          stopCount: 2,
+          pendingReasonCount: 1,
+        },
+        items: [
+          TODAY.items[0],
+          TODAY.items[1],
+          {
+            ...TODAY.items[1],
+            stateEventId: "se-3",
+            startedAt: "2026-10-19T11:00:00Z",
+            endedAt: "2026-10-19T11:10:00Z",
+            effectiveDurationSeconds: 600,
+            downtime: {
+              id: "dt-2",
+              reasonCode: "setup",
+              reasonLabel: "Setup de máquina",
+              category: "setup",
+              note: null,
+              confirmed: true,
+              source: "operator",
+              pendingReason: false,
+            },
+          },
+        ],
+      }),
+    );
+    renderWithSession(
+      <PostActivityPage {...PAGE_PROPS} />,
+      sessionCtx("identified"),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Informar motivo" }),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Setup de máquina")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Todas" }));
+    expect(await screen.findByText("Setup de máquina")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Alterar motivo" }),
+    ).toBeInTheDocument();
   });
 });

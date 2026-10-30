@@ -9,7 +9,7 @@ export const CockpitActivityContext =
 /**
  * Leitura diária MES compartilhada do cockpit (Etapa 4): um único hook —
  * e um único GET por escopo — alimenta o cartão de acesso, os indicadores
- * do cabeçalho e a tela de Atividade do posto.
+ * do cabeçalho e a tela de Paradas do posto.
  */
 export function useCockpitActivity(): CockpitActivityState {
   const ctx = useContext(CockpitActivityContext);
