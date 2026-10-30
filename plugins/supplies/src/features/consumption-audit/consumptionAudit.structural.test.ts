@@ -668,3 +668,86 @@ describe("consumption-audit layout (plugin-ui composition)", () => {
     expect(pageSource).toContain("advancedOpen");
   });
 });
+
+// ——— Listagem oficial plugin-ui + tokens de tema (revisão UI/UX PO) ———
+
+describe("consumption-audit results table (plugin-ui migration)", () => {
+  const pageSource = readFileSync(
+    join(
+      dirname(fileURLToPath(import.meta.url)),
+      "ConsumptionAuditPage.tsx",
+    ),
+    "utf-8",
+  );
+  const cssSource = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "../../index.css"),
+    "utf-8",
+  );
+
+  it("usa o DataTable oficial para a listagem de OPs — sem tabela própria", () => {
+    expect(pageSource).toContain("SuppliesDataTable");
+    expect(pageSource).toContain(
+      "onRowClick={(item) => selectOrder(item.production_order)}",
+    );
+    expect(pageSource).toContain("sp-list-table-region");
+    expect(pageSource).not.toContain("sp-consumption-audit__result-row");
+    // a região de resultados renderiza o kit, não um <table> manual
+    const regionIndex = pageSource.indexOf("sp-list-table-region");
+    const resultsBlock = pageSource.slice(
+      regionIndex,
+      pageSource.indexOf("<SuppliesCompactPagination", regionIndex),
+    );
+    expect(resultsBlock).toContain("SuppliesDataTable");
+    expect(resultsBlock).not.toContain("<table");
+    expect(cssSource).not.toContain("__result-row");
+    expect(cssSource).not.toContain("__pagination");
+  });
+
+  it("seleção múltipla usa o checkbox oficial — nenhum input nativo cru", () => {
+    expect(pageSource).toContain("SuppliesFilterCheckbox");
+    expect(pageSource).not.toContain('type="checkbox"');
+    expect(pageSource).toContain('key: "compare"');
+    expect(pageSource).toContain("interactive: true");
+    expect(pageSource).toContain("selected.length >= COMPARE_MAX");
+  });
+
+  it("linha selecionada usa o estado canônico is-selected do kit", () => {
+    expect(pageSource).toContain('"is-selected"');
+    expect(cssSource).toContain("tr.is-selected");
+  });
+
+  it("paginação usa o CompactPagination oficial", () => {
+    expect(pageSource).toContain("SuppliesCompactPagination");
+    expect(pageSource).toContain("onPageChange={setListPage}");
+    expect(pageSource).not.toContain("sp-consumption-audit__pagination");
+  });
+});
+
+describe("consumption-audit theme tokens", () => {
+  const cssSource = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "../../index.css"),
+    "utf-8",
+  );
+
+  it("tokens semânticos de estado resolvidos nos dois temas", () => {
+    // cada token deve aparecer ao menos 2x: bloco claro + bloco escuro
+    for (const token of [
+      "--sp-primary:",
+      "--sp-primary-soft:",
+      "--sp-accent-soft:",
+      "--sp-surface-alt:",
+    ]) {
+      expect(cssSource.split(token).length - 1).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("nenhum fallback claro fixo para tokens de estado (dark-safe)", () => {
+    expect(cssSource).not.toContain("var(--sp-accent-soft, #");
+    expect(cssSource).not.toContain("var(--sp-accent-soft, rgba");
+    expect(cssSource).not.toContain("var(--sp-surface-alt, #");
+    expect(cssSource).not.toContain("var(--sp-surface-alt, rgba");
+    expect(cssSource).not.toContain("var(--sp-primary, #1f6feb)");
+    expect(cssSource).not.toContain("#f5f7ff");
+    expect(cssSource).not.toContain("#eef2ff");
+  });
+});

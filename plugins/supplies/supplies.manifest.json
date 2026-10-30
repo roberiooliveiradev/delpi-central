@@ -4,7 +4,7 @@
   "name": "Portal Suprimentos",
   "description": "Hub operacional e analítico de Suprimentos.",
   "icon": "package-icon",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "type": "microfrontend",
   "basePath": "/apps/supplies",
   "entry": "/apps/supplies/assets/remoteEntry.js",

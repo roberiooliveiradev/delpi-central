@@ -24,7 +24,7 @@ describe("supplies.manifest", () => {
   it("does not invent CRUD permission codes", () => {
     const codes = manifest.permissions.map((item) => item.code);
     expect(codes).toEqual(["supplies.access", "supplies.manage"]);
-    expect(manifest.version).toBe("0.5.0");
+    expect(manifest.version).toBe("0.5.2");
     expect(codes.some((code) => /\.(view|write|create|delete)$/.test(code))).toBe(false);
   });
 

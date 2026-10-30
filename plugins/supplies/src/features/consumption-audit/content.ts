@@ -34,10 +34,6 @@ export const CONSUMPTION_AUDIT_CONTENT = {
   searchResultsTitle: "Resultados",
   searchResultsSubtitle: (total: number) =>
     `${total} ordem(ns) encontrada(s) — selecione uma linha para abrir a auditoria completa.`,
-  searchPageOf: (page: number, totalPages: number) =>
-    `Página ${page} de ${totalPages}`,
-  searchPrevPage: "Anterior",
-  searchNextPage: "Próxima",
   suggestionFor: (op: string, product: string) => `OP ${op} · ${product}`,
 
   // ——— Período rápido ———

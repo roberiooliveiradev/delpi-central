@@ -14,9 +14,12 @@ import {
 import {
   SuppliesActionButton,
   SuppliesClearFiltersButton,
+  SuppliesCompactPagination,
+  SuppliesDataTable,
   SuppliesDateField,
   SuppliesEmptyState,
   SuppliesFilterBarShell,
+  SuppliesFilterCheckbox,
   SuppliesLoadingCard,
   SuppliesPageHero,
   SuppliesPagePath,
@@ -28,6 +31,7 @@ import {
   SuppliesStateBanner,
   SuppliesStatusBadge,
   SuppliesTextField,
+  type DataTableColumn,
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
 import {
@@ -792,6 +796,68 @@ export function ConsumptionAuditPage({ basePath }: ConsumptionAuditPageProps) {
     });
   }, []);
 
+  const resultColumns = useMemo(
+    (): DataTableColumn<ConsumptionAuditOrderSummary>[] => [
+      {
+        key: "compare",
+        header: "",
+        align: "center",
+        interactive: true,
+        render: (item) => (
+          <SuppliesFilterCheckbox
+            aria-label={`${C.compareSelect} ${item.production_order}`}
+            checked={selected.includes(item.production_order)}
+            disabled={
+              !selected.includes(item.production_order) &&
+              selected.length >= COMPARE_MAX
+            }
+            onChange={() => toggleSelect(item.production_order)}
+          />
+        ),
+      },
+      {
+        key: "order",
+        header: C.colOrder,
+        render: (item) => <strong>{item.production_order}</strong>,
+      },
+      {
+        key: "product",
+        header: C.colProduct,
+        render: (item) => (
+          <>
+            {item.product_code}
+            {item.product_description
+              ? ` · ${item.product_description}`
+              : ""}
+          </>
+        ),
+      },
+      {
+        key: "status",
+        header: C.colStatus,
+        render: (item) => labelOf(C.statusLabels, item.status),
+      },
+      {
+        key: "emission",
+        header: C.colEmission,
+        render: (item) => formatDatePtBr(item.emission_date),
+      },
+      {
+        key: "finished",
+        header: C.colFinished,
+        render: (item) => formatDatePtBr(item.finished_at),
+      },
+      {
+        key: "planned",
+        header: C.colPlanned,
+        align: "right",
+        render: (item) =>
+          `${formatQuantity(item.planned_quantity, 3)} ${item.unit_of_measure}`,
+      },
+    ],
+    [selected, toggleSelect],
+  );
+
   const runComparison = useCallback(() => {
     if (!unit || selected.length < 2 || selected.length > COMPARE_MAX) return;
     setComparison({ status: "loading", data: null, error: null });
@@ -1185,93 +1251,32 @@ export function ConsumptionAuditPage({ basePath }: ConsumptionAuditPageProps) {
         >
           {searchState.page.items.length ? (
             <>
-              <div className="sp-consumption-audit__table-wrap">
-                <table className="sp-consumption-audit__materials-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">
-                        <span className="sp-visually-hidden">{C.compareSelect}</span>
-                      </th>
-                      <th scope="col">{C.colOrder}</th>
-                      <th scope="col">{C.colProduct}</th>
-                      <th scope="col">{C.colStatus}</th>
-                      <th scope="col">{C.colEmission}</th>
-                      <th scope="col">{C.colFinished}</th>
-                      <th scope="col">{C.colPlanned}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {searchState.page.items.map(
-                      (item: ConsumptionAuditOrderSummary) => (
-                        <tr
-                          key={item.production_order}
-                          className="sp-consumption-audit__result-row"
-                          onClick={() => selectOrder(item.production_order)}
-                        >
-                          <td onClick={(e) => e.stopPropagation()}>
-                            <input
-                              type="checkbox"
-                              aria-label={`${C.compareSelect} ${item.production_order}`}
-                              checked={selected.includes(item.production_order)}
-                              disabled={
-                                !selected.includes(item.production_order) &&
-                                selected.length >= COMPARE_MAX
-                              }
-                              onChange={() => toggleSelect(item.production_order)}
-                            />
-                          </td>
-                          <td>
-                            <button
-                              type="button"
-                              className="sp-consumption-audit__related-link"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                selectOrder(item.production_order);
-                              }}
-                            >
-                              <strong>{item.production_order}</strong>
-                            </button>
-                          </td>
-                          <td>
-                            {item.product_code}
-                            {item.product_description
-                              ? ` · ${item.product_description}`
-                              : ""}
-                          </td>
-                          <td>{labelOf(C.statusLabels, item.status)}</td>
-                          <td>{formatDatePtBr(item.emission_date)}</td>
-                          <td>{formatDatePtBr(item.finished_at)}</td>
-                          <td>
-                            {formatQuantity(item.planned_quantity, 3)}{" "}
-                            {item.unit_of_measure}
-                          </td>
-                        </tr>
-                      ),
-                    )}
-                  </tbody>
-                </table>
+              <div
+                className="sp-list-table-region"
+                role="region"
+                aria-label={C.searchResultsTitle}
+                tabIndex={0}
+              >
+                <SuppliesDataTable
+                  layout="section"
+                  columns={resultColumns}
+                  rows={searchState.page.items}
+                  rowKey={(item) => item.production_order}
+                  onRowClick={(item) => selectOrder(item.production_order)}
+                  getRowClassName={(item) =>
+                    selected.includes(item.production_order)
+                      ? "is-selected"
+                      : undefined
+                  }
+                />
               </div>
-              <div className="sp-consumption-audit__pagination">
-                <span>{C.searchPageOf(searchState.page.page, searchState.page.total_pages)}</span>
-                <div>
-                  <SuppliesActionButton
-                    type="button"
-                    variant="default"
-                    disabled={listPage <= 1}
-                    onClick={() => setListPage((p) => Math.max(1, p - 1))}
-                  >
-                    {C.searchPrevPage}
-                  </SuppliesActionButton>
-                  <SuppliesActionButton
-                    type="button"
-                    variant="default"
-                    disabled={listPage >= searchState.page.total_pages}
-                    onClick={() => setListPage((p) => p + 1)}
-                  >
-                    {C.searchNextPage}
-                  </SuppliesActionButton>
-                </div>
-              </div>
+              <SuppliesCompactPagination
+                page={searchState.page.page}
+                pageSize={searchState.page.page_size}
+                total={searchState.page.total}
+                totalPages={Math.max(1, searchState.page.total_pages)}
+                onPageChange={setListPage}
+              />
             </>
           ) : (
             <p className="sp-consumption-audit__note">{C.searchEmpty}</p>
