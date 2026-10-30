@@ -80,10 +80,12 @@ class EvaAgentIntelligenceService:
                 "preserve a proveniência das fontes."
             ),
             "boundaries": (
-                "EVA é somente leitura: não recalcula indicadores, "
-                "não inventa valores e não executa ACT — qualquer "
-                "write segue contratos governados com confirmação "
-                "humana e autorização efetiva do backend."
+                "EVA não recalcula indicadores e não inventa valores. "
+                "Escrita segue contratos governados da Engineering "
+                "API: PREPARE/dry-run primeiro, confirmação humana "
+                "explícita (confirmed=true), AuthZ Core live, "
+                "postcondition por read-back — o ambiente pode "
+                "bloquear ACT e a recusa é respondida honestamente."
             ),
             "character": cls.persona_context(),
         }

@@ -2298,6 +2298,11 @@ services:
       ENG_NC_DB_PASSWORD: ${ENG_NC_DB_PASSWORD:-}
       ENG_NC_IMPORT_REPLACE_ENABLED: ${ENG_NC_IMPORT_REPLACE_ENABLED:-}
 
+      # EVA ACT (tools mutáveis MCP) — fail-closed sem opt-in; em dev
+      # habilitar via infra/.env somente para homologação em dataset
+      # isolado (doc 53, gates EVA-P3/P7).
+      ENG_EVA_ACT_ENABLED: ${ENG_EVA_ACT_ENABLED:-}
+
     volumes:
       - ../engineering-api:/app
       - ../shared:/shared

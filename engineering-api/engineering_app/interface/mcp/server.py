@@ -1,4 +1,4 @@
-"""MCPServer — EVA read-only MCP surface (get_catalog/home/overview)."""
+"""MCPServer — EVA governed MCP surface (DISCOVERY/READ/PREPARE/ACT)."""
 
 from __future__ import annotations
 
@@ -299,6 +299,311 @@ def create_mcp_server() -> MCPServer:
             operation=operation,
             payload=payload,
             record_id=record_id,
+        )
+
+    @mcp.tool(
+        name="export_nonconformities",
+        title="Export nonconformities",
+        description=(
+            "READ-only full JSON export of the nonconformity record set "
+            "(backup/migration contract): version, generated_at, count "
+            "and items — official Engineering store only."
+        ),
+        annotations=_annotations("export_nonconformities", "Export nonconformities"),
+        meta=meta,
+    )
+    async def export_nonconformities() -> CallToolResult:
+        return await bridge.tool_export_nonconformities()
+
+    @mcp.tool(
+        name="list_lmps",
+        title="List LMPs",
+        description=(
+            "READ-only functional LMP list (orders tracked by "
+            "Engineering). Filters (optional): start_date/end_date "
+            "YYYY-MM-DD, branch, listing_type, status, page/page_size. "
+            "Delegated official TOTVS facts under Engineering rules."
+        ),
+        annotations=_annotations("list_lmps", "List LMPs"),
+        meta=meta,
+    )
+    async def list_lmps(
+        start_date: str | None = None,
+        end_date: str | None = None,
+        branch: str | None = None,
+        listing_type: str | None = None,
+        status: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> CallToolResult:
+        return await bridge.tool_list_lmps(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            listing_type=listing_type,
+            status=status,
+            page=page,
+            page_size=page_size,
+        )
+
+    @mcp.tool(
+        name="get_lmp_summary",
+        title="Get LMP summary",
+        description=(
+            "READ-only realized LMP KPIs (no goals/IDD) for a period: "
+            "counts and lead-time aggregates — official values only."
+        ),
+        annotations=_annotations("get_lmp_summary", "Get LMP summary"),
+        meta=meta,
+    )
+    async def get_lmp_summary(
+        start_date: str | None = None,
+        end_date: str | None = None,
+        branch: str | None = None,
+    ) -> CallToolResult:
+        return await bridge.tool_get_lmp_summary(
+            start_date=start_date, end_date=end_date, branch=branch
+        )
+
+    @mcp.tool(
+        name="get_lmp_detail",
+        title="Get LMP detail",
+        description=(
+            "READ-only functional detail of a single OV/LMP by "
+            "sale_number: status, dates, proposal context and flags "
+            "under Engineering rules. not_found is honest."
+        ),
+        annotations=_annotations("get_lmp_detail", "Get LMP detail"),
+        meta=meta,
+    )
+    async def get_lmp_detail(
+        sale_number: str,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        branch: str | None = None,
+    ) -> CallToolResult:
+        return await bridge.tool_get_lmp_detail(
+            sale_number=sale_number,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
+
+    @mcp.tool(
+        name="get_lmp_history",
+        title="Get LMP history",
+        description=(
+            "READ-only OV history by sale_number. view=events returns "
+            "the audit event list; view=flow returns status "
+            "transitions/lead-time flow — use it to explain why an LMP "
+            "was late or how it progressed. Optional period/branch/"
+            "revision filters."
+        ),
+        annotations=_annotations("get_lmp_history", "Get LMP history"),
+        meta=meta,
+    )
+    async def get_lmp_history(
+        sale_number: str,
+        view: str,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        branch: str | None = None,
+        revision: str | None = None,
+    ) -> CallToolResult:
+        return await bridge.tool_get_lmp_history(
+            sale_number=sale_number,
+            view=view,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            revision=revision,
+        )
+
+    @mcp.tool(
+        name="get_lmp_goal_context",
+        title="Get LMP goal context",
+        description=(
+            "READ-only goals context for the LMP dashboard — delegated "
+            "to the Strategic Indicators owner; explains targets behind "
+            "on-time/lead-time evaluation."
+        ),
+        annotations=_annotations("get_lmp_goal_context", "Get LMP goal context"),
+        meta=meta,
+    )
+    async def get_lmp_goal_context(
+        start_date: str | None = None,
+        end_date: str | None = None,
+        branch: str | None = None,
+    ) -> CallToolResult:
+        return await bridge.tool_get_lmp_goal_context(
+            start_date=start_date, end_date=end_date, branch=branch
+        )
+
+    @mcp.tool(
+        name="get_lmp_department_idd",
+        title="Get LMP department IDD",
+        description=(
+            "READ-only departmental IDD score — delegated to the "
+            "Strategic Indicators owner; optional competence (YYYY-MM) "
+            "or period filter."
+        ),
+        annotations=_annotations(
+            "get_lmp_department_idd", "Get LMP department IDD"
+        ),
+        meta=meta,
+    )
+    async def get_lmp_department_idd(
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        branch: str | None = None,
+    ) -> CallToolResult:
+        return await bridge.tool_get_lmp_department_idd(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
+
+    @mcp.tool(
+        name="get_lmp_nc_streak",
+        title="Get LMP NC streak",
+        description=(
+            "READ-only days-without-NC streak as published by the NC "
+            "owner for the LMP dashboard — delegated, never "
+            "recalculated."
+        ),
+        annotations=_annotations("get_lmp_nc_streak", "Get LMP NC streak"),
+        meta=meta,
+    )
+    async def get_lmp_nc_streak() -> CallToolResult:
+        return await bridge.tool_get_lmp_nc_streak()
+
+    @mcp.tool(
+        name="get_product_structure",
+        title="Get product structure",
+        description=(
+            "READ-only product structure/BOM by product_code — "
+            "delegated to the Products owner with the caller's Bearer; "
+            "payload returned intact with honest availability."
+        ),
+        annotations=_annotations("get_product_structure", "Get product structure"),
+        meta=meta,
+    )
+    async def get_product_structure(
+        product_code: str,
+        max_depth: int = 6,
+        page_size: int = 200,
+    ) -> CallToolResult:
+        return await bridge.tool_get_product_structure(
+            product_code=product_code,
+            max_depth=max_depth,
+            page_size=page_size,
+        )
+
+    @mcp.tool(
+        name="create_nonconformity",
+        title="Create nonconformity",
+        description=(
+            "ACT — creates a nonconformity through the official "
+            "Engineering contract as the authenticated human. Present "
+            "the candidate via prepare_nonconformity_mutation first; "
+            "call with confirmed=true ONLY after the user explicitly "
+            "authorizes the creation. Optional idempotency_key "
+            "deduplicates retries. Result includes read-back "
+            "postcondition. Never invent product, date, user, cause or "
+            "corrective action data the user did not provide."
+        ),
+        annotations=_annotations("create_nonconformity", "Create nonconformity"),
+        meta=meta,
+    )
+    async def create_nonconformity(
+        payload: dict,
+        confirmed: bool = False,
+        idempotency_key: str | None = None,
+    ) -> CallToolResult:
+        return await bridge.tool_create_nonconformity(
+            payload=payload,
+            confirmed=confirmed,
+            idempotency_key=idempotency_key,
+        )
+
+    @mcp.tool(
+        name="update_nonconformity",
+        title="Update nonconformity",
+        description=(
+            "ACT — updates a nonconformity. The official contract is "
+            "full-replace PUT: pass ONLY the intended field changes in "
+            "`changes`; the bridge fetches the current record, merges "
+            "and sends the full payload with optimistic locking. 409 "
+            "means a concurrent edit — re-fetch and re-confirm with the "
+            "user. confirmed=true required."
+        ),
+        annotations=_annotations("update_nonconformity", "Update nonconformity"),
+        meta=meta,
+    )
+    async def update_nonconformity(
+        record_id: str,
+        changes: dict,
+        confirmed: bool = False,
+        expected_updated_at: str | None = None,
+    ) -> CallToolResult:
+        return await bridge.tool_update_nonconformity(
+            record_id=record_id,
+            changes=changes,
+            confirmed=confirmed,
+            expected_updated_at=expected_updated_at,
+        )
+
+    @mcp.tool(
+        name="delete_nonconformity",
+        title="Delete nonconformity",
+        description=(
+            "ACT destructive — hard-deletes a nonconformity AND its "
+            "history (official cascade, irreversible). HIGH RISK: "
+            "present the record first and require explicit user "
+            "confirmation; call with confirmed=true only afterwards. "
+            "Result includes the deleted record summary and read-back "
+            "postcondition."
+        ),
+        annotations=_annotations("delete_nonconformity", "Delete nonconformity"),
+        meta=meta,
+    )
+    async def delete_nonconformity(
+        record_id: str,
+        confirmed: bool = False,
+    ) -> CallToolResult:
+        return await bridge.tool_delete_nonconformity(
+            record_id=record_id, confirmed=confirmed
+        )
+
+    @mcp.tool(
+        name="import_nonconformities",
+        title="Import nonconformities",
+        description=(
+            "ACT destructive — JSON import that REPLACES the entire "
+            "nonconformity record set when dry_run=false (legacy "
+            "semantics). ALWAYS run with dry_run=true first and present "
+            "the impact report (would_replace_all, per-item results). "
+            "Real import requires dry_run=false + confirm_replace=true "
+            "+ confirmed=true after explicit user authorization; the "
+            "environment may refuse replacement — report the refusal "
+            "honestly, never retry to bypass it."
+        ),
+        annotations=_annotations("import_nonconformities", "Import nonconformities"),
+        meta=meta,
+    )
+    async def import_nonconformities(
+        items: list,
+        confirmed: bool = False,
+        dry_run: bool = True,
+        confirm_replace: bool = False,
+    ) -> CallToolResult:
+        return await bridge.tool_import_nonconformities(
+            items=items,
+            confirmed=confirmed,
+            dry_run=dry_run,
+            confirm_replace=confirm_replace,
         )
 
     return mcp

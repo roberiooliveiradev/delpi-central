@@ -6,13 +6,21 @@ middleware + audience/scope) é o mesmo objeto canônico do request;
 como nas rotas REST — sem service token, sem elevação (F2a.R1).
 AuthZ de negócio: ``engineering.access`` + ``principal_type=="user"``
 aplicados aqui, idênticos às rotas /v1 — MCP não é autoridade.
+
+ACT (EVA.ENGINEERING.FULL.CAPABILITY.PARITY): ferramentas mutáveis
+executam os MESMOS use cases das rotas /v1 — confirmação humana
+explícita (``confirmed``), idempotência/concorrência do contrato
+oficial e postcondition por read-back. ``ENG_EVA_ACT_ENABLED`` fail-
+closed por ambiente; delete/import são reforçados
+(``DESTRUCTIVE_ACT_TOOLS``).
 """
 
 from __future__ import annotations
 
 import logging
+import os
 import re
-from typing import Any, Mapping
+from typing import Any
 
 from mcp.types import CallToolResult
 
@@ -29,11 +37,24 @@ from starlette.requests import Request
 from engineering_app.application.eva.agent_intelligence_service import (
     EvaAgentIntelligenceService,
 )
+from engineering_app.application.models.lmp import LmpQuery
 from engineering_app.application.ports.home_sources import HomeSourceContext
+from engineering_app.application.use_cases.nonconformity.actor import (
+    nc_actor_from_principal,
+)
 from engineering_app.composition import nc_composer
+from engineering_app.composition.lmp_composer import (
+    build_delegated_auxiliary_source,
+    build_get_lmp_detail_use_case,
+    build_get_lmp_history_use_case,
+    build_get_lmp_summary_use_case,
+    build_list_lmps_dashboard_use_case,
+)
 from engineering_app.domain.nonconformity.errors import (
+    NcConcurrencyError,
     NcNotFoundError,
     NcRepositoryError,
+    NcUnsafeOperationError,
     NcValidationError,
 )
 from engineering_app.application.ports.overview_sources import OverviewQuery
@@ -55,6 +76,37 @@ ENGINEERING_ACCESS = "engineering.access"
 
 _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _COMPETENCE_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+
+# Campos graváveis do contrato NC oficial (E-NC-07/08) — espelho de
+# ``normalize_nc_payload``; chaves fora desta lista são rejeitadas no
+# merge de UPDATE em vez de serem silenciosamente descartadas.
+NC_WRITABLE_FIELDS: tuple[str, ...] = (
+    "status",
+    "sale_number",
+    "lmp_number",
+    "customer_name",
+    "occurrence_date",
+    "launch_date",
+    "last_revision_date",
+    "executed_by",
+    "released_by",
+    "defect_description",
+    "corrective_actions",
+    "technical_opinion",
+    "problem_tags",
+    "products",
+    "registered_at",
+)
+
+EVA_ACT_ENV_FLAG = "ENG_EVA_ACT_ENABLED"
+
+
+class EvaActDisabledError(Exception):
+    """ACT EVA desabilitado neste ambiente — bloqueio honesto fail-closed."""
+
+
+class EvaConfirmationRequiredError(Exception):
+    """ACT invocado sem ``confirmed=true`` — confirmação humana ausente."""
 
 _TOOL_CONTRACT: dict[str, dict[str, Any]] = {
     "get_catalog": {
@@ -223,6 +275,294 @@ _TOOL_CONTRACT: dict[str, dict[str, Any]] = {
         "required_permission": ENGINEERING_ACCESS,
         "source": "engineering-api POST /v1/nonconformities/prepare",
     },
+    "export_nonconformities": {
+        "title": "Export nonconformities",
+        "description": (
+            "READ-only full JSON export of the nonconformity record set "
+            "(backup/migration contract E-NC-06): version, generated_at, "
+            "count and items."
+        ),
+        "input_schema": {"type": "object", "properties": {}},
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/nonconformities/export",
+    },
+    "list_lmps": {
+        "title": "List LMPs",
+        "description": (
+            "READ-only functional LMP list (orders tracked by "
+            "Engineering) with period/branch/listing_type/status "
+            "filters and pagination — delegated official TOTVS facts "
+            "under Engineering rules."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "start_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "end_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "branch": {"type": "string"},
+                "listing_type": {"type": "string"},
+                "status": {"type": "string"},
+                "page": {"type": "integer", "minimum": 1},
+                "page_size": {"type": "integer", "minimum": 1, "maximum": 200},
+            },
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/lmps",
+    },
+    "get_lmp_summary": {
+        "title": "Get LMP summary",
+        "description": (
+            "READ-only realized LMP KPIs (no goals/IDD): counts and "
+            "lead-time aggregates for a period — official values only."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "start_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "end_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "branch": {"type": "string"},
+            },
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/lmps/summary",
+    },
+    "get_lmp_detail": {
+        "title": "Get LMP detail",
+        "description": (
+            "READ-only functional detail of a single OV/LMP by "
+            "sale_number: status, dates, proposal context and flags "
+            "under Engineering rules."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sale_number": {"type": "string"},
+                "start_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "end_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "branch": {"type": "string"},
+            },
+            "required": ["sale_number"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/lmps/{sale_number}",
+    },
+    "get_lmp_history": {
+        "title": "Get LMP history",
+        "description": (
+            "READ-only OV history by sale_number. view=events returns "
+            "the audit event list; view=flow returns status "
+            "transitions/lead-time flow — use it to explain why an LMP "
+            "was late or how it progressed."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sale_number": {"type": "string"},
+                "view": {"type": "string", "enum": ["events", "flow"]},
+                "start_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "end_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "branch": {"type": "string"},
+                "revision": {"type": "string"},
+            },
+            "required": ["sale_number", "view"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": (
+            "engineering-api GET /v1/lmps/{sale_number}/history/"
+            "events|flow"
+        ),
+    },
+    "get_lmp_goal_context": {
+        "title": "Get LMP goal context",
+        "description": (
+            "READ-only goals context for the LMP dashboard — delegated "
+            "to the Strategic Indicators owner; explains targets behind "
+            "on-time/lead-time evaluation."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "start_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "end_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "branch": {"type": "string"},
+            },
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/lmps/goal-context",
+    },
+    "get_lmp_department_idd": {
+        "title": "Get LMP department IDD",
+        "description": (
+            "READ-only departmental IDD score — delegated to the "
+            "Strategic Indicators owner; optional competence (YYYY-MM) "
+            "or period filter."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "competence": {"type": "string", "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"},
+                "start_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "end_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "branch": {"type": "string"},
+            },
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/lmps/department-idd",
+    },
+    "get_lmp_nc_streak": {
+        "title": "Get LMP NC streak",
+        "description": (
+            "READ-only days-without-NC streak as published by the NC "
+            "owner for the LMP dashboard — delegated, never recalculated."
+        ),
+        "input_schema": {"type": "object", "properties": {}},
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/lmps/nonconformities/streak",
+    },
+    "get_product_structure": {
+        "title": "Get product structure",
+        "description": (
+            "READ-only product structure/BOM by product_code — delegated "
+            "to the Products owner (api-delpi) with the caller's Bearer; "
+            "payload returned intact with honest availability."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "product_code": {"type": "string"},
+                "max_depth": {"type": "integer", "minimum": 1, "maximum": 12},
+                "page_size": {"type": "integer", "minimum": 1, "maximum": 500},
+            },
+            "required": ["product_code"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/products/{product_code}/structure",
+    },
+    "create_nonconformity": {
+        "title": "Create nonconformity",
+        "description": (
+            "ACT — creates a nonconformity through the official contract "
+            "as the authenticated human. Requires confirmed=true after "
+            "the user authorizes the candidate (present the normalized "
+            "payload first via prepare_nonconformity_mutation). Optional "
+            "idempotency_key deduplicates retries; postcondition is "
+            "verified by read-back."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "payload": {"type": "object"},
+                "confirmed": {"type": "boolean"},
+                "idempotency_key": {"type": "string", "maxLength": 120},
+            },
+            "required": ["payload", "confirmed"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": False,
+        "required_permission": ENGINEERING_ACCESS,
+        "requires_human_confirmation": True,
+        "confirmation_policy": "explicit_user_authorization",
+        "source": "engineering-api POST /v1/nonconformities",
+    },
+    "update_nonconformity": {
+        "title": "Update nonconformity",
+        "description": (
+            "ACT — updates a nonconformity. The official contract is "
+            "full-replace PUT: pass only the intended field changes in "
+            "`changes`; the bridge fetches the current record and sends "
+            "the merged full payload with optimistic locking "
+            "(expected_updated_at). Conflicts return 409 — never loses "
+            "fields. Requires confirmed=true."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "record_id": {"type": "string", "format": "uuid"},
+                "changes": {"type": "object"},
+                "confirmed": {"type": "boolean"},
+                "expected_updated_at": {"type": "string"},
+            },
+            "required": ["record_id", "changes", "confirmed"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": False,
+        "required_permission": ENGINEERING_ACCESS,
+        "requires_human_confirmation": True,
+        "confirmation_policy": "explicit_user_authorization",
+        "source": "engineering-api PUT /v1/nonconformities/{record_id}",
+    },
+    "delete_nonconformity": {
+        "title": "Delete nonconformity",
+        "description": (
+            "ACT destructive — hard-deletes a nonconformity and its "
+            "history (official cascade). HIGH RISK: requires "
+            "confirmed=true only after presenting the record and "
+            "receiving explicit user confirmation. Postcondition "
+            "verified by read-back (404 expected)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "record_id": {"type": "string", "format": "uuid"},
+                "confirmed": {"type": "boolean"},
+            },
+            "required": ["record_id", "confirmed"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": False,
+        "required_permission": ENGINEERING_ACCESS,
+        "requires_human_confirmation": True,
+        "confirmation_policy": "reinforced_explicit_confirmation",
+        "destructive": True,
+        "source": "engineering-api DELETE /v1/nonconformities/{record_id}",
+    },
+    "import_nonconformities": {
+        "title": "Import nonconformities",
+        "description": (
+            "ACT destructive — JSON import that REPLACES the entire "
+            "nonconformity record set (legacy semantics). Always run "
+            "dry_run=true first and present the impact report; real "
+            "import requires dry_run=false + confirm_replace=true + "
+            "confirmed=true after explicit user authorization. The "
+            "environment may block replacement — honor the refusal "
+            "honestly."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "items": {"type": "array", "items": {"type": "object"}},
+                "dry_run": {"type": "boolean"},
+                "confirm_replace": {"type": "boolean"},
+                "confirmed": {"type": "boolean"},
+            },
+            "required": ["items", "confirmed"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": False,
+        "required_permission": ENGINEERING_ACCESS,
+        "requires_human_confirmation": True,
+        "confirmation_policy": "reinforced_explicit_confirmation",
+        "destructive": True,
+        "source": "engineering-api POST /v1/nonconformities/import",
+    },
 }
 
 # Capacidades futuras — documentadas como não implementadas, nunca
@@ -299,6 +639,31 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
             status_code=400,
             error_code="validation",
             data={"error_kind": "validation", "fields": exc.fields},
+        )
+    if isinstance(exc, NcConcurrencyError):
+        return _error_result(
+            str(exc),
+            status_code=409,
+            error_code="concurrency_conflict",
+            data={"error_kind": "concurrency"},
+        )
+    if isinstance(exc, (NcUnsafeOperationError, EvaActDisabledError)):
+        return _error_result(
+            str(exc),
+            status_code=403,
+            error_code=(
+                "act_disabled"
+                if isinstance(exc, EvaActDisabledError)
+                else "unsafe_operation"
+            ),
+            data={"error_kind": "unsafe_operation"},
+        )
+    if isinstance(exc, EvaConfirmationRequiredError):
+        return _error_result(
+            str(exc),
+            status_code=400,
+            error_code="confirmation_required",
+            data={"error_kind": "confirmation"},
         )
     if isinstance(exc, NcRepositoryError):
         return _error_result(
@@ -378,6 +743,82 @@ def _source_context(context) -> HomeSourceContext:
     )
 
 
+def _actor_from_context(context):
+    """NcActor do humano autenticado — mesma projeção das rotas REST."""
+    return nc_actor_from_principal(context.user)
+
+
+def _require_eva_act() -> None:
+    """Fail-closed por ambiente: EVA ACT exige opt-in operacional.
+
+    Sem a flag a tool responde ``act_disabled`` honesto — produção
+    permanece bloqueada até autorização específica (P8).
+    """
+    if os.getenv(EVA_ACT_ENV_FLAG, "").strip().lower() != "true":
+        raise EvaActDisabledError(
+            "EVA ACT indisponível neste ambiente "
+            f"({EVA_ACT_ENV_FLAG} não habilitado)."
+        )
+
+
+def _require_confirmation(confirmed: bool | None) -> None:
+    """Toda ACT exige a asserção explícita do chamador.
+
+    ``confirmed=true`` significa que o agente apresentou a operação ao
+    usuário e recebeu autorização — política de confirmação registrada
+    no contrato da tool; a autorização efetiva continua sendo a Core.
+    """
+    if confirmed is not True:
+        raise EvaConfirmationRequiredError(
+            "Confirmação humana obrigatória: apresente a operação ao "
+            "usuário e chame novamente com confirmed=true somente após "
+            "autorização explícita."
+        )
+
+
+def _validate_period(
+    start_date: str | None, end_date: str | None
+) -> str | None:
+    """Mesma validação de período das rotas /v1/lmps — sem contrato novo."""
+    for name, value in (
+        ("start_date", start_date),
+        ("end_date", end_date),
+    ):
+        if value is not None and not _ISO_DATE_RE.match(value.strip()):
+            return f"{name} inválida — use YYYY-MM-DD."
+    if (
+        start_date
+        and end_date
+        and _ISO_DATE_RE.match(start_date.strip())
+        and _ISO_DATE_RE.match(end_date.strip())
+        and start_date.strip() > end_date.strip()
+    ):
+        return "start_date não pode ser posterior a end_date."
+    return None
+
+
+def _lmp_result(
+    result: dict, *, not_found_message: str
+) -> CallToolResult:
+    """Estados honestos das fontes LMP delegadas → resultado tipado."""
+    status = result.get("status")
+    if status == "forbidden":
+        return _error_result(
+            "Acesso negado pelo owner da fonte.",
+            status_code=403,
+            error_code="forbidden",
+            data={"error_kind": "authz"},
+        )
+    if status == "not_found":
+        return _error_result(
+            not_found_message,
+            status_code=404,
+            error_code="not_found",
+            data={"error_kind": "not_found"},
+        )
+    return _ok_result(result, "Consulta realizada com sucesso.")
+
+
 # --- DISCOVERY ------------------------------------------------------------
 
 
@@ -399,6 +840,13 @@ def tool_get_catalog() -> CallToolResult:
                     "output_schema": contract["output_schema"],
                     "read_only": contract["read_only"],
                     "required_permission": contract["required_permission"],
+                    "requires_human_confirmation": contract.get(
+                        "requires_human_confirmation", False
+                    ),
+                    "confirmation_policy": contract.get(
+                        "confirmation_policy"
+                    ),
+                    "destructive": contract.get("destructive", False),
                     "source": contract.get("source"),
                     "owner": "engineering-api",
                 }
@@ -414,20 +862,44 @@ def tool_get_catalog() -> CallToolResult:
                     "Validation + projected diff only — zero side "
                     "effects; requires human confirmation to apply."
                 ),
+                "ACT": (
+                    "Real mutation through the official Engineering "
+                    "contract — requires confirmed=true after explicit "
+                    "user authorization, live Core AuthZ and "
+                    f"{EVA_ACT_ENV_FLAG} in the environment; "
+                    "postcondition verified by read-back."
+                ),
             },
-            "write_tools": [],
+            "write_tools": [
+                name
+                for name in MCP_TOOL_NAMES
+                if TOOL_CLASS[name] == "ACT"
+            ],
+            "act_enabled": (
+                os.getenv(EVA_ACT_ENV_FLAG, "").strip().lower() == "true"
+            ),
             "agent_directives": (
                 EvaAgentIntelligenceService.agent_directives()
             ),
             "planned_capabilities": list(_PLANNED_CAPABILITIES),
             "notes": [
-                "EVA é somente leitura; não existem ferramentas de escrita.",
+                "Tools ACT existem, mas só executam com confirmed=true "
+                "após autorização explícita do usuário, AuthZ Core live "
+                f"e {EVA_ACT_ENV_FLAG} habilitado no ambiente; "
+                "act_enabled reflete o gate vigente.",
+                "delete_nonconformity e import_nonconformities são "
+                "destrutivas: confirmação reforçada; import sem dry_run "
+                "exige confirm_replace=true e respeita o bloqueio de "
+                "ambiente do owner.",
                 "Disponibilidade por fonte é preservada — unavailable ou "
                 "forbidden NÃO significa ausência de dados.",
                 "Metas/IDD só existem nos indicadores elegíveis "
                 "(lmp_on_time, transforma_gross_savings).",
                 "Permissões declaradas são requisito, não concessão — a "
                 "autorização efetiva é da Core e dos owners downstream.",
+                "EVA nunca acessa PostgreSQL diretamente nem usa "
+                "identidade de serviço: o ator registrado em auditoria é "
+                "sempre o humano autenticado.",
             ],
         }
         return _ok_result(data, "Catálogo de capacidades da EVA.")
@@ -624,6 +1096,513 @@ async def tool_prepare_nonconformity_mutation(
         return _ok_result(
             result,
             "Mutação analisada — nada foi gravado (PREPARE).",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_export_nonconformities() -> CallToolResult:
+    try:
+        _require_engineering_human()
+        data = await nc_composer.build_export_nonconformities_use_case().execute()
+        return _ok_result(
+            data, "Exportação JSON do acervo de não conformidades."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+# --- READ tools: LMPs e produtos (delegação governada aos owners) ------
+
+
+async def tool_list_lmps(
+    *,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    listing_type: str | None = None,
+    status: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> CallToolResult:
+    try:
+        context = _require_engineering_human()
+        error = _validate_period(start_date, end_date)
+        if error:
+            return _error_result(
+                error,
+                status_code=400,
+                error_code="validation",
+                data={"error_kind": "validation"},
+            )
+        query = LmpQuery(
+            start_date=start_date.strip() if start_date else None,
+            end_date=end_date.strip() if end_date else None,
+            branch=branch.strip() if branch else None,
+            listing_type=listing_type.strip() if listing_type else None,
+            status_filter=status.strip() if status else None,
+            page=page,
+            page_size=page_size,
+        )
+        result = await build_list_lmps_dashboard_use_case().execute(
+            _source_context(context), query
+        )
+        return _lmp_result(
+            result, not_found_message="Listagem de LMPs indisponível."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_lmp_summary(
+    *,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+) -> CallToolResult:
+    try:
+        context = _require_engineering_human()
+        error = _validate_period(start_date, end_date)
+        if error:
+            return _error_result(
+                error,
+                status_code=400,
+                error_code="validation",
+                data={"error_kind": "validation"},
+            )
+        query = LmpQuery(
+            start_date=start_date.strip() if start_date else None,
+            end_date=end_date.strip() if end_date else None,
+            branch=branch.strip() if branch else None,
+        )
+        result = await build_get_lmp_summary_use_case().execute(
+            _source_context(context), query
+        )
+        return _lmp_result(
+            result, not_found_message="Resumo de LMPs indisponível."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_lmp_detail(
+    *,
+    sale_number: str,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+) -> CallToolResult:
+    try:
+        context = _require_engineering_human()
+        error = _validate_period(start_date, end_date)
+        if error:
+            return _error_result(
+                error,
+                status_code=400,
+                error_code="validation",
+                data={"error_kind": "validation"},
+            )
+        query = LmpQuery(
+            sale_number=sale_number.strip(),
+            start_date=start_date.strip() if start_date else None,
+            end_date=end_date.strip() if end_date else None,
+            branch=branch.strip() if branch else None,
+        )
+        result = await build_get_lmp_detail_use_case().execute(
+            _source_context(context), query
+        )
+        return _lmp_result(
+            result,
+            not_found_message=(
+                "OV não encontrada na listagem de engenharia."
+            ),
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_lmp_history(
+    *,
+    sale_number: str,
+    view: str,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    revision: str | None = None,
+) -> CallToolResult:
+    try:
+        context = _require_engineering_human()
+        view_normalized = (view or "").strip().lower()
+        if view_normalized not in {"events", "flow"}:
+            return _error_result(
+                "view inválida — use events|flow.",
+                status_code=400,
+                error_code="validation",
+                data={"error_kind": "validation"},
+            )
+        error = _validate_period(start_date, end_date)
+        if error:
+            return _error_result(
+                error,
+                status_code=400,
+                error_code="validation",
+                data={"error_kind": "validation"},
+            )
+        query = LmpQuery(
+            sale_number=sale_number.strip(),
+            start_date=start_date.strip() if start_date else None,
+            end_date=end_date.strip() if end_date else None,
+            branch=branch.strip() if branch else None,
+            revision=revision.strip() if revision else None,
+        )
+        result = await build_get_lmp_history_use_case(
+            view=view_normalized
+        ).execute(_source_context(context), query)
+        return _lmp_result(
+            result,
+            not_found_message=(
+                "OV não encontrada na listagem de engenharia."
+            ),
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_lmp_goal_context(
+    *,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+) -> CallToolResult:
+    try:
+        context = _require_engineering_human()
+        error = _validate_period(start_date, end_date)
+        if error:
+            return _error_result(
+                error,
+                status_code=400,
+                error_code="validation",
+                data={"error_kind": "validation"},
+            )
+        result = await build_delegated_auxiliary_source().fetch_goal_context(
+            _source_context(context),
+            start_date=start_date.strip() if start_date else None,
+            end_date=end_date.strip() if end_date else None,
+            branch=branch.strip() if branch else None,
+        )
+        return _lmp_result(
+            result, not_found_message="Contexto de metas indisponível."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_lmp_department_idd(
+    *,
+    competence: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+) -> CallToolResult:
+    try:
+        context = _require_engineering_human()
+        if competence is not None and not _COMPETENCE_RE.match(
+            competence.strip()
+        ):
+            return _error_result(
+                "competence inválida — use YYYY-MM.",
+                status_code=400,
+                error_code="validation",
+                data={"error_kind": "validation"},
+            )
+        error = _validate_period(start_date, end_date)
+        if error:
+            return _error_result(
+                error,
+                status_code=400,
+                error_code="validation",
+                data={"error_kind": "validation"},
+            )
+        result = await build_delegated_auxiliary_source().fetch_department_idd(
+            _source_context(context),
+            competence=competence.strip() if competence else None,
+            start_date=start_date.strip() if start_date else None,
+            end_date=end_date.strip() if end_date else None,
+            branch=branch.strip() if branch else None,
+        )
+        return _lmp_result(
+            result, not_found_message="IDD departamental indisponível."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_lmp_nc_streak() -> CallToolResult:
+    try:
+        context = _require_engineering_human()
+        result = await build_delegated_auxiliary_source().fetch_nc_streak(
+            _source_context(context)
+        )
+        return _lmp_result(
+            result, not_found_message="Streak de NC indisponível."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_product_structure(
+    *,
+    product_code: str,
+    max_depth: int = 6,
+    page_size: int = 200,
+) -> CallToolResult:
+    try:
+        context = _require_engineering_human()
+        code = (product_code or "").strip()
+        if not code:
+            return _error_result(
+                "product_code obrigatório.",
+                status_code=400,
+                error_code="validation",
+                data={"error_kind": "validation"},
+            )
+        result = await build_delegated_auxiliary_source().fetch_product_structure(
+            _source_context(context),
+            code=code,
+            max_depth=max_depth,
+            page_size=page_size,
+        )
+        return _lmp_result(
+            result, not_found_message="Estrutura do produto indisponível."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+# --- ACT tools: CRUD NC governado (E-NC-07..10) -------------------------
+
+
+def _merged_update_payload(
+    current: dict[str, Any], changes: dict[str, Any]
+) -> dict[str, Any]:
+    """Full-replace seguro: campos atuais + mudanças, chaves validadas.
+
+    O contrato E-NC-08 é PUT full-replace — um payload parcial apagaria
+    campos não informados. O merge parte do registro corrente e rejeita
+    chaves fora do contrato (typo do agente nunca é descarte silencioso).
+    """
+    unknown = sorted(set(changes) - set(NC_WRITABLE_FIELDS))
+    if unknown:
+        raise NcValidationError(
+            f"Campos fora do contrato NC: {', '.join(unknown)}.",
+            fields={key: "unknown_field" for key in unknown},
+        )
+    payload = {
+        field: current.get(field) for field in NC_WRITABLE_FIELDS
+    }
+    payload.update(changes)
+    return payload
+
+
+async def tool_create_nonconformity(
+    *,
+    payload: dict,
+    confirmed: bool = False,
+    idempotency_key: str | None = None,
+) -> CallToolResult:
+    """EVA ACT — create via contrato oficial com postcondition read-back."""
+    try:
+        context = _require_engineering_human()
+        _require_eva_act()
+        _require_confirmation(confirmed)
+        data = await nc_composer.build_create_nonconformity_use_case().execute(
+            payload=payload or {},
+            actor=_actor_from_context(context),
+            idempotency_key=idempotency_key,
+        )
+        postcondition = {"verified": False}
+        record_id = data.get("id")
+        if record_id:
+            try:
+                read_back = (
+                    await nc_composer.build_get_nonconformity_use_case().execute(
+                        record_id
+                    )
+                )
+                postcondition = {
+                    "verified": read_back is not None,
+                    "record_id": record_id,
+                    "check": "read_back",
+                }
+            except Exception:
+                postcondition = {
+                    "verified": False,
+                    "record_id": record_id,
+                    "check": "read_back_failed",
+                }
+        return _ok_result(
+            {**data, "postcondition": postcondition},
+            "Não conformidade criada com sucesso.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_update_nonconformity(
+    *,
+    record_id: str,
+    changes: dict,
+    confirmed: bool = False,
+    expected_updated_at: str | None = None,
+) -> CallToolResult:
+    """EVA ACT — update full-replace com merge + optimistic locking."""
+    try:
+        context = _require_engineering_human()
+        _require_eva_act()
+        _require_confirmation(confirmed)
+        if not isinstance(changes, dict) or not changes:
+            raise NcValidationError(
+                "changes é obrigatório (objeto com os campos a alterar).",
+                fields={"changes": "required"},
+            )
+        current = (
+            await nc_composer.build_get_nonconformity_use_case().execute(
+                record_id
+            )
+        )
+        merged = _merged_update_payload(current, changes)
+        etag = expected_updated_at or current.get("updated_at")
+        data = (
+            await nc_composer.build_update_nonconformity_use_case().execute(
+                record_id=record_id,
+                payload=merged,
+                actor=_actor_from_context(context),
+                expected_updated_at=etag,
+            )
+        )
+        postcondition = {"verified": False}
+        try:
+            read_back = (
+                await nc_composer.build_get_nonconformity_use_case().execute(
+                    record_id
+                )
+            )
+            postcondition = {
+                "verified": read_back is not None
+                and read_back.get("updated_at")
+                != current.get("updated_at"),
+                "record_id": record_id,
+                "check": "read_back",
+            }
+        except Exception:
+            postcondition = {
+                "verified": False,
+                "record_id": record_id,
+                "check": "read_back_failed",
+            }
+        return _ok_result(
+            {**data, "postcondition": postcondition},
+            "Não conformidade atualizada com sucesso.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_delete_nonconformity(
+    *,
+    record_id: str,
+    confirmed: bool = False,
+) -> CallToolResult:
+    """EVA ACT destrutiva — delete com impacto prévio + postcondition."""
+    try:
+        _require_engineering_human()
+        _require_eva_act()
+        _require_confirmation(confirmed)
+        current = (
+            await nc_composer.build_get_nonconformity_use_case().execute(
+                record_id
+            )
+        )
+        data = await nc_composer.build_delete_nonconformity_use_case().execute(
+            record_id
+        )
+        postcondition = {"verified": False}
+        try:
+            await nc_composer.build_get_nonconformity_use_case().execute(
+                record_id
+            )
+            postcondition = {
+                "verified": False,
+                "check": "read_back_still_present",
+            }
+        except NcNotFoundError:
+            postcondition = {"verified": True, "check": "read_back_gone"}
+        return _ok_result(
+            {
+                **data,
+                "deleted_record_summary": {
+                    "sale_number": current.get("sale_number"),
+                    "lmp_number": current.get("lmp_number"),
+                    "status": current.get("status"),
+                    "defect_description": current.get(
+                        "defect_description"
+                    ),
+                },
+                "postcondition": postcondition,
+            },
+            "Não conformidade excluída com sucesso.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_import_nonconformities(
+    *,
+    items: list,
+    confirmed: bool = False,
+    dry_run: bool = True,
+    confirm_replace: bool = False,
+) -> CallToolResult:
+    """EVA ACT destrutiva — import com dry-run padrão + confirmação
+    reforçada. A substituição total só ocorre com dry_run=false +
+    confirm_replace=true + confirmed=true; o bloqueio de ambiente do
+    owner (ENG_NC_IMPORT_REPLACE_ENABLED) continua valendo."""
+    try:
+        context = _require_engineering_human()
+        _require_eva_act()
+        if not isinstance(items, list) or not items:
+            raise NcValidationError(
+                "items é obrigatório (lista de não conformidades).",
+                fields={"items": "required"},
+            )
+        # dry_run não tem efeitos colaterais (equivale a PREPARE) —
+        # confirmação só é exigida na substituição real.
+        if dry_run is not True:
+            _require_confirmation(confirmed)
+        result = (
+            await nc_composer.build_import_nonconformities_use_case().execute(
+                items=items,
+                actor=_actor_from_context(context),
+                dry_run=bool(dry_run),
+                confirm_replace=bool(confirm_replace),
+            )
+        )
+        report = result.to_dict()
+        return _ok_result(
+            {
+                **report,
+                "postcondition": {
+                    "verified": True,
+                    "check": "import_report",
+                    "deleted": report.get("deleted"),
+                    "created": report.get("created"),
+                    "skipped": report.get("skipped"),
+                    "errors": report.get("errors"),
+                },
+            },
+            "Importação de não conformidades concluída."
+            if not dry_run
+            else "Simulação de importação concluída (dry_run).",
         )
     except Exception as exc:
         return handle_tool_error(exc)

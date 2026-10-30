@@ -24,6 +24,9 @@ from delpi_auth.authorization import require_any_permission
 from delpi_auth.context_resolver import resolve_user_context
 
 from engineering_app.application.ports.home_sources import HomeSourceContext
+from engineering_app.application.use_cases.nonconformity.actor import (
+    nc_actor_from_principal,
+)
 from engineering_app.composition.nc_composer import (
     build_create_nonconformity_use_case,
     build_delete_nonconformity_use_case,
@@ -181,29 +184,7 @@ def _require_human_principal(operation_id: str):
 
 
 def _actor_from_user(user) -> NcActor:
-    user_id = getattr(user, "id", None)
-    email_raw = getattr(user, "email", None)
-    name_raw = None
-    for attr in ("name", "full_name", "username"):
-        value = getattr(user, attr, None)
-        if isinstance(value, str) and value.strip():
-            name_raw = value.strip()
-            break
-    email = (
-        email_raw.strip()
-        if isinstance(email_raw, str) and email_raw.strip()
-        else None
-    )
-    name = name_raw[:300] if name_raw else None
-    label = name or email or (str(user_id) if user_id else None) or None
-    if label:
-        label = label[:120]
-    return NcActor(
-        user_id=str(user_id) if user_id else "unknown",
-        email=email[:255] if email else None,
-        name=name,
-        label=label,
-    )
+    return nc_actor_from_principal(user)
 
 
 def _nc_error_response(exc: Exception, operation_id: str):
