@@ -150,3 +150,55 @@ class TestStockKardexQueryRequest:
             StockKardexQueryRequest.from_query(
                 period="2026-09", warehouse="01;DROP"
             )
+
+
+class TestTtatHistoryQuery:
+    """As-of cost lookup contract (REWORK-018): the TTAT log tables
+    have no index on TTAT_RECNO — the query must resolve the earliest
+    post-boundary change for every recno in ONE set-based pass
+    (ROW_NUMBER), never a chunked ``RECNO IN (...)`` scan."""
+
+    def test_set_based_earliest_cold(self) -> None:
+        from app.infrastructure.persistence.totvs.financeiro_stock_kardex import (
+            stock_kardex_sql,
+        )
+
+        sql, params = stock_kardex_sql.build_ttat_history_query(
+            log_table="SD3010_TTAT_LOG",
+            field_name="D3_CUSTO1",
+            boundary="20261001",
+        )
+        assert "ROW_NUMBER() OVER" in sql
+        assert "PARTITION BY TTAT_RECNO" in sql
+        assert "ORDER BY TTAT_DTIME" in sql
+        assert "rn = 1" in sql
+        assert "SD3010_TTAT_LOG" in sql
+        # No per-recno filter — the caller keeps the recnos it needs.
+        assert "TTAT_RECNO IN" not in sql
+        assert params == ["D3_CUSTO1", "20261001"]
+
+    def test_repository_filters_wanted_recnos(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from app.infrastructure.persistence.totvs.base_repository import (
+            BaseRepository,
+        )
+        from app.infrastructure.persistence.totvs.financeiro_stock_kardex.stock_kardex_repository import (
+            StockKardexRepository,
+        )
+
+        rows = [
+            {"TTAT_RECNO": 10, "TTAT_COLD": "5.50"},
+            {"TTAT_RECNO": 20, "TTAT_COLD": "9.99"},
+            {"TTAT_RECNO": 999, "TTAT_COLD": "1.00"},
+        ]
+        monkeypatch.setattr(BaseRepository, "_connect", lambda self: None)
+        monkeypatch.setattr(BaseRepository, "_close", lambda self, **kw: None)
+        monkeypatch.setattr(
+            BaseRepository, "execute_query", lambda self, q, p=(): rows
+        )
+        repo = StockKardexRepository()
+        history = repo.fetch_cost_history(
+            source_table="SD3", boundary="20261001", recnos=(10, 20)
+        )
+        assert history == {10: "5.50", 20: "9.99"}
