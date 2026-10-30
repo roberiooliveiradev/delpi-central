@@ -88,8 +88,15 @@ class DelpiApiGateway:
         *,
         access_token: str,
         json_body: dict[str, Any],
+        correlation_id: str | None = None,
     ) -> Any:
-        return self._request("POST", path, access_token=access_token, json_body=json_body)
+        return self._request(
+            "POST",
+            path,
+            access_token=access_token,
+            json_body=json_body,
+            correlation_id=correlation_id,
+        )
 
     def put(
         self,
@@ -97,8 +104,15 @@ class DelpiApiGateway:
         *,
         access_token: str,
         json_body: dict[str, Any],
+        correlation_id: str | None = None,
     ) -> Any:
-        return self._request("PUT", path, access_token=access_token, json_body=json_body)
+        return self._request(
+            "PUT",
+            path,
+            access_token=access_token,
+            json_body=json_body,
+            correlation_id=correlation_id,
+        )
 
     def _build_headers(self, access_token: str) -> dict[str, str]:
         headers = {
@@ -117,6 +131,7 @@ class DelpiApiGateway:
         access_token: str,
         params: dict[str, Any] | None = None,
         json_body: dict[str, Any] | None = None,
+        correlation_id: str | None = None,
     ) -> Any:
         method_upper = method.upper()
         if method_upper in {"POST", "PUT", "PATCH", "DELETE"} and json_body is not None:
@@ -134,6 +149,12 @@ class DelpiApiGateway:
                     headers["X-Request-Id"] = str(request_id)
         except ImportError:
             pass
+
+        if correlation_id:
+            # api-delpi honors X-Correlation-ID for integration tracking —
+            # lets non-Flask callers (SURI MCP execute) bind the write to a
+            # durable correlation evidence.
+            headers["X-Correlation-ID"] = str(correlation_id)
 
         try:
             response = requests.request(

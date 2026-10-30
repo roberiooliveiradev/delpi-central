@@ -52,21 +52,21 @@ Policies BFF: `can_enter_shell` (access OR manage), `can_use_portal/analytics/op
 | Comex NCM request | `POST /comex/ncm-governance` | pg | PROVEN |
 | Comex transition | `POST /ncm-governance/{id}/transition` | pg + `PUT /v1/market-data/comex/ncm-allowlist` na ED-api (best-effort audited) | PROVEN (manage p/ algumas) |
 | Comex views CRUD | `POST/PUT/DELETE /comex/views[/{id}]` | pg | PROVEN |
-| Supplier create | `POST /suppliers` → api-delpi `POST /integrations/protheus/suppliers` | **Protheus ERP** | **BLOCKED** — gate upstream `*_DISABLED` → 503 `write_disabled` (X4.PROD-C1 aguardando TOTVS) |
-| Supplier update | `PUT /suppliers/{code}/{store}` → api-delpi `PUT /integrations/...` | **Protheus ERP** | **BLOCKED** — mesmo gate (PUT TST01 provou persistência parcial em homologação; sem liberação) |
+| Supplier create | `POST /suppliers` → api-delpi `POST /integrations/protheus/suppliers` | **Protheus ERP** | **PROVEN** (revisão 2026-10-30, `SURI-MCP-SUPPLIERS-WRITE-001` — classificação BLOCKED anterior era `STALE_EVIDENCE`; gates `=true` em prod, cadeia validada em runtime) |
+| Supplier update | `PUT /suppliers/{code}/{store}` → api-delpi `PUT /integrations/...` | **Protheus ERP** | **PROVEN** (idem — cadeia completa até o REST provada com fornecedor inexistente → `PROTHEUS_SUPPLIER_NOT_FOUND`) |
 
 ### 2.4 Producers canônicos (ownership)
 
 | Owner | Responsabilidade |
 |---|---|
 | `supplies-api` | BFF, AuthZ, composição, pg `supplies` |
-| `api-delpi` | Regras/consultas Protheus, catalogs, CEP, S2S scope enforcement, supplier REST writes (gated) |
+| `api-delpi` | Regras/consultas Protheus, catalogs, CEP, S2S scope enforcement, supplier REST writes (gates `PROTHEUS_SUPPLIER_CREATE/UPDATE_ENABLED=true` em prod — 2026-10-30) |
 | `purchase-requests-api` | SCs, CCs, requesters, visibility-scopes/mappings admin (`_require_admin` interno), notification events |
 | `strategic-indicators-api` | Metas/indicadores — alcançada **via** api-delpi `/dashboard/department-indicators` |
 | `external-data-api` | Market data, comex imports, quotes, company registry provider |
 | `core-api` | Identidade, permissões efetivas, fotos |
 
-## 3. Superfície SURI hoje (prova em runtime, 2026-10-30)
+## 3. Superfície SURI hoje (revisão `SURI-MCP-SUPPLIERS-WRITE-001`, 2026-10-30)
 
 | Tool | Cobertura executável | Estado |
 |---|---|---|
@@ -74,15 +74,19 @@ Policies BFF: `can_enter_shell` (access OR manage), `can_use_portal/analytics/op
 | `read` | `entity=purchase_orders` apenas: `search`, `get` | **PROVEN** (1 entidade) |
 | `analyze` | `purchase_orders_summary` apenas | **PROVEN** |
 | `knowledge` | corpus versionado search/get/sources | **PROVEN** |
-| `execute`/`delete` | não registradas (DESTRUCTIVE_ACT_TOOLS=∅) | TARGET contratual |
+| `execute` | `entity=suppliers`: `create`, `update` — batch ≤10, `idempotency_key`, dup-precheck, correlation-id, outcome por operação | **PROVEN** (30 testes, suite 100/100) |
+| `delete` | não registrada | TARGET contratual |
 
-As chamadas passam por `DelpiApiGateway` com Bearer do usuário — paridade de caminho com o BFF.
+Reads passam por `DelpiApiGateway` com Bearer do usuário; writes passam
+por `DelpiS2SApiGateway` (credencial S2S individual, scopes
+`suppliers.create`/`.update` enforceados upstream) — paridade de caminho
+com o BFF em ambos os casos.
 
 ## 4. Bloqueios revalidados (runtime/contrato, não doc)
 
 | Bloqueio | Evidência |
 |---|---|
-| Supplier ERP write OFF | api-delpi devolve `*_DISABLED` → 503 `write_disabled`; X4.PROD-C1 handoff TOTVS/Gabriel pendente |
+| ~~Supplier ERP write OFF~~ | **SUPERADO 2026-10-30** — classificação anterior era `STALE_EVIDENCE`: gates `PROTHEUS_SUPPLIER_{CREATE,UPDATE}_ENABLED=true` em runtime; UPDATE provado end-to-end até o REST (`PROTHEUS_SUPPLIER_NOT_FOUND` p/ `999999/01`); CREATE com gate aberto até `resolve_actor_codusr` (POST não disparado por segurança); ver seção «Reconciliação» da MATRIX |
 | SC create/approve/cancel | **Não existe no Portal** — `purchase-requests-api` só expõe reads + admin mappings; PRs nascem no ERP |
 | Metais dados reais | `source_use_pending` quarentena LME; egresso `api.metalcharts.org` bloqueado por firewall Sophos em prod; storage permanente gated `PROVIDER_PERMANENT_STORAGE_RIGHT=PENDING` |
 | Enrichment source | `COMPANY_REGISTRY_PROVIDER=unavailable` default fail-closed |

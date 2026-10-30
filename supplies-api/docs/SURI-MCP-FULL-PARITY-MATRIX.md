@@ -2,15 +2,22 @@
 
 Task: `SURI-MCP-FULL-PARITY-P0` · HEAD `8a822e29c1` · Status por item: `PROVEN | TO_INVENTORY | PLANNED | TARGET | BLOCKED`
 Granularidade: família de operação (não endpoint). Uma tool ≠ N capacidades provadas sem teste por operação.
+Revisão `SURI-MCP-SUPPLIERS-WRITE-001` (2026-10-30): B-01/B-02 superadas por evidência de runtime — ver seção «Reconciliação».
 
 ## Indicadores
 
 ```text
-PORTAL CAPABILITIES (denominador: PROVEN executável)   : 34 (25 READ + 9 WRITE)
-SURI CAPABILITIES PROVEN                               : 4  (context, read[PO], analyze[PO], knowledge)
-CURRENT PARITY PERCENTAGE (implementada)               : 11.8% (4/34)
-TARGET PARITY PERCENTAGE                               : 100% das capacidades autorizadas
+PORTAL CAPABILITIES (denominador: linhas PROVEN executáveis) : 45 (34 READ + 11 WRITE)
+SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 6  (R-08, R-10, R-33, R-34, W-10, W-11)
+CURRENT PARITY PERCENTAGE (implementada)                     : 13.3% (6/45)
+TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
+
+Nota de contagem (reconciliação do denominador): o indicador anterior
+declarava «34 = 25 READ + 9 WRITE», mas a tabela READ continha 34 linhas e
+a WRITE 9 — a unidade de contagem agora é **linha de capacidade PROVEN**.
+O denominador correto do snapshot P0 era 43; com W-10/W-11 promovidas de
+BLOCKED a PROVEN passa a 45.
 
 Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`delete` = tool alvo.
 
@@ -66,13 +73,31 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | W-07 | Mercado | Comex transition (algumas manage; ED-api put on approve/inactive) | PROVEN | — | pg + ED-api | `POST /{id}/transition` | access/manage | `execute` transition (PREPARE+consent p/ manage) | P2-E2 |
 | W-08 | Mercado | Comex views create/update | PROVEN | — | pg | `POST/PUT /views` | access | `execute` view.save | P2-E2 |
 | W-09 | Mercado | Comex views delete | PROVEN | — | pg | `DELETE /views/{id}` | access | `delete` view (confirmação explícita) | P2-D1 |
+| W-10 | Fornecedores | Supplier create (Protheus POST) | PROVEN | `execute:suppliers.create` | api-delpi(S2S) + Protheus REST | `POST /suppliers` → `/integrations/protheus/suppliers` | access + S2S `suppliers.create` | runtime 2026-10-30 + 30 testes SURI | **PROVEN** (era B-01) |
+| W-11 | Fornecedores | Supplier update (Protheus PUT) | PROVEN | `execute:suppliers.update` | api-delpi(S2S) + Protheus REST | `PUT /suppliers/{code}/{store}` | access + S2S `suppliers.update` | runtime end-to-end + 30 testes SURI | **PROVEN** (era B-02) |
+
+## Reconciliação — bloqueios superados por evidência (SURI-MCP-SUPPLIERS-WRITE-001, 2026-10-30)
+
+O inventário P0 classificou B-01/B-02 como bloqueados com base em
+documentação anterior ao corte produtivo. Verificação não-destrutiva de
+runtime provou o contrário:
+
+- `PROTHEUS_SUPPLIER_CREATE_ENABLED=true` e `PROTHEUS_SUPPLIER_UPDATE_ENABLED=true` no container produtivo (`delpi-api-delpi`);
+- provider S2S da `supplies-api` autentica com scopes `suppliers.read .create .update .consumption-audit.read`;
+- **UPDATE end-to-end**: use case executado em produção com fornecedor inexistente `999999/01` atravessou validação → gate → codusr do ator → params → target guard → **REST Protheus alcançado** → `PROTHEUS_SUPPLIER_NOT_FOUND` (sem escrita possível);
+- **CREATE**: payload válido normalizado atravessou validação → gate → parou em `PROTHEUS_IDENTITY_UNMAPPED` com ator propositalmente não mapeado (antes de qualquer byte REST — o POST real não foi disparado por segurança);
+- BFF `POST /suppliers`/`PUT /suppliers/{code}/{store}` publicam `acknowledged`/`persistence_proven`/`operation_id`/`tracking_warning` — read-back e rastreio já fazem parte do contrato;
+- SURI `execute` implementado com os mesmos primitivos canônicos (S2S gateway, DTOs, classificador de erro), `idempotency_key` por operação, pré-checagem de duplicidade por tax_id, correlation-id propagado ao tracker e auditoria por operação.
+
+Classificação P0 anterior: `STALE_EVIDENCE` — o bloqueio documental foi
+superado pelo runtime, não removido por força de instrução.
 
 ## BLOCKED — não viram operação MCP enquanto bloqueio vigente
 
 | ID | Capacidade | Causa | Gate p/ desbloqueio |
 |---|---|---|---|
-| B-01 | Supplier create (Protheus) | api-delpi `*_DISABLED`→503; X4.PROD-C1 aguardando TOTVS/Gabriel | liberação TOTVS + homologação C1 |
-| B-02 | Supplier update (Protheus PUT) | mesmo gate upstream | idem + re-teste TST01 |
+| ~~B-01~~ | ~~Supplier create (Protheus)~~ | superado → W-10 (evidência acima) | — |
+| ~~B-02~~ | ~~Supplier update (Protheus PUT)~~ | superado → W-11 (evidência acima) | — |
 | B-03 | SC create/approve/cancel | **não existe no Portal** (PR-api read-only) | decisão de produto nova (C2/C3 roadmap) |
 | B-04 | Metais dados reais | quarentena LME + firewall Sophos + retention right PENDING | aprovação de fonte + exceção de TI |
 
@@ -86,11 +111,11 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | P-04 | Indicadores página | PLANNED | SI já compõe Overview |
 | P-05 | Administração | PLANNED | admin real hoje = integration-status + comex manage inline |
 | P-06 | Safety-stock consumption-analysis (E12) + price history (E18) | PLANNED | produtor já possui rotas |
-| P-07 | Supplier create/update | BLOCKED→TARGET | B-01/B-02 |
+| P-07 | ~~Supplier create/update~~ | PROVEN | promovido a W-10/W-11 (runtime + execute) |
 
 ## EXECUTION_DRIFT / TO_INVENTORY
 
 - `patchPreferences` shared client existe mas a UI escreve por `patchUserProfile` — reconciliar owner da write de preferência no lote P2-E4. **TO_INVENTORY**
 - SURI `get_context` não inclui preferences — avaliar `read entity=me/preferences`. **TO_INVENTORY**
-- Asymmetry: MCP usa `DelpiApiGateway` (shared token); suppliers/consumption-audit migraram p/ `DelpiS2SApiGateway` — ao estender `read` p/ essas entidades, usar o S2S gateway (scope enforcement upstream). **DECISION registrada no plano**
+- Asymmetry: MCP usa `DelpiApiGateway` (shared token) para purchase_orders; `execute` já usa `DelpiS2SApiGateway` (W-10/W-11). Ao estender `read` p/ suppliers/consumption-audit, usar o S2S gateway (scope enforcement upstream). **DECISION registrada no plano**
 - VISUAL_AUTHENTICATED=INCONCLUSIVE persiste em várias páginas (não bloqueia paridade técnica; residual de homologação PO)

@@ -79,6 +79,13 @@ Template comum de autoridades (todo lote): instruções GPT Arquiteto, `.cursor`
 - **GOAL:** entradas por entidade/ação nova (buscas guiadas, glossário); version+SHA bump; teste de integridade.
 - **Files:** `app/content/suri_knowledge.json`, `knowledge.py` tests.
 
+## P2-E0 — supplier create/update ERP — **EXECUTADO (SURI-MCP-SUPPLIERS-WRITE-001, 2026-10-30)**
+
+- **GOAL (cumprido):** `execute(entity=suppliers, action=create|update)` com paridade ao Portal — S2S gateway, DTOs canônicos, outcome honesto, idempotência, audit, batch ≤10.
+- **Gate S0:** runtime provou gates `=true` + S2S mint + UPDATE end-to-end até REST (`PROTHEUS_SUPPLIER_NOT_FOUND` p/ `999999/01`) + CREATE até `resolve_actor_codusr` — classificação B-01/B-02 era `STALE_EVIDENCE`.
+- **Entregue:** `supplier_execute.py` (registry, replay cache TTL 900s/cap 512, dup-precheck por tax_id, audit por op, outcomes confirmed/acknowledged/sent/rejected/indeterminate/replayed), `tool_execute` no bridge, `SupplierWriteOperation` (extra=forbid), `TOOL_CLASS["execute"]=ACT` + `idempotentHint`, `classify_supplier_write_error` compartilhado BFF↔MCP, `X-Correlation-ID` no gateway.
+- **Decisões registradas:** direct path (sem prepare/commit conversacional — contrato da missão exige execução direta para writes inequívocas autorizadas); proposal store pg não exigido (durable tracking já existe no api-delpi); create sem `supplier_id` pré-atribuído → `supplier_id` vem do upstream ACK.
+
 ## P2-E1 — governed-write foundation
 
 - **GOAL:** infraestrutura `execute`/`delete` homologada — registry ACT, proposal store (DECISION-E1: pg `supplies` recomendado; migration própria `suri_*`), prepare→commit, idempotency store, audit channel `mcp/suri`, `delpi/toolClass` PREPARE/ACT meta, annotations `read_only:false`.
@@ -112,6 +119,6 @@ Template comum de autoridades (todo lote): instruções GPT Arquiteto, `.cursor`
 
 ## P3/P4 — fora de agenda
 
-- **P3:** `supplier.create`/`supplier.update` ERP — SÓ após B-01/B-02 (liberação TOTVS + homologação). Nova capacidade no registry permanece `status=blocked` honesta (veredicto `not_implemented`/`blocked`, padrão CAIO).
+- ~~**P3:** `supplier.create`/`supplier.update` ERP~~ — executado em P2-E0 (bloqueio era stale; ver reconciliação na MATRIX).
 - **P3-B:** SC workflow — inexistente no Portal; depende de decisão de produto (C2/C3).
 - **P4:** páginas placeholder — SURI acompanha o Portal, nunca o precede.

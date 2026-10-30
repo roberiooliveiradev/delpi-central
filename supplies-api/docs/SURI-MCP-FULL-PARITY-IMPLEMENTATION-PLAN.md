@@ -6,7 +6,7 @@ Objetivo do programa: `SURI_AUTHORIZED_PORTAL_PARITY = 100%`.
 ## Princípios (preservados em todos os lotes)
 
 ```text
-4 tools hoje → 6 tools alvo: get_context, read, analyze, knowledge, execute, delete
+5 tools hoje (rev.3) → 6 tools alvo: get_context, read, analyze, knowledge, execute, delete
 Closed (entity, action) registry — nunca executor universal, URL, SQL ou handler arbitrário
 Bearer do usuário end-to-end (paridade com BFF) — S2S gateway quando o BFF usa S2S
 Policies canônicas supriladas por chamada (mesmas do Flask) — nunca permissão paralela
@@ -26,10 +26,11 @@ FASE P1 — READ/ANALYZE parity (capacidades já homologadas no Portal)
   → P1-R7 consumption_audit → P1-R8 market_intelligence → P1-R9 users/me/home
   → P1-A1 analyze por entidade → P1-K1 corpus knowledge
 FASE P2 — EXECUTE/DELETE parity (só writes plugin-db/workflow homologadas)
-  P2-E1 fundação governed-write (registry+proposal+idempotency+audit)
+  P2-E0 supplier create/update ERP (EXECUTADO — SURI-MCP-SUPPLIERS-WRITE-001)
+  → P2-E1 fundação governed-write (registry+proposal+idempotency+audit)
   → P2-E2 comex (views CRUD + ncm request/transition) → P2-E3 enrichment
   → P2-E4 preferences/profile → P2-D1 delete (views)
-FASE P3 — BLOCKED (não agenda): supplier create/update ERP, SC workflow
+FASE P3 — BLOCKED (não agenda): SC workflow (supplier writes saíram de P3 em 2026-10-30)
 FASE P4 — TARGET: páginas ainda não implementadas no próprio Portal
 ```
 
@@ -55,7 +56,8 @@ Cada lote é independente em código (novo `entity`/`action` no registry + handl
 | P2-E3 | SURIP-E3: enrichment execute | review.create, decide, bulk-decide, prepare-update | reuse SupplierEnrichmentReviewService (expected_revision/idempotency já embutidos) | rate-limit actor → 429 honest |
 | P2-E4 | SURIP-E4: preferences execute | `execute` me.preferences.update + user.profile.update (self) | reuse PreferencesService | write de outro usuário → 403 |
 | P2-D1 | SURIP-D1: delete foundation + views | `delete` tool + confirmation obrigatória (target_echo elicit OU consent url — DECISION P2-E1) + read-back gone | tool + policy | client sem elicit/consent → confirmation_unavailable 403 |
-| P3-* | BLOCKED | supplier.create/update ERP; SC workflow | — | NÃO IMPLEMENTAR até B-01..B-03 desbloquearem |
+| P2-E0 | SURI-MCP-SUPPLIERS-WRITE-001: supplier create/update ERP | **EXECUTADO** — `execute` rev.3 (W-10/W-11) | `supplier_execute.py`, `tool_bridge.py`, `schemas.py`, `constants.py`, `server.py`, `suppliers_dto.py` (classifier compartilhado), `delpi_api_gateway.py` (X-Correlation-ID), 30 testes | gates OFF em runtime → write_disabled honest (nunca executar) |
+| P3-* | BLOCKED | SC workflow | — | NÃO IMPLEMENTAR até B-03 desbloquear |
 | P4-* | TARGET | my-tasks/products/negotiations/indicators/administration | — | depende do Portal implementar primeiro |
 
 ## Gates por lote (template comum)
@@ -72,6 +74,7 @@ G6 doc: matrix row → PROVEN; evidence doc por lote
 ## Decisões abertas (a fechar no primeiro lote que as toca)
 
 1. **DECISION-E1**: proposal store — Postgres `supplies` schema (CLARA-style, auditável cross-restart) vs HMAC in-process (EVA-style, single-process). Recomendo **pg** pela consistência com proposals persistentes e audit.
+   **Subdecisão fechada no P2-E0 (2026-10-30):** para writes não-destrutivas sem exigência de consent/prepare (supplier create/update — direct path, sem prepare/commit conversacional redundante conforme contrato da missão), a infra mínima é: registry `(entity,action)` fechado + replay cache in-process de `idempotency_key` (TTL 900s, guarda de retry, não fonte de verdade) + operation tracking durável do api-delpi (`operation_id`, `X-Correlation-ID` propagado) + audit estruturado por operação. O proposal store pg continua DECISION aberta para operações que exijam consent/prepare (enrichment, comex manage, delete).
 2. **DECISION-D1**: canal de confirmação — MCP elicitation `target_echo` (EVA) vs Portal consent url (CLARA). Recomendo **elicitation com echo** (MCP-native, sem dependência de UI nova) com fallback `confirmation_unavailable` honesto.
 3. **DECISION-G1**: export XLSX via MCP — artefato binário vs link/inline base64 resource. Avaliar `resources` do MCP protocol.
 4. `patchPreferences` vs `patchUserProfile` — reconciliar owner da write (TO_INVENTORY).

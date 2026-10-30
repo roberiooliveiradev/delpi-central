@@ -109,12 +109,25 @@ class TestServerWire:
             schemes = getattr(tool, "securitySchemes", None)
             assert schemes and schemes[0]["type"] == "oauth2"
             assert tool.input_schema.get("type") == "object"
-            # v1 surface is fully read-only
-            assert tool.annotations.read_only_hint is True
-            assert tool.annotations.destructive_hint is not True
+            if TOOL_CLASS[tool.name] == "ACT":
+                # rev.3 — execute is a governed write: not read-only, not
+                # destructive, idempotent hint declared.
+                assert tool.annotations.read_only_hint is False
+                assert tool.annotations.destructive_hint is not True
+                assert tool.annotations.idempotent_hint is True
+            else:
+                assert tool.annotations.read_only_hint is True
+                assert tool.annotations.destructive_hint is not True
 
-    def test_no_act_or_prepare_tools(self):
+    def test_act_surface_is_closed(self):
+        # Only the governed execute tool carries the ACT class — no
+        # PREPARE tools and no destructive registrations in rev.3.
+        act_tools = {
+            name for name, kind in TOOL_CLASS.items() if kind == "ACT"
+        }
+        assert act_tools == {"execute"}
         assert all(
-            TOOL_CLASS[name] in {"DISCOVERY", "READ", "ANALYSIS"}
+            TOOL_CLASS[name]
+            in {"DISCOVERY", "READ", "ANALYSIS", "ACT"}
             for name in MCP_TOOL_NAMES
         )

@@ -378,6 +378,126 @@ def sanitize_put_body(body: Any) -> dict[str, Any]:
     return dict(source)
 
 
+# X4.PROD-C1.R6 — only error families whose api-delpi messages are already
+# sanitized for clients may be republished (validation + business rejects).
+# Anything else keeps the generic transport detail so raw upstream text,
+# hosts, SQL or internals never reach the client surface.
+SAFE_UPSTREAM_DETAIL_PREFIXES = (
+    "PROTHEUS_SUPPLIER_",
+    "PROTHEUS_IDENTITY_",
+    "SUPPLIER_REQUIRED_FIELDS_",
+    "PROVENANCE_",
+)
+_FIELD_KEY_RE = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
+_MAX_FIELD_ERRORS = 25
+
+
+def sanitize_field_errors(fields: list | None) -> list[dict[str, str]]:
+    """Project the api-delpi field-error list, dropping malformed entries."""
+    if not fields:
+        return []
+    out: list[dict[str, str]] = []
+    for entry in fields[:_MAX_FIELD_ERRORS]:
+        if not isinstance(entry, dict):
+            continue
+        field = entry.get("field")
+        message = entry.get("message")
+        if not (
+            isinstance(field, str)
+            and _FIELD_KEY_RE.fullmatch(field)
+            and isinstance(message, str)
+            and message.strip()
+        ):
+            continue
+        item: dict[str, str] = {
+            "field": field,
+            "message": message.strip()[:200],
+        }
+        code = entry.get("code")
+        if isinstance(code, str) and re.fullmatch(r"[a-z_]{2,40}", code):
+            item["code"] = code
+        out.append(item)
+    return out
+
+
+def classify_supplier_write_error(exc) -> dict[str, Any]:
+    """Canonical supplier-write error classification — single source shared
+    by the Flask BFF response mapper and the SURI MCP execute surface.
+
+    Returns ``{"status", "outcome", "code", "detail", "fields"}`` where
+    ``outcome`` is the honest write verdict: ``write_disabled`` (feature
+    gate closed upstream, nothing sent), ``rejected`` (deterministic
+    refusal, nothing persisted) or ``indeterminate`` (transport/5xx — the
+    write may or may not have happened; callers must verify before retry).
+    ``status`` is the HTTP status the BFF publishes; ``fields`` carries the
+    sanitized per-field errors when the upstream code is allowlisted.
+    """
+    upstream_code = exc.code
+    if upstream_code and str(upstream_code).endswith("_DISABLED"):
+        return {
+            "status": 503,
+            "outcome": "write_disabled",
+            "code": upstream_code,
+            "detail": "Supplier write is disabled by gate",
+            "fields": [],
+        }
+    if exc.status_code is None:
+        return {
+            "status": 504,
+            "outcome": "indeterminate",
+            "code": "upstream_unreachable",
+            "detail": "api-delpi unreachable",
+            "fields": [],
+        }
+    status = exc.status_code
+    if status == 401:
+        return {
+            "status": 401,
+            "outcome": "rejected",
+            "code": "unauthorized",
+            "detail": "Unauthorized",
+            "fields": [],
+        }
+    if status == 403:
+        return {
+            "status": 403,
+            "outcome": "rejected",
+            "code": upstream_code or "upstream_forbidden",
+            "detail": "Forbidden",
+            "fields": [],
+        }
+    if status == 404:
+        return {
+            "status": 404,
+            "outcome": "rejected",
+            "code": upstream_code or "not_found",
+            "detail": "Not Found",
+            "fields": [],
+        }
+    if status < 500:
+        detail = str(exc)
+        safe_code = bool(
+            upstream_code
+            and str(upstream_code).startswith(SAFE_UPSTREAM_DETAIL_PREFIXES)
+        )
+        if safe_code and exc.upstream_message:
+            detail = str(exc.upstream_message)[:300]
+        return {
+            "status": status,
+            "outcome": "rejected",
+            "code": upstream_code or "upstream_client_error",
+            "detail": detail,
+            "fields": sanitize_field_errors(exc.fields) if safe_code else [],
+        }
+    return {
+        "status": 502,
+        "outcome": "indeterminate",
+        "code": upstream_code or "bad_gateway",
+        "detail": "api-delpi unavailable",
+        "fields": [],
+    }
+
+
 # X4.REST-STATUS.S1 — allowlist fechada do diagnóstico REST de fornecedores.
 # O BFF republica somente rótulos de estado + http status de autenticação:
 # nunca URLs, hosts, tokens, credenciais ou internals de upstream.

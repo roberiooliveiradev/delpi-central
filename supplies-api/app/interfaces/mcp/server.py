@@ -1,11 +1,11 @@
 """SURI MCPServer — conversational surface of Portal Suprimentos.
 
-Semantic contract freeze rev.2: exactly four tools
-(``get_context``, ``read``, ``analyze``, ``knowledge``) dispatching to
-specialized handlers. Tools are declared with the frozen ``delpi_mcp``
-taxonomy; metadata never authorizes — each handler re-applies the same
-policies the Flask BFF routes use (``can_use_operations``/``require_units``
-+ Core-derived EffectiveUser).
+Semantic contract freeze rev.3: exactly five tools
+(``get_context``, ``read``, ``analyze``, ``knowledge``, ``execute``)
+dispatching to specialized handlers. Tools are declared with the frozen
+``delpi_mcp`` taxonomy; metadata never authorizes — each handler re-applies
+the same policies the Flask BFF routes use (``can_use_operations``/
+``require_units`` + Core-derived EffectiveUser).
 """
 
 from __future__ import annotations
@@ -33,6 +33,7 @@ from app.interfaces.mcp.schemas import (
     PurchaseOrderAnalyzeFilters,
     PurchaseOrderIdentity,
     PurchaseOrderSearchFilters,
+    SupplierWriteOperation,
 )
 
 logger = logging.getLogger(__name__)
@@ -71,11 +72,15 @@ def _annotations(tool_name: str, title: str) -> ToolAnnotations:
     kind = TOOL_CLASS.get(tool_name, "READ")
     read_only = kind in {"DISCOVERY", "READ", "ANALYSIS"}
     destructive = tool_name in DESTRUCTIVE_ACT_TOOLS
+    # ACT tools declare their governed retry semantics: writes are never
+    # re-sent implicitly and idempotency keys dedupe client retries.
+    idempotent = True if kind == "ACT" else None
     return ToolAnnotations.model_validate(
         tool_annotations_payload(
             title,
             read_only=read_only,
             destructive=destructive,
+            idempotent=idempotent,
         )
     )
 
@@ -193,6 +198,35 @@ def create_mcp_server() -> MCPServer:
         return _guarded(bridge.tool_knowledge)(
             action, query, topic, knowledge_id, limit
         )
+
+    @mcp.tool(
+        name="execute",
+        title="Execute governed supplier writes",
+        description=(
+            "Escrita governada com paridade ao Portal Suprimentos. "
+            "entity=suppliers: action=create cadastra um novo fornecedor "
+            "(op.supplier — mesmos campos do Portal, validação cadastral "
+            "e pré-checagem de duplicidade por tax_id); action=update "
+            "altera campos editáveis de um fornecedor existente "
+            "(op.supplier_code + op.supplier_store + op.fields — "
+            "identidade inequívoca, campos de identidade/documento "
+            "imutáveis). 'operations' aceita até 10 operações "
+            "sequenciais; cada uma pode levar 'idempotency_key' para "
+            "deduplicar retries. Requer supplies.access; identidade e "
+            "escopo são os do próprio usuário. Resultados por operação: "
+            "confirmed/acknowledged/sent/rejected/indeterminate/replayed "
+            "com operation_id do tracker api-delpi — indeterminate exige "
+            "verificação antes de repetir (nunca há retry implícito)."
+        ),
+        annotations=_annotations("execute", "Execute supplier writes"),
+        meta=meta,
+    )
+    def execute(
+        entity: Literal["suppliers"],
+        action: Literal["create", "update"],
+        operations: list[SupplierWriteOperation],
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_execute)(entity, action, operations)
 
     return mcp
 

@@ -1,6 +1,7 @@
 # SURI — Semantic Contract Freeze (rev.2)
 
-> **Status:** FROZEN — executado em `SURI-MCP-TOOLS-SEMANTIC-001`.
+> **Status:** SUPERSEDED por `SURI-S1-CONTRACT-FREEZE-V3.md` (rev.3, aditiva — `execute` for suppliers). Conteúdo abaixo preservado como registro histórico.
+> **Original:** FROZEN — executado em `SURI-MCP-TOOLS-SEMANTIC-001`.
 > **Substitui:** rev.1 (`SURI-S1-CONTRACT-FREEZE.md`, superfície de 8
 > tools endpoint-oriented), que permanece como registro histórico.
 > Substituição atômica permitida pelo plano §2: sem consumidores vivos

@@ -1,5 +1,6 @@
 # Portal Suprimentos — documentação mestra
 
+> **Atualização (2026-10-30 — `SURI-MCP-SUPPLIERS-WRITE-001`):** writes de fornecedor **liberadas em runtime** — `PROTHEUS_SUPPLIER_CREATE/UPDATE_ENABLED=true`, UPDATE provado end-to-end até o REST (`PROTHEUS_SUPPLIER_NOT_FOUND` p/ `999999/01`, sem escrita) e CREATE com gate aberto. O status «writes ERP OFF — aguardando TOTVS» das linhas históricas abaixo está **superado por evidência** (X4.PROD-C1 cutover efetivado); SURI MCP `execute` cobre suppliers create/update (contrato freeze rev.3).
 > **Status (2026-10-23 — rebaseline R1):** implementação incremental em andamento · **E1–E9 concluídas** · **E10 / WF-15 GATE PASS_DEPLOYED** (bundle federado verificado contém a página; residual `VISUAL_AUTHENTICATED=INCONCLUSIVE`) · **E13/E14 fornecedores implementadas** (writes ERP OFF — X4.PROD-C1 aguardando TOTVS) · **USERS.PROFILE.S1–S3** fechadas
 > **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · E9/E10 fechadas c/ residual visual · **E11 READY_WITH_RESIDUAL** (contratos api-delpi completos; falta BFF+MFE)
 > **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual

@@ -18,14 +18,17 @@ from app.application.security.supplies_permissions import (
     can_use_operations,
 )
 from app.application.services.suppliers_dto import (
+    classify_supplier_write_error,
     normalize_operation_id,
     normalize_supplier_id,
     project_detail,
     project_integration_status,
     project_list_envelope,
     project_operation,
+    sanitize_field_errors,
     sanitize_post_body,
     sanitize_put_body,
+    SAFE_UPSTREAM_DETAIL_PREFIXES,
 )
 from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGatewayError
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
@@ -89,116 +92,85 @@ def _access_token() -> str:
     return g.current_user.access_token or ""
 
 
-# X4.PROD-C1.R6 — only error families whose api-delpi messages are already
-# sanitized for clients may be republished (validation + business rejects).
-# Anything else keeps the generic transport detail so raw upstream text,
-# hosts, SQL or internals never reach the browser.
-_SAFE_UPSTREAM_DETAIL_PREFIXES = (
-    "PROTHEUS_SUPPLIER_",
-    "PROTHEUS_IDENTITY_",
-    "SUPPLIER_REQUIRED_FIELDS_",
-    "PROVENANCE_",
-)
-_FIELD_KEY_RE = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
-_MAX_FIELD_ERRORS = 25
-
-
-def _sanitize_field_errors(fields: list | None) -> list[dict[str, str]]:
-    """Project the api-delpi field-error list, dropping malformed entries."""
-    if not fields:
-        return []
-    out: list[dict[str, str]] = []
-    for entry in fields[:_MAX_FIELD_ERRORS]:
-        if not isinstance(entry, dict):
-            continue
-        field = entry.get("field")
-        message = entry.get("message")
-        if not (
-            isinstance(field, str)
-            and _FIELD_KEY_RE.fullmatch(field)
-            and isinstance(message, str)
-            and message.strip()
-        ):
-            continue
-        item: dict[str, str] = {
-            "field": field,
-            "message": message.strip()[:200],
-        }
-        code = entry.get("code")
-        if isinstance(code, str) and re.fullmatch(r"[a-z_]{2,40}", code):
-            item["code"] = code
-        out.append(item)
-    return out
+# Sanitized upstream-detail prefixes and field-error projection live in
+# suppliers_dto (canonical owner) — shared by this route and the SURI MCP
+# execute surface.
+_SAFE_UPSTREAM_DETAIL_PREFIXES = SAFE_UPSTREAM_DETAIL_PREFIXES
+_sanitize_field_errors = sanitize_field_errors
 
 
 def _gateway_error_response(exc: DelpiApiGatewayError, *, write: bool = False):
-    upstream_code = exc.code
-    if write and upstream_code and upstream_code.endswith("_DISABLED"):
-        # Feature gate closed upstream — explicit operational block, no write sent.
+    if write:
+        # Single canonical classification shared with the SURI MCP execute
+        # surface — the HTTP body shape stays exactly the contract above.
+        classification = classify_supplier_write_error(exc)
+        status = classification["status"]
+        if status == 403:
+            # Propagate the upstream denial code so the response identifies
+            # the denial owner (e.g. S2S_SCOPE_DENIED) instead of collapsing
+            # into the same "forbidden" the BFF uses for its own
+            # supplies.access denial.
+            logger.warning(
+                "suppliers_upstream_denied status=403 upstream_code=%s",
+                exc.code or "none",
+            )
+        body = {
+            "detail": classification["detail"],
+            "code": classification["code"],
+        }
+        if classification["fields"]:
+            body["fields"] = classification["fields"]
+        # outcome is published on the write contract for every status except
+        # the transport-level 401/403/404 bodies (historical shape preserved).
+        if status not in (401, 403, 404):
+            body["outcome"] = classification["outcome"]
+        return jsonify(body), status
+    if exc.status_code is None:
         return jsonify(
             {
-                "detail": "Supplier write is disabled by gate",
-                "code": upstream_code,
-                "outcome": "write_disabled",
+                "detail": "api-delpi unreachable",
+                "code": "upstream_unreachable",
             }
-        ), 503
-    if exc.status_code is None:
-        # Timeout / connection failure — write outcome is indeterminate.
-        payload = {
-            "detail": "api-delpi unreachable",
-            "code": "upstream_unreachable",
-        }
-        if write:
-            payload["outcome"] = "indeterminate"
-        return jsonify(payload), 504
+        ), 504
     status = exc.status_code
     if status == 401:
         return jsonify({"detail": "Unauthorized", "code": "unauthorized"}), 401
     if status == 403:
-        # Propagate the upstream denial code so the response identifies the
-        # denial owner (e.g. S2S_SCOPE_DENIED) instead of collapsing into the
-        # same "forbidden" the BFF uses for its own supplies.access denial.
         logger.warning(
             "suppliers_upstream_denied status=403 upstream_code=%s",
-            upstream_code or "none",
+            exc.code or "none",
         )
         return jsonify(
             {
                 "detail": "Forbidden",
-                "code": upstream_code or "upstream_forbidden",
+                "code": exc.code or "upstream_forbidden",
             }
         ), 403
     if status == 404:
         return jsonify({"detail": "Not Found", "code": "not_found"}), 404
     if status < 500:
-        # Allowlisted codes carry an already-sanitized api-delpi message
-        # (validation + deterministic business rejects) — republish it so the
-        # UI can act on the real cause instead of "api-delpi client error".
         detail = str(exc)
         safe_code = bool(
-            upstream_code
-            and upstream_code.startswith(_SAFE_UPSTREAM_DETAIL_PREFIXES)
+            exc.code
+            and str(exc.code).startswith(_SAFE_UPSTREAM_DETAIL_PREFIXES)
         )
         if safe_code and exc.upstream_message:
             detail = exc.upstream_message[:300]
         payload = {
             "detail": detail,
-            "code": upstream_code or "upstream_client_error",
+            "code": exc.code or "upstream_client_error",
         }
         if safe_code:
             field_errors = _sanitize_field_errors(exc.fields)
             if field_errors:
                 payload["fields"] = field_errors
-        if write:
-            payload["outcome"] = "rejected"
         return jsonify(payload), status
-    payload = {
-        "detail": "api-delpi unavailable",
-        "code": upstream_code or "bad_gateway",
-    }
-    if write:
-        payload["outcome"] = "indeterminate"
-    return jsonify(payload), 502
+    return jsonify(
+        {
+            "detail": "api-delpi unavailable",
+            "code": exc.code or "bad_gateway",
+        }
+    ), 502
 
 
 def _validation_error(exc: ValueError):

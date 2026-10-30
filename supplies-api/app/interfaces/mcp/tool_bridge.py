@@ -37,7 +37,7 @@ from app.infrastructure.gateways.delpi_api_gateway import (
     DelpiApiGatewayError,
 )
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
-from app.interfaces.mcp import knowledge
+from app.interfaces.mcp import knowledge, supplier_execute
 from app.interfaces.mcp.branding import SURI_FULL_NAME, SURI_MISSION
 from app.interfaces.mcp.constants import (
     ANALYSIS_KINDS,
@@ -46,7 +46,10 @@ from app.interfaces.mcp.constants import (
     DEFAULT_KNOWLEDGE_LIMIT,
     DEFAULT_PAGE_SIZE,
     DEFAULT_SAMPLE_SIZE,
+    EXECUTE_ACTIONS_BY_ENTITY,
+    EXECUTE_ENTITIES,
     KNOWLEDGE_ACTIONS,
+    MAX_EXECUTE_OPERATIONS,
     MAX_KNOWLEDGE_LIMIT,
     MAX_PAGE_SIZE,
     MAX_SAMPLE_SIZE,
@@ -56,6 +59,7 @@ from app.interfaces.mcp.constants import (
     READ_ACTIONS,
     READ_ENTITIES,
     SEMANTIC_CAPABILITIES,
+    SUPPLIER_WRITE_OPERATION_KEYS,
     TOOL_CLASS,
 )
 from app.interfaces.mcp.oauth_contract import mcp_www_authenticate_meta
@@ -543,9 +547,9 @@ def tool_analyze_purchase_orders(
     )
 
 
-# -- SEMANTIC DISPATCH (contract freeze rev.2) ------------------------------
+# -- SEMANTIC DISPATCH (contract freeze rev.3) ------------------------------
 #
-# Public surface = 4 tools. Every accepted (entity, action, analysis)
+# Public surface = 5 tools. Every accepted (entity, action, analysis)
 # combination must map to an implemented, authorized handler above —
 # closed enums, closed filter vocabularies, no arbitrary fields.
 
@@ -720,4 +724,61 @@ def tool_knowledge(
     return _invalid(
         f"Unknown knowledge action: {normalized!r}. "
         f"Allowed: {sorted(KNOWLEDGE_ACTIONS)}"
+    )
+
+
+# -- EXECUTE (governed writes — rev.3) -------------------------------------
+
+
+def tool_execute(
+    entity: str,
+    action: str,
+    operations: list | None = None,
+) -> CallToolResult:
+    """Semantic EXECUTE — closed ``(entity, action)`` registry.
+
+    ``suppliers.create``/``suppliers.update`` delegate to the canonical
+    BFF path (``DelpiS2SApiGateway`` + owner DTO contracts). There is no
+    generic executor, no arbitrary URL/method and no service-account
+    substitution: the caller's own Bearer token authorizes every op.
+    """
+    normalized_entity = str(entity or "").strip()
+    if normalized_entity not in EXECUTE_ENTITIES:
+        return _invalid(
+            f"Unknown execute entity: {normalized_entity!r}. "
+            f"Allowed: {sorted(EXECUTE_ENTITIES)}"
+        )
+    normalized_action = str(action or "").strip()
+    allowed = EXECUTE_ACTIONS_BY_ENTITY[normalized_entity]
+    if normalized_action not in allowed:
+        return _invalid(
+            f"Unknown execute action for {normalized_entity}: "
+            f"{normalized_action!r}. Allowed: {sorted(allowed)}"
+        )
+    # Authorization first — same order as the BFF decorators: the policy
+    # runs before any payload handling, on the caller's own identity.
+    user = _operations_user()
+    ops_in = operations or []
+    if not isinstance(ops_in, list) or not ops_in:
+        return _invalid("execute requires a non-empty 'operations' list.")
+    if len(ops_in) > MAX_EXECUTE_OPERATIONS:
+        return _invalid(
+            f"execute accepts at most {MAX_EXECUTE_OPERATIONS} operations "
+            f"per call (received {len(ops_in)})."
+        )
+    ops = [_payload_dict(item) for item in ops_in]
+    for index, item in enumerate(ops):
+        unknown = _unknown_keys(item, SUPPLIER_WRITE_OPERATION_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown operation keys at index {index}: "
+                f"{sorted(unknown)}. Allowed: "
+                f"{sorted(SUPPLIER_WRITE_OPERATION_KEYS)}"
+            )
+    data = supplier_execute.execute_supplier_write(
+        user, action=normalized_action, operations=ops
+    )
+    return _ok(
+        data,
+        meta={"delpi/source": f"bff:/suppliers[{normalized_action}]"},
     )

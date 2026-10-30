@@ -30,19 +30,29 @@ class TestGetContext:
         assert data["subject"] == "user-1"
         assert data["capabilities"] == {"access": True, "manage": False}
         assert data["allowed_units"] == ["01", "02"]
-        assert data["mcp"]["catalog_version"] == 2
+        assert data["mcp"]["catalog_version"] == 3
 
     def test_catalog_lists_semantic_surface(self, access_context):
         access_context()
         result = tool_bridge.tool_get_context("catalog")
         data = _payload(result)["data"]
         names = {t["name"] for t in data["tools"]}
-        assert names == {"get_context", "read", "analyze", "knowledge"}
-        assert data["mcp"]["catalog_version"] == 2
+        assert names == {
+            "get_context",
+            "read",
+            "analyze",
+            "knowledge",
+            "execute",
+        }
+        assert data["mcp"]["catalog_version"] == 3
         caps = data["capabilities"]
         assert "purchase_orders" in caps["read"]["entities"]
         assert caps["analyze"]["analyses"] == ["purchase_orders_summary"]
         assert caps["knowledge"]["actions"] == ["get", "search", "sources"]
+        assert caps["execute"]["entities"]["suppliers"]["actions"] == [
+            "create",
+            "update",
+        ]
 
     def test_negative_anonymous_401(self, anonymous_context):
         result = tool_bridge.handle_tool_error(

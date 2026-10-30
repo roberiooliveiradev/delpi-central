@@ -1,5 +1,6 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
+> **Atualização (2026-10-30):** writes de fornecedor POST/PUT **liberadas em produção** — verificação de runtime `SURI-MCP-SUPPLIERS-WRITE-001` (gates `=true`, UPDATE end-to-end até REST, CREATE gate aberto). As notas históricas «Escrita Protheus continua OFF»/«sem escrita ERP» deste documento referem-se ao período X4.PROD-C1 anterior ao cutover. SURI MCP publicou `execute(entity=suppliers, create|update)` no contract freeze rev.3.
 > **Status (revalidado 2026-09-21, `4f3ed59483`):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.
 > **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido). GATE-FEATURE WF-06 = **PASS** ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)).
 > **Entregue adicional:** E9 / WF-07 — **GATE-FEATURE WF-07 = PASS** após recovery redeploy ([evidência](./evidence/e9-wf07-federated-runtime-gate.md)).
