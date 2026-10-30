@@ -100,6 +100,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_SALES_SUMMARY,
     PRODUCT_SAFETY_STOCK,
     PRODUCT_SEARCH,
+    PRODUCT_FILTER_OPTIONS,
     PRODUCT_STOCK,
     PRODUCT_STRUCTURE,
     PRODUCT_STRUCTURE_EXCEL,
@@ -155,6 +156,7 @@ from app.application.services.product.protheus_field_normalizer import (
 )
 from app.composition.product_composer import (
     build_search_products_use_case,
+    build_product_filter_options_use_case,
     build_list_structure_use_case,
     build_export_structure_excel_use_case,
     build_list_parents_use_case,
@@ -210,7 +212,13 @@ router = APIRouter()
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def search_products_route(
     code: Optional[str] = Query(None),
-    group_code: Optional[str] = Query(None),
+    group_code: Optional[str] = Query(
+        None,
+        description=(
+            "Filtro por grupo de produto (SB1.B1_GRUPO). Aceita lista "
+            "separada por vírgula — ex.: 3019,3020 (semântica OR)."
+        ),
+    ),
     subgroup: Optional[str] = Query(
         None,
         description="Filtro opcional por subgrupo (SB1.B1_SUBGRUP, exato).",
@@ -244,9 +252,22 @@ def search_products_route(
                 status_code=400,
             )
 
+        group_list = (
+            [g.strip() for g in group_code.split(",") if g.strip()]
+            if group_code
+            else None
+        )
+        if group_list and any(len(g) > 10 for g in group_list):
+            return error_response(
+                "group_code inválido: use códigos de grupo separados "
+                "por vírgula (ex.: 3019,3020).",
+                status_code=400,
+            )
+
         dto = ListProductsRequest(
             code=code,
-            group_code=group_code,
+            group_code=group_list[0] if group_list and len(group_list) == 1 else None,
+            group_codes=group_list,
             subgroup=subgroup,
             product_type=type_list,
             description=description,
@@ -272,6 +293,26 @@ def search_products_route(
 
     except Exception as e:
         log_error(f"Erro ao buscar produtos: {e}")
+        return error_response(str(e))
+
+
+@router.get(
+    "/filter-options",
+    **PRODUCT_FILTER_OPTIONS,
+)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
+def get_product_filter_options_route():
+    try:
+        use_case = build_product_filter_options_use_case()
+        result = use_case.execute()
+        return product_success(
+            result,
+            operation_id="get_product_filter_options",
+            entity="product_filter_options",
+            shape="object",
+        )
+    except Exception as e:
+        log_error(f"Erro ao buscar opções de filtro de produtos: {e}")
         return error_response(str(e))
 
 

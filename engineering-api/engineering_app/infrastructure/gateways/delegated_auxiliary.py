@@ -201,6 +201,11 @@ class ApiDelpiDelegatedAuxiliary:
             },
         )
 
+    async def fetch_product_filter_options(
+        self, ctx: HomeSourceContext
+    ) -> dict[str, Any]:
+        return await self._get_json(ctx, "/products/filter-options")
+
     async def fetch_product_detail(
         self,
         ctx: HomeSourceContext,

@@ -23,7 +23,8 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
         page=1,
         page_size=50,
         sort=None,
-        direction="asc"
+        direction="asc",
+        groups=None,
     ) -> Page[Product]:
 
         paging = paginate(page, page_size)
@@ -40,12 +41,22 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
             where_params.append(f"{code}%")
 
         # -----------------------------
-        # GROUP
+        # GROUP (B1_GRUPO) — único ou lista (OR)
         # -----------------------------
 
-        if group:
+        group_list = (
+            [group]
+            if isinstance(group, str)
+            else [g for g in (groups or []) if str(g).strip()]
+        )
+        group_list = [str(g).strip() for g in group_list if str(g).strip()]
+        if len(group_list) == 1:
             where_clauses.append("SB1.B1_GRUPO = ?")
-            where_params.append(group)
+            where_params.append(group_list[0])
+        elif group_list:
+            placeholders = ", ".join("?" for _ in group_list)
+            where_clauses.append(f"SB1.B1_GRUPO IN ({placeholders})")
+            where_params.extend(group_list)
 
         # -----------------------------
         # SUBGROUP (B1_SUBGRUP)
@@ -297,6 +308,27 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
             page=paging["page"],
             page_size=paging["page_size"]
         )
+
+    def fetch_product_filter_options(self) -> dict[str, list[str]]:
+        """Opções reais observadas no cadastro oficial (SB1) para filtros
+        de catálogo — grupos e tipos distintos, sem inventário paralelo."""
+        sql = """
+        SELECT DISTINCT
+            RTRIM(SB1.B1_GRUPO) AS group_code,
+            RTRIM(SB1.B1_TIPO) AS product_type
+        FROM SB1010 SB1 WITH (NOLOCK)
+        WHERE SB1.D_E_L_E_T_ = ''
+        ORDER BY group_code, product_type
+        """
+        with self as repo:
+            rows = repo.execute_query(sql, ())
+        groups = sorted(
+            {str(r.get("group_code") or "").strip() for r in rows if r.get("group_code")}
+        )
+        types = sorted(
+            {str(r.get("product_type") or "").strip() for r in rows if r.get("product_type")}
+        )
+        return {"groups": [g for g in groups if g], "types": [t for t in types if t]}
 
     def fetch_product_by_code(self, code: str) -> dict | None:
         sql = """

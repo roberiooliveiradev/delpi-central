@@ -6,6 +6,7 @@ from typing import Optional
 class ListProductsRequest:
     code: Optional[str] = None
     group_code: Optional[str] = None
+    group_codes: Optional[list[str]] = None
     description: Optional[str] = None
     customer_reference: Optional[str] = None
     product_type: Optional[list[str]] = None

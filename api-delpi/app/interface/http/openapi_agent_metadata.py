@@ -150,6 +150,16 @@ PRODUCT_SEARCH = agent_route(
     operation_id="search_products",
 )
 
+PRODUCT_FILTER_OPTIONS = agent_route(
+    summary="Opções de filtro do catálogo de produtos",
+    description=(
+        "Retorna os valores distintos de grupo (SB1.B1_GRUPO) e tipo (SB1.B1_TIPO) "
+        "observados no cadastro oficial, para montar filtros de catálogo. "
+        "Use antes de aplicar group_code/product_type na busca de produtos."
+    ),
+    operation_id="get_product_filter_options",
+)
+
 PRODUCT_STRUCTURE = agent_route(
     summary="Estrutura (BOM) do produto",
     description=(
