@@ -1,7 +1,8 @@
 # CAIO 2.0 — Trilha de execução autônoma: paridade funcional + conhecimento comercial
 
-**Status:** EXECUTION PLAN / objetivo aprovado pelo usuário, não capability implementada.
+**Status:** EXECUTED — E0→E9 concluídos; matriz em `CAIO_PARITY_MATRIX.md`; deploy `361d09da9` em produção.
 **Base observada ao planejar:** `main = 701c15dd9f9dd2db9f56d816fb1451910085fd0f` (revalidar no início e por etapa).
+**Execução:** baseline `0e69bcdb52` → commits `062ab28a61` + `361d09da96` → produção `361d09da9` (srv-api, `delpi-commercial-api` healthy).
 **Owner de domínio:** `commercial-api`. **Consumer operacional:** CAIO MCP em `commercial-api/commercial_app/interface/mcp`; Portal em `plugins/commercial`.
 **Propósito:** Devin inventariar todas as funcionalidades elegíveis do Portal Comercial, implementar paridade semântica do CAIO, dotá-lo de conhecimento confiável de processos e domínio, testar, commitar, dar push e implantar em produção, com verificação real. **Executar autonomamente as escolhas técnicas rotineiras; não inventar autoridade nem romper regras de segurança.**
 
