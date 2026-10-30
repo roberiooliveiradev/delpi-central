@@ -4,6 +4,13 @@ Technical ids não são branding — «CLARA» é identidade de produto,
 o id técnico permanece ``controllership-finance`` /
 ``mcp-controllership-finance`` (``mcp-clara`` = identificador OAuth
 anterior, mantido apenas como histórico).
+
+CLARA-MCP-SEMANTIC-001 (doc 119): a superfície pública é exatamente
+seis tools semânticas estáveis; capacidades crescem via registry
+(entity, action) — nunca via novos nomes de tool. Os nomes legados
+permanecem documentados em ``LEGACY_TOOL_NAMES`` para a janela de
+compatibilidade/migração de consumers (os handlers seguem vivos como
+alvos do dispatcher semântico).
 """
 
 from __future__ import annotations
@@ -19,9 +26,25 @@ MCP_GATEWAY_ROOT = "/apps/controllership-finance-api"
 
 MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 
+# --- Superfície semântica estável (doc 119) ---------------------------
 # DISCOVERY | READ | ANALYSIS | PREPARE | ACT — taxonomia congelada
 # do shared/delpi_mcp. Metadata descreve semântica, nunca autoriza.
-TOOL_CLASS: dict[str, str] = {
+SEMANTIC_TOOL_CLASS: dict[str, str] = {
+    "get_context": "DISCOVERY",
+    "read": "READ",
+    "analyze": "ANALYSIS",
+    "knowledge": "READ",
+    "execute": "ACT",
+    "delete": "ACT",
+}
+
+SEMANTIC_TOOL_NAMES: tuple[str, ...] = tuple(SEMANTIC_TOOL_CLASS.keys())
+
+# --- Superfície legada (pré-doc-119) ----------------------------------
+# Mantida para a janela de compatibilidade: os handlers tool_* seguem
+# como alvos do dispatcher semântico. Não registradas no tools/list —
+# consumers migram pelo discovery dinâmico do host (plugin ChatGPT).
+LEGACY_TOOL_CLASS: dict[str, str] = {
     "get_my_context": "READ",
     "get_catalog": "DISCOVERY",
     "get_competence_state": "READ",
@@ -69,9 +92,21 @@ TOOL_CLASS: dict[str, str] = {
     "get_batch_status": "READ",
 }
 
-MCP_TOOL_NAMES: tuple[str, ...] = tuple(TOOL_CLASS.keys())
+CLARA_LEGACY_TOOL_NAMES: tuple[str, ...] = tuple(
+    LEGACY_TOOL_CLASS.keys()
+)
 
-# commit_proposal pode executar operação sensível — anotação honesta.
+# União semântica + legada — usada para class/annotation lookup.
+TOOL_CLASS: dict[str, str] = {
+    **LEGACY_TOOL_CLASS,
+    **SEMANTIC_TOOL_CLASS,
+}
+
+# tools/list público: somente a superfície semântica (cutover doc 119).
+MCP_TOOL_NAMES: tuple[str, ...] = SEMANTIC_TOOL_NAMES
+
+# execute commit fases e delete carregam operações sensíveis —
+# anotação honesta para hosts que respeitam destructiveHint.
 DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset(
-    {"commit_proposal", "execute_batch"}
+    {"execute", "delete"}
 )

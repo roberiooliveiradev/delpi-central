@@ -1,9 +1,15 @@
 """CLARA MCP — superfície e contrato (não-PG).
 
-Cobre: registro das 43 tools com classes DISCOVERY/READ/ANALYSIS/
-PREPARE/ACT, anotações honestas (readOnly/destructive), securitySchemes
-no wire, instructions, mount paths e o guard de transporte (service
-tokens proibidos na superfície de dados).
+CLARA-MCP-SEMANTIC-001 (doc 119): superfície pública = seis tools
+semânticas estáveis (get_context/read/analyze/knowledge/execute/
+delete). Os 43 nomes legados permanecem em LEGACY_TOOL_CLASS como
+janela de compatibilidade (handlers vivos no dispatcher) — não são
+registrados no tools/list.
+
+Cobre: registro das 6 tools com classes DISCOVERY/READ/ANALYSIS/ACT,
+anotações honestas (readOnly/destructive), securitySchemes no wire,
+instructions, mount paths e o guard de transporte (service tokens
+proibidos na superfície de dados).
 """
 
 from __future__ import annotations
@@ -20,8 +26,11 @@ from controllership_finance_app.interface.mcp.branding import (
     CLARA_MCP_INSTRUCTIONS,
 )
 from controllership_finance_app.interface.mcp.constants import (
+    CLARA_LEGACY_TOOL_NAMES,
+    LEGACY_TOOL_CLASS,
     MCP_PREDEFINED_CLIENT_ID,
     MCP_TOOL_NAMES,
+    SEMANTIC_TOOL_CLASS,
     TOOL_CLASS,
 )
 from controllership_finance_app.interface.mcp.server import (
@@ -48,14 +57,53 @@ def test_tool_names_and_classes():
     tools = _list_tools()
     names = {t.name for t in tools}
     assert names == set(MCP_TOOL_NAMES)
-    assert len(tools) == 43
+    assert len(tools) == 6
     for t in tools:
         assert (t.meta or {}).get("delpi/toolClass") == TOOL_CLASS[t.name]
 
 
+def test_semantic_surface_contract():
+    """Doc 119: exatamente seis tools semânticas estáveis."""
+    assert set(SEMANTIC_TOOL_CLASS) == {
+        "get_context",
+        "read",
+        "analyze",
+        "knowledge",
+        "execute",
+        "delete",
+    }
+    assert MCP_TOOL_NAMES == (
+        "get_context",
+        "read",
+        "analyze",
+        "knowledge",
+        "execute",
+        "delete",
+    )
+
+
+def test_legacy_names_kept_for_compat_window():
+    """Doc 119: legado não é removido sem migração comprovada —
+    os nomes/handlers seguem documentados e despacháveis, mas fora
+    do tools/list público."""
+    assert len(CLARA_LEGACY_TOOL_NAMES) == 43
+    for name in CLARA_LEGACY_TOOL_NAMES:
+        assert name not in MCP_TOOL_NAMES
+        assert name in TOOL_CLASS
+        assert callable(getattr(tool_bridge, f"tool_{name}"))
+
+
 def test_tool_taxonomy():
-    assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
-    assert TOOL_CLASS["list_knowledge_sources"] == "DISCOVERY"
+    assert TOOL_CLASS["get_context"] == "DISCOVERY"
+    assert TOOL_CLASS["read"] == "READ"
+    assert TOOL_CLASS["analyze"] == "ANALYSIS"
+    assert TOOL_CLASS["knowledge"] == "READ"
+    assert TOOL_CLASS["execute"] == "ACT"
+    assert TOOL_CLASS["delete"] == "ACT"
+    # Taxonomia legada preservada na janela de compatibilidade.
+    assert LEGACY_TOOL_CLASS["get_catalog"] == "DISCOVERY"
+    assert LEGACY_TOOL_CLASS["prepare_governed_operation"] == "PREPARE"
+    assert LEGACY_TOOL_CLASS["commit_proposal"] == "ACT"
     for name in (
         "get_my_context",
         "get_competence_state",
@@ -105,18 +153,19 @@ def test_tool_taxonomy():
 
 def test_annotations_readonly_and_destructive():
     tools = {t.name: t for t in _list_tools()}
-    for name, cls in TOOL_CLASS.items():
+    for name in MCP_TOOL_NAMES:
+        cls = SEMANTIC_TOOL_CLASS[name]
         ann = tools[name].annotations
         expected_readonly = cls in {"DISCOVERY", "READ", "ANALYSIS"}
         assert bool(ann.read_only_hint) == expected_readonly, name
     assert bool(
-        tools["commit_proposal"].annotations.destructive_hint
+        tools["execute"].annotations.destructive_hint
     ) is True
     assert bool(
-        tools["execute_batch"].annotations.destructive_hint
+        tools["delete"].annotations.destructive_hint
     ) is True
     assert bool(
-        tools["prepare_governed_operation"].annotations.destructive_hint
+        tools["read"].annotations.destructive_hint
     ) in (False, None)
 
 
@@ -131,11 +180,12 @@ def test_security_schemes_on_wire():
 
 def test_instructions_honesty_invariants():
     assert "never zero" in CLARA_MCP_INSTRUCTIONS
-    assert "explicit user confirmation" in CLARA_MCP_INSTRUCTIONS
-    assert "one confirmation per operation" in CLARA_MCP_INSTRUCTIONS
-    assert "confirm_batch" in CLARA_MCP_INSTRUCTIONS
+    assert "confirmation_url" in CLARA_MCP_INSTRUCTIONS
+    assert "NOT consent" in CLARA_MCP_INSTRUCTIONS
+    assert "plan_hash" in CLARA_MCP_INSTRUCTIONS
     assert "untrusted data" in CLARA_MCP_INSTRUCTIONS
-    assert "PREPARE" in CLARA_MCP_INSTRUCTIONS
+    assert "phase='prepare'" in CLARA_MCP_INSTRUCTIONS
+    assert "get_context" in CLARA_MCP_INSTRUCTIONS
 
 
 def test_mount_path_normalization():

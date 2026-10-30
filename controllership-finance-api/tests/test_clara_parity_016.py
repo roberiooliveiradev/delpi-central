@@ -26,7 +26,7 @@ from controllership_finance_app.application.clara import (
 )
 from controllership_finance_app.interface.mcp import tool_bridge
 from controllership_finance_app.interface.mcp.constants import (
-    MCP_TOOL_NAMES,
+    CLARA_LEGACY_TOOL_NAMES,
     TOOL_CLASS,
 )
 
@@ -136,7 +136,10 @@ READ_PARITY_TOOLS = (
 
 @pytest.mark.parametrize("name", READ_PARITY_TOOLS)
 def test_read_tool_registered_and_callable(name):
-    assert name in MCP_TOOL_NAMES
+    # Pós CLARA-MCP-SEMANTIC-001: handlers legados permanecem como
+    # alvos do dispatcher semântico (janela de compatibilidade) —
+    # fora do tools/list público de seis tools.
+    assert name in CLARA_LEGACY_TOOL_NAMES
     assert TOOL_CLASS[name] == "READ"
     assert callable(getattr(tool_bridge, f"tool_{name}"))
 

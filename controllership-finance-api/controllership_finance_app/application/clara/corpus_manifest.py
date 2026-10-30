@@ -279,4 +279,12 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
        "122-gate-contratual-r06-r07-matr910-2026-10-29.md",
        "CONTRACT", "Gate contratual R06/R07 (MATR910) — contratos TARGET",
        "TARGET", "relatorio-cpv-kardex", report_ids=("R06", "R07")),
+    _s("doc-123",
+       "119-clara-mcp-semantico-plano-mestre-execucao-deploy.md",
+       "DOCUMENT", "Plano mestre CLARA MCP semântico (seis tools)",
+       "CURRENT_IMPLEMENTATION", "paridade-portal-clara"),
+    _s("doc-124",
+       "CLARA-MCP-SEMANTIC-001-capability-matrix.md",
+       "MATRIX", "Matriz de migração CLARA MCP semântico",
+       "CURRENT_IMPLEMENTATION", "paridade-portal-clara"),
 ]
