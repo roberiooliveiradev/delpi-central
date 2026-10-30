@@ -2,8 +2,8 @@
 
 **Data de registro:** 2026-10-30  
 **Status do desenho:** `ACCEPT_WITH_RESIDUAL`  
-**Status de execução:** `PLANNED / PENDING`  
-**Implementação:** não iniciada por este registro documental  
+**Status de execução:** `DEPLOYED — PRODUCTION SHA 7017df3d0a` (coexistência V3+V2)  
+**Implementação:** concluída em coexistência; tombstone das 23 tools V2 aguarda aceite de consumers  
 **Controle operacional e progresso:** [GitHub Issue #124](https://github.com/roberiooliveiradev/delpi-central/issues/124)
 
 > Este documento registra o alvo arquitetural e a estratégia de execução. **Não comprova código, deploy, runtime ou resultado**. A issue #124 é o ledger vivo que o Devin deverá preencher com evidências por gate. As fontes canônicas de capability e execution policy continuam no código do domínio.
@@ -54,15 +54,15 @@ Refatorar a superfície MCP do TÉO para seis tools semânticas, conforme o padr
 
 ## 4. Plano de execução e checkpoints
 
-| Marco | Escopo | Estado inicial | Gate de saída |
+| Marco | Escopo | Estado | Gate de saída |
 |---|---|---|---|
-| G0 | HEAD seguro, consumers, schemas V3, risco, classificação delete, rollback, contrato e autorização | `PENDING` | Revisão arquitetural e autorização do diff |
-| F1 | Projeção V3 derivada do registry | `TEST_NOT_RUN` | Coverage e contracts comprovados |
-| F2 | Seis handlers MCP, tipagem e envelopes de erro | `TEST_NOT_RUN` | Paridade de leitura e escrita |
-| F3 | Execution policy, AuthZ, multi-action, idempotência | `TEST_NOT_RUN` | Casos positivos e negativos |
-| F4 | Regressões, integração, segurança, correções, residual search | `TEST_NOT_RUN` | Evidências no SHA avaliado |
-| F5 | Aceite conversacional no host e em consumers | `TEST_NOT_RUN` | Paridade real, sem falhas materiais |
-| F6 | Commit, push, rollout controlado e pós-deploy | `TEST_NOT_RUN` | SHA de produção + read-back + rollback conhecido |
+| G0 | HEAD seguro, consumers, schemas V3, risco, classificação delete, rollback, contrato e autorização | `PASS` | Inventário PROVEN: 23 tools, 37 bindings, 56 policies, 21 Actions ops |
+| F1 | Projeção V3 derivada do registry | `PASS` | `DESTRUCTIVE_DELETE_OPERATIONS` fechado em confirmation_policy; `V3_TOOL_CLASS`/`SEMANTIC_V3_COEXISTENCE` em constants |
+| F2 | Seis handlers MCP, tipagem e envelopes de erro | `PASS` | `tool_bridge_v3.py` (864 linhas); `analyze` unificada (flat + params + meeting_minute_transcript); schemas com enums fechados |
+| F3 | Execution policy, AuthZ, multi-action, idempotência | `PASS` | 23 testes `test_teo_mcp_v3_surface.py`: auto_act 1-chamada, confirm→proposal, commit por proposal_id, delete fail-closed, ops[] com `$ops.N` refs, parada em falha, unauth 401 |
+| F4 | Regressões, integração, segurança, correções, residual search | `PASS` | Suíte integral 1976 pass; 26 falhas pré-existentes do baseline (async/fixture, comprovado via stash) — zero falha atribuída ao diff |
+| F5 | Aceite conversacional no host e em consumers | `TEST_NOT_RUN` | Requer sessão autenticada no ChatGPT/host — ação manual pendente |
+| F6 | Commit, push, rollout controlado e pós-deploy | `PASS` | SHA prod `7017df3d0a`; health 200; `tools/list` runtime = 28 tools (6 V3 presentes); MCP sem bearer = 401; rollback = `git revert` + redeploy do SHA anterior |
 
 **Operação do ledger:** em cada checkpoint, o Devin atualiza os checkboxes e tabela da [issue #124](https://github.com/roberiooliveiradev/delpi-central/issues/124), incluindo BASE/FINAL HEAD, arquivos, testes, AuthZ, policies, contratos, read-back, gaps, PR/commit, deploy e ações do Builder. Só classificar `PASS` quando a prova pertinente existir.
 

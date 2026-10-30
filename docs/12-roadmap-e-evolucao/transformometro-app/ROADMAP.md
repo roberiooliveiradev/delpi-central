@@ -219,11 +219,13 @@ Plano canônico: [PLAYBOOK-PORTAL-TRANSFORMA.md](./PLAYBOOK-PORTAL-TRANSFORMA.md
 
 Não duplica as fases de domínio acima; complementa a jornada UX/produto.
 
-## Evolução do TÉO — Semantic MCP V3 (PLANNED / PENDING)
+## Evolução do TÉO — Semantic MCP V3 (DEPLOYED — coexistência V3+V2)
 
 Plano mestre: [TEO-SEMANTIC-MCP-V3-PLANO-MESTRE.md](./TEO-SEMANTIC-MCP-V3-PLANO-MESTRE.md). Ledger de progresso do Devin: [GitHub issue #124](https://github.com/roberiooliveiradev/delpi-central/issues/124).
 
-**Objetivo:** convergir 23 tools MCP do inventário para seis interfaces semânticas (`get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`) por adapter sobre capabilities e use cases canônicos, sem perda de AuthZ, políticas de escrita, verificações, GPT Actions ou compatibilidade. Os marcos G0 e F1–F6 abrangem contrato, implementação, testes, correções, aceite conversacional, commit/push, deploy e pós-deploy. **G0 está PENDING; não há implementação ou runtime V3 comprovados por este registro.**
+**Objetivo:** convergir 23 tools MCP do inventário para seis interfaces semânticas (`get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`) por adapter sobre capabilities e use cases canônicos, sem perda de AuthZ, políticas de escrita, verificações, GPT Actions ou compatibilidade. Os marcos G0 e F1–F6 abrangem contrato, implementação, testes, correções, aceite conversacional, commit/push, deploy e pós-deploy.
+
+**Estado em 2026-10-30:** implementado e deployado em produção (SHA `7017df3d0a`) em modo de **coexistência** — as 6 tools semânticas (`get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`) expostas junto das 23 tools V2 (`tools/list` = 28; superfície `SEMANTIC_V3_COEXISTENCE`). `execute` executa `auto_act` na mesma chamada com read-back autoritativo; `confirm_before_act` retorna proposta e comita por `proposal_id`+`confirmation`; `delete` restrito a `DESTRUCTIVE_DELETE_OPERATIONS` com confirmação obrigatória; multi-action via `execute(ops[])` com refs `$ops.N`. Aceite conversacional no host (F5) e tombstone das tools legadas aguardam validação de consumers.
 
 A iniciativa não substitui a sequência das demais evoluções prevista em [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md). A issue #124 recebe checklists, checkpoints, evidências e status por fase.
 
