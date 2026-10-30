@@ -89,3 +89,40 @@ presets compartilhados. Se outros plugins precisarem desses atalhos, o owner
 - Avaliação visual final do Product Owner em produção.
 - TO_INVENTORY: absorver `yesterday`/`last_N_days` no `plugin-ui` se outros
   plugins adotarem.
+
+---
+
+## Hotfix 2026-10-30 — «Resposta inválida do servidor» na pesquisa
+
+**Sintoma (PO):** pesquisa por período sem OP (filial 01, Ontem,
+) exibia «Resposta inválida do servidor — os dados
+não puderam ser interpretados».
+
+**Causa raiz:** a rota  serializava o
+dataclass  direto em  →  usa
+, que descarta a property . O BFF repassava
+o payload e o guard de contrato do MFE (,
+que exige  numérico) derrubava qualquer resposta 200 da busca
+— o bug era genérico ao endpoint de listagem, não específico de
+.
+
+**Fix (1 linha):**  — convenção já
+usada pelos demais routers que devolvem ;  inclui
+ e formata datas dos itens. Commit .
+
+**Testes:**  (regressão no
+shape do envelope); suíte api-delpi **6581 passed** (4 falhas DAVI
+preexistentes/alheias ao diff); E2E dev BFF→producer→Protheus:
+ 200 ,  200 ,
+fragmento 200, data inválida 422,  inválido 422,  403,
+detalhe 200.
+
+**Deploy/smoke prod:**  → , srv-api HEAD ,
+container healthy. Smoke autenticado (impersonation OIDC oficial do
+superadmin) com a query exata do PO → **HTTP 200**, ,
+, itens reais — guard do MFE satisfeito.
+
+**TO_INVENTORY:** demais routers que devolvem  sem 
+( structure/inspection/guide/parents) têm o mesmo defeito
+latente de / — corrigir no owner com
+avaliação de compatibilidade de consumidores.
