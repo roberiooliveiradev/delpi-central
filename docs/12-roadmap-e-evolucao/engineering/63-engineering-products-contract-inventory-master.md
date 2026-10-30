@@ -149,6 +149,59 @@ Formato: `OWNER → SOURCE OF TRUTH → ROUTE → REQUEST → RESPONSE → AUTHN
 | `GET /v1/products/{code}/drawing/pdf` | `/products/{code}/drawing/pdf` (proxy binário) | idem |
 | `GET /v1/products/{code}/purchase-price-history` | `/products/{code}/purchase-price-history` | idem (aba Histórico, seção autorizada) |
 
-## 6. Próximos passos (G2→G9)
+## 6. Estado de implementação (atualizado em G6)
 
-Implementação das rotas façade + extensão owner (view=engineering, ENGINEERING_LMP_ACCESS), EVA semantic parity, frontend doc 61, testes G6, deploy G7, este documento atualizado com evidências finais e relatório G8/G9.
+### 6.1 Rotas engineering-api entregues — `PROVEN`
+
+Todas em `engineering-api/engineering_app/interface/http/routes/product_routes.py`,
+`engineering.access` + principal humano obrigatório + Bearer delegado ao owner:
+
+| Rota façade | Owner | Estado |
+|---|---|---|
+| `GET /v1/products` | `GET /products/search?view=engineering` | PROVEN (E2E dev) |
+| `GET /v1/products/{code}` | `GET /products/{code}?view=engineering` | PROVEN |
+| `GET /v1/products/{code}/structure` | `GET /products/{code}/structure` | PROVEN (pré-existente) |
+| `GET /v1/products/{code}/parents` | `GET /products/{code}/parents` | PROVEN |
+| `GET /v1/products/{code}/suppliers` | `GET /products/{code}/suppliers?view=engineering` | PROVEN |
+| `GET /v1/products/{code}/drawing` | `GET /products/{code}/drawing` | PROVEN |
+| `GET /v1/products/{code}/drawing/pdf` | `GET /products/{code}/drawing/pdf` (proxy binário `get_raw`) | PROVEN |
+| `GET /v1/products/{code}/purchase-price-history` | `GET /products/{code}/purchase-price-history` | PROVEN (forbidden honesto p/ perfis sem `api-delpi.access` — owner mantido estrito por carregar preço) |
+
+Erros: owner 401/403 → `403 forbidden`; 404 → `404 not_found`; demais → `502 unavailable` com `data` de diagnóstico. `meta.operationId` em todos os envelopes.
+
+### 6.2 Mudanças no owner (api-delpi) — `PROVEN`
+
+- `PRODUCT_DETAIL_VIEW_VALUES += "engineering"`; `narrow_product_fields(view="engineering")` aplica `PRODUCT_DETAIL_ENGINEERING_FIELDS` (cadastral/engenharia/logística — **sem** `sale_price`, `standard_cost`, `last_purchase_price`, fiscais).
+- `narrow_supplier_fields(view="engineering")` remove `last_price`/`last_price_date` do vínculo.
+- `narrow_paged_items` aplica narrowing item a item em `search` e `suppliers`.
+- AuthZ aditivo `require_any_permission(ENGINEERING_LMP_ACCESS)` em: `/{code}` detail, `/{code}/structure`, `/{code}/parents`, `/{code}/suppliers`, `/{code}/drawing`, `/{code}/drawing/pdf` (+`/{code}/drawings` no mesmo arquivo). `/{code}/summary`, `purchase-price-history`, `purchase-budget-history` e rotas comerciais **permanecem estritas** (`API_DELPI_ACCESS`).
+
+### 6.3 EVA — paridade semântica — `PROVEN`
+
+`read(product.*)` despacha somente por allowlist `(entity, action)` — sem tools MCP novas:
+
+| Ação | Handler | Fonte |
+|---|---|---|
+| `product.search` | `tool_search_products` | façade search |
+| `product.detail` | `tool_get_product_detail` | view=engineering |
+| `product.structure` | `tool_get_product_structure` | PROVEN pré-existente |
+| `product.where_used` | `tool_get_product_parents` | parents |
+| `product.suppliers` | `tool_get_product_suppliers` | suppliers engineering |
+| `product.drawing` | `tool_get_product_drawing` | metadados do acervo (PDF binário só via rota HTTP) |
+| `product.history` | `tool_get_product_history` | revisão cadastral + purchase-price autorizado + `revision_history:not_implemented` honesto |
+
+`product.update` registrado em `PLANNED_SEMANTIC_ACTIONS` como `not_implemented` (OWNER_BLOCKED §2.8). Ações fora do allowlist → `unknown_action_error`.
+
+### 6.4 Frontend — `PROVEN`
+
+- `plugins/engineering/src/features/products/` — listagem (hero, filtros oficiais, tabela server-sort/paginação, empty/error/loading honestos) + ficha (breadcrumb, hero compacto, badge `Visualizar`, `Editar` desabilitado com tooltip do gap §2.8, 6 abas na ordem da spec 61 com lazy load por aba e erro independente).
+- Rota `/apps/engineering/products*` + catálogo `products` + ícone `Package` em `ROUTE_ICONS`.
+- `e2e/specs/products.spec.ts` — 4 testes × 3 viewports (desktop/mobile/tablet), SSO real.
+- CSS próprio em `index.css` (tokens `--en-*`, sem duplicar design system).
+
+### 6.5 Estados residuais
+
+- Filtro server-side por situação (ativo/bloqueado): `OWNER_BLOCKED` (§G-3) — badge Situação renderizado por linha.
+- Histórico de revisões cadastrais: `OWNER_BLOCKED` (§2.7) — seção honesta `not_implemented`.
+- `purchase-price-history` para perfis sem `api-delpi.access`: `forbidden` honesto — dado de preço exige a permissão comercial, intencional.
+- Edição: `OWNER_BLOCKED` (§2.8) — sem contrato WRITE.
