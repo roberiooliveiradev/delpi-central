@@ -111,3 +111,7 @@ produzir semântica própria).
 | E7 | evidência documentada de migração de consumidores externos |
 | E8 | instructions no vocabulário novo; provenance por canal |
 | E9 | E2E + equivalência verdes; zero regressão legada |
+
+## Program B expanded acceptance matrix — 2026-10-30
+
+The product target now includes previously deferred/excluded D-6 blocks. Use [15 — master plan](15-d6-product-direction-and-master-plan.md) as execution ordering and keep the existing test matrix for Program A. For B1: playlist fields/activation, slide duplication, section ordering, media/preset reads — positive+sibling+wrong resource/branch+revision and parity. For B2 templates: publish/archive permissions, lifecycle, consumer parity and version behavior. For B3 delete/restore: signed-off trusted consent path, CAS, replay, wrong actor, invalid/expired handle, blast radius and history read-back. For B4 MDD: schema versions, invalid archives/path traversal, asset handling, export→preview→apply→roundtrip and permissions. For B5 sharing/invites/permissions: recipient/role identity, Core effective RBAC, resource scope, self-elevation, grant/revoke, invite expiry, audit, negative cross-branch and no service-account privilege substitution. Execute each suite at its bounded step, not only E9. Current state: tests for expanded items are PLANNED, not run.
