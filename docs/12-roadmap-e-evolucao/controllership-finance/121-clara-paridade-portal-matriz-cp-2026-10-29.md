@@ -455,3 +455,21 @@ inalterado — estados declarados honestamente. Transporte MCP
 ## Adendo Gate 021 — paridade Portal × CLARA (31/10/2026)
 
 Portal: smoke visual autenticado em produção PROVEN — navegação hub→catálogo→R10/R11, paridade visual dos totais (353/R$ 169.704,12; 11/R$ 97.462,71), separação de universos visível, disclaimers investigativos presentes, exportação individual exposta, mobile sem overflow. CLARA: mesma camada de dados e corpus verificados via repository real no container produtivo (15 fichas + ficha-processo + citações com locators); transporte MCP e2e permanece `TEST_NOT_RUN` até execução do fluxo ChatGPT — paridade de semântica confirmada na camada de dados, paridade de transporte pendente.
+
+
+## Adendo — teste direto da CLARA no ChatGPT após Gate 021 (30/10/2026)
+
+Teste realizado diretamente nesta sessão ChatGPT, com a conexão CLARA disponível e identidade autenticada. Evidência canônica detalhada no [doc 127, §9](./127-plano-execucao-sequencial-r10-r11-clara-comparacao-2026-10-30.md).
+
+| Capability | Resultado MCP conectado | Estado |
+|---|---|---|
+| `get_context` | Actor/catalog/schema retornados; catálogo registra R10, R11 e comparação | PASS |
+| `read(report.cost_center_expenses)` | 2026-09/f01, apuração: 353 linhas; R$ 169.704,12; 139 docs; 46 CC | PASS |
+| `read(report.billing_exclusion_roster)` | 2026-09/f01: 11 linhas; R$ 97.462,71; 3 findings, custo zero estrutural | PASS |
+| `analyze(report_comparison)` | R10 agosto → setembro: 420.737,98 → 169.704,12; `COMPARABLE`, delta −251.033,86 (−59,67%) | PASS |
+| `knowledge` | `ficha-r11` recuperada com citation locator; corpus produtivo `5bebf07f` | PASS |
+| Recuperação de pergunta longa | Busca textual longa retornou 0; busca objetiva `R11` recuperou fontes | OBSERVATION |
+| 403 com persona negativa | Identidade restrita não disponível neste chat | INCONCLUSIVE |
+| Execução composta `read+knowledge` por pergunta aberta | Não validada sistematicamente | TEST_NOT_RUN |
+
+**Interpretação:** conexão MCP funcional na sessão ChatGPT para as operações testadas; não inferir aceite do cliente Chat AI do Portal ou de todos os fluxos OAuth/segurança. Paridade oficial G6/E7 permanece pendente. Nenhuma alteração de permissions, código, dados ERP ou corpus.
