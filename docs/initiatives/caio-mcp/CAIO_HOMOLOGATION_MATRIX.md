@@ -192,9 +192,9 @@ Cada correção tem regressão em `tests/test_caio_homologation.py` e/ou `tests/
 | Suíte | Resultado |
 |---|---|
 | `tests/test_caio_homologation.py` | 537 passed, 58 skipped (external-dependent) |
-| `tests/test_caio_integration.py` | 34 passed (E2 plugins-db + boundary fakes) |
-| Suíte CAIO completa (parity/mcp/character) | **647 passed, 58 skipped** |
-| Suíte commercial-api | **1215 passed, 3 failed** — as 3 falhas reproduzem no HEAD limpo sem estas mudanças (baseline preexistente, fora do escopo CAIO): `test_commercial_totvs_bff_routes`, `test_recently_closed_orders_bff`, `test_worklist_routes_rbac` |
+| `tests/test_caio_integration.py` | 42 passed (E2 plugins-db + boundary fakes + cenário multi-etapa) |
+| Suíte CAIO completa (parity/mcp/character/homologation/integration) | **656 passed, 58 skipped** |
+| Suíte commercial-api | **1224 passed, 3 failed** — as 3 falhas reproduzem no HEAD limpo sem estas mudanças (baseline preexistente, fora do escopo CAIO): `test_commercial_totvs_bff_routes`, `test_recently_closed_orders_bff`, `test_worklist_routes_rbac` |
 
 ## Rodada complementar autenticada de somente leitura — 2026-10-30
 
