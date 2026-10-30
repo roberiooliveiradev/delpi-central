@@ -364,7 +364,7 @@ Registro do gate documental `CF-PROC0072-R10-R11-CLARA-COMPARISON-CONTRACT-GATE-
 
 | Capacidade | Portal (TARGET) | CLARA (TARGET) | AuthZ | Observações |
 |---|---|---|---|---|
-| R10 despesas por centro de custo | `GET /reports/cost-center-expenses` + página MFE | `read(report.cost_center_expenses)` | access + branch_scope | Eixo `D1_DTDIGIT`; seleção EDAPP provada; `cost_class` manual até D-01 |
-| R11 NF a desconsiderar | `GET /reports/billing-exclusion-roster` + página MFE | `read(report.billing_exclusion_roster)` | access + branch_scope | Roster SD2 9035∩594; `review_state` depende de D-02 |
-| Comparação universal R01–R15 | `POST /analysis/report-comparison` + painel MFE | `analyze(report_comparison)` | access sobre **todos** os sujeitos (fail-closed) | Orquestra contratos, nunca recalcula; matriz semântica doc 126 §7 |
-| Fichas de conhecimento R01–R15 | Help/MFE | `knowledge` (corpus governado) | access | Esquema doc 126 §9; publicação = gate de corpus separado |
+| R10 despesas por centro de custo | `GET /reports/cost-center-expenses` + página MFE com `findings[]` | `read(report.cost_center_expenses)` | access + branch_scope | Eixo `D1_DTDIGIT`; seleção EDAPP provada; divergências DV-R10-* (D-01 PO 30/10) |
+| R11 NF a desconsiderar | `GET /reports/billing-exclusion-roster` + página MFE | `read(report.billing_exclusion_roster)` | access + branch_scope | Roster SD2 9035∩594; investigativo (D-02 PO 30/10) |
+| Comparação universal R01–R15 | `POST /analysis/report-comparison` (owner **BFF**, D-03) | `analyze(report_comparison)` | access sobre **todos** os sujeitos (fail-closed) | **CLARA-first** (D-04): sem tela genérica no Portal, sem export comparativo (D-07) |
+| Fichas de conhecimento R01–R15 | Help/MFE | `knowledge` (corpus governado) | access | Esquema doc 126 §18 (D-06); publicação = gate de corpus separado |

@@ -1035,3 +1035,26 @@ Execução `CF-PROC0072-R10-R11-CLARA-COMPARISON-CONTRACT-GATE-019` — gate **d
 | RQ-EXP-01 | Export comparação exportável, bounded, watermark | doc 126 §6 | TARGET — D-07 |
 | RQ-DATA-01 | Dados parciais → `PARTIAL`+`subject_error`, nunca zero implícito | doc 126 §6/§8 | TARGET — D-08 |
 | RQ-TEST-01 | Suite de testes dos contratos R10/R11/comparação/segurança/CLARA | plano doc 126 §10; nenhum teste executado (gate documental) | TEST_NOT_RUN |
+
+### DECISION-EVIDENCE-GATE-020 — decisões PO + divergências R10/R11 (2026-10-30)
+
+Execução `CF-PROC0072-R10-R11-DECISION-EVIDENCE-GATE-020` — gate documental (zero runtime/migration/deploy/corpus). Decisões D-01..D-08 formalizadas pelo PO (doc 126 §14); vídeo e artefatos verificados diretamente (doc 126 §15–§16).
+
+| RQ/AC | Critério | Evidência | Estado |
+|---|---|---|---|
+| RQ-D01 | Decisão D-01 registrada com origem/data | doc 126 §14 — `APPROVED_WITH_EVIDENCE_GATE` | PASS |
+| RQ-D02..D08 | Decisões D-02..D-08 registradas | doc 126 §14 | PASS |
+| RQ-VID-01 | Vídeo localizado e segmentos-chave verificados | MP4 54:44 no acervo PO; contact-sheets + frames 50:10/50:35 | PASS |
+| RQ-VID-02 | R10 Reg 17/18 confirmado em frame e artefato | `SCAGQGA0.XML`+`col13` classificação manual 353/353; `0401`×1, `0404`×4 | PASS (`CONFIRMED_BY_VIDEO_AND_DOC`) |
+| RQ-VID-03 | Demonstração R11 no vídeo | nenhuma tela SD2/roster em 54:44; doc 117 já dizia "não demonstrado" | **INCONCLUSIVE** — `PENDING_EVIDENCE` (possível outra gravação) |
+| RQ-ART-01 | R11 artefato verificado diretamente | `Planilha2` literal `SD2`, 11 linhas × 184 cols, TES 594/CF 5101/grupo 9035/f01, Σ97.462,71 | PASS |
+| RQ-ART-02 | R10 artefato verificado diretamente | `SCAGQGA0.XML`, 353 linhas × 235 cols, Σ169.704,12, sem MP, classif col13 completa | PASS |
+| RQ-DIV-01 | Catálogo de divergências R10 (DV-R10-01..06) | doc 126 §16.1 — predicados sobre atributos SD1/CTT | TARGET |
+| RQ-DIV-02 | Catálogo de divergências R11 (DV-R11-01..04) | doc 126 §16.2 — roster + item-irmão + fora-de-critério | TARGET |
+| RQ-DIV-03 | Findings nunca `CONFIRMED_ERROR`; `UNCLASSIFIED` legítimo | doc 126 §16 | TARGET |
+| RQ-CTR-01 | Contrato R10 revisado com `findings[]`+`view` | doc 126 §17 | TARGET |
+| RQ-CTR-02 | Contrato R11 revisado com `affectedCalculation` honesto | doc 126 §17 — `TO_INVENTORY` até owner | TARGET |
+| RQ-CTR-03 | Comparação owner=`controllership-finance-api`, `analyze(report_comparison)` | D-03/D-04 `APPROVED` | TARGET |
+| RQ-FIC-01 | Esquema de ficha R01–R15 definido | doc 126 §18 yaml-schema + plano de ingestão | TARGET |
+| RQ-TÉO | AS-IS no TÉO/Transformômetro | sem dados PROC-0072 no repo; docs absorvem o conhecimento | TO_INVENTORY |
+| RQ-TEST-02 | Testes R10-01/02, R11-01/02, CLARA-01..03 | especificados; nenhum executado | TEST_NOT_RUN |

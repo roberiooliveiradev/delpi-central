@@ -937,7 +937,9 @@ de semântica com a view (BR-R09-012) permanece registrada — falta ≠ zero
 
 > **Gate contratual:** inventário, reuso, contratos TARGET e decisões E10/E11
 > consolidados em [doc 126](126-gate-contratual-r10-r11-comparacao-clara-2026-10-30.md)
-> (`CF-PROC0072-R10-R11-CLARA-COMPARISON-CONTRACT-GATE-019`).
+> (`CF-PROC0072-R10-R11-CLARA-COMPARISON-CONTRACT-GATE-019`). **Gate-020**
+> (30/10): decisões PO formalizadas + catálogo de divergências
+> DV-R10-01..06 / DV-R11-01..04 + contratos revisados no [doc 126 §14–§19](126-gate-contratual-r10-r11-comparacao-clara-2026-10-30.md).
 
 ### R10 · `CC matriz.xlsb` — seleção reconstruída e corroborada pelo owner (rodada 25)
 
