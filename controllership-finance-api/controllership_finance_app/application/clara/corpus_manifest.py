@@ -295,4 +295,8 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
        "124-clara-write-execution-risk-policy.md",
        "DOCUMENT", "CLARA — política de execução de escrita por risco",
        "CURRENT_IMPLEMENTATION", "paridade-portal-clara"),
+    _s("doc-127",
+       "125-clara-mcp-semantico-002-execution-report.md",
+       "DOCUMENT", "Execução CLARA SEMANTIC-002 — relatório",
+       "CURRENT_IMPLEMENTATION", "paridade-portal-clara"),
 ]
