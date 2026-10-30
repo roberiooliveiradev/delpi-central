@@ -563,7 +563,188 @@ _TOOL_CONTRACT: dict[str, dict[str, Any]] = {
         "destructive": True,
         "source": "engineering-api POST /v1/nonconformities/import",
     },
+    # --- Semantic surface (EVA.MCP.SEMANTIC.R1, plano 54) -----------------
+    "get_context": {
+        "title": "Get context",
+        "description": (
+            "EVA semantic discovery: working context, entities, actions, "
+            "schemas-on-demand, risk/phase model and honest availability. "
+            "Context is never authorization — call before any other tool."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "topic": {"type": "string"},
+                "entity": {"type": "string"},
+                "selected_ref": {"type": "string"},
+            },
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "semantic catalog (engineering-api)",
+    },
+    "read": {
+        "title": "Read",
+        "description": (
+            "Semantic official-data reads: entity + action dispatch over "
+            "the typed registry (engineering|lmp|product|nonconformity). "
+            "ref = primary identifier; filters/pagination per action — "
+            "unknown actions and fields fail honestly."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "entity": {"type": "string"},
+                "action": {"type": "string"},
+                "ref": {"type": "string"},
+                "filters": {"type": "object"},
+                "pagination": {"type": "object"},
+                "projection": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["entity", "action"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "semantic dispatcher → official Engineering use cases",
+    },
+    "analyze": {
+        "title": "Analyze",
+        "description": (
+            "Grounded Engineering analyses over official facts — each "
+            "fact labeled OBSERVED|CALCULATED|INFERRED|UNKNOWN with "
+            "verifiable method and provenance; never invents data."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "analysis_type": {"type": "string"},
+                "subject_refs": {"type": "array", "items": {"type": "string"}},
+                "question": {"type": "string"},
+                "parameters": {"type": "object"},
+            },
+            "required": ["analysis_type"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "semantic analyzer → official facts only",
+    },
+    "knowledge": {
+        "title": "Knowledge",
+        "description": (
+            "Versioned, owner-authorized Engineering guidance (contract "
+            "semantics, domain concepts, EVA operation). Not a facts "
+            "source — unindexed topics answer not_implemented honestly."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "topic": {"type": "string"},
+                "task": {"type": "string"},
+                "query": {"type": "string"},
+            },
+            "required": ["topic"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api content/eva_engineering_knowledge.json",
+    },
+    "execute": {
+        "title": "Execute",
+        "description": (
+            "Governed mutations: nonconformity create/update run "
+            "directly when intent is unambiguous and authorized "
+            "(idempotency + optimistic locking); phase=prepare "
+            "validates without side effects. Destructive "
+            "nonconformity.import requires prepare→sealed proposal→"
+            "commit — confirmed=true alone is never proof."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "entity": {"type": "string"},
+                "action": {"type": "string"},
+                "target_ref": {"type": "string"},
+                "payload": {"type": "object"},
+                "changes": {"type": "object"},
+                "idempotency_key": {"type": "string"},
+                "expected_version": {"type": "string"},
+                "proposal_ref": {"type": "string"},
+                "phase": {"type": "string", "enum": ["act", "prepare", "commit"]},
+            },
+            "required": ["entity", "action"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": False,
+        "required_permission": ENGINEERING_ACCESS,
+        "requires_human_confirmation": True,
+        "confirmation_policy": "direct_when_unequivocal_sealed_proposal_for_destructive",
+        "source": "semantic dispatcher → official Engineering use cases",
+    },
+    "delete": {
+        "title": "Delete",
+        "description": (
+            "Governed destructive deletes: phase=prepare seals target + "
+            "impact into a server-side proposal; phase=commit executes "
+            "only with the exact proposal_ref after verifiable human "
+            "confirmation. Never direct."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "entity": {"type": "string"},
+                "target_ref": {"type": "string"},
+                "proposal_ref": {"type": "string"},
+                "phase": {"type": "string", "enum": ["prepare", "commit"]},
+            },
+            "required": ["entity", "target_ref"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": False,
+        "required_permission": ENGINEERING_ACCESS,
+        "requires_human_confirmation": True,
+        "confirmation_policy": "sealed_proposal_required",
+        "destructive": True,
+        "source": "semantic dispatcher → official Engineering use cases",
+    },
 }
+
+# Tools legadas mantidas para compatibilidade durante a migração
+# (plano 54 M2/M6): remoção só após consumidores migrados + gate
+# separado. Cada nome aponta sua ação semântica equivalente.
+_LEGACY_TOOL_SUPERSEDED_BY: dict[str, str] = {
+    "get_catalog": "get_context",
+    "get_engineering_home": "read(engineering.home)",
+    "get_engineering_overview": "read(engineering.overview)",
+    "list_lmps": "read(lmp.list)",
+    "get_lmp_summary": "read(lmp.summary)",
+    "get_lmp_detail": "read(lmp.detail)",
+    "get_lmp_history": "read(lmp.history_events|history_flow)",
+    "get_lmp_goal_context": "read(lmp.goal_context)",
+    "get_lmp_department_idd": "read(lmp.department_idd)",
+    "get_lmp_nc_streak": "read(lmp.nc_streak)",
+    "get_product_structure": "read(product.structure)",
+    "search_nonconformities": "read(nonconformity.search)",
+    "get_nonconformity": "read(nonconformity.detail)",
+    "get_nonconformity_history": "read(nonconformity.history)",
+    "get_nonconformity_indicators": "read(nonconformity.indicators)",
+    "get_nonconformity_tags": "read(nonconformity.tags)",
+    "get_nonconformity_context": "read(nonconformity.context)",
+    "export_nonconformities": "read(nonconformity.export)",
+    "prepare_nonconformity_mutation": (
+        "execute(nonconformity.*, phase=prepare)"
+    ),
+    "create_nonconformity": "execute(nonconformity.create)",
+    "update_nonconformity": "execute(nonconformity.update)",
+    "delete_nonconformity": "delete(nonconformity.delete)",
+    "import_nonconformities": "execute(nonconformity.import)",
+}
+for _legacy_name, _semantic_target in _LEGACY_TOOL_SUPERSEDED_BY.items():
+    _TOOL_CONTRACT[_legacy_name]["lifecycle"] = "deprecated"
+    _TOOL_CONTRACT[_legacy_name]["superseded_by"] = _semantic_target
 
 # Capacidades futuras — documentadas como não implementadas, nunca
 # executáveis nem retornadas como tools.
@@ -748,13 +929,17 @@ def _actor_from_context(context):
     return nc_actor_from_principal(context.user)
 
 
+def _eva_act_enabled() -> bool:
+    return os.getenv(EVA_ACT_ENV_FLAG, "").strip().lower() == "true"
+
+
 def _require_eva_act() -> None:
     """Fail-closed por ambiente: EVA ACT exige opt-in operacional.
 
     Sem a flag a tool responde ``act_disabled`` honesto — produção
     permanece bloqueada até autorização específica (P8).
     """
-    if os.getenv(EVA_ACT_ENV_FLAG, "").strip().lower() != "true":
+    if not _eva_act_enabled():
         raise EvaActDisabledError(
             "EVA ACT indisponível neste ambiente "
             f"({EVA_ACT_ENV_FLAG} não habilitado)."
@@ -847,6 +1032,8 @@ def tool_get_catalog() -> CallToolResult:
                         "confirmation_policy"
                     ),
                     "destructive": contract.get("destructive", False),
+                    "lifecycle": contract.get("lifecycle", "stable"),
+                    "superseded_by": contract.get("superseded_by"),
                     "source": contract.get("source"),
                     "owner": "engineering-api",
                 }
@@ -858,6 +1045,10 @@ def tool_get_catalog() -> CallToolResult:
             "tool_class_legend": {
                 "DISCOVERY": "Discovery only — never business data.",
                 "READ": "Read-only official data — never persists.",
+                "ANALYSIS": (
+                    "Grounded analysis over official facts — labeled "
+                    "OBSERVED|CALCULATED|INFERRED, never persists."
+                ),
                 "PREPARE": (
                     "Validation + projected diff only — zero side "
                     "effects; requires human confirmation to apply."
@@ -883,6 +1074,11 @@ def tool_get_catalog() -> CallToolResult:
             ),
             "planned_capabilities": list(_PLANNED_CAPABILITIES),
             "notes": [
+                "Superfície semântica (EVA.MCP.SEMANTIC.R1): get_context, "
+                "read, analyze, knowledge, execute, delete — 6 tools "
+                "estáveis que despacham por entity+action tipadas; as "
+                "tools legadas seguem ativas em deprecated durante a "
+                "migração de consumidores.",
                 "Tools ACT existem, mas só executam com confirmed=true "
                 "após autorização explícita do usuário, AuthZ Core live "
                 f"e {EVA_ACT_ENV_FLAG} habilitado no ambiente; "
@@ -1404,6 +1600,45 @@ def _merged_update_payload(
     return payload
 
 
+async def _create_nc_record(
+    context,
+    *,
+    payload: dict,
+    idempotency_key: str | None,
+) -> dict:
+    """Create NC via official use case + read-back postcondition.
+
+    Shared by the legacy ACT tool and the semantic ``execute``
+    dispatcher — governance (confirmation model) lives in each caller.
+    """
+    data = await nc_composer.build_create_nonconformity_use_case().execute(
+        payload=payload or {},
+        actor=_actor_from_context(context),
+        idempotency_key=idempotency_key,
+    )
+    postcondition = {"verified": False}
+    record_id = data.get("id")
+    if record_id:
+        try:
+            read_back = (
+                await nc_composer.build_get_nonconformity_use_case().execute(
+                    record_id
+                )
+            )
+            postcondition = {
+                "verified": read_back is not None,
+                "record_id": record_id,
+                "check": "read_back",
+            }
+        except Exception:
+            postcondition = {
+                "verified": False,
+                "record_id": record_id,
+                "check": "read_back_failed",
+            }
+    return {**data, "postcondition": postcondition}
+
+
 async def tool_create_nonconformity(
     *,
     payload: dict,
@@ -1415,37 +1650,56 @@ async def tool_create_nonconformity(
         context = _require_engineering_human()
         _require_eva_act()
         _require_confirmation(confirmed)
-        data = await nc_composer.build_create_nonconformity_use_case().execute(
-            payload=payload or {},
-            actor=_actor_from_context(context),
-            idempotency_key=idempotency_key,
+        data = await _create_nc_record(
+            context, payload=payload, idempotency_key=idempotency_key
         )
-        postcondition = {"verified": False}
-        record_id = data.get("id")
-        if record_id:
-            try:
-                read_back = (
-                    await nc_composer.build_get_nonconformity_use_case().execute(
-                        record_id
-                    )
-                )
-                postcondition = {
-                    "verified": read_back is not None,
-                    "record_id": record_id,
-                    "check": "read_back",
-                }
-            except Exception:
-                postcondition = {
-                    "verified": False,
-                    "record_id": record_id,
-                    "check": "read_back_failed",
-                }
-        return _ok_result(
-            {**data, "postcondition": postcondition},
-            "Não conformidade criada com sucesso.",
-        )
+        return _ok_result(data, "Não conformidade criada com sucesso.")
     except Exception as exc:
         return handle_tool_error(exc)
+
+
+async def _update_nc_record(
+    context,
+    *,
+    record_id: str,
+    changes: dict,
+    expected_updated_at: str | None,
+) -> dict:
+    """Update NC — safe full-replace merge + optimistic locking + read-back."""
+    if not isinstance(changes, dict) or not changes:
+        raise NcValidationError(
+            "changes é obrigatório (objeto com os campos a alterar).",
+            fields={"changes": "required"},
+        )
+    current = await nc_composer.build_get_nonconformity_use_case().execute(
+        record_id
+    )
+    merged = _merged_update_payload(current, changes)
+    etag = expected_updated_at or current.get("updated_at")
+    data = await nc_composer.build_update_nonconformity_use_case().execute(
+        record_id=record_id,
+        payload=merged,
+        actor=_actor_from_context(context),
+        expected_updated_at=etag,
+    )
+    postcondition = {"verified": False}
+    try:
+        read_back = await nc_composer.build_get_nonconformity_use_case().execute(
+            record_id
+        )
+        postcondition = {
+            "verified": read_back is not None
+            and read_back.get("updated_at") != current.get("updated_at"),
+            "record_id": record_id,
+            "check": "read_back",
+        }
+    except Exception:
+        postcondition = {
+            "verified": False,
+            "record_id": record_id,
+            "check": "read_back_failed",
+        }
+    return {**data, "postcondition": postcondition}
 
 
 async def tool_update_nonconformity(
@@ -1460,52 +1714,44 @@ async def tool_update_nonconformity(
         context = _require_engineering_human()
         _require_eva_act()
         _require_confirmation(confirmed)
-        if not isinstance(changes, dict) or not changes:
-            raise NcValidationError(
-                "changes é obrigatório (objeto com os campos a alterar).",
-                fields={"changes": "required"},
-            )
-        current = (
-            await nc_composer.build_get_nonconformity_use_case().execute(
-                record_id
-            )
+        data = await _update_nc_record(
+            context,
+            record_id=record_id,
+            changes=changes,
+            expected_updated_at=expected_updated_at,
         )
-        merged = _merged_update_payload(current, changes)
-        etag = expected_updated_at or current.get("updated_at")
-        data = (
-            await nc_composer.build_update_nonconformity_use_case().execute(
-                record_id=record_id,
-                payload=merged,
-                actor=_actor_from_context(context),
-                expected_updated_at=etag,
-            )
-        )
-        postcondition = {"verified": False}
-        try:
-            read_back = (
-                await nc_composer.build_get_nonconformity_use_case().execute(
-                    record_id
-                )
-            )
-            postcondition = {
-                "verified": read_back is not None
-                and read_back.get("updated_at")
-                != current.get("updated_at"),
-                "record_id": record_id,
-                "check": "read_back",
-            }
-        except Exception:
-            postcondition = {
-                "verified": False,
-                "record_id": record_id,
-                "check": "read_back_failed",
-            }
-        return _ok_result(
-            {**data, "postcondition": postcondition},
-            "Não conformidade atualizada com sucesso.",
-        )
+        return _ok_result(data, "Não conformidade atualizada com sucesso.")
     except Exception as exc:
         return handle_tool_error(exc)
+
+
+async def _delete_nc_record(context, *, record_id: str) -> dict:
+    """Delete NC (hard-delete + cascade) with prior impact + read-back."""
+    current = await nc_composer.build_get_nonconformity_use_case().execute(
+        record_id
+    )
+    data = await nc_composer.build_delete_nonconformity_use_case().execute(
+        record_id
+    )
+    postcondition = {"verified": False}
+    try:
+        await nc_composer.build_get_nonconformity_use_case().execute(record_id)
+        postcondition = {
+            "verified": False,
+            "check": "read_back_still_present",
+        }
+    except NcNotFoundError:
+        postcondition = {"verified": True, "check": "read_back_gone"}
+    return {
+        **data,
+        "deleted_record_summary": {
+            "sale_number": current.get("sale_number"),
+            "lmp_number": current.get("lmp_number"),
+            "status": current.get("status"),
+            "defect_description": current.get("defect_description"),
+        },
+        "postcondition": postcondition,
+    }
 
 
 async def tool_delete_nonconformity(
@@ -1515,45 +1761,46 @@ async def tool_delete_nonconformity(
 ) -> CallToolResult:
     """EVA ACT destrutiva — delete com impacto prévio + postcondition."""
     try:
-        _require_engineering_human()
+        context = _require_engineering_human()
         _require_eva_act()
         _require_confirmation(confirmed)
-        current = (
-            await nc_composer.build_get_nonconformity_use_case().execute(
-                record_id
-            )
-        )
-        data = await nc_composer.build_delete_nonconformity_use_case().execute(
-            record_id
-        )
-        postcondition = {"verified": False}
-        try:
-            await nc_composer.build_get_nonconformity_use_case().execute(
-                record_id
-            )
-            postcondition = {
-                "verified": False,
-                "check": "read_back_still_present",
-            }
-        except NcNotFoundError:
-            postcondition = {"verified": True, "check": "read_back_gone"}
-        return _ok_result(
-            {
-                **data,
-                "deleted_record_summary": {
-                    "sale_number": current.get("sale_number"),
-                    "lmp_number": current.get("lmp_number"),
-                    "status": current.get("status"),
-                    "defect_description": current.get(
-                        "defect_description"
-                    ),
-                },
-                "postcondition": postcondition,
-            },
-            "Não conformidade excluída com sucesso.",
-        )
+        data = await _delete_nc_record(context, record_id=record_id)
+        return _ok_result(data, "Não conformidade excluída com sucesso.")
     except Exception as exc:
         return handle_tool_error(exc)
+
+
+async def _import_nc_records(
+    context,
+    *,
+    items: list,
+    dry_run: bool,
+    confirm_replace: bool,
+) -> dict:
+    """Import NC via official use case — dry_run or governed replace."""
+    if not isinstance(items, list) or not items:
+        raise NcValidationError(
+            "items é obrigatório (lista de não conformidades).",
+            fields={"items": "required"},
+        )
+    result = await nc_composer.build_import_nonconformities_use_case().execute(
+        items=items,
+        actor=_actor_from_context(context),
+        dry_run=bool(dry_run),
+        confirm_replace=bool(confirm_replace),
+    )
+    report = result.to_dict()
+    return {
+        **report,
+        "postcondition": {
+            "verified": True,
+            "check": "import_report",
+            "deleted": report.get("deleted"),
+            "created": report.get("created"),
+            "skipped": report.get("skipped"),
+            "errors": report.get("errors"),
+        },
+    }
 
 
 async def tool_import_nonconformities(
@@ -1570,36 +1817,18 @@ async def tool_import_nonconformities(
     try:
         context = _require_engineering_human()
         _require_eva_act()
-        if not isinstance(items, list) or not items:
-            raise NcValidationError(
-                "items é obrigatório (lista de não conformidades).",
-                fields={"items": "required"},
-            )
         # dry_run não tem efeitos colaterais (equivale a PREPARE) —
         # confirmação só é exigida na substituição real.
         if dry_run is not True:
             _require_confirmation(confirmed)
-        result = (
-            await nc_composer.build_import_nonconformities_use_case().execute(
-                items=items,
-                actor=_actor_from_context(context),
-                dry_run=bool(dry_run),
-                confirm_replace=bool(confirm_replace),
-            )
+        report = await _import_nc_records(
+            context,
+            items=items,
+            dry_run=dry_run,
+            confirm_replace=confirm_replace,
         )
-        report = result.to_dict()
         return _ok_result(
-            {
-                **report,
-                "postcondition": {
-                    "verified": True,
-                    "check": "import_report",
-                    "deleted": report.get("deleted"),
-                    "created": report.get("created"),
-                    "skipped": report.get("skipped"),
-                    "errors": report.get("errors"),
-                },
-            },
+            report,
             "Importação de não conformidades concluída."
             if not dry_run
             else "Simulação de importação concluída (dry_run).",

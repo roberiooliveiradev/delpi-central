@@ -126,13 +126,20 @@ def test_contract_freeze() -> None:
         "update_nonconformity",
         "delete_nonconformity",
         "import_nonconformities",
+        # Semantic surface (EVA.MCP.SEMANTIC.R1) — six stable tools.
+        "get_context",
+        "read",
+        "analyze",
+        "knowledge",
+        "execute",
+        "delete",
     }
     assert all(
-        v in {"DISCOVERY", "READ", "PREPARE", "ACT"}
+        v in {"DISCOVERY", "READ", "ANALYSIS", "PREPARE", "ACT"}
         for v in TOOL_CLASS.values()
     )
     assert DESTRUCTIVE_ACT_TOOLS == frozenset(
-        {"delete_nonconformity", "import_nonconformities"}
+        {"delete_nonconformity", "import_nonconformities", "delete"}
     )
     assert all(
         TOOL_CLASS[name] == "ACT" for name in DESTRUCTIVE_ACT_TOOLS
@@ -1189,6 +1196,9 @@ def test_catalog_reports_act_surface_and_gate(monkeypatch) -> None:
         "update_nonconformity",
         "delete_nonconformity",
         "import_nonconformities",
+        # Semantic ACT tools (EVA.MCP.SEMANTIC.R1)
+        "execute",
+        "delete",
     }
     by_name = {t["name"]: t for t in data["tools"]}
     assert by_name["delete_nonconformity"]["destructive"] is True

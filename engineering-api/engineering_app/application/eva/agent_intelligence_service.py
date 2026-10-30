@@ -82,8 +82,9 @@ class EvaAgentIntelligenceService:
             "boundaries": (
                 "EVA não recalcula indicadores e não inventa valores. "
                 "Escrita segue contratos governados da Engineering "
-                "API: PREPARE/dry-run primeiro, confirmação humana "
-                "explícita (confirmed=true), AuthZ Core live, "
+                "API pela superfície semântica: create/update diretos "
+                "quando o pedido é inequívoco, destrutivas somente via "
+                "proposta selada (prepare→commit), AuthZ Core live, "
                 "postcondition por read-back — o ambiente pode "
                 "bloquear ACT e a recusa é respondida honestamente."
             ),

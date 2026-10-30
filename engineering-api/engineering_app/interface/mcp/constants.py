@@ -49,11 +49,31 @@ TOOL_CLASS: dict[str, str] = {
     "import_nonconformities": "ACT",
 }
 
+# Superfície semântica estável (EVA.MCP.SEMANTIC.R1 / plano 54): as
+# seis tools despacham por (entity, action) do registry tipado — novas
+# capacidades entram como ações, nunca como novas tools.
+SEMANTIC_TOOL_CLASS: dict[str, str] = {
+    "get_context": "DISCOVERY",
+    "read": "READ",
+    "analyze": "ANALYSIS",
+    "knowledge": "READ",
+    "execute": "ACT",
+    "delete": "ACT",
+}
+
+SEMANTIC_TOOL_NAMES: tuple[str, ...] = tuple(SEMANTIC_TOOL_CLASS.keys())
+
+# Tools legadas em compatibilidade (deprecated no catálogo) — remoção
+# somente após consumidores migrados + gate separado de cutover.
+EVA_LEGACY_TOOL_NAMES: frozenset[str] = frozenset(TOOL_CLASS.keys())
+
+TOOL_CLASS.update(SEMANTIC_TOOL_CLASS)
+
 MCP_TOOL_NAMES: tuple[str, ...] = tuple(TOOL_CLASS.keys())
 
 # ACT de alto impacto — confirmação humana reforçada obrigatória;
 # delete é irreversível e import substitui todo o acervo quando não é
 # dry-run (o adapter Postgres ainda exige ENG_NC_IMPORT_REPLACE_ENABLED).
 DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset(
-    {"delete_nonconformity", "import_nonconformities"}
+    {"delete_nonconformity", "import_nonconformities", "delete"}
 )

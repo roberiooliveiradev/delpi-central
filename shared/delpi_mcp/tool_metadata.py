@@ -20,6 +20,7 @@ from typing import Any, Mapping, Sequence
 __all__ = [
     "DELPI_META_SECURITY_SCHEMES",
     "DELPI_META_TOOL_CLASS",
+    "DELPI_META_DEPRECATED",
     "SECURITY_SCHEMES_KEY",
     "TOOL_CLASS_ACT",
     "TOOL_CLASS_ANALYSIS",
@@ -49,6 +50,7 @@ SECURITY_SCHEMES_KEY = "securitySchemes"
 # `_meta` is reserved and broke OpenAI discovery; keep namespaced forms).
 DELPI_META_SECURITY_SCHEMES = "delpi/securitySchemes"
 DELPI_META_TOOL_CLASS = "delpi/toolClass"
+DELPI_META_DEPRECATED = "delpi/deprecated"
 
 
 def tool_annotations_payload(
