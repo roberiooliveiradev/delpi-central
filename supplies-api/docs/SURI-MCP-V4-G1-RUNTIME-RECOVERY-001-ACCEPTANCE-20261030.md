@@ -167,3 +167,17 @@ EXECUTION_DRIFT     nenhum
 
 **STATUS: PASS** (execução) — pendente apenas homologação interativa
 ChatGPT (R7), a ser reportada pelo usuário.
+
+
+## 10. Adendo de revisão GPT — smoke ChatGPT user-delegated (2026-10-30)
+
+**Fonte de evidência:** execução autenticada via plugin SURI nesta conversa, após o recovery; não é teste de gravação ERP. Classificação do reviewer: `ACCEPT_WITH_RESIDUAL`.
+
+- `read(entity=suppliers, action=get, identity={supplier_code:002012,supplier_store:01})` → `success=true`; ficha 360 retornou seções, identidade e atributos cadastrais: **PASS autenticado ChatGPT** (antigo 502 superado).
+- `analyze(analysis=supplier_creation_preview, filters.tax_id=<CNPJ do fornecedor homologado>)` → `success=true`, `duplicate_check`/proveniência e `write_enabled=false`: **PASS autenticado ChatGPT** (antigo 503 superado).
+- `get_context(action=catalog)` confirmou `catalog_version=4` com cinco tools; consultas anteriores de CEP, fornecedor por CNPJ, lista e catálogos e negativas 422 também foram observadas por chamada real.
+- `execute(suppliers.create|update)` **não** foi acionada nesta homologação; não inferir persistência ERP via ChatGPT.
+
+**Residual de governança identificado na evidência do executor:** o smoke `devin-smoke-r4` recebeu `supplies.access` por `INSERT user_roles` direto no banco da Core e houve restart `delpi-core-api` para limpar `RBACCache`; a evidência não informa revogação posterior. A concessão SQL direta não deve ser tomada como procedimento canônico de administração de RBAC. **Ação requerida (owner Core API / Segurança):** inventariar estado vigente do usuário e do grant, investigar trilha de auditoria e necessidade de acesso; se temporário, revogar exclusivamente pelo mecanismo autorizado da Core com evidência de efetividade, sem SQL direto, sem remover papéis legítimos de outros usuários; confirmar token antigo / cache e registrar SHA e resultados. Se o mecanismo não comportar revogação segura, emitir `EXECUTION_DRIFT` e escalar ao owner. Não presumir que o grant já foi removido.
+
+**Gate:** `G1_FUNCTIONAL_AUTHENTICATED=PASS`; `G1_GOVERNANCE_RESIDUAL=PENDING`; `G1_FINAL_REVIEW=ACCEPT_WITH_RESIDUAL`. Próxima execução funcional proposta: `G2 / purchase_requests + purchase_orders`, mediante autorização explícita, preservando o residual de segurança como tarefa de fechamento paralela com owner próprio.
