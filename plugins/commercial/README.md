@@ -43,6 +43,10 @@ Toda mudança relevante no Portal Comercial ou em sua interface conversacional C
 
 Esta regra vale também para trabalhos delegados a Devin/Cursor: entrega comercial sem atualização da documentação canônica aplicável **não está concluída**. GitHub issues organizam execução, mas não substituem a documentação do Portal.
 
+## CAIO 3.0 — inteligência comercial especializada (proposta)
+
+A evolução incremental de conhecimento, métodos profissionais, roteiros analíticos e recuperação contextual pela conversa está registrada em [CAIO-INTELIGENCIA-COMERCIAL-3-0.md](../../docs/12-roadmap-e-evolucao/commercial/CAIO-INTELIGENCIA-COMERCIAL-3-0.md). **Status: visão/planejamento; não representa funcionalidades já implementadas nem backlog automaticamente aprovado.** Preservar owners, fontes canônicas, permissões e evidência de execução.
+
 ## Rotas UI
 
 Rotas com parâmetros (`:userId`, `:codigo`, …) são resolvidas pelo SPA — **não** entram no manifesto Core (`PATH_RE` = `^/[-a-z0-9/]*$`).
