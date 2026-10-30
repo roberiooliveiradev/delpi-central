@@ -86,3 +86,7 @@ HEAD de inspeção: `28943d4d9b` · Legenda de disponibilidade:
 - `builder/sessions/*` e `/data/copilot/*`: caminho NL alternativo —
   manter fora da VISTA evita segunda trilha de materialização
   (o canônico é `suggest_change` + typed ops).
+
+## D-6 product-target update — 2026-10-30
+
+The inventory above remains an **as-inspected historical baseline**, not a current execution grant. Product direction now includes **all eight** functional blocks: playlist patch, activate/deactivate, slide duplicate, reorder sections, media/preset reads, playlist delete, restore/templates/MDD, and shares/invites/permissions. See [15 — full master plan](15-d6-product-direction-and-master-plan.md). Restoring a version and mutating access are *not* proven VISTA typed operations by the existence of REST endpoints: their authority, constraints, workflow and approval must be inventoried in B0. No runtime status is upgraded from TO_INVENTORY/PLANNED to PROVEN by this update.
