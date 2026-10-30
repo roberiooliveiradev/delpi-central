@@ -118,7 +118,7 @@ def search_consumption_audit_orders(
         )
 
     return api_delpi_success(
-        result,
+        result.to_dict(),
         operation_id="search_consumption_audit_orders",
         message="Ordens de produção carregadas com sucesso.",
     )

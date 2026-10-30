@@ -27,6 +27,7 @@ from app.application.dto.supplies.get_consumption_audit_comparison_request impor
 from app.application.dto.supplies.search_consumption_audit_orders_request import (
     SearchConsumptionAuditOrdersRequest,
 )
+from app.application.models.page import Page
 from app.application.use_cases.supplies.get_consumption_audit_comparison_use_case import (
     GetConsumptionAuditComparisonUseCase,
 )
@@ -366,7 +367,12 @@ def _search_call(*, s2s_header="Bearer svc-jwt", use_case=None, **kwargs):
         patch.object(
             consumption_audit_router,
             "build_search_consumption_audit_orders_use_case",
-            return_value=use_case or Mock(execute=Mock(return_value={"items": []})),
+            return_value=use_case
+            or Mock(
+                execute=Mock(
+                    return_value=Page(items=[], total=0, page=1, page_size=25)
+                )
+            ),
         ),
         patch.object(
             s2s_service_access.ServiceTokenValidator,
@@ -420,13 +426,37 @@ def _comparison_call(*, s2s_header="Bearer svc-jwt", use_case=None, orders=None,
 
 def test_search_route_valid_s2s_returns_envelope():
     uc = Mock()
-    uc.execute.return_value = {"items": [{"production_order": OP_A}]}
+    uc.execute.return_value = Page(
+        items=[{"production_order": OP_A}], total=40, page=2, page_size=25
+    )
     response = _search_call(use_case=uc, search="248842", page=2)
     assert response.status_code == 200
     body = json.loads(response.body)
     assert body["success"] is True
     dto = uc.execute.call_args.args[0]
     assert dto.search == "248842" and dto.page == 2
+
+
+def test_search_route_page_serializes_total_pages():
+    """Regressão GLPI #1353: ``Page`` dataclass via ``jsonable_encoder``
+    descartava a property ``total_pages`` → 200 sem o campo → o guard do
+    MFE derrubava a resposta como «Resposta inválida do servidor». O
+    router serializa ``result.to_dict()`` (mesma convenção dos demais
+    routers que devolvem Page)."""
+    uc = Mock()
+    uc.execute.return_value = Page(
+        items=[{"production_order": OP_A}], total=40, page=1, page_size=25
+    )
+    response = _search_call(use_case=uc, date_type="appointment",
+                            period_start="2026-10-29",
+                            period_end="2026-10-29")
+    assert response.status_code == 200
+    data = json.loads(response.body)["data"]
+    assert data["items"] == [{"production_order": OP_A}]
+    assert data["page"] == 1
+    assert data["page_size"] == 25
+    assert data["total"] == 40
+    assert data["total_pages"] == 2
 
 
 def test_search_route_invalid_params_are_400():
