@@ -15,6 +15,9 @@ import {
   createDashboardMetricStrip,
   createDashboardMultiSelectField,
   createDashboardDateField,
+  createInitialsAvatar,
+  createTimeline,
+  FieldLabel,
   createDashboardQuickPeriodSelector,
   dataTableBemClasses,
   dataTableSectionBemClasses,
@@ -240,6 +243,19 @@ export const EngineeringDetailFieldGrid = createDashboardDetailFieldGrid({
   },
   wrapLabels: true,
 });
+
+/** Timeline oficial do kit — histórico/auditoria das features. */
+export const EngineeringTimeline = createTimeline({
+  prefix: ENG_UI_PREFIX,
+});
+
+/** Avatar oficial por iniciais — foto é melhoria progressiva quando a
+ * fonte de identidade oferece imagem governada; iniciais são o fallback
+ * honesto para usuário sem foto publicada. */
+export const EngineeringInitialsAvatar = createInitialsAvatar(ENG_UI_PREFIX);
+
+/** Rótulo de formulário com ajuda no próprio texto (sem ícone `?`). */
+export const EngineeringFieldLabel = FieldLabel;
 
 /** Classes/labels canônicos da DataTable — o componente em si é genérico
  * (`DataTable<T>`) e é encapsulado pelos wrappers `.tsx` de cada feature. */

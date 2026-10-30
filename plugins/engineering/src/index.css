@@ -269,30 +269,39 @@
   margin-bottom: 8px;
 }
 
-.engineering-nc-history {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.engineering-nc-user {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.engineering-nc-change-list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.engineering-nc-history-item {
-  border-left: 3px solid var(--en-border);
-  padding-left: 12px;
+.engineering-nc-change-list li + li {
+  margin-top: 2px;
 }
 
-.engineering-nc-history-item header {
+.engineering-nc-products-cell {
   display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 4px;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 260px;
 }
 
-.engineering-nc-history-item ul {
-  margin: 4px 0 0;
-  padding-left: 16px;
+.engineering-nc-products-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.engineering-nc-products-more {
+  color: var(--en-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .engineering-nc-text-block dt {

@@ -5,6 +5,7 @@ import {
   EngineeringActionButton,
   EngineeringDateField,
   EngineeringEmptyState,
+  EngineeringFieldLabel,
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
   EngineeringPagePath,
@@ -251,7 +252,7 @@ export function NonconformityFormPage({
           <EngineeringSectionCard title="Identificação">
             <div className="engineering-nc-form-grid">
               <label className="engineering-nc-field">
-                <span>OV</span>
+                <EngineeringFieldLabel label="OV" hint={NC_HELP.saleNumber} />
                 <input
                   value={form.sale_number}
                   onChange={(e) => set("sale_number", e.target.value)}
@@ -260,7 +261,7 @@ export function NonconformityFormPage({
                 />
               </label>
               <label className="engineering-nc-field">
-                <span>LMP</span>
+                <EngineeringFieldLabel label="LMP" hint={NC_HELP.lmpNumber} />
                 <input
                   value={form.lmp_number}
                   onChange={(e) => set("lmp_number", e.target.value)}
@@ -269,7 +270,10 @@ export function NonconformityFormPage({
                 />
               </label>
               <label className="engineering-nc-field">
-                <span>Cliente</span>
+                <EngineeringFieldLabel
+                  label="Cliente"
+                  hint={NC_HELP.customerName}
+                />
                 <input
                   value={form.customer_name}
                   onChange={(e) => set("customer_name", e.target.value)}
@@ -278,7 +282,7 @@ export function NonconformityFormPage({
                 />
               </label>
               <label className="engineering-nc-field">
-                <span>Status</span>
+                <EngineeringFieldLabel label="Status" hint={NC_HELP.status} />
                 <select
                   value={form.status}
                   onChange={(e) => set("status", e.target.value as NcStatus)}
@@ -299,18 +303,23 @@ export function NonconformityFormPage({
               />
               <EngineeringDateField
                 label="Data de lançamento"
+                hint={NC_HELP.launchDate}
                 type="date"
                 value={form.launch_date}
                 onChange={(v) => set("launch_date", v)}
               />
               <EngineeringDateField
                 label="Última revisão"
+                hint={NC_HELP.lastRevisionDate}
                 type="date"
                 value={form.last_revision_date}
                 onChange={(v) => set("last_revision_date", v)}
               />
               <label className="engineering-nc-field">
-                <span>Executado por</span>
+                <EngineeringFieldLabel
+                  label="Executado por"
+                  hint={NC_HELP.executedBy}
+                />
                 <input
                   value={form.executed_by}
                   onChange={(e) => set("executed_by", e.target.value)}
@@ -318,7 +327,10 @@ export function NonconformityFormPage({
                 />
               </label>
               <label className="engineering-nc-field">
-                <span>Liberado por</span>
+                <EngineeringFieldLabel
+                  label="Liberado por"
+                  hint={NC_HELP.releasedBy}
+                />
                 <input
                   value={form.released_by}
                   onChange={(e) => set("released_by", e.target.value)}
@@ -328,82 +340,9 @@ export function NonconformityFormPage({
             </div>
           </EngineeringSectionCard>
 
-          <EngineeringSectionCard title="Problema e tratativa">
-            <label className="engineering-nc-field engineering-nc-field--block">
-              <span>Descrição do problema</span>
-              <textarea
-                className="engineering-nc-textarea"
-                rows={3}
-                value={form.defect_description}
-                onChange={(e) => set("defect_description", e.target.value)}
-              />
-            </label>
-            <label className="engineering-nc-field engineering-nc-field--block">
-              <span>Ações corretivas</span>
-              <textarea
-                className="engineering-nc-textarea"
-                rows={3}
-                value={form.corrective_actions}
-                onChange={(e) => set("corrective_actions", e.target.value)}
-              />
-            </label>
-            <label className="engineering-nc-field engineering-nc-field--block">
-              <span>Parecer técnico</span>
-              <textarea
-                className="engineering-nc-textarea"
-                rows={3}
-                value={form.technical_opinion}
-                onChange={(e) => set("technical_opinion", e.target.value)}
-              />
-            </label>
-          </EngineeringSectionCard>
-
-          <EngineeringSectionCard
-            title="Problemas identificados"
-            subtitle="Tags compartilhadas — selecione do catálogo ou crie novas (até 80 caracteres)."
-          >
-            <div className="engineering-nc-tag-editor">
-              {form.problem_tags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  className="engineering-nc-tag"
-                  onClick={() => removeTag(tag)}
-                  title="Remover tag"
-                >
-                  {tag} ×
-                </button>
-              ))}
-              <input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addTag(tagInput);
-                  }
-                }}
-                list="engineering-nc-known-tags"
-                placeholder="Adicionar tag e Enter"
-                maxLength={80}
-                aria-label="Adicionar tag de problema"
-              />
-              <datalist id="engineering-nc-known-tags">
-                {knownTags.map((tag) => (
-                  <option key={tag} value={tag} />
-                ))}
-              </datalist>
-              <EngineeringActionButton
-                variant="ghost"
-                onClick={() => addTag(tagInput)}
-              >
-                Adicionar
-              </EngineeringActionButton>
-            </div>
-          </EngineeringSectionCard>
-
           <EngineeringSectionCard
             title="Produtos associados"
+            hint={NC_HELP.productsSection}
             subtitle={`${form.products.length} item(ns) — códigos são normalizados para maiúsculas.`}
           >
             {form.products.map((product, index) => (
@@ -455,6 +394,90 @@ export function NonconformityFormPage({
             >
               Adicionar produto
             </EngineeringActionButton>
+          </EngineeringSectionCard>
+
+          <EngineeringSectionCard title="Problema e tratativa">
+            <label className="engineering-nc-field engineering-nc-field--block">
+              <EngineeringFieldLabel
+                label="Descrição do problema"
+                hint={NC_HELP.defectDescription}
+              />
+              <textarea
+                className="engineering-nc-textarea"
+                rows={3}
+                value={form.defect_description}
+                onChange={(e) => set("defect_description", e.target.value)}
+              />
+            </label>
+            <label className="engineering-nc-field engineering-nc-field--block">
+              <EngineeringFieldLabel
+                label="Ações corretivas"
+                hint={NC_HELP.correctiveActions}
+              />
+              <textarea
+                className="engineering-nc-textarea"
+                rows={3}
+                value={form.corrective_actions}
+                onChange={(e) => set("corrective_actions", e.target.value)}
+              />
+            </label>
+            <label className="engineering-nc-field engineering-nc-field--block">
+              <EngineeringFieldLabel
+                label="Parecer técnico"
+                hint={NC_HELP.technicalOpinion}
+              />
+              <textarea
+                className="engineering-nc-textarea"
+                rows={3}
+                value={form.technical_opinion}
+                onChange={(e) => set("technical_opinion", e.target.value)}
+              />
+            </label>
+          </EngineeringSectionCard>
+
+          <EngineeringSectionCard
+            title="Problemas identificados"
+            hint={NC_HELP.problemTagsSection}
+            subtitle="Tags compartilhadas — selecione do catálogo ou crie novas (até 80 caracteres)."
+          >
+            <div className="engineering-nc-tag-editor">
+              {form.problem_tags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className="engineering-nc-tag"
+                  onClick={() => removeTag(tag)}
+                  title="Remover tag"
+                >
+                  {tag} ×
+                </button>
+              ))}
+              <input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addTag(tagInput);
+                  }
+                }}
+                list="engineering-nc-known-tags"
+                placeholder="Adicionar tag e Enter"
+                maxLength={80}
+                aria-label="Adicionar tag de problema"
+              />
+              <datalist id="engineering-nc-known-tags">
+                {knownTags.map((tag) => (
+                  <option key={tag} value={tag} />
+                ))}
+              </datalist>
+              <EngineeringActionButton
+                variant="ghost"
+                onClick={() => addTag(tagInput)}
+              >
+                Adicionar
+              </EngineeringActionButton>
+            </div>
           </EngineeringSectionCard>
 
           <div className="engineering-nc-actions engineering-nc-actions--footer">

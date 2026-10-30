@@ -156,9 +156,19 @@ export function HelpPage({ basePath }: HelpPageProps) {
                     "Registros oficiais da Engineering API com busca por status, OV, LMP, cliente, produto, problema identificado e período de ocorrência. Toque em uma linha para abrir o detalhe.",
                 },
                 {
+                  term: "Produtos na listagem",
+                  meaning:
+                    "A coluna Produtos associados mostra os itens vinculados a cada NC — os primeiros aparecem na célula e o contador indica os demais; a lista completa fica no detalhe.",
+                },
+                {
                   term: "Indicadores",
                   meaning:
-                    "Cartões com os dias consecutivos sem não conformidade e o recorde histórico — mesma semântica do painel legado.",
+                    "Dias consecutivos sem não conformidade e recorde histórico aparecem dentro do cabeçalho da página — valores oficiais calculados pela Engineering API.",
+                },
+                {
+                  term: "Ajuda nos rótulos",
+                  meaning:
+                    "Passe o mouse, toque ou navegue com Tab sobre o texto de qualquer rótulo para ver a explicação do campo — não há ícone de ajuda separado.",
                 },
                 {
                   term: "Cadastro e edição",

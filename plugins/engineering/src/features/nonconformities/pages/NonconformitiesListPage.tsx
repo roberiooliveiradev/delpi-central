@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { CalendarCheck, Trophy } from "lucide-react";
-
 import { HomeApiError } from "../../../api/httpClient";
 import { navigateEngineeringView } from "../../../app/engineeringRoutes";
 import {
   EngineeringActionButton,
   EngineeringDateField,
   EngineeringEmptyState,
-  EngineeringKpiCard,
+  EngineeringFieldLabel,
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
   EngineeringPagePath,
@@ -34,11 +32,17 @@ import {
   NC_STATUS_VARIANTS,
 } from "../ncCopy";
 import { NC_PATHS, navigateNc } from "../nonconformityRoutes";
+import {
+  buildNcHeroHighlights,
+  buildNcProductsSummary,
+  describeNcProduct,
+} from "../ncPresentation";
 import type {
   NcImportReport,
   NcIndicators,
   NcListResult,
   NcProblemTag,
+  NcProduct,
   Nonconformity,
 } from "../types";
 
@@ -193,8 +197,15 @@ export function NonconformitiesListPage() {
       render: (row) => row.customer_name ?? "—",
     },
     {
+      key: "products",
+      header: "Produtos associados",
+      headerHint: NC_HELP.colProducts,
+      render: (row) => <NcProductsCell products={row.products} />,
+    },
+    {
       key: "status",
       header: "Status",
+      headerHint: NC_HELP.status,
       sortable: true,
       render: (row) => (
         <EngineeringStatusBadge
@@ -206,6 +217,7 @@ export function NonconformitiesListPage() {
     {
       key: "defect_description",
       header: "Problema",
+      headerHint: NC_HELP.colDefect,
       render: (row) => (
         <span
           className="engineering-nc-defect"
@@ -218,12 +230,14 @@ export function NonconformitiesListPage() {
     {
       key: "problem_tags",
       header: "Tags",
+      headerHint: NC_HELP.problemTag,
       render: (row) =>
         row.problem_tags.length ? row.problem_tags.join(", ") : "—",
     },
     {
       key: "registered_at",
       header: "Registro",
+      headerHint: NC_HELP.colRegisteredAt,
       sortable: true,
       render: (row) => formatNcDateTime(row.registered_at),
     },
@@ -248,6 +262,7 @@ export function NonconformitiesListPage() {
         eyebrow="Portal Engenharia"
         title="Não conformidades"
         description="Registro e acompanhamento das não conformidades de Engenharia — dados oficiais da Engineering API."
+        highlights={buildNcHeroHighlights(indicators)}
         actions={
           <>
             <EngineeringActionButton
@@ -278,7 +293,7 @@ export function NonconformitiesListPage() {
           aria-label="Filtros de não conformidades"
         >
           <label className="engineering-nc-field">
-            <span>Status</span>
+            <EngineeringFieldLabel label="Status" hint={NC_HELP.status} />
             <select
               value={filters.status}
               onChange={(e) =>
@@ -293,7 +308,7 @@ export function NonconformitiesListPage() {
             </select>
           </label>
           <label className="engineering-nc-field">
-            <span>OV</span>
+            <EngineeringFieldLabel label="OV" hint={NC_HELP.saleNumber} />
             <input
               value={filters.sale_number}
               onChange={(e) =>
@@ -304,7 +319,7 @@ export function NonconformitiesListPage() {
             />
           </label>
           <label className="engineering-nc-field">
-            <span>LMP</span>
+            <EngineeringFieldLabel label="LMP" hint={NC_HELP.lmpNumber} />
             <input
               value={filters.lmp_number}
               onChange={(e) =>
@@ -315,7 +330,10 @@ export function NonconformitiesListPage() {
             />
           </label>
           <label className="engineering-nc-field">
-            <span>Cliente</span>
+            <EngineeringFieldLabel
+              label="Cliente"
+              hint={NC_HELP.customerName}
+            />
             <input
               value={filters.customer_name}
               onChange={(e) =>
@@ -326,7 +344,10 @@ export function NonconformitiesListPage() {
             />
           </label>
           <label className="engineering-nc-field">
-            <span>Produto</span>
+            <EngineeringFieldLabel
+              label="Produto"
+              hint={NC_HELP.productCode}
+            />
             <input
               value={filters.product_code}
               onChange={(e) =>
@@ -337,7 +358,10 @@ export function NonconformitiesListPage() {
             />
           </label>
           <label className="engineering-nc-field">
-            <span>Problema identificado</span>
+            <EngineeringFieldLabel
+              label="Problema identificado"
+              hint={NC_HELP.problemTag}
+            />
             <select
               value={filters.problem_tag}
               onChange={(e) =>
@@ -391,31 +415,6 @@ export function NonconformitiesListPage() {
           </EngineeringActionButton>
         </div>
       </EngineeringPageHero>
-
-      {indicators ? (
-        <div
-          className="engineering-overview-kpi-grid"
-          role="list"
-          aria-label="Indicadores de não conformidades"
-        >
-          <EngineeringKpiCard
-            title="Dias sem NC (atual)"
-            value={String(indicators.current_days_without_nc)}
-            contextLabel={
-              indicators.last_nc_date
-                ? `Última NC em ${formatNcDate(indicators.last_nc_date)}`
-                : "Sem ocorrências registradas"
-            }
-            icon={<CalendarCheck size={22} aria-hidden="true" />}
-          />
-          <EngineeringKpiCard
-            title="Recorde de dias sem NC"
-            value={String(indicators.record_days_without_nc)}
-            contextLabel={`${indicators.nc_count} NC(s) registrada(s)`}
-            icon={<Trophy size={22} aria-hidden="true" />}
-          />
-        </div>
-      ) : null}
 
       {importOpen ? (
         <NcImportPanel
@@ -472,6 +471,37 @@ export function NonconformitiesListPage() {
         />
       ) : null}
     </main>
+  );
+}
+
+/** Célula compacta de produtos — primeiros itens + contador de
+ * excedentes; a lista completa fica acessível via `title`/`aria-label`
+ * e no detalhe da NC (a linha inteira navega). */
+function NcProductsCell({ products }: { products: NcProduct[] }) {
+  if (!products.length) {
+    return <span className="engineering-nc-muted">—</span>;
+  }
+  const summary = buildNcProductsSummary(products);
+  return (
+    <span
+      className="engineering-nc-products-cell"
+      title={summary.fullLabel}
+      aria-label={`Produtos associados: ${summary.fullLabel}`}
+    >
+      {summary.visible.map((product) => (
+        <span
+          key={product.product_code}
+          className="engineering-nc-products-item"
+        >
+          {describeNcProduct(product)}
+        </span>
+      ))}
+      {summary.overflowCount > 0 ? (
+        <span className="engineering-nc-products-more">
+          +{summary.overflowCount}
+        </span>
+      ) : null}
+    </span>
   );
 }
 

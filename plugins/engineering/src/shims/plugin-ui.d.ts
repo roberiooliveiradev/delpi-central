@@ -269,19 +269,38 @@ declare module "@delpi/plugin-ui/index" {
     defaultTone?: LoadingActivityCardTone;
   }): ComponentType<DashboardLoadingActivityCardProps>;
 
+  export type TimelineTone = "default" | "danger" | "warning" | "success" | "info";
+
+  export type TimelineLayout = "linear" | "tree";
+
   export type TimelineItemModel = {
     id: string;
     title: ReactNode;
     occurredAt?: string | null;
     timeLabel?: ReactNode;
     detail?: ReactNode;
+    meta?: ReactNode;
+    marker?: ReactNode;
+    tone?: TimelineTone;
+    parentId?: string | null;
+    branchKey?: string;
   };
 
   export type DashboardTimelineProps = {
     items: TimelineItemModel[];
+    emptyMessage?: string;
+    loading?: boolean;
+    loadingMessage?: string;
+    layout?: TimelineLayout;
+    toolbar?: ReactNode;
+    className?: string;
+    "aria-label"?: string;
   };
 
-  export function createTimeline(config: { prefix: string }): ComponentType<DashboardTimelineProps>;
+  export function createTimeline(config: {
+    prefix: string;
+    block?: string;
+  }): ComponentType<DashboardTimelineProps>;
 
   export type FormActionsAlign = "start" | "end";
 

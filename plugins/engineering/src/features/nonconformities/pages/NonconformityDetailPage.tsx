@@ -1,17 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 
+import type { TimelineItemModel } from "@delpi/plugin-ui/index";
+
 import { HomeApiError } from "../../../api/httpClient";
 import {
   EngineeringActionButton,
   EngineeringDetailCard,
   EngineeringDetailFieldGrid,
   EngineeringEmptyState,
+  EngineeringInitialsAvatar,
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
   EngineeringPagePath,
   EngineeringSectionCard,
   EngineeringStateBanner,
   EngineeringStatusBadge,
+  EngineeringTimeline,
 } from "../../../ui/engineeringUi";
 import {
   deleteNonconformity,
@@ -26,6 +30,10 @@ import {
   NC_STATUS_LABELS,
   NC_STATUS_VARIANTS,
 } from "../ncCopy";
+import {
+  ncHistoryActorLabel,
+  ncHistoryChangeLines,
+} from "../ncPresentation";
 import { NC_PATHS, navigateNc } from "../nonconformityRoutes";
 import type {
   NcContextPayload,
@@ -38,20 +46,102 @@ function errorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+/** Identidade de pessoa — avatar oficial por iniciais + nome acessível.
+ * Sem endpoint por-usuário de foto no MFE (Core expõe foto só via S2S
+ * ou /me), iniciais são o fallback honesto e estável. */
+function NcUserIdentity({ name }: { name: string | null }) {
+  const label = name?.trim() || "—";
+  if (label === "—") return <span className="engineering-nc-muted">—</span>;
+  return (
+    <span className="engineering-nc-user">
+      <EngineeringInitialsAvatar name={label} size="sm" />
+      <span>{label}</span>
+    </span>
+  );
+}
+
 function detailFields(record: Nonconformity) {
   return [
-    { label: "OV", value: record.sale_number ?? "—" },
-    { label: "LMP", value: record.lmp_number ?? "—" },
-    { label: "Cliente", value: record.customer_name ?? "—" },
-    { label: "Data de ocorrência", value: formatNcDate(record.occurrence_date) },
-    { label: "Registrado em", value: formatNcDateTime(record.registered_at) },
-    { label: "Data de lançamento", value: formatNcDate(record.launch_date) },
-    { label: "Última revisão", value: formatNcDate(record.last_revision_date) },
-    { label: "Executado por", value: record.executed_by ?? "—" },
-    { label: "Liberado por", value: record.released_by ?? "—" },
-    { label: "Criado por", value: record.created_by ?? "—" },
-    { label: "Atualizado por", value: record.updated_by ?? "—" },
+    { label: "OV", hint: NC_HELP.saleNumber, value: record.sale_number ?? "—" },
+    { label: "LMP", hint: NC_HELP.lmpNumber, value: record.lmp_number ?? "—" },
+    {
+      label: "Cliente",
+      hint: NC_HELP.customerName,
+      value: record.customer_name ?? "—",
+    },
+    {
+      label: "Data de ocorrência",
+      hint: NC_HELP.occurrenceDate,
+      value: formatNcDate(record.occurrence_date),
+    },
+    {
+      label: "Registrado em",
+      hint: NC_HELP.registeredAt,
+      value: formatNcDateTime(record.registered_at),
+    },
+    {
+      label: "Data de lançamento",
+      hint: NC_HELP.launchDate,
+      value: formatNcDate(record.launch_date),
+    },
+    {
+      label: "Última revisão",
+      hint: NC_HELP.lastRevisionDate,
+      value: formatNcDate(record.last_revision_date),
+    },
+    {
+      label: "Executado por",
+      hint: NC_HELP.executedBy,
+      value: <NcUserIdentity name={record.executed_by} />,
+    },
+    {
+      label: "Liberado por",
+      hint: NC_HELP.releasedBy,
+      value: <NcUserIdentity name={record.released_by} />,
+    },
+    {
+      label: "Criado por",
+      hint: NC_HELP.createdBy,
+      value: <NcUserIdentity name={record.created_by} />,
+    },
+    {
+      label: "Atualizado por",
+      hint: NC_HELP.updatedBy,
+      value: <NcUserIdentity name={record.updated_by} />,
+    },
   ];
+}
+
+/** Evento de auditoria → item da Timeline oficial do kit. */
+function toTimelineItem(event: NcHistoryEvent): TimelineItemModel {
+  const actorLabel = ncHistoryActorLabel(event);
+  const changes = ncHistoryChangeLines(event);
+  return {
+    id: event.id,
+    tone: event.event_type === "created" ? "success" : "info",
+    title:
+      event.event_type === "created" ? "Registro criado" : "Atualização",
+    occurredAt: event.created_at,
+    timeLabel: formatNcDateTime(event.created_at),
+    meta: (
+      <span
+        className="engineering-nc-user"
+        title={`${NC_HELP.historyActor} — ${actorLabel}`}
+      >
+        <EngineeringInitialsAvatar name={actorLabel} size="sm" />
+        <span>{actorLabel}</span>
+      </span>
+    ),
+    detail: changes.length ? (
+      <ul className="engineering-nc-change-list">
+        {changes.map((line, idx) => (
+          <li key={idx}>{line}</li>
+        ))}
+      </ul>
+    ) : (
+      "Sem campos alterados registrados."
+    ),
+  };
 }
 
 export function NonconformityDetailPage({ recordId }: { recordId: string }) {
@@ -115,6 +205,8 @@ export function NonconformityDetailPage({ recordId }: { recordId: string }) {
       setConfirmDelete(false);
     }
   };
+
+  const timelineItems = (history ?? []).map(toTimelineItem);
 
   return (
     <main className="engineering-nonconformities">
@@ -219,36 +311,9 @@ export function NonconformityDetailPage({ recordId }: { recordId: string }) {
             <EngineeringDetailFieldGrid fields={detailFields(record)} />
           </EngineeringDetailCard>
 
-          <EngineeringSectionCard title="Problema e tratativa">
-            <dl className="engineering-nc-text-block">
-              <dt>Descrição do problema</dt>
-              <dd>{record.defect_description ?? "—"}</dd>
-              <dt>Ações corretivas</dt>
-              <dd>{record.corrective_actions ?? "—"}</dd>
-              <dt>Parecer técnico</dt>
-              <dd>{record.technical_opinion ?? "—"}</dd>
-            </dl>
-          </EngineeringSectionCard>
-
-          <EngineeringSectionCard
-            title="Problemas identificados"
-            subtitle={`${record.problem_tags.length} tag(s)`}
-          >
-            {record.problem_tags.length ? (
-              <ul className="engineering-nc-tag-list">
-                {record.problem_tags.map((tag) => (
-                  <li key={tag}>
-                    <EngineeringStatusBadge label={tag} variant="neutral" />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="engineering-nc-muted">Nenhuma tag associada.</p>
-            )}
-          </EngineeringSectionCard>
-
           <EngineeringSectionCard
             title="Produtos associados"
+            hint={NC_HELP.productsSection}
             subtitle={`${record.products.length} item(ns)`}
           >
             {record.products.length ? (
@@ -264,6 +329,35 @@ export function NonconformityDetailPage({ recordId }: { recordId: string }) {
               </ul>
             ) : (
               <p className="engineering-nc-muted">Nenhum produto associado.</p>
+            )}
+          </EngineeringSectionCard>
+
+          <EngineeringSectionCard title="Problema e tratativa">
+            <dl className="engineering-nc-text-block">
+              <dt>Descrição do problema</dt>
+              <dd>{record.defect_description ?? "—"}</dd>
+              <dt>Ações corretivas</dt>
+              <dd>{record.corrective_actions ?? "—"}</dd>
+              <dt>Parecer técnico</dt>
+              <dd>{record.technical_opinion ?? "—"}</dd>
+            </dl>
+          </EngineeringSectionCard>
+
+          <EngineeringSectionCard
+            title="Problemas identificados"
+            hint={NC_HELP.problemTagsSection}
+            subtitle={`${record.problem_tags.length} tag(s)`}
+          >
+            {record.problem_tags.length ? (
+              <ul className="engineering-nc-tag-list">
+                {record.problem_tags.map((tag) => (
+                  <li key={tag}>
+                    <EngineeringStatusBadge label={tag} variant="neutral" />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="engineering-nc-muted">Nenhuma tag associada.</p>
             )}
           </EngineeringSectionCard>
 
@@ -314,43 +408,13 @@ export function NonconformityDetailPage({ recordId }: { recordId: string }) {
             hint={NC_HELP.history}
             subtitle="Eventos de auditoria append-only — mais recentes primeiro."
           >
-            {history && history.length ? (
-              <ol className="engineering-nc-history">
-                {history.map((event) => (
-                  <li key={event.id} className="engineering-nc-history-item">
-                    <header>
-                      <EngineeringStatusBadge
-                        label={
-                          event.event_type === "created"
-                            ? "Criação"
-                            : "Atualização"
-                        }
-                        variant={
-                          event.event_type === "created" ? "info" : "neutral"
-                        }
-                      />
-                      <span className="engineering-nc-muted">
-                        {formatNcDateTime(event.created_at)} —{" "}
-                        {event.actor_name ?? event.actor_email ?? event.actor_user_id}
-                      </span>
-                    </header>
-                    {(event.changes?.fields ?? []).length ? (
-                      <ul>
-                        {event.changes.fields!.map((change, idx) => (
-                          <li key={idx}>
-                            <strong>{change.label}</strong>:{" "}
-                            {formatChangeValue(change.old)} →{" "}
-                            {formatChangeValue(change.new)}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="engineering-nc-muted">Sem eventos registrados.</p>
-            )}
+            <EngineeringTimeline
+              items={timelineItems}
+              loading={history === null}
+              loadingMessage="Carregando histórico…"
+              emptyMessage="Sem eventos registrados."
+              aria-label="Histórico da não conformidade"
+            />
           </EngineeringSectionCard>
         </>
       ) : null}
@@ -358,9 +422,3 @@ export function NonconformityDetailPage({ recordId }: { recordId: string }) {
   );
 }
 
-function formatChangeValue(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "—";
-  if (Array.isArray(value)) return value.join(", ") || "—";
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
-}
