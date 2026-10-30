@@ -1611,3 +1611,14 @@ evidência externa sem medida numérica.
 declarados — nunca convertidos em valor 0, nunca usados para completar
 tendência. Sujeito negado não contribui nem existência. Percentual com
 denominador zero é declarado `zero_baseline`, não calculado.
+
+## §19 — Fichas técnicas R01–R15 (stage-04, 2026-10-31)
+
+As regras deste catálogo foram consolidadas em fichas técnicas
+versionadas para consumo da CLARA (decisão D-06 do doc 126):
+`fichas/R01-ficha.md` … `fichas/R15-ficha.md` (+ `fichas/README.md`
+índice e `fichas/processo-fechamento-ficha.md`). Cada ficha referencia
+esta fonte e mantém a classificação por afirmação — a ficha não cria
+regra nova nem rebaixa `PENDING`/`TO_INVENTORY` a fato; divergências
+encontradas devem ser corrigidas **aqui** (fonte canônica) e propagadas
+para a ficha.

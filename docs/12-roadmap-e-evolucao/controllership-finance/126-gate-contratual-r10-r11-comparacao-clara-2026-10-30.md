@@ -443,3 +443,17 @@ R04/R09/R12/R15 respondem `report_not_implemented`; R13/R14 são evidência
 externa; ids desconhecidos → `unknown_report`. Pares sem regra na matriz
 → `INSUFFICIENT_EVIDENCE` — o endpoint ser genérico **não** significa
 cobertura universal efetiva.
+
+## 23. Status pós-stage-04 (2026-10-31) — D-06 conhecimento `IMPLEMENTED`
+
+Execução `CF-PROC0072-CLARA-KNOWLEDGE-R01-R15-IMPLEMENTATION-STAGE-04`
+(doc 127 Etapa 4). A decisão **D-06** (fichas CLARA: estrutura,
+versionamento, publicação) passou de `APPROVED` para **`IMPLEMENTED`**:
+
+| Item da decisão | Entregue |
+|---|---|
+| Fichas R01–R15 versionadas | `fichas/R01..R15-ficha.md` no esquema canônico §18 — identidade/fonte/regras/interpretação/operação/comparação/governança com `PROVEN\|TO_INVENTORY\|PLANNED\|TARGET` por afirmação |
+| Entrada no `corpus_manifest` com `related_report_ids` | 17 `SourceSpec` (`ficha-index`, `ficha-processo`, `ficha-r01..r15`) — inventário explícito, classificação do vocabulário canônico |
+| Explicações FACT/POSSIBLE_DIVERGENCE/RECOMMENDATION/INSUFFICIENT_EVIDENCE | fichas explicitam FACT provado × hipótese pendente por seção; pares não curados seguem `INSUFFICIENT_EVIDENCE` |
+| Ingestão/publish | pipeline vigente executado no ambiente local (corpus `f9857be6`, 88 fontes/2.170 itens; rollback `57109de5`); **publicação produtiva `PENDING_APPROVAL`** — gate separado, conforme §9.2 |
+| Atualização obrigatória por gate | registrado como regra permanente das fichas (README do diretório) |

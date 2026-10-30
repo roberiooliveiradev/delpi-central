@@ -187,3 +187,17 @@ continua com exatamente seis tools (`get_context`, `read`, `analyze`,
 | Schema discovery | `get_context(topic="schema", entity="closing", action="report_comparison")` |
 | Semântica | matriz curada COMPARABLE / RELATED_REQUIRES_EXPLANATION / NOT_COMPARABLE / INSUFFICIENT_EVIDENCE; partial honesty; denied sem vazamento; sem zero implícito |
 | Fora de escopo | nenhuma tool plana nova; nenhuma permissão nova; nenhuma tela/export de comparação |
+
+## 15. Adendo stage-04 (2026-10-31) — corpus de conhecimento R01–R15 publicado localmente
+
+`CF-PROC0072-CLARA-KNOWLEDGE-R01-R15-IMPLEMENTATION-STAGE-04`: a base
+documental da CLARA passou a incluir as fichas técnicas governadas:
+
+| Aspecto | Entregue |
+|---|---|
+| Novas fontes | 17 `SourceSpec` em `AUTHORIZED_SOURCES` (`fichas/` — índice, processo, R01–R15) |
+| Pipeline | `corpus_ingestion` vigente — segmentação ATX, hash SHA-256 por fonte, supersede por locator estável; **nenhum segundo pipeline criado** |
+| Corpus local | `f9857be6` (88 fontes / 2.170 itens) publicado em ambiente autorizado; versão anterior preservada |
+| Recuperação | `knowledge`/`search` por `report_id` retorna fichas com `citation_locator` — verificado em execução local |
+| Seis tools | preservadas — fichas chegam via `knowledge`/`get_context`, nenhuma tool nova |
+| Produção | `PENDING_APPROVAL` — publish produtivo do corpus segue gate próprio |

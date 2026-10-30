@@ -427,3 +427,10 @@ Reabrir a consolidação **somente** quando: (a) nova revisão do processo no T�
 - **Plano do ciclo de análise:** [doc 116](./116-ciclo-inteligencia-fechamento-analysis-001-a-005.md); ledger [23](./23-ledger-rq-ac-testes.md); [README](./README.md).
 
 **Versão:** 1.3 — §9.1 referencia doc 119 (contratos definitivos P7 + readiness de implementação) — P7-IMPLEMENTATION-READINESS-005, 2026-10-28. Anterior: 1.2 — reuso do filtro canônico `B1_TIPO` + veredito de equivalência — P7-SCOPE-CONTRACT-004. Próxima revisão somente sob as condições do §17.
+
+## 19. Adendo — fichas CLARA (stage-04, 31/10/2026)
+
+A base canônica deste documento permanece autoridade sobre o processo.
+O conhecimento operacional para a CLARA foi consolidado em
+`fichas/R01..R15-ficha.md` e `fichas/processo-fechamento-ficha.md`
+(doc 126 D-06) — as fichas citam esta base; não há duplicação de regra.

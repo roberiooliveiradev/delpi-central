@@ -1128,3 +1128,24 @@ Execução `CF-PROC0072-CLARA-REPORT-COMPARISON-IMPLEMENTATION-STAGE-03` — Eta
 | RQ-CMP-LIVE | Paridade de diffs contra dados reais | somente testes de contrato com payloads stub — sem execução live nesta etapa | TEST_NOT_RUN |
 
 **Residuais da etapa:** pares não curados respondem INSUFFICIENT_EVIDENCE (default honesto — ampliação da matriz exige evidência documental nova); R09/R12/R15 seguem sem contrato; comparações RELATED exibem delta rotulado `related_not_equivalent` (nunca divergência comprovada); auditoria via hash de resposta + log estruturado (trilha persistida dedicada fica para refinamento); smoke/live/G6 pendem de gate autorizado.
+
+### IMPLEMENTATION-STAGE-04 — conhecimento especializado R01–R15 + corpus CLARA (2026-10-31)
+
+Execução `CF-PROC0072-CLARA-KNOWLEDGE-R01-R15-IMPLEMENTATION-STAGE-04` — Etapa 4 do doc 127, escopo exclusivo de conhecimento governado (sem deploy, sem novos relatórios, sem mutação ERP, sem Etapa 5). Owner: `controllership-finance-api` (corpus/dispatcher) + fichas canônicas no repositório de documentação.
+
+| RQ/AC | Critério | Evidência | Estado |
+|---|---|---|---|
+| RQ-KNW-INV | Inventário real R01–R15 | `fichas/README.md` — matriz GATE A com implementação, capability, Help e lacunas por relatório | PASS |
+| RQ-KNW-FICHAS | 15 fichas versionadas, esquema canônico | `fichas/R01..R15-ficha.md` — seções Identificação/Fonte/Regras/Interpretação/Operação/Governança, versão 1.0/1.1, classificação por afirmação | PASS |
+| RQ-KNW-R10R11 | Atenção especial R10/R11 | universos estritos nunca somados; eixo D1_DTDIGIT×D2_EMISSAO; 13 TES excluídos; benefícios; custo estrutural zero (F4_ESTOQUE='N'); DV-R10-01..06 e DV-R11-01..04; E10a/E10b/E11a/E11b como pendentes — nunca regra inventada | PASS |
+| RQ-KNW-CMP | Coerência com motor stage-03 | cada ficha declara pares COMPARABLE/RELATED_REQUIRES_EXPLANATION/NOT_COMPARABLE/INSUFFICIENT_EVIDENCE alinhados a `compatibility.py`; R04/R09/R12/R13/R14/R15 honestos como sem contrato | PASS |
+| RQ-KNW-PROC | Conhecimento do processo | `fichas/processo-fechamento-ficha.md` — P1–P6, competência×abertura, dados×documentos, Controladoria→DRE, permissões, conhecer≠consultar≠executar | PASS |
+| RQ-KNW-MANIFEST | Fontes/hashes no manifest | 17 `SourceSpec` novos (`ficha-*`) — inventário explícito; classificações do vocabulário canônico | PASS |
+| RQ-KNW-INGEST | Ingestão controlada | corpus local `f9857be6-6c08-4a08-a18c-41a96e815cba` — 88 fontes / 2.170 itens; anterior `57109de5` (56/1.722) como rollback; **produtivo `PENDING_APPROVAL`** | PASS (local) |
+| RQ-KNW-CITE | Recuperação citável | `repo.search` retorna fichas com `citation_locator` (documento + heading path) para perguntas R10/R11/R06/R08/R15; classificação de evidência preservada | PASS |
+| RQ-KNW-TEST | Cobertura §13 | `tests/test_clara_fichas_parity.py` — 8 testes: 15 fichas, estrutura canônica, evidência por afirmação, manifest, paths únicos existentes, links internos, RIDs canônicos, honestidade de não-implementados | **PASS 8/8** |
+| RQ-KNW-REG | Regressão | corpus_parity 7/7 + fichas 8/8 + regressão BFF completa | PASS |
+| RQ-KNW-PROD | Corpus produtivo | publicação produtiva exige gate próprio | PENDING_APPROVAL |
+| RQ-KNW-E2E | CLARA persona real respondendo | sem harness E2E nesta etapa | TEST_NOT_RUN |
+
+**Residuais da etapa:** publicação produtiva do corpus (gate separado — pacote pronto: manifest + fontes + hashes registrados); G6; fichas R09/R12/R15 documentam conhecimento sem contrato (`TARGET_ONLY`) — não geram capability; R04/R13/R14 bloqueados por fonte; perguntas de linguagem natural com ranking FTS validadas por recuperação direta, não por avaliação de resposta completa do agente.

@@ -410,3 +410,36 @@ não listado → `INSUFFICIENT_EVIDENCE`. R10 universos divergentes →
 `NOT_COMPARABLE`. DOCUMENT cruza por `filial+documento+série` e declara
 `incompleteKeys`. Suporte real: R01, R02, R03, R05, R06, R07, R08, R10,
 R11, CPV; demais respondem `report_not_implemented`/`unknown_report`.
+
+## Adendo — stage-04 (31/10/2026): conhecimento governado R01–R15 IMPLEMENTADO
+
+Execução `CF-PROC0072-CLARA-KNOWLEDGE-R01-R15-IMPLEMENTATION-STAGE-04`
+([doc 127](./127-plano-execucao-sequencial-r10-r11-clara-comparacao-2026-10-30.md)
+Etapa 4, decisão D-06) entregou as fichas técnicas e a publicação local
+do corpus:
+
+| Dimensão | Estado |
+|---|---|
+| Fichas técnicas | `docs/12-roadmap-e-evolucao/controllership-finance/fichas/` — 15 fichas + índice + ficha do processo, esquema canônico §18 do doc 126, evidência por afirmação |
+| Manifest | 17 fontes novas (`ficha-index`, `ficha-processo`, `ficha-r01..r15`) em `AUTHORIZED_SOURCES` — inventário explícito, nunca glob |
+| Corpus local | versão `f9857be6-6c08-4a08-a18c-41a96e815cba` (88 fontes / 2.170 itens) — anterior `57109de5` (56 fontes / 1.722 itens) preservada como rollback |
+| Corpus produtivo | **não publicado** — `PENDING_APPROVAL` (gate de publicação produtiva é separado) |
+| Recuperação | `PROVEN` local — fichas citáveis por `report_id` com `citation_locator` (documento + heading path) |
+| Help | verificado e **inalterado** — já declara paridade pendente, consulta operacional ≠ oficial e contrato pendente; nenhuma superfície user-facing nova nesta etapa |
+
+Matriz Portal × CLARA × Help por relatório (knowledge):
+
+| Rel. | Portal | CLARA read/analyze | CLARA knowledge | Paridade oficial |
+|---|---|---|---|---|
+| R01/R02 | settlements | `read(report.settlements_summary)` | ficha citável | pendente G6 |
+| R03 | stock-inventory | `read(report.stock_inventory)` | ficha citável | `officialP7=false` |
+| R04 | — | nenhuma | ficha (bloqueado, honesto) | n/a |
+| R05 | stock-movements | `read(report.stock_movements)` | ficha citável | pendente G6 |
+| R06 | kardex/cpv | `read(report.kardex/cpv)` | ficha citável | pendente E8/G6 |
+| R07 | inventory-adjustments | `read(report.inventory_adjustments)` | ficha citável | pendente G6 |
+| R08 | work-in-process | `read(report.work_in_process)` | ficha citável | `officialMatr989=false` |
+| R09 | — | nenhuma | ficha (TARGET_ONLY, honesto) | n/a |
+| R10 | cost-center-expenses | `read(report.cost_center_expenses)` | ficha citável | paridade técnica live; G6 |
+| R11 | billing-exclusion-roster | `read(report.billing_exclusion_roster)` | ficha citável | paridade técnica live; G6 |
+| R12/R15 | estado via fechamento | nenhuma (sem medida) | ficha citável | n/a |
+| R13/R14 | evidência externa | nenhuma | ficha citável | n/a |
