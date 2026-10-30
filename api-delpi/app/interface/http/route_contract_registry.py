@@ -202,6 +202,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_consumption_audit_order": RouteContract(
         "consumption_audit_order", "composite_analysis"
     ),
+    "search_consumption_audit_orders": RouteContract(
+        "consumption_audit_order_summary", "paged_list"
+    ),
+    "get_consumption_audit_comparison": RouteContract(
+        "consumption_audit_comparison", "composite_analysis"
+    ),
     "get_supplies_purchase_requests_open_coverage": RouteContract(
         "supplies_purchase_request_coverage", "list"
     ),

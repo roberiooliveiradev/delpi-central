@@ -291,3 +291,182 @@ def parent_consumers_sql() -> str:
           AND RE.D4_FILIAL = ?
         ORDER BY production_order ASC
         """
+
+
+# ---------------------------------------------------------------------------
+# GLPI #1353 — evolução F1: busca/listagem paginada de OPs
+#
+# Semântica de datas comprovada (A2/D2):
+#   emission    -> SC2.C2_EMISSAO (data de emissão da OP)
+#   finished    -> SC2.C2_DATRF (data real de término/encerramento da produção)
+#   appointment -> EXISTS SH6010.H6_DTAPONT (data de apontamento efetivo)
+# ``planned`` (C2_DATPRI/DATPRF) não é filtro de data real — não exposto.
+# ---------------------------------------------------------------------------
+
+SEARCH_DATE_TYPES = ("emission", "finished", "appointment")
+
+_SEARCH_SC2_DATE_COLUMNS = {
+    "emission": "OP.C2_EMISSAO",
+    "finished": "OP.C2_DATRF",
+}
+
+
+def _like_param(value: str) -> str:
+    """Escapa curingas do usuário e devolve o padrão LIKE com % externos."""
+    escaped = (
+        value.replace("\\", "\\\\").replace("%", "\%").replace("_", "\_")
+    )
+    return f"%{escaped}%"
+
+
+def orders_search_where(
+    *,
+    branch: str,
+    search: str | None = None,
+    product: str | None = None,
+    date_type: str = "emission",
+    period_start: str | None = None,
+    period_end: str | None = None,
+    status: str | None = None,
+    work_center: str | None = None,
+    operation: str | None = None,
+) -> tuple[str, tuple]:
+    """WHERE + params da busca paginada de OPs (SC2 × SB1 × EXISTS SH6/SH8).
+
+    Todo valor externo sai como ``?`` — nunca interpolado no texto SQL.
+    Intersecção estrita entre filtros; intervalo de datas aberto é permitido
+    (apenas start ou apenas end).
+    """
+    if date_type not in SEARCH_DATE_TYPES:
+        raise ValueError(f"date_type inválido: {date_type!r}")
+
+    clauses = ["OP.D_E_L_E_T_ = ''", "P.D_E_L_E_T_ = ''", "OP.C2_FILIAL = ?"]
+    params: list = [branch]
+
+    if search:
+        like = _like_param(search)
+        clauses.append(
+            "(RTRIM(LTRIM(OP.C2_OP)) LIKE ? ESCAPE '\\'"
+            " OR RTRIM(LTRIM(OP.C2_NUM)) LIKE ? ESCAPE '\\')"
+        )
+        params.extend([like, like])
+
+    if product:
+        like = _like_param(product)
+        clauses.append(
+            "(RTRIM(LTRIM(OP.C2_PRODUTO)) LIKE ? ESCAPE '\\'"
+            " OR RTRIM(LTRIM(P.B1_DESC)) LIKE ? ESCAPE '\\')"
+        )
+        params.extend([like, like])
+
+    if period_start or period_end:
+        if date_type == "appointment":
+            exists = (
+                "EXISTS (SELECT 1 FROM SH6010 H6 WITH (NOLOCK)"
+                " WHERE H6.D_E_L_E_T_ = ''"
+                " AND RTRIM(LTRIM(H6.H6_OP)) = RTRIM(LTRIM(OP.C2_OP))"
+                " AND H6.H6_FILIAL = OP.C2_FILIAL"
+            )
+            bounds = []
+            if period_start:
+                bounds.append(
+                    " AND CONVERT(DATE, NULLIF(H6.H6_DTAPONT, ''), 112) >= ?"
+                )
+                params_start = [period_start]
+            else:
+                params_start = []
+            if period_end:
+                bounds.append(
+                    " AND CONVERT(DATE, NULLIF(H6.H6_DTAPONT, ''), 112) <= ?"
+                )
+                params_end = [period_end]
+            else:
+                params_end = []
+            clauses.append(exists + "".join(bounds) + ")")
+            params.extend(params_start + params_end)
+        else:
+            column = _SEARCH_SC2_DATE_COLUMNS[date_type]
+            if period_start:
+                clauses.append(
+                    f"CONVERT(DATE, NULLIF({column}, ''), 112) >= ?"
+                )
+                params.append(period_start)
+            if period_end:
+                clauses.append(
+                    f"CONVERT(DATE, NULLIF({column}, ''), 112) <= ?"
+                )
+                params.append(period_end)
+
+    if status:
+        clauses.append("RTRIM(LTRIM(OP.C2_STATUS)) = ?")
+        params.append(status)
+
+    if work_center:
+        clauses.append(
+            "EXISTS (SELECT 1 FROM SH8010 H8 WITH (NOLOCK)"
+            " WHERE H8.D_E_L_E_T_ = ''"
+            " AND RTRIM(LTRIM(H8.H8_OP)) = RTRIM(LTRIM(OP.C2_OP))"
+            " AND H8.H8_FILIAL = OP.C2_FILIAL"
+            " AND RTRIM(LTRIM(H8.H8_CTRAB)) LIKE ? ESCAPE '\\')"
+        )
+        params.append(_like_param(work_center))
+
+    if operation:
+        clauses.append(
+            "EXISTS (SELECT 1 FROM SH8010 H8 WITH (NOLOCK)"
+            " WHERE H8.D_E_L_E_T_ = ''"
+            " AND RTRIM(LTRIM(H8.H8_OP)) = RTRIM(LTRIM(OP.C2_OP))"
+            " AND H8.H8_FILIAL = OP.C2_FILIAL"
+            " AND RTRIM(LTRIM(H8.H8_OPER)) = ?)"
+        )
+        params.append(operation)
+
+    return " AND ".join(clauses), tuple(params)
+
+
+_ORDERS_SEARCH_SELECT = """
+    SELECT
+        RTRIM(LTRIM(OP.C2_FILIAL)) AS branch,
+        RTRIM(LTRIM(OP.C2_OP)) AS production_order,
+        RTRIM(LTRIM(OP.C2_NUM)) AS order_number,
+        RTRIM(LTRIM(OP.C2_ITEM)) AS order_item,
+        RTRIM(LTRIM(OP.C2_SEQUEN)) AS order_sequence,
+        RTRIM(LTRIM(OP.C2_PRODUTO)) AS product_code,
+        RTRIM(LTRIM(P.B1_DESC)) AS product_description,
+        RTRIM(LTRIM(OP.C2_UM)) AS unit_of_measure,
+        CAST(OP.C2_QUANT AS FLOAT) AS planned_quantity,
+        CAST(OP.C2_QUJE AS FLOAT) AS produced_quantity,
+        RTRIM(LTRIM(OP.C2_STATUS)) AS status,
+        RTRIM(LTRIM(OP.C2_TPOP)) AS order_type,
+        CONVERT(VARCHAR(10), CONVERT(DATE, NULLIF(OP.C2_EMISSAO, ''), 112), 23)
+            AS emission_date,
+        CONVERT(VARCHAR(10), CONVERT(DATE, NULLIF(OP.C2_DATPRI, ''), 112), 23)
+            AS planned_start_date,
+        CONVERT(VARCHAR(10), CONVERT(DATE, NULLIF(OP.C2_DATPRF, ''), 112), 23)
+            AS due_date,
+        CONVERT(VARCHAR(10), CONVERT(DATE, NULLIF(OP.C2_DATRF, ''), 112), 23)
+            AS finished_at
+    FROM SC2010 OP WITH (NOLOCK)
+    INNER JOIN SB1010 P WITH (NOLOCK)
+        ON P.B1_COD = OP.C2_PRODUTO
+"""
+
+
+def orders_search_sql(where_sql: str) -> str:
+    """Listagem paginada de OPs — ordenação estável (emissão desc, OP asc)."""
+    return (
+        _ORDERS_SEARCH_SELECT
+        + f"\n    WHERE {where_sql}\n"
+        + "    ORDER BY OP.C2_EMISSAO DESC, OP.C2_OP ASC\n"
+        + "    OFFSET ? ROWS FETCH NEXT ? ROWS ONLY\n"
+    )
+
+
+def orders_search_count_sql(where_sql: str) -> str:
+    return (
+        "    SELECT COUNT(*) AS total\n"
+        "    FROM SC2010 OP WITH (NOLOCK)\n"
+        "    INNER JOIN SB1010 P WITH (NOLOCK)\n"
+        "        ON P.B1_COD = OP.C2_PRODUTO\n"
+        f"    WHERE {where_sql}\n"
+    )

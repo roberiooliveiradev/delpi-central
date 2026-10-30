@@ -1,6 +1,6 @@
 {
   "version": "2026.09.04",
-  "count": 122,
+  "count": 123,
   "entries": [
     {
       "file": "app/interface/http/propostas_comerciais_controller.py",
@@ -1587,6 +1587,19 @@
       "geResolved": 1,
       "leResolved": 200,
       "tierId": "limit_100_200"
+    },
+    {
+      "file": "app/interface/http/routes/supplies/consumption_audit_router.py",
+      "line": 86,
+      "module": "consumption_audit_router",
+      "param": "page_size",
+      "default": "25",
+      "ge": "1",
+      "le": "50",
+      "defaultResolved": 25,
+      "geResolved": 1,
+      "leResolved": 50,
+      "tierId": "page_25_50"
     }
   ]
 }

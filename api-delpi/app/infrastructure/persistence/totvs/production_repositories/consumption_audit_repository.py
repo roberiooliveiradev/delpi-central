@@ -126,3 +126,91 @@ class ConsumptionAuditRepository(BaseRepository):
                 consumption_audit_sql.parent_consumers_sql(),
                 (production_order, branch),
             )
+
+    def search_orders(
+        self,
+        *,
+        branch: str,
+        search: str | None = None,
+        product: str | None = None,
+        date_type: str = "emission",
+        period_start: str | None = None,
+        period_end: str | None = None,
+        status: str | None = None,
+        work_center: str | None = None,
+        operation: str | None = None,
+        offset: int = 0,
+        limit: int = 25,
+    ) -> list[dict]:
+        where_sql, params = self._search_where(
+            branch=branch,
+            search=search,
+            product=product,
+            date_type=date_type,
+            period_start=period_start,
+            period_end=period_end,
+            status=status,
+            work_center=work_center,
+            operation=operation,
+        )
+        with self as repo:
+            return repo.execute_query(
+                consumption_audit_sql.orders_search_sql(where_sql),
+                params + (int(offset), int(limit)),
+            )
+
+    def count_orders(
+        self,
+        *,
+        branch: str,
+        search: str | None = None,
+        product: str | None = None,
+        date_type: str = "emission",
+        period_start: str | None = None,
+        period_end: str | None = None,
+        status: str | None = None,
+        work_center: str | None = None,
+        operation: str | None = None,
+    ) -> int:
+        where_sql, params = self._search_where(
+            branch=branch,
+            search=search,
+            product=product,
+            date_type=date_type,
+            period_start=period_start,
+            period_end=period_end,
+            status=status,
+            work_center=work_center,
+            operation=operation,
+        )
+        with self as repo:
+            row = repo.execute_one(
+                consumption_audit_sql.orders_search_count_sql(where_sql),
+                params,
+            )
+        return int(row.get("total") or 0) if row else 0
+
+    @staticmethod
+    def _search_where(
+        *,
+        branch: str,
+        search: str | None,
+        product: str | None,
+        date_type: str,
+        period_start: str | None,
+        period_end: str | None,
+        status: str | None,
+        work_center: str | None,
+        operation: str | None,
+    ) -> tuple[str, tuple]:
+        return consumption_audit_sql.orders_search_where(
+            branch=branch,
+            search=search,
+            product=product,
+            date_type=date_type,
+            period_start=period_start,
+            period_end=period_end,
+            status=status,
+            work_center=work_center,
+            operation=operation,
+        )

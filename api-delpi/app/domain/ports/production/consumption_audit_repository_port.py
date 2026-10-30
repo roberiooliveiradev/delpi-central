@@ -59,3 +59,33 @@ class ConsumptionAuditRepositoryPort(Protocol):
     def fetch_parent_consumers(
         self, *, production_order: str, branch: str
     ) -> list[dict]: ...
+
+    def search_orders(
+        self,
+        *,
+        branch: str,
+        search: str | None = None,
+        product: str | None = None,
+        date_type: str = "emission",
+        period_start: str | None = None,
+        period_end: str | None = None,
+        status: str | None = None,
+        work_center: str | None = None,
+        operation: str | None = None,
+        offset: int = 0,
+        limit: int = 25,
+    ) -> list[dict]: ...
+
+    def count_orders(
+        self,
+        *,
+        branch: str,
+        search: str | None = None,
+        product: str | None = None,
+        date_type: str = "emission",
+        period_start: str | None = None,
+        period_end: str | None = None,
+        status: str | None = None,
+        work_center: str | None = None,
+        operation: str | None = None,
+    ) -> int: ...
