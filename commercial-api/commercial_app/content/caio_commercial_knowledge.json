@@ -1,5 +1,5 @@
 {
-  "version": "2.0",
+  "version": "3.0",
   "owner": "commercial-api",
   "audience": "caio-mcp",
   "topics": {
@@ -15,7 +15,8 @@
         "delete NUNCA executa direto: chame phase=prepare para selar a proposta e receber proposal_ref + impacto; repasse a proposta ao usuário e só execute phase=commit com o proposal_ref exato após confirmação humana explícita.",
         "confirmed=true vindo do cliente nunca autoriza exclusão — somente o handle selado pelo servidor prova a confirmação.",
         "Estados honestos: unavailable significa falha na fonte; forbidden significa falta de autorização — nunca apresente como ausência de dados.",
-        "Escopo de carteira: membros veem apenas clientes vinculados às próprias carteiras; scope_mode=membership força a carteira do usuário; sem filtro, usuários manage/team veem o recorte global autorizado."
+        "Escopo de carteira: membros veem apenas clientes vinculados às próprias carteiras; scope_mode=membership força a carteira do usuário; sem filtro, usuários manage/team veem o recorte global autorizado.",
+        "knowledge também recupera methods (method.<id>: metodologias externas curadas — nunca regra DELPI) e playbooks (playbook.<id>: roteiros que compõem casos de uso oficiais); topic vazio ou \"*\" com query seleciona os conteúdos relevantes para a pergunta."
       ]
     },
     "caio.tool_map": {
@@ -210,5 +211,1082 @@
       "topic": "products.guide",
       "note": "Guia de produtos — pendente de fonte autorizada."
     }
-  ]
+  ],
+  "methods": {
+    "abc_pareto": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "implemented",
+      "title": "Curva ABC / Pareto",
+      "objective": "Medir concentração de faturamento (ou outra métrica) por cliente, produto ou vendedor e separar o núcleo crítico da cauda.",
+      "applicability": "Perguntas sobre concentração, maiores clientes, dependência de receita, priorização de carteira.",
+      "when_not_to_use": "Não usar para medir tendência temporal nem sazonalidade; não usar quando a métrica/período/base não estiverem explícitos.",
+      "required_data": [
+        "série de faturamento por dimensão no período",
+        "período explícito",
+        "métrica e cortes (p.ex. 80/95%)"
+      ],
+      "formula": "Ordenar contribuições decrescentes; acumular percentual; classes A (~80%), B (~95%), C (restante). Cortes são convenção do analista, não regra DELPI.",
+      "limitations": [
+        "cortes A/B/C são convenção externa",
+        "concentração não prova causa",
+        "exige período e métrica declarados"
+      ],
+      "external_reference": true,
+      "keywords": [
+        "abc",
+        "pareto",
+        "concentração",
+        "concentrado",
+        "maiores clientes",
+        "dependência",
+        "curva"
+      ],
+      "trigger_questions": [
+        "Quais clientes concentram o faturamento?",
+        "Qual a concentração da carteira?"
+      ],
+      "related_capabilities": [
+        "customer.billing_series",
+        "customer.enrichment",
+        "analyze",
+        "customer_center.list"
+      ],
+      "evidence": "referência metodológica externa curada; cálculo sempre via indicadores do owner, nunca recálculo local",
+      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI"
+    },
+    "rfv": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "implemented",
+      "title": "RFV — Recência, Frequência, Valor",
+      "objective": "Segmentar clientes pelo comportamento de compra para detectar retração, inatividade e valor.",
+      "applicability": "Perguntas sobre clientes que pararam de comprar, segmentação, priorização de reativação.",
+      "when_not_to_use": "Não confundir baixa recência com churn comprovado; não aplicar sem histórico transacional autorizado e regras de pontuação documentadas.",
+      "required_data": [
+        "histórico de compras por cliente",
+        "janela temporal",
+        "regras de pontuação R/F/V explícitas"
+      ],
+      "formula": "Pontuar Recência, Frequência e Valor em faixas documentadas; combinar em segmentos. Sazonalidade deve ser declarada.",
+      "limitations": [
+        "retração é hipótese até confirmada",
+        "sazonalidade distorce recência",
+        "exige série histórica suficiente"
+      ],
+      "external_reference": true,
+      "keywords": [
+        "rfv",
+        "recência",
+        "frequência",
+        "valor",
+        "segmentação",
+        "retração",
+        "inativo",
+        "parou de comprar",
+        "churn"
+      ],
+      "trigger_questions": [
+        "Quais clientes pararam de comprar?",
+        "Quais clientes estão em retração?"
+      ],
+      "related_capabilities": [
+        "customer.enrichment",
+        "customer.billing_series",
+        "customer.search",
+        "portfolio.coverage_audit"
+      ],
+      "evidence": "referência metodológica externa curada; sinais via billing/enrichment oficiais",
+      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI"
+    },
+    "desvio_meta": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "implemented",
+      "title": "Desvio meta × realizado",
+      "objective": "Quantificar e localizar o desvio entre meta e realizado por período, carteira ou vendedor.",
+      "applicability": "Perguntas sobre atingimento de meta, desvio, gap comercial.",
+      "when_not_to_use": "Não inventar meta quando a fonte oficial não a retorna; não recalcular indicador do owner.",
+      "required_data": [
+        "meta oficial por período/escopo",
+        "realizado oficial",
+        "mesma base de comparação"
+      ],
+      "formula": "desvio = realizado - meta; atingimento% = realizado/meta × 100 — sempre com fonte e período declarados.",
+      "limitations": [
+        "fórmula do owner prevalece",
+        "meta ausente é lacuna, não zero",
+        "não projeta período futuro sem declarar"
+      ],
+      "external_reference": true,
+      "keywords": [
+        "meta",
+        "desvio",
+        "realizado",
+        "atingimento",
+        "gap",
+        "objetivo",
+        "bater a meta"
+      ],
+      "trigger_questions": [
+        "Estou batendo a meta?",
+        "Qual o desvio da meta?"
+      ],
+      "related_capabilities": [
+        "analyze",
+        "portfolio.load_summary"
+      ],
+      "evidence": "referência metodológica externa curada",
+      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI"
+    },
+    "funil_conversao": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "implemented",
+      "title": "Funil e conversão (proposta → pedido)",
+      "objective": "Analisar etapas do funil comercial, taxas de conversão e envelhecimento (aging) de propostas.",
+      "applicability": "Perguntas sobre funil, conversão de propostas, gargalos, oportunidades paradas.",
+      "when_not_to_use": "Não usar denominadores inventados; etapas e contagens vêm das fontes oficiais.",
+      "required_data": [
+        "propostas por status/etapa",
+        "pedidos gerados",
+        "janela e aging definidos"
+      ],
+      "formula": "conversão = etapa seguinte / etapa anterior, por período; aging = tempo na etapa — denominadores canônicos.",
+      "limitations": [
+        "conversão depende de denominador correto",
+        "oportunidades sem data não medem aging",
+        "não confundir proposta ativa com ganha"
+      ],
+      "external_reference": true,
+      "keywords": [
+        "funil",
+        "conversão",
+        "proposta",
+        "pedido",
+        "pipeline",
+        "oportunidade",
+        "aging",
+        "ganho",
+        "perdido"
+      ],
+      "trigger_questions": [
+        "Como está o funil de propostas?",
+        "Onde o funil trava?"
+      ],
+      "related_capabilities": [
+        "proposal.analytics_list",
+        "proposal.analytics_get",
+        "proposal.history_events"
+      ],
+      "evidence": "referência metodológica externa curada",
+      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI"
+    },
+    "risco_pedidos_otd": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "implemented",
+      "title": "Risco de pedidos / OTD",
+      "objective": "Identificar pedidos com risco de atraso ou falha de entrega cruzando abertura, produção e pontualidade.",
+      "applicability": "Perguntas sobre pedidos atrasados, risco de entrega, OTD, produção travada.",
+      "when_not_to_use": "Não declarar atraso sem data de entrega/produção oficial; OTD é indicador do owner.",
+      "required_data": [
+        "pedidos abertos com prazo",
+        "status de produção por OP",
+        "indicador OTD oficial"
+      ],
+      "formula": "risco = sinais compostos (prazo vencido + produção pendente + OTD histórico) — classificação qualitativa declarada, não score inventado.",
+      "limitations": [
+        "OTD oficial vem do indicador do owner",
+        "ausência de apontamento não prova atraso",
+        "sem dados de produção a análise é qualitativa com lacuna explícita"
+      ],
+      "external_reference": true,
+      "keywords": [
+        "risco",
+        "pedido",
+        "atraso",
+        "entrega",
+        "otd",
+        "produção",
+        "op",
+        "apontamento",
+        "prazo"
+      ],
+      "trigger_questions": [
+        "Quais pedidos estão em risco?",
+        "Qual o risco de atraso nas entregas?"
+      ],
+      "related_capabilities": [
+        "open_order.list",
+        "open_order.open_ops",
+        "production.order",
+        "production.appointments",
+        "production.product_status",
+        "analyze"
+      ],
+      "evidence": "referência metodológica externa curada; indicadores OTD são do owner",
+      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI"
+    },
+    "cinco_porques": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "implemented",
+      "title": "5 Porquês",
+      "objective": "Investigar cadeia causal de um problema comercial por perguntas sucessivas, gerando hipóteses verificáveis.",
+      "applicability": "Perguntas de causa raiz: queda de cliente, atraso recorrente, perda de propostas.",
+      "when_not_to_use": "Causas são hipóteses até validadas; não usar como afirmação de fato; não substituir evidência dos dados.",
+      "required_data": [
+        "problema bem delimitado",
+        "evidências observadas",
+        "acesso às fontes oficiais para validar cada porquê"
+      ],
+      "formula": "Perguntar 'por quê?' iterativamente (~5x) até causa plausível; registrar cada nível como hipótese com evidência ou lacuna.",
+      "limitations": [
+        "pode parar em causa superficial",
+        "viés do investigador",
+        "cada porquê exige evidência para virar fato"
+      ],
+      "external_reference": true,
+      "keywords": [
+        "causa",
+        "raiz",
+        "porquê",
+        "porque",
+        "motivo",
+        "queda",
+        "problema",
+        "investigar",
+        "5 porquês"
+      ],
+      "trigger_questions": [
+        "Por que as vendas caíram?",
+        "Qual a causa raiz do atraso?"
+      ],
+      "related_capabilities": [
+        "customer.enrichment",
+        "customer.billing_series",
+        "analyze"
+      ],
+      "evidence": "referência metodológica externa curada",
+      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI"
+    },
+    "spin_selling": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "pending_business_validation",
+      "external_reference": true,
+      "title": "SPIN Selling (Situação, Problema, Implicação, Necessidade de solução)",
+      "objective": "Estruturar descoberta consultiva em vendas B2B por perguntas que revelam valor.",
+      "applicability": "Preparação de abordagem comercial, reunião de descoberta, qualificação inicial.",
+      "when_not_to_use": "Não aplicar como script rígido; não confundir com política comercial DELPI — é metodologia externa de referência.",
+      "required_data": [
+        "contexto da conta autorizada",
+        "objetivo da conversa"
+      ],
+      "formula": "Situação → Problema → Implicação → Necessidade de solução (payoff).",
+      "limitations": [
+        "metodologia externa — adoção DELPI não comprovada",
+        "não substitui dados da conta"
+      ],
+      "keywords": [
+        "spin",
+        "perguntas consultivas",
+        "descoberta",
+        "abordagem",
+        "reunião de vendas",
+        "qualificação"
+      ],
+      "trigger_questions": [
+        "Como conduzir uma reunião de descoberta?",
+        "Qual método usar para qualificar uma oportunidade?"
+      ],
+      "related_capabilities": [
+        "customer.enrichment",
+        "proposal.analytics_get",
+        "interaction_room.*"
+      ],
+      "evidence": "referência externa — PENDING_BUSINESS_VALIDATION (responsáveis comerciais devem validar adequação)",
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência, não política DELPI"
+    },
+    "meddpicc": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "pending_business_validation",
+      "external_reference": true,
+      "title": "MEDDPICC — qualificação de oportunidade B2B complexa",
+      "objective": "Avaliar cobertura de uma oportunidade por critérios: Metrics, Economic Buyer, Decision Criteria, Decision Process, Paper Process, Identify Pain, Champion, Competition.",
+      "applicability": "Qualificação e revisão de oportunidades B2B de ciclo longo; forecast de propostas.",
+      "when_not_to_use": "Não usar como score oficial — a DELPI não comprovou adoção do método; itens sem evidência são lacunas.",
+      "required_data": [
+        "proposta/oportunidade autorizada",
+        "histórico de interações quando houver"
+      ],
+      "formula": "Checklist M-E-D-D-P-I-C-C; cada letra com evidência, hipótese ou lacuna declarada.",
+      "limitations": [
+        "método externo",
+        "exige dados de relacionamento que podem não existir no sistema",
+        "lacunas devem ser explícitas"
+      ],
+      "keywords": [
+        "meddpicc",
+        "menddic",
+        "qualificação",
+        "oportunidade",
+        "b2b",
+        "champion",
+        "decisor",
+        "critério de decisão"
+      ],
+      "trigger_questions": [
+        "Como qualificar uma oportunidade complexa?",
+        "O que falta para fechar a proposta?"
+      ],
+      "related_capabilities": [
+        "proposal.analytics_get",
+        "proposal.history_events",
+        "interaction_room.*",
+        "customer.enrichment"
+      ],
+      "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência, não política DELPI"
+    },
+    "account_planning": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "pending_business_validation",
+      "external_reference": true,
+      "title": "Account Planning — planejamento de conta estratégica",
+      "objective": "Estruturar plano de expansão para contas estratégicas: mapa de relacionamento, whitespace, metas e ações.",
+      "applicability": "Contas estratégicas da carteira, plano anual de conta, expansão cross-sell.",
+      "when_not_to_use": "Não presumir estrutura de relacionamento não registrada; premissas declaradas.",
+      "required_data": [
+        "conta autorizada na carteira",
+        "histórico de compras/mix",
+        "oportunidades ativas"
+      ],
+      "formula": "Perfil da conta → relacionamento → whitespace (produtos não comprados) → objetivos → ações → métricas.",
+      "limitations": [
+        "método externo",
+        "whitespace é hipótese comercial",
+        "depende de dados de mix autorizados"
+      ],
+      "keywords": [
+        "account planning",
+        "conta estratégica",
+        "plano de conta",
+        "whitespace",
+        "cross-sell",
+        "expansão de conta"
+      ],
+      "trigger_questions": [
+        "Como expandir a conta X?",
+        "Qual o plano para o cliente estratégico?"
+      ],
+      "related_capabilities": [
+        "customer.enrichment",
+        "customer.billing_series",
+        "proposal.analytics_list"
+      ],
+      "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência"
+    },
+    "sipoc_bpmn": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "pending_business_validation",
+      "external_reference": true,
+      "title": "SIPOC / BPMN — mapeamento de processo",
+      "objective": "Documentar processo comercial real: Suppliers→Inputs→Process→Outputs→Customers e fluxo com handoffs.",
+      "applicability": "Diagnóstico de processo comercial, mapeamento atual vs proposto, identificação de gargalos.",
+      "when_not_to_use": "Não desenhar processo 'ideal' sem evidência do atual; entrevistas/evidência antes de redesenhar.",
+      "required_data": [
+        "etapas observadas",
+        "atores",
+        "sistemas",
+        "handoffs",
+        "esperas",
+        "métricas",
+        "desconhecidos declarados"
+      ],
+      "formula": "SIPOC para escopo; BPMN para fluxo detalhado — separar processo atual, hipótese e proposta.",
+      "limitations": [
+        "fluxo real exige evidência documental/entrevista — não afirmar fluxo não demonstrado",
+        "TÉO pode receber briefing fiel quando autorizado"
+      ],
+      "keywords": [
+        "sipoc",
+        "bpmn",
+        "processo",
+        "fluxo",
+        "handoff",
+        "gargalo",
+        "mapear processo",
+        "etapas"
+      ],
+      "trigger_questions": [
+        "Como funciona o processo comercial?",
+        "Onde o processo trava?"
+      ],
+      "related_capabilities": [
+        "commercial.processes",
+        "interaction_room.*",
+        "worklist.*"
+      ],
+      "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
+      "source": "biblioteca curada CAIO 3.0 — APQC/PCF e BPMN como referências externas"
+    },
+    "ishikawa": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "pending_business_validation",
+      "external_reference": true,
+      "title": "Ishikawa (espinha de peixe) — análise causal",
+      "objective": "Organizar hipóteses de causa por categorias (método, pessoas, dados, sistema, medida, ambiente).",
+      "applicability": "Investigação de problemas recorrentes: atrasos, perdas, erros de pedido.",
+      "when_not_to_use": "Categorias organizam hipóteses — não comprovam causa; validar cada ramo com dados.",
+      "required_data": [
+        "problema delimitado",
+        "evidências por categoria quando houver"
+      ],
+      "formula": "Efeito central → categorias de causa → hipóteses → validação por evidência.",
+      "limitations": [
+        "diagrama é organizador, não prova",
+        "risco de parar em causa superficial"
+      ],
+      "keywords": [
+        "ishikawa",
+        "espinha de peixe",
+        "causa",
+        "diagrama de causa",
+        "6m",
+        "causa raiz"
+      ],
+      "trigger_questions": [
+        "Quais as possíveis causas do problema?",
+        "Organize as causas por categoria."
+      ],
+      "related_capabilities": [
+        "cinco_porques",
+        "analyze",
+        "customer.enrichment"
+      ],
+      "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência"
+    },
+    "pdca_5w2h": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "pending_business_validation",
+      "external_reference": true,
+      "title": "PDCA / 5W2H — ciclo de melhoria e plano de ação",
+      "objective": "Estruturar melhoria contínua (Plan-Do-Check-Act) e plano de ação (What, Why, Where, When, Who, How, How much).",
+      "applicability": "Planos de ação comerciais, follow-up de diagnóstico, melhoria de processo.",
+      "when_not_to_use": "Não criar tarefas por conta própria — o plano é sugestão até decisão do usuário; baseline e métrica obrigatórios.",
+      "required_data": [
+        "problema/objetivo",
+        "baseline",
+        "owner",
+        "prazo",
+        "métrica"
+      ],
+      "formula": "PDCA para ciclo; 5W2H para detalhar ação — cada ação com owner, prazo, baseline e métrica.",
+      "limitations": [
+        "método externo",
+        "execução exige confirmação humana via governed writes"
+      ],
+      "keywords": [
+        "pdca",
+        "5w2h",
+        "plano de ação",
+        "melhoria contínua",
+        "ciclo",
+        "acao corretiva"
+      ],
+      "trigger_questions": [
+        "Monte um plano de ação.",
+        "Como estruturar a melhoria?"
+      ],
+      "related_capabilities": [
+        "plan_30_60_90",
+        "task.create",
+        "worklist.mine"
+      ],
+      "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência"
+    },
+    "swot": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "pending_business_validation",
+      "external_reference": true,
+      "title": "SWOT/FOFA — análise estratégica",
+      "objective": "Estruturar forças, fraquezas, oportunidades e ameaças de conta, carteira ou oferta.",
+      "applicability": "Revisão estratégica de conta/carteira, preparação de negociação.",
+      "when_not_to_use": "Separar observação interna (dados) de percepção externa (hipótese); não inflar sem evidência.",
+      "required_data": [
+        "objeto da análise",
+        "dados internos autorizados",
+        "contexto de mercado quando houver"
+      ],
+      "formula": "Quadrante interno (forças/fraquezas) vs externo (oportunidades/ameaças) — itens internos com evidência.",
+      "limitations": [
+        "método externo",
+        "percepções externas são hipóteses sem fonte"
+      ],
+      "keywords": [
+        "swot",
+        "fofa",
+        "forças",
+        "fraquezas",
+        "oportunidades",
+        "ameaças",
+        "estratégia"
+      ],
+      "trigger_questions": [
+        "Faça um SWOT da carteira.",
+        "Quais as forças e fraquezas comerciais?"
+      ],
+      "related_capabilities": [
+        "customer.enrichment",
+        "analyze",
+        "portfolio.*"
+      ],
+      "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência"
+    },
+    "matriz_priorizacao": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "pending_business_validation",
+      "external_reference": true,
+      "title": "Matriz de priorização (impacto × urgência × esforço)",
+      "objective": "Ordenar ações comerciais por critérios e pesos explícitos.",
+      "applicability": "Priorização de plano de ação, backlog comercial, decisão entre alternativas.",
+      "when_not_to_use": "Pesos são julgamento humano declarado — não score oficial; sensibilidade deve ser declarada.",
+      "required_data": [
+        "alternativas",
+        "critérios",
+        "pesos explícitos"
+      ],
+      "formula": "Score ponderado por critério — pesos e justificativas declarados; empate resolvido por julgamento declarado.",
+      "limitations": [
+        "método externo",
+        "pesos subjetivos — mostrar premissas"
+      ],
+      "keywords": [
+        "priorização",
+        "matriz",
+        "impacto",
+        "urgência",
+        "esforço",
+        "prioridades",
+        "ranking de ações"
+      ],
+      "trigger_questions": [
+        "Priorize as ações.",
+        "O que fazer primeiro?"
+      ],
+      "related_capabilities": [
+        "plan_30_60_90",
+        "worklist.mine"
+      ],
+      "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência"
+    }
+  },
+  "playbooks": {
+    "executive_diagnosis": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "playbook",
+      "status": "implemented",
+      "title": "Diagnóstico comercial executivo",
+      "objective": "Responder 'o que mudou, qual evidência, o que fazer' para um período declarado (p.ex. últimos 90 dias).",
+      "inputs": [
+        "período explícito",
+        "escopo (carteira/vendedor/filial) quando aplicável"
+      ],
+      "permissions": [
+        "commercial.access",
+        "commercial.analytics para análises"
+      ],
+      "semantic_steps": [
+        "read portfolio.me / portfolio.list — escopo efetivo",
+        "analyze rol.summary / rol.trend — resultado oficial",
+        "read customer.billing_series / customer.enrichment — concentração e retração",
+        "read proposal.analytics_list — funil",
+        "read open_order.list + production.appointments — risco de entrega"
+      ],
+      "canonical_sources": [
+        "analytics owner use cases",
+        "api-delpi TOTVS",
+        "plugins-db carteiras"
+      ],
+      "insufficient_data": "quando indicador ausente: declarar lacuna e oferecer análise qualitativa — nunca inventar número",
+      "response_format": "conclusão → evidência → hipóteses → gaps → ações recomendadas → métricas de acompanhamento",
+      "related_methods": [
+        "desvio_meta",
+        "abc_pareto",
+        "rfv",
+        "risco_pedidos_otd"
+      ],
+      "related_capabilities": [
+        "analyze",
+        "portfolio.me",
+        "portfolio.list",
+        "customer.billing_series",
+        "customer.enrichment",
+        "proposal.analytics_list",
+        "open_order.list",
+        "production.appointments"
+      ],
+      "keywords": [
+        "diagnóstico",
+        "situação comercial",
+        "visão geral",
+        "executivo",
+        "últimos 90 dias",
+        "panorama",
+        "resumo executivo"
+      ],
+      "test_criteria": "período e escopo visíveis; números iguais aos casos de uso oficiais; hipóteses separadas",
+      "evidence": "roteiro curado CAIO 3.0",
+      "source": "biblioteca curada CAIO 3.0 — composição de casos de uso oficiais",
+      "limitations": [
+        "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
+        "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ]
+    },
+    "customers_retraction": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "playbook",
+      "status": "implemented",
+      "title": "Clientes em retração / risco de perda",
+      "objective": "Localizar clientes com queda ou interrupção de compras e priorizar reativação.",
+      "inputs": [
+        "janela de comparação",
+        "carteira/escopo"
+      ],
+      "permissions": [
+        "commercial.access"
+      ],
+      "semantic_steps": [
+        "read customer.enrichment — tendência por par cliente/loja",
+        "read customer.billing_series — série mensal",
+        "read portfolio.coverage_audit — cobertura de carteira (manage)",
+        "cruzar última compra vs janela → sinais de retração"
+      ],
+      "canonical_sources": [
+        "enrichment/billing owner",
+        "portfolio scope"
+      ],
+      "insufficient_data": "sem série suficiente: lista de candidatos qualitativa com lacuna declarada; retração não é churn comprovado",
+      "response_format": "clientes candidatos → evidência (queda/última compra) → hipóteses (sazonalidade, concorrência, problema) → ações sugeridas → lacunas",
+      "related_methods": [
+        "rfv",
+        "cinco_porques",
+        "abc_pareto"
+      ],
+      "related_capabilities": [
+        "customer.enrichment",
+        "customer.billing_series",
+        "customer.search",
+        "portfolio.coverage_audit"
+      ],
+      "keywords": [
+        "retração",
+        "pararam de comprar",
+        "clientes perdidos",
+        "inativos",
+        "queda",
+        "risco de perda",
+        "reativação",
+        "churn"
+      ],
+      "test_criteria": "somente clientes do escopo do usuário; sinais declarados como hipótese",
+      "evidence": "roteiro curado CAIO 3.0",
+      "source": "biblioteca curada CAIO 3.0 — composição de casos de uso oficiais",
+      "limitations": [
+        "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
+        "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ]
+    },
+    "expansion_opportunities": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "playbook",
+      "status": "implemented",
+      "title": "Oportunidades de expansão",
+      "objective": "Apontar contas/produtos com potencial de crescimento dentro do escopo autorizado.",
+      "inputs": [
+        "período",
+        "carteira/conta"
+      ],
+      "permissions": [
+        "commercial.access"
+      ],
+      "semantic_steps": [
+        "read customer.enrichment — mix e tendência",
+        "read proposal.analytics_list — oportunidades ativas",
+        "analyze oportunidades por colaborador quando aplicável"
+      ],
+      "canonical_sources": [
+        "enrichment",
+        "proposals analytics"
+      ],
+      "insufficient_data": "potencial é hipótese — declarar premissas",
+      "response_format": "oportunidades → evidência → premissas → ação sugerida",
+      "related_methods": [
+        "abc_pareto",
+        "funil_conversao"
+      ],
+      "related_capabilities": [
+        "customer.enrichment",
+        "proposal.analytics_list",
+        "analyze"
+      ],
+      "keywords": [
+        "expansão",
+        "crescimento",
+        "oportunidade",
+        "upsell",
+        "cross-sell",
+        "potencial",
+        "conta estratégica"
+      ],
+      "test_criteria": "sem inventar potencial; premissas explícitas",
+      "evidence": "roteiro curado CAIO 3.0",
+      "source": "biblioteca curada CAIO 3.0",
+      "limitations": [
+        "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
+        "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ]
+    },
+    "order_health": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "playbook",
+      "status": "implemented",
+      "title": "Saúde da carteira de pedidos",
+      "objective": "Avaliar pedidos abertos, riscos de entrega e dependência de produção.",
+      "inputs": [
+        "escopo",
+        "filial quando exigida"
+      ],
+      "permissions": [
+        "commercial.access",
+        "commercial.analytics"
+      ],
+      "semantic_steps": [
+        "read open_order.list / open_order.open_ops",
+        "read production.order(op) / production.appointments(op, branch)",
+        "analyze sales_order_otd.* — pontualidade oficial"
+      ],
+      "canonical_sources": [
+        "open orders BFF",
+        "production BFF",
+        "OTD owner"
+      ],
+      "insufficient_data": "sem dados de produção: sinalizar lacuna; OTD vem do owner",
+      "response_format": "estado geral → pedidos críticos → evidência → riscos → próximo passo",
+      "related_methods": [
+        "risco_pedidos_otd",
+        "desvio_meta"
+      ],
+      "related_capabilities": [
+        "open_order.list",
+        "open_order.open_ops",
+        "production.order",
+        "production.appointments",
+        "analyze"
+      ],
+      "keywords": [
+        "saúde dos pedidos",
+        "pedidos em risco",
+        "entrega",
+        "atraso",
+        "otd",
+        "produção",
+        "carteira de pedidos"
+      ],
+      "test_criteria": "OTD oficial citado; risco como classificação declarada",
+      "evidence": "roteiro curado CAIO 3.0",
+      "source": "biblioteca curada CAIO 3.0",
+      "limitations": [
+        "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
+        "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ]
+    },
+    "proposal_funnel": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "playbook",
+      "status": "implemented",
+      "title": "Funil e histórico de propostas",
+      "objective": "Analisar funil de propostas/oportunidades, conversão e aging.",
+      "inputs": [
+        "período",
+        "filial (branch obrigatória no detalhe)",
+        "escopo"
+      ],
+      "permissions": [
+        "commercial.access",
+        "commercial.analytics",
+        "commercial.proposals.view"
+      ],
+      "semantic_steps": [
+        "read proposal.analytics_list — universo por status",
+        "read proposal.analytics_get(ref, branch) — detalhe",
+        "read proposal.history_events(ref, branch, período) — linha do tempo",
+        "read proposal.get(interna) — documento + document_url"
+      ],
+      "canonical_sources": [
+        "api-delpi /commercial/proposals*",
+        "proposal-documents BFF"
+      ],
+      "insufficient_data": "proposta sem eventos não prova ausência de movimentação — declarar",
+      "response_format": "funil → conversão/aging → propostas críticas → evidência → ação",
+      "related_methods": [
+        "funil_conversao"
+      ],
+      "related_capabilities": [
+        "proposal.list",
+        "proposal.get",
+        "proposal.analytics_list",
+        "proposal.analytics_get",
+        "proposal.history_events"
+      ],
+      "keywords": [
+        "funil",
+        "propostas",
+        "conversão",
+        "oportunidades",
+        "histórico",
+        "pipeline"
+      ],
+      "test_criteria": "branch obrigatória respeitada; document_url para PDF",
+      "evidence": "roteiro curado CAIO 3.0",
+      "source": "biblioteca curada CAIO 3.0",
+      "limitations": [
+        "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
+        "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ]
+    },
+    "forecast_scenarios": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "playbook",
+      "status": "implemented",
+      "title": "Previsão com cenários e incerteza",
+      "objective": "Apoiar forecast declarando método, premissas e intervalo de incerteza.",
+      "inputs": [
+        "série histórica oficial",
+        "horizonte",
+        "premissas declaradas"
+      ],
+      "permissions": [
+        "commercial.access",
+        "commercial.analytics"
+      ],
+      "semantic_steps": [
+        "analyze rol.summary / rol.trend — base histórica oficial",
+        "read customer.billing_series — composição",
+        "declarar cenários (conservador/base/otimista) como hipóteses"
+      ],
+      "canonical_sources": [
+        "indicadores owner"
+      ],
+      "insufficient_data": "sem série suficiente: cenário qualitativo; nunca prometer precisão",
+      "response_format": "base observada → cenários com premissas → incerteza → o que mudaria o cenário",
+      "related_methods": [
+        "desvio_meta",
+        "abc_pareto"
+      ],
+      "related_capabilities": [
+        "analyze",
+        "customer.billing_series"
+      ],
+      "keywords": [
+        "previsão",
+        "forecast",
+        "projeção",
+        "cenário",
+        "expectativa",
+        "estimativa"
+      ],
+      "test_criteria": "projeção nunca apresentada como fato; intervalo/premissas explícitos",
+      "evidence": "roteiro curado CAIO 3.0",
+      "source": "biblioteca curada CAIO 3.0",
+      "limitations": [
+        "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
+        "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ]
+    },
+    "seller_portfolio_performance": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "playbook",
+      "status": "implemented",
+      "title": "Desempenho por vendedor/carteira",
+      "objective": "Comparar desempenho por vendedor ou carteira dentro da autorização do chamador.",
+      "inputs": [
+        "período",
+        "carteiras/vendedores autorizados"
+      ],
+      "permissions": [
+        "commercial.access",
+        "commercial.manage para auditoria de carteira"
+      ],
+      "semantic_steps": [
+        "read portfolio.load_summary (manage) / portfolio.me",
+        "read team.roster (manage)",
+        "analyze indicadores por escopo autorizado"
+      ],
+      "canonical_sources": [
+        "portfolio owner",
+        "analytics owner"
+      ],
+      "insufficient_data": "comparação fora do escopo é negada/declarada; sem hierarquia oficial, não ranquear pessoas",
+      "response_format": "comparação por escopo autorizado → evidência → contexto → cautelas de interpretação",
+      "related_methods": [
+        "desvio_meta",
+        "abc_pareto"
+      ],
+      "related_capabilities": [
+        "portfolio.me",
+        "portfolio.load_summary",
+        "team.roster",
+        "analyze"
+      ],
+      "keywords": [
+        "vendedor",
+        "carteira",
+        "desempenho",
+        "performance",
+        "ranking",
+        "comparar vendedores",
+        "equipe"
+      ],
+      "test_criteria": "escopo do chamador respeitado; sem ranking não autorizado",
+      "evidence": "roteiro curado CAIO 3.0",
+      "source": "biblioteca curada CAIO 3.0",
+      "limitations": [
+        "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
+        "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ]
+    },
+    "plan_30_60_90": {
+      "owner": "commercial-api",
+      "version": "3.0",
+      "source_date": "2026-10-30",
+      "access_classification": "internal",
+      "type": "playbook",
+      "status": "implemented",
+      "title": "Plano comercial 30/60/90 dias",
+      "objective": "Estruturar plano de ação comercial com prioridades, owner e métrica — sem criar tarefas por conta própria.",
+      "inputs": [
+        "diagnóstico ou objetivo",
+        "horizonte",
+        "restrições"
+      ],
+      "permissions": [
+        "commercial.access"
+      ],
+      "semantic_steps": [
+        "consolidar evidências do diagnóstico",
+        "priorizar por impacto × urgência × esforço (matriz de priorização)",
+        "sugerir acompanhamento via worklist quando o usuário decidir"
+      ],
+      "canonical_sources": [
+        "diagnóstico oficial do usuário",
+        "worklist owner"
+      ],
+      "insufficient_data": "plano sem diagnóstico → declarar premissas",
+      "response_format": "prioridades por horizonte → owner sugerido → métrica → risco — nunca registrar tasks sem confirmação",
+      "related_methods": [
+        "desvio_meta",
+        "cinco_porques"
+      ],
+      "related_capabilities": [
+        "worklist.mine",
+        "task.create",
+        "analyze"
+      ],
+      "keywords": [
+        "plano",
+        "30 dias",
+        "60 dias",
+        "90 dias",
+        "ação",
+        "prioridades",
+        "plano de ação",
+        "próximos passos"
+      ],
+      "test_criteria": "ações são sugestões até o usuário decidir; métrica por ação",
+      "evidence": "roteiro curado CAIO 3.0",
+      "source": "biblioteca curada CAIO 3.0",
+      "limitations": [
+        "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
+        "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ]
+    }
+  }
 }

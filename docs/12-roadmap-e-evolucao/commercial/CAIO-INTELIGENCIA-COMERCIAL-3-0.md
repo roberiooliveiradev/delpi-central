@@ -1,6 +1,6 @@
 # CAIO 3.0 — Inteligência Comercial e Conhecimento Especializado
 
-**Status:** VISÃO E PLANO INCREMENTAL APROVADOS PARA EXPLORAÇÃO; **NÃO IMPLEMENTADO** por este documento.  
+**Status:** P0–P3 e P5 **implementados/testados** no corpus v3.0 (métodos, roteiros e seleção contextual via `knowledge`); **P4 BLOCKED_EXTERNAL** (sem conector de busca autorizado). Ver diário em [CAIO-3-0-EXECUTION-TRAIL.md](CAIO-3-0-EXECUTION-TRAIL.md).  
 **Data:** 2026-10-30.  
 **Owner de domínio:** commercial-api / responsáveis pelos processos comerciais.  
 **Base de implementação a preservar:** CAIO 2.0, seis tools semânticas `get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`.  

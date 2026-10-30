@@ -30,12 +30,12 @@ Fluxo que deve ser demonstrado nos testes: **pergunta + contexto conversacional 
 
 | Etapa | Entrega verificável | Status | Commit | Testes/evidência | Deploy/SHA | Gaps |
 |---|---|---|---|---|---|---|
-| P0 | Inventário de fontes, perguntas, lacunas e baseline | NOT_STARTED | — | — | N/A | TO_INVENTORY |
-| P1 | Biblioteca inicial curada de 6 métodos + recuperação | NOT_STARTED | — | — | PENDING | TO_INVENTORY |
-| P2 | Roteiros de diagnóstico e análises reutilizáveis | NOT_STARTED | — | — | PENDING | TO_INVENTORY |
-| P3 | Seleção contextual e composição da resposta | NOT_STARTED | — | — | PENDING | TO_INVENTORY |
-| P4 | Pesquisa externa governada quando autorizada | NOT_STARTED | — | — | PENDING | PENDING_SECURITY_GATE |
-| P5 | Especialização B2B e processos comerciais reais | NOT_STARTED | — | — | PENDING | PENDING_BUSINESS_VALIDATION |
+| P0 | Inventário de fontes, perguntas, lacunas e baseline | IMPLEMENTED | — | [CAIO-3-0-INVENTORY.md](CAIO-3-0-INVENTORY.md) — 16 tópicos mapeados, 10 perguntas + rubrica, baseline 656/1224 | N/A | nenhum novo |
+| P1 | Biblioteca inicial curada de 6 métodos + recuperação | TESTED | — | corpus v3.0 `methods` (6) + contrato de campos testado | PENDING | validação comercial pendente |
+| P2 | Roteiros de diagnóstico e análises reutilizáveis | TESTED | — | corpus v3.0 `playbooks` (8) + contrato testado | PENDING | — |
+| P3 | Seleção contextual e composição da resposta | TESTED | — | `knowledge` com `query` seleciona método+roteiro; testes de seleção/vazamento/404 honesto | PENDING | sem histórico do host (contrato mínimo documentado) |
+| P4 | Pesquisa externa governada quando autorizada | BLOCKED_EXTERNAL | — | gate: nenhum conector/buscador autorizado existe — verificação de código | N/A | contrato de integração proposto no diário P4 |
+| P5 | Especialização B2B e processos comerciais reais | TESTED | — | +8 métodos externos `pending_business_validation` testados | PENDING | PENDING_BUSINESS_VALIDATION |
 
 `Status`: NOT_STARTED / IN_PROGRESS / IMPLEMENTED / TESTED / DEPLOYED_VERIFIED / BLOCKED_EXTERNAL / PARTIAL. Não trocar para DEPLOYED_VERIFIED sem evidência de SHA e smoke.
 
@@ -103,57 +103,57 @@ Não criar documentação duplicada; registrar implantação e utilização real
 ## Diário de execução — Devin deve preencher após cada etapa
 
 ### P0 — Registro
-- Data/owner:
-- Base HEAD / branch / worktree:
-- Fontes inventariadas / lacunas:
-- Evidências de baseline:
-- Arquivos e commit:
-- Status/veredito:
-- Próximo passo:
+- Data/owner: 2026-10-30 · commercial-api
+- Base HEAD / branch / worktree: `b453b0981c` / `main` / `.worktrees/caio-homolog-125`
+- Fontes inventariadas / lacunas: 16 tópicos mapeados com fonte/owner/status; lacunas = métodos, roteiros, seleção contextual, pesquisa externa, validação de negócio → `CAIO-3-0-INVENTORY.md`
+- Evidências de baseline: suíte CAIO 656 passed/58 skipped; commercial-api 1224 passed/3 failed (baseline preexistente); `knowledge` = lookup exato por topic (sem seleção, sem histórico host — contrato real documentado)
+- Arquivos e commit: `docs/12-roadmap-e-evolucao/commercial/CAIO-3-0-INVENTORY.md` (novo artefato canônico)
+- Status/veredito: IMPLEMENTED
+- Próximo passo: P1 corpus `methods` + recuperação tipada
 
 ### P1 — Registro
-- Base HEAD:
-- Métodos incorporados (IDs e fontes):
-- Contratos/arquivos alterados:
-- Testes positivos e negativos:
-- Commit/push/deployed SHA:
-- Gaps/validação de negócio:
-- Status/veredito:
+- Base HEAD: `b453b0981c`
+- Métodos incorporados (IDs e fontes): `abc_pareto`, `rfv`, `desvio_meta`, `funil_conversao`, `risco_pedidos_otd`, `cinco_porques` — corpus `methods` v3.0, todos `external_reference: true` (curadoria externa, não regra DELPI)
+- Contratos/arquivos alterados: `caio_commercial_knowledge.json` v2.0→v3.0 (`methods` dict com id/type/objective/applicability/required_data/formula/limitations/when_not_to_use/keywords/trigger_questions/related_capabilities/owner/version/source_date/access_classification/status); `semantic_bridge.tool_knowledge` resolve `method.<id>` e bare id
+- Testes positivos e negativos: contrato de campos por método; `external_reference` obrigatório; bare-id resolution; 404 honesto com `available_ids`; source/version auditáveis
+- Commit/push/deployed SHA: PENDING (deploy junto a P1–P3)
+- Gaps/validação de negócio: métodos são referência externa; adequação aos processos DELPI = validação pendente dos responsáveis
+- Status/veredito: TESTED
 
 ### P2 — Registro
-- Base HEAD:
-- Roteiros incorporados:
-- Fontes e operações relacionadas:
-- Evidência dos relatórios e testes:
-- Commit/push/deployed SHA:
-- Gaps:
-- Status/veredito:
+- Base HEAD: `b453b0981c`
+- Roteiros incorporados: 8 — `executive_diagnosis`, `customers_retraction`, `expansion_opportunities`, `order_health`, `proposal_funnel`, `forecast_scenarios`, `seller_portfolio_performance`, `plan_30_60_90` (corpus `playbooks` v3.0)
+- Fontes e operações relacionadas: cada roteiro declara `semantic_steps` com capabilities reais (portfolio.*, customer.*, proposal.* com branch, open_order.*, production.*, analyze, worklist.*), `canonical_sources`, `permissions`, `insufficient_data`, `response_format` (conclusão→evidência→gap→próximo passo), `test_criteria`
+- Evidência dos relatórios e testes: contrato de campos por roteiro; `semantic_steps`/`response_format`/`insufficient_data`/`permissions` obrigatórios; nenhum roteiro cria tool nova — compõe tools existentes
+- Commit/push/deployed SHA: PENDING (deploy junto a P1–P3)
+- Gaps: execução ponta a ponta dos roteiros é composição do agente — validação de saída completa depende de rodada autenticada
+- Status/veredito: TESTED
 
 ### P3 — Registro
-- Base HEAD:
-- Contrato de contexto efetivo:
-- Recuperação e seleção testadas:
-- Casos de vazamento/autorização negativos:
-- Commit/push/deployed SHA:
-- Gaps:
-- Status/veredito:
+- Base HEAD: `b453b0981c`
+- Contrato de contexto efetivo: MCP recebe apenas `topic`/`task`/`query` explícitos — sem histórico do chat, sem memória persistente, sem RAG/buscador (comprovado em código e documentado no inventário P0); seleção opera sobre o query recebido
+- Recuperação e seleção testadas: `topic` vazio/`*`/`select`/`search` + `query` → seleção por score sobre title/keywords/trigger_questions, top-5 com provenance (`id/type/title/objective/source/owner/version/access_classification/external_reference/status/related_capabilities/limitations/conversation_relevance`)
+- Casos de vazamento/autorização negativos: service principal → 403; seleção retorna só orientação interna (`access_classification: internal`) — sem dados de carteira/registros, logo sem vazamento cross-scope; consulta sem match → 404 honesto com ids disponíveis
+- Commit/push/deployed SHA: PENDING
+- Gaps: seleção por keyword simples (sem embeddings) — adequada ao corpus atual; reavaliar quando corpus crescer
+- Status/veredito: TESTED
 
 ### P4 — Registro
-- Base HEAD:
-- Conector/gate autorizado (evidência):
-- Fonte pública, data e trust boundary:
-- Tests de segurança:
-- Commit/push/deployed SHA OU motivo BLOCKED_EXTERNAL:
-- Status/veredito:
+- Base HEAD: `b453b0981c`
+- Conector/gate autorizado (evidência): **nenhum conector/buscador web autorizado existe** — busca no código (commercial-api, plugins/commercial, docs CAIO) não encontra web_search/conector externo; a própria visão marca pesquisa externa como proposta sujeita a gate
+- Fonte pública, data e trust boundary: N/A — gate não atendido
+- Tests de segurança: N/A — nada implementado; nenhum dado interno foi transmitido a terceiros
+- Commit/push/deployed SHA OU motivo BLOCKED_EXTERNAL: `BLOCKED_EXTERNAL` — entrega alternativa conforme a trilha: biblioteca curada offline implementada (P1/P5 `methods`, com `external_reference` marcado) + contrato proposto já descrito na visão §5 (fontes confiáveis, data, atribuição, limitação de domínio, não exfiltração, proteção contra prompt injection, isolamento web↔writes). Próxima ação: submeter contrato ao security gate antes de qualquer implementação
+- Status/veredito: BLOCKED_EXTERNAL
 
 ### P5 — Registro
-- Base HEAD:
-- Métodos de vendas/processos e fontes:
-- Validação com owner do negócio ou PENDING:
-- Cenários e resultados:
-- Commit/push/deployed SHA:
-- Gaps:
-- Status/veredito:
+- Base HEAD: `b453b0981c`
+- Métodos de vendas/processos e fontes: `spin_selling`, `meddpicc`, `account_planning`, `sipoc_bpmn`, `ishikawa`, `pdca_5w2h`, `swot`, `matriz_priorizacao` — corpus `methods` v3.0 (14 métodos totais), referências externas citadas na visão (SPIN, MEDDPICC, SIPOC/BPMN, PDCA/5W2H, SWOT, matriz de priorização)
+- Validação com owner do negócio ou PENDING: `status: pending_business_validation` em todos — responsáveis comerciais devem validar adequação DELPI; nenhum método é apresentado como política interna
+- Cenários e resultados: recuperação `method.<id>`/bare id; seleção por query ("qualificar oportunidade b2b" → meddpicc); campo `external_reference`+`status` auditáveis por teste
+- Commit/push/deployed SHA: PENDING
+- Gaps: validação de negócio pendente (documentado, não contornável); TÉO briefing apenas quando autorizado
+- Status/veredito: TESTED (com validação de negócio pendente declarada)
 
 ## Relatório final e encerramento
 

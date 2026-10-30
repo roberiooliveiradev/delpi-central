@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
@@ -582,18 +583,132 @@ def _knowledge_document() -> dict[str, Any]:
     return _KNOWLEDGE_DOC
 
 
+_KNOWLEDGE_COLLECTIONS = ("topics", "methods", "playbooks")
+_SELECTION_CAP = 5
+
+
+def _knowledge_entry(doc: dict[str, Any], key: str):
+    """Resolve a knowledge id across collections.
+
+    Accepts the plain key (``commercial.proposals``), the namespaced
+    form (``method.abc_pareto`` / ``playbook.order_health``) or the
+    bare id of a method/playbook."""
+    for collection in _KNOWLEDGE_COLLECTIONS:
+        entries = doc.get(collection) or {}
+        if key in entries:
+            return collection, entries[key]
+        prefix = f"{collection[:-1]}."
+        if key.startswith(prefix) and key[len(prefix):] in entries:
+            return collection, entries[key[len(prefix):]]
+        if key in {f"{collection[:-1]}.{i}" for i in entries}:
+            return collection, entries[key.split(".", 1)[1]]
+    return None, None
+
+
+def _knowledge_select(
+    doc: dict[str, Any], query: str | None
+) -> CallToolResult:
+    """Contextual selection over the authorized corpus.
+
+    Scores topics/methods/playbooks by keyword match on title,
+    keywords and trigger questions; returns a minimal package with
+    provenance — never the whole corpus. All entries share the same
+    internal access classification enforced by the human gate above,
+    so selection cannot leak cross-scope data (it returns guidance,
+    not records)."""
+    terms = {
+        t
+        for t in re.split(r"[^\wÀ-ÿ]+", (query or "").lower())
+        if len(t) >= 3
+    }
+    ranked: list[tuple[int, str, str, dict[str, Any]]] = []
+    for collection in _KNOWLEDGE_COLLECTIONS:
+        kind = collection[:-1]  # topic|method|playbook
+        for entry_id, entry in (doc.get(collection) or {}).items():
+            if not isinstance(entry, dict):
+                continue
+            haystack = " ".join(
+                str(v)
+                for v in [
+                    entry.get("title", ""),
+                    entry.get("objective", ""),
+                    " ".join(entry.get("keywords") or []),
+                    " ".join(entry.get("trigger_questions") or []),
+                ]
+            ).lower()
+            score = sum(1 for t in terms if t in haystack)
+            if score:
+                ranked.append((score, kind, entry_id, entry))
+    ranked.sort(key=lambda item: (-item[0], item[1], item[2]))
+    if not ranked:
+        return _err(
+            "Nenhum conteúdo de conhecimento corresponde à consulta.",
+            status_code=404,
+            code="not_found",
+            data={
+                "available_ids": {
+                    c: sorted((doc.get(c) or {}).keys())
+                    for c in _KNOWLEDGE_COLLECTIONS
+                },
+            },
+        )
+    items = []
+    for score, kind, entry_id, entry in ranked[:_SELECTION_CAP]:
+        items.append(
+            {
+                "id": f"{kind}.{entry_id}",
+                "type": kind,
+                "title": entry.get("title"),
+                "objective": entry.get("objective"),
+                "source": entry.get("source"),
+                "owner": entry.get("owner", doc.get("owner")),
+                "version": entry.get("version", doc.get("version")),
+                "access_classification": entry.get(
+                    "access_classification"
+                ),
+                "external_reference": entry.get(
+                    "external_reference", False
+                ),
+                "status": entry.get("status"),
+                "related_capabilities": entry.get(
+                    "related_capabilities"
+                ),
+                "limitations": entry.get("limitations"),
+                "conversation_relevance": score,
+            }
+        )
+    return _ok(
+        {
+            "selection": items,
+            "retrieval": (
+                "fetch full guidance via knowledge topic=<id> — "
+                "methods are external references, never DELPI rules; "
+                "playbooks compose official use cases only."
+            ),
+            "knowledge_version": doc.get("version"),
+        },
+        "Seleção contextual de conhecimento.",
+    )
+
+
 def tool_knowledge(
     *,
-    topic: str,
+    topic: str | None = None,
     task: str | None = None,
     query: str | None = None,
 ) -> CallToolResult:
-    """Versioned owner-authorized Commercial guidance."""
+    """Versioned owner-authorized Commercial guidance.
+
+    ``topic`` fetches one entry (``topic``/``method``/``playbook``
+    id); an empty topic or ``"*"`` with ``query`` selects the
+    relevant entries for the question (contextual selection)."""
     try:
         bridge._require_commercial_human()
         key = (topic or "").strip().lower()
         doc = _knowledge_document()
-        entry = (doc.get("topics") or {}).get(key)
+        if not key or key in {"*", "select", "search"}:
+            return _knowledge_select(doc, query or task)
+        collection, entry = _knowledge_entry(doc, key)
         if entry is None:
             planned = {
                 t["topic"]: t for t in doc.get("planned_topics", [])
@@ -610,19 +725,21 @@ def tool_knowledge(
                 status_code=404,
                 code="not_found",
                 data={
-                    "available_topics": sorted(
-                        (doc.get("topics") or {}).keys()
-                    ),
+                    "available_ids": {
+                        c: sorted((doc.get(c) or {}).keys())
+                        for c in _KNOWLEDGE_COLLECTIONS
+                    },
                     "planned_topics": sorted(planned),
                 },
             )
         return _ok(
             {
                 "topic": key,
+                "type": collection[:-1],
                 "task": task,
                 "query": query,
                 "knowledge_version": doc.get("version"),
-                "owner": doc.get("owner"),
+                "owner": entry.get("owner", doc.get("owner")),
                 **entry,
             },
             "Conhecimento comercial versionado.",

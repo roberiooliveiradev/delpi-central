@@ -669,7 +669,177 @@ def test_knowledge_unknown_topic_lists_available():
     assert result.is_error is True
     payload = result.structured_content
     assert payload["status_code"] == 404
-    assert payload["data"]["available_topics"]
+    assert payload["data"]["available_ids"]["topics"]
+
+
+# --- CAIO 3.0 P1/P2: methods + playbooks contract ------------------------------
+
+_KNOWLEDGE_CONTRACT_FIELDS = (
+    "type", "title", "objective", "source", "owner", "version",
+    "access_classification", "status", "related_capabilities",
+    "limitations",
+)
+
+
+def test_knowledge_methods_contract_fields():
+    _set_context(_human_user())
+    doc = sem._knowledge_document()
+    methods = doc.get("methods") or {}
+    assert len(methods) >= 6, "P1 exige 6 métodos pilotos"
+    for mid in methods:
+        result = sem.tool_knowledge(topic=f"method.{mid}")
+        assert result.is_error is False, mid
+        data = result.structured_content["data"]
+        for field in _KNOWLEDGE_CONTRACT_FIELDS:
+            assert data.get(field) is not None, (mid, field)
+        assert data["type"] == "method"
+        assert data["external_reference"] is True, (
+            f"{mid}: método externo deve declarar que não é "
+            "regra DELPI"
+        )
+        assert data["required_data"], mid
+        assert data["when_not_to_use"], mid
+
+
+def test_knowledge_playbooks_contract_fields():
+    _set_context(_human_user())
+    doc = sem._knowledge_document()
+    playbooks = doc.get("playbooks") or {}
+    assert len(playbooks) >= 8, "P2 exige 8 roteiros"
+    for pid in playbooks:
+        result = sem.tool_knowledge(topic=f"playbook.{pid}")
+        assert result.is_error is False, pid
+        data = result.structured_content["data"]
+        for field in _KNOWLEDGE_CONTRACT_FIELDS:
+            assert data.get(field) is not None, (pid, field)
+        assert data["type"] == "playbook"
+        assert data["semantic_steps"], pid
+        assert data["response_format"], pid
+        assert data["insufficient_data"], pid
+        assert data["permissions"], pid
+
+
+def test_knowledge_resolves_bare_method_and_playbook_ids():
+    _set_context(_human_user())
+    for key, expected in (
+        ("rfv", "method"),
+        ("order_health", "playbook"),
+    ):
+        result = sem.tool_knowledge(topic=key)
+        assert result.is_error is False, key
+        assert result.structured_content["data"]["type"] == expected
+
+
+def test_knowledge_unknown_method_lists_namespaces():
+    _set_context(_human_user())
+    result = sem.tool_knowledge(topic="method.nonexistent")
+    assert result.is_error is True
+    payload = result.structured_content
+    assert payload["status_code"] == 404
+    assert "methods" in payload["data"]["available_ids"]
+
+
+# --- CAIO 3.0 P3: contextual selection -------------------------------------------
+
+
+def test_knowledge_query_selects_retraction_method():
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        query="quais clientes pararam de comprar ou reduziram"
+    )
+    assert result.is_error is False
+    items = result.structured_content["data"]["selection"]
+    ids = {i["id"] for i in items}
+    assert "method.rfv" in ids
+    assert "playbook.customers_retraction" in ids
+
+
+def test_knowledge_query_selects_order_risk_playbook():
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        query="quais pedidos estão em risco de atraso na entrega"
+    )
+    assert result.is_error is False
+    ids = {
+        i["id"]
+        for i in result.structured_content["data"]["selection"]
+    }
+    assert "method.risco_pedidos_otd" in ids
+    assert "playbook.order_health" in ids
+
+
+def test_knowledge_selection_is_bounded_and_provenanced():
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        topic="*", query="meta desvio realizado gap"
+    )
+    assert result.is_error is False
+    items = result.structured_content["data"]["selection"]
+    assert 0 < len(items) <= 5
+    for item in items:
+        assert item["id"].split(".", 1)[0] in {
+            "topic", "method", "playbook",
+        }
+        assert item["source"]
+        assert item["version"]
+        assert item["access_classification"] == "internal"
+        assert item["conversation_relevance"] >= 1
+
+
+def test_knowledge_selection_no_match_is_honest_404():
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        query="zzzqqq unrelated tokens"
+    )
+    assert result.is_error is True
+    payload = result.structured_content
+    assert payload["status_code"] == 404
+    assert payload["data"]["available_ids"]["methods"]
+
+
+def test_knowledge_b2b_methods_are_external_references():
+    """P5: B2B/process methods are curated external references —
+    pending business validation, never DELPI rules."""
+    _set_context(_human_user())
+    doc = sem._knowledge_document()
+    methods = doc.get("methods") or {}
+    for mid in (
+        "spin_selling", "meddpicc", "account_planning",
+        "sipoc_bpmn", "ishikawa", "pdca_5w2h", "swot",
+        "matriz_priorizacao",
+    ):
+        assert mid in methods, mid
+        result = sem.tool_knowledge(topic=f"method.{mid}")
+        assert result.is_error is False, mid
+        data = result.structured_content["data"]
+        assert data["external_reference"] is True, mid
+        assert data["status"] == "pending_business_validation", mid
+        assert "DELPI" in data["source"] or "externa" in data["source"]
+
+
+def test_knowledge_query_selects_b2b_qualification():
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        query="como qualificar uma oportunidade b2b complexa"
+    )
+    assert result.is_error is False
+    ids = {
+        i["id"]
+        for i in result.structured_content["data"]["selection"]
+    }
+    assert "method.meddpicc" in ids
+
+
+def test_knowledge_selection_requires_human_principal():
+    _set_context(
+        _human_user(
+            principal_type="service",
+            permissions=["commercial.access"],
+        )
+    )
+    result = sem.tool_knowledge(query="qualquer coisa")
+    assert result.is_error is True
+    assert result.structured_content["status_code"] == 403
 
 
 def test_knowledge_required_domain_topics_present():
