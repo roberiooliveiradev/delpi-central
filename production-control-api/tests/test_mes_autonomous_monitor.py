@@ -221,6 +221,67 @@ def test_increment_opens_autonomous_producing():
     assert observer["last_increment_at"] == clock.at
 
 
+def test_continuous_increments_preserve_single_producing_period():
+    """Produção contínua (~1h, múltiplos pulsos): um único producing
+    aberto, mesmo id e started_at — sem fragmentação por incremento."""
+    audit = FakeAudit()
+    service, _, pulse, observers, states, downtimes, clock = _monitor(
+        audit=audit
+    )
+    service.tick_all()  # baseline
+    pulse.devices = [_device(counter=101)]
+    clock.at = BASE + timedelta(seconds=5)
+    assert service.tick_all() == 1
+    open_first = _open_states(states)[0]
+    first_id = open_first["id"]
+    first_started = open_first["started_at"]
+
+    # 12 incrementos a cada 5 min (~1h) — limiar de parada nunca atingido.
+    for i in range(2, 14):
+        pulse.devices = [_device(counter=100 + i)]
+        clock.at = BASE + timedelta(minutes=5 * (i - 1))
+        assert service.tick_all() == 0  # cursor avança; fato operacional intacto
+        open_now = _open_states(states)
+        assert len(open_now) == 1
+        assert open_now[0]["id"] == first_id
+        assert open_now[0]["started_at"] == first_started
+        assert open_now[0]["state"] == "producing"
+        assert open_now[0]["run_id"] is None
+        assert open_now[0]["ended_at"] is None
+
+    assert len([e for e in states.events if e["state"] == "producing"]) == 1
+    assert downtimes.events == []
+    started_audits = [
+        a for a in audit.events if a["action"] == "autonomous_producing_started"
+    ]
+    assert len(started_audits) == 1
+    observer = observers.get(branch="01", work_center="CT01")
+    assert observer["last_counter"] == 113
+    assert observer["last_increment_at"] == clock.at
+
+
+def test_activity_while_already_producing_is_idempotent_on_lifecycle():
+    """Irmão: record_autonomous_resumed sem parada aberta não muta estado;
+    producing idempotente preserva o evento."""
+    mes, states, _downtimes = make_mes()
+    conn = FakeConn()
+    at0 = BASE
+    opened = mes.record_autonomous_producing(
+        branch="01", work_center="CT01", conn=conn, at=at0
+    )
+    assert opened is not None
+    assert mes.record_autonomous_resumed(
+        branch="01", work_center="CT01", conn=conn, at=at0 + timedelta(seconds=10)
+    ) is None
+    assert mes.record_autonomous_producing(
+        branch="01", work_center="CT01", conn=conn, at=at0 + timedelta(seconds=10)
+    ) is None
+    open_now = _open_states(states)[0]
+    assert open_now["id"] == opened["id"]
+    assert open_now["started_at"] == at0
+    assert len(states.events) == 1
+
+
 # ---------- Parada autônoma (AC-02) ----------
 
 
@@ -295,6 +356,36 @@ def test_returning_counter_closes_downtime_without_duplication():
     assert len(states_open) == 1
     assert states_open[0]["state"] == "producing"
     assert states_open[0]["run_id"] is None
+
+
+def test_produce_stop_resume_creates_distinct_producing_periods():
+    """Negativo do contínuo: produce → stop → resume gera dois producing
+    distintos; só a retomada após parada fecha/abre estado."""
+    audit = FakeAudit()
+    service, _, pulse, _, states, downtimes, clock = _monitor(audit=audit)
+    service.tick_all()
+    pulse.devices = [_device(counter=101)]
+    clock.at = BASE + timedelta(seconds=5)
+    service.tick_all()
+    first = _open_states(states)[0]
+
+    clock.at = BASE + timedelta(seconds=5 + THRESHOLD + 1)
+    service.tick_all()
+    assert _open_states(states)[0]["state"] == "stopped"
+
+    pulse.devices = [_device(counter=110)]
+    resume_at = BASE + timedelta(seconds=5 + THRESHOLD + 40)
+    clock.at = resume_at
+    assert service.tick_all() == 1
+    second = _open_states(states)[0]
+    assert second["state"] == "producing"
+    assert second["id"] != first["id"]
+    assert second["started_at"] == resume_at
+    assert first["ended_at"] is not None
+    producing = [e for e in states.events if e["state"] == "producing"]
+    assert len(producing) == 2
+    ended = [a for a in audit.events if a["action"] == "automatic_downtime_ended"]
+    assert len(ended) == 1
 
 
 # ---------- Baseline/epoch/dispositivo (AC-09, AC-10) ----------
@@ -434,10 +525,13 @@ def test_reconnect_then_increment_then_idle_uses_new_baseline():
     new_increment = reconnect + timedelta(seconds=10)
     pulse.devices = [_device(counter=102)]
     clock.at = new_increment
-    assert service.tick_all() == 1
+    # producing autônomo permanece aberto no gap degradado — incremento
+    # só avança o cursor (sem reabrir fato / sem audit falso).
+    assert service.tick_all() == 0
     assert observers.get(branch="01", work_center="CT01")[
         "last_increment_at"
     ] == new_increment
+    assert _open_states(states)[0]["state"] == "producing"
 
     clock.at = new_increment + timedelta(seconds=THRESHOLD + 1)
     assert service.tick_all() == 1

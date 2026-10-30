@@ -423,22 +423,27 @@ class MesRunLifecycleService:
         at: datetime,
     ) -> dict[str, Any] | None:
         """Incremento após parada autônoma: fecha parada/estado e reabre
-        producing sem run. None quando não havia parada aberta —
-        nesse caso a retomada é apenas producing."""
-        open_state = self._states.get_open(
-            branch=branch, work_center=work_center, conn=conn
-        )
+        producing sem run.
+
+        Só age quando há parada autônoma aberta. Sem parada aberta retorna
+        ``None`` sem mutar o estado — o chamador usa
+        ``record_autonomous_producing`` (idempotente) para abrir ou
+        preservar o producing contínuo. Pulsos sucessivos durante produção
+        contínua **não** podem encerrar/reabrir o evento aberto.
+        """
         open_dt = self._downtimes.get_open(
             branch=branch, work_center=work_center, conn=conn
         )
-        if open_dt is not None:
-            if open_dt.get("run_id") is not None:
-                raise DowntimeConflict(
-                    "Existe parada aberta de um run neste posto."
-                )
-            self._downtimes.close_open(
-                branch=branch, work_center=work_center, ended_at=at, conn=conn
+        if open_dt is None:
+            # Sem parada a retomar: não fragmente producing já aberto.
+            return None
+        if open_dt.get("run_id") is not None:
+            raise DowntimeConflict(
+                "Existe parada aberta de um run neste posto."
             )
+        open_state = self._states.get_open(
+            branch=branch, work_center=work_center, conn=conn
+        )
         if open_state is not None:
             if open_state.get("run_id") is not None:
                 raise MesStateConflict(
@@ -447,6 +452,9 @@ class MesRunLifecycleService:
             self._states.close_open(
                 branch=branch, work_center=work_center, ended_at=at, conn=conn
             )
+        self._downtimes.close_open(
+            branch=branch, work_center=work_center, ended_at=at, conn=conn
+        )
         self._states.open_event(
             branch=branch,
             work_center=work_center,

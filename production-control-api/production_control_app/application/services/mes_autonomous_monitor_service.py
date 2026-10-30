@@ -249,10 +249,14 @@ class MesAutonomousMonitorService:
                 closed_dt = self._mes.record_autonomous_resumed(
                     branch=branch, work_center=work_center, conn=conn, at=at
                 )
+                opened = None
                 if closed_dt is None:
-                    self._mes.record_autonomous_producing(
+                    # Abre producing só na primeira atividade; incrementos
+                    # seguintes com producing já aberto são no-op (None).
+                    opened = self._mes.record_autonomous_producing(
                         branch=branch, work_center=work_center, conn=conn, at=at
                     )
+                state_changed = closed_dt is not None or opened is not None
                 self._observers.upsert(
                     branch=branch,
                     work_center=work_center,
@@ -266,7 +270,7 @@ class MesAutonomousMonitorService:
                     last_seen_at=seen_at,
                     conn=conn,
                 )
-                if self._audit is not None:
+                if state_changed and self._audit is not None:
                     self._audit.append(
                         branch=branch,
                         work_center=work_center,
@@ -289,21 +293,23 @@ class MesAutonomousMonitorService:
                             ),
                         },
                     )
-                self._notify(
-                    branch,
-                    work_center,
-                    reason=(
-                        "automatic_downtime_ended"
-                        if closed_dt is not None
-                        else "autonomous_activity"
-                    ),
-                    extra={"operationalState": "producing", "runId": None},
-                )
-                logger.info(
-                    "mes_autonomous_activity branch=%s work_center=%s resumed=%s",
-                    branch, work_center, closed_dt is not None,
-                )
-                return 1
+                if state_changed:
+                    self._notify(
+                        branch,
+                        work_center,
+                        reason=(
+                            "automatic_downtime_ended"
+                            if closed_dt is not None
+                            else "autonomous_activity"
+                        ),
+                        extra={"operationalState": "producing", "runId": None},
+                    )
+                    logger.info(
+                        "mes_autonomous_activity branch=%s work_center=%s resumed=%s",
+                        branch, work_center, closed_dt is not None,
+                    )
+                    return 1
+                return 0
 
             if action is AutonomousAction.STOPPED:
                 started_at = decision.started_at or at
