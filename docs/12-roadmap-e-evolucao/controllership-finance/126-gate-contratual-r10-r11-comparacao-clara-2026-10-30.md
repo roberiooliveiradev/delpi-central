@@ -375,3 +375,21 @@ corpus → publish governado — **sem ingestão produtiva neste gate**.
 E2 api-delpi (SD1/SD2/CTT) → E3 BFF proxies + `analysis/report-comparison`
 → E4 MFE páginas R10/R11 com findings → E6 CLARA `analyze(report_comparison)`
 + `read` R10/R11 → E7 fichas → E8 corpus/Help → E9 paridade → E10 deploy.
+
+## 20. Status pós-stage-01 (2026-10-31) — contrato R10 `IMPLEMENTED`
+
+Execução `CF-PROC0072-R10-IMPLEMENTATION-STAGE-01` (doc 127 Etapa 1).
+Divergências entre o alvo do §17 e o contrato entregue — registradas, não
+silenciadas:
+
+| Aspecto | TARGET (§17) | Entregue (stage-01) | Nota |
+|---|---|---|---|
+| Rota produtor | `GET /controllership/cost-center-expenses` | `GET /financeiro/cost-center-expenses` (+`/export`) na api-delpi | prefixo `/financeiro` = padrão vigente do domínio no repo (não `/controllership`) |
+| Rota BFF | — | `GET /closing/cost-center-expenses` (+`/export`) | mesma família dos proxies `closing/*` |
+| CLARA | `read(report.cost_center_expenses)` | idem — registrado em `READ_ACTIONS`; handler chama a mesma rota BFF | paridade por reúso de rota |
+| `universe` | `view` único | `universe`∈{`calculation`,`investigation`} **+** `view`∈{`all`,`divergences`,`unclassified`} | separação explícita dos dois universos (gate 2 do plano) |
+| Findings | DV-R10-01..06 | executados DV-R10-01/02/04; `costClass=UNCLASSIFIED` (D-01); DV-R10-03/06 declaradas `implemented:false` + `pendingReason` (E10a) | findings sempre `POSSIBLE_DIVERGENCE` |
+| CTT | `TO_INVENTORY` | `TOP 1 OUTER APPLY` CTT010 (filial específica → fallback filial-branca) | snapshot vigente; **não** comprova validade histórica |
+| Paridade | 353 linhas / R$ 169.704,12 | **reproduzida ao vivo** no TOTVS: 353 / R$ 169.704,12 / 139 docs / 46 buckets CC (45 + grupo sem-CC) | `PROVEN` para 2026-09 f01 |
+
+E10a, E10b, E11a, E11b, LISTA-13 e G6 permanecem `PENDING`/`DECISION_REQUIRED` conforme §19.

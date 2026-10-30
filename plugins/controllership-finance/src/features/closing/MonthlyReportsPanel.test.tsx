@@ -739,6 +739,13 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(onOpen).toHaveBeenCalledWith("stock-movements");
 
     fireEvent.click(
+      screen.getByRole("button", {
+        name: /Despesas por centro de custo — R10/,
+      }),
+    );
+    expect(onOpen).toHaveBeenCalledWith("cost-center-expenses");
+
+    fireEvent.click(
       screen.getByRole("button", { name: /Material em processo — R08/ }),
     );
     expect(onOpen).toHaveBeenCalledWith("work-in-process");
@@ -751,7 +758,7 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(screen.queryByText("RELATÓRIO")).toBeNull();
     expect(screen.queryByText("DESCRIÇÃO")).toBeNull();
     expect(screen.getAllByText("Disponível").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Abrir relatório").length).toBe(6);
+    expect(screen.getAllByText("Abrir relatório").length).toBe(7);
   });
 
   it("matriz R01–R15 fica em rastreabilidade técnica expansível", async () => {

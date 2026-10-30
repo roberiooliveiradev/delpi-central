@@ -739,6 +739,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "financeiro_inventory_adjustments_export", "document_export"
     ),
     "get_financeiro_cpv": RouteContract("financeiro_cpv", "scalar"),
+    "get_financeiro_cost_center_expenses": RouteContract(
+        "financeiro_cost_center_expenses", "paged_list"
+    ),
+    "export_financeiro_cost_center_expenses": RouteContract(
+        "financeiro_cost_center_expenses_export", "document_export"
+    ),
     "get_financeiro_work_in_process": RouteContract(
         "financeiro_work_in_process", "paged_list"
     ),

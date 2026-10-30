@@ -18,6 +18,7 @@ import {
   CfEmptyState,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
+import { CostCenterExpensesPage } from "./CostCenterExpensesPage";
 import { FinancialSettlementsPage } from "./FinancialSettlementsPage";
 import { InventoryAdjustmentsPage } from "./InventoryAdjustmentsPage";
 import { StockInventoryPage } from "./StockInventoryPage";
@@ -32,6 +33,7 @@ export type ReportKey =
   | "stock-movements"
   | "stock-kardex"
   | "inventory-adjustments"
+  | "cost-center-expenses"
   | "work-in-process";
 
 export type ReportFamily = "settlements" | "stock";
@@ -48,6 +50,7 @@ export const REPORT_KEY_TO_FAMILY: Record<ReportKey, ReportFamily> = {
   "stock-movements": "stock",
   "stock-kardex": "stock",
   "inventory-adjustments": "stock",
+  "cost-center-expenses": "settlements",
   "work-in-process": "stock",
 };
 
@@ -57,6 +60,7 @@ export const REPORT_KEY_LABELS: Record<ReportKey, string> = {
   "stock-movements": "Entradas e saídas",
   "stock-kardex": "Kardex e CPV",
   "inventory-adjustments": "Inventários",
+  "cost-center-expenses": "Despesas por centro de custo",
   "work-in-process": "Material em processo",
 };
 
@@ -67,6 +71,7 @@ export function isReportKey(value: string | undefined): value is ReportKey {
     value === "stock-movements" ||
     value === "stock-kardex" ||
     value === "inventory-adjustments" ||
+    value === "cost-center-expenses" ||
     value === "work-in-process"
   );
 }
@@ -114,6 +119,8 @@ export function MonthlyReportPage({
         <StockKardexPage reportContext={{ period }} />
       ) : reportKey === "inventory-adjustments" ? (
         <InventoryAdjustmentsPage reportContext={{ period }} />
+      ) : reportKey === "cost-center-expenses" ? (
+        <CostCenterExpensesPage reportContext={{ period }} />
       ) : reportKey === "work-in-process" ? (
         <WorkInProcessPage reportContext={{ period }} />
       ) : (

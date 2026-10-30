@@ -984,3 +984,114 @@ def get_closing_cpv(
         },
         operation_id="get_closing_cpv",
     )
+
+
+# --- R10 (doc 126, IMPLEMENTATION-STAGE-01) — proxy governado do
+# owner api-delpi. Dois universos estritos: ``calculation`` (seleção
+# histórica documentada) e ``investigation`` (linhas da competência
+# fora da seleção). O BFF não recalcula nem mistura totalizadores.
+
+
+@router.get(
+    "/cost-center-expenses",
+    operation_id="get_closing_cost_center_expenses",
+)
+def get_closing_cost_center_expenses(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    universe: str = Query(
+        "calculation", pattern="^(calculation|investigation)$"
+    ),
+    view: str = Query(
+        "all", pattern="^(all|divergences|unclassified)$"
+    ),
+    cost_center: str | None = Query(None),
+    product_code: str | None = Query(None),
+    document: str | None = Query(None),
+    supplier_code: str | None = Query(None),
+    tes: str | None = Query(None),
+    include_findings: bool = Query(True),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    sort: str = Query(
+        "date",
+        pattern="^(date|document|cost_center|product|total_value)$",
+    ),
+    sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
+):
+    """R10 Despesas por Centro de Custo — apuração histórica (eixo
+    D1_DTDIGIT) ou universo investigativo, com POSSIBLE_DIVERGENCE."""
+    params: dict[str, Any] = {
+        "period": period,
+        "branch": branch,
+        "universe": universe,
+        "view": view,
+        "include_findings": include_findings,
+        "page": page,
+        "page_size": page_size,
+        "sort": sort,
+        "sort_dir": sort_dir,
+    }
+    if cost_center:
+        params["cost_center"] = cost_center
+    if product_code:
+        params["product_code"] = product_code
+    if document:
+        params["document"] = document
+    if supplier_code:
+        params["supplier_code"] = supplier_code
+    if tes:
+        params["tes"] = tes
+    return _call_gateway(
+        request,
+        path="/financeiro/cost-center-expenses",
+        params=params,
+        operation_id="get_closing_cost_center_expenses",
+    )
+
+
+@router.get(
+    "/cost-center-expenses/export",
+    operation_id="export_closing_cost_center_expenses",
+)
+def export_closing_cost_center_expenses(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    universe: str = Query(
+        "calculation", pattern="^(calculation|investigation)$"
+    ),
+    view: str = Query(
+        "all", pattern="^(all|divergences|unclassified)$"
+    ),
+    cost_center: str | None = Query(None),
+    product_code: str | None = Query(None),
+    document: str | None = Query(None),
+    supplier_code: str | None = Query(None),
+    tes: str | None = Query(None),
+    export_format: str = Query("csv", alias="format", pattern="^(csv|pdf)$"),
+):
+    params: dict[str, Any] = {
+        "period": period,
+        "branch": branch,
+        "universe": universe,
+        "view": view,
+        "format": export_format,
+    }
+    if cost_center:
+        params["cost_center"] = cost_center
+    if product_code:
+        params["product_code"] = product_code
+    if document:
+        params["document"] = document
+    if supplier_code:
+        params["supplier_code"] = supplier_code
+    if tes:
+        params["tes"] = tes
+    return _proxy_export(
+        request,
+        upstream_path="/financeiro/cost-center-expenses/export",
+        params=params,
+        operation_id="export_closing_cost_center_expenses",
+    )

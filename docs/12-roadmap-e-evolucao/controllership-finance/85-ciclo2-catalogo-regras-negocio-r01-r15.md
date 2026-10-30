@@ -1018,6 +1018,25 @@ artefato (digitação + TES-exclusão + MP-out + benefícios-out) é a
 seleção do procedimento Controladoria — `TARGET` se homologada como
 consulta distinta; **não transplantar a seleção da view**.
 
+#### IMPLEMENTAÇÃO (stage-01, 2026-10-31) — `PROVEN` operacional
+
+Execução `CF-PROC0072-R10-IMPLEMENTATION-STAGE-01` materializou
+BR-R10-001..005 como engine novo na api-delpi
+(`GET /financeiro/cost-center-expenses`, módulo
+`financeiro_cost_center_expenses`): universo SD1 f01 por
+`D1_DTDIGIT` ∈ competência, classificado por linha em
+`calculation` (−13 TES BR-R10-003, −MP BR-R10-004, −6 benefícios
+BR-R10-005) ou `investigation` (demais linhas em competência). Paridade
+live 2026-09 f01: **353 linhas / R$ 169.704,12 / 139 docs / 46 buckets
+de CC** (45 nomeados + grupo sem-CC — forma de contagem do artefato).
+CTT resolvido via `TOP 1 OUTER APPLY` (filial específica, fallback
+filial-branca) — snapshot **vigente**, não comprova validade histórica.
+BR-R10-006 permanece manual/`UNCLASSIFIED` por D-01 (E10a pendente);
+findings DV-R10-01/02/04 implementados, DV-R10-03/06 declarados e
+bloqueados por E10a (`rulesCatalog.implemented=false`). View legada
+`vw_fin_despesas_centro_custo` não foi reutilizada (BR-R10-007
+`REUSE_PARTIAL` confirmado).
+
 ### R11 · `NF a desconsiderar.xlsb` — seleção reconstruída (rodada 26)
 
 Artefato: aba `Planilha2`, linha 0 literal `SD2`, headers = títulos SX3

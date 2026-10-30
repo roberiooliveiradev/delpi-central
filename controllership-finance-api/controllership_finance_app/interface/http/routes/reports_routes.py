@@ -125,12 +125,12 @@ REPORT_CATALOG: tuple[dict, ...] = (
     },
     {
         "report_id": "R10",
-        "label": "Centro de custo",
-        "source_kind": "MANUAL_EVIDENCE",
-        "owner": "Controladoria",
-        "operational_view": None,
-        "official_parity": None,
-        "note": "Evidência documental — validação humana P2.",
+        "label": "Despesas por centro de custo",
+        "source_kind": "OPERATIONAL_VIEW",
+        "owner": "TOTVS/SD1-SB1-CTT",
+        "operational_view": "cost-center-expenses",
+        "official_parity": "PENDING",
+        "note": "Consulta operacional da seleção histórica SD1/D1_DTDIGIT com universo investigativo separado — não substitui o relatório oficial. Achados são possíveis divergências, nunca erro confirmado.",
     },
     {
         "report_id": "R11",

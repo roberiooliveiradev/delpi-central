@@ -175,6 +175,34 @@ export const CF_HELP = {
       kind: "Ajuste positivo (entrada) ou ajuste negativo (saída).",
     },
   },
+  costCenterExpenses: {
+    page:
+      "Despesas por centro de custo — R10: lançamentos de entrada (SD1) da competência pelo eixo de data de digitação, com a seleção histórica do relatório de fechamento. Dois universos estritos: «Apuração» é exatamente o universo do relatório (sem matéria-prima, sem os TES excluídos, sem linhas de benefícios); «Investigação» traz as linhas da competência fora da apuração — úteis para investigar classificação — sem nunca se somar ao total oficial. Possíveis divergências são candidatos a revisão humana no Protheus; nada é corrigido automaticamente e a paridade oficial segue pendente.",
+    totals:
+      "Totais do universo consultado (apuração ou investigação — nunca somados): quantidade de linhas, valor total, centros de custo e fornecedores, sobre todo o universo autorizado — não apenas a página exibida. A apuração reproduz a seleção histórica documentada (set/2026: 353 linhas / R$ 169.704,12).",
+    summaryCostCenter:
+      "Totais por centro de custo do universo consultado — quantidade de linhas, valor e quantidade de alertas por CC, incluindo o agrupador «Sem centro de custo».",
+    findings:
+      "Achados das regras verificáveis: lançamento sem centro de custo, centro de custo fora do cadastro CTT, matéria-prima com centro de custo e registros sem classificação comprovada. Cada achado é POSSÍVEL divergência — a explicação informa o que conferir e onde localizar o documento no Protheus; a correção é atividade humana externa.",
+    export:
+      "Exporta o relatório em CSV ou PDF com o mesmo motor e escopo da tela — o documento declara competência, filial, universo (apuração ou investigação — nunca somados), critérios de seleção, fonte, hash e estado de paridade. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional.",
+    filters:
+      "Competência é obrigatória. «Universo» alterna entre apuração (universo do relatório) e investigação (linhas fora da apuração). «Visão» restringe a todos os registros, somente possíveis divergências ou somente sem classificação. Filial, centro de custo, produto, documento e TES filtram dados — sem alterar permissões.",
+    table:
+      "Detalhamento dos lançamentos no grão do item SD1 — documento, produto, centro de custo, TES, fornecedor, quantidade e valor. A coluna «Fora da apuração» explica por que uma linha investigativa não entra no universo do relatório; «Alertas» marca as regras disparadas. A paginação é no servidor sobre o conjunto inteiro autorizado.",
+    columns: {
+      entryDate:
+        "Data de digitação do lançamento (D1_DTDIGIT) — o eixo temporal da seleção histórica.",
+      product:
+        "Código, descrição e tipo do produto (MP, EM, GG e demais tipos TOTVS).",
+      costCenter:
+        "Centro de custo do lançamento e a situação no cadastro CTT (cadastrado, sintético, bloqueado ou não cadastrado). «Sem centro de custo» é alerta verificável.",
+      exclusion:
+        "Motivo pelo qual a linha investigativa não compõe a apuração — TES excluído, matéria-prima ou linha de benefícios.",
+      findings:
+        "Regras de divergência disparadas na linha — sempre candidatos a revisão, nunca erro confirmado.",
+    },
+  },
   workInProcess: {
     page:
       "Material em Processo — R08: relatório do material em processo no fechamento do mês, com a mesma composição MATR989 que o motor P7 certifica — bloco físico do armazém de processo (99) mais o saldo alocado em ordens de produção vivas. A paridade por competência contra uma nova emissão oficial MATR989 ainda está pendente de homologação — use os valores como referência verificável, não como selo oficial.",

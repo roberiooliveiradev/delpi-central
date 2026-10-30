@@ -40,6 +40,7 @@ from app.interface.http.routes import system_routes
 from app.interface.http.routes import data_routes
 from app.interface.http.routes import sale_routes
 from app.interface.http.routes.financial import financial_routes
+from app.interface.http.routes.financeiro import cost_center_expenses_router
 from app.interface.http.routes.financeiro import despesas_centro_custo_router
 from app.interface.http.routes.financeiro import inadimplencia_router
 from app.interface.http.routes.financeiro import settlements_router
@@ -293,6 +294,7 @@ app.include_router(
     include_in_schema=False,
 )
 app.include_router(financial_routes.router, prefix="/financial", tags=["Financeiro"])
+app.include_router(cost_center_expenses_router.router)
 app.include_router(despesas_centro_custo_router.router)
 app.include_router(inadimplencia_router.router)
 app.include_router(settlements_router.router)

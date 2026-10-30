@@ -167,6 +167,12 @@ const REPORT_META: Record<
       "Ajustes de inventário positivos e negativos do período — recorte INVENT do MATR910.",
     origin: "TOTVS/SD3 INVENT + SB9",
   },
+  "cost-center-expenses": {
+    name: "Despesas por centro de custo — R10",
+    description:
+      "Despesas por centro de custo com a seleção histórica do fechamento (eixo de digitação), universo investigativo separado e possíveis divergências para conferência no ERP.",
+    origin: "TOTVS/SD1 + SB1 + CTT",
+  },
   "work-in-process": {
     name: "Material em processo — R08",
     description:
@@ -181,6 +187,7 @@ const CATALOG_REPORT_KEYS: ReportKey[] = [
   "stock-movements",
   "stock-kardex",
   "inventory-adjustments",
+  "cost-center-expenses",
   "work-in-process",
 ];
 

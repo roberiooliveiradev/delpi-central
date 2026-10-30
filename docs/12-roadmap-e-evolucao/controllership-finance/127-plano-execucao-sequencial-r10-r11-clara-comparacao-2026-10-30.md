@@ -131,7 +131,7 @@ Cada gate:
 
 | Etapa | Estado inicial | EXECUTION_ID | SHA | Veredito GPT | Residuais |
 |---|---|---|---|---|---|
-| 1 — R10 | PLANNED | A atribuir | — | PENDING | E10a, E10b, CTT, TES |
+| 1 — R10 | IMPLEMENTED (aguardando review) | `CF-PROC0072-R10-IMPLEMENTATION-STAGE-01` | ver EXECUTION_REPORT | PENDING | E10a, E10b, CTT histórico, TES 12-vs-13, G6 |
 | 2 — R11 | PLANNED | A atribuir | — | PENDING | E11a, E11b |
 | 3 — Comparação | PLANNED | A atribuir | — | PENDING | semântica/limites/AuthZ |
 | 4 — Conhecimento CLARA | PLANNED | A atribuir | — | PENDING | corpus e citações |
@@ -141,4 +141,6 @@ Atualizar por **evidência**, não apenas pelo relato de execução. A aprovaç�
 
 ## 10. Próximo movimento
 
-**Próximo prompt, somente quando o PO solicitar:** `CF-PROC0072-R10-IMPLEMENTATION-STAGE-01`. Escopo exclusivamente Etapa 1; usar este plano e doc 126 como contratos de partida, fechar decisões E10 necessárias e não iniciar R11, comparação, corpus completo nem deploy final por antecipação.
+**Etapa 1 executada** sob `CF-PROC0072-R10-IMPLEMENTATION-STAGE-01` — R10 implementado ponta a ponta (api-delpi `/financeiro/cost-center-expenses`, BFF `/closing/cost-center-expenses` + export, página MFE no hub de relatórios, CLARA `read(report.cost_center_expenses)`), com paridade monetária reproduzida ao vivo contra o TOTVS (353 linhas / R$ 169.704,12 / 139 documentos / 46 buckets de CC para 2026-09 filial 01 — incluindo o grupo «sem centro de custo» como no artefato). Subset implementado de divergências: DV-R10-01 (universo investigação), DV-R10-02 (CTT vigente, sem conclusão histórica), DV-R10-04, DV-R10-05 (`UNCLASSIFIED` por D-01); DV-R10-03 e DV-R10-06 declarados e bloqueados por E10a. Sem deploy, sem corpus produtivo, sem R11 — EXECUTION_REPORT entregue para GPT REVIEW.
+
+**Próximo prompt, somente quando o PO solicitar:** Etapa 2 — R11, conforme §4, após review da Etapa 1 e autorização explícita do Product Owner.

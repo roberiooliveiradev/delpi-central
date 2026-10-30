@@ -286,6 +286,15 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
         required=("period",),
         allowed=("branch", "top_limit"),
     ),
+    ("report", "cost_center_expenses"): _read_spec(
+        bridge.tool_get_cost_center_expenses,
+        required=("period",),
+        allowed=(
+            "branch", "universe", "view", "cost_center",
+            "product_code", "document", "supplier_code", "tes",
+            "page", "page_size",
+        ),
+    ),
     ("report", "matrix"): _read_spec(
         bridge.tool_get_report_matrix,
         required=("period",),

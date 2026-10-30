@@ -1058,3 +1058,25 @@ Execução `CF-PROC0072-R10-R11-DECISION-EVIDENCE-GATE-020` — gate documental 
 | RQ-FIC-01 | Esquema de ficha R01–R15 definido | doc 126 §18 yaml-schema + plano de ingestão | TARGET |
 | RQ-TÉO | AS-IS no TÉO/Transformômetro | sem dados PROC-0072 no repo; docs absorvem o conhecimento | TO_INVENTORY |
 | RQ-TEST-02 | Testes R10-01/02, R11-01/02, CLARA-01..03 | especificados; nenhum executado | TEST_NOT_RUN |
+
+### IMPLEMENTATION-STAGE-01 — R10 despesas por centro de custo (2026-10-31)
+
+Execução `CF-PROC0072-R10-IMPLEMENTATION-STAGE-01` — Etapa 1 do doc 127, escopo exclusivo R10 (sem deploy, sem corpus, sem R11). Stack: api-delpi `GET /financeiro/cost-center-expenses` (+`/export`), BFF `GET /closing/cost-center-expenses` (+`/export`), MFE `cost-center-expenses` no hub, CLARA `read(report.cost_center_expenses)`.
+
+| RQ/AC | Critério | Evidência | Estado |
+|---|---|---|---|
+| RQ-R10-SEL | Seleção histórica reproduzida pelo engine novo | SQL real no TOTVS via `build_lines_query` + predicado da aplicação: 686→353 linhas, Σ `D1_TOTAL` = **169.704,12**, 139 docs, 46 buckets CC (45 nomeados + grupo sem-CC, como o artefato conta) | **PASS (PROVEN, live)** |
+| RQ-R10-UNI | Apuração × investigação como partições estritas | `universe=calculation\|investigation`; totais nunca somados; `calculationExclusion` por linha (`tes_excluded`/`raw_material_product`/`benefit_line`) | PASS |
+| RQ-R10-DV | Findings = `POSSIBLE_DIVERGENCE`, nunca `CONFIRMED_ERROR` | implementados DV-R10-01 (só investigação), DV-R10-02 (CTT vigente — sem conclusão histórica), DV-R10-04; DV-R10-05 expresso como `UNCLASSIFIED` por item (D-01) | PASS |
+| RQ-R10-BLK | Regras dependentes de E10a não executadas | DV-R10-03 e DV-R10-06 declaradas `implemented:false` no `rulesCatalog` com `pendingReason` | PASS |
+| RQ-R10-SEC | S2S + usuário delegado + scope fail-closed, sem permission nova | `stock-inventory.read` + `controllership-finance-api` + `controllership-finance.access`; 401/403/503 tipados; dataset gate `FINANCEIRO_STOCK_INVENTORY_ENABLED` | PASS (unit) |
+| RQ-R10-BFF | BFF proxy com forward verbatim + erros tipados | `tests/test_closing_cost_center_expenses.py` — 18 testes: bearer, manage-only 403, RBAC-down 503, service-principal 403, filtros/universe/view forwarding, `scope_unavailable` 403, timeout 503, export bytes | PASS |
+| RQ-R10-CLARA | Capability semântica no dispatcher (não tool plana) | `READ_ACTIONS[("report","cost_center_expenses")]`; dispatch via `sb.tool_read` com filtros permitidos e rejeição de parâmetro desconhecido; handler chama a MESMA rota do Portal (`_call_route`) | PASS |
+| RQ-R10-MFE | Página com universos distintos, findings, estados, export | `CostCenterExpensesPage` + catálogo + matriz (`OPERATIONAL_VIEW`/`cost-center-expenses`); 6 testes dedicados; lint/tsc limpos | PASS |
+| RQ-R10-EXP | Export individual CSV/PDF com metadados | mesmo motor da consulta; header declara competência/filial/universo/critérios/fonte/hash/paridade; PDF não afirma homologação | PASS (contrato; smoke manual PENDING) |
+| RQ-R10-REG | Regressão suítes afetadas | api-delpi 40/40 (27 R10 + kardex), BFF 257/257, MFE 407/407 | PASS |
+| RQ-R10-AUTH+ | Autorização positiva com persona real autorizada | sem harness E2E nesta etapa | TEST_NOT_RUN |
+| RQ-R10-SMOKE | Smoke HTTP contra runtime real | container executa imagem anterior; deploy não autorizado na etapa | TEST_NOT_RUN |
+| RQ-R10-G6 | Homologação humana oficial da paridade | independente e pendente | PENDING |
+
+**Residuais da etapa:** E10a (catálogo CC→classe — bloqueia DV-R10-03/06 e a classificação Direto/Ind/Adm), E10b (persistência de revisão — sem `REVIEWED`), CTT consulta snapshot vigente (não comprova validade histórica), lista TES 12-vs-13 (observada a de 13, que reproduz o artefato), G6 humano.

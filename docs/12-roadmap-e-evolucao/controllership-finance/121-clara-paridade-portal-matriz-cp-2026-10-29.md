@@ -137,7 +137,8 @@ Capabilities ACT vigentes (48): `evidence.decide_version`, `evidence.decide_item
 | R04, R09, R12, R15 | consumo OP, Fat×MOD, wizard, cutoff | — | PENDING_CONTRACT | — | — | PLANNED (pacotes 016–017; R04/R13/R14 depois) |
 | R06 | CPV/Kardex | TOTVS/SD1-SD2-SD3+SB9+TTAT | stock-kardex + cpv | competência, filial, armazém, produto, entrada/saída, `/summary`, drill por produto | CSV/PDF | PENDING (MATR910) |
 | R07 | Inventários / Kardex99 | TOTVS/SD3-INVENT | inventory-adjustments | competência, filial, armazém, produto, `/summary` | CSV/PDF | PENDING (MATR910/INVENT) |
-| R10, R11 | centro de custo, NF a desconsiderar | Controladoria | MANUAL_EVIDENCE | — | — | evidência documental P2 |
+| R10 | Despesas por centro de custo | TOTVS/SD1+SF4+SB1+SA2+CTT | cost-center-expenses | competência, filial, `universe=calculation\|investigation`, `view`, filtros, findings DV-R10-* | CSV/PDF (operacional) | PENDING (paridade histórica 353/R$169.704,12 reproduzida ao vivo; G6 humano pendente) |
+| R11 | NF a desconsiderar | Controladoria | MANUAL_EVIDENCE | — | — | evidência documental P2 |
 | R13, R14 | extratos/aplicações, importações/câmbio | instituições financeiras | EXTERNAL | — | — | evidência anexada validada |
 
 P7 — medidas distintas a não misturar: histórico SB9 (ex-99), em estoque, em processo físico, material alocado e total geral; escopo `mp_pi_pa` filtra MP/PI/PA pelo tipo canônico B1_TIPO; `all_products` cobre o universo completo. Competências sem posição histórica não inventam dados — explicar ausência.
@@ -169,7 +170,7 @@ Consulta operacional, cálculo analítico e exportação **não dependem** de do
 | Pacote | Escopo | Estado |
 |---|---|---|
 | 014/015 | R06 CPV/Kardex + R07 inventários | IMPLEMENTADO operacional — `CF-PROC0072-R06-R07-IMPLEMENTATION-015` (D-O1..D-O4 aprovadas pelo PO 29/10/2026); paridade oficial × MATR910 PENDING (E8) |
-| 015 | R10 centro de custo + R11 NF a desconsiderar | **CONTRACT_GATE_DONE** — [doc 126](./126-gate-contratual-r10-r11-comparacao-clara-2026-10-30.md); implementação aguarda D-01/D-02 |
+| 015 | R10 centro de custo + R11 NF a desconsiderar | **R10 IMPLEMENTADO** — `CF-PROC0072-R10-IMPLEMENTATION-STAGE-01` ([doc 127](./127-plano-execucao-sequencial-r10-r11-clara-comparacao-2026-10-30.md) Etapa 1): api-delpi/BFF/MFE/CLARA operacionais com paridade monetária live; residuais E10a/E10b/CTT/TES. **R11 aguarda Etapa 2** — doc 126 E11a/E11b |
 | 016 | R09 Faturamento × MOD | PLANNED (lacunas E9/G5) |
 | 017 | R12 estado de custos + R15 cutoff | PLANNED (READ-only de estado) |
 | depois | R04, R13, R14 | PLANNED (dependem de produtores/fontes) |
@@ -368,3 +369,14 @@ Registro do gate documental `CF-PROC0072-R10-R11-CLARA-COMPARISON-CONTRACT-GATE-
 | R11 NF a desconsiderar | `GET /reports/billing-exclusion-roster` + página MFE | `read(report.billing_exclusion_roster)` | access + branch_scope | Roster SD2 9035∩594; investigativo (D-02 PO 30/10) |
 | Comparação universal R01–R15 | `POST /analysis/report-comparison` (owner **BFF**, D-03) | `analyze(report_comparison)` | access sobre **todos** os sujeitos (fail-closed) | **CLARA-first** (D-04): sem tela genérica no Portal, sem export comparativo (D-07) |
 | Fichas de conhecimento R01–R15 | Help/MFE | `knowledge` (corpus governado) | access | Esquema doc 126 §18 (D-06); publicação = gate de corpus separado |
+
+## Adendo — stage-01 (31/10/2026): R10 IMPLEMENTADO (paridade Portal × CLARA real)
+
+Execução `CF-PROC0072-R10-IMPLEMENTATION-STAGE-01` ([doc 127](./127-plano-execucao-sequencial-r10-r11-clara-comparacao-2026-10-30.md) Etapa 1) materializou a linha TARGET do R10 acima, com rotas concretas:
+
+| Capacidade | Portal (REAL) | CLARA (REAL) | AuthZ | Paridade |
+|---|---|---|---|---|
+| R10 consulta + findings | `GET /closing/cost-center-expenses` → api-delpi `GET /financeiro/cost-center-expenses`; página MFE `cost-center-expenses` | `read(report.cost_center_expenses)` no dispatcher semântico — handler chama a **mesma rota BFF** do Portal | `controllership-finance.access` + S2S `stock-inventory.read` + dataset gate | **mesma identidade + mesmos parâmetros + mesma fonte = mesmo resultado** (sem recálculo na BFF nem na CLARA) |
+| R10 export individual | `GET /closing/cost-center-expenses/export?format=csv\|pdf` | — (operação de arquivo, `PORTAL_ONLY`) | idem | mesmo engine da consulta; metadados de universo/critérios/paridade |
+
+Residuais declarados na resposta (`rulesCatalog`/`pendingReason`): DV-R10-03 e DV-R10-06 bloqueadas por E10a; `costClass=UNCLASSIFIED` (D-01); CTT = snapshot vigente; paridade oficial G6 `PENDING`.

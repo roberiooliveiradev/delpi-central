@@ -875,6 +875,44 @@ def tool_get_cpv(
     )
 
 
+def tool_get_cost_center_expenses(
+    period: str,
+    branch: str = "all",
+    universe: str = "calculation",
+    view: str = "all",
+    cost_center: str | None = None,
+    product_code: str | None = None,
+    document: str | None = None,
+    supplier_code: str | None = None,
+    tes: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> CallToolResult:
+    """R10 Despesas por Centro de Custo — mesma rota governada do
+    Portal (eixo D1_DTDIGIT). ``universe`` separa a apuração histórica
+    das linhas investigativas; findings são POSSIBLE_DIVERGENCE, nunca
+    erro confirmado. Correção é atividade humana externa no Protheus."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_cost_center_expenses,
+        request,
+        period=period,
+        branch=branch,
+        universe=universe,
+        view=view,
+        cost_center=cost_center,
+        product_code=product_code,
+        document=document,
+        supplier_code=supplier_code,
+        tes=tes,
+        include_findings=True,
+        page=page,
+        page_size=page_size,
+        sort="date",
+        sort_dir="asc",
+    )
+
+
 def tool_get_report_matrix(
     period: str, branch_scope: str | None = None
 ) -> CallToolResult:
