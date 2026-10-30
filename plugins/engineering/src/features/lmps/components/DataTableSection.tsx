@@ -76,6 +76,10 @@ export type DataTableSectionProps<T> = {
   serverSort?: ServerSortConfig;
   onRowClick?: (row: T) => void;
   getRowClassName?: (row: T) => string | undefined;
+  /** Ocupa a altura disponível do container: tabela com scroll interno,
+   * cabeçalho sticky e paginação fixa abaixo. Requer ancestral com
+   * altura limitada (`flex` + `min-height: 0`). */
+  fillHeight?: boolean;
   columnPreferencesKey?: string;
   /** Visibilidade inicial antes de preferências salvas no localStorage. */
   defaultColumnVisibility?: Record<string, boolean>;
@@ -102,6 +106,7 @@ export function DataTableSection<T>({
   serverSort,
   onRowClick,
   getRowClassName,
+  fillHeight = false,
   columnPreferencesKey,
   defaultColumnVisibility,
   onVisibleColumnKeysChange,
@@ -194,7 +199,11 @@ export function DataTableSection<T>({
 
   return (
     <section
-      className={LMPS_SECTION.section}
+      className={
+        fillHeight
+          ? `${LMPS_SECTION.section} engineering-table-section--fill delpi-ui-table-section--fill`
+          : LMPS_SECTION.section
+      }
       aria-busy={loading || refreshing}
     >
       <div className={LMPS_SECTION.header}>
@@ -282,7 +291,7 @@ export function DataTableSection<T>({
             sortKey={activeSort?.sortKey}
             sortDirection={activeSort?.sortDirection}
             onSortChange={activeSort?.onSortChange}
-            layout="section"
+            layout={fillHeight ? "scroll" : "section"}
           />
 
           <Pagination

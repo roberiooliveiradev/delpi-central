@@ -57,6 +57,7 @@ type RichTreeNodeRowProps = {
   depth: number;
   defaultExpanded: boolean;
   expandDepth: number;
+  onNodeNavigate?: (node: RichTreeNode) => void;
 };
 
 function RichTreeNodeRow({
@@ -64,6 +65,7 @@ function RichTreeNodeRow({
   depth,
   defaultExpanded,
   expandDepth,
+  onNodeNavigate,
 }: RichTreeNodeRowProps) {
   const hasChildren = Boolean(node.children?.length);
   const [expanded, setExpanded] = useState(defaultExpanded || depth === 0);
@@ -102,12 +104,23 @@ function RichTreeNodeRow({
 
         <div className="lmps-rich-tree__content">
           <div className="lmps-rich-tree__primary">
-            <span
-              className="lmps-rich-tree__label"
-              title={`${LMPS_HELP_TOOLTIPS.detail.structureTreeCode}: ${node.label}`}
-            >
-              {node.label}
-            </span>
+            {onNodeNavigate && node.navCode ? (
+              <button
+                type="button"
+                className="lmps-rich-tree__label lmps-rich-tree__label--link"
+                title={`${LMPS_HELP_TOOLTIPS.detail.structureTreeCode}: ${node.label}`}
+                onClick={() => onNodeNavigate(node)}
+              >
+                {node.label}
+              </button>
+            ) : (
+              <span
+                className="lmps-rich-tree__label"
+                title={`${LMPS_HELP_TOOLTIPS.detail.structureTreeCode}: ${node.label}`}
+              >
+                {node.label}
+              </span>
+            )}
             {node.badge ? (
               <span
                 className={`lmps-rich-tree__badge ${badgeClass}`.trim()}
@@ -145,6 +158,7 @@ function RichTreeNodeRow({
               depth={depth + 1}
               defaultExpanded={depth < expandDepth}
               expandDepth={expandDepth}
+              onNodeNavigate={onNodeNavigate}
             />
           ))}
         </ul>
@@ -158,6 +172,8 @@ type RichTreeProps = {
   expandDepth?: number;
   maxHeight?: string;
   footerLabel?: (nodeCount: number) => string;
+  /** Quando definido, nós com `navCode` viram botões navegáveis. */
+  onNodeNavigate?: (node: RichTreeNode) => void;
 };
 
 export function RichTree({
@@ -165,6 +181,7 @@ export function RichTree({
   expandDepth = 1,
   maxHeight = "420px",
   footerLabel = (nodeCount) => `${nodeCount} nó(s)`,
+  onNodeNavigate,
 }: RichTreeProps) {
   const nodeCount = useMemo(() => countRichTreeNodes(root), [root]);
 
@@ -177,6 +194,7 @@ export function RichTree({
             depth={0}
             defaultExpanded
             expandDepth={expandDepth}
+            onNodeNavigate={onNodeNavigate}
           />
         </ul>
       </div>

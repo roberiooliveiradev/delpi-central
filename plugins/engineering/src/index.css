@@ -369,7 +369,57 @@
 .engineering-products {
   display: flex;
   flex-direction: column;
-  gap: var(--en-section-gap);
+  gap: 14px;
+}
+
+/* Filtros mais densos dentro do hero compacto (mesma densidade do kit). */
+.engineering-products .engineering-nc-filters {
+  gap: 10px 12px;
+}
+
+/* Catálogo fill-height: o mount do portal já é limitado em altura;
+ * quando a listagem está montada, a página trava no mount e a tabela
+ * rola internamente (`--scroll` do kit + `--fill` da section). */
+.portal-engineering.dashboard-page:has(.engineering-products--fill) {
+  height: 100%;
+}
+
+.portal-engineering .engineering-page-stack:has(> .engineering-products--fill) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.engineering-products--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.engineering-products--fill .engineering-table-section--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+}
+
+/* Header/toolbar/paginação fora da região rolável; wrap absorve o resto. */
+.engineering-products--fill .engineering-table-section--fill > * {
+  flex: 0 0 auto;
+}
+
+.engineering-products--fill
+  .engineering-table-section--fill
+  .engineering-table-wrap--scroll {
+  flex: 1 1 auto;
+  min-height: 180px;
+}
+
+/* Viewport muito curto: a página volta a rolar como página (usabilidade
+ * preservada — controles essenciais nunca ficam escondidos). */
+@media (max-height: 480px) {
+  .portal-engineering.dashboard-page:has(.engineering-products--fill) {
+    height: auto;
+  }
 }
 
 .engineering-products__placeholder-value {
@@ -419,43 +469,14 @@
   gap: var(--en-section-gap);
 }
 
-.engineering-product-tree,
-.engineering-product-tree ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.engineering-product-tree li {
-  padding: 4px 0 4px 16px;
-  border-left: 1px solid var(--en-border);
-}
-
-.engineering-product-tree-node {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  align-items: baseline;
-  font-size: 0.9rem;
-}
-
-.engineering-product-tree-meta {
-  color: var(--en-text-muted);
-  font-size: 0.8rem;
-}
-
 .engineering-product-drawing {
   display: flex;
   flex-direction: column;
   gap: var(--en-section-gap);
 }
 
-.engineering-product-drawing-frame {
-  border: 1px solid var(--en-border);
-  border-radius: 8px;
-  height: 70vh;
-  min-height: 360px;
-  width: 100%;
+.engineering-product-drawing__actions {
+  margin-bottom: 8px;
 }
 
 .engineering-product-history {

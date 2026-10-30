@@ -21,6 +21,13 @@ import {
 } from "../../../ui/engineeringUi";
 import type { DataTableColumn } from "../../lmps/components/DataTable";
 import { DataTableSection } from "../../lmps/components/DataTableSection";
+import { ProductStructureTree } from "../../lmps/components/ProductStructureTree";
+import { StructureLegend } from "../../lmps/components/StructureLegend";
+import type { RichTreeNode } from "../../lmps/types/richTree";
+import {
+  FilePreviewView,
+  useFilePreviewLoader,
+} from "@delpi/plugin-ui/index";
 import {
   fetchProductDetail,
   fetchProductDrawing,
@@ -49,9 +56,7 @@ import {
   type ProductTabKey,
 } from "../productRoutes";
 import type {
-  ProductBomNode,
   ProductDrawingMetadata,
-  ProductParentNode,
   ProductPurchaseHistoryResult,
   ProductRecord,
   ProductSupplier,
@@ -219,51 +224,6 @@ function overviewFields(product: ProductRecord) {
   };
 }
 
-/** Árvore BOM/onde-usado — renderização recursiva do payload oficial,
- * sem recomputar hierarquia no cliente. */
-function ProductTree({
-  nodes,
-  childKey,
-}: {
-  nodes: ProductBomNode[] | ProductParentNode[];
-  childKey: "components" | "parents";
-}) {
-  if (!nodes.length) return null;
-  return (
-    <ul className="engineering-product-tree">
-      {nodes.map((node, index) => {
-        const children =
-          (node as Record<string, unknown>)[childKey] as
-            | ProductBomNode[]
-            | ProductParentNode[]
-            | undefined;
-        return (
-          <li key={`${node.code}-${index}`}>
-            <span className="engineering-product-tree-node">
-              <strong>{node.code}</strong>
-              {node.description ? ` — ${node.description}` : ""}
-              <span className="engineering-product-tree-meta">
-                {[
-                  node.type ? productTypeLabel(node.type) : null,
-                  node.quantity != null
-                    ? `qtd ${node.quantity}`
-                    : null,
-                  node.unit,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </span>
-            </span>
-            {children?.length ? (
-              <ProductTree nodes={children} childKey={childKey} />
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
 const supplierColumns: DataTableColumn<ProductSupplier>[] = [
   {
     key: "supplier_code",
@@ -299,6 +259,9 @@ const supplierColumns: DataTableColumn<ProductSupplier>[] = [
   },
 ];
 
+/** Pré-visualização automática do desenho — viewer oficial do kit
+ * (`useFilePreviewLoader` + `FilePreviewView`): blob autenticado,
+ * object URL revogada no cleanup e requests cancelados na troca de aba. */
 function DrawingsSection({
   code,
   metadata,
@@ -306,36 +269,28 @@ function DrawingsSection({
   code: string;
   metadata: ProductDrawingMetadata;
 }) {
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [pdfError, setPdfError] = useState<unknown>(null);
-  const [pdfLoading, setPdfLoading] = useState(false);
-
-  useEffect(
-    () => () => {
-      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-    },
-    [pdfUrl],
-  );
-
-  const openPdf = useCallback(async () => {
-    setPdfLoading(true);
-    setPdfError(null);
-    try {
-      const blob = await fetchProductDrawingPdf(code);
-      setPdfUrl((previous) => {
-        if (previous) URL.revokeObjectURL(previous);
-        return URL.createObjectURL(blob);
-      });
-    } catch (err) {
-      setPdfError(err);
-    } finally {
-      setPdfLoading(false);
-    }
-  }, [code]);
+  const source = useCallback(() => fetchProductDrawingPdf(code), [code]);
+  const preview = useFilePreviewLoader({
+    source: metadata.found ? source : null,
+    mimeType: metadata.media_type ?? "application/pdf",
+    fileName: metadata.filename,
+    enabled: metadata.found,
+  });
 
   const openExternal = useCallback(() => {
-    if (pdfUrl) window.open(pdfUrl, "_blank", "noopener,noreferrer");
-  }, [pdfUrl]);
+    if (preview.previewUrl) {
+      window.open(preview.previewUrl, "_blank", "noopener,noreferrer");
+    }
+  }, [preview.previewUrl]);
+
+  const download = useCallback(() => {
+    if (!preview.previewUrl) return;
+    const anchor = document.createElement("a");
+    anchor.href = preview.previewUrl;
+    anchor.download = metadata.filename ?? `${code}.pdf`;
+    anchor.rel = "noopener";
+    anchor.click();
+  }, [preview.previewUrl, metadata.filename, code]);
 
   return (
     <div className="engineering-product-drawing">
@@ -354,28 +309,28 @@ function DrawingsSection({
           ]}
         />
       </EngineeringDetailCard>
-      <div className="engineering-nc-actions">
-        <EngineeringActionButton
-          variant="primary"
-          onClick={() => void openPdf()}
-          disabled={pdfLoading}
-        >
-          {pdfLoading ? "Abrindo…" : pdfUrl ? "Recarregar PDF" : "Visualizar PDF"}
-        </EngineeringActionButton>
-        {pdfUrl ? (
-          <EngineeringActionButton variant="ghost" onClick={openExternal}>
-            Abrir ampliado
-          </EngineeringActionButton>
-        ) : null}
-      </div>
-      {pdfError ? <TabError error={pdfError} fallback="PDF indisponível." /> : null}
-      {pdfUrl ? (
-        <iframe
-          className="engineering-product-drawing-frame"
-          src={pdfUrl}
-          title={`Desenho técnico do produto ${code}`}
+      <EngineeringDetailCard title="Pré-visualização do desenho técnico">
+        <div className="engineering-nc-actions engineering-product-drawing__actions">
+          {preview.previewUrl ? (
+            <>
+              <EngineeringActionButton variant="ghost" onClick={openExternal}>
+                Abrir ampliado
+              </EngineeringActionButton>
+              <EngineeringActionButton variant="ghost" onClick={download}>
+                Baixar PDF
+              </EngineeringActionButton>
+            </>
+          ) : null}
+        </div>
+        <FilePreviewView
+          state={preview}
+          title={metadata.filename ?? `Desenho do produto ${code}`}
+          labels={{
+            loading: "Carregando desenho técnico…",
+            loadFailed: "Não foi possível carregar o desenho técnico.",
+          }}
         />
-      ) : null}
+      </EngineeringDetailCard>
     </div>
   );
 }
@@ -383,6 +338,9 @@ function DrawingsSection({
 export function ProductDetailPage({ code }: ProductDetailPageProps) {
   const search = useLocationSearch();
   const tab = parseProductTab(search);
+  const goToProduct = useCallback((node: RichTreeNode) => {
+    if (node.navCode) navigateProducts(PRODUCT_PATHS.detail(node.navCode));
+  }, []);
   const [product, setProduct] = useState<ProductRecord | null>(null);
   const [productError, setProductError] = useState<unknown>(null);
   const [loadingProduct, setLoadingProduct] = useState(true);
@@ -636,10 +594,16 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
                 ) : null}
                 {structure.data ? (
                   structure.data.items.length ? (
-                    <ProductTree
-                      nodes={structure.data.items}
-                      childKey="components"
-                    />
+                    <div className="engineering-lmps">
+                      <StructureLegend />
+                      <ProductStructureTree
+                        structure={structure.data}
+                        onNodeNavigate={goToProduct}
+                        footerLabel={(count) =>
+                          `${count} componente(s) na estrutura`
+                        }
+                      />
+                    </div>
                   ) : (
                     <EngineeringEmptyState message="Este produto não possui estrutura cadastrada na fonte oficial." />
                   )
@@ -663,10 +627,16 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
                 ) : null}
                 {parents.data ? (
                   parents.data.items.length ? (
-                    <ProductTree
-                      nodes={parents.data.items}
-                      childKey="parents"
-                    />
+                    <div className="engineering-lmps">
+                      <StructureLegend />
+                      <ProductStructureTree
+                        structure={parents.data}
+                        onNodeNavigate={goToProduct}
+                        footerLabel={(count) =>
+                          `${count} produto(s) utilizam este componente`
+                        }
+                      />
+                    </div>
                   ) : (
                     <EngineeringEmptyState message="Este produto não é componente de nenhuma estrutura cadastrada." />
                   )

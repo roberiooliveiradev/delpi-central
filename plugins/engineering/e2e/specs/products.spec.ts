@@ -50,9 +50,9 @@ test("listagem renderiza filtros reativos, multiselects e Limpar", async ({
   await expect(
     page.getByRole("group", { name: "Filtros de produtos" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Limpar filtros" }),
-  ).toBeVisible();
+  // Limpar só aparece quando existe filtro aplicado (slot superior do hero).
+  const clearButton = page.getByRole("button", { name: "Limpar filtros" });
+  await expect(clearButton).toHaveCount(0);
   // Busca reativa — não existe botão Filtrar.
   await expect(
     page.getByRole("button", { name: "Filtrar", exact: true }),
@@ -82,7 +82,21 @@ test("listagem renderiza filtros reativos, multiselects e Limpar", async ({
     await expect(table.locator("thead").getByText("Código")).toBeVisible();
     await expect(table.locator("thead").getByText("Descrição")).toBeVisible();
     await expect(table.locator("thead").getByText("Situação")).toBeVisible();
+    // Tabela fill-height: registros rolam dentro do wrap oficial.
+    await expect(
+      page.locator(".delpi-ui-table-wrap--scroll"),
+    ).toBeVisible();
+    // Paginação fora da área rolável.
+    await expect(
+      page.getByRole("navigation", { name: "Paginação" }),
+    ).toBeVisible();
   }
+
+  // Filtro aplicado → Limpar aparece; limpar → some novamente.
+  await page.getByPlaceholder("Código do produto").fill("Z");
+  await expect(clearButton).toBeVisible({ timeout: 10_000 });
+  await clearButton.click();
+  await expect(clearButton).toHaveCount(0, { timeout: 10_000 });
 
   expectNoFailures(forbidden, pageErrors);
 });
@@ -223,6 +237,51 @@ test("ficha do produto renderiza abas oficiais com URL (?tab=)", async ({
   await expect(
     page.getByRole("tab", { name: "Fornecedores" }),
   ).toHaveAttribute("aria-selected", "true", { timeout: 20_000 });
+
+  // Estrutura: árvore oficial colapsável OU estado vazio honesto.
+  await page.goto(`${base}?tab=structure`);
+  const treeOutcome = await Promise.race([
+    page
+      .locator(".lmps-rich-tree")
+      .waitFor({ state: "visible", timeout: 45_000 })
+      .then(() => "tree"),
+    page
+      .getByText(/não possui estrutura cadastrada|Estrutura indisponível|Acesso negado/)
+      .first()
+      .waitFor({ state: "visible", timeout: 45_000 })
+      .then(() => "state"),
+  ]);
+  expect(["tree", "state"]).toContain(treeOutcome);
+  if (treeOutcome === "tree") {
+    // Nós com filhos expandem/recolhem via toggle oficial (aria-expanded).
+    const toggles = page.locator(".lmps-rich-tree__toggle");
+    const toggleCount = await toggles.count();
+    if (toggleCount > 0) {
+      const first = toggles.first();
+      const wasExpanded =
+        (await first.getAttribute("aria-expanded")) === "true";
+      await first.click();
+      await expect(first).toHaveAttribute(
+        "aria-expanded",
+        wasExpanded ? "false" : "true",
+      );
+    }
+  }
+
+  // Desenhos: preview oficial carrega automaticamente OU estado honesto.
+  await page.goto(`${base}?tab=drawings`);
+  const drawOutcome = await Promise.race([
+    page
+      .locator(".delpi-ui-file-preview__pdf")
+      .waitFor({ state: "visible", timeout: 60_000 })
+      .then(() => "pdf"),
+    page
+      .getByText(/não possui desenho|desenho técnico|indisponível|Acesso negado/)
+      .first()
+      .waitFor({ state: "visible", timeout: 60_000 })
+      .then(() => "state"),
+  ]);
+  expect(["pdf", "state"]).toContain(drawOutcome);
 
   expectNoFailures(forbidden, pageErrors);
 });

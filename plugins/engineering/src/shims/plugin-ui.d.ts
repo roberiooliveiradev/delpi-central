@@ -353,6 +353,75 @@ declare module "@delpi/plugin-ui/index" {
 
   export function FilePreviewModal(props: FilePreviewModalProps): ReactElement;
 
+  export type FilePreviewKind =
+    | "image"
+    | "pdf"
+    | "text"
+    | "spreadsheet"
+    | "docx"
+    | "none";
+
+  export type FilePreviewSource =
+    | File
+    | Blob
+    | (() => Promise<Blob | string>)
+    | string;
+
+  export type FilePreviewContentState = {
+    kind: FilePreviewKind;
+    loading: boolean;
+    error: string | null;
+    previewUrl: string | null;
+    textContent: string | null;
+    textTruncated: boolean;
+    spreadsheetData: unknown;
+    docxData: unknown;
+  };
+
+  export type FilePreviewLabels = {
+    loading: string;
+    loadFailed: string;
+    unavailable: string;
+    emptyText: string;
+    textTruncated: string;
+    emptySpreadsheet: string;
+    spreadsheetReadOnly: string;
+    spreadsheetExcelTitle: string;
+    docxReadOnly: string;
+    docxWordTitle: string;
+    docxEmptyDocument: string;
+    docxTruncated: string;
+    spreadsheetTruncatedPrefix: string;
+    spreadsheetTruncatedRows: string;
+    spreadsheetTruncatedAnd: string;
+    spreadsheetTruncatedCols: string;
+    spreadsheetTruncatedSuffix: string;
+  };
+
+  export type UseFilePreviewLoaderOptions = {
+    source?: FilePreviewSource | null;
+    mimeType?: string | null;
+    fileName?: string | null;
+    declaredType?: string | null;
+    remoteText?: string | null;
+    remoteTextTruncated?: boolean;
+    enabled?: boolean;
+  };
+
+  export function useFilePreviewLoader(
+    options: UseFilePreviewLoaderOptions,
+  ): FilePreviewContentState;
+
+  export type FilePreviewViewProps = {
+    state: FilePreviewContentState;
+    title?: string;
+    labels?: Partial<FilePreviewLabels>;
+    className?: string;
+    footer?: ReactNode;
+  };
+
+  export function FilePreviewView(props: FilePreviewViewProps): ReactElement;
+
   export type FieldLabelProps = {
     label: string;
     hint?: string;

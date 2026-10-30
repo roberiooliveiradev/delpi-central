@@ -7,6 +7,8 @@ export type ProductStructureNode = {
   unit?: string;
   components?: ProductStructureNode[];
   items?: ProductStructureNode[];
+  /** Consulta reversa (where-used) — filhos vivem em `parents`. */
+  parents?: ProductStructureNode[];
   [key: string]: unknown;
 };
 

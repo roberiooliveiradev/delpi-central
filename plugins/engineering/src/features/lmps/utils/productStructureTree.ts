@@ -37,6 +37,7 @@ function mapRootNode(
   return {
     id: `root-${code}`,
     label: code,
+    navCode: code !== "—" ? code : undefined,
     subtitle: readNodeField(root, "description", "B1_DESC") || undefined,
     badge: readNodeField(root, "type", "B1_TIPO") || undefined,
     metaCaption: formatStructureMeta(root) || undefined,
@@ -54,11 +55,12 @@ function mapStructureNode(
   const code = readNodeField(node, "code", "product_code", "B1_COD") || "—";
   const description = readNodeField(node, "description", "B1_DESC");
   const type = readNodeField(node, "type", "B1_TIPO");
-  const children = node.components ?? node.items ?? [];
+  const children = node.components ?? node.items ?? node.parents ?? [];
 
   return {
     id: `${parentKey}-${code}-${index}`,
     label: code,
+    navCode: code !== "—" ? code : undefined,
     subtitle: description || undefined,
     badge: type || undefined,
     metaCaption: formatStructureMeta(node) || undefined,

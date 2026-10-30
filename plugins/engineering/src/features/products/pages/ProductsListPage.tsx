@@ -224,6 +224,9 @@ export function ProductsListPage() {
   );
 
   const clearFilters = useCallback(() => {
+    /* Reseta o draft pendente também — sem isso, um debounce em voo
+     * recomitaria o texto digitado depois da limpeza da URL. */
+    setDraft({ code: "", description: "", customer_reference: "" });
     navigateProducts(PRODUCT_PATHS.list, { replace: true });
   }, []);
 
@@ -312,7 +315,7 @@ export function ProductsListPage() {
   );
 
   return (
-    <main className="engineering-products">
+    <main className="engineering-products engineering-products--fill">
       <EngineeringPagePath
         back={{
           label: "Início",
@@ -330,6 +333,18 @@ export function ProductsListPage() {
         eyebrow="Portal Engenharia"
         title={PRODUCT_COPY.listTitle}
         description={PRODUCT_COPY.listDescription}
+        density="compact"
+        actions={
+          hasActiveFilters ? (
+            <EngineeringActionButton
+              variant="ghost"
+              onClick={clearFilters}
+              title={PRODUCT_HELP.clearFilters}
+            >
+              Limpar filtros
+            </EngineeringActionButton>
+          ) : null
+        }
       >
         <div
           className="engineering-nc-filters"
@@ -396,16 +411,6 @@ export function ProductsListPage() {
             />
           </label>
         </div>
-        <div className="engineering-nc-actions">
-          <EngineeringActionButton
-            variant="ghost"
-            onClick={clearFilters}
-            disabled={!hasActiveFilters}
-            title={PRODUCT_HELP.clearFilters}
-          >
-            Limpar filtros
-          </EngineeringActionButton>
-        </div>
       </EngineeringPageHero>
 
       {error ? (
@@ -429,11 +434,12 @@ export function ProductsListPage() {
         <DataTableSection
           title={PRODUCT_COPY.listTitle}
           titleHint={PRODUCT_HELP.search}
-          hint={`${list.total} registro(s)${
+          hint={
             applied.sort
-              ? ` — ordenado por ${applied.sort} (${applied.direction})`
-              : ""
-          }`}
+              ? `Ordenado por ${applied.sort} (${applied.direction})`
+              : undefined
+          }
+          fillHeight
           columns={columns}
           rows={list.items}
           rowKey={(row) => row.code}
