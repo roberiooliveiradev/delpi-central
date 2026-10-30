@@ -30,12 +30,12 @@ Fluxo que deve ser demonstrado nos testes: **pergunta + contexto conversacional 
 
 | Etapa | Entrega verificável | Status | Commit | Testes/evidência | Deploy/SHA | Gaps |
 |---|---|---|---|---|---|---|
-| P0 | Inventário de fontes, perguntas, lacunas e baseline | IMPLEMENTED | — | [CAIO-3-0-INVENTORY.md](CAIO-3-0-INVENTORY.md) — 16 tópicos mapeados, 10 perguntas + rubrica, baseline 656/1224 | N/A | nenhum novo |
-| P1 | Biblioteca inicial curada de 6 métodos + recuperação | TESTED | — | corpus v3.0 `methods` (6) + contrato de campos testado | PENDING | validação comercial pendente |
-| P2 | Roteiros de diagnóstico e análises reutilizáveis | TESTED | — | corpus v3.0 `playbooks` (8) + contrato testado | PENDING | — |
-| P3 | Seleção contextual e composição da resposta | TESTED | — | `knowledge` com `query` seleciona método+roteiro; testes de seleção/vazamento/404 honesto | PENDING | sem histórico do host (contrato mínimo documentado) |
-| P4 | Pesquisa externa governada quando autorizada | BLOCKED_EXTERNAL | — | gate: nenhum conector/buscador autorizado existe — verificação de código | N/A | contrato de integração proposto no diário P4 |
-| P5 | Especialização B2B e processos comerciais reais | TESTED | — | +8 métodos externos `pending_business_validation` testados | PENDING | PENDING_BUSINESS_VALIDATION |
+| P0 | Inventário de fontes, perguntas, lacunas e baseline | DEPLOYED_VERIFIED | `447218e365` | [CAIO-3-0-INVENTORY.md](CAIO-3-0-INVENTORY.md) — 16 tópicos mapeados, 10 perguntas + rubrica, baseline 656/1224 | `447218e365` | nenhum novo |
+| P1 | Biblioteca inicial curada de 6 métodos + recuperação | DEPLOYED_VERIFIED | `447218e365` | corpus v3.0 `methods` (6) + contrato de campos testado | `447218e365` | validação comercial pendente |
+| P2 | Roteiros de diagnóstico e análises reutilizáveis | DEPLOYED_VERIFIED | `447218e365` | corpus v3.0 `playbooks` (8) + contrato testado | `447218e365` | — |
+| P3 | Seleção contextual e composição da resposta | DEPLOYED_VERIFIED | `447218e365` | `knowledge` com `query` seleciona método+roteiro; testes de seleção/vazamento/404 honesto | `447218e365` | sem histórico do host (contrato mínimo documentado) |
+| P4 | Pesquisa externa governada quando autorizada | BLOCKED_EXTERNAL | `447218e365` (offline) | gate: nenhum conector/buscador autorizado existe — verificação de código | N/A | contrato de integração proposto no diário P4 |
+| P5 | Especialização B2B e processos comerciais reais | DEPLOYED_VERIFIED | `447218e365` | +8 métodos externos `pending_business_validation` testados | `447218e365` | PENDING_BUSINESS_VALIDATION |
 
 `Status`: NOT_STARTED / IN_PROGRESS / IMPLEMENTED / TESTED / DEPLOYED_VERIFIED / BLOCKED_EXTERNAL / PARTIAL. Não trocar para DEPLOYED_VERIFIED sem evidência de SHA e smoke.
 
