@@ -232,3 +232,7 @@ Cada pendência da rodada autenticada foi investigada contra o contrato oficial 
 ## Smoke autenticado pós-deploy — 2026-10-30
 
 Após deploy informado no commit `b453b0981c6ef75d2025c1b70b5c80e281bc7553`, a conexão ChatGPT→CAIO respondeu `get_context` com catálogo `2.0` e 123 operações. Consulta `read(proposal.analytics_list)` retornou proposta e filial autorizadas; `read(proposal.analytics_get, ref=proposal_number, filters={branch})` e `read(proposal.history_events, ref=proposal_number, filters={branch})` retornaram **success=true**, corrigindo os erros anteriores 400/upstream 422. Não foram executadas mutações. Esta evidência comprova essas duas operações autenticadas, não toda a integração produtiva ou as 50 operações de escrita/exclusão.
+
+## Jornadas reais de usuário — 2026-10-30 (somente leitura)
+
+Smoke autenticado pelo conector CAIO: `get_context` (catálogo 2.0), `customer.search`, `open_order.list`, `proposal.analytics_list → proposal.analytics_get → proposal.history_events` (filial derivada da lista), `worklist.mine`, `production.appointments`, `production.order`, `rol.summary`, `sales_order_otd.summary`, `customer.open_orders`, `customer.contacts`, `task.list`: **PASS**. Dados consultados por vínculo autorizado e identificadores obtidos de listagens; sem gravar, notificar ou excluir. `portfolio.me` retornou **403** nesta rodada, embora tenha passado anteriormente; status **PENDING_AUTHZ_DIAGNOSIS** (revalidar mesmo principal/claims e logs). As verificações não provam paridade de mutações nem uso por todos os perfis.
