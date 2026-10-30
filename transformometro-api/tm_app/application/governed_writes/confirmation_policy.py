@@ -479,6 +479,45 @@ def classified_write_capabilities() -> frozenset[str]:
     return frozenset(_BY_CAPABILITY)
 
 
+# --- Destructive-delete classification (Semantic V3 `delete` tool) -----------
+# (capability, required_action) — ``required_action`` is matched against
+# ``args["action"]`` or ``args["operation"]`` when not None; ``None`` means
+# the capability itself is a delete. Only capabilities whose ACT truly
+# destroys state are listed here. Cancels, rejects, refusals, lifecycle
+# transitions and link/participant removals are consequential operations
+# governed by ``execute`` with their own policy — they are NOT deletes.
+# This is a closed classification, never inferred from verbs or transport.
+DESTRUCTIVE_DELETE_OPERATIONS: frozenset[tuple[str, str | None]] = frozenset(
+    {
+        ("delete_record", None),
+        ("manage_evidence", "delete"),
+        ("delete_interaction_message", None),
+        ("delete_interaction_room", None),
+        ("helpdesk_delete_ticket", None),
+        # Destroys the user's own GLPI OAuth session link — relinking is a
+        # browser flow, so unlinking is delete-class for this surface.
+        ("helpdesk_unlink_glpi_session", None),
+    }
+)
+
+
+def delete_operations() -> frozenset[tuple[str, str | None]]:
+    """The closed (capability, action) set served by the V3 `delete` tool."""
+    return DESTRUCTIVE_DELETE_OPERATIONS
+
+
+def is_destructive_delete(
+    capability: str, action: str | None = None
+) -> bool:
+    """True when (capability, action) is a classified destructive delete."""
+    cap = str(capability or "").strip()
+    act = str(action or "").strip() or None
+    return any(
+        allowed_cap == cap and (allowed_act is None or allowed_act == act)
+        for allowed_cap, allowed_act in DESTRUCTIVE_DELETE_OPERATIONS
+    )
+
+
 def write_policy_id_for_capability(capability: str) -> str | None:
     """Semantic write-policy id bound to a capability (registry link)."""
     rec = policy_record_for_capability(capability)

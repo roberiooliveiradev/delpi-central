@@ -22,7 +22,10 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 GPT_ACTIONS_LIFECYCLE = "GOVERNED_PREPARE_COMMIT_V2"
 
 # MCP Plugin surface: capability-driven (generic entity + common commit + specialized PREPARE).
-TEO_MCP_SURFACE = "CAPABILITY_GOVERNED_V2"
+# Semantic V3 coexistence: the 6 semantic tools are registered alongside
+# the V2 family surface until consumer inventory + acceptance allow
+# tombstoning the legacy names (TEO-SEMANTIC-MCP-V3, issue #124).
+TEO_MCP_SURFACE = "SEMANTIC_V3_COEXISTENCE"
 
 # ---------------------------------------------------------------------------
 # Capability parity — DERIVED from the canonical inward registry
@@ -42,16 +45,36 @@ GPT_TO_MCP_TOOLS: dict[str, tuple[str, ...]] = actions_parity()
 
 TOOL_TO_GPT_OPERATION: dict[str, str] = mcp_tool_to_actions()
 
+# Semantic V3 surface (issue #124) — six semantic tools registered in
+# coexistence with the V2 family names. Classes follow the shared
+# delpi_mcp taxonomy; execute/delete are ACT (they may persist state).
+V3_TOOL_CLASS: dict[str, str] = {
+    "get_context": "DISCOVERY",
+    "read": "READ",
+    "analyze": "ANALYSIS",
+    "knowledge": "READ",
+    "execute": "ACT",
+    "delete": "ACT",
+}
+V3_SEMANTIC_TOOL_NAMES: frozenset[str] = frozenset(V3_TOOL_CLASS)
+
 # MCP tools with no GPT Action. Diagnostic V1 is MCP-native in this slice —
 # GPT parity, if desired, is a separate decision (no fake parity mapping).
-MCP_NATIVE_TOOLS: frozenset[str] = mcp_native_tool_names()
+# The V3 semantic names are MCP-native as well — except ``analyze``, which
+# the registry already binds to a GPT operation.
+MCP_NATIVE_TOOLS: frozenset[str] = mcp_native_tool_names() | (
+    V3_SEMANTIC_TOOL_NAMES - {"analyze"}
+)
 
 # READ | PREPARE | ACT | ANALYSIS (non-persist)
 # ACT class retained for commit_proposal (common governed commit).
 TOOL_CLASS: dict[str, str] = mcp_tool_classes()
+TOOL_CLASS.update(V3_TOOL_CLASS)
 
 # commit_proposal may execute destructive capabilities → truthful annotation.
-DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset({"commit_proposal"})
+DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset(
+    {"commit_proposal", "delete"}
+)
 
 MCP_TOOL_NAMES: tuple[str, ...] = tuple(TOOL_CLASS.keys())
 

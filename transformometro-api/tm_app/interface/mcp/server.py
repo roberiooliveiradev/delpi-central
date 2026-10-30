@@ -46,6 +46,7 @@ from tm_app.interface.mcp.constants import (
 from tm_app.interface.mcp.oauth_contract import TEO_MCP_SECURITY_SCHEMES
 from tm_app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
 from tm_app.interface.mcp import tool_bridge as bridge
+from tm_app.interface.mcp import tool_bridge_v3 as bridge_v3
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,10 @@ logger = logging.getLogger(__name__)
 # the GPT Actions OpenAPI builder already uses; handlers still
 # receive plain strings at runtime.
 _EntityParam = Literal[tuple(e.value for e in GptEntity)]
-_AnalysisViewParam = Literal[tuple(v.value for v in GptAnalysisView)]
+_AnalysisViewParam = Literal[
+    tuple(v.value for v in GptAnalysisView)
+    + ("meeting_minute_transcript",)
+]
 _RecordOperationParam = Literal[tuple(sorted(RECORD_OPERATIONS))]
 _MinuteReadActionParam = Literal[
     tuple(sorted(MEETING_MINUTE_READ_ACTION_VALUES))
@@ -386,13 +390,18 @@ def create_mcp_server() -> MCPServer:
             "(revisao_id): revision_allocation_diagnostic|"
             "revision_diagram_merged|revision_decomposition_merged. "
             "impact_effort_matrix accepts processo_id|instancia_id|revisao_id "
-            "(competencia/horizonte_meses optional). READ-only — never persists."
+            "(competencia/horizonte_meses optional). Filters may ride flat "
+            "args or the params object (Semantic V3). "
+            "view=meeting_minute_transcript: non-persisting transcript "
+            "analysis (params.minute_id + params.data). READ-only — never "
+            "persists."
         ),
         annotations=_annotations("analyze", "Analyze dashboard"),
         meta=meta,
     )
     def analyze(
         view: _AnalysisViewParam,
+        params: dict | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         processo_id: str | None = None,
@@ -405,20 +414,25 @@ def create_mcp_server() -> MCPServer:
         horizonte_meses: int | None = None,
         limit: int | None = None,
     ) -> CallToolResult:
-        return bridge.tool_analyze(
-            view=view,
-            filial_id=filial_id,
-            setor_id=setor_id,
-            processo_id=processo_id,
-            revisao_id=revisao_id,
-            instancia_id=instancia_id,
-            familia_processo=familia_processo,
-            competencia=competencia,
-            competencia_inicio=competencia_inicio,
-            competencia_fim=competencia_fim,
-            horizonte_meses=horizonte_meses,
-            limit=limit,
-        )
+        merged = {
+            k: v
+            for k, v in {
+                "filial_id": filial_id,
+                "setor_id": setor_id,
+                "processo_id": processo_id,
+                "revisao_id": revisao_id,
+                "instancia_id": instancia_id,
+                "familia_processo": familia_processo,
+                "competencia": competencia,
+                "competencia_inicio": competencia_inicio,
+                "competencia_fim": competencia_fim,
+                "horizonte_meses": horizonte_meses,
+                "limit": limit,
+            }.items()
+            if v is not None
+        }
+        merged.update(params or {})
+        return bridge_v3.tool_analyze(view=view, params=merged)
 
     @mcp.tool(
         name="record_read",
@@ -1196,6 +1210,183 @@ def create_mcp_server() -> MCPServer:
             planned_begin=planned_begin,
             planned_end=planned_end,
             file=file.model_dump(exclude_none=True) if file else None,
+        )
+
+    # --- SEMANTIC V3 (issue #124) — six semantic tools over the same ------
+    # governed capabilities. Registered in coexistence with the V2 family
+    # names; capability/policy/AuthZ resolution is identical.
+
+    @mcp.tool(
+        name="get_context",
+        title="Get context",
+        description=(
+            "Semantic discovery — context is never authorization. "
+            "section=overview (default): authenticated user + current "
+            "workspace refs + discovery hint. section=self: personal "
+            "context + signature profile. section=workspace: current "
+            "process/instance/revision/area refs (navigation hint — "
+            "authoritative facts still require read()). section=catalog: "
+            "full capability catalog (entities, workflows, write schemas, "
+            "execution policies, agent_directives); optional entity "
+            "filters one entity contract."
+        ),
+        annotations=_annotations("get_context", "Get context"),
+        meta=meta,
+    )
+    def get_context(
+        section: Literal["overview", "self", "workspace", "catalog"]
+        | None = None,
+        entity: str | None = None,
+    ) -> CallToolResult:
+        return bridge_v3.tool_get_context(section=section, entity=entity)
+
+    @mcp.tool(
+        name="read",
+        title="Read",
+        description=(
+            "Semantic read — never writes. entity + typed action + params "
+            "object. Domain entities (process, instance, revision, "
+            "measurement, investment, shared_resource, resource_cost, "
+            "resource_link, meeting_minute, process_document, "
+            "decomposition_tree, instance_decomposition_scope, "
+            "revision_decomposition_overlay, process_diagram, "
+            "instance_diagram_scope, revision_diagram_overlay, "
+            "process_bpmn_document, impact_effort_matrix, branch, "
+            "department): action=search|get (search uses filter/pagination "
+            "params; get uses id). Specialized entities: process_context "
+            "(get: processo_id + optional instancia_id/revisao_id — "
+            "authoritative process intelligence), process_timeline (get: "
+            "processo_id — needs an already-identified process, not "
+            "discovery), solution (catalog|context), helpdesk "
+            "(session|capabilities|tickets|ticket|attachment|catalog), "
+            "meeting_minute (pending_signatures|audit|versions|"
+            "participants|signers), evidence (list), task (my_tasks|"
+            "task|process_tasks), interaction_room (rooms|room|messages|"
+            "attachments|room_links|room_participants|room_impact|"
+            "resolve_room), diagnostic (get|by_revision)."
+        ),
+        annotations=_annotations("read", "Read"),
+        meta=meta,
+    )
+    def read(
+        entity: str,
+        action: str | None = None,
+        params: dict | None = None,
+    ) -> CallToolResult:
+        return bridge_v3.tool_read(
+            entity=entity, action=action, params=params
+        )
+
+    @mcp.tool(
+        name="knowledge",
+        title="Knowledge",
+        description=(
+            "Versioned knowledge — guidance, never domain truth or AuthZ. "
+            "source=methodology: TÉO process-methodology playbooks "
+            "(params: method, task, guide_version v1|v2, intent, context "
+            "facts). source=product_guide: Portal/Transformômetro usage "
+            "guides (params: topic, section)."
+        ),
+        annotations=_annotations("knowledge", "Knowledge"),
+        meta=meta,
+    )
+    def knowledge(
+        source: Literal["methodology", "product_guide"],
+        params: dict | None = None,
+    ) -> CallToolResult:
+        return bridge_v3.tool_knowledge(source=source, params=params)
+
+    @mcp.tool(
+        name="execute",
+        title="Execute",
+        description=(
+            "Governed writes — PREPARE→policy gate→ACT→authoritative "
+            "read-back in one call when the sealed execution_policy is "
+            "auto_act (the user request is the intent). Target forms: "
+            "capability=<orchestrator capability or canonical family "
+            "action> + args{...}; or entity=<record entity> + "
+            "operation=create|update|duplicate + changes{...} (+record_id "
+            "for update/duplicate). Family actions cover record CRUD, "
+            "tasks, rooms/messages, meeting minutes, evidence links, "
+            "diagnostics, governed operations (activate_revision, "
+            "recalculate_dashboard, commit_improvement_package, "
+            "adjust_shared_resource_cost, update_signature_profile, "
+            "migrate_legacy_diagram_to_native_bpmn, create/save/revise/"
+            "organize_bpmn_document) and Helpdesk writes — see "
+            "get_context(section='catalog'). Outcomes: executed_verified "
+            "(auto_act, read-back proven) | proposal_pending_confirmation "
+            "(confirm_before_act — show exact_change, get ONE explicit "
+            "confirmation, then call again with proposal_id + "
+            "confirmation=true) | prepared_invalid (validation failed). "
+            "ops=[{capability|entity/operation, args|changes}, ...] runs "
+            "a typed sequence: $ops.N.<path> refs consume earlier "
+            "read-backs; the chain stops on first failure or pending "
+            "proposal. Destructive deletes belong to the delete tool."
+        ),
+        annotations=_annotations("execute", "Execute"),
+        meta=meta,
+    )
+    def execute(
+        capability: str | None = None,
+        args: dict | None = None,
+        entity: str | None = None,
+        operation: Literal["create", "update", "duplicate"] | None = None,
+        record_id: str | None = None,
+        changes: dict | None = None,
+        ops: list[dict] | None = None,
+        proposal_handle: str | None = None,
+        proposal_id: str | None = None,
+        confirmation: bool | None = None,
+    ) -> CallToolResult:
+        return bridge_v3.tool_execute(
+            capability=capability,
+            args=args,
+            entity=entity,
+            operation=operation,
+            record_id=record_id,
+            changes=changes,
+            ops=ops,
+            proposal_handle=proposal_handle,
+            proposal_id=proposal_id,
+            confirmation=confirmation,
+        )
+
+    @mcp.tool(
+        name="delete",
+        title="Delete",
+        description=(
+            "Destructive deletes ONLY — exact proposal + explicit "
+            "confirmation, never direct execution. First call prepares: "
+            "entity + record_id (record delete), or capability + args "
+            "for helpdesk_delete_ticket, helpdesk_unlink_glpi_session, "
+            "delete_interaction_message, delete_interaction_room, "
+            "manage_evidence with args.operation=delete. Returns "
+            "proposal_pending_confirmation with the exact sealed change. "
+            "Second call: delete(proposal_id=..., confirmation=true) "
+            "commits with AuthZ revalidation and postcondition verify. "
+            "Cancels, rejects and lifecycle transitions are NOT deletes — "
+            "use execute with their canonical capability."
+        ),
+        annotations=_annotations("delete", "Delete"),
+        meta=meta,
+    )
+    def delete(
+        capability: str | None = None,
+        args: dict | None = None,
+        entity: _EntityParam | None = None,
+        record_id: str | None = None,
+        proposal_handle: str | None = None,
+        proposal_id: str | None = None,
+        confirmation: bool | None = None,
+    ) -> CallToolResult:
+        return bridge_v3.tool_delete(
+            capability=capability,
+            args=args,
+            entity=entity,
+            record_id=record_id,
+            proposal_handle=proposal_handle,
+            proposal_id=proposal_id,
+            confirmation=confirmation,
         )
 
     # --- COMMON COMMIT (proposal_handle only; not a generic executor) -----

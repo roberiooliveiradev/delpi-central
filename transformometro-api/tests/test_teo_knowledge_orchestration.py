@@ -249,7 +249,8 @@ def test_r3_sufficiency_stops_after_demand_grouping():
 def test_r3_no_new_tool_surface_for_demand():
     from tm_app.interface.mcp.constants import MCP_TOOL_NAMES
 
-    assert len(MCP_TOOL_NAMES) == 23
+    # Semantic V3 coexistence: 23 V2 names + 6 semantic tools.
+    assert len(MCP_TOOL_NAMES) == 28
     forbidden = {"demand_analysis", "helpdesk_analysis", "cluster_tickets",
                  "ticket_insights", "find_process_from_ticket"}
     assert not forbidden.intersection(MCP_TOOL_NAMES)

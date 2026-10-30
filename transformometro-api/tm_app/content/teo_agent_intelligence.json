@@ -1171,6 +1171,28 @@
         "verify expected postcondition"
       ],
       "confirmation_policy": "canonical_confirmation_policy_source"
+    },
+    "semantic_v3_surface": {
+      "gpt_operations": [],
+      "mcp_tools": [
+        "get_context",
+        "read",
+        "analyze",
+        "knowledge",
+        "execute",
+        "delete"
+      ],
+      "pipeline": [
+        "get_context identity/workspace/capabilities/policies (never authz)",
+        "read(entity, action) typed reads over every domain owner",
+        "analyze(view) non-persisting computations incl. meeting_minute_transcript",
+        "knowledge(source) methodology + product guidance",
+        "execute capability resolve -> PREPARE -> policy gate -> ACT when auto_act -> read-back",
+        "execute ops[] sequential orchestration consuming authoritative read-back ids",
+        "delete destructive-only -> exact proposal -> explicit confirmation -> verify",
+        "confirm_before_act returns proposal_pending_confirmation; commit via execute/delete(proposal_id, confirmation)"
+      ],
+      "confirmation_policy": "canonical_confirmation_policy_source"
     }
   }
 }

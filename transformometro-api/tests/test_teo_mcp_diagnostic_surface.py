@@ -255,14 +255,24 @@ class TestSurfaceRegistration:
         assert TOOL_CLASS["prepare_diagnostic_change"] == "PREPARE"
 
     def test_mcp_native_flagged_no_gpt_parity(self):
+        # Semantic V3 coexistence: the new semantic names are MCP-native
+        # as well (no GPT Actions parity yet) — except ``analyze``, which
+        # the registry already binds to gpt_analyze.
         assert MCP_NATIVE_TOOLS == {
             "diagnostic_read",
             "prepare_diagnostic_change",
+            "get_context",
+            "read",
+            "knowledge",
+            "execute",
+            "delete",
         }
 
     def test_commit_proposal_is_the_only_act(self):
-        act_tools = [n for n, c in TOOL_CLASS.items() if c == "ACT"]
-        assert act_tools == ["commit_proposal"]
+        # Semantic V3 adds execute/delete as governed ACT tools over the
+        # same orchestrator; legacy commit_proposal stays registered.
+        act_tools = sorted(n for n, c in TOOL_CLASS.items() if c == "ACT")
+        assert act_tools == ["commit_proposal", "delete", "execute"]
 
     def test_no_diagnostic_act_or_generic_executor(self):
         forbidden = {

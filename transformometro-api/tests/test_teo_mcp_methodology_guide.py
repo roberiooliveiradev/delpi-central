@@ -63,15 +63,21 @@ _EXPECTED_METHODS = {
 
 def test_method_catalog_matches_canonical_playbook_projection() -> None:
     assert set(list_method_ids()) == _EXPECTED_METHODS
+    # Semantic V3 coexistence: semantic names are MCP-native too.
     assert MCP_NATIVE_TOOLS == frozenset(
         {
             "diagnostic_read",
             "prepare_diagnostic_change",
+            "get_context",
+            "read",
+            "knowledge",
+            "execute",
+            "delete",
         }
     )
     assert GPT_TO_MCP_TOOLS["gpt_get_methodology_guide"] == ("get_methodology_guide",)
     assert TOOL_CLASS["get_methodology_guide"] == "READ"
-    assert len(MCP_TOOL_NAMES) == 23
+    assert len(MCP_TOOL_NAMES) == 28
 
 
 @pytest.mark.parametrize(
@@ -130,7 +136,7 @@ def test_unknown_task_is_governed_validation() -> None:
 def test_tool_registered_read_only_and_not_an_act() -> None:
     mcp = create_mcp_server()
     tools = {tool.name: tool for tool in asyncio.run(mcp.list_tools())}
-    assert len(tools) == 23
+    assert len(tools) == 28
     guide = tools["get_methodology_guide"]
     assert guide.annotations is not None
     assert guide.annotations.read_only_hint is True

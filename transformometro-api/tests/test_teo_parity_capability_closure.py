@@ -169,7 +169,11 @@ def test_instance_contexto_published_in_entity_schema() -> None:
 def test_mcp_analyze_view_enum_projects_canonical() -> None:
     schema = _input_schema(_tools()["analyze"])
     enum = set(schema["properties"]["view"]["enum"])
-    assert enum == {v.value for v in GptAnalysisView}
+    # Canonical analysis views + the Semantic V3 non-persisting
+    # transcript analysis view (issue #124).
+    assert enum == {v.value for v in GptAnalysisView} | {
+        "meeting_minute_transcript"
+    }
 
 
 def test_mcp_minute_change_enum_projects_canonical() -> None:

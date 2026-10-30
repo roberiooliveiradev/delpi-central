@@ -57,7 +57,9 @@ def _request(path: str, headers: dict | None = None) -> Request:
 
 
 def test_contract_freeze_full_crud() -> None:
-    assert TEO_MCP_SURFACE == "CAPABILITY_GOVERNED_V2"
+    # Semantic V3 coexistence (issue #124): the six semantic tools are
+    # registered alongside the V2 family surface.
+    assert TEO_MCP_SURFACE == "SEMANTIC_V3_COEXISTENCE"
     assert MCP_PREDEFINED_CLIENT_ID == "mcp-transformometro"
     assert CANONICAL_MCP_RESOURCE_URL.endswith("/apps/transformometro-api/mcp")
     assert GPT_ACTIONS_LIFECYCLE == "GOVERNED_PREPARE_COMMIT_V2"
@@ -111,7 +113,12 @@ def test_list_tools_exposes_governed_full_crud_tools() -> None:
     names = [t.name for t in tools]
     assert set(names) == set(MCP_TOOL_NAMES)
     assert "get_methodology_guide" in names
-    assert len(names) == 23
+    # Semantic V3 coexistence: 23 V2 family names + 6 semantic tools
+    # (analyze unifies the legacy analyze + V3 transcript view).
+    assert len(names) == 28
+    for v3_name in ("get_context", "read", "analyze", "knowledge",
+                    "execute", "delete"):
+        assert v3_name in names
     assert "prepare_record_change" in names
     assert "commit_proposal" in names
     assert "prepare_governed_operation" in names
@@ -121,7 +128,7 @@ def test_list_tools_exposes_governed_full_crud_tools() -> None:
     for tool in tools:
         assert tool.securitySchemes == TEO_MCP_SECURITY_SCHEMES  # type: ignore[attr-defined]
         ann = tool.annotations
-        if tool.name == "commit_proposal":
+        if tool.name in {"commit_proposal", "delete"}:
             assert ann is not None and ann.destructive_hint is True
         if TOOL_CLASS[tool.name] in {"READ", "ANALYSIS"}:
             assert ann is not None and ann.read_only_hint is True
