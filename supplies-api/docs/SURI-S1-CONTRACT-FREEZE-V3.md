@@ -114,3 +114,29 @@ apenas ganha `execute`.
 > (lookup); `analyze` ganha `supplier_creation_preview` (read-only,
 > `write_enabled=false`). As cinco tools, classes, envelope e o contrato
 > `execute(suppliers, create|update)` permanecem inalterados.
+>
+> **Adendo rev.5 (SURI-MCP-FULL-PARITY-V4-G2):** `CATALOG_VERSION = 5`.
+> Extensão aditiva e non-breaking deste freeze: `read` ganha a entidade
+> `purchase_requests` (`search`, `summary`, `requesters`,
+> `cost_centers`, `get`, `export`) e `purchase_orders` ganha a ação
+> `export`. Os vocabulários de filtros são espelhos fechados dos
+> contratos query da `purchase-requests-api` e da `api-delpi` — cada
+> ação possui seu próprio conjunto de chaves (summary sem sort/page;
+> requesters sem `requester_user_id`/`overall_stage`; cost_centers sem
+> `cost_center`; detalhe aceita apenas `date_from`/`date_to`/
+> `cost_center` como contexto de faceta; export sem paginação).
+> **DECISION-G1 fechada:** exportação via MCP retorna o dataset JSON
+> filtrado canônico + metadados do artefato (`format`, `row_count`,
+> `portal_file_formats`) — nunca binário/base64/link; a materialização
+> em CSV/XLSX permanece exclusiva do Portal/BFF. A foto do solicitante
+> não é exposta como bytes pelo MCP (não há canal binário homologado);
+> o guard de escopo (`RequesterPhotoScopeGuard`) não é contornado — a
+> faceta `requesters` enriquecida continua sendo o universo autorizado
+> e `photo_url` segue apontando para a rota BFF protegida.
+> AuthZ idêntica às rotas Flask: `can_use_purchase_requests` /
+> `can_export_purchase_requests` (`supplies.access`) + `require_units`
+> por chamada; export exige branch não-vazio (fail-closed como o BFF).
+> Enriquecimento de solicitante reusa `RequesterIdentityService` —
+> nenhuma regra duplicada. As cinco tools, classes, envelope, OAuth e
+> o contrato `execute(suppliers, create|update)` permanecem
+> inalterados.

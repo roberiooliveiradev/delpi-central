@@ -32,8 +32,16 @@ from app.interfaces.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interfaces.mcp.schemas import (
     PostalCodeIdentity,
     PurchaseOrderAnalyzeFilters,
+    PurchaseOrderExportFilters,
     PurchaseOrderIdentity,
     PurchaseOrderSearchFilters,
+    PurchaseRequestCostCentersFilters,
+    PurchaseRequestDetailFilters,
+    PurchaseRequestExportFilters,
+    PurchaseRequestIdentity,
+    PurchaseRequestRequestersFilters,
+    PurchaseRequestSearchFilters,
+    PurchaseRequestSummaryFilters,
     SupplierCatalogFilters,
     SupplierIdentity,
     SupplierOperationIdentity,
@@ -157,16 +165,40 @@ def create_mcp_server() -> MCPServer:
             "da integração (somente supplies.manage). "
             "entity=postal_codes: action=lookup propõe endereço por CEP "
             "via 'identity' {postal_code} — proposta, nunca persiste. "
+            "entity=purchase_requests: action=search lista "
+            "solicitações de compra (filters fechados — branch "
+            "obrigatória, período, request_number, requester_user_id, "
+            "cost_center, product_code, supplier_code, order_number, "
+            "overall_stage, sort, page/page_size); action=summary "
+            "retorna os contadores de etapa do owner; "
+            "action=requesters e action=cost_centers retornam as "
+            "facetas autorizadas; action=get retorna a solicitação por "
+            "'identity' {branch, request_number} com contexto opcional "
+            "de facetas em 'filters'; action=export retorna o dataset "
+            "filtrado em JSON com metadados do artefato. "
+            "entity=purchase_orders: action=export retorna o dataset "
+            "filtrado de pedidos em aberto em JSON (mesmo recorte do "
+            "XLSX do Portal; a materialização em arquivo permanece no "
+            "Portal). "
             "Requer supplies.access e escopo do próprio usuário."
         ),
         annotations=_annotations("read", "Read supplies entities"),
         meta=meta,
     )
     def read(
-        entity: Literal["purchase_orders", "suppliers", "postal_codes"],
+        entity: Literal[
+            "purchase_orders",
+            "purchase_requests",
+            "suppliers",
+            "postal_codes",
+        ],
         action: Literal[
             "search",
             "get",
+            "export",
+            "summary",
+            "requesters",
+            "cost_centers",
             "catalogs",
             "search_by_tax_id",
             "existing",
@@ -176,6 +208,13 @@ def create_mcp_server() -> MCPServer:
         ],
         filters: (
             PurchaseOrderSearchFilters
+            | PurchaseOrderExportFilters
+            | PurchaseRequestSearchFilters
+            | PurchaseRequestSummaryFilters
+            | PurchaseRequestRequestersFilters
+            | PurchaseRequestCostCentersFilters
+            | PurchaseRequestDetailFilters
+            | PurchaseRequestExportFilters
             | SupplierSearchFilters
             | SupplierCatalogFilters
             | SupplierTaxIdFilters
@@ -183,6 +222,7 @@ def create_mcp_server() -> MCPServer:
         ) = None,
         identity: (
             PurchaseOrderIdentity
+            | PurchaseRequestIdentity
             | SupplierIdentity
             | SupplierOperationIdentity
             | PostalCodeIdentity

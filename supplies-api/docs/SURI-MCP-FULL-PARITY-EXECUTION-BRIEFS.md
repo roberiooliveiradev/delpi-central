@@ -6,7 +6,7 @@ Template comum de autoridades (todo lote): instruções GPT Arquiteto, `.cursor`
 
 ---
 
-## P1-R1 — `read entity=purchase_requests`
+## P1-R1 — `read entity=purchase_requests` — **EXECUTADO** (SURI-MCP-FULL-PARITY-V4-G2)
 
 - **GOAL:** paridade da jornada SC (lista/filtros, summary, facets, detalhe, export, foto).
 - **RQ/AC:** RQ-1 `action=search` aceita filtros fechados (branch[], date range, request_number, product, requester, cost_center, stage, page/size ≤200); RQ-2 `action=summary|requesters|cost_centers|get|export`; RQ-3 photo respeita `RequesterPhotoScopeGuard` (404 facet); RQ-4 identity `{branch, request_number}`; RQ-5 export devolve artefato conforme DECISION-G1.
@@ -17,14 +17,16 @@ Template comum de autoridades (todo lote): instruções GPT Arquiteto, `.cursor`
 - **AuthZ:** `can_use_purchase_requests` + `require_units("branch")`; export exige branch não-vazio (espelhar BFF).
 - **Testes:** contract schema (unknown key→422), dispatch cada action, units deny, facet 404, export contract, 401 challenge, regressão 4 tools.
 - **Evidence:** tools/list + call real em container teste; matrix R-04..R-07 → PROVEN.
-- **Dependências:** nenhuma (1º lote). **Próxima etapa:** P1-R2.
+- **Entregue (catálogo v5):** seis ações `read` sobre `PurchaseRequestsGateway` + `RequesterIdentityService` (mesmo reuse canônico do BFF); `PR_*_FILTER_KEYS` espelham os conjuntos exatos das rotas FastAPI do owner; export = dataset JSON + metadados (DECISION-G1 fechada); foto de solicitante permanece exclusiva da rota BFF (guard preservado — nenhum bypass nem canal binário inventado). Suíte `test_purchase_requests_read.py` (41 casos). Status: `TESTED_LOCALLY` — deploy gate `SURI-MCP-V4-G2-DEPLOY-001` pendente.
+- **Dependências:** nenhuma (1º lote). **Próxima etapa:** P1-R3 (P1-R2 já entregue).
 
-## P1-R2 — PO export
+## P1-R2 — PO export — **EXECUTADO** (SURI-MCP-FULL-PARITY-V4-G2)
 
 - **GOAL:** `read entity=purchase_orders action=export` com mesmo XLSX do BFF.
 - **RQ/AC:** reuso `build_purchase_orders_xlsx`; mesmo recorte de filtros do search.
 - **Files:** `tool_bridge.py`, constants, tests. **Dependências:** DECISION-G1 (formato do artefato).
 - **Stop:** artefato divergir do BFF.
+- **Entregue (catálogo v5):** ação `export` no mesmo upstream canônico `/supplies/purchase-orders/export` (mesmo recorte do XLSX BFF, sem paginação); retorno = dataset JSON + `export.{format,row_count,portal_file_formats}` — o builder XLSX não é duplicado: a materialização em arquivo continua exclusiva do Portal. Status: `TESTED_LOCALLY`.
 
 ## P1-R3 — deliveries + inventory
 

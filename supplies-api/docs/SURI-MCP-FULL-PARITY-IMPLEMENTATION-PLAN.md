@@ -21,7 +21,8 @@ Schemas MCP evoluem aditivamente (novos Literals/entities) — compatibilidade c
 
 ```text
 FASE P1 — READ/ANALYZE parity (capacidades já homologadas no Portal)
-  P1-R1 purchase_requests → P1-R2 PO export → P1-R3 deliveries+inventory
+  P1-R1 purchase_requests (EXECUTADO — SURI-MCP-FULL-PARITY-V4-G2, catálogo v5)
+  → P1-R2 PO export (EXECUTADO — V4-G2) → P1-R3 deliveries+inventory
   → P1-R4 safety_stock → P1-R5 suppliers reads (EXECUTADO —
     SURI-MCP-FULL-PARITY-V4-G1, catálogo v4) → P1-R6 analytics
   → P1-R7 consumption_audit → P1-R8 market_intelligence → P1-R9 users/me/home
@@ -41,8 +42,8 @@ Cada lote é independente em código (novo `entity`/`action` no registry + handl
 
 | Lote | TASK | Entrega | Files prováveis | Stop conditions |
 |---|---|---|---|---|
-| P1-R1 | SURIP-R1: `read entity=purchase_requests` | search/list, summary, facets (requesters, cost-centers, photo-guard), get, export | `tool_bridge.py`, `schemas.py`, `constants.py`, gateway PR-api reuse (já existe `PurchaseRequestsGateway`), tests | facets guard quebrar; units deny errado |
-| P1-R2 | SURIP-R2: PO export | export XLSX via mesmo compositor BFF | tool_bridge + in-proc builder reuse | artefato sem parity com BFF export |
+| P1-R1 | SURIP-R1: `read entity=purchase_requests` | **EXECUTADO** — search/summary/requesters/cost_centers/get/export (catálogo v5, TESTED_LOCALLY) | `tool_bridge.py`, `schemas.py`, `constants.py`, `PurchaseRequestsGateway` + `RequesterIdentityService` reuse, `test_purchase_requests_read.py` | facets guard quebrar; units deny errado |
+| P1-R2 | SURIP-R2: PO export | **EXECUTADO** — export = dataset JSON+meta do mesmo upstream `/supplies/purchase-orders/export` (TESTED_LOCALLY) | `tool_bridge.py`, `constants.py`, `schemas.py`, tests | artefato sem parity com BFF export |
 | P1-R3 | SURIP-R3: deliveries + inventory | `read entity=deliveries` (late), `read entity=inventory` (summary/items) | tool_bridge + SuppliesDelpiReads reuse | N/A |
 | P1-R4 | SURIP-R4: safety_stock | filters/summary/items/details/suppliers | tool_bridge | `all` branch vazar sem choice → retornar erro estruturado |
 | P1-R5 | SURIP-R5: suppliers reads | list/get/catalogs/postal-code/dup-check/preview/integration-status(manage)/operations | tool_bridge + **DelpiS2SApiGateway** | integration-status sem manage → 403 correto (negative test) |
@@ -77,7 +78,7 @@ G6 doc: matrix row → PROVEN; evidence doc por lote
 1. **DECISION-E1**: proposal store — Postgres `supplies` schema (CLARA-style, auditável cross-restart) vs HMAC in-process (EVA-style, single-process). Recomendo **pg** pela consistência com proposals persistentes e audit.
    **Subdecisão fechada no P2-E0 (2026-10-30):** para writes não-destrutivas sem exigência de consent/prepare (supplier create/update — direct path, sem prepare/commit conversacional redundante conforme contrato da missão), a infra mínima é: registry `(entity,action)` fechado + replay cache in-process de `idempotency_key` (TTL 900s, guarda de retry, não fonte de verdade) + operation tracking durável do api-delpi (`operation_id`, `X-Correlation-ID` propagado) + audit estruturado por operação. O proposal store pg continua DECISION aberta para operações que exijam consent/prepare (enrichment, comex manage, delete).
 2. **DECISION-D1**: canal de confirmação — MCP elicitation `target_echo` (EVA) vs Portal consent url (CLARA). Recomendo **elicitation com echo** (MCP-native, sem dependência de UI nova) com fallback `confirmation_unavailable` honesto.
-3. **DECISION-G1**: export XLSX via MCP — artefato binário vs link/inline base64 resource. Avaliar `resources` do MCP protocol.
+3. **DECISION-G1** — **FECHADA (V4-G2):** export via MCP = dataset JSON filtrado canônico + metadados do artefato (`format`, `row_count`, `portal_file_formats`). Sem binário/base64/link arbitrário — materialização CSV/XLSX permanece exclusiva das rotas BFF. Motivo: o contrato MCP corrente não tem canal de artefato homologado (sem resource/download endpoint próprio); dataset JSON é o menor mecanismo compatível com o recorte autorizado do Portal e com a UX do conector (o LLM consome as linhas diretamente).
 4. `patchPreferences` vs `patchUserProfile` — reconciliar owner da write (TO_INVENTORY).
 
 ## Compatibilidade OAuth / conector

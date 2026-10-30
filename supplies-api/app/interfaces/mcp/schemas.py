@@ -64,6 +64,134 @@ class PurchaseOrderIdentity(_ClosedModel):
     order_number: str
 
 
+class PurchaseOrderExportFilters(_ClosedModel):
+    """Filters for ``read(entity=purchase_orders, action=export)`` —
+    same closed vocabulary as search, without pagination."""
+
+    branch: list[str] = Field(
+        description="Unidades operacionais obrigatórias (ex.: ['01'])."
+    )
+    order_number: str | None = None
+    product_code: str | None = None
+    supplier_code: str | None = None
+    expected_delivery_from: str | None = None
+    expected_delivery_to: str | None = None
+    late_only: bool = False
+    sort_by: str | None = None
+    sort_dir: str | None = None
+
+
+class PurchaseRequestSearchFilters(_ClosedModel):
+    """Closed filter vocabulary for ``read(entity=purchase_requests,
+    action=search)`` — parity with the purchase-requests-api list
+    contract consumed by the BFF."""
+
+    branch: list[str] = Field(
+        description="Unidades operacionais obrigatórias (ex.: ['01'])."
+    )
+    date_from: str | None = None
+    date_to: str | None = None
+    request_number: str | None = None
+    requester_user_id: list[str] | None = None
+    cost_center: list[str] | None = None
+    product_code: str | None = None
+    supplier_code: str | None = None
+    order_number: str | None = None
+    overall_stage: list[str] | None = None
+    sort_by: str | None = None
+    sort_dir: str | None = None
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=DEFAULT_PAGE_SIZE, ge=1)
+
+
+class PurchaseRequestSummaryFilters(_ClosedModel):
+    """Filters for ``read(entity=purchase_requests, action=summary)`` —
+    same filter set as search minus sort and pagination."""
+
+    branch: list[str] = Field(
+        description="Unidades operacionais obrigatórias (ex.: ['01'])."
+    )
+    date_from: str | None = None
+    date_to: str | None = None
+    request_number: str | None = None
+    requester_user_id: list[str] | None = None
+    cost_center: list[str] | None = None
+    product_code: str | None = None
+    supplier_code: str | None = None
+    order_number: str | None = None
+    overall_stage: list[str] | None = None
+
+
+class PurchaseRequestRequestersFilters(_ClosedModel):
+    """Filters for ``read(entity=purchase_requests, action=requesters)``
+    — PR-api requesters facet contract (no requester_user_id or
+    overall_stage keys upstream)."""
+
+    branch: list[str] = Field(
+        description="Unidades operacionais obrigatórias (ex.: ['01'])."
+    )
+    date_from: str | None = None
+    date_to: str | None = None
+    request_number: str | None = None
+    cost_center: list[str] | None = None
+    product_code: str | None = None
+    supplier_code: str | None = None
+    order_number: str | None = None
+
+
+class PurchaseRequestCostCentersFilters(_ClosedModel):
+    """Filters for ``read(entity=purchase_requests, action=cost_centers)``
+    — PR-api cost-centers facet contract (no cost_center key upstream)."""
+
+    branch: list[str] = Field(
+        description="Unidades operacionais obrigatórias (ex.: ['01'])."
+    )
+    date_from: str | None = None
+    date_to: str | None = None
+    request_number: str | None = None
+    product_code: str | None = None
+    supplier_code: str | None = None
+    order_number: str | None = None
+
+
+class PurchaseRequestIdentity(_ClosedModel):
+    """Identity for ``read(entity=purchase_requests, action=get)`` —
+    unequivocal ``{branch, request_number}`` (BFF path contract)."""
+
+    branch: str
+    request_number: str
+
+
+class PurchaseRequestDetailFilters(_ClosedModel):
+    """Optional context filters for ``read(entity=purchase_requests,
+    action=get)`` — the PR-api detail endpoint accepts a facet-scoped
+    lookup context alongside the path identity."""
+
+    date_from: str | None = None
+    date_to: str | None = None
+    cost_center: list[str] | None = None
+
+
+class PurchaseRequestExportFilters(_ClosedModel):
+    """Filters for ``read(entity=purchase_requests, action=export)`` —
+    same closed vocabulary as search, without pagination."""
+
+    branch: list[str] = Field(
+        description="Unidades operacionais obrigatórias (ex.: ['01'])."
+    )
+    date_from: str | None = None
+    date_to: str | None = None
+    request_number: str | None = None
+    requester_user_id: list[str] | None = None
+    cost_center: list[str] | None = None
+    product_code: str | None = None
+    supplier_code: str | None = None
+    order_number: str | None = None
+    overall_stage: list[str] | None = None
+    sort_by: str | None = None
+    sort_dir: str | None = None
+
+
 class SupplierSearchFilters(_ClosedModel):
     """Filters for ``read(entity=suppliers, action=search)`` — parity
     with the BFF paged SA2 search contract."""

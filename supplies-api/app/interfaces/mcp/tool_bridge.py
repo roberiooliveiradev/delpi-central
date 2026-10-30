@@ -14,6 +14,7 @@ import hashlib
 import json
 import logging
 from typing import Any
+from urllib.parse import urlencode
 
 from delpi_mcp.errors import kind_for_http_status, mcp_tool_result
 from delpi_mcp.identity import require_mcp_context
@@ -22,11 +23,16 @@ from pydantic import BaseModel, ValidationError
 
 from app.application.security.supplies_permissions import (
     can_administer,
+    can_export_purchase_requests,
     can_use_operations,
+    can_use_purchase_requests,
     has_canonical_access,
     has_canonical_manage,
 )
 from app.application.services.authorization_service import AuthorizationService
+from app.application.services.requester_identity_service import (
+    RequesterIdentityService,
+)
 from app.application.services.supplier_creation_preview.preview_service import (
     SupplierCreationPreviewService,
 )
@@ -67,6 +73,10 @@ from app.infrastructure.gateways.delpi_s2s_gateway import DelpiS2SApiGateway
 from app.infrastructure.gateways.delpi_supplier_duplicate_search import (
     DelpiSupplierDuplicateSearch,
 )
+from app.infrastructure.gateways.purchase_requests_gateway import (
+    PurchaseRequestsGateway,
+    PurchaseRequestsGatewayError,
+)
 from app.infrastructure.gateways.supplier_enrichment_adapters import (
     company_registry_provider,
 )
@@ -87,9 +97,17 @@ from app.interfaces.mcp.constants import (
     MAX_PAGE_SIZE,
     MAX_SAMPLE_SIZE,
     PO_ANALYZE_FILTER_KEYS,
+    PO_EXPORT_FILTER_KEYS,
     PO_GET_IDENTITY_KEYS,
     PO_SEARCH_FILTER_KEYS,
     POSTAL_CODE_IDENTITY_KEYS,
+    PR_COST_CENTERS_FILTER_KEYS,
+    PR_DETAIL_FILTER_KEYS,
+    PR_EXPORT_FILTER_KEYS,
+    PR_GET_IDENTITY_KEYS,
+    PR_REQUESTERS_FILTER_KEYS,
+    PR_SEARCH_FILTER_KEYS,
+    PR_SUMMARY_FILTER_KEYS,
     READ_ACTIONS_BY_ENTITY,
     READ_ENTITIES,
     SEMANTIC_CAPABILITIES,
@@ -199,6 +217,31 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
                 error_code="validation",
             )
         return _error("api-delpi unavailable", status_code=502, error_code="upstream")
+    if isinstance(exc, PurchaseRequestsGatewayError):
+        status = exc.status_code or 502
+        if status == 401:
+            return _error(
+                "Authentication required.",
+                status_code=401,
+                error_code="unauthenticated",
+            )
+        if status == 403:
+            return _error("Forbidden", status_code=403, error_code="forbidden")
+        if status == 404:
+            message = "Not Found"
+            if isinstance(exc.payload, dict) and exc.payload.get("message"):
+                message = str(exc.payload["message"])
+            return _error(message, status_code=404, error_code="not_found")
+        if status < 500:
+            detail = "purchase-requests-api client error"
+            if isinstance(exc.payload, dict) and exc.payload.get("message"):
+                detail = str(exc.payload["message"])
+            return _error(detail, status_code=status, error_code="validation")
+        return _error(
+            "purchase-requests-api unavailable",
+            status_code=502,
+            error_code="upstream",
+        )
     if isinstance(exc, PermissionError):
         msg = str(exc) or "Unauthorized"
         if msg == "Unauthorized":
@@ -414,6 +457,231 @@ def tool_get_purchase_order(
     if not isinstance(data, dict):
         return _error("Not Found", status_code=404, error_code="not_found")
     return _ok(data, meta={"delpi/source": "bff:/purchase-orders/{branch}/{number}"})
+
+
+def tool_export_purchase_orders(filters: dict) -> CallToolResult:
+    """Filtered open-order dataset — DECISION-G1 export contract.
+
+    Same canonical upstream the BFF XLSX route consumes
+    (``/supplies/purchase-orders/export``, no pagination). The MCP
+    returns the JSON rows plus artifact metadata; file materialization
+    stays Portal-side — no binary/base64/arbitrary link is produced.
+    """
+    user = _operations_user()
+    branches = _clean_branches(filters.get("branch"))
+    _AUTHZ.require_units(user, branches)
+    params = _filter_params(
+        order_number=filters.get("order_number"),
+        product_code=filters.get("product_code"),
+        supplier_code=filters.get("supplier_code"),
+        expected_delivery_from=filters.get("expected_delivery_from"),
+        expected_delivery_to=filters.get("expected_delivery_to"),
+        sort_by=filters.get("sort_by"),
+        sort_dir=filters.get("sort_dir"),
+        late_only=bool(filters.get("late_only") or False),
+    )
+    merged = {"branch": branches, **params}
+    payload = _GATEWAY.get(
+        "/supplies/purchase-orders/export",
+        access_token=user.access_token or "",
+        params=merged,
+    )
+    data = unwrap_delpi_envelope(payload)
+    items = data.get("items") if isinstance(data, dict) else []
+    if not isinstance(items, list):
+        items = []
+    return _ok(
+        {
+            "items": items,
+            "export": {
+                "format": "json",
+                "row_count": len(items),
+                "portal_file_formats": ["xlsx"],
+            },
+        },
+        meta={"delpi/source": "bff:/purchase-orders/export"},
+    )
+
+
+# -- PURCHASE REQUESTS READ (rev.5) ----------------------------------------
+#
+# Same owner chain as the Flask purchase_requests routes:
+# PurchaseRequestsGateway (Bearer + internal service identity) →
+# purchase-requests-api, with the canonical RequesterIdentityService
+# enrichment on list/requesters/detail. No SC create/approve/cancel is
+# exposed — the Portal does not offer that workflow through this surface.
+
+_PR_GATEWAY = PurchaseRequestsGateway()
+_PR_REQUESTER_IDENTITY = RequesterIdentityService()
+
+
+def _pr_user() -> EffectiveUser:
+    user = _effective_user()
+    if not can_use_purchase_requests(user):
+        raise AuthorizationError("Forbidden")
+    return user
+
+
+def _pr_export_user() -> EffectiveUser:
+    user = _effective_user()
+    if not can_export_purchase_requests(user):
+        raise AuthorizationError("Forbidden")
+    return user
+
+
+def _pr_query_string(filters: dict, *, drop: frozenset[str]) -> str:
+    """Encode the closed filter payload as the owner query string —
+    list values become repeated keys, exactly like the BFF forwarding."""
+    pairs: list[tuple[str, str]] = []
+    for key in sorted(filters):
+        if key in drop:
+            continue
+        value = filters[key]
+        if value is None:
+            continue
+        if isinstance(value, (list, tuple)):
+            for item in value:
+                text = str(item or "").strip()
+                if text:
+                    pairs.append((key, text))
+        else:
+            text = str(value).strip()
+            if text:
+                pairs.append((key, text))
+    return urlencode(pairs, doseq=True)
+
+
+def _unwrap_pr_data(payload: Any) -> Any:
+    if isinstance(payload, dict) and "data" in payload:
+        return payload.get("data")
+    return payload
+
+
+def tool_list_purchase_requests(filters: dict) -> CallToolResult:
+    user = _pr_user()
+    branches = _clean_branches(filters.get("branch"))
+    _AUTHZ.require_units(user, branches)
+    bounded = dict(filters)
+    bounded["page"] = max(1, int(bounded.get("page") or 1))
+    bounded["page_size"] = min(
+        MAX_PAGE_SIZE, max(1, int(bounded.get("page_size") or DEFAULT_PAGE_SIZE))
+    )
+    payload = _PR_GATEWAY.list_purchase_requests(
+        access_token=user.access_token or "",
+        query_string=_pr_query_string(bounded, drop=frozenset()) or None,
+    )
+    data = _PR_REQUESTER_IDENTITY.enrich_payload(
+        _unwrap_pr_data(payload), access_token=user.access_token or ""
+    )
+    return _ok(data, meta={"delpi/source": "bff:/purchase-requests"})
+
+
+def tool_purchase_request_summary(filters: dict) -> CallToolResult:
+    user = _pr_user()
+    branches = _clean_branches(filters.get("branch"))
+    _AUTHZ.require_units(user, branches)
+    payload = _PR_GATEWAY.get_summary(
+        access_token=user.access_token or "",
+        query_string=_pr_query_string(filters, drop=frozenset()) or None,
+    )
+    return _ok(
+        _unwrap_pr_data(payload),
+        meta={"delpi/source": "bff:/purchase-requests/summary"},
+    )
+
+
+def tool_purchase_request_requesters(filters: dict) -> CallToolResult:
+    user = _pr_user()
+    branches = _clean_branches(filters.get("branch"))
+    _AUTHZ.require_units(user, branches)
+    payload = _PR_GATEWAY.list_requesters(
+        access_token=user.access_token or "",
+        query_string=_pr_query_string(filters, drop=frozenset()) or None,
+    )
+    data = _PR_REQUESTER_IDENTITY.enrich_payload(
+        _unwrap_pr_data(payload), access_token=user.access_token or ""
+    )
+    return _ok(
+        data,
+        meta={"delpi/source": "bff:/purchase-requests/requesters"},
+    )
+
+
+def tool_purchase_request_cost_centers(filters: dict) -> CallToolResult:
+    user = _pr_user()
+    branches = _clean_branches(filters.get("branch"))
+    _AUTHZ.require_units(user, branches)
+    payload = _PR_GATEWAY.list_cost_centers(
+        access_token=user.access_token or "",
+        query_string=_pr_query_string(filters, drop=frozenset()) or None,
+    )
+    return _ok(
+        _unwrap_pr_data(payload),
+        meta={"delpi/source": "bff:/purchase-requests/cost-centers"},
+    )
+
+
+def tool_get_purchase_request(
+    identity: dict, context_filters: dict
+) -> CallToolResult:
+    user = _pr_user()
+    branch = str(identity.get("branch") or "").strip()
+    request_number = str(identity.get("request_number") or "").strip()
+    if not branch or not request_number:
+        return _error(
+            "Invalid purchase request identity",
+            status_code=422,
+            error_code="validation",
+        )
+    _AUTHZ.require_unit(user, branch)
+    payload = _PR_GATEWAY.get_purchase_request(
+        access_token=user.access_token or "",
+        branch=branch,
+        request_number=request_number,
+        query_string=_pr_query_string(context_filters, drop=frozenset())
+        or None,
+    )
+    data = _PR_REQUESTER_IDENTITY.enrich_payload(
+        _unwrap_pr_data(payload), access_token=user.access_token or ""
+    )
+    return _ok(
+        data,
+        meta={"delpi/source": "bff:/purchase-requests/{branch}/{number}"},
+    )
+
+
+def tool_export_purchase_requests(filters: dict) -> CallToolResult:
+    """Filtered SC dataset — DECISION-G1 export contract.
+
+    Mirrors the BFF export route: ``can_export_purchase_requests`` +
+    unit scope + non-empty branch; pagination and format keys are never
+    forwarded. Returns the canonical JSON rows plus artifact metadata —
+    CSV/XLSX materialization stays Portal-side.
+    """
+    user = _pr_export_user()
+    branches = _clean_branches(filters.get("branch"))
+    if not branches:
+        raise AuthorizationError("Forbidden")
+    _AUTHZ.require_units(user, branches)
+    payload = _PR_GATEWAY.export_purchase_requests(
+        access_token=user.access_token or "",
+        query_string=_pr_query_string(filters, drop=frozenset()) or None,
+    )
+    data = _unwrap_pr_data(payload)
+    items = data.get("items") if isinstance(data, dict) else []
+    if not isinstance(items, list):
+        items = []
+    return _ok(
+        {
+            "items": items,
+            "export": {
+                "format": "json",
+                "row_count": len(items),
+                "portal_file_formats": ["csv", "xlsx"],
+            },
+        },
+        meta={"delpi/source": "bff:/purchase-requests/export"},
+    )
 
 
 # -- SUPPLIERS READ (rev.4) -------------------------------------------------
@@ -921,6 +1189,10 @@ def tool_read(
         return _dispatch_suppliers_read(
             normalized_action, filter_payload, identity_payload
         )
+    if normalized_entity == "purchase_requests":
+        return _dispatch_purchase_requests_read(
+            normalized_action, filter_payload, identity_payload
+        )
     if normalized_entity == "postal_codes":
         return _dispatch_postal_read(
             normalized_action, filter_payload, identity_payload
@@ -973,11 +1245,121 @@ def tool_read(
             order_number=str(identity_payload.get("order_number") or ""),
         )
 
+    if normalized_action == "export":
+        if identity_payload:
+            return _invalid(
+                "read action=export does not accept 'identity' — "
+                "use 'filters' for the export scope."
+            )
+        unknown = _unknown_keys(filter_payload, PO_EXPORT_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown purchase_orders export filters: {sorted(unknown)}. "
+                f"Allowed: {sorted(PO_EXPORT_FILTER_KEYS)}"
+            )
+        return tool_export_purchase_orders(filter_payload)
+
     return _invalid(
         f"Unknown read action for {normalized_entity}: "
         f"{normalized_action!r}. "
         f"Allowed: {sorted(READ_ACTIONS_BY_ENTITY[normalized_entity])}"
     )
+
+
+def _dispatch_purchase_requests_read(
+    action: str, filter_payload: dict, identity_payload: dict
+) -> CallToolResult:
+    """Per-action SC dispatch — each action owns a closed vocabulary
+    mirroring the purchase-requests-api query contracts."""
+    if action == "search":
+        if identity_payload:
+            return _invalid(
+                "read action=search does not accept 'identity' — "
+                "use action=get for a single request."
+            )
+        unknown = _unknown_keys(filter_payload, PR_SEARCH_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown purchase_requests filters: {sorted(unknown)}. "
+                f"Allowed: {sorted(PR_SEARCH_FILTER_KEYS)}"
+            )
+        return tool_list_purchase_requests(filter_payload)
+
+    if action == "summary":
+        if identity_payload:
+            return _invalid(
+                "read action=summary does not accept 'identity'."
+            )
+        unknown = _unknown_keys(filter_payload, PR_SUMMARY_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown purchase_requests summary filters: "
+                f"{sorted(unknown)}. "
+                f"Allowed: {sorted(PR_SUMMARY_FILTER_KEYS)}"
+            )
+        return tool_purchase_request_summary(filter_payload)
+
+    if action == "requesters":
+        if identity_payload:
+            return _invalid(
+                "read action=requesters does not accept 'identity'."
+            )
+        unknown = _unknown_keys(filter_payload, PR_REQUESTERS_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown purchase_requests requesters filters: "
+                f"{sorted(unknown)}. "
+                f"Allowed: {sorted(PR_REQUESTERS_FILTER_KEYS)}"
+            )
+        return tool_purchase_request_requesters(filter_payload)
+
+    if action == "cost_centers":
+        if identity_payload:
+            return _invalid(
+                "read action=cost_centers does not accept 'identity'."
+            )
+        unknown = _unknown_keys(filter_payload, PR_COST_CENTERS_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown purchase_requests cost_centers filters: "
+                f"{sorted(unknown)}. "
+                f"Allowed: {sorted(PR_COST_CENTERS_FILTER_KEYS)}"
+            )
+        return tool_purchase_request_cost_centers(filter_payload)
+
+    if action == "get":
+        unknown = _unknown_keys(identity_payload, PR_GET_IDENTITY_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown purchase_requests identity keys: "
+                f"{sorted(unknown)}. "
+                f"Allowed: {sorted(PR_GET_IDENTITY_KEYS)}"
+            )
+        unknown = _unknown_keys(filter_payload, PR_DETAIL_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown purchase_requests detail context filters: "
+                f"{sorted(unknown)}. "
+                f"Allowed: {sorted(PR_DETAIL_FILTER_KEYS)}"
+            )
+        return tool_get_purchase_request(identity_payload, filter_payload)
+
+    if action == "export":
+        if identity_payload:
+            return _invalid(
+                "read action=export does not accept 'identity' — "
+                "use 'filters' for the export scope."
+            )
+        unknown = _unknown_keys(filter_payload, PR_EXPORT_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown purchase_requests export filters: "
+                f"{sorted(unknown)}. "
+                f"Allowed: {sorted(PR_EXPORT_FILTER_KEYS)}"
+            )
+        return tool_export_purchase_requests(filter_payload)
+
+    return _invalid(f"Unknown purchase_requests read action: {action!r}.")
 
 
 def _dispatch_suppliers_read(
