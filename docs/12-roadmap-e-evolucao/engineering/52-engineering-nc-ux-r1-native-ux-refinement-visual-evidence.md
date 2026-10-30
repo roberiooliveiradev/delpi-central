@@ -10,8 +10,9 @@ contratos.
 navegador real (desktop, mobile, tablet, light/dark).
 
 **Base:** `5c1b939600` (= `origin/main` na reancoragem, pós-T7).
-**SHA testado:** ver `FINAL_HEAD` no relatório de execução — testes de
-navegador e CI rodados sobre o worktree exato que foi commitado.
+**SHA testado:** `4f6d73fd0c` — CI unit e Playwright 18/18 rodados sobre o
+bundle construído a partir deste commit (container `delpi-engineering`
+rebuildado no worktree exato do commit antes da rodada final).
 
 ---
 
