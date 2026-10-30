@@ -156,11 +156,11 @@ Portal + CLARA + corpus + Help + matriz publicados **como uma única entrega** (
 
 **Pendentes externas (não bloqueiam o contrato):** E7 versão RPO + parâmetros efetivos `mv_par09/10/16` (TI/ERP); classificação `F4_PODER3` no escopo kardex; confirmação do parâmetro de armazém da emissão R07.
 
-**Opções materiais (recomendação — aguardam aprovação):**
-- **D-O1** CPV: (a) `GET /financeiro/cpv` dedicado **← recomendado** × (b) embutido em `stock-kardex/summary`.
-- **D-O2** Export CSV/PDF das duas consultas **← recomendado aprovar** (molde pronto) × adiar.
-- **D-O3** R07 como view dedicada `inventory-adjustments` **← recomendado** (matriz/deep-link independentes) × alias de filtro no kardex.
-- **D-O4** `mv_par20/21` (pular `B2_QATU=0`/negativo): expor como parâmetros opcionais `include_zero_balance`/`include_negative_balance` × omitir (recomendado omitir — população = produtos com movimento).
+**Opções materiais — APROVADAS pelo PO em 2026-10-29** (aprovação em sessão, execução `CF-PROC0072-R06-R07-IMPLEMENTATION-015`, Gate 0; as quatro recomendações técnicas foram aceitas integralmente):
+- **D-O1** CPV: **`GET /financeiro/cpv` dedicado** — aprovado.
+- **D-O2** Export **CSV e PDF** das duas consultas — aprovado (molde `report_export_common`).
+- **D-O3** R07 como view dedicada **`inventory-adjustments`** — aprovado (matriz/deep-link independentes).
+- **D-O4** `mv_par20/21` (saldo zero/negativo): **omitir** — população = produtos com movimento.
 
 ## 10. Critérios AC-G do gate
 
@@ -190,3 +190,24 @@ Portal + CLARA + corpus + Help + matriz publicados **como uma única entrega** (
 ## 12. Limites declarados
 
 Nenhum endpoint, schema, migration, página, tool MCP produtiva, permissão, regra de autorização, rotina ERP ou deploy foi criado/alterado. A única alteração de código declarada é o manifest de fontes do corpus (tags `doc-61/62/63` saneadas + `doc-122` autorizado) — configuração documental, sem efeito runtime até a ingestão governada. **Implementação permanece bloqueada** até gate de execução transversal explicitamente aprovado (proposto: `CF-PROC0072-R06-R07-IMPLEMENTATION-015`).
+
+
+## 13. Adendo — correção da convenção `as_of` (REWORK-017, 2026-10-30)
+
+Investigação `CF-PROC0072-R06-R07-REVERT-MONETARY-INVESTIGATION-016` + rework `CF-PROC0072-R06-R07-MONETARY-REWORK-017`.
+
+**Causa raiz da divergência −4,27M/−1,28M (IMPLEMENTATION-015):** o boundary do `as_of` TTAT era `reference_date` (último dia da competência) com `TTAT_DTIME > '20260930'`. O fechamento de custos (MATA330) grava logs de custo **no próprio dia 30/09**; incluí-los fazia o engine restaurar custos **pré-fechamento**, enquanto o artefato foi emitido em 01/10/2026 com custos **pós-fechamento**.
+
+**Convenção corrigida (TARGET):** competência encerrada ao final do último dia; o `as_of` reconstrói o custo **pós-fechamento** usando o primeiro `TTAT_COLD` logado **a partir do primeiro dia após a competência** (`request.as_of_boundary()` = `reference_date + 1 dia`; SQL `TTAT_DTIME >= boundary` — dia seguinte inclusive, virada de mês/ano tratada).
+
+**Evidência de paridade (f02 / armazém 01 / 2026-09 × `cpv 09 26 matriz.xlsb`, sha256 `1e8f5173…`, emissão 01/10/2026 16:58):**
+- população 9.357/9.357 movimentos, 1.544/1.544 produtos;
+- quantidades entrada/saída exatas;
+- **valores EXATOS linha a linha** — MATCH=9.357, ONLY_XLSB=0, ONLY_ENGINE=0, AMBIGUOUS=0, VALUE_MISMATCH=0 (|diff| ≤ 0,01 por linha; totais diff = 0,000);
+- devoluções SD2 (4 movs, docs 016416/016488/016501/016560) e SD1 (7 movs) confirmadas no artefato na mesma convenção de coluna/sinal do engine;
+- R07 (INVENT, armazéns 01+99): 45/45 movimentos; totais de valor `2.348,108` / `30.808,206` / líq `−28.460,098` **exatos** × doc 85 §7; armazém 50 (2 movs) fora do escopo da emissão;
+- residual final: **R$ 0,00** em ambos os lados.
+
+**Residuais anteriores explicados:** o −R$11.954,21 (entradas) e o +R$2.845,00 (saídas) reportados na investigação eram artefato de sonda (último COLD sobrescrevia o primeiro na query de diagnóstico) — o engine canônico sempre usou o earliest-COLD correto.
+
+`G6` homologação humana permanece `PENDING`. `E7` (RPO/parâmetros efetivos da emissão) permanece `PENDING` externo.

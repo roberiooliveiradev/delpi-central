@@ -255,6 +255,37 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
         required=("period",),
         allowed=("branch", "report_scope"),
     ),
+    ("report", "stock_kardex"): _read_spec(
+        bridge.tool_get_stock_kardex,
+        required=("period",),
+        allowed=(
+            "branch", "warehouse", "product_code",
+            "movement_kind", "page", "page_size",
+        ),
+    ),
+    ("report", "stock_kardex_summary"): _read_spec(
+        bridge.tool_get_stock_kardex_summary,
+        required=("period",),
+        allowed=("branch", "warehouse", "product_code"),
+    ),
+    ("report", "inventory_adjustments"): _read_spec(
+        bridge.tool_get_inventory_adjustments,
+        required=("period",),
+        allowed=(
+            "branch", "warehouse", "product_code",
+            "movement_kind", "page", "page_size",
+        ),
+    ),
+    ("report", "inventory_adjustments_summary"): _read_spec(
+        bridge.tool_get_inventory_adjustments_summary,
+        required=("period",),
+        allowed=("branch", "warehouse", "product_code"),
+    ),
+    ("report", "cpv"): _read_spec(
+        bridge.tool_get_cpv,
+        required=("period",),
+        allowed=("branch", "top_limit"),
+    ),
     ("report", "matrix"): _read_spec(
         bridge.tool_get_report_matrix,
         required=("period",),

@@ -154,6 +154,15 @@ def test_insufficient_scope_returns_403(
 def test_flag_off_returns_typed_403(
     stock_movements_client: TestClient, monkeypatch
 ) -> None:
+    from app.application.security.stock_inventory_scope import (
+        SharedDatasetStockInventoryScopeResolver,
+    )
+
+    monkeypatch.setattr(
+        "app.composition.financeiro_stock_movements_composer."
+        "get_stock_inventory_scope_resolver",
+        lambda: SharedDatasetStockInventoryScopeResolver(enabled=False),
+    )
     _patch_s2s(monkeypatch, _request_headers(S2S_HEADERS), _validator())
     _patch_user(monkeypatch)
     response = stock_movements_client.get(

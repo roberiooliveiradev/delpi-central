@@ -37,7 +37,7 @@
 - **Deep routes:** `closing/{checklist|packages|cockpit|monthly-closing}/{AAAA-MM}`; relatório na aba via `?tab=reports&report=<id>`; filtros de documentos na query.
 - **Competência:** selecionada na visão (mês de referência `AAAA-MM`); parâmetro `period` das ferramentas CLARA segue o mesmo formato.
 
-## 3. Ferramentas MCP vigentes (43 — congeladas por `MCP_TOOL_NAMES`; execução 016 ampliou 18→43)
+## 3. Ferramentas MCP vigentes (48 — congeladas por `MCP_TOOL_NAMES`; execução 016 ampliou 18→43, IMPLEMENTATION-015 ampliou 43→48)
 
 > **Pós-CLARA-MCP-SEMANTIC-001:** a tabela abaixo descreve a superfície
 > legada pré-migração e os handlers que permanecem alvos do dispatcher.
@@ -79,6 +79,11 @@
 | `get_stock_movements` | READ | R05 entradas/saídas (MATR320) |
 | `get_work_in_process` | READ | R08/H02 material em processo |
 | `get_stock_reconciliation` | READ | Conciliação analítica R05−P7−H02 (IDENTITY_ONLY) |
+| `get_stock_kardex` | READ | R06 Kardex — motor MATR910 (SD1/SD2/SD3 + SB9 + TTAT as-of) |
+| `get_stock_kardex_summary` | READ | R06 — resumo por tipo/armazém + top produtos |
+| `get_inventory_adjustments` | READ | R07 ajustes de inventário (INVENT; READ — não executa ERP) |
+| `get_inventory_adjustments_summary` | READ | R07 — resumo dos ajustes + top produtos |
+| `get_cpv` | READ | CPV gerencial (medida viva SD2 — ≠ saídas do kardex) |
 | `get_report_matrix` | READ | Matriz R01–R15 de cobertura |
 | `list_closing_catalogs` | READ | Catálogos governados (manage) |
 | `list_catalog_entries` | READ | Entradas de catálogo (manage) |
@@ -130,7 +135,8 @@ Capabilities ACT vigentes (48): `evidence.decide_version`, `evidence.decide_item
 | R05 | Entradas/saídas | TOTVS/SD1–SD4 | stock-movements | seleção, agrupamentos, saldo (MATR320) | CSV/PDF | PENDING |
 | R08/H02 | Material em processo | TOTVS/SD3–SC2 | work-in-process | físico H02, alocado em OP, totais (MATR989) | CSV/PDF | PENDING; alimenta P3 |
 | R04, R09, R12, R15 | consumo OP, Fat×MOD, wizard, cutoff | — | PENDING_CONTRACT | — | — | PLANNED (pacotes 016–017; R04/R13/R14 depois) |
-| R06, R07 | CPV/Kardex (MATR910), inventários | — | PENDING_CONTRACT (gate 014 executado — contratos TARGET no doc 122) | — | — | PLANNED — implementação aguarda `CF-PROC0072-R06-R07-IMPLEMENTATION-015` |
+| R06 | CPV/Kardex | TOTVS/SD1-SD2-SD3+SB9+TTAT | stock-kardex + cpv | competência, filial, armazém, produto, entrada/saída, `/summary`, drill por produto | CSV/PDF | PENDING (MATR910) |
+| R07 | Inventários / Kardex99 | TOTVS/SD3-INVENT | inventory-adjustments | competência, filial, armazém, produto, `/summary` | CSV/PDF | PENDING (MATR910/INVENT) |
 | R10, R11 | centro de custo, NF a desconsiderar | Controladoria | MANUAL_EVIDENCE | — | — | evidência documental P2 |
 | R13, R14 | extratos/aplicações, importações/câmbio | instituições financeiras | EXTERNAL | — | — | evidência anexada validada |
 
@@ -150,7 +156,7 @@ Consulta operacional, cálculo analítico e exportação **não dependem** de do
 ## 8. Conhecimento — sincronização do corpus (esta execução)
 
 - Corpus anterior: `5d546360-ab37-410c-80e8-e1a5748ed56e` (27/10/2026 09:11 -03; 56 fontes, 1.713 itens) — anterior aos REWORK-010/011/012, ao P7 gate-final e ao doc 120.
-- Fontes do manifest alteradas desde a publicação (re-ingestão automática por supersede): docs 23, 85, 94, 112, 113, README.
+- Fontes do manifest alteradas desde a publicação (re-ingestão automática por supersede): docs 23, 85, 94, 112, 113, README — e, por IMPLEMENTATION-015, docs **120, 121, 122** (aprovação D-O1..D-O4 + estado implementado R06/R07).
 - Fontes novas autorizadas por esta execução (adicionadas ao manifest): docs **49** (contrato P7), **91** (gate documentos históricos/DRE), **115** (DRE-ACCESS-019), **116/117** (inteligência do processo real), **118** (base canônica), **119** (contratos P7 definitivos), **120** (plano R06–R15 + CLARA) e **121** (esta matriz).
 - Procedimento governado: `corpus_ingestion --docs-root <repo>` no ambiente com acesso a docs e `postgres-plugins`; nova versão/hash comprovados por `list_knowledge_sources` + buscas com citação. **Não** editar versão/hash manualmente.
 
@@ -162,7 +168,7 @@ Consulta operacional, cálculo analítico e exportação **não dependem** de do
 
 | Pacote | Escopo | Estado |
 |---|---|---|
-| 014 | R06 CPV/Kardex + R07 inventários | PLANNED — gate contratual executado (doc 122); implementação aguarda aprovação IMPLEMENTATION-015 |
+| 014/015 | R06 CPV/Kardex + R07 inventários | IMPLEMENTADO operacional — `CF-PROC0072-R06-R07-IMPLEMENTATION-015` (D-O1..D-O4 aprovadas pelo PO 29/10/2026); paridade oficial × MATR910 PENDING (E8) |
 | 015 | R10 centro de custo + R11 NF a desconsiderar | PLANNED |
 | 016 | R09 Faturamento × MOD | PLANNED (lacunas E9/G5) |
 | 017 | R12 estado de custos + R15 cutoff | PLANNED (READ-only de estado) |
@@ -187,12 +193,13 @@ A CLARA não oferece consultas de relatórios futuros como publicados; distingue
 - *Como abro o P7?* Aba Relatórios e divergências → matriz → R03, ou `closing/stock-inventory`; escopos `all_products`/`mp_pi_pa`, filial, armazém; exportação CSV/PDF no topo da consulta. [implementado]
 - *Qual a diferença entre P7 completo e MP/PI/PA?* `all_products` = universo; `mp_pi_pa` = matéria-prima/produto intermediário/produto acabado via tipo canônico. Medidas distintas (§5). [implementado]
 - *Onde exporto PDF?* Botão de exportação da própria consulta no Portal (R03/R05/R08); a CLARA explica, não exporta. [implementado; NOT_APPLICABLE para MCP]
-- *Quais relatórios existem?* §5 — cinco consultas operacionais (R01/R02/R03/R05/R08) + matriz R01–R15 com cobertura; demais R-IDs pendentes de contrato ou evidência manual. [implementado+planejado]
+- *Quais relatórios existem?* §5 — sete consultas operacionais (R01/R02/R03/R05/R06/R07/R08) + matriz R01–R15 com cobertura; demais R-IDs pendentes de contrato ou evidência manual. [implementado+planejado]
 - *Divergência zero significa conciliado?* Não — `IDENTITY_ONLY` é composição consistente de saldos SB9, não paridade oficial (§6). [conhecimento]
 - *O que falta para homologação oficial?* Comparação contra emissões oficiais com mesmo período/filial/escopo/`as_of` — frente PENDING. [conhecimento]
 - *Preciso cadastrar documento para consultar relatório?* Não — consulta/análise/exportação independentes (§7). [implementado]
 - *O que um usuário DRE vê?* Somente «Fechamento Mensal → Documentos e interações» do que a Controladoria disponibilizou. [implementado]
-- *O R06 já está implementado?* Não — pacote 014 com contratos TARGET aprovados em design (doc 122); implementação aguarda gate de execução. [planejado]
+- *O R06 já está implementado?* Sim — `stock-kardex` + `cpv` dedicado (D-O1) via motor MATR910; R07 em `inventory-adjustments` (D-O3). Paridade oficial × emissão MATR910 permanece PENDING. [implementado]
+- *As saídas do Kardex são iguais ao CPV?* Não — medidas distintas: saídas do kardex usam custo `as_of` (TTAT/SB9) no universo de movimentos; o CPV usa custo corrente vivo em SD2/CFOP 5101/5124/6101/6124. Não reconciliar uma à outra. [conhecimento]
 - *Quem valida evidências?* Ações governadas exigem PREPARE + confirmação humana; CLARA propõe, não decide sozinha. [governado]
 
 ## 13. Limites declarados (execução 014 — histórico)

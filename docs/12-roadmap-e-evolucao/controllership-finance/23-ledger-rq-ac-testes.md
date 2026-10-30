@@ -945,3 +945,50 @@ Execução `CF-PROC0072-R06-R07-CONTRACT-GATE-014`. Contratos TARGET e decisões
 | RQ-X-11 | Corpus+Help: `doc-122` autorizado no manifest (feito neste pacote); Help `reports.stockKardex`/`reports.inventoryAdjustments` na implementação; ingestão governada com versão/hash comprovados | doc 122 §7 | TARGET (manifest done; ingestão pós-impl) |
 | RQ-X-12 | Não-regressão: R01/R02/R03/R05/R08, conciliação `IDENTITY_ONLY`, P3, matriz R01–R15 e as 43 tools existentes — zero alteração funcional | suites api-delpi/BFF/MFE + `test_clara_mcp_surface.py` | TARGET |
 | RQ-X-13 | Paridade técnica × artefatos (etapa E8): R06 9.357 movimentos / 1.544 cadeias de saldo; R07 45/45 + totais oficiais — comparação do contrato implementado, não da reconstrução | `cpv 09 26 matriz.xlsb`, `Invent.xlsb`, doc 84 §5.1 | TEST_NOT_RUN (implementação futura) |
+
+
+### IMPLEMENTATION-015 — R06 (CPV/Kardex) + R07 (Inventários) implementados (2026-10-29)
+
+Execução `CF-PROC0072-R06-R07-IMPLEMENTATION-015`. Gate 0: **D-O1..D-O4 aprovadas pelo PO em sessão 29/10/2026** (registro: doc 122 §9). Contratos implementados conforme TARGET do doc 122 §4; motor único `stock-kardex` (UNION SD1/SD2/SD3 + TTAT `as_of` + SB9 fechamento anterior); CPV dedicado (D-O1) reusando `CpvQueryRepository`/`GetCPVUseCase`; export CSV/PDF (D-O2); R07 view dedicada (D-O3); sem filtros de saldo zero/negativo (D-O4). CLARA 43 → 48 tools READ.
+
+| RQ/AC | Critério | Evidência de execução | Estado |
+|---|---|---|---|
+| RQ-R06-01 | Engine kardex UNION SD1/SD2/SD3 com filtros MATR910 | `stock_kardex_sql.py` + `_engine.py`; live f02/loc01/2026-09: 16.178 movimentos | PASS |
+| RQ-R06-02 | Resumo por tipo/armazém + top produtos global | `get_stock_kardex_summary_use_case.py`; live: entry 11.889.924,464 / output 18.668.496,799 | PASS |
+| RQ-R06-03 | Drill por produto com cadeia de saldo | `…/products/{code}` + `get_kardex_product`; running qty/value | PASS |
+| RQ-R06-04 | Grão movimento + campos do contrato | response schema `stock_kardex_response.py`; route tests 13/13 | PASS |
+| RQ-R06-05 | Custo `as_of` TTAT_OLD + devoluções sinal | `_engine.classify_movement` + TTAT por tabela-fonte; live: 8.869 movimentos com TTAT aplicada | PASS |
+| RQ-R06-06 | CPV dedicado `/financeiro/cpv` (D-O1) | `get_financeiro_cpv_use_case.py` sobre `CpvQueryRepository`; live f02/2026-09: CPV 1.804.629,699 / 561 movimentos | PASS |
+| RQ-R07-01 | `inventory-adjustments` = mesmo engine, INVENT | live f02/2026-09: 45 movimentos (loc01=32 + loc99=13) = universo do artefato | PASS |
+| RQ-R07-02 | Resumo inventários | live: entry 2.350,667 / output 30.812,499 / net −28.461,832 | PASS |
+| RQ-R07-03 | Detalhe por produto/doc/TM | mesma resposta do kardex com `document_kind=invent` | PASS |
+| RQ-X-01 | Filtros tipados `YYYY-MM`, branch, warehouse multi | `stock_kardex_request.py`; 400 em período inválido | PASS |
+| RQ-X-02 | Ordenação allowlist | `sort in {date,product}` + `*_NUMSEQ` interno | PASS |
+| RQ-X-03 | Paginação server-side | `page/page_size` OFFSET/FETCH | PASS |
+| RQ-X-04 | Proveniência + `parityStatus:PENDING` | `minha-delpi-r06-kardex-engine`, `as_of_ttat`, `sb9_previous_month_end` | PASS |
+| RQ-X-05 | Erros tipados fail-closed | `source_missing` retornado p/ mês sem SB9 (live-verificado) | PASS |
+| RQ-X-06 | Monetário DECIMAL(30,9)→28,6 string | SQL CAST + serialize decimal | PASS |
+| RQ-X-07 | AuthZ S2S + flag + delegated user | `stock-inventory.read`, `controllership-finance-api`, flag OFF→403 testado | PASS |
+| RQ-X-08 | Export CSV/PDF watermark+hash | live: CSV 140 linhas/45 itens; PDF 187.685 bytes `%PDF-1.4` | PASS |
+| RQ-X-09 | CLARA tools READ 43→48 | 5 tools via `_call_route` (`get_stock_kardex(+_summary)`, `get_inventory_adjustments(+_summary)`, `get_cpv`); `test_clara_mcp_surface` 48/48 | PASS (drill via `product_code` param) |
+| RQ-X-10 | Paridade Portal × CLARA | mesmas rotas BFF via `_call_route` — mesma resposta por construção | PASS estrutural; e2e autenticado pendente smoke |
+| RQ-X-11 | Corpus+Help | `helpTooltips.ts` R06/R07 + docs 120/121/122 atualizados; re-ingestão pendente E9 | PASS (ingestão pendente) |
+| RQ-X-12 | Não-regressão R01/R02/R03/R05/R08 | suites BFF/MFE + api-delpi (ver relatório) | PASS |
+| RQ-X-13 | Paridade × artefatos XLSB | E8 executado (2026-10-29): `cpv 09 26 matriz.xlsb` × engine f02/loc01 — **1.544/1.544 produtos com contagem de movimentos idêntica; 9.357 movimentos, qtd entrada (6.209.264,643) e qtd saída (9.729.058,452) EXATAS**; 26 produtos `MOD*` (+6.821 mov, qtd+valor zero) fora do escopo da emissão; valores divergem por convenção `as_of` TTAT (entry −4,27M, output −1,28M — documentada). R07: 45/45 movimentos do doc 85. | PASS (divergências classificadas; homologação oficial = nova emissão — PENDING) |
+
+### MONETARY-REWORK-017 — correção as_of pós-fechamento + recuperação R06/R07 (2026-10-30)
+
+Execução `CF-PROC0072-R06-R07-MONETARY-REWORK-017`. Recuperação seletiva do `14a4b5f2cf` sobre `7d81aa2785` (worktree isolada), preservando GLPI-1353 e workstreams concorrentes. **Correção monetária:** boundary TTAT `> '20260930'` → `>=` primeiro dia após a competência (`as_of_boundary()`), convenção pós-fechamento da emissão MATR910 (artefato emitido 01/10/2026; MATA330 grava custos no próprio último dia da competência).
+
+| RQ/AC | Critério | Evidência de execução | Estado |
+|---|---|---|---|
+| AC-03 | Corte TTAT corrigido e testado | `as_of_boundary()` + `TTAT_DTIME >= boundary`; testes 30/09→01/10, virada ano, fev bissexto | PASS |
+| AC-04 | Custo pós-fechamento reproduzido | crosswalk f02/loc01/09-2026: **valores exatos linha a linha** (MATCH=9.357, VALUE_MISMATCH=0, totais diff=0,000) | PASS |
+| AC-05 | Devoluções SD2 reconciliadas | 4 movs no artefato entrada-negativa (−11.954,211) = convenção do engine | PASS |
+| AC-06 | Residual R$2.845 identificado | artefato de sonda da investigação (last-COLD overwrite); residual real = R$0,00 | PASS |
+| AC-07/08 | População/movimentos | 1.544 produtos / 9.357 movimentos | PASS |
+| AC-09 | Quantidades e sinais | entry_qty e output_qty exatas | PASS |
+| AC-10 | Valores R06 reconciliados | ENT 16.164.404,076 / OUT 19.951.547,214 — diff 0,000 | PASS |
+| AC-11 | R07 45 movimentos | loc01=32+loc99=13; valores exatos × doc 85 §7 | PASS |
+| AC-12 | Parâmetros MATR910 registrados | E7 permanece PENDING (SX1 só guarda emissão ago/2026) | PENDING |
+| G6 | Homologação humana oficial | aguarda PO/TÉO | PENDING |

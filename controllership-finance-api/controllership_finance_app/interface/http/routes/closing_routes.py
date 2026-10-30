@@ -730,3 +730,257 @@ def get_closing_analytics_stock_reconciliation(
         message="Analytical stock reconciliation computed.",
         operation_id=operation_id,
     )
+
+
+# --- R06/R07 (doc 122, IMPLEMENTATION-015) — proxies governados do
+# motor canônico de Kardex MATR910. O BFF não recalcula: regras,
+# custos e totais permanecem no owner (api-delpi financeiro).
+
+
+@router.get(
+    "/stock-kardex",
+    operation_id="get_closing_stock_kardex",
+)
+def get_closing_stock_kardex(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    warehouse: str | None = Query(None),
+    product_code: str | None = Query(None),
+    product_type: str | None = Query(None),
+    movement_kind: str | None = Query(
+        None, pattern="^(entry|output)$"
+    ),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    sort: str = Query("date", pattern="^(date|product)$"),
+    sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
+):
+    """R06 Kardex (MATR910 rule) — movimentações por produto com saldo
+    inicial SB9 do fechamento anterior e custo as-of TTAT."""
+    params: dict[str, Any] = {
+        "period": period,
+        "branch": branch,
+        "page": page,
+        "page_size": page_size,
+        "sort": sort,
+        "sort_dir": sort_dir,
+    }
+    if warehouse:
+        params["warehouse"] = warehouse
+    if product_code:
+        params["product_code"] = product_code
+    if product_type:
+        params["product_type"] = product_type
+    if movement_kind:
+        params["movement_kind"] = movement_kind
+    return _call_gateway(
+        request,
+        path="/financeiro/stock-kardex",
+        params=params,
+        operation_id="get_closing_stock_kardex",
+    )
+
+
+@router.get(
+    "/stock-kardex/summary",
+    operation_id="get_closing_stock_kardex_summary",
+)
+def get_closing_stock_kardex_summary(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    warehouse: str | None = Query(None),
+    product_code: str | None = Query(None),
+    product_type: str | None = Query(None),
+):
+    params: dict[str, Any] = {"period": period, "branch": branch}
+    if warehouse:
+        params["warehouse"] = warehouse
+    if product_code:
+        params["product_code"] = product_code
+    if product_type:
+        params["product_type"] = product_type
+    return _call_gateway(
+        request,
+        path="/financeiro/stock-kardex/summary",
+        params=params,
+        operation_id="get_closing_stock_kardex_summary",
+    )
+
+
+@router.get(
+    "/stock-kardex/products/{product_code}",
+    operation_id="get_closing_stock_kardex_product",
+)
+def get_closing_stock_kardex_product(
+    request: Request,
+    product_code: str,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    warehouse: str | None = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+):
+    params: dict[str, Any] = {
+        "period": period,
+        "branch": branch,
+        "page": page,
+        "page_size": page_size,
+    }
+    if warehouse:
+        params["warehouse"] = warehouse
+    return _call_gateway(
+        request,
+        path=f"/financeiro/stock-kardex/products/{product_code}",
+        params=params,
+        operation_id="get_closing_stock_kardex_product",
+    )
+
+
+@router.get(
+    "/stock-kardex/export",
+    operation_id="export_closing_stock_kardex",
+)
+def export_closing_stock_kardex(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    warehouse: str | None = Query(None),
+    product_code: str | None = Query(None),
+    product_type: str | None = Query(None),
+    export_format: str = Query("csv", alias="format", pattern="^(csv|pdf)$"),
+):
+    params: dict[str, Any] = {
+        "period": period,
+        "branch": branch,
+        "format": export_format,
+    }
+    if warehouse:
+        params["warehouse"] = warehouse
+    if product_code:
+        params["product_code"] = product_code
+    if product_type:
+        params["product_type"] = product_type
+    return _proxy_export(
+        request,
+        upstream_path="/financeiro/stock-kardex/export",
+        params=params,
+        operation_id="export_closing_stock_kardex",
+    )
+
+
+@router.get(
+    "/inventory-adjustments",
+    operation_id="get_closing_inventory_adjustments",
+)
+def get_closing_inventory_adjustments(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    warehouse: str | None = Query(None),
+    product_code: str | None = Query(None),
+    movement_kind: str | None = Query(
+        None, pattern="^(entry|output)$"
+    ),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+):
+    """R07 Ajustes de Inventário — mesmo motor do Kardex restrito ao
+    recorte INVENT (SD3 ``D3_DOC='INVENT'``, TES 499/DE0 + 999/RE0)."""
+    params: dict[str, Any] = {
+        "period": period,
+        "branch": branch,
+        "page": page,
+        "page_size": page_size,
+    }
+    if warehouse:
+        params["warehouse"] = warehouse
+    if product_code:
+        params["product_code"] = product_code
+    if movement_kind:
+        params["movement_kind"] = movement_kind
+    return _call_gateway(
+        request,
+        path="/financeiro/inventory-adjustments",
+        params=params,
+        operation_id="get_closing_inventory_adjustments",
+    )
+
+
+@router.get(
+    "/inventory-adjustments/summary",
+    operation_id="get_closing_inventory_adjustments_summary",
+)
+def get_closing_inventory_adjustments_summary(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    warehouse: str | None = Query(None),
+    product_code: str | None = Query(None),
+):
+    params: dict[str, Any] = {"period": period, "branch": branch}
+    if warehouse:
+        params["warehouse"] = warehouse
+    if product_code:
+        params["product_code"] = product_code
+    return _call_gateway(
+        request,
+        path="/financeiro/inventory-adjustments/summary",
+        params=params,
+        operation_id="get_closing_inventory_adjustments_summary",
+    )
+
+
+@router.get(
+    "/inventory-adjustments/export",
+    operation_id="export_closing_inventory_adjustments",
+)
+def export_closing_inventory_adjustments(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    warehouse: str | None = Query(None),
+    product_code: str | None = Query(None),
+    export_format: str = Query("csv", alias="format", pattern="^(csv|pdf)$"),
+):
+    params: dict[str, Any] = {
+        "period": period,
+        "branch": branch,
+        "format": export_format,
+    }
+    if warehouse:
+        params["warehouse"] = warehouse
+    if product_code:
+        params["product_code"] = product_code
+    return _proxy_export(
+        request,
+        upstream_path="/financeiro/inventory-adjustments/export",
+        params=params,
+        operation_id="export_closing_inventory_adjustments",
+    )
+
+
+@router.get(
+    "/cpv",
+    operation_id="get_closing_cpv",
+)
+def get_closing_cpv(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    top_limit: int = Query(10, ge=1, le=50),
+):
+    """CPV gerencial dedicado (D-O1) — semântica canônica SD2/CFOP com
+    custo corrente (``asOfConvention: "live"``); NÃO é o totalizador
+    de saídas do Kardex e não deve ser reconciliado a ele."""
+    return _call_gateway(
+        request,
+        path="/financeiro/cpv",
+        params={
+            "period": period,
+            "branch": branch,
+            "top_limit": top_limit,
+        },
+        operation_id="get_closing_cpv",
+    )

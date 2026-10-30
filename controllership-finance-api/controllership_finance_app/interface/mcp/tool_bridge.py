@@ -767,6 +767,114 @@ def tool_get_stock_reconciliation(
     )
 
 
+def tool_get_stock_kardex(
+    period: str,
+    branch: str = "all",
+    warehouse: str | None = None,
+    product_code: str | None = None,
+    movement_kind: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> CallToolResult:
+    """R06 Kardex — motor MATR910 (SD1/SD2/SD3 + SB9 anterior + custo
+    as-of TTAT). Mesma rota do Portal; paridade oficial PENDING."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_stock_kardex,
+        request,
+        period=period,
+        branch=branch,
+        warehouse=warehouse,
+        product_code=product_code,
+        product_type=None,
+        movement_kind=movement_kind,
+        page=page,
+        page_size=page_size,
+        sort="date",
+        sort_dir="asc",
+    )
+
+
+def tool_get_stock_kardex_summary(
+    period: str,
+    branch: str = "all",
+    warehouse: str | None = None,
+    product_code: str | None = None,
+) -> CallToolResult:
+    """R06 — resumo do kardex por tipo/armazém + top produtos por custo."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_stock_kardex_summary,
+        request,
+        period=period,
+        branch=branch,
+        warehouse=warehouse,
+        product_code=product_code,
+        product_type=None,
+    )
+
+
+def tool_get_inventory_adjustments(
+    period: str,
+    branch: str = "all",
+    warehouse: str | None = None,
+    product_code: str | None = None,
+    movement_kind: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> CallToolResult:
+    """R07 ajustes de inventário — recorte INVENT do motor MATR910
+    (TES 499/DE0 positivos, 999/RE0 negativos). READ — nenhum ajuste
+    é executado no ERP."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_inventory_adjustments,
+        request,
+        period=period,
+        branch=branch,
+        warehouse=warehouse,
+        product_code=product_code,
+        movement_kind=movement_kind,
+        page=page,
+        page_size=page_size,
+    )
+
+
+def tool_get_inventory_adjustments_summary(
+    period: str,
+    branch: str = "all",
+    warehouse: str | None = None,
+    product_code: str | None = None,
+) -> CallToolResult:
+    """R07 — resumo dos ajustes por tipo/armazém + top produtos."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_inventory_adjustments_summary,
+        request,
+        period=period,
+        branch=branch,
+        warehouse=warehouse,
+        product_code=product_code,
+    )
+
+
+def tool_get_cpv(
+    period: str,
+    branch: str = "all",
+    top_limit: int = 10,
+) -> CallToolResult:
+    """CPV gerencial (D-O1) — medida viva SD2/CFOP com custo corrente;
+    NÃO é o total de saídas do kardex e não deve ser reconciliado a ele."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_cpv,
+        request,
+        period=period,
+        branch=branch,
+        top_limit=top_limit,
+    )
+
+
 def tool_get_report_matrix(
     period: str, branch_scope: str | None = None
 ) -> CallToolResult:
@@ -1203,6 +1311,11 @@ __all__ = [
     "tool_get_stock_inventory",
     "tool_get_stock_movements",
     "tool_get_stock_reconciliation",
+    "tool_get_stock_kardex",
+    "tool_get_stock_kardex_summary",
+    "tool_get_inventory_adjustments",
+    "tool_get_inventory_adjustments_summary",
+    "tool_get_cpv",
     "tool_get_work_in_process",
     "tool_list_catalog_entries",
     "tool_list_checklist_templates",
