@@ -33,10 +33,10 @@ AVATAR_PATH = (
     / "assets"
     / "characters"
     / "caio"
-    / "avatar-v1.png"
+    / "avatar-v1.jpg"
 )
 
-AVATAR_REFERENCE = "commercial_app/assets/characters/caio/avatar-v1.png"
+AVATAR_REFERENCE = "commercial_app/assets/characters/caio/avatar-v1.jpg"
 
 PROFILE_VERSION = 1
 
@@ -44,9 +44,9 @@ PROFILE_VERSION = 1
 def _avatar_status() -> str:
     """Approved status only when the referenced asset is actually present.
 
-    The user approved the CAIO image creatively, but the binary is
-    ``PENDING_ASSET`` until the exact approved PNG is incorporated at
-    ``AVATAR_PATH`` — never substitute a lookalike.
+    The user approved the CAIO image and its binary is incorporated at
+    ``AVATAR_PATH`` — the route only publishes when the approved file
+    actually exists, never substituting a lookalike.
     """
     if AVATAR_PATH.is_file():
         return "OFFICIAL_AVATAR_APPROVED"

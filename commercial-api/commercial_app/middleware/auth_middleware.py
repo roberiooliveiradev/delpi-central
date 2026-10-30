@@ -50,8 +50,8 @@ _PUBLIC_OAUTH_METADATA_PATHS = frozenset(
 # personagem valida status/referência; o path nunca é resolvido do request).
 _PUBLIC_CHARACTER_AVATAR_PATHS = frozenset(
     {
-        "/public/characters/caio/avatar/avatar-v1.png",
-        "/apps/commercial-api/public/characters/caio/avatar/avatar-v1.png",
+        "/public/characters/caio/avatar/avatar-v1.jpg",
+        "/apps/commercial-api/public/characters/caio/avatar/avatar-v1.jpg",
     }
 )
 

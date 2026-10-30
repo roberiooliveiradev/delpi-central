@@ -1,10 +1,9 @@
 """CAIO character profile + avatar distribution (DELPI-CHARACTER-AVATARS-001).
 
 Approved facts only; unapproved narrative (age, relationships, events)
-stays empty. The avatar is PENDING_ASSET until the exact user-approved
-PNG is incorporated — tests cover both the pending contract (404,
-REFERENCE_NOT_OFFICIAL_AVATAR) and the approved path (real file →
-exact bytes + sha256), creating the asset transiently.
+stays empty. The official avatar is the user-approved JPEG incorporated
+unchanged at ``avatar-v1.jpg`` — the route serves the exact bytes and
+the recorded SHA-256; anything else fails closed.
 """
 
 from __future__ import annotations
@@ -32,22 +31,11 @@ from commercial_app.persona.caio_profile import (
     get_caio_profile,
 )
 
-_FAKE_PNG = b"\x89PNG\r\n\x1a\n" + b"CAIO-TEST-ASSET"
-
-
-def _profile_with_asset():
-    AVATAR_PATH.parent.mkdir(parents=True, exist_ok=True)
-    AVATAR_PATH.write_bytes(_FAKE_PNG)
-    get_caio_profile.cache_clear()
-    return get_caio_profile()
-
-
-def _cleanup_asset():
-    try:
-        AVATAR_PATH.unlink()
-    except FileNotFoundError:
-        pass
-    get_caio_profile.cache_clear()
+# SHA-256 of the exact user-approved file incorporated in the repo
+# (received JPEG bytes — see KEYCLOAK_CHATGPT_HANDOFF.md Avatar note).
+_EXPECTED_SHA256 = (
+    "1de842f71d821809396c52da1d096bc28e43513efb2cdf87e788baa11a515917"
+)
 
 
 def test_profile_validates_clean():
@@ -76,13 +64,14 @@ def test_profile_carries_only_approved_facts():
     assert "sem gravata" in appearance.clothing
 
 
-def test_avatar_is_pending_until_exact_asset():
-    _cleanup_asset()
-    profile = build_caio_profile()
-    assert profile.appearance.avatar_status == (
-        "REFERENCE_NOT_OFFICIAL_AVATAR"
-    )
-    assert CaioAgentService.avatar_distribution() is None
+def test_profile_and_asset_are_the_approved_source():
+    profile = get_caio_profile()
+    assert profile.identity.character_id == "caio"
+    assert profile.appearance.avatar_status == "OFFICIAL_AVATAR_APPROVED"
+    api_root = Path(__file__).resolve().parents[1]
+    asset = api_root / profile.appearance.avatar_reference
+    assert asset.is_file()
+    assert asset == AVATAR_PATH
 
 
 def test_distribution_gate_is_open():
@@ -91,10 +80,10 @@ def test_distribution_gate_is_open():
 
 def test_avatar_public_path_allowlist_exact_match():
     assert _is_commercial_public_path(
-        "/public/characters/caio/avatar/avatar-v1.png"
+        "/public/characters/caio/avatar/avatar-v1.jpg"
     ) is True
     assert _is_commercial_public_path(
-        "/apps/commercial-api/public/characters/caio/avatar/avatar-v1.png"
+        "/apps/commercial-api/public/characters/caio/avatar/avatar-v1.jpg"
     ) is True
 
 
@@ -102,7 +91,8 @@ def test_no_generic_public_exemption():
     for path in (
         "/public/",
         "/public/characters/",
-        "/public/characters/caio/avatar/avatar-v2.png",
+        "/public/characters/caio/avatar/avatar-v1.png",
+        "/public/characters/caio/avatar/avatar-v2.jpg",
         "/public/characters/eva/avatar/avatar-v1.jpg",
         "/mcp",
         "/apps/commercial-api/mcp",
@@ -110,51 +100,37 @@ def test_no_generic_public_exemption():
         assert _is_commercial_public_path(path) is False, path
 
 
-def test_avatar_route_404_while_pending():
-    _cleanup_asset()
-    response = get_public_character_avatar("caio", "avatar-v1.png")
-    assert response.status_code == 404
-
-
 def test_approved_avatar_serves_exact_bytes_and_sha():
-    try:
-        profile = _profile_with_asset()
-        assert profile.appearance.avatar_status == (
-            "OFFICIAL_AVATAR_APPROVED"
-        )
-        response = get_public_character_avatar("caio", "avatar-v1.png")
-        assert isinstance(response, FileResponse)
-        assert response.media_type == "image/png"
-        assert response.headers["Cache-Control"] == "public, max-age=300"
-        assert response.headers["X-Content-Type-Options"] == "nosniff"
-        digest = hashlib.sha256(
-            Path(response.path).read_bytes()
-        ).hexdigest()
-        assert digest == hashlib.sha256(_FAKE_PNG).hexdigest()
-        distribution = CaioAgentService.avatar_distribution()
-        assert distribution["sha256"] == digest
-        assert distribution["url"].endswith(
-            "/public/characters/caio/avatar/avatar-v1.png"
-        )
-    finally:
-        _cleanup_asset()
+    response = get_public_character_avatar("caio", "avatar-v1.jpg")
+    assert isinstance(response, FileResponse)
+    assert response.media_type == "image/jpeg"
+    assert response.headers["Cache-Control"] == "public, max-age=300"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    digest = hashlib.sha256(Path(response.path).read_bytes()).hexdigest()
+    assert digest == _EXPECTED_SHA256
+
+
+def test_avatar_distribution_publishes_url_and_hash():
+    distribution = CaioAgentService.avatar_distribution()
+    assert distribution is not None
+    assert distribution["sha256"] == _EXPECTED_SHA256
+    assert distribution["media_type"] == "image/jpeg"
+    assert distribution["url"].endswith(
+        "/public/characters/caio/avatar/avatar-v1.jpg"
+    )
 
 
 def test_wrong_character_or_filename_fails_safe():
-    try:
-        _profile_with_asset()
+    assert (
+        get_public_character_avatar("teo", "avatar-v1.jpg").status_code
+        == 404
+    )
+    for filename in (
+        "avatar-v2.jpg",
+        "avatar-v1.png",
+        "../caio/avatar-v1.jpg",
+    ):
         assert (
-            get_public_character_avatar("teo", "avatar-v1.png").status_code
+            get_public_character_avatar("caio", filename).status_code
             == 404
-        )
-        for filename in (
-            "avatar-v2.png",
-            "avatar-v1.jpg",
-            "../caio/avatar-v1.png",
-        ):
-            assert (
-                get_public_character_avatar("caio", filename).status_code
-                == 404
-            ), filename
-    finally:
-        _cleanup_asset()
+        ), filename

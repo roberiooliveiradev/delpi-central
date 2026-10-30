@@ -92,6 +92,6 @@ class CaioAgentService:
             ),
             "filename": filename,
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-            "media_type": "image/png",
+            "media_type": "image/jpeg",
             "distribution": "public",
         }

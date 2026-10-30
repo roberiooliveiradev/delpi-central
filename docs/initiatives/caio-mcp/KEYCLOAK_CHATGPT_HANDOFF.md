@@ -20,7 +20,7 @@
 | JWKS | `https://minhadelpi.com.br/auth/realms/delpi/protocol/openid-connect/certs` |
 | Authorization endpoint | `https://minhadelpi.com.br/auth/realms/delpi/protocol/openid-connect/auth` |
 | Token endpoint | `https://minhadelpi.com.br/auth/realms/delpi/protocol/openid-connect/token` |
-| Avatar público (quando aprovado) | `https://minhadelpi.com.br/apps/commercial-api/public/characters/caio/avatar/avatar-v1.png` |
+| Avatar público | `https://minhadelpi.com.br/apps/commercial-api/public/characters/caio/avatar/avatar-v1.jpg` |
 
 ## Audience / resource binding
 
@@ -141,19 +141,28 @@ comercial é resolvida pelo backend (`delpi_auth` → Core `/me`).
 - [ ] `execute`/`delete` → `not_implemented` honesto (v1 não ativa
       escritas).
 - [ ] Usuário sem `commercial.access`/`manage` → `403`.
-- [ ] Avatar: `GET /public/characters/caio/avatar/avatar-v1.png` →
-      `200` + `image/png` + SHA-256 documentado abaixo
-      (**PENDING_ASSET** enquanto o PNG aprovado não for incorporado —
-      hoje responde `404` por contrato).
+- [ ] Avatar: `GET /public/characters/caio/avatar/avatar-v1.jpg` →
+      `200` + `image/jpeg` + SHA-256 documentado abaixo.
 
 ## Avatar
 
 | Item | Valor |
 |---|---|
-| Versão | `avatar-v1.png` |
-| URL pública | `https://minhadelpi.com.br/apps/commercial-api/public/characters/caio/avatar/avatar-v1.png` |
-| SHA-256 | `PENDING_ASSET` — a preencher com o hash do PNG original aprovado |
-| Status | `REFERENCE_NOT_OFFICIAL_AVATAR` até o arquivo ser incorporado em `commercial-api/commercial_app/assets/characters/caio/avatar-v1.png` |
+| Versão | `avatar-v1.jpg` |
+| Arquivo | `commercial-api/commercial_app/assets/characters/caio/avatar-v1.jpg` |
+| URL pública | `https://minhadelpi.com.br/apps/commercial-api/public/characters/caio/avatar/avatar-v1.jpg` |
+| SHA-256 | `1de842f71d821809396c52da1d096bc28e43513efb2cdf87e788baa11a515917` |
+| Status | `OFFICIAL_AVATAR_APPROVED` |
+
+**Nota de divergência documentada:** a imagem aprovada foi entregue ao
+agente como JPEG (JFIF, 1024×1024) — o canal de anexo recodificou o
+arquivo, portanto o hash de referência PNG informado originalmente
+(`9c59b5ed…`) não corresponde a nenhum arquivo recebido. A imagem foi
+verificada visualmente como o CAIO aprovado e os bytes foram
+incorporados **inalterados** como `avatar-v1.jpg` (mesmo padrão `.jpg`
+da EVA/CLARA) — sem transcodificação, redimensionamento ou
+recompressão. Se o PNG original for providenciado depois, substituir o
+asset e revalidar hash/URL.
 
 ## Fora de escopo deste handoff
 
