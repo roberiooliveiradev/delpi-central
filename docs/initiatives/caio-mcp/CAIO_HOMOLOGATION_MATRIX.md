@@ -228,3 +228,7 @@ Cada pendência da rodada autenticada foi investigada contra o contrato oficial 
 **NSE revisadas (7 exclusões do inventário das 133 ops):** GET/POST de artefatos binários (anexo, foto de perfil, PDF de proposta) seguem fluxo do Portal — `attachment.list` retorna `download_url`, `user_profile.get` retorna `photo_url`, `proposal.get` retorna `document_url`; o CAIO entrega o link canônico autorizado, nunca o binário. `GET /realtime/ws` é canal push persistente e `POST integration-jobs/scan` é job interno de sistema — sem equivalente conversacional, exclusão mantida e justificada.
 
 **Evidência desta rodada de correção:** suíte CAIO **656 passed / 58 skipped** (homologação + integração isolada plugins-db + parity/mcp/character), incluindo novos testes de boundary para o contrato upstream de propostas e cenário multi-etapa de investigação de proposta. Nenhum write/delete produtivo executado.
+
+## Smoke autenticado pós-deploy — 2026-10-30
+
+Após deploy informado no commit `b453b0981c6ef75d2025c1b70b5c80e281bc7553`, a conexão ChatGPT→CAIO respondeu `get_context` com catálogo `2.0` e 123 operações. Consulta `read(proposal.analytics_list)` retornou proposta e filial autorizadas; `read(proposal.analytics_get, ref=proposal_number, filters={branch})` e `read(proposal.history_events, ref=proposal_number, filters={branch})` retornaram **success=true**, corrigindo os erros anteriores 400/upstream 422. Não foram executadas mutações. Esta evidência comprova essas duas operações autenticadas, não toda a integração produtiva ou as 50 operações de escrita/exclusão.
