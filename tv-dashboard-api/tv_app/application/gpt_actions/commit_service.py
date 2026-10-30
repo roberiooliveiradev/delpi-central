@@ -97,11 +97,16 @@ class TvGptCommitService:
         idempotency: IdempotencyRepositoryPort,
         patch: PresentationPatchService | None = None,
         access: PlaylistAccessService | None = None,
+        consent: Any | None = None,
     ) -> None:
         self._writes = writes
         self._idempotency = idempotency
         self._patch = patch or PresentationPatchService()
         self._access = access or PlaylistAccessService()
+        # Composition roots (routes/tool_bridge) inject the concrete
+        # VistaConsentService — application layer never imports
+        # infrastructure. None ⇒ artifact path fails closed.
+        self._consent = consent
 
     @staticmethod
     def _normalize_confirmation(confirmation: dict[str, Any] | bool | None) -> bool:
@@ -110,6 +115,31 @@ class TvGptCommitService:
         if isinstance(confirmation, dict):
             return bool(confirmation.get("confirmed") is True or confirmation.get("confirmation") is True)
         return False
+
+    @staticmethod
+    def _extract_consent(
+        confirmation: dict[str, Any] | bool | None,
+    ) -> dict[str, str | None]:
+        """Consent artifact + target echo from the confirmation envelope.
+
+        ``consent_artifact``/``consentArtifact`` is the backend-minted
+        challenge id approved by the human channel; ``target_echo``/
+        ``targetEcho`` is the target-identity check (never consent proof).
+        """
+        if not isinstance(confirmation, dict):
+            return {"artifact": None, "target_echo": None}
+        artifact = (
+            confirmation.get("consent_artifact")
+            or confirmation.get("consentArtifact")
+        )
+        echo = (
+            confirmation.get("target_echo")
+            or confirmation.get("targetEcho")
+        )
+        return {
+            "artifact": str(artifact).strip() if artifact else None,
+            "target_echo": str(echo).strip() if echo else None,
+        }
 
     @staticmethod
     def _requires_user_confirmation(proposal: Any) -> bool:
@@ -148,6 +178,7 @@ class TvGptCommitService:
         confirmation: dict[str, Any] | bool | None,
         idempotency_key: str,
         authorization: str | None = None,
+        consent_required: bool = False,
     ) -> dict[str, Any]:
         key = str(idempotency_key or "").strip()
         if not key:
@@ -159,17 +190,21 @@ class TvGptCommitService:
 
         handle = str(proposal_handle or "").strip()
         confirmed = self._normalize_confirmation(confirmation)
+        consent = self._extract_consent(confirmation)
         # Policy peek before the idempotency reservation: the stored
         # proposal decides whether explicit user confirmation is
         # required. A missing/consumed proposal cannot be peeked — it
         # fails authoritatively at load_valid_proposal below (or the
-        # REPLAY branch returns the stored snapshot).
+        # REPLAY branch returns the stored snapshot). A consent
+        # artifact satisfies the peek — full verification happens
+        # after the proposal loads.
         proposal_id = parse_proposal_handle(handle)
         peek = get_proposal_store().get(proposal_id)
         if (
             peek is not None
             and self._requires_user_confirmation(peek)
             and not confirmed
+            and not consent["artifact"]
         ):
             raise GptActionsError(
                 "confirmation.confirmed=true é obrigatório para COMMIT "
@@ -214,13 +249,64 @@ class TvGptCommitService:
             actor_id=actor_id,
             expected_capability=CAPABILITY_PRESENTATION_CHANGE,
         )
-        if self._requires_user_confirmation(proposal) and not confirmed:
+        # Human consent: a consent_artifact supersedes the legacy
+        # confirmed flag — it is the independently verified proof bound
+        # to actor + proposal + sealed plan. The legacy confirmed gate
+        # remains for gpt_* callers without an artifact; the semantic
+        # surface (consent_required=True) never accepts confirmed alone.
+        requires_user_confirmation = self._requires_user_confirmation(proposal)
+        challenge = None
+        if consent["artifact"]:
+            if self._consent is None:
+                raise GptActionsError(
+                    "Canal de consentimento não configurado neste "
+                    "runtime — operação bloqueada.",
+                    code="CONFIRMATION_UNAVAILABLE",
+                    status_code=503,
+                )
+            challenge = self._consent.verify_for_commit(
+                proposal=proposal,
+                actor_sub=str(actor_id),
+                consent_artifact=consent["artifact"],
+                required=True,
+            )
+        elif requires_user_confirmation and consent_required:
+            raise GptActionsError(
+                "consent_artifact é obrigatório para COMMIT desta "
+                "proposta (política confirm). Obtenha aprovação humana "
+                "no canal confiável — confirmation=true não prova "
+                "consentimento.",
+                code="CONFIRMATION_REQUIRED",
+                status_code=400,
+            )
+        elif requires_user_confirmation and not confirmed:
             raise GptActionsError(
                 "confirmation.confirmed=true é obrigatório para COMMIT "
                 "desta proposta (política confirm). Confirmação "
                 "conversacional não substitui AuthZ.",
                 code="CONFIRMATION_REQUIRED",
                 status_code=400,
+            )
+        if consent["target_echo"]:
+            from tv_app.application.gpt_actions.vista_consent_service import (
+                _target_ref,
+                confirm_op_names,
+            )
+            expected_ref = _target_ref(proposal, confirm_op_names(proposal))
+            if consent["target_echo"] != expected_ref:
+                raise GptActionsError(
+                    "target_echo não corresponde ao alvo do plano "
+                    "selado — reprepare a operação.",
+                    code="CONFIRMATION_MISMATCH",
+                    status_code=409,
+                )
+        if challenge is not None:
+            # Single-use: consumed on the first commit that passed
+            # verification, even if execution later fails.
+            self._consent.consume_for_commit(
+                challenge=challenge,
+                proposal_id=proposal.proposal_id,
+                actor_sub=str(actor_id),
             )
         exact = proposal.exact_change if isinstance(proposal.exact_change, dict) else {}
         target = exact.get("target") if isinstance(exact.get("target"), dict) else {}

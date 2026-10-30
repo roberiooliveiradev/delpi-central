@@ -38,6 +38,12 @@ from tv_app.infrastructure.persistence.repositories.playlist_repository import P
 from tv_app.infrastructure.persistence.repositories.playlist_history_repository import (
     PlaylistHistoryRepository,
 )
+from tv_app.infrastructure.persistence.repositories.vista_consent_challenge_repository import (
+    get_vista_consent_challenge_repository,
+)
+from tv_app.application.gpt_actions.vista_consent_service import (
+    VistaConsentService,
+)
 
 from .oauth_contract import build_www_authenticate_challenge
 
@@ -45,12 +51,17 @@ logger = logging.getLogger(__name__)
 
 _repo = PlaylistRepository()
 _writes = TvPresentationWriteService(repo=_repo)
-_commit = TvGptCommitService(writes=_writes, idempotency=PostgresIdempotencyRepository())
+_consent = VistaConsentService(challenges=get_vista_consent_challenge_repository())
+_commit = TvGptCommitService(
+    writes=_writes,
+    idempotency=PostgresIdempotencyRepository(),
+    consent=_consent,
+)
 _solutions = CoreSolutionCatalogGateway()
 _history = PlaylistHistoryRepository()
 _dispatch = GptActionsDispatchService(
     repo=_repo, writes=_writes, commit=_commit, solutions=_solutions,
-    history=_history,
+    history=_history, consent=_consent,
 )
 
 
@@ -504,6 +515,7 @@ def tool_prepare_change(
                 catalog_version=catalog_version,
                 authorization=auth,
                 commit_now=False,
+                transport="mcp",
             )
         )
     except Exception as e:
@@ -514,6 +526,8 @@ def tool_commit_proposal(
     proposal_handle: str,
     idempotency_key: str,
     confirmation: bool = False,
+    consent_artifact: str | None = None,
+    target_echo: str | None = None,
 ) -> CallToolResult:
     """Commit a proposal returned by ``prepare_change``.
 
@@ -523,14 +537,26 @@ def tool_commit_proposal(
     (confirmationPolicy=confirm / destructive); direct proposals commit
     without it. Postcondition is verified by the canonical backend
     (VERIFIED / OUTCOME_NOT_VERIFIED).
+
+    ``consent_artifact`` is the consent_challenge id approved by the
+    human through the trusted channel (``/vista/consent/...``); it is
+    the independently verified human-consent proof — ``target_echo``
+    only re-verifies target identity and never substitutes consent.
     """
     try:
         user, auth = _authed_context()
+        envelope: dict | bool = confirmation
+        if consent_artifact or target_echo:
+            envelope = {"confirmed": bool(confirmation)}
+            if consent_artifact:
+                envelope["consent_artifact"] = consent_artifact
+            if target_echo:
+                envelope["target_echo"] = target_echo
         return _ok_result(
             _dispatch.commit_change(
                 user=user,
                 proposal_handle=proposal_handle,
-                confirmation=confirmation,
+                confirmation=envelope,
                 idempotency_key=idempotency_key,
                 authorization=auth,
             )

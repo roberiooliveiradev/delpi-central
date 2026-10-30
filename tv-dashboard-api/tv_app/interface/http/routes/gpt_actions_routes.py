@@ -19,6 +19,9 @@ from tv_app.application.gpt_actions.openapi_builder import (
 from tv_app.application.services.tv_presentation_write_service import TvPresentationWriteService
 from tv_app.config import settings
 from tv_app.core.responses import ok
+from tv_app.application.gpt_actions.vista_consent_service import (
+    VistaConsentService,
+)
 from tv_app.infrastructure.persistence.repositories.idempotency_repository import (
     PostgresIdempotencyRepository,
 )
@@ -26,6 +29,9 @@ from tv_app.infrastructure.gateways.core_solution_catalog_gateway import (
     CoreSolutionCatalogGateway,
 )
 from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
+from tv_app.infrastructure.persistence.repositories.vista_consent_challenge_repository import (
+    get_vista_consent_challenge_repository,
+)
 from tv_app.infrastructure.persistence.repositories.playlist_history_repository import (
     PlaylistHistoryRepository,
 )
@@ -41,12 +47,15 @@ logger = logging.getLogger(__name__)
 _repo = PlaylistRepository()
 _writes = TvPresentationWriteService(repo=_repo)
 _idempotency = PostgresIdempotencyRepository()
-_commit = TvGptCommitService(writes=_writes, idempotency=_idempotency)
+_consent = VistaConsentService(challenges=get_vista_consent_challenge_repository())
+_commit = TvGptCommitService(
+    writes=_writes, idempotency=_idempotency, consent=_consent
+)
 _solutions = CoreSolutionCatalogGateway()
 _history = PlaylistHistoryRepository()
 _dispatch = GptActionsDispatchService(
     repo=_repo, writes=_writes, commit=_commit, solutions=_solutions,
-    history=_history,
+    history=_history, consent=_consent,
 )
 
 

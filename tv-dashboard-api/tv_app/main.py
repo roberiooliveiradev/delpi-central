@@ -29,6 +29,9 @@ from tv_app.interface.http.routes.characters_routes import router as characters_
 from tv_app.interface.http.routes.slide_routes import router as slide_router
 from tv_app.interface.http.routes.section_routes import router as section_router
 from tv_app.interface.http.routes.template_routes import router as template_router
+from tv_app.interface.http.routes.vista_consent_routes import (
+    router as vista_consent_router,
+)
 from tv_app.infrastructure.log_sanitization import (
     install_sensitive_query_params_log_filter,
 )
@@ -148,6 +151,7 @@ app.include_router(native_screen_router)
 app.include_router(data_routes_router)
 app.include_router(data_api_router)
 app.include_router(gpt_actions_router)
+app.include_router(vista_consent_router)
 app.include_router(public_router)
 app.include_router(characters_router)
 app.include_router(presentation_realtime_router)

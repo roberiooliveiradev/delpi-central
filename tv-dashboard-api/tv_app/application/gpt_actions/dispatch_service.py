@@ -204,8 +204,10 @@ class GptActionsDispatchService:
         suggest: TvDataRouteSuggestService | None = None,
         solutions: Any | None = None,
         history: Any | None = None,
+        consent: Any | None = None,
     ) -> None:
         self._repo = repo
+        self._consent = consent
         self._writes = writes
         self._access = access or PlaylistAccessService()
         self._patch = patch or PresentationPatchService()
@@ -2758,6 +2760,7 @@ class GptActionsDispatchService:
         commit_now: bool = False,
         confirmation: dict[str, Any] | bool | None = None,
         idempotency_key: str | None = None,
+        transport: str = "gpt_actions",
     ) -> dict[str, Any]:
         user = self._governed_write_user(user, authorization)
         actor = self._actor(user)
@@ -2836,6 +2839,40 @@ class GptActionsDispatchService:
             },
         )
         proposal_handle = get_proposal_store().put(proposal)
+
+        # Consent foundation (SEMANTIC_TOOLS_V1): when the sealed plan
+        # requires human confirmation, PREPARE mints a consent challenge
+        # bound to actor + proposal + plan hash. The artifact returned by
+        # the trusted approval channel is then required at COMMIT on the
+        # semantic surface — confirmation=true alone never proves consent.
+        required_confirmation: list[str] = []
+        consent_challenge: dict[str, Any] | None = None
+        confirmation_unavailable = False
+        if confirmation_policy == "confirm":
+            from tv_app.application.gpt_actions.vista_consent_service import (
+                challenge_view,
+                confirm_op_names,
+            )
+            required_confirmation = confirm_op_names(proposal)
+            if self._consent is None:
+                confirmation_unavailable = True
+            else:
+                try:
+                    consent_challenge = challenge_view(
+                        self._consent.issue_for_proposal(
+                            proposal=proposal,
+                            actor_sub=actor,
+                            origin=transport,
+                            correlation_id=str(result.get("fingerprint") or "")
+                            or None,
+                        )
+                    )
+                except Exception:  # noqa: BLE001 — fail closed, keep preview honest
+                    logger.exception(
+                        "vista consent challenge issue failed (proposal_id=%s)",
+                        proposal.proposal_id,
+                    )
+                    confirmation_unavailable = True
         preview_payload = {
             "target": envelope["target"],
             "ops": stored_ops,
@@ -2858,6 +2895,12 @@ class GptActionsDispatchService:
             "compileDigest": result.get("compileDigest"),
             "orderedOps": stored_ops,
         }
+        if required_confirmation:
+            preview_payload["requiredConfirmation"] = required_confirmation
+        if consent_challenge is not None:
+            preview_payload["consentChallenge"] = consent_challenge
+        if confirmation_unavailable:
+            preview_payload["confirmationUnavailable"] = True
         candidate = self._candidate_preview(
             playlist_id=playlist_id,
             slide_id=str((envelope["target"] or {}).get("slideId") or ""),
@@ -2927,6 +2970,7 @@ class GptActionsDispatchService:
         confirmation: dict[str, Any] | bool | None,
         idempotency_key: str,
         authorization: str | None,
+        consent_required: bool = False,
     ) -> dict[str, Any]:
         user = self._governed_write_user(user, authorization)
         actor = self._actor(user)
@@ -2942,5 +2986,6 @@ class GptActionsDispatchService:
                 confirmation=confirmation,
                 idempotency_key=idempotency_key,
                 authorization=authorization,
+                consent_required=consent_required,
             )
         )

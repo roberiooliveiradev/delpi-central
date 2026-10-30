@@ -162,3 +162,43 @@ class IdempotencyRepositoryPort(Protocol):
         response_snapshot: dict[str, Any],
         operation: str = "gpt_commit_change",
     ) -> None: ...
+
+
+class VistaConsentChallengeRepositoryPort(Protocol):
+    """Consent challenge store for VISTA governed confirms (D-5).
+
+    Lifecycle PENDING → APPROVED → CONSUMED | EXPIRED | REVOKED; each
+    row is bound to actor + proposal + sealed plan hash + target ref.
+    """
+
+    def issue_for_proposal(
+        self,
+        *,
+        proposal_id: str,
+        actor_sub: str,
+        plan_hash: str,
+        target_ref: str,
+        action: str,
+        origin: str,
+        expires_at: Any,
+        correlation_id: str | None = None,
+    ) -> dict | None: ...
+
+    def get_by_id(self, *, challenge_id: str) -> dict | None: ...
+
+    def latest_for_proposal(self, *, proposal_id: str) -> dict | None: ...
+
+    def approve(
+        self,
+        *,
+        challenge_id: str,
+        actor_sub: str,
+        plan_hash: str,
+        token_jti: str | None,
+        token_iat: Any,
+        consent_record: dict,
+    ) -> dict | None: ...
+
+    def consume_approved(
+        self, *, challenge_id: str, proposal_id: str, actor_sub: str
+    ) -> dict | None: ...
