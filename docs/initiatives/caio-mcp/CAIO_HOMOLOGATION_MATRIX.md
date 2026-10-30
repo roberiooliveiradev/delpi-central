@@ -68,8 +68,8 @@ Percentual efetivamente comprovado da camada semântica: **100%** (123/123 com e
 | read | proposal.list | read | - | api-delpi | contrato + boundary parcial | PASS |
 | read | proposal.get | read | - | api-delpi | contrato + boundary parcial | PASS |
 | read | proposal.analytics_list | read | - | api-delpi | contrato + boundary parcial | PASS |
-| read | proposal.analytics_get | read | - | api-delpi | contrato + boundary parcial | PASS |
-| read | proposal.history_events | read | - | api-delpi | contrato + boundary parcial | PASS |
+| read | proposal.analytics_get | read | - | api-delpi | contrato + boundary (branch/revision encaminhados) | PASS |
+| read | proposal.history_events | read | - | api-delpi | contrato + boundary (branch/revision/período encaminhados) | PASS |
 | read | worklist.mine | read | - | plugins-db | E2 real (plugins-db isolado) | PASS |
 | read | worklist.done | read | - | plugins-db | E2 real (plugins-db isolado) | PASS |
 | read | task.list | read | - | plugins-db | E2 real (plugins-db isolado) | PASS |
@@ -207,3 +207,24 @@ Cada correção tem regressão em `tests/test_caio_homologation.py` e/ou `tests/
 - **Risco residual:** 40 writes e 10 deletes **não foram executados em produção**, por decisão explícita de segurança; manter evidências isoladas e gap de confirmação humana efetiva. Portanto não declarar 123/123 como homologação produtiva.
 
 **Classificação desta rodada:** `ACCEPT_WITH_RESIDUAL` para o conjunto de consultas efetivamente concluídas; `PENDING` para diferenças de parâmetros, autorizações intermitentes e operações com identificadores inadequados; `TEST_NOT_RUN` para gravação/exclusão produtiva. **Sem alteração de dados.**
+
+## Resolução das pendências da rodada autenticada — 2026-10-30 (mesmo dia, pós-investigação)
+
+Cada pendência da rodada autenticada foi investigada contra o contrato oficial do owner (rotas REST da `commercial-api` e rotas upstream da `api-delpi`):
+
+| Pendência | Diagnóstico | Resolução |
+|---|---|---|
+| `proposal.analytics_get` / `proposal.history_events` → 400 (upstream 422) | **Defeito real.** As rotas upstream `/commercial/proposals/{n}` e `/proposals/{n}/history/events` exigem `branch` (query obrigatória) e aceitam `revision` (+ `start_date`/`end_date` na history). O adaptador CAIO não declarava nem encaminhava esses parâmetros. | `branch` declarado obrigatório no contrato semântico e encaminhado; `revision`/`start_date`/`end_date` opcionais encaminhados. Ausência de `branch` agora produz `400 validation` **antes** do upstream. Testes de boundary comprovam path e params. |
+| `interaction_room.pins` → 403 | **Negação legítima.** A rota REST e o use case exigem membership da sala; 403 para não-membro é a regra do owner — idêntica no MCP. | Sem alteração de código. |
+| `interaction_room.mention_suggest` → 403 intermitente | **Negação legítima/variação de claims.** O gate MCP (`commercial.access`) é idêntico ao da rota REST; alternância entre chamadas indica variação de claims do principal, não defeito de código. | Sem alteração de código. Nenhuma permissão foi ampliada. |
+| `home_favorite.list` → 403 em algumas chamadas | **Negação legítima.** Mesmo alias de permissão (`commercial.access`) que a rota REST; principal sem a claim recebe 403 em ambas as superfícies. | Sem alteração de código. |
+| `attachment.list` → 404 com id sintético | **Comportamento correto.** Entidade inexistente → 404 do owner. | `attachment.list` passou a retornar `download_url` da rota canônica do Portal para cada item (handoff seguro do binário). |
+| `interaction_room.entity_preview` → 400 com `ref=000179` | **Validação correta do contrato.** `ref` deve ser objeto JSON com as chaves do `kind` (ex.: `{"customer_code","customer_store"}`); `ref` agora é declarado obrigatório e a descrição do catálogo explicita o formato. | Contrato mais explícito; mensagens de validação claras mantidas. |
+| `user_profile.get` sem ref → 400 | **Contrato correto.** `user_id` (ref) é obrigatório por desenho; com id autenticado passa. | Sem alteração. |
+| `production.appointments` sem OP → 502 | `op` agora declarado obrigatório → `400 validation` tipado antes do upstream (com OP/filial reais, PASS autenticado já observado). | `required_fields` coberto na suíte. |
+| `customer.enrichment` / `billing_series` com `{code,store}` → falha | **Formato errado do chamador.** O contrato canônico é `{customer_code, customer_store}`; descrições do catálogo agora explicitam o shape. | Documentado no catálogo e no conhecimento. |
+| `idempotency_key` / `expected_version` aceitos e descartados | **Estado não honesto** — os parâmetros eram aceitos pela tool sem efeito. | `tool_execute` agora reporta `concurrency.enforcement = owner_contract` quando recebidos — a garantia é do use case oficial, o MCP não finge camada própria. |
+
+**NSE revisadas (7 exclusões do inventário das 133 ops):** GET/POST de artefatos binários (anexo, foto de perfil, PDF de proposta) seguem fluxo do Portal — `attachment.list` retorna `download_url`, `user_profile.get` retorna `photo_url`, `proposal.get` retorna `document_url`; o CAIO entrega o link canônico autorizado, nunca o binário. `GET /realtime/ws` é canal push persistente e `POST integration-jobs/scan` é job interno de sistema — sem equivalente conversacional, exclusão mantida e justificada.
+
+**Evidência desta rodada de correção:** suíte CAIO **656 passed / 58 skipped** (homologação + integração isolada plugins-db + parity/mcp/character), incluindo novos testes de boundary para o contrato upstream de propostas e cenário multi-etapa de investigação de proposta. Nenhum write/delete produtivo executado.

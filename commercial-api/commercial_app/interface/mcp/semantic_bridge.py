@@ -762,19 +762,31 @@ def tool_execute(
                 data={"capability": entry.capability},
             )
         data = handler(**merged)
-        return _ok(
-            {
-                "entity": entry.entity,
-                "action": entry.action,
-                "executed": True,
-                "data": data,
-                "write_policy": (
-                    "backend_authorized; audit trail do owner; "
-                    "notifications oficiais preservadas"
+        result: dict[str, Any] = {
+            "entity": entry.entity,
+            "action": entry.action,
+            "executed": True,
+            "data": data,
+            "write_policy": (
+                "backend_authorized; audit trail do owner; "
+                "notifications oficiais preservadas"
+            ),
+        }
+        if idempotency_key is not None or expected_version is not None:
+            result["concurrency"] = {
+                "idempotency_key_received": (
+                    idempotency_key is not None
                 ),
-            },
-            "Operação executada.",
-        )
+                "expected_version_received": (
+                    expected_version is not None
+                ),
+                "enforcement": (
+                    "owner_contract — o MCP não adiciona camada "
+                    "própria de idempotência/versionamento; "
+                    "garantias seguem o use case oficial."
+                ),
+            }
+        return _ok(result, "Operação executada.")
     except Exception as exc:
         return _handle_error(exc)
 

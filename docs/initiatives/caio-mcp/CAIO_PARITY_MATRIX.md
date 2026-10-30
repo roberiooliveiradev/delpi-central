@@ -171,17 +171,21 @@ reaction_clear/pin/unpin` · `execute task.from_message` ·
 `delete user_profile.photo_delete` · photo get/upload (binário/
 multipart) `NSE`.
 
-### NSE consolidadas (7)
+### NSE consolidadas (7) — revisão 2026-10-30
 
-| Operação | Motivo |
-|---|---|
-| GET /realtime/ws | canal push persistente — não é operação request/response |
-| POST attachments upload | multipart binário |
-| GET attachments download | stream binário |
-| GET user photo | binário |
-| POST user photo | multipart binário |
-| GET proposal document (pdf) | binário |
-| POST integration-jobs/scan (2) | jobs internos de sistema, não operações de usuário |
+| Operação | Motivo | Equivalente conversacional |
+|---|---|---|
+| GET /realtime/ws | canal push persistente — não é operação request/response | exclusão justificada — reads cobrem estado sob demanda |
+| POST attachments upload | multipart binário | handoff Portal — fluxo permanece multipart-only |
+| GET attachments download | stream binário | `read attachment.list` retorna `download_url` da rota canônica |
+| GET user photo | binário | `read user_profile.get` retorna `photo_url` |
+| POST user photo | multipart binário | handoff Portal — fluxo permanece multipart-only |
+| GET proposal document (pdf) | binário | `read proposal.get` retorna `document_url` (`/proposal-documents/{interna}/pdf`) |
+| POST integration-jobs/scan (2) | jobs internos de sistema, não operações de usuário | exclusão justificada |
+
+Nenhuma capacidade de negócio elegível ficou ausente: os artefatos
+binários são distribuídos pelo link canônico autorizado do Portal —
+o MCP nunca transporta binário nem reimplementa o endpoint.
 
 ## Cobertura de conhecimento (E5)
 

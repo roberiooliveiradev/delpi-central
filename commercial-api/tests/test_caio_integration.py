@@ -932,6 +932,128 @@ def test_read_reaches_official_gateway(cap, seeded):
     assert r.is_error is False, (cap, r.structured_content)
 
 
+def test_proposal_detail_forwards_upstream_contract(seeded):
+    """issue CAIO-2 F1.1 — upstream /proposals/{n} requires ``branch``
+    and accepts ``revision``; the adapter must forward both."""
+    fake = _FakeGateway({"data": {"proposal": "ok"}})
+    _act(_human(MANAGE_USER + ("commercial.analytics",
+                               "commercial.proposals.view")))
+    with patch.object(
+        parity, "build_delpi_commercial_gateway",
+        return_value=fake,
+    ):
+        r = sem.tool_read(
+            entity="proposal", action="analytics_get",
+            ref="000123",
+            filters={"branch": "01", "revision": "2"},
+        )
+    assert r.is_error is False, r.structured_content
+    assert fake.calls
+    name, args, kwargs = fake.calls[0]
+    assert name == "get_commercial_analytics"
+    assert args[0] == "/proposals/000123"
+    sent = kwargs.get("params") or {}
+    assert sent.get("branch") == "01"
+    assert sent.get("revision") == "2"
+
+
+def test_proposal_history_forwards_period_and_revision(seeded):
+    fake = _FakeGateway({"data": {"items": []}})
+    _act(_human(MANAGE_USER + ("commercial.analytics",
+                               "commercial.proposals.view")))
+    with patch.object(
+        parity, "build_delpi_commercial_gateway",
+        return_value=fake,
+    ):
+        r = sem.tool_read(
+            entity="proposal", action="history_events",
+            ref="000123",
+            filters={
+                "branch": "02",
+                "revision": "1",
+                "start_date": "2026-01-01",
+                "end_date": "2026-10-30",
+            },
+        )
+    assert r.is_error is False, r.structured_content
+    name, args, kwargs = fake.calls[0]
+    assert name == "get_commercial_analytics"
+    assert args[0] == "/proposals/000123/history/events"
+    sent = kwargs.get("params") or {}
+    assert sent.get("branch") == "02"
+    assert sent.get("revision") == "1"
+    assert sent.get("start_date") == "2026-01-01"
+    assert sent.get("end_date") == "2026-10-30"
+
+
+def test_proposal_detail_without_branch_is_validation(seeded):
+    fake = _FakeGateway()
+    _act(_human(MANAGE_USER + ("commercial.analytics",
+                               "commercial.proposals.view")))
+    with patch.object(
+        parity, "build_delpi_commercial_gateway",
+        return_value=fake,
+    ):
+        for action in ("analytics_get", "history_events"):
+            r = sem.tool_read(
+                entity="proposal", action=action, ref="000123"
+            )
+            assert r.is_error is True
+            payload = r.structured_content
+            assert payload["status_code"] == 400
+            assert payload["error_code"] == "validation"
+            assert "branch" in payload["data"]["missing_fields"]
+    assert not fake.calls
+
+
+def test_proposal_investigation_multistep_chain(seeded):
+    """Multi-step scenario (F3): analytics_list → analytics_get →
+    history_events → get(document_url) — the ChatGPT investigation
+    flow, scoped and authorized."""
+    fake = _FakeGateway({"data": {"items": [], "proposal": "ok"}})
+    _act(_human(MANAGE_USER + ("commercial.analytics",
+                               "commercial.proposals.view")))
+    with patch.object(
+        parity, "build_delpi_commercial_gateway",
+        return_value=fake,
+    ):
+        r1 = sem.tool_read(entity="proposal", action="analytics_list",
+                           filters={"branch": "01"})
+        r2 = sem.tool_read(entity="proposal", action="analytics_get",
+                           ref="000123",
+                           filters={"branch": "01", "revision": "2"})
+        r3 = sem.tool_read(entity="proposal", action="history_events",
+                           ref="000123",
+                           filters={"branch": "01"})
+        r4 = sem.tool_read(entity="proposal", action="get",
+                           ref="INT-1")
+    for r in (r1, r2, r3, r4):
+        assert r.is_error is False, r.structured_content
+    paths = [c[1][0] if c[1] else "" for c in fake.calls]
+    assert "/proposals" in paths or any(
+        p.startswith("/proposals") for p in paths
+    )
+    assert any(p == "/proposals/000123" for p in paths)
+    assert any(
+        p == "/proposals/000123/history/events" for p in paths
+    )
+    doc = r4.structured_content["data"]
+    assert doc.get("document_url") == "/proposal-documents/INT-1/pdf"
+
+
+def test_entity_preview_requires_ref_object(seeded):
+    _act(_human(MANAGE_USER))
+    r = sem.tool_read(
+        entity="interaction_room", action="entity_preview",
+        filters={"kind": "customer"},
+    )
+    assert r.is_error is True
+    payload = r.structured_content
+    assert payload["status_code"] == 400
+    assert payload["error_code"] == "validation"
+    assert "ref" in payload["data"]["missing_fields"]
+
+
 def test_analyze_all_reach_owner_path(seeded):
     from commercial_app.interface.mcp.tool_bridge_parity import (
         ANALYZE_PROXY_MAP,

@@ -128,7 +128,7 @@
       "guidance": [
         "TOTVS é a fonte canônica de pedidos, faturamento, notas, ROL, OTD e cadastros — o acesso passa por api-delpi via delpi_commercial_gateway.",
         "Produção (OPs, apontamentos, status de fábrica, estrutura de produto) vem do BFF de produção da mesma api-delpi.",
-        "Anexos e fotos de perfil usam storage do próprio commercial-api — upload/download seguem fluxo multipart/stream não elegível ao MCP.",
+        "Anexos e fotos de perfil usam storage do próprio commercial-api — upload/download seguem fluxo multipart/stream não elegível ao MCP; attachment.list retorna download_url da rota canônica do Portal e user_profile.get retorna photo_url — o CAIO orienta o handoff, nunca transporta binário.",
         "Realtime (/ws) e notificações de inbox são push — o MCP executa as mesmas mutações que disparam esses efeitos oficiais.",
         "Todo resultado analítico carrega proveniência: TOTVS → api-delpi → commercial-api scope → CAIO."
       ]
@@ -165,7 +165,9 @@
         "Gestão de follow-up: worklist.mine → task.create/complete/defer/reassign → activity.create — notificações oficiais disparam como no portal.",
         "Colaboração: interaction_room.resolve → message.post → task.from_message — sala, menção e tarefa vinculada em uma cadeia.",
         "Administração: portfolio.create → member_add → customer_add (centro verificado) → audit; transferências com motivo auditado.",
-        "Análise: get_context → analyze por analysis_type com escopo server-side → labels OBSERVED — sem recálculo local."
+        "Análise: get_context → analyze por analysis_type com escopo server-side → labels OBSERVED — sem recálculo local.",
+        "Investigação de proposta: proposal.analytics_list → analytics_get(ref + branch) → history_events(ref + branch + período) → proposal.get com document_url do PDF.",
+        "Pedido → produção: open_order.list/open_ops → production.order(op) → production.appointments(op + branch) → indicadores OTD — escopo server-side preservado."
       ]
     },
     "commercial.proposals": {
@@ -174,10 +176,11 @@
       "guidance": [
         "Proposta comercial é documento ADY no TOTVS, servido via api-delpi — list/get/history não carregam membership de carteira.",
         "read proposal.list: search cobre número de proposta, OV, cliente e nome; sort_by suporta ov, interna, cliente, oportunidade, versao, data, itens; paginação page/page_size suportada.",
-        "read proposal.get detalha uma proposta por identificador (ref).",
-        "read proposal.analytics_list / analytics_get / history_events cobrem as visões analíticas de propostas do Portal — mesmos filtros de escopo (portfolio_id, seller_id, scope_mode) e de período.",
+        "read proposal.get detalha uma proposta por identificador (ref) e retorna document_url com a rota canônica do PDF no Portal (/proposal-documents/{interna}/pdf) — o binário só é servido lá.",
+        "read proposal.analytics_get e proposal.history_events (analytics do TOTVS) exigem branch (filial) — argumento obrigatório declarado no contrato; revision é opcional e history aceita start_date/end_date.",
+        "Investigação de proposta: proposal.analytics_list (com branch) → analytics_get(ref, branch, revision?) → history_events(ref, branch, start_date?, end_date?) → proposal.get (document_url para o PDF).",
         "analyze opportunity.collaborator_summary resume o funil de oportunidades por colaborador no período.",
-        "Exportação de PDF da proposta é fluxo do Portal/api-delpi — não é operação elegível ao MCP."
+        "Exportação de PDF da proposta é fluxo do Portal/api-delpi — o CAIO entrega o document_url para handoff, nunca o binário."
       ]
     },
     "commercial.otd": {

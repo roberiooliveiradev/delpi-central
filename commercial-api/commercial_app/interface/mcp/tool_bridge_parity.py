@@ -927,6 +927,11 @@ def tool_proposal_get(*, proposta_interna: str) -> CallToolResult:
             f"/{encoded}"
         )
         data = payload.get("data", payload) if isinstance(payload, dict) else {}
+        if isinstance(data, dict):
+            data.setdefault(
+                "document_url",
+                f"/proposal-documents/{encoded}/pdf",
+            )
         return _ok(data, "Proposta carregada.")
     except Exception as exc:
         return handle_tool_error(exc)
@@ -982,6 +987,8 @@ def tool_proposal_analytics_list(
 def tool_proposal_analytics_get(
     *,
     proposal_number: str,
+    branch: str,
+    revision: str | None = None,
     seller_id: str | None = None,
     portfolio_id: str | None = None,
     scope_mode: str | None = None,
@@ -995,7 +1002,9 @@ def tool_proposal_analytics_get(
             portfolio_id=portfolio_id,
             scope_mode=scope_mode,
         )
-        totvs = merge_totvs_params(scope, {})
+        totvs = merge_totvs_params(
+            scope, {"branch": branch, "revision": revision}
+        )
         encoded = quote(str(proposal_number).strip(), safe="")
         payload = build_delpi_commercial_gateway().get_commercial_analytics(
             f"/proposals/{encoded}", params=totvs
@@ -1011,6 +1020,10 @@ def tool_proposal_analytics_get(
 def tool_proposal_history_events(
     *,
     proposal_number: str,
+    branch: str,
+    revision: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
     seller_id: str | None = None,
     portfolio_id: str | None = None,
     scope_mode: str | None = None,
@@ -1024,7 +1037,15 @@ def tool_proposal_history_events(
             portfolio_id=portfolio_id,
             scope_mode=scope_mode,
         )
-        totvs = merge_totvs_params(scope, {})
+        totvs = merge_totvs_params(
+            scope,
+            {
+                "branch": branch,
+                "revision": revision,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+        )
         encoded = quote(str(proposal_number).strip(), safe="")
         payload = build_delpi_commercial_gateway().get_commercial_analytics(
             f"/proposals/{encoded}/history/events", params=totvs
@@ -1733,7 +1754,22 @@ def tool_attachment_list(
             actor_is_portfolio_manager=_is_manager(request),
         )
         return _ok(
-            {"items": [item.to_dict() for item in items]},
+            {
+                "items": [
+                    {
+                        **item.to_dict(),
+                        "download_url": (
+                            f"/attachments/{item.id}/content"
+                        ),
+                    }
+                    for item in items
+                ],
+                "note": (
+                    "download_url points to the canonical Portal "
+                    "Comercial route — the binary stream is served "
+                    "only there."
+                ),
+            },
             "Anexos carregados.",
         )
     except Exception as exc:
@@ -1934,7 +1970,7 @@ def tool_interaction_mention_suggest(
 
 
 def tool_interaction_entity_preview(
-    *, kind: str, ref: Any = None
+    *, kind: str, ref: Any
 ) -> CallToolResult:
     import json as _json
 

@@ -217,7 +217,8 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     _a(
         "customer", "enrichment", "read",
         "Batch enrichment of scoped customers (trend window, billing "
-        "nature) — same customer pairs never exceed caller scope.",
+        "nature). customers = list of objects "
+        "{customer_code, customer_store} — never exceeds caller scope.",
         "read",
         fields=("customers", "window_days", "nature"),
         required_fields=("customers",),
@@ -226,7 +227,8 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     _a(
         "customer", "billing_series", "read",
         "Customer billing series (monthly points per customer pair "
-        "of the authorized scope).",
+        "of the authorized scope). customers = list of objects "
+        "{customer_code, customer_store}.",
         "read",
         fields=(
             "customers", "months", "start_date", "end_date",
@@ -356,7 +358,8 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "read",
         ref_arg="proposal_number",
         ref_description="TOTVS proposal number.",
-        fields=_SCOPE_FIELDS,
+        fields=_SCOPE_FIELDS + ("branch", "revision"),
+        required_fields=("branch",),
         requires=(REQ_ANALYTICS,),
     ),
     _a(
@@ -365,7 +368,10 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "read",
         ref_arg="proposal_number",
         ref_description="TOTVS proposal number.",
-        fields=_SCOPE_FIELDS,
+        fields=_SCOPE_FIELDS + (
+            "branch", "revision", "start_date", "end_date",
+        ),
+        required_fields=("branch",),
         requires=(REQ_ANALYTICS,),
     ),
     # --- read: worklist / tasks / activities ---------------------------------
@@ -504,10 +510,14 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     ),
     _a(
         "interaction_room", "entity_preview", "read",
-        "Preview card of a linked entity reference.",
+        "Preview card of a linked entity reference. kind = mention "
+        "kind id (user|customer|portfolio|order|product|"
+        "production_order|opportunity|otd_line|invoice); ref = JSON "
+        "object with that kind's keys — e.g. customer: "
+        "{customer_code, customer_store}.",
         "read",
         fields=("kind", "ref"),
-        required_fields=("kind",),
+        required_fields=("kind", "ref"),
         requires=(REQ_ACCESS,),
     ),
     # --- read: production BFF ---------------------------------------------------
