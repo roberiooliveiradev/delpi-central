@@ -78,7 +78,7 @@ Legenda de colunas (conforme doc 119 §4):
 ## 2. Governed operations → `execute`/`delete` (48)
 
 **Atualização SEMANTIC-002 (doc 124):** a classificação por risco
-real foi publicada — 11 capabilities viraram `DIRECT_ALLOWED` (executam
+real foi publicada — 13 capabilities viraram `DIRECT_ALLOWED` (executam
 já com AuthZ+idempotência física V019+read-back, sem desafio de
 consentimento; `phase=prepare` segue compatível), 37 permanecem
 `CONFIRMATION_REQUIRED` (`PREPARE → consentimento verificável no Portal
@@ -128,8 +128,8 @@ com justificativa por efeito está no
 | catalog.entry_update | execute | `catalog.entry_update` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | catalog.entry_deactivate | delete | `catalog.entry_deactivate` | manage | DESTRUCTIVE | prepare→consent→commit | MIGRATED |
 | catalog.entry_reactivate | execute | `catalog.entry_reactivate` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| checklist.draft_create | execute | `checklist.draft_create` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| checklist.draft_update | execute | `checklist.draft_update` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
+| checklist.draft_create | execute | `checklist.draft_create` | manage | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
+| checklist.draft_update | execute | `checklist.draft_update` | manage | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
 | checklist.version_submit | execute | `checklist.version_submit` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | checklist.version_return | execute | `checklist.version_return` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | checklist.version_discard | delete | `checklist.version_discard` | manage | DESTRUCTIVE | prepare→consent→commit | MIGRATED |
@@ -176,5 +176,5 @@ com justificativa por efeito está no
 - Upload/download de binários e exports CSV/PDF: `PORTAL_ONLY` por
   natureza de payload (execução 016) — não são gap de autorização.
 - Execução direta classe B: **RESOLVIDO em SEMANTIC-002** — decisão
-  do owner publicada no doc 124 (11 DIRECT_ALLOWED / 37
+  do owner publicada no doc 124 (13 DIRECT_ALLOWED / 35
   CONFIRMATION_REQUIRED; BLOCKED = erro tipado por pré-condição).

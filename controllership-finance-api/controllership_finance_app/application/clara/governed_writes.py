@@ -1949,6 +1949,7 @@ class ClaraGovernedWrites:
             },
             "checklist.draft_create": {
                 "gate": "manage",
+                "direct": True,
                 "resource_type": "checklist_template_version",
                 "resource_key": lambda p: str(
                     _require(p, "template_id")
@@ -1968,6 +1969,7 @@ class ClaraGovernedWrites:
             },
             "checklist.draft_update": {
                 "gate": "manage",
+                "direct": True,
                 "resource_type": "checklist_template_version",
                 "resource_key": lambda p: (
                     f"{p.get('template_id')}:v{p.get('version')}"

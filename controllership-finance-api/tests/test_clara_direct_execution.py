@@ -750,3 +750,36 @@ def test_schema_for_reflects_risk_policy(monkeypatch, actor):
     schema = sb._schema_for("pendency", "create")
     assert schema["direct"] is True
     assert "direct" in schema["phase_policy"]
+
+
+# ------------------------------------------------------------------
+# TRANSVERSAL-001 — classificação real do registry (sem mocks)
+# ------------------------------------------------------------------
+
+
+def test_registry_marks_draft_caps_direct():
+    """Doc 124 rev. A: as duas operações de rascunho são DIRECT_ALLOWED
+    no registry real — guarda contra remoção acidental da flag."""
+    table = ClaraGovernedWrites()._capability_table()
+    assert table["checklist.draft_create"]["direct"] is True
+    assert table["checklist.draft_update"]["direct"] is True
+    # Vizinhas de governança continuam governadas.
+    for cap in (
+        "checklist.version_submit",
+        "checklist.version_publish",
+        "checklist.version_discard",
+        "checklist.doc_requirement",
+        "catalog.entry_create",
+        "catalog.entry_update",
+        "competence.open",
+        "package.finalize",
+        "p3.upsert_reconciliation",
+        "item.create_exceptional",
+    ):
+        assert not table[cap].get("direct"), cap
+
+
+def test_registry_direct_count_is_thirteen():
+    table = ClaraGovernedWrites()._capability_table()
+    direct = [c for c, s in table.items() if s.get("direct")]
+    assert len(direct) == 13

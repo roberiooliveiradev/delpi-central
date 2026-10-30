@@ -1,6 +1,9 @@
 # Doc 124 — CLARA: política de execução de escrita por risco (SEMANTIC-002)
 
-**Status:** CANONICAL — vigente a partir de CLARA-MCP-SEMANTIC-002
+**Status:** CANONICAL — vigente a partir de CLARA-MCP-SEMANTIC-002;
+**revisão A** (`CF-CLARA-ACT-TRANSVERSAL-001`, PO): `checklist.draft_create`
+e `checklist.draft_update` promovidas a `DIRECT_ALLOWED` — criar/editar
+rascunho não exige confirmação adicional (§3 rev. A).
 **Autoridade:** substitui prospectivamente, **somente para o subconjunto
 `DIRECT_ALLOWED` abaixo**, a exigência de consentimento universal por
 escrita do [Documento 106](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md)
@@ -47,10 +50,12 @@ Legenda de gate: `access` = permission de acesso; `manage` = permission
 de gerência; `dre` = vínculo de destinatário externo. Coluna *Por quê* =
 efeito real que determina a classe.
 
-### 3.1 DIRECT_ALLOWED — 11
+### 3.1 DIRECT_ALLOWED — 13 (rev. A)
 
 | Capability | Gate | Efeito real | Reversível | Por quê |
 |---|---|---|---|---|
+| checklist.draft_create | manage | cria versão DRAFT de template | sim (version_discard) | rascunho não publicado — decisão do PO (CF-CLARA-ACT-TRANSVERSAL-001); `manage` revalidado na execução |
+| checklist.draft_update | manage | edita itens de versão DRAFT | sim | mesma decisão; OCC por `expected_revision` no caso de uso canônico |
 | clarification.open | access | abre pergunta/pendência de esclarecimento | sim (resolve) | comunicação operacional, sem decisão |
 | pendency.create | access | registra pendência operacional | sim (cancelamento do próprio registro via fluxo) | registro de trabalho, efeito corriqueiro |
 | pendency.claim | access | autoatribuição de pendência | sim (reassign) | afeta apenas a fila do próprio ator; OCC por expected_revision |
@@ -63,7 +68,7 @@ efeito real que determina a classe.
 | received.post_message | dre | mensagem do destinatário ao documento | append-only | mesmo canal, gate dre |
 | received.create_adjustment | dre | abre solicitação de ajuste | sim (confirm posterior) | pedido, não confirmação |
 
-### 3.2 CONFIRMATION_REQUIRED — 37
+### 3.2 CONFIRMATION_REQUIRED — 35 (rev. A)
 
 Razões por bloco (efeito real):
 
@@ -85,10 +90,12 @@ Razões por bloco (efeito real):
   irreversíveis ou com efeito destrutivo real.
 - **Catálogo/template de governança:** `catalog.entry_create`,
   `catalog.entry_update`, `catalog.entry_reactivate`,
-  `checklist.draft_create`, `checklist.draft_update`,
   `checklist.version_submit`, `checklist.version_return`,
   `checklist.version_publish`, `checklist.doc_requirement` — alteram
   conteúdo oficial reutilizado por competências futuras (doc 119 §5).
+  (`checklist.draft_create`/`draft_update` saíram deste bloco na rev. A:
+  versões DRAFT não são conteúdo oficial publicado — só `submit`/
+  `publish`/`doc_requirement` tocam o template efetivo.)
 - **Operações sobre terceiros/ownership:** `pendency.reassign`,
   `pendency.confirm_classification`, `clarification.resolve` —
   efetuam decisão sobre item de outro ator ou encerram
@@ -146,7 +153,7 @@ o contrato do doc 106 sem alteração.
 
 | Item | Valor |
 |---|---|
-| Execução | CLARA-MCP-SEMANTIC-002 |
+| Execução | CLARA-MCP-SEMANTIC-002; rev. A CF-CLARA-ACT-TRANSVERSAL-001 |
 | Base | CLARA-MCP-SEMANTIC-001 (doc 119, commit 3f36137dc3) |
 | Implementação | `governed_writes.execute_direct`, `semantic_bridge` (fase direct + `_run_operations`), V019 |
 | Auditoria | `CLARA_DIRECT_ATTEMPT/ACT/REJECTED` em `closing_audit_event` |

@@ -1314,3 +1314,119 @@ def test_pg_direct_stale_revision_conflicts_without_overwrite(env):
             },
             actor_sub=ADMIN,
         )
+
+
+# == TRANSVERSAL-001 — rascunhos de checklist diretos (doc 124 rev. A) ==
+
+
+def test_pg_direct_draft_create_update_roundtrip(env):
+    """Cenário real §8: draft_create e draft_update executam já, sem
+    desafio de consentimento; read-back comprova DRAFT persistido."""
+    checklist = ClosingChecklistRepository()
+    template_id = str(checklist.list_templates()[0]["template_id"])
+    created = env["writes"].execute_direct(
+        capability="checklist.draft_create",
+        params={"template_id": template_id},
+        actor_sub=ADMIN,
+    )
+    assert created["executed"] is True
+    assert created["consent"] == "not_required"
+    draft = created["result"].get("draft") or created["result"]
+    version = int(draft["version"])
+    assert draft["status"] == "DRAFT"
+    # Retry idempotente — mesma chave derivada devolve replay, não
+    # DraftAlreadyOpen.
+    replay = env["writes"].execute_direct(
+        capability="checklist.draft_create",
+        params={"template_id": template_id},
+        actor_sub=ADMIN,
+    )
+    assert replay["replayed"] is True
+    persisted = checklist.get_version_with_items(template_id, version)
+    assert persisted["status"] == "DRAFT"
+    assert persisted["items"]
+    items = [dict(i) for i in persisted["items"]]
+    items[0]["name"] = "Item renomeado via CLARA direta"
+    updated = env["writes"].execute_direct(
+        capability="checklist.draft_update",
+        params={
+            "template_id": template_id,
+            "version": version,
+            "expected_revision": persisted["revision"],
+            "items": items,
+        },
+        actor_sub=ADMIN,
+    )
+    assert updated["executed"] is True
+    reread = checklist.get_version_with_items(template_id, version)
+    assert reread["items"][0]["name"] == (
+        "Item renomeado via CLARA direta"
+    )
+    # OCC: revisão obsoleta -> conflito tipado, sem sobrescrever.
+    # (params precisam divergir — idênticos replayariam por idempotência)
+    stale_items = [dict(i) for i in persisted["items"]]
+    stale_items[0]["name"] = "Escrita stale que não pode acontecer"
+    with pytest.raises(ChecklistDomainError):
+        env["writes"].execute_direct(
+            capability="checklist.draft_update",
+            params={
+                "template_id": template_id,
+                "version": version,
+                "expected_revision": persisted["revision"],
+                "items": stale_items,
+            },
+            actor_sub=ADMIN,
+        )
+    assert checklist.get_version_with_items(
+        template_id, version
+    )["items"][0]["name"] == "Item renomeado via CLARA direta"
+
+
+def test_pg_direct_draft_requires_manage(env):
+    """Sem `.manage` efetivo, draft_create falha forbidden antes de
+    qualquer efeito — proposta nunca selada."""
+    non_manage = ClaraGovernedWrites(
+        identity_provider=lambda: {
+            "subject": REVIEWER_C, "name": "reviewer",
+            "is_manage": False, "is_dre": False,
+        },
+    )
+    template_id = str(
+        ClosingChecklistRepository().list_templates()[0]["template_id"]
+    )
+    with pytest.raises(ChecklistDomainError) as exc:
+        non_manage.execute_direct(
+            capability="checklist.draft_create",
+            params={"template_id": template_id},
+            actor_sub=REVIEWER_C,
+        )
+    assert getattr(exc.value, "code", "") == "forbidden"
+    with plugins_db_connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT count(*) AS n
+              FROM controllership_finance.clara_proposal
+             WHERE capability = 'checklist.draft_create'
+               AND actor_sub = %s
+            """,
+            (REVIEWER_C,),
+        )
+        assert cur.fetchone()[0] == 0
+
+
+def test_pg_direct_version_publish_still_governed(env):
+    """Regressão: version_publish permanece CONFIRMATION_REQUIRED."""
+    from controllership_finance_app.application.clara.step_up_consent import (  # noqa: E501
+        ConsentRequired,
+    )
+
+    with pytest.raises(ConsentRequired):
+        env["writes"].execute_direct(
+            capability="checklist.version_publish",
+            params={
+                "template_id": str(uuid.uuid4()),
+                "version": 1,
+                "effective_from": PERIOD,
+            },
+            actor_sub=ADMIN,
+        )
