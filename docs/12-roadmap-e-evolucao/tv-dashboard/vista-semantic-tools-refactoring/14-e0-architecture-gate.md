@@ -144,3 +144,7 @@ Quando (e somente quando) a ADR for aprovada:
   verificar antes de qualquer implementação futura.
 - PR não aberto; o pacote de aprovação vive na branch documental —
   abrir PR quando o owner estiver pronto para decidir.
+
+## D-6 product-direction amendment — 2026-10-30
+
+The §3 D-6 INCLUIR/ADIAR/EXCLUIR classification reflects an earlier recommendation, **not the latest requester scope**. All eight blocks are now desired as INCLUDED, including playlist delete, restore/templates/MDD and shares/invites/permissions. See [15 — product decision and master plan](15-d6-product-direction-and-master-plan.md). Approval status remains `PRODUCT_DIRECTION_RECORDED / OWNER_APPROVAL_PENDING`, **NOT** `PRODUCT_SCOPE_APPROVED` and **NOT** `READY_FOR_EXECUTION`. Resolve individual TV-domain, Core-RBAC and security gates before respective waves. E2/E3's existing read-only projections do not depend on Program B media/preset expansion. ADR supersession remains PROPOSED.
