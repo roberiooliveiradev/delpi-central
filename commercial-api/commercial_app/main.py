@@ -16,6 +16,9 @@ from commercial_app.application.services.commercial_realtime_hub import (
     commercial_realtime_hub,
 )
 from commercial_app.interface.http.routes.realtime_routes import router as realtime_router
+from commercial_app.interface.http.routes.characters_routes import (
+    router as characters_router,
+)
 from commercial_app.interface.http.routes.attachment_routes import router as attachment_router
 from commercial_app.interface.http.routes.analytics_routes import router as analytics_router
 from commercial_app.interface.http.routes.customer_routes import router as customer_router
@@ -56,6 +59,12 @@ from commercial_app.interface.http.routes.integration_jobs_routes import (
 )
 from commercial_app.interface.http.routes.interaction_room_routes import (
     router as interaction_room_router,
+)
+from commercial_app.interface.mcp import (
+    combine_lifespan,
+    mcp_http_app,
+    mcp_metadata_router,
+    mcp_mount_path_middleware,
 )
 from commercial_app.middleware.auth_middleware import jwt_middleware
 from commercial_app.startup.run_migrations_on_startup import run_migrations_on_startup
@@ -107,7 +116,7 @@ app = FastAPI(
     description="API do módulo Comercial — carteiras, avatars e extensões futuras.",
     version="0.1.0",
     root_path=settings.COMMERCIAL_API_ROOT_PATH,
-    lifespan=lifespan,
+    lifespan=combine_lifespan(lifespan, mcp_http_app),
     # Evita 307 slash-redirect com Location http:// atrás de TLS termination
     # (Mixed Content no browser). Clientes devem usar o path exato da rota.
     redirect_slashes=False,
@@ -130,6 +139,9 @@ async def unhandled_exception_handler(_request: Request, exc: Exception):
     return fail("Erro interno do servidor.", 500)
 
 
+# Last registered http middleware runs first: rewrite /mcp → /mcp/
+# for the mounted Starlette MCP app (canonical pattern).
+app.middleware("http")(mcp_mount_path_middleware)
 app.middleware("http")(jwt_middleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
@@ -195,3 +207,10 @@ app.include_router(administration_router)
 app.include_router(integration_jobs_router)
 app.include_router(interaction_room_router)
 app.include_router(realtime_router)
+app.include_router(characters_router)
+app.include_router(mcp_metadata_router)
+
+
+# Streamable HTTP MCP (path público: /apps/commercial-api/mcp) —
+# superfície governada do especialista CAIO.
+app.mount("/mcp", mcp_http_app)

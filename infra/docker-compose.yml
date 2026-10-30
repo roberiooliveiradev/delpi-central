@@ -2650,6 +2650,9 @@ services:
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
       DELPI_AUTH_CORE_API_URL: http://core-api:8000
 
+      # CAIO MCP (RFC 9728) — resource audience exata do endpoint público.
+      MCP_RESOURCE_URL: ${MCP_RESOURCE_URL_COMMERCIAL:-https://minhadelpi.com.br/apps/commercial-api/mcp}
+
       JWT_SECRET: ${API_DELPI_JWT_SECRET}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}

@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "owner": "commercial-api",
+  "audience": "caio-mcp",
+  "topics": {
+    "caio.usage": {
+      "title": "Como operar a superfície semântica do CAIO",
+      "source": "docs/initiatives/caio-mcp/IMPLEMENTATION_PLAN.md",
+      "guidance": [
+        "Chame get_context primeiro: ele lista entidades, ações, campos, riscos e capacidades efetivas do usuário.",
+        "read executa consultas oficiais por (entity, action) — nunca por URL, método HTTP ou SQL.",
+        "analyze compõe resultados oficiais com labels OBSERVED|CALCULATED|INFERRED|UNKNOWN — nenhum indicador é recalculado.",
+        "knowledge responde orientação versionada com proveniência — documentação não é verdade operacional.",
+        "execute e delete existem na superfície mas não têm operação ativada na v1 — respondem not_implemented com honestidade.",
+        "Estados honestos: unavailable significa falha na fonte; forbidden significa falta de autorização — nunca apresente como ausência de dados.",
+        "Escopo de carteira: membros veem apenas clientes vinculados às próprias carteiras; scope_mode=membership força a carteira do usuário; sem filtro, usuários manage/team veem o recorte global autorizado."
+      ]
+    },
+    "commercial.glossary": {
+      "title": "Conceitos comerciais DELPI",
+      "source": "commercial-api contracts (seller-portfolios, customers, open-orders, analytics)",
+      "guidance": [
+        "Carteira (seller portfolio): conjunto de clientes vinculados a um vendedor — define o escopo de dados que o usuário pode ver.",
+        "Membership: vínculo do usuário autenticado a uma ou mais carteiras; sem membership, membros veem escopo vazio (não erro).",
+        "Escopo irrestrito (manage/team scope): permite ver o recorte global ou carteiras selecionadas via portfolio_id/seller_id.",
+        "Pedido em aberto (open order): pedido de venda com saldo a faturar; open_summary retorna o KPI agregado sem itens; open_horizon agrupa por data de entrega.",
+        "Proposta comercial: documento de proposta (ADY) pesquisável no backend — search cobre número de proposta, OV, cliente e nome; sort_by suporta ov, interna, cliente, oportunidade, versao, data, itens.",
+        "OV (ordem de venda): identificador da venda vinculada a propostas e pedidos; o formato OV000116 corresponde ao identificador 000116.",
+        "ROL (receita): resumo de faturamento por período na visão analítica — start_date/end_date YYYY-MM-DD, branch, customer_segment."
+      ]
+    }
+  },
+  "planned_topics": [
+    {
+      "topic": "commercial.processes",
+      "note": "Orientações de processos comerciais aprovadas pelo owner — pendente de corpus oficial."
+    },
+    {
+      "topic": "products.guide",
+      "note": "Guia de produtos — pendente de fonte autorizada."
+    }
+  ]
+}

@@ -99,6 +99,8 @@ SPECIALISTS = (
      "apps/tv-dashboard-api/mcp"),
     ("mcp-controllership-finance", "mcp-audience-clara",
      "apps/controllership-finance-api/mcp"),
+    ("mcp-commercial", "mcp-audience-caio",
+     "apps/commercial-api/mcp"),
 )
 
 REQUESTER_CLIENT_ID = "delia-api"
