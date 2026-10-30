@@ -13,6 +13,7 @@ import {
   ChartNoAxesCombined,
   ClipboardCheck,
   ClipboardList,
+  ClipboardX,
   Compass,
   House,
   LifeBuoy,
@@ -65,6 +66,7 @@ const SECTION_ICONS: Record<string, ReactNode> = {
 const ROUTE_ICONS: Record<string, ReactNode> = {
   my_requests: <ClipboardList size={16} aria-hidden="true" />,
   lmps: <ClipboardCheck size={16} aria-hidden="true" />,
+  nonconformities: <ClipboardX size={16} aria-hidden="true" />,
   overview: <ChartColumn size={16} aria-hidden="true" />,
   dashboard: <ChartNoAxesCombined size={16} aria-hidden="true" />,
   home: <House size={16} aria-hidden="true" />,
