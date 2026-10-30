@@ -1,4 +1,8 @@
-"""SURI knowledge surface + deterministic analysis tests (S5/S6)."""
+"""SURI knowledge + deterministic analysis through the semantic surface.
+
+Parity with the legacy knowledge/analysis capabilities plus semantic
+validation negatives and the compound read→analyze→knowledge flow.
+"""
 
 from __future__ import annotations
 
@@ -48,33 +52,81 @@ class TestKnowledge:
         assert item["title"]
         assert knowledge.get_knowledge_item("nope") is None
 
-    def test_tools_gate_on_access(self, no_access_context):
+
+class TestKnowledgeTool:
+    """Parity with legacy knowledge tools through ``knowledge``."""
+
+    def test_gate_on_access(self, no_access_context):
         result = tool_bridge.handle_tool_error(
-            _call(tool_bridge.tool_search_supplies_knowledge, query="x")
+            _call(tool_bridge.tool_knowledge, "search", query="x")
         )
         assert _payload(result)["status_code"] == 403
 
-    def test_tools_positive(self, access_context):
+    def test_search_positive_cited(self, access_context):
         access_context()
-        result = tool_bridge.tool_get_knowledge_item("po.contract")
+        result = tool_bridge.tool_knowledge(
+            "search", query="pedidos de compra"
+        )
+        body = _payload(result)
+        assert body["success"] is True
+        assert body["data"]["items"]
+
+    def test_get_positive_and_404(self, access_context):
+        access_context()
+        result = tool_bridge.tool_knowledge("get", knowledge_id="po.contract")
         body = _payload(result)
         assert body["success"] is True
         assert body["data"]["knowledge_id"] == "po.contract"
 
-        result = tool_bridge.tool_get_knowledge_item("nope")
+        result = tool_bridge.tool_knowledge("get", knowledge_id="nope")
         assert _payload(result)["status_code"] == 404
 
-        result = tool_bridge.tool_list_knowledge_sources()
+    def test_sources_positive(self, access_context):
+        access_context()
+        result = tool_bridge.tool_knowledge("sources")
         assert _payload(result)["data"]["corpus_version"] == 1
 
+    def test_negative_knowledge_id_on_search(self, access_context):
+        access_context()
+        result = tool_bridge.tool_knowledge(
+            "search", query="x", knowledge_id="po.contract"
+        )
+        assert _payload(result)["status_code"] == 422
 
-class TestAnalyzePurchaseOrders:
+    def test_negative_missing_knowledge_id_on_get(self, access_context):
+        access_context()
+        result = tool_bridge.tool_knowledge("get")
+        assert _payload(result)["status_code"] == 422
+
+    def test_negative_query_on_get(self, access_context):
+        access_context()
+        result = tool_bridge.tool_knowledge(
+            "get", query="x", knowledge_id="po.contract"
+        )
+        assert _payload(result)["status_code"] == 422
+
+    def test_negative_params_on_sources(self, access_context):
+        access_context()
+        result = tool_bridge.tool_knowledge("sources", topic="suri")
+        assert _payload(result)["status_code"] == 422
+
+    def test_negative_unknown_action(self, access_context):
+        access_context()
+        result = tool_bridge.tool_knowledge("purge")
+        assert _payload(result)["status_code"] == 422
+
+
+class TestAnalyzeParity:
+    """Parity with legacy analyze_purchase_orders."""
+
     def test_positive_labels_and_reproducibility(
         self, access_context, fake_gateway
     ):
         access_context()
         fake_gateway(payload=PO_PAYLOAD)
-        result = tool_bridge.tool_analyze_purchase_orders(branch=["01"])
+        result = tool_bridge.tool_analyze(
+            "purchase_orders_summary", filters={"branch": ["01"]}
+        )
         data = _payload(result)["data"]
 
         facts = {f["label"]: f["value"] for f in data["facts"]}
@@ -97,11 +149,15 @@ class TestAnalyzePurchaseOrders:
         access_context()
         fake_gateway(payload=PO_PAYLOAD)
         first = _payload(
-            tool_bridge.tool_analyze_purchase_orders(branch=["01"])
+            tool_bridge.tool_analyze(
+                "purchase_orders_summary", filters={"branch": ["01"]}
+            )
         )["data"]["input_hash"]
         fake_gateway(payload=PO_PAYLOAD)
         second = _payload(
-            tool_bridge.tool_analyze_purchase_orders(branch=["01"])
+            tool_bridge.tool_analyze(
+                "purchase_orders_summary", filters={"branch": ["01"]}
+            )
         )["data"]["input_hash"]
         assert first == second
 
@@ -125,7 +181,9 @@ class TestAnalyzePurchaseOrders:
             }
         )
         data = _payload(
-            tool_bridge.tool_analyze_purchase_orders(branch=["01"])
+            tool_bridge.tool_analyze(
+                "purchase_orders_summary", filters={"branch": ["01"]}
+            )
         )["data"]
         rec_labels = {r["label"] for r in data["recommendations"]}
         assert "no_open_lines" in rec_labels
@@ -139,11 +197,80 @@ class TestAnalyzePurchaseOrders:
         gw = fake_gateway(payload=PO_PAYLOAD)
         result = tool_bridge.handle_tool_error(
             _call(
-                tool_bridge.tool_analyze_purchase_orders, branch=["03"]
+                tool_bridge.tool_analyze,
+                "purchase_orders_summary",
+                {"branch": ["03"]},
             )
         )
         assert _payload(result)["status_code"] == 403
         assert gw.calls == []
+
+    def test_negative_unknown_analysis(self, access_context):
+        access_context()
+        result = tool_bridge.tool_analyze("suppliers_risk")
+        assert _payload(result)["status_code"] == 422
+
+    def test_negative_unknown_filter_key(
+        self, access_context, fake_gateway
+    ):
+        access_context()
+        gw = fake_gateway(payload=PO_PAYLOAD)
+        result = tool_bridge.tool_analyze(
+            "purchase_orders_summary",
+            filters={"branch": ["01"], "force_all_units": True},
+        )
+        assert _payload(result)["status_code"] == 422
+        assert gw.calls == []
+
+
+class TestCompoundRequest:
+    """read → analyze → knowledge chained calls keep auth and integrity."""
+
+    def test_compound_chain(self, access_context, fake_gateway):
+        access_context()
+        gw = fake_gateway(payload=PO_PAYLOAD)
+
+        read_result = tool_bridge.tool_read(
+            "purchase_orders",
+            "search",
+            filters={"branch": ["01"], "late_only": True},
+        )
+        analyze_result = tool_bridge.tool_analyze(
+            "purchase_orders_summary", filters={"branch": ["01"]}
+        )
+        knowledge_result = tool_bridge.tool_knowledge(
+            "search", query="acompanhamento"
+        )
+
+        assert _payload(read_result)["success"] is True
+        assert _payload(analyze_result)["success"] is True
+        assert _payload(knowledge_result)["success"] is True
+        # read + analyze hit the BFF; knowledge stays local
+        assert len(gw.calls) == 2
+        assert all(
+            c["path"] == "/supplies/purchase-orders" for c in gw.calls
+        )
+
+    def test_compound_partial_failure_isolated(
+        self, access_context, fake_gateway
+    ):
+        """A forbidden read never fabricates the knowledge answer."""
+        access_context()
+        fake_gateway(payload=PO_PAYLOAD)
+
+        read_result = tool_bridge.handle_tool_error(
+            _call(
+                tool_bridge.tool_read,
+                "purchase_orders",
+                "search",
+                {"branch": ["03"]},
+            )
+        )
+        knowledge_result = tool_bridge.tool_knowledge(
+            "sources"
+        )
+        assert _payload(read_result)["status_code"] == 403
+        assert _payload(knowledge_result)["success"] is True
 
 
 def _call(fn, *args, **kwargs):

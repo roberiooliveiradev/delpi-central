@@ -132,11 +132,11 @@ na superfície MCP (fail-closed).
    banido na superfície)
 7. POST /mcp com token válido + usuário sem supplies.access → tools
    respondem forbidden estruturado, nunca dados
-8. initialize + tools/list com token válido → 8 tools
-   (get_my_context, get_catalog, list_purchase_orders,
-   get_purchase_order, search_supplies_knowledge, get_knowledge_item,
-   list_knowledge_sources, analyze_purchase_orders)
-9. list_purchase_orders com branch fora do escopo do usuário → 403
+8. initialize + tools/list com token válido → 4 tools semânticas
+   (get_context, read, analyze, knowledge) — superfície semantic
+   contract freeze rev.2; a V1 anterior (8 tools endpoint-oriented) foi
+   substituída atomicamente antes do onboarding
+9. read(action=search) com branch fora do escopo do usuário → 403
 10. Reautenticação: revogar sessão → próximo initialize → 401 → fluxo
     OAuth reabre (refresh expirado)
 ```

@@ -1,15 +1,17 @@
 """SURI MCPServer — conversational surface of Portal Suprimentos.
 
-Tools declared with the frozen ``delpi_mcp`` taxonomy; metadata never
-authorizes — each handler re-applies the same policies the Flask BFF
-routes use (``can_use_operations``/``require_units`` + Core-derived
-EffectiveUser).
+Semantic contract freeze rev.2: exactly four tools
+(``get_context``, ``read``, ``analyze``, ``knowledge``) dispatching to
+specialized handlers. Tools are declared with the frozen ``delpi_mcp``
+taxonomy; metadata never authorizes — each handler re-applies the same
+policies the Flask BFF routes use (``can_use_operations``/``require_units``
++ Core-derived EffectiveUser).
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Literal
 
 from delpi_mcp.tool_metadata import (
     DELPI_META_TOOL_CLASS,
@@ -27,6 +29,11 @@ from app.interfaces.mcp.branding import SURI_MCP_INSTRUCTIONS
 from app.interfaces.mcp.constants import DESTRUCTIVE_ACT_TOOLS, TOOL_CLASS
 from app.interfaces.mcp.oauth_contract import SURI_MCP_SECURITY_SCHEMES
 from app.interfaces.mcp.resource_metadata import public_host_allowed_for_mcp
+from app.interfaces.mcp.schemas import (
+    PurchaseOrderAnalyzeFilters,
+    PurchaseOrderIdentity,
+    PurchaseOrderSearchFilters,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -98,173 +105,93 @@ def create_mcp_server() -> MCPServer:
         return wrapper
 
     @mcp.tool(
-        name="get_my_context",
-        title="Get my context",
+        name="get_context",
+        title="Get context and capability catalog",
         description=(
-            "Contexto mínimo do usuário autenticado (capacidades "
-            "declarativas e unidades permitidas). Identidade — nunca "
-            "autorização adicional."
+            "Ponto de entrada da SURI. action=context: identidade e "
+            "capacidades efetivas do usuário autenticado (unidades "
+            "permitidas, flags declarativas). action=catalog: catálogo "
+            "semântico de capabilities realmente implementadas — tools, "
+            "entidades/ações/análises permitidas, limites e diretrizes."
         ),
-        annotations=_annotations("get_my_context", "Get my context"),
+        annotations=_annotations("get_context", "Get context and catalog"),
         meta=meta,
     )
-    def get_my_context() -> CallToolResult:
-        return _guarded(bridge.tool_get_my_context)()
+    def get_context(
+        action: Literal["context", "catalog"] = "context",
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_context)(action)
 
     @mcp.tool(
-        name="get_catalog",
-        title="Get catalog",
+        name="read",
+        title="Read supplies entities",
         description=(
-            "Discovery: tools realmente implementadas, classes, versão "
-            "do catálogo e diretrizes de uso da SURI."
-        ),
-        annotations=_annotations("get_catalog", "Get catalog"),
-        meta=meta,
-    )
-    def get_catalog() -> CallToolResult:
-        return _guarded(bridge.tool_get_catalog)()
-
-    @mcp.tool(
-        name="list_purchase_orders",
-        title="List open purchase orders",
-        description=(
-            "Linhas de pedidos de compra em aberto (SC7) por unidade "
-            "obrigatória — paridade com a lista do Portal. Requer "
+            "Consulta semântica de entidades de Suprimentos. "
+            "entity=purchase_orders: action=search lista linhas de "
+            "pedidos em aberto via 'filters' fechados (branch "
+            "obrigatória, order_number, product_code, supplier_code, "
+            "expected_delivery_from/to, late_only, sort_by/dir, "
+            "page/page_size); action=get retorna a ficha de um pedido "
+            "via 'identity' {branch, order_number}. Requer "
             "supplies.access e escopo de unidade do próprio usuário."
         ),
-        annotations=_annotations(
-            "list_purchase_orders", "List open purchase orders"
-        ),
+        annotations=_annotations("read", "Read supplies entities"),
         meta=meta,
     )
-    def list_purchase_orders(
-        branch: list[str],
-        order_number: str | None = None,
-        product_code: str | None = None,
-        supplier_code: str | None = None,
-        expected_delivery_from: str | None = None,
-        expected_delivery_to: str | None = None,
-        late_only: bool = False,
-        sort_by: str | None = None,
-        sort_dir: str | None = None,
-        page: int = 1,
-        page_size: int = 25,
+    def read(
+        entity: Literal["purchase_orders"],
+        action: Literal["search", "get"],
+        filters: PurchaseOrderSearchFilters | None = None,
+        identity: PurchaseOrderIdentity | None = None,
     ) -> CallToolResult:
-        return _guarded(bridge.tool_list_purchase_orders)(
-            branch,
-            order_number,
-            product_code,
-            supplier_code,
-            expected_delivery_from,
-            expected_delivery_to,
-            late_only,
-            sort_by,
-            sort_dir,
-            page,
-            page_size,
-        )
+        return _guarded(bridge.tool_read)(entity, action, filters, identity)
 
     @mcp.tool(
-        name="get_purchase_order",
-        title="Get purchase order detail",
+        name="analyze",
+        title="Analyze supplies data",
         description=(
-            "Ficha de um pedido de compra em aberto (itens e "
-            "recebimentos) — paridade com o detalhe do Portal."
+            "Análises determinísticas homologadas. "
+            "analysis=purchase_orders_summary: fatos do contrato do "
+            "owner (summary), cálculos reproduzíveis sobre a amostra e "
+            "recomendações rotuladas FACT/CALCULATION/RECOMMENDATION — "
+            "recomendações nunca executam. 'filters' aceita o mesmo "
+            "vocabulário fechado do read (sem sort/page); 'sample_size' "
+            "limita a amostra."
         ),
-        annotations=_annotations(
-            "get_purchase_order", "Get purchase order detail"
-        ),
+        annotations=_annotations("analyze", "Analyze supplies data"),
         meta=meta,
     )
-    def get_purchase_order(
-        branch: str, order_number: str
-    ) -> CallToolResult:
-        return _guarded(bridge.tool_get_purchase_order)(
-            branch, order_number
-        )
-
-    @mcp.tool(
-        name="search_supplies_knowledge",
-        title="Search supplies knowledge base",
-        description=(
-            "Busca no corpus governado da SURI (manual oficial do "
-            "Portal Suprimentos) com citações verificáveis — fonte, "
-            "locator e classificação de evidência."
-        ),
-        annotations=_annotations(
-            "search_supplies_knowledge", "Search supplies knowledge base"
-        ),
-        meta=meta,
-    )
-    def search_supplies_knowledge(
-        query: str | None = None,
-        topic: str | None = None,
-        limit: int = 8,
-    ) -> CallToolResult:
-        return _guarded(bridge.tool_search_supplies_knowledge)(
-            query, topic, limit
-        )
-
-    @mcp.tool(
-        name="get_knowledge_item",
-        title="Get knowledge item",
-        description=(
-            "Item completo do corpus com conteúdo, proveniência e "
-            "locator de citação."
-        ),
-        annotations=_annotations("get_knowledge_item", "Get knowledge item"),
-        meta=meta,
-    )
-    def get_knowledge_item(knowledge_id: str) -> CallToolResult:
-        return _guarded(bridge.tool_get_knowledge_item)(knowledge_id)
-
-    @mcp.tool(
-        name="list_knowledge_sources",
-        title="List knowledge sources",
-        description=(
-            "Inventário das fontes do corpus (tipo, versão, hash, "
-            "autoridade) e versão publicada."
-        ),
-        annotations=_annotations(
-            "list_knowledge_sources", "List knowledge sources"
-        ),
-        meta=meta,
-    )
-    def list_knowledge_sources() -> CallToolResult:
-        return _guarded(bridge.tool_list_knowledge_sources)()
-
-    @mcp.tool(
-        name="analyze_purchase_orders",
-        title="Analyze open purchase orders",
-        description=(
-            "Análise determinística das linhas em aberto: fatos do "
-            "owner (summary do contrato), cálculos reproduzíveis sobre "
-            "a amostra e recomendações rotuladas — nunca ações."
-        ),
-        annotations=_annotations(
-            "analyze_purchase_orders", "Analyze open purchase orders"
-        ),
-        meta=meta,
-    )
-    def analyze_purchase_orders(
-        branch: list[str],
-        order_number: str | None = None,
-        product_code: str | None = None,
-        supplier_code: str | None = None,
-        expected_delivery_from: str | None = None,
-        expected_delivery_to: str | None = None,
-        late_only: bool = False,
+    def analyze(
+        analysis: Literal["purchase_orders_summary"],
+        filters: PurchaseOrderAnalyzeFilters | None = None,
         sample_size: int = 50,
     ) -> CallToolResult:
-        return _guarded(bridge.tool_analyze_purchase_orders)(
-            branch,
-            order_number,
-            product_code,
-            supplier_code,
-            expected_delivery_from,
-            expected_delivery_to,
-            late_only,
-            sample_size,
+        return _guarded(bridge.tool_analyze)(analysis, filters, sample_size)
+
+    @mcp.tool(
+        name="knowledge",
+        title="Supplies knowledge and guidance",
+        description=(
+            "Conhecimento governado do Portal Suprimentos com citações "
+            "verificáveis (fonte, locator, classificação de evidência). "
+            "action=search: busca por 'query'/'topic' (limit); "
+            "action=get: item completo por 'knowledge_id'; "
+            "action=sources: inventário das fontes do corpus."
+        ),
+        annotations=_annotations(
+            "knowledge", "Supplies knowledge and guidance"
+        ),
+        meta=meta,
+    )
+    def knowledge(
+        action: Literal["search", "get", "sources"],
+        query: str | None = None,
+        topic: str | None = None,
+        knowledge_id: str | None = None,
+        limit: int = 8,
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_knowledge)(
+            action, query, topic, knowledge_id, limit
         )
 
     return mcp

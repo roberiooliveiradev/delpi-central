@@ -18,6 +18,7 @@ from typing import Any
 from delpi_mcp.errors import kind_for_http_status, mcp_tool_result
 from delpi_mcp.identity import require_mcp_context
 from mcp.types import CallToolResult
+from pydantic import BaseModel, ValidationError
 
 from app.application.security.supplies_permissions import (
     can_use_operations,
@@ -39,10 +40,22 @@ from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
 from app.interfaces.mcp import knowledge
 from app.interfaces.mcp.branding import SURI_FULL_NAME, SURI_MISSION
 from app.interfaces.mcp.constants import (
+    ANALYSIS_KINDS,
     CATALOG_VERSION,
+    CONTEXT_ACTIONS,
+    DEFAULT_KNOWLEDGE_LIMIT,
     DEFAULT_PAGE_SIZE,
+    DEFAULT_SAMPLE_SIZE,
+    KNOWLEDGE_ACTIONS,
+    MAX_KNOWLEDGE_LIMIT,
     MAX_PAGE_SIZE,
     MAX_SAMPLE_SIZE,
+    PO_ANALYZE_FILTER_KEYS,
+    PO_GET_IDENTITY_KEYS,
+    PO_SEARCH_FILTER_KEYS,
+    READ_ACTIONS,
+    READ_ENTITIES,
+    SEMANTIC_CAPABILITIES,
     TOOL_CLASS,
 )
 from app.interfaces.mcp.oauth_contract import mcp_www_authenticate_meta
@@ -108,6 +121,12 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
     if isinstance(exc, AuthenticationError):
         return _error(
             "Authentication required.", status_code=401, error_code="unauthenticated"
+        )
+    if isinstance(exc, ValidationError):
+        return _error(
+            "Invalid tool arguments",
+            status_code=422,
+            error_code="validation",
         )
     if isinstance(exc, AuthorizationError):
         return _error("Forbidden", status_code=403, error_code="forbidden")
@@ -270,9 +289,11 @@ def tool_get_catalog() -> CallToolResult:
                 {"name": name, "tool_class": TOOL_CLASS[name]}
                 for name in sorted(TOOL_CLASS)
             ],
+            "capabilities": SEMANTIC_CAPABILITIES,
             "limits": {
                 "max_page_size": MAX_PAGE_SIZE,
                 "max_sample_size": MAX_SAMPLE_SIZE,
+                "max_knowledge_limit": MAX_KNOWLEDGE_LIMIT,
                 "operational_units": ["01", "02"],
             },
             "directives": [
@@ -519,4 +540,184 @@ def tool_analyze_purchase_orders(
             },
         },
         meta={"delpi/source": "bff:/purchase-orders"},
+    )
+
+
+# -- SEMANTIC DISPATCH (contract freeze rev.2) ------------------------------
+#
+# Public surface = 4 tools. Every accepted (entity, action, analysis)
+# combination must map to an implemented, authorized handler above —
+# closed enums, closed filter vocabularies, no arbitrary fields.
+
+
+def _invalid(message: str) -> CallToolResult:
+    return _error(message, status_code=422, error_code="validation")
+
+
+def _unknown_keys(payload: dict, allowed: frozenset[str]) -> set[str]:
+    return {str(k) for k in payload} - set(allowed)
+
+
+def _payload_dict(value: Any) -> dict:
+    """Normalize a typed filter model or plain dict to a dict."""
+    if value is None:
+        return {}
+    if isinstance(value, BaseModel):
+        return value.model_dump(exclude_none=True)
+    if isinstance(value, dict):
+        return dict(value)
+    return {}
+
+
+def tool_get_context(action: str = "context") -> CallToolResult:
+    """``action=context`` → caller identity/capabilities;
+    ``action=catalog`` → semantic capability catalog."""
+    normalized = str(action or "").strip() or "context"
+    if normalized == "context":
+        return tool_get_my_context()
+    if normalized == "catalog":
+        return tool_get_catalog()
+    return _invalid(
+        f"Unknown get_context action: {normalized!r}. "
+        f"Allowed: {sorted(CONTEXT_ACTIONS)}"
+    )
+
+
+def tool_read(
+    entity: str,
+    action: str,
+    filters: dict | BaseModel | None = None,
+    identity: dict | BaseModel | None = None,
+) -> CallToolResult:
+    """Semantic READ — V1 entity: ``purchase_orders``."""
+    normalized_entity = str(entity or "").strip()
+    if normalized_entity not in READ_ENTITIES:
+        return _invalid(
+            f"Unknown read entity: {normalized_entity!r}. "
+            f"Allowed: {sorted(READ_ENTITIES)}"
+        )
+    normalized_action = str(action or "").strip()
+    filter_payload = _payload_dict(filters)
+    identity_payload = _payload_dict(identity)
+
+    if normalized_action == "search":
+        if identity_payload:
+            return _invalid(
+                "read action=search does not accept 'identity' — "
+                "use action=get for single records."
+            )
+        unknown = _unknown_keys(filter_payload, PO_SEARCH_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown purchase_orders filters: {sorted(unknown)}. "
+                f"Allowed: {sorted(PO_SEARCH_FILTER_KEYS)}"
+            )
+        return tool_list_purchase_orders(
+            branch=filter_payload.get("branch"),
+            order_number=filter_payload.get("order_number"),
+            product_code=filter_payload.get("product_code"),
+            supplier_code=filter_payload.get("supplier_code"),
+            expected_delivery_from=filter_payload.get(
+                "expected_delivery_from"
+            ),
+            expected_delivery_to=filter_payload.get("expected_delivery_to"),
+            late_only=bool(filter_payload.get("late_only") or False),
+            sort_by=filter_payload.get("sort_by"),
+            sort_dir=filter_payload.get("sort_dir"),
+            page=int(filter_payload.get("page") or 1),
+            page_size=int(
+                filter_payload.get("page_size") or DEFAULT_PAGE_SIZE
+            ),
+        )
+
+    if normalized_action == "get":
+        if filter_payload:
+            return _invalid(
+                "read action=get does not accept 'filters' — "
+                "use 'identity' {branch, order_number}."
+            )
+        unknown = _unknown_keys(identity_payload, PO_GET_IDENTITY_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown purchase_orders identity keys: {sorted(unknown)}. "
+                f"Allowed: {sorted(PO_GET_IDENTITY_KEYS)}"
+            )
+        return tool_get_purchase_order(
+            branch=str(identity_payload.get("branch") or ""),
+            order_number=str(identity_payload.get("order_number") or ""),
+        )
+
+    return _invalid(
+        f"Unknown read action: {normalized_action!r}. "
+        f"Allowed: {sorted(READ_ACTIONS)}"
+    )
+
+
+def tool_analyze(
+    analysis: str,
+    filters: dict | BaseModel | None = None,
+    sample_size: int = DEFAULT_SAMPLE_SIZE,
+) -> CallToolResult:
+    """Semantic ANALYSIS — V1: ``purchase_orders_summary``."""
+    normalized = str(analysis or "").strip()
+    if normalized not in ANALYSIS_KINDS:
+        return _invalid(
+            f"Unknown analysis: {normalized!r}. "
+            f"Allowed: {sorted(ANALYSIS_KINDS)}"
+        )
+    filter_payload = _payload_dict(filters)
+    unknown = _unknown_keys(filter_payload, PO_ANALYZE_FILTER_KEYS)
+    if unknown:
+        return _invalid(
+            f"Unknown purchase_orders filters: {sorted(unknown)}. "
+            f"Allowed: {sorted(PO_ANALYZE_FILTER_KEYS)}"
+        )
+    return tool_analyze_purchase_orders(
+        branch=filter_payload.get("branch"),
+        order_number=filter_payload.get("order_number"),
+        product_code=filter_payload.get("product_code"),
+        supplier_code=filter_payload.get("supplier_code"),
+        expected_delivery_from=filter_payload.get("expected_delivery_from"),
+        expected_delivery_to=filter_payload.get("expected_delivery_to"),
+        late_only=bool(filter_payload.get("late_only") or False),
+        sample_size=int(sample_size or DEFAULT_SAMPLE_SIZE),
+    )
+
+
+def tool_knowledge(
+    action: str,
+    query: str | None = None,
+    topic: str | None = None,
+    knowledge_id: str | None = None,
+    limit: int = DEFAULT_KNOWLEDGE_LIMIT,
+) -> CallToolResult:
+    """Semantic knowledge surface — search/get/sources over the corpus."""
+    normalized = str(action or "").strip()
+    if normalized == "search":
+        if knowledge_id is not None:
+            return _invalid(
+                "knowledge action=search does not accept 'knowledge_id'."
+            )
+        return tool_search_supplies_knowledge(
+            query=query, topic=topic, limit=limit
+        )
+    if normalized == "get":
+        if query is not None or topic is not None:
+            return _invalid(
+                "knowledge action=get accepts only 'knowledge_id'."
+            )
+        if not (knowledge_id or "").strip():
+            return _invalid(
+                "knowledge action=get requires 'knowledge_id'."
+            )
+        return tool_get_knowledge_item(knowledge_id)
+    if normalized == "sources":
+        if query is not None or topic is not None or knowledge_id is not None:
+            return _invalid(
+                "knowledge action=sources accepts no parameters."
+            )
+        return tool_list_knowledge_sources()
+    return _invalid(
+        f"Unknown knowledge action: {normalized!r}. "
+        f"Allowed: {sorted(KNOWLEDGE_ACTIONS)}"
     )

@@ -1,5 +1,11 @@
 # SURI — S1 Contract Freeze
 
+> **SUPERSEDED (rev.1 → rev.2):** a superfície de tools abaixo (8 tools
+> endpoint-oriented) foi substituída atomicamente em
+> `SURI-MCP-TOOLS-SEMANTIC-001` por 4 tools semânticas — ver
+> `SURI-S1-CONTRACT-FREEZE-V2.md`. Este documento permanece como
+> registro histórico da rev.1.
+>
 > **Plano:** SURI-MCP-MASTER-001 · **Etapa:** S1 · **BASE:** commit S0 `9cd69b9dda`  
 > Congela nomes, schemas, contrato OAuth/resource e catálogo. Nenhuma permissão é criada por tool; `mcp:tools` é binding de transporte, nunca grant de negócio.
 

@@ -1,4 +1,9 @@
-"""SURI tool bridge — AuthZ parity tests (positive/sibling/negative)."""
+"""SURI semantic tool bridge — AuthZ parity + dispatch validation.
+
+Covers the rev.2 surface: ``get_context``, ``read``, ``analyze``,
+``knowledge`` dispatchers with closed discriminators, parity with the
+eight legacy capabilities, and semantic validation negatives.
+"""
 
 from __future__ import annotations
 
@@ -15,25 +20,38 @@ def _payload(result) -> dict:
     return json.loads(result.content[0].text)
 
 
-class TestGetMyContext:
-    def test_positive_returns_declared_capabilities(self, access_context):
+class TestGetContext:
+    def test_context_positive_returns_declared_capabilities(
+        self, access_context
+    ):
         access_context()
-        result = tool_bridge.tool_get_my_context()
+        result = tool_bridge.tool_get_context("context")
         data = _payload(result)["data"]
         assert data["subject"] == "user-1"
         assert data["capabilities"] == {"access": True, "manage": False}
         assert data["allowed_units"] == ["01", "02"]
-        assert data["mcp"]["catalog_version"] == 1
+        assert data["mcp"]["catalog_version"] == 2
+
+    def test_catalog_lists_semantic_surface(self, access_context):
+        access_context()
+        result = tool_bridge.tool_get_context("catalog")
+        data = _payload(result)["data"]
+        names = {t["name"] for t in data["tools"]}
+        assert names == {"get_context", "read", "analyze", "knowledge"}
+        assert data["mcp"]["catalog_version"] == 2
+        caps = data["capabilities"]
+        assert "purchase_orders" in caps["read"]["entities"]
+        assert caps["analyze"]["analyses"] == ["purchase_orders_summary"]
+        assert caps["knowledge"]["actions"] == ["get", "search", "sources"]
 
     def test_negative_anonymous_401(self, anonymous_context):
         result = tool_bridge.handle_tool_error(
-            _call(tool_bridge.tool_get_my_context)
+            _call(tool_bridge.tool_get_context, "context")
         )
         data = _payload(result)
         assert data["success"] is False
         assert data["status_code"] == 401
         assert data["data"]["error_code"] == "unauthenticated"
-        # WWW-Authenticate meta envelope present on 401 (list form)
         assert "mcp/www_authenticate" in (result.meta or {})
 
     def test_negative_service_principal_403(self, monkeypatch):
@@ -44,39 +62,26 @@ class TestGetMyContext:
             tool_bridge, "require_mcp_context", lambda: make_context(ns)
         )
         result = tool_bridge.handle_tool_error(
-            _call(tool_bridge.tool_get_my_context)
+            _call(tool_bridge.tool_get_context, "context")
         )
-        data = _payload(result)
-        assert data["status_code"] == 403
-        assert data["data"]["error_code"] == "forbidden"
+        assert _payload(result)["status_code"] == 403
 
-
-class TestGetCatalog:
-    def test_lists_only_implemented_tools(self, access_context):
+    def test_negative_unknown_action(self, access_context):
         access_context()
-        result = tool_bridge.tool_get_catalog()
-        data = _payload(result)["data"]
-        names = {t["name"] for t in data["tools"]}
-        assert names == {
-            "get_my_context",
-            "get_catalog",
-            "list_purchase_orders",
-            "get_purchase_order",
-            "search_supplies_knowledge",
-            "get_knowledge_item",
-            "list_knowledge_sources",
-            "analyze_purchase_orders",
-        }
-        assert data["mcp"]["catalog_version"] == 1
+        result = tool_bridge.tool_get_context("bogus")
+        body = _payload(result)
+        assert body["status_code"] == 422
+        assert body["data"]["error_code"] == "validation"
 
-    def test_requires_identity(self, anonymous_context):
-        result = tool_bridge.handle_tool_error(
-            _call(tool_bridge.tool_get_catalog)
+
+class TestReadSearchParity:
+    """Parity with legacy list_purchase_orders."""
+
+    def _search(self, **filters):
+        return tool_bridge.tool_read(
+            "purchase_orders", "search", filters=filters
         )
-        assert _payload(result)["status_code"] == 401
 
-
-class TestListPurchaseOrders:
     def test_positive_calls_bff_with_branch_and_params(
         self, access_context, fake_gateway
     ):
@@ -85,7 +90,7 @@ class TestListPurchaseOrders:
             "success": True,
             "data": {"items": [], "total": 0},
         })
-        result = tool_bridge.tool_list_purchase_orders(
+        result = self._search(
             branch=["01"], page=2, page_size=10, late_only=True
         )
         body = _payload(result)
@@ -96,20 +101,21 @@ class TestListPurchaseOrders:
         assert call["params"]["branch"] == ["01"]
         assert call["params"]["late_only"] == "true"
         assert call["params"]["page_size"] == "10"
-        # parity: BFF envelope unwrapped to data
         assert body["data"] == {"items": [], "total": 0}
-        assert (result.meta or {}).get("delpi/source") == "bff:/purchase-orders"
+        assert (result.meta or {}).get("delpi/source") == (
+            "bff:/purchase-orders"
+        )
 
     def test_sibling_branch_02(self, access_context, fake_gateway):
         access_context()
         gw = fake_gateway(payload={"success": True, "data": {"items": []}})
-        tool_bridge.tool_list_purchase_orders(branch=["02"])
+        self._search(branch=["02"])
         assert gw.calls[0]["params"]["branch"] == ["02"]
 
     def test_page_size_capped_at_max(self, access_context, fake_gateway):
         access_context()
         gw = fake_gateway(payload={"data": {"items": []}})
-        tool_bridge.tool_list_purchase_orders(branch=["01"], page_size=999)
+        self._search(branch=["01"], page_size=999)
         assert gw.calls[0]["params"]["page_size"] == "100"
 
     def test_negative_without_supplies_access(
@@ -117,7 +123,7 @@ class TestListPurchaseOrders:
     ):
         gw = fake_gateway(payload={"data": {}})
         result = tool_bridge.handle_tool_error(
-            _call(tool_bridge.tool_list_purchase_orders, branch=["01"])
+            _call(self._search, branch=["01"])
         )
         assert _payload(result)["status_code"] == 403
         assert gw.calls == []
@@ -128,7 +134,7 @@ class TestListPurchaseOrders:
         access_context()
         gw = fake_gateway(payload={"data": {}})
         result = tool_bridge.handle_tool_error(
-            _call(tool_bridge.tool_list_purchase_orders, branch=["03"])
+            _call(self._search, branch=["03"])
         )
         assert _payload(result)["status_code"] == 403
         assert gw.calls == []
@@ -139,8 +145,17 @@ class TestListPurchaseOrders:
         access_context()
         gw = fake_gateway(payload={"data": {}})
         result = tool_bridge.handle_tool_error(
-            _call(tool_bridge.tool_list_purchase_orders, branch=[])
+            _call(self._search, branch=[])
         )
+        assert _payload(result)["status_code"] == 403
+        assert gw.calls == []
+
+    def test_negative_missing_branch_fail_closed(
+        self, access_context, fake_gateway
+    ):
+        access_context()
+        gw = fake_gateway(payload={"data": {}})
+        result = tool_bridge.handle_tool_error(_call(self._search))
         assert _payload(result)["status_code"] == 403
         assert gw.calls == []
 
@@ -152,7 +167,7 @@ class TestListPurchaseOrders:
             )
         )
         result = tool_bridge.handle_tool_error(
-            _call(tool_bridge.tool_list_purchase_orders, branch=["01"])
+            _call(self._search, branch=["01"])
         )
         body = _payload(result)
         assert body["status_code"] == 404
@@ -166,34 +181,113 @@ class TestListPurchaseOrders:
             )
         )
         result = tool_bridge.handle_tool_error(
-            _call(tool_bridge.tool_list_purchase_orders, branch=["01"])
+            _call(self._search, branch=["01"])
         )
         body = _payload(result)
         assert body["status_code"] == 502
         assert body["data"]["error_code"] == "upstream"
 
 
-class TestGetPurchaseOrder:
+class TestReadGetParity:
+    """Parity with legacy get_purchase_order."""
+
+    def _get(self, **identity):
+        return tool_bridge.tool_read(
+            "purchase_orders", "get", identity=identity
+        )
+
     def test_positive_detail(self, access_context, fake_gateway):
         access_context()
-        gw = fake_gateway(payload={"data": {"branch": "01", "order_number": "9"}})
-        result = tool_bridge.tool_get_purchase_order("01", "9")
+        gw = fake_gateway(
+            payload={"data": {"branch": "01", "order_number": "9"}}
+        )
+        result = self._get(branch="01", order_number="9")
         assert _payload(result)["success"] is True
         assert gw.calls[0]["path"] == "/supplies/purchase-orders/01/9"
 
-    def test_negative_invalid_identity(self, access_context):
+    def test_negative_missing_identity(self, access_context):
         access_context()
-        result = tool_bridge.tool_get_purchase_order("  ", "9")
+        result = tool_bridge.tool_read(
+            "purchase_orders", "get", identity={"branch": "01"}
+        )
+        assert _payload(result)["status_code"] == 422
+
+    def test_negative_blank_identity(self, access_context):
+        access_context()
+        result = self._get(branch="  ", order_number="9")
         assert _payload(result)["status_code"] == 422
 
     def test_negative_branch_forbidden(self, access_context, fake_gateway):
         access_context()
         gw = fake_gateway(payload={"data": {}})
         result = tool_bridge.handle_tool_error(
-            _call(tool_bridge.tool_get_purchase_order, "03", "9")
+            _call(self._get, branch="03", order_number="9")
         )
         assert _payload(result)["status_code"] == 403
         assert gw.calls == []
+
+
+class TestSemanticValidation:
+    """Closed discriminators — unknown combos are 422, never forwarded."""
+
+    def test_unknown_entity(self, access_context):
+        access_context()
+        result = tool_bridge.tool_read("inventory", "search", filters={})
+        assert _payload(result)["status_code"] == 422
+
+    def test_future_entity_not_registered(self, access_context):
+        access_context()
+        result = tool_bridge.tool_read("purchase_requests", "search")
+        assert _payload(result)["status_code"] == 422
+
+    def test_unknown_action(self, access_context):
+        access_context()
+        result = tool_bridge.tool_read(
+            "purchase_orders", "delete", filters={"branch": ["01"]}
+        )
+        assert _payload(result)["status_code"] == 422
+
+    def test_unknown_filter_key_rejected(
+        self, access_context, fake_gateway
+    ):
+        access_context()
+        gw = fake_gateway(payload={"data": {}})
+        result = tool_bridge.tool_read(
+            "purchase_orders",
+            "search",
+            filters={"branch": ["01"], "raw_sql": "DROP TABLE"},
+        )
+        assert _payload(result)["status_code"] == 422
+        assert gw.calls == []
+
+    def test_identity_rejected_on_search(self, access_context):
+        access_context()
+        result = tool_bridge.tool_read(
+            "purchase_orders",
+            "search",
+            filters={"branch": ["01"]},
+            identity={"branch": "01", "order_number": "1"},
+        )
+        assert _payload(result)["status_code"] == 422
+
+    def test_filters_rejected_on_get(self, access_context):
+        access_context()
+        result = tool_bridge.tool_read(
+            "purchase_orders",
+            "get",
+            filters={"branch": ["01"]},
+            identity={"branch": "01", "order_number": "1"},
+        )
+        assert _payload(result)["status_code"] == 422
+
+    def test_unknown_identity_key(self, access_context):
+        access_context()
+        result = tool_bridge.tool_read(
+            "purchase_orders",
+            "get",
+            identity={"branch": "01", "order_number": "1", "admin": True},
+        )
+        assert _payload(result)["status_code"] == 422
 
 
 def _call(fn, *args, **kwargs):
