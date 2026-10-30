@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 from urllib.parse import quote
+from datetime import datetime
 from uuid import UUID
 
 from mcp.types import CallToolResult
@@ -166,6 +167,26 @@ def _uuid(value: Any, name: str) -> UUID:
         return UUID(str(value or "").strip())
     except (ValueError, TypeError, AttributeError) as exc:
         raise ValueError(f"{name} inválido.") from exc
+
+
+def _iso_datetime(value: Any, name: str) -> Any:
+    """Coerce ISO-8601 date/datetime strings into ``datetime``.
+
+    REST routes get this coercion for free via Pydantic; the semantic
+    surface receives raw JSON, so strings must be parsed at the adapter
+    boundary — otherwise they crash inside the owner use case and
+    surface as a misleading 502 instead of a 400/valid call."""
+    if value is None or isinstance(value, datetime):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError(
+                f"{name} inválido. Use ISO 8601 "
+                "(ex.: 2026-10-30T14:00:00)."
+            ) from exc
+    raise ValueError(f"{name} inválido.")
 
 
 def _task_customers(raw: Any) -> list[TaskCustomerRef] | None:
@@ -1148,7 +1169,7 @@ def execute_task_create(
             description=description,
             task_type=task_type,
             priority=priority,
-            due_at=due_at,
+            due_at=_iso_datetime(due_at, "due_at"),
             customer_code=customer_code,
             customer_store=customer_store,
             assignee_user_id=assignee_user_id,
@@ -1185,7 +1206,7 @@ def execute_task_update(*, task_id: str, **fields: Any) -> dict:
             description=fields.get("description"),
             task_type=fields.get("task_type") or "follow_up",
             priority=fields.get("priority") or "normal",
-            due_at=fields.get("due_at"),
+            due_at=_iso_datetime(fields.get("due_at"), "due_at"),
             customer_code=fields.get("customer_code"),
             customer_store=fields.get("customer_store"),
             assignee_user_id=fields.get("assignee_user_id"),
@@ -1242,7 +1263,7 @@ def execute_task_complete(*, task_id: str) -> dict:
     return task.to_dict()
 
 
-def execute_task_defer(*, task_id: str, due_at: Any = None) -> dict:
+def execute_task_defer(*, task_id: str, due_at: Any) -> dict:
     request = build_mcp_request()
     _, user_id = _actor(request)
     if not user_id:
@@ -1250,7 +1271,7 @@ def execute_task_defer(*, task_id: str, due_at: Any = None) -> dict:
     task = build_manage_worklist_use_case().defer_task(
         user_id=user_id,
         task_id=_uuid(task_id, "task_id"),
-        due_at=due_at,
+        due_at=_iso_datetime(due_at, "due_at"),
         actor_is_portfolio_manager=_is_manager(request),
     )
     _notify_task(request, reason="task.deferred", task=task)
@@ -1363,7 +1384,7 @@ def execute_activity_create(
             activity_type=activity_type,
             subject=subject,
             body=body,
-            occurred_at=occurred_at,
+            occurred_at=_iso_datetime(occurred_at, "occurred_at"),
             customer_code=customer_code,
             customer_store=customer_store,
             task_id=_uuid(task_id, "task_id") if task_id else None,
@@ -1446,11 +1467,18 @@ def execute_group_create(
         CreateCommercialGroupRequest(
             name=name,
             kind=kind or "custom",
-            sort_order=sort_order,
-            user_ids=tuple(user_ids or ()),
-            actor_user_id=actor or None,
+            sort_order=sort_order if sort_order is not None else 0,
+            created_by_user_id=actor or None,
         )
     )
+    if user_ids:
+        # Mirrors the REST sequence: create the group, then replace
+        # members — the owner create contract takes no member list.
+        group = use_case.replace_members(
+            group_id=group.id,
+            user_ids=list(user_ids),
+            actor_user_id=actor or None,
+        )
     return use_case.serialize_group(group)
 
 

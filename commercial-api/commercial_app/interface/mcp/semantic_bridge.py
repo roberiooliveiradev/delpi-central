@@ -170,6 +170,19 @@ def _filters(
                     },
                 )
             merged[key] = value
+    missing = [
+        f for f in entry.required_fields if merged.get(f) is None
+    ]
+    if missing:
+        return {}, _err(
+            f"Campos obrigatórios ausentes para "
+            f"{entry.capability}: {', '.join(missing)}.",
+            code="validation",
+            data={
+                "missing_fields": missing,
+                "required_fields": list(entry.required_fields),
+            },
+        )
     return merged, None
 
 
@@ -289,6 +302,10 @@ def tool_read(
     entry, error = _resolve(entity, action, tool="read")
     if error:
         return error
+    try:
+        bridge._require_commercial_human()
+    except Exception as exc:
+        return _handle_error(exc)
     args, error = _filters(entry, filters, pagination)
     if error:
         return error
@@ -720,6 +737,21 @@ def tool_execute(
                     code="validation",
                 )
             merged[entry.ref_arg] = target_ref.strip()
+        missing = [
+            f
+            for f in entry.required_fields
+            if merged.get(f) is None
+        ]
+        if missing:
+            return _err(
+                f"Campos obrigatórios ausentes para "
+                f"{entry.capability}: {', '.join(missing)}.",
+                code="validation",
+                data={
+                    "missing_fields": missing,
+                    "required_fields": list(entry.required_fields),
+                },
+            )
         handler = _EXECUTE_DISPATCH.get((entry.entity, entry.action))
         if handler is None:
             return _err(

@@ -167,6 +167,39 @@
         "Administração: portfolio.create → member_add → customer_add (centro verificado) → audit; transferências com motivo auditado.",
         "Análise: get_context → analyze por analysis_type com escopo server-side → labels OBSERVED — sem recálculo local."
       ]
+    },
+    "commercial.proposals": {
+      "title": "Propostas comerciais e oportunidades",
+      "source": "docs/12-roadmap-e-evolucao/commercial/API-ROUTES.md §4.2 + api-delpi /commercial/proposals* e /propostas-comerciais",
+      "guidance": [
+        "Proposta comercial é documento ADY no TOTVS, servido via api-delpi — list/get/history não carregam membership de carteira.",
+        "read proposal.list: search cobre número de proposta, OV, cliente e nome; sort_by suporta ov, interna, cliente, oportunidade, versao, data, itens; paginação page/page_size suportada.",
+        "read proposal.get detalha uma proposta por identificador (ref).",
+        "read proposal.analytics_list / analytics_get / history_events cobrem as visões analíticas de propostas do Portal — mesmos filtros de escopo (portfolio_id, seller_id, scope_mode) e de período.",
+        "analyze opportunity.collaborator_summary resume o funil de oportunidades por colaborador no período.",
+        "Exportação de PDF da proposta é fluxo do Portal/api-delpi — não é operação elegível ao MCP."
+      ]
+    },
+    "commercial.otd": {
+      "title": "OTD — pontualidade de entrega de pedidos",
+      "source": "docs/12-roadmap-e-evolucao/commercial/KPI-FICHAS.md §KPI-OTD + api-delpi get_sales_order_otd*",
+      "guidance": [
+        "KPI-OTD = % de linhas elegíveis no prazo (C6_ENTREG): sales_order_otd_pct = on_time_lines / total_lines × 100 — fórmula do owner, nunca recalcular.",
+        "analyze sales_order_otd.summary/panel/series: a série EXIGE granularity — chamada sem ela retorna validação 400 por contrato.",
+        "O painel traz late_percentage, avg/p50/p90_late_days (só linhas late), recorrência (clientes com ≥2 linhas late no período) e top-10 de piores atrasos e próximas promessas.",
+        "analyze sales_order_otd.line_detail detalha por filial+pedido+item.",
+        "Fonte dos dados: TOTVS via api-delpi — indisponibilidade aparece como upstream_error, nunca como carteira vazia."
+      ]
+    },
+    "commercial.production": {
+      "title": "Ordens de produção (OP) e dados de fábrica",
+      "source": "commercial.integrations + BFF de produção da api-delpi",
+      "guidance": [
+        "OP (ordem de produção) é a ordem fabril do produto — read production.order consulta por OP/filial (ref = OP, branch opcional).",
+        "read production.appointments lista apontamentos da OP — exige op, aceita branch e pagina page/page_size.",
+        "read production.product_status e production.product_structure trazem status de fábrica e estrutura do produto por filial.",
+        "Todos os dados de produção vêm do BFF de produção da api-delpi (TOTVS) — são leituras externas, sem escopo de carteira próprio."
+      ]
     }
   },
   "planned_topics": [

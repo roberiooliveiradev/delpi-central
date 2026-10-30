@@ -26,6 +26,7 @@ O **Portal Comercial** é a UX canônica: carteira (N membros), pedidos, Meu dia
 | **[HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md)** | Checklist / smoke Wave G+ (P0 + P1) |
 | **[HOMOLOGACAO-CARTEIRAS-MULTI.md](./HOMOLOGACAO-CARTEIRAS-MULTI.md)** | Smoke MVP multi-membro (E5.2) + comandos de regressão |
 | **[HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md)** | Checklist de paridade (assinatura Comercial/QA) |
+| **[CAIO_HOMOLOGATION_MATRIX.md](../../initiatives/caio-mcp/CAIO_HOMOLOGATION_MATRIX.md)** | Homologação CAIO 2.0 — 123 operações semânticas com evidência por operação (issue #125) |
 | **[F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)** | **F2c executado** — remoção MFEs + redirects + comandos prod |
 | **[KPI-FICHAS.md](./KPI-FICHAS.md)** | Fichas KPI (F0) — Onda A C1 (baseline código; assinatura formal opcional) |
 | **[KPI-HOMOLOGACAO-ONDA-A.md](./KPI-HOMOLOGACAO-ONDA-A.md)** | Workshop homologação ROL / carteira / hit rate |

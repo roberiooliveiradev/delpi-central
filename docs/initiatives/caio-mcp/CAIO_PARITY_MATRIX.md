@@ -185,13 +185,14 @@ multipart) `NSE`.
 
 ## Cobertura de conhecimento (E5)
 
-`caio_commercial_knowledge.json` v2.0 — 12 tópicos ativos + 1 planned:
+`caio_commercial_knowledge.json` v2.0 — 16 tópicos ativos + 1 planned:
 `caio.usage`, `caio.tool_map`, `commercial.glossary`,
 `commercial.portfolio_governance`, `commercial.worklist_process`,
 `commercial.interaction_rooms`, `commercial.indicators`,
 `commercial.scope_semantics`, `commercial.permissions`,
 `commercial.integrations`, `commercial.delete_governance`,
-`commercial.honest_states`, `commercial.processes`.
+`commercial.honest_states`, `commercial.processes`,
+`commercial.proposals`, `commercial.otd`, `commercial.production`.
 Fonte canônica citada por tópico (rotas, use cases, helpers, docs).
 `products.guide` permanece `planned` honesto.
 
@@ -220,3 +221,47 @@ Fonte canônica citada por tópico (rotas, use cases, helpers, docs).
 `customer.outbound_invoices`, `portfolio.audit`,
 `production.appointments`. **`interaction_room.list`** usa
 `limit`/`cursor` (modelo cursor do owner) — `page` rejeitado com 400.
+
+## Homologação — Issue #125
+
+Matriz executável completa em  (123/123
+operações com estado e nível de evidência por linha).
+
+- Ambiente: PostgreSQL 15 isolado (schema , V001–V023);
+  boundaries api-delpi/core-api substituídos por fakes somente no
+  hop HTTP — use cases, repositórios e autorização reais.
+- Suítes:  (537 pass),
+   (34 pass E2 + boundary).
+- Evidência real de integração: 55 operações E2 plugins-db; 23
+  contrato+boundary completos; 22 contrato+auth; 20 boundary parcial;
+  3 internas. Dados upstream api-delpi/TOTVS = BLOCKED_EXTERNAL
+  (sem fixture live — documentado, não maquiado).
+- Defeitos corrigidos:  (43 caps → 502 vira 400),
+  ordem auth→validação no , coerção ISO→datetime em
+  task/activity,  alinhado ao DTO+,
+   default, catálogo  alinhado ao
+  owner.
+- Conhecimento: +3 tópicos dedicados (,
+  , ) — 16 tópicos ativos.
+
+## Homologação — Issue #125
+
+Matriz executável completa em `CAIO_HOMOLOGATION_MATRIX.md` (123/123
+operações com estado e nível de evidência por linha).
+
+- Ambiente: PostgreSQL 15 isolado (schema `commercial`, V001–V023);
+  boundaries api-delpi/core-api substituídos por fakes somente no
+  hop HTTP — use cases, repositórios e autorização reais.
+- Suítes: `tests/test_caio_homologation.py` (537 pass),
+  `tests/test_caio_integration.py` (34 pass E2 + boundary).
+- Evidência real de integração: 55 operações E2 plugins-db; 23
+  contrato+boundary completos; 22 contrato+auth; 20 boundary parcial;
+  3 internas. Dados upstream api-delpi/TOTVS = BLOCKED_EXTERNAL
+  (sem fixture live — documentado, não maquiado).
+- Defeitos corrigidos: `required_fields` (43 caps → 502 vira 400),
+  ordem auth→validação no `tool_read`, coerção ISO→datetime em
+  task/activity, `group.create` alinhado ao DTO+`replace_members`,
+  `sort_order` default, catálogo `task.from_message` alinhado ao
+  owner.
+- Conhecimento: +3 tópicos dedicados (`commercial.proposals`,
+  `commercial.otd`, `commercial.production`) — 16 tópicos ativos.

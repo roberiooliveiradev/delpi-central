@@ -64,6 +64,7 @@ class SemanticAction:
     ref_description: str | None = None
     requires: tuple[str, ...] = ()
     fields: tuple[str, ...] = ()
+    required_fields: tuple[str, ...] = ()
     phases: tuple[str, ...] = ()
     notes: tuple[str, ...] = field(default_factory=tuple)
 
@@ -90,6 +91,8 @@ class SemanticAction:
             out["requires"] = list(self.requires)
         if self.fields:
             out["fields"] = list(self.fields)
+        if self.required_fields:
+            out["required_fields"] = list(self.required_fields)
         if self.phases:
             out["phases"] = list(self.phases)
         if self.notes:
@@ -191,6 +194,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "portfolios of the authorized scope.",
         "read",
         fields=("customers", "portfolio_ids"),
+        required_fields=("customers",),
         requires=(REQ_READ,),
     ),
     # --- read: customer -----------------------------------------------------
@@ -216,6 +220,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "nature) — same customer pairs never exceed caller scope.",
         "read",
         fields=("customers", "window_days", "nature"),
+        required_fields=("customers",),
         requires=(REQ_READ,),
     ),
     _a(
@@ -228,6 +233,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "granularity", "nature", "metric", "product_codes",
             "product_groups", "market", "customer_centers",
         ),
+        required_fields=("customers",),
         requires=(REQ_READ,),
     ),
     _a(
@@ -245,6 +251,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         fields=_CUSTOMER_PAIR_FIELDS + (
             "branch", "start_date", "end_date", "page", "page_size",
         ),
+        required_fields=("customer_code", "customer_store",),
         requires=(REQ_READ,),
     ),
     _a(
@@ -254,6 +261,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         fields=_CUSTOMER_PAIR_FIELDS + (
             "branch", "invoice_number", "invoice_series",
         ),
+        required_fields=("customer_code", "customer_store", "branch", "invoice_number", "invoice_series",),
         requires=(REQ_READ,),
     ),
     _a(
@@ -261,6 +269,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Open orders of one customer account (account 360).",
         "read",
         fields=_CUSTOMER_PAIR_FIELDS + ("branch",),
+        required_fields=("customer_code", "customer_store",),
         requires=(REQ_READ,),
     ),
     _a(
@@ -268,6 +277,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Contacts bundle of one customer account (account 360).",
         "read",
         fields=_CUSTOMER_PAIR_FIELDS,
+        required_fields=("customer_code", "customer_store",),
         requires=(REQ_READ,),
     ),
     _a(
@@ -275,6 +285,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Account audit timeline of one customer account.",
         "read",
         fields=_CUSTOMER_PAIR_FIELDS + ("limit", "page", "page_size"),
+        required_fields=("customer_code", "customer_store",),
         requires=(REQ_READ,),
     ),
     # --- read: customer_center -------------------------------------------------
@@ -385,6 +396,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Commercial activities timeline of a customer account.",
         "read",
         fields=_CUSTOMER_PAIR_FIELDS + ("limit",),
+        required_fields=("customer_code", "customer_store",),
         requires=(REQ_READ,),
     ),
     # --- read: groups / settings / favorites / roster / attachments -----------
@@ -428,6 +440,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "message) — bytes are served only by the Portal route.",
         "read",
         fields=("owner_type", "owner_id"),
+        required_fields=("owner_type", "owner_id",),
         requires=(REQ_READ, REQ_FOLLOWUPS),
     ),
     # --- read: interaction rooms ----------------------------------------------
@@ -494,6 +507,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Preview card of a linked entity reference.",
         "read",
         fields=("kind", "ref"),
+        required_fields=("kind",),
         requires=(REQ_ACCESS,),
     ),
     # --- read: production BFF ---------------------------------------------------
@@ -511,6 +525,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Production appointments by OP.",
         "read",
         fields=("op", "branch", "page", "page_size"),
+        required_fields=("op",),
         requires=(REQ_READ, REQ_ANALYTICS),
     ),
     _a(
@@ -749,6 +764,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "user_id", "display_name", "customers", "user_ids",
             "owner_user_id",
         ),
+        required_fields=("display_name",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -767,6 +783,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="portfolio_id",
         ref_description="Portfolio UUID.",
         fields=("customers",),
+        required_fields=("customers",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -779,6 +796,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "customer_code", "customer_store", "customer_name",
             "customer_center",
         ),
+        required_fields=("customer_code", "customer_store",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -789,6 +807,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="portfolio_id",
         ref_description="Portfolio UUID.",
         fields=("customer_code", "customer_store", "customer_center"),
+        required_fields=("customer_code", "customer_store",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -798,6 +817,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="portfolio_id",
         ref_description="Portfolio UUID.",
         fields=("members",),
+        required_fields=("members",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -807,6 +827,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="portfolio_id",
         ref_description="Portfolio UUID.",
         fields=("user_id", "role"),
+        required_fields=("user_id",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -816,6 +837,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="portfolio_id",
         ref_description="Portfolio UUID.",
         fields=("user_id",),
+        required_fields=("user_id",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -825,6 +847,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="portfolio_id",
         ref_description="Portfolio UUID.",
         fields=("user_id",),
+        required_fields=("user_id",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -835,6 +858,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "source_portfolio_id", "target_portfolio_id",
             "customers", "reason_note",
         ),
+        required_fields=("source_portfolio_id", "target_portfolio_id", "customers", "reason_note",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -845,6 +869,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "source_portfolio_id", "target_portfolio_id",
             "customers", "reason_note",
         ),
+        required_fields=("source_portfolio_id", "target_portfolio_id", "customers", "reason_note",),
         requires=(REQ_MANAGE,),
     ),
     # --- execute: worklist (followups) -------------------------------------------
@@ -860,6 +885,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "assignee_group_ids", "related_entity_type",
             "related_entity_id", "source_interaction_message_id",
         ),
+        required_fields=("title",),
         requires=(REQ_FOLLOWUPS,),
     ),
     _a(
@@ -891,6 +917,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="task_id",
         ref_description="Task UUID.",
         fields=("due_at",),
+        required_fields=("due_at",),
         requires=(REQ_FOLLOWUPS,),
     ),
     _a(
@@ -910,9 +937,11 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Create a task from an interaction-room message.",
         "moderate",
         fields=(
-            "room_id", "message_id", "title", "due_at",
-            "target_user_ids", "target_group_ids",
+            "room_id", "message_id", "description",
+            "assignee_user_id", "assignee_user_ids",
+            "priority", "task_type",
         ),
+        required_fields=("room_id", "message_id",),
         requires=(REQ_ACCESS, REQ_FOLLOWUPS),
     ),
     _a(
@@ -924,6 +953,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "activity_type", "subject", "body", "occurred_at",
             "customer_code", "customer_store", "task_id",
         ),
+        required_fields=("activity_type", "subject",),
         requires=(REQ_FOLLOWUPS,),
     ),
     # --- execute: groups / sla / favorites / contacts / profile -------------------
@@ -932,6 +962,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Create a commercial group — manage only.",
         "moderate",
         fields=("name", "kind", "sort_order", "user_ids"),
+        required_fields=("name",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -941,6 +972,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="group_id",
         ref_description="Group UUID.",
         fields=("name",),
+        required_fields=("name",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -950,6 +982,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="group_id",
         ref_description="Group UUID.",
         fields=("user_ids",),
+        required_fields=("user_ids",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -959,6 +992,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="group_id",
         ref_description="Group UUID.",
         fields=("user_id",),
+        required_fields=("user_id",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -968,6 +1002,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="group_id",
         ref_description="Group UUID.",
         fields=("user_id",),
+        required_fields=("user_id",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -978,6 +1013,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "code", "name", "appliesTo", "durationHours",
             "calendarCode", "active",
         ),
+        required_fields=("code", "name",),
         requires=(REQ_MANAGE,),
     ),
     _a(
@@ -1007,6 +1043,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "full_name", "role_title", "channel", "email",
             "phone_e164", "is_whatsapp", "is_primary", "source",
         ),
+        required_fields=("customer_code", "customer_store", "full_name",),
         requires=(REQ_READ, REQ_MANAGE),
     ),
     _a(
@@ -1019,6 +1056,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "full_name", "role_title", "channel", "email",
             "phone_e164", "is_whatsapp", "is_primary",
         ),
+        required_fields=("customer_code", "customer_store",),
         requires=(REQ_READ, REQ_MANAGE),
     ),
     _a(
@@ -1040,6 +1078,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         fields=(
             "kind", "entity_type", "entity_key", "group_id", "title",
         ),
+        required_fields=("kind",),
         requires=(REQ_ACCESS,),
     ),
     _a(
@@ -1049,6 +1088,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="room_id",
         ref_description="Room UUID.",
         fields=("title",),
+        required_fields=("title",),
         requires=(REQ_ACCESS,),
     ),
     _a(
@@ -1058,6 +1098,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="room_id",
         ref_description="Room UUID.",
         fields=("user_id",),
+        required_fields=("user_id",),
         requires=(REQ_ACCESS,),
     ),
     _a(
@@ -1067,6 +1108,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="room_id",
         ref_description="Room UUID.",
         fields=("user_id",),
+        required_fields=("user_id",),
         requires=(REQ_ACCESS,),
     ),
     _a(
@@ -1084,6 +1126,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_arg="room_id",
         ref_description="Room UUID.",
         fields=("body_text", "message_kind", "parent_id", "mentions"),
+        required_fields=("body_text",),
         requires=(REQ_ACCESS,),
     ),
     _a(
@@ -1093,6 +1136,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         fields=(
             "room_id", "message_id", "body_text", "mentions",
         ),
+        required_fields=("room_id", "message_id",),
         requires=(REQ_ACCESS,),
     ),
     _a(
@@ -1100,6 +1144,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Set a reaction on a room message.",
         "moderate",
         fields=("room_id", "message_id", "code"),
+        required_fields=("room_id", "message_id", "code",),
         requires=(REQ_ACCESS,),
     ),
     _a(
@@ -1107,6 +1152,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Clear the caller's reaction on a room message.",
         "moderate",
         fields=("room_id", "message_id", "code"),
+        required_fields=("room_id", "message_id", "code",),
         requires=(REQ_ACCESS,),
     ),
     _a(
@@ -1114,6 +1160,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Pin a room message.",
         "moderate",
         fields=("room_id", "message_id"),
+        required_fields=("room_id", "message_id",),
         requires=(REQ_ACCESS,),
     ),
     _a(
@@ -1121,6 +1168,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Unpin a room message.",
         "moderate",
         fields=("room_id", "message_id"),
+        required_fields=("room_id", "message_id",),
         requires=(REQ_ACCESS,),
     ),
     # --- delete (sealed prepare→commit only) --------------------------------------
