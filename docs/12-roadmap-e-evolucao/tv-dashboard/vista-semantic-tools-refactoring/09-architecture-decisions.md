@@ -271,4 +271,4 @@ de segurança do owner.
 | D-8 delete_data_model | NEEDS_APPROVAL | decisão do owner sobre política condicional | tv-dashboard-api domain | confirm c/ consumidores | E1 |
 | D-9 opIds novos | RECOMMENDED | — | tv-dashboard-api | 6 vista_* + deprecar | E3-E5 |
 | D-10 audit canal | RECOMMENDED | — | tv-dashboard-api | channel na provenance | E8 |
-| ADR supersession | **PROPOSED** | aprovação formal | architecture board | doc 13 §6 texto-proposta | E0 — **bloqueia tudo** |
+| ADR supersession | **PROPOSED** | aprovação formal | architecture board | `tv-dashboard-api/docs/architecture/adr-vista-semantic-verbs-surface.md` (pacote em doc 14) | E0 — **bloqueia tudo** |

@@ -10,7 +10,7 @@
 | OpenAPI gerado | schemas novos + `deprecated:true` | ADDITIVE (geração) | por release |
 | `agent_directives` | vocabulário novo | BEHAVIORAL (modelo) | junto com as tools |
 | Commit schema | campos `target_echo` + `consent_artifact` novos | ADDITIVE (o campo em si) | por release |
-| Commit **política** | artifact exigido em ops `confirm` | **BEHAVIORAL + SECURITY-POLICY** — bloqueia fluxo antes permitido; NÃO é ADDITIVE | janela grandfather ≤1 release (`confirmation=true` aceito com warning); flag `VISTA_CONSENT_ARTIFACT_REQUIRED` |
+| Commit **política** | artifact exigido em ops `confirm` | **BEHAVIORAL + SECURITY-POLICY** — bloqueia fluxo antes permitido; NÃO é ADDITIVE | janela grandfather ≤1 release (`confirmation=true` aceito com warning) — **exceção de segurança pendente de aceite formal do owner, não política auto-aprovada**; flag `VISTA_CONSENT_ARTIFACT_REQUIRED` |
 | Playlist history | `channel`/provenance novo | ADDITIVE | imediata |
 | `confirmation` booleano | insuficiente como prova após E1 | DEPRECATED → REJECTED em ops `confirm` | após fechamento da janela grandfather |
 
@@ -41,9 +41,16 @@
 | E8 directives | versão anterior das instructions |
 | E9 testes | n/a |
 
-Deploy é **stateless** — nenhuma mudança de schema de dados
-(exceto provenance `channel`, additive); rollback = redeploy da
-imagem anterior ou feature flag.
+Deploy **não é plenamente stateless**: o proposal store é
+**in-process** (item 10 da ADR vigente, `ACCEPT_WITH_RESIDUAL` para
+single-replica — restart descarta proposals abertas) e, se o
+consent challenge backend-mediado for aprovado em D-5, uma tabela
+persistida própria passa a existir no domínio (migração exigida —
+o desafio **precisa** sobreviver a restart para não comprometer
+planos aprovados). Provenance `channel` é additive. Conclusão:
+rollback de tools/opIds = redeploy ou feature flag; rollback de
+schema do consent challenge exige migração reversível, não apenas
+redeploy.
 
 ## 4. Riscos de segurança
 
@@ -70,9 +77,10 @@ imagem anterior ou feature flag.
 
 ## 6. ADR supersession — proposta
 
-**Documento proposto**: `adr-vista-semantic-verbs-surface.md` —
-**estado atual: `PROPOSED`** (aguarda aprovação do owner em E0;
-só vira `DECIDED` após aceite formal — não é uma decisão tomada).
+**Documento proposto**: `tv-dashboard-api/docs/architecture/adr-vista-semantic-verbs-surface.md`
+— **estado atual: `PROPOSED`** (aguarda aprovação do owner em E0;
+só vira `DECIDED` após aceite formal registrado na tabela §10 do
+próprio ADR — não é uma decisão tomada).
 
 **Motivo da decisão original (item 8, 2026-09-22)**: rejeitar a
 superfície de entidades do TÉO (`search_records`/`prepare_record_change`)

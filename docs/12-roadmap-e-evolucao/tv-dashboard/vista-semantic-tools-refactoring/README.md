@@ -68,6 +68,17 @@ Revisão corrigiu pontos bloqueantes sem implementar código:
 - **ADR supersession**: proposta `PROPOSED` (09 tabela de decisões +
   13 §6) — não marcada `DECIDED` antes da aprovação do owner.
 
+## E0 — Architecture Decision Gate (2026-10-30)
+
+14. [14 — E0 Architecture Gate](14-e0-architecture-gate.md) — pacote
+    de aprovação: readiness matrix E0–E9 com estados
+    `ARCHITECTURE_APPROVED`/`SECURITY_APPROVED`/`PRODUCT_SCOPE_APPROVED`/
+    `READY_FOR_EXECUTION` separados, decisões condicionadas D-5/D-6/D-8,
+    correções stateless/grandfather, condições para E1 e E2.
+15. [`adr-vista-semantic-verbs-surface.md`](../../../../tv-dashboard-api/docs/architecture/adr-vista-semantic-verbs-surface.md)
+    — ADR de supersession do item 8, estado `PROPOSED` com tabela de
+    aprovação aguardando autoridade competente.
+
 ## Limitações desta fase
 
 - Nenhum write/exclusão real foi executado; evidência de runtime vem de
