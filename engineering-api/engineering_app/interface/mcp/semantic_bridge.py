@@ -463,15 +463,30 @@ async def _analyze_lmp_performance(
 ) -> CallToolResult:
     """LMP performance briefing — OBSERVED facts, CALCULATED deltas."""
     period = {
-        k: v
+        k: v.strip() if isinstance(v, str) else v
         for k, v in params.items()
         if k in {"start_date", "end_date", "branch"}
     }
+    error = bridge._validate_period(
+        period.get("start_date"), period.get("end_date")
+    )
+    if error:
+        return _err(
+            error,
+            status_code=400,
+            code="validation",
+            data={"error_kind": "validation"},
+        )
     ctx = bridge._source_context(context)
     query = LmpQuery(**period)
     summary = await build_get_lmp_summary_use_case().execute(ctx, query)
     auxiliary = build_delegated_auxiliary_source()
-    goal_context = await auxiliary.fetch_goal_context(ctx, **period)
+    goal_context = await auxiliary.fetch_goal_context(
+        ctx,
+        start_date=period.get("start_date"),
+        end_date=period.get("end_date"),
+        branch=period.get("branch"),
+    )
     streak = await auxiliary.fetch_nc_streak(ctx)
     facts = []
     for name, payload in (

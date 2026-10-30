@@ -378,7 +378,9 @@ def test_analyze_lmp_performance_composes(monkeypatch) -> None:
     )
 
     class _Aux:
-        async def fetch_goal_context(self, ctx, **kw):
+        async def fetch_goal_context(
+            self, ctx, *, start_date, end_date, branch
+        ):
             return {"status": "available", "goal": 0.85}
 
         async def fetch_nc_streak(self, ctx):
@@ -406,6 +408,19 @@ def test_analyze_unknown_type() -> None:
     assert result.is_error
     assert result.structured_content["status_code"] == 501
     assert result.structured_content["error_code"] == "not_implemented"
+
+
+def test_analyze_lmp_performance_invalid_period() -> None:
+    _set_context(_human_user())
+    result = asyncio.run(
+        sem.tool_analyze(
+            analysis_type="lmp.performance",
+            parameters={"start_date": "2026-10-30", "end_date": "2026-10-01"},
+        )
+    )
+    assert result.is_error
+    assert result.structured_content["status_code"] == 400
+    assert result.structured_content["error_code"] == "validation"
 
 
 # --- knowledge ---------------------------------------------------------------
