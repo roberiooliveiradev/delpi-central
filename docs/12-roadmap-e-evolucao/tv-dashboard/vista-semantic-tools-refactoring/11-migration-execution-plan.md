@@ -214,3 +214,7 @@ STOP THE LINE.
 | (via ops) | block/section/slide delete | delete(entity,delete) | `dispatch.commit_change` (ops confirm) | playlist edit + echo + consent artifact + CAS | facade confirm tests | E1+E5 |
 | (gap) | playlist.update | execute(patch_playlist) | typed op nova | playlist edit | op-level tests | E6 |
 | (gap) | presets listing | read(slide_preset,list) | REST `GET /slide-presets` | auth | preset tests | E6 |
+
+## D-6 amended implementation scope — 2026-10-30
+
+**This section supersedes E6's former INCLUDE/DEFER/EXCLUDE scope proposal, not any gates.** Execute Program A/E0-E9 for the existing semantic capabilities under architecture/security approvals. Execute Program B as separately gated waves: B0 owner/contract inventory; B1 playlist patch/activation, slide duplication, section reorder and media/presets read; B2 template lifecycle; B3 playlist deletion and history restoration (trusted consent + restore owner approval); B4 MDD export/validated preview/apply; B5 resource shares/invites and permitted access changes (Core RBAC + TV resource authority + security approval). Full dependencies, test matrix, stop conditions, rollback and outcome evidence: [15 — master implementation plan](15-d6-product-direction-and-master-plan.md). No automatic new typed op or GPT Action; B5 is not authorization to administer global roles. Existing E6 table above is a historical recommendation and **must not be used as current scope authority**.
