@@ -99,6 +99,8 @@ NC_WRITABLE_FIELDS: tuple[str, ...] = (
 )
 
 EVA_ACT_ENV_FLAG = "ENG_EVA_ACT_ENABLED"
+EVA_ACT_DELETE_ENV_FLAG = "ENG_EVA_ACT_DELETE_ENABLED"
+EVA_ACT_IMPORT_ENV_FLAG = "ENG_EVA_ACT_IMPORT_ENABLED"
 
 
 class EvaActDisabledError(Exception):
@@ -929,20 +931,50 @@ def _actor_from_context(context):
     return nc_actor_from_principal(context.user)
 
 
+def _env_flag_enabled(flag: str) -> bool:
+    return os.getenv(flag, "").strip().lower() == "true"
+
+
 def _eva_act_enabled() -> bool:
-    return os.getenv(EVA_ACT_ENV_FLAG, "").strip().lower() == "true"
+    return _env_flag_enabled(EVA_ACT_ENV_FLAG)
 
 
-def _require_eva_act() -> None:
-    """Fail-closed por ambiente: EVA ACT exige opt-in operacional.
+def _eva_act_delete_enabled() -> bool:
+    return _eva_act_enabled() and _env_flag_enabled(EVA_ACT_DELETE_ENV_FLAG)
 
-    Sem a flag a tool responde ``act_disabled`` honesto — produção
-    permanece bloqueada até autorização específica (P8).
+
+def _eva_act_import_enabled() -> bool:
+    return _eva_act_enabled() and _env_flag_enabled(EVA_ACT_IMPORT_ENV_FLAG)
+
+
+_ACT_TIER_FLAG = {
+    "delete": EVA_ACT_DELETE_ENV_FLAG,
+    "import": EVA_ACT_IMPORT_ENV_FLAG,
+}
+
+
+def _require_eva_act(act_class: str = "write") -> None:
+    """Fail-closed por classe de risco — um booleano global nunca é
+    autorização suficiente para todas as classes de operação.
+
+    Tiers (todos exigem o master ``ENG_EVA_ACT_ENABLED``):
+    - ``write``   — create/update não destrutivos;
+    - ``delete``  — exclusão → ``ENG_EVA_ACT_DELETE_ENABLED``;
+    - ``import``  — replace-all commit → ``ENG_EVA_ACT_IMPORT_ENABLED``.
+
+    Sem a flag da classe a tool responde ``act_disabled`` honesto.
     """
     if not _eva_act_enabled():
         raise EvaActDisabledError(
             "EVA ACT indisponível neste ambiente "
             f"({EVA_ACT_ENV_FLAG} não habilitado)."
+        )
+    tier_flag = _ACT_TIER_FLAG.get(act_class)
+    if tier_flag and not _env_flag_enabled(tier_flag):
+        raise EvaActDisabledError(
+            f"EVA ACT {act_class} indisponível neste ambiente "
+            f"({tier_flag} não habilitado — aprovação operacional "
+            "específica exigida)."
         )
 
 
@@ -1066,9 +1098,12 @@ def tool_get_catalog() -> CallToolResult:
                 for name in MCP_TOOL_NAMES
                 if TOOL_CLASS[name] == "ACT"
             ],
-            "act_enabled": (
-                os.getenv(EVA_ACT_ENV_FLAG, "").strip().lower() == "true"
-            ),
+            "act_enabled": _eva_act_enabled(),
+            "act_tiers": {
+                "write": _eva_act_enabled(),
+                "delete": _eva_act_delete_enabled(),
+                "import": _eva_act_import_enabled(),
+            },
             "agent_directives": (
                 EvaAgentIntelligenceService.agent_directives()
             ),
@@ -1083,6 +1118,11 @@ def tool_get_catalog() -> CallToolResult:
                 "após autorização explícita do usuário, AuthZ Core live "
                 f"e {EVA_ACT_ENV_FLAG} habilitado no ambiente; "
                 "act_enabled reflete o gate vigente.",
+                "Gates por classe de risco: write (create/update) "
+                f"exige {EVA_ACT_ENV_FLAG}; delete exige também "
+                f"{EVA_ACT_DELETE_ENV_FLAG}; import replace-all exige "
+                f"também {EVA_ACT_IMPORT_ENV_FLAG} — um booleano global "
+                "não é autorização para todas as classes.",
                 "delete_nonconformity e import_nonconformities são "
                 "destrutivas: confirmação reforçada; import sem dry_run "
                 "exige confirm_replace=true e respeita o bloqueio de "
@@ -1762,7 +1802,7 @@ async def tool_delete_nonconformity(
     """EVA ACT destrutiva — delete com impacto prévio + postcondition."""
     try:
         context = _require_engineering_human()
-        _require_eva_act()
+        _require_eva_act("delete")
         _require_confirmation(confirmed)
         data = await _delete_nc_record(context, record_id=record_id)
         return _ok_result(data, "Não conformidade excluída com sucesso.")
@@ -1816,10 +1856,13 @@ async def tool_import_nonconformities(
     owner (ENG_NC_IMPORT_REPLACE_ENABLED) continua valendo."""
     try:
         context = _require_engineering_human()
-        _require_eva_act()
         # dry_run não tem efeitos colaterais (equivale a PREPARE) —
-        # confirmação só é exigida na substituição real.
-        if dry_run is not True:
+        # tier write basta; a substituição real exige o tier import
+        # (flag específica) + confirmação reforçada.
+        if dry_run is True:
+            _require_eva_act()
+        else:
+            _require_eva_act("import")
             _require_confirmation(confirmed)
         report = await _import_nc_records(
             context,

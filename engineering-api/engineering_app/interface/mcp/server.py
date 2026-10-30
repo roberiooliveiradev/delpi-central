@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver import Context, MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import CallToolResult, Tool as MCPTool, ToolAnnotations
 from pydantic import ConfigDict
@@ -730,8 +730,10 @@ def create_mcp_server() -> MCPServer:
             "with zero side effects. nonconformity.import is "
             "DESTRUCTIVE replace-all: phase=prepare dry-runs and seals "
             "a server-side proposal; phase=commit requires the exact "
-            "proposal_ref — confirmed=true is never proof. Requires "
-            "live Core AuthZ + ENG_EVA_ACT_ENABLED."
+            "proposal_ref + verifiable human confirmation — "
+            "confirmed=true is never proof. Requires live Core AuthZ; "
+            "risk-tiered flags: ENG_EVA_ACT_ENABLED (write) and "
+            "ENG_EVA_ACT_IMPORT_ENABLED (replace-all commit)."
         ),
         annotations=_annotations("execute", "Execute"),
         meta=meta,
@@ -746,6 +748,7 @@ def create_mcp_server() -> MCPServer:
         expected_version: str | None = None,
         proposal_ref: str | None = None,
         phase: str | None = None,
+        ctx: Context | None = None,
     ) -> CallToolResult:
         return await semantic_bridge.tool_execute(
             entity=entity,
@@ -757,6 +760,7 @@ def create_mcp_server() -> MCPServer:
             expected_version=expected_version,
             proposal_ref=proposal_ref,
             phase=phase,
+            ctx=ctx,
         )
 
     @mcp.tool(
@@ -767,7 +771,10 @@ def create_mcp_server() -> MCPServer:
             "phase=prepare seals target + impact into a server-side "
             "proposal (actor-bound, expiring, single-use); phase=commit "
             "executes only with the exact proposal_ref after verifiable "
-            "human confirmation. Currently: nonconformity.delete."
+            "human confirmation via MCP elicitation (the human retypes "
+            "the target id). Requires ENG_EVA_ACT_ENABLED + "
+            "ENG_EVA_ACT_DELETE_ENABLED. Currently: "
+            "nonconformity.delete."
         ),
         annotations=_annotations("delete", "Delete"),
         meta=meta,
@@ -777,12 +784,14 @@ def create_mcp_server() -> MCPServer:
         target_ref: str,
         proposal_ref: str | None = None,
         phase: str | None = None,
+        ctx: Context | None = None,
     ) -> CallToolResult:
         return await semantic_bridge.tool_delete(
             entity=entity,
             target_ref=target_ref,
             proposal_ref=proposal_ref,
             phase=phase,
+            ctx=ctx,
         )
 
     return mcp

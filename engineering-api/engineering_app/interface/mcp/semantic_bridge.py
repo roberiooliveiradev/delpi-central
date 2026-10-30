@@ -10,13 +10,16 @@ the legacy tools — parity, not reimplementation.
 Governance model:
 - ``read``/``analyze``/``knowledge`` — human principal + live Core
   AuthZ (``engineering.access``), same gate as REST routes.
-- ``execute`` — ``ENG_EVA_ACT_ENABLED`` fail-closed; create/update run
-  directly when the request is unequivocal (plan §7); destructive
-  ``nonconformity.import`` requires prepare → sealed proposal → commit.
-- ``delete`` — destructive; phase=prepare seals a server-side proposal
+- ``execute`` — risk-tiered, fail-closed: ``ENG_EVA_ACT_ENABLED`` gates
+  the write tier (create/update run directly when the request is
+  unequivocal); destructive ``nonconformity.import`` additionally
+  requires ``ENG_EVA_ACT_IMPORT_ENABLED`` + prepare → sealed proposal
+  → verifiable human confirmation (MCP elicitation) → commit.
+- ``delete`` — destructive; requires ``ENG_EVA_ACT_DELETE_ENABLED`` on
+  top of the master flag; phase=prepare seals a server-side proposal
   (actor-bound, TTL, single-use, HMAC handle); phase=commit executes
-  only with the exact proposal_ref. ``confirmed=true`` from the model
-  is never proof of confirmation.
+  only after verifiable human confirmation via MCP elicitation —
+  ``confirmed=true`` or mere proposal_ref possession is never proof.
 """
 
 from __future__ import annotations
@@ -27,6 +30,7 @@ from pathlib import Path
 from typing import Any
 
 from mcp.types import CallToolResult
+from pydantic import BaseModel, Field
 
 from delpi_mcp.errors import mcp_tool_result
 from engineering_app.application.eva.agent_intelligence_service import (
@@ -106,6 +110,91 @@ def _handle_error(exc: Exception) -> CallToolResult:
             data={"error_kind": exc.code, **exc.detail},
         )
     return bridge.handle_tool_error(exc)
+
+
+class _DestructiveConfirmation(BaseModel):
+    """MCP elicitation schema — verifiable human confirmation.
+
+    Only primitives are allowed by the spec; ``target_echo`` forces the
+    human to retype the exact identifier being destroyed, binding the
+    confirmation to this proposal (never a generic click-through).
+    """
+
+    confirm: bool = Field(
+        description="Confirma a operação destrutiva descrita?"
+    )
+    target_echo: str = Field(
+        description="Redigite o identificador exibido para confirmar."
+    )
+
+
+async def _require_human_confirmation(
+    ctx: Any,
+    *,
+    expected_echo: str,
+    summary: str,
+    proposal_id: str,
+) -> CallToolResult | None:
+    """Verifiable human confirmation via MCP elicitation (form mode).
+
+    Possession of ``proposal_ref`` proves the sealed handle; the
+    elicitation proves that a human saw target + impact and confirmed
+    inside the MCP client during THIS request. When the consumer
+    offers no verifiable channel the operation stays blocked honestly
+    (``confirmation_unavailable``) — never a silent fallback.
+    """
+    elicit = getattr(ctx, "elicit", None)
+    if not callable(elicit):
+        return _err(
+            "Confirmação humana verificável indisponível: este "
+            "consumidor MCP não suporta elicitation — a operação "
+            "permanece bloqueada até um mecanismo aprovado.",
+            status_code=403,
+            code="confirmation_unavailable",
+            data={"proposal_id": proposal_id},
+        )
+    try:
+        result = await elicit(
+            message=(
+                f"{summary}\nPara confirmar, marque 'confirm' e "
+                f"redigite exatamente: {expected_echo}"
+            ),
+            schema=_DestructiveConfirmation,
+        )
+    except Exception:
+        logger.warning(
+            "eva_mcp_elicit_unsupported", extra={"proposal_id": proposal_id}
+        )
+        return _err(
+            "Confirmação humana verificável indisponível: elicitation "
+            "não suportada/aceita pelo consumidor — operação bloqueada.",
+            status_code=403,
+            code="confirmation_unavailable",
+            data={"proposal_id": proposal_id},
+        )
+    action = getattr(result, "action", None)
+    content = getattr(result, "content", None) or getattr(
+        result, "data", None
+    )
+    confirmed = action == "accept" and bool(
+        getattr(content, "confirm", False)
+    ) and str(getattr(content, "target_echo", "") or "").strip() == (
+        expected_echo
+    )
+    if not confirmed:
+        return _err(
+            "Operação destrutiva não confirmada pelo humano "
+            f"(elicitation action={action!r}) — nada foi alterado; a "
+            "proposta segue válida para nova tentativa.",
+            status_code=403,
+            code="confirmation_declined",
+            data={"proposal_id": proposal_id},
+        )
+    logger.info(
+        "eva_mcp_destructive_confirmed",
+        extra={"proposal_id": proposal_id, "target_echo": expected_echo},
+    )
+    return None
 
 
 def _resolve(
@@ -223,6 +312,16 @@ def tool_get_context(
             "entities": entities_summary(),
             "actions": [a.public_dict() for a in actions],
             "act_enabled": bridge._eva_act_enabled(),
+            "act_tiers": {
+                "write": bridge._eva_act_enabled(),
+                "delete": bridge._eva_act_delete_enabled(),
+                "import": bridge._eva_act_import_enabled(),
+            },
+            "act_flags": {
+                "write": bridge.EVA_ACT_ENV_FLAG,
+                "delete": bridge.EVA_ACT_DELETE_ENV_FLAG,
+                "import": bridge.EVA_ACT_IMPORT_ENV_FLAG,
+            },
             "confirmation_model": {
                 "read_analyze_knowledge": "executam imediatamente.",
                 "execute_moderate": (
@@ -232,12 +331,14 @@ def tool_get_context(
                 ),
                 "execute_destructive": (
                     "nonconformity.import exige phase=prepare → proposta "
-                    "selada → phase=commit com proposal_ref."
+                    "selada → confirmação humana verificável "
+                    "(elicitation) → phase=commit com proposal_ref."
                 ),
                 "delete": (
                     "Sempre prepare → proposta selada (ator, alvo, TTL, "
-                    "uso único) → commit com proposal_ref — "
-                    "confirmed=true não é prova."
+                    "uso único) → confirmação humana verificável via "
+                    "MCP elicitation → commit com proposal_ref — "
+                    "confirmed=true ou posse do ref não são prova."
                 ),
             },
             "selected_ref": selected_ref,
@@ -612,6 +713,7 @@ async def tool_execute(
     expected_version: str | None = None,
     proposal_ref: str | None = None,
     phase: str | None = None,
+    ctx: Any = None,
 ) -> CallToolResult:
     """Semantic ACT — governed mutations via official use cases."""
     entry, error = _resolve(entity, action, tool="execute")
@@ -637,6 +739,7 @@ async def tool_execute(
             idempotency_key=idempotency_key,
             expected_version=expected_version,
             proposal_ref=proposal_ref,
+            ctx=ctx,
         )
     except Exception as exc:
         return _handle_error(exc)
@@ -748,6 +851,19 @@ async def _exec_nc_import(context, entry, phase, *, payload, **_kw):
     import_items = _unseal_items(
         proposal, items if isinstance(items, list) and items else None
     )
+    # Tier import — replace-all exige flag específica além do master.
+    bridge._require_eva_act("import")
+    confirmation_error = await _require_human_confirmation(
+        _kw.get("ctx"),
+        expected_echo="import_replace_all",
+        summary=(
+            "Substituição TOTAL do dataset de não conformidades: "
+            f"{len(import_items)} itens — irreversível e auditada."
+        ),
+        proposal_id=proposal.proposal_id,
+    )
+    if confirmation_error is not None:
+        return confirmation_error
     get_proposal_store().consume(proposal.proposal_id)
     report = await bridge._import_nc_records(
         context,
@@ -798,6 +914,7 @@ async def tool_delete(
     target_ref: str,
     proposal_ref: str | None = None,
     phase: str | None = None,
+    ctx: Any = None,
 ) -> CallToolResult:
     """Semantic destructive ACT — sealed proposal, never direct."""
     entry, error = _resolve(entity, "delete", tool="delete")
@@ -811,7 +928,7 @@ async def tool_delete(
         )
     try:
         context = bridge._require_engineering_human()
-        bridge._require_eva_act()
+        bridge._require_eva_act("delete")
         ref = (target_ref or "").strip()
         if not ref:
             return _err("target_ref é obrigatório.", code="validation")
@@ -867,6 +984,22 @@ async def tool_delete(
             expected_capability=entry.capability,
             expected_target_ref=ref,
         )
+        # Posse do proposal_ref não é prova — exige confirmação humana
+        # verificável via MCP elicitation dentro desta requisição.
+        record = (proposal.impact or {}).get("record_summary") or {}
+        confirmation_error = await _require_human_confirmation(
+            ctx,
+            expected_echo=ref,
+            summary=(
+                "Exclusão irreversível de não conformidade "
+                f"{ref} (LMP {record.get('lmp_number')}, OV "
+                f"{record.get('sale_number')}, status "
+                f"{record.get('status')}): {record.get('defect_description')}"
+            ),
+            proposal_id=proposal.proposal_id,
+        )
+        if confirmation_error is not None:
+            return confirmation_error
         get_proposal_store().consume(proposal.proposal_id)
         data = await bridge._delete_nc_record(context, record_id=ref)
         return _ok(

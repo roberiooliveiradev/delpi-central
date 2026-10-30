@@ -91,7 +91,38 @@ def _fake_use_case(result=None, error=None):
 
 
 def _enable_act(monkeypatch) -> None:
+    """Full ACT — master + every risk tier enabled."""
     monkeypatch.setenv(bridge.EVA_ACT_ENV_FLAG, "true")
+    monkeypatch.setenv(bridge.EVA_ACT_DELETE_ENV_FLAG, "true")
+    monkeypatch.setenv(bridge.EVA_ACT_IMPORT_ENV_FLAG, "true")
+
+
+def _enable_write_act(monkeypatch) -> None:
+    """Write tier only — destructive classes stay fail-closed."""
+    monkeypatch.setenv(bridge.EVA_ACT_ENV_FLAG, "true")
+
+
+class _FakeElicitCtx:
+    """MCP Context fake — records elicit calls and returns a canned
+    ElicitationResult-shaped object."""
+
+    def __init__(self, *, action="accept", echo="", confirm=True):
+        self._action = action
+        self._echo = echo
+        self._confirm = confirm
+        self.calls = 0
+
+    async def elicit(self, *, message, schema):
+        self.calls += 1
+        content = schema(confirm=self._confirm, target_echo=self._echo)
+        return SimpleNamespace(action=self._action, content=content)
+
+
+class _NoElicitCtx:
+    """Context without elicitation support (attr present but broken)."""
+
+    async def elicit(self, *, message, schema):
+        raise RuntimeError("elicit unsupported")
 
 
 # --- registry / surface -----------------------------------------------------
@@ -171,6 +202,13 @@ def test_get_context_catalog(monkeypatch) -> None:
         SEMANTIC_TOOL_NAMES
     )
     assert data["act_enabled"] is False
+    assert data["act_tiers"] == {
+        "write": False,
+        "delete": False,
+        "import": False,
+    }
+    assert data["act_flags"]["delete"] == bridge.EVA_ACT_DELETE_ENV_FLAG
+    assert data["act_flags"]["import"] == bridge.EVA_ACT_IMPORT_ENV_FLAG
     assert data["confirmation_model"]["delete"]
     assert data["legacy_surface"]["status"] == "deprecated"
     assert data["agent_directives"]
@@ -669,6 +707,7 @@ def test_execute_import_commit_with_sealed_proposal(monkeypatch) -> None:
             action="import",
             phase="commit",
             proposal_ref=handle,
+            ctx=_FakeElicitCtx(echo="import_replace_all"),
         )
     )
     assert not result.is_error
@@ -793,6 +832,7 @@ def test_delete_commit_executes_with_proposal(monkeypatch) -> None:
             target_ref="r1",
             phase="commit",
             proposal_ref=handle,
+            ctx=_FakeElicitCtx(echo="r1"),
         )
     )
     assert not result.is_error
@@ -822,6 +862,7 @@ def test_delete_commit_replay_rejected(monkeypatch) -> None:
             target_ref="r1",
             phase="commit",
             proposal_ref=handle,
+            ctx=_FakeElicitCtx(echo="r1"),
         )
     )
     replay = asyncio.run(
@@ -886,7 +927,13 @@ def test_delete_commit_wrong_target_rejected(monkeypatch) -> None:
 
 
 def test_delete_commit_tampered_handle_rejected() -> None:
-    with patch.dict("os.environ", {bridge.EVA_ACT_ENV_FLAG: "true"}):
+    with patch.dict(
+        "os.environ",
+        {
+            bridge.EVA_ACT_ENV_FLAG: "true",
+            bridge.EVA_ACT_DELETE_ENV_FLAG: "true",
+        },
+    ):
         _set_context(_human_user())
         result = asyncio.run(
             sem.tool_delete(
@@ -942,3 +989,182 @@ def test_delete_service_principal_denied() -> None:
             sem.tool_delete(entity="nonconformity", target_ref="r1")
         )
     assert result.is_error
+
+
+# --- risk-tiered ACT flags + verifiable confirmation -----------------------
+
+
+def test_delete_requires_delete_tier_flag(monkeypatch) -> None:
+    """Master flag alone never unlocks destructive classes."""
+    _enable_write_act(monkeypatch)
+    _set_context(_human_user())
+    result = asyncio.run(
+        sem.tool_delete(entity="nonconformity", target_ref="r1")
+    )
+    assert result.is_error
+    assert (
+        result.structured_content["data"]["error_code"] == "act_disabled"
+    )
+    assert bridge.EVA_ACT_DELETE_ENV_FLAG in (
+        result.structured_content["message"]
+    )
+
+
+def test_import_commit_requires_import_tier_flag(monkeypatch) -> None:
+    """Write tier allows dry-run prepare but never replace-all commit."""
+    _enable_write_act(monkeypatch)
+    _set_context(_human_user())
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_import_nonconformities_use_case",
+        lambda: _fake_use_case(
+            SimpleNamespace(to_dict=lambda: {"created": 1})
+        ),
+    )
+    prep = asyncio.run(
+        sem.tool_execute(
+            entity="nonconformity",
+            action="import",
+            phase="prepare",
+            payload={"items": [{"status": "open"}]},
+        )
+    )
+    assert not prep.is_error
+    handle = prep.structured_content["data"]["proposal_ref"]
+    result = asyncio.run(
+        sem.tool_execute(
+            entity="nonconformity",
+            action="import",
+            phase="commit",
+            proposal_ref=handle,
+            ctx=_FakeElicitCtx(echo="import_replace_all"),
+        )
+    )
+    assert result.is_error
+    assert result.structured_content["data"]["error_code"] == "act_disabled"
+
+
+def test_delete_commit_elicit_unavailable_no_ctx(monkeypatch) -> None:
+    """No verifiable channel → honest block; proposal is NOT consumed."""
+    _enable_act(monkeypatch)
+    _set_context(_human_user())
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_get_nonconformity_use_case",
+        lambda: _fake_use_case({"id": "r1"}),
+    )
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_delete_nonconformity_use_case",
+        lambda: _fake_use_case({"deleted": True}),
+    )
+    prep = asyncio.run(
+        sem.tool_delete(entity="nonconformity", target_ref="r1")
+    )
+    handle = prep.structured_content["data"]["proposal_ref"]
+    result = asyncio.run(
+        sem.tool_delete(
+            entity="nonconformity",
+            target_ref="r1",
+            phase="commit",
+            proposal_ref=handle,
+        )
+    )
+    assert result.is_error
+    assert (
+        result.structured_content["error_code"]
+        == "confirmation_unavailable"
+    )
+    retry = asyncio.run(
+        sem.tool_delete(
+            entity="nonconformity",
+            target_ref="r1",
+            phase="commit",
+            proposal_ref=handle,
+            ctx=_FakeElicitCtx(echo="r1"),
+        )
+    )
+    assert not retry.is_error
+
+
+def test_delete_commit_elicit_broken_channel(monkeypatch) -> None:
+    """Elicitation raising → same honest unavailability block."""
+    _enable_act(monkeypatch)
+    _set_context(_human_user())
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_get_nonconformity_use_case",
+        lambda: _fake_use_case({"id": "r1"}),
+    )
+    prep = asyncio.run(
+        sem.tool_delete(entity="nonconformity", target_ref="r1")
+    )
+    handle = prep.structured_content["data"]["proposal_ref"]
+    result = asyncio.run(
+        sem.tool_delete(
+            entity="nonconformity",
+            target_ref="r1",
+            phase="commit",
+            proposal_ref=handle,
+            ctx=_NoElicitCtx(),
+        )
+    )
+    assert result.is_error
+    assert (
+        result.structured_content["error_code"]
+        == "confirmation_unavailable"
+    )
+
+
+@pytest.mark.parametrize(
+    "action,echo,confirm",
+    [
+        ("decline", "r1", True),
+        ("cancel", "r1", True),
+        ("accept", "r-WRONG", True),
+        ("accept", "r1", False),
+    ],
+)
+def test_delete_commit_elicit_not_confirmed(
+    monkeypatch, action, echo, confirm
+) -> None:
+    """Decline/cancel/wrong echo/unchecked → declined, nothing deleted."""
+    _enable_act(monkeypatch)
+    _set_context(_human_user())
+    delete_calls = {"n": 0}
+
+    class _Delete:
+        async def execute(self, record_id):
+            delete_calls["n"] += 1
+            return {"deleted": True}
+
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_get_nonconformity_use_case",
+        lambda: _fake_use_case({"id": "r1"}),
+    )
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_delete_nonconformity_use_case",
+        lambda: _Delete(),
+    )
+    prep = asyncio.run(
+        sem.tool_delete(entity="nonconformity", target_ref="r1")
+    )
+    handle = prep.structured_content["data"]["proposal_ref"]
+    ctx = _FakeElicitCtx(action=action, echo=echo, confirm=confirm)
+    result = asyncio.run(
+        sem.tool_delete(
+            entity="nonconformity",
+            target_ref="r1",
+            phase="commit",
+            proposal_ref=handle,
+            ctx=ctx,
+        )
+    )
+    assert result.is_error
+    assert (
+        result.structured_content["error_code"] == "confirmation_declined"
+    )
+    assert ctx.calls == 1
+    assert delete_calls["n"] == 0

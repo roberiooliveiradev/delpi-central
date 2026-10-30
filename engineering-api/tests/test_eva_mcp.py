@@ -644,7 +644,10 @@ def test_prepare_tool_annotations_readonly() -> None:
 
 
 def _enable_act(monkeypatch) -> None:
+    """Full ACT — master + every risk tier enabled."""
     monkeypatch.setenv(bridge.EVA_ACT_ENV_FLAG, "true")
+    monkeypatch.setenv(bridge.EVA_ACT_DELETE_ENV_FLAG, "true")
+    monkeypatch.setenv(bridge.EVA_ACT_IMPORT_ENV_FLAG, "true")
 
 
 def test_act_tools_disabled_without_env_flag(monkeypatch) -> None:
@@ -1204,3 +1207,45 @@ def test_catalog_reports_act_surface_and_gate(monkeypatch) -> None:
     assert by_name["delete_nonconformity"]["destructive"] is True
     assert by_name["create_nonconformity"]["requires_human_confirmation"]
     assert by_name["search_nonconformities"]["read_only"] is True
+
+
+def test_act_destructive_classes_need_tier_flags(monkeypatch) -> None:
+    """Master flag alone never unlocks delete/import on legacy tools."""
+    monkeypatch.setenv(bridge.EVA_ACT_ENV_FLAG, "true")
+    monkeypatch.delenv(bridge.EVA_ACT_DELETE_ENV_FLAG, raising=False)
+    monkeypatch.delenv(bridge.EVA_ACT_IMPORT_ENV_FLAG, raising=False)
+    _set_context(_human_user())
+    for call in (
+        lambda: bridge.tool_delete_nonconformity(
+            record_id="r1", confirmed=True
+        ),
+        lambda: bridge.tool_import_nonconformities(
+            items=[{"status": "open"}],
+            confirmed=True,
+            dry_run=False,
+            confirm_replace=True,
+        ),
+    ):
+        result = asyncio.run(call())
+        assert result.is_error
+        assert result.structured_content["status_code"] == 403
+        assert (
+            result.structured_content["data"]["error_code"]
+            == "act_disabled"
+        )
+    # dry_run stays on the write tier — no side effects.
+    class _Result:
+        def to_dict(self):
+            return {"dry_run": True, "created": 0, "deleted": 0}
+
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_import_nonconformities_use_case",
+        lambda: _fake_use_case(_Result()),
+    )
+    result = asyncio.run(
+        bridge.tool_import_nonconformities(
+            items=[{"status": "open"}], dry_run=True
+        )
+    )
+    assert not result.is_error
