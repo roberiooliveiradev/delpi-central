@@ -52,6 +52,7 @@ from controllership_finance_app.infrastructure.persistence.clara_consent_challen
 )
 from controllership_finance_app.infrastructure.persistence.clara_proposal_repository import (
     ClaraProposalRepository,
+    IdempotencyConflict,
     ProposalExpired,
 )
 from controllership_finance_app.infrastructure.persistence.closing_catalog_repository import (
@@ -853,6 +854,7 @@ class ClaraGovernedWrites:
             },
             "clarification.open": {
                 "gate": "access",
+                "direct": True,
                 "resource_type": "closing_package_version",
                 "resource_key": lambda p: str(
                     _require(p, "package_version_id")
@@ -927,6 +929,7 @@ class ClaraGovernedWrites:
             },
             "pendency.create": {
                 "gate": "access",
+                "direct": True,
                 "resource_type": "closing_pendency",
                 "resource_key": lambda p: str(_require(p, "title")),
                 "required_params": ("period", "kind", "title"),
@@ -974,6 +977,7 @@ class ClaraGovernedWrites:
             },
             "pendency.claim": {
                 "gate": "access",
+                "direct": True,
                 "resource_type": "closing_pendency",
                 "resource_key": lambda p: str(
                     _require(p, "pendency_id")
@@ -1037,6 +1041,7 @@ class ClaraGovernedWrites:
             },
             "pendency.transition": {
                 "gate": "access",
+                "direct": True,
                 "resource_type": "closing_pendency",
                 "resource_key": lambda p: str(
                     _require(p, "pendency_id")
@@ -1452,6 +1457,7 @@ class ClaraGovernedWrites:
             },
             "item.mark_not_applicable": {
                 "gate": "access",
+                "direct": True,
                 "resource_type": "competence_checklist_item",
                 "resource_key": lambda p: str(_require(p, "item_key")),
                 "required_params": (
@@ -1480,6 +1486,7 @@ class ClaraGovernedWrites:
             },
             "item.revert_not_applicable": {
                 "gate": "access",
+                "direct": True,
                 "resource_type": "competence_checklist_item",
                 "resource_key": lambda p: str(_require(p, "item_key")),
                 "required_params": (
@@ -1574,6 +1581,7 @@ class ClaraGovernedWrites:
             },
             "item.request_correction": {
                 "gate": "access",
+                "direct": True,
                 "resource_type": "competence_checklist_item",
                 "resource_key": lambda p: str(_require(p, "item_key")),
                 "required_params": (
@@ -1630,6 +1638,7 @@ class ClaraGovernedWrites:
             },
             "document.post_message": {
                 "gate": "access",
+                "direct": True,
                 "resource_type": "closing_document",
                 "resource_key": lambda p: str(
                     _require(p, "document_id")
@@ -1694,6 +1703,7 @@ class ClaraGovernedWrites:
             },
             "document.answer_adjustment": {
                 "gate": "access",
+                "direct": True,
                 "resource_type": "document_adjustment_request",
                 "resource_key": lambda p: str(
                     _require(p, "request_id")
@@ -1727,6 +1737,7 @@ class ClaraGovernedWrites:
             },
             "received.post_message": {
                 "gate": "dre",
+                "direct": True,
                 "resource_type": "closing_document",
                 "resource_key": lambda p: str(
                     _require(p, "document_id")
@@ -1757,6 +1768,7 @@ class ClaraGovernedWrites:
             },
             "received.create_adjustment": {
                 "gate": "dre",
+                "direct": True,
                 "resource_type": "document_adjustment_request",
                 "resource_key": lambda p: str(
                     _require(p, "document_id")
@@ -2197,6 +2209,7 @@ class ClaraGovernedWrites:
                 "required_params": list(spec["required_params"]),
                 "gate": spec.get("gate", "access"),
                 "destructive": bool(spec.get("destructive")),
+                "direct": bool(spec.get("direct")),
             }
             for name, spec in self._capability_table().items()
         ]
@@ -2427,6 +2440,217 @@ class ClaraGovernedWrites:
             "channel": MCP_CHANNEL,
         }
 
+
+    # -- execução direta (DIRECT_ALLOWED — doc 126, SEMANTIC-002) ---------
+
+    _DIRECT_TTL_SECONDS = 120
+
+    def execute_direct(
+        self,
+        *,
+        capability: str,
+        params: dict,
+        actor_sub: str,
+        user_groups: Any = (),
+        correlation_id: str | None = None,
+    ) -> dict:
+        """Executa capability `DIRECT_ALLOWED` em uma única chamada.
+
+        O caminho direto mantém o núcleo governado inteiro — selagem
+        de estado, claim atômico, execução pelo caso de uso canônico
+        da BFF, pós-condição por read-back independente, auditoria
+        mcp/clara — suprimindo apenas o desafio de consentimento. A
+        proteção de repetição deixa de ser semântica e vira constraint
+        física (V019): mesma (actor, capability, idempotency_key)
+        nunca aplica efeito duplicado — retry idêntico devolve o
+        resultado verificado já gravado (`replayed`).
+
+        Capabilities sem o marcador `direct` na allowlist tipada são
+        rejeitadas com `ConsentRequired` — o caminho governado
+        (PREPARE → consentimento Portal → ACT) permanece o único
+        possível para elas.
+        """
+        spec = self._capability_table().get(capability)
+        if spec is None:
+            raise UnknownCapability(
+                f"Capability desconhecida: {capability}."
+            )
+        if not spec.get("direct"):
+            raise ConsentRequired(
+                "A operação exige confirmação humana verificável no "
+                "Portal — execute via phase=prepare e o ACT com "
+                "consentimento registrado."
+            )
+        for name in spec["required_params"]:
+            _require(params, name)
+        # Gate de permission efetiva — revalidado na execução (a
+        # permission pode ter sido revogada desde a leitura).
+        self._check_gate(capability)
+        # Idempotência: key explícita do caller ou derivada
+        # deterministicamente do plano — chamadas repetidas com o
+        # mesmo pedido replayam o resultado verificado sem reexecutar
+        # o efeito; pedidos distintos recebem keys distintas.
+        idempotency_key = params.get("idempotency_key") or (
+            "clara-direct-"
+            + proposal_plan_hash(capability, params, {})
+        )
+        replay = self._replay_result(
+            capability=capability,
+            spec=spec,
+            prior=self._proposals.find_by_idempotency(
+                actor_sub=actor_sub,
+                capability=capability,
+                idempotency_key=idempotency_key,
+            ),
+            idempotency_key=idempotency_key,
+        )
+        if replay is not None:
+            return replay
+        resource_key = spec["resource_key"](params)
+        expected_state = self._snapshot(capability, params)
+        if not expected_state or not _state_present(expected_state):
+            raise SnapshotUnavailable(
+                "Não foi possível ler o estado do recurso — "
+                "execução bloqueada."
+            )
+        handle = uuid.uuid4().hex + uuid.uuid4().hex
+        try:
+            proposal = self._proposals.create(
+                handle=handle,
+                actor_sub=actor_sub,
+                capability=capability,
+                resource_type=spec["resource_type"],
+                resource_key=resource_key,
+                payload=dict(params),
+                expected_state=expected_state,
+                ttl_seconds=self._DIRECT_TTL_SECONDS,
+                idempotency_key=idempotency_key,
+            )
+        except IdempotencyConflict:
+            # Concorrente venceu a inserção — devolve o outcome dela
+            # (ou bloqueia honesto se ainda em curso/UNKNOWN).
+            replay = self._replay_result(
+                capability=capability,
+                spec=spec,
+                prior=self._proposals.find_by_idempotency(
+                    actor_sub=actor_sub,
+                    capability=capability,
+                    idempotency_key=idempotency_key,
+                ),
+                idempotency_key=idempotency_key,
+            )
+            if replay is not None:
+                return replay
+            raise
+
+        def _audit(event_type: str, detail: dict) -> None:
+            _audit_mcp(
+                entity_type=spec["resource_type"],
+                entity_id=resource_key,
+                competence_id=None,
+                event_type=event_type,
+                actor=actor_sub,
+                detail={
+                    "capability": capability,
+                    "resource_key": resource_key,
+                    "proposal_id": str(proposal["proposal_id"]),
+                    "idempotency_key": idempotency_key,
+                    "correlation_id": correlation_id,
+                    **detail,
+                },
+            )
+
+        _audit("CLARA_DIRECT_ATTEMPT", {})
+        # Claim atômico durável — mesmo núcleo do ACT governado.
+        self._proposals.claim(handle=handle, actor_sub=actor_sub)
+        try:
+            result = spec["execute"](params, actor_sub, user_groups)
+        except ChecklistDomainError as exc:
+            self._proposals.record_result(
+                handle=handle,
+                result={"outcome": "failed",
+                        "error_code": getattr(exc, "code", "error")},
+            )
+            _audit("CLARA_DIRECT_REJECTED",
+                   {"error_code": getattr(exc, "code", "error")})
+            raise
+        if not spec["verify"](params, result or {}) or not (
+            self._readback(spec, params, result or {}, actor_sub)
+        ):
+            self._proposals.record_result(
+                handle=handle,
+                result={"outcome": "unverified"},
+            )
+            _audit("CLARA_DIRECT_REJECTED",
+                   {"error_code": "outcome_verification_failed"})
+            raise OutcomeVerificationFailed(
+                "A pós-condição não pôde ser confirmada por leitura — "
+                "o outcome é UNKNOWN; não repita a operação."
+            )
+        self._proposals.record_result(
+            handle=handle,
+            result={"outcome": "executed", "result": result or {}},
+        )
+        _audit("CLARA_DIRECT_ACT", {"outcome": "executed"})
+        return {
+            "executed": True,
+            "capability": capability,
+            "resource_type": spec["resource_type"],
+            "resource_key": resource_key,
+            "result": result,
+            "consent": "not_required",
+            "idempotency_key": idempotency_key,
+            "channel": MCP_CHANNEL,
+        }
+
+    def _replay_result(
+        self,
+        *,
+        capability: str,
+        spec: dict,
+        prior: dict | None,
+        idempotency_key: str,
+    ) -> dict | None:
+        """Interpreta proposta prévia da mesma idempotency_key.
+
+        VERIFIED/APPLIED ⇒ devolve o resultado gravado (efeito único
+        já comprovado por read-back). FAILED com erro determinístico ⇒
+        propaga o erro tipado — repetir o mesmo plano falharia igual.
+        CLAIMED sem resultado ⇒ UNKNOWN honesto, nunca reexecuta.
+        Proposta fresca ainda não executada ⇒ concorrência em curso.
+        """
+        if prior is None:
+            return None
+        stored = prior.get("result") or {}
+        if isinstance(stored, str):
+            stored = json.loads(stored)
+        outcome = stored.get("outcome")
+        if outcome in ("executed", "applied"):
+            return {
+                "executed": True,
+                "replayed": True,
+                "capability": capability,
+                "resource_type": spec["resource_type"],
+                "resource_key": prior.get("resource_key"),
+                "result": stored.get("result"),
+                "consent": "not_required",
+                "idempotency_key": idempotency_key,
+                "channel": MCP_CHANNEL,
+            }
+        if outcome == "failed":
+            code = stored.get("error_code") or "error"
+            raise ChecklistDomainError(
+                f"Execução anterior com esta chave falhou ({code}) — "
+                "corrija os parâmetros ou use uma nova chave."
+            )
+        # CLAIMED sem resultado, UNKNOWN gravado ou proposta ainda em
+        # curso: outcome desconhecido é bloqueio honesto — repetir
+        # poderia duplicar o efeito.
+        raise IdempotencyConflict(
+            "Já existe execução em curso ou com outcome não "
+            "verificado para esta chave — aguarde ou consulte o "
+            "estado antes de repetir."
+        )
 
     # -- consent & reconcile ---------------------------------------------
 

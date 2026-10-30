@@ -236,18 +236,23 @@ def create_mcp_server() -> MCPServer:
         name="execute",
         title="Execute",
         description=(
-            "Operações de escrita governadas (entity + action do "
-            "catálogo, ex.: entity='pendency', action='create', "
-            "params={...}). Fluxo obrigatório: phase='prepare' sela "
-            "a operação e devolve confirmation_url → o usuário "
-            "consente no Portal com credencial fresca → "
-            "phase='commit' com o proposal_handle exato. Um 'sim' "
-            "digitado no chat NÃO é consentimento. Multi-ação: "
-            "arg 'batch' {phase, operations:[{entity, action, "
-            "params, depends_on?}], batch_handle, plan_hash} — uma "
-            "confirmação consolidada cobre o plano inteiro. "
-            "Revalida permissão efetiva, escopo, staleness, "
-            "idempotência e pós-condição por read-back."
+            "Operações de escrita (entity + action do catálogo, ex.: "
+            "entity='pendency', action='create', params={...}). "
+            "Política por risco: ações marcadas direct no catálogo "
+            "executam imediatamente (default) com AuthZ efetiva, "
+            "idempotência física e pós-condição por read-back; demais "
+            "ações seguem phase='prepare' → consentimento verificável "
+            "no Portal (confirmation_url) → phase='commit' com o "
+            "proposal_handle exato. Um 'sim' digitado no chat NÃO é "
+            "consentimento. Multi-ação: arg 'batch' {phase?, "
+            "operations:[{entity, action, params, depends_on?}]} — "
+            "orquestra na mesma solicitação: diretas executam já, "
+            "governadas voltam pending_confirmation e bloqueiam "
+            "dependentes; outcomes parciais são reportados. "
+            "batch.phase='prepare' força o caminho consolidado "
+            "governado para todo o plano. Revalida permissão "
+            "efetiva, escopo, staleness, idempotência e "
+            "pós-condição por read-back."
         ),
         annotations=_annotations("execute", "Execute"),
         meta=meta,

@@ -77,25 +77,27 @@ Legenda de colunas (conforme doc 119 §4):
 
 ## 2. Governed operations → `execute`/`delete` (48)
 
-Todas as operações abaixo mantêm `PREPARE → consentimento verificável
-no Portal → ACT` (política vigente — doc 106 §3 / doc 119 §5). Nenhuma
-foi reclassificada para execução direta: a matriz não comprova
-LOW/MEDIUM sem decisão do owner da política de consentimento
-(`DECISION_REQUIRED` registrado no relatório de execução, mesma
-constatação da execução 016).
+**Atualização SEMANTIC-002 (doc 124):** a classificação por risco
+real foi publicada — 11 capabilities viraram `DIRECT_ALLOWED` (executam
+já com AuthZ+idempotência física V019+read-back, sem desafio de
+consentimento; `phase=prepare` segue compatível), 37 permanecem
+`CONFIRMATION_REQUIRED` (`PREPARE → consentimento verificável no Portal
+→ ACT`, incluindo as 6 destrutivas da tool `delete`). A matriz completa
+com justificativa por efeito está no
+[Documento 124](./124-clara-write-execution-risk-policy.md).
 
 | capability_id | semantic_tool | entity/action | permission | risk | phase_policy | migration_status |
 |---|---|---|---|---|---|---|
 | evidence.decide_version | execute | `evidence.decide_version` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | evidence.decide_item_set | execute | `evidence.decide_item_set` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | review.record_decision | execute | `review.record_decision` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| clarification.open | execute | `clarification.open` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
+| clarification.open | execute | `clarification.open` | access | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
 | clarification.resolve | execute | `clarification.resolve` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | competence.open | execute | `competence.open` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| pendency.create | execute | `pendency.create` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| pendency.claim | execute | `pendency.claim` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
+| pendency.create | execute | `pendency.create` | access | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
+| pendency.claim | execute | `pendency.claim` | access | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
 | pendency.reassign | execute | `pendency.reassign` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| pendency.transition | execute | `pendency.transition` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
+| pendency.transition | execute | `pendency.transition` | access | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
 | pendency.confirm_classification | execute | `pendency.confirm_classification` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | p3.confirm_cutoff | execute | `p3.confirm_cutoff` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | p3.upsert_reconciliation | execute | `p3.upsert_reconciliation` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
@@ -110,17 +112,17 @@ constatação da execução 016).
 | package.confirm_terminal_rejection | delete | `package.confirm_terminal_rejection` | access | DESTRUCTIVE | prepare→consent→commit | MIGRATED |
 | package.revert_terminal_rejection | execute | `package.revert_terminal_rejection` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | item.reverse_decision | execute | `item.reverse_decision` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| item.mark_not_applicable | execute | `item.mark_not_applicable` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| item.revert_not_applicable | execute | `item.revert_not_applicable` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
+| item.mark_not_applicable | execute | `item.mark_not_applicable` | access | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
+| item.revert_not_applicable | execute | `item.revert_not_applicable` | access | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
 | item.cancel | delete | `item.cancel` | access | DESTRUCTIVE | prepare→consent→commit | MIGRATED |
 | item.create_exceptional | execute | `item.create_exceptional` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| item.request_correction | execute | `item.request_correction` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
+| item.request_correction | execute | `item.request_correction` | access | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
 | item.review_correction | execute | `item.review_correction` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| document.post_message | execute | `document.post_message` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
+| document.post_message | execute | `document.post_message` | access | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
 | document.cancel | delete | `document.cancel` | access | DESTRUCTIVE | prepare→consent→commit | MIGRATED |
-| document.answer_adjustment | execute | `document.answer_adjustment` | access | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| received.post_message | execute | `received.post_message` | dre | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
-| received.create_adjustment | execute | `received.create_adjustment` | dre | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
+| document.answer_adjustment | execute | `document.answer_adjustment` | access | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
+| received.post_message | execute | `received.post_message` | dre | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
+| received.create_adjustment | execute | `received.create_adjustment` | dre | DIRECT_ALLOWED | direct (prepare→consent→commit compat) | MIGRATED |
 | received.confirm_adjustment | execute | `received.confirm_adjustment` | dre | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | catalog.entry_create | execute | `catalog.entry_create` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | catalog.entry_update | execute | `catalog.entry_update` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
@@ -173,5 +175,6 @@ constatação da execução 016).
   honesto via `not_implemented` (doc 120/122 = TARGET).
 - Upload/download de binários e exports CSV/PDF: `PORTAL_ONLY` por
   natureza de payload (execução 016) — não são gap de autorização.
-- Execução direta classe B (LOW/MEDIUM_DIRECT): depende de decisão do
-  owner da política de consentimento → `DECISION_REQUIRED`.
+- Execução direta classe B: **RESOLVIDO em SEMANTIC-002** — decisão
+  do owner publicada no doc 124 (11 DIRECT_ALLOWED / 37
+  CONFIRMATION_REQUIRED; BLOCKED = erro tipado por pré-condição).

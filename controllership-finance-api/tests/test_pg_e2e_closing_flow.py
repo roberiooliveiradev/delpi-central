@@ -170,6 +170,7 @@ def env(_configure_db):
         "V016__document_messages.sql",
         "V017__document_requirement_operations.sql",
         "V018__recipient_document_delivery.sql",
+        "V019__clara_direct_execution_idempotency.sql",
     ]
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])

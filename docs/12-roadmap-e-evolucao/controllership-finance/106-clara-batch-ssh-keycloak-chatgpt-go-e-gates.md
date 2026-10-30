@@ -328,3 +328,24 @@ aguardam G2/G3.
 
 SHA: `FINAL_HEAD` do commit desta entrega em `main`
 (registrado no relatório CF-PROC0072-CLARA-CONSENT-FINAL-REWORK-001).
+
+### Adendo 3 — execução direta por risco (CLARA-MCP-SEMANTIC-002)
+
+A exigência de consentimento verificável para **toda** escrita MCP é
+substituída prospectivamente pela política por risco do
+[Documento 124](./124-clara-write-execution-risk-policy.md), aprovada
+pelo PO na autorização SEMANTIC-002:
+
+- `DIRECT_ALLOWED` (11 capabilities — creates/updates não destrutivos,
+  reversíveis ou corriqueiros): executam já, sem desafio de
+  consentimento, mantendo AuthZ efetiva, selagem/claim atômico,
+  idempotência física (V019), read-back e auditoria.
+- `CONFIRMATION_REQUIRED` (37 capabilities — destrutivas, alto impacto,
+  publicação oficial, fechamento, rejeição terminal, catálogo/template,
+  decisões sobre terceiros): caminho PREPARE → step-up Portal (V014) →
+  ACT **inalterado** — inclusive o consentimento consolidado por lote.
+- `BLOCKED`: erro tipado, nenhum efeito.
+
+Nenhuma invariante de autorização, escopo, staleness, OCC, auditoria ou
+pós-condição é relaxada — o que muda é apenas a presença do desafio de
+consentimento, restrita às operações cujo efeito o justifica.

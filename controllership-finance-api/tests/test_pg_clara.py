@@ -156,7 +156,7 @@ def _configure_db():
 @pytest.fixture(scope="module")
 def env(_configure_db):
     applied = mr.run_migrations()
-    assert applied[-1] == "V018__recipient_document_delivery.sql"
+    assert applied[-1] == "V019__clara_direct_execution_idempotency.sql"
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
     checklist.submit_version_for_review(template_id, 1, actor=ADMIN)
@@ -1152,3 +1152,165 @@ def test_pg_parity016_catalog_entry_lifecycle(env):
         },
     )
     assert reactivated["executed"] is True
+
+
+# == SEMANTIC-002 — execução direta por risco (doc 124) ====================
+
+
+def test_pg_direct_pendency_create_executes_without_consent(env):
+    """DIRECT_ALLOWED: efeito real aplicado já — sem consent_record,
+    sem desafio emitido; read-back comprova a pós-condição."""
+    res = env["writes"].execute_direct(
+        capability="pendency.create",
+        params={
+            "period": PERIOD,
+            "kind": "OTHER",
+            "title": "Pendência CLARA direta 002",
+            "description": "Sem desafio de consentimento.",
+        },
+        actor_sub=ADMIN,
+    )
+    assert res["executed"] is True
+    assert res["consent"] == "not_required"
+    pendency = res["result"].get("pendency") or res["result"]
+    assert pendency["pendency_id"]
+    with plugins_db_connect() as conn, conn.cursor(
+        row_factory=dict_row
+    ) as cur:
+        # Nenhum desafio de consentimento foi emitido no caminho
+        # direto.
+        cur.execute(
+            """
+            SELECT count(*) AS n
+              FROM controllership_finance.clara_consent_challenge c
+              JOIN controllership_finance.clara_proposal p
+                ON p.proposal_id = c.proposal_id
+             WHERE p.idempotency_key = %s
+            """,
+            (res["idempotency_key"],),
+        )
+        assert cur.fetchone()["n"] == 0
+
+
+def test_pg_direct_replay_same_key_returns_same_pendency(env):
+    """Idempotência física (V019): retry idêntico não duplica efeito —
+    devolve o resultado verificado já gravado."""
+    key = f"clara-direct-e2e-{uuid.uuid4()}"
+    params = {
+        "period": PERIOD,
+        "kind": "OTHER",
+        "title": "Pendência CLARA replay",
+        "idempotency_key": key,
+    }
+    first = env["writes"].execute_direct(
+        capability="pendency.create",
+        params=dict(params),
+        actor_sub=ADMIN,
+    )
+    second = env["writes"].execute_direct(
+        capability="pendency.create",
+        params=dict(params),
+        actor_sub=ADMIN,
+    )
+    assert first["executed"] is True
+    assert second["replayed"] is True
+    pid1 = (first["result"].get("pendency") or first["result"])[
+        "pendency_id"
+    ]
+    pid2 = (second["result"].get("pendency") or second["result"])[
+        "pendency_id"
+    ]
+    assert str(pid1) == str(pid2)
+
+
+def test_pg_direct_governed_capability_requires_consent(env):
+    """CONFIRMATION_REQUIRED permanece governada — execute_direct em
+    capability sem o marcador falha com consent_required."""
+    from controllership_finance_app.application.clara.step_up_consent import (  # noqa: E501
+        ConsentRequired,
+    )
+
+    with pytest.raises(ConsentRequired):
+        env["writes"].execute_direct(
+            capability="package.finalize",
+            params={
+                "period": PERIOD,
+                "recipient_area": "CONTABIL",
+            },
+            actor_sub=ADMIN,
+        )
+
+
+def test_pg_direct_gate_denied_no_mutation(env):
+    """AuthZ efetiva revalidada na execução: capability direct com
+    gate `dre` e identidade sem o vínculo falha antes de qualquer
+    efeito — proposta nunca é selada."""
+    non_dre = ClaraGovernedWrites(
+        identity_provider=lambda: {
+            "subject": REVIEWER_C, "name": "reviewer",
+            "is_manage": False, "is_dre": False,
+        },
+    )
+    with pytest.raises(ChecklistDomainError) as exc:
+        non_dre.execute_direct(
+            capability="received.post_message",
+            params={
+                "period": PERIOD,
+                "document_id": str(uuid.uuid4()),
+                "body": "sem vínculo dre",
+            },
+            actor_sub=REVIEWER_C,
+        )
+    assert getattr(exc.value, "code", "") == "forbidden"
+    with plugins_db_connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT count(*) AS n
+              FROM controllership_finance.clara_proposal
+             WHERE capability = 'received.post_message'
+               AND actor_sub = %s
+            """,
+            (REVIEWER_C,),
+        )
+        assert cur.fetchone()[0] == 0
+
+
+def test_pg_direct_stale_revision_conflicts_without_overwrite(env):
+    """OCC: expected_revision obsoleta produz conflito tipado, jamais
+    sobrescreve estado mais novo."""
+    created = env["writes"].execute_direct(
+        capability="pendency.create",
+        params={
+            "period": PERIOD,
+            "kind": "OTHER",
+            "title": "Pendência CLARA OCC",
+        },
+        actor_sub=ADMIN,
+    )
+    pendency = (
+        created["result"].get("pendency") or created["result"]
+    )
+    pid = str(pendency["pendency_id"])
+    rev = pendency["revision"]
+    claimed = env["writes"].execute_direct(
+        capability="pendency.claim",
+        params={
+            "period": PERIOD,
+            "pendency_id": pid,
+            "expected_revision": rev,
+        },
+        actor_sub=ADMIN,
+    )
+    assert claimed["executed"] is True
+    with pytest.raises(ChecklistDomainError):
+        env["writes"].execute_direct(
+            capability="pendency.transition",
+            params={
+                "period": PERIOD,
+                "pendency_id": pid,
+                "to_state": "IN_ANALYSIS",
+                # revisão anterior ao claim — conflito
+                "expected_revision": rev,
+            },
+            actor_sub=ADMIN,
+        )

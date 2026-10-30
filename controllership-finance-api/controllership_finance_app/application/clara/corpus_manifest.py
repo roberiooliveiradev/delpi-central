@@ -291,4 +291,8 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
        "123-clara-mcp-semantico-001-execution-report.md",
        "DOCUMENT", "Execução CLARA MCP semântico — relatório",
        "CURRENT_IMPLEMENTATION", "paridade-portal-clara"),
+    _s("doc-126",
+       "124-clara-write-execution-risk-policy.md",
+       "DOCUMENT", "CLARA — política de execução de escrita por risco",
+       "CURRENT_IMPLEMENTATION", "paridade-portal-clara"),
 ]

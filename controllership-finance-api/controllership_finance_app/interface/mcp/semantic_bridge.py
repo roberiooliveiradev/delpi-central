@@ -411,7 +411,12 @@ def _semantic_catalog(identity: dict | None = None) -> dict:
                     "capability": cap["capability"],
                     "resource_type": cap["resource_type"],
                     "destructive": bool(cap.get("destructive")),
-                    "phase_policy": "prepare_consent_act",
+                    "direct": bool(cap.get("direct")),
+                    "phase_policy": (
+                        "direct_or_prepare_consent_act"
+                        if cap.get("direct")
+                        else "prepare_consent_act"
+                    ),
                 }
             )
     except Exception:  # noqa: BLE001 — catálogo nunca quebra contexto
@@ -492,10 +497,15 @@ def _schema_for(entity: str, action: str) -> dict | None:
             "capability": cap_id,
             "gate": spec["gate"],
             "destructive": bool(spec.get("destructive")),
+            "direct": bool(spec.get("direct")),
             "required_params": list(spec["required_params"]),
             "phase_policy": (
-                "phase=prepare → Portal consent → phase=commit; "
-                "confirmação humana verificável sempre obrigatória"
+                "phase=direct (default) executa já com AuthZ + "
+                "idempotência; phase=prepare → consentimento Portal → "
+                "phase=commit também é aceito"
+                if spec.get("direct")
+                else "phase=prepare → Portal consent → phase=commit; "
+                "confirmação humana verificável obrigatória"
             ),
         }
     return None
@@ -738,11 +748,183 @@ def _commit_single(
     return _ok(result)
 
 
+def _direct_single(
+    entity: str,
+    action: str,
+    payload: dict,
+    actor_sub: str,
+) -> CallToolResult:
+    """Execução imediata de capability DIRECT_ALLOWED (doc 126).
+
+    Mesmo núcleo governado — selagem, claim atômico, execução
+    canônica, pós-condição por read-back e auditoria — sem o desafio
+    de consentimento, substituído pela constraint física de
+    idempotência (V019)."""
+    try:
+        result = _governed_writes().execute_direct(
+            capability=_capability_id(entity, action),
+            params=payload,
+            actor_sub=actor_sub,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc)
+    return _ok(result)
+
+
+def _run_operations(
+    batch: dict,
+    actor_sub: str,
+) -> CallToolResult:
+    """Orquestra N capabilities em uma solicitação (doc 126 §4.C).
+
+    Diretas executam já (com AuthZ + idempotência); governadas
+    retornam proposta selada + confirmation_url e bloqueiam seus
+    dependentes até o ACT do usuário. Outcomes parciais são
+    reportados honestamente — sem atomicidade global implícita.
+    """
+    operations = batch.get("operations") or []
+    if not operations:
+        return _err(
+            "batch.operations obrigatório.",
+            error_code="validation_error",
+        )
+    ops = [
+        {
+            "capability": o.get("capability")
+            or _capability_id(
+                str(o.get("entity", "")).strip().lower(),
+                str(o.get("action", "")).strip().lower(),
+            ),
+            "params": _clean(o.get("params") or {}),
+            **(
+                {"depends_on": o["depends_on"]}
+                if o.get("depends_on") is not None
+                else {}
+            ),
+        }
+        for o in operations
+    ]
+    gw = _governed_writes()
+    orch = _batch_orchestrator()
+    try:
+        plan = orch.plan_batch(operations=ops, actor_sub=actor_sub)
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc)
+    table = gw._capability_table()
+    state_by_index: dict[int, str] = {}
+    outcomes: list[dict] = []
+    for op in plan["operations"]:
+        idx = op["index"]
+        capability = op["capability"]
+        entry = {
+            "index": idx,
+            "capability": capability,
+            "resource_type": op.get("resource_type"),
+        }
+        if op["status"] != "viable":
+            state_by_index[idx] = "blocked"
+            outcomes.append(
+                entry | {
+                    "status": "blocked",
+                    "reason": op.get("block_reason") or "not_viable",
+                }
+            )
+            continue
+        waiting = [
+            d
+            for d in op.get("depends_on", [])
+            if state_by_index.get(d) != "executed"
+        ]
+        if waiting:
+            state_by_index[idx] = "blocked"
+            outcomes.append(
+                entry | {
+                    "status": "blocked",
+                    "reason": "dependency_not_executed",
+                    "depends_on": waiting,
+                }
+            )
+            continue
+        spec = table.get(capability)
+        if spec is not None and spec.get("direct"):
+            try:
+                result = gw.execute_direct(
+                    capability=capability,
+                    params=op["params"],
+                    actor_sub=actor_sub,
+                )
+            except ChecklistDomainError as exc:
+                state_by_index[idx] = "failed"
+                outcomes.append(
+                    entry | {
+                        "status": "failed",
+                        "error_code": getattr(exc, "code", "error"),
+                        "message": str(exc),
+                    }
+                )
+                continue
+            state_by_index[idx] = "executed"
+            outcomes.append(entry | {"status": "executed",
+                                     "result": result})
+            continue
+        # Governada — PREPARE selado + URL de consentimento; o ACT
+        # posterior revalida ator/escopo/estado como sempre.
+        try:
+            prepared = gw.prepare(
+                capability=capability,
+                params=op["params"],
+                actor_sub=actor_sub,
+            )
+        except ChecklistDomainError as exc:
+            state_by_index[idx] = "failed"
+            outcomes.append(
+                entry | {
+                    "status": "failed",
+                    "error_code": getattr(exc, "code", "error"),
+                    "message": str(exc),
+                }
+            )
+            continue
+        state_by_index[idx] = "pending"
+        outcomes.append(
+            entry | {
+                "status": "pending_confirmation",
+                "operation": prepared["operation"],
+                "proposal_id": prepared["proposal_id"],
+                "proposal_handle": prepared["proposal_handle"],
+                "confirmation_url": prepared["confirmation_url"],
+                "expires_at": prepared["expires_at"],
+            }
+        )
+    counts = {"executed": 0, "pending_confirmation": 0,
+              "blocked": 0, "failed": 0}
+    for o in outcomes:
+        counts[o["status"] if o["status"] in counts else "failed"] += 1
+    return _ok(
+        {
+            "orchestration": "operations",
+            "plan_hash": plan["plan_hash"],
+            "summary": counts,
+            "operations": outcomes,
+            "note": (
+                "Operações diretas já executadas; "
+                "pending_confirmation exige consentimento no Portal "
+                "antes do ACT. Não há transação global — outcomes são "
+                "parciais por operação."
+            ),
+        }
+    )
+
+
 def _run_batch(
     batch: dict,
     actor_sub: str,
 ) -> CallToolResult:
-    phase = (batch.get("phase") or "prepare").strip().lower()
+    phase = (batch.get("phase") or "").strip().lower()
+    # Fase omitida ou explícita "direct/immediate/run": orquestração
+    # proporcional ao risco — diretas já, governadas preparam.
+    if phase in ("", "direct", "immediate", "run"):
+        return _run_operations(batch, actor_sub)
     orch = _batch_orchestrator()
     try:
         if phase == "prepare":
@@ -816,7 +998,7 @@ def _governed_dispatch(
     if batch:
         return _run_batch(batch, actor)
 
-    phase_norm = (phase or "prepare").strip().lower()
+    phase_norm = (phase or "").strip().lower()
     if phase_norm in ("commit", "act"):
         if not proposal_handle:
             return _err(
@@ -824,19 +1006,6 @@ def _governed_dispatch(
                 error_code="validation_error",
             )
         return _commit_single(proposal_handle, actor)
-    if phase_norm in ("direct", "immediate"):
-        return _err(
-            "Execução direta não é permitida pela política vigente: "
-            "toda escrita exige PREPARE → consentimento verificável no "
-            "Portal → ACT (doc 106 §3, doc 119 §5).",
-            status_code=409,
-            error_code="consent_required",
-        )
-    if phase_norm != "prepare":
-        return _err(
-            f"phase inválida: {phase!r} — prepare|commit.",
-            error_code="validation_error",
-        )
 
     ent = (entity or "").strip().lower()
     act = (action or "").strip().lower()
@@ -870,7 +1039,27 @@ def _governed_dispatch(
             error_code="validation_error",
             data={"missing": missing, "capability": f"{ent}.{act}"},
         )
-    return _prepare_single(ent, act, payload, actor)
+    # Política proporcional ao risco (doc 126): DIRECT_ALLOWED
+    # executa imediatamente por default e em phase=direct; operações
+    # sem o marcador seguem PREPARE → consentimento Portal → ACT.
+    if phase_norm in ("", "direct", "immediate", "run"):
+        if spec.get("direct") and not destructive_only:
+            return _direct_single(ent, act, payload, actor)
+        if phase_norm == "":
+            return _prepare_single(ent, act, payload, actor)
+        return _err(
+            f"{ent}.{act} exige confirmação humana verificável — "
+            "use phase=prepare e o ACT com consentimento registrado "
+            "no Portal (doc 126).",
+            status_code=409,
+            error_code="consent_required",
+        )
+    if phase_norm == "prepare":
+        return _prepare_single(ent, act, payload, actor)
+    return _err(
+        f"phase inválida: {phase!r} — direct|prepare|commit.",
+        error_code="validation_error",
+    )
 
 
 def tool_execute(

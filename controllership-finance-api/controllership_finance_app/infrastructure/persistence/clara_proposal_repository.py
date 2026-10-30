@@ -56,6 +56,11 @@ class ProposalConsumed(ChecklistDomainError):
     status = 409
 
 
+class IdempotencyConflict(ChecklistDomainError):
+    code = "idempotency_conflict"
+    status = 409
+
+
 class ClaraProposalRepository:
     def _conn(self) -> psycopg.Connection:
         if not plugins_db_configured():
@@ -82,35 +87,79 @@ class ClaraProposalRepository:
         payload: dict,
         expected_state: dict,
         ttl_seconds: int = 900,
+        idempotency_key: str | None = None,
     ) -> dict:
-        """Sela a proposta server-side e devolve a projeção pública."""
+        """Sela a proposta server-side e devolve a projeção pública.
+
+        ``idempotency_key`` (V019) é restringida por índice único
+        parcial — a segunda inserção do mesmo par
+        (actor, capability, key) falha com ``IdempotencyConflict``,
+        tornando a proteção de repetição atômica e não semântica.
+        """
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
-                    cur.execute(
-                        f"""
-                        INSERT INTO {_q('clara_proposal')}
-                            (handle_hash, actor_sub, capability,
-                             resource_type, resource_key, payload,
-                             expected_state, expires_at)
-                        VALUES (%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,
-                                now() + make_interval(secs => %s))
-                        RETURNING proposal_id, capability, resource_type,
-                                  resource_key, payload, expected_state,
-                                  expires_at, created_at
-                        """,
-                        (
-                            handle_hash(handle),
-                            actor_sub,
-                            capability,
-                            resource_type,
-                            resource_key,
-                            json.dumps(payload, default=str),
-                            json.dumps(expected_state, default=str),
-                            ttl_seconds,
-                        ),
-                    )
+                    try:
+                        cur.execute(
+                            f"""
+                            INSERT INTO {_q('clara_proposal')}
+                                (handle_hash, actor_sub, capability,
+                                 resource_type, resource_key, payload,
+                                 expected_state, expires_at,
+                                 idempotency_key)
+                            VALUES (%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,
+                                    now() + make_interval(secs => %s),
+                                    %s)
+                            RETURNING proposal_id, capability,
+                                      resource_type, resource_key,
+                                      payload, expected_state,
+                                      expires_at, created_at
+                            """,
+                            (
+                                handle_hash(handle),
+                                actor_sub,
+                                capability,
+                                resource_type,
+                                resource_key,
+                                json.dumps(payload, default=str),
+                                json.dumps(expected_state, default=str),
+                                ttl_seconds,
+                                idempotency_key,
+                            ),
+                        )
+                    except psycopg.errors.UniqueViolation as exc:
+                        raise IdempotencyConflict(
+                            "Já existe operação em curso ou concluída "
+                            "com esta chave de idempotência."
+                        ) from exc
                     return cur.fetchone()
+
+    def find_by_idempotency(
+        self, *, actor_sub: str, capability: str, idempotency_key: str
+    ) -> dict | None:
+        """Última proposta do par (actor, capability, key) — replay.
+
+        Usada pela execução direta: se a proposta anterior chegou a
+        VERIFIED/APPLIED, o resultado gravado é devolvido sem reexecutar
+        o efeito; CLAIMED sem resultado é outcome desconhecido (honesto).
+        """
+        with self._conn() as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(
+                    f"""
+                    SELECT proposal_id, capability, resource_type,
+                           resource_key, result, execution_state,
+                           created_at, consumed_at
+                      FROM {_q('clara_proposal')}
+                     WHERE actor_sub = %s
+                       AND capability = %s
+                       AND idempotency_key = %s
+                     ORDER BY created_at DESC
+                     LIMIT 1
+                    """,
+                    (actor_sub, capability, idempotency_key),
+                )
+                return cur.fetchone()
 
     def load_for_actor(self, *, handle: str, actor_sub: str) -> dict:
         """Lê a proposta exigindo mesmo ator — mismatch é erro tipado."""
