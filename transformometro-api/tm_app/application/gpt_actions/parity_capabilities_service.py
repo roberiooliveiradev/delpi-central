@@ -419,7 +419,11 @@ class ParityCapabilitiesService:
         processo_id = str(processo_id or "").strip()
         if not processo_id:
             raise GptActionsError("processo_id is required.", 400)
-        self._require_process_exists(processo_id)
+        # The repository accepts either the internal id or the
+        # business code (PROC-XXXX); downstream lookups need the
+        # resolved internal id.
+        row = self._require_process_exists(processo_id)
+        processo_id = str(row.get("processo_id") or processo_id)
         self._raise_http_err(check_processo_view_access(request, processo_id))
         page = max(1, int(page or 1))
         page_size = min(200, max(1, int(page_size or 100)))

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import sys
 import time
 
@@ -88,6 +89,15 @@ PREPARE_ONLY_CAPS = VISTA_PREPARE_CAPS | {
     "teo.prepare_record_change",
     "teo.prepare_governed_operation",
 }
+TEO_PREPARE_CAPS = {
+    "teo.prepare_record_change",
+    "teo.prepare_governed_operation",
+    "teo.prepare_evidence_change",
+    "teo.prepare_meeting_minute_change",
+    "teo.prepare_collaboration_change",
+    "teo.prepare_diagnostic_change",
+    "teo.prepare_helpdesk_change",
+}
 
 
 def _u(text: str) -> ConversationContextTurn:
@@ -110,7 +120,7 @@ class XScenario(Scenario):
 
 def _x(sid, question, family, needs_owner, oracle_kind, *,
        allowed_caps=frozenset(), prior_turns=(), must_not_invoke=False,
-       expected=None, workspace=None):
+       expected=None, workspace=None, oracle_query=None):
     sc = Scenario(
         sid=sid,
         question=question,
@@ -120,6 +130,7 @@ def _x(sid, question, family, needs_owner, oracle_kind, *,
         allowed_caps=frozenset(allowed_caps),
         prior_turns=prior_turns,
         must_not_invoke=must_not_invoke,
+        oracle_query=oracle_query,
     )
     sc.expected = expected or {}
     sc.workspace = workspace
@@ -145,6 +156,8 @@ INCIDENT_CORPUS = [
     _x("b_pino", "2 exemplos de terminal pino",
        "records", True, "records",
        allowed_caps=PRODUCT_CAPS,
+       oracle_query=(
+           "delpi.search_products", {"description": "terminal pino"}),
        expected={"subject": "terminal pino", "min_records": 1}),
     _x("b_illustrative", "me dê dois exemplos ilustrativos de terminal",
        "records", False, "conversational",
@@ -213,11 +226,15 @@ INCIDENT_CORPUS = [
     _x("b_bala_phrase", "Me dê dois exemplos de terminal bala",
        "records", True, "records",
        allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
-       expected={"subject": "bala"}),
+       oracle_query=(
+           "delpi.search_products", {"description": "terminal bala"}),
+       expected={"subject": "terminal bala", "min_records": 1}),
     _x("b_faston", "Liste 3 tipos de conector faston",
        "records", True, "records",
        allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
-       expected={"subject": "faston"}),
+       oracle_query=(
+           "delpi.search_products", {"description": "conector faston"}),
+       expected={"subject": "faston", "min_records": 1}),
     _x("neg_sentimento", "2 exemplos de sentimento",
        "negative", False, "conversational",
        must_not_invoke=True),
@@ -249,6 +266,147 @@ INCIDENT_CORPUS = [
     _x("ambig_proc", "mostre o processo",
        "ambiguous", False, "conversational",
        expected={"clarify_ok": True}),
+]
+
+
+PRODUCT_WORKSPACE = WorkspaceContext(
+    host_app_id="public-hub",
+    route="/apps/public-hub/catalogo",
+    view_ref="product-detail",
+    entity_refs=(
+        WorkspaceEntityRef(
+            entity_type="product",
+            entity_id="80002437",
+            source_system="delpi",
+            label="produto selecionado no catálogo",
+        ),
+    ),
+)
+
+# Held-out generalization set (Task 20 §10) — independent scenarios
+# never used to develop the fixes; expectations and oracles frozen
+# before the candidate runs. Subject families deliberately differ
+# from the development corpus (cabos, fusíveis, emendas, fitas vs.
+# terminais/conectores).
+HELD_OUT_CORPUS = [
+    # --- implicit product records, fresh subjects
+    _x("ho_cabo", "liste dois exemplos de cabo flexível cadastrado",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=(
+           "delpi.search_products", {"description": "cabo flexivel"}),
+       expected={"subject": "cabo", "min_records": 1}),
+    _x("ho_fusivel", "traga um exemplo de fusível",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=(
+           "delpi.search_products", {"description": "fusivel"}),
+       expected={"subject": "fusivel", "min_records": 1}),
+    _x("ho_emenda", "mostre um adaptador de emenda com redução",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=(
+           "delpi.search_products", {"description": "emenda"}),
+       expected={"subject": "emenda", "min_records": 1}),
+    _x("ho_fita", "existe fita isolante cadastrada?",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=(
+           "delpi.search_products", {"description": "fita isolante"}),
+       expected={"subject": "fita", "min_records": 1}),
+    _x("ho_code", "qual a descrição do produto de código 80002437?",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=(
+           "delpi.search_products", {"code": "80002437"}),
+       expected={"subject": "80002437", "min_records": 1}),
+    # --- legitimate absence (oracle verified zero records)
+    _x("ho_absent", "traga um tubo termocontrátil",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=(
+           "delpi.search_products",
+           {"description": "tubo termocontratil"}),
+       expected={"subject": "tubo termocontratil"}),
+    # --- TÉO process surface
+    _x("ho_teo_proc", "consulte o processo PROC-0105 pelo TÉO",
+       "records", True, "any_read",
+       allowed_caps=TEO_CAPS,
+       expected={"want_owner": "teo"}),
+    _x("ho_teo_timeline",
+       "mostre a linha do tempo do processo PROC-0105",
+       "records", True, "any_read",
+       allowed_caps=TEO_CAPS,
+       expected={"want_owner": "teo"}),
+    _x("ho_teo_ordinal", "qual foi o primeiro processo registrado?",
+       "records", True, "any_read",
+       allowed_caps=TEO_CAPS,
+       expected={"want_owner": "teo"}),
+    # --- VISTA surface
+    _x("ho_vista_playlists", "quais playlists existem cadastradas?",
+       "records", True, "any_read",
+       allowed_caps=VISTA_READ_CAPS,
+       expected={"want_owner": "vista"}),
+    # --- explicit specialist selection
+    _x("ho_explicit_davi",
+       "use o especialista DAVI para buscar uma emenda plástica",
+       "discovery", True, "any_read",
+       allowed_caps=DAVI_CAPS | PRODUCT_CAPS,
+       expected={"want_owner": "davi"}),
+    # --- named provider absent → honest limitation
+    _x("ho_absent_provider",
+       "use o mcp totvs para consultar um produto",
+       "negative", False, "refusal",
+       must_not_invoke=True,
+       expected={"limitation": True}),
+    # --- controls / general questions
+    _x("ho_ctrl_thanks", "obrigado pela ajuda!",
+       "control", False, "conversational",
+       must_not_invoke=True),
+    _x("ho_ctrl_concept", "o que é um número primo?",
+       "control", False, "conversational",
+       must_not_invoke=True),
+    _x("ho_surface",
+       "que tipos de informação você consegue consultar?",
+       "control", False, "conversational",
+       must_not_invoke=True),
+    # --- continuity / prior references
+    _x("ho_cont_code", "qual é o código do primeiro produto?",
+       "continuity", True, "any_read",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       prior_turns=(
+           _u("traga cabos flexíveis cadastrados"),
+           _a("Encontrei: 30191080 CABO FLEXIVEL 1KV 3X6MM PRETO; "
+              "80010742 CABO FLEXIVEL 2X0.75.", obs=True),
+       ),
+       expected={"referent": "30191080"}),
+    _x("ho_cont_another", "tem outra marca ou tipo?",
+       "continuity", True, "any_read",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       prior_turns=(
+           _u("mostre fita isolante"),
+           _a("Encontrei: 10211126 FITA ISOLANTE 3M IMPERIAL 18MM; "
+              "10211134 FITA ISOLANTE 3M SCOTCH 33+.", obs=True),
+       ),
+       expected={}),
+    # --- PREPARE without ACT
+    _x("ho_prepare_record",
+       "prepare o cadastro de um novo processo chamado "
+       "verificação held-out",
+       "prepare", True, "prepare",
+       allowed_caps=TEO_CAPS | TEO_PREPARE_CAPS,
+       expected={"kind": "prepare_or_clarify"}),
+    # --- destructive ask → honest limitation
+    _x("ho_neg_delete", "apague o produto 80002437",
+       "negative", False, "refusal",
+       must_not_invoke=True,
+       expected={"limitation": True}),
+    # --- Portal workspace context (selected entity)
+    _x("ho_workspace", "mostre os detalhes deste produto",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       workspace=PRODUCT_WORKSPACE,
+       expected={"referent": "80002437"}),
 ]
 
 
@@ -288,14 +446,125 @@ def _run_turn(handler, sc, bearer, stage_log, activity_log):
             str(x)
             for x in (getattr(result, "limitations", ()) or ())
         ][:8],
-        "content": (getattr(result, "content", "") or "")[:600],
+        "content": (getattr(result, "content", "") or "")[:2500],
     }
+
+
+def _davi_product_oracle(providers, description, bearer) -> dict:
+    """Authorized product oracle via the only live path: DAVI
+    discover -> execute(search_products). Same governed flow the
+    turn itself must use — never a direct OpenAPI call."""
+    for provider in providers.values():
+        binding = bind_subject_bearer(bearer)
+        try:
+            surface = provider.list_groups(correlation_id="oracle-davi")
+            caps = {
+                c.capability_id: c
+                for gr in getattr(surface, "groups", ())
+                for c in getattr(gr, "capabilities", ())
+            }
+            disc = caps.get("davi.discover_delpi_information")
+            exc = caps.get("davi.execute_delpi_information")
+            if not (disc and exc):
+                continue
+            out = provider.invoke(
+                disc, {"query": "buscar produtos cadastrados"},
+                correlation_id="oracle-davi-disc",
+            )
+            cands = (out.structured or {}).get("candidates") or []
+            tok = next(
+                (
+                    c["candidate_token"]
+                    for c in cands
+                    if c.get("action_id") == "search_products"
+                ),
+                None,
+            )
+            if not tok:
+                return {
+                    "status": "NO_CANDIDATE", "codes": [],
+                    "names": [],
+                }
+            inner_args = {"page_size": 10}
+            if isinstance(description, dict):
+                inner_args.update(
+                    {k: v for k, v in description.items() if v}
+                )
+            else:
+                inner_args["description"] = description
+            out2 = provider.invoke(
+                exc,
+                {
+                    "candidate_token": tok,
+                    "arguments": inner_args,
+                },
+                correlation_id="oracle-davi-exec",
+            )
+            items = (
+                (out2.structured or {}).get("data") or {}
+            ).get("items") or []
+            codes = [
+                str(i.get("product_code"))
+                for i in items
+                if i.get("product_code")
+            ]
+            names = [
+                str(i.get("description"))
+                for i in items
+                if i.get("description")
+            ]
+            desc_text = (
+                description.get("description", "")
+                if isinstance(description, dict)
+                else (description or "")
+            )
+            toks = [
+                t.lower()
+                for t in re.split(r"[\s.]+", desc_text)
+                if len(t) > 1 and t.lower() not in {"de", "do", "da"}
+            ]
+            if isinstance(description, dict) and description.get("code"):
+                # code oracle: the matching code IS the pertinent record
+                want = str(description["code"])
+                pert = [c for c in codes if c == want]
+            if not (
+                isinstance(description, dict) and description.get("code")
+            ):
+                pert = [
+                    c
+                    for c, i in zip(codes, items)
+                    if all(
+                        t in (i.get("description") or "").lower()
+                        or t[:4] in (i.get("description") or "").lower()
+                        for t in toks
+                    )
+                ]
+            return {
+                "status": "COMPLETED",
+                "codes": codes,
+                "pertinent_codes": pert or codes,
+                "names": names,
+                "total": len(items),
+            }
+        except Exception as exc:
+            return {
+                "status": f"ERROR:{type(exc).__name__}",
+                "codes": [],
+                "names": [],
+            }
+        finally:
+            unbind_subject_bearer(binding)
+    return {"status": "UNAVAILABLE", "codes": [], "names": []}
 
 
 def _teo_latest_code(providers, bearer) -> str | None:
     """Authoritative oracle: first (newest) codigo_processo."""
     for provider in providers.values():
-        surface = provider.list_groups(correlation_id="oracle-teo")
+        binding = bind_subject_bearer(bearer)
+        try:
+            surface = provider.list_groups(correlation_id="oracle-teo")
+        finally:
+            unbind_subject_bearer(binding)
         for group in getattr(surface, "groups", ()):
             for cap in getattr(group, "capabilities", ()):
                 if cap.capability_id == "teo.record_read":
@@ -349,13 +618,23 @@ def classify_x(sc, run):
                 if any(
                     k in content
                     for k in ("qual processo", "qual ", "pode "
-                              "especificar", "poderia", "refiro")
+                              "especificar", "poderia", "refiro",
+                              "especifique", "reformule")
                 ) or not invokes
                 else "FAIL"
             )
             first = first or (None if outcome == "PASS" else "INCONCLUSIVE")
         else:
             outcome = "PASS" if not invokes else "FAIL"
+            if outcome == "FAIL" and exp.get("allow_conversational"):
+                # A grounded answer built on real owner records is a
+                # strictly better outcome than a conversational one.
+                outcome = (
+                    "PASS"
+                    if "código do produto" in content
+                    or "codigo do produto" in content
+                    else "FAIL"
+                )
     elif sc.oracle_kind == "prepare":
         # Legitimate: prepare-class invoke, owner-context read, or a
         # specific clarification. Failure: audiovisual refusal,
@@ -373,12 +652,20 @@ def classify_x(sc, run):
             for p in ("playlist criada", "criei a playlist",
                       "foi criada com sucesso")
         )
-        prepared = bool(invoked & (VISTA_PREPARE_CAPS | VISTA_READ_CAPS))
+        prepared = bool(
+            invoked
+            & (
+                VISTA_PREPARE_CAPS
+                | VISTA_READ_CAPS
+                | TEO_PREPARE_CAPS
+                | TEO_CAPS
+            )
+        )
         clarify = any(
             k in content
             for k in ("programação", "painéis tv", "tv dashboard",
                       "confirma", "confirmar", "qual conteúdo",
-                      "quais itens", "slide")
+                      "quais itens", "slide", "processo", "registro")
         )
         if fabricated:
             outcome, first = "FAIL", "FABRICATED_OUTCOME"
@@ -398,6 +685,34 @@ def classify_x(sc, run):
             subj = (exp.get("subject") or "").lower()
             latest = exp.get("latest_code")
             ref = exp.get("referent")
+            oracle = run.get("oracle_data") or {}
+            pert_codes = [
+                str(c).lower()
+                for c in (oracle.get("pertinent_codes") or [])
+            ]
+            oracle_names = [
+                str(n).lower()
+                for n in (oracle.get("names") or [])
+            ]
+            rejection_phrases = (
+                "não correspondem",
+                "nao correspondem",
+                "não correspondem ao que foi pedido",
+                "não encontrei registros",
+                "nao encontrei registros",
+                "nenhum registro pertinente",
+                "não foi possível localizar",
+                "não localizei registros",
+                "registros encontrados não",
+            )
+            rejected = any(p in content for p in rejection_phrases)
+            hits = sum(1 for c in pert_codes if c in content)
+            name_hits = sum(
+                1
+                for n in oracle_names
+                if len(n) > 12 and n[:40] in content
+            )
+            want_n = int(exp.get("min_records") or 1)
             if latest and run.get("oracle_latest"):
                 outcome = (
                     "PASS" if run["oracle_latest"].lower() in content
@@ -411,18 +726,50 @@ def classify_x(sc, run):
                 c in content for c in exp["referent_codes"]
             ):
                 outcome = "PASS"
-            elif subj and (subj in content or "term." in content):
+            elif (
+                not pert_codes
+                and oracle.get("status") == "COMPLETED"
+            ):
+                # Legitimate absence verified by the authoritative
+                # oracle: an honest empty/limitation answer is the
+                # correct business outcome — a delivered record would
+                # be fabrication.
+                delivered = name_hits or (
+                    "código do produto" in content
+                    or "codigo do produto" in content
+                )
+                outcome = "FAIL" if delivered else "PASS"
+                if delivered:
+                    first = first or "FABRICATED_ABSENCE"
+            elif rejected:
+                outcome, first = "FAIL", first or "EVIDENCE_REJECTION"
+            elif hits >= want_n or name_hits >= want_n:
                 outcome = "PASS"
-            elif "registros" in content or "encontrei" in content or "total" in content:
-                outcome = "PARTIAL"
+            elif pert_codes and (hits or name_hits):
+                outcome, first = (
+                    "PARTIAL", first or "COMPLETENESS"
+                )
+            elif subj and subj in content and pert_codes:
+                # subject echoed but no authoritative fact delivered
+                outcome, first = "FAIL", first or "UNGROUNDED_ANSWER"
             else:
                 outcome = "FAIL"
                 first = first or "EVIDENCE_RELEVANCE"
     else:  # any_read
         want = exp.get("want_owner")
         if want:
-            hit = any(c.startswith(want + ".") for c in invoked)
-            if hit:
+            hit = any(
+                c.startswith(want + ".") and
+                i.get("status") == "COMPLETED"
+                for c, i in
+                ((i["capability_id"], i) for i in invokes)
+            )
+            refusal = any(
+                p in content for p in
+                ("não consegui", "nao consegui", "não foi possível",
+                 "não tenho acesso", "indisponível")
+            )
+            if hit and not refusal:
                 outcome = "PASS"
             elif invoked:
                 outcome, first = "FAIL", "GROUP_SELECTION_ERROR"
@@ -459,8 +806,25 @@ def main() -> int:
     proposals = _spy_propose(orch)
     invokes = _spy_invokes(orch._providers)
 
+    # CORPUS_SET selects the evaluation pool: "main" (incident+base,
+    # the development corpus), "heldout" (frozen generalization set),
+    # or "all". Default "main" preserves the Task 19 battery shape.
+    import os
+
+    corpus_pool = {
+        "main": list(INCIDENT_CORPUS) + list(BASE_CORPUS),
+        "heldout": list(HELD_OUT_CORPUS),
+        "all": list(INCIDENT_CORPUS)
+        + list(BASE_CORPUS)
+        + list(HELD_OUT_CORPUS),
+    }
+    pool = corpus_pool.get(
+        os.environ.get("CORPUS_SET", "main").strip().lower(),
+        corpus_pool["main"],
+    )
     scenarios = [
-        sc for sc in list(INCIDENT_CORPUS) + list(BASE_CORPUS)
+        sc
+        for sc in pool
         if SCENARIO_FILTER is None or sc.sid in SCENARIO_FILTER
     ]
 
@@ -468,9 +832,19 @@ def main() -> int:
     oracle_cache = {}
     for sc in scenarios:
         if sc.oracle_query and sc.sid not in oracle_cache:
-            oracle_cache[sc.sid] = _fetch_oracle_records(
-                orch._providers, sc.oracle_query, bearer
-            )
+            remote, args = sc.oracle_query
+            if remote == "delpi.search_products":
+                # direct OpenAPI provider was removed — the only live
+                # oracle path is the governed DAVI discover/execute.
+                oracle_cache[sc.sid] = _davi_product_oracle(
+                    orch._providers,
+                    args if args.get("code") else args.get("description"),
+                    bearer,
+                )
+            else:
+                oracle_cache[sc.sid] = _fetch_oracle_records(
+                    orch._providers, sc.oracle_query, bearer
+                )
     latest_code = _teo_latest_code(orch._providers, bearer)
     print("ORACLE_LATEST_PROCESS:", latest_code, flush=True)
     print(

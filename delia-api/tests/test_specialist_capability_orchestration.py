@@ -1071,6 +1071,15 @@ MULTI_CANDIDATE_RESULT = RemoteToolOutcome(
                 },
                 "required_arguments": ["description"],
             },
+            {
+                "action_id": "list_product_catalog",
+                "candidate_token": "tok-catalog",
+                "description": "Lista o catalogo de produtos",
+                "argument_schema": {
+                    "type": "object",
+                    "properties": {"page": {"type": "integer"}},
+                },
+            },
         ]
     },
 )

@@ -82,6 +82,9 @@ class ProcessContextService:
         processo = ProcessoRepository().get(processo_id)
         if not processo:
             raise GptActionsError("Processo não encontrado.", 404)
+        # The caller may have sent the business code (PROC-XXXX) —
+        # downstream instance/revision lookups need the internal id.
+        processo_id = str(processo.get("processo_id") or processo_id)
 
         process_json = row_to_json(processo) or {}
 

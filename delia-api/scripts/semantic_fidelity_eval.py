@@ -157,22 +157,22 @@ CORPUS = [
         ),
         min_records=1,
         oracle_query=(
-            "delpi.get_product_summary", {"code": "10080092"}
+            "delpi.search_products", {"code": "10080092"}
         ),
     ),
     # --- nomenclature / metamorphic family (4)
     _product("nom_colloq",
              "me mostra ilhós pra cabo de 4 milímetros",
-             "ilhós", 0),
+             "ilhós pra cabo de 4 milímetros", 0),
     _product("nom_technical",
              "busque TERM. BALA 0,50-2,27MM2",
              "TERM. BALA", 0),
     _product("nom_incomplete",
              "tem algum terminal pra fio de 2,5mm?",
-             "terminal", 0),
+             "terminal 2,5mm", 0),
     _product("nom_multi",
              "procure terminal tubular pré-isolado azul 2,5mm",
-             "terminal tubular", 0),
+             "terminal tubular azul 2,5mm", 0),
     # --- conversational continuity (4)
     Scenario(
         sid="cont_explicit",
@@ -185,7 +185,7 @@ CORPUS = [
         min_records=1,
         oracle_query=(
             "delpi.search_products",
-            {"description": "terminal bala"},
+            {"description": "terminal bala 4mm"},
         ),
         prior_turns=(
             _u("quero ver terminal bala"),
@@ -527,30 +527,79 @@ def _safe_json(raw: str) -> bool:
 
 
 def _fetch_oracle_records(providers, spec, bearer) -> dict:
-    """Invoke the owner read directly; return real codes+names."""
+    """Invoke the owner read through the live governed path; return
+    real codes+names. ``delpi.*`` actions are only reachable via the
+    DAVI discover→execute chain — never a direct OpenAPI call."""
     remote, args = spec
-    for provider in providers.values():
-        surface = provider.list_groups(
-            correlation_id="oracle-build"
-        )
-        for group in getattr(surface, "groups", ()):
-            for cap in getattr(group, "capabilities", ()):
-                if cap.remote_name == remote or (
-                    cap.capability_id.endswith(remote.split(".")[-1])
-                    and remote in cap.capability_id
-                ):
-                    binding = bind_subject_bearer(bearer)
-                    try:
+    binding = bind_subject_bearer(bearer)
+    try:
+        if remote.startswith("delpi."):
+            return _davi_action_oracle(
+                providers, remote.rsplit(".", 1)[-1], args
+            )
+        for provider in providers.values():
+            surface = provider.list_groups(
+                correlation_id="oracle-build"
+            )
+            for group in getattr(surface, "groups", ()):
+                for cap in getattr(group, "capabilities", ()):
+                    if cap.remote_name == remote or (
+                        cap.capability_id.endswith(
+                            remote.split(".")[-1]
+                        )
+                        and remote in cap.capability_id
+                    ):
                         outcome = provider.invoke(
                             cap,
                             args,
                             correlation_id="oracle-build",
                         )
-                    finally:
-                        unbind_subject_bearer(binding)
-                    return _records_from(
-                        outcome, subject=args.get("description")
-                    )
+                        return _records_from(
+                            outcome, subject=args.get("description")
+                        )
+    finally:
+        unbind_subject_bearer(binding)
+    return {"status": "UNAVAILABLE", "codes": [], "names": []}
+
+
+def _davi_action_oracle(providers, action_id: str, args: dict) -> dict:
+    """Authorized oracle via the governed DAVI discover→execute
+    chain — the same flow a turn must use for DELPI actions."""
+    for provider in providers.values():
+        surface = provider.list_groups(correlation_id="oracle-davi")
+        caps = {
+            c.capability_id: c
+            for gr in getattr(surface, "groups", ())
+            for c in getattr(gr, "capabilities", ())
+        }
+        disc = caps.get("davi.discover_delpi_information")
+        exc = caps.get("davi.execute_delpi_information")
+        if not (disc and exc):
+            continue
+        out = provider.invoke(
+            disc,
+            {"query": "buscar produtos cadastrados"},
+            correlation_id="oracle-davi-disc",
+        )
+        candidates = (out.structured or {}).get("candidates") or []
+        token = next(
+            (
+                c["candidate_token"]
+                for c in candidates
+                if c.get("action_id") == action_id
+            ),
+            None,
+        )
+        if not token:
+            return {"status": "NO_CANDIDATE", "codes": [], "names": []}
+        inner = {"page_size": 10}
+        inner.update({k: v for k, v in (args or {}).items() if v})
+        out2 = provider.invoke(
+            exc,
+            {"candidate_token": token, "arguments": inner},
+            correlation_id="oracle-davi-exec",
+        )
+        return _records_from(out2, subject=args.get("description"))
     return {"status": "UNAVAILABLE", "codes": [], "names": []}
 
 
@@ -578,8 +627,15 @@ def _records_from(outcome, subject: str | None = None) -> dict:
     for item in items:
         if not isinstance(item, dict):
             continue
-        code = item.get("code") or item.get("id")
-        name = item.get("name") or item.get("description") or ""
+        code = item.get("code") or item.get("id") or item.get(
+            "product_code"
+        )
+        name = (
+            item.get("name")
+            or item.get("description")
+            or item.get("product_description")
+            or ""
+        )
         if code:
             codes.append(str(code))
             low = name.lower()
@@ -758,6 +814,20 @@ def classify(sc: Scenario, run: dict) -> dict:
             outcome = "PASS"
         elif hit:
             outcome = "PARTIAL"
+        elif oracle.get("status") == "COMPLETED" and not oracle_codes:
+            # Legitimate absence: the authoritative oracle verified the
+            # owner holds no records for the asked designation. An
+            # honest empty/limitation answer is the correct business
+            # outcome — any delivered record would be fabrication.
+            lower = content.lower()
+            delivered = (
+                "código do produto" in lower
+                or "registros:" in lower
+                or "exemplo" in lower and "código" in lower
+            )
+            outcome = "FAIL" if delivered else "PASS"
+            if delivered:
+                first = first or "FABRICATED_ABSENCE"
         else:
             outcome = "FAIL"
         if (

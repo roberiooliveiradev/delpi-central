@@ -166,6 +166,7 @@ from app.application.capability_provision.outcome_assessment import (
     EvidenceFacts,
     GoalEvidenceJudgment,
     OutcomeVerdict,
+    parse_temporal_value,
     apply_verdict_limitation,
     assess_outcome,
     distinct_delivered_count,
@@ -2659,6 +2660,283 @@ def _single_free_text_argument_from_input(
     candidate = {field: text[:MAX_DESCRIPTION_CHARS]}
     return _validate_instance(candidate, descriptor.input_schema)
 
+_FREE_TEXT_ARGUMENT_KEYS = frozenset(
+    {"description", "search", "query", "text", "name", "q", "term", "keyword"}
+)
+
+
+def _free_text_is_verbatim_request(
+    arguments: Mapping[str, Any],
+    input_text: str,
+    business_subject: str | None,
+) -> bool:
+    """True when a declared free-text search field carries the user
+    request verbatim (or verbatim minus punctuation) — the invariant
+    the arguments contract declares invalid.
+
+    Structural check only: it compares the emitted value against the
+    literal request and the governed subject; it never rewrites,
+    truncates or derives any argument value.
+    """
+
+    request = (input_text or "").strip().strip("?!.").lower()
+    if not request:
+        return False
+    subject = (business_subject or "").strip().lower()
+    for key in _FREE_TEXT_ARGUMENT_KEYS:
+        value = arguments.get(key)
+        if not isinstance(value, str):
+            continue
+        normalized = value.strip().strip("?!.").lower()
+        if not normalized:
+            continue
+        if normalized == request:
+            return True
+        if subject and normalized == subject:
+            continue
+        # The request minus politeness/question words still verbatim —
+        # a value contained in (or containing) the literal request is
+        # verbiage, not a formulated subject.
+        if (
+            subject
+            and normalized != subject
+            and (normalized in request or request in normalized)
+        ):
+            return True
+    return False
+
+
+_IDENTIFIER_ARG_KEY_RE = re.compile(
+    r"(^id$|_id$|^code$|_code$|_reference$)", re.IGNORECASE
+)
+_IDENTIFIER_LITERAL_RE = re.compile(r"[A-Za-z]{2,}[-_]\d{3,}|\d{5,}")
+
+
+def _candidate_needs_missing_identifier(
+    candidate: Mapping[str, Any],
+    input_text: str,
+) -> bool:
+    """True when the candidate declares a required identifier-typed
+    argument and the request supplies no identifier-like literal.
+
+    Same dead-end rule the resolver stage applies: a candidate that
+    cannot run without a missing identifier can never satisfy the
+    turn, so it is excluded from the selection set — selection stays
+    a model proposal over the executable remainder.
+    """
+    required = candidate.get("required_arguments")
+    if not isinstance(required, (list, tuple)) or not required:
+        return False
+    if not any(
+        _IDENTIFIER_ARG_KEY_RE.search(str(r)) for r in required
+    ):
+        return False
+    return not _IDENTIFIER_LITERAL_RE.search(input_text or "")
+
+
+def _capability_needs_missing_identifier(
+    descriptor: ProviderCapability,
+    input_text: str,
+) -> bool:
+    """True when the capability's required schema keys include an
+    identifier-typed field the request supplies no literal for.
+
+    Same dead-end rule applied to owner candidates: a capability
+    that cannot run without an unstated identifier can never satisfy
+    the turn by itself — the resolver step is the legitimate way to
+    obtain the identifier first.
+    """
+    _properties, required = _schema_keys(descriptor)
+    if not required:
+        return False
+    if not any(_IDENTIFIER_ARG_KEY_RE.search(k) for k in required):
+        return False
+    return not _IDENTIFIER_LITERAL_RE.search(input_text or "")
+
+
+_NAMED_PROVIDER_RE = re.compile(
+    r"\bmcp[\s:_-]*([a-z][a-z0-9_-]+)", re.IGNORECASE
+)
+
+
+def _named_provider_tokens(input_text: str) -> frozenset[str]:
+    """Provider ids the request explicitly invokes ("use o mcp sap").
+
+    Lexical, bounded: only the ``mcp <name>`` mention form counts —
+    a named surface the user asks for is a declared part of the
+    request contract, never inferred from loose words.
+    """
+    return frozenset(
+        m.group(1).lower()
+        for m in _NAMED_PROVIDER_RE.finditer(input_text or "")
+    )
+
+
+def _group_short_ids(
+    groups: Mapping[str, CapabilityGroup],
+) -> frozenset[str]:
+    """Short provider ids of live groups (``mcp:<id>`` → ``<id>``)."""
+    return frozenset(
+        key.split(":", 1)[-1].strip().lower() for key in groups
+    )
+
+
+def _edit_distance_leq(a: str, b: str, limit: int) -> bool:
+    """True when Levenshtein(a, b) <= limit (bounded DP)."""
+
+    if abs(len(a) - len(b)) > limit:
+        return False
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        row_min = i
+        for j, cb in enumerate(b, 1):
+            v = min(
+                prev[j] + 1,
+                cur[j - 1] + 1,
+                prev[j - 1] + (0 if ca == cb else 1),
+            )
+            cur.append(v)
+            row_min = min(row_min, v)
+        if row_min > limit:
+            return False
+        prev = cur
+    return prev[-1] <= limit
+
+
+def _nearest_capability_name(
+    remote_name: str,
+    candidates: Sequence[ProviderCapability],
+) -> ProviderCapability | None:
+    """Bind a mistyped remote_name to exactly one live capability.
+
+    Small models occasionally drop or transpose a character in a name
+    they saw ("discover_delp_information"). The correction is only
+    ever applied when EXACTLY ONE listed capability is within the
+    bounded edit distance — ambiguity still fails closed.
+    """
+
+    normalized = re.sub(r"[^a-z0-9]", "", remote_name.lower())
+    if not normalized:
+        return None
+    limit = 2 if len(normalized) >= 12 else 1
+    matches = [
+        cap
+        for cap in candidates
+        if _edit_distance_leq(
+            normalized,
+            re.sub(r"[^a-z0-9]", "", cap.remote_name.lower()),
+            limit,
+        )
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
+def _elide_unproven_optional_args(
+    arguments: Mapping[str, Any],
+    descriptor: ProviderCapability,
+    input_text: str,
+    workspace_context: WorkspaceContext | None,
+) -> dict[str, Any]:
+    """Elide OPTIONAL argument values the turn cannot support —
+    never rewrite, never invent.
+
+    The arguments contract forbids fabricated values; an optional
+    field carrying an empty string, a literal "none"/"null" marker,
+    or a value absent from every provenance source (user message,
+    workspace context, owner-declared schema literals) is an invented
+    constraint that would make the owner reject or mis-filter the
+    call. Free-text search fields are exempt — reformulating the
+    governed subject is their declared job. Required keys are
+    untouched — an unsatisfiable required input stays a
+    missing-input signal.
+    """
+
+    _, required = _schema_keys(descriptor)
+    haystack_parts = [input_text or ""]
+    if workspace_context is not None:
+        haystack_parts.append(workspace_context.to_prompt_block())
+    haystack_parts.append(_schema_declared_literals(descriptor))
+    haystack = "\n".join(haystack_parts)
+    cleaned: dict[str, Any] = {}
+    for key, value in list(arguments.items())[:MAX_ARGUMENT_KEYS]:
+        if str(key) in required:
+            cleaned[key] = value
+            continue
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped or stripped.lower() in {"none", "null"}:
+                continue
+            if _TEMPORAL_ARG_KEY_RE.search(str(key)) and (
+                parse_temporal_value(stripped) is not None
+                or str(key).endswith("_field")
+            ) and stripped not in haystack:
+                # Invented temporal/period filter — no provenance.
+                continue
+        cleaned[key] = value
+    return cleaned
+
+
+_NULL_LITERAL_ARG_VALUES = frozenset({"none", "null"})
+
+# Orchestration block field names the arguments payload itself
+# projects (subject/declared-requirements/evidence context). A model
+# that echoes one of these keys back inside "arguments" reproduced
+# our own context field, not an owner-declared input — recognizable
+# artifact, dropped only when the owner schema does not declare it.
+_ORCHESTRATION_BLOCK_ARG_KEYS = frozenset(
+    {
+        "business_subject",
+        "declared_requirements",
+        "owner_vocabulary",
+        "foreign_evidence",
+        "relevance_feedback",
+    }
+)
+
+
+def _drop_orchestration_field_args(
+    arguments: Mapping[str, Any],
+    schema: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    declared = (
+        schema.get("properties") if isinstance(schema, Mapping) else None
+    )
+    declared = declared if isinstance(declared, Mapping) else {}
+    return {
+        key: value
+        for key, value in list(arguments.items())[:MAX_ARGUMENT_KEYS]
+        if key in declared
+        or str(key) not in _ORCHESTRATION_BLOCK_ARG_KEYS
+    }
+
+
+def _drop_null_literal_args(
+    arguments: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Drop literal ``None``/``"None"``/``"null"`` markers from a
+    proposal — model serialization artifacts, never business values.
+    Applied before schema validation so a required key carrying the
+    marker still surfaces as a missing input instead of reaching the
+    owner."""
+    return {
+        key: value
+        for key, value in list(arguments.items())[:MAX_ARGUMENT_KEYS]
+        if value is not None
+        and not (
+            isinstance(value, str)
+            and value.strip().lower() in _NULL_LITERAL_ARG_VALUES
+        )
+    }
+
+
+_TEMPORAL_ARG_KEY_RE = re.compile(
+    r"date|time|_from|^from|_to$|^to$|since|until|period|competencia"
+    r"|year|month|day",
+    re.IGNORECASE,
+)
+
+
 def _deterministic_arguments_from_schema(
     descriptor: ProviderCapability,
 ) -> dict[str, Any] | None:
@@ -3005,6 +3283,11 @@ def _capability_payload(
             "operation_class": cap.operation_class.value,
             "argument_keys": sorted(_schema_keys(cap)[0]),
             "required": sorted(_schema_keys(cap)[1]),
+            "requires_identifier": any(
+                _canonical_key(k) == "id"
+                or _canonical_key(k).endswith("id")
+                for k in _schema_keys(cap)[1]
+            ),
         }
         # R2: compact role derived only from operation_class — helps
         # coverage-inquiry selection without provider-specific names.
@@ -5108,8 +5391,12 @@ class OperationalCapabilityOrchestrator:
                 input_text,
                 discovery,
                 workspace_context,
-                prior_turns,
-                deadline,
+                business_subject=(
+                    goal.business_subject if goal is not None else None
+                ),
+                prior_turns=prior_turns,
+                correlation=correlation,
+                deadline=deadline,
             )
             if discovery_arguments is not None:
                 try:
@@ -5535,10 +5822,22 @@ class OperationalCapabilityOrchestrator:
             # for an identifier the owner itself can resolve, run one
             # bounded same-owner non-mutating capability and rebuild
             # the target arguments from its evidence.
+            # The step exists for resolvable gaps only — identifier-
+            # or designation-typed inputs an owner read can supply.
+            # A business-field gap (a status field, a quantity, a
+            # mutation-body property) is user input no read resolves;
+            # clarifying is the only honest outcome, so the resolver
+            # never fires.
+            if not any(
+                _IDENTIFIER_ARG_KEY_RE.search(str(m))
+                or _canonical_key(str(m)) in _FREE_TEXT_ARGUMENT_KEYS
+                for m in missing_inputs
+            ):
+                resolved = self._Resolution()
             # After a self-index probe, skip foreign/same-owner resolver
             # fan-out that could invent ids — index options already
             # exhausted the legitimate vocabulary for this capability.
-            if self_index_ran and index_declared_ids is not None:
+            elif self_index_ran and index_declared_ids is not None:
                 resolved = self._Resolution()
             elif not self._budget_allows_resolver(deadline):
                 # Stage 05 latency: resolver fan-out is optional
@@ -6094,56 +6393,78 @@ class OperationalCapabilityOrchestrator:
         the target arguments. Ambiguous owner answers produce a
         candidate clarification — never a silent pick; an invented id
         that cannot be proven in the owner result fails closed.
+
+        Bounded retry: a resolver candidate that is itself unusable
+        (arguments cannot be satisfied without the missing input, or
+        the model declined while eligible candidates remain) is
+        excluded and one further selection is tried — selection stays
+        a model proposal, never a deterministic pick.
         """
-        resolver = self._select_resolver(
-            input_text,
-            descriptor,
-            missing_inputs,
-            group,
-            workspace_context,
-            prior_turns,
-            correlation,
-            deadline,
-        )
-        if resolver is None:
-            return self._Resolution()
-        # Rebuild the bounded plan with the resolver step and
-        # revalidate every step against the live surface.
-        plan = self._build_plan(
-            input_text,
-            descriptor,
-            group,
-            discovery,
-            correlation,
-            resolver=resolver,
-            foreign=foreign,
-            foreign_group=foreign_group,
-        )
-        if plan is None:
-            return self._Resolution()
-        _logger.info(
-            "orchestration stage=resolver decision=selected "
-            "capability=%s class=%s missing=%d correlation_id=%s",
-            resolver.remote_name,
-            resolver.operation_class.value,
-            len(missing_inputs),
-            correlation,
-        )
-        resolver_arguments, resolver_missing = self._build_arguments(
-            input_text,
-            resolver,
-            workspace_context,
-            correlation=correlation,
-            prior_turns=prior_turns,
-            deadline=deadline,
-        )
-        if resolver_arguments is None:
+        attempted: set[str] = set()
+        resolver: ProviderCapability | None = None
+        plan = None
+        resolver_arguments: dict[str, Any] | None = None
+        resolver_missing: tuple[str, ...] = ()
+        for _attempt in range(2):
+            resolver = self._select_resolver(
+                input_text,
+                descriptor,
+                missing_inputs,
+                group,
+                workspace_context,
+                prior_turns,
+                correlation,
+                deadline,
+                exclude=frozenset(attempted),
+            )
+            if resolver is None:
+                if _attempt == 0:
+                    # One bounded retry when eligible candidates may
+                    # remain — a declined selection is not proof no
+                    # resolver exists.
+                    continue
+                break
+            # Rebuild the bounded plan with the resolver step and
+            # revalidate every step against the live surface.
+            plan = self._build_plan(
+                input_text,
+                descriptor,
+                group,
+                discovery,
+                correlation,
+                resolver=resolver,
+                foreign=foreign,
+                foreign_group=foreign_group,
+            )
+            if plan is None:
+                return self._Resolution()
+            _logger.info(
+                "orchestration stage=resolver decision=selected "
+                "capability=%s class=%s missing=%d correlation_id=%s",
+                resolver.remote_name,
+                resolver.operation_class.value,
+                len(missing_inputs),
+                correlation,
+            )
+            resolver_arguments, resolver_missing = self._build_arguments(
+                input_text,
+                resolver,
+                workspace_context,
+                correlation=correlation,
+                prior_turns=prior_turns,
+                deadline=deadline,
+            )
+            if resolver_arguments is not None:
+                break
             _logger.info(
                 "orchestration stage=resolver decision=args_failed "
                 "missing=%d correlation_id=%s",
                 len(resolver_missing),
                 correlation,
             )
+            attempted.add(resolver.remote_name)
+            resolver = None
+        if resolver is None or resolver_arguments is None:
             return self._Resolution()
         if _unproven_identifier_inputs(
             resolver_arguments,
@@ -6294,17 +6615,26 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...],
         correlation: str,
         deadline: TurnDeadline,
+        exclude: frozenset[str] = frozenset(),
     ) -> ProviderCapability | None:
         """One bounded proposal for a same-owner non-mutating resolver.
 
         Eligible classes: DISCOVERY | READ | ANALYSIS. The target
-        itself, candidate-bound executors and write classes are never
-        eligible. The proposal is revalidated deterministically.
+        itself, candidate-bound executors, write classes and
+        capabilities already attempted and excluded by the bounded
+        retry are never eligible. The proposal is revalidated
+        deterministically.
         """
+        missing_is_identifier = any(
+            _canonical_key(m) == "id"
+            or _canonical_key(m).endswith("id")
+            for m in missing_inputs
+        )
         eligible = [
             cap
             for cap in group.capabilities
             if cap.remote_name != descriptor.remote_name
+            and cap.remote_name not in exclude
             and cap.operation_class
             in (
                 SpecialistOperationClass.DISCOVERY,
@@ -6313,6 +6643,19 @@ class OperationalCapabilityOrchestrator:
             )
             and not _is_candidate_bound(cap)
             and not _is_proposal_bound(cap)
+            # Dead ends (§6.140 G1): a candidate that itself requires
+            # an identifier the request does not state can never
+            # supply the missing input — and when the missing input
+            # is identifier-typed, a capability-discovery surface
+            # emits capability metadata, never entity identifiers.
+            and not _capability_needs_missing_identifier(
+                cap, input_text
+            )
+            and not (
+                missing_is_identifier
+                and cap.operation_class
+                is SpecialistOperationClass.DISCOVERY
+            )
         ]
         if not eligible:
             return None
@@ -6332,6 +6675,11 @@ class OperationalCapabilityOrchestrator:
                         :MAX_DESCRIPTION_CHARS
                     ],
                     "required": sorted(_schema_keys(cap)[1]),
+                    "requires_identifier": any(
+                        _canonical_key(k) == "id"
+                        or _canonical_key(k).endswith("id")
+                        for k in _schema_keys(cap)[1]
+                    ),
                 }
                 for cap in eligible[:MAX_SURFACE_ENTRIES]
             ],
@@ -7109,6 +7457,24 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             status = "inconclusive"
+        if status == "foreign_evidence_required" and any(
+            cap.operation_class is SpecialistOperationClass.DISCOVERY
+            and invocable_in_interactive_phase(cap.operation_class)
+            for cap in group.capabilities
+        ):
+            # Contract guard (v30): a native discovery/resolution
+            # capability on this surface IS the designation resolver —
+            # the instruction declares foreign evidence never required
+            # for designation in that case, so the emitted status
+            # violates a declared invariant and is rejected to the
+            # native default, exactly like an out-of-vocabulary status.
+            _logger.info(
+                "orchestration stage=native_assessment "
+                "decision=foreign_rejected_native_resolver "
+                "correlation_id=%s",
+                correlation,
+            )
+            status = "sufficient"
         _logger.info(
             "orchestration stage=native_assessment decision=%s "
             "correlation_id=%s",
@@ -9885,6 +10251,9 @@ class OperationalCapabilityOrchestrator:
                 input_text,
                 discovery_cap,
                 workspace_context,
+                business_subject=(
+                    goal.business_subject if goal is not None else None
+                ),
                 prior_turns=prior_turns,
                 deadline=deadline,
             )
@@ -10665,14 +11034,76 @@ class OperationalCapabilityOrchestrator:
             "ambiguous",
         }:
             return None, False
+        if interaction_class == "surface_inquiry" and requires:
+            # Declared-invariant violation: the instruction defines
+            # surface_inquiry as "requires stays false" — a true flag
+            # in the same proposal makes the pair contradictory.
+            # One bounded re-proposal (same malformed-output precedent
+            # as the other stages); if the contradiction repeats, the
+            # instruction's own asymmetry rule applies — a missed
+            # owner path fabricates business facts — so it resolves
+            # to the owner path, never the listing.
+            _logger.info(
+                "orchestration stage=interaction_admission "
+                "decision=surface_inquiry_requires_contradiction "
+                "correlation_id=%s",
+                correlation,
+            )
+            try:
+                retry = self._propose(
+                    input_text,
+                    block_tag="admission",
+                    block_payload=(
+                        '{"owner_surfaces":"live governed owner '
+                        'surfaces exist; their catalog is listed '
+                        'only after admission - decide whether '
+                        'the request requires governed owner '
+                        'data or can be answered '
+                        'conversationally"}'
+                    ),
+                    instruction_id=INTERACTION_ADMISSION_INSTRUCTION_ID,
+                    instruction=self._instruction(
+                        INTERACTION_ADMISSION_INSTRUCTION_ID
+                    ),
+                    expected_fields=(
+                        "requires_owner_surface",
+                        "interaction_class",
+                    ),
+                    input_kind="interaction_admission",
+                    allowed_keys=frozenset(
+                        {
+                            "requires_owner_surface",
+                            "interaction_class",
+                            "limitations",
+                        }
+                    ),
+                    workspace_context=workspace_context,
+                    prior_turns=prior_turns,
+                    correlation=correlation,
+                    deadline=deadline,
+                )
+            except _StageDeadlineExceeded:
+                retry = None
+            if isinstance(retry, Mapping):
+                r_raw = retry.get("requires_owner_surface")
+                r_class = retry.get("interaction_class")
+                if (
+                    isinstance(r_class, str)
+                    and r_class.strip().lower() == "surface_inquiry"
+                    and r_raw is False
+                ):
+                    # The retry produced the coherent pair — the
+                    # surface listing stands.
+                    return "surface_inquiry", True
+            # Persistent contradiction: the typed class is the
+            # semantic statement — the deterministic surface listing
+            # is bounded live metadata and never fabricates business
+            # facts, so it is the fail-safe resolution.
+            return "surface_inquiry", True
         if interaction_class == "surface_inquiry":
             # The typed class is the semantic statement: a surface
             # inquiry is answered by the deterministic live-surface
-            # projection — bounded, read-only, never an invocation. A
-            # contradictory requires_owner_surface flag in the same
-            # proposal is output noise and never vetoes the listing;
-            # it only vetoes free-form classes (below), where skipping
-            # the owner path could suppress real data.
+            # projection — bounded, read-only, never an invocation.
             return interaction_class, True
         if requires or interaction_class in {"operational", "ambiguous"}:
             _logger.info(
@@ -10729,6 +11160,20 @@ class OperationalCapabilityOrchestrator:
         # Missing/timeout proposals fail closed to not_applicable —
         # including when only one live group exists — so unproven
         # relevance cannot start an operational owner invoke.
+        # Declared contract clause enforced deterministically: when the
+        # request explicitly names a provider ("use o mcp sap") that no
+        # live group owns, the instruction declares it non-applicable —
+        # an honest limitation, never a silent substitution.
+        named = _named_provider_tokens(input_text)
+        if named and named.isdisjoint(_group_short_ids(groups)):
+            _logger.info(
+                "orchestration stage=select_group "
+                "decision=named_provider_absent named=%s "
+                "correlation_id=%s",
+                sorted(named),
+                correlation,
+            )
+            return ("not_applicable", None)
         observation = _prior_observation_context(prior_turns)
         group_payload = _group_summaries(
             groups,
@@ -10843,6 +11288,8 @@ class OperationalCapabilityOrchestrator:
             None,
         )
         if match is None:
+            match = _nearest_capability_name(remote_name, invocable)
+        if match is None:
             return ("inconclusive", None)
         return ("selected", match)
 
@@ -10937,9 +11384,85 @@ class OperationalCapabilityOrchestrator:
             correlation=correlation,
             deadline=deadline,
         )
-        return self._capability_from_selection_proposal(
+        status, descriptor = self._capability_from_selection_proposal(
             proposal, invocable
         )
+        if (
+            status == "selected"
+            and _capability_needs_missing_identifier(
+                descriptor, input_text
+            )
+            and any(
+                cap is not descriptor
+                and not _capability_needs_missing_identifier(
+                    cap, input_text
+                )
+                for cap in invocable
+            )
+        ):
+            # Declared-clause violation: the instruction forbids a
+            # capability requiring an identifier the request never
+            # stated while an executable alternative is listed. One
+            # bounded re-proposal — the first selection is kept when
+            # the retry also fails the clause (the resolver step may
+            # still legitimately produce the identifier).
+            _logger.info(
+                "orchestration stage=select_capability "
+                "decision=identifier_clause_retry capability=%s "
+                "correlation_id=%s",
+                descriptor.remote_name,
+                correlation,
+            )
+            # The violating pick is removed from the retry's projected
+            # surface — a clause violation may not be re-proposed
+            # (same exclusion the resolver retry applies to attempted
+            # names).
+            retry_group = dataclasses.replace(
+                group,
+                capabilities=tuple(
+                    cap
+                    for cap in group.capabilities
+                    if cap.remote_name != descriptor.remote_name
+                ),
+            )
+            retry_payload = _capability_payload(
+                retry_group,
+                prior_observation=observation,
+                business_subject=business_subject,
+            )
+            retry_visible = _projected_capability_names(retry_payload)
+            retry_invocable = [
+                cap
+                for cap in invocable
+                if cap.remote_name != descriptor.remote_name
+                and cap.remote_name in retry_visible
+            ]
+            retry = self._propose(
+                input_text,
+                block_tag="capabilities",
+                block_payload=retry_payload,
+                instruction_id=CAPABILITY_SELECTION_INSTRUCTION_ID,
+                instruction=self._instruction(
+                    CAPABILITY_SELECTION_INSTRUCTION_ID
+                ),
+                expected_fields=("applicable", "remote_name"),
+                input_kind="capability_selection",
+                allowed_keys=frozenset(
+                    {"applicable", "remote_name", "limitations"}
+                ),
+                workspace_context=workspace_context,
+                prior_turns=(),
+                correlation=correlation,
+                deadline=deadline,
+            )
+            alt_status, alt = self._capability_from_selection_proposal(
+                retry, retry_invocable
+            )
+            if alt_status == "selected" and not (
+                _capability_needs_missing_identifier(alt, input_text)
+            ):
+                return (alt_status, alt)
+        return (status, descriptor)
 
     def _select_capability_with_goal(
         self,
@@ -11018,6 +11541,70 @@ class OperationalCapabilityOrchestrator:
         cap_status, descriptor = self._capability_from_selection_proposal(
             proposal, invocable
         )
+        if (
+            cap_status == "selected"
+            and _capability_needs_missing_identifier(
+                descriptor, input_text
+            )
+            and any(
+                cap is not descriptor
+                and not _capability_needs_missing_identifier(
+                    cap, input_text
+                )
+                for cap in invocable
+            )
+        ):
+            # Same declared-clause bounded retry as _select_capability,
+            # with the violating pick excluded from the retry surface.
+            _logger.info(
+                "orchestration stage=select_capability "
+                "decision=identifier_clause_retry capability=%s "
+                "correlation_id=%s",
+                descriptor.remote_name,
+                correlation,
+            )
+            retry_group = dataclasses.replace(
+                group,
+                capabilities=tuple(
+                    cap
+                    for cap in group.capabilities
+                    if cap.remote_name != descriptor.remote_name
+                ),
+            )
+            retry_payload = _capability_payload(
+                retry_group,
+                prior_observation=observation,
+            )
+            retry_visible = _projected_capability_names(retry_payload)
+            retry_invocable = [
+                cap
+                for cap in invocable
+                if cap.remote_name != descriptor.remote_name
+                and cap.remote_name in retry_visible
+            ]
+            retry = self._propose(
+                input_text,
+                block_tag="capabilities",
+                block_payload=retry_payload,
+                instruction_id=CAPABILITY_SELECTION_INSTRUCTION_ID,
+                instruction=self._capability_goal_instruction,
+                instruction_version=self._cri_instruction_version,
+                expected_fields=("applicable", "remote_name"),
+                input_kind="capability_selection_with_goal",
+                allowed_keys=allowed,
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                correlation=correlation,
+                deadline=deadline,
+            )
+            alt_status, alt = self._capability_from_selection_proposal(
+                retry, retry_invocable
+            )
+            if alt_status == "selected" and not (
+                _capability_needs_missing_identifier(alt, input_text)
+            ):
+                proposal = retry
+                cap_status, descriptor = alt_status, alt
         if cap_status != "selected" or descriptor is None:
             return (cap_status, None, None)
         selected_goal = self._turn_goal_from_proposal(
@@ -11343,29 +11930,29 @@ class OperationalCapabilityOrchestrator:
                 evidence_blocks[evidence_key] = effective
             else:
                 evidence_blocks.pop(evidence_key, None)
+        propose_kwargs = dict(
+            block_tag="schema",
+            block_payload=arguments_payload,
+            instruction_id=ARGUMENTS_INSTRUCTION_ID,
+            instruction=self._instruction(ARGUMENTS_INSTRUCTION_ID),
+            expected_fields=("arguments",),
+            input_kind="capability_arguments",
+            allowed_keys=frozenset(
+                {
+                    "arguments",
+                    "missing_inputs",
+                    "limitations",
+                    "selections",
+                    "evidence_arguments",
+                }
+            ),
+            workspace_context=workspace_context,
+            prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
+        )
         try:
-            proposal = self._propose(
-                input_text,
-                block_tag="schema",
-                block_payload=arguments_payload,
-                instruction_id=ARGUMENTS_INSTRUCTION_ID,
-                instruction=self._instruction(ARGUMENTS_INSTRUCTION_ID),
-                expected_fields=("arguments",),
-                input_kind="capability_arguments",
-                allowed_keys=frozenset(
-                    {
-                        "arguments",
-                        "missing_inputs",
-                        "limitations",
-                        "selections",
-                        "evidence_arguments",
-                    }
-                ),
-                workspace_context=workspace_context,
-                prior_turns=prior_turns,
-                correlation=correlation,
-                deadline=deadline,
-            )
+            proposal = self._propose(input_text, **propose_kwargs)
         except _StageDeadlineExceeded as exc:
             # model_timeout on arguments remains terminal (LOOP-03R2A).
             # Only turn_budget_exhausted after selection may project a
@@ -11402,52 +11989,140 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             return None, missing
-        if proposal is None:
-            return None, ()
-        missing = _missing_inputs(proposal.get("missing_inputs"))
-        normalized = normalize_arguments(proposal.get("arguments"))
-        if normalized is None:
-            return None, missing
-        normalized = dict(normalized)
-        normalized, sel_applied, sel_rejected, sel_unbound = (
-            apply_evidence_bound_selections(
-                proposal.get("selections"),
-                normalized,
-                evidence_blocks,
+        def _validate_proposal(
+            proposal: Mapping[str, Any] | None,
+        ) -> tuple[dict[str, Any] | None, tuple[str, ...], bool]:
+            """Post-process one arguments proposal.
+
+            Returns ``(validated|None, missing, retryable)`` —
+            ``retryable`` marks model-side output failures (malformed
+            or schema-rejected payloads) that deserve one bounded
+            re-proposal; semantic terminals (declared missing inputs,
+            unbound evidence declarations) are not retried.
+            """
+            if proposal is None:
+                # No usable stage output (error/timeout taxonomy is
+                # resolved inside _propose) — terminal, not retried.
+                return None, (), False
+            missing = _missing_inputs(proposal.get("missing_inputs"))
+            normalized = normalize_arguments(proposal.get("arguments"))
+            if normalized is None:
+                # Declared missing inputs are a semantic route —
+                # the bounded resolver/clarify path handles them;
+                # only a clean arguments attempt merits a retry.
+                return None, missing, not missing
+            normalized = _drop_orchestration_field_args(
+                _drop_null_literal_args(dict(normalized)),
                 descriptor.input_schema,
-                declared=proposal.get("evidence_arguments"),
             )
-        )
-        if sel_applied or sel_rejected or sel_unbound:
+            normalized, sel_applied, sel_rejected, sel_unbound = (
+                apply_evidence_bound_selections(
+                    proposal.get("selections"),
+                    normalized,
+                    evidence_blocks,
+                    descriptor.input_schema,
+                    declared=proposal.get("evidence_arguments"),
+                )
+            )
+            if sel_applied or sel_rejected or sel_unbound:
+                _logger.info(
+                    "orchestration stage=arguments "
+                    "decision=evidence_bound applied=%d rejected=%d "
+                    "unbound=%s correlation_id=%s",
+                    sel_applied,
+                    sel_rejected,
+                    ",".join(sel_unbound) or "-",
+                    correlation,
+                )
+            if sel_unbound:
+                # Declared documental origin could not be verified —
+                # running the proposal without that value would be an
+                # unfiltered or under-filtered call the model itself
+                # flagged as evidence-dependent. Route the field names
+                # through missing_inputs so the bounded resolver/clarify
+                # path answers honestly (doc 147 / review F1).
+                missing = tuple(
+                    dict.fromkeys(list(missing) + list(sel_unbound))
+                )[:MAX_MISSING_INPUTS]
+                return None, missing, False
+            validated = _validate_instance(
+                normalized, descriptor.input_schema
+            )
+            if validated is None:
+                # Same rule: declared missing inputs route to the
+                # resolver/clarify path, never to a retry.
+                return None, missing, not missing
+            if missing and not validated:
+                # The model declared owner-required inputs absent and
+                # produced no arguments — clarify via the wording stage /
+                # deterministic ask-back. Do not heuristically invent
+                # query/limit values from free-text (doc 49 REWORK).
+                return None, missing, False
+            return validated, missing, False
+
+        validated, missing, retryable = _validate_proposal(proposal)
+        if validated is None and retryable:
+            # Bounded re-proposal: one more arguments stage attempt on
+            # model-side failure — typed validation remains the gate,
+            # fail-closed semantics unchanged.
             _logger.info(
                 "orchestration stage=arguments "
-                "decision=evidence_bound applied=%d rejected=%d "
-                "unbound=%s correlation_id=%s",
-                sel_applied,
-                sel_rejected,
-                ",".join(sel_unbound) or "-",
+                "decision=schema_rejected_retry correlation_id=%s",
                 correlation,
             )
-        if sel_unbound:
-            # Declared documental origin could not be verified —
-            # running the proposal without that value would be an
-            # unfiltered or under-filtered call the model itself
-            # flagged as evidence-dependent. Route the field names
-            # through missing_inputs so the bounded resolver/clarify
-            # path answers honestly (doc 147 / review F1).
-            missing = tuple(
-                dict.fromkeys(list(missing) + list(sel_unbound))
-            )[:MAX_MISSING_INPUTS]
-            return None, missing
-        validated = _validate_instance(normalized, descriptor.input_schema)
+            try:
+                second = self._propose(input_text, **propose_kwargs)
+            except _StageDeadlineExceeded:
+                second = None
+            second_validated, second_missing, _ = _validate_proposal(
+                second
+            )
+            if second_validated is not None:
+                validated = second_validated
+            elif not missing:
+                missing = second_missing
         if validated is None:
             return None, missing
-        if missing and not validated:
-            # The model declared owner-required inputs absent and
-            # produced no arguments — clarify via the wording stage /
-            # deterministic ask-back. Do not heuristically invent
-            # query/limit values from free-text (doc 49 REWORK).
-            return None, missing
+        elided = _elide_unproven_optional_args(
+            validated, descriptor, input_text, workspace_context
+        )
+        if len(elided) != len(validated):
+            _logger.info(
+                "orchestration stage=arguments "
+                "decision=unproven_optional_elided fields=%d "
+                "correlation_id=%s",
+                len(validated) - len(elided),
+                correlation,
+            )
+            validated = elided
+        if _free_text_is_verbatim_request(
+            validated, input_text, business_subject
+        ):
+            # Declared contract violation: the free-text field must
+            # carry the governed business_subject — binding it is
+            # contract application, not inference.
+            subject = (business_subject or "").strip()
+            if subject:
+                for key in _FREE_TEXT_ARGUMENT_KEYS:
+                    value = validated.get(key)
+                    if isinstance(value, str) and value.strip():
+                        validated[key] = subject
+                _logger.info(
+                    "orchestration stage=arguments "
+                    "decision=verbatim_subject_rebound "
+                    "correlation_id=%s",
+                    correlation,
+                )
+            else:
+                # No declared subject exists to rebind — the contract's
+                # declared binding cannot apply here; the owner remains
+                # the final validator for the proposed phrase.
+                _logger.info(
+                    "orchestration stage=arguments "
+                    "decision=verbatim_no_subject_passthrough "
+                    "correlation_id=%s",
+                    correlation,
+                )
         return validated, ()
 
     def _invoke_selected(
@@ -11879,8 +12554,22 @@ class OperationalCapabilityOrchestrator:
         if len(matching) == 1:
             return matching[0]
         if len(matching) > 1:
+            # Dead-end candidates: a candidate that requires an
+            # identifier the user never stated can never execute —
+            # same exclusion the resolver stage applies (§6.140 G1).
+            # Owner ordering and tokens stay untouched; only provably
+            # dead candidates leave the model's selection set.
+            usable = [
+                c
+                for c in matching
+                if not _candidate_needs_missing_identifier(
+                    c, input_text
+                )
+            ]
+            if len(usable) == 1:
+                return usable[0]
             return self._select_candidate(
-                matching,
+                usable if usable else matching,
                 input_text,
                 prior_turns,
                 correlation=correlation,
@@ -11918,16 +12607,29 @@ class OperationalCapabilityOrchestrator:
             action_id = action_id.strip()
             by_action.setdefault(action_id, []).append(candidate)
             description = candidate.get("description")
-            entries.append(
-                {
-                    "action_id": action_id,
-                    "description": (
-                        description
-                        if isinstance(description, str)
-                        else ""
-                    )[:MAX_DESCRIPTION_CHARS],
+            entry: dict[str, Any] = {
+                "action_id": action_id,
+                "description": (
+                    description
+                    if isinstance(description, str)
+                    else ""
+                )[:MAX_DESCRIPTION_CHARS],
+            }
+            required = candidate.get("required_arguments")
+            if isinstance(required, (list, tuple)) and required:
+                entry["required_arguments"] = [
+                    str(r) for r in required
+                ][:MAX_ARGUMENT_KEYS]
+            hints = candidate.get("semantic_hints")
+            if isinstance(hints, Mapping):
+                compact = {
+                    k: hints[k]
+                    for k in ("entity", "shape")
+                    if isinstance(hints.get(k), str)
                 }
-            )
+                if compact:
+                    entry["hints"] = compact
+            entries.append(entry)
         if not entries:
             return None
         block: dict[str, Any] = {}
@@ -11952,38 +12654,46 @@ class OperationalCapabilityOrchestrator:
                 block, "candidates", "candidates_omitted"
             ),
         )
-        proposal = self._model_stage_proposal(
-            input_text,
-            block_tag="candidates",
-            block_payload=payload,
-            instruction_id=CANDIDATE_SELECTION_INSTRUCTION_ID,
-            instruction=self._instruction(CANDIDATE_SELECTION_INSTRUCTION_ID),
-            instruction_lineage=_lineage(
+        # Bounded retry: a malformed proposal (missing keys, null or
+        # non-boolean "applicable", an action_id absent from the
+        # owner-declared set) gets one more selection attempt — an
+        # explicit ``applicable: false`` stays a terminal no-match.
+        for _attempt in range(2):
+            proposal = self._model_stage_proposal(
+                input_text,
+                block_tag="candidates",
+                block_payload=payload,
+                instruction_id=CANDIDATE_SELECTION_INSTRUCTION_ID,
+                instruction=self._instruction(CANDIDATE_SELECTION_INSTRUCTION_ID),
+                instruction_lineage=_lineage(
                     CANDIDATE_SELECTION_INSTRUCTION_ID,
                     self._instruction(CANDIDATE_SELECTION_INSTRUCTION_ID),
                 ),
-            expected_fields=("applicable", "action_id"),
-            input_kind="specialist_candidate_selection",
-            prior_turns=prior_turns,
-            correlation=correlation,
-            deadline=deadline,
-        )
-        if proposal is None:
-            return None
-        if set(proposal) - {"applicable", "action_id", "limitations"}:
-            return None
-        applicable = proposal.get("applicable")
-        if isinstance(applicable, str):
-            applicable = applicable.strip().lower() == "true"
-        if applicable is not True:
-            return None
-        action_id = proposal.get("action_id")
-        if not isinstance(action_id, str):
-            return None
-        hits = by_action.get(action_id.strip())
-        if hits is None or len(hits) != 1:
-            return None
-        return hits[0]
+                expected_fields=("applicable", "action_id"),
+                input_kind="specialist_candidate_selection",
+                prior_turns=prior_turns,
+                correlation=correlation,
+                deadline=deadline,
+            )
+            if proposal is None:
+                continue
+            if set(proposal) - {"applicable", "action_id", "limitations"}:
+                continue
+            applicable = proposal.get("applicable")
+            if isinstance(applicable, str):
+                applicable = applicable.strip().lower() == "true"
+            if applicable is False:
+                return None
+            if applicable is not True:
+                continue
+            action_id = proposal.get("action_id")
+            if not isinstance(action_id, str):
+                continue
+            hits = by_action.get(action_id.strip())
+            if hits is None or len(hits) != 1:
+                continue
+            return hits[0]
+        return None
 
     def _candidate_arguments(
         self,
@@ -12030,6 +12740,23 @@ class OperationalCapabilityOrchestrator:
                 if isinstance(proposed, Mapping)
                 else None
             )
+        if (
+            merged is not None
+            and (business_subject or "").strip()
+            and _free_text_is_verbatim_request(
+                merged, input_text, business_subject
+            )
+        ):
+            # Contract guard (v30): a declared free-text search field
+            # carrying the user request verbatim violates the declared
+            # invariant — the proposal is rejected so the bounded
+            # schema-scoped second proposal can bind the subject.
+            _logger.info(
+                "orchestration stage=candidate_arguments "
+                "decision=verbatim_request_rejected correlation_id=%s",
+                correlation,
+            )
+            merged = None
         if merged is not None:
             return merged
         second = self._propose_candidate_arguments(
@@ -12043,13 +12770,38 @@ class OperationalCapabilityOrchestrator:
         )
         if second is None:
             return None
-        if effective_schema is not None:
-            return _validate_instance(second, effective_schema)
-        return (
-            validate_untyped_arguments(second)
-            if isinstance(second, Mapping)
-            else None
+        second_validated = (
+            _validate_instance(second, effective_schema)
+            if effective_schema is not None
+            else (
+                validate_untyped_arguments(second)
+                if isinstance(second, Mapping)
+                else None
+            )
         )
+        if second_validated is not None and _free_text_is_verbatim_request(
+            second_validated, input_text, business_subject
+        ):
+            # Second verbatim violation: the contract already declares
+            # the binding — the governed business_subject is the
+            # declared value for the free-text field. Substituting the
+            # declared subject is contract application, not inference.
+            subject = (business_subject or "").strip()
+            if subject:
+                rebound = dict(second_validated)
+                for key in _FREE_TEXT_ARGUMENT_KEYS:
+                    value = rebound.get(key)
+                    if isinstance(value, str) and value.strip():
+                        rebound[key] = subject
+                second_validated = rebound
+                _logger.info(
+                    "orchestration stage=candidate_arguments "
+                    "decision=verbatim_subject_rebound correlation_id=%s",
+                    correlation,
+                )
+            # No declared subject to rebind — the validated payload
+            # passes through; the owner stays the final validator.
+        return second_validated
 
     def _propose_candidate_arguments(
         self,

@@ -260,6 +260,11 @@ def _parse_temporal(value: object) -> datetime | None:
     text = value.strip()
     if not text or len(text) > 40:
         return None
+    if text.isdigit():
+        # Bare digit sequences are identifier-shaped (product codes,
+        # document numbers, counters); fromisoformat would misread a
+        # compact YYYYMMDD as a real date and corrupt the owner value.
+        return None
     candidate = text[:-1] + "+00:00" if text.endswith("Z") else text
     try:
         parsed = datetime.fromisoformat(candidate)

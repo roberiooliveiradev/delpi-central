@@ -765,9 +765,12 @@ def test_cri_instruction_variant_carries_requirements_clause():
     )
     assert "answer_requirements" in orch._goal_instruction
     assert "answer_requirements" in orch._capability_goal_instruction
-    assert "answer_requirements" not in goal_text
+    # The baseline resource legitimately declares an
+    # answer_requirements field — the clause itself must stay
+    # injected, never duplicated inside the baseline text.
+    assert clause.text.strip() not in goal_text
     assert (
-        "answer_requirements" not in capability_goal_text
+        clause.text.strip() not in capability_goal_text
     )
 
 

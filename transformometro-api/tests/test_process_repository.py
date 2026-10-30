@@ -49,3 +49,14 @@ def test_touch_updated_at_ignores_blank_id():
     repo.execute_returning_one = MagicMock()
     assert repo.touch_updated_at("") is False
     repo.execute_returning_one.assert_not_called()
+
+
+def test_get_accepts_business_code_or_internal_id():
+    """PROC-XXXX is the user-facing code — get() must resolve it
+    alongside the internal id instead of crashing on a uuid cast."""
+    repo = ProcessoRepository(connection=MagicMock())
+    repo.fetch_one = MagicMock(return_value=None)
+    assert repo.get("PROC-0105") is None
+    sql, params = repo.fetch_one.call_args.args
+    assert "codigo_processo = %s" in sql
+    assert params == ("PROC-0105", "PROC-0105")

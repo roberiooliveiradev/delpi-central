@@ -173,13 +173,17 @@ class ProcessoRepository(PluginBaseRepository):
         )
 
     def get(self, processo_id: str) -> dict[str, Any] | None:
+        # Consumers may carry either the internal id or the user-facing
+        # business code (PROC-XXXX); resolving both here keeps a code
+        # lookup from degrading into a uuid-cast repository error.
         return self._enrich_row(
             self.fetch_one(
             f"""
             {_PROCESSO_SELECT}
-            WHERE p.processo_id = %s AND p.deletado = FALSE
+            WHERE (p.processo_id::text = %s OR p.codigo_processo = %s)
+              AND p.deletado = FALSE
             """,
-            (processo_id,),
+            (processo_id, processo_id),
             )
         )
 
