@@ -17,6 +17,9 @@ from controllership_finance_app.interface.http.routes.admin_catalogs_routes impo
 from controllership_finance_app.interface.http.routes.admin_checklist_routes import (
     router as admin_checklist_router,
 )
+from controllership_finance_app.interface.http.routes.analysis_routes import (
+    router as analysis_router,
+)
 from controllership_finance_app.interface.http.routes.characters_routes import (
     router as characters_router,
 )
@@ -157,6 +160,7 @@ app.include_router(health_router)
 app.include_router(characters_router)
 app.include_router(viewer_context_router)
 app.include_router(closing_router)
+app.include_router(analysis_router)
 app.include_router(competences_router)
 app.include_router(documents_router)
 app.include_router(participants_router)

@@ -1103,3 +1103,28 @@ Execução `CF-PROC0072-R11-IMPLEMENTATION-STAGE-02` — Etapa 2 do doc 127, esc
 | RQ-R11-G6 | Homologação humana oficial da paridade e do predicado | independente e pendente | PENDING |
 
 **Residuais da etapa:** E11a (apuração afetada + ação corretiva no ERP — `TO_INVENTORY`/`PENDING_EVIDENCE`), E11b (predicado oficial — o artefato não distingue grupo vs TES vs interseção; seleção exposta como evidência histórica, não regra universal), paridade oficial humana (G6), smoke produtivo, gravação 54:44 não demonstra R11 (gate 020 `INCONCLUSIVE`).
+
+### IMPLEMENTATION-STAGE-03 — comparação transversal de relatórios (CLARA/BFF) (2026-10-31)
+
+Execução `CF-PROC0072-CLARA-REPORT-COMPARISON-IMPLEMENTATION-STAGE-03` — Etapa 3 do doc 127, escopo exclusivo da capacidade transversal de comparação (sem deploy, sem MFE/página genérica, sem exportação de comparação, sem mutação no ERP, sem corpus da Etapa 4). Owner da orquestração: `controllership-finance-api` (decisão D-03 do doc 126). Endpoint BFF `POST /closing/analysis/report-comparison` (prefixo /closing reconciliado com o roteador vigente — o alvo documental §B era `/analysis/report-comparison`). CLARA: `analyze(report_comparison)` no dispatcher semântico existente — a superfície segue com exatamente seis tools.
+
+| RQ/AC | Critério | Evidência | Estado |
+|---|---|---|---|
+| RQ-CMP-CAT | Inventário de capacidades reais por HEAD, não por TARGET | `domain/report_comparison/catalog.py`: 10 contratos implementados (R01,R02,R03,R05,R06,R07,R08,R10,R11,CPV) com endpoint, medidas (unidade/tipo/caminho), grãos com agregações completas, filtros permitidos, medida default e chave documental; R04/R09/R12/R13/R14/R15 em `UNIMPLEMENTED_REPORTS` com motivo (PENDING_CONTRACT/EXTERNAL) | PASS |
+| RQ-CMP-REQ | Contrato tipado e bounded | Pydantic `ReportComparisonRequest`/`ComparisonSubjectRequest` (2–6 sujeitos, período YYYY-MM, filial all\|01\|02); kinds PERIOD\|BRANCH\|REPORT\|DOCUMENT\|TREND\|EXPLAIN; diffPageSize ≤500 | PASS |
+| RQ-CMP-SEM | Matriz de compatibilidade curada | `domain/report_comparison/compatibility.py`: pares reais codificados — R05×R06, R06×CPV, R06×R07, R03×R05, R03×R08, R10×R11, R09×R10, R12×R15; same-report → COMPARABLE; não listado → INSUFFICIENT_EVIDENCE; R10 universos divergentes → NOT_COMPARABLE | PASS |
+| RQ-CMP-NORM | Somente normalizações autorizadas | Agregação produtor preservada verbatim; delta absoluto + percentual apenas quando `numeric_delta_allowed`; zero_baseline → deltaPct=null + razão declarada; grãos usam somente agregações completas do produtor (top-N excluídos); `normalizations[]` declara cada regra aplicada | PASS |
+| RQ-CMP-R10 | Universos R10 nunca misturados | calculation × investigation → NOT_COMPARABLE `r10_universe_mismatch`; mesmo universo → comparável | PASS |
+| RQ-CMP-R11 | Semântica R11 preservada | view=candidates default; E11b permanece TO_INVENTORY; comparação não afirma aumento de erros fiscais | PASS |
+| RQ-CMP-R10R11 | Relação documental por chave confiável | kind=DOCUMENT: cruzamento por filial+documento+série; itens sem chave completa declarados em `incompleteKeys` e nunca cruzados; nota de eixo de data (D1_DTDIGIT × D2_EMISSAO) em cada match; cap 200 itens × 5 páginas por sujeito com flag `subjectTruncated` | PASS |
+| RQ-CMP-AUTHZ | Fail-closed por sujeito | Upstream 401/403 → sujeito `denied` sem nenhum valor/existência; autorização por sujeito via contrato governado (S2S + delegated Bearer); nenhuma permission nova | PASS |
+| RQ-CMP-PART | Parciais honestos | unavailable/empty/denied/unsupported/truncated declarados por sujeito + `missingData[]`; nunca zero implícito; EMPTY distinguido de valor zero; `baseline_shifted` declarado; PARTIAL quando sujeito/par indisponível | PASS |
+| RQ-CMP-LIMIT | Limites e timeout | 2–6 sujeitos; diffs ≤500 com paginação + `diffTruncated`; timeout de sujeito 30s; documentos ≤1000/sujeito | PASS |
+| RQ-CMP-CLARA | analyze(report_comparison) sem tool nova | `ANALYZE_ACTIONS["report_comparison"]` registrado; schema via `get_context(topic=schema)`; handler chama a MESMA rota BFF (`_call_route` → `post_closing_analysis_report_comparison`) — paridade por construção | PASS |
+| RQ-CMP-TEST | Cobertura §12 | `tests/test_closing_report_comparison.py` — 35 testes: válidas (R06×3 períodos, R07 filiais, R10 universos, R11 períodos, grãos), relacionadas (R06×CPV, EXPLAIN), não-comparáveis (R12×R15, R99, filtro inválido, medida não suportada), segurança (sem bearer 401, manage-only 403, denied 401/403 sem vazamento), parciais (unavailable→PARTIAL, empty≠zero, zero_baseline→%null), documento (match chave completa, incompleteKeys, NO_MATCHES), contrato (1/7 sujeitos, período/kind/baseline/paginação inválidos, PERIOD exige mesmo report), CLARA (registry, dispatch, paridade de rota, rejeição de param) | **PASS 35/35** |
+| RQ-CMP-REG | Regressão | BFF completo **851 pass / 249 skip**; R10/R11 inalterados | PASS |
+| RQ-CMP-AUTH+ | Persona real autorizada E2E | sem harness E2E nesta etapa | TEST_NOT_RUN |
+| RQ-CMP-SMOKE | Smoke HTTP runtime | container executa imagem anterior; deploy não autorizado | TEST_NOT_RUN |
+| RQ-CMP-LIVE | Paridade de diffs contra dados reais | somente testes de contrato com payloads stub — sem execução live nesta etapa | TEST_NOT_RUN |
+
+**Residuais da etapa:** pares não curados respondem INSUFFICIENT_EVIDENCE (default honesto — ampliação da matriz exige evidência documental nova); R09/R12/R15 seguem sem contrato; comparações RELATED exibem delta rotulado `related_not_equivalent` (nunca divergência comprovada); auditoria via hash de resposta + log estruturado (trilha persistida dedicada fica para refinamento); smoke/live/G6 pendem de gate autorizado.

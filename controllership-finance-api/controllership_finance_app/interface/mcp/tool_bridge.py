@@ -70,6 +70,7 @@ from controllership_finance_app.interface.http.authz import (
 )
 from controllership_finance_app.interface.http.routes import (
     admin_catalogs_routes,
+    analysis_routes,
     admin_checklist_routes,
     closing_routes,
     competences_routes,
@@ -1152,6 +1153,49 @@ def tool_analyze_closing_blockers(period: str) -> CallToolResult:
     )
 
 
+def tool_analyze_report_comparison(
+    subjects: list,
+    comparison_kind: str = "PERIOD",
+    measure: str | None = None,
+    grain: str | None = None,
+    baseline_index: int | None = None,
+    diff_page: int | None = None,
+    diff_page_size: int | None = None,
+) -> CallToolResult:
+    """Comparação transversal governada de relatórios (doc 126) —
+    chama a MESMA rota BFF do Portal; sujeitos, medida, grão e
+    classificação semântica vêm do contrato tipado."""
+    request, _user = _user_and_access()
+    payload: dict[str, Any] = {
+        "comparisonKind": comparison_kind,
+        "subjects": subjects,
+    }
+    if measure is not None:
+        payload["measure"] = measure
+    if grain is not None:
+        payload["grain"] = grain
+    if baseline_index is not None:
+        payload["baselineIndex"] = baseline_index
+    if diff_page is not None:
+        payload["diffPage"] = diff_page
+    if diff_page_size is not None:
+        payload["diffPageSize"] = diff_page_size
+    try:
+        body = analysis_routes.ReportComparisonRequest(**payload)
+    except Exception as exc:  # noqa: BLE001 — schema tipado do contrato
+        return _error(
+            f"Parâmetros da comparação inválidos: {exc}",
+            status_code=400,
+            data={"error": {"code": "validation_error"}},
+            error_code="validation_error",
+        )
+    return _call_route(
+        analysis_routes.post_closing_analysis_report_comparison,
+        request,
+        body=body,
+    )
+
+
 # -- KNOWLEDGE ---------------------------------------------------------------
 
 
@@ -1359,6 +1403,7 @@ __all__ = [
     "build_mcp_request",
     "handle_tool_error",
     "tool_analyze_closing_blockers",
+    "tool_analyze_report_comparison",
     "tool_commit_proposal",
     "tool_confirm_batch",
     "tool_execute_batch",

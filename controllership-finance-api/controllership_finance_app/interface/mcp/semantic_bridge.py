@@ -354,6 +354,21 @@ ANALYZE_ACTIONS: dict[str, dict] = {
             "fechamento da competência."
         ),
     },
+    "report_comparison": {
+        "handler": bridge.tool_analyze_report_comparison,
+        "required": ("subjects",),
+        "allowed": (
+            "comparison_kind", "subjects", "measure", "grain",
+            "baseline_index", "diff_page", "diff_page_size",
+        ),
+        "description": (
+            "Comparação transversal governada de relatórios "
+            "(doc 126): 2–6 sujeitos {reportId, period, branch, "
+            "filters}, kinds PERIOD|BRANCH|REPORT|DOCUMENT|TREND|"
+            "EXPLAIN; classifica compatibilidade semântica por par "
+            "e nunca trata ausência como zero."
+        ),
+    },
 }
 
 

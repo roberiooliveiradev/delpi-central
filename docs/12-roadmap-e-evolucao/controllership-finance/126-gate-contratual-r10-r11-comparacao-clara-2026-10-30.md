@@ -412,3 +412,34 @@ silenciadas:
 | Export | CSV/PDF individual | entregue — mesmo engine; cabeçalho declara competência/filial/visão/critério observado/caráter investigativo/fonte/hash/paridade | documento operacional, não emissão oficial |
 
 E11a e E11b **permanecem** `PENDING`/`DECISION_REQUIRED` conforme §4 e §19 — o relatório expõe a seleção como evidência histórica e a orientação limita-se a localizar/conferir o lançamento no Protheus; o predicado não foi publicado como regra oficial universal. G6 (homologação humana) e smoke produtivo `PENDING`.
+
+## 22. Status pós-stage-03 (2026-10-31) — comparação transversal `IMPLEMENTED`
+
+Execução `CF-PROC0072-CLARA-REPORT-COMPARISON-IMPLEMENTATION-STAGE-03`
+(doc 127 Etapa 3). O contrato de comparação definido neste documento
+passou de TARGET para `IMPLEMENTED` na `controllership-finance-api`.
+
+Divergências entre o alvo contratual e o entregue — registradas, não
+silenciadas:
+
+| Aspecto | TARGET (§B/§§6-8) | Entregue (stage-03) | Nota |
+|---|---|---|---|
+| Endpoint | `POST /analysis/report-comparison` | `POST /closing/analysis/report-comparison` | prefixo `/closing` = padrão vigente do roteador BFF (mesma família de `/closing/analytics/stock-reconciliation`) |
+| Sujeitos | 2–6 | 2–6 (Pydantic `min_length=2, max_length=6`) | conforme |
+| Tipos | PERIOD/BRANCH/REPORT/DOCUMENT/TREND/EXPLAIN | idem — único contrato compartilhado | PERIOD/BRANCH/TREND exigem mesmo `reportId` + `measure` |
+| Compatibilidade | COMPARABLE / RELATED_REQUIRES_EXPLANATION / NOT_COMPARABLE (+INSUFFICIENT_EVIDENCE default) | idem — matriz curada em `domain/report_comparison/compatibility.py`; par não listado → `INSUFFICIENT_EVIDENCE` | nenhuma compatibilidade inferida por nome de coluna |
+| Normalizações | somente §D4 | delta absoluto + percentual (denominador não nulo) somente sob `numeric_delta_allowed`; grãos usam apenas agregações completas do produtor (top-N excluídos) | `normalizations[]` declara cada regra |
+| Partial honesty | PARTIAL honesto | `subjects[].status` ∈ ok/empty/unavailable/denied/unsupported + `missingData[]` + `baseline_shifted` + `subjectTruncated` | nenhum zero implícito; `EMPTY` ≠ zero |
+| AuthZ | por sujeito, fail-closed | upstream 401/403 → `denied` sem valor/existência; S2S + Bearer delegado idêntico às rotas do Portal; sem permission nova | `security.subjectsDenied` contado |
+| Limites | bounded | sujeito 30s; diffs ≤500 paginados (`diffTruncated`); documentos ≤1000/sujeito (200×5 páginas) | resposta declara `limits{}` |
+| R10 universos | nunca misturar | `calculation`×`investigation` → NOT_COMPARABLE `r10_universe_mismatch` | invariante preservado |
+| R10×R11 | chave confiável | kind=DOCUMENT cruza `branchCode+document+series`; itens sem chave completa → `incompleteKeys`; nota de eixo `D1_DTDIGIT`×`D2_EMISSAO` por match | nunca só número de documento |
+| CLARA | `analyze(report_comparison)` | registrado em `ANALYZE_ACTIONS`; handler chama a mesma rota BFF (`_call_route`) | superfície segue com 6 tools |
+| Escopo | sem tela genérica, sem export, sem corpus | confirmado — nada disso foi criado | Etapa 4 intacta |
+
+Capacidades realmente suportadas nesta etapa (contratos implementados):
+R01, R02, R03, R05, R06, R07, R08, R10, R11, CPV.
+R04/R09/R12/R15 respondem `report_not_implemented`; R13/R14 são evidência
+externa; ids desconhecidos → `unknown_report`. Pares sem regra na matriz
+→ `INSUFFICIENT_EVIDENCE` — o endpoint ser genérico **não** significa
+cobertura universal efetiva.

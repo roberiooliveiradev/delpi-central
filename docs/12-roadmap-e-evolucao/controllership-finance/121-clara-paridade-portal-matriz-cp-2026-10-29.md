@@ -391,3 +391,22 @@ Execução `CF-PROC0072-R11-IMPLEMENTATION-STAGE-02` ([doc 127](./127-plano-exec
 | R11 export individual | `GET /closing/billing-exclusion-roster/export?format=csv\|pdf` | — (operação de arquivo, `PORTAL_ONLY`) | idem | mesmo engine da consulta; metadados de visão/critério/paridade/caráter investigativo |
 
 Residuais declarados na resposta (`selection`/`provenance`/`parityNotes`): **E11a** — apuração afetada e ação corretiva `TO_INVENTORY`/`PENDING_EVIDENCE` (orientação apenas de localização no Protheus); **E11b** — predicado oficial `TO_INVENTORY` (a interseção 9035∩594 é evidência histórica, não regra universal); D-02 — nenhuma nota excluída automaticamente de CPV/faturamento/DRE; paridade oficial G6 `PENDING`.
+
+## Adendo — stage-03 (31/10/2026): comparação transversal IMPLEMENTADA (paridade Portal × CLARA)
+
+Execução `CF-PROC0072-CLARA-REPORT-COMPARISON-IMPLEMENTATION-STAGE-03`
+([doc 127](./127-plano-execucao-sequencial-r10-r11-clara-comparacao-2026-10-30.md)
+Etapa 3) adicionou a capacidade `analyze(report_comparison)`:
+
+| Superfície | Portal | CLARA | Identidade/escopo | Equivalência de conteúdo |
+|---|---|---|---|---|
+| Comparação transversal de relatórios | `POST /closing/analysis/report-comparison` → orquestração na própria BFF sobre os contratos api-delpi | `analyze(report_comparison)` no dispatcher semântico — handler chama a **mesma rota BFF** do Portal | `controllership-finance.access` + S2S por sujeito (delegated Bearer) — fail-closed por sujeito | **mesma função de rota + mesma identidade delegada = mesmo resultado** — nenhuma lógica duplicada |
+
+Semântica entregue (doc 126 §7): mesma seleção/convenção → `COMPARABLE`;
+pares relacionados (R05×R06, R06×CPV, R06×R07, R03×R05, R03×R08,
+R10×R11, R09×R10) → `RELATED_REQUIRES_EXPLANATION` com explicação e
+delta rotulado `related_not_equivalent`; R12×R15 → `NOT_COMPARABLE`;
+não listado → `INSUFFICIENT_EVIDENCE`. R10 universos divergentes →
+`NOT_COMPARABLE`. DOCUMENT cruza por `filial+documento+série` e declara
+`incompleteKeys`. Suporte real: R01, R02, R03, R05, R06, R07, R08, R10,
+R11, CPV; demais respondem `report_not_implemented`/`unknown_report`.

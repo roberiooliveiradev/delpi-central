@@ -1557,3 +1557,57 @@ Verificação SELECT-only 2026-10-28 (filial 01, fechamento 30/09/2026):
 - Drift MP `STALE_EVIDENCE`: SB9 ex-99 atual diverge do estado de
   emissão em +8.182,43 (revalorização + regravação 21/10); PA/PI/II
   exatos — validação de paridade exige nova emissão controlada.
+
+## §18 — Regras semânticas de comparação transversal (stage-03, 2026-10-31)
+
+Execução `CF-PROC0072-CLARA-REPORT-COMPARISON-IMPLEMENTATION-STAGE-03`
+materializou a camada transversal de comparação prevista no doc 126 §7:
+owner `controllership-finance-api` (orquestração apenas — medidas e
+seleções continuam produzidas pelos owners canônicos). Regras
+semânticas agora executáveis:
+
+### BR-CMP-001 — Mesma convenção + mesma seleção = `COMPARABLE`
+
+O mesmo relatório entre competências/filiais é comparável somente com
+mesma medida, universo e convenção de custo (ex.: R06 `outputValue`
+entre competências, R07 entre filiais). O motor não inventaria delta
+para pares fora dessa condição.
+
+### BR-CMP-002 — R10 universos são partições estritas
+
+`universe=calculation` × `universe=investigation` → `NOT_COMPARABLE`
+(`r10_universe_mismatch`). Os totais dos dois universos nunca são
+somados nem comparados como equivalentes.
+
+### BR-CMP-003 — R06×CPV é relacionado, não equivalente — `PROVEN` semântico
+
+Saída de estoque (R06, `F4_ESTOQUE='S'` + custo TTAT) ≠ CPV
+(`SUM(D2_CUSTO1)` por CFOP de venda, custo corrente `live`). O delta é
+exibido rotulado `related_not_equivalent` + explicação com evidência —
+nunca divergência financeira comprovada. Mesma classe para
+R05×R06 (fluxo × kardex valorizado), R06×R07 (INVENT é subconjunto),
+R03×R05 (snapshot × fluxo), R03×R08 (universos disjuntos SB9),
+R10×R11 (SD1 despesa × SD2 roster, eixos de data distintos).
+
+### BR-CMP-004 — Identidade documental exige chave completa
+
+Cruzamento documental (ex.: R10×R11) somente por
+`filial+documento+série`; itens sem chave completa são declarados em
+`incompleteKeys` e nunca participam do match — número de documento
+isolado não é identidade. Eixo de data divergente (D1_DTDIGIT ×
+D2_EMISSAO) é anotado por match: a mesma NF pode cair em competências
+distintas.
+
+### BR-CMP-005 — Sem medida comum = `NOT_COMPARABLE`; sem evidência = `INSUFFICIENT_EVIDENCE`
+
+Pares fora da matriz curada respondem `INSUFFICIENT_EVIDENCE` — nunca
+promovidos por semelhança de nome de coluna. Relatórios sem contrato
+implementado (R04/R09/R12/R15) → `report_not_implemented`; R13/R14 são
+evidência externa sem medida numérica.
+
+### BR-CMP-006 — Ausência de dados não é zero
+
+`EMPTY`/`denied`/`unavailable`/`truncated` são estados de sujeito
+declarados — nunca convertidos em valor 0, nunca usados para completar
+tendência. Sujeito negado não contribui nem existência. Percentual com
+denominador zero é declarado `zero_baseline`, não calculado.

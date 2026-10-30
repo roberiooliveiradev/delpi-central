@@ -169,3 +169,21 @@ Classificação: PROVEN | TO_INVENTORY | PLANNED | TARGET. Testes: PASS | FAIL |
 
 ## 13. Regra final
 **Uma iteração ponta a ponta, não uma implementação às cegas.** Nenhum sucesso por contagem de tools, HTTP 200, testes isolados ou docs. Se o código está pronto mas o host ainda mostra tools antigas, a task não está funcionalmente encerrada. Se a compatibilidade exigir janela de migração, declarar o estado real e não simular six-tool cutover. Segurança, contratos, ausência de regressão e resultado comprovado determinam o PASS. 
+
+## 14. Adendo stage-03 (2026-10-31) — `analyze(report_comparison)` implementado
+
+`CF-PROC0072-CLARA-REPORT-COMPARISON-IMPLEMENTATION-STAGE-03`: a
+capacidade de comparação transversal (doc 126 §6-8) entrou no dispatcher
+semântico como **action**, não como tool — a superfície `tools/list`
+continua com exatamente seis tools (`get_context`, `read`, `analyze`,
+`knowledge`, `execute`, `delete`).
+
+| Aspecto | Entregue |
+|---|---|
+| Registro | `ANALYZE_ACTIONS["report_comparison"]` em `semantic_bridge.py` |
+| Params tipados | `subjects` (required, 2–6), `comparison_kind`, `measure`, `grain`, `baseline_index`, `diff_page`, `diff_page_size` — allowlist estrita, unknown rejeitado |
+| Handler | `tool_bridge.tool_analyze_report_comparison` → constrói `ReportComparisonRequest` e chama **a mesma rota BFF** `post_closing_analysis_report_comparison` via `_call_route` — paridade Portal×CLARA por construção, identidade delegada |
+| Endpoint BFF | `POST /closing/analysis/report-comparison` |
+| Schema discovery | `get_context(topic="schema", entity="closing", action="report_comparison")` |
+| Semântica | matriz curada COMPARABLE / RELATED_REQUIRES_EXPLANATION / NOT_COMPARABLE / INSUFFICIENT_EVIDENCE; partial honesty; denied sem vazamento; sem zero implícito |
+| Fora de escopo | nenhuma tool plana nova; nenhuma permissão nova; nenhuma tela/export de comparação |
