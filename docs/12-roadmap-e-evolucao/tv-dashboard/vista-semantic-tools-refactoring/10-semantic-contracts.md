@@ -9,8 +9,12 @@ método, nome de função, SQL ou código.
 - Erros estruturados: `{success:false, error:{code, message, details?}}`
   — `code` ∈ {`VALIDATION_ERROR`, `UNKNOWN_ENTITY`, `UNKNOWN_ACTION`,
   `AUTH_REQUIRED` (401), `FORBIDDEN` (403), `PROPOSAL_NOT_FOUND`,
-  `CONFIRMATION_REQUIRED`, `CONFIRMATION_MISMATCH`, `REVISION_CONFLICT`
-  (409), `NOT_IMPLEMENTED` (501, status honesto), `INTERNAL`}.
+  `PLAN_MISMATCH`, `CONFIRMATION_REQUIRED`, `CONFIRMATION_MISMATCH`,
+  `CONFIRMATION_UNAVAILABLE` (transporte/host sem mecanismo de
+  consentimento — bloqueio explícito), `CONSENT_MISMATCH` (artifact
+  não vincula actor/proposta/alvo), `DEPENDENCY_UNRESOLVED`,
+  `REVISION_CONFLICT` (409), `NOT_IMPLEMENTED` (501, status
+  honesto), `INTERNAL`}.
 - `VISTA capability ≤ user capability` — catálogo informa, backend
   autoriza; nenhum campo do schema é autoridade.
 - Paginação: `pagination: {limit ≤ 100, cursor?}`; respostas paginadas
@@ -26,8 +30,10 @@ método, nome de função, SQL ou código.
 
 - `context` → `{assistant:{id, displayName, avatarReference?},
   principal:{type:"user"}, effectiveCapabilities:[...ops permitidas
-  pós-AuthZ...], confirmationModel:{destructive:"target_echo",
-  elicitation:"host_dependent"}, catalogVersion}`
+  pós-AuthZ...], confirmationModel:{destructive:
+  "consent_artifact_required", targetCheck:"target_echo",
+  elicitation:"host_dependent", fallback:"CONFIRMATION_UNAVAILABLE"},
+  catalogVersion}`
 - `catalog` → capability surface completa (entidades, ações, status
   honesto, typed_ops disponíveis, `agent_directives`).
 
@@ -87,35 +93,71 @@ Mapeia para `get_product_guide` + conteúdo estático do domínio.
 `evidence_class` (padrão SURI `suri_knowledge.json`) — corpus citável,
 não texto solto.
 
-## 5. `execute`
+## 5. `execute` (contrato revisado — fidelidade à proposal)
+
+### `phase=prepare` — campos exigidos
 
 ```json
 { "entity": "presentation",
   "action": "apply_mutation",
-  "phase": "prepare"|"commit",
   "operations": [ {"op":"<typed_op>","args":{...},"as":"<alias>?"}, ...],
-  "proposal_handle": "<opaque>?",      // phase=commit
-  "idempotency_key": "<key>",          // ambas as phases
-  "target_echo": "<id do alvo>?",      // ops confirm (D-5)
-  "commit_now": false }                // Actions-only mecânica
+  "idempotency_key": "<key>" }
 ```
 
-- `phase=prepare` → `preview_change(commit_now=false)`: valida ops,
-  compila plano (topo-sort produces/consumes), minta proposal
-  opaco (HMAC, actor-bound, TTL, single-use), devolve diff+preview+
-  `requiredConfirmation`.
-- `phase=commit` → `commit_change`: revalida ator/TTL/single-use/
-  `target_echo`, executa ops em sequência com CAS por op
-  (`assert_expected_revision` chain), read-back → `VERIFIED |
-  OUTCOME_NOT_VERIFIED | PARTIAL_COMMIT`.
-- `commit_now` (Actions, política `direct`, confirmação cumprida):
-  single-shot prepare+commit — mecânica já existente.
-- Comportamentos explícitos: validação → `VALIDATION_ERROR`; op fora
-  do catálogo → `UNKNOWN_ACTION`; CAS → `REVISION_CONFLICT` (409 c/
-  `currentRevision`); parcial → `PARTIAL_COMMIT` + estado real;
-  retry → mesmo `idempotency_key` + single-use handle = seguro;
-  resultado desconhecido → `OUTCOME_NOT_VERIFIED` honesto, nunca
-  sucesso falso.
+- `entity`/`action`/`operations`/`idempotency_key` — obrigatórios.
+- `operations[]` ≤ 20 entradas (limite proposto, alinhado PlanCompiler).
+- Resposta: `proposal_handle` (opaco, HMAC, actor-bound, TTL,
+  single-use) + `plan_fingerprint` + diff/preview + `base_revision`
+  + `required_confirmation` (lista de ops `confirm` do plano e seus
+  alvos — sem expor internals) + `consent_challenge` (quando houver
+  op `confirm` — ver D-5).
+
+### `phase=commit` — campos exigidos
+
+```json
+{ "entity": "presentation",
+  "action": "apply_mutation",
+  "phase": "commit",
+  "proposal_handle": "<opaque>",
+  "idempotency_key": "<key>",
+  "target_echo": "<id do alvo confirm>?",   // identidade do alvo
+  "consent_artifact": "<token|challenge_ack>?" }  // prova humana
+```
+
+- `proposal_handle` **vincula o plano preparado** — o commit executa
+  o plano selado no prepare, não um plano reenviado.
+- **`operations[]` NÃO é reenviado no commit** — o handle é a
+  referência imutável do plano; reenviar permitiria substituição de
+  plano. Se enviado por robustez, o backend **deve** rejeitar
+  divergência de fingerprint (`PLAN_MISMATCH`).
+- `target_echo`: verificação de identidade do alvo (anti wrong-object)
+  — obrigatório quando o plano contém ops `confirm`; **não é prova
+  de consentimento** (ver D-5).
+- `consent_artifact`: prova de ação humana emitida por canal
+  verificável (ack de `ctx.elicit` em host capaz, ou token do
+  consent challenge backend-mediado). **Obrigatório para ops
+  `confirm`.** Ausência → `CONFIRMATION_REQUIRED`; ausência de
+  mecanismo no transporte → `CONFIRMATION_UNAVAILABLE` (bloqueio,
+  sem downgrade).
+
+### Semânticas
+
+- **Idempotência**: `idempotency_key` + handle single-use — retry
+  seguro; replay de handle → `PROPOSAL_NOT_FOUND`.
+- **CAS**: `assert_expected_revision` chain por op; conflito →
+  `REVISION_CONFLICT` 409 com `currentRevision`/`revisionBefore`/
+  `revisionAfter`.
+- **Parcial**: falha em op i → `PARTIAL_COMMIT` + estado real dos
+  aplicados; sem rollback compensatório (limitação documentada).
+- **Single-shot** (`commit_now`, Actions-only): permitido **somente
+  quando** (a) política de todas as ops é `direct`, (b) nenhuma op
+  `confirm` no plano, (c) AuthZ passa. Com op `confirm` →
+  `CONFIRMATION_REQUIRED` (o host deve usar two-phase).
+- **Confirmação humana interrompe o fluxo**: entre prepare e commit
+  o humano age fora-banda (elicit ou Portal challenge); o modelo
+  não avança o plano sozinho — commit sem artifact válido bloqueia.
+- **Resultado desconhecido**: `OUTCOME_NOT_VERIFIED` — nunca
+  sucesso afirmado sem read-back.
 
 ## 6. `delete`
 
@@ -126,16 +168,22 @@ não texto solto.
   "playlist_ref": "<playlist>",
   "phase": "prepare"|"commit",
   "proposal_handle": "?", "idempotency_key": "<key>",
-  "target_echo": "<ref exato>" }
+  "target_echo": "<ref exato>",
+  "consent_artifact": "<token|challenge_ack>" }
 ```
 
 - `entity` mapeia 1:1 para os 3 typed ops `confirm`
   (`delete_block|delete_section|delete_slide`).
-- `target_echo` **obrigatório** em `phase=commit` — deve ser
-  byte-igual ao `ref`; mismatch → `CONFIRMATION_MISMATCH`.
-- `ctx.elicit` (MCP, quando o host suporta) como prova adicional;
-  ausência não bloqueia se `target_echo` correto (echo é a prova
-  transport-neutral).
+- `phase=prepare` devolve impacto + `consent_challenge` para o
+  humano decidir.
+- `phase=commit` exige **dois artefatos distintos**:
+  - `target_echo` byte-igual ao `ref` — verificação de identidade
+    do alvo (anti wrong-object); mismatch → `CONFIRMATION_MISMATCH`;
+  - `consent_artifact` — prova de ação humana (ack de elicit em
+    host MCP capaz, ou token do consent challenge backend-mediado).
+    Sem artifact válido → `CONFIRMATION_REQUIRED`; transporte sem
+    mecanismo → `CONFIRMATION_UNAVAILABLE` (bloqueio explícito,
+    **nunca** fallback silencioso para echo-como-prova).
 - Delega integralmente ao envelope PREPARE/COMMIT — nenhum executor
   paralelo.
 

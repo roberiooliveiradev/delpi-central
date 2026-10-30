@@ -9,9 +9,15 @@
 | Typed ops catalog | ops novas (D-6) | ADDITIVE | imediata |
 | OpenAPI gerado | schemas novos + `deprecated:true` | ADDITIVE (geração) | por release |
 | `agent_directives` | vocabulário novo | BEHAVIORAL (modelo) | junto com as tools |
-| Commit schema | `target_echo` novo | ADDITIVE → obrigatório em ops confirm | flag `VISTA_TARGET_ECHO_REQUIRED` |
+| Commit schema | campos `target_echo` + `consent_artifact` novos | ADDITIVE (o campo em si) | por release |
+| Commit **política** | artifact exigido em ops `confirm` | **BEHAVIORAL + SECURITY-POLICY** — bloqueia fluxo antes permitido; NÃO é ADDITIVE | janela grandfather ≤1 release (`confirmation=true` aceito com warning); flag `VISTA_CONSENT_ARTIFACT_REQUIRED` |
 | Playlist history | `channel`/provenance novo | ADDITIVE | imediata |
-| `confirmation` booleano | redundante após echo | DEPRECATED | após adoção do echo |
+| `confirmation` booleano | insuficiente como prova após E1 | DEPRECATED → REJECTED em ops `confirm` | após fechamento da janela grandfather |
+
+> A adição de campo no schema é ADDITIVE; a **exigência** do
+> artifact é BEHAVIORAL porque rejeita consumidor que hoje comita
+> ops `confirm` com `confirmation=true`. Coexistência das 12 tools
+> legadas não elimina essa mudança de comportamento.
 
 ## 2. Consumidores e impacto
 
@@ -28,7 +34,7 @@
 | Etapa | Rollback |
 |---|---|
 | E0 ADR | supersession revertida (doc) |
-| E1 echo | flag `VISTA_TARGET_ECHO_REQUIRED=false` (volta a `confirmation` booleano); política delete_data_model = metadata editável |
+| E1 consent artifact | flag `VISTA_CONSENT_ARTIFACT_REQUIRED=false` — **com TTL + motivo registrado**; durante a janela grandfather volta ao estado de transição (`confirmation=true` + warning); **após a transição fechada, rollback não reintroduz `confirmation=true` como prova** — remover a tool, não rebaixar a política; política delete_data_model = metadata editável |
 | E2-E5 tools | remover tools/opIds novos — legadas intactas |
 | E6 typed ops | remover entries do catalog (metadata, não schema) |
 | E7 depreciação | undeprecate |
@@ -43,10 +49,10 @@ imagem anterior ou feature flag.
 
 | Risco | Nível | Mitigação |
 |---|---|---|
-| Modelo afirma `confirmation=true` sem humano (hoje) | **resolvido por E1** | `target_echo` vinculado ao alvo |
+| Modelo afirma `confirmation=true` sem humano (hoje) | **resolvido por E1** | consent artifact (elicit ack ou challenge backend-mediado) vinculado a ator+proposta+alvo+plan_hash; `target_echo` só verifica identidade do alvo |
 | Vocabulário aberto vira proxy genérico | baixo | Literals fechados; teste `UNKNOWN_ENTITY`/`UNKNOWN_ACTION` |
 | Effective capabilities vazam escopo | baixo | derivadas de AuthZ real; só o subconjunto permitido |
-| `delete` dedicada mais permissiva | não existe | mesma boundary + echo obrigatório |
+| `delete` dedicada mais permissiva | não existe | mesma boundary + echo + consent artifact obrigatórios |
 | Compound plan atomicidade | médio | PARTIAL_COMMIT honesto; sem rollback compensatório — documentado |
 | Proposal store in-process em multi-replica | residual aceito | documentado; Postgres (CLARA) se escalar |
 | `delete_data_model` direct órfana bindings | médio | D-8 política condicional — NEEDS_APPROVAL |
@@ -59,13 +65,14 @@ imagem anterior ou feature flag.
 | Drift parity_map em 6↔6 | mesmo gate de cobertura (`test_surface_parity_map_*` adaptado) |
 | Budget Actions com 6 schemas grandes | schemas por-verbo compactos; gate ≤100 KiB existente |
 | Instruções re-declarando ops | leak-gate + budget existentes; instructions apontam para catálogo |
-| Host MCP sem elicit | `confirmation_unavailable` honesto; `target_echo` é a prova transport-neutral |
-| ChatGPT Actions sem mecanismo de confirmação nativo | `target_echo` no payload — funciona em HTTP puro |
+| Host MCP sem elicit | `CONFIRMATION_UNAVAILABLE` — bloqueio explícito em ops `confirm`; `target_echo` NÃO é prova de consentimento (só target-check) |
+| ChatGPT Actions sem mecanismo de confirmação nativo | consent challenge backend-mediado (padrão CLARA: aprovação no Portal vinculada a `plan_hash`); sem canal humano verificável → `CONFIRMATION_UNAVAILABLE` |
 
 ## 6. ADR supersession — proposta
 
-**Documento proposto**: `adr-vista-semantic-verbs-surface.md`
-(DECIDED após aprovação em E0).
+**Documento proposto**: `adr-vista-semantic-verbs-surface.md` —
+**estado atual: `PROPOSED`** (aguarda aprovação do owner em E0;
+só vira `DECIDED` após aceite formal — não é uma decisão tomada).
 
 **Motivo da decisão original (item 8, 2026-09-22)**: rejeitar a
 superfície de entidades do TÉO (`search_records`/`prepare_record_change`)
@@ -89,15 +96,18 @@ fechado — não enfraquecida.
 `TvPresentationWriteService`, `GptActionsDispatchService`,
 `capability_surface`, RBAC backend-first, `VISTA ≤ user capability`.
 **Riscos novos**: divergência facade↔dispatch (mitigada por
-equivalência), hosts sem elicit (mitigada por target_echo),
-confusão de modelo entre verbos (mitigada por catalog rico +
+equivalência), hosts sem elicit (mitigada por challenge
+backend-mediado ou bloqueio `CONFIRMATION_UNAVAILABLE` — nunca por
+echo), confusão de modelo entre verbos (mitigada por catalog rico +
 instructions apontando para ele).
 
 ## 7. Limitações assumidas
 
 - Proposal store in-process permanece `ACCEPT_WITH_RESIDUAL` —
   migração para persistido só se runtime virar multi-replica.
-- `delete` MCP-elicit depende de suporte do host — não universal.
+- `delete` MCP-elicit depende de suporte do host — não universal;
+  host incapaz → `CONFIRMATION_UNAVAILABLE` (fail-closed), e o
+  consent challenge backend-mediado é a alternativa cross-transporte.
 - Consumidores externos do GPT: remoção das 12 depende de evidência
   que não está no repositório — janela de coexistência longa é o
   custo honesto.

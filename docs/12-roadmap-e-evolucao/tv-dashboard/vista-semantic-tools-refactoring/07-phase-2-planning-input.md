@@ -11,8 +11,8 @@ está classificado.
 | **D-1** | Convergir para 6 verbos semânticos no MCP? | (a) 6 tools substituindo 12; (b) 6 semantic + 12 legadas coexistindo (padrão EVA); (c) manter 12 | ADR item 8; docs 02/04 | (b) — coexistência EVA permite migração ADDITIVE sem BREAKING; decisão de supersession do ADR item 8 necessária |
 | **D-2** | Registry semântico separado ou extensão do `capability_surface`? | (a) `vista_semantic_registry.py` tipo `SemanticAction`; (b) campos `semantic_mapping`/`status` no modelo neutral existente | G-01, G-09; `custom-gpt-actions-integration.mdc` ("façade semântica owner-local") | (b) — o modelo neutral já é a fonte canônica; adicionar projeção semântica evita segunda fonte de verdade |
 | **D-3** | Forma do `execute` | (a) `execute(entity, action, operations[])` estilo SURI sobre typed ops; (b) `phase: prepare\|commit` no mesmo tool (estilo CAIO delete); (c) manter prepare/commit como tools separadas | 04 §2.execute; Caso A–E em 05 | (a)+(b) combinados: `execute` com `phase` e `operations[]` — preserva PREPARE→COMMIT e compound plans |
-| **D-4** | `delete` dedicada ou dentro de execute? | (a) tool `delete` com sealed/elicited confirmation (CAIO/EVA); (b) ops `confirm` dentro de `execute` | G-03; EVA elicitation | (b) com **prova de confirmação verificável** — elevar `confirmation=true` para `target_echo`/elicitation nos ops `confirm`; delete dedicada só se fase 2 adicionar deletes fora de typed ops |
-| **D-5** | Confirmação verificável | adicionar `target_echo`/elicitation ao commit para ops `confirm` | EVA `semantic_bridge.py:115-198`; `delpi_mcp` já suporta | Sim — aditivo e independente do resto da convergência; pode ir primeiro (quick win de segurança) |
+| **D-4** | `delete` dedicada ou dentro de execute? | (a) tool `delete` com sealed/elicited confirmation (CAIO/EVA); (b) ops `confirm` dentro de `execute` | G-03; EVA elicitation | **Corrigido (doc 09 D-4)**: (a) tool `delete` dedicada delegando ao mesmo envelope, com consent artifact + echo — ver D-5 |
+| **D-5** | Confirmação verificável | adicionar prova de consentimento humano ao commit para ops `confirm` | EVA `semantic_bridge.py:115-198`; CLARA `step_up_consent.py` | **Corrigido (doc 09 D-5)**: `target_echo` é só target-check, não prova humana; prova = consent artifact (elicit ack em host capaz ou consent challenge backend-mediado); transporte sem mecanismo → `CONFIRMATION_UNAVAILABLE`. É BEHAVIORAL, não aditivo |
 | **D-6** | Escopo de expansão de capabilities | quais gaps do doc 03 entram: playlist lifecycle? media read? templates? shares? | 03 matriz | Decidir por bloco: (i) playlist lifecycle update/delete/activate — forte candidato a typed ops novos; (ii) media/templates read — moderado; (iii) shares/invites — **excluir** (gestão de acesso humana); (iv) history restore — decisão owner |
 | **D-7** | `get_context` com capabilities do usuário | adicionar `principal_capabilities` derivado de AuthZ | G-05; SURI/CAIO precedent | Sim — read-only, aditivo, alto valor de UX do host |
 | **D-8** | `delete_data_model` confirmationPolicy | `direct` → `confirm`? | G-02 (INCONCLUSIVE) | Escalar ao owner: se não for deliberado, é fix de 1 linha + teste |
@@ -23,9 +23,11 @@ está classificado.
 
 ```text
 E0  Decisões D-1..D-10 aprovadas + ADR item 8 supersession draft
-E1  Segurança aditiva independente:
-    - D-5: target_echo/elicitation para ops confirm (MCP)
-    - D-8: fix delete_data_model se confirmado drift
+E1  Modelo de confirmação verificável (BEHAVIORAL + SECURITY-POLICY,
+    com janela grandfather — ver doc 11 E1):
+    - D-5: consent artifact (elicit/challenge) + target_echo como
+      target-check para ops confirm
+    - D-8: política delete_data_model decidida pelo owner
 E2  Registry semântico (D-2): campos no modelo neutral + projeção
     get_context enriquecido (D-7)
 E3  Verb tools read/analyze/knowledge (projeção sobre handlers
@@ -46,8 +48,10 @@ E7  Auditoria/observabilidade (D-10) + docs/ADR/capability matrix
   `(entity, action)` → erro estruturado, nunca dispatch dinâmico.
 - Todo handler novo delega a `GptActionsDispatchService` ou a serviço
   canônico existente — **zero** bypass de `TvPresentationWriteService`.
-- Ops `confirm`: confirmação só aceita com prova (`target_echo` ou
-  elicitation); host sem elicitation → `confirmation_unavailable`.
+- Ops `confirm`: confirmação só aceita com consent artifact
+  verificável (elicit ack ou challenge backend-mediado) + `target_echo`
+  como target-check; host sem mecanismo → `CONFIRMATION_UNAVAILABLE`
+  (corrigido — echo sozinho não é prova, doc 09 D-5).
 - Catálogo com `status` por capability (proven/planned/not_implemented);
   chamada a `not_implemented` → 501 honesto.
 - Proposal store: contrato inalterado (opaque, actor-bound, TTL,
@@ -90,7 +94,8 @@ E7  Auditoria/observabilidade (D-10) + docs/ADR/capability matrix
    ops não cobrem name/desc/viewport/transition/duration/playback/
    refresh/masterConfig.
 7. ~~Elicitation~~ — **PROVEN**: FastMCP `ctx.elicit`, por-host;
-   Actions precisa de `target_echo` (D-5).
+   Actions precisa de consent challenge backend-mediado (D-5
+   corrigido — `target_echo` não é prova).
 8. ~~Budget schema~~ — **PROVEN**: 100 KiB gate; 6 verbos cabem.
 
 Ver `08-follow-up-evidence.md` para evidência completa de cada item.

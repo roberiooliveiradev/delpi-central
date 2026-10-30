@@ -7,7 +7,7 @@ o contrato de validação a ser usado quando cada E* executar.
 
 | Camada | Propósito | Onde |
 |---|---|---|
-| unit | registry, projeções, schemas, echo, mapeamentos | `tv-dashboard-api/tests/test_vista_semantic_*.py` (novos) |
+| unit | registry, projeções, schemas, echo, consent artifacts, mapeamentos | `tv-dashboard-api/tests/test_vista_semantic_*.py` (novos) |
 | contrato | MCP tools/list, wire, OpenAPI gerado | `test_mcp_platform_conformance`, `test_mcp_streamable_http_wire`, `test_gpt_actions_*` |
 | equivalência | semântico produz resultado idêntico ao legado | novos specs comparando outputs |
 | negativa | fail-closed em todos os casos do doc 05 §4 | battery por tool |
@@ -28,11 +28,13 @@ o contrato de validação a ser usado quando cada E* executar.
   `evidence_class`.
 - `execute`: single op direct → VERIFIED; plano composto
   (create_playlist→add_slide→upsert_section→patch_native_config)
-  → VERIFIED; confirm op → CONFIRMATION_REQUIRED sem echo;
-  echo correto → VERIFIED; CAS conflict → REVISION_CONFLICT;
-  PARTIAL_COMMIT reporta estado real; retry com mesma key →
-  resultado replayed/consistente.
-- `delete`: prepare mostra impacto; commit echo ok → VERIFIED.
+  → VERIFIED; op `confirm` sem artifact → CONFIRMATION_REQUIRED;
+  artifact válido + echo correto → VERIFIED; `operations[]`
+  reenviado divergente no commit → `PLAN_MISMATCH`; CAS conflict →
+  REVISION_CONFLICT; PARTIAL_COMMIT reporta estado real; retry com
+  mesma key → resultado replayed/consistente.
+- `delete`: prepare mostra impacto; commit artifact válido +
+  echo correto → VERIFIED.
 
 ## 3. Bateria negativa (cada uma obrigatória)
 
@@ -45,19 +47,24 @@ o contrato de validação a ser usado quando cada E* executar.
 | sem auth | 401 |
 | sem permissão no recurso | 403 |
 | proposal inválido/expirado/outro ator | `PROPOSAL_NOT_FOUND` |
-| op `confirm` sem `target_echo` | `CONFIRMATION_REQUIRED` |
-| `target_echo` divergente | `CONFIRMATION_MISMATCH` |
+| `operations[]` reenviado divergente no commit | `PLAN_MISMATCH` |
+| op `confirm` sem `consent_artifact` | `CONFIRMATION_REQUIRED` |
+| `consent_artifact` de outra proposta/ator/alvo | `CONSENT_MISMATCH` |
+| artifact replay (já consumido) | `CONSENT_MISMATCH`/`PROPOSAL_NOT_FOUND` |
+| `confirmation=true` como única "prova" | `CONFIRMATION_REQUIRED` (nunca suficiente) |
+| `target_echo` divergente do alvo | `CONFIRMATION_MISMATCH` |
+| transporte sem mecanismo de consentimento | `CONFIRMATION_UNAVAILABLE` (bloqueio, sem fallback) |
 | CAS divergente | `REVISION_CONFLICT` 409 + `currentRevision` |
 | ops vazias | `NO_OPS`/`VALIDATION_ERROR` |
 | principal_type=service em write | 403 |
 | replay de handle usado | `PROPOSAL_NOT_FOUND` |
-| host MCP sem elicit | `confirmation_unavailable` (não fallback silencioso) |
-| elicit com echo errado | `CONFIRMATION_MISMATCH` |
+| host MCP sem elicit | `CONFIRMATION_UNAVAILABLE` (não fallback silencioso) |
+| delete_data_model c/ consumidores sem artifact | `CONFIRMATION_REQUIRED` (se D-8 aprovado) |
 
 ## 4. Sibling cases
 
 - `execute` com `operations[]` misturando direct+confirm no mesmo
-  plano → confirm op exige echo; direct executam.
+  plano → confirm op exige echo + consent artifact; direct executam.
 - Multi-playlist no mesmo plano → chain_revision por playlist.
 - `read` em playlist de outro escopo/filial → 403 igual ao legado.
 - `delete` para cada entity (block/section/slide) — não só um.
@@ -83,9 +90,10 @@ produzir semântica própria).
 
 - Fluxo A: get_context → read(playlist,list) →
   analyze(intent_materialization) → execute(prepare) →
-  execute(commit,echo) → read-back VERIFIED.
-- Fluxo B: delete prepare → confirmação echo → commit → história
-  registra mutação com canal `mcp`/`gpt_actions` (D-10).
+  execute(commit,artifact+echo) → read-back VERIFIED.
+- Fluxo B: delete prepare → consent challenge aprovado por humano
+  no Portal (ou elicit em host capaz) → commit com artifact+echo →
+  história registra mutação com canal `mcp`/`gpt_actions` (D-10).
 - Fluxo C: plano composto Caso A (playlist+slides+config) end-to-end.
 - Regressão: as 12 tools legadas continuam passando nas suites
   existentes durante toda a coexistência.
@@ -94,7 +102,7 @@ produzir semântica própria).
 
 | Etapa | Aceite |
 |---|---|
-| E1 | delete sem echo válido impossível; elicit fallback honesto |
+| E1 | op `confirm` nunca comita sem artifact verificável + echo; transporte cego → bloqueio explícito; rollback não rebaixa política após transição |
 | E2 | context+catalog+status via 1 tool; caps derivadas de AuthZ |
 | E3 | 9 handlers alcançáveis por verbos com equivalência provada |
 | E4 | execute produz resultados idênticos a prepare/commit |

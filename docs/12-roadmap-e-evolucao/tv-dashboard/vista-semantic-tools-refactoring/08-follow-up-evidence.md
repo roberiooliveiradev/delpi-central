@@ -116,13 +116,19 @@ Typed ops playlist-level: `create_playlist`, `patch_native_config`,
   suportam; hosts sem suporte recebem `confirmation_unavailable`
   (comportamento honesto EVA). **GPT Actions não têm elicitation** —
   o transporte HTTP/OpenAPI não carrega esse primitivo; precisa de
-  prova equivalente (`target_echo` no payload) ou confirmação de
-  plataforma do host.
+  prova de ação humana em canal autenticado fora do modelo.
 
 **PROVEN**: elicitation é viável em MCP por-host, não universal;
-Actions exige mecanismo alternativo — decisão arquitetural D-5
-resolve com `target_echo` transport-neutral + elicitation quando
-disponível.
+Actions exige mecanismo alternativo.
+
+> **Corrigido na revisão (doc 09 D-5)**: `target_echo` no payload
+> **não** é prova equivalente — o modelo pode copiar o ID do
+> preview. Para Actions o mecanismo proposto é o consent challenge
+> backend-mediado (padrão CLARA `clara_consent_challenge`: humano
+> autenticado aprova o plano selado no Portal; token emitido só
+> após aprovação registrada, vinculado a actor/proposal/plan_hash).
+> Sem canal humano verificável → `CONFIRMATION_UNAVAILABLE`
+> (fail-closed). `target_echo` permanece como target-check.
 
 ## 8. Budget OpenAPI/Actions
 

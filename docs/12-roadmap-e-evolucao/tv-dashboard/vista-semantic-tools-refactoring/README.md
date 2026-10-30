@@ -44,6 +44,30 @@ futura convergência da superfície VISTA ao padrão semântico dos especialista
 13. [13 — Compatibility, Rollback and Risks](13-compatibility-rollback-and-risks.md)
     — classes de mudança, rollback por etapa, proposta de ADR.
 
+## Architecture Correction (revisão do planejamento)
+
+Revisão corrigiu pontos bloqueantes sem implementar código:
+
+- **D-5 (09)**: `target_echo` reclassificado de "prova de confirmação"
+  para **target-check**; consentimento humano exige consent artifact
+  por transporte (elicitation em host capaz / consent challenge
+  backend-mediado padrão CLARA); fail-closed `CONFIRMATION_UNAVAILABLE`.
+- **D-8 (09)**: `delete_data_model` ganhou análise de dependências/
+  órfãos e proposta de política condicional — `NEEDS_APPROVAL` do owner.
+- **Compatibilidade (13)**: exigência de consent artifact reclassificada
+  de `ADDITIVE` para **BEHAVIORAL + SECURITY-POLICY** com janela
+  grandfather; rollback não rebaixa segurança após transição.
+- **Execute (10 §5)**: campos prepare/commit, binding do
+  `proposal_handle` ao plano selado, idempotência, `PLAN_MISMATCH`,
+  single-shot e interrupção por confirmação humana especificados.
+- **D-6 (09)**: separado em Programa A (refactoring semântico) e
+  Programa B (expansão de capability com classificação
+  INCLUIR/CONDICIONAR/ADIAR/EXCLUIR).
+- **E0–E9 (11)**: cada etapa com baseline, testes, segurança,
+  rollback, evidência e critério STOP THE LINE; E9 = certificação final.
+- **ADR supersession**: proposta `PROPOSED` (09 tabela de decisões +
+  13 §6) — não marcada `DECIDED` antes da aprovação do owner.
+
 ## Limitações desta fase
 
 - Nenhum write/exclusão real foi executado; evidência de runtime vem de

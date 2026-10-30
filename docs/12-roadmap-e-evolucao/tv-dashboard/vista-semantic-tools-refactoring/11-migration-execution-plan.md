@@ -2,6 +2,11 @@
 
 Plano incremental. Cada etapa é independente e revisável; nenhuma
 remove as 12 tools atuais sem evidência de migração de consumidores.
+**Regra de progressão**: nenhuma etapa avança com regressões
+materiais abertas; cada etapa declara baseline, testes de contrato/
+negativa/equivalência, verificação de segurança, smoke/E2E quando
+material, rollback seguro, evidência de outcome e critério
+STOP THE LINE.
 
 ## Baseline (pré-condição de E0)
 
@@ -25,25 +30,25 @@ remove as 12 tools atuais sem evidência de migração de consumidores.
 | ACCEPTANCE | ADR novo DECIDED com rationale: registry fechado + typed ops = não-CRUD-genérico |
 | ROLLBACK | ADR volta a vigorar (supersession revertida) |
 | EVIDENCE | ADR commit + diff do capability matrix |
-| STOP | owner rejeita supersession → convergência permanece fora de escopo; reportar |
+| STOP THE LINE | owner rejeita supersession → convergência permanece fora de escopo; reportar |
 
-## E1 — Confirmação verificável (D-5) + revisão delete_data_model (D-8)
+## E1 — Modelo de confirmação verificável (D-5) + delete_data_model (D-8)
 
 | Campo | Valor |
 |---|---|
-| GOAL | `target_echo` obrigatório para ops `confirm`; política `delete_data_model` revisada |
-| OWNER | tv-dashboard-api |
-| BASE | `commit_service.py`, `presentation_ops_content.json`, EVA `_DestructiveConfirmation` |
-| ALLOWED | campo `target_echo` no commit schema; validação echo==ref; erro `CONFIRMATION_MISMATCH`; `ctx.elicit` opcional MCP; policy condicional em delete_data_model **se aprovado** |
-| FORBIDDEN | remover `confirmation` booleano (deprecar primeiro); quebrar hosts sem elicit |
+| GOAL | consent artifact por transporte (elicit/challenge) + `target_echo` como target-check; política `delete_data_model` decidida pelo owner |
+| OWNER | tv-dashboard-api + security (consent mechanism) |
+| BASE | `commit_service.py`, `presentation_ops_content.json`, EVA `_DestructiveConfirmation`+`ctx.elicit`, CLARA `step_up_consent.py`/`clara_consent_challenge` (V014) |
+| ALLOWED | campos `target_echo` + `consent_artifact` no commit; consent challenge backend-mediado (reuso padrão CLARA); `ctx.elicit` MCP-capable; `CONFIRMATION_UNAVAILABLE` fail-closed; `CONFIRMATION_MISMATCH`/`CONSENT_MISMATCH`; política condicional delete_data_model **se aprovada em D-8** |
+| FORBIDDEN | aceitar `confirmation=true` como prova humana em op `confirm`; fallback silencioso para echo; remover enforcement já ativo |
 | DEPENDENCIES | E0 |
-| CONTRACT IMPACT | ADDITIVE (campo novo); booleano vira redundante (deprecar após) |
-| SECURITY | prova humana vinculada ao alvo — mitiga G-03 |
-| TESTS | echo correto/errado/ausente; commit sem echo em op confirm → 409; elicit host-suportado e fallback `confirmation_unavailable` |
-| ACCEPTANCE | nenhum delete confirmável sem echo válido |
-| ROLLBACK | flag `VISTA_TARGET_ECHO_REQUIRED` (default on; off volta ao booleano) |
-| EVIDENCE | testes novos + diff de commit_service + catalog |
-| STOP | hosts-alvo sem caminho de echo → escalar (não degradar prova) |
+| CONTRACT IMPACT | **BEHAVIORAL + SECURITY-POLICY** — consumidores que hoje comitam ops `confirm` com `confirmation=true` **serão rejeitados** até adotarem o artifact. NÃO é ADDITIVE: é endurecimento de política que bloqueia fluxo anteriormente permitido. Mitigação de coexistência: (a) campo novo no schema é ADDITIVE; (b) exigência de artifact é a mudança comportamental — rollout via flag `VISTA_CONSENT_ARTIFACT_REQUIRED` com janela de transição em que `confirmation=true` ainda é aceito **com warning logado** (grandfather ≤ 1 release) e o campo `confirmation_model` no `get_context` anuncia a política nova |
+| SECURITY | prova humana vinculada a (ator, proposta, alvo, plan_hash) — mitiga G-03 **de fato**, não por convenção |
+| TESTS | contrato (schema aceita artifact); negativa (echo como único artefato → `CONFIRMATION_REQUIRED`; artifact de outra proposta → `CONSENT_MISMATCH`; transporte sem mecanismo → `CONFIRMATION_UNAVAILABLE`; replay de artifact → negado); equivalência (ops `direct` inalterados); elicit capaz/incapaz; challenge expirado/reusado/errado |
+| ACCEPTANCE | op `confirm` nunca comita sem (a) echo correto E (b) artifact verificável; transporte sem mecanismo recebe bloqueio explícito |
+| ROLLBACK | flag `VISTA_CONSENT_ARTIFACT_REQUIRED=false` — **só aceita com registro de motivo + TTL (não permanente)**; rollback não pode rebaixar segurança silenciosamente: volta ao estado `confirmation=true` aceito APENAS durante a janela grandfather, nunca depois da transição fechada; se já transicionado, rollback = remover tools novas, **não** rebaixar a política |
+| EVIDENCE | testes novos + diff de commit_service + catalog + config flag |
+| STOP THE LINE | qualquer caminho que comite op `confirm` sem artifact → STOP; host-alvo sem mecanismo de consentimento → escalar antes de prosseguir (não degradar para echo) |
 
 ## E2 — Modelo semântico neutral + `get_context` (D-2, D-7)
 
@@ -61,7 +66,7 @@ remove as 12 tools atuais sem evidência de migração de consumidores.
 | ACCEPTANCE | host descobre contexto+catálogo+status via 1 tool |
 | ROLLBACK | tool removida; surface fields ignorados (aditivos) |
 | EVIDENCE | MCP tools/list + Actions OpenAPI diffs; testes |
-| STOP | derivação de capabilities exigir mudança no Core → escalar |
+| STOP THE LINE | derivação de capabilities exigir mudança no Core → escalar |
 
 ## E3 — `read`, `analyze`, `knowledge` (projeção sobre handlers existentes)
 
@@ -79,7 +84,7 @@ remove as 12 tools atuais sem evidência de migração de consumidores.
 | ACCEPTANCE | paridade funcional read/analyze/knowledge vs 9 tools legadas |
 | ROLLBACK | tools removidas (legadas intactas) |
 | EVIDENCE | conformance + testes de equivalência |
-| STOP | handler sem cobertura por teste → cobrir antes de expor |
+| STOP THE LINE | handler sem cobertura por teste → cobrir antes de expor |
 
 ## E4 — `execute` (phase + operations[]) (D-3)
 
@@ -90,50 +95,50 @@ remove as 12 tools atuais sem evidência de migração de consumidores.
 | BASE | `dispatch_service.preview_change`/`commit_change`, SURI `execute`, CAIO `phase` |
 | ALLOWED | tool/opId `execute`; schema `{entity:"presentation",action:"apply_mutation",operations[],phase,...}`; `commit_now` Actions-only |
 | FORBIDDEN | orquestrador novo; lógica de plano duplicada; CAS alterado |
-| DEPENDENCIES | E1 (target_echo), E2 |
+| DEPENDENCIES | E1 (consent artifact + echo), E2 |
 | CONTRACT IMPACT | ADDITIVE |
-| SECURITY | reusa proposal handle/CAS/read-back; `operations[]` ≤ limite (propor 20, alinhado PlanCompiler) |
-| TESTS | single op; plano composto (create_playlist+slides); confirm c/ echo; CAS conflict; partial commit; retry idempotente; unknown outcome |
-| ACCEPTANCE | mesmos resultados que prepare_change/commit_proposal para planos idênticos |
+| SECURITY | reusa proposal handle/CAS/read-back; `operations[]` ≤ 20; handle binds plan — `operations[]` não reenviado no commit (substituição de plano bloqueada); single-shot só sem op `confirm` |
+| TESTS | single op; plano composto (create_playlist+slides); confirm c/ artifact+echo; CAS conflict; partial commit; retry idempotente; `PLAN_MISMATCH` (operations reenviado divergente); unknown outcome |
+| ACCEPTANCE | mesmos resultados que prepare_change/commit_proposal para planos idênticos; commit executa o plano selado, não um reenviado |
 | ROLLBACK | tool removida |
 | EVIDENCE | testes de equivalência + E2E composto |
-| STOP | divergência execute vs prepare/commit → NÃO corrigir facade — corrigir no dispatch canônico ou não lançar |
+| STOP THE LINE | divergência execute vs prepare/commit → NÃO corrigir facade — corrigir no dispatch canônico ou não lançar |
 
 ## E5 — `delete` dedicada (D-4, D-5)
 
 | Campo | Valor |
 |---|---|
-| GOAL | tool `delete` com entity∈{block,section,slide} + prova target_echo |
+| GOAL | tool `delete` com entity∈{block,section,slide} + echo (alvo) + consent artifact (humano) |
 | OWNER | tv-dashboard-api |
-| BASE | os 3 typed ops `confirm`; EVA elicit; E1 |
-| ALLOWED | tool nova delegando a execute/prepare internamente; echo obrigatório |
-| FORBIDDEN | executor próprio; delete sem echo; deletes fora dos 3 typed ops |
+| BASE | os 3 typed ops `confirm`; EVA elicit; CLARA challenge; E1 |
+| ALLOWED | tool nova delegando a execute/prepare internamente; echo+artifact obrigatórios |
+| FORBIDDEN | executor próprio; delete sem artifact; echo como única prova; deletes fora dos 3 typed ops |
 | DEPENDENCIES | E1, E4 |
 | CONTRACT IMPACT | ADDITIVE |
-| SECURITY | a superfície mais protegida do conjunto (echo+handle+single-use+CAS) |
-| TESTS | prepare mostra impacto; commit echo ok/mismatch/ausente; elicit onde suportado; `confirmation_unavailable` host cego |
-| ACCEPTANCE | delete semântico com prova verificável, zero bypass |
+| SECURITY | superfície mais protegida: consent artifact + echo + handle + single-use + CAS |
+| TESTS | prepare mostra impacto; commit artifact válido+echo ok; echo mismatch; artifact de outra proposta; `CONFIRMATION_UNAVAILABLE` host cego; replay |
+| ACCEPTANCE | delete semântico só com prova humana verificável |
 | ROLLBACK | tool removida |
 | EVIDENCE | testes + wire |
-| STOP | — |
+| STOP THE LINE | qualquer delete sem artifact → STOP |
 
 ## E6 — Capability Expansion (Programa B, D-6)
 
 | Campo | Valor |
 |---|---|
-| GOAL | typed ops/leituras novas aprovadas em D-6 |
+| GOAL | typed ops/leituras novas aprovadas em D-6 — **Programa B**, separado do refactoring semântico (Programa A) |
 | OWNER | tv-dashboard-api (backend domain) |
-| BASE | `UpdatePlaylistBody` 11 campos; endpoints REST existentes |
-| ALLOWED | typed ops: `patch_playlist` (name/desc/viewport/transition/duration/playback/refresh), `delete_playlist`(confirm), `activate_playlist`/`deactivate_playlist`, `duplicate_slide`, `reorder_sections`; reads: `slide_preset.list`, `media_asset.list` |
-| FORBIDDEN | shares/invites/access; export/import .mdd; public-url/qr; history restore (owner decide); qualquer typed op → Action automática |
-| DEPENDENCIES | E0 aprovação por bloco |
+| BASE | `UpdatePlaylistBody` 11 campos; endpoints REST existentes; D-6 classificação |
+| ALLOWED | INCLUIR: `patch_playlist`, `activate_playlist`/`deactivate_playlist`, `duplicate_slide`, `reorder_sections`, reads `slide_preset.list`/`media_asset.list` · CONDICIONADO: `delete_playlist` **só após E1+E5 provarem consent artifact em produção** |
+| FORBIDDEN | shares/invites/ACL (EXCLUIR DO ESCOPO); history restore; templates admin; import/export .mdd; public-url/qr (ADIAR — decisão própria); qualquer typed op → Action automática |
+| DEPENDENCIES | E0 aprovação por bloco; `delete_playlist` adicionalmente E1+E5 |
 | CONTRACT IMPACT | ADDITIVE (typed ops catalog + reads no surface) |
-| SECURITY | ops confirm herdam target_echo; playlist-level AuthZ = mesmo `require_playlist_access(edit)` |
+| SECURITY | ops confirm herdam consent artifact + echo; playlist-level AuthZ = mesmo `require_playlist_access(edit)` |
 | TESTS | por op: positive + sibling + negative + confirm policy; paridade REST↔typed op |
 | ACCEPTANCE | cada capability aprovada alcançável via execute/read |
 | ROLLBACK | remover entries do catalog (não-deployed ops são metadata) |
 | EVIDENCE | catalog diff + testes por op |
-| STOP | op exige mudança em PatchService → escalar como sub-projeto |
+| STOP THE LINE | op exige mudança em PatchService → escalar como sub-projeto; `delete_playlist` sem E1+E5 → STOP |
 
 ## E7 — Depreciação controlada das 12 legadas
 
@@ -151,7 +156,7 @@ remove as 12 tools atuais sem evidência de migração de consumidores.
 | ACCEPTANCE | evidência documentada de consumidores migrados; janela mínima (propor ≥2 releases) |
 | ROLLBACK | undeprecate |
 | EVIDENCE | OpenAPI diff + relatório de uso |
-| STOP | qualquer consumidor ativo detectado → manter |
+| STOP THE LINE | qualquer consumidor ativo detectado → manter |
 
 ## E8 — Diretivas, instruções, observabilidade (D-9, D-10)
 
@@ -169,13 +174,13 @@ remove as 12 tools atuais sem evidência de migração de consumidores.
 | ACCEPTANCE | modelo descobre verbs pelo catalog; forense por canal disponível |
 | ROLLBACK | versão anterior das instructions |
 | EVIDENCE | diffs + tests |
-| STOP | — |
+| STOP THE LINE | instructions re-declarando ops (leak-gate falha) → corrigir diretiva, não o gate |
 
-## E9 — E2E + avaliação de comportamento
+## E9 — E2E + avaliação de comportamento (**certificação final**)
 
 | Campo | Valor |
 |---|---|
-| GOAL | prova E2E dos 6 verbos + regressão das 12 legadas |
+| GOAL | prova E2E dos 6 verbos + regressão das 12 legadas — **etapa de certificação: nenhuma etapa anterior avança com regressões materiais abertas** |
 | OWNER | tv-dashboard-api |
 | BASE | E2E harness real (task 026), MCP wire tests |
 | ALLOWED | specs novos para verbos; suite de equivalência legado↔semântico; negative battery (unknown entity/action, echo, handle, CAS, auth) |
@@ -187,7 +192,7 @@ remove as 12 tools atuais sem evidência de migração de consumidores.
 | ACCEPTANCE | verde completo + equivalência comprovada |
 | ROLLBACK | — |
 | EVIDENCE | CI run + spec list |
-| STOP | qualquer divergência semântica vs legado → bloquear lançamento |
+| STOP THE LINE | qualquer divergência semântica vs legado → bloquear lançamento |
 
 ## Matriz de rastreabilidade
 
@@ -206,6 +211,6 @@ remove as 12 tools atuais sem evidência de migração de consumidores.
 | suggest_change | change.suggest | analyze(intent_materialization) | `dispatch.suggest_change` | playlist edit | gpt_suggest tests | E3 |
 | prepare_change | change.prepare | execute(phase=prepare) | `dispatch.preview_change` | playlist edit | gpt_actions_facade | E4 |
 | commit_proposal | change.commit | execute(phase=commit) | `dispatch.commit_change` | playlist edit+CAS+handle | commit tests | E4 |
-| (via ops) | block/section/slide delete | delete(entity,delete) | `dispatch.commit_change` (ops confirm) | playlist edit + echo+CAS | facade confirm tests | E1+E5 |
+| (via ops) | block/section/slide delete | delete(entity,delete) | `dispatch.commit_change` (ops confirm) | playlist edit + echo + consent artifact + CAS | facade confirm tests | E1+E5 |
 | (gap) | playlist.update | execute(patch_playlist) | typed op nova | playlist edit | op-level tests | E6 |
 | (gap) | presets listing | read(slide_preset,list) | REST `GET /slide-presets` | auth | preset tests | E6 |

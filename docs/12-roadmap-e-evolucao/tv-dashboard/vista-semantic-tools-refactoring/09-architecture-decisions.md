@@ -48,7 +48,9 @@ status. Status `RECOMMENDED` = pronto para aprovação; `NEEDS_APPROVAL`
 - **Recomendação**: **(a)+(b)** — `execute` com
   `entity: "presentation"`, `action: "apply_mutation"`,
   `operations: [{op, args, as?}]`, `phase: "prepare"|"commit"`,
-  `proposal_handle?`, `idempotency_key`, `confirmation?`.
+  `proposal_handle?`, `idempotency_key`, `target_echo?`,
+  `consent_artifact?` (ver D-5 — `confirmation` booleano nunca é
+  prova suficiente em ops `confirm`).
   `phase=prepare` → delega a `preview_change`; `phase=commit` →
   `commit_change`. **Fachada fina, zero lógica nova**: o dispatch
   existente faz tudo. Nenhum orquestrador paralelo.
@@ -77,46 +79,86 @@ status. Status `RECOMMENDED` = pronto para aprovação; `NEEDS_APPROVAL`
   A interface separa a política; a execução não duplica.
 - **Status**: `RECOMMENDED` (mantém as 6 tools do padrão-alvo).
 
-## D-5 — Confirmação verificável
+## D-5 — Confirmação: separação formal de conceitos (CORRIGIDO)
 
-- **Problema**: `confirmation=true` é afirmado pelo modelo — não é
-  prova de humano.
-- **Opções**: (a) `target_echo` no payload (host exige o humano
-  redigitar o ID do alvo); (b) `ctx.elicit` quando o host suporta
-  (EVA); (c) proposal echo — o commit deve repetir um campo do
-  preview que só o humano que viu o diff conhece.
-- **Evidência**: EVA já opera `target_echo`+elicit; MCP elicit é
-  por-host (doc 08 §7); GPT Actions não têm elicit → `target_echo`
-  é o único mecanismo transport-neutral disponível em ambos.
-- **Recomendação**: **`target_echo` obrigatório para ops `confirm`**
-  — o commit deve carregar o identificador exato do alvo
-  (slideId/sectionId/blockId) que o preview exibiu; `ctx.elicit`
-  adicional quando o host MCP suportar (bonus, não requisito).
-  Mismatch → `CONFIRMATION_MISMATCH` 409. `confirmation=true`
-  torna-se redundante e pode ser removido depois — **a prova é o
-  echo, não o booleano**.
-- **Status**: `RECOMMENDED` — quick win de segurança, independente
-  da convergência (pode ir antes das 6 tools).
+**Correção ao plano anterior**: `target_echo` sozinho **não é prova
+de consentimento humano** — um modelo pode observar o target ID no
+preview e reproduzi-lo no commit sem intervenção humana. O plano
+anterior classificava o echo como "a prova"; isso estava errado.
+As responsabilidades são separadas:
 
-## D-6 — Escopo de expansão de capabilities (Programa B)
+| Conceito | O que prova | Mecanismo VISTA |
+|---|---|---|
+| Target identity verification | o commit atinge o objeto exibido no preview, não outro | `target_echo` (id exato do alvo) |
+| Proposal integrity | o plano comitado é o plano preparado, não outro | `proposal_handle` opaco HMAC + plan fingerprint selado server-side |
+| Actor binding | quem comita é quem preparou | handle actor-bound + `principal_type==user` + re-authz por op |
+| Authorization | o ator pode executar aquela operação naquele recurso | Core RBAC + `PlaylistAccessService` no commit |
+| **Human consent** | um humano aprovou conscientemente | **só vale se a emissão depender de ação humana verificável** — ver mecanismos abaixo |
+| Commit permission | política permite comitar neste transporte/estado | `confirmationPolicy` + consent artifact válido |
 
-- **Decisão por bloco** (detalhe em doc 11 E6):
-  | Bloco | Recomendação |
-  |---|---|
-  | `playlist.update` (name/desc/viewport/transition/duration/playback/refresh) | **INCLUIR** — typed op `patch_playlist` nova; gap real e frequente |
-  | `playlist.delete` | **INCLUIR como confirm** — typed op `delete_playlist`; coerente c/ deleções existentes |
-  | `playlist.activate/deactivate` | **INCLUIR** — typed ops direct; lifecycle natural |
-  | `playlist.duplicate` | **ADIAR** — sem typed op; avaliar demanda |
-  | `history.restore` | **DECISÃO OWNER** — surface hoje diz "never exposed" deliberadamente |
-  | `media list/get` (read) | **INCLUIR read** — útil p/ contexto de assets; upload/binário fora |
-  | `slide.duplicate` | **INCLUIR** — typed op `duplicate_slide` |
-  | `section.reorder` | **INCLUIR** — typed op `reorder_sections` |
-  | `slide-presets list` | **INCLUIR read** — presets já insumo de `add_slide_from_preset` |
-  | `templates` (além de apply) | **ADIAR** — fluxo editorial complexo; avaliar após núcleo |
-  | `export/import (.mdd)`, `public-url/qr`, `shares/invites` | **EXCLUIR** — gestão de acesso/exportação: decisão humana por design |
-  | `validate-config`, `native-screens` | **ADIAR** — baixa demanda provável |
-- **Status**: `NEEDS_APPROVAL` — cada bloco INCLUIR precisa de ok do
-  owner; EXCLUIR é recomendação minha.
+### Mecanismos de consentimento por transporte/host
+
+| Transporte/host | Mecanismo | Prova | Disponibilidade |
+|---|---|---|---|
+| MCP + host com elicitation (Claude Code/Desktop) | `ctx.elicit` schema `{confirm, target_echo}` (padrão EVA) | ação humana no protocolo | por-host |
+| MCP host sem elicitation | nenhum confiável | — | `CONFIRMATION_UNAVAILABLE` → **bloqueio explícito** |
+| GPT Actions (HTTP/OpenAPI) | **backend-mediated consent challenge** (padrão CLARA step-up): prepare emite `consent_challenge_id` + URL do Portal; humano autenticado aprova o plano selado no Portal; commit exige `consent_token` emitido pelo backend **após** aprovação registrada | ação humana em canal autenticado, fora do modelo | requer Portal consent endpoint (reuso do padrão CLARA `step_up_consent.py`/`clara_consent_challenge` V014: challenge persistido, `plan_hash` vinculado, `iat>=created_at`) |
+| Ambos (fallback político) | nenhum | — | `CONFIRMATION_UNAVAILABLE` explícito; **nunca downgrade silencioso para echo** |
+
+### Resistência a replay/reuso (obrigatória no desenho)
+
+- Consent challenge/token vinculado a `(actor, proposal_handle,
+  target_ref, action, plan_hash)` — reuso entre atores, alvos ou
+  propostas → `CONSENT_MISMATCH`.
+- Single-use: consumido no primeiro commit (mesmo se falhar).
+- TTL curto + invalidado se a proposal expirar/for consumida.
+- `iat >= challenge.created_at` (padrão CLARA) — credenciais
+  anteriores ao desafio não valem.
+- `target_echo` permanece como **verificação de identidade do alvo**
+  (anti wrong-object), nunca como consent proof.
+
+### Decisão
+
+`confirmation=true` booleano **não satisfaz** consentimento humano
+para ops `confirm`. Transições:
+1. `target_echo` entra como target-identity check (corrige
+   wrong-object; não é consent).
+2. Consent artifact por transporte: elicit (MCP-capable) ou
+   consent challenge backend-mediado (Actions/qualquer host).
+3. Sem mecanismo confiável no transporte → bloqueio explícito
+   `CONFIRMATION_UNAVAILABLE` — fail-closed.
+
+- **Status**: `RECOMMENDED` — mecanismo consent-challenge precisa
+  de aprovação de segurança (reuso do padrão CLARA vs. implementação
+  nova no tv-dashboard-api; owner decide).
+
+## D-6 — Dois programas separados (CORRIGIDO)
+
+**Programa A — Semantic Surface Refactoring**: padronizar *como* a
+VISTA descobre/consulta/analisa/executa o que já existe. Escopo:
+E0-E5, E7-E9. Não adiciona capability de produto.
+
+**Programa B — Capability Expansion**: ampliar *o que* a VISTA
+alcança. Escopo: E6 (e somente ele). Cada item abaixo é decisão de
+produto do owner, não consequência da refatoração:
+
+| Capability | Classificação | Rationale |
+|---|---|---|
+| `playlist.update` (patch_playlist: name/desc/viewport/transition/duration/playback/refresh) | **INCLUIR** | gap real provado (doc 08 §6); typed op nova sobre `UpdatePlaylistBody` |
+| `playlist.activate/deactivate` | **INCLUIR** | lifecycle natural; endpoints existem |
+| `slide.duplicate` | **INCLUIR** | REST existe; typed op `duplicate_slide` |
+| `section.reorder` | **INCLUIR** | REST existe; typed op `reorder_sections` |
+| `media.list/get` + `slide_presets.list` (reads) | **INCLUIR** | leitura de contexto; binário/upload fora |
+| `playlist.delete` | **CONDICIONADO À GOVERNANÇA DE EXCLUSÃO** | só entra após E1/E5 provarem consent artifact + echo; delete de recurso-topo é a operação mais destrutiva do domínio |
+| `history.restore` | **ADIAR** | surface diz "never exposed" deliberadamente; precisa decisão própria com análise de blast radius |
+| `templates` administrativos | **ADIAR** | fluxo editorial complexo (publish/archive/clone) |
+| `import/export .mdd` | **ADIAR** | boundary de pacote, validação de payload — sub-projeto próprio |
+| `public-url/qr/token`, `native-screens`, `validate-config` | **ADIAR** | baixa demanda provável; reavaliar depois |
+| `shares/invites/ACL` | **EXCLUIR DO ESCOPO** | gestão de acesso é decisão humana por design; IA operando ACL cria superfície de escalada |
+
+- **Status**: `NEEDS_APPROVAL` — cada INCLUIR precisa de ok do
+  owner; CONDICIONADO depende de E1/E5; EXCLUIR é recomendação
+  final da análise.
 
 ## D-7 — `get_context` com capabilities do usuário
 
@@ -132,16 +174,42 @@ status. Status `RECOMMENDED` = pronto para aprovação; `NEEDS_APPROVAL`
   enforcement backend, expor o *subconjunto permitido* não vaza nada
   que o backend não vá negar.
 
-## D-8 — `delete_data_model` confirmationPolicy
+## D-8 — `delete_data_model`: proposta de decisão ao owner (REVISADO)
 
-- **Evidência** (doc 08 §9): `risk=mutation`+`direct` é declarado,
-  mas pode órfanar bindings.
-- **Recomendação**: **owner-review** — propor `confirm` **quando o
-  model tem consumidores** (bindings ativos); `direct` quando órfão.
-  Política condicional por estado, implementável no preview (o
-  prepare já sabe contar consumidores). Sem aprovação, manter
-  `direct` — não mudar unilateralmente.
-- **Status**: `NEEDS_APPROVAL`.
+- **Owner/contrato**: `presentation_ops_content.json` —
+  `delete_data_model` declara `risk:"mutation"` +
+  `confirmationPolicy:"direct"` (decisão registrada, doc 08 §9).
+  O delete real executa no `PresentationPatchService` sobre
+  `nativeConfig.dataModels[]`.
+- **Análise de órfãos**: data models são alvo de bindings —
+  `dataBinding.modelId` em blocks e referências `modelId` em
+  visuals/cells (`binding_target_id` dual-read). Deletar um model
+  com consumidores **órfa os bindings**: os blocos ficam sem
+  resolução de dados (estado degradado, não erro visível imediato).
+- **Estado/dependências a consultar no prepare**: (a) o model
+  existe; (b) `blockIndex[]`/`dataBinding` consumers do `modelId`;
+  (c) data_sources/transforms dependentes do `modelId`;
+  (d) contagem de consumidores exposta no preview.
+- **Autorização**: `require_playlist_access(edit)` — mesma dos
+  demais ops; nenhuma política extra necessária.
+- **Política de confirmação proposta**:
+  | Condição | Política proposta |
+  |---|---|
+  | model sem consumidores | `direct` (atual — baixo risco real) |
+  | model com ≥1 binding consumidor | `confirm` + preview lista consumidores + consent artifact obrigatório (D-5) |
+  | consumidores indetermináveis | **bloqueio fail-closed** (`DEPENDENCY_UNRESOLVED`) — sem evidência, sem execução |
+- **Efeito sobre consumidores**: o preview do prepare **deve
+  enumerar** os bindings afetados (blockIds/slideIds) — o humano
+  consentidor precisa ver o blast radius.
+- **Testes negativos**: delete com consumidores sem consent →
+  `CONFIRMATION_REQUIRED`; consent para model errado →
+  `CONSENT_MISMATCH`; bindings resolvidos parcialmente → bloqueio.
+- **Decisão para o owner**: aprovar política condicional acima
+  (recomendado) OU declarar `direct` intencional e documentar
+  aceitação do risco de órfãos. **Não implementar confirmação
+  condicional por conveniência sem essa aprovação.**
+- **Status**: `NEEDS_APPROVAL` — proposta entregue, decisão do
+  owner pendente.
 
 ## D-9 — GPT Actions: novos opIds ou projeção sobre os existentes?
 
@@ -178,9 +246,29 @@ status. Status `RECOMMENDED` = pronto para aprovação; `NEEDS_APPROVAL`
 | D-2 | Estender capability_surface | RECOMMENDED |
 | D-3 | execute phase+operations[] | RECOMMENDED |
 | D-4 | delete dedicada (mesmo mecanismo) | RECOMMENDED |
-| D-5 | target_echo + elicit opcional | RECOMMENDED |
-| D-6 | Blocos incluir/ad iar/excluir | NEEDS_APPROVAL |
+| D-5 | Consent artifact por transporte + echo como target-check | RECOMMENDED* |
+| D-6 | Programa A/B; blocos por classificação | NEEDS_APPROVAL |
 | D-7 | get_context autenticado | RECOMMENDED |
 | D-8 | confirm condicional por consumidores | NEEDS_APPROVAL |
 | D-9 | 6 opIds novos + deprecar gpt_* | RECOMMENDED |
 | D-10 | provenance por canal | RECOMMENDED |
+
+\* D-5 RECOMMENDED condicionado à aprovação do mecanismo de
+consent challenge backend-mediado (reuso padrão CLARA) — decisão
+de segurança do owner.
+
+## Tabela de decisões (owner gates)
+
+| DECISION | CURRENT STATUS | REQUIRED EVIDENCE | OWNER | PROPOSED RESOLUTION | IMPLEMENTATION GATE |
+|---|---|---|---|---|---|
+| D-1 coexistência | RECOMMENDED | ADR supersession aprovada | tv-dashboard-api arch | 6 novas + 12 deprecated | E0 |
+| D-2 surface estendido | RECOMMENDED | — | tv-dashboard-api | campos semantic no modelo neutro | E2 |
+| D-3 execute contract | RECOMMENDED | contrato revisado doc 10 §5 | tv-dashboard-api | phase+operations[] facade | E4 |
+| D-4 delete dedicada | RECOMMENDED | — | tv-dashboard-api | tool delegando ao envelope | E5 |
+| D-5 consent model | RECOMMENDED* | aprovação de segurança do consent challenge | security + tv-dashboard-api | consent artifact (elicit/challenge) + echo | E1 — **bloqueia E5** |
+| D-6 expansão | NEEDS_APPROVAL | ok do owner por bloco | tv-dashboard-api product | tabela Programa B | E6 |
+| D-7 get_context | RECOMMENDED | — | tv-dashboard-api | caps derivadas AuthZ | E2 |
+| D-8 delete_data_model | NEEDS_APPROVAL | decisão do owner sobre política condicional | tv-dashboard-api domain | confirm c/ consumidores | E1 |
+| D-9 opIds novos | RECOMMENDED | — | tv-dashboard-api | 6 vista_* + deprecar | E3-E5 |
+| D-10 audit canal | RECOMMENDED | — | tv-dashboard-api | channel na provenance | E8 |
+| ADR supersession | **PROPOSED** | aprovação formal | architecture board | doc 13 §6 texto-proposta | E0 — **bloqueia tudo** |

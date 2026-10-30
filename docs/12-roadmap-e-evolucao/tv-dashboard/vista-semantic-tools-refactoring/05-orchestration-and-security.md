@@ -151,8 +151,14 @@ interação obrigatória hoje é `confirmation=true` para os 3 ops
 
 **Achado**: VISTA tem o *envelope* certo (prepare honesto +
 single-use handle + read-back) mas a *prova de confirmação* mais
-fraca do grupo. Migração incremental possível sem mudar a
-superfície: exigir `target_echo`/elicitation nos 3 ops confirm.
+fraca do grupo.
+
+> **Corrigido na revisão (doc 09 D-5)**: `target_echo` sozinho
+> **não** é prova de consentimento humano — o modelo pode copiar o
+> ID do preview. A correção exige consent artifact por transporte
+> (elicitation em host capaz, consent challenge backend-mediado
+> padrão CLARA nos demais) + `target_echo` como target-check;
+> transporte sem mecanismo → `CONFIRMATION_UNAVAILABLE` (fail-closed).
 
 ## 6. Auditoria e observabilidade
 
