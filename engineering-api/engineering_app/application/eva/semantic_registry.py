@@ -186,11 +186,72 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     ),
     # --- read: product ------------------------------------------------------
     _a(
+        "product", "search", "read",
+        "Search the official product catalog (TOTVS SB1 via API DELPI) "
+        "by code, description, group, subgroup, type or customer "
+        "reference.",
+        "read",
+        fields=(
+            "code", "description", "group_code", "subgroup",
+            "product_type", "customer_reference", "sort", "direction",
+        ),
+        paginated=True,
+    ),
+    _a(
+        "product", "detail", "read",
+        "Product cadastral record — engineering view (no cost/price/"
+        "fiscal fields, per contract view=engineering).",
+        "read", ref_arg="product_code",
+        ref_description="Product code in the official catalog.",
+    ),
+    _a(
         "product", "structure", "read",
         "Official product structure/BOM tree from the owning source.",
         "read", ref_arg="product_code",
         ref_description="Product code in the official catalog.",
         fields=("max_depth", "page_size"),
+    ),
+    _a(
+        "product", "where_used", "read",
+        "Reverse BOM — official parent products that consume this item.",
+        "read", ref_arg="product_code",
+        ref_description="Product code in the official catalog.",
+        fields=("max_depth", "page_size"),
+        paginated=True,
+    ),
+    _a(
+        "product", "suppliers", "read",
+        "Official product×supplier links (TOTVS SA5).",
+        "read", ref_arg="product_code",
+        ref_description="Product code in the official catalog.",
+        paginated=True,
+    ),
+    _a(
+        "product", "drawing", "read",
+        "Official technical drawing metadata from the file-server "
+        "library (Cockpit do Operador contract) — filename, revision, "
+        "variant, size and modified date.",
+        "read", ref_arg="product_code",
+        ref_description="Product code in the official catalog.",
+        notes=(
+            "PDF bytes are served by the Engineering API route "
+            "/v1/products/{code}/drawing/pdf — MCP returns metadata "
+            "only.",
+        ),
+    ),
+    _a(
+        "product", "history", "read",
+        "Product history: cadastral revision fields plus official "
+        "purchase-price history when authorized — each section labeled "
+        "with its provenance/status.",
+        "read", ref_arg="product_code",
+        ref_description="Product code in the official catalog.",
+        fields=("start_date", "end_date", "branch", "history_limit"),
+        notes=(
+            "No official cadastral revision-history contract exists "
+            "(OWNER_BLOCKED, doc 63 §2.7) — that section reports "
+            "not_implemented honestly.",
+        ),
     ),
     # --- read: nonconformity ------------------------------------------------
     _a(
@@ -380,15 +441,10 @@ def unknown_action_error(entity: str, action: str) -> dict:
 # PLANNED extension surface (Plan 54 §5) — catalogued, never executable.
 PLANNED_SEMANTIC_ACTIONS: tuple[dict, ...] = (
     {
-        "entity": "drawing", "action": "detail", "tool": "read",
+        "entity": "product", "action": "update", "tool": "execute",
         "status": "not_implemented",
-        "note": "Desenhos técnicos — sem fonte/contrato oficial ainda.",
-    },
-    {
-        "entity": "product", "action": "bom", "tool": "read",
-        "status": "planned",
-        "note": "BOM completa — parcial em product.structure; contrato "
-                "dedicado ainda não existe.",
+        "note": "Edição de cadastro de produto — sem contrato WRITE "
+                "oficial no owner (doc 63 §2.8, OWNER_BLOCKED).",
     },
     {
         "entity": "routing", "action": "steps", "tool": "read",

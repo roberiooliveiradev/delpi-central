@@ -59,6 +59,24 @@ export const ENGINEERING_CATALOG: readonly CatalogSection[] = [
         requiredPermission: "engineering.access",
         keywords: ["nc", "nao conformidade", "defeito", "qualidade", "problema"],
       },
+      {
+        id: "products",
+        label: "Produtos",
+        description:
+          "Consulte produtos, estruturas, fornecedores, aplicações e desenhos técnicos",
+        target: { kind: "internal", view: "products" },
+        requiredPermission: "engineering.access",
+        keywords: [
+          "produto",
+          "produtos",
+          "estrutura",
+          "bom",
+          "fornecedor",
+          "desenho",
+          "catalogo",
+          "onde e usado",
+        ],
+      },
     ],
   },
   {

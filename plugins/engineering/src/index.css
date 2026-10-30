@@ -363,3 +363,128 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* --- Produtos (bounded context próprio — spec 61) ------------------- */
+
+.engineering-products {
+  display: flex;
+  flex-direction: column;
+  gap: var(--en-section-gap);
+}
+
+.engineering-product-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--en-border);
+  overflow-x: auto;
+}
+
+.engineering-product-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--en-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
+.engineering-product-tab:hover {
+  color: var(--en-text);
+}
+
+.engineering-product-tab.is-active {
+  border-bottom-color: var(--en-accent);
+  color: var(--en-text);
+  font-weight: 600;
+}
+
+.engineering-product-tab:focus-visible {
+  outline: 2px solid var(--en-accent);
+  outline-offset: -2px;
+}
+
+.engineering-product-overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--en-section-gap);
+}
+
+.engineering-product-tree,
+.engineering-product-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.engineering-product-tree li {
+  padding: 4px 0 4px 16px;
+  border-left: 1px solid var(--en-border);
+}
+
+.engineering-product-tree-node {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+  font-size: 0.9rem;
+}
+
+.engineering-product-tree-meta {
+  color: var(--en-text-muted);
+  font-size: 0.8rem;
+}
+
+.engineering-product-drawing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--en-section-gap);
+}
+
+.engineering-product-drawing-frame {
+  border: 1px solid var(--en-border);
+  border-radius: 8px;
+  height: 70vh;
+  min-height: 360px;
+  width: 100%;
+}
+
+.engineering-product-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--en-section-gap);
+}
+
+.engineering-product-history-table-wrap {
+  overflow-x: auto;
+}
+
+.engineering-product-history-table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  min-width: 100%;
+}
+
+.engineering-product-history-table th,
+.engineering-product-history-table td {
+  border-bottom: 1px solid var(--en-border);
+  padding: 6px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.engineering-product-history-table th {
+  color: var(--en-text-muted);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .engineering-product-tab {
+    flex: 1 1 auto;
+    padding: 8px 10px;
+    text-align: center;
+  }
+}

@@ -64,6 +64,8 @@ def _lmp_date(value: str | None) -> str | None:
 def _map_error(exc: Exception) -> dict[str, Any]:
     if isinstance(exc, DownstreamError) and exc.status_code in (401, 403):
         return {"status": "forbidden", "reason": "owner_denied"}
+    if isinstance(exc, DownstreamError) and exc.status_code == 404:
+        return {"status": "not_found", "reason": "not_found"}
     if isinstance(exc, DownstreamError):
         return {
             "status": "unavailable",
@@ -114,6 +116,27 @@ class ApiDelpiDelegatedAuxiliary:
             "data": goal_fields,
         }
 
+    async def _get_json(
+        self,
+        ctx: HomeSourceContext,
+        path: str,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """GET JSON delegado → ``{"status", "data"}`` honesto."""
+        try:
+            data = await self._client.get(
+                path,
+                params=params,
+                access_token=ctx.access_token,
+                request_id=ctx.request_id,
+            )
+        except Exception as exc:
+            return _map_error(exc)
+
+        if not isinstance(data, dict):
+            return {"status": "unavailable", "reason": "contract_error"}
+        return {"status": "available", "data": data}
+
     async def fetch_department_idd(
         self,
         ctx: HomeSourceContext,
@@ -123,42 +146,71 @@ class ApiDelpiDelegatedAuxiliary:
         end_date: str | None,
         branch: str | None,
     ) -> dict[str, Any]:
-        try:
-            data = await self._client.get(
-                "/dashboard/department-idd",
-                params={
-                    "department_id": "engineering",
-                    "competence": competence,
-                    "start_date": start_date,
-                    "end_date": end_date,
-                    "branch": branch,
-                },
-                access_token=ctx.access_token,
-                request_id=ctx.request_id,
-            )
-        except Exception as exc:
-            return _map_error(exc)
-
-        if not isinstance(data, dict):
-            return {"status": "unavailable", "reason": "contract_error"}
-        return {"status": "available", "data": data}
+        return await self._get_json(
+            ctx,
+            "/dashboard/department-idd",
+            {
+                "department_id": "engineering",
+                "competence": competence,
+                "start_date": start_date,
+                "end_date": end_date,
+                "branch": branch,
+            },
+        )
 
     async def fetch_nc_streak(
         self,
         ctx: HomeSourceContext,
     ) -> dict[str, Any]:
-        try:
-            data = await self._client.get(
-                "/engineering/lmps/nonconformities/streak",
-                access_token=ctx.access_token,
-                request_id=ctx.request_id,
-            )
-        except Exception as exc:
-            return _map_error(exc)
+        return await self._get_json(
+            ctx, "/engineering/lmps/nonconformities/streak"
+        )
 
-        if not isinstance(data, dict):
-            return {"status": "unavailable", "reason": "contract_error"}
-        return {"status": "available", "data": data}
+    # --- Products (E-PRD) ---------------------------------------------------
+
+    async def fetch_product_search(
+        self,
+        ctx: HomeSourceContext,
+        *,
+        code: str | None = None,
+        description: str | None = None,
+        group_code: str | None = None,
+        subgroup: str | None = None,
+        product_type: str | None = None,
+        customer_reference: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+        sort: str | None = None,
+        direction: str | None = None,
+    ) -> dict[str, Any]:
+        return await self._get_json(
+            ctx,
+            "/products/search",
+            {
+                "code": code,
+                "description": description,
+                "group_code": group_code,
+                "subgroup": subgroup,
+                "product_type": product_type,
+                "customer_reference": customer_reference,
+                "view": "engineering",
+                "page": page,
+                "page_size": page_size,
+                "sort": sort,
+                "direction": direction,
+            },
+        )
+
+    async def fetch_product_detail(
+        self,
+        ctx: HomeSourceContext,
+        *,
+        code: str,
+        view: str = "engineering",
+    ) -> dict[str, Any]:
+        return await self._get_json(
+            ctx, f"/products/{code}", {"view": view}
+        )
 
     async def fetch_product_structure(
         self,
@@ -168,16 +220,94 @@ class ApiDelpiDelegatedAuxiliary:
         max_depth: int = 6,
         page_size: int = 200,
     ) -> dict[str, Any]:
+        return await self._get_json(
+            ctx,
+            f"/products/{code}/structure",
+            {"max_depth": max_depth, "page_size": page_size},
+        )
+
+    async def fetch_product_parents(
+        self,
+        ctx: HomeSourceContext,
+        *,
+        code: str,
+        max_depth: int | None = None,
+        page: int = 1,
+        page_size: int = 200,
+    ) -> dict[str, Any]:
+        return await self._get_json(
+            ctx,
+            f"/products/{code}/parents",
+            {
+                "max_depth": max_depth,
+                "page": page,
+                "page_size": page_size,
+            },
+        )
+
+    async def fetch_product_suppliers(
+        self,
+        ctx: HomeSourceContext,
+        *,
+        code: str,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict[str, Any]:
+        return await self._get_json(
+            ctx,
+            f"/products/{code}/suppliers",
+            {"page": page, "page_size": page_size, "view": "engineering"},
+        )
+
+    async def fetch_product_drawing(
+        self,
+        ctx: HomeSourceContext,
+        *,
+        code: str,
+    ) -> dict[str, Any]:
+        """Metadados do desenho PDF do acervo oficial (Cockpit/file server)."""
+        return await self._get_json(ctx, f"/products/{code}/drawing")
+
+    async def fetch_product_drawing_pdf(
+        self,
+        ctx: HomeSourceContext,
+        *,
+        code: str,
+    ) -> dict[str, Any]:
+        """Bytes do PDF do desenho — proxy governado, nunca file share."""
         try:
-            data = await self._client.get(
-                f"/products/{code}/structure",
-                params={"max_depth": max_depth, "page_size": page_size},
+            status, headers, content = await self._client.get_raw(
+                f"/products/{code}/drawing/pdf",
                 access_token=ctx.access_token,
                 request_id=ctx.request_id,
             )
         except Exception as exc:
             return _map_error(exc)
+        return {
+            "status": "available",
+            "status_code": status,
+            "content": content,
+            "content_type": headers.get("content-type", "application/pdf"),
+            "content_disposition": headers.get("content-disposition", ""),
+        }
 
-        if not isinstance(data, dict):
-            return {"status": "unavailable", "reason": "contract_error"}
-        return {"status": "available", "data": data}
+    async def fetch_product_purchase_price_history(
+        self,
+        ctx: HomeSourceContext,
+        *,
+        code: str,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        branch: str | None = None,
+        history_limit: int | None = None,
+    ) -> dict[str, Any]:
+        return await self._get_json(
+            ctx,
+            f"/products/{code}/purchase-price-history",
+            {
+                "start_date": start_date,
+                "end_date": end_date,
+                "branch": branch,
+                "history_limit": history_limit,
+            },
+        )

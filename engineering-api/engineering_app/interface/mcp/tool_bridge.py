@@ -1615,6 +1615,197 @@ async def tool_get_product_structure(
         return handle_tool_error(exc)
 
 
+async def tool_search_products(
+    *,
+    code: str | None = None,
+    description: str | None = None,
+    group_code: str | None = None,
+    subgroup: str | None = None,
+    product_type: str | None = None,
+    customer_reference: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+    sort: str | None = None,
+    direction: str | None = None,
+) -> CallToolResult:
+    """read(product.search) — catálogo TOTVS via owner oficial."""
+    try:
+        context = _require_engineering_human()
+        result = await build_delegated_auxiliary_source().fetch_product_search(
+            _source_context(context),
+            code=code,
+            description=description,
+            group_code=group_code,
+            subgroup=subgroup,
+            product_type=product_type,
+            customer_reference=customer_reference,
+            page=page,
+            page_size=page_size,
+            sort=sort,
+            direction=direction,
+        )
+        return _lmp_result(
+            result, not_found_message="Nenhum produto encontrado."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def _product_code_or_error(product_code: str | None):
+    code = (product_code or "").strip()
+    if not code:
+        return None, _error_result(
+            "product_code obrigatório.",
+            status_code=400,
+            error_code="validation",
+            data={"error_kind": "validation"},
+        )
+    return code, None
+
+
+async def tool_get_product_detail(*, product_code: str) -> CallToolResult:
+    """read(product.detail) — ficha cadastral visão engineering."""
+    try:
+        context = _require_engineering_human()
+        code, error = _product_code_or_error(product_code)
+        if error:
+            return error
+        result = await build_delegated_auxiliary_source().fetch_product_detail(
+            _source_context(context), code=code, view="engineering"
+        )
+        return _lmp_result(
+            result, not_found_message=f"Produto {code} não encontrado."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_product_parents(
+    *,
+    product_code: str,
+    max_depth: int | None = None,
+    page: int = 1,
+    page_size: int = 200,
+) -> CallToolResult:
+    """read(product.where_used) — BOM reversa oficial."""
+    try:
+        context = _require_engineering_human()
+        code, error = _product_code_or_error(product_code)
+        if error:
+            return error
+        result = await build_delegated_auxiliary_source().fetch_product_parents(
+            _source_context(context),
+            code=code,
+            max_depth=max_depth,
+            page=page,
+            page_size=page_size,
+        )
+        return _lmp_result(
+            result, not_found_message=f"Produto {code} não encontrado."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_product_suppliers(
+    *,
+    product_code: str,
+    page: int = 1,
+    page_size: int = 50,
+) -> CallToolResult:
+    """read(product.suppliers) — vínculos produto×fornecedor oficiais."""
+    try:
+        context = _require_engineering_human()
+        code, error = _product_code_or_error(product_code)
+        if error:
+            return error
+        result = await build_delegated_auxiliary_source().fetch_product_suppliers(
+            _source_context(context), code=code, page=page, page_size=page_size
+        )
+        return _lmp_result(
+            result, not_found_message=f"Produto {code} não encontrado."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_product_drawing(*, product_code: str) -> CallToolResult:
+    """read(product.drawing) — metadados do desenho do acervo oficial."""
+    try:
+        context = _require_engineering_human()
+        code, error = _product_code_or_error(product_code)
+        if error:
+            return error
+        result = await build_delegated_auxiliary_source().fetch_product_drawing(
+            _source_context(context), code=code
+        )
+        return _lmp_result(
+            result, not_found_message=f"Produto {code} sem desenho disponível."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_product_history(
+    *,
+    product_code: str,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    history_limit: int | None = None,
+) -> CallToolResult:
+    """read(product.history) — revisão cadastral + histórico de compras.
+
+    Histórico de revisões cadastrais não possui contrato oficial
+    (OWNER_BLOCKED — doc 63 §2.7): devolve os campos de revisão do
+    cadastro mais o histórico de preço de compra quando autorizado,
+    cada um rotulado com sua proveniência.
+    """
+    try:
+        context = _require_engineering_human()
+        code, error = _product_code_or_error(product_code)
+        if error:
+            return error
+        source = build_delegated_auxiliary_source()
+        ctx = _source_context(context)
+        detail = await source.fetch_product_detail(
+            ctx, code=code, view="engineering"
+        )
+        if detail.get("status") != "available":
+            return _lmp_result(
+                detail, not_found_message=f"Produto {code} não encontrado."
+            )
+        purchases = await source.fetch_product_purchase_price_history(
+            ctx,
+            code=code,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            history_limit=history_limit,
+        )
+        product = (detail.get("data") or {}).get("product") or {}
+        data = {
+            "cadastral_revision": {
+                "status": "available",
+                "current_revision": product.get("current_revision"),
+                "last_revision_date": product.get("last_revision_date"),
+                "source": "products.cadastral (TOTVS SB1)",
+            },
+            "purchase_price_history": purchases,
+            "revision_history": {
+                "status": "not_implemented",
+                "reason": "Sem contrato oficial de histórico de revisões "
+                "cadastrais (owner TOTVS/API DELPI) — doc 63 §2.7.",
+            },
+        }
+        return _ok_result(
+            {"status": "available", "data": data},
+            "Histórico do produto carregado.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
 # --- ACT tools: CRUD NC governado (E-NC-07..10) -------------------------
 
 

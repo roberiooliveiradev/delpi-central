@@ -10,6 +10,7 @@ export type EngineeringView =
   | "overview"
   | "lmps"
   | "nonconformities"
+  | "products"
   | "help";
 
 export type ResolvedEngineeringRoute = {
@@ -59,6 +60,9 @@ export function resolveEngineeringRoute(
     relativePath.startsWith("nonconformities/")
   ) {
     return { view: "nonconformities", pathname: path, relativePath };
+  }
+  if (relativePath === "products" || relativePath.startsWith("products/")) {
+    return { view: "products", pathname: path, relativePath };
   }
   if (relativePath === "help") {
     return { view: "help", pathname: path, relativePath };

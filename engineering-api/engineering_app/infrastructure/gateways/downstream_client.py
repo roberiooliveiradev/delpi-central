@@ -139,6 +139,50 @@ class DownstreamClient:
             raise DownstreamError("contract_error", "Envelope sem payload de dados.")
         return data if data is not None else body
 
+    async def get_raw(
+        self,
+        path: str,
+        *,
+        params: Mapping[str, Any] | None = None,
+        access_token: str,
+        request_id: str | None = None,
+        service_token: str | None = None,
+    ) -> tuple[int, dict[str, str], bytes]:
+        """GET binário (ex.: PDF de desenho) — sem parse de envelope JSON.
+
+        Retorna (status_code, headers, content). Erros HTTP seguem a
+        mesma classificação de ``get``: 401/403/404/etc → DownstreamError
+        ``http`` com status_code, transporte → transport_error/timeout.
+        """
+        headers = self._headers(access_token, request_id, service_token)
+        headers["Accept"] = "*/*"
+        clean_params = {
+            key: value for key, value in (params or {}).items() if value is not None
+        }
+        try:
+            async with httpx.AsyncClient(
+                base_url=self._base_url,
+                timeout=self._timeout,
+                transport=self._transport,
+            ) as client:
+                resp = await client.get(path, params=clean_params, headers=headers)
+        except httpx.TimeoutException as exc:
+            raise DownstreamError("timeout", str(exc)) from exc
+        except httpx.RequestError as exc:
+            raise DownstreamError("transport_error", str(exc)) from exc
+
+        if resp.status_code >= 400:
+            try:
+                body = resp.json()
+            except Exception:
+                body = None
+            raise DownstreamError(
+                "http",
+                format_error_message(body, fallback=resp.text[:200]),
+                status_code=resp.status_code,
+            )
+        return resp.status_code, dict(resp.headers), resp.content
+
     async def post(
         self,
         path: str,

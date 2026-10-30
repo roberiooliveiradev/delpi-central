@@ -11,13 +11,16 @@ from app.interface.http.pagination_query import (
 from app.interface.http.query_param_enums import SORT_DIR_QUERY
 from fastapi.responses import FileResponse
 
-from delpi_auth.authorization import require_permission
+from delpi_auth.authorization import require_any_permission, require_permission
 
 from app.application.dto.product.get_product_drawing_request import GetProductDrawingRequest
 from app.application.dto.product.list_product_drawings_request import (
     ListProductDrawingsRequest,
 )
-from app.application.security.api_delpi_permissions import API_DELPI_ACCESS
+from app.application.security.api_delpi_permissions import (
+    API_DELPI_ACCESS,
+    ENGINEERING_LMP_ACCESS,
+)
 from app.application.services.drawings.drawing_pdf_library_storage import (
     DrawingPdfLibraryStorageError,
     DrawingPdfLibraryUnavailableError,
@@ -60,7 +63,7 @@ def _parse_optional_datetime(value: str | None) -> datetime | None:
     "/drawings",
     **LIST_PRODUCT_DRAWINGS,
 )
-@require_permission(API_DELPI_ACCESS)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def list_product_drawings(
     code: Optional[str] = Query(
         default=None,
@@ -147,7 +150,7 @@ def list_product_drawings(
     "/{code}/drawing",
     **PRODUCT_DRAWING_METADATA,
 )
-@require_permission(API_DELPI_ACCESS)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def get_product_drawing_metadata(code: str):
     try:
         dto = GetProductDrawingRequest(code=code)
@@ -180,7 +183,7 @@ def get_product_drawing_metadata(code: str):
     "/{code}/drawing/pdf",
     **PRODUCT_DRAWING_PDF,
 )
-@require_permission(API_DELPI_ACCESS)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def get_product_drawing_pdf(code: str):
     try:
         dto = GetProductDrawingRequest(code=code)

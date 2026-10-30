@@ -433,8 +433,26 @@ _READ_DISPATCH = {
         lambda a: bridge.tool_get_lmp_department_idd(**a)
     ),
     ("lmp", "nc_streak"): lambda a: bridge.tool_get_lmp_nc_streak(),
+    ("product", "search"): (
+        lambda a: bridge.tool_search_products(**a)
+    ),
+    ("product", "detail"): (
+        lambda a: bridge.tool_get_product_detail(**a)
+    ),
     ("product", "structure"): (
         lambda a: bridge.tool_get_product_structure(**a)
+    ),
+    ("product", "where_used"): (
+        lambda a: bridge.tool_get_product_parents(**a)
+    ),
+    ("product", "suppliers"): (
+        lambda a: bridge.tool_get_product_suppliers(**a)
+    ),
+    ("product", "drawing"): (
+        lambda a: bridge.tool_get_product_drawing(**a)
+    ),
+    ("product", "history"): (
+        lambda a: bridge.tool_get_product_history(**a)
     ),
     ("nonconformity", "search"): (
         lambda a: bridge.tool_search_nonconformities(**a)

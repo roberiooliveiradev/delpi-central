@@ -147,7 +147,9 @@ from app.interface.http.schemas.openapi_examples import (
 from app.interface.http.schemas.openapi_route_helpers import openapi_example_response
 from app.application.services.composite_sections_builder import build_composite_sections
 from app.application.services.product.protheus_field_normalizer import (
+    narrow_paged_items,
     narrow_product_fields,
+    narrow_supplier_fields,
     normalize_playbook_payload,
     normalize_stock_payload,
 )
@@ -222,6 +224,7 @@ def search_products_route(
     ),
     description: Optional[str] = Query(None),
     customer_reference: Optional[str] = Query(None),
+    view: str = PRODUCT_DETAIL_VIEW_QUERY(),
     page: int = Query(1, ge=1),
     page_size: int = PAGE_SIZE_QUERY("page_50_500"),
     sort: Optional[str]=Query(None),
@@ -259,7 +262,9 @@ def search_products_route(
         result = use_case.execute(dto)
 
         return product_success(
-            result.to_dict(),
+            narrow_paged_items(
+                result.to_dict(), narrow_product_fields, view=view
+            ),
             operation_id="search_products",
             entity="product_search",
             shape="paged_list",
@@ -524,7 +529,7 @@ def get_product_directives(
     response_model=ProductDetailResponse,
     openapi_extra=openapi_example_response(PRODUCT_DETAIL_EXAMPLE),
 )
-@require_permission(API_DELPI_ACCESS)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def get_product_detail(
     code: str,
     view: str = PRODUCT_DETAIL_VIEW_QUERY(),
@@ -630,7 +635,7 @@ def get_product_summary(code: str):
     response_model=HierarchyResponse,
     openapi_extra=openapi_example_response(PRODUCT_STRUCTURE_EXAMPLE),
 )
-@require_permission(API_DELPI_ACCESS)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def get_structure(
     code: str,
     max_depth: Optional[int] = None,
@@ -1211,7 +1216,7 @@ async def structure_excel_public(
         return error_response(str(e), status_code=500)
     
 @router.get("/{code}/parents", **PRODUCT_PARENTS)
-@require_permission(API_DELPI_ACCESS)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def parents(
     code: str,
     max_depth: Optional[int] = None,
@@ -1247,9 +1252,10 @@ def parents(
         return error_response(str(e))
 
 @router.get("/{code}/suppliers", **PRODUCT_SUPPLIERS)
-@require_permission(API_DELPI_ACCESS)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def suppliers(
     code: str,
+    view: str = PRODUCT_DETAIL_VIEW_QUERY(),
     page: int = Query(1, ge=1),
     page_size: int = PAGE_SIZE_QUERY("page_50_500")
 ):
@@ -1267,7 +1273,9 @@ def suppliers(
         result = use_case.execute(dto)
 
         return product_success(
-            result.to_dict(),
+            narrow_paged_items(
+                result.to_dict(), narrow_supplier_fields, view=view
+            ),
             operation_id=PRODUCT_SUPPLIERS["operation_id"],
             entity="product_suppliers",
             shape="paged_list",

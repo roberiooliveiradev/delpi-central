@@ -44,6 +44,80 @@ PRODUCT_DETAIL_SUMMARY_FIELDS = (
     "make_or_buy",
 )
 
+# Visão "engineering" (Portal Engenharia / Ficha do Produto — spec doc 61):
+# cadastro e dados de engenharia/logística, SEM campos comerciais, custo
+# ou fiscais (sale_price, standard_cost, last_purchase_price, impostos).
+PRODUCT_DETAIL_ENGINEERING_FIELDS = (
+    # identification
+    "code",
+    "description",
+    "type",
+    "group_code",
+    "subgroup",
+    "previous_code",
+    "active",
+    "blocked",
+    "customer_reference",
+    "customer_reference_old",
+    "contractual_product",
+    "sales_class",
+    # engineering / production
+    "drawing_code",
+    "unit",
+    "secondary_unit",
+    "conversion_factor",
+    "conversion_type",
+    "material_type",
+    "production_line",
+    "operation_decimal_type",
+    "current_revision",
+    "last_revision_date",
+    "net_weight",
+    # stock / logistics
+    "default_warehouse",
+    "package_quantity",
+    "barcode",
+    "customer_packaging",
+    "make_or_buy",
+    # purchase metadata (sem preço)
+    "last_purchase_date",
+    "lead_time_type",
+    "requester_restriction",
+    # quality / MRP
+    "rohs_indicator",
+    "traceability",
+    "warranty_product",
+    "mrp_considered",
+    "suggestion_flag",
+    "power_control",
+    # Delpi controls
+    "initial_consumption_date",
+    "created_by",
+    "updated_by",
+    "delpi_category",
+    "delpi_segment",
+    "qtd_pi",
+)
+
+# Visão "engineering" do vínculo produto×fornecedor — sem last_price /
+# last_price_date (dado comercial sensível, doc 63 §4).
+PRODUCT_SUPPLIER_ENGINEERING_FIELDS = (
+    "product_code",
+    "product_description",
+    "unit",
+    "supplier_code",
+    "supplier_store",
+    "supplier_name",
+    "supplier_part_number",
+    "catalog_code",
+    "barcode",
+    "registered_lead_time_days",
+    "real_avg_lead_time_days",
+    "real_min_lead_time_days",
+    "real_max_lead_time_days",
+    "real_lead_time_sample_size",
+)
+
 
 def protheus_yes_no_label(value: str | None) -> str | None:
     if value in PROTHEUS_YES_VALUES:
@@ -217,11 +291,47 @@ def normalize_stock_payload(data: dict[str, Any], *, legacy: bool = False) -> di
 
 
 def narrow_product_fields(product: dict[str, Any], *, view: str = "full") -> dict[str, Any]:
-    if view != "summary" or not isinstance(product, dict):
+    if not isinstance(product, dict) or view == "full":
         return product
 
+    allowed = (
+        PRODUCT_DETAIL_SUMMARY_FIELDS
+        if view == "summary"
+        else PRODUCT_DETAIL_ENGINEERING_FIELDS
+        if view == "engineering"
+        else None
+    )
+    if allowed is None:
+        return product
+
+    return {field: product.get(field) for field in allowed if field in product}
+
+
+def narrow_supplier_fields(
+    supplier: dict[str, Any], *, view: str = "full"
+) -> dict[str, Any]:
+    if not isinstance(supplier, dict) or view != "engineering":
+        return supplier
     return {
-        field: product.get(field)
-        for field in PRODUCT_DETAIL_SUMMARY_FIELDS
-        if field in product
+        field: supplier.get(field)
+        for field in PRODUCT_SUPPLIER_ENGINEERING_FIELDS
+        if field in supplier
+    }
+
+
+def narrow_paged_items(
+    payload: dict[str, Any],
+    narrow,
+    *,
+    view: str = "full",
+) -> dict[str, Any]:
+    """Aplica narrowing item a item em payload ``{items: [...]}``."""
+    if view == "full" or not isinstance(payload, dict):
+        return payload
+    items = payload.get("items")
+    if not isinstance(items, list):
+        return payload
+    return {
+        **payload,
+        "items": [narrow(item, view=view) for item in items],
     }
