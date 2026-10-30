@@ -40,6 +40,14 @@ export const CONSUMPTION_AUDIT_CONTENT = {
   searchNextPage: "Próxima",
   suggestionFor: (op: string, product: string) => `OP ${op} · ${product}`,
 
+  // ——— Período rápido ———
+  quickPeriodLabel: "Período rápido",
+  quickPeriodHint:
+    "Atalhos preenchem as datas inicial e final do filtro; o período usa o tipo de data escolhido (Emissão, Apontamento ou Encerramento).",
+  clearPeriod: "Limpar período",
+  filtersAriaLabel: "Pesquisa e filtros de ordens de produção",
+  advancedFiltersTitle: "Filtros avançados",
+
   // ——— Filtros avançados (F3) ———
   filtersTitle: "Filtros de pesquisa",
   filtersHint:

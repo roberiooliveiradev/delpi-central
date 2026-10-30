@@ -1,18 +1,30 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Filter } from "lucide-react";
 
 import { ApiRequestError } from "../../api/httpClient";
 import { formatSuppliesUnitName } from "../../app/suppliesUnits";
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
 import {
+  matchSuppliesQuickPeriod,
+  resolveSuppliesQuickPeriod,
+  SUPPLIES_QUICK_PERIOD_OPTIONS,
+  type SuppliesQuickPeriodId,
+} from "../../app/periodPreset";
+import {
   SuppliesActionButton,
+  SuppliesClearFiltersButton,
+  SuppliesDateField,
   SuppliesEmptyState,
+  SuppliesFilterBarShell,
   SuppliesLoadingCard,
   SuppliesPageHero,
   SuppliesPagePath,
   SuppliesSectionCard,
   SuppliesSectionHintLabel,
+  SuppliesSegmentToggle,
   SuppliesSelectField,
+  spFiltersKit,
   SuppliesStateBanner,
   SuppliesStatusBadge,
   SuppliesTextField,
@@ -646,6 +658,9 @@ export function ConsumptionAuditPage({ basePath }: ConsumptionAuditPageProps) {
     data: null,
     error: null,
   });
+  const [advancedOpen, setAdvancedOpen] = useState<boolean>(
+    () => !filtersAreEmpty(parsed.filters),
+  );
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const lastSearchKey = useRef("");
 
@@ -858,6 +873,31 @@ export function ConsumptionAuditPage({ basePath }: ConsumptionAuditPageProps) {
     searchState.status === "ready" &&
     !searchState.page?.items.length;
 
+  // ——— Período rápido (Bloco B) ———
+  const activePeriodPreset = useMemo(
+    () => matchSuppliesQuickPeriod(filters.periodStart, filters.periodEnd),
+    [filters.periodStart, filters.periodEnd],
+  );
+  const periodIsSet = Boolean(filters.periodStart || filters.periodEnd);
+
+  const applyQuickPeriod = useCallback(
+    (preset: SuppliesQuickPeriodId) => {
+      if (preset === "custom") return;
+      const range = resolveSuppliesQuickPeriod(preset);
+      if (!range) return;
+      setFilters((f) => ({ ...f, periodStart: range.from, periodEnd: range.to }));
+      setListPage(1);
+    },
+    [],
+  );
+
+  const clearPeriod = useCallback(() => {
+    setFilters((f) => ({ ...f, periodStart: "", periodEnd: "" }));
+    setListPage(1);
+  }, []);
+
+  const { FiltersRow } = spFiltersKit;
+
   return (
     <div className="sp-page-stack sp-consumption-audit">
       <SuppliesPagePath back={homeBack} items={[]} current={C.title} />
@@ -882,178 +922,243 @@ export function ConsumptionAuditPage({ basePath }: ConsumptionAuditPageProps) {
             </span>
           ) : null
         }
-      >
-        <div className="sp-consumption-audit__query" role="search" aria-label={C.searchTitle}>
-          <div className="sp-consumption-audit__query-grid">
-            <SuppliesSelectField
-              label={C.unitLabel}
-              hint={C.searchHint}
-              value={unitDraft}
-              options={unitOptions}
-              onChange={(value) => {
-                setUnitDraft(value);
-                setSelected([]);
-              }}
-            />
-            <div className="sp-consumption-audit__combobox sp-field">
-              <label className="sp-field__label" htmlFor="ca-op-search">
-                {C.opLabel}
-              </label>
-              <input
-                id="ca-op-search"
-                ref={searchInputRef}
-                className="sp-field__control"
-                type="search"
-                role="combobox"
-                aria-expanded={suggestOpen && suggestions.length > 0}
-                aria-controls="ca-op-suggestions"
-                aria-activedescendant={
-                  suggestActive >= 0 ? `ca-suggestion-${suggestActive}` : undefined
-                }
-                aria-autocomplete="list"
-                autoComplete="off"
-                value={searchDraft}
-                placeholder={C.searchPlaceholder}
-                onChange={(event) => {
-                  setSearchDraft(event.target.value.toUpperCase());
-                  setSuggestOpen(true);
-                  setListPage(1);
-                }}
-                onFocus={() => setSuggestOpen(true)}
-                onKeyDown={onSearchKeyDown}
-              />
-              {suggestOpen && searchState.status === "loading" ? (
-                <div className="sp-consumption-audit__suggestions-status">
-                  {C.searchLoading}
-                </div>
-              ) : null}
-              {suggestOpen && suggestions.length ? (
-                <ul
-                  id="ca-op-suggestions"
-                  role="listbox"
-                  className="sp-consumption-audit__suggestions"
-                >
-                  {suggestions.map((item, index) => (
-                    <li
-                      key={item.production_order}
-                      id={`ca-suggestion-${index}`}
-                      role="option"
-                      aria-selected={index === suggestActive}
-                      className={
-                        index === suggestActive
-                          ? "sp-consumption-audit__suggestion is-active"
-                          : "sp-consumption-audit__suggestion"
-                      }
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                        selectOrder(item.production_order);
-                      }}
-                    >
-                      <strong>{item.production_order}</strong>
-                      <span>
-                        {item.product_code}
-                        {item.product_description
-                          ? ` · ${item.product_description}`
-                          : ""}
-                      </span>
-                      <span className="sp-consumption-audit__suggestion-meta">
-                        {formatDatePtBr(item.emission_date)} ·{" "}
-                        {labelOf(C.statusLabels, item.status)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-          </div>
+      />
 
-          <details className="sp-consumption-audit__filters">
-            <summary>{C.filtersTitle}</summary>
-            <div className="sp-consumption-audit__query-grid">
-              <SuppliesSelectField
-                label={C.dateTypeLabel}
-                hint={C.filtersHint}
-                value={filters.dateType}
-                options={dateTypeOptions}
-                onChange={(value) => {
-                  setFilters((f) => ({
-                    ...f,
-                    dateType: value as ConsumptionAuditDateType,
-                  }));
-                  setListPage(1);
-                }}
-              />
-              <SuppliesTextField
-                label={C.periodStartLabel}
-                value={filters.periodStart}
-                onChange={(value) => {
-                  setFilters((f) => ({ ...f, periodStart: value }));
-                  setListPage(1);
-                }}
-                type="date"
-              />
-              <SuppliesTextField
-                label={C.periodEndLabel}
-                value={filters.periodEnd}
-                onChange={(value) => {
-                  setFilters((f) => ({ ...f, periodEnd: value }));
-                  setListPage(1);
-                }}
-                type="date"
-              />
-              <SuppliesTextField
-                label={C.productLabel}
-                value={filters.product}
-                onChange={(value) => {
-                  setFilters((f) => ({ ...f, product: value }));
-                  setListPage(1);
-                }}
-                placeholder={C.productPlaceholder}
-              />
-              <SuppliesSelectField
-                label={C.statusFilterLabel}
-                value={filters.status}
-                options={statusOptions}
-                onChange={(value) => {
-                  setFilters((f) => ({ ...f, status: value }));
-                  setListPage(1);
-                }}
-              />
-              <SuppliesTextField
-                label={C.workCenterLabel}
-                value={filters.workCenter}
-                onChange={(value) => {
-                  setFilters((f) => ({ ...f, workCenter: value }));
-                  setListPage(1);
-                }}
-                placeholder={C.workCenterPlaceholder}
-              />
-              <SuppliesTextField
-                label={C.operationLabel}
-                value={filters.operation}
-                onChange={(value) => {
-                  setFilters((f) => ({ ...f, operation: value }));
-                  setListPage(1);
-                }}
-                placeholder={C.operationPlaceholder}
-              />
-              <div className="sp-consumption-audit__query-actions">
-                <SuppliesActionButton
-                  type="button"
-                  variant="default"
-                  disabled={filtersAreEmpty(filters)}
-                  onClick={() => {
-                    setFilters(EMPTY_FILTERS);
-                    setListPage(1);
+      <form
+        className="sp-list-filters sp-consumption-audit__filters-form"
+        onSubmit={(event) => event.preventDefault()}
+        aria-label={C.filtersAriaLabel}
+      >
+        <SuppliesFilterBarShell
+          embedded
+          ariaLabel={C.filtersAriaLabel}
+          leading={
+            <div className="sp-filter-bar__period-block">
+              <div className="sp-filter-bar__header">
+                <div className="sp-filter-bar__title">
+                  <Filter size={18} aria-hidden="true" />
+                  <h2>
+                    <SuppliesSectionHintLabel
+                      label={C.searchTitle}
+                      hint={SP_HELP.consumptionAuditQuery}
+                    />
+                  </h2>
+                </div>
+                {!filtersAreEmpty(filters) ? (
+                  <div className="sp-filter-bar__header-actions">
+                    <SuppliesClearFiltersButton
+                      density="compact"
+                      label={C.clearFilters}
+                      onClick={() => {
+                        setFilters(EMPTY_FILTERS);
+                        setListPage(1);
+                      }}
+                    />
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Bloco A — busca principal */}
+              <FiltersRow variant="extended">
+                <SuppliesSelectField
+                  label={C.unitLabel}
+                  hint={C.searchHint}
+                  value={unitDraft}
+                  options={unitOptions}
+                  onChange={(value) => {
+                    setUnitDraft(value);
+                    setSelected([]);
                   }}
-                >
-                  {C.clearFilters}
-                </SuppliesActionButton>
+                />
+                <div className="sp-consumption-audit__combobox sp-field">
+                  <label className="sp-field__label" htmlFor="ca-op-search">
+                    {C.opLabel}
+                  </label>
+                  <input
+                    id="ca-op-search"
+                    ref={searchInputRef}
+                    className="sp-field__control"
+                    type="search"
+                    role="combobox"
+                    aria-expanded={suggestOpen && suggestions.length > 0}
+                    aria-controls="ca-op-suggestions"
+                    aria-activedescendant={
+                      suggestActive >= 0
+                        ? `ca-suggestion-${suggestActive}`
+                        : undefined
+                    }
+                    aria-autocomplete="list"
+                    autoComplete="off"
+                    value={searchDraft}
+                    placeholder={C.searchPlaceholder}
+                    onChange={(event) => {
+                      setSearchDraft(event.target.value.toUpperCase());
+                      setSuggestOpen(true);
+                      setListPage(1);
+                    }}
+                    onFocus={() => setSuggestOpen(true)}
+                    onKeyDown={onSearchKeyDown}
+                  />
+                  {suggestOpen && searchState.status === "loading" ? (
+                    <div className="sp-consumption-audit__suggestions-status">
+                      {C.searchLoading}
+                    </div>
+                  ) : null}
+                  {suggestOpen && suggestions.length ? (
+                    <ul
+                      id="ca-op-suggestions"
+                      role="listbox"
+                      className="sp-consumption-audit__suggestions"
+                    >
+                      {suggestions.map((item, index) => (
+                        <li
+                          key={item.production_order}
+                          id={`ca-suggestion-${index}`}
+                          role="option"
+                          aria-selected={index === suggestActive}
+                          className={
+                            index === suggestActive
+                              ? "sp-consumption-audit__suggestion is-active"
+                              : "sp-consumption-audit__suggestion"
+                          }
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            selectOrder(item.production_order);
+                          }}
+                        >
+                          <strong>{item.production_order}</strong>
+                          <span>
+                            {item.product_code}
+                            {item.product_description
+                              ? ` · ${item.product_description}`
+                              : ""}
+                          </span>
+                          <span className="sp-consumption-audit__suggestion-meta">
+                            {formatDatePtBr(item.emission_date)} ·{" "}
+                            {labelOf(C.statusLabels, item.status)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              </FiltersRow>
+
+              {/* Bloco B — ações rápidas de período */}
+              <div className="sp-consumption-audit__period-presets">
+                <div className="sp-consumption-audit__period-presets-head">
+                  <SuppliesSectionHintLabel
+                    label={C.quickPeriodLabel}
+                    hint={C.quickPeriodHint}
+                  />
+                  <SuppliesActionButton
+                    type="button"
+                    variant="default"
+                    disabled={!periodIsSet}
+                    onClick={clearPeriod}
+                  >
+                    {C.clearPeriod}
+                  </SuppliesActionButton>
+                </div>
+                <SuppliesSegmentToggle
+                  ariaLabel={C.quickPeriodLabel}
+                  idPrefix="ca-period-preset"
+                  size="sm"
+                  value={activePeriodPreset}
+                  onChange={(value) =>
+                    applyQuickPeriod(value as SuppliesQuickPeriodId)
+                  }
+                  options={SUPPLIES_QUICK_PERIOD_OPTIONS}
+                />
               </div>
             </div>
-          </details>
-        </div>
-      </SuppliesPageHero>
+          }
+        >
+          {null}
+        </SuppliesFilterBarShell>
+
+        {/* Bloco C — filtros avançados */}
+        <details
+          className="sp-consumption-audit__advanced"
+          open={advancedOpen}
+          onToggle={(event) =>
+            setAdvancedOpen(event.currentTarget.open)
+          }
+        >
+          <summary>
+            <SuppliesSectionHintLabel
+              label={C.advancedFiltersTitle}
+              hint={C.filtersHint}
+            />
+          </summary>
+          <FiltersRow variant="extended">
+            <SuppliesSelectField
+              label={C.dateTypeLabel}
+              value={filters.dateType}
+              options={dateTypeOptions}
+              onChange={(value) => {
+                setFilters((f) => ({
+                  ...f,
+                  dateType: value as ConsumptionAuditDateType,
+                }));
+                setListPage(1);
+              }}
+            />
+            <SuppliesDateField
+              label={C.periodStartLabel}
+              value={filters.periodStart}
+              onChange={(value) => {
+                setFilters((f) => ({ ...f, periodStart: value }));
+                setListPage(1);
+              }}
+            />
+            <SuppliesDateField
+              label={C.periodEndLabel}
+              value={filters.periodEnd}
+              onChange={(value) => {
+                setFilters((f) => ({ ...f, periodEnd: value }));
+                setListPage(1);
+              }}
+            />
+            <SuppliesTextField
+              label={C.productLabel}
+              value={filters.product}
+              onChange={(value) => {
+                setFilters((f) => ({ ...f, product: value }));
+                setListPage(1);
+              }}
+              placeholder={C.productPlaceholder}
+            />
+            <SuppliesSelectField
+              label={C.statusFilterLabel}
+              value={filters.status}
+              options={statusOptions}
+              onChange={(value) => {
+                setFilters((f) => ({ ...f, status: value }));
+                setListPage(1);
+              }}
+            />
+            <SuppliesTextField
+              label={C.workCenterLabel}
+              value={filters.workCenter}
+              onChange={(value) => {
+                setFilters((f) => ({ ...f, workCenter: value }));
+                setListPage(1);
+              }}
+              placeholder={C.workCenterPlaceholder}
+            />
+            <SuppliesTextField
+              label={C.operationLabel}
+              value={filters.operation}
+              onChange={(value) => {
+                setFilters((f) => ({ ...f, operation: value }));
+                setListPage(1);
+              }}
+              placeholder={C.operationPlaceholder}
+            />
+          </FiltersRow>
+        </details>
+      </form>
 
       {/* ——— Lista de resultados (F3) ——— */}
       {!hasCriteria && !target ? (

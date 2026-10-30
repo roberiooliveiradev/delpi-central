@@ -2890,29 +2890,6 @@
 
 /* Consumption Audit (GLPI #1353) — escopo .dashboard-supplies-portal */
 
-.dashboard-supplies-portal .sp-consumption-audit__query {
-  margin-top: 0.75rem;
-}
-
-.dashboard-supplies-portal .sp-consumption-audit__query-grid {
-  display: grid;
-  grid-template-columns: minmax(8rem, 12rem) minmax(12rem, 1fr) auto;
-  gap: 0.75rem;
-  align-items: end;
-}
-
-@media (max-width: 640px) {
-  .dashboard-supplies-portal .sp-consumption-audit__query-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.dashboard-supplies-portal .sp-consumption-audit__query-actions {
-  display: flex;
-  align-items: center;
-  padding-bottom: 0.1rem;
-}
-
 .dashboard-supplies-portal .sp-consumption-audit__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
@@ -3217,21 +3194,37 @@
   opacity: 0.8;
 }
 
-.dashboard-supplies-portal .sp-consumption-audit__filters {
-  margin-top: 0.75rem;
-  border-top: 1px solid var(--sp-border, #d9dce3);
-  padding-top: 0.5rem;
+.dashboard-supplies-portal .sp-consumption-audit__period-presets {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
 }
 
-.dashboard-supplies-portal .sp-consumption-audit__filters summary {
+.dashboard-supplies-portal .sp-consumption-audit__period-presets-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__advanced {
+  border: 1px solid var(--sp-border, #d9dce3);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--sp-surface, #fff);
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__advanced summary {
   cursor: pointer;
   font-size: 0.85rem;
   font-weight: 600;
   padding: 0.25rem 0;
+  list-style-position: inside;
 }
 
-.dashboard-supplies-portal .sp-consumption-audit__filters[open] summary {
-  margin-bottom: 0.5rem;
+.dashboard-supplies-portal .sp-consumption-audit__advanced[open] summary {
+  margin-bottom: 0.75rem;
 }
 
 .dashboard-supplies-portal .sp-consumption-audit__result-row {

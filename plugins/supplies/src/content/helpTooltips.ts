@@ -310,7 +310,7 @@ export const SP_HELP = {
   consumptionAudit:
     "Auditoria de consumo de uma ordem de produção: estrutura prevista, empenhos, consumo registrado e evidências de execução por operação — tudo calculado pelo servidor, o Portal não recalcula.",
   consumptionAuditQuery:
-    "Digite parte do número da OP ou combine os filtros (período, produto, situação, centro de trabalho, operação) — a pesquisa é automática, sem botão de consultar. Selecionar uma linha abre a auditoria completa; filial e OP ficam na URL.",
+    "Digite parte do número da OP ou combine os filtros (período, produto, situação, centro de trabalho, operação) — a pesquisa é automática, sem botão de consultar. Use os atalhos de período rápido (Hoje, Últimos 7/15/30 dias, Este mês…) para preencher as datas com um clique. Selecionar uma linha abre a auditoria completa; filial e OP ficam na URL.",
   consumptionAuditSearch:
     "A pesquisa combina todos os filtros preenchidos (interseção). O período usa o tipo de data escolhido: Emissão, Apontamento ou Encerramento — datas diferentes, nunca misturadas.",
   consumptionAuditCompare:

@@ -549,3 +549,122 @@ describe("consumption-audit page structure (F2–F5)", () => {
     expect(pageSource).toContain("selected.length >= COMPARE_MAX");
   });
 });
+
+// ——— UX/layout — período rápido e componentes do kit (feedback PO) ———
+
+import {
+  matchSuppliesQuickPeriod,
+  resolveSuppliesQuickPeriod,
+  SUPPLIES_QUICK_PERIOD_OPTIONS,
+} from "../../app/periodPreset";
+
+describe("supplies quick-period presets", () => {
+  const now = new Date("2026-10-30T15:00:00Z"); // 12h em America/Sao_Paulo
+
+  it("cobre as ações exigidas na ordem operacional", () => {
+    expect(SUPPLIES_QUICK_PERIOD_OPTIONS.map((o) => o.value)).toEqual([
+      "today",
+      "yesterday",
+      "last_7_days",
+      "last_15_days",
+      "last_30_days",
+      "this_month",
+      "last_month",
+      "custom",
+    ]);
+    expect(SUPPLIES_QUICK_PERIOD_OPTIONS.map((o) => o.label)).toEqual([
+      "Hoje",
+      "Ontem",
+      "Últimos 7 dias",
+      "Últimos 15 dias",
+      "Últimos 30 dias",
+      "Este mês",
+      "Mês passado",
+      "Personalizado",
+    ]);
+  });
+
+  it("resolve janelas móveis terminando em hoje", () => {
+    expect(resolveSuppliesQuickPeriod("today", now)).toEqual({
+      from: "2026-10-30",
+      to: "2026-10-30",
+    });
+    expect(resolveSuppliesQuickPeriod("yesterday", now)).toEqual({
+      from: "2026-10-29",
+      to: "2026-10-29",
+    });
+    expect(resolveSuppliesQuickPeriod("last_7_days", now)).toEqual({
+      from: "2026-10-24",
+      to: "2026-10-30",
+    });
+    expect(resolveSuppliesQuickPeriod("last_15_days", now)).toEqual({
+      from: "2026-10-16",
+      to: "2026-10-30",
+    });
+    expect(resolveSuppliesQuickPeriod("last_30_days", now)).toEqual({
+      from: "2026-10-01",
+      to: "2026-10-30",
+    });
+    expect(resolveSuppliesQuickPeriod("this_month", now)).toEqual({
+      from: "2026-10-01",
+      to: "2026-10-30",
+    });
+    expect(resolveSuppliesQuickPeriod("last_month", now)).toEqual({
+      from: "2026-09-01",
+      to: "2026-09-30",
+    });
+    expect(resolveSuppliesQuickPeriod("custom", now)).toBeNull();
+  });
+
+  it("detecta o preset ativo e marca datas manuais como Personalizado", () => {
+    expect(
+      matchSuppliesQuickPeriod("2026-10-24", "2026-10-30", now),
+    ).toBe("last_7_days");
+    expect(
+      matchSuppliesQuickPeriod("2026-10-29", "2026-10-29", now),
+    ).toBe("yesterday");
+    expect(
+      matchSuppliesQuickPeriod("2026-10-01", "2026-10-15", now),
+    ).toBe("custom");
+    expect(matchSuppliesQuickPeriod("", "", now)).toBe("custom");
+  });
+});
+
+describe("consumption-audit layout (plugin-ui composition)", () => {
+  const pageSource = readFileSync(
+    join(
+      dirname(fileURLToPath(import.meta.url)),
+      "ConsumptionAuditPage.tsx",
+    ),
+    "utf-8",
+  );
+
+  it("área de filtros usa os componentes canônicos do kit", () => {
+    expect(pageSource).toContain("SuppliesFilterBarShell");
+    expect(pageSource).toContain("SuppliesSegmentToggle");
+    expect(pageSource).toContain("SuppliesDateField");
+    expect(pageSource).toContain("SuppliesClearFiltersButton");
+    expect(pageSource).toContain("FiltersRow");
+  });
+
+  it("período rápido preenche datas e oferece limpeza dedicada", () => {
+    expect(pageSource).toContain("SUPPLIES_QUICK_PERIOD_OPTIONS");
+    expect(pageSource).toContain("applyQuickPeriod");
+    expect(pageSource).toContain("clearPeriod");
+    expect(pageSource).toContain('idPrefix="ca-period-preset"');
+  });
+
+  it("busca/filtros fora do hero — cabeçalho não engole a área útil", () => {
+    const heroIndex = pageSource.indexOf("<SuppliesPageHero");
+    const formIndex = pageSource.indexOf("sp-consumption-audit__filters-form");
+    expect(heroIndex).toBeGreaterThan(-1);
+    expect(formIndex).toBeGreaterThan(heroIndex);
+    // hero não carrega filhos — o formulário vem depois dele
+    expect(pageSource.slice(heroIndex, formIndex)).not.toContain("combobox");
+  });
+
+  it("filtros avançados ficam em bloco colapsável separado", () => {
+    expect(pageSource).toContain("sp-consumption-audit__advanced");
+    expect(pageSource).toContain("advancedOpen");
+  });
+});
