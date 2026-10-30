@@ -1187,3 +1187,21 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | G022-J | Smoke visual produtivo | evidência em produção | deploy produtivo não autorizado | TEST_NOT_RUN |
 
 **Residuais:** evidência visual limitada a tema claro desktop+mobile na stack local; percentual determinado não existe em nenhuma superfície (por desenho — sem fonte de progresso real nas APIs atuais); deploy/homologação produtiva do novo bundle exige gate de release próprio.
+
+## Gate 023 — release produtivo UX-022 (CF-PROC0072-UX-LOADING-RELEASE-023, 30/10/2026)
+
+| Teste | Entrada | Esperado | Observado | Estado |
+|---|---|---|---|---|
+| G023-A | HEAD/worktrees/produção | inventário | prod →; MFE , plugin-ui ; tags rollback-ux022 registradas | PASS |
+| G023-B | Implementação UX-022 em main | exports/factories plugin-ui |  em main; exports reais verificados; bindings adaptador | PASS |
+| G023-C1 | Tema claro | contraste/visível | spinner , badge contextual | PASS |
+| G023-C2 | Tema escuro | contraste no escuro | spinner != fundo , texto legível | PASS |
+| G023-C3 | reduced-motion | identificável sem animação |  + texto + role=status | PASS |
+| G023-C4 | teclado/foco | foco preservado em loading | defeito real corrigido:  nativo → novo  (aria-disabled+guarda) no ActionButton; Enter abre R10 | PASS |
+| G023-C5 | responsivo | sem overflow | 768/390/320px overflowX=0, loaders visíveis | PASS |
+| G023-D | reports tab prioridade | KPIs —, badges, catálogo | comprovado local e prod | PASS |
+| G023-G | testes/build | sem regressão | plugin-ui 2363, MFE 413, tsc×2, vite×2 | PASS |
+| G023-I | deploy governado | escopo mínimo |  fase remote(plugin-ui )+mfe(MFE ); sem rebuild api/core/corpus | PASS |
+| G023-J | smoke produtivo | loaders+dados+mobile | 13/14: mid-flight badges, KPIs —, 0 residual, R10 353/R69.704,12, exports, pendências, mobile; 3×404 console de recursos (viewer-photo-like) — observação, sem defeito funcional | PASS c/ observação |
+
+**Residuais:** 404s de recurso no console (não funcionais — investigar em gate de observabilidade); demais residuais Gate-021 inalterados.
