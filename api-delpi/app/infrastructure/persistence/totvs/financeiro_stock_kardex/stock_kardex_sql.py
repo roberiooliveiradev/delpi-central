@@ -217,13 +217,26 @@ SELECT RTRIM(S.B9_FILIAL) AS branch_code,
 # post-competence boundary (first day after the period end) — that is
 # the value the field carried when the competence closed, including
 # the closing recalculation (MATA330) written on the last day.
+#
+# The log tables only carry single-column indexes (FIELD, DTIME, …) —
+# there is NO index on TTAT_RECNO. A chunked ``RECNO IN (...)`` filter
+# therefore scans the whole FIELD+DTIME range once per chunk (measured
+# 28–55s for historical competences, exceeding the BFF timeout). The
+# set-based form below resolves the earliest post-boundary change for
+# every recno in ONE pass (ROW_NUMBER), and the caller keeps only the
+# movement recnos it actually needs — same earliest-COLD semantics.
 _TTAT_HISTORY_SQL = """
 SELECT TTAT_RECNO, TTAT_COLD, TTAT_DTIME
-  FROM {log_table} WITH (NOLOCK)
- WHERE TTAT_FIELD = ?
-   AND TTAT_DTIME >= ?
-   AND TTAT_RECNO IN ({recno_placeholders})
- ORDER BY TTAT_RECNO, TTAT_DTIME
+  FROM (
+    SELECT TTAT_RECNO, TTAT_COLD, TTAT_DTIME,
+           ROW_NUMBER() OVER (
+             PARTITION BY TTAT_RECNO ORDER BY TTAT_DTIME
+           ) AS rn
+      FROM {log_table} WITH (NOLOCK)
+     WHERE TTAT_FIELD = ?
+       AND TTAT_DTIME >= ?
+  ) ranked
+ WHERE rn = 1
 """
 
 _SX6_PARAM_SQL = """
@@ -418,13 +431,11 @@ def build_ttat_history_query(
     log_table: str,
     field_name: str,
     boundary: str,
-    recnos: tuple[int, ...],
 ) -> tuple[str, list[Any]]:
-    sql = _TTAT_HISTORY_SQL.format(
-        log_table=log_table,
-        recno_placeholders=", ".join("?" for _ in recnos),
-    )
-    return sql, [field_name, boundary, *recnos]
+    """Earliest post-boundary cost change per recno — one scan; the
+    caller filters the rows down to the movement recnos it needs."""
+    sql = _TTAT_HISTORY_SQL.format(log_table=log_table)
+    return sql, [field_name, boundary]
 
 
 def build_sx6_param_query(param_name: str) -> tuple[str, list[Any]]:

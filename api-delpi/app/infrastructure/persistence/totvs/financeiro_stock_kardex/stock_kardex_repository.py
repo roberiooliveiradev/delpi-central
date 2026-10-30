@@ -125,21 +125,19 @@ class StockKardexRepository(BaseRepository, StockKardexRepositoryPort):
         if mapping is None or not recnos:
             return {}
         log_table, field_name = mapping
+        sql, params = stock_kardex_sql.build_ttat_history_query(
+            log_table=log_table,
+            field_name=field_name,
+            boundary=boundary,
+        )
+        wanted = set(int(r) for r in recnos)
         history: dict[int, str] = {}
         with self as repo:
-            for chunk in _chunks(recnos):
-                sql, params = stock_kardex_sql.build_ttat_history_query(
-                    log_table=log_table,
-                    field_name=field_name,
-                    boundary=boundary,
-                    recnos=chunk,
-                )
-                for row in repo.execute_query(sql, tuple(params)) or []:
-                    recno = int(row.get("TTAT_RECNO") or 0)
-                    # Rows arrive ordered by recno+dtime — keep the
-                    # earliest COLD only (value at the boundary).
-                    if recno and recno not in history:
-                        history[recno] = row.get("TTAT_COLD")
+            # One ranked row per recno — keep only movement recnos.
+            for row in repo.execute_query(sql, tuple(params)) or []:
+                recno = int(row.get("TTAT_RECNO") or 0)
+                if recno in wanted:
+                    history[recno] = row.get("TTAT_COLD")
         return history
 
     def fetch_sx6_param(self, *, param_name: str) -> str | None:

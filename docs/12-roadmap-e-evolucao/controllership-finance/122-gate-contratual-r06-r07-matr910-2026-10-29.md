@@ -211,3 +211,25 @@ Investigação `CF-PROC0072-R06-R07-REVERT-MONETARY-INVESTIGATION-016` + rework 
 **Residuais anteriores explicados:** o −R$11.954,21 (entradas) e o +R$2.845,00 (saídas) reportados na investigação eram artefato de sonda (último COLD sobrescrevia o primeiro na query de diagnóstico) — o engine canônico sempre usou o earliest-COLD correto.
 
 `G6` homologação humana permanece `PENDING`. `E7` (RPO/parâmetros efetivos da emissão) permanece `PENDING` externo.
+
+
+## 14. Adendo — causa raiz dos 503 históricos (REWORK-018, 2026-10-30)
+
+Execução `CF-PROC0072-R06-R07-HISTORICAL-ROOT-CAUSE-REWORK-018`. Sintoma reportado via CLARA autenticada: R06 filial 02 competências 2026-06/07/08 → HTTP 503 «Origem de dados financeiros indisponível»; f01 2026-08 e f02 2026-09/10 → 200.
+
+**Causa raiz (`PROVEN`, não é SB9 nem ausência de snapshot):**
+
+1. O lookup `as_of` TTAT usava `TTAT_RECNO IN (...)` em chunks de 500. As tabelas `*_TTAT_LOG` só têm índices single-column (`TTAT_FIELD`, `TTAT_DTIME`, …) — **não existe índice em `TTAT_RECNO`**. Cada chunk varria o range inteiro `FIELD + DTIME >= boundary`; meses históricos acumulam recálculos posteriores → 28–55s só no estágio TTAT (medido: jun=54,7s, jul=51,7s, ago=28,5s).
+2. O timeout do gateway BFF é **30s** (`DELPI_API_TIMEOUT`) → `requests.Timeout` → `DelpiApiGatewayError(status=None)` → `_map_gateway_error` → 503. A query da api-delpi continuava executando após o corte (request log posterior em 60s+).
+3. SB9 existe e está íntegra para todas as competências/filiais (f02: 2.937–3.117 posições em mai–set/2026) — descartada a hipótese `SOURCE_MISSING`. R07 nunca falhou porque o recorte INVENT é pequeno.
+
+**Correção mínima (owner: api-delpi `stock_kardex_sql`/`stock_kardex_repository`):** a consulta TTAT passou à forma set-based — `ROW_NUMBER() OVER (PARTITION BY TTAT_RECNO ORDER BY TTAT_DTIME)` filtrado a `rn=1` em **uma única passada** por tabela; o repositório mantém apenas os recnos dos movimentos em memória. Semântica earliest-COLD idêntica; medido 0,1–1,7s por tabela.
+
+**Paridade pós-fix (engine ponta-a-ponta, f02/armazém 01):** 2026-06 `available` em 6,6s; 2026-07 em 5,5s; 2026-08 em 5,1s; 2026-09 em 4,8s com totais **exatos** do baseline (entradas 16.164.404,076 / saídas 19.951.547,214).
+
+**R07 agosto/2026 (análise documental):** 102 movs armazém 01 (+9 no 99) — volume alto é legítimo: recontagem física concentrada em 19–28/08 com pares entrada+saída de ajuste em poucos produtos de alto valor (90263848 R$4,73M, 90263555 R$3,58M, 90263925 R$0,53M em 2 movs cada); líquido pequeno (−R$28,8k). Não é erro de classificação nem duplicidade.
+
+**Competência aberta (outubro/2026):** `referenceDate`/`costAsOfBoundary` são **limites contratuais do mês** — não afirmação de fechamento. Sem logs pós-boundary, os custos são vivos e a consulta é **provisória** (`asOfConvention` + `snapshotDate` expõem a convenção). Semântica preservada; `closingState` formal segue fora do escopo.
+
+`G6` permanece `PENDING`. `E7` permanece `PENDING` externo.
+

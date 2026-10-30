@@ -992,3 +992,20 @@ Execução `CF-PROC0072-R06-R07-MONETARY-REWORK-017`. Recuperação seletiva do 
 | AC-11 | R07 45 movimentos | loc01=32+loc99=13; valores exatos × doc 85 §7 | PASS |
 | AC-12 | Parâmetros MATR910 registrados | E7 permanece PENDING (SX1 só guarda emissão ago/2026) | PENDING |
 | G6 | Homologação humana oficial | aguarda PO/TÉO | PENDING |
+
+### HISTORICAL-ROOT-CAUSE-REWORK-018 — 503 históricos R06 (2026-10-30)
+
+Execução `CF-PROC0072-R06-R07-HISTORICAL-ROOT-CAUSE-REWORK-018`. Sintoma CLARA: f02 2026-06/07/08 → 503; f02 09/10 e f01 08 → 200. **Causa raiz `PROVEN`:** lookup TTAT `RECNO IN(chunk)` sem índice em `TTAT_RECNO` → scan completo `FIELD+DTIME` por chunk → 28–55s > timeout BFF 30s → `DelpiApiGatewayError(status=None)` → 503. SB9 presente em todos os meses (f02: 2.937–3.117 posições mai–set) — hipótese `SOURCE_MISSING` descartada. **Fix:** query set-based `ROW_NUMBER rn=1` (1 passada/tabela, 0,1–1,7s) + filtro de recnos em memória; semântica earliest-COLD idêntica.
+
+| RQ/AC | Critério | Evidência de execução | Estado |
+|---|---|---|---|
+| AC-01/02 | Causa raiz 503 por camada | engine OK em ~5s fix vs TTAT 28–55s; BFF timeout 30s (`DELPI_API_TIMEOUT`) → 503 | PASS |
+| AC-03 | Diferença f01×f02 | não é filial — é volume de logs TTAT desde o boundary; f01/ago também excedeu 30s (upstream log 62s) | PASS |
+| AC-04 | Snapshots SB9 | presentes f01/f02 em 31/05–30/09/2026 | PASS |
+| AC-05/06 | TTAT/boundary | earliest-COLD preservado; boundary `period_end+1` intacto | PASS |
+| AC-09/11 | R07 agosto explicado | 102+9 movs: recontagem 19–28/08, pares ± em 3 produtos de alto valor (R$8,8M bruto, líq −R$28,8k) | PASS (legítimo, não anomalia) |
+| AC-12 | Competência aberta | `referenceDate`/`costAsOfBoundary` = limites contratuais; custos vivos = provisório | PASS (semântica documentada) |
+| AC-13/14 | Paridade set/2026 | engine f02/01: 16.164.404,076 / 19.951.547,214 exatos; R07 45 movs intacto | PASS |
+| Latência | Engine f02/01 | jun 6,6s / jul 5,5s / ago 5,1s / set 4,8s (antes: 30–60s+, timeout) | PASS |
+| Smoke autenticado positivo | identidade autorizada | nenhuma credencial com `controllership-finance.access` disponível | TEST_NOT_RUN |
+| G6 | Homologação humana | aguarda PO/TÉO | PENDING |
