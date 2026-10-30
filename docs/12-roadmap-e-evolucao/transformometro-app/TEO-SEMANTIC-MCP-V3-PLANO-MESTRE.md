@@ -98,3 +98,25 @@ Toda implementação deve retornar `TRANSFORMÔMETRO EXECUTION REPORT` com TASK,
 Esta iniciativa complementa o roadmap histórico de produto e o [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md); **não substitui automaticamente a sequência de outras iniciativas**. Qualquer conflito com a fonte canônica ou o runtime deve ser registrado como drift e submetido à revisão.
 
 **Fonte operacional de progresso:** [TÉO Semantic MCP V3 — issue #124](https://github.com/roberiooliveiradev/delpi-central/issues/124).
+
+## 8. Encerramento do escopo V3 — aceite em 2026-10-30
+
+**Decisão:** `ACCEPT_WITH_RESIDUAL` — refatoração V3 **bem-sucedida no escopo de entrega**, com cutover público `SEMANTIC_V3_ONLY` verificado no ChatGPT e fluxo CRUD governado validado por teste real. O encerramento não significa prova universal de todas as capabilities.
+
+**Código e publicação:** commits [7017df3d0a](https://github.com/roberiooliveiradev/delpi-central/commit/7017df3d0a48ec8a101e9183552dc25a081db279), [aa297973d4](https://github.com/roberiooliveiradev/delpi-central/commit/aa297973d444792cf1f0bb5d890740530af17196), documentação [386191e219](https://github.com/roberiooliveiradev/delpi-central/commit/386191e21983ff11c73d7dd8d377ce1cc345be5d). Deploy/health/SHA produtivo informados no relatório do Devin. Nesta conversa, o catálogo disponibilizado pelo host contém **exatamente seis tools** (`get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`) e nenhuma tool legada.
+
+**Aceite autenticado no ChatGPT (evidência observada):**
+- `get_context`, `read` (consulta de 76 processos), `analyze`, `knowledge`: **PASS**.
+- `execute(ops[])` com falha inicial: **PASS** (parou sem executar dependentes).
+- `execute` criação de `process_document` de teste no processo `PROC-0001`: **PASS**, `executed_verified` + read-back independente.
+- `execute` atualização do mesmo documento: **PASS**, `executed_verified` + read-back independente.
+- `delete`: **PASS** — proposta exata `gp_c299d3bdffa54ca9bb58f64f8a3b7c28`, confirmação explícita do usuário, `executed_verified`, `absent=true` e consulta posterior `404 not_found`. Documento de teste `854481b0-4126-4ee2-b651-6fe63af0aaad` excluído, sem pendência de limpeza.
+- Casos negativos: create inválido `400 validation`, delete de ID inexistente `404`, confirmação sem proposta `400`: **PASS** para as rejeições esperadas.
+
+**Riscos residuais — não converter em PASS:**
+- Testes de AuthZ cross-user, fluxo multi-action positivo com dependências e smoke abrangente de todas as famílias: **TEST_NOT_RUN** nesta conversa; endereçar em acompanhamento futuro se necessário.
+- Suíte integral do Devin: **1.976 PASS / 10 FAIL** atribuídas ao baseline e 5 testes async deselecionados por ausência de `pytest-asyncio`: corrigir como dívida técnica separada, sem declarar a suíte integral verde.
+- Não foi verificado novamente o ambiente de produção por SSH nesta conversa; a evidência externa de deploy é o relatório do Devin, enquanto o funcionamento do MCP autenticado foi observado no ChatGPT.
+- GPT Actions/OpenAPI preservadas no escopo; revisar instruções do GPT Builder caso ainda apontem para vocabulário antigo.
+
+**Resultado:** iniciativa de refatoração e cutover encerrada por aceite do usuário; residual conhecido e explícito. Registro de execução e evidências na [issue #124](https://github.com/roberiooliveiradev/delpi-central/issues/124).
