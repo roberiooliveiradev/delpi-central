@@ -122,6 +122,14 @@ comandos ou logs.
 
 ### Produção
 
+> **Permissões do `.env` em produção (VM srv-api):** a árvore do projeto usa
+> ACL POSIX — `user:michael:rwx` + `group:projetos` (ver `getfacl infra`).
+> Nunca deixar `infra/.env` com modo `600`/`umask 077`: isso colapsa a
+> `mask` da ACL e bloqueia silenciosamente o grupo operacional. Após
+> recriar o arquivo (`cp`, `install`, editor remoto), garantir
+> `setfacl -m m::rwx infra/.env` ou modo `660`+ — equivalente ao
+> `-rwxrwxr-x + user:michael` já aplicado em `core-api/.env.semi-prod`.
+
 ```bash
 cp infra/.env.prod.example infra/.env
 # editar CHANGE_ME, PUBLIC_BASE_URL, KEYCLOAK_ISSUER
