@@ -162,9 +162,9 @@ def _filters(
             )
         merged[key] = value
     for key, value in (pagination or {}).items():
-        if key not in {"page", "page_size"}:
+        if key not in {"page", "page_size"} or not entry.paginated:
             return {}, _err(
-                f"Campo de paginação '{key}' não suportado.",
+                f"Paginação não suportada por {entry.capability}.",
                 code="validation",
             )
         merged[key] = value

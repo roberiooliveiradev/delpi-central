@@ -45,6 +45,7 @@ class SemanticAction:
     requires: tuple[str, ...] = ()
     fields: tuple[str, ...] = ()
     phases: tuple[str, ...] = ()
+    paginated: bool = False
     notes: tuple[str, ...] = field(default_factory=tuple)
 
     @property
@@ -72,6 +73,8 @@ class SemanticAction:
             out["fields"] = list(self.fields)
         if self.phases:
             out["phases"] = list(self.phases)
+        if self.paginated:
+            out["paginated"] = True
         if self.notes:
             out["notes"] = list(self.notes)
         return out
@@ -140,6 +143,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "status filters.",
         "read",
         fields=_LMP_PERIOD_FIELDS + ("listing_type", "status"),
+        paginated=True,
     ),
     _a(
         "lmp", "summary", "read",
@@ -193,6 +197,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "nonconformity", "search", "read",
         "Search nonconformities with filters, sorting and pagination.",
         "read", fields=_NC_LIST_FIELDS,
+        paginated=True,
     ),
     _a(
         "nonconformity", "detail", "read",

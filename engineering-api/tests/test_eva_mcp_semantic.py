@@ -245,6 +245,20 @@ def test_read_nc_search_delegates(monkeypatch) -> None:
     assert result.structured_content["entity"] == "nonconformity"
 
 
+def test_read_rejects_pagination_on_non_paginated_action() -> None:
+    _set_context(_human_user())
+    result = asyncio.run(
+        sem.tool_read(
+            entity="lmp",
+            action="summary",
+            pagination={"page_size": 10},
+        )
+    )
+    assert result.is_error
+    assert result.structured_content["error_code"] == "validation"
+    assert result.structured_content["status_code"] == 400
+
+
 def test_read_nc_detail_ref_mapping(monkeypatch) -> None:
     _set_context(_human_user())
     fake = _fake_use_case({"id": "r1"})
