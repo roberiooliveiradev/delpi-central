@@ -1103,7 +1103,7 @@ ChecklistAdminPage, ChecklistAdminEventsPage, ChecklistVersionPage,
 ChecklistVersionDocumentPage, DocumentConfigFormPage, DocumentsAdminPage,
 CatalogsAdminPage.
 
-**A11y (Gate-023):**  (opt-in, plugin-ui) — botões
+**A11y (Gate-023):** `ActionButton.softDisabled` (opt-in, plugin-ui) — botões
 de ação que desabilitam durante o próprio clique (refresh) usam
- + guarda em vez de  nativo, preservando o
+`aria-disabled` + guarda em vez de `disabled` nativo, preservando o
 foco; aplicado em «Atualizar consulta» e «Abrir fechamento».

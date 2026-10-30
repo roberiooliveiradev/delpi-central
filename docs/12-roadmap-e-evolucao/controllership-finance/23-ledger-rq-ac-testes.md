@@ -1192,16 +1192,16 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 
 | Teste | Entrada | Esperado | Observado | Estado |
 |---|---|---|---|---|
-| G023-A | HEAD/worktrees/produção | inventário | prod →; MFE , plugin-ui ; tags rollback-ux022 registradas | PASS |
-| G023-B | Implementação UX-022 em main | exports/factories plugin-ui |  em main; exports reais verificados; bindings adaptador | PASS |
-| G023-C1 | Tema claro | contraste/visível | spinner , badge contextual | PASS |
-| G023-C2 | Tema escuro | contraste no escuro | spinner != fundo , texto legível | PASS |
-| G023-C3 | reduced-motion | identificável sem animação |  + texto + role=status | PASS |
-| G023-C4 | teclado/foco | foco preservado em loading | defeito real corrigido:  nativo → novo  (aria-disabled+guarda) no ActionButton; Enter abre R10 | PASS |
+| G023-A | HEAD/worktrees/produção | inventário | prod `59d88e434`→`2ff624b833`; MFE `8530bbc8f797`, plugin-ui `85f700e9fd0a`; tags rollback-ux022 registradas | PASS |
+| G023-B | Implementação UX-022 em main | exports/factories plugin-ui | `07a10df917` em main; exports reais verificados; bindings adaptador | PASS |
+| G023-C1 | Tema claro | contraste/visível | spinner `rgb(8,155,219)`, badge contextual | PASS |
+| G023-C2 | Tema escuro | contraste no escuro | spinner != fundo `srgb 0.082…`, texto legível | PASS |
+| G023-C3 | reduced-motion | identificável sem animação | `animation:none` + texto + role=status | PASS |
+| G023-C4 | teclado/foco | foco preservado em loading | defeito real corrigido: `disabled` nativo → novo `softDisabled` (aria-disabled+guarda) no ActionButton; Enter abre R10 | PASS |
 | G023-C5 | responsivo | sem overflow | 768/390/320px overflowX=0, loaders visíveis | PASS |
 | G023-D | reports tab prioridade | KPIs —, badges, catálogo | comprovado local e prod | PASS |
 | G023-G | testes/build | sem regressão | plugin-ui 2363, MFE 413, tsc×2, vite×2 | PASS |
-| G023-I | deploy governado | escopo mínimo |  fase remote(plugin-ui )+mfe(MFE ); sem rebuild api/core/corpus | PASS |
-| G023-J | smoke produtivo | loaders+dados+mobile | 13/14: mid-flight badges, KPIs —, 0 residual, R10 353/R69.704,12, exports, pendências, mobile; 3×404 console de recursos (viewer-photo-like) — observação, sem defeito funcional | PASS c/ observação |
+| G023-I | deploy governado | escopo mínimo | `up-prod-sequential.sh` fase remote (plugin-ui `9b9850e5274b`) + mfe (MFE `bd0e083663a6`); sem rebuild api/core/corpus | PASS |
+| G023-J | smoke produtivo | loaders+dados+mobile | 13/14: mid-flight badges, KPIs `—`, 0 residual, R10 353/R$169.704,12, exports, pendências, mobile; 3×404 console de recursos (viewer-photo-like) — observação, sem defeito funcional | PASS c/ observação |
 
 **Residuais:** 404s de recurso no console (não funcionais — investigar em gate de observabilidade); demais residuais Gate-021 inalterados.
