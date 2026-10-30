@@ -50,6 +50,32 @@ _dispatch = GptActionsDispatchService(
 )
 
 
+class GetContextBody(BaseModel):
+    action: str = "context"
+
+
+class SemanticReadBody(BaseModel):
+    entity: str = Field(min_length=1)
+    action: str = Field(min_length=1)
+    ref: str | None = None
+    filters: dict[str, Any] | None = None
+    pagination: dict[str, Any] | None = None
+
+
+class SemanticAnalyzeBody(BaseModel):
+    analysis: str = Field(min_length=1)
+    subjectRefs: dict[str, Any] | None = None
+    parameters: dict[str, Any] | None = None
+
+
+class SemanticKnowledgeBody(BaseModel):
+    action: str = Field(min_length=1)
+    topic: str | None = None
+    section: str | None = None
+    query: str | None = None
+    limit: int = Field(default=20, ge=1, le=50)
+
+
 class SuggestBody(BaseModel):
     message: str = Field(min_length=1)
     hostContext: dict[str, Any] | None = None
@@ -386,6 +412,76 @@ def inspect_data_model(
             model_id=modelId,
             authorization=request.headers.get("Authorization"),
             include_runtime=bool(includeRuntime),
+        )
+        return ok(data)
+    except Exception as exc:  # noqa: BLE001
+        return _handle(exc, correlation_id=cid)
+
+
+# ---------------------------------------------------------------------------
+# SEMANTIC_TOOLS_V1 — six-verb semantic surface (coexists with gpt_* ops).
+# ---------------------------------------------------------------------------
+
+
+@router.post("/semantic/context")
+def semantic_get_context(request: Request, body: GetContextBody):
+    cid = _correlation_id(request)
+    try:
+        data = _dispatch.semantic_get_context(
+            user=resolve_user(request),
+            action=body.action,
+            transport="actions",
+        )
+        return ok(data)
+    except Exception as exc:  # noqa: BLE001
+        return _handle(exc, correlation_id=cid)
+
+
+@router.post("/semantic/read")
+def semantic_read(request: Request, body: SemanticReadBody):
+    cid = _correlation_id(request)
+    try:
+        data = _dispatch.semantic_read(
+            user=resolve_user(request),
+            entity=body.entity,
+            action=body.action,
+            ref=body.ref,
+            filters=body.filters,
+            pagination=body.pagination,
+            authorization=request.headers.get("Authorization"),
+        )
+        return ok(data)
+    except Exception as exc:  # noqa: BLE001
+        return _handle(exc, correlation_id=cid)
+
+
+@router.post("/semantic/analyze")
+def semantic_analyze(request: Request, body: SemanticAnalyzeBody):
+    cid = _correlation_id(request)
+    try:
+        data = _dispatch.semantic_analyze(
+            user=resolve_user(request),
+            analysis=body.analysis,
+            subject_refs=body.subjectRefs,
+            parameters=body.parameters,
+            authorization=request.headers.get("Authorization"),
+        )
+        return ok(data)
+    except Exception as exc:  # noqa: BLE001
+        return _handle(exc, correlation_id=cid)
+
+
+@router.post("/semantic/knowledge")
+def semantic_knowledge(request: Request, body: SemanticKnowledgeBody):
+    cid = _correlation_id(request)
+    try:
+        data = _dispatch.semantic_knowledge(
+            user=resolve_user(request),
+            action=body.action,
+            topic=body.topic,
+            section=body.section,
+            query=body.query,
+            limit=body.limit,
         )
         return ok(data)
     except Exception as exc:  # noqa: BLE001

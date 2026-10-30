@@ -155,17 +155,17 @@ def _clean_proposal_store():
 # ---------------------------------------------------------------------------
 
 
-def test_surface_has_exactly_twelve_tools():
-    assert len(MCP_TOOL_NAMES) == 12
+def test_surface_has_sixteen_tools():
+    assert len(MCP_TOOL_NAMES) == 16
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 7
-    assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
+    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 9
+    assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 2
     assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
     # Owner intelligence surface: ANALYSIS exposes the owner's semantic/
     # visual recommendation pipeline (preview_data_block) and the canonical
     # NL→typed-ops materializer (suggest_change) — both non-persisting.
-    assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 2
+    assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 3
     assert TOOL_CLASS["preview_data_block"] == "ANALYSIS"
 
 

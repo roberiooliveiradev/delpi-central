@@ -123,7 +123,7 @@ def _test_dispatch(**overrides) -> GptActionsDispatchService:
 # ---------------------------------------------------------------------------
 
 
-def test_tools_list_exactly_ten_governed_tools():
+def test_tools_list_sixteen_governed_tools():
     tools = asyncio.run(create_mcp_server().list_tools())
     names = {t.name for t in tools}
     assert names == set(MCP_TOOL_NAMES)
@@ -140,8 +140,12 @@ def test_tools_list_exactly_ten_governed_tools():
         "suggest_change",
         "prepare_change",
         "commit_proposal",
+        "get_context",
+        "read",
+        "analyze",
+        "knowledge",
     }
-    assert len(tools) == 12
+    assert len(tools) == 16
     assert "inspect_data_source" not in names
 
 
@@ -157,9 +161,9 @@ def test_no_native_op_or_legacy_tools_registered():
 def test_tool_classification_read_prepare_act():
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 7
+    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 9
     assert TOOL_CLASS["get_product_guide"] == "READ"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
+    assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 2
     assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
     # §6.133: owner ANALYSIS surface — preview_data_block is non-persisting
     # owner intelligence (semantic digest + visual recommendation);
@@ -167,7 +171,7 @@ def test_tool_classification_read_prepare_act():
     # with the Actions transport (same dispatch service).
     assert TOOL_CLASS["preview_data_block"] == "ANALYSIS"
     assert TOOL_CLASS["suggest_change"] == "ANALYSIS"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 2
+    assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 3
     assert set(TOOL_CLASS.keys()) == set(MCP_TOOL_NAMES)
 
 

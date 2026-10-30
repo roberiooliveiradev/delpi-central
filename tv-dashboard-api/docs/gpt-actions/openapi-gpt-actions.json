@@ -3,7 +3,7 @@
   "info": {
     "title": "TV Dashboard Custom GPT Actions",
     "version": "1.0.0",
-    "description": "Compact OAuth façade over tv-dashboard-api (VISTA). Owner of catalog and writes remains TV. Eight Actions under GOVERNED_PREPARE_COMMIT_V2; openapi.json is import-only and not listed here."
+    "description": "Compact OAuth façade over tv-dashboard-api (VISTA). Owner of catalog and writes remains TV. Legacy gpt_* Actions under GOVERNED_PREPARE_COMMIT_V2 coexist with the vista_* semantic verbs (SEMANTIC_TOOLS_V1); openapi.json is import-only and not listed here."
   },
   "servers": [
     {
@@ -6868,6 +6868,576 @@
         "responses": {
           "200": {
             "description": "Verified commit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or unsupported capability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking TV permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid change payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gpt-actions/v1/semantic/context": {
+      "post": {
+        "operationId": "vista_get_context",
+        "summary": "VISTA context + effective capabilities",
+        "description": "Specialist context: assistant identity, principal type, effectiveCapabilities (derived from real AuthZ — catalog informs, never grants), confirmation model, catalogVersion. action=catalog returns the full canonical catalog.",
+        "tags": [
+          "TV Dashboard GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "context",
+                      "catalog"
+                    ],
+                    "default": "context"
+                  }
+                }
+              },
+              "example": {
+                "action": "context"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "VISTA context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or unsupported capability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking TV permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid change payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gpt-actions/v1/semantic/read": {
+      "post": {
+        "operationId": "vista_read",
+        "summary": "Closed-vocabulary semantic read",
+        "description": "READ by closed entity+action: playlist.list|get|context, playlist_history.history, data_route.search, data_model.inspect, product_guide.guide. filters accept only declared keys (else VALIDATION_ERROR); unknown entity/action → UNKNOWN_ENTITY/UNKNOWN_ACTION; planned capabilities → NOT_IMPLEMENTED.",
+        "tags": [
+          "TV Dashboard GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "entity",
+                  "action"
+                ],
+                "properties": {
+                  "entity": {
+                    "type": "string",
+                    "enum": [
+                      "playlist",
+                      "playlist_history",
+                      "data_route",
+                      "data_model",
+                      "product_guide",
+                      "slide_preset",
+                      "media_asset"
+                    ]
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "list",
+                      "get",
+                      "context",
+                      "history",
+                      "search",
+                      "inspect",
+                      "guide"
+                    ]
+                  },
+                  "ref": {
+                    "type": "string",
+                    "description": "Entity id: playlistId for playlist.get/context and playlist_history.history; modelId for data_model.inspect; topic for product_guide.guide."
+                  },
+                  "filters": {
+                    "type": "object",
+                    "description": "Declared filter keys only per action (e.g. slideId, scope, snapshotId, page, query, playlistId, topic, section). Undeclared keys are rejected.",
+                    "x-delpi-gpt-opaque-object": true,
+                    "additionalProperties": true,
+                    "properties": {}
+                  },
+                  "pagination": {
+                    "type": "object",
+                    "description": "Optional {limit<=100, cursor}.",
+                    "x-delpi-gpt-opaque-object": true,
+                    "additionalProperties": true,
+                    "properties": {}
+                  }
+                }
+              },
+              "example": {
+                "entity": "playlist",
+                "action": "list",
+                "pagination": {
+                  "limit": 20
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Semantic read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or unsupported capability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking TV permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid change payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gpt-actions/v1/semantic/analyze": {
+      "post": {
+        "operationId": "vista_analyze",
+        "summary": "Closed-vocabulary semantic analysis",
+        "description": "Owner analyses that never persist: data_block_preview, data_model_preview, intent_materialization (NL intent → typed ops candidates for the governed envelope). Response carries evidenceClass (preview|calculation).",
+        "tags": [
+          "TV Dashboard GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "analysis"
+                ],
+                "properties": {
+                  "analysis": {
+                    "type": "string",
+                    "enum": [
+                      "data_block_preview",
+                      "data_model_preview",
+                      "intent_materialization"
+                    ]
+                  },
+                  "subjectRefs": {
+                    "type": "object",
+                    "description": "Authoritative refs: playlistId, slideId, blockId, modelId, hostContext fields.",
+                    "x-delpi-gpt-opaque-object": true,
+                    "additionalProperties": true,
+                    "properties": {}
+                  },
+                  "parameters": {
+                    "type": "object",
+                    "description": "Per-analysis params (operationId/params for data_block_preview; model/nativeConfig for data_model_preview; message for intent_materialization).",
+                    "x-delpi-gpt-opaque-object": true,
+                    "additionalProperties": true,
+                    "properties": {}
+                  }
+                }
+              },
+              "example": {
+                "analysis": "intent_materialization",
+                "subjectRefs": {
+                  "playlistId": "uuid"
+                },
+                "parameters": {
+                  "message": "Crie um slide de OTD"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Semantic analysis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or unsupported capability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking TV permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid change payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gpt-actions/v1/semantic/knowledge": {
+      "post": {
+        "operationId": "vista_knowledge",
+        "summary": "Canonical product knowledge",
+        "description": "Product guide registry (GUIDANCE_NOT_DOMAIN_TRUTH). action=get: one guide by topic (+optional section); omit topic for the index. action=search: bounded deterministic index projection filtered by query.",
+        "tags": [
+          "TV Dashboard GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "search",
+                      "get"
+                    ]
+                  },
+                  "topic": {
+                    "type": "string"
+                  },
+                  "section": {
+                    "type": "string",
+                    "enum": [
+                      "overview",
+                      "when_to_use",
+                      "how_to_use",
+                      "field_guidance",
+                      "quality",
+                      "relationships",
+                      "all"
+                    ]
+                  },
+                  "query": {
+                    "type": "string"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "default": 20
+                  }
+                }
+              },
+              "example": {
+                "action": "search",
+                "query": "playlist"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Knowledge",
             "content": {
               "application/json": {
                 "schema": {

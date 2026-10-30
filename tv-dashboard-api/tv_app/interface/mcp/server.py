@@ -21,16 +21,20 @@ from .branding import VISTA_MCP_INSTRUCTIONS
 from .constants import MCP_TOOL_NAMES, TOOL_CLASS
 from .oauth_contract import MCP_TOOL_SECURITY_SCHEMES
 from .tool_bridge import (
+    tool_analyze,
     tool_commit_proposal,
     tool_get_catalog,
+    tool_get_context,
     tool_get_playlist_context,
     tool_get_playlist_history,
     tool_get_product_guide,
     tool_inspect_data_model,
+    tool_knowledge,
     tool_list_playlists,
     tool_prepare_change,
     tool_preview_data_block,
     tool_preview_data_model,
+    tool_read,
     tool_search_data_routes,
     tool_suggest_change,
 )
@@ -366,6 +370,71 @@ def _register_read_tools(mcp: MCPServer) -> None:
         ),
         annotations=ann_act,
         meta=_meta("commit_proposal"),
+    )
+
+    # ------------------------------------------------------------------
+    # SEMANTIC_TOOLS_V1 — closed-vocabulary verbs over the same dispatch.
+    # ------------------------------------------------------------------
+    mcp.add_tool(
+        tool_get_context,
+        name="get_context",
+        title="Contexto do especialista + capabilities efetivas",
+        description=(
+            "Contexto da VISTA: identidade do assistente, principal, "
+            "capabilities efetivas do usuário autenticado (derivadas de "
+            "autorização real — o catálogo informa, nunca concede), modelo "
+            "de confirmação e catalogVersion. action=context (default) ou "
+            "action=catalog para o catálogo canônico completo."
+        ),
+        annotations=ann,
+        meta=_meta("get_context"),
+    )
+
+    mcp.add_tool(
+        tool_read,
+        name="read",
+        title="Leitura semântica (vocabulário fechado)",
+        description=(
+            "Leitura por vocabulário fechado entity+action: "
+            "playlist.list|get|context, playlist_history.history, "
+            "data_route.search, data_model.inspect, product_guide.guide. "
+            "filters aceita apenas chaves declaradas por ação — chave "
+            "desconhecida falha tipada (VALIDATION_ERROR). "
+            "Entidade/ação desconhecida → UNKNOWN_ENTITY/UNKNOWN_ACTION. "
+            "Capabilities planejadas retornam NOT_IMPLEMENTED honesto."
+        ),
+        annotations=ann,
+        meta=_meta("read"),
+    )
+
+    mcp.add_tool(
+        tool_analyze,
+        name="analyze",
+        title="Análise semântica (nunca persiste)",
+        description=(
+            "Análises fechadas do owner: data_block_preview, "
+            "data_model_preview, intent_materialization (intenção NL → "
+            "ops tipadas candidatas). Nada persiste; resposta inclui "
+            "evidenceClass (preview|calculation). Ops candidatas seguem "
+            "para o envelope governado — nunca persistem por si."
+        ),
+        annotations=ann_analysis,
+        meta=_meta("analyze"),
+    )
+
+    mcp.add_tool(
+        tool_knowledge,
+        name="knowledge",
+        title="Conhecimento canônico de produto",
+        description=(
+            "Registro canônico de guias de produto "
+            "(GUIDANCE_NOT_DOMAIN_TRUTH). action=get: um guia por topic "
+            "(+section opcional); sem topic = índice. action=search: "
+            "projeção limitada do índice filtrada por query. Nunca estado "
+            "de domínio nem autorização."
+        ),
+        annotations=ann,
+        meta=_meta("knowledge"),
     )
 
     registered = {t.name for t in mcp._tool_manager.list_tools()}

@@ -1395,7 +1395,11 @@
       "gpt_preview_data_block": "preview_data_block",
       "gpt_suggest_change": "suggest_change",
       "gpt_preview_change": "prepare_change",
-      "gpt_commit_change": "commit_proposal"
+      "gpt_commit_change": "commit_proposal",
+      "vista_get_context": "get_context",
+      "vista_read": "read",
+      "vista_analyze": "analyze",
+      "vista_knowledge": "knowledge"
     },
     "not_exposed_in_mcp": [
       "gpt_get_slide_preview_png"

@@ -20,6 +20,11 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_suggest_change",
     "gpt_preview_change",
     "gpt_commit_change",
+    # SEMANTIC_TOOLS_V1 — closed-vocabulary verbs (coexist with gpt_*).
+    "vista_get_context",
+    "vista_read",
+    "vista_analyze",
+    "vista_knowledge",
 )
 
 GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID = "gpt_get_openapi_schema"

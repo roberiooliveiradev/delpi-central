@@ -25,6 +25,7 @@ VISTA_MCP_SURFACE = "GOVERNED_WRITE_V1"
 
 # READ (MCP1) + governed envelope (MCP2). Native ops remain vocabulary inside
 # prepare_change.ops[] — never per-op tools.
+# SEMANTIC_TOOLS_V1: six-verb surface coexists with the 12 legacy tools.
 TOOL_CLASS: dict[str, str] = {
     "list_playlists": "READ",
     "get_playlist_context": "READ",
@@ -38,6 +39,10 @@ TOOL_CLASS: dict[str, str] = {
     "suggest_change": "ANALYSIS",
     "prepare_change": "PREPARE",
     "commit_proposal": "ACT",
+    "get_context": "DISCOVERY",
+    "read": "READ",
+    "analyze": "ANALYSIS",
+    "knowledge": "READ",
 }
 
 MCP_TOOL_NAMES: tuple[str, ...] = tuple(TOOL_CLASS.keys())

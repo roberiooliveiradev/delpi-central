@@ -1025,6 +1025,203 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "responses": {"200": _ok_response("Verified commit"), **_error_responses()},
             }
         },
+        # ------------------------------------------------------------------
+        # SEMANTIC_TOOLS_V1 — closed-vocabulary verbs (coexist with gpt_*).
+        # ------------------------------------------------------------------
+        f"{base}/semantic/context": {
+            "post": {
+                "operationId": "vista_get_context",
+                "summary": "VISTA context + effective capabilities",
+                "description": (
+                    "Specialist context: assistant identity, principal type, "
+                    "effectiveCapabilities (derived from real AuthZ — catalog "
+                    "informs, never grants), confirmation model, catalogVersion. "
+                    "action=catalog returns the full canonical catalog."
+                ),
+                "tags": [tag],
+                "security": [{"BearerAuth": []}],
+                "requestBody": _json_body(
+                    {
+                        "type": "object",
+                        "properties": {
+                            "action": {
+                                "type": "string",
+                                "enum": ["context", "catalog"],
+                                "default": "context",
+                            },
+                        },
+                    },
+                    example={"action": "context"},
+                ),
+                "responses": {"200": _ok_response("VISTA context"), **_error_responses()},
+            }
+        },
+        f"{base}/semantic/read": {
+            "post": {
+                "operationId": "vista_read",
+                "summary": "Closed-vocabulary semantic read",
+                "description": (
+                    "READ by closed entity+action: playlist.list|get|context, "
+                    "playlist_history.history, data_route.search, "
+                    "data_model.inspect, product_guide.guide. filters accept "
+                    "only declared keys (else VALIDATION_ERROR); unknown "
+                    "entity/action → UNKNOWN_ENTITY/UNKNOWN_ACTION; planned "
+                    "capabilities → NOT_IMPLEMENTED."
+                ),
+                "tags": [tag],
+                "security": [{"BearerAuth": []}],
+                "requestBody": _json_body(
+                    {
+                        "type": "object",
+                        "required": ["entity", "action"],
+                        "properties": {
+                            "entity": {
+                                "type": "string",
+                                "enum": [
+                                    "playlist",
+                                    "playlist_history",
+                                    "data_route",
+                                    "data_model",
+                                    "product_guide",
+                                    "slide_preset",
+                                    "media_asset",
+                                ],
+                            },
+                            "action": {
+                                "type": "string",
+                                "enum": [
+                                    "list",
+                                    "get",
+                                    "context",
+                                    "history",
+                                    "search",
+                                    "inspect",
+                                    "guide",
+                                ],
+                            },
+                            "ref": {
+                                "type": "string",
+                                "description": (
+                                    "Entity id: playlistId for playlist.get/context "
+                                    "and playlist_history.history; modelId for "
+                                    "data_model.inspect; topic for product_guide.guide."
+                                ),
+                            },
+                            "filters": _opaque_object_schema(
+                                description=(
+                                    "Declared filter keys only per action (e.g. "
+                                    "slideId, scope, snapshotId, page, query, "
+                                    "playlistId, topic, section). Undeclared keys "
+                                    "are rejected."
+                                )
+                            ),
+                            "pagination": _opaque_object_schema(
+                                description="Optional {limit<=100, cursor}."
+                            ),
+                        },
+                    },
+                    example={
+                        "entity": "playlist",
+                        "action": "list",
+                        "pagination": {"limit": 20},
+                    },
+                ),
+                "responses": {"200": _ok_response("Semantic read"), **_error_responses()},
+            }
+        },
+        f"{base}/semantic/analyze": {
+            "post": {
+                "operationId": "vista_analyze",
+                "summary": "Closed-vocabulary semantic analysis",
+                "description": (
+                    "Owner analyses that never persist: data_block_preview, "
+                    "data_model_preview, intent_materialization (NL intent → "
+                    "typed ops candidates for the governed envelope). "
+                    "Response carries evidenceClass (preview|calculation)."
+                ),
+                "tags": [tag],
+                "security": [{"BearerAuth": []}],
+                "requestBody": _json_body(
+                    {
+                        "type": "object",
+                        "required": ["analysis"],
+                        "properties": {
+                            "analysis": {
+                                "type": "string",
+                                "enum": [
+                                    "data_block_preview",
+                                    "data_model_preview",
+                                    "intent_materialization",
+                                ],
+                            },
+                            "subjectRefs": _opaque_object_schema(
+                                description=(
+                                    "Authoritative refs: playlistId, slideId, "
+                                    "blockId, modelId, hostContext fields."
+                                )
+                            ),
+                            "parameters": _opaque_object_schema(
+                                description=(
+                                    "Per-analysis params (operationId/params for "
+                                    "data_block_preview; model/nativeConfig for "
+                                    "data_model_preview; message for "
+                                    "intent_materialization)."
+                                )
+                            ),
+                        },
+                    },
+                    example={
+                        "analysis": "intent_materialization",
+                        "subjectRefs": {"playlistId": "uuid"},
+                        "parameters": {"message": "Crie um slide de OTD"},
+                    },
+                ),
+                "responses": {"200": _ok_response("Semantic analysis"), **_error_responses()},
+            }
+        },
+        f"{base}/semantic/knowledge": {
+            "post": {
+                "operationId": "vista_knowledge",
+                "summary": "Canonical product knowledge",
+                "description": (
+                    "Product guide registry (GUIDANCE_NOT_DOMAIN_TRUTH). "
+                    "action=get: one guide by topic (+optional section); "
+                    "omit topic for the index. action=search: bounded "
+                    "deterministic index projection filtered by query."
+                ),
+                "tags": [tag],
+                "security": [{"BearerAuth": []}],
+                "requestBody": _json_body(
+                    {
+                        "type": "object",
+                        "required": ["action"],
+                        "properties": {
+                            "action": {
+                                "type": "string",
+                                "enum": ["search", "get"],
+                            },
+                            "topic": {"type": "string"},
+                            "section": {
+                                "type": "string",
+                                "enum": [
+                                    "overview",
+                                    "when_to_use",
+                                    "how_to_use",
+                                    "field_guidance",
+                                    "quality",
+                                    "relationships",
+                                    "all",
+                                ],
+                            },
+                            "query": {"type": "string"},
+                            "limit": {"type": "integer", "default": 20},
+                        },
+                    },
+                    example={"action": "search", "query": "playlist"},
+                ),
+                "responses": {"200": _ok_response("Knowledge"), **_error_responses()},
+            }
+        },
     }
 
     return {
@@ -1034,8 +1231,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             "version": "1.0.0",
             "description": (
                 "Compact OAuth façade over tv-dashboard-api (VISTA). Owner of catalog "
-                "and writes remains TV. Eight Actions under GOVERNED_PREPARE_COMMIT_V2; "
-                "openapi.json is import-only and not listed here."
+                "and writes remains TV. Legacy gpt_* Actions under "
+                "GOVERNED_PREPARE_COMMIT_V2 coexist with the vista_* semantic "
+                "verbs (SEMANTIC_TOOLS_V1); openapi.json is import-only and "
+                "not listed here."
             ),
         },
         "servers": [{"url": server_url}],

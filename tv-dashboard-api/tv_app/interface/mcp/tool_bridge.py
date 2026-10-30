@@ -539,6 +539,113 @@ def tool_commit_proposal(
         return handle_tool_error(e, tool="commit_proposal", label="mcp tool")
 
 
+# ---------------------------------------------------------------------------
+# SEMANTIC_TOOLS_V1 — six-verb semantic surface (coexists with the 12 above).
+# Same adapter discipline: context rebuild + delegation to the same dispatch.
+# ---------------------------------------------------------------------------
+
+
+def tool_get_context(action: str = "context") -> CallToolResult:
+    """DISCOVERY — specialist context + effective capabilities.
+
+    action=context: assistant identity, principal, effectiveCapabilities
+    (derived from real AuthZ, never the catalog), confirmation model.
+    action=catalog: the full canonical capability catalog.
+    """
+    try:
+        user, _ = _authed_context()
+        return _ok_result(
+            _dispatch.semantic_get_context(user=user, action=action, transport="mcp")
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="get_context", label="mcp tool")
+
+
+def tool_read(
+    entity: str,
+    action: str,
+    ref: str | None = None,
+    filters: dict | None = None,
+    pagination: dict | None = None,
+) -> CallToolResult:
+    """READ — closed (entity, action) vocabulary over canonical handlers.
+
+    Entities: playlist (list|get|context), playlist_history (history),
+    data_route (search), data_model (inspect), product_guide (guide).
+    Unknown entity/action or undeclared filter key fails typed.
+    """
+    try:
+        user, auth = _authed_context()
+        return _ok_result(
+            _dispatch.semantic_read(
+                user=user,
+                entity=entity,
+                action=action,
+                ref=ref,
+                filters=filters if isinstance(filters, dict) else None,
+                pagination=pagination if isinstance(pagination, dict) else None,
+                authorization=auth,
+            )
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="read", label="mcp tool")
+
+
+def tool_analyze(
+    analysis: str,
+    subject_refs: dict | None = None,
+    parameters: dict | None = None,
+) -> CallToolResult:
+    """ANALYSIS — closed analysis vocabulary; never persists.
+
+    Analyses: data_block_preview, data_model_preview,
+    intent_materialization (NL intent → typed ops candidates).
+    Response carries evidenceClass (preview|calculation).
+    """
+    try:
+        user, auth = _authed_context()
+        return _ok_result(
+            _dispatch.semantic_analyze(
+                user=user,
+                analysis=analysis,
+                subject_refs=subject_refs if isinstance(subject_refs, dict) else None,
+                parameters=parameters if isinstance(parameters, dict) else None,
+                authorization=auth,
+            )
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="analyze", label="mcp tool")
+
+
+def tool_knowledge(
+    action: str,
+    topic: str | None = None,
+    section: str | None = None,
+    query: str | None = None,
+    limit: int = 20,
+) -> CallToolResult:
+    """READ — canonical product-guide registry (GUIDANCE_NOT_DOMAIN_TRUTH).
+
+    action=get: one guide by topic (+optional section); omit topic for the
+    index. action=search: bounded deterministic index projection filtered
+    by query.
+    """
+    try:
+        user, _ = _authed_context()
+        return _ok_result(
+            _dispatch.semantic_knowledge(
+                user=user,
+                action=action,
+                topic=topic,
+                section=section,
+                query=query,
+                limit=limit,
+            )
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="knowledge", label="mcp tool")
+
+
 def list_tool_names() -> list[str]:
     return [t.name for t in _iter_registered_tools()]
 

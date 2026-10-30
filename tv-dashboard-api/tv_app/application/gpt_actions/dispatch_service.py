@@ -44,6 +44,7 @@ from tv_app.core.security import (
     TV_WRITE,
     GovernedWriteAuthzError,
     assert_permission,
+    can,
 )
 
 logger = logging.getLogger(__name__)
@@ -245,6 +246,402 @@ class GptActionsDispatchService:
                 code=exc.code,
                 status_code=exc.status_code,
             ) from exc
+
+    # ------------------------------------------------------------------
+    # Semantic verbs surface (SEMANTIC_TOOLS_V1) — closed vocabulary
+    # dispatch over the same canonical handlers. Adapter semantics only:
+    # no second catalog, no second mutation engine, no AuthZ authority.
+    # ------------------------------------------------------------------
+
+    def semantic_get_context(
+        self,
+        *,
+        user: Any,
+        action: str | None = None,
+        transport: str = "actions",
+    ) -> dict[str, Any]:
+        """``get_context`` — specialist context + effective capabilities.
+
+        Effective capabilities are derived from real authorization
+        (``can`` against Core-resolved permissions), never from the
+        catalog — the catalog informs, AuthZ decides.
+        """
+        from tv_app.application.gpt_actions.capability_surface import (
+            READ_ENTITY_ACTIONS,
+            READ_ENTITY_STATUS,
+            ANALYZE_ACTIONS,
+            KNOWLEDGE_ACTIONS,
+            EXECUTE_ENTITIES,
+            EXECUTE_PHASES,
+            EXECUTE_VERB_STATUS,
+            DELETE_VERB_STATUS,
+            DELETE_ENTITIES,
+        )
+
+        action_key = str(action or "context").strip().lower()
+        if action_key == "catalog":
+            return self.get_catalog(user=user, transport=transport)
+        if action_key != "context":
+            raise GptActionsError(
+                f"Ação desconhecida para get_context: {action_key}.",
+                code="UNKNOWN_ACTION",
+                status_code=422,
+            )
+        assert_permission(user, TV_READ)
+        can_read = True
+        can_write = can(user, TV_WRITE)
+
+        capabilities: list[dict[str, Any]] = []
+
+        def _cap(name: str, *, verb: str, status: str, perm: str) -> None:
+            capabilities.append(
+                {
+                    "capability": name,
+                    "verb": verb,
+                    "status": status,
+                    "authorized": can_read if perm == "read" else can_write,
+                }
+            )
+
+        for entity, actions in READ_ENTITY_ACTIONS.items():
+            status = READ_ENTITY_STATUS.get(entity, "not_implemented")
+            for act in actions:
+                _cap(f"read.{entity}.{act}", verb="read", status=status, perm="read")
+        for analysis, status in ANALYZE_ACTIONS.items():
+            perm = "write" if analysis == "intent_materialization" else "read"
+            _cap(f"analyze.{analysis}", verb="analyze", status=status, perm=perm)
+        for act in KNOWLEDGE_ACTIONS:
+            _cap(f"knowledge.{act}", verb="knowledge", status="proven", perm="read")
+        for entity, actions in EXECUTE_ENTITIES.items():
+            for act in actions:
+                _cap(
+                    f"execute.{entity}.{act}",
+                    verb="execute",
+                    status=EXECUTE_VERB_STATUS,
+                    perm="write",
+                )
+        for entity in DELETE_ENTITIES:
+            _cap(
+                f"delete.{entity}",
+                verb="delete",
+                status=DELETE_VERB_STATUS,
+                perm="write",
+            )
+
+        return {
+            "assistant": {
+                "id": "vista",
+                "displayName": "VISTA",
+                "characterId": "vista",
+            },
+            "principal": {
+                "type": str(getattr(user, "principal_type", None) or "user"),
+            },
+            "catalogVersion": PresentationOpsContentService.catalog_version(),
+            "effectiveCapabilities": capabilities,
+            "confirmationModel": {
+                "destructive": "consent_artifact_required",
+                "target_check": "target_echo",
+                "elicitation": "host_dependent",
+                "fallback": "CONFIRMATION_UNAVAILABLE",
+                "legacy_envelope": "confirmation_bool",
+            },
+            "phases": list(EXECUTE_PHASES),
+            "notes": [
+                "Catalog informs; backend authorizes. status/authorized are "
+                "permission-level facts — resource scope (playlist/slide) is "
+                "still enforced per call.",
+                "confirm plans require a consent artifact minted by a "
+                "verifiable human channel; target_echo alone proves nothing.",
+            ],
+        }
+
+    @staticmethod
+    def _semantic_filters(
+        filters: Any,
+        *,
+        allowed: set[str],
+        context: str,
+    ) -> dict[str, Any]:
+        """Closed filter contract: undeclared keys are rejected (fail-closed),
+        never silently dropped or treated as opaque."""
+        raw = filters if isinstance(filters, dict) else {}
+        unknown = sorted(str(k) for k in raw if k not in allowed)
+        if unknown:
+            raise GptActionsError(
+                f"Filtro(s) não suportado(s) em {context}: {', '.join(unknown)}.",
+                code="VALIDATION_ERROR",
+                status_code=422,
+                details={"rejectedFilters": unknown, "allowedFilters": sorted(allowed)},
+            )
+        return raw
+
+    def semantic_read(
+        self,
+        *,
+        user: Any,
+        entity: str,
+        action: str,
+        ref: str | None = None,
+        filters: dict[str, Any] | None = None,
+        pagination: dict[str, Any] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        """``read`` — closed (entity, action) vocabulary over READ handlers."""
+        from tv_app.application.gpt_actions.capability_surface import (
+            READ_ENTITY_ACTIONS,
+            READ_ENTITY_STATUS,
+        )
+
+        entity_key = str(entity or "").strip()
+        action_key = str(action or "").strip().lower()
+        if entity_key not in READ_ENTITY_ACTIONS:
+            raise GptActionsError(
+                f"Entidade desconhecida para read: {entity_key!r}.",
+                code="UNKNOWN_ENTITY",
+                status_code=422,
+            )
+        if action_key not in READ_ENTITY_ACTIONS[entity_key]:
+            raise GptActionsError(
+                f"Ação desconhecida para read.{entity_key}: {action_key!r}.",
+                code="UNKNOWN_ACTION",
+                status_code=422,
+            )
+        if READ_ENTITY_STATUS.get(entity_key) != "proven":
+            raise GptActionsError(
+                f"read.{entity_key}.{action_key} ainda não possui handler "
+                "canônico (capability planejada — B0/B1).",
+                code="NOT_IMPLEMENTED",
+                status_code=501,
+            )
+        page = pagination if isinstance(pagination, dict) else {}
+        limit = page.get("limit")
+        cursor = page.get("cursor")
+
+        if entity_key == "playlist" and action_key == "list":
+            self._semantic_filters(
+                filters, allowed=set(), context="read.playlist.list"
+            )
+            return self.list_playlists(
+                user=user,
+                limit=min(max(int(limit or 50), 1), 100),
+                offset=max(int(cursor or 0), 0),
+            )
+        if entity_key == "playlist":
+            flt = self._semantic_filters(
+                filters,
+                allowed={
+                    "slideId",
+                    "includePreview",
+                    "scope",
+                    "objectQuery",
+                    "objectTypes",
+                    "blockCursor",
+                    "blockLimit",
+                    "dataSourceId",
+                    "includeRuntime",
+                },
+                context=f"read.playlist.{action_key}",
+            )
+            return self.get_playlist_context(
+                user=user,
+                playlist_id=str(ref or ""),
+                include_preview=bool(flt.get("includePreview")),
+                preview_slide_id=flt.get("slideId"),
+                scope=flt.get("scope"),
+                object_query=flt.get("objectQuery"),
+                object_types=flt.get("objectTypes"),
+                block_cursor=flt.get("blockCursor"),
+                block_limit=flt.get("blockLimit"),
+                data_source_id=flt.get("dataSourceId"),
+                include_runtime=bool(flt.get("includeRuntime")),
+                authorization=authorization,
+            )
+        if entity_key == "playlist_history":
+            flt = self._semantic_filters(
+                filters,
+                allowed={"snapshotId", "page", "pageSize"},
+                context="read.playlist_history.history",
+            )
+            return self.get_playlist_history(
+                user=user,
+                playlist_id=str(ref or ""),
+                snapshot_id=flt.get("snapshotId"),
+                page=int(flt.get("page") or 1),
+                page_size=min(max(int(flt.get("pageSize") or 10), 1), 100),
+            )
+        if entity_key == "data_route":
+            flt = self._semantic_filters(
+                filters,
+                allowed={"query", "limit", "category"},
+                context="read.data_route.search",
+            )
+            return self.search_data_routes(
+                user=user,
+                query=str(flt.get("query") or ""),
+                limit=int(flt.get("limit") or (limit or 8)),
+                category=flt.get("category"),
+                authorization=authorization,
+            )
+        if entity_key == "data_model":
+            flt = self._semantic_filters(
+                filters,
+                allowed={"playlistId", "slideId", "includeRuntime"},
+                context="read.data_model.inspect",
+            )
+            return self.inspect_data_model(
+                user=user,
+                playlist_id=str(flt.get("playlistId") or ""),
+                slide_id=str(flt.get("slideId") or ""),
+                model_id=str(ref or ""),
+                authorization=authorization,
+                include_runtime=bool(flt.get("includeRuntime", True)),
+            )
+        if entity_key == "product_guide":
+            flt = self._semantic_filters(
+                filters,
+                allowed={"topic", "section"},
+                context="read.product_guide.guide",
+            )
+            return self.get_product_guide(
+                user=user,
+                topic=str(ref or flt.get("topic") or "") or None,
+                section=flt.get("section"),
+            )
+        # Defensive: vocabulary table and status table must agree.
+        raise GptActionsError(  # pragma: no cover — contract table drift
+            f"read.{entity_key}.{action_key} sem dispatch.",
+            code="NOT_IMPLEMENTED",
+            status_code=501,
+        )
+
+    def semantic_analyze(
+        self,
+        *,
+        user: Any,
+        analysis: str,
+        subject_refs: dict[str, Any] | None = None,
+        parameters: dict[str, Any] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        """``analyze`` — closed analysis vocabulary over ANALYSIS handlers."""
+        from tv_app.application.gpt_actions.capability_surface import (
+            ANALYZE_ACTIONS,
+        )
+
+        analysis_key = str(analysis or "").strip()
+        if analysis_key not in ANALYZE_ACTIONS:
+            raise GptActionsError(
+                f"Análise desconhecida: {analysis_key!r}.",
+                code="UNKNOWN_ACTION",
+                status_code=422,
+            )
+        if ANALYZE_ACTIONS[analysis_key] != "proven":
+            raise GptActionsError(
+                f"analyze.{analysis_key} não implementada.",
+                code="NOT_IMPLEMENTED",
+                status_code=501,
+            )
+        refs = subject_refs if isinstance(subject_refs, dict) else {}
+        params = parameters if isinstance(parameters, dict) else {}
+
+        if analysis_key == "intent_materialization":
+            message = str(params.get("message") or "").strip()
+            if not message:
+                raise GptActionsError(
+                    "parameters.message é obrigatório para intent_materialization.",
+                    code="VALIDATION_ERROR",
+                    status_code=422,
+                )
+            out = self.suggest_change(
+                user=user,
+                message=message,
+                host_context=refs,
+                authorization=authorization,
+            )
+            out = dict(out)
+            out["evidenceClass"] = "calculation"
+            return out
+
+        body = dict(refs)
+        for key, value in params.items():
+            body.setdefault(key, value)
+        if analysis_key == "data_block_preview":
+            out = self.preview_data_block(
+                user=user, body=body, authorization=authorization
+            )
+            out = dict(out)
+            out["evidenceClass"] = "preview"
+            return out
+        if analysis_key == "data_model_preview":
+            out = self.preview_data_model(
+                user=user, body=body, authorization=authorization
+            )
+            out = dict(out)
+            out["evidenceClass"] = "preview"
+            return out
+        raise GptActionsError(  # pragma: no cover — contract table drift
+            f"analyze.{analysis_key} sem dispatch.",
+            code="NOT_IMPLEMENTED",
+            status_code=501,
+        )
+
+    def semantic_knowledge(
+        self,
+        *,
+        user: Any,
+        action: str,
+        topic: str | None = None,
+        section: str | None = None,
+        query: str | None = None,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        """``knowledge`` — canonical Product Guide registry projection.
+
+        ``get`` returns one guide (or the topic index when topic is
+        omitted). ``search`` is a deterministic bounded projection of the
+        same registry filtered by query — no second knowledge base.
+        """
+        action_key = str(action or "").strip().lower()
+        if action_key not in {"search", "get"}:
+            raise GptActionsError(
+                f"Ação desconhecida para knowledge: {action_key!r}.",
+                code="UNKNOWN_ACTION",
+                status_code=422,
+            )
+        if action_key == "get":
+            return self.get_product_guide(user=user, topic=topic, section=section)
+
+        assert_permission(user, TV_READ)
+        from tv_app.application.product_guide.product_guide_registry import (
+            get_product_guide_registry,
+        )
+        from tv_app.application.product_guide.product_guide_service import (
+            guide_index_payload,
+        )
+
+        index = guide_index_payload(get_product_guide_registry())
+        q = str(query or "").strip().lower()
+        topics = list(index.get("topics") or [])
+        if q:
+            topics = [
+                item
+                for item in topics
+                if isinstance(item, dict)
+                and (
+                    q in str(item.get("id") or "").lower()
+                    or q in str(item.get("title") or "").lower()
+                    or q in str(item.get("summary") or "").lower()
+                )
+            ]
+        capped = max(1, min(int(limit or 20), 50))
+        return {
+            "topics": topics[:capped],
+            "total": len(topics[:capped]),
+            "query": str(query or "") or None,
+            "evidenceClass": "fact",
+            "source": "product_guide_registry",
+        }
 
     def get_catalog(self, *, user: Any, transport: str = "actions") -> dict[str, Any]:
         assert_permission(user, TV_WRITE)

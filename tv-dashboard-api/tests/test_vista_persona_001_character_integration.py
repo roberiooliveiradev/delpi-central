@@ -298,12 +298,13 @@ def test_public_profile_carries_only_approved_narrative() -> None:
 
 def test_no_new_tools_or_authz_surface() -> None:
     """Ficha is narrative only: tool surface, write flow and AuthZ posture
-    are untouched."""
+    SEMANTIC_TOOLS_V1 expansion (16 opIds) is approved surface; AuthZ
+    posture is untouched."""
     from tv_app.application.gpt_actions.openapi_builder import (
         GPT_ACTIONS_OPERATION_IDS,
     )
 
-    assert len(GPT_ACTIONS_OPERATION_IDS) == 12
+    assert len(GPT_ACTIONS_OPERATION_IDS) == 16
     directives = VistaAgentIntelligenceService.agent_directives(
         transport="mcp"
     )

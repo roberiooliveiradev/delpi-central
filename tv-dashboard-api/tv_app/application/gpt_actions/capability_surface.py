@@ -59,6 +59,127 @@ def _actions_ops(names: list[str]) -> list[str]:
     return [mapping.get(name, name) for name in names]
 
 
+# ---------------------------------------------------------------------------
+# Semantic verbs surface (SEMANTIC_TOOLS_V1) — closed vocabulary projection.
+#
+# The six verbs are transport-neutral tool names. Each entry is a closed
+# Literal: dispatch happens in the application layer by (entity, action)
+# allowlist — never by URL, HTTP method, function name, SQL or arbitrary
+# string. ``status`` is honest per capability:
+#   proven          → implemented and covered by tests
+#   planned         → roadmap, not exposed on the wire yet
+#   not_implemented → contract exists, runtime absent (fail-closed 501)
+# Catalog informs; backend authorizes — ``status`` is never an AuthZ claim.
+# ---------------------------------------------------------------------------
+
+SEMANTIC_VERBS_VERSION = "SEMANTIC_TOOLS_V1"
+
+# Canonical (entity, action) → underlying capability handler name. This is
+# the single vocabulary authority consumed by the semantic dispatch — the
+# wire schema validates against the same table (one source, two projections).
+READ_ENTITY_ACTIONS: dict[str, tuple[str, ...]] = {
+    "playlist": ("list", "get", "context"),
+    "playlist_history": ("history",),
+    "data_route": ("search",),
+    "data_model": ("inspect",),
+    "product_guide": ("guide",),
+    "slide_preset": ("list",),
+    "media_asset": ("list",),
+}
+
+# Capabilities without a canonical runtime handler yet report honest status
+# instead of silently mapping. ``planned`` keeps them out of the wire surface.
+READ_ENTITY_STATUS: dict[str, str] = {
+    "playlist": "proven",
+    "playlist_history": "proven",
+    "data_route": "proven",
+    "data_model": "proven",
+    "product_guide": "proven",
+    "slide_preset": "not_implemented",
+    "media_asset": "not_implemented",
+}
+
+ANALYZE_ACTIONS: dict[str, str] = {
+    "data_block_preview": "proven",
+    "data_model_preview": "proven",
+    "intent_materialization": "proven",
+}
+
+KNOWLEDGE_ACTIONS: tuple[str, ...] = ("search", "get")
+
+EXECUTE_PHASES: tuple[str, ...] = ("prepare", "commit")
+EXECUTE_ENTITIES: dict[str, tuple[str, ...]] = {
+    "presentation": ("apply_mutation",),
+}
+
+DELETE_ENTITIES: dict[str, str] = {
+    "block": "delete_block",
+    "section": "delete_section",
+    "slide": "delete_slide",
+}
+
+# Write verbs ship in a later bounded unit (consent foundation first).
+EXECUTE_VERB_STATUS = "planned"
+DELETE_VERB_STATUS = "planned"
+
+
+def _semantic_verbs_projection() -> dict[str, Any]:
+    return {
+        "version": SEMANTIC_VERBS_VERSION,
+        "lifecycle": "coexists_with_legacy_surface",
+        "tools": {
+            "get_context": {
+                "actions": ["context", "catalog"],
+                "status": "proven",
+            },
+            "read": {
+                "status": "proven",
+                "entities": {
+                    entity: {
+                        "actions": list(actions),
+                        "status": READ_ENTITY_STATUS[entity],
+                    }
+                    for entity, actions in READ_ENTITY_ACTIONS.items()
+                },
+            },
+            "analyze": {
+                "status": "proven",
+                "analyses": dict(ANALYZE_ACTIONS),
+            },
+            "knowledge": {
+                "status": "proven",
+                "actions": list(KNOWLEDGE_ACTIONS),
+            },
+            "execute": {
+                "status": EXECUTE_VERB_STATUS,
+                "phases": list(EXECUTE_PHASES),
+                "entities": {
+                    entity: {"actions": list(actions)}
+                    for entity, actions in EXECUTE_ENTITIES.items()
+                },
+                "confirmation_model": {
+                    "destructive": "consent_artifact_required",
+                    "target_check": "target_echo",
+                    "elicitation": "host_dependent",
+                    "fallback": "CONFIRMATION_UNAVAILABLE",
+                },
+            },
+            "delete": {
+                "status": DELETE_VERB_STATUS,
+                "phases": list(EXECUTE_PHASES),
+                "entities": {
+                    entity: {"typed_op": op, "status": DELETE_VERB_STATUS}
+                    for entity, op in DELETE_ENTITIES.items()
+                },
+                "confirmation_model": {
+                    "required": ["target_echo", "consent_artifact"],
+                    "fallback": "CONFIRMATION_UNAVAILABLE",
+                },
+            },
+        },
+    }
+
+
 def _canonical_surface() -> dict[str, Any]:
     """Single semantic capability surface (transport-neutral names)."""
     ops = PresentationOpsContentService.operations()
@@ -240,6 +361,7 @@ def _canonical_surface() -> dict[str, Any]:
             "agent_directives_are_live": True,
             "builder_instructions_are_stable_only": True,
         },
+        "semantic_verbs": _semantic_verbs_projection(),
     }
 
 
@@ -284,6 +406,11 @@ def _project_for_actions(surface: dict[str, Any]) -> dict[str, Any]:
             if isinstance(analysis.get(key), list):
                 analysis[key] = _actions_ops(analysis[key])
     projected["analyses"] = analyses
+    # Actions envelope sits at the OpenAI ~100 KiB ceiling: the semantic-verbs
+    # descriptor is redundant there — verbs are first-class operationIds and
+    # vista_get_context already returns effectiveCapabilities + the
+    # confirmation model. MCP keeps the vocabulary descriptor.
+    projected.pop("semantic_verbs", None)
     return projected
 
 
