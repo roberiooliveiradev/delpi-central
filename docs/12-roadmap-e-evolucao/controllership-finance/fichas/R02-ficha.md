@@ -2,6 +2,8 @@
 
 Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 
+Publicação: **release produtivo stage-05** (30/10/2026, srv-api, SHA `297068f1b7`) — serviço reconstruído e paridade verificada em produção; corpus `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes / 2.186 itens).
+
 ## Identificação
 
 - Código/nome: **R02 — Baixas a receber** (contas a receber baixadas).

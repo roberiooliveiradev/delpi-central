@@ -55,3 +55,9 @@
 **ATUALIZAÇÃO 4 — 30/10/2026:** `CF-PROC0072-R10-R11-DECISION-EVIDENCE-GATE-020` **executado** — D-01..D-08 **formalizadas pelo PO** (D-03 `controllership-finance-api` como owner da comparação; D-04 comparação como capability `analyze` da CLARA, sem tela genérica; D-05 três resultados funcionais; D-06 fichas R01–R15; D-07 sem export comparativo; D-08 parciais honestos fail-closed). Vídeo e artefatos **verificados diretamente**: R10 Reg 17/18 `CONFIRMED_BY_VIDEO_AND_DOC` (casos `0401`/`0404` provados no artefato); **R11 sem demonstração no vídeo** — `PENDING_EVIDENCE`. Catálogo de divergências DV-R10-01..06/DV-R11-01..04, contratos revisados com `findings[]` e modelo de fichas no [doc 126 §14–§19](./126-gate-contratual-r10-r11-comparacao-clara-2026-10-30.md); ledger doc 23 §gate-020. Próximo gate: autorização de implementação (E1–E10) quando o PO aprovar.
 
 **ATUALIZAÇÃO 5 — 31/10/2026 (stage-04):** handoff de corpus **executado no ambiente local** — `CF-PROC0072-CLARA-KNOWLEDGE-R01-R15-IMPLEMENTATION-STAGE-04` ingeriu este plano, a base canônica, as fichas R01–R15 e a ficha de processo no pipeline vigente: corpus local `f9857be6` (88 fontes / 2.170 itens; rollback `57109de5`). **Publicação produtiva permanece `PENDING_APPROVAL`** — a nota de handoff §4 segue valendo para o gate produtivo: verificar `get_catalog`/`list_knowledge_sources` + buscas com citação após o publish autorizado.
+
+
+## Adendo — Estado de integracao produtivo (30/10/2026)
+
+release stage-05 (30/10/2026, host `srv-api`, checkout `297068f1b7` — inclui `9f66f8b8e0`) publicado por `up-prod-sequential.sh`: api-delpi `sha256:d46e307ad3e6`, BFF `sha256:7f0e7db69114`, MFE `sha256:8530bbc8f797`; corpus produtivo `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes / 2.186 itens, 17 fichas, 100% `PORTAL_ACCESS`). Cadeia api-delpi -> BFF -> Portal -> CLARA verificada live para
+R10/R11 e comparacao; regressao R03/R05/R06/R07/R08/CPV em producao: 200.

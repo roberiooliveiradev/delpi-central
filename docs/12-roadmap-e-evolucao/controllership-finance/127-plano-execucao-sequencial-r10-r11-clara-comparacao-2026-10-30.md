@@ -151,4 +151,24 @@ Atualizar por **evidência**, não apenas pelo relato de execução. A aprovaç�
 
 **Etapa 4 executada** sob `CF-PROC0072-CLARA-KNOWLEDGE-R01-R15-IMPLEMENTATION-STAGE-04` — 15 fichas técnicas versionadas em `docs/12-roadmap-e-evolucao/controllership-finance/fichas/` (esquema canônico doc 126 §18: identificação/fonte/regras/interpretação/operação/governança com evidência por afirmação), fichas de atenção especial R10/R11 (universos estritos, DV-R10-01..06, DV-R11-01..04, custo estrutural zero, E10a/E10b/E11a/E11b), ficha do processo PROC-0072 (GATE E — competência, pendências, fluxo Controladoria→DRE, permissões, conhecer≠consultar≠executar), matriz de inventário no README do diretório, e 17 fontes novas registradas no `corpus_manifest` (inventário explícito). Ingestão controlada executada no **ambiente local autorizado**: corpus `f9857be6` (88 fontes / 2.170 itens) — versão anterior `57109de5` preservada como rollback; **publicação produtiva do corpus permanece `PENDING_APPROVAL`** (gate separado). Recuperação citável verificada localmente com `citation_locator` por `report_id`. Help verificado e inalterado (sem superfície user-facing nova). Sem deploy, sem novos relatórios, sem mutação ERP — EXECUTION_REPORT entregue para GPT REVIEW.
 
-**Próximo prompt, somente quando o PO solicitar:** Etapa 5 — Homologação Transversal e Deploy Governado, após review da Etapa 4 e autorização explícita do Product Owner.
+**Etapa 5 executada** sob `CF-PROC0072-CONTROLLERSHIP-RELEASE-STAGE-05` — dois
+gates independentes. **Gate 1 (homologacao) PASS**: correcoes documentais
+(ficha R10 v1.2 — nota editorial 302/353 substituida pela definicao
+verificavel; reconciliacao do corpus 56->88 = 17 fichas novas + 15 docs ja
+autorizados nao indexados; estados R04/R09/R12/R13/R14/R15 confirmados sem
+contrato; DV-R10-01 confirmado como POSSIBLE_DIVERGENCE), paridade live na
+homologacao (R10 353/R$ 169.704,12; R11 11/R$ 97.462,71), comparacao em 10
+cenarios, seguranca positiva+negativa completa, regressao 860 pass/249 skip,
+bug real corrigido (`compatibility[].evidenceRefs` serializava chars — fix
+`9f66f8b8e0` + teste). **Gate 2 (publicacao) EXECUTADO**: release stage-05 (30/10/2026, host `srv-api`, checkout `297068f1b7` — inclui `9f66f8b8e0`) publicado por `up-prod-sequential.sh`: api-delpi `sha256:d46e307ad3e6`, BFF `sha256:7f0e7db69114`, MFE `sha256:8530bbc8f797`; corpus produtivo `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes / 2.186 itens, 17 fichas, 100% `PORTAL_ACCESS`).
+Smoke produtivo: R10/R11 exatos, exports CSV/PDF validos, comparacao PERIOD/
+BRANCH/REPORT com vereditos honestos, regressao de estoque/CPV 200, 401
+anonimo/token invalido/MCP, guarda de filial 422, multi-branch positivo,
+recuperacao de conhecimento via repositorio real (fichas citaveis). Residuais:
+CLARA via transporte MCP `TEST_NOT_RUN` (mcp-clara `BLOCKED_IAM` — owner IAM),
+403 autenticado em prod `TEST_NOT_RUN` (persona com acesso amplo), UX
+interativa `TEST_NOT_RUN`, G6/E7 oficial `PENDING`, E10/E11 pendentes.
+Rollback preparado: imagens `rollback-stage05:*` tagueadas + dump
+`~/backups/clara-pre-stage05.sql` + re-ingest do manifest anterior.
+
+**Status final: Etapa 5 concluida com deploy comprovado — produto publicado.**

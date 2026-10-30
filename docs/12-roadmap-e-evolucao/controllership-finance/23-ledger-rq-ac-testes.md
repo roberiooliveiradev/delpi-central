@@ -1149,3 +1149,12 @@ Execução `CF-PROC0072-CLARA-KNOWLEDGE-R01-R15-IMPLEMENTATION-STAGE-04` — Eta
 | RQ-KNW-E2E | CLARA persona real respondendo | sem harness E2E nesta etapa | TEST_NOT_RUN |
 
 **Residuais da etapa:** publicação produtiva do corpus (gate separado — pacote pronto: manifest + fontes + hashes registrados); G6; fichas R09/R12/R15 documentam conhecimento sem contrato (`TARGET_ONLY`) — não geram capability; R04/R13/R14 bloqueados por fonte; perguntas de linguagem natural com ranking FTS validadas por recuperação direta, não por avaliação de resposta completa do agente.
+
+
+## Adendo — Stage-05 (release coordenado, 30/10/2026)
+
+RQ/AC consolidados: release stage-05 (30/10/2026, host `srv-api`, checkout `297068f1b7` — inclui `9f66f8b8e0`) publicado por `up-prod-sequential.sh`: api-delpi `sha256:d46e307ad3e6`, BFF `sha256:7f0e7db69114`, MFE `sha256:8530bbc8f797`; corpus produtivo `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes / 2.186 itens, 17 fichas, 100% `PORTAL_ACCESS`). Gate 1 PASS (homologacao completa); Gate 2
+EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
+`ACCEPT_WITH_RESIDUAL` — residuais: transporte MCP `TEST_NOT_RUN`
+(mcp-clara BLOCKED_IAM), UX interativa e 403-prod `TEST_NOT_RUN`, G6/E7
+`PENDING`, E10/E11 pendentes.

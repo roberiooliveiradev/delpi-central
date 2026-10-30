@@ -1,6 +1,8 @@
 # R10 — Notas/Despesas por Centro de Custo
 
 Versão da ficha: 1.2 · doc 127 Etapa 5 (correção editorial §4.1:
+
+Publicação: **release produtivo stage-05** (30/10/2026, srv-api, SHA `297068f1b7`) — serviço reconstruído e paridade verificada em produção; corpus `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes / 2.186 itens).
 universo `calculation` definido como 686−exclusões=353, prova doc 85
 §10). Anterior: 1.1 · 31/10/2026 · doc 127 Etapa 4 (GATE C — ficha de
 atenção especial).

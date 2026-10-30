@@ -457,3 +457,14 @@ versionamento, publicação) passou de `APPROVED` para **`IMPLEMENTED`**:
 | Explicações FACT/POSSIBLE_DIVERGENCE/RECOMMENDATION/INSUFFICIENT_EVIDENCE | fichas explicitam FACT provado × hipótese pendente por seção; pares não curados seguem `INSUFFICIENT_EVIDENCE` |
 | Ingestão/publish | pipeline vigente executado no ambiente local (corpus `f9857be6`, 88 fontes/2.170 itens; rollback `57109de5`); **publicação produtiva `PENDING_APPROVAL`** — gate separado, conforme §9.2 |
 | Atualização obrigatória por gate | registrado como regra permanente das fichas (README do diretório) |
+
+
+## Adendo — Release produtivo (Etapa 5, 30/10/2026)
+
+Os contratos R10/R11/comparacao deste documento estao **publicados em
+producao**: release stage-05 (30/10/2026, host `srv-api`, checkout `297068f1b7` — inclui `9f66f8b8e0`) publicado por `up-prod-sequential.sh`: api-delpi `sha256:d46e307ad3e6`, BFF `sha256:7f0e7db69114`, MFE `sha256:8530bbc8f797`; corpus produtivo `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes / 2.186 itens, 17 fichas, 100% `PORTAL_ACCESS`). Paridade financeira reproduzida no ambiente produtivo
+(R10 353 linhas/R$ 169.704,12/139 docs/46 CC; investigacao 333 — universo
+separado; R11 11/R$ 97.462,71/3 sem irmao). `evidenceRefs` corrigido na
+serializacao (`9f66f8b8e0`). Residuais contratuais inalterados: G6 oficial
+`PENDING`; E10a/E10b, E11a/E11b pendentes de evidencia; R04/R09/R12/R15
+`PENDING_CONTRACT`; R13/R14 `EXTERNAL`.

@@ -2,6 +2,8 @@
 
 Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 
+Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (release stage-05, 30/10/2026) — **sem contrato operacional**; estado PENDING_CONTRACT/EXTERNAL inalterado.
+
 ## Identificação
 
 - Código/nome: **R04 — Consumo por OP** (materiais consumidos por

@@ -443,3 +443,11 @@ Matriz Portal × CLARA × Help por relatório (knowledge):
 | R11 | billing-exclusion-roster | `read(report.billing_exclusion_roster)` | ficha citável | paridade técnica live; G6 |
 | R12/R15 | estado via fechamento | nenhuma (sem medida) | ficha citável | n/a |
 | R13/R14 | evidência externa | nenhuma | ficha citável | n/a |
+
+
+## Adendo — Release stage-05 (30/10/2026)
+
+release stage-05 (30/10/2026, host `srv-api`, checkout `297068f1b7` — inclui `9f66f8b8e0`) publicado por `up-prod-sequential.sh`: api-delpi `sha256:d46e307ad3e6`, BFF `sha256:7f0e7db69114`, MFE `sha256:8530bbc8f797`; corpus produtivo `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes / 2.186 itens, 17 fichas, 100% `PORTAL_ACCESS`). Paridade tecnica Portal x CLARA por mesmas rotas BFF confirmada
+em producao (R10/R11/comparacao); paridade oficial G6 `PENDING`. Help
+inalterado — estados declarados honestamente. Transporte MCP
+`TEST_NOT_RUN` (mcp-clara BLOCKED_IAM).

@@ -434,3 +434,10 @@ A base canônica deste documento permanece autoridade sobre o processo.
 O conhecimento operacional para a CLARA foi consolidado em
 `fichas/R01..R15-ficha.md` e `fichas/processo-fechamento-ficha.md`
 (doc 126 D-06) — as fichas citam esta base; não há duplicação de regra.
+
+
+## Adendo — Estado produtivo (30/10/2026)
+
+Central de Fechamento publicada: release stage-05 (30/10/2026, host `srv-api`, checkout `297068f1b7` — inclui `9f66f8b8e0`) publicado por `up-prod-sequential.sh`: api-delpi `sha256:d46e307ad3e6`, BFF `sha256:7f0e7db69114`, MFE `sha256:8530bbc8f797`; corpus produtivo `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes / 2.186 itens, 17 fichas, 100% `PORTAL_ACCESS`). R10 e R11 operacionais em
+producao com paridade reproduzida; processo PROC-0072 coberto por ficha
+operacional no corpus. Sem alteracao no Protheus.

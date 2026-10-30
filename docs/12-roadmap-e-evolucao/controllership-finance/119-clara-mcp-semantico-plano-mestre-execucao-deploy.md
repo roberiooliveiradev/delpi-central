@@ -201,3 +201,14 @@ documental da CLARA passou a incluir as fichas técnicas governadas:
 | Recuperação | `knowledge`/`search` por `report_id` retorna fichas com `citation_locator` — verificado em execução local |
 | Seis tools | preservadas — fichas chegam via `knowledge`/`get_context`, nenhuma tool nova |
 | Produção | `PENDING_APPROVAL` — publish produtivo do corpus segue gate próprio |
+
+
+## Adendo — Release stage-05 (30/10/2026)
+
+Corpus governado publicado em producao: `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00`
+(88 fontes/2.186 itens; anterior `fc6f4865` 71/2047 preservado; dump
+`~/backups/clara-pre-stage05.sql`). Recuperacao citavel verificada via
+repositorio real (fichas por `report_id` com `citation_locator`). Codigo:
+release stage-05 (30/10/2026, host `srv-api`, checkout `297068f1b7` — inclui `9f66f8b8e0`) publicado por `up-prod-sequential.sh`: api-delpi `sha256:d46e307ad3e6`, BFF `sha256:7f0e7db69114`, MFE `sha256:8530bbc8f797`; corpus produtivo `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes / 2.186 itens, 17 fichas, 100% `PORTAL_ACCESS`). Transporte MCP e2e `TEST_NOT_RUN` — client `mcp-clara` segue
+`BLOCKED_IAM` (credencial admin rotacionada; owner IAM via canal seguro;
+401 fail-closed verificado para anon e token de usuario).

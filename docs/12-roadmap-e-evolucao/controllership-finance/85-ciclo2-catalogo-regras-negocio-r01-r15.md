@@ -1622,3 +1622,10 @@ esta fonte e mantém a classificação por afirmação — a ficha não cria
 regra nova nem rebaixa `PENDING`/`TO_INVENTORY` a fato; divergências
 encontradas devem ser corrigidas **aqui** (fonte canônica) e propagadas
 para a ficha.
+
+
+## Adendo — Publicacao produtiva (30/10/2026)
+
+As regras R10/R11 e o motor de comparacao publicadas em producao: release stage-05 (30/10/2026, host `srv-api`, checkout `297068f1b7` — inclui `9f66f8b8e0`) publicado por `up-prod-sequential.sh`: api-delpi `sha256:d46e307ad3e6`, BFF `sha256:7f0e7db69114`, MFE `sha256:8530bbc8f797`; corpus produtivo `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes / 2.186 itens, 17 fichas, 100% `PORTAL_ACCESS`).
+As regras sem contrato (R04/R09/R12/R13/R14/R15) seguem `PENDING_CONTRACT`/
+`EXTERNAL` — fichas publicadas no corpus descrevem regras, nao capabilities.
