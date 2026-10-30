@@ -74,26 +74,26 @@ E7  Auditoria/observabilidade (D-10) + docs/ADR/capability matrix
 | Testes existentes (119+ MCP/GPT) | suites assumem 12 tools | BEHAVIORAL | suites novas + manter legado até retirada |
 | `parity_map` | vira mapping 6↔6 ou desaparece | BEHAVIORAL | derivar de uma fonte; teste de drift |
 
-## 5. Itens TO_INVENTORY para fechar antes do plano
+## 5. Itens TO_INVENTORY — **todos fechados no doc 08**
 
-1. ~~`preview_data_block` executa a rota?~~ — **RESOLVIDO**: sim,
-   executa via `SlideDataResolutionService` (mesmo pipeline do
-   player; `tv_data_preview_service.py:44-53`). Gap real é análise,
-   não dados (G-08 reclassificado PROVEN).
-2. **`commit_proposal` valida base_revision/CAS?** — concorrência
-   com edição humana simultânea (05 §3).
-3. **Auditoria G-10** — verificar observability platform + se
-   playlist history registra origem `via_vista`.
-4. **Gate de drift parity_map ↔ capability_surface** — existe teste
-   que falha se os dois divergirem?
-5. **Consumidores reais das 12 tools** — Chat handoff, automações,
-   clientes MCP em produção (afeta D-1/D-9).
-6. **`update_playlist` fields** — typed ops cobrem quais campos de
-   playlist-level? (03 marcado TO_INVENTORY).
-7. **Elicitation em hosts-alvo** — quais MCP consumers suportam
-   `ctx.elicit` (afeta D-5 rollout).
-8. **Orçamento de schema** — 6 tools semantic com Literals grandes
-   (entity×action vocab) cabem no budget Actions? medir.
+1. ~~`preview_data_block` executa a rota?~~ — **PROVEN** (fase 1).
+2. ~~CAS/base_revision~~ — **PROVEN**: CAS completo por op
+   (`commit_service.py:231,445`, chain_revision).
+3. ~~Auditoria~~ — **PROVEN** domínio (history actor+provenance);
+   residual: sem canal → D-10.
+4. ~~Parity gate~~ — **PROVEN**: `test_surface_parity_map_*` cobre
+   12↔12 completo.
+5. ~~Consumidores~~ — **PROVEN** código (handoff só orienta; GPT
+   externo + hosts MCP são os consumidores); **INCONCLUSIVE** uso
+   runtime (mantém E7).
+6. ~~update_playlist fields~~ — **PROVEN gap**: 11 campos; typed
+   ops não cobrem name/desc/viewport/transition/duration/playback/
+   refresh/masterConfig.
+7. ~~Elicitation~~ — **PROVEN**: FastMCP `ctx.elicit`, por-host;
+   Actions precisa de `target_echo` (D-5).
+8. ~~Budget schema~~ — **PROVEN**: 100 KiB gate; 6 verbos cabem.
+
+Ver `08-follow-up-evidence.md` para evidência completa de cada item.
 
 ## 6. O que a fase 2 **não** deve fazer (aprendizado desta fase)
 

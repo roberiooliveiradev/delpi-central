@@ -33,16 +33,18 @@ CONTRACT → EXISTING_EQUIVALENT → REUSE_DECISION → RISK`.
 - **EVIDÊNCIA**: `presentation_ops_content.json` — 3 ops `confirm`
   (`delete_block`, `delete_section`, `delete_slide`);
   `delete_data_model` não consta entre elas.
-- **ROOT_CAUSE**: **INCONCLUSIVE** — pode ser decisão deliberada
-  (data model é configuração interna do bloco, não conteúdo visível)
-  ou drift de política. `CONTRACT_DRIFT` candidato.
+- **ROOT_CAUSE**: **PROVEN (revisado)** — decisão **declarada** no
+  catálogo: `risk:"mutation"` + `confirmationPolicy:"direct"` (não é
+  omissão nem drift). Porém pode órfanar bindings; recomendada
+  revisão do owner — política condicional por consumidores (D-8).
 - **OWNER**: tv-dashboard-api (typed op catalog authority).
 - **CONTRACT**: `confirmationPolicy` por op no catálogo canônico.
 - **EXISTING_EQUIVALENT**: — (não é gap de implementação).
-- **REUSE_DECISION**: — (decisão de política do owner; se for drift,
-  corrigir a flag no catálogo — uma linha).
-- **RISCO**: MEDIO — deleção silenciosa via proposal direta;
-  mitigação atual = envelope prepare/commit ainda mostra diff.
+- **REUSE_DECISION**: — (decisão de política do owner — D-8
+  `NEEDS_APPROVAL`; mudança = 1 linha de metadata).
+- **RISCO**: MEDIO — deleção silenciosa via proposal direta pode
+  órfanar bindings; mitigação atual = envelope prepare/commit ainda
+  mostra diff.
 
 ## G-03 — Confirmação declarada pelo modelo, não provada pelo humano
 
@@ -194,17 +196,19 @@ CONTRACT → EXISTING_EQUIVALENT → REUSE_DECISION → RISK`.
 - **EVIDÊNCIA**: inspeção de `commit_service.py`/`dispatch_service.py`
   não revelou audit trail dedicado (há eval telemetry
   `test_vista_eval_telemetry.py`, que é quality harness, não audit).
-- **ROOT_CAUSE**: **INCONCLUSIVE** — pode existir logging genérico
-  (observability platform) cobrindo; não verificado a fundo.
-  `TO_INVENTORY`.
+- **ROOT_CAUSE**: **PROVEN (revisado, doc 08 §3)** — auditoria de
+  domínio **existe**: playlist history persiste `authorName` +
+  `reason` (proveniência allowlisted) + revision por mutação, e
+  `gpt_commit.verify` emite logs estruturados com actor/client/op/
+  revisions. Gap residual real: **sem atribuição de canal**
+  (`presentation_mutation` não distingue editor vs MCP vs Actions).
 - **OWNER**: tv-dashboard-api + platform observability.
-- **CONTRACT**: —.
-- **EXISTING_EQUIVALENT**: YES — CLARA audit_trail.
-- **REUSE_DECISION**: TO_INVENTORY → EXTEND se confirmado gap.
-- **RISCO**: MEDIO — writes autônomos sem trilha dedicada dificultam
-  forense; mitigado parcialmente pela playlist history (mudanças de
-  conteúdo já são historiadas pelo domínio — verificar se registra
-  origem `via_vista`).
+- **CONTRACT**: `TECHNICAL_PROVENANCE_CODES` + history schema.
+- **EXISTING_EQUIVALENT**: YES — CLARA audit_trail (mais rica).
+- **REUSE_DECISION**: EXTEND — adicionar `channel` à provenance
+  (D-10, barato: o write já recebe contexto de transporte).
+- **RISCO**: BAIXO-MEDIO — forense por canal indisponível hoje;
+  conteúdo e ator já são auditados.
 
 ## Duplicações identificadas
 

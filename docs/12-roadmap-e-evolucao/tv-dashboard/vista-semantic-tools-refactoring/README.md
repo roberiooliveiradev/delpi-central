@@ -29,6 +29,21 @@ futura convergência da superfície VISTA ao padrão semântico dos especialista
 7. [07 — Phase 2 Planning Input](07-phase-2-planning-input.md) — base
    objetiva para o plano de implementação.
 
+## Phase 2 — Architecture & Planning (2026-10-30)
+
+8. [08 — Follow-Up Evidence](08-follow-up-evidence.md) — pendências
+   `TO_INVENTORY` fechadas com evidência.
+9. [09 — Architecture Decisions](09-architecture-decisions.md) —
+   D-1..D-10 resolvidas com status.
+10. [10 — Semantic Contracts](10-semantic-contracts.md) — proposta
+    de contrato das 6 tools.
+11. [11 — Migration Execution Plan](11-migration-execution-plan.md) —
+    etapas E0-E9 + matriz de rastreabilidade.
+12. [12 — Test and Acceptance Plan](12-test-and-acceptance-plan.md) —
+    baterias positiva/negativa/sibling/E2E.
+13. [13 — Compatibility, Rollback and Risks](13-compatibility-rollback-and-risks.md)
+    — classes de mudança, rollback por etapa, proposta de ADR.
+
 ## Limitações desta fase
 
 - Nenhum write/exclusão real foi executado; evidência de runtime vem de

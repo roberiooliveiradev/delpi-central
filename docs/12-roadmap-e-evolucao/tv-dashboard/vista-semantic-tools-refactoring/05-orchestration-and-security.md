@@ -99,10 +99,12 @@ interação obrigatória hoje é `confirmation=true` para os 3 ops
   dos aplicados; sem rollback compensatório — **não há
   transação/rollback** (documentar como limitação conhecida).
 - **Concorrência**: writes passam pelo mesmo `TvPresentationWriteService`
-  do editor; conflito com edições humanas simultâneas é tratado pela
-  camada de playlist revision (CAS/409 no editor; no GPT path o
-  write service aplica a patch no estado atual — **TO_INVENTORY**:
-  confirmação se o commit path valida base_revision esperada).
+  do editor; **CAS completo comprovado** — `commit_service.py:231,445`
+  minta `base_revision` no prepare e executa
+  `assert_expected_revision` por op (chain per-op em planos
+  compostos); conflito → 409 com `currentRevision` +
+  `revisionBefore`/`revisionAfter`. Edição humana simultânea
+  produz conflito honesto, não write cego (ver doc 08 §2).
 - **Proposal store in-process** (`proposal_store.py`): TTL+single-use
   sob lock — documentado `ACCEPT_WITH_RESIDUAL` para runtime
   single-replica; multi-replica exigiria store persistido (CLARA já
