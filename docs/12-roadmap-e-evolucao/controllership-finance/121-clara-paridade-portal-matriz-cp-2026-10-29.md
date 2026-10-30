@@ -451,3 +451,7 @@ release stage-05 (30/10/2026, host `srv-api`, checkout `297068f1b7` — inclui `
 em producao (R10/R11/comparacao); paridade oficial G6 `PENDING`. Help
 inalterado — estados declarados honestamente. Transporte MCP
 `TEST_NOT_RUN` (mcp-clara BLOCKED_IAM).
+
+## Adendo Gate 021 — paridade Portal × CLARA (31/10/2026)
+
+Portal: smoke visual autenticado em produção PROVEN — navegação hub→catálogo→R10/R11, paridade visual dos totais (353/R$ 169.704,12; 11/R$ 97.462,71), separação de universos visível, disclaimers investigativos presentes, exportação individual exposta, mobile sem overflow. CLARA: mesma camada de dados e corpus verificados via repository real no container produtivo (15 fichas + ficha-processo + citações com locators); transporte MCP e2e permanece `TEST_NOT_RUN` até execução do fluxo ChatGPT — paridade de semântica confirmada na camada de dados, paridade de transporte pendente.

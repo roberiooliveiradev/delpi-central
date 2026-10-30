@@ -468,3 +468,7 @@ separado; R11 11/R$ 97.462,71/3 sem irmao). `evidenceRefs` corrigido na
 serializacao (`9f66f8b8e0`). Residuais contratuais inalterados: G6 oficial
 `PENDING`; E10a/E10b, E11a/E11b pendentes de evidencia; R04/R09/R12/R15
 `PENDING_CONTRACT`; R13/R14 `EXTERNAL`.
+
+## Adendo Gate 021 — evidência produtiva pós-rebuild concorrente (31/10/2026)
+
+Após rebuild do `api-delpi` por workstream concorrente (imagem `ec68b4b2897c`, checkout `77200fa07f`), os contratos R10/R11 foram revalidados em produção sem regressão: R10 apuração 353 linhas/R$ 169.704,12/139 docs/46 CC; investigação 333 linhas separada; R11 11 linhas/R$ 97.462,71. Comparação live: PERIOD R10 ago→set `COMPARABLE` com medidas reais; R06×CPV e R10×R11 `RELATED_REQUIRES_EXPLANATION` com `evidenceRefs` serializados como lista de locators (`doc-126#7`, `doc-85#10`, `doc-80#45`) — correção stage-5 comprovada em runtime produtivo. Observação: timeout frio único (503 transitório na primeira chamada R10 ~3,2s upstream; retries 200) — item de reliability, não de contrato.

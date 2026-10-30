@@ -172,3 +172,20 @@ Rollback preparado: imagens `rollback-stage05:*` tagueadas + dump
 `~/backups/clara-pre-stage05.sql` + re-ingest do manifest anterior.
 
 **Status final: Etapa 5 concluida com deploy comprovado — produto publicado.**
+
+## 8. Gate 021 — Verificação pós-release (CF-PROC0072-POST-RELEASE-VERIFICATION-GATE-021, 31/10/2026)
+
+Verificação operacional read-only sobre o release da Etapa 5, após rebuild concorrente do `api-delpi` pelo workstream PRODUCTS.E2E (checkout produtivo `77200fa07f`, que contém `cf565160ce`).
+
+| Gate | Resultado | Evidência |
+|---|---|---|
+| A — Estado produtivo | PASS | Imagens: api-delpi `ec68b4b2897c` (rebuild concorrente), BFF `7f0e7db69114`, MFE `8530bbc8f797`; todos healthy; corpus `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` 88 fontes/2.186 itens confirmado |
+| B — IAM/MCP | PASS (diagnóstico) | Client `mcp-controllership-finance` PROVEN provisionado: habilitado, público, standard flow, PKCE S256, redirect `chatgpt.com/connector_platform_oauth_redirect`, scopes default `mcp:tools` + `audience-delpi`; `BLOCKED_IAM` histórico SUPERADO — era nomenclatura `mcp-clara` obsoleta, não ausência de client |
+| C — MCP E2E | TEST_NOT_RUN | `mcp-controllership-finance` tem direct access grants **desabilitado** — password grant não é caminho legítimo; fluxo oficial = authorization code + PKCE via callback ChatGPT, que exige sessão conectora autorizada (workspace ChatGPT) não disponível ao agente. 401 anônimo/user-token = fail-closed correto |
+| D — Portal visual | PASS | Playwright prod (persona autorizada): hub de fechamento, catálogo com cards R10/R11, página R10 exibindo 353 linhas/R$ 169.704,12/universos separados/2 controles de exportação; R11 exibindo 11/R$ 97.462,71; disclaimers "nunca erro confirmado" e "não é exclusão oficial" presentes; mobile 390px sem overflow; screenshots em artefatos do gate |
+| E — Segurança | PASS parcial / INCONCLUSIVE em um ponto | 401 anônimo/token inválido; S2S obrigatório na api-delpi (401 `S2S_TOKEN_MISSING`); sujeito restrito sem vazamento (evidência stage-5); porém **não existe persona produtiva autenticada sem `read(report.cost_center_expenses)`/`read(report.billing_exclusion_roster)`** para 403 específico — lacuna registrada (owner IAM/Core) |
+| F — Dados+conhecimento | PROVEN (camada de dados) | Retrieval real no container: R01–R15 por `report_id` com `citation_locator` (documento + `line_range` + `heading_path` + `source_version`); `ficha-processo` PROC-0072 recuperável; queries NL ("centro de custo", "desconsiderar", "kardex") ranqueadas; casos conversacionais completos dependem do Gate C |
+| G — Corpus | PASS | 88 fontes/2.186 itens; 17 fichas; fontes PROC-0072 (`doc-02`, `doc-118`, `doc-90`, `ficha-processo`); `origin_authority=OWNER` em 100%; classificações preservadas (R09/R12/R15=TARGET, R04/R13/R14=TO_INVENTORY) — TARGET não é apresentado como fato de runtime |
+| H — Regressão | PASS c/ observação | R03/R05/R06/R07/R08/CPV/pendências/documentos/competences/received-documents 200; comparação PERIOD R10 (ago 420.737,98 → set 169.704,12 COMPARABLE), R06×CPV e R10×R11 `RELATED_REQUIRES_EXPLANATION`; `evidenceRefs` serializando como lista de locators (fix stage-5 verificado live). **Observação de reliability:** primeira chamada R10 após idle registrou 1×503 `delpi_api_timeout` (upstream ~3,2s); retries imediatos 200 — recomendado revisar budget de timeout/warm-up (owner: BFF/api-delpi, não bloqueante) |
+
+**Veredito Gate 021: `ACCEPT_WITH_RESIDUAL`.** Residuais: MCP e2e `TEST_NOT_RUN` (necessária execução do fluxo ChatGPT authorization-code+PKCE — owner: IAM/Produto, não requer mudança de configuração); 403 específico R10/R11 `INCONCLUSIVE` (persona negativa inexistente — não conceder acesso para teste); timeout frio R10 (observação reliability).

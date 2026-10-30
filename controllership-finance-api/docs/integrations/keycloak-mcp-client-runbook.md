@@ -167,3 +167,7 @@ público verificados pelo Operador — nunca inferir PASS por HTTP 200.
 - Shared runbook: `docs/10-guias-operacionais/mcp-chatgpt-plugin-onboarding-runbook.md`
 - TÉO sibling (PROVEN): `transformometro-api/docs/integrations/keycloak-mcp-client-runbook.md`
 - Doc 106: `docs/12-roadmap-e-evolucao/controllership-finance/106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md`
+
+## Gate 021 — verificação produtiva (31/10/2026)
+
+Inspeção read-only confirmou `mcp-controllership-finance` provisionado conforme este runbook: enabled, public client, standard flow, PKCE S256, redirect `chatgpt.com/connector_platform_oauth_redirect`, default scopes `mcp:tools` + `audience-delpi`. Referência histórica `mcp-clara = BLOCKED_IAM` está superada (nomenclatura anterior). Próximo passo operacional: executar conexão real via conector ChatGPT (authorization code + PKCE) e validar `tools/list` + tools de leitura — pendente de sessão conectora autorizada; sem alteração de configuração necessária.

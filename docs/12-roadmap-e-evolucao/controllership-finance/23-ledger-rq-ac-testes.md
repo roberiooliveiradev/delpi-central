@@ -1158,3 +1158,15 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 `ACCEPT_WITH_RESIDUAL` — residuais: transporte MCP `TEST_NOT_RUN`
 (mcp-clara BLOCKED_IAM), UX interativa e 403-prod `TEST_NOT_RUN`, G6/E7
 `PENDING`, E10/E11 pendentes.
+
+## Gate 021 — verificação pós-release (CF-PROC0072-POST-RELEASE-VERIFICATION-GATE-021, 31/10/2026)
+
+| Teste | Entrada | Esperado | Observado | Estado |
+|---|---|---|---|---|
+| G021-A | Inventário containers/imagens/corpus | release stage-5 íntegro | api-delpi rebuild concorrente `ec68b4b2`, BFF/MFE stage-5, corpus `5bebf07f` 88/2.186 | PASS |
+| G021-B | Keycloak DB read-only | client MCP real | `mcp-controllership-finance` provisionado (PKCE, mcp:tools, audience-delpi, redirect ChatGPT) | PASS |
+| G021-C | tools MCP via transporte | read/analyze/knowledge | sem sessão conectora ChatGPT autorizada; 401 fail-closed correto | TEST_NOT_RUN |
+| G021-D | Playwright prod autenticado | R10/R11 navegáveis | 15/17 checks PASS; 2 flags = falsos positivos de regex sobre negações legais; mobile ok | PASS |
+| G021-E | negativos de autorização | 401/403 sem vazamento | 401 anônimo/inválido/S2S; persona negativa R10/R11 inexistente | PASS parcial — 403 específico INCONCLUSIVE |
+| G021-F/G | retrieval R01–R15/PROC-0072/temas | citações válidas | 15 fichas + ficha-processo com `citation_locator`; TARGET/TO_INVENTORY classificados | PASS |
+| G021-H | regressão relatórios | fluxos preservados | todos 200; 1×503 timeout frio R10 (recupera; reliability) | PASS c/ observação |

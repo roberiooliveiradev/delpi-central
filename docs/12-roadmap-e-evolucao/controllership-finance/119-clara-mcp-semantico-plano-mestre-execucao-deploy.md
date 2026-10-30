@@ -212,3 +212,7 @@ repositorio real (fichas por `report_id` com `citation_locator`). Codigo:
 release stage-05 (30/10/2026, host `srv-api`, checkout `297068f1b7` — inclui `9f66f8b8e0`) publicado por `up-prod-sequential.sh`: api-delpi `sha256:d46e307ad3e6`, BFF `sha256:7f0e7db69114`, MFE `sha256:8530bbc8f797`; corpus produtivo `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes / 2.186 itens, 17 fichas, 100% `PORTAL_ACCESS`). Transporte MCP e2e `TEST_NOT_RUN` — client `mcp-clara` segue
 `BLOCKED_IAM` (credencial admin rotacionada; owner IAM via canal seguro;
 401 fail-closed verificado para anon e token de usuario).
+
+## Adendo Gate 021 — estado real do IAM/MCP (31/10/2026)
+
+Inspeção read-only do realm `delpi` em produção confirmou o client **`mcp-controllership-finance`** totalmente provisionado: habilitado, público, standard flow, PKCE S256, redirect `https://chatgpt.com/connector_platform_oauth_redirect`, scopes default `mcp:tools` + `audience-delpi` (+`basic`,`email`,`profile`,`roles`,`web-origins`,`acr`). O registro histórico `mcp-clara = BLOCKED_IAM` referia-se à nomenclatura anterior e está **superado** — o client correto existe e está configurado. Direct access grants desabilitado por desenho: não há password grant legítimo; o caminho oficial é authorization code + PKCE via conector ChatGPT. **Pendente:** execução e2e real do fluxo (tools/list, read, analyze, knowledge, execute/delete discovery) — `TEST_NOT_RUN` no Gate 021 por indisponibilidade de sessão conectora autorizada; não requer alteração de IAM.
