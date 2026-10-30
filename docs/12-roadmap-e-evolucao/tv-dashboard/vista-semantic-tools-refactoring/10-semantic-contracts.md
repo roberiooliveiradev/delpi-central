@@ -195,3 +195,7 @@ não texto solto.
   OpenAPI gerado.
 - `agent_directives`/`specialist-instructions`: reescritos para o
   vocabulário novo — apontam para o catálogo, não re-declaram ops.
+
+## D-6 target capability extension — non-normative, 2026-10-30
+
+The six semantic verbs remain the proposed transport vocabulary. The product now requests all eight D-6 functional blocks, including restore, templates, MDD and resource shares/invites/permissions. **No generic entity/action executor, ACL proxy, or arbitrary typed op is authorized.** For each new operation B0 must decide whether the existing owner exposes a safe handler, dedicated governed workflow, read projection or approved typed op. `execute` covers permitted non-destructive mutations through the sealed prepare/commit boundary; `delete` covers approved destructive operations with independently verified consent, never echo alone. History restore is a domain restore operation, not an LLM-generated inverse patch. MDD import preview and apply are separate; binary/media handling must use approved flows. Access grants/revocations require Core effective RBAC + TV resource scope, recipient/role validation, recheck and audit. Canonical contracts and error schemas must be frozen in bounded design before implementation. See [15 — full master plan](15-d6-product-direction-and-master-plan.md).
