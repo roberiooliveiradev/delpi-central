@@ -1058,3 +1058,47 @@ Mapeamento dos quatro níveis do doc 112 §54 para componentes homologados. **Ne
 **Reuso de componentes CF existentes:** `DocumentDetailPanel` e `DocumentConversationPanel` já implementam preview+download+versões+conversa — reutilização possível **somente** sobre o novo contrato de projeção DRE (DTO distinto, actions política restrita); não plugar direto nos endpoints internos. `PackagesPage`/`MonthlyDocumentsPanel` servem de referência visual, não de consumo de dados.
 
 **Gap honesto:** a camada de dados (read-model BFF) não existe — reutilizar componentes de apresentação sem projeção autorizada violaria o boundary DRE (exporia `content` P3/P4 interno). **Não usar** `createDashboardMentionComposer` com capabilities de anexo/menção até decisão `D-DRE-COMPOSER-01` (texto-only).
+
+### UX-022 — padronização transversal de loading (PROVEN, Gate-022 30/10/2026)
+
+Matriz canônica de carregamento — fonte única: `@delpi/plugin-ui/index` via
+`controllershipFinanceUi.ts` + helper `CfSectionLoading` em `cfFeedbackUi.tsx`.
+Nenhum `<p aria-live>` isolado e nenhum `CfEmptyState` usado como loader
+permanece no portal (32 pontos corrigidos em 24 páginas/painéis).
+
+| Superfície | Componente canônico | Comportamento |
+|---|---|---|
+| Bootstrap do MFE / montagem | `CfScreenLoading` (`createDashboardScreenLoading` + `screenLoadingBemClasses`) | splash única com progresso indeterminado |
+| Primeira carga de página/seção | `CfSectionLoading variant="panel"` (`LoadingActivityCard` panel) | spinner + barra indeterminada + rótulo honesto |
+| Sub-superfície dentro de conteúdo | `CfSectionLoading variant="compact"` | indicador discreto, altura estável |
+| Indicador de atualização (dashboard/strip) | `CfLoadingBadge` (`createDashboardLoadingActivityBadge`) | `role=status` compacto — não apaga conteúdo |
+| Progresso inline mensurável | `CfInlineLoadingProgress` (`createDashboardInlineLoadingProgress`) | só com `completed/total` real |
+| KPI | `CfInteractiveDataCard` com valor `"—"` enquanto `anyLoading` + `aria-busy` na região | nunca `0` antes de comprovado |
+| Refresh | `aria-busy` na região + estado `refreshing` dos consumidores | valor anterior preservado |
+| Erro | `CfQueryErrorBanner` / `CfFeedbackMessage` + retry | nunca spinner infinito |
+| Vazio | `CfEmptyState` | somente após resposta confirmar ausência |
+
+Regra inegociável de progresso: `progressPercent` apenas quando derivado de
+trabalho real mensurável; nenhum percentual artificial por timer foi
+introduzido — todas as consultas HTTP síncronas do portal usam estado
+**indeterminado** honesto.
+
+Bindings criados no adaptador: `CfLoadingBadge`, `CfInlineLoadingProgress`,
+`CfScreenLoading` (factories novos) + `CfSectionLoading` (helper canônico
+de seção). Correção prioritária em `MonthlyReportsPanel`: faixa de KPIs com
+`CfLoadingBadge` «Consultando indicadores…», `aria-busy`, os três KPIs em
+`"—"` durante a primeira consulta (Divergências nunca mostra `0` antes de
+comprovado — RQ-LOAD-03) e catálogo com badge «Consultando disponibilidade
+dos relatórios…» + `aria-busy`.
+
+**Cobertura:** `CfSectionLoading` aplicado em todas as 24 superfícies que
+apresentavam texto isolado ou `EmptyState`-como-loader: CockpitPage,
+MonthlyClosingPage, MonthlyReportsPanel (fontes/conciliação/matriz),
+PendenciesPage, PackagesPage, P3CutoffPanel, ReportsMatrixPanel,
+ReportSharedSections (conciliação analítica P3), ReceivedDocumentsPage,
+ReceivedDocumentDetailPanel, ReceivedConversationPanel,
+ClosingDocumentsPanel, MonthlyDocumentsPanel, DocumentDetailPanel,
+DocumentConversationPanel, ItemValidationPanel, ClaraConsentPage,
+ChecklistAdminPage, ChecklistAdminEventsPage, ChecklistVersionPage,
+ChecklistVersionDocumentPage, DocumentConfigFormPage, DocumentsAdminPage,
+CatalogsAdminPage.

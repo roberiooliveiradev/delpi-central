@@ -49,6 +49,7 @@ import {
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
+  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   FilterInputField,
@@ -547,7 +548,7 @@ export function MonthlyDocumentsPanel({
         </div>
 
         {loading ? (
-          <p aria-live="polite">Carregando documentos…</p>
+          <CfSectionLoading label="Carregando documentos…" variant="panel" />
         ) : null}
 
         {!loading && filtered.length === 0 ? (

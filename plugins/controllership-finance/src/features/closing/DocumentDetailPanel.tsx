@@ -56,6 +56,7 @@ import {
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
+  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   FilterInputField,
@@ -600,7 +601,7 @@ export function DocumentDetailPanel({
         />
       ) : null}
 
-      {loading ? <p aria-live="polite">Carregando documento…</p> : null}
+      {loading ? <CfSectionLoading label="Carregando documento…" variant="panel" /> : null}
 
       {feedback ? (
         <CfFeedbackMessage

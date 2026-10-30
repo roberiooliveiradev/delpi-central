@@ -5,7 +5,45 @@
  */
 import type { ReactNode } from "react";
 
-import { CfActionButton, CfStateBanner } from "./controllershipFinanceUi";
+import {
+  CfActionButton,
+  CfLoadingCard,
+  CfStateBanner,
+} from "./controllershipFinanceUi";
+
+/**
+ * Indicador canônico de carregamento do Portal — substitui texto isolado
+ * (`<p aria-live>…`) e `EmptyState` usado como loader. Delega ao
+ * `LoadingActivityCard` do plugin-ui: `role=status`, `aria-live`,
+ * `progressbar` quando `progressPercent` real é fornecido.
+ *
+ * Matriz de superfície:
+ * - `panel` — primeira carga de página/seção inteira (lista, hero, corpo).
+ * - `compact` — sub-superfície dentro de conteúdo (painel lateral,
+ *   detalhe, área interna de um card/section).
+ * `progressPercent` só é aceito quando derivado de trabalho real
+ * mensurável (`completed/total`); nunca de timer ou estimativa.
+ */
+export function CfSectionLoading({
+  label,
+  description,
+  variant = "compact",
+  progressPercent,
+}: {
+  label: string;
+  description?: string;
+  variant?: "compact" | "panel";
+  progressPercent?: number;
+}) {
+  return (
+    <CfLoadingCard
+      title={label}
+      description={description}
+      variant={variant}
+      progressPercent={progressPercent}
+    />
+  );
+}
 
 export type CfFeedbackIntent = "info" | "warning" | "error" | "success";
 

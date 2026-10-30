@@ -10,6 +10,9 @@ import {
   createDashboardEventsSection,
   createDashboardInteractiveDataCard,
   createDashboardLoadingActivityCard,
+  createDashboardLoadingActivityBadge,
+  createDashboardInlineLoadingProgress,
+  createDashboardScreenLoading,
   createDashboardDataRecordCard,
   createDashboardMentionComposer,
   createDashboardMessageThread,
@@ -40,6 +43,7 @@ import {
   confirmModalBemClasses,
   dateFieldBemClasses,
   emptyStateCardBemClasses,
+  screenLoadingBemClasses,
   sectionCardPacBemClasses,
   sectionRouteCardBemClasses,
   selectFieldPacClasses,
@@ -126,6 +130,16 @@ export const CfLoadingCard = createDashboardLoadingActivityCard({
       `Carregamento: faltam ${remainingPercent} por cento`,
     progressAriaIndeterminate: "Carregamento em andamento",
   },
+});
+export const CfLoadingBadge = createDashboardLoadingActivityBadge({
+  prefix: UI_PREFIX,
+});
+export const CfInlineLoadingProgress = createDashboardInlineLoadingProgress({
+  prefix: UI_PREFIX,
+  defaultLabel: "Carregando dados",
+});
+export const CfScreenLoading = createDashboardScreenLoading({
+  classNames: screenLoadingBemClasses(UI_PREFIX),
 });
 export const CfStateBanner = createDashboardStateBanner({
   classNames: cfStateBannerClassNames,

@@ -62,6 +62,7 @@ export const sectionRouteCardBemClasses = passthroughClasses;
 export const stateBannerBemClasses = passthroughClasses;
 export const statusBadgeBemClasses = passthroughClasses;
 export const titleWithHelpBemClasses = passthroughClasses;
+export const screenLoadingBemClasses = passthroughClasses;
 
 export function createDashboardPageHero() {
   return function PageHero(props: {
@@ -162,6 +163,24 @@ export function createDashboardStateBanner() {
 export function createDashboardLoadingActivityCard() {
   return function LoadingCard(props: { title?: ReactNode }) {
     return el("p", { role: "status" }, props.title);
+  };
+}
+
+export function createDashboardLoadingActivityBadge() {
+  return function LoadingBadge(props: { label?: ReactNode }) {
+    return el("span", { role: "status" }, props.label);
+  };
+}
+
+export function createDashboardInlineLoadingProgress() {
+  return function InlineProgress(props: { label?: ReactNode; percent?: number }) {
+    return el("span", { role: "status" }, props.label);
+  };
+}
+
+export function createDashboardScreenLoading() {
+  return function ScreenLoading(props: { label?: ReactNode }) {
+    return el("div", { role: "status" }, props.label);
   };
 }
 

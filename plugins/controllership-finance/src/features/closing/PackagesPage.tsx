@@ -40,6 +40,7 @@ import { useViewerCapabilities } from "../../app/ViewerContext";
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
+  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfDialog,
@@ -490,7 +491,7 @@ export function PackagesPage({ period: initialPeriod }: { period?: string }) {
           hint={CF_HELP.packages.list}
         >
           {loading && packages.length === 0 ? (
-            <p aria-live="polite">Carregando pacotes…</p>
+            <CfSectionLoading label="Carregando pacotes…" variant="panel" />
           ) : packages.length === 0 ? (
             <CfEmptyState
               classNames={cfEmptyStateClassNames}

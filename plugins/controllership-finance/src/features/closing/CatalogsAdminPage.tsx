@@ -25,6 +25,7 @@ import {
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
+  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
@@ -347,7 +348,7 @@ export function CatalogsAdminPage() {
           hint={CF_HELP.catalogs.list}
         >
           {catalogs === null ? (
-            <p aria-live="polite">Carregando catálogos…</p>
+            <CfSectionLoading label="Carregando catálogos…" variant="panel" />
           ) : (
             <div className="cf-catalog-grid">
               {CATALOG_ORDER.map((key) => {

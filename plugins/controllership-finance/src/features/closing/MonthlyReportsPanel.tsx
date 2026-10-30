@@ -60,11 +60,13 @@ import {
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
+  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
   CfEmptyState,
   CfInteractiveDataCard,
+  CfLoadingBadge,
   CfSectionCard,
   CfStatusBadge,
   cfEmptyStateClassNames,
@@ -1098,7 +1100,7 @@ export function MonthlyReportsPanel({
   const divergenceValue =
     divergenceCount > 0
       ? String(divergenceCount)
-      : divergenceUnknown || unverifiedCount > 0
+      : anyLoading || divergenceUnknown || unverifiedCount > 0
         ? "—"
         : "0";
   const divergenceHint =
@@ -1106,11 +1108,13 @@ export function MonthlyReportsPanel({
       ? unverifiedCount > 0
         ? "diferenças comprovadas — outras verificações pendentes"
         : "diferenças comprovadas nas conferências"
-      : divergenceUnknown
-        ? "Não verificadas — nem todas as fontes responderam"
-        : unverifiedCount > 0
-          ? "Não verificadas — conferências pendentes"
-          : "nenhuma diferença comprovada nas conferências";
+      : anyLoading
+        ? "Consultando verificações…"
+        : divergenceUnknown
+          ? "Não verificadas — nem todas as fontes responderam"
+          : unverifiedCount > 0
+            ? "Não verificadas — conferências pendentes"
+            : "nenhuma diferença comprovada nas conferências";
   const operandStatus = (
     key: "entradasSaidas" | "p7" | "h02",
   ): string | null =>
@@ -1163,9 +1167,13 @@ export function MonthlyReportsPanel({
         subtitle="Analise os resultados do mês e identifique o que precisa ser corrigido."
         hint={CF_HELP.monthlyClosing.reportsIndicators}
       >
+        {anyLoading ? (
+          <CfLoadingBadge label="Consultando indicadores…" tone="info" />
+        ) : null}
         <div
           className="cf-monthly-indicators"
           aria-label="Indicadores de relatórios"
+          aria-busy={anyLoading}
         >
           <CfInteractiveDataCard
             ariaLabel={`Divergências identificadas: ${divergenceValue}`}
@@ -1230,7 +1238,7 @@ export function MonthlyReportsPanel({
           aria-label="Área de atenção"
         >
           {anyLoading ? (
-            <p aria-live="polite">Consultando fontes…</p>
+            <CfSectionLoading label="Consultando fontes…" variant="compact" />
           ) : attention.length === 0 ? (
             <CfEmptyState
               classNames={cfEmptyStateClassNames}
@@ -1270,11 +1278,18 @@ export function MonthlyReportsPanel({
         subtitle="Abra a página do relatório para ver totais, agrupamentos e registros."
         hint={CF_HELP.monthlyClosing.reportsCatalog}
       >
+        {anyLoading ? (
+          <CfLoadingBadge
+            label="Consultando disponibilidade dos relatórios…"
+            tone="info"
+          />
+        ) : null}
         <div
           id="cf-reports-catalog"
           tabIndex={-1}
           className="cf-report-cards"
           aria-label="Catálogo de relatórios"
+          aria-busy={anyLoading}
         >
           {CATALOG_REPORT_KEYS.map((key) => {
             const meta = REPORT_META[key];
@@ -1382,7 +1397,7 @@ export function MonthlyReportsPanel({
               onRetry={reload}
             />
           ) : (
-            <p aria-live="polite">Consultando a matriz de relatórios…</p>
+            <CfSectionLoading label="Consultando a matriz de relatórios…" variant="compact" />
           )}
         </div>
       </details>

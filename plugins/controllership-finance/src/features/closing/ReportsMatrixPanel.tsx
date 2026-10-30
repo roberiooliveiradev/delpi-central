@@ -17,6 +17,7 @@ import {
 } from "../../api/reportsApi";
 import {
   CfQueryErrorBanner,
+  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfSectionCard,
@@ -182,7 +183,7 @@ export function ReportsMatrixPanel({ period }: { period: string }) {
   if (loading && !matrix) {
     return (
       <CfSectionCard title="Relatórios do processo (R01–R15)">
-        <p aria-live="polite">Carregando matriz de relatórios…</p>
+        <CfSectionLoading label="Carregando matriz de relatórios…" variant="panel" />
       </CfSectionCard>
     );
   }

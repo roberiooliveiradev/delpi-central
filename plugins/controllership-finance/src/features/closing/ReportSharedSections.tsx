@@ -12,7 +12,10 @@ import {
   CfSectionCard,
   CfStatusBadge,
 } from "../../app/controllershipFinanceUi";
-import { CfFeedbackMessage } from "../../app/cfFeedbackUi";
+import {
+  CfFeedbackMessage,
+  CfSectionLoading,
+} from "../../app/cfFeedbackUi";
 import { CF_HELP } from "../../content/helpTooltips";
 import { formatAmount, formatDateTime } from "../../utils/formatters";
 
@@ -70,7 +73,7 @@ export function P3ReconciliationSection({
   p7OperationalAvailable?: boolean;
 }) {
   if (loading && !p3) {
-    return <p aria-live="polite">Consultando a conciliação P3…</p>;
+    return <CfSectionLoading label="Consultando a conciliação P3…" variant="panel" />;
   }
   if (!p3) {
     return (
@@ -226,7 +229,7 @@ export function AnalyticalReconciliationSection({
 }) {
   if (loading && !reconciliation) {
     return (
-      <p aria-live="polite">Consultando a conciliação analítica…</p>
+      <CfSectionLoading label="Consultando a conciliação analítica…" variant="panel" />
     );
   }
   if (!reconciliation) {

@@ -201,6 +201,16 @@ download auditado, mensagens `SHARED` e solicitações de ajuste
 confirma). Estados de loading/erro/vazio honestos; Help contextual nos
 grupos `receivedDocuments` e `dreHome`.
 
+UX-022 (padronização de loading): todo carregamento do portal usa os
+indicadores canônicos do `@delpi/plugin-ui` — `CfSectionLoading`
+(`LoadingActivityCard` panel/compact) para páginas e seções,
+`CfLoadingBadge` para atualizações compactas, `CfScreenLoading` para o
+bootstrap do MFE e `CfInlineLoadingProgress` somente com progresso real
+mensurável. Texto isolado de "carregando…" e `CfEmptyState` usado como
+loader foram eliminados; regiões em consulta declaram `aria-busy` e KPIs
+exibem `—` até o valor ser comprovado (Divergências nunca mostra `0`
+antes da verificação concluir). Matriz completa no doc 30 §UX-022.
+
 ## Runtime
 
 - React 19 + Vite 7 + `@originjs/vite-plugin-federation`

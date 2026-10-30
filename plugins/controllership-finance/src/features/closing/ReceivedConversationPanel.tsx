@@ -31,7 +31,10 @@ import {
   postReceivedDocumentMessage,
   type ReceivedMessage,
 } from "../../api/receivedDocumentsApi";
-import { CfFeedbackMessage } from "../../app/cfFeedbackUi";
+import {
+  CfFeedbackMessage,
+  CfSectionLoading,
+} from "../../app/cfFeedbackUi";
 import {
   CF_PORTAL_SCOPE,
   CfMentionComposer,
@@ -207,7 +210,7 @@ export function ReceivedConversationPanel({
       ) : null}
 
       {loaded === null && !loadError ? (
-        <p aria-live="polite">Carregando conversa…</p>
+        <CfSectionLoading label="Carregando conversa…" variant="compact" />
       ) : null}
 
       {loaded !== null ? (

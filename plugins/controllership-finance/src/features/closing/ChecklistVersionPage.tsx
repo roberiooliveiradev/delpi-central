@@ -31,6 +31,7 @@ import {
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
+  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
@@ -650,10 +651,7 @@ export function ChecklistVersionPage({
         ) : null}
 
         {loading || (templateLoaded && template && !detailData && !error) ? (
-          <CfEmptyState
-            classNames={cfEmptyStateClassNames}
-            defaultMessage="Carregando versão…"
-          />
+          <CfSectionLoading label="Carregando versão…" variant="compact" />
         ) : !error && templateLoaded && !template ? (
           <CfEmptyState
             classNames={cfEmptyStateClassNames}

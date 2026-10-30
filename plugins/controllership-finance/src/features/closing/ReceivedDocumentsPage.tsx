@@ -37,7 +37,10 @@ import {
   type ReceivedDelivery,
   type ReceivedDeliveryDetail,
 } from "../../api/receivedDocumentsApi";
-import { CfQueryErrorBanner } from "../../app/cfFeedbackUi";
+import {
+  CfQueryErrorBanner,
+  CfSectionLoading,
+} from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
   CfEmptyState,
@@ -339,7 +342,7 @@ export function ReceivedDocumentsPage({
       ) : period ? (
         <>
           {delivery === null && !currentError ? (
-            <p aria-live="polite">Carregando documentos…</p>
+            <CfSectionLoading label="Carregando documentos…" variant="panel" />
           ) : null}
 
           {delivery ? (
@@ -471,7 +474,7 @@ export function ReceivedDocumentsPage({
           hint={CF_HELP.receivedDocuments.deliveries}
         >
           {deliveries === null && !currentError ? (
-            <p aria-live="polite">Carregando fechamentos…</p>
+            <CfSectionLoading label="Carregando fechamentos…" variant="panel" />
           ) : null}
           {deliveries && deliveries.length === 0 ? (
             <CfEmptyState

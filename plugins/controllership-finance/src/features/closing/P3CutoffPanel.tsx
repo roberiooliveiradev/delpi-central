@@ -26,6 +26,7 @@ import { useViewerCapabilities } from "../../app/ViewerContext";
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
+  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfDialog,
@@ -199,7 +200,7 @@ export function P3CutoffPanel({ period }: { period: string }) {
   if (loading && !status) {
     return (
       <CfSectionCard title="Cutoff e conciliação (P3)">
-        <p aria-live="polite">Carregando estado do fechamento…</p>
+        <CfSectionLoading label="Carregando estado do fechamento…" variant="compact" />
       </CfSectionCard>
     );
   }

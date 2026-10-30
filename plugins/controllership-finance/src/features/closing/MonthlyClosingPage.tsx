@@ -45,6 +45,7 @@ import {
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
+  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   FilterInputField,
@@ -537,7 +538,7 @@ export function MonthlyClosingPage({
 
   const renderProbeGate = (children: React.ReactNode) => {
     if (probeLoading) {
-      return <p aria-live="polite">Verificando fechamento…</p>;
+      return <CfSectionLoading label="Verificando fechamento…" variant="panel" />;
     }
     if (probe?.kind === "not_opened") {
       return (
@@ -718,7 +719,7 @@ export function MonthlyClosingPage({
             {tab === "overview" ? (
               <>
                 {cockpitLoading ? (
-                  <p aria-live="polite">Carregando visão geral…</p>
+                  <CfSectionLoading label="Carregando visão geral…" variant="panel" />
                 ) : null}
                 {!cockpitLoading &&
                 cockpitError &&
@@ -776,7 +777,7 @@ export function MonthlyClosingPage({
       ) : (
         <div className="cf-page-stack">
           {currentList === null && !listError ? (
-            <p aria-live="polite">Carregando fechamentos…</p>
+            <CfSectionLoading label="Carregando fechamentos…" variant="panel" />
           ) : null}
           {competences && competences.length > 0 ? (
             <CfSectionCard

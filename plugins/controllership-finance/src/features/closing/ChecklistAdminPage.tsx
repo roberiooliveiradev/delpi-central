@@ -34,6 +34,7 @@ import {
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
+  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
@@ -386,10 +387,7 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
         ) : null}
 
         {loading ? (
-          <CfEmptyState
-            classNames={cfEmptyStateClassNames}
-            defaultMessage="Carregando administração…"
-          />
+          <CfSectionLoading label="Carregando administração…" variant="compact" />
         ) : !error && !template ? (
           <CfEmptyState
             classNames={cfEmptyStateClassNames}

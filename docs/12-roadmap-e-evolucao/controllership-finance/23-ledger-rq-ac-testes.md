@@ -1170,3 +1170,20 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | G021-E | negativos de autorização | 401/403 sem vazamento | 401 anônimo/inválido/S2S; persona negativa R10/R11 inexistente | PASS parcial — 403 específico INCONCLUSIVE |
 | G021-F/G | retrieval R01–R15/PROC-0072/temas | citações válidas | 15 fichas + ficha-processo com `citation_locator`; TARGET/TO_INVENTORY classificados | PASS |
 | G021-H | regressão relatórios | fluxos preservados | todos 200; 1×503 timeout frio R10 (recupera; reliability) | PASS c/ observação |
+
+## Gate 022 — padronização de loading UX (CF-PROC0072-UX-LOADING-PROGRESS-STANDARDIZATION-022, 30/10/2026)
+
+| Teste | Entrada | Esperado | Observado | Estado |
+|---|---|---|---|---|
+| G022-A | Inventário de loading | todas as superfícies mapeadas | 32 pontos com `<p aria-live>` isolado ou `EmptyState`-como-loader em 24 arquivos | PASS |
+| G022-B | Reuso plugin-ui | componentes canônicos | `createDashboardLoadingActivityBadge`, `createDashboardInlineLoadingProgress`, `createDashboardScreenLoading`, `screenLoadingBemClasses` bound no adaptador; `CfSectionLoading` helper único | PASS |
+| G022-C | Progresso | percentual só mensurável | nenhum percentual introduzido; todas as consultas HTTP síncronas em estado indeterminado | PASS |
+| G022-D | KPIs reports tab | sem `0`/`—` enganoso | 3 KPIs em `"—"` enquanto `anyLoading` + badge «Consultando indicadores…» + `aria-busy`; Divergências nunca `0` antes de comprovado | PASS |
+| G022-E | Tabelas/seções | loader contextual | `CfSectionLoading` panel/compact nas 24 superfícies; vazio/erro preservados | PASS |
+| G022-F | Vitest MFE | sem regressão | 37 arquivos / **413 testes PASS** + 25 testes estruturais `.mjs` | PASS |
+| G022-G | tsc + vite build | compila | `tsc -b` limpo; `vite build` OK (bundle `App-DFg8U3lQ.js`) | PASS |
+| G022-H | Smoke visual local (Playwright, stack homolog) | loaders mid-flight visíveis e encerráveis | **12/12 PASS** — badge/status/`aria-busy` mid-flight, 0 residual pós-conclusão, catálogo resolve, pendências/documentos loaders, mobile sem overflow; screenshots `Temp\g022-loading` | PASS |
+| G022-I | Tema escuro / foco / reduced-motion | validação visual | não executado neste gate | TEST_NOT_RUN |
+| G022-J | Smoke visual produtivo | evidência em produção | deploy produtivo não autorizado | TEST_NOT_RUN |
+
+**Residuais:** evidência visual limitada a tema claro desktop+mobile na stack local; percentual determinado não existe em nenhuma superfície (por desenho — sem fonte de progresso real nas APIs atuais); deploy/homologação produtiva do novo bundle exige gate de release próprio.

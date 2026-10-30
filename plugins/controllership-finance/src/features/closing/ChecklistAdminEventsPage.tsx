@@ -18,7 +18,10 @@ import {
   type ChecklistTemplate,
   type TemplateAuditEvent,
 } from "../../api/adminApi";
-import { CfQueryErrorBanner } from "../../app/cfFeedbackUi";
+import {
+  CfQueryErrorBanner,
+  CfSectionLoading,
+} from "../../app/cfFeedbackUi";
 import {
   CfEmptyState,
   CfPagePath,
@@ -228,10 +231,7 @@ export function ChecklistAdminEventsPage({
 
         {loading ||
         (templateLoaded && template && !currentEvents && !error) ? (
-          <CfEmptyState
-            classNames={cfEmptyStateClassNames}
-            defaultMessage="Carregando eventos…"
-          />
+          <CfSectionLoading label="Carregando eventos…" variant="compact" />
         ) : !error && templateLoaded && !template ? (
           <CfEmptyState
             classNames={cfEmptyStateClassNames}
