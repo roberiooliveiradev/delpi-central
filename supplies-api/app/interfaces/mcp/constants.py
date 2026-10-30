@@ -23,8 +23,9 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 
 # Catalog contract version — bumped on tool surface or wire envelope
 # changes (rev.1 = 8 endpoint-oriented tools; rev.2 = 4 semantic tools;
-# rev.3 = governed execute for suppliers create/update).
-CATALOG_VERSION = 3
+# rev.3 = governed execute for suppliers create/update;
+# rev.4 = suppliers reads + postal lookup + creation preview analysis).
+CATALOG_VERSION = 4
 
 # DISCOVERY | READ | ANALYSIS | ACT — frozen semantic tool classes.
 # Metadata describes semantics; it NEVER authorizes execution.
@@ -68,9 +69,29 @@ EXECUTE_IDEMPOTENCY_TTL_HOURS = 24
 # deliveries, inventory, suppliers) must NOT appear here until homologated.
 # ---------------------------------------------------------------------------
 
-READ_ENTITIES: frozenset[str] = frozenset({"purchase_orders"})
-READ_ACTIONS: frozenset[str] = frozenset({"search", "get"})
-ANALYSIS_KINDS: frozenset[str] = frozenset({"purchase_orders_summary"})
+# Governed reads — closed (entity, action) registry, same style as
+# EXECUTE_ACTIONS_BY_ENTITY. Each pair maps to a dedicated handler that
+# reuses the canonical BFF service/gateway — no new entity without owner
+# contract + tests.
+READ_ACTIONS_BY_ENTITY: dict[str, frozenset[str]] = {
+    "purchase_orders": frozenset({"search", "get"}),
+    "suppliers": frozenset(
+        {
+            "search",
+            "get",
+            "catalogs",
+            "search_by_tax_id",
+            "existing",
+            "operations",
+            "integration_status",
+        }
+    ),
+    "postal_codes": frozenset({"lookup"}),
+}
+READ_ENTITIES: frozenset[str] = frozenset(READ_ACTIONS_BY_ENTITY)
+ANALYSIS_KINDS: frozenset[str] = frozenset(
+    {"purchase_orders_summary", "supplier_creation_preview"}
+)
 KNOWLEDGE_ACTIONS: frozenset[str] = frozenset({"search", "get", "sources"})
 CONTEXT_ACTIONS: frozenset[str] = frozenset({"context", "catalog"})
 
@@ -114,6 +135,35 @@ PO_ANALYZE_FILTER_KEYS: frozenset[str] = frozenset(
 
 PO_GET_IDENTITY_KEYS: frozenset[str] = frozenset({"branch", "order_number"})
 
+# Suppliers read vocabularies — closed mirrors of the BFF query/identity
+# contracts (suppliers_routes + supplier_creation_routes).
+SUPPLIER_SEARCH_FILTER_KEYS: frozenset[str] = frozenset(
+    {
+        "query",
+        "state",
+        "blocked",
+        "page",
+        "page_size",
+        "sort_by",
+        "sort_dir",
+    }
+)
+SUPPLIER_GET_IDENTITY_KEYS: frozenset[str] = frozenset(
+    {"supplier_code", "supplier_store"}
+)
+SUPPLIER_CATALOG_FILTER_KEYS: frozenset[str] = frozenset(
+    {"kind", "query", "state", "code", "limit"}
+)
+SUPPLIER_TAX_ID_FILTER_KEYS: frozenset[str] = frozenset(
+    {"tax_id", "page", "page_size"}
+)
+SUPPLIER_OPERATION_IDENTITY_KEYS: frozenset[str] = frozenset({"operation_id"})
+POSTAL_CODE_IDENTITY_KEYS: frozenset[str] = frozenset({"postal_code"})
+SUPPLIER_PREVIEW_FILTER_KEYS: frozenset[str] = frozenset({"tax_id"})
+
+# Catalog limit and existing-suppliers page caps live with the canonical
+# supplier contract owner (suppliers_dto) — consumers import from there.
+
 # Closed per-operation keys for execute(entity=suppliers) — mirrors the
 # SupplierWriteOperation schema; unknown keys are rejected in depth.
 SUPPLIER_WRITE_OPERATION_KEYS: frozenset[str] = frozenset(
@@ -130,7 +180,8 @@ SEMANTIC_CAPABILITIES: dict[str, dict] = {
     "get_context": {"actions": sorted(CONTEXT_ACTIONS)},
     "read": {
         "entities": {
-            "purchase_orders": {"actions": sorted(READ_ACTIONS)},
+            entity: {"actions": sorted(actions)}
+            for entity, actions in READ_ACTIONS_BY_ENTITY.items()
         },
     },
     "analyze": {"analyses": sorted(ANALYSIS_KINDS)},

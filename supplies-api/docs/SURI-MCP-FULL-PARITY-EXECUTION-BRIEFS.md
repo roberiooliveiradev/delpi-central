@@ -38,7 +38,7 @@ Template comum de autoridades (todo lote): instruções GPT Arquiteto, `.cursor`
 - **AC especial:** branch `all` em detail → erro estruturado `branch_required` (espelha SafetyStockBranchChoiceDialog — sem default silencioso).
 - **AuthZ:** `can_use_operations`. **Dependência:** P1-R3 (padrão de handlers de leitura consolidado).
 
-## P1-R5 — suppliers reads
+## P1-R5 — suppliers reads — **EXECUTADO** (SURI-MCP-FULL-PARITY-V4-G1)
 
 - **GOAL:** `read entity=suppliers`: list, get, catalogs(14 allowlist), postal-code, existing(dup-check), integration-status(manage), operations, creation-preview(analyze).
 - **Contratos:** `DelpiS2SApiGateway` (NÃO o shared); upstream `*_DISABLED`/S2S codes repassados.

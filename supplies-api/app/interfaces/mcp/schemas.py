@@ -64,6 +64,81 @@ class PurchaseOrderIdentity(_ClosedModel):
     order_number: str
 
 
+class SupplierSearchFilters(_ClosedModel):
+    """Filters for ``read(entity=suppliers, action=search)`` — parity
+    with the BFF paged SA2 search contract."""
+
+    query: str | None = None
+    state: str | None = None
+    blocked: bool | None = None
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=DEFAULT_PAGE_SIZE, ge=1)
+    sort_by: str | None = None
+    sort_dir: str | None = None
+
+
+class SupplierIdentity(_ClosedModel):
+    """Identity for ``read(entity=suppliers, action=get)`` — ficha 360."""
+
+    supplier_code: str = Field(
+        description="Código do fornecedor (até 6 dígitos)."
+    )
+    supplier_store: str = Field(
+        description="Loja do fornecedor (até 2 dígitos)."
+    )
+
+
+class SupplierCatalogFilters(_ClosedModel):
+    """Filters for ``read(entity=suppliers, action=catalogs)`` —
+    ``kind`` belongs to the closed catalog allowlist."""
+
+    kind: str = Field(
+        description=(
+            "Catálogo TOTVS da allowlist (ex.: states, countries, "
+            "payment-conditions, payment-methods, financial-natures, "
+            "municipalities, carriers, segments)."
+        )
+    )
+    query: str | None = None
+    state: str | None = None
+    code: str | None = None
+    limit: int | None = Field(default=None, ge=1)
+
+
+class SupplierTaxIdFilters(_ClosedModel):
+    """Filters for ``read(entity=suppliers, action=search_by_tax_id |
+    existing)`` — exact CNPJ duplicate lookups."""
+
+    tax_id: str = Field(
+        description="CNPJ com ou sem máscara — validado como CNPJ real."
+    )
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=10, ge=1)
+
+
+class SupplierOperationIdentity(_ClosedModel):
+    """Identity for ``read(entity=suppliers, action=operations)`` —
+    tracked write status via the api-delpi operation record."""
+
+    operation_id: str
+
+
+class PostalCodeIdentity(_ClosedModel):
+    """Identity for ``read(entity=postal_codes, action=lookup)`` —
+    address proposal by CEP (proposal only, never persists)."""
+
+    postal_code: str = Field(description="CEP com ou sem máscara (8 dígitos).")
+
+
+class SupplierPreviewFilters(_ClosedModel):
+    """Filters for ``analyze(analysis=supplier_creation_preview)`` —
+    registry-assisted pre-registration preview (read-only)."""
+
+    tax_id: str = Field(
+        description="CNPJ com ou sem máscara — validado como CNPJ real."
+    )
+
+
 DEFAULT_ANALYZE_SAMPLE_SIZE = DEFAULT_SAMPLE_SIZE
 
 

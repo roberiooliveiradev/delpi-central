@@ -106,3 +106,11 @@ nunca o token legado compartilhado.
 `CATALOG_VERSION = 3` (rev.1 = 1, rev.2 = 2). Mudança aditiva e
 non-breaking: conectores existentes continuam funcionando; `tools/list`
 apenas ganha `execute`.
+
+> **Adendo rev.4 (SURI-MCP-FULL-PARITY-V4-G1):** `CATALOG_VERSION = 4`.
+> Extensão aditiva e non-breaking deste freeze: `read` ganha as entidades
+> `suppliers` (search, get, catalogs, search_by_tax_id, existing,
+> operations, integration_status — manage-only) e `postal_codes`
+> (lookup); `analyze` ganha `supplier_creation_preview` (read-only,
+> `write_enabled=false`). As cinco tools, classes, envelope e o contrato
+> `execute(suppliers, create|update)` permanecem inalterados.

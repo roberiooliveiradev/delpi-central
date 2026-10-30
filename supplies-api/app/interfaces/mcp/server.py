@@ -30,9 +30,16 @@ from app.interfaces.mcp.constants import DESTRUCTIVE_ACT_TOOLS, TOOL_CLASS
 from app.interfaces.mcp.oauth_contract import SURI_MCP_SECURITY_SCHEMES
 from app.interfaces.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interfaces.mcp.schemas import (
+    PostalCodeIdentity,
     PurchaseOrderAnalyzeFilters,
     PurchaseOrderIdentity,
     PurchaseOrderSearchFilters,
+    SupplierCatalogFilters,
+    SupplierIdentity,
+    SupplierOperationIdentity,
+    SupplierPreviewFilters,
+    SupplierSearchFilters,
+    SupplierTaxIdFilters,
     SupplierWriteOperation,
 )
 
@@ -137,17 +144,50 @@ def create_mcp_server() -> MCPServer:
             "obrigatória, order_number, product_code, supplier_code, "
             "expected_delivery_from/to, late_only, sort_by/dir, "
             "page/page_size); action=get retorna a ficha de um pedido "
-            "via 'identity' {branch, order_number}. Requer "
-            "supplies.access e escopo de unidade do próprio usuário."
+            "via 'identity' {branch, order_number}. entity=suppliers: "
+            "action=search lista fornecedores (filters query/state/"
+            "blocked/page/page_size/sort), action=get retorna a ficha "
+            "cadastral via 'identity' {supplier_code, supplier_store}, "
+            "action=catalogs consulta catálogos TOTVS da allowlist "
+            "(filters.kind obrigatório), action=search_by_tax_id lista "
+            "registros existentes para um CNPJ, action=existing verifica "
+            "duplicidade por CNPJ, action=operations acompanha uma "
+            "operação cadastral via 'identity' {operation_id}, "
+            "action=integration_status publica o diagnóstico sanitizado "
+            "da integração (somente supplies.manage). "
+            "entity=postal_codes: action=lookup propõe endereço por CEP "
+            "via 'identity' {postal_code} — proposta, nunca persiste. "
+            "Requer supplies.access e escopo do próprio usuário."
         ),
         annotations=_annotations("read", "Read supplies entities"),
         meta=meta,
     )
     def read(
-        entity: Literal["purchase_orders"],
-        action: Literal["search", "get"],
-        filters: PurchaseOrderSearchFilters | None = None,
-        identity: PurchaseOrderIdentity | None = None,
+        entity: Literal["purchase_orders", "suppliers", "postal_codes"],
+        action: Literal[
+            "search",
+            "get",
+            "catalogs",
+            "search_by_tax_id",
+            "existing",
+            "operations",
+            "integration_status",
+            "lookup",
+        ],
+        filters: (
+            PurchaseOrderSearchFilters
+            | SupplierSearchFilters
+            | SupplierCatalogFilters
+            | SupplierTaxIdFilters
+            | None
+        ) = None,
+        identity: (
+            PurchaseOrderIdentity
+            | SupplierIdentity
+            | SupplierOperationIdentity
+            | PostalCodeIdentity
+            | None
+        ) = None,
     ) -> CallToolResult:
         return _guarded(bridge.tool_read)(entity, action, filters, identity)
 
@@ -161,14 +201,23 @@ def create_mcp_server() -> MCPServer:
             "recomendações rotuladas FACT/CALCULATION/RECOMMENDATION — "
             "recomendações nunca executam. 'filters' aceita o mesmo "
             "vocabulário fechado do read (sem sort/page); 'sample_size' "
-            "limita a amostra."
+            "limita a amostra. "
+            "analysis=supplier_creation_preview: pré-cadastro de "
+            "fornecedor por CNPJ (filters.tax_id) — dados consultados no "
+            "registro externo com proveniência, duplicidades detectadas, "
+            "campos obrigatórios ausentes e prontidão para cadastro; "
+            "estritamente read-only (write_enabled=false) e dependente "
+            "do provider configurado — indisponibilidade é reportada "
+            "honestamente, nunca preenchida com dados inventados."
         ),
         annotations=_annotations("analyze", "Analyze supplies data"),
         meta=meta,
     )
     def analyze(
-        analysis: Literal["purchase_orders_summary"],
-        filters: PurchaseOrderAnalyzeFilters | None = None,
+        analysis: Literal[
+            "purchase_orders_summary", "supplier_creation_preview"
+        ],
+        filters: PurchaseOrderAnalyzeFilters | SupplierPreviewFilters | None = None,
         sample_size: int = 50,
     ) -> CallToolResult:
         return _guarded(bridge.tool_analyze)(analysis, filters, sample_size)

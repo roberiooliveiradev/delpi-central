@@ -16,13 +16,11 @@ from app.application.services.supplier_creation_preview.preview_service import (
     SupplierCreationPreviewService,
 )
 from app.application.services.supplier_enrichment.contracts import (
-    EnrichmentSourceUnavailableError,
-    RegistryAccessDeniedError,
-    RegistryLimiterUnavailableError,
-    RegistryRateLimitedError,
-    RegistryResponseInvalidError,
-    RegistryTaxIdInvalidError,
-    RegistryTaxIdNotFoundError,
+    classify_registry_error,
+)
+from app.application.services.suppliers_dto import (
+    project_existing_supplier_item,
+    SUPPLIER_EXISTING_PAGE_SIZE_MAX,
 )
 from app.domain.supplier_creation.preview import is_valid_cnpj
 from app.domain.supplier_enrichment.models import digits_only
@@ -69,51 +67,18 @@ def _require_body(body: Any) -> str:
 
 
 def _error(exc: Exception):
-    if isinstance(exc, RegistryTaxIdNotFoundError):
-        return jsonify(
-            {"detail": str(exc), "code": "ENRICHMENT_REGISTRY_TAX_ID_NOT_FOUND"}
-        ), 404
-    if isinstance(exc, RegistryTaxIdInvalidError):
-        return jsonify(
-            {"detail": str(exc), "code": "ENRICHMENT_REGISTRY_INVALID_TAX_ID"}
-        ), 422
-    if isinstance(exc, RegistryRateLimitedError):
-        response = jsonify(
-            {"detail": str(exc), "code": "ENRICHMENT_RATE_LIMITED"}
-        )
-        if exc.retry_after:
-            response.headers["Retry-After"] = str(exc.retry_after)
-        return response, 429
-    if isinstance(exc, RegistryLimiterUnavailableError):
-        return jsonify(
-            {"detail": str(exc), "code": "ENRICHMENT_RATE_LIMITER_UNAVAILABLE"}
-        ), 503
-    if isinstance(exc, RegistryResponseInvalidError):
-        return jsonify(
-            {"detail": str(exc), "code": "ENRICHMENT_REGISTRY_INVALID_RESPONSE"}
-        ), 502
-    if isinstance(exc, RegistryAccessDeniedError | EnrichmentSourceUnavailableError):
-        return jsonify(
-            {"detail": str(exc), "code": "ENRICHMENT_SOURCE_UNAVAILABLE"}
-        ), 503
+    classified = classify_registry_error(exc)
+    if classified is not None:
+        status, code, retry_after = classified
+        response = jsonify({"detail": str(exc), "code": code})
+        if retry_after:
+            response.headers["Retry-After"] = str(retry_after)
+        return response, status
     if isinstance(exc, ValueError):
         return jsonify({"detail": str(exc), "code": "invalid_request"}), 422
     if isinstance(exc, DelpiApiGatewayError):
         return _gateway_error_response(exc)
     raise exc
-
-
-_EXISTING_PAGE_SIZE_MAX = 50
-
-
-def _existing_suppliers_minimal(item: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "supplier_code": item.get("supplier_code"),
-        "supplier_store": item.get("supplier_store"),
-        "supplier_name": item.get("supplier_name"),
-        "state": item.get("state"),
-        "blocked": item.get("blocked"),
-    }
 
 
 @creation_bp.get("/suppliers/existing-suppliers")
@@ -132,7 +97,7 @@ def list_existing_suppliers():
         try:
             page = max(1, int(request.args.get("page") or 1))
             page_size = min(
-                _EXISTING_PAGE_SIZE_MAX,
+                SUPPLIER_EXISTING_PAGE_SIZE_MAX,
                 max(1, int(request.args.get("page_size") or 10)),
             )
         except (TypeError, ValueError):
@@ -145,7 +110,9 @@ def list_existing_suppliers():
         )
         return jsonify(
             {
-                "items": [_existing_suppliers_minimal(i) for i in items],
+                "items": [
+                    project_existing_supplier_item(i) for i in items
+                ],
                 "page": page,
                 "page_size": page_size,
                 "total": total,

@@ -22,7 +22,8 @@ Schemas MCP evoluem aditivamente (novos Literals/entities) — compatibilidade c
 ```text
 FASE P1 — READ/ANALYZE parity (capacidades já homologadas no Portal)
   P1-R1 purchase_requests → P1-R2 PO export → P1-R3 deliveries+inventory
-  → P1-R4 safety_stock → P1-R5 suppliers reads → P1-R6 analytics
+  → P1-R4 safety_stock → P1-R5 suppliers reads (EXECUTADO —
+    SURI-MCP-FULL-PARITY-V4-G1, catálogo v4) → P1-R6 analytics
   → P1-R7 consumption_audit → P1-R8 market_intelligence → P1-R9 users/me/home
   → P1-A1 analyze por entidade → P1-K1 corpus knowledge
 FASE P2 — EXECUTE/DELETE parity (só writes plugin-db/workflow homologadas)

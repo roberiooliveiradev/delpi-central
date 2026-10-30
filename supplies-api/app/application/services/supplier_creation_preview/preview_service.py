@@ -13,7 +13,10 @@ from typing import Any, Protocol
 from app.application.services.supplier_enrichment.contracts import (
     CompanyRegistryProvider,
 )
-from app.application.services.suppliers_dto import POST_SUPPLIER_FIELDS
+from app.application.services.suppliers_dto import (
+    POST_SUPPLIER_FIELDS,
+    project_existing_supplier_item,
+)
 from app.domain.supplier_creation.preview import (
     DuplicateStatus,
     build_creation_suggestions,
@@ -93,14 +96,7 @@ class SupplierCreationPreviewService:
         status = classify_duplicate(total)
         if status is DuplicateStatus.POSSIBLE_MATCH:
             minimal = [
-                {
-                    "supplier_code": item.get("supplier_code"),
-                    "supplier_store": item.get("supplier_store"),
-                    "supplier_name": item.get("supplier_name"),
-                    "state": item.get("state"),
-                    "blocked": item.get("blocked"),
-                }
-                for item in matches[:10]
+                project_existing_supplier_item(item) for item in matches[:10]
             ]
         else:
             minimal = []

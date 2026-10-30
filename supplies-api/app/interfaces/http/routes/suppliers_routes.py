@@ -9,7 +9,6 @@ from an ACK alone.
 from __future__ import annotations
 
 import logging
-import re
 
 from flask import Blueprint, jsonify, request
 
@@ -20,15 +19,21 @@ from app.application.security.supplies_permissions import (
 from app.application.services.suppliers_dto import (
     classify_supplier_write_error,
     normalize_operation_id,
+    normalize_postal_code,
     normalize_supplier_id,
     project_detail,
     project_integration_status,
     project_list_envelope,
     project_operation,
+    project_postal_lookup,
     sanitize_field_errors,
     sanitize_post_body,
     sanitize_put_body,
     SAFE_UPSTREAM_DETAIL_PREFIXES,
+    SUPPLIER_CATALOG_KINDS,
+    SUPPLIER_CATALOG_LIMIT_MAX,
+    SUPPLIER_CATALOG_QUERY_KEYS,
+    SUPPLIER_LIST_QUERY_KEYS,
 )
 from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGatewayError
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
@@ -44,48 +49,7 @@ _GATEWAY = DelpiS2SApiGateway()
 
 # CEP — o BFF nunca chama providers externos; a api-delpi é a owner da
 # integração (INT-CEP-01). Validação local só rejeita formato inválido
-# antes do S2S.
-_POSTAL_DIGITS = re.compile(r"\D")
-
-
-def normalize_postal_code(value: str) -> str:
-    digits = _POSTAL_DIGITS.sub("", value or "")
-    if len(digits) != 8:
-        raise ValueError("CEP deve conter exatamente 8 dígitos.")
-    return digits
-
-_LIST_QUERY_KEYS = (
-    "query",
-    "state",
-    "blocked",
-    "page",
-    "page_size",
-    "sort_by",
-    "sort_dir",
-)
-
-# Catálogos TOTVS servidos pela api-delpi — allowlist fechada (nenhum nome do
-# cliente seleciona tabela SQL arbitrária).
-_CATALOG_KINDS = frozenset(
-    {
-        "states",
-        "countries",
-        "bacen-countries",
-        "payment-conditions",
-        "payment-methods",
-        "financial-natures",
-        "accounting-accounts",
-        "municipalities",
-        # X4.FIELDS.E6 — referências cadastrais Protheus
-        "carriers",
-        "segments",
-        "administrators",
-        "employees",
-        "price-tables",
-        "customers",
-    }
-)
-_CATALOG_QUERY_KEYS = ("query", "state", "code", "limit")
+# antes do S2S (normalize_postal_code canônico em suppliers_dto).
 
 
 def _access_token() -> str:
@@ -183,7 +147,7 @@ def list_suppliers():
     """operationId: list_portal_suppliers — paged SA2 search via api-delpi."""
     params = {
         key: request.args[key]
-        for key in _LIST_QUERY_KEYS
+        for key in SUPPLIER_LIST_QUERY_KEYS
         if (request.args.get(key) or "").strip()
     }
     try:
@@ -203,19 +167,21 @@ def list_suppliers():
 def list_supplier_catalog(catalog: str):
     """operationId: list_portal_supplier_catalog — catálogos SA2 via api-delpi."""
     kind = (catalog or "").strip().lower()
-    if kind not in _CATALOG_KINDS:
+    if kind not in SUPPLIER_CATALOG_KINDS:
         return jsonify(
             {"detail": "Unknown supplier catalog", "code": "invalid_request"}
         ), 422
     params = {
         key: request.args[key]
-        for key in _CATALOG_QUERY_KEYS
+        for key in SUPPLIER_CATALOG_QUERY_KEYS
         if (request.args.get(key) or "").strip()
     }
     limit = params.get("limit")
     if limit is not None:
         try:
-            params["limit"] = str(max(1, min(int(limit), 500)))
+            params["limit"] = str(
+                max(1, min(int(limit), SUPPLIER_CATALOG_LIMIT_MAX))
+            )
         except ValueError:
             return _validation_error(ValueError("invalid 'limit'"))
     try:
@@ -265,19 +231,7 @@ def lookup_postal_code(postal_code: str):
             }
         ), 502
     data = unwrap_delpi_envelope(payload) or {}
-    result = {
-        "postal_code": data.get("postal_code") or digits,
-        "street": data.get("street") or "",
-        "district": data.get("district") or "",
-        "city": data.get("city") or "",
-        "state": data.get("state") or "",
-        "ibge_city_code": data.get("ibge_city_code") or "",
-        "source": data.get("source") or "",
-        "found": bool(data.get("found")),
-    }
-    if data.get("result_type"):
-        result["result_type"] = data["result_type"]
-    return jsonify(result), 200
+    return jsonify(project_postal_lookup(data, digits)), 200
 
 
 @suppliers_bp.get("/suppliers/integration-status")

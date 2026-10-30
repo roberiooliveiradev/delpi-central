@@ -162,6 +162,32 @@ class DuplicateKeyIdempotencyReplay(Exception):
         self.record = record
 
 
+def classify_registry_error(
+    exc: Exception,
+) -> tuple[int, str, int | None] | None:
+    """Canonical registry-failure contract — (status, code, retry_after).
+
+    Single source for the external company-registry error surface shared
+    by the Flask BFF envelope and the SURI MCP bridge: every consumer must
+    republish the same HTTP status and machine code, never invent new
+    semantics per interface. Returns ``None`` for non-registry errors so
+    callers fall through to their own generic handlers.
+    """
+    if isinstance(exc, RegistryTaxIdNotFoundError):
+        return 404, "ENRICHMENT_REGISTRY_TAX_ID_NOT_FOUND", None
+    if isinstance(exc, RegistryTaxIdInvalidError):
+        return 422, "ENRICHMENT_REGISTRY_INVALID_TAX_ID", None
+    if isinstance(exc, RegistryRateLimitedError):
+        return 429, "ENRICHMENT_RATE_LIMITED", exc.retry_after
+    if isinstance(exc, RegistryLimiterUnavailableError):
+        return 503, "ENRICHMENT_RATE_LIMITER_UNAVAILABLE", None
+    if isinstance(exc, RegistryResponseInvalidError):
+        return 502, "ENRICHMENT_REGISTRY_INVALID_RESPONSE", None
+    if isinstance(exc, RegistryAccessDeniedError | EnrichmentSourceUnavailableError):
+        return 503, "ENRICHMENT_SOURCE_UNAVAILABLE", None
+    return None
+
+
 # --- ports ----------------------------------------------------------------
 
 

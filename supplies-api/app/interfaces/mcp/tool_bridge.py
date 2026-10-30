@@ -21,22 +21,55 @@ from mcp.types import CallToolResult
 from pydantic import BaseModel, ValidationError
 
 from app.application.security.supplies_permissions import (
+    can_administer,
     can_use_operations,
     has_canonical_access,
     has_canonical_manage,
 )
 from app.application.services.authorization_service import AuthorizationService
+from app.application.services.supplier_creation_preview.preview_service import (
+    SupplierCreationPreviewService,
+)
+from app.application.services.supplier_enrichment.contracts import (
+    classify_registry_error,
+)
+from app.application.services.suppliers_dto import (
+    normalize_operation_id,
+    normalize_postal_code,
+    normalize_supplier_id,
+    project_detail,
+    project_existing_supplier_item,
+    project_integration_status,
+    project_list_envelope,
+    project_operation,
+    project_postal_lookup,
+    SUPPLIER_CATALOG_KINDS,
+    SUPPLIER_CATALOG_LIMIT_MAX,
+    SUPPLIER_EXISTING_PAGE_SIZE_MAX,
+)
 from app.domain.entities import EffectiveUser
 from app.domain.exceptions import (
     AuthenticationError,
     AuthorizationError,
     CoreApiUnavailableError,
 )
+from app.domain.supplier_creation.preview import is_valid_cnpj
+from app.domain.supplier_enrichment.models import digits_only
+from app.infrastructure.gateways.brasilapi_registry_provider import (
+    registry_rate_limiter,
+)
 from app.infrastructure.gateways.delpi_api_gateway import (
     DelpiApiGateway,
     DelpiApiGatewayError,
 )
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
+from app.infrastructure.gateways.delpi_s2s_gateway import DelpiS2SApiGateway
+from app.infrastructure.gateways.delpi_supplier_duplicate_search import (
+    DelpiSupplierDuplicateSearch,
+)
+from app.infrastructure.gateways.supplier_enrichment_adapters import (
+    company_registry_provider,
+)
 from app.interfaces.mcp import knowledge, supplier_execute
 from app.interfaces.mcp.branding import SURI_FULL_NAME, SURI_MISSION
 from app.interfaces.mcp.constants import (
@@ -56,9 +89,16 @@ from app.interfaces.mcp.constants import (
     PO_ANALYZE_FILTER_KEYS,
     PO_GET_IDENTITY_KEYS,
     PO_SEARCH_FILTER_KEYS,
-    READ_ACTIONS,
+    POSTAL_CODE_IDENTITY_KEYS,
+    READ_ACTIONS_BY_ENTITY,
     READ_ENTITIES,
     SEMANTIC_CAPABILITIES,
+    SUPPLIER_CATALOG_FILTER_KEYS,
+    SUPPLIER_GET_IDENTITY_KEYS,
+    SUPPLIER_OPERATION_IDENTITY_KEYS,
+    SUPPLIER_PREVIEW_FILTER_KEYS,
+    SUPPLIER_SEARCH_FILTER_KEYS,
+    SUPPLIER_TAX_ID_FILTER_KEYS,
     SUPPLIER_WRITE_OPERATION_KEYS,
     TOOL_CLASS,
 )
@@ -78,6 +118,14 @@ _ERROR_KIND_BY_CODE = {
     "validation": "validation",
     "upstream": "upstream",
     "internal": "internal",
+    "provider_unreachable": "upstream",
+    "provider_error": "upstream",
+    "ENRICHMENT_REGISTRY_TAX_ID_NOT_FOUND": "not_found",
+    "ENRICHMENT_REGISTRY_INVALID_TAX_ID": "validation",
+    "ENRICHMENT_RATE_LIMITED": "conflict",
+    "ENRICHMENT_RATE_LIMITER_UNAVAILABLE": "upstream",
+    "ENRICHMENT_REGISTRY_INVALID_RESPONSE": "upstream",
+    "ENRICHMENT_SOURCE_UNAVAILABLE": "upstream",
 }
 
 
@@ -368,6 +416,265 @@ def tool_get_purchase_order(
     return _ok(data, meta={"delpi/source": "bff:/purchase-orders/{branch}/{number}"})
 
 
+# -- SUPPLIERS READ (rev.4) -------------------------------------------------
+#
+# Same owner contract as the Flask suppliers routes: the S2S gateway
+# authenticates the technical identity with per-operation scopes while the
+# caller's own Bearer token is forwarded for actor binding upstream. Every
+# projection reuses the canonical suppliers_dto helpers — no parallel
+# schema and no invented cadastral fields.
+
+_S2S_GATEWAY = DelpiS2SApiGateway()
+
+
+def _admin_user() -> EffectiveUser:
+    user = _effective_user()
+    if not can_administer(user):
+        raise AuthorizationError("Forbidden")
+    return user
+
+
+def _supplier_catalog_params(payload: dict) -> dict:
+    params = {
+        key: str(payload[key]).strip()
+        for key in ("query", "state", "code")
+        if str(payload.get(key) or "").strip()
+    }
+    limit = payload.get("limit")
+    if limit is not None:
+        try:
+            params["limit"] = str(
+                max(1, min(int(limit), SUPPLIER_CATALOG_LIMIT_MAX))
+            )
+        except (TypeError, ValueError):
+            raise ValueError("invalid 'limit'") from None
+    return params
+
+
+def tool_search_suppliers(filters: dict) -> CallToolResult:
+    user = _operations_user()
+    params: dict[str, Any] = {}
+    for key in ("query", "state", "sort_by", "sort_dir"):
+        text = str(filters.get(key) or "").strip()
+        if text:
+            params[key] = text
+    if filters.get("blocked") is not None:
+        params["blocked"] = "true" if bool(filters["blocked"]) else "false"
+    params["page"] = str(max(1, int(filters.get("page") or 1)))
+    params["page_size"] = str(
+        min(MAX_PAGE_SIZE, max(1, int(filters.get("page_size") or DEFAULT_PAGE_SIZE)))
+    )
+    payload = _S2S_GATEWAY.get(
+        "/supplies/suppliers",
+        access_token=user.access_token or "",
+        params=params,
+    )
+    data = unwrap_delpi_envelope(payload)
+    return _ok(
+        project_list_envelope(data),
+        meta={"delpi/source": "bff:/suppliers"},
+    )
+
+
+def tool_get_supplier(identity: dict) -> CallToolResult:
+    user = _operations_user()
+    try:
+        supplier_id = normalize_supplier_id(
+            identity.get("supplier_code"), identity.get("supplier_store")
+        )
+    except ValueError as exc:
+        return _error(str(exc), status_code=422, error_code="validation")
+    payload = _S2S_GATEWAY.get(
+        f"/integrations/protheus/suppliers/{supplier_id}",
+        access_token=user.access_token or "",
+    )
+    data = unwrap_delpi_envelope(payload)
+    return _ok(
+        project_detail(data),
+        meta={"delpi/source": "bff:/suppliers/{code}/{store}"},
+    )
+
+
+def tool_supplier_catalogs(filters: dict) -> CallToolResult:
+    user = _operations_user()
+    kind = str(filters.get("kind") or "").strip().lower()
+    if kind not in SUPPLIER_CATALOG_KINDS:
+        return _invalid(
+            f"Unknown supplier catalog: {kind!r}. "
+            f"Allowed: {sorted(SUPPLIER_CATALOG_KINDS)}"
+        )
+    try:
+        params = _supplier_catalog_params(filters)
+    except ValueError as exc:
+        return _error(str(exc), status_code=422, error_code="validation")
+    payload = _S2S_GATEWAY.get(
+        f"/supplies/supplier-catalogs/{kind}",
+        access_token=user.access_token or "",
+        params=params,
+    )
+    return _ok(
+        unwrap_delpi_envelope(payload),
+        meta={"delpi/source": f"bff:/suppliers/catalogs/{kind}"},
+    )
+
+
+def _tax_id_pages(filters: dict) -> tuple[str, int, int] | CallToolResult:
+    digits = digits_only(filters.get("tax_id"))
+    if not is_valid_cnpj(digits):
+        return _invalid("tax_id must be a valid 14-digit CNPJ")
+    try:
+        page = max(1, int(filters.get("page") or 1))
+        page_size = min(
+            SUPPLIER_EXISTING_PAGE_SIZE_MAX,
+            max(1, int(filters.get("page_size") or 10)),
+        )
+    except (TypeError, ValueError):
+        return _invalid("page and page_size must be integers")
+    return digits, page, page_size
+
+
+def tool_supplier_search_by_tax_id(filters: dict) -> CallToolResult:
+    user = _operations_user()
+    parsed = _tax_id_pages(filters)
+    if not isinstance(parsed, tuple):
+        return parsed
+    digits, page, page_size = parsed
+    items, total = DelpiSupplierDuplicateSearch().search_by_tax_id(
+        digits,
+        access_token=user.access_token or "",
+        page=page,
+        page_size=page_size,
+    )
+    return _ok(
+        {
+            "items": [project_existing_supplier_item(i) for i in items],
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+        },
+        meta={"delpi/source": "bff:/suppliers/existing-suppliers"},
+    )
+
+
+def tool_supplier_existing(filters: dict) -> CallToolResult:
+    user = _operations_user()
+    parsed = _tax_id_pages(filters)
+    if not isinstance(parsed, tuple):
+        return parsed
+    digits, page, page_size = parsed
+    items, total = DelpiSupplierDuplicateSearch().search_by_tax_id(
+        digits,
+        access_token=user.access_token or "",
+        page=page,
+        page_size=page_size,
+    )
+    return _ok(
+        {
+            "exists": bool(total),
+            "total": total,
+            "matches": [
+                project_existing_supplier_item(i) for i in items[:10]
+            ],
+        },
+        meta={"delpi/source": "bff:/suppliers/existing-suppliers"},
+    )
+
+
+def tool_supplier_operation(identity: dict) -> CallToolResult:
+    user = _operations_user()
+    try:
+        operation_id = normalize_operation_id(identity.get("operation_id"))
+    except ValueError as exc:
+        return _error(str(exc), status_code=422, error_code="validation")
+    payload = _S2S_GATEWAY.get(
+        f"/integrations/operations/{operation_id}",
+        access_token=user.access_token or "",
+    )
+    return _ok(
+        project_operation(unwrap_delpi_envelope(payload)),
+        meta={"delpi/source": "bff:/suppliers/operations/{id}"},
+    )
+
+
+def tool_suppliers_integration_status() -> CallToolResult:
+    user = _admin_user()
+    payload = _S2S_GATEWAY.get(
+        "/integrations/protheus/status",
+        access_token=user.access_token or "",
+    )
+    return _ok(
+        project_integration_status(unwrap_delpi_envelope(payload)),
+        meta={"delpi/source": "bff:/suppliers/integration-status"},
+    )
+
+
+def tool_postal_code_lookup(identity: dict) -> CallToolResult:
+    user = _operations_user()
+    try:
+        digits = normalize_postal_code(identity.get("postal_code"))
+    except ValueError as exc:
+        return _error(str(exc), status_code=422, error_code="validation")
+    try:
+        payload = _S2S_GATEWAY.get(
+            f"/addresses/postal-codes/{digits}",
+            access_token=user.access_token or "",
+        )
+    except DelpiApiGatewayError as exc:
+        if exc.status_code is None or exc.status_code == 504:
+            return _error(
+                "Postal address provider unreachable",
+                status_code=504,
+                error_code="provider_unreachable",
+            )
+        if exc.status_code == 400:
+            return _error("CEP inválido", status_code=422, error_code="validation")
+        if exc.status_code in (401, 403):
+            raise
+        return _error(
+            "Postal address provider error",
+            status_code=502,
+            error_code="provider_error",
+        )
+    data = unwrap_delpi_envelope(payload) or {}
+    return _ok(
+        project_postal_lookup(data, digits),
+        meta={"delpi/source": "bff:/suppliers/postal-codes/{cep}"},
+    )
+
+
+def tool_analyze_supplier_creation_preview(filters: dict) -> CallToolResult:
+    """Registry-assisted pre-registration analysis — strictly read-only.
+
+    Reuses the canonical preview service: external registry suggestions
+    with provenance + exact SA2 duplicate check + missing-field report.
+    Provider states surface honestly (unavailable → ENRICHMENT_SOURCE_
+    UNAVAILABLE, never fabricated cadastral data). ``write_enabled``
+    is always false — analysis never writes.
+    """
+    user = _operations_user()
+    digits = digits_only(filters.get("tax_id"))
+    if not is_valid_cnpj(digits):
+        return _invalid("tax_id must be a valid 14-digit CNPJ")
+    service = SupplierCreationPreviewService(
+        registry_provider=company_registry_provider(),
+        duplicate_search=DelpiSupplierDuplicateSearch(),
+    )
+    try:
+        registry_rate_limiter().acquire("actor", str(user.id))
+        data = service.preview(digits, access_token=user.access_token or "")
+    except Exception as exc:
+        classified = classify_registry_error(exc)
+        if classified is None:
+            raise
+        status, code, retry_after = classified
+        err_data = {"retry_after": retry_after} if retry_after else None
+        return _error(str(exc), status_code=status, data=err_data, error_code=code)
+    return _ok(
+        data,
+        meta={"delpi/source": "bff:/suppliers/creation-preview"},
+    )
+
+
 # -- KNOWLEDGE (S5) --------------------------------------------------------
 
 
@@ -593,7 +900,7 @@ def tool_read(
     filters: dict | BaseModel | None = None,
     identity: dict | BaseModel | None = None,
 ) -> CallToolResult:
-    """Semantic READ — V1 entity: ``purchase_orders``."""
+    """Semantic READ — closed ``(entity, action)`` registry (rev.4)."""
     normalized_entity = str(entity or "").strip()
     if normalized_entity not in READ_ENTITIES:
         return _invalid(
@@ -601,8 +908,23 @@ def tool_read(
             f"Allowed: {sorted(READ_ENTITIES)}"
         )
     normalized_action = str(action or "").strip()
+    allowed = READ_ACTIONS_BY_ENTITY[normalized_entity]
+    if normalized_action not in allowed:
+        return _invalid(
+            f"Unknown read action for {normalized_entity}: "
+            f"{normalized_action!r}. Allowed: {sorted(allowed)}"
+        )
     filter_payload = _payload_dict(filters)
     identity_payload = _payload_dict(identity)
+
+    if normalized_entity == "suppliers":
+        return _dispatch_suppliers_read(
+            normalized_action, filter_payload, identity_payload
+        )
+    if normalized_entity == "postal_codes":
+        return _dispatch_postal_read(
+            normalized_action, filter_payload, identity_payload
+        )
 
     if normalized_action == "search":
         if identity_payload:
@@ -652,9 +974,116 @@ def tool_read(
         )
 
     return _invalid(
-        f"Unknown read action: {normalized_action!r}. "
-        f"Allowed: {sorted(READ_ACTIONS)}"
+        f"Unknown read action for {normalized_entity}: "
+        f"{normalized_action!r}. "
+        f"Allowed: {sorted(READ_ACTIONS_BY_ENTITY[normalized_entity])}"
     )
+
+
+def _dispatch_suppliers_read(
+    action: str, filter_payload: dict, identity_payload: dict
+) -> CallToolResult:
+    """Per-action suppliers dispatch — filters/identity contracts frozen
+    per action; unknown keys are rejected before any upstream call."""
+    if action == "search":
+        if identity_payload:
+            return _invalid(
+                "read action=search does not accept 'identity' — "
+                "use action=get for a supplier record."
+            )
+        unknown = _unknown_keys(filter_payload, SUPPLIER_SEARCH_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown suppliers filters: {sorted(unknown)}. "
+                f"Allowed: {sorted(SUPPLIER_SEARCH_FILTER_KEYS)}"
+            )
+        return tool_search_suppliers(filter_payload)
+
+    if action == "get":
+        if filter_payload:
+            return _invalid(
+                "read action=get does not accept 'filters' — "
+                "use 'identity' {supplier_code, supplier_store}."
+            )
+        unknown = _unknown_keys(identity_payload, SUPPLIER_GET_IDENTITY_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown suppliers identity keys: {sorted(unknown)}. "
+                f"Allowed: {sorted(SUPPLIER_GET_IDENTITY_KEYS)}"
+            )
+        return tool_get_supplier(identity_payload)
+
+    if action == "catalogs":
+        if identity_payload:
+            return _invalid(
+                "read action=catalogs does not accept 'identity' — "
+                "use 'filters' {kind, ...}."
+            )
+        unknown = _unknown_keys(filter_payload, SUPPLIER_CATALOG_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown suppliers catalog filters: {sorted(unknown)}. "
+                f"Allowed: {sorted(SUPPLIER_CATALOG_FILTER_KEYS)}"
+            )
+        return tool_supplier_catalogs(filter_payload)
+
+    if action in ("search_by_tax_id", "existing"):
+        if identity_payload:
+            return _invalid(
+                f"read action={action} does not accept 'identity' — "
+                "use 'filters' {tax_id, ...}."
+            )
+        unknown = _unknown_keys(filter_payload, SUPPLIER_TAX_ID_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown suppliers tax_id filters: {sorted(unknown)}. "
+                f"Allowed: {sorted(SUPPLIER_TAX_ID_FILTER_KEYS)}"
+            )
+        if action == "existing":
+            return tool_supplier_existing(filter_payload)
+        return tool_supplier_search_by_tax_id(filter_payload)
+
+    if action == "operations":
+        if filter_payload:
+            return _invalid(
+                "read action=operations does not accept 'filters' — "
+                "use 'identity' {operation_id}."
+            )
+        unknown = _unknown_keys(
+            identity_payload, SUPPLIER_OPERATION_IDENTITY_KEYS
+        )
+        if unknown:
+            return _invalid(
+                f"Unknown suppliers operation keys: {sorted(unknown)}. "
+                f"Allowed: {sorted(SUPPLIER_OPERATION_IDENTITY_KEYS)}"
+            )
+        return tool_supplier_operation(identity_payload)
+
+    if action == "integration_status":
+        if filter_payload or identity_payload:
+            return _invalid(
+                "read action=integration_status accepts no parameters."
+            )
+        return tool_suppliers_integration_status()
+
+    return _invalid(f"Unknown suppliers read action: {action!r}.")
+
+
+def _dispatch_postal_read(
+    action: str, filter_payload: dict, identity_payload: dict
+) -> CallToolResult:
+    if filter_payload:
+        return _invalid(
+            "read action=lookup does not accept 'filters' — "
+            "use 'identity' {postal_code}."
+        )
+    unknown = _unknown_keys(identity_payload, POSTAL_CODE_IDENTITY_KEYS)
+    if unknown:
+        return _invalid(
+            f"Unknown postal_codes identity keys: {sorted(unknown)}. "
+            f"Allowed: {sorted(POSTAL_CODE_IDENTITY_KEYS)}"
+        )
+    return tool_postal_code_lookup(identity_payload)
 
 
 def tool_analyze(
@@ -662,7 +1091,8 @@ def tool_analyze(
     filters: dict | BaseModel | None = None,
     sample_size: int = DEFAULT_SAMPLE_SIZE,
 ) -> CallToolResult:
-    """Semantic ANALYSIS — V1: ``purchase_orders_summary``."""
+    """Semantic ANALYSIS — ``purchase_orders_summary`` and the read-only
+    ``supplier_creation_preview`` (rev.4)."""
     normalized = str(analysis or "").strip()
     if normalized not in ANALYSIS_KINDS:
         return _invalid(
@@ -670,6 +1100,15 @@ def tool_analyze(
             f"Allowed: {sorted(ANALYSIS_KINDS)}"
         )
     filter_payload = _payload_dict(filters)
+    if normalized == "supplier_creation_preview":
+        unknown = _unknown_keys(filter_payload, SUPPLIER_PREVIEW_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown supplier_creation_preview filters: "
+                f"{sorted(unknown)}. "
+                f"Allowed: {sorted(SUPPLIER_PREVIEW_FILTER_KEYS)}"
+            )
+        return tool_analyze_supplier_creation_preview(filter_payload)
     unknown = _unknown_keys(filter_payload, PO_ANALYZE_FILTER_KEYS)
     if unknown:
         return _invalid(

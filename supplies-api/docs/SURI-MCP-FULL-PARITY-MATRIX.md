@@ -3,13 +3,14 @@
 Task: `SURI-MCP-FULL-PARITY-P0` · HEAD `8a822e29c1` · Status por item: `PROVEN | TO_INVENTORY | PLANNED | TARGET | BLOCKED`
 Granularidade: família de operação (não endpoint). Uma tool ≠ N capacidades provadas sem teste por operação.
 Revisão `SURI-MCP-SUPPLIERS-WRITE-001` (2026-10-30): B-01/B-02 superadas por evidência de runtime — ver seção «Reconciliação».
+Revisão `SURI-MCP-FULL-PARITY-V4-G1` (2026-10-30): lote P1-R5 entregue — R-15..R-22 promovidas a PROVEN (catálogo v4, `test_suppliers_read.py`).
 
 ## Indicadores
 
 ```text
 PORTAL CAPABILITIES (denominador: linhas PROVEN executáveis) : 45 (34 READ + 11 WRITE)
-SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 6  (R-08, R-10, R-33, R-34, W-10, W-11)
-CURRENT PARITY PERCENTAGE (implementada)                     : 13.3% (6/45)
+SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 14 (R-08, R-10, R-15..R-22, R-33, R-34, W-10, W-11)
+CURRENT PARITY PERCENTAGE (implementada)                     : 31.1% (14/45)
 TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
 
@@ -39,14 +40,14 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | R-12 | Estoque | stock-balances summary + items | PROVEN | — | api-delpi | `/inventory/stock-balances/*` | access | bff tests | `read` inventory | P1-R3 |
 | R-13 | Safety stock | filters+summary+items | PROVEN | — | api-delpi | `/safety-stock/*` | access | bff tests | `read` safety_stock | P1-R4 |
 | R-14 | Safety stock | item details + suppliers | PROVEN | — | api-delpi | `/items/{code}/details\|suppliers` | access | bff tests | `read` get/details | P1-R4 |
-| R-15 | Fornecedores | Lista | PROVEN | — | api-delpi(S2S) | `GET /suppliers` | access | routes tests | `read` suppliers | P1-R5 |
-| R-16 | Fornecedores | Ficha 360 | PROVEN | — | api-delpi(S2S) | `/{code}/{store}` | access | routes tests | `read` get | P1-R5 |
-| R-17 | Fornecedores | Catálogos (14 kinds) | PROVEN | — | api-delpi(S2S) | `/catalogs/{kind}` allowlist | access | routes tests | `read` catalogs | P1-R5 |
-| R-18 | Fornecedores | CEP assist | PROVEN | — | api-delpi | `/postal-codes/{cep}` | access | routes tests | `read` postal-code | P1-R5 |
-| R-19 | Fornecedores | Dup-check por tax_id | PROVEN | — | api-delpi(S2S) | `/existing-suppliers` | access | creation tests | `read`/`analyze` dup | P1-R5 |
-| R-20 | Fornecedores | Creation preview (read-only) | PROVEN | — | registry provider + S2S | `POST /creation-preview` (semântica READ) | access+rate-limit | preview tests | `analyze` preview | P1-R5 |
-| R-21 | Fornecedores | Integration status | PROVEN | — | api-delpi | `/integration-status` | **manage** | routes tests | `read` admin-gated | P1-R5 |
-| R-22 | Fornecedores | Operations tracking read | PROVEN | — | api-delpi | `/operations/{id}` | access | routes tests | `read` operation | P1-R5 |
+| R-15 | Fornecedores | Lista | PROVEN | `read:suppliers search` | api-delpi(S2S) | `GET /suppliers` | access | routes + suri tests | — | PROVEN |
+| R-16 | Fornecedores | Ficha 360 | PROVEN | `read:suppliers get` | api-delpi(S2S) | `/{code}/{store}` | access | routes + suri tests | — | PROVEN |
+| R-17 | Fornecedores | Catálogos (14 kinds) | PROVEN | `read:suppliers catalogs` | api-delpi(S2S) | `/catalogs/{kind}` allowlist | access | routes + suri tests | — | PROVEN |
+| R-18 | Fornecedores | CEP assist | PROVEN | `read:postal_codes lookup` | api-delpi | `/postal-codes/{cep}` | access | routes + suri tests | — | PROVEN |
+| R-19 | Fornecedores | Dup-check por tax_id | PROVEN | `read:suppliers search_by_tax_id/existing` | api-delpi(S2S) | `/existing-suppliers` | access | creation + suri tests | — | PROVEN |
+| R-20 | Fornecedores | Creation preview (read-only) | PROVEN | `analyze:supplier_creation_preview` | registry provider + S2S | `POST /creation-preview` (semântica READ) | access+rate-limit | preview + suri tests | — | PROVEN |
+| R-21 | Fornecedores | Integration status | PROVEN | `read:suppliers integration_status` | api-delpi | `/integration-status` | **manage** | routes + suri tests | — | PROVEN |
+| R-22 | Fornecedores | Operations tracking read | PROVEN | `read:suppliers operations` | api-delpi | `/operations/{id}` | access | routes + suri tests | — | PROVEN |
 | R-23 | Consumo | Busca OP (fragmento/filtros) | PROVEN | — | api-delpi(S2S `consumption-audit.read`) | `/consumption-audit/orders` | access+unit | routes tests | `read` production_orders | P1-R7 |
 | R-24 | Consumo | Detalhe OP | PROVEN | — | api-delpi(S2S) | `/orders/{op}` | access+unit | routes tests | `read` get | P1-R7 |
 | R-25 | Consumo | Comparação 2–10 OPs | PROVEN | — | api-delpi(S2S) | `/comparison` | access+unit | routes tests | `analyze` compare | P1-R7 |

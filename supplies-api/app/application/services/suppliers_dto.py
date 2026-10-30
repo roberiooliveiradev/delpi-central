@@ -242,6 +242,21 @@ def project_list_item(item: dict[str, Any]) -> dict[str, Any]:
     return projected
 
 
+def project_existing_supplier_item(item: dict[str, Any]) -> dict[str, Any]:
+    """Minimal projection of an existing-supplier match (tax_id lookups).
+
+    Same closed field set for the HTTP route and the MCP facade — no
+    upstream internals leak to either surface.
+    """
+    return {
+        "supplier_code": item.get("supplier_code"),
+        "supplier_store": item.get("supplier_store"),
+        "supplier_name": item.get("supplier_name"),
+        "state": item.get("state"),
+        "blocked": item.get("blocked"),
+    }
+
+
 def project_list_envelope(data: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(data, dict):
         return {"items": [], "total": 0}
@@ -529,3 +544,75 @@ def project_integration_status(data: Any) -> dict[str, Any]:
     if not isinstance(data, dict):
         data = {}
     return {key: data.get(key) for key in _INTEGRATION_STATUS_FIELDS}
+
+
+# Supplier read vocabularies — canonical contract shared by the Flask BFF
+# routes and the SURI MCP bridge. New consumers reuse these allowlists;
+# they never redefine the catalog kinds or postal-code normalization.
+
+SUPPLIER_LIST_QUERY_KEYS: tuple[str, ...] = (
+    "query",
+    "state",
+    "blocked",
+    "page",
+    "page_size",
+    "sort_by",
+    "sort_dir",
+)
+
+# TOTVS catalogs served by api-delpi — closed allowlist (no client-chosen
+# name may select an arbitrary SQL table).
+SUPPLIER_CATALOG_KINDS: frozenset[str] = frozenset(
+    {
+        "states",
+        "countries",
+        "bacen-countries",
+        "payment-conditions",
+        "payment-methods",
+        "financial-natures",
+        "accounting-accounts",
+        "municipalities",
+        # X4.FIELDS.E6 — Protheus cadastral references
+        "carriers",
+        "segments",
+        "administrators",
+        "employees",
+        "price-tables",
+        "customers",
+    }
+)
+SUPPLIER_CATALOG_QUERY_KEYS: tuple[str, ...] = ("query", "state", "code", "limit")
+SUPPLIER_CATALOG_LIMIT_MAX = 500
+SUPPLIER_EXISTING_PAGE_SIZE_MAX = 50
+
+_POSTAL_DIGITS = re.compile(r"\D")
+
+
+def project_postal_lookup(data: Any, digits: str) -> dict[str, Any]:
+    """Closed projection of an api-delpi postal-code lookup result.
+
+    Same shape for the HTTP route and the MCP facade — proposal only,
+    never a persisted write.
+    """
+    if not isinstance(data, dict):
+        data = {}
+    result = {
+        "postal_code": data.get("postal_code") or digits,
+        "street": data.get("street") or "",
+        "district": data.get("district") or "",
+        "city": data.get("city") or "",
+        "state": data.get("state") or "",
+        "ibge_city_code": data.get("ibge_city_code") or "",
+        "source": data.get("source") or "",
+        "found": bool(data.get("found")),
+    }
+    if data.get("result_type"):
+        result["result_type"] = data["result_type"]
+    return result
+
+
+def normalize_postal_code(value: Any) -> str:
+    digits = _POSTAL_DIGITS.sub("", str(value or ""))
+    if len(digits) != 8:
+        raise ValueError("CEP deve conter exatamente 8 dígitos.")
+    return digits
