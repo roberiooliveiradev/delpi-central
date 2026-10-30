@@ -75,3 +75,8 @@ Decisão S1: `get_purchase_order` incluído (rota existe, custo marginal, parida
 ## 6. Testes previstos (gate S4/S7)
 
 Positive: initialize/list_tools/call_tool com user `supplies.access`+unidade válida. Sibling: branch "02", outro filtro. Negative: sem Bearer, aud errada, scope faltando, service token, `supplies.access` ausente (403), branch fora ("03") (403), sem branch (403 fail-closed), Core indisponível (503/upstream), tool desconhecida, JSON-RPC malformado, cross-request actor leak. Conformance: `list_tools` expõe `securitySchemes`/`delpi/toolClass`/schemas.
+
+
+## Adendo de supersessão — contract freeze semântico v2 (2026-10-29)
+
+Este arquivo documenta a **baseline histórica S1 (8 tools)** que foi implementada; não deve ser apagado ou tratado como contrato da refatoração pretendida. A mudança de produto posterior está planejada em [SURI-MCP-SEMANTIC-TOOLS-REFACTOR-PLAN.md](./SURI-MCP-SEMANTIC-TOOLS-REFACTOR-PLAN.md), task `SURI-MCP-TOOLS-SEMANTIC-001`. A revisão de contrato v2 **ainda será produzida pelo executor** e só substituirá a superfície ativa após implementação e testes. Target V1: `get_context`, `read`, `analyze`, `knowledge`; `execute` e `delete` FUTURE TARGET apenas.
