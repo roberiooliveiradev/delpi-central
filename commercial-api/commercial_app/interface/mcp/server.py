@@ -201,11 +201,12 @@ def create_mcp_server() -> MCPServer:
         name="execute",
         title="Execute",
         description=(
-            "Governed mutations — entity + action only. V1 has NO "
-            "activated write operation: every action answers "
-            "not_implemented honestly. Writes will run directly when "
-            "unambiguous and authorized once the owner activates the "
-            "contract — never simulated."
+            "Governed mutations — entity + action only. Authorized "
+            "creates/updates execute directly through the official "
+            "owner use cases (no repetitive confirmations); backend "
+            "authorization and consent policies stay sovereign. "
+            "Unactivated contracts answer not_implemented honestly — "
+            "never simulated."
         ),
         annotations=_annotations("execute", "Execute"),
         meta=meta,
@@ -237,11 +238,11 @@ def create_mcp_server() -> MCPServer:
         name="delete",
         title="Delete",
         description=(
-            "Governed DESTRUCTIVE deletes — never direct once active: "
+            "Governed DESTRUCTIVE deletes — never direct: "
             "phase=prepare seals a server-side proposal (actor-bound, "
-            "expiring, single-use); phase=commit executes only with "
-            "the exact proposal_ref. V1 has no activated delete — "
-            "answers not_implemented honestly."
+            "target-bound, expiring, single-use); phase=commit "
+            "executes only with the exact proposal_ref. A client-side "
+            "'confirmed=true' is never proof."
         ),
         annotations=_annotations("delete", "Delete"),
         meta=meta,
@@ -249,11 +250,13 @@ def create_mcp_server() -> MCPServer:
     def delete(
         entity: str,
         target_ref: str,
+        action: str | None = None,
         proposal_ref: str | None = None,
         phase: str | None = None,
     ) -> CallToolResult:
         return semantic_bridge.tool_delete(
             entity=entity,
+            action=action,
             target_ref=target_ref,
             proposal_ref=proposal_ref,
             phase=phase,

@@ -105,11 +105,12 @@ def test_registry_unique_pairs_and_proven_dispatch():
         assert a.status in {"proven", "planned", "not_implemented"}
 
 
-def test_writes_are_deny_by_default_in_v1():
-    execute = [a for a in SEMANTIC_ACTIONS if a.tool == "execute"]
+def test_deletes_are_always_destructive_and_phased():
     delete = [a for a in SEMANTIC_ACTIONS if a.tool == "delete"]
-    assert execute and delete
-    assert all(a.status != "proven" for a in execute + delete)
+    assert delete
+    for a in delete:
+        assert a.destructive
+        assert a.phases == ("prepare", "commit")
 
 
 # --- AuthZ gate -------------------------------------------------------------
@@ -161,7 +162,7 @@ def test_get_context_returns_semantic_surface():
         SEMANTIC_TOOL_NAMES
     )
     assert data["commercial_capabilities"]["access"] is True
-    assert data["act_enabled"] is False
+    assert data["act_enabled"] is True
     assert any(
         e["entity"] == "open_order" for e in data["entities"]
     )
@@ -186,12 +187,12 @@ def test_read_unknown_entity_is_validation_error():
     assert payload["status_code"] == 400
 
 
-def test_read_not_implemented_action_is_honest():
+def test_read_execute_only_action_is_tool_mismatch():
     _set_context(_human_user())
     result = sem.tool_read(entity="portfolio", action="create")
     payload = result.structured_content
     assert result.is_error is True
-    assert payload["status_code"] == 501
+    assert payload["status_code"] == 400
 
 
 def test_read_rejects_undeclared_filter_fields():
@@ -304,7 +305,7 @@ def test_knowledge_returns_versioned_guidance():
     payload = result.structured_content
     assert result.is_error is False
     assert payload["data"]["topic"] == "caio.usage"
-    assert payload["data"]["knowledge_version"] == "1.0"
+    assert payload["data"]["knowledge_version"] == "2.0"
 
 
 def test_knowledge_unknown_topic_is_not_found():
@@ -317,7 +318,7 @@ def test_knowledge_unknown_topic_is_not_found():
 
 def test_knowledge_planned_topic_is_honest_not_implemented():
     _set_context(_human_user())
-    result = sem.tool_knowledge(topic="commercial.processes")
+    result = sem.tool_knowledge(topic="products.guide")
     payload = result.structured_content
     assert result.is_error is True
     assert payload["status_code"] == 501
@@ -326,23 +327,46 @@ def test_knowledge_planned_topic_is_honest_not_implemented():
 # --- execute / delete (deny-by-default) --------------------------------------
 
 
-def test_execute_not_implemented_is_honest():
+def test_execute_manage_gate_blocks_access_only_user():
     _set_context(_human_user())
     result = sem.tool_execute(
-        entity="portfolio", action="create", payload={"name": "x"}
+        entity="portfolio",
+        action="create",
+        payload={"display_name": "x"},
     )
     payload = result.structured_content
     assert result.is_error is True
-    assert payload["status_code"] == 501
-    assert payload["error_code"] == "not_implemented"
+    assert payload["status_code"] == 403
 
 
-def test_delete_not_implemented_is_honest():
-    _set_context(_human_user())
-    result = sem.tool_delete(entity="portfolio", target_ref="p-1")
+def test_execute_rejects_undeclared_payload_field():
+    _set_context(_human_user(permissions=["commercial.manage"]))
+    result = sem.tool_execute(
+        entity="portfolio",
+        action="create",
+        payload={"not_a_field": "x"},
+    )
     payload = result.structured_content
     assert result.is_error is True
-    assert payload["status_code"] == 501
+    assert payload["error_code"] == "validation"
+    assert "display_name" in str(payload)
+
+
+def test_delete_requires_target_ref():
+    _set_context(_human_user())
+    result = sem.tool_delete(entity="task", target_ref="")
+    payload = result.structured_content
+    assert result.is_error is True
+    assert payload["error_code"] == "validation"
+
+
+def test_delete_unknown_action_is_validation_error():
+    _set_context(_human_user())
+    result = sem.tool_delete(
+        entity="portfolio", action="explode", target_ref="p-1"
+    )
+    assert result.is_error is True
+    assert result.structured_content["status_code"] == 400
 
 
 def test_execute_unknown_entity_is_validation_error():

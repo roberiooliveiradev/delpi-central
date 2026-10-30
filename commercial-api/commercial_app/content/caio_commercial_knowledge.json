@@ -1,19 +1,35 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "owner": "commercial-api",
   "audience": "caio-mcp",
   "topics": {
     "caio.usage": {
       "title": "Como operar a superfície semântica do CAIO",
-      "source": "docs/initiatives/caio-mcp/IMPLEMENTATION_PLAN.md",
+      "source": "docs/initiatives/caio-mcp/IMPLEMENTATION_PLAN.md + commercial_app/interface/mcp",
       "guidance": [
         "Chame get_context primeiro: ele lista entidades, ações, campos, riscos e capacidades efetivas do usuário.",
         "read executa consultas oficiais por (entity, action) — nunca por URL, método HTTP ou SQL.",
         "analyze compõe resultados oficiais com labels OBSERVED|CALCULATED|INFERRED|UNKNOWN — nenhum indicador é recalculado.",
         "knowledge responde orientação versionada com proveniência — documentação não é verdade operacional.",
-        "execute e delete existem na superfície mas não têm operação ativada na v1 — respondem not_implemented com honestidade.",
+        "execute roda criações e atualizações autorizadas diretamente, sem confirmações repetitivas — a autorização efetiva e as políticas do backend continuam soberanas.",
+        "delete NUNCA executa direto: chame phase=prepare para selar a proposta e receber proposal_ref + impacto; repasse a proposta ao usuário e só execute phase=commit com o proposal_ref exato após confirmação humana explícita.",
+        "confirmed=true vindo do cliente nunca autoriza exclusão — somente o handle selado pelo servidor prova a confirmação.",
         "Estados honestos: unavailable significa falha na fonte; forbidden significa falta de autorização — nunca apresente como ausência de dados.",
         "Escopo de carteira: membros veem apenas clientes vinculados às próprias carteiras; scope_mode=membership força a carteira do usuário; sem filtro, usuários manage/team veem o recorte global autorizado."
+      ]
+    },
+    "caio.tool_map": {
+      "title": "Mapa semântico CAIO ↔ Portal Comercial",
+      "source": "commercial_app/application/caio/semantic_registry.py",
+      "guidance": [
+        "Carteiras: read portfolio.me/list/get/audit/coverage_audit/load_summary/customer_coverage; execute portfolio.create/update/customers_replace/customer_add/customer_remove/members_replace/member_add/member_remove/owner_set/transfer/transfer_bulk; delete portfolio.deactivate/purge.",
+        "Clientes: read customer.list/search/enrichment/billing_series/center_assignments/outbound_invoices/outbound_invoice/open_orders/contacts/account_audit; read customer_center.list; execute/delete contact.*.",
+        "Pedidos e propostas: read open_order.list/recently_closed/open_ops; read proposal.list/get/analytics_list/analytics_get/history_events.",
+        "Worklist: read worklist.mine/done, task.list, activity.list; execute task.create/update/complete/defer/reassign/from_message e activity.create; delete task.delete.",
+        "Grupos e SLA: read group.list/get, sla_policy.list; execute group.create/rename/members_replace/member_add/member_remove, sla_policy.create/update; delete group.delete e sla_policy.deactivate.",
+        "Salas de interação: read interaction_room.* e interaction_message implícito via room.messages; execute interaction_room.resolve/rename/member_add/member_remove/mark_read e interaction_message.post/update/reaction_set/reaction_clear/pin/unpin; execute task.from_message a partir de mensagem; delete interaction_room.delete e interaction_message.delete.",
+        "Outros: read home_favorite.list, team.roster, attachment.list, production.order/appointments/product_status/product_structure, user_profile.get; execute home_favorite.put, user_profile.update; delete attachment.delete.",
+        "Analytics: analyze por analysis_type — portfolio.open_summary/open_horizon/billing_share/billing_ranking, rol.summary/series/by_product/by_customer, billing.by_customer_month, closing_rate.summary/series, sales_order_otd.summary/panel/series/line_detail, new_business.rol_pct/rol_target_pct, weg.rol_target_pct, dashboard.department_idd/department_indicators, opportunity.collaborator_summary."
       ]
     },
     "commercial.glossary": {
@@ -23,18 +39,137 @@
         "Carteira (seller portfolio): conjunto de clientes vinculados a um vendedor — define o escopo de dados que o usuário pode ver.",
         "Membership: vínculo do usuário autenticado a uma ou mais carteiras; sem membership, membros veem escopo vazio (não erro).",
         "Escopo irrestrito (manage/team scope): permite ver o recorte global ou carteiras selecionadas via portfolio_id/seller_id.",
+        "Centro do cliente (customer center): subdivisão operacional do cliente no TOTVS; alguns cadastros e filtros exigem o centro validado pela fonte canônica.",
         "Pedido em aberto (open order): pedido de venda com saldo a faturar; open_summary retorna o KPI agregado sem itens; open_horizon agrupa por data de entrega.",
+        "Pedido recentemente fechado: pedido faturado na janela de fechamento recente — mesma autoridade de escopo dos pedidos em aberto.",
         "Proposta comercial: documento de proposta (ADY) pesquisável no backend — search cobre número de proposta, OV, cliente e nome; sort_by suporta ov, interna, cliente, oportunidade, versao, data, itens.",
         "OV (ordem de venda): identificador da venda vinculada a propostas e pedidos; o formato OV000116 corresponde ao identificador 000116.",
-        "ROL (receita): resumo de faturamento por período na visão analítica — start_date/end_date YYYY-MM-DD, branch, customer_segment."
+        "OP (ordem de produção): ordem fabril do produto — consultável via production.order e appointments por OP/filial.",
+        "ROL (receita): resumo de faturamento por período na visão analítica — start_date/end_date YYYY-MM-DD, branch, customer_segment.",
+        "OTD (on-time delivery): indicador de entrega no prazo dos pedidos de venda — summary, panel, series e line_detail por pedido/item.",
+        "Follow-up: acompanhamento comercial registrado como tarefa da worklist — ciclo open → completed, com defer/reassign e notificações oficiais.",
+        "Sala de interação (interaction room): conversa contextual do Portal — kind entity|group, com mensagens, reações, pins, menções e vínculo a tarefas.",
+        "Atividade (activity): registro de interação comercial vinculado a cliente e/ou tarefa — call, visit, note etc."
+      ]
+    },
+    "commercial.portfolio_governance": {
+      "title": "Governança de carteiras",
+      "source": "seller_portfolio_routes.py + manage_seller_portfolio use case",
+      "guidance": [
+        "Criar, editar, desativar, expurgar e administrar membros/clientes de carteiras exige commercial.manage — membros apenas leem as próprias carteiras.",
+        "Toda mutação de carteira passa pelo use case oficial e grava trilha de auditoria (portfolio.audit) com ator e motivo.",
+        "Transferência de clientes entre carteiras exige reason_note e é auditada; transfer_bulk orquestra o lote com resultado por item.",
+        "Centro do cliente só é gravado após validação na fonte canônica (_verified_customer_center) — nunca aceitar valor não verificado.",
+        "deactivate é reversível; purge é exclusão permanente de carteira inativa — ambos exigem proposta selada via delete.",
+        "Cobertura: coverage_audit detecta clientes sem carteira ou duplicados; customer_coverage mostra em quais carteiras um cliente está; load_summary mede a carga por carteira."
+      ]
+    },
+    "commercial.worklist_process": {
+      "title": "Processo da worklist e follow-ups",
+      "source": "worklist_routes.py + manage_worklist use case",
+      "guidance": [
+        "A worklist pessoal (worklist.mine) agrega tarefas do usuário; scope=team exige worklist.team ou manage.",
+        "Ciclo da tarefa: create → open → (defer | reassign | update) → complete; delete remove — todas notificam assignees via notify_worklist_changed e o serviço de portal.",
+        "Tarefas aceitam multi-assignees (users e groups), clientes vinculados (customers[{code,store,name}]) e related_entity para contexto.",
+        "task.from_message converte uma mensagem de sala em tarefa com referência rastreável à mensagem de origem.",
+        "Atividades registram toques comerciais por cliente e podem vincular-se a tarefas; list por customer_code+customer_store."
+      ]
+    },
+    "commercial.interaction_rooms": {
+      "title": "Salas de interação e mensagens",
+      "source": "interaction_room_routes.py + manage_interaction_* use cases",
+      "guidance": [
+        "Salas kind=entity vinculam-se a uma entidade (ex.: cliente) via entity_type+entity_key; kind=group vincula-se a um grupo comercial — resolve cria ou reutiliza a sala canônica.",
+        "Membros leem e postam; owner/manager adiciona e remove membros; soft-delete de sala é manage-only.",
+        "Mensagens suportam resposta (parent_id), menções estruturadas, reações e pins; edição e exclusão são soft e notificam a sala.",
+        "mention_suggest resolve usuários/entidades mencionáveis respeitando o escopo do ator; entity_preview gera card semântico da entidade referenciada.",
+        "mark_read zera o contador de não lidas do membro na sala."
+      ]
+    },
+    "commercial.indicators": {
+      "title": "Indicadores comerciais e análises",
+      "source": "analytics_routes.py + use cases de analytics + delpi_commercial_gateway",
+      "guidance": [
+        "Carteira aberta: open_summary (KPI agregado), open_horizon (pedidos por data de entrega) — calculados pelos use cases oficiais.",
+        "Faturamento: billing_share (participação por carteira, manage-only), billing_ranking (ranking de crescimento/queda por cliente ou vendedor), billing.by_customer_month.",
+        "Receita (ROL): summary/series/by_product/by_customer com filtros de período, filial, segmento, produto e mercado.",
+        "Fechamento: closing_rate.summary/series medem taxa de fechamento no período.",
+        "Entrega: sales_order_otd.summary/panel/series e line_detail por filial+pedido+item.",
+        "Novos negócios: new_business.rol_pct e rol_target_pct; meta WEG via weg.rol_target_pct.",
+        "Departamento: dashboard.department_idd e department_indicators por department_id+competence — sem escopo de carteira.",
+        "Propostas: opportunity.collaborator_summary resume funil por colaborador; propostas analíticas via read proposal.analytics_*."
+      ]
+    },
+    "commercial.scope_semantics": {
+      "title": "Semântica de escopo de carteira",
+      "source": "totvs_bff_helpers.py (resolve_*_portfolio_scope, merge_totvs_params)",
+      "guidance": [
+        "scope_mode=membership restringe ao escopo Minha Carteira do ator — mesmo usuários manage/team não expandem.",
+        "scope_mode=global (ou omisso): analytics usam o recorde TOTVS autorizado; portfolio_id/seller_id selecionados restringem àquelas carteiras.",
+        "seller_id, portfolio_id e customer_codes vindos do cliente NUNCA ampliam escopo — merge_totvs_params descarta e reconstrói server-side.",
+        "account_customer_code restringe a uma conta específica quando autorizada — nunca amplia.",
+        "customer_centers filtra por centro do cliente somente após a resolução do escopo."
+      ]
+    },
+    "commercial.permissions": {
+      "title": "Permissões comerciais efetivas",
+      "source": "commercial_permissions.py + rotas oficiais",
+      "guidance": [
+        "commercial.access habilita leituras, worklist pessoal, analytics comuns, contatos, favoritos, salas e propostas.",
+        "commercial.manage habilita administração de carteiras, grupos, SLA, roster de equipe, worklist de equipe, billing_share e exclusão de salas.",
+        "worklist.team / team scope permitem visão agregada de equipe sem manage total.",
+        "O principal precisa ser pessoa (principal_type=user) — service tokens são rejeitados nas tools.",
+        "A persona CAIO nunca concede permissão — a autorização é sempre a do usuário autenticado no token."
+      ]
+    },
+    "commercial.integrations": {
+      "title": "Integrações e proveniência de dados",
+      "source": "delpi_commercial_gateway.py + totvs_bff_helpers.py",
+      "guidance": [
+        "TOTVS é a fonte canônica de pedidos, faturamento, notas, ROL, OTD e cadastros — o acesso passa por api-delpi via delpi_commercial_gateway.",
+        "Produção (OPs, apontamentos, status de fábrica, estrutura de produto) vem do BFF de produção da mesma api-delpi.",
+        "Anexos e fotos de perfil usam storage do próprio commercial-api — upload/download seguem fluxo multipart/stream não elegível ao MCP.",
+        "Realtime (/ws) e notificações de inbox são push — o MCP executa as mesmas mutações que disparam esses efeitos oficiais.",
+        "Todo resultado analítico carrega proveniência: TOTVS → api-delpi → commercial-api scope → CAIO."
+      ]
+    },
+    "commercial.delete_governance": {
+      "title": "Governança de exclusões",
+      "source": "commercial_app/application/caio/proposal_store.py",
+      "guidance": [
+        "Nenhuma exclusão executa direto: phase=prepare valida o alvo pelo use case dono e sela uma proposta com impacto honesto.",
+        "O proposal_ref é opaco, assinado, vinculado ao ator + capability + alvo exato + mudança, com TTL e uso único.",
+        "phase=commit revalida integridade, ator, capability, alvo e vigência — reuso, adulteração, troca de usuário ou de alvo falham honestamente.",
+        "Alvos compostos usam target_ref estruturado: message → room_id=<uuid>&message_id=<uuid>; contato → contact_id=<uuid>&customer_code=<code>&customer_store=<store>.",
+        "O store é single-process/single-replica — múltiplas réplicas exigem store compartilhado (limitação documentada, não silenciada)."
+      ]
+    },
+    "commercial.honest_states": {
+      "title": "Estados honestos e exceções",
+      "source": "semantic_bridge error mapping + route error contracts",
+      "guidance": [
+        "validation (400): parâmetros, campos ou refs inválidos — corrija o argumento.",
+        "unauthorized (401): ausência de contexto autenticado ou principal não-humano.",
+        "forbidden (403): permissão/escopo insuficiente — não simular sucesso nem sugerir contorno.",
+        "not_found (404): alvo inexistente no owner — confirme o identificador.",
+        "conflict (409): estado impede a operação (ex.: proposta expirada/consumida, pré-condição de escrita).",
+        "unavailable (502/503): fonte canônica falhou — reporte como falha, nunca como 'sem dados'.",
+        "Escopo vazio retorna itens vazios com honestidade — é restrição de autorização, não erro."
+      ]
+    },
+    "commercial.processes": {
+      "title": "Processos comerciais de ponta a ponta",
+      "source": "Portal Comercial (plugins/commercial) + rotas/use cases canônicos",
+      "guidance": [
+        "Visão de carteira: me → customer.list → open_order.list/recently_closed → proposal.list — a mesma cadeia do portal, sem duplicar regra.",
+        "Gestão de follow-up: worklist.mine → task.create/complete/defer/reassign → activity.create — notificações oficiais disparam como no portal.",
+        "Colaboração: interaction_room.resolve → message.post → task.from_message — sala, menção e tarefa vinculada em uma cadeia.",
+        "Administração: portfolio.create → member_add → customer_add (centro verificado) → audit; transferências com motivo auditado.",
+        "Análise: get_context → analyze por analysis_type com escopo server-side → labels OBSERVED — sem recálculo local."
       ]
     }
   },
   "planned_topics": [
-    {
-      "topic": "commercial.processes",
-      "note": "Orientações de processos comerciais aprovadas pelo owner — pendente de corpus oficial."
-    },
     {
       "topic": "products.guide",
       "note": "Guia de produtos — pendente de fonte autorizada."
