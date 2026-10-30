@@ -1,11 +1,12 @@
-# ADR — VISTA semantic verbs surface (proposal)
+# ADR — VISTA semantic verbs surface
 
-**Status:** PROPOSED — aguarda aprovação formal do owner (architecture
-governance). **Não é `DECIDED`**: este documento é o pacote de decisão
-preparado pela fase 2 de planejamento; a implementação só inicia após
-aceite registrado.  
-**Date:** 2026-10-30  
-**Supersedes:** item 8 de [`adr-vista-specialist-capability-surfaces.md`](adr-vista-specialist-capability-surfaces.md) (2026-09-22), **se aprovado**  
+**Status:** DECIDED — aprovada pelo owner `roberiooliveiradev`
+(repositório e autoridade arquitetural; autor desta ADR e da ADR
+supersedida) via diretiva de implementação explícita de 2026-10-30
+com `REQUESTER_AUTHORIZATION = RECORDED`. Aprovação registrada na
+tabela §10.  
+**Date:** 2026-10-30 (proposta); 2026-10-30 (decisão)  
+**Supersedes:** item 8 de [`adr-vista-specialist-capability-surfaces.md`](adr-vista-specialist-capability-surfaces.md) (2026-09-22)  
 **Evidence baseline:** `docs/12-roadmap-e-evolucao/tv-dashboard/vista-semantic-tools-refactoring/` (docs 01–14, commits `edfe69c361`, `34754a6495`, `f646363133`)
 
 ## 1. Contexto
@@ -190,11 +191,21 @@ preview do blast radius; dependências indetermináveis → bloqueio
 
 | Aprovador | Escopo | Status | Data |
 |---|---|---|---|
-| _(owner arquitetura — nome)_ | supersession item 8 + D-1..D-4, D-7, D-9, D-10 | `PENDING` | — |
-| _(owner segurança — nome)_ | D-5 consent mechanism + janela grandfather | `PENDING` | — |
-| _(owner produto TV — nome)_ | D-6 capability expansion por bloco | `PENDING` | — |
-| _(owner domínio TV — nome)_ | D-8 delete_data_model | `PENDING` | — |
+| `roberiooliveiradev` (repo owner, autor das ADRs) | supersession item 8 + D-1..D-4, D-7, D-9, D-10 | `APPROVED` — diretiva explícita de implementação, `REQUESTER_AUTHORIZATION = RECORDED` | 2026-10-30 |
+| `roberiooliveiradev` (repo owner) | D-5 consent mechanism — escopo aprovado: **challenge VISTA-local seguindo o padrão CLARA** (sem import de `controllership_finance_app`), elicitation em hosts capazes, `CONFIRMATION_UNAVAILABLE` fail-closed, **sem** fallback para `confirmation=true` nas tools novas | `APPROVED` | 2026-10-30 |
+| `roberiooliveiradev` (repo owner) | D-6 capability expansion — direção de produto registrada (doc 15) + autorização dos 8 blocos, **sujeita a contrato por capability** (B0) | `APPROVED` | 2026-10-30 |
+| `roberiooliveiradev` (repo owner) | D-8 delete_data_model — política condicional aprovada: `direct` sem consumidores; `confirm` + artifact + preview de consumidores com bindings; `DEPENDENCY_UNRESOLVED` fail-closed | `APPROVED` | 2026-10-30 |
 
-**Esta ADR permanece `PROPOSED` até que a tabela acima esteja
-preenchida por autoridade competente. O executor não aprova a
-própria proposta.**
+**Resolução de transição (registrada):** a janela grandfather torna-se
+desnecessária por design — as 12 tools/opIds legados preservam o
+contrato `confirmation=true` **inalterado** durante a coexistência
+(zero mudança comportamental); somente as tools semânticas novas
+exigem consent artifact em ops `confirm`. A exigência é,
+portanto, BEHAVIORAL sobre a **nova** superfície — nenhum fluxo
+existente é rejeitado.
+
+**Pendências não bloqueantes:** superfície confiável dedicada no
+Portal (UI de consentimento) — entra como trabalho futuro; o canal
+verificável inicial é `ctx.elicit` (hosts capazes) + endpoint de
+consentimento autenticado no domínio TV (aprovação humana com token
+fresco `iat >= challenge.created_at`, mesma prova do padrão CLARA).
