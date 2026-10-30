@@ -60,10 +60,10 @@ def _cleanup(tokens):
 # --- Registration / taxonomy -------------------------------------------------
 
 
-def test_v3_tools_registered_in_coexistence() -> None:
+def test_v3_tools_registered_semantic_only() -> None:
     names = {t.name for t in asyncio.run(create_mcp_server().list_tools())}
     assert V3_SEMANTIC_TOOL_NAMES <= names
-    assert len(names) == len(MCP_TOOL_NAMES) == 28
+    assert len(names) == len(MCP_TOOL_NAMES) == 6
     assert TOOL_CLASS["get_context"] == "DISCOVERY"
     assert TOOL_CLASS["read"] == "READ"
     assert TOOL_CLASS["analyze"] == "ANALYSIS"

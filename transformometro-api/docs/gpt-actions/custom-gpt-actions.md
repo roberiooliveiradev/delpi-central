@@ -4,7 +4,7 @@
 > **Legacy HTTP shims** (`gpt_create_record` / `gpt_update_record` / `gpt_delete_record` /
 > `gpt_duplicate_record` / `gpt_commit_improvement_package`): **LEGACY_TRANSITIONAL**
 > (`include_in_schema=False`) — not model guidance.  
-> **Target Plugin/Agent:** MCP `CAPABILITY_GOVERNED_V2` (20 tools) — ver [`../integrations/openai-plugin-mcp.md`](../integrations/openai-plugin-mcp.md) (client `mcp-transformometro`).  
+> **Target Plugin/Agent:** MCP `SEMANTIC_V3_ONLY` (6 tools) — ver [`../integrations/openai-plugin-mcp.md`](../integrations/openai-plugin-mcp.md) (client `mcp-transformometro`).  
 > **Padrão transversal:** [padrao-custom-gpt-actions-oauth.md](../../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)  
 > Este arquivo é a **instância** Transformômetro (paths, client, operations). Para Action Plans e outros produtos, seguir o padrão geral e espelhar esta estrutura.  
 > **Persona user-facing:** [TÉO — Especialista em Transformação Digital](./specialist-instructions.md) (produto = Transformômetro; TÉO ≠ novo serviço/bounded context).  

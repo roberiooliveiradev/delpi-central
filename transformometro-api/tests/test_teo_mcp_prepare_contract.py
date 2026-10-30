@@ -1,12 +1,12 @@
 """TÉO MCP PREPARE/ACT contract — PREPARE must never invoke ACT.
 
 Owner contract invariant (ARCH-DRIFT-TEO-MCP-PREPARE-ACT-CONTRACT-01):
-every toolClass=PREPARE tool on the MCP surface is materially
-side-effect-free — it seals a proposal and returns ``persisted=False``;
-material execution exists only through the ACT-class ``commit_proposal``.
-``commit_now``/``confirmation``/``idempotency_key`` are a separate
-GPT-Actions-HTTP additive contract and must never reach the MCP
-PREPARE boundary.
+under SEMANTIC_V3_ONLY the internal prepare_* bridge functions remain
+materially side-effect-free — they seal a proposal and return
+``persisted=False``; material execution exists only through the
+ACT-class ``execute``/``delete`` tools. ``commit_now``/``idempotency_key``
+are a separate GPT-Actions-HTTP additive contract and must never reach
+the MCP boundary.
 """
 
 from __future__ import annotations
@@ -63,13 +63,20 @@ def _clean_proposals():
 
 
 class TestPrepareSchemasArePure:
-    def test_every_prepare_tool_schema_has_no_act_collapse_fields(self):
-        tools = _tools()
+    def test_no_prepare_tools_on_public_surface(self):
+        # SEMANTIC_V3_ONLY: PREPARE collapses into the typed ``execute``/
+        # ``delete`` contract — no public tool may carry toolClass=PREPARE.
         prepare_tools = [n for n, c in TOOL_CLASS.items() if c == "PREPARE"]
-        assert prepare_tools, "registry must list PREPARE tools"
-        for name in prepare_tools:
+        assert prepare_tools == []
+
+    def test_execute_schema_has_no_act_collapse_fields(self):
+        # ``confirmation`` is a legitimate V3 field (commits a pending
+        # proposal after the canonical policy gate); the HTTP-additive
+        # commit_now/idempotency_key fields must never reach the surface.
+        tools = _tools()
+        for name in ("execute", "delete"):
             props = set(tools[name].input_schema.get("properties") or {})
-            leaked = props & ACT_COLLAPSE_FIELDS
+            leaked = props & {"commit_now", "idempotency_key"}
             assert not leaked, f"{name} exposes ACT-collapse fields: {leaked}"
 
     def test_prepare_tool_count_matches_registry(self):
@@ -78,15 +85,18 @@ class TestPrepareSchemasArePure:
             assert name in tools, f"{name} not registered"
             meta = tools[name].meta or {}
             assert meta.get("delpi/toolClass") == cls
-        assert tools["commit_proposal"].meta["delpi/toolClass"] == "ACT"
+        assert tools["execute"].meta["delpi/toolClass"] == "ACT"
+        assert tools["delete"].meta["delpi/toolClass"] == "ACT"
 
-    def test_commit_proposal_schema_is_act_only(self):
-        schema = _tools()["commit_proposal"].input_schema
-        # confirmation is the only strictly-required field; the proposal
-        # is identified by proposal_handle OR proposal_id (recovery key).
-        assert set(schema.get("required") or []) == {"confirmation"}
-        props = set(schema.get("properties") or {})
-        assert {"proposal_handle", "proposal_id"} <= props
+    def test_execute_schema_carries_proposal_commit_fields(self):
+        # Proposal resumption rides inside ``execute``/``delete``:
+        # proposal_handle OR proposal_id identify the sealed proposal;
+        # confirmation is never globally required (auto_act needs none).
+        for name in ("execute", "delete"):
+            schema = _tools()[name].input_schema
+            assert "confirmation" not in (schema.get("required") or [])
+            props = set(schema.get("properties") or {})
+            assert {"proposal_handle", "proposal_id", "confirmation"} <= props
 
     def test_bridge_prepare_signatures_have_no_act_collapse_params(self):
         fns = {

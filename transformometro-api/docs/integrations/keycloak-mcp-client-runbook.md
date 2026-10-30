@@ -2,7 +2,7 @@
 
 > **Specialist brand:** TÉO — Especialista em Transformação Digital
 > **Technical client id:** `mcp-transformometro` (do not rename to `mcp-teo` / do not reuse `chatgpt-transformometro`)
-> **Surface:** `CAPABILITY_GOVERNED_V2` (READ + PREPARE + commit_proposal) — not DAVI READ-only.
+> **Surface:** `SEMANTIC_V3_ONLY` (get_context|read|analyze|knowledge|execute|delete) — not DAVI READ-only.
 
 > **KEYCLOAK_CONFIG = APPLIED_EVALUATE_PROVEN** (produção, 2026-09-17, host `srv-api`).
 > ChatGPT Plugin OAuth + tool discovery + READ live = **PROVEN**.

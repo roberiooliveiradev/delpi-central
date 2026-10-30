@@ -129,14 +129,19 @@ def test_registry_bindings_cover_task_and_room() -> None:
 
 
 def test_mcp_tool_registration_and_classes() -> None:
-    assert "collaboration_read" in MCP_TOOL_NAMES
-    assert "prepare_collaboration_change" in MCP_TOOL_NAMES
-    assert TOOL_CLASS["collaboration_read"] == "READ"
-    assert TOOL_CLASS["prepare_collaboration_change"] == "PREPARE"
+    # SEMANTIC_V3_ONLY: collaboration capabilities route through the
+    # semantic tools (task/interaction_room entities + governed ops).
+    assert "read" in MCP_TOOL_NAMES
+    assert "execute" in MCP_TOOL_NAMES
+    assert TOOL_CLASS["read"] == "READ"
+    assert TOOL_CLASS["execute"] == "ACT"
+    # Internal capability map keeps the family binding for bridge use.
     assert "prepare_collaboration_change" in PREPARE_TOOL_CAPABILITY
     tools = asyncio.run(create_mcp_server().list_tools())
     names = {t.name for t in tools}
-    assert {"collaboration_read", "prepare_collaboration_change"} <= names
+    assert {"read", "execute"} <= names
+    assert "collaboration_read" not in names
+    assert "prepare_collaboration_change" not in names
     assert len(names) == len(MCP_TOOL_NAMES)
 
 

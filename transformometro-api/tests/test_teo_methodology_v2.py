@@ -420,17 +420,16 @@ def test_unknown_context_facts_ignored_not_fatal() -> None:
 def test_mcp_tool_projects_version_and_intent() -> None:
     mcp = create_mcp_server()
     tools = {t.name: t for t in asyncio.run(mcp.list_tools())}
-    assert len(tools) == 28  # V2 family + Semantic V3 coexistence (#124)
-    guide = tools["get_methodology_guide"]
+    assert len(tools) == 6  # SEMANTIC_V3_ONLY (#124 — final cutover)
+    guide = tools["knowledge"]
     props = guide.input_schema["properties"]
-    assert "guide_version" in props
-    assert "intent" in props
-    blob = json.dumps(props["guide_version"])
-    assert "teo-method-playbooks-v1" in blob
-    assert "teo-method-playbooks-v2" in blob
-    blob = json.dumps(props["intent"])
-    assert "strategic_analysis" in blob
-    assert "improve" in blob
+    # Methodology version/intent ride inside the source-scoped params
+    # object — described in the tool prose; source stays a closed enum.
+    assert "source" in props and "params" in props
+    assert set(props["source"]["enum"]) == {"methodology", "product_guide"}
+    desc = guide.description or ""
+    assert "methodology" in desc and "guide_version" in desc
+    assert "intent" in desc
 
 
 def test_mcp_bridge_v1_and_v2() -> None:

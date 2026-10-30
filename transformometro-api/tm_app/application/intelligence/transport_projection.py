@@ -9,14 +9,17 @@ Transports:
 
 - ``"gpt_actions"`` — Actions surface (``gpt_*`` operationIds, additive
   ``commit_now`` policy). Byte-compatible with the historical contract.
-- ``"mcp"`` — MCP surface (``prepare_*`` / ``commit_proposal`` only).
-  PREPARE is pure: no ``commit_now``, no atomic prepare+commit, every
-  material write requires ``commit_proposal`` with explicit confirmation
-  and backend AuthZ.
+- ``"mcp"`` — Semantic V3 MCP surface (``get_context|read|analyze|
+  knowledge|execute|delete``). ``execute`` runs PREPARE→policy
+  gate→ACT→read-back; ``auto_act`` commits in the same call,
+  ``confirm_before_act`` returns a proposal committed via
+  ``execute|delete(proposal_id, confirmation)``. Backend AuthZ is
+  always revalidated at ACT.
 
-Fail closed: an unknown ``gpt_*`` name or a residual ``commit_now`` token
-in the MCP projection raises :class:`ProjectionContractError`. Only the
-explicitly listed legacy tombstones render as ``removed_*`` markers.
+Fail closed: an unknown ``gpt_*`` name, a residual ``commit_now`` token or
+an unmapped legacy V2 tool name in the MCP projection raises
+:class:`ProjectionContractError`. Only the explicitly listed legacy
+tombstones render as ``removed_*`` markers.
 """
 
 from __future__ import annotations
@@ -25,12 +28,13 @@ import re
 from typing import Any
 
 from tm_app.application.intelligence.capability_registry import (
+    MCP_TO_V3_TOOL,
     ProjectionContractError,
-    actions_to_mcp_primary,
+    actions_to_v3_primary,
 )
 
 __all__ = [
-    "actions_to_mcp_primary",
+    "actions_to_v3_primary",
     "neutralize_for_mcp",
     "MCP_DROP_KEYS",
 ]
@@ -58,14 +62,14 @@ _MCP_KEY_REWRITE = {
 }
 
 # Pipeline/policy tokens that encode the Actions atomic prepare+commit path.
-# On MCP the canonical policy is execution_policy: auto_act writes still
-# run PREPARE -> commit_proposal (same turn, no extra confirmation); only
-# confirm_before_act requires an explicit user confirmation. These legacy
-# tokens are kept as a fail-closed rewrite layer for bounded prose.
+# On the Semantic V3 surface the canonical policy is execution_policy:
+# auto_act writes run execute PREPARE→ACT→read-back in one call (same
+# turn, no extra confirmation); confirm_before_act returns a proposal
+# committed via execute/delete(proposal_id, confirmation=true).
 _MCP_TOKEN_REWRITE = {
-    "commit_now_or_confirm": "confirm_then_commit_proposal",
-    "commit_now_if_additive": "confirm_then_commit_proposal",
-    "commit_now_additive": "confirm_then_commit_proposal",
+    "commit_now_or_confirm": "auto_act_execute_or_confirm",
+    "commit_now_if_additive": "auto_act_execute_or_confirm",
+    "commit_now_additive": "auto_act_execute_or_confirm",
     "commit_now_allowed_additive": "explicit_confirmation_required",
     "create_update_duplicate_commit_now_delete_confirm": (
         "explicit_confirmation_before_commit"
@@ -78,6 +82,13 @@ _MCP_TOKEN_REWRITE = {
         "explicit_confirmation_required"
     ),
 }
+
+# Literal legacy V2 tool names → Semantic V3 route (derived from the
+# canonical registry map; prose must never name a tombstoned tool).
+_LEGACY_V2_NAME_RE = re.compile(
+    r"\b(" + "|".join(sorted(MCP_TO_V3_TOOL, key=len, reverse=True)) + r")\b"
+)
+_LEGACY_GLOBS = {"prepare_*": "execute"}
 
 # Known non-callable ``gpt_*`` names → neutral MCP rendering. Explicit,
 # enumerable tombstones only — UNKNOWN names raise ProjectionContractError.
@@ -106,7 +117,7 @@ def _strip_actions_annotations(text: str) -> str:
 
 def _neutralize_text_for_mcp(text: str) -> str:
     text = _strip_actions_annotations(text)
-    mapping = actions_to_mcp_primary()
+    mapping = actions_to_v3_primary()
 
     def _sub(match: re.Match) -> str:
         name = match.group(0)
@@ -122,6 +133,14 @@ def _neutralize_text_for_mcp(text: str) -> str:
     text = _GPT_NAME_RE.sub(_sub, text)
     for token, replacement in _MCP_TOKEN_REWRITE.items():
         text = text.replace(token, replacement)
+    # Literal legacy V2 names in prose → their Semantic V3 route. Runs
+    # after the gpt_* pass so ``gpt_record_read`` resolves via the parity
+    # map before ``record_read`` could match the literal pattern.
+    text = _LEGACY_V2_NAME_RE.sub(
+        lambda m: MCP_TO_V3_TOOL[m.group(0)], text
+    )
+    for glob, replacement in _LEGACY_GLOBS.items():
+        text = text.replace(glob, replacement)
     if "commit_now" in text or _GPT_NAME_RE.search(text):
         raise ProjectionContractError(
             "Residual Actions semantics after MCP neutralization.",

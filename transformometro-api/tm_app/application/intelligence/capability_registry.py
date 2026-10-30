@@ -224,6 +224,96 @@ def mcp_primary_to_actions(
     }
 
 
+# ---------------------------------------------------------------------------
+# Semantic V3 projection (issue #124 — final cutover)
+#
+# The bindings above stay the canonical capability↔transport record: they
+# describe the V2 family names the capabilities were bound to. The Semantic
+# V3 surface replaces those routes with six semantic tools. This map is the
+# derived, single-source classification of which V3 tool serves each legacy
+# route — the SAME capability, AuthZ and policies, only the surface name
+# changes. ``execute`` covers every governed write including commits of
+# destructive proposals; ``delete`` is the restricted ergonomic surface for
+# the closed DESTRUCTIVE_DELETE_OPERATIONS set (a subset of execute paths).
+# ---------------------------------------------------------------------------
+
+MCP_TO_V3_TOOL: dict[str, str] = {
+    "get_my_context": "get_context",
+    "get_workspace_context": "get_context",
+    "get_catalog": "get_context",
+    "get_methodology_guide": "knowledge",
+    "get_product_guide": "knowledge",
+    "solution_read": "read",
+    "get_process_context": "read",
+    "get_process_timeline": "read",
+    "analyze": "analyze",
+    "record_read": "read",
+    "helpdesk_read": "read",
+    "meeting_minute_read": "read",
+    "evidence_read": "read",
+    "collaboration_read": "read",
+    "diagnostic_read": "read",
+    "prepare_record_change": "execute",
+    "prepare_governed_operation": "execute",
+    "prepare_helpdesk_change": "execute",
+    "prepare_meeting_minute_change": "execute",
+    "prepare_evidence_change": "execute",
+    "prepare_collaboration_change": "execute",
+    "prepare_diagnostic_change": "execute",
+    "commit_proposal": "execute",
+}
+
+
+def v3_tool_for_legacy(
+    legacy_name: str,
+    mapping: dict[str, str] = MCP_TO_V3_TOOL,
+) -> str:
+    """Semantic V3 tool serving a legacy V2 route — fail closed."""
+    resolved = mapping.get(str(legacy_name or "").strip())
+    if resolved is None:
+        raise ProjectionContractError(
+            f"Legacy MCP tool '{legacy_name}' has no Semantic V3 route.",
+            detail={"legacy_name": legacy_name},
+        )
+    return resolved
+
+
+def actions_to_v3_primary(
+    bindings: tuple[CapabilityBinding, ...] = CAPABILITY_BINDINGS,
+) -> dict[str, str]:
+    """Actions operationId → primary Semantic V3 tool name."""
+    return {
+        b.actions_operation: v3_tool_for_legacy(b.mcp_primary)
+        for b in bindings
+        if b.actions_operation is not None
+    }
+
+
+def actions_to_v3_parity(
+    bindings: tuple[CapabilityBinding, ...] = CAPABILITY_BINDINGS,
+) -> dict[str, tuple[str, ...]]:
+    """Actions operationId → Semantic V3 tool names (merged, deduped)."""
+    parity: dict[str, list[str]] = {}
+    for b in bindings:
+        if b.actions_operation is None:
+            continue
+        tools = parity.setdefault(b.actions_operation, [])
+        for ref in b.mcp_tools:
+            v3 = v3_tool_for_legacy(ref.name)
+            if v3 not in tools:
+                tools.append(v3)
+    return {op: tuple(tools) for op, tools in parity.items()}
+
+
+def mcp_v3_tool_names(
+    bindings: tuple[CapabilityBinding, ...] = CAPABILITY_BINDINGS,
+) -> tuple[str, ...]:
+    """Every Semantic V3 tool referenced by the canonical bindings."""
+    return tuple(
+        sorted({v3_tool_for_legacy(ref.name) for b in bindings for ref in b.mcp_tools})
+    )
+
+
 def mcp_tool_to_actions(
     bindings: tuple[CapabilityBinding, ...] = CAPABILITY_BINDINGS,
 ) -> dict[str, str]:

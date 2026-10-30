@@ -550,14 +550,17 @@ class TestExplicitConfirmationHardening:
         from tm_app.interface.mcp.server import create_mcp_server
 
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        schema = tools["commit_proposal"].input_schema
-        # proposal_id (recovery key) OR proposal_handle identifies the
-        # stored proposal — both optional in schema; backend requires one.
-        # confirmation remains the only strictly-required argument.
-        assert set(schema.get("required") or []) == {"confirmation"}
-        assert "default" not in schema["properties"]["confirmation"]
-        assert "proposal_handle" in schema["properties"]
-        assert "proposal_id" in schema["properties"]
+        # SEMANTIC_V3_ONLY: proposal resumption rides inside execute/
+        # delete — confirmation must never default to True (omitted is
+        # not confirmed); proposal_handle/proposal_id identify the
+        # stored proposal, backend requires one at commit time.
+        for name in ("execute", "delete"):
+            schema = tools[name].input_schema
+            assert "confirmation" not in (schema.get("required") or [])
+            confirmation = schema["properties"]["confirmation"]
+            assert confirmation.get("default") in (None, False)
+            assert "proposal_handle" in schema["properties"]
+            assert "proposal_id" in schema["properties"]
 
     def test_bridge_commit_requires_confirmation_argument(self):
         import inspect

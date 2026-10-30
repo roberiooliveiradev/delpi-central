@@ -131,8 +131,11 @@ def test_mcp_surface_includes_workspace_context() -> None:
     from tm_app.interface.mcp.server import create_mcp_server
 
     tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-    assert "get_workspace_context" in tools
-    assert tools["get_workspace_context"].annotations.read_only_hint is True
+    # SEMANTIC_V3_ONLY: workspace context is served by
+    # get_context(section=workspace).
+    assert "get_context" in tools
+    assert tools["get_context"].annotations.read_only_hint is True
+    assert "workspace" in (tools["get_context"].description or "")
 
 
 def test_openapi_operation_present_and_read_only() -> None:

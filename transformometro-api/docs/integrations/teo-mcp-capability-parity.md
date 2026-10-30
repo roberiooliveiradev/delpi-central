@@ -8,19 +8,19 @@ Gate (MCP Surface V2 — HEAD capability-driven):
 ```text
 CURRENT_CAPABILITIES (GPT Actions importable) = 20 (family operations)
 MCP_COVERED = 20
-MCP_NATIVE = diagnostic_v1 (2 family tools)
-MCP_TOOLS = 22
+MCP_NATIVE = 5 semantic tools (all but analyze)
+MCP_TOOLS = 6 (SEMANTIC_V3_ONLY)
 MISSING = 0
 UNMAPPED GPT = 0
 REGRESSED = 0
 ENTITY_CATALOG includes process_document (no new MCP entity tools)
-TEO_MCP_SURFACE = CAPABILITY_GOVERNED_V2
+TEO_MCP_SURFACE = SEMANTIC_V3_ONLY
 ```
 
 ```text
 20 GPT Actions capabilities (semantic families)
-≠
-22 MCP tools
+→
+6 Semantic V3 MCP tools (get_context|read|analyze|knowledge|execute|delete)
 ```
 
 Tool Surface Rationalization V1: transports expose **semantic families with

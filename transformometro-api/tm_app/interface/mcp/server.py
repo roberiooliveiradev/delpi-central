@@ -1,4 +1,4 @@
-"""MCPServer — TÉO capability-driven MCP (PREPARE → commit_proposal)."""
+"""MCPServer — TÉO Semantic V3 MCP (six semantic tools, issue #124)."""
 
 from __future__ import annotations
 
@@ -14,28 +14,11 @@ from delpi_mcp.tool_metadata import (
 )
 from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, Tool as MCPTool, ToolAnnotations
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 
-from tm_app.application.gpt_actions.capability_descriptors import (
-    RECORD_OPERATIONS,
-)
 from tm_app.application.gpt_actions.entities import (
     GptAnalysisView,
     GptEntity,
-)
-from tm_app.application.gpt_actions.parity_capabilities_service import (
-    MEETING_MINUTE_READ_ACTION_VALUES,
-)
-from tm_app.application.governed_writes.orchestrator import (
-    GOVERNED_OPERATION_ACTION_TO_CAPABILITY,
-    MEETING_MINUTE_ACTION_TO_CAPABILITY,
-)
-from tm_app.application.helpdesk.helpdesk_write_capabilities import (
-    HELPDESK_ACTION_TO_CAPABILITY,
-)
-from tm_app.application.methodology.guide_v2 import (
-    INTENT_IDS,
-    SUPPORTED_GUIDE_VERSIONS,
 )
 from tm_app.interface.mcp.branding import TEO_MCP_INSTRUCTIONS
 from tm_app.interface.mcp.constants import (
@@ -45,7 +28,6 @@ from tm_app.interface.mcp.constants import (
 )
 from tm_app.interface.mcp.oauth_contract import TEO_MCP_SECURITY_SCHEMES
 from tm_app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
-from tm_app.interface.mcp import tool_bridge as bridge
 from tm_app.interface.mcp import tool_bridge_v3 as bridge_v3
 
 logger = logging.getLogger(__name__)
@@ -59,36 +41,6 @@ _AnalysisViewParam = Literal[
     tuple(v.value for v in GptAnalysisView)
     + ("meeting_minute_transcript",)
 ]
-_RecordOperationParam = Literal[tuple(sorted(RECORD_OPERATIONS))]
-_MinuteReadActionParam = Literal[
-    tuple(sorted(MEETING_MINUTE_READ_ACTION_VALUES))
-]
-_MinuteChangeActionParam = Literal[
-    tuple(sorted(MEETING_MINUTE_ACTION_TO_CAPABILITY))
-]
-_GovernedOperationParam = Literal[
-    tuple(sorted(GOVERNED_OPERATION_ACTION_TO_CAPABILITY))
-]
-_HelpdeskActionParam = Literal[
-    tuple(sorted(HELPDESK_ACTION_TO_CAPABILITY))
-]
-_GuideVersionParam = Literal[tuple(sorted(SUPPORTED_GUIDE_VERSIONS))]
-_MethodIntentParam = Literal[tuple(sorted(INTENT_IDS))]
-
-
-class _ChatGptFileParam(BaseModel):
-    """Canonical ``openai/fileParams`` file object (R4.2).
-
-    The ChatGPT host binds user uploads to fields listed in the tool
-    descriptor ``_meta["openai/fileParams"]`` — each value is this closed
-    object. ``download_url``/``file_id`` are required by the host
-    contract; ``mime_type``/``file_name`` are optional but declared.
-    """
-
-    download_url: str
-    file_id: str
-    mime_type: str | None = None
-    file_name: str | None = None
 
 
 class _TeoWireTool(MCPTool):
@@ -159,222 +111,6 @@ def create_mcp_server() -> MCPServer:
     )
     meta = security_schemes_meta(TEO_MCP_SECURITY_SCHEMES)
 
-    # --- READ -------------------------------------------------------------
-
-    @mcp.tool(
-        name="get_my_context",
-        title="Get my context",
-        description="Minimal personal context (name/role). Not authorization.",
-        annotations=_annotations("get_my_context", "Get my context"),
-        meta=meta,
-    )
-    def get_my_context() -> CallToolResult:
-        return bridge.tool_get_my_context()
-
-    @mcp.tool(
-        name="get_workspace_context",
-        title="Get current workspace context",
-        description=(
-            "Current Transformômetro workspace the user is viewing "
-            "(process/instance/revision/area refs). Navigation hint only — "
-            "never domain truth, never authorization. For 'this process', "
-            "'current revision', 'the improvement I'm editing' style "
-            "references: read this first, then call get_process_context with "
-            "the returned refs for authoritative facts."
-        ),
-        annotations=_annotations("get_workspace_context", "Get workspace context"),
-        meta=meta,
-    )
-    def get_workspace_context() -> CallToolResult:
-        return bridge.tool_get_workspace_context()
-
-    @mcp.tool(
-        name="get_catalog",
-        title="Get catalog",
-        description=(
-            "Discovery catalog: entities, workflows, analysis, registration_guide, "
-            "diagram_catalog, capability_surface. Use before writes. "
-            "Optional entity (e.g. decomposition_tree) returns only that "
-            "entity's write schema, concept and contract rules — the official "
-            "fallback when the full catalog is budget-trimmed."
-        ),
-        annotations=_annotations("get_catalog", "Get catalog"),
-        meta=meta,
-    )
-    def get_catalog(entity: str | None = None) -> CallToolResult:
-        return bridge.tool_get_catalog(entity=entity)
-
-    @mcp.tool(
-        name="get_methodology_guide",
-        title="Get methodology guide",
-        description=(
-            "READ-only TÉO process-methodology playbooks. "
-            "Optional method (macroprocess, key_process, end_to_end, sipoc, lean, "
-            "ishikawa, five_whys, ctp, tdr, kpi, swot, as_is, to_be) and/or task "
-            "(discover, map, diagnose, redesign, measure, prioritize, interview). "
-            "guide_version selects teo-method-playbooks-v1 (default) or "
-            "teo-method-playbooks-v2 (intent routing, readiness, soft "
-            "composition, sufficiency). V2 also accepts intent and an optional "
-            "context object of process facts (boundary_known, as_is_known, "
-            "problem_defined, candidate_cause, flow_known, ...). V2 responses "
-            "include supported_context_facts — the accepted vocabulary, "
-            "accepted values and semantics. "
-            "Guidance is not authorization, not domain truth, and does not write."
-        ),
-        annotations=_annotations("get_methodology_guide", "Get methodology guide"),
-        meta=meta,
-    )
-    def get_methodology_guide(
-        method: str | None = None,
-        task: str | None = None,
-        guide_version: _GuideVersionParam | None = None,
-        intent: _MethodIntentParam | None = None,
-        context: dict[str, Any] | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_get_methodology_guide(
-            method=method,
-            task=task,
-            guide_version=guide_version,
-            intent=intent,
-            context=context,
-        )
-
-    @mcp.tool(
-        name="get_product_guide",
-        title="Get product usage guide",
-        description=(
-            "READ-only product usage guidance for Portal/Transformômetro "
-            "features — how/when/why to use a capability correctly "
-            "(GUIDANCE, never domain truth, AuthZ or execution policy; "
-            "live contract stays in get_catalog). topic omitted returns "
-            "the topic index. section: overview|when_to_use|how_to_use|"
-            "field_guidance|quality|relationships|all. Unknown topic "
-            "fails typed — never falls back to another guide."
-        ),
-        annotations=_annotations("get_product_guide", "Get product usage guide"),
-        meta=meta,
-    )
-    def get_product_guide(
-        topic: str | None = None,
-        section: str | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_get_product_guide(topic=topic, section=section)
-
-    @mcp.tool(
-        name="solution_read",
-        title="Solution read",
-        description=(
-            "READ-only Minha DELPI solution intelligence (Core metadata). "
-            "action=catalog: discovery of ALL registered active solutions — "
-            "id, name, description, category, routes, features, permissions, "
-            "version, accessible flag; NOT filtered to apps the user can "
-            "open (accessible=false still means the solution EXISTS). "
-            "action=context: detail of one solution — identity, routes, "
-            "features, permissions, dependencies, accessible flag, recent "
-            "versions, CALCULATED structural evolution. Knowledge never "
-            "grants access — domain reads/writes require the plugin's AuthZ."
-        ),
-        annotations=_annotations("solution_read", "Solution read"),
-        meta=meta,
-    )
-    def solution_read(
-        action: Literal["catalog", "context"],
-        solution_id: str | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_solution_read(action=action, solution_id=solution_id)
-
-    @mcp.tool(
-        name="helpdesk_read",
-        title="Helpdesk read",
-        description=(
-            "READ-only Helpdesk/GLPI demand via the Helpdesk BFF — "
-            "knowledge, never authorization and never process truth. "
-            "action=session: GLPI link state (linked/profile_sync). "
-            "action=capabilities: effective Helpdesk capabilities. "
-            "action=tickets: paginated ticket list (q, status, "
-            "urgency_id, category_id, assignee_id, date ranges, sort, "
-            "page/page_size). action=ticket: one ticket detail "
-            "(ticket_id required) — description, timeline, attachments "
-            "metadata + attachment_refs, can_* flags (BFF-computed, "
-            "never inferred). action=attachment: one attachment of a "
-            "ticket (ticket_id + document_id required) — the actual "
-            "file content is returned as an image/resource content "
-            "block, with document metadata in structuredContent. "
-            "action=catalog: catalog_kind = categories|urgencies|"
-            "request_types|impacts|priorities|ticket_types|users|"
-            "groups|followup_templates|"
-            "solution_types|solution_templates|task_categories|"
-            "task_templates|task_statuses|validation_templates|"
-            "approval_steps (q/purpose/limit only for users). "
-            "glpi_link_required returns a typed error with the "
-            "canonical authorize_url — ticket reports are INFORMED "
-            "evidence, not proven root cause."
-        ),
-        annotations=_annotations("helpdesk_read", "Helpdesk read"),
-        meta=meta,
-    )
-    def helpdesk_read(
-        action: Literal[
-            "session", "capabilities", "tickets", "ticket",
-            "attachment", "catalog"
-        ],
-        ticket_id: int | None = None,
-        document_id: int | None = None,
-        catalog_kind: str | None = None,
-        q: str | None = None,
-        status: str | None = None,
-        urgency_id: int | None = None,
-        category_id: int | None = None,
-        assignee_id: int | None = None,
-        updated_from: str | None = None,
-        updated_to: str | None = None,
-        created_from: str | None = None,
-        created_to: str | None = None,
-        sort: str | None = None,
-        page: int | None = None,
-        page_size: int | None = None,
-        purpose: str | None = None,
-        limit: int | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_helpdesk_read(
-            action=action,
-            ticket_id=ticket_id,
-            document_id=document_id,
-            catalog_kind=catalog_kind,
-            q=q,
-            status=status,
-            urgency_id=urgency_id,
-            category_id=category_id,
-            assignee_id=assignee_id,
-            updated_from=updated_from,
-            updated_to=updated_to,
-            created_from=created_from,
-            created_to=created_to,
-            sort=sort,
-            page=page,
-            page_size=page_size,
-            purpose=purpose,
-            limit=limit,
-        )
-
-    @mcp.tool(
-        name="get_process_context",
-        title="Get process context",
-        description="Aggregated read-only process intelligence context.",
-        annotations=_annotations("get_process_context", "Get process context"),
-        meta=meta,
-    )
-    def get_process_context(
-        process_id: str,
-        instance_id: str | None = None,
-        revision_id: str | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_get_process_context(
-            process_id=process_id,
-            instance_id=instance_id,
-            revision_id=revision_id,
-        )
-
     @mcp.tool(
         name="analyze",
         title="Analyze dashboard",
@@ -400,19 +136,47 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def analyze(
-        view: _AnalysisViewParam,
-        params: dict | None = None,
-        filial_id: str | None = None,
-        setor_id: str | None = None,
-        processo_id: str | None = None,
-        revisao_id: str | None = None,
-        instancia_id: str | None = None,
-        familia_processo: str | None = None,
-        competencia: str | None = None,
-        competencia_inicio: str | None = None,
-        competencia_fim: str | None = None,
-        horizonte_meses: int | None = None,
-        limit: int | None = None,
+        view: Annotated[
+            _AnalysisViewParam,
+            Field(description="Canonical analysis view."),
+        ],
+        params: Annotated[
+            dict | None,
+            Field(description="View-scoped parameters object."),
+        ] = None,
+        filial_id: Annotated[
+            str | None, Field(description="Branch (filial) id filter.")
+        ] = None,
+        setor_id: Annotated[
+            str | None, Field(description="Department (setor) id filter.")
+        ] = None,
+        processo_id: Annotated[
+            str | None, Field(description="Process id (process-scoped views).")
+        ] = None,
+        revisao_id: Annotated[
+            str | None, Field(description="Revision id (revision-scoped views).")
+        ] = None,
+        instancia_id: Annotated[
+            str | None, Field(description="Instance id (instance-scoped views).")
+        ] = None,
+        familia_processo: Annotated[
+            str | None, Field(description="Process family name filter.")
+        ] = None,
+        competencia: Annotated[
+            str | None, Field(description="Competency period filter.")
+        ] = None,
+        competencia_inicio: Annotated[
+            str | None, Field(description="Competency range start.")
+        ] = None,
+        competencia_fim: Annotated[
+            str | None, Field(description="Competency range end.")
+        ] = None,
+        horizonte_meses: Annotated[
+            int | None, Field(description="Month horizon for forecast views.")
+        ] = None,
+        limit: Annotated[
+            int | None, Field(description="Result row cap for ranked views.")
+        ] = None,
     ) -> CallToolResult:
         merged = {
             k: v
@@ -434,787 +198,11 @@ def create_mcp_server() -> MCPServer:
         merged.update(params or {})
         return bridge_v3.tool_analyze(view=view, params=merged)
 
-    @mcp.tool(
-        name="record_read",
-        title="Record read",
-        description=(
-            "READ Transformômetro records by entity. action=search: list "
-            "records — instances/revisions can be discovered cross-process "
-            "(fase_melhoria, cenario_tipo, revisao_ativa, date_field/"
-            "date_from/date_to, page/page_size); parent_id scopes children; "
-            "q for text search. action=get: one record by entity + id (for "
-            "measurement, id is revisao_id; for decomposition/diagram "
-            "entities, id is the parent id)."
-        ),
-        annotations=_annotations("record_read", "Record read"),
-        meta=meta,
-    )
-    def record_read(
-        action: Annotated[
-            Literal["search", "get"],
-            Field(
-                description=(
-                    "search: list records matching optional filters "
-                    "(omit all filters for the full set); get: one "
-                    "record by entity + id."
-                )
-            ),
-        ],
-        entity: Annotated[
-            _EntityParam,
-            Field(description="Entity kind to read (e.g. process)."),
-        ],
-        id: Annotated[
-            str | None,
-            Field(
-                description=(
-                    "Record identifier for action=get (literal id; for "
-                    "measurement use revisao_id, for decomposition/"
-                    "diagram entities the parent id)."
-                )
-            ),
-        ] = None,
-        parent_id: Annotated[
-            str | None,
-            Field(
-                description=(
-                    "Literal parent record id — scopes the search to "
-                    "children of that record."
-                )
-            ),
-        ] = None,
-        instance_id: Annotated[
-            str | None,
-            Field(description="Literal process-instance id filter."),
-        ] = None,
-        filial_id: Annotated[
-            str | None,
-            Field(description="Literal branch (filial) id filter."),
-        ] = None,
-        setor_id: Annotated[
-            str | None,
-            Field(description="Literal department (setor) id filter."),
-        ] = None,
-        status: Annotated[
-            str | None,
-            Field(description="Literal process status filter."),
-        ] = None,
-        familia_processo: Annotated[
-            str | None,
-            Field(description="Literal process-family name filter."),
-        ] = None,
-        q: Annotated[
-            str | None,
-            Field(
-                description=(
-                    "Free-text search contained in the record's own "
-                    "text fields (name, code, family, description, "
-                    "objective). Use only when the user asks to find "
-                    "records by their content. Omit for listing, "
-                    "counting, ordering or latest/first-record goals — "
-                    "a text filter narrows the set and cannot express "
-                    "recency."
-                )
-            ),
-        ] = None,
-        unit_code: Annotated[
-            str | None,
-            Field(description="Literal unit code filter."),
-        ] = None,
-        fase_melhoria: Annotated[
-            str | None,
-            Field(
-                description="Improvement-phase filter (instances/revisions)."
-            ),
-        ] = None,
-        status_instancia: Annotated[
-            str | None,
-            Field(description="Instance status filter."),
-        ] = None,
-        cenario_tipo: Annotated[
-            str | None,
-            Field(description="Scenario type filter."),
-        ] = None,
-        revisao_ativa: Annotated[
-            str | None,
-            Field(description="Active-revision filter."),
-        ] = None,
-        has_improvement: Annotated[
-            str | None,
-            Field(
-                description="Restrict to processes with/without improvements."
-            ),
-        ] = None,
-        date_field: Annotated[
-            str | None,
-            Field(
-                description=(
-                    "Owner date field used with date_from/date_to "
-                    "(temporal evidence; not a sort key)."
-                )
-            ),
-        ] = None,
-        date_from: Annotated[
-            str | None,
-            Field(description="Inclusive lower bound for date_field."),
-        ] = None,
-        date_to: Annotated[
-            str | None,
-            Field(description="Inclusive upper bound for date_field."),
-        ] = None,
-        page: Annotated[
-            str | None,
-            Field(
-                description=(
-                    "Page cursor for listing (owner pages records; the "
-                    "set is ordered by last update, newest first)."
-                )
-            ),
-        ] = None,
-        page_size: Annotated[
-            str | None,
-            Field(description="Records per page (bounded by owner)."),
-        ] = None,
-    ) -> CallToolResult:
-        return bridge.tool_record_read(
-            action=action,
-            entity=entity,
-            id=id,
-            parent_id=parent_id,
-            instance_id=instance_id,
-            filial_id=filial_id,
-            setor_id=setor_id,
-            status=status,
-            familia_processo=familia_processo,
-            q=q,
-            unit_code=unit_code,
-            fase_melhoria=fase_melhoria,
-            status_instancia=status_instancia,
-            cenario_tipo=cenario_tipo,
-            revisao_ativa=revisao_ativa,
-            has_improvement=has_improvement,
-            date_field=date_field,
-            date_from=date_from,
-            date_to=date_to,
-            page=page,
-            page_size=page_size,
-        )
-
-    # --- Semantic family: evidence (structured metadata only) --------------
-
-    @mcp.tool(
-        name="evidence_read",
-        title="Evidence read",
-        description=(
-            "READ: evidence metadata — action=list (scope=process|revision, "
-            "parent_id required). Binary payloads are not available on this "
-            "transport. Writes use prepare_evidence_change."
-        ),
-        annotations=_annotations("evidence_read", "Evidence read"),
-        meta=meta,
-    )
-    def evidence_read(
-        action: Literal["list"],
-        scope: str | None = None,
-        parent_id: str | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_evidence_read(
-            action=action, scope=scope, parent_id=parent_id
-        )
-
-    @mcp.tool(
-        name="get_process_timeline",
-        title="Get process timeline",
-        description=(
-            "READ: audit timeline of one already-identified process "
-            "(requires processo_id) — the events of a known process, "
-            "not a way to find which process is latest."
-        ),
-        annotations=_annotations("get_process_timeline", "Get process timeline"),
-        meta=meta,
-    )
-    def get_process_timeline(
-        processo_id: str, page: int = 1, page_size: int = 100
-    ) -> CallToolResult:
-        return bridge.tool_get_process_timeline(
-            processo_id=processo_id, page=page, page_size=page_size
-        )
-
-    # --- Semantic family: meeting minutes -----------------------------------
-
-    @mcp.tool(
-        name="meeting_minute_read",
-        title="Meeting minute read",
-        description=(
-            "READ/ANALYSIS: pending_signatures|audit|versions|participants|"
-            "signers|generate_from_transcript (transcript draft is "
-            "analysis-only — never persists). Writes use "
-            "prepare_meeting_minute_change followed by commit_proposal per "
-            "execution_policy."
-        ),
-        annotations=_annotations("meeting_minute_read", "Meeting minute read"),
-        meta=meta,
-    )
-    def meeting_minute_read(
-        action: _MinuteReadActionParam,
-        minute_id: str | None = None,
-        data: dict | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_meeting_minute_read(
-            action=action, minute_id=minute_id, data=data
-        )
-
-    # --- Semantic family: collaboration -------------------------------------
-    # Transformômetro tasks + interaction rooms/messages — same canonical
-    # use cases as the Portal (TaskCommandUseCases / InteractionRoomUseCases).
-
-    @mcp.tool(
-        name="collaboration_read",
-        title="Collaboration read",
-        description=(
-            "READ: collaboration surface — tasks (action=my_tasks, status "
-            "filter pending|completed|cancelled|all; action=task needs "
-            "task_id; action=process_tasks needs processo_id) and "
-            "interaction rooms (action=rooms, inbox_filter; action=room "
-            "needs room_id; action=messages needs room_id, optional "
-            "limit/before_id; action=attachments returns metadata only — "
-            "room attachments have no byte route in the BFF; action="
-            "room_links / room_participants / room_impact need room_id; "
-            "action=resolve_room needs entity_type + entity_key — "
-            "read-only object resolution, never creates). Same canonical use "
-            "cases as the Portal."
-        ),
-        annotations=_annotations("collaboration_read", "Collaboration read"),
-        meta=meta,
-    )
-    def collaboration_read(
-        action: Literal[
-            "my_tasks",
-            "task",
-            "process_tasks",
-            "rooms",
-            "room",
-            "messages",
-            "attachments",
-            "room_links",
-            "room_participants",
-            "room_impact",
-            "resolve_room",
-        ],
-        task_id: str | None = None,
-        processo_id: str | None = None,
-        status: str = "pending",
-        room_id: str | None = None,
-        inbox_filter: str = "all",
-        limit: int = 50,
-        before_id: str | None = None,
-        entity_type: str | None = None,
-        entity_key: str | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_collaboration_read(
-            action=action,
-            task_id=task_id,
-            processo_id=processo_id,
-            status=status,
-            room_id=room_id,
-            inbox_filter=inbox_filter,
-            limit=limit,
-            before_id=before_id,
-            entity_type=entity_type,
-            entity_key=entity_key,
-        )
-
-    # --- Semantic family: diagnostics (MCP-native) --------------------------
-
-    @mcp.tool(
-        name="diagnostic_read",
-        title="Diagnostic read",
-        description=(
-            "READ: Diagnostic V1 — action=get (diagnostic_id; full detail "
-            "with revision context, resolved evidence links and data-quality "
-            "signals — findings are OBSERVED/CALCULATED, hypotheses and "
-            "conclusions are INFERRED claims, VALIDATED != FACT) or "
-            "action=by_revision (revision_id; canonical-ordered summaries, "
-            "no evidence fan-out). Use before prepare_diagnostic_change "
-            "when target ids are unknown."
-        ),
-        annotations=_annotations("diagnostic_read", "Diagnostic read"),
-        meta=meta,
-    )
-    def diagnostic_read(
-        action: Literal["get", "by_revision"],
-        diagnostic_id: str | None = None,
-        revision_id: str | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_diagnostic_read(
-            action=action,
-            diagnostic_id=diagnostic_id,
-            revision_id=revision_id,
-        )
-
-    # --- PREPARE (semantic families — action selects capability/policy) ----
-
-    @mcp.tool(
-        name="prepare_record_change",
-        title="Prepare record change",
-        description=(
-            "PREPARE only — never persists business state. Conventional "
-            "ENTITY CRUD (create|update|delete|duplicate) for catalog "
-            "entities (e.g. process_document). Returns opaque "
-            "proposal_handle + exact sealed change. Do NOT use for "
-            "business workflows (revision activation, evidence, meeting "
-            "minutes, packages, cost adjustment, tasks, rooms, "
-            "diagnostics) — use the family prepare_* tools instead. "
-            "Material execution via commit_proposal(proposal_handle) "
-            "follows proposal.execution_policy: auto_act "
-            "(create/update/duplicate) commits immediately — no extra "
-            "conversational confirmation; confirm_before_act (delete) "
-            "shows the exact change and requires one explicit user "
-            "confirmation first."
-        ),
-        annotations=_annotations("prepare_record_change", "Prepare record change"),
-        meta=meta,
-    )
-    def prepare_record_change(
-        entity: _EntityParam,
-        operation: _RecordOperationParam,
-        record_id: str | None = None,
-        changes: dict | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_prepare_record_change(
-            entity=entity,
-            operation=operation,
-            record_id=record_id,
-            changes=changes,
-        )
-
-    @mcp.tool(
-        name="prepare_governed_operation",
-        title="Prepare governed operation",
-        description=(
-            "PREPARE only — never persists business state. Special "
-            "governed operations (NOT generic record CRUD): "
-            "activate_revision (id; overwrites current — "
-            "confirm_before_act), recalculate_dashboard (revisao_id or "
-            "processo_id + optional competencia range — "
-            "confirm_before_act), commit_improvement_package (process + "
-            "instance + optional baseline/scenario; ready=false when "
-            "incomplete — confirm_before_act), adjust_shared_resource_cost "
-            "(recurso_compartilhado_id + valor_mensal + vigente_desde + "
-            "optional observacoes — auto_act), update_signature_profile "
-            "(display_name — auto_act; updates only the display name, "
-            "signature image stays in UI), "
-            "migrate_legacy_diagram_to_native_bpmn (processo_id + optional "
-            "resolutions/candidate_xml_override — converts the legacy "
-            "flowchart_v1 mapping into the canonical native BPMN document — "
-            "confirm_before_act), create_bpmn_document (processo_id + "
-            "optional BPMN 2.0 xml; blank when omitted — "
-            "confirm_before_act), save_bpmn_working_copy (processo_id + "
-            "xml + expected_version matching If-Match semantics — "
-            "auto_act), create_bpmn_revision (processo_id + "
-            "expected_version + optional name/description — auto_act), "
-            "organize_bpmn_document (processo_id — canonical Organizar "
-            "auto-layout on the working copy, DI-only; idempotent "
-            "no-op when already organized — auto_act). "
-            "Then "
-            "commit_proposal per proposal.execution_policy; AuthZ is "
-            "revalidated at ACT with authoritative read-back."
-        ),
-        annotations=_annotations(
-            "prepare_governed_operation", "Prepare governed operation"
-        ),
-        meta=meta,
-    )
-    def prepare_governed_operation(
-        action: _GovernedOperationParam,
-        id: str | None = None,
-        revisao_id: str | None = None,
-        processo_id: str | None = None,
-        competencia_inicio: str | None = None,
-        competencia_fim: str | None = None,
-        recurso_compartilhado_id: str | None = None,
-        valor_mensal: float | None = None,
-        vigente_desde: str | None = None,
-        observacoes: str | None = None,
-        process: dict | None = None,
-        instance: dict | None = None,
-        baseline: dict | None = None,
-        scenario: dict | None = None,
-        activate_scenario: bool = False,
-        recalculate: bool = False,
-        display_name: str | None = None,
-        resolutions: dict | None = None,
-        candidate_xml_override: str | None = None,
-        xml: str | None = None,
-        expected_version: int | None = None,
-        name: str | None = None,
-        description: str | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_prepare_governed_operation(
-            action=action,
-            id=id,
-            revisao_id=revisao_id,
-            processo_id=processo_id,
-            competencia_inicio=competencia_inicio,
-            competencia_fim=competencia_fim,
-            recurso_compartilhado_id=recurso_compartilhado_id,
-            valor_mensal=valor_mensal,
-            vigente_desde=vigente_desde,
-            observacoes=observacoes,
-            process=process,
-            instance=instance,
-            baseline=baseline,
-            scenario=scenario,
-            activate_scenario=activate_scenario,
-            recalculate=recalculate,
-            display_name=display_name,
-            resolutions=resolutions,
-            candidate_xml_override=candidate_xml_override,
-            xml=xml,
-            expected_version=expected_version,
-            name=name,
-            description=description,
-        )
-
-    @mcp.tool(
-        name="prepare_evidence_change",
-        title="Prepare evidence change",
-        description=(
-            "PREPARE only — never persists business state. Evidence "
-            "actions: create_link|update_description|delete (scope="
-            "process|revision + parent_id required; delete needs "
-            "confirm_delete=true). Structured metadata only — not generic "
-            "file CRUD, no binary payloads. execution_policy="
-            "confirm_before_act: show the exact change and obtain one "
-            "explicit user confirmation before commit_proposal."
-        ),
-        annotations=_annotations(
-            "prepare_evidence_change", "Prepare evidence change"
-        ),
-        meta=meta,
-    )
-    def prepare_evidence_change(
-        action: Literal["create_link", "update_description", "delete"],
-        scope: str,
-        parent_id: str,
-        evidence_id: str | None = None,
-        url_externa: str | None = None,
-        descricao: str | None = None,
-        confirm_delete: bool = False,
-    ) -> CallToolResult:
-        return bridge.tool_prepare_evidence_change(
-            action=action,
-            scope=scope,
-            parent_id=parent_id,
-            evidence_id=evidence_id,
-            url_externa=url_externa,
-            descricao=descricao,
-            confirm_delete=confirm_delete,
-        )
-
-    @mcp.tool(
-        name="prepare_meeting_minute_change",
-        title="Prepare meeting minute change",
-        description=(
-            "PREPARE only — never persists business state. Meeting-minute "
-            "writes: workflow transitions send|finalize|cancel|refuse "
-            "(minute_id + reason; reason required for refuse) and manage "
-            "writes resend|create_version|"
-            "set_participants|set_signers (minute_id + data payload; "
-            "resend requires data.confirm_resend=true). READ/analyze "
-            "actions — pending_signatures|audit|versions|participants|"
-            "signers|generate_from_transcript — use meeting_minute_read. "
-            "execution_policy=confirm_before_act: show the exact change "
-            "and obtain one explicit user confirmation before "
-            "commit_proposal."
-        ),
-        annotations=_annotations(
-            "prepare_meeting_minute_change", "Prepare meeting minute change"
-        ),
-        meta=meta,
-    )
-    def prepare_meeting_minute_change(
-        action: _MinuteChangeActionParam,
-        minute_id: str | None = None,
-        reason: str | None = None,
-        data: dict | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_prepare_meeting_minute_change(
-            action=action, minute_id=minute_id, reason=reason, data=data
-        )
-
-    @mcp.tool(
-        name="prepare_collaboration_change",
-        title="Prepare collaboration change",
-        description=(
-            "PREPARE only — never persists business state. Collaboration "
-            "writes via the same canonical use cases as the Portal. Task "
-            "actions: create_task|update_task|complete_task|cancel_task "
-            "(TaskCommandUseCases; create needs title; update/complete/"
-            "cancel need task_id). Room actions: open_room (processo_id, "
-            "or room_kind=ticket + ticket_id)|post_message|edit_message|"
-            "delete_message|toggle_reaction|pin_message|unpin_message|"
-            "mark_room_read plus V2 room management: create_standalone_room "
-            "(title, optional participant_ids)|add_room_link (entity_type + "
-            "entity_key, optional link_role)|remove_room_link (link_id)|"
-            "add_participant|remove_participant (user_id)|delete_room|"
-            "restore_room (room_id) "
-            "(InteractionRoomUseCases; message actions need room_id + "
-            "message_id). Then commit_proposal per proposal."
-            "execution_policy — auto_act commits immediately with no "
-            "extra confirmation; confirm_before_act (cancel_task, "
-            "delete_message, create_standalone_room, add_room_link, "
-            "remove_room_link, remove_participant, delete_room, "
-            "restore_room) requires one explicit user confirmation "
-            "first. Binary attachment upload/download is not available "
-            "on this transport."
-        ),
-        annotations=_annotations(
-            "prepare_collaboration_change", "Prepare collaboration change"
-        ),
-        meta=meta,
-    )
-    def prepare_collaboration_change(
-        action: Literal[
-            "create_task",
-            "update_task",
-            "complete_task",
-            "cancel_task",
-            "open_room",
-            "post_message",
-            "edit_message",
-            "delete_message",
-            "toggle_reaction",
-            "pin_message",
-            "unpin_message",
-            "mark_room_read",
-            "create_standalone_room",
-            "add_room_link",
-            "remove_room_link",
-            "add_participant",
-            "remove_participant",
-            "delete_room",
-            "restore_room",
-        ],
-        task_id: str | None = None,
-        title: str | None = None,
-        description: str | None = None,
-        assignee_user_id: str | None = None,
-        due_date: str | None = None,
-        source_interaction_message_id: str | None = None,
-        processo_id: str | None = None,
-        room_id: str | None = None,
-        message_id: str | None = None,
-        content: str | None = None,
-        parent_id: str | None = None,
-        mentions: list | None = None,
-        reaction: str | None = None,
-        room_kind: str | None = None,
-        ticket_id: str | None = None,
-        participant_ids: list | None = None,
-        entity_type: str | None = None,
-        entity_key: str | None = None,
-        link_role: str | None = None,
-        link_id: str | None = None,
-        user_id: str | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_prepare_collaboration_change(
-            action=action,
-            task_id=task_id,
-            title=title,
-            description=description,
-            assignee_user_id=assignee_user_id,
-            due_date=due_date,
-            source_interaction_message_id=source_interaction_message_id,
-            processo_id=processo_id,
-            room_id=room_id,
-            message_id=message_id,
-            content=content,
-            parent_id=parent_id,
-            mentions=mentions,
-            reaction=reaction,
-            room_kind=room_kind,
-            ticket_id=ticket_id,
-            participant_ids=participant_ids,
-            entity_type=entity_type,
-            entity_key=entity_key,
-            link_role=link_role,
-            link_id=link_id,
-            user_id=user_id,
-        )
-
-    @mcp.tool(
-        name="prepare_diagnostic_change",
-        title="Prepare diagnostic change",
-        description=(
-            "PREPARE only — does not persist. Diagnostic writes: "
-            "action=create (revision_id + problem_statement; "
-            "diagnostic_id is server-generated and shown in the sealed "
-            "change — never supply it; execution_policy=auto_act so "
-            "commit_proposal may execute immediately without a second "
-            "confirmation) or one of the canonical manage actions "
-            "(add_finding|add_hypothesis|add_causal_link|"
-            "add_evidence_link|add_conclusion|validate_hypothesis|"
-            "reject_hypothesis|supersede_hypothesis|"
-            "mark_hypothesis_stale_evidence|"
-            "mark_hypothesis_revalidation_required|validate_conclusion|"
-            "reject_conclusion|supersede_conclusion — diagnostic_id + "
-            "payload; add_* entity ids are server-generated, lifecycle/"
-            "mark actions target EXISTING ids — READ first via "
-            "diagnostic_read; execution_policy=confirm_before_act: one "
-            "explicit user confirmation before commit_proposal)."
-        ),
-        annotations=_annotations(
-            "prepare_diagnostic_change", "Prepare diagnostic change"
-        ),
-        meta=meta,
-    )
-    def prepare_diagnostic_change(
-        action: Literal[
-            "create",
-            "add_finding",
-            "add_hypothesis",
-            "add_causal_link",
-            "add_evidence_link",
-            "add_conclusion",
-            "validate_hypothesis",
-            "reject_hypothesis",
-            "supersede_hypothesis",
-            "mark_hypothesis_stale_evidence",
-            "mark_hypothesis_revalidation_required",
-            "validate_conclusion",
-            "reject_conclusion",
-            "supersede_conclusion",
-        ],
-        diagnostic_id: str | None = None,
-        revision_id: str | None = None,
-        problem_statement: str | None = None,
-        provenance: dict | None = None,
-        payload: dict | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_prepare_diagnostic_change(
-            action=action,
-            diagnostic_id=diagnostic_id,
-            revision_id=revision_id,
-            problem_statement=problem_statement,
-            provenance=provenance,
-            payload=payload,
-        )
-
-    @mcp.tool(
-        name="prepare_helpdesk_change",
-        title="Prepare Helpdesk change",
-        description=(
-            "PREPARE only — never persists. Governed Helpdesk/GLPI writes "
-            "via the Helpdesk BFF (same-user Bearer; the BFF owns business "
-            "rules, idempotency and the GLPI side effect). "
-            "action=create_ticket (title, description, category_id, "
-            "urgency_id; optional assignee_id/observer_ids) | "
-            "set_assignee (ticket_id + user_id — resolve the target user "
-            "first via helpdesk_read catalog users purpose=assignee; never "
-            "infer an id) | add_followup (ticket_id + content; optional "
-            "request_type_id) | update_followup (ticket_id + followup_id + "
-            "content — edits the body of an existing followup; read the "
-            "ticket first to resolve the real followup_id, never infer it) | "
-            "update_ticket_classification (ticket_id + at least one of "
-            "urgency_id/impact_id/category_id/type_id/priority_id/"
-            "request_type_id — partial update; omitted fields keep their "
-            "value; resolve ids via helpdesk_read catalogs urgencies/"
-            "impacts/priorities/ticket_types/categories/request_types; "
-            "GLPI may recompute priority from urgency*impact) | "
-            "create_task (ticket_id + content; optional "
-            "state/duration_seconds/task_category_id/user_tech_id/"
-            "group_tech_id/planned_begin/planned_end) | add_solution "
-            "(ticket_id + content; optional solution_type_id) | "
-            "request_validation (ticket_id + approver_id; optional "
-            "approver_type=user|group, content) | accept_solution | "
-            "reject_solution (ticket_id; optional content) | "
-            "submit_satisfaction (ticket_id + satisfaction 1-5; optional "
-            "comment) | accept_validation | reject_validation (ticket_id + "
-            "validation_id; optional content) | delete_ticket (ticket_id — "
-            "moves the ticket to the GLPI trash; always confirm_before_act) | "
-            "unlink_glpi_session (unlinks the user's own GLPI OAuth session; "
-            "relink is a browser flow) | upload_attachment (ticket_id + "
-            "file — the file the user attached to this conversation, bound "
-            "by the host as a fileParams object; optional title). Read the "
-            "ticket first via helpdesk_read(action=ticket) — PREPARE seals "
-            "a state fingerprint and ACT refuses a stale proposal. Then "
-            "commit_proposal per proposal. execution_policy: create_ticket/"
-            "add_followup/create_task/upload_attachment are auto_act; the "
-            "rest require one explicit user confirmation before "
-            "commit_proposal."
-        ),
-        annotations=_annotations(
-            "prepare_helpdesk_change", "Prepare Helpdesk change"
-        ),
-        meta={**meta, "openai/fileParams": ["file"]},
-    )
-    def prepare_helpdesk_change(
-        action: _HelpdeskActionParam,
-        ticket_id: int | None = None,
-        followup_id: int | None = None,
-        title: str | None = None,
-        file: _ChatGptFileParam | None = None,
-        description: str | None = None,
-        category_id: int | None = None,
-        urgency_id: int | None = None,
-        impact_id: int | None = None,
-        priority_id: int | None = None,
-        type_id: int | None = None,
-        observer_ids: list[int] | None = None,
-        assignee_id: int | None = None,
-        user_id: int | None = None,
-        content: str | None = None,
-        request_type_id: int | None = None,
-        solution_type_id: int | None = None,
-        approver_type: str | None = None,
-        approver_id: int | None = None,
-        validation_id: int | None = None,
-        satisfaction: int | None = None,
-        comment: str | None = None,
-        state: int | None = None,
-        duration_seconds: int | None = None,
-        task_category_id: int | None = None,
-        user_tech_id: int | None = None,
-        group_tech_id: int | None = None,
-        planned_begin: str | None = None,
-        planned_end: str | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_prepare_helpdesk_change(
-            action=action,
-            ticket_id=ticket_id,
-            followup_id=followup_id,
-            title=title,
-            description=description,
-            category_id=category_id,
-            urgency_id=urgency_id,
-            impact_id=impact_id,
-            priority_id=priority_id,
-            type_id=type_id,
-            observer_ids=observer_ids,
-            assignee_id=assignee_id,
-            user_id=user_id,
-            content=content,
-            request_type_id=request_type_id,
-            solution_type_id=solution_type_id,
-            approver_type=approver_type,
-            approver_id=approver_id,
-            validation_id=validation_id,
-            satisfaction=satisfaction,
-            comment=comment,
-            state=state,
-            duration_seconds=duration_seconds,
-            task_category_id=task_category_id,
-            user_tech_id=user_tech_id,
-            group_tech_id=group_tech_id,
-            planned_begin=planned_begin,
-            planned_end=planned_end,
-            file=file.model_dump(exclude_none=True) if file else None,
-        )
-
-    # --- SEMANTIC V3 (issue #124) — six semantic tools over the same ------
-    # governed capabilities. Registered in coexistence with the V2 family
-    # names; capability/policy/AuthZ resolution is identical.
+    # --- SEMANTIC V3 (issue #124 — final cutover) --------------------------
+    # The ONLY public surface: six semantic tools over the governed
+    # capabilities. The 22 V2 family names are tombstoned; their bridge
+    # functions remain internal adapters. Capability/policy/AuthZ
+    # resolution is unchanged.
 
     @mcp.tool(
         name="get_context",
@@ -1234,9 +222,19 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def get_context(
-        section: Literal["overview", "self", "workspace", "catalog"]
-        | None = None,
-        entity: str | None = None,
+        section: Annotated[
+            Literal["overview", "self", "workspace", "catalog"] | None,
+            Field(description="Discovery section (default: overview)."),
+        ] = None,
+        entity: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Entity filter for section=catalog — projects one "
+                    "entity contract instead of the full catalog."
+                )
+            ),
+        ] = None,
     ) -> CallToolResult:
         return bridge_v3.tool_get_context(section=section, entity=entity)
 
@@ -1260,7 +258,8 @@ def create_mcp_server() -> MCPServer:
             "discovery), solution (catalog|context), helpdesk "
             "(session|capabilities|tickets|ticket|attachment|catalog), "
             "meeting_minute (pending_signatures|audit|versions|"
-            "participants|signers), evidence (list), task (my_tasks|"
+            "participants|signers|generate_from_transcript), "
+            "evidence (list), task (my_tasks|"
             "task|process_tasks), interaction_room (rooms|room|messages|"
             "attachments|room_links|room_participants|room_impact|"
             "resolve_room), diagnostic (get|by_revision)."
@@ -1269,9 +268,35 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def read(
-        entity: str,
-        action: str | None = None,
-        params: dict | None = None,
+        entity: Annotated[
+            str,
+            Field(
+                description=(
+                    "Domain or specialized entity to read (see "
+                    "description for the closed vocabulary)."
+                )
+            ),
+        ],
+        action: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Typed entity action — search|get for domain "
+                    "entities; specialized entities declare their own "
+                    "closed action set."
+                )
+            ),
+        ] = None,
+        params: Annotated[
+            dict | None,
+            Field(
+                description=(
+                    "Action-scoped parameters: id for get; "
+                    "filters/pagination for search; action-specific "
+                    "fields for specialized routes."
+                )
+            ),
+        ] = None,
     ) -> CallToolResult:
         return bridge_v3.tool_read(
             entity=entity, action=action, params=params
@@ -1291,8 +316,20 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def knowledge(
-        source: Literal["methodology", "product_guide"],
-        params: dict | None = None,
+        source: Annotated[
+            Literal["methodology", "product_guide"],
+            Field(description="Knowledge family to project."),
+        ],
+        params: Annotated[
+            dict | None,
+            Field(
+                description=(
+                    "Source-scoped parameters (method/task/intent/ "
+                    "context for methodology; topic/section for "
+                    "product_guide)."
+                )
+            ),
+        ] = None,
     ) -> CallToolResult:
         return bridge_v3.tool_knowledge(source=source, params=params)
 
@@ -1327,16 +364,62 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def execute(
-        capability: str | None = None,
-        args: dict | None = None,
-        entity: str | None = None,
-        operation: Literal["create", "update", "duplicate"] | None = None,
-        record_id: str | None = None,
-        changes: dict | None = None,
-        ops: list[dict] | None = None,
-        proposal_handle: str | None = None,
-        proposal_id: str | None = None,
-        confirmation: bool | None = None,
+        capability: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Canonical governed capability or family action "
+                    "(e.g. create_record, create_task, activate_revision)."
+                )
+            ),
+        ] = None,
+        args: Annotated[
+            dict | None,
+            Field(description="Capability-scoped arguments."),
+        ] = None,
+        entity: Annotated[
+            str | None,
+            Field(description="Record entity for entity/operation form."),
+        ] = None,
+        operation: Annotated[
+            Literal["create", "update", "duplicate"] | None,
+            Field(description="Record operation for entity form."),
+        ] = None,
+        record_id: Annotated[
+            str | None,
+            Field(description="Target record id for update/duplicate."),
+        ] = None,
+        changes: Annotated[
+            dict | None,
+            Field(description="Field changes for the entity form."),
+        ] = None,
+        ops: Annotated[
+            list[dict] | None,
+            Field(
+                description=(
+                    "Typed multi-action sequence; $ops.N.<path> refs "
+                    "consume earlier authoritative read-backs."
+                )
+            ),
+        ] = None,
+        proposal_handle: Annotated[
+            str | None,
+            Field(description="Opaque handle of a sealed proposal."),
+        ] = None,
+        proposal_id: Annotated[
+            str | None,
+            Field(description="Persisted proposal id (gp_...) resume token."),
+        ] = None,
+        confirmation: Annotated[
+            bool | None,
+            Field(
+                description=(
+                    "Explicit confirmation to commit a pending "
+                    "proposal (required when the sealed policy is "
+                    "confirm_before_act)."
+                )
+            ),
+        ] = None,
     ) -> CallToolResult:
         return bridge_v3.tool_execute(
             capability=capability,
@@ -1371,49 +454,54 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def delete(
-        capability: str | None = None,
-        args: dict | None = None,
-        entity: _EntityParam | None = None,
-        record_id: str | None = None,
-        proposal_handle: str | None = None,
-        proposal_id: str | None = None,
-        confirmation: bool | None = None,
+        capability: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Destructive capability from the closed set "
+                    "(helpdesk_delete_ticket, "
+                    "helpdesk_unlink_glpi_session, "
+                    "delete_interaction_message, "
+                    "delete_interaction_room, manage_evidence "
+                    "args.operation=delete)."
+                )
+            ),
+        ] = None,
+        args: Annotated[
+            dict | None,
+            Field(description="Destructive capability arguments."),
+        ] = None,
+        entity: Annotated[
+            _EntityParam | None,
+            Field(description="Record entity for record delete form."),
+        ] = None,
+        record_id: Annotated[
+            str | None,
+            Field(description="Target record id for entity form."),
+        ] = None,
+        proposal_handle: Annotated[
+            str | None,
+            Field(description="Opaque handle of a sealed delete proposal."),
+        ] = None,
+        proposal_id: Annotated[
+            str | None,
+            Field(description="Persisted delete proposal id resume token."),
+        ] = None,
+        confirmation: Annotated[
+            bool | None,
+            Field(
+                description=(
+                    "Explicit confirmation — deletes always require a "
+                    "pending proposal plus confirmation=true."
+                )
+            ),
+        ] = None,
     ) -> CallToolResult:
         return bridge_v3.tool_delete(
             capability=capability,
             args=args,
             entity=entity,
             record_id=record_id,
-            proposal_handle=proposal_handle,
-            proposal_id=proposal_id,
-            confirmation=confirmation,
-        )
-
-    # --- COMMON COMMIT (proposal_handle only; not a generic executor) -----
-
-    @mcp.tool(
-        name="commit_proposal",
-        title="Commit proposal",
-        description=(
-            "ACT/COMMIT: execute the exact prepared change. "
-            "Accepts proposal_handle OR proposal_id (gp_...) — use "
-            "proposal_id to resume a proposal prepared in an earlier turn "
-            "when the opaque handle was not carried over; both resolve to "
-            "the same stored proposal. Does NOT accept entity/operation/"
-            "changes/tool_name. Revalidates AuthZ, user binding, "
-            "fingerprint, then authoritative read-back. "
-            "Use after any prepare_* tool."
-        ),
-        annotations=_annotations("commit_proposal", "Commit proposal"),
-        meta=meta,
-    )
-    def commit_proposal(
-        proposal_handle: str | None = None,
-        proposal_id: str | None = None,
-        *,
-        confirmation: bool,
-    ) -> CallToolResult:
-        return bridge.tool_commit_proposal(
             proposal_handle=proposal_handle,
             proposal_id=proposal_id,
             confirmation=confirmation,

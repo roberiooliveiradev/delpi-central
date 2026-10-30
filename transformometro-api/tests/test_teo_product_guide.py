@@ -204,8 +204,11 @@ def test_mcp_and_openapi_projection() -> None:
     mcp = create_mcp_server()
     tools = mcp._tool_manager.list_tools()
     names = [t.name for t in tools]
-    assert "get_product_guide" in names
-    guide_tool = next(t for t in tools if t.name == "get_product_guide")
+    # SEMANTIC_V3_ONLY: product guides are served by
+    # knowledge(source=product_guide).
+    assert "knowledge" in names
+    assert "get_product_guide" not in names
+    guide_tool = next(t for t in tools if t.name == "knowledge")
     assert guide_tool.annotations.read_only_hint is True
 
 

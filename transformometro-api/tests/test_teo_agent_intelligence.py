@@ -84,7 +84,15 @@ def test_mcp_branding_obeys_directives_not_universal_package_confirm():
     assert "commit_now" not in text
     assert "sempre confirmation antes de package" not in text.lower()
     assert "confirmation" in text.lower() or "Confirma?" in text
-    assert "commit_proposal" in text
+    # Semantic V3 surface: instructions must name the six tools and must
+    # not reference tombstoned legacy tool names.
+    for tool in ("get_context", "read", "analyze", "knowledge",
+                 "execute", "delete"):
+        assert tool in text
+    for tombstone in ("commit_proposal", "prepare_record_change",
+                      "record_read", "get_catalog", "get_methodology_guide",
+                      "diagnostic_read", "meeting_minute_read"):
+        assert tombstone not in text
 
 
 def test_intelligence_json_covers_all_gpt_ops_and_mcp_tools():

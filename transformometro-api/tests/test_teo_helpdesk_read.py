@@ -432,7 +432,7 @@ def _ko() -> dict[str, Any]:
 def test_helpdesk_source_registered():
     src = _ko()["sources"]["helpdesk_demand"]
     assert src["authority"] == "helpdesk_bff_glpi"
-    assert src["tools"] == ["helpdesk_read"]
+    assert src["tools"] == ["read"]
     assert "INFORMED" in src["epistemic"][1]
 
 
@@ -442,7 +442,7 @@ def test_helpdesk_gate_exists():
 
 def test_scenario_a_pending_tickets_routes_to_helpdesk_only():
     route = _ko()["routing"]["HELPDESK_DISCOVERY"]
-    assert route["route"] == ["helpdesk_read"]
+    assert route["route"] == ["read(entity=helpdesk)"]
     assert set(route["avoid"]) >= {
         "methodology",
         "solution_ecosystem",
@@ -452,14 +452,14 @@ def test_scenario_a_pending_tickets_routes_to_helpdesk_only():
 
 def test_scenario_c_recurrence_then_solution_ecosystem():
     demand = _ko()["routing"]["DEMAND_ANALYSIS"]
-    assert demand["route"][0] == "helpdesk_read"
+    assert demand["route"][0] == "read(entity=helpdesk)"
 
 
 def test_scenario_d_demand_to_process_chain():
     d2p = _ko()["routing"]["DEMAND_TO_PROCESS"]
     blob = " ".join(d2p["route"])
-    assert "record_read" in blob
-    assert "get_process_context" in blob
+    assert "action=search" in blob
+    assert "entity=process_context" in blob
     assert "NÃO viram AS-IS" in d2p["rule"]
 
 

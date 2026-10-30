@@ -70,7 +70,7 @@ def test_source_map_covers_all_knowledge_families():
     ):
         assert family in sources, family
     # Boundary invariants.
-    assert sources["act"]["tools"] == ["commit_proposal"]
+    assert sources["act"]["tools"] == ["execute", "delete"]
     assert sources["workspace_context"]["authority"] == "navigation_hint_only"
 
 
@@ -93,10 +93,10 @@ def test_scenario_1_dashboard_need_routes_to_ecosystem_first():
     """Dashboard proposal → process truth → ecosystem → fit. Never NEW first."""
     digital = _ko()["routing"]["DIGITAL_SOLUTION_NEED"]
     pipeline = digital["pipeline"]
-    assert "solution_read(action=catalog)" in pipeline
-    assert "solution_read(action=context) nos candidatos" in pipeline
+    assert "read(action=catalog)" in pipeline
+    assert "read(action=context) nos candidatos" in pipeline
     assert pipeline.index("classify fit") > pipeline.index(
-        "solution_read(action=catalog)"
+        "read(action=catalog)"
     )
     rule = digital["rule"]
     assert "NEW_CAPABILITY_CANDIDATE" in rule
@@ -113,20 +113,20 @@ def test_scenario_1_dashboard_need_routes_to_ecosystem_first():
 def test_scenario_2_product_usage_no_ecosystem():
     """'Como cadastro corretamente o baseline?' → product guide, no solutions."""
     product = _ko()["routing"]["PRODUCT_USAGE"]
-    assert product["route"][0] == "get_product_guide"
-    assert "solution_read" not in str(product["route"])
+    assert product["route"][0] == "knowledge(source=product_guide)"
+    assert "entity=solution" not in str(product["route"])
     assert product["gate"] == "PRODUCT_USAGE_GATE"
 
 
 def test_scenario_3_diagnosis_hypothesis_not_fact():
     diag = _ko()["routing"]["PROCESS_DIAGNOSIS"]
-    assert "get_process_context" in diag["route"][0]
+    assert "process_context" in diag["route"][0]
     assert "hipótese" in diag["rule"]
 
 
 def test_scenario_4_solution_discovery():
     disc = _ko()["routing"]["SOLUTION_DISCOVERY"]
-    assert disc["route"][0] == "solution_read(action=catalog)"
+    assert disc["route"][0] == "read(action=catalog)"
 
 
 def test_scenario_5_write_no_methodology_no_solutions():
@@ -203,7 +203,7 @@ def test_r3_helpdesk_source_has_bounded_analysis_contract():
 def test_r3_demand_analysis_output_model_and_epistemic_safety():
     route = _ko()["routing"]["DEMAND_ANALYSIS"]
     assert route["gate"] == "HELPDESK_DEMAND_GATE"
-    assert route["route"][0] == "helpdesk_read"
+    assert route["route"][0] == "read(entity=helpdesk)"
     analysis = route["analysis"]
     output = " ".join(analysis["output_model"])
     for field in ("Demand Theme", "Evidence", "Frequency", "Time Window",
@@ -223,8 +223,12 @@ def test_r3_demand_analysis_output_model_and_epistemic_safety():
 def test_r3_demand_to_process_uses_authoritative_search_first():
     route = _ko()["routing"]["DEMAND_TO_PROCESS"]
     steps = route["route"]
-    search_idx = next(i for i, s in enumerate(steps) if "record_read" in s)
-    ctx_idx = next(i for i, s in enumerate(steps) if "get_process_context" in s)
+    search_idx = next(
+        i for i, s in enumerate(steps) if "action=search" in s
+    )
+    ctx_idx = next(
+        i for i, s in enumerate(steps) if "entity=process_context" in s
+    )
     assert search_idx < ctx_idx  # never infer a process ID
     assert "PROCESS_TRUTH_GATE" in " ".join(route["gates"])
     confidence = route["confidence"]
@@ -249,8 +253,8 @@ def test_r3_sufficiency_stops_after_demand_grouping():
 def test_r3_no_new_tool_surface_for_demand():
     from tm_app.interface.mcp.constants import MCP_TOOL_NAMES
 
-    # Semantic V3 coexistence: 23 V2 names + 6 semantic tools.
-    assert len(MCP_TOOL_NAMES) == 28
+    # Semantic V3 ONLY: exactly the six semantic tools.
+    assert len(MCP_TOOL_NAMES) == 6
     forbidden = {"demand_analysis", "helpdesk_analysis", "cluster_tickets",
                  "ticket_insights", "find_process_from_ticket"}
     assert not forbidden.intersection(MCP_TOOL_NAMES)

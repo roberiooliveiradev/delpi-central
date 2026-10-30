@@ -243,24 +243,24 @@ def _seed_diagnostic(repo, **kwargs) -> Diagnostic:
 
 
 class TestSurfaceRegistration:
-    def test_exactly_four_new_tools_registered(self):
-        # Tool Surface Rationalization V1: the four pre-family tools are
-        # consolidated into the diagnostic family (2 tools, same actions).
+    def test_diagnostic_capability_served_by_semantic_tools(self):
+        # SEMANTIC_V3_ONLY: the diagnostic family tools are tombstoned;
+        # diagnostic reads run through ``read`` (entity=diagnostic) and
+        # governed writes through ``execute``.
         tools = asyncio.run(create_mcp_server().list_tools())
         names = {t.name for t in tools}
-        assert {"diagnostic_read", "prepare_diagnostic_change"} <= names
+        assert {"read", "execute"} <= names
+        assert "diagnostic_read" not in names
+        assert "prepare_diagnostic_change" not in names
 
     def test_tool_classes_correct(self):
-        assert TOOL_CLASS["diagnostic_read"] == "READ"
-        assert TOOL_CLASS["prepare_diagnostic_change"] == "PREPARE"
+        assert TOOL_CLASS["read"] == "READ"
+        assert TOOL_CLASS["execute"] == "ACT"
 
     def test_mcp_native_flagged_no_gpt_parity(self):
-        # Semantic V3 coexistence: the new semantic names are MCP-native
-        # as well (no GPT Actions parity yet) — except ``analyze``, which
-        # the registry already binds to gpt_analyze.
+        # SEMANTIC_V3_ONLY: the semantic names are MCP-native adapters —
+        # except ``analyze``, which the registry binds to gpt_analyze.
         assert MCP_NATIVE_TOOLS == {
-            "diagnostic_read",
-            "prepare_diagnostic_change",
             "get_context",
             "read",
             "knowledge",
@@ -268,11 +268,9 @@ class TestSurfaceRegistration:
             "delete",
         }
 
-    def test_commit_proposal_is_the_only_act(self):
-        # Semantic V3 adds execute/delete as governed ACT tools over the
-        # same orchestrator; legacy commit_proposal stays registered.
+    def test_execute_and_delete_are_the_only_act_tools(self):
         act_tools = sorted(n for n, c in TOOL_CLASS.items() if c == "ACT")
-        assert act_tools == ["commit_proposal", "delete", "execute"]
+        assert act_tools == ["delete", "execute"]
 
     def test_no_diagnostic_act_or_generic_executor(self):
         forbidden = {
@@ -298,42 +296,31 @@ class TestSurfaceRegistration:
             == "manage_diagnostic"
         )
 
-    def test_annotations_read_vs_prepare(self):
+    def test_annotations_read_vs_execute(self):
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        assert tools["diagnostic_read"].annotations.read_only_hint is True
-        assert (
-            tools["prepare_diagnostic_change"].annotations.read_only_hint
-            is False
-        )
-        assert (
-            tools["prepare_diagnostic_change"].annotations.destructive_hint
-            is False
-        )
+        assert tools["read"].annotations.read_only_hint is True
+        assert tools["execute"].annotations.read_only_hint is False
+        assert tools["execute"].annotations.destructive_hint is False
 
-    def test_create_schema_never_requests_diagnostic_id(self):
+    def test_execute_schema_never_requires_diagnostic_id(self):
         # diagnostic_id is only meaningful for manage actions; for
-        # action=create the id is server-generated — it must never be
-        # *required* on the family schema.
+        # create_diagnostic the id is server-generated — it must never
+        # be *required* on the execute schema (it travels inside args).
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        schema = tools["prepare_diagnostic_change"].input_schema
-        props = schema["properties"]
-        assert "diagnostic_id" not in schema.get("required", [])
-        assert "diagnostic_id" in props  # optional for manage actions
-        assert "commit_now" not in props
-        assert "action" in schema.get("required", [])
-        assert {"action", "diagnostic_id", "revision_id", "problem_statement",
-                "provenance", "payload"} == set(props)
+        schema = tools["execute"].input_schema
+        required = schema.get("required", [])
+        assert "diagnostic_id" not in required
+        assert "diagnostic_id" not in schema["properties"]
+        assert "commit_now" not in schema["properties"]
 
-    def test_manage_schema_action_is_closed_allowlist_of_13(self):
+    def test_diagnostic_manage_actions_stay_closed_in_args(self):
+        # V3 carries the closed diagnostic action allowlist inside
+        # execute.args — fail-closed at the bridge; the surface schema
+        # exposes no per-capability action enum and no commit_now.
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        action_schema = tools["prepare_diagnostic_change"].input_schema[
-            "properties"
-        ]["action"]
-        assert set(action_schema["enum"]) == set(MANAGE_ACTIONS) | {"create"}
-        assert len(action_schema["enum"]) == 14
-        # commit_now must not leak into the public schema
-        props = tools["prepare_diagnostic_change"].input_schema["properties"]
+        props = tools["execute"].input_schema["properties"]
         assert "commit_now" not in props
+        assert "args" in props
 
 
 # ---------------------------------------------------------------------------
@@ -749,15 +736,20 @@ class TestCommonCommit:
         assert _structured(replay)["success"] is False
         assert repo.create.call_count == 1
 
-    def test_commit_only_accepts_proposal_handle(self):
+    def test_delete_schema_is_proposal_resumption_only(self):
+        # ``delete`` is not an arbitrary executor: besides the typed
+        # delete target it only carries proposal resumption fields —
+        # no free-form capability/action leakage beyond the closed set.
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        props = tools["commit_proposal"].input_schema["properties"]
-        assert "capability" not in props
-        assert "action" not in props
-        # proposal_id is the sanctioned recovery key for the same
-        # stored proposal — still not an arbitrary executor.
+        props = tools["delete"].input_schema["properties"]
         assert set(props) <= {
+            "capability",
+            "args",
+            "entity",
+            "record_id",
             "proposal_handle",
             "proposal_id",
             "confirmation",
         }
+        assert "action" not in props
+        assert "commit_now" not in props

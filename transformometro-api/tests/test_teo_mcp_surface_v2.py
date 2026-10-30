@@ -18,6 +18,7 @@ from tm_app.interface.mcp.constants import (
     MCP_LEGACY_REMOVED_TOOLS,
     MCP_SURFACE_BUDGET,
     MCP_TOOL_NAMES,
+    MCP_V2_REMOVED_TOOLS,
     TEO_MCP_SURFACE,
     TOOL_CLASS,
 )
@@ -29,21 +30,27 @@ from tm_app.interface.mcp.tool_bridge import (
 
 
 def test_surface_budget_and_taxonomy() -> None:
-    # Semantic V3 coexistence (issue #124): the 6 semantic tools are
-    # registered alongside the 23 V2 family names until consumer
-    # acceptance allows tombstoning the legacy surface.
-    assert TEO_MCP_SURFACE == "SEMANTIC_V3_COEXISTENCE"
+    # Semantic V3 ONLY (issue #124 — final cutover): the six semantic
+    # tools are the entire public surface; the V2 family names are
+    # tombstoned (bridge functions remain internal adapters).
+    assert TEO_MCP_SURFACE == "SEMANTIC_V3_ONLY"
     assert MCP_SURFACE_BUDGET["before_total"] == 33
-    assert MCP_SURFACE_BUDGET["after_total"] == 28
-    assert len(MCP_TOOL_NAMES) == 28
-    assert TOOL_CLASS["prepare_record_change"] == "PREPARE"
-    assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 2
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 15
+    assert MCP_SURFACE_BUDGET["after_total"] == 6
+    assert len(MCP_TOOL_NAMES) == 6
+    assert TOOL_CLASS["get_context"] == "DISCOVERY"
+    assert TOOL_CLASS["read"] == "READ"
+    assert TOOL_CLASS["analyze"] == "ANALYSIS"
+    assert TOOL_CLASS["knowledge"] == "READ"
+    assert TOOL_CLASS["execute"] == "ACT"
+    assert TOOL_CLASS["delete"] == "ACT"
+    assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
+    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 2
     assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 1
-    assert sum(1 for v in TOOL_CLASS.values() if v == "PREPARE") == 7
-    assert sum(1 for v in TOOL_CLASS.values() if v == "ACT") == 3
+    assert sum(1 for v in TOOL_CLASS.values() if v == "PREPARE") == 0
+    assert sum(1 for v in TOOL_CLASS.values() if v == "ACT") == 2
     for name in MCP_LEGACY_REMOVED_TOOLS:
+        assert name not in TOOL_CLASS
+    for name in MCP_V2_REMOVED_TOOLS:
         assert name not in TOOL_CLASS
 
 
@@ -60,6 +67,7 @@ def test_no_generic_proxy_tools_registered() -> None:
     names = {t.name for t in asyncio.run(create_mcp_server().list_tools())}
     assert banned.isdisjoint(names)
     assert MCP_LEGACY_REMOVED_TOOLS.isdisjoint(names)
+    assert MCP_V2_REMOVED_TOOLS.isdisjoint(names)
 
 
 def test_prepare_record_change_delegates_to_shared_facade() -> None:
@@ -159,57 +167,29 @@ def test_commit_proposal_rejects_confirmation_false() -> None:
         reset_proposal_store_for_tests()
 
 
-def test_specialized_prepares_still_registered() -> None:
+def test_semantic_v3_tools_registered() -> None:
     names = {t.name for t in asyncio.run(create_mcp_server().list_tools())}
-    for required in (
-        "prepare_governed_operation",
-        "prepare_evidence_change",
-        "prepare_meeting_minute_change",
-        "prepare_collaboration_change",
-        "prepare_diagnostic_change",
-        "record_read",
-        "get_process_context",
-        "analyze",
-    ):
-        assert required in names
-
-
-def _record_read_tool():
-    tools = asyncio.run(create_mcp_server().list_tools())
-    return next(t for t in tools if t.name == "record_read")
-
-
-def test_record_read_publishes_per_parameter_descriptions() -> None:
-    """C3 Task 14 — the owner's published inputSchema must carry
-    field-level semantics, not only the tool-level prose description.
-    q is record-content text search (ILIKE over canonical textual
-    fields), not a record-set scope; page/page_size are the
-    owner cursor; date_* scope temporal evidence; identifier and
-    filter fields name their exact binding."""
-    tool = _record_read_tool()
-    props = tool.input_schema.get("properties", {})
-    expected = {
-        "action", "entity", "id", "parent_id", "instance_id",
-        "filial_id", "setor_id", "status", "familia_processo",
-        "q", "unit_code", "fase_melhoria", "status_instancia",
-        "cenario_tipo", "revisao_ativa", "has_improvement",
-        "date_field", "date_from", "date_to", "page", "page_size",
+    assert names == {
+        "get_context", "read", "analyze", "knowledge",
+        "execute", "delete",
     }
+
+
+def _read_tool():
+    tools = asyncio.run(create_mcp_server().list_tools())
+    return next(t for t in tools if t.name == "read")
+
+
+def test_read_publishes_per_parameter_descriptions() -> None:
+    """The Semantic V3 ``read`` tool publishes field-level semantics for
+    its typed routing arguments; entity-specific filter fields travel
+    inside ``params`` (described in prose + the live catalog)."""
+    tool = _read_tool()
+    props = tool.input_schema.get("properties", {})
+    expected = {"entity", "action", "params"}
     assert expected <= set(props)
     for name in expected:
         description = props[name].get("description")
         assert isinstance(description, str) and description.strip(), (
-            f"record_read.{name} publishes no field description"
+            f"read.{name} publishes no field description"
         )
-
-
-def test_record_read_q_description_is_text_search_semantics() -> None:
-    """q must be described as contained text search over record
-    content fields — a consumer must not treat it as record identity,
-    ordering, or set scoping."""
-    tool = _record_read_tool()
-    description = (
-        tool.input_schema["properties"]["q"].get("description") or ""
-    ).lower()
-    assert description
-    assert "text" in description

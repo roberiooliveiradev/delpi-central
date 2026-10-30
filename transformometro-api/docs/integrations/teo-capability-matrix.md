@@ -219,9 +219,9 @@ Justification: list/get/create/update/delete fit governed allowlisted CRUD with 
 |---|---|---|---|---|
 | Process document | User JWT → use case `require_access` | Same dispatch → use case | Must use user delegation when built | `ProcessDocumentUseCases` |
 | Entity CRUD (other) | Same as GPT services | Same | PLANNED | Domain + branch_access helpers |
-| Writes governed | PREPARE → commit_proposal; confirm flag required only for confirm_before_act | execution_policy gate + backend AuthZ | Must show + human confirm before destructive commit; auto_act direct | Orchestrator / services |
-| MCP tool count | **22** (`CAPABILITY_GOVERNED_V2`) | — | — | constants.MCP_SURFACE_BUDGET |
-| Explicit confirmation | `commit_proposal` requires `confirmation` only for `confirm_before_act` proposals (auto_act commits without it) | `gpt_commit_proposal` body `confirmation` default `false` (fail-closed for destructive) | Same contract | `GovernedActionsFacade.commit_proposal` policy gate on the sealed `execution_policy` |
+| Writes governed | execute: auto_act direto / proposal + confirmation=true (confirm_before_act); delete para destrutivas | execution_policy gate + backend AuthZ | Must show + human confirm before destructive commit; auto_act direct | Orchestrator / services |
+| MCP tool count | **6** (`SEMANTIC_V3_ONLY`) | — | — | constants.MCP_SURFACE_BUDGET |
+| Explicit confirmation | `execute`/`delete` commit a pending proposal only with `confirmation=true` on `confirm_before_act` (auto_act commits without it) | `gpt_commit_proposal` body `confirmation` default `false` (fail-closed for destructive) | Same contract | `GovernedActionsFacade.commit_proposal` policy gate on the sealed `execution_policy` |
 
 Profile/cargo/department/context ≠ AuthZ. Service account must not impersonate user on MCP `/mcp`.
 

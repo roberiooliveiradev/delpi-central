@@ -45,7 +45,7 @@ Workspace Agent / ChatGPT Plugin (TÉO)
   → Keycloak end-user identity (mcp-transformometro)
   → MCP Streamable HTTP /apps/transformometro-api/mcp
   → interface/mcp adapter
-  → application services + governed writes (CAPABILITY_GOVERNED_V2)
+  → application services + governed writes (SEMANTIC_V3_ONLY)
   → canonical AuthZ (capability ≤ user)
   → Postgres transformometro
 ```
@@ -53,9 +53,10 @@ Workspace Agent / ChatGPT Plugin (TÉO)
 ## Surface policy
 
 ```text
-TEO_MCP_SURFACE = CAPABILITY_GOVERNED_V2
-READ + PREPARE + COMMON COMMIT = REQUIRED
+TEO_MCP_SURFACE = SEMANTIC_V3_ONLY
+get_context + read + analyze + knowledge + execute + delete = REQUIRED
 DAVI_READ_ONLY_COPY = FORBIDDEN
+V2 family surface = TOMBSTONED (issue #124 final cutover)
 ```
 
 ### Capability vs tools
@@ -183,7 +184,7 @@ Verificação corrigida (produção):
 | GPT Actions importable em 2026-09-17 | 20 (HISTORICAL) |
 | GPT Actions importable no código | 21 |
 | MCP tools em 2026-09-17 | 32 (HISTORICAL) |
-| MCP tools no código | 20 (`CAPABILITY_GOVERNED_V2`; before=33 HISTORICAL) |
+| MCP tools no código | 6 (`SEMANTIC_V3_ONLY`; V2=23 tombstoned, before=33 HISTORICAL) |
 | Replicas | 1 | PASS |
 
 ## ChatGPT Plugin acceptance (PROVEN)
@@ -192,7 +193,7 @@ Verificação corrigida (produção):
 |---|---|
 | Plugin criado (`TÉO — Transformômetro`) | PASS |
 | OAuth user connection | PASS |
-| Tools discovery | código atual = **20**. 33 = HISTORICAL. Rediscovery no app publicado = revalidar (pode já ter ocorrido) |
+| Tools discovery | código atual = **6** (SEMANTIC_V3_ONLY). 20/33 = HISTORICAL. Rediscovery no app publicado = revalidar (pode já ter ocorrido) |
 | `get_my_context` | PASS |
 | `get_catalog` | PASS |
 | `search_records` (entity=process, q=Transforma → PROC-0001 ativo; diagram_node_count=115; decomposition_node_count=64) | PASS |

@@ -140,7 +140,7 @@ def test_closed_gap_justifications_reference_real_surface() -> None:
     assert "analyze" in exposed["dashboard.extended_views"]
     assert "meeting_minute_workflow" in exposed["meeting_minute.sign_refuse"]
     assert "manage_evidence" in exposed["process_file.metadata_write"]
-    assert "prepare_record_change" in exposed["instance.contexto"]
+    assert "execute" in exposed["instance.contexto"]
     assert "changes.contexto" in exposed["instance.contexto"]
     assert "data.contexto" not in exposed["instance.contexto"]
     assert "update_signature_profile" in exposed["signature_profile"]
@@ -176,19 +176,26 @@ def test_mcp_analyze_view_enum_projects_canonical() -> None:
     }
 
 
-def test_mcp_minute_change_enum_projects_canonical() -> None:
-    schema = _input_schema(_tools()["prepare_meeting_minute_change"])
-    enum = set(schema["properties"]["action"]["enum"])
-    assert enum == set(MEETING_MINUTE_ACTION_TO_CAPABILITY)
-    assert "refuse" in enum
+def test_mcp_minute_change_actions_served_by_execute() -> None:
+    # SEMANTIC_V3_ONLY: the closed meeting-minute action vocabulary is
+    # carried inside execute args — the canonical map is unchanged and
+    # the legacy family tool is tombstoned.
+    assert "refuse" in MEETING_MINUTE_ACTION_TO_CAPABILITY
+    tools = _tools()
+    assert "prepare_meeting_minute_change" not in tools
+    assert "execute" in tools
 
 
-def test_mcp_governed_operation_enum_projects_canonical() -> None:
-    schema = _input_schema(_tools()["prepare_governed_operation"])
-    enum = set(schema["properties"]["action"]["enum"])
-    assert enum == set(GOVERNED_OPERATION_ACTION_TO_CAPABILITY)
-    assert {"update_signature_profile", "migrate_legacy_diagram_to_native_bpmn"} <= enum
-    assert "import_diagram_bpmn_xml" not in enum
+def test_mcp_governed_operations_served_by_execute() -> None:
+    # Governed-operation actions keep their canonical closed set and
+    # route through ``execute``; import_diagram_bpmn_xml stays blocked.
+    assert {"update_signature_profile", "migrate_legacy_diagram_to_native_bpmn"} <= (
+        set(GOVERNED_OPERATION_ACTION_TO_CAPABILITY)
+    )
+    assert "import_diagram_bpmn_xml" not in GOVERNED_OPERATION_ACTION_TO_CAPABILITY
+    tools = _tools()
+    assert "prepare_governed_operation" not in tools
+    assert "execute" in tools
 
 
 # ------------------------------------------------------- capability registry

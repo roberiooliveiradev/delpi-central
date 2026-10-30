@@ -18,9 +18,10 @@ from tm_app.interface.mcp.constants import (
     MCP_NATIVE_TOOLS,
     MCP_PREDEFINED_CLIENT_ID,
     MCP_TOOL_NAMES,
+    MCP_V2_REMOVED_TOOLS,
     TEO_MCP_SURFACE,
     TOOL_CLASS,
-    TOOL_TO_GPT_OPERATION,
+    V3_TOOL_TO_GPT_OPS,
 )
 from tm_app.interface.mcp.oauth_contract import (
     KEYCLOAK_INTERNAL_AUDIENCE_CLIENT_SCOPE,
@@ -57,9 +58,9 @@ def _request(path: str, headers: dict | None = None) -> Request:
 
 
 def test_contract_freeze_full_crud() -> None:
-    # Semantic V3 coexistence (issue #124): the six semantic tools are
-    # registered alongside the V2 family surface.
-    assert TEO_MCP_SURFACE == "SEMANTIC_V3_COEXISTENCE"
+    # Semantic V3 ONLY (issue #124 — final cutover): the six semantic
+    # tools are the entire public MCP surface.
+    assert TEO_MCP_SURFACE == "SEMANTIC_V3_ONLY"
     assert MCP_PREDEFINED_CLIENT_ID == "mcp-transformometro"
     assert CANONICAL_MCP_RESOURCE_URL.endswith("/apps/transformometro-api/mcp")
     assert GPT_ACTIONS_LIFECYCLE == "GOVERNED_PREPARE_COMMIT_V2"
@@ -70,34 +71,38 @@ def test_contract_freeze_full_crud() -> None:
 
 
 def test_tool_parity_with_gpt_actions_operation_ids() -> None:
-    # Every current GPT operationId maps to >=1 MCP tool; no unmapped / missing.
+    # Every current GPT operationId maps to >=1 Semantic V3 MCP tool;
+    # no unmapped / missing capability.
     assert set(GPT_TO_MCP_TOOLS.keys()) == set(GPT_ACTIONS_OPERATION_IDS)
     covered = set()
     for gpt_op, tools in GPT_TO_MCP_TOOLS.items():
         assert tools, f"empty MCP mapping for {gpt_op}"
         for tool in tools:
             assert tool in TOOL_CLASS
-            assert TOOL_TO_GPT_OPERATION[tool] == gpt_op
+            assert gpt_op in V3_TOOL_TO_GPT_OPS[tool]
             covered.add(gpt_op)
     assert covered == set(GPT_ACTIONS_OPERATION_IDS)
     assert set(TOOL_CLASS) == set(MCP_TOOL_NAMES)
     assert MCP_NATIVE_TOOLS <= set(MCP_TOOL_NAMES)
-    assert set(TOOL_TO_GPT_OPERATION.keys()) == set(MCP_TOOL_NAMES) - set(MCP_NATIVE_TOOLS)
-    assert "get_methodology_guide" not in GPT_TO_MCP_TOOLS.get("gpt_get_catalog", ())
-    assert GPT_TO_MCP_TOOLS["gpt_get_methodology_guide"] == ("get_methodology_guide",)
-    assert TOOL_CLASS["get_methodology_guide"] == "READ"
-    assert TOOL_CLASS["prepare_governed_operation"] == "PREPARE"
-    assert TOOL_CLASS["prepare_record_change"] == "PREPARE"
-    assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
-    assert TOOL_CLASS["meeting_minute_read"] == "READ"
+    # Semantic route assertions (capability parity, not name parity).
+    assert GPT_TO_MCP_TOOLS["gpt_get_methodology_guide"] == ("knowledge",)
+    assert GPT_TO_MCP_TOOLS["gpt_commit_proposal"] == ("execute",)
+    assert "read" in GPT_TO_MCP_TOOLS["gpt_record_read"]
+    assert "execute" in GPT_TO_MCP_TOOLS["gpt_prepare_record_change"]
+    assert "get_context" in GPT_TO_MCP_TOOLS["gpt_get_catalog"]
+    assert TOOL_CLASS["knowledge"] == "READ"
+    assert TOOL_CLASS["read"] == "READ"
+    assert TOOL_CLASS["analyze"] == "ANALYSIS"
+    assert TOOL_CLASS["execute"] == "ACT"
+    assert TOOL_CLASS["delete"] == "ACT"
+    assert TOOL_CLASS["get_context"] == "DISCOVERY"
     assert any(TOOL_CLASS[n] == "ACT" for n in MCP_TOOL_NAMES)
-    assert any(TOOL_CLASS[n] == "PREPARE" for n in MCP_TOOL_NAMES)
     assert "act_create_record" not in TOOL_CLASS
     assert "prepare_create_record" not in TOOL_CLASS
-    # Gate: no capability loss after PREPARE/ACT split
+    assert MCP_V2_REMOVED_TOOLS.isdisjoint(TOOL_CLASS)
+    # Gate: no capability loss — every Actions op still has a route.
     assert len(GPT_ACTIONS_OPERATION_IDS) == len(GPT_TO_MCP_TOOLS)
-    assert len(MCP_TOOL_NAMES) >= len(GPT_ACTIONS_OPERATION_IDS)
+    assert len(MCP_TOOL_NAMES) == 6
 
 
 def test_security_schemes_have_no_rbac_codes() -> None:
@@ -107,28 +112,26 @@ def test_security_schemes_have_no_rbac_codes() -> None:
     assert "mcp:tools" in blob
 
 
-def test_list_tools_exposes_governed_full_crud_tools() -> None:
+def test_list_tools_exposes_semantic_v3_only() -> None:
     mcp = create_mcp_server()
     tools = asyncio.run(mcp.list_tools())
     names = [t.name for t in tools]
     assert set(names) == set(MCP_TOOL_NAMES)
-    assert "get_methodology_guide" in names
-    # Semantic V3 coexistence: 23 V2 family names + 6 semantic tools
-    # (analyze unifies the legacy analyze + V3 transcript view).
-    assert len(names) == 28
+    # SEMANTIC_V3_ONLY: exactly the six semantic tools — the 22 V2
+    # family names are tombstoned, never discoverable.
+    assert len(names) == 6
     for v3_name in ("get_context", "read", "analyze", "knowledge",
                     "execute", "delete"):
         assert v3_name in names
-    assert "prepare_record_change" in names
-    assert "commit_proposal" in names
-    assert "prepare_governed_operation" in names
+    for tombstone in MCP_V2_REMOVED_TOOLS:
+        assert tombstone not in names
     assert "prepare_create_record" not in names
     assert "act_create_record" not in names
     assert "act_commit_improvement_package" not in names
     for tool in tools:
         assert tool.securitySchemes == TEO_MCP_SECURITY_SCHEMES  # type: ignore[attr-defined]
         ann = tool.annotations
-        if tool.name in {"commit_proposal", "delete"}:
+        if tool.name == "delete":
             assert ann is not None and ann.destructive_hint is True
         if TOOL_CLASS[tool.name] in {"READ", "ANALYSIS"}:
             assert ann is not None and ann.read_only_hint is True
@@ -243,15 +246,12 @@ async def test_oauth_metadata_is_public() -> None:
     call_next.assert_awaited_once()
 
 
-def test_manage_evidence_requires_confirm_delete_flag_in_description() -> None:
+def test_semantic_v3_tool_descriptions_document_governance() -> None:
     mcp = create_mcp_server()
     tools = {t.name: t for t in asyncio.run(mcp.list_tools())}
-    desc = tools["prepare_evidence_change"].description or ""
-    assert "confirm_delete" in desc
-    commit = tools["commit_proposal"].description or ""
-    assert "proposal_handle" in commit
-    prepare_pkg = tools["prepare_governed_operation"].description or ""
-    assert "commit_proposal" in prepare_pkg
-    assert "prepare_record_change" in tools
+    execute_desc = tools["execute"].description or ""
+    assert "confirm" in execute_desc.lower() or "proposal" in execute_desc.lower()
+    delete_desc = tools["delete"].description or ""
+    assert "confirm" in delete_desc.lower() or "proposal" in delete_desc.lower()
     assert "execute_capability" not in tools
     assert "invoke_tool" not in tools

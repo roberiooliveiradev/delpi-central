@@ -892,7 +892,9 @@ class TestCatalog:
             if w.get("id") == "migrate_legacy_diagram_to_native_bpmn"
         ]
         assert mig_mcp
-        assert mig_mcp[0]["commit_via"] == "commit_proposal"
+        # SEMANTIC_V3_ONLY: the MCP projection commits governed
+        # proposals through the semantic ``execute`` tool.
+        assert mig_mcp[0]["commit_via"] == "execute"
 
     def test_read_entity_registered_get_only(self):
         from tm_app.application.gpt_actions.entities import (

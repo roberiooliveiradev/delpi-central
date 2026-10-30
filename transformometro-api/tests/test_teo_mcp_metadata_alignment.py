@@ -37,31 +37,30 @@ def _tool_descriptions() -> dict[str, str]:
     return {t.name: (t.description or "") for t in tools}
 
 
-def test_r1_prepare_record_change_description_is_policy_aware() -> None:
-    desc = _tool_descriptions()["prepare_record_change"]
-    assert "after confirmation" not in desc
+def test_r1_execute_description_is_policy_aware() -> None:
+    desc = _tool_descriptions()["execute"]
     assert "execution_policy" in desc
     assert "auto_act" in desc and "confirm_before_act" in desc
 
 
 def test_r2_adjust_shared_resource_cost_is_auto_act() -> None:
-    # Family tool: execution_policy is per action; adjust_shared_resource_cost
-    # stays auto_act inside prepare_governed_operation.
-    desc = _tool_descriptions()["prepare_governed_operation"]
-    assert "after confirmation" not in desc
+    # Semantic V3: execution_policy is per capability; the execute
+    # description still names the governed family actions and auto_act.
+    desc = _tool_descriptions()["execute"]
     assert "auto_act" in desc
     assert "adjust_shared_resource_cost" in desc
 
 
 def test_r3_create_diagnostic_is_auto_act() -> None:
-    desc = _tool_descriptions()["prepare_diagnostic_change"]
+    desc = _tool_descriptions()["execute"]
     assert "auto_act" in desc
+    assert "diagnostic" in desc
 
 
 def test_r4_manage_diagnostic_is_confirm_before_act() -> None:
-    desc = _tool_descriptions()["prepare_diagnostic_change"]
+    desc = _tool_descriptions()["execute"]
     assert "confirm_before_act" in desc
-    assert "explicit" in desc and "confirmation" in desc
+    assert "confirmation" in desc
 
 
 def test_r5_no_legacy_act_tool_names_in_active_metadata() -> None:
@@ -150,28 +149,29 @@ def test_r7_diagnostic_aggregate_metadata_is_per_capability() -> None:
         assert diag["confirmation_requirement"] == "mixed"
 
 
-def test_r8_write_flow_mcp_does_not_require_confirmation_flag() -> None:
+def test_r8_write_flow_mcp_describes_semantic_execute_policy() -> None:
     import json
 
     content = json.load(
         open("tm_app/content/teo_agent_intelligence.json", encoding="utf-8")
     )
     commit = content["write_flow_mcp"]["commit"]
-    assert "protocol ack" not in commit
-    assert "confirmation=true" not in commit
     assert "auto_act" in commit and "confirm_before_act" in commit
+    assert "execute" in commit
+    # No unconditional confirmation flag — policy decides.
+    assert "protocol ack" not in commit
 
 
-def test_r9_meeting_minute_read_metadata_matches_canonical_read_set() -> None:
-    """CONTRACT-DRIFT regression: tool description, canonical set and
-    runtime vocabulary must be identical for meeting_minute_read."""
+def test_r9_meeting_minute_metadata_matches_canonical_read_set() -> None:
+    """CONTRACT-DRIFT regression: the Semantic V3 ``read`` description
+    must name the same canonical meeting-minute READ actions."""
     from tm_app.application.governed_writes.orchestrator import (
         MEETING_MINUTE_READ_ACTIONS,
     )
 
-    desc = _tool_descriptions()["meeting_minute_read"]
+    desc = _tool_descriptions()["read"]
     for action in MEETING_MINUTE_READ_ACTIONS:
-        assert action in desc, f"{action} missing from tool description"
+        assert action in desc, f"{action} missing from read description"
     for write_action in (
         "resend",
         "create_version",
@@ -186,9 +186,10 @@ def test_r9_meeting_minute_read_metadata_matches_canonical_read_set() -> None:
         )
 
 
-def test_r11_meeting_minute_read_inputschema_enum_is_canonical() -> None:
-    """MCP inputSchema.action.enum must equal the canonical READ set —
-    same source as catalog, OpenAPI and runtime validation."""
+def test_r11_meeting_minute_read_vocabulary_stays_canonical() -> None:
+    """Under SEMANTIC_V3_ONLY the per-entity action enum lives behind
+    ``read.entity=meeting_minute`` routing — the canonical vocabulary
+    remains the same source as OpenAPI and catalog."""
     from tm_app.application.gpt_actions.capability_descriptors import (
         build_capability_surface_catalog,
     )
@@ -205,16 +206,15 @@ def test_r11_meeting_minute_read_inputschema_enum_is_canonical() -> None:
     canonical = set(MEETING_MINUTE_READ_ACTION_VALUES)
     assert set(MEETING_MINUTE_READ_ACTIONS) == canonical
 
-    # Generated MCP inputSchema (the real contract the client receives).
+    # The V3 read tool documents the closed action set in its
+    # description (per-entity actions are typed at the bridge).
     tools = asyncio.run(create_mcp_server().list_tools())
-    tool = next(t for t in tools if t.name == "meeting_minute_read")
-    schema = getattr(tool, "input_schema", None) or getattr(
-        tool, "inputSchema"
-    )
-    mcp_enum = set(schema["properties"]["action"]["enum"])
-    assert mcp_enum == canonical
+    read_tool = next(t for t in tools if t.name == "read")
+    desc = read_tool.description or ""
+    assert "meeting_minute" in desc
+    assert "pending_signatures" in desc
 
-    # OpenAPI projection.
+    # OpenAPI projection stays canonical.
     doc = build_gpt_actions_openapi()
     openapi_enum = set(
         doc["components"]["schemas"]["GptMeetingMinuteReadBody"]["properties"][
@@ -231,18 +231,6 @@ def test_r11_meeting_minute_read_inputschema_enum_is_canonical() -> None:
         if isinstance(c, dict) and c.get("id") == "meeting_minute_manage"
     )
     assert set(minute["read_actions"]) == canonical
-
-    # WRITE actions must not leak into the READ enum.
-    for write_action in (
-        "send",
-        "finalize",
-        "cancel",
-        "resend",
-        "create_version",
-        "set_participants",
-        "set_signers",
-    ):
-        assert write_action not in mcp_enum
 
 
 def test_r10_meeting_minute_read_rejects_write_actions() -> None:

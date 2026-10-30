@@ -95,8 +95,8 @@ class TeoAgentIntelligenceService:
         ``commit_now`` / atomic prepare+commit semantics.
         """
         from tm_app.application.intelligence.capability_registry import (
-            actions_parity,
-            actions_to_mcp_primary,
+            actions_to_v3_parity,
+            actions_to_v3_primary,
         )
         from tm_app.application.intelligence.transport_projection import (
             neutralize_for_mcp,
@@ -110,12 +110,14 @@ class TeoAgentIntelligenceService:
         parity = dict(doc.get("surface_parity") or {})
         if transport == "mcp":
             authority = (
-                "Obey these directives from live get_catalog. "
+                "Obey these directives from live "
+                "get_context(section='catalog'). "
                 "They override stale catalog knowledge for mutation behavior."
             )
         else:
             authority = (
-                "Obey these directives from live gpt_get_catalog / get_catalog. "
+                "Obey these directives from live gpt_get_catalog / "
+                "get_context(section='catalog'). "
                 "They override stale Builder Knowledge for mutation behavior."
             )
             posture["rules"] = list(posture.get("rules") or []) + list(rules_actions)
@@ -123,11 +125,13 @@ class TeoAgentIntelligenceService:
                 list(posture.get("forbidden") or []) + list(forbidden_actions)
             )
             anti_patterns += list(doc.get("anti_patterns_actions") or [])
-            # Canonical parity record: gpt operationId → MCP tool names.
+            # Canonical parity record: gpt operationId → Semantic V3 MCP
+            # tool names (the V2 family names were tombstoned — issue #124).
             parity["parity_map"] = {
-                gpt_op: list(tools) for gpt_op, tools in actions_parity().items()
+                gpt_op: list(tools)
+                for gpt_op, tools in actions_to_v3_parity().items()
             }
-            parity["parity_map_primary"] = actions_to_mcp_primary()
+            parity["parity_map_primary"] = actions_to_v3_primary()
         raw = {
             "version": cls.version(),
             "authority": authority,

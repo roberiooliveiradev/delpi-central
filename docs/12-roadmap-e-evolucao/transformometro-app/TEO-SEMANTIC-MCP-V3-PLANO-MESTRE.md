@@ -2,8 +2,8 @@
 
 **Data de registro:** 2026-10-30  
 **Status do desenho:** `ACCEPT_WITH_RESIDUAL`  
-**Status de execução:** `DEPLOYED — PRODUCTION SHA 7017df3d0a` (coexistência V3+V2)  
-**Implementação:** concluída em coexistência; tombstone das 23 tools V2 aguarda aceite de consumers  
+**Status de execução:** `CUTOVER — SEMANTIC_V3_ONLY` (remoção das 22 tools V2 da superfície pública; deploy pendente)  
+**Implementação:** coexistência → V3-only em andamento; `tools/list` alvo = exatamente 6 tools semânticas  
 **Controle operacional e progresso:** [GitHub Issue #124](https://github.com/roberiooliveiradev/delpi-central/issues/124)
 
 > Este documento registra o alvo arquitetural e a estratégia de execução. **Não comprova código, deploy, runtime ou resultado**. A issue #124 é o ledger vivo que o Devin deverá preencher com evidências por gate. As fontes canônicas de capability e execution policy continuam no código do domínio.
@@ -63,6 +63,7 @@ Refatorar a superfície MCP do TÉO para seis tools semânticas, conforme o padr
 | F4 | Regressões, integração, segurança, correções, residual search | `PASS` | Suíte integral 1976 pass; 26 falhas pré-existentes do baseline (async/fixture, comprovado via stash) — zero falha atribuída ao diff |
 | F5 | Aceite conversacional no host e em consumers | `TEST_NOT_RUN` | Requer sessão autenticada no ChatGPT/host — ação manual pendente |
 | F6 | Commit, push, rollout controlado e pós-deploy | `PASS` | SHA prod `7017df3d0a`; health 200; `tools/list` runtime = 28 tools (6 V3 presentes); MCP sem bearer = 401; rollback = `git revert` + redeploy do SHA anterior |
+| F7 | Final cutover — tombstone das 22 tools V2 (`SEMANTIC_V3_ONLY`) | `IN_PROGRESS` | `server.py` reduzido aos 6 registros V3; `capability_registry.MCP_TO_V3_TOOL` projeta rota semântica por capability; `transport_projection` reescreve nomes legados/`gpt_*` → V3 e fail-closed no desconhecido; `agent_directives` MCP sem nenhum nome legado; `constants` = `SEMANTIC_V3_ONLY` + tombstones não-públicos; bridge V2 preservado como adapter interno do `tool_bridge_v3`; suíte integral 1976 pass / 10 falhas pré-existentes do baseline — deploy e `tools/list` autenticado pendentes |
 
 **Operação do ledger:** em cada checkpoint, o Devin atualiza os checkboxes e tabela da [issue #124](https://github.com/roberiooliveiradev/delpi-central/issues/124), incluindo BASE/FINAL HEAD, arquivos, testes, AuthZ, policies, contratos, read-back, gaps, PR/commit, deploy e ações do Builder. Só classificar `PASS` quando a prova pertinente existir.
 

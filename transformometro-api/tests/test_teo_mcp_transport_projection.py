@@ -3,8 +3,9 @@
 The same canonical intelligence (teo_agent_intelligence.json + capability
 descriptors + registration guide) feeds both transports. The Actions
 projection keeps ``gpt_*`` names and the additive ``commit_now`` policy;
-the MCP projection must expose only MCP-callable names and the pure
-PREPARE → commit_proposal contract — zero ``commit_now``, zero ``gpt_*``.
+the MCP projection (SEMANTIC_V3_ONLY) must expose only the six callable
+semantic tools — zero ``commit_now``, zero ``gpt_*``, zero legacy V2
+tool names.
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ from tm_app.application.gpt_actions.teo_agent_intelligence_service import (
     clear_teo_agent_intelligence_cache,
 )
 from tm_app.application.intelligence.transport_projection import (
-    actions_to_mcp_primary,
+    actions_to_v3_primary,
 )
 from tm_app.interface.mcp.constants import GPT_TO_MCP_TOOLS, MCP_TOOL_NAMES
 
@@ -64,7 +65,7 @@ def test_mcp_capability_surface_callable_names_only():
     assert "gpt_" not in blob
     assert "commit_now" not in blob
     assert surface["surface_version"] != "teo-gpt-actions-v2"
-    assert surface["proposal_model"]["commit_operation"] == "commit_proposal"
+    assert surface["proposal_model"]["commit_operation"] == "execute"
     assert "commit_now_parameter" not in surface["proposal_model"]
     names = set(MCP_TOOL_NAMES)
     for workflow in surface["workflows"]:
@@ -83,8 +84,7 @@ def test_mcp_registration_guide_callable_names_only():
     assert "gpt_" not in blob
     assert "commit_now" not in blob
     assert "legacy_removed_from_builder" not in blob
-    assert "prepare_record_change" in blob
-    assert "commit_proposal" in blob
+    assert "execute" in blob
 
 
 def test_mcp_directives_flows_mcp_names_callable():
@@ -107,8 +107,8 @@ def test_actions_agent_directives_preserve_actions_contract():
     assert any("commit_now" in item for item in posture["forbidden"])
     assert any("commit_now" in item for item in directives["anti_patterns"])
     parity = directives.get("surface_parity") or {}
-    assert parity["parity_map"]["gpt_commit_proposal"] == ["commit_proposal"]
-    assert parity["parity_map_primary"]["gpt_get_catalog"] == "get_catalog"
+    assert parity["parity_map"]["gpt_commit_proposal"] == ["execute"]
+    assert parity["parity_map_primary"]["gpt_get_catalog"] == "get_context"
 
 
 def test_actions_capability_surface_unchanged():
@@ -135,24 +135,15 @@ def test_actions_registration_guide_unchanged():
 
 
 def test_parity_map_derives_from_canonical_record():
-    mapping = actions_to_mcp_primary()
+    mapping = actions_to_v3_primary()
     assert set(mapping.keys()) == set(GPT_TO_MCP_TOOLS.keys())
     names = set(MCP_TOOL_NAMES)
     assert set(mapping.values()) <= names
-    assert mapping["gpt_commit_proposal"] == "commit_proposal"
-    assert mapping["gpt_prepare_record_change"] == "prepare_record_change"
-    # Family transport: each consolidated Actions op projects to the
-    # matching MCP family tool.
-    assert (
-        mapping["gpt_prepare_meeting_minute_change"]
-        == "prepare_meeting_minute_change"
-    )
-    assert mapping["gpt_meeting_minute_read"] == "meeting_minute_read"
-    assert (
-        mapping["gpt_prepare_collaboration_change"]
-        == "prepare_collaboration_change"
-    )
-    assert (
-        mapping["gpt_prepare_governed_operation"]
-        == "prepare_governed_operation"
-    )
+    assert mapping["gpt_commit_proposal"] == "execute"
+    assert mapping["gpt_prepare_record_change"] == "execute"
+    # Semantic transport: each governed Actions op projects to the V3
+    # semantic tool that carries the same capability.
+    assert mapping["gpt_prepare_meeting_minute_change"] == "execute"
+    assert mapping["gpt_meeting_minute_read"] == "read"
+    assert mapping["gpt_prepare_collaboration_change"] == "execute"
+    assert mapping["gpt_prepare_governed_operation"] == "execute"

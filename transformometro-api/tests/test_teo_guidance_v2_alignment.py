@@ -74,14 +74,18 @@ def test_package_hints_commit_via_proposal():
 
 
 def test_mcp_surface_budget_matches_registration():
-    # Semantic V3 coexistence (issue #124): 23 V2 names + 6 semantic tools.
-    assert TEO_MCP_SURFACE == "SEMANTIC_V3_COEXISTENCE"
+    # Semantic V3 ONLY (issue #124 — final cutover): exactly the six
+    # semantic tools are registered; V2 family names are tombstoned.
+    assert TEO_MCP_SURFACE == "SEMANTIC_V3_ONLY"
     assert MCP_SURFACE_BUDGET["before_total"] == 33
-    assert MCP_SURFACE_BUDGET["after_total"] == 28
-    assert len(MCP_TOOL_NAMES) == 28
-    assert "prepare_record_change" in MCP_TOOL_NAMES
-    assert "commit_proposal" in MCP_TOOL_NAMES
+    assert MCP_SURFACE_BUDGET["after_total"] == 6
+    assert len(MCP_TOOL_NAMES) == 6
+    assert "execute" in MCP_TOOL_NAMES
+    assert "delete" in MCP_TOOL_NAMES
     for name in MCP_LEGACY_REMOVED_TOOLS:
+        assert name not in MCP_TOOL_NAMES
+    for name in ("prepare_record_change", "commit_proposal",
+                 "record_read", "get_catalog"):
         assert name not in MCP_TOOL_NAMES
 
 
