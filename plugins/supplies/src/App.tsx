@@ -24,6 +24,7 @@ import { PurchaseOrderDetailPage } from "./features/purchase-orders/PurchaseOrde
 import { PurchaseOrdersPage } from "./features/purchase-orders/PurchaseOrdersPage";
 import { PurchaseRequestDetailPage } from "./features/purchase-requests/PurchaseRequestDetailPage";
 import { PurchaseRequestsPage } from "./features/purchase-requests/PurchaseRequestsPage";
+import { ConsumptionAuditPage } from "./features/consumption-audit/ConsumptionAuditPage";
 import { SafetyStockDetailPage } from "./features/safety-stock/SafetyStockDetailPage";
 import { SafetyStockPage } from "./features/safety-stock/SafetyStockPage";
 import { SupplierCreatePage } from "./features/suppliers/SupplierCreatePage";
@@ -182,6 +183,8 @@ function AppRoutes({
     // PROC-0076: rota acessível por URL e navegação do hub (gate de
     // página reconciliado; permissão efetiva supplies.access).
     content = <MarketIntelligencePage basePath={basePath} />;
+  } else if (view === "consumption_audit") {
+    content = <ConsumptionAuditPage basePath={basePath} />;
   } else if (view === "safety_stock_detail") {
     content = (
       <SafetyStockDetailPage

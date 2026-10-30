@@ -109,6 +109,11 @@ export const USER_MANUAL_CONTENT = {
           how: "Abra a SC; cabeçalho com identificação, solicitante, centros de custo, aprovação e indicadores (itens visíveis, pedidos vinculados, atraso) — tudo no escopo de CC. Cada item mostra unidade, quantidades, necessidade, aprovação, fornecedor sugerido e conta contábil; depois vêm pedidos vinculados (clique no PC para a ficha dele), recebimentos e o acompanhamento com previsões marcadas. Copie o endereço da ficha; F5 a restaura; voltar retorna à lista com os filtros",
         },
         {
+          want: "Auditar o consumo de uma OP",
+          where: "Auditoria de consumo",
+          how: "Informe a chave completa da OP (11 posições) e a filial: estrutura prevista × empenhos × consumo classificado por operação, com evidências de execução e diferenças calculadas pelo servidor. A URL guarda a consulta (F5/compartilhamento)",
+        },
+        {
           want: "Alterar unidade padrão ou densidade das tabelas",
           where: "Perfil (avatar na TopBar)",
           how: "Só no próprio perfil; administradores podem ler outros usuários, sem editar prefs",
@@ -182,6 +187,7 @@ export const USER_MANUAL_CONTENT = {
         "Estoque — posição física atual por produto, unidade e armazém, incluindo saldos positivos, zerados e negativos. Não calcula saldo disponível e não é estoque de segurança.",
         "Estoque de segurança — materiais com estoque de segurança parametrizado no ERP: indicadores do recorte, déficit por unidade de medida e lista ordenável com os quatro status. Clique na linha para a página de detalhe do material (saldos, cobertura, pedidos/SCs/empenhos em aberto, projeção, consumo e fornecedores); na visão Todas as Filiais, o Portal pede a escolha de Santa Catarina ou Espírito Santo. Distinto de Estoque (posição física) e de Produtos (ficha cadastral).",
         "Inteligência de mercado — cotações históricas de metais e câmbio de fontes autorizadas (World Bank Pink Sheet e Banco Central PTAX), com USD nativo e conversão BRL pela média PTAX do mês. Mostra fonte, licença e estados de dados (parcial, desatualizado, sem dados) — nunca inventa valores.",
+        "Auditoria de consumo — consulta de uma OP específica: estrutura prevista × empenhos × consumo classificado, evidências de execução por operação, movimentações excluídas e pontos de atenção de qualidade. A URL guarda a consulta.",
         "Solicitações de compras — acompanhamento global no período; o hero conta SCs e a faixa Atenção filtra a situação sem ser uma permissão. Clique na SC para a ficha; exportação Excel faz parte do uso normal.",
         "Operações — agrupamento do Início que reúne pedidos, entregas, fornecedores, produtos, estoque físico e estoque de segurança. Na barra de navegação, «Pedidos de compra» abre diretamente a lista de pedidos.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
@@ -233,6 +239,23 @@ export const USER_MANUAL_CONTENT = {
         "Lacunas — competências sem publicação oficial aparecem listadas como ausências legítimas; nunca como zero nem interpoladas.",
         "Estados — dados parciais, desatualizados, fonte indisponível ou coleta pendente são sinalizados por aviso compacto; limite de requisições e erros aparecem com opção de tentar novamente.",
         "Atualizar — recarrega catálogo, indicadores e série mantendo a perspectiva e os filtros atuais.",
+      ],
+    },
+    {
+      id: "consumption-audit",
+      title: "Auditoria de consumo",
+      intro:
+        "A página Auditoria de consumo responde «o que esta ordem de produção deveria ter consumido e o que o ERP efetivamente registrou». Para uma OP informada, ela cruza a estrutura prevista na data de emissão, os empenhos gerados e as movimentações classificadas pelo servidor — separando o que compõe o consumo do que foi excluído. O Portal não recalcula nem acusa: mostra os números e aponta onde a evidência é incompleta.",
+      bullets: [
+        "Consulta — informe a chave completa da OP (11 posições: número + item + sequência) e a filial operacional. O resultado fica na URL: F5 e compartilhamento abrem a mesma auditoria.",
+        "Identificação — produto, quantidade planejada e registrada, situação e datas da ordem, conforme o ERP.",
+        "Operações — cada operação da rota aparece com seu centro de trabalho e um estado de execução: Apontada (existe apontamento), Pendente (programada sem apontamento encontrado — não prova não-execução) ou Desconhecida (evidência insuficiente). Programação, apontamentos e registros do coletor são mostrados separados, sem fusão artificial.",
+        "Materiais — por componente: quantidade teórica da estrutura, empenho original, saldo ainda empenhado, consumo derivado e consumo classificado pelo servidor, a diferença entre eles e a situação da conciliação (Conciliado, Pendente, Requer análise). Unidades de medida diferentes nunca são somadas entre si.",
+        "Movimentações — expanda um componente para ver os registros que compõem o consumo e os excluídos do cálculo (por exemplo, transferências entre armazéns ou estornos), cada um com o motivo da exclusão.",
+        "Sem empenho correspondente — registros da OP que não casam com nenhum empenho ficam visíveis como evidência fora da soma de materiais (ex.: mão de obra).",
+        "Ordens relacionadas — outras OPs do mesmo número de ordem e vínculos comprovados por empenho de origem; um clique abre a auditoria da OP relacionada.",
+        "Qualidade das informações — quando as evidências estão incompletas ou ambíguas, um aviso lista os pontos de atenção e as interpretações não resolvidas. Diferença aritmética não é acusação de irregularidade.",
+        "Acesso e erros — sem uso normal do Portal a página não abre (403); falhas de integração aparecem como aviso com opção de tentar novamente.",
       ],
     },
     {

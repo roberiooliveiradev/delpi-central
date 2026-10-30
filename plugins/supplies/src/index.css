@@ -2887,3 +2887,274 @@
 .dashboard-supplies-portal .sp-supplier-field__error::before {
   content: "⚠ ";
 }
+
+/* Consumption Audit (GLPI #1353) — escopo .dashboard-supplies-portal */
+
+.dashboard-supplies-portal .sp-consumption-audit__query {
+  margin-top: 0.75rem;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__query-grid {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) minmax(12rem, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+@media (max-width: 640px) {
+  .dashboard-supplies-portal .sp-consumption-audit__query-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__query-actions {
+  display: flex;
+  align-items: center;
+  padding-bottom: 0.1rem;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 0.6rem 1rem;
+  margin: 0;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__grid dt {
+  font-size: 0.72rem;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__grid dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.9rem;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__section-heading {
+  margin: 0.4rem 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__execution {
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--sp-border, rgba(120, 120, 120, 0.25));
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__execution-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 0.75rem;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__evidence-block h5 {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__kv {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__kv dt {
+  font-size: 0.7rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__kv dd {
+  margin: 0;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__appt-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__appt-list li {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--sp-border, rgba(120, 120, 120, 0.25));
+  border-radius: 0.45rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--sp-border, rgba(120, 120, 120, 0.25));
+  border-radius: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__materials-table,
+.dashboard-supplies-portal .sp-consumption-audit__movements-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__materials-table th,
+.dashboard-supplies-portal .sp-consumption-audit__movements-table th {
+  padding: 0.45rem 0.55rem;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--sp-border, rgba(120, 120, 120, 0.25));
+  white-space: nowrap;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__materials-table td,
+.dashboard-supplies-portal .sp-consumption-audit__movements-table td {
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid var(--sp-border, rgba(120, 120, 120, 0.16));
+  vertical-align: top;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__component-code {
+  font-weight: 600;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__component-type {
+  font-size: 0.7rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__movements-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--sp-primary, #1f6feb);
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__movements-toggle:disabled {
+  color: var(--sp-text-muted);
+  text-decoration: none;
+  cursor: default;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__movements-toggle:focus-visible {
+  outline: 2px solid var(--sp-primary, #1f6feb);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__movements-row td {
+  background: var(--sp-surface-alt, rgba(120, 120, 120, 0.06));
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__movements {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__movements-group h5 {
+  margin: 0 0 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__error {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__quality-block h5 {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__quality-list {
+  margin: 0 0 0.75rem;
+  padding-left: 1.2rem;
+  font-size: 0.85rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__related-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__related-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--sp-border, rgba(120, 120, 120, 0.25));
+  border-radius: 0.5rem;
+  background: none;
+  color: inherit;
+  font-size: 0.84rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__related-link:hover {
+  border-color: var(--sp-primary, #1f6feb);
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__related-link:focus-visible {
+  outline: 2px solid var(--sp-primary, #1f6feb);
+  outline-offset: 2px;
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__related-rel {
+  font-size: 0.72rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-consumption-audit__meta {
+  margin: 0.4rem 0 0;
+  font-size: 0.72rem;
+  color: var(--sp-text-muted);
+  text-align: right;
+}

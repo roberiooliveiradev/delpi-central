@@ -4,7 +4,7 @@
   "name": "Portal Suprimentos",
   "description": "Hub operacional e analítico de Suprimentos.",
   "icon": "package-icon",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "type": "microfrontend",
   "basePath": "/apps/supplies",
   "entry": "/apps/supplies/assets/remoteEntry.js",
@@ -104,11 +104,19 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/supplies/consumption-audit",
+      "label": "Auditoria de consumo",
+      "permission": "supplies.access",
+      "icon": "search-check",
+      "order": 40,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/supplies/negotiations",
       "label": "Negociações",
       "permission": "supplies.access",
       "icon": "handshake",
-      "order": 40,
+      "order": 41,
       "showInMenu": false
     },
     {
@@ -116,7 +124,7 @@
       "label": "Indicadores",
       "permission": "supplies.access",
       "icon": "gauge",
-      "order": 41,
+      "order": 42,
       "showInMenu": false
     },
     {
@@ -124,7 +132,7 @@
       "label": "Inteligência de Mercado",
       "permission": "supplies.access",
       "icon": "trending-up",
-      "order": 42,
+      "order": 43,
       "showInMenu": false
     },
     {
@@ -132,7 +140,7 @@
       "label": "Administração",
       "permission": "supplies.manage",
       "icon": "settings",
-      "order": 43,
+      "order": 44,
       "showInMenu": false
     },
     {
@@ -140,7 +148,7 @@
       "label": "Ajuda",
       "permission": "supplies.access",
       "icon": "circle-help",
-      "order": 44,
+      "order": 45,
       "showInMenu": false
     }
   ],

@@ -158,6 +158,13 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         requiredCap: "operations",
         keywords: ["estseg", "seguranca"],
       },
+      {
+        id: "consumption_audit",
+        label: "Auditoria de consumo",
+        viewId: "consumption_audit",
+        requiredCap: "operations",
+        keywords: ["op", "ordem", "producao", "consumo", "auditoria", "empenho"],
+      },
     ],
   },
   {

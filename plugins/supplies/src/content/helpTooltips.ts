@@ -307,6 +307,16 @@ export const SP_HELP = {
     "Filial padrão e densidade de tabelas valem só neste Portal. Só você edita o próprio perfil; administradores podem ler outros usuários.",
   forbiddenUnit:
     "Você não tem permissão para este módulo. Peça o uso normal do Portal ao administrador — aliases antigos não abrem o app.",
+  consumptionAudit:
+    "Auditoria de consumo de uma ordem de produção: estrutura prevista, empenhos, consumo registrado e evidências de execução por operação — tudo calculado pelo servidor, o Portal não recalcula.",
+  consumptionAuditQuery:
+    "Informe a chave completa da OP (11 posições) e a filial. A consulta fica na URL — F5 e compartilhamento restauram o mesmo resultado.",
+  consumptionAuditExecution:
+    "Apontada = existe apontamento registrado. Pendente = programada sem apontamento encontrado — não prova não-execução. Desconhecida = evidência insuficiente.",
+  consumptionAuditMaterials:
+    "Teórico vem da estrutura na data de emissão da OP; empenhos e consumo classificado vêm dos registros do ERP; a diferença é calculada pelo servidor.",
+  consumptionAuditQuality:
+    "Parcial = parte das evidências está incompleta ou ambígua. Os pontos de atenção explicam o que falta — não são acusação de irregularidade.",
 } as const;
 
 /** Hints do inspector Séries (COLOR_ONLY nos gráficos da Visão geral). */
