@@ -6,7 +6,7 @@ COPY supplies-api/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY shared /shared
-RUN pip install --no-cache-dir -e "/shared[flask]"
+RUN pip install --no-cache-dir -e "/shared[flask,fastapi]"
 
 COPY supplies-api /app
 

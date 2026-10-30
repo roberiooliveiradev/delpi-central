@@ -172,6 +172,7 @@ FASE_API=(
   commercial-api
   controllership-finance-api
   supplies-api
+  supplies-mcp
   delia-api
   cipa-api
   comite-etica-conduta-api
