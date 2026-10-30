@@ -155,18 +155,6 @@ const REPORT_META: Record<
       "Movimentações do mês por tipo de produto e saldo do fechamento — regra MATR320.",
     origin: "TOTVS/SD1·SD2·SD3·SF4 + SB9",
   },
-  "stock-kardex": {
-    name: "Kardex e CPV — R06",
-    description:
-      "Movimentações por produto com saldo inicial do fechamento anterior, custo histórico e CPV gerencial — regra MATR910.",
-    origin: "TOTVS/SD1·SD2·SD3·SF4 + SB9 + TTAT",
-  },
-  "inventory-adjustments": {
-    name: "Inventários — R07",
-    description:
-      "Ajustes de inventário positivos e negativos do período — recorte INVENT do MATR910.",
-    origin: "TOTVS/SD3 INVENT + SB9",
-  },
   "work-in-process": {
     name: "Material em processo — R08",
     description:
@@ -179,8 +167,6 @@ const CATALOG_REPORT_KEYS: ReportKey[] = [
   "financial-settlements",
   "stock-inventory",
   "stock-movements",
-  "stock-kardex",
-  "inventory-adjustments",
   "work-in-process",
 ];
 

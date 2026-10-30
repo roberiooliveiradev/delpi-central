@@ -1,6 +1,6 @@
 """CLARA MCP — superfície e contrato (não-PG).
 
-Cobre: registro das 48 tools com classes DISCOVERY/READ/ANALYSIS/
+Cobre: registro das 43 tools com classes DISCOVERY/READ/ANALYSIS/
 PREPARE/ACT, anotações honestas (readOnly/destructive), securitySchemes
 no wire, instructions, mount paths e o guard de transporte (service
 tokens proibidos na superfície de dados).
@@ -48,7 +48,7 @@ def test_tool_names_and_classes():
     tools = _list_tools()
     names = {t.name for t in tools}
     assert names == set(MCP_TOOL_NAMES)
-    assert len(tools) == 48
+    assert len(tools) == 43
     for t in tools:
         assert (t.meta or {}).get("delpi/toolClass") == TOOL_CLASS[t.name]
 

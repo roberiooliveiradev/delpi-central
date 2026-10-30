@@ -156,11 +156,11 @@ Portal + CLARA + corpus + Help + matriz publicados **como uma única entrega** (
 
 **Pendentes externas (não bloqueiam o contrato):** E7 versão RPO + parâmetros efetivos `mv_par09/10/16` (TI/ERP); classificação `F4_PODER3` no escopo kardex; confirmação do parâmetro de armazém da emissão R07.
 
-**Opções materiais — APROVADAS pelo PO em 2026-10-29** (aprovação em sessão, execução `CF-PROC0072-R06-R07-IMPLEMENTATION-015`, Gate 0; as quatro recomendações técnicas foram aceitas integralmente):
-- **D-O1** CPV: **`GET /financeiro/cpv` dedicado** — aprovado.
-- **D-O2** Export **CSV e PDF** das duas consultas — aprovado (molde `report_export_common`).
-- **D-O3** R07 como view dedicada **`inventory-adjustments`** — aprovado (matriz/deep-link independentes).
-- **D-O4** `mv_par20/21` (saldo zero/negativo): **omitir** — população = produtos com movimento.
+**Opções materiais (recomendação — aguardam aprovação):**
+- **D-O1** CPV: (a) `GET /financeiro/cpv` dedicado **← recomendado** × (b) embutido em `stock-kardex/summary`.
+- **D-O2** Export CSV/PDF das duas consultas **← recomendado aprovar** (molde pronto) × adiar.
+- **D-O3** R07 como view dedicada `inventory-adjustments` **← recomendado** (matriz/deep-link independentes) × alias de filtro no kardex.
+- **D-O4** `mv_par20/21` (pular `B2_QATU=0`/negativo): expor como parâmetros opcionais `include_zero_balance`/`include_negative_balance` × omitir (recomendado omitir — população = produtos com movimento).
 
 ## 10. Critérios AC-G do gate
 

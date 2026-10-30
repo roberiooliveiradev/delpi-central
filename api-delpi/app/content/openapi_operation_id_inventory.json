@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 793,
-  "stableCount": 793,
+  "operationCount": 784,
+  "stableCount": 784,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
@@ -1107,13 +1107,6 @@
       "stable": true
     },
     {
-      "operationId": "get_financeiro_cpv",
-      "method": "GET",
-      "path": "/financeiro/cpv",
-      "tag": "Financeiro — Stock Kardex",
-      "stable": true
-    },
-    {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
       "method": "GET",
       "path": "/financeiro/despesas-centro-custo/filtros",
@@ -1191,27 +1184,6 @@
       "stable": true
     },
     {
-      "operationId": "get_financeiro_inventory_adjustments",
-      "method": "GET",
-      "path": "/financeiro/inventory-adjustments",
-      "tag": "Financeiro — Stock Kardex",
-      "stable": true
-    },
-    {
-      "operationId": "export_financeiro_inventory_adjustments",
-      "method": "GET",
-      "path": "/financeiro/inventory-adjustments/export",
-      "tag": "Financeiro — Stock Kardex",
-      "stable": true
-    },
-    {
-      "operationId": "get_financeiro_inventory_adjustments_summary",
-      "method": "GET",
-      "path": "/financeiro/inventory-adjustments/summary",
-      "tag": "Financeiro — Stock Kardex",
-      "stable": true
-    },
-    {
       "operationId": "get_financeiro_settlements_payables",
       "method": "GET",
       "path": "/financeiro/settlements/payables",
@@ -1244,34 +1216,6 @@
       "method": "GET",
       "path": "/financeiro/stock-inventory/export",
       "tag": "Financeiro — Stock Inventory",
-      "stable": true
-    },
-    {
-      "operationId": "get_financeiro_stock_kardex",
-      "method": "GET",
-      "path": "/financeiro/stock-kardex",
-      "tag": "Financeiro — Stock Kardex",
-      "stable": true
-    },
-    {
-      "operationId": "export_financeiro_stock_kardex",
-      "method": "GET",
-      "path": "/financeiro/stock-kardex/export",
-      "tag": "Financeiro — Stock Kardex",
-      "stable": true
-    },
-    {
-      "operationId": "get_financeiro_stock_kardex_product",
-      "method": "GET",
-      "path": "/financeiro/stock-kardex/products/{product_code}",
-      "tag": "Financeiro — Stock Kardex",
-      "stable": true
-    },
-    {
-      "operationId": "get_financeiro_stock_kardex_summary",
-      "method": "GET",
-      "path": "/financeiro/stock-kardex/summary",
-      "tag": "Financeiro — Stock Kardex",
       "stable": true
     },
     {
@@ -3617,13 +3561,6 @@
       "method": "POST",
       "path": "/public/canal-denuncia/denuncias",
       "tag": "Canal de Denúncia — público",
-      "stable": true
-    },
-    {
-      "operationId": "get_public_character_avatar",
-      "method": "GET",
-      "path": "/public/characters/{character_id}/avatar/{filename}",
-      "tag": "Characters",
       "stable": true
     },
     {

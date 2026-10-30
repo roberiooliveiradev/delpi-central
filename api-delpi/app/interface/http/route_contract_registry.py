@@ -708,28 +708,6 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "export_financeiro_stock_movements": RouteContract(
         "financeiro_stock_movements_export", "document_export"
     ),
-    "get_financeiro_stock_kardex": RouteContract(
-        "financeiro_stock_kardex", "paged_list"
-    ),
-    "get_financeiro_stock_kardex_summary": RouteContract(
-        "financeiro_stock_kardex_summary", "scalar"
-    ),
-    "get_financeiro_stock_kardex_product": RouteContract(
-        "financeiro_stock_kardex", "paged_list"
-    ),
-    "export_financeiro_stock_kardex": RouteContract(
-        "financeiro_stock_kardex_export", "document_export"
-    ),
-    "get_financeiro_inventory_adjustments": RouteContract(
-        "financeiro_inventory_adjustments", "paged_list"
-    ),
-    "get_financeiro_inventory_adjustments_summary": RouteContract(
-        "financeiro_inventory_adjustments_summary", "scalar"
-    ),
-    "export_financeiro_inventory_adjustments": RouteContract(
-        "financeiro_inventory_adjustments_export", "document_export"
-    ),
-    "get_financeiro_cpv": RouteContract("financeiro_cpv", "scalar"),
     "get_financeiro_work_in_process": RouteContract(
         "financeiro_work_in_process", "paged_list"
     ),

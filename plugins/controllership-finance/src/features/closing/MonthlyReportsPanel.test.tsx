@@ -751,7 +751,7 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(screen.queryByText("RELATÓRIO")).toBeNull();
     expect(screen.queryByText("DESCRIÇÃO")).toBeNull();
     expect(screen.getAllByText("Disponível").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Abrir relatório").length).toBe(6);
+    expect(screen.getAllByText("Abrir relatório").length).toBe(4);
   });
 
   it("matriz R01–R15 fica em rastreabilidade técnica expansível", async () => {

@@ -129,52 +129,6 @@ export const CF_HELP = {
       type: "Tipo do produto (MP, PI, PA e demais tipos TOTVS).",
     },
   },
-  stockKardex: {
-    page:
-      "Kardex — R06: movimentações de cada produto no mês com a regra do relatório MATR910 do ERP — entradas e saídas (recebimentos, vendas e movimentos internos), documento, custo e saldo corrente a partir do fechamento anterior. A paridade por competência contra uma nova emissão oficial MATR910 ainda está pendente de homologação — use os valores como referência verificável, não como selo oficial.",
-    totals:
-      "Saldo inicial vem do snapshot de fechamento do mês anterior no ERP (SB9) — nunca substituído nem estimado; se a posição não existir, a página declara «Não encontrado» em vez de mostrar zero. Entradas e saídas somam a competência inteira no filtro; o saldo final é a equação abertura + entradas − saídas, não o snapshot do mês.",
-    summaryWarehouse:
-      "Totais por armazém e filial sobre o universo filtrado — posição líquida (entradas − saídas) e contagem de movimentos por local de estoque.",
-    cpv:
-      "CPV gerencial do mesmo período — medida viva calculada sobre as saídas fiscais do ERP com custo corrente (CFOPs de venda, custo D2_CUSTO1). Por decisão de produto o CPV usa custo vivo: retificações oficiais posteriores alteram a medida. O CPV não é o total de saídas do kardex — são semânticas diferentes (custo vivo do documento de saída versus custo histórico da movimentação) e não devem ser reconciliados como iguais.",
-    filters:
-      "Competência é obrigatória; Armazém aceita um ou mais códigos separados por vírgula (ex.: 01,99); Produto filtra um código exato; Movimento restringe a coluna impressa do MATR910 (entradas ou saídas). Filial é apenas filtro de dados — sem alterar permissões.",
-    export:
-      "Exporta o relatório completo em CSV ou PDF com o mesmo motor e escopo da tela — o documento registra competência, filial, armazém, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional — não substitui a emissão MATR910 do ERP.",
-    table:
-      "Detalhamento das movimentações no grão do MATR910 — uma linha por documento/produto/data com a coluna impressa (entrada ou saída), referência (fornecedor, pedido, OP ou centro de custo) e saldo corrente por produto. A paginação é no servidor sobre o conjunto inteiro autorizado.",
-    columns: {
-      product: "Código e descrição do produto no ERP.",
-      document: "Documento de origem da movimentação no ERP.",
-      kind: "Coluna impressa do MATR910 — entrada ou saída.",
-      tm: "Tipo de movimento/TES do ERP que classifica a movimentação.",
-      reference:
-        "Referência do MATR910: F-<fornecedor>, P-<pedido>, OP<ordem> ou CC<centro de custo>.",
-      unitCost:
-        "Custo unitário da movimentação — histórico via trilha TTAT quando disponível, corrente quando a regra permite.",
-      running:
-        "Saldo corrente do produto no armazém após a movimentação — dentro do bloco produto/armazém ordenado por data e sequência.",
-    },
-  },
-  inventoryAdjustments: {
-    page:
-      "Inventários — R07: ajustes de inventário do mês — o recorte oficial do MATR910 sobre as movimentações internas de inventário (documento INVENT: ajustes positivos e negativos). Consulta de leitura — nenhum ajuste é executado no ERP por esta página. A paridade por competência contra uma nova emissão oficial ainda está pendente de homologação.",
-    totals:
-      "Quantidade de ajustes, soma dos ajustes positivos (coluna entrada, TES 499/DE0), soma dos ajustes negativos (coluna saída, TES 999/RE0) e o valor líquido do período — todos sobre o universo autorizado, não apenas a página exibida.",
-    summaryWarehouse:
-      "Ajustes por armazém e filial — quantidade e posição líquida por local de estoque do recorte de inventário.",
-    export:
-      "Exporta o relatório em CSV ou PDF com o mesmo motor e escopo da tela — o documento registra competência, filial, armazém, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional — não substitui a emissão oficial do ERP.",
-    table:
-      "Detalhamento dos ajustes — uma linha por documento/produto/data com classificação (positivo ou negativo), quantidade, valor e saldo corrente do produto no armazém.",
-    columns: {
-      product: "Código e descrição do produto no ERP.",
-      warehouse:
-        "Armazém do ajuste — o recorte oficial cobre os armazéns da emissão (01 e 99).",
-      kind: "Ajuste positivo (entrada) ou ajuste negativo (saída).",
-    },
-  },
   workInProcess: {
     page:
       "Material em Processo — R08: relatório do material em processo no fechamento do mês, com a mesma composição MATR989 que o motor P7 certifica — bloco físico do armazém de processo (99) mais o saldo alocado em ordens de produção vivas. A paridade por competência contra uma nova emissão oficial MATR989 ainda está pendente de homologação — use os valores como referência verificável, não como selo oficial.",

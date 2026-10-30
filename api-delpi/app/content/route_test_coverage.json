@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-10-29",
-  "baselineOperationCount": 793,
-  "operationCount": 793,
-  "coveredCount": 713,
+  "baselineOperationCount": 784,
+  "operationCount": 784,
+  "coveredCount": 704,
   "gapCount": 79,
   "exemptCount": 1,
   "byModule": {
@@ -56,8 +56,8 @@
       "exempt": 0
     },
     "financeiro": {
-      "total": 28,
-      "covered": 28,
+      "total": 20,
+      "covered": 20,
       "gap": 0,
       "exempt": 0
     },
@@ -176,8 +176,8 @@
       "exempt": 0
     },
     "public": {
-      "total": 10,
-      "covered": 10,
+      "total": 9,
+      "covered": 9,
       "gap": 0,
       "exempt": 0
     },
@@ -1657,15 +1657,6 @@
       "status": "covered"
     },
     {
-      "operationId": "get_financeiro_cpv",
-      "method": "GET",
-      "path": "/financeiro/cpv",
-      "module": "financeiro",
-      "entity": "financeiro_cpv",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
       "method": "GET",
       "path": "/financeiro/despesas-centro-custo/filtros",
@@ -1765,33 +1756,6 @@
       "status": "covered"
     },
     {
-      "operationId": "get_financeiro_inventory_adjustments",
-      "method": "GET",
-      "path": "/financeiro/inventory-adjustments",
-      "module": "financeiro",
-      "entity": "financeiro_inventory_adjustments",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "export_financeiro_inventory_adjustments",
-      "method": "GET",
-      "path": "/financeiro/inventory-adjustments/export",
-      "module": "financeiro",
-      "entity": "financeiro_inventory_adjustments_export",
-      "shape": "document_export",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_financeiro_inventory_adjustments_summary",
-      "method": "GET",
-      "path": "/financeiro/inventory-adjustments/summary",
-      "module": "financeiro",
-      "entity": "financeiro_inventory_adjustments_summary",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
       "operationId": "get_financeiro_settlements_payables",
       "method": "GET",
       "path": "/financeiro/settlements/payables",
@@ -1834,42 +1798,6 @@
       "module": "financeiro",
       "entity": "financeiro_stock_inventory_export",
       "shape": "document_export",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_financeiro_stock_kardex",
-      "method": "GET",
-      "path": "/financeiro/stock-kardex",
-      "module": "financeiro",
-      "entity": "financeiro_stock_kardex",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "export_financeiro_stock_kardex",
-      "method": "GET",
-      "path": "/financeiro/stock-kardex/export",
-      "module": "financeiro",
-      "entity": "financeiro_stock_kardex_export",
-      "shape": "document_export",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_financeiro_stock_kardex_product",
-      "method": "GET",
-      "path": "/financeiro/stock-kardex/products/{product_code}",
-      "module": "financeiro",
-      "entity": "financeiro_stock_kardex",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_financeiro_stock_kardex_summary",
-      "method": "GET",
-      "path": "/financeiro/stock-kardex/summary",
-      "module": "financeiro",
-      "entity": "financeiro_stock_kardex_summary",
-      "shape": "scalar",
       "status": "covered"
     },
     {
@@ -4885,15 +4813,6 @@
       "path": "/public/canal-denuncia/denuncias",
       "module": "public",
       "entity": "canal_denuncia",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_public_character_avatar",
-      "method": "GET",
-      "path": "/public/characters/{character_id}/avatar/{filename}",
-      "module": "public",
-      "entity": "character_avatar",
       "shape": "scalar",
       "status": "covered"
     },
