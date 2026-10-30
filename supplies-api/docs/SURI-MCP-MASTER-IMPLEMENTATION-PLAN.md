@@ -245,3 +245,8 @@ O mapa de expansão **não** permite acessar `api-delpi` diretamente, criar perm
 
 `MASTER_PLAN = DOCUMENTED`; `S0 = READY_FOR_INVENTORY`; `S1..S9 = PLANNED`; `KEYCLOAK_READY = PENDING`; `KEYCLOAK_REGISTERED = NO`; `CHATGPT_CONNECTED = NO`; `SURI_MCP_RUNTIME_PROVEN = NO`.  
 **Plano fechado quanto ao objetivo e aos gates, aberto apenas onde decisões dependem de código/infra/owner real.** Se uma premissa falhar, emitir `EXECUTION_DRIFT` e seguir a regra STOP-THE-LINE. Não criar “PASS” narrativo.
+
+
+## 10. Adendo pós-S9 — revisão de catálogo semântico (2026-10-29)
+
+**Authority de planejamento posterior para o catálogo de tools:** [SURI-MCP-SEMANTIC-TOOLS-REFACTOR-PLAN.md](./SURI-MCP-SEMANTIC-TOOLS-REFACTOR-PLAN.md) — task `SURI-MCP-TOOLS-SEMANTIC-001`. O plano S0–S9 é histórico da implementação de 8 tools; **não reexecutar S0–S9** para mudar o catálogo. Novo target antes de cadastrar Keycloak: quatro ferramentas `get_context`, `read`, `analyze`, `knowledge`, preservando as oito capacidades da V1 por ações/entidades explícitas. `execute` e `delete` são apenas famílias TARGET de evolução, não implementadas; a SURI fará operações autorizadas com mínimo de confirmações adicionais, exigindo confirmação explícita para DELETE e quaisquer aprovações obrigatórias do contexto. Fazer refatoração, parity tests, atualização do contract freeze/handoff e novo smoke antes de reafirmar `KEYCLOAK_READY` para o catálogo novo. Não cadastrar Keycloak nem conectar ChatGPT nesta task.
