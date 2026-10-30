@@ -2773,10 +2773,12 @@ services:
       ENG_NC_IMPORT_REPLACE_ENABLED: ${ENG_NC_IMPORT_REPLACE_ENABLED:-}
       PLUGINS_DB_USER: ${PLUGINS_DB_USER:-}
 
-      # EVA ACT (tools mutáveis MCP) — fail-closed: vazio/ausente =
-      # desabilitado. Produção permanece desabilitada até autorização
-      # operacional específica (doc 53, gate EVA-P8).
+      # EVA ACT (tools mutáveis MCP) — tiers fail-closed por classe de
+      # risco (doc 57): ENG_EVA_ACT_ENABLED=write (create/update);
+      # DELETE e IMPORT exigem flags próprias além do master.
       ENG_EVA_ACT_ENABLED: ${ENG_EVA_ACT_ENABLED:-}
+      ENG_EVA_ACT_DELETE_ENABLED: ${ENG_EVA_ACT_DELETE_ENABLED:-}
+      ENG_EVA_ACT_IMPORT_ENABLED: ${ENG_EVA_ACT_IMPORT_ENABLED:-}
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]

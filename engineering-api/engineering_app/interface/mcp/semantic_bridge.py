@@ -161,9 +161,10 @@ async def _require_human_confirmation(
             ),
             schema=_DestructiveConfirmation,
         )
-    except Exception:
+    except Exception as exc:
         logger.warning(
-            "eva_mcp_elicit_unsupported", extra={"proposal_id": proposal_id}
+            "eva_mcp_elicit_unsupported",
+            extra={"proposal_id": proposal_id, "error": repr(exc)},
         )
         return _err(
             "Confirmação humana verificável indisponível: elicitation "

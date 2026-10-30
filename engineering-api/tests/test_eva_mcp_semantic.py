@@ -100,6 +100,8 @@ def _enable_act(monkeypatch) -> None:
 def _enable_write_act(monkeypatch) -> None:
     """Write tier only — destructive classes stay fail-closed."""
     monkeypatch.setenv(bridge.EVA_ACT_ENV_FLAG, "true")
+    monkeypatch.delenv(bridge.EVA_ACT_DELETE_ENV_FLAG, raising=False)
+    monkeypatch.delenv(bridge.EVA_ACT_IMPORT_ENV_FLAG, raising=False)
 
 
 class _FakeElicitCtx:
@@ -193,6 +195,8 @@ def test_registry_parity_covers_legacy_intents() -> None:
 
 def test_get_context_catalog(monkeypatch) -> None:
     monkeypatch.delenv(bridge.EVA_ACT_ENV_FLAG, raising=False)
+    monkeypatch.delenv(bridge.EVA_ACT_DELETE_ENV_FLAG, raising=False)
+    monkeypatch.delenv(bridge.EVA_ACT_IMPORT_ENV_FLAG, raising=False)
     _set_context(_human_user())
     result = sem.tool_get_context()
     assert not result.is_error
@@ -974,6 +978,7 @@ def test_delete_commit_expired_proposal(monkeypatch) -> None:
 
 def test_delete_act_disabled_without_flag(monkeypatch) -> None:
     monkeypatch.delenv(bridge.EVA_ACT_ENV_FLAG, raising=False)
+    monkeypatch.delenv(bridge.EVA_ACT_DELETE_ENV_FLAG, raising=False)
     _set_context(_human_user())
     result = asyncio.run(
         sem.tool_delete(entity="nonconformity", target_ref="r1")

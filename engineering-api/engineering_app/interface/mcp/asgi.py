@@ -25,8 +25,11 @@ from engineering_app.interface.mcp.server import (
 _mcp = create_mcp_server()
 mcp_http_app: Starlette = _mcp.streamable_http_app(
     streamable_http_path="/",
-    json_response=True,
-    stateless_http=True,
+    # Stateful sessions + SSE responses: server-initiated requests
+    # (elicitation for destructive human confirmation) require a
+    # back-channel that JSON/stateless mode does not provide.
+    json_response=False,
+    stateless_http=False,
     transport_security=eva_mcp_transport_security(),
 )
 
