@@ -39,6 +39,14 @@
 
 ## 3. Ferramentas MCP vigentes (43 — congeladas por `MCP_TOOL_NAMES`; execução 016 ampliou 18→43)
 
+> **Pós-CLARA-MCP-SEMANTIC-001:** a tabela abaixo descreve a superfície
+> legada pré-migração e os handlers que permanecem alvos do dispatcher.
+> O `tools/list` público passou a **seis tools semânticas**
+> (`get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`)
+> — o mapeamento tool→(entity, action) está em
+> `CLARA-MCP-SEMANTIC-001-capability-matrix.md`. O comportamento
+> operacional desta seção (gates, handlers BFF, envelopes) é inalterado.
+
 | Ferramenta | Classe | Cobre |
 |---|---|---|
 | `get_catalog` | DISCOVERY | Catálogo de ferramentas + agent_directives (persona) |

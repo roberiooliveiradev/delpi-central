@@ -287,4 +287,8 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
        "CLARA-MCP-SEMANTIC-001-capability-matrix.md",
        "MATRIX", "Matriz de migração CLARA MCP semântico",
        "CURRENT_IMPLEMENTATION", "paridade-portal-clara"),
+    _s("doc-125",
+       "123-clara-mcp-semantico-001-execution-report.md",
+       "DOCUMENT", "Execução CLARA MCP semântico — relatório",
+       "CURRENT_IMPLEMENTATION", "paridade-portal-clara"),
 ]
