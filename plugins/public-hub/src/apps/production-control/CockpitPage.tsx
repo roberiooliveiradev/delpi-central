@@ -529,7 +529,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   // Indicadores do cabeçalho conforme a fonte oficial (Etapa 4, ajuste
   // híbrido):
   // - mes: eficiência/produzido continuam do ERP (turno); somente o tile
-  //   de paradas mede o sensor MES ("hoje") e abre a Atividade do posto,
+  //   de paradas mede o sensor MES ("hoje") e abre Paradas do posto,
   //   nunca o modal TOTVS.
   // - totvs: eficiência/produção/paradas do turno legadas; abre o modal
   //   de apontamentos improdutivos do ERP.

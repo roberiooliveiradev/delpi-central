@@ -136,8 +136,8 @@ export function WorkCenterShiftMetrics({
  * Tiles do posto sensorizado (híbrido, ajuste pós-Etapa 4): eficiência e
  * produzido continuam vindo do ERP (turno, mesmos valores do painel
  * TOTVS); somente as paradas são medidas pelo sensor MES — sempre
- * "hoje" (dia civil SP), nunca rotuladas como turno — e abrem a
- * Atividade do posto, onde o operador classifica.
+ * "hoje" (dia civil SP), nunca rotuladas como turno — e abrem
+ * Paradas do posto, onde o operador classifica.
  * Lê o CockpitActivityContext — mesma consulta do cartão e da página.
  */
 export function MesShiftMetrics({
@@ -200,7 +200,7 @@ export function MesShiftMetrics({
         title={
           pending > 0
             ? `${pending} parada(s) aguardando motivo — toque para classificar`
-            : "Paradas medidas pelo sensor hoje — toque para ver a Atividade do posto"
+            : "Paradas medidas pelo sensor hoje — toque para ver as Paradas do posto"
         }
       >
         <span className="pcp-pub__hero-metric-label">Paradas · hoje</span>

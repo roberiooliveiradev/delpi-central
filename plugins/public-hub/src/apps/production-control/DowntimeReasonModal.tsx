@@ -15,10 +15,19 @@ type Props = {
   onClose: () => void;
 };
 
+function isEditingClassified(downtime: RunDowntimeView | null | undefined): boolean {
+  if (!downtime) return false;
+  return Boolean(
+    downtime.confirmed ||
+      downtime.reasonCode?.trim() ||
+      downtime.reasonLabel?.trim(),
+  );
+}
+
 /**
- * Classificação do motivo da parada MES. O `started_at` já foi gravado no
- * Pause — aqui o operador só informa o motivo. Usado tanto no card quanto
- * no detalhamento da operação via ProductionRunControls.
+ * Classificação do motivo da parada MES. Informa pendências e permite
+ * alterar motivo/observação de paradas já classificadas, pré-carregando
+ * os valores atuais. Usado no card de operação e em Paradas do posto.
  */
 export function DowntimeReasonModal({
   open,
@@ -34,31 +43,53 @@ export function DowntimeReasonModal({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [selected, setSelected] = useState<MesDowntimeReason | null>(null);
   const [note, setNote] = useState("");
+  const [inactiveCurrent, setInactiveCurrent] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     let active = true;
-    setSelected(null);
-    setNote("");
     setSubmitError(null);
     setLoadError(null);
+    setSelected(null);
+    setInactiveCurrent(false);
+    setNote(downtime?.note?.trim() ? downtime.note : "");
+    setReasons(null);
     void loadReasons()
       .then((items) => {
-        if (active) setReasons(items);
+        if (!active) return;
+        setReasons(items);
+        const code = downtime?.reasonCode?.trim();
+        if (!code) return;
+        const match = items.find((reason) => reason.code === code);
+        if (match) {
+          setSelected(match);
+        } else {
+          setInactiveCurrent(true);
+        }
       })
       .catch((err: unknown) => {
         if (active) {
           setLoadError(
-            err instanceof Error ? err.message : "Motivos de parada indisponíveis.",
+            err instanceof Error
+              ? err.message
+              : "Motivos de parada indisponíveis.",
           );
         }
       });
     return () => {
       active = false;
     };
-  }, [open, loadReasons]);
+  }, [open, downtime?.id, downtime?.reasonCode, downtime?.note, loadReasons]);
 
   if (!open) return null;
+
+  const editing = isEditingClassified(downtime);
+  const title = editing
+    ? "Alterar motivo da parada"
+    : "Informar motivo da parada";
+  const showNote =
+    selected != null &&
+    (selected.requiresNote || Boolean(note) || Boolean(downtime?.note));
 
   const submit = async () => {
     if (!selected || busy) return;
@@ -73,13 +104,20 @@ export function DowntimeReasonModal({
       onClose();
     } catch (err) {
       setSubmitError(
-        err instanceof Error ? err.message : "Não foi possível registrar o motivo.",
+        err instanceof Error
+          ? err.message
+          : "Não foi possível registrar o motivo.",
       );
     }
   };
 
   return (
-    <div className="pcp-pub-modal" role="dialog" aria-modal="true" aria-labelledby="pcp-downtime-title">
+    <div
+      className="pcp-pub-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pcp-downtime-title"
+    >
       <button
         type="button"
         className="pcp-pub-modal__backdrop"
@@ -88,18 +126,21 @@ export function DowntimeReasonModal({
       />
       <div className="pcp-pub-modal__panel pcp-pub-modal__panel--downtime-reason">
         <h3 id="pcp-downtime-title" className="pcp-pub__run-title">
-          Por que a produção parou?
+          {title}
         </h3>
 
         {downtime?.startedAt ? (
           <div className="pcp-pub__downtime" role="status">
             <p className="pcp-pub__downtime-title">
-              {downtime.endedAt ? "Parada encerrada" : "Parada em registro"}
+              {downtime.endedAt ? "Parada encerrada" : "Parada em andamento"}
             </p>
             {downtime.endedAt ? (
               <span className="pcp-pub__downtime-timer" role="timer">
                 {formatDurationHms(
-                  elapsedSeconds(downtime.startedAt, Date.parse(downtime.endedAt)),
+                  elapsedSeconds(
+                    downtime.startedAt,
+                    Date.parse(downtime.endedAt),
+                  ),
                 )}
               </span>
             ) : (
@@ -110,15 +151,36 @@ export function DowntimeReasonModal({
             )}
             <p className="pcp-pub__downtime-note">
               {downtime.endedAt
-                ? "Das " + formatTimeHmSp(downtime.startedAt) + " às " + formatTimeHmSp(downtime.endedAt)
-                : "Iniciada às " + formatTimeHmSp(downtime.startedAt) + " · em curso"}
+                ? "Das " +
+                  formatTimeHmSp(downtime.startedAt) +
+                  " às " +
+                  formatTimeHmSp(downtime.endedAt)
+                : "Iniciada às " +
+                  formatTimeHmSp(downtime.startedAt) +
+                  " · em andamento"}
             </p>
           </div>
         ) : null}
 
-        <p className="pcp-pub__run-note">
-          Selecione o motivo da parada para continuar.
-        </p>
+        {editing && downtime?.reasonLabel ? (
+          <p className="pcp-pub__run-note">
+            Motivo atual: <strong>{downtime.reasonLabel}</strong>
+            {downtime.note?.trim()
+              ? ` · Obs.: ${downtime.note.trim()}`
+              : ""}
+          </p>
+        ) : (
+          <p className="pcp-pub__run-note">
+            Selecione o motivo da parada para continuar.
+          </p>
+        )}
+
+        {inactiveCurrent && downtime?.reasonLabel ? (
+          <p className="pcp-pub__run-error" role="status">
+            O motivo atual ({downtime.reasonLabel}) não está mais disponível.
+            Selecione um motivo válido para confirmar.
+          </p>
+        ) : null}
 
         {loadError ? <p className="pcp-pub__run-error">{loadError}</p> : null}
         {!loadError && !reasons ? (
@@ -126,7 +188,11 @@ export function DowntimeReasonModal({
         ) : null}
 
         {reasons ? (
-          <div className="pcp-pub-reasons" role="listbox" aria-label="Motivos de parada">
+          <div
+            className="pcp-pub-reasons"
+            role="listbox"
+            aria-label="Motivos de parada"
+          >
             {reasons.map((reason) => (
               <button
                 key={reason.code}
@@ -134,11 +200,16 @@ export function DowntimeReasonModal({
                 role="option"
                 aria-selected={selected?.code === reason.code}
                 className={`pcp-pub-reasons__item${
-                  selected?.code === reason.code ? " pcp-pub-reasons__item--selected" : ""
+                  selected?.code === reason.code
+                    ? " pcp-pub-reasons__item--selected"
+                    : ""
                 }`}
                 onClick={() => {
                   setSelected(reason);
                   setSubmitError(null);
+                  if (!reason.requiresNote && !downtime?.note?.trim()) {
+                    setNote("");
+                  }
                 }}
                 disabled={busy}
               >
@@ -148,25 +219,29 @@ export function DowntimeReasonModal({
           </div>
         ) : null}
 
-        {selected?.requiresNote ? (
+        {showNote ? (
           <label className="pcp-pub__run-field pcp-pub-reasons__note">
-            <span>Descreva o motivo da parada</span>
+            <span>
+              {selected?.requiresNote
+                ? "Descreva o motivo da parada"
+                : "Observação (opcional)"}
+            </span>
             <textarea
               value={note}
               onChange={(event) => setNote(event.target.value)}
               rows={3}
               maxLength={500}
-              required
-              placeholder="Descreva o motivo da parada..."
+              required={Boolean(selected?.requiresNote)}
+              placeholder={
+                selected?.requiresNote
+                  ? "Descreva o motivo da parada..."
+                  : "Observação..."
+              }
             />
           </label>
         ) : null}
 
         {submitError ? <p className="pcp-pub__run-error">{submitError}</p> : null}
-
-        {downtime?.confirmed && downtime.reasonLabel ? (
-          <p className="pcp-pub__run-note">Motivo atual: {downtime.reasonLabel}</p>
-        ) : null}
 
         <div className="pcp-pub__run-actions">
           <button
@@ -175,7 +250,7 @@ export function DowntimeReasonModal({
             onClick={() => void submit()}
             disabled={busy || !selected}
           >
-            Confirmar motivo
+            {editing ? "Salvar alteração" : "Confirmar motivo"}
           </button>
           <button
             type="button"
