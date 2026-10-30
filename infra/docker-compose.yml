@@ -2224,6 +2224,73 @@ services:
     networks:
       - delpi-network
 
+  supplies-mcp:
+    build:
+      context: ..
+      dockerfile: supplies-api/Dockerfile
+
+    container_name: delpi-supplies-mcp
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      SERVICE_NAME: supplies-mcp
+      SUPPLIES_API_ROOT_PATH: /apps/supplies-api
+
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      MCP_RESOURCE_URL: ${SURI_MCP_RESOURCE_URL:-}
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      DELPI_API_URL: http://delpi-api-delpi:8000
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-60}
+      DELPI_API_CALLER_APP: supplies-api
+      API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+
+      CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
+      CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-10}
+      DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
+
+    depends_on:
+      keycloak:
+        condition: service_started
+      core-api:
+        condition: service_started
+      api-delpi:
+        condition: service_healthy
+      supplies-api:
+        condition: service_started
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
+    command: >-
+      sh -c "find /app -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true;
+      exec uvicorn app.interfaces.mcp.asgi:app --host 0.0.0.0 --port 8000 --workers 1"
+
   external-data-api:
     build:
       context: ..
