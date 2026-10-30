@@ -22,7 +22,7 @@ BLOCKED a PROVEN passa a 45.
 
 Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`delete` = tool alvo.
 
-## READ capabilities (25)
+## READ capabilities (34)
 
 | ID | Área | Capacidade | Portal | SURI hoje | Owner | Contrato | AuthZ | Evidência | Gap | Fase |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -61,7 +61,7 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | R-33 | Ajuda | Manual/FAQ/glossário | PROVEN | `knowledge` (corpus parcial) | supplies content | in-proc | access | knowledge tests | ampliar corpus | P1-K1 |
 | R-34 | Consumo | Análise determinística | PROVEN | `analyze:PO summary` | supplies-api | sample+facts+hash | access | suri tests | estender p/ demais entidades | P1-A1 |
 
-## WRITE capabilities (9 — todas plugin-db ou workflow; nenhuma ERP liberada)
+## WRITE capabilities (11 — plugin-db/workflow + 2 writes ERP governadas: W-10/W-11)
 
 | ID | Área | Capacidade | Portal | SURI | Owner | Contrato | AuthZ | Estado | Fase |
 |---|---|---|---|---|---|---|---|---|---|
