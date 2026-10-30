@@ -52,6 +52,12 @@ TOOL_CLASS: dict[str, str] = {
     "get_stock_movements": "READ",
     "get_work_in_process": "READ",
     "get_stock_reconciliation": "READ",
+    # --- paridade READ R06/R07 (doc 122, IMPLEMENTATION-015) --------
+    "get_stock_kardex": "READ",
+    "get_stock_kardex_summary": "READ",
+    "get_inventory_adjustments": "READ",
+    "get_inventory_adjustments_summary": "READ",
+    "get_cpv": "READ",
     "get_report_matrix": "READ",
     "list_closing_catalogs": "READ",
     "list_catalog_entries": "READ",

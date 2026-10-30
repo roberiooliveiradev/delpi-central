@@ -149,6 +149,15 @@ def test_flag_off_returns_typed_403(
 ) -> None:
     """FINANCEIRO_STOCK_INVENTORY_ENABLED stays off by default: valid S2S +
     delegated user still gets `scope_unavailable`, never real rows."""
+    from app.application.security.stock_inventory_scope import (
+        SharedDatasetStockInventoryScopeResolver,
+    )
+
+    monkeypatch.setattr(
+        "app.composition.financeiro_stock_inventory_composer."
+        "get_stock_inventory_scope_resolver",
+        lambda: SharedDatasetStockInventoryScopeResolver(enabled=False),
+    )
     _patch_s2s(monkeypatch, _request_headers(S2S_HEADERS), _validator())
     _patch_user(monkeypatch)
     response = stock_inventory_client.get(

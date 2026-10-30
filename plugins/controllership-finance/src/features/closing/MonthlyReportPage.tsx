@@ -19,7 +19,9 @@ import {
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
 import { FinancialSettlementsPage } from "./FinancialSettlementsPage";
+import { InventoryAdjustmentsPage } from "./InventoryAdjustmentsPage";
 import { StockInventoryPage } from "./StockInventoryPage";
+import { StockKardexPage } from "./StockKardexPage";
 import { StockMovementsPage } from "./StockMovementsPage";
 import { WorkInProcessPage } from "./WorkInProcessPage";
 
@@ -28,6 +30,8 @@ export type ReportKey =
   | "financial-settlements"
   | "stock-inventory"
   | "stock-movements"
+  | "stock-kardex"
+  | "inventory-adjustments"
   | "work-in-process";
 
 export type ReportFamily = "settlements" | "stock";
@@ -42,6 +46,8 @@ export const REPORT_KEY_TO_FAMILY: Record<ReportKey, ReportFamily> = {
   "financial-settlements": "settlements",
   "stock-inventory": "stock",
   "stock-movements": "stock",
+  "stock-kardex": "stock",
+  "inventory-adjustments": "stock",
   "work-in-process": "stock",
 };
 
@@ -49,6 +55,8 @@ export const REPORT_KEY_LABELS: Record<ReportKey, string> = {
   "financial-settlements": "Baixas financeiras",
   "stock-inventory": "Estoque e conciliação",
   "stock-movements": "Entradas e saídas",
+  "stock-kardex": "Kardex e CPV",
+  "inventory-adjustments": "Inventários",
   "work-in-process": "Material em processo",
 };
 
@@ -57,6 +65,8 @@ export function isReportKey(value: string | undefined): value is ReportKey {
     value === "financial-settlements" ||
     value === "stock-inventory" ||
     value === "stock-movements" ||
+    value === "stock-kardex" ||
+    value === "inventory-adjustments" ||
     value === "work-in-process"
   );
 }
@@ -100,6 +110,10 @@ export function MonthlyReportPage({
         <FinancialSettlementsPage reportContext={{ period }} />
       ) : reportKey === "stock-movements" ? (
         <StockMovementsPage reportContext={{ period }} />
+      ) : reportKey === "stock-kardex" ? (
+        <StockKardexPage reportContext={{ period }} />
+      ) : reportKey === "inventory-adjustments" ? (
+        <InventoryAdjustmentsPage reportContext={{ period }} />
       ) : reportKey === "work-in-process" ? (
         <WorkInProcessPage reportContext={{ period }} />
       ) : (
