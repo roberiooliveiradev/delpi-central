@@ -2393,6 +2393,25 @@ def execute_user_profile_update(
     )
 
 
+def delete_user_profile_photo(*, user_id: str) -> dict:
+    request = build_mcp_request()
+    _, actor = _actor(request)
+    if not actor:
+        raise PermissionError("Unauthorized")
+    return build_manage_user_profile_use_case().delete_photo(
+        actor_user_id=actor,
+        user_id=(user_id or "").strip() or actor,
+        authorization=request.headers.get("Authorization"),
+    )
+
+
+def user_profile_photo_delete_impact(*, user_id: str) -> dict:
+    return {
+        "user_id": user_id,
+        "effect": "Exclusão da foto de perfil do usuário.",
+    }
+
+
 # --- analyze: proxies over the official analytics owner ------------------------------
 
 

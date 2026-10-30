@@ -1207,6 +1207,17 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         phases=_DELETE_PHASES,
         requires=(REQ_FOLLOWUPS,),
     ),
+    _a(
+        "user_profile", "photo_delete", "delete",
+        "Delete a user profile photo — sealed proposal only; own "
+        "profile or manager.",
+        "destructive",
+        destructive=True,
+        ref_arg="target_ref",
+        ref_description="Target user_id.",
+        phases=_DELETE_PHASES,
+        requires=(REQ_ACCESS,),
+    ),
 )
 
 PLANNED_SEMANTIC_ACTIONS: tuple[str, ...] = tuple(

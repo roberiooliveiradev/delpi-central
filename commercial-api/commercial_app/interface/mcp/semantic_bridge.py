@@ -782,6 +782,14 @@ _DELETE_SPEC: dict[str, tuple[Any, Any]] = {
             attachment_id=target
         ),
     ),
+    "user_profile.photo_delete": (
+        lambda target: parity.user_profile_photo_delete_impact(
+            user_id=target
+        ),
+        lambda target, args: parity.delete_user_profile_photo(
+            user_id=target
+        ),
+    ),
 }
 
 
