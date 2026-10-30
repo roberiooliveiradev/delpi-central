@@ -189,3 +189,25 @@ Verificação operacional read-only sobre o release da Etapa 5, após rebuild co
 | H — Regressão | PASS c/ observação | R03/R05/R06/R07/R08/CPV/pendências/documentos/competences/received-documents 200; comparação PERIOD R10 (ago 420.737,98 → set 169.704,12 COMPARABLE), R06×CPV e R10×R11 `RELATED_REQUIRES_EXPLANATION`; `evidenceRefs` serializando como lista de locators (fix stage-5 verificado live). **Observação de reliability:** primeira chamada R10 após idle registrou 1×503 `delpi_api_timeout` (upstream ~3,2s); retries imediatos 200 — recomendado revisar budget de timeout/warm-up (owner: BFF/api-delpi, não bloqueante) |
 
 **Veredito Gate 021: `ACCEPT_WITH_RESIDUAL`.** Residuais: MCP e2e `TEST_NOT_RUN` (necessária execução do fluxo ChatGPT authorization-code+PKCE — owner: IAM/Produto, não requer mudança de configuração); 403 específico R10/R11 `INCONCLUSIVE` (persona negativa inexistente — não conceder acesso para teste); timeout frio R10 (observação reliability).
+
+
+## 9. Gate 021 — evidência complementar MCP real no ChatGPT (30/10/2026)
+
+**Origem da evidência:** testes realizados diretamente pelo GPT na sessão ChatGPT conectada à ferramenta `CLARA — Controladoria & Finanças`, usando somente operações de leitura. Diferente do Gate 021 executado pelo Devin, este teste percorreu o conector disponível na sessão do usuário. **Não** foi realizado novo deploy, alteração IAM, teste com identidade negativa nem operação de escrita.
+
+| Teste | Resultado observado | Estado |
+|---|---|---|
+| `get_context(topic=actor)` | Resposta `success=true`, ator autenticado e capabilities `access=true`, `manage=true`; backend continua sendo autoridade final de acesso | **PASS** |
+| `get_context(topic=catalog)` e schemas | Catálogo `clara-semantic-v1` incluiu `read(report.cost_center_expenses)`, `read(report.billing_exclusion_roster)` e `analyze(closing.report_comparison)`; schemas consultáveis | **PASS** |
+| `read(report.cost_center_expenses)` | 2026-09, filial 01, `universe=calculation`: **353 linhas / R$ 169.704,12 / 139 documentos / 46 buckets CC**; `officialR10=false`, `parityStatus=PENDING` e findings `POSSIBLE_DIVERGENCE` | **PASS** |
+| `read(report.billing_exclusion_roster)` | 2026-09, filial 01, `view=candidates`: **11 linhas / R$ 97.462,71**, 11 com custo de estoque zero e **3** findings por ausência de item-irmão (docs 103033, 103199, 103202); E11a/E11b explicitamente pendentes | **PASS** |
+| `analyze(report_comparison)` | R10, apuração, filial 01: agosto/2026 **R$ 420.737,98** versus setembro/2026 **R$ 169.704,12**; `COMPARABLE`, delta **−R$ 251.033,86** e **−59,67%**; `evidenceRefs` como array de locators | **PASS** |
+| `knowledge(action=search,query=R11,report_id=R11)` | Recuperou `ficha-r11` com `citation_locator` apontando para `fichas/R11-ficha.md`, além de outras fontes, a partir do corpus `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00` (88 fontes/2.186 itens) | **PASS** |
+| Busca semântica longa sobre R11 | Pergunta longa sobre custo zero e E11b retornou **0 itens**; consulta objetiva com filtro R11 retornou fontes citáveis. Investigar qualidade/ranking da recuperação, sem concluir indisponibilidade geral do corpus | **OBSERVATION** |
+| `execute` / `delete` | Não invocados: fora do escopo de teste não mutável | **TEST_NOT_RUN** |
+| 403 autenticado sem acesso R10/R11/comparação | Não foi possível testar com persona de acesso negativo nesta sessão | **INCONCLUSIVE** |
+| Perguntas conversacionais compostas (`read` + `knowledge`) | Não homologadas sistematicamente; tools testadas individualmente | **TEST_NOT_RUN** |
+
+**Classificação:** `PROVEN` para funcionamento da conexão CLARA disponível neste chat e operações específicas acima; não significa homologação de todas as identidades, escopos, ferramentas nem do cliente Chat AI embutido no Portal. A evidência do Gate 021 de `MCP E2E=TEST_NOT_RUN` permanece correta para a execução histórica do Devin; **nova evidência complementar** demonstra que o conector ChatGPT conectado nesta sessão executou `get_context/read/analyze/knowledge` com dados reais e citações. Não reclassificar retrospectivamente os demais gates.
+
+**Parecer:** `ACCEPT_WITH_RESIDUAL`. Residuais: teste 403 específico com persona negativa legítima; caso composto dados+conhecimento; busca semântica longa sem resultados; monitoramento do timeout frio R10; G6/E7 e decisões E10/E11 pendentes. Sem alteração de código ou deploy por este registro.
