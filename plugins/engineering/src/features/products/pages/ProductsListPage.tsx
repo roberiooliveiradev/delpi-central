@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { HomeApiError } from "../../../api/httpClient";
 import { navigateEngineeringView } from "../../../app/engineeringRoutes";
@@ -7,6 +7,7 @@ import {
   EngineeringEmptyState,
   EngineeringFieldLabel,
   EngineeringLoadingActivityCard,
+  EngineeringMultiSelectField,
   EngineeringPageHero,
   EngineeringPagePath,
   EngineeringStateBanner,
@@ -14,107 +15,227 @@ import {
 } from "../../../ui/engineeringUi";
 import type { DataTableColumn } from "../../lmps/components/DataTable";
 import { DataTableSection } from "../../lmps/components/DataTableSection";
-import { searchProducts } from "../api/productApi";
+import {
+  fetchProductFilterOptions,
+  searchProducts,
+} from "../api/productApi";
 import {
   PRODUCT_COPY,
   PRODUCT_HELP,
+  productDescriptionDisplay,
   productStatusLabel,
   productTypeLabel,
 } from "../productCopy";
-import { PRODUCT_PATHS, navigateProducts } from "../productRoutes";
-import type { ProductRecord } from "../types";
+import {
+  PRODUCT_PATHS,
+  buildProductsListUrl,
+  navigateProducts,
+  parseProductsListUrl,
+  useLocationSearch,
+  type ProductsListUrlState,
+} from "../productRoutes";
+import type { ProductFilterOptions, ProductRecord } from "../types";
 
-type Filters = {
+const PAGE_SIZE = 50;
+const DEBOUNCE_MS = 400;
+const SORTABLE_COLUMNS = new Set(["code", "description", "group_code"]);
+
+type TextDraft = {
   code: string;
   description: string;
-  group_code: string;
-  product_type: string;
   customer_reference: string;
 };
 
-const EMPTY_FILTERS: Filters = {
-  code: "",
-  description: "",
-  group_code: "",
-  product_type: "",
-  customer_reference: "",
-};
-
-const PAGE_SIZE = 50;
-const SORTABLE_COLUMNS = new Set(["code", "description", "group_code"]);
+function draftFrom(state: ProductsListUrlState): TextDraft {
+  return {
+    code: state.code,
+    description: state.description,
+    customer_reference: state.customer_reference,
+  };
+}
 
 function errorMessage(error: unknown, fallback: string): string {
   if (error instanceof HomeApiError) return error.message;
   return fallback;
 }
 
+function commitListState(
+  state: ProductsListUrlState,
+  options?: { replace?: boolean },
+) {
+  navigateProducts(buildProductsListUrl(state), { replace: options?.replace ?? true });
+}
+
 export function ProductsListPage() {
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
-  const [applied, setApplied] = useState<Filters>(EMPTY_FILTERS);
-  const [sortBy, setSortBy] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const [page, setPage] = useState(1);
+  const search = useLocationSearch();
+  const applied = useMemo(() => parseProductsListUrl(search), [search]);
+
+  /* Draft dos campos de texto — o valor digitado vive aqui até o
+   * debounce commitar na URL. Quando a URL muda por fora (voltar/
+   * avançar/limpar/deep link), o draft ressincroniza durante o render
+   * (padrão React de ajuste de estado derivado). */
+  const [draft, setDraft] = useState<TextDraft>(() => draftFrom(applied));
+  const [prevApplied, setPrevApplied] = useState(applied);
+  if (prevApplied !== applied) {
+    setPrevApplied(applied);
+    setDraft(draftFrom(applied));
+  }
+
   const [list, setList] = useState<{
     items: ProductRecord[];
     total: number;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestSeq = useRef(0);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await searchProducts({
-        code: applied.code || undefined,
-        description: applied.description || undefined,
-        group_code: applied.group_code || undefined,
-        product_type: applied.product_type || undefined,
-        customer_reference: applied.customer_reference || undefined,
-        sort: sortBy ?? undefined,
-        direction: sortBy ? sortDir : undefined,
-        page,
-        page_size: PAGE_SIZE,
-      });
-      setList({ items: result.items, total: result.total });
-    } catch (err) {
-      setError(errorMessage(err, "Falha ao consultar o catálogo de produtos."));
-      setList(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [applied, sortBy, sortDir, page]);
+  const load = useCallback(
+    async (state: ProductsListUrlState, signal: AbortSignal) => {
+      const seq = ++requestSeq.current;
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await searchProducts(
+          {
+            code: state.code || undefined,
+            description: state.description || undefined,
+            group_code: state.groups.length
+              ? state.groups.join(",")
+              : undefined,
+            product_type: state.types.length
+              ? state.types.join(",")
+              : undefined,
+            customer_reference: state.customer_reference || undefined,
+            sort: state.sort ?? undefined,
+            direction: state.sort ? state.direction : undefined,
+            page: state.page,
+            page_size: PAGE_SIZE,
+          },
+          signal,
+        );
+        if (seq !== requestSeq.current || signal.aborted) return;
+        setList({ items: result.items, total: result.total });
+      } catch (err) {
+        if (seq !== requestSeq.current || signal.aborted) return;
+        setError(
+          errorMessage(err, "Falha ao consultar o catálogo de produtos."),
+        );
+        setList(null);
+      } finally {
+        if (seq === requestSeq.current && !signal.aborted) {
+          setLoading(false);
+        }
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
-    void load();
+    void load(applied, controller.signal);
     return () => controller.abort();
-  }, [load]);
+  }, [applied, load]);
 
-  const applyFilters = useCallback(() => {
-    setPage(1);
-    setApplied(filters);
-  }, [filters]);
+  /* Debounce dos campos de texto → URL (replace; sem spam de histórico).
+   * Seleções múltiplas/ordenação/paginação comutam imediatamente. */
+  useEffect(() => {
+    if (
+      draft.code === applied.code &&
+      draft.description === applied.description &&
+      draft.customer_reference === applied.customer_reference
+    ) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      commitListState({ ...applied, ...draft, page: 1 });
+    }, DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [draft, applied]);
 
-  const clearFilters = useCallback(() => {
-    setFilters(EMPTY_FILTERS);
-    setPage(1);
-    setApplied(EMPTY_FILTERS);
+  /* Opções oficiais de filtro (grupos/tipos distintos do cadastro). */
+  const [options, setOptions] = useState<ProductFilterOptions | null>(null);
+  const [optionsUnavailable, setOptionsUnavailable] = useState(false);
+  const loadOptions = useCallback(async (signal: AbortSignal) => {
+    try {
+      const data = await fetchProductFilterOptions(signal);
+      if (!signal.aborted) setOptions(data);
+    } catch {
+      if (!signal.aborted) setOptionsUnavailable(true);
+    }
   }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadOptions(controller.signal);
+    return () => controller.abort();
+  }, [loadOptions]);
 
+  const groupOptions = useMemo(
+    () => (options?.groups ?? []).map((g) => ({ value: g, label: g })),
+    [options],
+  );
+  const typeOptions = useMemo(
+    () =>
+      (options?.types ?? []).map((t) => ({
+        value: t,
+        label: `${t} — ${productTypeLabel(t)}`,
+      })),
+    [options],
+  );
+
+  /* Commits de filtros carregam o draft pendente — digitar um texto e
+   * clicar num multiselect antes do debounce não perde o que foi
+   * digitado. `Limpar` é a exceção deliberada (reseta tudo). */
   const onSortChange = useCallback(
     (columnKey: string) => {
       if (!SORTABLE_COLUMNS.has(columnKey)) return;
-      setPage(1);
-      if (sortBy === columnKey) {
-        setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
-      } else {
-        setSortBy(columnKey);
-        setSortDir("asc");
-      }
+      const base = { ...applied, ...draft };
+      const next: ProductsListUrlState =
+        applied.sort === columnKey
+          ? {
+              ...base,
+              direction: applied.direction === "asc" ? "desc" : "asc",
+              page: 1,
+            }
+          : { ...base, sort: columnKey, direction: "asc", page: 1 };
+      commitListState(next);
     },
-    [sortBy],
+    [applied, draft],
   );
+
+  const onPageChange = useCallback(
+    (nextPage: number) => {
+      commitListState({ ...applied, ...draft, page: nextPage });
+    },
+    [applied, draft],
+  );
+
+  const onGroupsChange = useCallback(
+    (values: string[]) => {
+      commitListState({ ...applied, ...draft, groups: values, page: 1 });
+    },
+    [applied, draft],
+  );
+
+  const onTypesChange = useCallback(
+    (values: string[]) => {
+      commitListState({ ...applied, ...draft, types: values, page: 1 });
+    },
+    [applied, draft],
+  );
+
+  const clearFilters = useCallback(() => {
+    navigateProducts(PRODUCT_PATHS.list, { replace: true });
+  }, []);
+
+  const hasActiveFilters =
+    applied.code !== "" ||
+    applied.description !== "" ||
+    applied.customer_reference !== "" ||
+    applied.groups.length > 0 ||
+    applied.types.length > 0 ||
+    draft.code !== applied.code ||
+    draft.description !== applied.description ||
+    draft.customer_reference !== applied.customer_reference;
 
   const openDetail = useCallback((row: ProductRecord) => {
     navigateProducts(PRODUCT_PATHS.detail(row.code));
@@ -132,7 +253,19 @@ export function ProductsListPage() {
         key: "description",
         header: "Descrição",
         sortable: true,
-        render: (row) => row.description ?? "—",
+        render: (row) => {
+          const display = productDescriptionDisplay(row.description);
+          if (display.informative) return display.text;
+          if (display.text === "—") return "—";
+          return (
+            <span
+              className="engineering-products__placeholder-value"
+              title={PRODUCT_HELP.nonInformativeDescription}
+            >
+              {display.text}
+            </span>
+          );
+        },
       },
       {
         key: "type",
@@ -206,11 +339,10 @@ export function ProductsListPage() {
           <label className="engineering-nc-field">
             <EngineeringFieldLabel label="Código" hint={PRODUCT_HELP.code} />
             <input
-              value={filters.code}
+              value={draft.code}
               onChange={(e) =>
-                setFilters((f) => ({ ...f, code: e.target.value }))
+                setDraft((d) => ({ ...d, code: e.target.value }))
               }
-              disabled={loading}
               placeholder="Código do produto"
             />
           </label>
@@ -220,71 +352,58 @@ export function ProductsListPage() {
               hint={PRODUCT_HELP.description}
             />
             <input
-              value={filters.description}
+              value={draft.description}
               onChange={(e) =>
-                setFilters((f) => ({ ...f, description: e.target.value }))
+                setDraft((d) => ({ ...d, description: e.target.value }))
               }
-              disabled={loading}
               placeholder="Descrição do produto"
             />
           </label>
-          <label className="engineering-nc-field">
-            <EngineeringFieldLabel label="Grupo" hint={PRODUCT_HELP.group} />
-            <input
-              value={filters.group_code}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, group_code: e.target.value }))
-              }
-              disabled={loading}
-              placeholder="Código do grupo"
-            />
-          </label>
-          <label className="engineering-nc-field">
-            <EngineeringFieldLabel
-              label="Tipo"
-              hint={PRODUCT_HELP.productType}
-            />
-            <input
-              value={filters.product_type}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, product_type: e.target.value }))
-              }
-              disabled={loading}
-              placeholder="MP,PI,PA"
-            />
-          </label>
+          <EngineeringMultiSelectField
+            label="Grupo"
+            labelHint={PRODUCT_HELP.groups}
+            options={groupOptions}
+            selectedValues={applied.groups}
+            onChange={onGroupsChange}
+            searchable
+            disabled={loading}
+            emptyLabel={optionsUnavailable ? "Opções indisponíveis" : "Todos"}
+          />
+          <EngineeringMultiSelectField
+            label="Tipo"
+            labelHint={PRODUCT_HELP.productType}
+            options={typeOptions}
+            selectedValues={applied.types}
+            onChange={onTypesChange}
+            searchable
+            disabled={loading}
+            emptyLabel="Todos"
+          />
           <label className="engineering-nc-field">
             <EngineeringFieldLabel
               label="Ref. cliente"
               hint={PRODUCT_HELP.drawingCode}
             />
             <input
-              value={filters.customer_reference}
+              value={draft.customer_reference}
               onChange={(e) =>
-                setFilters((f) => ({
-                  ...f,
+                setDraft((d) => ({
+                  ...d,
                   customer_reference: e.target.value,
                 }))
               }
-              disabled={loading}
               placeholder="Referência do cliente"
             />
           </label>
         </div>
         <div className="engineering-nc-actions">
           <EngineeringActionButton
-            variant="primary"
-            onClick={applyFilters}
-            disabled={loading}
-          >
-            Filtrar
-          </EngineeringActionButton>
-          <EngineeringActionButton
             variant="ghost"
             onClick={clearFilters}
-            disabled={loading}
+            disabled={!hasActiveFilters}
+            title={PRODUCT_HELP.clearFilters}
           >
-            Limpar
+            Limpar filtros
           </EngineeringActionButton>
         </div>
       </EngineeringPageHero>
@@ -311,7 +430,9 @@ export function ProductsListPage() {
           title={PRODUCT_COPY.listTitle}
           titleHint={PRODUCT_HELP.search}
           hint={`${list.total} registro(s)${
-            sortBy ? ` — ordenado por ${sortBy} (${sortDir})` : ""
+            applied.sort
+              ? ` — ordenado por ${applied.sort} (${applied.direction})`
+              : ""
           }`}
           columns={columns}
           rows={list.items}
@@ -319,15 +440,15 @@ export function ProductsListPage() {
           loading={loading}
           hideSearch
           serverSort={{
-            sortKey: sortBy,
-            sortDirection: sortDir,
+            sortKey: applied.sort,
+            sortDirection: applied.direction,
             onSortChange,
           }}
           serverPagination={{
-            page,
+            page: applied.page,
             pageSize: PAGE_SIZE,
             total: list.total,
-            onPageChange: setPage,
+            onPageChange,
           }}
           onRowClick={openDetail}
           columnPreferencesKey="engineering-products-list"

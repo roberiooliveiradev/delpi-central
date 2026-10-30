@@ -372,6 +372,12 @@
   gap: var(--en-section-gap);
 }
 
+.engineering-products__placeholder-value {
+  color: var(--en-text-muted);
+  font-style: italic;
+  cursor: help;
+}
+
 .engineering-product-tabs {
   display: flex;
   flex-wrap: wrap;

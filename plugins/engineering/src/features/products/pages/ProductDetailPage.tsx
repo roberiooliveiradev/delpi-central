@@ -36,10 +36,18 @@ import {
   formatBytes,
   formatProductDate,
   formatProductDateTime,
+  productDescriptionDisplay,
   productStatusLabel,
   productTypeLabel,
 } from "../productCopy";
-import { PRODUCT_PATHS, navigateProducts } from "../productRoutes";
+import {
+  PRODUCT_PATHS,
+  navigateProducts,
+  parseProductTab,
+  productDetailTabPath,
+  useLocationSearch,
+  type ProductTabKey,
+} from "../productRoutes";
 import type {
   ProductBomNode,
   ProductDrawingMetadata,
@@ -53,18 +61,10 @@ type ProductDetailPageProps = {
   code: string;
 };
 
-type TabKey =
-  | "overview"
-  | "structure"
-  | "whereUsed"
-  | "suppliers"
-  | "drawings"
-  | "history";
-
-const TAB_ORDER: readonly { key: TabKey; label: string }[] = [
+const TAB_ORDER: readonly { key: ProductTabKey; label: string }[] = [
   { key: "overview", label: PRODUCT_COPY.tabs.overview },
   { key: "structure", label: PRODUCT_COPY.tabs.structure },
-  { key: "whereUsed", label: PRODUCT_COPY.tabs.whereUsed },
+  { key: "where-used", label: PRODUCT_COPY.tabs.whereUsed },
   { key: "suppliers", label: PRODUCT_COPY.tabs.suppliers },
   { key: "drawings", label: PRODUCT_COPY.tabs.drawings },
   { key: "history", label: PRODUCT_COPY.tabs.history },
@@ -109,21 +109,29 @@ function TabError({
 
 function useTabData<T>(
   active: boolean,
+  /** Identidade do recurso — troca de produto invalida o cache local
+   * para nunca reaproveitar dados da ficha anterior. */
+  resourceKey: string,
   fetcher: (signal: AbortSignal) => Promise<T>,
 ) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
-  const loaded = useRef(false);
+  const loadedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!active || loaded.current) return undefined;
+    if (loadedFor.current !== resourceKey) {
+      loadedFor.current = null;
+      setData(null);
+      setError(null);
+    }
+    if (!active || loadedFor.current === resourceKey) return undefined;
     const controller = new AbortController();
     setLoading(true);
     fetcher(controller.signal)
       .then((result) => {
         if (!controller.signal.aborted) {
-          loaded.current = true;
+          loadedFor.current = resourceKey;
           setData(result);
         }
       })
@@ -134,7 +142,7 @@ function useTabData<T>(
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [active, fetcher]);
+  }, [active, resourceKey, fetcher]);
 
   return { data, error, loading };
 }
@@ -147,11 +155,30 @@ function field(
   return { label, value: value ?? "—", hint };
 }
 
+/** Descrição oficial exibida como gravada — placeholders ("#") ficam
+ * sinalizados como não informativos sem inventar substituto. */
+function descriptionValue(description: string | null): ReactNode {
+  const display = productDescriptionDisplay(description);
+  if (display.informative || display.text === "—") return display.text;
+  return (
+    <span
+      className="engineering-products__placeholder-value"
+      title={PRODUCT_HELP.nonInformativeDescription}
+    >
+      {display.text}
+    </span>
+  );
+}
+
 function overviewFields(product: ProductRecord) {
   return {
     identification: [
       field("Código", product.code, PRODUCT_HELP.code),
-      field("Descrição", product.description, PRODUCT_HELP.description),
+      field(
+        "Descrição",
+        descriptionValue(product.description),
+        PRODUCT_HELP.description,
+      ),
       field("Tipo", productTypeLabel(product.type), PRODUCT_HELP.type),
       field("Grupo", product.group_code, PRODUCT_HELP.group),
       field("Subgrupo", product.subgroup),
@@ -354,7 +381,8 @@ function DrawingsSection({
 }
 
 export function ProductDetailPage({ code }: ProductDetailPageProps) {
-  const [tab, setTab] = useState<TabKey>("overview");
+  const search = useLocationSearch();
+  const tab = parseProductTab(search);
   const [product, setProduct] = useState<ProductRecord | null>(null);
   const [productError, setProductError] = useState<unknown>(null);
   const [loadingProduct, setLoadingProduct] = useState(true);
@@ -383,13 +411,15 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
 
   const structure = useTabData(
     tab === "structure",
+    code,
     useCallback(
       (signal: AbortSignal) => fetchProductStructure(code, signal),
       [code],
     ),
   );
   const parents = useTabData(
-    tab === "whereUsed",
+    tab === "where-used",
+    code,
     useCallback(
       (signal: AbortSignal) => fetchProductParents(code, signal),
       [code],
@@ -397,6 +427,7 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
   );
   const suppliers = useTabData(
     tab === "suppliers",
+    code,
     useCallback(
       (signal: AbortSignal) => fetchProductSuppliers(code, signal),
       [code],
@@ -404,6 +435,7 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
   );
   const drawing = useTabData(
     tab === "drawings",
+    code,
     useCallback(
       (signal: AbortSignal) => fetchProductDrawing(code, signal),
       [code],
@@ -411,10 +443,21 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
   );
   const history = useTabData(
     tab === "history",
+    code,
     useCallback(
       (signal: AbortSignal) => fetchProductHistory(code, signal),
       [code],
     ),
+  );
+
+  /** Aba é estado de URL — clique registra entrada de histórico e
+   * back/forward do navegador navegam entre seções da ficha. */
+  const selectTab = useCallback(
+    (key: ProductTabKey) => {
+      if (key === tab) return;
+      navigateProducts(productDetailTabPath(code, key));
+    },
+    [code, tab],
   );
 
   const onTabKeyDown = useCallback(
@@ -428,11 +471,20 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
       if (next === null) return;
       event.preventDefault();
       const key = TAB_ORDER[next].key;
-      setTab(key);
+      selectTab(key);
       tabRefs.current[key]?.focus();
     },
-    [],
+    [selectTab],
   );
+
+  /** `?tab=` inválido/legado → normaliza para a aba resolvida sem
+   * poluir o histórico (replace). */
+  useEffect(() => {
+    const raw = new URLSearchParams(search).get("tab");
+    if (raw && raw !== tab) {
+      navigateProducts(productDetailTabPath(code, tab), { replace: true });
+    }
+  }, [search, tab, code]);
 
   const statusLabel = product ? productStatusLabel(product) : null;
   const overview = useMemo(
@@ -460,7 +512,7 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
         title={PRODUCT_COPY.detailTitle}
         description={
           product
-            ? `${product.code} — ${product.description ?? ""} (${productTypeLabel(product.type)})`
+            ? `${product.code} — ${productDescriptionDisplay(product.description).text} (${productTypeLabel(product.type)})`
             : `Produto ${code}`
         }
         actions={
@@ -539,7 +591,7 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
                 className={`engineering-product-tab ${
                   tab === item.key ? "is-active" : ""
                 }`}
-                onClick={() => setTab(item.key)}
+                onClick={() => selectTab(item.key)}
                 onKeyDown={(event) => onTabKeyDown(event, index)}
               >
                 {item.label}
@@ -595,7 +647,7 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
               </>
             ) : null}
 
-            {tab === "whereUsed" ? (
+            {tab === "where-used" ? (
               <>
                 {parents.loading ? (
                   <EngineeringLoadingActivityCard

@@ -140,6 +140,13 @@ export type ProductSuppliersResult = {
   total_pages: number;
 };
 
+/** Opções oficiais de filtro do catálogo — valores distintos observados
+ * no cadastro (SB1), entregues por `GET /v1/products/filter-options`. */
+export type ProductFilterOptions = {
+  groups: string[];
+  types: string[];
+};
+
 export type ProductDrawingMetadata = {
   product_code: string;
   found: boolean;

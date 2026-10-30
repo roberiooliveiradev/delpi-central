@@ -2,11 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   PRODUCT_PATHS,
+  buildProductsListUrl,
+  parseProductTab,
+  parseProductsListUrl,
+  productDetailTabPath,
   resolveProductsPath,
 } from "./productRoutes";
 import {
   formatBytes,
   formatProductDate,
+  productDescriptionDisplay,
   productStatusLabel,
   productTypeLabel,
 } from "./productCopy";
@@ -80,5 +85,147 @@ describe("productCopy helpers", () => {
     expect(productTypeLabel("MP")).toBe("Matéria-prima");
     expect(productTypeLabel("XX")).toBe("XX");
     expect(productTypeLabel(null)).toBe("—");
+  });
+});
+
+describe("abas da ficha orientadas por URL (?tab=)", () => {
+  it("aba ausente resolve overview", () => {
+    expect(parseProductTab("")).toBe("overview");
+    expect(parseProductTab("?x=1")).toBe("overview");
+  });
+
+  it("resolve todas as abas oficiais", () => {
+    for (const key of [
+      "overview",
+      "structure",
+      "where-used",
+      "suppliers",
+      "drawings",
+      "history",
+    ]) {
+      expect(parseProductTab(`?tab=${key}`)).toBe(key);
+    }
+  });
+
+  it("normaliza legado camelCase e valores inválidos para overview", () => {
+    expect(parseProductTab("?tab=whereUsed")).toBe("where-used");
+    expect(parseProductTab("?tab=invented")).toBe("overview");
+    expect(parseProductTab("?tab=")).toBe("overview");
+  });
+
+  it("monta URL de aba — overview limpa o parâmetro", () => {
+    expect(productDetailTabPath("30190123", "overview")).toBe(
+      "/apps/engineering/products/30190123",
+    );
+    expect(productDetailTabPath("30190123", "structure")).toBe(
+      "/apps/engineering/products/30190123?tab=structure",
+    );
+  });
+});
+
+describe("estado da listagem orientado por URL", () => {
+  it("URL vazia produz estado inicial", () => {
+    expect(parseProductsListUrl("")).toEqual({
+      code: "",
+      description: "",
+      customer_reference: "",
+      groups: [],
+      types: [],
+      sort: null,
+      direction: "asc",
+      page: 1,
+    });
+  });
+
+  it("parseia filtros, CSV multivalor, sort e página", () => {
+    const state = parseProductsListUrl(
+      "?code=30&description=ANEL&groups=3019,3020&types=MP,PA&ref=R1&sort=code&dir=desc&page=3",
+    );
+    expect(state).toEqual({
+      code: "30",
+      description: "ANEL",
+      customer_reference: "R1",
+      groups: ["3019", "3020"],
+      types: ["MP", "PA"],
+      sort: "code",
+      direction: "desc",
+      page: 3,
+    });
+  });
+
+  it("normaliza página inválida e direção desconhecida", () => {
+    const state = parseProductsListUrl("?page=abc&dir=sideways");
+    expect(state.page).toBe(1);
+    expect(state.direction).toBe("asc");
+  });
+
+  it("roundtrip build↔parse preserva o estado", () => {
+    const url = buildProductsListUrl({
+      code: "90",
+      description: "",
+      customer_reference: "",
+      groups: ["3019"],
+      types: ["MP", "PI"],
+      sort: "description",
+      direction: "desc",
+      page: 2,
+    });
+    expect(url).toContain("?");
+    expect(parseProductsListUrl(url.split("?")[1])).toEqual({
+      code: "90",
+      description: "",
+      customer_reference: "",
+      groups: ["3019"],
+      types: ["MP", "PI"],
+      sort: "description",
+      direction: "desc",
+      page: 2,
+    });
+  });
+
+  it("estado limpo gera URL sem query (botão Limpar)", () => {
+    expect(
+      buildProductsListUrl({
+        code: "",
+        description: "",
+        customer_reference: "",
+        groups: [],
+        types: [],
+        sort: null,
+        direction: "asc",
+        page: 1,
+      }),
+    ).toBe("/apps/engineering/products");
+  });
+});
+
+describe("descrições placeholder honestas (GATE E)", () => {
+  it("sinaliza '#' e '###' como não informativos sem inventar texto", () => {
+    expect(productDescriptionDisplay("#")).toEqual({
+      text: "#",
+      informative: false,
+    });
+    expect(productDescriptionDisplay("###")).toEqual({
+      text: "###",
+      informative: false,
+    });
+  });
+
+  it("preserva descrições reais", () => {
+    expect(productDescriptionDisplay("ANEL ORING 25X2")).toEqual({
+      text: "ANEL ORING 25X2",
+      informative: true,
+    });
+  });
+
+  it("vazio/null vira traço neutro", () => {
+    expect(productDescriptionDisplay(null)).toEqual({
+      text: "—",
+      informative: false,
+    });
+    expect(productDescriptionDisplay("  ")).toEqual({
+      text: "—",
+      informative: false,
+    });
   });
 });

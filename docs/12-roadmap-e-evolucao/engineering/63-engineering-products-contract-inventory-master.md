@@ -169,6 +169,13 @@ Todas em `engineering-api/engineering_app/interface/http/routes/product_routes.p
 
 Erros: owner 401/403 → `403 forbidden`; 404 → `404 not_found`; demais → `502 unavailable` com `data` de diagnóstico. `meta.operationId` em todos os envelopes.
 
+### 6.1a Extensão aditiva R1 — filtros de catálogo (doc 65)
+
+- `group_code` em `GET /products/search` (owner) e `GET /v1/products` (façade): agora aceita **CSV** (`3019,3020`) com semântica OR → `SB1.B1_GRUPO IN (...)`, espelhando o padrão já existente de `product_type`. Escalar único permanece compatível (`=`).
+- `GET /products/filter-options` (owner, `require_any_permission(ENGINEERING_LMP_ACCESS)`): retorna `{groups: [], types: []}` — valores distintos observados em `SB1.B1_GRUPO`/`B1_TIPO` (`fetch_product_filter_options`, `ProductQueryRepositoryPort`). **Sem descrições de grupo** — tabela SBM010 não possui contrato inventariado no repositório (residual doc 65).
+- `GET /v1/products/filter-options` (façade, `engineering.access` + contexto humano): delegação governada ao endpoint acima; rota literal registrada **antes** de `/{product_code}` para não ser capturada como código.
+- Semântica EVA `product.search`: allowlist inalterada (`group_code`, `product_type` já permitidos); valores CSV agora fluem ao owner — sem nenhuma tool nova.
+
 ### 6.2 Mudanças no owner (api-delpi) — `PROVEN`
 
 - `PRODUCT_DETAIL_VIEW_VALUES += "engineering"`; `narrow_product_fields(view="engineering")` aplica `PRODUCT_DETAIL_ENGINEERING_FIELDS` (cadastral/engenharia/logística — **sem** `sale_price`, `standard_cost`, `last_purchase_price`, fiscais).
