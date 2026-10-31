@@ -83,7 +83,7 @@ def _flatten_bom(
                 path=occ_path,
             )
     _flatten_bom(
-        node.get("root"), out, parent_code=parent_code,
+        node.get("root"), out, parent_code=effective_parent,
         depth=depth, path=path,
     )
 
@@ -303,7 +303,9 @@ async def analyze_product_drawing(
     # V3 — drawing × BOM --------------------------------------------------------
     bom_items: list[dict[str, Any]] = []
     if isinstance(structure, dict):
-        _flatten_bom(structure, bom_items)
+        # R5.1/S6: raiz implícita = próprio produto analisado quando o
+        # nó raiz não carrega `code` (payload real api-delpi).
+        _flatten_bom(structure, bom_items, parent_code=code)
     # R5-C/D: estatísticas multinível — ocorrências, códigos, níveis.
     by_type: dict[str, int] = {}
     by_depth: dict[str, int] = {}
@@ -316,13 +318,23 @@ async def analyze_product_drawing(
         c = str(item.get("code") or "")
         if c:
             code_occurrences[c] = code_occurrences.get(c, 0) + 1
+    # S6 — semântica explícita de vínculos: raiz→diretos vs aninhados.
+    root_child_links = sum(1 for i in bom_items if i.get("_depth") == 1)
+    nested_links = sum(
+        1 for i in bom_items
+        if (i.get("_depth") or 0) > 1 and i.get("_parent_code")
+    )
     bom_stats = {
         "total_occurrences": len(bom_items),
         "unique_codes": len(code_occurrences),
         "by_type": by_type,
         "by_depth": by_depth,
+        "root_child_links": root_child_links,
+        "nested_parent_links": nested_links,
+        "total_relationships": root_child_links + nested_links,
+        # compat: parent_links = vínculos totais da árvore (inclui raiz).
         "parent_links": sum(1 for i in bom_items if i.get("_parent_code")),
-        "direct_children": sum(1 for i in bom_items if i.get("_depth") == 1),
+        "direct_children": root_child_links,
         "repeated_codes": {
             c: n for c, n in code_occurrences.items() if n > 1
         },
@@ -755,23 +767,26 @@ async def analyze_product_drawing(
                            "api_delpi_product"],
         })
 
-        # Reclassifica findings de ausência textual quando há
-        # corroboração visual×oficial (R5-B): limitação de cobertura.
+        # R5.1: reclassifica findings de ausência textual quando há
+        # corroboração visual×oficial (categorias reais: identification/
+        # bom — R5 filtrava nomes inexistentes, nunca executava).
         for f in findings:
-            if f.category in {"product_identification", "bom_coverage"}:
-                diverg = f.divergence or ""
-                if "not_located" in diverg or "without_text" in diverg:
-                    if _visual_code_agreement(official_code):
-                        f.severity = "info"
-                        f.severity_reason = (
-                            "Reconciliado: evidência visual concorda com o "
-                            "cadastro oficial; ausência é da camada textual."
-                        )
-                        f.divergence = "text_coverage_limitation"
-                        f.recommended_correction = (
-                            "Sem correção técnica necessária; registrar "
-                            "limitação de extração textual."
-                        )
+            diverg = f.divergence or ""
+            if "not_located" not in diverg and "without_text" not in diverg:
+                continue
+            if not _visual_code_agreement(official_code):
+                continue
+            f.severity = "info"
+            f.severity_reason = (
+                "Reconciliado: evidência visual concorda com o cadastro "
+                "oficial; ausência é limitação da camada textual, não "
+                "divergência cadastral."
+            )
+            f.divergence = "text_coverage_limitation"
+            f.recommended_correction = (
+                "Sem correção técnica necessária; registrar limitação de "
+                "extração textual."
+            )
         verifications.append(
             Verification(
                 key="visual_observations",
