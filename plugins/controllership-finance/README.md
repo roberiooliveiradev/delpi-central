@@ -60,9 +60,14 @@ hub de análise com indicadores honestos, atenção primeiro e cartões por
 relatório; cada cartão abre página contextual
 `closing/monthly-closing/{YYYY-MM}/reports/{reportKey}`
 (`financial-settlements` | `stock-inventory` | `stock-movements` |
-`work-in-process`) dentro do próprio Fechamento mensal — as páginas
+`stock-kardex` | `inventory-adjustments` | `cost-center-expenses` |
+`billing-exclusion-roster` | `work-in-process` | `cost-closing-state`)
+dentro do próprio Fechamento mensal — as páginas
 legadas são reutilizadas em modo `reportContext` com competência
-travada, agrupamentos em tabelas por colunas e export CSV/PDF real.
+travada; `cost-closing-state` (R12/R15, doc 129) é visão de estado
+com trilha de nós por filial — marcadores técnicos SB9010/MV_ULMES/TTAT,
+nunca homologação nem execução ERP. Cartões sem sonda própria exibem
+«Não verificado» e não entram no contador de disponíveis. agrupamentos em tabelas por colunas e export CSV/PDF real.
 O retorno restaura competência, aba e família analisada; a matriz
 R01–R15 permanece como rastreabilidade técnica recolhida.
 REWORK-008: os estados das fontes da conciliação distinguem
@@ -200,16 +205,6 @@ download auditado, mensagens `SHARED` e solicitações de ajuste
 `OPEN → ANSWERED → CONFIRMED` (responder não encerra; só o requerente
 confirma). Estados de loading/erro/vazio honestos; Help contextual nos
 grupos `receivedDocuments` e `dreHome`.
-
-UX-022 (padronização de loading): todo carregamento do portal usa os
-indicadores canônicos do `@delpi/plugin-ui` — `CfSectionLoading`
-(`LoadingActivityCard` panel/compact) para páginas e seções,
-`CfLoadingBadge` para atualizações compactas, `CfScreenLoading` para o
-bootstrap do MFE e `CfInlineLoadingProgress` somente com progresso real
-mensurável. Texto isolado de "carregando…" e `CfEmptyState` usado como
-loader foram eliminados; regiões em consulta declaram `aria-busy` e KPIs
-exibem `—` até o valor ser comprovado (Divergências nunca mostra `0`
-antes da verificação concluir). Matriz completa no doc 30 §UX-022.
 
 ## Runtime
 

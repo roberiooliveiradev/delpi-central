@@ -185,6 +185,8 @@ def test_matrix_separates_implementation_from_official_parity(
         "R08",
         "R10",
         "R11",
+        "R12",
+        "R15",
     }
     for entry in operational:
         assert entry["official_parity"] == "PENDING"

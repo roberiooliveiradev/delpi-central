@@ -1205,3 +1205,18 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | G023-J | smoke produtivo | loaders+dados+mobile | 13/14: mid-flight badges, KPIs `—`, 0 residual, R10 353/R$169.704,12, exports, pendências, mobile; 3×404 console de recursos (viewer-photo-like) — observação, sem defeito funcional | PASS c/ observação |
 
 **Residuais:** 404s de recurso no console (não funcionais — investigar em gate de observabilidade); demais residuais Gate-021 inalterados.
+
+## Gate 021/024 — R12/R15 estado de fechamento + badge fix (Ciclo 3, 31/10/2026)
+
+| Teste | Entrada | Esperado | Observado | Estado |
+|---|---|---|---|---|
+| RQ-C3S-01 | `GET /financeiro/closing-state?period&branch` | nós por filial com marcadores brutos | endpoint implementado (S2S `stock-inventory.read`, flag `FINANCEIRO_CLOSING_STATE_ENABLED` off) | PASS (unit) / TEST_NOT_RUN (live) |
+| RQ-C3S-02 | SB9010 ausente na competência | `snapshot.missing` + `lastAvailableDate`, nunca zero | projeção BFF honra (`test_closing_state_projection.py`) | PASS |
+| RQ-C3S-03 | `MV_ULMES` < fim da competência | `cutoff_marker.not_advanced` | idem | PASS |
+| RQ-C3S-04 | sem writes TTAT | `cost_evidence.unavailable` | idem | PASS |
+| RQ-C3S-05 | qualquer combinação | nunca `concluded`; `wizard_lifecycle.unavailable`, `human_acceptance.not_informed` fixos | semântica C3-D02=A garantida em código | PASS |
+| RQ-C3S-06 | 401/403/scope | fail-closed em 3 camadas | guards implementados | TEST_NOT_RUN (smoke real) |
+| RQ-C3S-07 | matriz + comparação | `STATE_VIEW` + `NOT_COMPARABLE` | matriz atualizada; catálogo comparável inalterado | PASS |
+| RQ-C3S-08 | MFE página | trilha de nós + limitações + loading UX-022 | página + help + typecheck limpo | PASS / visual TEST_NOT_RUN |
+| G024-BADGE | cards R06/R07/R10/R11 | não herdar h02 | «Não verificado» (5 cards) + contador 4 — vitest 25/25 | PASS |
+| G024-LIVE | Protheus real | marcadores conferidos | stack local sem cf-api; imagem api-delpi antecede endpoint | TEST_NOT_RUN |
