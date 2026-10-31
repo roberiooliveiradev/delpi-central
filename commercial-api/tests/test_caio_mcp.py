@@ -305,7 +305,7 @@ def test_knowledge_returns_versioned_guidance():
     payload = result.structured_content
     assert result.is_error is False
     assert payload["data"]["topic"] == "caio.usage"
-    assert payload["data"]["knowledge_version"] == "3.1"
+    assert payload["data"]["knowledge_version"] == "3.2"
 
 
 def test_knowledge_unknown_topic_is_not_found():

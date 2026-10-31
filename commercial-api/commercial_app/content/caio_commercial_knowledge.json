@@ -1,5 +1,5 @@
 {
-  "version": "3.1",
+  "version": "3.2",
   "owner": "commercial-api",
   "audience": "caio-mcp",
   "topics": {
@@ -16,7 +16,8 @@
         "confirmed=true vindo do cliente nunca autoriza exclusão — somente o handle selado pelo servidor prova a confirmação.",
         "Estados honestos: unavailable significa falha na fonte; forbidden significa falta de autorização — nunca apresente como ausência de dados.",
         "Escopo de carteira: membros veem apenas clientes vinculados às próprias carteiras; scope_mode=membership força a carteira do usuário; sem filtro, usuários manage/team veem o recorte global autorizado.",
-        "knowledge também recupera methods (method.<id>: metodologias externas curadas — nunca regra DELPI) e playbooks (playbook.<id>: roteiros que compõem casos de uso oficiais); topic vazio ou \"*\" com query seleciona os conteúdos relevantes para a pergunta."
+        "knowledge também recupera methods (method.<id>: metodologias externas curadas — nunca regra DELPI) e playbooks (playbook.<id>: roteiros que compõem casos de uso oficiais); topic vazio ou \"*\" com query seleciona os conteúdos relevantes para a pergunta.",
+        "Seleção contextual (v3.2): consulte knowledge com query textual — retorna até 5 entradas ranqueadas com id/tipo/título/fonte/owner/status/related_capabilities/related_entries; busque o conteúdo completo por topic=<id>."
       ],
       "keywords": [
         "caio",
@@ -1582,8 +1583,8 @@
   "playbooks": {
     "executive_diagnosis": {
       "owner": "commercial-api",
-      "version": "3.0",
-      "source_date": "2026-10-30",
+      "version": "3.2",
+      "source_date": "2026-10-31",
       "access_classification": "internal",
       "type": "playbook",
       "status": "implemented",
@@ -1656,12 +1657,38 @@
         "playbook.plan_30_60_90",
         "playbook.customers_retraction",
         "topic.commercial.indicators"
-      ]
+      ],
+      "intent": "Diagnóstico executivo completo da situação comercial no período.",
+      "investigation_questions": [
+        "Qual o período e a carteira/escopo?",
+        "ROL, funil, carteira aberta e OTD: o que mudou vs período anterior?",
+        "Onde está a concentração e a retração?"
+      ],
+      "expected_evidence": [
+        "rol.summary/series por período",
+        "portfolio.billing_ranking",
+        "proposal.analytics_list",
+        "open_order.list",
+        "sales_order_otd.summary"
+      ],
+      "failure_states": [
+        "sem dados no período → declarar UNKNOWN, não inventar",
+        "escopo vazio ≠ carteira vazia global",
+        "upstream indisponível → unavailable honesto"
+      ],
+      "official_actions": [
+        "read portfolio.me",
+        "analyze rol.summary",
+        "analyze rol.by_product",
+        "read proposal.analytics_list",
+        "read open_order.list"
+      ],
+      "output_schema": "escopo/período → resumo executivo → fatos OBSERVED → cálculos auditáveis → hipóteses INFERRED → desconhecidos UNKNOWN → prioridades → recomendações → owner sugerido → KPI de acompanhamento → limitações"
     },
     "customers_retraction": {
       "owner": "commercial-api",
-      "version": "3.0",
-      "source_date": "2026-10-30",
+      "version": "3.2",
+      "source_date": "2026-10-31",
       "access_classification": "internal",
       "type": "playbook",
       "status": "implemented",
@@ -1727,12 +1754,36 @@
         "method.abc_pareto",
         "method.cinco_porques",
         "topic.commercial.indicators"
-      ]
+      ],
+      "intent": "Encontrar clientes com queda/interrupção de compras e priorizar recuperação.",
+      "investigation_questions": [
+        "Qual janela de comparação e base?",
+        "Queda de compra ≠ perda de cliente — qual evidência separa os dois?",
+        "Sazonalidade ou mudança de mix explica?"
+      ],
+      "expected_evidence": [
+        "portfolio.billing_ranking (ranking oficial de queda)",
+        "customer.billing_series por par",
+        "customer.enrichment",
+        "última compra vs janela"
+      ],
+      "failure_states": [
+        "sem histórico suficiente → lista qualitativa com lacuna declarada",
+        "cliente novo aparenta retração falsa",
+        "retração por produto ≠ retração de conta"
+      ],
+      "official_actions": [
+        "analyze portfolio.billing_ranking",
+        "read customer.enrichment",
+        "read customer.billing_series",
+        "read customer.open_orders"
+      ],
+      "output_schema": "escopo/período → resumo executivo → fatos OBSERVED → cálculos auditáveis → hipóteses INFERRED → desconhecidos UNKNOWN → prioridades → recomendações → owner sugerido → KPI de acompanhamento → limitações"
     },
     "expansion_opportunities": {
       "owner": "commercial-api",
-      "version": "3.0",
-      "source_date": "2026-10-30",
+      "version": "3.2",
+      "source_date": "2026-10-31",
       "access_classification": "internal",
       "type": "playbook",
       "status": "implemented",
@@ -1800,12 +1851,37 @@
         "method.account_planning",
         "method.abc_pareto",
         "playbook.plan_30_60_90"
-      ]
+      ],
+      "intent": "Identificar oportunidades de crescimento por conta, carteira, produto/família.",
+      "investigation_questions": [
+        "Quais famílias concentram faturamento?",
+        "Quem compra a família e quem ainda não compra?",
+        "O mix do cliente sugere cross-sell plausível — hipótese, não compatibilidade técnica?"
+      ],
+      "expected_evidence": [
+        "rol.by_product/by_customer",
+        "product.customers",
+        "product.search customer_reference",
+        "customer.billing_series com filtro de produto"
+      ],
+      "failure_states": [
+        "cross-sell é hipótese até validação comercial",
+        "sem dado de produto → não inferir aplicação",
+        "cliente fora do escopo → fora da análise"
+      ],
+      "official_actions": [
+        "analyze rol.by_product",
+        "read product.customers",
+        "read product.search",
+        "read customer.enrichment",
+        "read proposal.analytics_list"
+      ],
+      "output_schema": "escopo/período → resumo executivo → fatos OBSERVED → cálculos auditáveis → hipóteses INFERRED → desconhecidos UNKNOWN → prioridades → recomendações → owner sugerido → KPI de acompanhamento → limitações"
     },
     "order_health": {
       "owner": "commercial-api",
-      "version": "3.0",
-      "source_date": "2026-10-30",
+      "version": "3.2",
+      "source_date": "2026-10-31",
       "access_classification": "internal",
       "type": "playbook",
       "status": "implemented",
@@ -1872,12 +1948,37 @@
         "method.risco_pedidos_otd",
         "topic.commercial.otd",
         "topic.commercial.production"
-      ]
+      ],
+      "intent": "Classificar risco comercial de pedidos em aberto (prazo × produção).",
+      "investigation_questions": [
+        "Quais pedidos vencem quando (open_horizon)?",
+        "OTD oficial mostra recorrência de atraso?",
+        "OP vinculada está no ritmo esperado?"
+      ],
+      "expected_evidence": [
+        "sales_order_otd.summary/panel/line_detail",
+        "open_order.list/open_ops",
+        "production.order/appointments",
+        "production.product_status"
+      ],
+      "failure_states": [
+        "dado fabril indisponível → declarar, não presumir risco",
+        "OP sem vínculo ao pedido → UNKNOWN",
+        "RISK só com regra/evidência explícita — risco previsto ≠ atraso confirmado"
+      ],
+      "official_actions": [
+        "read open_order.list",
+        "read open_order.open_ops",
+        "analyze sales_order_otd.panel",
+        "read production.order",
+        "read production.appointments"
+      ],
+      "output_schema": "escopo/período → resumo executivo → fatos OBSERVED → cálculos auditáveis → hipóteses INFERRED → desconhecidos UNKNOWN → prioridades → recomendações → owner sugerido → KPI de acompanhamento → limitações"
     },
     "proposal_funnel": {
       "owner": "commercial-api",
-      "version": "3.0",
-      "source_date": "2026-10-30",
+      "version": "3.2",
+      "source_date": "2026-10-31",
       "access_classification": "internal",
       "type": "playbook",
       "status": "implemented",
@@ -1937,12 +2038,37 @@
         "method.funil_conversao",
         "topic.commercial.proposals",
         "method.cinco_porques"
-      ]
+      ],
+      "intent": "Analisar funil, aging e conversão de propostas; achar oportunidades paradas.",
+      "investigation_questions": [
+        "Aging por etapa e denominador oficial?",
+        "Propostas paradas por quanto tempo e por quê (histórico)?",
+        "Conversão sustentada por status oficial?"
+      ],
+      "expected_evidence": [
+        "proposal.analytics_list por status",
+        "proposal.analytics_get",
+        "proposal.history_events",
+        "closing_rate.summary",
+        "opportunity.collaborator_summary"
+      ],
+      "failure_states": [
+        "perda/ganho só quando status oficial sustentar",
+        "revisão diferente da esperada → consultar revisions",
+        "histórico ausente → causa = hipótese"
+      ],
+      "official_actions": [
+        "read proposal.analytics_list",
+        "read proposal.analytics_get",
+        "read proposal.history_events",
+        "read proposal.get"
+      ],
+      "output_schema": "escopo/período → resumo executivo → fatos OBSERVED → cálculos auditáveis → hipóteses INFERRED → desconhecidos UNKNOWN → prioridades → recomendações → owner sugerido → KPI de acompanhamento → limitações"
     },
     "forecast_scenarios": {
       "owner": "commercial-api",
-      "version": "3.0",
-      "source_date": "2026-10-30",
+      "version": "3.2",
+      "source_date": "2026-10-31",
       "access_classification": "internal",
       "type": "playbook",
       "status": "implemented",
@@ -2007,12 +2133,36 @@
         "method.forecast_vendas",
         "method.desvio_meta",
         "topic.commercial.indicators"
-      ]
+      ],
+      "intent": "Projetar faturamento com cenários, premissas e incerteza declarados.",
+      "investigation_questions": [
+        "Qual a base histórica oficial e a janela?",
+        "Carteira aberta cobre quanto do período?",
+        "Quais premissas mudam entre cenários?"
+      ],
+      "expected_evidence": [
+        "rol.series (série oficial)",
+        "portfolio.open_summary/open_horizon (pipeline)",
+        "closing_rate.series",
+        "customer.billing_series"
+      ],
+      "failure_states": [
+        "projeção ≠ fato nem meta oficial",
+        "sazonalidade só quando demonstrável",
+        "erro histórico medido, não presumido"
+      ],
+      "official_actions": [
+        "analyze rol.series",
+        "analyze portfolio.open_summary",
+        "analyze portfolio.open_horizon",
+        "read customer.billing_series"
+      ],
+      "output_schema": "escopo/período → resumo executivo → fatos OBSERVED → cálculos auditáveis → hipóteses INFERRED → desconhecidos UNKNOWN → prioridades → recomendações → owner sugerido → KPI de acompanhamento → limitações"
     },
     "seller_portfolio_performance": {
       "owner": "commercial-api",
-      "version": "3.0",
-      "source_date": "2026-10-30",
+      "version": "3.2",
+      "source_date": "2026-10-31",
       "access_classification": "internal",
       "type": "playbook",
       "status": "implemented",
@@ -2073,12 +2223,38 @@
         "method.benchmarking",
         "method.desvio_meta",
         "topic.commercial.portfolio_governance"
-      ]
+      ],
+      "intent": "Comparar desempenho por vendedor/carteira dentro do escopo autorizado.",
+      "investigation_questions": [
+        "Qual recorte de carteiras é autorizado ao usuário?",
+        "Participação, evolução e fechamento por carteira/vendedor?",
+        "Comparação usa mesma base/período?"
+      ],
+      "expected_evidence": [
+        "portfolio.billing_share",
+        "portfolio.billing_ranking",
+        "closing_rate.summary",
+        "team.roster",
+        "portfolio.load_summary"
+      ],
+      "failure_states": [
+        "comparável exige mesma definição/período",
+        "carteira fora do escopo → não expor",
+        "ranking interno ≠ avaliação de pessoas"
+      ],
+      "official_actions": [
+        "read portfolio.me",
+        "read team.roster",
+        "analyze portfolio.billing_share",
+        "analyze portfolio.billing_ranking",
+        "analyze closing_rate.summary"
+      ],
+      "output_schema": "escopo/período → resumo executivo → fatos OBSERVED → cálculos auditáveis → hipóteses INFERRED → desconhecidos UNKNOWN → prioridades → recomendações → owner sugerido → KPI de acompanhamento → limitações"
     },
     "plan_30_60_90": {
       "owner": "commercial-api",
-      "version": "3.0",
-      "source_date": "2026-10-30",
+      "version": "3.2",
+      "source_date": "2026-10-31",
       "access_classification": "internal",
       "type": "playbook",
       "status": "implemented",
@@ -2134,7 +2310,28 @@
         "playbook.executive_diagnosis",
         "method.pdca_5w2h",
         "method.matriz_priorizacao"
-      ]
+      ],
+      "intent": "Transformar evidências do diagnóstico em plano priorizado 30/60/90 dias.",
+      "investigation_questions": [
+        "Quais evidências sustentam cada prioridade?",
+        "Impacto × urgência × esforço com pesos explícitos?",
+        "Como medir o resultado de cada ação?"
+      ],
+      "expected_evidence": [
+        "saídas dos demais playbooks",
+        "matriz de priorização",
+        "pdca_5w2h para ciclo de medição"
+      ],
+      "failure_states": [
+        "não criar tarefas/compromissos automaticamente — somente preparar rascunho mediante pedido",
+        "sem owner comprovado → marcar UNKNOWN"
+      ],
+      "official_actions": [
+        "compose a partir dos playbooks",
+        "read worklist.mine (contexto)",
+        "prepare task draft somente a pedido"
+      ],
+      "output_schema": "escopo/período → resumo executivo → fatos OBSERVED → cálculos auditáveis → hipóteses INFERRED → desconhecidos UNKNOWN → prioridades → recomendações → owner sugerido → KPI de acompanhamento → limitações"
     }
   }
 }
