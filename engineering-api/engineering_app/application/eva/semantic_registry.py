@@ -311,6 +311,24 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "analysis",
         fields=_LMP_PERIOD_FIELDS,
     ),
+    _a(
+        "product", "drawing_analysis", "analyze",
+        "Technical drawing analysis: official PDF of a product "
+        "(identified by product_code) is extracted and cross-checked "
+        "against the registered product card and BOM — revision, "
+        "identification, item presence, MP/PI description rules. "
+        "Emits a DRAFT/CANDIDATE technical report with page-level "
+        "evidence; never approves technically and never writes.",
+        "analysis",
+        fields=("product_code",),
+        notes=(
+            "Deterministic text-layer extraction only — scanned PDFs "
+            "yield INCONCLUSIVE; absence of visual evidence never "
+            "equals a proven BOM divergence; routing/inspection/"
+            "PA-description checks report NOT_CHECKED while their "
+            "contracts remain owner-blocked (doc 69)."
+        ),
+    ),
     # --- knowledge ----------------------------------------------------------
     _a(
         "nonconformity", "guide", "knowledge",
