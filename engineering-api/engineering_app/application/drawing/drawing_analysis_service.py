@@ -37,21 +37,18 @@ from engineering_app.domain.drawing import (
     Verification,
     VerificationStatus,
 )
+from engineering_app.application.drawing.drawing_contracts import (
+    DrawingAnalysisError,
+    unwrap_delegated,
+)
 from engineering_app.domain.drawing.source_identity import SourceMatch
 from engineering_app.domain.drawing.visual_observation import (
     DrawingVisualObservation,
 )
 
+__all__ = ["DrawingAnalysisError", "analyze_product_drawing"]
+
 _MAX_BOM_ITEMS = 300
-
-
-class DrawingAnalysisError(RuntimeError):
-    """Analysis could not proceed; carries a stable error code."""
-
-    def __init__(self, code: str, message: str, status_code: int = 400):
-        super().__init__(message)
-        self.code = code
-        self.status_code = status_code
 
 
 def _flatten_bom(node: Any, out: list[dict[str, Any]]) -> None:
@@ -78,17 +75,25 @@ async def analyze_product_drawing(
 ) -> dict[str, Any]:
     """Run the full drawing×product×BOM analysis for `code`."""
     # --- official facts (delegated identity) -------------------------------
-    detail = await source.fetch_product_detail(ctx, code=code,
-                                               view="engineering")
-    if not detail or detail.get("status") == "not_found":
-        raise DrawingAnalysisError(
-            "product_not_found", f"Produto {code} não encontrado.", 404
-        )
-    drawing_meta = await source.fetch_product_drawing(ctx, code=code)
+    detail_raw = await source.fetch_product_detail(ctx, code=code,
+                                                   view="engineering")
+    detail = unwrap_delegated(
+        detail_raw,
+        what="product.detail",
+        not_found_code="product_not_found",
+        not_found_message=f"Produto {code} não encontrado.",
+    )
+    drawing_meta_raw = await source.fetch_product_drawing(ctx, code=code)
+    drawing_meta = unwrap_delegated(
+        drawing_meta_raw,
+        what="product.drawing",
+        not_found_code="drawing_not_found",
+        not_found_message=(
+            f"Produto {code} não possui desenho PDF oficial no acervo."
+        ),
+    )
     found = bool(
-        drawing_meta
-        and drawing_meta.get("found")
-        and drawing_meta.get("filename")
+        drawing_meta.get("found") and drawing_meta.get("filename")
     )
     if not found:
         raise DrawingAnalysisError(
@@ -104,9 +109,21 @@ async def analyze_product_drawing(
             "Metadados do desenho existem mas o PDF não foi entregue.",
             502,
         )
-    structure = await source.fetch_product_structure(
+    structure_raw = await source.fetch_product_structure(
         ctx, code=code, max_depth=6, page_size=200
     )
+    try:
+        structure = unwrap_delegated(
+            structure_raw,
+            what="product.structure",
+            not_found_code="structure_not_found",
+            not_found_message="",
+        )
+    except DrawingAnalysisError as exc:
+        structure = {}
+        structure_error = exc
+    else:
+        structure_error = None
 
     # --- extraction ---------------------------------------------------------
     try:
@@ -203,7 +220,7 @@ async def analyze_product_drawing(
             ),
         )
 
-    # V2 — revision ------------------------------------------------------------
+    # V2 — revision (R5: type-aware, sem normalização inventada) -----------------
     rev_values = sorted(
         {
             e.observed_value
@@ -214,11 +231,11 @@ async def analyze_product_drawing(
     )
     if rev_values and official_rev:
         mismatch = [r for r in rev_values if r != official_rev]
-        status = (
-            VerificationStatus.WARNING if mismatch
-            else VerificationStatus.PASS
+        same_control = all(
+            len(r) == len(official_rev) for r in rev_values
         )
-        if mismatch:
+        if mismatch and same_control:
+            status = VerificationStatus.WARNING
             add_finding(
                 category="revision",
                 severity="warning",
@@ -233,9 +250,21 @@ async def analyze_product_drawing(
                     "Verificar se o PDF no acervo é a revisão vigente."
                 ),
             )
+        elif mismatch:
+            # e.g. "00" vs "001" — diferentes larguras podem indicar
+            # controles de revisão distintos (R5): INCONCLUSIVE honesto.
+            status = VerificationStatus.INCONCLUSIVE
+        else:
+            status = VerificationStatus.PASS
         summary = (
             f"Revisões no desenho {sorted(set(rev_values))} × "
-            f"cadastro '{official_rev}'."
+            f"cadastro '{official_rev}'"
+            + (
+                " — formatos divergentes (possíveis controles de revisão "
+                "distintos); equivalência exige regra oficial."
+                if mismatch and not same_control
+                else "."
+            )
         )
     elif rev_values:
         status, summary = VerificationStatus.INCONCLUSIVE, (
@@ -256,6 +285,19 @@ async def analyze_product_drawing(
     bom_items: list[dict[str, Any]] = []
     if isinstance(structure, dict):
         _flatten_bom(structure, bom_items)
+    if structure_error is not None:
+        verifications.append(
+            Verification(
+                key="bom_availability",
+                label="Disponibilidade da estrutura oficial",
+                status=VerificationStatus.INCONCLUSIVE,
+                summary=(
+                    f"Estrutura não carregada: "
+                    f"{structure_error.code} — comparações de BOM "
+                    "não executadas."
+                ),
+            )
+        )
 
     text_blob = " ".join(p.text for p in extraction.pages).upper()
     matched, absent_in_text, uncertain = [], [], []
@@ -424,6 +466,45 @@ async def analyze_product_drawing(
                 f"{pi_items_warned} com desvio de segmentos."
             ),
             evidence_class=EvidenceClass.CALCULATED,
+        )
+    )
+
+    # V4b — quantity semantics (R4: sem conversão inventada) ---------------------
+    qty_rows = [
+        {
+            "code": str(i.get("code") or ""),
+            "quantity": i.get("quantity"),
+            "unit": str(i.get("unit") or i.get("measure_unit") or ""),
+        }
+        for i in bom_items
+        if i.get("quantity") is not None
+    ]
+    distinct_units = sorted({r["unit"] for r in qty_rows if r["unit"]})
+    verifications.append(
+        Verification(
+            key="quantity_semantics",
+            label="Semântica de quantidades da BOM",
+            status=(
+                VerificationStatus.INCONCLUSIVE
+                if qty_rows
+                else VerificationStatus.NOT_APPLICABLE
+            ),
+            summary=(
+                f"{len(qty_rows)} itens com quantidade (unidades fonte: "
+                f"{', '.join(distinct_units) or '—'}). Valores são a "
+                "representação bruta do SG1 — base de consumo, fator e "
+                "unidade secundária não possuem contrato oficial de "
+                "conversão: comparação com observações do desenho exige "
+                "regra do owner, nunca inferência por magnitude."
+                if qty_rows
+                else "Sem itens de estrutura com quantidade."
+            ),
+            evidence_class=EvidenceClass.CALCULATED,
+            limitations=[
+                "sem contrato de conversão unidade×base de consumo — "
+                "643 MT não é presumivelmente 643 m por conjunto; "
+                "1000 PC não é presumivelmente consumo por peça"
+            ],
         )
     )
 
@@ -681,7 +762,7 @@ async def analyze_product_drawing(
         },
     )
     payload = report.to_dict()
-    payload["contract_version"] = "drawing_analysis.v2"
+    payload["contract_version"] = "drawing_analysis.v3"
     payload["source_match"] = source_match.value
     payload["visual_observations"] = [
         o.to_dict() for o in visual_observations
@@ -692,4 +773,45 @@ async def analyze_product_drawing(
         payload["executive_summary"]["visual_observations_total"] = len(
             visual_observations
         )
+    serialized_verifications = payload["verifications"]
+    inconclusive = [
+        v for v in serialized_verifications
+        if v["status"] in {"INCONCLUSIVE", "NOT_CHECKED", "NOT_APPLICABLE"}
+    ]
+    serialized_findings = payload["findings"]
+    recommendations = [
+        {"id": f["id"], "category": f["category"],
+         "correction": f["recommended_correction"]}
+        for f in serialized_findings
+        if f.get("recommended_correction")
+    ]
+    payload["sections"] = {
+        "A_identification": payload["identification"],
+        "B_executive_summary": payload["executive_summary"],
+        "C_visual_checks": [
+            v for v in serialized_verifications
+            if v["key"] in {
+                "legibility", "product_identification", "revision",
+                "technical_notes", "units_dimensions", "material_hints",
+                "visual_observations", "visual_vs_textual",
+            }
+        ],
+        "D_official_crosschecks": [
+            v for v in serialized_verifications
+            if v["key"] in {
+                "bom_availability", "bom_comparison", "quantity_semantics",
+                "mp_description", "pi_description",
+                "mp_items_descriptions", "pi_items_descriptions",
+            }
+        ],
+        "E_findings": serialized_findings,
+        "F_inconclusions": inconclusive,
+        "G_recommendations": recommendations,
+        "H_technical_review": {
+            "status": "DRAFT",
+            "reviewer": "Engenharia (owner)",
+            "human_review_required": True,
+            "automatic_approval": False,
+        },
+    }
     return payload
