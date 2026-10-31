@@ -78,14 +78,14 @@ SEMANTIC_VERBS_VERSION = "SEMANTIC_TOOLS_V1"
 # the single vocabulary authority consumed by the semantic dispatch — the
 # wire schema validates against the same table (one source, two projections).
 READ_ENTITY_ACTIONS: dict[str, tuple[str, ...]] = {
-    "playlist": ("list", "get", "context"),
+    "playlist": ("list", "get", "context", "export_mdd"),
     "playlist_history": ("history",),
     "data_route": ("search",),
     "data_model": ("inspect",),
     "product_guide": ("guide",),
     "slide_preset": ("list",),
     "media_asset": ("list",),
-    "slide_template": ("list", "get"),
+    "slide_template": ("list", "get", "export_mdd"),
 }
 
 # Capabilities without a canonical runtime handler yet report honest status
@@ -112,8 +112,9 @@ KNOWLEDGE_ACTIONS: tuple[str, ...] = ("search", "get")
 EXECUTE_PHASES: tuple[str, ...] = ("prepare", "commit")
 EXECUTE_ENTITIES: dict[str, tuple[str, ...]] = {
     "presentation": ("apply_mutation",),
-    "slide_template": ("create", "update", "clone", "publish", "unpublish", "archive"),
+    "slide_template": ("create", "update", "clone", "publish", "unpublish", "archive", "import_preview", "import_apply"),
     "playlist_history": ("restore",),
+    "playlist": ("import_preview", "import_apply"),
 }
 
 DELETE_ENTITIES: dict[str, str] = {

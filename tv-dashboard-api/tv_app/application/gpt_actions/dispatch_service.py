@@ -432,6 +432,52 @@ class GptActionsDispatchService:
                 limit=min(max(int(limit or 50), 1), 100),
                 offset=max(int(cursor or 0), 0),
             )
+        if action_key == "export_mdd" and entity_key in (
+            "playlist", "slide_template"
+        ):
+            self._semantic_filters(
+                filters, allowed=set(), context="read.export_mdd"
+            )
+            from tv_app.core.security import assert_permission
+            from uuid import UUID
+
+            ref_raw = str(ref or "").strip()
+            if not ref_raw:
+                raise GptActionsError(
+                    "export_mdd exige ref do recurso.",
+                    code="VALIDATION_ERROR", status_code=422,
+                )
+            try:
+                rid = UUID(ref_raw)
+            except ValueError as exc:
+                raise GptActionsError(
+                    "ref inválido.",
+                    code="INVALID_CHANGE", status_code=422,
+                ) from exc
+            if entity_key == "playlist":
+                assert_permission(user, TV_READ)
+                from tv_app.application.services.tv_deck_package_service import (
+                    TvDeckPackageService,
+                )
+
+                raw, filename = TvDeckPackageService().export_package(rid)
+            else:
+                assert_permission(user, TV_READ)
+                from tv_app.application.services.slide_template_library_service import (
+                    SlideTemplateLibraryService,
+                )
+
+                raw, filename = SlideTemplateLibraryService().export_mdd(
+                    rid
+                )
+            import json as _json
+
+            return {
+                "filename": filename,
+                "sizeBytes": len(raw),
+                "mdd": _json.loads(raw.decode("utf-8")),
+                "entity": entity_key,
+            }
         if entity_key == "playlist":
             flt = self._semantic_filters(
                 filters,
@@ -1068,6 +1114,153 @@ class GptActionsDispatchService:
             "playlist": playlist,
         }
 
+    # ------------------------------------------------------------------
+    # B4 — MDD import/export via canonical services
+    # ------------------------------------------------------------------
+
+    _MAX_MDD_INLINE_BYTES = 512 * 1024
+
+    def _mdd_payload(self, operations: list[Any] | None) -> bytes:
+        import json as _json
+
+        payload = (operations or [{}])[0]
+        if not isinstance(payload, dict):
+            raise GptActionsError(
+                "operations[0] deve ser um objeto com o pacote MDD.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        mdd = payload.get("mdd")
+        if mdd is None:
+            raise GptActionsError(
+                "operations[0].mdd é obrigatório (conteúdo JSON do pacote).",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        if isinstance(mdd, str):
+            raw = mdd.encode("utf-8")
+        elif isinstance(mdd, dict):
+            raw = _json.dumps(mdd).encode("utf-8")
+        else:
+            raise GptActionsError(
+                "mdd deve ser objeto JSON ou string JSON.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        if len(raw) > self._MAX_MDD_INLINE_BYTES:
+            raise GptActionsError(
+                "Pacote MDD acima do limite inline "
+                f"({self._MAX_MDD_INLINE_BYTES} bytes) — "
+                "use o canal de upload canônico.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        return raw
+
+    def _mdd_import(
+        self,
+        *,
+        user: Any,
+        entity: str,
+        action: str,
+        operations: list[Any] | None,
+        authorization: str | None,
+        transport: str,
+    ) -> dict[str, Any]:
+        """MDD import — preview (no persist) / apply (canonico, governed)."""
+        from tv_app.core.security import assert_permission
+
+        user = self._governed_write_user(user, authorization)
+        actor = self._actor(user)
+        payload = (operations or [{}])[0] if operations else {}
+        if not isinstance(payload, dict):
+            raise GptActionsError(
+                "operations[0] deve ser um objeto.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+
+        if entity == "playlist":
+            assert_permission(user, TV_WRITE)
+            from tv_app.application.services.tv_deck_package_service import (
+                TvDeckPackageService,
+                TvDeckPackageError,
+            )
+
+            svc = TvDeckPackageService()
+            try:
+                if action == "import_preview":
+                    raw = self._mdd_payload(operations)
+                    summary = svc.preview_import(raw)
+                    return {
+                        "status": "PREVIEW_ONLY",
+                        "operation": "import_preview",
+                        "summary": summary,
+                        "persisted": False,
+                    }
+                token = str(payload.get("importToken") or "").strip()
+                if not token:
+                    raise GptActionsError(
+                        "import_apply exige operations[0].importToken "
+                        "emitido por import_preview.",
+                        code="VALIDATION_ERROR", status_code=422,
+                    )
+                binding_policy = str(
+                    payload.get("bindingPolicy") or "lenient"
+                ).strip()
+                if binding_policy not in ("lenient", "strict"):
+                    raise GptActionsError(
+                        "bindingPolicy deve ser lenient|strict.",
+                        code="VALIDATION_ERROR", status_code=422,
+                    )
+                playlist = svc.apply_import(
+                    import_token=token,
+                    created_by=actor,
+                    name_override=payload.get("nameOverride"),
+                    activate_after_import=bool(
+                        payload.get("activateAfterImport")
+                    ),
+                    binding_policy=binding_policy,
+                )
+            except TvDeckPackageError as exc:
+                raise GptActionsError(
+                    str(exc),
+                    code="INVALID_CHANGE", status_code=422,
+                ) from exc
+            return {
+                "status": "VERIFIED",
+                "operation": "import_apply",
+                "playlist": playlist,
+            }
+
+        assert_permission(user, TV_TEMPLATES_MANAGE)
+        from tv_app.application.services.slide_template_library_service import (
+            SlideTemplateLibraryService,
+        )
+
+        svc = SlideTemplateLibraryService()
+        try:
+            if action == "import_preview":
+                raw = self._mdd_payload(operations)
+                summary = svc.import_preview(raw)
+                return {
+                    "status": "PREVIEW_ONLY",
+                    "operation": "import_preview",
+                    "summary": summary,
+                    "persisted": False,
+                }
+            raw = self._mdd_payload(operations)
+            item = svc.import_apply(
+                raw,
+                publish_now=bool(payload.get("publishNow")),
+                owner_user_id=actor,
+                updated_by=actor,
+            )
+        except Exception as exc:  # noqa: BLE001 — surface typed
+            raise GptActionsError(
+                str(exc), code="INVALID_CHANGE", status_code=422
+            ) from exc
+        return {
+            "status": "VERIFIED",
+            "operation": "import_apply",
+            "item": item,
+        }
+
     def _slide_template_execute(
         self,
         *,
@@ -1385,6 +1578,17 @@ class GptActionsDispatchService:
             return self._playlist_history_restore(
                 user=user, target=target,
                 authorization=authorization, transport=transport,
+            )
+        if entity_key in ("playlist", "slide_template") and action_key in (
+            "import_preview", "import_apply"
+        ):
+            return self._mdd_import(
+                user=user,
+                entity=entity_key,
+                action=action_key,
+                operations=operations,
+                authorization=authorization,
+                transport=transport,
             )
         if entity_key == "slide_template":
             return self._slide_template_execute(
