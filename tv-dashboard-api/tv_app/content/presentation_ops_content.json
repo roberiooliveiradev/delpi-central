@@ -3214,8 +3214,8 @@
   "delete_data_model": {
    "requiresPlaylist": true,
    "requiresSlide": true,
-   "risk": "mutation",
-   "confirmationPolicy": "direct",
+   "risk": "destructive",
+   "confirmationPolicy": "confirm",
    "sideEffectHints": [
     "replaceNativeConfig"
    ],

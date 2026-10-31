@@ -113,12 +113,14 @@ EXECUTE_PHASES: tuple[str, ...] = ("prepare", "commit")
 EXECUTE_ENTITIES: dict[str, tuple[str, ...]] = {
     "presentation": ("apply_mutation",),
     "slide_template": ("create", "update", "clone", "publish", "unpublish", "archive"),
+    "playlist_history": ("restore",),
 }
 
 DELETE_ENTITIES: dict[str, str] = {
     "block": "delete_block",
     "section": "delete_section",
     "slide": "delete_slide",
+    "data_model": "delete_data_model",
 }
 
 # Write verbs over PREPARE/COMMIT + consent foundation (A5-A7):
