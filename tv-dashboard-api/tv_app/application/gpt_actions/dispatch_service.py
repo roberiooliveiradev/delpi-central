@@ -40,6 +40,7 @@ from tv_app.application.services.tv_data_route_catalog_service import TvDataRout
 from tv_app.application.services.tv_presentation_write_service import TvPresentationWriteService
 import tv_app.core.security as core_security
 from tv_app.core.security import (
+    TV_TEMPLATES_MANAGE,
     TV_READ,
     TV_WRITE,
     GovernedWriteAuthzError,
@@ -359,6 +360,8 @@ class GptActionsDispatchService:
         }
 
     @staticmethod
+
+    # ------------------------------------------------------------------
     def _semantic_filters(
         filters: Any,
         *,
@@ -541,6 +544,61 @@ class GptActionsDispatchService:
                 "entity": "media_asset",
                 "playlistId": playlist_ref,
             }
+        if entity_key == "slide_template" and action_key == "list":
+            flt = self._semantic_filters(
+                filters,
+                allowed={"status", "q", "isSystem"},
+                context="read.slide_template.list",
+            )
+            from tv_app.application.services.slide_template_library_service import (
+                SlideTemplateLibraryService,
+            )
+            from tv_app.core.security import assert_permission
+
+            status_raw = str(flt.get("status") or "").strip().lower() or None
+            svc = SlideTemplateLibraryService()
+            if status_raw == "published":
+                assert_permission(user, TV_READ)
+                items = svc.list_published()
+            else:
+                assert_permission(user, TV_TEMPLATES_MANAGE)
+                if status_raw and status_raw not in (
+                    "draft", "published", "archived"
+                ):
+                    raise GptActionsError(
+                        "status inválido.",
+                        code="VALIDATION_ERROR", status_code=422,
+                    )
+                is_system = flt.get("isSystem")
+                items = svc.list_library(
+                    status=status_raw,
+                    q=str(flt.get("q") or "").strip() or None,
+                    is_system=is_system if isinstance(is_system, bool) else None,
+                )
+            return {"items": items, "count": len(items),
+                    "entity": "slide_template"}
+        if entity_key == "slide_template" and action_key == "get":
+            self._semantic_filters(
+                filters, allowed=set(), context="read.slide_template.get"
+            )
+            from tv_app.application.services.slide_template_library_service import (
+                SlideTemplateLibraryService,
+            )
+            from tv_app.core.security import assert_permission
+            from uuid import UUID
+
+            tid = str(ref or "").strip()
+            if not tid:
+                raise GptActionsError(
+                    "read.slide_template.get exige ref=templateId.",
+                    code="VALIDATION_ERROR", status_code=422,
+                )
+            item = SlideTemplateLibraryService().get(UUID(tid))
+            if str(item.get("status") or "") == "published":
+                assert_permission(user, TV_READ)
+            else:
+                assert_permission(user, TV_TEMPLATES_MANAGE)
+            return {"item": item, "entity": "slide_template"}
         if entity_key == "product_guide":
             flt = self._semantic_filters(
                 filters,
@@ -741,6 +799,277 @@ class GptActionsDispatchService:
             out.append(op)
         return out
 
+    # B2 — slide_template commands (canonical SlideTemplateLibraryService)
+    # ------------------------------------------------------------------
+
+    def _template_service(self):
+        from tv_app.application.services.slide_template_library_service import (
+            SlideTemplateLibraryService,
+        )
+
+        return SlideTemplateLibraryService()
+
+    def _slide_template_execute(
+        self,
+        *,
+        user: Any,
+        action: str,
+        target: dict[str, Any] | None,
+        operations: list[Any] | None,
+        idempotency_key: str | None,
+        authorization: str | None,
+        transport: str,
+    ) -> dict[str, Any]:
+        from tv_app.core.security import assert_permission
+        from uuid import UUID
+
+        user = self._governed_write_user(user, authorization)
+        assert_permission(user, TV_TEMPLATES_MANAGE)
+        actor = self._actor(user)
+        svc = self._template_service()
+        payload = (operations or [{}])[0]
+        if not isinstance(payload, dict):
+            raise GptActionsError(
+                "operations[0] deve ser um objeto com os campos do comando.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        target_map = target if isinstance(target, dict) else {}
+        tid_raw = str(target_map.get("templateId") or payload.get("templateId")
+                      or "").strip()
+
+        if action == "create":
+            label = str(payload.get("label") or "").strip()
+            if not label:
+                raise GptActionsError(
+                    "create exige label.",
+                    code="VALIDATION_ERROR", status_code=422,
+                )
+            item = svc.create(
+                label=label,
+                description=payload.get("description"),
+                native_config=payload.get("nativeConfig"),
+                native_screen_key=payload.get("nativeScreenKey"),
+                duration_sec=payload.get("durationSec"),
+                key=payload.get("key"),
+                publish_now=bool(payload.get("publishNow")),
+                owner_user_id=actor,
+                updated_by=actor,
+            )
+            return {"status": "VERIFIED", "operation": "create",
+                    "item": item}
+
+        if not tid_raw:
+            raise GptActionsError(
+                f"{action} exige target.templateId.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        try:
+            tid = UUID(tid_raw)
+        except ValueError as exc:
+            raise GptActionsError(
+                "templateId inválido.",
+                code="INVALID_CHANGE", status_code=422,
+            ) from exc
+
+        if action == "update":
+            fields = {
+                k: payload[k]
+                for k in ("label", "description", "nativeConfig",
+                          "nativeScreenKey", "durationSec")
+                if k in payload and payload[k] is not None
+            }
+            if not fields:
+                raise GptActionsError(
+                    "update exige ao menos um campo.",
+                    code="VALIDATION_ERROR", status_code=422,
+                )
+            item = svc.update(tid, updated_by=actor, **fields)
+        elif action == "clone":
+            item = svc.clone(
+                tid, updated_by=actor, owner_user_id=actor
+            )
+        elif action == "publish":
+            item = svc.publish(tid, updated_by=actor)
+        elif action == "unpublish":
+            item = svc.unpublish(tid, updated_by=actor)
+        elif action == "archive":
+            item = svc.archive(tid, updated_by=actor)
+        else:
+            raise GptActionsError(
+                f"Ação desconhecida para slide_template: {action!r}.",
+                code="UNKNOWN_ACTION", status_code=422,
+            )
+        return {"status": "VERIFIED", "operation": action, "item": item}
+
+    def _slide_template_delete(
+        self,
+        *,
+        user: Any,
+        phase: str | None,
+        target: dict[str, Any] | None,
+        proposal_handle: str | None,
+        consent_artifact: str | None,
+        target_echo: str | None,
+        idempotency_key: str | None,
+        authorization: str | None,
+        transport: str,
+    ) -> dict[str, Any]:
+        """slide_template delete — sealed proposal + consent artifact (A5)."""
+        import hashlib
+        import json as _json
+        import time as _time
+        import uuid as _uuid
+        from uuid import UUID
+
+        from tv_app.application.gpt_actions.proposal import (
+            VistaProposal,
+        )
+        from tv_app.application.gpt_actions.proposal_store import (
+            load_valid_proposal,
+            get_proposal_store,
+        )
+        from tv_app.application.gpt_actions.vista_consent_service import (
+            challenge_view,
+        )
+        from tv_app.core.security import assert_permission
+
+        user = self._governed_write_user(user, authorization)
+        assert_permission(user, TV_TEMPLATES_MANAGE)
+        actor = self._actor(user)
+        phase_key = str(phase or "prepare").strip().lower()
+        if phase_key not in ("prepare", "commit"):
+            raise GptActionsError(
+                f"Fase desconhecida para delete: {phase_key!r}.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        svc = self._template_service()
+
+        if phase_key == "commit":
+            if not proposal_handle:
+                raise GptActionsError(
+                    "commit exige proposal_handle.",
+                    code="VALIDATION_ERROR", status_code=422,
+                )
+            proposal = load_valid_proposal(
+                proposal_handle=proposal_handle,
+                actor_id=actor,
+                expected_capability="delete.slide_template",
+            )
+            tid_raw = str(
+                (proposal.exact_change.get("target") or {}).get("templateId")
+                or ""
+            ).strip()
+            echo = str(target_echo or "").strip()
+            if echo != tid_raw:
+                raise GptActionsError(
+                    "target_echo não corresponde ao alvo selado.",
+                    code="CONFIRMATION_MISMATCH", status_code=409,
+                )
+            if self._consent is None:
+                raise GptActionsError(
+                    "Canal de consentimento indisponível.",
+                    code="CONFIRMATION_UNAVAILABLE", status_code=503,
+                )
+            challenge = self._consent.verify_for_commit(
+                proposal=proposal,
+                actor_sub=actor,
+                consent_artifact=consent_artifact,
+                required=True,
+            )
+            deleted = svc.delete(UUID(tid_raw))
+            self._consent.consume_for_commit(
+                challenge=challenge,
+                proposal_id=proposal.proposal_id,
+                actor_sub=actor,
+            )
+            get_proposal_store().consume(proposal.proposal_id)
+            return {
+                "status": "VERIFIED",
+                "operation": "delete_slide_template",
+                "deleted": deleted,
+                "templateId": tid_raw,
+            }
+
+        target_map = target if isinstance(target, dict) else {}
+        tid_raw = str(target_map.get("templateId") or "").strip()
+        if not tid_raw:
+            raise GptActionsError(
+                "delete.slide_template exige target.templateId.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        try:
+            tid = UUID(tid_raw)
+        except ValueError as exc:
+            raise GptActionsError(
+                "templateId inválido.",
+                code="INVALID_CHANGE", status_code=422,
+            ) from exc
+        item = svc.get(tid)
+        state_fp = hashlib.sha256(
+            _json.dumps(item, sort_keys=True, default=str).encode()
+        ).hexdigest()
+        exact_change = {
+            "target": {"templateId": tid_raw},
+            "ops": [{"op": "delete_slide_template", "templateId": tid_raw}],
+        }
+        now = _time.time()
+        content_hash = hashlib.sha256(
+            _json.dumps(
+                {
+                    "capability": "delete.slide_template",
+                    "actor_id": str(actor),
+                    "resource_id": tid_raw,
+                    "state": state_fp,
+                    "exact_change": exact_change,
+                },
+                sort_keys=True, default=str,
+            ).encode()
+        ).hexdigest()
+        proposal = VistaProposal(
+            proposal_id=f"prop_{_uuid.uuid4().hex[:24]}",
+            capability="delete.slide_template",
+            actor_id=str(actor),
+            resource_type="slide_template",
+            resource_id=tid_raw,
+            current_state_fingerprint=state_fp,
+            exact_change=exact_change,
+            confirmation_requirement={
+                "explicit_user_confirmation": True,
+                "confirmation_policy": "confirm",
+                "destructive": True,
+            },
+            risk="destructive",
+            confirmation_policy="confirm",
+            catalog_version="",
+            base_revision=None,
+            created_at=now,
+            expires_at=now + 600,
+            content_hash=content_hash,
+        )
+        handle = get_proposal_store().put(proposal)
+        if self._consent is None:
+            raise GptActionsError(
+                "Canal de consentimento indisponível.",
+                code="CONFIRMATION_UNAVAILABLE", status_code=503,
+            )
+        consent_challenge = challenge_view(
+            self._consent.issue_for_proposal(
+                proposal=proposal,
+                actor_sub=actor,
+                origin=transport,
+                correlation_id=None,
+            )
+        )
+        return {
+            "status": "consent_required",
+            "phase": "prepare",
+            "operation": "delete_slide_template",
+            "proposal_handle": handle,
+            "consentChallenge": consent_challenge,
+            "target": {"templateId": tid_raw},
+            "item": item,
+        }
+
     def semantic_execute(
         self,
         *,
@@ -793,6 +1122,17 @@ class GptActionsDispatchService:
                 code="UNKNOWN_ACTION",
                 status_code=422,
             )
+        if entity_key == "slide_template":
+            return self._slide_template_execute(
+                user=user,
+                action=action_key,
+                target=target,
+                operations=operations,
+                idempotency_key=idempotency_key,
+                authorization=authorization,
+                transport=transport,
+            )
+
         phase_key = str(phase or "prepare").strip().lower()
         if phase_key not in EXECUTE_PHASES:
             raise GptActionsError(
@@ -901,6 +1241,18 @@ class GptActionsDispatchService:
         )
 
         entity_key = str(entity or "").strip().lower()
+        if entity_key == "slide_template":
+            return self._slide_template_delete(
+                user=user,
+                phase=phase,
+                target=target,
+                proposal_handle=proposal_handle,
+                consent_artifact=consent_artifact,
+                target_echo=target_echo,
+                idempotency_key=idempotency_key,
+                authorization=authorization,
+                transport=transport,
+            )
         op_name = DELETE_ENTITIES.get(entity_key)
         if op_name is None:
             raise GptActionsError(
