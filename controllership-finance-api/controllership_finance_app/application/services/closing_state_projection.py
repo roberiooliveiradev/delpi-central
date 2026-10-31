@@ -26,7 +26,7 @@ def _node(state: str, *, evidence: dict | None = None,
           limitations: list[str] | None = None) -> dict:
     return {
         "state": state,
-        "evidence": evidence or {},
+        "evidenceRefs": evidence or {},
         "limitations": limitations or [],
     }
 

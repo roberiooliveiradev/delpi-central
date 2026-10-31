@@ -17,7 +17,7 @@ export type ClosingStateNodeState =
 
 export type ClosingStateNode = {
   state: ClosingStateNodeState;
-  evidence: Record<string, unknown>;
+  evidenceRefs: Record<string, unknown>;
   limitations: string[];
 };
 
