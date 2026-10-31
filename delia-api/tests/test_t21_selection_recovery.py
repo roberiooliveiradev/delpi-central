@@ -27,7 +27,6 @@ from app.application.capability_provision.orchestration import (
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
-    _singular_form,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -442,47 +441,6 @@ def test_t21_all_groups_unbound_terminates_insufficiency():
     assert len(_requests(model, GROUP_SELECTION_INSTRUCTION_ID)) == 2
 
 
-def test_canonical_subject_args_singularizes_plural_drift():
-    from app.application.capability_provision.orchestration import (
-        _canonical_subject_args,
-    )
-
-    rebound = _canonical_subject_args(
-        {"description": "conectores elétricos"},
-        "conectores elétricos",
-    )
-    assert rebound == {"description": "conector elétrico"}
-
-    rebound = _canonical_subject_args(
-        {"description": "terminais bala"}, "terminais bala"
-    )
-    assert rebound == {"description": "terminal bala"}
-
-
-def test_canonical_subject_args_none_when_already_canonical():
-    from app.application.capability_provision.orchestration import (
-        _canonical_subject_args,
-    )
-
-    # already-canonical multi-token phrase -> head-noun fallback
-    assert _canonical_subject_args(
-        {"description": "espaguete termorretrátil"},
-        "espaguete termorretrátil",
-    ) == {"description": "espaguete"}
-    # single-token canonical -> nothing to retry
-    assert (
-        _canonical_subject_args(
-            {"description": "espaguete"}, "espaguete"
-        )
-        is None
-    )
-    # singular subject, plural merged -> rebound to designation
-    rebound = _canonical_subject_args(
-        {"description": "conectores elétricos"}, "conector elétrico"
-    )
-    assert rebound == {"description": "conector elétrico"}
-
-
 _PREPARE = SpecialistOperationClass.PREPARE
 
 
@@ -556,30 +514,3 @@ def test_t21_fallback_never_binds_write_class_capability():
     cap_requests = _requests(model, CAPABILITY_SELECTION_INSTRUCTION_ID)
     # 2 proposals inside gA (initial + reconcile retry) — none in gB.
     assert len(cap_requests) == 2
-
-
-# --- Task 22: language-normalization audit (singular_form bugs) ---
-import pytest as _pytest
-
-
-@_pytest.mark.parametrize(
-    "given,expected",
-    [
-        ("terminais", "terminal"),
-        ("conectores", "conector"),
-        ("disjuntores", "disjuntor"),
-        ("cabos", "cabo"),
-        ("tomadas", "tomada"),
-        ("fusíveis", "fusível"),
-        ("ilhós", "ilhó"),
-        ("bala", "bala"),
-        # Latin/Greek -is/-us and invariant nouns are never productive
-        # plurals in PT — stripping them is over-normalization.
-        ("lápis", "lápis"),
-        ("tênis", "tênis"),
-        ("vírus", "vírus"),
-        ("ônibus", "ônibus"),
-    ],
-)
-def test_singular_form_productive_plurals_only(given, expected):
-    assert _singular_form(given) == expected

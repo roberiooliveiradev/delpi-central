@@ -370,3 +370,39 @@ Registro de coordenação: 2026-10-31. Escopo exclusivo de **diagnóstico compar
 - Failures estáveis no novo conjunto (2+ reps): `t2_parafuso/rolamento/code` EVIDENCE_RELEVANCE (chain-death residual — discover OK, candidato não concluído); `t2_teo_resp`/`t2_vista_screens` GROUP_SELECTION (superfície errada p/ phrasing novo); `t2_absent` CAPABILITY_SELECTION (sensor→teo, superfície errada); `t2_workspace` EVIDENCE_REJECTION; `t2_abracadeira/teo_status/cont` ADMISSION_ERROR. Classes idênticas aos residuais `nh_*` — model-bound (qwen3-4B), não defeito de contrato.
 - **Veredito honesto:** o rework do `_singular_form` melhora cobertura de famílias `-veis` e elimina sobre-normalização, mas não eleva a taxa do novo held-out — o gargalo residual é capacidade de seleção do modelo, confirmando `ARCHITECTURE_DECISION_REQUIRED` (Alternativa B — tier de modelo).
 - Deploy produtivo desta task: **DEPLOY_EXECUTED=NO** — `SEMANTIC_GENERALIZATION_GATE=FAIL` (release gates §15 do briefing). Correções isoladas comprovadas (singular_form + testes + corpus V3 + driver) são publicadas sem aceite global.
+
+## 10. Task 23 — `DELIA-C3-SEMANTIC-HEURISTICS-REMOVAL-AND-80PCT-RECOVERY-01`
+
+### 10.1 Inventário de heurísticas (orquestrador, HEAD `61e3b93fee`)
+
+| Artefato | Comportamento | Classe | DECISION |
+|---|---|---|---|
+| `_singular_form` | Morfologia PT (plural→singular) decide reformulação de busca | **A — semântica indevida** | **REMOVED** |
+| `_canonical_subject_args` | Reescreve args p/ designação singularizada (+ head-token widen) | **A — semântica indevida** | **REMOVED** |
+| `_DESIGNATION_RETRY_USED` | Bound da retry determinística | — | mantido como bound da reformulação LLM |
+| `_free_text_is_verbatim_request` | Rejeitava args contendo substrings do pedido | A parcial — `normalized in request` = julgamento semântico por substring | **NARROWED**: só igualdade exata (B) |
+| `_FREE_TEXT_ARGUMENT_KEYS` | Lista de campos free-text | B estrutural | KEEP |
+| `_IDENTIFIER_ARG_KEY_RE` / `_IDENTIFIER_LITERAL_RE` | Formato de chave/valor identificador | B validação de formato | KEEP (VISIBLE≠RESOLVED documentado) |
+| `_NAMED_PROVIDER_RE` + `_named_provider_tokens` | Detecta `mcp <id>` explicitamente nomeado | B — só dispara p/ provider **ausente** → limitação honesta; nunca roteia | KEEP |
+| `_nearest_capability_name`/`_edit_distance_leq` | Liga remote_name mistyped a 1 única cap viva | B — correção unívoca fail-closed | KEEP |
+| `_resolve_live_group_key` | Membership de grupo por id | B | KEEP |
+| `_TEMPORAL_ARG_KEY_RE` | Formato de chave temporal | B | KEEP |
+| `_PRIOR_SENTENCE_SPLIT_RE` | Split de frases (formatação excerpt) | D | KEEP |
+
+### 10.2 Remoção e substituição (sem camada nova)
+
+- **REMOVED:** `_singular_form` + `_canonical_subject_args` — a reformulação de busca era decisão semântica por regras morfológicas PT hardcoded no orquestrador provider-neutral.
+- **Substituição por mecanismo existente:** coleção vazia → `_EMPTY_RESULT_FEEDBACK` (sinal tipado untrusted, mesma família dos feedbacks governados) → `_propose_candidate_arguments` (proposta do MODELO, parâmetro novo `owner_feedback`) → `_validate_instance` (schema do candidato) → re-invoke bounded 1× (`_DESIGNATION_RETRY_USED` — var mantida como bound do retry; o mecanismo agora é semântico). O LLM reformula; contrato valida; owner decide.
+- **NARROWED:** `_free_text_is_verbatim_request` — removido o containment (`in request`/`request in normalized`, julgamento semântico por substring que causava rejeições de subfrases legítimas e contribuía para a regressão de custo); mantida igualdade exata (estrutural).
+- Testes: removidos `test_canonical_subject_args_*` + parametrized `_singular_form`; 6/6 arquivo + suíte focada GREEN.
+
+### 10.3 Baterias (GPU, `delia-t21-main`, HEAD local)
+
+Driver `_task23_driver.sh`: main×1 + heldout×1 (regressão) + t22heldout×3 (aceite) — mesmo fingerprint de corpus.
+
+- Resultados (GPU, baseline `61e3b93fee` + remoções):
+  - `main_run1` **41/47 = 87,2%** (41P+1Parcial+5F) — **melhor resultado histórico** (T22 40/47, T21 39/47, T20 38-40) — remover heurísticas melhorou o corpus principal.
+  - `heldout_run1` **17/20 = 85%** (vs 16/20 T22, 17/20 T21).
+  - `t22heldout` **~10/21, ~11/21, ~10/21 ≈ 48–52%** — consistente com T22 (~50%): a remoção não elevou nem derrubou o conjunto novo → `MINIMUM_80PCT_GATE=FAIL` no held-out independente.
+- Leitura honesta: o residual é model-bound (GROUP_SELECTION, chain-death, ADMISSION em phrasings nunca vistos) — a limpeza arquitetural está correta e não degradou qualidade; o gate continua dependendo de capacidade de seleção do qwen3-4B → `ARCHITECTURE_DECISION_REQUIRED` (Alternativa B) reafirmado.
+- Segurança: zero invokes write-like, zero fabricações nas falhas (vazio honesto/limitação).
