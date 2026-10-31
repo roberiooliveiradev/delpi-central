@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from math import ceil
 from typing import Any
 
@@ -111,6 +112,10 @@ def _normalize_receipt_row(row: dict[str, Any]) -> dict[str, Any]:
 _SQL_SERVER_PARAM_BUDGET = 1800  # keep margin under the 2100-param cap
 _ORDER_KEYS_BATCH = _SQL_SERVER_PARAM_BUDGET // 3  # 3 bind params per line key
 _RECEIPT_KEYS_BATCH = _SQL_SERVER_PARAM_BUDGET // 6  # 6 bind params per order key
+# Batched attach queries are independent read-only lookups; run a small
+# bounded fan-out so a large export does not serialize ~30 round-trips.
+# Kept well below TOTVS_POOL_MAX_SIZE (default 10) to preserve headroom.
+_ATTACH_BATCH_MAX_WORKERS = 4
 
 
 def _batched(items: list, size: int):
@@ -396,12 +401,10 @@ class PurchaseRequestLinesRepository(BaseRepository):
             (line["branch"], line["request_number"], line["request_item"])
             for line in lines
         ]
-        order_rows: list[dict[str, Any]] = []
         # 3 params/line key → batches stay under the SQL Server 2100-param cap.
-        for batch in _batched(keys, _ORDER_KEYS_BATCH):
-            orders_sql, orders_params = build_purchase_orders_for_lines_sql(batch)
-            with self as repo:
-                order_rows.extend(repo.execute_query(orders_sql, tuple(orders_params)))
+        order_rows = self._fetch_key_batches(
+            keys, _ORDER_KEYS_BATCH, build_purchase_orders_for_lines_sql
+        )
         orders = [_normalize_order_row(row) for row in order_rows]
         order_keys = list(
             dict.fromkeys(
@@ -416,12 +419,10 @@ class PurchaseRequestLinesRepository(BaseRepository):
                 for order in orders
             )
         )
-        receipt_rows: list[dict[str, Any]] = []
         # 6 params/order key → batches stay under the SQL Server 2100-param cap.
-        for batch in _batched(order_keys, _RECEIPT_KEYS_BATCH):
-            receipts_sql, receipts_params = build_receipts_for_orders_sql(batch)
-            with self as repo:
-                receipt_rows.extend(repo.execute_query(receipts_sql, tuple(receipts_params)))
+        receipt_rows = self._fetch_key_batches(
+            order_keys, _RECEIPT_KEYS_BATCH, build_receipts_for_orders_sql
+        )
         receipts = [_normalize_receipt_row(row) for row in receipt_rows]
         receipts_by_order: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
         for receipt in receipts:
@@ -445,3 +446,32 @@ class PurchaseRequestLinesRepository(BaseRepository):
         for line in lines:
             key = (line["branch"], line["request_number"], line["request_item"])
             line["purchase_orders"] = orders_by_line.get(key, [])
+
+
+    def _fetch_key_batches(
+        self,
+        keys: list[tuple],
+        batch_size: int,
+        builder,
+    ) -> list[dict[str, Any]]:
+        """Run independent key-batch lookups with a bounded fan-out.
+
+        Each batch uses a fresh repository instance so every worker holds
+        its own pooled TOTVS connection (``self`` cursor/connection are
+        not thread-safe). ``executor.map`` preserves batch order, so the
+        assembled row list stays deterministic.
+        """
+        batches = list(_batched(keys, batch_size))
+
+        def _fetch(batch: list[tuple]) -> list[dict[str, Any]]:
+            sql, params = builder(batch)
+            with type(self)() as repo:
+                return repo.execute_query(sql, tuple(params))
+
+        if len(batches) <= 1:
+            return _fetch(batches[0]) if batches else []
+        rows: list[dict[str, Any]] = []
+        with ThreadPoolExecutor(max_workers=_ATTACH_BATCH_MAX_WORKERS) as executor:
+            for batch_rows in executor.map(_fetch, batches):
+                rows.extend(batch_rows)
+        return rows
