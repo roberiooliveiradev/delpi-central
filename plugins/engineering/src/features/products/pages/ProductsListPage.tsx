@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { X } from "lucide-react";
 
 import { HomeApiError } from "../../../api/httpClient";
 import { navigateEngineeringView } from "../../../app/engineeringRoutes";
@@ -19,6 +20,12 @@ import {
   fetchProductFilterOptions,
   searchProducts,
 } from "../api/productApi";
+import { ProductAdvancedFilters } from "../components/ProductAdvancedFilters";
+import {
+  applyRulesToListState,
+  rulesFromListState,
+  type ProductFilterRule,
+} from "../productFilterRules";
 import {
   PRODUCT_COPY,
   PRODUCT_HELP,
@@ -39,6 +46,19 @@ import type { ProductFilterOptions, ProductRecord } from "../types";
 const PAGE_SIZE = 50;
 const DEBOUNCE_MS = 400;
 const SORTABLE_COLUMNS = new Set(["code", "description", "group_code"]);
+
+/* Colunas opcionais do catálogo — ocultas por padrão até o usuário
+ * optar no gerenciador de colunas (doc 67 §6; fonte = mesmo payload
+ * `view=engineering`, sem request extra). */
+const OPTIONAL_COLUMN_DEFAULTS: Record<string, boolean> = {
+  subgroup: false,
+  drawing_code: false,
+  secondary_unit: false,
+  production_line: false,
+  default_warehouse: false,
+  barcode: false,
+  net_weight: false,
+};
 
 type TextDraft = {
   code: string;
@@ -106,6 +126,7 @@ export function ProductsListPage() {
               ? state.types.join(",")
               : undefined,
             customer_reference: state.customer_reference || undefined,
+            subgroup: state.subgroup || undefined,
             sort: state.sort ?? undefined,
             direction: state.sort ? state.direction : undefined,
             page: state.page,
@@ -234,6 +255,7 @@ export function ProductsListPage() {
     applied.code !== "" ||
     applied.description !== "" ||
     applied.customer_reference !== "" ||
+    applied.subgroup !== "" ||
     applied.groups.length > 0 ||
     applied.types.length > 0 ||
     draft.code !== applied.code ||
@@ -243,6 +265,32 @@ export function ProductsListPage() {
   const openDetail = useCallback((row: ProductRecord) => {
     navigateProducts(PRODUCT_PATHS.detail(row.code));
   }, []);
+
+  /* Aplicar critérios avançados: uma consulta atômica com todos os
+   * critérios válidos + draft pendente dos campos rápidos. Push de
+   * histórico (não replace) — ação explícita merece entrada própria
+   * para voltar/avançar. */
+  const onApplyAdvanced = useCallback(
+    (rules: ProductFilterRule[]) => {
+      const next = applyRulesToListState(
+        { ...applied, ...draft },
+        rules,
+      );
+      commitListState({ ...next, page: 1 }, { replace: false });
+    },
+    [applied, draft],
+  );
+
+  /* Critérios efetivamente aplicados — indicador do gatilho "Filtros"
+   * (quick + avançados compõem o mesmo estado canônico; draft do hero
+   * não conta porque ainda não foi consultado). */
+  const appliedCriteriaCount = rulesFromListState(applied).length;
+
+  /* Único campo filtrável sem controle próprio no hero — exigir chip
+   * removível para o filtro aplicado não ficar invisível (doc 67 §2.2). */
+  const clearSubgroup = useCallback(() => {
+    commitListState({ ...applied, ...draft, subgroup: "", page: 1 });
+  }, [applied, draft]);
 
   const columns = useMemo<DataTableColumn<ProductRecord>[]>(
     () => [
@@ -305,10 +353,49 @@ export function ProductsListPage() {
             label === "Ativo"
               ? ("success" as const)
               : label === "Bloqueado"
-                ? ("error" as const)
+                ? ("danger" as const)
                 : ("neutral" as const);
           return <EngineeringStatusBadge label={label} variant={variant} />;
         },
+      },
+      /* Colunas opcionais — todos os campos vêm do mesmo payload
+       * `view=engineering` da Engineering API (zero N+1; a visão já
+       * remove custo/preço/fiscal na fonte). */
+      {
+        key: "subgroup",
+        header: "Subgrupo",
+        render: (row) => row.subgroup ?? "—",
+      },
+      {
+        key: "drawing_code",
+        header: "Desenho",
+        render: (row) => row.drawing_code ?? "—",
+      },
+      {
+        key: "secondary_unit",
+        header: "UM 2ª",
+        render: (row) => row.secondary_unit ?? "—",
+      },
+      {
+        key: "production_line",
+        header: "Linha produção",
+        render: (row) => row.production_line ?? "—",
+      },
+      {
+        key: "default_warehouse",
+        header: "Armazém",
+        render: (row) => row.default_warehouse ?? "—",
+      },
+      {
+        key: "barcode",
+        header: "Cód. barras",
+        render: (row) => row.barcode ?? "—",
+      },
+      {
+        key: "net_weight",
+        header: "Peso líq.",
+        render: (row) =>
+          row.net_weight != null ? String(row.net_weight) : "—",
       },
     ],
     [],
@@ -458,6 +545,30 @@ export function ProductsListPage() {
           }}
           onRowClick={openDetail}
           columnPreferencesKey="engineering-products-list"
+          defaultColumnVisibility={OPTIONAL_COLUMN_DEFAULTS}
+          toolbarActions={
+            <>
+              <ProductAdvancedFilters
+                applied={{ ...applied, ...draft }}
+                activeCount={appliedCriteriaCount}
+                groupOptions={groupOptions}
+                typeOptions={typeOptions}
+                disabled={loading && !list}
+                onApply={onApplyAdvanced}
+              />
+              {applied.subgroup ? (
+                <button
+                  type="button"
+                  className="engineering-products__applied-chip"
+                  title="Remover filtro de subgrupo"
+                  onClick={clearSubgroup}
+                >
+                  Subgrupo: {applied.subgroup}
+                  <X size={12} aria-hidden />
+                </button>
+              ) : null}
+            </>
+          }
         />
       ) : null}
     </main>

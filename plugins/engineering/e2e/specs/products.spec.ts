@@ -165,6 +165,123 @@ test("multiselect de Tipo aplica seleção na URL", async ({ page }) => {
   await expect(page).toHaveURL(/\/apps\/engineering\/products\/?$/);
 });
 
+test("filtros avançados: draft, aplicar atômico, chip e Limpar global", async ({
+  page,
+}) => {
+  const forbidden = trackForbiddenApiCalls(page);
+  const pageErrors = trackPageErrors(page);
+
+  await page.goto(LIST_PATH);
+  const filtersTrigger = page.getByRole("button", {
+    name: "Filtros",
+    exact: true,
+  });
+  await expect(filtersTrigger).toBeVisible({ timeout: 30_000 });
+
+  // Draft não dispara consulta: abrir, adicionar critério e fechar sem
+  // aplicar não altera a URL.
+  await filtersTrigger.click();
+  const panel = page.getByRole("dialog", { name: "Filtros avançados" });
+  await expect(panel).toBeVisible();
+  await expect(
+    panel.getByText("Refine os produtos combinando um ou mais critérios."),
+  ).toBeVisible();
+  await panel
+    .getByRole("button", { name: "Adicionar critério" })
+    .click();
+  await expect(panel.locator(".engineering-products__adv-rule")).toHaveCount(
+    1,
+  );
+  await page.keyboard.press("Escape");
+  await expect(panel).toBeHidden({ timeout: 10_000 });
+  await expect(page).toHaveURL(/\/apps\/engineering\/products\/?$/);
+
+  // Critério de subgrupo (campo sem controle no hero) → Apply atômico:
+  // URL sub=, chip removível visível e badge no gatilho.
+  await filtersTrigger.click();
+  await panel
+    .getByRole("button", { name: "Adicionar critério" })
+    .click();
+  const fieldSelect = panel.getByRole("button", { name: "Campo" });
+  await fieldSelect.click();
+  await page
+    .getByRole("listbox")
+    .getByRole("button", { name: "Subgrupo" })
+    .click();
+  await panel.getByPlaceholder("Ex.: 01").fill("ZZTESTE");
+  await panel.getByRole("button", { name: "Aplicar filtros" }).click();
+
+  await expect(page).toHaveURL(/sub=ZZTESTE/, { timeout: 15_000 });
+  await expect(panel).toBeHidden();
+  const chip = page.getByRole("button", { name: /Subgrupo: ZZTESTE/ });
+  await expect(chip).toBeVisible();
+
+  // Remover o chip volta a consultar sem o critério.
+  await chip.click();
+  await expect(page).not.toHaveURL(/sub=/, { timeout: 15_000 });
+  await expect(chip).toHaveCount(0);
+
+  // Limpar global também remove critérios aplicados via painel.
+  await filtersTrigger.click();
+  await panel
+    .getByRole("button", { name: "Adicionar critério" })
+    .click();
+  await panel.getByPlaceholder("Ex.: 100").fill("77");
+  await panel.getByRole("button", { name: "Aplicar filtros" }).click();
+  await expect(page).toHaveURL(/code=77/, { timeout: 15_000 });
+  await page.getByRole("button", { name: "Limpar filtros" }).click();
+  await expect(page).toHaveURL(/\/apps\/engineering\/products\/?$/);
+
+  expectNoFailures(forbidden, pageErrors);
+});
+
+test("gerenciador de colunas: opcionais oficiais, toggle e restaurar", async ({
+  page,
+}) => {
+  const forbidden = trackForbiddenApiCalls(page);
+  const pageErrors = trackPageErrors(page);
+
+  await page.goto(LIST_PATH);
+  const table = page.locator("table");
+  const hasRows = await table
+    .waitFor({ state: "visible", timeout: 30_000 })
+    .then(() => true)
+    .catch(() => false);
+  test.skip(!hasRows, "Catálogo dev sem linhas — gerenciador exige tabela.");
+
+  // Colunas opcionais do contrato view=engineering começam ocultas.
+  const thead = table.locator("thead");
+  await expect(thead.getByText("Subgrupo")).toHaveCount(0);
+  await expect(thead.getByText("Cód. barras")).toHaveCount(0);
+
+  const columnsTrigger = page.getByRole("button", {
+    name: "Colunas",
+    exact: true,
+  });
+  await columnsTrigger.click();
+  const columnsPanel = page.getByRole("dialog", {
+    name: "Colunas visíveis",
+  });
+  await expect(columnsPanel).toBeVisible({ timeout: 10_000 });
+  await expect(columnsPanel.getByText("Subgrupo")).toBeVisible();
+  await expect(columnsPanel.getByText("Cód. barras")).toBeVisible();
+  await expect(columnsPanel.getByText("Desenho")).toBeVisible();
+
+  // Exibe uma opcional → cabeçalho aparece na tabela.
+  await columnsPanel
+    .getByLabel("Exibir coluna Subgrupo")
+    .click();
+  await expect(thead.getByText("Subgrupo")).toBeVisible({ timeout: 10_000 });
+
+  // Restaurar padrão oculta novamente as opcionais.
+  await columnsPanel
+    .getByRole("button", { name: "Restaurar" })
+    .click();
+  await expect(thead.getByText("Subgrupo")).toHaveCount(0);
+
+  expectNoFailures(forbidden, pageErrors);
+});
+
 test("ficha do produto renderiza abas oficiais com URL (?tab=)", async ({
   page,
 }) => {
@@ -253,6 +370,17 @@ test("ficha do produto renderiza abas oficiais com URL (?tab=)", async ({
   ]);
   expect(["tree", "state"]).toContain(treeOutcome);
   if (treeOutcome === "tree") {
+    // Card R2: título oficial + toolbar Expandir/Recolher todos.
+    await expect(
+      page.getByText("Estrutura do produto").first(),
+    ).toBeVisible();
+    const expandAll = page.getByRole("button", {
+      name: "Expandir todos",
+    });
+    const collapseAll = page.getByRole("button", {
+      name: "Recolher todos",
+    });
+    await expect(collapseAll).toBeVisible();
     // Nós com filhos expandem/recolhem via toggle oficial (aria-expanded).
     const toggles = page.locator(".lmps-rich-tree__toggle");
     const toggleCount = await toggles.count();
@@ -265,6 +393,20 @@ test("ficha do produto renderiza abas oficiais com URL (?tab=)", async ({
         "aria-expanded",
         wasExpanded ? "false" : "true",
       );
+    }
+    // Recolher todos: somente a raiz permanece expandida.
+    await collapseAll.click();
+    const expandedCount = await page
+      .locator('.lmps-rich-tree__toggle[aria-expanded="true"]')
+      .count();
+    expect(expandedCount).toBeLessThanOrEqual(1);
+    // Expandir todos (quando dentro do teto de segurança) reabre ramos.
+    if (await expandAll.isEnabled().catch(() => false)) {
+      await expandAll.click();
+      const expandedAfter = await page
+        .locator('.lmps-rich-tree__toggle[aria-expanded="true"]')
+        .count();
+      expect(expandedAfter).toBeGreaterThan(0);
     }
   }
 
@@ -282,6 +424,24 @@ test("ficha do produto renderiza abas oficiais com URL (?tab=)", async ({
       .then(() => "state"),
   ]);
   expect(["pdf", "state"]).toContain(drawOutcome);
+  if (drawOutcome === "pdf") {
+    // Workspace R2: cabeçalho compacto de metadados + viewer ampliado.
+    await expect(
+      page.locator(".engineering-product-drawing__bar"),
+    ).toBeVisible();
+    await expect(
+      page.locator(".engineering-product-drawing__meta"),
+    ).toContainText("Arquivo");
+    await expect(
+      page.locator(".engineering-product-drawing__meta"),
+    ).toContainText("Revisão");
+    await expect(
+      page.getByRole("button", { name: "Abrir ampliado" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Baixar PDF" }),
+    ).toBeVisible();
+  }
 
   expectNoFailures(forbidden, pageErrors);
 });

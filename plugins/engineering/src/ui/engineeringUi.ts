@@ -10,6 +10,7 @@ import {
   createDashboardDetailFieldGrid,
   createDashboardEmptyState,
   createDashboardEventsSection,
+  createDashboardFiltersKit,
   createDashboardKpiCard,
   createDashboardLoadingActivityCard,
   createDashboardMetricStrip,
@@ -256,6 +257,19 @@ export const EngineeringInitialsAvatar = createInitialsAvatar(ENG_UI_PREFIX);
 
 /** Rótulo de formulário com ajuda no próprio texto (sem ícone `?`). */
 export const EngineeringFieldLabel = FieldLabel;
+
+/* Filters kit oficial do design system — mesma fábrica compartilhada
+ * que outros MFEs (ex.: Helpdesk) consomem para construtores de
+ * critérios; nenhum componente privado de outro plugin é importado. */
+const engineeringFiltersKit = createDashboardFiltersKit({
+  prefix: ENG_UI_PREFIX,
+  labels: { filtersAriaLabel: "Filtros da listagem" },
+  portalScopeClassName: ENG_PORTAL_SCOPE,
+});
+
+export const EngineeringFiltersRow = engineeringFiltersKit.FiltersRow;
+export const EngineeringFilterInput = engineeringFiltersKit.FilterInputField;
+export const EngineeringFilterSelect = engineeringFiltersKit.FilterSelectField;
 
 /** Classes/labels canônicos da DataTable — o componente em si é genérico
  * (`DataTable<T>`) e é encapsulado pelos wrappers `.tsx` de cada feature. */

@@ -515,3 +515,277 @@
     text-align: center;
   }
 }
+
+/* --- Filtros avançados do catálogo (R2) --------------------------------
+ * Painel ancorado via AnchoredPanelPortal do kit — o surface/chrome vem
+ * de `.delpi-ui-popover-surface` (tokens do kit, claro/escuro); aqui só
+ * layout interno das regras FIELD + OPERATOR + VALUE. */
+.engineering-products__adv-filters {
+  display: inline-flex;
+}
+
+.engineering-products__adv-filters-trigger[aria-expanded="true"] {
+  border-color: color-mix(in srgb, var(--en-accent) 55%, var(--en-border));
+}
+
+/* Indicador de critérios aplicados no gatilho "Filtros" (doc 67 §2.4). */
+.engineering-products__adv-filters-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding-inline: 0.2rem;
+  margin-inline-start: 0.3rem;
+  border-radius: 999px;
+  background: var(--en-accent);
+  color: var(--en-accent-contrast, #fff);
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+/* Chip removível de filtro aplicado sem controle próprio no hero
+ * (ex.: Subgrupo) — doc 67 §2.2: resumo discreto + remoção na URL. */
+.engineering-products__applied-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 1.75rem;
+  padding-inline: 0.55rem;
+  border: 1px solid var(--en-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--en-accent) 9%, transparent);
+  color: var(--en-text);
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.engineering-products__applied-chip:hover {
+  border-color: var(--en-accent);
+}
+
+.engineering-products__applied-chip:focus-visible {
+  outline: 2px solid var(--en-accent);
+  outline-offset: 1px;
+}
+
+.engineering-products__adv-panel {
+  width: min(40rem, calc(100vw - 1.25rem));
+  max-height: min(32rem, 75vh);
+  overflow: auto;
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+
+.engineering-products__adv-panel-header {
+  display: grid;
+  gap: 0.2rem;
+  margin-block-end: 0.65rem;
+}
+
+.engineering-products__adv-panel-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.engineering-products__adv-panel-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--en-text-muted);
+}
+
+.engineering-products__adv-empty {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: var(--en-text-muted);
+}
+
+.engineering-products__adv-rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.engineering-products__adv-rule {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  padding: 0.55rem;
+  border: 1px solid var(--en-border);
+  border-radius: 10px;
+}
+
+.engineering-products__adv-rule-fields {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(7.5rem, auto) auto minmax(9rem, 1fr);
+  align-items: end;
+  gap: 0.45rem 0.6rem;
+}
+
+.engineering-products__adv-operator {
+  font-size: 0.78rem;
+  color: var(--en-text-muted);
+  padding-block-end: 0.45rem;
+  white-space: nowrap;
+}
+
+.engineering-products__adv-rule-remove {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--en-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--en-text-muted);
+  cursor: pointer;
+}
+
+.engineering-products__adv-rule-remove:hover {
+  color: var(--en-text);
+  border-color: var(--en-accent);
+}
+
+.engineering-products__adv-rule-remove:focus-visible {
+  outline: 2px solid var(--en-accent);
+  outline-offset: 1px;
+}
+
+.engineering-products__adv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-block-start: 0.65rem;
+}
+
+.engineering-products__adv-actions .engineering-action-btn:last-child {
+  margin-inline-start: auto;
+}
+
+/* Mobile: cada campo da regra ocupa a linha inteira. */
+@media (max-width: 640px) {
+  .engineering-products__adv-rule-fields {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .engineering-products__adv-operator {
+    padding-block-end: 0;
+  }
+}
+
+/* --- Ficha do produto R2: árvore e workspace de desenho -----------------
+ * Escopo .engineering-products — nenhum ajuste toca as páginas LMPs
+ * que consomem o mesmo RichTree. */
+
+.engineering-product-tree__toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Regiões tabulares no nó da árvore: quantidade/unidade no mesmo eixo,
+ * números alinhados, sem achatar a hierarquia (doc 67 §3.3). */
+.engineering-products .lmps-rich-tree__meta {
+  min-width: 5.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.engineering-product-overview__drawing-link {
+  margin-block-start: 0.6rem;
+}
+
+/* Workspace de desenho técnico: cabeçalho compacto com metadados e
+ * ações; viewer PDF ocupa a maior altura útil (doc 67 §3.6). */
+.engineering-product-drawing__workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.engineering-product-drawing__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--en-border);
+  border-radius: 10px;
+  background: var(--en-surface);
+}
+
+.engineering-product-drawing__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 1.1rem;
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.engineering-product-drawing__meta > div {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.engineering-product-drawing__meta dt {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--en-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.engineering-product-drawing__meta dd {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--en-text);
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.engineering-product-drawing__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0;
+  flex: 0 0 auto;
+}
+
+.engineering-product-drawing__viewer {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.engineering-product-drawing__viewer .delpi-ui-file-preview__pdf {
+  height: min(78vh, 60rem);
+  min-height: min(78vh, 60rem);
+}
+
+@media (max-width: 768px) {
+  .engineering-product-drawing__bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .engineering-product-drawing__viewer .delpi-ui-file-preview__pdf {
+    height: 60vh;
+    min-height: 60vh;
+  }
+}

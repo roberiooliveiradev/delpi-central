@@ -11,6 +11,10 @@ type ProductStructureTreeProps = {
   /** Nós com `navCode` viram botões que abrem a ficha do componente. */
   onNodeNavigate?: (node: RichTreeNode) => void;
   footerLabel?: (nodeCount: number) => string;
+  /** Profundidade inicial de expansão (default 1). Aditivo — combinado
+   * com `key` externa permite Expandir/Recolher todos sem alterar o
+   * estado interno do RichTree. */
+  expandDepth?: number;
 };
 
 export function ProductStructureTree({
@@ -18,6 +22,7 @@ export function ProductStructureTree({
   emptyMessage = "Estrutura não disponível para este produto.",
   onNodeNavigate,
   footerLabel = (nodeCount) => `${nodeCount} componente(s) na estrutura`,
+  expandDepth = 1,
 }: ProductStructureTreeProps) {
   const root = useMemo(() => buildProductStructureTree(structure), [structure]);
 
@@ -28,7 +33,7 @@ export function ProductStructureTree({
   return (
     <RichTree
       root={root}
-      expandDepth={1}
+      expandDepth={expandDepth}
       footerLabel={footerLabel}
       onNodeNavigate={onNodeNavigate}
     />

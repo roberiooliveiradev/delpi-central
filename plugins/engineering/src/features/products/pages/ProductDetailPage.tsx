@@ -23,7 +23,12 @@ import type { DataTableColumn } from "../../lmps/components/DataTable";
 import { DataTableSection } from "../../lmps/components/DataTableSection";
 import { ProductStructureTree } from "../../lmps/components/ProductStructureTree";
 import { StructureLegend } from "../../lmps/components/StructureLegend";
+import type { ProductStructureData } from "../../lmps/types/productStructure";
 import type { RichTreeNode } from "../../lmps/types/richTree";
+import {
+  buildProductStructureTree,
+  countRichTreeNodes,
+} from "../../lmps/utils/productStructureTree";
 import {
   FilePreviewView,
   useFilePreviewLoader,
@@ -224,6 +229,91 @@ function overviewFields(product: ProductRecord) {
   };
 }
 
+/** Teto de segurança para "Expandir todos" — acima disso o DOM da
+ * árvore fica pesado demais para uma ação única (doc 67 §3.3). */
+const EXPAND_ALL_NODE_LIMIT = 600;
+
+/** Card R2 das abas Estrutura/Onde é usado: título oficial + contagem +
+ * toolbar Expandir/Recolher todos sobre a ProductStructureTree oficial.
+ * Expandir/recolher tudo = remontar a árvore com outro `expandDepth`
+ * (`key` por época) — zero alteração no estado interno do RichTree. */
+function ProductTreeCard({
+  title,
+  hint,
+  structure,
+  onNodeNavigate,
+  footerLabel,
+}: {
+  title: string;
+  hint?: string;
+  structure: ProductStructureData;
+  onNodeNavigate: (node: RichTreeNode) => void;
+  footerLabel: (nodeCount: number) => string;
+}) {
+  const root = useMemo(() => buildProductStructureTree(structure), [structure]);
+  const nodeCount = useMemo(
+    () => (root ? countRichTreeNodes(root) : 0),
+    [root],
+  );
+  const [expandDepth, setExpandDepth] = useState(1);
+  const [epoch, setEpoch] = useState(0);
+  const canExpandAll = nodeCount <= EXPAND_ALL_NODE_LIMIT;
+
+  return (
+    <EngineeringDetailCard
+      title={title}
+      titleHint={hint}
+      hint={`${nodeCount} nó(s)`}
+      headerActions={
+        root ? (
+          <div
+            className="engineering-product-tree__toolbar"
+            role="group"
+            aria-label="Ações da árvore"
+          >
+            <EngineeringActionButton
+              variant="ghost"
+              disabled={!canExpandAll}
+              title={
+                canExpandAll
+                  ? "Expandir todos os níveis da árvore"
+                  : `Indisponível acima de ${EXPAND_ALL_NODE_LIMIT} nós`
+              }
+              onClick={() => {
+                setExpandDepth(Number.MAX_SAFE_INTEGER);
+                setEpoch((value) => value + 1);
+              }}
+            >
+              Expandir todos
+            </EngineeringActionButton>
+            <EngineeringActionButton
+              variant="ghost"
+              title="Recolher todos os níveis"
+              onClick={() => {
+                setExpandDepth(0);
+                setEpoch((value) => value + 1);
+              }}
+            >
+              Recolher todos
+            </EngineeringActionButton>
+          </div>
+        ) : null
+      }
+    >
+      <div className="engineering-lmps">
+        <StructureLegend />
+        <ProductStructureTree
+          key={epoch}
+          structure={structure}
+          expandDepth={expandDepth}
+          onNodeNavigate={onNodeNavigate}
+          footerLabel={footerLabel}
+        />
+      </div>
+    </EngineeringDetailCard>
+  );
+}
+
 const supplierColumns: DataTableColumn<ProductSupplier>[] = [
   {
     key: "supplier_code",
@@ -292,25 +382,55 @@ function DrawingsSection({
     anchor.click();
   }, [preview.previewUrl, metadata.filename, code]);
 
+  if (!metadata.found) {
+    return (
+      <EngineeringEmptyState
+        message={
+          metadata.message ??
+          "Nenhum desenho técnico localizado para este produto na fonte oficial."
+        }
+      />
+    );
+  }
+
   return (
-    <div className="engineering-product-drawing">
-      <EngineeringDetailCard title="Desenho técnico">
-        <EngineeringDetailFieldGrid
-          fields={[
-            field("Arquivo", metadata.filename),
-            field("Revisão", metadata.revision),
-            field("Variante", metadata.variant_suffix),
-            field("Tamanho", formatBytes(metadata.size_bytes)),
-            field(
-              "Modificado em",
-              formatProductDateTime(metadata.modified_at),
-            ),
-            field("Tipo de mídia", metadata.media_type),
-          ]}
-        />
-      </EngineeringDetailCard>
-      <EngineeringDetailCard title="Pré-visualização do desenho técnico">
-        <div className="engineering-nc-actions engineering-product-drawing__actions">
+    <div className="engineering-product-drawing__workspace">
+      <div
+        className="engineering-product-drawing__bar"
+        role="group"
+        aria-label="Metadados do desenho técnico"
+      >
+        <dl className="engineering-product-drawing__meta">
+          <div>
+            <dt>Arquivo</dt>
+            <dd title={metadata.filename ?? undefined}>
+              {metadata.filename ?? "—"}
+            </dd>
+          </div>
+          <div>
+            <dt>Revisão</dt>
+            <dd>{metadata.revision?.trim() || "Revisão não informada"}</dd>
+          </div>
+          {metadata.variant_suffix ? (
+            <div>
+              <dt>Variante</dt>
+              <dd>{metadata.variant_suffix}</dd>
+            </div>
+          ) : null}
+          <div>
+            <dt>Tamanho</dt>
+            <dd>{formatBytes(metadata.size_bytes)}</dd>
+          </div>
+          <div>
+            <dt>Modificado em</dt>
+            <dd>{formatProductDateTime(metadata.modified_at)}</dd>
+          </div>
+          <div>
+            <dt>Tipo</dt>
+            <dd>{metadata.media_type ?? "—"}</dd>
+          </div>
+        </dl>
+        <div className="engineering-product-drawing__actions">
           {preview.previewUrl ? (
             <>
               <EngineeringActionButton variant="ghost" onClick={openExternal}>
@@ -322,6 +442,8 @@ function DrawingsSection({
             </>
           ) : null}
         </div>
+      </div>
+      <div className="engineering-product-drawing__viewer">
         <FilePreviewView
           state={preview}
           title={metadata.filename ?? `Desenho do produto ${code}`}
@@ -330,7 +452,7 @@ function DrawingsSection({
             loadFailed: "Não foi possível carregar o desenho técnico.",
           }}
         />
-      </EngineeringDetailCard>
+      </div>
     </div>
   );
 }
@@ -482,7 +604,7 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
                   statusLabel === "Ativo"
                     ? "success"
                     : statusLabel === "Bloqueado"
-                      ? "error"
+                      ? "danger"
                       : "neutral"
                 }
               />
@@ -571,6 +693,17 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
                 </EngineeringDetailCard>
                 <EngineeringDetailCard title="Engenharia">
                   <EngineeringDetailFieldGrid fields={overview.engineering} />
+                  {product.drawing_code ? (
+                    <div className="engineering-product-overview__drawing-link">
+                      <EngineeringActionButton
+                        variant="ghost"
+                        title="Abrir a aba Desenhos desta ficha"
+                        onClick={() => selectTab("drawings")}
+                      >
+                        Ver desenho técnico
+                      </EngineeringActionButton>
+                    </div>
+                  ) : null}
                 </EngineeringDetailCard>
                 <EngineeringDetailCard title="Estoque e logística">
                   <EngineeringDetailFieldGrid fields={overview.logistics} />
@@ -594,16 +727,15 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
                 ) : null}
                 {structure.data ? (
                   structure.data.items.length ? (
-                    <div className="engineering-lmps">
-                      <StructureLegend />
-                      <ProductStructureTree
-                        structure={structure.data}
-                        onNodeNavigate={goToProduct}
-                        footerLabel={(count) =>
-                          `${count} componente(s) na estrutura`
-                        }
-                      />
-                    </div>
+                    <ProductTreeCard
+                      title="Estrutura do produto"
+                      hint={PRODUCT_HELP.structure}
+                      structure={structure.data}
+                      onNodeNavigate={goToProduct}
+                      footerLabel={(count) =>
+                        `${count} componente(s) na estrutura`
+                      }
+                    />
                   ) : (
                     <EngineeringEmptyState message="Este produto não possui estrutura cadastrada na fonte oficial." />
                   )
@@ -627,16 +759,15 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
                 ) : null}
                 {parents.data ? (
                   parents.data.items.length ? (
-                    <div className="engineering-lmps">
-                      <StructureLegend />
-                      <ProductStructureTree
-                        structure={parents.data}
-                        onNodeNavigate={goToProduct}
-                        footerLabel={(count) =>
-                          `${count} produto(s) utilizam este componente`
-                        }
-                      />
-                    </div>
+                    <ProductTreeCard
+                      title="Onde é usado"
+                      hint={PRODUCT_HELP.whereUsed}
+                      structure={parents.data}
+                      onNodeNavigate={goToProduct}
+                      footerLabel={(count) =>
+                        `${count} produto(s) utilizam este componente`
+                      }
+                    />
                   ) : (
                     <EngineeringEmptyState message="Este produto não é componente de nenhuma estrutura cadastrada." />
                   )
