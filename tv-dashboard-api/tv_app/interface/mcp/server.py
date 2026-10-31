@@ -23,6 +23,7 @@ from .oauth_contract import MCP_TOOL_SECURITY_SCHEMES
 from .tool_bridge import (
     tool_analyze,
     tool_commit_proposal,
+    tool_execute,
     tool_get_catalog,
     tool_get_context,
     tool_get_playlist_context,
@@ -435,6 +436,25 @@ def _register_read_tools(mcp: MCPServer) -> None:
         ),
         annotations=ann,
         meta=_meta("knowledge"),
+    )
+
+    mcp.add_tool(
+        tool_execute,
+        name="execute",
+        title="Execução semântica — PREPARE→COMMIT canônico",
+        description=(
+            "entity=\"presentation\" action=\"apply_mutation\". Fase "
+            "prepare: operations[] (typed ops do catálogo) + target → "
+            "PREPARE (mesma pipeline de prepare_change — proposal_handle "
+            "selado + consentChallenge quando policy=confirm). Fase "
+            "commit: proposal_handle + idempotency_key + consent_artifact "
+            "aprovado no canal humano confiável + target_echo. "
+            "operations[] nunca é reenviado no commit (PLAN_MISMATCH); "
+            "não existe booleano de confirmação nesta superfície — só o "
+            "artifact prova consentimento humano."
+        ),
+        annotations=ann_act,
+        meta=_meta("execute"),
     )
 
     registered = {t.name for t in mcp._tool_manager.list_tools()}

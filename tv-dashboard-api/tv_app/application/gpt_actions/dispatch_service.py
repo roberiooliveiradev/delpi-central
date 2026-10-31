@@ -645,6 +645,190 @@ class GptActionsDispatchService:
             "source": "product_guide_registry",
         }
 
+    def _semantic_commit(
+        self,
+        *,
+        user: Any,
+        proposal_handle: str,
+        idempotency_key: str | None,
+        consent_artifact: str | None,
+        target_echo: str | None,
+        authorization: str | None,
+    ) -> dict[str, Any]:
+        """Commit phase shared by semantic write verbs — always
+        ``consent_required=True``: the semantic surface has no
+        ``confirmation`` boolean; only the consent artifact minted by
+        the trusted channel proves human consent for confirm plans."""
+        if not str(proposal_handle or "").strip():
+            raise GptActionsError(
+                "proposal_handle é obrigatório na fase commit.",
+                code="INVALID_CHANGE",
+                status_code=422,
+            )
+        confirmation: dict[str, Any] = {}
+        if consent_artifact:
+            confirmation["consent_artifact"] = consent_artifact
+        if target_echo:
+            confirmation["target_echo"] = target_echo
+        return self.commit_change(
+            user=user,
+            proposal_handle=proposal_handle,
+            confirmation=confirmation,
+            idempotency_key=str(idempotency_key or "").strip(),
+            authorization=authorization,
+            consent_required=True,
+        )
+
+    @staticmethod
+    def _semantic_operations(operations: list[Any] | None) -> list[dict[str, Any]]:
+        """Normalize ``operations[]`` entries to canonical typed ops.
+
+        Accepts the documented ``{"op", "args", "as"}`` envelope shape —
+        ``args`` is flattened into the op — as well as flat op dicts.
+        Transport translation only; vocabulary validation stays with the
+        canonical catalog/PlanCompiler downstream.
+        """
+        out: list[dict[str, Any]] = []
+        for raw in operations or []:
+            if not isinstance(raw, dict):
+                continue
+            args = raw.get("args")
+            op = {k: v for k, v in raw.items() if k != "args"}
+            if isinstance(args, dict):
+                op = {**args, **op}
+            out.append(op)
+        return out
+
+    def semantic_execute(
+        self,
+        *,
+        user: Any,
+        entity: str,
+        action: str,
+        phase: str | None = None,
+        target: dict[str, Any] | None = None,
+        operations: list[Any] | None = None,
+        proposal_handle: str | None = None,
+        consent_artifact: str | None = None,
+        target_echo: str | None = None,
+        idempotency_key: str | None = None,
+        catalog_version: str | None = None,
+        commit_now: bool = False,
+        authorization: str | None = None,
+        transport: str = "gpt_actions",
+    ) -> dict[str, Any]:
+        """``execute`` — closed facade over the canonical pipeline.
+
+        ``phase=prepare`` (default): ``operations[]`` + optional
+        ``target`` → canonical ``preview_change`` (sealed proposal +
+        ``consentChallenge`` when the plan policy is ``confirm``;
+        ``commit_now`` is the Actions-only single-shot and is ignored
+        for confirm plans by the canonical pipeline).
+
+        ``phase=commit``: ``proposal_handle`` + ``idempotency_key`` +
+        ``consent_artifact``/``target_echo`` → canonical
+        ``commit_change`` with ``consent_required=True``. The handle
+        binds the sealed plan — ``operations[]`` re-sent at commit is
+        plan substitution and is rejected (``PLAN_MISMATCH``); no plan
+        is ever rebuilt from model output.
+        """
+        from tv_app.application.gpt_actions.capability_surface import (
+            EXECUTE_ENTITIES,
+            EXECUTE_PHASES,
+        )
+
+        entity_key = str(entity or "").strip()
+        if entity_key not in EXECUTE_ENTITIES:
+            raise GptActionsError(
+                f"Entidade desconhecida para execute: {entity_key!r}.",
+                code="UNKNOWN_ENTITY",
+                status_code=422,
+            )
+        action_key = str(action or "").strip()
+        if action_key not in EXECUTE_ENTITIES[entity_key]:
+            raise GptActionsError(
+                f"Ação desconhecida para execute.{entity_key}: {action_key!r}.",
+                code="UNKNOWN_ACTION",
+                status_code=422,
+            )
+        phase_key = str(phase or "prepare").strip().lower()
+        if phase_key not in EXECUTE_PHASES:
+            raise GptActionsError(
+                f"Fase desconhecida para execute: {phase_key!r} "
+                f"(esperado: {', '.join(EXECUTE_PHASES)}).",
+                code="VALIDATION_ERROR",
+                status_code=422,
+            )
+
+        if phase_key == "commit":
+            if operations:
+                raise GptActionsError(
+                    "operations[] não pertence à fase commit — o "
+                    "proposal_handle já vincula o plano selado "
+                    "(reenvio seria substituição de plano).",
+                    code="PLAN_MISMATCH",
+                    status_code=409,
+                )
+            for field, value in (
+                ("target", target),
+                ("catalog_version", catalog_version),
+                ("commit_now", True if commit_now else None),
+            ):
+                if value is not None:
+                    raise GptActionsError(
+                        f"{field} não pertence à fase commit.",
+                        code="VALIDATION_ERROR",
+                        status_code=422,
+                    )
+            return self._semantic_commit(
+                user=user,
+                proposal_handle=str(proposal_handle or ""),
+                idempotency_key=idempotency_key,
+                consent_artifact=consent_artifact,
+                target_echo=target_echo,
+                authorization=authorization,
+            )
+
+        # phase=prepare — commit-phase fields are out of contract here.
+        for field, value in (
+            ("proposal_handle", proposal_handle),
+            ("consent_artifact", consent_artifact),
+            ("target_echo", target_echo),
+        ):
+            if value is not None and str(value).strip():
+                raise GptActionsError(
+                    f"{field} não pertence à fase prepare.",
+                    code="VALIDATION_ERROR",
+                    status_code=422,
+                )
+        if commit_now and transport == "mcp":
+            # Actions-only envelope mechanic — the MCP projection never
+            # carries single-shot; enforced at the canonical boundary.
+            raise GptActionsError(
+                "commit_now não está disponível neste transporte — use "
+                "phase=commit com proposal_handle.",
+                code="VALIDATION_ERROR",
+                status_code=422,
+            )
+        ops = self._semantic_operations(operations)
+        if not ops:
+            raise GptActionsError(
+                "execute phase=prepare exige operations[] do catálogo "
+                "de typed ops (entradas {op, args?, as?}).",
+                code="INVALID_CHANGE",
+                status_code=422,
+            )
+        return self.preview_change(
+            user=user,
+            target=target if isinstance(target, dict) else {},
+            ops=ops,
+            catalog_version=catalog_version,
+            authorization=authorization,
+            commit_now=bool(commit_now),
+            idempotency_key=idempotency_key,
+            transport=transport,
+        )
+
     def get_catalog(self, *, user: Any, transport: str = "actions") -> dict[str, Any]:
         assert_permission(user, TV_WRITE)
         doc = PresentationOpsContentService.capability_catalog_document(

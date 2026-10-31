@@ -132,7 +132,7 @@ def test_get_context_admin_sees_all_authorized():
     assert caps["read.playlist.list"]["authorized"] is True
     assert caps["analyze.intent_materialization"]["authorized"] is True
     assert caps["execute.presentation.apply_mutation"]["authorized"] is True
-    assert caps["execute.presentation.apply_mutation"]["status"] == "planned"
+    assert caps["execute.presentation.apply_mutation"]["status"] == "implemented"
     assert caps["delete.slide"]["authorized"] is True
     assert out["assistant"]["id"] == "vista"
     assert out["confirmationModel"]["fallback"] == "CONFIRMATION_UNAVAILABLE"

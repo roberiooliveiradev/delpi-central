@@ -565,6 +565,55 @@ def tool_commit_proposal(
         return handle_tool_error(e, tool="commit_proposal", label="mcp tool")
 
 
+def tool_execute(
+    entity: str,
+    action: str,
+    operations: list | None = None,
+    phase: str | None = None,
+    target: dict | None = None,
+    proposal_handle: str | None = None,
+    consent_artifact: str | None = None,
+    target_echo: str | None = None,
+    idempotency_key: str | None = None,
+    catalog_version: str | None = None,
+) -> CallToolResult:
+    """Semantic execute — closed facade over PREPARE→COMMIT.
+
+    ``phase=prepare``: ``entity="presentation"`` +
+    ``action="apply_mutation"`` + ``operations[]`` (typed ops,
+    ``{op, args?, as?}``) + optional ``target`` → sealed proposal;
+    emits ``consentChallenge`` when the plan policy is ``confirm``.
+
+    ``phase=commit``: exact ``proposal_handle`` + ``idempotency_key`` +
+    ``consent_artifact`` approved via the trusted channel
+    (``/vista/consent/...``) + ``target_echo`` for confirm plans —
+    operations[] is never re-sent (plan substitution → PLAN_MISMATCH)
+    and there is no confirmation boolean on this surface: only the
+    artifact proves human consent.
+    """
+    try:
+        user, auth = _authed_context()
+        return _ok_result(
+            _dispatch.semantic_execute(
+                user=user,
+                entity=entity,
+                action=action,
+                phase=phase,
+                target=target,
+                operations=operations,
+                proposal_handle=proposal_handle,
+                consent_artifact=consent_artifact,
+                target_echo=target_echo,
+                idempotency_key=idempotency_key,
+                catalog_version=catalog_version,
+                authorization=auth,
+                transport="mcp",
+            )
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="execute", label="mcp tool")
+
+
 # ---------------------------------------------------------------------------
 # SEMANTIC_TOOLS_V1 — six-verb semantic surface (coexists with the 12 above).
 # Same adapter discipline: context rebuild + delegation to the same dispatch.

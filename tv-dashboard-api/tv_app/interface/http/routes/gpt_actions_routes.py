@@ -85,6 +85,22 @@ class SemanticKnowledgeBody(BaseModel):
     limit: int = Field(default=20, ge=1, le=50)
 
 
+class SemanticExecuteBody(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    entity: str = Field(min_length=1)
+    action: str = Field(min_length=1)
+    phase: str | None = None
+    target: dict[str, Any] | None = None
+    operations: list[dict[str, Any]] | None = None
+    proposal_handle: str | None = None
+    consent_artifact: str | None = None
+    target_echo: str | None = None
+    idempotency_key: str | None = None
+    catalogVersion: str | None = None
+    commit_now: bool = False
+
+
 class SuggestBody(BaseModel):
     message: str = Field(min_length=1)
     hostContext: dict[str, Any] | None = None
@@ -491,6 +507,35 @@ def semantic_knowledge(request: Request, body: SemanticKnowledgeBody):
             section=body.section,
             query=body.query,
             limit=body.limit,
+        )
+        return ok(data)
+    except Exception as exc:  # noqa: BLE001
+        return _handle(exc, correlation_id=cid)
+
+
+@router.post("/semantic/execute")
+def semantic_execute(
+    request: Request,
+    body: SemanticExecuteBody,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    cid = _correlation_id(request)
+    try:
+        data = _dispatch.semantic_execute(
+            user=resolve_user(request),
+            entity=body.entity,
+            action=body.action,
+            phase=body.phase,
+            target=body.target,
+            operations=body.operations,
+            proposal_handle=body.proposal_handle,
+            consent_artifact=body.consent_artifact,
+            target_echo=body.target_echo,
+            idempotency_key=(idempotency_key or body.idempotency_key),
+            catalog_version=body.catalogVersion,
+            commit_now=bool(body.commit_now),
+            authorization=request.headers.get("Authorization"),
+            transport="actions",
         )
         return ok(data)
     except Exception as exc:  # noqa: BLE001

@@ -25,6 +25,7 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "vista_read",
     "vista_analyze",
     "vista_knowledge",
+    "vista_execute",
 )
 
 GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID = "gpt_get_openapi_schema"

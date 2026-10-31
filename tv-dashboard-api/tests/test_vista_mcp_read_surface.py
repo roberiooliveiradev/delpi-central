@@ -123,7 +123,7 @@ def _test_dispatch(**overrides) -> GptActionsDispatchService:
 # ---------------------------------------------------------------------------
 
 
-def test_tools_list_sixteen_governed_tools():
+def test_tools_list_seventeen_governed_tools():
     tools = asyncio.run(create_mcp_server().list_tools())
     names = {t.name for t in tools}
     assert names == set(MCP_TOOL_NAMES)
@@ -144,8 +144,9 @@ def test_tools_list_sixteen_governed_tools():
         "read",
         "analyze",
         "knowledge",
+        "execute",
     }
-    assert len(tools) == 16
+    assert len(tools) == 17
     assert "inspect_data_source" not in names
 
 

@@ -347,7 +347,7 @@ def test_read_only_user_has_no_restore_path():
 def test_mcp_tool_registered_read_classified_and_bounded():
     assert TOOL_CLASS["get_playlist_history"] == "READ"
     assert "get_playlist_history" in MCP_TOOL_NAMES
-    assert len(MCP_TOOL_NAMES) == 16
+    assert len(MCP_TOOL_NAMES) == 17
 
     tools = {
         t.name: t.model_dump(mode="json", by_alias=True, exclude_none=True)
@@ -376,7 +376,7 @@ def test_mcp_has_no_restore_rollback_revert_replay_tools():
 
 def test_actions_operation_present_compact_and_schema_bounded():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == 16
+    assert count_operations(doc) == 17
     assert "gpt_get_playlist_history" in GPT_ACTIONS_OPERATION_IDS
 
     op = doc["paths"]["/gpt-actions/v1/playlists/{playlist_id}/history"]["get"]
@@ -410,7 +410,7 @@ def test_parity_map_canonical_single_entry():
 
     parity = VistaAgentIntelligenceService.document()["surface_parity"]["parity_map"]
     assert parity["gpt_get_playlist_history"] == "get_playlist_history"
-    assert len(parity) == 16
+    assert len(parity) == 17
 
 
 # --- response size ----------------------------------------------------------
