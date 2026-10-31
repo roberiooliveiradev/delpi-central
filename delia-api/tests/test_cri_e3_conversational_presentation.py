@@ -599,6 +599,37 @@ def test_compose_truncated_list_notices_and_marks_limitation():
     assert "5 de 7" in cri.content
 
 
+def test_compose_complete_coverage_presents_full_delivered_set():
+    records = _records(
+        *({"fields": (("Nome", f"R{i}"),)} for i in range(7))
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(complete_coverage=True),
+        delivered_count=7,
+    )
+    assert cri is not None
+    assert cri.presented_records == 7
+    assert LIMITATION_RESULT_TRUNCATED not in cri.limitations
+    assert "R6" in cri.content
+
+
+def test_compose_complete_coverage_bounded_by_scan_ceiling():
+    records = _records(
+        *({"fields": (("Nome", f"R{i}"),)} for i in range(40))
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(complete_coverage=True),
+        delivered_count=40,
+    )
+    assert cri is not None
+    assert cri.presented_records == 32
+    assert LIMITATION_RESULT_TRUNCATED in cri.limitations
+
+
 def test_compose_single_record_renders_detail_lines():
     records = _records(
         {

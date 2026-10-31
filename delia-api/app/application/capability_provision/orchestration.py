@@ -401,6 +401,79 @@ _WRITE_OPERATION_CLASSES = frozenset(
 # while selecting a write capability. A fixed business question —
 # never derived from capability names or fields, never an offer to
 # execute without the governed chain.
+# Bounded reconcile signal (typed, untrusted data — never an
+# instruction): the group stage judged this surface applicable to the
+# information need, yet the capability stage bound none. One governed
+# re-proposal asks the model to reconcile — binding the capability
+# that answers the need remains as valid as confirming
+# ``applicable: false`` when no listed capability owns the entity.
+_CAPABILITY_RECONCILE_FEEDBACK = json.dumps(
+    {
+        "reason": "group_applicable_capability_unbound",
+        "signal": (
+            "the selected capability group was judged applicable to "
+            "the information need, but no listed capability was "
+            "bound; reconcile by binding the listed capability that "
+            "answers the need, or keep applicable false when none "
+            "owns the entity"
+        ),
+    },
+    ensure_ascii=False,
+)
+
+
+def _group_unbound_feedback(tried_group: str) -> str:
+    """Typed reselection signal for the bounded group fallback —
+    the tried group bound no capability; other live groups remain."""
+    return json.dumps(
+        {
+            "reason": "group_capability_unbound",
+            "tried_group": tried_group,
+            "signal": (
+                "no listed capability in the tried capability group "
+                "could answer the information need; reselect among "
+                "the remaining live groups, or keep applicable false "
+                "when none owns the subject"
+            ),
+        },
+        ensure_ascii=False,
+    )
+
+
+# Bounded prior-continuation reformulation (Task 21): render-level
+# proposal malformations the model may correct on a single retry.
+# Deliberate outcomes (empty_selection) are never retried — that
+# would pressure the model to invent a selection it judged absent.
+_SYNTHESIS_RETRYABLE_REASONS = frozenset(
+    {
+        "proposal_absent",
+        "schema_invalid",
+        "invalid_record_index",
+        "invalid_field",
+    }
+)
+
+
+def _synthesis_rejection_feedback(reason: str) -> str:
+    """Typed reformulation signal for a rejected prior-continuation
+    synthesis proposal — the same governed feedback shape used by
+    selection recovery; untrusted context, never an instruction."""
+    return json.dumps(
+        {
+            "reason": "synthesis_proposal_rejected",
+            "rejection": reason,
+            "signal": (
+                "the previous synthesis proposal was rejected by "
+                "deterministic validation: use only record_index "
+                "values and field names that literally appear in the "
+                "projected records; return an empty items list when "
+                "nothing applies"
+            ),
+        },
+        ensure_ascii=False,
+    )
+
+
 _INTENT_CLARIFICATION_CONTENT = (
     "Você quer que eu explique como fazer, ou que eu execute "
     "a ação para você?"
@@ -2665,6 +2738,104 @@ _FREE_TEXT_ARGUMENT_KEYS = frozenset(
 )
 
 
+def _singular_form(token: str) -> str:
+    """Conservative Portuguese singular form of one designation token.
+
+    Used only as the bounded empty-result retry designation — never
+    replaces the first attempt — so over-normalization can only add
+    an owner call inside the already-budgeted recovery round, never
+    fabricate or hide records. Accent-marked finals are respected:
+    ``óculos`` stays a first-attempt term; ``ilhós`` -> ``ilhó``.
+    """
+    low = token.lower()
+    if len(low) < 4 or not low[-1].isalpha():
+        return token
+    if low.endswith(("ões", "ães", "ãos")):
+        return token[:-3] + "ão"
+    if low.endswith("ais"):
+        return token[:-3] + "al"
+    if low.endswith("éis"):
+        return token[:-3] + "el"
+    if low.endswith("óis"):
+        return token[:-3] + "ol"
+    if low.endswith("ós"):
+        return token[:-2] + "ó"
+    if low.endswith(("res", "zes")):
+        return token[:-2]
+    if low.endswith("es") and low[-3] in "rln":
+        return token[:-2]
+    if low.endswith("s") and low[-2] in "aeiou":
+        return token[:-1]
+    return token
+
+
+def _canonical_subject_args(
+    arguments: Mapping[str, Any], subject: str
+) -> dict[str, Any] | None:
+    """Free-text search fields rebound to the canonical designation.
+
+    The canonical designation is the governed business_subject in
+    singular form — the same normalization the designation contract
+    already declares. Returns the rebound mapping only when a
+    declared free-text field carried a different non-empty phrasing
+    (plural drift, filler qualifiers, colloquial state words); the
+    rebinding is contract application, not inference. ``None``
+    means nothing to retry.
+    """
+    subject = (subject or "").strip()
+    if not subject or not isinstance(arguments, Mapping):
+        return None
+    designation = " ".join(
+        _singular_form(token) for token in subject.split()
+    )
+    rebound = dict(arguments)
+    touched = False
+    for key in _FREE_TEXT_ARGUMENT_KEYS:
+        value = rebound.get(key)
+        if (
+            isinstance(value, str)
+            and value.strip()
+            and value.strip() != designation
+        ):
+            rebound[key] = designation
+            touched = True
+    if touched:
+        return rebound
+    # Nothing to rebind — the phrasing already equals the canonical
+    # designation. An empty owner response is then a miss hypothesis
+    # of scope, not phrasing: retry once under the minimal
+    # designation (singularized head token — e.g. a compound
+    # qualifier the owner tokenizes differently stays authoritative
+    # either way because the owner remains the final validator).
+    tokens = [
+        t for t in designation.split() if t and t[0].isalpha()
+    ]
+    if len(tokens) < 2:
+        return None
+    # Never drop a spec/model qualifier: a short or digit-bearing
+    # token ("O2", "M23", "10") materially narrows the ask — retrying
+    # without it surfaces records of the wrong variant, which is
+    # worse than an honest empty (a compound qualifier the owner
+    # tokenizes differently stays the only head-retry case).
+    if any(
+        len(t) <= 3 or any(ch.isdigit() for ch in t)
+        for t in tokens[1:]
+    ):
+        return None
+    head = tokens[0]
+    rebound = dict(arguments)
+    for key in _FREE_TEXT_ARGUMENT_KEYS:
+        value = rebound.get(key)
+        if (
+            isinstance(value, str)
+            and value.strip()
+            and value.strip() != head
+        ):
+            rebound[key] = head
+            touched = True
+    return rebound if touched else None
+
+
 def _free_text_is_verbatim_request(
     arguments: Mapping[str, Any],
     input_text: str,
@@ -2712,9 +2883,52 @@ _IDENTIFIER_ARG_KEY_RE = re.compile(
 _IDENTIFIER_LITERAL_RE = re.compile(r"[A-Za-z]{2,}[-_]\d{3,}|\d{5,}")
 
 
+def _workspace_identifier_literals(
+    workspace_context: "WorkspaceContext | None",
+) -> str:
+    """Space-joined entity identifiers the workspace declares.
+
+    Untrusted client context consulted only to decide whether an
+    identifier-typed requirement is *resolvable* this turn — it
+    never authorizes an action and never becomes an argument value
+    on its own; the model still selects the candidate and binds the
+    field.
+    """
+    if workspace_context is None:
+        return ""
+    refs = getattr(workspace_context, "entity_refs", ()) or ()
+    return " ".join(
+        str(ref.entity_id)
+        for ref in refs
+        if getattr(ref, "entity_id", None)
+    )
+
+
+def _resolvable_identifier_literals(
+    workspace_context: "WorkspaceContext | None",
+    prior_turns: tuple[ConversationContextTurn, ...] = (),
+) -> str:
+    """Workspace entity ids plus prior-observation excerpt text.
+
+    A referent the user binds to earlier DELIA output ("ele",
+    "esses") resolves an identifier requirement exactly like a
+    workspace literal: the untrusted excerpt never authorizes an
+    action and never becomes an argument value on its own — it only
+    proves the identifier is *available* for the model to bind.
+    """
+    literals = _workspace_identifier_literals(workspace_context)
+    observation = _prior_observation_context(prior_turns)
+    if observation:
+        excerpt = str(observation.get("untrusted_excerpt") or "")
+        if excerpt:
+            literals = f"{literals} {excerpt}".strip()
+    return literals
+
+
 def _candidate_needs_missing_identifier(
     candidate: Mapping[str, Any],
     input_text: str,
+    resolvable_literals: str = "",
 ) -> bool:
     """True when the candidate declares a required identifier-typed
     argument and the request supplies no identifier-like literal.
@@ -2731,12 +2945,14 @@ def _candidate_needs_missing_identifier(
         _IDENTIFIER_ARG_KEY_RE.search(str(r)) for r in required
     ):
         return False
-    return not _IDENTIFIER_LITERAL_RE.search(input_text or "")
+    haystack = (input_text or "") + " " + resolvable_literals
+    return not _IDENTIFIER_LITERAL_RE.search(haystack)
 
 
 def _capability_needs_missing_identifier(
     descriptor: ProviderCapability,
     input_text: str,
+    resolvable_literals: str = "",
 ) -> bool:
     """True when the capability's required schema keys include an
     identifier-typed field the request supplies no literal for.
@@ -2751,7 +2967,34 @@ def _capability_needs_missing_identifier(
         return False
     if not any(_IDENTIFIER_ARG_KEY_RE.search(k) for k in required):
         return False
-    return not _IDENTIFIER_LITERAL_RE.search(input_text or "")
+    haystack = (input_text or "") + " " + resolvable_literals
+    return not _IDENTIFIER_LITERAL_RE.search(haystack)
+
+
+def _capability_requires_orchestrated_input(
+    descriptor: ProviderCapability,
+) -> bool:
+    """True when a required schema key is orchestrator-supplied state.
+
+    Fields in ``ORCHESTRATED_FIELDS`` (candidate_token,
+    proposal_handle, confirmation, ...) are produced only by the
+    runtime after an owner step — a capability requiring one can
+    never execute from a direct interactive selection, so the pick
+    is a typed dead-end, never a semantic judgment.
+    """
+    _properties, required = _schema_keys(descriptor)
+    return bool(required & ORCHESTRATED_FIELDS)
+
+
+def _capability_dead_end(
+    descriptor: ProviderCapability,
+    input_text: str,
+    resolvable_literals: str = "",
+) -> bool:
+    """True when the capability provably cannot execute now."""
+    return _capability_needs_missing_identifier(
+        descriptor, input_text, resolvable_literals
+    ) or _capability_requires_orchestrated_input(descriptor)
 
 
 _NAMED_PROVIDER_RE = re.compile(
@@ -4139,6 +4382,16 @@ _RELEVANCE_RECOVERY_USED: contextvars.ContextVar[bool] = (
     )
 )
 
+# Canonical-designation retry (Task 21): at most ONE deterministic
+# re-invoke per interaction — the rebound is contract application
+# (governed subject, singularized), never a model proposal, so it
+# does not consume the shared model recovery round.
+_DESIGNATION_RETRY_USED: contextvars.ContextVar[bool] = (
+    contextvars.ContextVar(
+        "delia_designation_retry_used", default=False
+    )
+)
+
 # Sequencing-strategy ledger (H5 experiment, task
 # DELIA-C3-SEQUENCING-RECOVERY-AB-01): an OPT-IN ambient carrier a
 # sequencing engine may bind per attempt to observe established
@@ -4671,6 +4924,7 @@ class OperationalCapabilityOrchestrator:
         resume_token = _RESUME_STATE.set(checkpoint)
         cancel_token = _CANCEL_CHECK.set(cancel_check)
         relevance_token = _RELEVANCE_RECOVERY_USED.set(False)
+        designation_token = _DESIGNATION_RETRY_USED.set(False)
         try:
             # Monotonic interaction end: anchored at the REAL start of
             # the interaction's clock (TurnDeadline.start), never at
@@ -4774,6 +5028,7 @@ class OperationalCapabilityOrchestrator:
             _RESUME_STATE.reset(resume_token)
             _CANCEL_CHECK.reset(cancel_token)
             _RELEVANCE_RECOVERY_USED.reset(relevance_token)
+            _DESIGNATION_RETRY_USED.reset(designation_token)
 
     def _attempt(
         self,
@@ -4960,12 +5215,19 @@ class OperationalCapabilityOrchestrator:
                             ),
                         )
                         if continued is not None:
+                            # Committed prior-sufficiency ends with the
+                            # transform outcome — success or honest
+                            # insufficiency — never live reselection
+                            # (Stage 05: a failed committed transform
+                            # must not burn the remaining turn budget
+                            # on owner reselection).
                             if committed:
                                 return continued
-                            if (
+                            sufficient = (
                                 LIMITATION_INSUFFICIENT_EVIDENCE
                                 not in continued.limitations
-                            ):
+                            )
+                            if sufficient:
                                 _logger.info(
                                     "orchestration stage="
                                     "prior_continuation "
@@ -5982,6 +6244,7 @@ class OperationalCapabilityOrchestrator:
                 prior_turns,
                 deadline,
                 goal,
+                workspace_context=workspace_context,
             )
         except CapabilityProviderError as exc:
             if exc.code in _REPAIRABLE_SURFACE_CODES:
@@ -6648,8 +6911,12 @@ class OperationalCapabilityOrchestrator:
             # supply the missing input — and when the missing input
             # is identifier-typed, a capability-discovery surface
             # emits capability metadata, never entity identifiers.
-            and not _capability_needs_missing_identifier(
-                cap, input_text
+            and not _capability_dead_end(
+                cap,
+                input_text,
+                _resolvable_identifier_literals(
+                    workspace_context, prior_turns
+                ),
             )
             and not (
                 missing_is_identifier
@@ -7183,104 +7450,131 @@ class OperationalCapabilityOrchestrator:
         block: dict[str, Any] = {"records": [dict(r) for r in records]}
         if business_subject is not None:
             block["business_subject"] = business_subject
-        try:
-            proposal = self._propose(
-                input_text,
-                block_tag="records",
-                block_payload=_fit_json_block(
-                    block,
-                    MAX_SURFACE_CHARS,
-                    lambda: _omit_tail_entries(
-                        block, "records", "records_omitted"
-                    ),
-                ),
-                instruction_id=SYNTHESIS_INSTRUCTION_ID,
-                instruction=self._instruction(SYNTHESIS_INSTRUCTION_ID),
-                expected_fields=("items",),
-                input_kind="prior_continuity_synthesis",
-                allowed_keys=frozenset({"items", "presentation"}),
-                prior_turns=(),
-                correlation=correlation,
-                deadline=deadline,
-            )
-        except _StageDeadlineExceeded:
-            _logger.info(
-                "orchestration stage=prior_continuation "
-                "decision=budget_exhausted correlation_id=%s",
-                correlation,
-            )
-            return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.PROCESSING_TIMEOUT,
-                correlation_id=correlation,
-                error_code="turn_budget_exhausted",
-            )
-        explicit_empty = (
-            isinstance(proposal, Mapping)
-            and isinstance(proposal.get("items"), (list, tuple))
-            and len(proposal.get("items")) == 0
-        )
-        # Selection binds to the excerpts the model actually saw —
-        # the projected prefix, not the full prior-excerpt list.
-        projected_records = tuple(block["records"])
-        projection_limitations = (
-            (LIMITATION_EVIDENCE_PROJECTION_PARTIAL,)
-            if block.get("records_omitted")
-            else ()
-        )
-        selected_items = (
-            proposal.get("items")
-            if isinstance(proposal, Mapping)
-            else None
-        )
-        if (
-            isinstance(selected_items, (list, tuple))
-            and len(projected_records) > 2
-            and len(selected_items) >= len(projected_records)
-        ):
-            # Selecting every excerpt replays the prior result —
-            # not a proportional transform of the new ask.
-            _logger.info(
-                "orchestration stage=prior_continuation "
-                "decision=reject_full_replay excerpts=%d "
-                "correlation_id=%s",
-                len(records),
-                correlation,
-            )
-            return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.SUCCESS,
-                correlation_id=correlation,
-                content=_insufficiency_content(),
-                limitations=(
-                    LIMITATION_PRIOR_TURN_CONTINUATION,
-                    LIMITATION_INSUFFICIENT_EVIDENCE,
-                ),
-            )
-        rendered, reason = (
-            _render_synthesis(
-                proposal,
-                projected_records,
-                projected_omitted=block.get("records_omitted", 0),
-                field_labels=self._field_labels,
-            )
-            if isinstance(proposal, Mapping)
-            else (None, "proposal_absent")
-        )
-        if rendered is None:
-            if reason == "invalid_record_index" and comparison_requested:
-                return _compare_insufficiency_attempt(
-                    correlation,
-                    decision="compare_reject_invalid_index",
+        # Bounded proposal reformulation (Task 21): a malformed synthesis
+        # proposal (absent, schema-invalid, invalid index or field) is a
+        # formulation failure, not evidence insufficiency — re-propose
+        # once with the typed rejection signal before ending honestly.
+        # Deliberate outcomes (empty selection, full replay, literal
+        # copy, compare rejects) never retry, and a committed transform
+        # still never falls through to live reselection (Stage 05).
+        proposal: Mapping[str, Any] | None = None
+        rendered: str | None = None
+        reason = "proposal_absent"
+        projected_records: tuple[Mapping[str, Any], ...] = ()
+        projection_limitations: tuple[str, ...] = ()
+        for synthesis_attempt in range(2):
+            stage_block = block
+            if synthesis_attempt:
+                stage_block = dict(block)
+                stage_block["relevance_feedback"] = (
+                    _synthesis_rejection_feedback(reason)
                 )
-            if rendered is None and reason == "empty_selection":
-                if comparison_requested:
+            try:
+                proposal = self._propose(
+                    input_text,
+                    block_tag="records",
+                    block_payload=_fit_json_block(
+                        stage_block,
+                        MAX_SURFACE_CHARS,
+                        lambda stage_block=stage_block: _omit_tail_entries(
+                            stage_block, "records", "records_omitted"
+                        ),
+                    ),
+                    instruction_id=SYNTHESIS_INSTRUCTION_ID,
+                    instruction=self._instruction(SYNTHESIS_INSTRUCTION_ID),
+                    expected_fields=("items",),
+                    input_kind="prior_continuity_synthesis",
+                    allowed_keys=frozenset({"items", "presentation"}),
+                    prior_turns=(),
+                    correlation=correlation,
+                    deadline=deadline,
+                )
+            except _StageDeadlineExceeded:
+                _logger.info(
+                    "orchestration stage=prior_continuation "
+                    "decision=budget_exhausted correlation_id=%s",
+                    correlation,
+                )
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.PROCESSING_TIMEOUT,
+                    correlation_id=correlation,
+                    error_code="turn_budget_exhausted",
+                )
+            # Selection binds to the excerpts the model actually saw —
+            # the projected prefix, not the full prior-excerpt list.
+            projected_records = tuple(stage_block["records"])
+            projection_limitations = (
+                (LIMITATION_EVIDENCE_PROJECTION_PARTIAL,)
+                if stage_block.get("records_omitted")
+                else ()
+            )
+            selected_items = (
+                proposal.get("items")
+                if isinstance(proposal, Mapping)
+                else None
+            )
+            if (
+                isinstance(selected_items, (list, tuple))
+                and len(projected_records) > 2
+                and len(selected_items) >= len(projected_records)
+            ):
+                # Selecting every excerpt replays the prior result —
+                # not a proportional transform of the new ask.
+                _logger.info(
+                    "orchestration stage=prior_continuation "
+                    "decision=reject_full_replay excerpts=%d "
+                    "correlation_id=%s",
+                    len(records),
+                    correlation,
+                )
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.SUCCESS,
+                    correlation_id=correlation,
+                    content=_insufficiency_content(),
+                    limitations=(
+                        LIMITATION_PRIOR_TURN_CONTINUATION,
+                        LIMITATION_INSUFFICIENT_EVIDENCE,
+                    ),
+                )
+            rendered, reason = (
+                _render_synthesis(
+                    proposal,
+                    projected_records,
+                    projected_omitted=stage_block.get(
+                        "records_omitted", 0
+                    ),
+                    field_labels=self._field_labels,
+                )
+                if isinstance(proposal, Mapping)
+                else (None, "proposal_absent")
+            )
+            if rendered is None:
+                if (
+                    reason == "invalid_record_index"
+                    and comparison_requested
+                ):
+                    return _compare_insufficiency_attempt(
+                        correlation,
+                        decision="compare_reject_invalid_index",
+                    )
+                if reason == "empty_selection" and comparison_requested:
                     return _compare_insufficiency_attempt(
                         correlation,
                         decision="compare_reject_empty_selection",
                     )
-                # Q02-A: empty synthesis is insufficiency — do not
-                # invent a full prior bullet dump without a lexical
-                # extraction detector (removed) or typed selection.
-            if rendered is None:
+                if (
+                    synthesis_attempt == 0
+                    and not comparison_requested
+                    and reason in _SYNTHESIS_RETRYABLE_REASONS
+                ):
+                    _logger.info(
+                        "orchestration stage=prior_continuation "
+                        "decision=proposal_reformulation reason=%s "
+                        "correlation_id=%s",
+                        reason,
+                        correlation,
+                    )
+                    continue
                 # Already on the prior-continuation path: do not fall
                 # through to live reselection — that burns the remaining
                 # global budget after a failed transform (Stage 05 live).
@@ -7300,6 +7594,7 @@ class OperationalCapabilityOrchestrator:
                         LIMITATION_INSUFFICIENT_EVIDENCE,
                     ),
                 )
+            break
         proven_differences = (
             _selected_proven_differences(
                 proposal,
@@ -7646,6 +7941,7 @@ class OperationalCapabilityOrchestrator:
                 prior_turns,
                 deadline,
                 goal=goal,
+                workspace_context=workspace_context,
             )
         except CapabilityProviderError as exc:
             _logger.info(
@@ -9010,58 +9306,141 @@ class OperationalCapabilityOrchestrator:
         """
         if self._invoke_model is None or self._model_ref is None:
             return None
-        group_status, group_key = self._select_group(
-            input_text,
-            groups,
-            workspace_context,
-            prior_turns,
-            correlation=correlation,
-            deadline=deadline,
-            business_subject=business_subject,
-        )
-        if group_status == "not_applicable":
-            _logger.info(
-                "orchestration stage=select_group decision=none "
-                "groups=%d",
-                len(groups),
-            )
-            return ("not_applicable",)
-        if group_status == "invalid" or group_key is None or (
-            group_key not in groups
-        ):
-            _logger.info(
-                "orchestration stage=select_group decision=invalid "
-                "groups=%d",
-                len(groups),
-            )
-            return ("inconclusive",)
-        group = groups[group_key]
-        if interpret_goal:
-            cap_status, descriptor, selected_goal = (
-                self._select_capability_with_goal(
-                    input_text,
-                    group,
-                    workspace_context,
-                    prior_turns,
-                    correlation=correlation,
-                    deadline=deadline,
+        # Bounded group fallback (Task 21): when a selected group binds
+        # no capability, the tried group is recorded and group
+        # selection is re-run once per remaining live group with a
+        # typed unbound signal — the same governed recovery shape as
+        # the goal/evidence reselection. A group re-picked after
+        # binding nothing is never re-attempted; an explicit
+        # provider-name constraint still fails closed inside
+        # ``_select_group`` (named surface removed from the pool).
+        attempted_groups: set[str] = set()
+        group_feedback: str | None = None
+        while True:
+            available = {
+                key: grp
+                for key, grp in groups.items()
+                if key not in attempted_groups
+            }
+            if not available:
+                _logger.info(
+                    "orchestration stage=select_capability "
+                    "decision=not_applicable exhausted_groups=%d",
+                    len(attempted_groups),
                 )
-            )
-        else:
-            cap_status, descriptor = self._select_capability(
+                return ("not_applicable_capability",)
+            group_status, group_key = self._select_group(
                 input_text,
-                group,
+                available,
                 workspace_context,
                 prior_turns,
                 correlation=correlation,
                 deadline=deadline,
+                relevance_feedback=group_feedback,
                 business_subject=business_subject,
             )
-            selected_goal = None
-        if descriptor is None:
+            if group_status == "not_applicable":
+                _logger.info(
+                    "orchestration stage=select_group decision=none "
+                    "groups=%d",
+                    len(available),
+                )
+                if attempted_groups:
+                    # A group path WAS attempted and bound nothing —
+                    # deterministic insufficiency, not conversational.
+                    return ("not_applicable_capability",)
+                return ("not_applicable",)
+            if group_status == "invalid" or group_key is None or (
+                group_key not in groups
+            ):
+                _logger.info(
+                    "orchestration stage=select_group decision=invalid "
+                    "groups=%d",
+                    len(available),
+                )
+                if attempted_groups:
+                    # A fallback reselection that cannot bind a group
+                    # preserves the original unbound outcome — the
+                    # recovery round is spent, not the refusal.
+                    return ("not_applicable_capability",)
+                return ("inconclusive",)
+            group = groups[group_key]
+            selection_group = group
+            if attempted_groups:
+                # A capability bound only through group fallback must
+                # be non-mutating: a write the model finds in a group
+                # it did not first choose is a cross-domain misbind
+                # hypothesis (e.g. an owner CRUD surface tempted by a
+                # foreign entity), never a governed change request —
+                # the refused write stays refused (fail closed).
+                selection_group = dataclasses.replace(
+                    group,
+                    capabilities=tuple(
+                        cap
+                        for cap in group.capabilities
+                        if cap.operation_class
+                        not in _WRITE_OPERATION_CLASSES
+                    ),
+                )
+                if not selection_group.capabilities:
+                    # Write-only surface on fallback: same unbound
+                    # semantics as a refused capability stage — the
+                    # group is spent and the loop may continue over
+                    # remaining groups, else terminal insufficiency.
+                    attempted_groups.add(group_key)
+                    _logger.info(
+                        "orchestration stage=select_capability "
+                        "decision=write_only_fallback_skipped "
+                        "group=%s correlation_id=%s",
+                        group_key,
+                        correlation,
+                    )
+                    if set(groups) - attempted_groups:
+                        group_feedback = _group_unbound_feedback(
+                            group_key
+                        )
+                        continue
+                    return ("not_applicable_capability",)
+            if interpret_goal:
+                cap_status, descriptor, selected_goal = (
+                    self._select_capability_with_goal(
+                        input_text,
+                        selection_group,
+                        workspace_context,
+                        prior_turns,
+                        correlation=correlation,
+                        deadline=deadline,
+                    )
+                )
+            else:
+                cap_status, descriptor = self._select_capability(
+                    input_text,
+                    selection_group,
+                    workspace_context,
+                    prior_turns,
+                    correlation=correlation,
+                    deadline=deadline,
+                    business_subject=business_subject,
+                )
+                selected_goal = None
+            if descriptor is not None:
+                return ("selected", group_key, descriptor, selected_goal)
             # Q02-A: no lexical coverage-inquiry override. Capability
             # applicability remains a validated model proposal only.
             if cap_status == "not_applicable":
+                attempted_groups.add(group_key)
+                if set(groups) - attempted_groups:
+                    # Bounded reselection round — the tried group is
+                    # excluded so the recovery can only move forward.
+                    group_feedback = _group_unbound_feedback(group_key)
+                    _logger.info(
+                        "orchestration stage=select_capability "
+                        "decision=unbound_group_fallback group=%s "
+                        "correlation_id=%s",
+                        group_key,
+                        correlation,
+                    )
+                    continue
                 # The group path WAS attempted and bound nothing — a
                 # distinct signal from group-level not_applicable so
                 # the caller can mark the deterministic insufficiency
@@ -9072,14 +9451,12 @@ class OperationalCapabilityOrchestrator:
                     group_key,
                 )
                 return ("not_applicable_capability",)
-            else:
-                _logger.info(
-                    "orchestration stage=select_capability decision=none "
-                    "group=%s",
-                    group_key,
-                )
-                return ("inconclusive",)
-        return ("selected", group_key, descriptor, selected_goal)
+            _logger.info(
+                "orchestration stage=select_capability decision=none "
+                "group=%s",
+                group_key,
+            )
+            return ("inconclusive",)
 
     def _build_plan(
         self,
@@ -10199,6 +10576,7 @@ class OperationalCapabilityOrchestrator:
                 prior_turns,
                 deadline,
                 goal=goal,
+                workspace_context=workspace_context,
             )
         except CapabilityProviderError:
             return None
@@ -10318,6 +10696,7 @@ class OperationalCapabilityOrchestrator:
                 prior_turns,
                 deadline,
                 goal=goal,
+                workspace_context=workspace_context,
             )
         except CapabilityProviderError:
             return None
@@ -10729,6 +11108,7 @@ class OperationalCapabilityOrchestrator:
                     prior_turns,
                     deadline,
                     goal=goal,
+                    workspace_context=workspace_context,
                 )
             except CapabilityProviderError as exc:
                 if exc.code != OWNER_ARGUMENT_REJECTED:
@@ -11387,15 +11767,77 @@ class OperationalCapabilityOrchestrator:
         status, descriptor = self._capability_from_selection_proposal(
             proposal, invocable
         )
+        if status == "not_applicable" and relevance_feedback is None:
+            # Bounded reconcile (plan Task 21): group selection judged
+            # this surface applicable yet nothing was bound. One
+            # governed re-proposal with typed feedback; refusal stays
+            # a valid outcome — never force a selection.
+            _logger.info(
+                "orchestration stage=select_capability "
+                "decision=unbound_reconcile_retry group=%s "
+                "correlation_id=%s",
+                group.group_id,
+                correlation,
+            )
+            inner = json.loads(cap_payload)
+            wrapped = (
+                {"capabilities": inner}
+                if isinstance(inner, list)
+                else dict(inner)
+            )
+            wrapped["relevance_feedback"] = json.loads(
+                _CAPABILITY_RECONCILE_FEEDBACK
+            )
+            retry_payload = _fit_json_block(
+                wrapped,
+                MAX_SURFACE_CHARS,
+                lambda: _omit_tail_entries(
+                    wrapped, "capabilities", "capabilities_omitted"
+                ),
+            )
+            retry_visible = _projected_capability_names(retry_payload)
+            retry_invocable = [
+                cap
+                for cap in invocable
+                if cap.remote_name in retry_visible
+            ]
+            retry = self._propose(
+                input_text,
+                block_tag="capabilities",
+                block_payload=retry_payload,
+                instruction_id=CAPABILITY_SELECTION_INSTRUCTION_ID,
+                instruction=self._instruction(
+                    CAPABILITY_SELECTION_INSTRUCTION_ID
+                ),
+                expected_fields=("applicable", "remote_name"),
+                input_kind="capability_selection",
+                allowed_keys=frozenset(
+                    {"applicable", "remote_name", "limitations"}
+                ),
+                workspace_context=workspace_context,
+                prior_turns=(),
+                correlation=correlation,
+                deadline=deadline,
+            )
+            retry_status, retry_descriptor = (
+                self._capability_from_selection_proposal(
+                    retry, retry_invocable
+                )
+            )
+            if retry_status != "not_applicable":
+                status, descriptor = retry_status, retry_descriptor
+        literals = _resolvable_identifier_literals(
+            workspace_context, prior_turns
+        )
         if (
             status == "selected"
-            and _capability_needs_missing_identifier(
-                descriptor, input_text
+            and _capability_dead_end(
+                descriptor, input_text, literals
             )
             and any(
                 cap is not descriptor
-                and not _capability_needs_missing_identifier(
-                    cap, input_text
+                and not _capability_dead_end(
+                    cap, input_text, literals
                 )
                 for cap in invocable
             )
@@ -11459,7 +11901,7 @@ class OperationalCapabilityOrchestrator:
                 retry, retry_invocable
             )
             if alt_status == "selected" and not (
-                _capability_needs_missing_identifier(alt, input_text)
+                _capability_dead_end(alt, input_text, literals)
             ):
                 return (alt_status, alt)
         return (status, descriptor)
@@ -11472,6 +11914,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str = "",
         deadline: TurnDeadline | None = None,
+        relevance_feedback: str | None = None,
     ) -> tuple[
         str,
         ProviderCapability | None,
@@ -11515,6 +11958,23 @@ class OperationalCapabilityOrchestrator:
         cap_payload = _capability_payload(
             group, prior_observation=observation
         )
+        if relevance_feedback is not None:
+            # Same bounded recovery wrap as _select_capability —
+            # untrusted data embedded before the final fit.
+            wrapped: dict[str, Any] = {}
+            inner = json.loads(cap_payload)
+            if isinstance(inner, list):
+                wrapped["capabilities"] = inner
+            elif isinstance(inner, Mapping):
+                wrapped.update(inner)
+            wrapped["relevance_feedback"] = json.loads(relevance_feedback)
+            cap_payload = _fit_json_block(
+                wrapped,
+                MAX_SURFACE_CHARS,
+                lambda: _omit_tail_entries(
+                    wrapped, "capabilities", "capabilities_omitted"
+                ),
+            )
         # Same projected-membership bound as _select_capability —
         # entries omitted by the fit ladder were never presented.
         visible = _projected_capability_names(cap_payload)
@@ -11541,15 +12001,74 @@ class OperationalCapabilityOrchestrator:
         cap_status, descriptor = self._capability_from_selection_proposal(
             proposal, invocable
         )
+        if cap_status == "not_applicable" and relevance_feedback is None:
+            # Same bounded reconcile as _select_capability — one
+            # governed re-proposal with typed feedback; refusal stays
+            # a valid outcome.
+            _logger.info(
+                "orchestration stage=select_capability "
+                "decision=unbound_reconcile_retry group=%s "
+                "correlation_id=%s",
+                group.group_id,
+                correlation,
+            )
+            inner = json.loads(cap_payload)
+            wrapped = (
+                {"capabilities": inner}
+                if isinstance(inner, list)
+                else dict(inner)
+            )
+            wrapped["relevance_feedback"] = json.loads(
+                _CAPABILITY_RECONCILE_FEEDBACK
+            )
+            retry_payload = _fit_json_block(
+                wrapped,
+                MAX_SURFACE_CHARS,
+                lambda: _omit_tail_entries(
+                    wrapped, "capabilities", "capabilities_omitted"
+                ),
+            )
+            retry_visible = _projected_capability_names(retry_payload)
+            retry_invocable = [
+                cap
+                for cap in invocable
+                if cap.remote_name in retry_visible
+            ]
+            retry = self._propose(
+                input_text,
+                block_tag="capabilities",
+                block_payload=retry_payload,
+                instruction_id=CAPABILITY_SELECTION_INSTRUCTION_ID,
+                instruction=self._capability_goal_instruction,
+                instruction_version=self._cri_instruction_version,
+                expected_fields=("applicable", "remote_name"),
+                input_kind="capability_selection_with_goal",
+                allowed_keys=allowed,
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                correlation=correlation,
+                deadline=deadline,
+            )
+            retry_status, retry_descriptor = (
+                self._capability_from_selection_proposal(
+                    retry, retry_invocable
+                )
+            )
+            if retry_status != "not_applicable":
+                cap_status, descriptor = retry_status, retry_descriptor
+                proposal = retry
+        literals = _resolvable_identifier_literals(
+            workspace_context, prior_turns
+        )
         if (
             cap_status == "selected"
-            and _capability_needs_missing_identifier(
-                descriptor, input_text
+            and _capability_dead_end(
+                descriptor, input_text, literals
             )
             and any(
                 cap is not descriptor
-                and not _capability_needs_missing_identifier(
-                    cap, input_text
+                and not _capability_dead_end(
+                    cap, input_text, literals
                 )
                 for cap in invocable
             )
@@ -11601,7 +12120,7 @@ class OperationalCapabilityOrchestrator:
                 retry, retry_invocable
             )
             if alt_status == "selected" and not (
-                _capability_needs_missing_identifier(alt, input_text)
+                _capability_dead_end(alt, input_text, literals)
             ):
                 proposal = retry
                 cap_status, descriptor = alt_status, alt
@@ -11874,6 +12393,7 @@ class OperationalCapabilityOrchestrator:
             "description": (descriptor.description or "")[
                 :MAX_DESCRIPTION_CHARS
             ],
+            "operation_class": descriptor.operation_class.value,
             "input_schema": descriptor.input_schema,
         }
         evidence_blocks: dict[str, str] = {}
@@ -12095,12 +12615,20 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             validated = elided
-        if _free_text_is_verbatim_request(
-            validated, input_text, business_subject
+        if (
+            descriptor.operation_class
+            is not SpecialistOperationClass.DISCOVERY
+            and _free_text_is_verbatim_request(
+                validated, input_text, business_subject
+            )
         ):
             # Declared contract violation: the free-text field must
             # carry the governed business_subject — binding it is
-            # contract application, not inference.
+            # contract application, not inference. A DISCOVERY surface
+            # is exempt: its free-text field is declared to carry the
+            # natural-language information need, which legitimately
+            # echoes the request — rebinding it to the bare subject
+            # would strip the intent the owner action-ranker needs.
             subject = (business_subject or "").strip()
             if subject:
                 for key in _FREE_TEXT_ARGUMENT_KEYS:
@@ -12136,6 +12664,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         deadline: TurnDeadline | None = None,
         goal: _TurnGoal | None = None,
+        workspace_context: WorkspaceContext | None = None,
     ) -> tuple[SpecialistOutcome, str, str] | None:
         """Invoke honoring the owner's flow shape.
 
@@ -12161,6 +12690,7 @@ class OperationalCapabilityOrchestrator:
                 deadline,
                 prior_turns,
                 goal=goal,
+                workspace_context=workspace_context,
             )
             if found is None:
                 return None
@@ -12196,6 +12726,7 @@ class OperationalCapabilityOrchestrator:
                 answer_requirements=(
                     goal.answer_requirements if goal is not None else None
                 ),
+                workspace_context=workspace_context,
             )
             if merged is None:
                 terminal = self._unusable_candidate_terminal(
@@ -12244,6 +12775,7 @@ class OperationalCapabilityOrchestrator:
                 correlation=correlation,
                 deadline=deadline,
                 goal=goal,
+                workspace_context=workspace_context,
             )
             if candidate is None and not self._candidates_present(
                 outcome.structured
@@ -12271,7 +12803,103 @@ class OperationalCapabilityOrchestrator:
                         correlation=correlation,
                         deadline=deadline,
                         goal=goal,
+                        workspace_context=workspace_context,
                     )
+                    if candidate is None and not (
+                        self._candidates_present(retry.structured)
+                    ):
+                        outcome = retry
+            if candidate is None:
+                # Bounded reformulation: the owner matched no
+                # executable action for the proposed need — either no
+                # candidates at all, or only unresolvable ones (e.g. a
+                # detail action gated on an identifier the request
+                # never stated). Re-propose the arguments once with
+                # the typed owner signal (untrusted data, never
+                # authority), then re-invoke only when the formulation
+                # actually changed.
+                unmatched = {
+                    k: v
+                    for k, v in arguments.items()
+                    if isinstance(v, str) and v.strip()
+                }
+                fb_subject = (
+                    goal.business_subject
+                    if goal is not None and goal.business_subject
+                    else "<subject>"
+                )
+                feedback = json.dumps(
+                    {
+                        "reason": "discovery_no_candidates",
+                        "owner_signal": (
+                            "no owner action matched the proposed "
+                            "information need"
+                        ),
+                        "unmatched_need": unmatched,
+                        "reformulation_shape": (
+                            "retrieval verb + entity collection + "
+                            "subject or literal identifier"
+                        ),
+                        "concrete_example": (
+                            f"buscar produtos por descrição "
+                            f"{fb_subject}"
+                        ),
+                    },
+                    ensure_ascii=False,
+                )
+                reformulated, _missing = self._build_arguments(
+                    input_text,
+                    selected,
+                    workspace_context=workspace_context,
+                    business_subject=(
+                        goal.business_subject
+                        if goal is not None
+                        else None
+                    ),
+                    relevance_feedback=feedback,
+                    answer_requirements=(
+                        goal.answer_requirements
+                        if goal is not None
+                        else None
+                    ),
+                    prior_turns=prior_turns,
+                    correlation=correlation,
+                    deadline=deadline,
+                )
+                if (
+                    reformulated is not None
+                    and reformulated != arguments
+                ):
+                    # Same single governed recovery round the
+                    # relevance/miss paths share — a re-invocation
+                    # spends it, so no downstream stage may burn a
+                    # second round on the same miss.
+                    _RELEVANCE_RECOVERY_USED.set(True)
+                    _logger.info(
+                        "orchestration stage=discovery_retry "
+                        "decision=reformulated correlation_id=%s",
+                        correlation,
+                    )
+                    retry = self._invoke(
+                        group,
+                        remote_name,
+                        reformulated,
+                        correlation,
+                        deadline,
+                    )
+                    candidate = self._resolve_candidate(
+                        retry.structured,
+                        input_text,
+                        prior_turns,
+                        correlation=correlation,
+                        deadline=deadline,
+                        goal=goal,
+                        workspace_context=workspace_context,
+                    )
+                    if candidate is None and not (
+                        self._candidates_present(retry.structured)
+                    ):
+                        outcome = retry
             executors = [
                 cap
                 for cap in group.capabilities
@@ -12286,6 +12914,7 @@ class OperationalCapabilityOrchestrator:
                     prior_turns,
                     correlation=correlation,
                     deadline=deadline,
+                    workspace_context=workspace_context,
                     business_subject=(
                         goal.business_subject
                         if goal is not None
@@ -12310,6 +12939,50 @@ class OperationalCapabilityOrchestrator:
                         correlation,
                         deadline,
                     )
+                    # Bounded canonical retry (Task 21): an empty
+                    # business collection under a phrasing that drifts
+                    # from the governed designation (plural, filler
+                    # qualifiers, colloquial state words) is a miss
+                    # hypothesis, not proven absence — one re-invoke
+                    # under the canonical subject, spending the same
+                    # shared recovery round. Identical phrasing stays
+                    # honest absence; the owner stays the final
+                    # validator either way.
+                    subject = (
+                        goal.business_subject
+                        if goal is not None
+                        else None
+                    )
+                    rebound = (
+                        _canonical_subject_args(merged, subject)
+                        if isinstance(subject, str)
+                        else None
+                    )
+                    if (
+                        rebound is not None
+                        and not _DESIGNATION_RETRY_USED.get()
+                    ):
+                        facts = outcome_facts(chained)
+                        if not facts.has_business_evidence:
+                            _DESIGNATION_RETRY_USED.set(True)
+                            _logger.info(
+                                "orchestration stage=execute_retry "
+                                "decision=canonical_subject "
+                                "correlation_id=%s",
+                                correlation,
+                            )
+                            chained = self._invoke(
+                                group,
+                                executors[0].remote_name,
+                                {
+                                    CANDIDATE_TOKEN_FIELD: candidate[
+                                        CANDIDATE_TOKEN_FIELD
+                                    ],
+                                    "arguments": rebound,
+                                },
+                                correlation,
+                                deadline,
+                            )
                     return (
                         chained,
                         str(
@@ -12388,6 +13061,7 @@ class OperationalCapabilityOrchestrator:
         deadline: TurnDeadline | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         goal: "_TurnGoal | None" = None,
+        workspace_context: "WorkspaceContext | None" = None,
     ) -> tuple[Mapping[str, Any] | None, SpecialistOutcome | None] | None:
         """Owner discovery flow: exactly one DISCOVERY capability must
         exist for the candidate-bound READ to be resolvable. On a
@@ -12418,6 +13092,7 @@ class OperationalCapabilityOrchestrator:
             correlation=correlation,
             deadline=deadline,
             goal=goal,
+            workspace_context=workspace_context,
         )
         if candidate is not None:
             return candidate, outcome
@@ -12446,6 +13121,7 @@ class OperationalCapabilityOrchestrator:
                 correlation=correlation,
                 deadline=deadline,
                 goal=goal,
+                workspace_context=workspace_context,
             ),
             retry,
         )
@@ -12530,6 +13206,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str = "",
         deadline: TurnDeadline | None = None,
         goal: "_TurnGoal | None" = None,
+        workspace_context: "WorkspaceContext | None" = None,
     ) -> Mapping[str, Any] | None:
         """Resolve the owner candidate to chain — or none.
 
@@ -12551,32 +13228,41 @@ class OperationalCapabilityOrchestrator:
             and isinstance(c.get(CANDIDATE_TOKEN_FIELD), str)
             and c[CANDIDATE_TOKEN_FIELD].strip()
         ]
-        if len(matching) == 1:
-            return matching[0]
-        if len(matching) > 1:
-            # Dead-end candidates: a candidate that requires an
-            # identifier the user never stated can never execute —
-            # same exclusion the resolver stage applies (§6.140 G1).
-            # Owner ordering and tokens stay untouched; only provably
-            # dead candidates leave the model's selection set.
-            usable = [
-                c
-                for c in matching
-                if not _candidate_needs_missing_identifier(
-                    c, input_text
-                )
-            ]
-            if len(usable) == 1:
-                return usable[0]
-            return self._select_candidate(
-                usable if usable else matching,
-                input_text,
-                prior_turns,
-                correlation=correlation,
-                deadline=deadline,
-                goal=goal,
+        if not matching:
+            return None
+        # Dead-end candidates: a candidate that requires an
+        # identifier the request cannot resolve can never execute —
+        # same exclusion the resolver stage applies (§6.140 G1).
+        # Applies to the single-candidate fast path as well: a lone
+        # identifier-gated action is as dead as a dead pick inside a
+        # multi-candidate set. Owner ordering and tokens stay
+        # untouched; only provably dead candidates leave the
+        # selection set, and when none is executable the resolution
+        # fails closed so the bounded reformulation may restate the
+        # need instead of chaining an action that cannot run.
+        literals = _resolvable_identifier_literals(
+            workspace_context, prior_turns
+        )
+        usable = [
+            c
+            for c in matching
+            if not _candidate_needs_missing_identifier(
+                c, input_text, literals
             )
-        return None
+        ]
+        if len(usable) == 1:
+            return usable[0]
+        if not usable:
+            return None
+        return self._select_candidate(
+            usable,
+            input_text,
+            prior_turns,
+            correlation=correlation,
+            deadline=deadline,
+            goal=goal,
+            workspace_context=workspace_context,
+        )
 
     def _select_candidate(
         self,
@@ -12586,6 +13272,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str = "",
         deadline: TurnDeadline | None = None,
         goal: "_TurnGoal | None" = None,
+        workspace_context: "WorkspaceContext | None" = None,
     ) -> Mapping[str, Any] | None:
         """Bounded model disambiguation of a multi-candidate owner set.
 
@@ -12671,6 +13358,7 @@ class OperationalCapabilityOrchestrator:
                 ),
                 expected_fields=("applicable", "action_id"),
                 input_kind="specialist_candidate_selection",
+                workspace_context=workspace_context,
                 prior_turns=prior_turns,
                 correlation=correlation,
                 deadline=deadline,
@@ -12705,6 +13393,7 @@ class OperationalCapabilityOrchestrator:
         deadline: TurnDeadline | None = None,
         business_subject: str | None = None,
         answer_requirements: Any = None,
+        workspace_context: "WorkspaceContext | None" = None,
     ) -> dict[str, Any] | None:
         """Resolve inner args against the candidate's own schema.
 
@@ -12767,6 +13456,7 @@ class OperationalCapabilityOrchestrator:
             deadline=deadline,
             business_subject=business_subject,
             answer_requirements=answer_requirements,
+            workspace_context=workspace_context,
         )
         if second is None:
             return None
@@ -12812,6 +13502,7 @@ class OperationalCapabilityOrchestrator:
         deadline: TurnDeadline | None = None,
         business_subject: str | None = None,
         answer_requirements: Any = None,
+        workspace_context: "WorkspaceContext | None" = None,
     ) -> Mapping[str, Any] | None:
         """Bounded model proposal of inner arguments, schema-scoped."""
         # The candidate's inner schema is the argument contract —
@@ -12845,6 +13536,7 @@ class OperationalCapabilityOrchestrator:
                 ),
             expected_fields=("arguments",),
             input_kind="specialist_candidate_arguments",
+            workspace_context=workspace_context,
             prior_turns=prior_turns,
             correlation=correlation,
             deadline=deadline,

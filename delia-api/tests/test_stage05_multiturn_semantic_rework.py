@@ -777,6 +777,115 @@ def test_literal_multi_excerpt_copy_is_rejected():
     assert attempt.content != PRIOR_GUIDE
 
 
+def test_malformed_synthesis_reproposal_once_then_transforms():
+    """A malformed committed synthesis proposal gets one bounded
+    reformulation inside the continuation stage — never live
+    reselection (Task 21 bounded recovery)."""
+    provider = FakeProvider(
+        "acme",
+        [
+            _group(
+                "acme",
+                "guides",
+                [
+                    _cap(
+                        "guides",
+                        "acme",
+                        "read_guide",
+                        SpecialistOperationClass.READ,
+                    )
+                ],
+            )
+        ],
+    )
+    model = FakeProposalModel(
+        [
+            {
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    "prior_evidence_sufficient": True,
+                },
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [{"record_index": 99, "fields": ["excerpt"]}],
+                },
+            },
+            {
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [{"record_index": 1, "fields": ["excerpt"]}],
+                    "presentation": "answer",
+                },
+            },
+        ]
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt(
+        "Resuma a orientação anterior.",
+        prior_turns=_prior(),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert LIMITATION_PRIOR_TURN_CONTINUATION in attempt.limitations
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert provider.calls == []
+    purposes = [r.task_purpose_id for r in model.requests]
+    assert CAPABILITY_SELECTION_INSTRUCTION_ID not in purposes
+    assert GROUP_SELECTION_INSTRUCTION_ID not in purposes
+    assert purposes.count(SYNTHESIS_INSTRUCTION_ID) == 2
+
+
+def test_synthesis_reformulation_bounded_once_then_honest():
+    """A second malformed synthesis proposal ends honestly — the
+    reformulation budget is exactly one round (Task 21)."""
+    provider = FakeProvider(
+        "acme",
+        [
+            _group(
+                "acme",
+                "guides",
+                [
+                    _cap(
+                        "guides",
+                        "acme",
+                        "read_guide",
+                        SpecialistOperationClass.READ,
+                    )
+                ],
+            )
+        ],
+    )
+    model = FakeProposalModel(
+        {
+            GOAL_INSTRUCTION_ID: {
+                "goal_class": "read",
+                "prior_evidence_sufficient": True,
+            },
+            SYNTHESIS_INSTRUCTION_ID: {
+                "items": [{"record_index": 99, "fields": ["excerpt"]}],
+            },
+        }
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt(
+        "Resuma a orientação anterior.",
+        prior_turns=_prior(),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert LIMITATION_PRIOR_TURN_CONTINUATION in attempt.limitations
+    assert provider.calls == []
+    purposes = [r.task_purpose_id for r in model.requests]
+    assert CAPABILITY_SELECTION_INSTRUCTION_ID not in purposes
+    assert GROUP_SELECTION_INSTRUCTION_ID not in purposes
+    assert purposes.count(SYNTHESIS_INSTRUCTION_ID) == 2
+
+
 def test_resolver_skipped_when_remaining_budget_too_small():
     clock = FakeClock()
     deadline = TurnDeadline.start(30.0, clock=clock)
