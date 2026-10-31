@@ -5,7 +5,7 @@ Granularidade: família de operação (não endpoint). Uma tool ≠ N capacidade
 Revisão `SURI-MCP-SUPPLIERS-WRITE-001` (2026-10-30): B-01/B-02 superadas por evidência de runtime — ver seção «Reconciliação».
 Revisão `SURI-MCP-FULL-PARITY-V4-G1` (2026-10-30): lote P1-R5 entregue — R-15..R-22 promovidas a PROVEN (catálogo v4, `test_suppliers_read.py`).
 Revisão `SURI-MCP-V4-G1-RUNTIME-RECOVERY-001` (2026-10-30): smoke autenticado user-delegated em produção — R-16 (ficha 360), R-18 (CEP), R-19 (tax_id), R-20 (preview, `write_enabled=false`) e regressão R-15/R-17 comprovadas em runtime; duas falhas (502 transitório Protheus OAuth; REDIS_URL ausente no MCP) diagnosticadas e recuperadas — ver `SURI-MCP-V4-G1-RUNTIME-RECOVERY-001-ACCEPTANCE-20261030.md`.
-Revisão `SURI-MCP-FULL-PARITY-V4-G2` (2026-10-30): lote P1-R1+P1-R2 entregue — R-04..R-07 e R-09 promovidas a PROVEN (catálogo v5, `test_purchase_requests_read.py`); `DECISION-G1` fechada (export = dataset JSON + metadados; materialização CSV/XLSX permanece Portal-side). Estado G2 = `TESTED_LOCALLY` — não DEPLOYED nem AUTHENTICATED_RUNTIME_PROVEN (gate `SURI-MCP-V4-G2-DEPLOY-001` pendente).
+Revisão `SURI-MCP-FULL-PARITY-V4-G2` (2026-10-30): lote P1-R1+P1-R2 entregue — R-04..R-07 e R-09 promovidas a PROVEN (catálogo v5, `test_purchase_requests_read.py`); `DECISION-G1` fechada (export = dataset JSON + metadados; materialização CSV/XLSX permanece Portal-side). Revisão `SURI-MCP-V4-G2-DEPLOY-001` (2026-10-31): V5 publicada em produção — R-04..R-07 e R-09 promovidas a `AUTHENTICATED_RUNTIME_PROVEN` (smoke user-delegated real; export full-range de SC com residual de timeout upstream, paridade com Portal — ver `SURI-MCP-V4-G2-DEPLOY-ACCEPTANCE-20261030.md`).
 
 ## Indicadores
 
@@ -16,8 +16,7 @@ CURRENT PARITY PERCENTAGE (implementada)                     : 42.2% (19/45)
 TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
 
-Nota de status G2: as linhas R-04..R-07 e R-09 estão **PROVEN em teste
-local** (dispatch + AuthZ + unit scope + contrato fechado + payload
+Nota de status G2: R-04..R-07 e R-09 **PROVEN em runtime autenticado** (deploy 2026-10-31). Residual R-06: export full-range SC timeout upstream (owner PR-api/api-delpi; Portal idem).
 forwarding + erro upstream). Não contam como DEPLOYED nem
 AUTHENTICATED_RUNTIME_PROVEN — isso exige o gate operacional
 `SURI-MCP-V4-G2-DEPLOY-001` e smoke autenticado posterior.
@@ -37,12 +36,12 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | R-01 | Início | Hub + contagens de atenção | PROVEN | — | supplies-api (comp. página) | me/capabilities + dados-fonte | access | HomePage + BFF | tool `read`/knowledge nav | P1-R9 |
 | R-02 | Overview | Dashboard composto (OTD, CPV, turnover, savings, ES, SCs, SI) | PROVEN | — | supplies-api → api-delpi+PR-api+SI | `/analytics/overview` | access+units | test_overview | `analyze` overview | P1-R6 |
 | R-03 | Overview | OTD aggregate + series | PROVEN | — | api-delpi | `/analytics/otd[/series]` | access | test_otd_* | `read`/`analyze` otd | P1-R6 |
-| R-04 | SC | Lista + filtros | PROVEN | `read:purchase_requests search` | PR-api | `GET /purchase-requests` | access+units | bff + suri tests | — | **PROVEN** (TESTED_LOCALLY) |
-| R-05 | SC | Summary + facets (requesters, cost-centers, photo guard) | PROVEN | `read:PR summary/requesters/cost_centers` | PR-api + core | `/summary\|/requesters\|/cost-centers\|photo` | access | bff + suri tests | foto segue como bytes só via BFF (sem canal binário MCP); guard não contornado | **PROVEN** (TESTED_LOCALLY) |
-| R-06 | SC | Export | PROVEN | `read:PR export` (dataset JSON+meta — DECISION-G1) | PR-api → supplies-api | `/export` | access+units | bff + suri tests | artefato CSV/XLSX segue Portal-side | **PROVEN** (TESTED_LOCALLY) |
-| R-07 | SC | Detalhe + links | PROVEN | `read:PR get` | PR-api + core | `/{branch}/{num}` | access+unit | bff + suri tests | — | **PROVEN** (TESTED_LOCALLY) |
+| R-04 | SC | Lista + filtros | PROVEN | `read:purchase_requests search` | PR-api | `GET /purchase-requests` | access+units | bff + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-05 | SC | Summary + facets (requesters, cost-centers, photo guard) | PROVEN | `read:PR summary/requesters/cost_centers` | PR-api + core | `/summary\|/requesters\|/cost-centers\|photo` | access | bff + suri tests | foto segue como bytes só via BFF (sem canal binário MCP); guard não contornado | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-06 | SC | Export | PROVEN | `read:PR export` (dataset JSON+meta — DECISION-G1) | PR-api → supplies-api | `/export` | access+units | bff + suri tests | artefato CSV/XLSX segue Portal-side | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-07 | SC | Detalhe + links | PROVEN | `read:PR get` | PR-api + core | `/{branch}/{num}` | access+unit | bff + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-08 | PC | Lista + filtros | PROVEN | `read:PO search` | api-delpi | `GET /purchase-orders` | access+units | suri tests | — | PROVEN |
-| R-09 | PC | Export | PROVEN | `read:PO export` (dataset JSON+meta — DECISION-G1) | api-delpi → supplies-api | `/export` | access | bff + suri tests | artefato XLSX segue Portal-side | **PROVEN** (TESTED_LOCALLY) |
+| R-09 | PC | Export | PROVEN | `read:PO export` (dataset JSON+meta — DECISION-G1) | api-delpi → supplies-api | `/export` | access | bff + suri tests | artefato XLSX segue Portal-side | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-10 | PC | Detalhe | PROVEN | `read:PO get` | api-delpi | `/{branch}/{num}` | access+unit | suri tests | — | PROVEN |
 | R-11 | Entregas | Atrasos (panel paginado) | PROVEN | — | api-delpi | `/deliveries/late` | access | bff tests | `read` deliveries | P1-R3 |
 | R-12 | Estoque | stock-balances summary + items | PROVEN | — | api-delpi | `/inventory/stock-balances/*` | access | bff tests | `read` inventory | P1-R3 |

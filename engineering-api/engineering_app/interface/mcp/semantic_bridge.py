@@ -496,6 +496,8 @@ async def tool_analyze(
             return await _analyze_nc_recurrence(context, params, question)
         if kind == "lmp.performance":
             return await _analyze_lmp_performance(context, params, question)
+        if kind == "product.drawing_analysis":
+            return await _analyze_product_drawing(context, params, question)
         return _err(
             f"analysis_type '{kind}' não implementado.",
             status_code=501,
@@ -504,6 +506,7 @@ async def tool_analyze(
                 "available": [
                     "nonconformity.recurrence",
                     "lmp.performance",
+                    "product.drawing_analysis",
                 ]
             },
         )
@@ -643,6 +646,55 @@ async def _analyze_lmp_performance(
             "provenance": "OBSERVED official aggregates only",
         },
         "Análise de desempenho de LMPs.",
+    )
+
+
+async def _analyze_product_drawing(
+    context, params: dict, question: str | None
+) -> CallToolResult:
+    """analyze(product.drawing_analysis) — desenho oficial × cadastro × BOM."""
+    from engineering_app.application.drawing.drawing_analysis_service import (
+        DrawingAnalysisError,
+        analyze_product_drawing,
+    )
+
+    code = str(params.get("product_code") or "").strip()
+    if not code:
+        return _err(
+            "product_code obrigatório para product.drawing_analysis.",
+            code="validation",
+        )
+    ctx = bridge._source_context(context)
+    try:
+        report = await analyze_product_drawing(
+            code=code,
+            source=bridge.build_delegated_auxiliary_source(),
+            ctx=ctx,
+        )
+    except DrawingAnalysisError as exc:
+        return _err(
+            str(exc),
+            status_code=exc.status_code,
+            code=exc.code,
+        )
+    return _ok(
+        {
+            "analysis_type": "product.drawing_analysis",
+            "question": question,
+            "method": (
+                "Extração determinística da camada de texto do PDF "
+                "oficial + comparação com cadastro e BOM oficiais — "
+                "evidências por página, nenhuma inferência promovida a "
+                "fato."
+            ),
+            "data_class": "OBSERVED|CALCULATED|INFERRED|UNKNOWN",
+            "report": report,
+            "provenance": (
+                "api-delpi product/drawing/structure (identidade "
+                "delegada) + extração neutra engineering-api"
+            ),
+        },
+        "Análise técnica do desenho oficial do produto.",
     )
 
 

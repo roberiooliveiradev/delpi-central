@@ -679,7 +679,8 @@ def create_mcp_server() -> MCPServer:
             "Grounded Engineering analyses over official facts — every "
             "value labeled OBSERVED|CALCULATED|INFERRED|UNKNOWN with "
             "verifiable method and provenance. Types: "
-            "nonconformity.recurrence (group_by), lmp.performance. "
+            "nonconformity.recurrence (group_by), lmp.performance, "
+            "product.drawing_analysis (product_code). "
             "Unknown types answer not_implemented — never fabricated."
         ),
         annotations=_annotations("analyze", "Analyze"),

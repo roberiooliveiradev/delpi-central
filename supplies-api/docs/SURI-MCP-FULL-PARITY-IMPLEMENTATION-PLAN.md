@@ -38,6 +38,14 @@ FASE P4 — TARGET: páginas ainda não implementadas no próprio Portal
 
 Cada lote é independente em código (novo `entity`/`action` no registry + handlers + schemas + testes) mas dependente de P1-* anteriores apenas por convenção de catálogo (`SEMANTIC_CAPABILITIES`/`catalog_version` bump sequencial).
 
+## Regra explícita de governança — superfície MCP fixa (decisão do Product Owner, 2026-10-31)
+
+**INVARIANTE OBRIGATÓRIA: NÃO CRIAR NOVAS TOOLS MCP para ampliar a paridade funcional da SURI.** A superfície pública permanece com **exatamente cinco tools**: `get_context`, `read`, `analyze`, `knowledge`, `execute`. Novas capacidades devem ser acomodadas de forma organizada nas tools existentes por meio de registries fechados de `entity/action/analysis`, schemas tipados `extra=forbid`, handlers especializados e verificação de AuthZ por operação. `read` agrupa consultas/export de dataset autorizado; `analyze` agrupa análises determinísticas e previews estritamente sem escrita; `knowledge` agrupa corpus e referências; `execute` agrupa mutações governadas, incluindo futuras exclusões somente após contrato de confirmação/consentimento, auditoria e idempotência; `get_context` agrupa contexto/catálogo. **Não registrar `delete` como sexta tool.** Um novo caso de uso não autoriza uma nova tool, nem um proxy genérico de URLs/SQL. Nenhuma migração de API, permissão nova ou alteração de OAuth deriva desta regra.
+
+**Gate obrigatório para cada lote:** provar `tools/list == 5`, identidade e nomes estáveis, contrato fechado, compatibilidade retroativa, positive+sibling+negative, AuthZ fail-closed, cobertura de entrada JSON-RPC → schema Pydantic union → dispatch e documentação da matriz por capacidade. Alterações de superfície contrárias à regra devem parar como `EXECUTION_DRIFT` e ser devolvidas ao Product Owner para decisão explícita antes de qualquer implementação; nenhum roadmap ou brief histórico serve de autorização para criar a sexta tool.
+
+**Reconciliação documental:** referências antigas neste plano a registro de `delete` como tool, `execute/delete tool registration` e ao crescimento de `tools/list` por novas ferramentas são **SUPERSEDED** por esta regra. As operações legítimas de exclusão, quando autorizadas, serão representadas dentro de `execute` como ação fechada. A nota histórica de replay cache in-process em P2-E0 é anterior à store durável V005 (`supplies.suri_execute_operations`), que prevalece no runtime V3+. Esta regra não habilita nenhuma escrita/exclusão nova, não substitui os gates de cada capacidade e não autoriza deploy.
+
 ## Lotes (resumo; briefs completos em SURI-MCP-FULL-PARITY-EXECUTION-BRIEFS.md)
 
 | Lote | TASK | Entrega | Files prováveis | Stop conditions |
@@ -83,4 +91,4 @@ G6 doc: matrix row → PROVEN; evidence doc por lote
 
 ## Compatibilidade OAuth / conector
 
-Adição de tools é non-breaking para OAuth (audience/scopes inalterados); conector ChatGPT continua funcionando entre releases — `tools/list` simplesmente ganha itens. Mudanças em `read`/`analyze` são aditivas (novos valores de Literal), preservando calls existentes.
+Adição de capacidades às cinco tools existentes preserva o OAuth (audience/scopes inalterados). O conector ChatGPT pode exigir atualização dos schemas mesmo com nomes de tools estáveis; `tools/list` deve continuar com exatamente cinco itens. Mudanças em `read`/`analyze` são aditivas (novos valores de Literal), preservando calls existentes.

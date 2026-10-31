@@ -127,7 +127,7 @@ Cada etapa: matriz de lacunas → owner e contrato → menor solução suficient
 
 ## 10. Ampliação executada — 2026-10-31 (corpus v3.1, catálogo 127)
 
-**Estado:** implementado e testado em contrato/seleção/boundary; rodada autenticada de produção = TEST_NOT_RUN (ver matriz de homologação). Itens (1)–(5) da ação incremental foram endereçados:
+**Estado:** implementado, testado e **implantado em produção** (srv-api, SHA `6b8e534ed`, 2026-10-31 — health/OAuth/imagem verificados); rodada autenticada ChatGPT↔CAIO dos cenários A–G = TEST_NOT_RUN pendente de credencial (ver matriz de homologação). Itens (1)–(5) da ação incremental foram endereçados:
 
 - **Glossário estruturado:** `commercial.glossary` passa a `terms` por conceito — significado, aplicação, owner, fonte, relações, exemplos, status. Confirmados: OV, PV, OP, ROL, meta/desvio, saldo a faturar, carteira de pedidos, proposta/revisão/oportunidade, conversão/funil, previsão, lead time/OTD, follow-up, família de chicotes (grupo 9026 exemplo), produto SB1, cliente/centro/carteira. LMP = ordem especial/amostra da Engenharia (dashboard-lmps; processos 000002/000003 ≠ 000001 COMPONENTES) — significado confirmado, uso comercial `PENDING_BUSINESS_VALIDATION`.
 - **`products.guide` implementado:** quatro reads `product.search/summary/customers/filter_options` despacham para os contratos oficiais `/products/*` da api-delpi via products BFF da commercial-api (owner Engenharia preservado; sem cópia de catálogo no corpus). Guia documenta descoberta dinâmica de famílias/grupos/tipos e a separação Engenharia×Comercial.
