@@ -274,3 +274,13 @@ Após deploy informado no commit `b453b0981c6ef75d2025c1b70b5c80e281bc7553`, a c
 ## Jornadas reais de usuário — 2026-10-30 (somente leitura)
 
 Smoke autenticado pelo conector CAIO: `get_context` (catálogo 2.0), `customer.search`, `open_order.list`, `proposal.analytics_list → proposal.analytics_get → proposal.history_events` (filial derivada da lista), `worklist.mine`, `production.appointments`, `production.order`, `rol.summary`, `sales_order_otd.summary`, `customer.open_orders`, `customer.contacts`, `task.list`: **PASS**. Dados consultados por vínculo autorizado e identificadores obtidos de listagens; sem gravar, notificar ou excluir. `portfolio.me` retornou **403** nesta rodada, embora tenha passado anteriormente; status **PENDING_AUTHZ_DIAGNOSIS** (revalidar mesmo principal/claims e logs). As verificações não provam paridade de mutações nem uso por todos os perfis.
+
+## Homologação autenticada CAIO 3.1 — 2026-10-31
+
+**Ambiente:** conector ChatGPT→CAIO com autenticação do usuário, sem alterações produtivas. **Descoberta:** `get_context` respondeu 127 actions (4 de `product`: `search`, `summary`, `customers`, `filter_options`) e `catalog_version=2.0`; `knowledge` retornou `knowledge_version=3.1`. **Não confundir a versão de catálogo semântico 2.0 com corpus 3.1.**
+
+**PASS autenticado:** `knowledge(commercial.glossary)` com 17 termos; `knowledge(products.guide)`; `method.benchmarking`; `method.forecast_vendas`; `playbook.executive_diagnosis`; `knowledge(topic=select, query=clientes deixaram de comprar chicotes)` retornando guia de produtos/RFV/expansão/ABC/SWOT; `read(product.search,description=CHICOTE)`; `read(product.summary,ref=90260921)`; `read(product.customers,ref=90260921)` — consulta válida com `items=[]`, não erro; `read(product.filter_options)`.
+
+**Validação negativa e ajuste de chamada:** `product.summary` sem `ref` retornou 400 correto, e `product.customers` com `product_code` em `filters` retornou 400 correto; ambas passaram utilizando `ref=product_code`. A busca de chicote retornou o cadastro `90260921` como exemplo, não uma afirmação sobre todo o portfólio.
+
+**Limites:** não testados ponta a ponta os cenários amplos A–G envolvendo todas as fontes/indicadores e conclusões comerciais; nenhum write/delete; nenhuma prova nova de pesquisa web, adoção oficial de métodos externos ou uso com todos os perfis. Deploy/SHA reportado pelo executor; aqui comprovado o comportamento autenticado exposto pelo conector, não a introspecção do servidor.
