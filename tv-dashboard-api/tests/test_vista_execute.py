@@ -286,10 +286,21 @@ def test_unknown_entity_rejected():
     d, _, _ = _dispatch()
     with pytest.raises(GptActionsError) as exc:
         d.semantic_execute(
-            user=_user(), entity="playlist", action="apply_mutation",
+            user=_user(), entity="nonexistent_entity", action="apply_mutation",
             operations=[{"op": "add_blank_slide"}], target={},
         )
     assert exc.value.code == "UNKNOWN_ENTITY"
+    assert exc.value.status_code == 422
+
+
+def test_wrong_entity_action_rejected():
+    d, _, _ = _dispatch()
+    with pytest.raises(GptActionsError) as exc:
+        d.semantic_execute(
+            user=_user(), entity="playlist", action="apply_mutation",
+            operations=[{"op": "add_blank_slide"}], target={},
+        )
+    assert exc.value.code == "UNKNOWN_ACTION"
     assert exc.value.status_code == 422
 
 
