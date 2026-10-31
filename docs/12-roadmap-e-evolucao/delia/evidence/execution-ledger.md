@@ -899,3 +899,8 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Métricas: main 270–273 calls, 468–479k in-tokens, 8,6–9,3k out, 495–1082s; held-out 103–114 calls, 186–207k in, 173–283s. Custo/Business Outcome ≈ 6,8 calls + ~11,9k in-tokens.
 - FIXES PUBLICADOS: guards de contrato tipado, TÉO PROC-code (codigo_processo ou id interno), oráculos DAVI governados, ausência legítima, recurso instruções v29–v35, 3 novos arquivos de teste de contrato + correções de testes stale, harness de bateria. Publicação de código != aceite funcional.
 - UNRESOLVED/NEXT: chain-death discover→execute para descrições genéricas de produto é model-bound (4B); forçar a cadeia deterministicamente = roteamento semântico proibido → ARCHITECTURE_DECISION_REQUIRED (projeção de candidatos por contrato que torne a cadeia a única rota válida, ou tier de modelo maior). Limitação léxica do owner (plural/prefixo) permanece documentada. PRODUCTION_DEPLOY=NO; PRODUCTION_CALLS=0.
+
+
+## 2026-10-31 — Próxima iteração após Task 21: compatibilidade MCP heterogênea (PLANNED)
+- Documento 210 §7 atualizado no commit `457d24709cd71ae7cc9a730093ad39ed23ef1d34`: (1) testar generalização em MCPs semânticos, específicos e pouco padronizados; (2) comparar contrato publicado e projeção efetivamente recebida pelo LLM, revalidando doc 83 e truncamento; (3) atribuir primeira divergência/causa ao owner correto (MCP/Domain, adapter/projeção DÉLIA, modelo, AuthZ, ambiente ou evaluator).
+- `TASK_21_SCOPE_CHANGED=NO`; `NEXT_ITERATION=PLANNED`; `IMPLEMENTATION=NOT_STARTED`; `TEST_NOT_RUN`; `DEPLOY_AUTHORIZED=NO`. Reancorar antes de qualquer ação; fase/NEXT canônicos não alterados.

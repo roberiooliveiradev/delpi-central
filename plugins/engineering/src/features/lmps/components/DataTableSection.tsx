@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 
 import {
@@ -84,6 +84,10 @@ export type DataTableSectionProps<T> = {
   /** Visibilidade inicial antes de preferências salvas no localStorage. */
   defaultColumnVisibility?: Record<string, boolean>;
   onVisibleColumnKeysChange?: (keys: string[]) => void;
+  /** Ações extras na toolbar, antes do gerenciador de colunas
+   * (ex.: botão "Filtros" ancorado). Aditivo — sem efeito quando
+   * omitido. */
+  toolbarActions?: ReactNode;
 };
 
 export function DataTableSection<T>({
@@ -110,6 +114,7 @@ export function DataTableSection<T>({
   columnPreferencesKey,
   defaultColumnVisibility,
   onVisibleColumnKeysChange,
+  toolbarActions,
 }: DataTableSectionProps<T>) {
   const [search, setSearch] = useState("");
 
@@ -121,6 +126,8 @@ export function DataTableSection<T>({
   const {
     visibility,
     visibleKeys,
+    orderedColumns,
+    reorderColumns,
     setColumnVisible,
     reset: resetColumnVisibility,
     filterColumns,
@@ -195,7 +202,8 @@ export function DataTableSection<T>({
     refreshFetchProgress
   );
 
-  const showToolbar = !hideSearch || columnVisibilityEnabled;
+  const showToolbar =
+    !hideSearch || columnVisibilityEnabled || Boolean(toolbarActions);
 
   return (
     <section
@@ -267,15 +275,19 @@ export function DataTableSection<T>({
                   ) : null}
                 </>
               ) : null}
-              {columnVisibilityEnabled ? (
+              {columnVisibilityEnabled || toolbarActions ? (
                 <div className={LMPS_SECTION.toolbarExtra}>
-                  <TableColumnVisibilityMenu
-                    columns={columnCatalog}
-                    visibility={visibility}
-                    onToggleColumn={setColumnVisible}
-                    onReset={resetColumnVisibility}
-                    labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
-                  />
+                  {toolbarActions}
+                  {columnVisibilityEnabled ? (
+                    <TableColumnVisibilityMenu
+                      columns={orderedColumns}
+                      visibility={visibility}
+                      onToggleColumn={setColumnVisible}
+                      onReorderColumns={reorderColumns}
+                      onReset={resetColumnVisibility}
+                      labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
+                    />
+                  ) : null}
                 </div>
               ) : null}
             </div>

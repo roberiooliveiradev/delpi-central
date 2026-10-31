@@ -129,6 +129,7 @@ describe("estado da listagem orientado por URL", () => {
       code: "",
       description: "",
       customer_reference: "",
+      subgroup: "",
       groups: [],
       types: [],
       sort: null,
@@ -139,12 +140,13 @@ describe("estado da listagem orientado por URL", () => {
 
   it("parseia filtros, CSV multivalor, sort e página", () => {
     const state = parseProductsListUrl(
-      "?code=30&description=ANEL&groups=3019,3020&types=MP,PA&ref=R1&sort=code&dir=desc&page=3",
+      "?code=30&description=ANEL&groups=3019,3020&types=MP,PA&ref=R1&sub=02&sort=code&dir=desc&page=3",
     );
     expect(state).toEqual({
       code: "30",
       description: "ANEL",
       customer_reference: "R1",
+      subgroup: "02",
       groups: ["3019", "3020"],
       types: ["MP", "PA"],
       sort: "code",
@@ -164,6 +166,7 @@ describe("estado da listagem orientado por URL", () => {
       code: "90",
       description: "",
       customer_reference: "",
+      subgroup: "02",
       groups: ["3019"],
       types: ["MP", "PI"],
       sort: "description",
@@ -171,10 +174,12 @@ describe("estado da listagem orientado por URL", () => {
       page: 2,
     });
     expect(url).toContain("?");
+    expect(url).toContain("sub=02");
     expect(parseProductsListUrl(url.split("?")[1])).toEqual({
       code: "90",
       description: "",
       customer_reference: "",
+      subgroup: "02",
       groups: ["3019"],
       types: ["MP", "PI"],
       sort: "description",
@@ -189,6 +194,7 @@ describe("estado da listagem orientado por URL", () => {
         code: "",
         description: "",
         customer_reference: "",
+        subgroup: "",
         groups: [],
         types: [],
         sort: null,

@@ -70,6 +70,8 @@ export type ProductsListUrlState = {
   code: string;
   description: string;
   customer_reference: string;
+  /** Igualdade exata (SB1.B1_SUBGRUP) — contrato owner `subgroup`. */
+  subgroup: string;
   /** CSV de grupos/tipos (multiselect — contrato owner aceita lista). */
   groups: string[];
   types: string[];
@@ -82,6 +84,7 @@ export const EMPTY_PRODUCTS_LIST_URL: ProductsListUrlState = {
   code: "",
   description: "",
   customer_reference: "",
+  subgroup: "",
   groups: [],
   types: [],
   sort: null,
@@ -102,6 +105,7 @@ export function parseProductsListUrl(search: string): ProductsListUrlState {
     code: p.get("code") ?? "",
     description: p.get("description") ?? "",
     customer_reference: p.get("ref") ?? "",
+    subgroup: p.get("sub") ?? "",
     groups: csv("groups"),
     types: csv("types"),
     sort: p.get("sort"),
@@ -115,6 +119,7 @@ export function buildProductsListUrl(state: ProductsListUrlState): string {
   if (state.code) p.set("code", state.code);
   if (state.description) p.set("description", state.description);
   if (state.customer_reference) p.set("ref", state.customer_reference);
+  if (state.subgroup) p.set("sub", state.subgroup);
   if (state.groups.length) p.set("groups", state.groups.join(","));
   if (state.types.length) p.set("types", state.types.join(","));
   if (state.sort) p.set("sort", state.sort);

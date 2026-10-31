@@ -1,22 +1,22 @@
 export type ProductStructureNode = {
-  code?: string;
-  product_code?: string;
-  description?: string;
-  type?: string;
+  code?: string | null;
+  product_code?: string | null;
+  description?: string | null;
+  type?: string | null;
   quantity?: number | null;
-  unit?: string;
-  components?: ProductStructureNode[];
-  items?: ProductStructureNode[];
+  unit?: string | null;
+  components?: ProductStructureNode[] | null;
+  items?: ProductStructureNode[] | null;
   /** Consulta reversa (where-used) — filhos vivem em `parents`. */
-  parents?: ProductStructureNode[];
+  parents?: ProductStructureNode[] | null;
   [key: string]: unknown;
 };
 
 export type ProductStructureData = {
-  root?: ProductStructureNode;
-  items?: ProductStructureNode[];
-  total?: number;
-  page?: number;
-  page_size?: number;
-  total_pages?: number;
+  root?: ProductStructureNode | null;
+  items?: ProductStructureNode[] | null;
+  total?: number | null;
+  page?: number | null;
+  page_size?: number | null;
+  total_pages?: number | null;
 };
