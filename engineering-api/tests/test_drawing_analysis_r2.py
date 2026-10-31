@@ -119,10 +119,13 @@ async def test_t08_revision_00_vs_001_is_inconclusive_not_mismatch():
         code="90264302", source=_EnvelopeSource(PDF_90264302), ctx=None
     )
     keys = {v["key"]: v["status"] for v in report["verifications"]}
-    assert keys["revision"] == "INCONCLUSIVE"
+    # ENG-REV-001: domínios apresentados separadamente — sem comparação.
+    assert keys["revision_domains"] == "PASS"
+    domains = report["identification"]["revision_domains"]
+    assert domains["customer_totvs_revision"] == "001"
+    assert domains["engineering_drawing_revision"] == ["00"]
     assert not any(
-        f["category"] == "revision" and f["divergence"] == "revision_mismatch"
-        for f in report["findings"]
+        f["category"] == "revision" for f in report["findings"]
     )
 
 

@@ -1,5 +1,5 @@
 {
-  "version": "1.1",
+  "version": "1.2",
   "owner": "engineering-api",
   "source": "EVA.MCP.SEMANTIC.R1 — conhecimento técnico versionado derivado dos contratos oficiais E-NC-01..11, doc 47/53 e regras de negócio vigentes da Engineering API. Não é fonte de dados operacionais.",
   "topics": {
@@ -56,7 +56,7 @@
     },
     "product.drawing_criteria": {
       "title": "Criterios de analise de desenho — MP/PI, evidencias e revisao",
-      "revision": "1.0",
+      "revision": "1.2",
       "sources": [
         "doc 69 (discovery)",
         "doc 70 (E1-E3)",
@@ -121,17 +121,6 @@
           "limitations": "-"
         },
         {
-          "rule_id": "DRAW-REV-MATCH",
-          "owner": "Engenharia",
-          "source": "api-delpi drawing metadata + SB1",
-          "version": "contrato vigente",
-          "applicability": "desenho oficial",
-          "criterion": "revisao identificada deve coincidir com revisao vigente do cadastro",
-          "evidence_required": "revisao explicita no desenho + current_revision oficial",
-          "severity": "warning",
-          "limitations": "revisao ausente no texto -> INCONCLUSIVE"
-        },
-        {
           "rule_id": "DRAW-NO-PA-NORM",
           "owner": "Engenharia",
           "source": "doc 69 §9",
@@ -141,6 +130,17 @@
           "evidence_required": "-",
           "severity": "info",
           "limitations": "OWNER_BLOCKED ate norma oficial"
+        },
+        {
+          "rule_id": "ENG-REV-001",
+          "owner": "Engenharia",
+          "source": "esclarecimento do responsável do projeto + doc R3",
+          "version": "1.0",
+          "applicability": "toda comparação de revisões",
+          "criterion": "current_revision TOTVS = controle de revisões do CLIENTE; REV do desenho = controle técnico de ENGENHARIA; domínios independentes — diferença de número não é divergência nem conformidade",
+          "evidence_required": "comparação só dentro do mesmo domínio e com semântica da fonte comprovada",
+          "severity": "info",
+          "limitations": "acervo sem revisão confiável → UNKNOWN/NOT_CHECKED"
         }
       ],
       "guidance": [
@@ -148,7 +148,15 @@
         "Observacoes visuais do consumidor sao hipoteses; concordancia/divergencia so sobre mesmo documento verificado.",
         "Sem norma, roteiro ou inspecao: NOT_CHECKED/OWNER_BLOCKED, jamais conformidade inventada."
       ],
-      "scope": "Criterios estruturais versionados — nao substitui norma completa nem aprovacao tecnica."
+      "scope": "Criterios estruturais versionados — nao substitui norma completa nem aprovacao tecnica.",
+      "superseded_rules": [
+        {
+          "rule_id": "DRAW-REV-MATCH",
+          "superseded_by": "ENG-REV-001",
+          "reason": "revisão TOTVS/cliente e revisão de desenho são domínios independentes — comparação direta removida",
+          "superseded_at": "2026-10-31"
+        }
+      ]
     }
   },
   "planned_topics": [

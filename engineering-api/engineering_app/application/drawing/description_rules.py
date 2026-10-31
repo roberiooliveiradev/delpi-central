@@ -93,10 +93,21 @@ def validate_mp_description(
     )
 
 
+# Segment grammar PI 50xx (doc 69 §8 / R3-B):
+#   {family}{seq} {ISO}{gauge}{COLOR4}-{len}/{decE}/{decD}-{termEtermD}-{isoEisoD}
+# Prefixo concatenado é a forma canônica: "CA22VERM" = CA(PVC)+22+VERM.
+_PI_COMPOSITE = re.compile(
+    r"(CA|CB|CF|CT|CV)\s*([0-9][0-9,.]*)?\s*([A-Z]{4})?"
+    r"(-\s*\d{3,5})?\s*(/\s*\d{1,2}\s*/\s*\d{1,2})?\s*"
+    r"(-\s*\d{2,4}\s*-\s*\d{2,4})?",
+    re.IGNORECASE,
+)
+
+
 def validate_pi_description(
     product_code: str, description: str | None
 ) -> DescriptionCheck:
-    """50xx intermediate product canonical segment check."""
+    """50xx intermediate canonical segment check (concatenated prefix)."""
     code = (product_code or "").strip()
     desc = (description or "").strip()
     if not _PI_FAMILY.match(code):
@@ -111,33 +122,44 @@ def validate_pi_description(
             status="INCONCLUSIVE",
             summary="Descrição cadastral ausente — verificação impossível.",
         )
-    findings: list[str] = []
     upper = desc.upper()
-    isolations = [i for i in _PI_ISOLATION if re.search(rf"\b{i}\b", upper)]
-    if not isolations:
+    match = _PI_COMPOSITE.search(upper)
+    found_isolation = match.group(1).upper() if match else None
+    found_gauge = (match.group(2) or "").strip() if match else ""
+    found_color = (match.group(3) or "").upper() if match else ""
+    found_length = bool(match and match.group(4))
+    segments: dict[str, str | bool] = {
+        "family": code[:4],
+        "isolation": found_isolation or "absent",
+        "gauge": found_gauge or "absent",
+        "color4": found_color or "absent",
+        "length_mm": "present" if found_length else "absent",
+        "decape": "present" if match and match.group(5) else "absent",
+        "terminals": "present" if match and match.group(6) else "absent",
+    }
+    findings: list[str] = []
+    if not found_isolation:
         findings.append(
-            "código de isolação CA/CB/CF/CT/CV não identificado"
+            "segmento isolação CA/CB/CF/CT/CV ausente ou inválido"
         )
-    colors4 = [
-        t for t in re.findall(r"\b[A-Z]{4}\b", upper)
-        if t not in _PI_ISOLATION
-    ]
-    if not colors4:
-        findings.append("cor em 4 letras não identificada")
-    if not re.search(r"\d+\s*MM\b", upper) and not re.search(
-        r"-\s*\d{3,5}\b", upper
-    ):
+    else:
+        # Isolation invalid only if a *different* 2-letter token appears
+        # where isolation should be — CA/CB/CF/CT/CV are the valid set.
+        if found_isolation not in _PI_ISOLATION:
+            findings.append(f"isolação '{found_isolation}' inválida")
+    if not found_gauge:
+        findings.append("bitola não identificada junto à isolação")
+    if not found_color:
+        findings.append("cor de 4 letras ausente no segmento concatenado")
+    if not found_length:
         findings.append("comprimento (mm) não identificado")
     status = "WARNING" if findings else "PASS"
     return DescriptionCheck(
         key="pi_description",
         status=status,
         summary=(
-            f"Família {code[:4]}: isolação={isolations or '—'}, "
-            f"cor4L={colors4 or '—'}; "
-            + ("desvios: " + "; ".join(findings) if findings else
-               "segmentos canônicos identificados.")
-            + " Comparação de comprimento/decape/terminais exige "
-            "evidência explícita — ausência gera INCONCLUSIVE, não FAIL."
+            f"Família {code[:4]}: segmentos={segments}; "
+            + ("ausências: " + "; ".join(findings) if findings else
+               "segmentos canônicos identificados (prefixo concatenado).")
         ),
     )
