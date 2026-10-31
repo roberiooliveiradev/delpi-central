@@ -680,7 +680,8 @@ def create_mcp_server() -> MCPServer:
             "value labeled OBSERVED|CALCULATED|INFERRED|UNKNOWN with "
             "verifiable method and provenance. Types: "
             "nonconformity.recurrence (group_by), lmp.performance, "
-            "product.drawing_analysis (product_code). "
+            "product.drawing_analysis (product_code[, visual_"
+            "observations[], scope[]]). "
             "Unknown types answer not_implemented — never fabricated."
         ),
         annotations=_annotations("analyze", "Analyze"),

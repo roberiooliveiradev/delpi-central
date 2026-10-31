@@ -317,16 +317,23 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "(identified by product_code) is extracted and cross-checked "
         "against the registered product card and BOM — revision, "
         "identification, item presence, MP/PI description rules. "
-        "Emits a DRAFT/CANDIDATE technical report with page-level "
-        "evidence; never approves technically and never writes.",
+        "Optionally receives `visual_observations[]` (untrusted ChatGPT "
+        "perception of a drawing: kind/raw_observation/page/document_"
+        "identity/confidence) which are compared to the same verified "
+        "document and to official facts as hypotheses. Emits a "
+        "DRAFT/CANDIDATE technical report; never approves technically.",
         "analysis",
-        fields=("product_code",),
+        fields=(
+            "product_code", "visual_observations", "scope",
+        ),
         notes=(
             "Deterministic text-layer extraction only — scanned PDFs "
             "yield INCONCLUSIVE; absence of visual evidence never "
-            "equals a proven BOM divergence; routing/inspection/"
-            "PA-description checks report NOT_CHECKED while their "
-            "contracts remain owner-blocked (doc 69)."
+            "equals a proven BOM divergence; visual observations are "
+            "untrusted input (schema-limited, hypotheses only); "
+            "routing/inspection/PA-description checks report "
+            "NOT_CHECKED while contracts remain owner-blocked "
+            "(docs 69–71)."
         ),
     ),
     # --- knowledge ----------------------------------------------------------

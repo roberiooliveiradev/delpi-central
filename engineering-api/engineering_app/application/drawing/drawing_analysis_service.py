@@ -17,6 +17,11 @@ from engineering_app.application.drawing.description_rules import (
     validate_mp_description,
     validate_pi_description,
 )
+from engineering_app.application.drawing.drawing_comparator import (
+    compare_observation_to_official,
+    compare_observation_to_text,
+    evaluate_source_match,
+)
 from engineering_app.application.drawing.drawing_evidence_extractor import (
     extract_evidence,
 )
@@ -31,6 +36,10 @@ from engineering_app.domain.drawing import (
     Finding,
     Verification,
     VerificationStatus,
+)
+from engineering_app.domain.drawing.source_identity import SourceMatch
+from engineering_app.domain.drawing.visual_observation import (
+    DrawingVisualObservation,
 )
 
 _MAX_BOM_ITEMS = 300
@@ -64,6 +73,8 @@ async def analyze_product_drawing(
     code: str,
     source,
     ctx,
+    visual_observations: list[DrawingVisualObservation] | None = None,
+    scope: list[str] | None = None,
 ) -> dict[str, Any]:
     """Run the full drawing×product×BOM analysis for `code`."""
     # --- official facts (delegated identity) -------------------------------
@@ -498,6 +509,128 @@ async def analyze_product_drawing(
         ]
     )
 
+    # V7 — visual observations (untrusted consumer input) ----------------------
+    visual_observations = visual_observations or []
+    source_match = SourceMatch.UNKNOWN
+    visual_results: list[dict[str, Any]] = []
+    if visual_observations:
+        source_match = evaluate_source_match(
+            visual_observations,
+            official_hash=extraction.document_hash,
+            official_revision=(
+                str(revision_meta) if revision_meta else official_rev or None
+            ),
+            official_document_ref=filename,
+            official_product_code=official_code,
+        )
+        bom_code_set = {str(i.get("code") or "") for i in bom_items}
+        text_conflicts = 0
+        text_agreements = 0
+        for obs in visual_observations:
+            vs_text = (
+                compare_observation_to_text(obs, text_blob)
+                if source_match == SourceMatch.SAME_DOCUMENT_VERIFIED
+                else {
+                    "observation_id": obs.observation_id,
+                    "status": "not_applicable",
+                    "detail": (
+                        f"identidade de fonte: {source_match.value} — "
+                        "comparação visual×textual só é válida para o "
+                        "mesmo documento verificado"
+                    ),
+                }
+            )
+            vs_official = compare_observation_to_official(
+                obs,
+                official_code=official_code,
+                official_revision=official_rev or None,
+                official_description=official_desc,
+                bom_codes=bom_code_set,
+            )
+            if vs_text.get("status") == "conflict":
+                text_conflicts += 1
+            if vs_text.get("status") == "agreement":
+                text_agreements += 1
+            if vs_official.get("status") in {"conflict", "possible_divergence"}:
+                add_finding(
+                    category="visual_vs_official",
+                    severity="warning",
+                    severity_reason=(
+                        f"Observação visual ({obs.kind}) diverge do fato "
+                        "oficial — tratada como hipótese até revisão."
+                    ),
+                    rule="visual_observation_vs_official_fact",
+                    rule_source="doc71 G3 §6.2-6.3 — input não confiável",
+                    evidence_page=obs.page,
+                    evidence_region=obs.view_or_region,
+                    observed_value=obs.raw_observation,
+                    official_value={
+                        "code": official_code,
+                        "revision": official_rev or None,
+                    },
+                    divergence=str(vs_official.get("detail") or ""),
+                    confidence=obs.confidence,
+                    recommended_correction=(
+                        "Revisão humana do desenho × cadastro antes de "
+                        "qualquer correção no TOTVS."
+                    ),
+                )
+            visual_results.append(
+                {
+                    "observation": obs.to_dict(),
+                    "vs_text_layer": vs_text,
+                    "vs_official": vs_official,
+                }
+            )
+        verifications.append(
+            Verification(
+                key="visual_observations",
+                label="Observações visuais do consumidor",
+                status=(
+                    VerificationStatus.WARNING
+                    if text_conflicts
+                    else VerificationStatus.PASS
+                ),
+                summary=(
+                    f"{len(visual_observations)} observações recebidas — "
+                    f"identidade de fonte: {source_match.value}; "
+                    f"{text_agreements} concordam com a camada de texto, "
+                    f"{text_conflicts} em conflito de percepção."
+                ),
+                evidence_class=EvidenceClass.INFERRED,
+                limitations=[
+                    "observações visuais são entrada não confiável do "
+                    "consumidor — jamais promovidas a fato oficial",
+                    "comparação visual×textual só aplicada em "
+                    "same_document_verified",
+                ],
+            )
+        )
+        if source_match != SourceMatch.SAME_DOCUMENT_VERIFIED:
+            verifications.append(
+                Verification(
+                    key="visual_vs_textual",
+                    label="Visual × extração textual",
+                    status=VerificationStatus.NOT_CHECKED,
+                    summary=(
+                        f"Identidade de fonte '{source_match.value}' — "
+                        "sem mesmo documento verificado, comparação "
+                        "visual×textual não sustenta concordância nem "
+                        "divergência comprovada."
+                    ),
+                )
+            )
+    else:
+        verifications.append(
+            Verification(
+                key="visual_observations",
+                label="Observações visuais do consumidor",
+                status=VerificationStatus.NOT_APPLICABLE,
+                summary="Nenhuma observação visual fornecida — análise "
+                "restrita à extração textual × dados oficiais.",
+            )
+        )
+
     # --- report ---------------------------------------------------------------
     counts: dict[str, int] = {}
     for v_ in verifications:
@@ -547,4 +680,16 @@ async def analyze_product_drawing(
             "do owner Engenharia; a EVA não aprova.",
         },
     )
-    return report.to_dict()
+    payload = report.to_dict()
+    payload["contract_version"] = "drawing_analysis.v2"
+    payload["source_match"] = source_match.value
+    payload["visual_observations"] = [
+        o.to_dict() for o in visual_observations
+    ]
+    payload["comparison_results"] = visual_results
+    payload["scope"] = scope or ["all"]
+    if visual_observations:
+        payload["executive_summary"]["visual_observations_total"] = len(
+            visual_observations
+        )
+    return payload
