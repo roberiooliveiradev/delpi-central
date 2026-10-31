@@ -1000,6 +1000,68 @@ class TvGptCommitService:
                     )
                     continue
 
+                if op_name == "update_playlist":
+                    fields = {
+                        kw: raw[arg]
+                        for arg, kw in (
+                            ("name", "name"),
+                            ("description", "description"),
+                            ("transitionStyle", "transition_style"),
+                            ("defaultDurationSec", "default_duration_sec"),
+                            ("playbackMode", "playback_mode"),
+                            ("globalRefreshSec", "global_refresh_sec"),
+                            ("viewportProfile", "viewport_profile"),
+                            ("viewportWidth", "viewport_width"),
+                            ("viewportHeight", "viewport_height"),
+                        )
+                        if raw.get(arg) is not None
+                    }
+                    playlist = self._writes.update_playlist(
+                        current_playlist,
+                        actor_user_id=actor_id,
+                        expected_revision=chain_revision,
+                        **fields,
+                    )
+                    chain_revision = self._writes.get_revision(current_playlist)
+                    applied.append(
+                        {"op": op_name, "expected": {"fields": fields}}
+                    )
+                    continue
+
+                if op_name in {"activate_playlist", "deactivate_playlist"}:
+                    is_active = op_name == "activate_playlist"
+                    playlist = self._writes.set_playlist_active(
+                        current_playlist,
+                        is_active=is_active,
+                        actor_user_id=actor_id,
+                        expected_revision=chain_revision,
+                    )
+                    chain_revision = self._writes.get_revision(current_playlist)
+                    applied.append(
+                        {"op": op_name, "expected": {"isActive": is_active}}
+                    )
+                    continue
+
+                if op_name == "duplicate_slide":
+                    sid_raw = str(raw.get("slideId") or "").strip()
+                    if not sid_raw:
+                        raise GptActionsError(
+                            PresentationOpsContentService.message("missingTarget"),
+                            code="INVALID_CHANGE",
+                            status_code=422,
+                        )
+                    slide = self._writes.duplicate_slide(
+                        current_playlist,
+                        UUID(sid_raw),
+                        actor_user_id=actor_id,
+                        expected_revision=chain_revision,
+                    )
+                    chain_revision = self._writes.get_revision(current_playlist)
+                    applied.append(
+                        {"op": op_name, "expected": {"slide": slide}}
+                    )
+                    continue
+
                 if op_name == "reorder_sections":
                     items = raw.get("items") if isinstance(raw.get("items"), list) else []
                     self._writes.reorder_sections(
@@ -1762,6 +1824,53 @@ class TvGptCommitService:
                         "verificationStatus": "VERIFIED",
                     },
                 )
+
+            elif op == "update_playlist":
+                ok = isinstance(playlist, dict)
+                fields = expected.get("fields") if isinstance(
+                    expected.get("fields"), dict
+                ) else {}
+                if ok:
+                    for field, value in fields.items():
+                        camel = {
+                            "transition_style": "transitionStyle",
+                            "default_duration_sec": "defaultDurationSec",
+                            "playback_mode": "playbackMode",
+                            "global_refresh_sec": "globalRefreshSec",
+                            "viewport_profile": "viewportProfile",
+                            "viewport_width": "viewportWidth",
+                            "viewport_height": "viewportHeight",
+                        }.get(field, field)
+                        got = playlist.get(camel, playlist.get(field))
+                        if got != value:
+                            ok = False
+                            break
+                details["checks"].append(
+                    {"op": op, "ok": ok, "expected": fields}
+                )
+                if not ok:
+                    return False, details
+
+            elif op in {"activate_playlist", "deactivate_playlist"}:
+                want = expected.get("isActive")
+                ok = bool((playlist or {}).get("isActive")) == bool(want)
+                details["checks"].append(
+                    {"op": op, "ok": ok, "expected": {"isActive": want}}
+                )
+                if not ok:
+                    return False, details
+
+            elif op == "duplicate_slide":
+                dup = expected.get("slide") if isinstance(
+                    expected.get("slide"), dict
+                ) else {}
+                sid = str(dup.get("id") or "")
+                ok = sid in slides
+                details["checks"].append(
+                    {"op": op, "ok": ok, "slideId": sid}
+                )
+                if not ok:
+                    return False, details
 
             else:
                 details["checks"].append(

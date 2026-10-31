@@ -304,6 +304,11 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
             "page", "page_size",
         ),
     ),
+    ("report", "cost_closing_state"): _read_spec(
+        bridge.tool_get_cost_closing_state,
+        required=("period",),
+        allowed=("branch",),
+    ),
     ("report", "matrix"): _read_spec(
         bridge.tool_get_report_matrix,
         required=("period",),

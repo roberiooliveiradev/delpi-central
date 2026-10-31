@@ -80,3 +80,10 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Pendências: etapa 4 do wizard (G5); writer de `MV_ULMES` (E5); SPs
   pós-MATA330 (E4); DEL100 como rotina separada já resolvida.
 - Referências: doc 85 §11; doc 118 §6; doc 121.
+
+## Atualização v1.1 — 31/10/2026 (Ciclo 3)
+
+- Contrato TARGET aprovado no gate `CF-PROC0072-R12-R15-STATE-VIEW-CONTRACT-GATE-021` (doc 129): projeção governada de estado por competência/filial — nós snapshot/cutoff/cost_evidence/wizard_lifecycle/human_acceptance.
+- Implementação: api-delpi `GET /financeiro/closing-state` (SB9010, SX6 `MV_ULMES`, TTAT `B1_CUSTD`/`D3_CUSTO1`) → BFF `GET /closing/competences/{period}/cost-closing-state` → MFE `cost-closing-state` → CLARA `read(report.cost_closing_state)`.
+- Semântica C3-D02=A preservada: marcadores técnicos, nunca homologação nem execução ERP. `UNIMPLEMENTED_REPORTS` → `STATE_VIEW` (sem medida comparável — NOT_COMPARABLE preservado).
+- Persistem: E4/E5/E12.5/G5/G6 — declarados em `limitations`.

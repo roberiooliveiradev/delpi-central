@@ -29,6 +29,9 @@ from controllership_finance_app.interface.http.routes.clara_consent_routes impor
 from controllership_finance_app.interface.http.routes.closing_routes import (
     router as closing_router,
 )
+from controllership_finance_app.interface.http.routes.closing_state_routes import (
+    router as closing_state_router,
+)
 from controllership_finance_app.interface.http.routes.competences_routes import (
     router as competences_router,
 )
@@ -160,6 +163,7 @@ app.include_router(health_router)
 app.include_router(characters_router)
 app.include_router(viewer_context_router)
 app.include_router(closing_router)
+app.include_router(closing_state_router)
 app.include_router(analysis_router)
 app.include_router(competences_router)
 app.include_router(documents_router)

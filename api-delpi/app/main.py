@@ -46,6 +46,7 @@ from app.interface.http.routes.financeiro import despesas_centro_custo_router
 from app.interface.http.routes.financeiro import inadimplencia_router
 from app.interface.http.routes.financeiro import settlements_router
 from app.interface.http.routes.financeiro import stock_inventory_router
+from app.interface.http.routes.financeiro import closing_state_router
 from app.interface.http.routes.financeiro import stock_kardex_router
 from app.interface.http.routes.financeiro import stock_movements_router
 from app.interface.http.routes.financeiro import work_in_process_router
@@ -301,6 +302,7 @@ app.include_router(despesas_centro_custo_router.router)
 app.include_router(inadimplencia_router.router)
 app.include_router(settlements_router.router)
 app.include_router(stock_inventory_router.router)
+app.include_router(closing_state_router.router)
 app.include_router(stock_kardex_router.router)
 app.include_router(stock_movements_router.router)
 app.include_router(work_in_process_router.router)

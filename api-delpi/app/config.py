@@ -135,6 +135,14 @@ class Settings:
         in ("true", "1", "yes", "on")
     )
 
+    # Closing-state markers (R12/R15) shared-dataset gate — doc 129.
+    # Same family as stock-inventory; dedicated flag so the new read
+    # surface can be enabled independently in homologation before prod.
+    FINANCEIRO_CLOSING_STATE_ENABLED: bool = (
+        _get_env("FINANCEIRO_CLOSING_STATE_ENABLED", default="false").lower()
+        in ("true", "1", "yes", "on")
+    )
+
     # ==========================
     # Plugins PostgreSQL
     # ==========================

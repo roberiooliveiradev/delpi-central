@@ -467,6 +467,12 @@ export const CF_HELP = {
         "Cobertura: atendimento aos itens e evidências previstos no catálogo para o R-ID nesta competência. «Coberto» indica todos os itens vinculados validados — não é aceite de negócio do relatório.",
     },
   },
+  costClosingState: {
+    page:
+      "Estado de fechamento e cutoff (R12/R15): trilha de marcadores técnicos observados no ERP por filial — snapshot SB9010, marcador MV_ULMES, evidências de escrita TTAT (MATA320/MATA330). «Observado» indica marcador presente; nunca é confirmação de execução nem homologação. O ciclo de vida do wizard permanece indisponível (tabela não identificada) e a homologação humana não é informada por esta visão.",
+    provenance:
+      "Proveniência: SB9010 (snapshot mensal por B9_DATA), SX6010.MV_ULMES por filial, logs TTAT SB1010/SD3010 na janela da competência +45 dias. Carimbos físicos em UTC (-3h local). Escritor de SB9/MV_ULMES não auditável — marcadores técnicos, não aceite.",
+  },
   pendencies: {
     page:
       "Pendências e classificações (P4): registro e tratamento governado do que falta ou divergiu no fechamento — evidência ausente, rejeição, divergência de conciliação, correção estrutural ou dependência externa. Ciclo de vida fechado: Aberta → Em análise / Aguardando externo → Resolvida ou Descartada (descarte exige justificativa e não significa «não se aplica»).",

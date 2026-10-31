@@ -72,3 +72,8 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Pendências: E5 (writer SB9/MV_ULMES), E12 (semântica de reabertura),
   G5.
 - Referências: doc 85 §14; doc 118 §6; doc 121.
+
+## Atualização v1.1 — 31/10/2026 (Ciclo 3)
+
+- Idem R12 — gate doc 129: `MV_ULMES`/`SB9010` expostos como marcadores técnicos na projeção governada (`cutoff_marker`, `snapshot`), escritor segue `PENDING` (E5), reabertura fora de escopo (E12.6).
+- Cadeia Portal: `read(report.cost_closing_state)` + página contextual `cost-closing-state`; comparação monetária continua `NOT_COMPARABLE`.

@@ -143,12 +143,12 @@ REPORT_CATALOG: tuple[dict, ...] = (
     },
     {
         "report_id": "R12",
-        "label": "Wizard de fechamento",
-        "source_kind": "PENDING_CONTRACT",
-        "owner": None,
-        "operational_view": None,
-        "official_parity": None,
-        "note": "Fonte/owner não confirmados — captura manual governada.",
+        "label": "Estado de fechamento de custos",
+        "source_kind": "STATE_VIEW",
+        "owner": "TOTVS/MATA320-MATA300-MATA330",
+        "operational_view": "cost-closing-state",
+        "official_parity": "PENDING",
+        "note": "Projeção governada de marcadores técnicos — não é homologação nem execução ERP.",
     },
     {
         "report_id": "R13",
@@ -170,12 +170,12 @@ REPORT_CATALOG: tuple[dict, ...] = (
     },
     {
         "report_id": "R15",
-        "label": "Cutoff / SB9 final",
-        "source_kind": "PENDING_CONTRACT",
-        "owner": None,
-        "operational_view": None,
-        "official_parity": None,
-        "note": "Vinculado ao cutoff P3 — owner do fechamento no ERP.",
+        "label": "Cutoff / virada de saldos",
+        "source_kind": "STATE_VIEW",
+        "owner": "TOTVS/MATA330-MATA280-SB9010",
+        "operational_view": "cost-closing-state",
+        "official_parity": "PENDING",
+        "note": "Marcadores SB9010/MV_ULMES observados — não é homologação nem execução ERP.",
     },
 )
 

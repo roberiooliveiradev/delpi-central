@@ -8,6 +8,8 @@
 
 > **Trilha de execução e diário de resultados para o Devin:** [CAIO-3-0-EXECUTION-TRAIL.md](CAIO-3-0-EXECUTION-TRAIL.md) — P0–P5, etapas, gates, evidências e preenchimento contínuo. A criação da trilha não implementa capacidades.
 
+> **Nova trilha de inteligência comercial aplicada (W0–W8):** [CAIO-INTELIGENCIA-COMERCIAL-APLICADA-EXECUTION-PLAN.md](CAIO-INTELIGENCIA-COMERCIAL-APLICADA-EXECUTION-PLAN.md). É plano de implementação com diário de evidências, não prova de capacidade entregue.
+
 ## 1. Intenção e problema
 
 O CAIO já consegue consultar operações do Portal e construir relatórios comerciais articulados, a partir de prompts que solicitam cruzamento de fontes, evidências, riscos e planos de ação. A necessidade emergente não é adicionar indiscriminadamente endpoints: **transformar um assistente que conhece o Portal em um consultor de inteligência comercial** que entende métodos profissionais, escolhe análises adequadas, pesquisa referências quando autorizado e aplica o conhecimento ao contexto da pergunta e da conversa.

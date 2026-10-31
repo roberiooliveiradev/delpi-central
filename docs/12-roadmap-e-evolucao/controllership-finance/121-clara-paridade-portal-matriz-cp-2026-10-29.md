@@ -473,3 +473,7 @@ Teste realizado diretamente nesta sessão ChatGPT, com a conexão CLARA disponí
 | Execução composta `read+knowledge` por pergunta aberta | Não validada sistematicamente | TEST_NOT_RUN |
 
 **Interpretação:** conexão MCP funcional na sessão ChatGPT para as operações testadas; não inferir aceite do cliente Chat AI do Portal ou de todos os fluxos OAuth/segurança. Paridade oficial G6/E7 permanece pendente. Nenhuma alteração de permissions, código, dados ERP ou corpus.
+
+**ATUALIZAÇÃO 2 — 31/10/2026 (Gate 024, Ciclo 3):** linha 137 superada parcialmente — **R12/R15** deixam  e ganham a capability  (gate doc 129, semântica C3-D02=A), com página Portal  e matriz . Mesma identidade + mesmos parâmetros + mesma fonte (BFF → api-delpi) = mesmo resultado; comparação permanece  (estado ≠ medida). **Paridade:** PARITY_PENDING live — MCP_E2E/smoke homolog  (stack local sem cf-api). R04/R09/R13/R14 seguem /.
+
+**ATUALIZAÇÃO 2 — 31/10/2026 (Gate 024, Ciclo 3):** linha 137 superada parcialmente — **R12/R15** deixam `PENDING_CONTRACT` e ganham a capability `read(report.cost_closing_state)` (gate doc 129, semântica C3-D02=A), com página Portal `cost-closing-state` e matriz `STATE_VIEW`. Mesma identidade + mesmos parâmetros + mesma fonte (BFF → api-delpi) = mesmo resultado; comparação permanece `NOT_COMPARABLE` (estado ≠ medida). **Paridade:** PARITY_PENDING live — MCP_E2E/smoke homolog `TEST_NOT_RUN` (stack local sem cf-api). R04/R09/R13/R14 seguem `PENDING_CONTRACT`/`EXTERNAL`.

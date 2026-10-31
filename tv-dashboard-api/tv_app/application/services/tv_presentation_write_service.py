@@ -620,6 +620,121 @@ class TvPresentationWriteService:
             )
         return sections
 
+    def update_playlist(
+        self,
+        playlist_id: UUID,
+        *,
+        actor_user_id: str,
+        expected_revision: int | None = None,
+        notify: bool = True,
+        **fields: Any,
+    ) -> dict[str, Any]:
+        self.assert_expected_revision(playlist_id, expected_revision)
+        try:
+            playlist = self._persist(
+                playlist_id,
+                expected_revision,
+                lambda: self._repo.update(
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason="presentation_update_playlist",
+                    expected_revision=expected_revision,
+                    **fields,
+                ),
+            )
+        except PlaylistNotFoundError as exc:
+            raise PresentationWriteError(
+                "Programação não encontrada.",
+                status_code=404,
+                code="RESOURCE_NOT_FOUND",
+            ) from exc
+        if notify:
+            notify_presentation_changed(
+                playlist_id=str(playlist_id),
+                reason="presentation_update_playlist",
+            )
+        return playlist
+
+    def set_playlist_active(
+        self,
+        playlist_id: UUID,
+        *,
+        is_active: bool,
+        actor_user_id: str,
+        expected_revision: int | None = None,
+        notify: bool = True,
+    ) -> dict[str, Any]:
+        reason = (
+            "presentation_playlist_activated"
+            if is_active
+            else "presentation_playlist_deactivated"
+        )
+        self.assert_expected_revision(playlist_id, expected_revision)
+        try:
+            playlist = self._persist(
+                playlist_id,
+                expected_revision,
+                lambda: self._repo.set_active(
+                    playlist_id,
+                    is_active=is_active,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                    expected_revision=expected_revision,
+                ),
+            )
+        except PlaylistNotFoundError as exc:
+            raise PresentationWriteError(
+                "Programação não encontrada.",
+                status_code=404,
+                code="RESOURCE_NOT_FOUND",
+            ) from exc
+        if notify:
+            notify_presentation_changed(
+                playlist_id=str(playlist_id),
+                reason=reason,
+            )
+        return playlist
+
+    def duplicate_slide(
+        self,
+        playlist_id: UUID,
+        slide_id: UUID,
+        *,
+        actor_user_id: str,
+        expected_revision: int | None = None,
+        notify: bool = True,
+    ) -> dict[str, Any]:
+        self.assert_expected_revision(playlist_id, expected_revision)
+        try:
+            slide = self._persist(
+                playlist_id,
+                expected_revision,
+                lambda: self._repo.duplicate_slide(
+                    playlist_id,
+                    slide_id,
+                    actor_user_id=actor_user_id,
+                    expected_revision=expected_revision,
+                ),
+            )
+        except PlaylistNotFoundError as exc:
+            raise PresentationWriteError(
+                "Programação não encontrada.",
+                status_code=404,
+                code="RESOURCE_NOT_FOUND",
+            ) from exc
+        except SlideNotFoundError as exc:
+            raise PresentationWriteError(
+                "Tela não encontrada.",
+                status_code=404,
+                code="RESOURCE_NOT_FOUND",
+            ) from exc
+        if notify:
+            notify_presentation_changed(
+                playlist_id=str(playlist_id),
+                reason="slide_duplicated",
+            )
+        return slide
+
     def get_slide(self, slide_id: UUID, *, playlist_id: UUID) -> dict[str, Any]:
         try:
             return self._repo.get_slide(slide_id, playlist_id=playlist_id)

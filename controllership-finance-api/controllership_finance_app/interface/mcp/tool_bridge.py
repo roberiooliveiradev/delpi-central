@@ -73,6 +73,7 @@ from controllership_finance_app.interface.http.routes import (
     analysis_routes,
     admin_checklist_routes,
     closing_routes,
+    closing_state_routes,
     competences_routes,
     documents_routes,
     me_routes,
@@ -748,6 +749,21 @@ def tool_get_work_in_process(
         warehouse=warehouse,
         page=page,
         page_size=page_size,
+    )
+
+
+def tool_get_cost_closing_state(
+    period: str,
+    branch: str = "all",
+) -> CallToolResult:
+    """R12/R15 — projeção governada de estado de fechamento/cutoff
+    (marcadores técnicos; nunca homologação nem execução ERP)."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_state_routes.get_cost_closing_state,
+        request,
+        period=period,
+        branch=branch,
     )
 
 

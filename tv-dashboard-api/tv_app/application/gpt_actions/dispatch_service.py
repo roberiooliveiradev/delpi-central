@@ -499,6 +499,48 @@ class GptActionsDispatchService:
                 authorization=authorization,
                 include_runtime=bool(flt.get("includeRuntime", True)),
             )
+        if entity_key == "slide_preset" and action_key == "list":
+            self._semantic_filters(
+                filters, allowed=set(), context="read.slide_preset.list"
+            )
+            from tv_app.application.services.slide_preset_service import (
+                list_slide_presets,
+            )
+
+            items = list_slide_presets()
+            return {
+                "items": items,
+                "count": len(items),
+                "entity": "slide_preset",
+            }
+        if entity_key == "media_asset" and action_key == "list":
+            flt = self._semantic_filters(
+                filters,
+                allowed={"mediaKind"},
+                context="read.media_asset.list",
+            )
+            from tv_app.application.services.media_query_service import (
+                list_playlist_media,
+            )
+            from uuid import UUID
+
+            playlist_ref = str(ref or flt.get("playlistId") or "").strip()
+            if not playlist_ref:
+                raise GptActionsError(
+                    "read.media_asset.list exige ref=playlistId.",
+                    code="VALIDATION_ERROR",
+                    status_code=422,
+                )
+            items = list_playlist_media(
+                UUID(playlist_ref),
+                media_kind=flt.get("mediaKind"),
+            )
+            return {
+                "items": items,
+                "count": len(items),
+                "entity": "media_asset",
+                "playlistId": playlist_ref,
+            }
         if entity_key == "product_guide":
             flt = self._semantic_filters(
                 filters,

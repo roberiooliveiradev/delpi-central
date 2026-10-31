@@ -417,8 +417,8 @@ REPORT_CATALOG: dict[str, ReportCapability] = {
 UNIMPLEMENTED_REPORTS: dict[str, str] = {
     "R04": "PENDING_CONTRACT — fonte/owner não confirmados.",
     "R09": "PENDING_CONTRACT — DLP204 sem SP implementada (E9).",
-    "R12": "PENDING_CONTRACT — estado de custos via wizard ERP.",
+    "R12": "STATE_VIEW — projeção de estado implementada; comparação monetária não se aplica.",
     "R13": "EXTERNAL — evidência documental externa, sem contrato numérico.",
     "R14": "EXTERNAL — evidência documental externa, sem contrato numérico.",
-    "R15": "PENDING_CONTRACT — cutoff vinculado ao estado P3.",
+    "R15": "STATE_VIEW — projeção de estado implementada; comparação monetária não se aplica.",
 }

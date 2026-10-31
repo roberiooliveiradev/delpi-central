@@ -765,7 +765,21 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(screen.queryByText("RELATÓRIO")).toBeNull();
     expect(screen.queryByText("DESCRIÇÃO")).toBeNull();
     expect(screen.getAllByText("Disponível").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Abrir relatório").length).toBe(8);
+    expect(screen.getAllByText("Abrir relatório").length).toBe(9);
+  });
+
+  it("cards sem probe próprio exibem «Não verificado» e não inflam o contador", async () => {
+    renderPanel();
+
+    await screen.findByText("Relatórios para análise");
+    // R06/R07/R10/R11/R12-R15 não têm probe próprio — nunca herdam h02.
+    expect(screen.getAllByText("Não verificado").length).toBe(5);
+    const counter = document.querySelector(
+      '[aria-label^="Relatórios disponíveis:"]',
+    );
+    expect(counter?.getAttribute("aria-label")).toBe(
+      "Relatórios disponíveis: 4",
+    );
   });
 
   it("matriz R01–R15 fica em rastreabilidade técnica expansível", async () => {

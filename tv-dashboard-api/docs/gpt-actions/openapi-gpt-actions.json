@@ -653,6 +653,26 @@
                           ],
                           "properties": {
                             "op": {
+                              "const": "activate_playlist",
+                              "type": "string"
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            }
+                          },
+                          "example": {
+                            "op": "activate_playlist"
+                          },
+                          "title": "activate_playlist"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op"
+                          ],
+                          "properties": {
+                            "op": {
                               "const": "add_blank_slide",
                               "type": "string"
                             },
@@ -1062,6 +1082,26 @@
                         {
                           "type": "object",
                           "required": [
+                            "op"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "deactivate_playlist",
+                              "type": "string"
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            }
+                          },
+                          "example": {
+                            "op": "deactivate_playlist"
+                          },
+                          "title": "deactivate_playlist"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
                             "op",
                             "blockId"
                           ],
@@ -1195,6 +1235,40 @@
                             }
                           },
                           "title": "duplicate_blocks"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "slideId"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "duplicate_slide",
+                              "type": "string"
+                            },
+                            "slideId": {
+                              "type": "string",
+                              "description": "Slide existente a duplicar (UUID INFORMED)."
+                            },
+                            "as": {
+                              "type": "string",
+                              "description": "Local alias for the resource this op produces (compound plans)."
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "example": {
+                            "op": "duplicate_slide",
+                            "slideId": "00000000-0000-4000-8000-000000000001"
+                          },
+                          "title": "duplicate_slide"
                         },
                         {
                           "type": "object",
@@ -3001,6 +3075,58 @@
                             "op",
                             "items"
                           ],
+                          "properties": {
+                            "op": {
+                              "const": "reorder_sections",
+                              "type": "string"
+                            },
+                            "items": {
+                              "type": "array",
+                              "minItems": 1,
+                              "description": "Ordem completa das seções: section id + sortOrder.",
+                              "items": {
+                                "type": "object",
+                                "required": [
+                                  "id",
+                                  "sortOrder"
+                                ],
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "sortOrder": {
+                                    "type": "integer"
+                                  }
+                                }
+                              }
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            }
+                          },
+                          "example": {
+                            "op": "reorder_sections",
+                            "items": [
+                              {
+                                "id": "00000000-0000-4000-8000-000000000001",
+                                "sortOrder": 0
+                              },
+                              {
+                                "id": "00000000-0000-4000-8000-000000000002",
+                                "sortOrder": 1
+                              }
+                            ]
+                          },
+                          "title": "reorder_sections"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "items"
+                          ],
                           "example": {
                             "op": "reorder_slides",
                             "items": [
@@ -3646,6 +3772,70 @@
                             }
                           },
                           "title": "transform_text_case"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "update_playlist",
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 200
+                            },
+                            "description": {
+                              "type": "string"
+                            },
+                            "transitionStyle": {
+                              "type": "string"
+                            },
+                            "defaultDurationSec": {
+                              "type": "integer",
+                              "minimum": 5,
+                              "maximum": 600
+                            },
+                            "playbackMode": {
+                              "type": "string",
+                              "enum": [
+                                "presentation",
+                                "meeting"
+                              ]
+                            },
+                            "globalRefreshSec": {
+                              "type": "integer",
+                              "minimum": 30,
+                              "maximum": 3600
+                            },
+                            "viewportProfile": {
+                              "type": "string"
+                            },
+                            "viewportWidth": {
+                              "type": "integer",
+                              "minimum": 64,
+                              "maximum": 7680
+                            },
+                            "viewportHeight": {
+                              "type": "integer",
+                              "minimum": 64,
+                              "maximum": 7680
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            }
+                          },
+                          "example": {
+                            "op": "update_playlist",
+                            "name": "Painel Operacional",
+                            "defaultDurationSec": 15,
+                            "transitionStyle": "fade"
+                          },
+                          "title": "update_playlist"
                         },
                         {
                           "type": "object",
