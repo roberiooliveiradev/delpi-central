@@ -657,6 +657,10 @@ async def _analyze_product_drawing(
         DrawingAnalysisError,
         analyze_product_drawing,
     )
+    from engineering_app.domain.drawing.visual_observation import (
+        VisualObservationError,
+        parse_visual_observations,
+    )
 
     code = str(params.get("product_code") or "").strip()
     if not code:
@@ -664,12 +668,30 @@ async def _analyze_product_drawing(
             "product_code obrigatório para product.drawing_analysis.",
             code="validation",
         )
+    try:
+        observations = parse_visual_observations(
+            params.get("visual_observations")
+        )
+    except VisualObservationError as exc:
+        return _err(
+            str(exc),
+            status_code=400,
+            code="invalid_visual_observation",
+        )
+    scope_raw = params.get("scope")
+    scope = (
+        [str(s).strip() for s in scope_raw if str(s).strip()][:20]
+        if isinstance(scope_raw, list)
+        else None
+    )
     ctx = bridge._source_context(context)
     try:
         report = await analyze_product_drawing(
             code=code,
             source=bridge.build_delegated_auxiliary_source(),
             ctx=ctx,
+            visual_observations=observations or None,
+            scope=scope,
         )
     except DrawingAnalysisError as exc:
         return _err(
