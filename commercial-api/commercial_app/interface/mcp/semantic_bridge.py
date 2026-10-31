@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -440,6 +441,14 @@ _READ_DISPATCH = {
     ("production", "product_structure"): (
         lambda a: parity.tool_product_structure(**a)
     ),
+    ("product", "search"): lambda a: parity.tool_product_search(**a),
+    ("product", "summary"): lambda a: parity.tool_product_summary(**a),
+    ("product", "customers"): (
+        lambda a: parity.tool_product_customers(**a)
+    ),
+    ("product", "filter_options"): (
+        lambda a: parity.tool_product_filter_options(**a)
+    ),
     ("user_profile", "get"): lambda a: parity.tool_user_profile_get(**a),
 }
 
@@ -587,6 +596,36 @@ _KNOWLEDGE_COLLECTIONS = ("topics", "methods", "playbooks")
 _SELECTION_CAP = 5
 
 
+def _fold(text: str) -> str:
+    """Case + accent fold for knowledge selection matching."""
+    return "".join(
+        ch
+        for ch in unicodedata.normalize("NFKD", (text or "").lower())
+        if not unicodedata.combining(ch)
+    )
+
+
+# Portuguese function words / interrogatives that carry no retrieval
+# signal — filtered out of the query terms (accent-folded forms).
+_SELECTION_STOPWORDS = frozenset({
+    "que", "qual", "quais", "como", "quando", "onde", "quem",
+    "porque", "pois", "para", "pra", "sobre", "entre", "ser",
+    "sao", "estao", "esta", "foi", "era", "sera", "tem", "ter",
+    "seus", "suas", "seu", "sua", "meu", "minha", "nosso", "nossa",
+    "muito", "pouco", "todo", "toda", "todos", "todas", "tudo",
+    "este", "esta", "isso", "isto", "outro", "outra", "outros",
+    "outras", "cada", "mais", "menos", "maior", "menor", "melhor",
+    "pior", "entao", "assim", "tambem", "apenas", "vai", "vao",
+    "vem", "fazer", "feito", "faz", "pode", "podem", "deve",
+    "devem", "quer", "quero", "queremos", "gostaria", "preciso",
+    "mostre", "mostrar", "liste", "listar", "traga", "trazer",
+    "mes", "meses", "ano", "anos", "dia", "dias", "hoje", "ontem",
+    "agora", "ainda", "sendo", "novo", "nova", "ver", "saber",
+    "entender", "explique", "explicar", "diga", "fale", "falar",
+    "sobre", "algum", "alguma", "alguns", "algumas", "algo",
+})
+
+
 def _knowledge_entry(doc: dict[str, Any], key: str):
     """Resolve a knowledge id across collections.
 
@@ -616,27 +655,52 @@ def _knowledge_select(
     internal access classification enforced by the human gate above,
     so selection cannot leak cross-scope data (it returns guidance,
     not records)."""
+    # Short domain acronyms (OV, OP, PV) score only when declared as
+    # corpus keywords — data-driven, no hardcoded acronym list in the
+    # mechanism.
+    short_terms = {
+        kw.strip().lower()
+        for collection in _KNOWLEDGE_COLLECTIONS
+        for entry in (doc.get(collection) or {}).values()
+        if isinstance(entry, dict)
+        for kw in (entry.get("keywords") or [])
+        if 0 < len(kw.strip()) < 3
+    }
     terms = {
         t
         for t in re.split(r"[^\wÀ-ÿ]+", (query or "").lower())
-        if len(t) >= 3
+        if len(t) >= 3 or t in short_terms
     }
+    # Light plural normalization: "compras"/"pedidos" also try the
+    # singular form against the corpus haystack.
+    terms |= {
+        t[:-1] for t in set(terms) if len(t) > 3 and t.endswith("s")
+    }
+    # Accent-insensitive matching: Portuguese queries vary diacritics
+    # ("previsão" vs corpus keyword "previsao") — normalize both sides,
+    # then drop function words that carry no retrieval signal.
+    terms = {_fold(t) for t in terms} - _SELECTION_STOPWORDS
     ranked: list[tuple[int, str, str, dict[str, Any]]] = []
     for collection in _KNOWLEDGE_COLLECTIONS:
         kind = collection[:-1]  # topic|method|playbook
         for entry_id, entry in (doc.get(collection) or {}).items():
             if not isinstance(entry, dict):
                 continue
-            haystack = " ".join(
-                str(v)
-                for v in [
-                    entry.get("title", ""),
-                    entry.get("objective", ""),
-                    " ".join(entry.get("keywords") or []),
-                    " ".join(entry.get("trigger_questions") or []),
-                ]
-            ).lower()
-            score = sum(1 for t in terms if t in haystack)
+            curated_hay = _fold(
+                " ".join(entry.get("keywords") or [])
+                + " "
+                + " ".join(entry.get("trigger_questions") or [])
+            )
+            text_hay = _fold(
+                f"{entry.get('title', '')} {entry.get('objective', '')}"
+            )
+            # Curated fields (keywords/trigger_questions) weigh double —
+            # they exist precisely to route selection.
+            score = sum(
+                (2 if t in curated_hay else 1)
+                for t in terms
+                if t in curated_hay or t in text_hay
+            )
             if score:
                 ranked.append((score, kind, entry_id, entry))
     ranked.sort(key=lambda item: (-item[0], item[1], item[2]))
@@ -673,6 +737,7 @@ def _knowledge_select(
                 "related_capabilities": entry.get(
                     "related_capabilities"
                 ),
+                "related_entries": entry.get("related_entries"),
                 "limitations": entry.get("limitations"),
                 "conversation_relevance": score,
             }

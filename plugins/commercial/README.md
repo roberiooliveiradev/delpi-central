@@ -43,9 +43,11 @@ Toda mudança relevante no Portal Comercial ou em sua interface conversacional C
 
 Esta regra vale também para trabalhos delegados a Devin/Cursor: entrega comercial sem atualização da documentação canônica aplicável **não está concluída**. GitHub issues organizam execução, mas não substituem a documentação do Portal.
 
-## CAIO 3.0 — inteligência comercial especializada (proposta)
+## CAIO 3.0 — inteligência comercial especializada
 
-A evolução incremental de conhecimento, métodos profissionais, roteiros analíticos e recuperação contextual pela conversa está registrada em [CAIO-INTELIGENCIA-COMERCIAL-3-0.md](../../docs/12-roadmap-e-evolucao/commercial/CAIO-INTELIGENCIA-COMERCIAL-3-0.md). **Status: visão/planejamento; não representa funcionalidades já implementadas nem backlog automaticamente aprovado.** Preservar owners, fontes canônicas, permissões e evidência de execução.
+A evolução incremental de conhecimento, métodos profissionais, roteiros analíticos e recuperação contextual pela conversa está registrada em [CAIO-INTELIGENCIA-COMERCIAL-3-0.md](../../docs/12-roadmap-e-evolucao/commercial/CAIO-INTELIGENCIA-COMERCIAL-3-0.md). Preservar owners, fontes canônicas, permissões e evidência de execução.
+
+**Ampliação 2026-10-31 (corpus v3.1, catálogo 127 ops):** glossário estruturado de termos comerciais (OV/PV/OP/LMP/ROL/OTD…), tópico `products.guide` com 4 novas reads `product.search/summary/customers/filter_options` via products BFF (catálogo SB1, owner Engenharia), métodos `benchmarking` e `forecast_vendas` (referências externas, validação de negócio pendente), 8 roteiros revisados contra contratos reais e seleção contextual reforçada (acentos/plural/siglas/stopwords). Métodos externos nunca são regra DELPI; números sempre dos casos de uso oficiais.
 
 ## Rotas UI
 

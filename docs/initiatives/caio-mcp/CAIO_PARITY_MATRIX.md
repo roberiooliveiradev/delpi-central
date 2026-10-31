@@ -19,6 +19,7 @@ real não são operações elegíveis — classificação
 | `NOT_SEMANTICALLY_ELIGIBLE` | 7 | binário/multipart/push/jobs |
 | Elegíveis (denominador) | 126 | — |
 | Implementadas via 6 tools (`PROVEN_CURRENT`) | 126 | 123 capabilities + knowledge topics + get_context |
+| Além da paridade Portal (products BFF) | +4 | `product.search/summary/customers/filter_options` — catálogo SB1 via products BFF (CAIO 3.0 ampliação, 2026-10-31; não são páginas do Portal) |
 | `BLOCKED_EXTERNAL` / `TO_IMPLEMENT` | 0 | — |
 
 **PARITY_PERCENT = 126/126 = 100%** das operações elegíveis mapeadas

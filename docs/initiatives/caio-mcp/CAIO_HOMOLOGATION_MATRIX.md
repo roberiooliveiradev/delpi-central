@@ -229,6 +229,37 @@ Cada pendência da rodada autenticada foi investigada contra o contrato oficial 
 
 **Evidência desta rodada de correção:** suíte CAIO **656 passed / 58 skipped** (homologação + integração isolada plugins-db + parity/mcp/character), incluindo novos testes de boundary para o contrato upstream de propostas e cenário multi-etapa de investigação de proposta. Nenhum write/delete produtivo executado.
 
+## Rodada CAIO 3.0 — ampliação de conhecimento e inteligência comercial — 2026-10-31
+
+**Base:** `origin/main 7086824a1d` (inclui auditoria `9a91020b36ad`); catálogo semântico **127 operações** (123 anteriores + 4 novas `product.*`). Corpus de conhecimento v3.1 (17 tópicos, 16 métodos, 8 roteiros).
+
+### Novas capacidades homologadas em contrato
+
+| Op | Tool | Risco | Fonte | Nível | Resultado |
+|---|---|---|---|---|---|
+| `product.search` | read | read | api-delpi `/products/search` via products BFF | contrato + boundary (gateway fake) | PASS |
+| `product.summary` | read | read | api-delpi `/products/{code}/summary` | contrato + boundary | PASS |
+| `product.customers` | read | read | api-delpi `/products/{code}/customers` | contrato + boundary | PASS |
+| `product.filter_options` | read | read | api-delpi `/products/filter-options` | contrato + boundary | PASS |
+
+Autorização idêntica às demais reads (humano comercial; service principal → 403; dados upstream = JWT do chamador — escopo api-delpi/Engenharia efetivo no upstream).
+
+### Cenários da homologação comercial (FASE 6)
+
+| Cenário | Avaliação em contrato (seleção + dispatch) | Status |
+|---|---|---|
+| A — Conhecimento (OV/OP/OTD e relações) | `knowledge` com siglas de 2 letras seleciona `topic.commercial.glossary` (termos estruturados com fonte/owner/relações) | PASS (contrato) / TEST_NOT_RUN (autenticado) |
+| B — Produtos (chicotes cadastrados) | `topic.products.guide` + `product.search/filter_options/summary/customers` encaminham ao contrato oficial | PASS (contrato+boundary) / TEST_NOT_RUN (autenticado) |
+| C — Clientes em retração | `playbook.customers_retraction` + `method.rfv`/`abc_pareto` selecionados por frase alternativa | PASS (seleção) / TEST_NOT_RUN (dados reais) |
+| D — Funil de propostas | `playbook.proposal_funnel` + `method.funil_conversao` | PASS (seleção) |
+| E — Pedidos em risco | `playbook.order_health` + `method.risco_pedidos_otd` (steps corrigidos: OTD + produção) | PASS (seleção) |
+| F — Diagnóstico completo | `playbook.executive_diagnosis` cobre ROL/clientes/propostas/pedidos/produção (`rol.series`, não `rol.trend` — drift corrigido) | PASS (seleção) |
+| G — Método para crescimento | `method.account_planning`/`abc_pareto`/`benchmarking` retornam `external_reference` + `pending_business_validation` | PASS (contrato) |
+
+**Classificação:** `ACCEPT_WITH_RESIDUAL` para a camada semântica/contrato. Rodada autenticada em produção (ChatGPT↔CAIO com principal real) = **TEST_NOT_RUN** — sem credencial mcp-commercial neste ambiente; repetir os 7 cenários autenticados após deploy antes de declarar homologação produtiva.
+
+**Evidência:** suíte commercial-api **1226 passed / 3 failed** — as 3 falhas são a baseline preexistente já documentada (`test_commercial_totvs_bff_routes`, `test_recently_closed_orders_bff`, `test_worklist_routes_rbac`). Suíte CAIO (homologation+integration+mcp+parity): 609+ verde; novos testes cobrem contrato dos 4 `product.*`, campos dos novos métodos, seleção por frases alternativas e siglas OV/OP/PV.
+
 ## Smoke autenticado pós-deploy — 2026-10-30
 
 Após deploy informado no commit `b453b0981c6ef75d2025c1b70b5c80e281bc7553`, a conexão ChatGPT→CAIO respondeu `get_context` com catálogo `2.0` e 123 operações. Consulta `read(proposal.analytics_list)` retornou proposta e filial autorizadas; `read(proposal.analytics_get, ref=proposal_number, filters={branch})` e `read(proposal.history_events, ref=proposal_number, filters={branch})` retornaram **success=true**, corrigindo os erros anteriores 400/upstream 422. Não foram executadas mutações. Esta evidência comprova essas duas operações autenticadas, não toda a integração produtiva ou as 50 operações de escrita/exclusão.

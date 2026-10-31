@@ -305,7 +305,7 @@ def test_knowledge_returns_versioned_guidance():
     payload = result.structured_content
     assert result.is_error is False
     assert payload["data"]["topic"] == "caio.usage"
-    assert payload["data"]["knowledge_version"] == "3.0"
+    assert payload["data"]["knowledge_version"] == "3.1"
 
 
 def test_knowledge_unknown_topic_is_not_found():
@@ -316,12 +316,14 @@ def test_knowledge_unknown_topic_is_not_found():
     assert payload["status_code"] == 404
 
 
-def test_knowledge_planned_topic_is_honest_not_implemented():
+def test_knowledge_products_guide_is_implemented():
+    """CAIO 3.0 ampliação: products.guide left the planned state —
+    the topic now returns the implemented guidance."""
     _set_context(_human_user())
     result = sem.tool_knowledge(topic="products.guide")
     payload = result.structured_content
-    assert result.is_error is True
-    assert payload["status_code"] == 501
+    assert result.is_error is False
+    assert payload["data"]["status"] == "implemented"
 
 
 # --- execute / delete (deny-by-default) --------------------------------------

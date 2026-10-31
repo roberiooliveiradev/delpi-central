@@ -1142,7 +1142,7 @@ def _payload_dict(value: Any) -> dict:
     if value is None:
         return {}
     if isinstance(value, BaseModel):
-        return value.model_dump(exclude_none=True)
+        return value.model_dump(exclude_none=True, exclude_unset=True)
     if isinstance(value, dict):
         return dict(value)
     return {}
