@@ -1,5 +1,5 @@
 {
-  "version": "3.2",
+  "version": "4.0",
   "owner": "commercial-api",
   "audience": "caio-mcp",
   "topics": {
@@ -17,7 +17,8 @@
         "Estados honestos: unavailable significa falha na fonte; forbidden significa falta de autorização — nunca apresente como ausência de dados.",
         "Escopo de carteira: membros veem apenas clientes vinculados às próprias carteiras; scope_mode=membership força a carteira do usuário; sem filtro, usuários manage/team veem o recorte global autorizado.",
         "knowledge também recupera methods (method.<id>: metodologias externas curadas — nunca regra DELPI) e playbooks (playbook.<id>: roteiros que compõem casos de uso oficiais); topic vazio ou \"*\" com query seleciona os conteúdos relevantes para a pergunta.",
-        "Seleção contextual (v3.2): consulte knowledge com query textual — retorna até 5 entradas ranqueadas com id/tipo/título/fonte/owner/status/related_capabilities/related_entries; busque o conteúdo completo por topic=<id>."
+        "Seleção contextual (v3.2): consulte knowledge com query textual — retorna até 5 entradas ranqueadas com id/tipo/título/fonte/owner/status/related_capabilities/related_entries; busque o conteúdo completo por topic=<id>.",
+        "v4.0: playbook meeting_prep para briefing de reunião/visita; riscos rotulados CONFIRMED/RISK/WATCH/UNKNOWN; simulações rotuladas SIMULATED com premissas e fórmulas."
       ],
       "keywords": [
         "caio",
@@ -1770,7 +1771,8 @@
       "failure_states": [
         "sem histórico suficiente → lista qualitativa com lacuna declarada",
         "cliente novo aparenta retração falsa",
-        "retração por produto ≠ retração de conta"
+        "retração por produto ≠ retração de conta",
+        "retração estimada (queda relativa) ≠ perda confirmada (sem compra no período + evidência) — rotular cada cliente"
       ],
       "official_actions": [
         "analyze portfolio.billing_ranking",
@@ -1856,13 +1858,19 @@
       "investigation_questions": [
         "Quais famílias concentram faturamento?",
         "Quem compra a família e quem ainda não compra?",
-        "O mix do cliente sugere cross-sell plausível — hipótese, não compatibilidade técnica?"
+        "O mix do cliente sugere cross-sell plausível — hipótese, não compatibilidade técnica?",
+        "Clientes que compravam produto/família X e pararam — recuperação é oportunidade?",
+        "Clientes cujo mix sugere nova aplicação autorizada (hipótese, não compatibilidade técnica)?",
+        "Propostas antigas não concluídas merecem retomada (histórico/revisões)?",
+        "Carteiras/vendedores com crescimento acima da média replicável?"
       ],
       "expected_evidence": [
         "rol.by_product/by_customer",
         "product.customers",
         "product.search customer_reference",
-        "customer.billing_series com filtro de produto"
+        "customer.billing_series com filtro de produto",
+        "proposal.history_events para retomada",
+        "portfolio.billing_share por carteira"
       ],
       "failure_states": [
         "cross-sell é hipótese até validação comercial",
@@ -1964,7 +1972,8 @@
       "failure_states": [
         "dado fabril indisponível → declarar, não presumir risco",
         "OP sem vínculo ao pedido → UNKNOWN",
-        "RISK só com regra/evidência explícita — risco previsto ≠ atraso confirmado"
+        "RISK só com regra/evidência explícita — risco previsto ≠ atraso confirmado",
+        "RISK previsto ≠ atraso CONFIRMED — classificar explicitamente: CONFIRMED (OTD vencido), RISK (evidência de desvio), WATCH (sinal fraco), UNKNOWN (dado ausente)"
       ],
       "official_actions": [
         "read open_order.list",
@@ -2055,7 +2064,8 @@
       "failure_states": [
         "perda/ganho só quando status oficial sustentar",
         "revisão diferente da esperada → consultar revisions",
-        "histórico ausente → causa = hipótese"
+        "histórico ausente → causa = hipótese",
+        "proposta parada = aging sem evento recente; não declarar perdida sem status oficial — distinguir STALLED vs LOST"
       ],
       "official_actions": [
         "read proposal.analytics_list",
@@ -2073,7 +2083,7 @@
       "type": "playbook",
       "status": "implemented",
       "title": "Previsão com cenários e incerteza",
-      "objective": "Apoiar forecast declarando método, premissas e intervalo de incerteza.",
+      "objective": "Projetar faturamento e simular cenários comerciais com premissas, fórmulas e incerteza explícitas.",
       "inputs": [
         "série histórica oficial",
         "horizonte",
@@ -2138,18 +2148,25 @@
       "investigation_questions": [
         "Qual a base histórica oficial e a janela?",
         "Carteira aberta cobre quanto do período?",
-        "Quais premissas mudam entre cenários?"
+        "Quais premissas mudam entre cenários?",
+        "Qual o efeito de atrasos de entrega sobre o faturamento previsto?",
+        "E se a conversão de propostas variar ±x%?",
+        "E se clientes em retração recuperarem parcialmente as compras?"
       ],
       "expected_evidence": [
         "rol.series (série oficial)",
         "portfolio.open_summary/open_horizon (pipeline)",
         "closing_rate.series",
-        "customer.billing_series"
+        "customer.billing_series",
+        "premissas por cenário",
+        "fórmula e denominador de cada projeção"
       ],
       "failure_states": [
         "projeção ≠ fato nem meta oficial",
         "sazonalidade só quando demonstrável",
-        "erro histórico medido, não presumido"
+        "erro histórico medido, não presumido",
+        "simulação não é previsão garantida nem indicador oficial — rotular SIMULATED com fórmula/premissas",
+        "cenário sem base histórica → UNKNOWN, não projetar"
       ],
       "official_actions": [
         "analyze rol.series",
@@ -2157,7 +2174,7 @@
         "analyze portfolio.open_horizon",
         "read customer.billing_series"
       ],
-      "output_schema": "escopo/período → resumo executivo → fatos OBSERVED → cálculos auditáveis → hipóteses INFERRED → desconhecidos UNKNOWN → prioridades → recomendações → owner sugerido → KPI de acompanhamento → limitações"
+      "output_schema": "dados de origem OBSERVED → premissas → fórmulas autorizadas → cenário base → cenários alternativos → hipóteses INFERRED → incertezas/desconhecidos UNKNOWN → limitações → KPI"
     },
     "seller_portfolio_performance": {
       "owner": "commercial-api",
@@ -2332,6 +2349,110 @@
         "prepare task draft somente a pedido"
       ],
       "output_schema": "escopo/período → resumo executivo → fatos OBSERVED → cálculos auditáveis → hipóteses INFERRED → desconhecidos UNKNOWN → prioridades → recomendações → owner sugerido → KPI de acompanhamento → limitações"
+    },
+    "meeting_prep": {
+      "id": "meeting_prep",
+      "type": "playbook",
+      "status": "implemented",
+      "version": "4.0",
+      "source_date": "2026-10-31",
+      "owner": "commercial-api",
+      "source": "CAIO 4.0 F5 — briefing de reunião/visita",
+      "access_classification": "internal",
+      "title": "Preparação de reunião ou visita comercial",
+      "objective": "Reunir informações autorizadas do cliente para que o vendedor chegue preparado: histórico, pedidos, propostas, entregas, produtos, pendências e perguntas sugeridas.",
+      "intent": "Briefing completo do cliente antes de uma reunião ou visita comercial.",
+      "keywords": [
+        "reunião",
+        "visita",
+        "briefing",
+        "preparar",
+        "preparação",
+        "agenda",
+        "encontro",
+        "cliente",
+        "perguntas"
+      ],
+      "trigger_questions": [
+        "Prepare um briefing da empresa X para a reunião de amanhã",
+        "O que devo saber antes de visitar esse cliente?",
+        "Me ajude a me preparar para uma visita comercial"
+      ],
+      "inputs": [
+        "customer ou par carteira/cliente",
+        "período opcional"
+      ],
+      "permissions": [
+        "commercial.access",
+        "commercial.analytics"
+      ],
+      "semantic_steps": [
+        "read customer.enrichment — cadastro, vínculos e contatos do cliente",
+        "read customer.billing_series — evolução do faturamento no período",
+        "read customer.open_orders — pedidos em aberto e saldo",
+        "read proposal.analytics_list — propostas em andamento e históricas",
+        "analyze sales_order_otd.summary — desempenho de entrega/OTD",
+        "analyze rol.by_product — famílias/produtos adquiridos pelo cliente",
+        "read task.list — tarefas e follow-ups existentes do cliente",
+        "sintetizar briefing: situação, riscos, oportunidades e perguntas sugeridas"
+      ],
+      "investigation_questions": [
+        "Como evoluiu o faturamento do cliente no período?",
+        "Há pedidos em aberto atrasados ou propostas paradas?",
+        "Quais famílias de produtos o cliente compra — e quais deixou de comprar?",
+        "Existem tarefas ou pendências registradas para este cliente?",
+        "Que perguntas comerciais convém levar (ex.: SPIN sobre situação/problema/implicação)?"
+      ],
+      "expected_evidence": [
+        "customer.enrichment (cadastro e escopo)",
+        "customer.billing_series (série oficial)",
+        "customer.open_orders e proposal.analytics_list",
+        "sales_order_otd.summary (OTD oficial)",
+        "task.list (pendências registradas)"
+      ],
+      "failure_states": [
+        "cliente fora do escopo autorizado → 403 honesto, não simular",
+        "sem histórico suficiente → briefing parcial com lacuna declarada",
+        "dado de OTD indisponível → declarar, não presumir atraso",
+        "registro pós-visita exige execute(task.create) com commercial.manage e consentimento do usuário — nunca automático"
+      ],
+      "official_actions": [
+        "read customer.enrichment",
+        "read customer.billing_series",
+        "read customer.open_orders",
+        "read proposal.analytics_list",
+        "analyze sales_order_otd.summary",
+        "analyze rol.by_product",
+        "read task.list"
+      ],
+      "related_capabilities": [
+        "customer.enrichment",
+        "customer.billing_series",
+        "customer.open_orders",
+        "proposal.analytics_list",
+        "sales_order_otd.summary",
+        "rol.by_product",
+        "task.list"
+      ],
+      "canonical_sources": [
+        "commercial-api",
+        "api-delpi via gateway comercial"
+      ],
+      "insufficient_data": "Briefing parcial com campos UNKNOWN declarados; nunca inventar histórico, contatos ou compromissos.",
+      "response_format": "Briefing: cliente/escopo → situação comercial OBSERVED → pedidos/propostas → entregas/OTD → produtos → pendências → riscos e oportunidades → perguntas sugeridas → registro pós-visita (opcional, via execute com permissão) → limitações.",
+      "output_schema": "escopo/período → resumo executivo → fatos OBSERVED → cálculos auditáveis → hipóteses INFERRED → desconhecidos UNKNOWN → prioridades → recomendações → owner sugerido → KPI de acompanhamento → limitações",
+      "test_criteria": [
+        "briefing com dados sintéticos completos",
+        "cliente fora do escopo → 403",
+        "histórico ausente → UNKNOWN declarado"
+      ],
+      "related_entries": [
+        "spin_selling",
+        "account_planning",
+        "customers_retraction",
+        "expansion_opportunities"
+      ],
+      "limitations": "Briefing cobre apenas fontes comerciais autorizadas; informações técnicas de produto exigem contrato da Engenharia; registro pós-visita exige commercial.manage e pedido explícito do usuário."
     }
   }
 }
