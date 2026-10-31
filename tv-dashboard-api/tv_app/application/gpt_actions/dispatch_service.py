@@ -809,6 +809,265 @@ class GptActionsDispatchService:
 
         return SlideTemplateLibraryService()
 
+    # ------------------------------------------------------------------
+    # B3 — playlist delete (sealed+consent) & history restore (CAS)
+    # ------------------------------------------------------------------
+
+    def _playlist_delete(
+        self,
+        *,
+        user: Any,
+        phase: str | None,
+        target: dict[str, Any] | None,
+        proposal_handle: str | None,
+        consent_artifact: str | None,
+        target_echo: str | None,
+        idempotency_key: str | None,
+        authorization: str | None,
+        transport: str,
+    ) -> dict[str, Any]:
+        """Playlist delete — sealed proposal + A5 consent (B2 pattern)."""
+        import hashlib
+        import json as _json
+        import time as _time
+        import uuid as _uuid
+        from uuid import UUID
+
+        from tv_app.application.gpt_actions.proposal import VistaProposal
+        from tv_app.application.gpt_actions.proposal_store import (
+            load_valid_proposal,
+            get_proposal_store,
+        )
+        from tv_app.application.gpt_actions.vista_consent_service import (
+            challenge_view,
+        )
+        from tv_app.application.services.playlist_lifecycle_service import (
+            delete_playlist,
+        )
+
+        user = self._governed_write_user(user, authorization)
+        actor = self._actor(user)
+        phase_key = str(phase or "prepare").strip().lower()
+        if phase_key not in ("prepare", "commit"):
+            raise GptActionsError(
+                f"Fase desconhecida para delete: {phase_key!r}.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+
+        if phase_key == "commit":
+            if not proposal_handle:
+                raise GptActionsError(
+                    "commit exige proposal_handle.",
+                    code="VALIDATION_ERROR", status_code=422,
+                )
+            proposal = load_valid_proposal(
+                proposal_handle=proposal_handle,
+                actor_id=actor,
+                expected_capability="delete.playlist",
+            )
+            pid_raw = str(
+                (proposal.exact_change.get("target") or {}).get("playlistId")
+                or ""
+            ).strip()
+            echo = str(target_echo or "").strip()
+            if echo != pid_raw:
+                raise GptActionsError(
+                    "target_echo não corresponde ao alvo selado.",
+                    code="CONFIRMATION_MISMATCH", status_code=409,
+                )
+            if self._consent is None:
+                raise GptActionsError(
+                    "Canal de consentimento indisponível.",
+                    code="CONFIRMATION_UNAVAILABLE", status_code=503,
+                )
+            challenge = self._consent.verify_for_commit(
+                proposal=proposal,
+                actor_sub=actor,
+                consent_artifact=consent_artifact,
+                required=True,
+            )
+            try:
+                delete_playlist(UUID(pid_raw))
+            except Exception as exc:  # noqa: BLE001 — surface typed
+                raise GptActionsError(
+                    "Programação não encontrada.",
+                    code="RESOURCE_NOT_FOUND", status_code=404,
+                ) from exc
+            self._consent.consume_for_commit(
+                challenge=challenge,
+                proposal_id=proposal.proposal_id,
+                actor_sub=actor,
+            )
+            get_proposal_store().consume(proposal.proposal_id)
+            return {
+                "status": "VERIFIED",
+                "operation": "delete_playlist",
+                "deleted": {"id": pid_raw},
+                "playlistId": pid_raw,
+            }
+
+        target_map = target if isinstance(target, dict) else {}
+        pid_raw = str(target_map.get("playlistId") or "").strip()
+        if not pid_raw:
+            raise GptActionsError(
+                "delete.playlist exige target.playlistId.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        try:
+            pid = UUID(pid_raw)
+        except ValueError as exc:
+            raise GptActionsError(
+                "playlistId inválido.",
+                code="INVALID_CHANGE", status_code=422,
+            ) from exc
+        from tv_app.application.services.playlist_lifecycle_service import (
+            get_playlist_state,
+        )
+
+        item = get_playlist_state(pid)
+        if not item:
+            raise GptActionsError(
+                "Programação não encontrada.",
+                code="RESOURCE_NOT_FOUND", status_code=404,
+            )
+        state_fp = hashlib.sha256(
+            _json.dumps(item, sort_keys=True, default=str).encode()
+        ).hexdigest()
+        exact_change = {
+            "target": {"playlistId": pid_raw},
+            "ops": [{"op": "delete_playlist", "playlistId": pid_raw}],
+        }
+        now = _time.time()
+        content_hash = hashlib.sha256(
+            _json.dumps(
+                {
+                    "capability": "delete.playlist",
+                    "actor_id": str(actor),
+                    "resource_id": pid_raw,
+                    "state": state_fp,
+                    "exact_change": exact_change,
+                },
+                sort_keys=True, default=str,
+            ).encode()
+        ).hexdigest()
+        proposal = VistaProposal(
+            proposal_id=f"prop_{_uuid.uuid4().hex[:24]}",
+            capability="delete.playlist",
+            actor_id=str(actor),
+            resource_type="playlist",
+            resource_id=pid_raw,
+            current_state_fingerprint=state_fp,
+            exact_change=exact_change,
+            confirmation_requirement={
+                "explicit_user_confirmation": True,
+                "confirmation_policy": "confirm",
+                "destructive": True,
+            },
+            risk="destructive",
+            confirmation_policy="confirm",
+            catalog_version="",
+            base_revision=None,
+            created_at=now,
+            expires_at=now + 600,
+            content_hash=content_hash,
+        )
+        handle = get_proposal_store().put(proposal)
+        if self._consent is None:
+            raise GptActionsError(
+                "Canal de consentimento indisponível.",
+                code="CONFIRMATION_UNAVAILABLE", status_code=503,
+            )
+        consent_challenge = challenge_view(
+            self._consent.issue_for_proposal(
+                proposal=proposal,
+                actor_sub=actor,
+                origin=transport,
+                correlation_id=None,
+            )
+        )
+        return {
+            "status": "consent_required",
+            "phase": "prepare",
+            "operation": "delete_playlist",
+            "proposal_handle": handle,
+            "consentChallenge": consent_challenge,
+            "target": {"playlistId": pid_raw},
+            "item": item,
+        }
+
+    def _playlist_history_restore(
+        self,
+        *,
+        user: Any,
+        target: dict[str, Any] | None,
+        authorization: str | None,
+        transport: str,
+    ) -> dict[str, Any]:
+        """Playlist history restore — CAS-guarded canonical workflow."""
+        from uuid import UUID
+
+        from tv_app.application.services.playlist_lifecycle_service import (
+            PlaylistHistoryNotFoundError,
+            PlaylistRevisionConflictError,
+            restore_playlist_history,
+        )
+
+        user = self._governed_write_user(user, authorization)
+        from tv_app.core.security import assert_permission
+        assert_permission(user, TV_WRITE)
+        actor = self._actor(user)
+        tgt = target if isinstance(target, dict) else {}
+        pid_raw = str(tgt.get("playlistId") or "").strip()
+        hid_raw = str(tgt.get("historyId") or "").strip()
+        if not pid_raw or not hid_raw:
+            raise GptActionsError(
+                "restore exige target.playlistId + target.historyId.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        expected = tgt.get("expectedRevision")
+        try:
+            pid, hid = UUID(pid_raw), UUID(hid_raw)
+        except ValueError as exc:
+            raise GptActionsError(
+                "playlistId/historyId inválido.",
+                code="INVALID_CHANGE", status_code=422,
+            ) from exc
+        try:
+            result = restore_playlist_history(
+                pid,
+                hid,
+                expected_revision=(
+                    int(expected) if expected is not None else None
+                ),
+                actor_user_id=actor,
+            )
+            revision = result["revision"]
+            playlist = result["playlist"]
+        except PlaylistRevisionConflictError as exc:
+            raise GptActionsError(
+                "A programação foi alterada por outro usuário.",
+                code="REVISION_CONFLICT",
+                status_code=409,
+                details={
+                    "currentRevision": getattr(
+                        exc, "current_revision", None
+                    )
+                },
+            ) from exc
+        except PlaylistHistoryNotFoundError as exc:
+            raise GptActionsError(
+                "Versão do histórico não encontrada.",
+                code="RESOURCE_NOT_FOUND", status_code=404,
+            ) from exc
+        return {
+            "status": "VERIFIED",
+            "operation": "restore",
+            "playlistId": pid_raw,
+            "historyId": hid_raw,
+            "revision": revision,
+            "playlist": playlist,
+        }
+
     def _slide_template_execute(
         self,
         *,
@@ -1122,6 +1381,11 @@ class GptActionsDispatchService:
                 code="UNKNOWN_ACTION",
                 status_code=422,
             )
+        if entity_key == "playlist_history":
+            return self._playlist_history_restore(
+                user=user, target=target,
+                authorization=authorization, transport=transport,
+            )
         if entity_key == "slide_template":
             return self._slide_template_execute(
                 user=user,
@@ -1241,6 +1505,15 @@ class GptActionsDispatchService:
         )
 
         entity_key = str(entity or "").strip().lower()
+        if entity_key == "playlist":
+            return self._playlist_delete(
+                user=user, phase=phase, target=target,
+                proposal_handle=proposal_handle,
+                consent_artifact=consent_artifact,
+                target_echo=target_echo,
+                idempotency_key=idempotency_key,
+                authorization=authorization, transport=transport,
+            )
         if entity_key == "slide_template":
             return self._slide_template_delete(
                 user=user,
@@ -1301,7 +1574,7 @@ class GptActionsDispatchService:
                 )
         tgt = target if isinstance(target, dict) else {}
         op: dict[str, Any] = {"op": op_name}
-        for key in ("slideId", "sectionId", "blockId", "deleteSlides"):
+        for key in ("slideId", "sectionId", "blockId", "deleteSlides", "modelId"):
             if key in tgt and tgt[key] is not None:
                 op[key] = tgt[key]
         return self.preview_change(

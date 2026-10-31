@@ -333,12 +333,25 @@ def test_dispatch_requires_read_permission():
 
 
 def test_read_only_user_has_no_restore_path():
-    """Restore stays a domain edit op — it must not exist on the VISTA read."""
-    service, _ = _dispatch(MagicMock())
-    for attr in dir(service):
-        assert "restore" not in attr
-        assert "rollback" not in attr
-        assert "revert" not in attr
+    """Restore is governed by execute.playlist_history — viewer must be denied."""
+    from test_vista_mcp_write_surface import _governed_dispatch, _viewer
+    from tv_app.interface.mcp import tool_bridge
+    from unittest.mock import patch as _patch
+    import pytest as _pytest
+
+    from tv_app.application.gpt_actions.errors import (
+        GptActionsError,
+    )
+    dispatch, _, _ = _governed_dispatch()
+    with _pytest.raises(GptActionsError) as exc:
+        dispatch.semantic_execute(
+            user=_viewer(),
+            entity="playlist_history",
+            action="restore",
+            target={"playlistId": "00000000-0000-0000-0000-000000000001",
+                    "historyId": "00000000-0000-0000-0000-000000000002"},
+        )
+    assert exc.value.status_code == 403
 
 
 # --- MCP surface -----------------------------------------------------------

@@ -52,5 +52,8 @@ def test_only_destructive_operations_require_confirmation():
         for name, spec in operations.items()
         if spec.get("confirmationPolicy") == "confirm"
     }
-    assert confirmed == {"delete_block", "delete_slide", "delete_section"}
+    assert confirmed == {
+        "delete_block", "delete_slide", "delete_section",
+        "delete_data_model",
+    }
     assert all(operations[name]["risk"] == "destructive" for name in confirmed)
