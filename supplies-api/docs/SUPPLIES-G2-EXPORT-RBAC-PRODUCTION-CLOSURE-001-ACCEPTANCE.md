@@ -83,3 +83,61 @@ COMMITS: este commit
 NEXT_STEP: owner api-delpi/Protheus decide caminho (índices vs contrato
   paginado); depois homologação C5 completa; só então G3.
 ```
+
+## Adendo A2 — Fix implementado e homologado (2026-10-31)
+
+### Causa raiz final (cadeia completa medida)
+
+```text
+api-delpi /lines/export:        completa sozinho — 168.4s, 5445 linhas, 8.4MB, 200
+PR-api client (DELPI_API_TIMEOUT):      60s  → 300s  [era gargalo]
+PR-api worker (uvicorn):                sem timeout hard — OK
+supplies-api client (PURCHASE_REQUESTS_API_TIMEOUT): 90s → 300s [era gargalo]
+supplies-mcp client (PURCHASE_REQUESTS_API_TIMEOUT): 90s → 300s [era gargalo]
+supplies-api/mcp gunicorn workers (GUNICORN_TIMEOUT_SECONDS): 90s → 300s [era gargalo]
+nginx /apps/supplies-api/:              86400s — OK
+Cloudflare edge:                        ~125s — LIMITE EXTERNO REMANESCENTE
+```
+
+### Fix aplicado (commit b12524a73a, infra/docker-compose.yml)
+
+Orçamentos alinhados por serviço, env-scoped, com variáveis dedicadas:
+`PURCHASE_REQUESTS_API_DELPI_API_TIMEOUT` (PR-api→api-delpi),
+`PURCHASE_REQUESTS_API_TIMEOUT` (BFF/MCP→PR-api),
+`SUPPLIES_API_GUNICORN_TIMEOUT_SECONDS` (workers gunicorn).
+Sem mudança de contrato, sem truncamento, sem TOP, sem amostra —
+evidência medida: upstream produz o dataset completo corretamente.
+
+### Deploy
+
+`git pull` em prod → recreate `--no-deps` de purchase-requests-api,
+supplies-api, supplies-mcp (env-only, sem rebuild). Todos healthy.
+Demais serviços intactos. Rollback = commit anterior + recreate.
+
+### Homologação produtiva (mesma identidade user-delegated)
+
+```text
+OUT/2026 branch=01:
+  PORTAL_EXPORT  200 · 25.4s · 686 linhas CSV
+  SURI_EXPORT    200 · 20.7s · dataset completo (~1.5MB streamed)
+Ano inteiro branch=01 (168s upstream):
+  PORTAL_EXPORT  524 · Cloudflare edge timeout ~125s
+  SURI_EXPORT    524 · idem
+```
+
+### Resultado
+
+Envelope funcional de exportação: antes falhava qualquer dataset com
+custo >30s (client PR-api); agora opera até o limite do edge CF (~120s
+de custo upstream — cobre meses de dados, ~700+ linhas comprovadas).
+Full-year (168s) excede o edge — residual de infra externa.
+
+### EXECUTION_DRIFT remanescente (owner: infra/edge ou arquitetura)
+
+`FULL_YEAR_SC_EXPORT` bloqueado por Cloudflare proxy timeout (~125s).
+Opções para o owner: (a) config Cloudflare (Enterprise origin/read
+rules — requer acesso à conta CF); (b) SQL/índices TOTVS para custo
+<110s (DBA/Protheus); (c) contrato de export assíncrono/paginado
+(decisão arquitetural). Nenhuma implementável sem autoridade
+correspondente — app-layer já está correta e homologada.
+```
