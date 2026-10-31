@@ -243,6 +243,44 @@ class PresentationHttpCommandPlannerService:
                 )
                 continue
 
+            if op_name == "update_playlist":
+                body = {}
+                for arg in ("name", "description", "transitionStyle",
+                            "defaultDurationSec", "playbackMode",
+                            "globalRefreshSec", "viewportProfile",
+                            "viewportWidth", "viewportHeight"):
+                    if raw.get(arg) is not None:
+                        body[arg] = raw[arg]
+                if not body:
+                    continue
+                commands.append(
+                    _cmd(method="PATCH",
+                         path=f"/playlists/{current_playlist}",
+                         body=body, op=op_name)
+                )
+                continue
+
+            if op_name in {"activate_playlist", "deactivate_playlist"}:
+                verb = "activate" if op_name == "activate_playlist" else "deactivate"
+                commands.append(
+                    _cmd(method="POST",
+                         path=f"/playlists/{current_playlist}/{verb}",
+                         body={}, op=op_name)
+                )
+                continue
+
+            if op_name == "duplicate_slide":
+                sid = str(raw.get("slideId") or "").strip()
+                if not sid:
+                    raise ValueError(
+                        PresentationOpsContentService.message("missingSlide"))
+                commands.append(
+                    _cmd(method="POST",
+                         path=f"/playlists/{current_playlist}/slides/{sid}/duplicate",
+                         body={}, op=op_name)
+                )
+                continue
+
             if op_name == "reorder_slides":
                 items = raw.get("items") if isinstance(raw.get("items"), list) else []
                 commands.append(

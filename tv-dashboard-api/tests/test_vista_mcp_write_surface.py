@@ -98,6 +98,9 @@ def _writes_mock():
         "list_sections",
         "get_playlist",
         "create_playlist",
+        "update_playlist",
+        "set_playlist_active",
+        "duplicate_slide",
     ]
     return MagicMock(spec=base)
 

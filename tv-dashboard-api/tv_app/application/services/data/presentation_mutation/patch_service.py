@@ -1026,6 +1026,71 @@ class PresentationPatchService:
                 playlist_mutated = playlist_mutated or bool(persist)
                 continue
 
+            if op_name == "update_playlist":
+                if not playlist_id:
+                    raise PresentationPatchError(
+                        PresentationOpsContentService.message("missingPlaylist")
+                    )
+                updated_playlist = self._op_update_playlist(
+                    playlist_id,
+                    raw_op,
+                    persist=persist,
+                    actor_user_id=actor_user_id,
+                )
+                side_effects["playlist"] = updated_playlist
+                applied.append(op_name)
+                playlist_mutated = playlist_mutated or bool(persist)
+                continue
+
+            if op_name in {"activate_playlist", "deactivate_playlist"}:
+                if not playlist_id:
+                    raise PresentationPatchError(
+                        PresentationOpsContentService.message("missingPlaylist")
+                    )
+                toggled = self._op_set_playlist_active(
+                    playlist_id,
+                    raw_op,
+                    persist=persist,
+                    actor_user_id=actor_user_id,
+                    is_active=op_name == "activate_playlist",
+                )
+                side_effects["playlist"] = toggled
+                applied.append(op_name)
+                playlist_mutated = playlist_mutated or bool(persist)
+                continue
+
+            if op_name == "duplicate_slide":
+                if not playlist_id:
+                    raise PresentationPatchError(
+                        PresentationOpsContentService.message("missingPlaylist")
+                    )
+                duplicated = self._op_duplicate_slide(
+                    playlist_id,
+                    raw_op,
+                    persist=persist,
+                    actor_user_id=actor_user_id,
+                )
+                side_effects.setdefault("slides", []).append(duplicated)
+                applied.append(op_name)
+                playlist_mutated = playlist_mutated or bool(persist)
+                continue
+
+            if op_name == "reorder_sections":
+                if not playlist_id:
+                    raise PresentationPatchError(
+                        PresentationOpsContentService.message("missingPlaylist")
+                    )
+                reordered_sections = self._op_reorder_sections(
+                    playlist_id,
+                    raw_op,
+                    persist=persist,
+                    actor_user_id=actor_user_id,
+                )
+                side_effects["reorderSections"] = reordered_sections
+                applied.append(op_name)
+                playlist_mutated = playlist_mutated or bool(persist)
+                continue
+
             if op_name == "re_layer_playlist_filters":
                 if not playlist_id or not slide_id or native_config is None:
                     details: dict[str, Any] = {
@@ -4337,6 +4402,156 @@ class PresentationPatchService:
             reason="presentation_slide_from_preset",
         )
         return slide
+
+    def _op_update_playlist(
+        self,
+        playlist_id: str,
+        op: dict[str, Any],
+        *,
+        persist: bool,
+        actor_user_id: str | None,
+    ) -> dict[str, Any]:
+        fields: dict[str, Any] = {}
+        for arg, kw in (
+            ("name", "name"),
+            ("description", "description"),
+            ("transitionStyle", "transition_style"),
+            ("defaultDurationSec", "default_duration_sec"),
+            ("playbackMode", "playback_mode"),
+            ("globalRefreshSec", "global_refresh_sec"),
+            ("viewportProfile", "viewport_profile"),
+            ("viewportWidth", "viewport_width"),
+            ("viewportHeight", "viewport_height"),
+        ):
+            if arg in op and op[arg] is not None:
+                fields[kw] = op[arg]
+        if not fields:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("emptyUpdatePlaylist")
+            )
+        if not persist:
+            return {"preview": True, "playlistId": playlist_id, "fields": fields}
+        if not actor_user_id:
+            raise PresentationPatchError(PresentationOpsContentService.message("missingTarget"))
+        playlist = self._repo.update(
+            UUID(playlist_id),
+            actor_user_id=actor_user_id,
+            reason="presentation_update_playlist",
+            **fields,
+        )
+        notify_presentation_changed(
+            playlist_id=playlist_id,
+            reason="presentation_update_playlist",
+        )
+        return playlist
+
+    def _op_set_playlist_active(
+        self,
+        playlist_id: str,
+        op: dict[str, Any],
+        *,
+        persist: bool,
+        actor_user_id: str | None,
+        is_active: bool,
+    ) -> dict[str, Any]:
+        if not persist:
+            return {"preview": True, "playlistId": playlist_id, "isActive": is_active}
+        if not actor_user_id:
+            raise PresentationPatchError(PresentationOpsContentService.message("missingTarget"))
+        reason = (
+            "presentation_playlist_activated"
+            if is_active
+            else "presentation_playlist_deactivated"
+        )
+        playlist = self._repo.set_active(
+            UUID(playlist_id),
+            is_active=is_active,
+            actor_user_id=actor_user_id,
+            reason=reason,
+        )
+        notify_presentation_changed(playlist_id=playlist_id, reason=reason)
+        return playlist
+
+    def _op_duplicate_slide(
+        self,
+        playlist_id: str,
+        op: dict[str, Any],
+        *,
+        persist: bool,
+        actor_user_id: str | None,
+    ) -> dict[str, Any]:
+        slide_id = str(op.get("slideId") or "").strip()
+        if not slide_id:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("missingTarget")
+            )
+        if not persist:
+            return {
+                "preview": True,
+                "playlistId": playlist_id,
+                "slideId": slide_id,
+                "action": "duplicate",
+            }
+        if not actor_user_id:
+            raise PresentationPatchError(PresentationOpsContentService.message("missingTarget"))
+        slide = self._repo.duplicate_slide(
+            UUID(playlist_id),
+            UUID(slide_id),
+            actor_user_id=actor_user_id,
+            reason="presentation_duplicate_slide",
+        )
+        notify_presentation_changed(
+            playlist_id=playlist_id,
+            reason="presentation_duplicate_slide",
+        )
+        return slide
+
+    def _op_reorder_sections(
+        self,
+        playlist_id: str,
+        op: dict[str, Any],
+        *,
+        persist: bool,
+        actor_user_id: str | None,
+    ) -> dict[str, Any]:
+        items = op.get("items")
+        if not isinstance(items, list) or not items:
+            raise PresentationPatchError(
+                PresentationOpsContentService.message("reorderItemsRequired")
+            )
+        normalized: list[dict[str, Any]] = []
+        for item in items:
+            if not isinstance(item, dict):
+                raise PresentationPatchError(
+                    PresentationOpsContentService.message("reorderItemsRequired")
+                )
+            item_id = str(item.get("id") or "").strip()
+            if not item_id or "sortOrder" not in item:
+                raise PresentationPatchError(
+                    PresentationOpsContentService.message("reorderItemsRequired")
+                )
+            try:
+                sort_order = int(item["sortOrder"])
+            except (TypeError, ValueError) as exc:
+                raise PresentationPatchError(
+                    PresentationOpsContentService.message("reorderItemsRequired")
+                ) from exc
+            normalized.append({"id": item_id, "sortOrder": sort_order})
+        if not persist:
+            return {"preview": True, "items": normalized}
+        if not actor_user_id:
+            raise PresentationPatchError(PresentationOpsContentService.message("missingTarget"))
+        sections = self._repo.reorder_sections(
+            UUID(playlist_id),
+            normalized,
+            actor_user_id=actor_user_id,
+            reason="presentation_reorder_sections",
+        )
+        notify_presentation_changed(
+            playlist_id=playlist_id,
+            reason="presentation_reorder_sections",
+        )
+        return {"items": normalized, "sections": sections}
 
     def _op_create_playlist(
         self,

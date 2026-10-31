@@ -96,8 +96,8 @@ def test_surface_read_vocab_is_closed_and_status_honest():
         assert entities[entity]["actions"] == list(actions)
         assert entities[entity]["status"] == READ_ENTITY_STATUS[entity]
     # Planned capabilities are declared, not silently mapped.
-    assert entities["slide_preset"]["status"] == "not_implemented"
-    assert entities["media_asset"]["status"] == "not_implemented"
+    assert entities["slide_preset"]["status"] == "proven"
+    assert entities["media_asset"]["status"] == "proven"
 
 
 def test_surface_write_verbs_planned_until_consent_foundation():
@@ -289,13 +289,13 @@ def test_read_unknown_action_typed():
     assert exc.value.code == "UNKNOWN_ACTION"
 
 
-def test_read_planned_entity_fail_closed_501():
+def test_read_media_asset_requires_playlist_ref_fail_closed():
     with pytest.raises(GptActionsError) as exc:
         _dispatch().semantic_read(
             user=_viewer(), entity="media_asset", action="list"
         )
-    assert exc.value.code == "NOT_IMPLEMENTED"
-    assert exc.value.status_code == 501
+    assert exc.value.code == "VALIDATION_ERROR"
+    assert exc.value.status_code == 422
 
 
 def test_read_undeclared_filter_rejected_fail_closed():

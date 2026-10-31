@@ -95,8 +95,8 @@ READ_ENTITY_STATUS: dict[str, str] = {
     "data_route": "proven",
     "data_model": "proven",
     "product_guide": "proven",
-    "slide_preset": "not_implemented",
-    "media_asset": "not_implemented",
+    "slide_preset": "proven",
+    "media_asset": "proven",
 }
 
 ANALYZE_ACTIONS: dict[str, str] = {
