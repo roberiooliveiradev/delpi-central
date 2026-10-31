@@ -303,3 +303,9 @@ Conector ChatGPT→CAIO, usuário autenticado, consultas read-only. `get_context
 ## Reteste autenticado de relevância CAIO 3.2 — 2026-10-31
 
 Via conexão ChatGPT→CAIO com identidade autenticada, `get_context` retornou 127 operações (catálogo semântico 2.0) e `knowledge(select, query="Mapear processo comercial usando SIPOC e BPMN")` retornou **somente** `method.sipoc_bpmn` e `topic.commercial.processes` (score 4 cada), sem `method.forecast_vendas`: **PASS para correção de ruído demonstrada**. Reteste das dez perguntas A–J: 10/10 recuperaram conteúdo principal pertinente. **Residual:** A (OV/OP/LMP) ainda listou `commercial.delete_governance` e `commercial.portfolio_governance` além do glossário, mostrando ruído remanescente; outros cenários podem conter candidatos secundários discutíveis. Não foram executados integralmente os playbooks analíticos A–J. Nenhuma mutação. Status: `ACCEPT_WITH_RESIDUAL` para seleção; execução integral `TEST_NOT_RUN`.
+## CAIO 4.0 — corpus v4.0 e playbook meeting_prep — 2026-10-31
+
+- **Baseline F1 (HEAD 9cca21d92b):** 127 ops, 6 tools, corpus 3.2 confirmado antes da evolução.
+- **Delta:** corpus **v4.0** — 9 playbooks (+meeting_prep: briefing de reunião/visita com official_actions reais + registro pós-visita governado por permissão); riscos rotulados CONFIRMED/RISK/WATCH/UNKNOWN; simulações rotuladas SIMULATED com premissas/fórmulas; expansion_opportunities e forecast_scenarios aprofundados.
+- **Testes:** suíte CAIO 653 passed; contrato §5 validado nos 9 playbooks; seleção inclui casos de reunião/negociação.
+- **Autenticado:** reteste de relevância 3.2 já evidenciado acima (SIPOC sem ruído forecast, 10/10 A–J); composição integral A–J dos relatórios = TEST_NOT_RUN.

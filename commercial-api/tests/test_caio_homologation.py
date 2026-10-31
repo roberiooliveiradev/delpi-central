@@ -777,6 +777,13 @@ def test_knowledge_scenarios_a_j_selection_map():
         "desempenho por vendedor e carteira no trimestre": {
             "playbook.seller_portfolio_performance",
         },
+        "prepare um briefing para a reunião com o cliente": {
+            "playbook.meeting_prep",
+        },
+        "como me preparar para uma visita de negociação": {
+            "playbook.meeting_prep", "method.spin_selling",
+            "method.meddpicc",
+        },
     }
     for query, expected in cases.items():
         result = sem.tool_knowledge(query=query)
