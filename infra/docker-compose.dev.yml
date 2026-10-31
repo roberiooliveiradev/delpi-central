@@ -3138,6 +3138,7 @@ services:
     environment:
       PORT: "8000"
       CONTROLLERSHIP_FINANCE_API_ROOT_PATH: /apps/controllership-finance-api
+      MCP_RESOURCE_URL: ${MCP_RESOURCE_URL_CLARA:-https://minhadelpi.com.br/apps/controllership-finance-api/mcp}
 
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
       DELPI_AUTH_CORE_API_URL: http://core-api:8000

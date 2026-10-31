@@ -1246,3 +1246,31 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | G028-E2E | cadeia completa (gate 026 reexecutada) | projeção com dados reais | containers isolados remontados no HEAD; e2e 200 confirmado | PASS |
 | G028-VISUAL | navegador real (Playwright) | smoke visual/tema/a11y | Portal MFE não subiu na stack isolada (montar dist exigiria tocar stack compartilhada) | TEST_NOT_RUN |
 | G028-NEG-PERSONA | usuário sem .access | 403 efetivo | persona negativa não provisionada | INCONCLUSIVE |
+
+## Gate 030 — deploy integrado homolog + CLARA MCP real (31/10/2026)
+
+| Teste | Entrada | Esperado | Observado | Estado |
+|---|---|---|---|---|
+| G030-DEPLOY | rebuild `infra-api-delpi`/`-cf-api`/MFE de `git archive HEAD` (c963017308) | imagens com código R12/R15 | as 3 imagens rebuilt; containers `delpi-api-delpi`, `delpi-controllership-finance-api`, `delpi-controllership-finance` em produção-homolog | PASS |
+| G030-FLAG-OFF | e2e gateway com flag off | 403 tipado | `scope_unavailable` — fail-closed | PASS |
+| G030-FLAG-ON | e2e gateway com flag on (homolog) | projeção completa | HTTP 200 — dados Protheus reais, 5 nós × filiais 01/02 | PASS |
+| G030-MCP | `POST /mcp` initialize + `tools/call read(report.cost_closing_state)` via portal JWT → exchange `delia-api` → token `mcp:tools` | transporte OAuth real + dados reais | HTTP 200 initialize; `tools/call` retorna projeção idêntica ao BFF — residual `not_implemented` RESOLVIDO | PASS |
+| G030-MCP-NEG | audience errada / scope insuficiente | 401 tipado | `invalid_token` (aud ausente) e `insufficient_scope` (openid ausente) | PASS |
+| G030-MFE | `remoteEntry.js` + bundle | página no MFE publicado | remoteEntry 200; `cost-closing-state` presente em `App-COk_6J_E.js` | PASS (visual browser: TEST_NOT_RUN) |
+| G030-REG | consumidores api-delpi pós-recreate | rota resolvida | gateway cacheou IP antigo → 502; `nginx -s reload` → 401 auth correto — consumers OK | PASS (defeito operacional corrigido) |
+| G030-CONFIG | `MCP_RESOURCE_URL` ausente no cf-api | audiência realm minhadelpi.com.br | compose dev+prod corrigidos (`MCP_RESOURCE_URL_CLARA`) — causa raiz do 401 audience | PASS |
+| G030-NEG-PERSONA | usuário sem .access | 403 efetivo | realm dev só tem 1 usuário | INCONCLUSIVE (IAM) |
+
+## Gate 030 — deploy integrado homolog + CLARA MCP real (31/10/2026)
+
+| Teste | Entrada | Esperado | Observado | Estado |
+|---|---|---|---|---|
+| G030-DEPLOY | rebuild `infra-api-delpi`/`-cf-api`/MFE de `git archive HEAD` (c963017308) | imagens com código R12/R15 | as 3 imagens rebuilt; containers `delpi-api-delpi`, `delpi-controllership-finance-api`, `delpi-controllership-finance` em homolog | PASS |
+| G030-FLAG-OFF | e2e gateway com flag off | 403 tipado | `scope_unavailable` — fail-closed | PASS |
+| G030-FLAG-ON | e2e gateway com flag on (homolog) | projeção completa | HTTP 200 — dados Protheus reais, 5 nós × filiais 01/02 | PASS |
+| G030-MCP | `POST /mcp` initialize + `tools/call read(report.cost_closing_state)` via portal JWT → exchange `delia-api` → token `mcp:tools` | transporte OAuth real + dados reais | HTTP 200 initialize; `tools/call` retorna projeção idêntica ao BFF — residual `not_implemented` RESOLVIDO | PASS |
+| G030-MCP-NEG | audience errada / scope insuficiente | 401 tipado | `invalid_token` (aud ausente) e `insufficient_scope` (openid ausente) | PASS |
+| G030-MFE | `remoteEntry.js` + bundle | página no MFE publicado | remoteEntry 200; `cost-closing-state` presente em `App-COk_6J_E.js` | PASS (visual browser: TEST_NOT_RUN) |
+| G030-REG | consumidores api-delpi pós-recreate | rota resolvida | gateway cacheou IP antigo → 502; `nginx -s reload` → 401 auth correto — consumers OK | PASS (defeito operacional corrigido) |
+| G030-CONFIG | `MCP_RESOURCE_URL` ausente no cf-api | audiência realm minhadelpi.com.br | compose dev+prod corrigidos (`MCP_RESOURCE_URL_CLARA`) — causa raiz do 401 audience | PASS |
+| G030-NEG-PERSONA | usuário sem .access | 403 efetivo | realm dev só tem 1 usuário | INCONCLUSIVE (IAM) |

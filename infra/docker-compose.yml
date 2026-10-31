@@ -2264,10 +2264,6 @@ services:
       CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-10}
       DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
 
-      # Supplier enrichment parity with supplies-api: distributed registry
-      # rate limiter needs the shared DELPI redis URL (same X3 mapping).
-      REDIS_URL: ${DELPI_REDIS_URL:-}
-
     depends_on:
       keycloak:
         condition: service_started
@@ -2890,6 +2886,7 @@ services:
     environment:
       PORT: "8000"
       CONTROLLERSHIP_FINANCE_API_ROOT_PATH: /apps/controllership-finance-api
+      MCP_RESOURCE_URL: ${MCP_RESOURCE_URL_CLARA:-https://minhadelpi.com.br/apps/controllership-finance-api/mcp}
 
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
       DELPI_AUTH_CORE_API_URL: http://core-api:8000
