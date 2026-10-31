@@ -646,7 +646,7 @@ def test_preview_change_issues_consent_challenge_for_confirm_ops(
 # ---------------------------------------------------------------------------
 
 
-def test_mcp_commit_proposal_forwards_consent_fields():
+def test_mcp_execute_commit_forwards_consent_fields():
     from delpi_auth.request_context import (
         reset_current_user,
         reset_request_authorization,
@@ -661,10 +661,9 @@ def test_mcp_commit_proposal_forwards_consent_fields():
     tok_a = set_request_authorization("Bearer test")
     try:
         with patch.object(tool_bridge, "_dispatch", dispatch):
-            result = tool_bridge.tool_commit_proposal(
+            result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
                 proposal_handle="h",
                 idempotency_key="k",
-                confirmation=False,
                 consent_artifact="challenge-uuid",
                 target_echo="t-ref",
             )
@@ -672,9 +671,15 @@ def test_mcp_commit_proposal_forwards_consent_fields():
         reset_current_user(tok_u)
         reset_request_authorization(tok_a)
     assert result.is_error is False
-    confirmation = dispatch.commit_change.call_args.kwargs["confirmation"]
-    assert confirmation == {
-        "confirmed": False,
-        "consent_artifact": "challenge-uuid",
-        "target_echo": "t-ref",
-    }
+    kwargs = dispatch.semantic_execute.call_args.kwargs
+    assert kwargs["consent_artifact"] == "challenge-uuid"
+    assert kwargs["target_echo"] == "t-ref"
+    assert kwargs["phase"] == "commit"
+
+
+def _ca(confirmation):
+    return confirmation.get("consent_artifact") if isinstance(confirmation, dict) else None
+
+
+def _te(confirmation):
+    return confirmation.get("target_echo") if isinstance(confirmation, dict) else None

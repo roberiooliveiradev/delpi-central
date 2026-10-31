@@ -209,3 +209,53 @@ Portal (UI de consentimento) — entra como trabalho futuro; o canal
 verificável inicial é `ctx.elicit` (hosts capazes) + endpoint de
 consentimento autenticado no domínio TV (aprovação humana com token
 fresco `iat >= challenge.created_at`, mesma prova do padrão CLARA).
+
+
+## 11. Decisão de consolidação final — SIX-TOOLS-ONLY (2026-11)
+
+**Autorização:** diretiva explícita do solicitante `roberiooliveiradev`
+(owner do repositório e autoridade arquitetural) — mandato de
+consolidação "FINAL CONSOLIDATION — SIX TOOLS ONLY" com
+`REQUESTER_AUTHORIZATION = RECORDED`.
+
+A janela de coexistência aprovada na decisão original (§2) encerra-se
+nesta entrega. O estado final passa a ser o vocabulário fechado:
+
+- `TARGET_MCP_TOOL_COUNT = 6` — `get_context`, `read`, `analyze`,
+  `knowledge`, `execute`, `delete`.
+- `TARGET_GPT_ACTION_COUNT = 6` — `vista_get_context`, `vista_read`,
+  `vista_analyze`, `vista_knowledge`, `vista_execute`, `vista_delete`.
+- `LEGACY_MCP_TOOLS = REMOVE_AFTER_CONSUMER_MIGRATION` — executado.
+- `LEGACY_GPT_ACTIONS = REMOVE_AFTER_CONSUMER_MIGRATION` — executado.
+- `DOMAIN_CAPABILITIES = PRESERVE`; `BACKEND_AUTHORITY = UNCHANGED`.
+
+As 12 tools MCP legadas e os 12 operationIds `gpt_*` foram removidos
+da superfície pública; todas as capacidades migram para os seis
+verbos (`read` cobre playlist/context/history/routes/model/presets;
+`analyze` cobre previews e materialização de intenção; `knowledge`
+cobre product guides; `execute` cobre mutações não-destrutivas;
+`delete` cobre exclusões aprovadas block/section/slide com o mesmo
+envelope PREPARE -> CONSENT -> COMMIT -> READ-BACK).
+
+Handlers internos do domínio (`list_playlists`, `preview_change`,
+`commit_change`, `suggest_change`, `get_catalog`...) permanecem como
+implementação — os verbos são adapters sobre o mesmo dispatch
+canônico. Não houve segundo executor nem RBAC paralelo.
+
+O booleano `confirmation=true` deixa de existir como prova de
+consentimento em qualquer superfície pública: planos `confirm`
+exigem `consent_artifact` + `target_echo` em ambos os transportes.
+
+Consumidores internos (tests, directives, capability surface,
+product guides read/write_refs, branding, specialist-instructions)
+foram migrados para o vocabulário de seis verbos. O Custom GPT
+externo requer re-import do OpenAPI consolidado — verificado em
+deploy; sync do consumidor ChatGPT registrado no execution report.
+
+Única exceção não-parity mantida: `gpt_get_slide_preview_png`
+(rota auxiliar de artefato assinado, Actions-only, read-only),
+registrada em `surface_parity.not_exposed_in_mcp`.
+
+**Critério futuro:** nova capability de produto é incorporada ao
+verbo semântico apropriado — nunca como tool/opId adicional — salvo
+nova ADR formal.

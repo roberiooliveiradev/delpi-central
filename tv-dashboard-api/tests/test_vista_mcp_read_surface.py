@@ -123,30 +123,14 @@ def _test_dispatch(**overrides) -> GptActionsDispatchService:
 # ---------------------------------------------------------------------------
 
 
-def test_tools_list_seventeen_governed_tools():
+def test_tools_list_six_governed_tools():
     tools = asyncio.run(create_mcp_server().list_tools())
     names = {t.name for t in tools}
     assert names == set(MCP_TOOL_NAMES)
     assert names == {
-        "list_playlists",
-        "get_playlist_context",
-        "get_playlist_history",
-        "get_catalog",
-        "search_data_routes",
-        "inspect_data_model",
-        "preview_data_model",
-        "preview_data_block",
-        "get_product_guide",
-        "suggest_change",
-        "prepare_change",
-        "commit_proposal",
-        "get_context",
-        "read",
-        "analyze",
-        "knowledge",
-        "execute",
+        "get_context", "read", "analyze", "knowledge", "execute", "delete",
     }
-    assert len(tools) == 17
+    assert len(tools) == 6
     assert "inspect_data_source" not in names
 
 
@@ -159,20 +143,15 @@ def test_no_native_op_or_legacy_tools_registered():
     assert banned.isdisjoint(names)
 
 
-def test_tool_classification_read_prepare_act():
-    assert TOOL_CLASS["prepare_change"] == "PREPARE"
-    assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 9
-    assert TOOL_CLASS["get_product_guide"] == "READ"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 2
-    assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
-    # §6.133: owner ANALYSIS surface — preview_data_block is non-persisting
-    # owner intelligence (semantic digest + visual recommendation);
-    # suggest_change is the non-persisting NL→typed-ops materializer shared
-    # with the Actions transport (same dispatch service).
-    assert TOOL_CLASS["preview_data_block"] == "ANALYSIS"
-    assert TOOL_CLASS["suggest_change"] == "ANALYSIS"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 3
+def test_tool_classification_six_verbs():
+    assert TOOL_CLASS == {
+        "get_context": "DISCOVERY",
+        "read": "READ",
+        "analyze": "ANALYSIS",
+        "knowledge": "READ",
+        "execute": "ACT",
+        "delete": "ACT",
+    }
     assert set(TOOL_CLASS.keys()) == set(MCP_TOOL_NAMES)
 
 
@@ -323,7 +302,7 @@ def test_list_playlists_delegates_to_dispatch():
     with _ctx(_viewer()), patch.object(
         tool_bridge._dispatch, "list_playlists", return_value=expected
     ) as fn:
-        result = tool_bridge.tool_list_playlists(limit=10, offset=0)
+        result = tool_bridge.tool_read(entity="playlist", action="list", pagination={"limit": 10, "cursor": 0})
     assert result.is_error is False
     fn.assert_called_once()
     assert result.structured_content["status"] == "success"
@@ -339,7 +318,7 @@ def test_identity_propagates_to_dispatch():
         return {"items": []}
 
     with _ctx(user), patch.object(tool_bridge._dispatch, "list_playlists", side_effect=_capture):
-        result = tool_bridge.tool_list_playlists()
+        result = tool_bridge.tool_read(entity="playlist", action="list")
     assert result.is_error is False
     assert seen["user"] is user
     assert seen["user"].id == "viewer-1"
@@ -347,7 +326,7 @@ def test_identity_propagates_to_dispatch():
 
 def test_unauthenticated_tool_call_401():
     with _ctx(None, None):
-        result = tool_bridge.tool_list_playlists()
+        result = tool_bridge.tool_read(entity="playlist", action="list")
     assert result.is_error is True
     body = result.structured_content
     assert body["httpStatus"] == 401
@@ -362,9 +341,7 @@ def test_get_playlist_context_delegates():
         "get_playlist_context",
         return_value={"playlist": {"id": "p1"}, "slides": []},
     ) as fn:
-        result = tool_bridge.tool_get_playlist_context(
-            playlist_id="850d110a-4ec8-4fe8-91be-225f1dcfcf0e", scope="full"
-        )
+        result = tool_bridge.tool_read(entity="playlist", action="context", ref="850d110a-4ec8-4fe8-91be-225f1dcfcf0e", filters={"scope": "full"})
     assert result.is_error is False
     kwargs = fn.call_args.kwargs
     assert kwargs["playlist_id"] == "850d110a-4ec8-4fe8-91be-225f1dcfcf0e"
@@ -375,7 +352,7 @@ def test_get_catalog_delegates():
     with _ctx(_viewer()), patch.object(
         tool_bridge._dispatch, "get_catalog", return_value={"operations": ["x"]}
     ) as fn:
-        result = tool_bridge.tool_get_catalog()
+        result = tool_bridge.tool_get_context(action="catalog")
     assert result.is_error is False
     fn.assert_called_once()
 
@@ -388,7 +365,7 @@ def test_get_catalog_write_permission_preserved_as_403():
         "get_catalog",
         side_effect=PermissionError("Você não tem permissão para esta ação."),
     ):
-        result = tool_bridge.tool_get_catalog()
+        result = tool_bridge.tool_get_context(action="catalog")
     assert result.is_error is True
     assert result.structured_content["httpStatus"] == 403
 
@@ -399,7 +376,7 @@ def test_search_data_routes_delegates_and_preserves_validation():
         "search_data_routes",
         side_effect=GptActionsError("Informe uma busca.", code="QUERY_REQUIRED", status_code=422),
     ):
-        result = tool_bridge.tool_search_data_routes(query="")
+        result = tool_bridge.tool_read(entity="data_route", action="search", filters={"query": ""})
     assert result.is_error is True
     assert result.structured_content["code"] == "QUERY_REQUIRED"
     assert result.structured_content["httpStatus"] == 422
@@ -415,9 +392,7 @@ def test_inspect_data_model_passes_authorization_from_context():
     with _ctx(_viewer(), "Bearer user-token-abc"), patch.object(
         tool_bridge._dispatch, "inspect_data_model", side_effect=_capture
     ):
-        result = tool_bridge.tool_inspect_data_model(
-            playlist_id="p", slide_id="s", model_id="mdl_14b3b212b2"
-        )
+        result = tool_bridge.tool_read(entity="data_model", action="inspect", filters={"playlistId": "p", "slideId": "s"}, ref="mdl_14b3b212b2")
     assert result.is_error is False
     assert seen["authorization"] == "Bearer user-token-abc"
 
@@ -433,7 +408,7 @@ def test_inspect_model_not_found_preserves_domain_code():
             details={"modelId": "mdl_x"},
         ),
     ):
-        result = tool_bridge.tool_inspect_data_model(playlist_id="p", slide_id="s", model_id="m")
+        result = tool_bridge.tool_read(entity="data_model", action="inspect", filters={"playlistId": "p", "slideId": "s"}, ref="m")
     assert result.is_error is True
     body = result.structured_content
     assert body["code"] == "data_model.not_found"
@@ -450,7 +425,7 @@ def test_unauthorized_playlist_fails_closed():
             "Programação não encontrada.", code="RESOURCE_NOT_FOUND", status_code=404
         ),
     ):
-        result = tool_bridge.tool_get_playlist_context(playlist_id="other-tenant")
+        result = tool_bridge.tool_read(entity="playlist", action="context", ref="other-tenant")
     assert result.is_error is True
     assert result.structured_content["code"] == "RESOURCE_NOT_FOUND"
     assert "slides" not in result.structured_content.get("data", {})
@@ -460,7 +435,7 @@ def test_internal_error_no_stack_leak():
     with _ctx(_viewer()), patch.object(
         tool_bridge._dispatch, "list_playlists", side_effect=RuntimeError("db conn secret")
     ):
-        result = tool_bridge.tool_list_playlists()
+        result = tool_bridge.tool_read(entity="playlist", action="list")
     assert result.is_error is True
     body = result.structured_content
     assert body["code"] == "INTERNAL_ERROR"
@@ -494,7 +469,7 @@ def test_preview_data_model_rol_value_through_mcp():
     dispatch = _preview_dispatch_with_gateway(gateway)
     cfg, model = _inline_model_body()
     with _ctx(_viewer()), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_preview_data_model(model=model)
+        result = tool_bridge.tool_analyze(analysis="data_model_preview", subject_refs={"model": model})
     assert result.is_error is False
     data = result.structured_content["data"]
     resolved = data["resolved"]
@@ -510,7 +485,7 @@ def test_preview_inline_candidate_not_persisted():
     dispatch = _preview_dispatch_with_gateway(gateway)
     cfg, model = _inline_model_body()
     with _ctx(_viewer()), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_preview_data_model(model=model)
+        result = tool_bridge.tool_analyze(analysis="data_model_preview", subject_refs={"model": model})
     assert result.is_error is False
     # No persistence port touched by the inline preview path.
     assert dispatch._repo.method_calls == []
@@ -520,7 +495,7 @@ def test_preview_inline_candidate_not_persisted():
 
 def test_preview_requires_model_or_model_id():
     with _ctx(_viewer()):
-        result = tool_bridge.tool_preview_data_model()
+        result = tool_bridge.tool_analyze(analysis="data_model_preview")
     assert result.is_error is True
     assert result.structured_content["code"] == "INVALID_CHANGE"
     assert result.structured_content["httpStatus"] == 422

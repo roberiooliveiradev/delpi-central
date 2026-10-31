@@ -829,6 +829,97 @@ class GptActionsDispatchService:
             transport=transport,
         )
 
+    def semantic_delete(
+        self,
+        *,
+        user: Any,
+        entity: str,
+        phase: str | None = None,
+        target: dict[str, Any] | None = None,
+        proposal_handle: str | None = None,
+        consent_artifact: str | None = None,
+        target_echo: str | None = None,
+        idempotency_key: str | None = None,
+        catalog_version: str | None = None,
+        authorization: str | None = None,
+        transport: str = "gpt_actions",
+    ) -> dict[str, Any]:
+        """``delete`` — destructive verb over PREPARE/COMMIT + consent.
+
+        ``entity`` ∈ {block, section, slide} (approved delete targets;
+        ``delete_data_model``/sources stay forbidden on this surface).
+        ``phase=prepare`` seals the delete plan + consent challenge;
+        ``phase=commit`` requires the approved ``consent_artifact`` +
+        ``target_echo`` — the sealed handle binds the plan (no
+        substitution, no confirmation boolean).
+        """
+        from tv_app.application.gpt_actions.capability_surface import (
+            DELETE_ENTITIES,
+            EXECUTE_PHASES,
+        )
+
+        entity_key = str(entity or "").strip().lower()
+        op_name = DELETE_ENTITIES.get(entity_key)
+        if op_name is None:
+            raise GptActionsError(
+                "delete só cobre as entidades aprovadas "
+                f"{sorted(DELETE_ENTITIES)}; "
+                f"{entity_key!r} não tem contrato aprovado nesta superfície.",
+                code="CAPABILITY_NOT_APPROVED",
+                status_code=403,
+            )
+        phase_key = str(phase or "prepare").strip().lower()
+        if phase_key not in EXECUTE_PHASES:
+            raise GptActionsError(
+                f"Fase desconhecida para delete: {phase_key!r}.",
+                code="VALIDATION_ERROR",
+                status_code=422,
+            )
+        if phase_key == "commit":
+            for field, value in (
+                ("target", target),
+                ("catalog_version", catalog_version),
+            ):
+                if value is not None:
+                    raise GptActionsError(
+                        f"{field} não pertence à fase commit.",
+                        code="VALIDATION_ERROR",
+                        status_code=422,
+                    )
+            return self._semantic_commit(
+                user=user,
+                proposal_handle=str(proposal_handle or ""),
+                idempotency_key=idempotency_key,
+                consent_artifact=consent_artifact,
+                target_echo=target_echo,
+                authorization=authorization,
+            )
+        for field, value in (
+            ("proposal_handle", proposal_handle),
+            ("consent_artifact", consent_artifact),
+            ("target_echo", target_echo),
+        ):
+            if value is not None and str(value).strip():
+                raise GptActionsError(
+                    f"{field} não pertence à fase prepare.",
+                    code="VALIDATION_ERROR",
+                    status_code=422,
+                )
+        tgt = target if isinstance(target, dict) else {}
+        op: dict[str, Any] = {"op": op_name}
+        for key in ("slideId", "sectionId", "blockId", "deleteSlides"):
+            if key in tgt and tgt[key] is not None:
+                op[key] = tgt[key]
+        return self.preview_change(
+            user=user,
+            target=tgt,
+            ops=[op],
+            catalog_version=catalog_version,
+            authorization=authorization,
+            commit_now=False,
+            transport=transport,
+        )
+
     def get_catalog(self, *, user: Any, transport: str = "actions") -> dict[str, Any]:
         assert_permission(user, TV_WRITE)
         doc = PresentationOpsContentService.capability_catalog_document(

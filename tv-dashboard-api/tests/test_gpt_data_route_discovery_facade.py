@@ -94,23 +94,19 @@ def test_openapi_search_query_required_and_preview_shortcut():
     search = None
     preview = None
     for methods in doc["paths"].values():
-        get = methods.get("get") if isinstance(methods, dict) else None
         post = methods.get("post") if isinstance(methods, dict) else None
-        if isinstance(get, dict) and get.get("operationId") == "gpt_search_data_routes":
-            search = get
-        if isinstance(post, dict) and post.get("operationId") == "gpt_preview_data_block":
+        if isinstance(post, dict) and post.get("operationId") == "vista_read":
+            search = post
+        if isinstance(post, dict) and post.get("operationId") == "vista_analyze":
             preview = post
     assert search is not None and preview is not None
-    params = {p["name"]: p for p in search["parameters"]}
-    assert params["query"]["required"] is True
-    assert params["limit"]["schema"]["default"] == 8
-    assert params["limit"]["schema"]["maximum"] == 20
-    assert "category" in params
-    assert "dump" in search["description"].lower() or "never dump" in search["description"].lower()
+    schema = search["requestBody"]["content"]["application/json"]["schema"]
+    props = schema.get("properties") or {}
+    assert "entity" in props and "action" in props and "filters" in props
     schema = preview["requestBody"]["content"]["application/json"]["schema"]
     assert "required" not in schema or "block" not in schema.get("required", [])
-    assert "operationId" in schema["properties"]
-    assert "params" in schema["properties"]
+    assert "subjectRefs" in schema["properties"] or "parameters" in schema["properties"]
+    assert "parameters" in schema["properties"]
 
 
 def test_preview_operation_id_params_builds_block(monkeypatch):

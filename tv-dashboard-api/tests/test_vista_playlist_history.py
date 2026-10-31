@@ -345,20 +345,20 @@ def test_read_only_user_has_no_restore_path():
 
 
 def test_mcp_tool_registered_read_classified_and_bounded():
-    assert TOOL_CLASS["get_playlist_history"] == "READ"
-    assert "get_playlist_history" in MCP_TOOL_NAMES
-    assert len(MCP_TOOL_NAMES) == 17
+    assert TOOL_CLASS["read"] == "READ"
+    assert "read" in MCP_TOOL_NAMES
+    assert len(MCP_TOOL_NAMES) == 6
 
     tools = {
         t.name: t.model_dump(mode="json", by_alias=True, exclude_none=True)
         for t in asyncio.run(create_mcp_server().list_tools())
     }
-    tool = tools["get_playlist_history"]
+    tool = tools["read"]
     schema = tool["inputSchema"]
     props = schema["properties"]
-    assert set(props) == {"playlist_id", "snapshot_id", "page", "page_size"}
-    assert "playlist_id" in schema.get("required", [])
-    assert "snapshot_id" not in schema.get("required", [])
+    assert set(props) == {"entity", "action", "ref", "filters", "pagination"}
+    assert "entity" in schema.get("required", [])
+    assert "action" in schema.get("required", [])
     ann = tool["annotations"]
     assert ann["readOnlyHint"] is True
     assert ann["destructiveHint"] is False
@@ -376,19 +376,13 @@ def test_mcp_has_no_restore_rollback_revert_replay_tools():
 
 def test_actions_operation_present_compact_and_schema_bounded():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == 17
-    assert "gpt_get_playlist_history" in GPT_ACTIONS_OPERATION_IDS
+    assert count_operations(doc) == 6
+    assert "vista_read" in GPT_ACTIONS_OPERATION_IDS
 
-    op = doc["paths"]["/gpt-actions/v1/playlists/{playlist_id}/history"]["get"]
-    assert op["operationId"] == "gpt_get_playlist_history"
+    op = doc["paths"]["/gpt-actions/v1/semantic/read"]["post"]
+    assert op["operationId"] == "vista_read"
     assert len(op["description"]) <= 300
-    params = {p["name"]: p for p in op["parameters"]}
-    assert params["playlist_id"]["in"] == "path"
-    assert params["playlist_id"]["required"] is True
-    assert params["snapshotId"]["in"] == "query"
-    assert params["pageSize"]["schema"]["default"] == 10
-    # no write body on a read-only action
-    assert "requestBody" not in op
+    assert "requestBody" in op
 
 
 def test_actions_has_no_restore_rollback_operations():
@@ -409,8 +403,8 @@ def test_parity_map_canonical_single_entry():
     )
 
     parity = VistaAgentIntelligenceService.document()["surface_parity"]["parity_map"]
-    assert parity["gpt_get_playlist_history"] == "get_playlist_history"
-    assert len(parity) == 17
+    assert parity["vista_read"] == "read"
+    assert len(parity) == 6
 
 
 # --- response size ----------------------------------------------------------

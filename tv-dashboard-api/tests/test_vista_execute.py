@@ -169,11 +169,14 @@ def _commit(d, prepared, **kw):
 
 # --- surface ---------------------------------------------------------------
 
-def test_surface_has_seventeen_tools():
-    assert len(MCP_TOOL_NAMES) == 17
-    assert "execute" in MCP_TOOL_NAMES
+def test_surface_has_six_tools():
+    assert MCP_TOOL_NAMES == (
+        "get_context", "read", "analyze", "knowledge", "execute", "delete")
     assert TOOL_CLASS["execute"] == "ACT"
+    assert TOOL_CLASS["delete"] == "ACT"
     assert "vista_execute" in GPT_ACTIONS_OPERATION_IDS
+    assert "vista_delete" in GPT_ACTIONS_OPERATION_IDS
+    assert len(GPT_ACTIONS_OPERATION_IDS) == 6
 
 
 def test_surface_execute_status_implemented():

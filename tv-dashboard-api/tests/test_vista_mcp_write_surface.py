@@ -155,18 +155,18 @@ def _clean_proposal_store():
 # ---------------------------------------------------------------------------
 
 
-def test_surface_has_seventeen_tools():
-    assert len(MCP_TOOL_NAMES) == 17
-    assert TOOL_CLASS["prepare_change"] == "PREPARE"
-    assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 9
-    assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 2
-    assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
+def test_surface_has_six_tools():
+    assert len(MCP_TOOL_NAMES) == 6
+    assert TOOL_CLASS["execute"] == "ACT"
+    assert TOOL_CLASS["delete"] == "ACT"
+    assert sum(1 for v in TOOL_CLASS.values() if v == "ACT") == 2
+    assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
+    assert TOOL_CLASS["get_context"] == "DISCOVERY"
     # Owner intelligence surface: ANALYSIS exposes the owner's semantic/
-    # visual recommendation pipeline (preview_data_block) and the canonical
-    # NL→typed-ops materializer (suggest_change) — both non-persisting.
-    assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 3
-    assert TOOL_CLASS["preview_data_block"] == "ANALYSIS"
+    # visual recommendation pipeline and the canonical NL->typed-ops
+    # materializer — both non-persisting.
+    assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 1
+    assert TOOL_CLASS["analyze"] == "ANALYSIS"
 
 
 def test_mcp_catalog_exposes_field_vocabulary():
@@ -175,7 +175,7 @@ def test_mcp_catalog_exposes_field_vocabulary():
     without owner-specific knowledge."""
     dispatch, _, _ = _governed_dispatch()
     with _ctx(_editor()), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_get_catalog()
+        result = tool_bridge.tool_get_context(action="catalog")
     assert result.is_error is False
     ops = result.structured_content["data"]["operations"]
     create_block = ops["create_block"]
@@ -198,9 +198,9 @@ def test_prepare_change_delegates_with_commit_now_false():
     ), patch.object(
         PresentationPatchService, "preview", return_value=_preview_result()
     ) as prev:
-        result = tool_bridge.tool_prepare_change(
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="prepare", 
             target={"playlistId": str(uuid4())},
-            ops=[{"op": "add_blank_slide", "title": "T"}],
+            operations=[{"op": "add_blank_slide", "title": "T"}],
         )
     assert result.is_error is False
     prev.assert_called_once()
@@ -217,9 +217,9 @@ def test_prepare_change_requires_write_permission():
     """READ-only identity cannot prepare — TV_WRITE gate is application-owned."""
     dispatch, writes, _ = _governed_dispatch()
     with _ctx(_viewer()), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_prepare_change(
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="prepare", 
             target={"playlistId": str(uuid4())},
-            ops=[{"op": "add_blank_slide"}],
+            operations=[{"op": "add_blank_slide"}],
         )
     assert result.is_error is True
     assert result.structured_content["httpStatus"] == 403
@@ -228,7 +228,7 @@ def test_prepare_change_requires_write_permission():
 
 def test_prepare_change_requires_ops():
     with _ctx(_editor()):
-        result = tool_bridge.tool_prepare_change(target={"playlistId": str(uuid4())}, ops=[])
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="prepare", target={"playlistId": str(uuid4())}, operations=[])
     assert result.is_error is True
     assert result.structured_content["code"] == "INVALID_CHANGE"
     assert result.structured_content["httpStatus"] == 422
@@ -250,9 +250,9 @@ def test_prepare_unknown_op_fails_via_application():
             "Operação não suportada.", code="INVALID_CHANGE", details={"op": "bogus_op"}
         ),
     ):
-        result = tool_bridge.tool_prepare_change(
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="prepare", 
             target={"playlistId": str(uuid4())},
-            ops=[{"op": "bogus_op"}],
+            operations=[{"op": "bogus_op"}],
         )
     assert result.is_error is True
     assert result.structured_content["code"] == "INVALID_CHANGE"
@@ -267,9 +267,9 @@ def test_prepare_unauthorized_playlist_fails_closed():
         "resolve",
         return_value=SimpleNamespace(can_edit=False, can_read=False, level=None),
     ), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_prepare_change(
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="prepare", 
             target={"playlistId": str(uuid4())},
-            ops=[{"op": "add_blank_slide"}],
+            operations=[{"op": "add_blank_slide"}],
         )
     assert result.is_error is True
     assert result.structured_content["code"] == "RESOURCE_NOT_FOUND"
@@ -286,8 +286,8 @@ def _prepare_handle(dispatch, user, ops, playlist_id) -> str:
     with _ctx(user), _access_patches(dispatch)[0], patch.object(
         tool_bridge, "_dispatch", dispatch
     ), patch.object(PresentationPatchService, "preview", return_value=_preview_result()):
-        result = tool_bridge.tool_prepare_change(
-            target={"playlistId": playlist_id}, ops=ops
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="prepare", 
+            target={"playlistId": playlist_id}, operations=ops
         )
     assert result.is_error is False
     return result.structured_content["data"]["proposal_handle"]
@@ -299,9 +299,10 @@ def test_commit_requires_idempotency_key():
     user = _editor()
     handle = _prepare_handle(dispatch, user, [{"op": "add_blank_slide", "title": "T"}], playlist_id)
     with _ctx(user), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_commit_proposal(
-            proposal_handle=handle, idempotency_key="", confirmation=True
-        )
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=handle, idempotency_key="", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
     assert result.is_error is True
     assert result.structured_content["code"] == "INVALID_CHANGE"
     assert result.structured_content["httpStatus"] == 422
@@ -327,15 +328,16 @@ def test_commit_requires_explicit_confirmation():
             confirmationPolicy="confirm",
         ),
     ):
-        prepared = tool_bridge.tool_prepare_change(
-            target={"playlistId": playlist_id}, ops=delete_ops
+        prepared = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="prepare", 
+            target={"playlistId": playlist_id}, operations=delete_ops
         )
     assert prepared.is_error is False
     handle = prepared.structured_content["data"]["proposal_handle"]
     with _ctx(user), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_commit_proposal(
-            proposal_handle=handle, idempotency_key="k-1", confirmation=False
-        )
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=handle, idempotency_key="k-1", consent_artifact=_ca(False
+        ), target_echo=_te(False
+        ))
     assert result.is_error is True
     assert result.structured_content["code"] == "CONFIRMATION_REQUIRED"
     assert result.structured_content["httpStatus"] == 400
@@ -359,9 +361,10 @@ def test_commit_direct_policy_needs_no_confirmation():
     with _ctx(user), patch.object(tool_bridge, "_dispatch", dispatch), patch.object(
         PresentationPatchService, "preview", return_value={"confirmationPolicy": "direct"}
     ):
-        result = tool_bridge.tool_commit_proposal(
-            proposal_handle=handle, idempotency_key="k-direct-1", confirmation=None
-        )
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=handle, idempotency_key="k-direct-1", consent_artifact=_ca(None
+        ), target_echo=_te(None
+        ))
     assert result.is_error is False
     data = result.structured_content["data"]
     assert data["status"] == "VERIFIED"
@@ -371,9 +374,10 @@ def test_commit_direct_policy_needs_no_confirmation():
 def test_commit_unknown_handle_fails_closed():
     dispatch, _, _ = _governed_dispatch()
     with _ctx(_editor()), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_commit_proposal(
-            proposal_handle="AAAA.BBBBCCCC", idempotency_key="k-2", confirmation=True
-        )
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle="AAAA.BBBBCCCC", idempotency_key="k-2", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
     assert result.is_error is True
     assert result.structured_content["code"] == "PROPOSAL_NOT_FOUND"
 
@@ -385,9 +389,10 @@ def test_commit_tampered_handle_fails_closed():
     handle = _prepare_handle(dispatch, user, [{"op": "add_blank_slide"}], playlist_id)
     tampered = handle[:-2] + ("AA" if not handle.endswith("AA") else "BB")
     with _ctx(user), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_commit_proposal(
-            proposal_handle=tampered, idempotency_key="k-3", confirmation=True
-        )
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=tampered, idempotency_key="k-3", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
     assert result.is_error is True
     assert result.structured_content["code"] == "PROPOSAL_NOT_FOUND"
 
@@ -398,9 +403,10 @@ def test_commit_cross_user_fails_closed():
     playlist_id = str(uuid4())
     handle = _prepare_handle(dispatch, _editor("alice"), [{"op": "add_blank_slide"}], playlist_id)
     with _ctx(_editor("bob")), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_commit_proposal(
-            proposal_handle=handle, idempotency_key="k-4", confirmation=True
-        )
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=handle, idempotency_key="k-4", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
     assert result.is_error is True
     assert result.structured_content["code"] == "AUTHZ_DENIED"
     assert result.structured_content["httpStatus"] == 403
@@ -428,9 +434,10 @@ def test_commit_verified_end_to_end():
     ) if hasattr(commit, "_patch") else patch.object(
         PresentationPatchService, "preview", return_value={"confirmationPolicy": "direct"}
     ):
-        result = tool_bridge.tool_commit_proposal(
-            proposal_handle=handle, idempotency_key="k-verified-1", confirmation=True
-        )
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=handle, idempotency_key="k-verified-1", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
     assert result.is_error is False
     data = result.structured_content["data"]
     assert data["status"] == "VERIFIED"
@@ -454,12 +461,14 @@ def test_commit_idempotency_replay_same_key_same_handle():
     with _ctx(user), patch.object(tool_bridge, "_dispatch", dispatch), patch.object(
         PresentationPatchService, "preview", return_value={"confirmationPolicy": "direct"}
     ):
-        first = tool_bridge.tool_commit_proposal(
-            proposal_handle=handle, idempotency_key="k-replay", confirmation=True
-        )
-        second = tool_bridge.tool_commit_proposal(
-            proposal_handle=handle, idempotency_key="k-replay", confirmation=True
-        )
+        first = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=handle, idempotency_key="k-replay", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
+        second = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=handle, idempotency_key="k-replay", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
     assert first.is_error is False
     assert first.structured_content["data"]["status"] == "VERIFIED"
     # Replay: snapshot returned, no second execution.
@@ -486,12 +495,14 @@ def test_commit_same_key_different_payload_conflicts():
     with _ctx(user), patch.object(tool_bridge, "_dispatch", dispatch), patch.object(
         PresentationPatchService, "preview", return_value={"confirmationPolicy": "direct"}
     ):
-        first = tool_bridge.tool_commit_proposal(
-            proposal_handle=handle_a, idempotency_key="k-shared", confirmation=True
-        )
-        conflict = tool_bridge.tool_commit_proposal(
-            proposal_handle=handle_b, idempotency_key="k-shared", confirmation=True
-        )
+        first = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=handle_a, idempotency_key="k-shared", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
+        conflict = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=handle_b, idempotency_key="k-shared", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
     assert first.is_error is False
     assert conflict.is_error is True
     assert conflict.structured_content["code"] == "IDEMPOTENCY_CONFLICT"
@@ -516,12 +527,14 @@ def test_commit_consumed_proposal_fails_closed():
     with _ctx(user), patch.object(tool_bridge, "_dispatch", dispatch), patch.object(
         PresentationPatchService, "preview", return_value={"confirmationPolicy": "direct"}
     ):
-        first = tool_bridge.tool_commit_proposal(
-            proposal_handle=handle, idempotency_key="k-consume", confirmation=True
-        )
-        second = tool_bridge.tool_commit_proposal(
-            proposal_handle=handle, idempotency_key="k-consume-2", confirmation=True
-        )
+        first = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=handle, idempotency_key="k-consume", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
+        second = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=handle, idempotency_key="k-consume-2", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
     assert first.is_error is False
     assert second.is_error is True
     assert second.structured_content["code"] in {"PROPOSAL_NOT_FOUND", "PROPOSAL_CHANGED"}
@@ -531,9 +544,10 @@ def test_commit_consumed_proposal_fails_closed():
 def test_commit_requires_write_permission():
     dispatch, writes, _ = _governed_dispatch()
     with _ctx(_viewer()), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_commit_proposal(
-            proposal_handle="AAAA.BBBB", idempotency_key="k-9", confirmation=True
-        )
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle="AAAA.BBBB", idempotency_key="k-9", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
     assert result.is_error is True
     assert result.structured_content["httpStatus"] == 403
     assert writes.method_calls == []
@@ -556,9 +570,10 @@ def test_commit_stale_revision_fails_typed():
     with _ctx(user), patch.object(tool_bridge, "_dispatch", dispatch), patch.object(
         PresentationPatchService, "preview", return_value={"confirmationPolicy": "direct"}
     ):
-        result = tool_bridge.tool_commit_proposal(
-            proposal_handle=handle, idempotency_key="k-stale", confirmation=True
-        )
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle=handle, idempotency_key="k-stale", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
     assert result.is_error is True
     assert result.structured_content["code"] == "REVISION_CONFLICT"
     assert result.structured_content["httpStatus"] == 409
@@ -570,10 +585,20 @@ def test_commit_proposal_cannot_override_target():
     target parameter, so a proposal for playlist A cannot be steered to B."""
     import inspect
 
-    sig = inspect.signature(tool_bridge.tool_commit_proposal)
-    assert "target" not in sig.parameters
-    assert "playlist_id" not in sig.parameters
-    assert "ops" not in sig.parameters
+    dispatch, writes, _ = _governed_dispatch()
+    playlist_id = str(uuid4())
+    user = _editor()
+    handle = _prepare_handle(
+        dispatch, user, [{"op": "add_blank_slide", "title": "T"}], playlist_id)
+    with _ctx(user), patch.object(tool_bridge, "_dispatch", dispatch):
+        result = tool_bridge.tool_execute(
+            entity="presentation", action="apply_mutation", phase="commit",
+            proposal_handle=handle, idempotency_key="k-override",
+            operations=[{"op": "delete_slide", "slideId": str(uuid4())}],
+        )
+    assert result.is_error is True
+    assert result.structured_content["code"] == "PLAN_MISMATCH"
+    assert writes.method_calls == []
 
 
 # ---------------------------------------------------------------------------
@@ -594,9 +619,10 @@ def test_domain_codes_preserved_through_commit_path():
             status_code=409,
         ),
     ), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_commit_proposal(
-            proposal_handle="AAAA.BBBBCCCC", idempotency_key="k-dom", confirmation=True
-        )
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="commit", 
+            proposal_handle="AAAA.BBBBCCCC", idempotency_key="k-dom", consent_artifact=_ca(True
+        ), target_echo=_te(True
+        ))
     assert result.is_error is True
     body = result.structured_content
     assert body["code"] == "data_model.in_use"
@@ -619,11 +645,19 @@ def test_prepare_preserves_migration_conflict_code():
             "Fontes já migradas.", code="data_model.migration_conflict"
         ),
     ):
-        result = tool_bridge.tool_prepare_change(
+        result = tool_bridge.tool_execute(entity="presentation", action="apply_mutation", phase="prepare", 
             target={"playlistId": str(uuid4())},
-            ops=[{"op": "migrate_data_sources_to_model", "sourceIds": ["ds1"], "modelId": "m2"}],
+            operations=[{"op": "migrate_data_sources_to_model", "sourceIds": ["ds1"], "modelId": "m2"}],
         )
     assert result.is_error is True
     assert result.structured_content["code"] == "data_model.migration_conflict"
     assert result.structured_content["httpStatus"] == 422
 
+
+
+def _ca(confirmation):
+    return confirmation.get("consent_artifact") if isinstance(confirmation, dict) else None
+
+
+def _te(confirmation):
+    return confirmation.get("target_echo") if isinstance(confirmation, dict) else None

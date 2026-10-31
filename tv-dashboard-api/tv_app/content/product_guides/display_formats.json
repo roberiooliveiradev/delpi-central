@@ -42,11 +42,24 @@
     "Esperar cobertura tipada em todo destino — a superfície é PARTIAL hoje",
     "Hardcodar formatação no conteúdo do texto em vez de usar display format"
   ],
-  "related_topics": ["data_bindings", "block_types", "slide"],
-  "capability_refs": ["presentation_change"],
-  "operation_refs": ["set_display_format"],
-  "read_refs": ["get_catalog", "get_playlist_context"],
-  "write_refs": ["prepare_change", "commit_proposal"],
+  "related_topics": [
+    "data_bindings",
+    "block_types",
+    "slide"
+  ],
+  "capability_refs": [
+    "presentation_change"
+  ],
+  "operation_refs": [
+    "set_display_format"
+  ],
+  "read_refs": [
+    "get_context",
+    "read"
+  ],
+  "write_refs": [
+    "execute"
+  ],
   "source_refs": [
     {
       "ref": "docs/architecture/adr-tv-display-format-ownership.md",

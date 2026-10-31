@@ -45,8 +45,16 @@
     "Declarar transform esperando estado atual — o schema de saída é o contrato",
     "Usar o guia como estado — o model atual vem de inspect_data_model"
   ],
-  "related_topics": ["data_sources", "data_bindings", "data_route_discovery", "filters_and_layering"],
-  "capability_refs": ["data_model_lifecycle", "data_block_preview"],
+  "related_topics": [
+    "data_sources",
+    "data_bindings",
+    "data_route_discovery",
+    "filters_and_layering"
+  ],
+  "capability_refs": [
+    "data_model_lifecycle",
+    "data_block_preview"
+  ],
   "operation_refs": [
     "upsert_data_model",
     "patch_data_model",
@@ -54,8 +62,13 @@
     "migrate_data_sources_to_model",
     "set_data_transform"
   ],
-  "read_refs": ["preview_data_model", "inspect_data_model", "get_playlist_context"],
-  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "read_refs": [
+    "analyze",
+    "read"
+  ],
+  "write_refs": [
+    "execute"
+  ],
   "source_refs": [
     {
       "ref": "tv_app/content/vista_agent_intelligence.json data_model directive",

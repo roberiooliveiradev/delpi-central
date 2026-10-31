@@ -44,15 +44,27 @@
     "Assumir que o filtro do slide sobrescreve o da playlist — a regra é most-specific-wins",
     "Fixar período absoluto quando a intenção era relativa"
   ],
-  "related_topics": ["playlist", "slide", "data_sources", "data_models"],
-  "capability_refs": ["playlist"],
+  "related_topics": [
+    "playlist",
+    "slide",
+    "data_sources",
+    "data_models"
+  ],
+  "capability_refs": [
+    "playlist"
+  ],
   "operation_refs": [
     "patch_playlist_data_defaults",
     "patch_data_source_params",
     "re_layer_playlist_filters"
   ],
-  "read_refs": ["get_playlist_context", "preview_data_block"],
-  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "read_refs": [
+    "read",
+    "analyze"
+  ],
+  "write_refs": [
+    "execute"
+  ],
   "source_refs": [
     {
       "ref": "tv_app/content/vista_agent_intelligence.json filter_layering + branch_scope",

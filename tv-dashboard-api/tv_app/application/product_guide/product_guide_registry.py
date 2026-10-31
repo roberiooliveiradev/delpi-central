@@ -39,9 +39,7 @@ REGISTRY_VERSION = "product-guide-registry-v1"
 
 # The only governed write entry points on the specialist surface — typed ops
 # are vocabulary inside prepare_change.ops[], never direct write tools.
-WRITE_ENVELOPE_NAMES = frozenset(
-    {"suggest_change", "prepare_change", "commit_proposal"}
-)
+WRITE_ENVELOPE_NAMES = frozenset({"execute", "delete"})
 
 
 def _default_capability_ids() -> frozenset[str]:

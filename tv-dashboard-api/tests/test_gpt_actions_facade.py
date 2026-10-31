@@ -116,14 +116,14 @@ def test_openapi_error_envelope_and_success_schemas():
     schemas = doc["components"]["schemas"]
     assert "GptSuccessEnvelope" in schemas
     assert "GptErrorEnvelope" in schemas
-    commit = doc["paths"]["/gpt-actions/v1/changes/commit"]["post"]
+    commit = doc["paths"]["/gpt-actions/v1/semantic/execute"]["post"]
     assert commit["responses"]["422"]["content"]["application/json"]["schema"] == {
         "$ref": "#/components/schemas/GptErrorEnvelope"
     }
     assert commit["responses"]["200"]["content"]["application/json"]["schema"] == {
         "$ref": "#/components/schemas/GptSuccessEnvelope"
     }
-    assert count_operations(doc) == 17
+    assert count_operations(doc) == 6
     assert list(GPT_ACTIONS_OPERATION_IDS)
 
 
@@ -894,10 +894,9 @@ def test_openapi_object_schemas_have_properties_for_gpt_builder():
 def test_openapi_prepare_act_bodies_have_typed_examples_and_ops_oneof():
     doc = build_gpt_actions_openapi(server_url="https://minhadelpi.com.br/apps/tv-dashboard-api")
     body_ops = (
-        "gpt_preview_data_block",
-        "gpt_suggest_change",
-        "gpt_preview_change",
-        "gpt_commit_change",
+        "vista_analyze",
+        "vista_execute",
+        "vista_delete",
     )
     found: dict[str, dict] = {}
     for path, methods in doc["paths"].items():
@@ -917,27 +916,27 @@ def test_openapi_prepare_act_bodies_have_typed_examples_and_ops_oneof():
         example = content["example"]
         assert isinstance(example, dict)
 
-    preview_ex = found["gpt_preview_change"]["requestBody"]["content"]["application/json"][
+    preview_ex = found["vista_execute"]["requestBody"]["content"]["application/json"][
         "example"
     ]
-    commit_ex = found["gpt_commit_change"]["requestBody"]["content"]["application/json"][
+    commit_ex = found["vista_execute"]["requestBody"]["content"]["application/json"][
         "example"
     ]
-    assert preview_ex["ops"][0]["op"] == "create_playlist"
-    assert preview_ex["ops"][0]["name"] == "Testando a VISTA"
-    assert "proposal_handle" in commit_ex
-    assert commit_ex["confirmation"] == {"confirmed": True}
+    assert preview_ex["operations"][0]["op"] == "create_playlist"
+    assert preview_ex["operations"][0]["name"] == "Testando a VISTA"
+    assert "phase" in commit_ex
+    assert commit_ex["phase"] == "prepare"
     assert "ops" not in commit_ex
     assert "planDigest" not in commit_ex
 
-    suggest_ex = found["gpt_suggest_change"]["requestBody"]["content"]["application/json"][
+    suggest_ex = found["vista_analyze"]["requestBody"]["content"]["application/json"][
         "example"
     ]
-    assert "Testando a VISTA" in suggest_ex["message"]
+    assert "message" in suggest_ex["parameters"]
 
-    ops_schema = found["gpt_preview_change"]["requestBody"]["content"]["application/json"][
+    ops_schema = found["vista_execute"]["requestBody"]["content"]["application/json"][
         "schema"
-    ]["properties"]["ops"]
+    ]["properties"]["operations"]
     assert "oneOf" in ops_schema["items"]
     titles = {branch.get("title") for branch in ops_schema["items"]["oneOf"]}
     assert "create_playlist" in titles
@@ -1083,12 +1082,12 @@ def _ops_oneof_branches() -> list[dict]:
     preview = None
     for methods in doc["paths"].values():
         post = methods.get("post") if isinstance(methods, dict) else None
-        if isinstance(post, dict) and post.get("operationId") == "gpt_preview_change":
+        if isinstance(post, dict) and post.get("operationId") == "vista_execute":
             preview = post
             break
     assert preview is not None
     schema = preview["requestBody"]["content"]["application/json"]["schema"]
-    return schema["properties"]["ops"]["items"]["oneOf"]
+    return schema["properties"]["operations"]["items"]["oneOf"]
 
 
 def _branch(name: str) -> dict:
@@ -1150,12 +1149,12 @@ def test_gpt_request_opaque_objects_are_explicit():
     preview_data = None
     for methods in doc["paths"].values():
         post = methods.get("post") if isinstance(methods, dict) else None
-        if isinstance(post, dict) and post.get("operationId") == "gpt_preview_data_block":
+        if isinstance(post, dict) and post.get("operationId") == "vista_analyze":
             preview_data = post
             break
     assert preview_data is not None
     props = preview_data["requestBody"]["content"]["application/json"]["schema"]["properties"]
-    for key in ("block", "nativeConfig", "playlistDefaults", "previewOptions", "params"):
+    for key in ("subjectRefs", "parameters"):
         schema = props[key]
         assert schema["x-delpi-gpt-opaque-object"] is True
         assert schema["description"]
@@ -1166,9 +1165,9 @@ def test_gpt_request_opaque_objects_are_explicit():
     assert details["x-delpi-gpt-opaque-object"] is True
 
 
-def test_openapi_has_seventeen_stable_operation_ids():
+def test_openapi_has_six_stable_operation_ids():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == 17
+    assert count_operations(doc) == 6
     found = []
     for methods in doc["paths"].values():
         for method, op in methods.items():
@@ -1186,7 +1185,7 @@ def test_openapi_artifact_matches_builder():
     assert artifact.exists()
     on_disk = json.loads(artifact.read_text(encoding="utf-8"))
     assert on_disk == doc
-    assert count_operations(on_disk) == 17
+    assert count_operations(on_disk) == 6
 
 
 def test_dispatch_maps_nested_contract_error_to_invalid_change():
@@ -1350,7 +1349,7 @@ def test_structural_no_generic_proxy_in_gpt_actions():
 def test_action_surface_budget_at_most_30():
     doc = build_gpt_actions_openapi()
     assert count_operations(doc) <= 30
-    assert count_operations(doc) == 17
+    assert count_operations(doc) == 6
 
 
 def test_proposal_changed_on_revision_conflict():

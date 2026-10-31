@@ -304,7 +304,7 @@ def test_no_new_tools_or_authz_surface() -> None:
         GPT_ACTIONS_OPERATION_IDS,
     )
 
-    assert len(GPT_ACTIONS_OPERATION_IDS) == 17
+    assert len(GPT_ACTIONS_OPERATION_IDS) == 6
     directives = VistaAgentIntelligenceService.agent_directives(
         transport="mcp"
     )

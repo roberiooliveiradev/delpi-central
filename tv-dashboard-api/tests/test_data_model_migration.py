@@ -905,7 +905,7 @@ class TestInspectDataModel:
             build_gpt_actions_openapi,
         )
 
-        assert "gpt_inspect_data_model" in GPT_ACTIONS_OPERATION_IDS
+        assert "vista_read" in GPT_ACTIONS_OPERATION_IDS
         doc = build_gpt_actions_openapi()
         found = {
             op["operationId"]
@@ -913,4 +913,4 @@ class TestInspectDataModel:
             for op in methods.values()
             if isinstance(op, dict) and op.get("operationId")
         }
-        assert "gpt_inspect_data_model" in found
+        assert "vista_read" in found

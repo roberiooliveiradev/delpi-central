@@ -218,12 +218,12 @@ def test_registry_rejects_unknown_operation_ref(tmp_path):
 
 
 def test_registry_rejects_invalid_read_and_write_refs(tmp_path):
-    _write_topic(tmp_path, "a_topic", read_refs=["prepare_change"])
+    _write_topic(tmp_path, "a_topic", read_refs=["bogus_read_verb"])
     with pytest.raises(ProductGuideValidationError, match="read_ref"):
         _fixture_registry(tmp_path)
     tmp2 = tmp_path / "other"
     tmp2.mkdir()
-    _write_topic(tmp2, "a_topic", write_refs=["get_catalog"])
+    _write_topic(tmp2, "a_topic", write_refs=["bogus_write_verb"])
     with pytest.raises(ProductGuideValidationError, match="write_ref"):
         ProductGuideRegistry(
             content_dir=tmp2,
@@ -354,24 +354,22 @@ def test_every_topic_has_provenance():
 def test_parity_map_covers_product_guide_capability():
     doc = VistaAgentIntelligenceService.document()
     parity = doc["surface_parity"]["parity_map"]
-    assert parity["gpt_get_product_guide"] == "get_product_guide"
-    assert "get_product_guide" in MCP_TOOL_NAMES
-    assert "gpt_get_product_guide" in GPT_ACTIONS_OPERATION_IDS
+    assert parity["vista_knowledge"] == "knowledge"
+    assert "knowledge" in MCP_TOOL_NAMES
+    assert "vista_knowledge" in GPT_ACTIONS_OPERATION_IDS
 
 
 def test_openapi_includes_product_guide_operation():
     doc = build_gpt_actions_openapi()
     assert_operation_ids(doc)
-    op = doc["paths"]["/gpt-actions/v1/product-guides"]["get"]
-    assert op["operationId"] == "gpt_get_product_guide"
-    param_names = {p["name"] for p in op["parameters"]}
-    assert param_names == {"topic", "section"}
+    op = doc["paths"]["/gpt-actions/v1/semantic/knowledge"]["post"]
+    assert op["operationId"] == "vista_knowledge"
 
 
 def test_mcp_tool_registered():
     from tv_app.interface.mcp.tool_bridge import list_tool_names
 
-    assert "get_product_guide" in list_tool_names()
+    assert "knowledge" in list_tool_names()
 
 
 def test_capability_surface_declares_product_guide_analysis():
@@ -403,7 +401,7 @@ def test_get_catalog_embeds_compact_index_not_bodies():
     doc = dispatch.get_catalog(user=user, transport="mcp")
     index = doc["productGuide"]
     assert index["schema"] == "product_guide_index_v1"
-    assert index["readCapability"] == "get_product_guide"
+    assert index["readCapability"] == "knowledge"
     assert {t["id"] for t in index["topics"]} == WAVE_1_TOPICS
     # Index entries carry no bodies — on-demand fetch only.
     for entry in index["topics"]:
@@ -418,4 +416,4 @@ def test_knowledge_orchestration_product_usage_is_proven():
     doc = VistaAgentIntelligenceService.document()
     source = doc["knowledge_orchestration"]["sources"]["product_usage"]
     assert source["status"] == "PROVEN"
-    assert any("get_product_guide" in r for r in source["reads"])
+    assert any("knowledge" in r for r in source["reads"])

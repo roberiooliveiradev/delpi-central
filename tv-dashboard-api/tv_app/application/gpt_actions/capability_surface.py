@@ -118,16 +118,16 @@ DELETE_ENTITIES: dict[str, str] = {
     "slide": "delete_slide",
 }
 
-# Write verbs over PREPARE/COMMIT + consent foundation: execute shipped
-# in A6 (SEMANTIC_TOOLS_V2); delete remains planned for its own gate (A7).
+# Write verbs over PREPARE/COMMIT + consent foundation (A5-A7):
+# execute (A6) and delete (A7) — six-tools consolidated surface.
 EXECUTE_VERB_STATUS = "implemented"
-DELETE_VERB_STATUS = "planned"
+DELETE_VERB_STATUS = "implemented"
 
 
 def _semantic_verbs_projection() -> dict[str, Any]:
     return {
         "version": SEMANTIC_VERBS_VERSION,
-        "lifecycle": "coexists_with_legacy_surface",
+        "lifecycle": "consolidated_six_verbs",
         "tools": {
             "get_context": {
                 "actions": ["context", "catalog"],
@@ -208,8 +208,8 @@ def _canonical_surface() -> dict[str, Any]:
                     "Writes only via governed workflow."
                 ),
                 "read_operations": [
-                    "list_playlists",
-                    "get_playlist_context",
+                    "read",
+                    "get_context",
                 ],
                 "write_operations": [],
                 "filterable_fields": [],
@@ -235,21 +235,21 @@ def _canonical_surface() -> dict[str, Any]:
                     "topo-sort + as/*Ref; PREPARE mints opaque proposal; ACT → "
                     "TvPresentationWriteService + read-back."
                 ),
-                "read_operations": ["get_catalog", "get_playlist_context"],
+                "read_operations": ["get_context", "read"],
                 "write_operations": [
-                    "suggest_change",
-                    "prepare_change",
-                    "commit_proposal",
+                    "analyze",
+                    "execute",
+                    "delete",
                 ],
                 "typed_ops_authority": "presentation_ops_content.json",
                 "mutation_engine": "presentation_mutation.PresentationPatchService",
                 "typed_ops_count": len(ops),
                 "destructive_typed_ops": destructive,
                 "prepare_act_policy": {
-                    "suggest": "suggest_change",
-                    "prepare": "prepare_change",
-                    "commit": "commit_proposal",
-                    "commit_input": ["proposal_handle", "confirmation", "idempotency_key"],
+                    "suggest": "analyze",
+                    "prepare": "execute",
+                    "commit": "execute",
+                    "commit_input": ["proposal_handle", "consent_artifact", "target_echo", "idempotency_key"],
                     "opaque_proposal": True,
                     "compound_plan": True,
                     "plan_compiler": "topo_sort",
@@ -273,7 +273,7 @@ def _canonical_surface() -> dict[str, Any]:
                 "kind": "ANALYSIS",
                 "owner": "tv-dashboard-api",
                 "description": "Search allowlisted TV data routes. Read-only.",
-                "read_operations": ["search_data_routes"],
+                "read_operations": ["read"],
                 "write_operations": [],
                 "required_permission_metadata": {"read": "tv-dashboard.read"},
             },
@@ -284,7 +284,7 @@ def _canonical_surface() -> dict[str, Any]:
                 "description": (
                     "Preview data block resolution without persisting. Read-only."
                 ),
-                "read_operations": ["preview_data_block"],
+                "read_operations": ["analyze"],
                 "write_operations": [],
                 "required_permission_metadata": {"read": "tv-dashboard.read"},
             },
@@ -293,7 +293,7 @@ def _canonical_surface() -> dict[str, Any]:
                 "kind": "ANALYSIS",
                 "owner": "tv-dashboard-api",
                 "description": "NL intent → typed ops + clarification. Never persists; never authorizes.",
-                "read_operations": ["suggest_change"],
+                "read_operations": ["analyze"],
                 "write_operations": [],
                 "required_permission_metadata": {"read": "tv-dashboard.write"},
             },
@@ -392,7 +392,7 @@ def _project_for_actions(surface: dict[str, Any]) -> dict[str, Any]:
             # confirmation policy is direct — an adapter-level mechanic that
             # must never appear in the MCP projection.
             policy["additive_single_shot"] = {
-                "operation": _neutral_to_actions().get("prepare_change", "prepare_change"),
+                "operation": _neutral_to_actions().get("execute", "execute"),
                 "commit_now": True,
                 "when": "confirmationPolicy=direct",
             }

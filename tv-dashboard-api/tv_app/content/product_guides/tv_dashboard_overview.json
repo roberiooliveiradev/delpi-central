@@ -32,11 +32,26 @@
     "Confundir preview do editor com a TV real — a autoridade visual é o palco canônico",
     "Assumir que toda tela é composta de blocos — telas nativas são estrutura própria"
   ],
-  "related_topics": ["playlist", "slide", "block_types", "visual_verification"],
-  "capability_refs": ["playlist", "presentation_change"],
-  "operation_refs": ["create_playlist"],
-  "read_refs": ["list_playlists", "get_playlist_context", "get_catalog"],
-  "write_refs": ["prepare_change", "commit_proposal"],
+  "related_topics": [
+    "playlist",
+    "slide",
+    "block_types",
+    "visual_verification"
+  ],
+  "capability_refs": [
+    "playlist",
+    "presentation_change"
+  ],
+  "operation_refs": [
+    "create_playlist"
+  ],
+  "read_refs": [
+    "read",
+    "get_context"
+  ],
+  "write_refs": [
+    "execute"
+  ],
   "source_refs": [
     {
       "ref": "docs/12-roadmap-e-evolucao/tv-dashboard/README.md §Visão geral",

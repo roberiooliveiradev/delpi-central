@@ -46,38 +46,35 @@ def test_all_operation_descriptions_within_custom_gpt_builder_limit():
     )
 
 
-def test_gpt_get_playlist_context_description_under_limit_with_margin():
+def test_vista_read_description_under_limit_with_margin():
     doc = build_gpt_actions_openapi()
     for path, item in (doc.get("paths") or {}).items():
         if not isinstance(item, dict):
             continue
-        op = item.get("get")
+        op = item.get("post")
         if not isinstance(op, dict):
             continue
-        if op.get("operationId") != "gpt_get_playlist_context":
+        if op.get("operationId") != "vista_read":
             continue
         description = op.get("description") or ""
         assert len(description) <= 260, (
-            f"gpt_get_playlist_context description length={len(description)} "
+            f"vista_read description length={len(description)} "
             f"(prefer <=260 margin under Builder 300)"
         )
         # Contract keywords preserved (concise).
         blob = description.lower()
         assert "blockindex" in blob.replace(" ", "") or "block index" in blob
         assert "datasources" in blob.replace(" ", "") or "data sources" in blob
-        params = {str(p.get("name")) for p in (op.get("parameters") or []) if isinstance(p, dict)}
-        assert {
-            "playlist_id",
-            "includePreview",
-            "slideId",
-            "scope",
-            "objectQuery",
-            "objectTypes",
-            "blockCursor",
-            "blockLimit",
-        } <= params
+        schema = (
+            op.get("requestBody", {})
+            .get("content", {})
+            .get("application/json", {})
+            .get("schema", {})
+        )
+        props = set((schema.get("properties") or {}).keys())
+        assert {"entity", "action"} <= props
         return
-    raise AssertionError("gpt_get_playlist_context not found in OpenAPI")
+    raise AssertionError("vista_read not found in OpenAPI")
 
 
 def test_action_count_and_operation_ids_stable():
