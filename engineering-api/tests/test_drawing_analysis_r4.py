@@ -100,7 +100,10 @@ async def test_bom_stats_occurrences_vs_unique():
         code="90264302", source=_EnvelopeSource(PDF_90264302), ctx=None
     )
     stats = report["executive_summary"]["bom_stats"]
-    assert stats["total_occurrences"] == 4
+    assert stats["total_occurrences"] == 6
     assert stats["unique_codes"] == 4
     assert stats["by_type"].get("PI") == 2
-    assert stats["by_type"].get("MP") == 2
+    assert stats["by_type"].get("MP") == 4
+    assert stats["parent_links"] == 6
+    assert stats["by_depth"] == {"1": 2, "2": 4}
+    assert stats["repeated_codes"] == {"10020033": 2, "10080106": 2}

@@ -64,25 +64,38 @@ class _EnvelopeSource:
             "status": "available",
             "data": {
                 "root": {
+                    "code": "90264302",
                     "items": [
                         {"code": "50226113",
                          "description": "CABO INTERMEDIARIO CA 0,75 PRET "
                                         "-00643/00/00-0000-0000",
                          "product_type": "PI", "quantity": 1,
-                         "unit": "PC"},
+                         "unit": "PC",
+                         "items": [
+                             {"code": "10020033",
+                              "description": "CABO FLEX 0,75MM PRETO",
+                              "product_type": "MP", "quantity": 643,
+                              "unit": "MT"},
+                             {"code": "10080106",
+                              "description": "TERM. PINO 0,75MM",
+                              "product_type": "MP", "quantity": 1000,
+                              "unit": "PC"},
+                         ]},
                         {"code": "50226114",
                          "description": "CABO INTERMEDIARIO CA 0,75 VERD "
                                         "-00663/00/00-0000-0000",
                          "product_type": "PI", "quantity": 1,
-                         "unit": "PC"},
-                        {"code": "10020033",
-                         "description": "CABO FLEX 0,75MM PRETO",
-                         "product_type": "MP", "quantity": 643,
-                         "unit": "MT"},
-                        {"code": "10080106",
-                         "description": "TERM. PINO 0,75MM",
-                         "product_type": "MP", "quantity": 1000,
-                         "unit": "PC"},
+                         "unit": "PC",
+                         "items": [
+                             {"code": "10020033",
+                              "description": "CABO FLEX 0,75MM PRETO",
+                              "product_type": "MP", "quantity": 643,
+                              "unit": "MT"},
+                             {"code": "10080106",
+                              "description": "TERM. PINO 0,75MM",
+                              "product_type": "MP", "quantity": 1000,
+                              "unit": "PC"},
+                         ]},
                     ]
                 }
             },
@@ -138,7 +151,7 @@ async def test_t09_t11_bom_pi_and_quantities_no_fake_error():
     assert keys["bom_comparison"] in {"PASS", "WARNING"}
     assert keys["quantity_semantics"] == "INCONCLUSIVE"
     assert keys["pi_items_descriptions"] in {"PASS", "WARNING"}
-    assert report["executive_summary"]["bom_items_compared"] == 4
+    assert report["executive_summary"]["bom_items_compared"] == 6
     # sem conversão inventada — nenhum finding de divergência de qty
     assert not any(
         "quantity" in (f["divergence"] or "") for f in report["findings"]
