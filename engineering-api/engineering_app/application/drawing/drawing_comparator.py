@@ -41,10 +41,12 @@ def compare_observation_to_text(
         if any(_norm(c) in blob for c in candidates if c):
             result["status"] = "agreement"
         else:
-            result["status"] = "conflict"
+            # Ausência textual não é contradição (R3-C): revisão pode
+            # constar apenas graficamente ou com formatação distinta.
+            result["status"] = "not_found_in_text"
             result["detail"] = (
-                "revisão observada não consta na camada de texto do "
-                "mesmo documento"
+                "revisão observada não localizada na camada de texto — "
+                "ausência textual, não contradição"
             )
         return result
     # generic: strong token presence
@@ -63,7 +65,9 @@ def compare_observation_to_text(
         result["status"] = "partial"
         result["detail"] = f"{len(hits)}/{len(tokens)} tokens confirmados"
     else:
-        result["status"] = "conflict"
+        # R3-C: nenhum token confirmado != contradição; conflito exige
+        # evidências explícitas e comparáveis que se contradigam.
+        result["status"] = "not_found_in_text"
         result["detail"] = (
             "nenhum token confirmado na camada de texto — ausência de "
             "texto não é ausência no desenho (indício apenas)"

@@ -123,12 +123,13 @@ def test_revision_agreement_vs_text():
     assert r["status"] == "agreement"
 
 
-def test_revision_conflict_vs_text():
+def test_revision_absent_in_text_not_conflict():
+    # R3-C: ausência textual não é contradição.
     obs = parse_visual_observations(
         [_obs(raw_observation="REV 09", normalized_value="09")]
     )[0]
     r = compare_observation_to_text(obs, "PRODUTO 90264258 REV 01 PC")
-    assert r["status"] == "conflict"
+    assert r["status"] == "not_found_in_text"
 
 
 def test_official_revision_conflict():

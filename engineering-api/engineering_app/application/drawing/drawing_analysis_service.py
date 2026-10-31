@@ -54,10 +54,11 @@ _MAX_BOM_ITEMS = 300
 def _flatten_bom(node: Any, out: list[dict[str, Any]]) -> None:
     if not isinstance(node, dict):
         return
-    for item in node.get("items") or []:
-        if len(out) < _MAX_BOM_ITEMS:
-            out.append(item)
-        _flatten_bom(item, out)
+    for key in ("items", "components", "children"):
+        for item in node.get(key) or []:
+            if len(out) < _MAX_BOM_ITEMS:
+                out.append(item)
+            _flatten_bom(item, out)
     _flatten_bom(node.get("root"), out)
 
 
@@ -220,7 +221,7 @@ async def analyze_product_drawing(
             ),
         )
 
-    # V2 — revision (R5: type-aware, sem normalização inventada) -----------------
+    # V2 — revision domains (ENG-REV-001: TOTVS/cliente ≠ desenho/engenharia)
     rev_values = sorted(
         {
             e.observed_value
@@ -229,55 +230,32 @@ async def analyze_product_drawing(
         }
         - {None}
     )
-    if rev_values and official_rev:
-        mismatch = [r for r in rev_values if r != official_rev]
-        same_control = all(
-            len(r) == len(official_rev) for r in rev_values
-        )
-        if mismatch and same_control:
-            status = VerificationStatus.WARNING
-            add_finding(
-                category="revision",
-                severity="warning",
-                severity_reason="Revisão do desenho difere do cadastro.",
-                rule="drawing_revision_vs_product_current_revision",
-                rule_source="api-delpi drawing metadata + SB1 B1_REVATU",
-                observed_value=sorted(set(mismatch)),
-                official_value=official_rev,
-                divergence="revision_mismatch",
-                confidence="medium",
-                recommended_correction=(
-                    "Verificar se o PDF no acervo é a revisão vigente."
-                ),
-            )
-        elif mismatch:
-            # e.g. "00" vs "001" — diferentes larguras podem indicar
-            # controles de revisão distintos (R5): INCONCLUSIVE honesto.
-            status = VerificationStatus.INCONCLUSIVE
-        else:
-            status = VerificationStatus.PASS
-        summary = (
-            f"Revisões no desenho {sorted(set(rev_values))} × "
-            f"cadastro '{official_rev}'"
-            + (
-                " — formatos divergentes (possíveis controles de revisão "
-                "distintos); equivalência exige regra oficial."
-                if mismatch and not same_control
-                else "."
-            )
-        )
-    elif rev_values:
-        status, summary = VerificationStatus.INCONCLUSIVE, (
-            "Revisão no desenho encontrada mas produto não informa "
-            "revisão vigente no contrato engineering."
+    revision_domains = {
+        "customer_totvs_revision": official_rev or None,
+        "engineering_drawing_revision": sorted(set(rev_values)) or None,
+        "drawing_library_revision": (
+            str(revision_meta) if revision_meta else None
+        ),
+    }
+    if rev_values or official_rev or revision_meta:
+        status, summary = VerificationStatus.PASS, (
+            "Domínios de revisão apresentados separadamente — "
+            f"cadastro cliente/TOTVS '{official_rev or '—'}' × "
+            f"desenho engenharia {sorted(set(rev_values)) or '—'} × "
+            f"acervo '{revision_meta or '—'}'. Controles independentes: "
+            "diferença de número NÃO é divergência (ENG-REV-001); "
+            "comparação só dentro do mesmo domínio."
         )
     else:
         status, summary = VerificationStatus.INCONCLUSIVE, (
-            "Nenhuma revisão explícita identificada na camada de texto."
+            "Nenhuma revisão identificável em qualquer domínio."
         )
     verifications.append(
         Verification(
-            key="revision", label="Revisão", status=status, summary=summary
+            key="revision_domains",
+            label="Domínios de revisão (ENG-REV-001)",
+            status=status,
+            summary=summary,
         )
     )
 
@@ -624,7 +602,11 @@ async def analyze_product_drawing(
             vs_official = compare_observation_to_official(
                 obs,
                 official_code=official_code,
-                official_revision=official_rev or None,
+                official_revision=(
+                    (revision_domains.get(
+                        "engineering_drawing_revision") or [None])[0]
+                    or revision_domains.get("drawing_library_revision")
+                ),
                 official_description=official_desc,
                 bom_codes=bom_code_set,
             )
@@ -722,6 +704,7 @@ async def analyze_product_drawing(
             "description": official_desc,
             "product_type": official_type,
             "current_revision": official_rev or None,
+            "revision_domains": revision_domains,
             "drawing_reference": drawing_ref or None,
             "drawing_file": filename,
             "drawing_revision": revision_meta,
