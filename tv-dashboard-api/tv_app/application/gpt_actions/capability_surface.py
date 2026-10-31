@@ -85,6 +85,7 @@ READ_ENTITY_ACTIONS: dict[str, tuple[str, ...]] = {
     "product_guide": ("guide",),
     "slide_preset": ("list",),
     "media_asset": ("list",),
+    "slide_template": ("list", "get"),
 }
 
 # Capabilities without a canonical runtime handler yet report honest status
@@ -97,6 +98,7 @@ READ_ENTITY_STATUS: dict[str, str] = {
     "product_guide": "proven",
     "slide_preset": "proven",
     "media_asset": "proven",
+    "slide_template": "proven",
 }
 
 ANALYZE_ACTIONS: dict[str, str] = {
@@ -110,6 +112,7 @@ KNOWLEDGE_ACTIONS: tuple[str, ...] = ("search", "get")
 EXECUTE_PHASES: tuple[str, ...] = ("prepare", "commit")
 EXECUTE_ENTITIES: dict[str, tuple[str, ...]] = {
     "presentation": ("apply_mutation",),
+    "slide_template": ("create", "update", "clone", "publish", "unpublish", "archive"),
 }
 
 DELETE_ENTITIES: dict[str, str] = {
