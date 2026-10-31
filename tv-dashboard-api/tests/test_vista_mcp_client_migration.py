@@ -51,10 +51,10 @@ def _actions_instructions_block() -> str:
 # ---------------------------------------------------------------------------
 
 
-def test_mcp_surface_sixteen_with_semantic_verbs():
+def test_mcp_surface_seventeen_with_semantic_verbs():
     tools = asyncio.run(create_mcp_server().list_tools())
     assert {t.name for t in tools} == set(MCP_TOOL_NAMES)
-    assert len(tools) == 16
+    assert len(tools) == 17
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
     assert TOOL_CLASS["preview_data_block"] == "ANALYSIS"
@@ -73,7 +73,7 @@ def test_surface_parity_map_matches_registered_tools():
     mapping = parity["parity_map"]
     # Every MCP name in the map must be a real registered tool.
     assert set(mapping.values()) == set(MCP_TOOL_NAMES)
-    assert len(mapping) == 16
+    assert len(mapping) == 17
     # Canonical Actions op names expected on the left side.
     assert set(mapping.keys()) == {
         "gpt_get_catalog",
@@ -92,6 +92,7 @@ def test_surface_parity_map_matches_registered_tools():
         "vista_read",
         "vista_analyze",
         "vista_knowledge",
+        "vista_execute",
     }
     # Actions-only auxiliaries are explicit non-parity (signed artifact route).
     for op in parity["not_exposed_in_mcp"]:
@@ -230,7 +231,7 @@ def test_mcp_sections_projected_into_agent_directives():
     # product_guide).
     parity = directives["surface_parity"]
     mapping = parity["parity_map"]
-    assert len(mapping) == 16
+    assert len(mapping) == 17
     assert set(mapping.values()) == set(MCP_TOOL_NAMES)
     clear_vista_agent_intelligence_cache()
 

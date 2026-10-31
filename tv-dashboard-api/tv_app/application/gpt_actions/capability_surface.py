@@ -118,8 +118,9 @@ DELETE_ENTITIES: dict[str, str] = {
     "slide": "delete_slide",
 }
 
-# Write verbs ship in a later bounded unit (consent foundation first).
-EXECUTE_VERB_STATUS = "planned"
+# Write verbs over PREPARE/COMMIT + consent foundation: execute shipped
+# in A6 (SEMANTIC_TOOLS_V2); delete remains planned for its own gate (A7).
+EXECUTE_VERB_STATUS = "implemented"
 DELETE_VERB_STATUS = "planned"
 
 

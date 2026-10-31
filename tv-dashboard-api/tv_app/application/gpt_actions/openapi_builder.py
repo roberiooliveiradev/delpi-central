@@ -1222,6 +1222,108 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "responses": {"200": _ok_response("Knowledge"), **_error_responses()},
             }
         },
+        f"{base}/semantic/execute": {
+            "post": {
+                "operationId": "vista_execute",
+                "summary": "Governed mutation — PREPARE→COMMIT facade",
+                "description": (
+                    "Governed mutation facade (entity=presentation, "
+                    "action=apply_mutation). phase=prepare: operations[] + "
+                    "target → sealed proposal_handle (+consentChallenge when "
+                    "confirm). phase=commit: proposal_handle + idempotency "
+                    "+ consent_artifact + target_echo. Never re-send "
+                    "operations[] at commit (PLAN_MISMATCH)."
+                ),
+                "tags": [tag],
+                "security": [{"BearerAuth": []}],
+                "x-openai-isConsequential": True,
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": (
+                            "Required for phase=commit (or commit_now) — or "
+                            "use body idempotency_key. Atomic acquire before "
+                            "write; same key+payload replays."
+                        ),
+                    }
+                ],
+                "requestBody": _json_body(
+                    {
+                        "type": "object",
+                        "required": ["entity", "action"],
+                        "properties": {
+                            "entity": {
+                                "type": "string",
+                                "enum": ["presentation"],
+                            },
+                            "action": {
+                                "type": "string",
+                                "enum": ["apply_mutation"],
+                            },
+                            "phase": {
+                                "type": "string",
+                                "enum": ["prepare", "commit"],
+                                "default": "prepare",
+                            },
+                            "target": {
+                                "$ref": "#/components/schemas/GptChangeTarget"
+                            },
+                            "operations": typed_ops,
+                            "proposal_handle": {
+                                "type": "string",
+                                "description": (
+                                    "phase=commit: exact opaque handle from "
+                                    "prepare — binds the sealed plan."
+                                ),
+                            },
+                            "consent_artifact": {
+                                "type": "string",
+                                "description": (
+                                    "phase=commit on confirm plans: consent "
+                                    "challenge id approved by the human via "
+                                    "the trusted channel. No boolean "
+                                    "substitute exists on this surface."
+                                ),
+                            },
+                            "target_echo": {
+                                "type": "string",
+                                "description": (
+                                    "phase=commit on confirm plans: exact "
+                                    "consentChallenge.targetRef — target "
+                                    "identity check, never consent proof."
+                                ),
+                            },
+                            "idempotency_key": {"type": "string"},
+                            "catalogVersion": {"type": "string"},
+                            "commit_now": {
+                                "type": "boolean",
+                                "default": False,
+                                "description": (
+                                    "Actions-only: phase=prepare commits "
+                                    "inline when every op policy is direct. "
+                                    "Ignored for confirm plans."
+                                ),
+                            },
+                        },
+                    },
+                    example={
+                        "entity": "presentation",
+                        "action": "apply_mutation",
+                        "phase": "prepare",
+                        "target": {},
+                        "operations": create_ops,
+                        "catalogVersion": catalog_version,
+                    },
+                ),
+                "responses": {
+                    "200": _ok_response("Sealed proposal or verified commit"),
+                    **_error_responses(),
+                },
+            }
+        },
     }
 
     return {

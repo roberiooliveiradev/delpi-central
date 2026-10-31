@@ -43,6 +43,7 @@ TOOL_CLASS: dict[str, str] = {
     "read": "READ",
     "analyze": "ANALYSIS",
     "knowledge": "READ",
+    "execute": "ACT",
 }
 
 MCP_TOOL_NAMES: tuple[str, ...] = tuple(TOOL_CLASS.keys())
