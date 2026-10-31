@@ -1,5 +1,5 @@
 {
-  "version": "1.2",
+  "version": "1.3",
   "owner": "engineering-api",
   "source": "EVA.MCP.SEMANTIC.R1 — conhecimento técnico versionado derivado dos contratos oficiais E-NC-01..11, doc 47/53 e regras de negócio vigentes da Engineering API. Não é fonte de dados operacionais.",
   "topics": {
@@ -56,7 +56,7 @@
     },
     "product.drawing_criteria": {
       "title": "Criterios de analise de desenho — MP/PI, evidencias e revisao",
-      "revision": "1.2",
+      "revision": "1.3",
       "sources": [
         "doc 69 (discovery)",
         "doc 70 (E1-E3)",
@@ -141,6 +141,39 @@
           "evidence_required": "comparação só dentro do mesmo domínio e com semântica da fonte comprovada",
           "severity": "info",
           "limitations": "acervo sem revisão confiável → UNKNOWN/NOT_CHECKED"
+        },
+        {
+          "rule_id": "IDENT-ROLES-001",
+          "owner": "Engenharia",
+          "source": "doc R4",
+          "version": "1.0",
+          "applicability": "identificacao em observacoes visuais",
+          "criterion": "comparar identificadores apenas por funcao (product_code/customer_reference/drawing_code/component_code) — nunca todos os numeros contra o codigo do produto",
+          "evidence_required": "role tipado ou label documentado (COD/DES/PRODUTO)",
+          "severity": "warning",
+          "limitations": "papel ambiguo -> INCONCLUSIVE/unknown_identifier"
+        },
+        {
+          "rule_id": "TEXT-ABSENCE-NOT-CONFLICT-001",
+          "owner": "EVA/Engenharia",
+          "source": "doc 71/R3-C",
+          "version": "1.0",
+          "applicability": "visual x camada de texto",
+          "criterion": "ausencia de token na camada textual nao e contradicao; conflito exige evidencias explicitas e comparaveis",
+          "evidence_required": "mesmo documento verificado + valores que se contradigam",
+          "severity": "info",
+          "limitations": "-"
+        },
+        {
+          "rule_id": "BOM-MULTILEVEL-STATS-001",
+          "owner": "Engenharia",
+          "source": "doc R4",
+          "version": "1.0",
+          "applicability": "estrutura multinivel",
+          "criterion": "distinguir ocorrencias, codigos unicos, filhos diretos e itens por tipo/nivel; item_nao_no_texto != item_nao_no_desenho",
+          "evidence_required": "estrutura oficial completa",
+          "severity": "info",
+          "limitations": "sem conversao SG1 nao autorizada"
         }
       ],
       "guidance": [
