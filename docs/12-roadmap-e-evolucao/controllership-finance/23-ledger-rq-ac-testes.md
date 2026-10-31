@@ -1220,3 +1220,18 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | RQ-C3S-08 | MFE página | trilha de nós + limitações + loading UX-022 | página + help + typecheck limpo | PASS / visual TEST_NOT_RUN |
 | G024-BADGE | cards R06/R07/R10/R11 | não herdar h02 | «Não verificado» (5 cards) + contador 4 — vitest 25/25 | PASS |
 | G024-LIVE | Protheus real | marcadores conferidos | stack local sem cf-api; imagem api-delpi antecede endpoint | TEST_NOT_RUN |
+
+## Gate 025/026 — integridade Git + homologação real R12/R15 (31/10/2026)
+
+| Teste | Entrada | Esperado | Observado | Estado |
+|---|---|---|---|---|
+| G025 | 34 conflitos WIP estrangeiros | preservação sem resolução unilateral | 32 arquivos classificados por owner; stash `729732651d` (195 arqs) intacto; isolamento via `git archive HEAD` em /tmp/c3homolog | PASS c/ BLOCKED_BY_OWNER |
+| G026-DB | use case live Protheus | marcadores reais SB9010/MV_ULMES/TTAT | f01: snapshot 4812\@2026-09-30, MV_ULMES=20260930; f02: 3117; TTAT B1_CUSTD 60874, D3_CUSTO1 209076 writes na janela | PASS |
+| G026-SEC | api-delpi anônimo | 401 | 401 confirmado | PASS |
+| G026-SEC | BFF anônimo + token inválido | 401 | 401 (Unauthorized / Invalid token) | PASS |
+| G026-SEC | S2S sem credencial dedicada | 403 tipado | `S2S_CLIENT_DENIED` — fail-closed sem vazamento | PASS |
+| G026-E2E | JWT real → BFF → S2S dedicada → api-delpi (flag on) → Protheus | projeção governada completa | HTTP 200: nós snapshot/cutoff/evidence/wizard/acceptance por filial, `officiality=technical_markers`, `evidenceRefs`/`limitations` presentes | PASS |
+| G026-FLAG | FINANCEIRO_CLOSING_STATE_ENABLED | declarada, default off | True em container isolado; default false em config.py | PASS |
+| G026-MFE | página visual + tema/a11y | smoke homolog | não executado — Portal MFE não subiu na stack isolada | TEST_NOT_RUN |
+| G026-MCP | transporte MCP real | capability e2e | não executado — sessão MCP não disponível; registro semântico coberto por testes | TEST_NOT_RUN |
+| G026-NEG | usuário sem .access | 403 efetivo | não executado — persona negativa indisponível | INCONCLUSIVE |
