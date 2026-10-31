@@ -195,7 +195,7 @@ async def test_analysis_with_visual_observations():
     )
     assert report["source_match"] == "same_document_verified"
     assert report["visual_observations"]
-    assert report["contract_version"] == "drawing_analysis.v2"
+    assert report["contract_version"] == "drawing_analysis.v3"
     assert report["comparison_results"][0]["vs_text_layer"]["status"] == (
         "agreement"
     )
