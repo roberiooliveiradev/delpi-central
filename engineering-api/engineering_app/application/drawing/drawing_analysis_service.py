@@ -51,15 +51,41 @@ __all__ = ["DrawingAnalysisError", "analyze_product_drawing"]
 _MAX_BOM_ITEMS = 300
 
 
-def _flatten_bom(node: Any, out: list[dict[str, Any]]) -> None:
+def _flatten_bom(
+    node: Any,
+    out: list[dict[str, Any]],
+    *,
+    parent_code: str | None = None,
+    depth: int = 0,
+    path: str = "",
+) -> None:
+    """Multi-level traversal (R5-C): every occurrence gets deterministic
+    parent_code/depth/path provenance — the same component code under
+    different branches yields distinct occurrences."""
     if not isinstance(node, dict):
         return
+    effective_parent = str(node.get("code") or "") or parent_code
     for key in ("items", "components", "children"):
         for item in node.get(key) or []:
+            code = str(item.get("code") or "")
+            occ_path = f"{path}/{code}" if path else code
+            enriched = dict(item)
+            enriched["_occurrence_id"] = f"O{len(out) + 1:04d}"
+            enriched["_parent_code"] = effective_parent
+            enriched["_depth"] = depth + 1
+            enriched["_path"] = occ_path
             if len(out) < _MAX_BOM_ITEMS:
-                out.append(item)
-            _flatten_bom(item, out)
-    _flatten_bom(node.get("root"), out)
+                out.append(enriched)
+            _flatten_bom(
+                item, out,
+                parent_code=code or parent_code,
+                depth=depth + 1,
+                path=occ_path,
+            )
+    _flatten_bom(
+        node.get("root"), out, parent_code=parent_code,
+        depth=depth, path=path,
+    )
 
 
 def _first_code_value(codes: list[str], official: str) -> bool:
@@ -278,18 +304,30 @@ async def analyze_product_drawing(
     bom_items: list[dict[str, Any]] = []
     if isinstance(structure, dict):
         _flatten_bom(structure, bom_items)
-    # R4-C: estatísticas multinível — ocorrências ≠ códigos únicos.
-    bom_stats = {
-        "total_occurrences": len(bom_items),
-        "unique_codes": len({str(i.get("code")) for i in bom_items} - {""}),
-        "by_type": {},
-        "parent_links": sum(
-            1 for i in bom_items if i.get("parent_code") or i.get("parent")
-        ),
-    }
+    # R5-C/D: estatísticas multinível — ocorrências, códigos, níveis.
+    by_type: dict[str, int] = {}
+    by_depth: dict[str, int] = {}
+    code_occurrences: dict[str, int] = {}
     for item in bom_items:
         t = str(item.get("product_type") or item.get("type") or "unknown")
-        bom_stats["by_type"][t] = bom_stats["by_type"].get(t, 0) + 1
+        by_type[t] = by_type.get(t, 0) + 1
+        d = str(item.get("_depth") or "?")
+        by_depth[d] = by_depth.get(d, 0) + 1
+        c = str(item.get("code") or "")
+        if c:
+            code_occurrences[c] = code_occurrences.get(c, 0) + 1
+    bom_stats = {
+        "total_occurrences": len(bom_items),
+        "unique_codes": len(code_occurrences),
+        "by_type": by_type,
+        "by_depth": by_depth,
+        "parent_links": sum(1 for i in bom_items if i.get("_parent_code")),
+        "direct_children": sum(1 for i in bom_items if i.get("_depth") == 1),
+        "repeated_codes": {
+            c: n for c, n in code_occurrences.items() if n > 1
+        },
+        "max_depth": max((i.get("_depth") or 0 for i in bom_items), default=0),
+    }
     if structure_error is not None:
         verifications.append(
             Verification(
@@ -599,6 +637,7 @@ async def analyze_product_drawing(
     visual_observations = visual_observations or []
     source_match = SourceMatch.UNKNOWN
     visual_results: list[dict[str, Any]] = []
+    reconciliations: list[dict[str, Any]] = []
     if visual_observations:
         source_match = evaluate_source_match(
             visual_observations,
@@ -672,6 +711,67 @@ async def analyze_product_drawing(
                     "vs_official": vs_official,
                 }
             )
+
+        # --- R5-A: reconciliação de evidências --------------------------------
+        def _visual_code_agreement(target_code: str) -> bool:
+            for res in visual_results:
+                obs = res["observation"]
+                for ident in obs.get("identifiers") or []:
+                    if ident.get("role") == "product_code" and (
+                        ident.get("value") == target_code
+                    ):
+                        return res["vs_official"]["status"] == "agreement"
+                if res["vs_official"]["status"] == "agreement" and (
+                    obs.get("kind") == "identification"
+                ):
+                    return True
+            return False
+
+        text_has_code = any(
+            e.evidence_type == "code" and e.observed_value == official_code
+            for e in evidence
+        )
+        visual_code_ok = _visual_code_agreement(official_code)
+        recon_status = (
+            "corroborated" if text_has_code and visual_code_ok
+            else "visual_and_official_only" if visual_code_ok
+            else "official_only" if text_has_code or official_code
+            else "insufficient_evidence"
+        )
+        reconciliations.append({
+            "subject": "product_code",
+            "field_role": "product_code",
+            "textual_evidence": bool(text_has_code),
+            "visual_evidence": bool(visual_code_ok),
+            "official_evidence": bool(official_code),
+            "reconciliation_status": recon_status,
+            "confidence": "high" if visual_code_ok else "medium",
+            "limitations": (
+                [] if text_has_code else
+                ["camada textual não recuperou o código — limitação de "
+                 "extração, não evidência de ausência no desenho"]
+            ),
+            "provenance": ["pypdf_text_layer", "chatgpt_visual",
+                           "api_delpi_product"],
+        })
+
+        # Reclassifica findings de ausência textual quando há
+        # corroboração visual×oficial (R5-B): limitação de cobertura.
+        for f in findings:
+            if f.category in {"product_identification", "bom_coverage"}:
+                diverg = f.divergence or ""
+                if "not_located" in diverg or "without_text" in diverg:
+                    if _visual_code_agreement(official_code):
+                        f.severity = "info"
+                        f.severity_reason = (
+                            "Reconciliado: evidência visual concorda com o "
+                            "cadastro oficial; ausência é da camada textual."
+                        )
+                        f.divergence = "text_coverage_limitation"
+                        f.recommended_correction = (
+                            "Sem correção técnica necessária; registrar "
+                            "limitação de extração textual."
+                        )
         verifications.append(
             Verification(
                 key="visual_observations",
@@ -779,6 +879,20 @@ async def analyze_product_drawing(
         o.to_dict() for o in visual_observations
     ]
     payload["comparison_results"] = visual_results
+    payload["reconciliations"] = reconciliations
+    payload["bom_occurrences"] = [
+        {
+            "occurrence_id": i.get("_occurrence_id"),
+            "component_code": i.get("code"),
+            "component_type": i.get("product_type") or i.get("type"),
+            "parent_code": i.get("_parent_code"),
+            "depth": i.get("_depth"),
+            "path": i.get("_path"),
+            "quantity_raw": i.get("quantity"),
+            "unit_raw": i.get("unit"),
+        }
+        for i in bom_items
+    ]
     payload["scope"] = scope or ["all"]
     if visual_observations:
         payload["executive_summary"]["visual_observations_total"] = len(
