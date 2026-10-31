@@ -3837,6 +3837,53 @@ class GptActionsDispatchService:
             "compileDigest": result.get("compileDigest"),
             "orderedOps": stored_ops,
         }
+        # D-8 (CANON 2026-10-31): delete_data_model demands conclusive
+        # consumer discovery — impact preview is attached to PREPARE;
+        # inconclusive discovery fails closed (DEPENDENCY_UNRESOLVED).
+        dm_ops = [
+            o for o in stored_ops
+            if isinstance(o, dict)
+            and str(o.get("op") or "") == "delete_data_model"
+        ]
+        if dm_ops:
+            from tv_app.application.services.data.projection_fields_contract import (
+                collect_source_consumer_field_refs,
+            )
+
+            cfg = (
+                result.get("nativeConfig")
+                if isinstance(result.get("nativeConfig"), dict)
+                else None
+            )
+            if cfg is None:
+                raise GptActionsError(
+                    "Descoberta de consumidores inconclusiva para "
+                    "delete_data_model — exclusão bloqueada.",
+                    code="DEPENDENCY_UNRESOLVED",
+                    status_code=409,
+                )
+            cfg_blocks = (
+                cfg.get("blocks") if isinstance(cfg.get("blocks"), list)
+                else []
+            )
+            impacts = []
+            for dm_op in dm_ops:
+                mid = str(dm_op.get("modelId") or "").strip()
+                refs = collect_source_consumer_field_refs(cfg_blocks, mid)
+                impacts.append({
+                    "modelId": mid,
+                    "consumerBlocks": len(refs),
+                    "consumerFieldRefs": sum(
+                        len(v) for v in refs.values()
+                    ),
+                    "consumers": [
+                        {"blockId": bid, "fields": fields}
+                        for bid, fields in refs.items()
+                    ],
+                    "confirmationPolicy": "confirm",
+                    "verificationStatus": "CONCLUSIVE",
+                })
+            preview_payload["dependencyImpact"] = impacts
         if required_confirmation:
             preview_payload["requiredConfirmation"] = required_confirmation
         if consent_challenge is not None:

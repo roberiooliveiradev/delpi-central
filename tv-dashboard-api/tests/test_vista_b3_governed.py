@@ -10,11 +10,16 @@ from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 from test_vista_mcp_write_surface import (
+    _access_patches,
     _ctx,
     _editor,
     _governed_dispatch,
+    _preview_result,
     _viewer,
     reset_proposal_store_for_tests,
+)
+from tv_app.application.services.data.presentation_mutation.patch_service import (
+    PresentationPatchService,
 )
 from tv_app.interface.mcp import tool_bridge
 from tv_app.interface.mcp.constants import MCP_TOOL_NAMES
@@ -218,3 +223,68 @@ def test_restore_history_requires_refs():
             target={"playlistId": str(uuid4())})
     assert r.is_error is True
     assert r.structured_content["code"] == "VALIDATION_ERROR"
+
+
+# ---------------------------------------------------------------------------
+# R1/D-8 — delete_data_model impact preview (CANON 2026-10-31)
+# ---------------------------------------------------------------------------
+
+
+def test_d8_prepare_shows_conclusive_impact():
+    dispatch, _, _ = _governed_dispatch()
+    dispatch._consent = _consent_mock()
+    pid, sid = str(uuid4()), str(uuid4())
+    ops = [{"op": "delete_data_model", "modelId": "m1"}]
+    cfg = {
+        "blocks": [
+            {
+                "id": "b1",
+                "type": "kpi",
+                "dataSourceId": "m1",
+                "textProjection": {"dataRef": {"field": "vendas"}},
+            }
+        ]
+    }
+    with _ctx(_editor()), _access_patches(dispatch)[0], patch.object(
+        tool_bridge, "_dispatch", dispatch
+    ), patch.object(
+        PresentationPatchService, "preview",
+        return_value=_preview_result(
+            orderedOps=ops,
+            appliedOps=["delete_data_model"],
+            nativeConfig=cfg,
+        ),
+    ):
+        r = tool_bridge.tool_delete(
+            entity="data_model", phase="prepare",
+            target={"playlistId": pid, "slideId": sid, "modelId": "m1"})
+    assert r.is_error is False
+    data = r.structured_content["data"]
+    impact = data["dependencyImpact"][0]
+    assert impact["modelId"] == "m1"
+    assert impact["verificationStatus"] == "CONCLUSIVE"
+    assert impact["confirmationPolicy"] == "confirm"
+    assert isinstance(impact["consumerBlocks"], int)
+
+
+def test_d8_prepare_failclosed_when_discovery_inconclusive():
+    dispatch, _, _ = _governed_dispatch()
+    dispatch._consent = _consent_mock()
+    pid, sid = str(uuid4()), str(uuid4())
+    ops = [{"op": "delete_data_model", "modelId": "m1"}]
+    with _ctx(_editor()), _access_patches(dispatch)[0], patch.object(
+        tool_bridge, "_dispatch", dispatch
+    ), patch.object(
+        PresentationPatchService, "preview",
+        return_value=_preview_result(
+            orderedOps=ops,
+            appliedOps=["delete_data_model"],
+            nativeConfig=None,
+        ),
+    ):
+        r = tool_bridge.tool_delete(
+            entity="data_model", phase="prepare",
+            target={"playlistId": pid, "slideId": sid, "modelId": "m1"})
+    assert r.is_error is True
+    assert r.structured_content["code"] == "DEPENDENCY_UNRESOLVED"
+    assert r.structured_content["httpStatus"] == 409
