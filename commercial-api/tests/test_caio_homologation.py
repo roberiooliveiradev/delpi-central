@@ -717,6 +717,75 @@ def test_knowledge_playbooks_contract_fields():
         assert data["response_format"], pid
         assert data["insufficient_data"], pid
         assert data["permissions"], pid
+        for field in (
+            "intent", "investigation_questions", "expected_evidence",
+            "failure_states", "official_actions", "output_schema",
+        ):
+            assert data.get(field), (pid, field)
+
+
+def test_knowledge_playbook_investigation_contract_is_actionable():
+    """W6/W7: each playbook declares discovery questions, official
+    actions that exist in the semantic registry, honest failure
+    states and the conclusion→evidence→…→limitations output."""
+    _set_context(_human_user())
+    doc = sem._knowledge_document()
+    known_caps = {a.capability for a in SEMANTIC_ACTIONS}
+    for pid, b in doc["playbooks"].items():
+        assert len(b["investigation_questions"]) >= 2, pid
+        assert len(b["failure_states"]) >= 2, pid
+        assert "limitações" in b["output_schema"], pid
+        assert "OBSERVED" in b["output_schema"], pid
+        assert "INFERRED" in b["output_schema"], pid
+        assert "UNKNOWN" in b["output_schema"], pid
+        for cap in b["related_capabilities"]:
+            assert cap in known_caps or cap == "analyze", (pid, cap)
+
+
+def test_knowledge_scenarios_a_j_selection_map():
+    """W8 homologação — scenario phrasings select the right
+    knowledge without naming the method (contract level)."""
+    _set_context(_human_user())
+    cases = {
+        "o que é uma ov e como se liga à proposta e à op": {
+            "topic.commercial.glossary",
+        },
+        "quais chicotes a delpi vende e quem os compra": {
+            "topic.products.guide",
+        },
+        "quais clientes reduziram compras nos últimos 90 dias": {
+            "playbook.customers_retraction",
+        },
+        "onde existem oportunidades de crescer nas contas": {
+            "playbook.expansion_opportunities",
+        },
+        "quais pedidos abertos têm maior risco de atraso": {
+            "playbook.order_health",
+        },
+        "propostas paradas no funil há muito tempo": {
+            "playbook.proposal_funnel",
+        },
+        "monte a previsão de faturamento com cenários": {
+            "method.forecast_vendas",
+        },
+        "prepare um plano comercial para 30 60 90 dias": {
+            "playbook.plan_30_60_90",
+        },
+        "como mapear o processo comercial sipoc": {
+            "method.sipoc_bpmn",
+        },
+        "desempenho por vendedor e carteira no trimestre": {
+            "playbook.seller_portfolio_performance",
+        },
+    }
+    for query, expected in cases.items():
+        result = sem.tool_knowledge(query=query)
+        assert result.is_error is False, query
+        ids = {
+            i["id"]
+            for i in result.structured_content["data"]["selection"]
+        }
+        assert ids & expected, (query, ids, expected)
 
 
 def test_knowledge_resolves_bare_method_and_playbook_ids():

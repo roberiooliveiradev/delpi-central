@@ -75,15 +75,17 @@ Resultado demonstrável: **conclusão → evidência → causa confirmada ou hip
 
 | Fase | Status | HEAD / commit | Testes | Fontes/owner | Deployed SHA | Gaps |
 |---|---|---|---|---|---|---|
-| W0 Inventário | NOT_STARTED | — | — | — | N/A | — |
-| W1 Conhecimento | NOT_STARTED | — | — | — | — | — |
-| W2 Clientes | NOT_STARTED | — | — | — | — | — |
-| W3 Pedidos | NOT_STARTED | — | — | — | — | — |
-| W4 Propostas | NOT_STARTED | — | — | — | — | — |
-| W5 Produtos | NOT_STARTED | — | — | — | — | — |
-| W6 Contexto | NOT_STARTED | — | — | — | — | — |
-| W7 Relatórios | NOT_STARTED | — | — | — | — | — |
-| W8 Homologação | NOT_STARTED | — | — | — | — | — |
+| W0 Inventário | TESTED | — | — | — | N/A | — |
+| W1 Conhecimento | TESTED | — | — | — | — | — |
+| W2 Clientes | TESTED | — | — | — | — | — |
+| W3 Pedidos | TESTED | — | — | — | — | — |
+| W4 Propostas | TESTED | — | — | — | — | — |
+| W5 Produtos | TESTED | — | — | — | — | — |
+| W6 Contexto | TESTED | — | — | — | — | — |
+| W7 Relatórios | TESTED | — | — | — | — | — |
+| W8 Homologação | PARTIAL | — | — | — | — | — |
+
+Diário 2026-10-31 (execução W0–W8): base dc0d34641e; CAIO 3.1 já continha glossário 17 termos, 16 métodos, products.guide, 4 product.*, seleção contextual — W1/W5 reutilizados; delta executado = corpus v3.2 com os 8 playbooks no contrato de investigação §5 (intent, investigation_questions, expected_evidence, failure_states, official_actions, output_schema OBSERVED/INFERRED/UNKNOWN→limitações) + teste de mapa de seleção A–J + contract fields; suíte CAIO 651 passed. Autenticado produção = TEST_NOT_RUN (credencial indisponível). W8 = PARTIAL até rodada autenticada A–J.
 
 Status válidos: `NOT_STARTED`, `IN_PROGRESS`, `IMPLEMENTED`, `TESTED`, `DEPLOYED_VERIFIED`, `PARTIAL`, `BLOCKED_EXTERNAL`, `PENDING_BUSINESS_VALIDATION`.
 
