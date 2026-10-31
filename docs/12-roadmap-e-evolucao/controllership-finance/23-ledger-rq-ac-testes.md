@@ -1274,3 +1274,16 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | G030-REG | consumidores api-delpi pós-recreate | rota resolvida | gateway cacheou IP antigo → 502; `nginx -s reload` → 401 auth correto — consumers OK | PASS (defeito operacional corrigido) |
 | G030-CONFIG | `MCP_RESOURCE_URL` ausente no cf-api | audiência realm minhadelpi.com.br | compose dev+prod corrigidos (`MCP_RESOURCE_URL_CLARA`) — causa raiz do 401 audience | PASS |
 | G030-NEG-PERSONA | usuário sem .access | 403 efetivo | realm dev só tem 1 usuário | INCONCLUSIVE (IAM) |
+
+## Gate 032 — release produtivo R12/R15 (31/10/2026, srv-api)
+
+| Teste | Entrada | Esperado | Observado | Estado |
+|---|---|---|---|---|
+| G032-DEPLOY | merge `origin/main` (`87d031c894`) + `up-prod-sequential.sh --build` | 3 serviços atualizados | `delpi-api-delpi` (código novo, `closing_state_router` presente), `delpi-controllership-finance-api` (healthy, `MCP_RESOURCE_URL` correto), `delpi-controllership-finance` (remoteEntry 200, bundle com página) | PASS |
+| G032-REGISTRY | `READ_ACTIONS` no runtime prod | action registrada | `("report","cost_closing_state")` = True — `not_implemented` resolvido no deploy | PASS |
+| G032-NEG | `POST /mcp` e rota BFF anônimas em prod | 401 | 401 × 2 confirmado em `minhadelpi.com.br` | PASS |
+| G032-CONSUMERS | serviços compartilhados pós-deploy | saúde | 112 containers up/healthy; openapi 200; remoteEntry 200 | PASS |
+| G032-FLAG | `FINANCEIRO_CLOSING_STATE_ENABLED` | off até gate positivo | ausente do .env prod → off por default | PASS (controle mantido) |
+| G032-POS | 200 OAuth + dados via CLARA conectada | consulta real | requer sessão de usuário real no realm prod (conector do PO); sem credencial de teste disponível no host | TEST_NOT_RUN |
+| G032-FLAG-ON | ativação produtiva | após controles | não executada — §7 exige positivo; credencial de usuário não disponível no host | PENDING (STOP CONDITION honrada) |
+| G032-NEG-PERSONA | usuário sem .access | 403 | sem persona no realm | INCONCLUSIVE (IAM) |
