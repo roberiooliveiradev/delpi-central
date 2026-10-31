@@ -910,7 +910,75 @@ GATEWAY_READS = {
     "open_order.recently_closed": {},
     "open_order.open_ops": {},
     "production.appointments": {"op": "123"},
+    "product.search": {"description": "chicote"},
+    "product.filter_options": {},
 }
+
+
+def test_product_search_forwards_official_contract(seeded):
+    """product.search proxies GET /products/search with the caller's
+    filters — no recomputed catalog, no invented fields."""
+    fake = _FakeGateway({"data": {"items": []}})
+    _act(_human(MANAGE_USER + ("commercial.analytics",)))
+    with patch.object(
+        parity, "build_delpi_commercial_gateway",
+        return_value=fake,
+    ):
+        r = sem.tool_read(
+            entity="product", action="search",
+            filters={
+                "description": "chicote",
+                "group_code": "9026",
+                "product_type": "PA",
+                "page": 1,
+                "page_size": 25,
+            },
+        )
+    assert r.is_error is False, r.structured_content
+    name, args, kwargs = fake.calls[0]
+    assert name == "get_product"
+    assert args[0] == "/search"
+    sent = kwargs.get("params") or {}
+    assert sent.get("description") == "chicote"
+    assert sent.get("group_code") == "9026"
+    assert sent.get("product_type") == "PA"
+    assert sent.get("page") == 1
+    assert sent.get("page_size") == 25
+
+
+def test_product_summary_and_customers_hit_canonical_paths(seeded):
+    fake = _FakeGateway({"data": {"items": []}})
+    _act(_human(MANAGE_USER + ("commercial.analytics",)))
+    with patch.object(
+        parity, "build_delpi_commercial_gateway",
+        return_value=fake,
+    ):
+        r1 = sem.tool_read(
+            entity="product", action="summary", ref="90260921"
+        )
+        r2 = sem.tool_read(
+            entity="product", action="customers", ref="90260921",
+            filters={"page": 2, "page_size": 10},
+        )
+    assert r1.is_error is False, r1.structured_content
+    assert r2.is_error is False, r2.structured_content
+    paths = [c[1][0] for c in fake.calls if c[0] == "get_product"]
+    assert "/90260921/summary" in paths
+    assert "/90260921/customers" in paths
+
+
+def test_product_filter_options_hits_canonical_path(seeded):
+    fake = _FakeGateway({"data": {}})
+    _act(_human(MANAGE_USER + ("commercial.analytics",)))
+    with patch.object(
+        parity, "build_delpi_commercial_gateway",
+        return_value=fake,
+    ):
+        r = sem.tool_read(entity="product", action="filter_options")
+    assert r.is_error is False, r.structured_content
+    name, args, kwargs = fake.calls[0]
+    assert name == "get_product"
+    assert args[0] == "/filter-options"
 
 
 @pytest.mark.parametrize("cap", sorted(GATEWAY_READS))

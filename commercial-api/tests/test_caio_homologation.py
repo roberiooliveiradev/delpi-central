@@ -101,14 +101,14 @@ def test_catalog_inventory_counts():
         counts[a.tool] += 1
     assert counts == {
         "get_context": 1,
-        "read": 49,
+        "read": 53,
         "analyze": 21,
         "knowledge": 2,
         "execute": 40,
         "delete": 10,
     }
-    assert len(SEMANTIC_ACTIONS) == 123
-    assert len({a.capability for a in SEMANTIC_ACTIONS}) == 123
+    assert len(SEMANTIC_ACTIONS) == 127
+    assert len({a.capability for a in SEMANTIC_ACTIONS}) == 127
 
 
 def test_get_context_exposes_full_catalog():
@@ -857,6 +857,157 @@ def test_knowledge_required_domain_topics_present():
         "commercial.interaction_rooms",
         "commercial.permissions",
         "commercial.integrations",
+        "products.guide",
+        "commercial.glossary",
     ):
         assert key in topics, key
         assert topics[key].get("source"), key
+
+
+# --- CAIO 3.0 ampliação: glossário estruturado + products.guide + seleção ----
+
+
+def test_knowledge_glossary_structured_terms_contract():
+    """Glossary terms carry meaning, application, owner, source,
+    relations and examples; unconfirmed usage is marked
+    PENDING_BUSINESS_VALIDATION — never silently asserted."""
+    _set_context(_human_user())
+    result = sem.tool_knowledge(topic="commercial.glossary")
+    assert result.is_error is False
+    terms = result.structured_content["data"]["terms"]
+    for key in (
+        "ov", "pv", "op", "lmp", "rol", "meta", "saldo_a_faturar",
+        "carteira_pedidos", "proposta", "conversao",
+        "previsao_comercial", "lead_time", "otd", "follow_up",
+        "familia_chicotes", "produto", "cliente",
+    ):
+        assert key in terms, key
+    for tid, term in terms.items():
+        for field in ("meaning", "application", "owner", "source", "status"):
+            assert term.get(field), (tid, field)
+        assert term.get("relations"), tid
+    lmp = terms["lmp"]
+    assert "Engenharia" in lmp["owner"]
+    assert "PENDING_BUSINESS_VALIDATION" in lmp["status"]
+
+
+def test_knowledge_products_guide_contract():
+    _set_context(_human_user())
+    result = sem.tool_knowledge(topic="products.guide")
+    assert result.is_error is False
+    data = result.structured_content["data"]
+    assert data["type"] == "topic"
+    assert data["status"] == "implemented"
+    caps = set(data["related_capabilities"])
+    assert {
+        "product.search", "product.summary", "product.customers",
+        "product.filter_options",
+    } <= caps
+    assert "Engenharia" in " ".join(data["guidance"])
+
+
+def test_knowledge_planned_topic_removed_once_implemented():
+    _set_context(_human_user())
+    doc = sem._knowledge_document()
+    planned = {t["topic"] for t in doc.get("planned_topics", [])}
+    assert "products.guide" not in planned
+
+
+def test_knowledge_query_selects_product_guide_and_expansion():
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        query="quais produtos podemos vender mais para os clientes"
+    )
+    assert result.is_error is False
+    ids = {
+        i["id"]
+        for i in result.structured_content["data"]["selection"]
+    }
+    assert "playbook.expansion_opportunities" in ids
+    assert "topic.products.guide" in ids
+
+
+def test_knowledge_query_selects_chicote_catalog():
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        query="quais chicotes estão cadastrados no catálogo"
+    )
+    assert result.is_error is False
+    ids = {
+        i["id"]
+        for i in result.structured_content["data"]["selection"]
+    }
+    assert "topic.products.guide" in ids
+
+
+def test_knowledge_query_acronym_terms_select_glossary():
+    """2-char domain acronyms (OV/OP/PV) select the glossary when
+    declared as corpus keywords — FASE 5 scenario A phrasing."""
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        query="o que é ov op e otd e como se relacionam"
+    )
+    assert result.is_error is False
+    ids = {
+        i["id"]
+        for i in result.structured_content["data"]["selection"]
+    }
+    assert "topic.commercial.glossary" in ids
+
+
+def test_knowledge_query_diminishing_customers_selects_retraction():
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        query="quais clientes importantes estão diminuindo suas "
+              "compras"
+    )
+    assert result.is_error is False
+    ids = {
+        i["id"]
+        for i in result.structured_content["data"]["selection"]
+    }
+    assert "playbook.customers_retraction" in ids
+    assert "method.rfv" in ids or "method.abc_pareto" in ids
+
+
+def test_knowledge_query_conversion_selects_funnel():
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        query="como melhorar a conversão de propostas"
+    )
+    assert result.is_error is False
+    ids = {
+        i["id"]
+        for i in result.structured_content["data"]["selection"]
+    }
+    assert "method.funil_conversao" in ids
+    assert "playbook.proposal_funnel" in ids
+
+
+def test_knowledge_new_methods_are_external_pending_validation():
+    _set_context(_human_user())
+    doc = sem._knowledge_document()
+    methods = doc.get("methods") or {}
+    for mid in ("benchmarking", "forecast_vendas"):
+        assert mid in methods, mid
+        result = sem.tool_knowledge(topic=f"method.{mid}")
+        assert result.is_error is False, mid
+        data = result.structured_content["data"]
+        assert data["external_reference"] is True, mid
+        assert data["status"] == "pending_business_validation", mid
+        assert data["examples"], mid
+        assert data["formula"], mid
+
+
+def test_knowledge_query_selects_forecast_method():
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        query="qual a previsão de faturamento para o mês"
+    )
+    assert result.is_error is False
+    ids = {
+        i["id"]
+        for i in result.structured_content["data"]["selection"]
+    }
+    assert "method.forecast_vendas" in ids
+    assert "playbook.forecast_scenarios" in ids

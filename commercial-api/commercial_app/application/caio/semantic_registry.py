@@ -556,6 +556,46 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         fields=("branch",),
         requires=(REQ_READ, REQ_ANALYTICS),
     ),
+    # --- read: product catalog (engineering-owned SB1 via BFF) ------------------
+    _a(
+        "product", "search", "read",
+        "Product catalog search (SB1 cadastral) by code, description, "
+        "group, subgroup, type or customer reference — engineering "
+        "owner via the products BFF.",
+        "read",
+        fields=(
+            "code", "description", "group_code", "subgroup",
+            "product_type", "customer_reference", "view", "sort",
+            "direction", "page", "page_size",
+        ),
+        requires=(REQ_READ,),
+    ),
+    _a(
+        "product", "summary", "read",
+        "Product cadastral snapshot with stock and price lists "
+        "(engineering owner).",
+        "read",
+        ref_arg="product_code",
+        ref_description="Product code (Protheus B1_COD).",
+        requires=(REQ_READ,),
+    ),
+    _a(
+        "product", "customers", "read",
+        "Customers that purchased a product — paged cadastral view "
+        "(engineering owner).",
+        "read",
+        ref_arg="product_code",
+        ref_description="Product code (Protheus B1_COD).",
+        fields=("page", "page_size"),
+        requires=(REQ_READ,),
+    ),
+    _a(
+        "product", "filter_options", "read",
+        "Official product filter options — confirmed groups, "
+        "subgroups and types of the catalog (engineering owner).",
+        "read",
+        requires=(REQ_READ,),
+    ),
     # --- read: user profile ------------------------------------------------------
     _a(
         "user_profile", "get", "read",

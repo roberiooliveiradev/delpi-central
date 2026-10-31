@@ -1,5 +1,5 @@
 {
-  "version": "3.0",
+  "version": "3.1",
   "owner": "commercial-api",
   "audience": "caio-mcp",
   "topics": {
@@ -17,7 +17,25 @@
         "Estados honestos: unavailable significa falha na fonte; forbidden significa falta de autorização — nunca apresente como ausência de dados.",
         "Escopo de carteira: membros veem apenas clientes vinculados às próprias carteiras; scope_mode=membership força a carteira do usuário; sem filtro, usuários manage/team veem o recorte global autorizado.",
         "knowledge também recupera methods (method.<id>: metodologias externas curadas — nunca regra DELPI) e playbooks (playbook.<id>: roteiros que compõem casos de uso oficiais); topic vazio ou \"*\" com query seleciona os conteúdos relevantes para a pergunta."
-      ]
+      ],
+      "keywords": [
+        "caio",
+        "tools",
+        "ferramentas",
+        "como usar",
+        "get_context",
+        "read",
+        "analyze",
+        "knowledge",
+        "execute",
+        "delete",
+        "operar"
+      ],
+      "trigger_questions": [
+        "Como usar o CAIO?",
+        "Quais ferramentas existem?"
+      ],
+      "access_classification": "internal"
     },
     "caio.tool_map": {
       "title": "Mapa semântico CAIO ↔ Portal Comercial",
@@ -28,30 +46,321 @@
         "Pedidos e propostas: read open_order.list/recently_closed/open_ops; read proposal.list/get/analytics_list/analytics_get/history_events.",
         "Worklist: read worklist.mine/done, task.list, activity.list; execute task.create/update/complete/defer/reassign/from_message e activity.create; delete task.delete.",
         "Grupos e SLA: read group.list/get, sla_policy.list; execute group.create/rename/members_replace/member_add/member_remove, sla_policy.create/update; delete group.delete e sla_policy.deactivate.",
+        "Produtos: read product.search/summary/customers/filter_options — catálogo SB1 via products BFF (owner Engenharia); visão fabril via production.order/appointments/product_status/product_structure.",
         "Salas de interação: read interaction_room.* e interaction_message implícito via room.messages; execute interaction_room.resolve/rename/member_add/member_remove/mark_read e interaction_message.post/update/reaction_set/reaction_clear/pin/unpin; execute task.from_message a partir de mensagem; delete interaction_room.delete e interaction_message.delete.",
         "Outros: read home_favorite.list, team.roster, attachment.list, production.order/appointments/product_status/product_structure, user_profile.get; execute home_favorite.put, user_profile.update; delete attachment.delete.",
         "Analytics: analyze por analysis_type — portfolio.open_summary/open_horizon/billing_share/billing_ranking, rol.summary/series/by_product/by_customer, billing.by_customer_month, closing_rate.summary/series, sales_order_otd.summary/panel/series/line_detail, new_business.rol_pct/rol_target_pct, weg.rol_target_pct, dashboard.department_idd/department_indicators, opportunity.collaborator_summary."
-      ]
+      ],
+      "keywords": [
+        "mapa",
+        "capacidades",
+        "catalogo",
+        "entidades",
+        "acoes",
+        "tools",
+        "operacoes"
+      ],
+      "access_classification": "internal"
     },
     "commercial.glossary": {
       "title": "Conceitos comerciais DELPI",
       "source": "commercial-api contracts (seller-portfolios, customers, open-orders, analytics)",
       "guidance": [
-        "Carteira (seller portfolio): conjunto de clientes vinculados a um vendedor — define o escopo de dados que o usuário pode ver.",
-        "Membership: vínculo do usuário autenticado a uma ou mais carteiras; sem membership, membros veem escopo vazio (não erro).",
-        "Escopo irrestrito (manage/team scope): permite ver o recorte global ou carteiras selecionadas via portfolio_id/seller_id.",
-        "Centro do cliente (customer center): subdivisão operacional do cliente no TOTVS; alguns cadastros e filtros exigem o centro validado pela fonte canônica.",
-        "Pedido em aberto (open order): pedido de venda com saldo a faturar; open_summary retorna o KPI agregado sem itens; open_horizon agrupa por data de entrega.",
-        "Pedido recentemente fechado: pedido faturado na janela de fechamento recente — mesma autoridade de escopo dos pedidos em aberto.",
-        "Proposta comercial: documento de proposta (ADY) pesquisável no backend — search cobre número de proposta, OV, cliente e nome; sort_by suporta ov, interna, cliente, oportunidade, versao, data, itens.",
-        "OV (ordem de venda): identificador da venda vinculada a propostas e pedidos; o formato OV000116 corresponde ao identificador 000116.",
-        "OP (ordem de produção): ordem fabril do produto — consultável via production.order e appointments por OP/filial.",
-        "ROL (receita): resumo de faturamento por período na visão analítica — start_date/end_date YYYY-MM-DD, branch, customer_segment.",
-        "OTD (on-time delivery): indicador de entrega no prazo dos pedidos de venda — summary, panel, series e line_detail por pedido/item.",
-        "Follow-up: acompanhamento comercial registrado como tarefa da worklist — ciclo open → completed, com defer/reassign e notificações oficiais.",
-        "Sala de interação (interaction room): conversa contextual do Portal — kind entity|group, com mensagens, reações, pins, menções e vínculo a tarefas.",
-        "Atividade (activity): registro de interação comercial vinculado a cliente e/ou tarefa — call, visit, note etc."
-      ]
+        "Glossário estruturado: cada conceito tem significado, aplicação comercial, fonte, owner, relações e exemplos na seção terms — definições não confirmadas pelo responsável ficam marcadas como PENDING_BUSINESS_VALIDATION.",
+        "Cadeia comercial: proposta/oportunidade (ADY) → OV → PV (pedido de venda, open_order) → OP (produção) → faturamento/entrega (ROL, OTD).",
+        "Carteira (seller portfolio): conjunto de clientes vinculados a um vendedor — define o escopo de dados que o usuário pode ver; membership é o vínculo do usuário à carteira.",
+        "LMP pertence à Engenharia (ordem especial/amostra) e não é o funil comercial COMPONENTES — não misturar os dois recortes.",
+        "Dados cadastrais de produto (SB1) são do owner Engenharia; consultas ao CAIO seguem os contratos product.* via products BFF — ver topic products.guide."
+      ],
+      "keywords": [
+        "glossario",
+        "termos",
+        "conceitos",
+        "siglas",
+        "significado",
+        "ov",
+        "op",
+        "pv",
+        "lmp",
+        "otd",
+        "rol",
+        "pedido",
+        "ordem",
+        "proposta",
+        "o que e"
+      ],
+      "trigger_questions": [
+        "O que é uma OV e qual sua relação com proposta, pedido de venda e OP?",
+        "O que significa LMP no comercial?",
+        "O que é saldo a faturar?",
+        "O que é OTD e lead time?"
+      ],
+      "access_classification": "internal",
+      "owner": "commercial-api",
+      "version": "3.1",
+      "status": "implemented",
+      "related_entries": [
+        "topic.products.guide",
+        "topic.commercial.proposals",
+        "topic.commercial.otd",
+        "topic.commercial.production",
+        "topic.commercial.indicators"
+      ],
+      "terms": {
+        "ov": {
+          "title": "OV — Ordem de Venda",
+          "meaning": "Identificador da venda no documento comercial TOTVS (ADY); vincula proposta/oportunidade ao pedido de venda e à produção.",
+          "application": "Rastrear a origem de um pedido até a proposta/oportunidade e a OP correspondente; search de propostas cobre número de proposta, OV, cliente e nome.",
+          "owner": "commercial-api (contratos proposal.*, open_order.*); TOTVS é autoridade do dado",
+          "source": "semantic registry proposal.list/get, open_order.*, opportunity.collaborator_summary",
+          "relations": [
+            "proposta",
+            "pv",
+            "op",
+            "faturamento",
+            "otd"
+          ],
+          "examples": [
+            "OV000116 corresponde ao identificador 000116"
+          ],
+          "status": "confirmed"
+        },
+        "pv": {
+          "title": "PV — Pedido de Venda",
+          "meaning": "Pedido de venda registrado no TOTVS; open_order representa o PV com saldo a faturar.",
+          "application": "Acompanhar carteira de pedidos, saldo a faturar, prazo prometido, OTD e faturamento.",
+          "owner": "commercial-api via pedidos-venda-abertos (api-delpi/TOTVS)",
+          "source": "open_order.list, open_order.recently_closed, sales_order_otd.*, portfolio.open_summary/open_horizon",
+          "relations": [
+            "ov",
+            "op",
+            "faturamento",
+            "otd",
+            "saldo_a_faturar",
+            "carteira_pedidos"
+          ],
+          "examples": [
+            "open_order.list retorna os PVs em aberto do escopo autorizado"
+          ],
+          "status": "confirmed"
+        },
+        "op": {
+          "title": "OP — Ordem de Produção",
+          "meaning": "Ordem fabril do produto — o que a fábrica precisa produzir.",
+          "application": "Cruzar prazo prometido do pedido com o andamento da OP para avaliar risco de entrega; acompanhar apontamentos.",
+          "owner": "Produção (BFF de produção da api-delpi)",
+          "source": "production.order, production.appointments, open_order.open_ops",
+          "relations": [
+            "pv",
+            "produto",
+            "lead_time",
+            "otd"
+          ],
+          "examples": [
+            "read production.order(ref=OP, branch=filial)"
+          ],
+          "status": "confirmed"
+        },
+        "lmp": {
+          "title": "LMP — Ordem especial / amostra (Engenharia)",
+          "meaning": "Ordem especial gerida pela Engenharia (ciclo de amostras/homologação) — dashboard-lmps e rotas /engineering; no funil TOTVS os processos 000002/000003 são LMP e 000001 é COMPONENTES (maior volume).",
+          "application": "Reconhecer quando uma venda/oportunidade está no ciclo de engenharia (amostra, homologação, revisão de medição) — recorte distinto do funil comercial padrão.",
+          "owner": "Engenharia (engineering-api / dashboard-lmps / api-delpi /engineering)",
+          "source": "contrato Engenharia (modelo LmpFact, docs comercial ATA-MAPA-NECESSIDADES §12, DATA-MODEL totvs_process_code)",
+          "relations": [
+            "proposta",
+            "oportunidade",
+            "amostra",
+            "funil_vendas"
+          ],
+          "examples": [
+            "listing_type=Amostra no dashboard-lmps"
+          ],
+          "status": "confirmed — uso na rotina comercial = PENDING_BUSINESS_VALIDATION"
+        },
+        "rol": {
+          "title": "ROL — Receita (faturamento)",
+          "meaning": "Receita oficial por período: summary, series, by_product e by_customer.",
+          "application": "Medir resultado, desvio vs meta, composição por produto/família/cliente e ranking de evolução.",
+          "owner": "commercial analytics (api-delpi)",
+          "source": "analyze rol.summary/series/by_product/by_customer, billing.by_customer_month",
+          "relations": [
+            "meta",
+            "faturamento",
+            "desvio",
+            "previsao_comercial"
+          ],
+          "examples": [
+            "analyze rol.by_product com product_groups para famílias"
+          ],
+          "status": "confirmed"
+        },
+        "meta": {
+          "title": "Meta / desvio de meta",
+          "meaning": "Objetivo de faturamento por período; desvio = meta × realizado (fórmula do owner).",
+          "application": "Avaliar atingimento, gap e projeção — analyze new_business.rol_target_pct e weg.rol_target_pct; método desvio_meta orienta a leitura.",
+          "owner": "commercial analytics (api-delpi)",
+          "source": "new_business.rol_pct/rol_target_pct, weg.rol_target_pct, method.desvio_meta",
+          "relations": [
+            "rol",
+            "desvio",
+            "previsao_comercial"
+          ],
+          "examples": [
+            "analyze weg.rol_target_pct no período"
+          ],
+          "status": "confirmed"
+        },
+        "saldo_a_faturar": {
+          "title": "Saldo a faturar",
+          "meaning": "Valor dos pedidos de venda em aberto ainda não faturados.",
+          "application": "Medir carteira aberta e pipeline de faturamento — open_summary agrega o KPI; open_horizon agrupa por data de entrega.",
+          "owner": "commercial-api via pedidos-venda-abertos",
+          "source": "analyze portfolio.open_summary, portfolio.open_horizon",
+          "relations": [
+            "pv",
+            "carteira_pedidos",
+            "faturamento",
+            "otd"
+          ],
+          "status": "confirmed"
+        },
+        "carteira_pedidos": {
+          "title": "Carteira de pedidos",
+          "meaning": "Conjunto de pedidos de venda em aberto (saldo a faturar) no escopo autorizado.",
+          "application": "Saúde da carteira: prazos, concentração por cliente, risco de atraso vs capacidade de produção.",
+          "owner": "commercial-api via pedidos-venda-abertos",
+          "source": "open_order.list, portfolio.open_summary/open_horizon, sales_order_otd.*",
+          "relations": [
+            "pv",
+            "saldo_a_faturar",
+            "otd",
+            "op"
+          ],
+          "status": "confirmed"
+        },
+        "proposta": {
+          "title": "Proposta comercial / revisão / oportunidade",
+          "meaning": "Documento comercial ADY no TOTVS; revisões versionam a proposta; oportunidade é a etapa de funil associada.",
+          "application": "Acompanhar funil, aging de propostas, histórico de eventos e documento PDF (document_url).",
+          "owner": "commercial-api via commercial-proposals (api-delpi)",
+          "source": "proposal.list/get/analytics_list/analytics_get/history_events, opportunity.collaborator_summary",
+          "relations": [
+            "ov",
+            "funil_vendas",
+            "conversao"
+          ],
+          "examples": [
+            "revision é parâmetro opcional de analytics_get/history_events"
+          ],
+          "status": "confirmed"
+        },
+        "conversao": {
+          "title": "Conversão e funil de vendas",
+          "meaning": "Taxa de avanço entre etapas do funil (proposta → pedido) e taxa de fechamento no período.",
+          "application": "Identificar gargalos, propostas paradas e aging por etapa; funil TOTVS tem três processos — 000001 COMPONENTES ≠ LMP.",
+          "owner": "commercial analytics (api-delpi)",
+          "source": "closing_rate.summary/series, proposal.analytics_list, opportunity.collaborator_summary, method.funil_conversao",
+          "relations": [
+            "proposta",
+            "funil_vendas",
+            "meta"
+          ],
+          "status": "confirmed"
+        },
+        "previsao_comercial": {
+          "title": "Previsão comercial (forecast)",
+          "meaning": "Projeção de faturamento a partir do histórico oficial, com cenários e incerteza — método externo, nunca cálculo oficial inventado.",
+          "application": "Estimar fechamento do período: carteira aberta + histórico + tendência; comparar previsto × realizado no ciclo seguinte.",
+          "owner": "método curado CAIO (dados: commercial analytics)",
+          "source": "method.forecast_vendas, playbook.forecast_scenarios, rol.series, portfolio.open_summary",
+          "relations": [
+            "rol",
+            "meta",
+            "carteira_pedidos"
+          ],
+          "status": "confirmed — cenários são hipóteses declaradas"
+        },
+        "lead_time": {
+          "title": "Lead time / prazo prometido / OTD",
+          "meaning": "Prazo prometido é a data de entrega acordada (C6_ENTREG); OTD mede % de linhas entregues no prazo.",
+          "application": "Avaliar risco de atraso cruzando prazo prometido, carteira aberta e andamento da OP.",
+          "owner": "commercial analytics / produção (api-delpi)",
+          "source": "sales_order_otd.summary/panel/series/line_detail, production.order/appointments",
+          "relations": [
+            "otd",
+            "pv",
+            "op"
+          ],
+          "status": "confirmed"
+        },
+        "otd": {
+          "title": "OTD — On-Time Delivery",
+          "meaning": "Indicador oficial de entrega no prazo das linhas de pedido (fórmula do owner).",
+          "application": "Monitorar pontualidade, piores atrasos e recorrência por cliente.",
+          "owner": "commercial analytics (api-delpi)",
+          "source": "topic commercial.otd; analyze sales_order_otd.*",
+          "relations": [
+            "lead_time",
+            "pv"
+          ],
+          "status": "confirmed"
+        },
+        "follow_up": {
+          "title": "Follow-up / tarefa / atividade / sala comercial",
+          "meaning": "Acompanhamento comercial: tarefas da worklist (open→completed, defer/reassign), atividades (call, visit, note) e salas de interação por entidade.",
+          "application": "Registrar e acompanhar ações comerciais por cliente/oportunidade; tarefas podem nascer de mensagens da sala.",
+          "owner": "commercial-api",
+          "source": "worklist.mine/done, task.*, activity.*, interaction_room.*",
+          "relations": [
+            "proposta",
+            "cliente"
+          ],
+          "status": "confirmed"
+        },
+        "familia_chicotes": {
+          "title": "Famílias de produtos e chicotes elétricos",
+          "meaning": "Produtos agrupados por grupo (SB1.B1_GRUPO)/subgrupo/tipo; chicotes elétricos são a família comercializada pela DELPI — grupo 9026 é exemplo confirmado (90260921 CHICOTE DE LIGACAO, tipo PA).",
+          "application": "Descobrir famílias e produtos cadastrados via product.filter_options e product.search (group_code, product_type, description).",
+          "owner": "Engenharia (api-delpi /products) — leitura delegada ao comercial via products BFF",
+          "source": "topic products.guide; product.search/filter_options/summary/customers",
+          "relations": [
+            "produto",
+            "ov",
+            "op"
+          ],
+          "examples": [
+            "grupo 9026 confirmado por consulta oficial; demais grupos só quando confirmados"
+          ],
+          "status": "confirmed — lista de famílias é dinâmica, nunca assumir catálogo estático"
+        },
+        "produto": {
+          "title": "Produto (SB1 / B1_COD)",
+          "meaning": "Item do catálogo TOTVS: código, descrição, tipo (PA/MP/PI), grupo e subgrupo.",
+          "application": "product.search descobre itens; product.summary traz snapshot + estoque + preços; product.customers lista quem compra; production.* traz visão fabril.",
+          "owner": "Engenharia (cadastro) / Produção (visão fabril)",
+          "source": "product.* via products BFF; production.product_status/product_structure",
+          "relations": [
+            "familia_chicotes",
+            "op",
+            "ov"
+          ],
+          "status": "confirmed"
+        },
+        "cliente": {
+          "title": "Cliente / centro / carteira comercial",
+          "meaning": "Cliente TOTVS (código+loja); centro é a subdivisão operacional (SA7); carteira vincula clientes a vendedores.",
+          "application": "Escopo de visibilidade, enriquecimento de conta, série de faturamento e conta 360.",
+          "owner": "commercial-api",
+          "source": "customer.*, customer_center.list, portfolio.*",
+          "relations": [
+            "carteira",
+            "proposta",
+            "pv"
+          ],
+          "status": "confirmed"
+        }
+      }
     },
     "commercial.portfolio_governance": {
       "title": "Governança de carteiras",
@@ -63,7 +372,22 @@
         "Centro do cliente só é gravado após validação na fonte canônica (_verified_customer_center) — nunca aceitar valor não verificado.",
         "deactivate é reversível; purge é exclusão permanente de carteira inativa — ambos exigem proposta selada via delete.",
         "Cobertura: coverage_audit detecta clientes sem carteira ou duplicados; customer_coverage mostra em quais carteiras um cliente está; load_summary mede a carga por carteira."
-      ]
+      ],
+      "keywords": [
+        "carteira",
+        "carteiras",
+        "portfolio",
+        "membership",
+        "escopo",
+        "vendedor",
+        "transferencia",
+        "governanca"
+      ],
+      "trigger_questions": [
+        "Como funcionam as carteiras?",
+        "O que é membership?"
+      ],
+      "access_classification": "internal"
     },
     "commercial.worklist_process": {
       "title": "Processo da worklist e follow-ups",
@@ -74,7 +398,23 @@
         "Tarefas aceitam multi-assignees (users e groups), clientes vinculados (customers[{code,store,name}]) e related_entity para contexto.",
         "task.from_message converte uma mensagem de sala em tarefa com referência rastreável à mensagem de origem.",
         "Atividades registram toques comerciais por cliente e podem vincular-se a tarefas; list por customer_code+customer_store."
-      ]
+      ],
+      "keywords": [
+        "tarefa",
+        "tarefas",
+        "worklist",
+        "follow-up",
+        "followup",
+        "atividade",
+        "atividades",
+        "prazo",
+        "delegar"
+      ],
+      "trigger_questions": [
+        "Como acompanhar follow-ups?",
+        "Como criar tarefa?"
+      ],
+      "access_classification": "internal"
     },
     "commercial.interaction_rooms": {
       "title": "Salas de interação e mensagens",
@@ -85,7 +425,20 @@
         "Mensagens suportam resposta (parent_id), menções estruturadas, reações e pins; edição e exclusão são soft e notificam a sala.",
         "mention_suggest resolve usuários/entidades mencionáveis respeitando o escopo do ator; entity_preview gera card semântico da entidade referenciada.",
         "mark_read zera o contador de não lidas do membro na sala."
-      ]
+      ],
+      "keywords": [
+        "sala",
+        "salas",
+        "mensagem",
+        "conversa",
+        "interaction",
+        "mencao",
+        "chat interno"
+      ],
+      "trigger_questions": [
+        "O que são salas de interação?"
+      ],
+      "access_classification": "internal"
     },
     "commercial.indicators": {
       "title": "Indicadores comerciais e análises",
@@ -99,7 +452,25 @@
         "Novos negócios: new_business.rol_pct e rol_target_pct; meta WEG via weg.rol_target_pct.",
         "Departamento: dashboard.department_idd e department_indicators por department_id+competence — sem escopo de carteira.",
         "Propostas: opportunity.collaborator_summary resume funil por colaborador; propostas analíticas via read proposal.analytics_*."
-      ]
+      ],
+      "keywords": [
+        "kpi",
+        "indicador",
+        "indicadores",
+        "rol",
+        "faturamento",
+        "meta",
+        "otd",
+        "fechamento",
+        "billing",
+        "dashboard"
+      ],
+      "trigger_questions": [
+        "Quais indicadores existem?",
+        "Como está o faturamento?",
+        "Qual a taxa de fechamento?"
+      ],
+      "access_classification": "internal"
     },
     "commercial.scope_semantics": {
       "title": "Semântica de escopo de carteira",
@@ -110,7 +481,18 @@
         "seller_id, portfolio_id e customer_codes vindos do cliente NUNCA ampliam escopo — merge_totvs_params descarta e reconstrói server-side.",
         "account_customer_code restringe a uma conta específica quando autorizada — nunca amplia.",
         "customer_centers filtra por centro do cliente somente após a resolução do escopo."
-      ]
+      ],
+      "keywords": [
+        "escopo",
+        "membership",
+        "acesso",
+        "visibilidade",
+        "restrito"
+      ],
+      "trigger_questions": [
+        "O que o usuário pode ver?"
+      ],
+      "access_classification": "internal"
     },
     "commercial.permissions": {
       "title": "Permissões comerciais efetivas",
@@ -121,7 +503,21 @@
         "worklist.team / team scope permitem visão agregada de equipe sem manage total.",
         "O principal precisa ser pessoa (principal_type=user) — service tokens são rejeitados nas tools.",
         "A persona CAIO nunca concede permissão — a autorização é sempre a do usuário autenticado no token."
-      ]
+      ],
+      "keywords": [
+        "permissao",
+        "perfil",
+        "admin",
+        "vendedor",
+        "rbac",
+        "forbidden",
+        "403"
+      ],
+      "trigger_questions": [
+        "Quais permissões existem?",
+        "Por que deu acesso negado?"
+      ],
+      "access_classification": "internal"
     },
     "commercial.integrations": {
       "title": "Integrações e proveniência de dados",
@@ -132,7 +528,19 @@
         "Anexos e fotos de perfil usam storage do próprio commercial-api — upload/download seguem fluxo multipart/stream não elegível ao MCP; attachment.list retorna download_url da rota canônica do Portal e user_profile.get retorna photo_url — o CAIO orienta o handoff, nunca transporta binário.",
         "Realtime (/ws) e notificações de inbox são push — o MCP executa as mesmas mutações que disparam esses efeitos oficiais.",
         "Todo resultado analítico carrega proveniência: TOTVS → api-delpi → commercial-api scope → CAIO."
-      ]
+      ],
+      "keywords": [
+        "integracao",
+        "api-delpi",
+        "totvs",
+        "bff",
+        "gateway",
+        "upstream"
+      ],
+      "trigger_questions": [
+        "De onde vêm os dados?"
+      ],
+      "access_classification": "internal"
     },
     "commercial.delete_governance": {
       "title": "Governança de exclusões",
@@ -143,7 +551,19 @@
         "phase=commit revalida integridade, ator, capability, alvo e vigência — reuso, adulteração, troca de usuário ou de alvo falham honestamente.",
         "Alvos compostos usam target_ref estruturado: message → room_id=<uuid>&message_id=<uuid>; contato → contact_id=<uuid>&customer_code=<code>&customer_store=<store>.",
         "O store é single-process/single-replica — múltiplas réplicas exigem store compartilhado (limitação documentada, não silenciada)."
-      ]
+      ],
+      "keywords": [
+        "excluir",
+        "delete",
+        "deletar",
+        "remover",
+        "proposta selada",
+        "confirmacao"
+      ],
+      "trigger_questions": [
+        "Como excluir um registro?"
+      ],
+      "access_classification": "internal"
     },
     "commercial.honest_states": {
       "title": "Estados honestos e exceções",
@@ -156,7 +576,21 @@
         "conflict (409): estado impede a operação (ex.: proposta expirada/consumida, pré-condição de escrita).",
         "unavailable (502/503): fonte canônica falhou — reporte como falha, nunca como 'sem dados'.",
         "Escopo vazio retorna itens vazios com honestidade — é restrição de autorização, não erro."
-      ]
+      ],
+      "keywords": [
+        "erro",
+        "unavailable",
+        "forbidden",
+        "404",
+        "502",
+        "sem dados",
+        "falha",
+        "indisponivel"
+      ],
+      "trigger_questions": [
+        "Por que a consulta falhou?"
+      ],
+      "access_classification": "internal"
     },
     "commercial.processes": {
       "title": "Processos comerciais de ponta a ponta",
@@ -169,7 +603,20 @@
         "Análise: get_context → analyze por analysis_type com escopo server-side → labels OBSERVED — sem recálculo local.",
         "Investigação de proposta: proposal.analytics_list → analytics_get(ref + branch) → history_events(ref + branch + período) → proposal.get com document_url do PDF.",
         "Pedido → produção: open_order.list/open_ops → production.order(op) → production.appointments(op + branch) → indicadores OTD — escopo server-side preservado."
-      ]
+      ],
+      "keywords": [
+        "processo",
+        "processos",
+        "fluxo",
+        "etapas",
+        "sipoc",
+        "bpmn",
+        "melhoria"
+      ],
+      "trigger_questions": [
+        "Como mapear o processo comercial?"
+      ],
+      "access_classification": "internal"
     },
     "commercial.proposals": {
       "title": "Propostas comerciais e oportunidades",
@@ -182,7 +629,24 @@
         "Investigação de proposta: proposal.analytics_list (com branch) → analytics_get(ref, branch, revision?) → history_events(ref, branch, start_date?, end_date?) → proposal.get (document_url para o PDF).",
         "analyze opportunity.collaborator_summary resume o funil de oportunidades por colaborador no período.",
         "Exportação de PDF da proposta é fluxo do Portal/api-delpi — o CAIO entrega o document_url para handoff, nunca o binário."
-      ]
+      ],
+      "keywords": [
+        "proposta",
+        "propostas",
+        "oportunidade",
+        "funil",
+        "revisao",
+        "ady",
+        "documento",
+        "pipeline",
+        "conversao"
+      ],
+      "trigger_questions": [
+        "Como está o funil de propostas?",
+        "Onde há oportunidades paradas?",
+        "Como investigar uma proposta?"
+      ],
+      "access_classification": "internal"
     },
     "commercial.otd": {
       "title": "OTD — pontualidade de entrega de pedidos",
@@ -193,7 +657,21 @@
         "O painel traz late_percentage, avg/p50/p90_late_days (só linhas late), recorrência (clientes com ≥2 linhas late no período) e top-10 de piores atrasos e próximas promessas.",
         "analyze sales_order_otd.line_detail detalha por filial+pedido+item.",
         "Fonte dos dados: TOTVS via api-delpi — indisponibilidade aparece como upstream_error, nunca como carteira vazia."
-      ]
+      ],
+      "keywords": [
+        "otd",
+        "entrega",
+        "atraso",
+        "prazo",
+        "pontualidade",
+        "lead time",
+        "prometido"
+      ],
+      "trigger_questions": [
+        "Como está a entrega no prazo?",
+        "Quais pedidos atrasaram?"
+      ],
+      "access_classification": "internal"
     },
     "commercial.production": {
       "title": "Ordens de produção (OP) e dados de fábrica",
@@ -202,16 +680,92 @@
         "OP (ordem de produção) é a ordem fabril do produto — read production.order consulta por OP/filial (ref = OP, branch opcional).",
         "read production.appointments lista apontamentos da OP — exige op, aceita branch e pagina page/page_size.",
         "read production.product_status e production.product_structure trazem status de fábrica e estrutura do produto por filial.",
-        "Todos os dados de produção vêm do BFF de produção da api-delpi (TOTVS) — são leituras externas, sem escopo de carteira próprio."
+        "Todos os dados de produção vêm do BFF de produção da api-delpi (TOTVS) — são leituras externas, sem escopo de carteira próprio.",
+        "Produto cadastral (SB1) tem entidade própria: product.search/summary/customers/filter_options via products BFF — ver topic products.guide para o uso comercial."
+      ],
+      "keywords": [
+        "producao",
+        "op",
+        "ordem de producao",
+        "fabrica",
+        "apontamento",
+        "estrutura",
+        "produto"
+      ],
+      "related_entries": [
+        "topic.products.guide",
+        "topic.commercial.glossary"
+      ],
+      "access_classification": "internal"
+    },
+    "products.guide": {
+      "title": "Guia de produtos DELPI (cadastro comercial)",
+      "source": "api-delpi /products contracts via commercial-api products BFF (owner: Engenharia, TOTVS SB1)",
+      "guidance": [
+        "Produto (SB1/B1_COD): item do catálogo TOTVS — código, descrição, tipo cadastral (B1_TIPO: PA produto acabado, MP matéria-prima, PI intermediário), grupo (B1_GRUPO) e subgrupo (B1_SUBGRUP).",
+        "Chicotes elétricos são a família de produtos comercializada pela DELPI — grupo 9026 é exemplo confirmado (90260921 \"21010421 CHICOTE DE LIGACAO\", tipo PA). A lista completa de grupos/famílias é dinâmica: descubra via product.filter_options, nunca assuma catálogo estático.",
+        "Descoberta: read product.search filtra por code, description, group_code (CSV, OR), subgroup, product_type (CSV) e customer_reference (produtos ligados a um cliente); paginação page/page_size, ordenação sort/direction e view.",
+        "Detalhe comercial: read product.summary = snapshot cadastral + estoque + tabelas de preço; read product.customers = clientes que compraram o produto (paginado).",
+        "Visão fabril (owner Produção): production.product_status (status de fábrica) e production.product_structure (estrutura/BOM) — dados técnicos da Engenharia, não interpretação comercial.",
+        "Inteligência comercial de produtos: analyze rol.by_product (faturamento por produto/família via product_codes/product_groups), rol.by_customer, customer.billing_series (evolução por cliente com filtro de produto), product.customers (quem compra) e product.search customer_reference (o que o cliente compra).",
+        "Separação de owners: dados cadastrais/técnicos são da Engenharia (api-delpi); informações comerciais (quem compra, quanto fatura) são do comercial. Visões completas de engenharia (detalhe, desenhos, roteiro de fabricação) podem exigir escopo upstream específico — forbidden é estado honesto, não ausência de dados.",
+        "Nunca inferir compatibilidade técnica, substituição ou aplicação sem fonte confirmada; distinguir informação cadastral confirmada de características não verificadas para o produto."
+      ],
+      "keywords": [
+        "produto",
+        "produtos",
+        "chicote",
+        "chicotes",
+        "catalogo",
+        "cadastro",
+        "sb1",
+        "grupo",
+        "familia",
+        "estrutura",
+        "bom",
+        "tipo",
+        "pa",
+        "mp",
+        "o que vendemos",
+        "linha de produtos"
+      ],
+      "trigger_questions": [
+        "Quais produtos do tipo chicote estão cadastrados?",
+        "Quais informações oficiais existem sobre um produto?",
+        "Quais clientes compram este produto?",
+        "Quais produtos podemos vender mais para determinados clientes?"
+      ],
+      "related_capabilities": [
+        "product.search",
+        "product.summary",
+        "product.customers",
+        "product.filter_options",
+        "production.product_status",
+        "production.product_structure",
+        "rol.by_product",
+        "rol.by_customer",
+        "customer.billing_series"
+      ],
+      "related_entries": [
+        "topic.commercial.glossary",
+        "topic.commercial.production",
+        "topic.commercial.indicators",
+        "playbook.expansion_opportunities",
+        "playbook.executive_diagnosis",
+        "method.abc_pareto"
+      ],
+      "access_classification": "internal",
+      "owner": "commercial-api",
+      "version": "3.1",
+      "status": "implemented",
+      "limitations": [
+        "catálogo e dados técnicos pertencem à Engenharia — CAIO consulta via contratos oficiais, não copia catálogo",
+        "detalhe completo de engenharia (view detail, desenhos, roteiro de fabricação) pode exigir escopo upstream — forbidden honesto",
+        "listas de famílias/grupos/tipos só são válidas quando retornadas pela fonte oficial"
       ]
     }
   },
-  "planned_topics": [
-    {
-      "topic": "products.guide",
-      "note": "Guia de produtos — pendente de fonte autorizada."
-    }
-  ],
+  "planned_topics": [],
   "methods": {
     "abc_pareto": {
       "owner": "commercial-api",
@@ -238,12 +792,17 @@
       "external_reference": true,
       "keywords": [
         "abc",
-        "pareto",
-        "concentração",
+        "concentracao",
         "concentrado",
-        "maiores clientes",
+        "concentração",
+        "curva",
+        "curva abc",
         "dependência",
-        "curva"
+        "importantes",
+        "maiores clientes",
+        "pareto",
+        "principais",
+        "top clientes"
       ],
       "trigger_questions": [
         "Quais clientes concentram o faturamento?",
@@ -256,7 +815,13 @@
         "customer_center.list"
       ],
       "evidence": "referência metodológica externa curada; cálculo sempre via indicadores do owner, nunca recálculo local",
-      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI"
+      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI",
+      "related_entries": [
+        "playbook.customers_retraction",
+        "playbook.executive_diagnosis",
+        "method.rfv",
+        "method.benchmarking"
+      ]
     },
     "rfv": {
       "owner": "commercial-api",
@@ -282,15 +847,21 @@
       ],
       "external_reference": true,
       "keywords": [
-        "rfv",
-        "recência",
+        "90 dias",
+        "churn",
+        "diminuindo",
         "frequência",
-        "valor",
-        "segmentação",
-        "retração",
+        "importantes",
         "inativo",
+        "pararam",
         "parou de comprar",
-        "churn"
+        "queda de compras",
+        "recência",
+        "reduziram",
+        "retração",
+        "rfv",
+        "segmentação",
+        "valor"
       ],
       "trigger_questions": [
         "Quais clientes pararam de comprar?",
@@ -303,7 +874,12 @@
         "portfolio.coverage_audit"
       ],
       "evidence": "referência metodológica externa curada; sinais via billing/enrichment oficiais",
-      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI"
+      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI",
+      "related_entries": [
+        "playbook.customers_retraction",
+        "method.abc_pareto",
+        "method.cinco_porques"
+      ]
     },
     "desvio_meta": {
       "owner": "commercial-api",
@@ -329,13 +905,14 @@
       ],
       "external_reference": true,
       "keywords": [
-        "meta",
-        "desvio",
-        "realizado",
+        "alvo",
         "atingimento",
+        "bater a meta",
+        "desvio",
         "gap",
+        "meta",
         "objetivo",
-        "bater a meta"
+        "realizado"
       ],
       "trigger_questions": [
         "Estou batendo a meta?",
@@ -346,7 +923,12 @@
         "portfolio.load_summary"
       ],
       "evidence": "referência metodológica externa curada",
-      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI"
+      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI",
+      "related_entries": [
+        "method.benchmarking",
+        "method.forecast_vendas",
+        "playbook.executive_diagnosis"
+      ]
     },
     "funil_conversao": {
       "owner": "commercial-api",
@@ -372,15 +954,21 @@
       ],
       "external_reference": true,
       "keywords": [
-        "funil",
-        "conversão",
-        "proposta",
-        "pedido",
-        "pipeline",
-        "oportunidade",
         "aging",
+        "conversao de propostas",
+        "conversão",
+        "funil",
+        "funil de propostas",
         "ganho",
-        "perdido"
+        "gargalo",
+        "melhorar conversao",
+        "oportunidade",
+        "oportunidades paradas",
+        "pedido",
+        "perdido",
+        "pipeline",
+        "proposta",
+        "proposta parada"
       ],
       "trigger_questions": [
         "Como está o funil de propostas?",
@@ -392,7 +980,12 @@
         "proposal.history_events"
       ],
       "evidence": "referência metodológica externa curada",
-      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI"
+      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI",
+      "related_entries": [
+        "playbook.proposal_funnel",
+        "topic.commercial.proposals",
+        "method.cinco_porques"
+      ]
     },
     "risco_pedidos_otd": {
       "owner": "commercial-api",
@@ -418,15 +1011,18 @@
       ],
       "external_reference": true,
       "keywords": [
-        "risco",
-        "pedido",
+        "apontamento",
         "atraso",
         "entrega",
-        "otd",
-        "produção",
         "op",
-        "apontamento",
-        "prazo"
+        "otd",
+        "pedido",
+        "pedidos em aberto",
+        "prazo",
+        "producao",
+        "produção",
+        "risco",
+        "risco de entrega"
       ],
       "trigger_questions": [
         "Quais pedidos estão em risco?",
@@ -441,7 +1037,12 @@
         "analyze"
       ],
       "evidence": "referência metodológica externa curada; indicadores OTD são do owner",
-      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI"
+      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI",
+      "related_entries": [
+        "playbook.order_health",
+        "topic.commercial.otd",
+        "topic.commercial.production"
+      ]
     },
     "cinco_porques": {
       "owner": "commercial-api",
@@ -487,7 +1088,8 @@
         "analyze"
       ],
       "evidence": "referência metodológica externa curada",
-      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI"
+      "source": "biblioteca curada CAIO 3.0 — método externo, não regra DELPI",
+      "related_entries": []
     },
     "spin_selling": {
       "owner": "commercial-api",
@@ -528,7 +1130,8 @@
         "interaction_room.*"
       ],
       "evidence": "referência externa — PENDING_BUSINESS_VALIDATION (responsáveis comerciais devem validar adequação)",
-      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência, não política DELPI"
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência, não política DELPI",
+      "related_entries": []
     },
     "meddpicc": {
       "owner": "commercial-api",
@@ -573,7 +1176,8 @@
         "customer.enrichment"
       ],
       "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
-      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência, não política DELPI"
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência, não política DELPI",
+      "related_entries": []
     },
     "account_planning": {
       "owner": "commercial-api",
@@ -600,11 +1204,14 @@
       ],
       "keywords": [
         "account planning",
+        "conta estrategica",
         "conta estratégica",
-        "plano de conta",
-        "whitespace",
         "cross-sell",
-        "expansão de conta"
+        "expansao de conta",
+        "expansão de conta",
+        "plano de conta",
+        "vender mais",
+        "whitespace"
       ],
       "trigger_questions": [
         "Como expandir a conta X?",
@@ -616,7 +1223,12 @@
         "proposal.analytics_list"
       ],
       "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
-      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência"
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência",
+      "related_entries": [
+        "playbook.expansion_opportunities",
+        "topic.products.guide",
+        "method.abc_pareto"
+      ]
     },
     "sipoc_bpmn": {
       "owner": "commercial-api",
@@ -664,7 +1276,8 @@
         "worklist.*"
       ],
       "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
-      "source": "biblioteca curada CAIO 3.0 — APQC/PCF e BPMN como referências externas"
+      "source": "biblioteca curada CAIO 3.0 — APQC/PCF e BPMN como referências externas",
+      "related_entries": []
     },
     "ishikawa": {
       "owner": "commercial-api",
@@ -705,7 +1318,8 @@
         "customer.enrichment"
       ],
       "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
-      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência"
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência",
+      "related_entries": []
     },
     "pdca_5w2h": {
       "owner": "commercial-api",
@@ -749,7 +1363,8 @@
         "worklist.mine"
       ],
       "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
-      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência"
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência",
+      "related_entries": []
     },
     "swot": {
       "owner": "commercial-api",
@@ -792,7 +1407,8 @@
         "portfolio.*"
       ],
       "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
-      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência"
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência",
+      "related_entries": []
     },
     "matriz_priorizacao": {
       "owner": "commercial-api",
@@ -834,7 +1450,133 @@
         "worklist.mine"
       ],
       "evidence": "referência externa — PENDING_BUSINESS_VALIDATION",
-      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência"
+      "source": "biblioteca curada CAIO 3.0 — metodologia externa de referência",
+      "related_entries": []
+    },
+    "benchmarking": {
+      "owner": "commercial-api",
+      "version": "3.1",
+      "source_date": "2026-10-31",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "pending_business_validation",
+      "title": "Benchmarking comercial",
+      "objective": "Comparar desempenho e práticas contra referências internas (períodos, carteiras, vendedores) ou externas para identificar lacunas e práticas aplicáveis.",
+      "applicability": "Perguntas sobre comparação com mercado, melhores práticas, ranking interno, referência para metas.",
+      "when_not_to_use": "Não comparar sem comparabilidade (mesma definição de métrica, período e base); referência externa nunca é meta DELPI sem validação dos responsáveis; não substituir indicadores oficiais por dado de mercado não verificado.",
+      "required_data": [
+        "indicador comparável com definição canônica",
+        "período e base de comparação",
+        "fonte e data da referência externa quando houver"
+      ],
+      "formula": "Escolher o tipo de comparação (interna por período/carteira/vendedor, competitiva ou de práticas) → selecionar indicadores comparáveis → normalizar definição/período/base → medir o gap → identificar práticas transferíveis → declarar limitações da referência externa.",
+      "examples": [
+        "Comparar OTD do trimestre atual vs trimestre anterior (interno)",
+        "Comparar taxa de fechamento por carteira",
+        "Contrastar prática de follow-up com referência de mercado — citando fonte e data"
+      ],
+      "limitations": [
+        "comparabilidade exige mesma definição de métrica",
+        "fontes externas têm contexto e data próprios",
+        "prática transferível não é prática comprovada na DELPI"
+      ],
+      "external_reference": true,
+      "keywords": [
+        "benchmark",
+        "benchmarking",
+        "comparacao",
+        "comparar",
+        "mercado",
+        "concorrencia",
+        "melhores praticas",
+        "ranking",
+        "referencia",
+        "meta externa"
+      ],
+      "trigger_questions": [
+        "Como estamos comparados ao mercado?",
+        "Qual referência usar para este indicador?",
+        "Compare carteiras ou vendedores."
+      ],
+      "related_capabilities": [
+        "portfolio.billing_share",
+        "portfolio.billing_ranking",
+        "rol.summary",
+        "closing_rate.summary",
+        "dashboard.department_idd",
+        "team.roster"
+      ],
+      "related_entries": [
+        "method.desvio_meta",
+        "method.abc_pareto",
+        "playbook.seller_portfolio_performance",
+        "playbook.executive_diagnosis"
+      ],
+      "evidence": "referência metodológica externa curada; comparações internas usam indicadores oficiais",
+      "source": "biblioteca curada CAIO 3.1 — método externo, não regra DELPI"
+    },
+    "forecast_vendas": {
+      "owner": "commercial-api",
+      "version": "3.1",
+      "source_date": "2026-10-31",
+      "access_classification": "internal",
+      "type": "method",
+      "status": "pending_business_validation",
+      "title": "Previsão comercial (forecast)",
+      "objective": "Projetar faturamento/vendas a partir do histórico oficial com cenários, premissas e incerteza declarados.",
+      "applicability": "Perguntas sobre previsão, projeção, expectativa de faturamento, fechamento do mês, pipeline futuro.",
+      "when_not_to_use": "Não apresentar projeção como fato ou meta oficial; não prometer precisão; sem série histórica suficiente, limitar a indicação qualitativa com lacuna declarada.",
+      "required_data": [
+        "série histórica de ROL/faturamento",
+        "janela de projeção",
+        "premissas explícitas",
+        "carteira aberta (pipeline)",
+        "erro histórico quando houver"
+      ],
+      "formula": "Base histórica oficial (rol.series) → tendência → sazonalidade somente quando demonstrável nos dados → cenários conservador/base/otimista → registrar premissas e incerteza → comparar previsto × realizado no ciclo seguinte para medir erro.",
+      "examples": [
+        "Projetar o mês corrente: faturado até hoje + carteira aberta por data de entrega + média histórica",
+        "Cenário conservador = piso histórico do período comparável"
+      ],
+      "limitations": [
+        "projeção é hipótese, não fato",
+        "sazonalidade só quando demonstrável",
+        "erro histórico deve ser medido, não presumido",
+        "novos negócios/campanhas quebram extrapolação"
+      ],
+      "external_reference": true,
+      "keywords": [
+        "forecast",
+        "previsao",
+        "projecao",
+        "cenario",
+        "cenarios",
+        "expectativa",
+        "fechamento",
+        "futuro",
+        "tendencia",
+        "sazonalidade"
+      ],
+      "trigger_questions": [
+        "Quanto devemos faturar este mês?",
+        "Monte cenários de fechamento.",
+        "Qual a previsão comercial?"
+      ],
+      "related_capabilities": [
+        "rol.series",
+        "rol.summary",
+        "portfolio.open_summary",
+        "portfolio.open_horizon",
+        "closing_rate.series",
+        "customer.billing_series"
+      ],
+      "related_entries": [
+        "playbook.forecast_scenarios",
+        "method.desvio_meta",
+        "method.abc_pareto"
+      ],
+      "evidence": "referência metodológica externa curada; dados sempre dos casos de uso oficiais",
+      "source": "biblioteca curada CAIO 3.1 — método externo, não regra DELPI"
     }
   },
   "playbooks": {
@@ -857,7 +1599,8 @@
       ],
       "semantic_steps": [
         "read portfolio.me / portfolio.list — escopo efetivo",
-        "analyze rol.summary / rol.trend — resultado oficial",
+        "analyze rol.summary / rol.series — resultado oficial e tendência",
+        "analyze rol.by_product — famílias com maior faturamento",
         "read customer.billing_series / customer.enrichment — concentração e retração",
         "read proposal.analytics_list — funil",
         "read open_order.list + production.appointments — risco de entrega"
@@ -883,16 +1626,24 @@
         "customer.enrichment",
         "proposal.analytics_list",
         "open_order.list",
-        "production.appointments"
+        "production.appointments",
+        "rol.by_product",
+        "product.search"
       ],
       "keywords": [
+        "90 dias",
+        "analise comercial",
+        "completo",
+        "diagnostico",
         "diagnóstico",
-        "situação comercial",
-        "visão geral",
         "executivo",
-        "últimos 90 dias",
         "panorama",
-        "resumo executivo"
+        "resumo executivo",
+        "situacao comercial",
+        "situação comercial",
+        "visao geral",
+        "visão geral",
+        "últimos 90 dias"
       ],
       "test_criteria": "período e escopo visíveis; números iguais aos casos de uso oficiais; hipóteses separadas",
       "evidence": "roteiro curado CAIO 3.0",
@@ -900,6 +1651,11 @@
       "limitations": [
         "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
         "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ],
+      "related_entries": [
+        "playbook.plan_30_60_90",
+        "playbook.customers_retraction",
+        "topic.commercial.indicators"
       ]
     },
     "customers_retraction": {
@@ -919,8 +1675,9 @@
         "commercial.access"
       ],
       "semantic_steps": [
+        "analyze portfolio.billing_ranking — ranking oficial de queda/crescimento por cliente (quando autorizado)",
         "read customer.enrichment — tendência por par cliente/loja",
-        "read customer.billing_series — série mensal",
+        "read customer.billing_series — série mensal, com filtro product_codes/product_groups para retração por produto/família",
         "read portfolio.coverage_audit — cobertura de carteira (manage)",
         "cruzar última compra vs janela → sinais de retração"
       ],
@@ -939,17 +1696,24 @@
         "customer.enrichment",
         "customer.billing_series",
         "customer.search",
-        "portfolio.coverage_audit"
+        "portfolio.coverage_audit",
+        "portfolio.billing_ranking",
+        "rol.by_customer"
       ],
       "keywords": [
-        "retração",
-        "pararam de comprar",
+        "90 dias",
+        "atencao prioritaria",
+        "churn",
+        "clientes importantes",
         "clientes perdidos",
+        "diminuindo",
         "inativos",
+        "pararam de comprar",
         "queda",
-        "risco de perda",
         "reativação",
-        "churn"
+        "reduziram",
+        "retração",
+        "risco de perda"
       ],
       "test_criteria": "somente clientes do escopo do usuário; sinais declarados como hipótese",
       "evidence": "roteiro curado CAIO 3.0",
@@ -957,6 +1721,12 @@
       "limitations": [
         "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
         "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ],
+      "related_entries": [
+        "method.rfv",
+        "method.abc_pareto",
+        "method.cinco_porques",
+        "topic.commercial.indicators"
       ]
     },
     "expansion_opportunities": {
@@ -976,9 +1746,12 @@
         "commercial.access"
       ],
       "semantic_steps": [
-        "read customer.enrichment — mix e tendência",
-        "read proposal.analytics_list — oportunidades ativas",
-        "analyze oportunidades por colaborador quando aplicável"
+        "analyze rol.by_product — famílias com maior faturamento no escopo",
+        "analyze rol.by_customer — clientes de maior potencial",
+        "read product.customers(product_code) — quem já compra a família",
+        "read product.search(customer_reference) — mix atual do cliente",
+        "read customer.enrichment / billing_series — tendência e espaço",
+        "read proposal.analytics_list — oportunidades ativas"
       ],
       "canonical_sources": [
         "enrichment",
@@ -988,21 +1761,32 @@
       "response_format": "oportunidades → evidência → premissas → ação sugerida",
       "related_methods": [
         "abc_pareto",
-        "funil_conversao"
+        "funil_conversao",
+        "account_planning"
       ],
       "related_capabilities": [
         "customer.enrichment",
+        "customer.billing_series",
         "proposal.analytics_list",
-        "analyze"
+        "rol.by_product",
+        "rol.by_customer",
+        "product.customers",
+        "product.search",
+        "product.filter_options"
       ],
       "keywords": [
-        "expansão",
+        "conta estratégica",
+        "crescer",
         "crescimento",
-        "oportunidade",
-        "upsell",
         "cross-sell",
+        "expansao",
+        "expansão",
+        "mix",
+        "oportunidade",
         "potencial",
-        "conta estratégica"
+        "produtos para clientes",
+        "upsell",
+        "vender mais"
       ],
       "test_criteria": "sem inventar potencial; premissas explícitas",
       "evidence": "roteiro curado CAIO 3.0",
@@ -1010,6 +1794,12 @@
       "limitations": [
         "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
         "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ],
+      "related_entries": [
+        "topic.products.guide",
+        "method.account_planning",
+        "method.abc_pareto",
+        "playbook.plan_30_60_90"
       ]
     },
     "order_health": {
@@ -1030,9 +1820,11 @@
         "commercial.analytics"
       ],
       "semantic_steps": [
-        "read open_order.list / open_order.open_ops",
-        "read production.order(op) / production.appointments(op, branch)",
-        "analyze sales_order_otd.* — pontualidade oficial"
+        "read open_order.list / open_order.open_ops — carteira aberta e OPs",
+        "analyze sales_order_otd.summary/panel — pontualidade oficial e piores atrasos",
+        "analyze sales_order_otd.line_detail — detalhe por filial+pedido+item",
+        "read production.order(op) / production.appointments(op, branch) — andamento fabril",
+        "read production.product_status(product_code) — status de fábrica do produto"
       ],
       "canonical_sources": [
         "open orders BFF",
@@ -1050,16 +1842,24 @@
         "open_order.open_ops",
         "production.order",
         "production.appointments",
-        "analyze"
+        "production.product_status",
+        "sales_order_otd.summary",
+        "sales_order_otd.panel",
+        "sales_order_otd.line_detail"
       ],
       "keywords": [
-        "saúde dos pedidos",
-        "pedidos em risco",
-        "entrega",
         "atraso",
+        "carteira de pedidos",
+        "entrega",
+        "maior risco",
         "otd",
+        "pedidos em aberto",
+        "pedidos em risco",
+        "prazos",
+        "producao",
         "produção",
-        "carteira de pedidos"
+        "risco comercial",
+        "saúde dos pedidos"
       ],
       "test_criteria": "OTD oficial citado; risco como classificação declarada",
       "evidence": "roteiro curado CAIO 3.0",
@@ -1067,6 +1867,11 @@
       "limitations": [
         "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
         "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ],
+      "related_entries": [
+        "method.risco_pedidos_otd",
+        "topic.commercial.otd",
+        "topic.commercial.production"
       ]
     },
     "proposal_funnel": {
@@ -1111,12 +1916,15 @@
         "proposal.history_events"
       ],
       "keywords": [
-        "funil",
-        "propostas",
+        "conversao",
         "conversão",
-        "oportunidades",
+        "estagnadas",
+        "funil",
         "histórico",
-        "pipeline"
+        "oportunidades",
+        "oportunidades paradas",
+        "pipeline",
+        "propostas"
       ],
       "test_criteria": "branch obrigatória respeitada; document_url para PDF",
       "evidence": "roteiro curado CAIO 3.0",
@@ -1124,6 +1932,11 @@
       "limitations": [
         "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
         "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ],
+      "related_entries": [
+        "method.funil_conversao",
+        "topic.commercial.proposals",
+        "method.cinco_porques"
       ]
     },
     "forecast_scenarios": {
@@ -1145,9 +1958,11 @@
         "commercial.analytics"
       ],
       "semantic_steps": [
-        "analyze rol.summary / rol.trend — base histórica oficial",
-        "read customer.billing_series — composição",
-        "declarar cenários (conservador/base/otimista) como hipóteses"
+        "analyze rol.series / rol.summary — base histórica oficial",
+        "analyze portfolio.open_summary / open_horizon — carteira aberta (pipeline de faturamento)",
+        "read customer.billing_series — composição por cliente",
+        "declarar cenários (conservador/base/otimista) com premissas e incerteza",
+        "comparar previsto × realizado no ciclo seguinte — erro histórico"
       ],
       "canonical_sources": [
         "indicadores owner"
@@ -1155,20 +1970,31 @@
       "insufficient_data": "sem série suficiente: cenário qualitativo; nunca prometer precisão",
       "response_format": "base observada → cenários com premissas → incerteza → o que mudaria o cenário",
       "related_methods": [
+        "forecast_vendas",
         "desvio_meta",
         "abc_pareto"
       ],
       "related_capabilities": [
         "analyze",
-        "customer.billing_series"
+        "customer.billing_series",
+        "rol.series",
+        "rol.summary",
+        "portfolio.open_summary",
+        "portfolio.open_horizon",
+        "closing_rate.series"
       ],
       "keywords": [
-        "previsão",
-        "forecast",
-        "projeção",
+        "cenarios",
         "cenário",
+        "estimativa",
         "expectativa",
-        "estimativa"
+        "fechamento",
+        "forecast",
+        "futuro",
+        "previsao",
+        "previsão",
+        "projecao",
+        "projeção"
       ],
       "test_criteria": "projeção nunca apresentada como fato; intervalo/premissas explícitos",
       "evidence": "roteiro curado CAIO 3.0",
@@ -1176,6 +2002,11 @@
       "limitations": [
         "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
         "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ],
+      "related_entries": [
+        "method.forecast_vendas",
+        "method.desvio_meta",
+        "topic.commercial.indicators"
       ]
     },
     "seller_portfolio_performance": {
@@ -1196,8 +2027,10 @@
         "commercial.manage para auditoria de carteira"
       ],
       "semantic_steps": [
-        "read portfolio.load_summary (manage) / portfolio.me",
-        "read team.roster (manage)",
+        "read portfolio.load_summary (manage) / portfolio.me — carteiras e carga",
+        "read team.roster (manage) — equipe",
+        "analyze portfolio.billing_share / billing_ranking — participação e evolução por carteira/vendedor",
+        "analyze closing_rate.summary — taxa de fechamento no período",
         "analyze indicadores por escopo autorizado"
       ],
       "canonical_sources": [
@@ -1208,22 +2041,26 @@
       "response_format": "comparação por escopo autorizado → evidência → contexto → cautelas de interpretação",
       "related_methods": [
         "desvio_meta",
-        "abc_pareto"
+        "abc_pareto",
+        "benchmarking"
       ],
       "related_capabilities": [
         "portfolio.me",
         "portfolio.load_summary",
         "team.roster",
+        "portfolio.billing_share",
+        "portfolio.billing_ranking",
+        "closing_rate.summary",
         "analyze"
       ],
       "keywords": [
-        "vendedor",
         "carteira",
+        "comparar vendedores",
         "desempenho",
+        "equipe",
         "performance",
         "ranking",
-        "comparar vendedores",
-        "equipe"
+        "vendedor"
       ],
       "test_criteria": "escopo do chamador respeitado; sem ranking não autorizado",
       "evidence": "roteiro curado CAIO 3.0",
@@ -1231,6 +2068,11 @@
       "limitations": [
         "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
         "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ],
+      "related_entries": [
+        "method.benchmarking",
+        "method.desvio_meta",
+        "topic.commercial.portfolio_governance"
       ]
     },
     "plan_30_60_90": {
@@ -1271,13 +2113,14 @@
         "analyze"
       ],
       "keywords": [
-        "plano",
         "30 dias",
         "60 dias",
         "90 dias",
+        "acoes",
         "ação",
-        "prioridades",
+        "plano",
         "plano de ação",
+        "prioridades",
         "próximos passos"
       ],
       "test_criteria": "ações são sugestões até o usuário decidir; métrica por ação",
@@ -1286,6 +2129,11 @@
       "limitations": [
         "roteiro é orientação de composição — números sempre dos casos de uso oficiais",
         "sem dados suficientes o roteiro declara lacuna, não inventa indicador"
+      ],
+      "related_entries": [
+        "playbook.executive_diagnosis",
+        "method.pdca_5w2h",
+        "method.matriz_priorizacao"
       ]
     }
   }

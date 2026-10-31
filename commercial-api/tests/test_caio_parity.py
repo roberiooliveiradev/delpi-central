@@ -528,10 +528,14 @@ def test_knowledge_parity_topics_present():
 
 
 def test_knowledge_planned_topic_still_honest():
+    """products.guide was implemented (CAIO 3.0 ampliação); a topic
+    outside corpus and planned list is still an honest 404."""
     _set_context(_human_user())
     result = sem.tool_knowledge(topic="products.guide")
+    assert result.is_error is False
+    result = sem.tool_knowledge(topic="products.unknown")
     assert result.is_error is True
-    assert result.structured_content["error_code"] == "not_implemented"
+    assert result.structured_content["status_code"] == 404
 
 
 # --- issue #123: pagination contract -------------------------------------------------

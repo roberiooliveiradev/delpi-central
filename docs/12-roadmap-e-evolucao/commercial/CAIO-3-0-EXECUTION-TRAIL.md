@@ -160,3 +160,22 @@ Não criar documentação duplicada; registrar implantação e utilização real
 Apresentar `INITIAL_HEAD, FINAL_HEAD, BRANCH, WORKTREE, COMMITS, PUSH, DEPLOYED_SHA`, matriz P0–P5 com evidências, cobertura de métodos/roteiros, fontes e versões, testes/regressão, segurança, gaps, dados não comprovados e `FINAL_VERDICT: ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`.
 
 **Término correto:** completar todas as etapas tecnicamente executáveis e registrar as etapas legitimamente bloqueadas; não encerrar cedo por questões triviais; não prometer 100% quando P4/validações de negócio não têm autoridade ou acesso. Nenhum documento muda o estado do runtime apenas por declarar implementação.
+
+---
+
+## Ampliação CAIO 3.0 — conhecimento e inteligência comercial (2026-10-31)
+
+> Nova missão pós-P5: completar glossário, implementar `products.guide`, completar biblioteca de métodos, aprofundar roteiros, melhorar seleção contextual e homologar cenários reais. **Base:** `origin/main 7086824a1d` — worktree dedicado `.worktrees/caio-30-ampl` (worktree principal continha estado estranho de outra frente, preservado intacto).
+
+| Fase | Entrega | Status | Evidência |
+|---|---|---|---|
+| F1 Glossário | `commercial.glossary` → 17 termos estruturados (meaning/application/owner/source/relations/examples/status); LMP confirmado como ordem especial/amostra da Engenharia; PV confirmado | IMPLEMENTED+TESTED | `test_knowledge_glossary_structured_terms_contract` |
+| F2 products.guide | 4 novas reads `product.search/summary/customers/filter_options` via products BFF (catálogo 123→127); tópico implementado e removido de planned_topics | IMPLEMENTED+TESTED | boundary tests `test_product_*` (fake gateway, path/params oficiais) |
+| F3 Métodos | +`benchmarking`, +`forecast_vendas` (16 total) — `external_reference`, `pending_business_validation`, examples/formula; composição RFV+ABC+retração aprofundada no playbook | IMPLEMENTED+TESTED | `test_knowledge_new_methods_are_external_pending_validation` |
+| F4 Roteiros | 8 playbooks revisados contra contratos reais; drift `rol.trend`→`rol.series` corrigido; steps com capabilities oficiais (billing_ranking, rol.by_product, product.*) | IMPLEMENTED+TESTED | contract tests playbooks |
+| F5 Seleção contextual | siglas OV/OP/PV (data-driven), plural PT, fold de acentos, stopwords PT, peso ×2 em keywords/trigger_questions, `related_entries` no pacote | IMPLEMENTED+TESTED | testes de frases alternativas A–G |
+| F6 Homologação | 7 cenários avaliados em contrato/seleção/boundary; autenticado produção = TEST_NOT_RUN (sem credencial mcp-commercial no ambiente) | ACCEPT_WITH_RESIDUAL | `CAIO_HOMOLOGATION_MATRIX.md` rodada 2026-10-31 |
+| F7 Segurança | 6 tools preservadas; `requires`/`ref_arg`/`required_fields` declarados; nenhum dado copiado para corpus; separação Engenharia×Comercial documentada | PASS | gates parametrizados verdes |
+| F8 Docs/deploy | knowledge v3.1, matriz homologação, matriz paridade, README, esta trilha | esta entrada | — |
+
+**Registro técnico F1–F8:** HEAD inicial `7086824a1d`; arquivos: `semantic_registry.py`, `tool_bridge_parity.py`, `semantic_bridge.py` (dispatch + `_knowledge_select`), `caio_commercial_knowledge.json` v3.1, `test_caio_homologation.py`, `test_caio_integration.py`, `test_caio_mcp.py`, `test_caio_parity.py`, docs canônicos. Suíte commercial-api: **1226 passed / 3 failed** (3 = baseline preexistente documentada). Gaps honestos: autenticado produtivo pendente de credencial; validação de negócio dos métodos externos segue pendente por design; `products.guide` cobre cadastro/consulta — visões de engenharia completas continuam fora do escopo comercial.

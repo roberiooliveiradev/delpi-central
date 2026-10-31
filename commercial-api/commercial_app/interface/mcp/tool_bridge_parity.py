@@ -2419,6 +2419,98 @@ def tool_product_structure(
         return handle_tool_error(exc)
 
 
+# --- read: product catalog (engineering-owned SB1 via products BFF) ------------
+
+
+def tool_product_search(
+    *,
+    code: str | None = None,
+    description: str | None = None,
+    group_code: str | None = None,
+    subgroup: str | None = None,
+    product_type: str | None = None,
+    customer_reference: str | None = None,
+    view: str | None = None,
+    sort: str | None = None,
+    direction: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> CallToolResult:
+    try:
+        _require_commercial_human()
+        payload = build_delpi_commercial_gateway().get_product(
+            "/search",
+            params={
+                "code": code,
+                "description": description,
+                "group_code": group_code,
+                "subgroup": subgroup,
+                "product_type": product_type,
+                "customer_reference": customer_reference,
+                "view": view,
+                "sort": sort,
+                "direction": direction,
+                "page": max(int(page or 1), 1),
+                "page_size": min(max(int(page_size or 50), 1), 100),
+            },
+        )
+        return _ok(
+            unwrap_gateway_data(payload), "Produtos carregados."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_product_summary(*, product_code: str) -> CallToolResult:
+    try:
+        _require_commercial_human()
+        encoded = quote(product_code.strip(), safe="")
+        payload = build_delpi_commercial_gateway().get_product(
+            f"/{encoded}/summary"
+        )
+        return _ok(
+            unwrap_gateway_data(payload),
+            "Resumo cadastral do produto carregado.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_product_customers(
+    *, product_code: str, page: int = 1, page_size: int = 50
+) -> CallToolResult:
+    try:
+        _require_commercial_human()
+        encoded = quote(product_code.strip(), safe="")
+        payload = build_delpi_commercial_gateway().get_product(
+            f"/{encoded}/customers",
+            params={
+                "page": max(int(page or 1), 1),
+                "page_size": min(max(int(page_size or 50), 1), 100),
+            },
+        )
+        return _ok(
+            unwrap_gateway_data(payload),
+            "Clientes do produto carregados.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_product_filter_options() -> CallToolResult:
+    try:
+        _require_commercial_human()
+        payload = build_delpi_commercial_gateway().get_product(
+            "/filter-options"
+        )
+        return _ok(
+            unwrap_gateway_data(payload),
+            "Opções de filtro de produtos carregadas.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
 # --- read/execute: user profile ------------------------------------------------------------
 
 
