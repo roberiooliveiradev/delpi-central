@@ -359,7 +359,15 @@ def compose_cri_response(
         )
         presented = 1
     else:
-        for record in records[:MAX_PRESENTED_RECORDS]:
+        # A declared complete-coverage ask widens the presentation
+        # bound to the field-scan ceiling — the truncation notice
+        # still fires when the delivered set exceeds it.
+        scan_limit = (
+            _MAX_FIELD_SCAN_RECORDS
+            if req.complete_coverage
+            else MAX_PRESENTED_RECORDS
+        )
+        for record in records[:scan_limit]:
             line = _record_line(record)
             if line is None or line in seen_lines:
                 continue

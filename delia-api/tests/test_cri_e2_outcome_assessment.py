@@ -796,10 +796,13 @@ def test_on_uses_cri_instruction_off_uses_baseline():
         for r in orch_on._invoke_model._port.requests
         if r.task_purpose_id == CAPABILITY_SELECTION_INSTRUCTION_ID
     )
-    assert "answer_requirements" not in (
+    # "ordering_semantic" stays a CRI-clause-only marker: the baseline
+    # legitimately declares answer_requirements fields but never the
+    # semantic-ordering hypothesis extension.
+    assert "ordering_semantic" not in (
         req_off.instruction_content or ""
     )
-    assert "answer_requirements" in (req_on.instruction_content or "")
+    assert "ordering_semantic" in (req_on.instruction_content or "")
 
 
 # ---------------------------------------------------------------------------
@@ -1218,7 +1221,7 @@ def test_r3_off_never_consumes_resource():
         if r.task_purpose_id == CAPABILITY_SELECTION_INSTRUCTION_ID
     )
     assert "+cri." not in req.instruction_lineage.version
-    assert "answer_requirements" not in (req.instruction_content or "")
+    assert "ordering_semantic" not in (req.instruction_content or "")
 
 
 # ---------------------------------------------------------------------------

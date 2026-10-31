@@ -451,6 +451,12 @@ def _spy_propose(orch):
                     "items",
                     "left_indices",
                     "right_indices",
+                    "prior_evidence_sufficient",
+                    "comparison_requested",
+                    "answer_requirements",
+                    "output_mode",
+                    "execution_bound",
+                    "contract_subject",
                 )
                 if k in proposal
             }
@@ -478,7 +484,27 @@ def _spy_invokes(providers):
 
         def make(real_invoke, pid):
             def wrapper(capability, arguments, **kw):
-                outcome = real_invoke(capability, arguments, **kw)
+                try:
+                    outcome = real_invoke(capability, arguments, **kw)
+                except Exception as exc:
+                    captured.append(
+                        {
+                            "provider": pid,
+                            "capability_id": getattr(
+                                capability, "capability_id", ""
+                            ),
+                            "arg_keys": sorted(
+                                (arguments or {}).keys()
+                            ),
+                            "args": {
+                                k: str(v)[:60]
+                                for k, v in (arguments or {}).items()
+                            },
+                            "status": "EXC:" + type(exc).__name__,
+                            "complete": None,
+                        }
+                    )
+                    raise
                 captured.append(
                     {
                         "provider": pid,
@@ -830,14 +856,18 @@ def classify(sc: Scenario, run: dict) -> dict:
                 first = first or "FABRICATED_ABSENCE"
         else:
             outcome = "FAIL"
-        if (
-            sc.exhaustive
-            and hit
-            and "não é exaustiva" not in content
-            and "há mais" not in content
-        ):
-            outcome = "FAIL"
-            first = first or "SYNTHESIS_ERROR"
+        if sc.exhaustive and hit:
+            if len(hit) == len(oracle_codes):
+                # Proven-complete: every oracle code the owner holds
+                # for the designation was delivered — the exhaustive
+                # ask is satisfied without a disclaimer.
+                outcome = "PASS"
+            elif (
+                "não é exaustiva" not in content
+                and "há mais" not in content
+            ):
+                outcome = "FAIL"
+                first = first or "SYNTHESIS_ERROR"
     elif sc.oracle_kind == "refusal":
         outcome = "PASS" if not invokes else "FAIL"
     elif sc.oracle_kind == "conversational":

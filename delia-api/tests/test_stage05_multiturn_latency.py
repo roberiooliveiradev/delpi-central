@@ -26,6 +26,7 @@ from app.application.interaction.capability_attempt import (
 )
 from app.application.interaction.contracts import (
     InteractiveTurnRequest,
+    LIMITATION_INSUFFICIENT_EVIDENCE,
     LIMITATION_PRIOR_TURN_CONTINUATION,
 )
 from app.application.interaction.handle_interactive_turn import (
@@ -384,6 +385,185 @@ def test_topic_change_requires_new_selection_without_prior_on_select():
     ]
     assert select_reqs
     assert select_reqs[0].prior_context == ()
+
+
+def test_committed_prior_transform_reformulates_malformed_selection():
+    """A committed prior transform whose synthesis proposal is malformed
+    reformulates once with typed feedback — a valid retry renders from
+    the prior records and never falls through to live reselection."""
+    provider = FakeProvider(
+        "teo",
+        [
+            _group(
+                "teo",
+                "teo",
+                [
+                    _cap(
+                        "teo",
+                        "teo",
+                        "get_product_guide",
+                        SpecialistOperationClass.READ,
+                    )
+                ],
+            )
+        ],
+        {
+            ("teo", "get_product_guide"): _outcome(
+                "teo",
+                "get_product_guide",
+                "guia fresco",
+                structured={
+                    "data": {"items": [{"codigo": "C-1", "nome": "Guia"}]}
+                },
+            )
+        },
+    )
+    model = FakeProposalModel(
+        [
+            {
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    "prior_evidence_sufficient": True,
+                }
+            },
+            {
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 9, "fields": ["excerpt"]}
+                    ]
+                }
+            },
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "get_product_guide",
+                }
+            },
+            {ARGUMENTS_INSTRUCTION_ID: {"arguments": {}}},
+            {
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {
+                            "record_index": 0,
+                            "fields": ["excerpt"],
+                        }
+                    ]
+                }
+            },
+        ]
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    prior = _prior_pair(
+        "Encontrei 2 registros: 10080092 TERM. BALA 0,50; "
+        "10081004 TERM. BALA 1,00."
+    )
+    attempt = orch.attempt(
+        "me mostra os códigos deles",
+        prior_turns=prior,
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert not provider.calls
+    assert (
+        LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    )
+    synthesis_reqs = [
+        r
+        for r in model.requests
+        if r.task_purpose_id == SYNTHESIS_INSTRUCTION_ID
+    ]
+    assert len(synthesis_reqs) == 2
+
+
+def test_committed_prior_transform_failed_retry_is_insufficient():
+    """A committed prior transform whose reformulated proposal still
+    fails validation ends as honest insufficiency — never live
+    reselection, never a second retry round."""
+    provider = FakeProvider(
+        "teo",
+        [
+            _group(
+                "teo",
+                "teo",
+                [
+                    _cap(
+                        "teo",
+                        "teo",
+                        "get_product_guide",
+                        SpecialistOperationClass.READ,
+                    )
+                ],
+            )
+        ],
+        {
+            ("teo", "get_product_guide"): _outcome(
+                "teo",
+                "get_product_guide",
+                "guia fresco",
+                structured={
+                    "data": {"items": [{"codigo": "C-1", "nome": "Guia"}]}
+                },
+            )
+        },
+    )
+    model = FakeProposalModel(
+        [
+            {
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    "prior_evidence_sufficient": True,
+                }
+            },
+            {
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 9, "fields": ["excerpt"]}
+                    ]
+                }
+            },
+            {
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 8, "fields": ["excerpt"]}
+                    ]
+                }
+            },
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "get_product_guide",
+                }
+            },
+            {ARGUMENTS_INSTRUCTION_ID: {"arguments": {}}},
+        ]
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    prior = _prior_pair(
+        "Encontrei 2 registros: 10080092 TERM. BALA 0,50; "
+        "10081004 TERM. BALA 1,00."
+    )
+    attempt = orch.attempt(
+        "me mostra os códigos deles",
+        prior_turns=prior,
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert not provider.calls
+    assert (
+        LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    )
+    synthesis_reqs = [
+        r
+        for r in model.requests
+        if r.task_purpose_id == SYNTHESIS_INSTRUCTION_ID
+    ]
+    assert len(synthesis_reqs) == 2
 
 
 def test_insufficient_prior_content_does_not_reuse():

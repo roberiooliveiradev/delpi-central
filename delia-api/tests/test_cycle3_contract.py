@@ -540,6 +540,211 @@ def test_select_capability_literal_identifier_no_retry():
     assert len(model.requests) == 1
 
 
+# ---------- selection dead-end: orchestrator-supplied required input ----------
+
+
+def _token_bound_group():
+    from tests.test_goal_evidence_relevance import _cap, _group
+    from app.domain.specialist_interop.model import (
+        SpecialistOperationClass,
+    )
+
+    execute = _cap(
+        "alpha",
+        "mcp",
+        "execute_information",
+        schema={
+            "type": "object",
+            "required": ["candidate_token", "arguments"],
+            "properties": {
+                "candidate_token": {"type": "string"},
+                "arguments": {"type": "object"},
+            },
+        },
+    )
+    discover = _cap(
+        "alpha",
+        "mcp",
+        "discover_information",
+        op_class=SpecialistOperationClass.DISCOVERY,
+    )
+    record = _cap(
+        "alpha",
+        "mcp",
+        "record_read",
+        schema={
+            "type": "object",
+            "required": ["action", "entity"],
+            "properties": {
+                "action": {"type": "string"},
+                "entity": {"type": "string"},
+            },
+        },
+    )
+    return _group("pa", "alpha", [execute, discover, record])
+
+
+def _token_bound_orchestrator(proposals):
+    from tests.test_governed_attempt_contract import build_engine
+    from tests.test_goal_evidence_relevance import (
+        _cri_clause,
+        _outcome,
+        FakeProposalModel,
+        FakeProvider,
+    )
+
+    group = _token_bound_group()
+    provider = FakeProvider(
+        "pa",
+        [group],
+        outcomes={("alpha", "record_read"): _outcome("ok")},
+    )
+    clause = _cri_clause()
+    model = FakeProposalModel(list(proposals))
+    orch = build_engine(
+        "delia",
+        providers=[provider],
+        model=model,
+        response_intelligence_enabled=True,
+        cri_instruction_clause=clause.text,
+        cri_instruction_version=clause.version,
+    )
+    return orch, model, group
+
+
+def test_orchestrated_input_dead_end_predicate():
+    """``required ∩ ORCHESTRATED_FIELDS`` marks the capability as a
+    typed dead-end; ordinary required business fields do not."""
+    from app.application.capability_provision.orchestration import (
+        _capability_dead_end,
+        _capability_requires_orchestrated_input,
+    )
+    from tests.test_goal_evidence_relevance import _cap
+
+    token_bound = _cap(
+        "alpha",
+        "mcp",
+        "execute_information",
+        schema={
+            "type": "object",
+            "required": ["candidate_token", "arguments"],
+            "properties": {
+                "candidate_token": {"type": "string"},
+                "arguments": {"type": "object"},
+            },
+        },
+    )
+    ordinary = _cap(
+        "alpha",
+        "mcp",
+        "record_read",
+        schema={
+            "type": "object",
+            "required": ["action", "entity"],
+            "properties": {
+                "action": {"type": "string"},
+                "entity": {"type": "string"},
+            },
+        },
+    )
+    assert _capability_requires_orchestrated_input(token_bound)
+    assert _capability_dead_end(token_bound, "buscar um fusível")
+    assert not _capability_requires_orchestrated_input(ordinary)
+    assert not _capability_dead_end(ordinary, "buscar um fusível")
+
+
+def test_select_capability_retries_orchestrated_input_pick():
+    """Picking a capability that requires orchestrator-issued state
+    (``candidate_token``) violates the same dead-end clause as a
+    missing-identifier pick — the token only exists after owner
+    discovery, so one bounded re-proposal selects the executable
+    alternative."""
+    from app.application.capability_provision.orchestration import (
+        CAPABILITY_SELECTION_INSTRUCTION_ID,
+    )
+
+    orch, model, group = _token_bound_orchestrator(
+        [
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "execute_information",
+                }
+            },
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "discover_information",
+                }
+            },
+        ]
+    )
+    status, descriptor = orch._select_capability(
+        "traga dois exemplos de fusível cadastrado", group
+    )
+    assert status == "selected"
+    assert descriptor.remote_name == "discover_information"
+    assert len(model.requests) == 2
+
+
+def test_select_capability_orchestrated_pick_stands_without_alternative():
+    """When every listed capability is a dead-end, no executable
+    alternative exists — the first pick stands (fail-closed path
+    reports the honest limitation downstream)."""
+    from app.application.capability_provision.orchestration import (
+        CAPABILITY_SELECTION_INSTRUCTION_ID,
+    )
+    from tests.test_governed_attempt_contract import build_engine
+    from tests.test_goal_evidence_relevance import (
+        _cap,
+        _cri_clause,
+        _group,
+        FakeProposalModel,
+        FakeProvider,
+    )
+
+    execute = _cap(
+        "alpha",
+        "mcp",
+        "execute_information",
+        schema={
+            "type": "object",
+            "required": ["candidate_token", "arguments"],
+            "properties": {
+                "candidate_token": {"type": "string"},
+                "arguments": {"type": "object"},
+            },
+        },
+    )
+    group = _group("pa", "alpha", [execute])
+    provider = FakeProvider("pa", [group], outcomes={})
+    clause = _cri_clause()
+    model = FakeProposalModel(
+        [
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "execute_information",
+                }
+            }
+        ]
+    )
+    orch = build_engine(
+        "delia",
+        providers=[provider],
+        model=model,
+        response_intelligence_enabled=True,
+        cri_instruction_clause=clause.text,
+        cri_instruction_version=clause.version,
+    )
+    status, descriptor = orch._select_capability(
+        "traga dois exemplos de fusível cadastrado", group
+    )
+    assert status == "selected"
+    assert descriptor.remote_name == "execute_information"
+    assert len(model.requests) == 1
+
+
 def test_v35_instruction_clauses_present():
     turn_goal = _instruction(
         "delia.capability_orchestration.turn_goal"
@@ -551,6 +756,24 @@ def test_v35_instruction_clauses_present():
     ).lower()
     assert "compare x com y" in admission
     assert "quantos deles" in admission
+
+
+def test_v36_instruction_clauses_present():
+    """v36 — Task 21 trace-proven clauses:
+    (a) the args contract declares the DISCOVERY surface carries the
+    natural-language information need (operation_class keyed);
+    (b) the with_goal subject rule excludes domain-state qualifiers
+    the same way turn_goal already did."""
+    arguments = _instruction(
+        "delia.capability_orchestration.arguments"
+    ).lower()
+    assert "operation_class is discovery" in arguments
+    assert "information need" in arguments
+    with_goal = _instruction(
+        "delia.capability_orchestration.select_capability#with_goal"
+    ).lower()
+    assert "domain-state qualifiers" in with_goal
+    assert "cabo flexível cadastrado" in with_goal
 
 
 # ---------- admission: surface_inquiry contradiction guard ----------
@@ -686,3 +909,369 @@ def test_admission_surface_inquiry_requires_false_lists_surface():
     )
     assert cls == "surface_inquiry"
     assert owner is True
+
+
+# ---------- workspace entity refs: identifier resolvability ----------
+
+
+def test_candidate_dead_end_workspace_literal_resolves():
+    """A candidate requiring an identifier is executable when the
+    declared workspace entity supplies a resolvable literal — the
+    ref only widens the executable set; selection stays model."""
+    from app.application.capability_provision.orchestration import (
+        _candidate_needs_missing_identifier,
+        _workspace_identifier_literals,
+    )
+    from app.application.interaction.workspace_context import (
+        WorkspaceContext,
+        WorkspaceEntityRef,
+    )
+
+    candidate = {"required_arguments": ["product_id"]}
+    ctx = WorkspaceContext(
+        host_app_id="public-hub",
+        route="/apps/public-hub/catalogo",
+        view_ref="product-detail",
+        entity_refs=(
+            WorkspaceEntityRef(
+                entity_type="product",
+                entity_id="80002437",
+                source_system="delpi",
+                label="produto selecionado",
+            ),
+        ),
+    )
+    literals = _workspace_identifier_literals(ctx)
+    assert "80002437" in literals
+    assert not _candidate_needs_missing_identifier(
+        candidate, "mostre detalhes do produto", literals
+    )
+    # sibling: no workspace → same candidate is a dead-end
+    assert _candidate_needs_missing_identifier(
+        candidate, "mostre detalhes do produto"
+    )
+    # negative: unrelated workspace entity type still supplies the
+    # literal only when it is identifier-shaped — a label without
+    # entity_id contributes nothing
+    ctx_empty = WorkspaceContext(
+        host_app_id="public-hub",
+        route="/r",
+        view_ref="v",
+        entity_refs=(),
+    )
+    assert _workspace_identifier_literals(ctx_empty) == ""
+
+
+
+# ---------- discovery reformulation: zero-candidate bounded retry ----------
+
+
+def _discovery_chain_orchestrator(discovery_outcomes, proposals):
+    from tests.test_governed_attempt_contract import build_engine
+    from tests.test_goal_evidence_relevance import (
+        _cap,
+        _cri_clause,
+        _group,
+        _outcome,
+        FakeProposalModel,
+        FakeProvider,
+    )
+    from app.domain.specialist_interop.model import (
+        SpecialistOperationClass,
+    )
+
+    discover = _cap(
+        "alpha",
+        "mcp",
+        "discover_information",
+        op_class=SpecialistOperationClass.DISCOVERY,
+        schema={
+            "type": "object",
+            "required": ["query"],
+            "properties": {"query": {"type": "string"}},
+        },
+    )
+    execute = _cap(
+        "alpha",
+        "mcp",
+        "execute_information",
+        schema={
+            "type": "object",
+            "required": ["candidate_token", "arguments"],
+            "properties": {
+                "candidate_token": {"type": "string"},
+                "arguments": {"type": "object"},
+            },
+        },
+    )
+    group = _group("pa", "alpha", [discover, execute])
+    provider = FakeProvider(
+        "pa",
+        [group],
+        outcomes={
+            ("alpha", "discover_information"): list(discovery_outcomes),
+            ("alpha", "execute_information"): _outcome(
+                '[{"code": "301"}]'
+            ),
+        },
+    )
+    clause = _cri_clause()
+    model = FakeProposalModel(list(proposals))
+    orch = build_engine(
+        "delia",
+        providers=[provider],
+        model=model,
+        response_intelligence_enabled=True,
+        cri_instruction_clause=clause.text,
+        cri_instruction_version=clause.version,
+    )
+    return orch, model, provider, group
+
+
+_DISCOVERY_CANDIDATES = {
+    "candidates": [
+        {
+            "action_id": "search_products",
+            "candidate_token": "tok-owner-1",
+            "argument_schema": {
+                "type": "object",
+                "required": ["description"],
+                "properties": {"description": {"type": "string"}},
+            },
+            "required_arguments": ["description"],
+        }
+    ]
+}
+
+
+def test_discovery_zero_candidates_reformulates_once():
+    """Zero-candidate discovery re-proposes the need once with the
+    typed owner signal; the reformulated query surfaces the
+    owner-issued candidate and the chain executes."""
+    from app.application.capability_provision.orchestration import (
+        ARGUMENTS_INSTRUCTION_ID,
+    )
+    from tests.test_goal_evidence_relevance import _outcome
+
+    orch, model, provider, group = _discovery_chain_orchestrator(
+        [
+            _outcome("{}", structured={"candidates": []}),
+            _outcome("{}", structured=_DISCOVERY_CANDIDATES),
+        ],
+        [
+            {
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {"query": "buscar fita isolante"}
+                }
+            },
+            {"arguments": {"description": "fita isolante"}},
+        ],
+    )
+    result = orch._invoke_selected(
+        "pa:alpha",
+        "discover_information",
+        {"query": "existe fita isolante?"},
+        group,
+        "existe fita isolante cadastrada?",
+        "corr-reform",
+    )
+    assert result is not None
+    outcome, action_id, used = result
+    assert action_id == "search_products"
+    assert used == "execute_information"
+    names = [c[0] for c in provider.calls]
+    assert names == [
+        "discover_information",
+        "discover_information",
+        "execute_information",
+    ]
+    exec_args = provider.calls[-1][1]
+    assert exec_args["candidate_token"] == "tok-owner-1"
+    assert exec_args["arguments"] == {"description": "fita isolante"}
+
+
+def test_discovery_identical_reformulation_no_second_invoke():
+    """A reformulation identical to the first proposal cannot change
+    the owner answer — no second invoke, fail-closed terminal."""
+    from app.application.capability_provision.orchestration import (
+        ARGUMENTS_INSTRUCTION_ID,
+    )
+    from tests.test_goal_evidence_relevance import _outcome
+
+    orch, model, provider, group = _discovery_chain_orchestrator(
+        [
+            _outcome("{}", structured={"candidates": []}),
+            _outcome("{}", structured=_DISCOVERY_CANDIDATES),
+        ],
+        [
+            {
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {"query": "existe fita isolante?"}
+                }
+            },
+        ],
+    )
+    result = orch._invoke_selected(
+        "pa:alpha",
+        "discover_information",
+        {"query": "existe fita isolante?"},
+        group,
+        "existe fita isolante cadastrada?",
+        "corr-reform2",
+    )
+    names = [c[0] for c in provider.calls]
+    assert names == ["discover_information"]
+
+
+# ---------- discovery reformulation: unresolvable-candidate retry ----------
+
+
+_DETAIL_CANDIDATES = {
+    "candidates": [
+        {
+            "action_id": "get_product_detail",
+            "candidate_token": "tok-detail-1",
+            "required_arguments": ["code"],
+        },
+        {
+            "action_id": "get_product_drawing",
+            "candidate_token": "tok-drawing-1",
+            "required_arguments": ["code"],
+        },
+    ]
+}
+
+_DETAIL_SINGLE = {
+    "candidates": [
+        {
+            "action_id": "get_product_detail",
+            "candidate_token": "tok-detail-1",
+            "required_arguments": ["code"],
+        }
+    ]
+}
+
+
+def test_discovery_detail_only_candidates_reformulate():
+    """A discovery result whose only candidates are identifier-gated
+    detail actions can never execute for an identifier-less ask —
+    the resolution fails closed and the bounded reformulation
+    restates the need, surfacing the collection action."""
+    from app.application.capability_provision.orchestration import (
+        ARGUMENTS_INSTRUCTION_ID,
+    )
+    from tests.test_goal_evidence_relevance import _outcome
+
+    orch, model, provider, group = _discovery_chain_orchestrator(
+        [
+            _outcome("{}", structured=_DETAIL_CANDIDATES),
+            _outcome("{}", structured=_DISCOVERY_CANDIDATES),
+        ],
+        [
+            {
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {
+                        "query": "buscar produtos por descrição "
+                        "espaguete"
+                    }
+                }
+            },
+            {"arguments": {"description": "espaguete"}},
+        ],
+    )
+    result = orch._invoke_selected(
+        "pa:alpha",
+        "discover_information",
+        {"query": "detalhes do produto espaguete"},
+        group,
+        "traga um espaguete termorretrátil",
+        "corr-detaildead",
+    )
+    assert result is not None
+    outcome, action_id, used = result
+    assert action_id == "search_products"
+    assert used == "execute_information"
+    names = [c[0] for c in provider.calls]
+    assert names == [
+        "discover_information",
+        "discover_information",
+        "execute_information",
+    ]
+
+
+def test_discovery_single_dead_candidate_reformulates():
+    """Sibling: the single-candidate fast path honors the same
+    dead-end exclusion — a lone identifier-gated candidate is as
+    unresolvable as a dead pick inside a multi-candidate set."""
+    from app.application.capability_provision.orchestration import (
+        ARGUMENTS_INSTRUCTION_ID,
+    )
+    from tests.test_goal_evidence_relevance import _outcome
+
+    orch, model, provider, group = _discovery_chain_orchestrator(
+        [
+            _outcome("{}", structured=_DETAIL_SINGLE),
+            _outcome("{}", structured=_DISCOVERY_CANDIDATES),
+        ],
+        [
+            {
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {
+                        "query": "buscar produtos por descrição "
+                        "espaguete"
+                    }
+                }
+            },
+            {"arguments": {"description": "espaguete"}},
+        ],
+    )
+    result = orch._invoke_selected(
+        "pa:alpha",
+        "discover_information",
+        {"query": "detalhes do produto espaguete"},
+        group,
+        "traga um espaguete termorretrátil",
+        "corr-singledead",
+    )
+    assert result is not None
+    outcome, action_id, used = result
+    assert used == "execute_information"
+    names = [c[0] for c in provider.calls]
+    assert names == [
+        "discover_information",
+        "discover_information",
+        "execute_information",
+    ]
+
+
+def test_discovery_dead_candidate_stated_identifier_chains():
+    """Negative: when the request DOES state an identifier literal,
+    the same detail candidate is executable — no reformulation, the
+    chain proceeds directly."""
+    from app.application.capability_provision.orchestration import (
+        ARGUMENTS_INSTRUCTION_ID,
+    )
+    from tests.test_goal_evidence_relevance import _outcome
+
+    orch, model, provider, group = _discovery_chain_orchestrator(
+        [
+            _outcome("{}", structured=_DETAIL_SINGLE),
+        ],
+        [
+            {"arguments": {"code": "80002437"}},
+        ],
+    )
+    result = orch._invoke_selected(
+        "pa:alpha",
+        "discover_information",
+        {"query": "detalhes do produto código 80002437"},
+        group,
+        "detalhes do produto código 80002437",
+        "corr-detailok",
+    )
+    assert result is not None
+    outcome, action_id, used = result
+    assert action_id == "get_product_detail"
+    assert used == "execute_information"
+    names = [c[0] for c in provider.calls]
+    assert names == ["discover_information", "execute_information"]

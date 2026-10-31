@@ -51,12 +51,12 @@ _SNAPSHOT = {
         8183,
     ),
     "delia.capability_orchestration.select_capability": (
-        "a370afea466b3855037b243ad4ee7a1b53e872cdbf42abb987203a9c4c122dae",
-        4882,
+        "9026692a4e57a1ff3e6eada7384c1036e4721f61ce822d101a8a1c16010d30b9",
+        6269,
     ),
     "delia.capability_orchestration.select_capability#with_goal": (
-        "d6e7076f2f37640979ffa987f44667409539a97a310b411989142666ec2e134c",
-        5226,
+        "1ab8048f99214cbbcdacaa76d0ac9792ae18088c918daebb7460c6aa2686d842",
+        7461,
     ),
     "delia.capability_orchestration.index_probe": (
         "5acfbc5f0843e2fa2810f456554caad27f3a5f56df49069371fbeb7731d9539a",
@@ -67,8 +67,8 @@ _SNAPSHOT = {
         1225,
     ),
     "delia.capability_orchestration.arguments": (
-        "9d44e714f119ac987a584f232c08e690dab15128c2d2a375ff24a0e27cf4d18d",
-        8163,
+        "855bf62d90febfa1e209f6df8ec073bd6c4be8dee8c15e79e89e6c007ef001e6",
+        8187,
     ),
     "delia.capability_orchestration.select_resolver": (
         "c796256fe1cbdfd2ae87f254f726e0fd35ab83ea622be7033217f95ce095dc39",
@@ -95,24 +95,24 @@ _SNAPSHOT = {
         1850,
     ),
     "delia.capability_orchestration.turn_goal": (
-        "a459e3b5f7bed28ec9634d03a1ff158d98de0ddfaee6337b0a4a3d4e9408ed27",
-        5601,
+        "f34ad2b9050edb903f5b121e2691cd4408881b7c699f2135a3ab4e0e7e827b63",
+        5929,
     ),
     "delia.capability_orchestration.comparison": (
         "9a26c820deb88cd2f48b102d7ad8826f993be937ec2d1d6ab77980228149b3bf",
         1346,
     ),
     "delia.capability_orchestration.candidate_arguments": (
-        "3a47b8f2e6b2cb3f29b2c8f00dc56fd2f2e4af3b57a36b3a90984714baa52453",
-        2640,
+        "2abffb8fd62307039048e28094a83539b47bf49ec976942dbbc7efdf04b06691",
+        2846,
     ),
     "delia.capability_orchestration.select_candidate": (
         "b3fad6b9bc0fe9ad7d4857d461d168555c5761a1c2a7f821dc5b93f4a6d5421f",
         2284,
     ),
     "delia.capability_orchestration.interaction_admission": (
-        "b189692382e7443680866b2f637a0a9c4aa2b15b0435186c423fa8879595a2a9",
-        5042,
+        "7d7fec290fbe556db579eb4133f38bb2ce0b53186c713cf46fa1ea0fa23bb378",
+        5235,
     ),
     "delia.capability_orchestration.goal_evidence_relevance": (
         "14effd87356774e92ba7b6bd77cd825369114d2a52ff091bfb12ae5aa2ba4755",
@@ -133,7 +133,7 @@ def test_instruction_resource_snapshot_parity():
     InstructionLineage cannot drift silently."""
     res = _load()
     assert res.resource_id == "delia.capability_orchestration.instructions"
-    assert res.version == "35"
+    assert res.version == "38"
     assert set(res.instructions) == set(_SNAPSHOT)
     for key, (sha, nbytes) in _SNAPSHOT.items():
         text = res.instructions[key]

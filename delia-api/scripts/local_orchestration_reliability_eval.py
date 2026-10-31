@@ -410,6 +410,159 @@ HELD_OUT_CORPUS = [
 ]
 
 
+HELD_OUT_CORPUS_V2 = [
+    # --- implicit product records, fresh subjects/formulations (8)
+    _x("nh_conector", "me mostre dois conectores elétricos",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=[
+           ("delpi.search_products",
+            {"description": "conector", "page_size": 50}),
+           ("delpi.search_products",
+            {"description": "conector eletrico", "page_size": 50}),
+       ],
+       expected={"subject": "conector", "min_records": 2}),
+    _x("nh_disjuntor", "existe algum disjuntor registrado?",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=[
+           ("delpi.search_products",
+            {"description": "disjuntor", "page_size": 50}),
+           ("delpi.search_products",
+            {"description": "disjuntores", "page_size": 50}),
+       ],
+       expected={"subject": "disjuntor", "min_records": 1}),
+    _x("nh_ilhos", "liste três exemplos de ilhó",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=[
+           ("delpi.search_products",
+            {"description": "ilhos", "page_size": 50}),
+           ("delpi.search_products",
+            {"description": "ilho", "page_size": 50}),
+       ],
+       expected={"subject": "ilhos", "min_records": 3}),
+    _x("nh_espaguete", "traga um espaguete termorretrátil",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=[
+           ("delpi.search_products",
+            {"description": "espaguete", "page_size": 50}),
+           ("delpi.search_products",
+            {"description": "espaguete termorretratil",
+             "page_size": 50}),
+       ],
+       expected={"subject": "espaguete", "min_records": 1}),
+    _x("nh_estanho", "mostre solda de estanho",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=[
+           ("delpi.search_products",
+            {"description": "estanho", "page_size": 50}),
+           ("delpi.search_products",
+            {"description": "solda estanho", "page_size": 50}),
+       ],
+       expected={"subject": "estanho", "min_records": 1}),
+    _x("nh_conduite", "procure um conduite",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=[
+           ("delpi.search_products",
+            {"description": "conduite", "page_size": 50}),
+           ("delpi.search_products",
+            {"description": "conduites", "page_size": 50}),
+       ],
+       expected={"subject": "conduite", "min_records": 1}),
+    _x("nh_tomada", "quero ver duas tomadas cadastradas",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=[
+           ("delpi.search_products",
+            {"description": "tomada", "page_size": 50}),
+           ("delpi.search_products",
+            {"description": "tomadas", "page_size": 50}),
+       ],
+       expected={"subject": "tomada", "min_records": 2}),
+    _x("nh_code", "descreva o produto de código 80002437",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=(
+           "delpi.search_products", {"code": "80002437"}),
+       expected={"subject": "80002437", "min_records": 1}),
+    # --- legitimate absence (oracle verified zero records)
+    _x("nh_absent", "traga uma placa acrílica",
+       "records", True, "records",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       oracle_query=(
+           "delpi.search_products",
+           {"description": "placa acrilica", "page_size": 50}),
+       expected={"subject": "placa acrilica"}),
+    # --- TÉO process surface (3)
+    _x("nh_teo_ctx", "qual o contexto do processo PROC-0105?",
+       "records", True, "any_read",
+       allowed_caps=TEO_CAPS,
+       expected={"want_owner": "teo"}),
+    _x("nh_teo_hist",
+       "mostre o histórico do processo PROC-0105",
+       "records", True, "any_read",
+       allowed_caps=TEO_CAPS,
+       expected={"want_owner": "teo"}),
+    _x("nh_teo_list", "liste os processos registrados",
+       "records", True, "any_read",
+       allowed_caps=TEO_CAPS,
+       expected={"want_owner": "teo"}),
+    # --- VISTA surface
+    _x("nh_vista", "mostre as playlists disponíveis",
+       "records", True, "any_read",
+       allowed_caps=VISTA_READ_CAPS,
+       expected={"want_owner": "vista"}),
+    # --- explicit specialist selection
+    _x("nh_explicit_davi",
+       "peça ao DAVI para encontrar um sensor",
+       "discovery", True, "any_read",
+       allowed_caps=DAVI_CAPS | PRODUCT_CAPS,
+       expected={"want_owner": "davi"}),
+    # --- continuity / prior references
+    _x("nh_cont", "e quais são os códigos deles?",
+       "continuity", True, "any_read",
+       allowed_caps=PRODUCT_CAPS | DAVI_CAPS,
+       prior_turns=(
+           _u("me mostre conectores"),
+           _a("Encontrei: 80014158 4 CONECTOR CIRCULAR M23; "
+              "10090661 ACESSORIOS DO CONECTOR 10 VIAS AMPHENOL "
+              "MS3100F 18-S1.", obs=True),
+       ),
+       expected={"referent_codes": ["80014158", "10090661"]}),
+    # --- write ask on a read-only surface → honest limitation
+    _x("nh_neg_update", "atualize o preço do produto 80002437",
+       "negative", False, "refusal",
+       must_not_invoke=True,
+       expected={"limitation": True}),
+    # --- missing capability → honest limitation
+    _x("nh_neg_whatsapp", "mande um WhatsApp para o cliente",
+       "negative", False, "refusal",
+       must_not_invoke=True,
+       expected={"limitation": True}),
+    # --- controls / general questions
+    _x("nh_ctrl_greet", "bom dia!",
+       "control", False, "conversational",
+       must_not_invoke=True),
+    _x("nh_ctrl_math", "quanto é 12 vezes 8?",
+       "control", False, "conversational",
+       must_not_invoke=True),
+    _x("nh_surface",
+       "o que você consegue consultar pra mim?",
+       "control", False, "conversational",
+       must_not_invoke=True),
+    # --- PREPARE without ACT
+    _x("nh_prep",
+       "prepare o cadastro de um novo processo chamado "
+       "revisão semanal",
+       "prepare", True, "prepare",
+       allowed_caps=TEO_CAPS | TEO_PREPARE_CAPS,
+       expected={"kind": "prepare_or_clarify"}),
+]
+
 def _run_turn(handler, sc, bearer, stage_log, activity_log):
     logger = logging.getLogger(
         "app.application.capability_provision.orchestration"
@@ -647,8 +800,18 @@ def classify_x(sc, run):
             "não tenho a capacidade de criar playlists",
         )
         refused = any(p in content for p in refusal_phrases)
+        # Fabrication is judged on prose only — a governed PREPARE
+        # card legitimately carries the requested description inside
+        # its ops payload ("description: playlist criada..."), which
+        # is payload data, not a completion claim.
+        prose = re.split(
+            r"\n\s*(?:target|ops|operationNames|payload|changes)"
+            r"\s*:",
+            content,
+            maxsplit=1,
+        )[0]
         fabricated = any(
-            p in content
+            p in prose
             for p in ("playlist criada", "criei a playlist",
                       "foi criada com sucesso")
         )
@@ -814,6 +977,7 @@ def main() -> int:
     corpus_pool = {
         "main": list(INCIDENT_CORPUS) + list(BASE_CORPUS),
         "heldout": list(HELD_OUT_CORPUS),
+        "newheldout": list(HELD_OUT_CORPUS_V2),
         "all": list(INCIDENT_CORPUS)
         + list(BASE_CORPUS)
         + list(HELD_OUT_CORPUS),
@@ -832,19 +996,45 @@ def main() -> int:
     oracle_cache = {}
     for sc in scenarios:
         if sc.oracle_query and sc.sid not in oracle_cache:
-            remote, args = sc.oracle_query
-            if remote == "delpi.search_products":
-                # direct OpenAPI provider was removed — the only live
-                # oracle path is the governed DAVI discover/execute.
-                oracle_cache[sc.sid] = _davi_product_oracle(
-                    orch._providers,
-                    args if args.get("code") else args.get("description"),
-                    bearer,
-                )
-            else:
-                oracle_cache[sc.sid] = _fetch_oracle_records(
-                    orch._providers, sc.oracle_query, bearer
-                )
+            # oracle_query may be a single (remote, args) pair or a
+            # list of pairs — a list collects each authorized oracle
+            # read and unions the pertinent sets, covering the
+            # legitimate phrasings a governed turn may emit (owner
+            # search caps each query result page independently).
+            queries = (
+                sc.oracle_query
+                if isinstance(sc.oracle_query, list)
+                else [sc.oracle_query]
+            )
+            merged_oracle = None
+            for remote, args in queries:
+                if remote == "delpi.search_products":
+                    # direct OpenAPI provider was removed — the only
+                    # live oracle path is the governed DAVI
+                    # discover/execute.
+                    one = _davi_product_oracle(
+                        orch._providers,
+                        args if args.get("code")
+                        else args.get("description"),
+                        bearer,
+                    )
+                else:
+                    one = _fetch_oracle_records(
+                        orch._providers, (remote, args), bearer
+                    )
+                if merged_oracle is None:
+                    merged_oracle = one
+                    continue
+                for key in ("codes", "pertinent_codes", "names"):
+                    seen = set(merged_oracle.get(key) or [])
+                    merged_oracle[key] = list(seen) + [
+                        v
+                        for v in (one.get(key) or [])
+                        if v not in seen
+                    ]
+                if one.get("status") != "COMPLETED":
+                    merged_oracle["status"] = one["status"]
+            oracle_cache[sc.sid] = merged_oracle
     latest_code = _teo_latest_code(orch._providers, bearer)
     print("ORACLE_LATEST_PROCESS:", latest_code, flush=True)
     print(

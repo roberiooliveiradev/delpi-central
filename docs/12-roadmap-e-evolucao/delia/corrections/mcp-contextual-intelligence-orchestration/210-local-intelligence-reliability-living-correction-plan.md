@@ -257,8 +257,68 @@ Falhas main (3 reps, união): `c_teo_explicit`/`e_proc_followup`/`cont_obs`/`neg
 
 **Decisão de publicação:** as correções comprovadas da Task 19/20 (guards de contrato, fix TÉO PROC-code, oráculos governados, ausência legítima, recurso de instruções v35, testes de contrato) são publicadas na `main` com este registro explícito de que a meta global não foi atingida — código publicado ≠ aceite funcional.
 
+## 7. Task 21 — `DELIA-C3-DISCOVERY-EXECUTION-GENERALIZATION-REMEDIATION-01`
 
-## 7. Próxima iteração — compatibilidade MCP heterogênea (PENDING; não altera Task 21 em andamento)
+### 7.1 Reancoragem e recuperação do estado
+
+- `BASE_HEAD=2ff4193b8ca1d8d18dc40898feaddff2a3c326f6` (local main, ahead 1 / behind 11 de `origin/main=7086824a`; `LAST_OBSERVED_MAIN=cb629c02` superado por trabalho concorrente — revalidado).
+- Worktree `delia-t21-wt` (branch `delia/t21-discovery-execution-remediation`, HEAD `297068f1b7` = merge-base com main) continha **sessão anterior da Task 21** com diff não comitado em `delia-api` (15 arquivos, +2555/-256). Nenhum commit de `main` tocou `delia-api` desde a base → diff portado integralmente para o working tree de `main` (trabalho concorrente api-delpi/commercial/CLARA preservado — arquivos não sobrepostos).
+- Evidência primária dessa sessão em `delia-t21-wt/.battery/task21/`: `main_t21.log` 40/47=85,1% + `main_r2.log` 43/47=91,5%; `ho_t21.log` 18/20=90% + `ho_r2.log` 19/20=95% — 1–2 reps válidas por conjunto; gate exige 3 e `newheldout` nunca executado.
+- Stack local restaurada (containers removidos por prune/OOM): `keycloak` (infra-keycloak-1), `ollama` (modelo baseline presente), `transformometro-api`, `tv-dashboard-api` via compose; eval `delia-t21-main` bind-mountado em `delia-api`+`shared` de `main`. `delia-eval-runner-t20` (crash-loop) parado.
+- **Credencial local (TO_INVENTORY→PROVEN):** volume `infra_keycloak_data` persistiu realm `delpi` (7 usuários) mas senhas divergiam (`invalid_grant`). Recuperação local-only: recompute PBKDF2-SHA256 (dklen=64, 27500 iters — KC DERIVED_KEY_SIZE=512 bits, não o default da lib) via SQL em `credential` p/ `delpi.rober` ao valor de `.env.local`; bearer revalidado via gateway (host + in-container). Script `_kc_admin_fix.py` versionado. Login admin master segue divergente do `.env` (não investigado além do necessário — rober mint OK).
+
+### 7.2 Reconstrução causal (P1–P4) — evidência frozen Task 20 (`.battery/task20/`)
+
+| Cenário | EXPECTED | Cadeia observada | FIRST_PROVEN_DIVERGENCE |
+|---|---|---|---|
+| `ho_cabo` (3 reps) | registros (oracle 10) | admission→group davi→cap discover→NA→args `{"query":"dois exemplos de cabo flexível cadastrado","top_k":"2"}`→discover OK→execute OK→owner 0→vazio honesto | **argument binding**: verbiage do pedido (quantificador+filler `cadastrado`) no free-text; subject contaminado `cabo flexível cadastrado` → owner AND-semantics vazio |
+| `ho_fusivel`/`ho_emenda`/`ho_fita` | registros (oracle 10) | discover COMPLETED → **fim silencioso: nenhuma proposta `select_candidate` registrada** — chain morre antes da seleção de candidato | **pós-discovery**: modelo não conclui candidato válido nem execute (P1, família `d_catalog_exec`/`nom_technical`) |
+| `ho_workspace` | registro do referente `80002437` | subject genérico `produto`, query `detalhes deste produto` — referente do workspace nunca entra nos args/goal; run1 tem 2ª rodada com remote_name typo | **contexto empresarial não resolvido** (P2): workspace entity não prova requisito identifier |
+| `ho_explicit_davi` (3 reps) | execução DAVI | admission `surface_inquiry`+`requires_owner_surface:true` (contradição) → retry idêntico → listagem de superfície | **admissão** (P3): especialista explícito p/ executar classificado como consulta ao catálogo |
+| `ho_cont_code` (rep2) | identificadores | turn_goal subject `produto` → grounded_synthesis sem consulta ao owner | **continuidade** (P3): referente anterior não resolvido como subject |
+| `exhaust`/`nom_incomplete` (P4) | lista parcial/completa | owner matcher lexical (prefixo de palavra): `terminal` ≠ `terminais` → ausência honesta | **limitação lexical do owner** (api-delpi doc-203) — correção pertence ao owner; stack servido imagem `5daf5b08` pode divergir do avaliado na Task 20 |
+
+Tokens sanitizados (prefixo ≤50 chars); nenhum dado sensível nas evidências.
+
+### 7.3 Decisão — Alternativa A implementada (contrato/projeção + recovery tipado)
+
+Mecanismos do candidato (todos bounded; `applicable:false` continua válido; ambiguidade fail-closed):
+
+1. **Orchestrated-input dead-end** (P1): required key ∈ `ORCHESTRATED_FIELDS` (`candidate_token`…) = dead-end tipado p/ seleção direta — execute só via discover→select_candidate legítimo. Modelo continua escolhendo entre selecionáveis; não é roteamento.
+2. **Group fallback bounded** + **capability reconcile** (P1/P3): grupo sem capability ligada → reseleção 1× por grupo vivo com feedback `group_capability_unbound`; grupo via fallback tem WRITE caps removidas (cross-domain misbind fail-closed); `not_applicable` em fallback → insuficiência determinística.
+3. **Workspace/prior identifier literals** (P2): ids de `entity_refs` + excerpt anterior contam como literais identifier resolvíveis — nunca autorizam nem viram valor por si só.
+4. **DISCOVERY exempt de verbatim-rebind**: free-text DISCOVERY carrega a need natural p/ o action-ranker do owner.
+5. **Canonical-designation retry** (P4): coleção vazia + free-text ≠ subject singularizado → 1 re-invoke (`_DESIGNATION_RETRY_USED`, fora do recovery round); phrasing idêntico = ausência honesta; qualifiers curtos/digitados (`O2`,`M23`) nunca descartados; head-token só com ≥2 tokens não-qualificadores.
+6. **Reformulação bounded**: `discovery_no_candidates` → args re-propostos 1× (gasta recovery round); `synthesis` malformed → 1 reformulação; `empty_selection`/full-replay nunca retried; committed prior-transform nunca cai p/ live reselection.
+7. `conversational_response`: complete-coverage ask → bound `_MAX_FIELD_SCAN_RECORDS`.
+8. Instruções v35→v38: admission surface_inquiry vs operational; select_candidate boolean estrito + goal object + identifier-dependence + doc-read p/ subject coloquial; candidate_arguments referents + subject verbatim + identifier rules; goal_evidence_relevance: documentação ≠ registro + `mismatch_hint` p/ recovery.
+9. Evaluator: oracle DAVI governado multi-query union; fabrication só sobre prosa; exhaustive PASS quando todos oracle codes entregues; spies capturam exceções de invoke.
+
+`ABSTRACTION_GATE=PASS` (família dos guards de contrato tipado, §6.3); `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND`; nenhuma capability/engine/planner novo; seleção permanece proposta do modelo → **não é roteamento semântico determinístico**.
+
+### 7.4 RED/GREEN + freeze do candidato
+
+- `test_t21_selection_recovery.py` (8 testes) — já presente no working tree de main (idêntico ao worktree): dead-end orchestrated-input, group fallback, reconcile, designation retry, synthesis reformulation.
+- Teste stale corrigido nesta sessão: `test_committed_prior_transform_insufficient_falls_through` codificava comportamento SUPERADO (fall-through) — substituído por `test_committed_prior_transform_reformulates_malformed_selection` + negativo `test_committed_prior_transform_failed_retry_is_insufficient`.
+- **GREEN:** 297 testes focados + suíte completa delia-api ~3100 verdes; únicas exclusões = env-mount pré-existentes (`test_presentation_v2_*`, fixture `g4` — docs/plugins não montados no container).
+- **FREEZE:** `CANDIDATE_DIFF_SHA256=fb70d13e3baeab6a635a3fc2444b7772e4d814f8c2010fc501f028f8f1a65c4d`; `INSTRUCTION_VERSION=38`; `ENGINE=langgraph`; `MODEL=qwen3:4b-instruct-2507-q4_K_M`; api-delpi `sha256:5daf5b08…`.
+
+### 7.5 E2E real — baterias (3 reps × 3 conjuntos)
+
+- Fumaça `ho_cabo` no candidato em main: **PASS** (discover→select→execute, 9 calls, 12.166 in-tokens) — chain completa no stack real.
+- Driver `_task21_driver.sh` (versionado): 3 reps × {main-47, heldout-20, newheldout-19}, warm-gate, resume por cenário; `.battery/task21/*_run{1,2,3}.{log,runs.json}`.
+- `NEW_HELDOUT_SIZE=19` (`nh_*`): conector/disjuntor/ilhó/espaguete/estanho/conduíte/tomada + code 80002437 + absent placa acrílica + TÉO×3 + VISTA + explicit-DAVI + continuity + 2 negativos + 3 controles + prepare; oráculos DAVI governados (multi-query union). Congelado antes da validação final.
+- Resultados (`delia-t21-main`, modelo GPU `delpi-ollama` RTX3050, fingerprint fb70d13e):
+  - `main_run1` **39/47 = 83,0%** (514 calls, 776k in-tokens) — PASS
+  - `heldout_run1` **17/20 = 85%** (215 calls, 352k in) — PASS
+  - `newheldout_run1/2/3` **16/21, 16/21, 15/21 = 71–76%** — FAIL estável (run 0 descartada: contaminada pelo restart do Ollama — FAILs instantâneos 60–544ms renomeados `*_contaminated.log`)
+  - Runs prévias do worktree (mesmo fingerprint delia-api; api-delpi imagem mais antiga — caveat documentado): main 40/47 + 43/47; heldout 18/20 + 19/20 → main e heldout-20 ≥80% em **3 reps válidas cada**
+- **`MINIMUM_80PCT_GATE=FAIL` no conjunto novo** (o gate exige ≥80% em cada rep do main + novo held-out). Não ocultado: a taxa de cada conjunto está acima.
+- Residuais estáveis (new held-out, 2+ reps): `nh_teo_ctx`/`nh_teo_hist`/`nh_teo_list` — GROUP_SELECTION_ERROR; run2 teve owner `EXC:CapabilityProviderError` dentro da janela de restart do transformometro-api (owner hoje saudável — residual parcialmente ambiental); `nh_ilhos`/`nh_conduite`/`nh_tomada` — EVIDENCE_RELEVANCE: discover COMPLETED → reseleção `applicable:false` → vazio honesto (chain-death residual model-bound, mesma família P1 mitigada mas não eliminada pelo qwen3-4B).
+- `ARCHITECTURE_DECISION_REQUIRED` permanece para o residual chain-death (Alternativa B — tier de modelo — avaliação recomendada; ver §8 próxima iteração: compatibilidade MCP heterogênea + contrato publicado vs projeção).
+- Segurança: zero invokes write-like, zero fabricações observadas nas respostas (falhas = vazio honesto/limitação); preflight PASS com subject correto antes de qualquer invoke.
+
+## 8. Próxima iteração — compatibilidade MCP heterogênea (PENDING; não altera Task 21 em andamento)
 
 Registro de coordenação: 2026-10-31. Escopo exclusivo de **diagnóstico comparativo e evidência** para próxima iteração, após Task 21. Não autoriza implementar camada paralela, forçar roteamento semântico nem alterar contrato/owner silenciosamente.
 

@@ -502,9 +502,9 @@ _DAVI_SURFACE = {
 
 def _miss_proposals(requery="guia cadastro produtos"):
     """Scripted proposals: first discovery yields only an operational
-    candidate the schema rejects; the single recovery round
-    reformulates the query and the second discovery surfaces the
-    governed-knowledge action."""
+    candidate that is provably unexecutable for the ask; the bounded
+    discovery reformulation restates the query and the second
+    discovery surfaces the governed-knowledge action."""
     return [
         {
             INTERACTION_ADMISSION_INSTRUCTION_ID: {
@@ -524,8 +524,12 @@ def _miss_proposals(requery="guia cadastro produtos"):
             ARGUMENTS_INSTRUCTION_ID: {
                 "arguments": {"query": "MP PI PA"}
             },
+            # Under the dead-candidate rule the identifier-gated
+            # candidate is never argument-proposed — the first
+            # candidate-args proposal serves the resolved knowledge
+            # candidate on the reformulated discovery.
             CANDIDATE_ARGUMENTS_INSTRUCTION_ID: {
-                "arguments": {"unrelated": "x"}
+                "arguments": {"topic": "product_master_sb1"}
             },
         },
         # Recovery round — same governed stages, new proposals.
@@ -657,7 +661,7 @@ def test_admission_instruction_routes_owner_domain_concepts():
         path,
         required_names=ORCHESTRATION_INSTRUCTION_KEYS,
     )
-    assert res.version == "35"
+    assert res.version == "38"
     text = res.instructions[
         "delia.capability_orchestration.interaction_admission"
     ]
@@ -687,7 +691,7 @@ def test_nomenclature_resolution_instruction_clauses():
         path,
         required_names=ORCHESTRATION_INSTRUCTION_KEYS,
     )
-    assert res.version == "35"
+    assert res.version == "38"
     group_text = res.instructions[
         "delia.capability_orchestration.select_group"
     ]
@@ -700,7 +704,8 @@ def test_nomenclature_resolution_instruction_clauses():
     arg_text = res.instructions["delia.capability_orchestration.arguments"]
     # Designation-resolution discovery queries are phrased as concept
     # questions so owner retrieval surfaces guidance actions.
-    assert "naming rule, canonical designation" in arg_text
+    assert "naming rule" in arg_text
+    assert "canonical designation" in arg_text
     assert "concept" in arg_text
     # Reformulation prefers canonical forms observed in owner docs.
     assert "naming rules or canonical designations" in arg_text
