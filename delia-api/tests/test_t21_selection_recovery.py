@@ -27,6 +27,7 @@ from app.application.capability_provision.orchestration import (
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
+    _singular_form,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -555,3 +556,30 @@ def test_t21_fallback_never_binds_write_class_capability():
     cap_requests = _requests(model, CAPABILITY_SELECTION_INSTRUCTION_ID)
     # 2 proposals inside gA (initial + reconcile retry) — none in gB.
     assert len(cap_requests) == 2
+
+
+# --- Task 22: language-normalization audit (singular_form bugs) ---
+import pytest as _pytest
+
+
+@_pytest.mark.parametrize(
+    "given,expected",
+    [
+        ("terminais", "terminal"),
+        ("conectores", "conector"),
+        ("disjuntores", "disjuntor"),
+        ("cabos", "cabo"),
+        ("tomadas", "tomada"),
+        ("fusíveis", "fusível"),
+        ("ilhós", "ilhó"),
+        ("bala", "bala"),
+        # Latin/Greek -is/-us and invariant nouns are never productive
+        # plurals in PT — stripping them is over-normalization.
+        ("lápis", "lápis"),
+        ("tênis", "tênis"),
+        ("vírus", "vírus"),
+        ("ônibus", "ônibus"),
+    ],
+)
+def test_singular_form_productive_plurals_only(given, expected):
+    assert _singular_form(given) == expected

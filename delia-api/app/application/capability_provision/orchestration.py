@@ -2750,6 +2750,11 @@ def _singular_form(token: str) -> str:
     low = token.lower()
     if len(low) < 4 or not low[-1].isalpha():
         return token
+    # -veis is a productive plural class whose singular is -vel
+    # (fusíveis -> fusível, móveis -> móvel); it precedes the éis/eis
+    # rules because the accent falls on the í, not on the final e.
+    if low.endswith("veis"):
+        return token[:-4] + "vel"
     if low.endswith(("ões", "ães", "ãos")):
         return token[:-3] + "ão"
     if low.endswith("ais"):
@@ -2764,6 +2769,11 @@ def _singular_form(token: str) -> str:
         return token[:-2]
     if low.endswith("es") and low[-3] in "rln":
         return token[:-2]
+    # -is/-us endings are never productive PT plurals (lápis, tênis,
+    # vírus, ônibus stay invariant) — stripping them is
+    # over-normalization that produces a nonexistent form.
+    if low.endswith(("is", "us")):
+        return token
     if low.endswith("s") and low[-2] in "aeiou":
         return token[:-1]
     return token

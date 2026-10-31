@@ -327,3 +327,46 @@ Registro de coordenação: 2026-10-31. Escopo exclusivo de **diagnóstico compar
 3. **Ownership de cada falha:** registrar `USER_GOAL → FIRST_DIVERGENCE → RESPONSIBILITY → OWNER → CANONICAL_CONTRACT → IMPLEMENTATION → TEST → BUSINESS_OUTCOME` e distinguir defeito do MCP/Domain API, falha de contrato/schema/descrição do owner, defeito do adapter/projeção DÉLIA, seleção/argumentação do LLM, ambiente, autorização ou avaliador. Se contrato do owner for inadequado, corrigir somente no owner legítimo após gates; DÉLIA deve operar provider-neutral e falhar honestamente quando a superfície não permite inferência segura.
 
 **Gate da próxima iteração:** reancorar HEAD/autoridades/doc 16/ledger, recuperar resultados reais da Task 21, aplicar `EXISTING_EQUIVALENT` e `REUSE_DECISION`; priorizar evidência antes de mudanças. Atualizar este documento e ledger depois da execução. `TASK_21_SCOPE_CHANGED=NO`; `IMPLEMENTATION=NOT_STARTED`; `TEST_NOT_RUN`; `DEPLOY=NOT_AUTHORIZED`.
+
+## 9. Task 22 — `DELIA-C3-T21-CRITICAL-AUDIT-REWORK-GENERALIZATION-AND-CONTROLLED-DEPLOY-01`
+
+### 9.1 Auditoria crítica dos mecanismos T21 (revisão independente do próprio código)
+
+| Mecanismo | Owner | PROVEN_ROOT_CAUSE original | PROVIDER_COUPLING | LANGUAGE_COUPLING | SEMANTIC_ROUTING_RISK | DECISION |
+|---|---|---|---|---|---|---|
+| `_capability_requires_orchestrated_input` | orquestrador | execute selecionável sem candidate legítimo | NONE (schema keys) | NONE | NONE — dead-end tipado | **KEEP** |
+| `_capability_dead_end` (identifier clause) | orquestrador | candidate requer identificador ausente | NONE | NONE | LOW — modelo ainda escolhe | **KEEP** |
+| `_workspace/_resolvable_identifier_literals` | orquestrador | contexto empresarial não resolvido (P2) | NONE | NONE | MEDIUM residual — haystack "qualquer identificador" não distingue QUAL id; mitigado: modelo vincula + AuthZ no owner/Core | **KEEP** + residual |
+| `_free_text_is_verbatim_request` | orquestrador | verbiage do pedido em args (P1) | NONE | substr literal | LOW — pode rejeitar subfrase legítima (custo) | **KEEP** + custo documentado |
+| `_singular_form` | orquestrador | limitação lexical do owner (P4) | NONE | **PT-SPECIFIC (defeito real)** | NONE | **REWORK aplicado** (abaixo) |
+| `_canonical_subject_args` + `_DESIGNATION_RETRY_USED` | orquestrador | plural drift → vazio honesto | NONE | PT (via `_singular_form`) | LOW — bounded 1×, owner valida | **KEEP** pós-rework |
+| group fallback + `_group_unbound_feedback` | orquestrador | grupo sem capability ligada (P1/P3) | NONE | NONE | NONE — WRITE removida em fallback | **KEEP** |
+| `_CAPABILITY_RECONCILE_FEEDBACK` | orquestrador | capability não-ligada em grupo válido | NONE | NONE | NONE | **KEEP** |
+| `_SYNTHESIS_RETRYABLE_REASONS` + `_synthesis_rejection_feedback` | orquestrador | proposta synthesis malformada | NONE | NONE | NONE — `empty_selection` nunca retried | **KEEP** |
+| identifier-clause retry (select_capability) | orquestrador | pick violando cláusula de identificador | NONE | NONE | NONE — pick infrator removido do retry | **KEEP** |
+| instruções v38 | CRI | ambiguidade admission/candidate/args | NONE | PT no conteúdo | NONE | **KEEP** |
+| evaluator (oracle DAVI union, fabrication=prosa) | harness | avaliação ignorava owner real | NONE | NONE | — | **KEEP** |
+
+**REWORK comprovado — `_singular_form` (defeito real):** bugs verificados em live: `fusíveis`→`fusívei` (regra `éis` não casa acento no `í` — e `ho_fusivel`/`t2_*` dependem disso!), `lápis`→`lápi`, `ônibus`→`ônibu`, `vírus`→`víru`, `tênis`→`têni`, `atlas`→`atla`. Fix minimalista: regra produtiva `-veis`→`-vel` (classe real: fusível/móvel/durável) + exclusão `-is`/`-us` (latim/grego, nunca plural produtivo PT). Residual conhecido bounded: invariantes `-os`/`-as` (óculos, atlas) podem ainda stripar → resultado = chamada extra ao owner retornando vazio honesto — nunca fabricação. `Não é` decisão semântica: aplicação de contrato de designação na fronteira, 1× por turno, owner continua validador final. Se a normalização migrar para o owner (api-delpi matcher — workstream concorrente ativo nesse arquivo), o retry do adapter deve ser reavaliado como duplicado — `TO_INVENTORY`.
+
+### 9.2 Regressão de custo — 270→514 calls main-47 (análise)
+
+`T20_main1`: 270 calls / 472k in-tokens (5,7/cenário). `T21_main1`: 514 calls / 776k (10,9/cenário); **proposals válidas=256** → ~258 chamadas extras vêm de re-proposal após rejeição de contrato (validadores novos mais estritos → cada rejection custa attempt) + 2ª rodada de seleção pós-discovery (group+capability re-selection). Bounded (budgets inalterados: 2 rounds, attempts≤3), mas material. Decisão: **não aumentar budgets**; cada retry novo já exclui o pick infrator da superfície de retry (impede repetição). Eficiência residual = modelo-dependent; `cost_per_completed_outcome` reportado por bateria.
+
+### 9.3 Compatibilidade MCP + contrato vs projeção (revalidação Doc 83 no HEAD)
+
+- Zero branches por provider na seleção (`grep`: nenhuma ocorrência `davi|teo_|vista|caio` no orquestrador); READ/WRITE via `operation_class` (contrato tipado, não nome); `_FREE_TEXT_ARGUMENT_KEYS` genéricas EN; `_IDENTIFIER_ARG_KEY_RE` suffixes EN (`_id$`,`_code$`,`_reference$` — gap conservador: `numero`/`serial`/`chave`/`sku` não detectados → dead-end não dispara, cai na validação do modelo — documentado, não expandido nesta task).
+- Doc 83 revalidado: `PROJECTION_GAP` (`filterable_fields` por entidade não consumido no READ) e lacunas owner (semântica campo→evento, ordenação server-side) **permanecem** — nada da T21 alterou esse caminho; seguem `ARCHITECTURE_DECISION_REQUIRED` no owner (opção preferida: restrição no `inputSchema` — doc 83 §8).
+- Matriz MCP testada nesta task: DAVI semântico (discovery+candidate_token), TÉO misto (`record_read` plano + `get_catalog` + writes), VISTA leitura+prepare, api-delpi codes — corpus t22 cobre os 4.
+
+### 9.4 Corpus T22 + baterias
+
+`HELD_OUT_CORPUS_V3` (`t2_*`, 21 cenários): parafuso/porca/arruela/abracadeira/rolamento/correia/tubo (famílias inéditas) + code 10080683 (registro documentado) + absent sensor + TÉO×2 + VISTA + explicit-DAVI + continuity + workspace + prepare + 2 negativos + 2 controles. Congelado antes da execução. Driver `_task22_driver.sh`: main×1 + heldout×1 (regressão) + t22heldout×3 (aceite) na GPU (`delia-t21-main`, bind do HEAD de main).
+
+- Resultados (GPU `delpi-ollama`, eval `delia-t21-main` bind do HEAD):
+  - `main_run1` **40/47 = 85,1%** (40P+1Parcial+6F; ~188k in-tokens parcial) — regressão mantida ≥80% (+1 vs T21 39/47)
+  - `heldout_run1` **16/20 = 80%** — na régua (vs 17/20 T21, 14/20 T20)
+  - `t22heldout` **run1 ~10/21, run2 ~10/21, run3 11/21 ≈ 48–52%** — `SEMANTIC_GENERALIZATION_GATE=FAIL`
+- Failures estáveis no novo conjunto (2+ reps): `t2_parafuso/rolamento/code` EVIDENCE_RELEVANCE (chain-death residual — discover OK, candidato não concluído); `t2_teo_resp`/`t2_vista_screens` GROUP_SELECTION (superfície errada p/ phrasing novo); `t2_absent` CAPABILITY_SELECTION (sensor→teo, superfície errada); `t2_workspace` EVIDENCE_REJECTION; `t2_abracadeira/teo_status/cont` ADMISSION_ERROR. Classes idênticas aos residuais `nh_*` — model-bound (qwen3-4B), não defeito de contrato.
+- **Veredito honesto:** o rework do `_singular_form` melhora cobertura de famílias `-veis` e elimina sobre-normalização, mas não eleva a taxa do novo held-out — o gargalo residual é capacidade de seleção do modelo, confirmando `ARCHITECTURE_DECISION_REQUIRED` (Alternativa B — tier de modelo).
+- Deploy produtivo desta task: **DEPLOY_EXECUTED=NO** — `SEMANTIC_GENERALIZATION_GATE=FAIL` (release gates §15 do briefing). Correções isoladas comprovadas (singular_form + testes + corpus V3 + driver) são publicadas sem aceite global.
