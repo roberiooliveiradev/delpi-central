@@ -623,6 +623,15 @@ _SELECTION_STOPWORDS = frozenset({
     "agora", "ainda", "sendo", "novo", "nova", "ver", "saber",
     "entender", "explique", "explicar", "diga", "fale", "falar",
     "sobre", "algum", "alguma", "alguns", "algumas", "algo",
+    # Ultra-generic domain words — they match curated fields of
+    # nearly every entry (e.g. "previsão comercial") and only add
+    # noise to relevance ranking; real signal comes from the
+    # specific terms of the question.
+    "comercial", "comerciais", "processo", "processos",
+    "dado", "dados", "informacao", "informacoes", "delpi",
+    "usando", "usar", "utilizando", "mapear", "mapeamento",
+    "area", "setor", "empresa", "negocio", "negocios", "vendas",
+    "venda", "gestao", "melhoria", "melhorar", "trabalho",
 })
 
 
@@ -716,8 +725,15 @@ def _knowledge_select(
                 },
             },
         )
+    # Precision floor: keep entries whose score is at least half the
+    # leader's — single-hit noise must not surface as a suggestion
+    # when a clearly better match exists.
+    top_score = ranked[0][0]
+    floor = max(1, (top_score + 1) // 2)
     items = []
     for score, kind, entry_id, entry in ranked[:_SELECTION_CAP]:
+        if score < floor:
+            break
         items.append(
             {
                 "id": f"{kind}.{entry_id}",

@@ -788,6 +788,40 @@ def test_knowledge_scenarios_a_j_selection_map():
         assert ids & expected, (query, ids, expected)
 
 
+def test_knowledge_selection_precision_floor_excludes_noise():
+    """CAIO 3.2 F1: secondary results must stay relevant — generic
+    domain words ("comercial", "processo") cannot pull unrelated
+    methods like forecast into a SIPOC question."""
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        query="Mapear processo comercial usando SIPOC e BPMN"
+    )
+    assert result.is_error is False
+    items = result.structured_content["data"]["selection"]
+    ids = {i["id"] for i in items}
+    assert "method.sipoc_bpmn" in ids
+    assert "method.forecast_vendas" not in ids
+    assert "playbook.forecast_scenarios" not in ids
+    for i in items:
+        assert i["conversation_relevance"] >= 1
+
+
+def test_knowledge_selection_composite_question_stays_precise():
+    """Composite mission question still selects the right corpus —
+    precision floor must not drop the expected entries."""
+    _set_context(_human_user())
+    result = sem.tool_knowledge(
+        query="quais produtos podemos vender mais para os clientes"
+    )
+    assert result.is_error is False
+    ids = {
+        i["id"]
+        for i in result.structured_content["data"]["selection"]
+    }
+    assert "playbook.expansion_opportunities" in ids
+    assert "topic.products.guide" in ids
+
+
 def test_knowledge_resolves_bare_method_and_playbook_ids():
     _set_context(_human_user())
     for key, expected in (
