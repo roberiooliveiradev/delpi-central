@@ -179,3 +179,11 @@ Apresentar `INITIAL_HEAD, FINAL_HEAD, BRANCH, WORKTREE, COMMITS, PUSH, DEPLOYED_
 | F8 Docs/deploy | knowledge v3.1, matriz homologação, matriz paridade, README, esta trilha | esta entrada | — |
 
 **Registro técnico F1–F8:** HEAD inicial `7086824a1d`; arquivos: `semantic_registry.py`, `tool_bridge_parity.py`, `semantic_bridge.py` (dispatch + `_knowledge_select`), `caio_commercial_knowledge.json` v3.1, `test_caio_homologation.py`, `test_caio_integration.py`, `test_caio_mcp.py`, `test_caio_parity.py`, docs canônicos. Suíte commercial-api: **1226 passed / 3 failed** (3 = baseline preexistente documentada). Gaps honestos: autenticado produtivo pendente de credencial; validação de negócio dos métodos externos segue pendente por design; `products.guide` cobre cadastro/consulta — visões de engenharia completas continuam fora do escopo comercial.
+
+### Deploy produtivo — 2026-10-31 (DEPLOYED_VERIFIED)
+
+- **Servidor/SHA:** `srv-api` (operador@192.168.1.237), repo `~/projetos/delpi-central` HEAD `6b8e534ed` (merge contendo implementação `7b3cfc1cf7` sobre `dc0d34641e`); working tree limpa.
+- **Procedimento:** `./infra/scripts/up-prod-sequential.sh --build commercial-api` — somente `delpi-commercial-api` recriado; demais serviços preservados; nenhuma credencial/env/Keycloak alterada.
+- **Pós-deploy:** startup limpo (migrations done, session manager MCP up); `GET /apps/commercial-api/health` → **200**; `/.well-known/oauth-protected-resource` → **200**; MCP sem autenticação → **401**; logs sem erros novos.
+- **Imagem implantada (introspecção read-only):** 6 tools, **127 operações** (`product.search/summary/customers/filter_options` presentes), corpus **v3.1** — 17 tópicos, 16 métodos, 8 roteiros.
+- **Smoke autenticado (ChatGPT↔CAIO):** `TEST_NOT_RUN` — sem credencial `mcp-commercial` disponível neste ambiente; cenários A–G aguardam rodada autenticada pós-deploy.

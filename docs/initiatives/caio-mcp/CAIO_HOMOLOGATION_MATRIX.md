@@ -260,6 +260,13 @@ Autorização idêntica às demais reads (humano comercial; service principal �
 
 **Evidência:** suíte commercial-api **1226 passed / 3 failed** — as 3 falhas são a baseline preexistente já documentada (`test_commercial_totvs_bff_routes`, `test_recently_closed_orders_bff`, `test_worklist_routes_rbac`). Suíte CAIO (homologation+integration+mcp+parity): 609+ verde; novos testes cobrem contrato dos 4 `product.*`, campos dos novos métodos, seleção por frases alternativas e siglas OV/OP/PV.
 
+## Deploy produtivo e verificação de imagem — 2026-10-31
+
+- **SHA implantado:** `6b8e534ed` em `srv-api` (contém `7b3cfc1cf7` CAIO 3.1 sobre `dc0d34641e`); `up-prod-sequential.sh --build commercial-api`, só o serviço afetado.
+- **Health/segurança:** `/apps/commercial-api/health` 200 · `/.well-known/oauth-protected-resource` 200 · MCP não autenticado 401 · startup e logs limpos.
+- **Catálogo implantado (imagem):** 6 tools, **127 operações**; corpus v3.1 (17 tópicos/16 métodos/8 roteiros; `products.guide` implementado).
+- **Autenticado:** `TEST_NOT_RUN` — ChatGPT↔CAIO com principal real pendente de credencial; cenários A–G devem ser reexecutados na próxima rodada autenticada antes de declarar homologação produtiva.
+
 ## Smoke autenticado pós-deploy — 2026-10-30
 
 Após deploy informado no commit `b453b0981c6ef75d2025c1b70b5c80e281bc7553`, a conexão ChatGPT→CAIO respondeu `get_context` com catálogo `2.0` e 123 operações. Consulta `read(proposal.analytics_list)` retornou proposta e filial autorizadas; `read(proposal.analytics_get, ref=proposal_number, filters={branch})` e `read(proposal.history_events, ref=proposal_number, filters={branch})` retornaram **success=true**, corrigindo os erros anteriores 400/upstream 422. Não foram executadas mutações. Esta evidência comprova essas duas operações autenticadas, não toda a integração produtiva ou as 50 operações de escrita/exclusão.
