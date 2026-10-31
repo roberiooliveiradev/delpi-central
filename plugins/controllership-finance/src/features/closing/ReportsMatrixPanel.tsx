@@ -30,6 +30,7 @@ type PanelError = { status: number; code: string | null; message: string };
 
 export const SOURCE_LABELS: Record<ReportSourceKind, string> = {
   OPERATIONAL_VIEW: "Consulta operacional",
+  STATE_VIEW: "Visão de estado",
   MANUAL_EVIDENCE: "Evidência manual",
   EXTERNAL: "Fonte externa",
   PENDING_CONTRACT: "Contrato pendente",

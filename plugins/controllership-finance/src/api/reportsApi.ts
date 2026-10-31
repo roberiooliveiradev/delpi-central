@@ -5,7 +5,8 @@ export type ReportSourceKind =
   | "OPERATIONAL_VIEW"
   | "MANUAL_EVIDENCE"
   | "EXTERNAL"
-  | "PENDING_CONTRACT";
+  | "PENDING_CONTRACT"
+  | "STATE_VIEW";
 
 export type ReportMatrixEntry = {
   report_id: string;

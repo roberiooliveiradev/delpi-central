@@ -187,6 +187,12 @@ const REPORT_META: Record<
       "Material em processo físico (armazém 99) e alocado em ordens vivas — regra MATR989.",
     origin: "TOTVS/SB9 + SD3/SC2",
   },
+  "cost-closing-state": {
+    name: "Estado de fechamento e cutoff — R12/R15",
+    description:
+      "Marcadores técnicos do fechamento de custos e da virada por filial (SB9, MV_ULMES, TTAT) — não é homologação nem execução.",
+    origin: "TOTVS/SB9010 + SX6 + TTAT",
+  },
 };
 
 const CATALOG_REPORT_KEYS: ReportKey[] = [
@@ -198,6 +204,7 @@ const CATALOG_REPORT_KEYS: ReportKey[] = [
   "cost-center-expenses",
   "billing-exclusion-roster",
   "work-in-process",
+  "cost-closing-state",
 ];
 
 const DOMAIN_LABELS: Record<ReconciliationDomain, string> = {
@@ -1132,7 +1139,14 @@ export function MonthlyReportsPanel({
       );
     }
     const operand =
-      key === "stock-movements" ? "entradasSaidas" : "h02";
+      key === "stock-movements"
+        ? "entradasSaidas"
+        : key === "work-in-process"
+          ? "h02"
+          : null;
+    if (operand === null) {
+      return false;
+    }
     return operandStatus(operand) === "AVAILABLE";
   };
   const availableReports = CATALOG_REPORT_KEYS.filter(
@@ -1318,15 +1332,21 @@ export function MonthlyReportsPanel({
               // analítica (a BFF consulta cada produtor e classifica
               // o operando; fonte ausente nunca entra como zero).
               const operand =
-                key === "stock-movements" ? "entradasSaidas" : "h02";
-              status =
-                recon?.kind === "ready"
-                  ? (OPERAND_STATUS_LABELS[
-                      recon.data.operands[operand].status ?? ""
-                    ] ?? "Disponível")
-                  : recon?.kind === "error"
-                    ? "Indisponível"
+                key === "stock-movements"
+                  ? "entradasSaidas"
+                  : key === "work-in-process"
+                    ? "h02"
                     : null;
+              status =
+                operand === null
+                  ? "Não verificado"
+                  : recon?.kind === "ready"
+                    ? (OPERAND_STATUS_LABELS[
+                        recon.data.operands[operand].status ?? ""
+                      ] ?? "Disponível")
+                    : recon?.kind === "error"
+                      ? "Indisponível"
+                      : null;
               updated = recon?.kind === "ready" ? recon.at : null;
             }
             const selected =
