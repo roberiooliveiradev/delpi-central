@@ -32,8 +32,15 @@
     "Usar tabela quando a pergunta é tendência — ou gráfico quando a leitura é valor exato",
     "Assumir schema de bloco por memória — a autoridade é o catálogo de operações"
   ],
-  "related_topics": ["slide", "data_bindings", "data_sources", "display_formats"],
-  "capability_refs": ["presentation_change"],
+  "related_topics": [
+    "slide",
+    "data_bindings",
+    "data_sources",
+    "display_formats"
+  ],
+  "capability_refs": [
+    "presentation_change"
+  ],
   "operation_refs": [
     "create_block",
     "upsert_block",
@@ -42,8 +49,14 @@
     "align_blocks",
     "reorder_block_z"
   ],
-  "read_refs": ["get_catalog", "get_playlist_context", "preview_data_block"],
-  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "read_refs": [
+    "get_context",
+    "read",
+    "analyze"
+  ],
+  "write_refs": [
+    "execute"
+  ],
   "source_refs": [
     {
       "ref": "tv_app/content/design_intelligence.json componentSpecs",

@@ -474,9 +474,9 @@ def test_catalog_expressions_metadata_matches_writable_ops():
 
 def test_openapi_projects_expression_variant_for_mutation_ops():
     doc = build_gpt_actions_openapi()
-    ops_schema = doc["paths"]["/gpt-actions/v1/changes/preview"]["post"][
+    ops_schema = doc["paths"]["/gpt-actions/v1/semantic/execute"]["post"][
         "requestBody"
-    ]["content"]["application/json"]["schema"]["properties"]["ops"]["items"][
+    ]["content"]["application/json"]["schema"]["properties"]["operations"]["items"][
         "oneOf"
     ]
     by_title = {b.get("title"): b for b in ops_schema}

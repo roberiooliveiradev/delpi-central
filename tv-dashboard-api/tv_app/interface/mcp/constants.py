@@ -23,35 +23,36 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 # MCP2 surface: semantic READ tools + governed PREPARE/ACT envelope.
 VISTA_MCP_SURFACE = "GOVERNED_WRITE_V1"
 
-# READ (MCP1) + governed envelope (MCP2). Native ops remain vocabulary inside
-# prepare_change.ops[] — never per-op tools.
-# SEMANTIC_TOOLS_V1: six-verb surface coexists with the 12 legacy tools.
+# SIX-TOOLS-ONLY consolidation: the public surface is exactly the
+# six semantic verbs. Domain capabilities are preserved inside the verbs —
+# a product capability never becomes a per-op tool.
 TOOL_CLASS: dict[str, str] = {
-    "list_playlists": "READ",
-    "get_playlist_context": "READ",
-    "get_playlist_history": "READ",
-    "get_catalog": "DISCOVERY",
-    "search_data_routes": "READ",
-    "inspect_data_model": "READ",
-    "preview_data_model": "READ",
-    "preview_data_block": "ANALYSIS",
-    "get_product_guide": "READ",
-    "suggest_change": "ANALYSIS",
-    "prepare_change": "PREPARE",
-    "commit_proposal": "ACT",
     "get_context": "DISCOVERY",
     "read": "READ",
     "analyze": "ANALYSIS",
     "knowledge": "READ",
     "execute": "ACT",
+    "delete": "ACT",
 }
 
 MCP_TOOL_NAMES: tuple[str, ...] = tuple(TOOL_CLASS.keys())
 
-# Names that must never appear in tools/list for this surface. Writes flow
-# exclusively through prepare_change/commit_proposal envelope tools.
+# Names that must never appear in tools/list for this surface —
+# removed legacy tools and every native/per-op name.
 MCP_FORBIDDEN_TOOLS: frozenset[str] = frozenset(
     {
+        "list_playlists",
+        "get_playlist_context",
+        "get_playlist_history",
+        "get_catalog",
+        "search_data_routes",
+        "inspect_data_model",
+        "preview_data_model",
+        "preview_data_block",
+        "get_product_guide",
+        "suggest_change",
+        "prepare_change",
+        "commit_proposal",
         "upsert_data_model",
         "patch_data_model",
         "delete_data_model",

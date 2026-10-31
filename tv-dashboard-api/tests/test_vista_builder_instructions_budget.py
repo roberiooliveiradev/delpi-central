@@ -22,14 +22,14 @@ BUILDER_HARD_LIMIT = 8000
 PROJECT_TARGET_LIMIT = 3500
 
 EXPECTED_OPS = (
-    "gpt_get_catalog",
+    "vista_get_context",
     "gpt_list_playlists",
     "gpt_get_playlist_context",
     "gpt_search_data_routes",
     "gpt_preview_data_block",
     "gpt_suggest_change",
     "gpt_preview_change",
-    "gpt_commit_change",
+    "vista_execute",
 )
 
 
@@ -65,8 +65,8 @@ def test_vista_builder_core_keeps_required_invariants():
         "VISTA capability <= capability do usuário autenticado",
         "commit_now=true",
         "agent_directives",
-        "gpt_get_catalog",
-        "gpt_commit_change",
+        "vista_get_context",
+        "vista_execute",
         "confirmation != authorization",
         "2xx != verified",
         "401=AuthN",

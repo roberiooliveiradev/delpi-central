@@ -39,11 +39,27 @@
     "Duplicar binding onde o bloco já tem um — verificar antes de criar",
     "Confundir binding (ligação) com fonte (origem) ou com format (apresentação)"
   ],
-  "related_topics": ["block_types", "data_sources", "data_models", "display_formats"],
-  "capability_refs": ["data_block_preview", "data_model_lifecycle"],
-  "operation_refs": ["bind_visual", "upsert_block"],
-  "read_refs": ["get_playlist_context", "preview_data_block", "inspect_data_model"],
-  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "related_topics": [
+    "block_types",
+    "data_sources",
+    "data_models",
+    "display_formats"
+  ],
+  "capability_refs": [
+    "data_block_preview",
+    "data_model_lifecycle"
+  ],
+  "operation_refs": [
+    "bind_visual",
+    "upsert_block"
+  ],
+  "read_refs": [
+    "read",
+    "analyze"
+  ],
+  "write_refs": [
+    "execute"
+  ],
   "source_refs": [
     {
       "ref": "tv_app/content/presentation_ops_content.json bind_visual",

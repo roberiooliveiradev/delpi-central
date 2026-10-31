@@ -580,452 +580,6 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
     }
 
     paths: dict[str, Any] = {
-        f"{base}/catalog": {
-            "get": {
-                "operationId": "gpt_get_catalog",
-                "summary": "TV presentation mutation capability catalog",
-                "description": (
-                    "Returns catalogVersion, compact ops index, capabilities, and "
-                    "capability_surface.agent_directives. Full op schemas live in this "
-                    "OpenAPI requestBody. Call before writes; obey agent_directives. "
-                    "Backend authorizes. Requires tv-dashboard.write."
-                ),
-                "tags": [tag],
-                "security": [{"BearerAuth": []}],
-                "responses": {"200": _ok_response("Catalog"), **_error_responses()},
-            }
-        },
-        f"{base}/playlists": {
-            "get": {
-                "operationId": "gpt_list_playlists",
-                "summary": "List owned and shared playlists",
-                "description": (
-                    "Compact playlist list for the authenticated actor (id/name/role/revision). "
-                    "No coverSlide/nativeConfig. When the actor has a live editor session, "
-                    "editorFocus is returned first (playlistId/slideId/selectedIds, ephemeral TTL)."
-                ),
-                "tags": [tag],
-                "security": [{"BearerAuth": []}],
-                "parameters": [
-                    {
-                        "name": "limit",
-                        "in": "query",
-                        "schema": {"type": "integer", "default": 50},
-                        "description": "Max items (1-100).",
-                    },
-                    {
-                        "name": "offset",
-                        "in": "query",
-                        "schema": {"type": "integer", "default": 0},
-                        "description": "Pagination offset.",
-                    },
-                ],
-                "responses": {"200": _ok_response("Playlist list"), **_error_responses()},
-            }
-        },
-        f"{base}/playlists/{{playlist_id}}": {
-            "get": {
-                "operationId": "gpt_get_playlist_context",
-                "summary": "Authorized playlist context",
-                "description": (
-                    "Playlist context with slides and focused slide. "
-                    "editorFocus omits nativeConfig; returns dataSources, "
-                    "dataModels, blockIndex.modelId, focusedBinding. "
-                    "full auto-downgrades over budget keeping addressability. "
-                    "objectQuery returns persisted objectMatches."
-                ),
-                "tags": [tag],
-                "security": [{"BearerAuth": []}],
-                "parameters": [
-                    {
-                        "name": "playlist_id",
-                        "in": "path",
-                        "required": True,
-                        "schema": {"type": "string", "format": "uuid"},
-                        "description": "Playlist UUID.",
-                    },
-                    {
-                        "name": "includePreview",
-                        "in": "query",
-                        "required": False,
-                        "schema": {"type": "boolean", "default": False},
-                        "description": (
-                            "When true, include slidePreview with signed previewUrl "
-                            "(schematic PNG) plus rendered: canonical_stage artifact "
-                            "metadata (signed URL when status=ready). "
-                            "Prefer over a dedicated preview Action."
-                        ),
-                    },
-                    {
-                        "name": "slideId",
-                        "in": "query",
-                        "required": False,
-                        "schema": {"type": "string", "format": "uuid"},
-                        "description": (
-                            "Selects focusedSlide (full nativeConfig) and optional includePreview. "
-                            "Defaults to editorFocus.slideId or the first slide."
-                        ),
-                    },
-                    {
-                        "name": "scope",
-                        "in": "query",
-                        "required": False,
-                        "schema": {
-                            "type": "string",
-                            "enum": ["full", "editorFocus"],
-                            "default": "full",
-                        },
-                        "description": (
-                            "full: focusedSlide.nativeConfig + digests. "
-                            "editorFocus: omit nativeConfig; return dataSources[] + "
-                            "blockIndex for existing-object addressability."
-                        ),
-                    },
-                    {
-                        "name": "objectQuery",
-                        "in": "query",
-                        "required": False,
-                        "schema": {"type": "string"},
-                        "description": (
-                            "Optional filter for objectMatches[] "
-                            "(contentPreview/label/groupId/role). Persisted IDs only."
-                        ),
-                    },
-                    {
-                        "name": "objectTypes",
-                        "in": "query",
-                        "required": False,
-                        "schema": {"type": "string"},
-                        "description": (
-                            "Optional comma-separated types filter for blockIndex/objectMatches."
-                        ),
-                    },
-                    {
-                        "name": "blockCursor",
-                        "in": "query",
-                        "required": False,
-                        "schema": {"type": "string"},
-                        "description": "Absolute offset cursor for blockIndex pagination.",
-                    },
-                    {
-                        "name": "blockLimit",
-                        "in": "query",
-                        "required": False,
-                        "schema": {"type": "integer"},
-                        "description": "Max items in blockIndex.items for this page.",
-                    },
-                ],
-                "responses": {"200": _ok_response("Playlist context"), **_error_responses()},
-            }
-        },
-        f"{base}/data-routes": {
-            "get": {
-                "operationId": "gpt_search_data_routes",
-                "summary": "Search allowlisted data routes",
-                "description": (
-                    "Required NL query over the TV allowlist (owner-local discovery). "
-                    "Never dump the full catalog; never invent operationId. "
-                    "Miss does not prove absence — refine query. Returns compact "
-                    "DTO with paramSchema."
-                ),
-                "tags": [tag],
-                "security": [{"BearerAuth": []}],
-                "parameters": [
-                    {
-                        "name": "query",
-                        "in": "query",
-                        "required": True,
-                        "schema": {"type": "string", "minLength": 1},
-                        "description": "Business intent (ex.: otd comercial).",
-                    },
-                    {
-                        "name": "limit",
-                        "in": "query",
-                        "schema": {"type": "integer", "default": 8, "minimum": 1, "maximum": 20},
-                        "description": "Max routes (default 8, max 20).",
-                    },
-                    {
-                        "name": "category",
-                        "in": "query",
-                        "schema": {"type": "string"},
-                        "description": "Optional category filter (commercial, supplies, …).",
-                    },
-                ],
-                "responses": {"200": _ok_response("Data routes"), **_error_responses()},
-            }
-        },
-        f"{base}/data-preview": {
-            "post": {
-                "operationId": "gpt_preview_data_block",
-                "summary": "Preview a data block without persisting",
-                "description": (
-                    "Prefer operationId+params from search hits; server validates "
-                    "paramSchema and builds the canonical binding. Legacy "
-                    "block+nativeConfig remains for editor-shaped clients. No persistence."
-                ),
-                "tags": [tag],
-                "security": [{"BearerAuth": []}],
-                "requestBody": _json_body(
-                    data_preview_schema,
-                    example={
-                        "operationId": "get_sales_order_otd_series",
-                        "params": {"granularity": "week"},
-                        "forceRefresh": False,
-                    },
-                ),
-                "responses": {"200": _ok_response("Block preview"), **_error_responses()},
-            }
-        },
-        f"{base}/data-model-preview": {
-            "post": {
-                "operationId": "gpt_preview_data_model",
-                "summary": "Preview a DataModel without persisting",
-                "description": (
-                    "Executes a persisted (modelId) or candidate (model) "
-                    "DataModel through the canonical resolver: inputs fetch, "
-                    "per-input transforms, model transform, merge/dependency "
-                    "DAG. Returns resolved output, dynamic outputSchema, "
-                    "runtimeErrors/transformError and dependencyStatus."
-                ),
-                "tags": [tag],
-                "security": [{"BearerAuth": []}],
-                "requestBody": _json_body(
-                    data_model_preview_schema,
-                    example={
-                        "playlistId": "uuid",
-                        "slideId": "uuid",
-                        "modelId": "mdl_rol_delta",
-                    },
-                ),
-                "responses": {"200": _ok_response("DataModel preview"), **_error_responses()},
-            }
-        },
-        f"{base}/data-models/inspect": {
-            "get": {
-                "operationId": "gpt_inspect_data_model",
-                "summary": "Inspect a persisted DataModel",
-                "description": (
-                    "Read-only DataModel inspection: lossless persisted definition "
-                    "(inputs incl. per-input transform + hasTransform, model transform, "
-                    "fieldLabels), definitionCompleteness + definitionDigest, output "
-                    "schema, consumer bindings and runtime state. Use as candidate base "
-                    "for governed mutation."
-                ),
-                "tags": [tag],
-                "security": [{"BearerAuth": []}],
-                "parameters": [
-                    {
-                        "name": "playlistId",
-                        "in": "query",
-                        "required": True,
-                        "schema": {"type": "string"},
-                        "description": "Playlist UUID.",
-                    },
-                    {
-                        "name": "slideId",
-                        "in": "query",
-                        "required": True,
-                        "schema": {"type": "string"},
-                        "description": "Slide UUID.",
-                    },
-                    {
-                        "name": "modelId",
-                        "in": "query",
-                        "required": True,
-                        "schema": {"type": "string"},
-                        "description": "Persisted DataModel id (mdl_*).",
-                    },
-                    {
-                        "name": "includeRuntime",
-                        "in": "query",
-                        "required": False,
-                        "schema": {"type": "boolean", "default": True},
-                        "description": "Execute the model to expose outputSchema + runtime state.",
-                    },
-                ],
-                "responses": {"200": _ok_response("DataModel inspect"), **_error_responses()},
-            }
-        },
-        f"{base}/playlists/{{playlist_id}}/history": {
-            "get": {
-                "operationId": "gpt_get_playlist_history",
-                "summary": "Read-only playlist revision history digest",
-                "description": (
-                    "Read-only playlist revision history. Omit snapshotId "
-                    "= paginated digest list; set = one digest. Max 500 "
-                    "retained; no coverage beyond. "
-                    "change.available=false = non-adjacent, never invent "
-                    "diffs. Slide-field granularity only. "
-                    "mutationProvenance = technical origin, not motive. "
-                    "Requires read permission."
-                ),
-                "tags": [tag],
-                "security": [{"BearerAuth": []}],
-                "parameters": [
-                    {
-                        "name": "playlist_id",
-                        "in": "path",
-                        "required": True,
-                        "schema": {"type": "string", "format": "uuid"},
-                        "description": "Playlist UUID.",
-                    },
-                    {
-                        "name": "snapshotId",
-                        "in": "query",
-                        "required": False,
-                        "schema": {"type": "string", "format": "uuid"},
-                        "description": "History snapshot UUID — detail mode.",
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "required": False,
-                        "schema": {"type": "integer", "default": 1},
-                        "description": "Page number (>=1).",
-                    },
-                    {
-                        "name": "pageSize",
-                        "in": "query",
-                        "required": False,
-                        "schema": {"type": "integer", "default": 10},
-                        "description": "Items per page (1-100).",
-                    },
-                ],
-                "responses": {"200": _ok_response("Playlist history"), **_error_responses()},
-            }
-        },
-        f"{base}/product-guides": {
-            "get": {
-                "operationId": "gpt_get_product_guide",
-                "summary": "Product usage guidance (GUIDANCE_NOT_DOMAIN_TRUTH)",
-                "description": (
-                    "Read-only TV Dashboard product guide. Omit topic for the "
-                    "topic index; pass topic (+optional section) for one guide. "
-                    "Guidance only — live catalog, domain reads and api-delpi "
-                    "contracts always win. Unknown topic/section fail typed."
-                ),
-                "tags": [tag],
-                "security": [{"BearerAuth": []}],
-                "parameters": [
-                    {
-                        "name": "topic",
-                        "in": "query",
-                        "required": False,
-                        "schema": {"type": "string"},
-                        "description": "Guide topic id from the index; omit for index.",
-                    },
-                    {
-                        "name": "section",
-                        "in": "query",
-                        "required": False,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "overview",
-                                "when_to_use",
-                                "how_to_use",
-                                "field_guidance",
-                                "quality",
-                                "relationships",
-                                "all",
-                            ],
-                        },
-                        "description": "Optional bounded section projection.",
-                    },
-                ],
-                "responses": {"200": _ok_response("Product guide"), **_error_responses()},
-            }
-        },
-        f"{base}/changes/suggest": {
-            "post": {
-                "operationId": "gpt_suggest_change",
-                "summary": "Suggest typed presentation ops from NL",
-                "description": (
-                    "Uses the canonical presentation planner. Returns ready|clarification|"
-                    "unsupported|error with typed ops — no free M/SQL. "
-                    "Example: create a playlist named Testando a VISTA."
-                ),
-                "tags": [tag],
-                "security": [{"BearerAuth": []}],
-                "requestBody": _json_body(
-                    suggest_schema,
-                    example={
-                        "message": "Crie uma playlist chamada Testando a VISTA",
-                    },
-                ),
-                "responses": {"200": _ok_response("Suggestion plan"), **_error_responses()},
-            }
-        },
-        f"{base}/changes/preview": {
-            "post": {
-                "operationId": "gpt_preview_change",
-                "summary": "Preview typed change without persisting",
-                "description": (
-                    "PREPARE PresentationMutation compound plan. Server topo-sorts ops "
-                    "(as/playlistRef/slideRef). NO WRITE by default. Additive: "
-                    "commit_now=true + confirmation + Idempotency-Key → PREPARE+COMMIT. "
-                    "Destructive ignores commit_now."
-                ),
-                "tags": [tag],
-                "security": [{"BearerAuth": []}],
-                "parameters": [
-                    {
-                        "name": "Idempotency-Key",
-                        "in": "header",
-                        "required": False,
-                        "schema": {"type": "string"},
-                        "description": "Required when commit_now=true (or use body idempotency_key).",
-                    }
-                ],
-                "requestBody": _json_body(
-                    preview_schema,
-                    example={
-                        "target": {},
-                        "ops": create_ops,
-                        "catalogVersion": catalog_version,
-                        "commit_now": True,
-                        "confirmation": {"confirmed": True},
-                        "idempotency_key": "vista-create-playlist-1",
-                    },
-                ),
-                "responses": {"200": _ok_response("Change preview or verified commit"), **_error_responses()},
-            }
-        },
-        f"{base}/changes/commit": {
-            "post": {
-                "operationId": "gpt_commit_change",
-                "summary": "Commit a previously previewed change",
-                "description": (
-                    "COMMIT prepared proposal. WRITE. Body: exact proposal_handle + "
-                    "confirmation (+ Idempotency-Key). Never invent handle (no latest). "
-                    "Prefer commit_now on preview for additive direct policies."
-                ),
-                "tags": [tag],
-                "security": [{"BearerAuth": []}],
-                "x-openai-isConsequential": True,
-                "parameters": [
-                    {
-                        "name": "Idempotency-Key",
-                        "in": "header",
-                        "required": True,
-                        "schema": {"type": "string"},
-                        "description": (
-                            "Client-generated key scoped to actor+operation. Atomic acquire "
-                            "before write; same key+payload replays; different payload → 409."
-                        ),
-                    }
-                ],
-                "requestBody": _json_body(
-                    commit_schema,
-                    example={
-                        "proposal_handle": "dnBfYWJjMTIz.dGVzdGhtYWMtc2lnbmF0dXJl",
-                        "confirmation": {"confirmed": True},
-                    },
-                ),
-                "responses": {"200": _ok_response("Verified commit"), **_error_responses()},
-            }
-        },
-        # ------------------------------------------------------------------
         # SEMANTIC_TOOLS_V1 — closed-vocabulary verbs (coexist with gpt_*).
         # ------------------------------------------------------------------
         f"{base}/semantic/context": {
@@ -1063,10 +617,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "description": (
                     "READ by closed entity+action: playlist.list|get|context, "
                     "playlist_history.history, data_route.search, "
-                    "data_model.inspect, product_guide.guide. filters accept "
-                    "only declared keys (else VALIDATION_ERROR); unknown "
-                    "entity/action → UNKNOWN_ENTITY/UNKNOWN_ACTION; planned "
-                    "capabilities → NOT_IMPLEMENTED."
+                    "data_model.inspect, product_guide.guide. BlockIndex/DataSources "
+                    "coverage. Unknown entity/action -> errors."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -1315,6 +867,71 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "phase": "prepare",
                         "target": {},
                         "operations": create_ops,
+                        "catalogVersion": catalog_version,
+                    },
+                ),
+                "responses": {
+                    "200": _ok_response("Sealed proposal or verified commit"),
+                    **_error_responses(),
+                },
+            }
+        },
+        f"{base}/semantic/delete": {
+            "post": {
+                "operationId": "vista_delete",
+                "summary": "Governed delete — PREPARE→COMMIT facade",
+                "description": (
+                    "Destructive ops only (entity in block|section|slide). "
+                    "phase=prepare: entity + target -> sealed proposal_handle "
+                    "+ consentChallenge. phase=commit: proposal_handle + "
+                    "idempotency_key + consent_artifact + target_echo. Only "
+                    "the artifact proves consent."
+                ),
+                "tags": [tag],
+                "security": [{"BearerAuth": []}],
+                "x-openai-isConsequential": True,
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": (
+                            "Required for phase=commit — or use body "
+                            "idempotency_key."
+                        ),
+                    }
+                ],
+                "requestBody": _json_body(
+                    {
+                        "type": "object",
+                        "required": ["entity"],
+                        "properties": {
+                            "entity": {
+                                "type": "string",
+                                "enum": ["block", "section", "slide"],
+                            },
+                            "phase": {
+                                "type": "string",
+                                "enum": ["prepare", "commit"],
+                                "default": "prepare",
+                            },
+                            "target": _opaque_object_schema(
+                                description="playlistId + entity id " +
+                                "(slideId|sectionId|blockId); " +
+                                "deleteSlides optional for section."
+                            ),
+                            "proposal_handle": {"type": "string"},
+                            "consent_artifact": {"type": "string"},
+                            "target_echo": {"type": "string"},
+                            "idempotency_key": {"type": "string"},
+                            "catalogVersion": {"type": "string"},
+                        },
+                    },
+                    example={
+                        "entity": "slide",
+                        "phase": "prepare",
+                        "target": {"playlistId": "<uuid>", "slideId": "<uuid>"},
                         "catalogVersion": catalog_version,
                     },
                 ),

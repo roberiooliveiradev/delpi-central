@@ -630,7 +630,7 @@ class TestMcpSurface:
         assert "inspect_data_source" not in MCP_TOOL_NAMES
         assert "inspect_data_source" not in TOOL_CLASS
         tools = asyncio.run(create_mcp_server().list_tools())
-        assert len(tools) == 17
+        assert len(tools) == 6
         assert "inspect_data_source" not in {t.name for t in tools}
 
     def test_get_playlist_context_schema_has_focused_args(self):
@@ -639,15 +639,14 @@ class TestMcpSurface:
         from tv_app.interface.mcp.server import create_mcp_server
 
         tools = asyncio.run(create_mcp_server().list_tools())
-        tool = next(t for t in tools if t.name == "get_playlist_context")
+        tool = next(t for t in tools if t.name == "read")
         schema = tool.inputSchema if hasattr(tool, "inputSchema") else tool.input_schema
         props = schema["properties"]
-        assert "data_source_id" in props
-        assert "include_runtime" in props
-        assert "slide_id" in props
+        assert "filters" in props
+        assert "ref" in props
         required = schema.get("required") or []
-        assert "data_source_id" not in required
-        assert "include_runtime" not in required
+        assert "entity" in required
+        assert "action" in required
 
     def test_bridge_passes_authorization_and_focused_args(self):
         from test_vista_mcp_read_surface import _ctx, _viewer
@@ -676,11 +675,10 @@ class TestMcpSurface:
         with _ctx(_viewer(), "Bearer user-token-xyz"), patch.object(
             tool_bridge._dispatch, "get_playlist_context", side_effect=_capture
         ):
-            result = tool_bridge.tool_get_playlist_context(
-                playlist_id="p",
-                slide_id="s",
-                data_source_id="pct_weg_sc_m26",
-                include_runtime=True,
+            result = tool_bridge.tool_read(
+                entity="playlist", action="context", ref="p",
+                filters={"slideId": "s", "dataSourceId": "pct_weg_sc_m26",
+                         "includeRuntime": True},
             )
         assert result.is_error is False
         assert seen["authorization"] == "Bearer user-token-xyz"
@@ -691,11 +689,11 @@ class TestMcpSurface:
     def test_bridge_default_include_runtime_false(self):
         import inspect as py_inspect
 
-        from tv_app.interface.mcp.tool_bridge import tool_get_playlist_context
+        from tv_app.interface.mcp.tool_bridge import tool_read
 
-        sig = py_inspect.signature(tool_get_playlist_context)
-        assert sig.parameters["include_runtime"].default is False
-        assert sig.parameters["data_source_id"].default is None
+        sig = py_inspect.signature(tool_read)
+        assert sig.parameters["filters"].default is None
+        assert sig.parameters["ref"].default is None
 
     def test_bridge_domain_error_preserved(self):
         from test_vista_mcp_read_surface import _ctx, _viewer
@@ -711,8 +709,9 @@ class TestMcpSurface:
                 details={"dataSourceId": "x"},
             ),
         ):
-            result = tool_bridge.tool_get_playlist_context(
-                playlist_id="p", slide_id="s", data_source_id="x"
+            result = tool_bridge.tool_read(
+                entity="playlist", action="context", ref="p",
+                filters={"slideId": "s", "dataSourceId": "x"},
             )
         assert result.is_error is True
         body = result.structured_content

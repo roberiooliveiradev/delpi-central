@@ -42,8 +42,15 @@
     "Editar bloco a bloco quando a mudança é estrutural da programação",
     "Confundir playlist (programação) com slide (tela individual)"
   ],
-  "related_topics": ["slide", "filters_and_layering", "tv_dashboard_overview"],
-  "capability_refs": ["playlist", "presentation_change"],
+  "related_topics": [
+    "slide",
+    "filters_and_layering",
+    "tv_dashboard_overview"
+  ],
+  "capability_refs": [
+    "playlist",
+    "presentation_change"
+  ],
   "operation_refs": [
     "create_playlist",
     "upsert_section",
@@ -51,8 +58,13 @@
     "reorder_slides",
     "re_layer_playlist_filters"
   ],
-  "read_refs": ["list_playlists", "get_playlist_context"],
-  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "read_refs": [
+    "read",
+    "analyze"
+  ],
+  "write_refs": [
+    "execute"
+  ],
   "source_refs": [
     {
       "ref": "docs/12-roadmap-e-evolucao/tv-dashboard/README.md",

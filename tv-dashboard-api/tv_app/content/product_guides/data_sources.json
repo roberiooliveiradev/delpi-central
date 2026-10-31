@@ -40,11 +40,28 @@
     "Confundir fonte de dados com DataModel — fonte é a entrada; DataModel é a unidade lógica",
     "Criar fonte duplicada em vez de reutilizar a existente com params diferentes"
   ],
-  "related_topics": ["data_models", "data_bindings", "filters_and_layering", "data_route_discovery"],
-  "capability_refs": ["data_route_search", "data_model_lifecycle"],
-  "operation_refs": ["upsert_data_source", "patch_data_source_params", "set_data_transform"],
-  "read_refs": ["search_data_routes", "preview_data_block", "get_playlist_context"],
-  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "related_topics": [
+    "data_models",
+    "data_bindings",
+    "filters_and_layering",
+    "data_route_discovery"
+  ],
+  "capability_refs": [
+    "data_route_search",
+    "data_model_lifecycle"
+  ],
+  "operation_refs": [
+    "upsert_data_source",
+    "patch_data_source_params",
+    "set_data_transform"
+  ],
+  "read_refs": [
+    "read",
+    "analyze"
+  ],
+  "write_refs": [
+    "execute"
+  ],
   "source_refs": [
     {
       "ref": "docs/data-route-nl-suggest.md",

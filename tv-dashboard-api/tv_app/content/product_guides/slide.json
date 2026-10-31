@@ -42,8 +42,16 @@
     "Editar slide quando a intenção era mudar o default da playlist inteira",
     "Ignorar que o slide carrega contexto de dados herdado (seção/playlist)"
   ],
-  "related_topics": ["playlist", "block_types", "filters_and_layering", "display_formats"],
-  "capability_refs": ["playlist", "presentation_change"],
+  "related_topics": [
+    "playlist",
+    "block_types",
+    "filters_and_layering",
+    "display_formats"
+  ],
+  "capability_refs": [
+    "playlist",
+    "presentation_change"
+  ],
   "operation_refs": [
     "add_blank_slide",
     "add_slide_from_preset",
@@ -51,8 +59,13 @@
     "delete_slide",
     "patch_native_config"
   ],
-  "read_refs": ["get_playlist_context"],
-  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "read_refs": [
+    "read",
+    "analyze"
+  ],
+  "write_refs": [
+    "execute"
+  ],
   "source_refs": [
     {
       "ref": "docs/12-roadmap-e-evolucao/tv-dashboard/README.md §Telas",

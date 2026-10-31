@@ -51,14 +51,14 @@ def _actions_instructions_block() -> str:
 # ---------------------------------------------------------------------------
 
 
-def test_mcp_surface_seventeen_with_semantic_verbs():
+def test_mcp_surface_six_with_semantic_verbs():
     tools = asyncio.run(create_mcp_server().list_tools())
     assert {t.name for t in tools} == set(MCP_TOOL_NAMES)
-    assert len(tools) == 17
-    assert TOOL_CLASS["prepare_change"] == "PREPARE"
-    assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert TOOL_CLASS["preview_data_block"] == "ANALYSIS"
-    assert TOOL_CLASS["suggest_change"] == "ANALYSIS"
+    assert len(tools) == 6
+    assert TOOL_CLASS["execute"] == "ACT"
+    assert TOOL_CLASS["delete"] == "ACT"
+    assert TOOL_CLASS["analyze"] == "ANALYSIS"
+    assert TOOL_CLASS["execute"] == "ACT"
 
 
 # ---------------------------------------------------------------------------
@@ -73,26 +73,15 @@ def test_surface_parity_map_matches_registered_tools():
     mapping = parity["parity_map"]
     # Every MCP name in the map must be a real registered tool.
     assert set(mapping.values()) == set(MCP_TOOL_NAMES)
-    assert len(mapping) == 17
+    assert len(mapping) == 6
     # Canonical Actions op names expected on the left side.
     assert set(mapping.keys()) == {
-        "gpt_get_catalog",
-        "gpt_list_playlists",
-        "gpt_get_playlist_context",
-        "gpt_search_data_routes",
-        "gpt_inspect_data_model",
-        "gpt_preview_data_model",
-        "gpt_preview_data_block",
-        "gpt_get_product_guide",
-        "gpt_get_playlist_history",
-        "gpt_suggest_change",
-        "gpt_preview_change",
-        "gpt_commit_change",
         "vista_get_context",
         "vista_read",
         "vista_analyze",
         "vista_knowledge",
         "vista_execute",
+        "vista_delete",
     }
     # Actions-only auxiliaries are explicit non-parity (signed artifact route).
     for op in parity["not_exposed_in_mcp"]:
@@ -105,11 +94,11 @@ def test_write_flow_mcp_semantics():
     wf = intel["write_flow_mcp"]
     assert wf["principle"] == "GOVERNED_ENVELOPE_PREPARE_THEN_ACT"
     additive = wf["additive"]
-    assert "prepare_change" in additive and "commit_proposal" in additive
-    assert "confirmation=true" in additive and "idempotency_key" in additive
+    assert "execute" in additive and "phase=prepare" in additive
+    assert "consent_artifact" in additive and "idempotency_key" in additive
     assert "commit_now" not in additive  # MCP has no commit_now
     destructive = wf["destructive"]
-    assert "prepare_change" in destructive and "Confirma?" in destructive
+    assert "delete" in destructive and "consent_artifact" in destructive
     # Idempotency discipline: same logical attempt = same key; new mutation = new key.
     assert "MESMA key" in wf["idempotency_key"] or "mesma key" in wf["idempotency_key"].lower()
     # Unknown outcome: reconcile before retry, never cross-transport replay.
@@ -128,8 +117,8 @@ def test_write_flow_actions_variant_preserved():
     """Coexistence: the Actions write_flow remains for the Actions transport."""
     intel = json.loads(INTELLIGENCE.read_text(encoding="utf-8"))
     assert "write_flow" in intel
-    assert "gpt_preview_change" in intel["write_flow"]["additive"]
-    assert "gpt_commit_change" in intel["write_flow"]["destructive"]
+    assert "vista_execute" in intel["write_flow"]["additive"]
+    assert "vista_execute" in intel["write_flow"]["destructive"]
 
 
 # ---------------------------------------------------------------------------
@@ -158,12 +147,12 @@ def test_mcp_instructions_required_markers():
         "403=AuthZ",
         "proposal_handle",
         "latest",
-        "get_catalog",
+        "get_context",
         "agent_directives",
-        "prepare_change",
-        "commit_proposal",
+        "execute",
+        "delete",
         "idempotency_key",
-        "confirmation=true",
+        "consent_artifact",
         "VERIFIED",
         "UNKNOWN_OUTCOME",
     ]
@@ -178,7 +167,6 @@ def test_mcp_instructions_no_actions_or_leaks():
         "gpt_get_catalog",
         "gpt_preview_change",
         "gpt_commit_change",
-        "commit_now",
     ):
         assert gpt_op not in block, gpt_op
     # No mutable directive section names leaked into stable instructions.
@@ -199,8 +187,8 @@ def test_mcp_instructions_no_actions_or_leaks():
 
 def test_actions_instructions_variant_preserved():
     block = _actions_instructions_block()
-    assert "gpt_preview_change" in block
-    assert "gpt_commit_change" in block
+    assert "vista_execute" in block
+    assert "vista_execute" in block
     assert "commit_now=true" in block
 
 
@@ -231,7 +219,7 @@ def test_mcp_sections_projected_into_agent_directives():
     # product_guide).
     parity = directives["surface_parity"]
     mapping = parity["parity_map"]
-    assert len(mapping) == 17
+    assert len(mapping) == 6
     assert set(mapping.values()) == set(MCP_TOOL_NAMES)
     clear_vista_agent_intelligence_cache()
 
@@ -247,15 +235,12 @@ def test_agent_directives_mcp_primary_tool_names():
     directives = VistaAgentIntelligenceService.agent_directives()
     blob = json.dumps(directives, ensure_ascii=False)
     for tool in (
-        "get_catalog",
-        "get_playlist_context",
-        "list_playlists",
-        "search_data_routes",
-        "inspect_data_model",
-        "preview_data_model",
-        "suggest_change",
-        "prepare_change",
-        "commit_proposal",
+        "get_context",
+        "read",
+        "analyze",
+        "knowledge",
+        "execute",
+        "delete",
     ):
         assert tool in blob, tool
     clear_vista_agent_intelligence_cache()
@@ -332,9 +317,9 @@ def test_write_flow_mcp_projected_confirmation_semantics():
     clear_vista_agent_intelligence_cache()
     directives = VistaAgentIntelligenceService.agent_directives()
     wf = directives["write_flow_mcp"]
-    assert "prepare_change" in wf["additive"]
-    assert "commit_proposal" in wf["additive"]
-    assert "confirmation=true" in wf["additive"]
+    assert "execute" in wf["additive"]
+    assert "phase=commit" in wf["additive"]
+    assert "consent_artifact" in wf["additive"]
     assert "commit_now" not in json.dumps(wf, ensure_ascii=False)
     assert "confirmation.confirmed" not in json.dumps(wf, ensure_ascii=False)
     assert "mesma key" in wf["idempotency_key"].lower()

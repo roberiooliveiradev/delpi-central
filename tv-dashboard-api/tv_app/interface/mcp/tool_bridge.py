@@ -248,323 +248,6 @@ def handle_tool_error(exc: Exception, *, tool: str, label: str) -> CallToolResul
     )
 
 
-def tool_list_playlists(limit: int = 50, offset: int = 0) -> CallToolResult:
-    try:
-        user, _ = _authed_context()
-        return _ok_result(_dispatch.list_playlists(user=user, limit=limit, offset=offset))
-    except Exception as e:
-        return handle_tool_error(e, tool="list_playlists", label="mcp tool")
-
-
-def tool_get_playlist_context(
-    playlist_id: str,
-    slide_id: str | None = None,
-    include_preview: bool = False,
-    scope: str | None = None,
-    data_source_id: str | None = None,
-    include_runtime: bool = False,
-) -> CallToolResult:
-    try:
-        user, auth = _authed_context()
-        data = _dispatch.get_playlist_context(
-            user=user,
-            playlist_id=playlist_id,
-            include_preview=include_preview,
-            preview_slide_id=slide_id,
-            scope=scope,
-            data_source_id=data_source_id,
-            include_runtime=include_runtime,
-            authorization=auth,
-        )
-        image = _canonical_stage_image(data)
-        return _ok_result(data, images=[image] if image else None)
-    except Exception as e:
-        return handle_tool_error(e, tool="get_playlist_context", label="mcp tool")
-
-
-def tool_get_playlist_history(
-    playlist_id: str,
-    snapshot_id: str | None = None,
-    page: int = 1,
-    page_size: int = 10,
-) -> CallToolResult:
-    try:
-        user, _ = _authed_context()
-        return _ok_result(
-            _dispatch.get_playlist_history(
-                user=user,
-                playlist_id=playlist_id,
-                snapshot_id=snapshot_id,
-                page=page,
-                page_size=page_size,
-            )
-        )
-    except Exception as e:
-        return handle_tool_error(e, tool="get_playlist_history", label="mcp tool")
-
-
-def tool_get_catalog() -> CallToolResult:
-    try:
-        user, _ = _authed_context()
-        return _ok_result(_dispatch.get_catalog(user=user, transport="mcp"))
-    except Exception as e:
-        return handle_tool_error(e, tool="get_catalog", label="mcp tool")
-
-
-def tool_search_data_routes(
-    query: str,
-    limit: int = 8,
-    category: str | None = None,
-) -> CallToolResult:
-    try:
-        user, auth = _authed_context()
-        return _ok_result(
-            _dispatch.search_data_routes(
-                user=user,
-                query=query,
-                limit=limit,
-                category=category,
-                authorization=auth,
-            )
-        )
-    except Exception as e:
-        return handle_tool_error(e, tool="search_data_routes", label="mcp tool")
-
-
-def tool_inspect_data_model(
-    playlist_id: str,
-    slide_id: str,
-    model_id: str,
-    include_runtime: bool = True,
-) -> CallToolResult:
-    try:
-        user, auth = _authed_context()
-        return _ok_result(
-            _dispatch.inspect_data_model(
-                user=user,
-                playlist_id=playlist_id,
-                slide_id=slide_id,
-                model_id=model_id,
-                authorization=auth,
-                include_runtime=include_runtime,
-            )
-        )
-    except Exception as e:
-        return handle_tool_error(e, tool="inspect_data_model", label="mcp tool")
-
-
-def tool_preview_data_model(
-    playlist_id: str | None = None,
-    slide_id: str | None = None,
-    model_id: str | None = None,
-    model: dict | None = None,
-    playlist_defaults: dict | None = None,
-) -> CallToolResult:
-    try:
-        if model is None and not (model_id or "").strip():
-            raise GptActionsError(
-                "modelId (modelo persistido) ou model (candidato inline) é obrigatório.",
-                code="INVALID_CHANGE",
-                status_code=422,
-            )
-        body: dict[str, Any] = {}
-        if playlist_id:
-            body["playlistId"] = playlist_id
-        if slide_id:
-            body["slideId"] = slide_id
-        if model is not None:
-            body["model"] = model
-        elif model_id:
-            body["modelId"] = model_id
-        if playlist_defaults is not None:
-            body["playlistDefaults"] = playlist_defaults
-        user, auth = _authed_context()
-        return _ok_result(_dispatch.preview_data_model(user=user, body=body, authorization=auth))
-    except Exception as e:
-        return handle_tool_error(e, tool="preview_data_model", label="mcp tool")
-
-
-def tool_preview_data_block(
-    playlist_id: str | None = None,
-    slide_id: str | None = None,
-    block_id: str | None = None,
-    block: dict | None = None,
-    native_config: dict | None = None,
-    operation_id: str | None = None,
-    params: dict | None = None,
-    playlist_defaults: dict | None = None,
-) -> CallToolResult:
-    try:
-        body: dict[str, Any] = {}
-        if playlist_id:
-            body["playlistId"] = playlist_id
-        if slide_id:
-            body["slideId"] = slide_id
-        if block_id:
-            body["blockId"] = block_id
-        if block is not None:
-            body["block"] = block
-        if native_config is not None:
-            body["nativeConfig"] = native_config
-        if operation_id:
-            body["operationId"] = operation_id
-        if params is not None:
-            body["params"] = params
-        if playlist_defaults is not None:
-            body["playlistDefaults"] = playlist_defaults
-        user, auth = _authed_context()
-        return _ok_result(
-            _dispatch.preview_data_block(user=user, body=body, authorization=auth)
-        )
-    except Exception as e:
-        return handle_tool_error(e, tool="preview_data_block", label="mcp tool")
-
-
-def tool_get_product_guide(
-    topic: str | None = None,
-    section: str | None = None,
-) -> CallToolResult:
-    """READ — Product usage guidance registry (GUIDANCE_NOT_DOMAIN_TRUTH).
-
-    Omit topic for the topic index; pass topic (+optional bounded section)
-    for one guide. Guidance only — never domain state, never AuthZ.
-    """
-    try:
-        user, _ = _authed_context()
-        return _ok_result(
-            _dispatch.get_product_guide(user=user, topic=topic, section=section)
-        )
-    except Exception as e:
-        return handle_tool_error(e, tool="get_product_guide", label="mcp tool")
-
-
-def tool_suggest_change(
-    message: str,
-    host_context: dict | None = None,
-    playlist_id: str | None = None,
-    slide_id: str | None = None,
-    selected_block_id: str | None = None,
-) -> CallToolResult:
-    """ANALYSIS — interpret NL intent into candidate typed ops.
-
-    Delegates to the canonical owner materializer (same service Actions uses).
-    Never persists; candidate ops carry no authorization — AuthZ is enforced
-    by PREPARE/ACT downstream. ``host_context`` is the transport-neutral owner
-    context contract (playlistId/slideId/selectedBlockIds/nativeConfig/...);
-    the scalar convenience args merge into it.
-    """
-    try:
-        if not str(message or "").strip():
-            raise GptActionsError(
-                "message é obrigatória.",
-                code="INVALID_CHANGE",
-                status_code=422,
-            )
-        host: dict[str, Any] = dict(host_context) if isinstance(host_context, dict) else {}
-        if playlist_id:
-            host.setdefault("playlistId", playlist_id)
-        if slide_id:
-            host.setdefault("slideId", slide_id)
-        if selected_block_id:
-            host.setdefault("selectedBlockId", selected_block_id)
-        user, auth = _authed_context()
-        return _ok_result(
-            _dispatch.suggest_change(
-                user=user,
-                message=message,
-                host_context=host,
-                authorization=auth,
-            )
-        )
-    except Exception as e:
-        return handle_tool_error(e, tool="suggest_change", label="mcp tool")
-
-
-# ---------------------------------------------------------------------------
-# MCP2 — governed write envelope (PREPARE → proposal_handle → ACT).
-# Adapter only: ops[] are canonical catalog vocabulary validated by the
-# application pipeline; proposal_handle is opaque, HMAC-signed, actor-bound,
-# single-use, TTL'd — owned entirely by the application layer.
-# ---------------------------------------------------------------------------
-
-
-def tool_prepare_change(
-    target: dict | None = None,
-    ops: list | None = None,
-    catalog_version: str | None = None,
-) -> CallToolResult:
-    """Evaluate a governed candidate mutation without material persistence.
-
-    Returns the canonical proposal payload (proposal_handle, canCommit, risk,
-    confirmationPolicy, sideEffectHints, diff/candidate preview). PREPARE never
-    commits — commit happens only via ``commit_proposal``.
-    """
-    try:
-        if not isinstance(ops, list) or not ops:
-            raise GptActionsError(
-                "ops[] é obrigatório (vocabulary do catálogo de operações).",
-                code="INVALID_CHANGE",
-                status_code=422,
-            )
-        user, auth = _authed_context()
-        return _ok_result(
-            _dispatch.preview_change(
-                user=user,
-                target=target if isinstance(target, dict) else {},
-                ops=ops,
-                catalog_version=catalog_version,
-                authorization=auth,
-                commit_now=False,
-                transport="mcp",
-            )
-        )
-    except Exception as e:
-        return handle_tool_error(e, tool="prepare_change", label="mcp tool")
-
-
-def tool_commit_proposal(
-    proposal_handle: str,
-    idempotency_key: str,
-    confirmation: bool = False,
-    consent_artifact: str | None = None,
-    target_echo: str | None = None,
-) -> CallToolResult:
-    """Commit a proposal returned by ``prepare_change``.
-
-    Caller must supply the exact opaque ``proposal_handle`` and a
-    caller-owned ``idempotency_key``. ``confirmation=True`` is required
-    only when the proposal's policy demands explicit user confirmation
-    (confirmationPolicy=confirm / destructive); direct proposals commit
-    without it. Postcondition is verified by the canonical backend
-    (VERIFIED / OUTCOME_NOT_VERIFIED).
-
-    ``consent_artifact`` is the consent_challenge id approved by the
-    human through the trusted channel (``/vista/consent/...``); it is
-    the independently verified human-consent proof — ``target_echo``
-    only re-verifies target identity and never substitutes consent.
-    """
-    try:
-        user, auth = _authed_context()
-        envelope: dict | bool = confirmation
-        if consent_artifact or target_echo:
-            envelope = {"confirmed": bool(confirmation)}
-            if consent_artifact:
-                envelope["consent_artifact"] = consent_artifact
-            if target_echo:
-                envelope["target_echo"] = target_echo
-        return _ok_result(
-            _dispatch.commit_change(
-                user=user,
-                proposal_handle=proposal_handle,
-                confirmation=envelope,
-                idempotency_key=idempotency_key,
-                authorization=auth,
-            )
-        )
-    except Exception as e:
-        return handle_tool_error(e, tool="commit_proposal", label="mcp tool")
-
-
 def tool_execute(
     entity: str,
     action: str,
@@ -614,6 +297,45 @@ def tool_execute(
         return handle_tool_error(e, tool="execute", label="mcp tool")
 
 
+def tool_delete(
+    entity: str,
+    phase: str | None = None,
+    target: dict | None = None,
+    proposal_handle: str | None = None,
+    consent_artifact: str | None = None,
+    target_echo: str | None = None,
+    idempotency_key: str | None = None,
+    catalog_version: str | None = None,
+) -> CallToolResult:
+    """Semantic delete — governed destructive ops (block|section|slide).
+
+    ``phase=prepare``: ``entity`` + ``target`` (playlistId + entity id;
+    ``deleteSlides`` optional for section) → sealed proposal +
+    ``consentChallenge``. ``phase=commit``: ``proposal_handle`` +
+    ``idempotency_key`` + approved ``consent_artifact`` +
+    ``target_echo`` — no confirmation boolean exists on this surface.
+    """
+    try:
+        user, auth = _authed_context()
+        return _ok_result(
+            _dispatch.semantic_delete(
+                user=user,
+                entity=entity,
+                phase=phase,
+                target=target,
+                proposal_handle=proposal_handle,
+                consent_artifact=consent_artifact,
+                target_echo=target_echo,
+                idempotency_key=idempotency_key,
+                catalog_version=catalog_version,
+                authorization=auth,
+                transport="mcp",
+            )
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="delete", label="mcp tool")
+
+
 # ---------------------------------------------------------------------------
 # SEMANTIC_TOOLS_V1 — six-verb semantic surface (coexists with the 12 above).
 # Same adapter discipline: context rebuild + delegation to the same dispatch.
@@ -651,17 +373,21 @@ def tool_read(
     """
     try:
         user, auth = _authed_context()
-        return _ok_result(
-            _dispatch.semantic_read(
-                user=user,
-                entity=entity,
-                action=action,
-                ref=ref,
-                filters=filters if isinstance(filters, dict) else None,
-                pagination=pagination if isinstance(pagination, dict) else None,
-                authorization=auth,
-            )
+        out = _dispatch.semantic_read(
+            user=user,
+            entity=entity,
+            action=action,
+            ref=ref,
+            filters=filters if isinstance(filters, dict) else None,
+            pagination=pagination if isinstance(pagination, dict) else None,
+            authorization=auth,
         )
+        images: list[Any] | None = None
+        if isinstance(out, dict):
+            img = _canonical_stage_image(out)
+            if img is not None:
+                images = [img]
+        return _ok_result(out, images=images)
     except Exception as e:
         return handle_tool_error(e, tool="read", label="mcp tool")
 

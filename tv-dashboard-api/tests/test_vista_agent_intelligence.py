@@ -70,7 +70,7 @@ def test_actions_runtime_try_before_claiming_unavailable():
     runtime = directives["actions_runtime"]
     assert runtime["principle"] == "TRY_ACTION_BEFORE_CLAIMING_UNAVAILABLE"
     rules = " ".join(runtime["rules"]).lower()
-    assert "get_catalog" in rules
+    assert "get_context" in rules
     assert "conector" in rules
     assert "tentar" in rules or "tente" in rules
     assert "escrita do painel" in rules or "escrita não habilitada" in rules
@@ -239,14 +239,14 @@ def test_screenshot_parity_maps_print_to_typed_slide():
     assert "upsert_block" in pipeline
     assert "patch_native_config" in pipeline
     # MCP projection is neutralized: adapter names translate to neutral ones.
-    assert "prepare_change" in pipeline
+    assert "execute" in pipeline
     assert "gpt_preview_change" not in pipeline
     actions_pipeline = " ".join(
         VistaAgentIntelligenceService.agent_directives(transport="actions")[
             "screenshot_parity"
         ]["pipeline"]
     )
-    assert "gpt_preview_change" in actions_pipeline
+    assert "vista_execute" in actions_pipeline
     forbidden = " ".join(parity["parity_bar"]["forbidden_shortcuts"])
     assert "Image Generation" in forbidden or "imagem" in forbidden.lower()
     assert any("print" in str(item).lower() for item in directives["anti_patterns"])

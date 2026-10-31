@@ -119,7 +119,7 @@ async def _tools_call_context(payload: dict) -> dict:
                 with (
                     patch.object(
                         tool_bridge._dispatch,
-                        "get_playlist_context",
+                        "semantic_read",
                         return_value=payload,
                     ),
                     patch(
@@ -137,11 +137,15 @@ async def _tools_call_context(payload: dict) -> dict:
                             "id": 2,
                             "method": "tools/call",
                             "params": {
-                                "name": "get_playlist_context",
+                                "name": "read",
                                 "arguments": {
-                                    "playlist_id": "pl-1",
-                                    "slide_id": "sl-1",
-                                    "include_preview": True,
+                                    "entity": "playlist",
+                                    "action": "context",
+                                    "ref": "pl-1",
+                                    "filters": {
+                                        "slideId": "sl-1",
+                                        "includePreview": True,
+                                    },
                                 },
                             },
                         },

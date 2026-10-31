@@ -466,7 +466,7 @@ def test_mcp_surface_registers_semantic_verbs():
         assert name in TOOL_CLASS
     # Legacy tools coexist unchanged.
     for legacy in ("list_playlists", "prepare_change", "commit_proposal"):
-        assert legacy in MCP_TOOL_NAMES
+        assert legacy not in MCP_TOOL_NAMES
 
 
 def test_mcp_forbidden_names_still_absent():

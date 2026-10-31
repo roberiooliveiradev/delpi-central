@@ -59,7 +59,7 @@ def guide_index_payload(registry: ProductGuideRegistry) -> dict[str, Any]:
         "registryVersion": registry.version,
         "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
         "sections": list(GUIDE_SECTIONS),
-        "readCapability": "get_product_guide",
+        "readCapability": "knowledge",
         "topics": registry.index(),
     }
 

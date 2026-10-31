@@ -93,7 +93,7 @@ def _test_dispatch(**overrides) -> GptActionsDispatchService:
 
 def test_suggest_change_requires_auth():
     with _ctx(None, None):
-        result = tool_bridge.tool_suggest_change(message="adicione um texto")
+        result = tool_bridge.tool_analyze(analysis="intent_materialization", parameters={"message": "adicione um texto"})
     assert result.is_error is True
     assert result.structured_content["httpStatus"] == 401
 
@@ -113,12 +113,10 @@ def test_suggest_change_delegates_with_host_context():
     with _ctx(_writer(), "Bearer user-token"), patch.object(
         tool_bridge._dispatch, "suggest_change", side_effect=_capture
     ):
-        result = tool_bridge.tool_suggest_change(
-            message="adicione um texto 'x' neste slide",
-            playlist_id="p1",
-            slide_id="s1",
-            selected_block_id="b1",
-            host_context={"extra": "kept"},
+        result = tool_bridge.tool_analyze(analysis="intent_materialization", 
+            parameters={"message": "adicione um texto 'x' neste slide"},
+            subject_refs={"playlistId": "p1", "slideId": "s1",
+                          "selectedBlockId": "b1", "extra": "kept"},
         )
     assert result.is_error is False
     assert seen["message"].startswith("adicione")
@@ -135,14 +133,14 @@ def test_suggest_change_preserves_domain_error():
         "suggest_change",
         side_effect=GptActionsError("Inválido.", code="INVALID_CHANGE", status_code=422),
     ):
-        result = tool_bridge.tool_suggest_change(message="x")
+        result = tool_bridge.tool_analyze(analysis="intent_materialization", parameters={"message": "x"})
     assert result.is_error is True
     assert result.structured_content["code"] == "INVALID_CHANGE"
 
 
 def test_suggest_change_requires_message():
     with _ctx(_writer()):
-        result = tool_bridge.tool_suggest_change(message="   ")
+        result = tool_bridge.tool_analyze(analysis="intent_materialization", parameters={"message": "   "})
     assert result.is_error is True
     assert result.structured_content["httpStatus"] == 422
 
@@ -152,9 +150,9 @@ def test_mcp_domain_materialization_no_persist_no_authz():
     candidate ops only — nothing persisted, no permission granted."""
     dispatch = _test_dispatch()
     with _ctx(_writer()), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_suggest_change(
-            message="adicione um texto 'delia deu certo' neste slide",
-            host_context={"playlistId": "p1", "slideId": "s1"},
+        result = tool_bridge.tool_analyze(analysis="intent_materialization", 
+            parameters={"message": "adicione um texto 'delia deu certo' neste slide"},
+            subject_refs={"playlistId": "p1", "slideId": "s1"},
         )
     assert result.is_error is False
     data = result.structured_content["data"]
@@ -177,9 +175,9 @@ def test_actions_materialization_same_application_service():
         authorization=None,
     )
     with _ctx(_writer()), patch.object(tool_bridge, "_dispatch", dispatch):
-        mcp = tool_bridge.tool_suggest_change(
-            message="adicione um texto 'delia deu certo' neste slide",
-            host_context={"playlistId": "p1", "slideId": "s1"},
+        mcp = tool_bridge.tool_analyze(analysis="intent_materialization", 
+            parameters={"message": "adicione um texto 'delia deu certo' neste slide"},
+            subject_refs={"playlistId": "p1", "slideId": "s1"},
         )
     data = mcp.structured_content["data"]
     assert data["status"] == actions_payload["status"] == "ready"
@@ -193,9 +191,9 @@ def test_fuzzy_intent_same_recognition():
     """Accent/typo-tolerant recognition reaches MCP through the same service."""
     dispatch = _test_dispatch()
     with _ctx(_writer()), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_suggest_change(
-            message="adicone um txto",
-            host_context={"playlistId": "p1", "slideId": "s1"},
+        result = tool_bridge.tool_analyze(analysis="intent_materialization", 
+            parameters={"message": "adicone um txto"},
+            subject_refs={"playlistId": "p1", "slideId": "s1"},
         )
     data = result.structured_content["data"]
     assert data["status"] == "ready"
@@ -206,9 +204,9 @@ def test_selected_object_resolution_via_context():
     """Caller-provided context resolves references — context is not AuthZ."""
     dispatch = _test_dispatch()
     with _ctx(_writer()), patch.object(tool_bridge, "_dispatch", dispatch):
-        result = tool_bridge.tool_suggest_change(
-            message="remova este bloco",
-            host_context={
+        result = tool_bridge.tool_analyze(analysis="intent_materialization", 
+            parameters={"message": "remova este bloco"},
+            subject_refs={
                 "playlistId": "p1",
                 "slideId": "s1",
                 "selectedBlockId": "blk_target",
@@ -244,13 +242,13 @@ def test_mcp_projection_has_no_actions_mechanics():
 def test_actions_projection_uses_actions_names():
     surface = build_capability_surface(transport="actions")
     wf = surface["workflows"][0]
-    assert "gpt_suggest_change" in wf["write_operations"]
-    assert "gpt_preview_change" in wf["write_operations"]
-    assert "gpt_commit_change" in wf["write_operations"]
+    assert "vista_analyze" in wf["write_operations"]
+    assert "vista_execute" in wf["write_operations"]
+    assert "vista_execute" in wf["write_operations"]
     policy = wf["prepare_act_policy"]
-    assert policy["prepare"] == "gpt_preview_change"
-    assert policy["commit"] == "gpt_commit_change"
-    assert policy["additive_single_shot"]["operation"] == "gpt_preview_change"
+    assert policy["prepare"] == "vista_execute"
+    assert policy["commit"] == "vista_execute"
+    assert policy["additive_single_shot"]["operation"] == "vista_execute"
     assert policy["additive_single_shot"]["commit_now"] is True
     # No bare MCP names survive the projection.
     blob = _blob({k: v for k, v in surface.items() if k != "agent_directives"})
@@ -263,7 +261,7 @@ def test_one_parity_map_change_flows_to_both_projections(monkeypatch):
     projection follows automatically; MCP keeps the neutral name."""
     doc = copy.deepcopy(VistaAgentIntelligenceService.document())
     parity = doc["surface_parity"]["parity_map"]
-    parity["gpt_routes_renamed"] = parity.pop("gpt_search_data_routes")
+    parity["vista_routes_renamed"] = parity.pop("vista_read")
     monkeypatch.setattr(
         VistaAgentIntelligenceService,
         "document",
@@ -272,9 +270,9 @@ def test_one_parity_map_change_flows_to_both_projections(monkeypatch):
     actions = build_capability_surface(transport="actions")
     mcp = build_capability_surface(transport="mcp")
     search = next(a for a in actions["analyses"] if a["id"] == "data_route_search")
-    assert search["read_operations"] == ["gpt_routes_renamed"]
+    assert search["read_operations"] == ["vista_routes_renamed"]
     search_mcp = next(a for a in mcp["analyses"] if a["id"] == "data_route_search")
-    assert search_mcp["read_operations"] == ["search_data_routes"]
+    assert search_mcp["read_operations"] == ["read"]
 
 
 def test_new_capability_policy_derives_both_projections(monkeypatch):
@@ -346,7 +344,7 @@ def test_mcp_projection_has_no_actions_names_or_envelope_mechanics():
         (catalog.get("agent_directives") or {}).get("compound_slide", {}).get("pipeline", [])
     )
     assert "dateRangePreset" in compound
-    assert "commit_proposal" in compound
+    assert "execute" in compound
 
 
 # ---------------------------------------------------------------------------

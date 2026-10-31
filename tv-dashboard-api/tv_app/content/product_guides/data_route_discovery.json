@@ -32,10 +32,21 @@
     "Tratar o allowlist de TV como o catálogo completo da DELPI",
     "Pular o preview e commitar baseado só na rota descoberta"
   ],
-  "related_topics": ["data_sources", "data_models", "filters_and_layering"],
-  "capability_refs": ["data_route_search", "data_block_preview"],
+  "related_topics": [
+    "data_sources",
+    "data_models",
+    "filters_and_layering"
+  ],
+  "capability_refs": [
+    "data_route_search",
+    "data_block_preview"
+  ],
   "operation_refs": [],
-  "read_refs": ["search_data_routes", "preview_data_block", "get_catalog"],
+  "read_refs": [
+    "read",
+    "analyze",
+    "get_context"
+  ],
   "write_refs": [],
   "source_refs": [
     {
