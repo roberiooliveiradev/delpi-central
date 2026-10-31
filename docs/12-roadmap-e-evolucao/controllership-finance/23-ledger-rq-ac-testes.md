@@ -1235,3 +1235,14 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | G026-MFE | página visual + tema/a11y | smoke homolog | não executado — Portal MFE não subiu na stack isolada | TEST_NOT_RUN |
 | G026-MCP | transporte MCP real | capability e2e | não executado — sessão MCP não disponível; registro semântico coberto por testes | TEST_NOT_RUN |
 | G026-NEG | usuário sem .access | 403 efetivo | não executado — persona negativa indisponível | INCONCLUSIVE |
+
+## Gate 028 — homologação final R12/R15, Portal × CLARA e release candidate (31/10/2026)
+
+| Teste | Entrada | Esperado | Observado | Estado |
+|---|---|---|---|---|
+| G028-MCP-TRANS | `POST /mcp` JWT portal | descoberta/capability via transporte | 401 OAuth com `scope="mcp:tools"` exigido — boundary real funciona; client OAuth MCP não provisionado no realm dev | TEST_NOT_RUN (bloqueio IAM documentado) |
+| G028-MCP-SEC | token sem audiência MCP | rejeição tipada | `invalid_token` + `error_description` — fail-closed | PASS (negativo real) |
+| G028-PAGE | `CostClosingStatePage.test.tsx` | nós por filial, estados honestos, erro/retry | 2/2 PASS — nunca «Concluído»/«Fechado»; wizard=Indisponível; aceite=Não informado; limitações+officiality exibidas | PASS |
+| G028-E2E | cadeia completa (gate 026 reexecutada) | projeção com dados reais | containers isolados remontados no HEAD; e2e 200 confirmado | PASS |
+| G028-VISUAL | navegador real (Playwright) | smoke visual/tema/a11y | Portal MFE não subiu na stack isolada (montar dist exigiria tocar stack compartilhada) | TEST_NOT_RUN |
+| G028-NEG-PERSONA | usuário sem .access | 403 efetivo | persona negativa não provisionada | INCONCLUSIVE |

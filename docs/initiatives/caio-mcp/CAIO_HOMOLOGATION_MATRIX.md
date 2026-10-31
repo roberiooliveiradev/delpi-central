@@ -284,3 +284,18 @@ Smoke autenticado pelo conector CAIO: `get_context` (catálogo 2.0), `customer.s
 **Validação negativa e ajuste de chamada:** `product.summary` sem `ref` retornou 400 correto, e `product.customers` com `product_code` em `filters` retornou 400 correto; ambas passaram utilizando `ref=product_code`. A busca de chicote retornou o cadastro `90260921` como exemplo, não uma afirmação sobre todo o portfólio.
 
 **Limites:** não testados ponta a ponta os cenários amplos A–G envolvendo todas as fontes/indicadores e conclusões comerciais; nenhum write/delete; nenhuma prova nova de pesquisa web, adoção oficial de métodos externos ou uso com todos os perfis. Deploy/SHA reportado pelo executor; aqui comprovado o comportamento autenticado exposto pelo conector, não a introspecção do servidor.
+
+## Smoke autenticado CAIO 3.2 — 2026-10-31
+
+Conector ChatGPT→CAIO, usuário autenticado, consultas read-only. `get_context`: 127 ações, `catalog_version=2.0`; `knowledge(playbook.executive_diagnosis)`: `knowledge_version=3.2`, com `intent`, `investigation_questions`, `expected_evidence`, `failure_states`, `official_actions`, `output_schema`.
+
+**A–J — seleção contextual:** dez perguntas sobre (A) OV/OP/LMP, (B) chicotes, (C) retração, (D) expansão, (E) pedidos/OTD, (F) propostas, (G) forecast, (H) plano 30/60/90, (I) SIPOC/BPMN, (J) diagnóstico executivo recuperaram ao menos o conhecimento central pertinente: **10/10 PASS para seleção de conteúdo**. Precisão de top-5 não integral: alguns resultados secundários não pertinentes (ex. previsão em mapeamento de processo), classificar melhoria de ranking como residual.
+
+**Dados oficiais, amostra:** `read(product.search, description=CHICOTE)` PASS, `read(open_order.list)` PASS (274 itens no escopo da chamada), `read(proposal.analytics_list)` PASS, `analyze(rol.series)` PASS, `analyze(sales_order_otd.summary)` PASS. Nenhum write/delete. **Limite:** sem teste de composição integral dos dez relatórios A–J, de todos os perfis, de validação comercial dos métodos externos ou de pesquisa web. A evidência é seleção + amostra de consultas oficiais autenticadas, não prova de autonomia do roteiro. Não declarar paridade operacional universal.
+## Refinamento de seleção contextual — 2026-10-31 (CAIO 3.2 F1)
+
+- **Problema comprovado:** termos genéricos de domínio (comercial, processo, dados) geravam secundários irrelevantes — ex.: consulta SIPOC/BPMN retornava forecast como sugestão.
+- **Correção (menor diff):** stopwords PT de domínio genérico + precision floor (score >= ceil(top/2)). Sem embeddings/serviço novo.
+- **Métrica antes/depois (consulta SIPOC):** antes — secundários incluíam method.forecast_vendas; depois — seleção = method.sipoc_bpmn + topic.commercial.processes apenas. Recall nos 10 cenários A–J preservado (mapa de seleção verde).
+- **Rubrica F6 (pesos propostos, não oficiais):** correção de dados 25% · relevância conhecimento 15% · investigação 20% · evidência/rastreio 15% · recomendações 15% · limitações 10% — segurança/autorização = eliminatório.
+- **Suíte:** 653 passed / 106 skipped; cenários A–J em contrato = PASS; autenticado produção amostral já evidenciado acima — composição integral dos relatórios segue TEST_NOT_RUN.
