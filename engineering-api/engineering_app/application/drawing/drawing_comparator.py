@@ -75,6 +75,34 @@ def compare_observation_to_text(
     return result
 
 
+_LABEL_ROLES = [
+    (re.compile(r"(?i:\bCOD\b)\D{0,15}(\d[0-9A-Z.\-]{4,})"),
+     "customer_reference"),
+    (re.compile(r"(?i:\bDES\b)\D{0,15}(\d[0-9A-Z.\-]{4,})"),
+     "drawing_code"),
+    (re.compile(r"(?i:\b(?:PRODUTO|PRODUCT)\b)\D{0,15}(\d[0-9A-Z.\-]{4,})"),
+     "product_code"),
+    (re.compile(r"(?i:\b(?:REF|REFER[ÊE]NCIA)\b)\D{0,15}(\d[0-9A-Z.\-]{4,})"),
+     "customer_reference"),
+]
+
+
+def _label_classified_identifiers(value: str) -> list[dict[str, str]]:
+    """Legacy text → typed identifiers by documented labels (R4-A)."""
+    out: list[dict[str, str]] = []
+    for pattern, role in _LABEL_ROLES:
+        for m in pattern.finditer(value):
+            v = m.group(1).strip(" .,;:")
+            if v:
+                out.append({"role": role, "value": v})
+    labeled = {i["value"] for i in out}
+    for m in _DIGITS.finditer(value):
+        v = m.group(0)
+        if v not in labeled and len(v) >= 6:
+            out.append({"role": "unknown_identifier", "value": v})
+    return out
+
+
 def compare_observation_to_official(
     obs: DrawingVisualObservation,
     *,
@@ -105,14 +133,37 @@ def compare_observation_to_official(
                 )
         return out
     if obs.kind == "identification":
-        codes = _DIGITS.findall(value)
-        if official_code in codes:
+        # R4-A: comparar somente identificadores da mesma função —
+        # product_code×code, drawing_code×drawing, customer_reference×ref.
+        typed = obs.identifiers or _label_classified_identifiers(value)
+        role_map = {
+            "product_code": official_code,
+            "customer_reference": None,  # sem contrato comparável direto
+            "drawing_code": bom_codes.pop() if False else None,
+        }
+        agreements, conflicts, seen_codes = 0, 0, []
+        for ident in typed:
+            role, val = ident.get("role"), ident.get("value")
+            if role == "product_code" and val:
+                seen_codes.append(val)
+                if val == official_code:
+                    agreements += 1
+                else:
+                    conflicts += 1
+            elif role == "drawing_code" and val:
+                out.setdefault("typed_results", {})[role] = val
+            elif role == "customer_reference" and val:
+                out.setdefault("typed_results", {})[role] = val
+        if agreements:
             out["status"] = "agreement"
-        elif codes:
+        elif conflicts:
             out["status"] = "conflict"
             out["detail"] = (
-                f"códigos {codes} observados × oficial {official_code}"
+                f"product_code observado {seen_codes} × oficial "
+                f"{official_code}"
             )
+        else:
+            out["status"] = "no_evidence"
         return out
     if obs.kind == "bom_item":
         codes = [c for c in _DIGITS.findall(value) if len(c) >= 6]

@@ -21,6 +21,10 @@ ALLOWED_KINDS = {
     "legibility", "revision", "identification", "other",
 }
 ALLOWED_CONFIDENCE = {"low", "medium", "high"}
+ALLOWED_IDENTIFIER_ROLES = {
+    "product_code", "customer_reference", "drawing_code",
+    "component_code", "unknown_identifier",
+}
 CAPTURE_METHOD = "chatgpt_visual"
 
 
@@ -62,6 +66,7 @@ class DrawingVisualObservation:
     uncertainty_reason: str | None = None
     capture_method: str = CAPTURE_METHOD
     is_hypothesis: bool = False
+    identifiers: list[dict[str, str]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         out = asdict(self)
@@ -103,7 +108,7 @@ def parse_visual_observations(payload: Any) -> list[DrawingVisualObservation]:
             "observation_id", "document_identity", "page",
             "view_or_region", "kind", "raw_observation",
             "normalized_value", "unit", "confidence",
-            "uncertainty_reason", "is_hypothesis",
+            "uncertainty_reason", "is_hypothesis", "identifiers",
         }
         unknown = set(raw) - allowed
         if unknown:
@@ -149,6 +154,9 @@ def parse_visual_observations(payload: Any) -> list[DrawingVisualObservation]:
         if obs_id in seen_ids:
             obs_id = f"{obs_id}#{index + 1}"
         seen_ids.add(obs_id)
+        identifiers = _parse_identifiers(
+            raw.get("identifiers"), index
+        )
         out.append(
             DrawingVisualObservation(
                 observation_id=obs_id,
@@ -162,6 +170,30 @@ def parse_visual_observations(payload: Any) -> list[DrawingVisualObservation]:
                 confidence=confidence,
                 uncertainty_reason=_clip(raw.get("uncertainty_reason")),
                 is_hypothesis=bool(raw.get("is_hypothesis")),
+                identifiers=identifiers,
             )
         )
+    return out
+
+
+def _parse_identifiers(payload: Any, index: int) -> list[dict[str, str]]:
+    """Normalize `identifiers[]` entries {role, value} (R4-A)."""
+    if payload is None:
+        return []
+    if not isinstance(payload, list) or len(payload) > 20:
+        raise VisualObservationError(
+            f"invalid_visual_observation:item_{index}_identifiers"
+        )
+    out: list[dict[str, str]] = []
+    for entry in payload:
+        if not isinstance(entry, dict) or set(entry) - {"role", "value"}:
+            raise VisualObservationError(
+                f"invalid_visual_observation:item_{index}_identifier_shape"
+            )
+        role = str(entry.get("role") or "unknown_identifier").strip()
+        if role not in ALLOWED_IDENTIFIER_ROLES:
+            role = "unknown_identifier"
+        value = _clip(entry.get("value"), 40)
+        if value:
+            out.append({"role": role, "value": value})
     return out

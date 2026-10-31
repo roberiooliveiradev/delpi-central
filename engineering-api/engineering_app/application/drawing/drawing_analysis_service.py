@@ -230,12 +230,27 @@ async def analyze_product_drawing(
         }
         - {None}
     )
+    visual_revs = sorted(
+        {
+            (o.normalized_value or "").strip()
+            for o in (visual_observations or [])
+            if o.kind == "revision" and o.normalized_value
+        }
+        - {""}
+    )
     revision_domains = {
         "customer_totvs_revision": official_rev or None,
         "engineering_drawing_revision": sorted(set(rev_values)) or None,
+        "engineering_drawing_revision_visual": {
+            "values": visual_revs or None,
+            "provenance": "chatgpt_visual_observation",
+            "promoted_to_official": False,
+        },
         "drawing_library_revision": (
             str(revision_meta) if revision_meta else None
         ),
+        "totvs_vs_drawing_comparable": False,
+        "rule": "ENG-REV-001",
     }
     if rev_values or official_rev or revision_meta:
         status, summary = VerificationStatus.PASS, (
@@ -263,6 +278,18 @@ async def analyze_product_drawing(
     bom_items: list[dict[str, Any]] = []
     if isinstance(structure, dict):
         _flatten_bom(structure, bom_items)
+    # R4-C: estatísticas multinível — ocorrências ≠ códigos únicos.
+    bom_stats = {
+        "total_occurrences": len(bom_items),
+        "unique_codes": len({str(i.get("code")) for i in bom_items} - {""}),
+        "by_type": {},
+        "parent_links": sum(
+            1 for i in bom_items if i.get("parent_code") or i.get("parent")
+        ),
+    }
+    for item in bom_items:
+        t = str(item.get("product_type") or item.get("type") or "unknown")
+        bom_stats["by_type"][t] = bom_stats["by_type"].get(t, 0) + 1
     if structure_error is not None:
         verifications.append(
             Verification(
@@ -717,6 +744,7 @@ async def analyze_product_drawing(
             "verifications_by_status": counts,
             "findings_total": len(findings),
             "bom_items_compared": len(bom_items),
+            "bom_stats": bom_stats,
             "evidence_items": len(evidence),
             "extraction_method": "pdf_text_layer (determinístico) — "
             "OCR/VLM fora do adapter atual",
