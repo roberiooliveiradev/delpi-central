@@ -32,7 +32,8 @@ def test_ambiguous_sources_not_silently_picked():
     out = _suggest("quero acompanhar vendas e metas")
     bp = out.get("bindingPlan")
     assert bp["state"] == "NEEDS_SOURCE_SELECTION"
-    assert len(bp["dataRouteCandidates"]) > 1
+    total = sum(len(b["candidates"]) for b in bp["blocks"])
+    assert total > 1
 
 
 def test_ops_still_materialize_with_binding_plan():
