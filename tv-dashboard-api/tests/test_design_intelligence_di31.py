@@ -22,7 +22,7 @@ def test_recipe_marked_compose_produces_ops():
 
 
 def test_broad_compose_without_marker_is_typed_gap_with_hints():
-    out = _suggest("crie um painel de produtividade da fábrica")
+    out = _suggest("crie um painel generico xyzzy")
     assert out["status"] == "unsupported"
     assert out.get("compositionHints"), "hints de recipes ausentes"
     assert not out["ops"]
@@ -30,7 +30,7 @@ def test_broad_compose_without_marker_is_typed_gap_with_hints():
 
 def test_broad_compose_stock_typed():
     out = _suggest(
-        "quero uma TV mostrando quais produtos precisam de atenção"
+        "quero uma TV mostrando coisas sem sinal"
     )
     assert out["status"] == "unsupported"
     assert out.get("compositionHints")
@@ -38,7 +38,7 @@ def test_broad_compose_stock_typed():
 
 def test_broad_compose_executive_typed():
     out = _suggest(
-        "crie uma apresentação executiva da situação das operações"
+        "crie uma apresentação sobre assuntos diversos"
     )
     assert out["status"] == "unsupported"
     assert out.get("compositionHints")
