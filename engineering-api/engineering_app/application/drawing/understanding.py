@@ -70,6 +70,26 @@ _TABLE_HEADER_LABELS = frozenset(
         "obs", "pi", "mp", "ref", "ref.",
     }
 )
+_REVHIST_LABELS = frozenset(
+    {
+        'lmp', 'ov', 'ov.', 'modificações', 'modificacoes',
+        'resumo', 'revisão', 'revisao', 'alteração', 'alteracao',
+        'observação', 'observacao', 'motivo', 'solic', 'solicitante',
+        'autoriz', 'autorizado', 'eng', 'eng.',
+    }
+)
+_HEADER_TYPE_MAP = {
+    "item": "item", "nº": "item", "no": "item", "n": "item",
+    "qtd": "quantity", "qtde": "quantity", "quant": "quantity",
+    "quantidade": "quantity", "unid": "unit", "un": "unit",
+    "unidade": "unit",
+    "cod": "component_code", "código": "component_code",
+    "codigo": "component_code", "componente": "component_code",
+    "pi": "component_code", "mp": "component_code",
+    "ref": "reference", "descrição": "description",
+    "descricao": "description", "descr": "description",
+    "obs": "note",
+}
 _CODE_RE = re.compile(r"^\d{6,11}(-\d+)?$")
 _REV_LABEL_RE = re.compile(r"^REV\.?:?$", re.IGNORECASE)
 _REV_VALUE_RE = re.compile(r"^(\d{2}|[A-Z]{1,2})$")
@@ -253,6 +273,57 @@ def _detect_title_block(
     }
 
 
+def _is_revhist_label(text: str) -> bool:
+    return text.lower().rstrip('.:') in _REVHIST_LABELS
+
+
+def _detect_revision_history(
+    tokens: list[dict], w: float, h: float, used_ids: set[int]
+) -> dict | None:
+    """Histórico de revisão = cluster ≥2 rótulos de histórico
+    (LMP/OV/MODIFICAÇÕES/RESUMO...) fora do carimbo já detectado —
+    região independente mesmo adjacente (isolamento R8.2)."""
+    labels = [
+        t
+        for t in tokens
+        if id(t) not in used_ids
+        and _is_revhist_label(_text_of(t))
+        and _tok_center(t)
+    ]
+    if len(labels) < 2:
+        return None
+    y_tol = h * 0.06
+    groups: list[list[dict]] = []
+    for t in sorted(
+        labels, key=lambda t: (_tok_center(t)[1], _tok_center(t)[0])
+    ):
+        c = _tok_center(t)
+        for g in groups:
+            if _inside(c, _box(g), margin=max(w * 0.14, y_tol)):
+                g.append(t)
+                break
+        else:
+            groups.append([t])
+    best = max(groups, key=len)
+    if len(best) < 2:
+        return None
+    box = _box(best)
+    box[0] -= w * 0.02
+    box[1] -= h * 0.02
+    box[2] += w * 0.35
+    box[3] += h * 0.05
+    return {
+        box: box,
+        label_count: len(best),
+        labels: [_text_of(t) for t in best],
+        tokens: [
+            t
+            for t in tokens
+            if _tok_center(t) and _inside(_tok_center(t), box)
+        ],
+    }
+
+
 def _detect_component_table(
     tokens: list[dict], w: float, h: float, tb_box: list[float] | None
 ) -> dict | None:
@@ -341,6 +412,10 @@ def _detect_component_table(
     }
 
 
+def _header_type(text: str) -> str | None:
+    return _HEADER_TYPE_MAP.get(text.lower().rstrip(".:"))
+
+
 def _structure_table(
     table: dict, w: float, h: float
 ) -> list[dict]:
@@ -360,6 +435,45 @@ def _structure_table(
             col_centers.append(cx)
         else:
             col_centers[-1] = (col_centers[-1] + cx) / 2.0
+    col_types: dict[int, str] = {}
+    # header→col: atribuição greedy sem colisão — cada rótulo ocupa a
+    # coluna livre mais próxima (headers em ordem x).
+    hdr_toks = sorted(
+        [t for t in (table.get("header_tokens") or []) if _tok_center(t)],
+        key=lambda t: _tok_center(t)[0],
+    )
+    used_cols: set[int] = set()
+    for ht in hdr_toks:
+        tpe = _header_type(_text_of(ht))
+        c = _tok_center(ht)
+        if not (tpe and c and col_centers):
+            continue
+        free = [i for i in range(len(col_centers)) if i not in used_cols]
+        if not free:
+            break
+        ci = min(free, key=lambda i: abs(col_centers[i] - c[0]))
+        col_types[ci] = tpe
+        used_cols.add(ci)
+    # tipagem por conteúdo (evidência de dados): coluna cujas células
+    # são majoritariamente códigos 6-11 dígitos → component_code,
+    # quando o header não a tipou (header pode estar desalinhado em x).
+    content_counts: dict[int, Counter] = {}
+    for row in table["rows"]:
+        for t in row["tokens"]:
+            c = _tok_center(t)
+            if not c or not col_centers:
+                continue
+            ci = min(
+                range(len(col_centers)),
+                key=lambda i: abs(col_centers[i] - c[0]),
+            )
+            cnt = content_counts.setdefault(ci, Counter())
+            cnt["total"] += 1
+            if _CODE_RE.match(_text_of(t)):
+                cnt["codes"] += 1
+    for ci, cnt in content_counts.items():
+        if ci not in col_types and cnt["total"] and cnt["codes"] / cnt["total"] >= 0.5:
+            col_types[ci] = "component_code"
     rows_out = []
     ambiguous = 0
     for r_i, row in enumerate(sorted(table["rows"], key=lambda r: r["y"])):
@@ -378,6 +492,8 @@ def _structure_table(
                 "bounding_box_px": t.get("bounding_box_px"),
                 "confidence": t.get("confidence"),
             }
+            if best_i in col_types:
+                cell["col_type"] = col_types[best_i]
             if len(ties) > 1:
                 cell["ambiguous"] = True
                 cell["alternatives"] = ties
@@ -391,7 +507,7 @@ def _structure_table(
                 "col_count": len(col_centers),
             }
         )
-    return rows_out, ambiguous
+    return rows_out, ambiguous, col_types
 
 
 def _match_revisions(
@@ -476,18 +592,58 @@ def build_understanding(
     table = _detect_component_table(
         tokens, w, h, tb["box"] if tb else None
     )
-    tb_tokens = set(id(t) for t in (tb["tokens"] if tb else []))
-    tbl_tokens = set(id(t) for t in (table["tokens"] if table else []))
+    tb_ids = set(id(t) for t in (tb["tokens"] if tb else []))
+    tbl_ids = set(id(t) for t in (table["tokens"] if table else []))
+    revh = _detect_revision_history(tokens, w, h, tb_ids | tbl_ids)
+    revh_ids = set(id(t) for t in (revh["tokens"] if revh else []))
+
+    # isolamento (AC02): um token pertence a exatamente uma região;
+    # sobreposição de regiões candidatas → conflito explícito.
+    ownership_conflicts: list[dict] = []
+    for t in tokens:
+        belongs = sum(
+            1 for ids in (tbl_ids, tb_ids, revh_ids) if id(t) in ids
+        )
+        if belongs > 1:
+            c = _tok_center(t)
+            ownership_conflicts.append(
+                {
+                    "text": _text_of(t),
+                    "bounding_box_px": t.get("bounding_box_px"),
+                    "center_px": list(c) if c else None,
+                }
+            )
+    regions: list[dict] = []
+    for rid, rtype, obj, ids in (
+        ("region_title_block", "title_block", tb, tb_ids),
+        ("region_component_table", "component_table", table, tbl_ids),
+        ("region_revision_history", "revision_history", revh, revh_ids),
+    ):
+        if obj:
+            regions.append(
+                {
+                    "id": rid,
+                    "type": rtype,
+                    "box_px": obj["box"],
+                    "token_count": len(ids),
+                    "evidence": obj.get("labels")
+                    or [
+                        _text_of(t)
+                        for t in obj.get("header_tokens") or []
+                    ],
+                    "state": "candidate",
+                }
+            )
 
     for idx, t in enumerate(tokens):
         text = _text_of(t)
         c = _tok_center(t)
-        if id(t) in tbl_tokens:
+        if id(t) in tbl_ids:
             region = "component_table"
-        elif id(t) in tb_tokens:
+        elif id(t) in tb_ids:
             region = "title_block"
-        elif c and c[1] < h * 0.10 and not text:
-            region = "unknown"
+        elif id(t) in revh_ids:
+            region = "revision_history"
         elif c and c[0] < w * 0.45 and c[1] < h * 0.35:
             region = "notes"
         else:
@@ -509,8 +665,11 @@ def build_understanding(
     # ---------- tabela estruturada ----------
     table_rows: list[dict] = []
     ambiguous_cells = 0
+    col_types: dict[int, str] = {}
     if table:
-        table_rows, ambiguous_cells = _structure_table(table, w, h)
+        table_rows, ambiguous_cells, col_types = _structure_table(
+            table, w, h
+        )
 
     # ---------- revisão contextual ----------
     revisions = _match_revisions(tokens, w, h)
@@ -608,11 +767,25 @@ def build_understanding(
                     "afirmada",
                 ],
             }
+        elif not col_types:
+            bom_comparison = {
+                "state": "NOT_COMPARABLE",
+                "matched": [],
+                "missing_in_drawing_table": [],
+                "not_in_bom": [],
+                "occurrence_mismatches": [],
+                "limitations": [
+                    "tabela sem cabeçalho tipado — sequência de códigos "
+                    "não comprova tabela de componentes",
+                ],
+            }
         else:
             table_code_counts: Counter = Counter()
             for r in table_rows:
                 for c in r["cells"]:
-                    if _CODE_RE.match(c["text"]):
+                    if _CODE_RE.match(c["text"]) and c.get(
+                        "col_type"
+                    ) == "component_code":
                         table_code_counts[c["text"]] += 1
             bom_counts = Counter(bom_codes)
             matched, missing_draw, missing_bom, qty_mm = [], [], [], []
@@ -654,6 +827,8 @@ def build_understanding(
         "document_hash_sha256": document_hash,
         "page": page,
         "page_size_px": [round(w, 0), round(h, 0)],
+        "regions": regions,
+        "ownership_conflicts": ownership_conflicts,
         "regions_summary": dict(regions_seen),
         "tokens_processed": len(annotated),
         "title_block": {
@@ -675,10 +850,18 @@ def build_understanding(
                 for t in (table["header_tokens"] if table else [])
             ],
             "ambiguous_cells": ambiguous_cells,
+            "col_types": {str(k): v for k, v in col_types.items()},
             "detection": "code_column_cluster + row_y_proximity",
             "confidence": "rule_based",
         },
         "identifier_candidates": fields,
+        "revision_history": {
+            "candidate": revh is not None,
+            "box_px": revh["box"] if revh else None,
+            "labels": revh["labels"] if revh else [],
+            "detection": "revhist_label_cluster (≥2 rótulos fora do "
+            "carimbo)",
+        },
         "revision_candidates": revisions,
         "dimension_candidates": dimensions,
         "dimension_excluded": excluded,
