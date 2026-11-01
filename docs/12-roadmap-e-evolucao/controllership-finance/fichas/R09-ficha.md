@@ -136,3 +136,23 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Deploy produtivo e validação CLARA/Portal live: NÃO executados —
   SSH público indisponível na estação (publickey). Canal credenciado.
 - DR-3 pendente; custos source_missing. Verdict: ACCEPT_WITH_RESIDUAL.
+
+## Atualização — Gate 046 (01/11/2026) — DEPLOY PRODUTIVO EXECUTADO
+
+- Publicação: todo o código R09 confirmado em origin/main (producer
+  7ca041a19b, G041 0acdf32b6a, G042 92c2ee44f8, BFF dd6552526d, CLARA
+  d1987532fa, MFE 8607173b56 + fix 586073e9b5). SSH GitHub funcional.
+- Typecheck MFE real (WSL): corrigidos variant/props/REPORT_META; 1 erro
+  PRÉ-EXISTENTE em CostClosingStatePage (contrato legado ClosingHero —
+  fora do escopo R09, owner plugins).
+- Homologação live local: api-delpi rebuildado com produtor R09
+  (healthy); 401 sem/com token inválido; BFF 401 noauth; READ_ACTIONS
+  contém report.billing_mod_breakdown.
+- DEPLOY PRODUTIVO (srv-api): git pull --no-rebase → ae8c587c; rebuild
+  api-delpi + controllership-finance-api + controllership-finance via
+  up-prod-sequential.sh. Verificado em prod: producer file presente,
+  health 200, BFF módulo + registry OK, gateway 401 noauth, serviços
+  compartilhados sem regressão.
+- Cadeia positiva (usuário autenticado) e validação CLARA via ChatGPT:
+  aguardam credencial de usuário/execução do PO — NÃO classificadas.
+- DR-3 pendente; custos source_missing. Verdict: ACCEPT_WITH_RESIDUAL.

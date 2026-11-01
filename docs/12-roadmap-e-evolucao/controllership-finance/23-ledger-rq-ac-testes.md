@@ -1393,3 +1393,20 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Deploy produtivo | BLOQUEADO | SSH publickey estação; requer canal credenciado |
 | Portal MFE | FORA_DO_ESCOPO | pendente gate dedicado |
 | DR-3 homologação | PENDING | pacote preparado; aceite humano aguardado |
+
+---
+
+## R09-G045/G046 — MFE + deploy produtivo + homologação (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Página MFE R09 (hub Relatórios) | ATENDIDO | BillingModBreakdownPage + billingModBreakdownApi + wiring REPORT_META/ReportKey |
+| Typecheck/build MFE | EXECUTADO | tsc -b via WSL — R09 limpo; 1 erro pré-existente CostClosingStatePage (owner plugins) |
+| Publicação G045/G046 | ATENDIDO | 8607173b56, 586073e9b5 em origin/main |
+| Produtor R09 em prod | ATENDIDO | rebuild api-delpi; file presente; health 200; 401 noauth/bogus |
+| BFF R09 em prod | ATENDIDO | módulo + READ_ACTIONS verificados in-container |
+| CLARA read(report.billing_mod_breakdown) | REGISTRADO | registry runtime confirmado prod |
+| Deploy produtivo | EXECUTADO | up-prod-sequential.sh — 3 serviços, sem regressão |
+| Cadeia positiva usuário | TEST_NOT_RUN | requer Bearer Keycloak real |
+| Validação CLARA/Portal live pelo PO | PENDING | aguarda execução do PO |
+| DR-3 | PENDING | operational_view ativa; paridade oficial pendente |
