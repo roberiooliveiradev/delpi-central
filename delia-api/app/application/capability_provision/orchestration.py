@@ -444,6 +444,23 @@ def _group_unbound_feedback(tried_group: str) -> str:
 # proposal malformations the model may correct on a single retry.
 # Deliberate outcomes (empty_selection) are never retried — that
 # would pressure the model to invent a selection it judged absent.
+_EMPTY_RESULT_FEEDBACK = json.dumps(
+    {
+        "owner_feedback": {
+            "kind": "owner_empty_result",
+            "detail": (
+                "The previous argument set returned no records. "
+                "Reformulate the search arguments once: preserve the "
+                "business subject, identifiers, quantities and "
+                "technical qualifiers; you may drop filler wording or "
+                "use the canonical designation — return empty "
+                "arguments only when nothing plausible applies."
+            ),
+        }
+    },
+    ensure_ascii=False,
+)
+
 _SYNTHESIS_RETRYABLE_REASONS = frozenset(
     {
         "proposal_absent",
@@ -2738,114 +2755,6 @@ _FREE_TEXT_ARGUMENT_KEYS = frozenset(
 )
 
 
-def _singular_form(token: str) -> str:
-    """Conservative Portuguese singular form of one designation token.
-
-    Used only as the bounded empty-result retry designation — never
-    replaces the first attempt — so over-normalization can only add
-    an owner call inside the already-budgeted recovery round, never
-    fabricate or hide records. Accent-marked finals are respected:
-    ``óculos`` stays a first-attempt term; ``ilhós`` -> ``ilhó``.
-    """
-    low = token.lower()
-    if len(low) < 4 or not low[-1].isalpha():
-        return token
-    # -veis is a productive plural class whose singular is -vel
-    # (fusíveis -> fusível, móveis -> móvel); it precedes the éis/eis
-    # rules because the accent falls on the í, not on the final e.
-    if low.endswith("veis"):
-        return token[:-4] + "vel"
-    if low.endswith(("ões", "ães", "ãos")):
-        return token[:-3] + "ão"
-    if low.endswith("ais"):
-        return token[:-3] + "al"
-    if low.endswith("éis"):
-        return token[:-3] + "el"
-    if low.endswith("óis"):
-        return token[:-3] + "ol"
-    if low.endswith("ós"):
-        return token[:-2] + "ó"
-    if low.endswith(("res", "zes")):
-        return token[:-2]
-    if low.endswith("es") and low[-3] in "rln":
-        return token[:-2]
-    # -is/-us endings are never productive PT plurals (lápis, tênis,
-    # vírus, ônibus stay invariant) — stripping them is
-    # over-normalization that produces a nonexistent form.
-    if low.endswith(("is", "us")):
-        return token
-    if low.endswith("s") and low[-2] in "aeiou":
-        return token[:-1]
-    return token
-
-
-def _canonical_subject_args(
-    arguments: Mapping[str, Any], subject: str
-) -> dict[str, Any] | None:
-    """Free-text search fields rebound to the canonical designation.
-
-    The canonical designation is the governed business_subject in
-    singular form — the same normalization the designation contract
-    already declares. Returns the rebound mapping only when a
-    declared free-text field carried a different non-empty phrasing
-    (plural drift, filler qualifiers, colloquial state words); the
-    rebinding is contract application, not inference. ``None``
-    means nothing to retry.
-    """
-    subject = (subject or "").strip()
-    if not subject or not isinstance(arguments, Mapping):
-        return None
-    designation = " ".join(
-        _singular_form(token) for token in subject.split()
-    )
-    rebound = dict(arguments)
-    touched = False
-    for key in _FREE_TEXT_ARGUMENT_KEYS:
-        value = rebound.get(key)
-        if (
-            isinstance(value, str)
-            and value.strip()
-            and value.strip() != designation
-        ):
-            rebound[key] = designation
-            touched = True
-    if touched:
-        return rebound
-    # Nothing to rebind — the phrasing already equals the canonical
-    # designation. An empty owner response is then a miss hypothesis
-    # of scope, not phrasing: retry once under the minimal
-    # designation (singularized head token — e.g. a compound
-    # qualifier the owner tokenizes differently stays authoritative
-    # either way because the owner remains the final validator).
-    tokens = [
-        t for t in designation.split() if t and t[0].isalpha()
-    ]
-    if len(tokens) < 2:
-        return None
-    # Never drop a spec/model qualifier: a short or digit-bearing
-    # token ("O2", "M23", "10") materially narrows the ask — retrying
-    # without it surfaces records of the wrong variant, which is
-    # worse than an honest empty (a compound qualifier the owner
-    # tokenizes differently stays the only head-retry case).
-    if any(
-        len(t) <= 3 or any(ch.isdigit() for ch in t)
-        for t in tokens[1:]
-    ):
-        return None
-    head = tokens[0]
-    rebound = dict(arguments)
-    for key in _FREE_TEXT_ARGUMENT_KEYS:
-        value = rebound.get(key)
-        if (
-            isinstance(value, str)
-            and value.strip()
-            and value.strip() != head
-        ):
-            rebound[key] = head
-            touched = True
-    return rebound if touched else None
-
-
 def _free_text_is_verbatim_request(
     arguments: Mapping[str, Any],
     input_text: str,
@@ -2863,7 +2772,6 @@ def _free_text_is_verbatim_request(
     request = (input_text or "").strip().strip("?!.").lower()
     if not request:
         return False
-    subject = (business_subject or "").strip().lower()
     for key in _FREE_TEXT_ARGUMENT_KEYS:
         value = arguments.get(key)
         if not isinstance(value, str):
@@ -2871,18 +2779,12 @@ def _free_text_is_verbatim_request(
         normalized = value.strip().strip("?!.").lower()
         if not normalized:
             continue
+        # Structural check only: the emitted value equals the literal
+        # request — the declared invariant violation. Whether a
+        # sub-phrase of the request is a legitimate subject is a
+        # semantic judgment that belongs to the model proposal, not
+        # to substring containment.
         if normalized == request:
-            return True
-        if subject and normalized == subject:
-            continue
-        # The request minus politeness/question words still verbatim —
-        # a value contained in (or containing) the literal request is
-        # verbiage, not a formulated subject.
-        if (
-            subject
-            and normalized != subject
-            and (normalized in request or request in normalized)
-        ):
             return True
     return False
 
@@ -12949,35 +12851,64 @@ class OperationalCapabilityOrchestrator:
                         correlation,
                         deadline,
                     )
-                    # Bounded canonical retry (Task 21): an empty
-                    # business collection under a phrasing that drifts
-                    # from the governed designation (plural, filler
-                    # qualifiers, colloquial state words) is a miss
-                    # hypothesis, not proven absence — one re-invoke
-                    # under the canonical subject, spending the same
-                    # shared recovery round. Identical phrasing stays
-                    # honest absence; the owner stays the final
-                    # validator either way.
-                    subject = (
-                        goal.business_subject
-                        if goal is not None
-                        else None
-                    )
-                    rebound = (
-                        _canonical_subject_args(merged, subject)
-                        if isinstance(subject, str)
-                        else None
-                    )
+                    # Bounded governed reformulation (Task 23): an
+                    # empty business collection is a miss hypothesis,
+                    # not proven absence — but the reformulation is a
+                    # semantic decision, so it belongs to the model,
+                    # not to a deterministic string transform. One
+                    # bounded re-proposal under typed owner feedback
+                    # ("no records returned — reformulate the search
+                    # arguments preserving the business subject,
+                    # identifiers, quantities and qualifiers"); the
+                    # schema validates the result and the owner stays
+                    # the final validator. Identical re-proposals
+                    # still get one governed retry — the bounded round
+                    # already spent is the same one.
+                    facts = outcome_facts(chained)
                     if (
-                        rebound is not None
+                        not facts.has_business_evidence
                         and not _DESIGNATION_RETRY_USED.get()
                     ):
-                        facts = outcome_facts(chained)
-                        if not facts.has_business_evidence:
-                            _DESIGNATION_RETRY_USED.set(True)
+                        _DESIGNATION_RETRY_USED.set(True)
+                        retry_args = self._propose_candidate_arguments(
+                            input_text,
+                            candidate.get("argument_schema"),
+                            prior_turns,
+                            correlation=correlation,
+                            deadline=deadline,
+                            business_subject=(
+                                goal.business_subject
+                                if goal is not None
+                                else None
+                            ),
+                            answer_requirements=(
+                                goal.answer_requirements
+                                if goal is not None
+                                else None
+                            ),
+                            workspace_context=workspace_context,
+                            owner_feedback=_EMPTY_RESULT_FEEDBACK,
+                        )
+                        retry_merged = (
+                            _validate_instance(
+                                dict(retry_args),
+                                candidate.get("argument_schema")
+                                if isinstance(
+                                    candidate.get("argument_schema"),
+                                    Mapping,
+                                )
+                                else {},
+                            )
+                            if isinstance(retry_args, Mapping)
+                            else None
+                        )
+                        if (
+                            retry_merged is not None
+                            and retry_merged != merged
+                        ):
                             _logger.info(
                                 "orchestration stage=execute_retry "
-                                "decision=canonical_subject "
+                                "decision=owner_empty_reformulation "
                                 "correlation_id=%s",
                                 correlation,
                             )
@@ -12988,7 +12919,7 @@ class OperationalCapabilityOrchestrator:
                                     CANDIDATE_TOKEN_FIELD: candidate[
                                         CANDIDATE_TOKEN_FIELD
                                     ],
-                                    "arguments": rebound,
+                                    "arguments": retry_merged,
                                 },
                                 correlation,
                                 deadline,
@@ -13513,6 +13444,7 @@ class OperationalCapabilityOrchestrator:
         business_subject: str | None = None,
         answer_requirements: Any = None,
         workspace_context: "WorkspaceContext | None" = None,
+        owner_feedback: str | None = None,
     ) -> Mapping[str, Any] | None:
         """Bounded model proposal of inner arguments, schema-scoped."""
         # The candidate's inner schema is the argument contract —
@@ -13529,6 +13461,12 @@ class OperationalCapabilityOrchestrator:
             payload_fields["declared_requirements"] = (
                 declared_requirements
             )
+        if owner_feedback:
+            # Typed untrusted signal (same family as the governed
+            # recovery feedbacks): informs the model that the previous
+            # arguments returned no records; the reformulation is the
+            # model's semantic decision, never a string transform.
+            payload_fields["owner_feedback"] = json.loads(owner_feedback)
         schema_payload = _json_block(
             {**payload_fields, "schema": schema or {"type": "object"}}
             if payload_fields

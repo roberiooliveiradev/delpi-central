@@ -922,3 +922,13 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Corpus T22 V3 (21 t2_*: parafuso/porca/arruela/abracadeira/rolamento/correia/tubo/code/absent/TEO/VISTA/continuity/workspace/prepare/negativos) congelado pré-execução.
 - BATERIAS GPU: main 40/47=85,1%; heldout 16/20=80%; t22heldout ~10/~10/11 de 21 = 48-52% -> SEMANTIC_GENERALIZATION_GATE=FAIL. Residuais model-bound (GROUP_SELECTION, chain-death, ADMISSION) — confirma decisão de modelo (Alternativa B).
 - DEPLOY_EXECUTED=NO (gate falhou). PRODUCTION_CALLS=0 nesta task.
+
+## 2026-10-31 — DELIA-C3-SEMANTIC-HEURISTICS-REMOVAL-AND-80PCT-RECOVERY-01 (Task 23, doc 210 §10) — heurísticas removidas; gate held-out FAIL
+- Inventário: 11 artefatos avaliados — 2 REMOVED (_singular_form, _canonical_subject_args — NLP-PT decide reformulação), 1 NARROWED (_free_text_is_verbatim_request: só igualdade exata; containment substring era julgamento semântico e causava rejeições falsas + custo), 8 KEEP-B/D (identifier/temporal/format regex, _NAMED_PROVIDER_RE só-provider-ausente, fuzzy-membership unívoco fail-closed, sentence-split formatação).
+- Substituição sem camada nova: coleção vazia -> _EMPTY_RESULT_FEEDBACK (sinal tipado untrusted) -> _propose_candidate_arguments (modelo propõe) -> _validate_instance -> re-invoke bounded 1x (_DESIGNATION_RETRY_USED como bound do retry semântico).
+- Suíte: 6/6 arquivo + focada GREEN.
+- BATERIAS GPU: main 41/47=87,2% (melhor histórico); heldout 17/20=85%; t22heldout ~10/~11/~10 de 21=48-52% -> MINIMUM_80PCT_GATE=FAIL (model-bound residual; ARCHITECTURE_DECISION_REQUIRED Alt.B). Zero write-invokes/fabricações.
+- PRODUCTION_DEPLOY=NO; PRODUCTION_CALLS=0.
+
+## 2026-10-31 — DELIA-C3-MODEL-CAPABILITY-COMPARATIVE-EVALUATION-01 (Task 24, doc 210 §11)
+- Experimento única-variável DELIA_LLM_MODEL em t22heldout-21, código fe13b9fac2 congelado: qwen3:4b ~10-11/21 (~50%) vs qwen2.5:3b 7/20=35%. MODEL_CAPACITY_LIMITATION=PROVEN para a família de falhas do held-out novo. MODEL_B_LARGER_7B_8B=NOT_FEASIBLE (nenhum modelo maior local; download fora de escopo). PRODUCTION_DEPLOY=NO; PRODUCTION_CALLS=0.

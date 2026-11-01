@@ -40,6 +40,8 @@ class PdfTextExtraction:
     text_chars: int = 0
     scanned_or_empty: bool = False
     limitations: list[str] = field(default_factory=list)
+    # R6-A: canal aditivo para proveniência espacial/provider.
+    metadata: dict = field(default_factory=dict)
 
 
 def extract_pdf_text(pdf_bytes: bytes) -> PdfTextExtraction:
