@@ -932,3 +932,8 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 
 ## 2026-10-31 — DELIA-C3-MODEL-CAPABILITY-COMPARATIVE-EVALUATION-01 (Task 24, doc 210 §11)
 - Experimento única-variável DELIA_LLM_MODEL em t22heldout-21, código fe13b9fac2 congelado: qwen3:4b ~10-11/21 (~50%) vs qwen2.5:3b 7/20=35%. MODEL_CAPACITY_LIMITATION=PROVEN para a família de falhas do held-out novo. MODEL_B_LARGER_7B_8B=NOT_FEASIBLE (nenhum modelo maior local; download fora de escopo). PRODUCTION_DEPLOY=NO; PRODUCTION_CALLS=0.
+
+## 2026-11-01 — DELIA-C3-ASCENDING-LOCAL-MODEL-EVALUATION-01 (Task 25, doc 210 §12) — hipótese de modelo maior REJEITADA
+- Download autorizado: qwen3:8b (5.2GB q4_K_M). Stock e thinking-model -> content vazio no adapter frozen; criado delia-qwen3:8b (Modelfile FROM + template thinking-off) — compatibilidade registrada.
+- Bateria controlada DELIA_LLM_MODEL=delia-qwen3:8b, código fe13b9fac2 frozen: main 31/47=66% (vs 87% 4B), heldout 13/20=65% (vs 85%), t22heldout ~9/~9/~8=40-45% (vs ~50%). Cenario D: nenhum modelo supera baseline — 8B estritamente pior. Mais parametros != mais aderencia a contrato.
+- MINIMUM_80PCT_GATE=FAIL. PRODUCTION_DEPLOY=NO. Next bounded step: categoria diferente (14B+ nao cabe em 6GB; provider externo = decisao de arquitetura).

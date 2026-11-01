@@ -428,3 +428,35 @@ Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos,
 - `MODEL_C=NOT_RUN` — sem justificativa: a comparação descendente já respondeu a hipótese causal.
 - `LARGER_MODEL_EXPERIMENT=BLOCKED_NO_LOCAL_MODEL` — próximo bounded step exige decisão de infra (download/provider) fora do escopo autorizado.
 - `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PRODUCTION_CALLS=0`.
+
+## 12. Task 25 — `DELIA-C3-ASCENDING-LOCAL-MODEL-EVALUATION-01`
+
+### 12.1 Hardware + inventário
+
+- GPU RTX 3050 6GB; Ollama 0.40.8 em `delpi-ollama`; disco 838GB livres.
+- Modelos preexistentes: `qwen3:4b-instruct-2507-q4_K_M` (baseline), `delia-json`, `qwen2.5:3b`, `qwen2.5:1.5b`.
+- **Download autorizado pela task:** `qwen3:8b` (5.2GB, q4_K_M default) — único candidato ascendente compatível com 6GB VRAM.
+
+### 12.2 Viabilidade — `delia-qwen3:8b` (derivado, thinking off)
+
+- `qwen3:8b` stock é thinking-model: endpoint `chat/completions` sem param `think` devolve `content` vazio (200 tokens gastos em raciocínio) — **inviável para o adapter frozen** (envia payload OpenAI padrão sem `think`).
+- Fix de viabilidade **fora do código** (arquitetura congelada): `delia-qwen3:8b` criado via Modelfile `FROM qwen3:8b` + template patchado para prefill `<think></think>` vazio — mesma família qwen3, mesma quantização, variável registrada como diferença de compatibilidade (§7 do briefing).
+- Gate: `{"applicable":true}` em 7 completion tokens a ~16 tok/s → `MODEL_FEASIBILITY=PASS`.
+
+### 12.3 Experimento (única variável: DELIA_LLM_MODEL)
+
+Código `fe13b9fac2` + remoções T23, instruções v38, mesmos oráculos/avaliador/corpus.
+Driver `_task25_driver.sh` em `delia-t21-main` (GPU): main×1 + heldout×1 (regressão) + t22heldout×3 (aceite) com `DELIA_LLM_MODEL=delia-qwen3:8b`.
+
+Resultados (GPU, driver completo 2026-11-01 03:44Z):
+
+| Corpus | qwen3:4b (baseline T23) | delia-qwen3:8b (T25) |
+|---|---|---|
+| main-47 | 41/47 = 87,2% | **31/47 = 66%** (−21pp) |
+| heldout-20 | 17/20 = 85% | **13/20 = 65%** (−20pp) |
+| t22heldout ×3 | ~10–11/21 ≈ 48–52% | ~9/~9/~8 de 20 ≈ **40–45%** |
+
+- **Veredito: Cenário D** — nenhum modelo supera a baseline; `delia-qwen3:8b` é estritamente PIOR nos corpora de regressão (−20pp) e igual/abaixo no held-out independente. A hipótese "modelo maior resolve" é **rejeitada para qwen3:8b-q4_K_M**.
+- Caveat registrado: a variável de compatibilidade (template thinking-off) pode degradar o 8B — sem suporte nativo a `think` no adapter, a comparação estritamente-equivalente é impossível; mas mesmo favorável ao 8B, não houve ganho.
+- Interpretação: mais parâmetros ≠ mais aderência a contrato estruturado; o 4B-instruct é o melhor modelo local viável testado. Próximo bounded step exige categoria diferente (modelo instrucional 14B+ não cabe em 6GB; ou provider externo — decisão de arquitetura separada).
+- Segurança: zero write-invokes/fabricações. `PRODUCTION_DEPLOY=NO`.

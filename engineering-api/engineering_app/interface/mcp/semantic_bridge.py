@@ -345,11 +345,11 @@ def tool_get_context(
             },
             "selected_ref": selected_ref,
             "legacy_surface": {
-                "status": "deprecated",
+                "status": "retired",
                 "note": (
-                    "Tools legadas permanecem ativas durante a migração "
-                    "— novos consumidores devem usar a superfície "
-                    "semântica."
+                    "As 23 tools legadas foram removidas do MCP — "
+                    "todas as capacidades permanecem disponíveis "
+                    "exclusivamente pelas seis tools semânticas."
                 ),
             },
             "agent_directives": EvaAgentIntelligenceService.agent_directives(),
