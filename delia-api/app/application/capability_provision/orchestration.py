@@ -210,6 +210,14 @@ from app.application.capability_provision.outcome_assessment import (
     _value_present,
     _wording_leaks_technical,
 )
+from app.application.capability_provision.subobjective_tracker import (
+    SUBOBJECTIVE_COMPLETED,
+    SUBOBJECTIVE_PARTIAL,
+    SubObjective,
+    SubObjectiveTracker,
+    TERMINAL_STATES,
+    MAX_SUBOBJECTIVES_PER_INVESTIGATION,
+)
 from app.application.capability_provision.paginated_result_semantics import (
     DEFAULT_MAX_PAGES,
     PaginationEnvelope,
@@ -371,6 +379,10 @@ FOREIGN_SELECTION_INSTRUCTION_ID = (
 
 GOAL_INSTRUCTION_ID = (
     "delia.capability_orchestration.turn_goal"
+)
+
+SUBOBJECTIVES_INSTRUCTION_ID = (
+    "delia.capability_orchestration.subobjectives"
 )
 
 # CRI E2 (doc 73 §3-§6 / spec 75): when the response-intelligence
@@ -4191,6 +4203,7 @@ ORCHESTRATION_INSTRUCTION_KEYS = frozenset(
         CANDIDATE_SELECTION_INSTRUCTION_ID,
         INTERACTION_ADMISSION_INSTRUCTION_ID,
         GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
+        SUBOBJECTIVES_INSTRUCTION_ID,
     }
 )
 
@@ -5043,6 +5056,7 @@ class OperationalCapabilityOrchestrator:
         prepare_only: bool,
         unbound_outcome: str | None,
         deadline: TurnDeadline,
+        depth: int = 0,
     ) -> GovernedCapabilityAttempt:
         """Owner-path tail of _attempt: after typed admission
         clears the turn, everything from the live surface listing
@@ -5184,6 +5198,32 @@ class OperationalCapabilityOrchestrator:
                                 "fallthrough correlation_id=%s",
                                 correlation,
                             )
+
+        # S3 (doc 214): a compound objective decomposes into explicit
+        # tracked subobjectives investigated through the SAME governed
+        # path — decomposition is a bounded model proposal validated
+        # fail-closed; a single subobjective or no proposal continues
+        # the efficient single-capability path unchanged. Sub-investigations
+        # run at depth>0 and never decompose further.
+        if depth == 0:
+            subobjectives = self._decompose_objective(
+                input_text,
+                correlation=correlation,
+                workspace_context=workspace_context,
+                deadline=deadline,
+            )
+            if subobjectives is not None:
+                return self._investigate_subobjectives(
+                    subobjectives,
+                    input_text,
+                    correlation=correlation,
+                    actor_user_id=actor_user_id,
+                    session_id=session_id,
+                    workspace_context=workspace_context,
+                    prepare_only=prepare_only,
+                    deadline=deadline,
+                    depth=depth + 1,
+                )
 
         # Selection must not receive full prior transcript (Stage 05
         # latency). A bounded untrusted prior_observation may be embedded in the
@@ -6544,6 +6584,307 @@ class OperationalCapabilityOrchestrator:
         arguments: dict[str, Any] | None = None
         attempt: GovernedCapabilityAttempt | None = None
         owner_evidence: str | None = None
+
+    # -------- S3 (doc 214): explicit subobjective investigation --------
+
+    _SUBOBJECTIVE_ALLOWED_KEYS = frozenset({"subobjectives"})
+    _SUBOBJECTIVE_MAX_GOAL_CHARS = 240
+
+    def _decompose_objective(
+        self,
+        input_text: str,
+        *,
+        correlation: str,
+        workspace_context: WorkspaceContext | None,
+        deadline: TurnDeadline,
+    ) -> tuple[SubObjective, ...] | None:
+        """Bounded decomposition proposal for a compound objective.
+
+        The model proposes semantic subobjectives; the deterministic
+        runtime validates the proposal fail-closed — any malformed
+        item, forward/self dependency or overrun count discards the
+        whole proposal and the turn continues on the efficient
+        single-capability path. Decomposition is never invented: with
+        no proposal, or a single/empty list, nothing decomposes.
+        """
+        instruction = self._instruction(SUBOBJECTIVES_INSTRUCTION_ID)
+        if not instruction:
+            # A governed stage without its instruction text cannot run
+            # safely — same fail-closed contract as the resource loader;
+            # turns without the governed resource keep the efficient
+            # single-capability path.
+            return None
+        if deadline is not None and deadline.remaining_seconds() <= 0:
+            return None
+        proposal = self._propose(
+            input_text,
+            block_tag="subobjective_decomposition",
+            block_payload="{}",
+            instruction_id=SUBOBJECTIVES_INSTRUCTION_ID,
+            instruction=instruction,
+            instruction_version=self._cri_instruction_version,
+            expected_fields=("subobjectives",),
+            input_kind="subobjective_decomposition",
+            allowed_keys=self._SUBOBJECTIVE_ALLOWED_KEYS,
+            workspace_context=workspace_context,
+            correlation=correlation,
+            deadline=deadline,
+        )
+        if proposal is None:
+            return None
+        return self._subobjectives_from_proposal(proposal, correlation)
+
+    def _subobjectives_from_proposal(
+        self, proposal: Mapping[str, Any], correlation: str
+    ) -> tuple[SubObjective, ...] | None:
+        raw = proposal.get("subobjectives")
+        if not isinstance(raw, (list, tuple)):
+            return None
+        if len(raw) < 2 or len(raw) > MAX_SUBOBJECTIVES_PER_INVESTIGATION:
+            _logger.info(
+                "orchestration stage=subobjective_decomposition "
+                "decision=skip count=%d correlation_id=%s",
+                len(raw) if isinstance(raw, (list, tuple)) else -1,
+                correlation,
+            )
+            return None
+        objectives: list[SubObjective] = []
+        for index, item in enumerate(raw):
+            if not isinstance(item, Mapping):
+                return None
+            goal = str(item.get("goal") or "").strip()
+            if not goal or len(goal) > self._SUBOBJECTIVE_MAX_GOAL_CHARS:
+                return None
+            depends_on = item.get("depends_on") or ()
+            if not isinstance(depends_on, (list, tuple)):
+                return None
+            dep_ids: list[str] = []
+            for dep in depends_on:
+                if (
+                    not isinstance(dep, int)
+                    or isinstance(dep, bool)
+                    or dep < 0
+                    or dep >= index
+                ):
+                    # Unknown, self or forward dependency — the whole
+                    # proposal is untrusted garbage; fail closed.
+                    return None
+                dep_ids.append(f"so_{dep + 1}")
+            evidence_needed = item.get("evidence_needed") or ()
+            if not isinstance(evidence_needed, (list, tuple)):
+                return None
+            objectives.append(
+                SubObjective(
+                    subobjective_id=f"so_{index + 1}",
+                    goal=goal,
+                    dependencies=tuple(dep_ids),
+                    evidence_needed=tuple(
+                        str(e)[: self._SUBOBJECTIVE_MAX_GOAL_CHARS]
+                        for e in evidence_needed
+                        if str(e).strip()
+                    ),
+                )
+            )
+        _logger.info(
+            "orchestration stage=subobjective_decomposition "
+            "decision=decomposed count=%d correlation_id=%s",
+            len(objectives),
+            correlation,
+        )
+        return tuple(objectives)
+
+    def _investigate_subobjectives(
+        self,
+        objectives: tuple[SubObjective, ...],
+        input_text: str,
+        *,
+        correlation: str,
+        actor_user_id: str | None,
+        session_id: str | None,
+        workspace_context: WorkspaceContext | None,
+        prepare_only: bool,
+        deadline: TurnDeadline,
+        depth: int,
+    ) -> GovernedCapabilityAttempt:
+        """Run tracked subobjectives through the SAME governed owner
+        path — one sub-investigation per subobjective, dependencies
+        enforced by the tracker, budgets shared with the parent turn
+        (the same TurnDeadline bounds the whole investigation).
+        Sub-investigations run at depth>0 and never decompose."""
+        tracker = SubObjectiveTracker(objectives)
+        contents: list[str] = []
+        limitations: list[str] = []
+        saw_source_unavailable = False
+        saw_authz_denied = False
+        while not tracker.is_finished():
+            if deadline is not None and deadline.remaining_seconds() <= 0:
+                tracker.expire_pending(gap="investigation budget exhausted")
+                break
+            schedulable = [
+                oid
+                for oid in tracker.ready_ids()
+            ]
+            schedulable += [
+                obj.subobjective_id
+                for obj in tracker.objectives
+                if tracker.retry_ready(obj.subobjective_id)
+            ]
+            if not schedulable:
+                break
+            for oid in schedulable:
+                if deadline is not None and (
+                    deadline.remaining_seconds() <= 0
+                ):
+                    tracker.expire_pending(
+                        gap="investigation budget exhausted"
+                    )
+                    break
+                sub = tracker.get(oid)
+                try:
+                    tracker.begin_attempt(oid)
+                except ValueError:
+                    continue
+                sub_attempt = self._governed_owner_path(
+                    sub.goal,
+                    correlation=f"{correlation}-{oid}",
+                    actor_user_id=actor_user_id,
+                    session_id=session_id,
+                    workspace_context=workspace_context,
+                    prior_turns=(),
+                    prepare_only=prepare_only,
+                    unbound_outcome=None,
+                    deadline=deadline,
+                    depth=depth,
+                )
+                self._record_subobjective_outcome(
+                    tracker, oid, sub_attempt
+                )
+                if sub_attempt.status is (
+                    GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+                ):
+                    saw_source_unavailable = True
+                if sub_attempt.status is (
+                    GovernedCapabilityStatus.AUTHZ_DENIED
+                ):
+                    saw_authz_denied = True
+                if (
+                    sub_attempt.status
+                    is GovernedCapabilityStatus.SUCCESS
+                    and sub_attempt.content
+                ):
+                    contents.append(sub_attempt.content)
+                limitations.extend(
+                    f"{oid}: {lim}" for lim in sub_attempt.limitations
+                )
+        return self._subobjective_attempt_result(
+            tracker,
+            contents,
+            limitations,
+            correlation=correlation,
+            saw_source_unavailable=saw_source_unavailable,
+            saw_authz_denied=saw_authz_denied,
+        )
+
+    def _record_subobjective_outcome(
+        self,
+        tracker: SubObjectiveTracker,
+        subobjective_id: str,
+        attempt: GovernedCapabilityAttempt,
+    ) -> None:
+        """Map the typed governed outcome onto the tracker state —
+        never infers success from a bare 200."""
+        status = attempt.status
+        provenance_ref = None
+        outcome = attempt.outcome
+        prov = getattr(outcome, "provenance", None) if outcome else None
+        if prov is not None:
+            provenance_ref = (
+                f"{getattr(prov, 'specialist_id', '')}."
+                f"{getattr(prov, 'remote_name', '')}"
+            )
+        if status is GovernedCapabilityStatus.SUCCESS:
+            refs = (
+                (provenance_ref,)
+                if provenance_ref
+                else (f"governed_attempt:{attempt.correlation_id}",)
+            )
+            if attempt.content:
+                tracker.complete(subobjective_id, evidence_refs=refs)
+            else:
+                tracker.conclude_partial(
+                    subobjective_id,
+                    gaps=("empty authoritative result",),
+                )
+            return
+        if status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE:
+            # Legitimate owner unavailability is a declared gap —
+            # an honest lacuna, never an arggen failure.
+            tracker.conclude_partial(
+                subobjective_id,
+                gaps=("authoritative source unavailable",),
+            )
+            return
+        if status is GovernedCapabilityStatus.PROCESSING_TIMEOUT:
+            tracker.fail(subobjective_id, recoverable=True)
+            return
+        # AUTHZ_DENIED (never retried silently), NOT_APPLICABLE,
+        # CLARIFICATION_REQUIRED, CONFIRMATION_REQUIRED,
+        # WRITE_REJECTED — a governed refusal is fail-closed here.
+        tracker.fail(subobjective_id, recoverable=False)
+
+    def _subobjective_attempt_result(
+        self,
+        tracker: SubObjectiveTracker,
+        contents: list[str],
+        limitations: list[str],
+        *,
+        correlation: str,
+        saw_source_unavailable: bool,
+        saw_authz_denied: bool,
+    ) -> GovernedCapabilityAttempt:
+        """Deterministic fan-in: honest coverage of the original
+        objective — every subobjective gap surfaces as a limitation;
+        nothing is summarized beyond what the owner paths grounded."""
+        coverage = tracker.coverage()
+        for obj in tracker.objectives:
+            for gap in obj.gaps:
+                limitations.append(
+                    f"{obj.subobjective_id} {obj.state}: {gap}"
+                )
+            if (
+                obj.state == SUBOBJECTIVE_COMPLETED
+                and not obj.evidence_refs
+            ):
+                # Structurally impossible — guarded invariant.
+                limitations.append(
+                    f"{obj.subobjective_id} completion unverified"
+                )
+        bounded_limitations = tuple(limitations[:24])
+        if contents:
+            status = GovernedCapabilityStatus.SUCCESS
+            content = "\n\n".join(contents)
+        elif saw_source_unavailable:
+            status = GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+            content = None
+        elif saw_authz_denied:
+            status = GovernedCapabilityStatus.AUTHZ_DENIED
+            content = None
+        else:
+            status = GovernedCapabilityStatus.NOT_APPLICABLE
+            content = None
+        _logger.info(
+            "orchestration stage=subobjective_investigation "
+            "decision=done status=%s coverage=%s correlation_id=%s",
+            status.value,
+            dict(coverage),
+            correlation,
+        )
+        return GovernedCapabilityAttempt(
+            status=status,
+            correlation_id=correlation,
+            content=content,
+            limitations=bounded_limitations,
+        )
 
     def _resolve_missing_inputs(
         self,
