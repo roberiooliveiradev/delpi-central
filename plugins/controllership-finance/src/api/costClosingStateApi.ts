@@ -41,16 +41,23 @@ export type CostClosingStatePayload = {
   limitations: string[];
 };
 
+type CfEnvelope<T> = {
+  success: boolean;
+  message?: string;
+  data: T;
+  meta?: Record<string, unknown>;
+};
+
 export function getCostClosingState(
   period: string,
   branch: string = "all",
 ): Promise<CostClosingStatePayload> {
   const params = new URLSearchParams({ branch });
-  return httpGet<CostClosingStatePayload>(
+  return httpGet<CfEnvelope<CostClosingStatePayload>>(
     cfApiUrl(
       `/closing/competences/${encodeURIComponent(
         period,
       )}/cost-closing-state?${params.toString()}`,
     ),
-  );
+  ).then((envelope) => envelope.data);
 }
