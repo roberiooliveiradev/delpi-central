@@ -937,3 +937,8 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Download autorizado: qwen3:8b (5.2GB q4_K_M). Stock e thinking-model -> content vazio no adapter frozen; criado delia-qwen3:8b (Modelfile FROM + template thinking-off) — compatibilidade registrada.
 - Bateria controlada DELIA_LLM_MODEL=delia-qwen3:8b, código fe13b9fac2 frozen: main 31/47=66% (vs 87% 4B), heldout 13/20=65% (vs 85%), t22heldout ~9/~9/~8=40-45% (vs ~50%). Cenario D: nenhum modelo supera baseline — 8B estritamente pior. Mais parametros != mais aderencia a contrato.
 - MINIMUM_80PCT_GATE=FAIL. PRODUCTION_DEPLOY=NO. Next bounded step: categoria diferente (14B+ nao cabe em 6GB; provider externo = decisao de arquitetura).
+
+## 2026-11-01 — DELIA-C3-CUSTOM-MCP-KEYCLOAK-INTEGRATION-AND-COMPOSITE-OUTCOME-RECOVERY-01 (Task 27, doc 210 §13) — integração 7/7 fia+KC; bateria 8/28 FAIL divergência projeção
+- 4 novos MCPs integrados (caio/clara/suri/eva): settings+config env-driven; 11 arquivos conflitados resolvidos (lado Stashed); containers supplies-mcp/commercial-api healthy; Keycloak KC24 convergido 7/7 (resource clients+scopes+exchange perms); corpus doc211 (28 verbatim) criado.
+- doc211 run1 GPU qwen3-4b: 8/28=29% — 12 GROUP_SELECTION + 8 ADMISSION; caps novos nunca invocados -> hipotese FIRST_DIVERGENCE=GROUP_PROJECTION (tools/list delegado ou payload omitindo grupos novos). Gate FAIL; correções seguem.
+- PRODUCTION_DEPLOY=NO; zero writes; 401 unauth correto nos 7 endpoints.

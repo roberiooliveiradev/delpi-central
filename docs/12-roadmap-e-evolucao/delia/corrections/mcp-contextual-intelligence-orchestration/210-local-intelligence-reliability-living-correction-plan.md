@@ -429,6 +429,25 @@ Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos,
 - `LARGER_MODEL_EXPERIMENT=BLOCKED_NO_LOCAL_MODEL` — próximo bounded step exige decisão de infra (download/provider) fora do escopo autorizado.
 - `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PRODUCTION_CALLS=0`.
 
+## 13. Task 27 — `DELIA-C3-CUSTOM-MCP-KEYCLOAK-INTEGRATION-AND-COMPOSITE-OUTCOME-RECOVERY-01`
+
+### 13.1 Inventário e integração (estado comprovado)
+
+- HEAD `bdb5731c`; Doc 211 = banco de 28 perguntas compostas (4/especialista × 7).
+- MCPs existentes: DAVI, TÉO, VISTA (já integrados). Novos integrados nesta task: **CAIO** (`commercial-api`, `mcp-commercial`), **CLARA** (`controllership-finance-api`, `mcp-controllership-finance`), **SURI** (`delpi-supplies-mcp` dedicado, `mcp-supplies`), **EVA** (`engineering-api`, `mcp-engineering`) — 4/4 com interfaces MCP próprias (`interface/mcp/server.py`).
+- Blocoers resolvidos: 11 arquivos com marcadores de conflito (workstreams SURI/CAIO/EVA, lado "Stashed" preservado); `supplies-mcp` + `commercial-api` rebuilt saudáveis.
+- **Fiação DELIA (diff mínimo):** `settings.py` — `mcp_specialist_endpoints`/`enabled` estendidos para caio/clara/suri/eva via `DELIA_MCP_{ID}_{BASE_URL,ENABLED,HOST_HEADER}`; `config.py` — `CANONICAL_MCP_CLIENT_IDS`/`RESOURCE_AUDIENCES` + iteração por mapa (não tuple hardcoded). Zero branches por provider.
+- **Keycloak (dev, bounded):** `delia_mcp_keycloak_state.py` estendido com `mcp-supplies`+`mcp-engineering`; `--apply` convergiu 7/7 resource clients + audience scopes + token-exchange permissions (KC24_LEGACY, infra-keycloak-1). Credencial `rober` recuperada via `_kc_admin_fix.py` (PBKDF2) + restart KC (cache).
+- **Corpus:** `DOC211_CORPUS` (28 cenários verbatim) + `doc211` pool no harness; CAPS por especialista; `want_owner` + `require_business_result` como oráculo mínimo (rubrica profunda por subobjetivo = residual documentado).
+
+### 13.2 Primeira bateria `doc211` (GPU, qwen3:4b)
+
+- **Run 1: 8/28 = 29%** — 20 FAIL (12 GROUP_SELECTION, 8 ADMISSION).
+- Divergência dominante: cenários caio/clara/suri/eva nunca invocam caps novos (seleção cai em `teo.analyze`/`davi.discover` ou `applicable:false`) — **os 4 grupos novos provavelmente não estão sendo projetados** (tools/list via token delegado para os novos resource clients é a hipótese a confirmar: exchange convergido no KC24 mas o adapter pode falhar silenciosamente → grupo ausente → modelo não pode escolher). PASSs concentrados em teo/vista/davi (providers já integrados).
+- `FIRST_DIVERGENCE=GROUP_PROJECTION` (hipótese sob investigação — não confirmada se é tools/list failing ou omissão de payload).
+- Segurança: zero writes; 401 unauth correto em todos os 7 endpoints.
+- `MINIMUM_80PCT_GATE=FAIL` nesta rodada; ciclos de correção seguem no próximo bounded step.
+
 ## 12. Task 25 — `DELIA-C3-ASCENDING-LOCAL-MODEL-EVALUATION-01`
 
 ### 12.1 Hardware + inventário
