@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 
 import {
   CfEmptyState,
-  CfLoadingCard,
   CfSectionCard,
   CfSelectField,
   CfStateBanner,
@@ -72,7 +71,7 @@ export function BillingModBreakdownPage({
 
   return (
     <div className="cf-page-stack" aria-label="Faturamento × MOD">
-      <CfStateBanner variant="info">
+      <CfStateBanner>
         <p className="cf-banner-title">
           Visão operacional — paridade oficial pendente
         </p>
@@ -95,7 +94,7 @@ export function BillingModBreakdownPage({
       </CfSectionCard>
 
       {state === null ? (
-        <CfLoadingCard label="Carregando faturamento × MOD…" />
+        <p aria-live="polite">Carregando faturamento × MOD…</p>
       ) : state.kind === "error" ? (
         <CfEmptyState
           classNames={cfEmptyStateClassNames}
