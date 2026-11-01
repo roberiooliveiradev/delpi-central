@@ -989,3 +989,5 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - GREEN probe clara: structuredContent tipado confirmado; diag direto: CODE=owner_argument_rejected + owner_hint via stack real.
 - doc211 pós-fix: 9/28 — EVA 0->3/4, TEO 1->2/4, SURI 3/4; VISTA 4->0 (clarificacoes genericas viraram execucao real que falha honestamente); cmp_10 recovery e2e provado (EXC->get_context->analyze COMPLETED); cmp_22/23 retry bounded sem loop.
 - Residual: arggen do modelo ainda inventa enums fora do contrato na 2a proposta; erros authz/policy permanecem fail-closed.
+
+## 2026-11-01 — Task 37: Doc 213 — inventario runtime B1 + matriz 5 frameworks (LangGraph EXTEND, PydanticAI ADOPT_BOUNDED, MCPSDK REUSE, LC-adapters REJECT, LlamaIndex DEFER) + arquitetura-alvo substituivel + slices S1-S7 status.
