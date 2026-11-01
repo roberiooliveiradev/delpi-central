@@ -359,6 +359,27 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "ground truth."
         ),
     ),
+    _a(
+        "product", "drawing_understanding", "analyze",
+        "Experimental structural understanding of the official product "
+        "drawing (drawing_understanding.v1): region candidates (title "
+        "block, component table, revision history, notes, drawing "
+        "area), identifier/revision/dimension candidates, table rows "
+        "and cells, multiplicity-aware BOM comparison and explicit "
+        "ambiguity — all built from OCR token evidence with full "
+        "provenance. Candidates are DRAFT only; never promoted to "
+        "engineering facts. Requires ENG_DRAWING_BENCHMARK_ENABLED and "
+        "ENG_DRAWING_OCR_BENCHMARK_ENABLED.",
+        "analysis",
+        fields=("product_code",),
+        notes=(
+            "Deterministic, explainable rules only (position/alignment "
+            "clustering); OCR confidence is never association "
+            "confidence; DIMENSION_TEXT_FOUND is not a verified "
+            "geometry association; BOM stays source of truth; absence "
+            "in OCR never proves absence in the drawing; read-only."
+        ),
+    ),
     # --- knowledge ----------------------------------------------------------
     _a(
         "nonconformity", "guide", "knowledge",

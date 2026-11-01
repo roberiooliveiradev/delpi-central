@@ -501,6 +501,10 @@ async def tool_analyze(
             return await _analyze_product_drawing(context, params, question)
         if kind == "product.drawing_benchmark":
             return await _analyze_drawing_benchmark(context, params, question)
+        if kind == "product.drawing_understanding":
+            return await _analyze_drawing_understanding(
+                context, params, question
+            )
         return _err(
             f"analysis_type '{kind}' não implementado.",
             status_code=501,
@@ -886,6 +890,150 @@ async def _analyze_drawing_benchmark(
             ),
         },
         "Benchmark multiprovider do desenho oficial.",
+    )
+
+
+def _structure_codes(payload: dict) -> list[str]:
+    """Extrai códigos de componentes da estrutura BOM (best-effort,
+    defensivo — contrato owner api-delpi pode evoluir)."""
+    codes: list[str] = []
+
+    def walk(node):
+        if isinstance(node, dict):
+            for key in ("component_code", "code", "product_code",
+                        "item_code", "code_son"):
+                v = node.get(key)
+                if isinstance(v, str) and v.strip().isdigit():
+                    codes.append(v.strip())
+            for v in node.values():
+                walk(v)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    walk(payload)
+    return codes
+
+
+async def _analyze_drawing_understanding(
+    context, params: dict, question: str | None
+) -> CallToolResult:
+    """analyze(product.drawing_understanding) — R8 experimental:
+    candidatos estruturados (regiões/carimbo/tabela/cotas/revisão) a
+    partir da evidência OCR já governada. Perfil fixo visual; consumidor
+    não escolhe algoritmo; resultado permanece DRAFT/candidate."""
+    import os
+
+    from engineering_app.application.drawing.document_benchmark_service import (  # noqa: E501
+        run_official_document_benchmark,
+    )
+    from engineering_app.application.drawing.drawing_analysis_service import (  # noqa: E501
+        DrawingAnalysisError,
+    )
+    from engineering_app.application.drawing.understanding import (
+        build_understanding,
+    )
+
+    if os.environ.get(_BENCHMARK_FLAG) != "true":
+        return _err(
+            "Benchmark experimental de desenho desabilitado neste "
+            "ambiente.",
+            status_code=403,
+            code="feature_disabled",
+        )
+    if os.environ.get(_OCR_BENCHMARK_FLAG) != "true":
+        return _err(
+            "Perfil visual OCR experimental desabilitado neste "
+            "ambiente.",
+            status_code=403,
+            code="feature_disabled",
+            data={"required_flag": _OCR_BENCHMARK_FLAG},
+        )
+    code = str(params.get("product_code") or "").strip()
+    if not code:
+        return _err(
+            "product_code obrigatório para product.drawing_understanding.",
+            code="validation",
+        )
+    spec = _BENCHMARK_PROFILES["approved_local_visual_ocr"]
+    ctx = bridge._source_context(context)
+    try:
+        out = await run_official_document_benchmark(
+            code=code,
+            source=bridge.build_delegated_auxiliary_source(),
+            ctx=ctx,
+            providers=None,
+            visual_pipelines=spec.get("pipelines"),
+            corpus_id="official_drawing",
+            environment="mcp_governed",
+        )
+    except DrawingAnalysisError as exc:
+        return _err(
+            str(exc), status_code=exc.status_code, code=exc.code
+        )
+    runs = [
+        r
+        for r in out["runs"]
+        if r.get("status") in {"ok", "partial"} and r.get("_tokens_sample")
+    ]
+    if not runs:
+        return _err(
+            "Nenhum pipeline visual retornou evidência OCR para "
+            "interpretação.",
+            status_code=422,
+            code="no_ocr_evidence",
+            data={
+                "run_statuses": [
+                    r.get("status") for r in out["runs"]
+                ]
+            },
+        )
+    best = max(runs, key=lambda r: r.get("token_count") or 0)
+    tokens = [
+        {
+            "normalized_text": t.get("normalized_text"),
+            "raw_text": t.get("raw_text"),
+            "bounding_box_px": t.get("bounding_box_px"),
+            "confidence": t.get("confidence"),
+            "page": t.get("page", 1),
+        }
+        for t in (best.get("_tokens_sample") or [])
+    ]
+    bom_codes: list[str] | None = None
+    try:
+        structure = await bridge.build_delegated_auxiliary_source().fetch_product_structure(  # noqa: E501
+            ctx, code=code
+        )
+        bom_codes = _structure_codes(structure or {}) or None
+    except Exception:
+        bom_codes = None
+    understanding = build_understanding(
+        tokens,
+        document_hash=best.get("document_hash") or "",
+        page=1,
+        bom_codes=bom_codes,
+    )
+    understanding["source_run"] = {
+        "provider_id": best.get("provider_id"),
+        "token_count": best.get("token_count"),
+        "token_sample_size": len(tokens),
+        "sampled": len(tokens) < (best.get("token_count") or 0),
+    }
+    return _ok(
+        {
+            "analysis_type": "product.drawing_understanding",
+            "question": question,
+            "document": out["document"],
+            "same_document_verified": out["same_document_verified"],
+            "understanding": understanding,
+            "quality_gate": "EVAL_PENDING",
+            "provenance": (
+                "api-delpi product/drawing/pdf (identidade delegada) → "
+                "PDFium render + local PaddleOCR (subprocess isolado) → "
+                "drawing_understanding.v1 deterministic rules"
+            ),
+        },
+        "Interpretação estrutural candidata do desenho oficial.",
     )
 
 
