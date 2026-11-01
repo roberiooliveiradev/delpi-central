@@ -14,7 +14,11 @@ from tv_app.application.services.data.slide_layout_quality_service import (
 _CONTENT = Path(__file__).resolve().parents[3] / "content" / "design_intelligence.json"
 
 _LABEL_KEYS = frozenset({"label", "bucket", "periodo", "date", "name", "categoria", "category"})
-_TEMPORAL_KEYS = frozenset({"date", "bucket", "periodo", "competencia", "granularity"})
+_TEMPORAL_KEYS = frozenset({
+    "date", "bucket", "periodo", "competencia", "granularity",
+    "dia", "mes", "ano", "data", "semana", "trimestre", "semestre",
+    "quarter", "month", "year", "day", "hora",
+})
 _GOAL_HINTS = ("target", "goal", "meta", "objetivo")
 _PERCENT_HINTS = ("pct", "percent", "rate", "taxa", "conversion")
 _CURRENCY_HINTS = ("revenue", "receita", "valor", "amount", "brl")
@@ -102,7 +106,14 @@ class DesignIntelligenceService:
         ("CHOOSE_VISUAL", ("qual grafico", "que grafico", "qual visual", "grafico devo", "qual tipo de grafico")),
         ("FIX_LAYOUT", ("sobrepo", "sobrepost", "fora do slide", "apertad", "organiz", "layout quebrad")),
         ("REVIEW_SLIDE", ("esta bom", "ta bom", "revise", "avalie", "como esta", "bonit")),
-        ("COMPOSE_SLIDE", ("executiv", "monte", "componha", "crie um slide", "novo slide")),
+        ("COMPOSE_SLIDE", (
+            "executiv", "monte", "componha", "crie um slide", "novo slide",
+            "crie um painel", "crie uma tv", "crie um tv",
+            "crie uma apresentacao", "nova apresentacao", "novo painel",
+            "monte uma apresentacao", "monte um painel", "monte uma tv",
+            "quero uma tv", "preciso de um painel", "preciso de uma tv",
+            "preciso de uma apresentacao", "tv mostrando",
+        )),
         ("IMPROVE_EXISTING", ("melhore", "melhorar", "destaque", "destacar", "deixe melhor", "polir")),
     )
 
@@ -482,7 +493,38 @@ class DesignIntelligenceService:
                 "alternatives": [{"type": "table_view", "reason": "exact values"}],
                 "rejected": [{"type": "pie", "reason": "too many categories"}],
             }
+        detail_dims = [
+            field
+            for field in digest.get("fields") or []
+            if isinstance(field, dict) and field.get("role") in {"dimension", "category"}
+        ]
+        if len(detail_dims) >= 3 and metrics:
+            return {
+                "recommendedType": "table_view",
+                "confidence": 0.7,
+                "reasons": ["detail listing with multiple dimensions"],
+                "alternatives": [{"type": "bar", "reason": "single-metric comparison"}],
+                "rejected": [{"type": "doughnut", "reason": "detail is not a composition"}],
+            }
         if composition and metrics:
+            cardinality_map = digest.get("categoryCardinality") or {}
+            cardinalities = [
+                cardinality_map.get(str(name))
+                for name in composition
+                if isinstance(cardinality_map, dict)
+            ]
+            cardinality = min(
+                (c for c in cardinalities if isinstance(c, int)),
+                default=99,
+            )
+            if cardinality <= 2:
+                return {
+                    "recommendedType": "bar",
+                    "confidence": 0.72,
+                    "reasons": ["two-category comparison is safer as bars than share slices"],
+                    "alternatives": [{"type": "doughnut", "reason": "if share-of-total matters"}],
+                    "rejected": [],
+                }
             return {
                 "recommendedType": "doughnut",
                 "confidence": 0.7,
@@ -673,9 +715,25 @@ def _block_ids_from_code(code: str) -> list[str]:
     return []
 
 
+def _temporal_value(sample: Any) -> bool:
+    """ISO/BR date-like sample values are evidence of a temporal role."""
+    import re
+
+    if not isinstance(sample, str):
+        return False
+    text = sample.strip()
+    return bool(
+        re.fullmatch(r"\d{4}-\d{2}(-\d{2})?(T.*)?", text)
+        or re.fullmatch(r"\d{2}/\d{2}(/\d{2,4})?", text)
+        or re.fullmatch(r"\d{2}-\d{2}-\d{4}", text)
+    )
+
+
 def _role_for(name: str, sample: Any) -> str:
     key = name.lower()
     if key in _TEMPORAL_KEYS or key.endswith("_date"):
+        return "temporal"
+    if _temporal_value(sample):
         return "temporal"
     if any(hint in key for hint in _GOAL_HINTS):
         return "goal"
