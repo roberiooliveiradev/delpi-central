@@ -31,6 +31,7 @@ from app.interfaces.mcp.oauth_contract import SURI_MCP_SECURITY_SCHEMES
 from app.interfaces.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interfaces.mcp.schemas import (
     ComexWriteOperation,
+    EnrichmentWriteOperation,
     EmptyFilters,
     UsersIdentity,
     UsersRelatedFilters,
@@ -397,12 +398,17 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def execute(
-        entity: Literal["suppliers", "comex"],
+        entity: Literal["suppliers", "comex", "enrichment"],
         action: Literal[
             "create", "update", "ncm_request",
             "ncm_transition", "view_create", "view_update",
+            "review_create", "decide", "decide_bulk",
+            "prepare_update",
         ],
-        operations: list[SupplierWriteOperation | ComexWriteOperation],
+        operations: list[
+            SupplierWriteOperation | ComexWriteOperation
+            | EnrichmentWriteOperation
+        ],
     ) -> CallToolResult:
         return _guarded(bridge.tool_execute)(entity, action, operations)
 

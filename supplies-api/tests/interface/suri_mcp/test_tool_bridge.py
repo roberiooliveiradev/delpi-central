@@ -30,7 +30,7 @@ class TestGetContext:
         assert data["subject"] == "user-1"
         assert data["capabilities"] == {"access": True, "manage": False}
         assert data["allowed_units"] == ["01", "02"]
-        assert data["mcp"]["catalog_version"] == 12
+        assert data["mcp"]["catalog_version"] == 13
 
     def test_catalog_lists_semantic_surface(self, access_context):
         access_context()
@@ -44,7 +44,7 @@ class TestGetContext:
             "knowledge",
             "execute",
         }
-        assert data["mcp"]["catalog_version"] == 12
+        assert data["mcp"]["catalog_version"] == 13
         caps = data["capabilities"]
         assert "purchase_orders" in caps["read"]["entities"]
         assert caps["analyze"]["analyses"] == [
@@ -77,6 +77,12 @@ class TestGetContext:
             "ncm_transition",
             "view_create",
             "view_update",
+        ]
+        assert caps["execute"]["entities"]["enrichment"]["actions"] == [
+            "decide",
+            "decide_bulk",
+            "prepare_update",
+            "review_create",
         ]
 
     def test_negative_anonymous_401(self, anonymous_context):
