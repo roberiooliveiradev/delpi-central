@@ -24,10 +24,21 @@
 
 ```bash
 cd /home/analistaptd/projetos/delpi-central && git status && git rev-parse HEAD
-docker ps | grep -E "delia|commercial|controllership|supplies|engineering|transformometro|tv-dashboard|keycloak"
-# re-verificar envelopes: python3 -c probe get_context clara (task36)
-# bateria doc211: CORPUS_SET=doc211 python3 scripts/local_orchestration_reliability_eval.py 1 (delia-t21-main)
+# HEAD esperado: ff41499261 (S2 enums owner-side) — workstreams concorrentes preservados (UU SURI ledger NÃO resolver aqui)
+wsl -e docker exec delia-t21-main python3 /app/scripts/_s2_schema_probe.py caio eva clara teo suri   # re-verificar enums no wire
+# bateria doc211 v2 (ENVS OBRIGATÓRIOS — container só habilita davi/teo/vista por default):
+wsl -e docker exec -e CORPUS_SET=doc211 \
+  -e DELIA_MCP_CAIO_ENABLED=1 -e DELIA_MCP_CAIO_BASE_URL=http://commercial-api:8000/mcp -e DELIA_MCP_CAIO_HOST_HEADER=localhost:8000 \
+  -e DELIA_MCP_CLARA_ENABLED=1 -e DELIA_MCP_CLARA_BASE_URL=http://controllership-finance-api:8000/mcp -e DELIA_MCP_CLARA_HOST_HEADER=localhost:8000 \
+  -e DELIA_MCP_EVA_ENABLED=1 -e DELIA_MCP_EVA_BASE_URL=http://engineering-api:8000/mcp -e DELIA_MCP_EVA_HOST_HEADER=localhost:8000 \
+  -e DELIA_MCP_SURI_ENABLED=1 -e DELIA_MCP_SURI_BASE_URL=http://supplies-mcp:8000/mcp -e DELIA_MCP_SURI_HOST_HEADER=localhost:8000 \
+  delia-t21-main python3 /app/scripts/local_orchestration_reliability_eval.py 1
+# arggen real isolado: wsl -e docker exec <mesmos -e> delia-t21-main python3 /app/scripts/_s2_arggen_probe.py
 ```
+
+## Resultado bateria doc211 v2 (SHA ff41499261, envs corretos)
+
+`{executions:4, outcomes:{PASS:2, FAIL:2}}` — cmp_03 PASS (caio.get_context COMPLETED), cmp_05 PASS (clara.get_context COMPLETED). cmp_13/cmp_19 FAIL `GROUP_SELECTION_ERROR` com eva.*/teo.* invocados — owner correto selecionado mas nenhum cap COMPLETED: primeira investigação da próxima sessão = status do invoke (arggen→invoke→reject?) via proposals/invokes do eval (adicionar dump de invokes por cenário ou rerodar cmp_13,cmp_19 com `-v`).
 
 ## Workstreams concorrentes ativos (não tocar)
 
