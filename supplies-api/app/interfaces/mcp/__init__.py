@@ -1,1 +1,1 @@
-"""SURI MCP — conversational adapter interface of supplies-api (read-only v1)."""
+"""SURI MCP — conversational adapter interface of supplies-api (semantic reads + governed writes (v6))."""

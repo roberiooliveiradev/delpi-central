@@ -27,8 +27,9 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 # rev.4 = suppliers reads + postal lookup + creation preview analysis;
 # rev.5 = purchase_requests reads + export datasets for SC/PO —
 # DECISION-G1 closed: export returns the canonical filtered JSON dataset,
-# not binary/base64 — file materialization stays on the BFF/Portal).
-CATALOG_VERSION = 5
+# not binary/base64 — file materialization stays on the BFF/Portal;
+# rev.6 = deliveries.late + inventory summary/items (P1-R3).
+CATALOG_VERSION = 6
 
 # DISCOVERY | READ | ANALYSIS | ACT — frozen semantic tool classes.
 # Metadata describes semantics; it NEVER authorizes execution.
@@ -100,6 +101,8 @@ READ_ACTIONS_BY_ENTITY: dict[str, frozenset[str]] = {
         }
     ),
     "postal_codes": frozenset({"lookup"}),
+    "deliveries": frozenset({"late"}),
+    "inventory": frozenset({"summary", "items"}),
 }
 READ_ENTITIES: frozenset[str] = frozenset(READ_ACTIONS_BY_ENTITY)
 ANALYSIS_KINDS: frozenset[str] = frozenset(
@@ -247,6 +250,58 @@ SUPPLIER_TAX_ID_FILTER_KEYS: frozenset[str] = frozenset(
 )
 SUPPLIER_OPERATION_IDENTITY_KEYS: frozenset[str] = frozenset({"operation_id"})
 POSTAL_CODE_IDENTITY_KEYS: frozenset[str] = frozenset({"postal_code"})
+# R-11 / R-12 (G3) — closed filter vocabularies, mirrored from the BFF
+# routes: deliveries (/deliveries/late) and inventory
+# (/inventory/stock-balances/{summary,items}).
+DELIVERIES_LATE_FILTER_KEYS: frozenset[str] = frozenset(
+    {
+        "branch",
+        "status",
+        "start_date",
+        "end_date",
+        "sort_by",
+        "sort_dir",
+        "page",
+        "page_size",
+    }
+)
+DELIVERIES_LATE_STATUS: frozenset[str] = frozenset({"late", "on_time"})
+DELIVERIES_LATE_SORT_KEYS: frozenset[str] = frozenset(
+    {
+        "status",
+        "branch",
+        "order_number",
+        "order_item",
+        "product_code",
+        "product_description",
+        "supplier_code",
+        "supplier_name",
+        "supplier_short_name",
+        "expected_delivery_date",
+        "receipt_entry_date",
+        "quantity",
+        "days_diff",
+    }
+)
+INVENTORY_SUMMARY_FILTER_KEYS: frozenset[str] = frozenset(
+    {"branch", "warehouse"}
+)
+INVENTORY_ITEMS_FILTER_KEYS: frozenset[str] = frozenset(
+    {"branch", "warehouse", "page", "page_size", "sort"}
+)
+INVENTORY_ITEMS_SORT_KEYS: frozenset[str] = frozenset(
+    {
+        "stock_value_desc",
+        "stock_value_asc",
+        "quantity_desc",
+        "quantity_asc",
+        "product_code_asc",
+        "product_code_desc",
+    }
+)
+INVENTORY_ITEMS_MAX_PAGE_SIZE = 500
+DELIVERIES_LATE_MAX_PAGE_SIZE = 1000
+
 SUPPLIER_PREVIEW_FILTER_KEYS: frozenset[str] = frozenset({"tax_id"})
 
 # Catalog limit and existing-suppliers page caps live with the canonical

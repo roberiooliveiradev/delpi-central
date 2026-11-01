@@ -33,6 +33,12 @@ from app.application.services.authorization_service import AuthorizationService
 from app.application.services.requester_identity_service import (
     RequesterIdentityService,
 )
+from app.application.services.inventory_stock_balances_service import (
+    InventoryStockBalancesService,
+)
+from app.application.services.late_deliveries_composition_service import (
+    LateDeliveriesCompositionService,
+)
 from app.application.services.supplier_creation_preview.preview_service import (
     SupplierCreationPreviewService,
 )
@@ -108,6 +114,9 @@ from app.interfaces.mcp.constants import (
     PR_REQUESTERS_FILTER_KEYS,
     PR_SEARCH_FILTER_KEYS,
     PR_SUMMARY_FILTER_KEYS,
+DELIVERIES_LATE_FILTER_KEYS,
+    INVENTORY_ITEMS_FILTER_KEYS,
+    INVENTORY_SUMMARY_FILTER_KEYS,
     READ_ACTIONS_BY_ENTITY,
     READ_ENTITIES,
     SEMANTIC_CAPABILITIES,
@@ -510,6 +519,9 @@ def tool_export_purchase_orders(filters: dict) -> CallToolResult:
 # purchase-requests-api, with the canonical RequesterIdentityService
 # enrichment on list/requesters/detail. No SC create/approve/cancel is
 # exposed — the Portal does not offer that workflow through this surface.
+
+_DELIVERIES_SERVICE = LateDeliveriesCompositionService()
+_INVENTORY_SERVICE = InventoryStockBalancesService()
 
 _PR_GATEWAY = PurchaseRequestsGateway()
 _PR_REQUESTER_IDENTITY = RequesterIdentityService()
@@ -1198,6 +1210,15 @@ def tool_read(
             normalized_action, filter_payload, identity_payload
         )
 
+    if normalized_entity == "deliveries":
+        return _dispatch_deliveries_read(
+            normalized_action, filter_payload, identity_payload
+        )
+    if normalized_entity == "inventory":
+        return _dispatch_inventory_read(
+            normalized_action, filter_payload, identity_payload
+        )
+
     if normalized_action == "search":
         if identity_payload:
             return _invalid(
@@ -1603,3 +1624,94 @@ def tool_execute(
         data,
         meta={"delpi/source": f"bff:/suppliers[{normalized_action}]"},
     )
+
+def _dispatch_deliveries_read(
+    action: str, filters: dict, identity: dict
+) -> CallToolResult:
+    if identity:
+        return _invalid("read(deliveries) does not accept 'identity'.")
+    unknown = _unknown_keys(filters, DELIVERIES_LATE_FILTER_KEYS)
+    if unknown:
+        return _invalid(
+            f"Unknown deliveries filters: {sorted(unknown)}. "
+            f"Allowed: {sorted(DELIVERIES_LATE_FILTER_KEYS)}"
+        )
+    return tool_deliveries_late(filters)
+
+
+def _dispatch_inventory_read(
+    action: str, filters: dict, identity: dict
+) -> CallToolResult:
+    if identity:
+        return _invalid("read(inventory) does not accept 'identity'.")
+    if action == "summary":
+        unknown = _unknown_keys(filters, INVENTORY_SUMMARY_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown inventory summary filters: {sorted(unknown)}. "
+                f"Allowed: {sorted(INVENTORY_SUMMARY_FILTER_KEYS)}"
+            )
+        return tool_inventory_summary(filters)
+    unknown = _unknown_keys(filters, INVENTORY_ITEMS_FILTER_KEYS)
+    if unknown:
+        return _invalid(
+            f"Unknown inventory items filters: {sorted(unknown)}. "
+            f"Allowed: {sorted(INVENTORY_ITEMS_FILTER_KEYS)}"
+        )
+    return tool_inventory_items(filters)
+
+
+def tool_deliveries_late(filters: dict) -> CallToolResult:
+    """read(deliveries,late) — same compose call as GET /deliveries/late."""
+    user = _operations_user()
+    try:
+        payload = _DELIVERIES_SERVICE.compose(
+            user,
+            branches=_clean_branches(filters.get("branch")),
+            status=filters.get("status"),
+            start_date=filters.get("start_date"),
+            end_date=filters.get("end_date"),
+            page=filters.get("page"),
+            page_size=filters.get("page_size"),
+            sort_by=filters.get("sort_by"),
+            sort_dir=filters.get("sort_dir"),
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(payload, meta={"delpi/source": "bff:/deliveries/late"})
+
+
+def tool_inventory_summary(filters: dict) -> CallToolResult:
+    """read(inventory,summary) — same call as /stock-balances/summary."""
+    user = _operations_user()
+    try:
+        payload = _INVENTORY_SERVICE.get_summary(
+            user,
+            branches=_clean_branches(filters.get("branch")),
+            warehouse=filters.get("warehouse"),
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(
+        payload, meta={"delpi/source": "bff:/inventory/stock-balances/summary"}
+    )
+
+
+def tool_inventory_items(filters: dict) -> CallToolResult:
+    """read(inventory,items) — same call as /stock-balances/items."""
+    user = _operations_user()
+    try:
+        payload = _INVENTORY_SERVICE.list_items(
+            user,
+            branches=_clean_branches(filters.get("branch")),
+            warehouse=filters.get("warehouse"),
+            page=filters.get("page"),
+            page_size=filters.get("page_size"),
+            sort=filters.get("sort"),
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(
+        payload, meta={"delpi/source": "bff:/inventory/stock-balances/items"}
+    )
+

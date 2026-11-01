@@ -30,6 +30,9 @@ from app.interfaces.mcp.constants import DESTRUCTIVE_ACT_TOOLS, TOOL_CLASS
 from app.interfaces.mcp.oauth_contract import SURI_MCP_SECURITY_SCHEMES
 from app.interfaces.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interfaces.mcp.schemas import (
+    DeliveriesLateFilters,
+    InventoryItemsFilters,
+    InventorySummaryFilters,
     PostalCodeIdentity,
     PurchaseOrderAnalyzeFilters,
     PurchaseOrderExportFilters,
@@ -191,6 +194,8 @@ def create_mcp_server() -> MCPServer:
             "purchase_requests",
             "suppliers",
             "postal_codes",
+            "deliveries",
+            "inventory",
         ],
         action: Literal[
             "search",
@@ -205,6 +210,8 @@ def create_mcp_server() -> MCPServer:
             "operations",
             "integration_status",
             "lookup",
+            "late",
+            "items",
         ],
         filters: (
             PurchaseOrderSearchFilters
@@ -218,6 +225,9 @@ def create_mcp_server() -> MCPServer:
             | SupplierSearchFilters
             | SupplierCatalogFilters
             | SupplierTaxIdFilters
+            | DeliveriesLateFilters
+            | InventorySummaryFilters
+            | InventoryItemsFilters
             | None
         ) = None,
         identity: (

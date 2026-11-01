@@ -49,7 +49,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="SURI — Supplies MCP",
         description=(
-            "Conversational MCP adapter of supplies-api (read-only v1). "
+            "Conversational MCP adapter of supplies-api (semantic reads + governed writes (v6)). "
             "Business data flows through the same BFF contracts and "
             "AuthZ as the Portal Suprimentos."
         ),

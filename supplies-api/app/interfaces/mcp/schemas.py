@@ -318,3 +318,33 @@ class SupplierWriteOperation(_ClosedModel):
             "supplier_store) são imutáveis e rejeitados."
         ),
     )
+
+class DeliveriesLateFilters(_ClosedModel):
+    """read(deliveries,late) — mirrors GET /deliveries/late."""
+
+    branch: list[str] | None = None
+    status: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    sort_by: str | None = None
+    sort_dir: str | None = None
+    page: int | None = Field(default=None, ge=1)
+    page_size: int | None = Field(default=None, ge=1, le=1000)
+
+
+class InventorySummaryFilters(_ClosedModel):
+    """read(inventory,summary) — mirrors /stock-balances/summary."""
+
+    branch: list[str] | None = None
+    warehouse: str | None = None
+
+
+class InventoryItemsFilters(_ClosedModel):
+    """read(inventory,items) — mirrors /stock-balances/items."""
+
+    branch: list[str] | None = None
+    warehouse: str | None = None
+    page: int | None = Field(default=None, ge=1)
+    page_size: int | None = Field(default=None, ge=1, le=500)
+    sort: str | None = None
+
