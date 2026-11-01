@@ -402,8 +402,10 @@ def tool_get_catalog() -> CallToolResult:
             },
             "directives": [
                 "Tool metadata describes semantics; it never authorizes.",
-                "READ tools mirror the Portal BFF contracts; no write "
-                "capability exists in this version.",
+                "READ operations are read-only and mirror the "
+                "authorized Portal BFF contracts. Governed write "
+                "operations are available only through execute, for "
+                "explicitly registered entity/action pairs.",
                 "Analysis is deterministic and labeled FACT/CALCULATION/"
                 "RECOMMENDATION — recommendations never execute.",
             ],
