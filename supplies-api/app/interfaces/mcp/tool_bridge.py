@@ -118,6 +118,7 @@ from app.infrastructure.gateways.supplier_enrichment_adapters import (
 )
 from app.interfaces.mcp import (
     comex_execute,
+    enrichment_execute,
     knowledge,
     supplier_execute,
 )
@@ -1724,6 +1725,26 @@ def tool_execute(
             f"per call (received {len(ops_in)})."
         )
     ops = [_payload_dict(item) for item in ops_in]
+    if normalized_entity == "enrichment":
+        user = _operations_user()
+        allowed_keys = enrichment_execute.ENRICHMENT_WRITE_KEYS_BY_ACTION[
+            normalized_action
+        ]
+        for index, item in enumerate(ops):
+            unknown = _unknown_keys(item, allowed_keys)
+            if unknown:
+                return _invalid(
+                    f"Unknown enrichment {normalized_action} operation "
+                    f"keys at index {index}: {sorted(unknown)}. "
+                    f"Allowed: {sorted(allowed_keys)}"
+                )
+        data = enrichment_execute.execute_enrichment_write(
+            user, action=normalized_action, operations=ops
+        )
+        return _ok(
+            data,
+            meta={"delpi/source": f"bff:/enrichment[{normalized_action}]"},
+        )
     if normalized_entity == "comex":
         user = _market_user()
         allowed_keys = comex_execute.COMEX_WRITE_KEYS_BY_ACTION[

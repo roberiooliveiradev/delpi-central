@@ -539,3 +539,20 @@ class ComexWriteOperation(_ClosedModel):
     granularity: str | None = None
     view_mode: str | None = None
 
+class EnrichmentWriteOperation(_ClosedModel):
+    """One governed write operation for ``execute(entity=enrichment)``.
+
+    Per-action key sets are enforced in the dispatcher — this model only
+    declares the closed union vocabulary for review/decision/prepare
+    writes plus ``idempotency_key``.
+    """
+    idempotency_key: str | None = Field(default=None, max_length=128)
+    supplier_code: str | None = None
+    supplier_store: str | None = None
+    review_id: str | None = None
+    field_key: str | None = None
+    field_keys: list[str] | None = None
+    decision: str | None = None
+    expected_revision: int | None = None
+    reason_code: str | None = None
+
