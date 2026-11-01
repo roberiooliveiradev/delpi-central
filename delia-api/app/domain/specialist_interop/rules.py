@@ -35,14 +35,40 @@ from app.domain.specialist_interop.model import (
 )
 
 
-_SPECIALIST_IDENTITY: dict[str, tuple[str, str]] = {
-    "davi": ("DAVI", "api-delpi"),
-    "teo": ("TEO", "transformometro-api"),
-    "vista": ("VISTA", "tv-dashboard-api"),
-    "caio": ("CAIO", "commercial-api"),
-    "clara": ("CLARA", "controllership-finance-api"),
-    "suri": ("SURI", "supplies-mcp"),
-    "eva": ("EVA", "engineering-api"),
+# Single governed source for approved specialists (doc 60):
+# (display_name, owner_ref, keycloak resource client_id, resource audience).
+# Infrastructure derives its MCP connection profiles from this identity;
+# no second registry may repeat the specialist set.
+_SPECIALIST_IDENTITY: dict[str, tuple[str, str, str, str]] = {
+    "davi": (
+        "DAVI", "api-delpi", "mcp-api-delpi",
+        "https://minhadelpi.com.br/apps/api-delpi/mcp",
+    ),
+    "teo": (
+        "TEO", "transformometro-api", "mcp-transformometro",
+        "https://minhadelpi.com.br/apps/transformometro-api/mcp",
+    ),
+    "vista": (
+        "VISTA", "tv-dashboard-api", "mcp-tv-dashboard",
+        "https://minhadelpi.com.br/apps/tv-dashboard-api/mcp",
+    ),
+    "caio": (
+        "CAIO", "commercial-api", "mcp-commercial",
+        "https://minhadelpi.com.br/apps/commercial-api/mcp",
+    ),
+    "clara": (
+        "CLARA", "controllership-finance-api",
+        "mcp-controllership-finance",
+        "https://minhadelpi.com.br/apps/controllership-finance-api/mcp",
+    ),
+    "suri": (
+        "SURI", "supplies-mcp", "mcp-supplies",
+        "https://minhadelpi.com.br/apps/supplies-api/mcp",
+    ),
+    "eva": (
+        "EVA", "engineering-api", "mcp-engineering",
+        "https://minhadelpi.com.br/apps/engineering-api/mcp",
+    ),
 }
 
 APPROVED_SPECIALIST_IDS = frozenset(_SPECIALIST_IDENTITY)

@@ -1,0 +1,401 @@
+"""Visual-perception benchmark harness — experimental pipelines (R7).
+
+Chains governed stages resolved through the infrastructure catalogs:
+PDFium render → optional OpenCV preprocessing → PaddleOCR. Every run
+record keeps document identity, page/region, coordinate transform,
+provider + model provenance and honest limitations — OCR output is
+coverage evidence, never official engineering fact.
+
+Same rules as ``benchmark.py``: same bytes for every pipeline, JSONL
+serialization strips ``_`` transient keys, quality stays
+``metric_not_available`` without owner-approved ground truth.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import time
+import uuid
+from typing import Any
+
+from engineering_app.infrastructure.extraction.registry import (
+    resolve_visual_provider,
+)
+from engineering_app.application.drawing.pdf_text_extractor import (
+    PdfExtractionError,
+)
+
+_MAX_RENDER_PAGES = 5
+_TOKEN_SAMPLE_LIMIT = 200
+_DEDUP_ENTRY_LIMIT = 500
+
+# Backend-defined pipelines — the consumer never picks classes/modules.
+VISUAL_PIPELINE_CATALOG: dict[str, dict[str, Any]] = {
+    "pdfium_render_paddleocr": {
+        "render": "pdfium_render_experimental",
+        "preprocess": None,
+        "ocr": "paddleocr_experimental",
+    },
+    "pdfium_render_opencv_paddleocr": {
+        "render": "pdfium_render_experimental",
+        "preprocess": "opencv_preprocess_experimental",
+        "preprocess_mode": "adaptive_threshold",
+        "ocr": "paddleocr_experimental",
+    },
+    "pdfium_render_grayscale_paddleocr": {
+        "render": "pdfium_render_experimental",
+        "preprocess": "opencv_preprocess_experimental",
+        "preprocess_mode": "grayscale",
+        "ocr": "paddleocr_experimental",
+    },
+}
+
+
+def _peak_rss_kb() -> int | None:
+    """Best-effort peak RSS (Linux ru_maxrss) — observability, not SLA."""
+    try:
+        import resource
+
+        return int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+    except Exception:
+        return None
+
+
+def _normalized(text: str) -> str:
+    return "".join(str(text).split()).lower()
+
+
+def _token_sample_entry(
+    token: Any,
+    *,
+    page: int,
+    scale: float | None,
+    width: int,
+    height: int,
+    provider_id: str,
+    provider_version: str | None,
+    extraction_method: str,
+) -> dict[str, Any]:
+    box = token.box
+    entry: dict[str, Any] = {
+        "page": page,
+        "raw_text": token.text,
+        "normalized_text": _normalized(token.text),
+        "confidence": token.confidence,
+        "bounding_box_px": box,
+        "coordinate_system": "pixels_top_left",
+        "provider_id": provider_id,
+        "provider_version": provider_version,
+        "extraction_method": extraction_method,
+    }
+    if box and len(box) >= 4 and width and height:
+        xs = box[0::2]
+        ys = box[1::2]
+        entry["bounding_box_normalized"] = [
+            round(min(xs) / width, 4), round(min(ys) / height, 4),
+            round(max(xs) / width, 4), round(max(ys) / height, 4),
+        ]
+        if scale:
+            entry["bounding_box_pdf_points"] = [
+                round(v / scale, 2) for v in box
+            ]
+            entry["pdf_transform"] = f"pdf_pt = px / {scale:.4f}"
+    else:
+        entry["bounding_box_normalized"] = None
+        entry["bounding_box_pdf_points"] = None
+    return entry
+
+
+def run_visual_benchmark(
+    pdf_bytes: bytes,
+    *,
+    pipelines: list[str],
+    corpus_id: str = "local",
+    environment: str = "test",
+    dpi: int = 200,
+) -> list[dict[str, Any]]:
+    """Execute visual pipelines over the same bytes → run records."""
+    doc_hash = hashlib.sha256(pdf_bytes).hexdigest()
+    records: list[dict[str, Any]] = []
+    for pipeline_id in pipelines:
+        rec: dict[str, Any] = {
+            "run_id": uuid.uuid4().hex[:12],
+            "corpus_id": corpus_id,
+            "environment": environment,
+            "provider_id": pipeline_id,
+            "pipeline_kind": "visual_ocr",
+            "document_hash": doc_hash,
+            "input_bytes": len(pdf_bytes),
+            "precision": "metric_not_available",
+            "recall": "metric_not_available",
+        }
+        t0 = time.monotonic()
+        spec = VISUAL_PIPELINE_CATALOG.get(pipeline_id)
+        if spec is None:
+            rec["status"] = "provider_error"
+            rec["error"] = f"unknown_pipeline:{pipeline_id}"
+            records.append(rec)
+            continue
+        try:
+            renderer = resolve_visual_provider(
+                "render", spec["render"], allow_experimental=True
+            )
+            preprocessor = (
+                resolve_visual_provider(
+                    "preprocess",
+                    spec["preprocess"],
+                    allow_experimental=True,
+                )
+                if spec.get("preprocess")
+                else None
+            )
+            ocr = resolve_visual_provider(
+                "ocr", spec["ocr"], allow_experimental=True
+            )
+        except Exception as exc:
+            rec["status"] = "provider_error"
+            rec["error"] = f"{type(exc).__name__}:{exc}"
+            records.append(rec)
+            continue
+
+        desc = ocr.capability_descriptor()
+        rec["provider_version"] = desc.version
+        rec["provider_status"] = desc.status
+        rec["preprocess_profile"] = spec.get("preprocess_mode")
+        rec["render_provider"] = spec["render"]
+        rec["ocr_provider"] = spec["ocr"]
+
+        pages: list[dict[str, Any]] = []
+        text_parts: list[str] = []
+        tokens_sample: list[dict[str, Any]] = []
+        page_errors = 0
+        limitations: list[str] = []
+        try:
+            for page_no in range(1, _MAX_RENDER_PAGES + 1):
+                try:
+                    rendered = renderer.render_page(
+                        pdf_bytes, page=page_no, dpi=dpi
+                    )
+                except PdfExtractionError as exc:
+                    if str(exc).startswith("page_out_of_bounds"):
+                        break
+                    raise
+                stage: dict[str, Any] = {
+                    "page": page_no,
+                    "render": {
+                        "width": rendered.width,
+                        "height": rendered.height,
+                        "dpi": rendered.dpi,
+                        "scale": rendered.scale,
+                        "rotation": rendered.rotation,
+                        "page_width_pt": rendered.page_width_pt,
+                        "page_height_pt": rendered.page_height_pt,
+                        "coordinate_system": rendered.coordinate_system,
+                        "provider_id": rendered.provider_id,
+                    },
+                }
+                image = rendered.image_bytes
+                try:
+                    if preprocessor is not None:
+                        pre = preprocessor.preprocess(
+                            image, mode=spec["preprocess_mode"]
+                        )
+                        stage["preprocess"] = {
+                            "profile": pre.profile,
+                            "ops_applied": pre.ops_applied,
+                            "provider_id": pre.provider_id,
+                        }
+                        image = pre.image_bytes
+                    result = ocr.extract_text(image)
+                except PdfExtractionError as exc:
+                    page_errors += 1
+                    stage["status"] = "error"
+                    stage["error"] = str(exc)
+                    pages.append(stage)
+                    continue
+                except Exception as exc:
+                    page_errors += 1
+                    stage["status"] = "error"
+                    stage["error"] = f"{type(exc).__name__}"
+                    pages.append(stage)
+                    continue
+                confidences = [
+                    t.confidence
+                    for t in result.tokens
+                    if t.confidence is not None
+                ]
+                meta = result.metadata or {}
+                stage["status"] = "ok"
+                stage["ocr"] = {
+                    "text_chars": len(result.text),
+                    "token_count": len(result.tokens),
+                    "boxes_returned": sum(
+                        1 for t in result.tokens if t.box
+                    ),
+                    "confidence_mean": (
+                        round(sum(confidences) / len(confidences), 4)
+                        if confidences
+                        else None
+                    ),
+                    "duration_ms": result.duration_ms,
+                    "limitations": result.limitations,
+                    "model": {
+                        "engine": meta.get("engine"),
+                        "paddleocr_version": meta.get(
+                            "paddleocr_version"
+                        ),
+                        "paddle_version": meta.get("paddle_version"),
+                        "model_source": meta.get("model_source"),
+                        "device": meta.get("device"),
+                        "lang": meta.get("lang"),
+                        "coordinate_system": meta.get(
+                            "coordinate_system"
+                        ),
+                        "timeout_seconds": meta.get("timeout_seconds"),
+                    },
+                }
+                text_parts.append(result.text)
+                for token in result.tokens:
+                    if len(tokens_sample) >= _TOKEN_SAMPLE_LIMIT:
+                        break
+                    tokens_sample.append(
+                        _token_sample_entry(
+                            token,
+                            page=page_no,
+                            scale=rendered.scale,
+                            width=rendered.width,
+                            height=rendered.height,
+                            provider_id=result.provider_id,
+                            provider_version=meta.get(
+                                "paddleocr_version"
+                            ),
+                            extraction_method=(
+                                "paddleocr_local"
+                                if not preprocessor
+                                else f"opencv_{spec['preprocess_mode']}"
+                                "+paddleocr_local"
+                            ),
+                        )
+                    )
+                pages.append(stage)
+        except PdfExtractionError as exc:
+            rec["status"] = "extraction_error"
+            rec["error"] = str(exc)
+            records.append(rec)
+            continue
+        except Exception as exc:
+            rec["status"] = "provider_error"
+            rec["error"] = f"{type(exc).__name__}:{exc}"
+            records.append(rec)
+            continue
+
+        if not pages:
+            rec["status"] = "extraction_error"
+            rec["error"] = "no_pages_rendered"
+            records.append(rec)
+            continue
+        ocr_ok_pages = sum(1 for p in pages if "ocr" in p)
+        if page_errors:
+            limitations.append(
+                f"page_errors:{page_errors}_of_{len(pages)}_pages"
+            )
+        if page_errors == 0:
+            status = "ok"
+        elif ocr_ok_pages > 0:
+            status = "partial"
+            limitations.append(
+                f"partial_coverage:{ocr_ok_pages}_ok_pages"
+            )
+        else:
+            status = "error"
+        rec.update(
+            {
+                "status": status,
+                "duration_ms": round((time.monotonic() - t0) * 1000),
+                "pages_rendered": len(pages),
+                "pages": pages,
+                "text_chars": sum(
+                    p.get("ocr", {}).get("text_chars", 0) for p in pages
+                ),
+                "token_count": sum(
+                    p.get("ocr", {}).get("token_count", 0)
+                    for p in pages
+                ),
+                "limitations": limitations,
+                "memory_peak_kb": _peak_rss_kb(),
+                "has_positional_data": bool(tokens_sample),
+                "_text_blob": " ".join(text_parts),
+                "_tokens_sample": tokens_sample,
+            }
+        )
+        records.append(rec)
+    return records
+
+
+def dedupe_visual_evidence(
+    runs: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Conservative dedup across providers/pipelines (R7-15).
+
+    Key = (page, normalized_text) — exact normalized match only. No
+    geometric merge and no fuzzy value merge: distinct values and
+    divergent regions are preserved, provenance per provider kept.
+    """
+    groups: dict[tuple[int, str], dict[str, Any]] = {}
+    truncated = False
+    for run in runs:
+        pid = run.get("provider_id", "?")
+        for tok in run.get("_tokens_sample") or []:
+            key = (
+                int(tok.get("page") or 0),
+                str(tok.get("normalized_text") or ""),
+            )
+            if not key[1]:
+                continue
+            group = groups.get(key)
+            if group is None:
+                if len(groups) >= _DEDUP_ENTRY_LIMIT:
+                    truncated = True
+                    continue
+                group = {
+                    "page": key[0],
+                    "normalized_text": key[1],
+                    "occurrences": [],
+                }
+                groups[key] = group
+            group["occurrences"].append(
+                {
+                    "provider_id": pid,
+                    "confidence": tok.get("confidence"),
+                    "bounding_box_px": tok.get("bounding_box_px"),
+                }
+            )
+    entries = [
+        {
+            "page": g["page"],
+            "normalized_text": g["normalized_text"],
+            "copies": len(g["occurrences"]),
+            "providers": sorted(
+                {o["provider_id"] for o in g["occurrences"]}
+            ),
+            "occurrences": g["occurrences"],
+        }
+        for g in groups.values()
+    ]
+    return {
+        "method": "page+normalized_text_exact (sem merge geométrico/"
+        "fuzzy — divergências preservadas)",
+        "unique_texts": len(entries),
+        "duplicated_texts": sum(1 for e in entries if e["copies"] > 1),
+        "truncated": truncated,
+        "entries": entries,
+    }
+
+
+def visual_records_to_jsonl(records: list[dict[str, Any]]) -> str:
+    clean = [
+        {k: v for k, v in r.items() if not k.startswith("_")}
+        for r in records
+    ]
+    return "\n".join(json.dumps(r, ensure_ascii=False) for r in clean)

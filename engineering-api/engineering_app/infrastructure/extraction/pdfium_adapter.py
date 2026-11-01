@@ -96,27 +96,58 @@ class PdfiumExtractionAdapter:
     def render_page(
         self, pdf_bytes: bytes, *, page: int, dpi: int = 150
     ) -> RenderedPage:
-        """Render one page to PNG (bounded: ≤5 pages, ≤300 DPI)."""
+        """Render one page to PNG (bounded: ≤5 pages, ≤300 DPI).
+
+        R7-04: preserves the PDF→pixel transform — scale = dpi/72,
+        page rotation and point dimensions are recorded so pixel
+        boxes can be mapped back to PDF space explicitly.
+        """
         if not _PDFIUM_AVAILABLE:
             raise PdfExtractionError(
                 "provider_unavailable:pypdfium2_not_installed"
             )
-        if dpi > _MAX_DPI:
+        if not pdf_bytes:
+            raise PdfExtractionError("empty_document")
+        if len(pdf_bytes) > MAX_PDF_BYTES:
+            raise PdfExtractionError(
+                f"document_too_large:{len(pdf_bytes)}>{MAX_PDF_BYTES}"
+            )
+        if not pdf_bytes[:5] == b"%PDF-":
+            raise PdfExtractionError("invalid_mime:missing_pdf_signature")
+        if dpi < 1 or dpi > _MAX_DPI:
             raise PdfExtractionError(f"dpi_limit:{dpi}>{_MAX_DPI}")
         pdf = pdfium.PdfDocument(pdf_bytes)
-        if page < 1 or page > len(pdf) or page > _MAX_RENDER_PAGES:
+        try:
+            if page < 1 or page > len(pdf) or page > _MAX_RENDER_PAGES:
+                raise PdfExtractionError(f"page_out_of_bounds:{page}")
+            pdf_page = pdf[page - 1]
+            try:
+                rotation = int(pdf_page.get_rotation() or 0)
+            except Exception:
+                rotation = 0
+            try:
+                page_width_pt, page_height_pt = (
+                    float(v) for v in pdf_page.get_size()
+                )
+            except Exception:
+                page_width_pt = page_height_pt = None
+            scale = dpi / 72
+            # PDFium aplica a rotação da página no bitmap renderizado —
+            # o pixel space retornado já é "visual" (top-left origin).
+            bitmap = pdf_page.render(scale=scale)
+            pil = bitmap.to_pil()
+            buf = io.BytesIO()
+            pil.save(buf, format="PNG")
+            return RenderedPage(
+                page=page, image_bytes=buf.getvalue(),
+                width=pil.width, height=pil.height, dpi=dpi,
+                provider_id="pdfium_experimental",
+                scale=scale, rotation=rotation,
+                page_width_pt=page_width_pt,
+                page_height_pt=page_height_pt,
+            )
+        finally:
             pdf.close()
-            raise PdfExtractionError(f"page_out_of_bounds:{page}")
-        bitmap = pdf[page - 1].render(scale=dpi / 72)
-        pil = bitmap.to_pil()
-        buf = io.BytesIO()
-        pil.save(buf, format="PNG")
-        pdf.close()
-        return RenderedPage(
-            page=page, image_bytes=buf.getvalue(),
-            width=pil.width, height=pil.height, dpi=dpi,
-            provider_id="pdfium_experimental",
-        )
 
     def capability_descriptor(self) -> ProviderCapability:
         return ProviderCapability(

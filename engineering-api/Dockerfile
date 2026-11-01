@@ -5,6 +5,16 @@ WORKDIR /app
 COPY engineering-api/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
+# EVA drawing R7 — extras visuais (OpenCV/PaddleOCR) são OPT-IN:
+# docker build --build-arg INSTALL_VISION_EXTRAS=true. Ausentes, os
+# adapters respondem provider_unavailable/model_not_provisioned
+# (fail-closed) e o perfil approved_local_visual_ocr fica gated.
+ARG INSTALL_VISION_EXTRAS=false
+COPY engineering-api/requirements-vision.txt /tmp/requirements-vision.txt
+RUN if [ "$INSTALL_VISION_EXTRAS" = "true" ]; then \
+      pip install --no-cache-dir -r /tmp/requirements-vision.txt; \
+    fi
+
 COPY shared /shared
 RUN pip install --no-cache-dir -e "/shared[fastapi]"
 

@@ -954,3 +954,32 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - RC3=autorização legítima por domínio (não integração). Decisão pendente: memberships do sujeito de teste no Core (dev, procedimento oficial).
 - Evaluator residual: scorer want_owner penaliza limitação honesta -> rubrica por subobjetivo pendente.
 - PRODUCTION_DEPLOY=NO; zero writes.
+
+## 2026-11-01 — DELIA-C3-LOCAL-ENVIRONMENT-KEYCLOAK-CORE-MCP-ACCESS-RECOVERY-01 (Task 30, doc 210 §16) — gate localizado, nenhuma alteração administrativa
+- Gate: CAIO/CLARA/EVA exigem is_superadmin OU permission domain-scoped (commercial.access etc) via Core RBAC; rober tem units/operations (SURI ok) mas sem as permissões de domínio.
+- Mecanismo oficial: /admin/rbac/roles + replace_user_roles (requer rbac.manage do chamador).
+- Pendente: credencial Core-admin legítima + grants das permissões de homologação (autorizado pela Task 30 via mecanismo oficial).
+- Drift T29 triage: registrado; sem revert; ownership misto sinalizado ao usuário.
+- PRODUCTION=NO; zero writes.
+
+## 2026-11-01 — DELIA-C3-LOCAL-CORE-SUPERADMIN-TEST-IDENTITY-ENABLEMENT-01 (Task 31, doc 210 §17) — superadmin local ON; 7/7 MCPs authz-proven
+- rober@dev.local (id 8b22db5d) is_superadmin f->t no Core local (delpi-postgres-core, db delpi_core) — mesma coluna do SetUserSuperadminUseCase; rollback documentado.
+- Probe pós-grant: CAIO get_context success:true; EVA success:true; CLARA passou authz (erro=enum args).
+- doc211 run1 pós-superadmin: 10/28 PASS — SURI 3/4 (primeiro provider novo completando), VISTA 4/4, DAVI 3/4, CAIO/CLARA/EVA/TEO 0/4.
+- Residuais fora de authz: síntese composta/arggen nos novos providers, teo.analyze não completa, ADMISSION em 3 compostos, scorer recusa-limitação.
+- PRODUCTION=NO; zero writes empresariais.
+
+## 2026-11-01 — DELIA-C3-MCP-DECOUPLING-DYNAMIC-DISCOVERY-AND-AUDITABLE-COMPOSITE-EVAL-01 (Task 32, doc 210 §18)
+- Desacoplamento: _SPECIALIST_IDENTITY -> 4-tupla (display,owner,client_id,audience) fonte unica em domain; config.py deriva CANONICAL maps; adicionar especialista = 1 tupla + envs. Teste stale (3->7 ids) corrigido; 11 testes interop verdes.
+- Eval auditavel: _t32_emit_eval_artifacts.py -> .json+.md por cenario (resposta integral, caps/args/status, divergence) + index em .battery/task32/eval/.
+- doc211 consolidado: 10/28 PASS (paridade T31; SURI 3, TEO 1, VISTA 4, DAVI 2). CAIO/CLARA/EVA invocam caps; residual = sintese composta (T29).
+- PRODUCTION=NO; zero writes; FABRICATIONS=0.
+
+## 2026-11-01 — DELIA-C3-MCP-DYNAMIC-DISCOVERY-COMPOSITE-RESPONSE-AUDIT-CLOSURE-01 (Task 33, doc 210 §19)
+- Boundary review: tupla de identidade com client_id+audience = contrato canonico doc 60 (domain-level); config deriva sem duplicar.
+- Testes A-F: ja cobertos — 47 testes interop verdes (new/removed tool, metadata-injection, unapproved fail-closed).
+- Pacote revisao: .battery/task33/eval/run-1 — 28 .json+.md com pergunta integral + resposta literal + caps/args/status + index (local-only, dados empresariais).
+- doc211: 10/28 inalterado pós-consolidacao. Residual = sintese composta/arggen (T29).
+- PRODUCTION=NO; FABRICATIONS=0.
+
+## 2026-11-01 — Task 35 (doc 210 §20): recovery OWNER_ARGUMENT_REJECTED existe e dispara so com structuredContent tipado; 15 EXC da T34 = owners sem envelope tipado; fix owner-side (emitir code=ARGUMENT_VALIDATION+recoverable). Pydantic AI NOT_ADOPT para esse gate.

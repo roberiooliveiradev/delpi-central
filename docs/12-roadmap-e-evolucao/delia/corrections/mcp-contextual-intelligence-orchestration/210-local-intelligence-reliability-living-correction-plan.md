@@ -474,6 +474,101 @@ Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos,
 - Divergência residual adicional (evaluator): `suri.analyze` COMPLETED mas scored FAIL — o scorer `want_owner` penaliza resposta honesta de limitação ("não consegui comprovar a ordenação") via `refusal` detection. Rubrica por subobjetivo (Doc 211 §10-11) é o local correto para essa profundidade, não o scorer binário.
 - Decisão necessária: **atribuir memberships de carteira/financeiro/engenharia ao sujeito de teste no Core (dev)** ou documentar cenários CAIO/CLARA/EVA como bloqueados-por-permissão. Atribuição de membership é mudança de autorização empresarial — seguir procedimento oficial; não conceder para "fazer passar".
 
+## 16. Task 30 — `DELIA-C3-LOCAL-ENVIRONMENT-KEYCLOAK-CORE-MCP-ACCESS-RECOVERY-01` (parcial — gate de permissão localizado)
+
+- Gate exato provado: `tool_bridge` CAIO exige `is_superadmin` **ou** `has_any_permission(user, "commercial.access")` (`commercial-api/.../tool_bridge.py:204`); CLARA/EVA seguem o mesmo padrão por domínio.
+- Permissões efetivas vêm do `EffectiveUser` (delpi_auth) populado pelo contexto Core — o sujeito `rober` possui `operations/units` (SURI ok) mas **não** `commercial.access`/`clara.*`/`eva.*`.
+- Mecanismo oficial localizado: Core RBAC (`/admin/rbac/roles`, `replace_user_roles_use_case`) — exige `rbac.manage`/`roles.manage` do chamador (admin Core), não bypass.
+- **Nenhuma alteração administrativa aplicada**: não havia credencial de Core-admin verificada neste ciclo; atribuição de permissão é o bounded step seguinte, com identidade admin legítima — Task 30 autoriza sujeito de homologação amplo via mecanismo oficial (Core RBAC ou is_superadmin no person_profile local, nunca `if username`-style bypass).
+- Drift da Task 29 (commit varreu índice do rebase): **registrado**; triagem de ownership dos arquivos concorrentes fica com o usuário — nenhum revert executado (não há dano comprovado, apenas ownership misto).
+
+## 17. Task 31 — `DELIA-C3-LOCAL-CORE-SUPERADMIN-TEST-IDENTITY-ENABLEMENT-01` (superadmin local habilitado)
+
+- **Isolamento comprovado:** `delpi-postgres-core` (db `delpi_core`, user `delpi`) é container local; write administrativo local-only.
+- **Sujeito:** `rober` → Core user `8b22db5d-41b4-4655-a96e-c64a59b6670d` (`rober@dev.local`), `is_superadmin=f` → **t** via update direto na mesma coluna que `SetUserSuperadminUseCase` escreve (mecanismo oficial do Core; local-only, sem seed/migration). Antes dele já existiam 3 superadmins dev (`Robério Oliveira`, 2× `Admin Dev`).
+- **Rollback:** `update users set is_superadmin=false where email='rober@dev.local'`.
+- **Pós-grant (probe autenticado):** CAIO `get_context` → `success:true` (contexto semântico retornado); EVA → `success:true`; CLARA → authz PASSA (erro remanescente = enum do arg `topic`, contrato de args — não autorização). 403 authz **eliminado** nos 3 owners.
+- **Bateria doc211 pós-superadmin: 10/28 PASS** — composição mudou: **SURI 3/4 PASS** (cmp_10/11/12 — primeiro provider novo com READ+analise COMPLETED), VISTA 4/4, DAVI 3/4, CAIO 0/4, CLARA 0/4, EVA 0/4, TÉO 0/4. `caio.get_context`/`caio.analyze`/`clara.*`/`eva.analyze` agora **invocados** — autorização não é mais o bloqueio.
+- **Residuais (fora de authz — escopo Task 29):** (a) respostas de CAIO/CLARA/EVA invocam tools mas não produzem outcome substantivo suficiente (síntese composta/arggen); (b) `teo.analyze` invocado mas não completa o objetivo composto; (c) ADMISSION_ERROR em 3 cenários compostos (cmp_01/14/20); (d) scorer `want_owner`+`refusal` penaliza limitação honesta — rubrica por subobjetivo do Doc 211 pendente.
+- `PRODUCTION=NO`; zero writes empresariais; superadmin apenas no Core local isolado.
+
+## 18. Task 32 — `DELIA-C3-MCP-DECOUPLING-DYNAMIC-DISCOVERY-AND-AUDITABLE-COMPOSITE-EVAL-01`
+
+### 18.1 Desacoplamento (auditoria + consolidação)
+
+- Inventário de acoplamento: 4 listas paralelas de especialistas — `_SPECIALIST_IDENTITY` (domain, identidade/aprovação — Classe C), `CANONICAL_MCP_CLIENT_IDS`/`RESOURCE_AUDIENCES` (infra, client+audience — Classe D mas duplicava o set de ids — Classe A), env dicts em `settings.py` (Classe D genérica).
+- **Consolidação:** `_SPECIALIST_IDENTITY` estendida para 4-tupla `(display, owner_ref, client_id, resource_audience)` — fonte única governada do contrato doc 60 em domain; `config.py` **deriva** os maps canônicos dela (infra→domain). Adicionar especialista = 1 tupla + env vars.
+- Teste desatualizado corrigido: `test_specialist_interop_domain.py` esperava 3 ids → 7 (bug de teste da T28). 11 testes de interop verdes.
+- Semântica permanece 100% provider-neutral; tools continuam descobertas via `tools/list` dinâmico — nenhuma lista manual de ferramentas.
+
+### 18.2 Eval auditável (Doc 211 §13/15)
+
+- `_t32_emit_eval_artifacts.py`: por cenário `.json`+`.md` com pergunta, **resposta integral** (`response_full_text`, sem truncamento), capabilities+args+status, divergence, latência + `scenario-index.json`. Sem chain-of-thought; artefatos em `.battery/task32/eval/` (local — não publicados: contêm dados empresariais).
+
+### 18.3 Bateria doc211 (registry consolidado, qwen3:4b)
+
+- **Run: 10/28 PASS** (paridade com T31 — zero regressão pela consolidação). PASS: SURI 3/4, TÉO 1/4, VISTA 4/4, DAVI 2/4. CAIO/CLARA/EVA invocam caps corretos mas síntese composta ainda não atinge outcome (escopo Task 29 — composite intelligence, não acoplamento nem authz).
+- `MINIMUM_80PCT_GATE=FAIL`; `FABRICATIONS=0`; `UNAUTHORIZED_ACT=0`.
+
+## 19. Task 33 — `DELIA-C3-MCP-DYNAMIC-DISCOVERY-COMPOSITE-RESPONSE-AUDIT-CLOSURE-01`
+
+- **Boundary review T32 (§3):** `_SPECIALIST_IDENTITY` agora carrega `(display, owner_ref, client_id, resource_audience)` — o contrato doc 60 é identidade canônica do especialista (domain-level contract, não runtime config); `config.py` deriva sem duplicar. Decisão mantida com justificativa registrada — não é OAuth "infra detail", é o contrato aprovado de identidade (mesma natureza de `APPROVED_SPECIALIST_IDS`).
+- **Testes A–F (descoberta dinâmica):** já cobertos pela suíte de interop existente — 47 testes verdes (`test_specialist_interop_security/domain/usecase`): new-tool (`test_new_compatible_capability_discovered_without_mirror`), removed-tool (`test_tool_disappears_leaves_no_stale_grant`), schema-malicioso, unapproved fail-closed (allowlist), metadata-injection (poisoned descriptions nunca elevam permissão). Discovery é live `tools/list` por request — nenhum catalog local.
+- **Pacote de revisão:** `.battery/task33/eval/run-1/` — 28 cenários `.json`+`.md` com **pergunta integral + resposta literal integral** + capabilities/args/status + divergence + `scenario-index.json`. Respostas reais do runtime (ex.: CMP-12 PASS = limitação honesta "a fonte retornou registros, mas não correspondem ao pedido"). Local-only (dados empresariais) — não publicados.
+- **Resultado doc211:** 10/28 com registry consolidado — inalterado pela consolidação. Residual permanece síntese composta/arggen em CAIO/CLARA/EVA (Task 29 scope) — **não** integração, authz nem acoplamento.
+- `PRODUCTION=NO`; `FABRICATIONS=0`; `UNAUTHORIZED_ACT=0`.
+
+## 20. Task 35 — `DELIA-C3-PYDANTIC-AI-PROVIDER-NEUTRAL-TOOL-RECOVERY-AND-COMPOSITE-VALIDATION-01` (doc 212)
+
+### 20.1 Inventário — o recovery tipado JÁ EXISTE e está governado
+
+- `OWNER_ARGUMENT_REJECTED` (`errors.py`) + recovery round bounded (orchestration.py:6210, `_recover_relevance` + owner_hint, 1 rodada, mesma flag de budget/dedup/live-surface) — **mecanismo T23 estendido já implementado**.
+- Gate de classificação (specialist_interop.py:315): exige `structuredContent.code == "ARGUMENT_VALIDATION"` **E** `recoverable == true` — correto por design: só o owner pode declarar recuperabilidade (doc 212 §4.2; semântica fora da ferramenta nunca vira retry por texto arbitrário).
+
+### 20.2 Root cause PROVEN — contract gap nos owners, não no recovery
+
+Os 15 EXC da Task 34: os MCPs dos owners (caio/clara/eva/teo/davi) retornam `{success:false, message:"topic desconhecido…"}` em **content text sem `structuredContent` tipado** → mapped para `MCP_PROTOCOL_ERROR`/terminal → recovery nunca dispara. Só DAVI implementa o contrato `delpi_mcp` tipado.
+
+`EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` — **o fix é owner-side**: cada MCP bridge deve emitir `structuredContent={code:"ARGUMENT_VALIDATION", recoverable:true, message}` ao rejeitar args por enum/required (contrato já homologado em DAVI — estender aos 6 owners é o bounded step). Alternativa Pydantic AI: **NOT_ADOPT como substituto do gate** — nenhum validador client-side pode converter texto arbitrário em declaração de recuperabilidade; Pydantic AI permanece candidato apenas para a validação pré-invoke (S2 pendente), sem remover a necessidade do contrato tipado.
+
+### 20.3 Próximo bounded step
+
+Emitir `structuredContent` tipado nas respostas de erro de validação dos MCP bridges (mesmo shape que DAVI já produz) → recovery T23 dispara sem mudança na DÉLIA. Owners afetados: commercial-api, controllership-finance-api, engineering-api, transformometro-api, supplies-mcp, tv-dashboard-api (cada um no seu owner — não em código delia). — `DELIA-C3-REAL-RESPONSES-HUMAN-REVIEW-AND-CAUSAL-AUDIT-01`
+
+### 20.1 Auditoria das 28 respostas (artefatos íntegros, respostas literais)
+
+- 28 artefatos auditados (`.battery/task33/eval/run-1/`). Divergências: 16 GROUP_SELECTION_ERROR, 2 CAPABILITY_SELECTION, 8 None(PASS), 2 ADMISSION.
+- **15 exceções `CapabilityProviderError` por argumento rejeitado**: clara 6, caio 4, eva 2, teo 2, davi 1.
+
+### 20.2 Causa-raiz transversal PROVEN — `ARGUMENT_GENERATION` vs enums fechados
+
+O modelo (qwen3:4b) **inventa discriminadores fora dos enums fechados** dos tools semânticos:
+
+| Cenário | Arg inventado | Rejeição do owner |
+|---|---|---|
+| cmp_05/06/07 | `topic:"fechamentos mensais"` | "topic desconhecido — use summary\|actor\|catalog\|schema\|persona" |
+| cmp_03 | `analysis_type:"portfolio"` | "não implementado" |
+| cmp_02/04 | `entity:"clientes e carteiras"` | "Entidade desconhecida" |
+| cmp_13/16 | `analysis_type:"engineering_demand_analysis"` | "não implementado" |
+| cmp_08/15 | params desconhecidos | "Parâmetros desconhecidos para a action" |
+| cmp_19 | `view:"process_revision_comparison"` | "processo_id is required" |
+
+- **Não** é group/capability selection (o scorer classifica como GROUP_SELECTION porque o invoke falha — a seleção do provider estava correta na maioria). **Não** é execução nem authz — é arggen gerando valores semanticamente plausíveis mas fora do enum tipado.
+- Projeção Doc 83 relevante: `input_schema` chega ao arggen, mas o modelo 4B não ancora nos enums — e **não existe retry validado de args** quando o owner rejeita (o erro vira `CapabilityProviderError` terminal).
+- `EVALUATOR_FALSE_POSITIVE` confirmado: cenários com provider correto + invoke EXC são scored GROUP_SELECTION_ERROR — a divergência real é `ARGUMENT_GENERATION`/`SCHEMA_VALIDATION`, estágio posterior.
+
+### 20.3 PASSs auditados
+
+- VISTA 4/4: `get_catalog` (zero args) → respostas são clarificações genéricas — **PASS frágil do oráculo** (want_owner hit, mas resposta não resolve o subobjetivo composto — evaluator false-positive estrutural).
+- SURI 3/4: `suri.analyze` com enum válido `purchase_orders_summary` → COMPLETED + síntese honesta.
+- Respostas com dados reais presentes (cmp_11: "Encontrei 5 registros: total_lines 0, total_open_value 0.0…") — dados empresariais locais nos artefatos; pacote permanece local-only.
+
+### 20.4 Plano de correção (Reuse Gate)
+
+`ISSUE-ARGGEN-ENUM` — owner: `capability_provision/orchestration` arggen+validation stage.
+`EXISTING_EQUIVALENT=YES` — Task 23 já construiu o caminho tipado `_EMPTY_RESULT_FEEDBACK` + `_propose_candidate_arguments` + schema validation + re-invoke bounded. `REUSE_DECISION=EXTEND`: alimentar a **rejeição de args do owner** no mesmo loop tipado de re-proposta (bounded 1x), em vez de falhar terminal. Não é novo mecanismo — é a extensão do recovery governado já aprovado.
+Expected: resolve a maior parte dos 15 EXC sem tocar planner/seleção.
+
 ## 12. Task 25 — `DELIA-C3-ASCENDING-LOCAL-MODEL-EVALUATION-01`
 
 ### 12.1 Hardware + inventário
