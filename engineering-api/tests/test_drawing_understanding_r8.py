@@ -24,6 +24,8 @@ def _tok(text, x, y, w=40, h=10, conf=0.9, page=1):
 # carimbo por rótulos COD/DES/REV no inferior-direito,
 # número/cota na área de desenho, nota canto sup-esq
 _TOKENS = [
+    _tok("COMPONENTE", 600, 380),  # header col0 → component_code
+    _tok("QTD", 700, 380),         # header col1 → quantity
     _tok("10080106", 600, 400),   # tabela row0 (coluna de códigos)
     _tok("CABO", 700, 400),       # tabela row0 col1
     _tok("10020033", 600, 420),   # tabela row1
