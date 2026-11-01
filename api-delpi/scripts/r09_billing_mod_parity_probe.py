@@ -94,10 +94,12 @@ def main() -> int:
     request = BillingModBreakdownRequest.from_query(
         period=period, branch="all"
     )
+    # Production semantics: latest OP with route as of execution.
+    # The bounded variant (run_date="20261007", artifact-era) was
+    # tested in Gate 042 and measured worse (3.493 vs 3.694 keys) —
+    # documented hypothesis rejection, not adopted.
     data = uc.execute(
-        request,
-        user_subject="parity-probe",
-        run_date="20261007",  # artifact generation date (doc 141)
+        request, user_subject="parity-probe", run_date=None
     )
 
     calc_lines = []

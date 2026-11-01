@@ -93,3 +93,16 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
   revisão de roteiro (medido, com owner).
 - BZ_CUSTD REJEITADO como fonte da taxa (0/120; SBZ só tem corrente).
 - Custos continuam source_missing (DR-2); DR-3 pendente. Evid.: doc 143.
+
+## Atualização — Gate 042 (01/11/2026)
+
+- Git: G041 já publicado em main (0acdf32b6a); SSH `publickey`
+  bloqueia novos pushes desta estação (bloqueio formal, sem perda).
+- Temporal SHY/OP: última OP com roteiro congelado (run_date=hoje)
+  adotada; bound ≤07/10 rejeitado (3.493<3.694). Fallback SG2 por linha.
+- Paridade final 2026-09: 4.659 linhas; 3.694/4.476 chaves (82,5%);
+  QtdFat 99,6%; Quantidade 82,2%; Horas 81,9%; 782 aus./965 exc. —
+  divergência = drift temporal de revisão de roteiro.
+- Taxa MOD: SBZ/SB9/custom exauridas — SOURCE_MISSING mantido (DR-2);
+  próximo: RPO/backups + Controladoria.
+- DR-3: pacote de homologação preparado (doc 144). BFF: NOT_READY.
