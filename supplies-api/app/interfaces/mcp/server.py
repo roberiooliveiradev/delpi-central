@@ -262,6 +262,8 @@ def create_mcp_server() -> MCPServer:
             "profile",
             "photo",
             "related_requests",
+            "capabilities",
+            "preferences",
         ],
         filters: (
             PurchaseOrderSearchFilters
