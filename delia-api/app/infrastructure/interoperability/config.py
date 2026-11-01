@@ -28,24 +28,15 @@ from app.infrastructure.config.settings import Settings
 
 
 # Canonical MCP OAuth contracts (doc 60 / runbook): one resource client
-# and one resource audience per approved specialist.
+# and one resource audience per approved specialist. Derived from the
+# domain's single governed identity registry — never a second list.
+from app.domain.specialist_interop.rules import _SPECIALIST_IDENTITY
+
 CANONICAL_MCP_CLIENT_IDS = {
-    "davi": "mcp-api-delpi",
-    "teo": "mcp-transformometro",
-    "vista": "mcp-tv-dashboard",
-    "caio": "mcp-commercial",
-    "clara": "mcp-controllership-finance",
-    "suri": "mcp-supplies",
-    "eva": "mcp-engineering",
+    sid: identity[2] for sid, identity in _SPECIALIST_IDENTITY.items()
 }
 CANONICAL_MCP_RESOURCE_AUDIENCES = {
-    "davi": "https://minhadelpi.com.br/apps/api-delpi/mcp",
-    "teo": "https://minhadelpi.com.br/apps/transformometro-api/mcp",
-    "vista": "https://minhadelpi.com.br/apps/tv-dashboard-api/mcp",
-    "caio": "https://minhadelpi.com.br/apps/commercial-api/mcp",
-    "clara": "https://minhadelpi.com.br/apps/controllership-finance-api/mcp",
-    "suri": "https://minhadelpi.com.br/apps/supplies-api/mcp",
-    "eva": "https://minhadelpi.com.br/apps/engineering-api/mcp",
+    sid: identity[3] for sid, identity in _SPECIALIST_IDENTITY.items()
 }
 
 

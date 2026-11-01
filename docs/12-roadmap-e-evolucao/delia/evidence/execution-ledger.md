@@ -968,3 +968,9 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - doc211 run1 pós-superadmin: 10/28 PASS — SURI 3/4 (primeiro provider novo completando), VISTA 4/4, DAVI 3/4, CAIO/CLARA/EVA/TEO 0/4.
 - Residuais fora de authz: síntese composta/arggen nos novos providers, teo.analyze não completa, ADMISSION em 3 compostos, scorer recusa-limitação.
 - PRODUCTION=NO; zero writes empresariais.
+
+## 2026-11-01 — DELIA-C3-MCP-DECOUPLING-DYNAMIC-DISCOVERY-AND-AUDITABLE-COMPOSITE-EVAL-01 (Task 32, doc 210 §18)
+- Desacoplamento: _SPECIALIST_IDENTITY -> 4-tupla (display,owner,client_id,audience) fonte unica em domain; config.py deriva CANONICAL maps; adicionar especialista = 1 tupla + envs. Teste stale (3->7 ids) corrigido; 11 testes interop verdes.
+- Eval auditavel: _t32_emit_eval_artifacts.py -> .json+.md por cenario (resposta integral, caps/args/status, divergence) + index em .battery/task32/eval/.
+- doc211 consolidado: 10/28 PASS (paridade T31; SURI 3, TEO 1, VISTA 4, DAVI 2). CAIO/CLARA/EVA invocam caps; residual = sintese composta (T29).
+- PRODUCTION=NO; zero writes; FABRICATIONS=0.

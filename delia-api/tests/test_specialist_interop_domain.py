@@ -40,8 +40,10 @@ from app.domain.specialist_interop.rules import (
 )
 
 
-def test_approved_specialist_set_is_exactly_davi_teo_vista():
-    assert APPROVED_SPECIALIST_IDS == frozenset({"davi", "teo", "vista"})
+def test_approved_specialist_set_is_exactly_the_governed_seven():
+    assert APPROVED_SPECIALIST_IDS == frozenset(
+        {"davi", "teo", "vista", "caio", "clara", "suri", "eva"}
+    )
 
 
 def test_specialist_ref_for_each_approved_specialist():

@@ -492,6 +492,24 @@ Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos,
 - **Residuais (fora de authz — escopo Task 29):** (a) respostas de CAIO/CLARA/EVA invocam tools mas não produzem outcome substantivo suficiente (síntese composta/arggen); (b) `teo.analyze` invocado mas não completa o objetivo composto; (c) ADMISSION_ERROR em 3 cenários compostos (cmp_01/14/20); (d) scorer `want_owner`+`refusal` penaliza limitação honesta — rubrica por subobjetivo do Doc 211 pendente.
 - `PRODUCTION=NO`; zero writes empresariais; superadmin apenas no Core local isolado.
 
+## 18. Task 32 — `DELIA-C3-MCP-DECOUPLING-DYNAMIC-DISCOVERY-AND-AUDITABLE-COMPOSITE-EVAL-01`
+
+### 18.1 Desacoplamento (auditoria + consolidação)
+
+- Inventário de acoplamento: 4 listas paralelas de especialistas — `_SPECIALIST_IDENTITY` (domain, identidade/aprovação — Classe C), `CANONICAL_MCP_CLIENT_IDS`/`RESOURCE_AUDIENCES` (infra, client+audience — Classe D mas duplicava o set de ids — Classe A), env dicts em `settings.py` (Classe D genérica).
+- **Consolidação:** `_SPECIALIST_IDENTITY` estendida para 4-tupla `(display, owner_ref, client_id, resource_audience)` — fonte única governada do contrato doc 60 em domain; `config.py` **deriva** os maps canônicos dela (infra→domain). Adicionar especialista = 1 tupla + env vars.
+- Teste desatualizado corrigido: `test_specialist_interop_domain.py` esperava 3 ids → 7 (bug de teste da T28). 11 testes de interop verdes.
+- Semântica permanece 100% provider-neutral; tools continuam descobertas via `tools/list` dinâmico — nenhuma lista manual de ferramentas.
+
+### 18.2 Eval auditável (Doc 211 §13/15)
+
+- `_t32_emit_eval_artifacts.py`: por cenário `.json`+`.md` com pergunta, **resposta integral** (`response_full_text`, sem truncamento), capabilities+args+status, divergence, latência + `scenario-index.json`. Sem chain-of-thought; artefatos em `.battery/task32/eval/` (local — não publicados: contêm dados empresariais).
+
+### 18.3 Bateria doc211 (registry consolidado, qwen3:4b)
+
+- **Run: 10/28 PASS** (paridade com T31 — zero regressão pela consolidação). PASS: SURI 3/4, TÉO 1/4, VISTA 4/4, DAVI 2/4. CAIO/CLARA/EVA invocam caps corretos mas síntese composta ainda não atinge outcome (escopo Task 29 — composite intelligence, não acoplamento nem authz).
+- `MINIMUM_80PCT_GATE=FAIL`; `FABRICATIONS=0`; `UNAUTHORIZED_ACT=0`.
+
 ## 12. Task 25 — `DELIA-C3-ASCENDING-LOCAL-MODEL-EVALUATION-01`
 
 ### 12.1 Hardware + inventário
