@@ -153,13 +153,32 @@ def _is_header_label(text: str) -> bool:
     return text.lower().rstrip(".:") in _TABLE_HEADER_LABELS
 
 
-def _page_size(tokens: Iterable[dict]) -> tuple[float, float]:
+def _page_size(
+    tokens: Iterable[dict], render_size: tuple[float, float] | None
+) -> tuple[float, float]:
+    """Dimensões reais da página: render_size (px) quando disponível;
+    senão max centro OCR (limitação documentada)."""
+    if render_size and render_size[0] > 0 and render_size[1] > 0:
+        return float(render_size[0]), float(render_size[1])
     maxx = maxy = 0.0
     for t in tokens:
         c = _tok_center(t)
         if c:
             maxx, maxy = max(maxx, c[0]), max(maxy, c[1])
     return (maxx or 1.0, maxy or 1.0)
+
+
+def _clip_box(box: list[float] | None, w: float, h: float) -> list[float] | None:
+    """AC04: todo bbox dentro de 0..w / 0..h; inválido → None."""
+    if not box:
+        return None
+    x1 = max(0.0, min(float(box[0]), w))
+    y1 = max(0.0, min(float(box[1]), h))
+    x2 = max(0.0, min(float(box[2]), w))
+    y2 = max(0.0, min(float(box[3]), h))
+    if x2 <= x1 or y2 <= y1:
+        return None
+    return [round(x1, 1), round(y1, 1), round(x2, 1), round(y2, 1)]
 
 
 def _nearest_value_right(
@@ -479,7 +498,13 @@ def _structure_table(
     for r_i, row in enumerate(sorted(table["rows"], key=lambda r: r["y"])):
         cells = []
         for t in sorted(
-            row["tokens"], key=lambda t: _tok_center(t)[0]
+            [
+                tok
+                for tok in row["tokens"]
+                if not _is_label(_text_of(tok))
+                and not _is_revhist_label(_text_of(tok))
+            ],
+            key=lambda t: _tok_center(t)[0],
         ):
             x = _tok_center(t)[0]
             d = [abs(x - c) for c in col_centers]
@@ -583,9 +608,11 @@ def build_understanding(
     page: int = 1,
     bom_codes: list[str] | None = None,
     bom_quantities: dict[str, int] | None = None,
+    product_code: str | None = None,
+    render_size_px: tuple[int, int] | None = None,
 ) -> dict[str, Any]:
     """Constrói candidatos estruturados a partir de tokens OCR."""
-    w, h = _page_size(tokens)
+    w, h = _page_size(tokens, render_size_px)
     annotated: list[dict] = []
 
     tb = _detect_title_block(tokens, w, h)
@@ -593,9 +620,20 @@ def build_understanding(
         tokens, w, h, tb["box"] if tb else None
     )
     tb_ids = set(id(t) for t in (tb["tokens"] if tb else []))
-    tbl_ids = set(id(t) for t in (table["tokens"] if table else []))
+    # AC06/AC08: ownership exclusivo — tokens do carimbo nunca são
+    # células de tabela (bordas sobrepostas → tb prevalece, conflito
+    # registrado abaixo).
+    tbl_ids = {
+        i
+        for i in set(id(t) for t in (table["tokens"] if table else []))
+        if i not in tb_ids
+    }
     revh = _detect_revision_history(tokens, w, h, tb_ids | tbl_ids)
-    revh_ids = set(id(t) for t in (revh["tokens"] if revh else []))
+    revh_ids = {
+        i
+        for i in set(id(t) for t in (revh["tokens"] if revh else []))
+        if i not in tb_ids and i not in tbl_ids
+    }
 
     # isolamento (AC02): um token pertence a exatamente uma região;
     # sobreposição de regiões candidatas → conflito explícito.
@@ -624,7 +662,7 @@ def build_understanding(
                 {
                     "id": rid,
                     "type": rtype,
-                    "box_px": obj["box"],
+                    "box_px": _clip_box(obj["box"], w, h),
                     "token_count": len(ids),
                     "evidence": obj.get("labels")
                     or [
@@ -783,12 +821,15 @@ def build_understanding(
             table_code_counts: Counter = Counter()
             for r in table_rows:
                 for c in r["cells"]:
-                    if _CODE_RE.match(c["text"]) and c.get(
-                        "col_type"
-                    ) == "component_code":
+                    if (
+                        _CODE_RE.match(c["text"])
+                        and c.get("col_type") == "component_code"
+                        and c["text"] != (product_code or "")
+                    ):
                         table_code_counts[c["text"]] += 1
             bom_counts = Counter(bom_codes)
             matched, missing_draw, missing_bom, qty_mm = [], [], [], []
+            unclassified: list[str] = []
             for code in set(bom_counts) | set(table_code_counts):
                 o_n, b_n = table_code_counts.get(code, 0), bom_counts.get(
                     code, 0
@@ -806,15 +847,28 @@ def build_understanding(
                         {"code": code, "occurrences": min(o_n, b_n)}
                     )
                 elif b_n:
-                    missing_draw.append(code)
+                    # AC12: código visível no OCR mas fora das células
+                    # tipadas NÃO é ausência na tabela — não comparável.
+                    visible = any(
+                        _text_of(t) == code for t in tokens
+                    )
+                    if visible:
+                        unclassified.append(code)
+                    else:
+                        missing_draw.append(code)
                 else:
                     missing_bom.append(code)
+            # fail-closed: sem matches → NOT_COMPARABLE; com matches →
+            # COMPARED_PARTIAL (cobertura incompleta sinalizada por
+            # extracted_but_unclassified, nunca por falsa ausência).
+            state = "COMPARED_PARTIAL" if matched else "NOT_COMPARABLE"
             bom_comparison = {
-                "state": "COMPARED_PARTIAL" if matched else "NOT_COMPARABLE",
+                "state": state,
                 "matched": matched,
-                "missing_in_drawing_table": missing_draw,
-                "not_in_bom": missing_bom,
-                "occurrence_mismatches": qty_mm,
+                "missing_in_drawing_table": missing_draw if matched else [],
+                "not_in_bom": missing_bom if matched else [],
+                "occurrence_mismatches": qty_mm if matched else [],
+                "extracted_but_unclassified": unclassified,
                 "limitations": [
                     "ausência na tabela candidata não prova ausência visual",
                     "tabela parcial não representa BOM completa",
