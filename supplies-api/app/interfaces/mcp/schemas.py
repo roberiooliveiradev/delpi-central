@@ -580,3 +580,10 @@ class ComexDeleteOperation(_ClosedModel):
     view_id: str = Field(min_length=1)
     confirmation: dict | None = None
 
+class ProcurementDiagnosticFilters(_ClosedModel):
+    """analyze(procurement_diagnostic) — multi-entity read-only compose."""
+    branch: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    include_sections: list[str] | None = None
+

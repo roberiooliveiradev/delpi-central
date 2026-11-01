@@ -53,6 +53,7 @@ from app.interfaces.mcp.schemas import (
     OtdAggregateFilters,
     OtdSeriesFilters,
     OverviewSummaryFilters,
+    ProcurementDiagnosticFilters,
     SafetyStockItemIdentity,
     SafetyStockItemsFilters,
     SafetyStockScopeFilters,
@@ -344,9 +345,13 @@ def create_mcp_server() -> MCPServer:
     def analyze(
         analysis: Literal[
             "purchase_orders_summary", "supplier_creation_preview",
-            "overview_summary",
+            "overview_summary", "procurement_diagnostic",
         ],
-        filters: PurchaseOrderAnalyzeFilters | SupplierPreviewFilters | OverviewSummaryFilters | None = None,
+        filters: (
+            PurchaseOrderAnalyzeFilters | SupplierPreviewFilters
+            | OverviewSummaryFilters | ProcurementDiagnosticFilters
+            | None
+        ) = None,
         sample_size: int = 50,
     ) -> CallToolResult:
         return _guarded(bridge.tool_analyze)(analysis, filters, sample_size)

@@ -65,6 +65,9 @@ from app.application.services.comex_analysis_service import (
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
 from app.application.services.otd_aggregate_service import OtdAggregateService
 from app.application.services.otd_series_service import OtdSeriesService
+from app.application.services.procurement_diagnostic_service import (
+    ProcurementDiagnosticService,
+)
 from app.application.services.overview_composition_service import (
     OverviewCompositionService,
     normalize_overview_branches,
@@ -125,6 +128,7 @@ from app.interfaces.mcp import (
 )
 from app.interfaces.mcp.branding import SURI_FULL_NAME, SURI_MISSION
 from app.interfaces.mcp.constants import (
+    PROCUREMENT_DIAGNOSTIC_FILTER_KEYS,
     ANALYSIS_KINDS,
     CATALOG_VERSION,
     CONTEXT_ACTIONS,
@@ -598,6 +602,7 @@ _SAFETY_STOCK_SERVICE = SafetyStockService()
 _OVERVIEW_SERVICE = OverviewCompositionService()
 _OTD_AGG_SERVICE = OtdAggregateService()
 _OTD_SERIES_SERVICE = OtdSeriesService()
+_PROC_DIAG_SERVICE = ProcurementDiagnosticService()
 _MARKET_SERVICE = MarketIntelligenceService()
 _COMEX_SERVICE = ComexAnalysisService()
 _CAPABILITY_SERVICE = CapabilityResolutionService()
@@ -1628,6 +1633,17 @@ def tool_analyze(
             f"Allowed: {sorted(ANALYSIS_KINDS)}"
         )
     filter_payload = _payload_dict(filters)
+    if normalized == "procurement_diagnostic":
+        unknown = _unknown_keys(
+            filter_payload, PROCUREMENT_DIAGNOSTIC_FILTER_KEYS
+        )
+        if unknown:
+            return _invalid(
+                f"Unknown procurement_diagnostic filters: "
+                f"{sorted(unknown)}. "
+                f"Allowed: {sorted(PROCUREMENT_DIAGNOSTIC_FILTER_KEYS)}"
+            )
+        return tool_procurement_diagnostic(filter_payload)
     if normalized == "overview_summary":
         unknown = _unknown_keys(filter_payload, OVERVIEW_SUMMARY_FILTER_KEYS)
         if unknown:
@@ -2116,6 +2132,24 @@ def tool_otd_series(filters: dict) -> CallToolResult:
     except ValueError as exc:
         return _invalid(str(exc))
     return _ok(payload, meta={"delpi/source": "bff:/analytics/otd/series"})
+
+
+def tool_procurement_diagnostic(filters: dict) -> CallToolResult:
+    """analyze(procurement_diagnostic) — bounded multi-entity compose."""
+    user = _analytics_user()
+    try:
+        payload = _PROC_DIAG_SERVICE.compose(
+            user,
+            branch=filters.get("branch"),
+            start_date=filters.get("start_date"),
+            end_date=filters.get("end_date"),
+            include_sections=filters.get("include_sections"),
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(
+        payload, meta={"delpi/source": "bff:multi[diagnostic]"}
+    )
 
 
 def tool_analyze_overview_summary(filters: dict) -> CallToolResult:
