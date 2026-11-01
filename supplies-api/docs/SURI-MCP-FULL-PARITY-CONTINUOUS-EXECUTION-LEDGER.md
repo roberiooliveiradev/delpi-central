@@ -1,10 +1,19 @@
 # SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION — LEDGER
 
 PROGRAM: SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION-001/002
-CURRENT LOT: G10 — Governed write foundation (ACT infra audit)
-LAST CLOSED LOT: G9 Knowledge coverage (corpus 12→17 itens; search
-  consumption.op-key e OTD comprovados; corpus_version=1; no catalog
-  bump — nenhuma capability nova contada).
+CURRENT LOT: G11 — Comex WRITE (W-06 ncm request, W-07 transitions,
+  W-08 views create/update)
+LAST CLOSED LOT: G10 ACT FOUNDATION — AUDITED/PROVEN
+G10 AUDIT: PostgresSuriExecuteOperationsRepository (V005) = claim
+  atomic in_progress -> complete, replay/conflict/in_progress kinds,
+  payload_hash LGPD, TTL+gc, fail-closed on store error;
+  _audit = actor+correlation+action+index+key-hash estruturado;
+  EXECUTE registry fechado; AuthZ primeiro; MAX ops bounded;
+  caller Bearer token only (sem service-account); batch isolation.
+  GAP registrado: sem expected_revision generico; delete (G14)
+  exige confirmation channel — se indisponivel, retornar
+  confirmation_unavailable sem executar.
+
 
 G8 EVIDENCE: catalog v11 in-image; smoke — session.capabilities/
   preferences success; users.related_requests success; profile
