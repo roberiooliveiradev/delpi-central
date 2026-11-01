@@ -264,6 +264,11 @@ class Settings:
         self.subobjective_investigation_enabled = _env_flag(
             "DELIA_SUBOBJECTIVE_INVESTIGATION"
         )
+        # S4 (doc 214): LangGraph Send fan-out for independent
+        # subobjectives — composition config ONLY; OFF by default.
+        self.subobjective_fanout_enabled = _env_flag(
+            "DELIA_SUBOBJECTIVE_FANOUT"
+        )
         _call_attempts_raw = os.getenv("DELIA_LLM_CALL_MAX_ATTEMPTS")
         self.llm_call_max_attempts_config_source = (
             "environment"

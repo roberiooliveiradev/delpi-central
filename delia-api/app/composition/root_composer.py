@@ -68,7 +68,9 @@ _logger = logging.getLogger(__name__)
 _SUPPORTED_ORCHESTRATION_ENGINES = frozenset({"langgraph", "delia"})
 
 
-def _resolve_orchestration_attempt(engine_name: str, gates):
+def _resolve_orchestration_attempt(
+    engine_name: str, gates, *, subobjective_fanout_enabled: bool = False
+):
     """Select ONE governed-attempt implementation for the composed
     application. Unknown identifiers fail closed — a misspelled
     engine must never silently select another engine. The LangGraph
@@ -86,7 +88,9 @@ def _resolve_orchestration_attempt(engine_name: str, gates):
         )
 
         return LangGraphCapabilityOrchestrator(
-            gates, recovery_reuse_enabled=True
+            gates,
+            recovery_reuse_enabled=True,
+            subobjective_fanout_enabled=subobjective_fanout_enabled,
         )
     return gates
 
@@ -434,7 +438,11 @@ def _compose_turn_handler(
     )
     orchestration = (
         _resolve_orchestration_attempt(
-            settings.orchestration_engine, gates
+            settings.orchestration_engine,
+            gates,
+            subobjective_fanout_enabled=(
+                settings.subobjective_fanout_enabled
+            ),
         )
         if gates is not None
         else None
