@@ -172,7 +172,8 @@ def _error_result(
     # Owner-declared typed recoverability (delpi_mcp contract): argument
     # validation rejections are repairable by the caller.
     if error_kind == "validation":
-        err["code"] = "ARGUMENT_VALIDATION"
+        if code in {"", "VALIDATION_ERROR", "ARGUMENT_VALIDATION"}:
+            err["code"] = "ARGUMENT_VALIDATION"
         err["recoverable"] = True
     if retryable:
         err["retryable"] = True

@@ -104,7 +104,7 @@ def test_list_shares_requires_ref():
     with _ctx(_editor()), patch.object(tool_bridge, "_dispatch", dispatch):
         r = tool_bridge.tool_read(entity="playlist", action="list_shares")
     assert r.is_error is True
-    assert r.structured_content["code"] == "VALIDATION_ERROR"
+    assert r.structured_content["code"] == "ARGUMENT_VALIDATION"
 
 
 # ---------------------------------------------------------------------------
@@ -236,7 +236,7 @@ def test_revoke_share_missing_target_user():
             entity="playlist_share", phase="prepare",
             target={"playlistId": pid})
     assert r.is_error is True
-    assert r.structured_content["code"] == "VALIDATION_ERROR"
+    assert r.structured_content["code"] == "ARGUMENT_VALIDATION"
 
 
 def test_revoke_edit_invites_bulk():
