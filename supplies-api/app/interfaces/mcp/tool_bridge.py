@@ -120,6 +120,7 @@ from app.interfaces.mcp import (
     comex_execute,
     enrichment_execute,
     knowledge,
+    personal_execute,
     supplier_execute,
 )
 from app.interfaces.mcp.branding import SURI_FULL_NAME, SURI_MISSION
@@ -1725,6 +1726,30 @@ def tool_execute(
             f"per call (received {len(ops_in)})."
         )
     ops = [_payload_dict(item) for item in ops_in]
+    if normalized_entity in {"session", "users"}:
+        user = _operations_user()
+        allowed_keys = personal_execute.PERSONAL_WRITE_KEYS_BY_ACTION[
+            normalized_action
+        ]
+        for index, item in enumerate(ops):
+            unknown = _unknown_keys(item, allowed_keys)
+            if unknown:
+                return _invalid(
+                    f"Unknown {normalized_action} operation keys at "
+                    f"index {index}: {sorted(unknown)}. Allowed: "
+                    f"{sorted(allowed_keys)}"
+                )
+        data = personal_execute.execute_personal_write(
+            user, entity=normalized_entity, action=normalized_action,
+            operations=ops,
+        )
+        return _ok(
+            data,
+            meta={
+                "delpi/source":
+                    f"bff:/{normalized_entity}[{normalized_action}]"
+            },
+        )
     if normalized_entity == "enrichment":
         user = _operations_user()
         allowed_keys = enrichment_execute.ENRICHMENT_WRITE_KEYS_BY_ACTION[

@@ -73,6 +73,7 @@ from controllership_finance_app.interface.http.routes import (
     analysis_routes,
     admin_checklist_routes,
     closing_routes,
+    billing_mod_breakdown_routes,
     closing_state_routes,
     competences_routes,
     documents_routes,
@@ -768,6 +769,22 @@ def tool_get_cost_closing_state(
     request, _user = _user_and_access()
     return _call_route(
         closing_state_routes.get_cost_closing_state,
+        request,
+        period=period,
+        branch=branch,
+    )
+
+
+def tool_get_billing_mod_breakdown(
+    period: str,
+    branch: str = "all",
+) -> CallToolResult:
+    """R09 — faturamento × MOD (visão operacional): passthrough
+    governado da rota BFF; estados de ausência e paridade pendente
+    preservados — a CLARA nunca recalcula nem zera ausências."""
+    request, _user = _user_and_access()
+    return _call_route(
+        billing_mod_breakdown_routes.get_billing_mod_breakdown,
         request,
         period=period,
         branch=branch,

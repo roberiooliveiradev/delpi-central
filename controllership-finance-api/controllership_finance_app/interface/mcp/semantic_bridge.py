@@ -309,6 +309,11 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
         required=("period",),
         allowed=("branch",),
     ),
+    ("report", "billing_mod_breakdown"): _read_spec(
+        bridge.tool_get_billing_mod_breakdown,
+        required=("period",),
+        allowed=("branch",),
+    ),
     ("report", "matrix"): _read_spec(
         bridge.tool_get_report_matrix,
         required=("period",),

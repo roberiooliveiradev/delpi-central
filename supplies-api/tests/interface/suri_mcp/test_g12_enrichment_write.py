@@ -31,6 +31,8 @@ def env():
     svc.prepare_update.return_value = (_Review(), [1])
     rl = MagicMock()
     with patch.object(enrichment_execute, "_service", lambda: svc), \
+         patch.object(enrichment_execute, "_claim_or_replay",
+                      lambda *a, **k: (None, None)), \
          patch.object(enrichment_execute, "registry_rate_limiter",
                       return_value=rl), \
          patch.object(enrichment_execute, "normalize_supplier_id",

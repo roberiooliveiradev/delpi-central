@@ -32,6 +32,7 @@ from app.interfaces.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interfaces.mcp.schemas import (
     ComexWriteOperation,
     EnrichmentWriteOperation,
+    PersonalWriteOperation,
     EmptyFilters,
     UsersIdentity,
     UsersRelatedFilters,
@@ -398,16 +399,19 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def execute(
-        entity: Literal["suppliers", "comex", "enrichment"],
+        entity: Literal[
+            "suppliers", "comex", "enrichment", "session",
+            "users",
+        ],
         action: Literal[
             "create", "update", "ncm_request",
             "ncm_transition", "view_create", "view_update",
             "review_create", "decide", "decide_bulk",
-            "prepare_update",
+            "prepare_update", "preferences_update", "profile_update",
         ],
         operations: list[
             SupplierWriteOperation | ComexWriteOperation
-            | EnrichmentWriteOperation
+            | EnrichmentWriteOperation | PersonalWriteOperation
         ],
     ) -> CallToolResult:
         return _guarded(bridge.tool_execute)(entity, action, operations)

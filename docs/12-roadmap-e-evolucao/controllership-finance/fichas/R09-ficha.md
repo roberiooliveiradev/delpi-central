@@ -106,3 +106,18 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Taxa MOD: SBZ/SB9/custom exauridas — SOURCE_MISSING mantido (DR-2);
   próximo: RPO/backups + Controladoria.
 - DR-3: pacote de homologação preparado (doc 144). BFF: NOT_READY.
+
+## Atualização — Gates 043/044 (01/11/2026)
+
+- BFF R09: GET /closing/competences/{period}/billing-mod-breakdown na
+  controllership-finance-api — passthrough S2S governado, officiality
+  operational_view + officialParity pending, evidência histórica de
+  paridade (G042, escopo 2026-09), ausência tipada preservada. 10/10
+  testes; regressão 33 pass.
+- CLARA: capability read(report.billing_mod_breakdown) registrada no
+  semantic bridge (paridade 1:1 com a rota BFF, sem recálculo).
+- Integração live BFF→api-delpi e deploy produtivo: NÃO executados —
+  SSH público indisponível na estação (publickey GitHub); WSL/Docker
+  fora na sessão (mock ≠ integração). Canal credenciado publica.
+- Portal MFE: pendente para gate dedicado (não implementado).
+- DR-3 segue pendente; custos source_missing. Verdict: ACCEPT_WITH_RESIDUAL.
