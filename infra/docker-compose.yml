@@ -2778,6 +2778,10 @@ services:
     build:
       context: ..
       dockerfile: engineering-api/Dockerfile
+      args:
+        # R7.2 — extras de visão (opencv/paddle) opt-in via .env:
+        # INSTALL_VISION_EXTRAS=true somente p/ execução OCR governada.
+        INSTALL_VISION_EXTRAS: ${INSTALL_VISION_EXTRAS:-false}
 
     container_name: delpi-engineering-api
     restart: unless-stopped
@@ -2869,6 +2873,11 @@ services:
       ENG_DRAWING_OCR_CPU_SECONDS: ${ENG_DRAWING_OCR_CPU_SECONDS:-300}
       ENG_DRAWING_OCR_MAX_CONCURRENCY: ${ENG_DRAWING_OCR_MAX_CONCURRENCY:-1}
       ENG_DRAWING_OCR_TIMEOUT_SECONDS: ${ENG_DRAWING_OCR_TIMEOUT_SECONDS:-}
+
+    # R7.2 — modelos PaddleOCR provisionados read-only (provisionamento
+    # governado via infra/scripts; vazio → model_not_provisioned honesto).
+    volumes:
+      - ${OCR_MODELS_HOST_PATH:-/srv/delpi/ocr-models}:/opt/ocr-models:ro
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
