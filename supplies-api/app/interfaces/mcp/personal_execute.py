@@ -82,8 +82,11 @@ def execute_personal_write(
             continue
         try:
             payload = _exec_op(user, action, op)
-        except AuthorizationError:
-            raise
+        except AuthorizationError as exc:
+            entry = _op_error(
+                index, outcome="rejected",
+                code="forbidden", message=str(exc) or "forbidden",
+                idempotency_key=idem_key, http_status=403)
         except ValueError as exc:
             entry = _op_error(
                 index, outcome="rejected",
