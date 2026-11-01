@@ -205,3 +205,122 @@ Para cada ficha, exigir:
 - Referências externas com links e indicações de authority; referências internas só após inventário do HEAD.
 - Lista explícita de pressupostos, limites, exemplos de jornadas e plano de governança.
 - Documento aprovado como **inventário de pesquisa / planejamento**, não como implementação de knowledge no MCP.
+
+
+---
+
+# 10. Inventário do Portal Suprimentos — assistência integral ao usuário (expansão de escopo K0)
+
+**Fonte de verificação (HEAD GitHub em 2026-11-01):**
+- `plugins/supplies/supplies.manifest.json` (manifest schemaVersion 1.0.0): rotas declaradas e permissões, **não prova de implementação**;
+- `plugins/supplies/src/App.tsx`: roteador e componentes realmente renderizados;
+- `plugins/supplies/src/content/userManualContent.ts`: manual oficial PT-BR, sete seções; **22 entradas** “Quero… → vá em…” e **43 perguntas** na estrutura textual;
+- `plugins/supplies/src/content/glossaryContent.ts`: glossário com **21 conceitos** (contagem estrutural);
+- `supplies-api/docs/SURI-MCP-FULL-PARITY-MATRIX.md`: 45 famílias de capacidade MCP inventariadas (não substitui verificação do frontend);
+- referências de execução: testes de rota, Help e BFF a inventariar em profundidade antes de tornar o conteúdo normativo do corpus.
+
+**Classificação:** o fato de `App.tsx` selecionar um componente comprova **componente de página conectado ao roteador**, não confirma todos os estados de tela, smoke federado, AuthZ efetivo ou implementação completa de cada jornada. Uma rota do manifest sozinha é `ROUTE_DECLARED_ONLY`.
+
+## 10.1 Inventário de páginas e status verificado no roteador
+
+| Página/jornada | Rota base/caminho | Evidência de renderização no App.tsx | Estado para curadoria Help SURI |
+|---|---|---|---|
+| Início / Hub | `/apps/supplies` | `HomePage` | ROUTED_COMPONENT; verificar cards, favoritos, recentes e busca |
+| Visão geral | `/apps/supplies/overview` | `OverviewPage` | ROUTED_COMPONENT; filtros, período, metas/IDD e parcialidade |
+| OTD | subrota do Portal (consultar `pluginRoutes.ts`) | `OtdAnalyticsPage` | ROUTED_COMPONENT; velocímetros e séries |
+| Solicitações de compras | `/apps/supplies/purchase-requests` | `PurchaseRequestsPage` | ROUTED_COMPONENT; lista/filters/export |
+| Detalhe de SC | subrota com filial+número | `PurchaseRequestDetailPage` | ROUTED_COMPONENT; escopo CC, itens, PCs e recebimentos |
+| Pedidos de compra | `/apps/supplies/purchase-orders` | `PurchaseOrdersPage` | ROUTED_COMPONENT; linhas em aberto |
+| Detalhe de PC | subrota com filial+número | `PurchaseOrderDetailPage` | ROUTED_COMPONENT; itens, recebimentos, SC origem |
+| Entregas/Atrasos | `/apps/supplies/deliveries` | `DeliveriesPage` | ROUTED_COMPONENT; recebimentos MP por data de entrada |
+| Fornecedores | `/apps/supplies/suppliers` | `SuppliersPage` | ROUTED_COMPONENT; busca |
+| Ficha de fornecedor | subrota com código+loja | `SupplierDetailPage` | ROUTED_COMPONENT; dados e enriquecimento |
+| Cadastro de fornecedor | subrota do Portal | `SupplierCreatePage` | ROUTED_COMPONENT; gates ERP |
+| Estoque físico | `/apps/supplies/inventory` | `InventoryPage` | ROUTED_COMPONENT; saldos físicos |
+| Estoque de segurança | `/apps/supplies/safety-stock` | `SafetyStockPage` | ROUTED_COMPONENT; filtros/status |
+| Detalhe estoque de segurança | subrota com filial+produto | `SafetyStockDetailPage` | ROUTED_COMPONENT; filial concreta |
+| Auditoria de consumo | `/apps/supplies/consumption-audit` | `ConsumptionAuditPage` | ROUTED_COMPONENT; busca, detalhe, comparação |
+| Inteligência de mercado | `/apps/supplies/market-intelligence` | `MarketIntelligencePage` | ROUTED_COMPONENT; metais, câmbio, indicadores/Comex |
+| Perfil de usuário | subrota `/users/:id` | `UserProfilePage` | ROUTED_COMPONENT com guard `canAccessUserProfile` |
+| Ajuda / Manual | `/apps/supplies/help` | `UserManualPage` | ROUTED_COMPONENT; fonte canônica de ajuda |
+| Minhas tarefas | `/apps/supplies/my-tasks` | **`PlaceholderPage`** | PLACEHOLDER; não dizer que a fila funciona |
+| Produtos / Product 360 | `/apps/supplies/products` | **`PlaceholderPage`** | PLACEHOLDER; não anunciar ficha pronta |
+| Negociações | `/apps/supplies/negotiations` | **`PlaceholderPage`** | PLACEHOLDER |
+| Indicadores (página própria) | `/apps/supplies/indicators` | **`PlaceholderPage`** | PLACEHOLDER; não confundir com KPIs do Overview |
+| Administração (página própria) | `/apps/supplies/administration` | **`PlaceholderPage`** | PLACEHOLDER; operações de gestão específicas podem existir em outras páginas, sem torná-la implementada |
+
+Observações: o manifest declara rotas de primeiro nível, mas nem todas as subrotas de detalhes; consultar `plugins/supplies/src/app/pluginRoutes.ts` antes de publicar links exatos. O manual inclui alguns atalhos de jornadas futuras (ex.: Minhas tarefas, Produtos, Administração); validar divergências entre Help, roteamento e runtime e registrar `EXECUTION_DRIFT` de Help quando um texto afirmar que o placeholder já funciona. Não substituir o conteúdo silenciosamente.
+
+## 10.2 Conteúdo do manual existente — seven source sections
+
+| ID do manual | Título | Competência que SURI deve incorporar |
+|---|---|---|
+| `want` | Quero… → vá em… | orientação por intenção do usuário; onde entrar, como filtrar, navegar e retornar |
+| `screens` | Mapa das áreas | explicar finalidade e diferenças entre áreas sem confundir futuro com atual |
+| `safety-stock` | Estoque de segurança | filtros, situações, indicadores, déficit por UM, cobertura, projeção, detalhe e erros |
+| `market-intelligence` | Inteligência de mercado | fontes, licenças, metais, PTAX, IPP, NCM/Comex, visualizações, frequência e gaps |
+| `consumption-audit` | Auditoria de consumo | busca/OP, data type, comparação 2–10, estrutura × empenho × consumo e qualidade |
+| `faq` | Perguntas frequentes | **43 entradas de perguntas** na fonte; vincular cada FAQ à página/rota/contrato |
+| `glossary` | Glossário mínimo | integrar glossário oficial do Portal; preservar significados de domínio |
+
+O manual também contém conceitos transversais sobre diferenças: Portal vs apps antigos, Início vs Visão Geral, escopo de filial e Perfil Portal vs Minha DELPI.
+
+## 10.3 Glossário vigente — termos que devem ser conhecidos e explicados com fonte
+
+1. OTD; 2. Data de digitação do recebimento; 3. ESTSEG; 4. Saldo físico; 5. SC; 6. Fornecedor; 7. Enriquecimento cadastral; 8. Cadastro assistido; 9. Solicitante; 10. PC; 11. CPV; 12. Giro; 13. Filial 01; 14. Filial 02; 15. SA2; 16. PTAX; 17. Pink Sheet; 18. Cobertura; 19. US$/t e US$/lb; 20. Indisponível por licença; 21. Desatualizado (stale).
+
+**Distinções obrigatórias para respostas:** OTD analítico ≠ listagem de Entregas/Atrasos; recebimentos MP por data de digitação ≠ PCs abertos; saldo físico ≠ saldo disponível ≠ estoque segurança; SC no escopo CC/unidade; giro em vezes ≠ meses de cobertura; metas parciais ≠ metas mensais; índice IPP ≠ cotação; ausência de dado ≠ zero; data/fonte/licença de mercado; `SA2` usa código+loja, não CNPJ como chave única.
+
+## 10.4 Matriz de conhecimento por página: o que ensinar e demonstrar
+
+| Jornada | Tutorial SURI requerido | Perguntas e problemas a cobrir |
+|---|---|---|
+| Início | menu, busca, favoritos, recentes, caminhos conforme capability | “Onde encontro...?”, “por que não aparece?”, diferenças de páginas |
+| Overview/OTD | seleção de unidade, períodos/presets, link com filtros, meta parcial, origem de KPI, velocidade/série | “por que indicadores divergiram?”, “qual período e base?”, atraso vs OTD |
+| SC | filtros, recorte por unidade e CC, hero/atenção, exportação, ficha, pedido vinculado | “como localizar SC?”, “por que não vejo uma SC?”, dados ausentes |
+| PC | pesquisa de linhas abertas, atraso, atualização, ficha, recebimentos NF, SC origem | “como abrir o detalhe?”, “por que PC não aparece?”, link/F5 |
+| Entregas | MP recebido, status `late/on_time`, data de entrada, paginação | “por que não são os mesmos pedidos da lista PC?” |
+| Fornecedores | busca por identidade, código+loja, ficha, consulta externa, revisão, decisões e rascunho | “consulta CNPJ atualiza ERP?”, “como evitar duplicatas?”, permissões de integração |
+| Estoque | unidade e armazém, custo, UM, saldos negativos/zerados | “saldo disponível é igual ao físico?” (não) |
+| Estoque segurança | filtros `all/01/02`, status, déficit por UM, cobertura, pedidos/SCs/empenhos, projeção, fornecedores | “por que preciso escolher filial antes do detalhe?”, “o que é falta comprar?” |
+| Auditoria consumo | busca fragmentada, período/tipo de data, comparação, evidências por OP e diferença | “diferença significa irregularidade?” (não necessariamente) |
+| Mercado/Comex | fontes e licença, períodos, granularidade, visualizações, câmbio, NCM governance e export | “fonte pendente significa zero?”, “como salvo visualização?” |
+| Perfil/preferências | perfil próprio, permissões de leitura de outros perfis, unidade padrão e densidade | “por que 403?”, “como alterar preferências?” |
+| Ajuda | busca por pergunta, conceito e página; resposta com navegação orientada | “ensine passo a passo”, “o que mudou?” |
+| Minhas tarefas/Produtos/Negociações/Indicadores/Admin | explicar que a **página própria é placeholder** no App.tsx atual; distinguir de ações existentes em outras telas | “está disponível?”, “há caminho alternativo existente?” |
+
+## 10.5 Capacidades de Help que SURI deve demonstrar
+
+- **Help contextual:** responder “o que esta tela faz?” com título, objetivo, unidade/permissão, filtros, leitura do resultado, limitações, link real e fonte/versão.
+- **Tutorial passo a passo:** fluxos “abrir”, “filtrar”, “exportar”, “comparar”, “voltar”, “compartilhar URL”, diferenciando ações efetivas de placeholders.
+- **Explicação de números:** distinguir owner do KPI, fórmula canônica, período, data, unidade, granularidade, fonte, status e significado. Nunca calcular métrica não homologada como se fosse oficial.
+- **Estados de interface:** loading, empty, partial, error, 403, 404, 422, sem sinalizar acesso que não existe; oferecer instrução compatível com o erro.
+- **Jornadas encadeadas:** como ir de SC→PC→recebimento; de fornecedor→enriquecimento; de estoque→estoque segurança; do KPI→análise operacional sem confundir conceitos.
+- **Preferências e acessibilidade:** localização no Portal, dicas de filtros por URL/F5, desktop/mobile e teclado/foco somente quando comprovados pelo componente/teste correspondente.
+- **Suporte a permissões:** `supplies.access` e `supplies.manage` conforme Core; `view-all` amplia CC, nunca unidade; UI não autoriza; usar contexto autorizado sem explicar endpoints internos a usuários finais.
+- **Diagnóstico baseado em evidência:** perguntar apenas o detalhe mínimo faltante, sinalizar limitações, não sugerir ações proibidas, não atribuir culpa ou causa presumida.
+- **Relatórios e treinamentos:** guias por perfil (comprador, gestor, solicitante), FAQ contextual, respostas simples e avançadas e relatórios com fontes; não divulgar informações pessoais fora do escopo.
+- **Conhecimento sempre sincronizado:** atualização de página/campo/contrato exige atualização da ficha e do teste correspondente; documentar `STALE_EVIDENCE` até reconciliação.
+
+## 10.6 Esquema de ficha de página para Knowledge V2
+
+Para **cada página implementada ou placeholder**, preparar um registro com:
+`page_id, route_pattern, page_label, page_status (ROUTED_COMPONENT|PLACEHOLDER|PLANNED|RUNTIME_PROVEN), implementation_source_sha, help_section_ids, title, objective, capabilities, permissions_and_scopes, visible_sections, filters, defaults, query_parameters, navigation_links, deep_links, workflow_steps, actions_read, actions_write, confirmation_rules, indicator_definitions, error_states, loading_empty_partial_403_404, related_glossary_ids, related_methods, examples, FAQs, screenshots_optional, source_locators, evidence_class, reviewed_by, reviewed_at, knowledge_version, acceptance_tests`.
+
+Separar `what_is_documented`, `what_is_rendered`, `what_is_runtime_proven` e `what_is_only_planned`; nunca inferir um nível a partir de outro. Manter textos de UX em PT-BR; identificadores em inglês.
+
+## 10.7 Backlog de adoção da Help integral na SURI — adição ao K0–K5
+
+| Ciclo | Entrega específica de conhecimento do Portal | Gate |
+|---|---|---|
+| K0.H1 | Inventariar rotas reais de `pluginRoutes.ts`, components, menu e manifest; mapear diferenças | ROUTED_COMPONENT vs PLACEHOLDER vs runtime, testes de URL |
+| K0.H2 | Extrair 7 seções do manual, 22 jornadas, 43 perguntas e 21 termos; mapear fontes/locators | sem omissões e sem promover Help desatualizada |
+| K0.H3 | Auditar cada página implementada: elementos, filtros, presets, URL/F5, deep links, export, 403/404, loading/empty/partial/error, desktop/mobile, keyboard | `PROVEN|TO_INVENTORY|PLANNED` por ação |
+| K0.H4 | Relacionar as 45 capacidades SURI às páginas e à Help, distinguindo operações MCP de navegação/funcionalidades UI | mapa página→operação→explicação→método |
+| K1.H1 | Criar fichas de todas as páginas e conceitos, priorizando jornada implementada | revisão Product + suporte/usuários |
+| K2.H1 | Publicar knowledge corpus com fontes versionadas, hash, busca contextual e perguntas teste | 5 MCP tools; retrieval por intenção, página e termo |
+| K3.H1 | Assistente de navegação, passos e diagnóstico de erros com fallback para capabilities atuais | testes de assistência, permissões, link real, sem instrução para placeholder |
+| K4.H1 | Guias gerenciais e relatórios vinculados às páginas, com explicação de KPI e metodologia | métricas canônicas, proveniência, escopo |
+| K5.H1 | Regressão de Help a cada feature user-facing (feature-help-sync), ownership e revisão por versão | teste change-trigger; `STALE_EVIDENCE` quando não sincronizado |
+
+**K0–K5 continuam `PLANNED`:** inventário e plano aqui documentados não constituem integração do corpus nem prova de que a SURI já sabe orientar corretamente sobre todos os estados das telas. O conteúdo real deverá ser extraído e testado no próximo ciclo autorizado. Não relacionar processos do Transformômetro ou TÉO.
