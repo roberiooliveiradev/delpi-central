@@ -48,7 +48,7 @@ def get_billing_mod_breakdown(
         # R09 is a genuinely heavy report (~150-210s on 2026-09): the
         # route needs a dedicated upstream timeout within the gateway
         # proxy budget (proxy_read_timeout=300s on
-        # /apps/controllership-finance-api) - 30s default caused 503s.
+        # /apps/controllership-finance-api) — 30s default caused 503s.
         body = ApiDelpiSettlementsGateway().get(
             "/financeiro/billing-mod-breakdown",
             access_token=access_token,
