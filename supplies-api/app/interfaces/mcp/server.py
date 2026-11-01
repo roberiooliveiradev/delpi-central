@@ -30,6 +30,7 @@ from app.interfaces.mcp.constants import DESTRUCTIVE_ACT_TOOLS, TOOL_CLASS
 from app.interfaces.mcp.oauth_contract import SURI_MCP_SECURITY_SCHEMES
 from app.interfaces.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interfaces.mcp.schemas import (
+    ComexWriteOperation,
     EmptyFilters,
     UsersIdentity,
     UsersRelatedFilters,
@@ -396,9 +397,12 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def execute(
-        entity: Literal["suppliers"],
-        action: Literal["create", "update"],
-        operations: list[SupplierWriteOperation],
+        entity: Literal["suppliers", "comex"],
+        action: Literal[
+            "create", "update", "ncm_request",
+            "ncm_transition", "view_create", "view_update",
+        ],
+        operations: list[SupplierWriteOperation | ComexWriteOperation],
     ) -> CallToolResult:
         return _guarded(bridge.tool_execute)(entity, action, operations)
 

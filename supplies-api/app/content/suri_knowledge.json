@@ -30,9 +30,19 @@
       "summary": "Onde fica cada jornada: Início, Visão geral, OTD, Pedidos de compra, Entregas/Atrasos, Estoque, Estoque de segurança, Inteligência de mercado, Solicitações, Operações, Perfil e Ajuda.",
       "content": "Início abre rápido com busca, favoritos e caminhos por capability — pendências ficam nas faixas Atenção das listas e na Visão geral. Pedidos de compra lista PCs com saldo pendente de recebimento; Entregas/Atrasos mostra recebimentos de MP já digitados; Estoque mostra posição física; Estoque de segurança mostra déficit planejado; Inteligência de mercado reúne cotações de fontes autorizadas; Solicitações acompanha SCs no período.",
       "topic": "portal-navigation",
-      "keywords": ["início", "visão geral", "mapa", "onde", "área", "página"],
+      "keywords": [
+        "início",
+        "visão geral",
+        "mapa",
+        "onde",
+        "área",
+        "página"
+      ],
       "evidence_class": "PROVEN",
-      "source": {"file": "plugins/supplies/src/content/userManualContent.ts", "locator": "sections#screens"}
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "sections#screens"
+      }
     },
     {
       "knowledge_id": "po.open-lines",
@@ -40,9 +50,20 @@
       "summary": "A lista mostra linhas de pedidos de compra com saldo em aberto (SC7): o que ainda falta receber, não histórico.",
       "content": "Pedidos de compra exibe itens com saldo pendente de recebimento no recorte: hero com linhas, valor e atrasadas; faixas Atenção Todos(N)/Atrasados(N) vêm do resumo do servidor; filtros automáticos e unidade como filtro de dados. Clique no PC abre a ficha. É distinto do OTD de pontualidade e de Entregas/Atrasos (recebimentos já digitados).",
       "topic": "purchase-orders",
-      "keywords": ["pedido", "compra", "PC", "aberto", "saldo", "SC7", "atraso"],
+      "keywords": [
+        "pedido",
+        "compra",
+        "PC",
+        "aberto",
+        "saldo",
+        "SC7",
+        "atraso"
+      ],
       "evidence_class": "PROVEN",
-      "source": {"file": "plugins/supplies/src/content/userManualContent.ts", "locator": "sections#screens · Pedidos de compra"}
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "sections#screens · Pedidos de compra"
+      }
     },
     {
       "knowledge_id": "po.contract",
@@ -50,9 +71,19 @@
       "summary": "GET /purchase-orders exige supplies.access e ao menos uma unidade autorizada (01 ou 02); resposta traz itens paginados + summary com totais e contagens de atraso.",
       "content": "A rota canônica aplica require_policy(can_use_operations) e require_units(branch) — fail-closed: sem unidade ou com unidade fora do escopo o acesso é negado. O payload traz items (branch, order_number, order_item, product, quantities, datas, fornecedor, open_value, delivery_status late/on_time/no_date) e summary (total_lines, total_open_value, late_lines, on_time_lines, no_date_lines).",
       "topic": "purchase-orders",
-      "keywords": ["contrato", "BFF", "unidade", "branch", "permissão", "summary"],
+      "keywords": [
+        "contrato",
+        "BFF",
+        "unidade",
+        "branch",
+        "permissão",
+        "summary"
+      ],
       "evidence_class": "PROVEN",
-      "source": {"file": "supplies-api/app/interfaces/http/routes/purchase_orders_routes.py", "locator": "list_portal_purchase_orders"}
+      "source": {
+        "file": "supplies-api/app/interfaces/http/routes/purchase_orders_routes.py",
+        "locator": "list_portal_purchase_orders"
+      }
     },
     {
       "knowledge_id": "po.vs-deliveries",
@@ -60,9 +91,18 @@
       "summary": "Três universos diferentes: PC em aberto (saldo), recebimentos digitados (histórico) e indicador analítico de pontualidade.",
       "content": "Entregas/Atrasos mostra recebimentos de MP já digitados no período (data de digitação), classificados Em atraso ou No prazo — sem clique no pedido. Pedidos de compra mostra saldo em aberto, inclusive sem nenhum recebimento. OTD é indicador analítico de pontualidade com velocímetros por unidade — outro universo.",
       "topic": "purchase-orders",
-      "keywords": ["OTD", "entregas", "atrasos", "diferença", "recebimento"],
+      "keywords": [
+        "OTD",
+        "entregas",
+        "atrasos",
+        "diferença",
+        "recebimento"
+      ],
       "evidence_class": "PROVEN",
-      "source": {"file": "plugins/supplies/src/content/userManualContent.ts", "locator": "sections#faq"}
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "sections#faq"
+      }
     },
     {
       "knowledge_id": "stock.vs-safety",
@@ -70,9 +110,19 @@
       "summary": "Estoque é a posição física atual; estoque de segurança é a cobertura mínima planejada e o déficit calculado pelo servidor.",
       "content": "Estoque mostra saldos físicos por produto, unidade e armazém — inclusive negativos — sem calcular disponibilidade. Estoque de segurança mostra materiais com parâmetro no ERP, os quatro status (Sem estoque de segurança, Abaixo, No nível, Acima), déficit por unidade de medida e a ficha do material com cobertura, projeção e fornecedores.",
       "topic": "stock",
-      "keywords": ["estoque", "segurança", "saldo", "déficit", "status", "ruptura"],
+      "keywords": [
+        "estoque",
+        "segurança",
+        "saldo",
+        "déficit",
+        "status",
+        "ruptura"
+      ],
       "evidence_class": "PROVEN",
-      "source": {"file": "plugins/supplies/src/content/userManualContent.ts", "locator": "sections#safety-stock + sections#faq"}
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "sections#safety-stock + sections#faq"
+      }
     },
     {
       "knowledge_id": "safety.material-detail",
@@ -80,9 +130,19 @@
       "summary": "A ficha do material mostra saldos por armazém, cobertura do déficit, pedidos/SCs/empenhos em aberto, projeção, consumo e fornecedores — por filial.",
       "content": "Clique na linha para abrir a página do material naquela filial: identificação, saldos por armazém, cobertura do déficit, pedidos de compra, solicitações e empenhos em aberto, projeção de estoque (ruptura = primeiro saldo projetado negativo), consumo mensal/anual e fornecedores vinculados (identidade = código + loja). Na visão Todas as Filiais, escolha a filial antes de abrir. O endereço é próprio na URL — copiar o link compartilha a mesma ficha.",
       "topic": "stock",
-      "keywords": ["material", "detalhe", "ficha", "projeção", "cobertura", "fornecedor"],
+      "keywords": [
+        "material",
+        "detalhe",
+        "ficha",
+        "projeção",
+        "cobertura",
+        "fornecedor"
+      ],
       "evidence_class": "PROVEN",
-      "source": {"file": "plugins/supplies/src/content/userManualContent.ts", "locator": "sections#safety-stock · Detalhe do material + sections#faq"}
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "sections#safety-stock · Detalhe do material + sections#faq"
+      }
     },
     {
       "knowledge_id": "mi.sources",
@@ -90,9 +150,21 @@
       "summary": "Cotações históricas de fontes autorizadas (World Bank Pink Sheet, BCB PTAX) com fonte, licença e estados de dados visíveis — nunca valores inventados.",
       "content": "A página mostra Metais (seis instrumentos), Câmbio (PTAX do Banco Central) e Indicadores (IPP do IBGE e Comex Stat por NCM habilitada). Dados vêm do serviço interno de dados externos — a página nunca consulta a internet diretamente. USD nativo com conversão BRL pela média PTAX do mês; unidades legíveis em cada card; séries de unidades diferentes nunca são somadas. Lacunas aparecem como ausência legítima, nunca zero nem interpoladas; fonte indisponível mostra aviso com última tentativa e última observação persistida.",
       "topic": "market-intelligence",
-      "keywords": ["cotação", "metais", "câmbio", "PTAX", "IPP", "Comex", "fonte", "licença"],
+      "keywords": [
+        "cotação",
+        "metais",
+        "câmbio",
+        "PTAX",
+        "IPP",
+        "Comex",
+        "fonte",
+        "licença"
+      ],
       "evidence_class": "PROVEN",
-      "source": {"file": "plugins/supplies/src/content/userManualContent.ts", "locator": "sections#market-intelligence + sections#faq"}
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "sections#market-intelligence + sections#faq"
+      }
     },
     {
       "knowledge_id": "mi.comex-flow",
@@ -100,9 +172,19 @@
       "summary": "Dentro de Indicadores, a aba Comex permite pesquisar produtos DELPI ou NCMs do catálogo e adicionar à análise com uma única ação.",
       "content": "«Produtos DELPI» pesquisa itens reais do cadastro e mostra a NCM fiscal; «Buscar NCM» pesquisa o catálogo compartilhado por código ou descrição — um código de 8 dígitos não cadastrado aparece como opção de inclusão. «Adicionar à análise» cadastra a NCM quando necessário (sem duplicar) e já a seleciona. Somente NCMs Disponíveis entram na análise; cadastro não é aprovação fiscal nem liberação automática da fonte MDIC. Visualizações salvas são pessoais.",
       "topic": "market-intelligence",
-      "keywords": ["Comex", "NCM", "importação", "FOB", "análise", "seleção"],
+      "keywords": [
+        "Comex",
+        "NCM",
+        "importação",
+        "FOB",
+        "análise",
+        "seleção"
+      ],
       "evidence_class": "PROVEN",
-      "source": {"file": "plugins/supplies/src/content/userManualContent.ts", "locator": "sections#market-intelligence · Comex configurável"}
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "sections#market-intelligence · Comex configurável"
+      }
     },
     {
       "knowledge_id": "access.denied",
@@ -110,9 +192,18 @@
       "summary": "Sem uso normal do módulo a página não abre: peça o acesso ao administrador; aliases antigos não abrem o app.",
       "content": "Sem permissão de uso normal do Portal Suprimentos o módulo retorna 403 — não é erro de dados nem de filtro. O acesso é concedido pelo administrador via permissões efetivas do Core; a SURI (e o Portal) nunca contornam isso.",
       "topic": "access",
-      "keywords": ["403", "permissão", "acesso", "negado", "administrador"],
+      "keywords": [
+        "403",
+        "permissão",
+        "acesso",
+        "negado",
+        "administrador"
+      ],
       "evidence_class": "PROVEN",
-      "source": {"file": "plugins/supplies/src/content/userManualContent.ts", "locator": "scopeNote + sections#safety-stock · Erros e acesso"}
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "scopeNote + sections#safety-stock · Erros e acesso"
+      }
     },
     {
       "knowledge_id": "data.states",
@@ -120,9 +211,19 @@
       "summary": "Lista vazia é resultado legítimo do recorte; falha aparece como aviso com tentar novamente; indicador indisponível aparece como «—», nunca zero falso.",
       "content": "Cada bloco da página é independente: se o resumo falhar, a lista continua. Filtros ficam na URL (F5 restaura o mesmo recorte). Vazio significa que nenhum item atendeu aos filtros — ajuste ou use Limpar. Indisponibilidade é sinalizada explicitamente; valores ausentes aparecem como «—» com motivo.",
       "topic": "portal-navigation",
-      "keywords": ["vazio", "erro", "filtro", "indisponível", "F5", "atualizar"],
+      "keywords": [
+        "vazio",
+        "erro",
+        "filtro",
+        "indisponível",
+        "F5",
+        "atualizar"
+      ],
       "evidence_class": "PROVEN",
-      "source": {"file": "plugins/supplies/src/content/userManualContent.ts", "locator": "sections#faq"}
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "sections#faq"
+      }
     },
     {
       "knowledge_id": "units.branch-scope",
@@ -130,9 +231,18 @@
       "summary": "As unidades operacionais são Santa Catarina (01) e Espírito Santo (02); a filial na tela é filtro — escopo de unidade autorizado é verificado no servidor.",
       "content": "Dados TOTVS cobrem as duas unidades operacionais. A filial na tela filtra o recorte; «Todas» é uma única consulta consolidada. Sem uso normal do Portal o módulo não abre — escopo de unidade é verificado server-side em cada consulta.",
       "topic": "access",
-      "keywords": ["filial", "unidade", "Santa Catarina", "Espírito Santo", "branch"],
+      "keywords": [
+        "filial",
+        "unidade",
+        "Santa Catarina",
+        "Espírito Santo",
+        "branch"
+      ],
       "evidence_class": "PROVEN",
-      "source": {"file": "plugins/supplies/src/content/userManualContent.ts", "locator": "concepts · Filial no escopo + sections#safety-stock · Filial"}
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "concepts · Filial no escopo + sections#safety-stock · Filial"
+      }
     },
     {
       "knowledge_id": "suri.boundaries",
@@ -140,9 +250,123 @@
       "summary": "Esta versão da SURI é somente leitura: descoberta, consultas governadas, knowledge e análise determinística — nenhuma operação de escrita.",
       "content": "As tools implementadas refletem contratos read-only do Portal Suprimentos com a mesma autorização efetiva do usuário. Não existem tools de escrita, aprovação, cancelamento ou CRUD nesta release — análises são rotuladas FACT/CALCULATION/RECOMMENDATION e recomendações nunca executam.",
       "topic": "suri",
-      "keywords": ["SURI", "limite", "escrita", "leitura", "permissão"],
+      "keywords": [
+        "SURI",
+        "limite",
+        "escrita",
+        "leitura",
+        "permissão"
+      ],
       "evidence_class": "OWNER_REPORTED",
-      "source": {"file": "supplies-api/docs/SURI-S1-CONTRACT-FREEZE.md", "locator": "§2 tools congeladas"}
+      "source": {
+        "file": "supplies-api/docs/SURI-S1-CONTRACT-FREEZE.md",
+        "locator": "§2 tools congeladas"
+      }
+    },
+    {
+      "knowledge_id": "consumption.op-key",
+      "title": "Consumo de OP — chave de 11 posições",
+      "summary": "A ordem de produção é identificada por chave canônica de 11 posições (C2_NUM(6)+C2_ITEM(2)+C2_SEQUEN(3), zeros preservados) e a unidade é obrigatória.",
+      "content": "A busca aceita fragmento de até 11 posições alfanuméricas e filtros canônicos (produto, tipo de data emission|finished|appointment, período, status, centro de trabalho, operação, página). O detalhe exige a chave completa de 11 posições. A comparação aceita entre 2 e 10 OPs distintas. A consulta sai da BFF via gateway S2S para a api-delpi — o MCP nunca consulta SQL TOTVS direto. Se a unidade estiver fora do escopo do usuário, a resposta falha fechada.",
+      "topic": "purchase-orders",
+      "keywords": [
+        "consumo",
+        "ordem de produção",
+        "OP",
+        "chave",
+        "11 posições",
+        "comparar",
+        "consumption-audit"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "supplies-api/app/interfaces/http/routes/consumption_audit_routes.py",
+        "locator": "consumption_audit_bp"
+      }
+    },
+    {
+      "knowledge_id": "otd.semantics",
+      "title": "OTD — agregado e série",
+      "summary": "OTD tem leitura agregada por filial e série temporal com granularidade; período define o recorte.",
+      "content": "O agregado recebe uma filial única (branch) e período opcional (start_date/end_date). A série normaliza a lista de filiais do mesmo jeito que o Portal — filial única vira escopo direto; múltiplas caem no modo consolidado — e aceita granularity (default month). Os indicadores vêm da composição canônica, sem recálculo local.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "OTD",
+        "agregado",
+        "série",
+        "granularidade",
+        "período",
+        "entrega no prazo"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "supplies-api/app/interfaces/http/routes/analytics_routes.py",
+        "locator": "get_analytics_otd*"
+      }
+    },
+    {
+      "knowledge_id": "session.self-only",
+      "title": "Sessão e perfil — self-only e self|manage",
+      "summary": "Capabilities e preferências são da própria sessão; perfil/foto/SCs relacionadas de usuário respeitam self|admin no serviço.",
+      "content": "read(session,capabilities) e read(session,preferences) retornam dados do próprio usuário autenticado. Perfil, foto e solicitações relacionadas exigem identity {user_id}: o serviço aplica self|admin — ler terceiros sem permissão manage falha fechada ('Forbidden'). A foto retorna conteúdo binário em base64 com content_type e file_name, preservando o proxy S2S do Portal.",
+      "topic": "access",
+      "keywords": [
+        "perfil",
+        "sessão",
+        "preferências",
+        "capabilities",
+        "self",
+        "admin",
+        "foto"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "supplies-api/app/interfaces/http/routes/users_routes.py",
+        "locator": "get_supplies_user_*"
+      }
+    },
+    {
+      "knowledge_id": "stock.deliveries-vs-inventory",
+      "title": "Entregas atrasadas e saldo de estoque",
+      "summary": "deliveries.late cobre recebimentos digitados em atraso; inventory.summary/items cobre posição física — famílias distintas do safety_stock.",
+      "content": "read(deliveries,late) lista recebimentos de material em atraso; read(inventory,summary|items) cobre saldo físico por unidade. Ambas são famílias separadas do Estoque de Segurança (déficit planejado) — não misturar semânticas. Paginação e filtros seguem os contratos BFF canônicos.",
+      "topic": "stock",
+      "keywords": [
+        "entregas",
+        "atrasadas",
+        "saldo",
+        "estoque",
+        "inventário",
+        "late",
+        "items"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "supplies-api/app/interfaces/http/routes/deliveries_routes.py",
+        "locator": "deliveries_bp"
+      }
+    },
+    {
+      "knowledge_id": "market.vocabulary",
+      "title": "Market intelligence — vocabulário real",
+      "summary": "Instrumentos são códigos de commodity autorizados (ex.: aluminum, copper); datas são obrigatórias na maioria das séries; NCM exige 8 dígitos.",
+      "content": "O vocabulário de instrumentos vem de read(market,filters) — nunca assuma ticker de bolsa. summary/series/monthly_averages exigem date_from e date_to; quote_series/quote_compare aceitam lista de instrumentos; import_series exige NCM de 8 dígitos presente no catálogo; producer_price_series exige series_id válido. Cotações vêm de fontes autorizadas — dados indisponíveis permanecem bloqueados, nunca sintetizados.",
+      "topic": "market-intelligence",
+      "keywords": [
+        "instrumento",
+        "commodity",
+        "cotação",
+        "NCM",
+        "série",
+        "fx",
+        "compare",
+        "aluminum"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "supplies-api/app/interfaces/http/routes/market_intelligence_routes.py",
+        "locator": "market_intelligence_bp"
+      }
     }
   ]
 }
