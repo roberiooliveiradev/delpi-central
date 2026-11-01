@@ -36,3 +36,12 @@ CAIO como **consultor comercial especializado DELPI**: investigar problemas, det
 ## 5. Matriz de execução contínua
 
 Preenchida por fase conforme `plan-execution.mdc` — resultados consolidados em `CAIO_HOMOLOGATION_MATRIX.md` e na seção de diário acima. Nenhuma promessa sem evidência de código+teste+deploy.
+
+## 6. CAIO 4.1 — Dossiê inteligente de cliente (2026-10-31)
+
+- **F1 identidade/carteira:** meeting_prep v4.1 exige resolução de carteira oficial, owner e participantes via customer.enrichment + portfolio.get/list; divergência (participante ≠ owner, ex. caso WANKE/Camilo↔Cássio) declarada, nunca presumida. Defeito real corrigido: portfolio.customer_coverage retornava 502 — adapter passava SellerCustomerAssignment enquanto o use case espera tuplas (code,store); tradução na fronteira + teste de regressão; fallback autorizado portfolio.get/list + customer.list documentado.
+- **F3 tarefas:** activity.list (vinculada ao cliente) + task.list (worklist do próprio vendedor); tarefa registrada ≠ compromisso mencionado.
+- **F4 salas:** interaction_room.list/get/members/messages/pins/shared_items — somente salas com vínculo estruturado ao cliente e acesso do usuário; menção textual ≠ vínculo.
+- **F5–F7:** rótulos OBSERVED/CALCULATED/INFERRED/UNKNOWN/SIMULATED; estrutura de saída A–I (identificação→resumo→relacionamento→desempenho→riscos→pauta→preparação interna→pós-reunião→fontes/limitações).
+- **F8 pós-reunião:** rascunho de decisões/tarefas; gravação só via execute com permissão + pedido explícito.
+- **Evidências:** corpus v4.1 (9 playbooks); suíte CAIO 654 passed; homologação A–L em contrato = PASS; autenticado integral = TEST_NOT_RUN.

@@ -253,6 +253,36 @@ def test_read_portfolio_me_calls_official_use_case():
     assert payload["data"]["portfolios"] == [{"id": "p1"}]
 
 
+def test_portfolio_customer_coverage_passes_tuple_pairs_not_dataclasses():
+    """CAIO 4.1 F1/L: regression for the authenticated 502 — the
+    adapter passed SellerCustomerAssignment objects while the use
+    case unpacks (code, store) tuples; now translated at the
+    boundary."""
+    _set_context(_human_user())
+    captured = {}
+
+    class _FakeUseCase:
+        def lookup_customer_shared_coverage(
+            self, *, customers, portfolio_ids, actor_user_id, team_scope
+        ):
+            captured["customers"] = customers
+            captured["team_scope"] = team_scope
+            return []
+
+    from commercial_app.interface.mcp import tool_bridge_parity as parity
+
+    with patch.object(
+        parity,
+        "build_manage_seller_portfolio_use_case",
+        return_value=_FakeUseCase(),
+    ):
+        result = parity.tool_portfolio_customer_coverage(
+            customers=[{"customer_code": "000223", "customer_store": "01"}]
+        )
+    assert result.is_error is False
+    assert captured["customers"] == [("000223", "01")]
+
+
 # --- analyze ----------------------------------------------------------------
 
 
@@ -305,7 +335,7 @@ def test_knowledge_returns_versioned_guidance():
     payload = result.structured_content
     assert result.is_error is False
     assert payload["data"]["topic"] == "caio.usage"
-    assert payload["data"]["knowledge_version"] == "4.0"
+    assert payload["data"]["knowledge_version"] == "4.1"
 
 
 def test_knowledge_unknown_topic_is_not_found():
