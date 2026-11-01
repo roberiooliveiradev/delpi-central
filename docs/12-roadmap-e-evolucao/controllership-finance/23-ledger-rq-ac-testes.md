@@ -1322,3 +1322,22 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Paridade R05 MATR320 | homologação funcional humana separada | PENDING — owner funcional Controladoria; `official_parity=PENDING` preservado |
 | R01–R11 regressão | zero contrato/regra alterado pelo fix G034 | PASS (consolidado; fix é client-only) |
 | WIP terceiros | stashes+markers preservados | PASS |
+
+---
+
+## R09-G040 — Slice 1 api-delpi (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Rota `GET /financeiro/billing-mod-breakdown` | ATENDIDO | router+registry+main; smoke 24 testes |
+| Âncoras SD2/SF4 `F4_DUPLIC='S'` eixo `D2_EMISSAO` | ATENDIDO | 521 âncoras live = baseline (299+222) |
+| Explosão SG1 níveis 02/04/06, dedup, multiplicidade | ATENDIDO | Estrut direta + aScan; testes unitários |
+| Ponte `G2_RECURSO`→`SH1.H1_CCUSTO`→`MOD*` | ATENDIDO | prova live CT-33A→MOD393 |
+| `Quantidade=G2_TEMPAD`, `Horas=qtd×tempo` | ATENDIDO | 1.179/1.395 em chaves (HY divergente documentado) |
+| `QtdFat` própria→fallback âncora | ATENDIDO | 1.395/1.395 live = 100% |
+| Custos `costUnit/costTotal` ausência tipada (DR-2) | ATENDIDO | nós `source_missing`; nada calculado |
+| Roteiro congelado OP (SHY) | BLOQUEADO_COM_EVIDENCIA | seleção OP/divisor `PENDING` E9; 3.081 ausentes medidos |
+| Paridade XLSB | EXECUTADO | doc 142 §6 — divergências com causa/owner |
+| Segurança S2S + gate dataset | ATENDIDO | 401/403/scope_unavailable/delegated user |
+| Deploy produtivo / BFF / MFE / permissão nova | FORA_DO_ESCOPO | não autorizado pelo gate |
+| Vídeo Gate 039 | TEST_NOT_RUN | sem decoder no ambiente |

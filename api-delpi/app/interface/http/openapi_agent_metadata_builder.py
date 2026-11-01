@@ -60,6 +60,9 @@ _ENTITY_LABELS: dict[str, str] = {
     "new_business_rol_pct": "percentual ROL de novos negócios",
     "new_clients_rol_pct": "percentual ROL de clientes novos",
     "financial_rol": "ROL financeiro",
+    "financeiro_billing_mod_breakdown": (
+        "faturamento × MOD por âncora PA (R09/DLP204, visão operacional)"
+    ),
     "financial_purchase_freight_link": (
         "vínculos de NF de compra com CT-e para análise de percentual de frete"
     ),

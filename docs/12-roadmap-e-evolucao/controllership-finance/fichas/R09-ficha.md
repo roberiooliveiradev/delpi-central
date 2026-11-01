@@ -68,3 +68,15 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Limitações: não afirmar totais de MOD como apuração oficial — SP
   interna não verificada.
 - Referências: doc 85 §9; doc 118 §6; doc 120; doc 121.
+
+## Atualização — Gate 040 (01/11/2026)
+
+- `GET /financeiro/billing-mod-breakdown` implementado na api-delpi
+  (Slice 1, DR-1/DR-2 APPROVED): âncoras SD2+SF4, explosão SG1
+  02/04/06, ops SG2 cadastrais → `SH1.H1_CCUSTO` → `MOD*`,
+  `Quantidade=G2_TEMPAD`, `Horas=qtd×tempo`, custos em ausência tipada.
+- `officiality=operational_view`, `official_parity=PENDING` (DR-3).
+- Paridade live 2026-09: 521 âncoras; 1.395 chaves MOD; QtdFat 100%;
+  Quantidade/Horas 84,5% (lacuna SHY roteiro-OP documentada); 3.081
+  ausentes / 70 excedentes com causa e owner (doc 142).
+- Owner técnico: `api-delpi` (financeiro). Evidências: doc 142.
