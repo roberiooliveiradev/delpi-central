@@ -52,6 +52,13 @@ VISUAL_PIPELINE_CATALOG: dict[str, dict[str, Any]] = {
 }
 
 
+def _resolve_isolation() -> str:
+    import os
+
+    mode = os.getenv("ENG_DRAWING_OCR_ISOLATION", "").strip().lower()
+    return mode if mode in {"subprocess", "inprocess"} else "subprocess"
+
+
 def _peak_rss_kb() -> int | None:
     """Best-effort peak RSS (Linux ru_maxrss) — observability, not SLA."""
     try:
@@ -114,9 +121,34 @@ def run_visual_benchmark(
     corpus_id: str = "local",
     environment: str = "test",
     dpi: int = 200,
+    isolation: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Execute visual pipelines over the same bytes → run records."""
+    """Execute visual pipelines over the same bytes → run records.
+
+    ``isolation`` (R7.1): ``subprocess`` (default — real OS limits,
+    killable) or ``inprocess`` (dev/test only). Resolved per call from
+    ``ENG_DRAWING_OCR_ISOLATION``; never consumer-controlled via MCP.
+    """
     doc_hash = hashlib.sha256(pdf_bytes).hexdigest()
+    mode = isolation or _resolve_isolation()
+    if mode == "subprocess":
+        from engineering_app.infrastructure.extraction.subprocess_executor import (  # noqa: E501
+            run_pipeline_isolated,
+        )
+
+        out: list[dict[str, Any]] = []
+        for pid in pipelines:
+            rec = run_pipeline_isolated(
+                pdf_bytes, pipeline_id=pid, dpi=dpi
+            )
+            rec.setdefault("run_id", uuid.uuid4().hex[:12])
+            rec["corpus_id"] = corpus_id
+            rec["environment"] = environment
+            rec.setdefault("document_hash", doc_hash)
+            rec["precision"] = "metric_not_available"
+            rec["recall"] = "metric_not_available"
+            out.append(rec)
+        return out
     records: list[dict[str, Any]] = []
     for pipeline_id in pipelines:
         rec: dict[str, Any] = {

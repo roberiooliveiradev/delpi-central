@@ -2860,6 +2860,15 @@ services:
       # OFF em produção (não habilitar sem decisão do owner; exige
       # imagem com INSTALL_VISION_EXTRAS=true + modelos provisionados).
       ENG_DRAWING_OCR_BENCHMARK_ENABLED: ${ENG_DRAWING_OCR_BENCHMARK_ENABLED:-}
+      # R7.1 — isolamento subprocess real: RLIMIT_AS/CPU, process group
+      # SIGKILL no timeout, semáforo de concorrência, modelos somente
+      # por diretório provisionado (sem download implícito em prod).
+      ENG_DRAWING_OCR_ISOLATION: ${ENG_DRAWING_OCR_ISOLATION:-subprocess}
+      ENG_DRAWING_OCR_MODEL_DIR: ${ENG_DRAWING_OCR_MODEL_DIR:-}
+      ENG_DRAWING_OCR_MAX_RSS_MB: ${ENG_DRAWING_OCR_MAX_RSS_MB:-3072}
+      ENG_DRAWING_OCR_CPU_SECONDS: ${ENG_DRAWING_OCR_CPU_SECONDS:-300}
+      ENG_DRAWING_OCR_MAX_CONCURRENCY: ${ENG_DRAWING_OCR_MAX_CONCURRENCY:-1}
+      ENG_DRAWING_OCR_TIMEOUT_SECONDS: ${ENG_DRAWING_OCR_TIMEOUT_SECONDS:-}
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
