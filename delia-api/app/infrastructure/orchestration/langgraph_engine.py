@@ -161,6 +161,7 @@ class LangGraphCapabilityOrchestrator:
         *,
         recovery_reuse_enabled: bool = True,
         subobjective_fanout_enabled: bool = False,
+        checkpointer=None,
     ) -> None:
         # Shared governed primitives — the SAME gates Engine A runs;
         # the engine calls its stage-phase methods, never attempt()
@@ -179,6 +180,10 @@ class LangGraphCapabilityOrchestrator:
         # as before (the governed path itself may still investigate
         # sequentially — sequencing parity, never a behavior fork).
         self._subobjective_fanout_enabled = subobjective_fanout_enabled
+        # S5 (doc 214): optional durable checkpointer — injected infra
+        # only; when present the graph compiles with it and attempts
+        # may resume an investigation by thread/investigation id.
+        self._checkpointer = checkpointer
         self._compiled_graph: CompiledStateGraph = self._build_graph()
         # Evaluation observability only — the executed node list of
         # the most recent invocation (proves real sequencing in the
@@ -231,7 +236,7 @@ class LangGraphCapabilityOrchestrator:
         graph.add_edge("surface_inquiry", END)
         graph.add_edge("conversational", END)
         graph.add_edge("owner_path", END)
-        return graph.compile()
+        return graph.compile(checkpointer=self._checkpointer)
 
     # ---------------- routing (deterministic, not model-owned) -----
 
@@ -660,6 +665,7 @@ class LangGraphCapabilityOrchestrator:
         turn_deadline: TurnDeadline | None = None,
         activity_sink: ActivityEventSink | None = None,
         cancel_check: Callable[[], bool] | None = None,
+        thread_id: str | None = None,
     ) -> GovernedCapabilityAttempt:
         def attempt_once(
             correlation: str, deadline: TurnDeadline
@@ -676,7 +682,13 @@ class LangGraphCapabilityOrchestrator:
                 "deadline": deadline,
                 "trace": [],
             }
-            final = self._compiled_graph.invoke(state)
+            if thread_id is not None:
+                final = self._compiled_graph.invoke(
+                    state,
+                    config={"configurable": {"thread_id": thread_id}},
+                )
+            else:
+                final = self._compiled_graph.invoke(state)
             self.last_node_trace = list(final.get("trace") or [])
             return final["attempt"]
 
