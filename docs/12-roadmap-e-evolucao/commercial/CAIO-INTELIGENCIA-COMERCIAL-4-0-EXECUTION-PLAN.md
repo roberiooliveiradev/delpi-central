@@ -45,3 +45,6 @@ Preenchida por fase conforme `plan-execution.mdc` — resultados consolidados em
 - **F5–F7:** rótulos OBSERVED/CALCULATED/INFERRED/UNKNOWN/SIMULATED; estrutura de saída A–I (identificação→resumo→relacionamento→desempenho→riscos→pauta→preparação interna→pós-reunião→fontes/limitações).
 - **F8 pós-reunião:** rascunho de decisões/tarefas; gravação só via execute com permissão + pedido explícito.
 - **Evidências:** corpus v4.1 (9 playbooks); suíte CAIO 654 passed; homologação A–L em contrato = PASS; autenticado integral = TEST_NOT_RUN.
+
+### Adendo 4.1.1 — semântica de `customer_coverage` (2026-10-31)
+Diagnóstico definitivo: `portfolio.customer_coverage` é detector de cobertura **compartilhada** (2+ carteiras); `items:[]` para WANKE = resultado válido (1 carteira), não defeito. Resolução de identidade permanece via portfolio.get/list + customer.list. Corpus v4.1.1; suíte 660 passed.
