@@ -60,11 +60,13 @@ def search_knowledge(
     *,
     query: str | None = None,
     topic: str | None = None,
+    kind: str | None = None,
     limit: int = 8,
 ) -> dict[str, Any]:
     """Deterministic token-overlap search — no embeddings, no LLM."""
     corpus = load_corpus()
     topic_filter = (topic or "").strip().lower()
+    kind_filter = (kind or "").strip().lower()
     terms = [
         token
         for token in (query or "").strip().lower().split()
@@ -74,12 +76,16 @@ def search_knowledge(
     for item in corpus["items"]:
         if topic_filter and str(item.get("topic") or "").lower() != topic_filter:
             continue
+        if kind_filter and str(item.get("kind") or "topic").lower() != kind_filter:
+            continue
         if not terms:
             scored.append((0, item))
             continue
         haystack = " ".join(
             str(item.get(key) or "")
-            for key in ("title", "summary", "content", "topic")
+            for key in ("title", "summary", "content", "topic",
+                        "term", "method_id", "page_id",
+                        "route_pattern")
         ).lower() + " " + " ".join(
             str(k) for k in (item.get("keywords") or [])
         ).lower()
@@ -96,6 +102,12 @@ def search_knowledge(
             "topic": item.get("topic"),
             "evidence_class": item.get("evidence_class"),
             "source": item.get("source"),
+            "kind": item.get("kind") or "topic",
+            "page_id": item.get("page_id"),
+            "method_id": item.get("method_id"),
+            "knowledge_status": item.get("knowledge_status"),
+            "methods": item.get("methods"),
+            "problem_domain": item.get("problem_domain"),
         }
         for _score, item in scored[:capped]
     ]
@@ -104,6 +116,7 @@ def search_knowledge(
         "corpus_sha256": corpus["corpus_sha256"],
         "query": query or "",
         "topic": topic or None,
+        "kind": kind or None,
         "total_matches": len(scored),
         "items": hits,
     }

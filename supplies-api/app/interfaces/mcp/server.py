@@ -370,11 +370,12 @@ def create_mcp_server() -> MCPServer:
         action: Literal["search", "get", "sources"],
         query: str | None = None,
         topic: str | None = None,
+        kind: str | None = None,
         knowledge_id: str | None = None,
         limit: int = 8,
     ) -> CallToolResult:
         return _guarded(bridge.tool_knowledge)(
-            action, query, topic, knowledge_id, limit
+            action, query, topic, kind, knowledge_id, limit
         )
 
     @mcp.tool(

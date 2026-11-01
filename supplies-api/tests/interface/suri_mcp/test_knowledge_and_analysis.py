@@ -20,7 +20,7 @@ def _payload(result) -> dict:
 class TestKnowledge:
     def test_sources_inventory_has_corpus_meta(self):
         data = knowledge.list_knowledge_sources()
-        assert data["corpus_version"] == 1
+        assert data["corpus_version"] == 2
         assert len(data["corpus_sha256"]) == 64
         assert {s["source_id"] for s in data["sources"]} >= {
             "portal-user-manual",
@@ -84,7 +84,7 @@ class TestKnowledgeTool:
     def test_sources_positive(self, access_context):
         access_context()
         result = tool_bridge.tool_knowledge("sources")
-        assert _payload(result)["data"]["corpus_version"] == 1
+        assert _payload(result)["data"]["corpus_version"] == 2
 
     def test_negative_knowledge_id_on_search(self, access_context):
         access_context()
