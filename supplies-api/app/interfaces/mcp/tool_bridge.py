@@ -26,6 +26,7 @@ from app.application.security.supplies_permissions import (
     can_administer,
     can_export_purchase_requests,
     can_use_analytics,
+    can_use_market_intelligence,
     can_use_operations,
     can_use_purchase_requests,
     has_canonical_access,
@@ -43,6 +44,17 @@ from app.application.services.late_deliveries_composition_service import (
 )
 from app.application.services.safety_stock_service import (
     SafetyStockService,
+)
+from app.application.services.market_intelligence_service import (
+    MarketDataNotFoundError,
+    MarketIntelligenceService,
+)
+from app.application.services.comex_analysis_service import (
+    ComexAnalysisService,
+    ComexConflictError,
+    ComexForbiddenError,
+    ComexNotFoundError,
+    ComexValidationError,
 )
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
 from app.application.services.otd_aggregate_service import OtdAggregateService
@@ -129,10 +141,22 @@ from app.interfaces.mcp.constants import (
 DELIVERIES_LATE_FILTER_KEYS,
     INVENTORY_ITEMS_FILTER_KEYS,
     INVENTORY_SUMMARY_FILTER_KEYS,
+    COMEX_IDENTITY_KEYS,
+    COMEX_NCM_LIST_KEYS,
+    COMEX_PRODUCTS_KEYS,
+    COMEX_VIEWS_KEYS,
     CONSUMPTION_COMPARISON_FILTER_KEYS,
     CONSUMPTION_DATE_TYPES,
     CONSUMPTION_IDENTITY_KEYS,
     CONSUMPTION_SEARCH_FILTER_KEYS,
+    MARKET_COMMON_KEYS,
+    MARKET_FILTERS_KEYS,
+    MARKET_FX_KEYS,
+    MARKET_IMPORT_SERIES_KEYS,
+    MARKET_MONTHLY_KEYS,
+    MARKET_PRODUCER_PRICE_KEYS,
+    MARKET_QUOTE_KEYS,
+    MARKET_SERIES_KEYS,
     OTD_AGGREGATE_FILTER_KEYS,
     OTD_SERIES_FILTER_KEYS,
     OVERVIEW_SUMMARY_FILTER_KEYS,
@@ -556,6 +580,8 @@ _SAFETY_STOCK_SERVICE = SafetyStockService()
 _OVERVIEW_SERVICE = OverviewCompositionService()
 _OTD_AGG_SERVICE = OtdAggregateService()
 _OTD_SERIES_SERVICE = OtdSeriesService()
+_MARKET_SERVICE = MarketIntelligenceService()
+_COMEX_SERVICE = ComexAnalysisService()
 _INVENTORY_SERVICE = InventoryStockBalancesService()
 
 _PR_GATEWAY = PurchaseRequestsGateway()
@@ -1263,6 +1289,14 @@ def tool_read(
         )
     if normalized_entity == "consumption":
         return _dispatch_consumption_read(
+            normalized_action, filter_payload, identity_payload
+        )
+    if normalized_entity == "market":
+        return _dispatch_market_read(
+            normalized_action, filter_payload, identity_payload
+        )
+    if normalized_entity == "comex":
+        return _dispatch_comex_read(
             normalized_action, filter_payload, identity_payload
         )
 
@@ -2122,5 +2156,238 @@ def tool_consumption_comparison(filters: dict) -> CallToolResult:
     data = unwrap_delpi_envelope(payload)
     return _ok(
         data, meta={"delpi/source": "bff:/consumption-audit/comparison"}
+    )
+
+
+def _market_user() -> EffectiveUser:
+    user = _effective_user()
+    if not can_use_market_intelligence(user):
+        raise AuthorizationError("Forbidden")
+    return user
+
+
+_MARKET_ACTION_KEYS = {
+    "filters": MARKET_FILTERS_KEYS,
+    "summary": MARKET_COMMON_KEYS,
+    "series": MARKET_SERIES_KEYS,
+    "import_series": MARKET_IMPORT_SERIES_KEYS,
+    "producer_price_series": MARKET_PRODUCER_PRICE_KEYS,
+    "fx_series": MARKET_FX_KEYS,
+    "quote_series": MARKET_QUOTE_KEYS,
+    "quote_compare": MARKET_QUOTE_KEYS,
+    "monthly_averages": MARKET_MONTHLY_KEYS,
+}
+
+
+def _dispatch_market_read(
+    action: str, filters: dict, identity: dict
+) -> CallToolResult:
+    if identity:
+        return _invalid(f"read(market,{action}) does not accept 'identity'.")
+    allowed = _MARKET_ACTION_KEYS[action]
+    unknown = _unknown_keys(filters, allowed)
+    if unknown:
+        return _invalid(
+            f"Unknown market {action} filters: {sorted(unknown)}. "
+            f"Allowed: {sorted(allowed)}"
+        )
+    return tool_market_read(action, filters)
+
+
+def tool_market_read(action: str, filters: dict) -> CallToolResult:
+    user = _market_user()
+    svc = _MARKET_SERVICE
+    try:
+        if action == "filters":
+            payload = svc.get_filters()
+        elif action == "summary":
+            payload = svc.get_summary(
+                instrument_code=filters.get("instrument"),
+                currency=filters.get("currency"),
+                fx_kind=filters.get("fx_kind"),
+                date_from=filters.get("date_from"),
+                date_to=filters.get("date_to"),
+            )
+        elif action == "series":
+            payload = svc.list_series(
+                instrument_code=filters.get("instrument"),
+                currency=filters.get("currency"),
+                granularity=filters.get("granularity"),
+                fx_kind=filters.get("fx_kind"),
+                date_from=filters.get("date_from"),
+                date_to=filters.get("date_to"),
+            )
+        elif action == "import_series":
+            payload = svc.list_import_series(
+                ncm_code=filters.get("ncm"),
+                granularity=filters.get("granularity"),
+                date_from=filters.get("date_from"),
+                date_to=filters.get("date_to"),
+                country_code=filters.get("country_code"),
+                state_code=filters.get("state_code"),
+            )
+        elif action == "producer_price_series":
+            payload = svc.list_producer_price_series(
+                series_id=filters.get("series_id"),
+                granularity=filters.get("granularity"),
+                date_from=filters.get("date_from"),
+                date_to=filters.get("date_to"),
+            )
+        elif action == "fx_series":
+            payload = svc.list_fx_series(
+                fx_kind=filters.get("fx_kind"),
+                granularity=filters.get("granularity"),
+                date_from=filters.get("date_from"),
+                date_to=filters.get("date_to"),
+            )
+        elif action == "quote_series":
+            payload = svc.list_quotes_series(
+                instruments=filters.get("instruments"),
+                granularity=filters.get("granularity"),
+                currency=filters.get("currency"),
+                fx_kind=filters.get("fx_kind"),
+                date_from=filters.get("date_from"),
+                date_to=filters.get("date_to"),
+            )
+        elif action == "quote_compare":
+            payload = svc.list_quotes_compare(
+                instruments=filters.get("instruments"),
+                granularity=filters.get("granularity"),
+                currency=filters.get("currency"),
+                fx_kind=filters.get("fx_kind"),
+                date_from=filters.get("date_from"),
+                date_to=filters.get("date_to"),
+            )
+        else:
+            payload = svc.list_monthly_averages(
+                instrument_code=filters.get("instrument"),
+                currency=filters.get("currency"),
+                fx_kind=filters.get("fx_kind"),
+                date_from=filters.get("date_from"),
+                date_to=filters.get("date_to"),
+                page=filters.get("page"),
+                page_size=filters.get("page_size"),
+            )
+    except MarketDataNotFoundError as exc:
+        return _invalid(str(exc))
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(
+        payload, meta={"delpi/source": "bff:/market-intelligence/" + action}
+    )
+
+
+def _dispatch_comex_read(
+    action: str, filters: dict, identity: dict
+) -> CallToolResult:
+    if action in {"ncm_governance_get", "view_get"}:
+        if filters:
+            return _invalid(
+                f"read(comex,{action}) accepts no 'filters' — "
+                "use identity."
+            )
+        unknown = _unknown_keys(identity, COMEX_IDENTITY_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown comex identity keys: {sorted(unknown)}. "
+                f"Allowed: {sorted(COMEX_IDENTITY_KEYS)}"
+            )
+        if action == "ncm_governance_get":
+            return tool_comex_governance_get(identity)
+        return tool_comex_view_get(identity)
+    if identity:
+        return _invalid(
+            f"read(comex,{action}) does not accept 'identity'."
+        )
+    allowed = (
+        COMEX_PRODUCTS_KEYS
+        if action == "products_search"
+        else COMEX_NCM_LIST_KEYS
+        if action == "ncm_governance"
+        else COMEX_VIEWS_KEYS
+    )
+    unknown = _unknown_keys(filters, allowed)
+    if unknown:
+        return _invalid(
+            f"Unknown comex {action} filters: {sorted(unknown)}. "
+            f"Allowed: {sorted(allowed)}"
+        )
+    if action == "products_search":
+        return tool_comex_products_search(filters)
+    if action == "ncm_governance":
+        return tool_comex_governance_list(filters)
+    return tool_comex_views()
+
+
+def tool_comex_products_search(filters: dict) -> CallToolResult:
+    user = _market_user()
+    try:
+        payload = _COMEX_SERVICE.search_products(user=user, args=filters)
+    except (ComexValidationError, ComexConflictError) as exc:
+        return _invalid(str(exc))
+    return _ok(
+        payload,
+        meta={"delpi/source":
+              "bff:/market-intelligence/comex/products/search"},
+    )
+
+
+def tool_comex_governance_list(filters: dict) -> CallToolResult:
+    user = _market_user()
+    try:
+        items = _COMEX_SERVICE.list_governance(
+            status=filters.get("status")
+        )
+    except ComexValidationError as exc:
+        return _invalid(str(exc))
+    return _ok(
+        {"items": items},
+        meta={"delpi/source":
+              "bff:/market-intelligence/comex/ncm-governance"},
+    )
+
+
+def tool_comex_governance_get(identity: dict) -> CallToolResult:
+    user = _market_user()
+    gid = str(identity.get("governance_id") or "").strip()
+    if not gid:
+        return _invalid("comex identity requires 'governance_id'.")
+    try:
+        payload = _COMEX_SERVICE.get_governance(gid)
+    except (
+        ComexNotFoundError, ComexForbiddenError, ComexValidationError
+    ) as exc:
+        return _invalid(str(exc))
+    return _ok(
+        payload,
+        meta={"delpi/source":
+              "bff:/market-intelligence/comex/ncm-governance/{id}"},
+    )
+
+
+def tool_comex_views() -> CallToolResult:
+    user = _market_user()
+    items = _COMEX_SERVICE.list_views(user=user)
+    return _ok(
+        {"items": items},
+        meta={"delpi/source": "bff:/market-intelligence/comex/views"},
+    )
+
+
+def tool_comex_view_get(identity: dict) -> CallToolResult:
+    user = _market_user()
+    vid = str(identity.get("view_id") or "").strip()
+    if not vid:
+        return _invalid("comex identity requires 'view_id'.")
+    try:
+        payload = _COMEX_SERVICE.get_view(vid, user=user)
+    except (
+        ComexNotFoundError, ComexForbiddenError, ComexValidationError
+    ) as exc:
+        return _invalid(str(exc))
+    return _ok(
+        payload,
+        meta={"delpi/source":
+              "bff:/market-intelligence/comex/views/{id}"},
     )
 

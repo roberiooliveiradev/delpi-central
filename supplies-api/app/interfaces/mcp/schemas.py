@@ -425,3 +425,71 @@ class ConsumptionIdentity(_ClosedModel):
     unit: str
     production_order: str = Field(min_length=11, max_length=11)
 
+class MarketCommonFilters(_ClosedModel):
+    instrument: str | None = None
+    currency: str | None = None
+    fx_kind: str | None = None
+    date_from: str | None = None
+    date_to: str | None = None
+
+
+class MarketSeriesFilters(MarketCommonFilters):
+    granularity: str | None = None
+
+
+class MarketImportSeriesFilters(_ClosedModel):
+    ncm: str | None = None
+    granularity: str | None = None
+    date_from: str | None = None
+    date_to: str | None = None
+    country_code: str | None = None
+    state_code: str | None = None
+
+
+class MarketProducerPriceFilters(_ClosedModel):
+    series_id: str | None = None
+    granularity: str | None = None
+    date_from: str | None = None
+    date_to: str | None = None
+
+
+class MarketFxFilters(_ClosedModel):
+    fx_kind: str | None = None
+    granularity: str | None = None
+    date_from: str | None = None
+    date_to: str | None = None
+
+
+class MarketQuoteFilters(_ClosedModel):
+    instruments: str | None = None
+    granularity: str | None = None
+    currency: str | None = None
+    fx_kind: str | None = None
+    date_from: str | None = None
+    date_to: str | None = None
+
+
+class MarketMonthlyFilters(MarketCommonFilters):
+    page: int | None = Field(default=None, ge=1)
+    page_size: int | None = Field(default=None, ge=1)
+
+
+class ComexProductsFilters(_ClosedModel):
+    code: str | None = None
+    description: str | None = None
+    product_type: str | None = None
+    group_code: str | None = None
+    search: str | None = None
+    page: int | None = Field(default=None, ge=1)
+    page_size: int | None = Field(default=None, ge=1)
+
+
+class ComexNcmListFilters(_ClosedModel):
+    status: str | None = None
+
+
+class ComexIdentity(_ClosedModel):
+    """identity for ncm_governance_get / view_get."""
+    governance_id: str | None = None
+    view_id: str | None = None
+
