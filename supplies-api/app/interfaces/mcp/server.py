@@ -30,6 +30,16 @@ from app.interfaces.mcp.constants import DESTRUCTIVE_ACT_TOOLS, TOOL_CLASS
 from app.interfaces.mcp.oauth_contract import SURI_MCP_SECURITY_SCHEMES
 from app.interfaces.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interfaces.mcp.schemas import (
+    ComexIdentity,
+    ComexNcmListFilters,
+    ComexProductsFilters,
+    MarketCommonFilters,
+    MarketFxFilters,
+    MarketImportSeriesFilters,
+    MarketMonthlyFilters,
+    MarketProducerPriceFilters,
+    MarketQuoteFilters,
+    MarketSeriesFilters,
     ConsumptionComparisonFilters,
     ConsumptionIdentity,
     ConsumptionSearchFilters,
@@ -209,6 +219,8 @@ def create_mcp_server() -> MCPServer:
             "safety_stock",
             "otd",
             "consumption",
+            "market",
+            "comex",
         ],
         action: Literal[
             "search",
@@ -231,6 +243,17 @@ def create_mcp_server() -> MCPServer:
             "aggregate",
             "series",
             "comparison",
+            "import_series",
+            "producer_price_series",
+            "fx_series",
+            "quote_series",
+            "quote_compare",
+            "monthly_averages",
+            "products_search",
+            "ncm_governance",
+            "ncm_governance_get",
+            "views",
+            "view_get",
         ],
         filters: (
             PurchaseOrderSearchFilters
@@ -254,6 +277,15 @@ def create_mcp_server() -> MCPServer:
             | OtdSeriesFilters
             | ConsumptionSearchFilters
             | ConsumptionComparisonFilters
+            | MarketCommonFilters
+            | MarketSeriesFilters
+            | MarketImportSeriesFilters
+            | MarketProducerPriceFilters
+            | MarketFxFilters
+            | MarketQuoteFilters
+            | MarketMonthlyFilters
+            | ComexProductsFilters
+            | ComexNcmListFilters
             | None
         ) = None,
         identity: (
@@ -264,6 +296,7 @@ def create_mcp_server() -> MCPServer:
             | PostalCodeIdentity
             | SafetyStockItemIdentity
             | ConsumptionIdentity
+            | ComexIdentity
             | None
         ) = None,
     ) -> CallToolResult:

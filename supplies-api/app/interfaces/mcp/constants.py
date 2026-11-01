@@ -31,8 +31,9 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 # rev.6 = deliveries.late + inventory summary/items (P1-R3);
 # rev.7 = safety_stock filters/summary/items/details/suppliers (R-13/R-14);
 # rev.8 = otd aggregate/series + analyze(overview_summary) (R-02/R-03);
-# rev.9 = consumption-audit search/get/comparison (R-23..R-25).
-CATALOG_VERSION = 9
+# rev.9 = consumption-audit search/get/comparison (R-23..R-25);
+# rev.10 = market_intelligence 9 reads + comex products/governance/views (R-26..R-29).
+CATALOG_VERSION = 10
 
 # DISCOVERY | READ | ANALYSIS | ACT — frozen semantic tool classes.
 # Metadata describes semantics; it NEVER authorizes execution.
@@ -111,6 +112,28 @@ READ_ACTIONS_BY_ENTITY: dict[str, frozenset[str]] = {
     ),
     "otd": frozenset({"aggregate", "series"}),
     "consumption": frozenset({"search", "get", "comparison"}),
+    "market": frozenset(
+        {
+            "filters",
+            "summary",
+            "series",
+            "import_series",
+            "producer_price_series",
+            "fx_series",
+            "quote_series",
+            "quote_compare",
+            "monthly_averages",
+        }
+    ),
+    "comex": frozenset(
+        {
+            "products_search",
+            "ncm_governance",
+            "ncm_governance_get",
+            "views",
+            "view_get",
+        }
+    ),
 }
 READ_ENTITIES: frozenset[str] = frozenset(READ_ACTIONS_BY_ENTITY)
 ANALYSIS_KINDS: frozenset[str] = frozenset(
@@ -384,3 +407,27 @@ CONSUMPTION_SEARCH_FILTER_KEYS = frozenset(
 CONSUMPTION_COMPARISON_FILTER_KEYS = frozenset({"unit", "orders"})
 CONSUMPTION_IDENTITY_KEYS = frozenset({"unit", "production_order"})
 CONSUMPTION_DATE_TYPES = frozenset({"emission", "finished", "appointment"})
+
+MARKET_FILTERS_KEYS = frozenset(set())
+MARKET_COMMON_KEYS = frozenset(
+    {"instrument", "currency", "fx_kind", "date_from", "date_to"}
+)
+MARKET_SERIES_KEYS = MARKET_COMMON_KEYS | frozenset({"granularity"})
+MARKET_IMPORT_SERIES_KEYS = frozenset(
+    {"ncm", "granularity", "date_from", "date_to", "country_code", "state_code"}
+)
+MARKET_PRODUCER_PRICE_KEYS = frozenset(
+    {"series_id", "granularity", "date_from", "date_to"}
+)
+MARKET_FX_KEYS = frozenset({"fx_kind", "granularity", "date_from", "date_to"})
+MARKET_QUOTE_KEYS = frozenset(
+    {"instruments", "granularity", "currency", "fx_kind", "date_from", "date_to"}
+)
+MARKET_MONTHLY_KEYS = MARKET_COMMON_KEYS | frozenset({"page", "page_size"})
+COMEX_PRODUCTS_KEYS = frozenset(
+    {"code", "description", "product_type", "group_code", "search",
+     "page", "page_size"}
+)
+COMEX_NCM_LIST_KEYS = frozenset({"status"})
+COMEX_VIEWS_KEYS = frozenset(set())
+COMEX_IDENTITY_KEYS = frozenset({"governance_id", "view_id"})
