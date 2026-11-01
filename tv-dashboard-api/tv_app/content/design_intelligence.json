@@ -3,93 +3,283 @@
   "componentSpecs": {
     "heading": {
       "componentType": "heading",
-      "purpose": ["title", "sectionTitle"],
-      "recommendedFor": ["slide title"],
-      "avoidFor": ["metric value"],
-      "textRoles": ["display", "title", "sectionTitle"]
+      "purpose": [
+        "title",
+        "sectionTitle"
+      ],
+      "recommendedFor": [
+        "slide title"
+      ],
+      "avoidFor": [
+        "metric value"
+      ],
+      "textRoles": [
+        "display",
+        "title",
+        "sectionTitle"
+      ]
     },
     "text": {
       "componentType": "text",
-      "purpose": ["caption", "body"],
-      "recommendedFor": ["supporting copy"],
-      "avoidFor": ["primary metric"],
-      "textRoles": ["body", "caption", "label"]
+      "purpose": [
+        "caption",
+        "body"
+      ],
+      "recommendedFor": [
+        "supporting copy"
+      ],
+      "avoidFor": [
+        "primary metric"
+      ],
+      "textRoles": [
+        "body",
+        "caption",
+        "label"
+      ]
     },
     "shape": {
       "componentType": "shape",
-      "purpose": ["surface"],
-      "recommendedFor": ["card", "callout", "accentStrip"],
-      "avoidFor": ["data series"],
-      "shapeRoles": ["card", "callout", "accentStrip", "badge", "ghostFrame", "sectionBackground"]
+      "purpose": [
+        "surface"
+      ],
+      "recommendedFor": [
+        "card",
+        "callout",
+        "accentStrip"
+      ],
+      "avoidFor": [
+        "data series"
+      ],
+      "shapeRoles": [
+        "card",
+        "callout",
+        "accentStrip",
+        "badge",
+        "ghostFrame",
+        "sectionBackground"
+      ]
     },
     "icon": {
       "componentType": "icon",
-      "purpose": ["affordance"],
-      "recommendedFor": ["kpi accent"],
-      "avoidFor": ["replacing a metric"]
+      "purpose": [
+        "affordance"
+      ],
+      "recommendedFor": [
+        "kpi accent"
+      ],
+      "avoidFor": [
+        "replacing a metric"
+      ]
     },
     "image": {
       "componentType": "image",
-      "purpose": ["media", "brand"],
-      "recommendedFor": ["photo", "logo"],
-      "avoidFor": ["kpi value"]
+      "purpose": [
+        "media",
+        "brand"
+      ],
+      "recommendedFor": [
+        "photo",
+        "logo"
+      ],
+      "avoidFor": [
+        "kpi value"
+      ]
     },
     "kpi_view": {
       "componentType": "kpi_view",
-      "purpose": ["single metric"],
-      "recommendedFor": ["revenue", "quantity", "rate", "primary indicator"],
-      "avoidFor": ["time series", "many categories"],
-      "kpiRoles": ["hero", "primary", "secondary", "compact"],
-      "requiredDataRoles": ["metric"]
+      "purpose": [
+        "single metric"
+      ],
+      "recommendedFor": [
+        "revenue",
+        "quantity",
+        "rate",
+        "primary indicator"
+      ],
+      "avoidFor": [
+        "time series",
+        "many categories"
+      ],
+      "kpiRoles": [
+        "hero",
+        "primary",
+        "secondary",
+        "compact"
+      ],
+      "requiredDataRoles": [
+        "metric"
+      ]
     },
     "data_kpi": {
       "componentType": "data_kpi",
-      "purpose": ["single metric"],
-      "recommendedFor": ["revenue", "quantity", "rate"],
-      "avoidFor": ["time series"],
-      "requiredDataRoles": ["metric"]
+      "purpose": [
+        "single metric"
+      ],
+      "recommendedFor": [
+        "revenue",
+        "quantity",
+        "rate"
+      ],
+      "avoidFor": [
+        "time series"
+      ],
+      "requiredDataRoles": [
+        "metric"
+      ]
     },
     "chart_view": {
       "componentType": "chart_view",
-      "purpose": ["comparison", "trend", "composition"],
+      "purpose": [
+        "comparison",
+        "trend",
+        "composition"
+      ],
       "variants": {
-        "line": {"purpose": ["temporal trend"], "requiredDataRoles": ["temporal", "metric"], "avoidFor": ["unordered categories"]},
-        "area": {"purpose": ["temporal trend"], "requiredDataRoles": ["temporal", "metric"], "avoidFor": ["unordered categories"]},
-        "bar": {"purpose": ["category comparison"], "recommendedFor": ["branch", "seller", "product"]},
-        "horizontal_bar": {"purpose": ["ranking"], "recommendedFor": ["long labels", "cardinality>4"]},
-        "doughnut": {"purpose": ["composition"], "avoidFor": ["time series", "ranking", "negative values"], "maxCategories": 5},
-        "pie": {"purpose": ["composition"], "avoidFor": ["time series", "ranking", "negative values"], "maxCategories": 5},
-        "gauge": {"purpose": ["progress vs goal"], "requiredDataRoles": ["metric", "goal"], "avoidFor": ["ranking", "time series"]},
-        "waterfall": {"purpose": ["bridge from start to end"], "recommendedFor": ["positive and negative components"]}
+        "line": {
+          "purpose": [
+            "temporal trend"
+          ],
+          "requiredDataRoles": [
+            "temporal",
+            "metric"
+          ],
+          "avoidFor": [
+            "unordered categories"
+          ]
+        },
+        "area": {
+          "purpose": [
+            "temporal trend"
+          ],
+          "requiredDataRoles": [
+            "temporal",
+            "metric"
+          ],
+          "avoidFor": [
+            "unordered categories"
+          ]
+        },
+        "bar": {
+          "purpose": [
+            "category comparison"
+          ],
+          "recommendedFor": [
+            "branch",
+            "seller",
+            "product"
+          ]
+        },
+        "horizontal_bar": {
+          "purpose": [
+            "ranking"
+          ],
+          "recommendedFor": [
+            "long labels",
+            "cardinality>4"
+          ]
+        },
+        "doughnut": {
+          "purpose": [
+            "composition"
+          ],
+          "avoidFor": [
+            "time series",
+            "ranking",
+            "negative values"
+          ],
+          "maxCategories": 5
+        },
+        "pie": {
+          "purpose": [
+            "composition"
+          ],
+          "avoidFor": [
+            "time series",
+            "ranking",
+            "negative values"
+          ],
+          "maxCategories": 5
+        },
+        "gauge": {
+          "purpose": [
+            "progress vs goal"
+          ],
+          "requiredDataRoles": [
+            "metric",
+            "goal"
+          ],
+          "avoidFor": [
+            "ranking",
+            "time series"
+          ]
+        },
+        "waterfall": {
+          "purpose": [
+            "bridge from start to end"
+          ],
+          "recommendedFor": [
+            "positive and negative components"
+          ]
+        }
       }
     },
     "data_chart": {
       "componentType": "data_chart",
-      "purpose": ["comparison", "trend"],
-      "avoidFor": ["exact operational listing"]
+      "purpose": [
+        "comparison",
+        "trend"
+      ],
+      "avoidFor": [
+        "exact operational listing"
+      ]
     },
     "table_view": {
       "componentType": "table_view",
-      "purpose": ["exact values", "detailed ranking"],
-      "recommendedFor": ["many categories", "operational rows"],
-      "avoidFor": ["single hero metric"]
+      "purpose": [
+        "exact values",
+        "detailed ranking"
+      ],
+      "recommendedFor": [
+        "many categories",
+        "operational rows"
+      ],
+      "avoidFor": [
+        "single hero metric"
+      ]
     },
     "data_table": {
       "componentType": "data_table",
-      "purpose": ["exact values"],
-      "recommendedFor": ["many categories"]
+      "purpose": [
+        "exact values"
+      ],
+      "recommendedFor": [
+        "many categories"
+      ]
     },
     "canvas_table": {
       "componentType": "canvas_table",
-      "purpose": ["dense operational grid"],
-      "recommendedFor": ["many columns"],
-      "avoidFor": ["hero kpi"]
+      "purpose": [
+        "dense operational grid"
+      ],
+      "recommendedFor": [
+        "many columns"
+      ],
+      "avoidFor": [
+        "hero kpi"
+      ]
     },
     "input": {
       "componentType": "input",
-      "purpose": ["filter control"],
-      "recommendedFor": ["branch", "period"],
-      "avoidFor": ["primary visualization"]
+      "purpose": [
+        "filter control"
+      ],
+      "recommendedFor": [
+        "branch",
+        "period"
+      ],
+      "avoidFor": [
+        "primary visualization"
+      ]
     }
   },
   "designMethodology": {
@@ -102,8 +292,18 @@
       "COMPOSE_SLIDE",
       "FIX_LAYOUT"
     ],
-    "epistemicStates": ["FACT", "INFERRED", "RECOMMENDED", "UNKNOWN"],
-    "readinessStates": ["READY", "PARTIAL", "MISSING_INFORMATION", "BLOCKED"],
+    "epistemicStates": [
+      "FACT",
+      "INFERRED",
+      "RECOMMENDED",
+      "UNKNOWN"
+    ],
+    "readinessStates": [
+      "READY",
+      "PARTIAL",
+      "MISSING_INFORMATION",
+      "BLOCKED"
+    ],
     "sufficiencyOutcomes": [
       "RECOMMEND_NOW",
       "READ_MORE_STATE",
@@ -119,7 +319,9 @@
     ],
     "factRequirements": {
       "CHOOSE_VISUAL": {
-        "required": ["data_shape"],
+        "required": [
+          "data_shape"
+        ],
         "optional": [
           "primary_metric",
           "time_series",
@@ -130,7 +332,9 @@
         ]
       },
       "REVIEW_SLIDE": {
-        "required": ["target_scope"],
+        "required": [
+          "target_scope"
+        ],
         "optional": [
           "layout_density",
           "visual_evidence_available",
@@ -139,32 +343,81 @@
         ]
       },
       "IMPROVE_EXISTING": {
-        "required": ["target_object"],
-        "optional": ["existing_visual_type", "data_shape", "layout_density"]
+        "required": [
+          "target_object"
+        ],
+        "optional": [
+          "existing_visual_type",
+          "data_shape",
+          "layout_density"
+        ]
       },
       "COMPOSE_SLIDE": {
         "required": [],
-        "optional": ["slide_purpose", "data_shape", "display_context", "dominant_family"]
+        "optional": [
+          "slide_purpose",
+          "data_shape",
+          "display_context",
+          "dominant_family"
+        ]
       },
       "FIX_LAYOUT": {
-        "required": ["target_scope"],
-        "optional": ["layout_density"]
+        "required": [
+          "target_scope"
+        ],
+        "optional": [
+          "layout_density"
+        ]
       }
     },
     "factSources": {
-      "data_shape": {"read": "preview_data_block", "alt": "inspect_data_model"},
-      "primary_metric": {"derived": "semanticDigest.fields[role=metric]"},
-      "time_series": {"derived": "semanticDigest.temporal.detected"},
-      "category_count": {"derived": "semanticDigest.categoryCardinality"},
-      "existing_visual_type": {"read": "get_playlist_context", "via": "blockIndex/selectedObjects"},
-      "target_object": {"read": "get_playlist_context", "via": "editorFocus.selectedObjects"},
-      "target_scope": {"read": "get_playlist_context"},
-      "layout_density": {"read": "get_playlist_context", "via": "layoutDigest"},
-      "dominant_family": {"read": "get_playlist_context", "via": "storyDigest"},
-      "visual_evidence_available": {"read": "get_playlist_context", "via": "canonical_stage"},
-      "slide_purpose": {"user": true},
-      "comparison_goal": {"user": true, "note": "ask only when not inferable from digest"},
-      "display_context": {"user": true, "note": "kiosk vs detail context"}
+      "data_shape": {
+        "read": "preview_data_block",
+        "alt": "inspect_data_model"
+      },
+      "primary_metric": {
+        "derived": "semanticDigest.fields[role=metric]"
+      },
+      "time_series": {
+        "derived": "semanticDigest.temporal.detected"
+      },
+      "category_count": {
+        "derived": "semanticDigest.categoryCardinality"
+      },
+      "existing_visual_type": {
+        "read": "get_playlist_context",
+        "via": "blockIndex/selectedObjects"
+      },
+      "target_object": {
+        "read": "get_playlist_context",
+        "via": "editorFocus.selectedObjects"
+      },
+      "target_scope": {
+        "read": "get_playlist_context"
+      },
+      "layout_density": {
+        "read": "get_playlist_context",
+        "via": "layoutDigest"
+      },
+      "dominant_family": {
+        "read": "get_playlist_context",
+        "via": "storyDigest"
+      },
+      "visual_evidence_available": {
+        "read": "get_playlist_context",
+        "via": "canonical_stage"
+      },
+      "slide_purpose": {
+        "user": true
+      },
+      "comparison_goal": {
+        "user": true,
+        "note": "ask only when not inferable from digest"
+      },
+      "display_context": {
+        "user": true,
+        "note": "kiosk vs detail context"
+      }
     },
     "readinessRules": {
       "BLOCKED": "hard read/evidence failure (preview error, missing persisted target)",
@@ -200,6 +453,101 @@
       "layout fixed before authoritative read-back",
       "authorization/capability claims from methodology"
     ],
-    "confidencePolicy": "no numeric confidence; evidence level + readiness + reasons only"
+    "confidencePolicy": "no numeric confidence; evidence level + readiness + reasons only",
+    "professionalGuidance": {
+      "version": "prof-guidance-v1",
+      "scope": "TV digital signage — painéis industriais sem interacao (nao BI desktop)",
+      "sources": [
+        {
+          "ref": "Power BI dashboard design guidance",
+          "org": "Microsoft",
+          "url": "https://learn.microsoft.com/power-bi/create-reports/service-dashboards-design-tips",
+          "applicability": "layout, hierarquia, escolha de visual"
+        },
+        {
+          "ref": "Grafana dashboard best practices",
+          "org": "Grafana Labs",
+          "url": "https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/best-practices/",
+          "applicability": "painéis operacionais, alertas, densidade"
+        },
+        {
+          "ref": "WCAG 2.x contrast",
+          "org": "W3C",
+          "url": "https://www.w3.org/TR/WCAG21/#contrast-minimum",
+          "applicability": "contraste minimo de legibilidade"
+        },
+        {
+          "ref": "Information Dashboard Design",
+          "org": "Stephen Few",
+          "url": "literatura (Analytics Press)",
+          "applicability": "escolha de grafico, semantica de cores, densidade"
+        },
+        {
+          "ref": "Storytelling with Data",
+          "org": "Cole Nussbaumer Knaflic",
+          "url": "literatura (Wiley)",
+          "applicability": "narrativa executiva vs operacional"
+        }
+      ],
+      "chartSelection": {
+        "comparison": {
+          "recommended": "bar",
+          "avoid": "doughnut",
+          "reason": "barras expressam magnitude comparativa; fatias so fazem sentido em parte-do-todo com <=4 categorias"
+        },
+        "temporal": {
+          "recommended": "line",
+          "avoid": "doughnut,pie",
+          "reason": "serie temporal nunca e composicao; linha expressa tendencia"
+        },
+        "goal_progress": {
+          "recommended": "gauge",
+          "alternative": "kpi_view",
+          "reason": "valor atual vs meta exige proporcao, nao categoria"
+        },
+        "ranking": {
+          "recommended": "horizontal_bar",
+          "alternative": "table_view",
+          "reason": "ordem ordinal le melhor horizontal; tabela para valores exatos"
+        },
+        "detail_listing": {
+          "recommended": "table_view",
+          "reason": "multiplas dimensoes nao sao composicao; listar exato"
+        },
+        "state_snapshot": {
+          "recommended": "table_view",
+          "reason": "sem metrica, listar e honesto; nao fabricar grafico categorico"
+        },
+        "part_of_whole": {
+          "recommended": "doughnut",
+          "condition": "apenas <=5 categorias com semantica de share real"
+        }
+      },
+      "tvConstraints": {
+        "viewing_distance_m": [
+          2,
+          8
+        ],
+        "min_font_hero": "valor numerico principal >= parte dominante (hierarquia invertida e defeito)",
+        "max_kpis_per_slide": 4,
+        "contrast": "texto/dado em contraste WCAG AA sobre o fundo do tema TV",
+        "safe_margin": "respeitar safeMargin — TV cropa bordas (overscan)",
+        "no_interaction": "painel nunca depende de hover/click/drilldown",
+        "reading_time_s": "slide deve ser legivel na janela de exibicao da playlist; densidade alta exige multiplos slides"
+      },
+      "qualitySignals": {
+        "density": "kpi_density_exceeded quando >4 indicadores por slide",
+        "legibility": "low_contrast + part_font_below_min mapeiam Q5",
+        "hierarchy": "hierarchy_inverted + widescreen_single_data_visual mapeiam Q4",
+        "layout": "block_overlap + frame_overflow + safe_area_violation"
+      },
+      "antiPatterns": [
+        "grafico categorico em dados sem forma (strings sem metrica)",
+        "composicao parte-do-todo sem share semantico",
+        "indentificador numerico tratado como data sem evidencia de valor",
+        "metricas oficiais inventadas sem owner de dados",
+        "densidade BI desktop replicada em TV industrial"
+      ]
+    }
   }
 }

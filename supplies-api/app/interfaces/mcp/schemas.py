@@ -378,3 +378,24 @@ class SafetyStockItemIdentity(_ClosedModel):
     code: str = Field(min_length=1)
     branch: str | None = None
 
+class OtdAggregateFilters(_ClosedModel):
+    """read(otd,aggregate) — GET /analytics/otd."""
+    branch: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+
+
+class OtdSeriesFilters(_ClosedModel):
+    """read(otd,series) — GET /analytics/otd/series."""
+    branch: list[str] | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    granularity: str | None = None
+
+
+class OverviewSummaryFilters(_ClosedModel):
+    """analyze(overview_summary) — GET /analytics/overview."""
+    branch: list[str] | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+

@@ -30,6 +30,9 @@ from app.interfaces.mcp.constants import DESTRUCTIVE_ACT_TOOLS, TOOL_CLASS
 from app.interfaces.mcp.oauth_contract import SURI_MCP_SECURITY_SCHEMES
 from app.interfaces.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interfaces.mcp.schemas import (
+    OtdAggregateFilters,
+    OtdSeriesFilters,
+    OverviewSummaryFilters,
     SafetyStockItemIdentity,
     SafetyStockItemsFilters,
     SafetyStockScopeFilters,
@@ -201,6 +204,7 @@ def create_mcp_server() -> MCPServer:
             "deliveries",
             "inventory",
             "safety_stock",
+            "otd",
         ],
         action: Literal[
             "search",
@@ -220,6 +224,8 @@ def create_mcp_server() -> MCPServer:
             "filters",
             "details",
             "suppliers",
+            "aggregate",
+            "series",
         ],
         filters: (
             PurchaseOrderSearchFilters
@@ -239,6 +245,8 @@ def create_mcp_server() -> MCPServer:
             | SafetyStockScopeFilters
             | SafetyStockSummaryFilters
             | SafetyStockItemsFilters
+            | OtdAggregateFilters
+            | OtdSeriesFilters
             | None
         ) = None,
         identity: (
@@ -279,7 +287,7 @@ def create_mcp_server() -> MCPServer:
         analysis: Literal[
             "purchase_orders_summary", "supplier_creation_preview"
         ],
-        filters: PurchaseOrderAnalyzeFilters | SupplierPreviewFilters | None = None,
+        filters: PurchaseOrderAnalyzeFilters | SupplierPreviewFilters | OverviewSummaryFilters | None = None,
         sample_size: int = 50,
     ) -> CallToolResult:
         return _guarded(bridge.tool_analyze)(analysis, filters, sample_size)

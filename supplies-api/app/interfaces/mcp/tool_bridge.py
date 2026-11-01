@@ -24,6 +24,7 @@ from pydantic import BaseModel, ValidationError
 from app.application.security.supplies_permissions import (
     can_administer,
     can_export_purchase_requests,
+    can_use_analytics,
     can_use_operations,
     can_use_purchase_requests,
     has_canonical_access,
@@ -40,6 +41,12 @@ from app.application.services.late_deliveries_composition_service import (
     LateDeliveriesCompositionService,
 )
 from app.application.services.safety_stock_service import SafetyStockService
+from app.application.services.otd_aggregate_service import OtdAggregateService
+from app.application.services.otd_series_service import OtdSeriesService
+from app.application.services.overview_composition_service import (
+    OverviewCompositionService,
+    normalize_overview_branches,
+)
 from app.application.services.supplier_creation_preview.preview_service import (
     SupplierCreationPreviewService,
 )
@@ -118,6 +125,9 @@ from app.interfaces.mcp.constants import (
 DELIVERIES_LATE_FILTER_KEYS,
     INVENTORY_ITEMS_FILTER_KEYS,
     INVENTORY_SUMMARY_FILTER_KEYS,
+    OTD_AGGREGATE_FILTER_KEYS,
+    OTD_SERIES_FILTER_KEYS,
+    OVERVIEW_SUMMARY_FILTER_KEYS,
     SAFETY_STOCK_FILTERS_FILTER_KEYS,
     SAFETY_STOCK_ITEM_IDENTITY_KEYS,
     SAFETY_STOCK_ITEMS_FILTER_KEYS,
@@ -529,6 +539,9 @@ def tool_export_purchase_orders(filters: dict) -> CallToolResult:
 
 _DELIVERIES_SERVICE = LateDeliveriesCompositionService()
 _SAFETY_STOCK_SERVICE = SafetyStockService()
+_OVERVIEW_SERVICE = OverviewCompositionService()
+_OTD_AGG_SERVICE = OtdAggregateService()
+_OTD_SERIES_SERVICE = OtdSeriesService()
 _INVENTORY_SERVICE = InventoryStockBalancesService()
 
 _PR_GATEWAY = PurchaseRequestsGateway()
@@ -1230,6 +1243,10 @@ def tool_read(
         return _dispatch_safety_stock_read(
             normalized_action, filter_payload, identity_payload
         )
+    if normalized_entity == "otd":
+        return _dispatch_otd_read(
+            normalized_action, filter_payload, identity_payload
+        )
 
     if normalized_action == "search":
         if identity_payload:
@@ -1515,6 +1532,14 @@ def tool_analyze(
             f"Allowed: {sorted(ANALYSIS_KINDS)}"
         )
     filter_payload = _payload_dict(filters)
+    if normalized == "overview_summary":
+        unknown = _unknown_keys(filter_payload, OVERVIEW_SUMMARY_FILTER_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown overview_summary filters: {sorted(unknown)}. "
+                f"Allowed: {sorted(OVERVIEW_SUMMARY_FILTER_KEYS)}"
+            )
+        return tool_analyze_overview_summary(filter_payload)
     if normalized == "supplier_creation_preview":
         unknown = _unknown_keys(filter_payload, SUPPLIER_PREVIEW_FILTER_KEYS)
         if unknown:
@@ -1857,4 +1882,89 @@ def tool_safety_stock_item_suppliers(code, branch) -> CallToolResult:
         payload,
         meta={"delpi/source": "bff:/safety-stock/items/{code}/suppliers"},
     )
+
+
+def _analytics_user() -> EffectiveUser:
+    user = _effective_user()
+    if not can_use_analytics(user):
+        raise AuthorizationError("Forbidden")
+    return user
+
+
+def _dispatch_otd_read(
+    action: str, filters: dict, identity: dict
+) -> CallToolResult:
+    if identity:
+        return _invalid(f"read(otd,{action}) does not accept 'identity'.")
+    allowed = (
+        OTD_AGGREGATE_FILTER_KEYS
+        if action == "aggregate"
+        else OTD_SERIES_FILTER_KEYS
+    )
+    unknown = _unknown_keys(filters, allowed)
+    if unknown:
+        return _invalid(
+            f"Unknown otd {action} filters: {sorted(unknown)}. "
+            f"Allowed: {sorted(allowed)}"
+        )
+    if action == "aggregate":
+        return tool_otd_aggregate(filters)
+    return tool_otd_series(filters)
+
+
+def tool_otd_aggregate(filters: dict) -> CallToolResult:
+    """read(otd,aggregate) — same compose call as GET /analytics/otd."""
+    user = _analytics_user()
+    try:
+        payload = _OTD_AGG_SERVICE.compose(
+            user,
+            branch=filters.get("branch"),
+            start_date=filters.get("start_date"),
+            end_date=filters.get("end_date"),
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(payload, meta={"delpi/source": "bff:/analytics/otd"})
+
+
+def tool_otd_series(filters: dict) -> CallToolResult:
+    """read(otd,series) — same compose call as GET /analytics/otd/series."""
+    user = _analytics_user()
+    try:
+        branches = normalize_overview_branches(
+            _clean_branches(filters.get("branch"))
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    series_branch = branches[0] if len(branches) == 1 else None
+    try:
+        payload = _OTD_SERIES_SERVICE.compose(
+            user,
+            branch=series_branch,
+            start_date=filters.get("start_date"),
+            end_date=filters.get("end_date"),
+            granularity=filters.get("granularity"),
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(payload, meta={"delpi/source": "bff:/analytics/otd/series"})
+
+
+def tool_analyze_overview_summary(filters: dict) -> CallToolResult:
+    """analyze(overview_summary) — same compose as GET /analytics/overview.
+
+    Partial producer failures stay visible in the payload's own
+    partialFailures semantics — never coerced to zeros or full success.
+    """
+    user = _analytics_user()
+    try:
+        payload = _OVERVIEW_SERVICE.compose(
+            user,
+            branches=_clean_branches(filters.get("branch")),
+            start_date=filters.get("start_date"),
+            end_date=filters.get("end_date"),
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(payload, meta={"delpi/source": "bff:/analytics/overview"})
 

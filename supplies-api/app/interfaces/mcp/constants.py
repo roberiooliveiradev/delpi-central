@@ -29,8 +29,9 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 # DECISION-G1 closed: export returns the canonical filtered JSON dataset,
 # not binary/base64 — file materialization stays on the BFF/Portal;
 # rev.6 = deliveries.late + inventory summary/items (P1-R3);
-# rev.7 = safety_stock filters/summary/items/details/suppliers (R-13/R-14).
-CATALOG_VERSION = 7
+# rev.7 = safety_stock filters/summary/items/details/suppliers (R-13/R-14);
+# rev.8 = otd aggregate/series + analyze(overview_summary) (R-02/R-03).
+CATALOG_VERSION = 8
 
 # DISCOVERY | READ | ANALYSIS | ACT — frozen semantic tool classes.
 # Metadata describes semantics; it NEVER authorizes execution.
@@ -107,10 +108,11 @@ READ_ACTIONS_BY_ENTITY: dict[str, frozenset[str]] = {
     "safety_stock": frozenset(
         {"filters", "summary", "items", "details", "suppliers"}
     ),
+    "otd": frozenset({"aggregate", "series"}),
 }
 READ_ENTITIES: frozenset[str] = frozenset(READ_ACTIONS_BY_ENTITY)
 ANALYSIS_KINDS: frozenset[str] = frozenset(
-    {"purchase_orders_summary", "supplier_creation_preview"}
+    {"purchase_orders_summary", "supplier_creation_preview", "overview_summary"}
 )
 KNOWLEDGE_ACTIONS: frozenset[str] = frozenset({"search", "get", "sources"})
 CONTEXT_ACTIONS: frozenset[str] = frozenset({"context", "catalog"})
@@ -350,3 +352,14 @@ SAFETY_STOCK_ITEMS_FILTER_KEYS = SAFETY_STOCK_SUMMARY_FILTER_KEYS | frozenset(
     {"page", "page_size", "sortBy", "sortDirection"}
 )
 SAFETY_STOCK_ITEM_IDENTITY_KEYS = frozenset({"code", "branch"})
+
+OTD_COMMON_FILTER_KEYS = frozenset({"branch", "start_date", "end_date"})
+OTD_AGGREGATE_FILTER_KEYS = frozenset(
+    {"branch", "start_date", "end_date"}
+)
+OTD_SERIES_FILTER_KEYS = frozenset(
+    {"branch", "start_date", "end_date", "granularity"}
+)
+OVERVIEW_SUMMARY_FILTER_KEYS = frozenset(
+    {"branch", "start_date", "end_date"}
+)
