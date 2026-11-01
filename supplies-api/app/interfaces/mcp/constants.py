@@ -33,8 +33,9 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 # rev.8 = otd aggregate/series + analyze(overview_summary) (R-02/R-03);
 # rev.9 = consumption-audit search/get/comparison (R-23..R-25);
 # rev.10 = market_intelligence 9 reads + comex products/governance/views (R-26..R-29);
-# rev.11 = session capabilities/preferences + users profile/photo/related (R-01,R-30..R-32).
-CATALOG_VERSION = 11
+# rev.11 = session capabilities/preferences + users profile/photo/related (R-01,R-30..R-32);
+# rev.12 = comex governed writes ncm_request/ncm_transition/view_create/view_update (W-06..W-08).
+CATALOG_VERSION = 12
 
 # DISCOVERY | READ | ANALYSIS | ACT — frozen semantic tool classes.
 # Metadata describes semantics; it NEVER authorizes execution.
@@ -150,6 +151,9 @@ CONTEXT_ACTIONS: frozenset[str] = frozenset({"context", "catalog"})
 # no arbitrary URL/method/handler selection.
 EXECUTE_ACTIONS_BY_ENTITY: dict[str, frozenset[str]] = {
     "suppliers": frozenset({"create", "update"}),
+    "comex": frozenset(
+        {"ncm_request", "ncm_transition", "view_create", "view_update"}
+    ),
 }
 EXECUTE_ENTITIES: frozenset[str] = frozenset(EXECUTE_ACTIONS_BY_ENTITY)
 

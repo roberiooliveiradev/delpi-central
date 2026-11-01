@@ -116,7 +116,11 @@ from app.infrastructure.gateways.purchase_requests_gateway import (
 from app.infrastructure.gateways.supplier_enrichment_adapters import (
     company_registry_provider,
 )
-from app.interfaces.mcp import knowledge, supplier_execute
+from app.interfaces.mcp import (
+    comex_execute,
+    knowledge,
+    supplier_execute,
+)
 from app.interfaces.mcp.branding import SURI_FULL_NAME, SURI_MISSION
 from app.interfaces.mcp.constants import (
     ANALYSIS_KINDS,
@@ -1711,7 +1715,6 @@ def tool_execute(
         )
     # Authorization first — same order as the BFF decorators: the policy
     # runs before any payload handling, on the caller's own identity.
-    user = _operations_user()
     ops_in = operations or []
     if not isinstance(ops_in, list) or not ops_in:
         return _invalid("execute requires a non-empty 'operations' list.")
@@ -1721,6 +1724,27 @@ def tool_execute(
             f"per call (received {len(ops_in)})."
         )
     ops = [_payload_dict(item) for item in ops_in]
+    if normalized_entity == "comex":
+        user = _market_user()
+        allowed_keys = comex_execute.COMEX_WRITE_KEYS_BY_ACTION[
+            normalized_action
+        ]
+        for index, item in enumerate(ops):
+            unknown = _unknown_keys(item, allowed_keys)
+            if unknown:
+                return _invalid(
+                    f"Unknown comex {normalized_action} operation keys at "
+                    f"index {index}: {sorted(unknown)}. Allowed: "
+                    f"{sorted(allowed_keys)}"
+                )
+        data = comex_execute.execute_comex_write(
+            user, action=normalized_action, operations=ops
+        )
+        return _ok(
+            data,
+            meta={"delpi/source": f"bff:/comex[{normalized_action}]"},
+        )
+    user = _operations_user()
     for index, item in enumerate(ops):
         unknown = _unknown_keys(item, SUPPLIER_WRITE_OPERATION_KEYS)
         if unknown:

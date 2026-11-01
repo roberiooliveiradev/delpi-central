@@ -510,3 +510,32 @@ class UsersIdentity(_ClosedModel):
     """identity {user_id} for profile/photo/related_requests."""
     user_id: str = Field(min_length=1)
 
+class ComexWriteOperation(_ClosedModel):
+    """One governed write operation for ``execute(entity=comex)``.
+
+    Key sets are enforced per action in the dispatcher — this model only
+    declares the closed union vocabulary: NCM request/transition and view
+    create/update fields plus ``idempotency_key``.
+    """
+    idempotency_key: str | None = Field(default=None, max_length=128)
+    ncm_code: str | None = None
+    description: str | None = None
+    ncm_version: str | None = None
+    family_code: str | None = None
+    product_codes: list[str] | None = None
+    notes: str | None = None
+    initial_status: str | None = None
+    governance_id: str | None = None
+    to_status: str | None = None
+    expected_revision: int | None = None
+    view_id: str | None = None
+    name: str | None = None
+    unit_scope: str | None = None
+    selected_product_codes: list[str] | None = None
+    selected_materials: list[str] | None = None
+    approved_ncm_references: list[str] | None = None
+    selected_metrics: list[str] | None = None
+    date_range: dict | None = None
+    granularity: str | None = None
+    view_mode: str | None = None
+
