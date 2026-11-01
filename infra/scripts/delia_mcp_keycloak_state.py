@@ -101,6 +101,10 @@ SPECIALISTS = (
      "apps/controllership-finance-api/mcp"),
     ("mcp-commercial", "mcp-audience-caio",
      "apps/commercial-api/mcp"),
+    ("mcp-supplies", "mcp-audience-suri",
+     "apps/supplies-api/mcp"),
+    ("mcp-engineering", "mcp-audience-eva",
+     "apps/engineering-api/mcp"),
 )
 
 REQUESTER_CLIENT_ID = "delia-api"

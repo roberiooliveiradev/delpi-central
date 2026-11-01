@@ -142,11 +142,19 @@ class Settings:
             "davi": (os.getenv("DELIA_MCP_DAVI_BASE_URL") or "").strip(),
             "teo": (os.getenv("DELIA_MCP_TEO_BASE_URL") or "").strip(),
             "vista": (os.getenv("DELIA_MCP_VISTA_BASE_URL") or "").strip(),
+            "caio": (os.getenv("DELIA_MCP_CAIO_BASE_URL") or "").strip(),
+            "clara": (os.getenv("DELIA_MCP_CLARA_BASE_URL") or "").strip(),
+            "suri": (os.getenv("DELIA_MCP_SURI_BASE_URL") or "").strip(),
+            "eva": (os.getenv("DELIA_MCP_EVA_BASE_URL") or "").strip(),
         }
         self.mcp_specialist_enabled = {
             "davi": _env_flag("DELIA_MCP_DAVI_ENABLED"),
             "teo": _env_flag("DELIA_MCP_TEO_ENABLED"),
             "vista": _env_flag("DELIA_MCP_VISTA_ENABLED"),
+            "caio": _env_flag("DELIA_MCP_CAIO_ENABLED"),
+            "clara": _env_flag("DELIA_MCP_CLARA_ENABLED"),
+            "suri": _env_flag("DELIA_MCP_SURI_ENABLED"),
+            "eva": _env_flag("DELIA_MCP_EVA_ENABLED"),
         }
         # C3-MCP-INTEROP-01R1A: user-delegated identity via a single
         # confidential DÉLIA requester client + RFC 8693 token exchange.

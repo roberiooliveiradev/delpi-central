@@ -33,11 +33,19 @@ CANONICAL_MCP_CLIENT_IDS = {
     "davi": "mcp-api-delpi",
     "teo": "mcp-transformometro",
     "vista": "mcp-tv-dashboard",
+    "caio": "mcp-commercial",
+    "clara": "mcp-controllership-finance",
+    "suri": "mcp-supplies",
+    "eva": "mcp-engineering",
 }
 CANONICAL_MCP_RESOURCE_AUDIENCES = {
     "davi": "https://minhadelpi.com.br/apps/api-delpi/mcp",
     "teo": "https://minhadelpi.com.br/apps/transformometro-api/mcp",
     "vista": "https://minhadelpi.com.br/apps/tv-dashboard-api/mcp",
+    "caio": "https://minhadelpi.com.br/apps/commercial-api/mcp",
+    "clara": "https://minhadelpi.com.br/apps/controllership-finance-api/mcp",
+    "suri": "https://minhadelpi.com.br/apps/supplies-api/mcp",
+    "eva": "https://minhadelpi.com.br/apps/engineering-api/mcp",
 }
 
 
@@ -57,7 +65,7 @@ def specialist_connections_from_settings(
     settings: Settings,
 ) -> Mapping[str, SpecialistConnectionProfile]:
     profiles: dict[str, SpecialistConnectionProfile] = {}
-    for specialist_id in ("davi", "teo", "vista"):
+    for specialist_id in CANONICAL_MCP_CLIENT_IDS:
         key = specialist_id.upper()
         profiles[specialist_id] = SpecialistConnectionProfile(
             endpoint=settings.mcp_specialist_endpoints.get(specialist_id, ""),

@@ -499,6 +499,8 @@ async def tool_analyze(
             return await _analyze_lmp_performance(context, params, question)
         if kind == "product.drawing_analysis":
             return await _analyze_product_drawing(context, params, question)
+        if kind == "product.drawing_benchmark":
+            return await _analyze_drawing_benchmark(context, params, question)
         return _err(
             f"analysis_type '{kind}' não implementado.",
             status_code=501,
@@ -508,6 +510,7 @@ async def tool_analyze(
                     "nonconformity.recurrence",
                     "lmp.performance",
                     "product.drawing_analysis",
+                    "product.drawing_benchmark",
                 ]
             },
         )
@@ -718,6 +721,110 @@ async def _analyze_product_drawing(
             ),
         },
         "Análise técnica do desenho oficial do produto.",
+    )
+
+
+_BENCHMARK_FLAG = "ENG_DRAWING_BENCHMARK_ENABLED"
+_BENCHMARK_PROFILES: dict[str, list[str]] = {
+    "approved_local_extractors": [
+        "pypdf_baseline",
+        "pdfplumber_experimental",
+        "pdfium_experimental",
+    ],
+}
+
+
+async def _analyze_drawing_benchmark(
+    context, params: dict, question: str | None
+) -> CallToolResult:
+    """analyze(product.drawing_benchmark) — governed multiprovider
+    benchmark over the official drawing PDF (read-only)."""
+    import os
+
+    from engineering_app.application.drawing.document_benchmark_service import (
+        reconcile_provider_fields,
+        run_official_document_benchmark,
+    )
+    from engineering_app.application.drawing.drawing_analysis_service import (
+        DrawingAnalysisError,
+    )
+
+    if os.environ.get(_BENCHMARK_FLAG) != "true":
+        return _err(
+            "Benchmark experimental de desenho desabilitado neste "
+            "ambiente.",
+            status_code=403,
+            code="feature_disabled",
+        )
+    code = str(params.get("product_code") or "").strip()
+    if not code:
+        return _err(
+            "product_code obrigatório para product.drawing_benchmark.",
+            code="validation",
+        )
+    profile = str(
+        params.get("benchmark_profile") or "approved_local_extractors"
+    ).strip()
+    providers = _BENCHMARK_PROFILES.get(profile)
+    if providers is None:
+        return _err(
+            f"benchmark_profile '{profile}' não permitido.",
+            status_code=400,
+            code="provider_profile_not_allowed",
+            data={"allowed": sorted(_BENCHMARK_PROFILES)},
+        )
+    fields_raw = params.get("fields")
+    fields = (
+        [str(f).strip() for f in fields_raw if str(f).strip()][:50]
+        if isinstance(fields_raw, list)
+        else []
+    )
+    ctx = bridge._source_context(context)
+    try:
+        out = await run_official_document_benchmark(
+            code=code,
+            source=bridge.build_delegated_auxiliary_source(),
+            ctx=ctx,
+            providers=providers,
+            corpus_id="official_drawing",
+            environment="mcp_governed",
+        )
+    except DrawingAnalysisError as exc:
+        return _err(
+            str(exc), status_code=exc.status_code, code=exc.code
+        )
+    coverage = (
+        reconcile_provider_fields(out["runs"], fields)
+        if fields
+        else None
+    )
+    runs = [
+        {k: v for k, v in r.items() if not k.startswith("_")}
+        for r in out["runs"]
+    ]
+    return _ok(
+        {
+            "analysis_type": "product.drawing_benchmark",
+            "question": question,
+            "schema_version": "drawing_benchmark.v1",
+            "benchmark_profile": profile,
+            "document": out["document"],
+            "same_document_verified": out["same_document_verified"],
+            "providers": runs,
+            "field_coverage": coverage,
+            "quality_gate": "EVAL_PENDING",
+            "limitations": [
+                "Cobertura textual por provider — não é acurácia nem "
+                "ground truth; presença em OCR não vira fato.",
+                "providers experimentais não executam — status "
+                "honesto registrado por run.",
+            ],
+            "provenance": (
+                "api-delpi product/drawing/pdf (identidade delegada) "
+                "+ adapters locais engineering-api"
+            ),
+        },
+        "Benchmark multiprovider do desenho oficial.",
     )
 
 
