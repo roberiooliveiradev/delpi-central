@@ -111,5 +111,9 @@ Rollback: tag infra-supplies-mcp:pre-v6-rollback; nova tag por lote.
 
 ## Estado dos lotes
 
-G0 CLOSED (8935dab669) · G4 IN_PROGRESS (S0 done) · G5–G15 PENDING.
+HISTORY (superseded): G0 CLOSED (8935dab669). Todas as linhas IN_PROGRESS/PENDING abaixo foram encerradas — veja CURRENT LOT no topo deste documento; NAO executar G4–G15 a partir desta seção.
 Resíduos conhecidos: CHATGPT_SCHEMA refresh = PENDING_USER_ACTION.
+
+## HISTORY — estado operacional superseded
+
+As seções de evidência G0..G15 acima são registro histórico de execução. Estado vigente = cabeçalho CURRENT LOT/PROGRAM COMPLETE. Nenhuma linha histórica é instrução de execução atual.
