@@ -558,6 +558,281 @@ class DesignIntelligenceService:
             "issues": issues,
             "signals": {"issueCount": len(issues)},
             "layout": {"issueCodes": raw_issues},
+            "rubric": cls.quality_rubric(native_config, issue_codes=raw_issues),
+        }
+
+    @classmethod
+    def quality_rubric(
+        cls,
+        native_config: Mapping[str, Any] | None,
+        *,
+        issue_codes: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Q1–Q10 dashboard quality rubric — interpretable statuses.
+
+        Each criterion reports status + evidence + explanation +
+        limitation + severity + recommendation. NOT_EVALUABLE is
+        returned honestly when the evidence available cannot decide —
+        JSON inspection cannot prove visual parity (Q10) or binding
+        integrity (Q8).
+        """
+        if issue_codes is None:
+            issue_codes = list(
+                SlideLayoutQualityService.collect_native_layout_issues(
+                    native_config
+                )
+                if native_config
+                else []
+            )
+        codes = {str(code).split(":", 1)[0] for code in issue_codes}
+        blocks = []
+        if isinstance(native_config, Mapping):
+            raw_blocks = native_config.get("blocks")
+            if isinstance(raw_blocks, list):
+                blocks = [b for b in raw_blocks if isinstance(b, Mapping)]
+        block_types = {
+            str(b.get("type") or "").lower() for b in blocks
+        }
+        data_types = block_types & {
+            "data_kpi", "data_chart", "data_table", "canvas_table",
+        }
+
+        def _criterion(
+            key: str,
+            status: str,
+            *,
+            evidence: list[str] | None = None,
+            explanation: str = "",
+            limitation: str = "",
+            severity: str = "info",
+            recommendation: str = "",
+        ) -> dict[str, Any]:
+            return {
+                "id": key,
+                "status": status,
+                "evidence": evidence or [],
+                "explanation": explanation,
+                "limitation": limitation,
+                "severity": severity,
+                "recommendation": recommendation,
+            }
+
+        has_title = bool(
+            block_types & {"heading", "text"}
+            or str(
+                (native_config or {}).get("title") or ""
+            ).strip()
+        )
+        q1 = _criterion(
+            "Q1_OBJECTIVE",
+            "PASS" if has_title and data_types else (
+                "FAIL" if not data_types and blocks else "NOT_EVALUABLE"
+            ),
+            evidence=sorted(block_types)[:6],
+            explanation=(
+                "Slide expõe título/contexto e ao menos um visual de "
+                "dados que responde a uma pergunta."
+                if data_types else
+                "Nenhum bloco de dados identificado — não é possível "
+                "afirmar que o painel responde a uma pergunta."
+            ),
+            limitation=(
+                "A rubrica não lê intenção de negócio — verifica "
+                "presença estrutural de título + visual de dados."
+            ),
+            recommendation=(
+                "Adicione um bloco de dados (data_kpi/data_chart/"
+                "data_table) com propósito claro."
+            ),
+        )
+        q2 = _criterion(
+            "Q2_INDICATORS",
+            "PASS" if data_types else (
+                "NOT_EVALUABLE" if not blocks else "FAIL"
+            ),
+            evidence=sorted(data_types),
+            explanation=(
+                f"Visuais de dados presentes: {sorted(data_types)}."
+                if data_types else
+                "Sem indicadores bound — rubrica não decide pertinência "
+                "sem contrato de dados."
+            ),
+            limitation=(
+                "Pertinência e definição autorizada do indicador "
+                "exigem owner dos dados — não inferido do JSON."
+            ),
+            severity="info" if data_types else "warning",
+        )
+        q3 = _criterion(
+            "Q3_VISUAL_CHOICE",
+            "NOT_EVALUABLE",
+            evidence=sorted(block_types),
+            explanation=(
+                "Adequação visual↔dado requer digest dos dados "
+                "vinculados — indisponível no JSON do slide."
+            ),
+            limitation=(
+                "Use visual_recommendation sobre o digest da fonte "
+                "para avaliar escolha técnica."
+            ),
+        )
+        hier_issues = [
+            c for c in issue_codes
+            if str(c).split(":", 1)[0]
+            in {"hierarchy_inverted", "widescreen_single_data_visual"}
+        ]
+        q4 = _criterion(
+            "Q4_HIERARCHY",
+            "FAIL" if hier_issues else ("PASS" if blocks else "NOT_EVALUABLE"),
+            evidence=hier_issues,
+            explanation=(
+                "Hierarquia tipográfica/composição violada."
+                if hier_issues else
+                "Sem violações de hierarquia detectadas."
+            ),
+            severity="warning" if hier_issues else "info",
+            recommendation=(
+                "Valor numérico principal deve dominar; adicione "
+                "título/KPI hero ao visual único."
+                if hier_issues else ""
+            ),
+        )
+        leg_issues = [
+            c for c in issue_codes
+            if str(c).split(":", 1)[0]
+            in {"low_contrast", "part_font_below_min"}
+        ]
+        q5 = _criterion(
+            "Q5_LEGIBILITY",
+            "FAIL" if leg_issues else ("PASS" if blocks else "NOT_EVALUABLE"),
+            evidence=leg_issues,
+            explanation=(
+                "Contraste ou tamanho de fonte abaixo do mínimo TV."
+                if leg_issues else
+                "Sem violações de legibilidade detectadas."
+            ),
+            severity="error" if leg_issues else "info",
+            recommendation=(
+                "Use cores/fontes dos design tokens TV (mínimo de "
+                "partChrome + contraste do tema)."
+                if leg_issues else ""
+            ),
+        )
+        den_issues = [
+            c for c in issue_codes
+            if str(c).split(":", 1)[0]
+            in {"kpi_density_exceeded", "block_overlap"}
+        ]
+        q6 = _criterion(
+            "Q6_DENSITY",
+            "FAIL" if den_issues else ("PASS" if blocks else "NOT_EVALUABLE"),
+            evidence=den_issues,
+            explanation=(
+                "Densidade excessiva: KPIs demais ou blocos "
+                "sobrepostos."
+                if den_issues else
+                "Sem excesso de informação detectado."
+            ),
+            severity="warning" if den_issues else "info",
+            recommendation=(
+                "Distribua indicadores em outra tela (grade de "
+                "quatro) ou reduza blocos."
+                if den_issues else ""
+            ),
+        )
+        contrast_issues = [c for c in issue_codes if "low_contrast" in str(c)]
+        q7 = _criterion(
+            "Q7_COLOR_SEMANTICS",
+            "FAIL" if contrast_issues else (
+                "NOT_EVALUABLE" if blocks else "NOT_EVALUABLE"
+            ),
+            evidence=contrast_issues,
+            explanation=(
+                "Contraste de cor violado."
+                if contrast_issues else
+                "Semântica de cores não auditável sem tokens/valores "
+                "de cor no JSON."
+            ),
+            limitation=(
+                "Apenas contraste é verificável; semântica de cores "
+                "(alerta/sucesso) requer política de tema."
+            ),
+            severity="warning" if contrast_issues else "info",
+        )
+        q8 = _criterion(
+            "Q8_DATA_INTEGRITY",
+            "NOT_EVALUABLE",
+            evidence=sorted(data_types),
+            explanation=(
+                "Integridade de bindings/unidades/agregações requer "
+                "verificação contra a fonte autorizada — não "
+                "provável por JSON."
+            ),
+            limitation=(
+                "Use data_block_preview/read-back para provar "
+                "integridade antes do commit."
+            ),
+        )
+        tv_issues = [
+            c for c in issue_codes
+            if str(c).split(":", 1)[0]
+            in {
+                "safe_area_violation", "block_frame_overflow",
+                "block_frame_non_positive", "kpi_density_exceeded",
+                "low_contrast", "part_font_below_min", "block_overlap",
+            }
+        ]
+        q9 = _criterion(
+            "Q9_TV_FITNESS",
+            "FAIL" if tv_issues else ("PASS" if blocks else "NOT_EVALUABLE"),
+            evidence=tv_issues,
+            explanation=(
+                "Violações de adequação TV (safe area, contraste, "
+                "fonte mínima, densidade)."
+                if tv_issues else
+                "Sem violações de adequação TV detectadas."
+            ),
+            severity="error" if tv_issues else "info",
+            recommendation=(
+                "Respeite safeMargin, mínimos tipográficos e "
+                "densidade do design system TV."
+                if tv_issues else ""
+            ),
+        )
+        q10 = _criterion(
+            "Q10_PARITY",
+            "NOT_EVALUABLE",
+            explanation=(
+                "Paridade editor/preview/TV exige evidência visual "
+                "do palco canônico — JSON não comprova."
+            ),
+            limitation=(
+                "Requer render/screenshot do presentation package — "
+                "fora do escopo de auditoria estrutural."
+            ),
+        )
+        results = {
+            q["id"]: q
+            for q in (q1, q2, q3, q4, q5, q6, q7, q8, q9, q10)
+        }
+        evaluated = sum(
+            1 for q in results.values() if q["status"] != "NOT_EVALUABLE"
+        )
+        failures = sum(1 for q in results.values() if q["status"] == "FAIL")
+        return {
+            "criteria": results,
+            "summary": {
+                "evaluated": evaluated,
+                "passed": sum(
+                    1 for q in results.values() if q["status"] == "PASS"
+                ),
+                "failed": failures,
+                "notEvaluable": sum(
+                    1
+                    for q in results.values()
+                    if q["status"] == "NOT_EVALUABLE"
+                ),
+            },
         }
 
     @classmethod
