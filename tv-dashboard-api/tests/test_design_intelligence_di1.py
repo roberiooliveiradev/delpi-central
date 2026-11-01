@@ -37,4 +37,6 @@ def test_catalog_projection_includes_methodology():
     cat = m.DesignIntelligenceService.catalog_projection()
     assert "designMethodology" in cat
     dm = cat["designMethodology"]
-    assert dm.get("professionalGuidance") is not None
+    # Guidance completa fica no documento (canal knowledge/raciocínio);
+    # a projeção compacta expõe apenas o escopo (budget de catálogo).
+    assert dm.get("professionalGuidanceScope")
