@@ -12,7 +12,12 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 ARG INSTALL_VISION_EXTRAS=false
 COPY engineering-api/requirements-vision.txt /tmp/requirements-vision.txt
 RUN if [ "$INSTALL_VISION_EXTRAS" = "true" ]; then \
+      apt-get update && apt-get install -y --no-install-recommends libgomp1 libglib2.0-0 \
+        && rm -rf /var/lib/apt/lists/*; \
       pip install --no-cache-dir -r /tmp/requirements-vision.txt; \
+      # R7.2 — deps do paddle arrastam opencv-python (precisa libGL);
+      # reimpor a variante headless por último, sem re-baixar deps.
+      pip install --no-cache-dir --force-reinstall --no-deps opencv-python-headless==4.10.0.84; \
     fi
 
 COPY shared /shared
