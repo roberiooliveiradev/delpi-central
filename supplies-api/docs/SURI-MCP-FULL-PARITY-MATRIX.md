@@ -80,7 +80,7 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | W-06 | Mercado | Comex NCM request create | PROVEN | G11 | pg | `POST /ncm-governance` | access | `execute` ncm.request | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | W-07 | Mercado | Comex transition (algumas manage; ED-api put on approve/inactive) | PROVEN | G11 | pg + ED-api | `POST /{id}/transition` | access/manage | `execute` transition (PREPARE+consent p/ manage) | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | W-08 | Mercado | Comex views create/update | PROVEN | G11 | pg | `POST/PUT /views` | access | `execute` view.save | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
-| W-09 | Mercado | Comex views delete | PROVEN | G14 | pg | `DELETE /views/{id}` | access | `delete` view (confirmação explícita) | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| W-09 | Mercado | Comex views delete | PROVEN | G14 | pg | `DELETE /views/{id}` | access | `execute(entity=comex, action=view_delete)` (confirmação explícita) | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | W-10 | Fornecedores | Supplier create (Protheus POST) | PROVEN | `execute:suppliers.create` | api-delpi(S2S) + Protheus REST | `POST /suppliers` → `/integrations/protheus/suppliers` | access + S2S `suppliers.create` | runtime 2026-10-30 + 30 testes SURI | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | W-11 | Fornecedores | Supplier update (Protheus PUT) | PROVEN | `execute:suppliers.update` | api-delpi(S2S) + Protheus REST | `PUT /suppliers/{code}/{store}` | access + S2S `suppliers.update` | runtime end-to-end + 30 testes SURI | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 

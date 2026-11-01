@@ -3506,33 +3506,105 @@ class GptActionsDispatchService:
                     )
                 except Exception:
                     candidates = []
-                slim = [
-                    {
+                # DI-3.4 — qualificação por contrato: document_export /
+                # não-GET não são fontes de bloco de dashboard.
+                qualified = [
+                    cand for cand in candidates
+                    if isinstance(cand, dict)
+                    and str(cand.get("metaShape") or "")
+                    != "document_export"
+                    and str(cand.get("httpMethod") or "GET").upper()
+                    == "GET"
+                ]
+
+                def _slim(cand):
+                    return {
                         key: cand.get(key)
                         for key in (
                             "operationId", "path", "category",
-                            "description", "method",
+                            "description", "allowedDisplayModes",
+                            "metaShape", "paramSchema",
                         )
                         if cand.get(key) is not None
                     }
-                    for cand in candidates
-                    if isinstance(cand, dict)
-                ]
-                if len(slim) == 1:
-                    state = "RESOLVED"
-                elif len(slim) > 1:
-                    state = "NEEDS_SOURCE_SELECTION"
-                else:
-                    state = "NEEDS_CONTEXT"
+
+                def _modes_for(block_type, chart_type):
+                    if block_type in {"kpi_view", "data_kpi"}:
+                        return {"kpi", "auto"}
+                    if block_type in {"chart_view", "data_chart"}:
+                        ct = str(chart_type or "").lower()
+                        if ct in {"line", "area"}:
+                            return {"line_chart", "auto"}
+                        if ct in {"bar", "horizontal_bar", "column"}:
+                            return {"bar_chart", "auto"}
+                        return {"line_chart", "bar_chart", "auto"}
+                    if block_type in {
+                        "table_view", "data_table", "canvas_table",
+                    }:
+                        return {"table", "auto"}
+                    return {"auto"}
+
+                def _state(cands):
+                    if len(cands) == 1:
+                        return "RESOLVED"
+                    if len(cands) > 1:
+                        return "NEEDS_SOURCE_SELECTION"
+                    return "NEEDS_CONTEXT"
+
+                blocks = []
+                for op in data_ops:
+                    block = (
+                        op.get("block")
+                        if isinstance(op.get("block"), dict) else {}
+                    )
+                    btype = str(block.get("type") or "")
+                    modes = _modes_for(btype, block.get("chartType"))
+                    per = [
+                        cand for cand in qualified
+                        if modes & {
+                            str(m)
+                            for m in (
+                                cand.get("allowedDisplayModes") or []
+                            )
+                        }
+                    ]
+                    blocks.append({
+                        "blockType": btype or "data_block",
+                        "requiredModes": sorted(modes),
+                        "state": _state(per),
+                        "candidates": [_slim(c) for c in per],
+                    })
                 payload["bindingPlan"] = {
-                    "state": state,
+                    "state": (
+                        "RESOLVED"
+                        if all(b["state"] == "RESOLVED" for b in blocks)
+                        else "NEEDS_SOURCE_SELECTION"
+                        if any(
+                            b["state"] == "NEEDS_SOURCE_SELECTION"
+                            for b in blocks
+                        )
+                        else "NEEDS_CONTEXT"
+                    ),
                     "dataBlockOps": len(data_ops),
-                    "dataRouteCandidates": slim,
+                    "blocks": blocks,
+                    "disqualifiedSources": max(
+                        0, len(candidates) - len(qualified)
+                    ),
                     "note": (
-                        "Seleção de fonte preservada quando "
-                        "ambígua — não escolhe silenciosamente."
+                        "Fontes qualificadas por allowedDisplayModes/"
+                        "metaShape; ambiguidade preservada — nunca "
+                        "pick silencioso."
                     ),
                 }
+                # readiness honesto: layout pronto ≠ dados prontos.
+                if payload["bindingPlan"]["state"] != "RESOLVED":
+                    payload["dataReadiness"] = "pending_source_selection"
+                    reason = str(payload.get("reason") or "")
+                    if "execução direta" in reason:
+                        payload["reason"] = (
+                            "Layout pronto; seleção de fonte de dados "
+                            "pendente (ver bindingPlan)."
+                        )
         if intent:
             methodology = self._design_methodology_for_suggest(intent=intent, host=host)
             methodology.pop("_fabricated", None)
