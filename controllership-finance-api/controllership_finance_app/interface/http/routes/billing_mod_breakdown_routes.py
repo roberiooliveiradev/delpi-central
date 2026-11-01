@@ -45,10 +45,15 @@ def get_billing_mod_breakdown(
     _authorized_user(request)
     access_token = _user_bearer(request)
     try:
+        # R09 is a genuinely heavy report (~150-210s on 2026-09): the
+        # route needs a dedicated upstream timeout within the gateway
+        # proxy budget (proxy_read_timeout=300s on
+        # /apps/controllership-finance-api) — 30s default caused 503s.
         body = ApiDelpiSettlementsGateway().get(
             "/financeiro/billing-mod-breakdown",
             access_token=access_token,
             params={"period": period, "branch": branch},
+            timeout_seconds=300,
         )
     except DelpiApiGatewayError as exc:
         return _map_gateway_error(exc, "get_billing_mod_breakdown")

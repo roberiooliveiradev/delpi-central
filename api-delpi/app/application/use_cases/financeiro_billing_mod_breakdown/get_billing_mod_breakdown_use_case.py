@@ -121,10 +121,9 @@ class GetBillingModBreakdownUseCase:
 
         for branch in request.requested_branches():
             billed = self._billed_map(request, branch)
-            for product in sorted(billed):
-                anchors.append(
-                    self._build_anchor(branch, product, billed)
-                )
+            anchors.extend(
+                self._build_branch_anchors(branch, billed)
+            )
 
         return {
             "report": REPORT_BILLING_MOD_BREAKDOWN,
@@ -171,23 +170,67 @@ class GetBillingModBreakdownUseCase:
             if r.get("has_billing")
         }
 
+    def _build_branch_anchors(
+        self, branch: str, billed: dict[str, float]
+    ) -> list[dict[str, Any]]:
+        """Set-based prefetch for the whole branch — the same queries
+        as before but executed ONCE for all anchors instead of once
+        per anchor (~299× refetch). Proven: DB time ~20s vs 200s+ of
+        per-anchor round-trips (Gate 049 profile)."""
+        level1_all = self._edges(list(billed), branch)
+        edges_by_parent: dict[str, list[dict]] = {}
+        for edge in level1_all:
+            edges_by_parent.setdefault(
+                str(edge["parent_code"]).strip(), []
+            ).append(edge)
+
+        level1_parents = sorted(
+            {e["component_code"] for e in level1_all}
+        )
+        level2_all = self._edges(level1_parents, branch)
+        level2_by_parent: dict[str, list[dict]] = {}
+        for edge in level2_all:
+            level2_by_parent.setdefault(
+                str(edge["parent_code"]).strip(), []
+            ).append(edge)
+
+        tree_products = set(billed)
+        tree_products.update(e["component_code"] for e in level1_all)
+        tree_products.update(e["component_code"] for e in level2_all)
+        operations = self._operations(
+            sorted(tree_products), branch
+        )
+
+        return [
+            self._build_anchor(
+                branch,
+                product,
+                billed,
+                edges_by_parent,
+                level2_by_parent,
+                operations,
+            )
+            for product in sorted(billed)
+        ]
+
     def _build_anchor(
         self,
         branch: str,
         product: str,
         billed: dict[str, float],
+        edges_by_parent: dict[str, list[dict]],
+        level2_by_parent: dict[str, list[dict]],
+        operations: dict[str, list[dict[str, Any]]],
     ) -> dict[str, Any]:
         anchor_qty = billed[product]
-        level1_edges = self._edges([product], branch)
-        level1_parents = [e["component_code"] for e in level1_edges]
-        level2_edges = self._edges(level1_parents, branch)
-
-        tree_products = {product}
-        tree_products.update(e["component_code"] for e in level1_edges)
-        tree_products.update(e["component_code"] for e in level2_edges)
-        operations = self._operations(
-            sorted(tree_products), branch
-        )
+        level1_edges = edges_by_parent.get(product, [])
+        level2_edges = [
+            edge
+            for level1 in level1_edges
+            for edge in level2_by_parent.get(
+                str(level1["component_code"]).strip(), []
+            )
+        ]
 
         lines: list[dict[str, Any]] = []
         unresolved_products: list[str] = []
