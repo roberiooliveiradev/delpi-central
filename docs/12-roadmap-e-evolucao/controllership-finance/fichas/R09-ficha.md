@@ -136,3 +136,70 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Deploy produtivo e validação CLARA/Portal live: NÃO executados —
   SSH público indisponível na estação (publickey). Canal credenciado.
 - DR-3 pendente; custos source_missing. Verdict: ACCEPT_WITH_RESIDUAL.
+
+## Atualização — Gate 046 (01/11/2026) — DEPLOY PRODUTIVO EXECUTADO
+
+- Publicação: todo o código R09 confirmado em origin/main (producer
+  7ca041a19b, G041 0acdf32b6a, G042 92c2ee44f8, BFF dd6552526d, CLARA
+  d1987532fa, MFE 8607173b56 + fix 586073e9b5). SSH GitHub funcional.
+- Typecheck MFE real (WSL): corrigidos variant/props/REPORT_META; 1 erro
+  PRÉ-EXISTENTE em CostClosingStatePage (contrato legado ClosingHero —
+  fora do escopo R09, owner plugins).
+- Homologação live local: api-delpi rebuildado com produtor R09
+  (healthy); 401 sem/com token inválido; BFF 401 noauth; READ_ACTIONS
+  contém report.billing_mod_breakdown.
+- DEPLOY PRODUTIVO (srv-api): git pull --no-rebase → ae8c587c; rebuild
+  api-delpi + controllership-finance-api + controllership-finance via
+  up-prod-sequential.sh. Verificado em prod: producer file presente,
+  health 200, BFF módulo + registry OK, gateway 401 noauth, serviços
+  compartilhados sem regressão.
+- Cadeia positiva (usuário autenticado) e validação CLARA via ChatGPT:
+  aguardam credencial de usuário/execução do PO — NÃO classificadas.
+- DR-3 pendente; custos source_missing. Verdict: ACCEPT_WITH_RESIDUAL.
+
+## Atualização — Gate 047 (01/11/2026) — 503 corrigido em produção
+
+- Causa raiz PROVEN: DELPI_API_TIMEOUT=30 (BFF→api-delpi) < ~150-210s
+  do produtor (logs: status=200 duration_ms=149157/212481). Classe:
+  configuração/timeout.
+- Fix: timeout_seconds=300 dedicado na rota R09 (proxy nginx 300s);
+  produtor e regras inalterados. 10/10 testes. Deploy rebuild BFF —
+  healthy, fix verificado no container.
+- Consulta positiva real pendente de credencial de usuário (PO/ChatGPT).
+
+## Atualização — Gate 048 (01/11/2026) — segunda camada do 503
+
+- Fix G047 CONFIRMADO em produção: producer completou 200 em 140-207s
+  (4x pós-fix) — BFF agora espera; 503 resolvido.
+- Nova falha CLARA (interna na tool): bound restante = timeout do tool
+  call ChatGPT→MCP (~<207s); _call_route síncrono in-process — não há
+  timeout configurável server-side; o relatório de ~3,5min excede o
+  orçamento do cliente MCP. Portal (browser→BFF 300s) é viável.
+- DECISION_REQUIRED: relatório síncrono longo via ChatGPT exige
+  Opção A) otimizar producer <~120s, B) padrão async/job existente,
+  ou C) snapshot governado — não implementado sem aprovação.
+- Fix do timeout ainda não consta em origin/main (merge de terceiro
+  bloqueia rebase local; srv-api sem HTTPS interativo) — commit
+  prod dd0b809ac ≡ local 6242838fa6 aguarda publicação.
+
+## Atualização — Gate 049 (01/11/2026) — otimização 12× comprovada
+
+- Gargalo REAL (perfil em prod): DB ~20s mas execute() = 203.3s —
+  causa = _build_anchor refazia _edges + _operations por âncora (~299×).
+- Fix: prefetch set-based por filial (edges L1/L2 + ops SHY/SG2 uma vez).
+- Resultado medido em PROD: 203.3s → 16.9s | 299 âncoras | 2.581
+  linhas | payload idêntico (semântica preservada). 26/26 testes.
+- Commits: local 4240a831d5 ≡ prod 8ab19ecc1. Rebuild api-delpi deployado.
+- Todos os timeouts agora atendidos (MCP/BFF 300s/30s) — validação
+  positiva CLARA/Portal passa a ser viável.
+
+## Atualização — Gate 051 (01/11/2026) — ENCERRAMENTO OPERACIONAL
+
+- GitHub × produção reconciliados: timeout BFF + otimização producer
+  publicados em fc53a128 via clone limpo isolado (merge alheio preservado).
+- CLARA validada pelo PO: 521 âncoras, 4.659 linhas, ambas filiais — PASS.
+- execute() 203.3s → 16.9s — 12x, semântica preservada.
+- Estado final: OPERATIONAL_IMPLEMENTATION_COMPLETE.
+  DR-3 permanece PENDING (paridade oficial com a Controladoria).
+- R13/R04/R14: readiness inventory — cada um requer DR próprio + fonte
+  TOTVS confirmada + contrato homologado antes da BFF.

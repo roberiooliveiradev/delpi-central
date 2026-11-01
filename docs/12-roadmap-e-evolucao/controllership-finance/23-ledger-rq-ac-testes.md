@@ -1393,3 +1393,72 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Deploy produtivo | BLOQUEADO | SSH publickey estação; requer canal credenciado |
 | Portal MFE | FORA_DO_ESCOPO | pendente gate dedicado |
 | DR-3 homologação | PENDING | pacote preparado; aceite humano aguardado |
+
+---
+
+## R09-G045/G046 — MFE + deploy produtivo + homologação (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Página MFE R09 (hub Relatórios) | ATENDIDO | BillingModBreakdownPage + billingModBreakdownApi + wiring REPORT_META/ReportKey |
+| Typecheck/build MFE | EXECUTADO | tsc -b via WSL — R09 limpo; 1 erro pré-existente CostClosingStatePage (owner plugins) |
+| Publicação G045/G046 | ATENDIDO | 8607173b56, 586073e9b5 em origin/main |
+| Produtor R09 em prod | ATENDIDO | rebuild api-delpi; file presente; health 200; 401 noauth/bogus |
+| BFF R09 em prod | ATENDIDO | módulo + READ_ACTIONS verificados in-container |
+| CLARA read(report.billing_mod_breakdown) | REGISTRADO | registry runtime confirmado prod |
+| Deploy produtivo | EXECUTADO | up-prod-sequential.sh — 3 serviços, sem regressão |
+| Cadeia positiva usuário | TEST_NOT_RUN | requer Bearer Keycloak real |
+| Validação CLARA/Portal live pelo PO | PENDING | aguarda execução do PO |
+| DR-3 | PENDING | operational_view ativa; paridade oficial pendente |
+
+---
+
+## R09-G047 — 503 root cause + fix produtivo (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Reprodução/causa do 503 | PROVEN | delpi_api_timeout; producer 200 em 149-212s vs timeout 30s |
+| Correção mínima | ATENDIDO | timeout_seconds=300 na rota; 10/10 testes |
+| Deploy prod | EXECUTADO | rebuild BFF; fix no container; healthy |
+| Consulta positiva real | TEST_NOT_RUN | aguarda Bearer de usuário (PO/ChatGPT) |
+| Push fix para origin | PENDING | canal credenciado (merge alheio bloqueia) |
+| DoD full-flow transversal | REGISTRADO | doc 145; aplica-se a R13/R04/R14 |
+
+---
+
+## R09-G048 — estabilização e segunda camada (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Fix timeout G047 em prod | ATENDIDO | producer 200 em 140-207s (4x); container healthy |
+| Falha CLARA pós-fix | DIAGNOSTICADA | timeout tool-call ChatGPT (~<207s) — não MCP auth |
+| Push do fix para origin | BLOQUEADO | merge alheio (UU supplies-api); srv-api sem HTTPS |
+| Solução tool-timeout | DECISION_REQUIRED | async/otimização/snapshot — não implementado |
+| Cadeia BFF→api-delpi | FUNCIONAL | 200s reais completados via S2S |
+| Portal | PROVÁVEL_FUNCIONAL | mesmo orçamento 300s; validação visual pendente |
+
+---
+
+## R09-G049 — otimização comprovada + reconcile (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Perfil por etapa | EXECUTADO | DB ~20s; Python refetch ~180s (per-anchor) |
+| Otimização | ATENDIDO | prefetch set-based; 203.3s → 16.9s prod |
+| Semântica preservada | ATENDIDO | 299 âncoras, 2.581 linhas idênticas; 26/26 testes |
+| Deploy prod | EXECUTADO | rebuild api-delpi; execute()=16.9s verificado |
+| Timeout consumidores | ATENDIDO | 16.9s < MCP/BFF/browser budgets |
+| Consulta positiva real | PRONTA | aguarda execução do usuário/PO |
+
+---
+
+## R09-G051 — encerramento operacional (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| GitHub × produção sincronizados | ATENDIDO | fc53a128 publicado; prod conteúdo-idêntico |
+| Consulta positiva CLARA | PASS | PO: 01=299/2.581, 02=222/2.078 reais |
+| Otimização | ATENDIDO | 203.3s → 16.9s medido prod |
+| Segurança negativa | PASS | 401 noauth/bogus producer+BFF+gateway |
+| Portal smoke visual | TEST_NOT_RUN | sem sessão de usuário no executor; MFE servido e auth-gated |
+| DR-3 | PENDING | officialParity=pending permanente |

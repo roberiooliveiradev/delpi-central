@@ -3498,14 +3498,42 @@ class GptActionsDispatchService:
                         ),
                         default=0.0,
                     )
+                    # gate semântico (DI-3.6.3): score isolado não
+                    # prova relevância (gibberish pode pontuar alto) —
+                    # exige um token forte da mensagem presente no
+                    # contrato dos top candidatos + domínio real.
+                    stop = {
+                        "crie", "criar", "quero", "uma", "painel",
+                        "acompanhar", "mostrar", "para", "com", "das",
+                        "dos", "que", "fábrica", "resultados",
+                        "iniciativas", "mostrando", "coisas", "sinal",
+                    }
+                    tokens = {
+                        t.strip(".,;:!?()\"'")
+                        for t in str(message or "").lower().split()
+                        if len(t.strip(".,;:!?()\"'")) >= 4
+                    } - stop
+                    token_hit = any(
+                        any(
+                            tok in (
+                                str(c.get("operationId") or "")
+                                + str(c.get("label") or "")
+                                + str(c.get("description") or "")
+                                + str(c.get("path") or "")
+                            ).lower()
+                            for tok in tokens
+                        )
+                        for c in sugg[:3]
+                        if isinstance(c, dict)
+                    )
                     domain_hit = any(
                         str(c.get("category") or "")
                         not in {"", "other"}
-                        and float(c.get("score") or 0.0) >= 8.0
+                        and float(c.get("score") or 0.0) >= 6.0
                         for c in sugg
                         if isinstance(c, dict)
                     )
-                    if sugg and top_score >= 8.0 and domain_hit:
+                    if sugg and top_score >= 6.0 and domain_hit and token_hit:
                         generic = (
                             "TV_TABLE_FOCUS"
                             if shapes <= {
@@ -3597,14 +3625,23 @@ class GptActionsDispatchService:
 
                 # DI-3.4 — qualificação por contrato: document_export /
                 # não-GET não são fontes de bloco de dashboard.
-                qualified = [
-                    cand for cand in candidates
-                    if isinstance(cand, dict)
-                    and str(cand.get("metaShape") or "")
-                    != "document_export"
-                    and str(cand.get("httpMethod") or "GET").upper()
-                    == "GET"
-                ]
+                def _eligible(cand):
+                    # DI-3.6.3 — elegibilidade unificada: não-GET e
+                    # shapes documentais fora; rotas de download/
+                    # export retornam binário/anexo por contrato de
+                    # operação — metaShape=scalar derivado é drift.
+                    if not isinstance(cand, dict):
+                        return False
+                    if str(cand.get("httpMethod") or "GET").upper() != "GET":
+                        return False
+                    if str(cand.get("metaShape") or "") == "document_export":
+                        return False
+                    oid = str(cand.get("operationId") or "").lower()
+                    return not oid.startswith(
+                        ("download_", "export_", "upload_", "import_")
+                    )
+
+                qualified = [cand for cand in candidates if _eligible(cand)]
                 # DI-3.6.1 — business domain anchoring: a mensagem
                 # original (sem sufixo de propósito) define os domínios
                 # relevantes; sufixos de propósito nunca podem promover
@@ -3622,6 +3659,77 @@ class GptActionsDispatchService:
                     >= _anchor_top * 0.7
                     and str(c.get("category") or "").strip()
                 }
+                # multi-intent (DI-3.6.3): domínios citados
+                # explicitamente na mensagem ancoram sua categoria
+                # mesmo cortados pelo limit do ranking — "produtividade
+                # e auditorias 5S" preserva production E quality.
+                _mtok = {
+                    t.strip(".,;:!?()\"'")
+                    for t in str(message or "").lower().split()
+                    if len(t.strip(".,;:!?()\"'")) >= 4
+                } - {
+                    "crie", "criar", "quero", "uma", "painel",
+                    "acompanhar", "mostrar", "para", "com", "das",
+                    "dos", "que", "resultados", "iniciativas",
+                    "mostrando", "coisas", "sinal",
+                }
+                if _mtok:
+                    anchor_categories |= {
+                        str(c.get("category") or "").strip()
+                        for c in qualified
+                        if str(c.get("category") or "").strip()
+                        and any(
+                            tok in (
+                                str(c.get("operationId") or "")
+                                + str(c.get("label") or "")
+                                + str(c.get("description") or "")
+                            ).lower()
+                            for tok in _mtok
+                        )
+                    }
+                    # cobertura multi-intent (DI-3.6.3): para cada
+                    # token forte, uma query de suggest garante que o
+                    # domínio citado tenha candidatos em `qualified`
+                    # — citar um objetivo nunca pode deixá-lo
+                    # silenciosamente sem cobertura.
+                    present_ids = {
+                        str(c.get("operationId") or "")
+                        for c in qualified
+                    }
+                    for tok in list(_mtok)[:4]:
+                        try:
+                            rr = self._suggest.suggest(
+                                query=tok, limit=6
+                            )
+                            tok_sugg = (
+                                rr.get("suggestions") or []
+                                if isinstance(rr, dict) else []
+                            )
+                        except Exception:
+                            tok_sugg = []
+                        for cand in tok_sugg[:3]:
+                            oid = str(cand.get("operationId") or "")
+                            if (
+                                _eligible(cand)
+                                and oid
+                                and oid not in present_ids
+                                and len(qualified) < 40
+                            ):
+                                present_ids.add(oid)
+                                qualified.append(dict(cand))
+                    anchor_categories |= {
+                        str(c.get("category") or "").strip()
+                        for c in qualified
+                        if str(c.get("category") or "").strip()
+                        and any(
+                            tok in (
+                                str(c.get("operationId") or "")
+                                + str(c.get("label") or "")
+                                + str(c.get("description") or "")
+                            ).lower()
+                            for tok in _mtok
+                        )
+                    }
                 # Domínio secundário só entra por relevância individual
                 # forte na query bruta (>=50% do topo) — categoria
                 # fraca não arrasta vizinhos (5S/Kaizen fora de
@@ -3724,21 +3832,22 @@ class GptActionsDispatchService:
                     )
                     purpose_qualified = [
                         cand for cand in purpose_candidates
-                        if isinstance(cand, dict)
-                        and str(cand.get("metaShape") or "")
-                        != "document_export"
-                        and str(cand.get("httpMethod") or "GET").upper()
-                        == "GET"
+                        if _eligible(cand)
                     ]
+                    # union deduplicada: query de propósito + query
+                    # bruta + cobertura multi-intent — objetivo citado
+                    # não pode ser descartado por ordem de consulta.
+                    _seen = set()
+                    _combined = []
+                    for cand in purpose_qualified + qualified:
+                        oid = str(cand.get("operationId") or "")
+                        if oid and oid not in _seen:
+                            _seen.add(oid)
+                            _combined.append(cand)
                     per = [
-                        cand for cand in purpose_qualified
+                        cand for cand in _combined
                         if _compatible(cand, modes)
                     ]
-                    if not per:
-                        per = [
-                            cand for cand in qualified
-                            if _compatible(cand, modes)
-                        ]
                     # limiar semântico: score relativo ao topo do bloco
                     # remove candidatos fracamente relacionados (ruído
                     # lexical — ex.: get_customer_avatar em vendas).
@@ -3757,6 +3866,12 @@ class GptActionsDispatchService:
                     # fontes fora do domínio de negócio âncora; secundárias
                     # só por relevância individual forte na query bruta.
                     per = [c for c in per if _anchor_ok(c)]
+                    # multi-intent: ordenar por score evita que
+                    # adições de cobertura percam o cap por posição.
+                    per.sort(
+                        key=lambda c: float(c.get("score") or 0.0),
+                        reverse=True,
+                    )
                     per = per[:8]
                     if not per and qualified:
                         # Fallback por domínio: ranking lexical fraco
@@ -3775,14 +3890,9 @@ class GptActionsDispatchService:
                                 catalog_routes = []
                             per = [
                                 cand for cand in catalog_routes
-                                if isinstance(cand, dict)
+                                if _eligible(cand)
                                 and str(cand.get("category") or "")
                                 == top_category
-                                and str(cand.get("metaShape") or "")
-                                != "document_export"
-                                and str(
-                                    cand.get("httpMethod") or "GET"
-                                ).upper() == "GET"
                                 and _compatible(cand, modes)
                             ][:8]
                     block_state = _state(per)
