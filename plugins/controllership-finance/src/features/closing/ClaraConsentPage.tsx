@@ -22,10 +22,7 @@ import {
   type ClaraBatchOperation,
   type ClaraProposalConsentView,
 } from "../../api/claraConsentApi";
-import {
-  CfFeedbackMessage,
-  CfSectionLoading,
-} from "../../app/cfFeedbackUi";
+import { CfFeedbackMessage } from "../../app/cfFeedbackUi";
 import {
   CfEmptyState,
   CfPageHero,
@@ -314,7 +311,7 @@ export function ClaraConsentPage() {
         ) : null}
 
         {loading ? (
-          <CfSectionLoading label="Carregando consentimento…" variant="panel" />
+          <p aria-live="polite">Carregando consentimento…</p>
         ) : null}
 
         {batch ? (

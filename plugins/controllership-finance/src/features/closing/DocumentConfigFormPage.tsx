@@ -30,7 +30,6 @@ import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
   type CfQueryError,
-  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
@@ -555,7 +554,10 @@ export function DocumentConfigFormPage({
             onRetry={() => reload()}
           />
         ) : loading ? (
-          <CfSectionLoading label="Carregando configuração…" variant="compact" />
+          <CfEmptyState
+            classNames={cfEmptyStateClassNames}
+            defaultMessage="Carregando configuração…"
+          />
         ) : notFound ? (
           <CfEmptyState
             classNames={cfEmptyStateClassNames}
@@ -849,7 +851,10 @@ export function DocumentConfigFormPage({
                 hint={CF_HELP.documentsAdmin.history}
               >
                 {events === null ? (
-                  <CfSectionLoading label="Carregando histórico…" variant="compact" />
+                  <CfEmptyState
+                    classNames={cfEmptyStateClassNames}
+                    defaultMessage="Carregando histórico…"
+                  />
                 ) : documentEvents.length === 0 ? (
                   <CfEmptyState
                     classNames={cfEmptyStateClassNames}

@@ -126,8 +126,12 @@ DELETE_ENTITIES: dict[str, str] = {
     "edit_invite": "revoke_edit_invites",
 }
 
+<<<<<<< Updated upstream
 # Write verbs over PREPARE/COMMIT + consent foundation (A5-A7):
 # execute (A6) and delete (A7) — six-tools consolidated surface.
+=======
+# Write verbs implemented over PREPARE/COMMIT + consent foundation (A5-A7).
+>>>>>>> Stashed changes
 EXECUTE_VERB_STATUS = "implemented"
 DELETE_VERB_STATUS = "implemented"
 

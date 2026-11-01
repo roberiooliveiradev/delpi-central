@@ -2030,12 +2030,20 @@ class GptActionsDispatchService:
         self,
         *,
         user: Any,
+<<<<<<< Updated upstream
         entity: str,
         phase: str | None = None,
+=======
+        entity: str | None = None,
+>>>>>>> Stashed changes
         target: dict[str, Any] | None = None,
         proposal_handle: str | None = None,
         consent_artifact: str | None = None,
         target_echo: str | None = None,
+<<<<<<< Updated upstream
+=======
+        confirmation: Any = None,
+>>>>>>> Stashed changes
         idempotency_key: str | None = None,
         catalog_version: str | None = None,
         authorization: str | None = None,
@@ -2043,6 +2051,7 @@ class GptActionsDispatchService:
     ) -> dict[str, Any]:
         """``delete`` — destructive verb over PREPARE/COMMIT + consent.
 
+<<<<<<< Updated upstream
         ``entity`` ∈ {block, section, slide} (approved delete targets;
         ``delete_data_model``/sources stay forbidden on this surface).
         ``phase=prepare`` seals the delete plan + consent challenge;
@@ -2053,6 +2062,23 @@ class GptActionsDispatchService:
         from tv_app.application.gpt_actions.capability_surface import (
             DELETE_ENTITIES,
             EXECUTE_PHASES,
+=======
+        ``entity`` ∈ {block, section, slide} (D-8: ``delete_data_model``
+        is not approved on this surface). ``target`` carries the ids
+        (playlistId + entity id; ``deleteSlides`` optional for section).
+        """
+        if proposal_handle:
+            return self._semantic_commit(
+                user=user,
+                proposal_handle=proposal_handle,
+                idempotency_key=idempotency_key,
+                consent_artifact=consent_artifact,
+                target_echo=target_echo,
+                authorization=authorization,
+            )
+        from tv_app.application.gpt_actions.capability_surface import (
+            DELETE_ENTITIES,
+>>>>>>> Stashed changes
         )
 
         entity_key = str(entity or "").strip().lower()
@@ -2099,6 +2125,7 @@ class GptActionsDispatchService:
                 code="CAPABILITY_NOT_APPROVED",
                 status_code=403,
             )
+<<<<<<< Updated upstream
         phase_key = str(phase or "prepare").strip().lower()
         if phase_key not in EXECUTE_PHASES:
             raise GptActionsError(
@@ -2136,6 +2163,8 @@ class GptActionsDispatchService:
                     code="VALIDATION_ERROR",
                     status_code=422,
                 )
+=======
+>>>>>>> Stashed changes
         tgt = target if isinstance(target, dict) else {}
         op: dict[str, Any] = {"op": op_name}
         for key in ("slideId", "sectionId", "blockId", "deleteSlides", "modelId"):

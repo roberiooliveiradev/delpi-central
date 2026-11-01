@@ -30,7 +30,7 @@ class TestGetContext:
         assert data["subject"] == "user-1"
         assert data["capabilities"] == {"access": True, "manage": False}
         assert data["allowed_units"] == ["01", "02"]
-        assert data["mcp"]["catalog_version"] == 6
+        assert data["mcp"]["catalog_version"] == 4
 
     def test_catalog_lists_semantic_surface(self, access_context):
         access_context()
@@ -44,7 +44,7 @@ class TestGetContext:
             "knowledge",
             "execute",
         }
-        assert data["mcp"]["catalog_version"] == 6
+        assert data["mcp"]["catalog_version"] == 4
         caps = data["capabilities"]
         assert "purchase_orders" in caps["read"]["entities"]
         assert caps["analyze"]["analyses"] == [
@@ -53,11 +53,9 @@ class TestGetContext:
         ]
         assert set(caps["read"]["entities"]) == {
             "purchase_orders",
-            "purchase_requests",
             "suppliers",
             "postal_codes",
-            "deliveries",
-            "inventory",}
+        }
         assert caps["knowledge"]["actions"] == ["get", "search", "sources"]
         assert caps["execute"]["entities"]["suppliers"]["actions"] == [
             "create",
@@ -255,9 +253,9 @@ class TestSemanticValidation:
         result = tool_bridge.tool_read("inventory", "search", filters={})
         assert _payload(result)["status_code"] == 422
 
-    def test_unregistered_entity_still_closed(self, access_context):
+    def test_future_entity_not_registered(self, access_context):
         access_context()
-        result = tool_bridge.tool_read("invoices", "search")
+        result = tool_bridge.tool_read("purchase_requests", "search")
         assert _payload(result)["status_code"] == 422
 
     def test_unknown_action(self, access_context):

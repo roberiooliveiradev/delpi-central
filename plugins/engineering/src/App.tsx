@@ -18,8 +18,6 @@ import { HomePage } from "./features/home/HomePage";
 import { LmpsFeature } from "./features/lmps/LmpsFeature";
 import { NonconformitiesFeature } from "./features/nonconformities/NonconformitiesFeature";
 import { ProductsFeature } from "./features/products/ProductsFeature";
-import { PluginErrorBoundary } from "@delpi/plugin-ui/index";
-import { ENG_UI_PREFIX } from "./ui/engineeringUi";
 import { OverviewPage } from "./features/overview/OverviewPage";
 import {
   EngineeringActionButton,
@@ -106,18 +104,7 @@ export default function App({
         <NonconformitiesFeature relativePath={resolved.relativePath} />
       ) : null}
       {resolved.view === "products" ? (
-        <PluginErrorBoundary
-          prefix={ENG_UI_PREFIX}
-          resetKey={resolved.relativePath}
-          labels={{
-            title: "Produtos indisponível",
-            message:
-              "A página de produtos encontrou um erro inesperado. Tente novamente.",
-            retry: "Recarregar",
-          }}
-        >
-          <ProductsFeature relativePath={resolved.relativePath} />
-        </PluginErrorBoundary>
+        <ProductsFeature relativePath={resolved.relativePath} />
       ) : null}
       {resolved.view === "help" ? <HelpPage basePath={basePath} /> : null}
     </EngineeringPluginShell>

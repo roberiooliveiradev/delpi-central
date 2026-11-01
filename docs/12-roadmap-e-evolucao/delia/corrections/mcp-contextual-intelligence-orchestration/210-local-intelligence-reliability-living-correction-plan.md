@@ -464,6 +464,16 @@ Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos,
 - Falhas remanescentes migraram para execução/arggen nos novos providers (cap invocado mas não `COMPLETED`) + ADMISSION parcial — próximo ciclo de correção.
 - Segurança: zero writes; negativos 401 unauth corretos nos 7 endpoints.
 
+## 15. Task 29 — `DELIA-C3-COMPOSITE-AGENTIC-INTELLIGENCE-AND-DURABLE-ORCHESTRATION-01` — Slice B (execução MCP)
+
+### 15.1 Fronteira de execução dos novos providers (probe autenticado + invoke trace)
+
+- `suri.analyze` — **status COMPLETED** em cmp_09 (args válidos: `analysis=purchase_orders_summary`, filtros, sample_size). Execução SURI funciona end-to-end.
+- `caio.get_context` / `clara.get_context` — `EXC:CapabilityProviderError` → probe direto no owner retorna `403 Forbidden, error_kind=authz`.
+- **ROOT CAUSE 3 (authorization por domínio):** CAIO exige `can_manage_portfolios`/`can_use_team_scope`/`resolve_analytics_portfolio_scope` (escopo de carteira); SURI exige `can_use_operations`+`require_unit(s)`. O sujeito de avaliação `rober` possui membership de operations+units (SURI COMPLETED) mas **não possui carteira comercial/escopo financeiro** → o owner rejeita corretamente com 403. Não é defeito de integração: é a autorização do domain API trabalhando conforme contrato.
+- Divergência residual adicional (evaluator): `suri.analyze` COMPLETED mas scored FAIL — o scorer `want_owner` penaliza resposta honesta de limitação ("não consegui comprovar a ordenação") via `refusal` detection. Rubrica por subobjetivo (Doc 211 §10-11) é o local correto para essa profundidade, não o scorer binário.
+- Decisão necessária: **atribuir memberships de carteira/financeiro/engenharia ao sujeito de teste no Core (dev)** ou documentar cenários CAIO/CLARA/EVA como bloqueados-por-permissão. Atribuição de membership é mudança de autorização empresarial — seguir procedimento oficial; não conceder para "fazer passar".
+
 ## 12. Task 25 — `DELIA-C3-ASCENDING-LOCAL-MODEL-EVALUATION-01`
 
 ### 12.1 Hardware + inventário

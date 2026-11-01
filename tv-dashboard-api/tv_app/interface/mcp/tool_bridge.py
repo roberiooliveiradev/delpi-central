@@ -298,12 +298,17 @@ def tool_execute(
 
 
 def tool_delete(
+<<<<<<< Updated upstream
     entity: str,
     phase: str | None = None,
+=======
+    entity: str | None = None,
+>>>>>>> Stashed changes
     target: dict | None = None,
     proposal_handle: str | None = None,
     consent_artifact: str | None = None,
     target_echo: str | None = None,
+<<<<<<< Updated upstream
     idempotency_key: str | None = None,
     catalog_version: str | None = None,
 ) -> CallToolResult:
@@ -314,6 +319,17 @@ def tool_delete(
     ``consentChallenge``. ``phase=commit``: ``proposal_handle`` +
     ``idempotency_key`` + approved ``consent_artifact`` +
     ``target_echo`` — no confirmation boolean exists on this surface.
+=======
+    confirmation: bool = False,
+    idempotency_key: str | None = None,
+    catalog_version: str | None = None,
+) -> CallToolResult:
+    """Semantic delete — destructive ops (block|section|slide) only.
+
+    Always two-phase: PREPARE seals the plan + consent challenge;
+    COMMIT requires the approved ``consent_artifact`` +
+    ``target_echo`` + ``idempotency_key``.
+>>>>>>> Stashed changes
     """
     try:
         user, auth = _authed_context()
@@ -321,11 +337,18 @@ def tool_delete(
             _dispatch.semantic_delete(
                 user=user,
                 entity=entity,
+<<<<<<< Updated upstream
                 phase=phase,
+=======
+>>>>>>> Stashed changes
                 target=target,
                 proposal_handle=proposal_handle,
                 consent_artifact=consent_artifact,
                 target_echo=target_echo,
+<<<<<<< Updated upstream
+=======
+                confirmation=confirmation,
+>>>>>>> Stashed changes
                 idempotency_key=idempotency_key,
                 catalog_version=catalog_version,
                 authorization=auth,

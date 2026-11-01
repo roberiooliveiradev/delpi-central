@@ -43,7 +43,6 @@ def test_only_authorized_business_routes_exposed(client):
         "/v1/lmps/{sale_number}/history/events",
         "/v1/lmps/{sale_number}/history/flow",
         "/v1/products",
-        "/v1/products/filter-options",
         "/v1/products/{product_code}",
         "/v1/products/{product_code}/structure",
         "/v1/products/{product_code}/parents",

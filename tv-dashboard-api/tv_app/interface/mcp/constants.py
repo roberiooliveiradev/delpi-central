@@ -56,6 +56,7 @@ MCP_FORBIDDEN_TOOLS: frozenset[str] = frozenset(
         "upsert_data_model",
         "patch_data_model",
         "delete_data_model",
+        "delete_data_source",
         "bind_visual",
         "migrate_data_sources_to_model",
         "upsert_data_source",

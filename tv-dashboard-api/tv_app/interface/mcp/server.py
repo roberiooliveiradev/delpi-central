@@ -22,6 +22,10 @@ from .constants import MCP_TOOL_NAMES, TOOL_CLASS
 from .oauth_contract import MCP_TOOL_SECURITY_SCHEMES
 from .tool_bridge import (
     tool_analyze,
+<<<<<<< Updated upstream
+=======
+    tool_commit_proposal,
+>>>>>>> Stashed changes
     tool_delete,
     tool_execute,
     tool_get_context,
@@ -268,6 +272,7 @@ def _register_read_tools(mcp: MCPServer) -> None:
         name="delete",
         title="Exclusão semântica — somente block|section|slide",
         description=(
+<<<<<<< Updated upstream
             "Exclusão governada em duas fases. phase=prepare: entity ∈ "
             "{block,section,slide} + target (playlistId + id da entidade; "
             "deleteSlides opcional para section) → proposal selado + "
@@ -275,6 +280,14 @@ def _register_read_tools(mcp: MCPServer) -> None:
             "idempotency_key + consent_artifact aprovado no canal humano "
             "confiável + target_echo — sem booleano de confirmação nesta "
             "superfície."
+=======
+            "Exclusão governada em duas fases. entity∈{block,section,"
+            "slide} + target (playlistId + id da entidade; deleteSlides "
+            "opcional para section) → PREPARE sela plano + emite "
+            "consentChallenge. COMMIT exige proposal_handle + "
+            "idempotency_key + consent_artifact + target_echo — "
+            "confirmation=true não substitui consentimento humano."
+>>>>>>> Stashed changes
         ),
         annotations=ann_act,
         meta=_meta("delete"),

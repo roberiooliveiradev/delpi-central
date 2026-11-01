@@ -36,7 +36,6 @@ import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
   type CfQueryError,
-  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
@@ -406,7 +405,10 @@ export function DocumentsAdminPage({
             onRetry={() => reload()}
           />
         ) : loading ? (
-          <CfSectionLoading label="Carregando catálogo de documentos…" variant="compact" />
+          <CfEmptyState
+            classNames={cfEmptyStateClassNames}
+            defaultMessage="Carregando catálogo de documentos…"
+          />
         ) : (
           <>
             <div className="cf-validation-panel__item-actions">

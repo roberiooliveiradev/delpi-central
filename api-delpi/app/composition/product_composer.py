@@ -1,8 +1,5 @@
 # app/composition/product_composition.py
 from app.application.use_cases.product.search_products_use_case import SearchProductsUseCase
-from app.application.use_cases.product.get_product_filter_options_use_case import (
-    GetProductFilterOptionsUseCase,
-)
 from app.infrastructure.persistence.totvs.product_repositories.product_repository import ProductRepository
 from app.infrastructure.persistence.totvs.product_repositories.product_structure_repository import ProductStructureRepository
 from app.application.use_cases.product.list_product_structure_use_case import ListProductStructureUseCase
@@ -90,10 +87,6 @@ from app.infrastructure.persistence.totvs.product_repositories.product_raw_mater
 def build_search_products_use_case() -> SearchProductsUseCase:
     repository = ProductRepository()
     return SearchProductsUseCase(repository)
-
-def build_product_filter_options_use_case() -> GetProductFilterOptionsUseCase:
-    repository = ProductRepository()
-    return GetProductFilterOptionsUseCase(repository)
 
 def build_list_structure_use_case() -> ListProductStructureUseCase:
     repository = ProductStructureRepository()

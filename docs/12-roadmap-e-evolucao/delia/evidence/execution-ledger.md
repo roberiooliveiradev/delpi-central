@@ -948,3 +948,9 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - RC2: _SPECIALIST_IDENTITY (rules.py) hardcoded davi/teo/vista -> drop silencioso dos 4 novos no provider boundary. Fix: estendido p/ caio/clara/suri/eva.
 - Pós-fix: tools/list autenticado 200 (CAIO 6/CLARA 6/SURI 5; EVA session-id coberto pelo transport). doc211 run1: 11/28 PASS (vs 8/28). Falhas restantes = execução/arggen nos novos providers — próximo ciclo.
 - PRODUCTION_DEPLOY=NO; zero writes; negativos 401 corretos.
+
+## 2026-11-01 — DELIA-C3-COMPOSITE-AGENTIC-INTELLIGENCE-AND-DURABLE-ORCHESTRATION-01 (Task 29, doc 210 §15) — fronteira de execução provada
+- suri.analyze COMPLETED e2e (cmp_09). caio/clara get_context -> 403 authz: owner exige portfolio/team_scope; rober tem operations+units (SURI ok) mas nao carteira comercial/financeira.
+- RC3=autorização legítima por domínio (não integração). Decisão pendente: memberships do sujeito de teste no Core (dev, procedimento oficial).
+- Evaluator residual: scorer want_owner penaliza limitação honesta -> rubrica por subobjetivo pendente.
+- PRODUCTION_DEPLOY=NO; zero writes.

@@ -52,7 +52,6 @@ import {
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
-  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfDialog,
@@ -656,7 +655,10 @@ export function ClosingDocumentsPanel({
           onRetry={() => setRetryNonce((n) => n + 1)}
         />
       ) : loading ? (
-        <CfSectionLoading label="Carregando evidências…" variant="compact" />
+        <CfEmptyState
+          classNames={cfEmptyStateClassNames}
+          defaultMessage="Carregando evidências…"
+        />
       ) : (
         <>
         {downloadError ? (
@@ -791,7 +793,10 @@ export function ClosingDocumentsPanel({
               {versionsError.message}
             </CfFeedbackMessage>
           ) : versions === null ? (
-            <CfSectionLoading label="Carregando versões…" variant="compact" />
+            <CfEmptyState
+              classNames={cfEmptyStateClassNames}
+              defaultMessage="Carregando versões…"
+            />
           ) : versions.length === 0 ? (
             <CfEmptyState
               classNames={cfEmptyStateClassNames}
@@ -856,7 +861,10 @@ export function ClosingDocumentsPanel({
               {eventsError.message}
             </CfFeedbackMessage>
           ) : events === null ? (
-            <CfSectionLoading label="Carregando eventos…" variant="compact" />
+            <CfEmptyState
+              classNames={cfEmptyStateClassNames}
+              defaultMessage="Carregando eventos…"
+            />
           ) : events.length === 0 ? (
             <CfEmptyState
               classNames={cfEmptyStateClassNames}
