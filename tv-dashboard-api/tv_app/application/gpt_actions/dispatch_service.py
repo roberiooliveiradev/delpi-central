@@ -3478,6 +3478,61 @@ class GptActionsDispatchService:
                 payload["compositionHints"] = (
                     PresentationRecipeService.recipe_ids()[:10]
                 )
+        # DI-3.3 — plano de binding para blocos de dados (paths recipe e
+        # planner-ready): descoberta canônica de rotas (read-only); nunca
+        # inventa fonte — RESOLVED / NEEDS_SOURCE_SELECTION /
+        # NEEDS_CONTEXT tipados honestamente.
+        ops_list = payload.get("ops")
+        if isinstance(ops_list, list) and ops_list:
+            data_ops = [
+                op for op in ops_list
+                if isinstance(op, dict)
+                and (
+                    str((op.get("block") or {}).get("type") or "")
+                    in {"kpi_view", "chart_view", "data_kpi",
+                        "data_chart", "data_table", "canvas_table",
+                        "table_view"}
+                    or str(op.get("op") or "") == "create_data_block"
+                )
+            ]
+            if data_ops:
+                try:
+                    route_result = self._suggest.suggest(
+                        query=message, limit=8
+                    )
+                    candidates = (
+                        route_result.get("suggestions") or []
+                        if isinstance(route_result, dict) else []
+                    )
+                except Exception:
+                    candidates = []
+                slim = [
+                    {
+                        key: cand.get(key)
+                        for key in (
+                            "operationId", "path", "category",
+                            "description", "method",
+                        )
+                        if cand.get(key) is not None
+                    }
+                    for cand in candidates
+                    if isinstance(cand, dict)
+                ]
+                if len(slim) == 1:
+                    state = "RESOLVED"
+                elif len(slim) > 1:
+                    state = "NEEDS_SOURCE_SELECTION"
+                else:
+                    state = "NEEDS_CONTEXT"
+                payload["bindingPlan"] = {
+                    "state": state,
+                    "dataBlockOps": len(data_ops),
+                    "dataRouteCandidates": slim,
+                    "note": (
+                        "Seleção de fonte preservada quando "
+                        "ambígua — não escolhe silenciosamente."
+                    ),
+                }
         if intent:
             methodology = self._design_methodology_for_suggest(intent=intent, host=host)
             methodology.pop("_fabricated", None)
