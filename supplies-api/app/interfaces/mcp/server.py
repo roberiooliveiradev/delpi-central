@@ -285,7 +285,8 @@ def create_mcp_server() -> MCPServer:
     )
     def analyze(
         analysis: Literal[
-            "purchase_orders_summary", "supplier_creation_preview"
+            "purchase_orders_summary", "supplier_creation_preview",
+            "overview_summary",
         ],
         filters: PurchaseOrderAnalyzeFilters | SupplierPreviewFilters | OverviewSummaryFilters | None = None,
         sample_size: int = 50,
