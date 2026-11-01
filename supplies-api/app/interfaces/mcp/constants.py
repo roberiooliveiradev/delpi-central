@@ -24,8 +24,12 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 # Catalog contract version — bumped on tool surface or wire envelope
 # changes (rev.1 = 8 endpoint-oriented tools; rev.2 = 4 semantic tools;
 # rev.3 = governed execute for suppliers create/update;
-# rev.4 = suppliers reads + postal lookup + creation preview analysis).
-CATALOG_VERSION = 4
+# rev.4 = suppliers reads + postal lookup + creation preview analysis;
+# rev.5 = purchase_requests reads + export datasets for SC/PO —
+# DECISION-G1 closed: export returns the canonical filtered JSON dataset,
+# not binary/base64 — file materialization stays on the BFF/Portal;
+# rev.6 = deliveries.late + inventory summary/items (P1-R3).
+CATALOG_VERSION = 6
 
 # DISCOVERY | READ | ANALYSIS | ACT — frozen semantic tool classes.
 # Metadata describes semantics; it NEVER authorizes execution.
@@ -74,7 +78,17 @@ EXECUTE_IDEMPOTENCY_TTL_HOURS = 24
 # reuses the canonical BFF service/gateway — no new entity without owner
 # contract + tests.
 READ_ACTIONS_BY_ENTITY: dict[str, frozenset[str]] = {
-    "purchase_orders": frozenset({"search", "get"}),
+    "purchase_orders": frozenset({"search", "get", "export"}),
+    "purchase_requests": frozenset(
+        {
+            "search",
+            "summary",
+            "requesters",
+            "cost_centers",
+            "get",
+            "export",
+        }
+    ),
     "suppliers": frozenset(
         {
             "search",
@@ -87,6 +101,8 @@ READ_ACTIONS_BY_ENTITY: dict[str, frozenset[str]] = {
         }
     ),
     "postal_codes": frozenset({"lookup"}),
+    "deliveries": frozenset({"late"}),
+    "inventory": frozenset({"summary", "items"}),
 }
 READ_ENTITIES: frozenset[str] = frozenset(READ_ACTIONS_BY_ENTITY)
 ANALYSIS_KINDS: frozenset[str] = frozenset(
@@ -135,6 +151,81 @@ PO_ANALYZE_FILTER_KEYS: frozenset[str] = frozenset(
 
 PO_GET_IDENTITY_KEYS: frozenset[str] = frozenset({"branch", "order_number"})
 
+# PO export shares the search vocabulary minus pagination (BFF contract:
+# export ignores page/page_size and returns the full filtered dataset).
+PO_EXPORT_FILTER_KEYS: frozenset[str] = PO_SEARCH_FILTER_KEYS - {
+    "page",
+    "page_size",
+}
+
+# Purchase requests (SC) vocabularies — closed mirrors of the
+# purchase-requests-api query contracts consumed by the BFF routes.
+PR_SEARCH_FILTER_KEYS: frozenset[str] = frozenset(
+    {
+        "branch",
+        "date_from",
+        "date_to",
+        "request_number",
+        "requester_user_id",
+        "cost_center",
+        "product_code",
+        "supplier_code",
+        "order_number",
+        "overall_stage",
+        "sort_by",
+        "sort_dir",
+        "page",
+        "page_size",
+    }
+)
+# Summary accepts the same filter set minus sort/page (PR-api summary
+# ignores sort fields and never paginates).
+PR_SUMMARY_FILTER_KEYS: frozenset[str] = PR_SEARCH_FILTER_KEYS - {
+    "sort_by",
+    "sort_dir",
+    "page",
+    "page_size",
+}
+# Requesters facet — the PR-api facet contract has no requester_user_id
+# or overall_stage keys.
+PR_REQUESTERS_FILTER_KEYS: frozenset[str] = frozenset(
+    {
+        "branch",
+        "date_from",
+        "date_to",
+        "request_number",
+        "cost_center",
+        "product_code",
+        "supplier_code",
+        "order_number",
+    }
+)
+# Cost-centers facet — no cost_center/self-filter keys upstream.
+PR_COST_CENTERS_FILTER_KEYS: frozenset[str] = frozenset(
+    {
+        "branch",
+        "date_from",
+        "date_to",
+        "request_number",
+        "product_code",
+        "supplier_code",
+        "order_number",
+    }
+)
+# SC detail context filters (optional facet-scoped lookup params the
+# PR-api detail endpoint accepts alongside the path identity).
+PR_DETAIL_FILTER_KEYS: frozenset[str] = frozenset(
+    {"date_from", "date_to", "cost_center"}
+)
+PR_GET_IDENTITY_KEYS: frozenset[str] = frozenset(
+    {"branch", "request_number"}
+)
+# SC export — search vocabulary minus pagination (full filtered dataset).
+PR_EXPORT_FILTER_KEYS: frozenset[str] = PR_SEARCH_FILTER_KEYS - {
+    "page",
+    "page_size",
+}
+
 # Suppliers read vocabularies — closed mirrors of the BFF query/identity
 # contracts (suppliers_routes + supplier_creation_routes).
 SUPPLIER_SEARCH_FILTER_KEYS: frozenset[str] = frozenset(
@@ -159,6 +250,58 @@ SUPPLIER_TAX_ID_FILTER_KEYS: frozenset[str] = frozenset(
 )
 SUPPLIER_OPERATION_IDENTITY_KEYS: frozenset[str] = frozenset({"operation_id"})
 POSTAL_CODE_IDENTITY_KEYS: frozenset[str] = frozenset({"postal_code"})
+# R-11 / R-12 (G3) — closed filter vocabularies, mirrored from the BFF
+# routes: deliveries (/deliveries/late) and inventory
+# (/inventory/stock-balances/{summary,items}).
+DELIVERIES_LATE_FILTER_KEYS: frozenset[str] = frozenset(
+    {
+        "branch",
+        "status",
+        "start_date",
+        "end_date",
+        "sort_by",
+        "sort_dir",
+        "page",
+        "page_size",
+    }
+)
+DELIVERIES_LATE_STATUS: frozenset[str] = frozenset({"late", "on_time"})
+DELIVERIES_LATE_SORT_KEYS: frozenset[str] = frozenset(
+    {
+        "status",
+        "branch",
+        "order_number",
+        "order_item",
+        "product_code",
+        "product_description",
+        "supplier_code",
+        "supplier_name",
+        "supplier_short_name",
+        "expected_delivery_date",
+        "receipt_entry_date",
+        "quantity",
+        "days_diff",
+    }
+)
+INVENTORY_SUMMARY_FILTER_KEYS: frozenset[str] = frozenset(
+    {"branch", "warehouse"}
+)
+INVENTORY_ITEMS_FILTER_KEYS: frozenset[str] = frozenset(
+    {"branch", "warehouse", "page", "page_size", "sort"}
+)
+INVENTORY_ITEMS_SORT_KEYS: frozenset[str] = frozenset(
+    {
+        "stock_value_desc",
+        "stock_value_asc",
+        "quantity_desc",
+        "quantity_asc",
+        "product_code_asc",
+        "product_code_desc",
+    }
+)
+INVENTORY_ITEMS_MAX_PAGE_SIZE = 500
+DELIVERIES_LATE_MAX_PAGE_SIZE = 1000
+
 SUPPLIER_PREVIEW_FILTER_KEYS: frozenset[str] = frozenset({"tax_id"})
 
 # Catalog limit and existing-suppliers page caps live with the canonical
