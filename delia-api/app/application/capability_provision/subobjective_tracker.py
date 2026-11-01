@@ -297,6 +297,18 @@ class SubObjectiveTracker:
         self._objectives[subobjective_id] = updated
         return updated
 
+    def expire_pending(self, *, gap: str) -> None:
+        """Budget/deadline exhausted: every non-terminal subobjective
+        becomes BLOCKED with the declared gap — never a silent drop."""
+        for oid in self._order:
+            obj = self._objectives[oid]
+            if obj.state not in TERMINAL_STATES:
+                self._objectives[oid] = dataclasses.replace(
+                    obj,
+                    state=SUBOBJECTIVE_BLOCKED,
+                    gaps=(obj.gaps + (gap[:MAX_FIELD_CHARS],))[:MAX_GAPS],
+                )
+
     def retry_ready(self, subobjective_id: str) -> bool:
         """A FAILED subobjective may retry while budget remains —
         recovering it back to READY (not silently re-running)."""
