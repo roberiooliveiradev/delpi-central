@@ -11,7 +11,7 @@ Revisão `SURI-MCP-FULL-PARITY-V4-G2` (2026-10-30): lote P1-R1+P1-R2 entregue �
 
 ```text
 PORTAL CAPABILITIES (denominador: linhas PROVEN executáveis) : 45 (34 READ + 11 WRITE)
-SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 19 (R-04..R-10, R-15..R-22, R-33, R-34, W-10, W-11)
+SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 21 (R-04..R-12, R-15..R-22, R-33, R-34, W-10, W-11)
 CURRENT PARITY PERCENTAGE (implementada)                     : 42.2% (19/45)
 TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
