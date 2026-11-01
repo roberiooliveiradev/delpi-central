@@ -1,10 +1,14 @@
 # SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION — LEDGER
 
 PROGRAM: SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION-001/002
-CURRENT LOT: G4 — Safety Stock (R-13, R-14) — INVENTORY done, S1 next
-LAST CLOSED LOT: G0 (8935dab669)
-CURRENT HEAD: 8935dab669 · SOURCE SHA: idem · CATALOG: V6 · TOOLS: 5
-PARITY: 21/45 = 46.7% · TARGET G4: 23/45 = 51.1%
+CURRENT LOT: G5 — Overview/OTD (R-02, R-03) — inventory next
+LAST CLOSED LOT: G4 Safety Stock (a577c25308 + restore 1267637fb2)
+G4 EVIDENCE: catalog v7 in-image; smoke autenticado — filters/summary ok,
+  items total=14232, details+suppliers ok (code 10010001),
+  details sem branch -> 'A concrete branch (01 or 02) is required',
+  action/filtro inválidos fail-closed. Suite suri_mcp verde.
+CURRENT HEAD: a577c25308 · SOURCE SHA: idem · CATALOG: V6 · TOOLS: 5
+PARITY: 23/45 = 51.1% · TARGET: 45/45 = 100%
 
 ## G4 — Inventário concluído (contratos reais no HEAD)
 
