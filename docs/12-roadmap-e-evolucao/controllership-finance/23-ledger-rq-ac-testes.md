@@ -1300,3 +1300,13 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | G033-CLARA-REAL | `read(report.cost_closing_state)` conectada | dados reais via OAuth | flag agora on — reteste do conector pelo PO é o positivo (única credencial legítima) | PENDING (owner: PO) |
 | G033-VISUAL | browser smoke Portal prod | página funcional | sem driver de navegador no host | TEST_NOT_RUN |
 | G033-NEG-PERSONA | usuário sem .access | 403 | sem persona provisionada | INCONCLUSIVE (IAM) |
+
+## Gate 034 — fix paridade Portal × CLARA R12/R15 (31/10/2026)
+
+| Teste | Entrada | Esperado | Observado | Estado |
+|---|---|---|---|---|
+| G034-ROOTCAUSE | página exibe "Nenhum marcador observado" com dados reais na BFF | envelope tipado | `getCostClosingState` não desempacotava `envelope.data` — único client sem unwrap; `state.data.branches`=undefined → empty state | CAUSA PROVADA |
+| G034-FIX | `costClosingStateApi.ts` `.then(e=>e.data)` | payload interno | diff mínimo, padrão `reportsApi`/`adminApi` | PASS |
+| G034-TEST | `costClosingStateApi.test.ts` + página | unwrap + render | 3/3 vitest PASS incl. regressão do envelope | PASS |
+| G034-DEPLOY | rebuild MFE prod | bundle com fix | `App-DiPOPBCR.js` (novo hash) + remoteEntry 200 + container recriado | PASS |
+| G034-VISUAL | browser real | confirmação PO | dados na página devem aparecer — validação visual pelo PO | PENDING (PO smoke) |
