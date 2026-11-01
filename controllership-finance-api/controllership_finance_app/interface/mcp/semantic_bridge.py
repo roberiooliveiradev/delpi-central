@@ -354,6 +354,18 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
 }
 
 
+def analysis_types() -> tuple[str, ...]:
+    """Canonical closed vocabulary for ``analyze.analysis_type`` —
+    the dispatch registry is the single owner."""
+    return tuple(sorted(ANALYZE_ACTIONS))
+
+
+def knowledge_actions() -> tuple[str, ...]:
+    """Canonical closed vocabulary for ``knowledge.action`` —
+    the dispatch registry is the single owner."""
+    return tuple(sorted(KNOWLEDGE_ACTIONS))
+
+
 ANALYZE_ACTIONS: dict[str, dict] = {
     "closing_blockers": {
         "handler": bridge.tool_analyze_closing_blockers,
