@@ -942,3 +942,9 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - 4 novos MCPs integrados (caio/clara/suri/eva): settings+config env-driven; 11 arquivos conflitados resolvidos (lado Stashed); containers supplies-mcp/commercial-api healthy; Keycloak KC24 convergido 7/7 (resource clients+scopes+exchange perms); corpus doc211 (28 verbatim) criado.
 - doc211 run1 GPU qwen3-4b: 8/28=29% — 12 GROUP_SELECTION + 8 ADMISSION; caps novos nunca invocados -> hipotese FIRST_DIVERGENCE=GROUP_PROJECTION (tools/list delegado ou payload omitindo grupos novos). Gate FAIL; correções seguem.
 - PRODUCTION_DEPLOY=NO; zero writes; 401 unauth correto nos 7 endpoints.
+
+## 2026-11-01 — DELIA-C3-MCP-DISCOVERY-PROJECTION-AND-COMPOSITE-OUTCOME-REMEDIATION-01 (Task 28, doc 210 §14) — aud canônico + allowlist domínio corrigidos; 11/28
+- RC1: scopes mcp-audience-{caio,suri,eva} sem mapper canônico -> aud localhost-only -> tools/list 401. Fix: DELIA_MCP_AUDIENCE_BASE=https://minhadelpi.com.br --apply (mecanismo suportado, não workaround).
+- RC2: _SPECIALIST_IDENTITY (rules.py) hardcoded davi/teo/vista -> drop silencioso dos 4 novos no provider boundary. Fix: estendido p/ caio/clara/suri/eva.
+- Pós-fix: tools/list autenticado 200 (CAIO 6/CLARA 6/SURI 5; EVA session-id coberto pelo transport). doc211 run1: 11/28 PASS (vs 8/28). Falhas restantes = execução/arggen nos novos providers — próximo ciclo.
+- PRODUCTION_DEPLOY=NO; zero writes; negativos 401 corretos.
