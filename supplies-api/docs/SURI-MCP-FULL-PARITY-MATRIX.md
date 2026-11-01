@@ -11,8 +11,8 @@ Revisão `SURI-MCP-FULL-PARITY-V4-G2` (2026-10-30): lote P1-R1+P1-R2 entregue �
 
 ```text
 PORTAL CAPABILITIES (denominador: linhas PROVEN executáveis) : 45 (34 READ + 11 WRITE)
-SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 41 (R-01..R-34, W-01..W-08, W-10, W-11)
-CURRENT PARITY PERCENTAGE (implementada)                     : 91.1% (41/45)
+SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 42 (R-01..R-34, W-01..W-11)
+CURRENT PARITY PERCENTAGE (implementada)                     : 93.3% (42/45)
 TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
 
@@ -80,7 +80,7 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | W-06 | Mercado | Comex NCM request create | PROVEN | G11 | pg | `POST /ncm-governance` | access | `execute` ncm.request | P2-E2 |
 | W-07 | Mercado | Comex transition (algumas manage; ED-api put on approve/inactive) | PROVEN | G11 | pg + ED-api | `POST /{id}/transition` | access/manage | `execute` transition (PREPARE+consent p/ manage) | P2-E2 |
 | W-08 | Mercado | Comex views create/update | PROVEN | G11 | pg | `POST/PUT /views` | access | `execute` view.save | P2-E2 |
-| W-09 | Mercado | Comex views delete | PROVEN | — | pg | `DELETE /views/{id}` | access | `delete` view (confirmação explícita) | P2-D1 |
+| W-09 | Mercado | Comex views delete | PROVEN | G14 | pg | `DELETE /views/{id}` | access | `delete` view (confirmação explícita) | P2-D1 |
 | W-10 | Fornecedores | Supplier create (Protheus POST) | PROVEN | `execute:suppliers.create` | api-delpi(S2S) + Protheus REST | `POST /suppliers` → `/integrations/protheus/suppliers` | access + S2S `suppliers.create` | runtime 2026-10-30 + 30 testes SURI | **PROVEN** (era B-01) |
 | W-11 | Fornecedores | Supplier update (Protheus PUT) | PROVEN | `execute:suppliers.update` | api-delpi(S2S) + Protheus REST | `PUT /suppliers/{code}/{store}` | access + S2S `suppliers.update` | runtime end-to-end + 30 testes SURI | **PROVEN** (era B-02) |
 
