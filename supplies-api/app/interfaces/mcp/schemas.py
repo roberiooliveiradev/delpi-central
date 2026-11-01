@@ -348,3 +348,33 @@ class InventoryItemsFilters(_ClosedModel):
     page_size: int | None = Field(default=None, ge=1, le=500)
     sort: str | None = None
 
+class SafetyStockScopeFilters(_ClosedModel):
+    """read(safety_stock,filters)."""
+    branch: str | None = None
+    includeBlocked: bool | None = None
+
+
+class SafetyStockSummaryFilters(_ClosedModel):
+    """read(safety_stock,summary)."""
+    branch: str | None = None
+    includeBlocked: bool | None = None
+    productGroup: str | None = None
+    unit: str | None = None
+    search: str | None = None
+    status: str | None = None
+    includeWithoutSafetyStock: bool | None = None
+
+
+class SafetyStockItemsFilters(SafetyStockSummaryFilters):
+    """read(safety_stock,items)."""
+    page: int | None = Field(default=None, ge=1)
+    page_size: int | None = Field(default=None, ge=1, le=200)
+    sortBy: str | None = None
+    sortDirection: str | None = None
+
+
+class SafetyStockItemIdentity(_ClosedModel):
+    """read(safety_stock,details|suppliers)."""
+    code: str = Field(min_length=1)
+    branch: str | None = None
+

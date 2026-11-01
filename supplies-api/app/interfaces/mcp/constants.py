@@ -28,8 +28,9 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 # rev.5 = purchase_requests reads + export datasets for SC/PO —
 # DECISION-G1 closed: export returns the canonical filtered JSON dataset,
 # not binary/base64 — file materialization stays on the BFF/Portal;
-# rev.6 = deliveries.late + inventory summary/items (P1-R3).
-CATALOG_VERSION = 6
+# rev.6 = deliveries.late + inventory summary/items (P1-R3);
+# rev.7 = safety_stock filters/summary/items/details/suppliers (R-13/R-14).
+CATALOG_VERSION = 7
 
 # DISCOVERY | READ | ANALYSIS | ACT — frozen semantic tool classes.
 # Metadata describes semantics; it NEVER authorizes execution.
@@ -103,6 +104,9 @@ READ_ACTIONS_BY_ENTITY: dict[str, frozenset[str]] = {
     "postal_codes": frozenset({"lookup"}),
     "deliveries": frozenset({"late"}),
     "inventory": frozenset({"summary", "items"}),
+    "safety_stock": frozenset(
+        {"filters", "summary", "items", "details", "suppliers"}
+    ),
 }
 READ_ENTITIES: frozenset[str] = frozenset(READ_ACTIONS_BY_ENTITY)
 ANALYSIS_KINDS: frozenset[str] = frozenset(
@@ -336,3 +340,13 @@ SEMANTIC_CAPABILITIES: dict[str, dict] = {
         },
     },
 }
+
+SAFETY_STOCK_FILTERS_FILTER_KEYS = frozenset({"branch", "includeBlocked"})
+SAFETY_STOCK_SUMMARY_FILTER_KEYS = frozenset(
+    {"branch", "includeBlocked", "productGroup", "unit", "search",
+     "status", "includeWithoutSafetyStock"}
+)
+SAFETY_STOCK_ITEMS_FILTER_KEYS = SAFETY_STOCK_SUMMARY_FILTER_KEYS | frozenset(
+    {"page", "page_size", "sortBy", "sortDirection"}
+)
+SAFETY_STOCK_ITEM_IDENTITY_KEYS = frozenset({"code", "branch"})

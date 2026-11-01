@@ -39,6 +39,7 @@ from app.application.services.inventory_stock_balances_service import (
 from app.application.services.late_deliveries_composition_service import (
     LateDeliveriesCompositionService,
 )
+from app.application.services.safety_stock_service import SafetyStockService
 from app.application.services.supplier_creation_preview.preview_service import (
     SupplierCreationPreviewService,
 )
@@ -117,6 +118,10 @@ from app.interfaces.mcp.constants import (
 DELIVERIES_LATE_FILTER_KEYS,
     INVENTORY_ITEMS_FILTER_KEYS,
     INVENTORY_SUMMARY_FILTER_KEYS,
+    SAFETY_STOCK_FILTERS_FILTER_KEYS,
+    SAFETY_STOCK_ITEM_IDENTITY_KEYS,
+    SAFETY_STOCK_ITEMS_FILTER_KEYS,
+    SAFETY_STOCK_SUMMARY_FILTER_KEYS,
     READ_ACTIONS_BY_ENTITY,
     READ_ENTITIES,
     SEMANTIC_CAPABILITIES,
@@ -523,6 +528,7 @@ def tool_export_purchase_orders(filters: dict) -> CallToolResult:
 # exposed — the Portal does not offer that workflow through this surface.
 
 _DELIVERIES_SERVICE = LateDeliveriesCompositionService()
+_SAFETY_STOCK_SERVICE = SafetyStockService()
 _INVENTORY_SERVICE = InventoryStockBalancesService()
 
 _PR_GATEWAY = PurchaseRequestsGateway()
@@ -1220,6 +1226,10 @@ def tool_read(
         return _dispatch_inventory_read(
             normalized_action, filter_payload, identity_payload
         )
+    if normalized_entity == "safety_stock":
+        return _dispatch_safety_stock_read(
+            normalized_action, filter_payload, identity_payload
+        )
 
     if normalized_action == "search":
         if identity_payload:
@@ -1715,5 +1725,136 @@ def tool_inventory_items(filters: dict) -> CallToolResult:
         return _invalid(str(exc))
     return _ok(
         payload, meta={"delpi/source": "bff:/inventory/stock-balances/items"}
+    )
+
+_SAFETY_ACTION_KEYS = {
+    "filters": SAFETY_STOCK_FILTERS_FILTER_KEYS,
+    "summary": SAFETY_STOCK_SUMMARY_FILTER_KEYS,
+    "items": SAFETY_STOCK_ITEMS_FILTER_KEYS,
+}
+
+
+def _dispatch_safety_stock_read(
+    action: str, filters: dict, identity: dict
+) -> CallToolResult:
+    if action in {"details", "suppliers"}:
+        if filters:
+            return _invalid(
+                f"read(safety_stock,{action}) accepts no 'filters' — "
+                "use identity {code, branch}."
+            )
+        unknown = _unknown_keys(identity, SAFETY_STOCK_ITEM_IDENTITY_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown safety_stock identity keys: {sorted(unknown)}. "
+                f"Allowed: {sorted(SAFETY_STOCK_ITEM_IDENTITY_KEYS)}"
+            )
+        code = str(identity.get("code") or "").strip()
+        if not code:
+            return _invalid("safety_stock identity requires 'code'.")
+        if action == "details":
+            return tool_safety_stock_item_details(
+                code, identity.get("branch")
+            )
+        return tool_safety_stock_item_suppliers(code, identity.get("branch"))
+    if identity:
+        return _invalid(
+            f"read(safety_stock,{action}) does not accept 'identity'."
+        )
+    allowed = _SAFETY_ACTION_KEYS[action]
+    unknown = _unknown_keys(filters, allowed)
+    if unknown:
+        return _invalid(
+            f"Unknown safety_stock {action} filters: {sorted(unknown)}. "
+            f"Allowed: {sorted(allowed)}"
+        )
+    if action == "filters":
+        return tool_safety_stock_filters(filters)
+    if action == "summary":
+        return tool_safety_stock_summary(filters)
+    return tool_safety_stock_items(filters)
+
+
+def tool_safety_stock_filters(filters: dict) -> CallToolResult:
+    user = _operations_user()
+    try:
+        payload = _SAFETY_STOCK_SERVICE.get_filters(
+            user,
+            branch=filters.get("branch"),
+            include_blocked=filters.get("includeBlocked"),
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(payload, meta={"delpi/source": "bff:/safety-stock/filters"})
+
+
+def tool_safety_stock_summary(filters: dict) -> CallToolResult:
+    user = _operations_user()
+    try:
+        payload = _SAFETY_STOCK_SERVICE.get_summary(
+            user,
+            branch=filters.get("branch"),
+            include_blocked=filters.get("includeBlocked"),
+            product_group=filters.get("productGroup"),
+            unit=filters.get("unit"),
+            search=filters.get("search"),
+            status=filters.get("status"),
+            include_without_safety_stock=filters.get(
+                "includeWithoutSafetyStock"
+            ),
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(payload, meta={"delpi/source": "bff:/safety-stock/summary"})
+
+
+def tool_safety_stock_items(filters: dict) -> CallToolResult:
+    user = _operations_user()
+    try:
+        payload = _SAFETY_STOCK_SERVICE.list_items(
+            user,
+            branch=filters.get("branch"),
+            page=filters.get("page"),
+            page_size=filters.get("page_size"),
+            sort_by=filters.get("sortBy"),
+            sort_direction=filters.get("sortDirection"),
+            include_blocked=filters.get("includeBlocked"),
+            product_group=filters.get("productGroup"),
+            unit=filters.get("unit"),
+            search=filters.get("search"),
+            status=filters.get("status"),
+            include_without_safety_stock=filters.get(
+                "includeWithoutSafetyStock"
+            ),
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(payload, meta={"delpi/source": "bff:/safety-stock/items"})
+
+
+def tool_safety_stock_item_details(code, branch) -> CallToolResult:
+    user = _operations_user()
+    try:
+        payload = _SAFETY_STOCK_SERVICE.get_item_details(
+            user, code=code, branch=branch
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(
+        payload, meta={"delpi/source": "bff:/safety-stock/items/{code}/details"}
+    )
+
+
+def tool_safety_stock_item_suppliers(code, branch) -> CallToolResult:
+    user = _operations_user()
+    try:
+        payload = _SAFETY_STOCK_SERVICE.get_item_suppliers(
+            user, code=code, branch=branch
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(
+        payload,
+        meta={"delpi/source": "bff:/safety-stock/items/{code}/suppliers"},
     )
 
