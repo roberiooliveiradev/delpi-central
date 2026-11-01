@@ -1310,3 +1310,15 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | G034-TEST | `costClosingStateApi.test.ts` + página | unwrap + render | 3/3 vitest PASS incl. regressão do envelope | PASS |
 | G034-DEPLOY | rebuild MFE prod | bundle com fix | `App-DiPOPBCR.js` (novo hash) + remoteEntry 200 + container recriado | PASS |
 | G034-VISUAL | browser real | confirmação PO | dados na página devem aparecer — validação visual pelo PO | PENDING (PO smoke) |
+
+## Gate 035 — encerramento do Ciclo 3 (31/10/2026)
+
+| Item | Evidência | Estado |
+|---|---|---|
+| Aceite visual R12/R15 | captura PO: filiais 01/02 com snapshot disponível, cutoff observado, TTAT observada, wizard indisponível, aceite não informado, limitações+proveniência+officiality | PASS (escopo: elementos da captura) |
+| Envelope unwrap residual | busca em `src/api/*.ts` por httpGet sem unwrap | só `httpClient.ts` (infra — correto por design); zero outros clients afetados | PASS |
+| OAuth MCP | aud/scope/exchange/negativos/positivo — homolog e prod | PASS (consolidado G030/G033) |
+| Persona negativa | usuário sem `.access` | INCONCLUSIVE — owner IAM, não bloqueante p/ fechamento técnico (fail-closed provado 3x) |
+| Paridade R05 MATR320 | homologação funcional humana separada | PENDING — owner funcional Controladoria; `official_parity=PENDING` preservado |
+| R01–R11 regressão | zero contrato/regra alterado pelo fix G034 | PASS (consolidado; fix é client-only) |
+| WIP terceiros | stashes+markers preservados | PASS |
