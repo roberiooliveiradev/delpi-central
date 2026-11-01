@@ -74,3 +74,14 @@ def test_registry_lists_benchmark_action():
     )
     caps = {a.capability for a in SEMANTIC_ACTIONS}
     assert "product.drawing_benchmark" in caps
+
+def test_every_registered_analyze_action_has_dispatch():
+    """R6-D.2 integrity: registry e dispatcher não podem divergir —
+    perda silenciosa de branch em merge (46da939277) deve falhar."""
+    import inspect
+
+    from engineering_app.interface.mcp import semantic_bridge as sem
+
+    src = inspect.getsource(sem.tool_analyze)
+    for cap in ("product.drawing_analysis", "product.drawing_benchmark"):
+        assert 'kind == "' + cap + '"' in src, "dispatch ausente: " + cap

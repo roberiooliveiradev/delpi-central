@@ -92,7 +92,10 @@ def _delegated(
 async def search_products(
     code: str | None = Query(default=None),
     description: str | None = Query(default=None),
-    group_code: str | None = Query(default=None),
+    group_code: str | None = Query(
+        default=None,
+        description="Grupos separados por vírgula (ex.: 3019,3020) — semântica OR.",
+    ),
     subgroup: str | None = Query(default=None),
     product_type: str | None = Query(
         default=None,
@@ -125,6 +128,25 @@ async def search_products(
         operation_id="search_products",
         ok_message="Produtos carregados.",
         not_found_message="Nenhum produto encontrado.",
+    )
+
+
+@router.get(
+    "/v1/products/filter-options",
+    operation_id="get_product_filter_options",
+    summary="Opções oficiais de filtro do catálogo (grupos e tipos) — delegação ao owner",
+)
+@require_any_permission([ENGINEERING_ACCESS])
+async def get_product_filter_options():
+    ctx, error = _human_context("get_product_filter_options")
+    if error:
+        return error
+    result = await build_delegated_auxiliary_source().fetch_product_filter_options(ctx)
+    return _delegated(
+        result,
+        operation_id="get_product_filter_options",
+        ok_message="Opções de filtro carregadas.",
+        not_found_message="Opções de filtro indisponíveis.",
     )
 
 
