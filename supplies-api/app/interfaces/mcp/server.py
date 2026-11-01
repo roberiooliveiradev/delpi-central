@@ -30,6 +30,7 @@ from app.interfaces.mcp.constants import DESTRUCTIVE_ACT_TOOLS, TOOL_CLASS
 from app.interfaces.mcp.oauth_contract import SURI_MCP_SECURITY_SCHEMES
 from app.interfaces.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interfaces.mcp.schemas import (
+    ComexDeleteOperation,
     ComexWriteOperation,
     EnrichmentWriteOperation,
     PersonalWriteOperation,
@@ -408,10 +409,12 @@ def create_mcp_server() -> MCPServer:
             "ncm_transition", "view_create", "view_update",
             "review_create", "decide", "decide_bulk",
             "prepare_update", "preferences_update", "profile_update",
+            "view_delete",
         ],
         operations: list[
             SupplierWriteOperation | ComexWriteOperation
             | EnrichmentWriteOperation | PersonalWriteOperation
+            | ComexDeleteOperation
         ],
     ) -> CallToolResult:
         return _guarded(bridge.tool_execute)(entity, action, operations)

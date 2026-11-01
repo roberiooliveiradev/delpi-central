@@ -1,8 +1,12 @@
 # SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION — LEDGER
 
 PROGRAM: SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION-001/002
-CURRENT LOT: G13 — Preferences/Profile WRITE (W-01, W-02)
-LAST CLOSED LOT: G12 Enrichment WRITE (0d462a5dd7)
+CURRENT LOT: G14 — Comex views delete (W-09) + confirmation semantics
+LAST CLOSED LOT: G13 Personal WRITE (9a36d71c54 + isolation fix)
+G13 EVIDENCE: catalog v14; preferences_update confirmed+replayed+
+  read-back db=01; profile_update self-only Forbidden; badDensity
+  per-op rejected (batch isolation); unknown key/action fail-closed.
+
 G12 EVIDENCE: catalog v13 in-image; enrichment_execute espelha
   ACT V005 + rate limiter + normalize_supplier_id;
   smoke — decide/decide_bulk/prepare_update rejected paths
@@ -48,8 +52,8 @@ G4 EVIDENCE: catalog v7 in-image; smoke autenticado — filters/summary ok,
   items total=14232, details+suppliers ok (code 10010001),
   details sem branch -> 'A concrete branch (01 or 02) is required',
   action/filtro inválidos fail-closed. Suite suri_mcp verde.
-CURRENT HEAD: 0d462a5dd7 · CATALOG: V13 · SOURCE SHA: idem · CATALOG: V6 · TOOLS: 5
-PARITY: 39/45 = 86.7% · TARGET: 45/45 = 100%
+CURRENT HEAD: 9a36d71c54 · CATALOG: V14 · SOURCE SHA: idem · CATALOG: V6 · TOOLS: 5
+PARITY: 41/45 = 91.1% · TARGET: 45/45 = 100%
 
 ## G4 — Inventário concluído (contratos reais no HEAD)
 

@@ -54,12 +54,16 @@ _VIEW_CREATE_KEYS = frozenset(
     }
 )
 _VIEW_UPDATE_KEYS = _VIEW_CREATE_KEYS | frozenset({"view_id"})
+_VIEW_DELETE_KEYS = frozenset(
+    {"idempotency_key", "view_id", "confirmation"}
+)
 
 COMEX_WRITE_KEYS_BY_ACTION = {
     "ncm_request": _NCM_REQUEST_KEYS,
     "ncm_transition": _NCM_TRANSITION_KEYS,
     "view_create": _VIEW_CREATE_KEYS,
     "view_update": _VIEW_UPDATE_KEYS,
+    "view_delete": _VIEW_DELETE_KEYS,
 }
 
 
@@ -86,10 +90,35 @@ def _exec_op(user: EffectiveUser, action: str, op: dict[str, Any]) -> dict:
     if action == "view_create":
         body = {k: v for k, v in op.items() if k != "idempotency_key"}
         return _COMEX.create_view(user=user, body=body)
+    if action == "view_delete":
+        return _delete_view_op(user, op)
     body = {k: v for k, v in op.items() if k != "idempotency_key"}
     return _COMEX.update_view(
         op.get("view_id"), user=user, body=body
     )
+
+
+def _delete_view_op(user: EffectiveUser, op: dict[str, Any]) -> dict:
+    vid = str(op.get("view_id") or "").strip()
+    confirmation = op.get("confirmation")
+    if not isinstance(confirmation, dict):
+        raise ConfirmationRequiredError(
+            "confirmation_unavailable: destructive view_delete requires "
+            "an explicit confirmation object "
+            "{view_id, acknowledged: true}."
+        )
+    if (str(confirmation.get("view_id") or "").strip() != vid
+            or confirmation.get("acknowledged") is not True):
+        raise ConfirmationRequiredError(
+            "confirmation_unavailable: confirmation must repeat the "
+            "exact view_id and acknowledged=true."
+        )
+    _COMEX.delete_view(vid, user=user)
+    return {"view_id": vid, "deleted": True}
+
+
+class ConfirmationRequiredError(Exception):
+    """Destructive op lacks a verifiable confirmation — never execute."""
 
 
 def _identity_for(action: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -147,6 +176,15 @@ def execute_comex_write(
                 message=str(exc),
                 idempotency_key=idem_key,
                 http_status=403,
+            )
+        except ConfirmationRequiredError as exc:
+            entry = _op_error(
+                index,
+                outcome="rejected",
+                code="confirmation_unavailable",
+                message=str(exc),
+                idempotency_key=idem_key,
+                http_status=412,
             )
         except ComexConflictError as exc:
             entry = _op_error(
