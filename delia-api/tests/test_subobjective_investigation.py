@@ -106,6 +106,7 @@ def _orchestrator(providers, proposal):
         orchestration_instructions={
             SUBOBJECTIVES_INSTRUCTION_ID: _SUBOBJECTIVES_INSTRUCTION,
         },
+        subobjective_investigation_enabled=True,
     )
 
 

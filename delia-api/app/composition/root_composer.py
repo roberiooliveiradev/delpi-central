@@ -425,6 +425,9 @@ def _compose_turn_handler(
             cri_presentation_vocabulary=cri_vocabulary,
             field_labels=field_labels,
             orchestration_instructions=orchestration_instructions,
+            subobjective_investigation_enabled=(
+                settings.subobjective_investigation_enabled
+            ),
         )
         if providers and orchestration_instructions is not None
         else None

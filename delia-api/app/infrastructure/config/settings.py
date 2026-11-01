@@ -259,6 +259,11 @@ class Settings:
         self.orchestration_engine = (
             os.getenv("DELIA_ORCHESTRATION_ENGINE") or "langgraph"
         ).strip()
+        # S3 (doc 214): compound-objective decomposition — composition
+        # config ONLY, backend-controlled; OFF by default.
+        self.subobjective_investigation_enabled = _env_flag(
+            "DELIA_SUBOBJECTIVE_INVESTIGATION"
+        )
         _call_attempts_raw = os.getenv("DELIA_LLM_CALL_MAX_ATTEMPTS")
         self.llm_call_max_attempts_config_source = (
             "environment"

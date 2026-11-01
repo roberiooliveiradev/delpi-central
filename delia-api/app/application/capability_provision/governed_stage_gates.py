@@ -90,6 +90,19 @@ class SupportsGovernedStageGates(Protocol):
         """Deterministic surface-inquiry answer attempt."""
         ...
 
+    def _decompose_objective(
+        self,
+        input_text: str,
+        *,
+        correlation: str,
+        workspace_context: WorkspaceContext | None,
+        deadline: TurnDeadline,
+    ) -> tuple["SubObjective", ...] | None:
+        """Bounded decomposition proposal for a compound objective —
+        validated fail-closed; ``None`` keeps the single-capability
+        path."""
+        ...
+
     def _governed_owner_path(
         self,
         input_text: str,
@@ -102,6 +115,7 @@ class SupportsGovernedStageGates(Protocol):
         prepare_only: bool,
         unbound_outcome: str | None,
         deadline: TurnDeadline,
+        depth: int = 0,
     ) -> GovernedCapabilityAttempt:
         """Post-admission governed owner path: surface → selection →
         invoke → judgment → recovery → synthesis."""
