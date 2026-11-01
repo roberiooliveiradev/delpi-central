@@ -193,6 +193,17 @@ def _error(
             "error_kind",
             _ERROR_KIND_BY_CODE.get(error_code, "client"),
         )
+    payload: dict = {
+        "success": False,
+        "message": message,
+        "data": err_data,
+        "status_code": status_code,
+    }
+    # Owner-declared typed recoverability (delpi_mcp contract): argument
+    # validation rejections are repairable by the caller.
+    if error_code == "validation":
+        payload["code"] = "ARGUMENT_VALIDATION"
+        payload["recoverable"] = True
     meta = None
     if status_code == 401:
         meta = mcp_www_authenticate_meta(
@@ -200,12 +211,7 @@ def _error(
             error_description="Authentication required",
         )
     return mcp_tool_result(
-        {
-            "success": False,
-            "message": message,
-            "data": err_data,
-            "status_code": status_code,
-        },
+        payload,
         is_error=True,
         meta=meta,
     )
