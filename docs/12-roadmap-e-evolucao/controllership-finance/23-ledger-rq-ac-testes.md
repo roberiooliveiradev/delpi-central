@@ -1423,3 +1423,16 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Consulta positiva real | TEST_NOT_RUN | aguarda Bearer de usuário (PO/ChatGPT) |
 | Push fix para origin | PENDING | canal credenciado (merge alheio bloqueia) |
 | DoD full-flow transversal | REGISTRADO | doc 145; aplica-se a R13/R04/R14 |
+
+---
+
+## R09-G048 — estabilização e segunda camada (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Fix timeout G047 em prod | ATENDIDO | producer 200 em 140-207s (4x); container healthy |
+| Falha CLARA pós-fix | DIAGNOSTICADA | timeout tool-call ChatGPT (~<207s) — não MCP auth |
+| Push do fix para origin | BLOQUEADO | merge alheio (UU supplies-api); srv-api sem HTTPS |
+| Solução tool-timeout | DECISION_REQUIRED | async/otimização/snapshot — não implementado |
+| Cadeia BFF→api-delpi | FUNCIONAL | 200s reais completados via S2S |
+| Portal | PROVÁVEL_FUNCIONAL | mesmo orçamento 300s; validação visual pendente |

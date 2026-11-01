@@ -166,3 +166,18 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
   produtor e regras inalterados. 10/10 testes. Deploy rebuild BFF —
   healthy, fix verificado no container.
 - Consulta positiva real pendente de credencial de usuário (PO/ChatGPT).
+
+## Atualização — Gate 048 (01/11/2026) — segunda camada do 503
+
+- Fix G047 CONFIRMADO em produção: producer completou 200 em 140-207s
+  (4x pós-fix) — BFF agora espera; 503 resolvido.
+- Nova falha CLARA (interna na tool): bound restante = timeout do tool
+  call ChatGPT→MCP (~<207s); _call_route síncrono in-process — não há
+  timeout configurável server-side; o relatório de ~3,5min excede o
+  orçamento do cliente MCP. Portal (browser→BFF 300s) é viável.
+- DECISION_REQUIRED: relatório síncrono longo via ChatGPT exige
+  Opção A) otimizar producer <~120s, B) padrão async/job existente,
+  ou C) snapshot governado — não implementado sem aprovação.
+- Fix do timeout ainda não consta em origin/main (merge de terceiro
+  bloqueia rebase local; srv-api sem HTTPS interativo) — commit
+  prod dd0b809ac ≡ local 6242838fa6 aguarda publicação.
