@@ -40,7 +40,7 @@ class ShareNotFoundError(LookupError):
 
 def assert_can_manage(playlist_id: UUID, user: Any) -> None:
     access = PlaylistAccessService().resolve(playlist_id, user)
-    if not access.can_manage():
+    if not access.can_manage:
         raise PermissionError(
             "Você não tem permissão para gerenciar esta programação."
         )
