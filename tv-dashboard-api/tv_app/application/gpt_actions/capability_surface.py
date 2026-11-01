@@ -78,7 +78,7 @@ SEMANTIC_VERBS_VERSION = "SEMANTIC_TOOLS_V1"
 # the single vocabulary authority consumed by the semantic dispatch — the
 # wire schema validates against the same table (one source, two projections).
 READ_ENTITY_ACTIONS: dict[str, tuple[str, ...]] = {
-    "playlist": ("list", "get", "context", "export_mdd"),
+    "playlist": ("list", "get", "context", "export_mdd", "list_shares"),
     "playlist_history": ("history",),
     "data_route": ("search",),
     "data_model": ("inspect",),
@@ -114,7 +114,7 @@ EXECUTE_ENTITIES: dict[str, tuple[str, ...]] = {
     "presentation": ("apply_mutation",),
     "slide_template": ("create", "update", "clone", "publish", "unpublish", "archive", "import_preview", "import_apply"),
     "playlist_history": ("restore",),
-    "playlist": ("import_preview", "import_apply"),
+    "playlist": ("import_preview", "import_apply", "share", "create_edit_invite", "accept_edit_invite"),
 }
 
 DELETE_ENTITIES: dict[str, str] = {
@@ -122,6 +122,8 @@ DELETE_ENTITIES: dict[str, str] = {
     "section": "delete_section",
     "slide": "delete_slide",
     "data_model": "delete_data_model",
+    "playlist_share": "revoke_share",
+    "edit_invite": "revoke_edit_invites",
 }
 
 # Write verbs over PREPARE/COMMIT + consent foundation (A5-A7):

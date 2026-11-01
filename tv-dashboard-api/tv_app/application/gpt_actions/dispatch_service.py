@@ -478,6 +478,25 @@ class GptActionsDispatchService:
                 "mdd": _json.loads(raw.decode("utf-8")),
                 "entity": entity_key,
             }
+        if entity_key == "playlist" and action_key == "list_shares":
+            self._semantic_filters(
+                filters, allowed=set(), context="read.playlist.list_shares"
+            )
+            from uuid import UUID
+
+            from tv_app.application.services.playlist_share_service import (
+                list_shares,
+            )
+
+            pid_raw = str(ref or "").strip()
+            if not pid_raw:
+                raise GptActionsError(
+                    "list_shares exige ref=playlistId.",
+                    code="VALIDATION_ERROR", status_code=422,
+                )
+            items = list_shares(UUID(pid_raw), user)
+            return {"items": items, "count": len(items),
+                    "entity": "playlist"}
         if entity_key == "playlist":
             flt = self._semantic_filters(
                 filters,
@@ -1261,6 +1280,323 @@ class GptActionsDispatchService:
             "item": item,
         }
 
+    # ------------------------------------------------------------------
+    # B5 — playlist shares & edit invites (canon commands)
+    # ------------------------------------------------------------------
+
+    def _share_invite_command(
+        self,
+        *,
+        user: Any,
+        action: str,
+        target: dict[str, Any] | None,
+        operations: list[Any] | None,
+        authorization: str | None,
+        transport: str,
+    ) -> dict[str, Any]:
+        from uuid import UUID
+
+        from tv_app.application.services.playlist_share_service import (
+            ShareNotFoundError,
+            create_edit_invite,
+            redeem_edit_invite,
+            upsert_share,
+        )
+
+        user = self._governed_write_user(user, authorization)
+        payload = (operations or [{}])[0] if operations else {}
+        if not isinstance(payload, dict):
+            raise GptActionsError(
+                "operations[0] deve ser um objeto.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        tgt = target if isinstance(target, dict) else {}
+
+        if action == "accept_edit_invite":
+            token = str(payload.get("token") or "").strip()
+            if not token:
+                raise GptActionsError(
+                    "accept_edit_invite exige operations[0].token.",
+                    code="VALIDATION_ERROR", status_code=422,
+                )
+            try:
+                result = redeem_edit_invite(token, user)
+            except ShareNotFoundError as exc:
+                raise GptActionsError(
+                    "Convite inválido ou revogado.",
+                    code="RESOURCE_NOT_FOUND", status_code=404,
+                ) from exc
+            return {
+                "status": "VERIFIED",
+                "operation": "accept_edit_invite",
+                "share": result,
+            }
+
+        pid_raw = str(tgt.get("playlistId") or "").strip()
+        if not pid_raw:
+            raise GptActionsError(
+                f"{action} exige target.playlistId.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        try:
+            pid = UUID(pid_raw)
+        except ValueError as exc:
+            raise GptActionsError(
+                "playlistId inválido.",
+                code="INVALID_CHANGE", status_code=422,
+            ) from exc
+
+        try:
+            if action == "share":
+                role = str(payload.get("role") or "viewer").strip()
+                share = upsert_share(
+                    pid,
+                    user,
+                    target_user_id=str(payload.get("targetUserId") or ""),
+                    role=role,
+                )
+                return {
+                    "status": "VERIFIED",
+                    "operation": "share",
+                    "share": share,
+                }
+            if action == "create_edit_invite":
+                invite = create_edit_invite(
+                    pid,
+                    user,
+                    role=str(payload.get("role") or "editor").strip(),
+                )
+                return {
+                    "status": "VERIFIED",
+                    "operation": "create_edit_invite",
+                    "invite": invite,
+                }
+        except PermissionError as exc:
+            raise GptActionsError(
+                str(exc), code="PERMISSION_DENIED", status_code=403
+            ) from exc
+        except ValueError as exc:
+            raise GptActionsError(
+                str(exc), code="VALIDATION_ERROR", status_code=422
+            ) from exc
+        raise GptActionsError(
+            f"Ação desconhecida: {action!r}.",
+            code="UNKNOWN_ACTION", status_code=422,
+        )
+
+    def _share_invite_delete(
+        self,
+        *,
+        user: Any,
+        entity: str,
+        phase: str | None,
+        target: dict[str, Any] | None,
+        proposal_handle: str | None,
+        consent_artifact: str | None,
+        target_echo: str | None,
+        idempotency_key: str | None,
+        authorization: str | None,
+        transport: str,
+    ) -> dict[str, Any]:
+        """Share/invite revoke — sealed proposal + A5 consent."""
+        import hashlib
+        import json as _json
+        import time as _time
+        import uuid as _uuid
+        from uuid import UUID
+
+        from tv_app.application.gpt_actions.proposal import VistaProposal
+        from tv_app.application.gpt_actions.proposal_store import (
+            load_valid_proposal,
+            get_proposal_store,
+        )
+        from tv_app.application.gpt_actions.vista_consent_service import (
+            challenge_view,
+        )
+        from tv_app.application.services.playlist_share_service import (
+            ShareNotFoundError,
+            list_shares,
+            revoke_edit_invites,
+            revoke_share,
+        )
+
+        user = self._governed_write_user(user, authorization)
+        actor = self._actor(user)
+        phase_key = str(phase or "prepare").strip().lower()
+        if phase_key not in ("prepare", "commit"):
+            raise GptActionsError(
+                f"Fase desconhecida para delete: {phase_key!r}.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        capability = f"delete.{entity}"
+
+        if phase_key == "commit":
+            if not proposal_handle:
+                raise GptActionsError(
+                    "commit exige proposal_handle.",
+                    code="VALIDATION_ERROR", status_code=422,
+                )
+            proposal = load_valid_proposal(
+                proposal_handle=proposal_handle,
+                actor_id=actor,
+                expected_capability=capability,
+            )
+            tgt = proposal.exact_change.get("target") or {}
+            pid_raw = str(tgt.get("playlistId") or "").strip()
+            expected_echo = str(tgt.get("targetUserId") or pid_raw)
+            echo = str(target_echo or "").strip()
+            if echo != expected_echo:
+                raise GptActionsError(
+                    "target_echo não corresponde ao alvo selado.",
+                    code="CONFIRMATION_MISMATCH", status_code=409,
+                )
+            if self._consent is None:
+                raise GptActionsError(
+                    "Canal de consentimento indisponível.",
+                    code="CONFIRMATION_UNAVAILABLE", status_code=503,
+                )
+            challenge = self._consent.verify_for_commit(
+                proposal=proposal,
+                actor_sub=actor,
+                consent_artifact=consent_artifact,
+                required=True,
+            )
+            try:
+                if entity == "playlist_share":
+                    revoke_share(
+                        UUID(pid_raw),
+                        user,
+                        target_user_id=str(tgt.get("targetUserId") or ""),
+                    )
+                    result = {"targetUserId": tgt.get("targetUserId")}
+                else:
+                    count = revoke_edit_invites(UUID(pid_raw), user)
+                    result = {"revoked": count}
+            except ShareNotFoundError as exc:
+                raise GptActionsError(
+                    "Alvo não encontrado.",
+                    code="RESOURCE_NOT_FOUND", status_code=404,
+                ) from exc
+            except PermissionError as exc:
+                raise GptActionsError(
+                    str(exc), code="PERMISSION_DENIED", status_code=403
+                ) from exc
+            self._consent.consume_for_commit(
+                challenge=challenge,
+                proposal_id=proposal.proposal_id,
+                actor_sub=actor,
+            )
+            get_proposal_store().consume(proposal.proposal_id)
+            return {
+                "status": "VERIFIED",
+                "operation": capability,
+                "result": result,
+                "playlistId": pid_raw,
+            }
+
+        tgt_map = target if isinstance(target, dict) else {}
+        pid_raw = str(tgt_map.get("playlistId") or "").strip()
+        if not pid_raw:
+            raise GptActionsError(
+                f"delete.{entity} exige target.playlistId.",
+                code="VALIDATION_ERROR", status_code=422,
+            )
+        try:
+            pid = UUID(pid_raw)
+        except ValueError as exc:
+            raise GptActionsError(
+                "playlistId inválido.",
+                code="INVALID_CHANGE", status_code=422,
+            ) from exc
+        try:
+            current = list_shares(pid, user)
+        except PermissionError as exc:
+            raise GptActionsError(
+                str(exc), code="PERMISSION_DENIED", status_code=403
+            ) from exc
+        sealed_target = {"playlistId": pid_raw}
+        if entity == "playlist_share":
+            tuid = str(tgt_map.get("targetUserId") or "").strip()
+            if not tuid:
+                raise GptActionsError(
+                    "delete.playlist_share exige target.targetUserId.",
+                    code="VALIDATION_ERROR", status_code=422,
+                )
+            sealed_target["targetUserId"] = tuid
+            match = next(
+                (s for s in current
+                 if str(s.get("userId") or s.get("targetUserId") or "")
+                 == tuid),
+                None,
+            )
+            if match is None:
+                raise GptActionsError(
+                    "Compartilhamento não encontrado.",
+                    code="RESOURCE_NOT_FOUND", status_code=404,
+                )
+        state_fp = hashlib.sha256(
+            _json.dumps(current, sort_keys=True, default=str).encode()
+        ).hexdigest()
+        exact_change = {"target": sealed_target,
+                        "ops": [{"op": capability, **sealed_target}]}
+        now = _time.time()
+        content_hash = hashlib.sha256(
+            _json.dumps(
+                {
+                    "capability": capability,
+                    "actor_id": str(actor),
+                    "resource_id": pid_raw,
+                    "state": state_fp,
+                    "exact_change": exact_change,
+                },
+                sort_keys=True, default=str,
+            ).encode()
+        ).hexdigest()
+        proposal = VistaProposal(
+            proposal_id=f"prop_{_uuid.uuid4().hex[:24]}",
+            capability=capability,
+            actor_id=str(actor),
+            resource_type=entity,
+            resource_id=pid_raw,
+            current_state_fingerprint=state_fp,
+            exact_change=exact_change,
+            confirmation_requirement={
+                "explicit_user_confirmation": True,
+                "confirmation_policy": "confirm",
+                "destructive": True,
+            },
+            risk="destructive",
+            confirmation_policy="confirm",
+            catalog_version="",
+            base_revision=None,
+            created_at=now,
+            expires_at=now + 600,
+            content_hash=content_hash,
+        )
+        handle = get_proposal_store().put(proposal)
+        if self._consent is None:
+            raise GptActionsError(
+                "Canal de consentimento indisponível.",
+                code="CONFIRMATION_UNAVAILABLE", status_code=503,
+            )
+        consent_challenge = challenge_view(
+            self._consent.issue_for_proposal(
+                proposal=proposal,
+                actor_sub=actor,
+                origin=transport,
+                correlation_id=None,
+            )
+        )
+        return {
+            "status": "consent_required",
+            "phase": "prepare",
+            "operation": capability,
+            "proposal_handle": handle,
+            "consentChallenge": consent_challenge,
+            "target": sealed_target,
+            "impact": {"shares": len(current)},
+        }
+
     def _slide_template_execute(
         self,
         *,
@@ -1579,6 +1915,17 @@ class GptActionsDispatchService:
                 user=user, target=target,
                 authorization=authorization, transport=transport,
             )
+        if entity_key == "playlist" and action_key in (
+            "share", "create_edit_invite", "accept_edit_invite"
+        ):
+            return self._share_invite_command(
+                user=user,
+                action=action_key,
+                target=target,
+                operations=operations,
+                authorization=authorization,
+                transport=transport,
+            )
         if entity_key in ("playlist", "slide_template") and action_key in (
             "import_preview", "import_apply"
         ):
@@ -1709,6 +2056,19 @@ class GptActionsDispatchService:
         )
 
         entity_key = str(entity or "").strip().lower()
+        if entity_key in ("playlist_share", "edit_invite"):
+            return self._share_invite_delete(
+                user=user,
+                entity=entity_key,
+                phase=phase,
+                target=target,
+                proposal_handle=proposal_handle,
+                consent_artifact=consent_artifact,
+                target_echo=target_echo,
+                idempotency_key=idempotency_key,
+                authorization=authorization,
+                transport=transport,
+            )
         if entity_key == "playlist":
             return self._playlist_delete(
                 user=user, phase=phase, target=target,
