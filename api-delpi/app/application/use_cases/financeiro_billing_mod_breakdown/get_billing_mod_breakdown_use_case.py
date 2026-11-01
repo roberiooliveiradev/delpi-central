@@ -64,10 +64,10 @@ _LIMITATIONS = (
     "Base da taxa de MOD não comprovada: costUnit/costTotal ausentes "
     "tipados (DR-2). BZ_CUSTD as_of é candidato documentado (BR-R09-010) "
     "pendente de homologação — não calculado neste slice.",
-    "Tempo padrão do roteiro cadastral SG2 (roteiro '01'). O artefato "
-    "usa majoritariamente o roteiro congelado da OP (HY_TEMPAD, "
-    "BR-R09-008); linhas em que HY_TEMPAD diverge de G2_TEMPAD são "
-    "divergências registradas na matriz de paridade.",
+    "Tempo padrão do roteiro congelado da OP mais recente existente na "
+    "data de execução (HY_TEMPAD, BR-R09-007/008 — fonte primária "
+    "comprovada) com fallback para o roteiro cadastral SG2 ('01') "
+    "quando o produto não tem OP com roteiro.",
     "Semântica do divisor ÷C2_QUANT em desdobramentos: pendente (E9) — "
     "linhas afetadas compõem divergência conhecida, não cálculo inventado.",
     "Paridade oficial com DLP204: PENDING — homologação informacional "
@@ -104,10 +104,17 @@ class GetBillingModBreakdownUseCase:
         request: BillingModBreakdownRequest,
         *,
         user_subject: str | None,
+        run_date: str | None = None,
     ) -> dict:
         require_stock_inventory_scope(
             self._scope_resolver, user_subject=user_subject
         )
+        # Latest OP existing at run date — the DLP204 semantic ("the
+        # OP current when the report ran"). Defaults to today; the
+        # parity probe passes the artifact's generation date.
+        self._run_date = run_date or datetime.now(
+            timezone.utc
+        ).strftime("%Y%m%d")
 
         anchors: list[dict[str, Any]] = []
         limitations = list(_LIMITATIONS)
@@ -178,7 +185,9 @@ class GetBillingModBreakdownUseCase:
         tree_products = {product}
         tree_products.update(e["component_code"] for e in level1_edges)
         tree_products.update(e["component_code"] for e in level2_edges)
-        operations = self._operations(sorted(tree_products), branch)
+        operations = self._operations(
+            sorted(tree_products), branch
+        )
 
         lines: list[dict[str, Any]] = []
         unresolved_products: list[str] = []
@@ -282,8 +291,9 @@ class GetBillingModBreakdownUseCase:
                     ),
                     "resource": op.get("resource"),
                     "stdTime": _typed_number(
-                        std_time, state="sg2_cadastral"
+                        std_time, state=op["std_time_source"]
                     ),
+                    "sourceOp": op.get("op_code"),
                     "propagatedQty": propagated,
                     "hours": _typed_number(
                         hours,
@@ -330,11 +340,34 @@ class GetBillingModBreakdownUseCase:
     def _operations(
         self, product_codes: list[str], branch: str
     ) -> dict[str, list[dict[str, Any]]]:
+        """Ops per product — frozen-OP route (SHY) is the proven primary
+        source (~96% of artifact lines, BR-R09-007/008); cadastral SG2
+        is the fallback for products without an OP carrying a route."""
         if not product_codes:
             return {}
-        rows = self._repository.fetch_route_operations(
-            product_codes=product_codes, branch=branch
+        frozen = self._op_rows(
+            self._repository.fetch_frozen_route_ops(
+                product_codes=product_codes,
+                branch=branch,
+                run_date=self._run_date,
+            ),
+            source="shy_frozen_op",
         )
+        cadastral = self._op_rows(
+            self._repository.fetch_route_operations(
+                product_codes=product_codes, branch=branch
+            ),
+            source="sg2_cadastral",
+        )
+        operations: dict[str, list[dict[str, Any]]] = {}
+        for product, rows in cadastral.items():
+            operations.setdefault(product, []).extend(rows)
+        for product, rows in frozen.items():
+            operations[product] = rows  # SHY route wins over cadastral
+        return operations
+
+    @staticmethod
+    def _op_rows(rows, *, source: str):
         operations: dict[str, list[dict[str, Any]]] = {}
         for row in rows:
             product = str(row["product_code"]).strip()
@@ -346,6 +379,8 @@ class GetBillingModBreakdownUseCase:
                     ),
                     "resource": row.get("resource"),
                     "std_time": row.get("std_time"),
+                    "std_time_source": source,
+                    "op_code": row.get("op_code"),
                     "mod_item": row.get("mod_item"),
                     "mod_description": row.get("mod_description"),
                     "mod_unit": row.get("mod_unit"),

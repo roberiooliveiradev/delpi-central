@@ -94,7 +94,11 @@ def main() -> int:
     request = BillingModBreakdownRequest.from_query(
         period=period, branch="all"
     )
-    data = uc.execute(request, user_subject="parity-probe")
+    data = uc.execute(
+        request,
+        user_subject="parity-probe",
+        run_date="20261007",  # artifact generation date (doc 141)
+    )
 
     calc_lines = []
     anchors_seen = {}
@@ -126,8 +130,12 @@ def main() -> int:
     art_key = Counter(
         (r["branch"], r["pa"], r["level"], r["mod"]) for r in artifact
     )
+    # Artifact's "PA" column is the exploded product, not the billed
+    # anchor (proven: 70260033 appears only at level 04 and was never
+    # billed; its billed parents carry it as an SG1 component).
     cal_key = Counter(
-        (c["branch"], c["pa"], c["level"], c["mod"]) for c in calc_lines
+        (c["branch"], c["product"], c["level"], c["mod"])
+        for c in calc_lines
     )
     matched = sum((art_key & cal_key).values())
     missing = art_key - cal_key
@@ -141,7 +149,7 @@ def main() -> int:
         ).append(r)
     qty_ok = qty_bad = hours_ok = hours_bad = qtdfat_ok = qtdfat_bad = 0
     for c in calc_lines:
-        key = (c["branch"], c["pa"], c["level"], c["mod"])
+        key = (c["branch"], c["product"], c["level"], c["mod"])
         bucket = art_by_key.get(key)
         if not bucket:
             continue

@@ -49,10 +49,31 @@ class BillingModBreakdownRepository(
     def fetch_route_operations(
         self, *, product_codes: list[str], branch: str
     ) -> list[dict[str, Any]]:
+        return self._paged_products(
+            product_codes,
+            branch,
+            billing_mod_breakdown_sql.route_operations_sql,
+        )
+
+    def fetch_frozen_route_ops(
+        self, *, product_codes: list[str], branch: str, run_date: str
+    ) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
         with self:
             for chunk in _chunks(product_codes):
-                sql, params = billing_mod_breakdown_sql.route_operations_sql(
+                sql, params = billing_mod_breakdown_sql.frozen_route_ops_sql(
+                    product_codes=chunk, branch=branch, run_date=run_date
+                )
+                rows.extend(self.execute_query(sql, tuple(params)))
+        return rows
+
+    def _paged_products(
+        self, product_codes, branch, builder
+    ) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        with self:
+            for chunk in _chunks(product_codes):
+                sql, params = builder(
                     product_codes=chunk, branch=branch
                 )
                 rows.extend(self.execute_query(sql, tuple(params)))

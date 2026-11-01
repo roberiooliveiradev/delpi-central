@@ -1341,3 +1341,20 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Segurança S2S + gate dataset | ATENDIDO | 401/403/scope_unavailable/delegated user |
 | Deploy produtivo / BFF / MFE / permissão nova | FORA_DO_ESCOPO | não autorizado pelo gate |
 | Vídeo Gate 039 | TEST_NOT_RUN | sem decoder no ambiente |
+
+---
+
+## R09-G041 — Recuperação + SHY/OP + BZ_CUSTD + nova paridade (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Slice 1 publicado na main | ATENDIDO | já integrado (7ca041a19b); SSH push bloqueado para novos commits |
+| Revisão S2S/scope/flag | ATENDIDO | contrato transversal doc 49 §8 aprovado; testes 401/403/flag-off |
+| SG1 filial compartilhada | ATENDIDO | `G1_FILIAL=''` provado — todas as estruturas |
+| Fonte primária SHY (última OP) | ATENDIDO | `HY_TEMPAD` = `Quantidade` artefato; fallback SG2 |
+| Chave de paridade (PA=produto explodido) | ATENDIDO | 70260033 não faturado com 27 linhas '04' |
+| run_date ≤ geração artefato | REJEITADO | paridade piorou (3.493 vs 3.694) — rotas estáveis |
+| BZ_CUSTD fonte da taxa | REJEITADO | 0/120; SBZ010 só corrente (BZ_DATREF vazio) |
+| Paridade | EXECUTADO | 3.694 chaves (82,5%); QtdFat 99,5%; divergências com causa |
+| Custos | source_missing (DR-2) | inalterado |
+| Vídeo | TEST_NOT_RUN | mantido |

@@ -71,7 +71,10 @@ def structure_edges_sql(
 ) -> tuple[str, list[Any]]:
     """Direct SG1 children of ``parent_codes`` (``Estrut`` level-1 read).
 
-    Replicates ``dbSeek(xFilial()+cProduto)``: exact branch filial only.
+    Proven live (Gate 041): the SG1 structure table is shared —
+    ``G1_FILIAL=''`` carries every sampled product's components while
+    the branch-specific filial is empty, so the filter accepts the
+    shared blank row plus the branch row.
     Component validity (``G1_INI``/``G1_FIM``) is evaluated at execution
     date — the same runtime reference ``ExplEstr`` uses. The ``qty>0``
     and self-component guards stay in the use case (``Estrut`` skips
@@ -87,7 +90,7 @@ SELECT RTRIM(G1.G1_COD)  AS parent_code,
        CAST(G1.G1_QUANT AS FLOAT) AS quantity_per_unit
   FROM SG1010 G1 WITH (NOLOCK)
  WHERE G1.D_E_L_E_T_ = ' '
-   AND G1.G1_FILIAL = ?
+   AND G1.G1_FILIAL IN ('', ?)
    AND G1.G1_COD IN ({placeholders})
    AND (G1.G1_INI = '' OR G1.G1_INI <= CONVERT(CHAR(8), GETDATE(), 112))
    AND (G1.G1_FIM = '' OR G1.G1_FIM >= CONVERT(CHAR(8), GETDATE(), 112))
@@ -159,3 +162,78 @@ SELECT SG2.product_code,
  ORDER BY SG2.product_code, SG2.operation
 """
     return sql, [branch, branch, route_code, *product_codes, branch, branch]
+
+
+def frozen_route_ops_sql(
+    *, product_codes: list[str], branch: str, run_date: str
+) -> tuple[str, list[Any]]:
+    """Frozen-OP route (SHY) ops for ``product_codes``.
+
+    For each product picks the LATEST OP (``SC2010.R_E_C_N_O_`` desc,
+    branch filial) that carries a frozen route in ``SHY010``, then
+    returns that OP's operations — the proven primary source of the
+    artifact ``Quantidade`` (BR-R09-007/008: ~96% of lines come from the
+    OP route frozen at production time, e.g. ``70260033``'s
+    ``MOD268/CT-53`` line-times equal the latest OP's ``HY_TEMPAD``).
+    """
+    if not product_codes:
+        raise ValueError("product_codes deve conter pelo menos 1 código.")
+    placeholders = _in_placeholders(len(product_codes))
+    sql = f"""
+WITH OP_RANKED AS (
+    SELECT
+        RTRIM(C2.C2_PRODUTO) AS product_code,
+        RTRIM(C2.C2_OP)      AS op_code,
+        ROW_NUMBER() OVER (
+            PARTITION BY RTRIM(C2.C2_PRODUTO)
+            ORDER BY C2.R_E_C_N_O_ DESC
+        ) AS rn
+    FROM SC2010 C2 WITH (NOLOCK)
+    WHERE C2.D_E_L_E_T_ = ' '
+      AND C2.C2_FILIAL = ?
+      AND C2.C2_EMISSAO <= ?
+      AND C2.C2_PRODUTO IN ({placeholders})
+      AND EXISTS (
+            SELECT 1 FROM SHY010 HY WITH (NOLOCK)
+            WHERE HY.D_E_L_E_T_ = ' '
+              AND HY.HY_FILIAL = ?
+              AND HY.HY_OP = C2.C2_OP)
+)
+SELECT OP.product_code,
+       OP.op_code,
+       RTRIM(HY.HY_OPERAC)  AS operation,
+       RTRIM(HY.HY_DESCRI)  AS operation_description,
+       RTRIM(HY.HY_RECURSO) AS resource,
+       TRY_CAST(REPLACE(LTRIM(RTRIM(HY.HY_TEMPAD)), ',', '.') AS FLOAT)
+           AS std_time,
+       RTRIM(MODP.B1_COD)   AS mod_item,
+       RTRIM(MODP.B1_DESC)  AS mod_description,
+       RTRIM(MODP.B1_UM)    AS mod_unit
+  FROM OP_RANKED OP
+  JOIN SHY010 HY WITH (NOLOCK)
+    ON HY.D_E_L_E_T_ = ' '
+   AND HY.HY_FILIAL = ?
+   AND HY.HY_OP = OP.op_code
+  OUTER APPLY (
+      SELECT TOP 1 RTRIM(SH1.H1_CCUSTO) AS ccusto
+        FROM SH1010 SH1 WITH (NOLOCK)
+       WHERE SH1.D_E_L_E_T_ = ' '
+         AND SH1.H1_CODIGO = HY.HY_RECURSO
+         AND SH1.H1_FILIAL IN ('', ?)
+       ORDER BY CASE WHEN SH1.H1_FILIAL = ? THEN 0 ELSE 1 END
+  ) SH1
+  LEFT JOIN SB1010 MODP WITH (NOLOCK)
+         ON MODP.D_E_L_E_T_ = ' '
+        AND MODP.B1_COD = 'MOD' + NULLIF(RTRIM(SH1.ccusto), '')
+ WHERE OP.rn = 1
+ ORDER BY OP.product_code, HY.HY_OPERAC
+"""
+    return sql, [
+        branch,
+        run_date,
+        *product_codes,
+        branch,
+        branch,
+        branch,
+        branch,
+    ]
