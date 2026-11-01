@@ -94,37 +94,44 @@ def reconcile_provider_fields(
         row: dict[str, str] = {}
         for run in runs:
             pid = run["provider_id"]
-            if run["status"] != "ok":
+            status = run["status"]
+            if status in {"provider_error", "extraction_error",
+                          "error"}:
                 row[pid] = "not_run"
                 continue
-            blob = " ".join(
-                p.get("text", "") for p in run.get("_pages", []) or []
-            ) or str(run.get("_text_blob") or "")
-            # run records don't carry text — caller may attach _text_blob.
-            row[pid] = "found" if blob and value in blob else (
-                "not_found" if run["status"] == "ok" else "not_run"
-            )
+            blob = str(run.get("_text_blob") or "")
+            if not blob:
+                # Executou mas sem evidência textual transitória →
+                # não concluir ausência (R6C.1).
+                row[pid] = "not_comparable"
+            else:
+                row[pid] = "found" if value in blob else "not_found"
         matrix[value] = row
-    statuses = {
-        v for row in matrix.values() for v in row.values()
-    }
+    comparable = {"found", "not_found"}
     return {
         "fields": matrix,
         "coverage_summary": {
             "coincident": sum(
                 1 for row in matrix.values()
-                if len(set(row.values()) - {"not_run"}) == 1
-                and next(iter(row.values())) == "found"
+                if row.values() and all(
+                    v == "found" for v in row.values()
+                    if v in comparable
+                ) and any(v == "found" for v in row.values())
             ),
             "divergent": sum(
                 1 for row in matrix.values()
-                if "found" in row.values() and "not_found" in row.values()
+                if "found" in row.values()
+                and "not_found" in row.values()
             ),
             "missing_everywhere": sum(
                 1 for row in matrix.values()
-                if set(row.values()) <= {"not_found", "not_run"}
-                and "not_found" in row.values()
+                if set(row.values()) - {"not_run", "not_comparable"}
+                == {"not_found"}
             ),
+            "valid_providers": len({
+                r["provider_id"] for r in runs
+                if r["status"] == "ok"
+            }),
         },
         "note": (
             "Cobertura textual por provider — não é acurácia nem "
