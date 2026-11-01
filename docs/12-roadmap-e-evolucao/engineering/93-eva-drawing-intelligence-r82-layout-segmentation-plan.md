@@ -19,6 +19,38 @@ Todas as consultas a seguir foram efetuadas por `read(product.drawing)` e `analy
 
 **Limites da evidência:** o acesso foi real e autorizado, mas não houve inspeção visual integral das páginas nesta etapa; tipos de desenho são referências operacionais, a classificar formalmente. 200 tokens é o limite observado na resposta de dois casos, não prova de que o PDF contenha somente 200 tokens. SHA histórico pode mudar legitimamente em nova revisão, exigindo nova proveniência.
 
+## 1.1 Atualização de seleção: priorizar produto acabado 9026 e PDFs multipágina (2026-11-01)
+
+**Diretriz do owner:** o corpus primário de R8.2 deve privilegiar códigos iniciados em `9026` (desenhos de produtos acabados). Códigos `10...` são casos complementares — não são representativos por padrão dos desenhos de produto acabado. A prioridade de arquitetura é **múltiplas páginas + diversidade de layout**, e não tamanho de arquivo isolado.
+
+**Descoberta autenticada na EVA:** `read(product.search, filters.code="9026")` retornou 4.306 registros no catálogo; isso **não equivale a 4.306 desenhos existentes ou autorizados**. `read(product.drawing)` verificou a existência dos PDFs abaixo; `analyze(product.drawing_benchmark, benchmark_profile="approved_local_extractors")` verificou a contagem real de páginas pelo pypdf, pdfplumber e PDFium, todos com `status=ok`.
+
+| Prioridade | Produto | PDF | Páginas comprovadas | Bytes | Tipo/descrição conhecida | Papel no corpus |
+|---|---|---|---:|---:|---|---|
+| P0 | `90263554` | `90263554.pdf` | **18** | 6202644 | Desenho de código 9026, multipágina | Caso primário de cobertura multi-page e detecção independente por página |
+| P0 | `90264135` | `90264135.pdf` | **13** | 4434155 | Catálogo: CHICOTE - P66 | Segundo caso primário multipágina, testar layout heterogêneo e revisões por folha |
+| P0 | `90264302` | `90264302.pdf` | **1** (benchmark R7) | 103498 | CHICOTE DE LIGACAO | Regressão de região, tabela, carimbo, BOM/cotas |
+| P1 | `90264161` | `90264161.pdf` | **1** | 202428 | CABO DE LIGACAO 15.5M-3X2.5 | Controle de uma página, layout de PA |
+| P1 | `90264094` | `90264094.pdf` | **1** | 157700 | CABO DE LIGAÇÃO 15.5M-4X10 | Segundo controle de uma página |
+| P1 (metadado apenas) | `90263792` | `90263792.pdf` | A verificar | 78347 | CABO 3X1,5MM²...25,3M | Candidato adicional se ampliar corpus |
+| P1 (metadado apenas) | `90263793` | `90263793.pdf` | A verificar | 76890 | CABO 3X1,5MM²...20.4M | Candidato adicional |
+| P1 (metadado apenas) | `90263247` | `90263247.pdf` | A verificar | 88629 | CABO 4X10MM2 - 500V | Candidato adicional |
+| P1 (metadado apenas) | `90263397` | `90263397.pdf` | A verificar | 69398 | CABO 4X2.5MM²X30M | Candidato adicional |
+| P1 (metadado apenas) | `90264282` | `90264282.pdf` | A verificar | 138129 | CABOS LIGACAO...CHICOTE | Candidato adicional |
+| P2 | `10210267-2` | `10210267-2.pdf` | 1 (R7 benchmark) | 51944 | Exemplo escaneado não-9026 | **Controle complementar de OCR**, não integrar amostra central de PA |
+| P2 | `90262471` | `90262471.pdf` | A verificar | 431628 | Inspeção/esparso (histórico) | Caso adversarial, sem presumir produto acabado |
+
+**Atenção à análise multipágina:** o benchmark textual comprovou processamento de 18/18 e 13/13 páginas. Isso não comprova que `drawing_understanding.v1` analisou todas elas: nas consultas anteriores essa ação apresentou 200 tokens no relatório, com cobertura por folha não transparente. R8.2 precisa separar `document_page_count` de `pages_rendered`, `pages_ocr_processed`, `pages_understood`, `tokens_total`, `tokens_used` e `sampled`.
+
+**Aceite adicional obrigatório:**
+1. Primeira fase com `90263554` e `90264135` como **multipágina 9026 P0**; confirmar hash atual na nova execução, não assumir imutabilidade de revisões.
+2. Provar resultado **por folha** (18 e 13), ou registrar `PARTIAL/NOT_RUN` por folha conforme limites de OCR (5 páginas/300 DPI) e recursos do host. Não remover limites para declarar sucesso.
+3. Usar extração textual nas páginas todas quando autorizada e OCR **seletivo** com critério de cobertura, custo/segurança e autorização — sem carregar automaticamente 31 páginas pesadas de OCR no runtime da API.
+4. Inferir layout e regiões em cada página separadamente; não reutilizar automaticamente template da página 1, nem agregar cotas/revisões/tabelas de folhas distintas como se fossem uma única região.
+5. Desenhos que começam em `10` só entram como controles raster/escaneados ou exceções tecnicamente justificadas; **nunca dominar o corpus primário**.
+6. Para descobrir outros multi-page `9026`, usar a listagem oficial governada `GET /products/drawings` (contrato e acesso sob API DELPI) quando disponível ao consumer; paginar e pré-filtrar por código, sem rastrear filesystem diretamente. Confirmar `page_count` lendo o PDF oficial pelo gateway autorizado, **não inferir pelo tamanho em bytes**.
+7. Preparar ground truth para Engenharia por página e região, incluindo folhas sem tabela e folhas com carimbos/revisões diferentes.
+
 ## 2. Diagnóstico do algoritmo vigente (`engineering-api/engineering_app/application/drawing/understanding.py`)
 
 Implementação R8.1 é **determinística**, sem modelo de layout: token OCR + bounding box; `_detect_title_block` agrupa >=2 rótulos; `_detect_component_table` exige >=2 códigos de 6–11 dígitos alinhados por X; linhas aproximadas por Y; `_structure_table` forma colunas por cluster X; revisão por rótulo à direita/abaixo; cotas por regex + região. Permanecem margens proporcionais à página e fallback posicional.

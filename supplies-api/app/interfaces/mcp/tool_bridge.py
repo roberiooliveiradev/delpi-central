@@ -1050,11 +1050,14 @@ def _knowledge_user() -> EffectiveUser:
 def tool_search_supplies_knowledge(
     query: str | None = None,
     topic: str | None = None,
+    kind: str | None = None,
     limit: int = 8,
 ) -> CallToolResult:
     _knowledge_user()
     return _ok(
-        knowledge.search_knowledge(query=query, topic=topic, limit=limit)
+        knowledge.search_knowledge(
+            query=query, topic=topic, kind=kind, limit=limit
+        )
     )
 
 
@@ -1652,6 +1655,7 @@ def tool_knowledge(
     action: str,
     query: str | None = None,
     topic: str | None = None,
+    kind: str | None = None,
     knowledge_id: str | None = None,
     limit: int = DEFAULT_KNOWLEDGE_LIMIT,
 ) -> CallToolResult:
@@ -1663,10 +1667,10 @@ def tool_knowledge(
                 "knowledge action=search does not accept 'knowledge_id'."
             )
         return tool_search_supplies_knowledge(
-            query=query, topic=topic, limit=limit
+            query=query, topic=topic, kind=kind, limit=limit
         )
     if normalized == "get":
-        if query is not None or topic is not None:
+        if query is not None or topic is not None or kind is not None:
             return _invalid(
                 "knowledge action=get accepts only 'knowledge_id'."
             )
@@ -1676,7 +1680,7 @@ def tool_knowledge(
             )
         return tool_get_knowledge_item(knowledge_id)
     if normalized == "sources":
-        if query is not None or topic is not None or knowledge_id is not None:
+        if query is not None or topic is not None or kind is not None or knowledge_id is not None:
             return _invalid(
                 "knowledge action=sources accepts no parameters."
             )
