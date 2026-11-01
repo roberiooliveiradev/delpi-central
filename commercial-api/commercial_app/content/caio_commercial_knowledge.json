@@ -1,5 +1,5 @@
 {
-  "version": "4.0",
+  "version": "4.1",
   "owner": "commercial-api",
   "audience": "caio-mcp",
   "topics": {
@@ -2354,105 +2354,140 @@
       "id": "meeting_prep",
       "type": "playbook",
       "status": "implemented",
-      "version": "4.0",
+      "version": "4.1",
       "source_date": "2026-10-31",
       "owner": "commercial-api",
-      "source": "CAIO 4.0 F5 — briefing de reunião/visita",
+      "source": "CAIO 4.1 — dossiê inteligente de cliente (F1–F8)",
       "access_classification": "internal",
-      "title": "Preparação de reunião ou visita comercial",
-      "objective": "Reunir informações autorizadas do cliente para que o vendedor chegue preparado: histórico, pedidos, propostas, entregas, produtos, pendências e perguntas sugeridas.",
-      "intent": "Briefing completo do cliente antes de uma reunião ou visita comercial.",
+      "title": "Dossiê inteligente de cliente — reunião, visita ou negociação",
+      "objective": "Preparar um dossiê comercial completo do cliente antes de reuniões e visitas: identidade/carteira correta, consolidação comercial, tarefas, interações, riscos, oportunidades, pauta sugerida e preparação do acompanhamento.",
+      "intent": "Produzir dossiê estruturado A–I do cliente para o vendedor chegar preparado à reunião.",
       "keywords": [
         "reunião",
         "visita",
         "briefing",
+        "dossiê",
         "preparar",
         "preparação",
         "agenda",
+        "negociação",
         "encontro",
-        "cliente",
-        "perguntas"
+        "pauta"
       ],
       "trigger_questions": [
-        "Prepare um briefing da empresa X para a reunião de amanhã",
+        "Prepare um dossiê da empresa X para a reunião de amanhã",
         "O que devo saber antes de visitar esse cliente?",
-        "Me ajude a me preparar para uma visita comercial"
+        "Monte um briefing completo do cliente para negociação",
+        "Quem é o responsável pela carteira desse cliente?"
       ],
       "inputs": [
         "customer ou par carteira/cliente",
-        "período opcional"
+        "data e participantes da reunião (opcional)",
+        "período de análise (default 12 meses)"
       ],
       "permissions": [
         "commercial.access",
         "commercial.analytics"
       ],
       "semantic_steps": [
-        "read customer.enrichment — cadastro, vínculos e contatos do cliente",
-        "read customer.billing_series — evolução do faturamento no período",
-        "read customer.open_orders — pedidos em aberto e saldo",
-        "read proposal.analytics_list — propostas em andamento e históricas",
-        "analyze sales_order_otd.summary — desempenho de entrega/OTD",
-        "analyze rol.by_product — famílias/produtos adquiridos pelo cliente",
-        "read task.list — tarefas e follow-ups existentes do cliente",
-        "sintetizar briefing: situação, riscos, oportunidades e perguntas sugeridas"
+        "F1 identidade: read customer.enrichment (código, loja, nome) + portfolio.get/portfolio.list (carteira oficial, owner e participantes); se o participante informado pertencer a outra carteira, declarar a divergência — nunca presumir que é o owner",
+        "F2 consolidação: read customer.billing_series (12m) — faturamento, evolução mensal, comparação de períodos; analyze rol.by_product (famílias/produtos comprados e alterações)",
+        "F2 operação: read customer.open_orders + analyze sales_order_otd.summary — pedidos abertos, entregas futuras, risco CONFIRMED/RISK/WATCH/UNKNOWN",
+        "F2 propostas: read proposal.analytics_list (+proposal.analytics_get/history_events quando relevante) — abertas, paradas, histórico",
+        "F3 tarefas: read activity.list (atividades vinculadas ao cliente) + task.list (pendências do próprio vendedor) — tarefa registrada ≠ compromisso mencionado",
+        "F4 interações: read interaction_room.list (query=cliente) → get/members/messages/pins/shared_items APENAS de salas vinculadas à entidade do cliente e permitidas ao usuário; menção textual ≠ vínculo",
+        "F5 síntese: combinar fontes — OBSERVED (fato), CALCULATED (cálculo+fórmula), INFERRED (hipótese), UNKNOWN (lacuna), SIMULATED (cenário); nunca correlação→causa",
+        "F6 pauta: perguntas específicas ligadas a fatos/lacunas/hipóteses do dossiê (SPIN quando pertinente) — nunca questionário genérico",
+        "F8 pós-reunião: preparar rascunho de decisões/tarefas; criação só via execute(task.create/activity.create) com permissão e pedido explícito do usuário"
       ],
       "investigation_questions": [
-        "Como evoluiu o faturamento do cliente no período?",
-        "Há pedidos em aberto atrasados ou propostas paradas?",
-        "Quais famílias de produtos o cliente compra — e quais deixou de comprar?",
-        "Existem tarefas ou pendências registradas para este cliente?",
-        "Que perguntas comerciais convém levar (ex.: SPIN sobre situação/problema/implicação)?"
+        "Qual é a carteira oficial do cliente e quem é o responsável — o participante da reunião diverge?",
+        "O cliente está crescendo ou reduzindo compras? Em quais produtos?",
+        "Há pedidos atrasados/em risco, propostas paradas ou pendências registradas?",
+        "Quais compromissos/decisões já foram registrados nas interações oficiais?",
+        "Que perguntas comerciais as evidências justificam levar à reunião?"
       ],
       "expected_evidence": [
-        "customer.enrichment (cadastro e escopo)",
-        "customer.billing_series (série oficial)",
-        "customer.open_orders e proposal.analytics_list",
-        "sales_order_otd.summary (OTD oficial)",
-        "task.list (pendências registradas)"
+        "customer.enrichment + portfolio.get (vínculo carteira/owner)",
+        "customer.billing_series 12m (série oficial) e rol.by_product",
+        "customer.open_orders + sales_order_otd.summary",
+        "proposal.analytics_list/history_events",
+        "activity.list + task.list (pendências comprovadas)",
+        "interaction_room.shared_items/messages/pins (entidades vinculadas)"
       ],
       "failure_states": [
-        "cliente fora do escopo autorizado → 403 honesto, não simular",
-        "sem histórico suficiente → briefing parcial com lacuna declarada",
-        "dado de OTD indisponível → declarar, não presumir atraso",
-        "registro pós-visita exige execute(task.create) com commercial.manage e consentimento do usuário — nunca automático"
+        "cliente fora do escopo → 403 honesto; sem dados → dossiê parcial com UNKNOWN declarado",
+        "participante ≠ owner da carteira → divergência apresentada, não atribuição incorreta",
+        "portfolio.customer_coverage indisponível → identidade via portfolio.get/list + customer.list (fallback autorizado)",
+        "sala sem vínculo estruturado ao cliente → não incorporar conteúdo; sala sem acesso → negar, sem vazamento",
+        "tarefa mencionada em conversa ≠ tarefa registrada — distinguir sempre"
       ],
       "official_actions": [
         "read customer.enrichment",
+        "read portfolio.get",
+        "read portfolio.list",
         "read customer.billing_series",
-        "read customer.open_orders",
-        "read proposal.analytics_list",
-        "analyze sales_order_otd.summary",
         "analyze rol.by_product",
-        "read task.list"
+        "read customer.open_orders",
+        "analyze sales_order_otd.summary",
+        "read proposal.analytics_list",
+        "read proposal.analytics_get",
+        "read proposal.history_events",
+        "read activity.list",
+        "read task.list",
+        "read interaction_room.list",
+        "read interaction_room.get",
+        "read interaction_room.members",
+        "read interaction_room.messages",
+        "read interaction_room.pins",
+        "read interaction_room.shared_items",
+        "read customer.contacts"
       ],
       "related_capabilities": [
         "customer.enrichment",
+        "portfolio.get",
+        "portfolio.list",
         "customer.billing_series",
-        "customer.open_orders",
-        "proposal.analytics_list",
-        "sales_order_otd.summary",
         "rol.by_product",
-        "task.list"
+        "customer.open_orders",
+        "sales_order_otd.summary",
+        "proposal.analytics_list",
+        "proposal.analytics_get",
+        "proposal.history_events",
+        "activity.list",
+        "task.list",
+        "interaction_room.list",
+        "interaction_room.get",
+        "interaction_room.members",
+        "interaction_room.messages",
+        "interaction_room.pins",
+        "interaction_room.shared_items",
+        "customer.contacts"
       ],
       "canonical_sources": [
         "commercial-api",
         "api-delpi via gateway comercial"
       ],
-      "insufficient_data": "Briefing parcial com campos UNKNOWN declarados; nunca inventar histórico, contatos ou compromissos.",
-      "response_format": "Briefing: cliente/escopo → situação comercial OBSERVED → pedidos/propostas → entregas/OTD → produtos → pendências → riscos e oportunidades → perguntas sugeridas → registro pós-visita (opcional, via execute com permissão) → limitações.",
-      "output_schema": "escopo/período → resumo executivo → fatos OBSERVED → cálculos auditáveis → hipóteses INFERRED → desconhecidos UNKNOWN → prioridades → recomendações → owner sugerido → KPI de acompanhamento → limitações",
+      "insufficient_data": "Dossiê parcial com campos UNKNOWN declarados por seção; nunca inventar histórico, vínculos, contatos, compromissos ou decisões.",
+      "response_format": "A. Identificação (cliente/código/loja/data/participantes/owner/escopo) → B. Resumo executivo (3–5 pontos) → C. Relacionamento (carteira, contatos, tarefas, interações) → D. Desempenho (faturamento/tendências/produtos/pedidos/propostas) → E. Riscos e oportunidades (evidência/impacto/hipóteses/ações) → F. Pauta sugerida (objetivos/assuntos/perguntas/validações) → G. Preparação interna (pendências comerciais/engenharia/PCP fundamentadas) → H. Pós-reunião (decisões a registrar/tarefas sugeridas/responsáveis/KPI) → I. Fontes e limitações (origem/períodos/filtros/ausências/restrições)",
+      "output_schema": "A–I dossiê; cada afirmação rotulada OBSERVED/CALCULATED/INFERRED/UNKNOWN/SIMULATED com fonte; recomendações com responsável fundamentado e KPI; limitações explícitas.",
+      "limitations": "Cobre apenas fontes comerciais autorizadas do Portal; informações técnicas de produto via contrato da Engenharia; salas/mensagens somente com vínculo estruturado e permissão; registros pós-reunião exigem permissão de escrita e pedido explícito; não é CRM.",
       "test_criteria": [
-        "briefing com dados sintéticos completos",
+        "dossiê completo com fixtures",
         "cliente fora do escopo → 403",
-        "histórico ausente → UNKNOWN declarado"
+        "divergência de carteira → declarada",
+        "sala sem vínculo → excluída",
+        "sem dados → UNKNOWN por seção"
       ],
       "related_entries": [
         "spin_selling",
         "account_planning",
+        "meddpicc",
         "customers_retraction",
-        "expansion_opportunities"
-      ],
-      "limitations": "Briefing cobre apenas fontes comerciais autorizadas; informações técnicas de produto exigem contrato da Engenharia; registro pós-visita exige commercial.manage e pedido explícito do usuário."
+        "expansion_opportunities",
+        "order_health",
+        "proposal_funnel"
+      ]
     }
   }
 }

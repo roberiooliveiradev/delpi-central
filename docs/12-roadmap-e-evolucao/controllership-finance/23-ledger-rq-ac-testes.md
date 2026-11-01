@@ -1287,3 +1287,16 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | G032-POS | 200 OAuth + dados via CLARA conectada | consulta real | requer sessão de usuário real no realm prod (conector do PO); sem credencial de teste disponível no host | TEST_NOT_RUN |
 | G032-FLAG-ON | ativação produtiva | após controles | não executada — §7 exige positivo; credencial de usuário não disponível no host | PENDING (STOP CONDITION honrada) |
 | G032-NEG-PERSONA | usuário sem .access | 403 | sem persona no realm | INCONCLUSIVE (IAM) |
+
+## Gate 033 — ativação produtiva R12/R15 (31/10/2026, srv-api)
+
+| Teste | Entrada | Esperado | Observado | Estado |
+|---|---|---|---|---|
+| G033-PO-AUTH | conector ChatGPT (GPT review) | auth+catalog+action | auth PASS, catalog PASS, action registrada, `not_implemented` RESOLVIDO → `403 scope_unavailable` (flag off) | PASS (OWNER_REPORTED) |
+| G033-FLAG-ON | `FINANCEIRO_CLOSING_STATE_ENABLED=true` + recreate api-delpi | flag efetiva, healthy | env line 348 + recreate; `printenv`=true; container healthy | PASS |
+| G033-PRODUCER | use case live Protheus prod | marcadores reais | f01: 4812\@2026-09-30 + MV_ULMES=20260930; f02: 3117 — dados prod reais | PASS |
+| G033-NEG-POS-FLAG | anônimo pós-ativação | auth inalterado | 401 × 3 (BFF + MCP + producer) — flag não enfraquece auth | PASS |
+| G033-CONSUMERS | stack prod pós-recreate | saúde | 112 containers up/healthy | PASS |
+| G033-CLARA-REAL | `read(report.cost_closing_state)` conectada | dados reais via OAuth | flag agora on — reteste do conector pelo PO é o positivo (única credencial legítima) | PENDING (owner: PO) |
+| G033-VISUAL | browser smoke Portal prod | página funcional | sem driver de navegador no host | TEST_NOT_RUN |
+| G033-NEG-PERSONA | usuário sem .access | 403 | sem persona provisionada | INCONCLUSIVE (IAM) |

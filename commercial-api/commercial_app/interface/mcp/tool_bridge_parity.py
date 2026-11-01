@@ -366,7 +366,11 @@ def tool_portfolio_customer_coverage(
     try:
         _require_commercial_human()
         request = build_mcp_request()
-        keys = _assignments(customers)
+        assignments = _assignments(customers)
+        # The use-case contract takes (code, store) pairs — adapting
+        # SellerCustomerAssignment objects here keeps boundary types
+        # explicit and avoids TypeError surfacing as 502.
+        keys = [(a.customer_code, a.customer_store) for a in assignments]
         user = current_user_from_request(request)
         team_scope = can_use_team_scope(user) or can_manage_portfolios(user)
         items = build_manage_seller_portfolio_use_case().lookup_customer_shared_coverage(
