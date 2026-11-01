@@ -11,8 +11,8 @@ Revisão `SURI-MCP-FULL-PARITY-V4-G2` (2026-10-30): lote P1-R1+P1-R2 entregue �
 
 ```text
 PORTAL CAPABILITIES (denominador: linhas PROVEN executáveis) : 45 (34 READ + 11 WRITE)
-SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 39 (R-01..R-34, W-03..W-08, W-10, W-11)
-CURRENT PARITY PERCENTAGE (implementada)                     : 86.7% (39/45)
+SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 41 (R-01..R-34, W-01..W-08, W-10, W-11)
+CURRENT PARITY PERCENTAGE (implementada)                     : 91.1% (41/45)
 TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
 
@@ -72,8 +72,8 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 
 | ID | Área | Capacidade | Portal | SURI | Owner | Contrato | AuthZ | Estado | Fase |
 |---|---|---|---|---|---|---|---|---|---|
-| W-01 | Sessão | PATCH preferences | PROVEN | — | supplies-api pg | `/me/preferences` | self | tool `execute` pref.update | P2-E4 |
-| W-02 | Usuários | PATCH profile (self) | PROVEN | — | supplies-api pg | `/users/{id}/profile` | self only | `execute` profile.update | P2-E4 |
+| W-01 | Sessão | PATCH preferences | PROVEN | G13 | supplies-api pg | `/me/preferences` | self | tool `execute` pref.update | P2-E4 |
+| W-02 | Usuários | PATCH profile (self) | PROVEN | G13 | supplies-api pg | `/users/{id}/profile` | self only | `execute` profile.update | P2-E4 |
 | W-03 | Fornecedores | Enrichment review create | PROVEN | G12 | pg + S2S read + registry | `POST enrichment-reviews` | access+rate | `execute` review.create (PREPARE) | P2-E3 |
 | W-04 | Fornecedores | Enrichment decisions + bulk | PROVEN | G12 | pg (expected_revision, idempotency) | `POST .../decisions\|bulk-decisions` | access | `execute` decide (PREPARE) | P2-E3 |
 | W-05 | Fornecedores | Enrichment prepare-update (draft) | PROVEN | G12 | pg draft (nunca ERP) | `POST .../prepare-update` | access | `execute` prepare-update | P2-E3 |
