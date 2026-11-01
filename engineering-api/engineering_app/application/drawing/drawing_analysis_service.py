@@ -41,6 +41,9 @@ from engineering_app.application.drawing.drawing_contracts import (
     DrawingAnalysisError,
     unwrap_delegated,
 )
+from engineering_app.application.drawing.extraction_ports import (
+    resolve_extraction_provider,
+)
 from engineering_app.domain.drawing.source_identity import SourceMatch
 from engineering_app.domain.drawing.visual_observation import (
     DrawingVisualObservation,
@@ -99,6 +102,7 @@ async def analyze_product_drawing(
     ctx,
     visual_observations: list[DrawingVisualObservation] | None = None,
     scope: list[str] | None = None,
+    extractor=None,
 ) -> dict[str, Any]:
     """Run the full drawing×product×BOM analysis for `code`."""
     # --- official facts (delegated identity) -------------------------------
@@ -154,7 +158,10 @@ async def analyze_product_drawing(
 
     # --- extraction ---------------------------------------------------------
     try:
-        extraction = extract_pdf_text(content)
+        # R6-A: extração via port intercambiável — default pypdf baseline.
+        if extractor is None:
+            extractor = resolve_extraction_provider()
+        extraction = extractor.extract(content)
     except PdfExtractionError as exc:
         raise DrawingAnalysisError(
             "pdf_extraction_failed", str(exc), 422
