@@ -28,6 +28,7 @@ __all__ = [
     "TOOL_CLASS_PREPARE",
     "TOOL_CLASS_READ",
     "delpi_tool_meta",
+    "enum_constrained_parameters",
     "security_schemes_meta",
     "tool_annotations_payload",
 ]
@@ -95,3 +96,35 @@ def security_schemes_meta(
 ) -> dict[str, Any]:
     """Reserved ``securitySchemes`` meta payload (TÉO/DAVI strategy)."""
     return {SECURITY_SCHEMES_KEY: list(security_schemes)}
+
+
+def enum_constrained_parameters(
+    parameters: Mapping[str, Any] | None,
+    constraints: Mapping[str, Sequence[str]],
+) -> dict[str, Any]:
+    """Return a copy of a tool ``inputSchema`` with ``enum`` injected on
+    the given closed-vocabulary properties.
+
+    Owners declare the canonical vocabulary once (dispatch registry,
+    knowledge document, Literal signature); this helper only publishes
+    it on the wire so arggen clients never have to infer allowed
+    discriminator values from descriptions. Properties not present in
+    the schema are skipped — the published enum is always a subset of
+    values the owner accepts; open vocabularies (free-text filters)
+    must NOT be constrained here.
+    """
+    schema = dict(parameters or {})
+    properties = schema.get("properties")
+    if not isinstance(properties, Mapping) or not constraints:
+        return schema
+    updated = dict(properties)
+    for field, values in constraints.items():
+        current = updated.get(field)
+        if not isinstance(current, Mapping):
+            continue
+        allowed = [str(v) for v in values if str(v).strip()]
+        if not allowed:
+            continue
+        updated[field] = {**current, "enum": allowed}
+    schema["properties"] = updated
+    return schema

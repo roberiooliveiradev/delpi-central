@@ -21,7 +21,7 @@ def _schema_for(capability: str) -> dict:
     """Fetch the live inputSchema from tools/list — never hardcoded."""
     import os, urllib.request, urllib.parse
     creds = dict(os.environ)
-    for path in ("/tmp/env.local", "/tmp/infra.env"):
+    for path in ("/tmp/env.local", "/tmp/infra.env", "/app/.battery/env.local"):
         try:
             for line in open(path):
                 if "=" in line:
@@ -52,12 +52,23 @@ def _schema_for(capability: str) -> dict:
         "subject_token": subj,
         "subject_token_type": "urn:ietf:params:oauth:token-type:access_token",
         "audience": ep[1],
-        "requested_token_type": "urn:ietf:params:oauth:token-type:access_token",
+        "scope": "openid profile email mcp:tools",
     }).encode()
+    issuer = (creds.get("KEYCLOAK_ISSUER") or "").strip()
+    host_hdr = (
+        creds.get("DELIA_EXCHANGE_HOST_HEADER")
+        or urllib.parse.urlsplit(issuer).netloc
+        or ""
+    ).strip()
+    token_url = creds.get(
+        "S2S_TOKEN_URL",
+        "http://keycloak:8080/auth/realms/delpi/protocol/openid-connect/token",
+    )
     tok = json.loads(urllib.request.urlopen(
         urllib.request.Request(
-            "http://infra-keycloak-1:8080/auth/realms/delpi/protocol/openid-connect/token",
-            data=f2), timeout=15).read())["access_token"]
+            token_url, data=f2,
+            headers={"Host": host_hdr} if host_hdr else None),
+        timeout=15).read())["access_token"]
     init = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize",
                        "params": {"protocolVersion": "2024-11-05",
                                   "capabilities": {},
@@ -74,14 +85,20 @@ def _schema_for(capability: str) -> dict:
     r = urllib.request.Request(f"http://{ep[0]}:8000/mcp", data=json.dumps(
         {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}).encode(), headers=hdr)
     body = urllib.request.urlopen(r, timeout=15).read().decode()
+    payloads = []
+    stripped = body.strip()
+    if stripped.startswith("{"):
+        payloads.append(json.loads(stripped))
     for line in body.splitlines():
         if line.startswith("data:"):
-            data = json.loads(line[5:].strip())
-            names = [t.get("name") for t in data.get("result", {}).get("tools", [])]
-            for t in data.get("result", {}).get("tools", []):
-                n = t.get("name") or ""
-                if n == tool or n.endswith("." + tool) or n.endswith("_" + tool):
-                    return t.get("inputSchema", {})
+            payloads.append(json.loads(line[5:].strip()))
+    for data in payloads:
+        names = [t.get("name") for t in data.get("result", {}).get("tools", [])]
+        for t in data.get("result", {}).get("tools", []):
+            n = t.get("name") or ""
+            if n == tool or n.endswith("." + tool) or n.endswith("_" + tool):
+                return t.get("inputSchema", {})
+        if names:
             print(f"tool {tool} not found; advertised: {names}")
     return {}
 

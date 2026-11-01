@@ -481,6 +481,23 @@ _READ_DISPATCH = {
 # --- analyze --------------------------------------------------------------
 
 
+_ANALYZE_KINDS: frozenset[str] = frozenset(
+    {
+        "nonconformity.recurrence",
+        "lmp.performance",
+        "product.drawing_analysis",
+        "product.drawing_benchmark",
+        "product.drawing_understanding",
+    }
+)
+
+
+def analysis_types() -> tuple[str, ...]:
+    """Canonical closed vocabulary for ``analyze.analysis_type`` —
+    single owner for dispatch, honest errors and the wire ``enum``."""
+    return tuple(sorted(_ANALYZE_KINDS))
+
+
 async def tool_analyze(
     *,
     analysis_type: str,
@@ -493,6 +510,13 @@ async def tool_analyze(
         context = bridge._require_engineering_human()
         kind = (analysis_type or "").strip().lower()
         params = dict(parameters or {})
+        if kind not in _ANALYZE_KINDS:
+            return _err(
+                f"analysis_type '{kind}' não implementado.",
+                status_code=501,
+                code="not_implemented",
+                data={"available": sorted(_ANALYZE_KINDS)},
+            )
         if kind == "nonconformity.recurrence":
             return await _analyze_nc_recurrence(context, params, question)
         if kind == "lmp.performance":
@@ -505,18 +529,14 @@ async def tool_analyze(
             return await _analyze_drawing_understanding(
                 context, params, question
             )
+        # Unreachable: the _ANALYZE_KINDS gate above rejects unknown
+        # kinds — kept as a fail-closed tail if the set ever drifts
+        # from the dispatch chain.
         return _err(
             f"analysis_type '{kind}' não implementado.",
             status_code=501,
             code="not_implemented",
-            data={
-                "available": [
-                    "nonconformity.recurrence",
-                    "lmp.performance",
-                    "product.drawing_analysis",
-                    "product.drawing_benchmark",
-                ]
-            },
+            data={"available": sorted(_ANALYZE_KINDS)},
         )
     except Exception as exc:
         return _handle_error(exc)
@@ -1107,6 +1127,17 @@ def tool_knowledge(
         )
     except Exception as exc:
         return _handle_error(exc)
+
+
+def knowledge_topics() -> tuple[str, ...]:
+    """Canonical closed vocabulary for ``knowledge.topic``.
+
+    The versioned knowledge document is the single owner — only
+    actually served topics are published (planned topics answer
+    ``not_implemented`` honestly, never appear in the enum).
+    """
+    doc = _knowledge_document()
+    return tuple(sorted((doc.get("topics") or {}).keys()))
 
 
 # --- execute ----------------------------------------------------------------
