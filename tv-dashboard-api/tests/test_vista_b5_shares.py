@@ -29,9 +29,9 @@ ACCESS_SVC = (
 def _manage_access():
     svc = MagicMock()
     svc.resolve.return_value = MagicMock(
-        can_manage=lambda: True,
-        can_edit=lambda: True,
-        can_read=lambda: True,
+        can_manage=True,
+        can_edit=True,
+        can_read=True,
     )
     return svc
 
@@ -39,9 +39,9 @@ def _manage_access():
 def _no_access():
     svc = MagicMock()
     svc.resolve.return_value = MagicMock(
-        can_manage=lambda: False,
-        can_edit=lambda: False,
-        can_read=lambda: True,
+        can_manage=False,
+        can_edit=False,
+        can_read=True,
     )
     return svc
 
@@ -262,6 +262,31 @@ def test_revoke_edit_invites_bulk():
     assert r.is_error is False
     assert r.structured_content["data"]["result"]["revoked"] == 3
     reset_proposal_store_for_tests()
+
+
+def test_list_shares_real_access_property():
+    """Regression: can_manage is a @property — assert_can_manage must not
+    call it with parens (previous TypeError produced HTTP 500)."""
+    from tv_app.application.services.playlist_access_service import (
+        PlaylistAccess,
+    )
+    from tv_app.application.services.playlist_share_service import (
+        assert_can_manage,
+    )
+    import pytest
+
+    svc = MagicMock()
+    svc.resolve.return_value = PlaylistAccess(level="editor")
+    with patch(f"{SHARE_SVC}.PlaylistAccessService", return_value=svc):
+        with pytest.raises(PermissionError):
+            assert_can_manage(uuid4(), _editor())
+    svc.resolve.return_value = PlaylistAccess(level="owner")
+    with patch(f"{SHARE_SVC}.PlaylistAccessService", return_value=svc):
+        assert_can_manage(uuid4(), _editor())  # no raise
+    svc.resolve.return_value = PlaylistAccess(level="none")
+    with patch(f"{SHARE_SVC}.PlaylistAccessService", return_value=svc):
+        with pytest.raises(PermissionError):
+            assert_can_manage(uuid4(), _editor())
 
 
 def test_revoke_share_no_consent_channel():
