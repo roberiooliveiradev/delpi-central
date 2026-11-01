@@ -52,6 +52,10 @@ def run_extraction_benchmark(
             rec["provider_status"] = desc.status
             t0 = time.monotonic()
             result = adapter.extract(pdf_bytes)
+            # transient evidence (internal only — stripped on JSONL)
+            rec["_text_blob"] = " ".join(
+                p.text for p in result.pages
+            )
             rec.update(
                 {
                     "duration_ms": round(
@@ -79,4 +83,10 @@ def run_extraction_benchmark(
 
 
 def records_to_jsonl(records: list[dict[str, Any]]) -> str:
-    return "\n".join(json.dumps(r, ensure_ascii=False) for r in records)
+    """Persistable records only — transient `_` keys (text blobs,
+    internal evidence) are stripped before serialization."""
+    clean = [
+        {k: v for k, v in r.items() if not k.startswith("_")}
+        for r in records
+    ]
+    return "\n".join(json.dumps(r, ensure_ascii=False) for r in clean)
