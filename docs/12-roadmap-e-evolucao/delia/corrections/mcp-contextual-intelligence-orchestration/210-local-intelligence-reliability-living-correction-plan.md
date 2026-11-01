@@ -510,6 +510,14 @@ Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos,
 - **Run: 10/28 PASS** (paridade com T31 — zero regressão pela consolidação). PASS: SURI 3/4, TÉO 1/4, VISTA 4/4, DAVI 2/4. CAIO/CLARA/EVA invocam caps corretos mas síntese composta ainda não atinge outcome (escopo Task 29 — composite intelligence, não acoplamento nem authz).
 - `MINIMUM_80PCT_GATE=FAIL`; `FABRICATIONS=0`; `UNAUTHORIZED_ACT=0`.
 
+## 19. Task 33 — `DELIA-C3-MCP-DYNAMIC-DISCOVERY-COMPOSITE-RESPONSE-AUDIT-CLOSURE-01`
+
+- **Boundary review T32 (§3):** `_SPECIALIST_IDENTITY` agora carrega `(display, owner_ref, client_id, resource_audience)` — o contrato doc 60 é identidade canônica do especialista (domain-level contract, não runtime config); `config.py` deriva sem duplicar. Decisão mantida com justificativa registrada — não é OAuth "infra detail", é o contrato aprovado de identidade (mesma natureza de `APPROVED_SPECIALIST_IDS`).
+- **Testes A–F (descoberta dinâmica):** já cobertos pela suíte de interop existente — 47 testes verdes (`test_specialist_interop_security/domain/usecase`): new-tool (`test_new_compatible_capability_discovered_without_mirror`), removed-tool (`test_tool_disappears_leaves_no_stale_grant`), schema-malicioso, unapproved fail-closed (allowlist), metadata-injection (poisoned descriptions nunca elevam permissão). Discovery é live `tools/list` por request — nenhum catalog local.
+- **Pacote de revisão:** `.battery/task33/eval/run-1/` — 28 cenários `.json`+`.md` com **pergunta integral + resposta literal integral** + capabilities/args/status + divergence + `scenario-index.json`. Respostas reais do runtime (ex.: CMP-12 PASS = limitação honesta "a fonte retornou registros, mas não correspondem ao pedido"). Local-only (dados empresariais) — não publicados.
+- **Resultado doc211:** 10/28 com registry consolidado — inalterado pela consolidação. Residual permanece síntese composta/arggen em CAIO/CLARA/EVA (Task 29 scope) — **não** integração, authz nem acoplamento.
+- `PRODUCTION=NO`; `FABRICATIONS=0`; `UNAUTHORIZED_ACT=0`.
+
 ## 12. Task 25 — `DELIA-C3-ASCENDING-LOCAL-MODEL-EVALUATION-01`
 
 ### 12.1 Hardware + inventário
