@@ -42,7 +42,7 @@ from engineering_app.application.drawing.drawing_contracts import (
     unwrap_delegated,
 )
 from engineering_app.application.drawing.extraction_ports import (
-    resolve_extraction_provider,
+    get_default_extractor,
 )
 from engineering_app.domain.drawing.source_identity import SourceMatch
 from engineering_app.domain.drawing.visual_observation import (
@@ -158,9 +158,9 @@ async def analyze_product_drawing(
 
     # --- extraction ---------------------------------------------------------
     try:
-        # R6-A: extração via port intercambiável — default pypdf baseline.
+        # R6-B: extractor injetado ou default do composition root.
         if extractor is None:
-            extractor = resolve_extraction_provider()
+            extractor = get_default_extractor()
         extraction = extractor.extract(content)
     except PdfExtractionError as exc:
         raise DrawingAnalysisError(

@@ -54,6 +54,7 @@ from engineering_app.application.eva.semantic_registry import (
 )
 from engineering_app.application.models.lmp import LmpQuery
 from engineering_app.composition import nc_composer
+import engineering_app.composition.drawing_composer  # noqa: F401
 from engineering_app.composition.lmp_composer import (
     build_delegated_auxiliary_source,
     build_get_lmp_summary_use_case,

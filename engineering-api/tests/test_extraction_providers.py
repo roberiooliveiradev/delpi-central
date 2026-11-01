@@ -13,6 +13,8 @@ from engineering_app.application.drawing.drawing_analysis_service import (
 )
 from engineering_app.application.drawing.extraction_ports import (
     ProviderResolutionError,
+)
+from engineering_app.infrastructure.extraction.registry import (
     list_providers,
     resolve_extraction_provider,
 )
@@ -70,14 +72,16 @@ def test_t12_unknown_provider_rejected():
         resolve_extraction_provider("totally_made_up_provider")
 
 
-def test_t13_experimental_requires_explicit_optin():
-    # provider_id explícito é permitido (seleção backend), mas
-    # pdfplumber ausente levanta erro honesto na extração, nunca fake.
-    adapter = resolve_extraction_provider("pdfplumber_experimental")
-    try:
-        adapter.extract(PDF)
-    except PdfExtractionError as exc:
-        assert "provider_unavailable" in str(exc) or True
+def test_t13_experimental_id_alone_is_not_authorization():
+    # R6B-02: ID explícito sem flag NÃO seleciona provider experimental.
+    import pytest as _pt
+    with _pt.raises(ProviderResolutionError):
+        resolve_extraction_provider("pdfplumber_experimental")
+    # backend autorizado resolve
+    adapter = resolve_extraction_provider(
+        "pdfplumber_experimental", allow_experimental=True
+    )
+    assert adapter is not None
 
 
 def test_catalog_descriptor_contract():
@@ -89,7 +93,9 @@ def test_catalog_descriptor_contract():
 
 
 def test_t20_no_fabricated_results_when_unavailable():
-    adapter = resolve_extraction_provider("pdfplumber_experimental")
+    adapter = resolve_extraction_provider(
+        "pdfplumber_experimental", allow_experimental=True
+    )
     desc = adapter.capability_descriptor()
     if desc.status == "unavailable":
         with pytest.raises(PdfExtractionError):

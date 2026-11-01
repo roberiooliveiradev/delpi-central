@@ -14,7 +14,7 @@ import time
 import uuid
 from typing import Any
 
-from engineering_app.application.drawing.extraction_ports import (
+from engineering_app.infrastructure.extraction.registry import (
     resolve_extraction_provider,
 )
 from engineering_app.application.drawing.pdf_text_extractor import (
@@ -44,7 +44,9 @@ def run_extraction_benchmark(
             "recall": "metric_not_available",
         }
         try:
-            adapter = resolve_extraction_provider(pid)
+            adapter = resolve_extraction_provider(
+                pid, allow_experimental=True
+            )
             desc = adapter.capability_descriptor()
             rec["provider_version"] = desc.version
             rec["provider_status"] = desc.status
