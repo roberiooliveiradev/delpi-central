@@ -1,15 +1,12 @@
-"""Neutral extraction ports & provider catalog (R6-A).
+"""Neutral extraction contracts (R6-B) — application layer only.
 
-Contracts by capability, not vendor. Adapters live in infrastructure;
-the domain/application orchestration selects implementations through
-`resolve_extraction_provider` — never by arbitrary request-supplied
-class names. Production default is `pypdf_baseline`; experimental
-providers are disabled unless explicitly enabled by backend config.
+NO concrete adapter imports live here: the provider registry and
+factories belong to infrastructure; the default production extractor
+is injected by the composition root via `set_default_extractor_factory`.
 """
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol
 
@@ -17,11 +14,9 @@ from engineering_app.application.drawing.pdf_text_extractor import (
     PdfTextExtraction,
 )
 
-DEFAULT_PROVIDER = "pypdf_baseline"
-
 
 class PdfExtractionPort(Protocol):
-    """PDF bytes → neutral ExtractionResult (same contract as baseline)."""
+    """PDF bytes → neutral PdfTextExtraction (baseline contract)."""
 
     def extract(
         self, pdf_bytes: bytes, *, filename: str | None = None
@@ -30,8 +25,51 @@ class PdfExtractionPort(Protocol):
     def capability_descriptor(self) -> "ProviderCapability": ...
 
 
-class DrawingAnalysisErrorCompat(RuntimeError):
-    pass
+class PdfRenderingPort(Protocol):
+    """PDF bytes → rasterized page image (experimental pipelines)."""
+
+    def render_page(
+        self, pdf_bytes: bytes, *, page: int, dpi: int = 150
+    ) -> "RenderedPage": ...
+
+
+class OcrExtractionPort(Protocol):
+    """Raster image bytes → recognized text + coordinates."""
+
+    def extract_text(self, image_bytes: bytes) -> "OcrResult": ...
+
+
+class ImagePreprocessingPort(Protocol):
+    """Raster image bytes → preprocessed raster image bytes."""
+
+    def preprocess(self, image_bytes: bytes, *, mode: str = "binarize") -> bytes: ...
+
+
+@dataclass
+class RenderedPage:
+    page: int
+    image_bytes: bytes
+    width: int
+    height: int
+    dpi: int
+    provider_id: str
+    format: str = "png"
+
+
+@dataclass
+class OcrToken:
+    text: str
+    confidence: float | None
+    box: list[float] | None  # provider coordinate system
+
+
+@dataclass
+class OcrResult:
+    provider_id: str
+    text: str
+    tokens: list[OcrToken] = field(default_factory=list)
+    duration_ms: int = 0
+    limitations: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -50,92 +88,30 @@ class ProviderCapability:
     license_notes: str | None = None
 
 
-@dataclass
-class _ProviderEntry:
-    factory: Callable[[], PdfExtractionPort]
-    status: str  # baseline | experimental
-    enabled_by_default: bool
-
-
-def _pypdf_factory() -> PdfExtractionPort:
-    from engineering_app.infrastructure.extraction.pypdf_adapter import (
-        PypdfExtractionAdapter,
-    )
-
-    return PypdfExtractionAdapter()
-
-
-def _pdfplumber_factory() -> PdfExtractionPort:
-    from engineering_app.infrastructure.extraction.pdfplumber_adapter import (
-        PdfplumberExtractionAdapter,
-    )
-
-    return PdfplumberExtractionAdapter()
-
-
-# Explicit allowlist — no dynamic/untrusted imports (R6A-05/08/10).
-_PROVIDER_CATALOG: dict[str, _ProviderEntry] = {
-    "pypdf_baseline": _ProviderEntry(
-        _pypdf_factory, "baseline", enabled_by_default=True
-    ),
-    "pdfplumber_experimental": _ProviderEntry(
-        _pdfplumber_factory, "experimental", enabled_by_default=False
-    ),
-}
-
-
 class ProviderResolutionError(RuntimeError):
     def __init__(self, code: str, message: str):
         super().__init__(message)
         self.code = code
 
 
-def list_providers() -> list[dict[str, Any]]:
-    """Capability descriptors for authorized introspection/tests."""
-    out: list[dict[str, Any]] = []
-    for pid, entry in _PROVIDER_CATALOG.items():
-        desc = entry.factory().capability_descriptor()
-        out.append(
-            {
-                "provider_id": pid,
-                "status": entry.status,
-                "enabled_by_default": entry.enabled_by_default,
-                "descriptor": {
-                    "version": desc.version,
-                    "capabilities": desc.capabilities,
-                    "formats": desc.formats,
-                    "runs_local": desc.runs_local,
-                    "license": desc.license,
-                    "limits": desc.limits,
-                },
-            }
-        )
-    return out
+# --- composition hook (default production extractor) -------------------------
+
+_default_factory: Callable[[], PdfExtractionPort] | None = None
 
 
-def resolve_extraction_provider(
-    provider_id: str | None = None,
-) -> PdfExtractionPort:
-    """Backend-governed selection; experimental providers require
-    explicit opt-in via EVA_DRAWING_EXTRACTION_PROVIDER env var."""
-    pid = (
-        provider_id
-        or os.environ.get("EVA_DRAWING_EXTRACTION_PROVIDER")
-        or DEFAULT_PROVIDER
-    ).strip()
-    entry = _PROVIDER_CATALOG.get(pid)
-    if entry is None:
+def set_default_extractor_factory(
+    factory: Callable[[], PdfExtractionPort],
+) -> None:
+    """Registered by the composition root — the ONLY way production
+    resolves the default provider (backend-governed, allowlisted)."""
+    global _default_factory
+    _default_factory = factory
+
+
+def get_default_extractor() -> PdfExtractionPort:
+    if _default_factory is None:
         raise ProviderResolutionError(
-            "unknown_provider",
-            f"Provider de extração '{pid}' não consta no catálogo "
-            "autorizado.",
+            "no_default_extractor",
+            "Nenhum extractor default registrado pelo composition root.",
         )
-    if not entry.enabled_by_default and provider_id != pid and not (
-        os.environ.get("EVA_DRAWING_EXTRACTION_PROVIDER") == pid
-    ):
-        raise ProviderResolutionError(
-            "provider_not_enabled",
-            f"Provider experimental '{pid}' não habilitado neste "
-            "ambiente.",
-        )
-    return entry.factory()
+    return _default_factory()

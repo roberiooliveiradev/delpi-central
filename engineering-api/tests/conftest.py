@@ -240,3 +240,6 @@ def probe_asgi_app():
         }
 
     return probe_app
+
+# R6-B: production default extractor for service tests (composition hook).
+import engineering_app.composition.drawing_composer  # noqa: F401,E402
