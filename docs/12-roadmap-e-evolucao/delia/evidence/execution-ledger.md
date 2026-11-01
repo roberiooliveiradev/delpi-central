@@ -991,3 +991,9 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Residual: arggen do modelo ainda inventa enums fora do contrato na 2a proposta; erros authz/policy permanecem fail-closed.
 
 ## 2026-11-01 — Task 37: Doc 213 — inventario runtime B1 + matriz 5 frameworks (LangGraph EXTEND, PydanticAI ADOPT_BOUNDED, MCPSDK REUSE, LC-adapters REJECT, LlamaIndex DEFER) + arquitetura-alvo substituivel + slices S1-S7 status.
+
+## 2026-11-01 — Task37 S2-S6 checkpoint (doc 215): baseline congelada; envelopes/recovery T36 entregues; S2-S6 nao iniciados — handoff verificavel com comandos de retomada; TASK_INCOMPLETE.
+
+## 2026-11-01 — S2 benchmark A/B executado (_s2_ab_benchmark.py, .battery/task37/s2_ab.json): pydantic-ai 2.60.0 structured output produz tipos validos mas analysis_type inventado quando schema = string livre (enum vive no catalogo owner, nao no inputSchema) -> evidencia NOT_ADOPT nesta fronteira; owner_hint T36 segue correto. S3-S6 pendentes (INCOMPLETE).
+
+## 2026-11-01 — S2 benchmark traceability fixed: bd229c9a28 = _s2_ab_benchmark.py (pydantic-ai 2.60.0). Resultado: args schema-valid mas discriminadores livres inventados nao-deterministicamente (analysis_type variou entre runs) — NOT_ADOPT nesta fronteira; clara/caio tools nao localizados por nome (namespace diferente). S3-S6 INCOMPLETE.

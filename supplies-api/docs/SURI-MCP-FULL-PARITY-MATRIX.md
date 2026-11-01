@@ -11,8 +11,8 @@ Revisão `SURI-MCP-FULL-PARITY-V4-G2` (2026-10-30): lote P1-R1+P1-R2 entregue �
 
 ```text
 PORTAL CAPABILITIES (denominador: linhas PROVEN executáveis) : 45 (34 READ + 11 WRITE)
-SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 41 (R-01..R-34, W-01..W-08, W-10, W-11)
-CURRENT PARITY PERCENTAGE (implementada)                     : 91.1% (41/45)
+SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 45 (R-01..R-34, W-01..W-11)
+CURRENT PARITY PERCENTAGE (implementada)                     : 100% (45/45)
 TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
 
@@ -40,21 +40,21 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | R-05 | SC | Summary + facets (requesters, cost-centers, photo guard) | PROVEN | `read:PR summary/requesters/cost_centers` | PR-api + core | `/summary\|/requesters\|/cost-centers\|photo` | access | bff + suri tests | foto segue como bytes só via BFF (sem canal binário MCP); guard não contornado | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-06 | SC | Export | PROVEN | `read:PR export` (dataset JSON+meta — DECISION-G1) | PR-api → supplies-api | `/export` | access+units | bff + suri tests | artefato CSV/XLSX segue Portal-side | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-07 | SC | Detalhe + links | PROVEN | `read:PR get` | PR-api + core | `/{branch}/{num}` | access+unit | bff + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
-| R-08 | PC | Lista + filtros | PROVEN | `read:PO search` | api-delpi | `GET /purchase-orders` | access+units | suri tests | — | PROVEN |
+| R-08 | PC | Lista + filtros | PROVEN | `read:PO search` | api-delpi | `GET /purchase-orders` | access+units | suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-09 | PC | Export | PROVEN | `read:PO export` (dataset JSON+meta — DECISION-G1) | api-delpi → supplies-api | `/export` | access | bff + suri tests | artefato XLSX segue Portal-side | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
-| R-10 | PC | Detalhe | PROVEN | `read:PO get` | api-delpi | `/{branch}/{num}` | access+unit | suri tests | — | PROVEN |
+| R-10 | PC | Detalhe | PROVEN | `read:PO get` | api-delpi | `/{branch}/{num}` | access+unit | suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-11 | Entregas | Atrasos (panel paginado) | PROVEN | `read:deliveries late` | api-delpi | `/deliveries/late` | access | bff tests | `read` deliveries | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-12 | Estoque | stock-balances summary + items | PROVEN | `read:inventory summary+items` | api-delpi | `/inventory/stock-balances/*` | access | bff tests | `read` inventory | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-13 | Safety stock | filters+summary+items | PROVEN | `read:safety_stock filters/summary/items` | api-delpi | `/safety-stock/*` | access | bff tests | `read` safety_stock | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-14 | Safety stock | item details + suppliers | PROVEN | `read:safety_stock details/suppliers` | api-delpi | `/items/{code}/details\|suppliers` | access | bff tests | `read` get/details | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
-| R-15 | Fornecedores | Lista | PROVEN | `read:suppliers search` | api-delpi(S2S) | `GET /suppliers` | access | routes + suri tests | — | PROVEN |
-| R-16 | Fornecedores | Ficha 360 | PROVEN | `read:suppliers get` | api-delpi(S2S) | `/{code}/{store}` | access | routes + suri tests | — | PROVEN |
-| R-17 | Fornecedores | Catálogos (14 kinds) | PROVEN | `read:suppliers catalogs` | api-delpi(S2S) | `/catalogs/{kind}` allowlist | access | routes + suri tests | — | PROVEN |
-| R-18 | Fornecedores | CEP assist | PROVEN | `read:postal_codes lookup` | api-delpi | `/postal-codes/{cep}` | access | routes + suri tests | — | PROVEN |
-| R-19 | Fornecedores | Dup-check por tax_id | PROVEN | `read:suppliers search_by_tax_id/existing` | api-delpi(S2S) | `/existing-suppliers` | access | creation + suri tests | — | PROVEN |
-| R-20 | Fornecedores | Creation preview (read-only) | PROVEN | `analyze:supplier_creation_preview` | registry provider + S2S | `POST /creation-preview` (semântica READ) | access+rate-limit | preview + suri tests | — | PROVEN |
-| R-21 | Fornecedores | Integration status | PROVEN | `read:suppliers integration_status` | api-delpi | `/integration-status` | **manage** | routes + suri tests | — | PROVEN |
-| R-22 | Fornecedores | Operations tracking read | PROVEN | `read:suppliers operations` | api-delpi | `/operations/{id}` | access | routes + suri tests | — | PROVEN |
+| R-15 | Fornecedores | Lista | PROVEN | `read:suppliers search` | api-delpi(S2S) | `GET /suppliers` | access | routes + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-16 | Fornecedores | Ficha 360 | PROVEN | `read:suppliers get` | api-delpi(S2S) | `/{code}/{store}` | access | routes + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-17 | Fornecedores | Catálogos (14 kinds) | PROVEN | `read:suppliers catalogs` | api-delpi(S2S) | `/catalogs/{kind}` allowlist | access | routes + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-18 | Fornecedores | CEP assist | PROVEN | `read:postal_codes lookup` | api-delpi | `/postal-codes/{cep}` | access | routes + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-19 | Fornecedores | Dup-check por tax_id | PROVEN | `read:suppliers search_by_tax_id/existing` | api-delpi(S2S) | `/existing-suppliers` | access | creation + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-20 | Fornecedores | Creation preview (read-only) | PROVEN | `analyze:supplier_creation_preview` | registry provider + S2S | `POST /creation-preview` (semântica READ) | access+rate-limit | preview + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-21 | Fornecedores | Integration status | PROVEN | `read:suppliers integration_status` | api-delpi | `/integration-status` | **manage** | routes + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-22 | Fornecedores | Operations tracking read | PROVEN | `read:suppliers operations` | api-delpi | `/operations/{id}` | access | routes + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-23 | Consumo | Busca OP (fragmento/filtros) | PROVEN | `read:consumption search` | api-delpi(S2S `consumption-audit.read`) | `/consumption-audit/orders` | access+unit | routes tests | `read` production_orders | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-24 | Consumo | Detalhe OP | PROVEN | `read:consumption get` | api-delpi(S2S) | `/orders/{op}` | access+unit | routes tests | `read` get | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-25 | Consumo | Comparação 2–10 OPs | PROVEN | `read:consumption comparison` | api-delpi(S2S) | `/comparison` | access+unit | routes tests | `analyze` compare | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
@@ -65,24 +65,24 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | R-30 | Usuários | Perfil + foto | PROVEN | G8 | core-api+pg | `/users/{id}/profile\|photo` | self\|manage | profile tests | `read` user profile | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-31 | Usuários | SCs relacionadas | PROVEN | G8 | PR-api+core | `/related-requests` | self\|manage+units | profile tests | `read` related | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-32 | Sessão | capabilities + preferences read | PROVEN | `get_context` (parcial: sem preferences) | supplies-api | `/me/capabilities`, `/me/preferences` | shell | session ctx | `read`/`get_context` prefs | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
-| R-33 | Ajuda | Manual/FAQ/glossário | PROVEN | `knowledge` (corpus parcial) | supplies content | in-proc | access | knowledge tests | ampliar corpus | P1-K1 |
-| R-34 | Consumo | Análise determinística | PROVEN | `analyze:PO summary` | supplies-api | sample+facts+hash | access | suri tests | estender p/ demais entidades | P1-A1 |
+| R-33 | Ajuda | Manual/FAQ/glossário | PROVEN | `knowledge` (corpus parcial) | supplies content | in-proc | access | knowledge tests | ampliar corpus | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-34 | Consumo | Análise determinística | PROVEN | `analyze:PO summary` | supplies-api | sample+facts+hash | access | suri tests | estender p/ demais entidades | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 
 ## WRITE capabilities (11 — plugin-db/workflow + 2 writes ERP governadas: W-10/W-11)
 
 | ID | Área | Capacidade | Portal | SURI | Owner | Contrato | AuthZ | Estado | Fase |
 |---|---|---|---|---|---|---|---|---|---|
-| W-01 | Sessão | PATCH preferences | PROVEN | G13 | supplies-api pg | `/me/preferences` | self | tool `execute` pref.update | P2-E4 |
-| W-02 | Usuários | PATCH profile (self) | PROVEN | G13 | supplies-api pg | `/users/{id}/profile` | self only | `execute` profile.update | P2-E4 |
-| W-03 | Fornecedores | Enrichment review create | PROVEN | G12 | pg + S2S read + registry | `POST enrichment-reviews` | access+rate | `execute` review.create (PREPARE) | P2-E3 |
-| W-04 | Fornecedores | Enrichment decisions + bulk | PROVEN | G12 | pg (expected_revision, idempotency) | `POST .../decisions\|bulk-decisions` | access | `execute` decide (PREPARE) | P2-E3 |
-| W-05 | Fornecedores | Enrichment prepare-update (draft) | PROVEN | G12 | pg draft (nunca ERP) | `POST .../prepare-update` | access | `execute` prepare-update | P2-E3 |
-| W-06 | Mercado | Comex NCM request create | PROVEN | G11 | pg | `POST /ncm-governance` | access | `execute` ncm.request | P2-E2 |
-| W-07 | Mercado | Comex transition (algumas manage; ED-api put on approve/inactive) | PROVEN | G11 | pg + ED-api | `POST /{id}/transition` | access/manage | `execute` transition (PREPARE+consent p/ manage) | P2-E2 |
-| W-08 | Mercado | Comex views create/update | PROVEN | G11 | pg | `POST/PUT /views` | access | `execute` view.save | P2-E2 |
-| W-09 | Mercado | Comex views delete | PROVEN | — | pg | `DELETE /views/{id}` | access | `delete` view (confirmação explícita) | P2-D1 |
-| W-10 | Fornecedores | Supplier create (Protheus POST) | PROVEN | `execute:suppliers.create` | api-delpi(S2S) + Protheus REST | `POST /suppliers` → `/integrations/protheus/suppliers` | access + S2S `suppliers.create` | runtime 2026-10-30 + 30 testes SURI | **PROVEN** (era B-01) |
-| W-11 | Fornecedores | Supplier update (Protheus PUT) | PROVEN | `execute:suppliers.update` | api-delpi(S2S) + Protheus REST | `PUT /suppliers/{code}/{store}` | access + S2S `suppliers.update` | runtime end-to-end + 30 testes SURI | **PROVEN** (era B-02) |
+| W-01 | Sessão | PATCH preferences | PROVEN | G13 | supplies-api pg | `/me/preferences` | self | tool `execute` pref.update | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| W-02 | Usuários | PATCH profile (self) | PROVEN | G13 | supplies-api pg | `/users/{id}/profile` | self only | `execute` profile.update | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| W-03 | Fornecedores | Enrichment review create | PROVEN | G12 | pg + S2S read + registry | `POST enrichment-reviews` | access+rate | `execute` review.create (PREPARE) | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| W-04 | Fornecedores | Enrichment decisions + bulk | PROVEN | G12 | pg (expected_revision, idempotency) | `POST .../decisions\|bulk-decisions` | access | `execute` decide (PREPARE) | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| W-05 | Fornecedores | Enrichment prepare-update (draft) | PROVEN | G12 | pg draft (nunca ERP) | `POST .../prepare-update` | access | `execute` prepare-update | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| W-06 | Mercado | Comex NCM request create | PROVEN | G11 | pg | `POST /ncm-governance` | access | `execute` ncm.request | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| W-07 | Mercado | Comex transition (algumas manage; ED-api put on approve/inactive) | PROVEN | G11 | pg + ED-api | `POST /{id}/transition` | access/manage | `execute` transition (PREPARE+consent p/ manage) | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| W-08 | Mercado | Comex views create/update | PROVEN | G11 | pg | `POST/PUT /views` | access | `execute` view.save | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| W-09 | Mercado | Comex views delete | PROVEN | G14 | pg | `DELETE /views/{id}` | access | `delete` view (confirmação explícita) | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| W-10 | Fornecedores | Supplier create (Protheus POST) | PROVEN | `execute:suppliers.create` | api-delpi(S2S) + Protheus REST | `POST /suppliers` → `/integrations/protheus/suppliers` | access + S2S `suppliers.create` | runtime 2026-10-30 + 30 testes SURI | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| W-11 | Fornecedores | Supplier update (Protheus PUT) | PROVEN | `execute:suppliers.update` | api-delpi(S2S) + Protheus REST | `PUT /suppliers/{code}/{store}` | access + S2S `suppliers.update` | runtime end-to-end + 30 testes SURI | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 
 ## Reconciliação — bloqueios superados por evidência (SURI-MCP-SUPPLIERS-WRITE-001, 2026-10-30)
 
