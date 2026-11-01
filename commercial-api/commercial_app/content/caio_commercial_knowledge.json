@@ -1,5 +1,5 @@
 {
-  "version": "4.1",
+  "version": "4.1.1",
   "owner": "commercial-api",
   "audience": "caio-mcp",
   "topics": {
@@ -2354,7 +2354,7 @@
       "id": "meeting_prep",
       "type": "playbook",
       "status": "implemented",
-      "version": "4.1",
+      "version": "4.1.1",
       "source_date": "2026-10-31",
       "owner": "commercial-api",
       "source": "CAIO 4.1 — dossiê inteligente de cliente (F1–F8)",
@@ -2390,7 +2390,7 @@
         "commercial.analytics"
       ],
       "semantic_steps": [
-        "F1 identidade: read customer.enrichment (código, loja, nome) + portfolio.get/portfolio.list (carteira oficial, owner e participantes); se o participante informado pertencer a outra carteira, declarar a divergência — nunca presumir que é o owner",
+        "F1 identidade: read customer.enrichment (código, loja, nome) + portfolio.list/include_customers + portfolio.get (carteira oficial, owner e participantes) — portfolio.customer_coverage apenas para detectar cobertura compartilhada (2+ carteiras); se o participante informado pertencer a outra carteira, declarar a divergência — nunca presumir que é o owner",
         "F2 consolidação: read customer.billing_series (12m) — faturamento, evolução mensal, comparação de períodos; analyze rol.by_product (famílias/produtos comprados e alterações)",
         "F2 operação: read customer.open_orders + analyze sales_order_otd.summary — pedidos abertos, entregas futuras, risco CONFIRMED/RISK/WATCH/UNKNOWN",
         "F2 propostas: read proposal.analytics_list (+proposal.analytics_get/history_events quando relevante) — abertas, paradas, histórico",
@@ -2418,7 +2418,7 @@
       "failure_states": [
         "cliente fora do escopo → 403 honesto; sem dados → dossiê parcial com UNKNOWN declarado",
         "participante ≠ owner da carteira → divergência apresentada, não atribuição incorreta",
-        "portfolio.customer_coverage indisponível → identidade via portfolio.get/list + customer.list (fallback autorizado)",
+        "portfolio.customer_coverage é detector de cobertura COMPARTILHADA (cliente em 2+ carteiras) — vazio é resultado válido para cliente em 1 carteira; identidade/owner resolve-se via portfolio.get/list + customer.list (contrato primário, não fallback)",
         "sala sem vínculo estruturado ao cliente → não incorporar conteúdo; sala sem acesso → negar, sem vazamento",
         "tarefa mencionada em conversa ≠ tarefa registrada — distinguir sempre"
       ],
