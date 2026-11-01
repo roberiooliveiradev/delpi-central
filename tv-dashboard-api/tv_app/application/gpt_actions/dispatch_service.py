@@ -3506,6 +3506,35 @@ class GptActionsDispatchService:
                     )
                 except Exception:
                     candidates = []
+
+                def _purpose_query(btype, chart_type):
+                    # refinamento semântico por propósito do bloco —
+                    # alinha o ranking lexical com a pergunta real
+                    # do componente (DI-3.6).
+                    if btype in {"kpi_view", "data_kpi"}:
+                        return f"{message} indicador valor atual"
+                    if btype in {"chart_view", "data_chart"}:
+                        ct = str(chart_type or "").lower()
+                        suffix = "série evolução período" if ct in {
+                            "line", "area"
+                        } else "comparação ranking categorias"
+                        return f"{message} {suffix}"
+                    if btype in {
+                        "table_view", "data_table", "canvas_table",
+                    }:
+                        return f"{message} lista detalhes problemas"
+                    return message
+
+                def _suggest_for(q):
+                    try:
+                        rr = self._suggest.suggest(query=q, limit=20)
+                        return (
+                            rr.get("suggestions") or []
+                            if isinstance(rr, dict) else []
+                        )
+                    except Exception:
+                        return []
+
                 # DI-3.4 — qualificação por contrato: document_export /
                 # não-GET não são fontes de bloco de dashboard.
                 qualified = [
@@ -3587,10 +3616,41 @@ class GptActionsDispatchService:
                     )
                     btype = str(block.get("type") or "")
                     modes = _modes_for(btype, block.get("chartType"))
+                    purpose_candidates = _suggest_for(
+                        _purpose_query(btype, block.get("chartType"))
+                    )
+                    purpose_qualified = [
+                        cand for cand in purpose_candidates
+                        if isinstance(cand, dict)
+                        and str(cand.get("metaShape") or "")
+                        != "document_export"
+                        and str(cand.get("httpMethod") or "GET").upper()
+                        == "GET"
+                    ]
                     per = [
-                        cand for cand in qualified
+                        cand for cand in purpose_qualified
                         if _compatible(cand, modes)
                     ]
+                    if not per:
+                        per = [
+                            cand for cand in qualified
+                            if _compatible(cand, modes)
+                        ]
+                    # limiar semântico: score relativo ao topo do bloco
+                    # remove candidatos fracamente relacionados (ruído
+                    # lexical — ex.: get_customer_avatar em vendas).
+                    if len(per) > 1:
+                        scores = [
+                            float(c.get("score") or 0.0)
+                            for c in per
+                        ]
+                        top = max(scores) if scores else 0.0
+                        floor = top * 0.5 if top > 0 else 0.0
+                        per = [
+                            c for c in per
+                            if float(c.get("score") or 0.0) >= floor
+                        ]
+                    per = per[:8]
                     if not per and qualified:
                         # Fallback por domínio: ranking lexical fraco
                         # não prova inexistência — busca no catálogo
@@ -3618,12 +3678,39 @@ class GptActionsDispatchService:
                                 ).upper() == "GET"
                                 and _compatible(cand, modes)
                             ][:8]
-                    blocks.append({
+                    block_state = _state(per)
+                    entry = {
                         "blockType": btype or "data_block",
                         "requiredModes": sorted(modes),
-                        "state": _state(per),
+                        "state": block_state,
                         "candidates": [_slim(c) for c in per],
-                    })
+                    }
+                    if block_state == "RESOLVED" and per:
+                        # binding canônico: operationId + displayMode +
+                        # params (required não-optional => missingParams
+                        # explicitados, nunca inventados).
+                        cand = per[0]
+                        schema = cand.get("paramSchema")
+                        missing = [
+                            str(k)
+                            for k, spec in (
+                                schema.items() if isinstance(schema, dict)
+                                else []
+                            )
+                            if isinstance(spec, dict)
+                            and spec.get("optional") is False
+                            and spec.get("default") is None
+                        ]
+                        modes_list = cand.get("allowedDisplayModes") or []
+                        entry["binding"] = {
+                            "operationId": cand.get("operationId"),
+                            "displayMode": (
+                                str(modes_list[0])
+                                if modes_list else "auto"
+                            ),
+                            "missingParams": missing,
+                        }
+                    blocks.append(entry)
                 payload["bindingPlan"] = {
                     "state": (
                         "RESOLVED"
