@@ -121,3 +121,18 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
   fora na sessão (mock ≠ integração). Canal credenciado publica.
 - Portal MFE: pendente para gate dedicado (não implementado).
 - DR-3 segue pendente; custos source_missing. Verdict: ACCEPT_WITH_RESIDUAL.
+
+## Atualização — Gate 045 (01/11/2026)
+
+- Portal MFE: página R09 «Faturamento × MOD» implementada na rota
+  contextual monthly-closing/{period}/reports/billing-mod-breakdown —
+  filtro de filial, banner de visão operacional/paridade pendente,
+  evidência histórica, limitações e âncoras com linhas MOD (ausências
+  tipadas renderizadas, nunca zero). API client billingModBreakdownApi
+  espelha o padrão de costClosingStateApi.
+- Build/typecheck do plugin: ENV-BLOCKED (caminho UNC impede npx/tsc
+  nesta estação; WSL/Docker fora). Código segue o padrão dos irmãos;
+  validação pendente em ambiente funcional.
+- Deploy produtivo e validação CLARA/Portal live: NÃO executados —
+  SSH público indisponível na estação (publickey). Canal credenciado.
+- DR-3 pendente; custos source_missing. Verdict: ACCEPT_WITH_RESIDUAL.

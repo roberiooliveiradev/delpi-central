@@ -19,6 +19,7 @@ import {
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
 import { BillingExclusionRosterPage } from "./BillingExclusionRosterPage";
+import { BillingModBreakdownPage } from "./BillingModBreakdownPage";
 import { CostClosingStatePage } from "./CostClosingStatePage";
 import { CostCenterExpensesPage } from "./CostCenterExpensesPage";
 import { FinancialSettlementsPage } from "./FinancialSettlementsPage";
@@ -38,7 +39,8 @@ export type ReportKey =
   | "cost-center-expenses"
   | "billing-exclusion-roster"
   | "work-in-process"
-  | "cost-closing-state";
+  | "cost-closing-state"
+  | "billing-mod-breakdown";
 
 export type ReportFamily = "settlements" | "stock";
 
@@ -58,6 +60,7 @@ export const REPORT_KEY_TO_FAMILY: Record<ReportKey, ReportFamily> = {
   "billing-exclusion-roster": "settlements",
   "work-in-process": "stock",
   "cost-closing-state": "stock",
+  "billing-mod-breakdown": "settlements",
 };
 
 export const REPORT_KEY_LABELS: Record<ReportKey, string> = {
@@ -70,6 +73,7 @@ export const REPORT_KEY_LABELS: Record<ReportKey, string> = {
   "billing-exclusion-roster": "Notas fiscais a desconsiderar",
   "work-in-process": "Material em processo",
   "cost-closing-state": "Estado de fechamento e cutoff",
+  "billing-mod-breakdown": "Faturamento × MOD",
 };
 
 export function isReportKey(value: string | undefined): value is ReportKey {
@@ -82,7 +86,8 @@ export function isReportKey(value: string | undefined): value is ReportKey {
     value === "cost-center-expenses" ||
     value === "billing-exclusion-roster" ||
     value === "work-in-process" ||
-    value === "cost-closing-state"
+    value === "cost-closing-state" ||
+    value === "billing-mod-breakdown"
   );
 }
 
@@ -137,6 +142,8 @@ export function MonthlyReportPage({
         <WorkInProcessPage reportContext={{ period }} />
       ) : reportKey === "cost-closing-state" ? (
         <CostClosingStatePage reportContext={{ period }} />
+      ) : reportKey === "billing-mod-breakdown" ? (
+        <BillingModBreakdownPage reportContext={{ period }} />
       ) : (
         <StockInventoryPage reportContext={{ period }} />
       )}
