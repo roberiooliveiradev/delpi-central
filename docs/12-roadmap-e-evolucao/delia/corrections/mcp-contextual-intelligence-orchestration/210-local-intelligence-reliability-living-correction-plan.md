@@ -518,6 +518,42 @@ Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos,
 - **Resultado doc211:** 10/28 com registry consolidado — inalterado pela consolidação. Residual permanece síntese composta/arggen em CAIO/CLARA/EVA (Task 29 scope) — **não** integração, authz nem acoplamento.
 - `PRODUCTION=NO`; `FABRICATIONS=0`; `UNAUTHORIZED_ACT=0`.
 
+## 20. Task 34 — `DELIA-C3-REAL-RESPONSES-HUMAN-REVIEW-AND-CAUSAL-AUDIT-01`
+
+### 20.1 Auditoria das 28 respostas (artefatos íntegros, respostas literais)
+
+- 28 artefatos auditados (`.battery/task33/eval/run-1/`). Divergências: 16 GROUP_SELECTION_ERROR, 2 CAPABILITY_SELECTION, 8 None(PASS), 2 ADMISSION.
+- **15 exceções `CapabilityProviderError` por argumento rejeitado**: clara 6, caio 4, eva 2, teo 2, davi 1.
+
+### 20.2 Causa-raiz transversal PROVEN — `ARGUMENT_GENERATION` vs enums fechados
+
+O modelo (qwen3:4b) **inventa discriminadores fora dos enums fechados** dos tools semânticos:
+
+| Cenário | Arg inventado | Rejeição do owner |
+|---|---|---|
+| cmp_05/06/07 | `topic:"fechamentos mensais"` | "topic desconhecido — use summary\|actor\|catalog\|schema\|persona" |
+| cmp_03 | `analysis_type:"portfolio"` | "não implementado" |
+| cmp_02/04 | `entity:"clientes e carteiras"` | "Entidade desconhecida" |
+| cmp_13/16 | `analysis_type:"engineering_demand_analysis"` | "não implementado" |
+| cmp_08/15 | params desconhecidos | "Parâmetros desconhecidos para a action" |
+| cmp_19 | `view:"process_revision_comparison"` | "processo_id is required" |
+
+- **Não** é group/capability selection (o scorer classifica como GROUP_SELECTION porque o invoke falha — a seleção do provider estava correta na maioria). **Não** é execução nem authz — é arggen gerando valores semanticamente plausíveis mas fora do enum tipado.
+- Projeção Doc 83 relevante: `input_schema` chega ao arggen, mas o modelo 4B não ancora nos enums — e **não existe retry validado de args** quando o owner rejeita (o erro vira `CapabilityProviderError` terminal).
+- `EVALUATOR_FALSE_POSITIVE` confirmado: cenários com provider correto + invoke EXC são scored GROUP_SELECTION_ERROR — a divergência real é `ARGUMENT_GENERATION`/`SCHEMA_VALIDATION`, estágio posterior.
+
+### 20.3 PASSs auditados
+
+- VISTA 4/4: `get_catalog` (zero args) → respostas são clarificações genéricas — **PASS frágil do oráculo** (want_owner hit, mas resposta não resolve o subobjetivo composto — evaluator false-positive estrutural).
+- SURI 3/4: `suri.analyze` com enum válido `purchase_orders_summary` → COMPLETED + síntese honesta.
+- Respostas com dados reais presentes (cmp_11: "Encontrei 5 registros: total_lines 0, total_open_value 0.0…") — dados empresariais locais nos artefatos; pacote permanece local-only.
+
+### 20.4 Plano de correção (Reuse Gate)
+
+`ISSUE-ARGGEN-ENUM` — owner: `capability_provision/orchestration` arggen+validation stage.
+`EXISTING_EQUIVALENT=YES` — Task 23 já construiu o caminho tipado `_EMPTY_RESULT_FEEDBACK` + `_propose_candidate_arguments` + schema validation + re-invoke bounded. `REUSE_DECISION=EXTEND`: alimentar a **rejeição de args do owner** no mesmo loop tipado de re-proposta (bounded 1x), em vez de falhar terminal. Não é novo mecanismo — é a extensão do recovery governado já aprovado.
+Expected: resolve a maior parte dos 15 EXC sem tocar planner/seleção.
+
 ## 12. Task 25 — `DELIA-C3-ASCENDING-LOCAL-MODEL-EVALUATION-01`
 
 ### 12.1 Hardware + inventário
