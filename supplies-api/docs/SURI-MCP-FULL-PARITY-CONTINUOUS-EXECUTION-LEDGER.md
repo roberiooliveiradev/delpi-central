@@ -1,8 +1,11 @@
 # SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION — LEDGER
 
 PROGRAM: SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION-001/002
-CURRENT LOT: G9 — Analyze/Knowledge expansion (R-33/R-34 coverage)
-LAST CLOSED LOT: G8 Session/Users (0947d9feb6 + Literal fix def1d325dc)
+CURRENT LOT: G10 — Governed write foundation (ACT infra audit)
+LAST CLOSED LOT: G9 Knowledge coverage (corpus 12→17 itens; search
+  consumption.op-key e OTD comprovados; corpus_version=1; no catalog
+  bump — nenhuma capability nova contada).
+
 G8 EVIDENCE: catalog v11 in-image; smoke — session.capabilities/
   preferences success; users.related_requests success; profile
   self-only 'Forbidden' provado; photo 'photo not found' honesto;
