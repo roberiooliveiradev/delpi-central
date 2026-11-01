@@ -12,7 +12,7 @@ Revisão `SURI-MCP-FULL-PARITY-V4-G2` (2026-10-30): lote P1-R1+P1-R2 entregue �
 ```text
 PORTAL CAPABILITIES (denominador: linhas PROVEN executáveis) : 45 (34 READ + 11 WRITE)
 SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 21 (R-04..R-12, R-15..R-22, R-33, R-34, W-10, W-11)
-CURRENT PARITY PERCENTAGE (implementada)                     : 42.2% (19/45)
+CURRENT PARITY PERCENTAGE (implementada)                     : 46.7% (21/45)
 TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
 
@@ -43,8 +43,8 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | R-08 | PC | Lista + filtros | PROVEN | `read:PO search` | api-delpi | `GET /purchase-orders` | access+units | suri tests | — | PROVEN |
 | R-09 | PC | Export | PROVEN | `read:PO export` (dataset JSON+meta — DECISION-G1) | api-delpi → supplies-api | `/export` | access | bff + suri tests | artefato XLSX segue Portal-side | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-10 | PC | Detalhe | PROVEN | `read:PO get` | api-delpi | `/{branch}/{num}` | access+unit | suri tests | — | PROVEN |
-| R-11 | Entregas | Atrasos (panel paginado) | PROVEN | — | api-delpi | `/deliveries/late` | access | bff tests | `read` deliveries | P1-R3 |
-| R-12 | Estoque | stock-balances summary + items | PROVEN | — | api-delpi | `/inventory/stock-balances/*` | access | bff tests | `read` inventory | P1-R3 |
+| R-11 | Entregas | Atrasos (panel paginado) | PROVEN | `read:deliveries late` | api-delpi | `/deliveries/late` | access | bff tests | `read` deliveries | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-12 | Estoque | stock-balances summary + items | PROVEN | `read:inventory summary+items` | api-delpi | `/inventory/stock-balances/*` | access | bff tests | `read` inventory | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-13 | Safety stock | filters+summary+items | PROVEN | — | api-delpi | `/safety-stock/*` | access | bff tests | `read` safety_stock | P1-R4 |
 | R-14 | Safety stock | item details + suppliers | PROVEN | — | api-delpi | `/items/{code}/details\|suppliers` | access | bff tests | `read` get/details | P1-R4 |
 | R-15 | Fornecedores | Lista | PROVEN | `read:suppliers search` | api-delpi(S2S) | `GET /suppliers` | access | routes + suri tests | — | PROVEN |

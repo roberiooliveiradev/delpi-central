@@ -72,3 +72,18 @@ def test_inventory_summary_rejects_items_filter(env):
 def test_unknown_action_rejected(env):
     r = tool_bridge.tool_read("inventory", "export", {"branch": ["01"]})
     assert not _ok(r)
+
+
+def test_catalog_directives_do_not_deny_execute():
+    """R2 — catalog must not claim 'no write capability' while execute
+    has registered operations."""
+    r = tool_bridge.tool_get_catalog()
+    import json as _json
+    txt = _json.dumps(
+        (r.structuredContent or {}) if hasattr(r, "structuredContent") else {},
+        ensure_ascii=False,
+    ) + _json.dumps([getattr(c, "text", "") for c in (r.content or [])])
+    assert "no write capability exists" not in txt
+    assert "execute" in txt
+    # READ stays read-only: directives still present
+    assert "read-only" in txt.lower() or "READ operations" in txt
