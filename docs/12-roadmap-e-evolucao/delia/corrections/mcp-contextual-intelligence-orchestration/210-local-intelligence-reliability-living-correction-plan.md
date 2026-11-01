@@ -406,3 +406,25 @@ Driver `_task23_driver.sh`: main×1 + heldout×1 (regressão) + t22heldout×3 (a
   - `t22heldout` **~10/21, ~11/21, ~10/21 ≈ 48–52%** — consistente com T22 (~50%): a remoção não elevou nem derrubou o conjunto novo → `MINIMUM_80PCT_GATE=FAIL` no held-out independente.
 - Leitura honesta: o residual é model-bound (GROUP_SELECTION, chain-death, ADMISSION em phrasings nunca vistos) — a limpeza arquitetural está correta e não degradou qualidade; o gate continua dependendo de capacidade de seleção do qwen3-4B → `ARCHITECTURE_DECISION_REQUIRED` (Alternativa B) reafirmado.
 - Segurança: zero invokes write-like, zero fabricações nas falhas (vazio honesto/limitação).
+
+## 11. Task 24 — `DELIA-C3-MODEL-CAPABILITY-COMPARATIVE-EVALUATION-01`
+
+### 11.1 Inventário de inferência
+
+- GPU: RTX 3050 6GB; Ollama GPU ativo (~42 tok/s no 4B).
+- Modelos disponíveis: `qwen3:4b-instruct-2507-q4_K_M` (baseline A), `delia-json:latest`, `qwen2.5:3b`, `qwen2.5:1.5b`.
+- `MODEL_B_LARGER_7B_8B=NOT_FEASIBLE` — nenhum modelo maior no host; a task proíbe download arbitrário. Comparação descendente usada como teste causal: se a capacidade é o gargalo, um modelo menor deve piorar proporcionalmente.
+
+### 11.2 Experimento controlado (única variável = `DELIA_LLM_MODEL`)
+
+Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos, avaliador:
+
+| Modelo | t22heldout | vs baseline |
+|---|---|---|
+| `qwen3:4b` (A) | ~10–11/21 ≈ 48–52% | baseline |
+| `qwen2.5:3b` (B) | **7/20 = 35%** (13F) | −15pp |
+
+- Classificação: `MODEL_CAPACITY_LIMITATION=PROVEN` para a família de falhas do novo held-out (menor capacidade ⇒ queda acentuada no mesmo contrato); residuais `CONTRACT/PROJECTION` já auditados (doc 83) permanecem independentes.
+- `MODEL_C=NOT_RUN` — sem justificativa: a comparação descendente já respondeu a hipótese causal.
+- `LARGER_MODEL_EXPERIMENT=BLOCKED_NO_LOCAL_MODEL` — próximo bounded step exige decisão de infra (download/provider) fora do escopo autorizado.
+- `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PRODUCTION_CALLS=0`.

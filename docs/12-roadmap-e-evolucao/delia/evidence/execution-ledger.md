@@ -929,3 +929,6 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Suíte: 6/6 arquivo + focada GREEN.
 - BATERIAS GPU: main 41/47=87,2% (melhor histórico); heldout 17/20=85%; t22heldout ~10/~11/~10 de 21=48-52% -> MINIMUM_80PCT_GATE=FAIL (model-bound residual; ARCHITECTURE_DECISION_REQUIRED Alt.B). Zero write-invokes/fabricações.
 - PRODUCTION_DEPLOY=NO; PRODUCTION_CALLS=0.
+
+## 2026-10-31 — DELIA-C3-MODEL-CAPABILITY-COMPARATIVE-EVALUATION-01 (Task 24, doc 210 §11)
+- Experimento única-variável DELIA_LLM_MODEL em t22heldout-21, código fe13b9fac2 congelado: qwen3:4b ~10-11/21 (~50%) vs qwen2.5:3b 7/20=35%. MODEL_CAPACITY_LIMITATION=PROVEN para a família de falhas do held-out novo. MODEL_B_LARGER_7B_8B=NOT_FEASIBLE (nenhum modelo maior local; download fora de escopo). PRODUCTION_DEPLOY=NO; PRODUCTION_CALLS=0.
