@@ -1436,3 +1436,16 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Solução tool-timeout | DECISION_REQUIRED | async/otimização/snapshot — não implementado |
 | Cadeia BFF→api-delpi | FUNCIONAL | 200s reais completados via S2S |
 | Portal | PROVÁVEL_FUNCIONAL | mesmo orçamento 300s; validação visual pendente |
+
+---
+
+## R09-G049 — otimização comprovada + reconcile (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Perfil por etapa | EXECUTADO | DB ~20s; Python refetch ~180s (per-anchor) |
+| Otimização | ATENDIDO | prefetch set-based; 203.3s → 16.9s prod |
+| Semântica preservada | ATENDIDO | 299 âncoras, 2.581 linhas idênticas; 26/26 testes |
+| Deploy prod | EXECUTADO | rebuild api-delpi; execute()=16.9s verificado |
+| Timeout consumidores | ATENDIDO | 16.9s < MCP/BFF/browser budgets |
+| Consulta positiva real | PRONTA | aguarda execução do usuário/PO |

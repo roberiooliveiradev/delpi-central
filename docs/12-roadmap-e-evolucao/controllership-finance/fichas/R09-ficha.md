@@ -181,3 +181,14 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Fix do timeout ainda não consta em origin/main (merge de terceiro
   bloqueia rebase local; srv-api sem HTTPS interativo) — commit
   prod dd0b809ac ≡ local 6242838fa6 aguarda publicação.
+
+## Atualização — Gate 049 (01/11/2026) — otimização 12× comprovada
+
+- Gargalo REAL (perfil em prod): DB ~20s mas execute() = 203.3s —
+  causa = _build_anchor refazia _edges + _operations por âncora (~299×).
+- Fix: prefetch set-based por filial (edges L1/L2 + ops SHY/SG2 uma vez).
+- Resultado medido em PROD: 203.3s → 16.9s | 299 âncoras | 2.581
+  linhas | payload idêntico (semântica preservada). 26/26 testes.
+- Commits: local 4240a831d5 ≡ prod 8ab19ecc1. Rebuild api-delpi deployado.
+- Todos os timeouts agora atendidos (MCP/BFF 300s/30s) — validação
+  positiva CLARA/Portal passa a ser viável.
