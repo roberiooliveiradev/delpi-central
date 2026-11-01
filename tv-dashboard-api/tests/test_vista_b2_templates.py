@@ -105,7 +105,7 @@ def test_read_template_get_requires_ref():
     with _ctx(_viewer()), patch.object(tool_bridge, "_dispatch", dispatch):
         r = tool_bridge.tool_read(entity="slide_template", action="get")
     assert r.is_error is True
-    assert r.structured_content["code"] == "VALIDATION_ERROR"
+    assert r.structured_content["code"] == "ARGUMENT_VALIDATION"
 
 
 # ---------------------------------------------------------------------------

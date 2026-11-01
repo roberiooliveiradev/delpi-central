@@ -97,6 +97,16 @@ class PresentationRecipeService:
         for recipe_id, row in recipes.items():
             if not isinstance(row, dict):
                 continue
+            rid = str(recipe_id or "").strip()
+            # Explicit recipe IDs resolve (normalized: underscores,
+            # spaces and dashes are equivalent word separators).
+            id_token = rid.lower()
+            compact = normalized.replace(" ", "_").replace("-", "_")
+            if id_token and (id_token in compact or
+                             rid.lower().replace("_", " ") in normalized):
+                score = len(rid) + 1
+                if best is None or score > best[0]:
+                    best = (score, rid, row)
             markers = row.get("markers")
             if not isinstance(markers, list):
                 continue

@@ -287,7 +287,7 @@ def test_read_media_asset_requires_playlist_ref():
     with _ctx(_viewer()), patch.object(tool_bridge, "_dispatch", dispatch):
         result = tool_bridge.tool_read(entity="media_asset", action="list")
     assert result.is_error is True
-    assert result.structured_content["code"] == "VALIDATION_ERROR"
+    assert result.structured_content["code"] == "ARGUMENT_VALIDATION"
 
 
 def test_read_media_asset_rejects_unknown_filter():
@@ -298,4 +298,4 @@ def test_read_media_asset_rejects_unknown_filter():
             filters={"evil": True})
     assert result.is_error is True
     assert result.structured_content["code"] in (
-        "VALIDATION_ERROR", "UNKNOWN_FILTER")
+        "ARGUMENT_VALIDATION", "UNKNOWN_FILTER")

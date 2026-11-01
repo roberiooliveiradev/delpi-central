@@ -549,7 +549,10 @@
         "4 kpis",
         "grade de quatro",
         "kpi grid",
-        "grid de kpis"
+        "grid de kpis",
+        "visao geral",
+        "visão geral",
+        "quatro indicadores"
       ],
       "ops": [
         {
@@ -807,7 +810,9 @@
         "kpi e tabela",
         "hero e tabela",
         "kpi plus table",
-        "indicador e tabela"
+        "indicador e tabela",
+        "principais problemas",
+        "ranking de problemas"
       ],
       "ops": [
         {
@@ -1146,7 +1151,14 @@
         "kpi e grafico",
         "indicador com série",
         "kpi plus chart",
-        "painel com gráfico"
+        "painel com gráfico",
+        "vendas e metas",
+        "acompanhar vendas",
+        "tendencia de",
+        "tendência de",
+        "evolucao de",
+        "evolução de",
+        "painel comercial"
       ],
       "ops": [
         {
@@ -1308,7 +1320,16 @@
         "painel otd",
         "multi indicador",
         "kpi series table",
-        "painel completo"
+        "painel completo",
+        "produtividade",
+        "acompanhar a producao",
+        "acompanhar a produção",
+        "situacao geral",
+        "situação geral",
+        "desvios de qualidade",
+        "painel de qualidade",
+        "acompanhar operacao",
+        "acompanhar operação"
       ],
       "ops": [
         {
@@ -1432,7 +1453,13 @@
         "tabela em destaque",
         "foco tabela",
         "slide tabela",
-        "table focus"
+        "table focus",
+        "produtos que exigem atencao",
+        "produtos que exigem atenção",
+        "maior atencao",
+        "maior atenção",
+        "lista de produtos",
+        "painel de estoque"
       ],
       "ops": [
         {
@@ -1629,7 +1656,9 @@
         "gráfico de barras",
         "grafico de barras",
         "kpi plus bar",
-        "comparação em barras"
+        "comparação em barras",
+        "comparar",
+        "comparacao de"
       ],
       "ops": [
         {
