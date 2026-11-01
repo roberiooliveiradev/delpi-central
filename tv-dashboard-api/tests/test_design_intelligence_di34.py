@@ -44,7 +44,12 @@ def test_modes_qualify_candidates():
     for b in bp["blocks"]:
         allowed = set(b["requiredModes"])
         for c in b["candidates"]:
-            assert allowed & set(c.get("allowedDisplayModes") or [])
+            declared = set(c.get("allowedDisplayModes") or [])
+            # modo específico OU auto + shape compatível (DI-3.5)
+            assert (allowed & (declared - {"auto"})) or (
+                "auto" in declared
+                and c.get("metaShape") is not None
+            )
 
 
 def test_pending_binding_honest_readiness():
