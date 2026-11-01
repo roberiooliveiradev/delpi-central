@@ -77,9 +77,12 @@ def _schema_for(capability: str) -> dict:
     for line in body.splitlines():
         if line.startswith("data:"):
             data = json.loads(line[5:].strip())
+            names = [t.get("name") for t in data.get("result", {}).get("tools", [])]
             for t in data.get("result", {}).get("tools", []):
-                if t.get("name") == tool:
+                n = t.get("name") or ""
+                if n == tool or n.endswith("." + tool) or n.endswith("_" + tool):
                     return t.get("inputSchema", {})
+            print(f"tool {tool} not found; advertised: {names}")
     return {}
 
 
