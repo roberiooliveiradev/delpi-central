@@ -13,10 +13,10 @@
 | Slice | Estado | Próximo comando/ação |
 |---|---|---|
 | S0 baseline/RED | parcial — baseline congelada acima | montar matriz de incidentes T34 → fixtures RED paramétricas |
-| S2 arggen | **benchmark executado + causa-raiz provada** (pydantic-ai 2.60.0, `_s2_ab_benchmark.py` em `bd229c9a28`+`0c5bd4a1f2`) | PROVA tools/list clara: `topic` é `anyOf[string,null]` — free-string; enum `summary\|actor\|catalog\|schema\|persona` só na description. Pydantic-ai produz tipos válidos mas inventa discriminadores → NOT_ADOPT nesta fronteira. **PRÓXIMO FIX owner-side:** tools são registrados por decorator `@mcp.tool` com signature `topic: str` → schema gerado da assinatura. Trocar para `Literal["summary","actor","catalog","schema","persona"] \| None` no server.py de cada owner publica o enum no inputSchema (sem enum hardcoded na DÉLIA). Aplica-se a: clara `topic`, caio `topic`, eva/teo `analysis_type`, suri `analysis`. Próxima ação: editar signatures + rebuild + tools/list verify + rerun benchmark. |
+| S2 arggen | **enums owner-side publicados + arggen real verde** — tools/list verificado nos 5 owners (clara get_context.topic Literal `e8573b5615` + analyze/knowledge via enum injection; caio analyze 21 + knowledge 17; eva analyze 5 + knowledge 4; teo/suri já literais). Helper `enum_constrained_parameters` em `delpi_mcp.tool_metadata`. `_s2_arggen_probe.py`: 7/7 discriminadores ∈ enum + schema_valid (`s2_arggen.json`). Fix incidente: `caio_commercial_knowledge.json` corrompido por merge commitado — resolvido upstream 4.1.1. Vocabulários abertos (get_context.topic caio/eva, suri knowledge.topic) corretamente não enumados. | bateria doc211 v2 com envs `DELIA_MCP_{CAIO,CLARA,EVA,SURI}_*` habilitados → `s2_gate_4cases_v2.log`; depois held-out + negativos + eval pela DÉLIA para fechar gate §2 |
 | S3 subobjetivos | não iniciado | modelo de estado `subobjective(id,goal,deps,evidence_needed,state,attempts,evidence_refs,gaps)` reutilizando `GoalEvidenceJudgment`/`Work` existentes — TO_INVENTORY primeiro |
-| S4 paralelismo | não iniciado | `Send`+reducers no `langgraph_engine`; benchmark vs fan-out custom (latência/tokens/coverage) |
-| S5 checkpoint | não iniciado | `SqliteSaver` no composition root, thread/investigation-scoped; prova interrupt→restart→resume; sem tokens/CoT persistidos |
+| S4 paralelismo | não iniciado | `Send`+reducers no `langgraph_engine` (existe em `app/infrastructure/orchestration/langgraph_engine.py`, eval-only); benchmark vs fan-out custom |
+| S5 checkpoint | não iniciado | `SqliteSaver` (langgraph-checkpoint 4.3.1 instalado) no composition root, thread/investigation-scoped; prova interrupt→restart→resume; sem tokens/CoT |
 | S6 evidência | não iniciado | rubrica por subobjetivo `SATISFIED/PARTIAL/UNSUPPORTED/CONTRADICTED` no avaliador; golden tests catálogo/clarificação ≠ PASS |
 | Integração | pendente | full regression + interop A–F + 10 cenários E2E + rollback |
 
@@ -24,10 +24,21 @@
 
 ```bash
 cd /home/analistaptd/projetos/delpi-central && git status && git rev-parse HEAD
-docker ps | grep -E "delia|commercial|controllership|supplies|engineering|transformometro|tv-dashboard|keycloak"
-# re-verificar envelopes: python3 -c probe get_context clara (task36)
-# bateria doc211: CORPUS_SET=doc211 python3 scripts/local_orchestration_reliability_eval.py 1 (delia-t21-main)
+# HEAD esperado: ff41499261 (S2 enums owner-side) — workstreams concorrentes preservados (UU SURI ledger NÃO resolver aqui)
+wsl -e docker exec delia-t21-main python3 /app/scripts/_s2_schema_probe.py caio eva clara teo suri   # re-verificar enums no wire
+# bateria doc211 v2 (ENVS OBRIGATÓRIOS — container só habilita davi/teo/vista por default):
+wsl -e docker exec -e CORPUS_SET=doc211 \
+  -e DELIA_MCP_CAIO_ENABLED=1 -e DELIA_MCP_CAIO_BASE_URL=http://commercial-api:8000/mcp -e DELIA_MCP_CAIO_HOST_HEADER=localhost:8000 \
+  -e DELIA_MCP_CLARA_ENABLED=1 -e DELIA_MCP_CLARA_BASE_URL=http://controllership-finance-api:8000/mcp -e DELIA_MCP_CLARA_HOST_HEADER=localhost:8000 \
+  -e DELIA_MCP_EVA_ENABLED=1 -e DELIA_MCP_EVA_BASE_URL=http://engineering-api:8000/mcp -e DELIA_MCP_EVA_HOST_HEADER=localhost:8000 \
+  -e DELIA_MCP_SURI_ENABLED=1 -e DELIA_MCP_SURI_BASE_URL=http://supplies-mcp:8000/mcp -e DELIA_MCP_SURI_HOST_HEADER=localhost:8000 \
+  delia-t21-main python3 /app/scripts/local_orchestration_reliability_eval.py 1
+# arggen real isolado: wsl -e docker exec <mesmos -e> delia-t21-main python3 /app/scripts/_s2_arggen_probe.py
 ```
+
+## Resultado bateria doc211 v2 (SHA ff41499261, envs corretos)
+
+`{executions:4, outcomes:{PASS:2, FAIL:2}}` — cmp_03 PASS (caio.get_context COMPLETED), cmp_05 PASS (clara.get_context COMPLETED). cmp_13/cmp_19 FAIL `GROUP_SELECTION_ERROR` com eva.*/teo.* invocados — owner correto selecionado mas nenhum cap COMPLETED: primeira investigação da próxima sessão = status do invoke (arggen→invoke→reject?) via proposals/invokes do eval (adicionar dump de invokes por cenário ou rerodar cmp_13,cmp_19 com `-v`).
 
 ## Workstreams concorrentes ativos (não tocar)
 
