@@ -1449,3 +1449,16 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Deploy prod | EXECUTADO | rebuild api-delpi; execute()=16.9s verificado |
 | Timeout consumidores | ATENDIDO | 16.9s < MCP/BFF/browser budgets |
 | Consulta positiva real | PRONTA | aguarda execução do usuário/PO |
+
+---
+
+## R09-G051 — encerramento operacional (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| GitHub × produção sincronizados | ATENDIDO | fc53a128 publicado; prod conteúdo-idêntico |
+| Consulta positiva CLARA | PASS | PO: 01=299/2.581, 02=222/2.078 reais |
+| Otimização | ATENDIDO | 203.3s → 16.9s medido prod |
+| Segurança negativa | PASS | 401 noauth/bogus producer+BFF+gateway |
+| Portal smoke visual | TEST_NOT_RUN | sem sessão de usuário no executor; MFE servido e auth-gated |
+| DR-3 | PENDING | officialParity=pending permanente |
