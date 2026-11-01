@@ -30,7 +30,7 @@ class TestGetContext:
         assert data["subject"] == "user-1"
         assert data["capabilities"] == {"access": True, "manage": False}
         assert data["allowed_units"] == ["01", "02"]
-        assert data["mcp"]["catalog_version"] == 8
+        assert data["mcp"]["catalog_version"] == 9
 
     def test_catalog_lists_semantic_surface(self, access_context):
         access_context()
@@ -44,7 +44,7 @@ class TestGetContext:
             "knowledge",
             "execute",
         }
-        assert data["mcp"]["catalog_version"] == 8
+        assert data["mcp"]["catalog_version"] == 9
         caps = data["capabilities"]
         assert "purchase_orders" in caps["read"]["entities"]
         assert caps["analyze"]["analyses"] == [
@@ -60,7 +60,8 @@ class TestGetContext:
             "deliveries",
             "inventory",
             "safety_stock",
-            "otd",}
+            "otd",
+            "consumption",}
         assert caps["knowledge"]["actions"] == ["get", "search", "sources"]
         assert caps["execute"]["entities"]["suppliers"]["actions"] == [
             "create",

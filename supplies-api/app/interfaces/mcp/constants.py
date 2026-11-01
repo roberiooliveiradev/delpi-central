@@ -30,8 +30,9 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 # not binary/base64 — file materialization stays on the BFF/Portal;
 # rev.6 = deliveries.late + inventory summary/items (P1-R3);
 # rev.7 = safety_stock filters/summary/items/details/suppliers (R-13/R-14);
-# rev.8 = otd aggregate/series + analyze(overview_summary) (R-02/R-03).
-CATALOG_VERSION = 8
+# rev.8 = otd aggregate/series + analyze(overview_summary) (R-02/R-03);
+# rev.9 = consumption-audit search/get/comparison (R-23..R-25).
+CATALOG_VERSION = 9
 
 # DISCOVERY | READ | ANALYSIS | ACT — frozen semantic tool classes.
 # Metadata describes semantics; it NEVER authorizes execution.
@@ -109,6 +110,7 @@ READ_ACTIONS_BY_ENTITY: dict[str, frozenset[str]] = {
         {"filters", "summary", "items", "details", "suppliers"}
     ),
     "otd": frozenset({"aggregate", "series"}),
+    "consumption": frozenset({"search", "get", "comparison"}),
 }
 READ_ENTITIES: frozenset[str] = frozenset(READ_ACTIONS_BY_ENTITY)
 ANALYSIS_KINDS: frozenset[str] = frozenset(
@@ -363,3 +365,22 @@ OTD_SERIES_FILTER_KEYS = frozenset(
 OVERVIEW_SUMMARY_FILTER_KEYS = frozenset(
     {"branch", "start_date", "end_date"}
 )
+
+CONSUMPTION_SEARCH_FILTER_KEYS = frozenset(
+    {
+        "unit",
+        "search",
+        "product",
+        "date_type",
+        "period_start",
+        "period_end",
+        "status",
+        "work_center",
+        "operation",
+        "page",
+        "page_size",
+    }
+)
+CONSUMPTION_COMPARISON_FILTER_KEYS = frozenset({"unit", "orders"})
+CONSUMPTION_IDENTITY_KEYS = frozenset({"unit", "production_order"})
+CONSUMPTION_DATE_TYPES = frozenset({"emission", "finished", "appointment"})
