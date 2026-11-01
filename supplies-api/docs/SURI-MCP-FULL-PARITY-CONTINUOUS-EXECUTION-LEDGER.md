@@ -1,8 +1,14 @@
 # SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION — LEDGER
 
 PROGRAM: SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION-001/002
-CURRENT LOT: G15 — Auditoria final 100% (recontar 45 linhas)
-LAST CLOSED LOT: G14 View DELETE (262e157012)
+CURRENT LOT: PROGRAM COMPLETE — 45/45 proven
+LAST CLOSED LOT: G15 FINAL AUDIT (all 45 rows verified on HEAD)
+G15 AUDIT: 45/45 matrix rows carry runtime evidence —
+  baseline G1/G2/G3 (21) + G4..G8 reads (15) + G9 corpus +
+  G10 ACT audit + G11..G14 writes (9); catalog v15, 5 tools,
+  V005 durable idempotency, AuthZ fail-closed, negatives
+  verified per lot; production image = HEAD.
+
 G14 EVIDENCE: catalog v15; view_delete exige confirmation
   {view_id match + acknowledged:true}; 3 negações ->
   confirmation_unavailable; delete real da view 'smoke'
@@ -58,8 +64,8 @@ G4 EVIDENCE: catalog v7 in-image; smoke autenticado — filters/summary ok,
   items total=14232, details+suppliers ok (code 10010001),
   details sem branch -> 'A concrete branch (01 or 02) is required',
   action/filtro inválidos fail-closed. Suite suri_mcp verde.
-CURRENT HEAD: 262e157012 · CATALOG: V15 · SOURCE SHA: idem · CATALOG: V6 · TOOLS: 5
-PARITY: 42/45 = 93.3% · TARGET: 45/45 = 100%
+CURRENT HEAD: PROGRAM CLOSED · CATALOG: V15 · SOURCE SHA: idem · CATALOG: V6 · TOOLS: 5
+PARITY: 45/45 = 100% · TARGET: 45/45 = 100%
 
 ## G4 — Inventário concluído (contratos reais no HEAD)
 
