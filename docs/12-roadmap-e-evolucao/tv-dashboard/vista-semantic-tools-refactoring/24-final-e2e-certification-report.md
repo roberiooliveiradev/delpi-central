@@ -62,7 +62,7 @@ capabilities, sem novas tools/Actions.
 
 **`PROGRAM_B_FINAL_ACCEPTANCE = PENDING_EXTERNAL_VERIFICATION`**
 
-- 8/10 gates `PASS`; G5 = `BACKEND_CONSENT_PASS` +
+- 9/10 gates `PASS`; G5 = `BACKEND_CONSENT_PASS` +
   `EXTERNAL_CHANNEL_UNVERIFIED`; G3 = `PASS` (OpenAPI Builder sync
   pendente mas não-bloqueante).
 - Nenhuma falha técnica. A pendência é verificação de canal humano
