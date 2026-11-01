@@ -90,6 +90,11 @@ class DesignIntelligenceService:
             "readBeforeAsk": contract.get("readBeforeAsk") or {},
             "forbiddenClaims": contract.get("forbiddenClaims") or [],
             "confidencePolicy": contract.get("confidencePolicy"),
+            "professionalGuidance": {
+                key: contract.get("professionalGuidance", {}).get(key)
+                for key in ("version", "scope", "chartSelection",
+                            "tvConstraints", "antiPatterns")
+            },
         }
 
     # -- PHASE 5 methodology evaluator --------------------------------------
