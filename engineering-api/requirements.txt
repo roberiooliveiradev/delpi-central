@@ -11,5 +11,5 @@ mcp==2.2.0
 psycopg[binary]==3.2.10
 pypdf==5.9.0
 # EVA drawing benchmark — providers locais experimentais (MIT/BSD)
-pdfplumber==0.11.10
+pdfplumber==0.11.9
 pypdfium2==4.30.1
