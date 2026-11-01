@@ -156,3 +156,13 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Cadeia positiva (usuário autenticado) e validação CLARA via ChatGPT:
   aguardam credencial de usuário/execução do PO — NÃO classificadas.
 - DR-3 pendente; custos source_missing. Verdict: ACCEPT_WITH_RESIDUAL.
+
+## Atualização — Gate 047 (01/11/2026) — 503 corrigido em produção
+
+- Causa raiz PROVEN: DELPI_API_TIMEOUT=30 (BFF→api-delpi) < ~150-210s
+  do produtor (logs: status=200 duration_ms=149157/212481). Classe:
+  configuração/timeout.
+- Fix: timeout_seconds=300 dedicado na rota R09 (proxy nginx 300s);
+  produtor e regras inalterados. 10/10 testes. Deploy rebuild BFF —
+  healthy, fix verificado no container.
+- Consulta positiva real pendente de credencial de usuário (PO/ChatGPT).

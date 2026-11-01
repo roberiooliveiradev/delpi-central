@@ -1410,3 +1410,16 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Cadeia positiva usuário | TEST_NOT_RUN | requer Bearer Keycloak real |
 | Validação CLARA/Portal live pelo PO | PENDING | aguarda execução do PO |
 | DR-3 | PENDING | operational_view ativa; paridade oficial pendente |
+
+---
+
+## R09-G047 — 503 root cause + fix produtivo (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Reprodução/causa do 503 | PROVEN | delpi_api_timeout; producer 200 em 149-212s vs timeout 30s |
+| Correção mínima | ATENDIDO | timeout_seconds=300 na rota; 10/10 testes |
+| Deploy prod | EXECUTADO | rebuild BFF; fix no container; healthy |
+| Consulta positiva real | TEST_NOT_RUN | aguarda Bearer de usuário (PO/ChatGPT) |
+| Push fix para origin | PENDING | canal credenciado (merge alheio bloqueia) |
+| DoD full-flow transversal | REGISTRADO | doc 145; aplica-se a R13/R04/R14 |
