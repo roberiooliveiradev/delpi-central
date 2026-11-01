@@ -17,7 +17,7 @@
 2. APQC — *Sourcing and Procurement: 2024 Blueprint for Success*: https://www.apqc.org/resource-library/resource-listing/sourcing-and-procurement-2024-blueprint-success
 3. APQC — *Process Frameworks (PCF)*: https://www.apqc.org/process-frameworks
 4. APQC — *How Should Procurement And Sourcing Performance Be Benchmarked?*: https://www.apqc.org/How-Should-Procurement-And-Sourcing-Performance-Be-Benchmarked
-5. APQC — *How Should Procure-to-Pay And Accounts-Payable Performance Be Measured And Improved?*: https://www.apqc.org/How-Should Procure-to-Pay-And-Accounts-Payable-Performance-Be-Measured-And-Improved (verificar URL antes de usar como link automatizado)
+5. APQC — *How Should Procure-to-Pay And Accounts-Payable Performance Be Measured And Improved?*: https://www.apqc.org/How-Should-Procure-to-Pay-And-Accounts-Payable-Performance-Be-Measured-And-Improved
 6. ISM — *Category Management in Procurement Essentials*: https://www.ism.ws/supply-chain/category-management-in-procurement/
 7. ISM — *Procurement Analytics for Category Managers*: https://www.ismworld.org/supply-management-news-and-reports/news-publications/inside-supply-management-magazine/blog/2024/2024-05/procurement-analytics-for-category-managers/
 8. ISM — *Tools & Templates Library*: https://sg.ismworld.org/for-individuals/member-tools-resources/tools--templates-library/
@@ -191,7 +191,7 @@ Para cada ficha, exigir:
 | Ciclo | Entrega | Gate / evidência |
 |---|---|---|
 | K0 | Inventário da Help, glossário, schemas, endpoints, 45 capacidades e campos disponíveis por página | matriz página→capability→método→input→owner |
-| K1 | Curadoria P1: 22 métodos (ST-02, SU-01/04/05/06, IN-01/02/03/04/07/14, OP-01/02/03/07, MK-01/04/06, MG-01/02/06/08) | fichas + validação PO + testes de compreensão |
+| K1 | Curadoria P1: 23 métodos (ST-02, SU-01/04/05/06, IN-01/02/03/04/07/14, OP-01/02/03/07, MK-01/04/06, MG-01/02/06/08) | fichas + validação PO + testes de compreensão |
 | K2 | Expansão knowledge corpus com fonte/locator/hash, versionamento e testes | `knowledge(search|get|sources)`, 5 tools |
 | K3 | Análises determinísticas P1, uma por contrato, somente se houver inputs e fórmula suficientes | positive+sibling+negative, AuthZ, dados-fonte e parcialidade |
 | K4 | Relatórios e jornadas compostas; templates, proveniência, export adequado a cada canal | smoke real, revisão de qualidade e usuário |
