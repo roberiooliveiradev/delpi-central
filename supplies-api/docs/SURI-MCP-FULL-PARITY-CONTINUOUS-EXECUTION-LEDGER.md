@@ -1,9 +1,16 @@
 # SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION — LEDGER
 
 PROGRAM: SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION-001/002
-CURRENT LOT: G11 — Comex WRITE (W-06 ncm request, W-07 transitions,
-  W-08 views create/update)
-LAST CLOSED LOT: G10 ACT FOUNDATION — AUDITED/PROVEN
+CURRENT LOT: G12 — Enrichment WRITE (W-03 review create, W-04
+  decisions/bulk, W-05 prepare-update)
+LAST CLOSED LOT: G11 Comex WRITE (d28d2f9fc9)
+G11 EVIDENCE: catalog v12 in-image; comex_execute espelha ACT V005;
+  smoke — ncm_request candidate sobre NCM existente -> confirmed
+  (already_registered, sem mutacao); mesma idem_key -> replayed;
+  transition governanca inexistente -> rejected not_found;
+  view_create 'smoke' criou view real do actor (visivel em views);
+  bogus key/status/action fail-closed. W-09 delete fica p/ G14.
+
 G10 AUDIT: PostgresSuriExecuteOperationsRepository (V005) = claim
   atomic in_progress -> complete, replay/conflict/in_progress kinds,
   payload_hash LGPD, TTL+gc, fail-closed on store error;
@@ -35,8 +42,8 @@ G4 EVIDENCE: catalog v7 in-image; smoke autenticado — filters/summary ok,
   items total=14232, details+suppliers ok (code 10010001),
   details sem branch -> 'A concrete branch (01 or 02) is required',
   action/filtro inválidos fail-closed. Suite suri_mcp verde.
-CURRENT HEAD: def1d325dc · CATALOG: V11 · SOURCE SHA: idem · CATALOG: V6 · TOOLS: 5
-PARITY: 33/45 = 73.3% · TARGET: 45/45 = 100%
+CURRENT HEAD: d28d2f9fc9 · CATALOG: V12 · SOURCE SHA: idem · CATALOG: V6 · TOOLS: 5
+PARITY: 36/45 = 80.0% · TARGET: 45/45 = 100%
 
 ## G4 — Inventário concluído (contratos reais no HEAD)
 
