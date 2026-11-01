@@ -3498,7 +3498,7 @@ class GptActionsDispatchService:
             if data_ops:
                 try:
                     route_result = self._suggest.suggest(
-                        query=message, limit=8
+                        query=message, limit=20
                     )
                     candidates = (
                         route_result.get("suggestions") or []
@@ -3529,20 +3529,48 @@ class GptActionsDispatchService:
                     }
 
                 def _modes_for(block_type, chart_type):
+                    """Modos ESPECÍFICOS exigidos — `auto` nunca conta
+                    como evidência de compatibilidade (DI-3.5)."""
                     if block_type in {"kpi_view", "data_kpi"}:
-                        return {"kpi", "auto"}
+                        return {"kpi"}
                     if block_type in {"chart_view", "data_chart"}:
                         ct = str(chart_type or "").lower()
                         if ct in {"line", "area"}:
-                            return {"line_chart", "auto"}
+                            return {"line_chart"}
                         if ct in {"bar", "horizontal_bar", "column"}:
-                            return {"bar_chart", "auto"}
-                        return {"line_chart", "bar_chart", "auto"}
+                            return {"bar_chart"}
+                        return {"line_chart", "bar_chart"}
                     if block_type in {
                         "table_view", "data_table", "canvas_table",
                     }:
-                        return {"table", "auto"}
-                    return {"auto"}
+                        return {"table"}
+                    return set()
+
+                # metaShape ↔ componente: evidência estrutural mínima
+                # quando a rota declara apenas `auto` (o catálogo
+                # auto-seleciona o modo pelo shape do retorno).
+                _SHAPES_FOR_MODES = {
+                    "kpi": {"scalar", "object", "composite_analysis",
+                            "product_snapshot", "nested_object"},
+                    "table": {"list", "paged_list", "hierarchy",
+                              "playbook_report", "composite_analysis"},
+                }
+
+                def _compatible(cand, modes):
+                    declared = {
+                        str(m) for m in
+                        (cand.get("allowedDisplayModes") or [])
+                    }
+                    if modes & (declared - {"auto"}):
+                        return True
+                    shape = str(cand.get("metaShape") or "")
+                    return bool(
+                        "auto" in declared
+                        and any(
+                            shape in _SHAPES_FOR_MODES.get(m, set())
+                            for m in modes
+                        )
+                    )
 
                 def _state(cands):
                     if len(cands) == 1:
@@ -3561,13 +3589,35 @@ class GptActionsDispatchService:
                     modes = _modes_for(btype, block.get("chartType"))
                     per = [
                         cand for cand in qualified
-                        if modes & {
-                            str(m)
-                            for m in (
-                                cand.get("allowedDisplayModes") or []
-                            )
-                        }
+                        if _compatible(cand, modes)
                     ]
+                    if not per and qualified:
+                        # Fallback por domínio: ranking lexical fraco
+                        # não prova inexistência — busca no catálogo
+                        # canônico rotas do mesmo domínio das top
+                        # candidates que declarem o modo exigido.
+                        top_category = str(
+                            (qualified[0].get("category") or "")
+                        ).strip()
+                        if top_category:
+                            try:
+                                catalog_routes = (
+                                    self._catalog.list_routes()
+                                )
+                            except Exception:
+                                catalog_routes = []
+                            per = [
+                                cand for cand in catalog_routes
+                                if isinstance(cand, dict)
+                                and str(cand.get("category") or "")
+                                == top_category
+                                and str(cand.get("metaShape") or "")
+                                != "document_export"
+                                and str(
+                                    cand.get("httpMethod") or "GET"
+                                ).upper() == "GET"
+                                and _compatible(cand, modes)
+                            ][:8]
                     blocks.append({
                         "blockType": btype or "data_block",
                         "requiredModes": sorted(modes),
