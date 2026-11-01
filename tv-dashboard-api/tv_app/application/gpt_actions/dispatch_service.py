@@ -3474,10 +3474,70 @@ class GptActionsDispatchService:
                     payload["clarificationKey"] = None
                     payload["reason"] = None
             else:
-                payload["status"] = "unsupported"
-                payload["compositionHints"] = (
-                    PresentationRecipeService.recipe_ids()[:10]
-                )
+                # Sem marker de recipe: se o pedido produz fontes
+                # qualificadas no catálogo canônico, compõe por recipe
+                # genérica do shape dominante — cobertura de intenção
+                # (ex.: auditorias 5S -> tabela de NCs) sem engine nova.
+                generic = None
+                try:
+                    rr = self._suggest.suggest(query=message, limit=6)
+                    sugg = (
+                        rr.get("suggestions") or []
+                        if isinstance(rr, dict) else []
+                    )
+                    shapes = {
+                        str(c.get("metaShape") or "")
+                        for c in sugg[:3]
+                        if isinstance(c, dict)
+                    }
+                    top_score = max(
+                        (
+                            float(c.get("score") or 0.0)
+                            for c in sugg
+                            if isinstance(c, dict)
+                        ),
+                        default=0.0,
+                    )
+                    domain_hit = any(
+                        str(c.get("category") or "")
+                        not in {"", "other"}
+                        and float(c.get("score") or 0.0) >= 8.0
+                        for c in sugg
+                        if isinstance(c, dict)
+                    )
+                    if sugg and top_score >= 8.0 and domain_hit:
+                        generic = (
+                            "TV_TABLE_FOCUS"
+                            if shapes <= {
+                                "list", "paged_list", "hierarchy",
+                            }
+                            else "TV_KPI_SERIES_TABLE"
+                        )
+                except Exception:
+                    sugg = []
+                if generic:
+                    ops = PresentationRecipeService.ops_for_recipe(
+                        generic
+                    )
+                    if ops:
+                        payload["status"] = "proposal"
+                        payload["recipeId"] = generic
+                        payload["ops"] = ops
+                        payload["matchedCapabilityKeys"] = [
+                            f"recipe:{generic}"
+                        ]
+                        payload["clarificationKey"] = None
+                        payload["reason"] = None
+                    else:
+                        payload["status"] = "unsupported"
+                        payload["compositionHints"] = (
+                            PresentationRecipeService.recipe_ids()[:10]
+                        )
+                else:
+                    payload["status"] = "unsupported"
+                    payload["compositionHints"] = (
+                        PresentationRecipeService.recipe_ids()[:10]
+                    )
         # DI-3.3 — plano de binding para blocos de dados (paths recipe e
         # planner-ready): descoberta canônica de rotas (read-only); nunca
         # inventa fonte — RESOLVED / NEEDS_SOURCE_SELECTION /
@@ -3559,17 +3619,35 @@ class GptActionsDispatchService:
                     for c in qualified
                     if _anchor_top > 0
                     and float(c.get("score") or 0.0)
-                    >= _anchor_top * 0.5
+                    >= _anchor_top * 0.7
                     and str(c.get("category") or "").strip()
                 }
-                anchor_ids = {
-                    str(c.get("operationId") or "")
+                # Domínio secundário só entra por relevância individual
+                # forte na query bruta (>=50% do topo) — categoria
+                # fraca não arrasta vizinhos (5S/Kaizen fora de
+                # produção; T02/T03 DI-3.6.2).
+                bare_scores = {
+                    str(c.get("operationId") or ""): float(
+                        c.get("score") or 0.0
+                    )
                     for c in qualified
-                    if _anchor_top > 0
-                    and float(c.get("score") or 0.0)
-                    >= _anchor_top * 0.35
-                    and str(c.get("operationId") or "").strip()
                 }
+
+                def _anchor_ok(cand):
+                    cat = str(cand.get("category") or "").strip()
+                    if not anchor_categories:
+                        return True
+                    if cat in anchor_categories:
+                        return True
+                    # score da QUERY BRUTA, não o da query de propósito
+                    # — sufixos nunca promovem cross-domain.
+                    return (
+                        _anchor_top > 0
+                        and bare_scores.get(
+                            str(cand.get("operationId") or ""), 0.0
+                        )
+                        >= _anchor_top * 0.5
+                    )
 
                 def _slim(cand):
                     return {
@@ -3676,15 +3754,9 @@ class GptActionsDispatchService:
                             if float(c.get("score") or 0.0) >= floor
                         ]
                     # domain anchor: sufixo de propósito não promove
-                    # fontes fora do domínio de negócio âncora.
-                    if anchor_categories or anchor_ids:
-                        per = [
-                            c for c in per
-                            if str(c.get("category") or "").strip()
-                            in anchor_categories
-                            or str(c.get("operationId") or "")
-                            in anchor_ids
-                        ]
+                    # fontes fora do domínio de negócio âncora; secundárias
+                    # só por relevância individual forte na query bruta.
+                    per = [c for c in per if _anchor_ok(c)]
                     per = per[:8]
                     if not per and qualified:
                         # Fallback por domínio: ranking lexical fraco

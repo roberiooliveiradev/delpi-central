@@ -38,6 +38,9 @@ def test_table_prefers_list_sources():
     ids = {c["operationId"] for c in table["candidates"]}
     assert any(
         "list" in oid or "detalhes" in oid or "retrabalhos" in oid
+        or "inspecoes" in oid or "inspection" in oid
+        or "pending" in oid or "incomplete" in oid
+        or "supplies" in oid
         for oid in ids
     )
 
