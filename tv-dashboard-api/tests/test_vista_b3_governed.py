@@ -222,7 +222,7 @@ def test_restore_history_requires_refs():
             entity="playlist_history", action="restore",
             target={"playlistId": str(uuid4())})
     assert r.is_error is True
-    assert r.structured_content["code"] == "VALIDATION_ERROR"
+    assert r.structured_content["code"] == "ARGUMENT_VALIDATION"
 
 
 # ---------------------------------------------------------------------------
