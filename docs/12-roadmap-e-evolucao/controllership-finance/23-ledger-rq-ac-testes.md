@@ -1376,3 +1376,20 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Testes | PASS | 50/50 reexecutados (venv Windows) |
 | Homologação DR-3 | PREPARADO | pacote doc 144; aceite humano pendente |
 | BFF | NOT_READY | depende DR-3 + fonte taxa |
+
+---
+
+## R09-G043/G044 — BFF + CLARA capability (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Rota BFF governada | ATENDIDO | GET /closing/competences/{p}/billing-mod-breakdown; 10/10 testes |
+| Officialidade operational_view + parity pending | ATENDIDO | projeção BFF, testado |
+| Evidência histórica de paridade | ATENDIDO | bloco estático escopo 2026-09, rotulado |
+| Ausência tipada (custos) | ATENDIDO | source_missing preservado, nunca zero |
+| S2S/AuthZ existente | ATENDIDO | gateway + _authorized_user reusados; sem permission nova |
+| CLARA read(report.billing_mod_breakdown) | ATENDIDO | READ_ACTIONS registrado; paridade BFF |
+| Integração live BFF→api-delpi | TEST_NOT_RUN | ambiente indisponível (WSL/Docker fora) |
+| Deploy produtivo | BLOQUEADO | SSH publickey estação; requer canal credenciado |
+| Portal MFE | FORA_DO_ESCOPO | pendente gate dedicado |
+| DR-3 homologação | PENDING | pacote preparado; aceite humano aguardado |
