@@ -981,3 +981,5 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Pacote revisao: .battery/task33/eval/run-1 — 28 .json+.md com pergunta integral + resposta literal + caps/args/status + index (local-only, dados empresariais).
 - doc211: 10/28 inalterado pós-consolidacao. Residual = sintese composta/arggen (T29).
 - PRODUCTION=NO; FABRICATIONS=0.
+
+## 2026-11-01 — Task 35 (doc 210 §20): recovery OWNER_ARGUMENT_REJECTED existe e dispara so com structuredContent tipado; 15 EXC da T34 = owners sem envelope tipado; fix owner-side (emitir code=ARGUMENT_VALIDATION+recoverable). Pydantic AI NOT_ADOPT para esse gate.

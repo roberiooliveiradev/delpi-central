@@ -518,7 +518,22 @@ Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos,
 - **Resultado doc211:** 10/28 com registry consolidado — inalterado pela consolidação. Residual permanece síntese composta/arggen em CAIO/CLARA/EVA (Task 29 scope) — **não** integração, authz nem acoplamento.
 - `PRODUCTION=NO`; `FABRICATIONS=0`; `UNAUTHORIZED_ACT=0`.
 
-## 20. Task 34 — `DELIA-C3-REAL-RESPONSES-HUMAN-REVIEW-AND-CAUSAL-AUDIT-01`
+## 20. Task 35 — `DELIA-C3-PYDANTIC-AI-PROVIDER-NEUTRAL-TOOL-RECOVERY-AND-COMPOSITE-VALIDATION-01` (doc 212)
+
+### 20.1 Inventário — o recovery tipado JÁ EXISTE e está governado
+
+- `OWNER_ARGUMENT_REJECTED` (`errors.py`) + recovery round bounded (orchestration.py:6210, `_recover_relevance` + owner_hint, 1 rodada, mesma flag de budget/dedup/live-surface) — **mecanismo T23 estendido já implementado**.
+- Gate de classificação (specialist_interop.py:315): exige `structuredContent.code == "ARGUMENT_VALIDATION"` **E** `recoverable == true` — correto por design: só o owner pode declarar recuperabilidade (doc 212 §4.2; semântica fora da ferramenta nunca vira retry por texto arbitrário).
+
+### 20.2 Root cause PROVEN — contract gap nos owners, não no recovery
+
+Os 15 EXC da Task 34: os MCPs dos owners (caio/clara/eva/teo/davi) retornam `{success:false, message:"topic desconhecido…"}` em **content text sem `structuredContent` tipado** → mapped para `MCP_PROTOCOL_ERROR`/terminal → recovery nunca dispara. Só DAVI implementa o contrato `delpi_mcp` tipado.
+
+`EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` — **o fix é owner-side**: cada MCP bridge deve emitir `structuredContent={code:"ARGUMENT_VALIDATION", recoverable:true, message}` ao rejeitar args por enum/required (contrato já homologado em DAVI — estender aos 6 owners é o bounded step). Alternativa Pydantic AI: **NOT_ADOPT como substituto do gate** — nenhum validador client-side pode converter texto arbitrário em declaração de recuperabilidade; Pydantic AI permanece candidato apenas para a validação pré-invoke (S2 pendente), sem remover a necessidade do contrato tipado.
+
+### 20.3 Próximo bounded step
+
+Emitir `structuredContent` tipado nas respostas de erro de validação dos MCP bridges (mesmo shape que DAVI já produz) → recovery T23 dispara sem mudança na DÉLIA. Owners afetados: commercial-api, controllership-finance-api, engineering-api, transformometro-api, supplies-mcp, tv-dashboard-api (cada um no seu owner — não em código delia). — `DELIA-C3-REAL-RESPONSES-HUMAN-REVIEW-AND-CAUSAL-AUDIT-01`
 
 ### 20.1 Auditoria das 28 respostas (artefatos íntegros, respostas literais)
 
