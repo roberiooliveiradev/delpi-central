@@ -569,3 +569,14 @@ class PersonalWriteOperation(_ClosedModel):
     tableDensity: str | None = None
     preferences: dict | None = None
 
+class ComexDeleteOperation(_ClosedModel):
+    """execute(comex,view_delete) — confirmation-required destructive op.
+
+    ``confirmation`` must repeat the exact target: the service will not
+    run unless ``confirmation.view_id`` equals ``view_id`` and
+    ``confirmation.acknowledged`` is true.
+    """
+    idempotency_key: str | None = Field(default=None, max_length=128)
+    view_id: str = Field(min_length=1)
+    confirmation: dict | None = None
+
