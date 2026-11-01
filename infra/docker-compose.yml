@@ -2850,6 +2850,12 @@ services:
       ENG_EVA_ACT_DELETE_ENABLED: ${ENG_EVA_ACT_DELETE_ENABLED:-}
       ENG_EVA_ACT_IMPORT_ENABLED: ${ENG_EVA_ACT_IMPORT_ENABLED:-}
 
+      # EVA drawing benchmark (analyze product.drawing_benchmark) —
+      # kill switch operacional, fail-closed quando ausente/vazio.
+      # Autorização de usuário segue RBAC real (engineering.access +
+      # permissão do desenho) + profile allowlist backend.
+      ENG_DRAWING_BENCHMARK_ENABLED: ${ENG_DRAWING_BENCHMARK_ENABLED:-true}
+
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 10s
