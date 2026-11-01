@@ -35,6 +35,7 @@ from engineering_app.interface.mcp import tool_bridge as bridge
 from engineering_app.interface.mcp.server import create_mcp_server
 from engineering_app.interface.mcp.constants import (
     DESTRUCTIVE_ACT_TOOLS,
+    EVA_LEGACY_TOOL_NAMES,
     SEMANTIC_TOOL_CLASS,
     TOOL_CLASS,
 )
@@ -166,8 +167,9 @@ def test_semantic_annotations() -> None:
     # Security schemes must ride every semantic tool (OAuth transport).
     for name in SEMANTIC_TOOL_NAMES:
         assert by_name[name]["securitySchemes"]
-    # Legacy tools carry deprecation metadata - still functional.
-    assert by_name["search_nonconformities"]["_meta"]["delpi/deprecated"] is True
+    # Legacy tools retired — none present on the wire surface.
+    for legacy in EVA_LEGACY_TOOL_NAMES:
+        assert legacy not in by_name, legacy
     assert not by_name["read"].get("_meta", {}).get("delpi/deprecated")
 
 
@@ -214,7 +216,7 @@ def test_get_context_catalog(monkeypatch) -> None:
     assert data["act_flags"]["delete"] == bridge.EVA_ACT_DELETE_ENV_FLAG
     assert data["act_flags"]["import"] == bridge.EVA_ACT_IMPORT_ENV_FLAG
     assert data["confirmation_model"]["delete"]
-    assert data["legacy_surface"]["status"] == "deprecated"
+    assert data["legacy_surface"]["status"] == "retired"
     assert data["agent_directives"]
 
 

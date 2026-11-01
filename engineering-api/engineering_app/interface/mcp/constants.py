@@ -63,17 +63,16 @@ SEMANTIC_TOOL_CLASS: dict[str, str] = {
 
 SEMANTIC_TOOL_NAMES: tuple[str, ...] = tuple(SEMANTIC_TOOL_CLASS.keys())
 
-# Tools legadas em compatibilidade (deprecated no catálogo) — remoção
-# somente após consumidores migrados + gate separado de cutover.
+# Legadas retiradas do MCP (mission legacy-removal): 23 nomes
+# permanecem aqui somente como referência histórica de descontinuação
+# — nenhuma é registrada, exposta ou invocável.
 EVA_LEGACY_TOOL_NAMES: frozenset[str] = frozenset(TOOL_CLASS.keys())
 
 TOOL_CLASS.update(SEMANTIC_TOOL_CLASS)
 
-MCP_TOOL_NAMES: tuple[str, ...] = tuple(TOOL_CLASS.keys())
+MCP_TOOL_NAMES: tuple[str, ...] = SEMANTIC_TOOL_NAMES
 
 # ACT de alto impacto — confirmação humana reforçada obrigatória;
-# delete é irreversível e import substitui todo o acervo quando não é
-# dry-run (o adapter Postgres ainda exige ENG_NC_IMPORT_REPLACE_ENABLED).
-DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset(
-    {"delete_nonconformity", "import_nonconformities", "delete"}
-)
+# delete é irreversível (imports destrutivos vivem dentro de
+# execute/nonconformity.import via prepare/commit, não como tool).
+DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset({"delete"})

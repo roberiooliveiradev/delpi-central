@@ -29,6 +29,8 @@ from engineering_app.interface.mcp import tool_bridge as bridge
 from engineering_app.interface.mcp.constants import (
     CANONICAL_MCP_RESOURCE_URL,
     DESTRUCTIVE_ACT_TOOLS,
+    EVA_LEGACY_TOOL_NAMES,
+    SEMANTIC_TOOL_NAMES,
     MCP_PREDEFINED_CLIENT_ID,
     MCP_TOOL_NAMES,
     TOOL_CLASS,
@@ -102,45 +104,12 @@ def _clear_context():
 def test_contract_freeze() -> None:
     assert CANONICAL_MCP_RESOURCE_URL.endswith("/apps/engineering-api/mcp")
     assert MCP_PREDEFINED_CLIENT_ID == "mcp-engineering"
-    assert set(MCP_TOOL_NAMES) == {
-        "get_catalog",
-        "get_engineering_home",
-        "get_engineering_overview",
-        "list_lmps",
-        "get_lmp_summary",
-        "get_lmp_detail",
-        "get_lmp_history",
-        "get_lmp_goal_context",
-        "get_lmp_department_idd",
-        "get_lmp_nc_streak",
-        "get_product_structure",
-        "search_nonconformities",
-        "get_nonconformity",
-        "get_nonconformity_history",
-        "get_nonconformity_indicators",
-        "get_nonconformity_tags",
-        "get_nonconformity_context",
-        "export_nonconformities",
-        "prepare_nonconformity_mutation",
-        "create_nonconformity",
-        "update_nonconformity",
-        "delete_nonconformity",
-        "import_nonconformities",
-        # Semantic surface (EVA.MCP.SEMANTIC.R1) — six stable tools.
-        "get_context",
-        "read",
-        "analyze",
-        "knowledge",
-        "execute",
-        "delete",
-    }
+    assert set(MCP_TOOL_NAMES) == set(SEMANTIC_TOOL_NAMES)
     assert all(
         v in {"DISCOVERY", "READ", "ANALYSIS", "PREPARE", "ACT"}
         for v in TOOL_CLASS.values()
     )
-    assert DESTRUCTIVE_ACT_TOOLS == frozenset(
-        {"delete_nonconformity", "import_nonconformities", "delete"}
-    )
+    assert DESTRUCTIVE_ACT_TOOLS == frozenset({"delete"})
     assert all(
         TOOL_CLASS[name] == "ACT" for name in DESTRUCTIVE_ACT_TOOLS
     )
@@ -335,9 +304,7 @@ def test_catalog_ok() -> None:
     assert not result.is_error
     data = result.structured_content["data"]
     assert {t["name"] for t in data["tools"]} == set(MCP_TOOL_NAMES)
-    assert set(data["write_tools"]) == {
-        name for name, kind in TOOL_CLASS.items() if kind == "ACT"
-    }
+    assert set(data["write_tools"]) == {"execute", "delete"}
     assert all(
         p["status"] == "not_implemented"
         for p in data["planned_capabilities"]
@@ -633,11 +600,12 @@ def test_nc_prepare_forbidden_without_permission() -> None:
     assert result.structured_content["status_code"] == 403
 
 
-def test_prepare_tool_annotations_readonly() -> None:
+def test_legacy_tools_absent_from_surface() -> None:
     tools = _wire_tools()
-    prepare = next(t for t in tools if t["name"] == "prepare_nonconformity_mutation")
-    assert prepare["annotations"]["readOnlyHint"] is True
-    assert prepare["annotations"]["destructiveHint"] is False
+    names = {t["name"] for t in tools}
+    assert names == set(SEMANTIC_TOOL_NAMES)
+    for legacy in EVA_LEGACY_TOOL_NAMES:
+        assert legacy not in names, legacy
 
 
 # --- ACT tools: gate de ambiente ----------------------------------------
@@ -1176,16 +1144,13 @@ def test_lmp_tools_reject_service_principal() -> None:
         assert result.structured_content["status_code"] == 403
 
 
-def test_act_tool_annotations() -> None:
+def test_semantic_act_tool_annotations() -> None:
     tools = _wire_tools()
-    for name in ("create_nonconformity", "update_nonconformity"):
+    for name in ("execute", "delete"):
         tool = next(t for t in tools if t["name"] == name)
         assert tool["annotations"]["readOnlyHint"] is False
-        assert tool["annotations"]["destructiveHint"] is False
-    for name in ("delete_nonconformity", "import_nonconformities"):
-        tool = next(t for t in tools if t["name"] == name)
-        assert tool["annotations"]["readOnlyHint"] is False
-        assert tool["annotations"]["destructiveHint"] is True
+    delete = next(t for t in tools if t["name"] == "delete")
+    assert delete["annotations"]["destructiveHint"] is True
 
 
 def test_catalog_reports_act_surface_and_gate(monkeypatch) -> None:
@@ -1194,19 +1159,11 @@ def test_catalog_reports_act_surface_and_gate(monkeypatch) -> None:
     result = bridge.tool_get_catalog()
     data = result.structured_content["data"]
     assert data["act_enabled"] is False
-    assert set(data["write_tools"]) == {
-        "create_nonconformity",
-        "update_nonconformity",
-        "delete_nonconformity",
-        "import_nonconformities",
-        # Semantic ACT tools (EVA.MCP.SEMANTIC.R1)
-        "execute",
-        "delete",
-    }
+    assert set(data["write_tools"]) == {"execute", "delete"}
     by_name = {t["name"]: t for t in data["tools"]}
-    assert by_name["delete_nonconformity"]["destructive"] is True
-    assert by_name["create_nonconformity"]["requires_human_confirmation"]
-    assert by_name["search_nonconformities"]["read_only"] is True
+    assert by_name["delete"]["destructive"] is True
+    assert by_name["delete"]["requires_human_confirmation"]
+    assert by_name["read"]["read_only"] is True
 
 
 def test_act_destructive_classes_need_tier_flags(monkeypatch) -> None:
