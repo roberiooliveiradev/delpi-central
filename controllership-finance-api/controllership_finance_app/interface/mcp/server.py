@@ -17,7 +17,7 @@ repositórios canônicos reaplicam as regras de negócio.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Literal
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
@@ -138,7 +138,9 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def get_context(
-        topic: str | None = None,
+        topic: Literal[
+            "summary", "actor", "catalog", "schema", "persona"
+        ] | None = None,
         entity: str | None = None,
         action: str | None = None,
         scope: str | None = None,
