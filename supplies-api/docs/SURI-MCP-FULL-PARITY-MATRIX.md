@@ -11,8 +11,8 @@ Revisão `SURI-MCP-FULL-PARITY-V4-G2` (2026-10-30): lote P1-R1+P1-R2 entregue �
 
 ```text
 PORTAL CAPABILITIES (denominador: linhas PROVEN executáveis) : 45 (34 READ + 11 WRITE)
-SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 27 (R-02..R-22, R-33, R-34, W-10, W-11)
-CURRENT PARITY PERCENTAGE (implementada)                     : 60.0% (27/45)
+SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 29 (R-02..R-29, R-33, R-34, W-10, W-11)
+CURRENT PARITY PERCENTAGE (implementada)                     : 64.4% (29/45)
 TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
 
@@ -58,10 +58,10 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | R-23 | Consumo | Busca OP (fragmento/filtros) | PROVEN | `read:consumption search` | api-delpi(S2S `consumption-audit.read`) | `/consumption-audit/orders` | access+unit | routes tests | `read` production_orders | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-24 | Consumo | Detalhe OP | PROVEN | `read:consumption get` | api-delpi(S2S) | `/orders/{op}` | access+unit | routes tests | `read` get | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-25 | Consumo | Comparação 2–10 OPs | PROVEN | `read:consumption comparison` | api-delpi(S2S) | `/comparison` | access+unit | routes tests | `analyze` compare | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
-| R-26 | Mercado | filters+summary+series×5+monthly-averages+quotes/compare | PROVEN | — | external-data-api(S2S) | `/market-intelligence/*` | access | mi bff tests | `read`/`analyze` market | P1-R8 |
-| R-27 | Mercado | Comex products search | PROVEN | — | api-delpi(S2S) | `/comex/products/search` | access | comex tests | `read` comex products | P1-R8 |
-| R-28 | Mercado | Comex NCM governance list/detail | PROVEN | — | pg supplies | `/comex/ncm-governance` | access | comex tests | `read` governance | P1-R8 |
-| R-29 | Mercado | Comex views list/get | PROVEN | — | pg supplies | `/comex/views` | access | comex tests | `read` views | P1-R8 |
+| R-26 | Mercado | filters+summary+series×5+monthly-averages+quotes/compare | PROVEN | G7 | external-data-api(S2S) | `/market-intelligence/*` | access | mi bff tests | `read`/`analyze` market | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-27 | Mercado | Comex products search | PROVEN | G7 | api-delpi(S2S) | `/comex/products/search` | access | comex tests | `read` comex products | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-28 | Mercado | Comex NCM governance list/detail | PROVEN | G7 | pg supplies | `/comex/ncm-governance` | access | comex tests | `read` governance | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-29 | Mercado | Comex views list/get | PROVEN | G7 | pg supplies | `/comex/views` | access | comex tests | `read` views | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-30 | Usuários | Perfil + foto | PROVEN | — | core-api+pg | `/users/{id}/profile\|photo` | self\|manage | profile tests | `read` user profile | P1-R9 |
 | R-31 | Usuários | SCs relacionadas | PROVEN | — | PR-api+core | `/related-requests` | self\|manage+units | profile tests | `read` related | P1-R9 |
 | R-32 | Sessão | capabilities + preferences read | PROVEN | `get_context` (parcial: sem preferences) | supplies-api | `/me/capabilities`, `/me/preferences` | shell | session ctx | `read`/`get_context` prefs | P1-R9 |
