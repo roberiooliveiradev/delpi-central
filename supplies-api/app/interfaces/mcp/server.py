@@ -30,6 +30,9 @@ from app.interfaces.mcp.constants import DESTRUCTIVE_ACT_TOOLS, TOOL_CLASS
 from app.interfaces.mcp.oauth_contract import SURI_MCP_SECURITY_SCHEMES
 from app.interfaces.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interfaces.mcp.schemas import (
+    ConsumptionComparisonFilters,
+    ConsumptionIdentity,
+    ConsumptionSearchFilters,
     OtdAggregateFilters,
     OtdSeriesFilters,
     OverviewSummaryFilters,
@@ -205,6 +208,7 @@ def create_mcp_server() -> MCPServer:
             "inventory",
             "safety_stock",
             "otd",
+            "consumption",
         ],
         action: Literal[
             "search",
@@ -226,6 +230,7 @@ def create_mcp_server() -> MCPServer:
             "suppliers",
             "aggregate",
             "series",
+            "comparison",
         ],
         filters: (
             PurchaseOrderSearchFilters
@@ -247,6 +252,8 @@ def create_mcp_server() -> MCPServer:
             | SafetyStockItemsFilters
             | OtdAggregateFilters
             | OtdSeriesFilters
+            | ConsumptionSearchFilters
+            | ConsumptionComparisonFilters
             | None
         ) = None,
         identity: (
@@ -256,6 +263,7 @@ def create_mcp_server() -> MCPServer:
             | SupplierOperationIdentity
             | PostalCodeIdentity
             | SafetyStockItemIdentity
+            | ConsumptionIdentity
             | None
         ) = None,
     ) -> CallToolResult:

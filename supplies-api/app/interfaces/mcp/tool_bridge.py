@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import logging
 from typing import Any
 from urllib.parse import urlencode
@@ -40,7 +41,10 @@ from app.application.services.inventory_stock_balances_service import (
 from app.application.services.late_deliveries_composition_service import (
     LateDeliveriesCompositionService,
 )
-from app.application.services.safety_stock_service import SafetyStockService
+from app.application.services.safety_stock_service import (
+    SafetyStockService,
+)
+from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
 from app.application.services.otd_aggregate_service import OtdAggregateService
 from app.application.services.otd_series_service import OtdSeriesService
 from app.application.services.overview_composition_service import (
@@ -125,6 +129,10 @@ from app.interfaces.mcp.constants import (
 DELIVERIES_LATE_FILTER_KEYS,
     INVENTORY_ITEMS_FILTER_KEYS,
     INVENTORY_SUMMARY_FILTER_KEYS,
+    CONSUMPTION_COMPARISON_FILTER_KEYS,
+    CONSUMPTION_DATE_TYPES,
+    CONSUMPTION_IDENTITY_KEYS,
+    CONSUMPTION_SEARCH_FILTER_KEYS,
     OTD_AGGREGATE_FILTER_KEYS,
     OTD_SERIES_FILTER_KEYS,
     OVERVIEW_SUMMARY_FILTER_KEYS,
@@ -1253,6 +1261,10 @@ def tool_read(
         return _dispatch_otd_read(
             normalized_action, filter_payload, identity_payload
         )
+    if normalized_entity == "consumption":
+        return _dispatch_consumption_read(
+            normalized_action, filter_payload, identity_payload
+        )
 
     if normalized_action == "search":
         if identity_payload:
@@ -1973,4 +1985,142 @@ def tool_analyze_overview_summary(filters: dict) -> CallToolResult:
     except ValueError as exc:
         return _invalid(str(exc))
     return _ok(payload, meta={"delpi/source": "bff:/analytics/overview"})
+
+_PRODUCTION_ORDER_RE = re.compile(r"^[0-9A-Z]{11}$")
+
+
+def _dispatch_consumption_read(
+    action: str, filters: dict, identity: dict
+) -> CallToolResult:
+    if action == "get":
+        if filters:
+            return _invalid(
+                "read(consumption,get) accepts no 'filters' — "
+                "use identity {unit, production_order}."
+            )
+        unknown = _unknown_keys(identity, CONSUMPTION_IDENTITY_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown consumption identity keys: {sorted(unknown)}. "
+                f"Allowed: {sorted(CONSUMPTION_IDENTITY_KEYS)}"
+            )
+        return tool_consumption_get(identity)
+    if identity:
+        return _invalid(
+            f"read(consumption,{action}) does not accept 'identity'."
+        )
+    allowed = (
+        CONSUMPTION_SEARCH_FILTER_KEYS
+        if action == "search"
+        else CONSUMPTION_COMPARISON_FILTER_KEYS
+    )
+    unknown = _unknown_keys(filters, allowed)
+    if unknown:
+        return _invalid(
+            f"Unknown consumption {action} filters: {sorted(unknown)}. "
+            f"Allowed: {sorted(allowed)}"
+        )
+    if action == "search":
+        return tool_consumption_search(filters)
+    return tool_consumption_comparison(filters)
+
+
+def _consumption_unit(user: EffectiveUser, filters: dict) -> str | CallToolResult:
+    unit = str(filters.get("unit") or "").strip()
+    if not unit:
+        return _invalid("consumption requires 'unit' (01|02).")
+    try:
+        _AUTHZ.require_units(user, [unit])
+    except AuthorizationError as exc:
+        return _invalid(str(exc))
+    return unit
+
+
+def tool_consumption_search(filters: dict) -> CallToolResult:
+    """read(consumption,search) — GET /consumption-audit/orders."""
+    user = _operations_user()
+    unit = _consumption_unit(user, filters)
+    if not isinstance(unit, str):
+        return unit
+    search = (filters.get("search") or "").strip().upper()
+    if search and not re.match(r"^[0-9A-Z]{1,11}$", search):
+        return _invalid("invalid parameter: search")
+    date_type = (filters.get("date_type") or "emission").strip()
+    if date_type not in CONSUMPTION_DATE_TYPES:
+        return _invalid("invalid parameter: date_type")
+    ps = filters.get("period_start")
+    pe = filters.get("period_end")
+    if ps and pe and str(ps) > str(pe):
+        return _invalid("invalid parameter: period")
+    params: dict[str, Any] = {"branch": unit}
+    for key in (
+        "search", "product", "date_type", "period_start", "period_end",
+        "status", "work_center", "operation", "page", "page_size",
+    ):
+        value = filters.get(key)
+        if value is None:
+            continue
+        params[key] = value
+    if search:
+        params["search"] = search
+    payload = _S2S_GATEWAY.get(
+        "/supplies/consumption-audit/orders",
+        access_token=user.access_token or "",
+        params=params,
+    )
+    data = unwrap_delpi_envelope(payload)
+    return _ok(data, meta={"delpi/source": "bff:/consumption-audit/orders"})
+
+
+def tool_consumption_get(identity: dict) -> CallToolResult:
+    """read(consumption,get) — /consumption-audit/orders/{op}."""
+    user = _operations_user()
+    op = str(identity.get("production_order") or "").strip().upper()
+    if not _PRODUCTION_ORDER_RE.match(op):
+        return _invalid(
+            "production_order must be the 11-position order key"
+        )
+    unit = _consumption_unit(user, identity)
+    if not isinstance(unit, str):
+        return unit
+    payload = _S2S_GATEWAY.get(
+        f"/supplies/consumption-audit/orders/{op}",
+        access_token=user.access_token or "",
+        params={"branch": unit},
+    )
+    data = unwrap_delpi_envelope(payload)
+    return _ok(
+        data, meta={"delpi/source": "bff:/consumption-audit/orders/{op}"}
+    )
+
+
+def tool_consumption_comparison(filters: dict) -> CallToolResult:
+    """read(consumption,comparison) — 2..10 distinct 11-position keys."""
+    user = _operations_user()
+    unit = _consumption_unit(user, filters)
+    if not isinstance(unit, str):
+        return unit
+    orders = [
+        str(op).strip().upper()
+        for op in (filters.get("orders") or [])
+        if str(op).strip()
+    ]
+    unique = list(dict.fromkeys(orders))
+    if not 2 <= len(unique) <= 10:
+        return _invalid(
+            "orders must contain between 2 and 10 distinct keys"
+        )
+    if any(not _PRODUCTION_ORDER_RE.match(op) for op in unique):
+        return _invalid(
+            "each order must be the 11-position order key"
+        )
+    payload = _S2S_GATEWAY.get(
+        "/supplies/consumption-audit/comparison",
+        access_token=user.access_token or "",
+        params={"branch": unit, "orders": ",".join(unique)},
+    )
+    data = unwrap_delpi_envelope(payload)
+    return _ok(
+        data, meta={"delpi/source": "bff:/consumption-audit/comparison"}
+    )
 

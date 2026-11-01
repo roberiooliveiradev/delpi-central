@@ -399,3 +399,29 @@ class OverviewSummaryFilters(_ClosedModel):
     start_date: str | None = None
     end_date: str | None = None
 
+class ConsumptionSearchFilters(_ClosedModel):
+    """read(consumption,search) — GET /consumption-audit/orders."""
+    unit: str
+    search: str | None = None
+    product: str | None = None
+    date_type: str | None = None
+    period_start: str | None = None
+    period_end: str | None = None
+    status: str | None = None
+    work_center: str | None = None
+    operation: str | None = None
+    page: int | None = Field(default=None, ge=1, le=10000)
+    page_size: int | None = Field(default=None, ge=1, le=50)
+
+
+class ConsumptionComparisonFilters(_ClosedModel):
+    """read(consumption,comparison) — /consumption-audit/comparison."""
+    unit: str
+    orders: list[str] = Field(min_length=2, max_length=10)
+
+
+class ConsumptionIdentity(_ClosedModel):
+    """read(consumption,get) — /consumption-audit/orders/{op}."""
+    unit: str
+    production_order: str = Field(min_length=11, max_length=11)
+
