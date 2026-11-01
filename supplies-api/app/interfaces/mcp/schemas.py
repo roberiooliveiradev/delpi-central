@@ -556,3 +556,16 @@ class EnrichmentWriteOperation(_ClosedModel):
     expected_revision: int | None = None
     reason_code: str | None = None
 
+class PersonalWriteOperation(_ClosedModel):
+    """One governed write operation for ``execute`` on session/users.
+
+    Per-action key sets enforced in the dispatcher — this model only
+    declares the closed union vocabulary for preferences/profile updates
+    plus ``idempotency_key``.
+    """
+    idempotency_key: str | None = Field(default=None, max_length=128)
+    user_id: str | None = None
+    defaultBranch: str | None = None
+    tableDensity: str | None = None
+    preferences: dict | None = None
+
