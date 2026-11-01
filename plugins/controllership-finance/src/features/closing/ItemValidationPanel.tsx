@@ -40,7 +40,6 @@ import {
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
-  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfDialog,
@@ -443,7 +442,10 @@ export function ItemValidationPanel({ period, item, onChanged }: Props) {
           onRetry={() => setNonce((n) => n + 1)}
         />
       ) : loading ? (
-        <CfSectionLoading label="Carregando validação…" variant="compact" />
+        <CfEmptyState
+          classNames={cfEmptyStateClassNames}
+          defaultMessage="Carregando validação…"
+        />
       ) : (
         <>
           <p className="cf-validation-panel__scope">

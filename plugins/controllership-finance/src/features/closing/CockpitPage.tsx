@@ -17,7 +17,6 @@ import {
 } from "../../api/packagesApi";
 import {
   CfQueryErrorBanner,
-  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfEmptyState,
@@ -138,7 +137,7 @@ export function CockpitPage({ period: initialPeriod }: { period?: string }) {
           />
         ) : null}
         {loading && !cockpit ? (
-          <CfSectionLoading label="Carregando cockpit…" variant="panel" />
+          <p aria-live="polite">Carregando cockpit…</p>
         ) : null}
         {!loading && !cockpit && !error ? (
           <CfEmptyState

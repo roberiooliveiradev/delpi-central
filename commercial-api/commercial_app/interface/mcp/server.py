@@ -186,18 +186,15 @@ def create_mcp_server() -> MCPServer:
         title="Knowledge",
         description=(
             "Versioned owner-authorized Commercial guidance — "
-            "topics (caio.usage, commercial.*), methods "
-            "(method.<id>: curated external methodologies) and "
-            "playbooks (playbook.<id>: reusable analysis scripts). "
-            "Empty topic with query selects the relevant entries "
-            "for the question. Guidance, not operational truth: "
-            "unindexed topics answer not_found/not_implemented."
+            "caio.usage (operation), commercial.glossary (domain "
+            "concepts). Guidance, not operational truth: unindexed "
+            "topics answer not_found/not_implemented honestly."
         ),
         annotations=_annotations("knowledge", "Knowledge"),
         meta=meta,
     )
     def knowledge(
-        topic: str | None = None,
+        topic: str,
         task: str | None = None,
         query: str | None = None,
     ) -> CallToolResult:

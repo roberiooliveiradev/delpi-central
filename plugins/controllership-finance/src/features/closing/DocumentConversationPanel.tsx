@@ -31,10 +31,7 @@ import {
   postDocumentMessage,
   type DocumentMessage,
 } from "../../api/documentsApi";
-import {
-  CfFeedbackMessage,
-  CfSectionLoading,
-} from "../../app/cfFeedbackUi";
+import { CfFeedbackMessage } from "../../app/cfFeedbackUi";
 import {
   CF_PORTAL_SCOPE,
   CfMentionComposer,
@@ -229,7 +226,7 @@ export function DocumentConversationPanel({
       ) : null}
 
       {loaded === null && !loadError ? (
-        <CfSectionLoading label="Carregando conversa…" variant="compact" />
+        <p aria-live="polite">Carregando conversa…</p>
       ) : null}
 
       {loaded !== null ? (

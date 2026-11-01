@@ -39,6 +39,10 @@ _SPECIALIST_IDENTITY: dict[str, tuple[str, str]] = {
     "davi": ("DAVI", "api-delpi"),
     "teo": ("TEO", "transformometro-api"),
     "vista": ("VISTA", "tv-dashboard-api"),
+    "caio": ("CAIO", "commercial-api"),
+    "clara": ("CLARA", "controllership-finance-api"),
+    "suri": ("SURI", "supplies-mcp"),
+    "eva": ("EVA", "engineering-api"),
 }
 
 APPROVED_SPECIALIST_IDS = frozenset(_SPECIALIST_IDENTITY)

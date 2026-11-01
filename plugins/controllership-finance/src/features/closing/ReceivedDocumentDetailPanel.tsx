@@ -39,7 +39,6 @@ import {
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
-  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import { FilterInputField } from "../../app/cfFiltersUi";
 import {
@@ -342,7 +341,7 @@ export function ReceivedDocumentDetailPanel({
       ) : null}
 
       {loading ? (
-        <CfSectionLoading label="Carregando documento…" variant="compact" />
+        <p aria-live="polite">Carregando documento…</p>
       ) : null}
 
       {feedback ? (
@@ -419,7 +418,7 @@ export function ReceivedDocumentDetailPanel({
                 hint={CF_HELP.receivedDocuments.requests}
               >
                 {requestList === null ? (
-                  <CfSectionLoading label="Carregando solicitações…" variant="compact" />
+                  <p aria-live="polite">Carregando solicitações…</p>
                 ) : requestList.length === 0 ? (
                   <CfEmptyState
                     classNames={cfEmptyStateClassNames}

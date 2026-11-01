@@ -18,10 +18,7 @@ import {
   type ChecklistTemplate,
   type ChecklistTemplateVersionDetail,
 } from "../../api/adminApi";
-import {
-  CfQueryErrorBanner,
-  CfSectionLoading,
-} from "../../app/cfFeedbackUi";
+import { CfQueryErrorBanner } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
   CfEmptyState,
@@ -254,7 +251,10 @@ export function ChecklistVersionDocumentPage({
 
         {loading ||
         (templateLoaded && template && !detailData && !error) ? (
-          <CfSectionLoading label="Carregando documento…" variant="compact" />
+          <CfEmptyState
+            classNames={cfEmptyStateClassNames}
+            defaultMessage="Carregando documento…"
+          />
         ) : !error && templateLoaded && !template ? (
           <CfEmptyState
             classNames={cfEmptyStateClassNames}

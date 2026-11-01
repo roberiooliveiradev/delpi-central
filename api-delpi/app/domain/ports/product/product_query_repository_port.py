@@ -18,14 +18,13 @@ class ProductQueryRepositoryPort(ABC):
         self,
         code: Optional[str],
         group: Optional[str],
-        description: Optional[str] = None,
+        description: Optional[str],
         customer_reference: Optional[str] = None,
         product_type: Optional[list[str]] = None,
         subgroup: Optional[str] = None,
         page: int = 1,
         page_size: int = 50,
         sort=Optional[str],
-        direction=Optional[str],
-        groups: Optional[list[str]] = None,
+        direction=Optional[str]
     ) -> Page[Product]:
         raise NotImplementedError

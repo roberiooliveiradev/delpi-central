@@ -448,6 +448,32 @@ Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos,
 - Segurança: zero writes; 401 unauth correto em todos os 7 endpoints.
 - `MINIMUM_80PCT_GATE=FAIL` nesta rodada; ciclos de correção seguem no próximo bounded step.
 
+## 14. Task 28 — `DELIA-C3-MCP-DISCOVERY-PROJECTION-AND-COMPOSITE-OUTCOME-REMEDIATION-01`
+
+### 14.1 Diagnóstico fronteira-a-fronteira (comprovado por probe)
+
+- Exchange delegado KC24: **EXCHANGE_OK para todos os 7** (`delia-api` → `mcp-*`).
+- `tools/list` autenticado falhava 401 nos 4 novos (e falharia em qualquer scope novo): token `aud` continha apenas `http://localhost/apps/<svc>/mcp`, mas os serviços validam contra `MCP_RESOURCE_URL=https://minhadelpi.com.br/apps/<svc>/mcp` (canônico). DAVI/TÉO/VISTA tinham ambos os audiences no scope → funcionavam.
+- **ROOT CAUSE 1 (KC/contract):** scopes `mcp-audience-{caio,suri,eva}` criados sem o mapper do audience canônico. Fix via mecanismo suportado `DELIA_MCP_AUDIENCE_BASE=https://minhadelpi.com.br` → `--apply` re-executado, todos os 7 scopes emitem canonical+local.
+- **ROOT CAUSE 2 (domain allowlist):** `_SPECIALIST_IDENTITY` em `app/domain/specialist_interop/rules.py` hardcoded só `{davi,teo,vista}` — `APPROVED_SPECIALIST_IDS` dropava os 4 novos no boundary `McpCapabilityProvider` antes de qualquer projeção (exclusão silenciosa, indistinguível de provider vazio). Fix: estendido com `caio→commercial-api`, `clara→controllership-finance-api`, `suri→supplies-mcp`, `eva→engineering-api` (mesmo contrato id→(nome,serviço)).
+
+### 14.2 Pós-fix
+
+- `tools/list` autenticado 200: **CAIO 6 tools, CLARA 6, SURI 5**; EVA exige session-id — transport do adapter já faz `initialize`+`mcp-session-id` (probe sem handshake falhava; adapter correto).
+- Bateria doc211 pós-fix: **11/28 PASS** (vs 8/28). `caio.get_context`, `clara.analyze`, `suri.analyze` agora invocados — projeção funciona.
+- Falhas remanescentes migraram para execução/arggen nos novos providers (cap invocado mas não `COMPLETED`) + ADMISSION parcial — próximo ciclo de correção.
+- Segurança: zero writes; negativos 401 unauth corretos nos 7 endpoints.
+
+## 15. Task 29 — `DELIA-C3-COMPOSITE-AGENTIC-INTELLIGENCE-AND-DURABLE-ORCHESTRATION-01` — Slice B (execução MCP)
+
+### 15.1 Fronteira de execução dos novos providers (probe autenticado + invoke trace)
+
+- `suri.analyze` — **status COMPLETED** em cmp_09 (args válidos: `analysis=purchase_orders_summary`, filtros, sample_size). Execução SURI funciona end-to-end.
+- `caio.get_context` / `clara.get_context` — `EXC:CapabilityProviderError` → probe direto no owner retorna `403 Forbidden, error_kind=authz`.
+- **ROOT CAUSE 3 (authorization por domínio):** CAIO exige `can_manage_portfolios`/`can_use_team_scope`/`resolve_analytics_portfolio_scope` (escopo de carteira); SURI exige `can_use_operations`+`require_unit(s)`. O sujeito de avaliação `rober` possui membership de operations+units (SURI COMPLETED) mas **não possui carteira comercial/escopo financeiro** → o owner rejeita corretamente com 403. Não é defeito de integração: é a autorização do domain API trabalhando conforme contrato.
+- Divergência residual adicional (evaluator): `suri.analyze` COMPLETED mas scored FAIL — o scorer `want_owner` penaliza resposta honesta de limitação ("não consegui comprovar a ordenação") via `refusal` detection. Rubrica por subobjetivo (Doc 211 §10-11) é o local correto para essa profundidade, não o scorer binário.
+- Decisão necessária: **atribuir memberships de carteira/financeiro/engenharia ao sujeito de teste no Core (dev)** ou documentar cenários CAIO/CLARA/EVA como bloqueados-por-permissão. Atribuição de membership é mudança de autorização empresarial — seguir procedimento oficial; não conceder para "fazer passar".
+
 ## 12. Task 25 — `DELIA-C3-ASCENDING-LOCAL-MODEL-EVALUATION-01`
 
 ### 12.1 Hardware + inventário

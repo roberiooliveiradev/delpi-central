@@ -311,49 +311,6 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "analysis",
         fields=_LMP_PERIOD_FIELDS,
     ),
-    _a(
-        "product", "drawing_analysis", "analyze",
-        "Technical drawing analysis: official PDF of a product "
-        "(identified by product_code) is extracted and cross-checked "
-        "against the registered product card and BOM — revision, "
-        "identification, item presence, MP/PI description rules. "
-        "Optionally receives `visual_observations[]` (untrusted ChatGPT "
-        "perception of a drawing: kind/raw_observation/page/document_"
-        "identity/confidence) which are compared to the same verified "
-        "document and to official facts as hypotheses. Emits a "
-        "DRAFT/CANDIDATE technical report; never approves technically.",
-        "analysis",
-        fields=(
-            "product_code", "visual_observations", "scope",
-        ),
-        notes=(
-            "Deterministic text-layer extraction only — scanned PDFs "
-            "yield INCONCLUSIVE; absence of visual evidence never "
-            "equals a proven BOM divergence; visual observations are "
-            "untrusted input (schema-limited, hypotheses only); "
-            "routing/inspection/PA-description checks report "
-            "NOT_CHECKED while contracts remain owner-blocked "
-            "(docs 69–71)."
-        ),
-    ),
-    _a(
-        "product", "drawing_benchmark", "analyze",
-        "Governed extraction benchmark: the official product drawing "
-        "PDF is fetched once via the delegated gateway and processed "
-        "by the backend-defined provider profile (default "
-        "approved_local_extractors) — same bytes, same SHA-256, per-"
-        "provider coverage and field matrix. Read-only; requires "
-        "ENG_DRAWING_BENCHMARK_ENABLED; results are coverage evidence, "
-        "never engineering accuracy or ground truth.",
-        "analysis",
-        fields=("product_code", "benchmark_profile", "fields"),
-        notes=(
-            "Fail-closed feature flag; provider allowlist is backend-"
-            "defined — the consumer cannot pick providers, paths, URLs "
-            "or modules; no SaaS egress; no writes; quality metrics "
-            "remain EVAL_PENDING without owner-approved ground truth."
-        ),
-    ),
     # --- knowledge ----------------------------------------------------------
     _a(
         "nonconformity", "guide", "knowledge",

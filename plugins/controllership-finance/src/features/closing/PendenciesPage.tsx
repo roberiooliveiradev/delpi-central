@@ -32,7 +32,6 @@ import { useViewerCapabilities } from "../../app/ViewerContext";
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
-  CfSectionLoading,
 } from "../../app/cfFeedbackUi";
 import {
   CfDialog,
@@ -379,7 +378,7 @@ export function PendenciesPage() {
 
         <CfSectionCard title="Fila de pendências" hint={CF_HELP.pendencies.queue}>
           {loading && items.length === 0 ? (
-            <CfSectionLoading label="Carregando pendências…" variant="panel" />
+            <p aria-live="polite">Carregando pendências…</p>
           ) : items.length === 0 ? (
             <CfEmptyState
               classNames={cfEmptyStateClassNames}

@@ -24,8 +24,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
-import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -441,14 +439,6 @@ _READ_DISPATCH = {
     ("production", "product_structure"): (
         lambda a: parity.tool_product_structure(**a)
     ),
-    ("product", "search"): lambda a: parity.tool_product_search(**a),
-    ("product", "summary"): lambda a: parity.tool_product_summary(**a),
-    ("product", "customers"): (
-        lambda a: parity.tool_product_customers(**a)
-    ),
-    ("product", "filter_options"): (
-        lambda a: parity.tool_product_filter_options(**a)
-    ),
     ("user_profile", "get"): lambda a: parity.tool_user_profile_get(**a),
 }
 
@@ -592,204 +582,18 @@ def _knowledge_document() -> dict[str, Any]:
     return _KNOWLEDGE_DOC
 
 
-_KNOWLEDGE_COLLECTIONS = ("topics", "methods", "playbooks")
-_SELECTION_CAP = 5
-
-
-def _fold(text: str) -> str:
-    """Case + accent fold for knowledge selection matching."""
-    return "".join(
-        ch
-        for ch in unicodedata.normalize("NFKD", (text or "").lower())
-        if not unicodedata.combining(ch)
-    )
-
-
-# Portuguese function words / interrogatives that carry no retrieval
-# signal — filtered out of the query terms (accent-folded forms).
-_SELECTION_STOPWORDS = frozenset({
-    "que", "qual", "quais", "como", "quando", "onde", "quem",
-    "porque", "pois", "para", "pra", "sobre", "entre", "ser",
-    "sao", "estao", "esta", "foi", "era", "sera", "tem", "ter",
-    "seus", "suas", "seu", "sua", "meu", "minha", "nosso", "nossa",
-    "muito", "pouco", "todo", "toda", "todos", "todas", "tudo",
-    "este", "esta", "isso", "isto", "outro", "outra", "outros",
-    "outras", "cada", "mais", "menos", "maior", "menor", "melhor",
-    "pior", "entao", "assim", "tambem", "apenas", "vai", "vao",
-    "vem", "fazer", "feito", "faz", "pode", "podem", "deve",
-    "devem", "quer", "quero", "queremos", "gostaria", "preciso",
-    "mostre", "mostrar", "liste", "listar", "traga", "trazer",
-    "mes", "meses", "ano", "anos", "dia", "dias", "hoje", "ontem",
-    "agora", "ainda", "sendo", "novo", "nova", "ver", "saber",
-    "entender", "explique", "explicar", "diga", "fale", "falar",
-    "sobre", "algum", "alguma", "alguns", "algumas", "algo",
-    # Ultra-generic domain words — they match curated fields of
-    # nearly every entry (e.g. "previsão comercial") and only add
-    # noise to relevance ranking; real signal comes from the
-    # specific terms of the question.
-    "comercial", "comerciais", "processo", "processos",
-    "dado", "dados", "informacao", "informacoes", "delpi",
-    "usando", "usar", "utilizando", "mapear", "mapeamento",
-    "area", "setor", "empresa", "negocio", "negocios", "vendas",
-    "venda", "gestao", "melhoria", "melhorar", "trabalho",
-})
-
-
-def _knowledge_entry(doc: dict[str, Any], key: str):
-    """Resolve a knowledge id across collections.
-
-    Accepts the plain key (``commercial.proposals``), the namespaced
-    form (``method.abc_pareto`` / ``playbook.order_health``) or the
-    bare id of a method/playbook."""
-    for collection in _KNOWLEDGE_COLLECTIONS:
-        entries = doc.get(collection) or {}
-        if key in entries:
-            return collection, entries[key]
-        prefix = f"{collection[:-1]}."
-        if key.startswith(prefix) and key[len(prefix):] in entries:
-            return collection, entries[key[len(prefix):]]
-        if key in {f"{collection[:-1]}.{i}" for i in entries}:
-            return collection, entries[key.split(".", 1)[1]]
-    return None, None
-
-
-def _knowledge_select(
-    doc: dict[str, Any], query: str | None
-) -> CallToolResult:
-    """Contextual selection over the authorized corpus.
-
-    Scores topics/methods/playbooks by keyword match on title,
-    keywords and trigger questions; returns a minimal package with
-    provenance — never the whole corpus. All entries share the same
-    internal access classification enforced by the human gate above,
-    so selection cannot leak cross-scope data (it returns guidance,
-    not records)."""
-    # Short domain acronyms (OV, OP, PV) score only when declared as
-    # corpus keywords — data-driven, no hardcoded acronym list in the
-    # mechanism.
-    short_terms = {
-        kw.strip().lower()
-        for collection in _KNOWLEDGE_COLLECTIONS
-        for entry in (doc.get(collection) or {}).values()
-        if isinstance(entry, dict)
-        for kw in (entry.get("keywords") or [])
-        if 0 < len(kw.strip()) < 3
-    }
-    terms = {
-        t
-        for t in re.split(r"[^\wÀ-ÿ]+", (query or "").lower())
-        if len(t) >= 3 or t in short_terms
-    }
-    # Light plural normalization: "compras"/"pedidos" also try the
-    # singular form against the corpus haystack.
-    terms |= {
-        t[:-1] for t in set(terms) if len(t) > 3 and t.endswith("s")
-    }
-    # Accent-insensitive matching: Portuguese queries vary diacritics
-    # ("previsão" vs corpus keyword "previsao") — normalize both sides,
-    # then drop function words that carry no retrieval signal.
-    terms = {_fold(t) for t in terms} - _SELECTION_STOPWORDS
-    ranked: list[tuple[int, str, str, dict[str, Any]]] = []
-    for collection in _KNOWLEDGE_COLLECTIONS:
-        kind = collection[:-1]  # topic|method|playbook
-        for entry_id, entry in (doc.get(collection) or {}).items():
-            if not isinstance(entry, dict):
-                continue
-            curated_hay = _fold(
-                " ".join(entry.get("keywords") or [])
-                + " "
-                + " ".join(entry.get("trigger_questions") or [])
-            )
-            text_hay = _fold(
-                f"{entry.get('title', '')} {entry.get('objective', '')}"
-            )
-            # Curated fields (keywords/trigger_questions) weigh double —
-            # they exist precisely to route selection.
-            score = sum(
-                (2 if t in curated_hay else 1)
-                for t in terms
-                if t in curated_hay or t in text_hay
-            )
-            if score:
-                ranked.append((score, kind, entry_id, entry))
-    ranked.sort(key=lambda item: (-item[0], item[1], item[2]))
-    if not ranked:
-        return _err(
-            "Nenhum conteúdo de conhecimento corresponde à consulta.",
-            status_code=404,
-            code="not_found",
-            data={
-                "available_ids": {
-                    c: sorted((doc.get(c) or {}).keys())
-                    for c in _KNOWLEDGE_COLLECTIONS
-                },
-            },
-        )
-    # Precision floor: keep entries whose score is at least half the
-    # leader's — single-hit noise must not surface as a suggestion
-    # when a clearly better match exists.
-    top_score = ranked[0][0]
-    floor = max(1, (top_score + 1) // 2)
-    items = []
-    for score, kind, entry_id, entry in ranked[:_SELECTION_CAP]:
-        if score < floor:
-            break
-        items.append(
-            {
-                "id": f"{kind}.{entry_id}",
-                "type": kind,
-                "title": entry.get("title"),
-                "objective": entry.get("objective"),
-                "source": entry.get("source"),
-                "owner": entry.get("owner", doc.get("owner")),
-                "version": entry.get("version", doc.get("version")),
-                "access_classification": entry.get(
-                    "access_classification"
-                ),
-                "external_reference": entry.get(
-                    "external_reference", False
-                ),
-                "status": entry.get("status"),
-                "related_capabilities": entry.get(
-                    "related_capabilities"
-                ),
-                "related_entries": entry.get("related_entries"),
-                "limitations": entry.get("limitations"),
-                "conversation_relevance": score,
-            }
-        )
-    return _ok(
-        {
-            "selection": items,
-            "retrieval": (
-                "fetch full guidance via knowledge topic=<id> — "
-                "methods are external references, never DELPI rules; "
-                "playbooks compose official use cases only."
-            ),
-            "knowledge_version": doc.get("version"),
-        },
-        "Seleção contextual de conhecimento.",
-    )
-
-
 def tool_knowledge(
     *,
-    topic: str | None = None,
+    topic: str,
     task: str | None = None,
     query: str | None = None,
 ) -> CallToolResult:
-    """Versioned owner-authorized Commercial guidance.
-
-    ``topic`` fetches one entry (``topic``/``method``/``playbook``
-    id); an empty topic or ``"*"`` with ``query`` selects the
-    relevant entries for the question (contextual selection)."""
+    """Versioned owner-authorized Commercial guidance."""
     try:
         bridge._require_commercial_human()
         key = (topic or "").strip().lower()
         doc = _knowledge_document()
-        if not key or key in {"*", "select", "search"}:
-            return _knowledge_select(doc, query or task)
-        collection, entry = _knowledge_entry(doc, key)
+        entry = (doc.get("topics") or {}).get(key)
         if entry is None:
             planned = {
                 t["topic"]: t for t in doc.get("planned_topics", [])
@@ -806,21 +610,19 @@ def tool_knowledge(
                 status_code=404,
                 code="not_found",
                 data={
-                    "available_ids": {
-                        c: sorted((doc.get(c) or {}).keys())
-                        for c in _KNOWLEDGE_COLLECTIONS
-                    },
+                    "available_topics": sorted(
+                        (doc.get("topics") or {}).keys()
+                    ),
                     "planned_topics": sorted(planned),
                 },
             )
         return _ok(
             {
                 "topic": key,
-                "type": collection[:-1],
                 "task": task,
                 "query": query,
                 "knowledge_version": doc.get("version"),
-                "owner": entry.get("owner", doc.get("owner")),
+                "owner": doc.get("owner"),
                 **entry,
             },
             "Conhecimento comercial versionado.",
