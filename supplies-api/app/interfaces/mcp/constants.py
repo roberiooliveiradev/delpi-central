@@ -32,8 +32,9 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 # rev.7 = safety_stock filters/summary/items/details/suppliers (R-13/R-14);
 # rev.8 = otd aggregate/series + analyze(overview_summary) (R-02/R-03);
 # rev.9 = consumption-audit search/get/comparison (R-23..R-25);
-# rev.10 = market_intelligence 9 reads + comex products/governance/views (R-26..R-29).
-CATALOG_VERSION = 10
+# rev.10 = market_intelligence 9 reads + comex products/governance/views (R-26..R-29);
+# rev.11 = session capabilities/preferences + users profile/photo/related (R-01,R-30..R-32).
+CATALOG_VERSION = 11
 
 # DISCOVERY | READ | ANALYSIS | ACT — frozen semantic tool classes.
 # Metadata describes semantics; it NEVER authorizes execution.
@@ -134,6 +135,8 @@ READ_ACTIONS_BY_ENTITY: dict[str, frozenset[str]] = {
             "view_get",
         }
     ),
+    "session": frozenset({"capabilities", "preferences"}),
+    "users": frozenset({"profile", "photo", "related_requests"}),
 }
 READ_ENTITIES: frozenset[str] = frozenset(READ_ACTIONS_BY_ENTITY)
 ANALYSIS_KINDS: frozenset[str] = frozenset(
@@ -431,3 +434,12 @@ COMEX_PRODUCTS_KEYS = frozenset(
 COMEX_NCM_LIST_KEYS = frozenset({"status"})
 COMEX_VIEWS_KEYS = frozenset(set())
 COMEX_IDENTITY_KEYS = frozenset({"governance_id", "view_id"})
+
+SESSION_CAPABILITIES_KEYS = frozenset(set())
+SESSION_PREFERENCES_KEYS = frozenset(set())
+USERS_PROFILE_KEYS = frozenset(set())
+USERS_PHOTO_KEYS = frozenset(set())
+USERS_RELATED_KEYS = frozenset(
+    {"branch", "page", "page_size", "sort_by", "sort_dir"}
+)
+USERS_IDENTITY_KEYS = frozenset({"user_id"})

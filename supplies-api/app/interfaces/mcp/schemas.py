@@ -493,3 +493,20 @@ class ComexIdentity(_ClosedModel):
     governance_id: str | None = None
     view_id: str | None = None
 
+class EmptyFilters(_ClosedModel):
+    """no-op filter object for actions that take no filters."""
+
+
+class UsersRelatedFilters(_ClosedModel):
+    """read(users,related_requests)."""
+    branch: list[str] | None = None
+    page: int | None = Field(default=None, ge=1)
+    page_size: int | None = Field(default=None, ge=1, le=50)
+    sort_by: str | None = None
+    sort_dir: str | None = None
+
+
+class UsersIdentity(_ClosedModel):
+    """identity {user_id} for profile/photo/related_requests."""
+    user_id: str = Field(min_length=1)
+

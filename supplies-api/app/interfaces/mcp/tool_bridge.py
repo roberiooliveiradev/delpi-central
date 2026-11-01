@@ -28,6 +28,7 @@ from app.application.security.supplies_permissions import (
     can_use_analytics,
     can_use_market_intelligence,
     can_use_operations,
+    can_enter_shell,
     can_use_purchase_requests,
     has_canonical_access,
     has_canonical_manage,
@@ -49,6 +50,11 @@ from app.application.services.market_intelligence_service import (
     MarketDataNotFoundError,
     MarketIntelligenceService,
 )
+from app.application.services.capability_resolution_service import (
+    CapabilityResolutionService,
+)
+from app.application.services.preferences_service import PreferencesService
+from app.application.services.user_profile_service import UserProfileService
 from app.application.services.comex_analysis_service import (
     ComexAnalysisService,
     ComexConflictError,
@@ -141,6 +147,12 @@ from app.interfaces.mcp.constants import (
 DELIVERIES_LATE_FILTER_KEYS,
     INVENTORY_ITEMS_FILTER_KEYS,
     INVENTORY_SUMMARY_FILTER_KEYS,
+    SESSION_CAPABILITIES_KEYS,
+    SESSION_PREFERENCES_KEYS,
+    USERS_IDENTITY_KEYS,
+    USERS_PROFILE_KEYS,
+    USERS_PHOTO_KEYS,
+    USERS_RELATED_KEYS,
     COMEX_IDENTITY_KEYS,
     COMEX_NCM_LIST_KEYS,
     COMEX_PRODUCTS_KEYS,
@@ -582,6 +594,9 @@ _OTD_AGG_SERVICE = OtdAggregateService()
 _OTD_SERIES_SERVICE = OtdSeriesService()
 _MARKET_SERVICE = MarketIntelligenceService()
 _COMEX_SERVICE = ComexAnalysisService()
+_CAPABILITY_SERVICE = CapabilityResolutionService()
+_PREFERENCES_SERVICE = PreferencesService()
+_USER_PROFILE_SERVICE = UserProfileService()
 _INVENTORY_SERVICE = InventoryStockBalancesService()
 
 _PR_GATEWAY = PurchaseRequestsGateway()
@@ -1297,6 +1312,14 @@ def tool_read(
         )
     if normalized_entity == "comex":
         return _dispatch_comex_read(
+            normalized_action, filter_payload, identity_payload
+        )
+    if normalized_entity == "session":
+        return _dispatch_session_read(
+            normalized_action, filter_payload, identity_payload
+        )
+    if normalized_entity == "users":
+        return _dispatch_users_read(
             normalized_action, filter_payload, identity_payload
         )
 
@@ -2389,5 +2412,131 @@ def tool_comex_view_get(identity: dict) -> CallToolResult:
         payload,
         meta={"delpi/source":
               "bff:/market-intelligence/comex/views/{id}"},
+    )
+
+
+def _shell_user() -> EffectiveUser:
+    user = _effective_user()
+    if not can_enter_shell(user):
+        raise AuthorizationError("Forbidden")
+    return user
+
+
+def _dispatch_session_read(
+    action: str, filters: dict, identity: dict
+) -> CallToolResult:
+    if identity:
+        return _invalid(
+            f"read(session,{action}) does not accept 'identity'."
+        )
+    allowed = (
+        SESSION_CAPABILITIES_KEYS
+        if action == "capabilities"
+        else SESSION_PREFERENCES_KEYS
+    )
+    unknown = _unknown_keys(filters, allowed)
+    if unknown:
+        return _invalid(
+            f"Unknown session {action} filters: {sorted(unknown)}. "
+            "Expected: none."
+        )
+    if action == "capabilities":
+        return tool_session_capabilities()
+    return tool_session_preferences()
+
+
+def tool_session_capabilities() -> CallToolResult:
+    user = _shell_user()
+    payload = _CAPABILITY_SERVICE.resolve(user)
+    return _ok(payload, meta={"delpi/source": "bff:/me/capabilities"})
+
+
+def tool_session_preferences() -> CallToolResult:
+    user = _shell_user()
+    payload = _PREFERENCES_SERVICE.get(user)
+    return _ok(payload, meta={"delpi/source": "bff:/me/preferences"})
+
+
+def _dispatch_users_read(
+    action: str, filters: dict, identity: dict
+) -> CallToolResult:
+    if action == "related_requests":
+        unknown = _unknown_keys(filters, USERS_RELATED_KEYS)
+        if unknown:
+            return _invalid(
+                f"Unknown users related_requests filters: "
+                f"{sorted(unknown)}. Allowed: "
+                f"{sorted(USERS_RELATED_KEYS)}"
+            )
+    elif filters:
+        return _invalid(
+            f"read(users,{action}) accepts no 'filters'."
+        )
+    unknown = _unknown_keys(identity, USERS_IDENTITY_KEYS)
+    if unknown:
+        return _invalid(
+            f"Unknown users identity keys: {sorted(unknown)}. "
+            f"Allowed: {sorted(USERS_IDENTITY_KEYS)}"
+        )
+    uid = str(identity.get("user_id") or "").strip()
+    if not uid:
+        return _invalid("users identity requires 'user_id'.")
+    if action == "profile":
+        return tool_users_profile(uid)
+    if action == "photo":
+        return tool_users_photo(uid)
+    return tool_users_related_requests(uid, filters)
+
+
+def tool_users_profile(user_id: str) -> CallToolResult:
+    user = _operations_user()
+    try:
+        payload = _USER_PROFILE_SERVICE.get(user, user_id)
+    except AuthorizationError:
+        raise
+    except Exception as exc:
+        return _invalid(str(exc))
+    return _ok(
+        payload, meta={"delpi/source": "bff:/users/{id}/profile"}
+    )
+
+
+def tool_users_photo(user_id: str) -> CallToolResult:
+    user = _operations_user()
+    photo = _USER_PROFILE_SERVICE.photo(user, user_id)
+    if not photo:
+        return _invalid("photo not found")
+    content, content_type, file_name = photo
+    import base64 as _b64
+    return _ok(
+        {
+            "content_base64": _b64.b64encode(content).decode("ascii"),
+            "content_type": content_type or "image/jpeg",
+            "file_name": file_name,
+        },
+        meta={"delpi/source": "bff:/users/{id}/photo"},
+    )
+
+
+def tool_users_related_requests(
+    user_id: str, filters: dict
+) -> CallToolResult:
+    user = _operations_user()
+    try:
+        payload = _USER_PROFILE_SERVICE.related_purchase_requests(
+            user,
+            user_id,
+            branches=_clean_branches(filters.get("branch")),
+            page=filters.get("page") or 1,
+            page_size=filters.get("page_size") or 5,
+            sort_by=filters.get("sort_by"),
+            sort_dir=filters.get("sort_dir"),
+        )
+    except AuthorizationError:
+        raise
+    except Exception as exc:
+        return _invalid(str(exc))
+    return _ok(
+        payload, meta={"delpi/source": "bff:/users/{id}/related-requests"}
     )
 
