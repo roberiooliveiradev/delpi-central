@@ -1,8 +1,13 @@
 # SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION — LEDGER
 
 PROGRAM: SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION-001/002
-CURRENT LOT: G7 — Mercado/Comex READ (R-26..R-29) — inventory next
-LAST CLOSED LOT: G6 Consumo OP (1fc6601d87)
+CURRENT LOT: G8 — Home/Users/Preferences READ (R-01,R-30..R-32)
+LAST CLOSED LOT: G7 Market/Comex READ (0b024e7245)
+G7 EVIDENCE: catalog v10 in-image; smoke — market filters/summary/series/fx/quotes/quote_compare/monthly success;
+  import_series+ppi = domain errors 'unknown ncm/series' (data-gated);
+  comex products_search/ncm_list(pending_fiscal_review)/views success;
+  negativos fail-closed (export/bogus/bad-status).
+
 G6 EVIDENCE: catalog v9 in-image; smoke — search total=474896,
   bad-fragment/short-key/1-op/unknown-action/unit-99 fail-closed;
   S2S DelpiS2SApiGateway + require_units preservados.
@@ -13,8 +18,8 @@ G4 EVIDENCE: catalog v7 in-image; smoke autenticado — filters/summary ok,
   items total=14232, details+suppliers ok (code 10010001),
   details sem branch -> 'A concrete branch (01 or 02) is required',
   action/filtro inválidos fail-closed. Suite suri_mcp verde.
-CURRENT HEAD: 1fc6601d87 · CATALOG: V9 · SOURCE SHA: idem · CATALOG: V6 · TOOLS: 5
-PARITY: 27/45 = 60.0% · TARGET: 45/45 = 100%
+CURRENT HEAD: 0b024e7245 · CATALOG: V10 · SOURCE SHA: idem · CATALOG: V6 · TOOLS: 5
+PARITY: 29/45 = 64.4% · TARGET: 45/45 = 100%
 
 ## G4 — Inventário concluído (contratos reais no HEAD)
 

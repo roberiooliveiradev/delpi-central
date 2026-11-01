@@ -30,6 +30,9 @@ from app.interfaces.mcp.constants import DESTRUCTIVE_ACT_TOOLS, TOOL_CLASS
 from app.interfaces.mcp.oauth_contract import SURI_MCP_SECURITY_SCHEMES
 from app.interfaces.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interfaces.mcp.schemas import (
+    EmptyFilters,
+    UsersIdentity,
+    UsersRelatedFilters,
     ComexIdentity,
     ComexNcmListFilters,
     ComexProductsFilters,
@@ -221,6 +224,8 @@ def create_mcp_server() -> MCPServer:
             "consumption",
             "market",
             "comex",
+            "session",
+            "users",
         ],
         action: Literal[
             "search",
@@ -254,6 +259,9 @@ def create_mcp_server() -> MCPServer:
             "ncm_governance_get",
             "views",
             "view_get",
+            "profile",
+            "photo",
+            "related_requests",
         ],
         filters: (
             PurchaseOrderSearchFilters
@@ -286,6 +294,8 @@ def create_mcp_server() -> MCPServer:
             | MarketMonthlyFilters
             | ComexProductsFilters
             | ComexNcmListFilters
+            | EmptyFilters
+            | UsersRelatedFilters
             | None
         ) = None,
         identity: (
@@ -297,6 +307,7 @@ def create_mcp_server() -> MCPServer:
             | SafetyStockItemIdentity
             | ConsumptionIdentity
             | ComexIdentity
+            | UsersIdentity
             | None
         ) = None,
     ) -> CallToolResult:

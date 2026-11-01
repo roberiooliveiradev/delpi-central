@@ -1358,3 +1358,21 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Paridade | EXECUTADO | 3.694 chaves (82,5%); QtdFat 99,5%; divergências com causa |
 | Custos | source_missing (DR-2) | inalterado |
 | Vídeo | TEST_NOT_RUN | mantido |
+
+---
+
+## R09-G042 — Temporal SHY/OP + taxa + paridade final (2026-11-01)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Recuperação Git G041 | ATENDIDO | já na main (0acdf32b6a); HEAD d199686f92 = remote |
+| Push | BLOQUEADO | SSH publickey; gh ausente; helper=manager |
+| Seleção temporal OP | ATENDIDO | última OP c/ roteiro; bound ≤07/10 rejeitado c/ métrica |
+| Fallback SG2 | ATENDIDO | estado tipado por linha (`stdTime.state`) |
+| Grão âncora agregada | ATENDIDO | soma SD2/produto (evid. 70260033) |
+| Quantidade/Horas | PARCIAL | 82,2%/81,9% — resíduo = drift roteiro + E9 serial |
+| Taxa MOD | SOURCE_MISSING | SBZ/SB9/custom exauridas; RPO pendente |
+| Paridade G042 | EXECUTADO | 3.694 chaves (82,5%); métricas por filial no probe |
+| Testes | PASS | 50/50 reexecutados (venv Windows) |
+| Homologação DR-3 | PREPARADO | pacote doc 144; aceite humano pendente |
+| BFF | NOT_READY | depende DR-3 + fonte taxa |
