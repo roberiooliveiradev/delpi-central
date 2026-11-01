@@ -249,12 +249,13 @@ def test_happy_path_envelope_and_meta(
 
 
 class _FakeRepository:
-    """Row-level fake: billed map + SG1 edges + SG2 ops per product."""
+    """Row-level fake: billed map + SG1 edges + ops per product."""
 
-    def __init__(self, *, billed=None, edges=None, ops=None):
+    def __init__(self, *, billed=None, edges=None, ops=None, frozen_ops=None):
         self._billed = billed or {}
         self._edges = edges or {}
         self._ops = ops or {}
+        self._frozen = frozen_ops or {}
         self.calls = []
 
     def fetch_billed_quantities(self, *, period_start, period_end, branch):
@@ -288,6 +289,14 @@ class _FakeRepository:
         rows = []
         for product in product_codes:
             for op in self._ops.get(product, []):
+                rows.append({"product_code": product, **op})
+        return rows
+
+    def fetch_frozen_route_ops(self, *, product_codes, branch, run_date):
+        self.calls.append(("frozen", branch, tuple(product_codes)))
+        rows = []
+        for product in product_codes:
+            for op in self._frozen.get(product, []):
                 rows.append({"product_code": product, **op})
         return rows
 
@@ -507,7 +516,10 @@ def test_missing_std_time_yields_typed_absence_not_zero() -> None:
     data = _use_case(repo).execute(_request(), user_subject="u")
     line = data["anchors"][0]["modLines"][0]
     assert line["stdTime"]["value"] is None
-    assert line["stdTime"]["state"] == "sg2_cadastral"
+    assert line["stdTime"]["state"] in (
+        "sg2_cadastral",
+        "shy_frozen_op",
+    )
     assert line["hours"]["value"] is None
     assert line["hours"]["state"] == "source_missing"
 
@@ -524,6 +536,37 @@ def test_zero_billed_qty_is_legitimate_value() -> None:
     assert anchor["billedQty"] == 0.0
     assert anchor["modLines"][0]["propagatedQty"] == 0.0
     assert anchor["modLines"][0]["hours"]["value"] == 0.0
+
+
+def test_shy_frozen_route_wins_over_cadastral() -> None:
+    """BR-R09-007/008 — the OP-frozen route is the primary std-time
+    source; cadastral SG2 ops are the fallback."""
+    repo = _FakeRepository(
+        billed={"PA1": 2.0},
+        ops={"PA1": [_op(std_time=99.0)]},
+        frozen_ops={
+            "PA1": [
+                _op(std_time=7.5, op_code="24890001001"),
+            ],
+        },
+    )
+    data = _use_case(repo).execute(_request(), user_subject="u")
+    line = data["anchors"][0]["modLines"][0]
+    assert line["stdTime"]["value"] == 7.5
+    assert line["stdTime"]["state"] == "shy_frozen_op"
+    assert line["sourceOp"] == "24890001001"
+    assert line["hours"]["value"] == pytest.approx(15.0)
+
+
+def test_sg2_used_when_no_frozen_route() -> None:
+    repo = _FakeRepository(
+        billed={"PA1": 2.0},
+        ops={"PA1": [_op(std_time=3.0)]},
+    )
+    data = _use_case(repo).execute(_request(), user_subject="u")
+    line = data["anchors"][0]["modLines"][0]
+    assert line["stdTime"]["value"] == 3.0
+    assert line["stdTime"]["state"] == "sg2_cadastral"
 
 
 def test_branch_all_expands_both_branches() -> None:
@@ -579,7 +622,7 @@ def test_edges_sql_is_parameterized_and_branch_scoped() -> None:
         parent_codes=["PA1", "PA2"], branch="01"
     )
     assert "SG1010" in sql
-    assert "G1_FILIAL = ?" in sql
+    assert "G1_FILIAL IN ('', ?)" in sql
     assert "PA1" not in sql and "PA2" not in sql
     assert params[0] == "01"
     assert params[1:] == ["PA1", "PA2"]

@@ -45,3 +45,11 @@ class BillingModBreakdownRepositoryPort(Protocol):
         ``SB1010`` when the resource maps to a ``MOD*`` item).
         """
         ...
+
+    def fetch_frozen_route_ops(
+        self, *, product_codes: list[str], branch: str, run_date: str
+    ) -> list[dict[str, Any]]:
+        """Frozen-OP (SHY) ops of ``product_codes`` — primary std-time
+        source. Same row shape as ``fetch_route_operations`` plus
+        ``op_code`` for provenance."""
+        ...

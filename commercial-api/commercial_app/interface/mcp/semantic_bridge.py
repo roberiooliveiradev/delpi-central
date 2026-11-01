@@ -65,14 +65,20 @@ def _err(
 ) -> CallToolResult:
     err = dict(data or {})
     err.setdefault("error_kind", code)
+    payload: dict = {
+        "success": False,
+        "message": message,
+        "status_code": status_code,
+        "error_code": code,
+        "data": err,
+    }
+    # Owner-declared typed recoverability (delpi_mcp contract): argument
+    # validation rejections are repairable by the caller.
+    if code == "validation":
+        payload["code"] = "ARGUMENT_VALIDATION"
+        payload["recoverable"] = True
     return mcp_tool_result(
-        {
-            "success": False,
-            "message": message,
-            "status_code": status_code,
-            "error_code": code,
-            "data": err,
-        },
+        payload,
         is_error=True,
     )
 

@@ -73,7 +73,7 @@ def test_export_requires_ref():
     with _ctx(_editor()), patch.object(tool_bridge, "_dispatch", dispatch):
         r = tool_bridge.tool_read(entity="playlist", action="export_mdd")
     assert r.is_error is True
-    assert r.structured_content["code"] == "VALIDATION_ERROR"
+    assert r.structured_content["code"] == "ARGUMENT_VALIDATION"
 
 
 # ---------------------------------------------------------------------------
@@ -124,7 +124,7 @@ def test_playlist_import_apply_requires_token():
             entity="playlist", action="import_apply",
             operations=[{}])
     assert r.is_error is True
-    assert r.structured_content["code"] == "VALIDATION_ERROR"
+    assert r.structured_content["code"] == "ARGUMENT_VALIDATION"
 
 
 def test_playlist_import_denied_for_viewer():
@@ -145,7 +145,7 @@ def test_import_oversized_mdd_rejected():
             entity="playlist", action="import_preview",
             operations=[{"mdd": big}])
     assert r.is_error is True
-    assert r.structured_content["code"] == "VALIDATION_ERROR"
+    assert r.structured_content["code"] == "ARGUMENT_VALIDATION"
 
 
 # ---------------------------------------------------------------------------

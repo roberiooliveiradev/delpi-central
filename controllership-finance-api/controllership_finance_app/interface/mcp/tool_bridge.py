@@ -146,13 +146,20 @@ def _error(
             error="invalid_token",
             error_description="Authentication required",
         )
+    payload: dict = {
+        "success": False,
+        "message": message,
+        "data": err_data,
+        "status_code": status_code,
+    }
+    # Owner-declared typed recoverability (delpi_mcp contract): argument
+    # validation rejections are repairable by the caller — authz/policy/
+    # business/transport classes remain non-recoverable by omission.
+    if error_code == "validation_error":
+        payload["code"] = "ARGUMENT_VALIDATION"
+        payload["recoverable"] = True
     return mcp_tool_result(
-        {
-            "success": False,
-            "message": message,
-            "data": err_data,
-            "status_code": status_code,
-        },
+        payload,
         is_error=True,
         meta=meta,
     )

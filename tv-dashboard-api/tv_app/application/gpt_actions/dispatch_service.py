@@ -3448,6 +3448,36 @@ class GptActionsDispatchService:
         # PHASE 5 — bounded methodology advisory for high-level design intents
         # only. Direct typed commands bypass it; ops/policy stay canonical.
         intent = DesignIntelligenceService.design_intent_for_message(message)
+        if (
+            intent == "COMPOSE_SLIDE"
+            and str(payload.get("status") or "")
+            in {"unsupported", "not_command"}
+        ):
+            from tv_app.application.services.data.presentation_recipe_service import (
+                PresentationRecipeService,
+            )
+
+            recipe = PresentationRecipeService.resolve_from_nl(message)
+            if recipe:
+                ops = PresentationRecipeService.ops_for_recipe(
+                    recipe.recipe_id
+                )
+                if ops:
+                    payload["status"] = "proposal"
+                    payload["recipeId"] = recipe.recipe_id
+                    if recipe.theme_key:
+                        payload["themeKey"] = recipe.theme_key
+                    payload["ops"] = ops
+                    payload["matchedCapabilityKeys"] = [
+                        f"recipe:{recipe.recipe_id}"
+                    ]
+                    payload["clarificationKey"] = None
+                    payload["reason"] = None
+            else:
+                payload["status"] = "unsupported"
+                payload["compositionHints"] = (
+                    PresentationRecipeService.recipe_ids()[:10]
+                )
         if intent:
             methodology = self._design_methodology_for_suggest(intent=intent, host=host)
             methodology.pop("_fabricated", None)

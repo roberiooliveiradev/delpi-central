@@ -80,3 +80,16 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
   Quantidade/Horas 84,5% (lacuna SHY roteiro-OP documentada); 3.081
   ausentes / 70 excedentes com causa e owner (doc 142).
 - Owner técnico: `api-delpi` (financeiro). Evidências: doc 142.
+
+## Atualização — Gate 041 (01/11/2026)
+
+- Slice 1 já estava publicado em main (7ca041a19b); push SSH segue
+  bloqueado nesta estação (publickey) — novos commits locais pendentes.
+- Correções comprovadas: SG1 compartilhada (G1_FILIAL=''), coluna PA
+  = produto explodido, roteiro congelado SHY (última OP com roteiro)
+  primário com fallback SG2 — `Quantidade=HY_TEMPAD`.
+- Nova paridade 2026-09: 4.659 linhas; 3.694/4.476 chaves (82,5%);
+  QtdFat 99,5%; 983 ausentes/1.165 excedentes por drift temporal de
+  revisão de roteiro (medido, com owner).
+- BZ_CUSTD REJEITADO como fonte da taxa (0/120; SBZ só tem corrente).
+- Custos continuam source_missing (DR-2); DR-3 pendente. Evid.: doc 143.

@@ -96,6 +96,11 @@ def _error_result(
         "error_code": error_code,
         "data": data or {},
     }
+    # Owner-declared typed recoverability (delpi_mcp contract): argument
+    # validation rejections are repairable by the caller.
+    if error_code == "validation":
+        payload["code"] = "ARGUMENT_VALIDATION"
+        payload["recoverable"] = True
     return mcp_tool_result(payload, is_error=True)
 
 
