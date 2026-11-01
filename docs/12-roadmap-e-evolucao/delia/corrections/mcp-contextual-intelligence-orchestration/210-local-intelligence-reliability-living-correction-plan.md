@@ -518,6 +518,21 @@ Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos,
 - **Resultado doc211:** 10/28 com registry consolidado — inalterado pela consolidação. Residual permanece síntese composta/arggen em CAIO/CLARA/EVA (Task 29 scope) — **não** integração, authz nem acoplamento.
 - `PRODUCTION=NO`; `FABRICATIONS=0`; `UNAUTHORIZED_ACT=0`.
 
+## 19.5 Task 36 — `DELIA-C3-MCP-OWNER-CONTRACT-REMEDIATION-AND-AGENTIC-FRAMEWORK-ARCHITECTURE-01` (implementado)
+
+### Frente A — envelopes tipados implementados (commit `3bf75b7e94`)
+
+- `code="ARGUMENT_VALIDATION"` + `recoverable=true` emitidos no structuredContent **somente** para a classe `error_code=validation(_error)` (enum/required/unknown-field) nos 6 bridges: controllership-finance `tool_bridge`, commercial `tool_bridge`+`semantic_bridge`, engineering `tool_bridge`, transformometro `tool_bridge`, tv-dashboard `tool_bridge`, supplies `tool_bridge`. Authz/policy/business/transport permanecem não-recuperáveis (sem flag).
+- **GREEN provado:** probe clara → `structuredContent={code:"ARGUMENT_VALIDATION",recoverable:true}`; invocação direta pelo stack real → `SpecialistInteropError.code=owner_argument_rejected` + `owner_hint`.
+- **Recovery e2e provado** (cmp_10): `suri.analyze` EXC → recuperação → `suri.get_context` → `suri.analyze` COMPLETED → PASS.
+- **doc211 pós-fix: 9/28** — composição real mudou: EVA **0→3/4**, TÉO **1→2/4**, SURI 3/4 (com recovery e2e), VISTA **4→0** (clarificações genéricas viraram execução real que falha honestamente — avaliação mais verdadeira), retry bounded sem loop (cmp_22/23).
+- Residual: arggen ainda inventa enums na 2ª proposta (dedup aborta corretamente); erros não-recuperáveis permanecem fail-closed.
+
+### Frente B — parcial
+
+- Inventário LangGraph: `langgraph_engine.py` usa `StateGraph`+`add_conditional_edges` apenas — sem checkpointer, Send API, interrupts, subgraphs ou fan-out nativo; paralelismo é fan-out custom no provider. pip: langgraph 1.2.16, langchain-core 1.7.1, pydantic 2.14.1; pydantic-ai e llamaindex **não instalados**.
+- Estudo completo dos 5 frameworks + protótipos + arquitetura-alvo: **não executado** nesta iteração (Frente A + bateria consumiram o ciclo) — permanece como bounded step com inventário parcial registrado.
+
 ## 20. Task 35 — `DELIA-C3-PYDANTIC-AI-PROVIDER-NEUTRAL-TOOL-RECOVERY-AND-COMPOSITE-VALIDATION-01` (doc 212)
 
 ### 20.1 Inventário — o recovery tipado JÁ EXISTE e está governado
