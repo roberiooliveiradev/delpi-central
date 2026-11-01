@@ -20,21 +20,24 @@ def _tok(text, x, y, w=40, h=10, conf=0.9, page=1):
     }
 
 
-# layout 1000x800: carimbo inferior-direito (x≥550,y≥576),
-# tabela sobre o carimbo (x≥550,360≤y<576), notas canto sup-esq
+# layout ~840x730: coluna de códigos x=600 (tabela estrutural),
+# carimbo por rótulos COD/DES/REV no inferior-direito,
+# número/cota na área de desenho, nota canto sup-esq
 _TOKENS = [
-    _tok("10080106", 600, 400),   # tabela row0
+    _tok("10080106", 600, 400),   # tabela row0 (coluna de códigos)
     _tok("CABO", 700, 400),       # tabela row0 col1
     _tok("10020033", 600, 420),   # tabela row1
     _tok("TUBO", 700, 420),
     _tok("50226113", 600, 440),   # tabela row2
     _tok("50226114", 600, 460),   # tabela row3
-    _tok("90264302", 800, 700),   # carimbo
+    _tok("COD", 620, 700),        # carimbo — rótulo 1
+    _tok("DES", 740, 700),        # carimbo — rótulo 2
+    _tok("90264302", 800, 700),   # carimbo valor
     _tok("18702881", 800, 720),
-    _tok("REV", 650, 700),
-    _tok("00", 700, 700),
-    _tok("643", 200, 300),        # área de desenho → region candidate
-    _tok("663", 200, 350),
+    _tok("REV", 620, 720),
+    _tok("00", 700, 720),         # valor de REV (nunca cota)
+    _tok("643±2", 200, 300),      # cota explícita na área de desenho
+    _tok("663±2", 200, 350),
     _tok("CHICOTE", 50, 50),      # notas
 ]
 
@@ -89,7 +92,9 @@ def test_revision_candidate_label_value():
 def test_dimension_candidates_never_verified():
     out = build_understanding(_TOKENS, document_hash="x")
     dims = {d["text"]: d for d in out["dimension_candidates"]}
-    assert "643" in dims and "663" in dims
+    assert "643±2" in dims and "663±2" in dims
+    # "00" (valor de REV) nunca é cota
+    assert "00" not in dims
     assert all(
         d["state"] in {
             "DIMENSION_TEXT_FOUND", "DIMENSION_REGION_CANDIDATE"

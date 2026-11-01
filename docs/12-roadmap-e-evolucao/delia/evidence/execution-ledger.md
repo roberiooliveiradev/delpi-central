@@ -997,3 +997,7 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 ## 2026-11-01 — S2 benchmark A/B executado (_s2_ab_benchmark.py, .battery/task37/s2_ab.json): pydantic-ai 2.60.0 structured output produz tipos validos mas analysis_type inventado quando schema = string livre (enum vive no catalogo owner, nao no inputSchema) -> evidencia NOT_ADOPT nesta fronteira; owner_hint T36 segue correto. S3-S6 pendentes (INCOMPLETE).
 
 ## 2026-11-01 — S2 benchmark traceability fixed: bd229c9a28 = _s2_ab_benchmark.py (pydantic-ai 2.60.0). Resultado: args schema-valid mas discriminadores livres inventados nao-deterministicamente (analysis_type variou entre runs) — NOT_ADOPT nesta fronteira; clara/caio tools nao localizados por nome (namespace diferente). S3-S6 INCOMPLETE.
+
+## 2026-11-01 — S2 causa-raiz owner-side provada: clara topic = anyOf[string,null] (free-string); enum valido so em description. Proximo fix: Literal[...] na signature do @mcp.tool por owner (sem enum na DELIA). Pydantic-ai NOT_ADOPT confirmado por benchmark.
+
+## 2026-11-01 — S2 slice: clara get_context topic -> Literal[summary|actor|catalog|schema|persona] (server.py) — inputSchema publica enum do owner (sem enum na DELIA). Probe GREEN pendente (docker DNS flap); pydantic-ai NOT_ADOPT por benchmark.

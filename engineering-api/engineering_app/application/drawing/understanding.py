@@ -1,31 +1,37 @@
-"""Drawing Understanding — camada de interpretação estrutural (R8).
+"""Drawing Understanding — camada de interpretação estrutural (R8.1).
 
 Contrato ``drawing_understanding.v1``: consome evidência OCR existente
 (tokens + bounding boxes em pixels, sistema de coordenadas explícito)
 e produz candidatos estruturados — regiões, carimbo, revisão, tabela,
 cotas, notas, ambiguidades — com provenance e estados honestos.
 
-Determinístico e explicável: agrupamento por posição/alinhamento,
-regras declaradas, zero ML. Nenhuma confiança técnica inventada:
-``DIMENSION_TEXT_FOUND`` ≠ ``DIMENSION_ASSOCIATION_VERIFIED`` e
-``OCR_TEXT_FOUND`` ≠ ``ENGINEERING_VALIDATED``.
+R8.1 (correções D1–D5):
+- região por estrutura/semântica (rótulos + cluster de códigos), não
+  só posição relativa — funciona em carimbo superior ou inferior;
+- tabela detectada por coluna de códigos + rótulos, em qualquer posição;
+- pareamento rótulo→valor para REV (proximidade/alinhamento);
+- filtro contextual de cotas (exclui valores de rótulos, itens de
+  tabela, códigos longos, células de carimbo/tabela);
+- BOM compare fail-closed: sem tabela estruturada → NOT_COMPARABLE
+  com listas vazias (nunca falsa ausência).
+
+Determinístico e explicável: zero ML. ``OCR_TEXT_FOUND`` nunca é
+``ENGINEERING_VALIDATED``; ``DIMENSION_TEXT_FOUND`` nunca é
+``DIMENSION_ASSOCIATION_VERIFIED``.
 """
 
 from __future__ import annotations
 
 import re
+from collections import Counter
 from typing import Any, Iterable
 
 SCHEMA_VERSION = "drawing_understanding.v1"
 
-# Status de associação (escopo fechado, honesto)
 FIELD_STATES = frozenset(
     {
-        "FIELD_IDENTIFIED",      # texto + região atribuídos com regra
-        "FIELD_AMBIGUOUS",       # múltiplos candidatos igualmente plausíveis
-        "TEXT_ONLY",             # texto achado, sem região/campo
-        "NOT_FOUND",
-        "NOT_COMPARABLE",
+        "FIELD_IDENTIFIED", "FIELD_AMBIGUOUS", "TEXT_ONLY",
+        "NOT_FOUND", "NOT_COMPARABLE",
     }
 )
 DIMENSION_STATES = frozenset(
@@ -33,8 +39,7 @@ DIMENSION_STATES = frozenset(
         "DIMENSION_TEXT_FOUND",
         "DIMENSION_REGION_CANDIDATE",
         "DIMENSION_GEOMETRY_ASSOCIATION_CANDIDATE",
-        # DIMENSION_ASSOCIATION_VERIFIED só por validação governada —
-        # nunca emitido automaticamente.
+        # DIMENSION_ASSOCIATION_VERIFIED — somente validação governada.
     }
 )
 REGION_TYPES = frozenset(
@@ -45,15 +50,50 @@ REGION_TYPES = frozenset(
     }
 )
 
-_DIM_RE = re.compile(
-    r"^~?\d{1,4}([.,]\d+)?(\s?[±+/-]\s?\d+([.,]\d+)?)?(\s?(mm|pol|in|[°º]))?$"
+# Rótulos de carimbo DELPI / vocabulário técnico (case-insensitive).
+_TITLEBLOCK_LABELS = frozenset(
+    {
+        "cod", "cod.", "des", "des.", "rev", "rev.", "rev:",
+        "cliente", "desenho", "esc", "esc.", "escala", "data",
+        "ref", "ref.", "mat", "material", "peso", "unid",
+        "unidade", "folha", "fl", "fl.", "obs", "obs.",
+        "aprov", "aprov.", "aprovado", "verific", "resp",
+        "respons", "liberado", "desenhado", "conferido",
+    }
 )
-_REV_RE = re.compile(r"^(REV\.?|R)?\s?(\d{2}|[A-Z])$", re.IGNORECASE)
+# Rótulos de cabeçalho de tabela de componentes.
+_TABLE_HEADER_LABELS = frozenset(
+    {
+        "item", "cod", "cod.", "código", "codigo",
+        "descrição", "descricao", "descr", "qtd",
+        "qtde", "quant", "unid", "un", "componente",
+        "obs", "pi", "mp", "ref", "ref.",
+    }
+)
 _CODE_RE = re.compile(r"^\d{6,11}(-\d+)?$")
+_REV_LABEL_RE = re.compile(r"^REV\.?:?$", re.IGNORECASE)
+_REV_VALUE_RE = re.compile(r"^(\d{2}|[A-Z]{1,2})$")
+_NUM_RE = re.compile(r"^\d+([.,]\d+)?$")
+# cota explícita: tolerância ±/±n ou unidade escrita — nunca só número
+_DIM_EXPLICIT_RE = re.compile(
+    r"^\d+([.,]\d+)?\s*([±+/-]\s*\d+([.,]\d+)?|mm|pol|in|[°ºøØ])\s*$",
+    re.IGNORECASE,
+)
 
 
 def _norm(text: str) -> str:
     return " ".join((text or "").split()).strip()
+
+
+def _text_of(t: dict) -> str:
+    return _norm(
+        str(
+            t.get("normalized_text")
+            or t.get("raw_text")
+            or t.get("text")
+            or ""
+        )
+    )
 
 
 def _tok_center(token: dict) -> tuple[float, float] | None:
@@ -65,35 +105,88 @@ def _tok_center(token: dict) -> tuple[float, float] | None:
     return (sum(xs) / 4.0, sum(ys) / 4.0)
 
 
+def _box(tokens: list[dict]) -> list[float] | None:
+    """BBox agregada (min/min, max/max) de um conjunto de tokens."""
+    pts = [_tok_center(t) for t in tokens]
+    pts = [p for p in pts if p]
+    if not pts:
+        return None
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+    return [min(xs), min(ys), max(xs), max(ys)]
+
+
+def _inside(center: tuple[float, float], box: list[float],
+            margin: float = 0.0) -> bool:
+    return (
+        box[0] - margin <= center[0] <= box[2] + margin
+        and box[1] - margin <= center[1] <= box[3] + margin
+    )
+
+
+def _is_label(text: str) -> bool:
+    return text.lower().rstrip(".") in _TITLEBLOCK_LABELS or (
+        text.lower() in _TITLEBLOCK_LABELS
+    )
+
+
+def _is_header_label(text: str) -> bool:
+    return text.lower().rstrip(".:") in _TABLE_HEADER_LABELS
+
+
 def _page_size(tokens: Iterable[dict]) -> tuple[float, float]:
     maxx = maxy = 0.0
     for t in tokens:
-        for p in _tok_center(t) or ():
-            pass
         c = _tok_center(t)
         if c:
             maxx, maxy = max(maxx, c[0]), max(maxy, c[1])
     return (maxx or 1.0, maxy or 1.0)
 
 
-def classify_region(cx: float, cy: float, w: float, h: float) -> str:
-    """Região candidata por posição relativa (layout DELPI: carimbo
-    inferior-direito; tabela de componentes acima do carimbo; histórico
-    de revisão na faixa superior do carimbo; área de desenho à esquerda)."""
-    fx, fy = cx / w, cy / h
-    if fx >= 0.55 and fy >= 0.72:
-        return "title_block"
-    if fx >= 0.55 and fy >= 0.45:
-        return "component_table"
-    if fy < 0.10:
-        return "revision_history"
-    if fx < 0.45 and fy < 0.35:
-        return "notes"
-    return "drawing_area"
+def _nearest_value_right(
+    label_tok: dict, tokens: list[dict], y_tol: float, x_tol: float
+) -> dict | None:
+    """Token mais próximo à direita do rótulo (mesma linha)."""
+    lc = _tok_center(label_tok)
+    if not lc:
+        return None
+    best, best_d = None, None
+    for t in tokens:
+        if t is label_tok:
+            continue
+        c = _tok_center(t)
+        if not c:
+            continue
+        if abs(c[1] - lc[1]) <= y_tol and 0 < c[0] - lc[0] <= x_tol:
+            d = c[0] - lc[0]
+            if best_d is None or d < best_d:
+                best, best_d = t, d
+    return best
 
 
-def _cluster_rows(tokens: list[dict], y_tol: float) -> list[list[dict]]:
-    """Agrupa tokens em linhas por proximidade de centro-Y (determinístico)."""
+def _nearest_value_below(
+    label_tok: dict, tokens: list[dict], x_tol: float, y_tol: float
+) -> dict | None:
+    """Token mais próximo abaixo do rótulo (mesma coluna)."""
+    lc = _tok_center(label_tok)
+    if not lc:
+        return None
+    best, best_d = None, None
+    for t in tokens:
+        if t is label_tok:
+            continue
+        c = _tok_center(t)
+        if not c:
+            continue
+        if abs(c[0] - lc[0]) <= x_tol and 0 < c[1] - lc[1] <= y_tol:
+            d = c[1] - lc[1]
+            if best_d is None or d < best_d:
+                best, best_d = t, d
+    return best
+
+
+def _cluster_y(
+    tokens: list[dict], y_tol: float
+) -> list[list[dict]]:
     rows: list[list[dict]] = []
     for t in sorted(
         [t for t in tokens if _tok_center(t)],
@@ -110,18 +203,261 @@ def _cluster_rows(tokens: list[dict], y_tol: float) -> list[list[dict]]:
     return rows
 
 
-def _cluster_cols(tokens: list[dict], x_tol: float) -> list[float]:
-    """Centros X candidatos de colunas por cluster de tokens."""
-    centers = sorted(
-        _tok_center(t)[0] for t in tokens if _tok_center(t)
-    )
-    cols: list[float] = []
-    for x in centers:
-        if not cols or abs(x - cols[-1]) > x_tol:
-            cols.append(x)
+def _detect_title_block(
+    tokens: list[dict], w: float, h: float
+) -> dict | None:
+    """Carimbo = cluster de ≥2 rótulos de carimbo (em qualquer posição).
+
+    D1/D5: posição é apenas um indício; rótulos conhecidos (COD/DES/
+    REV/CLIENTE...) definem a região. Bbox ampliada por margem de
+    célula e tokens internos marcados como title_block.
+    """
+    labels = [
+        t for t in tokens
+        if _is_label(_text_of(t)) and _tok_center(t)
+    ]
+    if len(labels) < 2:
+        return None
+    # agrupa rótulos próximos — o maior cluster vence
+    y_tol = h * 0.06
+    groups: list[list[dict]] = []
+    for t in sorted(
+        labels, key=lambda t: (_tok_center(t)[1], _tok_center(t)[0])
+    ):
+        c = _tok_center(t)
+        for g in groups:
+            gb = _box(g)
+            if _inside(c, gb, margin=max(w * 0.12, y_tol)):
+                g.append(t)
+                break
         else:
-            cols[-1] = (cols[-1] + x) / 2.0
-    return cols
+            groups.append([t])
+    best = max(groups, key=len)
+    if len(best) < 2:
+        return None
+    box = _box(best)
+    box[0] -= w * 0.02
+    box[1] -= h * 0.02
+    box[2] += w * 0.30  # rótulo → valor à direita
+    box[3] += h * 0.06
+    members = [
+        t
+        for t in tokens
+        if _tok_center(t) and _inside(_tok_center(t), box)
+    ]
+    return {
+        "box": box,
+        "label_count": len(best),
+        "labels": [_text_of(t) for t in best],
+        "tokens": members,
+    }
+
+
+def _detect_component_table(
+    tokens: list[dict], w: float, h: float, tb_box: list[float] | None
+) -> dict | None:
+    """Tabela = coluna de ≥2 códigos (6-11 dígitos) alinhados em X +
+    linhas adjacentes, em qualquer posição (D2)."""
+    code_tokens = [
+        t
+        for t in tokens
+        if _CODE_RE.match(_text_of(t)) and _tok_center(t)
+    ]
+    if len(code_tokens) < 2:
+        return None
+    x_tol = w * 0.045
+    cols: list[list[dict]] = []
+    for t in sorted(
+        code_tokens, key=lambda t: _tok_center(t)[0]
+    ):
+        cx = _tok_center(t)[0]
+        for col in cols:
+            xs = [_tok_center(c)[0] for c in col]
+            if abs(cx - (sum(xs) / len(xs))) <= x_tol:
+                col.append(t)
+                break
+        else:
+            cols.append([t])
+    code_col = max(cols, key=len)
+    if len(code_col) < 2:
+        return None
+    col_box = _box(code_col)
+    y_tol = h * 0.02
+    # linhas da tabela = tokens na mesma faixa Y dos códigos (vizinhança)
+    rows: list[list[dict]] = []
+    for t in sorted(
+        [t for t in tokens if _tok_center(t)],
+        key=lambda t: _tok_center(t)[1],
+    ):
+        c = _tok_center(t)
+        row_y = None
+        for code_t in code_col:
+            if abs(c[1] - _tok_center(code_t)[1]) <= y_tol:
+                row_y = _tok_center(code_t)[1]
+                break
+        if row_y is not None:
+            for row in rows:
+                if abs(row_y - row["y"]) <= y_tol:
+                    row["tokens"].append(t)
+                    break
+            else:
+                rows.append({"y": row_y, "tokens": [t]})
+    if not rows:
+        return None
+    table_box = _box(
+        [t for r in rows for t in r["tokens"]]
+    )
+    table_box[0] -= w * 0.03
+    table_box[2] += w * 0.30  # descrição à direita do código
+    header = [
+        t
+        for t in tokens
+        if _tok_center(t)
+        and _is_header_label(_text_of(t))
+        and abs(_tok_center(t)[0] - col_box[0]) <= w * 0.10
+        and _tok_center(t)[1] < table_box[1] - h * 0.005
+        and _tok_center(t)[1] > table_box[1] - h * 0.12
+    ]
+    # não engolir o carimbo: se a tabela coincide com o carimbo,
+    # limitar à coluna de códigos
+    if tb_box and _inside(
+        (col_box[0], col_box[1]), tb_box, margin=w * 0.02
+    ):
+        table_box[0] = col_box[0] - w * 0.02
+        table_box[1] = col_box[1] - h * 0.005
+        table_box[2] = col_box[2] + w * 0.30
+        table_box[3] = col_box[3] + h * 0.01
+    return {
+        "box": table_box,
+        "code_col_x": (col_box[0] + col_box[2]) / 2,
+        "code_count": len(code_col),
+        "rows": rows,
+        "header_tokens": header,
+        "tokens": [
+            t
+            for t in tokens
+            if _tok_center(t) and _inside(_tok_center(t), table_box)
+        ],
+    }
+
+
+def _structure_table(
+    table: dict, w: float, h: float
+) -> list[dict]:
+    """Estrutura linhas/células: célula = token na linha, coluna por
+    cluster X dos tokens da tabela; cabeçalho por proximidade."""
+    y_tol = h * 0.015
+    x_tol = w * 0.05
+    all_toks = [
+        t for r in table["rows"] for t in r["tokens"]
+    ]
+    col_centers: list[float] = []
+    for t in sorted(
+        all_toks, key=lambda t: _tok_center(t)[0]
+    ):
+        cx = _tok_center(t)[0]
+        if not col_centers or abs(cx - col_centers[-1]) > x_tol:
+            col_centers.append(cx)
+        else:
+            col_centers[-1] = (col_centers[-1] + cx) / 2.0
+    rows_out = []
+    ambiguous = 0
+    for r_i, row in enumerate(sorted(table["rows"], key=lambda r: r["y"])):
+        cells = []
+        for t in sorted(
+            row["tokens"], key=lambda t: _tok_center(t)[0]
+        ):
+            x = _tok_center(t)[0]
+            d = [abs(x - c) for c in col_centers]
+            best_i = min(range(len(d)), key=lambda i: d[i])
+            ties = [i for i in range(len(d)) if abs(d[i] - d[best_i]) < 1e-9]
+            cell = {
+                "text": _text_of(t),
+                "col": best_i,
+                "row": r_i,
+                "bounding_box_px": t.get("bounding_box_px"),
+                "confidence": t.get("confidence"),
+            }
+            if len(ties) > 1:
+                cell["ambiguous"] = True
+                cell["alternatives"] = ties
+                ambiguous += 1
+            cells.append(cell)
+        rows_out.append(
+            {
+                "row": r_i,
+                "y_px": round(row["y"], 1),
+                "cells": cells,
+                "col_count": len(col_centers),
+            }
+        )
+    return rows_out, ambiguous
+
+
+def _match_revisions(
+    tokens: list[dict], w: float, h: float
+) -> list[dict]:
+    """REV: → valor (mesma linha à direita ou abaixo na coluna). D3."""
+    revs = []
+    y_tol = h * 0.015
+    x_tol = w * 0.12
+    for t in tokens:
+        text = _text_of(t)
+        if not _REV_LABEL_RE.match(text):
+            continue
+        val = _nearest_value_right(t, tokens, y_tol, x_tol)
+        rule = "label_right_same_row"
+        if val is None or not _REV_VALUE_RE.match(_text_of(val)):
+            val = _nearest_value_below(t, tokens, x_tol, y_tol * 3)
+            rule = "label_below_same_col"
+        if val and _REV_VALUE_RE.match(_text_of(val)):
+            revs.append(
+                {
+                    "field": "revision_candidate",
+                    "label_text": text,
+                    "value_text": _text_of(val),
+                    "region": "title_block",
+                    "bounding_box_px": t.get("bounding_box_px"),
+                    "value_bounding_box_px": val.get("bounding_box_px"),
+                    "state": "FIELD_IDENTIFIED",
+                    "association": f"label_value:{rule}",
+                    "association_confidence": "rule_based",
+                }
+            )
+        else:
+            revs.append(
+                {
+                    "field": "revision_candidate",
+                    "label_text": text,
+                    "value_text": None,
+                    "region": "title_block",
+                    "bounding_box_px": t.get("bounding_box_px"),
+                    "state": "TEXT_ONLY",
+                    "association": None,
+                }
+            )
+    return revs
+
+
+def _is_dimension_candidate(
+    text: str, region: str, paired: bool
+) -> tuple[bool, str]:
+    """Filtro contextual de cota (D4): nunca número solto em
+    carimbo/tabela/rótulo; exige tolerância/unidade explícita ou
+    região de desenho SEM contexto de exclusão."""
+    if paired:
+        return False, "paired_label_value"
+    if _CODE_RE.match(text):
+        return False, "long_code_not_dimension"
+    if region in {"title_block", "component_table", "revision_history"}:
+        return False, "inside_structured_region"
+    if _DIM_EXPLICIT_RE.match(text):
+        return True, "explicit_tolerance_or_unit"
+    if region == "drawing_area" and _NUM_RE.match(text) and len(text) >= 3:
+        return True, "drawing_area_number_ge3"
+    if region == "dimension" and _NUM_RE.match(text):
+        return True, "dimension_region_number"
+    return False, "number_without_dimension_context"
 
 
 def build_understanding(
@@ -132,26 +468,30 @@ def build_understanding(
     bom_codes: list[str] | None = None,
     bom_quantities: dict[str, int] | None = None,
 ) -> dict[str, Any]:
-    """Constrói candidatos estruturados a partir de tokens OCR.
-
-    ``tokens`` itens com ``text``, ``bounding_box_px`` [x1,y1..x4,y4],
-    ``confidence``, ``page``. Retorna ``drawing_understanding.v1``.
-    """
+    """Constrói candidatos estruturados a partir de tokens OCR."""
     w, h = _page_size(tokens)
     annotated: list[dict] = []
-    regions_seen: dict[str, int] = {}
+
+    tb = _detect_title_block(tokens, w, h)
+    table = _detect_component_table(
+        tokens, w, h, tb["box"] if tb else None
+    )
+    tb_tokens = set(id(t) for t in (tb["tokens"] if tb else []))
+    tbl_tokens = set(id(t) for t in (table["tokens"] if table else []))
+
     for idx, t in enumerate(tokens):
-        text = _norm(
-            str(
-                t.get("normalized_text")
-                or t.get("raw_text")
-                or t.get("text")
-                or ""
-            )
-        )
+        text = _text_of(t)
         c = _tok_center(t)
-        region = classify_region(c[0], c[1], w, h) if c else "unknown"
-        regions_seen[region] = regions_seen.get(region, 0) + 1
+        if id(t) in tbl_tokens:
+            region = "component_table"
+        elif id(t) in tb_tokens:
+            region = "title_block"
+        elif c and c[1] < h * 0.10 and not text:
+            region = "unknown"
+        elif c and c[0] < w * 0.45 and c[1] < h * 0.35:
+            region = "notes"
+        else:
+            region = "drawing_area"
         annotated.append(
             {
                 "index": idx,
@@ -164,48 +504,32 @@ def build_understanding(
             }
         )
 
-    # ---------- tabela de componentes ----------
-    table_tokens = [
-        a for a in annotated if a["region"] == "component_table"
-    ]
+    regions_seen = Counter(a["region"] for a in annotated)
+
+    # ---------- tabela estruturada ----------
     table_rows: list[dict] = []
     ambiguous_cells = 0
-    if len(table_tokens) >= 4:
-        y_tol = h * 0.015
-        x_tol = w * 0.03
-        for r_i, row in enumerate(_cluster_rows(table_tokens, y_tol)):
-            cols = _cluster_cols(row, x_tol)
-            cells = []
-            for t in row:
-                x = _tok_center(t)[0]
-                best = min(cols, key=lambda c: abs(c - x))
-                ties = [c for c in cols if abs(abs(c - x) - abs(best - x)) < 1e-9]
-                cell = {
-                    "text": t["text"],
-                    "col": cols.index(best),
-                    "row": r_i,
-                    "bounding_box_px": t["bounding_box_px"],
-                    "confidence": t["confidence"],
-                }
-                if len(ties) > 1:
-                    cell["ambiguous"] = True
-                    cell["alternatives"] = [
-                        cols.index(c) for c in ties
-                    ]
-                    ambiguous_cells += 1
-                cells.append(cell)
-            table_rows.append(
-                {
-                    "row": r_i,
-                    "y_px": round(
-                        sum(_tok_center(t)[1] for t in row) / len(row), 1
-                    ),
-                    "cells": cells,
-                    "col_count": len(cols),
-                }
-            )
+    if table:
+        table_rows, ambiguous_cells = _structure_table(table, w, h)
 
-    # ---------- campos / códigos ----------
+    # ---------- revisão contextual ----------
+    revisions = _match_revisions(tokens, w, h)
+    paired_values = set()
+    for r in revisions:
+        vb = r.get("value_bounding_box_px")
+        if vb:
+            paired_values.add(tuple(vb))
+    # tokens cujo texto foi consumido como valor de rótulo
+    label_value_texts = {
+        _text_of(t)
+        for r in revisions
+        if r.get("value_text")
+        for t in tokens
+        if _text_of(t) == r["value_text"]
+        and t.get("bounding_box_px") == r.get("value_bounding_box_px")
+    }
+
+    # ---------- identificadores ----------
     fields: list[dict] = []
     for a in annotated:
         if _CODE_RE.match(a["text"]):
@@ -221,113 +545,143 @@ def build_understanding(
                         if a["region"] in {"title_block", "component_table"}
                         else "TEXT_ONLY"
                     ),
-                    "association": "position_rule:title_or_table_region",
+                    "association": (
+                        "structure_rule:inside_"
+                        + a["region"]
+                        if a["region"] in {"title_block", "component_table"}
+                        else None
+                    ),
                     "association_confidence": "rule_based",
                 }
             )
 
-    # ---------- revisão ----------
-    revisions: list[dict] = []
-    for i, a in enumerate(annotated):
-        if a["region"] == "title_block" and re.match(
-            r"^(REV|R)\.?$", a["text"], re.IGNORECASE
-        ):
-            nxt = annotated[i + 1] if i + 1 < len(annotated) else None
-            rev = {
-                "field": "revision_candidate",
-                "label_text": a["text"],
-                "value_text": nxt["text"] if nxt else None,
-                "region": "title_block",
-                "bounding_box_px": a["bounding_box_px"],
-                "state": (
-                    "FIELD_IDENTIFIED" if nxt else "TEXT_ONLY"
-                ),
-            }
-            revisions.append(rev)
-
-    # ---------- cotas ----------
+    # ---------- cotas (filtro contextual) ----------
     dimensions: list[dict] = []
+    excluded: list[dict] = []
     for a in annotated:
-        if not _DIM_RE.match(a["text"].replace(",", ".")):
+        if not _NUM_RE.match(a["text"]) and not _DIM_EXPLICIT_RE.match(
+            a["text"]
+        ):
             continue
-        if len(a["text"]) < 2:
-            continue
-        state = "DIMENSION_TEXT_FOUND"
-        if a["region"] == "dimension" or a["region"] == "drawing_area":
-            state = "DIMENSION_REGION_CANDIDATE"
-        dimensions.append(
-            {
-                "text": a["text"],
-                "region": a["region"],
-                "page": a["page"],
-                "bounding_box_px": a["bounding_box_px"],
-                "state": state,
-                "association": None,
+        paired = a["bounding_box_px"] and tuple(
+            a["bounding_box_px"]
+        ) in paired_values or a["text"] in label_value_texts
+        ok, reason = _is_dimension_candidate(
+            a["text"], a["region"], paired
+        )
+        if ok:
+            dimensions.append(
+                {
+                    "text": a["text"],
+                    "region": a["region"],
+                    "page": a["page"],
+                    "bounding_box_px": a["bounding_box_px"],
+                    "state": (
+                        "DIMENSION_REGION_CANDIDATE"
+                        if a["region"] == "drawing_area"
+                        else "DIMENSION_TEXT_FOUND"
+                    ),
+                    "association": None,
+                    "rule": reason,
+                    "limitations": [
+                        "associação geométrica não verificada automaticamente",
+                        "unidade/tolerância só quando explicitamente escrita",
+                    ],
+                }
+            )
+        else:
+            excluded.append({"text": a["text"], "reason": reason})
+
+    # ---------- comparação BOM (fail-closed, D5) ----------
+    bom_comparison: dict | None = None
+    if bom_codes is not None:
+        if not table_rows:
+            bom_comparison = {
+                "state": "NOT_COMPARABLE",
+                "matched": [],
+                "missing_in_drawing_table": [],
+                "not_in_bom": [],
+                "occurrence_mismatches": [],
                 "limitations": [
-                    "texto numérico não comprova associação geométrica",
-                    "unidade/tolerância só quando explicitamente escrita",
+                    "tabela do desenho não estruturada com evidência "
+                    "suficiente — ausência na tabela não pode ser "
+                    "afirmada",
                 ],
             }
-        )
-
-    # ---------- comparação com BOM oficial (multiplicidade-aware) ----------
-    bom_comparison: dict | None = None
-    if bom_codes:
-        from collections import Counter
-
-        ocr_counts = Counter(
-            f["text"]
-            for f in fields
-            if f["region"] == "component_table" or f["state"] == "FIELD_IDENTIFIED"
-        )
-        bom_counts = Counter(bom_codes)
-        matched, missing_draw, missing_bom, qty_mismatch = [], [], [], []
-        for code in set(bom_counts) | set(ocr_counts):
-            o_n, b_n = ocr_counts.get(code, 0), bom_counts.get(code, 0)
-            if o_n and b_n:
-                if b_n != o_n:
-                    qty_mismatch.append(
-                        {"code": code, "bom": b_n, "drawing_table": o_n}
+        else:
+            table_code_counts: Counter = Counter()
+            for r in table_rows:
+                for c in r["cells"]:
+                    if _CODE_RE.match(c["text"]):
+                        table_code_counts[c["text"]] += 1
+            bom_counts = Counter(bom_codes)
+            matched, missing_draw, missing_bom, qty_mm = [], [], [], []
+            for code in set(bom_counts) | set(table_code_counts):
+                o_n, b_n = table_code_counts.get(code, 0), bom_counts.get(
+                    code, 0
+                )
+                if o_n and b_n:
+                    if b_n != o_n:
+                        qty_mm.append(
+                            {
+                                "code": code,
+                                "bom": b_n,
+                                "drawing_table": o_n,
+                            }
+                        )
+                    matched.append(
+                        {"code": code, "occurrences": min(o_n, b_n)}
                     )
-                matched.append({"code": code, "occurrences": min(o_n, b_n)})
-            elif b_n:
-                missing_draw.append(code)
-            else:
-                missing_bom.append(code)
-        bom_comparison = {
-            "matched": matched,
-            "missing_in_drawing_table": missing_draw,
-            "not_in_bom": missing_bom,
-            "occurrence_mismatches": qty_mismatch,
-            "state": "COMPARED_PARTIAL" if matched else "NOT_COMPARABLE",
-            "limitations": [
-                "ausência no desenho não prova erro de BOM",
-                "ausência em OCR não prova ausência visual",
-                "BOM oficial permanece source of truth",
-            ],
-        }
+                elif b_n:
+                    missing_draw.append(code)
+                else:
+                    missing_bom.append(code)
+            bom_comparison = {
+                "state": "COMPARED_PARTIAL" if matched else "NOT_COMPARABLE",
+                "matched": matched,
+                "missing_in_drawing_table": missing_draw,
+                "not_in_bom": missing_bom,
+                "occurrence_mismatches": qty_mm,
+                "limitations": [
+                    "ausência na tabela candidata não prova ausência visual",
+                    "tabela parcial não representa BOM completa",
+                    "BOM oficial permanece source of truth",
+                ],
+            }
 
     out: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "document_hash_sha256": document_hash,
         "page": page,
         "page_size_px": [round(w, 0), round(h, 0)],
-        "regions_summary": regions_seen,
+        "regions_summary": dict(regions_seen),
         "tokens_processed": len(annotated),
+        "title_block": {
+            "candidate": tb is not None,
+            "box_px": tb["box"] if tb else None,
+            "labels": tb["labels"] if tb else [],
+            "detection": "label_cluster (≥2 rótulos conhecidos)",
+        },
         "title_block_candidates": [
             a for a in annotated if a["region"] == "title_block"
         ],
         "component_table": {
-            "candidate": bool(table_rows),
+            "candidate": table is not None and bool(table_rows),
             "rows": table_rows,
             "row_count": len(table_rows),
+            "code_count": table["code_count"] if table else 0,
+            "headers": [
+                _text_of(t)
+                for t in (table["header_tokens"] if table else [])
+            ],
             "ambiguous_cells": ambiguous_cells,
-            "association": "row_cluster:y_proximity + col_cluster:x",
+            "detection": "code_column_cluster + row_y_proximity",
             "confidence": "rule_based",
         },
         "identifier_candidates": fields,
         "revision_candidates": revisions,
         "dimension_candidates": dimensions,
+        "dimension_excluded": excluded,
         "bom_comparison": bom_comparison,
         "states": {
             "fields": sorted(FIELD_STATES),
@@ -339,9 +693,11 @@ def build_understanding(
             "note": "candidatos — revisão técnica pelo owner de Engenharia",
         },
         "limitations": [
-            "região por posição relativa — layout atípico pode classificar errado",
+            "região por estrutura+rótulos — layout atípico pode ainda "
+            "classificar errado",
             "associação cota↔geometria não verificada automaticamente",
             "confidence de OCR não é confiança técnica",
+            "tabela candidata parcial não representa BOM completa",
         ],
     }
     return out

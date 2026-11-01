@@ -185,6 +185,12 @@ const REPORT_META: Record<
       "Material em processo físico (armazém 99) e alocado em ordens vivas — regra MATR989.",
     origin: "TOTVS/SB9 + SD3/SC2",
   },
+  "billing-mod-breakdown": {
+    name: "Faturamento × MOD",
+    description:
+      "Mão de obra direta por PA faturado — visão operacional; paridade oficial pendente de homologação.",
+    origin: "api-delpi/SD2+SG1+SHY — visão operacional",
+  },
   "cost-closing-state": {
     name: "Estado de fechamento e cutoff — R12/R15",
     description:
