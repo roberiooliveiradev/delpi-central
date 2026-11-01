@@ -3545,6 +3545,31 @@ class GptActionsDispatchService:
                     and str(cand.get("httpMethod") or "GET").upper()
                     == "GET"
                 ]
+                # DI-3.6.1 — business domain anchoring: a mensagem
+                # original (sem sufixo de propósito) define os domínios
+                # relevantes; sufixos de propósito nunca podem promover
+                # fontes cross-domain (get_openapi_diff, series
+                # comerciais, auditorias 5S) para pedidos de produção.
+                _anchor_top = max(
+                    (float(c.get("score") or 0.0) for c in qualified),
+                    default=0.0,
+                )
+                anchor_categories = {
+                    str(c.get("category") or "").strip()
+                    for c in qualified
+                    if _anchor_top > 0
+                    and float(c.get("score") or 0.0)
+                    >= _anchor_top * 0.5
+                    and str(c.get("category") or "").strip()
+                }
+                anchor_ids = {
+                    str(c.get("operationId") or "")
+                    for c in qualified
+                    if _anchor_top > 0
+                    and float(c.get("score") or 0.0)
+                    >= _anchor_top * 0.35
+                    and str(c.get("operationId") or "").strip()
+                }
 
                 def _slim(cand):
                     return {
@@ -3649,6 +3674,16 @@ class GptActionsDispatchService:
                         per = [
                             c for c in per
                             if float(c.get("score") or 0.0) >= floor
+                        ]
+                    # domain anchor: sufixo de propósito não promove
+                    # fontes fora do domínio de negócio âncora.
+                    if anchor_categories or anchor_ids:
+                        per = [
+                            c for c in per
+                            if str(c.get("category") or "").strip()
+                            in anchor_categories
+                            or str(c.get("operationId") or "")
+                            in anchor_ids
                         ]
                     per = per[:8]
                     if not per and qualified:
