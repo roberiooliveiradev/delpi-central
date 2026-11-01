@@ -40,9 +40,15 @@ class OcrExtractionPort(Protocol):
 
 
 class ImagePreprocessingPort(Protocol):
-    """Raster image bytes → preprocessed raster image bytes."""
+    """Raster image bytes → preprocessed raster image (R7).
 
-    def preprocess(self, image_bytes: bytes, *, mode: str = "binarize") -> bytes: ...
+    ``mode`` is a governed profile name, never free-form operation
+    chaining: ``raw_render`` | ``grayscale`` | ``adaptive_threshold``.
+    """
+
+    def preprocess(
+        self, image_bytes: bytes, *, mode: str = "grayscale"
+    ) -> "PreprocessResult": ...
 
 
 @dataclass
@@ -54,6 +60,25 @@ class RenderedPage:
     dpi: int
     provider_id: str
     format: str = "png"
+    # R7-04: proveniência espacial — transformação PDF→pixel explícita.
+    scale: float | None = None  # dpi/72 — fator pontos→pixels aplicado
+    rotation: int | None = None  # graus da página fonte (0/90/180/270)
+    page_width_pt: float | None = None  # dimensão da página em pontos PDF
+    page_height_pt: float | None = None
+    coordinate_system: str = "pixels_pdfium_top_left"
+
+
+@dataclass
+class PreprocessResult:
+    """Raster output + rastreabilidade das operações aplicadas (R7-05)."""
+
+    image_bytes: bytes
+    profile: str
+    ops_applied: list[str] = field(default_factory=list)
+    width: int = 0
+    height: int = 0
+    provider_id: str = ""
+    limitations: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -70,6 +95,8 @@ class OcrResult:
     tokens: list[OcrToken] = field(default_factory=list)
     duration_ms: int = 0
     limitations: list[str] = field(default_factory=list)
+    # R7-03/06: proveniência do modelo/engine — nunca fato oficial.
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

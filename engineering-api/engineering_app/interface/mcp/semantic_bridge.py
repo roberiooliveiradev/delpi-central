@@ -725,13 +725,55 @@ async def _analyze_product_drawing(
 
 
 _BENCHMARK_FLAG = "ENG_DRAWING_BENCHMARK_ENABLED"
-_BENCHMARK_PROFILES: dict[str, list[str]] = {
-    "approved_local_extractors": [
-        "pypdf_baseline",
-        "pdfplumber_experimental",
-        "pdfium_experimental",
-    ],
+_OCR_BENCHMARK_FLAG = "ENG_DRAWING_OCR_BENCHMARK_ENABLED"
+_BENCHMARK_PROFILES: dict[str, dict[str, Any]] = {
+    "approved_local_extractors": {
+        "kind": "text",
+        "providers": [
+            "pypdf_baseline",
+            "pdfplumber_experimental",
+            "pdfium_experimental",
+        ],
+    },
+    # R7-08: perfil experimental de percepção visual — exige flag própria
+    # além do benchmark master; nunca habilitado por padrão em produção.
+    "approved_local_visual_ocr": {
+        "kind": "visual_ocr",
+        "requires_flag": _OCR_BENCHMARK_FLAG,
+        "pipelines": [
+            "pdfium_render_paddleocr",
+            "pdfium_render_opencv_paddleocr",
+        ],
+    },
 }
+
+_MAX_SPATIAL_SAMPLE = 200
+
+
+def _benchmark_limitations(runs: list[dict[str, Any]]) -> list[str]:
+    """R7-16: limitações derivadas da execução real — um provider que
+    rodou nunca é declarado 'não executou'; erro/parcial registra motivo."""
+    limitations = [
+        "Cobertura por provider — não é acurácia nem ground truth; "
+        "presença em OCR não vira fato de Engenharia."
+    ]
+    for run in runs:
+        pid = run.get("provider_id", "?")
+        status = run.get("status")
+        if status in {"provider_error", "extraction_error", "error"}:
+            limitations.append(
+                f"provider {pid} não executou: "
+                f"{run.get('error') or status}"
+            )
+        elif status == "partial":
+            limitations.append(
+                f"provider {pid}: cobertura parcial — "
+                + "; ".join(run.get("limitations") or ["ver runs"])
+            )
+        else:
+            for lim in run.get("limitations") or []:
+                limitations.append(f"provider {pid}: {lim}")
+    return limitations
 
 
 async def _analyze_drawing_benchmark(
@@ -765,13 +807,22 @@ async def _analyze_drawing_benchmark(
     profile = str(
         params.get("benchmark_profile") or "approved_local_extractors"
     ).strip()
-    providers = _BENCHMARK_PROFILES.get(profile)
-    if providers is None:
+    spec = _BENCHMARK_PROFILES.get(profile)
+    if spec is None:
         return _err(
             f"benchmark_profile '{profile}' não permitido.",
             status_code=400,
             code="provider_profile_not_allowed",
             data={"allowed": sorted(_BENCHMARK_PROFILES)},
+        )
+    extra_flag = spec.get("requires_flag")
+    if extra_flag and os.environ.get(extra_flag) != "true":
+        return _err(
+            "Perfil visual OCR experimental desabilitado neste "
+            "ambiente.",
+            status_code=403,
+            code="feature_disabled",
+            data={"required_flag": extra_flag},
         )
     fields_raw = params.get("fields")
     fields = (
@@ -785,7 +836,8 @@ async def _analyze_drawing_benchmark(
             code=code,
             source=bridge.build_delegated_auxiliary_source(),
             ctx=ctx,
-            providers=providers,
+            providers=spec.get("providers"),
+            visual_pipelines=spec.get("pipelines"),
             corpus_id="official_drawing",
             environment="mcp_governed",
         )
@@ -798,10 +850,23 @@ async def _analyze_drawing_benchmark(
         if fields
         else None
     )
-    runs = [
-        {k: v for k, v in r.items() if not k.startswith("_")}
-        for r in out["runs"]
-    ]
+    runs = []
+    for r in out["runs"]:
+        clean = {k: v for k, v in r.items() if not k.startswith("_")}
+        sample = r.get("_tokens_sample")
+        if sample:
+            clean["spatial_evidence"] = {
+                "coordinate_system": "pixels_top_left + "
+                "bounding_box_pdf_points (transform explícita por "
+                "render scale)",
+                "token_sample": sample[:_MAX_SPATIAL_SAMPLE],
+                "token_sample_size": len(sample[:_MAX_SPATIAL_SAMPLE]),
+                "note": (
+                    "Evidência OCR experimental — não é fato oficial; "
+                    "número reconhecido ≠ cota validada."
+                ),
+            }
+        runs.append(clean)
     return _ok(
         {
             "analysis_type": "product.drawing_benchmark",
@@ -812,13 +877,9 @@ async def _analyze_drawing_benchmark(
             "same_document_verified": out["same_document_verified"],
             "providers": runs,
             "field_coverage": coverage,
+            "evidence_dedup": out.get("evidence_dedup"),
             "quality_gate": "EVAL_PENDING",
-            "limitations": [
-                "Cobertura textual por provider — não é acurácia nem "
-                "ground truth; presença em OCR não vira fato.",
-                "providers experimentais não executam — status "
-                "honesto registrado por run.",
-            ],
+            "limitations": _benchmark_limitations(out["runs"]),
             "provenance": (
                 "api-delpi product/drawing/pdf (identidade delegada) "
                 "+ adapters locais engineering-api"

@@ -2855,6 +2855,11 @@ services:
       # Autorização de usuário segue RBAC real (engineering.access +
       # permissão do desenho) + profile allowlist backend.
       ENG_DRAWING_BENCHMARK_ENABLED: ${ENG_DRAWING_BENCHMARK_ENABLED:-true}
+      # EVA drawing R7 — perfil visual OCR (PDFium+OpenCV+PaddleOCR)
+      # experimental: flag própria ALÉM do benchmark master, default
+      # OFF em produção (não habilitar sem decisão do owner; exige
+      # imagem com INSTALL_VISION_EXTRAS=true + modelos provisionados).
+      ENG_DRAWING_OCR_BENCHMARK_ENABLED: ${ENG_DRAWING_OCR_BENCHMARK_ENABLED:-}
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]

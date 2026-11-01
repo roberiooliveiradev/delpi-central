@@ -39,9 +39,13 @@ FORBIDDEN_DEPENDENCY_PREFIXES = (
 
 MCP_ADAPTER_DIR = PACKAGE_ROOT / "interface" / "mcp"
 PERSISTENCE_ADAPTER_DIR = PACKAGE_ROOT / "infrastructure" / "persistence"
+EXTRACTION_ADAPTER_DIR = PACKAGE_ROOT / "infrastructure" / "extraction"
 
 MCP_ONLY_PREFIXES = ("mcp", "delpi_mcp")
 PERSISTENCE_ONLY_PREFIXES = ("psycopg", "sqlalchemy", "asyncpg")
+# R7-02: SDKs de visão/OCR só são legítimos nos adapters de extraction —
+# domain/application nunca dependem de cv2/paddle/paddleocr/numpy.
+VISION_ONLY_PREFIXES = ("cv2", "paddleocr", "paddle", "numpy")
 
 
 def _iter_imports():
@@ -88,6 +92,12 @@ def test_no_forbidden_dependencies():
             # delpi_mcp.auth fornece os gates de transporte MCP compartilhados
             # (mesmo papel de delpi_auth) — permitido apenas no middleware.
             if top == "delpi_mcp" and path.is_relative_to(PACKAGE_ROOT / "middleware"):
+                continue
+            # R7-02: cv2/paddleocr/paddle/numpy confinados aos adapters de
+            # infrastructure/extraction — nunca em domain/application.
+            if top in VISION_ONLY_PREFIXES and path.is_relative_to(
+                EXTRACTION_ADAPTER_DIR
+            ):
                 continue
             violations.append(f"{path}:{line} imports {module}")
     assert not violations, "Forbidden dependencies found:\n" + "\n".join(violations)

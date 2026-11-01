@@ -25,11 +25,17 @@ async def run_official_document_benchmark(
     source: Any,
     ctx: Any,
     providers: list[str] | None = None,
+    visual_pipelines: list[str] | None = None,
     corpus_id: str = "official_document",
     environment: str = "internal_benchmark",
 ) -> dict[str, Any]:
     """Fetch the official drawing via delegated identity and run the
-    benchmark over the real bytes. Read-only; never writes."""
+    benchmark over the real bytes. Read-only; never writes.
+
+    ``visual_pipelines`` (R7): backend-defined render→preprocess→OCR
+    pipeline ids — when present the visual harness runs instead of the
+    text extractors; same bytes, same hash verification.
+    """
     meta_raw = await source.fetch_product_drawing(ctx, code=code)
     meta = unwrap_delegated(
         meta_raw,
@@ -64,19 +70,35 @@ async def run_official_document_benchmark(
         "mime": "application/pdf",
         "authorized_via": "delegated_identity_gateway",
     }
-    runs = run_extraction_benchmark(
-        bytes(content),
-        providers=providers or ["pypdf_baseline"],
-        corpus_id=corpus_id,
-        environment=environment,
-    )
+    if visual_pipelines:
+        from engineering_app.application.drawing.visual_benchmark import (
+            dedupe_visual_evidence,
+            run_visual_benchmark,
+        )
+
+        runs = run_visual_benchmark(
+            bytes(content),
+            pipelines=visual_pipelines,
+            corpus_id=corpus_id,
+            environment=environment,
+        )
+    else:
+        runs = run_extraction_benchmark(
+            bytes(content),
+            providers=providers or ["pypdf_baseline"],
+            corpus_id=corpus_id,
+            environment=environment,
+        )
     same_hash = all(r["document_hash"] == doc_hash for r in runs)
-    return {
+    out = {
         "document": document,
         "providers_ran": [r["provider_id"] for r in runs],
         "same_document_verified": same_hash,
         "runs": runs,
     }
+    if visual_pipelines:
+        out["evidence_dedup"] = dedupe_visual_evidence(runs)
+    return out
 
 
 def reconcile_provider_fields(

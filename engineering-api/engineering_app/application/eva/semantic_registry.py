@@ -341,8 +341,11 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Governed extraction benchmark: the official product drawing "
         "PDF is fetched once via the delegated gateway and processed "
         "by the backend-defined provider profile (default "
-        "approved_local_extractors) — same bytes, same SHA-256, per-"
-        "provider coverage and field matrix. Read-only; requires "
+        "approved_local_extractors; experimental visual profile "
+        "approved_local_visual_ocr = PDFium render + optional OpenCV "
+        "preprocess + local PaddleOCR, gated by its own flag) — same "
+        "bytes, same SHA-256, per-provider coverage, spatial evidence "
+        "and field matrix. Read-only; requires "
         "ENG_DRAWING_BENCHMARK_ENABLED; results are coverage evidence, "
         "never engineering accuracy or ground truth.",
         "analysis",
@@ -350,8 +353,10 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         notes=(
             "Fail-closed feature flag; provider allowlist is backend-"
             "defined — the consumer cannot pick providers, paths, URLs "
-            "or modules; no SaaS egress; no writes; quality metrics "
-            "remain EVAL_PENDING without owner-approved ground truth."
+            "or modules; no SaaS egress; no writes; OCR tokens carry "
+            "pixel/PDF-pt boxes + confidence as hypotheses only; "
+            "quality metrics remain EVAL_PENDING without owner-approved "
+            "ground truth."
         ),
     ),
     # --- knowledge ----------------------------------------------------------

@@ -106,3 +106,107 @@ def list_providers() -> list[dict[str, Any]]:
             }
         )
     return out
+
+
+# --- visual pipeline catalogs (R7) ------------------------------------------
+#
+# Text-extraction catalog stays untouched; visual stages resolve through
+# their own governed catalogs — same rule: experimental providers require
+# explicit backend enablement, consumers never pick classes/modules.
+
+def _pdfium_render():
+    from engineering_app.infrastructure.extraction.pdfium_adapter import (
+        PdfiumExtractionAdapter,
+    )
+
+    return PdfiumExtractionAdapter()
+
+
+def _opencv_preprocess():
+    from engineering_app.infrastructure.extraction.opencv_adapter import (
+        OpencvPreprocessingAdapter,
+    )
+
+    return OpencvPreprocessingAdapter()
+
+
+def _paddleocr():
+    from engineering_app.infrastructure.extraction.paddleocr_adapter import (
+        PaddleOcrAdapter,
+    )
+
+    return PaddleOcrAdapter()
+
+
+_RENDER_CATALOG: dict[str, _Entry] = {
+    "pdfium_render_experimental": _Entry(_pdfium_render, "experimental"),
+}
+
+_PREPROCESS_CATALOG: dict[str, _Entry] = {
+    "opencv_preprocess_experimental": _Entry(_opencv_preprocess, "experimental"),
+}
+
+_OCR_CATALOG: dict[str, _Entry] = {
+    "paddleocr_experimental": _Entry(_paddleocr, "experimental"),
+}
+
+_VISUAL_CATALOGS: dict[str, dict[str, _Entry]] = {
+    "render": _RENDER_CATALOG,
+    "preprocess": _PREPROCESS_CATALOG,
+    "ocr": _OCR_CATALOG,
+}
+
+
+def resolve_visual_provider(
+    kind: str,
+    provider_id: str,
+    *,
+    allow_experimental: bool = False,
+):
+    """Backend-governed resolution of visual pipeline stages (R7-08).
+
+    ``kind`` ∈ render|preprocess|ocr; every listed provider is
+    experimental — an explicit id alone is NOT authorization.
+    """
+    catalog = _VISUAL_CATALOGS.get(kind)
+    if catalog is None:
+        raise ProviderResolutionError(
+            "unknown_provider_kind", f"Kind '{kind}' inválido."
+        )
+    entry = catalog.get(provider_id)
+    if entry is None:
+        raise ProviderResolutionError(
+            "unknown_provider",
+            f"Provider '{provider_id}' não consta no catálogo "
+            f"autorizado de '{kind}'.",
+        )
+    if entry.status == "experimental" and not allow_experimental:
+        raise ProviderResolutionError(
+            "provider_not_enabled",
+            f"Provider experimental '{provider_id}' exige habilitação "
+            "explícita pelo backend.",
+        )
+    return entry.factory()
+
+
+def list_visual_providers() -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for kind, catalog in _VISUAL_CATALOGS.items():
+        for pid, entry in catalog.items():
+            try:
+                desc = entry.factory().capability_descriptor()
+                descriptor = {
+                    "version": desc.version,
+                    "capabilities": desc.capabilities,
+                    "license": desc.license,
+                    "limits": desc.limits,
+                    "runs_local": desc.runs_local,
+                    "descriptor_status": desc.status,
+                }
+            except Exception as exc:  # adapter import/init failure
+                descriptor = {"unavailable": f"{type(exc).__name__}"}
+            out.append(
+                {"kind": kind, "provider_id": pid,
+                 "status": entry.status, "descriptor": descriptor}
+            )
+    return out

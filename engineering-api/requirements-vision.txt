@@ -1,0 +1,8 @@
+# EVA drawing R7 — percepção visual EXPERIMENTAL (opt-in).
+# Não instalado por padrão no Dockerfile: imagem pesada (~1GB+) e
+# footprint de CPU/memória distinto do pipeline textual. Ativação em
+# produção exige decisão do owner + build com INSTALL_VISION_EXTRAS=true
+# + provisionamento governado de modelos (ver doc 87).
+opencv-python-headless==4.10.0.84
+paddlepaddle==3.2.2
+paddleocr==3.3.0
