@@ -1032,6 +1032,13 @@ async def _analyze_drawing_understanding(
         document_hash=best.get("document_hash") or "",
         page=1,
         bom_codes=bom_codes,
+        product_code=code,
+        render_size_px=(
+            tuple(best.get("page_size_px"))
+            if best.get("page_size_px")
+            else None
+        ),
+        graphic_primitives=best.get("_graphic_primitives"),
     )
     understanding["source_run"] = {
         "provider_id": best.get("provider_id"),

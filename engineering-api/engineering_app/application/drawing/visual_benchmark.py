@@ -229,6 +229,15 @@ def run_visual_benchmark(
                 }
                 image = rendered.image_bytes
                 try:
+                    from engineering_app.infrastructure.extraction.opencv_adapter import (  # noqa: E501
+                        detect_graphic_primitives,
+                    )
+                    stage["graphic_primitives"] = (
+                        detect_graphic_primitives(image)
+                    )
+                except Exception:
+                    stage["graphic_primitives"] = None
+                try:
                     if preprocessor is not None:
                         pre = preprocessor.preprocess(
                             image, mode=spec["preprocess_mode"]
@@ -341,6 +350,14 @@ def run_visual_benchmark(
             )
         else:
             status = "error"
+        _gp = next(
+            (
+                p.get("graphic_primitives")
+                for p in pages
+                if p.get("graphic_primitives")
+            ),
+            None,
+        )
         rec.update(
             {
                 "status": status,
@@ -359,6 +376,15 @@ def run_visual_benchmark(
                 "has_positional_data": bool(tokens_sample),
                 "_text_blob": " ".join(text_parts),
                 "_tokens_sample": tokens_sample,
+                "_graphic_primitives": _gp,
+                "page_size_px": (
+                    [
+                        pages[0]["render"]["width"],
+                        pages[0]["render"]["height"],
+                    ]
+                    if pages and pages[0].get("render")
+                    else None
+                ),
             }
         )
         records.append(rec)

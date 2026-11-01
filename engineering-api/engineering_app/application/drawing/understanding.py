@@ -144,9 +144,7 @@ def _inside(center: tuple[float, float], box: list[float],
 
 
 def _is_label(text: str) -> bool:
-    return text.lower().rstrip(".") in _TITLEBLOCK_LABELS or (
-        text.lower() in _TITLEBLOCK_LABELS
-    )
+    return text.lower().rstrip(".:") in _TITLEBLOCK_LABELS
 
 
 def _is_header_label(text: str) -> bool:
@@ -610,6 +608,7 @@ def build_understanding(
     bom_quantities: dict[str, int] | None = None,
     product_code: str | None = None,
     render_size_px: tuple[int, int] | None = None,
+    graphic_primitives: dict | None = None,
 ) -> dict[str, Any]:
     """Constrói candidatos estruturados a partir de tokens OCR."""
     w, h = _page_size(tokens, render_size_px)
@@ -620,6 +619,44 @@ def build_understanding(
         tokens, w, h, tb["box"] if tb else None
     )
     tb_ids = set(id(t) for t in (tb["tokens"] if tb else []))
+    # R8.2.2: fronteira gráfica real — retângulos detectados contendo a
+    # coluna de códigos delimitam a tabela; sem evidência → fallback
+    # token-derived com limitação explícita (nunca promove inferência).
+    graphic_boundary = False
+    if table and graphic_primitives and graphic_primitives.get("rects"):
+        code_tokens = table.get("code_tokens") or [
+            t
+            for t in tokens
+            if _CODE_RE.match(_text_of(t)) and _tok_center(t)
+        ]
+        # por token de código da coluna: menor retângulo que o contém
+        # = célula real (exclui a moldura externa que engloba carimbo
+        # e histórico junto com a tabela).
+        containing = []
+        for t in code_tokens:
+            c = _tok_center(t)
+            cands = [
+                r
+                for r in graphic_primitives["rects"]
+                if _inside(c, r)
+            ]
+            if cands:
+                containing.append(
+                    min(cands, key=lambda r: (r[2] - r[0]) * (r[3] - r[1]))
+                )
+        if containing:
+            x1 = min(r[0] for r in containing)
+            y1 = min(r[1] for r in containing)
+            x2 = max(r[2] for r in containing)
+            y2 = max(r[3] for r in containing)
+            table["box"] = [x1, y1, x2, y2]
+            table["tokens"] = [
+                t
+                for t in tokens
+                if _tok_center(t)
+                and _inside(_tok_center(t), table["box"])
+            ]
+            graphic_boundary = True
     # AC06/AC08: ownership exclusivo — tokens do carimbo nunca são
     # células de tabela (bordas sobrepostas → tb prevalece, conflito
     # registrado abaixo).
@@ -905,6 +942,10 @@ def build_understanding(
             ],
             "ambiguous_cells": ambiguous_cells,
             "col_types": {str(k): v for k, v in col_types.items()},
+            "graphic_boundary": graphic_boundary,
+            "boundary_source": (
+                "graphic_rects" if graphic_boundary else "tokens_inferred"
+            ),
             "detection": "code_column_cluster + row_y_proximity",
             "confidence": "rule_based",
         },
