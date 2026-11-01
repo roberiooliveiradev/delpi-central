@@ -11,8 +11,8 @@ Revisão `SURI-MCP-FULL-PARITY-V4-G2` (2026-10-30): lote P1-R1+P1-R2 entregue �
 
 ```text
 PORTAL CAPABILITIES (denominador: linhas PROVEN executáveis) : 45 (34 READ + 11 WRITE)
-SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 25 (R-02..R-14, R-15..R-22, R-33, R-34, W-10, W-11)
-CURRENT PARITY PERCENTAGE (implementada)                     : 55.6% (25/45)
+SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 27 (R-02..R-22, R-33, R-34, W-10, W-11)
+CURRENT PARITY PERCENTAGE (implementada)                     : 60.0% (27/45)
 TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
 
@@ -55,9 +55,9 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | R-20 | Fornecedores | Creation preview (read-only) | PROVEN | `analyze:supplier_creation_preview` | registry provider + S2S | `POST /creation-preview` (semântica READ) | access+rate-limit | preview + suri tests | — | PROVEN |
 | R-21 | Fornecedores | Integration status | PROVEN | `read:suppliers integration_status` | api-delpi | `/integration-status` | **manage** | routes + suri tests | — | PROVEN |
 | R-22 | Fornecedores | Operations tracking read | PROVEN | `read:suppliers operations` | api-delpi | `/operations/{id}` | access | routes + suri tests | — | PROVEN |
-| R-23 | Consumo | Busca OP (fragmento/filtros) | PROVEN | — | api-delpi(S2S `consumption-audit.read`) | `/consumption-audit/orders` | access+unit | routes tests | `read` production_orders | P1-R7 |
-| R-24 | Consumo | Detalhe OP | PROVEN | — | api-delpi(S2S) | `/orders/{op}` | access+unit | routes tests | `read` get | P1-R7 |
-| R-25 | Consumo | Comparação 2–10 OPs | PROVEN | — | api-delpi(S2S) | `/comparison` | access+unit | routes tests | `analyze` compare | P1-R7 |
+| R-23 | Consumo | Busca OP (fragmento/filtros) | PROVEN | `read:consumption search` | api-delpi(S2S `consumption-audit.read`) | `/consumption-audit/orders` | access+unit | routes tests | `read` production_orders | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-24 | Consumo | Detalhe OP | PROVEN | `read:consumption get` | api-delpi(S2S) | `/orders/{op}` | access+unit | routes tests | `read` get | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-25 | Consumo | Comparação 2–10 OPs | PROVEN | `read:consumption comparison` | api-delpi(S2S) | `/comparison` | access+unit | routes tests | `analyze` compare | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-26 | Mercado | filters+summary+series×5+monthly-averages+quotes/compare | PROVEN | — | external-data-api(S2S) | `/market-intelligence/*` | access | mi bff tests | `read`/`analyze` market | P1-R8 |
 | R-27 | Mercado | Comex products search | PROVEN | — | api-delpi(S2S) | `/comex/products/search` | access | comex tests | `read` comex products | P1-R8 |
 | R-28 | Mercado | Comex NCM governance list/detail | PROVEN | — | pg supplies | `/comex/ncm-governance` | access | comex tests | `read` governance | P1-R8 |

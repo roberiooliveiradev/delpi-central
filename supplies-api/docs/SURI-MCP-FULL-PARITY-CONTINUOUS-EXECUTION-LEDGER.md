@@ -1,8 +1,11 @@
 # SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION — LEDGER
 
 PROGRAM: SURI-MCP-FULL-PARITY-CONTINUOUS-EXECUTION-001/002
-CURRENT LOT: G6 — Consumo de OP (R-23,R-24,R-25) — inventory next
-LAST CLOSED LOT: G5 Overview/OTD (05f938328e + fix 5bdf3e713c)
+CURRENT LOT: G7 — Mercado/Comex READ (R-26..R-29) — inventory next
+LAST CLOSED LOT: G6 Consumo OP (1fc6601d87)
+G6 EVIDENCE: catalog v9 in-image; smoke — search total=474896,
+  bad-fragment/short-key/1-op/unknown-action/unit-99 fail-closed;
+  S2S DelpiS2SApiGateway + require_units preservados.
 G4 EVIDENCE em history; G5 EVIDENCE: catalog v8 in-image; smoke —
   otd aggregate/series success; analyze(overview_summary) success
   (Literal fix 5bdf3e713c); negativos fail-closed.
@@ -10,8 +13,8 @@ G4 EVIDENCE: catalog v7 in-image; smoke autenticado — filters/summary ok,
   items total=14232, details+suppliers ok (code 10010001),
   details sem branch -> 'A concrete branch (01 or 02) is required',
   action/filtro inválidos fail-closed. Suite suri_mcp verde.
-CURRENT HEAD: 5bdf3e713c · CATALOG: V8 · SOURCE SHA: idem · CATALOG: V6 · TOOLS: 5
-PARITY: 25/45 = 55.6% · TARGET: 45/45 = 100%
+CURRENT HEAD: 1fc6601d87 · CATALOG: V9 · SOURCE SHA: idem · CATALOG: V6 · TOOLS: 5
+PARITY: 27/45 = 60.0% · TARGET: 45/45 = 100%
 
 ## G4 — Inventário concluído (contratos reais no HEAD)
 
