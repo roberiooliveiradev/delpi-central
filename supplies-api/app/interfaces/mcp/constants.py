@@ -144,7 +144,10 @@ READ_ACTIONS_BY_ENTITY: dict[str, frozenset[str]] = {
 }
 READ_ENTITIES: frozenset[str] = frozenset(READ_ACTIONS_BY_ENTITY)
 ANALYSIS_KINDS: frozenset[str] = frozenset(
-    {"purchase_orders_summary", "supplier_creation_preview", "overview_summary"}
+    {
+        "purchase_orders_summary", "supplier_creation_preview",
+        "overview_summary", "procurement_diagnostic",
+    }
 )
 KNOWLEDGE_ACTIONS: frozenset[str] = frozenset({"search", "get", "sources"})
 CONTEXT_ACTIONS: frozenset[str] = frozenset({"context", "catalog"})
@@ -403,6 +406,10 @@ OTD_AGGREGATE_FILTER_KEYS = frozenset(
 OTD_SERIES_FILTER_KEYS = frozenset(
     {"branch", "start_date", "end_date", "granularity"}
 )
+PROCUREMENT_DIAGNOSTIC_FILTER_KEYS = frozenset(
+    {"branch", "start_date", "end_date", "include_sections"}
+)
+
 OVERVIEW_SUMMARY_FILTER_KEYS = frozenset(
     {"branch", "start_date", "end_date"}
 )

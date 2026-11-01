@@ -49,6 +49,7 @@ class TestGetContext:
         assert "purchase_orders" in caps["read"]["entities"]
         assert caps["analyze"]["analyses"] == [
             "overview_summary",
+            "procurement_diagnostic",
             "purchase_orders_summary",
             "supplier_creation_preview",
         ]
