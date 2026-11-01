@@ -565,6 +565,16 @@ _ANALYZE_ALLOWED_PARAMS: set[str] = {
     "order_number", "line_item",
 }
 
+
+def analysis_types() -> tuple[str, ...]:
+    """Canonical closed vocabulary for ``analyze.analysis_type``.
+
+    The dispatch registry is the single owner — the published wire
+    enum derives from it so clients never infer values from prose.
+    """
+    return tuple(sorted(_ANALYZE_DISPATCH))
+
+
 # --- knowledge ------------------------------------------------------------
 
 
@@ -635,6 +645,17 @@ def tool_knowledge(
         )
     except Exception as exc:
         return _handle_error(exc)
+
+
+def knowledge_topics() -> tuple[str, ...]:
+    """Canonical closed vocabulary for ``knowledge.topic``.
+
+    The versioned knowledge document is the single owner — only
+    actually served topics are published (planned topics answer
+    ``not_implemented`` honestly, never appear in the enum).
+    """
+    doc = _knowledge_document()
+    return tuple(sorted((doc.get("topics") or {}).keys()))
 
 
 # --- execute (governed writes — direct, backend-authorized) -------------------

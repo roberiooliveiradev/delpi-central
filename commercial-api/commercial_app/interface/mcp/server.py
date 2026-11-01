@@ -12,6 +12,7 @@ from pydantic import ConfigDict
 
 from delpi_mcp.tool_metadata import (
     DELPI_META_TOOL_CLASS,
+    enum_constrained_parameters,
     security_schemes_meta,
     tool_annotations_payload,
 )
@@ -56,7 +57,10 @@ class CommercialMCPServer(MCPServer):
                 "name": info.name,
                 "title": info.title,
                 "description": info.description or "",
-                "inputSchema": info.parameters,
+                "inputSchema": enum_constrained_parameters(
+                    info.parameters,
+                    _closed_vocabulary_constraints(info.name),
+                ),
                 "outputSchema": info.output_schema,
                 "annotations": info.annotations,
                 "icons": info.icons,
@@ -65,6 +69,23 @@ class CommercialMCPServer(MCPServer):
             }
             listed.append(_CaioWireTool.model_validate(payload))
         return listed
+
+
+def _closed_vocabulary_constraints(
+    tool_name: str,
+) -> dict[str, tuple[str, ...]]:
+    """Owner-declared closed vocabularies published as wire ``enum``.
+
+    The canonical values live in the semantic bridge registries —
+    never duplicated here. Open free-text filters (e.g.
+    ``get_context.topic`` substring matching) are deliberately NOT
+    constrained.
+    """
+    if tool_name == "analyze":
+        return {"analysis_type": semantic_bridge.analysis_types()}
+    if tool_name == "knowledge":
+        return {"topic": semantic_bridge.knowledge_topics()}
+    return {}
 
 
 def _annotations(tool_name: str, title: str) -> ToolAnnotations:

@@ -26,6 +26,7 @@ from pydantic import ConfigDict
 
 from delpi_mcp.tool_metadata import (
     DELPI_META_TOOL_CLASS,
+    enum_constrained_parameters,
     security_schemes_meta,
     tool_annotations_payload,
 )
@@ -72,7 +73,10 @@ class ClaraMCPServer(MCPServer):
                 "name": info.name,
                 "title": info.title,
                 "description": info.description or "",
-                "inputSchema": info.parameters,
+                "inputSchema": enum_constrained_parameters(
+                    info.parameters,
+                    _closed_vocabulary_constraints(info.name),
+                ),
                 "outputSchema": info.output_schema,
                 "annotations": info.annotations,
                 "icons": info.icons,
@@ -81,6 +85,19 @@ class ClaraMCPServer(MCPServer):
             }
             listed.append(_ClaraWireTool.model_validate(payload))
         return listed
+
+
+def _closed_vocabulary_constraints(
+    tool_name: str,
+) -> dict[str, tuple[str, ...]]:
+    """Owner-declared closed vocabularies published as wire ``enum`` —
+    canonical values live in the semantic bridge registries, never
+    duplicated here. Open filters stay unconstrained by design."""
+    if tool_name == "analyze":
+        return {"analysis_type": semantic.analysis_types()}
+    if tool_name == "knowledge":
+        return {"action": semantic.knowledge_actions()}
+    return {}
 
 
 def _annotations(tool_name: str, title: str) -> ToolAnnotations:
