@@ -11,8 +11,8 @@ Revisão `SURI-MCP-FULL-PARITY-V4-G2` (2026-10-30): lote P1-R1+P1-R2 entregue �
 
 ```text
 PORTAL CAPABILITIES (denominador: linhas PROVEN executáveis) : 45 (34 READ + 11 WRITE)
-SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 23 (R-04..R-14, R-15..R-22, R-33, R-34, W-10, W-11)
-CURRENT PARITY PERCENTAGE (implementada)                     : 51.1% (23/45)
+SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 25 (R-02..R-14, R-15..R-22, R-33, R-34, W-10, W-11)
+CURRENT PARITY PERCENTAGE (implementada)                     : 55.6% (25/45)
 TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
 
@@ -34,8 +34,8 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | ID | Área | Capacidade | Portal | SURI hoje | Owner | Contrato | AuthZ | Evidência | Gap | Fase |
 |---|---|---|---|---|---|---|---|---|---|---|
 | R-01 | Início | Hub + contagens de atenção | PROVEN | — | supplies-api (comp. página) | me/capabilities + dados-fonte | access | HomePage + BFF | tool `read`/knowledge nav | P1-R9 |
-| R-02 | Overview | Dashboard composto (OTD, CPV, turnover, savings, ES, SCs, SI) | PROVEN | — | supplies-api → api-delpi+PR-api+SI | `/analytics/overview` | access+units | test_overview | `analyze` overview | P1-R6 |
-| R-03 | Overview | OTD aggregate + series | PROVEN | — | api-delpi | `/analytics/otd[/series]` | access | test_otd_* | `read`/`analyze` otd | P1-R6 |
+| R-02 | Overview | Dashboard composto (OTD, CPV, turnover, savings, ES, SCs, SI) | PROVEN | `analyze:overview_summary` | supplies-api → api-delpi+PR-api+SI | `/analytics/overview` | access+units | test_overview | `analyze` overview | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-03 | Overview | OTD aggregate + series | PROVEN | `read:otd aggregate+series` | api-delpi | `/analytics/otd[/series]` | access | test_otd_* | `read`/`analyze` otd | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-04 | SC | Lista + filtros | PROVEN | `read:purchase_requests search` | PR-api | `GET /purchase-requests` | access+units | bff + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-05 | SC | Summary + facets (requesters, cost-centers, photo guard) | PROVEN | `read:PR summary/requesters/cost_centers` | PR-api + core | `/summary\|/requesters\|/cost-centers\|photo` | access | bff + suri tests | foto segue como bytes só via BFF (sem canal binário MCP); guard não contornado | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-06 | SC | Export | PROVEN | `read:PR export` (dataset JSON+meta — DECISION-G1) | PR-api → supplies-api | `/export` | access+units | bff + suri tests | artefato CSV/XLSX segue Portal-side | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
