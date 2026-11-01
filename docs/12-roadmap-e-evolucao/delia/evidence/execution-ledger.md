@@ -961,3 +961,10 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Pendente: credencial Core-admin legítima + grants das permissões de homologação (autorizado pela Task 30 via mecanismo oficial).
 - Drift T29 triage: registrado; sem revert; ownership misto sinalizado ao usuário.
 - PRODUCTION=NO; zero writes.
+
+## 2026-11-01 — DELIA-C3-LOCAL-CORE-SUPERADMIN-TEST-IDENTITY-ENABLEMENT-01 (Task 31, doc 210 §17) — superadmin local ON; 7/7 MCPs authz-proven
+- rober@dev.local (id 8b22db5d) is_superadmin f->t no Core local (delpi-postgres-core, db delpi_core) — mesma coluna do SetUserSuperadminUseCase; rollback documentado.
+- Probe pós-grant: CAIO get_context success:true; EVA success:true; CLARA passou authz (erro=enum args).
+- doc211 run1 pós-superadmin: 10/28 PASS — SURI 3/4 (primeiro provider novo completando), VISTA 4/4, DAVI 3/4, CAIO/CLARA/EVA/TEO 0/4.
+- Residuais fora de authz: síntese composta/arggen nos novos providers, teo.analyze não completa, ADMISSION em 3 compostos, scorer recusa-limitação.
+- PRODUCTION=NO; zero writes empresariais.

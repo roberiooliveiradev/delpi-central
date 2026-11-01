@@ -482,6 +482,16 @@ Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos,
 - **Nenhuma alteração administrativa aplicada**: não havia credencial de Core-admin verificada neste ciclo; atribuição de permissão é o bounded step seguinte, com identidade admin legítima — Task 30 autoriza sujeito de homologação amplo via mecanismo oficial (Core RBAC ou is_superadmin no person_profile local, nunca `if username`-style bypass).
 - Drift da Task 29 (commit varreu índice do rebase): **registrado**; triagem de ownership dos arquivos concorrentes fica com o usuário — nenhum revert executado (não há dano comprovado, apenas ownership misto).
 
+## 17. Task 31 — `DELIA-C3-LOCAL-CORE-SUPERADMIN-TEST-IDENTITY-ENABLEMENT-01` (superadmin local habilitado)
+
+- **Isolamento comprovado:** `delpi-postgres-core` (db `delpi_core`, user `delpi`) é container local; write administrativo local-only.
+- **Sujeito:** `rober` → Core user `8b22db5d-41b4-4655-a96e-c64a59b6670d` (`rober@dev.local`), `is_superadmin=f` → **t** via update direto na mesma coluna que `SetUserSuperadminUseCase` escreve (mecanismo oficial do Core; local-only, sem seed/migration). Antes dele já existiam 3 superadmins dev (`Robério Oliveira`, 2× `Admin Dev`).
+- **Rollback:** `update users set is_superadmin=false where email='rober@dev.local'`.
+- **Pós-grant (probe autenticado):** CAIO `get_context` → `success:true` (contexto semântico retornado); EVA → `success:true`; CLARA → authz PASSA (erro remanescente = enum do arg `topic`, contrato de args — não autorização). 403 authz **eliminado** nos 3 owners.
+- **Bateria doc211 pós-superadmin: 10/28 PASS** — composição mudou: **SURI 3/4 PASS** (cmp_10/11/12 — primeiro provider novo com READ+analise COMPLETED), VISTA 4/4, DAVI 3/4, CAIO 0/4, CLARA 0/4, EVA 0/4, TÉO 0/4. `caio.get_context`/`caio.analyze`/`clara.*`/`eva.analyze` agora **invocados** — autorização não é mais o bloqueio.
+- **Residuais (fora de authz — escopo Task 29):** (a) respostas de CAIO/CLARA/EVA invocam tools mas não produzem outcome substantivo suficiente (síntese composta/arggen); (b) `teo.analyze` invocado mas não completa o objetivo composto; (c) ADMISSION_ERROR em 3 cenários compostos (cmp_01/14/20); (d) scorer `want_owner`+`refusal` penaliza limitação honesta — rubrica por subobjetivo do Doc 211 pendente.
+- `PRODUCTION=NO`; zero writes empresariais; superadmin apenas no Core local isolado.
+
 ## 12. Task 25 — `DELIA-C3-ASCENDING-LOCAL-MODEL-EVALUATION-01`
 
 ### 12.1 Hardware + inventário
