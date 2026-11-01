@@ -74,9 +74,10 @@ def test_unknown_action_rejected(env):
     assert not _ok(r)
 
 
-def test_catalog_directives_do_not_deny_execute():
+def test_catalog_directives_do_not_deny_execute(monkeypatch):
     """R2 — catalog must not claim 'no write capability' while execute
     has registered operations."""
+    monkeypatch.setattr(tool_bridge, "_effective_user", lambda: _User())
     r = tool_bridge.tool_get_catalog()
     import json as _json
     txt = _json.dumps(
