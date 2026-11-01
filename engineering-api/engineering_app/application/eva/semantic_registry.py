@@ -336,6 +336,24 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "(docs 69–71)."
         ),
     ),
+    _a(
+        "product", "drawing_benchmark", "analyze",
+        "Governed extraction benchmark: the official product drawing "
+        "PDF is fetched once via the delegated gateway and processed "
+        "by the backend-defined provider profile (default "
+        "approved_local_extractors) — same bytes, same SHA-256, per-"
+        "provider coverage and field matrix. Read-only; requires "
+        "ENG_DRAWING_BENCHMARK_ENABLED; results are coverage evidence, "
+        "never engineering accuracy or ground truth.",
+        "analysis",
+        fields=("product_code", "benchmark_profile", "fields"),
+        notes=(
+            "Fail-closed feature flag; provider allowlist is backend-"
+            "defined — the consumer cannot pick providers, paths, URLs "
+            "or modules; no SaaS egress; no writes; quality metrics "
+            "remain EVAL_PENDING without owner-approved ground truth."
+        ),
+    ),
     # --- knowledge ----------------------------------------------------------
     _a(
         "nonconformity", "guide", "knowledge",
