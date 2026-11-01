@@ -52,6 +52,8 @@ Decisões: LLM decide; contratos restringem; owners validam/executam; EvidenceFa
 - **S6 evidência/síntese:** rubrica por subobjetivo pendente (Doc 211 §10-11).
 - **S7 limpeza:** registry consolidado (T32); envelopes uniformizados (T36).
 
+> **Continuidade vinculante (coordenação, 2026-11-01):** Documento 214 — `214-s2-s6-binding-implementation-acceptance-contract.md` — fixa escopo de implementação S2–S6, critérios objetivos não delegáveis, provas E2E, testes e procedimento de handoff. Os passos de §5 abaixo são referências, **não autorizam encerramento docs-only**. O executor deve seguir o Documento 214 após reancoragem canônica.
+
 ## 5. Residuais e próximos bounded steps
 
 1. Benchmark S2: Pydantic AI structured-output na re-proposta de args vs mecanismo atual (mesmos 15 casos + held-out).
