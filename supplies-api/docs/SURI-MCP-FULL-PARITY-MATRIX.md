@@ -11,8 +11,8 @@ Revisão `SURI-MCP-FULL-PARITY-V4-G2` (2026-10-30): lote P1-R1+P1-R2 entregue �
 
 ```text
 PORTAL CAPABILITIES (denominador: linhas PROVEN executáveis) : 45 (34 READ + 11 WRITE)
-SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 29 (R-02..R-29, R-33, R-34, W-10, W-11)
-CURRENT PARITY PERCENTAGE (implementada)                     : 64.4% (29/45)
+SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 33 (R-01..R-29, R-30..R-34, W-10, W-11)
+CURRENT PARITY PERCENTAGE (implementada)                     : 73.3% (33/45)
 TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
 
@@ -33,7 +33,7 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 
 | ID | Área | Capacidade | Portal | SURI hoje | Owner | Contrato | AuthZ | Evidência | Gap | Fase |
 |---|---|---|---|---|---|---|---|---|---|---|
-| R-01 | Início | Hub + contagens de atenção | PROVEN | — | supplies-api (comp. página) | me/capabilities + dados-fonte | access | HomePage + BFF | tool `read`/knowledge nav | P1-R9 |
+| R-01 | Início | Hub + contagens de atenção | PROVEN | G8 | supplies-api (comp. página) | me/capabilities + dados-fonte | access | HomePage + BFF | tool `read`/knowledge nav | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-02 | Overview | Dashboard composto (OTD, CPV, turnover, savings, ES, SCs, SI) | PROVEN | `analyze:overview_summary` | supplies-api → api-delpi+PR-api+SI | `/analytics/overview` | access+units | test_overview | `analyze` overview | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-03 | Overview | OTD aggregate + series | PROVEN | `read:otd aggregate+series` | api-delpi | `/analytics/otd[/series]` | access | test_otd_* | `read`/`analyze` otd | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-04 | SC | Lista + filtros | PROVEN | `read:purchase_requests search` | PR-api | `GET /purchase-requests` | access+units | bff + suri tests | — | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
@@ -62,9 +62,9 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | R-27 | Mercado | Comex products search | PROVEN | G7 | api-delpi(S2S) | `/comex/products/search` | access | comex tests | `read` comex products | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-28 | Mercado | Comex NCM governance list/detail | PROVEN | G7 | pg supplies | `/comex/ncm-governance` | access | comex tests | `read` governance | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-29 | Mercado | Comex views list/get | PROVEN | G7 | pg supplies | `/comex/views` | access | comex tests | `read` views | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
-| R-30 | Usuários | Perfil + foto | PROVEN | — | core-api+pg | `/users/{id}/profile\|photo` | self\|manage | profile tests | `read` user profile | P1-R9 |
-| R-31 | Usuários | SCs relacionadas | PROVEN | — | PR-api+core | `/related-requests` | self\|manage+units | profile tests | `read` related | P1-R9 |
-| R-32 | Sessão | capabilities + preferences read | PROVEN | `get_context` (parcial: sem preferences) | supplies-api | `/me/capabilities`, `/me/preferences` | shell | session ctx | `read`/`get_context` prefs | P1-R9 |
+| R-30 | Usuários | Perfil + foto | PROVEN | G8 | core-api+pg | `/users/{id}/profile\|photo` | self\|manage | profile tests | `read` user profile | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-31 | Usuários | SCs relacionadas | PROVEN | G8 | PR-api+core | `/related-requests` | self\|manage+units | profile tests | `read` related | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
+| R-32 | Sessão | capabilities + preferences read | PROVEN | `get_context` (parcial: sem preferences) | supplies-api | `/me/capabilities`, `/me/preferences` | shell | session ctx | `read`/`get_context` prefs | **PROVEN** (AUTHENTICATED_RUNTIME_PROVEN) |
 | R-33 | Ajuda | Manual/FAQ/glossário | PROVEN | `knowledge` (corpus parcial) | supplies content | in-proc | access | knowledge tests | ampliar corpus | P1-K1 |
 | R-34 | Consumo | Análise determinística | PROVEN | `analyze:PO summary` | supplies-api | sample+facts+hash | access | suri tests | estender p/ demais entidades | P1-A1 |
 
