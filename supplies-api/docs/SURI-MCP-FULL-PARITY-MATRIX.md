@@ -11,8 +11,8 @@ Revisão `SURI-MCP-FULL-PARITY-V4-G2` (2026-10-30): lote P1-R1+P1-R2 entregue �
 
 ```text
 PORTAL CAPABILITIES (denominador: linhas PROVEN executáveis) : 45 (34 READ + 11 WRITE)
-SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 33 (R-01..R-29, R-30..R-34, W-10, W-11)
-CURRENT PARITY PERCENTAGE (implementada)                     : 73.3% (33/45)
+SURI CAPABILITIES PROVEN (linhas com cobertura homologada)   : 36 (R-01..R-34, W-06..W-08, W-10, W-11)
+CURRENT PARITY PERCENTAGE (implementada)                     : 80.0% (36/45)
 TARGET PARITY PERCENTAGE                                     : 100% das capacidades autorizadas
 ```
 
@@ -77,9 +77,9 @@ Legenda SURI: `—` = sem dispatch; `read`/`analyze`/`knowledge`/`execute`/`dele
 | W-03 | Fornecedores | Enrichment review create | PROVEN | — | pg + S2S read + registry | `POST enrichment-reviews` | access+rate | `execute` review.create (PREPARE) | P2-E3 |
 | W-04 | Fornecedores | Enrichment decisions + bulk | PROVEN | — | pg (expected_revision, idempotency) | `POST .../decisions\|bulk-decisions` | access | `execute` decide (PREPARE) | P2-E3 |
 | W-05 | Fornecedores | Enrichment prepare-update (draft) | PROVEN | — | pg draft (nunca ERP) | `POST .../prepare-update` | access | `execute` prepare-update | P2-E3 |
-| W-06 | Mercado | Comex NCM request create | PROVEN | — | pg | `POST /ncm-governance` | access | `execute` ncm.request | P2-E2 |
-| W-07 | Mercado | Comex transition (algumas manage; ED-api put on approve/inactive) | PROVEN | — | pg + ED-api | `POST /{id}/transition` | access/manage | `execute` transition (PREPARE+consent p/ manage) | P2-E2 |
-| W-08 | Mercado | Comex views create/update | PROVEN | — | pg | `POST/PUT /views` | access | `execute` view.save | P2-E2 |
+| W-06 | Mercado | Comex NCM request create | PROVEN | G11 | pg | `POST /ncm-governance` | access | `execute` ncm.request | P2-E2 |
+| W-07 | Mercado | Comex transition (algumas manage; ED-api put on approve/inactive) | PROVEN | G11 | pg + ED-api | `POST /{id}/transition` | access/manage | `execute` transition (PREPARE+consent p/ manage) | P2-E2 |
+| W-08 | Mercado | Comex views create/update | PROVEN | G11 | pg | `POST/PUT /views` | access | `execute` view.save | P2-E2 |
 | W-09 | Mercado | Comex views delete | PROVEN | — | pg | `DELETE /views/{id}` | access | `delete` view (confirmação explícita) | P2-D1 |
 | W-10 | Fornecedores | Supplier create (Protheus POST) | PROVEN | `execute:suppliers.create` | api-delpi(S2S) + Protheus REST | `POST /suppliers` → `/integrations/protheus/suppliers` | access + S2S `suppliers.create` | runtime 2026-10-30 + 30 testes SURI | **PROVEN** (era B-01) |
 | W-11 | Fornecedores | Supplier update (Protheus PUT) | PROVEN | `execute:suppliers.update` | api-delpi(S2S) + Protheus REST | `PUT /suppliers/{code}/{store}` | access + S2S `suppliers.update` | runtime end-to-end + 30 testes SURI | **PROVEN** (era B-02) |
