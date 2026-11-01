@@ -474,6 +474,14 @@ Mesmo código (`fe13b9fac2`), instruções v38, corpus t22heldout-21, oráculos,
 - Divergência residual adicional (evaluator): `suri.analyze` COMPLETED mas scored FAIL — o scorer `want_owner` penaliza resposta honesta de limitação ("não consegui comprovar a ordenação") via `refusal` detection. Rubrica por subobjetivo (Doc 211 §10-11) é o local correto para essa profundidade, não o scorer binário.
 - Decisão necessária: **atribuir memberships de carteira/financeiro/engenharia ao sujeito de teste no Core (dev)** ou documentar cenários CAIO/CLARA/EVA como bloqueados-por-permissão. Atribuição de membership é mudança de autorização empresarial — seguir procedimento oficial; não conceder para "fazer passar".
 
+## 16. Task 30 — `DELIA-C3-LOCAL-ENVIRONMENT-KEYCLOAK-CORE-MCP-ACCESS-RECOVERY-01` (parcial — gate de permissão localizado)
+
+- Gate exato provado: `tool_bridge` CAIO exige `is_superadmin` **ou** `has_any_permission(user, "commercial.access")` (`commercial-api/.../tool_bridge.py:204`); CLARA/EVA seguem o mesmo padrão por domínio.
+- Permissões efetivas vêm do `EffectiveUser` (delpi_auth) populado pelo contexto Core — o sujeito `rober` possui `operations/units` (SURI ok) mas **não** `commercial.access`/`clara.*`/`eva.*`.
+- Mecanismo oficial localizado: Core RBAC (`/admin/rbac/roles`, `replace_user_roles_use_case`) — exige `rbac.manage`/`roles.manage` do chamador (admin Core), não bypass.
+- **Nenhuma alteração administrativa aplicada**: não havia credencial de Core-admin verificada neste ciclo; atribuição de permissão é o bounded step seguinte, com identidade admin legítima — Task 30 autoriza sujeito de homologação amplo via mecanismo oficial (Core RBAC ou is_superadmin no person_profile local, nunca `if username`-style bypass).
+- Drift da Task 29 (commit varreu índice do rebase): **registrado**; triagem de ownership dos arquivos concorrentes fica com o usuário — nenhum revert executado (não há dano comprovado, apenas ownership misto).
+
 ## 12. Task 25 — `DELIA-C3-ASCENDING-LOCAL-MODEL-EVALUATION-01`
 
 ### 12.1 Hardware + inventário

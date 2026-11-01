@@ -954,3 +954,10 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - RC3=autorização legítima por domínio (não integração). Decisão pendente: memberships do sujeito de teste no Core (dev, procedimento oficial).
 - Evaluator residual: scorer want_owner penaliza limitação honesta -> rubrica por subobjetivo pendente.
 - PRODUCTION_DEPLOY=NO; zero writes.
+
+## 2026-11-01 — DELIA-C3-LOCAL-ENVIRONMENT-KEYCLOAK-CORE-MCP-ACCESS-RECOVERY-01 (Task 30, doc 210 §16) — gate localizado, nenhuma alteração administrativa
+- Gate: CAIO/CLARA/EVA exigem is_superadmin OU permission domain-scoped (commercial.access etc) via Core RBAC; rober tem units/operations (SURI ok) mas sem as permissões de domínio.
+- Mecanismo oficial: /admin/rbac/roles + replace_user_roles (requer rbac.manage do chamador).
+- Pendente: credencial Core-admin legítima + grants das permissões de homologação (autorizado pela Task 30 via mecanismo oficial).
+- Drift T29 triage: registrado; sem revert; ownership misto sinalizado ao usuário.
+- PRODUCTION=NO; zero writes.
