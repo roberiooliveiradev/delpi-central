@@ -1,6 +1,6 @@
 {
-  "corpus_version": 2,
-  "schema_version": "suri-knowledge-v2",
+  "corpus_version": 3,
+  "schema_version": "suri-knowledge-v3",
   "sources": [
     {
       "source_id": "portal-user-manual",
@@ -1429,7 +1429,13 @@
         "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
         "locator": "ST-01"
       },
-      "evidence_class": "PROVEN"
+      "evidence_class": "PROVEN",
+      "concept": "Segmentação bidimensional de categorias de compra",
+      "formula_or_method": "Quadrantes: commodities (baixo impacto, baixo risco), alavanca (alto impacto, baixo risco), gargalo (baixo impacto, alto risco), estratégicos (alto impacto, alto risco)",
+      "step_by_step": "1) Agrupar spend por categoria; 2) medir risco de suprimento por fonte homologada (não inferir); 3) posicionar quadrante; 4) definir estratégia por quadrante",
+      "interpretation": "Quadrante determina postura: competitiva, transacional, garantia de suprimento ou parceria.",
+      "portal_application": "No Portal: read(purchase-orders)+read(suppliers) fornecem volume/dependência; risco exige fonte homologada — sem ela Kraljic é apenas ilustrativa",
+      "limitations": "Sem medida de risco aprovada o quadrante é julgamento; não classificar sem dados de dependência"
     },
     {
       "knowledge_id": "method.st-02",
@@ -1459,7 +1465,13 @@
         "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
         "locator": "ST-02"
       },
-      "evidence_class": "PROVEN"
+      "evidence_class": "PROVEN",
+      "concept": "Curva de concentração por valor acumulado",
+      "formula_or_method": "Ordenar por valor desc; classe A≈80% acumulado, B≈15%, C≈5%",
+      "step_by_step": "1) Obter valores do período e chave (material/fornecedor); 2) ordenar desc; 3) acumular; 4) marcar cortes",
+      "interpretation": "Foco em A; C recebe gestão simplificada.",
+      "portal_application": "read(inventory,items)+read(purchase-orders) fornecem valores por chave — ANALYSIS_ENABLED com dados suficientes",
+      "limitations": "Exige valor comparável e período comum; amostra truncada ≠ curva populacional"
     },
     {
       "knowledge_id": "method.st-03",
@@ -1487,7 +1499,13 @@
         "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
         "locator": "ST-03"
       },
-      "evidence_class": "PROVEN"
+      "evidence_class": "PROVEN",
+      "concept": "Análise estruturada de gastos",
+      "formula_or_method": "Spend por dimensão (fornecedor, categoria, filial, período)",
+      "step_by_step": "1) Valores do período; 2) dimensão; 3) agregação; 4) participação",
+      "interpretation": "Base para ABC, concentração e negociação.",
+      "portal_application": "read(purchase-orders) dá valor por linha/fornecedor — insumo, não análise pronta",
+      "limitations": "Sem natureza da despesa completa, recorte é parcial"
     },
     {
       "knowledge_id": "method.st-04",
@@ -1573,7 +1591,13 @@
         "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
         "locator": "ST-06"
       },
-      "evidence_class": "PROVEN"
+      "evidence_class": "PROVEN",
+      "concept": "Custo total de posse além do preço",
+      "formula_or_method": "TCO = preço + frete + tributos + qualidade + manutenção + descarte",
+      "step_by_step": "1) Componentes de custo aplicáveis; 2) custeá-los; 3) comparar por opção",
+      "interpretation": "Menor preço ≠ menor TCO.",
+      "portal_application": "dados de frete/qualidade exigem fontes fora do Portal — conhecimento explicativo",
+      "limitations": "Sem custo por componente, TCO é checklist qualitativo"
     },
     {
       "knowledge_id": "method.st-07",
@@ -1858,7 +1882,13 @@
         "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
         "locator": "SU-01"
       },
-      "evidence_class": "PROVEN"
+      "evidence_class": "PROVEN",
+      "concept": "Painel ponderado de desempenho do fornecedor",
+      "formula_or_method": "Score = Σ(peso_i × métrica_i) com pesos declarados e aprovados",
+      "step_by_step": "1) Escolher métricas (OTD, qualidade, resposta); 2) fixar pesos aprovados; 3) normalizar escalas; 4) compor",
+      "interpretation": "Score comparável apenas com mesma composição de pesos.",
+      "portal_application": "read(otd)+read(suppliers)+entregas fornecem métricas brutas; pesos exigem decisão do owner",
+      "limitations": "Pesos inventados invalidam o score; sempre declarar a composição"
     },
     {
       "knowledge_id": "method.su-02",
@@ -1944,7 +1974,13 @@
         "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
         "locator": "SU-04"
       },
-      "evidence_class": "PROVEN"
+      "evidence_class": "PROVEN",
+      "concept": "Probabilidade × impacto de falha de suprimento",
+      "formula_or_method": "Score de risco = P(falha) × impacto, com mitigação e owner",
+      "step_by_step": "1) Listar riscos por item/fornecedor; 2) estimar P e impacto com justificativa; 3) registrar mitigação",
+      "interpretation": "Priorizar quadrante alto-alto com plano de contingência.",
+      "portal_application": "read(safety-stock)+read(deliveries) evidenciam exposição; P é avaliação declarada",
+      "limitations": "Probabilidade inventada = ilusão de precisão"
     },
     {
       "knowledge_id": "method.su-05",
@@ -2002,7 +2038,13 @@
         "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
         "locator": "SU-06"
       },
-      "evidence_class": "PROVEN"
+      "evidence_class": "PROVEN",
+      "concept": "Pontualidade de entrega (e completude para OTIF)",
+      "formula_or_method": "OTD% = entregues no prazo / elegíveis × 100 (população e regra do analytics)",
+      "step_by_step": "1) População elegível do período/filial; 2) marcar promessa vs real; 3) agregar",
+      "interpretation": "Sempre citar período, filial e população; difere de entregas-recebidas.",
+      "portal_application": "read(otd,aggregate|series)+analyze(overview_summary) — RUNTIME_PROVEN",
+      "limitations": "OTD do analytics ≠ lista de recebimentos late/on_time"
     },
     {
       "knowledge_id": "method.su-07",
@@ -2174,7 +2216,13 @@
         "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
         "locator": "IN-01"
       },
-      "evidence_class": "PROVEN"
+      "evidence_class": "PROVEN",
+      "concept": "Renovação do estoque pelo consumo",
+      "formula_or_method": "Giro = custo do consumo do período / estoque médio (mesmo critério contábil)",
+      "step_by_step": "1) Consumo no critério de custo do período; 2) estoque médio do período (não instantâneo); 3) dividir",
+      "interpretation": "Giro baixo = capital parado; alto = risco de ruptura.",
+      "portal_application": "read(inventory,summary) fornece saldo/custo; consumo histórico exige série — cuidado com snapshot único",
+      "limitations": "Saldo instantâneo ≠ estoque médio; período curto distorce"
     },
     {
       "knowledge_id": "method.in-02",
@@ -2204,7 +2252,13 @@
         "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
         "locator": "IN-02"
       },
-      "evidence_class": "PROVEN"
+      "evidence_class": "PROVEN",
+      "concept": "Dias de suprimento pelo saldo útil",
+      "formula_or_method": "Cobertura (dias) = saldo útil / consumo médio diário",
+      "step_by_step": "1) Saldo utilizável; 2) consumo médio diário da janela; 3) dividir",
+      "interpretation": "Cobertura abaixo do lead time = risco de ruptura.",
+      "portal_application": "read(safety-stock,summary/items) já expõe cobertura calculada pelo owner — reuse, não recalcule",
+      "limitations": "Consumo médio exige histórico compatível com a janela"
     },
     {
       "knowledge_id": "method.in-03",
@@ -2234,7 +2288,13 @@
         "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
         "locator": "IN-03"
       },
-      "evidence_class": "PROVEN"
+      "evidence_class": "PROVEN",
+      "concept": "Proteção contra variabilidade de demanda e prazo",
+      "formula_or_method": "ESTSEG definido pela política do ERP; déficit = demanda coberta − saldo disponível",
+      "step_by_step": "1) Política do ERP (owner); 2) saldo disponível; 3) demanda prevista até cobertura; 4) comparar",
+      "interpretation": "Déficit por UM indica quanto falta comprar.",
+      "portal_application": "read(safety-stock,*) entrega déficit, cobertura e projeção do owner — ANALYSIS_ENABLED",
+      "limitations": "Não inventar fórmula de ESTSEG; a política é do ERP"
     },
     {
       "knowledge_id": "method.in-04",
@@ -2264,7 +2324,13 @@
         "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
         "locator": "IN-04"
       },
-      "evidence_class": "PROVEN"
+      "evidence_class": "PROVEN",
+      "concept": "Gatilho de reposição pelo consumo no lead time",
+      "formula_or_method": "ROP = consumo no lead time + estoque de segurança",
+      "step_by_step": "1) Consumo médio; 2) lead time homologado; 3) ESTSEG; 4) somar",
+      "interpretation": "Abaixo do ROP = emitir requisição.",
+      "portal_application": "read(safety-stock,details) expõe projeção; lead time exige fonte homologada",
+      "limitations": "Sem lead time aprovado é apenas ilustração"
     },
     {
       "knowledge_id": "method.in-05",
@@ -2350,7 +2416,13 @@
         "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
         "locator": "IN-07"
       },
-      "evidence_class": "PROVEN"
+      "evidence_class": "PROVEN",
+      "concept": "Decomposição do tempo total de suprimento",
+      "formula_or_method": "Lead time = pedido→confirmação + preparação + trânsito + recebimento",
+      "step_by_step": "1) Carimbos temporais confiáveis por etapa; 2) estatísticas por fornecedor/material; 3) variabilidade",
+      "interpretation": "Variância alta pede ESTSEG maior ou renegociação.",
+      "portal_application": "read(purchase-orders)+read(deliveries) fornecem datas; eventos intermedios exigem fonte",
+      "limitations": "Sem eventos confiáveis por etapa, só total aproximado"
     },
     {
       "knowledge_id": "method.in-08",
@@ -4421,6 +4493,89 @@
         "locator": "journey.sc-tutorial"
       },
       "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "ref.filter-vocabulary",
+      "kind": "reference",
+      "title": "Vocabulário canônico de filtros (valores exatos)",
+      "summary": "Valores exatos por campo: safety-stock.status ∈ {below_safety_stock, at_safety_stock, above_safety_stock, no_safety_stock}; otd.branch = string única ('01'|'02'|'all'); otd.series.branch = lista; consumption.unit = 'all'|'01'|'02'.",
+      "content": "Filtros com valores inválidos retornam 422. Estados de estoque de segurança: below_safety_stock (abaixo), at_safety_stock (no limite), above_safety_stock (acima), no_safety_stock (sem política). Para OTD multi-filial usar read(otd,series); aggregate aceita apenas branch string.",
+      "topic": "canonical-filters",
+      "keywords": [
+        "status",
+        "filtro",
+        "below_safety_stock",
+        "branch",
+        "422",
+        "valores"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "supplies-api/app/interfaces/mcp/constants.py",
+        "locator": "SAFETY_STOCK_STATUS + OTD filter keys"
+      }
+    },
+    {
+      "knowledge_id": "explain.otd-divergence",
+      "kind": "explanation",
+      "title": "Por que OTD (Overview) difere do OTD de Entregas/Atrasos",
+      "summary": "São populações e fórmulas distintas: Overview OTD compõe o indicador do analytics por período/filial; a página Entregas lista recebimentos de MP por data de entrada (late/on_time). Divergência esperada — nenhum dos dois está necessariamente errado.",
+      "content": "OVERVIEW OTD (analyze overview_summary / read otd aggregate|series) usa o serviço OTD do analytics: população de pedidos/linhas por promessa vs entrega, agregada por período e filial. A página Entregas/Atrasos (read deliveries late) lista recebimentos de matéria-prima por data de entrada com status late/on_time — população diferente (recebimentos, não linhas de PC), datas diferentes (entrada efetiva) e sem agregação ponderada. Ao responder divergências entre indicadores, a SURI deve citar população, período, filtro e fórmula de cada fonte, sem declarar valor 'errado' sem evidência.",
+      "topic": "indicator-interpretation",
+      "keywords": [
+        "otd",
+        "divergência",
+        "entregas",
+        "overview",
+        "atraso",
+        "indicador diferente"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "supplies-api/app/interfaces/mcp/constants.py",
+        "locator": "otd actions + deliveries late contract"
+      }
+    },
+    {
+      "knowledge_id": "report.executive",
+      "kind": "report_template",
+      "title": "Relatório executivo de Suprimentos",
+      "summary": "Template de relatório: 13 seções obrigatórias.",
+      "content": "Relatório executivo de Suprimentos. Seções: EXECUTIVE_SUMMARY; SCOPE_AND_PERIOD; KPI_SCORECARD; SUPPLIES_PERFORMANCE; PURCHASE_REQUESTS; PURCHASE_ORDERS; SUPPLIER_PERFORMANCE; INVENTORY_EXPOSURE; DELIVERY_RISKS; MARKET_INTELLIGENCE; TOP_PRIORITIES; ACTION_PLAN; EVIDENCE_AND_LIMITATIONS. Toda seção cita a fonte dos dados, separa FACT/CALCULATION/INFERENCE/RECOMMENDATION e declara LIMITATIONS; dados ausentes viram DATA_GAP, nunca invenção.",
+      "topic": "report-journeys",
+      "keywords": [
+        "relatório",
+        "executivo",
+        "de",
+        "suprimentos",
+        "relatório"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "docs",
+        "locator": "report.executive"
+      }
+    },
+    {
+      "knowledge_id": "report.supply-risk",
+      "kind": "report_template",
+      "title": "Diagnóstico de risco de abastecimento",
+      "summary": "Template de relatório: 10 seções obrigatórias.",
+      "content": "Diagnóstico de risco de abastecimento. Seções: MATERIAL; BRANCH; DEFICIT; OPEN_PURCHASE_ORDERS; SUPPLIER; DELIVERY_DATES; COVERAGE; RISK_EVIDENCE; HYPOTHESES; RECOMMENDED_ACTION. Toda seção cita a fonte dos dados, separa FACT/CALCULATION/INFERENCE/RECOMMENDATION e declara LIMITATIONS; dados ausentes viram DATA_GAP, nunca invenção.",
+      "topic": "report-journeys",
+      "keywords": [
+        "diagnóstico",
+        "de",
+        "risco",
+        "de",
+        "abastecimento",
+        "relatório"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "docs",
+        "locator": "report.supply-risk"
+      }
     }
   ]
 }

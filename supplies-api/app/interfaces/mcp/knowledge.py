@@ -81,6 +81,7 @@ def search_knowledge(
         if not terms:
             scored.append((0, item))
             continue
+        title_h = str(item.get("title") or "").lower()
         haystack = " ".join(
             str(item.get(key) or "")
             for key in ("title", "summary", "content", "topic",
@@ -91,6 +92,16 @@ def search_knowledge(
         ).lower()
         score = sum(haystack.count(term) for term in terms)
         if score > 0:
+            # intent/phrase boosts: all-terms coverage, title hits,
+            # phrase substring, question-target kinds first
+            coverage = sum(1 for term in terms if term in haystack)
+            score += coverage * 2
+            score += sum(3 for term in terms if term in title_h)
+            q = (query or "").strip().lower()
+            if len(q) >= 12 and q in haystack:
+                score += 15
+            if item.get("kind") in {"page", "journey", "faq"}:
+                score += 2
             scored.append((score, item))
     scored.sort(key=lambda pair: (-pair[0], str(pair[1].get("knowledge_id"))))
     capped = max(1, min(int(limit or 8), 20))

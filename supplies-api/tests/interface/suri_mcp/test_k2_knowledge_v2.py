@@ -34,7 +34,7 @@ ITEMS = CORPUS["items"]
 
 
 def test_corpus_version_and_counts():
-    assert CORPUS["corpus_version"] == 2
+    assert CORPUS["corpus_version"] == 3
     kinds = {}
     for it in ITEMS:
         kinds[it["kind"]] = kinds.get(it["kind"], 0) + 1
@@ -58,7 +58,8 @@ def test_corpus_required_fields():
         assert it.get("source", {}).get("file")
         assert it.get("kind") in {
             "page", "concept", "method", "faq",
-            "journey", "guidance", "topic"}
+            "journey", "guidance", "topic",
+            "reference", "explanation", "report_template"}
 
 
 def test_methods_have_status():
@@ -80,7 +81,7 @@ def test_search_by_question():
         "search", "como filtro solicitações por filial")
     data = _payload(r)
     assert data["total_matches"] > 0
-    assert data["corpus_version"] == 2
+    assert data["corpus_version"] == 3
 
 
 def test_search_kind_filter_method():
@@ -133,5 +134,5 @@ def test_kind_rejected_on_get():
 def test_sources_version():
     r = tool_bridge.tool_knowledge("sources")
     data = _payload(r)
-    assert data["corpus_version"] == 2
+    assert data["corpus_version"] == 3
     assert data["item_count"] == len(ITEMS)
