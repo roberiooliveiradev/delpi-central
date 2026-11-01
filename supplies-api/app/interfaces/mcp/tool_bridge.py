@@ -1156,6 +1156,18 @@ def tool_analyze_purchase_orders(
             "label": "sample_truncated",
             "value": bool(int(data.get("total") or 0) > sample_total),
         },
+        {
+            "label": "population_total_lines",
+            "value": int(data.get("total") or 0),
+        },
+        {
+            "label": "interpretation",
+            "value": (
+                "sample_* metrics describe ONLY the fetched sample — "
+                "they are NOT population shares; population_* and the "
+                "summary facts describe the full filtered universe."
+            ),
+        },
     ]
 
     recommendations: list[dict[str, Any]] = []
@@ -2064,10 +2076,17 @@ def _dispatch_otd_read(
 def tool_otd_aggregate(filters: dict) -> CallToolResult:
     """read(otd,aggregate) — same compose call as GET /analytics/otd."""
     user = _analytics_user()
+    branch = filters.get("branch")
+    if branch is not None and not isinstance(branch, str):
+        return _invalid(
+            "read(otd,aggregate) filter 'branch' must be a single branch "
+            "string ('01', '02' or 'all'), not a list — use "
+            "read(otd,series) for multi-branch OTD."
+        )
     try:
         payload = _OTD_AGG_SERVICE.compose(
             user,
-            branch=filters.get("branch"),
+            branch=branch,
             start_date=filters.get("start_date"),
             end_date=filters.get("end_date"),
         )
