@@ -4416,8 +4416,16 @@ class GptActionsDispatchService:
             if re.search(kw, msg_norm, re.I):
                 params_msg["granularity"] = gran
 
+        # "não conformidades", problemas, ocorrências e similares
+        # são semanticamente pedidos de apresentação em detalhe —
+        # não precisam da palavra "tabela" para exigir o bloco.
         want_table = bool(
-            re.search(r"tabela|detalh|lista", msg_norm, re.I)
+            re.search(
+                r"tabela|detalh|lista|conformidades|conformidade"
+                r"|ocorr|problem|item|itens|falha|pendenc|registro",
+                msg_norm,
+                re.I,
+            )
         )
         plan_by_type = {
             str(b.get("blockType") or ""): b
@@ -4426,6 +4434,7 @@ class GptActionsDispatchService:
         }
         enriched: list[dict[str, Any]] = []
         dropped_types: set[str] = set()
+        _bound_goals: set[str] = set()
         for op in ops:
             if (
                 not isinstance(op, dict)
@@ -4445,45 +4454,127 @@ class GptActionsDispatchService:
                 for c in plan_cands
                 if isinstance(c, dict) and c.get("goals")
             ]
-            # componente não pedido e sem candidatos justificados
-            # sai; com fontes justificadas (ex.: NCs de 5S) fica.
-            if (
-                btype == "table_view"
-                and not want_table
-                and not justified
-            ):
-                dropped_types.add(btype)
-                continue
+            # componente não pedido sai quando vazio OU redundante
+            # — seus goals já estão cobertos por outros blocos
+            # (ex.: tabela OEE com kpi+chart cobrindo tudo).
+            if btype == "table_view" and not want_table:
+                # briefing descreve componentes visuais? então
+                # componente extra sem papel é arbitrário; pedido só
+                # por domínio mantém detalhe justificado na tabela.
+                _explicit_visuals = bool(
+                    re.search(
+                        r"kpi|grafic|titulo|tendenc|destaque"
+                        r"|indicador|hierarqu|contraste|tipograf"
+                        r"|dashboard",
+                        msg_norm,
+                        re.I,
+                    )
+                )
+                _own_goals = {
+                    g
+                    for c in justified
+                    for g in (c.get("goals") or [])
+                }
+                if not justified or (
+                    _explicit_visuals
+                    and _own_goals <= _bound_goals
+                ):
+                    dropped_types.add(btype)
+                    continue
             if btype == "heading" and title:
                 blk["content"] = title
                 blk["contentRuns"] = [{"text": title}]
             if plan is None:
                 enriched.append(op)
                 continue
-            # seleção por PAPEL (F2): entre candidatos justificados,
-            # prefere o de menor contaminação semântica — goals ⊆
-            # pedido e menor conjunto (meta vs realizado não são
-            # equivalentes de KPI). Empate por score.
-            role_ok = [
+            # seleção por PAPEL (F2 issue #129): papel do segmento
+            # do operationId — "meta"→TARGET, "series"→SERIES,
+            # demais→REALIZED. KPI/tabela preferem REALIZED quando
+            # existir; chart prefere SERIES; meta-segment nunca
+            # serve KPI de realizado.
+            def _cand_role(c):
+                segs = str(c.get("operationId") or "").split("_")
+                if "meta" in segs or "metas" in segs:
+                    return "target"
+                if "series" in segs or "serie" in segs:
+                    return "series"
+                return "realized"
+
+            _role_pref = {
+                "kpi_view": ["realized", "target", "series"],
+                "chart_view": ["series", "realized", "target"],
+                "table_view": ["realized", "series", "target"],
+            }.get(btype, ["realized", "series", "target"])
+
+            pool = [
                 c
                 for c in justified
                 if set(c.get("goals") or [])
                 <= (request_goals or set())
             ] or justified
-            role_ok = sorted(
-                role_ok,
+            # forma canônica por papel do bloco.
+            _shape_ok = {
+                "kpi_view": {"scalar", "object", "composite_analysis"},
+                "chart_view": {"list", "series", "paged_list", "scalar"},
+                "table_view": {"list", "paged_list", "hierarchy"},
+            }.get(btype, set())
+            if _shape_ok:
+                _shaped = [
+                    c
+                    for c in pool
+                    if str(c.get("metaShape") or "")
+                    in _shape_ok
+                ]
+                if _shaped:
+                    pool = _shaped
+            # role pref ordena mas não exclui: indicador meta que
+            # cobre oee+meta é a comparação oficial pedida, não
+            # contaminação — a chave de cobertura decide.
+            pool = sorted(
+                pool,
                 key=lambda c: (
+                    -len(
+                        set(c.get("goals") or [])
+                        & (request_goals or set())
+                    ),
+                    _role_pref.index(_cand_role(c))
+                    if _cand_role(c) in _role_pref
+                    else len(_role_pref),
+                    -max(
+                        (
+                            msg_norm.count(g)
+                            for g in (c.get("goals") or [])
+                        ),
+                        default=0,
+                    ),
                     len(set(c.get("goals") or [])),
                     -float(c.get("score") or 0.0),
                 ),
             )
-            # ambiguidade preservada: só resolve quando plano
-            # RESOLVED, único justificado ou vencedor de papel
-            # inequívoco (menos goals extraneous que o segundo).
+            role_ok = pool
+
+            def _rank_key(c):
+                return (
+                    -len(
+                        set(c.get("goals") or [])
+                        & (request_goals or set())
+                    ),
+                    _role_pref.index(_cand_role(c))
+                    if _cand_role(c) in _role_pref
+                    else len(_role_pref),
+                    -max(
+                        (
+                            msg_norm.count(g)
+                            for g in (c.get("goals") or [])
+                        ),
+                        default=0,
+                    ),
+                    len(set(c.get("goals") or [])),
+                )
+
             _role_unique = len(role_ok) == 1 or (
                 role_ok
-                and len(set(role_ok[0].get("goals") or []))
-                < len(set(role_ok[1].get("goals") or []))
+                and _rank_key(role_ok[0]) < _rank_key(role_ok[1])
             )
             if (
                 plan.get("state") != "RESOLVED"
@@ -4537,6 +4628,14 @@ class GptActionsDispatchService:
             plan["state"] = "RESOLVED"
             plan["resolvedOperationId"] = oid
             plan["resolvedParams"] = params
+            plan["binding"] = {
+                "operationId": oid,
+                "displayMode": str(
+                    spec.get("displayMode") or "auto"
+                ),
+                "missingParams": spec.get("missingParams") or [],
+            }
+            _bound_goals |= set(cand.get("goals") or [])
         payload["ops"] = enriched
         # blocos do plano cujo componente foi descartado não podem
         # travar a prontidão da proposta.
