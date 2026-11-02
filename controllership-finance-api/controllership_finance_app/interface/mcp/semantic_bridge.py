@@ -314,6 +314,14 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
         required=("period",),
         allowed=("branch",),
     ),
+    ("report", "production_order_consumption"): _read_spec(
+        bridge.tool_get_production_order_consumption,
+        required=("period", "branch"),
+        allowed=(
+            "search", "product", "date_type", "status",
+            "work_center", "operation", "page", "page_size",
+        ),
+    ),
     ("report", "matrix"): _read_spec(
         bridge.tool_get_report_matrix,
         required=("period",),

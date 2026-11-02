@@ -40,7 +40,7 @@ router = APIRouter(
     tags=["Supplies — Consumption Audit"],
 )
 
-_SUPPLIES_BFF_CLIENTS = ("supplies-api",)
+_SUPPLIES_BFF_CLIENTS = ("supplies-api", "controllership-finance-api")
 _CONSUMPTION_AUDIT_READ_SCOPE = ("consumption-audit.read",)
 
 

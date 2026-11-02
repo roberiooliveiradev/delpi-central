@@ -191,6 +191,12 @@ const REPORT_META: Record<
       "Mão de obra direta por PA faturado — visão operacional; paridade oficial pendente de homologação.",
     origin: "api-delpi/SD2+SG1+SHY — visão operacional",
   },
+  "production-order-consumption": {
+    name: "Consumo por OP — R04",
+    description:
+      "Ordens de produção para auditoria de consumo — visão operacional; equivalência MATR860 pendente.",
+    origin: "api-delpi/SC2+SG1+SD4+SD3 — consumption-audit",
+  },
   "cost-closing-state": {
     name: "Estado de fechamento e cutoff — R12/R15",
     description:
@@ -209,6 +215,7 @@ const CATALOG_REPORT_KEYS: ReportKey[] = [
   "billing-exclusion-roster",
   "work-in-process",
   "cost-closing-state",
+  "production-order-consumption",
 ];
 
 const DOMAIN_LABELS: Record<ReconciliationDomain, string> = {
