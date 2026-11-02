@@ -4432,6 +4432,34 @@ class GptActionsDispatchService:
             for b in blocks
             if isinstance(b, dict)
         }
+        def _cand_role(c):
+            segs = str(c.get("operationId") or "").split("_")
+            if "meta" in segs or "metas" in segs:
+                return "target"
+            if "series" in segs or "serie" in segs:
+                return "series"
+            return "realized"
+
+        # pré-computo: fonte TARGET que vai alimentar o componente
+        # de meta — seus goals contam como cobertos pela proposta
+        # final (a emissão ocorre após o loop).
+        _meta_cand = None
+        if (request_goals or set()) & {"meta", "metas", "alvo"}:
+            for _p in plan_by_type.values():
+                _mc = [
+                    c
+                    for c in (_p.get("candidates") or [])
+                    if isinstance(c, dict)
+                    and _cand_role(c) == "target"
+                    and c.get("goals")
+                ]
+                if _mc:
+                    _meta_cand = _mc[0]
+                    break
+        _meta_goals = (
+            set(_meta_cand.get("goals") or []) if _meta_cand else set()
+        )
+
         enriched: list[dict[str, Any]] = []
         dropped_types: set[str] = set()
         _bound_goals: set[str] = set()
@@ -4477,7 +4505,8 @@ class GptActionsDispatchService:
                 }
                 if not justified or (
                     _explicit_visuals
-                    and _own_goals <= _bound_goals
+                    and _own_goals
+                    <= (_bound_goals | _meta_goals)
                 ):
                     dropped_types.add(btype)
                     continue
