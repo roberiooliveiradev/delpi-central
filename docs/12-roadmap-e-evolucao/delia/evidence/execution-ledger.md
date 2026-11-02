@@ -1298,3 +1298,20 @@ GOAL_INTERPRETATION (3, prepare-class), EVIDENCE_REJECTION (1), AUTHZ neg_delete
 PROXIMO: aguardar doc211 v2 DONE -> contagem; inspecionar um FAIL clara (trace proposals);
 GROUP_SELECTION heldout (ho_vista_playlists/nh_vista/t2_teo_resp/t2_vista_screens) reruns isolados;
 regressao 470 + relatorio §9. COMANDOS no ledger acima (secao matriz causal).
+
+## RESUME-POINT final (SHA d9a4876f8d)
+
+doc211 v2: 7/28 executados, 2 PASS (cmp_01, cmp_03). FAILs cmp_04-07 seguem
+GROUP_SELECTION_ERROR mesmo com owners corretos invocados (caio.*/clara.* chegam ao
+wire) — NAO e env: e selecao/julgamento ou oraculo. Inspecionar trace de cmp_04
+(runs.json atual) — verificar want_owner vs grupo selecionado e status dos invokes.
+COMANDO: docker exec delia-t21-main python3 -c "import json; r=[x for x in
+json.load(open(/tmp/local_reliability_runs.json))[runs] if cmp_04 in str(x.get(scenario))]; print(json.dumps(r[0], ensure_ascii=False)[:2500])"
+
+BATERIA 89/89 (SHA 18479ed41c): 45 PASS / 44 FAIL — matriz completa no ledger.
+neg_delete: ARBITRADO — discovery READ legitimo antes de recusa honesta (harness strict);
+gate L5521 mantido publicado.
+PENDENTE: doc211v2 DONE; clusters EVIDENCE_RELEVANCE(8)/ADMISSION(4)/GROUP_SEL heldout(5)/
+GOAL_INTERP(3)/EVIDENCE_REJECTION(1) — classificar causalmente, corrigir defeitos DELIA,
+rerun afetados, regressao 470, relatorio §9.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
