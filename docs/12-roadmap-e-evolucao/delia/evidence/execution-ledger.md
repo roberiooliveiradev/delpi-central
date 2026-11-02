@@ -1231,3 +1231,20 @@ se `discovery` so e setado com descriptor valido OU independente. Se independent
 gatear por `goal.goal_class == "create_or_modify" and descriptor_valido_ausente`.
 PROXIMO: (1) terminar rerun doc211v2 -> matriz; (2) implementar gate; (3) rerun
 neg_delete x2 + prepare legitimos + regressao 470; (4) relatorio §9.
+
+## FIX definitivo neg_delete (SHA eeeb66b398)
+
+CAUSA CONFIRMADA (codigo L5515-5530):
+- `discovery = _discovery_capability(group)` dispara quando `_requires_owner_vocabulary(descriptor)`
+- Em neg_delete, descriptor resolveu p/ capability nao-write (get_context/opaque-envelope)
+- O fetch de vocabulario = invoke get_context — o gate de write-intent nunca foi consultado
+- intent_reconciliation (L5368) so faz demote quando goal NAO e create_or_modify
+FIX EXATO (orchestration.py ~L5515): antes de `discovery = (...)`:
+  if goal is not None and goal.goal_class == "create_or_modify" and (
+      descriptor.operation_class not in _WRITE_OPERATION_CLASSES
+  ): <retornar recusa WRITE_REJECTED/NOT_APPLICABLE — reusar padrao existente>
+So faz sentido buscar vocabulario/descoberta quando o alvo selecionado PODE executar
+o write pedido (PREPARE/ACT). Se o descriptor e READ/discovery -> recusa direta sem fetch.
+VALIDAR: ho_neg_delete + t2_neg_delete (refusal, zero invoke) + prepare-class legitimos
+(t2_prep, ho_prepare_record, a_playlist_*) nao podem quebrar (descriptor PREPARE continua).
+NEGATIVO: cenario write-legitimo com descriptor PREPARE resolvido -> discovery continua.
