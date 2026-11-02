@@ -217,6 +217,7 @@ from app.application.capability_provision.subobjective_tracker import (
     SubObjectiveTracker,
     TERMINAL_STATES,
     MAX_SUBOBJECTIVES_PER_INVESTIGATION,
+    subobjective_outcome_transition,
 )
 from app.application.capability_provision.paginated_result_semantics import (
     DEFAULT_MAX_PAGES,
@@ -4665,6 +4666,7 @@ class OperationalCapabilityOrchestrator:
         ) = None,
         field_labels: FieldLabels | None = None,
         orchestration_instructions: Mapping[str, str] | None = None,
+        subobjective_investigation_enabled: bool = False,
     ) -> None:
         self._providers = {p.provider_id: p for p in providers}
         # R1/M01: declarative instruction text is composition-injected
@@ -4693,6 +4695,13 @@ class OperationalCapabilityOrchestrator:
         # (OFF); clamped to the PO-approved ceiling, never raised.
         self._llm_call_max_attempts = max(
             1, min(int(llm_call_max_attempts), LLM_CALL_MAX_ATTEMPTS)
+        )
+        # S3/S4 (doc 214): compound-objective decomposition — OFF by
+        # default; the composition root enables it via governed config.
+        # When off, no decomposition model call is issued and every
+        # turn keeps the exact pre-S3 stage sequence.
+        self._subobjective_investigation_enabled = bool(
+            subobjective_investigation_enabled
         )
         # CRI E1/E2: composition-resolved response mode — when ON, the
         # goal stage may propose typed answer requirements and the
@@ -5205,7 +5214,7 @@ class OperationalCapabilityOrchestrator:
         # fail-closed; a single subobjective or no proposal continues
         # the efficient single-capability path unchanged. Sub-investigations
         # run at depth>0 and never decompose further.
-        if depth == 0:
+        if depth == 0 and self._subobjective_investigation_enabled:
             subobjectives = self._decompose_objective(
                 input_text,
                 correlation=correlation,
@@ -6791,46 +6800,28 @@ class OperationalCapabilityOrchestrator:
         subobjective_id: str,
         attempt: GovernedCapabilityAttempt,
     ) -> None:
-        """Map the typed governed outcome onto the tracker state —
-        never infers success from a bare 200."""
-        status = attempt.status
-        provenance_ref = None
+        """Map the typed governed outcome onto the tracker state via
+        the shared classifier — never infers success from a bare 200."""
         outcome = attempt.outcome
         prov = getattr(outcome, "provenance", None) if outcome else None
-        if prov is not None:
-            provenance_ref = (
-                f"{getattr(prov, 'specialist_id', '')}."
-                f"{getattr(prov, 'remote_name', '')}"
-            )
-        if status is GovernedCapabilityStatus.SUCCESS:
-            refs = (
-                (provenance_ref,)
-                if provenance_ref
-                else (f"governed_attempt:{attempt.correlation_id}",)
-            )
-            if attempt.content:
-                tracker.complete(subobjective_id, evidence_refs=refs)
-            else:
-                tracker.conclude_partial(
-                    subobjective_id,
-                    gaps=("empty authoritative result",),
-                )
-            return
-        if status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE:
-            # Legitimate owner unavailability is a declared gap —
-            # an honest lacuna, never an arggen failure.
-            tracker.conclude_partial(
-                subobjective_id,
-                gaps=("authoritative source unavailable",),
-            )
-            return
-        if status is GovernedCapabilityStatus.PROCESSING_TIMEOUT:
-            tracker.fail(subobjective_id, recoverable=True)
-            return
-        # AUTHZ_DENIED (never retried silently), NOT_APPLICABLE,
-        # CLARIFICATION_REQUIRED, CONFIRMATION_REQUIRED,
-        # WRITE_REJECTED — a governed refusal is fail-closed here.
-        tracker.fail(subobjective_id, recoverable=False)
+        provenance_ref = (
+            f"{getattr(prov, 'specialist_id', '')}."
+            f"{getattr(prov, 'remote_name', '')}"
+            if prov is not None
+            else None
+        )
+        action, refs, gaps, recoverable = subobjective_outcome_transition(
+            attempt.status.value,
+            has_content=bool(attempt.content),
+            provenance_ref=provenance_ref,
+            correlation_id=attempt.correlation_id,
+        )
+        if action == "complete":
+            tracker.complete(subobjective_id, evidence_refs=refs)
+        elif action == "partial":
+            tracker.conclude_partial(subobjective_id, gaps=gaps)
+        else:
+            tracker.fail(subobjective_id, recoverable=recoverable)
 
     def _subobjective_attempt_result(
         self,

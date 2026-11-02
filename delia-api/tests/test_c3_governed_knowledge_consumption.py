@@ -661,7 +661,7 @@ def test_admission_instruction_routes_owner_domain_concepts():
         path,
         required_names=ORCHESTRATION_INSTRUCTION_KEYS,
     )
-    assert res.version == "38"
+    assert res.version == "39"
     text = res.instructions[
         "delia.capability_orchestration.interaction_admission"
     ]
@@ -691,7 +691,7 @@ def test_nomenclature_resolution_instruction_clauses():
         path,
         required_names=ORCHESTRATION_INSTRUCTION_KEYS,
     )
-    assert res.version == "38"
+    assert res.version == "39"
     group_text = res.instructions[
         "delia.capability_orchestration.select_group"
     ]

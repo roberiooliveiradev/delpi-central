@@ -259,6 +259,22 @@ class Settings:
         self.orchestration_engine = (
             os.getenv("DELIA_ORCHESTRATION_ENGINE") or "langgraph"
         ).strip()
+        # S3 (doc 214): compound-objective decomposition — composition
+        # config ONLY, backend-controlled; OFF by default.
+        self.subobjective_investigation_enabled = _env_flag(
+            "DELIA_SUBOBJECTIVE_INVESTIGATION"
+        )
+        # S4 (doc 214): LangGraph Send fan-out for independent
+        # subobjectives — composition config ONLY; OFF by default.
+        self.subobjective_fanout_enabled = _env_flag(
+            "DELIA_SUBOBJECTIVE_FANOUT"
+        )
+        # S5 (doc 214): durable checkpoint storage for investigation
+        # resume — composition config ONLY; unset means no durable
+        # checkpointer (in-process behavior, unchanged default).
+        self.checkpoint_db_path = (
+            os.getenv("DELIA_CHECKPOINT_DB") or ""
+        ).strip() or None
         _call_attempts_raw = os.getenv("DELIA_LLM_CALL_MAX_ATTEMPTS")
         self.llm_call_max_attempts_config_source = (
             "environment"

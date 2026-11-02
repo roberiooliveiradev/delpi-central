@@ -68,7 +68,13 @@ _logger = logging.getLogger(__name__)
 _SUPPORTED_ORCHESTRATION_ENGINES = frozenset({"langgraph", "delia"})
 
 
-def _resolve_orchestration_attempt(engine_name: str, gates):
+def _resolve_orchestration_attempt(
+    engine_name: str,
+    gates,
+    *,
+    subobjective_fanout_enabled: bool = False,
+    checkpoint_db_path: str | None = None,
+):
     """Select ONE governed-attempt implementation for the composed
     application. Unknown identifiers fail closed — a misspelled
     engine must never silently select another engine. The LangGraph
@@ -85,8 +91,25 @@ def _resolve_orchestration_attempt(engine_name: str, gates):
             LangGraphCapabilityOrchestrator,
         )
 
+        checkpointer = None
+        if checkpoint_db_path:
+            # S5: durable resume — configured path means the operator
+            # opted in; an unavailable driver fails composition
+            # closed rather than silently degrading to ephemeral.
+            import sqlite3
+
+            from langgraph.checkpoint.sqlite import SqliteSaver
+
+            checkpointer = SqliteSaver(
+                sqlite3.connect(
+                    checkpoint_db_path, check_same_thread=False
+                )
+            )
         return LangGraphCapabilityOrchestrator(
-            gates, recovery_reuse_enabled=True
+            gates,
+            recovery_reuse_enabled=True,
+            subobjective_fanout_enabled=subobjective_fanout_enabled,
+            checkpointer=checkpointer,
         )
     return gates
 
@@ -425,13 +448,21 @@ def _compose_turn_handler(
             cri_presentation_vocabulary=cri_vocabulary,
             field_labels=field_labels,
             orchestration_instructions=orchestration_instructions,
+            subobjective_investigation_enabled=(
+                settings.subobjective_investigation_enabled
+            ),
         )
         if providers and orchestration_instructions is not None
         else None
     )
     orchestration = (
         _resolve_orchestration_attempt(
-            settings.orchestration_engine, gates
+            settings.orchestration_engine,
+            gates,
+            subobjective_fanout_enabled=(
+                settings.subobjective_fanout_enabled
+            ),
+            checkpoint_db_path=settings.checkpoint_db_path,
         )
         if gates is not None
         else None

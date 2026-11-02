@@ -29,7 +29,9 @@ from app.domain.entities import EffectiveUser
 logger = logging.getLogger("supplies-api.procurement_diagnostic")
 
 SECTIONS = (
-    "overview", "otd", "deliveries", "safety_stock", "supply_risk"
+    "overview", "otd", "deliveries", "safety_stock",
+    "supply_risk", "supplier_performance", "inventory",
+    "market_exposure",
 )
 
 
@@ -117,7 +119,7 @@ class ProcurementDiagnosticService:
                 lambda: self._deliveries.compose(
                     user, branches=branches, status="late",
                     start_date=start_date, end_date=end_date,
-                    page=1, page_size=20, sort_by=None)))
+                    page=1, page_size=20, sort_by=None, sort_dir=None)))
         safety: dict[str, Any] = {}
         if "safety_stock" in wanted:
             safety = self._section(
@@ -125,6 +127,23 @@ class ProcurementDiagnosticService:
                 lambda: self._safety.get_summary(
                     user, branch=branch))
             sections.append(safety)
+        if "supplier_performance" in wanted:
+            sections.append(self._section(
+                "supplier_performance", "bff:/deliveries/late+otd",
+                lambda: self._supplier_perf(user, branch,
+                                            start_date, end_date)))
+        if "inventory" in wanted:
+            sections.append(self._section(
+                "inventory", "bff:/safety-stock/summary",
+                lambda: self._safety.get_summary(user, branch=branch)))
+        if "market_exposure" in wanted:
+            sections.append(self._section(
+                "market_exposure",
+                "bff:/market-intelligence (data-gated)",
+                lambda: {"note": "market section uses licensed external "
+                                 "sources — composition deferred to "
+                                 "dedicated variant; reads available via "
+                                 "read(market,*)"}))
         if "supply_risk" in wanted:
             sections.append(self._section(
                 "supply_risk", "derived:safety_stock+deliveries",
@@ -200,4 +219,32 @@ class ProcurementDiagnosticService:
                         "no supplier attribution without canonical link",
             "data_gap": False,
             "branch": branch or "all",
+        }
+
+
+    def _supplier_perf(
+        self, user: EffectiveUser, branch: str | None,
+        start_date: str | None, end_date: str | None,
+    ) -> dict[str, Any]:
+        """Bounded supplier metrics — volume + late counts, no score."""
+        branches = None if branch in {None, "all"} else [branch]
+        late = self._deliveries.compose(
+            user, branches=branches, status="late",
+            start_date=start_date, end_date=end_date,
+            page=1, page_size=50, sort_by=None, sort_dir=None)
+        items = late.get("items") or []
+        by_supplier: dict[str, int] = {}
+        for it in items:
+            key = str(it.get("supplier") or it.get("supplier_id") or "?")
+            by_supplier[key] = by_supplier.get(key, 0) + 1
+        return {
+            "late_lines_in_window": len(items),
+            "total_late": late.get("total"),
+            "top_late_suppliers": dict(
+                sorted(by_supplier.items(),
+                       key=lambda kv: -kv[1])[:5]),
+            "limitations": [
+                "sample-limited (page_size=50) — not a full scorecard; "
+                "no invented weights or quality metrics",
+            ],
         }

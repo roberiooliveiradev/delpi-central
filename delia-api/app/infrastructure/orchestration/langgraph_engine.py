@@ -71,13 +71,25 @@ surfaced on the node trace for A/B attribution.
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Mapping, TypedDict
+import operator
+import time
+from typing import Annotated, Any, Callable, Mapping, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
+from langgraph.types import Send
 
 from app.application.capability_provision.governed_stage_gates import (
     SupportsGovernedStageGates,
+)
+from app.application.capability_provision.subobjective_tracker import (
+    MAX_ATTEMPTS_PER_SUBOBJECTIVE,
+    SUBOBJECTIVE_BLOCKED,
+    SUBOBJECTIVE_COMPLETED,
+    SUBOBJECTIVE_FAILED,
+    SUBOBJECTIVE_PARTIAL,
+    SubObjective,
+    subobjective_outcome_transition,
 )
 from app.application.capability_provision.orchestration import (
     _emit_activity,
@@ -101,6 +113,18 @@ from app.application.model_invocation.contracts import (
 
 _logger = logging.getLogger(__name__)
 
+# S5: persisted-state contract version — a checkpoint written under a
+# different version fails closed at preflight instead of being
+# misinterpreted (migration is an explicit future contract).
+CHECKPOINT_STATE_VERSION = "s5.v1"
+
+
+def _keep_persisted(persisted: Any, _new: Any) -> Any:
+    """Write-once reducer: the checkpointed value wins over whatever a
+    resume's fresh input carries, so version metadata reflects the
+    checkpoint that is actually being resumed."""
+    return persisted if persisted else _new
+
 
 class _GovernedTurnState(TypedDict, total=False):
     """Bounded per-attempt graph state. Every field is either a
@@ -115,11 +139,21 @@ class _GovernedTurnState(TypedDict, total=False):
     workspace_context: WorkspaceContext | None
     prior_turns: tuple[ConversationContextTurn, ...]
     prepare_only: bool
-    deadline: TurnDeadline
+    deadline_data: dict
+    state_version: Annotated[str, _keep_persisted]
     admission_class: str | None
     admission_owner_required: bool
     assessment_reuse: bool
     attempt: GovernedCapabilityAttempt
+    # S4 (doc 214): governed fan-out state. ``subobjectives`` carries the
+    # validated decomposition proposal; ``sub_results`` accumulates one
+    # bounded record per executed branch (operator.add reducer — order
+    # of completion never changes the merged set); ``subobjective`` is
+    # the per-branch Send payload.
+    subobjectives: tuple[SubObjective, ...]
+    sub_results: Annotated[list[dict], operator.add]
+    subobjective: SubObjective
+    sub_finished: bool
     trace: list[str]
 
 
@@ -140,6 +174,8 @@ class LangGraphCapabilityOrchestrator:
         gates: SupportsGovernedStageGates,
         *,
         recovery_reuse_enabled: bool = True,
+        subobjective_fanout_enabled: bool = False,
+        checkpointer=None,
     ) -> None:
         # Shared governed primitives — the SAME gates Engine A runs;
         # the engine calls its stage-phase methods, never attempt()
@@ -151,6 +187,17 @@ class LangGraphCapabilityOrchestrator:
         # on this flag; the ledger merely exposes decisions the
         # shared monotonic check may safely reuse.
         self._recovery_reuse_enabled = recovery_reuse_enabled
+        # S4 scheduling knob (default off — byte-identical to the
+        # baseline graph): when enabled, the plan node may decompose a
+        # compound objective into Send fan-out waves; when disabled no
+        # model call is issued and the turn reaches owner_path exactly
+        # as before (the governed path itself may still investigate
+        # sequentially — sequencing parity, never a behavior fork).
+        self._subobjective_fanout_enabled = subobjective_fanout_enabled
+        # S5 (doc 214): optional durable checkpointer — injected infra
+        # only; when present the graph compiles with it and attempts
+        # may resume an investigation by thread/investigation id.
+        self._checkpointer = checkpointer
         self._compiled_graph: CompiledStateGraph = self._build_graph()
         # Evaluation observability only — the executed node list of
         # the most recent invocation (proves real sequencing in the
@@ -167,6 +214,11 @@ class LangGraphCapabilityOrchestrator:
         graph.add_node("surface_inquiry", self._surface_inquiry_node)
         graph.add_node("conversational", self._conversational_node)
         graph.add_node("evidence_session", self._evidence_session_node)
+        graph.add_node("subobjective_plan", self._subobjective_plan_node)
+        graph.add_node("subobjective_branch", self._subobjective_branch_node)
+        graph.add_node(
+            "subobjective_synthesis", self._subobjective_synthesis_node
+        )
         graph.add_node("owner_path", self._owner_path_node)
 
         graph.add_edge(START, "preflight")
@@ -184,12 +236,21 @@ class LangGraphCapabilityOrchestrator:
                 "owner_path": "evidence_session",
             },
         )
-        graph.add_edge("evidence_session", "owner_path")
+        graph.add_edge("evidence_session", "subobjective_plan")
+        graph.add_conditional_edges(
+            "subobjective_plan",
+            self._route_subobjective_wave,
+        )
+        graph.add_edge("subobjective_branch", "subobjective_synthesis")
+        graph.add_conditional_edges(
+            "subobjective_synthesis",
+            self._route_subobjective_wave,
+        )
         graph.add_edge("confirmation", END)
         graph.add_edge("surface_inquiry", END)
         graph.add_edge("conversational", END)
         graph.add_edge("owner_path", END)
-        return graph.compile()
+        return graph.compile(checkpointer=self._checkpointer)
 
     # ---------------- routing (deterministic, not model-owned) -----
 
@@ -224,7 +285,15 @@ class LangGraphCapabilityOrchestrator:
         # Same terminal guards as Engine A's attempt entry: exhausted
         # budget/cancel raise the typed exceptions the shared runner
         # maps to PROCESSING_TIMEOUT.
-        state["deadline"].check("turn_start")
+        version = state.get("state_version")
+        if version is not None and version != CHECKPOINT_STATE_VERSION:
+            # Resume across an incompatible persisted-state contract —
+            # fail closed rather than misinterpret foreign fields.
+            raise ValueError(
+                f"checkpoint state_version {version!r} incompatible "
+                f"with {CHECKPOINT_STATE_VERSION!r}"
+            )
+        self._dl(state).check("turn_start")
         _emit_activity(
             phase=ActivityPhase.CONTEXTUALIZING,
             correlation=state["correlation"],
@@ -240,7 +309,7 @@ class LangGraphCapabilityOrchestrator:
                 workspace_context=state.get("workspace_context"),
                 prior_turns=state.get("prior_turns") or (),
                 correlation=state["correlation"],
-                deadline=state["deadline"],
+                deadline=self._dl(state),
             )
         )
         return {
@@ -257,7 +326,7 @@ class LangGraphCapabilityOrchestrator:
             actor_user_id=state.get("actor_user_id"),
             correlation=state["correlation"],
             prepare_only=state["prepare_only"],
-            deadline=state["deadline"],
+            deadline=self._dl(state),
         )
         return {**self._traced(state, "confirmation"), "attempt": attempt}
 
@@ -265,7 +334,7 @@ class LangGraphCapabilityOrchestrator:
         self, state: _GovernedTurnState
     ) -> dict[str, Any]:
         groups, failures = self._gates._groups(
-            state["correlation"], state["deadline"]
+            state["correlation"], self._dl(state)
         )
         attempt = self._gates._surface_inquiry_attempt(
             groups, failures, state["correlation"]
@@ -338,7 +407,7 @@ class LangGraphCapabilityOrchestrator:
                 prior_turns=state.get("prior_turns") or (),
                 prepare_only=state["prepare_only"],
                 unbound_outcome=unbound_outcome,
-                deadline=state["deadline"],
+                deadline=self._dl(state),
             )
             traced = self._traced(state, "owner_path")
             ledger = _NATIVE_ASSESSMENT_LEDGER.get()
@@ -351,6 +420,276 @@ class LangGraphCapabilityOrchestrator:
         finally:
             if ledger_token is not None:
                 _NATIVE_ASSESSMENT_LEDGER.reset(ledger_token)
+
+    # ---------------- S4: governed subobjective fan-out ------------
+    #
+    # Ordering semantics only — every gate (selection, argument
+    # validation, invoke, judgment, budgets, provenance) still runs
+    # inside the SAME governed owner path; the graph owns the schedule:
+    # independent subobjectives fan out as Send branches per wave,
+    # dependents wait for COMPLETED/PARTIAL dependencies, and the
+    # shared TurnDeadline bounds the whole investigation (concurrency
+    # never multiplies the global budget). Branches are isolated —
+    # each returns one bounded record merged by the operator.add
+    # reducer, so fan-in is independent of completion order.
+
+    @staticmethod
+    def _subobjective_states(state: _GovernedTurnState) -> dict[str, str]:
+        """Latest terminal/non-terminal state per subobjective id."""
+        states: dict[str, str] = {}
+        for record in state.get("sub_results") or ():
+            states[record["subobjective_id"]] = record["state"]
+        return states
+
+    @staticmethod
+    def _subobjective_attempt_counts(
+        state: _GovernedTurnState,
+    ) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for record in state.get("sub_results") or ():
+            oid = record["subobjective_id"]
+            counts[oid] = counts.get(oid, 0) + 1
+        return counts
+
+    def _route_subobjective_wave(
+        self, state: _GovernedTurnState
+    ) -> Any:
+        """Dependency-aware wave scheduler — deterministic, never
+        model-owned. Called after ``subobjective_plan`` (first wave)
+        and after ``subobjective_synthesis`` (next wave or END)."""
+        if state.get("sub_finished"):
+            return END
+        objectives = state.get("subobjectives") or ()
+        if not objectives:
+            return "owner_path"
+        deadline = self._dl(state)
+        if deadline is not None and deadline.remaining_seconds() <= 0:
+            # Budget exhausted — synthesis closes every pending
+            # subobjective with an honest gap, then END.
+            return "subobjective_synthesis"
+        states = self._subobjective_states(state)
+        counts = self._subobjective_attempt_counts(state)
+        satisfied = {
+            oid
+            for oid, s in states.items()
+            if s in (SUBOBJECTIVE_COMPLETED, SUBOBJECTIVE_PARTIAL)
+        }
+        sends: list[Send] = []
+        for obj in objectives:
+            oid = obj.subobjective_id
+            current = states.get(oid)
+            if current in (
+                SUBOBJECTIVE_COMPLETED,
+                SUBOBJECTIVE_PARTIAL,
+                SUBOBJECTIVE_BLOCKED,
+            ):
+                continue
+            if current == SUBOBJECTIVE_FAILED and counts.get(oid, 0) >= (
+                MAX_ATTEMPTS_PER_SUBOBJECTIVE
+            ):
+                continue  # retry budget spent — synthesis blocks it
+            if all(dep in satisfied for dep in obj.dependencies):
+                sends.append(
+                    Send(
+                        "subobjective_branch",
+                        {**state, "subobjective": obj},
+                    )
+                )
+        if sends:
+            return sends
+        return "subobjective_synthesis"
+
+    def _subobjective_plan_node(
+        self, state: _GovernedTurnState
+    ) -> dict[str, Any]:
+        if not self._subobjective_fanout_enabled:
+            return {
+                **self._traced(state, "subobjective_plan"),
+                "subobjectives": (),
+            }
+        if state.get("subobjectives"):
+            # Resume: the checkpointed plan is the durable source of
+            # truth — re-decomposing would burn a model call and could
+            # nondeterministically diverge from committed subobjective
+            # identity/state (S3 continuity + S5 resume contract).
+            return self._traced(state, "subobjective_plan")
+        objectives = self._gates._decompose_objective(
+            state["input_text"],
+            correlation=state["correlation"],
+            workspace_context=state.get("workspace_context"),
+            deadline=self._dl(state),
+        )
+        return {
+            **self._traced(state, "subobjective_plan"),
+            "subobjectives": tuple(objectives or ()),
+        }
+
+    def _subobjective_branch_node(
+        self, state: _GovernedTurnState
+    ) -> dict[str, Any]:
+        sub: SubObjective = state["subobjective"]
+        correlation = f'{state["correlation"]}-{sub.subobjective_id}'
+        attempt = self._gates._governed_owner_path(
+            sub.goal,
+            correlation=correlation,
+            actor_user_id=state.get("actor_user_id"),
+            session_id=state.get("session_id"),
+            workspace_context=state.get("workspace_context"),
+            prior_turns=(),
+            prepare_only=state["prepare_only"],
+            unbound_outcome=None,
+            deadline=self._dl(state),
+            depth=1,
+        )
+        outcome = attempt.outcome
+        prov = getattr(outcome, "provenance", None) if outcome else None
+        provenance_ref = (
+            f"{getattr(prov, 'specialist_id', '')}."
+            f"{getattr(prov, 'remote_name', '')}"
+            if prov is not None
+            else None
+        )
+        action, refs, gaps, recoverable = subobjective_outcome_transition(
+            attempt.status.value,
+            has_content=bool(attempt.content),
+            provenance_ref=provenance_ref,
+            correlation_id=correlation,
+        )
+        if action == "complete":
+            sub_state = SUBOBJECTIVE_COMPLETED
+        elif action == "partial":
+            sub_state = SUBOBJECTIVE_PARTIAL
+        else:
+            sub_state = (
+                SUBOBJECTIVE_FAILED
+                if recoverable
+                else SUBOBJECTIVE_BLOCKED
+            )
+        record = {
+            "subobjective_id": sub.subobjective_id,
+            "goal": sub.goal,
+            "state": sub_state,
+            "attempt_status": attempt.status.value,
+            "content": attempt.content,
+            "limitations": list(attempt.limitations),
+            "evidence_refs": list(refs),
+            "gaps": list(gaps),
+        }
+        return {"sub_results": [record]}
+
+    def _subobjective_synthesis_node(
+        self, state: _GovernedTurnState
+    ) -> dict[str, Any]:
+        objectives = state.get("subobjectives") or ()
+        results = list(state.get("sub_results") or ())
+        states = self._subobjective_states(state)
+        counts = self._subobjective_attempt_counts(state)
+        satisfied = {
+            oid
+            for oid, s in states.items()
+            if s in (SUBOBJECTIVE_COMPLETED, SUBOBJECTIVE_PARTIAL)
+        }
+        deadline = self._dl(state)
+        deadline_gone = (
+            deadline is not None and deadline.remaining_seconds() <= 0
+        )
+        # Anything still non-terminal and unschedulable (deadline gone,
+        # blocked dependency, or retry budget spent) is an honest gap —
+        # BLOCKED, never silently dropped.
+        pending_gaps: dict[str, str] = {}
+        finished = True
+        for obj in objectives:
+            oid = obj.subobjective_id
+            if states.get(oid) in (
+                SUBOBJECTIVE_COMPLETED,
+                SUBOBJECTIVE_PARTIAL,
+                SUBOBJECTIVE_BLOCKED,
+            ):
+                continue
+            if deadline_gone:
+                pending_gaps[oid] = "investigation budget exhausted"
+                continue
+            if states.get(oid) == SUBOBJECTIVE_FAILED and counts.get(
+                oid, 0
+            ) >= MAX_ATTEMPTS_PER_SUBOBJECTIVE:
+                pending_gaps[oid] = "subobjective attempt cap reached"
+                continue
+            if not all(dep in satisfied for dep in obj.dependencies):
+                pending_gaps[oid] = "dependency unresolved"
+                continue
+            finished = False
+        contents: list[str] = []
+        limitations: list[str] = []
+        saw_source_unavailable = False
+        saw_authz_denied = False
+        order = {obj.subobjective_id: i for i, obj in enumerate(objectives)}
+        for record in sorted(
+            results, key=lambda r: order.get(r["subobjective_id"], 99)
+        ):
+            oid = record["subobjective_id"]
+            if record["attempt_status"] == "SOURCE_UNAVAILABLE":
+                saw_source_unavailable = True
+            if record["attempt_status"] == "AUTHZ_DENIED":
+                saw_authz_denied = True
+            if record["state"] in (
+                SUBOBJECTIVE_COMPLETED,
+                SUBOBJECTIVE_PARTIAL,
+            ) and record.get("content"):
+                contents.append(record["content"])
+            for lim in record.get("limitations") or ():
+                limitations.append(f"{oid}: {lim}")
+            for gap in record.get("gaps") or ():
+                limitations.append(
+                    f"{oid} {record['state']}: {gap}"
+                )
+        for oid, gap in pending_gaps.items():
+            limitations.append(f"{oid} {SUBOBJECTIVE_BLOCKED}: {gap}")
+        if contents:
+            status = GovernedCapabilityStatus.SUCCESS
+            content = "\n\n".join(contents)
+        elif saw_source_unavailable:
+            status = GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+            content = None
+        elif saw_authz_denied:
+            status = GovernedCapabilityStatus.AUTHZ_DENIED
+            content = None
+        else:
+            status = GovernedCapabilityStatus.NOT_APPLICABLE
+            content = None
+        _logger.info(
+            "orchestration engine=langgraph "
+            "stage=subobjective_synthesis decision=done status=%s "
+            "finished=%s correlation_id=%s",
+            status.value,
+            finished or bool(pending_gaps),
+            state["correlation"],
+        )
+        out: dict[str, Any] = {
+            **self._traced(state, "subobjective_synthesis")
+        }
+        if finished or pending_gaps:
+            out["sub_finished"] = True
+            out["attempt"] = GovernedCapabilityAttempt(
+                status=status,
+                correlation_id=state["correlation"],
+                content=content,
+                limitations=tuple(limitations[:24]),
+            )
+        return out
+
+    @staticmethod
+    def _dl(state: _GovernedTurnState) -> TurnDeadline:
+        """Rebuild the monotonic deadline from its serde-safe wire
+        form — msgpack cannot persist the clock callable, so the state
+        carries primitive fields only (S5 checkpoint contract)."""
+        data = state["deadline_data"]
+        # ends_at_epoch is wall-clock: monotonic epochs do not survive
+        # a real process restart, so the wire form stores the wall
+        # instant and the rebuilt deadline ticks on time.time.
+        return TurnDeadline(
+            ends_at=data["ends_at_epoch"],
+            clock=time.time,
+        )
 
     # ---------------- contract entrypoint ----------------
 
@@ -368,6 +707,7 @@ class LangGraphCapabilityOrchestrator:
         turn_deadline: TurnDeadline | None = None,
         activity_sink: ActivityEventSink | None = None,
         cancel_check: Callable[[], bool] | None = None,
+        thread_id: str | None = None,
     ) -> GovernedCapabilityAttempt:
         def attempt_once(
             correlation: str, deadline: TurnDeadline
@@ -381,10 +721,21 @@ class LangGraphCapabilityOrchestrator:
                 "workspace_context": workspace_context,
                 "prior_turns": prior_turns,
                 "prepare_only": max_execution_stage == "prepare",
-                "deadline": deadline,
+                "deadline_data": {
+                    "ends_at_epoch": (
+                        time.time() + deadline.remaining_seconds()
+                    ),
+                },
+                "state_version": CHECKPOINT_STATE_VERSION,
                 "trace": [],
             }
-            final = self._compiled_graph.invoke(state)
+            if thread_id is not None:
+                final = self._compiled_graph.invoke(
+                    state,
+                    config={"configurable": {"thread_id": thread_id}},
+                )
+            else:
+                final = self._compiled_graph.invoke(state)
             self.last_node_trace = list(final.get("trace") or [])
             return final["attempt"]
 

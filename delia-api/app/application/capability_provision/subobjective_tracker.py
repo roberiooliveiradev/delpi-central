@@ -108,6 +108,47 @@ class SubObjective:
             raise ValueError("COMPLETED requires evidence_refs")
 
 
+def subobjective_outcome_transition(
+    status: str,
+    *,
+    has_content: bool,
+    provenance_ref: str | None,
+    correlation_id: str,
+) -> tuple[str, tuple[str, ...], tuple[str, ...], bool]:
+    """Map a governed-attempt outcome onto tracker transition inputs.
+
+    ``status`` is ``GovernedCapabilityStatus.value`` — passed as str so
+    this module stays free of interaction-layer imports. Returns
+    ``(action, evidence_refs, gaps, recoverable)`` where action is one
+    of ``complete`` | ``partial`` | ``fail``. A tool 200, catalog row or
+    generic reply never produces ``complete`` — only grounded content
+    does; legitimate owner unavailability is a declared gap (PARTIAL),
+    never an argument-generation failure.
+    """
+    if status == "SUCCESS":
+        refs = (
+            (provenance_ref[:MAX_FIELD_CHARS],)
+            if provenance_ref
+            else (f"governed_attempt:{correlation_id}",)
+        )
+        if has_content:
+            return "complete", refs, (), False
+        return "partial", (), ("empty authoritative result",), False
+    if status == "SOURCE_UNAVAILABLE":
+        return (
+            "partial",
+            (),
+            ("authoritative source unavailable",),
+            False,
+        )
+    if status == "PROCESSING_TIMEOUT":
+        return "fail", (), (), True
+    # AUTHZ_DENIED (never retried silently), NOT_APPLICABLE,
+    # CLARIFICATION_REQUIRED, CONFIRMATION_REQUIRED, WRITE_REJECTED —
+    # a governed refusal is fail-closed here.
+    return "fail", (), (), False
+
+
 class SubObjectiveTracker:
     """Deterministic state machine for one investigation's
     subobjectives. Fail-closed on unknown ids, forward/duplicate
