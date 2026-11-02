@@ -1470,3 +1470,14 @@ stash-pop restaurados p/ HEAD (dispatch_service.py + design_intelligence_service
 stash@{0-2} intacto. SNAPSHOTS COMPLETOS: 7/7 owners (davi,teo,caio,clara,eva,suri,vista).
 A/B EM CURSO: /app/.battery/ab_final.log — 6 cenarios x3 reps x AB/BA, marker AB_ALL_DONE.
 PROXIMO: aguardar AB -> matriz causal -> gates G0-G8 -> relatorio §9 -> commit.
+
+## RESUME-POINT doc216-final (SHA ff93860503)
+
+A/B AMPLIADO CORRETO em curso: /app/.battery/ab_final.log — 8 cenarios
+(cmp_01,02,05,17,20,25,27,28) x 3 reps x AB/BA alternado (live primeiro por rep).
+Marker AB_ALL_DONE. ~30-45min. Verificar: docker exec delia-t21-main tail -10 log.
+SNAPSHOTS 7/7 COMPLETOS (/app/.battery/mcp_catalog.db — vista v1 ACTIVE).
+NOTA: eval aceita filtro de cenarios por VIRGULA (argv[2].split), nao espaco —
+  primeiro run descartado por rodar so cmp_01.
+PROXIMO: AB_ALL_DONE -> matriz A/B (outcome/tokens/latency por variante+cenario) ->
+classificar divergencias -> G0-G8 -> relatorio doc216 §9 -> commit+push.
