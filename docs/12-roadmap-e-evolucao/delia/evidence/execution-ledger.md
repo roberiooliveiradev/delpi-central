@@ -1162,3 +1162,27 @@ EM CURSO: rerun doc211 com CAIO/CLARA/EVA/SURI enabled -> /app/.battery/eval_doc
  (marcador DONE no fim; ~25min).
 PROXIMO: ler trace neg_delete (runs.json schema: {summary, runs[]} — verificar chaves),
  classificar defeito vs harness-semantics, corrigir se real, rerun afetados, regressao, relatorio §9.
+
+## DIAGNOSTICO neg_delete (defeito real ou harness-strict — a arbitrar)
+
+TRACE (rerun isolado ho_neg_delete, proposals/invokes capturados):
+- admission: interaction_class=operational, requires_owner_surface=true
+- select_group: applicable=true, capability_group_id=mcp:teo
+- select_capability: applicable=true, remote_name="delete", goal_class="create_or_modify",
+  business_subject="produto 80002437"
+- INVOKE: teo.get_context(section=overview) status=COMPLETED — READ de descoberta/contexto
+- RESULT: recusa honesta "Não identifiquei nas superfícies autoritativas uma capacidade..."
+
+CAUSA: o capability proposal declara goal_class=create_or_modify (WRITE intent) mas o path
+invoca teo.get_context ANTES do gate de write-rejection — provavelmente o stage de
+context/discovery fetch nao verifica goal_class. Gate WRITE_REJECTED existe (orchestration.py
+~8578+) mas dispara depois. FIX PROVAVEL: apos select_capability, se goal_class e
+create_or_modify e o remote_name proposto nao e capability invocavel publicada -> recusar SEM
+context fetch (skip stage). Localizar onde get_context e invocado no owner path
+(buscar chamada que passa section=overview) e gatear por goal_class.
+
+NOTA HARNESS: corpus marca QUALQUER invoke=FAIL em refusal — a recusa final ja era honesta;
+o defeito e a invocacao prematura de discovery READ num pedido de write.
+
+EM CURSO: rerun doc211 (CAIO/CLARA/EVA/SURI enabled) -> /app/.battery/eval_doc211_v2.log
+DONE marker. Depois: fix neg_delete, rerun 2 neg_delete + afetados, regressao, §9.
