@@ -1839,3 +1839,14 @@ _propose_candidate_arguments: engine==pydantic_ai -> propose_arguments
 (dynamic schema model + previous_arguments) -> retorna p/ _validate_instance.
 NEXT: E2E "qual a descricao do produto 30190123" com flag pydantic_ai
 -> code field? -> A/B llm vs pydantic_ai -> regressao -> §17 report.
+
+## PYDANTIC-AI — handoff E2E (SHA 46e7787aa9)
+
+DONE: adapter+flag+wiring publicados. E2E 30190123 (pydantic_ai): so
+discover invocado — flow nao chegou ao execute; rerun com INFO log em
+curso p/ ver se engine branch foi atingido (grep engine=|candidate_arguments).
+SUSPEITA: (a) discover->execute pipeline exige candidate resolution antes
+de _propose_candidate_arguments; (b) arggen branch maybe nao chamado por
+o path ser outro (chained executor usa _propose_candidate_arguments?).
+NEXT: ler resultado do log; se engine nao apareceu, injetar branch no
+path chained-execute (L13320 area) tambem; se apareceu, ver args gerados.
