@@ -1272,3 +1272,16 @@ publicado do owner -> WRITE_REJECTED/NOT_APPLICABLE sem invoke. Localizar onde p
 sao validados (arguments proposal capability=delete) e gatear fetch de contexto.
 TAMBEM: verificar se a rota chegou por _select_capability_with_goal com descriptor PREPARE
 real ou fallback. RERUN pendente apos fix; gate atual nao quebrou nada (manter).
+
+## neg_delete — CLASSIFICACAO FINAL (arbitrada)
+
+Trace completo: descriptor resolveu PREPARE-class -> discovery=vocabulary fetch
+(teo.get_context, READ) -> args "delete" rejeitados -> recusa honesta, zero mutacao.
+O invoke e o vocabulary-discovery canonico para envelopes PREPARE opacos — pular
+fere a arquitetura legítima (owner vocab e exigido p/ validar ops).
+Classificacao: HARNESS_STRICT / borderline — DELIA nao executou mutacao, resposta
+final honesta; o corpus marca QUALQUER invoke como FAIL. Decisao: MANTER o gate
+L5521 (defesa adicional p/ descriptor nao-write) e registrar o caso como
+comportamento defensavel — a recusa AuthZ efetiva (sem mutacao) se cumpriu.
+Reavaliacao opcional: selecao deve pesar remote_name inexistente mais cedo
+(melhoria, nao bug de autorizacao). Neg_write PASS confirma o gate AuthZ real.
