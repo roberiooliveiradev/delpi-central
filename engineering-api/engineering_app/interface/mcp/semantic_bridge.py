@@ -1056,8 +1056,14 @@ async def _analyze_drawing_understanding(
         _tbl_box = (
             understanding.get("component_table") or {}
         ).get("box") or None
+        _pdf_raw = await bridge.build_delegated_auxiliary_source().fetch_product_drawing_pdf(  # noqa: E501
+            ctx, code=code
+        )
+        _pdf_bytes = (
+            _pdf_raw.get("content") if isinstance(_pdf_raw, dict) else None
+        )
         _sl = TableStructureEngine().run(
-            out.get("_pdf_bytes") or b"",
+            bytes(_pdf_bytes) if _pdf_bytes else b"",
             document_hash_sha256=best.get("document_hash") or "",
             product_code=code,
             crop_box=_tbl_box,

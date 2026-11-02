@@ -92,7 +92,6 @@ async def run_official_document_benchmark(
     same_hash = all(r["document_hash"] == doc_hash for r in runs)
     out = {
         "document": document,
-        "_pdf_bytes": bytes(content),
         "providers_ran": [r["provider_id"] for r in runs],
         "same_document_verified": same_hash,
         "runs": runs,
