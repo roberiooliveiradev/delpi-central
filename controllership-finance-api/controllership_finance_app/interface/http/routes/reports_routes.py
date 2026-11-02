@@ -72,11 +72,11 @@ REPORT_CATALOG: tuple[dict, ...] = (
     {
         "report_id": "R04",
         "label": "Consumo por OP",
-        "source_kind": "PENDING_CONTRACT",
-        "owner": None,
-        "operational_view": None,
-        "official_parity": None,
-        "note": "Fonte/owner não confirmados — captura manual governada.",
+        "source_kind": "OPERATIONAL_VIEW",
+        "owner": "api-delpi/consumption-audit",
+        "operational_view": "production-order-consumption",
+        "official_parity": "PENDING",
+        "note": "Visão operacional via produtor consumption-audit (SC2/SG1/SD4/SD3) — equivalência com o relatório oficial MATR860 pendente de homologação.",
     },
     {
         "report_id": "R05",
@@ -117,11 +117,11 @@ REPORT_CATALOG: tuple[dict, ...] = (
     {
         "report_id": "R09",
         "label": "Faturamento × MOD",
-        "source_kind": "PENDING_CONTRACT",
-        "owner": None,
-        "operational_view": None,
-        "official_parity": None,
-        "note": "Fonte/owner não confirmados — captura manual governada.",
+        "source_kind": "OPERATIONAL_VIEW",
+        "owner": "api-delpi/SD2+SG1+SHY",
+        "operational_view": "billing-mod-breakdown",
+        "official_parity": "PENDING",
+        "note": "Visão operacional de MOD por PA faturado (SD2+SG1+SHY) — paridade oficial pendente de homologação.",
     },
     {
         "report_id": "R10",

@@ -415,8 +415,8 @@ REPORT_CATALOG: dict[str, ReportCapability] = {
 
 # Reports without an implemented contract — the honest negative set.
 UNIMPLEMENTED_REPORTS: dict[str, str] = {
-    "R04": "PENDING_CONTRACT — fonte/owner não confirmados.",
-    "R09": "PENDING_CONTRACT — DLP204 sem SP implementada (E9).",
+    "R04": "OPERATIONAL_VIEW — consulta consumption-audit implementada; comparação monetária não se aplica ao contrato vigente.",
+    "R09": "OPERATIONAL_VIEW — consulta billing-mod-breakdown implementada; comparação monetária não se aplica ao contrato vigente.",
     "R12": "STATE_VIEW — projeção de estado implementada; comparação monetária não se aplica.",
     "R13": "EXTERNAL — evidência documental externa, sem contrato numérico.",
     "R14": "EXTERNAL — evidência documental externa, sem contrato numérico.",

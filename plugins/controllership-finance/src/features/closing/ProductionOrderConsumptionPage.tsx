@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import {
   CfEmptyState,
+  CfLoadingCard,
   CfSelectField,
   CfStateBanner,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
+import {
+  FilterInputField,
+} from "../../app/cfFiltersUi";
 import {
   getProductionOrderConsumption,
   type DateType,
@@ -104,21 +108,24 @@ export function ProductionOrderConsumptionPage({
           }}
           options={DATE_TYPES}
         />
-        <label className="cf-field">
-          <span>Busca OP / produto</span>
-          <input
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Fragmento da OP ou produto"
-            aria-label="Buscar por OP ou produto"
-          />
-        </label>
+        <FilterInputField
+          id="cf-r04-search"
+          label="Busca OP / produto"
+          type="search"
+          value={search}
+          onChange={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          placeholder="Fragmento da OP ou produto"
+        />
       </div>
       {loading ? (
-        <p aria-live="polite">Carregando OPs…</p>
+        <CfLoadingCard
+          title="Carregando OPs…"
+          variant="compact"
+          description="Consultando o produtor consumption-audit."
+        />
       ) : error ? (
         <CfStateBanner>
           <p className="cf-banner-title">Falha na consulta</p>
@@ -171,7 +178,7 @@ export function ProductionOrderConsumptionPage({
             </button>
             <button
               type="button"
-              disabled={rows.length < 1}
+              disabled={page * 25 >= total}
               onClick={() => setPage((p) => p + 1)}
             >
               Próxima

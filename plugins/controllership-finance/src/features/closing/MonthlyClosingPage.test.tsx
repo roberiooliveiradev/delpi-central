@@ -211,7 +211,11 @@ describe("mês de referência — seleção livre e landing honesta", () => {
     render(<MonthlyClosingPage basePath={BASE} />);
 
     await screen.findByText("Fechamentos abertos");
-    fireEvent.click(screen.getByRole("button", { name: /10\/2026/ }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Abrir fechamento de 10\/2026/,
+      }),
+    );
     expect(window.location.pathname).toBe(
       `${BASE}/closing/monthly-closing/2026-10`,
     );

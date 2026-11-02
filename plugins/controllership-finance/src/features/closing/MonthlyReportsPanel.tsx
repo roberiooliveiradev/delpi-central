@@ -65,6 +65,7 @@ import {
   CfActionButton,
   CfEmptyState,
   CfInteractiveDataCard,
+  CfLoadingCard,
   CfSectionCard,
   CfStatusBadge,
   cfEmptyStateClassNames,
@@ -952,6 +953,22 @@ export function MonthlyReportsPanel({
     settlements === null ||
     stock === null ||
     recon === null;
+  // Progresso honesto: 5 consultas com denominador estável conhecido —
+  // percentual = consultas concluídas / 5 (CF-UX-019, nunca estimado).
+  const sourcesTotal = 5;
+  const sourcesDone =
+    (p3 !== null ? 1 : 0) +
+    (matrix !== null ? 1 : 0) +
+    (settlements !== null ? 1 : 0) +
+    (stock !== null ? 1 : 0) +
+    (recon !== null ? 1 : 0);
+  const loadingDescription = [
+    `Fontes: conciliação P3 — ${p3 === null ? "consultando" : "concluída"}`,
+    `matriz R01–R15 — ${matrix === null ? "consultando" : "concluída"}`,
+    `baixas financeiras — ${settlements === null ? "consultando" : "concluída"}`,
+    `posição de estoque — ${stock === null ? "consultando" : "concluída"}`,
+    `conciliação analítica — ${recon === null ? "consultando" : "concluída"}`,
+  ].join(" · ");
 
   useEffect(() => {
     if (!period) return;
@@ -1257,7 +1274,11 @@ export function MonthlyReportsPanel({
           aria-label="Área de atenção"
         >
           {anyLoading ? (
-            <p aria-live="polite">Consultando fontes…</p>
+            <CfLoadingCard
+              title={`Consultando fontes — ${sourcesDone} de ${sourcesTotal} consultas concluídas`}
+              description={loadingDescription}
+              progressPercent={(sourcesDone / sourcesTotal) * 100}
+            />
           ) : attention.length === 0 ? (
             <CfEmptyState
               classNames={cfEmptyStateClassNames}
@@ -1337,7 +1358,7 @@ export function MonthlyReportsPanel({
                     : null;
               status =
                 operand === null
-                  ? "Não verificado"
+                  ? "Consulta implementada"
                   : recon?.kind === "ready"
                     ? (OPERAND_STATUS_LABELS[
                         recon.data.operands[operand].status ?? ""
@@ -1415,7 +1436,10 @@ export function MonthlyReportsPanel({
               onRetry={reload}
             />
           ) : (
-            <p aria-live="polite">Consultando a matriz de relatórios…</p>
+            <CfLoadingCard
+              title="Consultando a matriz de relatórios…"
+              variant="compact"
+            />
           )}
         </div>
       </details>

@@ -765,15 +765,18 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(screen.queryByText("RELATÓRIO")).toBeNull();
     expect(screen.queryByText("DESCRIÇÃO")).toBeNull();
     expect(screen.getAllByText("Disponível").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Abrir relatório").length).toBe(9);
+    expect(screen.getAllByText("Abrir relatório").length).toBe(10);
   });
 
   it("cards sem probe próprio exibem «Não verificado» e não inflam o contador", async () => {
     renderPanel();
 
     await screen.findByText("Relatórios para análise");
-    // R06/R07/R10/R11/R12-R15 não têm probe próprio — nunca herdam h02.
-    expect(screen.getAllByText("Não verificado").length).toBe(5);
+    // Cards sem probe próprio exibem «Consulta implementada» — página
+    // existe no HEAD, sem confundir com disponibilidade medida.
+    expect(
+      screen.getAllByText("Consulta implementada").length,
+    ).toBe(6);
     const counter = document.querySelector(
       '[aria-label^="Relatórios disponíveis:"]',
     );

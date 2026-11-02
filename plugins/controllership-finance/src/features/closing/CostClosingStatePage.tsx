@@ -17,6 +17,7 @@ import {
 } from "../../api/costClosingStateApi";
 import {
   CfEmptyState,
+  CfLoadingCard,
   CfSectionCard,
   CfStatusBadge,
   CfTitleWithHelp,
@@ -119,12 +120,23 @@ export function CostClosingStatePage({
   return (
     <div className="cf-page-stack" aria-label="Estado de fechamento e cutoff">
       <ClosingHero
-        title="Estado de fechamento e cutoff — R12/R15"
+        title={
+          <CfTitleWithHelp
+            title="Estado de fechamento e cutoff — R12/R15"
+            hint={CF_HELP.costClosingState.page}
+          />
+        }
         subtitle="Marcadores técnicos observados no ERP por filial. Não é homologação nem execução de rotina."
-        hint={CF_HELP.costClosingState.page}
+        updatedAt={state?.kind === "ready" ? state.at : null}
+        onRefresh={load}
+        refreshing={state === null}
+        filters={null}
       />
       {state === null ? (
-        <p aria-live="polite">Consultando o estado de fechamento…</p>
+        <CfLoadingCard
+          title="Consultando o estado de fechamento…"
+          variant="compact"
+        />
       ) : state.kind === "error" ? (
         <CfQueryErrorBanner
           error={state.error}

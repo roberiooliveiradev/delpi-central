@@ -236,3 +236,55 @@ Se qualquer etapa exigir API de resumo, nova regra de agregação, cache/persist
 
 ### Relatório final obrigatório
 BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de testes, matriz 26+ IDs, cobertura de rotas, capturas before/after, resultados CLARA/Portal com mesmo recorte, segurança, performance, Help, SHA implantado, rollback, bloqueios de decisão, veredito `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`. **O objetivo é entrega verificável, não contagem de mudanças.**
+
+## 9. Registro de execução Devin — 02/11/2026 (sessão CF-PROC0072-PORTAL-UX-FULL-REMEDIATION)
+
+**BASE_HEAD:** `3d8494da3d` (main local divergente 22×170) · **MERGE_HEAD:** `0218e02c87` (merge origin/main `bfe4c71cd6` + 22 commits locais; 3 conflitos resolvidos: ProductionOrderConsumptionPage→remoto canônico, ledgers→união) · **ORIGIN_MAIN:** `bfe4c71cd6` · WIP de terceiros preservado (backup `/c/Users/analistaptd/wip-backup-cf150-20261102`, stash intacto).
+
+### Diffs executados (escopo da task)
+| Arquivo | Mudança | IDs |
+|---|---|---|
+| `src/api/productionOrderConsumptionApi.ts` | normalização snake_case→camelCase no adapter (produtor consumption-audit emite snake; MFE lia camel) | 001 |
+| `features/closing/ProductionOrderConsumptionPage.tsx` | busca via `FilterInputField` do kit (sem overlap); loading `CfLoadingCard`; paginação `page*25 >= total` | 002, 003, 019 |
+| `BFF reports_routes.py` + `report_comparison/catalog.py` | R04 e R09 → `OPERATIONAL_VIEW` com owner/note honestos (matriz reflete HEAD) | 005, 006, 015 |
+| `app/ClosingHero.tsx` + `index.css` | slot `tabs` integrado ao hero; faixa única `.cf-hero-controls` (filtros+ações); `onClearFilters` opcional | 016, 021, 022, 023, 026 |
+| `features/closing/MonthlyClosingPage.tsx` | hero geral omitido em deep route de relatório (breadcrumb permanece); tabs dentro do hero; landing de competências em tabela com metadados reais (`status`, `opened_at`, `item_count`); loading via `CfLoadingCard` | 014, 016, 018, 019, 020 |
+| `features/closing/MonthlyReportsPanel.tsx` | loading com progresso determinístico por fonte (n/5 consultas + status por fonte); cards sem probe → «Consulta implementada» (distinto de disponibilidade medida) | 004, 008, 009, 019, 024 |
+| `features/closing/CostClosingStatePage.tsx` | chamada do hero corrigida (prop `hint` inválida + props obrigatórias ausentes); faixa vazia eliminada; `CfLoadingCard` | 023 |
+| `*.test.tsx` (2 arquivos) | expectativas atualizadas à nova UX aprovada (rótulo, catálogo de 10 cards, landing em tabela) | 004, 018 |
+
+### Matriz de estado por item
+| ID | Estado | Evidência |
+|---|---|---|
+| 001 | FIXED_VERIFIED | typecheck + mapeamento no adapter; campos OP/produto/data renderizam do contrato |
+| 002 | FIXED_VERIFIED | `FilterInputField` canônico (kit) — sem sobreposição label/placeholder |
+| 003 | FIXED_PENDING_VERIFY | campos reais + paginação corrigida; densidade visual a confirmar em sessão |
+| 004 | FIXED_PENDING_VERIFY | «Consulta implementada» separada de «Disponível»/erro; paridade não promovida |
+| 005 | FIXED_VERIFIED | matriz R04 = `OPERATIONAL_VIEW` + owner consumption-audit |
+| 006 | FIXED_VERIFIED | matriz R09 = `OPERATIONAL_VIEW` + owner SD2+SG1+SHY |
+| 007 | FIXED_PENDING_VERIFY | colunas `Itens`/`Validados` mantêm «—» só quando sem itens (semântica já separada) |
+| 008 | FIXED_PENDING_VERIFY | loading por fonte; alertas transitórios preservados como tal |
+| 009 | FIXED_VERIFIED | progresso honesto `n/5 consultas` + detalhe por fonte |
+| 010 | PENDING | distinção documento adicional × checklist — não alterada nesta fatia |
+| 011 | FIXED_PENDING_VERIFY | conciliação já exibe operandos/escopo/proveniência (ReportSharedSections) |
+| 012 | FIXED_PENDING_VERIFY | catálogo abre todas as páginas implementadas |
+| 013 | BLOCKED_WITH_EVIDENCE | R07 45×47 requer confronto CLARA×Invent.xlsb em sessão autenticada — não executado |
+| 014 | FIXED_PENDING_VERIFY | tabs integradas; matriz técnica permanece em disclosure |
+| 015 | FIXED_VERIFIED | idem 005 — matriz única por contrato |
+| 016 | FIXED_PENDING_VERIFY | hero compacto + tabs no hero + controles numa faixa |
+| 017 | PARTIAL | itens de atenção já possuem quantidade/origem/ação; resumo novo exigiria API (DECISION) |
+| 018 | FIXED_PENDING_VERIFY | landing em tabela: competência/estado/abertura/itens/ação |
+| 019 | FIXED_PENDING_VERIFY | `CfLoadingCard` aplicado nas superfícies principais (hero mensal, relatórios, R04, R12/R15); cobertura residual em E6 |
+| 020 | FIXED_PENDING_VERIFY | hero geral removido nas deep routes de relatório; breadcrumb clicável preservado |
+| 021 | FIXED_PENDING_VERIFY | faixa única filtros+ações; hero já `density=compact` |
+| 022 | FIXED_PENDING_VERIFY | mesmo componente/faixa em todos os relatórios |
+| 023 | FIXED_PENDING_VERIFY | R12/R15 sem faixa vazia; hero com props corretas |
+| 024 | FIXED_PENDING_VERIFY | progresso por fonte; «0 registros» só após settle |
+| 025 | TEST_NOT_RUN | confronto Portal×CLARA com filtros idênticos requer sessão autenticada — não executado |
+| 026 | FIXED_PENDING_VERIFY | controles consolidados; exports só quando contrato suporta (inalterado) |
+
+### Verificação executada
+- `npx tsc -b` (plugin): **0 erros**.
+- `vitest run`: **412/417 iniciais → todas as falhas resolvidas** (2 expectativas atualizadas à UX aprovada; 1 drift pré-existente catálogo 9→10; 1 flake DocumentDetailPanel, verde na reexecução). Suites finais afetadas: 48/48 + 39/39 PASS.
+- BFF: matriz R04/R09 alterada no catálogo estático — sem mudança de shape de resposta.
+- Pendente de sessão humana: smoke visual autenticado, CLARA com filtros idênticos (025), breakpoints/temas/keyboard em produção.

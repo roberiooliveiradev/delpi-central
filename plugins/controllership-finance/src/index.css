@@ -151,6 +151,22 @@
   background: color-mix(in srgb, var(--cf-surface-muted) 62%, transparent);
 }
 
+/* Faixa única filtros + ações no hero (CF-UX-016/021). */
+.dashboard-controllership-finance .cf-hero-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--cf-grid-gap, 16px);
+}
+
+.dashboard-controllership-finance .cf-hero-controls > .cf-hero-filters {
+  flex: 1 1 320px;
+}
+
+.dashboard-controllership-finance .cf-hero-controls > .cf-settlements-actions {
+  margin-left: auto;
+}
+
 .dashboard-controllership-finance .cf-hero-updated {
   align-self: center;
   font-size: 12px;

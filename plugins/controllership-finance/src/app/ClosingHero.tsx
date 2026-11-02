@@ -45,10 +45,13 @@ export type ClosingHeroProps = {
   notice?: ReactNode;
   /** Área de filtros (form completo, já montado pela página). */
   filters: ReactNode;
-  /** Restaura os defaults e dispara a consulta automática. */
-  onClearFilters: () => void;
+  /** Restaura os defaults e dispara a consulta automática — omitido
+   *  em páginas sem filtros (o botão não é renderizado). */
+  onClearFilters?: () => void;
   /** Ações extras da página (ex.: exportar), antes de «Atualizar». */
   extraActions?: ReactNode;
+  /** Navegação por abas integrada ao hero (ex.: CfSegmentToggle). */
+  tabs?: ReactNode;
 };
 
 /**
@@ -67,6 +70,7 @@ export function ClosingHero({
   filters,
   onClearFilters,
   extraActions,
+  tabs,
 }: ClosingHeroProps) {
   return (
     <CfPageHero
@@ -97,26 +101,31 @@ export function ClosingHero({
         </div>
       ) : null}
       {notice}
-      <div className="cf-hero-filters">{filters}</div>
-      <div className="cf-settlements-actions">
-        <CfActionButton
-          variant="ghost"
-          type="button"
-          onClick={onClearFilters}
-        >
-          Limpar filtros
-        </CfActionButton>
-        {extraActions}
-        <CfActionButton
-          variant="primary"
-          type="button"
-          onClick={onRefresh}
-          disabled={refreshing}
-          softDisabled
-        >
-          Atualizar consulta
-        </CfActionButton>
+      <div className="cf-hero-controls">
+        <div className="cf-hero-filters">{filters}</div>
+        <div className="cf-settlements-actions">
+          {onClearFilters ? (
+            <CfActionButton
+              variant="ghost"
+              type="button"
+              onClick={onClearFilters}
+            >
+              Limpar filtros
+            </CfActionButton>
+          ) : null}
+          {extraActions}
+          <CfActionButton
+            variant="primary"
+            type="button"
+            onClick={onRefresh}
+            disabled={refreshing}
+            softDisabled
+          >
+            Atualizar consulta
+          </CfActionButton>
+        </div>
       </div>
+      {tabs}
     </CfPageHero>
   );
 }

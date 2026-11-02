@@ -54,6 +54,7 @@ import { ClosingHero } from "../../app/ClosingHero";
 import {
   CfActionButton,
   CfEmptyState,
+  CfLoadingCard,
   CfPagePath,
   CfSectionCard,
   CfSegmentToggle,
@@ -652,22 +653,35 @@ export function MonthlyClosingPage({
         items={pathItems}
         current={tabLabel}
       />
-      <ClosingHero
-        title={
-          <CfTitleWithHelp
-            title="Fechamento mensal"
-            hint={CF_HELP.monthlyClosing.page}
-          />
-        }
-        subtitle="Acompanhamento do fechamento por mês de referência."
-        filters={referencePicker}
-        updatedAt={lastUpdated}
-        onRefresh={retry}
-        refreshing={cockpitLoading}
-        onClearFilters={() =>
-          navigatePluginPath(monthlyPath(base, "", tab))
-        }
-      />
+      {!reportMode ? (
+        <ClosingHero
+          title={
+            <CfTitleWithHelp
+              title="Fechamento mensal"
+              hint={CF_HELP.monthlyClosing.page}
+            />
+          }
+          subtitle="Acompanhamento do fechamento por mês de referência."
+          filters={referencePicker}
+          updatedAt={lastUpdated}
+          onRefresh={retry}
+          refreshing={cockpitLoading}
+          onClearFilters={() =>
+            navigatePluginPath(monthlyPath(base, "", tab))
+          }
+          tabs={
+            period && !detailMode ? (
+              <CfSegmentToggle<MonthlyClosingTab>
+                options={TAB_OPTIONS}
+                value={tab}
+                onChange={selectTab}
+                ariaLabel="Visões do fechamento mensal"
+                size="sm"
+              />
+            ) : undefined
+          }
+        />
+      ) : null}
 
       {listError ? (
         <CfQueryErrorBanner
@@ -698,14 +712,6 @@ export function MonthlyClosingPage({
         </div>
       ) : period ? (
         <>
-          <CfSegmentToggle<MonthlyClosingTab>
-            options={TAB_OPTIONS}
-            value={tab}
-            onChange={selectTab}
-            ariaLabel="Visões do fechamento mensal"
-            size="sm"
-          />
-
           <div className="cf-page-stack" aria-busy={cockpitLoading}>
             {cockpitError && !isNotOpened(cockpitError) ? (
               <CfQueryErrorBanner
@@ -718,7 +724,10 @@ export function MonthlyClosingPage({
             {tab === "overview" ? (
               <>
                 {cockpitLoading ? (
-                  <p aria-live="polite">Carregando visão geral…</p>
+                  <CfLoadingCard
+                    title="Carregando visão geral…"
+                    variant="compact"
+                  />
                 ) : null}
                 {!cockpitLoading &&
                 cockpitError &&
@@ -776,31 +785,63 @@ export function MonthlyClosingPage({
       ) : (
         <div className="cf-page-stack">
           {currentList === null && !listError ? (
-            <p aria-live="polite">Carregando fechamentos…</p>
+            <CfLoadingCard
+              title="Carregando fechamentos…"
+              variant="compact"
+            />
           ) : null}
           {competences && competences.length > 0 ? (
             <CfSectionCard
               title="Fechamentos abertos"
               hint={CF_HELP.monthlyClosing.page}
             >
-              <ul className="cf-competence-list">
-                {competences.map((competence) => (
-                  <li key={competence.competence_id}>
-                    <button
-                      type="button"
-                      className="cf-competence-link"
-                      onClick={() =>
-                        navigateToPeriod(competence.period, "overview")
-                      }
-                    >
-                      {formatPeriod(competence.period)}
-                      {competence.item_count !== undefined
-                        ? ` · ${competence.item_count} itens`
-                        : ""}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <table className="cf-table" aria-label="Fechamentos abertos">
+                <thead>
+                  <tr>
+                    <th>Competência</th>
+                    <th>Estado</th>
+                    <th>Abertura</th>
+                    <th>Itens do checklist</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {competences.map((competence) => (
+                    <tr key={competence.competence_id}>
+                      <td>{formatPeriod(competence.period)}</td>
+                      <td>
+                        {competence.status === "OPEN"
+                          ? "Aberto"
+                          : competence.status}
+                      </td>
+                      <td>
+                        {competence.opened_at
+                          ? new Date(
+                              competence.opened_at,
+                            ).toLocaleDateString("pt-BR")
+                          : "—"}
+                      </td>
+                      <td>
+                        {competence.item_count !== undefined
+                          ? competence.item_count
+                          : "—"}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="cf-competence-link"
+                          aria-label={`Abrir fechamento de ${formatPeriod(competence.period)}`}
+                          onClick={() =>
+                            navigateToPeriod(competence.period, "overview")
+                          }
+                        >
+                          Abrir fechamento
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </CfSectionCard>
           ) : null}
           {competences && competences.length === 0 ? (
