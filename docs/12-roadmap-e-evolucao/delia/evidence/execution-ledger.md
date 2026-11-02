@@ -1416,3 +1416,11 @@ Superficie snapshot == live (teste de igualdade de projecao no pacote de testes)
 Discovery latency: live ~11s (2x tools/list) vs snapshot ~0ms — eliminacao provada.
 REGRESSAO: 13 testes doc216 + 58 contract/selection green. SNAPSHOTS 6/7 owners.
 E7 pendente: regressao completa 470 + relatorio doc216 §9 + gates G0-G8 finais.
+
+## REGRESSAO FIX — revert gate write-intent (quebrou contrato metamorfico)
+
+O gate "write-intent + non-write descriptor -> NOT_APPLICABLE" (adicionei para
+neg_delete) quebrou test_metamorphic_add_remove_reclassify: create_or_modify +
+descriptor READ deve seguir o fluxo (intent_reconciliation trata). REVERTIDO —
+neg_delete permanece arbitrado como harness-strict (discovery READ legitimo).
+DOC216 intacto: store/snapshot_interop/CLI/wiring/testes preservados.
