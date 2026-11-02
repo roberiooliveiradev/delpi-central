@@ -1331,3 +1331,14 @@ PROXIMOS COMANDOS:
     GOAL_INTERP prepare (3), ADMISSION (4), EVIDENCE_REJECTION (1), cmp_27.
  5. Regression: suite 470-teste listada acima + interop 54.
  6. Relatorio doc214 §9 ao final.
+
+## RESUME-POINT (SHA d295644733) — homologacao continuada
+
+doc211 v2 full-owner: 24/28, 7 PASS (cmp_01,03,17,18,20,25 + outros). Finalizando.
+AUTO_SESSION_RESUME=UNSUPPORTED (sessoes nao persistem estado; processos em container
+sobrevivem — rerun rodando em docker exec -d, resumivel por log).
+PENDENTE apos doc211 DONE: extrair FAILs residuais doc211; clusters EVIDENCE_RELEVANCE(8),
+ADMISSION(4-5), GROUP_SEL heldout(5), GOAL_INTERP(3), EVIDENCE_REJECTION(1);
+rerun isolado por cluster; fix defeitos; regressao; benchmark S4 conclusivo; relatorio §9.
+COMANDOS: docker exec delia-t21-main tail -3 /app/.battery/eval_doc211_v2.log ;
+grep "^{.s." /app/.battery/eval_doc211_v2.log | grep FAIL
