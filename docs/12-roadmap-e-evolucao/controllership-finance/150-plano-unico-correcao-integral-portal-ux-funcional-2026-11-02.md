@@ -82,3 +82,34 @@ O executor deve descobrir rotas efetivas via router/manifests/HEAD, percorrer a 
 | Aceite | Cenário positivo/negativo, competência, filial, status PASS/FAIL |
 
 **Atualizar este documento no GitHub durante a auditoria e o ciclo de correção; não criar outro plano paralelo.** Itens `TO_VERIFY` viram problemas somente após reprodução. Ao fim entregar quadro aberto/resolvido, evidências verificáveis e resíduos com owner.
+
+
+## 6. Diretriz do PO — fase de revisão acumulativa, sem implementação (02/11/2026)
+
+**Decisão explícita:** neste momento, o trabalho é **somente revisar todas as páginas e registrar cada observação neste documento**. **Não gerar prompt de execução, não iniciar correções, não realizar deploy, não fracionar o trabalho em pequenos ciclos.** Ao terminar a inspeção integral, consolidar os requisitos e só então preparar um único programa de correção, mediante nova autorização do PO. As descrições abaixo são **intenção de produto/UX registrada**, não contratos técnicos aprovados. Para dados/resumos que necessitem de API, persistência ou semântica nova, registrar `DECISION_REQUIRED` posteriormente, sem antecipar solução.
+
+### CF-UX-016 — Hero compacto e navegação integrada
+- **Prioridade:** P1 · **Estado:** OPEN / DESIGN_INTENT_RECORDED · **Evidência:** duas novas capturas do PO, rota `/closing/monthly-closing` sem competência e `/closing/monthly-closing/2026-09` com competência.
+- **Situação atual:** hero de “Fechamento mensal” usa altura excessiva: título/descrição, filtro de mês, ações em linha isolada; tabs “Visão geral / Documentos e interações / Relatórios e divergências” aparecem abaixo, fora do hero.
+- **Diretriz UX do PO:** compactar hero; em desktop colocar **mês de referência + ações Atualizar consulta e Limpar filtros** (e ação de pesquisa, se existir nesse contexto) **na mesma linha**; organizar fluxo em cerca de **duas faixas**, não três; integrar as **três tabs dentro do hero**, mantendo hero presente e consistente na navegação entre elas.
+- **Validação futura:** desktop/mobile, claro/escuro, foco/teclado, troca de abas/deep routes, filtro e refresh; sem overflow nem sobreposição; seguir `@delpi/plugin-ui` e padrão visual, sem duplicar chrome.
+- **Nota:** proposta não redefine o shell global nem obriga um layout rígido no mobile.
+
+### CF-UX-017 — Área “O que precisa de atenção” orientada a decisão
+- **Prioridade:** P1 · **Estado:** OPEN / PRODUCT_INTENT_RECORDED · **Evidência:** capturas da visão geral de setembro/2026.
+- **Situação atual:** lista/cartões mostram textos genéricos como “conferência ainda não finalizada”, “não foi possível consultar ...”, sem dimensão numérica, relatório/escopo/causa ou indicação suficiente do próximo passo; há também resumo de “8 situações”.
+- **Diretriz UX do PO:** exibir, **quando sustentado pelo contrato**, quantidade, resumo, relatório/divergência afetada, natureza/status, impacto e ação concreta. Priorizar informação escaneável e navegável em vez de avisos vagos.
+- **Pendência contratual futura:** inventariar resumos já disponíveis, custo/performance e origem; **rotas de resumo, pré-cálculo, cache ou persistência são hipóteses, não escolhas aprovadas**. Não inventar contagens nem transformar erro técnico em divergência de negócio.
+- **Validação futura:** distinguir pendência, erro de consulta, divergência real e homologação pendente; mostrar proveniência e link correto ao owner.
+
+### CF-UX-018 — Entrada da Central sem competência selecionada
+- **Prioridade:** P1 · **Estado:** OPEN / DESIGN_INTENT_RECORDED · **Evidência:** captura da rota `/closing/monthly-closing` sem período, com seleção vazia e cards “Fechamentos abertos: 10/2026 · 0 itens; 09/2026 · 0 itens”.
+- **Situação atual:** pequenos cards com mês e “0 itens” não explicam o significado da contagem, o estado do fechamento nem a próxima ação; usuário pode interpretar incorretamente “0” como ausência de pendências.
+- **Diretriz UX do PO:** substituir ou complementar cards por **tabela/listagem informativa** com metadados reais e disponíveis: competência, estado, data de abertura, quantidade de pendências, progresso/etapa, responsável **somente se o contrato possuir esse dado**, e ação clara para abrir a competência.
+- **Validação futura:** labels e zeros semanticamente corretos, estados vazios, navegação, responsividade e acessibilidade. Sem inventar campos ou criar API antes da revisão contratual consolidada.
+
+### Política de continuidade desta revisão
+1. Cada nova observação do PO será registrada neste **mesmo documento 150**, com ID sequencial `CF-UX-019+`, evidência, rota, prioridade e estado de revisão.
+2. Durante esta fase, **não produzir prompts de Devin, não codificar, não alterar contrato/runtime, não publicar deploy**. Apenas commits documentais incrementais para conservar as observações.
+3. Não classificar intenção UX como defeito técnico provado; separar `OBSERVED_SCREENSHOT`, `TO_VERIFY` e `DESIGN_INTENT_RECORDED`.
+4. Ao fim da revisão de **todas** as páginas, produzir consolidação única de dependências, padrões de UX, RQ/AC e decisões materiais para uma execução coordenada, **somente quando o PO determinar**.
