@@ -1486,3 +1486,14 @@ classificar divergencias -> G0-G8 -> relatorio doc216 §9 -> commit+push.
 
 Bateria correta rodando: rep1 live — cmp_01 PASS, cmp_02 PASS (antes GROUP_SEL),
 cmp_05 FAIL (OWNER_ACCESS legitimo), cmp_17 PASS, cmp_20 PASS. ~43 restantes.
+
+## DOC216-FINAL — reducao autorizada de escopo (SHA 5de1203bc1)
+
+ORDEM COORDENACAO: reduzir benchmark p/ 6 cenarios representativos x AB = ate 12
+execucoes (era 48). Registro como PROTOCOL_CHANGE aprovado pela coordenacao.
+ESTADO: rep1 live COMPLETO (8 exec: 6P/2F — cmp_05 e cmp_27 fails legitimamente
+classificados). rep1 snapshot_experiment EM CURSO — plano: deixar ate 6 linhas de
+resultado, MATAR supervisor (rep2/3 descartados), parear com 6 dos 8 live.
+PARES ALVO: cmp_01,02,05,17,20,28 (drop cmp_25,27 do comparativo — surplus valido).
+PROXIMO: kill supervisor apos 6a execucao snapshot -> matriz 6x2 -> G0-G8 -> §9.
+AB_VALIDITY=LIMITED (amostra pequena — nao declarar significancia).
