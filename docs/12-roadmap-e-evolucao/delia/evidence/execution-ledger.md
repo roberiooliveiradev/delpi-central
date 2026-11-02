@@ -1258,3 +1258,17 @@ Reusa o error_code canonico ja existente (~L5397 demote path).
 VERIFY em curso: rerun ho_neg_delete isolado (shell bg). PROXIMO: t2_neg_delete,
 prepare-class legitimos (t2_prep, ho_prepare_record, a_playlist_*), regressao 470.
 doc211 v2 rerun em paralelo -> eval_doc211_v2.log.
+
+## neg_delete — analise refinada apos verify
+
+Gate L5521 presente no runtime MAS nao disparou: descriptor resolveu PREPARE-class
+(_WRITE_OPERATION_CLASSES) — a rota prepare/preview invoca get_context como context-fetch
+ANTES de rejeitar o remote "delete" (nao-publicado). Trace novo: native_assessment=sufficient
+-> arguments(section=workspace) -> INVOKE teo.get_context -> arguments(capability=delete) ->
+recusa honesta. O gate atual continua correto p/ descriptor nao-write; o residual e a ordenacao
+prepare-path: validar remote vocabulary ANTES do context-fetch.
+PROXIMO FIX: no fluxo PREPARE (preview), se o remote/capability alvo nao consta no vocabulario
+publicado do owner -> WRITE_REJECTED/NOT_APPLICABLE sem invoke. Localizar onde prepare-args
+sao validados (arguments proposal capability=delete) e gatear fetch de contexto.
+TAMBEM: verificar se a rota chegou por _select_capability_with_goal com descriptor PREPARE
+real ou fallback. RERUN pendente apos fix; gate atual nao quebrou nada (manter).
