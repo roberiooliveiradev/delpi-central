@@ -1462,3 +1462,11 @@ PROXIMO: (1) docker logs delpi-tv-dashboard-api --tail 10 (novo erro);
 (2) aguardar AB_ALL_DONE -> matriz A/B -> divergencias causais;
 (3) gates G0-G8 + relatorio §9 doc216; (4) commits.
 COMANDO AB: docker exec delia-t21-main tail -15 /app/.battery/ab_final.log
+
+## DOC216-FINAL — 7/7 owners + A/B em curso (SHA 47321dd1d2)
+
+VISTA CAPTURADA: v1 ACTIVE 6 tools — recuperacao: 2 arquivos com merge-marker
+stash-pop restaurados p/ HEAD (dispatch_service.py + design_intelligence_service.py);
+stash@{0-2} intacto. SNAPSHOTS COMPLETOS: 7/7 owners (davi,teo,caio,clara,eva,suri,vista).
+A/B EM CURSO: /app/.battery/ab_final.log — 6 cenarios x3 reps x AB/BA, marker AB_ALL_DONE.
+PROXIMO: aguardar AB -> matriz causal -> gates G0-G8 -> relatorio §9 -> commit.
