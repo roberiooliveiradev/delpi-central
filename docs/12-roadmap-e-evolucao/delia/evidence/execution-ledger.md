@@ -1035,3 +1035,98 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 ## 2026-11-01 — RESUME EXATO S5 serde fix: langgraph_engine.py trocar state["deadline"]->self._dl(state) nas linhas 274,290,307,315,388,492,513 e attempt() state build linha ~682 "deadline": deadline -> "deadline_data": {"ends_at": deadline.ends_at, "started_at": deadline.started_at}; adicionar field deadline_data no _GovernedTurnState (TypedDict) + helper `def _dl(state)->TurnDeadline: d=state["deadline_data"]; return TurnDeadline(ends_at=d["ends_at"], started_at=d.get("started_at"))` (clock default monotonic). TAMBEM serializar: SubObjective( frozen dataclass ok? testar) e GovernedCapabilityAttempt (so em fim de node -> ok se serde falhar mover para fora do checkpoint). Re-run: docker exec delia-t21-main python3 //app/scripts/_s5_resume_probe.py — esperado PHASE1 crash simulado + PHASE2 resume com p1/p2 call counts (prova no-duplicate-READ). requirements: add langgraph-checkpoint-sqlite==3.1.3. Depois composer wiring DELIA_CHECKPOINT_DB + testes §8.3 + S6 rubrica.
 
 ## 2026-11-01 — S5 deadline_data refactor APLICADO (langgraph_engine.py): deadline_data dict no state + _dl() helper + todos os usos state["deadline"]->self._dl(state). PROXIMO COMANDO: docker exec delia-t21-main python3 //app/scripts/_s5_resume_probe.py (esperado: PHASE2 resume sem re-invoke duplicado; se outro tipo falhar serde — SubObjective/GovernedCapabilityAttempt — mesmo padrao: dados serializaveis + reconstrucao no boundary). Depois: pin langgraph-checkpoint-sqlite==3.1.3 requirements, composer DELIA_CHECKPOINT_DB, testes §8.3, S6 rubrica, integracao.
+
+## S5+S6 implementation complete (published d89621de87 + 127581c920)
+
+S5 — durable checkpoint/resume REAL, nao mock:
+- langgraph_engine: deadline_data wall-clock serde (TurnDeadline reconstruido no boundary), plan node no-op no resume (continuidade S3), state_version guard fail-closed (CHECKPOINT_STATE_VERSION s5.v1, reducer write-once _keep_persisted).
+- Wiring: settings DELIA_CHECKPOINT_DB -> root_composer -> SqliteSaver (fail-closed se configurado sem driver). requirements-eval.txt pin (producao continua sem backend local — Task 07 pin preservado).
+- tests/test_subobjective_resume.py 7/7: restart-resume sem re-invoke de so_1 commitado; isolamento por thread_id; revogacao AuthZ no resume bloqueia branch sem fallback; budget expirado -> PROCESSING_TIMEOUT sem fabricacao; checkpoint corrompido -> fail-closed pre-invoke; versao incompativel -> fail-closed; rollback via checkpoint anterior re-executa trabalho revertido.
+- Probe real: _s5_resume_probe.py — crash mid-wave (RuntimeError no provider), fresh engine + mesmo sqlite -> resume, so_1 nao re-invocado, so_2 re-executado e completado.
+
+S6 — cobertura de evidencia por subobjetivo + sintese fundamentada:
+- Branch record ganha is_complete, contradictions, period, scope, unit (owner-declared, nunca inferido).
+- _subobjective_coverage: sufficient/partial/unsupported/absent/contradictory — SUCCESS sem evidence_refs = unsupported; tool-200 != fato empresarial.
+- _dimension_conflicts: subs com evidence_needed compartilhado e period/scope/unit divergentes -> conflito declarado, sem reconciliacao fabricada.
+- Sintese: limitations explicitas por cobertura (unsupported/partial/contradictory/BLOCKED-gap); evidence_coverage no state final.
+- tests/test_subobjective_evidence.py 7/7: suficiente, parcial (is_complete), contradicao declarada, conflito de periodo cross-owner, complementar 2 owners, owner-503 apos outros completos, 200-vazio apresentado honestamente.
+
+REGRESSAO: 470 testes orquestracao/engine/governed/instructions/subobjective — 0 falhas.
+PINS atualizados: resolver signature (fanout+checkpoint params config-sourced), _SNAPSHOT instrucao subobjectives (sha 9d50a9bc…, 1248b, v39).
+VERDICT: S5=IMPLEMENTATION_GREEN (evidencia real de resume), S6=IMPLEMENTATION_GREEN. Restam: integracao E2E doc214 §10, interop A-F, relatorio final.
+
+## INTEGRACAO — estado ao publicar (SHA d49df0e45e)
+
+GATES EXECUTADOS (todos GREEN, SHA atual):
+- Regressao orquestracao completa: 470 testes (governed, engine A/B, instructions, subobjective S3/S4/S5/S6) — 0 falhas.
+- Interop+security: test_specialist_interop_{architecture,domain,security,usecase}.py — 54 testes, 0 falhas.
+- S5 resume probe REAL: _s5_resume_probe.py PASS (crash→restart→resume, committed work nao re-executado).
+- Pins de contrato alinhados: resolver signature, _SNAPSHOT v39 (instrucao subobjectives), sqlite saver eval-only.
+
+EM CURSO (background, resumivel): _battery_supervisor.sh dentro de delia-t21-main — corpus completo
+(base 25 + held-out + negatives = 89 cenarios). Log: /app/.battery/eval.log (append JSONL por cenario).
+Ultima execucao registrada no log (SHA anterior): 47 exec, 38 PASS / 9 FAIL — a rerodagem contra o
+SHA final classifica cada FAIL com evidencia causal.
+RESUME: docker exec delia-t21-main tail -f /app/.battery/eval.log ; relancar: docker exec -d delia-t21-main bash /app/scripts/_battery_supervisor.sh (idempotente — pula cenarios concluidos).
+
+PENDENTE para fechamento doc214 §9: classificacao causal dos FAILs da bateria no SHA final,
+relatorio secao 9 completo. NENHUM gate declarado PASS sem execucao.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## INTEGRACAO — prova cruzada S3+S4+S5+S6 (SHA pendente)
+
+- tests/test_integrated_investigation.py GREEN: 1 investigacao composta exercita decomposicao S3, wave paralela S4 (2 independentes + 1 dependente), crash mid-run + resume em instancia nova S5 (so_1 commitado nao re-executado, p1.calls==1), cobertura S6 (so_2 SOURCE_UNAVAILABLE -> coverage!=sufficient, limitation declarada).
+- scripts/_s4_fanout_benchmark.py: INCONCLUSIVE — harness de proposals produziu contagem de invocacoes implausivel (6 calls/3 subs); mecanica da fila fake distorce medicao de parede; benchmark sequencial-vs-paralelo precisa de instrumentacao de tempo por wave, nao da fila do FakeProposalModel.
+- Bateria: supervisor original fazia loop infinito (pool main nao cobre heldout/doc211); relancada em execucao por corpus (heldout→newheldout→t22heldout→doc211) em /app/.battery/eval_final.log, resumivel.
+- Keycloak estava down (502) — recuperado com docker start; gate de aquecimento passando.
+
+## RESUME-POINT (SHA 20e4585f30)
+
+Bateria em curso: /app/.battery/eval_final.log no container delia-t21-main.
+Ordem: heldout (20) -> newheldout -> t22heldout -> doc211 (28). ~89 cenarios, ~30-90s cada.
+Comando de retomada: docker exec -d delia-t21-main bash /tmp/run_battery.sh (idempotente, append).
+Leitura: docker exec delia-t21-main tail -5 /app/.battery/eval_final.log
+Cenarios completos ate agora: 5/89 — todos PASS (ho_cabo, ho_fusivel, ho_emenda, ho_fita, ho_code).
+PROXIMO PASSO: aguardar termino, classificar cada FAIL causalmente (S2/S3/S4/S5/S6/owner/env),
+corrigir defeitos DELIA, rerodar afetados + negativos + regressao 470, entao relatorio doc214 §9.
+CLASSIFICACAO PRELIMINAR dos 9 FAILs da rodada anterior (SHA pre-final):
+- c_teo_explicit, c_teo_proc_id, e_proc_followup: ADMISSION_ERROR cluster TEO — TEO_ENABLED=1,
+  transformometro-api up; verificar se recusa de admission e defeito ou indisponibilidade honesta.
+- cont_obs: ADMISSION_ERROR em multi-turn de continuidade.
+- neg_scope: invocou capability (davi.discover) em cenario must_not_invoke — SUSPEITO DEFEITO REAL
+  (boundary de seguranca). Verificar primeiro se discovery conta como invoke no contrato do teste.
+- d_catalog_exec: DISCOVERY_AS_ANSWER — pediu descobrir+trazer produto; respondeu so discovery.
+- nom_technical, nom_incomplete, exhaust: INCONCLUSIVE — nomenclatura/exaustividade de catalogo.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## RESUME-POINT homologacao (SHA 18479ed41c) — bateria 73+/89
+
+PROCESSO: /tmp/run_battery.sh ativo (PID bash + python3 reliability_eval), log /app/.battery/eval_final.log.
+Contagem parcial: 73 cenarios, 39 PASS / 31 FAIL. Restam ~16 (doc211 tail).
+
+MATRIZ CAUSAL PARCIAL (FAILs por cluster):
+1. doc211 cmp_01..12+ GROUP_SELECTION_ERROR — cluster sistematico; verificar se cmp exige owners
+   desabilitados no eval (CAIO/CLARA/EVA/SURI nao habilitados — so DAVI/TEO/VISTA) => ENVIRONMENT/OWNER_AVAILABILITY.
+   Se requerer owner habilitado (teo/davi) e ainda assim falhar => DEFEITO DÉLIA group-selection.
+2. EVIDENCE_RELEVANCE cluster (nh_ilhos, nh_espaguete, nh_conduite, nh_tomada, t2_parafuso,
+   t2_rolamento, t2_tubo, t2_code) — nomenclatura/colloquial catalogo; S6/judgment relevance.
+3. AUTHZ_DENIED_EXPECTED (ho_neg_delete, t2_neg_delete): refusal scenario invocou teo.get_context
+   num pedido de delete — DEFEITO CANDIDATO REAL: admission/AuthZ deve recusar WRITE antes de invoke.
+   Verificar: teo.get_context e READ — contrato do corpus marca qualquer invoke=FAIL.
+4. ADMISSION_ERROR (t2_abracadeira, t2_teo_status, t2_cont) — recusa pre-owner em cenario esperando owner.
+5. GROUP_SELECTION_ERROR heldout (ho_teo_ordinal, ho_vista_playlists, nh_vista, t2_teo_resp, t2_vista_screens)
+   — selecao de grupo errada (caiu em davi/teo errado).
+6. GOAL_INTERPRETATION (ho_prepare_record, nh_prep, t2_prep) — PREPARE-class nao reconhecida.
+7. EVIDENCE_REJECTION (t2_workspace).
+8. PASS parcial confirmado: ho_cabo/fusivel/emenda/fita/code, base corpus majority.
+
+COMANDOS DE RETOMADA:
+- tail: docker exec delia-t21-main tail -3 /app/.battery/eval_final.log
+- contagem: docker exec delia-t21-main grep -c "^{.s." /app/.battery/eval_final.log
+- FAILs: docker exec delia-t21-main sh -c "grep \"^{.s.\" /app/.battery/eval_final.log | grep FAIL"
+- runs json: docker cp delia-t21-main:/tmp/local_reliability_runs.json /tmp/runs.json (traces por cenario)
+- rerun cenario: docker exec delia-t21-main sh -c "CORPUS_SET=<pool> python3 scripts/local_orchestration_reliability_eval.py 1 <sid>"
+- pools: heldout|newheldout|t22heldout|doc211|main|all
+PROXIMO: quando FINAL_DONE -> matriz completa -> fix neg_delete (AuthZ antes de invoke) se defeito real ->
+verificar cmp_* env-vs-defeito -> rerun afetados -> regressao 470 -> publicar.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW

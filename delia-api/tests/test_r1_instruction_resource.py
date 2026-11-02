@@ -118,6 +118,10 @@ _SNAPSHOT = {
         "14effd87356774e92ba7b6bd77cd825369114d2a52ff091bfb12ae5aa2ba4755",
         2388,
     ),
+    "delia.capability_orchestration.subobjectives": (
+        "9d50a9bce8b7f9a1437237c856eb3db5df1015b5e2ebb89fc2cdd846cb11014a",
+        1248,
+    ),
 }
 
 
