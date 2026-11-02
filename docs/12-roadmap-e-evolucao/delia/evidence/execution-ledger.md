@@ -1481,3 +1481,8 @@ NOTA: eval aceita filtro de cenarios por VIRGULA (argv[2].split), nao espaco —
   primeiro run descartado por rodar so cmp_01.
 PROXIMO: AB_ALL_DONE -> matriz A/B (outcome/tokens/latency por variante+cenario) ->
 classificar divergencias -> G0-G8 -> relatorio doc216 §9 -> commit+push.
+
+## DOC216-FINAL — A/B 5/48 (SHA 20dfb33389)
+
+Bateria correta rodando: rep1 live — cmp_01 PASS, cmp_02 PASS (antes GROUP_SEL),
+cmp_05 FAIL (OWNER_ACCESS legitimo), cmp_17 PASS, cmp_20 PASS. ~43 restantes.
