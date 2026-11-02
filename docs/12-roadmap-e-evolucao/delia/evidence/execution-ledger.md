@@ -1815,3 +1815,18 @@ FILE: delia-api/app/infrastructure/arggen/pydantic_arggen.py
   previous_arguments incluidos; retorna dict p/ _validate_instance.
 NEXT: flag DELIA_ARGGEN_ENGINE + wiring em _propose_candidate_arguments
   (L13925) + settings (llm_base_url/api_key/model) + teste E2E 30190123.
+
+## PYDANTIC-AI — resume point wiring (SHA 3461cc991a)
+
+DONE: adapter pydantic_arggen.py publicado (create_model do schema real +
+Agent output_type + previous_arguments). 
+NEXT EXACT: (1) settings DELIA_ARGGEN_ENGINE (default llm) em settings.py
+apos tool_selection_mode; (2) em _propose_candidate_arguments L13945+ —
+antes de _model_stage_proposal, quando mode==pydantic_ai chamar
+propose_arguments(objective=input_text, capability_name, schema=schema,
+previous_arguments=extraido de owner_feedback, base_url=llm_base_url,
+api_key=llm_api_key, model=llm_model) -> _validate_instance -> return.
+Settings disponiveis em self._settings? verificar ctor do orchestrator —
+model port: OpenAICompatibleModelInvocationAdapter base_url/api_key/model
+via settings.llm_*. (3) E2E: "qual a descricao do produto 30190123" ->
+deve usar code field. (4) A/B llm vs pydantic_ai.
