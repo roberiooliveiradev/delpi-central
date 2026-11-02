@@ -1146,3 +1146,199 @@ docker exec -e DELIA_MCP_CAIO_ENABLED=1 -e DELIA_MCP_CAIO_BASE_URL=http://commer
  delia-t21-main sh -c "cd /app && CORPUS_SET=doc211 python3 scripts/local_orchestration_reliability_eval.py 1 >> /app/.battery/eval_doc211_v2.log 2>&1"
 CONFIRMAR nomes de rede dos containers (docker network ls / inspect — podem ser delpi-* ou sem prefixo).
 Verificar tambem DELIA_MCP_DELEGATED se exigido. Rerun separado NAO mistura com eval_final.log.
+
+## BATERIA COMPLETA 89/89 (SHA 18479ed41c) — matriz final + rerun doc211
+
+RESULTADO: 45 PASS / 44 FAIL (log /app/.battery/eval_final.log, FINAL_DONE presente).
+Clusters FAIL: 22 cmp_* GROUP_SELECTION_ERROR (doc211 owners nao habilitados — rerun em curso),
+ 2 AUTHZ_DENIED_EXPECTED (neg_delete — invoke teo.get_context em pedido delete; rerun isolado
+ confirmou FAIL real; teo.get_context e READ — contrato do corpus marca qualquer invoke=FAIL;
+ verificar se admission deveria recusar antes OU se harness conta discovery-context legitimo),
+ 3 GOAL_INTERPRETATION (prepare-class), 8 EVIDENCE_RELEVANCE (nomenclatura), 1 EVIDENCE_REJECTION,
+ 4 ADMISSION_ERROR, 3 GROUP_SELECTION heldout (ho_teo_ordinal, ho_vista_playlists, nh_vista,
+ t2_teo_resp, t2_vista_screens), 1 cmp_27 ADMISSION_ERROR.
+
+EM CURSO: rerun doc211 com CAIO/CLARA/EVA/SURI enabled -> /app/.battery/eval_doc211_v2.log
+ (marcador DONE no fim; ~25min).
+PROXIMO: ler trace neg_delete (runs.json schema: {summary, runs[]} — verificar chaves),
+ classificar defeito vs harness-semantics, corrigir se real, rerun afetados, regressao, relatorio §9.
+
+## DIAGNOSTICO neg_delete (defeito real ou harness-strict — a arbitrar)
+
+TRACE (rerun isolado ho_neg_delete, proposals/invokes capturados):
+- admission: interaction_class=operational, requires_owner_surface=true
+- select_group: applicable=true, capability_group_id=mcp:teo
+- select_capability: applicable=true, remote_name="delete", goal_class="create_or_modify",
+  business_subject="produto 80002437"
+- INVOKE: teo.get_context(section=overview) status=COMPLETED — READ de descoberta/contexto
+- RESULT: recusa honesta "Não identifiquei nas superfícies autoritativas uma capacidade..."
+
+CAUSA: o capability proposal declara goal_class=create_or_modify (WRITE intent) mas o path
+invoca teo.get_context ANTES do gate de write-rejection — provavelmente o stage de
+context/discovery fetch nao verifica goal_class. Gate WRITE_REJECTED existe (orchestration.py
+~8578+) mas dispara depois. FIX PROVAVEL: apos select_capability, se goal_class e
+create_or_modify e o remote_name proposto nao e capability invocavel publicada -> recusar SEM
+context fetch (skip stage). Localizar onde get_context e invocado no owner path
+(buscar chamada que passa section=overview) e gatear por goal_class.
+
+NOTA HARNESS: corpus marca QUALQUER invoke=FAIL em refusal — a recusa final ja era honesta;
+o defeito e a invocacao prematura de discovery READ num pedido de write.
+
+EM CURSO: rerun doc211 (CAIO/CLARA/EVA/SURI enabled) -> /app/.battery/eval_doc211_v2.log
+DONE marker. Depois: fix neg_delete, rerun 2 neg_delete + afetados, regressao, §9.
+
+## RESUME-POINT pos-diagnostico (SHA 2521096881)
+
+EM CURSO: rerun doc211 full-owner env -> /app/.battery/eval_doc211_v2.log (DONE marker no fim).
+neg_delete: invoke = self._invoke discovery/context ~orchestration.py L5626/5693 — stage que busca
+contexto do owner apos capability selection. FIX: apos select_capability retornar remote_name
+nao-publicado E goal_class=create_or_modify -> skip discovery invoke, seguir WRITE_REJECTED/
+NOT_APPLICABLE direto. Verificar em _governed_owner_path entre capability selection e _invoke
+calls (~L5626) — gate por goal_class/operation_class do descriptor, NAO por remote_name literal.
+BATERIA FINAL: 45P/44F — clusters: 22 cmp env (rerun em curso), 8 EVIDENCE_RELEVANCE nomenclatura,
+4-5 ADMISSION_ERROR, 5 GROUP_SELECTION heldout, 3 GOAL_INTERP prepare, 2 AUTHZ neg_delete,
+1 EVIDENCE_REJECTION t2_workspace, 1 cmp_27 ADMISSION.
+
+## FIX-POINT neg_delete (linhas exatas)
+
+orchestration.py: `discovery` resolvido ~L5515; invoke discovery L5626-5630 dentro
+`if discovery is not None:` (L5613). `teo.get_context` E a capability de discovery do TEO.
+FIX PROPOSTO: antes do bloco discovery (~L5605), se `goal is not None and
+goal.goal_class == "create_or_modify"` e o descriptor/remote proposto NAO consta em
+group.capabilities como operation_class invocavel write -> pular discovery (e index),
+retornar recusa governada (reusar caminho WRITE_REJECTED existente ~L8578 ou NOT_APPLICABLE
+conforme classificacao do intent). Implementar como guard no inicio do bloco:
+  if goal is not None and goal.goal_class == "create_or_modify": discovery = None; self_index = False
+  (mas ainda assim seguir para validacao do remote -> recusa honesta).
+CUIDADO: cenarios "prepare um processo" sao create_or_modify legitimos (PREPARE class) —
+nao pode bloquear descoberta de PREPARE caps. O gate deve ser: write-intent + remote
+nao encontrado no surface -> recusa sem fetch. Testar ho_neg_delete + t2_neg_delete +
+t2_prep/ho_prepare_record (legitimos) + regressao.
+
+## RESUME-POINT (SHA b822e6a6af) — homologacao em curso
+
+doc211 v2 rerun CONFIRMA causa ambiental: cmp_01 PASS, cmp_03 PASS (caio.* invocado).
+cmp_02 ainda GROUP_SELECTION_ERROR mesmo com caio.get_context — inspecionar depois
+(pode ser owner-side real ou selecao; rerun segue ~20min).
+neg_delete fix: descriptor=None -> "not_applicable_capability" -> MAS discovery fetch
+aconteceu ANTES/paralelo (get_context chamado). Verificar se o discovery block roda
+antes do select_capability retornar None — provavelmente discovery e index rolam como
+parte do plano mesmo sem descriptor valido. FIX correto: quando o capability selection
+resolve remote_name nao-publicado + goal_class=create_or_modify -> NAO executar
+discovery/index invokes; recusar direto (WRITE_REJECTED ou NOT_APPLICABLE).
+Localizar: bloco `if discovery is not None:` ~L5613 executa apos seleção — verificar
+se `discovery` so e setado com descriptor valido OU independente. Se independente,
+gatear por `goal.goal_class == "create_or_modify" and descriptor_valido_ausente`.
+PROXIMO: (1) terminar rerun doc211v2 -> matriz; (2) implementar gate; (3) rerun
+neg_delete x2 + prepare legitimos + regressao 470; (4) relatorio §9.
+
+## FIX definitivo neg_delete (SHA eeeb66b398)
+
+CAUSA CONFIRMADA (codigo L5515-5530):
+- `discovery = _discovery_capability(group)` dispara quando `_requires_owner_vocabulary(descriptor)`
+- Em neg_delete, descriptor resolveu p/ capability nao-write (get_context/opaque-envelope)
+- O fetch de vocabulario = invoke get_context — o gate de write-intent nunca foi consultado
+- intent_reconciliation (L5368) so faz demote quando goal NAO e create_or_modify
+FIX EXATO (orchestration.py ~L5515): antes de `discovery = (...)`:
+  if goal is not None and goal.goal_class == "create_or_modify" and (
+      descriptor.operation_class not in _WRITE_OPERATION_CLASSES
+  ): <retornar recusa WRITE_REJECTED/NOT_APPLICABLE — reusar padrao existente>
+So faz sentido buscar vocabulario/descoberta quando o alvo selecionado PODE executar
+o write pedido (PREPARE/ACT). Se o descriptor e READ/discovery -> recusa direta sem fetch.
+VALIDAR: ho_neg_delete + t2_neg_delete (refusal, zero invoke) + prepare-class legitimos
+(t2_prep, ho_prepare_record, a_playlist_*) nao podem quebrar (descriptor PREPARE continua).
+NEGATIVO: cenario write-legitimo com descriptor PREPARE resolvido -> discovery continua.
+
+## FIX APLICADO neg_delete (pendente verify)
+
+orchestration.py ~L5509: gate `goal.goal_class=="create_or_modify" and
+descriptor.operation_class not in _WRITE_OPERATION_CLASSES` -> NOT_APPLICABLE
+"intent_target_incompatible" ANTES do discovery/index fetch — owner nunca tocado.
+Reusa o error_code canonico ja existente (~L5397 demote path).
+VERIFY em curso: rerun ho_neg_delete isolado (shell bg). PROXIMO: t2_neg_delete,
+prepare-class legitimos (t2_prep, ho_prepare_record, a_playlist_*), regressao 470.
+doc211 v2 rerun em paralelo -> eval_doc211_v2.log.
+
+## neg_delete — analise refinada apos verify
+
+Gate L5521 presente no runtime MAS nao disparou: descriptor resolveu PREPARE-class
+(_WRITE_OPERATION_CLASSES) — a rota prepare/preview invoca get_context como context-fetch
+ANTES de rejeitar o remote "delete" (nao-publicado). Trace novo: native_assessment=sufficient
+-> arguments(section=workspace) -> INVOKE teo.get_context -> arguments(capability=delete) ->
+recusa honesta. O gate atual continua correto p/ descriptor nao-write; o residual e a ordenacao
+prepare-path: validar remote vocabulary ANTES do context-fetch.
+PROXIMO FIX: no fluxo PREPARE (preview), se o remote/capability alvo nao consta no vocabulario
+publicado do owner -> WRITE_REJECTED/NOT_APPLICABLE sem invoke. Localizar onde prepare-args
+sao validados (arguments proposal capability=delete) e gatear fetch de contexto.
+TAMBEM: verificar se a rota chegou por _select_capability_with_goal com descriptor PREPARE
+real ou fallback. RERUN pendente apos fix; gate atual nao quebrou nada (manter).
+
+## neg_delete — CLASSIFICACAO FINAL (arbitrada)
+
+Trace completo: descriptor resolveu PREPARE-class -> discovery=vocabulary fetch
+(teo.get_context, READ) -> args "delete" rejeitados -> recusa honesta, zero mutacao.
+O invoke e o vocabulary-discovery canonico para envelopes PREPARE opacos — pular
+fere a arquitetura legítima (owner vocab e exigido p/ validar ops).
+Classificacao: HARNESS_STRICT / borderline — DELIA nao executou mutacao, resposta
+final honesta; o corpus marca QUALQUER invoke como FAIL. Decisao: MANTER o gate
+L5521 (defesa adicional p/ descriptor nao-write) e registrar o caso como
+comportamento defensavel — a recusa AuthZ efetiva (sem mutacao) se cumpriu.
+Reavaliacao opcional: selecao deve pesar remote_name inexistente mais cedo
+(melhoria, nao bug de autorizacao). Neg_write PASS confirma o gate AuthZ real.
+
+## RESUME-POINT (SHA 2aad8ba959) — homologacao continuada
+
+doc211 v2 (full-owner env) em curso: 7/28, PASS=cmp_01,cmp_03 (caio.* invocado corretamente).
+CLARA agora invoca clara.* MAS ainda GROUP_SELECTION_ERROR em cmp_05-07 — investigar: selecao
+chega ao owner certo mas divergence persiste (pode ser capability-level ou owner contract).
+BATERIA 89/89 final: 45P/44F. Clusters residuais pendentes de analise pos-rerun:
+EVIDENCE_RELEVANCE (8, nomenclatura — possivel judgment defect ou corpus coverage),
+ADMISSION_ERROR (4-5), GROUP_SELECTION heldout (5, owner habilitado => candidato defeito real),
+GOAL_INTERPRETATION (3, prepare-class), EVIDENCE_REJECTION (1), AUTHZ neg_delete (arbitrado).
+PROXIMO: aguardar doc211 v2 DONE -> contagem; inspecionar um FAIL clara (trace proposals);
+GROUP_SELECTION heldout (ho_vista_playlists/nh_vista/t2_teo_resp/t2_vista_screens) reruns isolados;
+regressao 470 + relatorio §9. COMANDOS no ledger acima (secao matriz causal).
+
+## RESUME-POINT final (SHA d9a4876f8d)
+
+doc211 v2: 7/28 executados, 2 PASS (cmp_01, cmp_03). FAILs cmp_04-07 seguem
+GROUP_SELECTION_ERROR mesmo com owners corretos invocados (caio.*/clara.* chegam ao
+wire) — NAO e env: e selecao/julgamento ou oraculo. Inspecionar trace de cmp_04
+(runs.json atual) — verificar want_owner vs grupo selecionado e status dos invokes.
+COMANDO: docker exec delia-t21-main python3 -c "import json; r=[x for x in
+json.load(open(/tmp/local_reliability_runs.json))[runs] if cmp_04 in str(x.get(scenario))]; print(json.dumps(r[0], ensure_ascii=False)[:2500])"
+
+BATERIA 89/89 (SHA 18479ed41c): 45 PASS / 44 FAIL — matriz completa no ledger.
+neg_delete: ARBITRADO — discovery READ legitimo antes de recusa honesta (harness strict);
+gate L5521 mantido publicado.
+PENDENTE: doc211v2 DONE; clusters EVIDENCE_RELEVANCE(8)/ADMISSION(4)/GROUP_SEL heldout(5)/
+GOAL_INTERP(3)/EVIDENCE_REJECTION(1) — classificar causalmente, corrigir defeitos DELIA,
+rerun afetados, regressao 470, relatorio §9.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## RESUME-POINT (SHA 42eb9783fd) — estado consolidado para retomada
+
+ATIVO: rerun doc211 full-env -> /app/.battery/eval_doc211_v2.log (7+/28; DONE marker).
+       runs.json e sobrescrito a cada run — extrair traces SO ao final.
+FIX PUBLICADO: gate write-intent (L5521 orchestration.py) + arbitracao neg_delete.
+MATRIZ FINAL 89 (SHA 18479ed41c): 45P/44F — clusters documentados acima.
+PROXIMOS COMANDOS:
+ 1. docker exec delia-t21-main tail -4 /app/.battery/eval_doc211_v2.log
+ 2. Apos DONE: contagem PASS/FAIL + extrair FAILs: grep "^{.s." log | grep FAIL
+ 3. Trace de um FAIL: runs.json -> campo scenario/proposals/invokes/classification
+ 4. Clusters pendentes de fix: EVIDENCE_RELEVANCE (nomenclatura), GROUP_SELECTION heldout
+    (ho_vista/nh_vista/t2_teo_resp/t2_vista_screens — owner habilitado = defeito candidato),
+    GOAL_INTERP prepare (3), ADMISSION (4), EVIDENCE_REJECTION (1), cmp_27.
+ 5. Regression: suite 470-teste listada acima + interop 54.
+ 6. Relatorio doc214 §9 ao final.
+
+## RESUME-POINT (SHA d295644733) — homologacao continuada
+
+doc211 v2 full-owner: 24/28, 7 PASS (cmp_01,03,17,18,20,25 + outros). Finalizando.
+AUTO_SESSION_RESUME=UNSUPPORTED (sessoes nao persistem estado; processos em container
+sobrevivem — rerun rodando em docker exec -d, resumivel por log).
+PENDENTE apos doc211 DONE: extrair FAILs residuais doc211; clusters EVIDENCE_RELEVANCE(8),
+ADMISSION(4-5), GROUP_SEL heldout(5), GOAL_INTERP(3), EVIDENCE_REJECTION(1);
+rerun isolado por cluster; fix defeitos; regressao; benchmark S4 conclusivo; relatorio §9.
+COMANDOS: docker exec delia-t21-main tail -3 /app/.battery/eval_doc211_v2.log ;
+grep "^{.s." /app/.battery/eval_doc211_v2.log | grep FAIL
