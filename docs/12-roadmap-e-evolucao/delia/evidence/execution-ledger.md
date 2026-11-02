@@ -1079,3 +1079,22 @@ TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
 - scripts/_s4_fanout_benchmark.py: INCONCLUSIVE — harness de proposals produziu contagem de invocacoes implausivel (6 calls/3 subs); mecanica da fila fake distorce medicao de parede; benchmark sequencial-vs-paralelo precisa de instrumentacao de tempo por wave, nao da fila do FakeProposalModel.
 - Bateria: supervisor original fazia loop infinito (pool main nao cobre heldout/doc211); relancada em execucao por corpus (heldout→newheldout→t22heldout→doc211) em /app/.battery/eval_final.log, resumivel.
 - Keycloak estava down (502) — recuperado com docker start; gate de aquecimento passando.
+
+## RESUME-POINT (SHA 20e4585f30)
+
+Bateria em curso: /app/.battery/eval_final.log no container delia-t21-main.
+Ordem: heldout (20) -> newheldout -> t22heldout -> doc211 (28). ~89 cenarios, ~30-90s cada.
+Comando de retomada: docker exec -d delia-t21-main bash /tmp/run_battery.sh (idempotente, append).
+Leitura: docker exec delia-t21-main tail -5 /app/.battery/eval_final.log
+Cenarios completos ate agora: 5/89 — todos PASS (ho_cabo, ho_fusivel, ho_emenda, ho_fita, ho_code).
+PROXIMO PASSO: aguardar termino, classificar cada FAIL causalmente (S2/S3/S4/S5/S6/owner/env),
+corrigir defeitos DELIA, rerodar afetados + negativos + regressao 470, entao relatorio doc214 §9.
+CLASSIFICACAO PRELIMINAR dos 9 FAILs da rodada anterior (SHA pre-final):
+- c_teo_explicit, c_teo_proc_id, e_proc_followup: ADMISSION_ERROR cluster TEO — TEO_ENABLED=1,
+  transformometro-api up; verificar se recusa de admission e defeito ou indisponibilidade honesta.
+- cont_obs: ADMISSION_ERROR em multi-turn de continuidade.
+- neg_scope: invocou capability (davi.discover) em cenario must_not_invoke — SUSPEITO DEFEITO REAL
+  (boundary de seguranca). Verificar primeiro se discovery conta como invoke no contrato do teste.
+- d_catalog_exec: DISCOVERY_AS_ANSWER — pediu descobrir+trazer produto; respondeu so discovery.
+- nom_technical, nom_incomplete, exhaust: INCONCLUSIVE — nomenclatura/exaustividade de catalogo.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
