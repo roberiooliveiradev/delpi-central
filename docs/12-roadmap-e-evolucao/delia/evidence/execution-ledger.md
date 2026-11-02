@@ -1054,3 +1054,21 @@ S6 — cobertura de evidencia por subobjetivo + sintese fundamentada:
 REGRESSAO: 470 testes orquestracao/engine/governed/instructions/subobjective — 0 falhas.
 PINS atualizados: resolver signature (fanout+checkpoint params config-sourced), _SNAPSHOT instrucao subobjectives (sha 9d50a9bc…, 1248b, v39).
 VERDICT: S5=IMPLEMENTATION_GREEN (evidencia real de resume), S6=IMPLEMENTATION_GREEN. Restam: integracao E2E doc214 §10, interop A-F, relatorio final.
+
+## INTEGRACAO — estado ao publicar (SHA d49df0e45e)
+
+GATES EXECUTADOS (todos GREEN, SHA atual):
+- Regressao orquestracao completa: 470 testes (governed, engine A/B, instructions, subobjective S3/S4/S5/S6) — 0 falhas.
+- Interop+security: test_specialist_interop_{architecture,domain,security,usecase}.py — 54 testes, 0 falhas.
+- S5 resume probe REAL: _s5_resume_probe.py PASS (crash→restart→resume, committed work nao re-executado).
+- Pins de contrato alinhados: resolver signature, _SNAPSHOT v39 (instrucao subobjectives), sqlite saver eval-only.
+
+EM CURSO (background, resumivel): _battery_supervisor.sh dentro de delia-t21-main — corpus completo
+(base 25 + held-out + negatives = 89 cenarios). Log: /app/.battery/eval.log (append JSONL por cenario).
+Ultima execucao registrada no log (SHA anterior): 47 exec, 38 PASS / 9 FAIL — a rerodagem contra o
+SHA final classifica cada FAIL com evidencia causal.
+RESUME: docker exec delia-t21-main tail -f /app/.battery/eval.log ; relancar: docker exec -d delia-t21-main bash /app/scripts/_battery_supervisor.sh (idempotente — pula cenarios concluidos).
+
+PENDENTE para fechamento doc214 §9: classificacao causal dos FAILs da bateria no SHA final,
+relatorio secao 9 completo. NENHUM gate declarado PASS sem execucao.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
