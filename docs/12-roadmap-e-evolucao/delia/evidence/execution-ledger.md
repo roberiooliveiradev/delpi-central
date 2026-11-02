@@ -1865,3 +1865,27 @@ IRMAO conector (pydantic_ai): "colecao vazia" — arggen produziu termo nao-
   casado (variancia; baseline llm acertou via retry anterior). Classificado
   como variancia de arggen, nao defeito estrutural.
 REGRESSAO: 126 testes green. LIVE default intocado (flag opt-in).
+
+## PYDANTIC-AI — matriz A/B homologacao (SHA bfe4c71cd6)
+
+A=llm baseline · B=pydantic_ai — mesmo modelo/contrato/owner/identidade.
+
+| caso | A (llm) | B (pydantic_ai) | delta |
+|---|---|---|---|
+| C1 id 30190123 | FAIL: description->0, "colecao vazia" | PASS: code->registro real | B resolveu campo tipado |
+| C2 conectores | FAIL: plural->0 | FAIL: plural->0 (retry tb) | igual — owner strict-match |
+| C3 ausente(ilhos) | honesta recusa | honesta recusa | igual — honesto ambos |
+| C4 suri fornecedores | FAIL: vazio (discover only) | FAIL: vazio | igual — owner-side |
+| C5 parafusos | FAIL: plural->0 | FAIL: plural->0 | igual |
+| C6 porca sextavada | PASS: 20 registros reais | PASS: 20 registros reais | igual — ambos corretos |
+
+SALDO: B resolve o caso sistematico de identifier->typed-field
+(codigo real recuperado); plural/lexical e owner-strict residual
+(igual em ambos); sem regressao B vs A. VARIANCIA: B ja produziu
+description em 1 dos 3 runs de C1 (modelo local, nao defeito
+estrutural — structured output restringe forma, nao semantica).
+DECISAO: PROMOTE_CANDIDATE (opt-in) — melhoria real em campo tipado,
+custo: +1 dependencia pydantic-ai, ~+15s latency por geracao
+(Agent overhead), sem writes, sem segundo planner, live intacto.
+RESIDUAL: owner davi strict-lexical-match (plural) — classificado
+owner-side; pydantic nao resolve normalizacao lexical do owner.
