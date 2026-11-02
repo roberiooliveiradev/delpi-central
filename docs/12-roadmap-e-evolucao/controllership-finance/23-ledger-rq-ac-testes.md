@@ -1485,3 +1485,14 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Boundary | PROVEN | supplies-api NÃO é caminho; produtor api-delpi reutilizável via S2S CF existente (R09 pattern) |
 | Contrato BFF R04 | NOT_IMPLEMENTED | requer nova rota /closing/competences/{period}/production-order-consumption (ou convenção vigente) |
 | Semântica MATR860 | NÃO CONFIRMADA | visão operational_view apenas; equivalência pendente |
+
+---
+
+## G060 — Correção de classificação (2026-11-02)
+
+| Req | Estado corrigido | Evidência |
+|---|---|---|
+| R06 Kardex/CPV | IMPLEMENTED | api-delpi financeiro_stock_kardex + BFF /closing/stock-kardex* + StockKardexPage + CLARA read(report.stock_kardex) |
+| R07 Inventários | IMPLEMENTED | api-delpi inventory_adjustments* + BFF /closing/inventory-adjustments* + InventoryAdjustmentsPage + CLARA read(report.inventory_adjustments) |
+| R04 | lacuna real = integração BFF/CLARA/MFE | produtor consumption-audit existe em api-delpi (supplies/) |
+| Classificações G052-G058 'não implementado' R06/R07 | ERRADAS — corrigidas | busca era restrita ao namespace financeiro; SEARCH_MISS != ABSENCE |
