@@ -341,6 +341,22 @@ def _detect_revision_history(
     }
 
 
+_ADMIN_WORD_RE = re.compile(
+    r"^(cod|des|rev|cliente|client|esc|escala|data|ref|mat|material|"
+    r"peso|folha|fl|obs|aprov|verific|resp|respons|liberado|"
+    r"desenhado|conferido|lmp|ov|resumo|modifica|executado|"
+    r"autoriz|solic|eng)\b",
+    re.IGNORECASE,
+)
+
+
+def _has_admin_word(text: str) -> bool:
+    """Prefixo administrativo (COD:5101.5561, CLIENTE:FAMAC,
+    RESUMO DAS MODIFICAÇÕES) — exclusão contextual por vocabulário
+    de rótulo, não lista global de termos."""
+    return bool(_ADMIN_WORD_RE.match((text or "").strip()))
+
+
 def _detect_component_table(
     tokens: list[dict], w: float, h: float, tb_box: list[float] | None
 ) -> dict | None:
@@ -491,6 +507,25 @@ def _structure_table(
     for ci, cnt in content_counts.items():
         if ci not in col_types and cnt["total"] and cnt["codes"] / cnt["total"] >= 0.5:
             col_types[ci] = "component_code"
+    # colunas conectadas à coluna de códigos — gap >12% da largura
+    # rompe a faixa da tabela (campos administrativos ficam fora).
+    keep_cols: set[int] = set()
+    code_x = table.get("code_col_x")
+    if code_x is not None and col_centers:
+        ci = min(
+            range(len(col_centers)),
+            key=lambda i: abs(col_centers[i] - code_x),
+        )
+        keep_cols.add(ci)
+        gap = w * 0.15
+        for i in range(ci - 1, -1, -1):
+            if col_centers[i + 1] - col_centers[i] > gap:
+                break
+            keep_cols.add(i)
+        for i in range(ci + 1, len(col_centers)):
+            if col_centers[i] - col_centers[i - 1] > gap:
+                break
+            keep_cols.add(i)
     rows_out = []
     ambiguous = 0
     for r_i, row in enumerate(sorted(table["rows"], key=lambda r: r["y"])):
@@ -499,14 +534,15 @@ def _structure_table(
             [
                 tok
                 for tok in row["tokens"]
-                if not _is_label(_text_of(tok))
-                and not _is_revhist_label(_text_of(tok))
+                if not _has_admin_word(_text_of(tok))
             ],
             key=lambda t: _tok_center(t)[0],
         ):
             x = _tok_center(t)[0]
             d = [abs(x - c) for c in col_centers]
             best_i = min(range(len(d)), key=lambda i: d[i])
+            if keep_cols and best_i not in keep_cols:
+                continue
             ties = [i for i in range(len(d)) if abs(d[i] - d[best_i]) < 1e-9]
             cell = {
                 "text": _text_of(t),
@@ -657,6 +693,14 @@ def build_understanding(
                 and _inside(_tok_center(t), table["box"])
             ]
             graphic_boundary = True
+            area = (x2 - x1) * (y2 - y1)
+            if area > w * h * 0.60:
+                # moldura quase integral NÃO é tabela (AC04/AC15) —
+                # fronteira rejeitada: tokens não reivindicados, cotas
+                # preservadas, BOM fail-closed.
+                graphic_boundary = False
+                table["unreliable_boundary"] = True
+                table["tokens"] = []
     # AC06/AC08: ownership exclusivo — tokens do carimbo nunca são
     # células de tabela (bordas sobrepostas → tb prevalece, conflito
     # registrado abaixo).
@@ -943,6 +987,9 @@ def build_understanding(
             "ambiguous_cells": ambiguous_cells,
             "col_types": {str(k): v for k, v in col_types.items()},
             "graphic_boundary": graphic_boundary,
+            "unreliable_boundary": bool(
+                table and table.get("unreliable_boundary")
+            ),
             "boundary_source": (
                 "graphic_rects" if graphic_boundary else "tokens_inferred"
             ),
