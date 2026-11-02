@@ -107,7 +107,7 @@ def get_production_order_consumption(
             params[key] = value
     try:
         body = ApiDelpiSettlementsGateway().get(
-            "/consumption-audit/orders",
+            "/supplies/consumption-audit/orders",
             access_token=access_token,
             params=params,
             timeout_seconds=120,
@@ -149,7 +149,7 @@ def get_production_order_consumption_detail(
     access_token = _user_bearer(request)
     try:
         body = ApiDelpiSettlementsGateway().get(
-            f"/consumption-audit/orders/{production_order}",
+            f"/supplies/consumption-audit/orders/{production_order}",
             access_token=access_token,
             params={"branch": branch},
             timeout_seconds=120,
