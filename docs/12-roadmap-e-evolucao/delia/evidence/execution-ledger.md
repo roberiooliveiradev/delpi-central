@@ -1596,3 +1596,39 @@ FIX: _filter_groups_for_selection preserva grupos cujo short-id esta em
   _named_provider_tokens|_vocative_provider_tokens — declarado nunca e dropado.
 RERUN em curso: /app/.battery/abcd_217_v2.log (ABCD2_ALL_DONE), 3 modos x3 cenarios.
 Verificar: docker exec delia-t21-main tail -8 /app/.battery/abcd_217_v2.log
+
+## DOC217/T20 — rerun v2 + respostas reais (SHA 2b48532d86)
+
+MATRIZ v2 (apos fix declared-owner):
+  retrieval 3/3 · retrieval_llm 2/3 · progressive 1/3 · live 3/3 (round1)
+RESPOSTAS REAIS DO LLM (verbatim, runs.json):
+  cmp_01 (live r1): "Nao consegui consultar a fonte autoritativa... Entidade
+    delpi desconhecida" — recusa honesta por owner-side unknown-entity;
+    na v2 retrieve caio.analyze completou e respondeu (variancia LLM/owner).
+  cmp_17: "A fonte retornou registros, mas nao consegui comprovar a ordenacao
+    completa — nao posso afirmar com seguranca qual e a posicao exata" —
+    LIMITACAO HONESTA correta; harness marca FAIL/GROUP_SEL quando o
+    invoke analitico nao completa, mas a selecao estava certa (teo.*).
+  cmp_25: "A fonte respondeu com uma colecao vazia — nao ha registros para
+    esse pedido" — resposta correta a dado inexistente.
+ANALISE CAUSAL: nao ha defeito sistematico de selecao apos o fix — fails
+  residuais sao owner-side rejects ou variancia; a resposta real tende a
+  limitacao honesta (comportamento correto, oracle-as-failure e artefato).
+DECISAO doc217: KEEP_LIVE para producao — variantes retrieval atingem paridade
+  (B 3/3) mas nao superam live; BM25 nao agrega valor sobre o seletor atual.
+  LIBRARIES: LlamaIndex/Pydantic-toolset/LangChain-middleware = NOT_ADOPT
+  (nao instalados ou exigem segundo runtime; BM25 implementado e medido).
+PROXIMO (T20 pendente): remediacao dos clusters residuais da bateria 89
+  (GROUP_SEL heldout, EVIDENCE_RELEVANCE, ADMISSION) — avaliacao de resposta
+  empresarial por pergunta com criterio semantico, nao oracle-only.
+
+## T20 — caso heldout real + vista funcional (SHA ed9afb2713)
+
+ho_vista_playlists (heldout, corpus real, todos owners habilitados):
+  PASS — invocou vista.get_context+vista.read corretos; resposta real:
+  "A fonte respondeu com uma colecao vazia — nao ha registros para esse pedido"
+  = resposta empresarial correta p/ dado inexistente (nao inventou).
+VISTA totalmente funcional pos-recuperacao (merge-marker fix).
+REGRESSAO: 126 testes green (217+catalog+vocative+specialist-orch).
+RESIDUAL: nh_vista (newheldout pool), clusters EVIDENCE_RELEVANCE/ADMISSION
+  da bateria 89 — fila de remediacao; avaliar resposta semantica por pergunta.

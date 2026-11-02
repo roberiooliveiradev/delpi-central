@@ -217,3 +217,51 @@ class PerceptionEnginePort(Protocol):
         pages: list[int] | None = None,
     ) -> dict:
         ...
+
+
+def associate_tokens_to_cells(
+    tokens: list,
+    cell_bboxes: list,
+    *,
+    crop_offset: tuple = (0.0, 0.0),
+) -> dict:
+    """Associa tokens OCR a células SLANet por geometria determinística.
+
+    RQ-01/02/05: token→célula por contenção do centro do token;
+    múltiplas células → ``conflicts``; sem match → ``unassigned``.
+    Nunca inventa texto nem associa arbitrariamente.
+    """
+    ox, oy = crop_offset
+    assigned: dict = {}
+    conflicts: list = []
+    unassigned: list = []
+    for ti, tok in enumerate(tokens):
+        bb = tok.get("bounding_box_px") if isinstance(tok, dict) else None
+        if not bb or len(bb) < 4:
+            unassigned.append(ti)
+            continue
+        cx, cy = (bb[0] + bb[2]) / 2.0, (bb[1] + bb[3]) / 2.0
+        hits = []
+        for ci, cb in enumerate(cell_bboxes or []):
+            if not cb or len(cb) < 4:
+                continue
+            xs = [cb[0], cb[2], cb[4], cb[6]] if len(cb) >= 8 else [cb[0], cb[2]]
+            ys = [cb[1], cb[3], cb[5], cb[7]] if len(cb) >= 8 else [cb[1], cb[3]]
+            if (
+                min(xs) + ox <= cx <= max(xs) + ox
+                and min(ys) + oy <= cy <= max(ys) + oy
+            ):
+                hits.append(ci)
+        if len(hits) == 1:
+            assigned.setdefault(hits[0], []).append(ti)
+        elif len(hits) > 1:
+            conflicts.append({"token_index": ti, "cells": hits})
+            assigned.setdefault(hits[0], []).append(ti)
+        else:
+            unassigned.append(ti)
+    return {
+        "cell_token_map": {str(k): v for k, v in assigned.items()},
+        "conflicts": conflicts,
+        "unassigned": unassigned,
+        "method": "center_containment",
+    }

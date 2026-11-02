@@ -3457,11 +3457,19 @@ class GptActionsDispatchService:
             and str(o.get("op") or "") == "upsert_block"
             for o in _ops_out
         )
+        import unicodedata as _unic
+        _msg_norm = "".join(
+            c
+            for c in _unic.normalize(
+                "NFD", str(message or "").lower()
+            )
+            if _unic.category(c) != "Mn"
+        )
         _has_design_req = any(
-            t in str(message or "").lower()
+            t in _msg_norm
             for t in (
-                "kpi", "grafic", "tabela", "título", "titulo",
-                "hierarqu", "indicador", "tendenc", "tendência",
+                "kpi", "grafic", "tabela", "titulo",
+                "hierarqu", "indicador", "tendenc",
                 "visual", "design", "layout", "contraste",
                 "identidade", "tipograf",
             )
@@ -3746,6 +3754,34 @@ class GptActionsDispatchService:
                     "evolução", "ultimos", "últimos", "apresente",
                     "mostre", "acompanhar", "dias", "horas",
                     "minutos", "semanas", "meses",
+                    # DI-E2E-DESIGN-01R — palavras de instrução e
+                    # função gramatical não são objetivos de negócio:
+                    "desenvolva", "desenvolver", "usando", "mantendo",
+                    "mantenha", "inventar", "fontes", "oficiais",
+                    "dados", "reais", "deste", "este", "esta",
+                    "essa", "esse", "neste", "nesse", "nesta",
+                    "também", "tambem", "então", "entao", "cada",
+                    "quando", "onde", "como", "deve", "deveria",
+                    "preciso", "precisa", "gostaria", "poderia",
+                    "faça", "faca", "seja", "sejam", "sendo",
+                    "tenha", "tenho", "são", "sao", "apenas",
+                    "ainda", "assim", "depois", "antes", "sobre",
+                    "entre", "sem", "com", "por", "dos", "das",
+                    "nos", "nas", "aos", "às", "aos", "sua", "seu",
+                    "suas", "seus", "nossos", "nossas", "um", "uma",
+                    "dos", "das", "ele", "ela", "eles", "elas",
+                    # design/formato solicitado — não é indicador:
+                    "gráfico", "grafico", "gráficos", "titulo",
+                    "título", "títulos", "design", "layout",
+                    "formato", "resolução", "resolucao", "1080p",
+                    "4k", "alto", "alta", "claro", "clara",
+                    "limpo", "limpa", "bonito", "bonita",
+                    "moderno", "moderna", "elegante", "simples",
+                    "executivo", "executiva", "corporativo",
+                    "corporativa", "minimalista", "equilibrado",
+                    "equilibrada", "elementos", "tendencia",
+                    "tendência", "evolução", "histórica",
+                    "historica", "atualização", "atualizacao",
                 }
                 goal_map: dict[str, dict] = {}
                 # contexto escopifica a busca mas não é objetivo —
@@ -4317,8 +4353,14 @@ class GptActionsDispatchService:
         if not isinstance(ops, list) or not ops:
             return
         import re
+        import unicodedata as _u
 
         msg = str(message or "")
+        msg_norm = "".join(
+            c
+            for c in _u.normalize("NFD", msg.lower())
+            if _u.category(c) != "Mn"
+        )
         title = ""
         m = re.search(
             r"t[íi]tulo\s*[:=\"']?\s*[\"']?([^\"'\n.,;]{3,80})",
@@ -4328,29 +4370,53 @@ class GptActionsDispatchService:
         if m:
             title = m.group(1).strip()
         if not title:
-            # sem título explícito — deriva do primeiro objetivo
-            # de negócio reconhecido (rastreável, não inventado).
+            # sem título explícito — deriva do primeiro objetivo de
+            # negócio em ORDEM DE APARIÇÃO no briefing (não por
+            # ordem arbitrária de set).
             goals = payload.get("interpretedGoals") or []
-            if goals:
-                title = (
-                    "Painel de "
-                    + str(goals[0].get("goal") or "").capitalize()
+            ordered = sorted(
+                (
+                    g
+                    for g in goals
+                    if str(g.get("goal") or "")
+                ),
+                key=lambda g: msg_norm.find(
+                    str(g["goal"]).lower()
                 )
+                if msg_norm.find(str(g["goal"]).lower()) >= 0
+                else 10**6,
+            )
+            if ordered:
+                _g = str(ordered[0]["goal"])
+                # sigla que o usuário escreveu em maiúsculas
+                # permanece: OEE, não "Oee".
+                _g = (
+                    _g.upper()
+                    if _g.upper()
+                    in {
+                        t.strip(".,;:!?()\"'")
+                        for t in msg.split()
+                    }
+                    else _g.capitalize()
+                )
+                title = "Painel de " + _g
 
         params_msg: dict[str, Any] = {}
-        mp = re.search(r"(\d{1,4})\s*dias", msg, re.I)
+        mp = re.search(r"(\d{1,4})\s*dias", msg_norm, re.I)
         if mp:
             params_msg["periodDays"] = int(mp.group(1))
         for kw, gran in (
-            (r"mensal|por\s+m[eê]s|m[eê]s\s+a\s+m[eê]s|monthly", "month"),
+            (r"mensal|por\s+mes|mes\s+a\s+mes|monthly", "month"),
             (r"semanal|por\s+semana|weekly", "week"),
             (r"anual|por\s+ano|yearly", "year"),
-            (r"di[aá]ri|por\s+dia|daily", "day"),
+            (r"diari|por\s+dia|daily", "day"),
         ):
-            if re.search(kw, msg, re.I):
+            if re.search(kw, msg_norm, re.I):
                 params_msg["granularity"] = gran
 
-        want_table = bool(re.search(r"tabela|detalh|lista", msg, re.I))
+        want_table = bool(
+            re.search(r"tabela|detalh|lista", msg_norm, re.I)
+        )
         plan_by_type = {
             str(b.get("blockType") or ""): b
             for b in blocks
