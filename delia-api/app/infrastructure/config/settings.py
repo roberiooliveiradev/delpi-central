@@ -269,6 +269,12 @@ class Settings:
         self.subobjective_fanout_enabled = _env_flag(
             "DELIA_SUBOBJECTIVE_FANOUT"
         )
+        # S5 (doc 214): durable checkpoint storage for investigation
+        # resume — composition config ONLY; unset means no durable
+        # checkpointer (in-process behavior, unchanged default).
+        self.checkpoint_db_path = (
+            os.getenv("DELIA_CHECKPOINT_DB") or ""
+        ).strip() or None
         _call_attempts_raw = os.getenv("DELIA_LLM_CALL_MAX_ATTEMPTS")
         self.llm_call_max_attempts_config_source = (
             "environment"

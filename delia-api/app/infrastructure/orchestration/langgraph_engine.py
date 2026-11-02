@@ -72,6 +72,7 @@ from __future__ import annotations
 
 import logging
 import operator
+import time
 from typing import Annotated, Any, Callable, Mapping, TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -126,7 +127,7 @@ class _GovernedTurnState(TypedDict, total=False):
     workspace_context: WorkspaceContext | None
     prior_turns: tuple[ConversationContextTurn, ...]
     prepare_only: bool
-    deadline: TurnDeadline
+    deadline_data: dict
     admission_class: str | None
     admission_owner_required: bool
     assessment_reuse: bool
@@ -271,7 +272,7 @@ class LangGraphCapabilityOrchestrator:
         # Same terminal guards as Engine A's attempt entry: exhausted
         # budget/cancel raise the typed exceptions the shared runner
         # maps to PROCESSING_TIMEOUT.
-        state["deadline"].check("turn_start")
+        self._dl(state).check("turn_start")
         _emit_activity(
             phase=ActivityPhase.CONTEXTUALIZING,
             correlation=state["correlation"],
@@ -287,7 +288,7 @@ class LangGraphCapabilityOrchestrator:
                 workspace_context=state.get("workspace_context"),
                 prior_turns=state.get("prior_turns") or (),
                 correlation=state["correlation"],
-                deadline=state["deadline"],
+                deadline=self._dl(state),
             )
         )
         return {
@@ -304,7 +305,7 @@ class LangGraphCapabilityOrchestrator:
             actor_user_id=state.get("actor_user_id"),
             correlation=state["correlation"],
             prepare_only=state["prepare_only"],
-            deadline=state["deadline"],
+            deadline=self._dl(state),
         )
         return {**self._traced(state, "confirmation"), "attempt": attempt}
 
@@ -312,7 +313,7 @@ class LangGraphCapabilityOrchestrator:
         self, state: _GovernedTurnState
     ) -> dict[str, Any]:
         groups, failures = self._gates._groups(
-            state["correlation"], state["deadline"]
+            state["correlation"], self._dl(state)
         )
         attempt = self._gates._surface_inquiry_attempt(
             groups, failures, state["correlation"]
@@ -385,7 +386,7 @@ class LangGraphCapabilityOrchestrator:
                 prior_turns=state.get("prior_turns") or (),
                 prepare_only=state["prepare_only"],
                 unbound_outcome=unbound_outcome,
-                deadline=state["deadline"],
+                deadline=self._dl(state),
             )
             traced = self._traced(state, "owner_path")
             ledger = _NATIVE_ASSESSMENT_LEDGER.get()
@@ -440,7 +441,7 @@ class LangGraphCapabilityOrchestrator:
         objectives = state.get("subobjectives") or ()
         if not objectives:
             return "owner_path"
-        deadline = state.get("deadline")
+        deadline = self._dl(state)
         if deadline is not None and deadline.remaining_seconds() <= 0:
             # Budget exhausted — synthesis closes every pending
             # subobjective with an honest gap, then END.
@@ -485,11 +486,17 @@ class LangGraphCapabilityOrchestrator:
                 **self._traced(state, "subobjective_plan"),
                 "subobjectives": (),
             }
+        if state.get("subobjectives"):
+            # Resume: the checkpointed plan is the durable source of
+            # truth — re-decomposing would burn a model call and could
+            # nondeterministically diverge from committed subobjective
+            # identity/state (S3 continuity + S5 resume contract).
+            return self._traced(state, "subobjective_plan")
         objectives = self._gates._decompose_objective(
             state["input_text"],
             correlation=state["correlation"],
             workspace_context=state.get("workspace_context"),
-            deadline=state["deadline"],
+            deadline=self._dl(state),
         )
         return {
             **self._traced(state, "subobjective_plan"),
@@ -510,7 +517,7 @@ class LangGraphCapabilityOrchestrator:
             prior_turns=(),
             prepare_only=state["prepare_only"],
             unbound_outcome=None,
-            deadline=state["deadline"],
+            deadline=self._dl(state),
             depth=1,
         )
         outcome = attempt.outcome
@@ -561,7 +568,7 @@ class LangGraphCapabilityOrchestrator:
             for oid, s in states.items()
             if s in (SUBOBJECTIVE_COMPLETED, SUBOBJECTIVE_PARTIAL)
         }
-        deadline = state.get("deadline")
+        deadline = self._dl(state)
         deadline_gone = (
             deadline is not None and deadline.remaining_seconds() <= 0
         )
@@ -649,6 +656,20 @@ class LangGraphCapabilityOrchestrator:
             )
         return out
 
+    @staticmethod
+    def _dl(state: _GovernedTurnState) -> TurnDeadline:
+        """Rebuild the monotonic deadline from its serde-safe wire
+        form — msgpack cannot persist the clock callable, so the state
+        carries primitive fields only (S5 checkpoint contract)."""
+        data = state["deadline_data"]
+        # ends_at_epoch is wall-clock: monotonic epochs do not survive
+        # a real process restart, so the wire form stores the wall
+        # instant and the rebuilt deadline ticks on time.time.
+        return TurnDeadline(
+            ends_at=data["ends_at_epoch"],
+            clock=time.time,
+        )
+
     # ---------------- contract entrypoint ----------------
 
     def attempt(
@@ -679,7 +700,11 @@ class LangGraphCapabilityOrchestrator:
                 "workspace_context": workspace_context,
                 "prior_turns": prior_turns,
                 "prepare_only": max_execution_stage == "prepare",
-                "deadline": deadline,
+                "deadline_data": {
+                    "ends_at_epoch": (
+                        time.time() + deadline.remaining_seconds()
+                    ),
+                },
                 "trace": [],
             }
             if thread_id is not None:

@@ -109,14 +109,22 @@ class TestSelection:
 class TestUntrustedSurfaces:
     def test_p4_input_text_cannot_select_engine(self):
         """P4 — the resolver signature takes only (engine_name,
-        gates): request input has no path into selection. An
-        adversarial user text never reaches composition."""
+        gates, subobjective_fanout_enabled, checkpoint_db_path):
+        request input has no path into selection. An adversarial
+        user text never reaches composition. The fan-out flag and
+        the checkpoint path are config-sourced (Settings env), not
+        request input."""
         import inspect
 
         params = list(
             inspect.signature(_resolve_orchestration_attempt).parameters
         )
-        assert params == ["engine_name", "gates"]
+        assert params == [
+            "engine_name",
+            "gates",
+            "subobjective_fanout_enabled",
+            "checkpoint_db_path",
+        ]
 
     def test_p5_provider_metadata_cannot_select_engine(self):
         """P5 — selection is config-resolved before providers are

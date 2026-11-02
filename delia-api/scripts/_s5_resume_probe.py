@@ -69,13 +69,13 @@ def main():
     proposal = [
         _select("g1", "r1", extra=_decompose(
             ("ler g1", (), ("a",)),
-            ("ler g2", (), ("b",)),
+            ("ler g2", (0,), ("b",)),
         )),
         _select("g2", "r2"),
     ]
     # phase 1 — crash mid-run
     p1 = FakeProvider("p1", [_group("p1", "g1", caps1)])
-    p2 = FakeProvider("p2", [_group("p2", "g2", caps2)])
+    p2 = _KillThenOk("p2", [_group("p2", "g2", caps2)], kill_calls=1)
     eng1 = build(db, {"p1": p1, "p2": p2}, proposal, None)
     thread = "probe-investigation-1"
     try:
@@ -85,14 +85,38 @@ def main():
     except Exception as e:
         print("PHASE1 crash:", type(e).__name__, str(e)[:120])
     # phase 2 — resume on fresh instance
-    eng2 = build(db, {"p1": p1, "p2": p2}, proposal, None)
+    from langgraph.checkpoint.sqlite import SqliteSaver
+    import sqlite3
+    conn = sqlite3.connect(db, check_same_thread=False)
+    ck = SqliteSaver(conn).get_tuple(
+        {"configurable": {"thread_id": thread}})
+    if ck is not None:
+        cv = ck.checkpoint.get("channel_values", {})
+        print("CK deadline_data:", cv.get("deadline_data"))
+        print("CK sub_results:", cv.get("sub_results"))
+        print("CK subobjectives:", cv.get("subobjectives"))
+    eng2 = build(db, {"p1": p1, "p2": p2},
+                 [_select("g2", "r2")], None)
     try:
         att = eng2.attempt("ler g1 e g2", correlation_id="c1", turn_deadline=None,
                            thread_id=thread)
         print("PHASE2 status:", att.status, "content?", bool(att.content))
+        print("PHASE2 trace:", eng2.last_node_trace)
+        ck2 = SqliteSaver(sqlite3.connect(db, check_same_thread=False)
+                          ).get_tuple({"configurable": {"thread_id": thread}})
+        if ck2 is not None:
+            cv2 = ck2.checkpoint.get("channel_values", {})
+            for r in cv2.get("sub_results") or []:
+                print("FINAL sub_result:", r["subobjective_id"], r["state"],
+                      r.get("attempt_status"), "gaps=", r.get("gaps"))
     except Exception as e:
         print("PHASE2 raise:", type(e).__name__, str(e)[:200])
     print("p1.calls", len(p1.calls), "p2.calls", len(p2.calls))
+    # Contract: durably-completed so_1 must NOT be re-invoked
+    # (p1.calls stays 1); so_2 was never committed, so governed
+    # re-execution (incl. retry of the killed call) is legitimate.
+    ok = len(p1.calls) == 1 and len(p2.calls) >= 2
+    print("RESUME_NO_DUPLICATE:", "PASS" if ok else "FAIL")
 
 
 if __name__ == "__main__":
