@@ -1473,3 +1473,15 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Produtor R06 (Kardex/CPV) | PARTIAL | artefato cpv xlsb existe; endpoint não presente no namespace financeiro |
 | Produtor R07 (Inventários) | PARTIAL | Invent.xlsb existe; recorte D3_DOC=INVENT não comprovado |
 | Separação op. × informação | PROVEN | R12/R15 = ERP_OPERATION — Portal só consulta estado |
+
+---
+
+## R04-G059 — owner/contrato confirmados (2026-11-02)
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Produtor consumption-audit | PROVEN | api-delpi use_cases/supplies/; scope consumption-audit.read |
+| BFF CF pode consumir | TO_VERIFY | CF_S2S_SCOPE vazio = carrega defaults do client; verificar se consumption-audit.read está nos defaults do client CF no Keycloak |
+| Boundary | PROVEN | supplies-api NÃO é caminho; produtor api-delpi reutilizável via S2S CF existente (R09 pattern) |
+| Contrato BFF R04 | NOT_IMPLEMENTED | requer nova rota /closing/competences/{period}/production-order-consumption (ou convenção vigente) |
+| Semântica MATR860 | NÃO CONFIRMADA | visão operational_view apenas; equivalência pendente |
