@@ -1186,3 +1186,15 @@ o defeito e a invocacao prematura de discovery READ num pedido de write.
 
 EM CURSO: rerun doc211 (CAIO/CLARA/EVA/SURI enabled) -> /app/.battery/eval_doc211_v2.log
 DONE marker. Depois: fix neg_delete, rerun 2 neg_delete + afetados, regressao, §9.
+
+## RESUME-POINT pos-diagnostico (SHA 2521096881)
+
+EM CURSO: rerun doc211 full-owner env -> /app/.battery/eval_doc211_v2.log (DONE marker no fim).
+neg_delete: invoke = self._invoke discovery/context ~orchestration.py L5626/5693 — stage que busca
+contexto do owner apos capability selection. FIX: apos select_capability retornar remote_name
+nao-publicado E goal_class=create_or_modify -> skip discovery invoke, seguir WRITE_REJECTED/
+NOT_APPLICABLE direto. Verificar em _governed_owner_path entre capability selection e _invoke
+calls (~L5626) — gate por goal_class/operation_class do descriptor, NAO por remote_name literal.
+BATERIA FINAL: 45P/44F — clusters: 22 cmp env (rerun em curso), 8 EVIDENCE_RELEVANCE nomenclatura,
+4-5 ADMISSION_ERROR, 5 GROUP_SELECTION heldout, 3 GOAL_INTERP prepare, 2 AUTHZ neg_delete,
+1 EVIDENCE_REJECTION t2_workspace, 1 cmp_27 ADMISSION.
