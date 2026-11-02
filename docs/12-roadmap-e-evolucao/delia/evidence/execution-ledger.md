@@ -1130,3 +1130,19 @@ COMANDOS DE RETOMADA:
 PROXIMO: quando FINAL_DONE -> matriz completa -> fix neg_delete (AuthZ antes de invoke) se defeito real ->
 verificar cmp_* env-vs-defeito -> rerun afetados -> regressao 470 -> publicar.
 TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## ENV-FIX doc211 corpus (nao e defeito — owners desabilitados no eval)
+
+cmp_01-28 pedem CAIO/CLARA/SURI/EVA; container delia-t21-main so tinha DAVI/TEO/VISTA.
+Rerun doc211 com env (mesmo padrao TEO/VISTA):
+docker exec -e DELIA_MCP_CAIO_ENABLED=1 -e DELIA_MCP_CAIO_BASE_URL=http://commercial-api:8000/mcp \
+ -e DELIA_MCP_CAIO_HOST_HEADER=localhost:8000 \
+ -e DELIA_MCP_CLARA_ENABLED=1 -e DELIA_MCP_CLARA_BASE_URL=http://controllership-finance-api:8000/mcp \
+ -e DELIA_MCP_CLARA_HOST_HEADER=localhost:8000 \
+ -e DELIA_MCP_EVA_ENABLED=1 -e DELIA_MCP_EVA_BASE_URL=http://engineering-api:8000/mcp \
+ -e DELIA_MCP_EVA_HOST_HEADER=localhost:8000 \
+ -e DELIA_MCP_SURI_ENABLED=1 -e DELIA_MCP_SURI_BASE_URL=http://supplies-api:8000/mcp \
+ -e DELIA_MCP_SURI_HOST_HEADER=localhost:8000 \
+ delia-t21-main sh -c "cd /app && CORPUS_SET=doc211 python3 scripts/local_orchestration_reliability_eval.py 1 >> /app/.battery/eval_doc211_v2.log 2>&1"
+CONFIRMAR nomes de rede dos containers (docker network ls / inspect — podem ser delpi-* ou sem prefixo).
+Verificar tambem DELIA_MCP_DELEGATED se exigido. Rerun separado NAO mistura com eval_final.log.
