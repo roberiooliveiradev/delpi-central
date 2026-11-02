@@ -1794,3 +1794,15 @@ OWNER_RESIDUALS: davi strict-lexical-match (owner-side).
 ROLLBACK: revert trivial do feedback; comportamento anterior = honest-empty.
 TASK_STATUS=COMPLETE (causas corrigidas/justificadas; residuais classificados)
 COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## PYDANTIC-AI-ARGGEN — resume point (SHA 36c9592535)
+
+TASK=DELIA-C3-PYDANTIC-AI-ARGUMENT-INTELLIGENCE-AND-MCP-CONTRACT-REMEDIATION-01
+CASE-ALVO: "produto 30190123" -> description-field em vez de code-field -> 0 items
+  (code->1 item real; provado). MESMA CLASSE plural/singular -> reformulacao ok.
+pydantic-ai 2.60.0 JA instalado no container. Boundary: _propose_candidate_arguments
+  (InvokeModel->JSON); _validate_instance valida schema antes de invoke.
+PLANO: adapter pydantic_arggen (Agent+structured output sobre schema real) ->
+  flag DELIA_ARGGEN_ENGINE=llm|pydantic_ai (opt-in eval) -> _validate_instance
+  segue owner contrato; sem segundo planner; invoke live unchanged.
+PROXIMO: implementar adapter + flag + tests + E2E 30190123 + A/B.
