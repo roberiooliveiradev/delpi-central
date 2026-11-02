@@ -289,6 +289,11 @@ class Settings:
         self.tool_selection_mode = (
             os.getenv("DELIA_TOOL_SELECTION_MODE") or "live"
         ).strip().lower()
+        # Doc 217+ remediation: argument-generation engine — llm
+        # default; pydantic_ai is eval-only structured arggen.
+        self.arggen_engine = (
+            os.getenv("DELIA_ARGGEN_ENGINE") or "llm"
+        ).strip().lower()
         _call_attempts_raw = os.getenv("DELIA_LLM_CALL_MAX_ATTEMPTS")
         self.llm_call_max_attempts_config_source = (
             "environment"

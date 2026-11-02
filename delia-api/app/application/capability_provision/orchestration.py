@@ -4723,6 +4723,8 @@ class OperationalCapabilityOrchestrator:
         orchestration_instructions: Mapping[str, str] | None = None,
         subobjective_investigation_enabled: bool = False,
         tool_selection_mode: str = "live",
+        arggen_engine: str = "llm",
+        arggen_model_config: Mapping[str, str] | None = None,
     ) -> None:
         self._providers = {p.provider_id: p for p in providers}
         # R1/M01: declarative instruction text is composition-injected
@@ -4771,6 +4773,8 @@ class OperationalCapabilityOrchestrator:
         # the canonical path untouched; retrieval modes restrict the
         # candidate surface before selection (eval-only).
         self._tool_selection_mode = (tool_selection_mode or "live").strip().lower()
+        self._arggen_engine = (arggen_engine or "llm").strip().lower()
+        self._arggen_model_config = dict(arggen_model_config or {})
         # CRI E2-R3: the answer-requirements clause is a governed
         # declarative resource injected by composition — never embedded
         # in this module. The CRI enhancement activates only when BOTH
@@ -13960,6 +13964,41 @@ class OperationalCapabilityOrchestrator:
             if payload_fields
             else (schema or {"type": "object"})
         )
+        if (
+            self._arggen_engine == "pydantic_ai"
+            and self._arggen_model_config.get("base_url")
+        ):
+            from app.infrastructure.arggen.pydantic_arggen import (
+                propose_arguments,
+            )
+
+            try:
+                prev = (
+                    json.loads(owner_feedback)
+                    .get("owner_feedback", {})
+                    .get("previous_arguments")
+                    if owner_feedback
+                    else None
+                )
+                pyd_args = propose_arguments(
+                    objective=input_text,
+                    capability_name="candidate",
+                    schema=schema or {"type": "object"},
+                    previous_arguments=(
+                        prev if isinstance(prev, Mapping) else None
+                    ),
+                    base_url=self._arggen_model_config["base_url"],
+                    api_key=self._arggen_model_config.get("api_key", ""),
+                    model=self._arggen_model_config.get("model", ""),
+                )
+            except Exception:
+                pyd_args = None
+            _logger.info(
+                "orchestration stage=candidate_arguments "
+                "engine=pydantic_ai produced=%s correlation_id=%s",
+                bool(pyd_args), correlation,
+            )
+            return pyd_args
         proposal = self._model_stage_proposal(
             input_text,
             block_tag="schema",

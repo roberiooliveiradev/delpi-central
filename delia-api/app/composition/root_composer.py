@@ -476,6 +476,12 @@ def _compose_turn_handler(
                 settings.subobjective_investigation_enabled
             ),
             tool_selection_mode=settings.tool_selection_mode,
+            arggen_engine=settings.arggen_engine,
+            arggen_model_config={
+                "base_url": settings.llm_base_url,
+                "api_key": settings.llm_api_key,
+                "model": settings.llm_model,
+            },
         )
         if providers and orchestration_instructions is not None
         else None

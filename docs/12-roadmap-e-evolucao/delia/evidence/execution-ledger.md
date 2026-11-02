@@ -1830,3 +1830,12 @@ Settings disponiveis em self._settings? verificar ctor do orchestrator —
 model port: OpenAICompatibleModelInvocationAdapter base_url/api_key/model
 via settings.llm_*. (3) E2E: "qual a descricao do produto 30190123" ->
 deve usar code field. (4) A/B llm vs pydantic_ai.
+
+## PYDANTIC-AI — wiring completo compilado (SHA pendente)
+
+DONE: DELIA_ARGGEN_ENGINE flag (llm default|pydantic_ai opt-in) +
+arggen_model_config (llm_base_url/api_key/model) + branch em
+_propose_candidate_arguments: engine==pydantic_ai -> propose_arguments
+(dynamic schema model + previous_arguments) -> retorna p/ _validate_instance.
+NEXT: E2E "qual a descricao do produto 30190123" com flag pydantic_ai
+-> code field? -> A/B llm vs pydantic_ai -> regressao -> §17 report.
