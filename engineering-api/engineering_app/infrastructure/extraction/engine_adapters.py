@@ -516,10 +516,22 @@ class TableStructureEngine:
                     pass
             cb = crop_box or [41, 31, 2295, 262]
             crop = img[cb[1] : cb[3], cb[0] : cb[2]]
+            # RQ-01: tokens OCR reais via pipeline governado (não só amostra)
+            from engineering_app.infrastructure.extraction.subprocess_executor import (  # noqa: E501
+                run_pipeline_isolated,
+            )
+            from engineering_app.application.drawing.perception_contract import (
+                associate_tokens_to_cells,
+            )
+            rec = run_pipeline_isolated(
+                pdf_bytes, pipeline_id="pdfium_render_paddleocr", timeout_s=190
+            )
+            ocr_tokens = rec.get("_tokens_sample") or []
             eng = TableStructureRecognition()
             out = eng.predict(input=crop)
             tables = []
             cells = []
+            cell_bboxes = []
             for res in out or []:
                 r = res if isinstance(res, dict) else res.json
                 st = r.get("structure") or []
@@ -530,15 +542,31 @@ class TableStructureEngine:
                         "structure_score": r.get("structure_score"),
                     }
                 )
-                for i, bb in enumerate(r.get("bbox") or []):
-                    cells.append(
-                        make_cell(
-                            row=i // 8,
-                            col=i % 8,
-                            text="",
-                            bounding_box_px=list(bb) if bb else None,
-                        )
+                for bb in r.get("bbox") or []:
+                    cell_bboxes.append(bb)
+            # RQ-02: associação OCR↔célula determinística
+            assoc = associate_tokens_to_cells(
+                ocr_tokens, cell_bboxes, crop_offset=(cb[0], cb[1])
+            )
+            cmap = assoc["cell_token_map"]
+            for i, bb in enumerate(cell_bboxes):
+                tis = cmap.get(str(i)) or []
+                text = " ".join(
+                    (ocr_tokens[ti].get("raw_text") or ocr_tokens[ti].get("normalized_text") or "")
+                    for ti in tis
+                    if ti < len(ocr_tokens)
+                ).strip()
+                cells.append(
+                    make_cell(
+                        row=i // 8,
+                        col=i % 8,
+                        text=text,
+                        bounding_box_px=list(bb) if bb else None,
+                        ambiguous=bool(
+                            any(c["token_index"] in tis for c in assoc["conflicts"])
+                        ),
                     )
+                )
             return make_result(
                 provider_id=self.provider_id,
                 provider_version="slanet_7.67MB",
@@ -548,7 +576,7 @@ class TableStructureEngine:
                 execution_mode="local_isolated",
                 tables=tables,
                 cells=cells,
-                provenance="api-delpi pdf → render → table crop → SLANet → v1",
+                provenance="api-delpi pdf → render → table crop → SLANet → OCR-cell assoc → v1",
                 limitations=[
                     "candidates only",
                     "estrutura tabular sem texto — OCR associa depois",
