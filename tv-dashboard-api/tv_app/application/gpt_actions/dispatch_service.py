@@ -4299,7 +4299,8 @@ class GptActionsDispatchService:
                 # heading recebe o título do briefing e componentes
                 # não pedidos saem do plano.
                 self._enrich_composition_ops(
-                    payload, blocks, message
+                    payload, blocks, message,
+                    request_goals=set(goal_map),
                 )
                 # readiness honesto: layout pronto ≠ dados prontos.
                 if payload["bindingPlan"]["state"] != "RESOLVED":
@@ -4331,6 +4332,7 @@ class GptActionsDispatchService:
         payload: dict[str, Any],
         blocks: list[dict[str, Any]],
         message: Any,
+        request_goals: set[str] | None = None,
     ) -> None:
         """DI-E2E-DESIGN-01 — ONE REQUEST → COMPLETE DASHBOARD.
 
@@ -4458,13 +4460,39 @@ class GptActionsDispatchService:
             if plan is None:
                 enriched.append(op)
                 continue
-            # ambiguidade preservada: só resolve fonte quando o
-            # plano canônico já estava RESOLVED ou existe um único
-            # candidato justificado — nunca pick silencioso.
-            if plan.get("state") != "RESOLVED" and len(justified) != 1:
+            # seleção por PAPEL (F2): entre candidatos justificados,
+            # prefere o de menor contaminação semântica — goals ⊆
+            # pedido e menor conjunto (meta vs realizado não são
+            # equivalentes de KPI). Empate por score.
+            role_ok = [
+                c
+                for c in justified
+                if set(c.get("goals") or [])
+                <= (request_goals or set())
+            ] or justified
+            role_ok = sorted(
+                role_ok,
+                key=lambda c: (
+                    len(set(c.get("goals") or [])),
+                    -float(c.get("score") or 0.0),
+                ),
+            )
+            # ambiguidade preservada: só resolve quando plano
+            # RESOLVED, único justificado ou vencedor de papel
+            # inequívoco (menos goals extraneous que o segundo).
+            _role_unique = len(role_ok) == 1 or (
+                role_ok
+                and len(set(role_ok[0].get("goals") or []))
+                < len(set(role_ok[1].get("goals") or []))
+            )
+            if (
+                plan.get("state") != "RESOLVED"
+                and len(justified) != 1
+                and not _role_unique
+            ):
                 enriched.append(op)
                 continue
-            cand = justified[0] if justified else (
+            cand = role_ok[0] if role_ok else (
                 plan_cands[0] if plan_cands else None
             )
             oid = (
