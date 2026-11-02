@@ -1285,3 +1285,16 @@ L5521 (defesa adicional p/ descriptor nao-write) e registrar o caso como
 comportamento defensavel — a recusa AuthZ efetiva (sem mutacao) se cumpriu.
 Reavaliacao opcional: selecao deve pesar remote_name inexistente mais cedo
 (melhoria, nao bug de autorizacao). Neg_write PASS confirma o gate AuthZ real.
+
+## RESUME-POINT (SHA 2aad8ba959) — homologacao continuada
+
+doc211 v2 (full-owner env) em curso: 7/28, PASS=cmp_01,cmp_03 (caio.* invocado corretamente).
+CLARA agora invoca clara.* MAS ainda GROUP_SELECTION_ERROR em cmp_05-07 — investigar: selecao
+chega ao owner certo mas divergence persiste (pode ser capability-level ou owner contract).
+BATERIA 89/89 final: 45P/44F. Clusters residuais pendentes de analise pos-rerun:
+EVIDENCE_RELEVANCE (8, nomenclatura — possivel judgment defect ou corpus coverage),
+ADMISSION_ERROR (4-5), GROUP_SELECTION heldout (5, owner habilitado => candidato defeito real),
+GOAL_INTERPRETATION (3, prepare-class), EVIDENCE_REJECTION (1), AUTHZ neg_delete (arbitrado).
+PROXIMO: aguardar doc211 v2 DONE -> contagem; inspecionar um FAIL clara (trace proposals);
+GROUP_SELECTION heldout (ho_vista_playlists/nh_vista/t2_teo_resp/t2_vista_screens) reruns isolados;
+regressao 470 + relatorio §9. COMANDOS no ledger acima (secao matriz causal).
