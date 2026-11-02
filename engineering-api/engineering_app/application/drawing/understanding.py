@@ -886,16 +886,20 @@ def build_understanding(
                     "afirmada",
                 ],
             }
-        elif not col_types:
+        elif (
+            table and table.get("unreliable_boundary")
+        ) or not col_types:
             bom_comparison = {
                 "state": "NOT_COMPARABLE",
                 "matched": [],
                 "missing_in_drawing_table": [],
                 "not_in_bom": [],
                 "occurrence_mismatches": [],
+                "extracted_but_unclassified": [],
                 "limitations": [
-                    "tabela sem cabeçalho tipado — sequência de códigos "
-                    "não comprova tabela de componentes",
+                    "tabela sem cabeçalho tipado ou fronteira "
+                    "não confiável — sequência de códigos não comprova "
+                    "tabela de componentes",
                 ],
             }
         else:
