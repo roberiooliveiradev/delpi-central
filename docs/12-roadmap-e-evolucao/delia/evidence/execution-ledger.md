@@ -1146,3 +1146,19 @@ docker exec -e DELIA_MCP_CAIO_ENABLED=1 -e DELIA_MCP_CAIO_BASE_URL=http://commer
  delia-t21-main sh -c "cd /app && CORPUS_SET=doc211 python3 scripts/local_orchestration_reliability_eval.py 1 >> /app/.battery/eval_doc211_v2.log 2>&1"
 CONFIRMAR nomes de rede dos containers (docker network ls / inspect — podem ser delpi-* ou sem prefixo).
 Verificar tambem DELIA_MCP_DELEGATED se exigido. Rerun separado NAO mistura com eval_final.log.
+
+## BATERIA COMPLETA 89/89 (SHA 18479ed41c) — matriz final + rerun doc211
+
+RESULTADO: 45 PASS / 44 FAIL (log /app/.battery/eval_final.log, FINAL_DONE presente).
+Clusters FAIL: 22 cmp_* GROUP_SELECTION_ERROR (doc211 owners nao habilitados — rerun em curso),
+ 2 AUTHZ_DENIED_EXPECTED (neg_delete — invoke teo.get_context em pedido delete; rerun isolado
+ confirmou FAIL real; teo.get_context e READ — contrato do corpus marca qualquer invoke=FAIL;
+ verificar se admission deveria recusar antes OU se harness conta discovery-context legitimo),
+ 3 GOAL_INTERPRETATION (prepare-class), 8 EVIDENCE_RELEVANCE (nomenclatura), 1 EVIDENCE_REJECTION,
+ 4 ADMISSION_ERROR, 3 GROUP_SELECTION heldout (ho_teo_ordinal, ho_vista_playlists, nh_vista,
+ t2_teo_resp, t2_vista_screens), 1 cmp_27 ADMISSION_ERROR.
+
+EM CURSO: rerun doc211 com CAIO/CLARA/EVA/SURI enabled -> /app/.battery/eval_doc211_v2.log
+ (marcador DONE no fim; ~25min).
+PROXIMO: ler trace neg_delete (runs.json schema: {summary, runs[]} — verificar chaves),
+ classificar defeito vs harness-semantics, corrigir se real, rerun afetados, regressao, relatorio §9.
