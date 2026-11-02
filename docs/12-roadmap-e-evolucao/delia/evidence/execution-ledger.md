@@ -1035,3 +1035,22 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 ## 2026-11-01 — RESUME EXATO S5 serde fix: langgraph_engine.py trocar state["deadline"]->self._dl(state) nas linhas 274,290,307,315,388,492,513 e attempt() state build linha ~682 "deadline": deadline -> "deadline_data": {"ends_at": deadline.ends_at, "started_at": deadline.started_at}; adicionar field deadline_data no _GovernedTurnState (TypedDict) + helper `def _dl(state)->TurnDeadline: d=state["deadline_data"]; return TurnDeadline(ends_at=d["ends_at"], started_at=d.get("started_at"))` (clock default monotonic). TAMBEM serializar: SubObjective( frozen dataclass ok? testar) e GovernedCapabilityAttempt (so em fim de node -> ok se serde falhar mover para fora do checkpoint). Re-run: docker exec delia-t21-main python3 //app/scripts/_s5_resume_probe.py — esperado PHASE1 crash simulado + PHASE2 resume com p1/p2 call counts (prova no-duplicate-READ). requirements: add langgraph-checkpoint-sqlite==3.1.3. Depois composer wiring DELIA_CHECKPOINT_DB + testes §8.3 + S6 rubrica.
 
 ## 2026-11-01 — S5 deadline_data refactor APLICADO (langgraph_engine.py): deadline_data dict no state + _dl() helper + todos os usos state["deadline"]->self._dl(state). PROXIMO COMANDO: docker exec delia-t21-main python3 //app/scripts/_s5_resume_probe.py (esperado: PHASE2 resume sem re-invoke duplicado; se outro tipo falhar serde — SubObjective/GovernedCapabilityAttempt — mesmo padrao: dados serializaveis + reconstrucao no boundary). Depois: pin langgraph-checkpoint-sqlite==3.1.3 requirements, composer DELIA_CHECKPOINT_DB, testes §8.3, S6 rubrica, integracao.
+
+## S5+S6 implementation complete (published d89621de87 + 127581c920)
+
+S5 — durable checkpoint/resume REAL, nao mock:
+- langgraph_engine: deadline_data wall-clock serde (TurnDeadline reconstruido no boundary), plan node no-op no resume (continuidade S3), state_version guard fail-closed (CHECKPOINT_STATE_VERSION s5.v1, reducer write-once _keep_persisted).
+- Wiring: settings DELIA_CHECKPOINT_DB -> root_composer -> SqliteSaver (fail-closed se configurado sem driver). requirements-eval.txt pin (producao continua sem backend local — Task 07 pin preservado).
+- tests/test_subobjective_resume.py 7/7: restart-resume sem re-invoke de so_1 commitado; isolamento por thread_id; revogacao AuthZ no resume bloqueia branch sem fallback; budget expirado -> PROCESSING_TIMEOUT sem fabricacao; checkpoint corrompido -> fail-closed pre-invoke; versao incompativel -> fail-closed; rollback via checkpoint anterior re-executa trabalho revertido.
+- Probe real: _s5_resume_probe.py — crash mid-wave (RuntimeError no provider), fresh engine + mesmo sqlite -> resume, so_1 nao re-invocado, so_2 re-executado e completado.
+
+S6 — cobertura de evidencia por subobjetivo + sintese fundamentada:
+- Branch record ganha is_complete, contradictions, period, scope, unit (owner-declared, nunca inferido).
+- _subobjective_coverage: sufficient/partial/unsupported/absent/contradictory — SUCCESS sem evidence_refs = unsupported; tool-200 != fato empresarial.
+- _dimension_conflicts: subs com evidence_needed compartilhado e period/scope/unit divergentes -> conflito declarado, sem reconciliacao fabricada.
+- Sintese: limitations explicitas por cobertura (unsupported/partial/contradictory/BLOCKED-gap); evidence_coverage no state final.
+- tests/test_subobjective_evidence.py 7/7: suficiente, parcial (is_complete), contradicao declarada, conflito de periodo cross-owner, complementar 2 owners, owner-503 apos outros completos, 200-vazio apresentado honestamente.
+
+REGRESSAO: 470 testes orquestracao/engine/governed/instructions/subobjective — 0 falhas.
+PINS atualizados: resolver signature (fanout+checkpoint params config-sourced), _SNAPSHOT instrucao subobjectives (sha 9d50a9bc…, 1248b, v39).
+VERDICT: S5=IMPLEMENTATION_GREEN (evidencia real de resume), S6=IMPLEMENTATION_GREEN. Restam: integracao E2E doc214 §10, interop A-F, relatorio final.
