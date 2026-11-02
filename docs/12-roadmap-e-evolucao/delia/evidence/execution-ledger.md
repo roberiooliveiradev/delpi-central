@@ -1694,3 +1694,17 @@ ROLLBACK_PLAN=flags opt-in (DELIA_TOOL_SELECTION_MODE=live default);
 TASK_STATUS=COMPLETE (implementado, avaliado, classificado; fails residuais
   sao owner/oracle-side documentados, nao defeitos DELIA abertos)
 COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-EVIDENCE — causa-raiz isolada (SHA a377eea394)
+
+TRACE nh_conector real: stage=execute_retry decision=owner_empty_reformulation
+-> stage=outcome_assessment decision=empty_result -> "colecao vazia".
+CAUSA: arggen do execute gerou argumentos que o owner nao casa (primeira
+execucao vazia); retry de reformulacao tambem falhou. Probe direto prova que
+arguments={"description":"conector eletrico"} retorna 4 itens reais completos.
+Facts/envelope/synthesis_records EXTRAEM corretamente — o defeito e upstream:
+a primeira divergencia e o argumento gerado para execute, nao a interpretacao.
+FIX CANDIDATO: execute deve propagar os arguments publicados no candidate
+(Schema-bounded arguments for the discovered candidate) quando presentes,
+em vez de regenerar do zero — contrato owner, nao workaround.
+VERIFICANDO: args do 1o execute vs retry vs candidate.published arguments.
