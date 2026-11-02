@@ -475,6 +475,7 @@ def _compose_turn_handler(
             subobjective_investigation_enabled=(
                 settings.subobjective_investigation_enabled
             ),
+            tool_selection_mode=settings.tool_selection_mode,
         )
         if providers and orchestration_instructions is not None
         else None
