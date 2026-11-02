@@ -66,13 +66,13 @@ def propose_arguments(
     Returns the model's proposed argument dict — never invokes the
     capability; orchestration validates and decides.
     """
-    from pydantic_ai.models.openai import OpenAIModel
+    from pydantic_ai.models.openai import OpenAIChatModel
     from pydantic_ai.providers.openai import OpenAIProvider
 
     args_model = _model_from_schema(schema)
     provider = OpenAIProvider(base_url=base_url, api_key=api_key)
     agent = Agent(
-        OpenAIModel(model, provider=provider),
+        OpenAIChatModel(model, provider=provider),
         output_type=args_model,
         system_prompt=(
             "You produce arguments for one approved capability call. "

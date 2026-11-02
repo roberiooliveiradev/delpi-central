@@ -1850,3 +1850,18 @@ de _propose_candidate_arguments; (b) arggen branch maybe nao chamado por
 o path ser outro (chained executor usa _propose_candidate_arguments?).
 NEXT: ler resultado do log; se engine nao apareceu, injetar branch no
 path chained-execute (L13320 area) tambem; se apareceu, ver args gerados.
+
+## PYDANTIC-AI — caso-alvo RESOLVIDO E2E (SHA pendente)
+
+FIX API: OpenAIChatModel + OpenAIProvider (2.60.0 — OpenAIModel/
+ChatCompatibleProvider nao existem). Adapter funciona.
+E2E "qual a descricao do produto 30190123" DELIA_ARGGEN_ENGINE=pydantic_ai:
+  ARGS GERADOS: {"code":"30190123","page":1,"page_size":50} — campo tipado
+  correto (baseline llm usava description->0 items).
+  RESPOSTA REAL: "Encontrei este registro: Codigo 30190123 · Descricao #
+  · Categoria 3019" — produto REAL retornado ("#" = redacao owner).
+  ANTES: "colecao vazia" (errado) -> DEPOIS: registro real (correto).
+IRMAO conector (pydantic_ai): "colecao vazia" — arggen produziu termo nao-
+  casado (variancia; baseline llm acertou via retry anterior). Classificado
+  como variancia de arggen, nao defeito estrutural.
+REGRESSAO: 126 testes green. LIVE default intocado (flag opt-in).
