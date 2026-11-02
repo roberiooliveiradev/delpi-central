@@ -1342,3 +1342,14 @@ ADMISSION(4-5), GROUP_SEL heldout(5), GOAL_INTERP(3), EVIDENCE_REJECTION(1);
 rerun isolado por cluster; fix defeitos; regressao; benchmark S4 conclusivo; relatorio §9.
 COMANDOS: docker exec delia-t21-main tail -3 /app/.battery/eval_doc211_v2.log ;
 grep "^{.s." /app/.battery/eval_doc211_v2.log | grep FAIL
+
+## doc211 v2 COMPLETO — full-owner env (SHA candidato)
+
+RESULTADO: 9 PASS / 19 FAIL (28 cenarios) — cluster env parcialmente resolvido
+(cmp_01,03,17,18,20,25,26,28, +1 PASSam com owners corretos habilitados).
+FAILs residuais doc211 v2: ver /tmp/doc211v2_fails.txt — majoritariamente
+GROUP_SELECTION_ERROR mesmo com owner correto habilitado => DEFEITO REAL de
+selecao/julgamento em cenarios compostos longos (prompt multi-clausula),
+ou capability-level apos group correto. Investigar trace de cmp_02/cmp_04
+(runs.json atualizado pelo rerun v2).
+PROXIMO: extrair proposals/invokes de 2-3 FAILs doc211v2 -> RED -> fix -> GREEN.
