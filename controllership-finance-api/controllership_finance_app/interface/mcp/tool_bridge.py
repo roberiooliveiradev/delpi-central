@@ -74,6 +74,7 @@ from controllership_finance_app.interface.http.routes import (
     admin_checklist_routes,
     closing_routes,
     billing_mod_breakdown_routes,
+    production_order_consumption_routes,
     closing_state_routes,
     competences_routes,
     documents_routes,
@@ -788,6 +789,38 @@ def tool_get_billing_mod_breakdown(
         request,
         period=period,
         branch=branch,
+    )
+
+
+def tool_get_production_order_consumption(
+    period: str,
+    branch: str,
+    search: str | None = None,
+    product: str | None = None,
+    date_type: str = "emission",
+    status: str | None = None,
+    work_center: str | None = None,
+    operation: str | None = None,
+    page: int = 1,
+    page_size: int = 25,
+) -> CallToolResult:
+    """R04 — consumo por OP (visão operacional): passthrough governado
+    da rota BFF; proveniência e limitações preservadas — a CLARA nunca
+    recalcula consumo nem declara paridade MATR860."""
+    request, _user = _user_and_access()
+    return _call_route(
+        production_order_consumption_routes.get_production_order_consumption,
+        request,
+        period=period,
+        branch=branch,
+        search=search,
+        product=product,
+        date_type=date_type,
+        status=status,
+        work_center=work_center,
+        operation=operation,
+        page=page,
+        page_size=page_size,
     )
 
 

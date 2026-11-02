@@ -28,6 +28,7 @@ import { StockInventoryPage } from "./StockInventoryPage";
 import { StockKardexPage } from "./StockKardexPage";
 import { StockMovementsPage } from "./StockMovementsPage";
 import { WorkInProcessPage } from "./WorkInProcessPage";
+import { ProductionOrderConsumptionPage } from "./ProductionOrderConsumptionPage";
 
 /** Relatórios com página contextual implementada (hub → rota). */
 export type ReportKey =
@@ -40,7 +41,8 @@ export type ReportKey =
   | "billing-exclusion-roster"
   | "work-in-process"
   | "cost-closing-state"
-  | "billing-mod-breakdown";
+  | "billing-mod-breakdown"
+  | "production-order-consumption";
 
 export type ReportFamily = "settlements" | "stock";
 
@@ -61,6 +63,7 @@ export const REPORT_KEY_TO_FAMILY: Record<ReportKey, ReportFamily> = {
   "work-in-process": "stock",
   "cost-closing-state": "stock",
   "billing-mod-breakdown": "settlements",
+  "production-order-consumption": "stock",
 };
 
 export const REPORT_KEY_LABELS: Record<ReportKey, string> = {
@@ -74,6 +77,7 @@ export const REPORT_KEY_LABELS: Record<ReportKey, string> = {
   "work-in-process": "Material em processo",
   "cost-closing-state": "Estado de fechamento e cutoff",
   "billing-mod-breakdown": "Faturamento × MOD",
+  "production-order-consumption": "Consumo por OP",
 };
 
 export function isReportKey(value: string | undefined): value is ReportKey {
@@ -87,7 +91,8 @@ export function isReportKey(value: string | undefined): value is ReportKey {
     value === "billing-exclusion-roster" ||
     value === "work-in-process" ||
     value === "cost-closing-state" ||
-    value === "billing-mod-breakdown"
+    value === "billing-mod-breakdown" ||
+    value === "production-order-consumption"
   );
 }
 
@@ -134,6 +139,8 @@ export function MonthlyReportPage({
         <StockKardexPage reportContext={{ period }} />
       ) : reportKey === "inventory-adjustments" ? (
         <InventoryAdjustmentsPage reportContext={{ period }} />
+      ) : reportKey === "production-order-consumption" ? (
+        <ProductionOrderConsumptionPage reportContext={{ period }} />
       ) : reportKey === "cost-center-expenses" ? (
         <CostCenterExpensesPage reportContext={{ period }} />
       ) : reportKey === "billing-exclusion-roster" ? (
