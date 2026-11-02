@@ -3672,8 +3672,24 @@ class GptActionsDispatchService:
                     "acompanhar", "mostrar", "para", "com", "das",
                     "dos", "que", "resultados", "iniciativas",
                     "mostrando", "coisas", "sinal",
+                    # DI-3.7.1 — contexto escopifica, não é objetivo:
+                    "fabrica", "fábrica", "filial", "unidade",
+                    "setor", "planta", "empresa", "período",
+                    "periodo", "televisao", "televisão",
                 }
                 goal_map: dict[str, dict] = {}
+                # contexto escopifica a busca mas não é objetivo —
+                # parceiros de pairing usam TODOS os tokens fortes.
+                _all_tok = {
+                    t.strip(".,;:!?()\"'")
+                    for t in str(message or "").lower().split()
+                    if len(t.strip(".,;:!?()\"'")) >= 4
+                } - {
+                    "crie", "criar", "quero", "uma", "painel",
+                    "acompanhar", "mostrar", "para", "com", "das",
+                    "dos", "que", "resultados", "iniciativas",
+                    "mostrando", "coisas", "sinal",
+                }
                 if _mtok:
                     anchor_categories |= {
                         str(c.get("category") or "").strip()
@@ -3699,13 +3715,8 @@ class GptActionsDispatchService:
                     }
                     for tok in list(_mtok)[:4]:
                         tok_sugg = []
-                        for variant in (
-                            tok,
-                            tok.rstrip("s"),
-                            f"{tok} indicador",
-                            f"{tok} {next(iter(_mtok - {tok}), '')}".strip(),
-                        ):
-                            if not variant or variant == tok and tok_sugg:
+                        for variant in (tok, tok.rstrip("s")):
+                            if variant == tok and tok_sugg:
                                 continue
                             try:
                                 rr = self._suggest.suggest(
@@ -3719,20 +3730,59 @@ class GptActionsDispatchService:
                                 tok_sugg = []
                             if tok_sugg:
                                 break
+                        if not tok_sugg:
+                            # token único não ranqueia — union dos
+                            # pairings com TODOS os tokens fortes
+                            # (inclusive contexto) — "produtividade"
+                            # só resolve com "fábrica"/"indicador".
+                            merged: dict[str, dict] = {}
+                            for other in sorted(_all_tok - {tok}):
+                                try:
+                                    rr = self._suggest.suggest(
+                                        query=f"{tok} {other}",
+                                        limit=6,
+                                    )
+                                    for cand in (
+                                        rr.get("suggestions") or []
+                                        if isinstance(rr, dict)
+                                        else []
+                                    ):
+                                        oid = str(
+                                            cand.get("operationId")
+                                            or ""
+                                        )
+                                        if oid and oid not in merged:
+                                            merged[oid] = cand
+                                except Exception:
+                                    continue
+                            tok_sugg = list(merged.values())
+                            if not tok_sugg:
+                                try:
+                                    rr = self._suggest.suggest(
+                                        query=f"{tok} indicador",
+                                        limit=6,
+                                    )
+                                    tok_sugg = (
+                                        rr.get("suggestions") or []
+                                        if isinstance(rr, dict)
+                                        else []
+                                    )
+                                except Exception:
+                                    tok_sugg = []
                         goal_map[tok] = {
                             "operationIds": {
                                 str(c.get("operationId") or "")
-                                for c in tok_sugg[:6]
+                                for c in tok_sugg[:8]
                                 if isinstance(c, dict)
                             } - {""},
                             "categories": {
                                 str(c.get("category") or "").strip()
-                                for c in tok_sugg[:6]
+                                for c in tok_sugg[:8]
                                 if isinstance(c, dict)
                                 and str(c.get("category") or "").strip()
                             },
                         }
-                        for cand in tok_sugg[:3]:
+                        for cand in tok_sugg:
                             oid = str(cand.get("operationId") or "")
                             if (
                                 _eligible(cand)
@@ -3755,15 +3805,82 @@ class GptActionsDispatchService:
                             for tok in _mtok
                         )
                     }
+                # RC-D (DI-3.7.1): cobertura falsa — um objetivo só
+                # pode ser atendido por fonte que passa a âncora de
+                # domínio ("metas" comerciais não valem Kaizen/system).
+                _oid_cat: dict[str, str] = {}
+                try:
+                    _all_routes = self._catalog.list_routes()
+                except Exception:
+                    _all_routes = []
+                for r in list(qualified) + list(_all_routes):
+                    if isinstance(r, dict):
+                        _oid_cat.setdefault(
+                            str(r.get("operationId") or ""),
+                            str(r.get("category") or "").strip(),
+                        )
+                _oid_score = {
+                    str(c.get("operationId") or ""): float(
+                        c.get("score") or 0.0
+                    )
+                    for c in qualified
+                    if isinstance(c, dict)
+                }
+
+                def _goal_ok(oid, goal_cats):
+                    cat = _oid_cat.get(oid, "")
+                    # categorias do PRÓPRIO objetivo são evidência —
+                    # production serve produtividade, commercial serve
+                    # metas, mesmo cortadas da âncora global.
+                    if cat and cat in goal_cats:
+                        return True
+                    if not anchor_categories:
+                        return True
+                    if cat in anchor_categories:
+                        return True
+                    return (
+                        _anchor_top > 0
+                        and _oid_score.get(oid, 0.0)
+                        >= _anchor_top * 0.5
+                    )
+
+                for _g in goal_map.values():
+                    _g["operationIds"] = {
+                        oid
+                        for oid in _g["operationIds"]
+                        if _goal_ok(oid, _g["categories"])
+                    }
+
+                # donos de categoria: uma categoria só pode
+                # justificar associação quando pertence a UM único
+                # objetivo — `production`→produtividade associa
+                # séries não presentes nos opIds; `quality` é
+                # compartilhada (auditorias/kaizen) e segue estrita.
+                _cat_owners: dict[str, set] = {}
+                for _tok, _g in goal_map.items():
+                    for _c in _g["categories"]:
+                        _cat_owners.setdefault(_c, set()).add(_tok)
+
                 def _goals_of(cand):
-                    # associação estrita por operationId — categoria
-                    # é ampla demais (Kaizen contaminaria via
-                    # `quality` compartilhada com auditorias).
+                    # oid nos opIds do objetivo OU token no oid OU
+                    # categoria de dono único COM afinidade etimológica
+                    # ("produtividade"~"production"); sem afinidade,
+                    # associação fica restrita a opIds (quality não
+                    # justifica kaizen para auditorias).
                     oid = str(cand.get("operationId") or "")
+                    cat = str(cand.get("category") or "").strip()
                     return [
                         tok for tok, g in goal_map.items()
                         if oid in g["operationIds"]
                         or tok in oid
+                        or (
+                            cat
+                            and _cat_owners.get(cat) == {tok}
+                            and (
+                                tok[:4] == cat[:4]
+                                or cat[:4] == tok[:4]
+                            )
+                        )
                     ]
 
                 # goal-to-source association (DI-3.7): cada objetivo
@@ -3931,6 +4048,22 @@ class GptActionsDispatchService:
                         ]
                         if justified:
                             per = justified
+                    # goal floor (DI-3.7.1): cada objetivo reconhecido
+                    # mantém >=1 representante no bloco — cap por score
+                    # não pode apagar a cobertura de um objetivo.
+                    per.sort(
+                        key=lambda c: float(c.get("score") or 0.0),
+                        reverse=True,
+                    )
+                    if len(per) > 8:
+                        seen_goals = set()
+                        kept = []
+                        for c in per:
+                            g = set(_goals_of(c))
+                            if len(kept) < 6 or (g - seen_goals):
+                                seen_goals |= g
+                                kept.append(c)
+                        per = kept
                     per = per[:8]
                     if not per and qualified:
                         # Fallback por domínio: ranking lexical fraco
