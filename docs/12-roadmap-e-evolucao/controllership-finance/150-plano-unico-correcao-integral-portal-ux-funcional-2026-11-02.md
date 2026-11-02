@@ -182,3 +182,57 @@ O executor deve descobrir rotas efetivas via router/manifests/HEAD, percorrer a 
 - O executor futuro não poderá resolver divergências de valores antes de igualar filtros/grão/universo, nem alterar SQL para obter números iguais aos screenshots.
 - Todo item deve ter captura, resultado funcional, causa demonstrada, owner/RQ/AC, teste, patch, SHA e pós-verificação real.
 - Não duplicar CF-UX-001..021: aplicar os padrões compartilhados uma única vez e validar cada consumidor, evitando pequenas intervenções e deploys repetidos.
+
+
+## 8. Programa executivo aprovado pelo PO — execução sequencial completa (02/11/2026)
+
+**Esta seção substitui as instruções anteriores de “somente revisão / não implementar” nas seções 6 e 7:** o PO **agora autoriza** iniciar a implementação coordenada pelo Devin, em etapas sequenciais, com correção no ambiente local, testes, commits, push e deploy controlado após gates. Os itens históricos CF-UX-001..026 permanecem válidos e não podem ser eliminados por reorganização. A autorização abrange UX e correções de bugs dentro dos contratos existentes, **não** mudanças materiais de contrato, segurança, owner, persistência ou arquitetura sem decisão explícita.
+
+### Regras de execução e registro
+- **HEAD remoto + git status local e WIP** no início; ler instruções oficiais, .cursor aplicável, README, doc 150, doc 30 reuso, padrão visual, documentação da competência e contratos/testes. GitHub authority TARGET; TÉO authority AS-IS.
+- Usar **uma branch de trabalho dedicada ou checkout limpo conforme política vigente**, sem sobrescrever alterações de terceiros; não mover WIP alheio. Respeitar branch protection e CI. Não trabalhar num HEAD local antigo sem comparar com origem.
+- **Não reabrir arquitetura:** MFE → somente BFF `controllership-finance-api`; BFF → integração existente com `api-delpi`; CLARA → BFF; `@delpi/plugin-ui` first; apenas `controllership-finance.access/manage`; Core AuthZ efetiva fail-closed. Sem SQL/produtor novos por preferência.
+- **Um programa, etapas em sequência e checkpoints locais:** em cada etapa reproduzir → classificar → aplicar diff mínimo → testar → verificar visual e outcome → atualizar linha de evidência do doc 150. Não encerrar em “plano”, “rota presente”, “build verde” ou “teste não executado”.
+- **Sem buracos:** cada ID CF-UX-001..026 terá no fim `FIXED_VERIFIED`, `NO_DEFECT_VERIFIED`, `DECISION_REQUIRED` ou `BLOCKED_WITH_EVIDENCE`, com evidência e owner; nunca “feito” quando não testado. Se houver decisão material, parar somente parte dependente e continuar o que é independente; não implementar a opção recomendada sem decisão.
+- **Performance e segurança:** não disparar N consultas por render desnecessariamente; não adicionar summary API/cache/persistência sem gate material; não simular percentual ou tempos. Testar permissão e escopo de recurso com identidade autorizada sem logs de tokens.
+- **Deploy:** somente após testes locais/integrados e gates de segurança; publicar componentes alterados, confirmar SHA, rollback pronto, smoke real no Portal/CLARA, registrar status. Quando ambiente/sessão humana indisponível, `TEST_NOT_RUN` e veredito `INCONCLUSIVE`, sem simular a validação.
+
+### Etapas e dependências — sem perder nenhum dos 26 IDs
+
+| Etapa | Entrega executável | CF-UX cobertos | Gate de saída |
+|---|---|---|---|
+| E0 — Baseline e matriz | Varredura de rotas/componentes, contract maps e evidências antes; matriz de tela × estado × breakpoint; reprodutor R04; definir owner e RQ/AC por item. | **Todos 001–026** como inventário de cobertura | 100% das 26 linhas rastreadas; fontes e screenshots linkados ou indisponibilidade explicitada. Não encerra o trabalho. |
+| E1 — P0: verdade dos dados | Corrigir DTO/projeção/tabela R04 com OP, produto, datas, detalhe reais; corrigir matriz R04/R09 no catálogo vigente; garantir correspondência via CLARA com recortes iguais. | **001, 005, 006, 015, 025(P0)** | Portal com mesma OP real e campos da CLARA; matriz sem afirmações obsoletas; nenhuma paridade oficial promovida. |
+| E2 — Componentes compartilhados de navegação, hero e filtros | Hero compacto da competência e tabs internas; remover hero geral dos deep routes mantendo breadcrumb clicável; compactar hero dos relatórios, KPIs, textos, filtros e ações; corrigir search R04 e overflow. | **002, 003, 014, 016, 020, 021, 022, 026** | Todas rotas alvo com layouts responsivos e navegação/refresh/deep link acessíveis; ações só quando suportadas. |
+| E3 — Loading, estados e feedback | Reusar loader do plugin-ui, progresso honesto por tarefas conhecidas, status por fonte e render progressivo; resolver placeholders, ‘0 registros’ durante loading, stale state e retry. | **008, 009, 019, 024** | Nenhum estado transiente interpretado como zero definitivo; sem percentual/ETA fictícios; screenshots de loading/sucesso/erro/empty em rotas representativas. |
+| E4 — Cockpit, documentos, atenção e primeira entrada | Reescrever apresentação orientada a ação do painel de atenção a partir de dados existentes; deixar claro documento adicional vs checklist e ausência de configuração; substituir cards confusos de fechamentos abertos por tabela/resumo com metadados reais; explicar conciliação. | **010, 011, 017, 018** | Dados existentes e proveniência/ação claras; nenhum count inventado; sem novas rotas/armazenamento sem decisão material. |
+| E5 — Estados de relatórios e auditoria funcional | Separar consulta disponível vs paridade/homologação pendente; legenda e indicadores `Itens/Validados` com semântica; validar R06/R07 páginas reais e reavaliar 45×47; R12/R15 faixa vazia/estados técnicos; fazer paridade **Portal × CLARA** em mesmo universo R01–R15 aplicáveis. | **004, 007, 012, 013, 023, 025(P1)** | Screenshots e consultas reais; explicação de cada diferença; nenhuma rotina ERP executada; classificação honesta de pendências. |
+| E6 — Auditoria residual de TODAS as páginas | Percorrer Início, Visão geral, Central P1–P5, Documentos/interações, Relatórios/deep routes, Administração, Sala de interação, Minhas tarefas, Ajuda, usuário, todas variações e breakpoints; registrar novos IDs **027+** para bugs reais. | **Todos 001–026** + novos | Cobertura por rota e caso; bugs novos corrigidos nesta execução se autorizados/contratos existentes, senão decisão/bloqueio explícito. |
+| E7 — Regressão integral, Help, publicação e aceite | Testes de unidade/integrados/contrato, security positive/negative, a11y, mobile/dark/light, CLARA com dados reais, builds, regressão R04/R06/R07/R09 e demais rotas afetadas; docs/Help; commits/push; deploy controlado e smoke humano em produção. | **Todos 001–026** e novos | Quadro final sem ID omitido, SHA local/remoto/deploy, smoke do Portal com screenshot, rollback e veredito baseado em outcome. |
+
+**Dependência:** E0 → E1 → E2 → E3 → E4 → E5 → E6 → E7. Testes e atualização documental ocorrem em **todas** as etapas, não apenas E7. E6 pode identificar novos bugs e exigir retornar a E1–E5 para corrigi-los antes de E7; evitar publicar versões parciais desnecessárias. Preferir deploy produtivo consolidado após gates e validação em staging, salvo exigência operacional demonstrada.
+
+### Quadro de cobertura verificável dos 26 IDs
+
+| ID | Etapa primária | ID | Etapa primária | ID | Etapa primária |
+|---|---|---|---|---|---|
+| 001 | E1 | 002 | E2 | 003 | E2 |
+| 004 | E5 | 005 | E1 | 006 | E1 |
+| 007 | E5 | 008 | E3 | 009 | E3 |
+| 010 | E4 | 011 | E4 | 012 | E5 |
+| 013 | E5 | 014 | E2 | 015 | E1 |
+| 016 | E2 | 017 | E4 | 018 | E4 |
+| 019 | E3 | 020 | E2 | 021 | E2 |
+| 022 | E2 | 023 | E5 | 024 | E3 |
+| 025 | E1+E5 | 026 | E2 | — | — |
+
+### Contrato de rastreabilidade por item
+`ID | rota | condição/filtros | evidência antes | causa PROVEN ou TO_VERIFY | owner | RQ/AC | diff/commit | testes locais | teste Portal humano | teste CLARA se aplicável | evidência depois | status | residual/decision`.
+
+No encerramento, entregar tabela **26/26** com links para provas; `CF-UX-027+` quando houver. `OPEN` ou `TEST_NOT_RUN` nunca são convertidos em `PASS` por conveniência.
+
+### Política de decisões
+Se qualquer etapa exigir API de resumo, nova regra de agregação, cache/persistência, mudança de contrato, autorização/Keycloak, estratégia de cálculo, breaking change, outro bounded context ou UX de produto com escolha ainda não definida: registrar **DECISION_REQUIRED** (opções, impactos, recomendação), **não implementar** a escolha sem aprovação. Fazer todos os outros ajustes aprovados do mesmo programa. Não usar uma pendência pontual como desculpa para abandonar os demais itens.
+
+### Relatório final obrigatório
+BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de testes, matriz 26+ IDs, cobertura de rotas, capturas before/after, resultados CLARA/Portal com mesmo recorte, segurança, performance, Help, SHA implantado, rollback, bloqueios de decisão, veredito `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`. **O objetivo é entrega verificável, não contagem de mudanças.**
