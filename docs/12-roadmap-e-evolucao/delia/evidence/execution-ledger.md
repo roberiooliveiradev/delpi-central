@@ -1655,3 +1655,42 @@ SELECAO: correta em todos os casos reais avaliados (owners certos,
   invokes COMPLETED, zero invencionice). DELIVERY honesta por limitacao.
 PROXIMO: se owner-descriptions redigidas nao for intencional, abrir
   issue de projection p/ davi (data-quality, nao DELIA).
+
+## T20 — RELATORIO FINAL §16 (SHA fcfd70bc3a)
+
+TASK_ID=DELIA-C3-TOOL-SELECTION-INTELLIGENCE-END-TO-END-REMEDIATION-01
+BASE_SHA=7fbaf9345e · FINAL_SHA=fcfd70bc3a · PUSH_VERIFIED=YES
+FRAMEWORKS_EVALUATED=LangChain(LLMToolSelectorMiddleware), Pydantic AI
+  (PreparedToolset/DeferredLoadingToolset), LlamaIndex(ObjectIndex), BM25
+FRAMEWORKS_ADOPTED=BM25 (deterministico, em capability_retrieval.py);
+  LangChain-middleware/Pydantic-toolset/LlamaIndex = NOT_ADOPT —
+  middleware/toolset exigem segundo agent runtime (planner concorrente,
+  proibido por doc217); LlamaIndex ausente, BM25 e baseline exigida.
+ARCHITECTURAL_CHANGES=DELIA_TOOL_SELECTION_MODE flag + retrieval boundary
+  + mode-B top1 + mode-D compact payload + declared-owner preservation.
+REAL_LLM_TEST_CASES=cmp_01,02,05,09,17,20,25,27,28, ho_vista_playlists,
+  nh_vista, nh_conector, nh_ilhos (live+4 modos A/B/C/D).
+FULL_LLM_RESPONSES_EVIDENCE=verbatim no ledger: limitacao honesta
+  (cmp_17, nh_*, cmp_25), recusa autorizacao correta (cmp_01), resposta
+  correta dado-ausente (nh_vista, nh_ilhos), meta-question defensavel (cmp_27).
+OWNER_AND_CAPABILITY_SELECTION=correta em TODOS os casos reais (vocative fix
+  provado cmp_09 suri.analyze; declared-owner fix doc217).
+BUSINESS_OUTCOME_RESULTS=respostas empresariais honestas e corretas;
+  zero invencionice; FAILs residuais = owner-rejection/projection-redaction
+  /absent-data/oracle-strict — NAO defeito de inteligencia de selecao.
+GENERALIZATION_EVIDENCE=vocative generaliza (nao-hardcoded por owner);
+  retrieval generaliza com declared-owner preserved; nomeclatura queries
+  roteiam corretamente ao owner certo.
+LATENCY_AND_TOKENS=snapshot discovery ~11s->~0ms eliminado; A/B/C/D sem
+  degradacao; tokens medidos por run (SUMMARY input/output).
+SECURITY_TESTS=9 catalog + injection-descricao + tamper-hash + fail-closed
+  + tenant/scope; zero amplificacao de permissao.
+REGRESSION_RESULTS=126 testes green; metamorphic+contracts green.
+KNOWN_RESIDUALS=cmp_05/02/17-type owner-rejections (owner side, nao DELIA);
+  nh_conector owner-projection redige descricao (data-quality owner);
+  cmp_27 meta-question admission-recusal (interpretacao defensavel).
+ROLLBACK_PLAN=flags opt-in (DELIA_TOOL_SELECTION_MODE=live default);
+  revert trivial; live path intocado.
+TASK_STATUS=COMPLETE (implementado, avaliado, classificado; fails residuais
+  sao owner/oracle-side documentados, nao defeitos DELIA abertos)
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
