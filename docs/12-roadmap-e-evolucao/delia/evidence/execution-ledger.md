@@ -1621,3 +1621,14 @@ DECISAO doc217: KEEP_LIVE para producao — variantes retrieval atingem paridade
 PROXIMO (T20 pendente): remediacao dos clusters residuais da bateria 89
   (GROUP_SEL heldout, EVIDENCE_RELEVANCE, ADMISSION) — avaliacao de resposta
   empresarial por pergunta com criterio semantico, nao oracle-only.
+
+## T20 — caso heldout real + vista funcional (SHA ed9afb2713)
+
+ho_vista_playlists (heldout, corpus real, todos owners habilitados):
+  PASS — invocou vista.get_context+vista.read corretos; resposta real:
+  "A fonte respondeu com uma colecao vazia — nao ha registros para esse pedido"
+  = resposta empresarial correta p/ dado inexistente (nao inventou).
+VISTA totalmente funcional pos-recuperacao (merge-marker fix).
+REGRESSAO: 126 testes green (217+catalog+vocative+specialist-orch).
+RESIDUAL: nh_vista (newheldout pool), clusters EVIDENCE_RELEVANCE/ADMISSION
+  da bateria 89 — fila de remediacao; avaliar resposta semantica por pergunta.
