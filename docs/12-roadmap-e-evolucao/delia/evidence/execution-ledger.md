@@ -1368,3 +1368,20 @@ PROXIMO: extrair error_code dos CapabilityProviderError (probe direto ao MCP own
 com os mesmos args) -> classificar OWNER_CONTRACT vs OWNER_AVAILABILITY vs arggen.
 cmp_09 rerun isolado p/ confirmar defeito group->wrong-owner.
 PENDENTES: clusters residuais, benchmark S4, bateria final full-env, relatorio §9.
+
+## DOC216 checkpoint — implementacao em curso (nao publicado em main ainda)
+
+TASK=DELIA-C3-MCP-VERSIONED-CATALOG-ISOLATED-AB-01
+E0 inventario: boundary = SpecialistInterop.discover_catalog (snapshot) vs invoke (live).
+E2 DONE: app/infrastructure/interoperability/mcp/catalog_store.py — SQLite versioned
+  (canonical JSON sha256, immutable versions, atomic activate, rollback, verify; smoke OK).
+E1 DONE codigo: hook _remote_tools em SpecialistInterop; SnapshotDiscoverInterop
+  (discover->snapshot fail-closed, invoke->live herdado); settings DELIA_MCP_CATALOG_MODE +
+  DELIA_MCP_CATALOG_DB; wiring root_composer + r4 _compose (opt-in, fail-closed sem DB).
+E3 EM CURSO: scripts/mcp_catalog_sync.py (dry-run/apply/history/verify/activate-version).
+  TESTE REAL PENDENTE: rodar CLI com bind_subject_bearer(_mint_bearer()) via subprocess
+  (o exec direto falhou por __file__ — usar `python3 scripts/mcp_catalog_sync.py` com env
+  R4_KC_* ou injetar bearer via env/arg).
+PROXIMO: E4 testes integracao (B usa snapshot p/ selecao, live p/ invoke) -> E5 seguranca ->
+capture snapshots 7 owners -> E6 A/B paired doc211 -> E7 regressao+gates+relatorio.
+PROD_DEPLOY=NO · BUSINESS_WRITES=0

@@ -194,14 +194,38 @@ def create_application(
     # C4-MCP-GOVERNED-READS-01/02: per-binding enabled set — each
     # bounded flag contributes exactly its own authorized tuple at
     # both enforcement boundaries.
-    interop = SpecialistInterop(
-        McpSpecialistAdapter(
-            connections,
-            credential_provider=_wire_delegated_credential_provider(
-                settings, connections
-            ),
+    adapter = McpSpecialistAdapter(
+        connections,
+        credential_provider=_wire_delegated_credential_provider(
+            settings, connections
         ),
     )
+    # Doc 216: SNAPSHOT_EXPERIMENT (eval-only) routes catalog
+    # discovery through the persisted snapshot; invoke stays live.
+    # Missing/invalid config fails closed — never silent fallback.
+    if settings.mcp_catalog_mode == "snapshot_experiment":
+        if not settings.mcp_catalog_db:
+            raise RuntimeError(
+                "DELIA_MCP_CATALOG_MODE=snapshot_experiment requires "
+                "DELIA_MCP_CATALOG_DB"
+            )
+        from app.application.specialist_interop.snapshot_interop import (
+            SnapshotDiscoverInterop,
+        )
+        from app.infrastructure.interoperability.mcp.catalog_store import (
+            McpCatalogStore,
+        )
+
+        interop = SnapshotDiscoverInterop(
+            adapter, McpCatalogStore(settings.mcp_catalog_db)
+        )
+    elif settings.mcp_catalog_mode != "live":
+        raise RuntimeError(
+            "DELIA_MCP_CATALOG_MODE must be 'live' or "
+            f"'snapshot_experiment', got {settings.mcp_catalog_mode!r}"
+        )
+    else:
+        interop = SpecialistInterop(adapter)
     app.config["SPECIALIST_INTEROP"] = interop
 
     # C3-INTERACTION-RUNTIME-01R2: TEST_ONLY deterministic adapter is

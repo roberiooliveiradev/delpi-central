@@ -275,6 +275,14 @@ class Settings:
         self.checkpoint_db_path = (
             os.getenv("DELIA_CHECKPOINT_DB") or ""
         ).strip() or None
+        # Doc 216: isolated catalog experiment — LIVE default;
+        # SNAPSHOT_EXPERIMENT is eval-only composition config.
+        self.mcp_catalog_mode = (
+            os.getenv("DELIA_MCP_CATALOG_MODE") or "live"
+        ).strip().lower()
+        self.mcp_catalog_db = (
+            os.getenv("DELIA_MCP_CATALOG_DB") or ""
+        ).strip() or None
         _call_attempts_raw = os.getenv("DELIA_LLM_CALL_MAX_ATTEMPTS")
         self.llm_call_max_attempts_config_source = (
             "environment"
