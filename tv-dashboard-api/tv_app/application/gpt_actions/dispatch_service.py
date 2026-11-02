@@ -3673,6 +3673,7 @@ class GptActionsDispatchService:
                     "dos", "que", "resultados", "iniciativas",
                     "mostrando", "coisas", "sinal",
                 }
+                goal_map: dict[str, dict] = {}
                 if _mtok:
                     anchor_categories |= {
                         str(c.get("category") or "").strip()
@@ -3697,16 +3698,40 @@ class GptActionsDispatchService:
                         for c in qualified
                     }
                     for tok in list(_mtok)[:4]:
-                        try:
-                            rr = self._suggest.suggest(
-                                query=tok, limit=6
-                            )
-                            tok_sugg = (
-                                rr.get("suggestions") or []
-                                if isinstance(rr, dict) else []
-                            )
-                        except Exception:
-                            tok_sugg = []
+                        tok_sugg = []
+                        for variant in (
+                            tok,
+                            tok.rstrip("s"),
+                            f"{tok} indicador",
+                            f"{tok} {next(iter(_mtok - {tok}), '')}".strip(),
+                        ):
+                            if not variant or variant == tok and tok_sugg:
+                                continue
+                            try:
+                                rr = self._suggest.suggest(
+                                    query=variant, limit=6
+                                )
+                                tok_sugg = (
+                                    rr.get("suggestions") or []
+                                    if isinstance(rr, dict) else []
+                                )
+                            except Exception:
+                                tok_sugg = []
+                            if tok_sugg:
+                                break
+                        goal_map[tok] = {
+                            "operationIds": {
+                                str(c.get("operationId") or "")
+                                for c in tok_sugg[:6]
+                                if isinstance(c, dict)
+                            } - {""},
+                            "categories": {
+                                str(c.get("category") or "").strip()
+                                for c in tok_sugg[:6]
+                                if isinstance(c, dict)
+                                and str(c.get("category") or "").strip()
+                            },
+                        }
                         for cand in tok_sugg[:3]:
                             oid = str(cand.get("operationId") or "")
                             if (
@@ -3730,6 +3755,24 @@ class GptActionsDispatchService:
                             for tok in _mtok
                         )
                     }
+                def _goals_of(cand):
+                    # associação estrita por operationId — categoria
+                    # é ampla demais (Kaizen contaminaria via
+                    # `quality` compartilhada com auditorias).
+                    oid = str(cand.get("operationId") or "")
+                    return [
+                        tok for tok, g in goal_map.items()
+                        if oid in g["operationIds"]
+                        or tok in oid
+                    ]
+
+                # goal-to-source association (DI-3.7): cada objetivo
+                # forte carrega suas fontes justificadas; candidato
+                # sem objetivo é descartável quando houver justificados.
+                for cand in qualified:
+                    if isinstance(cand, dict):
+                        cand["goals"] = _goals_of(cand)
+
                 # Domínio secundário só entra por relevância individual
                 # forte na query bruta (>=50% do topo) — categoria
                 # fraca não arrasta vizinhos (5S/Kaizen fora de
@@ -3763,7 +3806,7 @@ class GptActionsDispatchService:
                         for key in (
                             "operationId", "path", "category",
                             "description", "allowedDisplayModes",
-                            "metaShape", "paramSchema",
+                            "metaShape", "paramSchema", "goals",
                         )
                         if cand.get(key) is not None
                     }
@@ -3843,6 +3886,8 @@ class GptActionsDispatchService:
                         oid = str(cand.get("operationId") or "")
                         if oid and oid not in _seen:
                             _seen.add(oid)
+                            if isinstance(cand, dict):
+                                cand["goals"] = _goals_of(cand)
                             _combined.append(cand)
                     per = [
                         cand for cand in _combined
@@ -3858,9 +3903,13 @@ class GptActionsDispatchService:
                         ]
                         top = max(scores) if scores else 0.0
                         floor = top * 0.5 if top > 0 else 0.0
+                        # goal-justified sources são evidência —
+                        # o floor não pode cortá-las por escala
+                        # de score entre queries distintas.
                         per = [
                             c for c in per
-                            if float(c.get("score") or 0.0) >= floor
+                            if c.get("goals")
+                            or float(c.get("score") or 0.0) >= floor
                         ]
                     # domain anchor: sufixo de propósito não promove
                     # fontes fora do domínio de negócio âncora; secundárias
@@ -3872,6 +3921,16 @@ class GptActionsDispatchService:
                         key=lambda c: float(c.get("score") or 0.0),
                         reverse=True,
                     )
+                    # goal-to-source (DI-3.7): quando há objetivos
+                    # reconhecidos, candidato sem justificativa de
+                    # objetivo não pode permanecer (Kaizen fora de
+                    # produtividade+5S, transformômetro fora de 5S).
+                    if goal_map:
+                        justified = [
+                            c for c in per if _goals_of(c)
+                        ]
+                        if justified:
+                            per = justified
                     per = per[:8]
                     if not per and qualified:
                         # Fallback por domínio: ranking lexical fraco
@@ -3900,6 +3959,9 @@ class GptActionsDispatchService:
                         "blockType": btype or "data_block",
                         "requiredModes": sorted(modes),
                         "state": block_state,
+                        "servesGoals": sorted({
+                            g for c in per for g in c.get("goals") or []
+                        }),
                         "candidates": [_slim(c) for c in per],
                     }
                     if block_state == "RESOLVED" and per:
@@ -3950,6 +4012,28 @@ class GptActionsDispatchService:
                         "pick silencioso."
                     ),
                 }
+                # goal traceability (DI-3.7): objetivos reconhecidos
+                # + ignorados no payload — nenhum descartado
+                # silenciosamente.
+                covered = {
+                    g for b in blocks for g in b.get("servesGoals") or []
+                }
+                payload["interpretedGoals"] = [
+                    {
+                        "goal": tok,
+                        "categories": sorted(g["categories"]),
+                        "status": (
+                            "COVERED" if tok in covered
+                            else "NO_SOURCE_CANDIDATE"
+                        ),
+                    }
+                    for tok, g in goal_map.items()
+                    if g["operationIds"]
+                ]
+                payload["ignoredGoals"] = [
+                    tok for tok, g in goal_map.items()
+                    if not g["operationIds"]
+                ]
                 # readiness honesto: layout pronto ≠ dados prontos.
                 if payload["bindingPlan"]["state"] != "RESOLVED":
                     payload["dataReadiness"] = "pending_source_selection"
