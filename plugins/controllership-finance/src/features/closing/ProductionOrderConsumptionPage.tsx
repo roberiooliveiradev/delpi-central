@@ -4,7 +4,7 @@ import {
   CfSelectField,
   CfStateBanner,
   cfEmptyStateClassNames,
-} from "@delpi/plugin-ui";
+} from "../../app/controllershipFinanceUi";
 import {
   getProductionOrderConsumption,
   type DateType,
@@ -75,11 +75,16 @@ export function ProductionOrderConsumptionPage({
 
   return (
     <div className="cf-page-stack">
-      <CfStateBanner
-        variant="warning"
-        title="Visão operacional — paridade oficial pendente"
-        description="Consumo por ordem de produção via contrato vigente do produtor TOTVS (consumption-audit). A equivalência com o relatório oficial MATR860 ainda não foi homologada."
-      />
+      <CfStateBanner>
+        <p className="cf-banner-title">
+          Visão operacional — paridade oficial pendente
+        </p>
+        <p className="cf-banner-text">
+          Consumo por ordem de produção via contrato vigente do produtor
+          TOTVS (consumption-audit). A equivalência com o relatório
+          oficial MATR860 ainda não foi homologada.
+        </p>
+      </CfStateBanner>
       <div className="cf-settlements-actions" role="group" aria-label="Filtros">
         <CfSelectField
           label="Filial"
@@ -115,11 +120,10 @@ export function ProductionOrderConsumptionPage({
       {loading ? (
         <p aria-live="polite">Carregando OPs…</p>
       ) : error ? (
-        <CfStateBanner
-          variant="danger"
-          title="Falha na consulta"
-          description={error}
-        />
+        <CfStateBanner>
+          <p className="cf-banner-title">Falha na consulta</p>
+          <p className="cf-banner-text">{error}</p>
+        </CfStateBanner>
       ) : rows.length === 0 ? (
         <CfEmptyState
           classNames={cfEmptyStateClassNames}
