@@ -3448,10 +3448,36 @@ class GptActionsDispatchService:
         # PHASE 5 — bounded methodology advisory for high-level design intents
         # only. Direct typed commands bypass it; ops/policy stay canonical.
         intent = DesignIntelligenceService.design_intent_for_message(message)
+        # DI-DESIGN-02 — um add_blank_slide solitário não satisfaz um
+        # pedido de composição com requisitos de design; só vale `ready`
+        # sem recipe quando o pedido é realmente só "slide vazio".
+        _ops_out = payload.get("ops") or []
+        _only_blank_slide = bool(_ops_out) and all(
+            str(o.get("op") or "") == "add_blank_slide"
+            for o in _ops_out
+            if isinstance(o, dict)
+        )
+        _has_design_req = any(
+            t in str(message or "").lower()
+            for t in (
+                "kpi", "grafic", "tabela", "título", "titulo",
+                "hierarqu", "indicador", "tendenc", "tendência",
+                "visual", "design", "layout", "contraste",
+                "identidade", "tipograf",
+            )
+        )
         if (
             intent == "COMPOSE_SLIDE"
-            and str(payload.get("status") or "")
-            in {"unsupported", "not_command"}
+            and (
+                str(payload.get("status") or "")
+                in {"unsupported", "not_command", "selection_pending"}
+                and not payload.get("ops")
+                or (
+                    str(payload.get("status") or "") == "ready"
+                    and _only_blank_slide
+                    and _has_design_req
+                )
+            )
         ):
             from tv_app.application.services.data.presentation_recipe_service import (
                 PresentationRecipeService,
@@ -3541,6 +3567,10 @@ class GptActionsDispatchService:
                             }
                             else "TV_KPI_SERIES_TABLE"
                         )
+                    elif _has_design_req:
+                        # pedido de composição visual não depende de
+                        # fonte — recipe genérica pelos componentes.
+                        generic = "TV_KPI_SERIES_TABLE"
                 except Exception:
                     sugg = []
                 if generic:
