@@ -1214,3 +1214,20 @@ CUIDADO: cenarios "prepare um processo" sao create_or_modify legitimos (PREPARE 
 nao pode bloquear descoberta de PREPARE caps. O gate deve ser: write-intent + remote
 nao encontrado no surface -> recusa sem fetch. Testar ho_neg_delete + t2_neg_delete +
 t2_prep/ho_prepare_record (legitimos) + regressao.
+
+## RESUME-POINT (SHA b822e6a6af) — homologacao em curso
+
+doc211 v2 rerun CONFIRMA causa ambiental: cmp_01 PASS, cmp_03 PASS (caio.* invocado).
+cmp_02 ainda GROUP_SELECTION_ERROR mesmo com caio.get_context — inspecionar depois
+(pode ser owner-side real ou selecao; rerun segue ~20min).
+neg_delete fix: descriptor=None -> "not_applicable_capability" -> MAS discovery fetch
+aconteceu ANTES/paralelo (get_context chamado). Verificar se o discovery block roda
+antes do select_capability retornar None — provavelmente discovery e index rolam como
+parte do plano mesmo sem descriptor valido. FIX correto: quando o capability selection
+resolve remote_name nao-publicado + goal_class=create_or_modify -> NAO executar
+discovery/index invokes; recusar direto (WRITE_REJECTED ou NOT_APPLICABLE).
+Localizar: bloco `if discovery is not None:` ~L5613 executa apos seleção — verificar
+se `discovery` so e setado com descriptor valido OU independente. Se independente,
+gatear por `goal.goal_class == "create_or_modify" and descriptor_valido_ausente`.
+PROXIMO: (1) terminar rerun doc211v2 -> matriz; (2) implementar gate; (3) rerun
+neg_delete x2 + prepare legitimos + regressao 470; (4) relatorio §9.
