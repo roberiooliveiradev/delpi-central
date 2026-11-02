@@ -1755,3 +1755,14 @@ KNOWN_RESIDUALS=owner-side lexical normalization (davi); nh_conector-style
 ROLLBACK=flag nao aplicavel (comportamento padrao melhorado); revert trivial.
 TASK_STATUS=COMPLETE (causa corrigida e provada E2E)
 COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-CTX — segundo caso do mesmo defeito (SHA 20d79202b2)
+
+PROBE: "qual a descricao do produto 30190123" -> execute com
+{"description":"produto 30190123"} -> 0 items -> "colecao vazia".
+MAS {"code":"30190123"} -> 1 item real (product_code 30190123).
+MESMA CLASSE: arggen nao mapeia identificador exato ao campo tipado
+(code) — enche description. Retry existia mas nao trocou de campo.
+FIX: estender _empty_result_feedback_with_args com orientacao de
+mapear identificadores/codigos ao campo tipado do schema quando
+disponivel — generico, sem regra por owner.
