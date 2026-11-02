@@ -71,6 +71,9 @@ from app.application.interaction.activity import (
     owner_ref as _activity_owner_ref,
     source_ref as _activity_source_ref,
 )
+from app.application.capability_provision.capability_retrieval import (
+    rank_capabilities,
+)
 from app.application.interaction.argument_validation import (
     MAX_ARGUMENT_KEYS,
     ORCHESTRATED_FIELDS,
@@ -3440,6 +3443,7 @@ def _capability_payload(
     *,
     prior_observation: Mapping[str, Any] | None = None,
     business_subject: str | None = None,
+    compact: bool = False,
 ) -> str:
     """Bounded semantic payload of ONE group's live surface.
 
@@ -3448,6 +3452,9 @@ def _capability_payload(
     Optional ``prior_observation`` is untrusted prior-turn text.
     Optional ``business_subject`` is the validated turn-goal subject —
     untrusted semantic hint (goal continuity), never authority.
+    ``compact`` (doc 217 mode D) exposes only name/description/class —
+    argument shape is loaded for arggen from the live descriptor,
+    never from this selection payload.
     """
     capabilities = [
         cap
@@ -3474,6 +3481,10 @@ def _capability_payload(
         # coverage-inquiry selection without provider-specific names.
         if cap.operation_class is SpecialistOperationClass.DISCOVERY:
             entry["role"] = "owner_vocabulary_discovery"
+        if compact:
+            entry.pop("argument_keys", None)
+            entry.pop("required", None)
+            entry.pop("requires_identifier", None)
         entries.append(entry)
     optionals: dict[str, Any] = {}
     if prior_observation is not None:
@@ -4680,6 +4691,7 @@ class OperationalCapabilityOrchestrator:
         field_labels: FieldLabels | None = None,
         orchestration_instructions: Mapping[str, str] | None = None,
         subobjective_investigation_enabled: bool = False,
+        tool_selection_mode: str = "live",
     ) -> None:
         self._providers = {p.provider_id: p for p in providers}
         # R1/M01: declarative instruction text is composition-injected
@@ -4724,6 +4736,10 @@ class OperationalCapabilityOrchestrator:
         self._response_intelligence_enabled = bool(
             response_intelligence_enabled
         )
+        # Doc 217: composable tool-selection experiment — 'live' keeps
+        # the canonical path untouched; retrieval modes restrict the
+        # candidate surface before selection (eval-only).
+        self._tool_selection_mode = (tool_selection_mode or "live").strip().lower()
         # CRI E2-R3: the answer-requirements clause is a governed
         # declarative resource injected by composition — never embedded
         # in this module. The CRI enhancement activates only when BOTH
@@ -5038,6 +5054,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             groups, failures = self._groups(correlation, deadline)
+            groups = self._filter_groups_for_selection(input_text, groups)
             return self._surface_inquiry_attempt(
                 groups, failures, correlation
             )
@@ -5096,6 +5113,7 @@ class OperationalCapabilityOrchestrator:
         if attempt_ledger is not None:
             attempt_ledger.begin_recovery_attempt()
         groups, failures = self._groups(correlation, deadline)
+        groups = self._filter_groups_for_selection(input_text, groups)
         surface = _project_surface(groups)
         if not surface:
             # No orchestratable surface observed. When at least one
@@ -9459,6 +9477,43 @@ class OperationalCapabilityOrchestrator:
 
     # ---------------- internals ----------------
 
+    def _filter_groups_for_selection(
+        self,
+        input_text: str,
+        groups: Mapping[str, CapabilityGroup],
+    ) -> Mapping[str, CapabilityGroup]:
+        """Doc 217: retrieval-restricted candidate surface.
+
+        'live' returns groups untouched. Retrieval modes rank the
+        projected surface (name/description/owner) and keep only the
+        groups containing top candidates — the selection stages then
+        operate on the bounded set. Selection narrowing is a planning
+        aid only: invocation and authorization semantics are unchanged.
+        """
+        if self._tool_selection_mode not in {
+            "retrieval",
+            "retrieval_llm",
+            "retrieval_llm_progressive",
+        }:
+            return groups
+        surface = _project_surface(groups)
+        ranked = rank_capabilities(
+            input_text, surface, groups, top_k=8
+        )
+        keep = {group_key for group_key, _cap in ranked}
+        if not keep:
+            return groups
+        _logger.info(
+            "orchestration stage=capability_retrieval "
+            "mode=%s candidates=%d groups=%s",
+            self._tool_selection_mode,
+            len(ranked),
+            sorted(keep),
+        )
+        return {
+            key: group for key, group in groups.items() if key in keep
+        }
+
     def _groups(
         self,
         correlation: str,
@@ -11964,6 +12019,23 @@ class OperationalCapabilityOrchestrator:
         ]
         if not invocable:
             return ("inconclusive", None)
+        # Doc 217 mode 'retrieval' (B): deterministic pick — the
+        # top-ranked invocable capability, no model selection call.
+        if self._tool_selection_mode == "retrieval":
+            ranked = rank_capabilities(
+                input_text,
+                [("__g__", cap) for cap in invocable],
+                {"__g__": group},
+                top_k=1,
+            )
+            if ranked:
+                pick = ranked[0][1]
+                _logger.info(
+                    "orchestration stage=select_capability "
+                    "decision=retrieval_top1 capability=%s",
+                    pick.remote_name,
+                )
+                return ("selected", pick)
         # Q02-C keeps this short-circuit: exactly one READ whose published
         # schema enum includes action=tickets, and only when the existing
         # pagination intent already applies. It is not a continuity or
@@ -11990,6 +12062,8 @@ class OperationalCapabilityOrchestrator:
             group,
             prior_observation=observation,
             business_subject=business_subject,
+            compact=(self._tool_selection_mode
+                     == "retrieval_llm_progressive"),
         )
         if relevance_feedback is not None:
             # Same bounded recovery signal as stage 1 — untrusted data.
@@ -12143,6 +12217,8 @@ class OperationalCapabilityOrchestrator:
                 retry_group,
                 prior_observation=observation,
                 business_subject=business_subject,
+                compact=(self._tool_selection_mode
+                         == "retrieval_llm_progressive"),
             )
             retry_visible = _projected_capability_names(retry_payload)
             retry_invocable = [
@@ -12228,7 +12304,10 @@ class OperationalCapabilityOrchestrator:
             {"applicable", "remote_name", "limitations"}
         ) | self._GOAL_ALLOWED_KEYS
         cap_payload = _capability_payload(
-            group, prior_observation=observation
+            group,
+            prior_observation=observation,
+            compact=(self._tool_selection_mode
+                     == "retrieval_llm_progressive"),
         )
         if relevance_feedback is not None:
             # Same bounded recovery wrap as _select_capability —
@@ -12365,6 +12444,8 @@ class OperationalCapabilityOrchestrator:
             retry_payload = _capability_payload(
                 retry_group,
                 prior_observation=observation,
+                compact=(self._tool_selection_mode
+                         == "retrieval_llm_progressive"),
             )
             retry_visible = _projected_capability_names(retry_payload)
             retry_invocable = [

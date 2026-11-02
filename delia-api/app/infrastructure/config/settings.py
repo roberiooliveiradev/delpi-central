@@ -283,6 +283,12 @@ class Settings:
         self.mcp_catalog_db = (
             os.getenv("DELIA_MCP_CATALOG_DB") or ""
         ).strip() or None
+        # Doc 217: composable tool-selection experiment — live default;
+        # retrieval / retrieval_llm / retrieval_llm_progressive are
+        # eval-only composition config, never request-sourced.
+        self.tool_selection_mode = (
+            os.getenv("DELIA_TOOL_SELECTION_MODE") or "live"
+        ).strip().lower()
         _call_attempts_raw = os.getenv("DELIA_LLM_CALL_MAX_ATTEMPTS")
         self.llm_call_max_attempts_config_source = (
             "environment"

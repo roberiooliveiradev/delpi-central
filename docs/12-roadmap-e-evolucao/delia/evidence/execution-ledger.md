@@ -1554,3 +1554,23 @@ REQUISITOS: T0 inventario boundary -> T1 flag opt-in variante B de SELECAO (nao 
 BASE ja pronta: catalog_store SQLite (/app/.battery/mcp_catalog.db 7 owners),
   SnapshotDiscoverInterop, composer flag pattern (DELIA_MCP_CATALOG_MODE).
 PROXIMO: ler doc217 inteiro -> REUSE gate -> implementar retrieval.
+
+## DOC217 — T0-T5 implementado (SHA pendente)
+
+TASK=DELIA-C3-COMPOSABLE-TOOL-SELECTION-EXPERIMENT-01
+T0 boundary: select_group -> _select_capability -> arggen(descriptor.input_schema)
+T1 flag: DELIA_TOOL_SELECTION_MODE = live|retrieval|retrieval_llm|
+  retrieval_llm_progressive (opt-in eval-only; live default inalterado)
+T2 retrieval: capability_retrieval.py — BM25 deterministico sobre surface
+  (name+desc+owner; multi-tool recall top_k; LlamaIndex NOT_ADOPT: nao instalado,
+  BM25 e baseline exigida primeiro)
+T3 selector: LangChain LLMToolSelectorMiddleware NOT_ADOPT — middleware exige
+  create_agent runtime (segundo planner, proibido); selecao segue via port/model
+  existente sobre conjunto restrito
+T4 exposicao progressiva: Pydantic PreparedToolset/Deferred NOT_ADOPT — requer
+  pydantic-ai agent; implementado via _capability_payload(compact=True) —
+  argument_keys/required ocultos na selecao, schema segue interno no arggen
+T5 integracao: _filter_groups_for_selection antes de select_group/capability;
+  modos B determinístico top-1, C retrieval+LLM, D retrieval+LLM+compact
+EM CURSO: A/B/C/D 3 cenarios x4 modos -> /app/.battery/abcd_217.log (ABCD_ALL_DONE)
+REGRESSAO: 20 testes green (217+catalog+vocative+metamorphic)
