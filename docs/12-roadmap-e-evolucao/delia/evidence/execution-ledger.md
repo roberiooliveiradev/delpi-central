@@ -1198,3 +1198,19 @@ calls (~L5626) — gate por goal_class/operation_class do descriptor, NAO por re
 BATERIA FINAL: 45P/44F — clusters: 22 cmp env (rerun em curso), 8 EVIDENCE_RELEVANCE nomenclatura,
 4-5 ADMISSION_ERROR, 5 GROUP_SELECTION heldout, 3 GOAL_INTERP prepare, 2 AUTHZ neg_delete,
 1 EVIDENCE_REJECTION t2_workspace, 1 cmp_27 ADMISSION.
+
+## FIX-POINT neg_delete (linhas exatas)
+
+orchestration.py: `discovery` resolvido ~L5515; invoke discovery L5626-5630 dentro
+`if discovery is not None:` (L5613). `teo.get_context` E a capability de discovery do TEO.
+FIX PROPOSTO: antes do bloco discovery (~L5605), se `goal is not None and
+goal.goal_class == "create_or_modify"` e o descriptor/remote proposto NAO consta em
+group.capabilities como operation_class invocavel write -> pular discovery (e index),
+retornar recusa governada (reusar caminho WRITE_REJECTED existente ~L8578 ou NOT_APPLICABLE
+conforme classificacao do intent). Implementar como guard no inicio do bloco:
+  if goal is not None and goal.goal_class == "create_or_modify": discovery = None; self_index = False
+  (mas ainda assim seguir para validacao do remote -> recusa honesta).
+CUIDADO: cenarios "prepare um processo" sao create_or_modify legitimos (PREPARE class) —
+nao pode bloquear descoberta de PREPARE caps. O gate deve ser: write-intent + remote
+nao encontrado no surface -> recusa sem fetch. Testar ho_neg_delete + t2_neg_delete +
+t2_prep/ho_prepare_record (legitimos) + regressao.
