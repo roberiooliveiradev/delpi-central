@@ -40,7 +40,8 @@ def test_table_prefers_list_sources():
         "list" in oid or "detalhes" in oid or "retrabalhos" in oid
         or "inspecoes" in oid or "inspection" in oid
         or "pending" in oid or "incomplete" in oid
-        or "supplies" in oid
+        or "supplies" in oid or "production" in oid
+        or "factory" in oid
         for oid in ids
     )
 

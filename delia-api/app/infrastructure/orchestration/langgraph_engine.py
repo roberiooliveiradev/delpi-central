@@ -154,6 +154,8 @@ class _GovernedTurnState(TypedDict, total=False):
     sub_results: Annotated[list[dict], operator.add]
     subobjective: SubObjective
     sub_finished: bool
+    # S6: last computed coverage map (subobjective_id → class).
+    evidence_coverage: dict
     trace: list[str]
 
 
@@ -565,6 +567,13 @@ class LangGraphCapabilityOrchestrator:
                 if recoverable
                 else SUBOBJECTIVE_BLOCKED
             )
+        structured = (
+            outcome.structured
+            if outcome is not None and isinstance(
+                getattr(outcome, "structured", None), Mapping
+            )
+            else {}
+        )
         record = {
             "subobjective_id": sub.subobjective_id,
             "goal": sub.goal,
@@ -574,6 +583,21 @@ class LangGraphCapabilityOrchestrator:
             "limitations": list(attempt.limitations),
             "evidence_refs": list(refs),
             "gaps": list(gaps),
+            # S6: coverage inputs — completeness flag, declared
+            # contradictions and the reconciliation dimensions carried
+            # by the owner outcome (period/scope/unit). All are
+            # owner-declared observations, never inferred facts.
+            "is_complete": (
+                getattr(outcome, "is_complete", True)
+                if outcome is not None
+                else True
+            ),
+            "contradictions": list(
+                structured.get("contradictions") or ()
+            ),
+            "period": structured.get("period"),
+            "scope": structured.get("scope"),
+            "unit": structured.get("unit"),
         }
         return {"sub_results": [record]}
 
@@ -618,6 +642,17 @@ class LangGraphCapabilityOrchestrator:
                 pending_gaps[oid] = "dependency unresolved"
                 continue
             finished = False
+        # S6: per-subobjective evidence coverage + declared
+        # conflicts — the synthesis reports what is established,
+        # partial, unsupported or contradictory; it never upgrades a
+        # tool-success into a business fact.
+        coverage = {
+            r["subobjective_id"]: self._subobjective_coverage(r)
+            for r in results
+        }
+        dim_conflicts = self._dimension_conflicts(objectives, results)
+        for oid, note in dim_conflicts.items():
+            coverage[oid] = "contradictory"
         contents: list[str] = []
         limitations: list[str] = []
         saw_source_unavailable = False
@@ -644,6 +679,19 @@ class LangGraphCapabilityOrchestrator:
                 )
         for oid, gap in pending_gaps.items():
             limitations.append(f"{oid} {SUBOBJECTIVE_BLOCKED}: {gap}")
+        for oid, cls in sorted(coverage.items()):
+            if cls == "unsupported":
+                limitations.append(
+                    f"{oid} unsupported: no evidence references"
+                )
+            elif cls == "partial":
+                limitations.append(f"{oid} partial: incomplete evidence")
+            elif cls == "contradictory":
+                note = dim_conflicts.get(oid)
+                limitations.append(
+                    f"{oid} contradictory: "
+                    + (note or "conflicting evidence declared")
+                )
         if contents:
             status = GovernedCapabilityStatus.SUCCESS
             content = "\n\n".join(contents)
@@ -665,7 +713,8 @@ class LangGraphCapabilityOrchestrator:
             state["correlation"],
         )
         out: dict[str, Any] = {
-            **self._traced(state, "subobjective_synthesis")
+            **self._traced(state, "subobjective_synthesis"),
+            "evidence_coverage": coverage,
         }
         if finished or pending_gaps:
             out["sub_finished"] = True
@@ -676,6 +725,68 @@ class LangGraphCapabilityOrchestrator:
                 limitations=tuple(limitations[:24]),
             )
         return out
+
+    @staticmethod
+    def _subobjective_coverage(record: dict) -> str:
+        """S6 coverage class for one subobjective result record —
+        sufficient/partial/unsupported/absent/contradictory. Driven
+        only by declared fields: a successful invocation without
+        evidence references is UNSUPPORTED, never a business fact."""
+        if record.get("contradictions"):
+            return "contradictory"
+        state = record.get("state")
+        if state in (SUBOBJECTIVE_FAILED, SUBOBJECTIVE_BLOCKED):
+            return "absent"
+        if state == SUBOBJECTIVE_PARTIAL or record.get(
+            "is_complete"
+        ) is False:
+            return "partial"
+        if state == SUBOBJECTIVE_COMPLETED:
+            return (
+                "sufficient"
+                if record.get("evidence_refs")
+                else "unsupported"
+            )
+        return "absent"
+
+    @staticmethod
+    def _dimension_conflicts(
+        objectives: tuple, results: list[dict]
+    ) -> dict[str, str]:
+        """Cross-record reconciliation: when subobjectives share a
+        required-evidence tag but their owner outcomes declare
+        different period/scope/unit, the pair is an explicit
+        unreconciled conflict — reported, never silently averaged."""
+        by_oid = {
+            r["subobjective_id"]: r
+            for r in results
+            if r.get("state")
+            in (SUBOBJECTIVE_COMPLETED, SUBOBJECTIVE_PARTIAL)
+        }
+        conflicts: dict[str, str] = {}
+        objs = [o for o in objectives if o.subobjective_id in by_oid]
+        for i, a in enumerate(objs):
+            for b in objs[i + 1:]:
+                if not (
+                    set(a.evidence_needed) & set(b.evidence_needed)
+                ):
+                    continue
+                ra, rb = by_oid[a.subobjective_id], by_oid[b.subobjective_id]
+                for dim in ("period", "scope", "unit"):
+                    va, vb = ra.get(dim), rb.get(dim)
+                    if va and vb and va != vb:
+                        note = (
+                            f"{dim} conflict "
+                            f"{a.subobjective_id}={va} vs "
+                            f"{b.subobjective_id}={vb}"
+                        )
+                        conflicts.setdefault(
+                            a.subobjective_id, note
+                        )
+                        conflicts.setdefault(
+                            b.subobjective_id, note
+                        )
+        return conflicts
 
     @staticmethod
     def _dl(state: _GovernedTurnState) -> TurnDeadline:
