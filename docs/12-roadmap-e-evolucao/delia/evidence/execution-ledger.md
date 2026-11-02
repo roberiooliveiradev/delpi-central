@@ -1072,3 +1072,10 @@ RESUME: docker exec delia-t21-main tail -f /app/.battery/eval.log ; relancar: do
 PENDENTE para fechamento doc214 §9: classificacao causal dos FAILs da bateria no SHA final,
 relatorio secao 9 completo. NENHUM gate declarado PASS sem execucao.
 TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## INTEGRACAO — prova cruzada S3+S4+S5+S6 (SHA pendente)
+
+- tests/test_integrated_investigation.py GREEN: 1 investigacao composta exercita decomposicao S3, wave paralela S4 (2 independentes + 1 dependente), crash mid-run + resume em instancia nova S5 (so_1 commitado nao re-executado, p1.calls==1), cobertura S6 (so_2 SOURCE_UNAVAILABLE -> coverage!=sufficient, limitation declarada).
+- scripts/_s4_fanout_benchmark.py: INCONCLUSIVE — harness de proposals produziu contagem de invocacoes implausivel (6 calls/3 subs); mecanica da fila fake distorce medicao de parede; benchmark sequencial-vs-paralelo precisa de instrumentacao de tempo por wave, nao da fila do FakeProposalModel.
+- Bateria: supervisor original fazia loop infinito (pool main nao cobre heldout/doc211); relancada em execucao por corpus (heldout→newheldout→t22heldout→doc211) em /app/.battery/eval_final.log, resumivel.
+- Keycloak estava down (502) — recuperado com docker start; gate de aquecimento passando.
