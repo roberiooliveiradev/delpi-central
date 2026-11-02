@@ -1723,3 +1723,35 @@ IRMAO nh_ilhos: recusa interpretativa honesta (dado realmente ausente) —
 CAUSA CONFIRMADA: owner davi casa termo literal (plural->0, singular->4);
  arggen repassava forma do usuario -> owner-empty; retry sem contexto dos
  args rejeitados -> retry tambem falhava.
+
+## T20-EVIDENCE — RELATORIO FINAL §13 (SHA f13c943673)
+
+TASK_ID=DELIA-C3-EVIDENCE-INTERPRETATION-AND-OUTCOME-REMEDIATION-01
+BASE_SHA=a377eea394 · FINAL_SHA=f13c943673 · PUSH_VERIFIED=YES
+ROOT_CAUSE=owner davi search casa termo literal — arggen repassava forma
+  plural do usuario (conectores eletricos->0 items, conector eletrico->4);
+  retry de empty-result nao recebia os args rejeitados e falhava tambem ->
+  verdict empty_result honesto -> resposta "colecao vazia" com dados existentes.
+  PRIMEIRA DIVERGENCIA: argument generation, NAO evidence interpretation —
+  facts/envelope/synthesis extraem corretamente (probe provou 4 records).
+OWNER_RESPONSIBILITIES=davi search sem normalizacao lexical (owner-side;
+  residuo aberto p/ owner).
+EVIDENCE_PROJECTION_FINDINGS=correto — extract_pagination_envelope,
+  outcome_facts, _synthesis_records preservam 4 records com descricao.
+OUTCOME_ASSESSMENT_FINDINGS=correto — verdict empty_result quando owner
+  retorna vazio; retry substitui outcome corretamente.
+RESPONSE_COMPOSITION_FINDINGS=correto — template/model fiel ao verdict.
+REAL_LLM_QUESTIONS="me mostre dois conectores eletricos" + nh_ilhos irmao.
+FULL_LLM_RESPONSES=ANTES colecao vazia (errada) -> DEPOIS "Aqui estao 2
+  exemplos: 10091052 CONECTOR ELETRICO DIN 43650-A..., 90263705 CHICOTE...
+  Exibindo 2 de 4 registros" (correta, evidence-grounded).
+FIX=_empty_result_feedback_with_args: previous_arguments + orientacao
+  generica de reformulacao (model reformula; zero hardcode por owner).
+REGRESSION=126 testes green; metamorphic+contracts green.
+GENERALIZATION=mecanismo generico (qualquer owner/termo); irmao nh_ilhos
+  manteve recusa honesta sem invencionice.
+KNOWN_RESIDUALS=owner-side lexical normalization (davi); nh_conector-style
+  plural-vs-singular pode ainda exigir retry em outros termos.
+ROLLBACK=flag nao aplicavel (comportamento padrao melhorado); revert trivial.
+TASK_STATUS=COMPLETE (causa corrigida e provada E2E)
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
