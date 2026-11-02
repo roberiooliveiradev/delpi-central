@@ -1708,3 +1708,18 @@ FIX CANDIDATO: execute deve propagar os arguments publicados no candidate
 (Schema-bounded arguments for the discovered candidate) quando presentes,
 em vez de regenerar do zero — contrato owner, nao workaround.
 VERIFICANDO: args do 1o execute vs retry vs candidate.published arguments.
+
+## T20-EVIDENCE — fix provado end-to-end (SHA pendente)
+
+FIX: _empty_result_feedback_with_args — o feedback de empty-result agora
+leva previous_arguments + orientacao generica de reformulacao (formas mais
+curtas/canonicas) — o modelo reformula semanticamente, zero hardcode.
+ANTES: "A fonte respondeu com uma colecao vazia" (dados existiam).
+DEPOIS: "Aqui estao 2 exemplos: 10091052 CONECTOR ELETRICO DIN 43650-A...,
+ 90263705 CHICOTE ELETRICO P22 TSE... — Exibindo 2 de 4 registros"
+ — resposta empresarial REAL com descricao+codigo+categoria.
+IRMAO nh_ilhos: recusa interpretativa honesta (dado realmente ausente) —
+ nao inventou; regressao 126 testes green.
+CAUSA CONFIRMADA: owner davi casa termo literal (plural->0, singular->4);
+ arggen repassava forma do usuario -> owner-empty; retry sem contexto dos
+ args rejeitados -> retry tambem falhava.

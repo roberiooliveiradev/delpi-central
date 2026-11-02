@@ -477,6 +477,34 @@ _EMPTY_RESULT_FEEDBACK = json.dumps(
     ensure_ascii=False,
 )
 
+# Owner-visible context for the same reformulation: the concrete
+# arguments that produced the empty result, with permission to vary
+# lexical form (shorter, simpler, singular or canonical term) — the
+# model performs the semantic reformulation; nothing is hardcoded.
+def _empty_result_feedback_with_args(previous: Mapping) -> str:
+    """Empty-result feedback carrying the concrete rejected args —
+    the model reformulates semantically; nothing is hardcoded."""
+    return json.dumps(
+        {
+            "owner_feedback": {
+                "kind": "owner_empty_result",
+                "previous_arguments": dict(previous),
+                "detail": (
+                    "The argument set in previous_arguments returned "
+                    "no records from the owner. Reformulate once, "
+                    "preserving business subject, identifiers, "
+                    "quantities and technical qualifiers. Prefer "
+                    "shorter, simpler or canonical term forms (the "
+                    "owner may match literal terms); you may also "
+                    "drop nonessential qualifiers or filler wording. "
+                    "Return empty arguments only when nothing "
+                    "plausible applies."
+                ),
+            }
+        },
+        ensure_ascii=False,
+    )
+
 _SYNTHESIS_RETRYABLE_REASONS = frozenset(
     {
         "proposal_absent",
@@ -13340,7 +13368,11 @@ class OperationalCapabilityOrchestrator:
                                 else None
                             ),
                             workspace_context=workspace_context,
-                            owner_feedback=_EMPTY_RESULT_FEEDBACK,
+                            owner_feedback=(
+                                _empty_result_feedback_with_args(merged)
+                                if isinstance(merged, Mapping)
+                                else _EMPTY_RESULT_FEEDBACK
+                            ),
                         )
                         retry_merged = (
                             _validate_instance(
