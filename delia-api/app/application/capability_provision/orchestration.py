@@ -5506,6 +5506,30 @@ class OperationalCapabilityOrchestrator:
                     foreign_key, foreign_cap = found
                     foreign_group = groups[foreign_key]
 
+        # Write-intent bound to a non-write target: vocabulary
+        # discovery cannot make a READ/analyze capability execute a
+        # mutation, so the owner is never touched — fail closed with
+        # the same honest refusal the no-capability path produces.
+        if (
+            goal is not None
+            and goal.goal_class == "create_or_modify"
+            and descriptor.operation_class
+            not in _WRITE_OPERATION_CLASSES
+        ):
+            _logger.info(
+                "orchestration stage=plan "
+                "decision=write_intent_non_write_target "
+                "capability=%s class=%s correlation_id=%s",
+                descriptor.remote_name,
+                descriptor.operation_class.value,
+                correlation,
+            )
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                error_code="intent_target_incompatible",
+                admission_outcome=unbound_outcome,
+            )
         # Bounded operational plan (§6.131 R1): when the selected
         # capability is an opaque envelope, the owner's DISCOVERY
         # capability must supply the real operation vocabulary before

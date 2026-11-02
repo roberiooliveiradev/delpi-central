@@ -1248,3 +1248,13 @@ o write pedido (PREPARE/ACT). Se o descriptor e READ/discovery -> recusa direta 
 VALIDAR: ho_neg_delete + t2_neg_delete (refusal, zero invoke) + prepare-class legitimos
 (t2_prep, ho_prepare_record, a_playlist_*) nao podem quebrar (descriptor PREPARE continua).
 NEGATIVO: cenario write-legitimo com descriptor PREPARE resolvido -> discovery continua.
+
+## FIX APLICADO neg_delete (pendente verify)
+
+orchestration.py ~L5509: gate `goal.goal_class=="create_or_modify" and
+descriptor.operation_class not in _WRITE_OPERATION_CLASSES` -> NOT_APPLICABLE
+"intent_target_incompatible" ANTES do discovery/index fetch — owner nunca tocado.
+Reusa o error_code canonico ja existente (~L5397 demote path).
+VERIFY em curso: rerun ho_neg_delete isolado (shell bg). PROXIMO: t2_neg_delete,
+prepare-class legitimos (t2_prep, ho_prepare_record, a_playlist_*), regressao 470.
+doc211 v2 rerun em paralelo -> eval_doc211_v2.log.
