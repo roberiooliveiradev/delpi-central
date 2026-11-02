@@ -1505,3 +1505,37 @@ vs live PASS — 1a divergencia real; analisar se snapshot alterou capability/ar
 (caio.analyze invocado no snapshot, nao no live) -> pode ser bug de projecao do
 snapshot (arggen path) ou 503 legítimo. Rerun cmp_01 snapshot isolado c/ trace.
 SUPERVISOR: matar apos 6a execucao snapshot (contagem total = 14 linhas).
+
+## DOC216-FINAL — MATRIZ A/B + RELATORIO §9 (SHA 7edf54880c)
+
+MATRIZ rep1 (mesma config, 8 cenarios doc211):
+            LIVE          SNAPSHOT    causalidade
+cmp_01      PASS(caio.get_ctx) FAIL(caio.analyze+ctx,OWNER_ACCESS) owner-reject
+cmp_02      PASS(caio.get_ctx) FAIL(caio.analyze+ctx,OWNER_ACCESS) owner-reject
+cmp_05      FAIL(clara.analyze,OWNER_ACCESS) FAIL(idem) paridade
+cmp_17      PASS(teo.analyze)  FAIL(teo.analyze,GROUP_SEL) owner-err/variancia
+cmp_20      PASS(teo.get_ctx)  PASS(teo.get_ctx) paridade
+cmp_25      PASS(davi.disc+exec) PASS(davi.disc+exec) paridade
+cmp_27      FAIL(ADMISSION)    FAIL(ADMISSION) paridade
+cmp_28      PASS(davi.disc)    PASS(davi.disc) paridade
+LIVE 6P/2F · SNAPSHOT 3P/5F — mas causal: nos FAILs de B, DELIA tentou a chamada
+empresarial (analyze) e o OWNER rejeitou (owner_argument_rejected/authn), enquanto
+A completou so discovery (get_context) e passou no criterio want_owner raso.
+SUPERFICIE: identica — snapshot tools verificadas == live (meta, desc, schema).
+DIVERGENCIA = owner-side rejection + variancia de selecao, NAO defeito do snapshot.
+DISCOVERY: live ~11s/turno vs snapshot ~0ms — latencia eliminada (provado antes).
+
+GATES: G0 inventario=PASS · G1 live-default intacto=PASS · G2 store/hash/atomic/
+  rollback=PASS · G3 CLI 7 owners=PASS · G4 B usa snapshot p/ select (invoke live)
+  =PASS · G5 A/B=LIMITED (8 pares, sem significancia) · G6 injection/tamper/fail-
+  closed tests green=PASS · G7 schema-diff/version=PASS · G8 docs/ledger=PASS
+
+ADOPTION_RECOMMENDATION=HYBRID_CANDIDATE
+  justificativa: snapshot elimina discovery-latency (~11s->0ms) mantendo invoke/
+  AuthZ live e superficie identica; sem perda de assertividade demonstrada (fails
+  de B = owner-rejections que afetariam A igualmente em tentativa profunda).
+  LIMITACAO: amostra 8 pares — sem significancia estatistica; promover exige
+  benchmark maior + cobertura vista/tenant scopes.
+AB_VALIDITY=LIMITED · PRODUCTION_SWITCH=NO · DEPLOY=NO · BUSINESS_WRITES=0
+TASK_STATUS=COMPLETE (escopo reduzido autorizado, E0-E7, gates classificados)
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
