@@ -1497,3 +1497,11 @@ resultado, MATAR supervisor (rep2/3 descartados), parear com 6 dos 8 live.
 PARES ALVO: cmp_01,02,05,17,20,28 (drop cmp_25,27 do comparativo — surplus valido).
 PROXIMO: kill supervisor apos 6a execucao snapshot -> matriz 6x2 -> G0-G8 -> §9.
 AB_VALIDITY=LIMITED (amostra pequena — nao declarar significancia).
+
+## HANDOFF A/B-reduzido (SHA ff05bf7678)
+
+DIVERGENCIA REAL PARCIAL: cmp_01 snapshot FAIL(OWNER_ACCESS, caio.analyze+get_context)
+vs live PASS — 1a divergencia real; analisar se snapshot alterou capability/args
+(caio.analyze invocado no snapshot, nao no live) -> pode ser bug de projecao do
+snapshot (arggen path) ou 503 legítimo. Rerun cmp_01 snapshot isolado c/ trace.
+SUPERVISOR: matar apos 6a execucao snapshot (contagem total = 14 linhas).
