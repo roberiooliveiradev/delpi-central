@@ -107,7 +107,9 @@ class DesignIntelligenceService:
     # router; direct typed commands must return None so ops flow ungated.
     _DESIGN_INTENT_PATTERNS = (
         ("CHOOSE_VISUAL", ("qual grafico", "que grafico", "qual visual", "grafico devo", "qual tipo de grafico")),
-        ("FIX_LAYOUT", ("sobrepo", "sobrepost", "fora do slide", "apertad", "organiz", "layout quebrad")),
+        # COMPOSE_SLIDE vem antes de FIX_LAYOUT — "organize os
+        # elementos" num pedido de composição não pode sequestrar
+        # a intenção para o caminho de correção de layout.
         ("REVIEW_SLIDE", ("esta bom", "ta bom", "revise", "avalie", "como esta", "bonit")),
         ("COMPOSE_SLIDE", (
             "executiv", "monte", "componha", "crie um slide", "novo slide",
@@ -128,6 +130,7 @@ class DesignIntelligenceService:
             "desenhe", "projete um painel", "estruture o painel",
             "estruture a apresentacao",
         )),
+        ("FIX_LAYOUT", ("sobrepo", "sobrepost", "fora do slide", "apertad", "organiz", "layout quebrad")),
         ("IMPROVE_EXISTING", ("melhore", "melhorar", "destaque", "destacar", "deixe melhor", "polir")),
     )
 
