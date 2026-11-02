@@ -235,3 +235,86 @@ def test_corrupted_checkpoint_fails_closed(tmp_path):
             "ler g1", thread_id="t-corrupt",
         )
     assert len(p1.calls) == calls_before  # fail closed pre-invoke
+
+
+# ---------------- incompatible persisted version ------------------
+
+
+def test_incompatible_checkpoint_version_fails_closed(tmp_path):
+    db = str(tmp_path / "ck.sqlite")
+    caps = [_cap_s("g1", "p1", "r1")]
+    proposal = [
+        _select("g1", "r1", extra=_decompose(("ler g1", (), ("a",)))),
+        _select("g1", "r1"),
+    ]
+    p1 = FakeProvider("p1", [_group("p1", "g1", caps)])
+    _engine({"p1": p1}, proposal, _saver(db)).attempt(
+        "ler g1", thread_id="t-ver",
+    )
+    saver = _saver(db)
+    latest = saver.get_tuple({"configurable": {"thread_id": "t-ver"}})
+    cfg = latest.config
+    forged = dict(latest.checkpoint)
+    forged["channel_values"] = dict(forged["channel_values"])
+    forged["channel_values"]["state_version"] = "s5.v0"
+    saver.put(cfg, forged, latest.metadata, {})
+
+    calls_before = len(p1.calls)
+    with pytest.raises(Exception):
+        _engine({"p1": p1}, proposal, _saver(db)).attempt(
+            "ler g1", thread_id="t-ver",
+        )
+    assert len(p1.calls) == calls_before  # fail closed pre-invoke
+
+
+# ---------------- rollback to an earlier checkpoint ---------------
+
+
+def test_rollback_restores_earlier_checkpoint(tmp_path):
+    db = str(tmp_path / "ck.sqlite")
+    caps1, caps2, proposal = _two_sub_setup()
+    p1 = FakeProvider("p1", [_group("p1", "g1", caps1)])
+    p2 = _KillThenOk("p2", [_group("p2", "g2", caps2)])
+    eng1 = _engine({"p1": p1, "p2": p2}, proposal, _saver(db))
+    with pytest.raises(RuntimeError):
+        eng1.attempt("ler g1 e g2", thread_id="t-rb")
+
+    # Complete the investigation on a fresh engine.
+    eng2 = _engine({"p1": p1, "p2": p2}, [_select("g2", "r2")],
+                   _saver(db))
+    att = eng2.attempt("ler g1 e g2", thread_id="t-rb")
+    assert att.status is GovernedCapabilityStatus.SUCCESS
+    history = list(
+        _saver(db).list({"configurable": {"thread_id": "t-rb"}})
+    )
+    # Roll back to the earliest checkpoint that already carries the
+    # plan but no committed results — the resumed run must then
+    # re-execute from that point (so_1's provider runs again).
+    earlier = next(
+        t for t in reversed(history)
+        if t.checkpoint["channel_values"].get("subobjectives")
+        and not t.checkpoint["channel_values"].get("sub_results")
+    )
+    rolled = dict(earlier.checkpoint)
+    # SqliteSaver picks the newest row by checkpoint_id DESC — a
+    # lexically-later hex id lands the rollback at the head.
+    rolled["id"] = "ffffffff-ffff-ffff-ffff-ffffffffffff"
+    cfg = earlier.config
+    _saver(db).put(cfg, rolled, earlier.metadata, {})
+
+    p1_before = len(p1.calls)
+    eng3 = _engine(
+        {"p1": p1, "p2": p2},
+        [
+            _select("g1", "r1", extra=_decompose(
+                ("ler g1", (), ("a",)),
+                ("ler g2", (0,), ("b",)),
+            )),
+            _select("g1", "r1"),
+            _select("g2", "r2"),
+        ],
+        _saver(db),
+    )
+    att3 = eng3.attempt("ler g1 e g2", thread_id="t-rb")
+    assert att3.status is GovernedCapabilityStatus.SUCCESS
+    assert len(p1.calls) > p1_before  # rolled-back work re-executed

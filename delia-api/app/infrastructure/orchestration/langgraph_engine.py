@@ -113,6 +113,18 @@ from app.application.model_invocation.contracts import (
 
 _logger = logging.getLogger(__name__)
 
+# S5: persisted-state contract version — a checkpoint written under a
+# different version fails closed at preflight instead of being
+# misinterpreted (migration is an explicit future contract).
+CHECKPOINT_STATE_VERSION = "s5.v1"
+
+
+def _keep_persisted(persisted: Any, _new: Any) -> Any:
+    """Write-once reducer: the checkpointed value wins over whatever a
+    resume's fresh input carries, so version metadata reflects the
+    checkpoint that is actually being resumed."""
+    return persisted if persisted else _new
+
 
 class _GovernedTurnState(TypedDict, total=False):
     """Bounded per-attempt graph state. Every field is either a
@@ -128,6 +140,7 @@ class _GovernedTurnState(TypedDict, total=False):
     prior_turns: tuple[ConversationContextTurn, ...]
     prepare_only: bool
     deadline_data: dict
+    state_version: Annotated[str, _keep_persisted]
     admission_class: str | None
     admission_owner_required: bool
     assessment_reuse: bool
@@ -272,6 +285,14 @@ class LangGraphCapabilityOrchestrator:
         # Same terminal guards as Engine A's attempt entry: exhausted
         # budget/cancel raise the typed exceptions the shared runner
         # maps to PROCESSING_TIMEOUT.
+        version = state.get("state_version")
+        if version is not None and version != CHECKPOINT_STATE_VERSION:
+            # Resume across an incompatible persisted-state contract —
+            # fail closed rather than misinterpret foreign fields.
+            raise ValueError(
+                f"checkpoint state_version {version!r} incompatible "
+                f"with {CHECKPOINT_STATE_VERSION!r}"
+            )
         self._dl(state).check("turn_start")
         _emit_activity(
             phase=ActivityPhase.CONTEXTUALIZING,
@@ -705,6 +726,7 @@ class LangGraphCapabilityOrchestrator:
                         time.time() + deadline.remaining_seconds()
                     ),
                 },
+                "state_version": CHECKPOINT_STATE_VERSION,
                 "trace": [],
             }
             if thread_id is not None:
