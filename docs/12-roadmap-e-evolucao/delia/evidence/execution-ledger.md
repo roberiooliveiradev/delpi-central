@@ -1585,3 +1585,14 @@ CODE DONE: capability_retrieval.py (BM25), flag DELIA_TOOL_SELECTION_MODE,
   _filter_groups_for_selection, mode-B top1, mode-D compact payload.
   LangChain middleware + Pydantic toolset = NOT_ADOPT (requerem segundo
   agent runtime — doc217 permite NOT_ADOPT com justificativa).
+
+## DOC217 — A/B/C/D round1 + fix causal (SHA feaa274559+)
+
+ROUND1 matriz (12 exec, 3 cenarios x4 modos):
+  live 3/3 PASS · retrieval 1/3 · retrieval_llm 0/3 · progressive 1/3
+  Causa-raiz DEFEITO: retrieval dropava grupos de owners declarados
+  (vocative "CAIO,"/named mcp) — candidate filter ignorou o contrato do pedido.
+FIX: _filter_groups_for_selection preserva grupos cujo short-id esta em
+  _named_provider_tokens|_vocative_provider_tokens — declarado nunca e dropado.
+RERUN em curso: /app/.battery/abcd_217_v2.log (ABCD2_ALL_DONE), 3 modos x3 cenarios.
+Verificar: docker exec delia-t21-main tail -8 /app/.battery/abcd_217_v2.log

@@ -9503,6 +9503,18 @@ class OperationalCapabilityOrchestrator:
         keep = {group_key for group_key, _cap in ranked}
         if not keep:
             return groups
+        # Declared owners are never retrieval-dropped: an explicitly
+        # named/vocative provider is part of the request contract.
+        declared = (
+            _named_provider_tokens(input_text)
+            | _vocative_provider_tokens(input_text)
+        )
+        if declared:
+            keep |= {
+                key
+                for key in groups
+                if key.split(":", 1)[-1].strip().lower() in declared
+            }
         _logger.info(
             "orchestration stage=capability_retrieval "
             "mode=%s candidates=%d groups=%s",
