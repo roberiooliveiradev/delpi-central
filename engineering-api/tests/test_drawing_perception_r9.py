@@ -124,9 +124,11 @@ def test_adapters_contract_and_capabilities():
     caps = engine_capabilities()
     assert "eva_baseline_r823" in caps
     assert "pp_structure_v3" in caps
+    assert "table_structure_slanet" in caps
     assert caps["eva_baseline_r823"]["supports"]["ocr"] is True
     assert caps["pp_structure_v3"]["supports"]["tables"] is True
-    assert len(ENGINES) == 2
+    assert caps["table_structure_slanet"]["supports"]["cells"] is True
+    assert len(ENGINES) == 4
 
 
 def test_eva_baseline_capability_no_gpu():

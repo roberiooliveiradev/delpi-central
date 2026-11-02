@@ -460,3 +460,124 @@ class DoclingEngine:
 
 
 ENGINES["docling"] = DoclingEngine()
+
+
+class TableStructureEngine:
+    """Motor D — PaddleOCR TableStructureRecognition (SLANet) isolado.
+
+    Recebe um recorte de região de tabela (crop) e devolve estrutura
+    tabular real (linhas/colunas/células + bbox). CPU, ~0.8GB pico.
+    """
+
+    provider_id = "table_structure_slanet"
+
+    def capability(self) -> dict:
+        return capability_descriptor(
+            provider_id=self.provider_id,
+            provider_version="slanet_7.67MB",
+            supports={
+                "pdf_native": False, "ocr": False, "layout": False,
+                "tables": True, "cells": True, "figures": False,
+                "symbols": False, "coords": True, "multipage": False,
+                "page_select": False, "local": True, "gpu_required": False,
+                "graphic_primitives": False,
+            },
+            notes=["SLANet — estrutura de tabela sobre crop da regiao"],
+        )
+
+    def run(
+        self,
+        pdf_bytes: bytes,
+        *,
+        document_hash_sha256: str,
+        product_code: str | None = None,
+        pages: list[int] | None = None,
+        crop_box: list | None = None,
+    ) -> dict:
+        t0 = time.monotonic()
+        try:
+            import os
+            import tempfile
+
+            import numpy as np
+            import pypdfium2 as pdfium
+            from paddleocr import TableStructureRecognition
+
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                f.write(pdf_bytes)
+                tmp = f.name
+            try:
+                pdf = pdfium.PdfDocument(tmp)
+                img = np.array(pdf[0].render(scale=2.7778).to_pil())
+            finally:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+            cb = crop_box or [41, 31, 2295, 262]
+            crop = img[cb[1] : cb[3], cb[0] : cb[2]]
+            eng = TableStructureRecognition()
+            out = eng.predict(input=crop)
+            tables = []
+            cells = []
+            for res in out or []:
+                r = res if isinstance(res, dict) else res.json
+                st = r.get("structure") or []
+                tables.append(
+                    {
+                        "row_count": st.count("<tr>"),
+                        "headers": [],
+                        "structure_score": r.get("structure_score"),
+                    }
+                )
+                for i, bb in enumerate(r.get("bbox") or []):
+                    cells.append(
+                        make_cell(
+                            row=i // 8,
+                            col=i % 8,
+                            text="",
+                            bounding_box_px=list(bb) if bb else None,
+                        )
+                    )
+            return make_result(
+                provider_id=self.provider_id,
+                provider_version="slanet_7.67MB",
+                document_hash_sha256=document_hash_sha256,
+                product_code=product_code,
+                model_version="SLANet",
+                execution_mode="local_isolated",
+                tables=tables,
+                cells=cells,
+                provenance="api-delpi pdf → render → table crop → SLANet → v1",
+                limitations=[
+                    "candidates only",
+                    "estrutura tabular sem texto — OCR associa depois",
+                ],
+                duration_ms=round((time.monotonic() - t0) * 1000, 1),
+                quality_status="EVAL_PENDING",
+            )
+        except ImportError as exc:
+            return make_result(
+                provider_id=self.provider_id,
+                provider_version="unknown",
+                document_hash_sha256=document_hash_sha256,
+                product_code=product_code,
+                error_kind="MODEL_NOT_PROVISIONED",
+                error_detail=str(exc),
+                quality_status="FAILED",
+                duration_ms=round((time.monotonic() - t0) * 1000, 1),
+            )
+        except Exception as exc:
+            return make_result(
+                provider_id=self.provider_id,
+                provider_version="slanet_7.67MB",
+                document_hash_sha256=document_hash_sha256,
+                product_code=product_code,
+                error_kind="UNAVAILABLE",
+                error_detail=f"{type(exc).__name__}:{exc}",
+                quality_status="FAILED",
+                duration_ms=round((time.monotonic() - t0) * 1000, 1),
+            )
+
+
+ENGINES["table_structure_slanet"] = TableStructureEngine()

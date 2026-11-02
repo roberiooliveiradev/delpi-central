@@ -1574,3 +1574,14 @@ T5 integracao: _filter_groups_for_selection antes de select_group/capability;
   modos B determinístico top-1, C retrieval+LLM, D retrieval+LLM+compact
 EM CURSO: A/B/C/D 3 cenarios x4 modos -> /app/.battery/abcd_217.log (ABCD_ALL_DONE)
 REGRESSAO: 20 testes green (217+catalog+vocative+metamorphic)
+
+## DOC217 — HANDOFF A/B/C/D em curso (SHA fc070d1fcf)
+
+A/B/C/D: /app/.battery/abcd_217.log — 3 cenarios x4 modos (live/retrieval/
+retrieval_llm/retrieval_llm_progressive), marker ABCD_ALL_DONE.
+Verificar: docker exec delia-t21-main tail -8 /app/.battery/abcd_217.log
+PENDENTE: matriz comparativa -> G0-G8 -> relatorio doc217 §9 -> push.
+CODE DONE: capability_retrieval.py (BM25), flag DELIA_TOOL_SELECTION_MODE,
+  _filter_groups_for_selection, mode-B top1, mode-D compact payload.
+  LangChain middleware + Pydantic toolset = NOT_ADOPT (requerem segundo
+  agent runtime — doc217 permite NOT_ADOPT com justificativa).

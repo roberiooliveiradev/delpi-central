@@ -50,7 +50,11 @@ TARGET_AUDIENCE = "api-delpi"
 # api-delpi exige um scope por operação (require_s2s_service):
 #   GET /financeiro/settlements/*  -> settlements.read  (doc 48, R01/R02)
 #   GET /financeiro/stock-inventory -> stock-inventory.read (doc 49, R03/P7)
-REQUIRED_SCOPES = ("settlements.read", "stock-inventory.read")
+REQUIRED_SCOPES = (
+    "settlements.read",
+    "stock-inventory.read",
+    "consumption-audit.read",  # R04 — reuse consumption-audit producer (G061)
+)
 AUDIENCE_MAPPER_NAME = f"audience-{TARGET_AUDIENCE}"
 _USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
