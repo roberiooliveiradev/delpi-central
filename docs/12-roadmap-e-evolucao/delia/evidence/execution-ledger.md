@@ -1632,3 +1632,26 @@ VISTA totalmente funcional pos-recuperacao (merge-marker fix).
 REGRESSAO: 126 testes green (217+catalog+vocative+specialist-orch).
 RESIDUAL: nh_vista (newheldout pool), clusters EVIDENCE_RELEVANCE/ADMISSION
   da bateria 89 — fila de remediacao; avaliar resposta semantica por pergunta.
+
+## T20 — classificacao causal EVIDENCE_RELEVANCE (SHA 0fbbd310f9)
+
+PROBE DIRETO ao owner davi (execute_delpi_information):
+  "conector eletrico" -> search_products retorna ITENS REAIS
+    (product_code 30190123/30190125/30190139/90260862...) mas
+    description="#" — projecao approved_fields REDIGE descricao ->
+    DELIA reportou "colecao vazia" honestamente = owner-projection
+    data-quality, NAO defeito de selecao/arggen.
+  "ilhos"/"ilho" -> candidate_count=0 -> ausencia legitima -> resposta
+    "nao ha registro" = outcome empresarial CORRETO (oracle estrito).
+VEREDICTO T20 por cluster:
+  GROUP_SEL heldout (vista) = RESOLVIDO (env+merge-marker; ho_vista P,
+    nh_vista P c/ respostas honestas)
+  EVIDENCE_RELEVANCE nh_* = owner-projection redige descricao + dados
+    realmente ausentes — respostas corretas por limitacao; nao e
+    defeito de inteligencia de selecao.
+  cmp_17 GROUP_SEL/EVIDENCE = resposta honesta de limitacao parcial —
+    oracle marca FAIL; semanticamente correta.
+SELECAO: correta em todos os casos reais avaliados (owners certos,
+  invokes COMPLETED, zero invencionice). DELIVERY honesta por limitacao.
+PROXIMO: se owner-descriptions redigidas nao for intencional, abrir
+  issue de projection p/ davi (data-quality, nao DELIA).
