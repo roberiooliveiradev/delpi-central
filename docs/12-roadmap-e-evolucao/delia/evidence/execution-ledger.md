@@ -1353,3 +1353,18 @@ selecao/julgamento em cenarios compostos longos (prompt multi-clausula),
 ou capability-level apos group correto. Investigar trace de cmp_02/cmp_04
 (runs.json atualizado pelo rerun v2).
 PROXIMO: extrair proposals/invokes de 2-3 FAILs doc211v2 -> RED -> fix -> GREEN.
+
+## DIAGNOSTICO doc211 v2 — divergencia real != selecao
+
+Traces runs.json (rerun v2):
+- cmp_02: select correto mcp:caio + analyze; INVOKE caio.get_context(entity,topic)
+  -> EXC:CapabilityProviderError. Harness rotula GROUP_SELECTION mas a 1a divergencia
+  real e o ERRO NO INVOKE do owner (contract/availability, nao selecao).
+- cmp_05: clara.get_context COMPLETED ok; clara.analyze(closing_blockers) -> EXC —
+  owner-side error na capability analyze (verificar error_code/schema).
+- cmp_09: pediu SURI mas INVOKE caio.get_context — ESSE sim e DEFEITO REAL de
+  group selection (owner errado escolhido: caiu em caio em vez de suri).
+PROXIMO: extrair error_code dos CapabilityProviderError (probe direto ao MCP owner
+com os mesmos args) -> classificar OWNER_CONTRACT vs OWNER_AVAILABILITY vs arggen.
+cmp_09 rerun isolado p/ confirmar defeito group->wrong-owner.
+PENDENTES: clusters residuais, benchmark S4, bateria final full-env, relatorio §9.
