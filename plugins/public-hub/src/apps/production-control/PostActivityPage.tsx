@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import {
   classifyRunDowntime,
@@ -15,14 +15,14 @@ import {
   formatDurationHms,
   serverClockOffsetMs,
   serverNowMs,
-  stateLabel,
 } from "./runTimeline";
 import { useCockpitActivity } from "./CockpitActivityContext";
 import {
   classifiableDowntime,
   formatTimeHmSp,
   isReasonPending,
-  timelineSegments,
+  projectPostDowntimes,
+  type DowntimeListFilter,
 } from "./workCenterActivity";
 
 type Props = {
@@ -39,6 +39,8 @@ type ClassifyTarget = {
   runId: string | null;
   downtimeId: string;
 };
+
+const INITIAL_VISIBLE = 8;
 
 /** Adapta o downtime diário ao DTO de entrada do modal de classificação. */
 function toRunDowntimeView(target: ClassifyTarget): RunDowntimeView {
@@ -57,30 +59,10 @@ function toRunDowntimeView(target: ClassifyTarget): RunDowntimeView {
   };
 }
 
-function itemDescription(item: MesWorkCenterTodayItem): string {
-  const range = `${formatTimeHmSp(item.startedAt)}–${item.endedAt ? formatTimeHmSp(item.endedAt) : "agora"}`;
-  const base = `${stateLabel(item.state)} ${range}`;
-  if (item.state === "stopped") {
-    const dt = item.downtime;
-    const reason = dt?.reasonLabel ?? (dt ? "Motivo não informado" : "Motivo não disponível");
-    return `${base} · ${reason}`;
-  }
-  return base;
-}
-
 function SummaryStrip({ data }: { data: MesWorkCenterTodayMes }) {
-  const { producingSeconds, stoppedSeconds, stopCount, pendingReasonCount } =
-    data.summary;
+  const { stopCount, pendingReasonCount } = data.summary;
   return (
-    <dl className="pcp-pub-activity__summary" aria-label="Resumo do dia">
-      <div className="pcp-pub-activity__metric pcp-pub-activity__metric--producing">
-        <dt>Produzindo</dt>
-        <dd>{formatDurationHms(producingSeconds)}</dd>
-      </div>
-      <div className="pcp-pub-activity__metric pcp-pub-activity__metric--stopped">
-        <dt>Parado</dt>
-        <dd>{formatDurationHms(stoppedSeconds)}</dd>
-      </div>
+    <dl className="pcp-pub-activity__summary" aria-label="Resumo das paradas">
       <div className="pcp-pub-activity__metric">
         <dt>Paradas</dt>
         <dd>{stopCount}</dd>
@@ -90,94 +72,121 @@ function SummaryStrip({ data }: { data: MesWorkCenterTodayMes }) {
           pendingReasonCount > 0 ? " pcp-pub-activity__metric--pending" : ""
         }`}
       >
-        <dt>Motivos pendentes</dt>
+        <dt>Sem motivo</dt>
         <dd>{pendingReasonCount}</dd>
       </div>
     </dl>
   );
 }
 
-function DayBand({ data }: { data: MesWorkCenterTodayMes }) {
-  const segments = timelineSegments(data.items, data.from, data.to);
+function DowntimeFilterBar({
+  filter,
+  pendingCount,
+  onChange,
+}: {
+  filter: DowntimeListFilter;
+  pendingCount: number;
+  onChange: (next: DowntimeListFilter) => void;
+}) {
   return (
-    <figure className="pcp-pub-activity-band">
-      <div
-        className="pcp-pub-timeline__band pcp-pub-activity-band__track"
-        role="img"
-        aria-label={
-          segments.length > 0
-            ? segments.map((seg) => itemDescription(seg.item)).join(" → ")
-            : "Sem registros MES no dia"
-        }
+    <div
+      className="pcp-pub-activity__filters"
+      role="group"
+      aria-label="Filtrar paradas"
+    >
+      <button
+        type="button"
+        className={`pcp-pub-activity__filter${
+          filter === "all" ? " pcp-pub-activity__filter--active" : ""
+        }`}
+        aria-pressed={filter === "all"}
+        onClick={() => onChange("all")}
       >
-        {segments.map((seg) => (
-          <span
-            key={seg.item.stateEventId}
-            className={`pcp-pub-timeline__seg pcp-pub-activity-band__seg pcp-pub-timeline__seg--${seg.item.state}`}
-            style={{ left: `${seg.leftPct}%`, width: `${seg.widthPct}%` }}
-            title={itemDescription(seg.item)}
-          />
-        ))}
-      </div>
-      <figcaption className="pcp-pub-activity-band__caption">
-        <span>{formatTimeHmSp(data.from)}</span>
-        <span>{formatTimeHmSp(data.to)}</span>
-      </figcaption>
-    </figure>
+        Todas
+      </button>
+      <button
+        type="button"
+        className={`pcp-pub-activity__filter${
+          filter === "pending" ? " pcp-pub-activity__filter--active" : ""
+        }${pendingCount > 0 ? " pcp-pub-activity__filter--warn" : ""}`}
+        aria-pressed={filter === "pending"}
+        onClick={() => onChange("pending")}
+      >
+        Sem motivo
+        {pendingCount > 0 ? (
+          <span className="pcp-pub-activity__filter-count">{pendingCount}</span>
+        ) : null}
+      </button>
+    </div>
   );
 }
 
-function ActivityList({
-  data,
+function DowntimeList({
+  items,
   busy,
+  visibleCount,
+  onShowMore,
   onClassify,
 }: {
-  data: MesWorkCenterTodayMes;
+  items: MesWorkCenterTodayItem[];
   busy: boolean;
+  visibleCount: number;
+  onShowMore: () => void;
   onClassify: (target: ClassifyTarget) => void;
 }) {
+  const visible = items.slice(0, visibleCount);
+  const remaining = items.length - visible.length;
+
   return (
-    <ol className="pcp-pub-activity__list">
-      {data.items.map((item) => {
-        const target = classifiableDowntime(item);
-        const pending = isReasonPending(item);
-        const open = item.endedAt == null;
-        const dt = item.downtime;
-        const classifiable =
-          item.state === "stopped" && target !== null;
-        return (
-          <li
-            key={item.stateEventId}
-            className={`pcp-pub-activity__entry${
-              open ? " pcp-pub-activity__entry--open" : ""
-            }`}
-          >
-            <div className="pcp-pub-activity__entry-time">
-              <strong>{formatTimeHmSp(item.startedAt)}</strong>
-              <span>{item.endedAt ? formatTimeHmSp(item.endedAt) : "em curso"}</span>
-            </div>
-            <div className="pcp-pub-activity__entry-body">
-              <div className="pcp-pub-activity__entry-head">
-                <strong className={`pcp-pub-activity__state pcp-pub-activity__state--${item.state}`}>
-                  {item.state === "stopped" ? "Parada" : stateLabel(item.state)}
-                </strong>
-                <span className="pcp-pub-activity__duration">
-                  {formatDurationHms(item.effectiveDurationSeconds)}
-                  {open ? " · em curso" : ""}
+    <>
+      <ol className="pcp-pub-activity__list">
+        {visible.map((item) => {
+          const target = classifiableDowntime(item);
+          const pending = isReasonPending(item);
+          const open = item.endedAt == null;
+          const dt = item.downtime;
+          const classifiable = target !== null;
+          const reasonLabel =
+            dt?.reasonLabel ??
+            (dt ? "Motivo não informado" : "Motivo não disponível");
+          return (
+            <li
+              key={item.stateEventId}
+              className={`pcp-pub-activity__entry${
+                open ? " pcp-pub-activity__entry--open" : ""
+              }${pending ? " pcp-pub-activity__entry--pending" : ""}`}
+            >
+              <div className="pcp-pub-activity__entry-time">
+                <strong>{formatTimeHmSp(item.startedAt)}</strong>
+                <span>
+                  {item.endedAt ? formatTimeHmSp(item.endedAt) : "Em andamento"}
                 </span>
               </div>
-              <p className="pcp-pub-activity__meta">
-                {item.productionOrder
-                  ? `OP ${item.productionOrder}${item.operationCode ? ` · op. ${item.operationCode}` : ""}`
-                  : "Sem produção vinculada"}
-                {item.source === "system" || item.source === "automatic_detection"
-                  ? " · automática"
-                  : ""}
-              </p>
-              {item.state === "stopped" ? (
+              <div className="pcp-pub-activity__entry-body">
+                <div className="pcp-pub-activity__entry-head">
+                  <strong className="pcp-pub-activity__state pcp-pub-activity__state--stopped">
+                    Parada
+                  </strong>
+                  <span className="pcp-pub-activity__duration">
+                    {formatDurationHms(item.effectiveDurationSeconds)}
+                    {open ? " · em andamento" : ""}
+                  </span>
+                </div>
+                <p className="pcp-pub-activity__meta">
+                  {item.productionOrder
+                    ? `OP ${item.productionOrder}${
+                        item.operationCode
+                          ? ` · op. ${item.operationCode}`
+                          : ""
+                      }`
+                    : "Sem OP vinculada"}
+                  {item.source === "system" ||
+                  item.source === "automatic_detection"
+                    ? " · automática"
+                    : ""}
+                </p>
                 <p className="pcp-pub-activity__reason">
-                  {dt?.reasonLabel ??
-                    (dt ? "Motivo não informado" : "Motivo não disponível")}
+                  {reasonLabel}
                   {pending ? (
                     <span className="pcp-pub-activity__pending">
                       {" "}
@@ -188,32 +197,47 @@ function ActivityList({
                     </span>
                   ) : null}
                 </p>
+                {dt?.note ? (
+                  <p className="pcp-pub-activity__note">{dt.note}</p>
+                ) : null}
+              </div>
+              {classifiable ? (
+                <button
+                  type="button"
+                  className={`pcp-pub__btn pcp-pub-activity__classify${
+                    pending
+                      ? " pcp-pub__btn--primary"
+                      : " pcp-pub__btn--ghost"
+                  }`}
+                  disabled={busy}
+                  onClick={() => onClassify({ item, ...target })}
+                >
+                  {pending || !dt?.confirmed
+                    ? "Informar motivo"
+                    : "Alterar motivo"}
+                </button>
               ) : null}
-              {dt?.note ? (
-                <p className="pcp-pub-activity__note">{dt.note}</p>
-              ) : null}
-            </div>
-            {classifiable ? (
-              <button
-                type="button"
-                className="pcp-pub__btn pcp-pub__btn--ghost pcp-pub-activity__classify"
-                disabled={busy}
-                onClick={() => onClassify({ item, ...target })}
-              >
-                {pending || !dt?.confirmed ? "Informar motivo" : "Alterar motivo"}
-              </button>
-            ) : null}
-          </li>
-        );
-      })}
-    </ol>
+            </li>
+          );
+        })}
+      </ol>
+      {remaining > 0 ? (
+        <button
+          type="button"
+          className="pcp-pub__btn pcp-pub__btn--ghost pcp-pub-activity__more"
+          onClick={onShowMore}
+        >
+          Ver mais ({remaining})
+        </button>
+      ) : null}
+    </>
   );
 }
 
 /**
- * Atividade do posto (Etapa 3): resumo oficial, faixa temporal real e
- * histórico diário MES com classificação por identidade — inclusive de
- * runs já encerrados do mesmo posto.
+ * Paradas do posto: consulta e classificação das paradas MES do centro de
+ * trabalho no dia civil de São Paulo. Filtra `stopped` só nesta projeção —
+ * o histórico compartilhado do cockpit permanece intacto.
  */
 export function PostActivityPage({
   token,
@@ -223,15 +247,13 @@ export function PostActivityPage({
   onBack,
 }: Props) {
   const { session, status, invalidate, openIdentify } = useOperatorSession();
-  // Leitura diária compartilhada (Etapa 4): mesmo GET do cartão e dos
-  // indicadores do cabeçalho — classificar aqui já atualiza os tiles.
   const { data, error, loading, refresh } = useCockpitActivity();
   const [classifying, setClassifying] = useState<ClassifyTarget | null>(null);
   const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState<DowntimeListFilter>("all");
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+  const filterScopeRef = useRef<string | null>(null);
 
-  // Relógio do servidor: o offset é ANCORADO uma vez por resposta (no
-  // recebimento do referenceAt). Recalculá-lo a cada chamada congelaria o
-  // "agora" no referenceAt — o timer da parada aberta não avançaria.
   const clockOffsetRef = useRef(0);
   useEffect(() => {
     clockOffsetRef.current = data
@@ -243,6 +265,25 @@ export function PostActivityPage({
     [],
   );
   const loadReasons = useCallback(() => fetchMesDowntimeReasons(token), [token]);
+
+  const downtimes = useMemo(() => {
+    if (!data || data.source !== "mes") return [];
+    return projectPostDowntimes(data.items, filter);
+  }, [data, filter]);
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE);
+  }, [filter, data?.date, data?.workCenter]);
+
+  // Prioriza pendências só na primeira carga do posto/dia — não sobrescreve
+  // a escolha do operador após classificar ou mudar o filtro.
+  useEffect(() => {
+    if (!data || data.source !== "mes") return;
+    const scope = `${data.workCenter}|${data.date}`;
+    if (filterScopeRef.current === scope) return;
+    filterScopeRef.current = scope;
+    setFilter(data.summary.pendingReasonCount > 0 ? "pending" : "all");
+  }, [data]);
 
   const handleClassify = useCallback(
     async (reasonCode: string, note: string | null) => {
@@ -256,8 +297,6 @@ export function PostActivityPage({
             downtimeId: classifying.downtimeId,
           });
         } else {
-          // Parada autônoma (sem OP): endpoint por identidade — o backend
-          // confere que a sessão pertence ao posto da parada.
           await classifyWorkCenterDowntime(
             token,
             session.sessionToken,
@@ -268,8 +307,8 @@ export function PostActivityPage({
         await refresh();
       } catch (err) {
         if (err instanceof Error && "status" in err) {
-          const status = (err as { status?: number }).status;
-          if (status === 401) invalidate();
+          const statusCode = (err as { status?: number }).status;
+          if (statusCode === 401) invalidate();
         }
         throw err;
       } finally {
@@ -286,8 +325,8 @@ export function PostActivityPage({
     body = (
       <div className="pcp-pub-activity__notice" role="status">
         <p>
-          Identifique-se para ver a produção e as paradas reais deste posto
-          hoje. A identificação vale somente para esta bancada.
+          Identifique-se para ver as paradas reais deste posto hoje. A
+          identificação vale somente para esta bancada.
         </p>
         <button
           type="button"
@@ -299,7 +338,7 @@ export function PostActivityPage({
       </div>
     );
   } else if (loading && !data) {
-    body = <p className="pcp-pub__empty">Carregando atividade…</p>;
+    body = <p className="pcp-pub__empty">Carregando paradas…</p>;
   } else if (error) {
     body = (
       <div className="pcp-pub-activity__notice" role="alert">
@@ -316,7 +355,7 @@ export function PostActivityPage({
       </div>
     );
   } else if (!data) {
-    body = <p className="pcp-pub__empty">Atividade indisponível.</p>;
+    body = <p className="pcp-pub__empty">Paradas indisponíveis.</p>;
   } else if (data.source === "totvs") {
     body = (
       <div className="pcp-pub-activity__notice" role="status">
@@ -327,28 +366,43 @@ export function PostActivityPage({
         </p>
       </div>
     );
-  } else if (data.items.length === 0) {
-    body = (
-      <>
-        <SummaryStrip data={data} />
-        <p className="pcp-pub__empty">
-          Nenhum registro MES neste posto hoje ({data.date}).
-        </p>
-      </>
-    );
   } else {
+    const pendingCount = data.summary.pendingReasonCount;
+    const stopCount = data.summary.stopCount;
+    const emptyMessage =
+      stopCount === 0
+        ? `Nenhuma parada registrada neste posto hoje (${data.date}).`
+        : filter === "pending"
+          ? "Nenhuma parada sem motivo neste período."
+          : "Nenhuma parada para exibir com o filtro atual.";
+
     body = (
       <>
         <SummaryStrip data={data} />
-        <h2 className="pcp-pub__detail-section">Linha do tempo do dia</h2>
-        <DayBand data={data} />
-        <h2 className="pcp-pub__detail-section">Eventos e paradas</h2>
-        <ActivityList data={data} busy={busy} onClassify={setClassifying} />
+        <DowntimeFilterBar
+          filter={filter}
+          pendingCount={pendingCount}
+          onChange={setFilter}
+        />
+        {downtimes.length === 0 ? (
+          <p className="pcp-pub__empty pcp-pub-activity__empty" role="status">
+            {emptyMessage}
+          </p>
+        ) : (
+          <DowntimeList
+            items={downtimes}
+            busy={busy}
+            visibleCount={visibleCount}
+            onShowMore={() =>
+              setVisibleCount((n) => n + INITIAL_VISIBLE)
+            }
+            onClassify={setClassifying}
+          />
+        )}
         <p className="pcp-pub-activity__meta" role="note">
           Horários em horário de São Paulo. Estas são as paradas reais medidas
           pelo sensor do posto (MES) — diferentes dos apontamentos de parada
-          do TOTVS. Espaços sem evento na faixa significam ausência de
-          registro, não máquina desligada.
+          do TOTVS.
         </p>
       </>
     );
@@ -357,12 +411,14 @@ export function PostActivityPage({
   return (
     <section className="pcp-pub pcp-pub--activity">
       <BrandBar
-        eyebrow={`Atividade do posto · Filial ${branch}`}
+        eyebrow={`Paradas do posto · Filial ${branch}`}
         title={workCenterName || workCenter}
         code={workCenter}
         stats={
           data?.source === "mes" ? (
-            <span className="pcp-pub__chip">{data.date} · horário de São Paulo</span>
+            <span className="pcp-pub__chip">
+              {data.date} · horário de São Paulo
+            </span>
           ) : null
         }
         lead={

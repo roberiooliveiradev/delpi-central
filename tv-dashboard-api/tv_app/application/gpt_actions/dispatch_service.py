@@ -3448,10 +3448,44 @@ class GptActionsDispatchService:
         # PHASE 5 — bounded methodology advisory for high-level design intents
         # only. Direct typed commands bypass it; ops/policy stay canonical.
         intent = DesignIntelligenceService.design_intent_for_message(message)
+        # DI-DESIGN-02 — um add_blank_slide solitário não satisfaz um
+        # pedido de composição com requisitos de design; só vale `ready`
+        # sem recipe quando o pedido é realmente só "slide vazio".
+        _ops_out = payload.get("ops") or []
+        _has_visual_ops = any(
+            isinstance(o, dict)
+            and str(o.get("op") or "") == "upsert_block"
+            for o in _ops_out
+        )
+        import unicodedata as _unic
+        _msg_norm = "".join(
+            c
+            for c in _unic.normalize(
+                "NFD", str(message or "").lower()
+            )
+            if _unic.category(c) != "Mn"
+        )
+        _has_design_req = any(
+            t in _msg_norm
+            for t in (
+                "kpi", "grafic", "tabela", "titulo",
+                "hierarqu", "indicador", "tendenc",
+                "visual", "design", "layout", "contraste",
+                "identidade", "tipograf",
+            )
+        )
         if (
             intent == "COMPOSE_SLIDE"
-            and str(payload.get("status") or "")
-            in {"unsupported", "not_command"}
+            and (
+                str(payload.get("status") or "")
+                in {"unsupported", "not_command", "selection_pending"}
+                and not payload.get("ops")
+                or (
+                    str(payload.get("status") or "") == "ready"
+                    and _has_design_req
+                    and not _has_visual_ops
+                )
+            )
         ):
             from tv_app.application.services.data.presentation_recipe_service import (
                 PresentationRecipeService,
@@ -3463,6 +3497,33 @@ class GptActionsDispatchService:
                     recipe.recipe_id
                 )
                 if ops:
+                    # DI-E2E-DESIGN-01 — recipe de tema (só patch) não
+                    # satisfaz pedido de composição: mantém o tema e
+                    # concatena a recipe genérica de componentes.
+                    _has_blocks = any(
+                        isinstance(o, dict)
+                        and str(o.get("op") or "") == "upsert_block"
+                        for o in ops
+                    )
+                    if _has_design_req and not _has_blocks:
+                        composed = PresentationRecipeService.ops_for_recipe(
+                            "TV_KPI_SERIES_TABLE"
+                        )
+                        theme_ops = ops
+                        ops = [
+                            o for o in theme_ops
+                            if str(o.get("op") or "")
+                            == "patch_native_config"
+                        ] + [
+                            o for o in composed
+                            if str(o.get("op") or "")
+                            != "patch_native_config"
+                            or not any(
+                                str(t.get("op") or "")
+                                == "patch_native_config"
+                                for t in theme_ops
+                            )
+                        ]
                     payload["status"] = "proposal"
                     payload["recipeId"] = recipe.recipe_id
                     if recipe.theme_key:
@@ -3474,10 +3535,102 @@ class GptActionsDispatchService:
                     payload["clarificationKey"] = None
                     payload["reason"] = None
             else:
-                payload["status"] = "unsupported"
-                payload["compositionHints"] = (
-                    PresentationRecipeService.recipe_ids()[:10]
-                )
+                # Sem marker de recipe: se o pedido produz fontes
+                # qualificadas no catálogo canônico, compõe por recipe
+                # genérica do shape dominante — cobertura de intenção
+                # (ex.: auditorias 5S -> tabela de NCs) sem engine nova.
+                generic = None
+                try:
+                    rr = self._suggest.suggest(query=message, limit=6)
+                    sugg = (
+                        rr.get("suggestions") or []
+                        if isinstance(rr, dict) else []
+                    )
+                    shapes = {
+                        str(c.get("metaShape") or "")
+                        for c in sugg[:3]
+                        if isinstance(c, dict)
+                    }
+                    top_score = max(
+                        (
+                            float(c.get("score") or 0.0)
+                            for c in sugg
+                            if isinstance(c, dict)
+                        ),
+                        default=0.0,
+                    )
+                    # gate semântico (DI-3.6.3): score isolado não
+                    # prova relevância (gibberish pode pontuar alto) —
+                    # exige um token forte da mensagem presente no
+                    # contrato dos top candidatos + domínio real.
+                    stop = {
+                        "crie", "criar", "quero", "uma", "painel",
+                        "acompanhar", "mostrar", "para", "com", "das",
+                        "dos", "que", "fábrica", "resultados",
+                        "iniciativas", "mostrando", "coisas", "sinal",
+                    }
+                    tokens = {
+                        t.strip(".,;:!?()\"'")
+                        for t in str(message or "").lower().split()
+                        if len(t.strip(".,;:!?()\"'")) >= 4
+                    } - stop
+                    token_hit = any(
+                        any(
+                            tok in (
+                                str(c.get("operationId") or "")
+                                + str(c.get("label") or "")
+                                + str(c.get("description") or "")
+                                + str(c.get("path") or "")
+                            ).lower()
+                            for tok in tokens
+                        )
+                        for c in sugg[:3]
+                        if isinstance(c, dict)
+                    )
+                    domain_hit = any(
+                        str(c.get("category") or "")
+                        not in {"", "other"}
+                        and float(c.get("score") or 0.0) >= 6.0
+                        for c in sugg
+                        if isinstance(c, dict)
+                    )
+                    if sugg and top_score >= 6.0 and domain_hit and token_hit:
+                        generic = (
+                            "TV_TABLE_FOCUS"
+                            if shapes <= {
+                                "list", "paged_list", "hierarchy",
+                            }
+                            else "TV_KPI_SERIES_TABLE"
+                        )
+                    elif _has_design_req:
+                        # pedido de composição visual não depende de
+                        # fonte — recipe genérica pelos componentes.
+                        generic = "TV_KPI_SERIES_TABLE"
+                except Exception:
+                    sugg = []
+                if generic:
+                    ops = PresentationRecipeService.ops_for_recipe(
+                        generic
+                    )
+                    if ops:
+                        payload["status"] = "proposal"
+                        payload["recipeId"] = generic
+                        payload["ops"] = ops
+                        payload["matchedCapabilityKeys"] = [
+                            f"recipe:{generic}"
+                        ]
+                        payload["clarificationKey"] = None
+                        payload["reason"] = None
+                    else:
+                        payload["status"] = "unsupported"
+                        payload["compositionHints"] = (
+                            PresentationRecipeService.recipe_ids()[:10]
+                        )
+                else:
+                    payload["status"] = "unsupported"
+                    payload["compositionHints"] = (
+                        PresentationRecipeService.recipe_ids()[:10]
+                    )
         # DI-3.3 — plano de binding para blocos de dados (paths recipe e
         # planner-ready): descoberta canônica de rotas (read-only); nunca
         # inventa fonte — RESOLVED / NEEDS_SOURCE_SELECTION /
@@ -3498,7 +3651,7 @@ class GptActionsDispatchService:
             if data_ops:
                 try:
                     route_result = self._suggest.suggest(
-                        query=message, limit=8
+                        query=message, limit=20
                     )
                     candidates = (
                         route_result.get("suggestions") or []
@@ -3506,16 +3659,390 @@ class GptActionsDispatchService:
                     )
                 except Exception:
                     candidates = []
+
+                def _purpose_query(btype, chart_type):
+                    # refinamento semântico por propósito do bloco —
+                    # alinha o ranking lexical com a pergunta real
+                    # do componente (DI-3.6).
+                    if btype in {"kpi_view", "data_kpi"}:
+                        return f"{message} indicador valor atual"
+                    if btype in {"chart_view", "data_chart"}:
+                        ct = str(chart_type or "").lower()
+                        suffix = "série evolução período" if ct in {
+                            "line", "area"
+                        } else "comparação ranking categorias"
+                        return f"{message} {suffix}"
+                    if btype in {
+                        "table_view", "data_table", "canvas_table",
+                    }:
+                        return f"{message} lista detalhes problemas"
+                    return message
+
+                def _suggest_for(q):
+                    try:
+                        rr = self._suggest.suggest(query=q, limit=20)
+                        return (
+                            rr.get("suggestions") or []
+                            if isinstance(rr, dict) else []
+                        )
+                    except Exception:
+                        return []
+
                 # DI-3.4 — qualificação por contrato: document_export /
                 # não-GET não são fontes de bloco de dashboard.
-                qualified = [
-                    cand for cand in candidates
-                    if isinstance(cand, dict)
-                    and str(cand.get("metaShape") or "")
-                    != "document_export"
-                    and str(cand.get("httpMethod") or "GET").upper()
-                    == "GET"
-                ]
+                def _eligible(cand):
+                    # DI-3.6.3 — elegibilidade unificada: não-GET e
+                    # shapes documentais fora; rotas de download/
+                    # export retornam binário/anexo por contrato de
+                    # operação — metaShape=scalar derivado é drift.
+                    if not isinstance(cand, dict):
+                        return False
+                    if str(cand.get("httpMethod") or "GET").upper() != "GET":
+                        return False
+                    if str(cand.get("metaShape") or "") == "document_export":
+                        return False
+                    oid = str(cand.get("operationId") or "").lower()
+                    return not oid.startswith(
+                        ("download_", "export_", "upload_", "import_")
+                    )
+
+                qualified = [cand for cand in candidates if _eligible(cand)]
+                # DI-3.6.1 — business domain anchoring: a mensagem
+                # original (sem sufixo de propósito) define os domínios
+                # relevantes; sufixos de propósito nunca podem promover
+                # fontes cross-domain (get_openapi_diff, series
+                # comerciais, auditorias 5S) para pedidos de produção.
+                _anchor_top = max(
+                    (float(c.get("score") or 0.0) for c in qualified),
+                    default=0.0,
+                )
+                anchor_categories = {
+                    str(c.get("category") or "").strip()
+                    for c in qualified
+                    if _anchor_top > 0
+                    and float(c.get("score") or 0.0)
+                    >= _anchor_top * 0.7
+                    and str(c.get("category") or "").strip()
+                }
+                # multi-intent (DI-3.6.3): domínios citados
+                # explicitamente na mensagem ancoram sua categoria
+                # mesmo cortados pelo limit do ranking — "produtividade
+                # e auditorias 5S" preserva production E quality.
+                _mtok = {
+                    t.strip(".,;:!?()\"'")
+                    for t in str(message or "").lower().split()
+                    if len(t.strip(".,;:!?()\"'")) >= 4
+                } - {
+                    "crie", "criar", "quero", "uma", "painel",
+                    "acompanhar", "mostrar", "para", "com", "das",
+                    "dos", "que", "resultados", "iniciativas",
+                    "mostrando", "coisas", "sinal",
+                    # DI-3.7.1 — contexto escopifica, não é objetivo:
+                    "fabrica", "fábrica", "filial", "unidade",
+                    "setor", "planta", "empresa", "período",
+                    "periodo", "televisao", "televisão",
+                    # DI-E2E — self-name, qualificadores e requisitos
+                    # de design não são objetivos de negócio:
+                    "vista", "delpi", "atual", "atualmente",
+                    "identidade", "visual", "industrial",
+                    "industria", "profissional", "dashboard",
+                    "playlist", "lab", "slide", "destaque",
+                    "compare", "comparacao",
+                    "comparação", "utilize", "organize",
+                    "elementos", "hierarquia", "contraste",
+                    "tipografia", "adequada", "evolucao",
+                    "evolução", "ultimos", "últimos", "apresente",
+                    "mostre", "acompanhar", "dias", "horas",
+                    "minutos", "semanas", "meses",
+                    # DI-E2E-DESIGN-01R — palavras de instrução e
+                    # função gramatical não são objetivos de negócio:
+                    "desenvolva", "desenvolver", "usando", "mantendo",
+                    "mantenha", "inventar", "fontes", "oficiais",
+                    "dados", "reais", "deste", "este", "esta",
+                    "essa", "esse", "neste", "nesse", "nesta",
+                    "também", "tambem", "então", "entao", "cada",
+                    "quando", "onde", "como", "deve", "deveria",
+                    "preciso", "precisa", "gostaria", "poderia",
+                    "faça", "faca", "seja", "sejam", "sendo",
+                    "tenha", "tenho", "são", "sao", "apenas",
+                    "ainda", "assim", "depois", "antes", "sobre",
+                    "entre", "sem", "com", "por", "dos", "das",
+                    "nos", "nas", "aos", "às", "aos", "sua", "seu",
+                    "suas", "seus", "nossos", "nossas", "um", "uma",
+                    "dos", "das", "ele", "ela", "eles", "elas",
+                    # design/formato solicitado — não é indicador:
+                    "gráfico", "grafico", "gráficos", "titulo",
+                    "título", "títulos", "design", "layout",
+                    "formato", "resolução", "resolucao", "1080p",
+                    "4k", "alto", "alta", "claro", "clara",
+                    "limpo", "limpa", "bonito", "bonita",
+                    "moderno", "moderna", "elegante", "simples",
+                    "executivo", "executiva", "corporativo",
+                    "corporativa", "minimalista", "equilibrado",
+                    "equilibrada", "elementos", "tendencia",
+                    "tendência", "evolução", "histórica",
+                    "historica", "atualização", "atualizacao",
+                }
+                goal_map: dict[str, dict] = {}
+                # contexto escopifica a busca mas não é objetivo —
+                # parceiros de pairing usam TODOS os tokens fortes.
+                _all_tok = {
+                    t.strip(".,;:!?()\"'")
+                    for t in str(message or "").lower().split()
+                    if len(t.strip(".,;:!?()\"'")) >= 4
+                } - {
+                    "crie", "criar", "quero", "uma", "painel",
+                    "acompanhar", "mostrar", "para", "com", "das",
+                    "dos", "que", "resultados", "iniciativas",
+                    "mostrando", "coisas", "sinal",
+                }
+                # DI-E2E — tokens de métrica curtos ("oee", "kpi")
+                # viram objetivos quando há evidência direta nos
+                # operationIds elegíveis do catálogo.
+                _metric_tok = {
+                    t.strip(".,;:!?()\"'")
+                    for t in str(message or "").lower().split()
+                    if 3 <= len(t.strip(".,;:!?()\"'")) < 4
+                }
+                _metric_tok = {
+                    t
+                    for t in _metric_tok
+                    if any(
+                        t
+                        in str(
+                            c.get("operationId") or ""
+                        ).split("_")
+                        for c in qualified
+                    )
+                }
+                _mtok |= _metric_tok
+                _all_tok |= _metric_tok
+                if _mtok:
+                    anchor_categories |= {
+                        str(c.get("category") or "").strip()
+                        for c in qualified
+                        if str(c.get("category") or "").strip()
+                        and any(
+                            tok in (
+                                str(c.get("operationId") or "")
+                                + str(c.get("label") or "")
+                                + str(c.get("description") or "")
+                            ).lower()
+                            for tok in _mtok
+                        )
+                    }
+                    # cobertura multi-intent (DI-3.6.3): para cada
+                    # token forte, uma query de suggest garante que o
+                    # domínio citado tenha candidatos em `qualified`
+                    # — citar um objetivo nunca pode deixá-lo
+                    # silenciosamente sem cobertura.
+                    present_ids = {
+                        str(c.get("operationId") or "")
+                        for c in qualified
+                    }
+                    for tok in list(_mtok)[:6]:
+                        tok_sugg = []
+                        for variant in (tok, tok.rstrip("s")):
+                            if variant == tok and tok_sugg:
+                                continue
+                            try:
+                                rr = self._suggest.suggest(
+                                    query=variant, limit=6
+                                )
+                                tok_sugg = (
+                                    rr.get("suggestions") or []
+                                    if isinstance(rr, dict) else []
+                                )
+                            except Exception:
+                                tok_sugg = []
+                            if tok_sugg:
+                                break
+                        if not tok_sugg:
+                            # token único não ranqueia — union dos
+                            # pairings com TODOS os tokens fortes
+                            # (inclusive contexto) — "produtividade"
+                            # só resolve com "fábrica"/"indicador".
+                            merged: dict[str, dict] = {}
+                            for other in sorted(_all_tok - {tok}):
+                                try:
+                                    rr = self._suggest.suggest(
+                                        query=f"{tok} {other}",
+                                        limit=6,
+                                    )
+                                    for cand in (
+                                        rr.get("suggestions") or []
+                                        if isinstance(rr, dict)
+                                        else []
+                                    ):
+                                        oid = str(
+                                            cand.get("operationId")
+                                            or ""
+                                        )
+                                        if oid and oid not in merged:
+                                            merged[oid] = cand
+                                except Exception:
+                                    continue
+                            tok_sugg = list(merged.values())
+                            if not tok_sugg:
+                                try:
+                                    rr = self._suggest.suggest(
+                                        query=f"{tok} indicador",
+                                        limit=6,
+                                    )
+                                    tok_sugg = (
+                                        rr.get("suggestions") or []
+                                        if isinstance(rr, dict)
+                                        else []
+                                    )
+                                except Exception:
+                                    tok_sugg = []
+                        goal_map[tok] = {
+                            "operationIds": {
+                                str(c.get("operationId") or "")
+                                for c in tok_sugg[:8]
+                                if isinstance(c, dict)
+                            } - {""},
+                            "categories": {
+                                str(c.get("category") or "").strip()
+                                for c in tok_sugg[:8]
+                                if isinstance(c, dict)
+                                and str(c.get("category") or "").strip()
+                            },
+                        }
+                        for cand in tok_sugg:
+                            oid = str(cand.get("operationId") or "")
+                            if (
+                                _eligible(cand)
+                                and oid
+                                and oid not in present_ids
+                                and len(qualified) < 40
+                            ):
+                                present_ids.add(oid)
+                                qualified.append(dict(cand))
+                    anchor_categories |= {
+                        str(c.get("category") or "").strip()
+                        for c in qualified
+                        if str(c.get("category") or "").strip()
+                        and any(
+                            tok in (
+                                str(c.get("operationId") or "")
+                                + str(c.get("label") or "")
+                                + str(c.get("description") or "")
+                            ).lower()
+                            for tok in _mtok
+                        )
+                    }
+                # RC-D (DI-3.7.1): cobertura falsa — um objetivo só
+                # pode ser atendido por fonte que passa a âncora de
+                # domínio ("metas" comerciais não valem Kaizen/system).
+                _oid_cat: dict[str, str] = {}
+                try:
+                    _all_routes = self._catalog.list_routes()
+                except Exception:
+                    _all_routes = []
+                for r in list(qualified) + list(_all_routes):
+                    if isinstance(r, dict):
+                        _oid_cat.setdefault(
+                            str(r.get("operationId") or ""),
+                            str(r.get("category") or "").strip(),
+                        )
+                _oid_score = {
+                    str(c.get("operationId") or ""): float(
+                        c.get("score") or 0.0
+                    )
+                    for c in qualified
+                    if isinstance(c, dict)
+                }
+
+                def _goal_ok(oid, goal_cats):
+                    cat = _oid_cat.get(oid, "")
+                    # categorias do PRÓPRIO objetivo são evidência —
+                    # production serve produtividade, commercial serve
+                    # metas, mesmo cortadas da âncora global.
+                    if cat and cat in goal_cats:
+                        return True
+                    if not anchor_categories:
+                        return True
+                    if cat in anchor_categories:
+                        return True
+                    return (
+                        _anchor_top > 0
+                        and _oid_score.get(oid, 0.0)
+                        >= _anchor_top * 0.5
+                    )
+
+                for _g in goal_map.values():
+                    _g["operationIds"] = {
+                        oid
+                        for oid in _g["operationIds"]
+                        if _goal_ok(oid, _g["categories"])
+                    }
+
+                # donos de categoria: uma categoria só pode
+                # justificar associação quando pertence a UM único
+                # objetivo — `production`→produtividade associa
+                # séries não presentes nos opIds; `quality` é
+                # compartilhada (auditorias/kaizen) e segue estrita.
+                _cat_owners: dict[str, set] = {}
+                for _tok, _g in goal_map.items():
+                    for _c in _g["categories"]:
+                        _cat_owners.setdefault(_c, set()).add(_tok)
+
+                def _goals_of(cand):
+                    # oid nos opIds do objetivo OU token no oid OU
+                    # categoria de dono único COM afinidade etimológica
+                    # ("produtividade"~"production"); sem afinidade,
+                    # associação fica restrita a opIds (quality não
+                    # justifica kaizen para auditorias).
+                    oid = str(cand.get("operationId") or "")
+                    cat = str(cand.get("category") or "").strip()
+                    return [
+                        tok for tok, g in goal_map.items()
+                        if oid in g["operationIds"]
+                        or tok in oid
+                        or (
+                            cat
+                            and _cat_owners.get(cat) == {tok}
+                            and (
+                                tok[:4] == cat[:4]
+                                or cat[:4] == tok[:4]
+                            )
+                        )
+                    ]
+
+                # goal-to-source association (DI-3.7): cada objetivo
+                # forte carrega suas fontes justificadas; candidato
+                # sem objetivo é descartável quando houver justificados.
+                for cand in qualified:
+                    if isinstance(cand, dict):
+                        cand["goals"] = _goals_of(cand)
+
+                # Domínio secundário só entra por relevância individual
+                # forte na query bruta (>=50% do topo) — categoria
+                # fraca não arrasta vizinhos (5S/Kaizen fora de
+                # produção; T02/T03 DI-3.6.2).
+                bare_scores = {
+                    str(c.get("operationId") or ""): float(
+                        c.get("score") or 0.0
+                    )
+                    for c in qualified
+                }
+
+                def _anchor_ok(cand):
+                    cat = str(cand.get("category") or "").strip()
+                    if not anchor_categories:
+                        return True
+                    if cat in anchor_categories:
+                        return True
+                    # score da QUERY BRUTA, não o da query de propósito
+                    # — sufixos nunca promovem cross-domain.
+                    return (
+                        _anchor_top > 0
+                        and bare_scores.get(
+                            str(cand.get("operationId") or ""), 0.0
+                        )
+                        >= _anchor_top * 0.5
+                    )
 
                 def _slim(cand):
                     return {
@@ -3523,26 +4050,54 @@ class GptActionsDispatchService:
                         for key in (
                             "operationId", "path", "category",
                             "description", "allowedDisplayModes",
-                            "metaShape", "paramSchema",
+                            "metaShape", "paramSchema", "goals",
                         )
                         if cand.get(key) is not None
                     }
 
                 def _modes_for(block_type, chart_type):
+                    """Modos ESPECÍFICOS exigidos — `auto` nunca conta
+                    como evidência de compatibilidade (DI-3.5)."""
                     if block_type in {"kpi_view", "data_kpi"}:
-                        return {"kpi", "auto"}
+                        return {"kpi"}
                     if block_type in {"chart_view", "data_chart"}:
                         ct = str(chart_type or "").lower()
                         if ct in {"line", "area"}:
-                            return {"line_chart", "auto"}
+                            return {"line_chart"}
                         if ct in {"bar", "horizontal_bar", "column"}:
-                            return {"bar_chart", "auto"}
-                        return {"line_chart", "bar_chart", "auto"}
+                            return {"bar_chart"}
+                        return {"line_chart", "bar_chart"}
                     if block_type in {
                         "table_view", "data_table", "canvas_table",
                     }:
-                        return {"table", "auto"}
-                    return {"auto"}
+                        return {"table"}
+                    return set()
+
+                # metaShape ↔ componente: evidência estrutural mínima
+                # quando a rota declara apenas `auto` (o catálogo
+                # auto-seleciona o modo pelo shape do retorno).
+                _SHAPES_FOR_MODES = {
+                    "kpi": {"scalar", "object", "composite_analysis",
+                            "product_snapshot", "nested_object"},
+                    "table": {"list", "paged_list", "hierarchy",
+                              "playbook_report", "composite_analysis"},
+                }
+
+                def _compatible(cand, modes):
+                    declared = {
+                        str(m) for m in
+                        (cand.get("allowedDisplayModes") or [])
+                    }
+                    if modes & (declared - {"auto"}):
+                        return True
+                    shape = str(cand.get("metaShape") or "")
+                    return bool(
+                        "auto" in declared
+                        and any(
+                            shape in _SHAPES_FOR_MODES.get(m, set())
+                            for m in modes
+                        )
+                    )
 
                 def _state(cands):
                     if len(cands) == 1:
@@ -3559,21 +4114,142 @@ class GptActionsDispatchService:
                     )
                     btype = str(block.get("type") or "")
                     modes = _modes_for(btype, block.get("chartType"))
-                    per = [
-                        cand for cand in qualified
-                        if modes & {
-                            str(m)
-                            for m in (
-                                cand.get("allowedDisplayModes") or []
-                            )
-                        }
+                    purpose_candidates = _suggest_for(
+                        _purpose_query(btype, block.get("chartType"))
+                    )
+                    purpose_qualified = [
+                        cand for cand in purpose_candidates
+                        if _eligible(cand)
                     ]
-                    blocks.append({
+                    # union deduplicada: query de propósito + query
+                    # bruta + cobertura multi-intent — objetivo citado
+                    # não pode ser descartado por ordem de consulta.
+                    _seen = set()
+                    _combined = []
+                    for cand in purpose_qualified + qualified:
+                        oid = str(cand.get("operationId") or "")
+                        if oid and oid not in _seen:
+                            _seen.add(oid)
+                            if isinstance(cand, dict):
+                                cand["goals"] = _goals_of(cand)
+                            _combined.append(cand)
+                    per = [
+                        cand for cand in _combined
+                        if _compatible(cand, modes)
+                    ]
+                    # limiar semântico: score relativo ao topo do bloco
+                    # remove candidatos fracamente relacionados (ruído
+                    # lexical — ex.: get_customer_avatar em vendas).
+                    if len(per) > 1:
+                        scores = [
+                            float(c.get("score") or 0.0)
+                            for c in per
+                        ]
+                        top = max(scores) if scores else 0.0
+                        floor = top * 0.5 if top > 0 else 0.0
+                        # goal-justified sources são evidência —
+                        # o floor não pode cortá-las por escala
+                        # de score entre queries distintas.
+                        per = [
+                            c for c in per
+                            if c.get("goals")
+                            or float(c.get("score") or 0.0) >= floor
+                        ]
+                    # domain anchor: sufixo de propósito não promove
+                    # fontes fora do domínio de negócio âncora; secundárias
+                    # só por relevância individual forte na query bruta.
+                    per = [c for c in per if _anchor_ok(c)]
+                    # multi-intent: ordenar por score evita que
+                    # adições de cobertura percam o cap por posição.
+                    per.sort(
+                        key=lambda c: float(c.get("score") or 0.0),
+                        reverse=True,
+                    )
+                    # goal-to-source (DI-3.7): quando há objetivos
+                    # reconhecidos, candidato sem justificativa de
+                    # objetivo não pode permanecer (Kaizen fora de
+                    # produtividade+5S, transformômetro fora de 5S).
+                    if goal_map:
+                        justified = [
+                            c for c in per if _goals_of(c)
+                        ]
+                        if justified:
+                            per = justified
+                    # goal floor (DI-3.7.1): cada objetivo reconhecido
+                    # mantém >=1 representante no bloco — cap por score
+                    # não pode apagar a cobertura de um objetivo.
+                    per.sort(
+                        key=lambda c: float(c.get("score") or 0.0),
+                        reverse=True,
+                    )
+                    if len(per) > 8:
+                        seen_goals = set()
+                        kept = []
+                        for c in per:
+                            g = set(_goals_of(c))
+                            if len(kept) < 6 or (g - seen_goals):
+                                seen_goals |= g
+                                kept.append(c)
+                        per = kept
+                    per = per[:8]
+                    if not per and qualified:
+                        # Fallback por domínio: ranking lexical fraco
+                        # não prova inexistência — busca no catálogo
+                        # canônico rotas do mesmo domínio das top
+                        # candidates que declarem o modo exigido.
+                        top_category = str(
+                            (qualified[0].get("category") or "")
+                        ).strip()
+                        if top_category:
+                            try:
+                                catalog_routes = (
+                                    self._catalog.list_routes()
+                                )
+                            except Exception:
+                                catalog_routes = []
+                            per = [
+                                cand for cand in catalog_routes
+                                if _eligible(cand)
+                                and str(cand.get("category") or "")
+                                == top_category
+                                and _compatible(cand, modes)
+                            ][:8]
+                    block_state = _state(per)
+                    entry = {
                         "blockType": btype or "data_block",
                         "requiredModes": sorted(modes),
-                        "state": _state(per),
+                        "state": block_state,
+                        "servesGoals": sorted({
+                            g for c in per for g in c.get("goals") or []
+                        }),
                         "candidates": [_slim(c) for c in per],
-                    })
+                    }
+                    if block_state == "RESOLVED" and per:
+                        # binding canônico: operationId + displayMode +
+                        # params (required não-optional => missingParams
+                        # explicitados, nunca inventados).
+                        cand = per[0]
+                        schema = cand.get("paramSchema")
+                        missing = [
+                            str(k)
+                            for k, spec in (
+                                schema.items() if isinstance(schema, dict)
+                                else []
+                            )
+                            if isinstance(spec, dict)
+                            and spec.get("optional") is False
+                            and spec.get("default") is None
+                        ]
+                        modes_list = cand.get("allowedDisplayModes") or []
+                        entry["binding"] = {
+                            "operationId": cand.get("operationId"),
+                            "displayMode": (
+                                str(modes_list[0])
+                                if modes_list else "auto"
+                            ),
+                            "missingParams": missing,
+                        }
+                    blocks.append(entry)
                 payload["bindingPlan"] = {
                     "state": (
                         "RESOLVED"
@@ -3596,6 +4272,36 @@ class GptActionsDispatchService:
                         "pick silencioso."
                     ),
                 }
+                # goal traceability (DI-3.7): objetivos reconhecidos
+                # + ignorados no payload — nenhum descartado
+                # silenciosamente.
+                covered = {
+                    g for b in blocks for g in b.get("servesGoals") or []
+                }
+                payload["interpretedGoals"] = [
+                    {
+                        "goal": tok,
+                        "categories": sorted(g["categories"]),
+                        "status": (
+                            "COVERED" if tok in covered
+                            else "NO_SOURCE_CANDIDATE"
+                        ),
+                    }
+                    for tok, g in goal_map.items()
+                    if g["operationIds"]
+                ]
+                payload["ignoredGoals"] = [
+                    tok for tok, g in goal_map.items()
+                    if not g["operationIds"]
+                ]
+                # DI-E2E-DESIGN-01 — bridge composição→binding: ops de
+                # recipe ganham data_source + bind_visual canônicos,
+                # heading recebe o título do briefing e componentes
+                # não pedidos saem do plano.
+                self._enrich_composition_ops(
+                    payload, blocks, message,
+                    request_goals=set(goal_map),
+                )
                 # readiness honesto: layout pronto ≠ dados prontos.
                 if payload["bindingPlan"]["state"] != "RESOLVED":
                     payload["dataReadiness"] = "pending_source_selection"
@@ -3620,6 +4326,458 @@ class GptActionsDispatchService:
                 sufficiency=methodology.get("sufficiency"),
             )
         return payload
+
+    @staticmethod
+    def _enrich_composition_ops(
+        payload: dict[str, Any],
+        blocks: list[dict[str, Any]],
+        message: Any,
+        request_goals: set[str] | None = None,
+    ) -> None:
+        """DI-E2E-DESIGN-01 — ONE REQUEST → COMPLETE DASHBOARD.
+
+        Recipe ops are layout scaffolds (frames/styles only). This
+        bridge connects them to the canonical data path that the
+        bindingPlan already qualified:
+
+        - heading gains the briefing title (``content``/``contentRuns``);
+        - each ``upsert_block`` data block gains an ``id`` and is
+          followed by ``upsert_data_source`` + ``bind_visual`` ops
+          (canonical flat contract);
+        - ``table_view`` scaffold is dropped when the request never
+          asked for a table/detail — recipe is a scaffold, not a
+          prescription of components;
+        - declared period intent (``N dias`` / mensal / semanal /
+          anual / diário) fills route params only when the route's
+          own ``paramSchema`` declares the key.
+        """
+        ops = payload.get("ops")
+        if not isinstance(ops, list) or not ops:
+            return
+        import re
+        import unicodedata as _u
+
+        msg = str(message or "")
+        msg_norm = "".join(
+            c
+            for c in _u.normalize("NFD", msg.lower())
+            if _u.category(c) != "Mn"
+        )
+        title = ""
+        m = re.search(
+            r"t[íi]tulo\s*[:=\"']?\s*[\"']?([^\"'\n.,;]{3,80})",
+            msg,
+            re.I,
+        )
+        if m:
+            title = m.group(1).strip()
+        if not title:
+            # sem título explícito — deriva do primeiro objetivo de
+            # negócio em ORDEM DE APARIÇÃO no briefing (não por
+            # ordem arbitrária de set).
+            goals = payload.get("interpretedGoals") or []
+            ordered = sorted(
+                (
+                    g
+                    for g in goals
+                    if str(g.get("goal") or "")
+                ),
+                key=lambda g: msg_norm.find(
+                    str(g["goal"]).lower()
+                )
+                if msg_norm.find(str(g["goal"]).lower()) >= 0
+                else 10**6,
+            )
+            if ordered:
+                _g = str(ordered[0]["goal"])
+                # sigla que o usuário escreveu em maiúsculas
+                # permanece: OEE, não "Oee".
+                _g = (
+                    _g.upper()
+                    if _g.upper()
+                    in {
+                        t.strip(".,;:!?()\"'")
+                        for t in msg.split()
+                    }
+                    else _g.capitalize()
+                )
+                title = "Painel de " + _g
+
+        params_msg: dict[str, Any] = {}
+        mp = re.search(r"(\d{1,4})\s*dias", msg_norm, re.I)
+        if mp:
+            params_msg["periodDays"] = int(mp.group(1))
+        for kw, gran in (
+            (r"mensal|por\s+mes|mes\s+a\s+mes|monthly", "month"),
+            (r"semanal|por\s+semana|weekly", "week"),
+            (r"anual|por\s+ano|yearly", "year"),
+            (r"diari|por\s+dia|daily", "day"),
+        ):
+            if re.search(kw, msg_norm, re.I):
+                params_msg["granularity"] = gran
+
+        # "não conformidades", problemas, ocorrências e similares
+        # são semanticamente pedidos de apresentação em detalhe —
+        # não precisam da palavra "tabela" para exigir o bloco.
+        want_table = bool(
+            re.search(
+                r"tabela|detalh|lista|conformidades|conformidade"
+                r"|ocorr|problem|item|itens|falha|pendenc|registro",
+                msg_norm,
+                re.I,
+            )
+        )
+        plan_by_type = {
+            str(b.get("blockType") or ""): b
+            for b in blocks
+            if isinstance(b, dict)
+        }
+        def _cand_role(c):
+            segs = str(c.get("operationId") or "").split("_")
+            if "meta" in segs or "metas" in segs:
+                return "target"
+            if "series" in segs or "serie" in segs:
+                return "series"
+            return "realized"
+
+        # pré-computo: fonte TARGET que vai alimentar o componente
+        # de meta — seus goals contam como cobertos pela proposta
+        # final (a emissão ocorre após o loop).
+        _meta_cand = None
+        if (request_goals or set()) & {"meta", "metas", "alvo"}:
+            for _p in plan_by_type.values():
+                _mc = [
+                    c
+                    for c in (_p.get("candidates") or [])
+                    if isinstance(c, dict)
+                    and _cand_role(c) == "target"
+                    and c.get("goals")
+                ]
+                if _mc:
+                    _meta_cand = _mc[0]
+                    break
+        _meta_goals = (
+            set(_meta_cand.get("goals") or []) if _meta_cand else set()
+        )
+
+        enriched: list[dict[str, Any]] = []
+        dropped_types: set[str] = set()
+        _bound_goals: set[str] = set()
+        for op in ops:
+            if (
+                not isinstance(op, dict)
+                or str(op.get("op") or "") != "upsert_block"
+                or not isinstance(op.get("block"), dict)
+            ):
+                enriched.append(op)
+                continue
+            blk = op["block"]
+            btype = str(blk.get("type") or "")
+            plan = plan_by_type.get(btype)
+            plan_cands = (
+                plan.get("candidates") or [] if plan else []
+            )
+            justified = [
+                c
+                for c in plan_cands
+                if isinstance(c, dict) and c.get("goals")
+            ]
+            # componente não pedido sai quando vazio OU redundante
+            # — seus goals já estão cobertos por outros blocos
+            # (ex.: tabela OEE com kpi+chart cobrindo tudo).
+            if btype == "table_view" and not want_table:
+                # briefing descreve componentes visuais? então
+                # componente extra sem papel é arbitrário; pedido só
+                # por domínio mantém detalhe justificado na tabela.
+                _explicit_visuals = bool(
+                    re.search(
+                        r"kpi|grafic|titulo|tendenc|destaque"
+                        r"|indicador|hierarqu|contraste|tipograf"
+                        r"|dashboard",
+                        msg_norm,
+                        re.I,
+                    )
+                )
+                _own_goals = {
+                    g
+                    for c in justified
+                    for g in (c.get("goals") or [])
+                }
+                if not justified or (
+                    _explicit_visuals
+                    and _own_goals
+                    <= (_bound_goals | _meta_goals)
+                ):
+                    dropped_types.add(btype)
+                    continue
+            if btype == "heading" and title:
+                blk["content"] = title
+                blk["contentRuns"] = [{"text": title}]
+            if plan is None:
+                enriched.append(op)
+                continue
+            # seleção por PAPEL (F2 issue #129): papel do segmento
+            # do operationId — "meta"→TARGET, "series"→SERIES,
+            # demais→REALIZED. KPI/tabela preferem REALIZED quando
+            # existir; chart prefere SERIES; meta-segment nunca
+            # serve KPI de realizado.
+            def _cand_role(c):
+                segs = str(c.get("operationId") or "").split("_")
+                if "meta" in segs or "metas" in segs:
+                    return "target"
+                if "series" in segs or "serie" in segs:
+                    return "series"
+                return "realized"
+
+            # papel = ELEGIBILIDADE, não ranking (issue #129):
+            # fonte de meta NUNCA alimenta KPI de realizado; série
+            # não alimenta scalar; realizado não vira meta.
+            _ROLE_ELIGIBLE = {
+                "kpi_view": {"realized"},
+                "chart_view": {"series", "realized"},
+                "table_view": {"realized", "series"},
+            }
+            _role_pref = {
+                "kpi_view": ["realized", "target", "series"],
+                "chart_view": ["series", "realized", "target"],
+                "table_view": ["realized", "series", "target"],
+            }.get(btype, ["realized", "series", "target"])
+
+            pool = [
+                c
+                for c in justified
+                if set(c.get("goals") or [])
+                <= (request_goals or set())
+            ] or justified
+            # forma canônica por papel do bloco.
+            _shape_ok = {
+                "kpi_view": {"scalar", "object", "composite_analysis"},
+                "chart_view": {"list", "series", "paged_list", "scalar"},
+                "table_view": {"list", "paged_list", "hierarchy"},
+            }.get(btype, set())
+            if _shape_ok:
+                _shaped = [
+                    c
+                    for c in pool
+                    if str(c.get("metaShape") or "")
+                    in _shape_ok
+                ]
+                if _shaped:
+                    pool = _shaped
+            # elegibilidade por papel — candidato com papel
+            # incompatível sai antes do ranking.
+            _eligible_roles = _ROLE_ELIGIBLE.get(btype, set())
+            if _eligible_roles:
+                _role_pool = [
+                    c
+                    for c in pool
+                    if _cand_role(c) in _eligible_roles
+                ]
+                if _role_pool:
+                    pool = _role_pool
+            # role pref ordena mas não exclui: indicador meta que
+            # cobre oee+meta é a comparação oficial pedida, não
+            # contaminação — a chave de cobertura decide.
+            pool = sorted(
+                pool,
+                key=lambda c: (
+                    -len(
+                        set(c.get("goals") or [])
+                        & (request_goals or set())
+                    ),
+                    _role_pref.index(_cand_role(c))
+                    if _cand_role(c) in _role_pref
+                    else len(_role_pref),
+                    -max(
+                        (
+                            msg_norm.count(g)
+                            for g in (c.get("goals") or [])
+                        ),
+                        default=0,
+                    ),
+                    len(set(c.get("goals") or [])),
+                    -float(c.get("score") or 0.0),
+                ),
+            )
+            role_ok = pool
+
+            def _rank_key(c):
+                return (
+                    -len(
+                        set(c.get("goals") or [])
+                        & (request_goals or set())
+                    ),
+                    _role_pref.index(_cand_role(c))
+                    if _cand_role(c) in _role_pref
+                    else len(_role_pref),
+                    -max(
+                        (
+                            msg_norm.count(g)
+                            for g in (c.get("goals") or [])
+                        ),
+                        default=0,
+                    ),
+                    len(set(c.get("goals") or [])),
+                )
+
+            _role_unique = len(role_ok) == 1 or (
+                role_ok
+                and _rank_key(role_ok[0]) < _rank_key(role_ok[1])
+            )
+            if (
+                plan.get("state") != "RESOLVED"
+                and len(justified) != 1
+                and not _role_unique
+            ):
+                enriched.append(op)
+                continue
+            cand = role_ok[0] if role_ok else (
+                plan_cands[0] if plan_cands else None
+            )
+            oid = (
+                str(cand.get("operationId") or "").strip()
+                if isinstance(cand, dict)
+                else ""
+            )
+            if not oid:
+                enriched.append(op)
+                continue
+            vid = str(blk.get("id") or f"v_{btype}")
+            blk["id"] = vid
+            dsid = f"ds_{btype}"
+            params = dict(cand.get("params") or {})
+            schema = cand.get("paramSchema") or {}
+            for key, value in params_msg.items():
+                if key in schema:
+                    params[key] = value
+            spec = plan.get("binding") or {}
+            enriched.append(op)
+            enriched.append(
+                {
+                    "op": "upsert_data_source",
+                    "operationId": oid,
+                    "blockId": dsid,
+                    "displayMode": str(
+                        spec.get("displayMode") or "auto"
+                    ),
+                    "label": str(cand.get("label") or oid),
+                    "params": params,
+                }
+            )
+            enriched.append(
+                {
+                    "op": "bind_visual",
+                    "visualId": vid,
+                    "dataSourceId": dsid,
+                }
+            )
+            # o binding agora é concreto nos ops — o plano reflete
+            # a resolução efetiva, não apenas a existência de spec.
+            plan["state"] = "RESOLVED"
+            plan["resolvedOperationId"] = oid
+            plan["resolvedParams"] = params
+            plan["binding"] = {
+                "operationId": oid,
+                "displayMode": str(
+                    spec.get("displayMode") or "auto"
+                ),
+                "missingParams": spec.get("missingParams") or [],
+            }
+            _bound_goals |= set(cand.get("goals") or [])
+        payload["ops"] = enriched
+        # meta é representação independente: quando o pedido pede
+        # comparação e existe fonte TARGET justificada, emite um
+        # KPI de meta próprio — nunca dentro do KPI de realizado.
+        if (request_goals or set()) & {"meta", "metas", "goal", "alvo"}:
+            for _plan in plan_by_type.values():
+                _meta_cands = [
+                    c
+                    for c in (_plan.get("candidates") or [])
+                    if isinstance(c, dict)
+                    and _cand_role(c) == "target"
+                    and c.get("goals")
+                ]
+                if not _meta_cands:
+                    continue
+                _mc = _meta_cands[0]
+                _moid = str(_mc.get("operationId") or "").strip()
+                if not _moid or any(
+                    o.get("operationId") == _moid
+                    for o in enriched
+                    if isinstance(o, dict)
+                ):
+                    continue
+                enriched.extend(
+                    [
+                        {
+                            "op": "upsert_block",
+                            "block": {
+                                "id": "v_meta_view",
+                                "type": "kpi_view",
+                                "frame": {
+                                    "x": 3, "y": 50,
+                                    "w": 22, "h": 22,
+                                },
+                                "style": {
+                                    "color": "#0f172a",
+                                    "backgroundColor": "#ffffff",
+                                    "fontFamily": (
+                                        "Inter, system-ui, sans-serif"
+                                    ),
+                                },
+                            },
+                        },
+                        {
+                            "op": "upsert_data_source",
+                            "operationId": _moid,
+                            "blockId": "ds_meta_view",
+                            "displayMode": "kpi",
+                            "label": str(
+                                _mc.get("label") or _moid
+                            ),
+                            "params": dict(
+                                _mc.get("params") or {}
+                            ),
+                        },
+                        {
+                            "op": "bind_visual",
+                            "visualId": "v_meta_view",
+                            "dataSourceId": "ds_meta_view",
+                        },
+                    ]
+                )
+                break
+        # blocos do plano cujo componente foi descartado não podem
+        # travar a prontidão da proposta.
+        if dropped_types and isinstance(
+            payload.get("bindingPlan"), dict
+        ):
+            payload["bindingPlan"]["blocks"] = [
+                b
+                for b in payload["bindingPlan"].get("blocks") or []
+                if str(b.get("blockType") or "") not in dropped_types
+            ]
+            for dt in dropped_types:
+                plan_by_type.pop(dt, None)
+        # recomputa o estado agregado após a resolução dos ops.
+        plan_list = [
+            b for b in plan_by_type.values() if isinstance(b, dict)
+        ]
+        if plan_list and isinstance(
+            payload.get("bindingPlan"), dict
+        ):
+            payload["bindingPlan"]["state"] = (
+                "RESOLVED"
+                if all(
+                    b.get("state") == "RESOLVED" for b in plan_list
+                )
+                else "NEEDS_SOURCE_SELECTION"
+                if any(
+                    b.get("state") == "NEEDS_SOURCE_SELECTION"
+                    for b in plan_list
+                )
+                else "NEEDS_CONTEXT"
+            )
 
     def _design_methodology_for_suggest(
         self,

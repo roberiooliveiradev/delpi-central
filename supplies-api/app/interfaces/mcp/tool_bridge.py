@@ -65,6 +65,9 @@ from app.application.services.comex_analysis_service import (
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
 from app.application.services.otd_aggregate_service import OtdAggregateService
 from app.application.services.otd_series_service import OtdSeriesService
+from app.application.services.procurement_diagnostic_service import (
+    ProcurementDiagnosticService,
+)
 from app.application.services.overview_composition_service import (
     OverviewCompositionService,
     normalize_overview_branches,
@@ -125,6 +128,7 @@ from app.interfaces.mcp import (
 )
 from app.interfaces.mcp.branding import SURI_FULL_NAME, SURI_MISSION
 from app.interfaces.mcp.constants import (
+    PROCUREMENT_DIAGNOSTIC_FILTER_KEYS,
     ANALYSIS_KINDS,
     CATALOG_VERSION,
     CONTEXT_ACTIONS,
@@ -598,6 +602,7 @@ _SAFETY_STOCK_SERVICE = SafetyStockService()
 _OVERVIEW_SERVICE = OverviewCompositionService()
 _OTD_AGG_SERVICE = OtdAggregateService()
 _OTD_SERIES_SERVICE = OtdSeriesService()
+_PROC_DIAG_SERVICE = ProcurementDiagnosticService()
 _MARKET_SERVICE = MarketIntelligenceService()
 _COMEX_SERVICE = ComexAnalysisService()
 _CAPABILITY_SERVICE = CapabilityResolutionService()
@@ -1050,11 +1055,14 @@ def _knowledge_user() -> EffectiveUser:
 def tool_search_supplies_knowledge(
     query: str | None = None,
     topic: str | None = None,
+    kind: str | None = None,
     limit: int = 8,
 ) -> CallToolResult:
     _knowledge_user()
     return _ok(
-        knowledge.search_knowledge(query=query, topic=topic, limit=limit)
+        knowledge.search_knowledge(
+            query=query, topic=topic, kind=kind, limit=limit
+        )
     )
 
 
@@ -1152,6 +1160,18 @@ def tool_analyze_purchase_orders(
         {
             "label": "sample_truncated",
             "value": bool(int(data.get("total") or 0) > sample_total),
+        },
+        {
+            "label": "population_total_lines",
+            "value": int(data.get("total") or 0),
+        },
+        {
+            "label": "interpretation",
+            "value": (
+                "sample_* metrics describe ONLY the fetched sample — "
+                "they are NOT population shares; population_* and the "
+                "summary facts describe the full filtered universe."
+            ),
         },
     ]
 
@@ -1613,6 +1633,17 @@ def tool_analyze(
             f"Allowed: {sorted(ANALYSIS_KINDS)}"
         )
     filter_payload = _payload_dict(filters)
+    if normalized == "procurement_diagnostic":
+        unknown = _unknown_keys(
+            filter_payload, PROCUREMENT_DIAGNOSTIC_FILTER_KEYS
+        )
+        if unknown:
+            return _invalid(
+                f"Unknown procurement_diagnostic filters: "
+                f"{sorted(unknown)}. "
+                f"Allowed: {sorted(PROCUREMENT_DIAGNOSTIC_FILTER_KEYS)}"
+            )
+        return tool_procurement_diagnostic(filter_payload)
     if normalized == "overview_summary":
         unknown = _unknown_keys(filter_payload, OVERVIEW_SUMMARY_FILTER_KEYS)
         if unknown:
@@ -1652,6 +1683,7 @@ def tool_knowledge(
     action: str,
     query: str | None = None,
     topic: str | None = None,
+    kind: str | None = None,
     knowledge_id: str | None = None,
     limit: int = DEFAULT_KNOWLEDGE_LIMIT,
 ) -> CallToolResult:
@@ -1663,10 +1695,10 @@ def tool_knowledge(
                 "knowledge action=search does not accept 'knowledge_id'."
             )
         return tool_search_supplies_knowledge(
-            query=query, topic=topic, limit=limit
+            query=query, topic=topic, kind=kind, limit=limit
         )
     if normalized == "get":
-        if query is not None or topic is not None:
+        if query is not None or topic is not None or kind is not None:
             return _invalid(
                 "knowledge action=get accepts only 'knowledge_id'."
             )
@@ -1676,7 +1708,7 @@ def tool_knowledge(
             )
         return tool_get_knowledge_item(knowledge_id)
     if normalized == "sources":
-        if query is not None or topic is not None or knowledge_id is not None:
+        if query is not None or topic is not None or kind is not None or knowledge_id is not None:
             return _invalid(
                 "knowledge action=sources accepts no parameters."
             )
@@ -2060,10 +2092,17 @@ def _dispatch_otd_read(
 def tool_otd_aggregate(filters: dict) -> CallToolResult:
     """read(otd,aggregate) — same compose call as GET /analytics/otd."""
     user = _analytics_user()
+    branch = filters.get("branch")
+    if branch is not None and not isinstance(branch, str):
+        return _invalid(
+            "read(otd,aggregate) filter 'branch' must be a single branch "
+            "string ('01', '02' or 'all'), not a list — use "
+            "read(otd,series) for multi-branch OTD."
+        )
     try:
         payload = _OTD_AGG_SERVICE.compose(
             user,
-            branch=filters.get("branch"),
+            branch=branch,
             start_date=filters.get("start_date"),
             end_date=filters.get("end_date"),
         )
@@ -2093,6 +2132,24 @@ def tool_otd_series(filters: dict) -> CallToolResult:
     except ValueError as exc:
         return _invalid(str(exc))
     return _ok(payload, meta={"delpi/source": "bff:/analytics/otd/series"})
+
+
+def tool_procurement_diagnostic(filters: dict) -> CallToolResult:
+    """analyze(procurement_diagnostic) — bounded multi-entity compose."""
+    user = _analytics_user()
+    try:
+        payload = _PROC_DIAG_SERVICE.compose(
+            user,
+            branch=filters.get("branch"),
+            start_date=filters.get("start_date"),
+            end_date=filters.get("end_date"),
+            include_sections=filters.get("include_sections"),
+        )
+    except ValueError as exc:
+        return _invalid(str(exc))
+    return _ok(
+        payload, meta={"delpi/source": "bff:multi[diagnostic]"}
+    )
 
 
 def tool_analyze_overview_summary(filters: dict) -> CallToolResult:

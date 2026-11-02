@@ -1032,6 +1032,13 @@ async def _analyze_drawing_understanding(
         document_hash=best.get("document_hash") or "",
         page=1,
         bom_codes=bom_codes,
+        product_code=code,
+        render_size_px=(
+            tuple(best.get("page_size_px"))
+            if best.get("page_size_px")
+            else None
+        ),
+        graphic_primitives=best.get("_graphic_primitives"),
     )
     understanding["source_run"] = {
         "provider_id": best.get("provider_id"),
@@ -1039,6 +1046,64 @@ async def _analyze_drawing_understanding(
         "token_sample_size": len(tokens),
         "sampled": len(tokens) < (best.get("token_count") or 0),
     }
+    # R9.8 — motor SLANet: estrutura de tabela real sobre a região
+    # detectada, com associação OCR↔célula; candidate, nunca autoridade.
+    try:
+        from engineering_app.infrastructure.extraction.engine_adapters import (
+            TableStructureEngine,
+        )
+
+        _tbl_box = (
+            understanding.get("component_table") or {}
+        ).get("box") or None
+        _pdf_raw = await bridge.build_delegated_auxiliary_source().fetch_product_drawing_pdf(  # noqa: E501
+            ctx, code=code
+        )
+        _pdf_bytes = (
+            _pdf_raw.get("content") if isinstance(_pdf_raw, dict) else None
+        )
+        _sl = TableStructureEngine().run(
+            bytes(_pdf_bytes) if _pdf_bytes else b"",
+            document_hash_sha256=best.get("document_hash") or "",
+            product_code=code,
+            crop_box=_tbl_box,
+        )
+        understanding["table_structure_engines"] = [
+            {
+                "provider_id": _sl.get("provider_id"),
+                "model_version": _sl.get("model_version"),
+                "executed": not _sl.get("error_kind"),
+                "error_kind": _sl.get("error_kind"),
+                "structure_score": (
+                    (_sl.get("tables") or [{}])[0].get("structure_score")
+                    if _sl.get("tables")
+                    else None
+                ),
+                "row_count": (
+                    (_sl.get("tables") or [{}])[0].get("row_count")
+                    if _sl.get("tables")
+                    else None
+                ),
+                "cells": _sl.get("cells"),
+                "cell_count": len(_sl.get("cells") or []),
+                "cells_with_text": sum(
+                    1 for c in (_sl.get("cells") or [])
+                    if c.get("normalized_text")
+                ),
+                "duration_ms": _sl.get("duration_ms"),
+                "state": "CANDIDATE_GENERATED",
+            }
+        ]
+    except Exception as _sl_exc:
+        understanding["table_structure_engines"] = [
+            {
+                "provider_id": "table_structure_slanet",
+                "executed": False,
+                "error_kind": "UNAVAILABLE",
+                "error_detail": str(_sl_exc),
+                "state": "ENGINE_AVAILABLE",
+            }
+        ]
     return _ok(
         {
             "analysis_type": "product.drawing_understanding",

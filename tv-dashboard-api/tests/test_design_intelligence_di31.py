@@ -30,7 +30,7 @@ def test_broad_compose_without_marker_is_typed_gap_with_hints():
 
 def test_broad_compose_stock_typed():
     out = _suggest(
-        "quero uma TV mostrando coisas sem sinal"
+        "quero uma TV mostrando xyzzy foobar"
     )
     assert out["status"] == "unsupported"
     assert out.get("compositionHints")
@@ -53,8 +53,9 @@ def test_kpi_specific_still_clarifies_route():
 
 def test_no_playlist_keeps_legit_clarification():
     out = _suggest("crie um painel de vendas", host={})
-    # sem contexto de playlist, clarificação legítima preservada
-    assert out["status"] in {"clarification", "unsupported"}
+    # sem contexto de playlist: clarificação legítima OU proposta
+    # conceitual tipada (DI-3.6.2 — composição sem target explícito)
+    assert out["status"] in {"clarification", "unsupported", "proposal"}
     if out["status"] == "clarification":
         assert out.get("clarificationKey")
 

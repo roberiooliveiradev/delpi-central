@@ -20,21 +20,26 @@ def _tok(text, x, y, w=40, h=10, conf=0.9, page=1):
     }
 
 
-# layout 1000x800: carimbo inferior-direito (x≥550,y≥576),
-# tabela sobre o carimbo (x≥550,360≤y<576), notas canto sup-esq
+# layout ~840x730: coluna de códigos x=600 (tabela estrutural),
+# carimbo por rótulos COD/DES/REV no inferior-direito,
+# número/cota na área de desenho, nota canto sup-esq
 _TOKENS = [
-    _tok("10080106", 600, 400),   # tabela row0
+    _tok("COMPONENTE", 600, 380),  # header col0 → component_code
+    _tok("QTD", 700, 380),         # header col1 → quantity
+    _tok("10080106", 600, 400),   # tabela row0 (coluna de códigos)
     _tok("CABO", 700, 400),       # tabela row0 col1
     _tok("10020033", 600, 420),   # tabela row1
     _tok("TUBO", 700, 420),
     _tok("50226113", 600, 440),   # tabela row2
     _tok("50226114", 600, 460),   # tabela row3
-    _tok("90264302", 800, 700),   # carimbo
+    _tok("COD", 620, 700),        # carimbo — rótulo 1
+    _tok("DES", 740, 700),        # carimbo — rótulo 2
+    _tok("90264302", 800, 700),   # carimbo valor
     _tok("18702881", 800, 720),
-    _tok("REV", 650, 700),
-    _tok("00", 700, 700),
-    _tok("643", 200, 300),        # área de desenho → region candidate
-    _tok("663", 200, 350),
+    _tok("REV", 620, 720),
+    _tok("00", 700, 720),         # valor de REV (nunca cota)
+    _tok("643±2", 200, 300),      # cota explícita na área de desenho
+    _tok("663±2", 200, 350),
     _tok("CHICOTE", 50, 50),      # notas
 ]
 
@@ -89,7 +94,9 @@ def test_revision_candidate_label_value():
 def test_dimension_candidates_never_verified():
     out = build_understanding(_TOKENS, document_hash="x")
     dims = {d["text"]: d for d in out["dimension_candidates"]}
-    assert "643" in dims and "663" in dims
+    assert "643±2" in dims and "663±2" in dims
+    # "00" (valor de REV) nunca é cota
+    assert "00" not in dims
     assert all(
         d["state"] in {
             "DIMENSION_TEXT_FOUND", "DIMENSION_REGION_CANDIDATE"
@@ -192,3 +199,20 @@ def test_understanding_no_vision_imports():
     src = inspect.getsource(m)
     for bad in ("cv2", "paddle", "pypdfium2"):
         assert bad not in src
+
+
+def test_unreliable_boundary_forces_not_comparable():
+    # R9.1/AC18: fronteira quase integral rejeitada → BOM fail-closed.
+    toks = [_tok('50226113', 600, 400), _tok('50226114', 600, 440)]
+    # simular moldura quase integral forçando area >60% da página
+    fake_gp = {'rects': [[0, 0, 2330, 1650]]}
+    out = build_understanding(
+        toks, document_hash='x', bom_codes=['50226113'],
+        product_code='90264161', render_size_px=(2339, 1653),
+        graphic_primitives=fake_gp,
+    )
+    b = out['bom_comparison']
+    assert out['component_table'].get('unreliable_boundary') is True
+    assert b['state'] == 'NOT_COMPARABLE'
+    assert b['matched'] == [] and b['missing_in_drawing_table'] == []
+    assert b['not_in_bom'] == [] and b['occurrence_mismatches'] == []

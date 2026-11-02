@@ -259,6 +259,41 @@ class Settings:
         self.orchestration_engine = (
             os.getenv("DELIA_ORCHESTRATION_ENGINE") or "langgraph"
         ).strip()
+        # S3 (doc 214): compound-objective decomposition — composition
+        # config ONLY, backend-controlled; OFF by default.
+        self.subobjective_investigation_enabled = _env_flag(
+            "DELIA_SUBOBJECTIVE_INVESTIGATION"
+        )
+        # S4 (doc 214): LangGraph Send fan-out for independent
+        # subobjectives — composition config ONLY; OFF by default.
+        self.subobjective_fanout_enabled = _env_flag(
+            "DELIA_SUBOBJECTIVE_FANOUT"
+        )
+        # S5 (doc 214): durable checkpoint storage for investigation
+        # resume — composition config ONLY; unset means no durable
+        # checkpointer (in-process behavior, unchanged default).
+        self.checkpoint_db_path = (
+            os.getenv("DELIA_CHECKPOINT_DB") or ""
+        ).strip() or None
+        # Doc 216: isolated catalog experiment — LIVE default;
+        # SNAPSHOT_EXPERIMENT is eval-only composition config.
+        self.mcp_catalog_mode = (
+            os.getenv("DELIA_MCP_CATALOG_MODE") or "live"
+        ).strip().lower()
+        self.mcp_catalog_db = (
+            os.getenv("DELIA_MCP_CATALOG_DB") or ""
+        ).strip() or None
+        # Doc 217: composable tool-selection experiment — live default;
+        # retrieval / retrieval_llm / retrieval_llm_progressive are
+        # eval-only composition config, never request-sourced.
+        self.tool_selection_mode = (
+            os.getenv("DELIA_TOOL_SELECTION_MODE") or "live"
+        ).strip().lower()
+        # Doc 217+ remediation: argument-generation engine — llm
+        # default; pydantic_ai is eval-only structured arggen.
+        self.arggen_engine = (
+            os.getenv("DELIA_ARGGEN_ENGINE") or "llm"
+        ).strip().lower()
         _call_attempts_raw = os.getenv("DELIA_LLM_CALL_MAX_ATTEMPTS")
         self.llm_call_max_attempts_config_source = (
             "environment"

@@ -133,15 +133,41 @@ class OtdAggregateService:
 
         aggregate_on_time = None
         aggregate_total = None
+        consolidated_pct = None
+        consolidation_method = "branch"
         if mode == "single" and branches:
             entry = by_branch.get(branches[0]) or {}
             aggregate_on_time = entry.get("onTime")
             aggregate_total = entry.get("total")
+            consolidated_pct = entry.get("otdPct")
+        else:
+            try:
+                summary = self.delpi_reads.get_otd(
+                    access_token=token,
+                    branch=None,
+                    start_date=start,
+                    end_date=end,
+                )
+                consolidated_pct = _as_float(summary.get("otd_percentage"))
+                aggregate_on_time = _as_float(
+                    summary.get("on_time_count") or summary.get("onTime"))
+                aggregate_total = _as_float(
+                    summary.get("total_count") or summary.get("total"))
+                consolidation_method = "source_consolidated"
+            except DelpiApiGatewayError as exc:
+                partial_failures.append(
+                    {
+                        "source": "api-delpi",
+                        "branch": "consolidated",
+                        "message": str(exc) or "otd consolidated unavailable",
+                    }
+                )
 
         return {
             "scope": {"branches": branches, "mode": mode},
             "period": {"from": start, "to": end, "label": f"{start} → {end}"},
-            "otdPct": _mean(otd_values),
+            "otdPct": consolidated_pct,
+            "consolidationMethod": consolidation_method,
             "goal": goal,
             "onTime": aggregate_on_time,
             "total": aggregate_total,

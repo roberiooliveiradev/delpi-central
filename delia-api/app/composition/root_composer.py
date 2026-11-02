@@ -68,7 +68,13 @@ _logger = logging.getLogger(__name__)
 _SUPPORTED_ORCHESTRATION_ENGINES = frozenset({"langgraph", "delia"})
 
 
-def _resolve_orchestration_attempt(engine_name: str, gates):
+def _resolve_orchestration_attempt(
+    engine_name: str,
+    gates,
+    *,
+    subobjective_fanout_enabled: bool = False,
+    checkpoint_db_path: str | None = None,
+):
     """Select ONE governed-attempt implementation for the composed
     application. Unknown identifiers fail closed — a misspelled
     engine must never silently select another engine. The LangGraph
@@ -85,8 +91,25 @@ def _resolve_orchestration_attempt(engine_name: str, gates):
             LangGraphCapabilityOrchestrator,
         )
 
+        checkpointer = None
+        if checkpoint_db_path:
+            # S5: durable resume — configured path means the operator
+            # opted in; an unavailable driver fails composition
+            # closed rather than silently degrading to ephemeral.
+            import sqlite3
+
+            from langgraph.checkpoint.sqlite import SqliteSaver
+
+            checkpointer = SqliteSaver(
+                sqlite3.connect(
+                    checkpoint_db_path, check_same_thread=False
+                )
+            )
         return LangGraphCapabilityOrchestrator(
-            gates, recovery_reuse_enabled=True
+            gates,
+            recovery_reuse_enabled=True,
+            subobjective_fanout_enabled=subobjective_fanout_enabled,
+            checkpointer=checkpointer,
         )
     return gates
 
@@ -171,14 +194,38 @@ def create_application(
     # C4-MCP-GOVERNED-READS-01/02: per-binding enabled set — each
     # bounded flag contributes exactly its own authorized tuple at
     # both enforcement boundaries.
-    interop = SpecialistInterop(
-        McpSpecialistAdapter(
-            connections,
-            credential_provider=_wire_delegated_credential_provider(
-                settings, connections
-            ),
+    adapter = McpSpecialistAdapter(
+        connections,
+        credential_provider=_wire_delegated_credential_provider(
+            settings, connections
         ),
     )
+    # Doc 216: SNAPSHOT_EXPERIMENT (eval-only) routes catalog
+    # discovery through the persisted snapshot; invoke stays live.
+    # Missing/invalid config fails closed — never silent fallback.
+    if settings.mcp_catalog_mode == "snapshot_experiment":
+        if not settings.mcp_catalog_db:
+            raise RuntimeError(
+                "DELIA_MCP_CATALOG_MODE=snapshot_experiment requires "
+                "DELIA_MCP_CATALOG_DB"
+            )
+        from app.application.specialist_interop.snapshot_interop import (
+            SnapshotDiscoverInterop,
+        )
+        from app.infrastructure.interoperability.mcp.catalog_store import (
+            McpCatalogStore,
+        )
+
+        interop = SnapshotDiscoverInterop(
+            adapter, McpCatalogStore(settings.mcp_catalog_db)
+        )
+    elif settings.mcp_catalog_mode != "live":
+        raise RuntimeError(
+            "DELIA_MCP_CATALOG_MODE must be 'live' or "
+            f"'snapshot_experiment', got {settings.mcp_catalog_mode!r}"
+        )
+    else:
+        interop = SpecialistInterop(adapter)
     app.config["SPECIALIST_INTEROP"] = interop
 
     # C3-INTERACTION-RUNTIME-01R2: TEST_ONLY deterministic adapter is
@@ -425,13 +472,28 @@ def _compose_turn_handler(
             cri_presentation_vocabulary=cri_vocabulary,
             field_labels=field_labels,
             orchestration_instructions=orchestration_instructions,
+            subobjective_investigation_enabled=(
+                settings.subobjective_investigation_enabled
+            ),
+            tool_selection_mode=settings.tool_selection_mode,
+            arggen_engine=settings.arggen_engine,
+            arggen_model_config={
+                "base_url": settings.llm_base_url,
+                "api_key": settings.llm_api_key,
+                "model": settings.llm_model,
+            },
         )
         if providers and orchestration_instructions is not None
         else None
     )
     orchestration = (
         _resolve_orchestration_attempt(
-            settings.orchestration_engine, gates
+            settings.orchestration_engine,
+            gates,
+            subobjective_fanout_enabled=(
+                settings.subobjective_fanout_enabled
+            ),
+            checkpoint_db_path=settings.checkpoint_db_path,
         )
         if gates is not None
         else None

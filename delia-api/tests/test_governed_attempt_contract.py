@@ -636,7 +636,12 @@ def test_engine_selection_is_config_gated_not_request_driven():
     )
     assert list(
         inspect.signature(_resolve_orchestration_attempt).parameters
-    ) == ["engine_name", "gates"]
+    ) == [
+        "engine_name",
+        "gates",
+        "subobjective_fanout_enabled",
+        "checkpoint_db_path",
+    ]
 
 
 def test_langgraph_production_requirements_pinned_and_scoped():

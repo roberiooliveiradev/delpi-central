@@ -916,7 +916,7 @@ export async function fetchSensorizedWorkCenters(
 }
 
 // ---------------------------------------------------------------------------
-// Atividade do posto — histórico diário MES (Etapa 3, API da Etapa 2).
+// Paradas do posto — histórico diário MES (consulta/classificação).
 // source=totvs não traz summary/items: união discriminada, nunca vazio falso.
 // ---------------------------------------------------------------------------
 

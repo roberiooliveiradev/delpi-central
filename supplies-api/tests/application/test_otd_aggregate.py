@@ -47,11 +47,12 @@ def test_otd_aggregate_positive_single_branch():
     assert result["partialFailures"] == []
 
 
-def test_otd_aggregate_sibling_consolidated_averages():
+def test_otd_aggregate_sibling_consolidated_uses_source_consolidated():
     reads = MagicMock()
     reads.get_otd.side_effect = [
-        {"otd_percentage": 90.0},
-        {"otd_percentage": 80.0},
+        {"otd_percentage": 90.0, "on_time_count": 9, "total_count": 10},
+        {"otd_percentage": 80.0, "on_time_count": 4, "total_count": 5},
+        {"otd_percentage": 86.67, "on_time_count": 13, "total_count": 15},
     ]
     si = MagicMock()
     si.goals_by_kpi.return_value = {"KPI-OTD": 98.0}
@@ -67,7 +68,12 @@ def test_otd_aggregate_sibling_consolidated_averages():
         branch=None,
     )
     assert result["scope"]["mode"] == "consolidated"
-    assert result["otdPct"] == 85.0
+    assert result["otdPct"] == 86.67
+    assert result["consolidationMethod"] == "source_consolidated"
+    assert result["onTime"] == 13.0
+    assert result["total"] == 15.0
+    assert result["byBranch"]["01"]["otdPct"] == 90.0
+    assert result["byBranch"]["02"]["otdPct"] == 80.0
     assert set(result["byBranch"].keys()) == {"01", "02"}
 
 

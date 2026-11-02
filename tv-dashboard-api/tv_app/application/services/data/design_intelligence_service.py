@@ -107,7 +107,9 @@ class DesignIntelligenceService:
     # router; direct typed commands must return None so ops flow ungated.
     _DESIGN_INTENT_PATTERNS = (
         ("CHOOSE_VISUAL", ("qual grafico", "que grafico", "qual visual", "grafico devo", "qual tipo de grafico")),
-        ("FIX_LAYOUT", ("sobrepo", "sobrepost", "fora do slide", "apertad", "organiz", "layout quebrad")),
+        # COMPOSE_SLIDE vem antes de FIX_LAYOUT — "organize os
+        # elementos" num pedido de composição não pode sequestrar
+        # a intenção para o caminho de correção de layout.
         ("REVIEW_SLIDE", ("esta bom", "ta bom", "revise", "avalie", "como esta", "bonit")),
         ("COMPOSE_SLIDE", (
             "executiv", "monte", "componha", "crie um slide", "novo slide",
@@ -116,7 +118,19 @@ class DesignIntelligenceService:
             "monte uma apresentacao", "monte um painel", "monte uma tv",
             "quero uma tv", "preciso de um painel", "preciso de uma tv",
             "preciso de uma apresentacao", "tv mostrando",
+            # DI-DESIGN-02 — categoria funcional de pedidos de
+            # composição/edição visual, não só "crie/monte":
+            "desenvolva", "desenvolver", "design profissional",
+            "layout profissional", "visual profissional",
+            "dashboard", "apresentacao visual", "monte o visual",
+            "monte um visual", "organize os indicadores",
+            "apresentacao dos indicadores", "melhore a apresentacao",
+            "melhore o design", "aprimore o design", "aprimore a apresentacao",
+            "melhore o visual", "melhore o layout", "faca um layout",
+            "desenhe", "projete um painel", "estruture o painel",
+            "estruture a apresentacao",
         )),
+        ("FIX_LAYOUT", ("sobrepo", "sobrepost", "fora do slide", "apertad", "organiz", "layout quebrad")),
         ("IMPROVE_EXISTING", ("melhore", "melhorar", "destaque", "destacar", "deixe melhor", "polir")),
     )
 

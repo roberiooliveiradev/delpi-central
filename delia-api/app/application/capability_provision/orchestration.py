@@ -71,6 +71,9 @@ from app.application.interaction.activity import (
     owner_ref as _activity_owner_ref,
     source_ref as _activity_source_ref,
 )
+from app.application.capability_provision.capability_retrieval import (
+    rank_capabilities,
+)
 from app.application.interaction.argument_validation import (
     MAX_ARGUMENT_KEYS,
     ORCHESTRATED_FIELDS,
@@ -209,6 +212,15 @@ from app.application.capability_provision.outcome_assessment import (
     _unwrap_owner_payload,
     _value_present,
     _wording_leaks_technical,
+)
+from app.application.capability_provision.subobjective_tracker import (
+    SUBOBJECTIVE_COMPLETED,
+    SUBOBJECTIVE_PARTIAL,
+    SubObjective,
+    SubObjectiveTracker,
+    TERMINAL_STATES,
+    MAX_SUBOBJECTIVES_PER_INVESTIGATION,
+    subobjective_outcome_transition,
 )
 from app.application.capability_provision.paginated_result_semantics import (
     DEFAULT_MAX_PAGES,
@@ -373,6 +385,10 @@ GOAL_INSTRUCTION_ID = (
     "delia.capability_orchestration.turn_goal"
 )
 
+SUBOBJECTIVES_INSTRUCTION_ID = (
+    "delia.capability_orchestration.subobjectives"
+)
+
 # CRI E2 (doc 73 §3-§6 / spec 75): when the response-intelligence
 # switch is ON, the SAME goal stage also proposes typed sufficiency
 # requirements — a hypothesis the runtime verifies against typed
@@ -460,6 +476,37 @@ _EMPTY_RESULT_FEEDBACK = json.dumps(
     },
     ensure_ascii=False,
 )
+
+# Owner-visible context for the same reformulation: the concrete
+# arguments that produced the empty result, with permission to vary
+# lexical form (shorter, simpler, singular or canonical term) — the
+# model performs the semantic reformulation; nothing is hardcoded.
+def _empty_result_feedback_with_args(previous: Mapping) -> str:
+    """Empty-result feedback carrying the concrete rejected args —
+    the model reformulates semantically; nothing is hardcoded."""
+    return json.dumps(
+        {
+            "owner_feedback": {
+                "kind": "owner_empty_result",
+                "previous_arguments": dict(previous),
+                "detail": (
+                    "The argument set in previous_arguments returned "
+                    "no records from the owner. Reformulate once, "
+                    "preserving business subject, identifiers, "
+                    "quantities and technical qualifiers. Prefer "
+                    "shorter, simpler or canonical term forms (the "
+                    "owner may match literal terms); you may also "
+                    "drop nonessential qualifiers or filler wording. "
+                    "When an exact identifier or code appears inside "
+                    "a descriptive field, move it to the typed "
+                    "identifier field the schema exposes (if any). "
+                    "Return empty arguments only when nothing "
+                    "plausible applies."
+                ),
+            }
+        },
+        ensure_ascii=False,
+    )
 
 _SYNTHESIS_RETRYABLE_REASONS = frozenset(
     {
@@ -2912,6 +2959,9 @@ def _capability_dead_end(
 _NAMED_PROVIDER_RE = re.compile(
     r"\bmcp[\s:_-]*([a-z][a-z0-9_-]+)", re.IGNORECASE
 )
+_VOCATIVE_PROVIDER_RE = re.compile(
+    r"^\s*([A-Za-z][A-Za-z0-9_-]{2,})\s*[,:;]"
+)
 
 
 def _named_provider_tokens(input_text: str) -> frozenset[str]:
@@ -2925,6 +2975,16 @@ def _named_provider_tokens(input_text: str) -> frozenset[str]:
         m.group(1).lower()
         for m in _NAMED_PROVIDER_RE.finditer(input_text or "")
     )
+
+
+def _vocative_provider_tokens(input_text: str) -> frozenset[str]:
+    """Leading addressee token (``SURI, investigue…``).
+
+    Candidate constraint only — a leading word that names a live
+    provider is a declared addressee; when it matches nothing the
+    value is ignored (never an absent-provider refusal)."""
+    m = _VOCATIVE_PROVIDER_RE.match(input_text or "")
+    return frozenset({m.group(1).lower()}) if m else frozenset()
 
 
 def _group_short_ids(
@@ -3414,6 +3474,7 @@ def _capability_payload(
     *,
     prior_observation: Mapping[str, Any] | None = None,
     business_subject: str | None = None,
+    compact: bool = False,
 ) -> str:
     """Bounded semantic payload of ONE group's live surface.
 
@@ -3422,6 +3483,9 @@ def _capability_payload(
     Optional ``prior_observation`` is untrusted prior-turn text.
     Optional ``business_subject`` is the validated turn-goal subject —
     untrusted semantic hint (goal continuity), never authority.
+    ``compact`` (doc 217 mode D) exposes only name/description/class —
+    argument shape is loaded for arggen from the live descriptor,
+    never from this selection payload.
     """
     capabilities = [
         cap
@@ -3448,6 +3512,10 @@ def _capability_payload(
         # coverage-inquiry selection without provider-specific names.
         if cap.operation_class is SpecialistOperationClass.DISCOVERY:
             entry["role"] = "owner_vocabulary_discovery"
+        if compact:
+            entry.pop("argument_keys", None)
+            entry.pop("required", None)
+            entry.pop("requires_identifier", None)
         entries.append(entry)
     optionals: dict[str, Any] = {}
     if prior_observation is not None:
@@ -4191,6 +4259,7 @@ ORCHESTRATION_INSTRUCTION_KEYS = frozenset(
         CANDIDATE_SELECTION_INSTRUCTION_ID,
         INTERACTION_ADMISSION_INSTRUCTION_ID,
         GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
+        SUBOBJECTIVES_INSTRUCTION_ID,
     }
 )
 
@@ -4652,6 +4721,10 @@ class OperationalCapabilityOrchestrator:
         ) = None,
         field_labels: FieldLabels | None = None,
         orchestration_instructions: Mapping[str, str] | None = None,
+        subobjective_investigation_enabled: bool = False,
+        tool_selection_mode: str = "live",
+        arggen_engine: str = "llm",
+        arggen_model_config: Mapping[str, str] | None = None,
     ) -> None:
         self._providers = {p.provider_id: p for p in providers}
         # R1/M01: declarative instruction text is composition-injected
@@ -4681,6 +4754,13 @@ class OperationalCapabilityOrchestrator:
         self._llm_call_max_attempts = max(
             1, min(int(llm_call_max_attempts), LLM_CALL_MAX_ATTEMPTS)
         )
+        # S3/S4 (doc 214): compound-objective decomposition — OFF by
+        # default; the composition root enables it via governed config.
+        # When off, no decomposition model call is issued and every
+        # turn keeps the exact pre-S3 stage sequence.
+        self._subobjective_investigation_enabled = bool(
+            subobjective_investigation_enabled
+        )
         # CRI E1/E2: composition-resolved response mode — when ON, the
         # goal stage may propose typed answer requirements and the
         # outcome binding edge runs the governed sufficiency
@@ -4689,6 +4769,12 @@ class OperationalCapabilityOrchestrator:
         self._response_intelligence_enabled = bool(
             response_intelligence_enabled
         )
+        # Doc 217: composable tool-selection experiment — 'live' keeps
+        # the canonical path untouched; retrieval modes restrict the
+        # candidate surface before selection (eval-only).
+        self._tool_selection_mode = (tool_selection_mode or "live").strip().lower()
+        self._arggen_engine = (arggen_engine or "llm").strip().lower()
+        self._arggen_model_config = dict(arggen_model_config or {})
         # CRI E2-R3: the answer-requirements clause is a governed
         # declarative resource injected by composition — never embedded
         # in this module. The CRI enhancement activates only when BOTH
@@ -5003,6 +5089,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             groups, failures = self._groups(correlation, deadline)
+            groups = self._filter_groups_for_selection(input_text, groups)
             return self._surface_inquiry_attempt(
                 groups, failures, correlation
             )
@@ -5043,6 +5130,7 @@ class OperationalCapabilityOrchestrator:
         prepare_only: bool,
         unbound_outcome: str | None,
         deadline: TurnDeadline,
+        depth: int = 0,
     ) -> GovernedCapabilityAttempt:
         """Owner-path tail of _attempt: after typed admission
         clears the turn, everything from the live surface listing
@@ -5060,6 +5148,7 @@ class OperationalCapabilityOrchestrator:
         if attempt_ledger is not None:
             attempt_ledger.begin_recovery_attempt()
         groups, failures = self._groups(correlation, deadline)
+        groups = self._filter_groups_for_selection(input_text, groups)
         surface = _project_surface(groups)
         if not surface:
             # No orchestratable surface observed. When at least one
@@ -5184,6 +5273,32 @@ class OperationalCapabilityOrchestrator:
                                 "fallthrough correlation_id=%s",
                                 correlation,
                             )
+
+        # S3 (doc 214): a compound objective decomposes into explicit
+        # tracked subobjectives investigated through the SAME governed
+        # path — decomposition is a bounded model proposal validated
+        # fail-closed; a single subobjective or no proposal continues
+        # the efficient single-capability path unchanged. Sub-investigations
+        # run at depth>0 and never decompose further.
+        if depth == 0 and self._subobjective_investigation_enabled:
+            subobjectives = self._decompose_objective(
+                input_text,
+                correlation=correlation,
+                workspace_context=workspace_context,
+                deadline=deadline,
+            )
+            if subobjectives is not None:
+                return self._investigate_subobjectives(
+                    subobjectives,
+                    input_text,
+                    correlation=correlation,
+                    actor_user_id=actor_user_id,
+                    session_id=session_id,
+                    workspace_context=workspace_context,
+                    prepare_only=prepare_only,
+                    deadline=deadline,
+                    depth=depth + 1,
+                )
 
         # Selection must not receive full prior transcript (Stage 05
         # latency). A bounded untrusted prior_observation may be embedded in the
@@ -6544,6 +6659,289 @@ class OperationalCapabilityOrchestrator:
         arguments: dict[str, Any] | None = None
         attempt: GovernedCapabilityAttempt | None = None
         owner_evidence: str | None = None
+
+    # -------- S3 (doc 214): explicit subobjective investigation --------
+
+    _SUBOBJECTIVE_ALLOWED_KEYS = frozenset({"subobjectives"})
+    _SUBOBJECTIVE_MAX_GOAL_CHARS = 240
+
+    def _decompose_objective(
+        self,
+        input_text: str,
+        *,
+        correlation: str,
+        workspace_context: WorkspaceContext | None,
+        deadline: TurnDeadline,
+    ) -> tuple[SubObjective, ...] | None:
+        """Bounded decomposition proposal for a compound objective.
+
+        The model proposes semantic subobjectives; the deterministic
+        runtime validates the proposal fail-closed — any malformed
+        item, forward/self dependency or overrun count discards the
+        whole proposal and the turn continues on the efficient
+        single-capability path. Decomposition is never invented: with
+        no proposal, or a single/empty list, nothing decomposes.
+        """
+        instruction = self._instruction(SUBOBJECTIVES_INSTRUCTION_ID)
+        if not instruction:
+            # A governed stage without its instruction text cannot run
+            # safely — same fail-closed contract as the resource loader;
+            # turns without the governed resource keep the efficient
+            # single-capability path.
+            return None
+        if deadline is not None and deadline.remaining_seconds() <= 0:
+            return None
+        proposal = self._propose(
+            input_text,
+            block_tag="subobjective_decomposition",
+            block_payload="{}",
+            instruction_id=SUBOBJECTIVES_INSTRUCTION_ID,
+            instruction=instruction,
+            instruction_version=self._cri_instruction_version,
+            expected_fields=("subobjectives",),
+            input_kind="subobjective_decomposition",
+            allowed_keys=self._SUBOBJECTIVE_ALLOWED_KEYS,
+            workspace_context=workspace_context,
+            correlation=correlation,
+            deadline=deadline,
+        )
+        if proposal is None:
+            return None
+        return self._subobjectives_from_proposal(proposal, correlation)
+
+    def _subobjectives_from_proposal(
+        self, proposal: Mapping[str, Any], correlation: str
+    ) -> tuple[SubObjective, ...] | None:
+        raw = proposal.get("subobjectives")
+        if not isinstance(raw, (list, tuple)):
+            return None
+        if len(raw) < 2 or len(raw) > MAX_SUBOBJECTIVES_PER_INVESTIGATION:
+            _logger.info(
+                "orchestration stage=subobjective_decomposition "
+                "decision=skip count=%d correlation_id=%s",
+                len(raw) if isinstance(raw, (list, tuple)) else -1,
+                correlation,
+            )
+            return None
+        objectives: list[SubObjective] = []
+        for index, item in enumerate(raw):
+            if not isinstance(item, Mapping):
+                return None
+            goal = str(item.get("goal") or "").strip()
+            if not goal or len(goal) > self._SUBOBJECTIVE_MAX_GOAL_CHARS:
+                return None
+            depends_on = item.get("depends_on") or ()
+            if not isinstance(depends_on, (list, tuple)):
+                return None
+            dep_ids: list[str] = []
+            for dep in depends_on:
+                if (
+                    not isinstance(dep, int)
+                    or isinstance(dep, bool)
+                    or dep < 0
+                    or dep >= index
+                ):
+                    # Unknown, self or forward dependency — the whole
+                    # proposal is untrusted garbage; fail closed.
+                    return None
+                dep_ids.append(f"so_{dep + 1}")
+            evidence_needed = item.get("evidence_needed") or ()
+            if not isinstance(evidence_needed, (list, tuple)):
+                return None
+            objectives.append(
+                SubObjective(
+                    subobjective_id=f"so_{index + 1}",
+                    goal=goal,
+                    dependencies=tuple(dep_ids),
+                    evidence_needed=tuple(
+                        str(e)[: self._SUBOBJECTIVE_MAX_GOAL_CHARS]
+                        for e in evidence_needed
+                        if str(e).strip()
+                    ),
+                )
+            )
+        _logger.info(
+            "orchestration stage=subobjective_decomposition "
+            "decision=decomposed count=%d correlation_id=%s",
+            len(objectives),
+            correlation,
+        )
+        return tuple(objectives)
+
+    def _investigate_subobjectives(
+        self,
+        objectives: tuple[SubObjective, ...],
+        input_text: str,
+        *,
+        correlation: str,
+        actor_user_id: str | None,
+        session_id: str | None,
+        workspace_context: WorkspaceContext | None,
+        prepare_only: bool,
+        deadline: TurnDeadline,
+        depth: int,
+    ) -> GovernedCapabilityAttempt:
+        """Run tracked subobjectives through the SAME governed owner
+        path — one sub-investigation per subobjective, dependencies
+        enforced by the tracker, budgets shared with the parent turn
+        (the same TurnDeadline bounds the whole investigation).
+        Sub-investigations run at depth>0 and never decompose."""
+        tracker = SubObjectiveTracker(objectives)
+        contents: list[str] = []
+        limitations: list[str] = []
+        saw_source_unavailable = False
+        saw_authz_denied = False
+        while not tracker.is_finished():
+            if deadline is not None and deadline.remaining_seconds() <= 0:
+                tracker.expire_pending(gap="investigation budget exhausted")
+                break
+            schedulable = [
+                oid
+                for oid in tracker.ready_ids()
+            ]
+            schedulable += [
+                obj.subobjective_id
+                for obj in tracker.objectives
+                if tracker.retry_ready(obj.subobjective_id)
+            ]
+            if not schedulable:
+                break
+            for oid in schedulable:
+                if deadline is not None and (
+                    deadline.remaining_seconds() <= 0
+                ):
+                    tracker.expire_pending(
+                        gap="investigation budget exhausted"
+                    )
+                    break
+                sub = tracker.get(oid)
+                try:
+                    tracker.begin_attempt(oid)
+                except ValueError:
+                    continue
+                sub_attempt = self._governed_owner_path(
+                    sub.goal,
+                    correlation=f"{correlation}-{oid}",
+                    actor_user_id=actor_user_id,
+                    session_id=session_id,
+                    workspace_context=workspace_context,
+                    prior_turns=(),
+                    prepare_only=prepare_only,
+                    unbound_outcome=None,
+                    deadline=deadline,
+                    depth=depth,
+                )
+                self._record_subobjective_outcome(
+                    tracker, oid, sub_attempt
+                )
+                if sub_attempt.status is (
+                    GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+                ):
+                    saw_source_unavailable = True
+                if sub_attempt.status is (
+                    GovernedCapabilityStatus.AUTHZ_DENIED
+                ):
+                    saw_authz_denied = True
+                if (
+                    sub_attempt.status
+                    is GovernedCapabilityStatus.SUCCESS
+                    and sub_attempt.content
+                ):
+                    contents.append(sub_attempt.content)
+                limitations.extend(
+                    f"{oid}: {lim}" for lim in sub_attempt.limitations
+                )
+        return self._subobjective_attempt_result(
+            tracker,
+            contents,
+            limitations,
+            correlation=correlation,
+            saw_source_unavailable=saw_source_unavailable,
+            saw_authz_denied=saw_authz_denied,
+        )
+
+    def _record_subobjective_outcome(
+        self,
+        tracker: SubObjectiveTracker,
+        subobjective_id: str,
+        attempt: GovernedCapabilityAttempt,
+    ) -> None:
+        """Map the typed governed outcome onto the tracker state via
+        the shared classifier — never infers success from a bare 200."""
+        outcome = attempt.outcome
+        prov = getattr(outcome, "provenance", None) if outcome else None
+        provenance_ref = (
+            f"{getattr(prov, 'specialist_id', '')}."
+            f"{getattr(prov, 'remote_name', '')}"
+            if prov is not None
+            else None
+        )
+        action, refs, gaps, recoverable = subobjective_outcome_transition(
+            attempt.status.value,
+            has_content=bool(attempt.content),
+            provenance_ref=provenance_ref,
+            correlation_id=attempt.correlation_id,
+        )
+        if action == "complete":
+            tracker.complete(subobjective_id, evidence_refs=refs)
+        elif action == "partial":
+            tracker.conclude_partial(subobjective_id, gaps=gaps)
+        else:
+            tracker.fail(subobjective_id, recoverable=recoverable)
+
+    def _subobjective_attempt_result(
+        self,
+        tracker: SubObjectiveTracker,
+        contents: list[str],
+        limitations: list[str],
+        *,
+        correlation: str,
+        saw_source_unavailable: bool,
+        saw_authz_denied: bool,
+    ) -> GovernedCapabilityAttempt:
+        """Deterministic fan-in: honest coverage of the original
+        objective — every subobjective gap surfaces as a limitation;
+        nothing is summarized beyond what the owner paths grounded."""
+        coverage = tracker.coverage()
+        for obj in tracker.objectives:
+            for gap in obj.gaps:
+                limitations.append(
+                    f"{obj.subobjective_id} {obj.state}: {gap}"
+                )
+            if (
+                obj.state == SUBOBJECTIVE_COMPLETED
+                and not obj.evidence_refs
+            ):
+                # Structurally impossible — guarded invariant.
+                limitations.append(
+                    f"{obj.subobjective_id} completion unverified"
+                )
+        bounded_limitations = tuple(limitations[:24])
+        if contents:
+            status = GovernedCapabilityStatus.SUCCESS
+            content = "\n\n".join(contents)
+        elif saw_source_unavailable:
+            status = GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+            content = None
+        elif saw_authz_denied:
+            status = GovernedCapabilityStatus.AUTHZ_DENIED
+            content = None
+        else:
+            status = GovernedCapabilityStatus.NOT_APPLICABLE
+            content = None
+        _logger.info(
+            "orchestration stage=subobjective_investigation "
+            "decision=done status=%s coverage=%s correlation_id=%s",
+            status.value,
+            dict(coverage),
+            correlation,
+        )
+        return GovernedCapabilityAttempt(
+            status=status,
+            correlation_id=correlation,
+            content=content,
+            limitations=bounded_limitations,
+        )
 
     def _resolve_missing_inputs(
         self,
@@ -9114,6 +9512,55 @@ class OperationalCapabilityOrchestrator:
 
     # ---------------- internals ----------------
 
+    def _filter_groups_for_selection(
+        self,
+        input_text: str,
+        groups: Mapping[str, CapabilityGroup],
+    ) -> Mapping[str, CapabilityGroup]:
+        """Doc 217: retrieval-restricted candidate surface.
+
+        'live' returns groups untouched. Retrieval modes rank the
+        projected surface (name/description/owner) and keep only the
+        groups containing top candidates — the selection stages then
+        operate on the bounded set. Selection narrowing is a planning
+        aid only: invocation and authorization semantics are unchanged.
+        """
+        if self._tool_selection_mode not in {
+            "retrieval",
+            "retrieval_llm",
+            "retrieval_llm_progressive",
+        }:
+            return groups
+        surface = _project_surface(groups)
+        ranked = rank_capabilities(
+            input_text, surface, groups, top_k=8
+        )
+        keep = {group_key for group_key, _cap in ranked}
+        if not keep:
+            return groups
+        # Declared owners are never retrieval-dropped: an explicitly
+        # named/vocative provider is part of the request contract.
+        declared = (
+            _named_provider_tokens(input_text)
+            | _vocative_provider_tokens(input_text)
+        )
+        if declared:
+            keep |= {
+                key
+                for key in groups
+                if key.split(":", 1)[-1].strip().lower() in declared
+            }
+        _logger.info(
+            "orchestration stage=capability_retrieval "
+            "mode=%s candidates=%d groups=%s",
+            self._tool_selection_mode,
+            len(ranked),
+            sorted(keep),
+        )
+        return {
+            key: group for key, group in groups.items() if key in keep
+        }
+
     def _groups(
         self,
         correlation: str,
@@ -11466,6 +11913,21 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             return ("not_applicable", None)
+        # Declared-surface constraint: providers named in the request
+        # — either the ``mcp <name>`` form or a leading addressee
+        # ("SURI, investigue…") — bound the candidate surface to the
+        # named owners. The model still decides applicability inside
+        # that subset; an out-of-subset proposal fails revalidation
+        # closed instead of silently substituting another owner.
+        addressed = (
+            named | _vocative_provider_tokens(input_text)
+        ) & _group_short_ids(groups)
+        if addressed:
+            groups = {
+                key: group
+                for key, group in groups.items()
+                if key.split(":", 1)[-1].strip().lower() in addressed
+            }
         observation = _prior_observation_context(prior_turns)
         group_payload = _group_summaries(
             groups,
@@ -11604,6 +12066,23 @@ class OperationalCapabilityOrchestrator:
         ]
         if not invocable:
             return ("inconclusive", None)
+        # Doc 217 mode 'retrieval' (B): deterministic pick — the
+        # top-ranked invocable capability, no model selection call.
+        if self._tool_selection_mode == "retrieval":
+            ranked = rank_capabilities(
+                input_text,
+                [("__g__", cap) for cap in invocable],
+                {"__g__": group},
+                top_k=1,
+            )
+            if ranked:
+                pick = ranked[0][1]
+                _logger.info(
+                    "orchestration stage=select_capability "
+                    "decision=retrieval_top1 capability=%s",
+                    pick.remote_name,
+                )
+                return ("selected", pick)
         # Q02-C keeps this short-circuit: exactly one READ whose published
         # schema enum includes action=tickets, and only when the existing
         # pagination intent already applies. It is not a continuity or
@@ -11630,6 +12109,8 @@ class OperationalCapabilityOrchestrator:
             group,
             prior_observation=observation,
             business_subject=business_subject,
+            compact=(self._tool_selection_mode
+                     == "retrieval_llm_progressive"),
         )
         if relevance_feedback is not None:
             # Same bounded recovery signal as stage 1 — untrusted data.
@@ -11783,6 +12264,8 @@ class OperationalCapabilityOrchestrator:
                 retry_group,
                 prior_observation=observation,
                 business_subject=business_subject,
+                compact=(self._tool_selection_mode
+                         == "retrieval_llm_progressive"),
             )
             retry_visible = _projected_capability_names(retry_payload)
             retry_invocable = [
@@ -11868,7 +12351,10 @@ class OperationalCapabilityOrchestrator:
             {"applicable", "remote_name", "limitations"}
         ) | self._GOAL_ALLOWED_KEYS
         cap_payload = _capability_payload(
-            group, prior_observation=observation
+            group,
+            prior_observation=observation,
+            compact=(self._tool_selection_mode
+                     == "retrieval_llm_progressive"),
         )
         if relevance_feedback is not None:
             # Same bounded recovery wrap as _select_capability —
@@ -12005,6 +12491,8 @@ class OperationalCapabilityOrchestrator:
             retry_payload = _capability_payload(
                 retry_group,
                 prior_observation=observation,
+                compact=(self._tool_selection_mode
+                         == "retrieval_llm_progressive"),
             )
             retry_visible = _projected_capability_names(retry_payload)
             retry_invocable = [
@@ -12887,7 +13375,11 @@ class OperationalCapabilityOrchestrator:
                                 else None
                             ),
                             workspace_context=workspace_context,
-                            owner_feedback=_EMPTY_RESULT_FEEDBACK,
+                            owner_feedback=(
+                                _empty_result_feedback_with_args(merged)
+                                if isinstance(merged, Mapping)
+                                else _EMPTY_RESULT_FEEDBACK
+                            ),
                         )
                         retry_merged = (
                             _validate_instance(
@@ -13472,6 +13964,41 @@ class OperationalCapabilityOrchestrator:
             if payload_fields
             else (schema or {"type": "object"})
         )
+        if (
+            self._arggen_engine == "pydantic_ai"
+            and self._arggen_model_config.get("base_url")
+        ):
+            from app.infrastructure.arggen.pydantic_arggen import (
+                propose_arguments,
+            )
+
+            try:
+                prev = (
+                    json.loads(owner_feedback)
+                    .get("owner_feedback", {})
+                    .get("previous_arguments")
+                    if owner_feedback
+                    else None
+                )
+                pyd_args = propose_arguments(
+                    objective=input_text,
+                    capability_name="candidate",
+                    schema=schema or {"type": "object"},
+                    previous_arguments=(
+                        prev if isinstance(prev, Mapping) else None
+                    ),
+                    base_url=self._arggen_model_config["base_url"],
+                    api_key=self._arggen_model_config.get("api_key", ""),
+                    model=self._arggen_model_config.get("model", ""),
+                )
+            except Exception:
+                pyd_args = None
+            _logger.info(
+                "orchestration stage=candidate_arguments "
+                "engine=pydantic_ai produced=%s correlation_id=%s",
+                bool(pyd_args), correlation,
+            )
+            return pyd_args
         proposal = self._model_stage_proposal(
             input_text,
             block_tag="schema",

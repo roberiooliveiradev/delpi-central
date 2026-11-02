@@ -1,9 +1,10 @@
 import type { MesWorkCenterTodayItem } from "./api";
 
 /**
- * Atividade do posto (Etapa 3) — derivados puros e testáveis do payload
- * diário MES. Toda a formatação de horário é fixada em America/Sao_Paulo,
- * independente do fuso do tablet.
+ * Paradas do posto — derivados puros e testáveis do payload diário MES.
+ * Toda a formatação de horário é fixada em America/Sao_Paulo, independente
+ * do fuso do tablet. A filtragem de `stopped` é projeção de tela: o payload
+ * compartilhado do CockpitActivityProvider permanece intacto.
  */
 
 const SP_TZ = "America/Sao_Paulo";
@@ -85,4 +86,32 @@ export function classifiableDowntime(
 /** Motivo pendente: a regra oficial é pendingReason do backend. */
 export function isReasonPending(item: MesWorkCenterTodayItem): boolean {
   return item.downtime?.pendingReason === true;
+}
+
+export type DowntimeListFilter = "all" | "pending";
+
+/** Somente eventos de parada — não altera o payload compartilhado. */
+export function stoppedDowntimeItems(
+  items: readonly MesWorkCenterTodayItem[],
+): MesWorkCenterTodayItem[] {
+  return items.filter((item) => item.state === "stopped");
+}
+
+/**
+ * Projeção da tela «Paradas do posto»: só `stopped`, filtro opcional de
+ * pendências e ordenação com pendentes primeiro + mais recentes em seguida.
+ */
+export function projectPostDowntimes(
+  items: readonly MesWorkCenterTodayItem[],
+  filter: DowntimeListFilter,
+): MesWorkCenterTodayItem[] {
+  const stopped = stoppedDowntimeItems(items);
+  const filtered =
+    filter === "pending" ? stopped.filter(isReasonPending) : stopped;
+  return [...filtered].sort((a, b) => {
+    const pendingDelta =
+      Number(isReasonPending(b)) - Number(isReasonPending(a));
+    if (pendingDelta !== 0) return pendingDelta;
+    return Date.parse(b.startedAt) - Date.parse(a.startedAt);
+  });
 }

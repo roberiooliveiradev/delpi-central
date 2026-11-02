@@ -140,3 +140,75 @@ class OpencvPreprocessingAdapter:
                 "Apache-2.0 — opencv-python-headless; sem GUI/telemetria."
             ),
         )
+
+
+def detect_graphic_primitives(image_bytes: bytes) -> dict | None:
+    """Detecta primitivas gráficas (linhas/retângulos) por morphological
+    opening — evidência de bordas de tabela/carimbo (R8.2.2, AC03).
+
+    Retorna dict {h_lines, v_lines, rects} em pixels (top-left) ou
+    None quando cv2 indisponível. Determinístico; cada primitiva é
+    evidência, não verdade técnica.
+    """
+    if not _CV2_AVAILABLE:
+        return None
+    arr = np.frombuffer(image_bytes, np.uint8)
+    img = cv2.imdecode(arr, cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        return None
+    bin_ = cv2.adaptiveThreshold(
+        img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 21, 12
+    )
+    # kernels proporcionais ao tamanho — mínimo ~20px de comprimento
+    hw, hh = img.shape[1], img.shape[0]
+    kh = max(15, hw // 60)
+    kv = max(15, hh // 60)
+    horiz = cv2.morphologyEx(
+        bin_, cv2.MORPH_OPEN,
+        cv2.getStructuringElement(cv2.MORPH_RECT, (kh, 1)),
+    )
+    vert = cv2.morphologyEx(
+        bin_, cv2.MORPH_OPEN,
+        cv2.getStructuringElement(cv2.MORPH_RECT, (1, kv)),
+    )
+    merged = cv2.bitwise_or(horiz, vert)
+    contours, _ = cv2.findContours(
+        merged, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+    )
+    rects = []
+    page_area = float(hw) * hh
+    for c in contours:
+        x, y, w2, h2 = cv2.boundingRect(c)
+        area = float(w2) * h2
+        if w2 >= kh and h2 >= kv and area < page_area * 0.90:
+            rects.append([int(x), int(y), int(x + w2), int(y + h2)])
+    # linhas longas individuais
+    h_lines = []
+    for y in range(hh):
+        row = horiz[y]
+        runs, start = [], None
+        for x in range(hw):
+            if row[x]:
+                start = start if start is not None else x
+            elif start is not None:
+                if x - start >= kh:
+                    runs.append([start, y, x - 1, y])
+                start = None
+        h_lines.extend(runs)
+    v_lines = []
+    for x in range(hw):
+        col = vert[:, x]
+        start = None
+        for y in range(hh):
+            if col[y]:
+                start = start if start is not None else y
+            elif start is not None:
+                if y - start >= kv:
+                    v_lines.append([x, start, x, y - 1])
+                start = None
+    return {
+        "h_lines": h_lines[:400],
+        "v_lines": v_lines[:400],
+        "rects": sorted(rects, key=lambda r: (r[3]-r[1])*(r[2]-r[0]), reverse=True)[:80],
+        "count": {"h": len(h_lines), "v": len(v_lines), "rects": len(rects)},
+    }

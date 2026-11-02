@@ -53,6 +53,7 @@ from app.interfaces.mcp.schemas import (
     OtdAggregateFilters,
     OtdSeriesFilters,
     OverviewSummaryFilters,
+    ProcurementDiagnosticFilters,
     SafetyStockItemIdentity,
     SafetyStockItemsFilters,
     SafetyStockScopeFilters,
@@ -344,9 +345,13 @@ def create_mcp_server() -> MCPServer:
     def analyze(
         analysis: Literal[
             "purchase_orders_summary", "supplier_creation_preview",
-            "overview_summary",
+            "overview_summary", "procurement_diagnostic",
         ],
-        filters: PurchaseOrderAnalyzeFilters | SupplierPreviewFilters | OverviewSummaryFilters | None = None,
+        filters: (
+            PurchaseOrderAnalyzeFilters | SupplierPreviewFilters
+            | OverviewSummaryFilters | ProcurementDiagnosticFilters
+            | None
+        ) = None,
         sample_size: int = 50,
     ) -> CallToolResult:
         return _guarded(bridge.tool_analyze)(analysis, filters, sample_size)
@@ -370,11 +375,12 @@ def create_mcp_server() -> MCPServer:
         action: Literal["search", "get", "sources"],
         query: str | None = None,
         topic: str | None = None,
+        kind: str | None = None,
         knowledge_id: str | None = None,
         limit: int = 8,
     ) -> CallToolResult:
         return _guarded(bridge.tool_knowledge)(
-            action, query, topic, knowledge_id, limit
+            action, query, topic, kind, knowledge_id, limit
         )
 
     @mcp.tool(

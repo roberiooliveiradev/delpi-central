@@ -5,7 +5,9 @@ import {
   classifiableDowntime,
   formatTimeHmSp,
   isReasonPending,
+  projectPostDowntimes,
   spCivilDayKey,
+  stoppedDowntimeItems,
   timelineSegments,
 } from "./workCenterActivity.ts";
 
@@ -116,5 +118,95 @@ describe("isReasonPending", () => {
       false,
     );
     assert.equal(isReasonPending(item({ downtime: null })), false);
+  });
+});
+
+describe("projectPostDowntimes", () => {
+  it("keeps only stopped events and ignores producing siblings", () => {
+    const producing = item({
+      stateEventId: "se-prod",
+      state: "producing",
+      downtime: null,
+    });
+    const stopped = item({
+      stateEventId: "se-stop",
+      downtime: {
+        id: "d1",
+        reasonCode: null,
+        reasonLabel: null,
+        category: null,
+        note: null,
+        confirmed: false,
+        pendingReason: true,
+      },
+    });
+    assert.deepEqual(
+      stoppedDowntimeItems([producing, stopped]).map((i) => i.stateEventId),
+      ["se-stop"],
+    );
+    assert.deepEqual(
+      projectPostDowntimes([producing, stopped], "all").map((i) => i.stateEventId),
+      ["se-stop"],
+    );
+  });
+
+  it("filters pending and sorts pending before classified, then by recency", () => {
+    const olderPending = item({
+      stateEventId: "se-old-pending",
+      startedAt: "2026-10-19T10:00:00Z",
+      endedAt: "2026-10-19T10:20:00Z",
+      downtime: {
+        id: "d-old",
+        reasonCode: null,
+        reasonLabel: null,
+        category: null,
+        note: null,
+        confirmed: false,
+        pendingReason: true,
+      },
+    });
+    const newerClassified = item({
+      stateEventId: "se-new-ok",
+      startedAt: "2026-10-19T14:00:00Z",
+      endedAt: "2026-10-19T14:10:00Z",
+      downtime: {
+        id: "d-ok",
+        reasonCode: "setup",
+        reasonLabel: "Setup",
+        category: null,
+        note: null,
+        confirmed: true,
+        pendingReason: false,
+      },
+    });
+    const newerPending = item({
+      stateEventId: "se-new-pending",
+      startedAt: "2026-10-19T15:00:00Z",
+      endedAt: null,
+      downtime: {
+        id: "d-new",
+        reasonCode: null,
+        reasonLabel: null,
+        category: null,
+        note: null,
+        confirmed: false,
+        pendingReason: true,
+      },
+    });
+    const all = projectPostDowntimes(
+      [newerClassified, olderPending, newerPending],
+      "all",
+    );
+    assert.deepEqual(
+      all.map((i) => i.stateEventId),
+      ["se-new-pending", "se-old-pending", "se-new-ok"],
+    );
+    assert.deepEqual(
+      projectPostDowntimes(
+        [newerClassified, olderPending, newerPending],
+        "pending",
+      ).map((i) => i.stateEventId),
+      ["se-new-pending", "se-old-pending"],
+    );
   });
 });

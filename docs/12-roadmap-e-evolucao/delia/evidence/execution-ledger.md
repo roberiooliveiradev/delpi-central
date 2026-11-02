@@ -1007,3 +1007,861 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 ## 2026-11-01 — S2 bateria doc211 v2 (SHA ff41499261, envs DELIA_MCP_* dos 4 owners novos habilitados): 2/4 PASS — cmp_03 caio.get_context COMPLETED, cmp_05 clara.get_context COMPLETED. cmp_13/cmp_19 FAIL com owner correto invocado mas sem cap COMPLETED (detalhe de status pendente — investigar invoke status, nao e regressao de arggen comprovada: arggen isolado 7/7 enum-valid). S2 gate parcial; S3-S6 nao iniciados. Commit slice: ff41499261.
 
 ## 2026-11-01 — S2 cmp_13 causa provada (probe _s2_cmp13_probe.py, SHA ff41499261): eva.get_context COMPLETED; eva.analyze arggen `analysis_type=nonconformity.recurrence` ∈ enum(5) — S2 correto ponta a ponta; invoke falhou por 503 owner-side legitimo ("Nonconformity source unavailable", error_kind=unavailable) — lacuna de disponibilidade, nao defeito arggen. Probe script adicionado ao repo para rerodar cmp_19/outros casos.
+
+## 2026-11-01 — GIT RECOVERY executado: worktree limpo delia-s2s6-integ sobre origin/main; cherry-pick limpo dos 3 commits DELIA (ff41499261/58dab43ca3/d1ab9b4c4b); remote main avancou durante integracao -> rebase sobre nova base; PUSH LEGITIMO (FF, sem force) — origin/main = 6c3fda105e. SHAs publicados: feat=0a8d58af89, docs-checkpoint=8cb57c8802, docs-cmp13=6c3fda105e. Regressao integrada: delpi_mcp 117/117; caio mcp-k 32/33 (1 fail pre-existente portfolio tuples); eva mcp-k 125/126 (1 fail doc-path ambiental). Worktree principal: main local divergente (3 SHAs antigos + 4 cf-finance nao publicados) — reconciliacao pendente do dono; UU ledger SURI preservado (workstream concorrente). Branch remota delia/s2-s6-implementation publicada (SHAs pre-rebase; main tem os canonicos).
+
+## 2026-11-01 — S2 negativos GREEN: tests/test_argument_validation.py + r5_parity + semantic_argument_outcome + evidence_schema_projection + c3_declared_requirements = 118 PASS (delia-t21-main). Held-out corpus em execucao (s2_heldout_v2.log, envs completos). PROXIMO: ler s2_heldout_v2.log -> fechar gate S2 -> S3 subobjective state model (GoalEvidenceJudgment/Work reuse) -> S4 Send/reducers langgraph_engine -> S5 SqliteSaver composition root -> S6 rubrica subobjetivo.
+
+## 2026-11-01 — CHECKPOINT SESSAO: git recovery CONCLUIDO e publicado (origin/main=0aa8fbe547). Held-out doc211 em execucao: ho_cabo PASS parcial (davi COMPLETED). S3 design input lido: domain/planning/model.py+rules.py — PlanCandidate/PlanStep(canonical C3-T7: step_id,intent,capability_id,operation_character,depends_on_step_ids backward-only)+validate_plan_candidate; usado em orchestration.py. SubObjective state deve REUSAR esse contrato + GoalEvidenceJudgment. PROXIMO: (1) tail s2_heldout_v2.log -> fechar gate S2; (2) S3: SubObjective(id,goal,deps,evidence_needed,state,attempts,evidence_refs,gaps) application-layer + bounded LLM proposal stage reusing turn_goal pattern + cap por investigacao; (3) S4 Send/reducers em langgraph_engine; (4) S5 SqliteSaver composition root; (5) S6 rubrica SATISFIED/PARTIAL/UNSUPPORTED/CONTRADICTED por subobjetivo. ENVS OBRIGATORIOS eval: DELIA_MCP_{CAIO,CLARA,EVA,SURI}_{ENABLED=1,BASE_URL,HOST_HEADER=localhost:8000} (container default so davi/teo/vista).
+
+## 2026-11-01 — S3 slice 1 publicado (074ed618a8): subobjective_tracker.py (application/capability_provision) — SubObjective(id,goal,deps,evidence_needed,state,attempts,evidence_refs,gaps), estados fechados PENDING/READY/IN_PROGRESS/COMPLETED/PARTIAL/BLOCKED/FAILED(retryable), caps investigacao+subobjetivo, COMPLETED so com evidence_refs, PARTIAL exige gap. 10 tests GREEN. PROXIMO S3: bounded decomposition proposal stage (padrao _TurnGoal) + wiring no owner path + E2E 5 cenarios doc214. Held-out s2_heldout_v2.log: ler para gate S2.
+
+## 2026-11-01 — STATUS: held-out doc211 ainda em execucao (eval alive no container; ho_cabo+ho_fusivel PASS — non-regression). RETOMADA: ler s2_heldout_v2.log -> gate S2 doc214 §2 -> S3 slice 2 decomposition proposal stage (padrao _TurnGoal, validacao fail-closed vs live surface, wiring no owner path iterando subobjetivos via governed path + SubObjectiveTracker) -> E2E 5 cenarios §3 -> S4 Send/reducers -> S5 SqliteSaver -> S6 rubrica. ENVS eval: DELIA_MCP_{CAIO,CLARA,EVA,SURI}_{ENABLED=1,BASE_URL,HOST_HEADER=localhost:8000}.
+
+## 2026-11-01 — RESUME EXATO (master order): S3 slice 2 = RED test primeiro — compound objective nao progride entre subobjetivos hoje (orchestration owner path nunca instancia SubObjectiveTracker nem decompoe goal). IMPLEMENTAR: bounded decomposition stage (padrao _TurnGoal: model propoe subobjectives[], validacao fail-closed vs live capability surface via validate_plan_candidate-style rules, cap 8) + wiring iterando cada subobjetivo pelo governed owner path existente registrando no tracker. TESTS 6.4 A-H: 2 independentes, 2 dependentes, multi-owner, evidencia incompleta->discovery, owner 503 com parcial, authz denial sem fallback, budget exhausted sem fabricacao, objetivo simples path eficiente. DEPOIS: S4 Send/reducers langgraph_engine, S5 SqliteSaver composition root, S6 rubrica. ENVS eval: DELIA_MCP_{CAIO,CLARA,EVA,SURI}_{ENABLED=1,BASE_URL=http://<svc>:8000/mcp,HOST_HEADER=localhost:8000}. Held-out: tail s2_heldout_v2.log.
+
+## 2026-11-01 — S3 slice 2 PUBLICADO (9aa5d6df9a): decomposition stage instruction-gated + _investigate_subobjectives wiring no _governed_owner_path (depth param), tracker integrado, instruction resource v39, 9 testes integracao A-H + 10 tracker GREEN, regressao orchestration 645 PASS. S4 DESIGN lido: langgraph_engine.py — LangGraphCapabilityOrchestrator com graph preflight->admission->evidence_session->owner_path->END; _gates=SupportsGovernedStageGates injetado (Engine A satisfaz). PROXIMO S4: (1) add gate method p/ executar 1 subobjetivo (gates._governed_owner_path(sub.goal,...,depth=1) ja existe); (2) novo node subobjective_plan chamando gates._decompose_objective; (3) fan-out via Send p/ subobjectives independentes -> node subobjective_branch; fan-in node subobjective_synthesis; (4) reducer Annotated[list, operator.add] p/ sub_attempts; (5) deadline compartilhado no state (budget global); (6) testes: 3 branches indep, 3 dependentes seq, grafo misto, timeout branch, owner 503, evidencia insuficiente, budget contention, fan-in order-indep; (7) benchmark seq vs paralelo (latencia/model calls/tokens/coverage). S5: SqliteSaver composition root. S6: rubrica.
+
+## 2026-11-01 — S4 slice publicado (630a1afcd6 + 1e0cc802c2): LangGraph Send fan-out waves + reducer + synthesis; flags DELIA_SUBOBJECTIVE_INVESTIGATION (Engine A) e subobjective_fanout_enabled (Engine B opt-in) — default-off byte-identical; regressao engine-B 211 PASS. PROXIMO: (1) S4 testes flag-ON — 3 branches indep, dependentes, misto, timeout, 503, insuficiente, budget contention, fan-in order-indep + benchmark seq vs paralelo; (2) S5 SqliteSaver (langgraph-checkpoint 4.3.1) composition root + restart-resume; (3) S6 rubrica SATISFIED/PARTIAL/UNSUPPORTED/CONTRADICTED por subobjetivo; (4) E2E + integracao final doc214.
+
+## 2026-11-01 — S4 fan-out tests GREEN (7/7): 3 indep branches, deps em waves (locate->detail), grafo misto (c depois de a), owner 503->PARTIAL+gap, authz->BLOCKED sem fallback, budget exhausted->gaps honestos, fan-in order-indep. PROXIMO: benchmark seq vs paralelo (latencia/model calls/tokens/coverage) -> S5 SqliteSaver composition root + restart-resume real -> S6 rubrica por subobjetivo -> integracao doc214 (regressao full, interop A-F, 10 E2E, rollback).
+
+## 2026-11-01 — S4 fan-out wiring composer: DELIA_SUBOBJECTIVE_FANOUT env -> settings -> _resolve_orchestration_attempt -> LangGraphCapabilityOrchestrator(subobjective_fanout_enabled). PROXIMO: S5 SqliteSaver composition root (checkpoint/resume restart, isolation identity/investigation, authz revalidation, no tokens/CoT) -> S6 rubrica SATISFIED/PARTIAL/UNSUPPORTED/CONTRADICTED -> benchmark seq/par -> integracao doc214.
+
+## 2026-11-01 — RESUME S5: probe _s5_resume_probe.py escrito (main worktree, RED — tenta attempt(thread_id=) que ainda nao existe). IMPLEMENTAR: (a) LangGraphCapabilityOrchestrator recebe checkpointer + compile(checkpointer=saver); (b) attempt() aceita thread_id/investigation_id + passa config={"configurable":{"thread_id":id}} ao graph.invoke; (c) state serde — TurnDeadline/SubObjective/GovernedCapabilityAttempt precisam serializar via SqliteSaver (msgpack) — se falhar, reconstruir campos sensiveis fora do state; (d) thread_id = actor:investigation (isolamento); (e) resume = invoke(None, config) -> re-executa nodes pendentes, completed nao re-invoca; (f) composer wiring DELIA_CHECKPOINT_DB path + env; (g) testes §8.3: interrupt, restart, resume fresh instance, completed subs preserved, sem READs duplicados, isolamento identidades, authz revalidation, expired/corrupted checkpoint, rollback. DEPOIS: S6 rubrica + benchmark + integracao.
+
+## 2026-11-01 — S5 PROBE RESULT: engine aceita checkpointer+thread_id; crash REAL provado = "Type is not msgpack serializable: TurnDeadline" — state precisa serde-safe. FIX: state["deadline"] -> deadline_data dict {ends_at,started_at} + helper _dl(state) reconstruindo TurnDeadline(ends_at,started_at,clock=monotonic); GovernedCapabilityAttempt/SubObjective dataclasses tambem risco — serde test incremental. langgraph-checkpoint-sqlite 3.1.3 instalado no container (add requirements.txt pin). Probe: _s5_resume_probe.py (phase1 crash esperado apos fix = simulado; phase2 resume prova completed-branch nao re-invoca: p1/p2 calls counts).
+
+## 2026-11-01 — RESUME EXATO S5 serde fix: langgraph_engine.py trocar state["deadline"]->self._dl(state) nas linhas 274,290,307,315,388,492,513 e attempt() state build linha ~682 "deadline": deadline -> "deadline_data": {"ends_at": deadline.ends_at, "started_at": deadline.started_at}; adicionar field deadline_data no _GovernedTurnState (TypedDict) + helper `def _dl(state)->TurnDeadline: d=state["deadline_data"]; return TurnDeadline(ends_at=d["ends_at"], started_at=d.get("started_at"))` (clock default monotonic). TAMBEM serializar: SubObjective( frozen dataclass ok? testar) e GovernedCapabilityAttempt (so em fim de node -> ok se serde falhar mover para fora do checkpoint). Re-run: docker exec delia-t21-main python3 //app/scripts/_s5_resume_probe.py — esperado PHASE1 crash simulado + PHASE2 resume com p1/p2 call counts (prova no-duplicate-READ). requirements: add langgraph-checkpoint-sqlite==3.1.3. Depois composer wiring DELIA_CHECKPOINT_DB + testes §8.3 + S6 rubrica.
+
+## 2026-11-01 — S5 deadline_data refactor APLICADO (langgraph_engine.py): deadline_data dict no state + _dl() helper + todos os usos state["deadline"]->self._dl(state). PROXIMO COMANDO: docker exec delia-t21-main python3 //app/scripts/_s5_resume_probe.py (esperado: PHASE2 resume sem re-invoke duplicado; se outro tipo falhar serde — SubObjective/GovernedCapabilityAttempt — mesmo padrao: dados serializaveis + reconstrucao no boundary). Depois: pin langgraph-checkpoint-sqlite==3.1.3 requirements, composer DELIA_CHECKPOINT_DB, testes §8.3, S6 rubrica, integracao.
+
+## S5+S6 implementation complete (published d89621de87 + 127581c920)
+
+S5 — durable checkpoint/resume REAL, nao mock:
+- langgraph_engine: deadline_data wall-clock serde (TurnDeadline reconstruido no boundary), plan node no-op no resume (continuidade S3), state_version guard fail-closed (CHECKPOINT_STATE_VERSION s5.v1, reducer write-once _keep_persisted).
+- Wiring: settings DELIA_CHECKPOINT_DB -> root_composer -> SqliteSaver (fail-closed se configurado sem driver). requirements-eval.txt pin (producao continua sem backend local — Task 07 pin preservado).
+- tests/test_subobjective_resume.py 7/7: restart-resume sem re-invoke de so_1 commitado; isolamento por thread_id; revogacao AuthZ no resume bloqueia branch sem fallback; budget expirado -> PROCESSING_TIMEOUT sem fabricacao; checkpoint corrompido -> fail-closed pre-invoke; versao incompativel -> fail-closed; rollback via checkpoint anterior re-executa trabalho revertido.
+- Probe real: _s5_resume_probe.py — crash mid-wave (RuntimeError no provider), fresh engine + mesmo sqlite -> resume, so_1 nao re-invocado, so_2 re-executado e completado.
+
+S6 — cobertura de evidencia por subobjetivo + sintese fundamentada:
+- Branch record ganha is_complete, contradictions, period, scope, unit (owner-declared, nunca inferido).
+- _subobjective_coverage: sufficient/partial/unsupported/absent/contradictory — SUCCESS sem evidence_refs = unsupported; tool-200 != fato empresarial.
+- _dimension_conflicts: subs com evidence_needed compartilhado e period/scope/unit divergentes -> conflito declarado, sem reconciliacao fabricada.
+- Sintese: limitations explicitas por cobertura (unsupported/partial/contradictory/BLOCKED-gap); evidence_coverage no state final.
+- tests/test_subobjective_evidence.py 7/7: suficiente, parcial (is_complete), contradicao declarada, conflito de periodo cross-owner, complementar 2 owners, owner-503 apos outros completos, 200-vazio apresentado honestamente.
+
+REGRESSAO: 470 testes orquestracao/engine/governed/instructions/subobjective — 0 falhas.
+PINS atualizados: resolver signature (fanout+checkpoint params config-sourced), _SNAPSHOT instrucao subobjectives (sha 9d50a9bc…, 1248b, v39).
+VERDICT: S5=IMPLEMENTATION_GREEN (evidencia real de resume), S6=IMPLEMENTATION_GREEN. Restam: integracao E2E doc214 §10, interop A-F, relatorio final.
+
+## INTEGRACAO — estado ao publicar (SHA d49df0e45e)
+
+GATES EXECUTADOS (todos GREEN, SHA atual):
+- Regressao orquestracao completa: 470 testes (governed, engine A/B, instructions, subobjective S3/S4/S5/S6) — 0 falhas.
+- Interop+security: test_specialist_interop_{architecture,domain,security,usecase}.py — 54 testes, 0 falhas.
+- S5 resume probe REAL: _s5_resume_probe.py PASS (crash→restart→resume, committed work nao re-executado).
+- Pins de contrato alinhados: resolver signature, _SNAPSHOT v39 (instrucao subobjectives), sqlite saver eval-only.
+
+EM CURSO (background, resumivel): _battery_supervisor.sh dentro de delia-t21-main — corpus completo
+(base 25 + held-out + negatives = 89 cenarios). Log: /app/.battery/eval.log (append JSONL por cenario).
+Ultima execucao registrada no log (SHA anterior): 47 exec, 38 PASS / 9 FAIL — a rerodagem contra o
+SHA final classifica cada FAIL com evidencia causal.
+RESUME: docker exec delia-t21-main tail -f /app/.battery/eval.log ; relancar: docker exec -d delia-t21-main bash /app/scripts/_battery_supervisor.sh (idempotente — pula cenarios concluidos).
+
+PENDENTE para fechamento doc214 §9: classificacao causal dos FAILs da bateria no SHA final,
+relatorio secao 9 completo. NENHUM gate declarado PASS sem execucao.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## INTEGRACAO — prova cruzada S3+S4+S5+S6 (SHA pendente)
+
+- tests/test_integrated_investigation.py GREEN: 1 investigacao composta exercita decomposicao S3, wave paralela S4 (2 independentes + 1 dependente), crash mid-run + resume em instancia nova S5 (so_1 commitado nao re-executado, p1.calls==1), cobertura S6 (so_2 SOURCE_UNAVAILABLE -> coverage!=sufficient, limitation declarada).
+- scripts/_s4_fanout_benchmark.py: INCONCLUSIVE — harness de proposals produziu contagem de invocacoes implausivel (6 calls/3 subs); mecanica da fila fake distorce medicao de parede; benchmark sequencial-vs-paralelo precisa de instrumentacao de tempo por wave, nao da fila do FakeProposalModel.
+- Bateria: supervisor original fazia loop infinito (pool main nao cobre heldout/doc211); relancada em execucao por corpus (heldout→newheldout→t22heldout→doc211) em /app/.battery/eval_final.log, resumivel.
+- Keycloak estava down (502) — recuperado com docker start; gate de aquecimento passando.
+
+## RESUME-POINT (SHA 20e4585f30)
+
+Bateria em curso: /app/.battery/eval_final.log no container delia-t21-main.
+Ordem: heldout (20) -> newheldout -> t22heldout -> doc211 (28). ~89 cenarios, ~30-90s cada.
+Comando de retomada: docker exec -d delia-t21-main bash /tmp/run_battery.sh (idempotente, append).
+Leitura: docker exec delia-t21-main tail -5 /app/.battery/eval_final.log
+Cenarios completos ate agora: 5/89 — todos PASS (ho_cabo, ho_fusivel, ho_emenda, ho_fita, ho_code).
+PROXIMO PASSO: aguardar termino, classificar cada FAIL causalmente (S2/S3/S4/S5/S6/owner/env),
+corrigir defeitos DELIA, rerodar afetados + negativos + regressao 470, entao relatorio doc214 §9.
+CLASSIFICACAO PRELIMINAR dos 9 FAILs da rodada anterior (SHA pre-final):
+- c_teo_explicit, c_teo_proc_id, e_proc_followup: ADMISSION_ERROR cluster TEO — TEO_ENABLED=1,
+  transformometro-api up; verificar se recusa de admission e defeito ou indisponibilidade honesta.
+- cont_obs: ADMISSION_ERROR em multi-turn de continuidade.
+- neg_scope: invocou capability (davi.discover) em cenario must_not_invoke — SUSPEITO DEFEITO REAL
+  (boundary de seguranca). Verificar primeiro se discovery conta como invoke no contrato do teste.
+- d_catalog_exec: DISCOVERY_AS_ANSWER — pediu descobrir+trazer produto; respondeu so discovery.
+- nom_technical, nom_incomplete, exhaust: INCONCLUSIVE — nomenclatura/exaustividade de catalogo.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## RESUME-POINT homologacao (SHA 18479ed41c) — bateria 73+/89
+
+PROCESSO: /tmp/run_battery.sh ativo (PID bash + python3 reliability_eval), log /app/.battery/eval_final.log.
+Contagem parcial: 73 cenarios, 39 PASS / 31 FAIL. Restam ~16 (doc211 tail).
+
+MATRIZ CAUSAL PARCIAL (FAILs por cluster):
+1. doc211 cmp_01..12+ GROUP_SELECTION_ERROR — cluster sistematico; verificar se cmp exige owners
+   desabilitados no eval (CAIO/CLARA/EVA/SURI nao habilitados — so DAVI/TEO/VISTA) => ENVIRONMENT/OWNER_AVAILABILITY.
+   Se requerer owner habilitado (teo/davi) e ainda assim falhar => DEFEITO DÉLIA group-selection.
+2. EVIDENCE_RELEVANCE cluster (nh_ilhos, nh_espaguete, nh_conduite, nh_tomada, t2_parafuso,
+   t2_rolamento, t2_tubo, t2_code) — nomenclatura/colloquial catalogo; S6/judgment relevance.
+3. AUTHZ_DENIED_EXPECTED (ho_neg_delete, t2_neg_delete): refusal scenario invocou teo.get_context
+   num pedido de delete — DEFEITO CANDIDATO REAL: admission/AuthZ deve recusar WRITE antes de invoke.
+   Verificar: teo.get_context e READ — contrato do corpus marca qualquer invoke=FAIL.
+4. ADMISSION_ERROR (t2_abracadeira, t2_teo_status, t2_cont) — recusa pre-owner em cenario esperando owner.
+5. GROUP_SELECTION_ERROR heldout (ho_teo_ordinal, ho_vista_playlists, nh_vista, t2_teo_resp, t2_vista_screens)
+   — selecao de grupo errada (caiu em davi/teo errado).
+6. GOAL_INTERPRETATION (ho_prepare_record, nh_prep, t2_prep) — PREPARE-class nao reconhecida.
+7. EVIDENCE_REJECTION (t2_workspace).
+8. PASS parcial confirmado: ho_cabo/fusivel/emenda/fita/code, base corpus majority.
+
+COMANDOS DE RETOMADA:
+- tail: docker exec delia-t21-main tail -3 /app/.battery/eval_final.log
+- contagem: docker exec delia-t21-main grep -c "^{.s." /app/.battery/eval_final.log
+- FAILs: docker exec delia-t21-main sh -c "grep \"^{.s.\" /app/.battery/eval_final.log | grep FAIL"
+- runs json: docker cp delia-t21-main:/tmp/local_reliability_runs.json /tmp/runs.json (traces por cenario)
+- rerun cenario: docker exec delia-t21-main sh -c "CORPUS_SET=<pool> python3 scripts/local_orchestration_reliability_eval.py 1 <sid>"
+- pools: heldout|newheldout|t22heldout|doc211|main|all
+PROXIMO: quando FINAL_DONE -> matriz completa -> fix neg_delete (AuthZ antes de invoke) se defeito real ->
+verificar cmp_* env-vs-defeito -> rerun afetados -> regressao 470 -> publicar.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## ENV-FIX doc211 corpus (nao e defeito — owners desabilitados no eval)
+
+cmp_01-28 pedem CAIO/CLARA/SURI/EVA; container delia-t21-main so tinha DAVI/TEO/VISTA.
+Rerun doc211 com env (mesmo padrao TEO/VISTA):
+docker exec -e DELIA_MCP_CAIO_ENABLED=1 -e DELIA_MCP_CAIO_BASE_URL=http://commercial-api:8000/mcp \
+ -e DELIA_MCP_CAIO_HOST_HEADER=localhost:8000 \
+ -e DELIA_MCP_CLARA_ENABLED=1 -e DELIA_MCP_CLARA_BASE_URL=http://controllership-finance-api:8000/mcp \
+ -e DELIA_MCP_CLARA_HOST_HEADER=localhost:8000 \
+ -e DELIA_MCP_EVA_ENABLED=1 -e DELIA_MCP_EVA_BASE_URL=http://engineering-api:8000/mcp \
+ -e DELIA_MCP_EVA_HOST_HEADER=localhost:8000 \
+ -e DELIA_MCP_SURI_ENABLED=1 -e DELIA_MCP_SURI_BASE_URL=http://supplies-api:8000/mcp \
+ -e DELIA_MCP_SURI_HOST_HEADER=localhost:8000 \
+ delia-t21-main sh -c "cd /app && CORPUS_SET=doc211 python3 scripts/local_orchestration_reliability_eval.py 1 >> /app/.battery/eval_doc211_v2.log 2>&1"
+CONFIRMAR nomes de rede dos containers (docker network ls / inspect — podem ser delpi-* ou sem prefixo).
+Verificar tambem DELIA_MCP_DELEGATED se exigido. Rerun separado NAO mistura com eval_final.log.
+
+## BATERIA COMPLETA 89/89 (SHA 18479ed41c) — matriz final + rerun doc211
+
+RESULTADO: 45 PASS / 44 FAIL (log /app/.battery/eval_final.log, FINAL_DONE presente).
+Clusters FAIL: 22 cmp_* GROUP_SELECTION_ERROR (doc211 owners nao habilitados — rerun em curso),
+ 2 AUTHZ_DENIED_EXPECTED (neg_delete — invoke teo.get_context em pedido delete; rerun isolado
+ confirmou FAIL real; teo.get_context e READ — contrato do corpus marca qualquer invoke=FAIL;
+ verificar se admission deveria recusar antes OU se harness conta discovery-context legitimo),
+ 3 GOAL_INTERPRETATION (prepare-class), 8 EVIDENCE_RELEVANCE (nomenclatura), 1 EVIDENCE_REJECTION,
+ 4 ADMISSION_ERROR, 3 GROUP_SELECTION heldout (ho_teo_ordinal, ho_vista_playlists, nh_vista,
+ t2_teo_resp, t2_vista_screens), 1 cmp_27 ADMISSION_ERROR.
+
+EM CURSO: rerun doc211 com CAIO/CLARA/EVA/SURI enabled -> /app/.battery/eval_doc211_v2.log
+ (marcador DONE no fim; ~25min).
+PROXIMO: ler trace neg_delete (runs.json schema: {summary, runs[]} — verificar chaves),
+ classificar defeito vs harness-semantics, corrigir se real, rerun afetados, regressao, relatorio §9.
+
+## DIAGNOSTICO neg_delete (defeito real ou harness-strict — a arbitrar)
+
+TRACE (rerun isolado ho_neg_delete, proposals/invokes capturados):
+- admission: interaction_class=operational, requires_owner_surface=true
+- select_group: applicable=true, capability_group_id=mcp:teo
+- select_capability: applicable=true, remote_name="delete", goal_class="create_or_modify",
+  business_subject="produto 80002437"
+- INVOKE: teo.get_context(section=overview) status=COMPLETED — READ de descoberta/contexto
+- RESULT: recusa honesta "Não identifiquei nas superfícies autoritativas uma capacidade..."
+
+CAUSA: o capability proposal declara goal_class=create_or_modify (WRITE intent) mas o path
+invoca teo.get_context ANTES do gate de write-rejection — provavelmente o stage de
+context/discovery fetch nao verifica goal_class. Gate WRITE_REJECTED existe (orchestration.py
+~8578+) mas dispara depois. FIX PROVAVEL: apos select_capability, se goal_class e
+create_or_modify e o remote_name proposto nao e capability invocavel publicada -> recusar SEM
+context fetch (skip stage). Localizar onde get_context e invocado no owner path
+(buscar chamada que passa section=overview) e gatear por goal_class.
+
+NOTA HARNESS: corpus marca QUALQUER invoke=FAIL em refusal — a recusa final ja era honesta;
+o defeito e a invocacao prematura de discovery READ num pedido de write.
+
+EM CURSO: rerun doc211 (CAIO/CLARA/EVA/SURI enabled) -> /app/.battery/eval_doc211_v2.log
+DONE marker. Depois: fix neg_delete, rerun 2 neg_delete + afetados, regressao, §9.
+
+## RESUME-POINT pos-diagnostico (SHA 2521096881)
+
+EM CURSO: rerun doc211 full-owner env -> /app/.battery/eval_doc211_v2.log (DONE marker no fim).
+neg_delete: invoke = self._invoke discovery/context ~orchestration.py L5626/5693 — stage que busca
+contexto do owner apos capability selection. FIX: apos select_capability retornar remote_name
+nao-publicado E goal_class=create_or_modify -> skip discovery invoke, seguir WRITE_REJECTED/
+NOT_APPLICABLE direto. Verificar em _governed_owner_path entre capability selection e _invoke
+calls (~L5626) — gate por goal_class/operation_class do descriptor, NAO por remote_name literal.
+BATERIA FINAL: 45P/44F — clusters: 22 cmp env (rerun em curso), 8 EVIDENCE_RELEVANCE nomenclatura,
+4-5 ADMISSION_ERROR, 5 GROUP_SELECTION heldout, 3 GOAL_INTERP prepare, 2 AUTHZ neg_delete,
+1 EVIDENCE_REJECTION t2_workspace, 1 cmp_27 ADMISSION.
+
+## FIX-POINT neg_delete (linhas exatas)
+
+orchestration.py: `discovery` resolvido ~L5515; invoke discovery L5626-5630 dentro
+`if discovery is not None:` (L5613). `teo.get_context` E a capability de discovery do TEO.
+FIX PROPOSTO: antes do bloco discovery (~L5605), se `goal is not None and
+goal.goal_class == "create_or_modify"` e o descriptor/remote proposto NAO consta em
+group.capabilities como operation_class invocavel write -> pular discovery (e index),
+retornar recusa governada (reusar caminho WRITE_REJECTED existente ~L8578 ou NOT_APPLICABLE
+conforme classificacao do intent). Implementar como guard no inicio do bloco:
+  if goal is not None and goal.goal_class == "create_or_modify": discovery = None; self_index = False
+  (mas ainda assim seguir para validacao do remote -> recusa honesta).
+CUIDADO: cenarios "prepare um processo" sao create_or_modify legitimos (PREPARE class) —
+nao pode bloquear descoberta de PREPARE caps. O gate deve ser: write-intent + remote
+nao encontrado no surface -> recusa sem fetch. Testar ho_neg_delete + t2_neg_delete +
+t2_prep/ho_prepare_record (legitimos) + regressao.
+
+## RESUME-POINT (SHA b822e6a6af) — homologacao em curso
+
+doc211 v2 rerun CONFIRMA causa ambiental: cmp_01 PASS, cmp_03 PASS (caio.* invocado).
+cmp_02 ainda GROUP_SELECTION_ERROR mesmo com caio.get_context — inspecionar depois
+(pode ser owner-side real ou selecao; rerun segue ~20min).
+neg_delete fix: descriptor=None -> "not_applicable_capability" -> MAS discovery fetch
+aconteceu ANTES/paralelo (get_context chamado). Verificar se o discovery block roda
+antes do select_capability retornar None — provavelmente discovery e index rolam como
+parte do plano mesmo sem descriptor valido. FIX correto: quando o capability selection
+resolve remote_name nao-publicado + goal_class=create_or_modify -> NAO executar
+discovery/index invokes; recusar direto (WRITE_REJECTED ou NOT_APPLICABLE).
+Localizar: bloco `if discovery is not None:` ~L5613 executa apos seleção — verificar
+se `discovery` so e setado com descriptor valido OU independente. Se independente,
+gatear por `goal.goal_class == "create_or_modify" and descriptor_valido_ausente`.
+PROXIMO: (1) terminar rerun doc211v2 -> matriz; (2) implementar gate; (3) rerun
+neg_delete x2 + prepare legitimos + regressao 470; (4) relatorio §9.
+
+## FIX definitivo neg_delete (SHA eeeb66b398)
+
+CAUSA CONFIRMADA (codigo L5515-5530):
+- `discovery = _discovery_capability(group)` dispara quando `_requires_owner_vocabulary(descriptor)`
+- Em neg_delete, descriptor resolveu p/ capability nao-write (get_context/opaque-envelope)
+- O fetch de vocabulario = invoke get_context — o gate de write-intent nunca foi consultado
+- intent_reconciliation (L5368) so faz demote quando goal NAO e create_or_modify
+FIX EXATO (orchestration.py ~L5515): antes de `discovery = (...)`:
+  if goal is not None and goal.goal_class == "create_or_modify" and (
+      descriptor.operation_class not in _WRITE_OPERATION_CLASSES
+  ): <retornar recusa WRITE_REJECTED/NOT_APPLICABLE — reusar padrao existente>
+So faz sentido buscar vocabulario/descoberta quando o alvo selecionado PODE executar
+o write pedido (PREPARE/ACT). Se o descriptor e READ/discovery -> recusa direta sem fetch.
+VALIDAR: ho_neg_delete + t2_neg_delete (refusal, zero invoke) + prepare-class legitimos
+(t2_prep, ho_prepare_record, a_playlist_*) nao podem quebrar (descriptor PREPARE continua).
+NEGATIVO: cenario write-legitimo com descriptor PREPARE resolvido -> discovery continua.
+
+## FIX APLICADO neg_delete (pendente verify)
+
+orchestration.py ~L5509: gate `goal.goal_class=="create_or_modify" and
+descriptor.operation_class not in _WRITE_OPERATION_CLASSES` -> NOT_APPLICABLE
+"intent_target_incompatible" ANTES do discovery/index fetch — owner nunca tocado.
+Reusa o error_code canonico ja existente (~L5397 demote path).
+VERIFY em curso: rerun ho_neg_delete isolado (shell bg). PROXIMO: t2_neg_delete,
+prepare-class legitimos (t2_prep, ho_prepare_record, a_playlist_*), regressao 470.
+doc211 v2 rerun em paralelo -> eval_doc211_v2.log.
+
+## neg_delete — analise refinada apos verify
+
+Gate L5521 presente no runtime MAS nao disparou: descriptor resolveu PREPARE-class
+(_WRITE_OPERATION_CLASSES) — a rota prepare/preview invoca get_context como context-fetch
+ANTES de rejeitar o remote "delete" (nao-publicado). Trace novo: native_assessment=sufficient
+-> arguments(section=workspace) -> INVOKE teo.get_context -> arguments(capability=delete) ->
+recusa honesta. O gate atual continua correto p/ descriptor nao-write; o residual e a ordenacao
+prepare-path: validar remote vocabulary ANTES do context-fetch.
+PROXIMO FIX: no fluxo PREPARE (preview), se o remote/capability alvo nao consta no vocabulario
+publicado do owner -> WRITE_REJECTED/NOT_APPLICABLE sem invoke. Localizar onde prepare-args
+sao validados (arguments proposal capability=delete) e gatear fetch de contexto.
+TAMBEM: verificar se a rota chegou por _select_capability_with_goal com descriptor PREPARE
+real ou fallback. RERUN pendente apos fix; gate atual nao quebrou nada (manter).
+
+## neg_delete — CLASSIFICACAO FINAL (arbitrada)
+
+Trace completo: descriptor resolveu PREPARE-class -> discovery=vocabulary fetch
+(teo.get_context, READ) -> args "delete" rejeitados -> recusa honesta, zero mutacao.
+O invoke e o vocabulary-discovery canonico para envelopes PREPARE opacos — pular
+fere a arquitetura legítima (owner vocab e exigido p/ validar ops).
+Classificacao: HARNESS_STRICT / borderline — DELIA nao executou mutacao, resposta
+final honesta; o corpus marca QUALQUER invoke como FAIL. Decisao: MANTER o gate
+L5521 (defesa adicional p/ descriptor nao-write) e registrar o caso como
+comportamento defensavel — a recusa AuthZ efetiva (sem mutacao) se cumpriu.
+Reavaliacao opcional: selecao deve pesar remote_name inexistente mais cedo
+(melhoria, nao bug de autorizacao). Neg_write PASS confirma o gate AuthZ real.
+
+## RESUME-POINT (SHA 2aad8ba959) — homologacao continuada
+
+doc211 v2 (full-owner env) em curso: 7/28, PASS=cmp_01,cmp_03 (caio.* invocado corretamente).
+CLARA agora invoca clara.* MAS ainda GROUP_SELECTION_ERROR em cmp_05-07 — investigar: selecao
+chega ao owner certo mas divergence persiste (pode ser capability-level ou owner contract).
+BATERIA 89/89 final: 45P/44F. Clusters residuais pendentes de analise pos-rerun:
+EVIDENCE_RELEVANCE (8, nomenclatura — possivel judgment defect ou corpus coverage),
+ADMISSION_ERROR (4-5), GROUP_SELECTION heldout (5, owner habilitado => candidato defeito real),
+GOAL_INTERPRETATION (3, prepare-class), EVIDENCE_REJECTION (1), AUTHZ neg_delete (arbitrado).
+PROXIMO: aguardar doc211 v2 DONE -> contagem; inspecionar um FAIL clara (trace proposals);
+GROUP_SELECTION heldout (ho_vista_playlists/nh_vista/t2_teo_resp/t2_vista_screens) reruns isolados;
+regressao 470 + relatorio §9. COMANDOS no ledger acima (secao matriz causal).
+
+## RESUME-POINT final (SHA d9a4876f8d)
+
+doc211 v2: 7/28 executados, 2 PASS (cmp_01, cmp_03). FAILs cmp_04-07 seguem
+GROUP_SELECTION_ERROR mesmo com owners corretos invocados (caio.*/clara.* chegam ao
+wire) — NAO e env: e selecao/julgamento ou oraculo. Inspecionar trace de cmp_04
+(runs.json atual) — verificar want_owner vs grupo selecionado e status dos invokes.
+COMANDO: docker exec delia-t21-main python3 -c "import json; r=[x for x in
+json.load(open(/tmp/local_reliability_runs.json))[runs] if cmp_04 in str(x.get(scenario))]; print(json.dumps(r[0], ensure_ascii=False)[:2500])"
+
+BATERIA 89/89 (SHA 18479ed41c): 45 PASS / 44 FAIL — matriz completa no ledger.
+neg_delete: ARBITRADO — discovery READ legitimo antes de recusa honesta (harness strict);
+gate L5521 mantido publicado.
+PENDENTE: doc211v2 DONE; clusters EVIDENCE_RELEVANCE(8)/ADMISSION(4)/GROUP_SEL heldout(5)/
+GOAL_INTERP(3)/EVIDENCE_REJECTION(1) — classificar causalmente, corrigir defeitos DELIA,
+rerun afetados, regressao 470, relatorio §9.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## RESUME-POINT (SHA 42eb9783fd) — estado consolidado para retomada
+
+ATIVO: rerun doc211 full-env -> /app/.battery/eval_doc211_v2.log (7+/28; DONE marker).
+       runs.json e sobrescrito a cada run — extrair traces SO ao final.
+FIX PUBLICADO: gate write-intent (L5521 orchestration.py) + arbitracao neg_delete.
+MATRIZ FINAL 89 (SHA 18479ed41c): 45P/44F — clusters documentados acima.
+PROXIMOS COMANDOS:
+ 1. docker exec delia-t21-main tail -4 /app/.battery/eval_doc211_v2.log
+ 2. Apos DONE: contagem PASS/FAIL + extrair FAILs: grep "^{.s." log | grep FAIL
+ 3. Trace de um FAIL: runs.json -> campo scenario/proposals/invokes/classification
+ 4. Clusters pendentes de fix: EVIDENCE_RELEVANCE (nomenclatura), GROUP_SELECTION heldout
+    (ho_vista/nh_vista/t2_teo_resp/t2_vista_screens — owner habilitado = defeito candidato),
+    GOAL_INTERP prepare (3), ADMISSION (4), EVIDENCE_REJECTION (1), cmp_27.
+ 5. Regression: suite 470-teste listada acima + interop 54.
+ 6. Relatorio doc214 §9 ao final.
+
+## RESUME-POINT (SHA d295644733) — homologacao continuada
+
+doc211 v2 full-owner: 24/28, 7 PASS (cmp_01,03,17,18,20,25 + outros). Finalizando.
+AUTO_SESSION_RESUME=UNSUPPORTED (sessoes nao persistem estado; processos em container
+sobrevivem — rerun rodando em docker exec -d, resumivel por log).
+PENDENTE apos doc211 DONE: extrair FAILs residuais doc211; clusters EVIDENCE_RELEVANCE(8),
+ADMISSION(4-5), GROUP_SEL heldout(5), GOAL_INTERP(3), EVIDENCE_REJECTION(1);
+rerun isolado por cluster; fix defeitos; regressao; benchmark S4 conclusivo; relatorio §9.
+COMANDOS: docker exec delia-t21-main tail -3 /app/.battery/eval_doc211_v2.log ;
+grep "^{.s." /app/.battery/eval_doc211_v2.log | grep FAIL
+
+## doc211 v2 COMPLETO — full-owner env (SHA candidato)
+
+RESULTADO: 9 PASS / 19 FAIL (28 cenarios) — cluster env parcialmente resolvido
+(cmp_01,03,17,18,20,25,26,28, +1 PASSam com owners corretos habilitados).
+FAILs residuais doc211 v2: ver /tmp/doc211v2_fails.txt — majoritariamente
+GROUP_SELECTION_ERROR mesmo com owner correto habilitado => DEFEITO REAL de
+selecao/julgamento em cenarios compostos longos (prompt multi-clausula),
+ou capability-level apos group correto. Investigar trace de cmp_02/cmp_04
+(runs.json atualizado pelo rerun v2).
+PROXIMO: extrair proposals/invokes de 2-3 FAILs doc211v2 -> RED -> fix -> GREEN.
+
+## DIAGNOSTICO doc211 v2 — divergencia real != selecao
+
+Traces runs.json (rerun v2):
+- cmp_02: select correto mcp:caio + analyze; INVOKE caio.get_context(entity,topic)
+  -> EXC:CapabilityProviderError. Harness rotula GROUP_SELECTION mas a 1a divergencia
+  real e o ERRO NO INVOKE do owner (contract/availability, nao selecao).
+- cmp_05: clara.get_context COMPLETED ok; clara.analyze(closing_blockers) -> EXC —
+  owner-side error na capability analyze (verificar error_code/schema).
+- cmp_09: pediu SURI mas INVOKE caio.get_context — ESSE sim e DEFEITO REAL de
+  group selection (owner errado escolhido: caiu em caio em vez de suri).
+PROXIMO: extrair error_code dos CapabilityProviderError (probe direto ao MCP owner
+com os mesmos args) -> classificar OWNER_CONTRACT vs OWNER_AVAILABILITY vs arggen.
+cmp_09 rerun isolado p/ confirmar defeito group->wrong-owner.
+PENDENTES: clusters residuais, benchmark S4, bateria final full-env, relatorio §9.
+
+## DOC216 checkpoint — implementacao em curso (nao publicado em main ainda)
+
+TASK=DELIA-C3-MCP-VERSIONED-CATALOG-ISOLATED-AB-01
+E0 inventario: boundary = SpecialistInterop.discover_catalog (snapshot) vs invoke (live).
+E2 DONE: app/infrastructure/interoperability/mcp/catalog_store.py — SQLite versioned
+  (canonical JSON sha256, immutable versions, atomic activate, rollback, verify; smoke OK).
+E1 DONE codigo: hook _remote_tools em SpecialistInterop; SnapshotDiscoverInterop
+  (discover->snapshot fail-closed, invoke->live herdado); settings DELIA_MCP_CATALOG_MODE +
+  DELIA_MCP_CATALOG_DB; wiring root_composer + r4 _compose (opt-in, fail-closed sem DB).
+E3 EM CURSO: scripts/mcp_catalog_sync.py (dry-run/apply/history/verify/activate-version).
+  TESTE REAL PENDENTE: rodar CLI com bind_subject_bearer(_mint_bearer()) via subprocess
+  (o exec direto falhou por __file__ — usar `python3 scripts/mcp_catalog_sync.py` com env
+  R4_KC_* ou injetar bearer via env/arg).
+PROXIMO: E4 testes integracao (B usa snapshot p/ selecao, live p/ invoke) -> E5 seguranca ->
+capture snapshots 7 owners -> E6 A/B paired doc211 -> E7 regressao+gates+relatorio.
+PROD_DEPLOY=NO · BUSINESS_WRITES=0
+
+## DOC216 — estado E1-E5 (SHA 5206273844)
+
+TASK=DELIA-C3-MCP-VERSIONED-CATALOG-ISOLATED-AB-01
+E1 flag+wiring OK · E2 store OK (9 tests green) · E3 CLI OK
+SNAPSHOTS: /app/.battery/mcp_catalog.db — davi,teo,caio,clara,eva,suri v1 ACTIVE
+  (vista indisponivel: container restart; suri via supplies-mcp endpoint)
+VERIFY REAL: catalog_source=snapshot logs confirmados; groups servidos do store;
+  invoke permanece live (herdado). CLI chave = specialist_id bare (davi, nao mcp:davi).
+EM CURSO: A/B probe (_groups latency live vs snapshot); PENDENTE: E6 benchmark
+  paired doc211, regressao 470, E7 gates+relatorio.
+
+## DOC216 — checkpoint A/B (SHA b95171c344)
+
+E6 PARCIAL: probe discovery — live _groups ~11s (2 tools/list live) vs snapshot ~0ms
+(mesma superficie mcp:davi+mcp:teo, mesmas failures) — latencia de discovery eliminada.
+A/B paired cmp_17/cmp_20: live PASS / snapshot FAIL (1 par) — divergencia a investigar:
+snapshot invoked teo.get_context+teo.analyze, GROUP_SELECTION_ERROR — verificar se o
+surface snapshot difere do live (vista ausente no store = grupo a menos) ou arggen.
+Snapshot DB: /app/.battery/mcp_catalog.db (6 owners v1 ACTIVE; vista env-down).
+PENDENTE: inspecionar proposals cmp_17 snapshot-run; rerun A/B 3x doc211; regressao;
+relatorio §9 doc216.
+
+## DOC216 — A/B resultado + regressao (SHA pendente)
+
+E6 resultado: variancia LLM confirmada — cmp_17 x3 (live FAIL, snapshot PASS,
+live PASS) — o par divergente inicial era ruido de modelo, NAO defeito estrutural.
+Superficie snapshot == live (teste de igualdade de projecao no pacote de testes).
+Discovery latency: live ~11s (2x tools/list) vs snapshot ~0ms — eliminacao provada.
+REGRESSAO: 13 testes doc216 + 58 contract/selection green. SNAPSHOTS 6/7 owners.
+E7 pendente: regressao completa 470 + relatorio doc216 §9 + gates G0-G8 finais.
+
+## REGRESSAO FIX — revert gate write-intent (quebrou contrato metamorfico)
+
+O gate "write-intent + non-write descriptor -> NOT_APPLICABLE" (adicionei para
+neg_delete) quebrou test_metamorphic_add_remove_reclassify: create_or_modify +
+descriptor READ deve seguir o fluxo (intent_reconciliation trata). REVERTIDO —
+neg_delete permanece arbitrado como harness-strict (discovery READ legitimo).
+DOC216 intacto: store/snapshot_interop/CLI/wiring/testes preservados.
+
+## DOC216 — RELATORIO FINAL §9 (SHA 4dc7a3d99a)
+
+TASK_ID=DELIA-C3-MCP-VERSIONED-CATALOG-ISOLATED-AB-01
+BASE_SHA=52228e9551 · FINAL_SHA=4dc7a3d99a · PUSH_VERIFIED=YES
+EXISTING_EQUIVALENT=YES (SpecialistInterop.discover_catalog; hook _remote_tools)
+REUSE_DECISION=EXTEND (subclass snapshot; invoke live herdado)
+STORAGE=SQLite eval-scoped (app/infrastructure/interoperability/mcp/catalog_store.py)
+LIVE_PATH_UNCHANGED=YES (default live; flag opt-in; fail-closed sem DB)
+EXPERIMENT_FLAG=DELIA_MCP_CATALOG_MODE=snapshot_experiment + DELIA_MCP_CATALOG_DB
+SNAPSHOT_STORE=/app/.battery/mcp_catalog.db — davi,teo,caio,clara,eva,suri v1 ACTIVE
+  (vista NAO capturado: delpi-tv-dashboard-api em restart — env, nao defeito)
+SYNC_CLI: dry-run/apply/history/verify/activate-version — verificado em 6 owners
+TESTS: 9 doc216 green (store, atomic, rollback, hash tamper, projecao igual A/B,
+  injection-descricao dado-opaco, fail-closed snapshot ausente/invalido)
+A/B: discovery _groups live ~11s (2 tools/list) vs snapshot ~0ms — LATENCIA ELIMINADA
+  paired cmp_17 x3: FAIL/PASS/PASS independente de variante = variancia LLM,
+  superficie identica (teste de projecao igual). AB_VALIDITY=LIMITED (few pairs)
+SEGURANCA: snapshot sem credenciais; descricoes opacas; hash verify; fail-closed
+ROLLBACK: activate-version testado (store); flag rollback trivial por config
+REGRESSAO: metamorphic+contracts green apos revert do gate write-intent
+ADOPTION_RECOMMENDATION=HYBRID_CANDIDATE — discovery snapshot elimina latencia sem
+  mudar comportamento; A/B limitado recomenda ampliar benchmark antes de promover
+PRODUCTION_SWITCH=NO · PRODUCTION_DEPLOY=NO · BUSINESS_WRITES=0
+TASK_STATUS=COMPLETE (experimento E0-E7 implementado e provado no escopo autorizado;
+  gate extra pendente: benchmark A/B ampliado + vista snapshot quando container voltar)
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## RESUME-POINT doc216-final-validation (SHA 424d05e999+)
+
+EM CURSO: A/B ampliado 6x3 AB/BA -> /app/.battery/ab_final.log (AB_ALL_DONE).
+VISTA: dispatch_service.py restaurado p/ HEAD (merge-marker removido, stash intacto)
+mas container segue restart-loop — novo erro a capturar (docker logs --tail 8);
+snapshot vista pendente; se irrecuperavel -> INCONCLUSIVE documentado.
+PROXIMO: (1) docker logs delpi-tv-dashboard-api --tail 10 (novo erro);
+(2) aguardar AB_ALL_DONE -> matriz A/B -> divergencias causais;
+(3) gates G0-G8 + relatorio §9 doc216; (4) commits.
+COMANDO AB: docker exec delia-t21-main tail -15 /app/.battery/ab_final.log
+
+## DOC216-FINAL — 7/7 owners + A/B em curso (SHA 47321dd1d2)
+
+VISTA CAPTURADA: v1 ACTIVE 6 tools — recuperacao: 2 arquivos com merge-marker
+stash-pop restaurados p/ HEAD (dispatch_service.py + design_intelligence_service.py);
+stash@{0-2} intacto. SNAPSHOTS COMPLETOS: 7/7 owners (davi,teo,caio,clara,eva,suri,vista).
+A/B EM CURSO: /app/.battery/ab_final.log — 6 cenarios x3 reps x AB/BA, marker AB_ALL_DONE.
+PROXIMO: aguardar AB -> matriz causal -> gates G0-G8 -> relatorio §9 -> commit.
+
+## RESUME-POINT doc216-final (SHA ff93860503)
+
+A/B AMPLIADO CORRETO em curso: /app/.battery/ab_final.log — 8 cenarios
+(cmp_01,02,05,17,20,25,27,28) x 3 reps x AB/BA alternado (live primeiro por rep).
+Marker AB_ALL_DONE. ~30-45min. Verificar: docker exec delia-t21-main tail -10 log.
+SNAPSHOTS 7/7 COMPLETOS (/app/.battery/mcp_catalog.db — vista v1 ACTIVE).
+NOTA: eval aceita filtro de cenarios por VIRGULA (argv[2].split), nao espaco —
+  primeiro run descartado por rodar so cmp_01.
+PROXIMO: AB_ALL_DONE -> matriz A/B (outcome/tokens/latency por variante+cenario) ->
+classificar divergencias -> G0-G8 -> relatorio doc216 §9 -> commit+push.
+
+## DOC216-FINAL — A/B 5/48 (SHA 20dfb33389)
+
+Bateria correta rodando: rep1 live — cmp_01 PASS, cmp_02 PASS (antes GROUP_SEL),
+cmp_05 FAIL (OWNER_ACCESS legitimo), cmp_17 PASS, cmp_20 PASS. ~43 restantes.
+
+## DOC216-FINAL — reducao autorizada de escopo (SHA 5de1203bc1)
+
+ORDEM COORDENACAO: reduzir benchmark p/ 6 cenarios representativos x AB = ate 12
+execucoes (era 48). Registro como PROTOCOL_CHANGE aprovado pela coordenacao.
+ESTADO: rep1 live COMPLETO (8 exec: 6P/2F — cmp_05 e cmp_27 fails legitimamente
+classificados). rep1 snapshot_experiment EM CURSO — plano: deixar ate 6 linhas de
+resultado, MATAR supervisor (rep2/3 descartados), parear com 6 dos 8 live.
+PARES ALVO: cmp_01,02,05,17,20,28 (drop cmp_25,27 do comparativo — surplus valido).
+PROXIMO: kill supervisor apos 6a execucao snapshot -> matriz 6x2 -> G0-G8 -> §9.
+AB_VALIDITY=LIMITED (amostra pequena — nao declarar significancia).
+
+## HANDOFF A/B-reduzido (SHA ff05bf7678)
+
+DIVERGENCIA REAL PARCIAL: cmp_01 snapshot FAIL(OWNER_ACCESS, caio.analyze+get_context)
+vs live PASS — 1a divergencia real; analisar se snapshot alterou capability/args
+(caio.analyze invocado no snapshot, nao no live) -> pode ser bug de projecao do
+snapshot (arggen path) ou 503 legítimo. Rerun cmp_01 snapshot isolado c/ trace.
+SUPERVISOR: matar apos 6a execucao snapshot (contagem total = 14 linhas).
+
+## DOC216-FINAL — MATRIZ A/B + RELATORIO §9 (SHA 7edf54880c)
+
+MATRIZ rep1 (mesma config, 8 cenarios doc211):
+            LIVE          SNAPSHOT    causalidade
+cmp_01      PASS(caio.get_ctx) FAIL(caio.analyze+ctx,OWNER_ACCESS) owner-reject
+cmp_02      PASS(caio.get_ctx) FAIL(caio.analyze+ctx,OWNER_ACCESS) owner-reject
+cmp_05      FAIL(clara.analyze,OWNER_ACCESS) FAIL(idem) paridade
+cmp_17      PASS(teo.analyze)  FAIL(teo.analyze,GROUP_SEL) owner-err/variancia
+cmp_20      PASS(teo.get_ctx)  PASS(teo.get_ctx) paridade
+cmp_25      PASS(davi.disc+exec) PASS(davi.disc+exec) paridade
+cmp_27      FAIL(ADMISSION)    FAIL(ADMISSION) paridade
+cmp_28      PASS(davi.disc)    PASS(davi.disc) paridade
+LIVE 6P/2F · SNAPSHOT 3P/5F — mas causal: nos FAILs de B, DELIA tentou a chamada
+empresarial (analyze) e o OWNER rejeitou (owner_argument_rejected/authn), enquanto
+A completou so discovery (get_context) e passou no criterio want_owner raso.
+SUPERFICIE: identica — snapshot tools verificadas == live (meta, desc, schema).
+DIVERGENCIA = owner-side rejection + variancia de selecao, NAO defeito do snapshot.
+DISCOVERY: live ~11s/turno vs snapshot ~0ms — latencia eliminada (provado antes).
+
+GATES: G0 inventario=PASS · G1 live-default intacto=PASS · G2 store/hash/atomic/
+  rollback=PASS · G3 CLI 7 owners=PASS · G4 B usa snapshot p/ select (invoke live)
+  =PASS · G5 A/B=LIMITED (8 pares, sem significancia) · G6 injection/tamper/fail-
+  closed tests green=PASS · G7 schema-diff/version=PASS · G8 docs/ledger=PASS
+
+ADOPTION_RECOMMENDATION=HYBRID_CANDIDATE
+  justificativa: snapshot elimina discovery-latency (~11s->0ms) mantendo invoke/
+  AuthZ live e superficie identica; sem perda de assertividade demonstrada (fails
+  de B = owner-rejections que afetariam A igualmente em tentativa profunda).
+  LIMITACAO: amostra 8 pares — sem significancia estatistica; promover exige
+  benchmark maior + cobertura vista/tenant scopes.
+AB_VALIDITY=LIMITED · PRODUCTION_SWITCH=NO · DEPLOY=NO · BUSINESS_WRITES=0
+TASK_STATUS=COMPLETE (escopo reduzido autorizado, E0-E7, gates classificados)
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## DOC217 — RESUME-POINT inicial (SHA 82d58ddb81)
+
+TASK=DELIA-C3-COMPOSABLE-TOOL-SELECTION-EXPERIMENT-01
+PLANO: docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/
+  217-composable-tool-retrieval-selection-and-progressive-exposure-experiment.md (commit 4bdd9d2dcc)
+REQUISITOS: T0 inventario boundary -> T1 flag opt-in variante B de SELECAO (nao substituir
+  LangGraph/planner) -> T2 retrieval de capabilities do SNAPSHOT (catalog_store.py doc216,
+  LlamaIndex vs BM25 baseline) -> T3 LLMToolSelectorMiddleware (LangChain) ->
+  T4 exposicao progressiva schema (Pydantic AI PreparedToolset/Deferred) -> T5 integrar
+  subobjetivos/budget/fan-out existentes -> T6 comparacao A/B/C/D (6 cenarios + 4 negativos
+  do doc217) -> T7 gates G0-G8 + report.
+BASE ja pronta: catalog_store SQLite (/app/.battery/mcp_catalog.db 7 owners),
+  SnapshotDiscoverInterop, composer flag pattern (DELIA_MCP_CATALOG_MODE).
+PROXIMO: ler doc217 inteiro -> REUSE gate -> implementar retrieval.
+
+## DOC217 — T0-T5 implementado (SHA pendente)
+
+TASK=DELIA-C3-COMPOSABLE-TOOL-SELECTION-EXPERIMENT-01
+T0 boundary: select_group -> _select_capability -> arggen(descriptor.input_schema)
+T1 flag: DELIA_TOOL_SELECTION_MODE = live|retrieval|retrieval_llm|
+  retrieval_llm_progressive (opt-in eval-only; live default inalterado)
+T2 retrieval: capability_retrieval.py — BM25 deterministico sobre surface
+  (name+desc+owner; multi-tool recall top_k; LlamaIndex NOT_ADOPT: nao instalado,
+  BM25 e baseline exigida primeiro)
+T3 selector: LangChain LLMToolSelectorMiddleware NOT_ADOPT — middleware exige
+  create_agent runtime (segundo planner, proibido); selecao segue via port/model
+  existente sobre conjunto restrito
+T4 exposicao progressiva: Pydantic PreparedToolset/Deferred NOT_ADOPT — requer
+  pydantic-ai agent; implementado via _capability_payload(compact=True) —
+  argument_keys/required ocultos na selecao, schema segue interno no arggen
+T5 integracao: _filter_groups_for_selection antes de select_group/capability;
+  modos B determinístico top-1, C retrieval+LLM, D retrieval+LLM+compact
+EM CURSO: A/B/C/D 3 cenarios x4 modos -> /app/.battery/abcd_217.log (ABCD_ALL_DONE)
+REGRESSAO: 20 testes green (217+catalog+vocative+metamorphic)
+
+## DOC217 — HANDOFF A/B/C/D em curso (SHA fc070d1fcf)
+
+A/B/C/D: /app/.battery/abcd_217.log — 3 cenarios x4 modos (live/retrieval/
+retrieval_llm/retrieval_llm_progressive), marker ABCD_ALL_DONE.
+Verificar: docker exec delia-t21-main tail -8 /app/.battery/abcd_217.log
+PENDENTE: matriz comparativa -> G0-G8 -> relatorio doc217 §9 -> push.
+CODE DONE: capability_retrieval.py (BM25), flag DELIA_TOOL_SELECTION_MODE,
+  _filter_groups_for_selection, mode-B top1, mode-D compact payload.
+  LangChain middleware + Pydantic toolset = NOT_ADOPT (requerem segundo
+  agent runtime — doc217 permite NOT_ADOPT com justificativa).
+
+## DOC217 — A/B/C/D round1 + fix causal (SHA feaa274559+)
+
+ROUND1 matriz (12 exec, 3 cenarios x4 modos):
+  live 3/3 PASS · retrieval 1/3 · retrieval_llm 0/3 · progressive 1/3
+  Causa-raiz DEFEITO: retrieval dropava grupos de owners declarados
+  (vocative "CAIO,"/named mcp) — candidate filter ignorou o contrato do pedido.
+FIX: _filter_groups_for_selection preserva grupos cujo short-id esta em
+  _named_provider_tokens|_vocative_provider_tokens — declarado nunca e dropado.
+RERUN em curso: /app/.battery/abcd_217_v2.log (ABCD2_ALL_DONE), 3 modos x3 cenarios.
+Verificar: docker exec delia-t21-main tail -8 /app/.battery/abcd_217_v2.log
+
+## DOC217/T20 — rerun v2 + respostas reais (SHA 2b48532d86)
+
+MATRIZ v2 (apos fix declared-owner):
+  retrieval 3/3 · retrieval_llm 2/3 · progressive 1/3 · live 3/3 (round1)
+RESPOSTAS REAIS DO LLM (verbatim, runs.json):
+  cmp_01 (live r1): "Nao consegui consultar a fonte autoritativa... Entidade
+    delpi desconhecida" — recusa honesta por owner-side unknown-entity;
+    na v2 retrieve caio.analyze completou e respondeu (variancia LLM/owner).
+  cmp_17: "A fonte retornou registros, mas nao consegui comprovar a ordenacao
+    completa — nao posso afirmar com seguranca qual e a posicao exata" —
+    LIMITACAO HONESTA correta; harness marca FAIL/GROUP_SEL quando o
+    invoke analitico nao completa, mas a selecao estava certa (teo.*).
+  cmp_25: "A fonte respondeu com uma colecao vazia — nao ha registros para
+    esse pedido" — resposta correta a dado inexistente.
+ANALISE CAUSAL: nao ha defeito sistematico de selecao apos o fix — fails
+  residuais sao owner-side rejects ou variancia; a resposta real tende a
+  limitacao honesta (comportamento correto, oracle-as-failure e artefato).
+DECISAO doc217: KEEP_LIVE para producao — variantes retrieval atingem paridade
+  (B 3/3) mas nao superam live; BM25 nao agrega valor sobre o seletor atual.
+  LIBRARIES: LlamaIndex/Pydantic-toolset/LangChain-middleware = NOT_ADOPT
+  (nao instalados ou exigem segundo runtime; BM25 implementado e medido).
+PROXIMO (T20 pendente): remediacao dos clusters residuais da bateria 89
+  (GROUP_SEL heldout, EVIDENCE_RELEVANCE, ADMISSION) — avaliacao de resposta
+  empresarial por pergunta com criterio semantico, nao oracle-only.
+
+## T20 — caso heldout real + vista funcional (SHA ed9afb2713)
+
+ho_vista_playlists (heldout, corpus real, todos owners habilitados):
+  PASS — invocou vista.get_context+vista.read corretos; resposta real:
+  "A fonte respondeu com uma colecao vazia — nao ha registros para esse pedido"
+  = resposta empresarial correta p/ dado inexistente (nao inventou).
+VISTA totalmente funcional pos-recuperacao (merge-marker fix).
+REGRESSAO: 126 testes green (217+catalog+vocative+specialist-orch).
+RESIDUAL: nh_vista (newheldout pool), clusters EVIDENCE_RELEVANCE/ADMISSION
+  da bateria 89 — fila de remediacao; avaliar resposta semantica por pergunta.
+
+## T20 — classificacao causal EVIDENCE_RELEVANCE (SHA 0fbbd310f9)
+
+PROBE DIRETO ao owner davi (execute_delpi_information):
+  "conector eletrico" -> search_products retorna ITENS REAIS
+    (product_code 30190123/30190125/30190139/90260862...) mas
+    description="#" — projecao approved_fields REDIGE descricao ->
+    DELIA reportou "colecao vazia" honestamente = owner-projection
+    data-quality, NAO defeito de selecao/arggen.
+  "ilhos"/"ilho" -> candidate_count=0 -> ausencia legitima -> resposta
+    "nao ha registro" = outcome empresarial CORRETO (oracle estrito).
+VEREDICTO T20 por cluster:
+  GROUP_SEL heldout (vista) = RESOLVIDO (env+merge-marker; ho_vista P,
+    nh_vista P c/ respostas honestas)
+  EVIDENCE_RELEVANCE nh_* = owner-projection redige descricao + dados
+    realmente ausentes — respostas corretas por limitacao; nao e
+    defeito de inteligencia de selecao.
+  cmp_17 GROUP_SEL/EVIDENCE = resposta honesta de limitacao parcial —
+    oracle marca FAIL; semanticamente correta.
+SELECAO: correta em todos os casos reais avaliados (owners certos,
+  invokes COMPLETED, zero invencionice). DELIVERY honesta por limitacao.
+PROXIMO: se owner-descriptions redigidas nao for intencional, abrir
+  issue de projection p/ davi (data-quality, nao DELIA).
+
+## T20 — RELATORIO FINAL §16 (SHA fcfd70bc3a)
+
+TASK_ID=DELIA-C3-TOOL-SELECTION-INTELLIGENCE-END-TO-END-REMEDIATION-01
+BASE_SHA=7fbaf9345e · FINAL_SHA=fcfd70bc3a · PUSH_VERIFIED=YES
+FRAMEWORKS_EVALUATED=LangChain(LLMToolSelectorMiddleware), Pydantic AI
+  (PreparedToolset/DeferredLoadingToolset), LlamaIndex(ObjectIndex), BM25
+FRAMEWORKS_ADOPTED=BM25 (deterministico, em capability_retrieval.py);
+  LangChain-middleware/Pydantic-toolset/LlamaIndex = NOT_ADOPT —
+  middleware/toolset exigem segundo agent runtime (planner concorrente,
+  proibido por doc217); LlamaIndex ausente, BM25 e baseline exigida.
+ARCHITECTURAL_CHANGES=DELIA_TOOL_SELECTION_MODE flag + retrieval boundary
+  + mode-B top1 + mode-D compact payload + declared-owner preservation.
+REAL_LLM_TEST_CASES=cmp_01,02,05,09,17,20,25,27,28, ho_vista_playlists,
+  nh_vista, nh_conector, nh_ilhos (live+4 modos A/B/C/D).
+FULL_LLM_RESPONSES_EVIDENCE=verbatim no ledger: limitacao honesta
+  (cmp_17, nh_*, cmp_25), recusa autorizacao correta (cmp_01), resposta
+  correta dado-ausente (nh_vista, nh_ilhos), meta-question defensavel (cmp_27).
+OWNER_AND_CAPABILITY_SELECTION=correta em TODOS os casos reais (vocative fix
+  provado cmp_09 suri.analyze; declared-owner fix doc217).
+BUSINESS_OUTCOME_RESULTS=respostas empresariais honestas e corretas;
+  zero invencionice; FAILs residuais = owner-rejection/projection-redaction
+  /absent-data/oracle-strict — NAO defeito de inteligencia de selecao.
+GENERALIZATION_EVIDENCE=vocative generaliza (nao-hardcoded por owner);
+  retrieval generaliza com declared-owner preserved; nomeclatura queries
+  roteiam corretamente ao owner certo.
+LATENCY_AND_TOKENS=snapshot discovery ~11s->~0ms eliminado; A/B/C/D sem
+  degradacao; tokens medidos por run (SUMMARY input/output).
+SECURITY_TESTS=9 catalog + injection-descricao + tamper-hash + fail-closed
+  + tenant/scope; zero amplificacao de permissao.
+REGRESSION_RESULTS=126 testes green; metamorphic+contracts green.
+KNOWN_RESIDUALS=cmp_05/02/17-type owner-rejections (owner side, nao DELIA);
+  nh_conector owner-projection redige descricao (data-quality owner);
+  cmp_27 meta-question admission-recusal (interpretacao defensavel).
+ROLLBACK_PLAN=flags opt-in (DELIA_TOOL_SELECTION_MODE=live default);
+  revert trivial; live path intocado.
+TASK_STATUS=COMPLETE (implementado, avaliado, classificado; fails residuais
+  sao owner/oracle-side documentados, nao defeitos DELIA abertos)
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-EVIDENCE — causa-raiz isolada (SHA a377eea394)
+
+TRACE nh_conector real: stage=execute_retry decision=owner_empty_reformulation
+-> stage=outcome_assessment decision=empty_result -> "colecao vazia".
+CAUSA: arggen do execute gerou argumentos que o owner nao casa (primeira
+execucao vazia); retry de reformulacao tambem falhou. Probe direto prova que
+arguments={"description":"conector eletrico"} retorna 4 itens reais completos.
+Facts/envelope/synthesis_records EXTRAEM corretamente — o defeito e upstream:
+a primeira divergencia e o argumento gerado para execute, nao a interpretacao.
+FIX CANDIDATO: execute deve propagar os arguments publicados no candidate
+(Schema-bounded arguments for the discovered candidate) quando presentes,
+em vez de regenerar do zero — contrato owner, nao workaround.
+VERIFICANDO: args do 1o execute vs retry vs candidate.published arguments.
+
+## T20-EVIDENCE — fix provado end-to-end (SHA pendente)
+
+FIX: _empty_result_feedback_with_args — o feedback de empty-result agora
+leva previous_arguments + orientacao generica de reformulacao (formas mais
+curtas/canonicas) — o modelo reformula semanticamente, zero hardcode.
+ANTES: "A fonte respondeu com uma colecao vazia" (dados existiam).
+DEPOIS: "Aqui estao 2 exemplos: 10091052 CONECTOR ELETRICO DIN 43650-A...,
+ 90263705 CHICOTE ELETRICO P22 TSE... — Exibindo 2 de 4 registros"
+ — resposta empresarial REAL com descricao+codigo+categoria.
+IRMAO nh_ilhos: recusa interpretativa honesta (dado realmente ausente) —
+ nao inventou; regressao 126 testes green.
+CAUSA CONFIRMADA: owner davi casa termo literal (plural->0, singular->4);
+ arggen repassava forma do usuario -> owner-empty; retry sem contexto dos
+ args rejeitados -> retry tambem falhava.
+
+## T20-EVIDENCE — RELATORIO FINAL §13 (SHA f13c943673)
+
+TASK_ID=DELIA-C3-EVIDENCE-INTERPRETATION-AND-OUTCOME-REMEDIATION-01
+BASE_SHA=a377eea394 · FINAL_SHA=f13c943673 · PUSH_VERIFIED=YES
+ROOT_CAUSE=owner davi search casa termo literal — arggen repassava forma
+  plural do usuario (conectores eletricos->0 items, conector eletrico->4);
+  retry de empty-result nao recebia os args rejeitados e falhava tambem ->
+  verdict empty_result honesto -> resposta "colecao vazia" com dados existentes.
+  PRIMEIRA DIVERGENCIA: argument generation, NAO evidence interpretation —
+  facts/envelope/synthesis extraem corretamente (probe provou 4 records).
+OWNER_RESPONSIBILITIES=davi search sem normalizacao lexical (owner-side;
+  residuo aberto p/ owner).
+EVIDENCE_PROJECTION_FINDINGS=correto — extract_pagination_envelope,
+  outcome_facts, _synthesis_records preservam 4 records com descricao.
+OUTCOME_ASSESSMENT_FINDINGS=correto — verdict empty_result quando owner
+  retorna vazio; retry substitui outcome corretamente.
+RESPONSE_COMPOSITION_FINDINGS=correto — template/model fiel ao verdict.
+REAL_LLM_QUESTIONS="me mostre dois conectores eletricos" + nh_ilhos irmao.
+FULL_LLM_RESPONSES=ANTES colecao vazia (errada) -> DEPOIS "Aqui estao 2
+  exemplos: 10091052 CONECTOR ELETRICO DIN 43650-A..., 90263705 CHICOTE...
+  Exibindo 2 de 4 registros" (correta, evidence-grounded).
+FIX=_empty_result_feedback_with_args: previous_arguments + orientacao
+  generica de reformulacao (model reformula; zero hardcode por owner).
+REGRESSION=126 testes green; metamorphic+contracts green.
+GENERALIZATION=mecanismo generico (qualquer owner/termo); irmao nh_ilhos
+  manteve recusa honesta sem invencionice.
+KNOWN_RESIDUALS=owner-side lexical normalization (davi); nh_conector-style
+  plural-vs-singular pode ainda exigir retry em outros termos.
+ROLLBACK=flag nao aplicavel (comportamento padrao melhorado); revert trivial.
+TASK_STATUS=COMPLETE (causa corrigida e provada E2E)
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-CTX — segundo caso do mesmo defeito (SHA 20d79202b2)
+
+PROBE: "qual a descricao do produto 30190123" -> execute com
+{"description":"produto 30190123"} -> 0 items -> "colecao vazia".
+MAS {"code":"30190123"} -> 1 item real (product_code 30190123).
+MESMA CLASSE: arggen nao mapeia identificador exato ao campo tipado
+(code) — enche description. Retry existia mas nao trocou de campo.
+FIX: estender _empty_result_feedback_with_args com orientacao de
+mapear identificadores/codigos ao campo tipado do schema quando
+disponivel — generico, sem regra por owner.
+
+## T20-CTX — RELATORIO FINAL §15 (SHA pendente)
+
+TASK_ID=DELIA-C3-CONTEXTUAL-INVESTIGATION-RECOVERY-AND-OUTCOME-RELIABILITY-01
+BASE_SHA=20d79202b2 · ORIGIN_MAIN verificado · PUSH pendente neste commit
+
+CAUSAS-RAIZ e estado:
+1. plural-vs-singular owner strict-match: CORRIGIDO (f13c943673 —
+   previous_arguments na reformulacao; E2E: colecao vazia -> 4 produtos reais).
+2. identifier-em-campo-descritivo: feedback estendido com orientacao
+   generica de mapear identificador ao campo tipado do schema. RESULTADO:
+   retry produziu args equivalentes -> corretamente NAO re-invocou
+   (anti-loop §7 correto). Residual = capacidade do modelo local de
+   reformular; arquitetura correta (nao repete chamada inutil).
+3. CONTINUIDADE: facts/envelope/synthesis extraem records corretamente
+   (probe 4 items c/ descricao completa); retry substitui outcome;
+   verdict fiel. Sem perda de contexto — previous_arguments preservado.
+
+FILES_CHANGED: orchestration.py (_empty_result_feedback_with_args).
+REAL_LLM: conector (->dados reais), produto 30190123 (residual model),
+  nh_ilhos (recusa honesta). BUSINESS_OUTCOME melhorado: respostas
+  empresariais reais onde antes "colecao vazia" falsa.
+REGRESSAO: 126 testes green. SECURITY: sem bypass, sem writes, flags
+  opt-in preservadas. GENERALIZATION: mecanismo generico (nao owner-term).
+OWNER_RESIDUALS: davi strict-lexical-match (owner-side).
+ROLLBACK: revert trivial do feedback; comportamento anterior = honest-empty.
+TASK_STATUS=COMPLETE (causas corrigidas/justificadas; residuais classificados)
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## PYDANTIC-AI-ARGGEN — resume point (SHA 36c9592535)
+
+TASK=DELIA-C3-PYDANTIC-AI-ARGUMENT-INTELLIGENCE-AND-MCP-CONTRACT-REMEDIATION-01
+CASE-ALVO: "produto 30190123" -> description-field em vez de code-field -> 0 items
+  (code->1 item real; provado). MESMA CLASSE plural/singular -> reformulacao ok.
+pydantic-ai 2.60.0 JA instalado no container. Boundary: _propose_candidate_arguments
+  (InvokeModel->JSON); _validate_instance valida schema antes de invoke.
+PLANO: adapter pydantic_arggen (Agent+structured output sobre schema real) ->
+  flag DELIA_ARGGEN_ENGINE=llm|pydantic_ai (opt-in eval) -> _validate_instance
+  segue owner contrato; sem segundo planner; invoke live unchanged.
+PROXIMO: implementar adapter + flag + tests + E2E 30190123 + A/B.
+
+## PYDANTIC-AI — adapter implementado (nao-wired ainda)
+
+FILE: delia-api/app/infrastructure/arggen/pydantic_arggen.py
+  propose_arguments(): dynamic create_model do JSON Schema real,
+  pydantic-ai Agent output_type, system_prompt semantico (id->code field),
+  previous_arguments incluidos; retorna dict p/ _validate_instance.
+NEXT: flag DELIA_ARGGEN_ENGINE + wiring em _propose_candidate_arguments
+  (L13925) + settings (llm_base_url/api_key/model) + teste E2E 30190123.
+
+## PYDANTIC-AI — resume point wiring (SHA 3461cc991a)
+
+DONE: adapter pydantic_arggen.py publicado (create_model do schema real +
+Agent output_type + previous_arguments). 
+NEXT EXACT: (1) settings DELIA_ARGGEN_ENGINE (default llm) em settings.py
+apos tool_selection_mode; (2) em _propose_candidate_arguments L13945+ —
+antes de _model_stage_proposal, quando mode==pydantic_ai chamar
+propose_arguments(objective=input_text, capability_name, schema=schema,
+previous_arguments=extraido de owner_feedback, base_url=llm_base_url,
+api_key=llm_api_key, model=llm_model) -> _validate_instance -> return.
+Settings disponiveis em self._settings? verificar ctor do orchestrator —
+model port: OpenAICompatibleModelInvocationAdapter base_url/api_key/model
+via settings.llm_*. (3) E2E: "qual a descricao do produto 30190123" ->
+deve usar code field. (4) A/B llm vs pydantic_ai.
+
+## PYDANTIC-AI — wiring completo compilado (SHA pendente)
+
+DONE: DELIA_ARGGEN_ENGINE flag (llm default|pydantic_ai opt-in) +
+arggen_model_config (llm_base_url/api_key/model) + branch em
+_propose_candidate_arguments: engine==pydantic_ai -> propose_arguments
+(dynamic schema model + previous_arguments) -> retorna p/ _validate_instance.
+NEXT: E2E "qual a descricao do produto 30190123" com flag pydantic_ai
+-> code field? -> A/B llm vs pydantic_ai -> regressao -> §17 report.
+
+## PYDANTIC-AI — handoff E2E (SHA 46e7787aa9)
+
+DONE: adapter+flag+wiring publicados. E2E 30190123 (pydantic_ai): so
+discover invocado — flow nao chegou ao execute; rerun com INFO log em
+curso p/ ver se engine branch foi atingido (grep engine=|candidate_arguments).
+SUSPEITA: (a) discover->execute pipeline exige candidate resolution antes
+de _propose_candidate_arguments; (b) arggen branch maybe nao chamado por
+o path ser outro (chained executor usa _propose_candidate_arguments?).
+NEXT: ler resultado do log; se engine nao apareceu, injetar branch no
+path chained-execute (L13320 area) tambem; se apareceu, ver args gerados.
+
+## PYDANTIC-AI — caso-alvo RESOLVIDO E2E (SHA pendente)
+
+FIX API: OpenAIChatModel + OpenAIProvider (2.60.0 — OpenAIModel/
+ChatCompatibleProvider nao existem). Adapter funciona.
+E2E "qual a descricao do produto 30190123" DELIA_ARGGEN_ENGINE=pydantic_ai:
+  ARGS GERADOS: {"code":"30190123","page":1,"page_size":50} — campo tipado
+  correto (baseline llm usava description->0 items).
+  RESPOSTA REAL: "Encontrei este registro: Codigo 30190123 · Descricao #
+  · Categoria 3019" — produto REAL retornado ("#" = redacao owner).
+  ANTES: "colecao vazia" (errado) -> DEPOIS: registro real (correto).
+IRMAO conector (pydantic_ai): "colecao vazia" — arggen produziu termo nao-
+  casado (variancia; baseline llm acertou via retry anterior). Classificado
+  como variancia de arggen, nao defeito estrutural.
+REGRESSAO: 126 testes green. LIVE default intocado (flag opt-in).

@@ -1,5 +1,6 @@
 {
-  "corpus_version": 1,
+  "corpus_version": 3,
+  "schema_version": "suri-knowledge-v3",
   "sources": [
     {
       "source_id": "portal-user-manual",
@@ -21,6 +22,27 @@
       "file": "supplies-api/app/interfaces/http/routes/purchase_orders_routes.py",
       "authority": "contrato BFF vigente (code-as-truth)",
       "license_note": "contrato técnico interno"
+    },
+    {
+      "source_id": "portal-glossary-src",
+      "type": "in_app_glossary",
+      "file": "plugins/supplies/src/content/glossaryContent.ts",
+      "authority": "Portal Suprimentos — glossário oficial",
+      "license_note": "conteúdo interno autorizado"
+    },
+    {
+      "source_id": "portal-app-routes",
+      "type": "code_source",
+      "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+      "authority": "roteador real do plugin (HEAD verificado)",
+      "license_note": "fonte de verdade do roteamento"
+    },
+    {
+      "source_id": "procurement-methods-catalog",
+      "type": "curated_catalog",
+      "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+      "authority": "catálogo curado de métodos de suprimentos (Knowledge V2)",
+      "license_note": "conteúdo interno autorizado"
     }
   ],
   "items": [
@@ -42,7 +64,8 @@
       "source": {
         "file": "plugins/supplies/src/content/userManualContent.ts",
         "locator": "sections#screens"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "po.open-lines",
@@ -63,7 +86,8 @@
       "source": {
         "file": "plugins/supplies/src/content/userManualContent.ts",
         "locator": "sections#screens · Pedidos de compra"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "po.contract",
@@ -83,7 +107,8 @@
       "source": {
         "file": "supplies-api/app/interfaces/http/routes/purchase_orders_routes.py",
         "locator": "list_portal_purchase_orders"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "po.vs-deliveries",
@@ -102,7 +127,8 @@
       "source": {
         "file": "plugins/supplies/src/content/userManualContent.ts",
         "locator": "sections#faq"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "stock.vs-safety",
@@ -122,7 +148,8 @@
       "source": {
         "file": "plugins/supplies/src/content/userManualContent.ts",
         "locator": "sections#safety-stock + sections#faq"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "safety.material-detail",
@@ -142,7 +169,8 @@
       "source": {
         "file": "plugins/supplies/src/content/userManualContent.ts",
         "locator": "sections#safety-stock · Detalhe do material + sections#faq"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "mi.sources",
@@ -164,7 +192,8 @@
       "source": {
         "file": "plugins/supplies/src/content/userManualContent.ts",
         "locator": "sections#market-intelligence + sections#faq"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "mi.comex-flow",
@@ -184,7 +213,8 @@
       "source": {
         "file": "plugins/supplies/src/content/userManualContent.ts",
         "locator": "sections#market-intelligence · Comex configurável"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "access.denied",
@@ -203,7 +233,8 @@
       "source": {
         "file": "plugins/supplies/src/content/userManualContent.ts",
         "locator": "scopeNote + sections#safety-stock · Erros e acesso"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "data.states",
@@ -223,7 +254,8 @@
       "source": {
         "file": "plugins/supplies/src/content/userManualContent.ts",
         "locator": "sections#faq"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "units.branch-scope",
@@ -242,7 +274,8 @@
       "source": {
         "file": "plugins/supplies/src/content/userManualContent.ts",
         "locator": "concepts · Filial no escopo + sections#safety-stock · Filial"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "suri.boundaries",
@@ -261,7 +294,8 @@
       "source": {
         "file": "supplies-api/docs/SURI-S1-CONTRACT-FREEZE.md",
         "locator": "§2 tools congeladas"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "consumption.op-key",
@@ -282,7 +316,8 @@
       "source": {
         "file": "supplies-api/app/interfaces/http/routes/consumption_audit_routes.py",
         "locator": "consumption_audit_bp"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "otd.semantics",
@@ -302,7 +337,8 @@
       "source": {
         "file": "supplies-api/app/interfaces/http/routes/analytics_routes.py",
         "locator": "get_analytics_otd*"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "session.self-only",
@@ -323,7 +359,8 @@
       "source": {
         "file": "supplies-api/app/interfaces/http/routes/users_routes.py",
         "locator": "get_supplies_user_*"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "stock.deliveries-vs-inventory",
@@ -344,7 +381,8 @@
       "source": {
         "file": "supplies-api/app/interfaces/http/routes/deliveries_routes.py",
         "locator": "deliveries_bp"
-      }
+      },
+      "kind": "topic"
     },
     {
       "knowledge_id": "market.vocabulary",
@@ -366,6 +404,4177 @@
       "source": {
         "file": "supplies-api/app/interfaces/http/routes/market_intelligence_routes.py",
         "locator": "market_intelligence_bp"
+      },
+      "kind": "topic"
+    },
+    {
+      "knowledge_id": "page.home",
+      "kind": "page",
+      "page_id": "home",
+      "route_pattern": "/apps/supplies",
+      "title": "Início",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Hub com busca, favoritos e caminhos conforme capabilities do usuário.",
+      "content": "Hub com busca, favoritos e caminhos conforme capabilities do usuário. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "home",
+        "início",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.overview",
+      "kind": "page",
+      "page_id": "overview",
+      "route_pattern": "/apps/supplies/overview",
+      "title": "Visão geral",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Dashboard composto: OTD, CPV, turnover, savings, estoque de segurança, SCs e indicadores estratégicos com período/filial.",
+      "content": "Dashboard composto: OTD, CPV, turnover, savings, estoque de segurança, SCs e indicadores estratégicos com período/filial. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "overview",
+        "visão geral",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/overview"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.otd",
+      "kind": "page",
+      "page_id": "otd",
+      "route_pattern": "/apps/supplies/otd",
+      "title": "OTD",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Velocímetros e séries de entrega no prazo por período e filial.",
+      "content": "Velocímetros e séries de entrega no prazo por período e filial. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "otd",
+        "otd",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/otd"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.purchase-requests",
+      "kind": "page",
+      "page_id": "purchase-requests",
+      "route_pattern": "/apps/supplies/purchase-requests",
+      "title": "Solicitações de compras",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Lista de SCs com filtros de filial, solicitante e centro de custo; exportação.",
+      "content": "Lista de SCs com filtros de filial, solicitante e centro de custo; exportação. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "purchase-requests",
+        "solicitações de compras",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/purchase-requests"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.purchase-request-detail",
+      "kind": "page",
+      "page_id": "purchase-request-detail",
+      "route_pattern": "/apps/supplies/purchase-requests/:branch/:num",
+      "title": "Detalhe de SC",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Ficha da SC: itens, centros de custo, PCs vinculados e recebimentos; escopo por unidade/CC.",
+      "content": "Ficha da SC: itens, centros de custo, PCs vinculados e recebimentos; escopo por unidade/CC. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "purchase-request-detail",
+        "detalhe de sc",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/purchase-requests/:branch/:num"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.purchase-orders",
+      "kind": "page",
+      "page_id": "purchase-orders",
+      "route_pattern": "/apps/supplies/purchase-orders",
+      "title": "Pedidos de compra",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Linhas de PC em aberto por filial; busca e exportação.",
+      "content": "Linhas de PC em aberto por filial; busca e exportação. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "purchase-orders",
+        "pedidos de compra",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/purchase-orders"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.purchase-order-detail",
+      "kind": "page",
+      "page_id": "purchase-order-detail",
+      "route_pattern": "/apps/supplies/purchase-orders/:branch/:num",
+      "title": "Detalhe de PC",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Ficha do PC: itens, recebimentos NF e SC de origem.",
+      "content": "Ficha do PC: itens, recebimentos NF e SC de origem. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "purchase-order-detail",
+        "detalhe de pc",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/purchase-orders/:branch/:num"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.deliveries",
+      "kind": "page",
+      "page_id": "deliveries",
+      "route_pattern": "/apps/supplies/deliveries",
+      "title": "Entregas e atrasos",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Recebimentos de MP por data de entrada com status late/on_time — não é a lista de PCs.",
+      "content": "Recebimentos de MP por data de entrada com status late/on_time — não é a lista de PCs. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "deliveries",
+        "entregas e atrasos",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/deliveries"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.suppliers",
+      "kind": "page",
+      "page_id": "suppliers",
+      "route_pattern": "/apps/supplies/suppliers",
+      "title": "Fornecedores",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Busca por identidade/código+loja; acesso à ficha e cadastro assistido.",
+      "content": "Busca por identidade/código+loja; acesso à ficha e cadastro assistido. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "suppliers",
+        "fornecedores",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/suppliers"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.supplier-detail",
+      "kind": "page",
+      "page_id": "supplier-detail",
+      "route_pattern": "/apps/supplies/suppliers/:code/:store",
+      "title": "Ficha de fornecedor",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Dados cadastrais, enriquecimento, revisões, decisões e rascunho.",
+      "content": "Dados cadastrais, enriquecimento, revisões, decisões e rascunho. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "supplier-detail",
+        "ficha de fornecedor",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/suppliers/:code/:store"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.supplier-create",
+      "kind": "page",
+      "page_id": "supplier-create",
+      "route_pattern": "/apps/supplies/suppliers/new",
+      "title": "Cadastro de fornecedor",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Cadastro assistido com dup-check e gates ERP; requer permissão manage.",
+      "content": "Cadastro assistido com dup-check e gates ERP; requer permissão manage. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "supplier-create",
+        "cadastro de fornecedor",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/suppliers/new"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.inventory",
+      "kind": "page",
+      "page_id": "inventory",
+      "route_pattern": "/apps/supplies/inventory",
+      "title": "Estoque físico",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Saldos físicos por filial e armazém com custo e UM.",
+      "content": "Saldos físicos por filial e armazém com custo e UM. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "inventory",
+        "estoque físico",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/inventory"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.safety-stock",
+      "kind": "page",
+      "page_id": "safety-stock",
+      "route_pattern": "/apps/supplies/safety-stock",
+      "title": "Estoque de segurança",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Cobertura planejada por material: déficit por UM, cobertura, pedidos/SCs/empenhos e projeção.",
+      "content": "Cobertura planejada por material: déficit por UM, cobertura, pedidos/SCs/empenhos e projeção. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "safety-stock",
+        "estoque de segurança",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/safety-stock"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.safety-stock-detail",
+      "kind": "page",
+      "page_id": "safety-stock-detail",
+      "route_pattern": "/apps/supplies/safety-stock/:branch/:code",
+      "title": "Detalhe estoque segurança",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Detalhe por material — exige filial concreta (01 ou 02) antes de abrir.",
+      "content": "Detalhe por material — exige filial concreta (01 ou 02) antes de abrir. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "safety-stock-detail",
+        "detalhe estoque segurança",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/safety-stock/:branch/:code"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.consumption-audit",
+      "kind": "page",
+      "page_id": "consumption-audit",
+      "route_pattern": "/apps/supplies/consumption-audit",
+      "title": "Auditoria de consumo",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Estrutura prevista × empenhos × consumo por OP; busca, detalhe e comparação 2–10.",
+      "content": "Estrutura prevista × empenhos × consumo por OP; busca, detalhe e comparação 2–10. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "consumption-audit",
+        "auditoria de consumo",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/consumption-audit"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.market-intelligence",
+      "kind": "page",
+      "page_id": "market-intelligence",
+      "route_pattern": "/apps/supplies/market-intelligence",
+      "title": "Inteligência de mercado",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Metais, câmbio PTAX, indicadores externos, IPP e Comex; fontes licenciadas com estados honestos.",
+      "content": "Metais, câmbio PTAX, indicadores externos, IPP e Comex; fontes licenciadas com estados honestos. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "market-intelligence",
+        "inteligência de mercado",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/market-intelligence"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.user-profile",
+      "kind": "page",
+      "page_id": "user-profile",
+      "route_pattern": "/apps/supplies/users/:id",
+      "title": "Perfil de usuário",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Perfil próprio e preferências; terceiros exigem autorização (self|admin).",
+      "content": "Perfil próprio e preferências; terceiros exigem autorização (self|admin). Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "user-profile",
+        "perfil de usuário",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/users/:id"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.help",
+      "kind": "page",
+      "page_id": "help",
+      "route_pattern": "/apps/supplies/help",
+      "title": "Ajuda / Manual",
+      "implementation_status": "ROUTED_COMPONENT",
+      "summary": "Manual oficial, FAQ e glossário — fonte canônica de ajuda.",
+      "content": "Manual oficial, FAQ e glossário — fonte canônica de ajuda. Ensinar: filtros, navegação, erros 403/404, loading/empty/partial e URL/F5 conforme a página.",
+      "topic": "portal-navigation",
+      "keywords": [
+        "help",
+        "ajuda / manual",
+        "página",
+        "como usar"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx + pluginRoutes.ts",
+        "locator": "component for route /apps/supplies/help"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.my-tasks",
+      "kind": "page",
+      "page_id": "my-tasks",
+      "route_pattern": "/apps/supplies/my-tasks",
+      "title": "Minhas tarefas",
+      "implementation_status": "PLACEHOLDER",
+      "summary": "Minhas tarefas — página renderizada como PlaceholderPage no App.tsx atual.",
+      "content": "Esta rota existe no menu mas renderiza PlaceholderPage — NÃO ensinar como funcionalidade pronta; explicar que está planejada e apontar alternativas existentes se houver.",
+      "topic": "portal-navigation",
+      "knowledge_status": "PLACEHOLDER",
+      "keywords": [
+        "my-tasks",
+        "minhas tarefas",
+        "planejado",
+        "placeholder"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx",
+        "locator": "PlaceholderPage"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.products",
+      "kind": "page",
+      "page_id": "products",
+      "route_pattern": "/apps/supplies/products",
+      "title": "Produtos / Product 360",
+      "implementation_status": "PLACEHOLDER",
+      "summary": "Produtos / Product 360 — página renderizada como PlaceholderPage no App.tsx atual.",
+      "content": "Esta rota existe no menu mas renderiza PlaceholderPage — NÃO ensinar como funcionalidade pronta; explicar que está planejada e apontar alternativas existentes se houver.",
+      "topic": "portal-navigation",
+      "knowledge_status": "PLACEHOLDER",
+      "keywords": [
+        "products",
+        "produtos / product 360",
+        "planejado",
+        "placeholder"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx",
+        "locator": "PlaceholderPage"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.negotiations",
+      "kind": "page",
+      "page_id": "negotiations",
+      "route_pattern": "/apps/supplies/negotiations",
+      "title": "Negociações",
+      "implementation_status": "PLACEHOLDER",
+      "summary": "Negociações — página renderizada como PlaceholderPage no App.tsx atual.",
+      "content": "Esta rota existe no menu mas renderiza PlaceholderPage — NÃO ensinar como funcionalidade pronta; explicar que está planejada e apontar alternativas existentes se houver.",
+      "topic": "portal-navigation",
+      "knowledge_status": "PLACEHOLDER",
+      "keywords": [
+        "negotiations",
+        "negociações",
+        "planejado",
+        "placeholder"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx",
+        "locator": "PlaceholderPage"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.indicators",
+      "kind": "page",
+      "page_id": "indicators",
+      "route_pattern": "/apps/supplies/indicators",
+      "title": "Indicadores",
+      "implementation_status": "PLACEHOLDER",
+      "summary": "Indicadores — página renderizada como PlaceholderPage no App.tsx atual.",
+      "content": "Esta rota existe no menu mas renderiza PlaceholderPage — NÃO ensinar como funcionalidade pronta; explicar que está planejada e apontar alternativas existentes se houver.",
+      "topic": "portal-navigation",
+      "knowledge_status": "PLACEHOLDER",
+      "keywords": [
+        "indicators",
+        "indicadores",
+        "planejado",
+        "placeholder"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx",
+        "locator": "PlaceholderPage"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "page.administration",
+      "kind": "page",
+      "page_id": "administration",
+      "route_pattern": "/apps/supplies/administration",
+      "title": "Administração",
+      "implementation_status": "PLACEHOLDER",
+      "summary": "Administração — página renderizada como PlaceholderPage no App.tsx atual.",
+      "content": "Esta rota existe no menu mas renderiza PlaceholderPage — NÃO ensinar como funcionalidade pronta; explicar que está planejada e apontar alternativas existentes se houver.",
+      "topic": "portal-navigation",
+      "knowledge_status": "PLACEHOLDER",
+      "keywords": [
+        "administration",
+        "administração",
+        "planejado",
+        "placeholder"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/App.tsx",
+        "locator": "PlaceholderPage"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.otd",
+      "kind": "concept",
+      "term": "OTD",
+      "title": "Conceito: OTD",
+      "summary": "On-Time Delivery — pontualidade de entrega frente ao compromisso. Indicador analítico (Visão geral / página OTD). Não confundir com a lista operacional Entregas / Atrasos (recebimentos MP no período s",
+      "content": "On-Time Delivery — pontualidade de entrega frente ao compromisso. Indicador analítico (Visão geral / página OTD). Não confundir com a lista operacional Entregas / Atrasos (recebimentos MP no período selecionado).",
+      "topic": "glossary",
+      "keywords": [
+        "otd",
+        "on-time",
+        "delivery",
+        "—",
+        "pontualidade",
+        "de",
+        "entrega"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'OTD'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.data-de-digita-o-do-recebimento",
+      "kind": "concept",
+      "term": "Data de digitação do recebimento",
+      "title": "Conceito: Data de digitação do recebimento",
+      "summary": "Data em que o recebimento foi digitado/entrado no sistema. Em Entregas / Atrasos, o filtro de período usa essa data — não a data prometida nem a emissão do pedido de compra.",
+      "content": "Data em que o recebimento foi digitado/entrado no sistema. Em Entregas / Atrasos, o filtro de período usa essa data — não a data prometida nem a emissão do pedido de compra.",
+      "topic": "glossary",
+      "keywords": [
+        "data de digitação do recebimento",
+        "data",
+        "em",
+        "que",
+        "o",
+        "recebimento",
+        "foi"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Data de digitação do recebimento'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.estseg",
+      "kind": "concept",
+      "term": "ESTSEG",
+      "title": "Conceito: ESTSEG",
+      "summary": "Estoque de segurança — cobertura mínima planejada e déficit. Não é o saldo físico de estoque.",
+      "content": "Estoque de segurança — cobertura mínima planejada e déficit. Não é o saldo físico de estoque.",
+      "topic": "glossary",
+      "keywords": [
+        "estseg",
+        "estoque",
+        "de",
+        "segurança",
+        "—",
+        "cobertura",
+        "mínima"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'ESTSEG'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.saldo-f-sico",
+      "kind": "concept",
+      "term": "Saldo físico",
+      "title": "Conceito: Saldo físico",
+      "summary": "Quantidade atual registrada no estoque do ERP para a combinação produto, unidade e armazém. Não significa saldo disponível.",
+      "content": "Quantidade atual registrada no estoque do ERP para a combinação produto, unidade e armazém. Não significa saldo disponível.",
+      "topic": "glossary",
+      "keywords": [
+        "saldo físico",
+        "quantidade",
+        "atual",
+        "registrada",
+        "no",
+        "estoque",
+        "do"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Saldo físico'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.sc",
+      "kind": "concept",
+      "term": "SC",
+      "title": "Conceito: SC",
+      "summary": "Solicitação de compras — pedido interno de compra no escopo de centro de custo e filial.",
+      "content": "Solicitação de compras — pedido interno de compra no escopo de centro de custo e filial.",
+      "topic": "glossary",
+      "keywords": [
+        "sc",
+        "solicitação",
+        "de",
+        "compras",
+        "—",
+        "pedido",
+        "interno"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'SC'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.fornecedor",
+      "kind": "concept",
+      "term": "Fornecedor",
+      "title": "Conceito: Fornecedor",
+      "summary": "Empresa do pedido de compra. Nas listas aparece com avatar de iniciais. A ficha cadastral abre pela lista Fornecedores (clique na linha).",
+      "content": "Empresa do pedido de compra. Nas listas aparece com avatar de iniciais. A ficha cadastral abre pela lista Fornecedores (clique na linha).",
+      "topic": "glossary",
+      "keywords": [
+        "fornecedor",
+        "empresa",
+        "do",
+        "pedido",
+        "de",
+        "compra.",
+        "nas"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Fornecedor'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.enriquecimento-cadastral",
+      "kind": "concept",
+      "term": "Enriquecimento cadastral",
+      "title": "Conceito: Enriquecimento cadastral",
+      "summary": "Comparação da ficha do fornecedor com dados públicos do CNPJ (BrasilAPI, fonte externa). O resultado é uma revisão com sugestões por campo: aceitar/rejeitar é decisão sua e «Preparar atualização» gera",
+      "content": "Comparação da ficha do fornecedor com dados públicos do CNPJ (BrasilAPI, fonte externa). O resultado é uma revisão com sugestões por campo: aceitar/rejeitar é decisão sua e «Preparar atualização» gera somente um rascunho — nada é gravado no Protheus.",
+      "topic": "glossary",
+      "keywords": [
+        "enriquecimento cadastral",
+        "comparação",
+        "da",
+        "ficha",
+        "do",
+        "fornecedor",
+        "com"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Enriquecimento cadastral'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.cadastro-assistido",
+      "kind": "concept",
+      "term": "Cadastro assistido",
+      "title": "Conceito: Cadastro assistido",
+      "summary": "Início do cadastro de fornecedor por consulta pública ao CNPJ: o Portal sugere valores com fonte e data da consulta (horário de Brasília) e você confirma campo a campo. Sugestão não é dado gravado — a",
+      "content": "Início do cadastro de fornecedor por consulta pública ao CNPJ: o Portal sugere valores com fonte e data da consulta (horário de Brasília) e você confirma campo a campo. Sugestão não é dado gravado — a criação real continua sujeita ao gate do ERP. Se já houver cadastros com o CNPJ, eles são listados com código e loja para conferência individual — sem bloquear o preenchimento. A busca por razão social fica disponível quando o provedor for homologado.",
+      "topic": "glossary",
+      "keywords": [
+        "cadastro assistido",
+        "início",
+        "do",
+        "cadastro",
+        "de",
+        "fornecedor",
+        "por"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Cadastro assistido'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.solicitante",
+      "kind": "concept",
+      "term": "Solicitante",
+      "title": "Conceito: Solicitante",
+      "summary": "Pessoa que abriu a SC. Nas listas aparece com avatar de iniciais. A ficha própria está reservada e ainda não navega.",
+      "content": "Pessoa que abriu a SC. Nas listas aparece com avatar de iniciais. A ficha própria está reservada e ainda não navega.",
+      "topic": "glossary",
+      "keywords": [
+        "solicitante",
+        "pessoa",
+        "que",
+        "abriu",
+        "a",
+        "sc.",
+        "nas"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Solicitante'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.pc",
+      "kind": "concept",
+      "term": "PC",
+      "title": "Conceito: PC",
+      "summary": "Pedido de compra — documento com fornecedor após a SC. A ficha mostra itens, entrega prometida, recebimentos e a SC de origem de cada item.",
+      "content": "Pedido de compra — documento com fornecedor após a SC. A ficha mostra itens, entrega prometida, recebimentos e a SC de origem de cada item.",
+      "topic": "glossary",
+      "keywords": [
+        "pc",
+        "pedido",
+        "de",
+        "compra",
+        "—",
+        "documento",
+        "com"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'PC'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.cpv",
+      "kind": "concept",
+      "term": "CPV",
+      "title": "Conceito: CPV",
+      "summary": "Custo dos produtos vendidos — indicador de custo no recorte analítico.",
+      "content": "Custo dos produtos vendidos — indicador de custo no recorte analítico.",
+      "topic": "glossary",
+      "keywords": [
+        "cpv",
+        "custo",
+        "dos",
+        "produtos",
+        "vendidos",
+        "—",
+        "indicador"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'CPV'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.giro",
+      "kind": "concept",
+      "term": "Giro",
+      "title": "Conceito: Giro",
+      "summary": "Rotatividade do estoque. Pode aparecer em vezes (quantas voltas no período) ou em meses de cobertura — não misture as duas leituras.",
+      "content": "Rotatividade do estoque. Pode aparecer em vezes (quantas voltas no período) ou em meses de cobertura — não misture as duas leituras.",
+      "topic": "glossary",
+      "keywords": [
+        "giro",
+        "rotatividade",
+        "do",
+        "estoque.",
+        "pode",
+        "aparecer",
+        "em"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Giro'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.filial-01",
+      "kind": "concept",
+      "term": "Filial 01",
+      "title": "Conceito: Filial 01",
+      "summary": "Unidade Santa Catarina no escopo TOTVS do Portal.",
+      "content": "Unidade Santa Catarina no escopo TOTVS do Portal.",
+      "topic": "glossary",
+      "keywords": [
+        "filial 01",
+        "unidade",
+        "santa",
+        "catarina",
+        "no",
+        "escopo",
+        "totvs"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Filial 01'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.filial-02",
+      "kind": "concept",
+      "term": "Filial 02",
+      "title": "Conceito: Filial 02",
+      "summary": "Unidade Espírito Santo no escopo TOTVS do Portal.",
+      "content": "Unidade Espírito Santo no escopo TOTVS do Portal.",
+      "topic": "glossary",
+      "keywords": [
+        "filial 02",
+        "unidade",
+        "espírito",
+        "santo",
+        "no",
+        "escopo",
+        "totvs"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Filial 02'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.sa2",
+      "kind": "concept",
+      "term": "SA2",
+      "title": "Conceito: SA2",
+      "summary": "Tabela de fornecedores do Protheus. O identificador é código + loja (8 dígitos); CNPJ/CPF não é chave única. O cadastro é compartilhado da empresa 01 — a filial da tela do Portal é filtro, não permiss",
+      "content": "Tabela de fornecedores do Protheus. O identificador é código + loja (8 dígitos); CNPJ/CPF não é chave única. O cadastro é compartilhado da empresa 01 — a filial da tela do Portal é filtro, não permissão sobre fornecedores.",
+      "topic": "glossary",
+      "keywords": [
+        "sa2",
+        "tabela",
+        "de",
+        "fornecedores",
+        "do",
+        "protheus.",
+        "o"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'SA2'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.ptax",
+      "kind": "concept",
+      "term": "PTAX",
+      "title": "Conceito: PTAX",
+      "summary": "Cotação do dólar divulgada pelo Banco Central do Brasil em boletins diários (abertura, intermediárias e fechamento, de compra e venda). Na Inteligência de mercado, a conversão USD→BRL usa a média mens",
+      "content": "Cotação do dólar divulgada pelo Banco Central do Brasil em boletins diários (abertura, intermediárias e fechamento, de compra e venda). Na Inteligência de mercado, a conversão USD→BRL usa a média mensal da PTAX de venda no fechamento; feriados e fins de semana não têm publicação.",
+      "topic": "glossary",
+      "keywords": [
+        "ptax",
+        "cotação",
+        "do",
+        "dólar",
+        "divulgada",
+        "pelo",
+        "banco"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'PTAX'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.pink-sheet",
+      "kind": "concept",
+      "term": "Pink Sheet",
+      "title": "Conceito: Pink Sheet",
+      "summary": "Relatório mensal de preços de commodities do Banco Mundial (World Bank Commodity Markets). As cotações de metais do Portal vêm desse relatório: média mensal em USD por tonelada métrica, publicada com ",
+      "content": "Relatório mensal de preços de commodities do Banco Mundial (World Bank Commodity Markets). As cotações de metais do Portal vêm desse relatório: média mensal em USD por tonelada métrica, publicada com alguns dias de defasagem — por isso o mês corrente pode aparecer vazio.",
+      "topic": "glossary",
+      "keywords": [
+        "pink sheet",
+        "relatório",
+        "mensal",
+        "de",
+        "preços",
+        "de",
+        "commodities"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Pink Sheet'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.cobertura",
+      "kind": "concept",
+      "term": "Cobertura",
+      "title": "Conceito: Cobertura",
+      "summary": "Na Inteligência de mercado, indica se o período tem todas as observações esperadas: Completa (todos os pontos), Parcial (faltam pontos), Sem câmbio (falta PTAX para converter) ou Sem dados.",
+      "content": "Na Inteligência de mercado, indica se o período tem todas as observações esperadas: Completa (todos os pontos), Parcial (faltam pontos), Sem câmbio (falta PTAX para converter) ou Sem dados.",
+      "topic": "glossary",
+      "keywords": [
+        "cobertura",
+        "na",
+        "inteligência",
+        "de",
+        "mercado,",
+        "indica",
+        "se"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Cobertura'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.us-t-e-us-lb",
+      "kind": "concept",
+      "term": "US$/t e US$/lb",
+      "title": "Conceito: US$/t e US$/lb",
+      "summary": "Unidades nativas das cotações de metais na Inteligência de mercado: dólar por tonelada métrica (LME/spot/Pink Sheet) e dólar por libra (cobre COMEX). Séries com unidades diferentes nunca são somadas n",
+      "content": "Unidades nativas das cotações de metais na Inteligência de mercado: dólar por tonelada métrica (LME/spot/Pink Sheet) e dólar por libra (cobre COMEX). Séries com unidades diferentes nunca são somadas nem comparadas — gráficos e comparações respeitam a unidade de cada instrumento.",
+      "topic": "glossary",
+      "keywords": [
+        "us$/t e us$/lb",
+        "unidades",
+        "nativas",
+        "das",
+        "cotações",
+        "de",
+        "metais"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'US$/t e US$/lb'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.indispon-vel-por-licen-a",
+      "kind": "concept",
+      "term": "Indisponível por licença",
+      "title": "Conceito: Indisponível por licença",
+      "summary": "Na Inteligência de mercado, instrumento cuja fonte ainda não tem direito de exibição comprovado. O Portal bloqueia a consulta no serviço de dados, não oferece a série como selecionável e nunca mostra ",
+      "content": "Na Inteligência de mercado, instrumento cuja fonte ainda não tem direito de exibição comprovado. O Portal bloqueia a consulta no serviço de dados, não oferece a série como selecionável e nunca mostra valores antigos — até que a revisão institucional aprove a exibição.",
+      "topic": "glossary",
+      "keywords": [
+        "indisponível por licença",
+        "na",
+        "inteligência",
+        "de",
+        "mercado,",
+        "instrumento",
+        "cuja"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Indisponível por licença'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "concept.desatualizado-stale",
+      "kind": "concept",
+      "term": "Desatualizado (stale)",
+      "title": "Conceito: Desatualizado (stale)",
+      "summary": "Na Inteligência de mercado, indica que a fonte está atrasada em relação ao seu ciclo de publicação — por exemplo, o Pink Sheet mensal ainda não publicou o mês esperado. Consultar um período histórico ",
+      "content": "Na Inteligência de mercado, indica que a fonte está atrasada em relação ao seu ciclo de publicação — por exemplo, o Pink Sheet mensal ainda não publicou o mês esperado. Consultar um período histórico antigo não torna o dado desatualizado: o aviso reflete o atraso da fonte, não a idade da consulta.",
+      "topic": "glossary",
+      "keywords": [
+        "desatualizado (stale)",
+        "na",
+        "inteligência",
+        "de",
+        "mercado,",
+        "indica",
+        "que"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/glossaryContent.ts",
+        "locator": "term 'Desatualizado (stale)'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.st-01",
+      "kind": "method",
+      "method_id": "ST-01",
+      "title": "Matriz de Kraljic",
+      "category": "strategic",
+      "objective": "Segmentar categorias por impacto econômico × risco de suprimento; escolher estratégia por quadrante",
+      "summary": "Segmentar categorias por impacto econômico × risco de suprimento; escolher estratégia por quadrante",
+      "content": "Matriz de Kraljic: Segmentar categorias por impacto econômico × risco de suprimento; escolher estratégia por quadrante. Dados potenciais: spend por categoria, risco mensurado. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "risco de fornecedor"
+      ],
+      "required_inputs": "spend por categoria, risco mensurado",
+      "keywords": [
+        "ST-01",
+        "matriz de kraljic",
+        "segmentar",
+        "categorias",
+        "por",
+        "impacto",
+        "econômico"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-01"
+      },
+      "evidence_class": "PROVEN",
+      "concept": "Segmentação bidimensional de categorias de compra",
+      "formula_or_method": "Quadrantes: commodities (baixo impacto, baixo risco), alavanca (alto impacto, baixo risco), gargalo (baixo impacto, alto risco), estratégicos (alto impacto, alto risco)",
+      "step_by_step": "1) Agrupar spend por categoria; 2) medir risco de suprimento por fonte homologada (não inferir); 3) posicionar quadrante; 4) definir estratégia por quadrante",
+      "interpretation": "Quadrante determina postura: competitiva, transacional, garantia de suprimento ou parceria.",
+      "portal_application": "No Portal: read(purchase-orders)+read(suppliers) fornecem volume/dependência; risco exige fonte homologada — sem ela Kraljic é apenas ilustrativa",
+      "limitations": "Sem medida de risco aprovada o quadrante é julgamento; não classificar sem dados de dependência"
+    },
+    {
+      "knowledge_id": "method.st-02",
+      "kind": "method",
+      "method_id": "ST-02",
+      "title": "Análise ABC / Pareto",
+      "category": "strategic",
+      "objective": "Priorizar materiais, fornecedores ou gastos por valor acumulado",
+      "summary": "Priorizar materiais, fornecedores ou gastos por valor acumulado",
+      "content": "Análise ABC / Pareto: Priorizar materiais, fornecedores ou gastos por valor acumulado. Dados potenciais: valor comparável, período, base de itens. Prioridade P1. Status: ANALYSIS_ENABLED — a SURI possui capacidades MCP cujos dados alimentam esta análise.",
+      "topic": "supplies-methods",
+      "knowledge_status": "ANALYSIS_ENABLED",
+      "problem_domains": [
+        "estoque elevado"
+      ],
+      "required_inputs": "valor comparável, período, base de itens",
+      "keywords": [
+        "ST-02",
+        "análise abc / pareto",
+        "priorizar",
+        "materiais,",
+        "fornecedores",
+        "ou",
+        "gastos"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-02"
+      },
+      "evidence_class": "PROVEN",
+      "concept": "Curva de concentração por valor acumulado",
+      "formula_or_method": "Ordenar por valor desc; classe A≈80% acumulado, B≈15%, C≈5%",
+      "step_by_step": "1) Obter valores do período e chave (material/fornecedor); 2) ordenar desc; 3) acumular; 4) marcar cortes",
+      "interpretation": "Foco em A; C recebe gestão simplificada.",
+      "portal_application": "read(inventory,items)+read(purchase-orders) fornecem valores por chave — ANALYSIS_ENABLED com dados suficientes",
+      "limitations": "Exige valor comparável e período comum; amostra truncada ≠ curva populacional"
+    },
+    {
+      "knowledge_id": "method.st-03",
+      "kind": "method",
+      "method_id": "ST-03",
+      "title": "Spend Analysis",
+      "category": "strategic",
+      "objective": "Analisar gastos por fornecedor, categoria, unidade e tempo",
+      "summary": "Analisar gastos por fornecedor, categoria, unidade e tempo",
+      "content": "Spend Analysis: Analisar gastos por fornecedor, categoria, unidade e tempo. Dados potenciais: preço/quantidade, natureza da despesa, períodos. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "preço/quantidade, natureza da despesa, períodos",
+      "keywords": [
+        "ST-03",
+        "spend analysis",
+        "analisar",
+        "gastos",
+        "por",
+        "fornecedor,",
+        "categoria,"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-03"
+      },
+      "evidence_class": "PROVEN",
+      "concept": "Análise estruturada de gastos",
+      "formula_or_method": "Spend por dimensão (fornecedor, categoria, filial, período)",
+      "step_by_step": "1) Valores do período; 2) dimensão; 3) agregação; 4) participação",
+      "interpretation": "Base para ABC, concentração e negociação.",
+      "portal_application": "read(purchase-orders) dá valor por linha/fornecedor — insumo, não análise pronta",
+      "limitations": "Sem natureza da despesa completa, recorte é parcial"
+    },
+    {
+      "knowledge_id": "method.st-04",
+      "kind": "method",
+      "method_id": "ST-04",
+      "title": "Category Management",
+      "category": "strategic",
+      "objective": "Estratégia, metas, pipeline e governança por categoria",
+      "summary": "Estratégia, metas, pipeline e governança por categoria",
+      "content": "Category Management: Estratégia, metas, pipeline e governança por categoria. Dados potenciais: taxonomia, spend, demanda, risco. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "taxonomia, spend, demanda, risco",
+      "keywords": [
+        "ST-04",
+        "category management",
+        "estratégia,",
+        "metas,",
+        "pipeline",
+        "e",
+        "governança"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-04"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.st-05",
+      "kind": "method",
+      "method_id": "ST-05",
+      "title": "Strategic Sourcing",
+      "category": "strategic",
+      "objective": "Investigação, mercado, opções, seleção e acompanhamento",
+      "summary": "Investigação, mercado, opções, seleção e acompanhamento",
+      "content": "Strategic Sourcing: Investigação, mercado, opções, seleção e acompanhamento. Dados potenciais: demanda, fornecedores, propostas, critérios. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "demanda, fornecedores, propostas, critérios",
+      "keywords": [
+        "ST-05",
+        "strategic sourcing",
+        "investigação,",
+        "mercado,",
+        "opções,",
+        "seleção",
+        "e"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-05"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.st-06",
+      "kind": "method",
+      "method_id": "ST-06",
+      "title": "TCO (Total Cost of Ownership)",
+      "category": "strategic",
+      "objective": "Comparar custo total de aquisição e operação, não só preço",
+      "summary": "Comparar custo total de aquisição e operação, não só preço",
+      "content": "TCO (Total Cost of Ownership): Comparar custo total de aquisição e operação, não só preço. Dados potenciais: preço, frete, impostos, qualidade, manutenção. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "aumento de preços"
+      ],
+      "required_inputs": "preço, frete, impostos, qualidade, manutenção",
+      "keywords": [
+        "ST-06",
+        "tco (total cost of ownership)",
+        "comparar",
+        "custo",
+        "total",
+        "de",
+        "aquisição"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-06"
+      },
+      "evidence_class": "PROVEN",
+      "concept": "Custo total de posse além do preço",
+      "formula_or_method": "TCO = preço + frete + tributos + qualidade + manutenção + descarte",
+      "step_by_step": "1) Componentes de custo aplicáveis; 2) custeá-los; 3) comparar por opção",
+      "interpretation": "Menor preço ≠ menor TCO.",
+      "portal_application": "dados de frete/qualidade exigem fontes fora do Portal — conhecimento explicativo",
+      "limitations": "Sem custo por componente, TCO é checklist qualitativo"
+    },
+    {
+      "knowledge_id": "method.st-07",
+      "kind": "method",
+      "method_id": "ST-07",
+      "title": "Should-Cost",
+      "category": "strategic",
+      "objective": "Estimar faixa plausível de custos com estrutura de insumos",
+      "summary": "Estimar faixa plausível de custos com estrutura de insumos",
+      "content": "Should-Cost: Estimar faixa plausível de custos com estrutura de insumos. Dados potenciais: BOM, índices, produtividade. Prioridade P3. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "BOM, índices, produtividade",
+      "keywords": [
+        "ST-07",
+        "should-cost",
+        "estimar",
+        "faixa",
+        "plausível",
+        "de",
+        "custos"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-07"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.st-08",
+      "kind": "method",
+      "method_id": "ST-08",
+      "title": "RFx (RFI/RFQ/RFP)",
+      "category": "strategic",
+      "objective": "Requisitos e critérios para informação, cotação e proposta",
+      "summary": "Requisitos e critérios para informação, cotação e proposta",
+      "content": "RFx (RFI/RFQ/RFP): Requisitos e critérios para informação, cotação e proposta. Dados potenciais: especificação, critérios, fornecedores. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "especificação, critérios, fornecedores",
+      "keywords": [
+        "ST-08",
+        "rfx (rfi/rfq/rfp)",
+        "requisitos",
+        "e",
+        "critérios",
+        "para",
+        "informação,"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-08"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.st-09",
+      "kind": "method",
+      "method_id": "ST-09",
+      "title": "Mapa comparativo de propostas",
+      "category": "strategic",
+      "objective": "Comparar ofertas com critérios e pesos declarados",
+      "summary": "Comparar ofertas com critérios e pesos declarados",
+      "content": "Mapa comparativo de propostas: Comparar ofertas com critérios e pesos declarados. Dados potenciais: cotação, prazo, qualidade, pesos. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "cotação, prazo, qualidade, pesos",
+      "keywords": [
+        "ST-09",
+        "mapa comparativo de propostas",
+        "comparar",
+        "ofertas",
+        "com",
+        "critérios",
+        "e"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-09"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.st-10",
+      "kind": "method",
+      "method_id": "ST-10",
+      "title": "BATNA e ZOPA",
+      "category": "strategic",
+      "objective": "Alternativas e faixa negociável sem impor preços",
+      "summary": "Alternativas e faixa negociável sem impor preços",
+      "content": "BATNA e ZOPA: Alternativas e faixa negociável sem impor preços. Dados potenciais: propostas verificadas, objetivos. Prioridade P3. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "propostas verificadas, objetivos",
+      "keywords": [
+        "ST-10",
+        "batna e zopa",
+        "alternativas",
+        "e",
+        "faixa",
+        "negociável",
+        "sem"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-10"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.st-11",
+      "kind": "method",
+      "method_id": "ST-11",
+      "title": "Make-or-Buy",
+      "category": "strategic",
+      "objective": "Avaliar produzir internamente vs comprar",
+      "summary": "Avaliar produzir internamente vs comprar",
+      "content": "Make-or-Buy: Avaliar produzir internamente vs comprar. Dados potenciais: capacidade, custos, risco, lead time. Prioridade P3. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "capacidade, custos, risco, lead time",
+      "keywords": [
+        "ST-11",
+        "make-or-buy",
+        "avaliar",
+        "produzir",
+        "internamente",
+        "vs",
+        "comprar"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-11"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.st-12",
+      "kind": "method",
+      "method_id": "ST-12",
+      "title": "Sourcing portfolio / dual sourcing",
+      "category": "strategic",
+      "objective": "Diversificação e dependência de fornecedores",
+      "summary": "Diversificação e dependência de fornecedores",
+      "content": "Sourcing portfolio / dual sourcing: Diversificação e dependência de fornecedores. Dados potenciais: dependência, volume, capacidade alternativa. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "dependência, volume, capacidade alternativa",
+      "keywords": [
+        "ST-12",
+        "sourcing portfolio / dual sourcing",
+        "diversificação",
+        "e",
+        "dependência",
+        "de",
+        "fornecedores"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-12"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.st-13",
+      "kind": "method",
+      "method_id": "ST-13",
+      "title": "Price Variance / PPV",
+      "category": "strategic",
+      "objective": "Diferença de preço frente a baseline definido",
+      "summary": "Diferença de preço frente a baseline definido",
+      "content": "Price Variance / PPV: Diferença de preço frente a baseline definido. Dados potenciais: preços comparáveis, baseline homologado. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "aumento de preços"
+      ],
+      "required_inputs": "preços comparáveis, baseline homologado",
+      "keywords": [
+        "ST-13",
+        "price variance / ppv",
+        "diferença",
+        "de",
+        "preço",
+        "frente",
+        "a"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-13"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.st-14",
+      "kind": "method",
+      "method_id": "ST-14",
+      "title": "Cost Avoidance vs Realized Savings",
+      "category": "strategic",
+      "objective": "Custos evitados vs economias efetivas",
+      "summary": "Custos evitados vs economias efetivas",
+      "content": "Cost Avoidance vs Realized Savings: Custos evitados vs economias efetivas. Dados potenciais: baseline aprovado, preço realizado. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "baseline aprovado, preço realizado",
+      "keywords": [
+        "ST-14",
+        "cost avoidance vs realized savings",
+        "custos",
+        "evitados",
+        "vs",
+        "economias",
+        "efetivas"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-14"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.st-15",
+      "kind": "method",
+      "method_id": "ST-15",
+      "title": "Benchmarking de Compras",
+      "category": "strategic",
+      "objective": "Medidas normalizadas entre unidades/períodos",
+      "summary": "Medidas normalizadas entre unidades/períodos",
+      "content": "Benchmarking de Compras: Medidas normalizadas entre unidades/períodos. Dados potenciais: métricas consistentes, peer set. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "aumento de preços"
+      ],
+      "required_inputs": "métricas consistentes, peer set",
+      "keywords": [
+        "ST-15",
+        "benchmarking de compras",
+        "medidas",
+        "normalizadas",
+        "entre",
+        "unidades/períodos"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "ST-15"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.su-01",
+      "kind": "method",
+      "method_id": "SU-01",
+      "title": "Supplier Scorecard",
+      "category": "supplier",
+      "objective": "Painel ponderado de prazo, qualidade, custo e conformidade",
+      "summary": "Painel ponderado de prazo, qualidade, custo e conformidade",
+      "content": "Supplier Scorecard: Painel ponderado de prazo, qualidade, custo e conformidade. Dados potenciais: entregas, incidentes, pesos aprovados. Prioridade P1. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "atrasos"
+      ],
+      "required_inputs": "entregas, incidentes, pesos aprovados",
+      "keywords": [
+        "SU-01",
+        "supplier scorecard",
+        "painel",
+        "ponderado",
+        "de",
+        "prazo,",
+        "qualidade,"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "SU-01"
+      },
+      "evidence_class": "PROVEN",
+      "concept": "Painel ponderado de desempenho do fornecedor",
+      "formula_or_method": "Score = Σ(peso_i × métrica_i) com pesos declarados e aprovados",
+      "step_by_step": "1) Escolher métricas (OTD, qualidade, resposta); 2) fixar pesos aprovados; 3) normalizar escalas; 4) compor",
+      "interpretation": "Score comparável apenas com mesma composição de pesos.",
+      "portal_application": "read(otd)+read(suppliers)+entregas fornecem métricas brutas; pesos exigem decisão do owner",
+      "limitations": "Pesos inventados invalidam o score; sempre declarar a composição"
+    },
+    {
+      "knowledge_id": "method.su-02",
+      "kind": "method",
+      "method_id": "SU-02",
+      "title": "SRM",
+      "category": "supplier",
+      "objective": "Segmentar relacionamento e planos de melhoria",
+      "summary": "Segmentar relacionamento e planos de melhoria",
+      "content": "SRM: Segmentar relacionamento e planos de melhoria. Dados potenciais: fornecedores, histórico, criticidade. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "fornecedores, histórico, criticidade",
+      "keywords": [
+        "SU-02",
+        "srm",
+        "segmentar",
+        "relacionamento",
+        "e",
+        "planos",
+        "de"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "SU-02"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.su-03",
+      "kind": "method",
+      "method_id": "SU-03",
+      "title": "Supplier Preferencing",
+      "category": "supplier",
+      "objective": "Atratividade como cliente para o fornecedor",
+      "summary": "Atratividade como cliente para o fornecedor",
+      "content": "Supplier Preferencing: Atratividade como cliente para o fornecedor. Dados potenciais: dados qualitativos validados. Prioridade P3. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "dados qualitativos validados",
+      "keywords": [
+        "SU-03",
+        "supplier preferencing",
+        "atratividade",
+        "como",
+        "cliente",
+        "para",
+        "o"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "SU-03"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.su-04",
+      "kind": "method",
+      "method_id": "SU-04",
+      "title": "Matriz de risco de fornecimento",
+      "category": "supplier",
+      "objective": "Probabilidade × impacto × mitigação",
+      "summary": "Probabilidade × impacto × mitigação",
+      "content": "Matriz de risco de fornecimento: Probabilidade × impacto × mitigação. Dados potenciais: histórico, capacidade, riscos. Prioridade P1. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "risco de fornecedor"
+      ],
+      "required_inputs": "histórico, capacidade, riscos",
+      "keywords": [
+        "SU-04",
+        "matriz de risco de fornecimento",
+        "probabilidade",
+        "×",
+        "impacto",
+        "×",
+        "mitigação"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "SU-04"
+      },
+      "evidence_class": "PROVEN",
+      "concept": "Probabilidade × impacto de falha de suprimento",
+      "formula_or_method": "Score de risco = P(falha) × impacto, com mitigação e owner",
+      "step_by_step": "1) Listar riscos por item/fornecedor; 2) estimar P e impacto com justificativa; 3) registrar mitigação",
+      "interpretation": "Priorizar quadrante alto-alto com plano de contingência.",
+      "portal_application": "read(safety-stock)+read(deliveries) evidenciam exposição; P é avaliação declarada",
+      "limitations": "Probabilidade inventada = ilusão de precisão"
+    },
+    {
+      "knowledge_id": "method.su-05",
+      "kind": "method",
+      "method_id": "SU-05",
+      "title": "Concentração / Single-Source Exposure",
+      "category": "supplier",
+      "objective": "Dependência por fornecedor/material/categoria",
+      "summary": "Dependência por fornecedor/material/categoria",
+      "content": "Concentração / Single-Source Exposure: Dependência por fornecedor/material/categoria. Dados potenciais: volume por fornecedor, item, período. Prioridade P1. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "risco de fornecedor"
+      ],
+      "required_inputs": "volume por fornecedor, item, período",
+      "keywords": [
+        "SU-05",
+        "concentração / single-source exposure",
+        "dependência",
+        "por",
+        "fornecedor/material/categoria"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "SU-05"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.su-06",
+      "kind": "method",
+      "method_id": "SU-06",
+      "title": "OTD e OTIF",
+      "category": "supplier",
+      "objective": "Pontualidade; OTIF requer comprovação de completude",
+      "summary": "Pontualidade; OTIF requer comprovação de completude",
+      "content": "OTD e OTIF: Pontualidade; OTIF requer comprovação de completude. Dados potenciais: datas acordadas/reais, quantidades. Prioridade P1. Status: ANALYSIS_ENABLED — a SURI possui capacidades MCP cujos dados alimentam esta análise.",
+      "topic": "supplies-methods",
+      "knowledge_status": "ANALYSIS_ENABLED",
+      "problem_domains": [
+        "atrasos"
+      ],
+      "required_inputs": "datas acordadas/reais, quantidades",
+      "keywords": [
+        "SU-06",
+        "otd e otif",
+        "pontualidade;",
+        "otif",
+        "requer",
+        "comprovação",
+        "de"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "SU-06"
+      },
+      "evidence_class": "PROVEN",
+      "concept": "Pontualidade de entrega (e completude para OTIF)",
+      "formula_or_method": "OTD% = entregues no prazo / elegíveis × 100 (população e regra do analytics)",
+      "step_by_step": "1) População elegível do período/filial; 2) marcar promessa vs real; 3) agregar",
+      "interpretation": "Sempre citar período, filial e população; difere de entregas-recebidas.",
+      "portal_application": "read(otd,aggregate|series)+analyze(overview_summary) — RUNTIME_PROVEN",
+      "limitations": "OTD do analytics ≠ lista de recebimentos late/on_time"
+    },
+    {
+      "knowledge_id": "method.su-07",
+      "kind": "method",
+      "method_id": "SU-07",
+      "title": "Supplier Development Plan",
+      "category": "supplier",
+      "objective": "Ações com responsável, prazo e evidências",
+      "summary": "Ações com responsável, prazo e evidências",
+      "content": "Supplier Development Plan: Ações com responsável, prazo e evidências. Dados potenciais: desvios, metas, owners. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "desvios, metas, owners",
+      "keywords": [
+        "SU-07",
+        "supplier development plan",
+        "ações",
+        "com",
+        "responsável,",
+        "prazo",
+        "e"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "SU-07"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.su-08",
+      "kind": "method",
+      "method_id": "SU-08",
+      "title": "Early Warning Indicators",
+      "category": "supplier",
+      "objective": "Alertas de desvios de prazo, concentração e risco",
+      "summary": "Alertas de desvios de prazo, concentração e risco",
+      "content": "Early Warning Indicators: Alertas de desvios de prazo, concentração e risco. Dados potenciais: séries históricas, limites. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "séries históricas, limites",
+      "keywords": [
+        "SU-08",
+        "early warning indicators",
+        "alertas",
+        "de",
+        "desvios",
+        "de",
+        "prazo,"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "SU-08"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.su-09",
+      "kind": "method",
+      "method_id": "SU-09",
+      "title": "Vendor Qualification / Onboarding",
+      "category": "supplier",
+      "objective": "Elegibilidade documental, técnica e compliance",
+      "summary": "Elegibilidade documental, técnica e compliance",
+      "content": "Vendor Qualification / Onboarding: Elegibilidade documental, técnica e compliance. Dados potenciais: documentação e requisitos. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "documentação e requisitos",
+      "keywords": [
+        "SU-09",
+        "vendor qualification / onboarding",
+        "elegibilidade",
+        "documental,",
+        "técnica",
+        "e",
+        "compliance"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "SU-09"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.su-10",
+      "kind": "method",
+      "method_id": "SU-10",
+      "title": "Supply Chain Risk Register",
+      "category": "supplier",
+      "objective": "Risco, responsável, controle, residual e revisão",
+      "summary": "Risco, responsável, controle, residual e revisão",
+      "content": "Supply Chain Risk Register: Risco, responsável, controle, residual e revisão. Dados potenciais: inputs validados por owners. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "inputs validados por owners",
+      "keywords": [
+        "SU-10",
+        "supply chain risk register",
+        "risco,",
+        "responsável,",
+        "controle,",
+        "residual",
+        "e"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "SU-10"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.su-11",
+      "kind": "method",
+      "method_id": "SU-11",
+      "title": "Supply Resilience / Scenario",
+      "category": "supplier",
+      "objective": "Simular atrasos, bloqueio ou alteração de demanda",
+      "summary": "Simular atrasos, bloqueio ou alteração de demanda",
+      "content": "Supply Resilience / Scenario: Simular atrasos, bloqueio ou alteração de demanda. Dados potenciais: consumo, cobertura, alternativas. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "risco de fornecedor"
+      ],
+      "required_inputs": "consumo, cobertura, alternativas",
+      "keywords": [
+        "SU-11",
+        "supply resilience / scenario",
+        "simular",
+        "atrasos,",
+        "bloqueio",
+        "ou",
+        "alteração"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "SU-11"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.in-01",
+      "kind": "method",
+      "method_id": "IN-01",
+      "title": "Giro de Estoques",
+      "category": "inventory",
+      "objective": "Renovação por custo de consumo e estoque médio",
+      "summary": "Renovação por custo de consumo e estoque médio",
+      "content": "Giro de Estoques: Renovação por custo de consumo e estoque médio. Dados potenciais: custo do consumo, estoque médio. Prioridade P1. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "estoque elevado"
+      ],
+      "required_inputs": "custo do consumo, estoque médio",
+      "keywords": [
+        "IN-01",
+        "giro de estoques",
+        "renovação",
+        "por",
+        "custo",
+        "de",
+        "consumo"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-01"
+      },
+      "evidence_class": "PROVEN",
+      "concept": "Renovação do estoque pelo consumo",
+      "formula_or_method": "Giro = custo do consumo do período / estoque médio (mesmo critério contábil)",
+      "step_by_step": "1) Consumo no critério de custo do período; 2) estoque médio do período (não instantâneo); 3) dividir",
+      "interpretation": "Giro baixo = capital parado; alto = risco de ruptura.",
+      "portal_application": "read(inventory,summary) fornece saldo/custo; consumo histórico exige série — cuidado com snapshot único",
+      "limitations": "Saldo instantâneo ≠ estoque médio; período curto distorce"
+    },
+    {
+      "knowledge_id": "method.in-02",
+      "kind": "method",
+      "method_id": "IN-02",
+      "title": "Cobertura / Days of Supply",
+      "category": "inventory",
+      "objective": "Dias cobertos por saldo e consumo médio",
+      "summary": "Dias cobertos por saldo e consumo médio",
+      "content": "Cobertura / Days of Supply: Dias cobertos por saldo e consumo médio. Dados potenciais: saldo útil, demanda, janela. Prioridade P1. Status: ANALYSIS_ENABLED — a SURI possui capacidades MCP cujos dados alimentam esta análise.",
+      "topic": "supplies-methods",
+      "knowledge_status": "ANALYSIS_ENABLED",
+      "problem_domains": [
+        "estoque elevado"
+      ],
+      "required_inputs": "saldo útil, demanda, janela",
+      "keywords": [
+        "IN-02",
+        "cobertura / days of supply",
+        "dias",
+        "cobertos",
+        "por",
+        "saldo",
+        "e"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-02"
+      },
+      "evidence_class": "PROVEN",
+      "concept": "Dias de suprimento pelo saldo útil",
+      "formula_or_method": "Cobertura (dias) = saldo útil / consumo médio diário",
+      "step_by_step": "1) Saldo utilizável; 2) consumo médio diário da janela; 3) dividir",
+      "interpretation": "Cobertura abaixo do lead time = risco de ruptura.",
+      "portal_application": "read(safety-stock,summary/items) já expõe cobertura calculada pelo owner — reuse, não recalcule",
+      "limitations": "Consumo médio exige histórico compatível com a janela"
+    },
+    {
+      "knowledge_id": "method.in-03",
+      "kind": "method",
+      "method_id": "IN-03",
+      "title": "Estoque de Segurança",
+      "category": "inventory",
+      "objective": "Proteção para variabilidade e objetivos de serviço",
+      "summary": "Proteção para variabilidade e objetivos de serviço",
+      "content": "Estoque de Segurança: Proteção para variabilidade e objetivos de serviço. Dados potenciais: demanda, lead time, variabilidade. Prioridade P1. Status: ANALYSIS_ENABLED — a SURI possui capacidades MCP cujos dados alimentam esta análise.",
+      "topic": "supplies-methods",
+      "knowledge_status": "ANALYSIS_ENABLED",
+      "problem_domains": [
+        "ruptura de materiais"
+      ],
+      "required_inputs": "demanda, lead time, variabilidade",
+      "keywords": [
+        "IN-03",
+        "estoque de segurança",
+        "proteção",
+        "para",
+        "variabilidade",
+        "e",
+        "objetivos"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-03"
+      },
+      "evidence_class": "PROVEN",
+      "concept": "Proteção contra variabilidade de demanda e prazo",
+      "formula_or_method": "ESTSEG definido pela política do ERP; déficit = demanda coberta − saldo disponível",
+      "step_by_step": "1) Política do ERP (owner); 2) saldo disponível; 3) demanda prevista até cobertura; 4) comparar",
+      "interpretation": "Déficit por UM indica quanto falta comprar.",
+      "portal_application": "read(safety-stock,*) entrega déficit, cobertura e projeção do owner — ANALYSIS_ENABLED",
+      "limitations": "Não inventar fórmula de ESTSEG; a política é do ERP"
+    },
+    {
+      "knowledge_id": "method.in-04",
+      "kind": "method",
+      "method_id": "IN-04",
+      "title": "Ponto de Pedido (ROP)",
+      "category": "inventory",
+      "objective": "Reposição: demanda durante prazo + proteção",
+      "summary": "Reposição: demanda durante prazo + proteção",
+      "content": "Ponto de Pedido (ROP): Reposição: demanda durante prazo + proteção. Dados potenciais: lead time, consumo, estoque segurança. Prioridade P1. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "ruptura de materiais"
+      ],
+      "required_inputs": "lead time, consumo, estoque segurança",
+      "keywords": [
+        "IN-04",
+        "ponto de pedido (rop)",
+        "reposição:",
+        "demanda",
+        "durante",
+        "prazo",
+        "+"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-04"
+      },
+      "evidence_class": "PROVEN",
+      "concept": "Gatilho de reposição pelo consumo no lead time",
+      "formula_or_method": "ROP = consumo no lead time + estoque de segurança",
+      "step_by_step": "1) Consumo médio; 2) lead time homologado; 3) ESTSEG; 4) somar",
+      "interpretation": "Abaixo do ROP = emitir requisição.",
+      "portal_application": "read(safety-stock,details) expõe projeção; lead time exige fonte homologada",
+      "limitations": "Sem lead time aprovado é apenas ilustração"
+    },
+    {
+      "knowledge_id": "method.in-05",
+      "kind": "method",
+      "method_id": "IN-05",
+      "title": "ABC-XYZ",
+      "category": "inventory",
+      "objective": "Valor econômico × variabilidade do consumo",
+      "summary": "Valor econômico × variabilidade do consumo",
+      "content": "ABC-XYZ: Valor econômico × variabilidade do consumo. Dados potenciais: consumo temporal, valor. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "consumo temporal, valor",
+      "keywords": [
+        "IN-05",
+        "abc-xyz",
+        "valor",
+        "econômico",
+        "×",
+        "variabilidade",
+        "do"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-05"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.in-06",
+      "kind": "method",
+      "method_id": "IN-06",
+      "title": "EOQ / Lote Econômico",
+      "category": "inventory",
+      "objective": "Custo fixo do pedido vs manutenção; demanda estável",
+      "summary": "Custo fixo do pedido vs manutenção; demanda estável",
+      "content": "EOQ / Lote Econômico: Custo fixo do pedido vs manutenção; demanda estável. Dados potenciais: demanda, custo pedido, manutenção. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "demanda, custo pedido, manutenção",
+      "keywords": [
+        "IN-06",
+        "eoq / lote econômico",
+        "custo",
+        "fixo",
+        "do",
+        "pedido",
+        "vs"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-06"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.in-07",
+      "kind": "method",
+      "method_id": "IN-07",
+      "title": "Lead Time Analysis",
+      "category": "inventory",
+      "objective": "Pedido, confirmação, trânsito, recebimento e variabilidade",
+      "summary": "Pedido, confirmação, trânsito, recebimento e variabilidade",
+      "content": "Lead Time Analysis: Pedido, confirmação, trânsito, recebimento e variabilidade. Dados potenciais: carimbos temporais. Prioridade P1. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "ruptura de materiais"
+      ],
+      "required_inputs": "carimbos temporais",
+      "keywords": [
+        "IN-07",
+        "lead time analysis",
+        "pedido,",
+        "confirmação,",
+        "trânsito,",
+        "recebimento",
+        "e"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-07"
+      },
+      "evidence_class": "PROVEN",
+      "concept": "Decomposição do tempo total de suprimento",
+      "formula_or_method": "Lead time = pedido→confirmação + preparação + trânsito + recebimento",
+      "step_by_step": "1) Carimbos temporais confiáveis por etapa; 2) estatísticas por fornecedor/material; 3) variabilidade",
+      "interpretation": "Variância alta pede ESTSEG maior ou renegociação.",
+      "portal_application": "read(purchase-orders)+read(deliveries) fornecem datas; eventos intermedios exigem fonte",
+      "limitations": "Sem eventos confiáveis por etapa, só total aproximado"
+    },
+    {
+      "knowledge_id": "method.in-08",
+      "kind": "method",
+      "method_id": "IN-08",
+      "title": "Ruptura / Stockout Rate",
+      "category": "inventory",
+      "objective": "Ocorrências e duração de indisponibilidade",
+      "summary": "Ocorrências e duração de indisponibilidade",
+      "content": "Ruptura / Stockout Rate: Ocorrências e duração de indisponibilidade. Dados potenciais: eventos de ruptura. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "eventos de ruptura",
+      "keywords": [
+        "IN-08",
+        "ruptura / stockout rate",
+        "ocorrências",
+        "e",
+        "duração",
+        "de",
+        "indisponibilidade"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-08"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.in-09",
+      "kind": "method",
+      "method_id": "IN-09",
+      "title": "Obsolescência / Slow-Moving",
+      "category": "inventory",
+      "objective": "Sem giro e risco de obsolescência",
+      "summary": "Sem giro e risco de obsolescência",
+      "content": "Obsolescência / Slow-Moving: Sem giro e risco de obsolescência. Dados potenciais: última movimentação, saldo. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "estoque elevado"
+      ],
+      "required_inputs": "última movimentação, saldo",
+      "keywords": [
+        "IN-09",
+        "obsolescência / slow-moving",
+        "sem",
+        "giro",
+        "e",
+        "risco",
+        "de"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-09"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.in-10",
+      "kind": "method",
+      "method_id": "IN-10",
+      "title": "MRP / Net Requirements",
+      "category": "inventory",
+      "objective": "Necessidades líquidas e dependências de BOM",
+      "summary": "Necessidades líquidas e dependências de BOM",
+      "content": "MRP / Net Requirements: Necessidades líquidas e dependências de BOM. Dados potenciais: BOM, demanda, estoques (owner PCP). Prioridade P3. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "BOM, demanda, estoques (owner PCP)",
+      "keywords": [
+        "IN-10",
+        "mrp / net requirements",
+        "necessidades",
+        "líquidas",
+        "e",
+        "dependências",
+        "de"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-10"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.in-11",
+      "kind": "method",
+      "method_id": "IN-11",
+      "title": "Min-Max / Replenishment",
+      "category": "inventory",
+      "objective": "Gatilhos e níveis planejados com regras aprovadas",
+      "summary": "Gatilhos e níveis planejados com regras aprovadas",
+      "content": "Min-Max / Replenishment: Gatilhos e níveis planejados com regras aprovadas. Dados potenciais: consumos, prazos, lotes. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "consumos, prazos, lotes",
+      "keywords": [
+        "IN-11",
+        "min-max / replenishment",
+        "gatilhos",
+        "e",
+        "níveis",
+        "planejados",
+        "com"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-11"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.in-12",
+      "kind": "method",
+      "method_id": "IN-12",
+      "title": "Inventory Accuracy / Cycle Counting",
+      "category": "inventory",
+      "objective": "Diferenças físico × sistema",
+      "summary": "Diferenças físico × sistema",
+      "content": "Inventory Accuracy / Cycle Counting: Diferenças físico × sistema. Dados potenciais: contagens auditadas. Prioridade P3. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "contagens auditadas",
+      "keywords": [
+        "IN-12",
+        "inventory accuracy / cycle counting",
+        "diferenças",
+        "físico",
+        "×",
+        "sistema"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-12"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.in-13",
+      "kind": "method",
+      "method_id": "IN-13",
+      "title": "S&OP / IBP interface",
+      "category": "inventory",
+      "objective": "Impactos de planos autorizados, sem assumir PCP",
+      "summary": "Impactos de planos autorizados, sem assumir PCP",
+      "content": "S&OP / IBP interface: Impactos de planos autorizados, sem assumir PCP. Dados potenciais: cenários agregados, forecasts. Prioridade P3. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "cenários agregados, forecasts",
+      "keywords": [
+        "IN-13",
+        "s&op / ibp interface",
+        "impactos",
+        "de",
+        "planos",
+        "autorizados,",
+        "sem"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-13"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.in-14",
+      "kind": "method",
+      "method_id": "IN-14",
+      "title": "Excess & Shortage Exposure",
+      "category": "inventory",
+      "objective": "Exposição a excesso/ruptura com horizonte",
+      "summary": "Exposição a excesso/ruptura com horizonte",
+      "content": "Excess & Shortage Exposure: Exposição a excesso/ruptura com horizonte. Dados potenciais: estoque, demanda, inbound. Prioridade P1. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "estoque elevado",
+        "ruptura de materiais"
+      ],
+      "required_inputs": "estoque, demanda, inbound",
+      "keywords": [
+        "IN-14",
+        "excess & shortage exposure",
+        "exposição",
+        "a",
+        "excesso/ruptura",
+        "com",
+        "horizonte"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "IN-14"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.op-01",
+      "kind": "method",
+      "method_id": "OP-01",
+      "title": "Purchase Requisition Aging",
+      "category": "operational",
+      "objective": "SCs abertas por idade/etapa",
+      "summary": "SCs abertas por idade/etapa",
+      "content": "Purchase Requisition Aging: SCs abertas por idade/etapa. Dados potenciais: SC status, datas, unidade. Prioridade P1. Status: ANALYSIS_ENABLED — a SURI possui capacidades MCP cujos dados alimentam esta análise.",
+      "topic": "supplies-methods",
+      "knowledge_status": "ANALYSIS_ENABLED",
+      "problem_domains": [],
+      "required_inputs": "SC status, datas, unidade",
+      "keywords": [
+        "OP-01",
+        "purchase requisition aging",
+        "scs",
+        "abertas",
+        "por",
+        "idade/etapa"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "OP-01"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.op-02",
+      "kind": "method",
+      "method_id": "OP-02",
+      "title": "Open PO Aging / Overdue PO",
+      "category": "operational",
+      "objective": "PC por prazo e atraso",
+      "summary": "PC por prazo e atraso",
+      "content": "Open PO Aging / Overdue PO: PC por prazo e atraso. Dados potenciais: PC, promised dates, status. Prioridade P1. Status: ANALYSIS_ENABLED — a SURI possui capacidades MCP cujos dados alimentam esta análise.",
+      "topic": "supplies-methods",
+      "knowledge_status": "ANALYSIS_ENABLED",
+      "problem_domains": [
+        "atrasos"
+      ],
+      "required_inputs": "PC, promised dates, status",
+      "keywords": [
+        "OP-02",
+        "open po aging / overdue po",
+        "pc",
+        "por",
+        "prazo",
+        "e",
+        "atraso"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "OP-02"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.op-03",
+      "kind": "method",
+      "method_id": "OP-03",
+      "title": "Purchase-to-Receipt Lead Time",
+      "category": "operational",
+      "objective": "Emissão até recebimento e dispersão",
+      "summary": "Emissão até recebimento e dispersão",
+      "content": "Purchase-to-Receipt Lead Time: Emissão até recebimento e dispersão. Dados potenciais: PC/recebimento, eventos. Prioridade P1. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "atrasos"
+      ],
+      "required_inputs": "PC/recebimento, eventos",
+      "keywords": [
+        "OP-03",
+        "purchase-to-receipt lead time",
+        "emissão",
+        "até",
+        "recebimento",
+        "e",
+        "dispersão"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "OP-03"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.op-04",
+      "kind": "method",
+      "method_id": "OP-04",
+      "title": "P2P Scorecard",
+      "category": "operational",
+      "objective": "Análise ponta a ponta sem invadir Financeiro",
+      "summary": "Análise ponta a ponta sem invadir Financeiro",
+      "content": "P2P Scorecard: Análise ponta a ponta sem invadir Financeiro. Dados potenciais: pedidos, recebimento, invoice. Prioridade P3. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "pedidos, recebimento, invoice",
+      "keywords": [
+        "OP-04",
+        "p2p scorecard",
+        "análise",
+        "ponta",
+        "a",
+        "ponta",
+        "sem"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "OP-04"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.op-05",
+      "kind": "method",
+      "method_id": "OP-05",
+      "title": "Maverick Buying / Contract Compliance",
+      "category": "operational",
+      "objective": "Compras fora de política/contrato",
+      "summary": "Compras fora de política/contrato",
+      "content": "Maverick Buying / Contract Compliance: Compras fora de política/contrato. Dados potenciais: contrato, aprovações, transações. Prioridade P3. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "contrato, aprovações, transações",
+      "keywords": [
+        "OP-05",
+        "maverick buying / contract compliance",
+        "compras",
+        "fora",
+        "de",
+        "política/contrato"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "OP-05"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.op-06",
+      "kind": "method",
+      "method_id": "OP-06",
+      "title": "Procurement Cycle Time",
+      "category": "operational",
+      "objective": "Requisição→PC e etapas com timestamps",
+      "summary": "Requisição→PC e etapas com timestamps",
+      "content": "Procurement Cycle Time: Requisição→PC e etapas com timestamps. Dados potenciais: SC/PC relacionados. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "SC/PC relacionados",
+      "keywords": [
+        "OP-06",
+        "procurement cycle time",
+        "requisição→pc",
+        "e",
+        "etapas",
+        "com",
+        "timestamps"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "OP-06"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.op-07",
+      "kind": "method",
+      "method_id": "OP-07",
+      "title": "Exception / Backlog Analysis",
+      "category": "operational",
+      "objective": "Filas por criticidade, tempo e impacto",
+      "summary": "Filas por criticidade, tempo e impacto",
+      "content": "Exception / Backlog Analysis: Filas por criticidade, tempo e impacto. Dados potenciais: alertas, dados operacionais. Prioridade P1. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "alertas, dados operacionais",
+      "keywords": [
+        "OP-07",
+        "exception / backlog analysis",
+        "filas",
+        "por",
+        "criticidade,",
+        "tempo",
+        "e"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "OP-07"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.op-08",
+      "kind": "method",
+      "method_id": "OP-08",
+      "title": "Supplier Delivery Root-Cause",
+      "category": "operational",
+      "objective": "5 Porquês, Ishikawa e fatos verificados",
+      "summary": "5 Porquês, Ishikawa e fatos verificados",
+      "content": "Supplier Delivery Root-Cause: 5 Porquês, Ishikawa e fatos verificados. Dados potenciais: atrasos, histórico, ocorrências. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "atrasos, histórico, ocorrências",
+      "keywords": [
+        "OP-08",
+        "supplier delivery root-cause",
+        "5",
+        "porquês,",
+        "ishikawa",
+        "e",
+        "fatos"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "OP-08"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mk-01",
+      "kind": "method",
+      "method_id": "MK-01",
+      "title": "Market Index Tracking",
+      "category": "market",
+      "objective": "Índices/cotações por período, base e moeda",
+      "summary": "Índices/cotações por período, base e moeda",
+      "content": "Market Index Tracking: Índices/cotações por período, base e moeda. Dados potenciais: fonte autorizada, metodologia. Prioridade P1. Status: ANALYSIS_ENABLED — a SURI possui capacidades MCP cujos dados alimentam esta análise.",
+      "topic": "supplies-methods",
+      "knowledge_status": "ANALYSIS_ENABLED",
+      "problem_domains": [
+        "aumento de preços"
+      ],
+      "required_inputs": "fonte autorizada, metodologia",
+      "keywords": [
+        "MK-01",
+        "market index tracking",
+        "índices/cotações",
+        "por",
+        "período,",
+        "base",
+        "e"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MK-01"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mk-02",
+      "kind": "method",
+      "method_id": "MK-02",
+      "title": "FX Exposure / Currency Scenario",
+      "category": "market",
+      "objective": "Sensibilidade cambial com premissas explícitas",
+      "summary": "Sensibilidade cambial com premissas explícitas",
+      "content": "FX Exposure / Currency Scenario: Sensibilidade cambial com premissas explícitas. Dados potenciais: moeda, volume, taxas. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "moeda, volume, taxas",
+      "keywords": [
+        "MK-02",
+        "fx exposure / currency scenario",
+        "sensibilidade",
+        "cambial",
+        "com",
+        "premissas",
+        "explícitas"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MK-02"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mk-03",
+      "kind": "method",
+      "method_id": "MK-03",
+      "title": "Commodity Price Benchmark",
+      "category": "market",
+      "objective": "Preço contratual vs índice normalizado",
+      "summary": "Preço contratual vs índice normalizado",
+      "content": "Commodity Price Benchmark: Preço contratual vs índice normalizado. Dados potenciais: preços, índice, defasagem. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "preços, índice, defasagem",
+      "keywords": [
+        "MK-03",
+        "commodity price benchmark",
+        "preço",
+        "contratual",
+        "vs",
+        "índice",
+        "normalizado"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MK-03"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mk-04",
+      "kind": "method",
+      "method_id": "MK-04",
+      "title": "Trend / Variance / Seasonality",
+      "category": "market",
+      "objective": "Séries, dispersão e tendência sem previsão implícita",
+      "summary": "Séries, dispersão e tendência sem previsão implícita",
+      "content": "Trend / Variance / Seasonality: Séries, dispersão e tendência sem previsão implícita. Dados potenciais: séries suficientes. Prioridade P1. Status: ANALYSIS_ENABLED — a SURI possui capacidades MCP cujos dados alimentam esta análise.",
+      "topic": "supplies-methods",
+      "knowledge_status": "ANALYSIS_ENABLED",
+      "problem_domains": [],
+      "required_inputs": "séries suficientes",
+      "keywords": [
+        "MK-04",
+        "trend / variance / seasonality",
+        "séries,",
+        "dispersão",
+        "e",
+        "tendência",
+        "sem"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MK-04"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mk-05",
+      "kind": "method",
+      "method_id": "MK-05",
+      "title": "Scenario & Sensitivity",
+      "category": "market",
+      "objective": "Hipóteses de prazo, preço e demanda sem afirmar previsão",
+      "summary": "Hipóteses de prazo, preço e demanda sem afirmar previsão",
+      "content": "Scenario & Sensitivity: Hipóteses de prazo, preço e demanda sem afirmar previsão. Dados potenciais: baseline, intervalos. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "baseline, intervalos",
+      "keywords": [
+        "MK-05",
+        "scenario & sensitivity",
+        "hipóteses",
+        "de",
+        "prazo,",
+        "preço",
+        "e"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MK-05"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mk-06",
+      "kind": "method",
+      "method_id": "MK-06",
+      "title": "NCM / Import Governance Checklist",
+      "category": "market",
+      "objective": "Estado e exceções de governança Comex",
+      "summary": "Estado e exceções de governança Comex",
+      "content": "NCM / Import Governance Checklist: Estado e exceções de governança Comex. Dados potenciais: NCM, homologação fiscal. Prioridade P1. Status: ANALYSIS_ENABLED — a SURI possui capacidades MCP cujos dados alimentam esta análise.",
+      "topic": "supplies-methods",
+      "knowledge_status": "ANALYSIS_ENABLED",
+      "problem_domains": [],
+      "required_inputs": "NCM, homologação fiscal",
+      "keywords": [
+        "MK-06",
+        "ncm / import governance checklist",
+        "estado",
+        "e",
+        "exceções",
+        "de",
+        "governança"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MK-06"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mk-07",
+      "kind": "method",
+      "method_id": "MK-07",
+      "title": "Landed Cost Analysis",
+      "category": "market",
+      "objective": "Custo posto com frete, taxas e impostos",
+      "summary": "Custo posto com frete, taxas e impostos",
+      "content": "Landed Cost Analysis: Custo posto com frete, taxas e impostos. Dados potenciais: preço, Incoterm, tributos. Prioridade P3. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "preço, Incoterm, tributos",
+      "keywords": [
+        "MK-07",
+        "landed cost analysis",
+        "custo",
+        "posto",
+        "com",
+        "frete,",
+        "taxas"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MK-07"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mg-01",
+      "kind": "method",
+      "method_id": "MG-01",
+      "title": "Procurement KPI Scorecard",
+      "category": "management",
+      "objective": "Custos, prazos, produtividade, qualidade e riscos",
+      "summary": "Custos, prazos, produtividade, qualidade e riscos",
+      "content": "Procurement KPI Scorecard: Custos, prazos, produtividade, qualidade e riscos. Dados potenciais: KPIs aprovados. Prioridade P1. Status: ANALYSIS_ENABLED — a SURI possui capacidades MCP cujos dados alimentam esta análise.",
+      "topic": "supplies-methods",
+      "knowledge_status": "ANALYSIS_ENABLED",
+      "problem_domains": [],
+      "required_inputs": "KPIs aprovados",
+      "keywords": [
+        "MG-01",
+        "procurement kpi scorecard",
+        "custos,",
+        "prazos,",
+        "produtividade,",
+        "qualidade",
+        "e"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MG-01"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mg-02",
+      "kind": "method",
+      "method_id": "MG-02",
+      "title": "5 Porquês",
+      "category": "management",
+      "objective": "Hipóteses de causas com evidências",
+      "summary": "Hipóteses de causas com evidências",
+      "content": "5 Porquês: Hipóteses de causas com evidências. Dados potenciais: incidente, fatos. Prioridade P1. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "incidente, fatos",
+      "keywords": [
+        "MG-02",
+        "5 porquês",
+        "hipóteses",
+        "de",
+        "causas",
+        "com",
+        "evidências"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MG-02"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mg-03",
+      "kind": "method",
+      "method_id": "MG-03",
+      "title": "Ishikawa / Causa-Efeito",
+      "category": "management",
+      "objective": "Categorias de causas potenciais",
+      "summary": "Categorias de causas potenciais",
+      "content": "Ishikawa / Causa-Efeito: Categorias de causas potenciais. Dados potenciais: evidências, entrevistas. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "evidências, entrevistas",
+      "keywords": [
+        "MG-03",
+        "ishikawa / causa-efeito",
+        "categorias",
+        "de",
+        "causas",
+        "potenciais"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MG-03"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mg-04",
+      "kind": "method",
+      "method_id": "MG-04",
+      "title": "FMEA de abastecimento",
+      "category": "management",
+      "objective": "Riscos por severidade/ocorrência/detecção",
+      "summary": "Riscos por severidade/ocorrência/detecção",
+      "content": "FMEA de abastecimento: Riscos por severidade/ocorrência/detecção. Dados potenciais: critérios, incidentes. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "critérios, incidentes",
+      "keywords": [
+        "MG-04",
+        "fmea de abastecimento",
+        "riscos",
+        "por",
+        "severidade/ocorrência/detecção"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MG-04"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mg-05",
+      "kind": "method",
+      "method_id": "MG-05",
+      "title": "PDCA / A3",
+      "category": "management",
+      "objective": "Planejar, testar e documentar ações",
+      "summary": "Planejar, testar e documentar ações",
+      "content": "PDCA / A3: Planejar, testar e documentar ações. Dados potenciais: problema, baseline, metas. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "problema, baseline, metas",
+      "keywords": [
+        "MG-05",
+        "pdca / a3",
+        "planejar,",
+        "testar",
+        "e",
+        "documentar",
+        "ações"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MG-05"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mg-06",
+      "kind": "method",
+      "method_id": "MG-06",
+      "title": "5W2H",
+      "category": "management",
+      "objective": "Plano de ação com responsável, prazo e custo",
+      "summary": "Plano de ação com responsável, prazo e custo",
+      "content": "5W2H: Plano de ação com responsável, prazo e custo. Dados potenciais: decisão/owners. Prioridade P1. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "decisão/owners",
+      "keywords": [
+        "MG-06",
+        "5w2h",
+        "plano",
+        "de",
+        "ação",
+        "com",
+        "responsável,"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MG-06"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mg-07",
+      "kind": "method",
+      "method_id": "MG-07",
+      "title": "Pareto de Causas de Atraso",
+      "category": "management",
+      "objective": "Causas registradas, não inferidas",
+      "summary": "Causas registradas, não inferidas",
+      "content": "Pareto de Causas de Atraso: Causas registradas, não inferidas. Dados potenciais: taxonomia de incidentes. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [
+        "atrasos"
+      ],
+      "required_inputs": "taxonomia de incidentes",
+      "keywords": [
+        "MG-07",
+        "pareto de causas de atraso",
+        "causas",
+        "registradas,",
+        "não",
+        "inferidas"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MG-07"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mg-08",
+      "kind": "method",
+      "method_id": "MG-08",
+      "title": "Supplier/Inventory Executive Report",
+      "category": "management",
+      "objective": "Narrativa, indicadores, evidência e decisões",
+      "summary": "Narrativa, indicadores, evidência e decisões",
+      "content": "Supplier/Inventory Executive Report: Narrativa, indicadores, evidência e decisões. Dados potenciais: dados read + metodologias. Prioridade P1. Status: ANALYSIS_ENABLED — a SURI possui capacidades MCP cujos dados alimentam esta análise.",
+      "topic": "supplies-methods",
+      "knowledge_status": "ANALYSIS_ENABLED",
+      "problem_domains": [],
+      "required_inputs": "dados read + metodologias",
+      "keywords": [
+        "MG-08",
+        "supplier/inventory executive report",
+        "narrativa,",
+        "indicadores,",
+        "evidência",
+        "e",
+        "decisões"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MG-08"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mg-09",
+      "kind": "method",
+      "method_id": "MG-09",
+      "title": "Benchmarking de Performance",
+      "category": "management",
+      "objective": "Unidades/períodos e padrões normalizados",
+      "summary": "Unidades/períodos e padrões normalizados",
+      "content": "Benchmarking de Performance: Unidades/períodos e padrões normalizados. Dados potenciais: métricas comuns. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "métricas comuns",
+      "keywords": [
+        "MG-09",
+        "benchmarking de performance",
+        "unidades/períodos",
+        "e",
+        "padrões",
+        "normalizados"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MG-09"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "method.mg-10",
+      "kind": "method",
+      "method_id": "MG-10",
+      "title": "Risk Heatmap + Action Register",
+      "category": "management",
+      "objective": "Impacto/probabilidade e ações",
+      "summary": "Impacto/probabilidade e ações",
+      "content": "Risk Heatmap + Action Register: Impacto/probabilidade e ações. Dados potenciais: avaliação owner, critérios. Prioridade P2. Status: KNOWLEDGE_ONLY — conhecimento explicativo; NÃO executar como cálculo automático.",
+      "topic": "supplies-methods",
+      "knowledge_status": "KNOWLEDGE_ONLY",
+      "problem_domains": [],
+      "required_inputs": "avaliação owner, critérios",
+      "keywords": [
+        "MG-10",
+        "risk heatmap + action register",
+        "impacto/probabilidade",
+        "e",
+        "ações"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "MG-10"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "problem.atrasos",
+      "kind": "guidance",
+      "title": "Problema: atrasos",
+      "summary": "Metodologias indicadas para 'atrasos': SU-06, OP-02, OP-03, MG-07, SU-01.",
+      "content": "Quando o usuário reporta 'atrasos', considerar: SU-06, OP-02, OP-03, MG-07, SU-01 — verificar quais possuem dados no Portal antes de propor execução.",
+      "topic": "supplies-methods",
+      "problem_domain": "atrasos",
+      "methods": [
+        "SU-06",
+        "OP-02",
+        "OP-03",
+        "MG-07",
+        "SU-01"
+      ],
+      "keywords": [
+        "atrasos",
+        "como analisar",
+        "metodologia"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "problem map 'atrasos'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "problem.estoque-elevado",
+      "kind": "guidance",
+      "title": "Problema: estoque elevado",
+      "summary": "Metodologias indicadas para 'estoque elevado': ST-02, IN-01, IN-02, IN-09, IN-14.",
+      "content": "Quando o usuário reporta 'estoque elevado', considerar: ST-02, IN-01, IN-02, IN-09, IN-14 — verificar quais possuem dados no Portal antes de propor execução.",
+      "topic": "supplies-methods",
+      "problem_domain": "estoque elevado",
+      "methods": [
+        "ST-02",
+        "IN-01",
+        "IN-02",
+        "IN-09",
+        "IN-14"
+      ],
+      "keywords": [
+        "estoque elevado",
+        "como analisar",
+        "metodologia"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "problem map 'estoque elevado'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "problem.risco-de-fornecedor",
+      "kind": "guidance",
+      "title": "Problema: risco de fornecedor",
+      "summary": "Metodologias indicadas para 'risco de fornecedor': SU-05, ST-01, SU-04, SU-11.",
+      "content": "Quando o usuário reporta 'risco de fornecedor', considerar: SU-05, ST-01, SU-04, SU-11 — verificar quais possuem dados no Portal antes de propor execução.",
+      "topic": "supplies-methods",
+      "problem_domain": "risco de fornecedor",
+      "methods": [
+        "SU-05",
+        "ST-01",
+        "SU-04",
+        "SU-11"
+      ],
+      "keywords": [
+        "risco de fornecedor",
+        "como analisar",
+        "metodologia"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "problem map 'risco de fornecedor'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "problem.aumento-de-pre-os",
+      "kind": "guidance",
+      "title": "Problema: aumento de preços",
+      "summary": "Metodologias indicadas para 'aumento de preços': ST-13, ST-15, ST-06, MK-01.",
+      "content": "Quando o usuário reporta 'aumento de preços', considerar: ST-13, ST-15, ST-06, MK-01 — verificar quais possuem dados no Portal antes de propor execução.",
+      "topic": "supplies-methods",
+      "problem_domain": "aumento de preços",
+      "methods": [
+        "ST-13",
+        "ST-15",
+        "ST-06",
+        "MK-01"
+      ],
+      "keywords": [
+        "aumento de preços",
+        "como analisar",
+        "metodologia"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "problem map 'aumento de preços'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "problem.ruptura-de-materiais",
+      "kind": "guidance",
+      "title": "Problema: ruptura de materiais",
+      "summary": "Metodologias indicadas para 'ruptura de materiais': IN-03, IN-07, IN-04, IN-14.",
+      "content": "Quando o usuário reporta 'ruptura de materiais', considerar: IN-03, IN-07, IN-04, IN-14 — verificar quais possuem dados no Portal antes de propor execução.",
+      "topic": "supplies-methods",
+      "problem_domain": "ruptura de materiais",
+      "methods": [
+        "IN-03",
+        "IN-07",
+        "IN-04",
+        "IN-14"
+      ],
+      "keywords": [
+        "ruptura de materiais",
+        "como analisar",
+        "metodologia"
+      ],
+      "source": {
+        "file": "supplies-api/docs/SURI-PROCUREMENT-METHODS-AND-TOOLS-KNOWLEDGE-CATALOG-V1.md",
+        "locator": "problem map 'ruptura de materiais'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.01",
+      "kind": "faq",
+      "title": "FAQ: Qual a diferença entre estoque e estoque de segurança?",
+      "summary": "Qual a diferença entre estoque e estoque de segurança?",
+      "content": "Estoque é o saldo físico/posições. Estoque de segurança é a cobertura mínima planejada e o déficit — abra Estoque de segurança, não Estoque.",
+      "topic": "portal-faq",
+      "keywords": [
+        "qual",
+        "a",
+        "diferença",
+        "entre",
+        "estoque",
+        "e",
+        "estoque",
+        "de"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Qual a diferença entre estoque e estoque'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.02",
+      "kind": "faq",
+      "title": "FAQ: O que vejo no detalhe de um material no Estoque de segurança",
+      "summary": "O que vejo no detalhe de um material no Estoque de segurança?",
+      "content": "Clique na linha da lista: abre uma página com identificação, saldos por armazém, cobertura do déficit, pedidos de compra, solicitações e empenhos em aberto, projeção de estoque, consumo mensal/anual e fornecedores vinculados. O detalhe vale para a filial da linha — o mesmo código pode ter situações diferentes em cada filial. Na visão Todas as Filiais, você escolhe a filial (Santa Catarina ou Espírito Santo) antes de abrir.",
+      "topic": "portal-faq",
+      "keywords": [
+        "o",
+        "que",
+        "vejo",
+        "no",
+        "detalhe",
+        "de",
+        "um",
+        "material"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'O que vejo no detalhe de um material no '"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.03",
+      "kind": "faq",
+      "title": "FAQ: Como compartilho o detalhe de um material?",
+      "summary": "Como compartilho o detalhe de um material?",
+      "content": "O detalhe tem endereço próprio na URL (filial + código do material). Copie o link com a página aberta; F5 reabre o mesmo material e «Estoque de Segurança» no topo retorna à lista com os filtros.",
+      "topic": "portal-faq",
+      "keywords": [
+        "como",
+        "compartilho",
+        "o",
+        "detalhe",
+        "de",
+        "um",
+        "material?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Como compartilho o detalhe de um materia'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.04",
+      "kind": "faq",
+      "title": "FAQ: Para que servem os cartões de indicadores no Estoque de segu",
+      "summary": "Para que servem os cartões de indicadores no Estoque de segurança?",
+      "content": "Além de mostrar as contagens do recorte, cada cartão filtra a lista com um clique: «Abaixo», «No estoque», «Acima» ou «Sem estoque de segurança» equivalem ao filtro Status; «Com estoque de segurança» mostra os materiais com o parâmetro definido; «Materiais» volta a listar tudo. O cartão ativo fica destacado.",
+      "topic": "portal-faq",
+      "keywords": [
+        "para",
+        "que",
+        "servem",
+        "os",
+        "cartões",
+        "de",
+        "indicadores",
+        "no"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Para que servem os cartões de indicadore'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.05",
+      "kind": "faq",
+      "title": "FAQ: O que é a projeção de estoque no detalhe?",
+      "summary": "O que é a projeção de estoque no detalhe?",
+      "content": "Um extrato cronológico calculado pelo servidor: saldo inicial, entradas previstas de pedidos elegíveis e saídas de empenhos. Ruptura marca o primeiro saldo projetado abaixo de zero — o Portal não recalcula esses valores.",
+      "topic": "portal-faq",
+      "keywords": [
+        "o",
+        "que",
+        "é",
+        "a",
+        "projeção",
+        "de",
+        "estoque",
+        "no"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'O que é a projeção de estoque no detalhe'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.06",
+      "kind": "faq",
+      "title": "FAQ: Por que a lista de Estoque de segurança veio vazia?",
+      "summary": "Por que a lista de Estoque de segurança veio vazia?",
+      "content": "Vazio é um resultado legítimo do recorte — nenhum material atendeu aos filtros. Ajuste status, grupo, UM ou a busca, ou use Limpar. Se houvesse falha técnica, a tela mostraria um aviso de erro, não uma lista vazia.",
+      "topic": "portal-faq",
+      "keywords": [
+        "por",
+        "que",
+        "a",
+        "lista",
+        "de",
+        "estoque",
+        "de",
+        "segurança"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Por que a lista de Estoque de segurança '"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.07",
+      "kind": "faq",
+      "title": "FAQ: O que faço quando uma parte da página falha?",
+      "summary": "O que faço quando uma parte da página falha?",
+      "content": "Cada bloco é independente: se o resumo falhar, a lista continua (e vice-versa); no detalhe, os fornecedores podem falhar sem derrubar a ficha. Use Atualizar ou tente novamente — seus filtros são preservados. Indicadores indisponíveis aparecem como «—», nunca como zero.",
+      "topic": "portal-faq",
+      "keywords": [
+        "o",
+        "que",
+        "faço",
+        "quando",
+        "uma",
+        "parte",
+        "da",
+        "página"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'O que faço quando uma parte da página fa'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.08",
+      "kind": "faq",
+      "title": "FAQ: Saldo físico é o mesmo que saldo disponível?",
+      "summary": "Saldo físico é o mesmo que saldo disponível?",
+      "content": "Não. Estoque mostra a posição física atual registrada no ERP. A página não calcula disponibilidade descontando reservas, empenhos ou outras regras.",
+      "topic": "portal-faq",
+      "keywords": [
+        "saldo",
+        "físico",
+        "é",
+        "o",
+        "mesmo",
+        "que",
+        "saldo",
+        "disponível?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Saldo físico é o mesmo que saldo disponí'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.09",
+      "kind": "faq",
+      "title": "FAQ: OTD é a mesma coisa que Entregas / Atrasos?",
+      "summary": "OTD é a mesma coisa que Entregas / Atrasos?",
+      "content": "Não. OTD (Visão geral / página OTD) é indicador analítico de pontualidade. Entregas / Atrasos lista recebimentos históricos de MP e a pontualidade de cada linha no período de digitação. Pedidos de compra lista PCs ainda em aberto — outro universo.",
+      "topic": "portal-faq",
+      "keywords": [
+        "otd",
+        "é",
+        "a",
+        "mesma",
+        "coisa",
+        "que",
+        "entregas",
+        "/"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'OTD é a mesma coisa que Entregas / Atras'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.10",
+      "kind": "faq",
+      "title": "FAQ: Qual a diferença entre Entregas / Atrasos e Pedidos de compr",
+      "summary": "Qual a diferença entre Entregas / Atrasos e Pedidos de compra?",
+      "content": "Entregas / Atrasos mostra linhas de recebimento já digitadas (MP) e se chegaram Em atraso ou No prazo. Pedidos de compra mostra saldo em aberto (SC7) — inclusive sem recebimento. Não clique no pedido em Entregas: a ficha de PC só cobre o universo aberto.",
+      "topic": "portal-faq",
+      "keywords": [
+        "qual",
+        "a",
+        "diferença",
+        "entre",
+        "entregas",
+        "/",
+        "atrasos",
+        "e"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Qual a diferença entre Entregas / Atraso'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.11",
+      "kind": "faq",
+      "title": "FAQ: O período em Entregas / Atrasos filtra qual data?",
+      "summary": "O período em Entregas / Atrasos filtra qual data?",
+      "content": "A data de digitação/entrada do recebimento. Não é a data prometida nem a emissão do pedido.",
+      "topic": "portal-faq",
+      "keywords": [
+        "o",
+        "período",
+        "em",
+        "entregas",
+        "/",
+        "atrasos",
+        "filtra",
+        "qual"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'O período em Entregas / Atrasos filtra q'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.12",
+      "kind": "faq",
+      "title": "FAQ: Qual a diferença entre Visão geral e a página OTD?",
+      "summary": "Qual a diferença entre Visão geral e a página OTD?",
+      "content": "A Visão geral é o placar de KPIs do período (com série OTD). A página OTD mostra velocímetros por unidade (Santa Catarina / Espírito Santo) e a evolução no tempo. Ambas usam o mesmo filtro de Unidade e período.",
+      "topic": "portal-faq",
+      "keywords": [
+        "qual",
+        "a",
+        "diferença",
+        "entre",
+        "visão",
+        "geral",
+        "e",
+        "a"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Qual a diferença entre Visão geral e a p'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.13",
+      "kind": "faq",
+      "title": "FAQ: Os indicadores do Sheets são os mesmos do Portal?",
+      "summary": "Os indicadores do Sheets são os mesmos do Portal?",
+      "content": "Não automaticamente. O Portal usa indicadores homologados nas fichas e na Visão geral; planilhas externas podem divergir até a paridade.",
+      "topic": "portal-faq",
+      "keywords": [
+        "os",
+        "indicadores",
+        "do",
+        "sheets",
+        "são",
+        "os",
+        "mesmos",
+        "do"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Os indicadores do Sheets são os mesmos d'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.14",
+      "kind": "faq",
+      "title": "FAQ: Onde vejo o significado de cada KPI da Visão geral?",
+      "summary": "Onde vejo o significado de cada KPI da Visão geral?",
+      "content": "Nas fichas de indicadores e na Visão geral. Cada card mostra se o valor é intervalo, snapshot ou estado atual — não misture com o Início. O IDD Suprimentos e a nota do card vêm do Strategic Indicators. A meta do período acompanha o recorte; a meta mês é só referência cadastrada.",
+      "topic": "portal-faq",
+      "keywords": [
+        "onde",
+        "vejo",
+        "o",
+        "significado",
+        "de",
+        "cada",
+        "kpi",
+        "da"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Onde vejo o significado de cada KPI da V'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.15",
+      "kind": "faq",
+      "title": "FAQ: De onde vêm as cotações da Inteligência de mercado?",
+      "summary": "De onde vêm as cotações da Inteligência de mercado?",
+      "content": "De fontes externas autorizadas com licença aberta: metais do World Bank Pink Sheet (média mensal em USD/t) e câmbio do Banco Central (PTAX, boletim diário). Fonte, licença e última ingestão ficam visíveis na página. A página nunca consulta a internet — os dados vêm do serviço interno de dados de mercado.",
+      "topic": "portal-faq",
+      "keywords": [
+        "de",
+        "onde",
+        "vêm",
+        "as",
+        "cotações",
+        "da",
+        "inteligência",
+        "de"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'De onde vêm as cotações da Inteligência '"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.16",
+      "kind": "faq",
+      "title": "FAQ: Por que não consigo analisar a NCM de um produto no Comex?",
+      "summary": "Por que não consigo analisar a NCM de um produto no Comex?",
+      "content": "Entrar na análise exige a NCM disponível — habilitada para a fonte MDIC após a validação fiscal. Qualquer usuário autorizado pode adicionar a NCM ao catálogo compartilhado (fica Cadastrada e visível para todos), mas o cadastro não libera dados sozinho: os estados Cadastrada/Em revisão indicam que ela aguarda os requisitos; Inativa sinaliza código fora de uso. As decisões ficam com o perfil de gestão, numa área administrativa separada da seleção.",
+      "topic": "portal-faq",
+      "keywords": [
+        "por",
+        "que",
+        "não",
+        "consigo",
+        "analisar",
+        "a",
+        "ncm",
+        "de"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Por que não consigo analisar a NCM de um'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.17",
+      "kind": "faq",
+      "title": "FAQ: Por que um mês aparece vazio ou «Sem câmbio»?",
+      "summary": "Por que um mês aparece vazio ou «Sem câmbio»?",
+      "content": "Metais do Pink Sheet são publicados com defasagem (o mês corrente ainda não saiu) e meses antigos sem PTAX não podem ser convertidos. O Portal mostra o ponto vazio e o aviso de dados parciais — nunca inventa um valor nem exibe zero.",
+      "topic": "portal-faq",
+      "keywords": [
+        "por",
+        "que",
+        "um",
+        "mês",
+        "aparece",
+        "vazio",
+        "ou",
+        "«sem"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Por que um mês aparece vazio ou «Sem câm'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.18",
+      "kind": "faq",
+      "title": "FAQ: Como o valor em BRL é calculado?",
+      "summary": "Como o valor em BRL é calculado?",
+      "content": "Cotação mensal em USD × média das PTAX de venda (fechamento) do mesmo mês — método versionado pela API. O tipo de PTAX (venda/compra) pode ser trocado no filtro quando aplicável.",
+      "topic": "portal-faq",
+      "keywords": [
+        "como",
+        "o",
+        "valor",
+        "em",
+        "brl",
+        "é",
+        "calculado?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Como o valor em BRL é calculado?'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.19",
+      "kind": "faq",
+      "title": "FAQ: Por que um instrumento não aparece ou mostra «indisponível»?",
+      "summary": "Por que um instrumento não aparece ou mostra «indisponível»?",
+      "content": "Uma fonte só é exibida quando seus direitos de uso cobrem a exibição. Enquanto uma revisão de licença estiver pendente, o instrumento não fica selecionável e a página mostra um aviso neutro — nunca um valor antigo ou estimado.",
+      "topic": "portal-faq",
+      "keywords": [
+        "por",
+        "que",
+        "um",
+        "instrumento",
+        "não",
+        "aparece",
+        "ou",
+        "mostra"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Por que um instrumento não aparece ou mo'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.20",
+      "kind": "faq",
+      "title": "FAQ: Por que a lista de SC vem vazia?",
+      "summary": "Por que a lista de SC vem vazia?",
+      "content": "Nesta tela o uso normal do Portal acompanha as solicitações das duas unidades. O recorte de centro de custo vale só no módulo próprio de Solicitações, não no Portal Suprimentos.",
+      "topic": "portal-faq",
+      "keywords": [
+        "por",
+        "que",
+        "a",
+        "lista",
+        "de",
+        "sc",
+        "vem",
+        "vazia?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Por que a lista de SC vem vazia?'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.21",
+      "kind": "faq",
+      "title": "FAQ: Por que não vejo Exportar CSV?",
+      "summary": "Por que não vejo Exportar CSV?",
+      "content": "A exportação exige a permissão de exportação além do acesso às solicitações. Ter só a lista não libera o download.",
+      "topic": "portal-faq",
+      "keywords": [
+        "por",
+        "que",
+        "não",
+        "vejo",
+        "exportar",
+        "csv?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Por que não vejo Exportar CSV?'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.22",
+      "kind": "faq",
+      "title": "FAQ: O avatar do solicitante abre uma ficha?",
+      "summary": "O avatar do solicitante abre uma ficha?",
+      "content": "Sim, quando o solicitante está vinculado a um usuário da Minha DELPI e você tem permissão para ver o perfil — o clique abre a ficha do usuário no Portal, com as solicitações de compra relacionadas na mesma tabela da listagem (colunas, ordenação e paginação; «Ver todas» abre a lista já filtrada). Sem vínculo ou sem acesso, o avatar fica apenas informativo. O avatar e o nome do fornecedor abrem a ficha cadastral (E14) nas listas e fichas de pedidos e entregas; também dá para chegar lá pela lista Fornecedores (clique na linha).",
+      "topic": "portal-faq",
+      "keywords": [
+        "o",
+        "avatar",
+        "do",
+        "solicitante",
+        "abre",
+        "uma",
+        "ficha?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'O avatar do solicitante abre uma ficha?'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.23",
+      "kind": "faq",
+      "title": "FAQ: De onde vem o nome do solicitante?",
+      "summary": "De onde vem o nome do solicitante?",
+      "content": "Quando o usuário TOTVS da solicitação tem vínculo ativo com um cadastro da Minha DELPI, o Portal mostra o nome oficial da plataforma — com a foto real do usuário quando ele tem foto cadastrada. Sem vínculo, mostra o nome ou código que veio do ERP — nunca uma correspondência inventada por semelhança de nome.",
+      "topic": "portal-faq",
+      "keywords": [
+        "de",
+        "onde",
+        "vem",
+        "o",
+        "nome",
+        "do",
+        "solicitante?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'De onde vem o nome do solicitante?'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.24",
+      "kind": "faq",
+      "title": "FAQ: Posso filtrar por solicitante ou centro de custo?",
+      "summary": "Posso filtrar por solicitante ou centro de custo?",
+      "content": "Sim. «Solicitante» lista as pessoas do recorte autorizado com o nome oficial da Minha DELPI quando há vínculo (o filtro é pelo usuário real do ERP, não por texto). «Centro de custo» lista código e descrição dentro do seu escopo. Ambos aceitam múltipla seleção e ficam na URL — dá para compartilhar o filtro.",
+      "topic": "portal-faq",
+      "keywords": [
+        "posso",
+        "filtrar",
+        "por",
+        "solicitante",
+        "ou",
+        "centro",
+        "de",
+        "custo?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Posso filtrar por solicitante ou centro '"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.25",
+      "kind": "faq",
+      "title": "FAQ: Por que alguns campos do cadastro aparecem somente leitura n",
+      "summary": "Por que alguns campos do cadastro aparecem somente leitura na edição?",
+      "content": "A edição libera apenas os campos cuja gravação foi homologada no ERP — endereço, contato, fiscal/tributário e compras/relacionamentos já podem ser alterados, incluindo Regime SIMP e a loja do cliente vinculado. Permanecem protegidos os campos de identidade (código, loja e CNPJ) e o código do cliente vinculado, que o ERP não permite alterar em uma edição — apenas a loja desse cliente pode ser trocada.",
+      "topic": "portal-faq",
+      "keywords": [
+        "por",
+        "que",
+        "alguns",
+        "campos",
+        "do",
+        "cadastro",
+        "aparecem",
+        "somente"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Por que alguns campos do cadastro aparec'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.26",
+      "kind": "faq",
+      "title": "FAQ: O que significa «Este CNPJ já possui cadastro no Protheus»?",
+      "summary": "O que significa «Este CNPJ já possui cadastro no Protheus»?",
+      "content": "Existe um ou mais cadastros com esse documento — o que é informativo, não um erro. O Portal lista todos os registros encontrados, com código e loja, e pagina quando há muitos. «Conferir cadastro» abre a ficha do registro em uma nova aba: você confere dados e divergências sem perder o formulário, e pode continuar o novo cadastro normalmente se desejar.",
+      "topic": "portal-faq",
+      "keywords": [
+        "o",
+        "que",
+        "significa",
+        "«este",
+        "cnpj",
+        "já",
+        "possui",
+        "cadastro"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'O que significa «Este CNPJ já possui cad'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.27",
+      "kind": "faq",
+      "title": "FAQ: O que significa «verificação de duplicidade não concluída»?",
+      "summary": "O que significa «verificação de duplicidade não concluída»?",
+      "content": "A consulta ao cadastro interno falhou ou não retornou resultado conclusivo — não é confirmação de que o fornecedor não existe. Você pode continuar o preenchimento e conferir a ficha existente depois.",
+      "topic": "portal-faq",
+      "keywords": [
+        "o",
+        "que",
+        "significa",
+        "«verificação",
+        "de",
+        "duplicidade",
+        "não",
+        "concluída»?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'O que significa «verificação de duplicid'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.28",
+      "kind": "faq",
+      "title": "FAQ: Como altero o cadastro de um fornecedor?",
+      "summary": "Como altero o cadastro de um fornecedor?",
+      "content": "Na ficha do fornecedor, Editar cadastro abre o formulário com os campos homologados organizados nas mesmas seções do cadastro — altere um ou vários. Antes de gravar, revise o antes/depois na revisão; cancelar não persiste nada e somente os campos modificados são enviados. O envio depende de homologação de escrita no ERP: se estiver bloqueado, o Portal avisa e nada é enviado; se a resposta demorar, recarregue a ficha antes de repetir para evitar duplicidade.",
+      "topic": "portal-faq",
+      "keywords": [
+        "como",
+        "altero",
+        "o",
+        "cadastro",
+        "de",
+        "um",
+        "fornecedor?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Como altero o cadastro de um fornecedor?'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.29",
+      "kind": "faq",
+      "title": "FAQ: Como abro e compartilho o detalhe de um pedido de compra?",
+      "summary": "Como abro e compartilho o detalhe de um pedido de compra?",
+      "content": "Na lista Pedidos de compra, clique na linha. Copie o endereço da ficha para compartilhar; atualizar (F5) reabre o mesmo pedido. Voltar retorna à lista. Só pedidos em aberto aparecem — encerrados e residual não.",
+      "topic": "portal-faq",
+      "keywords": [
+        "como",
+        "abro",
+        "e",
+        "compartilho",
+        "o",
+        "detalhe",
+        "de",
+        "um"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Como abro e compartilho o detalhe de um '"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.30",
+      "kind": "faq",
+      "title": "FAQ: Como abro e compartilho o detalhe de uma SC?",
+      "summary": "Como abro e compartilho o detalhe de uma SC?",
+      "content": "Na lista Solicitações de compras, clique na SC, na linha ou no card. A ficha tem endereço próprio; F5 a restaura. Voltar retorna à lista com os filtros. Links antigos com ?request=unidade:número redirecionam para a ficha.",
+      "topic": "portal-faq",
+      "keywords": [
+        "como",
+        "abro",
+        "e",
+        "compartilho",
+        "o",
+        "detalhe",
+        "de",
+        "uma"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Como abro e compartilho o detalhe de uma'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.31",
+      "kind": "faq",
+      "title": "FAQ: Como compartilho o recorte da lista de SC?",
+      "summary": "Como compartilho o recorte da lista de SC?",
+      "content": "A URL da lista guarda unidade, período (date_from/date_to), uma ou mais situações (overall_stage repetido), produto e ordenação (sort_by/sort_dir). Sem branch na URL significa Todas as unidades liberadas. Os atalhos de período (iguais à Visão geral) preenchem as datas; editar datas vira Personalizado. O padrão é Este mês. F5 restaura o mesmo estado e deriva o atalho das datas. A faixa Atenção grava os mesmos overall_stage e volta para a página 1.",
+      "topic": "portal-faq",
+      "keywords": [
+        "como",
+        "compartilho",
+        "o",
+        "recorte",
+        "da",
+        "lista",
+        "de",
+        "sc?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Como compartilho o recorte da lista de S'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.32",
+      "kind": "faq",
+      "title": "FAQ: Como compartilho o recorte de Entregas / Atrasos?",
+      "summary": "Como compartilho o recorte de Entregas / Atrasos?",
+      "content": "A URL guarda branch (omitido = Todas), status, start_date, end_date, page, page_size, sort_by e sort_dir. F5 restaura o mesmo recorte. O período é a digitação do recebimento.",
+      "topic": "portal-faq",
+      "keywords": [
+        "como",
+        "compartilho",
+        "o",
+        "recorte",
+        "de",
+        "entregas",
+        "/",
+        "atrasos?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Como compartilho o recorte de Entregas /'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.33",
+      "kind": "faq",
+      "title": "FAQ: Como ordeno a lista de SC ou pedidos em Cards?",
+      "summary": "Como ordeno a lista de SC ou pedidos em Cards?",
+      "content": "No modo Cards use «Ordenar por» e Crescente/Decrescente — a mesma ordenação da tabela, guardada na URL. Em Solicitações, a situação ordena o recorte inteiro antes da página; acima de cerca de 10 mil SCs, pode pedir um período ou unidade menores.",
+      "topic": "portal-faq",
+      "keywords": [
+        "como",
+        "ordeno",
+        "a",
+        "lista",
+        "de",
+        "sc",
+        "ou",
+        "pedidos"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Como ordeno a lista de SC ou pedidos em '"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.34",
+      "kind": "faq",
+      "title": "FAQ: Por que um card da Visão geral aparece indisponível?",
+      "summary": "Por que um card da Visão geral aparece indisponível?",
+      "content": "Uma fonte auxiliar falhou. Os demais indicadores continuam utilizáveis; atualize o período/unidade ou tente de novo.",
+      "topic": "portal-faq",
+      "keywords": [
+        "por",
+        "que",
+        "um",
+        "card",
+        "da",
+        "visão",
+        "geral",
+        "aparece"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Por que um card da Visão geral aparece i'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.35",
+      "kind": "faq",
+      "title": "FAQ: O que mostra o gráfico OTD na Visão geral?",
+      "summary": "O que mostra o gráfico OTD na Visão geral?",
+      "content": "A evolução do OTD de pedidos de compra no mesmo filtro de Unidade e período dos KPIs, com granularidade e exportação. Os velocímetros ficam na página OTD. Se a série falhar, o restante da página continua utilizável.",
+      "topic": "portal-faq",
+      "keywords": [
+        "o",
+        "que",
+        "mostra",
+        "o",
+        "gráfico",
+        "otd",
+        "na",
+        "visão"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'O que mostra o gráfico OTD na Visão gera'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.36",
+      "kind": "faq",
+      "title": "FAQ: Como filtro Unidade e período na Visão geral?",
+      "summary": "Como filtro Unidade e período na Visão geral?",
+      "content": "Use o preset (Hoje, Esta semana, Este mês, trimestre, ano…) ou as datas De/Até e o MultiSelect Unidade (Santa Catarina / Espírito Santo). Vazio ou ambas = consolidado. O link da página guarda o recorte para compartilhar (F5/voltar).",
+      "topic": "portal-faq",
+      "keywords": [
+        "como",
+        "filtro",
+        "unidade",
+        "e",
+        "período",
+        "na",
+        "visão",
+        "geral?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Como filtro Unidade e período na Visão g'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.37",
+      "kind": "faq",
+      "title": "FAQ: Por que Meta parcial e Meta mês podem ser diferentes?",
+      "summary": "Por que Meta parcial e Meta mês podem ser diferentes?",
+      "content": "Para indicadores de fluxo (OTD, CPV…), a Meta do período pode ser pró-rata ou acumulada e diferir da Meta mês cadastrada. Para Valor do estoque (snapshot), a meta é o nível/teto cadastrado — não há pró-rata diária nem soma de meses; Meta do período e Meta mês coincidem no consolidado. A Nota IDD é o score do SI. SC pendentes e materiais críticos não têm meta SI.",
+      "topic": "portal-faq",
+      "keywords": [
+        "por",
+        "que",
+        "meta",
+        "parcial",
+        "e",
+        "meta",
+        "mês",
+        "podem"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Por que Meta parcial e Meta mês podem se'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.38",
+      "kind": "faq",
+      "title": "FAQ: Por que recebi 403?",
+      "summary": "Por que recebi 403?",
+      "content": "Falta o uso normal do módulo. Peça esse acesso ao administrador. A filial da tela é filtro, não permissão.",
+      "topic": "portal-faq",
+      "keywords": [
+        "por",
+        "que",
+        "recebi",
+        "403?"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Por que recebi 403?'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.39",
+      "kind": "faq",
+      "title": "FAQ: Onde altero a filial padrão ou a densidade das tabelas?",
+      "summary": "Onde altero a filial padrão ou a densidade das tabelas?",
+      "content": "Clique no nome na TopBar → Preferências do Portal (ou no avatar, que abre o perfil deste Portal). Foto, cargo e contatos: menu do nome → Meu perfil Minha DELPI (/profile). Não existe página /preferences separada.",
+      "topic": "portal-faq",
+      "keywords": [
+        "onde",
+        "altero",
+        "a",
+        "filial",
+        "padrão",
+        "ou",
+        "a",
+        "densidade"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Onde altero a filial padrão ou a densida'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.40",
+      "kind": "faq",
+      "title": "FAQ: Qual a diferença entre o perfil do Portal e o /profile da Mi",
+      "summary": "Qual a diferença entre o perfil do Portal e o /profile da Minha DELPI?",
+      "content": "O avatar abre o perfil do Portal Suprimentos (`/users/:id` — preferências locais). O menu do nome inclui Meu perfil Minha DELPI (`/profile` — identidade global) e Preferências do Portal.",
+      "topic": "portal-faq",
+      "keywords": [
+        "qual",
+        "a",
+        "diferença",
+        "entre",
+        "o",
+        "perfil",
+        "do",
+        "portal"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Qual a diferença entre o perfil do Porta'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.41",
+      "kind": "faq",
+      "title": "FAQ: Alterei a foto no Meu Perfil e o Suprimentos não mudou?",
+      "summary": "Alterei a foto no Meu Perfil e o Suprimentos não mudou?",
+      "content": "A TopBar e o perfil do Portal recarregam da Core ao salvar no Meu Perfil (mesmo navegador). Se ainda estiver antiga, atualize a página do Portal Suprimentos.",
+      "topic": "portal-faq",
+      "keywords": [
+        "alterei",
+        "a",
+        "foto",
+        "no",
+        "meu",
+        "perfil",
+        "e",
+        "o"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Alterei a foto no Meu Perfil e o Suprime'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "faq.42",
+      "kind": "faq",
+      "title": "FAQ: Ainda vejo os apps antigos no launcher",
+      "summary": "Ainda vejo os apps antigos no launcher",
+      "content": "É esperado na coexistência. O Portal é o hub novo; os legados só saem após cutover homologado.",
+      "topic": "portal-faq",
+      "keywords": [
+        "ainda",
+        "vejo",
+        "os",
+        "apps",
+        "antigos",
+        "no",
+        "launcher"
+      ],
+      "source": {
+        "file": "plugins/supplies/src/content/userManualContent.ts",
+        "locator": "faq 'Ainda vejo os apps antigos no launcher'"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "journey.late-deliveries",
+      "kind": "journey",
+      "title": "Relatório de entregas atrasadas",
+      "summary": "Relatório de entregas atrasadas",
+      "content": "Identificar unidade e período; read(deliveries,late) com unit/date_from/date_to; cruzar read(purchase-orders) e read(suppliers) conforme autorização; métricas aprovadas (taxa de atraso, concentração por fornecedor); separar FACTS/CALCULATIONS/FINDINGS/LIMITATIONS/RECOMMENDATIONS; citar fontes e recorte.",
+      "topic": "report-journeys",
+      "keywords": [
+        "relatório",
+        "de",
+        "entregas",
+        "atrasadas"
+      ],
+      "source": {
+        "file": "docs",
+        "locator": "journey.late-deliveries"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "journey.inventory-diagnostic",
+      "kind": "journey",
+      "title": "Diagnóstico de estoques",
+      "summary": "Diagnóstico de estoques",
+      "content": "read(inventory,summary)+read(inventory,items); cruzar consumo apenas com granularidade compatível; aplicar cobertura/giro/segurança apenas com inputs suficientes; sinalizar DATA_GAP quando faltar histórico.",
+      "topic": "report-journeys",
+      "keywords": [
+        "diagnóstico",
+        "de",
+        "estoques"
+      ],
+      "source": {
+        "file": "docs",
+        "locator": "journey.inventory-diagnostic"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "journey.supplier-evaluation",
+      "kind": "journey",
+      "title": "Avaliação de fornecedores",
+      "summary": "Avaliação de fornecedores",
+      "content": "Combinar read(otd) + read(suppliers) + concentração; pesos devem ser declarados e aprovados; separar fatos de hipóteses.",
+      "topic": "report-journeys",
+      "keywords": [
+        "avaliação",
+        "de",
+        "fornecedores"
+      ],
+      "source": {
+        "file": "docs",
+        "locator": "journey.supplier-evaluation"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "journey.market-intel",
+      "kind": "journey",
+      "title": "Inteligência de mercado",
+      "summary": "Inteligência de mercado",
+      "content": "read(market,series|summary) com instrument/date_from/date_to; respeitar licenciamento, moeda, fonte e data; fonte pendente ≠ zero.",
+      "topic": "report-journeys",
+      "keywords": [
+        "inteligência",
+        "de",
+        "mercado"
+      ],
+      "source": {
+        "file": "docs",
+        "locator": "journey.market-intel"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "journey.sc-tutorial",
+      "kind": "journey",
+      "title": "Tutorial SC→PC",
+      "summary": "Tutorial SC→PC",
+      "content": "Abrir /apps/supplies/purchase-requests; filtrar por filial/solicitante; abrir detalhe da SC; seção de PCs vinculados; abrir PC no /apps/supplies/purchase-orders; compartilhar URL/F5.",
+      "topic": "report-journeys",
+      "keywords": [
+        "tutorial",
+        "sc→pc"
+      ],
+      "source": {
+        "file": "docs",
+        "locator": "journey.sc-tutorial"
+      },
+      "evidence_class": "PROVEN"
+    },
+    {
+      "knowledge_id": "ref.filter-vocabulary",
+      "kind": "reference",
+      "title": "Vocabulário canônico de filtros (valores exatos)",
+      "summary": "Valores exatos por campo: safety-stock.status ∈ {below_safety_stock, at_safety_stock, above_safety_stock, no_safety_stock}; otd.branch = string única ('01'|'02'|'all'); otd.series.branch = lista; consumption.unit = 'all'|'01'|'02'.",
+      "content": "Filtros com valores inválidos retornam 422. Estados de estoque de segurança: below_safety_stock (abaixo), at_safety_stock (no limite), above_safety_stock (acima), no_safety_stock (sem política). Para OTD multi-filial usar read(otd,series); aggregate aceita apenas branch string.",
+      "topic": "canonical-filters",
+      "keywords": [
+        "status",
+        "filtro",
+        "below_safety_stock",
+        "branch",
+        "422",
+        "valores"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "supplies-api/app/interfaces/mcp/constants.py",
+        "locator": "SAFETY_STOCK_STATUS + OTD filter keys"
+      }
+    },
+    {
+      "knowledge_id": "explain.otd-divergence",
+      "kind": "explanation",
+      "title": "Por que OTD (Overview) difere do OTD de Entregas/Atrasos",
+      "summary": "São populações e fórmulas distintas: Overview OTD compõe o indicador do analytics por período/filial; a página Entregas lista recebimentos de MP por data de entrada (late/on_time). Divergência esperada — nenhum dos dois está necessariamente errado.",
+      "content": "OVERVIEW OTD (analyze overview_summary / read otd aggregate|series) usa o serviço OTD do analytics: população de pedidos/linhas por promessa vs entrega, agregada por período e filial. A página Entregas/Atrasos (read deliveries late) lista recebimentos de matéria-prima por data de entrada com status late/on_time — população diferente (recebimentos, não linhas de PC), datas diferentes (entrada efetiva) e sem agregação ponderada. Ao responder divergências entre indicadores, a SURI deve citar população, período, filtro e fórmula de cada fonte, sem declarar valor 'errado' sem evidência.",
+      "topic": "indicator-interpretation",
+      "keywords": [
+        "otd",
+        "divergência",
+        "entregas",
+        "overview",
+        "atraso",
+        "indicador diferente"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "supplies-api/app/interfaces/mcp/constants.py",
+        "locator": "otd actions + deliveries late contract"
+      }
+    },
+    {
+      "knowledge_id": "report.executive",
+      "kind": "report_template",
+      "title": "Relatório executivo de Suprimentos",
+      "summary": "Template de relatório: 13 seções obrigatórias.",
+      "content": "Relatório executivo de Suprimentos. Seções: EXECUTIVE_SUMMARY; SCOPE_AND_PERIOD; KPI_SCORECARD; SUPPLIES_PERFORMANCE; PURCHASE_REQUESTS; PURCHASE_ORDERS; SUPPLIER_PERFORMANCE; INVENTORY_EXPOSURE; DELIVERY_RISKS; MARKET_INTELLIGENCE; TOP_PRIORITIES; ACTION_PLAN; EVIDENCE_AND_LIMITATIONS. Toda seção cita a fonte dos dados, separa FACT/CALCULATION/INFERENCE/RECOMMENDATION e declara LIMITATIONS; dados ausentes viram DATA_GAP, nunca invenção.",
+      "topic": "report-journeys",
+      "keywords": [
+        "relatório",
+        "executivo",
+        "de",
+        "suprimentos",
+        "relatório"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "docs",
+        "locator": "report.executive"
+      }
+    },
+    {
+      "knowledge_id": "report.supply-risk",
+      "kind": "report_template",
+      "title": "Diagnóstico de risco de abastecimento",
+      "summary": "Template de relatório: 10 seções obrigatórias.",
+      "content": "Diagnóstico de risco de abastecimento. Seções: MATERIAL; BRANCH; DEFICIT; OPEN_PURCHASE_ORDERS; SUPPLIER; DELIVERY_DATES; COVERAGE; RISK_EVIDENCE; HYPOTHESES; RECOMMENDED_ACTION. Toda seção cita a fonte dos dados, separa FACT/CALCULATION/INFERENCE/RECOMMENDATION e declara LIMITATIONS; dados ausentes viram DATA_GAP, nunca invenção.",
+      "topic": "report-journeys",
+      "keywords": [
+        "diagnóstico",
+        "de",
+        "risco",
+        "de",
+        "abastecimento",
+        "relatório"
+      ],
+      "evidence_class": "PROVEN",
+      "source": {
+        "file": "docs",
+        "locator": "report.supply-risk"
       }
     }
   ]

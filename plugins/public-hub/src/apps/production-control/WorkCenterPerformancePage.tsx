@@ -452,7 +452,7 @@ function MesPeriodPanel({
           className="pcp-pub__btn pcp-pub__btn--ghost"
           onClick={onOpenActivity}
         >
-          Atividade do posto (hoje)
+          Paradas do posto (hoje)
         </button>
       </div>
 
@@ -504,7 +504,7 @@ function MesPeriodPanel({
               value={String(mesData.totals.pendingReasonCount)}
               note={
                 mesData.totals.pendingReasonCount > 0
-                  ? "classifique na Atividade do posto"
+                  ? "classifique em Paradas do posto"
                   : "todos os motivos informados"
               }
               tone={mesData.totals.pendingReasonCount > 0 ? "warn" : "none"}
