@@ -1806,3 +1806,12 @@ PLANO: adapter pydantic_arggen (Agent+structured output sobre schema real) ->
   flag DELIA_ARGGEN_ENGINE=llm|pydantic_ai (opt-in eval) -> _validate_instance
   segue owner contrato; sem segundo planner; invoke live unchanged.
 PROXIMO: implementar adapter + flag + tests + E2E 30190123 + A/B.
+
+## PYDANTIC-AI — adapter implementado (nao-wired ainda)
+
+FILE: delia-api/app/infrastructure/arggen/pydantic_arggen.py
+  propose_arguments(): dynamic create_model do JSON Schema real,
+  pydantic-ai Agent output_type, system_prompt semantico (id->code field),
+  previous_arguments incluidos; retorna dict p/ _validate_instance.
+NEXT: flag DELIA_ARGGEN_ENGINE + wiring em _propose_candidate_arguments
+  (L13925) + settings (llm_base_url/api_key/model) + teste E2E 30190123.
