@@ -4500,6 +4500,14 @@ class GptActionsDispatchService:
                     return "series"
                 return "realized"
 
+            # papel = ELEGIBILIDADE, não ranking (issue #129):
+            # fonte de meta NUNCA alimenta KPI de realizado; série
+            # não alimenta scalar; realizado não vira meta.
+            _ROLE_ELIGIBLE = {
+                "kpi_view": {"realized"},
+                "chart_view": {"series", "realized"},
+                "table_view": {"realized", "series"},
+            }
             _role_pref = {
                 "kpi_view": ["realized", "target", "series"],
                 "chart_view": ["series", "realized", "target"],
@@ -4527,6 +4535,17 @@ class GptActionsDispatchService:
                 ]
                 if _shaped:
                     pool = _shaped
+            # elegibilidade por papel — candidato com papel
+            # incompatível sai antes do ranking.
+            _eligible_roles = _ROLE_ELIGIBLE.get(btype, set())
+            if _eligible_roles:
+                _role_pool = [
+                    c
+                    for c in pool
+                    if _cand_role(c) in _eligible_roles
+                ]
+                if _role_pool:
+                    pool = _role_pool
             # role pref ordena mas não exclui: indicador meta que
             # cobre oee+meta é a comparação oficial pedida, não
             # contaminação — a chave de cobertura decide.
@@ -4637,6 +4656,68 @@ class GptActionsDispatchService:
             }
             _bound_goals |= set(cand.get("goals") or [])
         payload["ops"] = enriched
+        # meta é representação independente: quando o pedido pede
+        # comparação e existe fonte TARGET justificada, emite um
+        # KPI de meta próprio — nunca dentro do KPI de realizado.
+        if (request_goals or set()) & {"meta", "metas", "goal", "alvo"}:
+            for _plan in plan_by_type.values():
+                _meta_cands = [
+                    c
+                    for c in (_plan.get("candidates") or [])
+                    if isinstance(c, dict)
+                    and _cand_role(c) == "target"
+                    and c.get("goals")
+                ]
+                if not _meta_cands:
+                    continue
+                _mc = _meta_cands[0]
+                _moid = str(_mc.get("operationId") or "").strip()
+                if not _moid or any(
+                    o.get("operationId") == _moid
+                    for o in enriched
+                    if isinstance(o, dict)
+                ):
+                    continue
+                enriched.extend(
+                    [
+                        {
+                            "op": "upsert_block",
+                            "block": {
+                                "id": "v_meta_view",
+                                "type": "kpi_view",
+                                "frame": {
+                                    "x": 3, "y": 50,
+                                    "w": 22, "h": 22,
+                                },
+                                "style": {
+                                    "color": "#0f172a",
+                                    "backgroundColor": "#ffffff",
+                                    "fontFamily": (
+                                        "Inter, system-ui, sans-serif"
+                                    ),
+                                },
+                            },
+                        },
+                        {
+                            "op": "upsert_data_source",
+                            "operationId": _moid,
+                            "blockId": "ds_meta_view",
+                            "displayMode": "kpi",
+                            "label": str(
+                                _mc.get("label") or _moid
+                            ),
+                            "params": dict(
+                                _mc.get("params") or {}
+                            ),
+                        },
+                        {
+                            "op": "bind_visual",
+                            "visualId": "v_meta_view",
+                            "dataSourceId": "ds_meta_view",
+                        },
+                    ]
+                )
+                break
         # blocos do plano cujo componente foi descartado não podem
         # travar a prontidão da proposta.
         if dropped_types and isinstance(
