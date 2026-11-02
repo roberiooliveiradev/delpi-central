@@ -3452,10 +3452,10 @@ class GptActionsDispatchService:
         # pedido de composição com requisitos de design; só vale `ready`
         # sem recipe quando o pedido é realmente só "slide vazio".
         _ops_out = payload.get("ops") or []
-        _only_blank_slide = bool(_ops_out) and all(
-            str(o.get("op") or "") == "add_blank_slide"
+        _has_visual_ops = any(
+            isinstance(o, dict)
+            and str(o.get("op") or "") == "upsert_block"
             for o in _ops_out
-            if isinstance(o, dict)
         )
         _has_design_req = any(
             t in str(message or "").lower()
@@ -3474,8 +3474,8 @@ class GptActionsDispatchService:
                 and not payload.get("ops")
                 or (
                     str(payload.get("status") or "") == "ready"
-                    and _only_blank_slide
                     and _has_design_req
+                    and not _has_visual_ops
                 )
             )
         ):
@@ -3489,6 +3489,33 @@ class GptActionsDispatchService:
                     recipe.recipe_id
                 )
                 if ops:
+                    # DI-E2E-DESIGN-01 — recipe de tema (só patch) não
+                    # satisfaz pedido de composição: mantém o tema e
+                    # concatena a recipe genérica de componentes.
+                    _has_blocks = any(
+                        isinstance(o, dict)
+                        and str(o.get("op") or "") == "upsert_block"
+                        for o in ops
+                    )
+                    if _has_design_req and not _has_blocks:
+                        composed = PresentationRecipeService.ops_for_recipe(
+                            "TV_KPI_SERIES_TABLE"
+                        )
+                        theme_ops = ops
+                        ops = [
+                            o for o in theme_ops
+                            if str(o.get("op") or "")
+                            == "patch_native_config"
+                        ] + [
+                            o for o in composed
+                            if str(o.get("op") or "")
+                            != "patch_native_config"
+                            or not any(
+                                str(t.get("op") or "")
+                                == "patch_native_config"
+                                for t in theme_ops
+                            )
+                        ]
                     payload["status"] = "proposal"
                     payload["recipeId"] = recipe.recipe_id
                     if recipe.theme_key:
@@ -3706,6 +3733,19 @@ class GptActionsDispatchService:
                     "fabrica", "fábrica", "filial", "unidade",
                     "setor", "planta", "empresa", "período",
                     "periodo", "televisao", "televisão",
+                    # DI-E2E — self-name, qualificadores e requisitos
+                    # de design não são objetivos de negócio:
+                    "vista", "delpi", "atual", "atualmente",
+                    "identidade", "visual", "industrial",
+                    "industria", "profissional", "dashboard",
+                    "playlist", "lab", "slide", "destaque",
+                    "compare", "comparacao",
+                    "comparação", "utilize", "organize",
+                    "elementos", "hierarquia", "contraste",
+                    "tipografia", "adequada", "evolucao",
+                    "evolução", "ultimos", "últimos", "apresente",
+                    "mostre", "acompanhar", "dias", "horas",
+                    "minutos", "semanas", "meses",
                 }
                 goal_map: dict[str, dict] = {}
                 # contexto escopifica a busca mas não é objetivo —
@@ -3720,6 +3760,27 @@ class GptActionsDispatchService:
                     "dos", "que", "resultados", "iniciativas",
                     "mostrando", "coisas", "sinal",
                 }
+                # DI-E2E — tokens de métrica curtos ("oee", "kpi")
+                # viram objetivos quando há evidência direta nos
+                # operationIds elegíveis do catálogo.
+                _metric_tok = {
+                    t.strip(".,;:!?()\"'")
+                    for t in str(message or "").lower().split()
+                    if 3 <= len(t.strip(".,;:!?()\"'")) < 4
+                }
+                _metric_tok = {
+                    t
+                    for t in _metric_tok
+                    if any(
+                        t
+                        in str(
+                            c.get("operationId") or ""
+                        ).split("_")
+                        for c in qualified
+                    )
+                }
+                _mtok |= _metric_tok
+                _all_tok |= _metric_tok
                 if _mtok:
                     anchor_categories |= {
                         str(c.get("category") or "").strip()
@@ -3743,7 +3804,7 @@ class GptActionsDispatchService:
                         str(c.get("operationId") or "")
                         for c in qualified
                     }
-                    for tok in list(_mtok)[:4]:
+                    for tok in list(_mtok)[:6]:
                         tok_sugg = []
                         for variant in (tok, tok.rstrip("s")):
                             if variant == tok and tok_sugg:
@@ -4197,6 +4258,13 @@ class GptActionsDispatchService:
                     tok for tok, g in goal_map.items()
                     if not g["operationIds"]
                 ]
+                # DI-E2E-DESIGN-01 — bridge composição→binding: ops de
+                # recipe ganham data_source + bind_visual canônicos,
+                # heading recebe o título do briefing e componentes
+                # não pedidos saem do plano.
+                self._enrich_composition_ops(
+                    payload, blocks, message
+                )
                 # readiness honesto: layout pronto ≠ dados prontos.
                 if payload["bindingPlan"]["state"] != "RESOLVED":
                     payload["dataReadiness"] = "pending_source_selection"
@@ -4221,6 +4289,192 @@ class GptActionsDispatchService:
                 sufficiency=methodology.get("sufficiency"),
             )
         return payload
+
+    @staticmethod
+    def _enrich_composition_ops(
+        payload: dict[str, Any],
+        blocks: list[dict[str, Any]],
+        message: Any,
+    ) -> None:
+        """DI-E2E-DESIGN-01 — ONE REQUEST → COMPLETE DASHBOARD.
+
+        Recipe ops are layout scaffolds (frames/styles only). This
+        bridge connects them to the canonical data path that the
+        bindingPlan already qualified:
+
+        - heading gains the briefing title (``content``/``contentRuns``);
+        - each ``upsert_block`` data block gains an ``id`` and is
+          followed by ``upsert_data_source`` + ``bind_visual`` ops
+          (canonical flat contract);
+        - ``table_view`` scaffold is dropped when the request never
+          asked for a table/detail — recipe is a scaffold, not a
+          prescription of components;
+        - declared period intent (``N dias`` / mensal / semanal /
+          anual / diário) fills route params only when the route's
+          own ``paramSchema`` declares the key.
+        """
+        ops = payload.get("ops")
+        if not isinstance(ops, list) or not ops:
+            return
+        import re
+
+        msg = str(message or "")
+        title = ""
+        m = re.search(
+            r"t[íi]tulo\s*[:=\"']?\s*[\"']?([^\"'\n.,;]{3,80})",
+            msg,
+            re.I,
+        )
+        if m:
+            title = m.group(1).strip()
+        if not title:
+            # sem título explícito — deriva do primeiro objetivo
+            # de negócio reconhecido (rastreável, não inventado).
+            goals = payload.get("interpretedGoals") or []
+            if goals:
+                title = (
+                    "Painel de "
+                    + str(goals[0].get("goal") or "").capitalize()
+                )
+
+        params_msg: dict[str, Any] = {}
+        mp = re.search(r"(\d{1,4})\s*dias", msg, re.I)
+        if mp:
+            params_msg["periodDays"] = int(mp.group(1))
+        for kw, gran in (
+            (r"mensal|por\s+m[eê]s|m[eê]s\s+a\s+m[eê]s|monthly", "month"),
+            (r"semanal|por\s+semana|weekly", "week"),
+            (r"anual|por\s+ano|yearly", "year"),
+            (r"di[aá]ri|por\s+dia|daily", "day"),
+        ):
+            if re.search(kw, msg, re.I):
+                params_msg["granularity"] = gran
+
+        want_table = bool(re.search(r"tabela|detalh|lista", msg, re.I))
+        plan_by_type = {
+            str(b.get("blockType") or ""): b
+            for b in blocks
+            if isinstance(b, dict)
+        }
+        enriched: list[dict[str, Any]] = []
+        dropped_types: set[str] = set()
+        for op in ops:
+            if (
+                not isinstance(op, dict)
+                or str(op.get("op") or "") != "upsert_block"
+                or not isinstance(op.get("block"), dict)
+            ):
+                enriched.append(op)
+                continue
+            blk = op["block"]
+            btype = str(blk.get("type") or "")
+            plan = plan_by_type.get(btype)
+            plan_cands = (
+                plan.get("candidates") or [] if plan else []
+            )
+            justified = [
+                c
+                for c in plan_cands
+                if isinstance(c, dict) and c.get("goals")
+            ]
+            # componente não pedido e sem candidatos justificados
+            # sai; com fontes justificadas (ex.: NCs de 5S) fica.
+            if (
+                btype == "table_view"
+                and not want_table
+                and not justified
+            ):
+                dropped_types.add(btype)
+                continue
+            if btype == "heading" and title:
+                blk["content"] = title
+                blk["contentRuns"] = [{"text": title}]
+            if plan is None:
+                enriched.append(op)
+                continue
+            # ambiguidade preservada: só resolve fonte quando o
+            # plano canônico já estava RESOLVED ou existe um único
+            # candidato justificado — nunca pick silencioso.
+            if plan.get("state") != "RESOLVED" and len(justified) != 1:
+                enriched.append(op)
+                continue
+            cand = justified[0] if justified else (
+                plan_cands[0] if plan_cands else None
+            )
+            oid = (
+                str(cand.get("operationId") or "").strip()
+                if isinstance(cand, dict)
+                else ""
+            )
+            if not oid:
+                enriched.append(op)
+                continue
+            vid = str(blk.get("id") or f"v_{btype}")
+            blk["id"] = vid
+            dsid = f"ds_{btype}"
+            params = dict(cand.get("params") or {})
+            schema = cand.get("paramSchema") or {}
+            for key, value in params_msg.items():
+                if key in schema:
+                    params[key] = value
+            spec = plan.get("binding") or {}
+            enriched.append(op)
+            enriched.append(
+                {
+                    "op": "upsert_data_source",
+                    "operationId": oid,
+                    "blockId": dsid,
+                    "displayMode": str(
+                        spec.get("displayMode") or "auto"
+                    ),
+                    "label": str(cand.get("label") or oid),
+                    "params": params,
+                }
+            )
+            enriched.append(
+                {
+                    "op": "bind_visual",
+                    "visualId": vid,
+                    "dataSourceId": dsid,
+                }
+            )
+            # o binding agora é concreto nos ops — o plano reflete
+            # a resolução efetiva, não apenas a existência de spec.
+            plan["state"] = "RESOLVED"
+            plan["resolvedOperationId"] = oid
+            plan["resolvedParams"] = params
+        payload["ops"] = enriched
+        # blocos do plano cujo componente foi descartado não podem
+        # travar a prontidão da proposta.
+        if dropped_types and isinstance(
+            payload.get("bindingPlan"), dict
+        ):
+            payload["bindingPlan"]["blocks"] = [
+                b
+                for b in payload["bindingPlan"].get("blocks") or []
+                if str(b.get("blockType") or "") not in dropped_types
+            ]
+            for dt in dropped_types:
+                plan_by_type.pop(dt, None)
+        # recomputa o estado agregado após a resolução dos ops.
+        plan_list = [
+            b for b in plan_by_type.values() if isinstance(b, dict)
+        ]
+        if plan_list and isinstance(
+            payload.get("bindingPlan"), dict
+        ):
+            payload["bindingPlan"]["state"] = (
+                "RESOLVED"
+                if all(
+                    b.get("state") == "RESOLVED" for b in plan_list
+                )
+                else "NEEDS_SOURCE_SELECTION"
+                if any(
+                    b.get("state") == "NEEDS_SOURCE_SELECTION"
+                    for b in plan_list
+                )
+                else "NEEDS_CONTEXT"
+            )
 
     def _design_methodology_for_suggest(
         self,
