@@ -1424,3 +1424,30 @@ neg_delete) quebrou test_metamorphic_add_remove_reclassify: create_or_modify +
 descriptor READ deve seguir o fluxo (intent_reconciliation trata). REVERTIDO —
 neg_delete permanece arbitrado como harness-strict (discovery READ legitimo).
 DOC216 intacto: store/snapshot_interop/CLI/wiring/testes preservados.
+
+## DOC216 — RELATORIO FINAL §9 (SHA 4dc7a3d99a)
+
+TASK_ID=DELIA-C3-MCP-VERSIONED-CATALOG-ISOLATED-AB-01
+BASE_SHA=52228e9551 · FINAL_SHA=4dc7a3d99a · PUSH_VERIFIED=YES
+EXISTING_EQUIVALENT=YES (SpecialistInterop.discover_catalog; hook _remote_tools)
+REUSE_DECISION=EXTEND (subclass snapshot; invoke live herdado)
+STORAGE=SQLite eval-scoped (app/infrastructure/interoperability/mcp/catalog_store.py)
+LIVE_PATH_UNCHANGED=YES (default live; flag opt-in; fail-closed sem DB)
+EXPERIMENT_FLAG=DELIA_MCP_CATALOG_MODE=snapshot_experiment + DELIA_MCP_CATALOG_DB
+SNAPSHOT_STORE=/app/.battery/mcp_catalog.db — davi,teo,caio,clara,eva,suri v1 ACTIVE
+  (vista NAO capturado: delpi-tv-dashboard-api em restart — env, nao defeito)
+SYNC_CLI: dry-run/apply/history/verify/activate-version — verificado em 6 owners
+TESTS: 9 doc216 green (store, atomic, rollback, hash tamper, projecao igual A/B,
+  injection-descricao dado-opaco, fail-closed snapshot ausente/invalido)
+A/B: discovery _groups live ~11s (2 tools/list) vs snapshot ~0ms — LATENCIA ELIMINADA
+  paired cmp_17 x3: FAIL/PASS/PASS independente de variante = variancia LLM,
+  superficie identica (teste de projecao igual). AB_VALIDITY=LIMITED (few pairs)
+SEGURANCA: snapshot sem credenciais; descricoes opacas; hash verify; fail-closed
+ROLLBACK: activate-version testado (store); flag rollback trivial por config
+REGRESSAO: metamorphic+contracts green apos revert do gate write-intent
+ADOPTION_RECOMMENDATION=HYBRID_CANDIDATE — discovery snapshot elimina latencia sem
+  mudar comportamento; A/B limitado recomenda ampliar benchmark antes de promover
+PRODUCTION_SWITCH=NO · PRODUCTION_DEPLOY=NO · BUSINESS_WRITES=0
+TASK_STATUS=COMPLETE (experimento E0-E7 implementado e provado no escopo autorizado;
+  gate extra pendente: benchmark A/B ampliado + vista snapshot quando container voltar)
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
