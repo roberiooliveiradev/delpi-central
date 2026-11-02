@@ -497,6 +497,9 @@ def _empty_result_feedback_with_args(previous: Mapping) -> str:
                     "shorter, simpler or canonical term forms (the "
                     "owner may match literal terms); you may also "
                     "drop nonessential qualifiers or filler wording. "
+                    "When an exact identifier or code appears inside "
+                    "a descriptive field, move it to the typed "
+                    "identifier field the schema exposes (if any). "
                     "Return empty arguments only when nothing "
                     "plausible applies."
                 ),

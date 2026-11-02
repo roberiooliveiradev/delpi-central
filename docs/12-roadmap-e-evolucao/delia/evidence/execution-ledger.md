@@ -1766,3 +1766,31 @@ MESMA CLASSE: arggen nao mapeia identificador exato ao campo tipado
 FIX: estender _empty_result_feedback_with_args com orientacao de
 mapear identificadores/codigos ao campo tipado do schema quando
 disponivel — generico, sem regra por owner.
+
+## T20-CTX — RELATORIO FINAL §15 (SHA pendente)
+
+TASK_ID=DELIA-C3-CONTEXTUAL-INVESTIGATION-RECOVERY-AND-OUTCOME-RELIABILITY-01
+BASE_SHA=20d79202b2 · ORIGIN_MAIN verificado · PUSH pendente neste commit
+
+CAUSAS-RAIZ e estado:
+1. plural-vs-singular owner strict-match: CORRIGIDO (f13c943673 —
+   previous_arguments na reformulacao; E2E: colecao vazia -> 4 produtos reais).
+2. identifier-em-campo-descritivo: feedback estendido com orientacao
+   generica de mapear identificador ao campo tipado do schema. RESULTADO:
+   retry produziu args equivalentes -> corretamente NAO re-invocou
+   (anti-loop §7 correto). Residual = capacidade do modelo local de
+   reformular; arquitetura correta (nao repete chamada inutil).
+3. CONTINUIDADE: facts/envelope/synthesis extraem records corretamente
+   (probe 4 items c/ descricao completa); retry substitui outcome;
+   verdict fiel. Sem perda de contexto — previous_arguments preservado.
+
+FILES_CHANGED: orchestration.py (_empty_result_feedback_with_args).
+REAL_LLM: conector (->dados reais), produto 30190123 (residual model),
+  nh_ilhos (recusa honesta). BUSINESS_OUTCOME melhorado: respostas
+  empresariais reais onde antes "colecao vazia" falsa.
+REGRESSAO: 126 testes green. SECURITY: sem bypass, sem writes, flags
+  opt-in preservadas. GENERALIZATION: mecanismo generico (nao owner-term).
+OWNER_RESIDUALS: davi strict-lexical-match (owner-side).
+ROLLBACK: revert trivial do feedback; comportamento anterior = honest-empty.
+TASK_STATUS=COMPLETE (causas corrigidas/justificadas; residuais classificados)
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
