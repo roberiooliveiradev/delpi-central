@@ -127,7 +127,7 @@ def test_happy_path_maps_period_and_projects(client, gateway):
     assert len(data["limitations"]) >= 1
     assert data["orders"][0]["productionOrder"] == "OP001"
     call = gateway.get.call_args
-    assert call.args[0] == "/consumption-audit/orders"
+    assert call.args[0] == "/supplies/consumption-audit/orders"
     params = call.kwargs["params"]
     assert params["period_start"] == "2026-09-01"
     assert params["period_end"] == "2026-09-30"
@@ -177,6 +177,6 @@ def test_detail_route_calls_producer(client, gateway):
     )
     assert resp.status_code == 200, resp.text
     call = gateway.get.call_args
-    assert call.args[0] == "/consumption-audit/orders/OP001"
+    assert call.args[0] == "/supplies/consumption-audit/orders/OP001"
     assert call.kwargs["params"]["branch"] == "01"
     assert resp.json()["data"]["officialParity"] == "pending"
