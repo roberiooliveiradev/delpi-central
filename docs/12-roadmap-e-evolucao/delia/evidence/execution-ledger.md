@@ -1315,3 +1315,19 @@ PENDENTE: doc211v2 DONE; clusters EVIDENCE_RELEVANCE(8)/ADMISSION(4)/GROUP_SEL h
 GOAL_INTERP(3)/EVIDENCE_REJECTION(1) — classificar causalmente, corrigir defeitos DELIA,
 rerun afetados, regressao 470, relatorio §9.
 TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## RESUME-POINT (SHA 42eb9783fd) — estado consolidado para retomada
+
+ATIVO: rerun doc211 full-env -> /app/.battery/eval_doc211_v2.log (7+/28; DONE marker).
+       runs.json e sobrescrito a cada run — extrair traces SO ao final.
+FIX PUBLICADO: gate write-intent (L5521 orchestration.py) + arbitracao neg_delete.
+MATRIZ FINAL 89 (SHA 18479ed41c): 45P/44F — clusters documentados acima.
+PROXIMOS COMANDOS:
+ 1. docker exec delia-t21-main tail -4 /app/.battery/eval_doc211_v2.log
+ 2. Apos DONE: contagem PASS/FAIL + extrair FAILs: grep "^{.s." log | grep FAIL
+ 3. Trace de um FAIL: runs.json -> campo scenario/proposals/invokes/classification
+ 4. Clusters pendentes de fix: EVIDENCE_RELEVANCE (nomenclatura), GROUP_SELECTION heldout
+    (ho_vista/nh_vista/t2_teo_resp/t2_vista_screens — owner habilitado = defeito candidato),
+    GOAL_INTERP prepare (3), ADMISSION (4), EVIDENCE_REJECTION (1), cmp_27.
+ 5. Regression: suite 470-teste listada acima + interop 54.
+ 6. Relatorio doc214 §9 ao final.
