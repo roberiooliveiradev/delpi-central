@@ -116,6 +116,17 @@ class DesignIntelligenceService:
             "monte uma apresentacao", "monte um painel", "monte uma tv",
             "quero uma tv", "preciso de um painel", "preciso de uma tv",
             "preciso de uma apresentacao", "tv mostrando",
+            # DI-DESIGN-02 — categoria funcional de pedidos de
+            # composição/edição visual, não só "crie/monte":
+            "desenvolva", "desenvolver", "design profissional",
+            "layout profissional", "visual profissional",
+            "dashboard", "apresentacao visual", "monte o visual",
+            "monte um visual", "organize os indicadores",
+            "apresentacao dos indicadores", "melhore a apresentacao",
+            "melhore o design", "aprimore o design", "aprimore a apresentacao",
+            "melhore o visual", "melhore o layout", "faca um layout",
+            "desenhe", "projete um painel", "estruture o painel",
+            "estruture a apresentacao",
         )),
         ("IMPROVE_EXISTING", ("melhore", "melhorar", "destaque", "destacar", "deixe melhor", "polir")),
     )

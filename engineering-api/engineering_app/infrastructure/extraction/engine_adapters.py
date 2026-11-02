@@ -322,3 +322,141 @@ ENGINES: dict[str, Any] = {
 
 def engine_capabilities() -> dict[str, dict]:
     return {k: v.capability() for k, v in ENGINES.items()}
+
+
+class DoclingEngine:
+    """Motor C — Docling (layout+TableFormer) adaptado ao contrato v1."""
+
+    provider_id = "docling"
+
+    def capability(self) -> dict:
+        return capability_descriptor(
+            provider_id=self.provider_id,
+            provider_version="docling_2.145",
+            supports={
+                "pdf_native": True, "ocr": True, "layout": True,
+                "tables": True, "cells": True, "figures": True,
+                "symbols": False, "coords": True, "multipage": True,
+                "page_select": True, "local": True, "gpu_required": False,
+                "graphic_primitives": False,
+            },
+            notes=["Docling 2.145 + TableFormer + torch CPU"],
+        )
+
+    def run(
+        self,
+        pdf_bytes: bytes,
+        *,
+        document_hash_sha256: str,
+        product_code: str | None = None,
+        pages: list[int] | None = None,
+    ) -> dict:
+        t0 = time.monotonic()
+        try:
+            import os
+            import tempfile
+
+            from docling.document_converter import DocumentConverter
+
+            with tempfile.NamedTemporaryFile(
+                suffix=".pdf", delete=False
+            ) as f:
+                f.write(pdf_bytes)
+                tmp = f.name
+            try:
+                conv = DocumentConverter()
+                res = conv.convert(tmp)
+            finally:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+            doc = res.document
+            regions: list[dict] = []
+            tables: list[dict] = []
+            cells: list[dict] = []
+            tblocks: list[dict] = []
+            for page_item in getattr(doc, "pages", {}) or {}:
+                pass
+            # itera elementos do documento exportável
+            try:
+                for item, _ in doc.iterate_items():
+                    label = getattr(getattr(item, "label", None), "value", str(getattr(item, "label", "")))
+                    prov = (item.prov or [None])[0] if getattr(item, "prov", None) else None
+                    bbox = getattr(prov, "bbox", None) if prov else None
+                    bb = [bbox.l, bbox.t, bbox.r, bbox.b] if bbox else None
+                    if label in ("table", "section_header", "list_item"):
+                        regions.append(
+                            make_region(
+                                region_id=f"doc_{len(regions)}",
+                                region_type="unknown",
+                                page=getattr(prov, "page_no", 1) if prov else 1,
+                                bounding_box_px=bb,
+                                evidence=[str(label)],
+                            )
+                        )
+                    if label == "table" and hasattr(item, "data"):
+                        grid = getattr(item.data, "grid", None) or []
+                        tables.append({"row_count": len(grid), "headers": []})
+                        for r_i, row in enumerate(grid):
+                            for c_i, cell in enumerate(row or []):
+                                cells.append(
+                                    make_cell(
+                                        row=r_i, col=c_i,
+                                        text=getattr(cell, "text", ""),
+                                        bounding_box_px=None,
+                                    )
+                                )
+                    elif label in ("text", "paragraph"):
+                        tblocks.append(
+                            {
+                                "text": getattr(item, "text", ""),
+                                "bounding_box_px": bb,
+                            }
+                        )
+            except Exception:
+                pass
+            n_pages = len(getattr(doc, "pages", {}) or {1: 1})
+            return make_result(
+                provider_id=self.provider_id,
+                provider_version="docling_2.145",
+                document_hash_sha256=document_hash_sha256,
+                product_code=product_code,
+                model_version="docling_layout+tableformer",
+                execution_mode="local_isolated",
+                regions=regions,
+                tables=tables,
+                cells=cells,
+                text_blocks=tblocks[:40],
+                provenance=(
+                    "api-delpi pdf → Docling (layout+TableFormer) → v1 contract"
+                ),
+                limitations=["candidates only", "coordenadas em pdf points quando bbox disponível"],
+                duration_ms=round((time.monotonic() - t0) * 1000, 1),
+                quality_status="EVAL_PENDING",
+            )
+        except ImportError as exc:
+            return make_result(
+                provider_id=self.provider_id,
+                provider_version="unknown",
+                document_hash_sha256=document_hash_sha256,
+                product_code=product_code,
+                error_kind="MODEL_NOT_PROVISIONED",
+                error_detail=f"docling import: {exc}",
+                quality_status="FAILED",
+                duration_ms=round((time.monotonic() - t0) * 1000, 1),
+            )
+        except Exception as exc:
+            return make_result(
+                provider_id=self.provider_id,
+                provider_version="docling_2.145",
+                document_hash_sha256=document_hash_sha256,
+                product_code=product_code,
+                error_kind="UNAVAILABLE",
+                error_detail=f"{type(exc).__name__}:{exc}",
+                quality_status="FAILED",
+                duration_ms=round((time.monotonic() - t0) * 1000, 1),
+            )
+
+
+ENGINES["docling"] = DoclingEngine()

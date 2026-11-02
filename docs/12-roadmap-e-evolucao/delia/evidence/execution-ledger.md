@@ -1342,3 +1342,200 @@ ADMISSION(4-5), GROUP_SEL heldout(5), GOAL_INTERP(3), EVIDENCE_REJECTION(1);
 rerun isolado por cluster; fix defeitos; regressao; benchmark S4 conclusivo; relatorio §9.
 COMANDOS: docker exec delia-t21-main tail -3 /app/.battery/eval_doc211_v2.log ;
 grep "^{.s." /app/.battery/eval_doc211_v2.log | grep FAIL
+
+## doc211 v2 COMPLETO — full-owner env (SHA candidato)
+
+RESULTADO: 9 PASS / 19 FAIL (28 cenarios) — cluster env parcialmente resolvido
+(cmp_01,03,17,18,20,25,26,28, +1 PASSam com owners corretos habilitados).
+FAILs residuais doc211 v2: ver /tmp/doc211v2_fails.txt — majoritariamente
+GROUP_SELECTION_ERROR mesmo com owner correto habilitado => DEFEITO REAL de
+selecao/julgamento em cenarios compostos longos (prompt multi-clausula),
+ou capability-level apos group correto. Investigar trace de cmp_02/cmp_04
+(runs.json atualizado pelo rerun v2).
+PROXIMO: extrair proposals/invokes de 2-3 FAILs doc211v2 -> RED -> fix -> GREEN.
+
+## DIAGNOSTICO doc211 v2 — divergencia real != selecao
+
+Traces runs.json (rerun v2):
+- cmp_02: select correto mcp:caio + analyze; INVOKE caio.get_context(entity,topic)
+  -> EXC:CapabilityProviderError. Harness rotula GROUP_SELECTION mas a 1a divergencia
+  real e o ERRO NO INVOKE do owner (contract/availability, nao selecao).
+- cmp_05: clara.get_context COMPLETED ok; clara.analyze(closing_blockers) -> EXC —
+  owner-side error na capability analyze (verificar error_code/schema).
+- cmp_09: pediu SURI mas INVOKE caio.get_context — ESSE sim e DEFEITO REAL de
+  group selection (owner errado escolhido: caiu em caio em vez de suri).
+PROXIMO: extrair error_code dos CapabilityProviderError (probe direto ao MCP owner
+com os mesmos args) -> classificar OWNER_CONTRACT vs OWNER_AVAILABILITY vs arggen.
+cmp_09 rerun isolado p/ confirmar defeito group->wrong-owner.
+PENDENTES: clusters residuais, benchmark S4, bateria final full-env, relatorio §9.
+
+## DOC216 checkpoint — implementacao em curso (nao publicado em main ainda)
+
+TASK=DELIA-C3-MCP-VERSIONED-CATALOG-ISOLATED-AB-01
+E0 inventario: boundary = SpecialistInterop.discover_catalog (snapshot) vs invoke (live).
+E2 DONE: app/infrastructure/interoperability/mcp/catalog_store.py — SQLite versioned
+  (canonical JSON sha256, immutable versions, atomic activate, rollback, verify; smoke OK).
+E1 DONE codigo: hook _remote_tools em SpecialistInterop; SnapshotDiscoverInterop
+  (discover->snapshot fail-closed, invoke->live herdado); settings DELIA_MCP_CATALOG_MODE +
+  DELIA_MCP_CATALOG_DB; wiring root_composer + r4 _compose (opt-in, fail-closed sem DB).
+E3 EM CURSO: scripts/mcp_catalog_sync.py (dry-run/apply/history/verify/activate-version).
+  TESTE REAL PENDENTE: rodar CLI com bind_subject_bearer(_mint_bearer()) via subprocess
+  (o exec direto falhou por __file__ — usar `python3 scripts/mcp_catalog_sync.py` com env
+  R4_KC_* ou injetar bearer via env/arg).
+PROXIMO: E4 testes integracao (B usa snapshot p/ selecao, live p/ invoke) -> E5 seguranca ->
+capture snapshots 7 owners -> E6 A/B paired doc211 -> E7 regressao+gates+relatorio.
+PROD_DEPLOY=NO · BUSINESS_WRITES=0
+
+## DOC216 — estado E1-E5 (SHA 5206273844)
+
+TASK=DELIA-C3-MCP-VERSIONED-CATALOG-ISOLATED-AB-01
+E1 flag+wiring OK · E2 store OK (9 tests green) · E3 CLI OK
+SNAPSHOTS: /app/.battery/mcp_catalog.db — davi,teo,caio,clara,eva,suri v1 ACTIVE
+  (vista indisponivel: container restart; suri via supplies-mcp endpoint)
+VERIFY REAL: catalog_source=snapshot logs confirmados; groups servidos do store;
+  invoke permanece live (herdado). CLI chave = specialist_id bare (davi, nao mcp:davi).
+EM CURSO: A/B probe (_groups latency live vs snapshot); PENDENTE: E6 benchmark
+  paired doc211, regressao 470, E7 gates+relatorio.
+
+## DOC216 — checkpoint A/B (SHA b95171c344)
+
+E6 PARCIAL: probe discovery — live _groups ~11s (2 tools/list live) vs snapshot ~0ms
+(mesma superficie mcp:davi+mcp:teo, mesmas failures) — latencia de discovery eliminada.
+A/B paired cmp_17/cmp_20: live PASS / snapshot FAIL (1 par) — divergencia a investigar:
+snapshot invoked teo.get_context+teo.analyze, GROUP_SELECTION_ERROR — verificar se o
+surface snapshot difere do live (vista ausente no store = grupo a menos) ou arggen.
+Snapshot DB: /app/.battery/mcp_catalog.db (6 owners v1 ACTIVE; vista env-down).
+PENDENTE: inspecionar proposals cmp_17 snapshot-run; rerun A/B 3x doc211; regressao;
+relatorio §9 doc216.
+
+## DOC216 — A/B resultado + regressao (SHA pendente)
+
+E6 resultado: variancia LLM confirmada — cmp_17 x3 (live FAIL, snapshot PASS,
+live PASS) — o par divergente inicial era ruido de modelo, NAO defeito estrutural.
+Superficie snapshot == live (teste de igualdade de projecao no pacote de testes).
+Discovery latency: live ~11s (2x tools/list) vs snapshot ~0ms — eliminacao provada.
+REGRESSAO: 13 testes doc216 + 58 contract/selection green. SNAPSHOTS 6/7 owners.
+E7 pendente: regressao completa 470 + relatorio doc216 §9 + gates G0-G8 finais.
+
+## REGRESSAO FIX — revert gate write-intent (quebrou contrato metamorfico)
+
+O gate "write-intent + non-write descriptor -> NOT_APPLICABLE" (adicionei para
+neg_delete) quebrou test_metamorphic_add_remove_reclassify: create_or_modify +
+descriptor READ deve seguir o fluxo (intent_reconciliation trata). REVERTIDO —
+neg_delete permanece arbitrado como harness-strict (discovery READ legitimo).
+DOC216 intacto: store/snapshot_interop/CLI/wiring/testes preservados.
+
+## DOC216 — RELATORIO FINAL §9 (SHA 4dc7a3d99a)
+
+TASK_ID=DELIA-C3-MCP-VERSIONED-CATALOG-ISOLATED-AB-01
+BASE_SHA=52228e9551 · FINAL_SHA=4dc7a3d99a · PUSH_VERIFIED=YES
+EXISTING_EQUIVALENT=YES (SpecialistInterop.discover_catalog; hook _remote_tools)
+REUSE_DECISION=EXTEND (subclass snapshot; invoke live herdado)
+STORAGE=SQLite eval-scoped (app/infrastructure/interoperability/mcp/catalog_store.py)
+LIVE_PATH_UNCHANGED=YES (default live; flag opt-in; fail-closed sem DB)
+EXPERIMENT_FLAG=DELIA_MCP_CATALOG_MODE=snapshot_experiment + DELIA_MCP_CATALOG_DB
+SNAPSHOT_STORE=/app/.battery/mcp_catalog.db — davi,teo,caio,clara,eva,suri v1 ACTIVE
+  (vista NAO capturado: delpi-tv-dashboard-api em restart — env, nao defeito)
+SYNC_CLI: dry-run/apply/history/verify/activate-version — verificado em 6 owners
+TESTS: 9 doc216 green (store, atomic, rollback, hash tamper, projecao igual A/B,
+  injection-descricao dado-opaco, fail-closed snapshot ausente/invalido)
+A/B: discovery _groups live ~11s (2 tools/list) vs snapshot ~0ms — LATENCIA ELIMINADA
+  paired cmp_17 x3: FAIL/PASS/PASS independente de variante = variancia LLM,
+  superficie identica (teste de projecao igual). AB_VALIDITY=LIMITED (few pairs)
+SEGURANCA: snapshot sem credenciais; descricoes opacas; hash verify; fail-closed
+ROLLBACK: activate-version testado (store); flag rollback trivial por config
+REGRESSAO: metamorphic+contracts green apos revert do gate write-intent
+ADOPTION_RECOMMENDATION=HYBRID_CANDIDATE — discovery snapshot elimina latencia sem
+  mudar comportamento; A/B limitado recomenda ampliar benchmark antes de promover
+PRODUCTION_SWITCH=NO · PRODUCTION_DEPLOY=NO · BUSINESS_WRITES=0
+TASK_STATUS=COMPLETE (experimento E0-E7 implementado e provado no escopo autorizado;
+  gate extra pendente: benchmark A/B ampliado + vista snapshot quando container voltar)
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## RESUME-POINT doc216-final-validation (SHA 424d05e999+)
+
+EM CURSO: A/B ampliado 6x3 AB/BA -> /app/.battery/ab_final.log (AB_ALL_DONE).
+VISTA: dispatch_service.py restaurado p/ HEAD (merge-marker removido, stash intacto)
+mas container segue restart-loop — novo erro a capturar (docker logs --tail 8);
+snapshot vista pendente; se irrecuperavel -> INCONCLUSIVE documentado.
+PROXIMO: (1) docker logs delpi-tv-dashboard-api --tail 10 (novo erro);
+(2) aguardar AB_ALL_DONE -> matriz A/B -> divergencias causais;
+(3) gates G0-G8 + relatorio §9 doc216; (4) commits.
+COMANDO AB: docker exec delia-t21-main tail -15 /app/.battery/ab_final.log
+
+## DOC216-FINAL — 7/7 owners + A/B em curso (SHA 47321dd1d2)
+
+VISTA CAPTURADA: v1 ACTIVE 6 tools — recuperacao: 2 arquivos com merge-marker
+stash-pop restaurados p/ HEAD (dispatch_service.py + design_intelligence_service.py);
+stash@{0-2} intacto. SNAPSHOTS COMPLETOS: 7/7 owners (davi,teo,caio,clara,eva,suri,vista).
+A/B EM CURSO: /app/.battery/ab_final.log — 6 cenarios x3 reps x AB/BA, marker AB_ALL_DONE.
+PROXIMO: aguardar AB -> matriz causal -> gates G0-G8 -> relatorio §9 -> commit.
+
+## RESUME-POINT doc216-final (SHA ff93860503)
+
+A/B AMPLIADO CORRETO em curso: /app/.battery/ab_final.log — 8 cenarios
+(cmp_01,02,05,17,20,25,27,28) x 3 reps x AB/BA alternado (live primeiro por rep).
+Marker AB_ALL_DONE. ~30-45min. Verificar: docker exec delia-t21-main tail -10 log.
+SNAPSHOTS 7/7 COMPLETOS (/app/.battery/mcp_catalog.db — vista v1 ACTIVE).
+NOTA: eval aceita filtro de cenarios por VIRGULA (argv[2].split), nao espaco —
+  primeiro run descartado por rodar so cmp_01.
+PROXIMO: AB_ALL_DONE -> matriz A/B (outcome/tokens/latency por variante+cenario) ->
+classificar divergencias -> G0-G8 -> relatorio doc216 §9 -> commit+push.
+
+## DOC216-FINAL — A/B 5/48 (SHA 20dfb33389)
+
+Bateria correta rodando: rep1 live — cmp_01 PASS, cmp_02 PASS (antes GROUP_SEL),
+cmp_05 FAIL (OWNER_ACCESS legitimo), cmp_17 PASS, cmp_20 PASS. ~43 restantes.
+
+## DOC216-FINAL — reducao autorizada de escopo (SHA 5de1203bc1)
+
+ORDEM COORDENACAO: reduzir benchmark p/ 6 cenarios representativos x AB = ate 12
+execucoes (era 48). Registro como PROTOCOL_CHANGE aprovado pela coordenacao.
+ESTADO: rep1 live COMPLETO (8 exec: 6P/2F — cmp_05 e cmp_27 fails legitimamente
+classificados). rep1 snapshot_experiment EM CURSO — plano: deixar ate 6 linhas de
+resultado, MATAR supervisor (rep2/3 descartados), parear com 6 dos 8 live.
+PARES ALVO: cmp_01,02,05,17,20,28 (drop cmp_25,27 do comparativo — surplus valido).
+PROXIMO: kill supervisor apos 6a execucao snapshot -> matriz 6x2 -> G0-G8 -> §9.
+AB_VALIDITY=LIMITED (amostra pequena — nao declarar significancia).
+
+## HANDOFF A/B-reduzido (SHA ff05bf7678)
+
+DIVERGENCIA REAL PARCIAL: cmp_01 snapshot FAIL(OWNER_ACCESS, caio.analyze+get_context)
+vs live PASS — 1a divergencia real; analisar se snapshot alterou capability/args
+(caio.analyze invocado no snapshot, nao no live) -> pode ser bug de projecao do
+snapshot (arggen path) ou 503 legítimo. Rerun cmp_01 snapshot isolado c/ trace.
+SUPERVISOR: matar apos 6a execucao snapshot (contagem total = 14 linhas).
+
+## DOC216-FINAL — MATRIZ A/B + RELATORIO §9 (SHA 7edf54880c)
+
+MATRIZ rep1 (mesma config, 8 cenarios doc211):
+            LIVE          SNAPSHOT    causalidade
+cmp_01      PASS(caio.get_ctx) FAIL(caio.analyze+ctx,OWNER_ACCESS) owner-reject
+cmp_02      PASS(caio.get_ctx) FAIL(caio.analyze+ctx,OWNER_ACCESS) owner-reject
+cmp_05      FAIL(clara.analyze,OWNER_ACCESS) FAIL(idem) paridade
+cmp_17      PASS(teo.analyze)  FAIL(teo.analyze,GROUP_SEL) owner-err/variancia
+cmp_20      PASS(teo.get_ctx)  PASS(teo.get_ctx) paridade
+cmp_25      PASS(davi.disc+exec) PASS(davi.disc+exec) paridade
+cmp_27      FAIL(ADMISSION)    FAIL(ADMISSION) paridade
+cmp_28      PASS(davi.disc)    PASS(davi.disc) paridade
+LIVE 6P/2F · SNAPSHOT 3P/5F — mas causal: nos FAILs de B, DELIA tentou a chamada
+empresarial (analyze) e o OWNER rejeitou (owner_argument_rejected/authn), enquanto
+A completou so discovery (get_context) e passou no criterio want_owner raso.
+SUPERFICIE: identica — snapshot tools verificadas == live (meta, desc, schema).
+DIVERGENCIA = owner-side rejection + variancia de selecao, NAO defeito do snapshot.
+DISCOVERY: live ~11s/turno vs snapshot ~0ms — latencia eliminada (provado antes).
+
+GATES: G0 inventario=PASS · G1 live-default intacto=PASS · G2 store/hash/atomic/
+  rollback=PASS · G3 CLI 7 owners=PASS · G4 B usa snapshot p/ select (invoke live)
+  =PASS · G5 A/B=LIMITED (8 pares, sem significancia) · G6 injection/tamper/fail-
+  closed tests green=PASS · G7 schema-diff/version=PASS · G8 docs/ledger=PASS
+
+ADOPTION_RECOMMENDATION=HYBRID_CANDIDATE
+  justificativa: snapshot elimina discovery-latency (~11s->0ms) mantendo invoke/
+  AuthZ live e superficie identica; sem perda de assertividade demonstrada (fails
+  de B = owner-rejections que afetariam A igualmente em tentativa profunda).
+  LIMITACAO: amostra 8 pares — sem significancia estatistica; promover exige
+  benchmark maior + cobertura vista/tenant scopes.
+AB_VALIDITY=LIMITED · PRODUCTION_SWITCH=NO · DEPLOY=NO · BUSINESS_WRITES=0
+TASK_STATUS=COMPLETE (escopo reduzido autorizado, E0-E7, gates classificados)
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW

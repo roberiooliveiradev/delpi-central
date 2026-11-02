@@ -1215,7 +1215,22 @@ def classify_x(sc, run):
             if hit and not refusal:
                 outcome = "PASS"
             elif invoked:
-                outcome, first = "FAIL", "GROUP_SELECTION_ERROR"
+                want_hit_err = any(
+                    c.startswith(want + ".")
+                    and i.get("status") != "COMPLETED"
+                    for c, i in
+                    ((i["capability_id"], i) for i in invokes)
+                )
+                if want_hit_err:
+                    # the intended owner WAS selected and invoked —
+                    # the divergence is the owner call result, never
+                    # a selection mistake.
+                    outcome, first = (
+                        "FAIL",
+                        "OWNER_ACCESS_OR_AVAILABILITY",
+                    )
+                else:
+                    outcome, first = "FAIL", "GROUP_SELECTION_ERROR"
             else:
                 outcome, first = "FAIL", "ADMISSION_ERROR"
         elif exp.get("require_business_result"):

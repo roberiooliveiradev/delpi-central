@@ -501,6 +501,7 @@ def _spy_invokes(providers):
                                 for k, v in (arguments or {}).items()
                             },
                             "status": "EXC:" + type(exc).__name__,
+                            "error_code": getattr(exc, "code", None),
                             "complete": None,
                         }
                     )

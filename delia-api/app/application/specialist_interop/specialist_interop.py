@@ -134,10 +134,7 @@ class SpecialistInterop:
         """
         specialist = self._require_specialist(request.specialist_id)
         observed_at = _now_utc()
-        remote_tools = self._port.list_remote_tools(
-            specialist,
-            timeout_seconds=self._clamp_timeout(request.timeout_seconds),
-        )
+        remote_tools = self._remote_tools(specialist, request)
         capabilities: list[SpecialistCapabilityDescriptor] = []
         blocked: list[str] = []
         for tool in remote_tools:
@@ -217,6 +214,22 @@ class SpecialistInterop:
         )
         return self._normalize_outcome(
             specialist, remote_name, request.correlation_id, outcome
+        )
+
+    def _remote_tools(
+        self,
+        specialist: SpecialistRef,
+        request: SpecialistCatalogRequest,
+    ):
+        """Catalog acquisition seam — live tools/list by default.
+
+        The SNAPSHOT_EXPERIMENT variant overrides this single point
+        (doc 216): selection/arggen may read a persisted catalog, but
+        ``invoke`` never does — live revalidation stays on the port.
+        """
+        return self._port.list_remote_tools(
+            specialist,
+            timeout_seconds=self._clamp_timeout(request.timeout_seconds),
         )
 
     def _require_specialist(self, specialist_id: str) -> SpecialistRef:

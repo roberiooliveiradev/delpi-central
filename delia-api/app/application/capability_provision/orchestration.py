@@ -2925,6 +2925,9 @@ def _capability_dead_end(
 _NAMED_PROVIDER_RE = re.compile(
     r"\bmcp[\s:_-]*([a-z][a-z0-9_-]+)", re.IGNORECASE
 )
+_VOCATIVE_PROVIDER_RE = re.compile(
+    r"^\s*([A-Za-z][A-Za-z0-9_-]{2,})\s*[,:;]"
+)
 
 
 def _named_provider_tokens(input_text: str) -> frozenset[str]:
@@ -2938,6 +2941,16 @@ def _named_provider_tokens(input_text: str) -> frozenset[str]:
         m.group(1).lower()
         for m in _NAMED_PROVIDER_RE.finditer(input_text or "")
     )
+
+
+def _vocative_provider_tokens(input_text: str) -> frozenset[str]:
+    """Leading addressee token (``SURI, investigue…``).
+
+    Candidate constraint only — a leading word that names a live
+    provider is a declared addressee; when it matches nothing the
+    value is ignored (never an absent-provider refusal)."""
+    m = _VOCATIVE_PROVIDER_RE.match(input_text or "")
+    return frozenset({m.group(1).lower()}) if m else frozenset()
 
 
 def _group_short_ids(
@@ -5506,30 +5519,6 @@ class OperationalCapabilityOrchestrator:
                     foreign_key, foreign_cap = found
                     foreign_group = groups[foreign_key]
 
-        # Write-intent bound to a non-write target: vocabulary
-        # discovery cannot make a READ/analyze capability execute a
-        # mutation, so the owner is never touched — fail closed with
-        # the same honest refusal the no-capability path produces.
-        if (
-            goal is not None
-            and goal.goal_class == "create_or_modify"
-            and descriptor.operation_class
-            not in _WRITE_OPERATION_CLASSES
-        ):
-            _logger.info(
-                "orchestration stage=plan "
-                "decision=write_intent_non_write_target "
-                "capability=%s class=%s correlation_id=%s",
-                descriptor.remote_name,
-                descriptor.operation_class.value,
-                correlation,
-            )
-            return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.NOT_APPLICABLE,
-                correlation_id=correlation,
-                error_code="intent_target_incompatible",
-                admission_outcome=unbound_outcome,
-            )
         # Bounded operational plan (§6.131 R1): when the selected
         # capability is an opaque envelope, the owner's DISCOVERY
         # capability must supply the real operation vocabulary before
@@ -11822,6 +11811,21 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             return ("not_applicable", None)
+        # Declared-surface constraint: providers named in the request
+        # — either the ``mcp <name>`` form or a leading addressee
+        # ("SURI, investigue…") — bound the candidate surface to the
+        # named owners. The model still decides applicability inside
+        # that subset; an out-of-subset proposal fails revalidation
+        # closed instead of silently substituting another owner.
+        addressed = (
+            named | _vocative_provider_tokens(input_text)
+        ) & _group_short_ids(groups)
+        if addressed:
+            groups = {
+                key: group
+                for key, group in groups.items()
+                if key.split(":", 1)[-1].strip().lower() in addressed
+            }
         observation = _prior_observation_context(prior_turns)
         group_payload = _group_summaries(
             groups,
