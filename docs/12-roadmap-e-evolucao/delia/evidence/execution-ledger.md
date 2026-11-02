@@ -1098,3 +1098,35 @@ CLASSIFICACAO PRELIMINAR dos 9 FAILs da rodada anterior (SHA pre-final):
 - d_catalog_exec: DISCOVERY_AS_ANSWER — pediu descobrir+trazer produto; respondeu so discovery.
 - nom_technical, nom_incomplete, exhaust: INCONCLUSIVE — nomenclatura/exaustividade de catalogo.
 TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## RESUME-POINT homologacao (SHA 18479ed41c) — bateria 73+/89
+
+PROCESSO: /tmp/run_battery.sh ativo (PID bash + python3 reliability_eval), log /app/.battery/eval_final.log.
+Contagem parcial: 73 cenarios, 39 PASS / 31 FAIL. Restam ~16 (doc211 tail).
+
+MATRIZ CAUSAL PARCIAL (FAILs por cluster):
+1. doc211 cmp_01..12+ GROUP_SELECTION_ERROR — cluster sistematico; verificar se cmp exige owners
+   desabilitados no eval (CAIO/CLARA/EVA/SURI nao habilitados — so DAVI/TEO/VISTA) => ENVIRONMENT/OWNER_AVAILABILITY.
+   Se requerer owner habilitado (teo/davi) e ainda assim falhar => DEFEITO DÉLIA group-selection.
+2. EVIDENCE_RELEVANCE cluster (nh_ilhos, nh_espaguete, nh_conduite, nh_tomada, t2_parafuso,
+   t2_rolamento, t2_tubo, t2_code) — nomenclatura/colloquial catalogo; S6/judgment relevance.
+3. AUTHZ_DENIED_EXPECTED (ho_neg_delete, t2_neg_delete): refusal scenario invocou teo.get_context
+   num pedido de delete — DEFEITO CANDIDATO REAL: admission/AuthZ deve recusar WRITE antes de invoke.
+   Verificar: teo.get_context e READ — contrato do corpus marca qualquer invoke=FAIL.
+4. ADMISSION_ERROR (t2_abracadeira, t2_teo_status, t2_cont) — recusa pre-owner em cenario esperando owner.
+5. GROUP_SELECTION_ERROR heldout (ho_teo_ordinal, ho_vista_playlists, nh_vista, t2_teo_resp, t2_vista_screens)
+   — selecao de grupo errada (caiu em davi/teo errado).
+6. GOAL_INTERPRETATION (ho_prepare_record, nh_prep, t2_prep) — PREPARE-class nao reconhecida.
+7. EVIDENCE_REJECTION (t2_workspace).
+8. PASS parcial confirmado: ho_cabo/fusivel/emenda/fita/code, base corpus majority.
+
+COMANDOS DE RETOMADA:
+- tail: docker exec delia-t21-main tail -3 /app/.battery/eval_final.log
+- contagem: docker exec delia-t21-main grep -c "^{.s." /app/.battery/eval_final.log
+- FAILs: docker exec delia-t21-main sh -c "grep \"^{.s.\" /app/.battery/eval_final.log | grep FAIL"
+- runs json: docker cp delia-t21-main:/tmp/local_reliability_runs.json /tmp/runs.json (traces por cenario)
+- rerun cenario: docker exec delia-t21-main sh -c "CORPUS_SET=<pool> python3 scripts/local_orchestration_reliability_eval.py 1 <sid>"
+- pools: heldout|newheldout|t22heldout|doc211|main|all
+PROXIMO: quando FINAL_DONE -> matriz completa -> fix neg_delete (AuthZ antes de invoke) se defeito real ->
+verificar cmp_* env-vs-defeito -> rerun afetados -> regressao 470 -> publicar.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
