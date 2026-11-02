@@ -1462,3 +1462,14 @@ EXECUTADO (deploy + smoke produtivo positivo/negativo). Veredito tecnico:
 | Segurança negativa | PASS | 401 noauth/bogus producer+BFF+gateway |
 | Portal smoke visual | TEST_NOT_RUN | sem sessão de usuário no executor; MFE servido e auth-gated |
 | DR-3 | PENDING | officialParity=pending permanente |
+
+---
+
+## G054–G057 — R04/R06/R07 (2026-11-02) — status inicial
+
+| Req | Estado | Evidência |
+|---|---|---|
+| Produtor R04 | NOT_IMPLEMENTED | sem artefato oficial; MATR860/SD3 = TO_INVENTORY — DECISION_REQUIRED owner+layout |
+| Produtor R06 (Kardex/CPV) | PARTIAL | artefato cpv xlsb existe; endpoint não presente no namespace financeiro |
+| Produtor R07 (Inventários) | PARTIAL | Invent.xlsb existe; recorte D3_DOC=INVENT não comprovado |
+| Separação op. × informação | PROVEN | R12/R15 = ERP_OPERATION — Portal só consulta estado |
