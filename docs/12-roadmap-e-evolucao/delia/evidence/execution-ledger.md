@@ -1539,3 +1539,18 @@ ADOPTION_RECOMMENDATION=HYBRID_CANDIDATE
 AB_VALIDITY=LIMITED · PRODUCTION_SWITCH=NO · DEPLOY=NO · BUSINESS_WRITES=0
 TASK_STATUS=COMPLETE (escopo reduzido autorizado, E0-E7, gates classificados)
 COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## DOC217 — RESUME-POINT inicial (SHA 82d58ddb81)
+
+TASK=DELIA-C3-COMPOSABLE-TOOL-SELECTION-EXPERIMENT-01
+PLANO: docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/
+  217-composable-tool-retrieval-selection-and-progressive-exposure-experiment.md (commit 4bdd9d2dcc)
+REQUISITOS: T0 inventario boundary -> T1 flag opt-in variante B de SELECAO (nao substituir
+  LangGraph/planner) -> T2 retrieval de capabilities do SNAPSHOT (catalog_store.py doc216,
+  LlamaIndex vs BM25 baseline) -> T3 LLMToolSelectorMiddleware (LangChain) ->
+  T4 exposicao progressiva schema (Pydantic AI PreparedToolset/Deferred) -> T5 integrar
+  subobjetivos/budget/fan-out existentes -> T6 comparacao A/B/C/D (6 cenarios + 4 negativos
+  do doc217) -> T7 gates G0-G8 + report.
+BASE ja pronta: catalog_store SQLite (/app/.battery/mcp_catalog.db 7 owners),
+  SnapshotDiscoverInterop, composer flag pattern (DELIA_MCP_CATALOG_MODE).
+PROXIMO: ler doc217 inteiro -> REUSE gate -> implementar retrieval.
