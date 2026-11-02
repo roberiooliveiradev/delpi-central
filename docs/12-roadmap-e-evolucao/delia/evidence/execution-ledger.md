@@ -1451,3 +1451,14 @@ PRODUCTION_SWITCH=NO · PRODUCTION_DEPLOY=NO · BUSINESS_WRITES=0
 TASK_STATUS=COMPLETE (experimento E0-E7 implementado e provado no escopo autorizado;
   gate extra pendente: benchmark A/B ampliado + vista snapshot quando container voltar)
 COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## RESUME-POINT doc216-final-validation (SHA 424d05e999+)
+
+EM CURSO: A/B ampliado 6x3 AB/BA -> /app/.battery/ab_final.log (AB_ALL_DONE).
+VISTA: dispatch_service.py restaurado p/ HEAD (merge-marker removido, stash intacto)
+mas container segue restart-loop — novo erro a capturar (docker logs --tail 8);
+snapshot vista pendente; se irrecuperavel -> INCONCLUSIVE documentado.
+PROXIMO: (1) docker logs delpi-tv-dashboard-api --tail 10 (novo erro);
+(2) aguardar AB_ALL_DONE -> matriz A/B -> divergencias causais;
+(3) gates G0-G8 + relatorio §9 doc216; (4) commits.
+COMANDO AB: docker exec delia-t21-main tail -15 /app/.battery/ab_final.log
