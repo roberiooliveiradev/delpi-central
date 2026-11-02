@@ -1396,3 +1396,14 @@ VERIFY REAL: catalog_source=snapshot logs confirmados; groups servidos do store;
   invoke permanece live (herdado). CLI chave = specialist_id bare (davi, nao mcp:davi).
 EM CURSO: A/B probe (_groups latency live vs snapshot); PENDENTE: E6 benchmark
   paired doc211, regressao 470, E7 gates+relatorio.
+
+## DOC216 — checkpoint A/B (SHA b95171c344)
+
+E6 PARCIAL: probe discovery — live _groups ~11s (2 tools/list live) vs snapshot ~0ms
+(mesma superficie mcp:davi+mcp:teo, mesmas failures) — latencia de discovery eliminada.
+A/B paired cmp_17/cmp_20: live PASS / snapshot FAIL (1 par) — divergencia a investigar:
+snapshot invoked teo.get_context+teo.analyze, GROUP_SELECTION_ERROR — verificar se o
+surface snapshot difere do live (vista ausente no store = grupo a menos) ou arggen.
+Snapshot DB: /app/.battery/mcp_catalog.db (6 owners v1 ACTIVE; vista env-down).
+PENDENTE: inspecionar proposals cmp_17 snapshot-run; rerun A/B 3x doc211; regressao;
+relatorio §9 doc216.
