@@ -1407,3 +1407,12 @@ surface snapshot difere do live (vista ausente no store = grupo a menos) ou argg
 Snapshot DB: /app/.battery/mcp_catalog.db (6 owners v1 ACTIVE; vista env-down).
 PENDENTE: inspecionar proposals cmp_17 snapshot-run; rerun A/B 3x doc211; regressao;
 relatorio §9 doc216.
+
+## DOC216 — A/B resultado + regressao (SHA pendente)
+
+E6 resultado: variancia LLM confirmada — cmp_17 x3 (live FAIL, snapshot PASS,
+live PASS) — o par divergente inicial era ruido de modelo, NAO defeito estrutural.
+Superficie snapshot == live (teste de igualdade de projecao no pacote de testes).
+Discovery latency: live ~11s (2x tools/list) vs snapshot ~0ms — eliminacao provada.
+REGRESSAO: 13 testes doc216 + 58 contract/selection green. SNAPSHOTS 6/7 owners.
+E7 pendente: regressao completa 470 + relatorio doc216 §9 + gates G0-G8 finais.
