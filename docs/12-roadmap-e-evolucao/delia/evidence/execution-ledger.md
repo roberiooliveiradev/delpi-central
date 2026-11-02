@@ -1385,3 +1385,14 @@ E3 EM CURSO: scripts/mcp_catalog_sync.py (dry-run/apply/history/verify/activate-
 PROXIMO: E4 testes integracao (B usa snapshot p/ selecao, live p/ invoke) -> E5 seguranca ->
 capture snapshots 7 owners -> E6 A/B paired doc211 -> E7 regressao+gates+relatorio.
 PROD_DEPLOY=NO · BUSINESS_WRITES=0
+
+## DOC216 — estado E1-E5 (SHA 5206273844)
+
+TASK=DELIA-C3-MCP-VERSIONED-CATALOG-ISOLATED-AB-01
+E1 flag+wiring OK · E2 store OK (9 tests green) · E3 CLI OK
+SNAPSHOTS: /app/.battery/mcp_catalog.db — davi,teo,caio,clara,eva,suri v1 ACTIVE
+  (vista indisponivel: container restart; suri via supplies-mcp endpoint)
+VERIFY REAL: catalog_source=snapshot logs confirmados; groups servidos do store;
+  invoke permanece live (herdado). CLI chave = specialist_id bare (davi, nao mcp:davi).
+EM CURSO: A/B probe (_groups latency live vs snapshot); PENDENTE: E6 benchmark
+  paired doc211, regressao 470, E7 gates+relatorio.

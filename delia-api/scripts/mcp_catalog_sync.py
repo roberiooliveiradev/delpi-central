@@ -101,7 +101,7 @@ def main() -> int:
     args = ap.parse_args()
 
     owner_key = args.owner.replace("mcp:", "")
-    owner_id = f"mcp:{owner_key}"
+    owner_id = owner_key
     settings = Settings()
     store = _store(settings)
 
@@ -112,7 +112,6 @@ def main() -> int:
                 f"tools={r['tool_count']} hash={r['contract_hash'][:12]}"
             )
         return 0
-
     if args.verify:
         ok = store.verify(owner_id)
         print("VERIFY", "PASS" if ok else "FAIL")
