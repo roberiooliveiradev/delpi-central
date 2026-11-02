@@ -20,6 +20,27 @@ from engineering_app.application.drawing.perception_contract import (
 )
 
 
+
+
+def _to_native(obj):
+    """Converte numpy scalars/arrays para tipos nativos Python —
+    numpy.float32/int64/ndarray quebram o serializer MCP (pydantic)."""
+    try:
+        import numpy as np
+    except ImportError:
+        np = None
+    if np is not None:
+        if isinstance(obj, np.generic):
+            return obj.item()
+        if isinstance(obj, np.ndarray):
+            return [_to_native(x) for x in obj.tolist()]
+    if isinstance(obj, dict):
+        return {k: _to_native(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_to_native(x) for x in obj]
+    return obj
+
+
 class EvaBaselineEngine:
     """Motor A — pipeline governado existente (PDFium+PaddleOCR+
     OpenCV+understanding.v1) adaptado ao contrato comum."""
@@ -539,7 +560,9 @@ class TableStructureEngine:
                     {
                         "row_count": st.count("<tr>"),
                         "headers": [],
-                        "structure_score": r.get("structure_score"),
+                        "structure_score": _to_native(
+                            r.get("structure_score")
+                        ),
                     }
                 )
                 for bb in r.get("bbox") or []:
