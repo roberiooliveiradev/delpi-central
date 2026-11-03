@@ -45,6 +45,7 @@ import {
   OperatorSessionChip,
   OperatorSessionProvider,
 } from "./OperatorSessionProvider";
+import { shouldBlockOperatorSwitch } from "./operatorSession.ts";
 import { ProductionRunControls } from "./ProductionRunControls";
 import { useOperatorSession } from "./OperatorSessionContext.ts";
 import {
@@ -635,7 +636,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           realtimeConnected={connected}
           feedbackUpdatedSignal={feedbackUpdatedSignal}
           feedbackRealtimeEvent={feedbackRealtimeEvent}
-          hasActiveRun={Boolean(counterRun)}
+          hasActiveRun={shouldBlockOperatorSwitch(counterRun)}
           onHandoffCompleted={handleHandoffCompleted}
           onBack={openQueue}
           onPrevious={
@@ -705,7 +706,9 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             </div>
             {shiftMetrics}
             <div className="pcp-pub__hero-aside">
-              <OperatorSessionChip hasActiveRun={Boolean(counterRun)} />
+              <OperatorSessionChip
+                blockOperatorSwitch={shouldBlockOperatorSwitch(counterRun)}
+              />
               <span
                 className={`pcp-pub__live ${connected ? "pcp-pub__live--on" : "pcp-pub__live--off"}`}
                 title={

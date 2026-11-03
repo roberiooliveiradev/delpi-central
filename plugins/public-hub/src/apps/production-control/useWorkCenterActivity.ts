@@ -4,6 +4,7 @@ import {
   isAuthError,
   type MesWorkCenterToday,
 } from "./api";
+import { createCoalescedRefresh } from "./coalescedRefresh";
 import { spCivilDayKey } from "./workCenterActivity";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
 
@@ -59,6 +60,11 @@ function scopeKey(
  * e sessão de bancada. Single-flight com reconciliação coalescida por WS;
  * o resultado é chaveado pelo escopo que o gerou — resposta de outro
  * CT/sessão nunca é exibida como atual.
+ *
+ * `await refresh()` **sempre** espera o ciclo completo (incluindo re-fetch
+ * coalescido). Retornar cedo com Promise resolvida fazia a UI fechar o
+ * modal de motivo com snapshot antigo — a lista só atualizava no próximo
+ * evento (ex.: retomada da produção).
  */
 export function useWorkCenterActivity({
   token,
@@ -71,12 +77,11 @@ export function useWorkCenterActivity({
 }: Options) {
   const currentKey = scopeKey(token, sessionToken, branch, workCenter);
   const [result, setResult] = useState<ActivityResult | null>(null);
-  const inFlightRef = useRef(false);
-  const pendingRef = useRef(false);
   const onAuthErrorRef = useRef(onAuthError);
   const requestRef = useRef({ token, sessionToken, branch, workCenter });
   // Virada do dia civil SP: a janela do backend muda — precisa de novo GET.
   const dayKeyRef = useRef(spCivilDayKey());
+  const refreshImplRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     onAuthErrorRef.current = onAuthError;
@@ -86,69 +91,63 @@ export function useWorkCenterActivity({
     requestRef.current = { token, sessionToken, branch, workCenter };
   }, [token, sessionToken, branch, workCenter]);
 
-  const refresh = useCallback(async () => {
-    if (inFlightRef.current) {
-      pendingRef.current = true;
-      return;
-    }
-    inFlightRef.current = true;
-    try {
-      do {
-        pendingRef.current = false;
-        const request = requestRef.current;
-        const key = scopeKey(
+  if (refreshImplRef.current === null) {
+    refreshImplRef.current = createCoalescedRefresh(async () => {
+      const request = requestRef.current;
+      const key = scopeKey(
+        request.token,
+        request.sessionToken,
+        request.branch,
+        request.workCenter,
+      );
+      if (!request.sessionToken || !request.workCenter) {
+        return;
+      }
+      try {
+        const next = await fetchMesWorkCenterToday(
           request.token,
           request.sessionToken,
           request.branch,
           request.workCenter,
         );
-        if (!request.sessionToken || !request.workCenter) {
-          continue;
+        setResult({ key, data: next, error: null });
+      } catch (err) {
+        // Escopo vigente no momento da resposta — uma requisição lançada
+        // com sessão/CT antigos não pode produzir efeitos no atual.
+        const live = requestRef.current;
+        const stale =
+          key !==
+          scopeKey(live.token, live.sessionToken, live.branch, live.workCenter);
+        if (isAuthError(err)) {
+          // 401: dados protegidos somem e a sessão local é invalidada —
+          // apenas quando o 401 pertence ao escopo vigente; um 401 tardio
+          // de sessão/CT trocados não derruba a sessão atual.
+          setResult({ key, data: null, error: null });
+          if (!stale) onAuthErrorRef.current?.(err);
+        } else {
+          const status =
+            err instanceof Error && "status" in err
+              ? (err as { status?: number }).status
+              : undefined;
+          setResult((prev) => ({
+            key,
+            // refetch falhou: preserva o último dado bom do mesmo escopo.
+            data: prev?.key === key ? prev.data : null,
+            error: {
+              message:
+                err instanceof Error
+                  ? err.message
+                  : "Atividade do posto indisponível.",
+              retryable: status == null || status >= 500 || status === 0,
+            },
+          }));
         }
-        try {
-          const next = await fetchMesWorkCenterToday(
-            request.token,
-            request.sessionToken,
-            request.branch,
-            request.workCenter,
-          );
-          setResult({ key, data: next, error: null });
-        } catch (err) {
-          // Escopo vigente no momento da resposta — uma requisição lançada
-          // com sessão/CT antigos não pode produzir efeitos no atual.
-          const live = requestRef.current;
-          const stale =
-            key !==
-            scopeKey(live.token, live.sessionToken, live.branch, live.workCenter);
-          if (isAuthError(err)) {
-            // 401: dados protegidos somem e a sessão local é invalidada —
-            // apenas quando o 401 pertence ao escopo vigente; um 401 tardio
-            // de sessão/CT trocados não derruba a sessão atual.
-            setResult({ key, data: null, error: null });
-            if (!stale) onAuthErrorRef.current?.(err);
-          } else {
-            const status =
-              err instanceof Error && "status" in err
-                ? (err as { status?: number }).status
-                : undefined;
-            setResult((prev) => ({
-              key,
-              // refetch falhou: preserva o último dado bom do mesmo escopo.
-              data: prev?.key === key ? prev.data : null,
-              error: {
-                message:
-                  err instanceof Error
-                    ? err.message
-                    : "Atividade do posto indisponível.",
-                retryable: status == null || status >= 500 || status === 0,
-              },
-            }));
-          }
-        }
-      } while (pendingRef.current);
-    } finally {
-      inFlightRef.current = false;
-    }
+      }
+    });
+  }
+
+  const refresh = useCallback(async () => {
+    await refreshImplRef.current?.();
   }, []);
 
   // Carga inicial / troca de CT, filial ou sessão.
