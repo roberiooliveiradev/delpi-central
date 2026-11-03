@@ -52,6 +52,14 @@ V3_TOOL_CLASS: dict[str, str] = {
 }
 V3_SEMANTIC_TOOL_NAMES: frozenset[str] = frozenset(V3_TOOL_CLASS)
 
+# Dedicated file-transport adapter (R4.6): ChatGPT fileParams hydration
+# requires a file-typed tool — generic dispatch surfaces are not bound.
+# It is NOT a semantic tool; it delegates to the canonical
+# helpdesk_upload_attachment governed capability unchanged.
+FILE_TRANSPORT_TOOL_CLASS: dict[str, str] = {
+    "helpdesk_upload_attachment": "ACT",
+}
+
 # Capability parity: GPT operationId → Semantic V3 tool names (1→N).
 # Derived from the canonical registry — an Actions op maps to the V3
 # tool(s) serving its bound capability route.
@@ -75,7 +83,7 @@ TOOL_TO_GPT_OPERATION: dict[str, str] = mcp_tool_to_actions()
 MCP_NATIVE_TOOLS: frozenset[str] = V3_SEMANTIC_TOOL_NAMES - {"analyze"}
 
 # READ | PREPARE | ACT | ANALYSIS (non-persist) | DISCOVERY
-TOOL_CLASS: dict[str, str] = dict(V3_TOOL_CLASS)
+TOOL_CLASS: dict[str, str] = {**V3_TOOL_CLASS, **FILE_TRANSPORT_TOOL_CLASS}
 
 # Destructive-capable public tools — truthful annotation.
 DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset({"delete"})

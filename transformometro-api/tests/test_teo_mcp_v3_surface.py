@@ -63,13 +63,14 @@ def _cleanup(tokens):
 def test_v3_tools_registered_semantic_only() -> None:
     names = {t.name for t in asyncio.run(create_mcp_server().list_tools())}
     assert V3_SEMANTIC_TOOL_NAMES <= names
-    assert len(names) == len(MCP_TOOL_NAMES) == 6
+    assert len(names) == len(MCP_TOOL_NAMES) == 7
     assert TOOL_CLASS["get_context"] == "DISCOVERY"
     assert TOOL_CLASS["read"] == "READ"
     assert TOOL_CLASS["analyze"] == "ANALYSIS"
     assert TOOL_CLASS["knowledge"] == "READ"
     assert TOOL_CLASS["execute"] == "ACT"
     assert TOOL_CLASS["delete"] == "ACT"
+    assert TOOL_CLASS["helpdesk_upload_attachment"] == "ACT"
 
 
 def test_v3_analyze_is_single_unified_tool() -> None:
