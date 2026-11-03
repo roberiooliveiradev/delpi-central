@@ -65,7 +65,7 @@ def _writes_mock():
     writes = MagicMock(spec=[
         "assert_expected_revision", "get_revision",
         "add_slide", "delete_slide", "list_slides", "list_sections",
-        "get_playlist", "create_playlist",
+        "get_playlist", "create_playlist", "get_slide",
     ])
     writes.get_revision.return_value = 4
     writes.add_slide.return_value = {"id": SID, "title": "T"}
