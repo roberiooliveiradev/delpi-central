@@ -581,3 +581,38 @@ def test_acceptance_traceability(corpus):
                 rec["executed_at"] = stamp
                 fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
     assert len(records) == 115
+
+
+def test_superseded_state_segments(corpus):
+    """Gate 080 — segmentos datados com afirmação de estado superado
+    (SUPERSEDED_SEGMENTS) ficam fora da busca, mas estados ainda
+    verdadeiros (R13/R14 BLOQUEADO) permanecem publicados."""
+    hits = corpus.search(
+        query="O R04 ainda está bloqueado?",
+        report_id="R04",
+        limit=12,
+    )
+    blocked_titles = [
+        h["title"] for h in hits if "BLOQUEADO" in h["title"].upper()
+    ]
+    assert not blocked_titles, (
+        f"segmentos superados recuperados: {blocked_titles}"
+    )
+    assert any(h["source_id"] == "ficha-r04" for h in hits), (
+        "ficha vigente ausente no top-12"
+    )
+    with plugins_db_connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM controllership_finance.clara_knowledge_item"
+            " WHERE status='SUPERSEDED' AND source_id IN ('doc-83','doc-85')"
+            " AND title ILIKE '%BLOQUEADO%'"
+        )
+        assert cur.fetchone()[0] == 2
+        cur.execute(
+            "SELECT count(*) FROM controllership_finance.clara_knowledge_item"
+            " WHERE status='PUBLISHED' AND title ILIKE '%BLOQUEADO%'"
+            " AND source_id IN ('doc-83','doc-85')"
+            " AND (related_report_ids @> '[\"R13\"]'"
+            "      OR related_report_ids @> '[\"R14\"]')"
+        )
+        assert cur.fetchone()[0] >= 3

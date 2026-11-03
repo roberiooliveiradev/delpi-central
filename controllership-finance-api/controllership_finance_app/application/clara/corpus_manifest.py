@@ -352,3 +352,23 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
        "DOCUMENT", "Ficha R15 — Cutoff / virada / SB9",
        "TARGET", "relatorios-r01-r15", report_ids=("R15",)),
 ]
+
+
+# Gate 080 (PO/decisão produto — issue #130): seleção DETERMINÍSTICA
+# de fontes vigentes. Segmentos que afirmam um estado hoje superado
+# são marcados SUPERSEDED na ingestão — permanecem no GitHub e no
+# banco para auditoria, mas nunca concorrem como autoridade vigente.
+# Somente afirmações comprovadamente falsas hoje; estados ainda
+# verdadeiros (ex.: R13/R14 BLOQUEADO) NÃO são listados.
+SUPERSEDED_SEGMENTS: tuple[dict, ...] = (
+    dict(
+        source_id="doc-83",
+        title_contains="R04 — Consumo por OP — **BLOQUEADO",
+        reason="R04 implementado (consumption-audit) — ficha vigente",
+    ),
+    dict(
+        source_id="doc-85",
+        title_contains="§4 — R04 · Consumo por OP — `BLOQUEADO`",
+        reason="R04 implementado (consumption-audit) — ficha vigente",
+    ),
+)

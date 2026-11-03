@@ -184,10 +184,25 @@ def ingest_source(
     stale_swept = repository.supersede_stale_items(
         source_id=spec.source_id, keep_ids=keep_ids
     )
+    # Gate 080 — segmentos com afirmação de estado superado (lista
+    # declarativa SUPERSEDED_SEGMENTS do manifest) saem do PUBLISHED.
+    from controllership_finance_app.application.clara.corpus_manifest import (  # noqa: E501
+        SUPERSEDED_SEGMENTS,
+    )
+
+    state_superseded = sum(
+        repository.mark_segments_superseded(
+            source_id=spec.source_id,
+            title_contains=entry["title_contains"],
+        )
+        for entry in SUPERSEDED_SEGMENTS
+        if entry["source_id"] == spec.source_id
+    )
     return {
         "source_id": spec.source_id,
         "segments": len(segments),
         "stale_swept": stale_swept,
+        "state_superseded": state_superseded,
         "inserted": inserted,
         "superseded": superseded,
         "deduplicated": deduplicated,

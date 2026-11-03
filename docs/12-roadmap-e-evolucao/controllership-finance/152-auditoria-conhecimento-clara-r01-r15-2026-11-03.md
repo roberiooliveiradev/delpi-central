@@ -626,3 +626,33 @@ Opções analisadas: **(a)** rerank por especificidade (`jsonb_array_length(rela
 **Quatro leituras operacionais reais reexecutadas pelo GPT:** R04 2026-09 filial01 `success=true`, 1.243 OPs; R04 2026-10 filial01 `success=true`, 2.381 OPs; R09 2026-09 filial01 `success=true`, 299 âncoras; R12 2026-09 `success=true`, 4 limitações. R04/R09 `officiality=operational_view` e `officialParity=pending`; R12 `officiality=technical_markers`. **PASS** para leitura operacional desses cenários, não homologação das rotinas oficiais.
 
 **Avaliação de qualidade:** código do novo `test_acceptance_traceability` está versionado; saída JSONL de 115 linhas e pytest 14/14 foram reportados, **não reexecutados diretamente em PostgreSQL por este revisor**. Canal MCP `knowledge` não fornece as 115 respostas em linguagem natural de um host conversacional externo: `TEST_NOT_RUN` para esse objetivo, embora as 115 perguntas tenham sido submetidas ao motor de recuperação do MCP. Classificação Gate079: **`ACCEPT_WITH_RESIDUAL`** para correções autorizadas de conteúdo, atualização de corpus e recuperação das sete evidências; manter issue #130 **aberta** para decisão de ranking/vigência por owner e homologação efetiva de respostas NL. Sem aprovar campo `is_historical` ou alteração de ranking neste parecer.
+
+
+## 18. Gate 080 — Seleção determinística de fontes vigentes (03/11/2026)
+
+**Executor:** Devin · **Issue:** #130 (decisão PO registrada) · **Corpus:** re-publicação via pipeline.
+
+### 18.1 Decisão de produto
+
+PO aprovou: conhecimento canônico vigente + seleção **determinística** de fontes válidas (não preferência probabilística por recência). Implementado: `SUPERSEDED_SEGMENTS` (lista declarativa em `corpus_manifest.py`) — segmentos que afirmam estado comprovadamente superado são marcados `SUPERSEDED` na ingestão. Permanecem no GitHub e no banco para auditoria; nunca concorrem como autoridade vigente. Sem mudança de ranking/contrato/escopo.
+
+### 18.2 Segmentos marcados
+
+- `doc-83` — "R04 — Consumo por OP — **BLOQUEADO (sem artefato novo)**" (R04 está `IMPLEMENTED` — consumption-audit).
+- `doc-85` — "§4 — R04 · Consumo por OP — `BLOQUEADO`" (idem).
+
+Estados ainda verdadeiros preservados: doc-83/doc-85 "R13/R14 BLOQUEADO" (fonte externa — segue vigente), doc-80 histórico, todo o catálogo BR de doc-85 (citado pelas fichas).
+
+### 18.3 Dados dinâmicos (inventário)
+
+Consultas financeiras usam produtores oficiais vigentes: `production_order_consumption` (R04), `billing_mod_breakdown` (R09), `cost_closing_state` (R12/R15), settlements/stock/cost-center/billing-roster (R01–R11) — sempre com competência+filial+permissões; `officialParity` declarada. Nenhum número documental estático substitui dado operacional.
+
+### 18.4 Testes
+
+`test_superseded_state_segments`: query "O R04 ainda está bloqueado?" → zero itens `BLOQUEADO` retornados + ficha vigente presente; 2 segmentos SUPERSEDED; ≥3 segmentos R13/R14 BLOQUEADO permanecem PUBLISHED. Suíte PG: **15/15**. Mutações/enforcement/invariants preservadas.
+
+### 18.5 Resíduos
+
+- Conversacional live `TEST_NOT_RUN` (canal externo; GPT reexecuta).
+- Política futura de `is_historical` granular por item (não fonte/segmento) segue `DECISION_REQUIRED` se demandada.
+- Issue #130: sem credencial API — registro nesta seção.
