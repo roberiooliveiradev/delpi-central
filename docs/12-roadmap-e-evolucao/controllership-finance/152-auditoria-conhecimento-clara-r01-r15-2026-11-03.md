@@ -392,3 +392,12 @@ Novos: `tests/test_pg_clara_retrieval.py` (6 casos controlados + runner do golde
 - **Bloqueio de integração:** WIP alheio staged (`delia-api` orchestration, `execution-ledger.md`, etc.) conflita com o commit `47358f0c` pendente — `pull --ff-only`/rebase recusam sem stash (AGENTS R6). Publicação em `main` pendente de decisão do usuário → `DECISION_REQUIRED` na etapa de push/deploy.
 - **Resíduos:** (1) ranking-policy DECISION_REQUIRED §13.3; (2) 4 RETRIEVAL_MISS residuais; (3) dimensão C/D sem validação live; (4) corpus produtivo `83dddfbe` não re-publicado com as fichas corrigidas — republicação segue gate próprio após merge; (5) desempate `indexed_at` anotado.
 - **Rollback:** corpus = reingestão das fontes anteriores via pipeline canônico; código = revert do commit; testes novos não alteram comportamento alheio.
+
+### 13.10 Adendo — publicação efetivada (03/11/2026)
+
+- **Integração:** commit `43ea733d1d` rebaseado via worktree isolada (`g076-publish`, removida) → **`156c60fa10`** em `main` (ff, sem tocar WIP alheio).
+- **Deploy produção:** `srv-api` pull ff → `up-prod-sequential.sh --build controllership-finance-api`; container `Up (healthy)`, código ≡ `156c60fa10`.
+- **Corpus produtivo republicado:** `3cdbd991-837a-4ed6-81d4-0b81a304da6a` — 2.215 itens / 88 fontes.
+- **Verificação produtiva (repositório real, canal autorizado):** as 6 consultas técnicas que retornavam **0** agora retornam 12 itens cada — R01/R04/R09/R13 ficha pos. 1, R06 pos. 4, R12 pos. 6; `full_match=false` correto em todas (fill OR).
+- **Resíduos finais:** ranking-policy `DECISION_REQUIRED` (§13.3) pendente de owner; 4 `RETRIEVAL_MISS` documentados; dimensão C (resposta conversacional CLARA/ChatGPT) `TEST_NOT_RUN` — requer sessão autenticada; reads operacionais R04/R09/R12 mantêm PASS do Gate 075 (nenhum SQL/contrato alterado).
+- **Rollback:** `git revert 156c60fa10` + reingestão do corpus anterior pelo pipeline canônico.
