@@ -4837,3 +4837,51 @@ RECOMENDACOES p/ coordenacao (nao executadas):
   habilitar vista.analyze como surface legitima.
 - R4: credencial dev valida em .env.local p/ destravar E2E.
 - Prioridade: R1 > R3 > R2 > R4.
+
+## DIAG-E2E — real authenticated LLM context/evidence/continuity (2026-11-03)
+
+TASK=DELIA-C3-REAL-LLM-CONTEXT-EVIDENCE-CONTINUITY-DIAGNOSTIC-01.
+HEAD=944d70f662; origin=4be21a407d. STACK: pydantic_ai + langgraph +
+qwen3:4b real Ollama + Keycloak real + DAVI real. Auth: senha de
+user@local.com redefinida via kcadm (procedimento autorizado PO);
+token por password grant gateway; sem alteracao de roles/membership.
+
+RESULTADOS REAIS (traces delia-api, correlation-id):
+- A01 "estrutura 90260147" sem contexto: GROUNDED via
+  davi.get_product_structure (PA root + PI + MP real). ~4 model
+  calls, ~20s. goal_understanding class=read comparison=False.
+- A02 "estrutura 90260148" COM prior_turns: interaction_admission
+  3x invalid_structured_output (23s/36s/40s) + turn_goal 3x
+  (22s/42s/86s) => nginx 504 ao cliente; turno seguiu churning
+  server-side. EVIDENCIA NOVA: contexto multi-turno torna os
+  stages de proposta dramaticamente instaveis no qwen3:4b —
+  retries de schema consomem o budget antes de qualquer capability.
+- B01 "compare 90260147 e 90260148" conversa nova:
+  goal_understanding class=compare comparison=True ->
+  target_selection mcp:davi.discover_delpi_information (DISCOVERY)
+  -> native_assessment skip_comparison_declared ->
+  foreign_selection vista.analyze mode=corroborate. Cadeia REAL:
+  comparacao e' delegada a vista.analyze; AuthZ negada (M6) ->
+  insuficiencia honesta. Sem estagio interno de composicao.
+
+ROOT CAUSE (contraprova live):
+- RC1 EVIDENCE_NOT_COMPOSABLE — nao ha boundary governado que
+  entregue as duas estruturas a um raciocinio comparativo; delega a
+  vista.analyze (owner de analise) -> bloqueio AuthZ -> insuficiencia
+  honesta. Confirmado em trace real.
+- RC2 MODEL_REASONING_FAILURE amplificador — invalid_structured_output
+  recorrente no qwen3:4b COM prior_turns (5+ retries ~130s+ por
+  turno) => timeout de gateway; e' instabilidade de proposta, nao
+  perda de contexto. A01 sem contexto foi estavel.
+- RC3 CROSS_TURN_EVIDENCE_REVALIDATION_REQUIRED — evidencia de turnos
+  anteriores nao e' rebatida (contrato epistemico); contribui para
+  re-busca, mas nesta execucao o turno nem chegou a esse boundary.
+- Resposta a pergunta obrigatoria: a DÉLIA NAO disponibiliza as duas
+  estruturas juntas ao LLM — a composicao e' delegada (vista) ou
+  inexiste; nao e' falha do modelo ao receber os dados.
+
+RECOMENDACOES p/ coordenacao: (1) contrato governado de composicao
+multi-evidencia tipado antes de synthesis (REUSE port); (2) grant
+VISTA p/ usuario de teste; (3) investigar estabilidade de proposal
+com prior_turns no qwen3:4b (possivel instruction/context-size);
+(4) budget/timeout de admission+turn_goal vs nginx 120s.
