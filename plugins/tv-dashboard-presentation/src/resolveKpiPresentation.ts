@@ -89,6 +89,16 @@ export function resolveKpiViewPresentation(
         ? serverPres.valueDisplay
         : "—";
   const hint = options.subtitle?.trim() || undefined;
+  // Apenas compõe textos já materializados pelo backend. Sem avaliar metas no frontend.
+  const comparisonDisplay = serverPres?.comparisonDisplay?.trim() || undefined;
+  const statusLabel =
+    serverPres?.showComparison === true
+      ? serverPres.statusLabel?.trim() || undefined
+      : undefined;
+  const comparisonText =
+    comparisonDisplay && statusLabel && !comparisonDisplay.includes(statusLabel)
+      ? `${comparisonDisplay} · ${statusLabel}`
+      : comparisonDisplay;
   const sparklinePoints =
     Array.isArray(serverPres?.sparklinePoints)
       ? serverPres.sparklinePoints
@@ -96,7 +106,7 @@ export function resolveKpiViewPresentation(
   const comparison =
     serverPres != null
       ? {
-          comparisonText: serverPres.comparisonDisplay ?? undefined,
+          comparisonText,
           comparisonTone: serverPres.comparisonTone ?? undefined,
           progressPct: serverPres.progressPct ?? null,
         }
