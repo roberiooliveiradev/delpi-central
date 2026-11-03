@@ -14,7 +14,7 @@ from delpi_mcp.tool_metadata import (
 )
 from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, Tool as MCPTool, ToolAnnotations
-from pydantic import ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from tm_app.application.gpt_actions.entities import (
     GptAnalysisView,
@@ -41,6 +41,23 @@ _AnalysisViewParam = Literal[
     tuple(v.value for v in GptAnalysisView)
     + ("meeting_minute_transcript",)
 ]
+
+
+class _ChatGptFileParam(BaseModel):
+    """Canonical openai/fileParams file object (R4.2 contract).
+
+    The ChatGPT host binds user uploads to fields listed in the tool
+    descriptor _meta["openai/fileParams"] — each value is this
+    closed object. download_url/file_id are required by the host
+    contract; mime_type/file_name are optional but declared.
+    The declared properties are what enables host hydration: a bare
+    dict/object schema cannot be bound (R4.8 root cause).
+    """
+
+    download_url: str
+    file_id: str
+    mime_type: str | None = None
+    file_name: str | None = None
 
 
 class _TeoWireTool(MCPTool):
@@ -429,7 +446,7 @@ def create_mcp_server() -> MCPServer:
             ),
         ] = None,
         file: Annotated[
-            dict | None,
+            _ChatGptFileParam | None,
             Field(
                 description=(
                     "Canonical openai/fileParams object bound by the "
@@ -445,7 +462,7 @@ def create_mcp_server() -> MCPServer:
         return bridge_v3.tool_execute(
             capability=capability,
             args=args,
-            file=file,
+            file=file.model_dump(exclude_none=True) if file else None,
             entity=entity,
             operation=operation,
             record_id=record_id,
@@ -476,7 +493,7 @@ def create_mcp_server() -> MCPServer:
             Field(description="Target GLPI ticket id."),
         ],
         file: Annotated[
-            dict,
+            _ChatGptFileParam,
             Field(
                 description=(
                     "Canonical openai/fileParams object bound by the "
@@ -494,7 +511,7 @@ def create_mcp_server() -> MCPServer:
         return bridge_v3.tool_execute(
             capability="upload_attachment",
             args={"ticket_id": ticket_id, "title": title},
-            file=file,
+            file=file.model_dump(exclude_none=True) if file else None,
         )
 
     @mcp.tool(

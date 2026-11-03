@@ -819,3 +819,19 @@ def test_v3_tools_fail_closed_without_identity() -> None:
         result = fn(**kwargs)
         assert result.is_error is True
         assert result.structured_content["status_code"] == 401
+
+
+def test_file_param_schema_is_closed_fileparams_model() -> None:
+    """R4.8 — host hydration requires the file arg schema to declare the
+    fileParams object properties (closed model, download_url/file_id
+    required). A bare object schema cannot bind — the legacy→V3
+    regression root cause."""
+    tools = {t.name: t.model_dump(by_alias=True) for t in asyncio.run(create_mcp_server().list_tools())}
+    for name in ("execute", "helpdesk_upload_attachment"):
+        schema = tools[name]["inputSchema"]
+        node = (schema.get("$defs") or {}).get("_ChatGptFileParam")
+        assert node is not None, name
+        assert node["type"] == "object"
+        assert set(node["required"]) >= {"download_url", "file_id"}
+        assert {"download_url", "file_id", "mime_type", "file_name"} <= set(node["properties"])
+        assert "_meta" in tools[name] and tools[name]["_meta"].get("openai/fileParams") == ["file"]
