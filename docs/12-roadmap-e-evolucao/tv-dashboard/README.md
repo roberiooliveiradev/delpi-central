@@ -338,3 +338,9 @@ Detalhes do contrato backend: [README da API](../../../tv-dashboard-api/README.m
 **Evidência:** execução reportou 12 testes no adaptador e suites correlatas verdes, revisão do código no commit e **confirmação posterior do usuário de que a seleção de branco foi corrigida em produção**. Classificação: `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE`; `CONTRACT_IMPACT=NONE`.
 
 **Escopo do encerramento:** somente cor sólida explícita de ícone. Os conflitos HTTP 409, coordenação entre abas, escritores MCP e testes adversariais multi-cliente permanecem **independentes**; não são considerados resolvidos por este registro. O histórico anterior de edição concorrente neste README é contextual e não deve ser interpretado como encerramento de todos os riscos.
+
+---
+
+## Evolução planejada — KPI moderno com contexto e status operacional (2026-11-03)
+
+**TARGET/PLANNED:** biblioteca de apresentações no mesmo `DelpiKpiCard` com comparação vs meta/período, acima/abaixo/na/dentro da meta, texto dinâmico, setas, cores semânticas, progresso e sparkline, posicionamento e escala de ícones. Backend TV Dashboard é autoridade de cálculo/formatação/status; plugin-ui e renderer compartilhado pintam o contrato; VISTA seleciona/autorrevê via mutation governada. Ver [inventário, wireframes e fases de implementação](./KPI-CONTEXTUAL-MODERN-VARIANTS-INVENTORY.md). Não implica nova Action nem que o E2E esteja concluído.
