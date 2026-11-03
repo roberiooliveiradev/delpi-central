@@ -10,7 +10,8 @@
   },
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test --config e2e/playwright.config.ts"
   },
   "peerDependencies": {
     "@delpi/plugin-ui": "*",
@@ -32,6 +33,7 @@
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "typescript": "~5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "@playwright/test": "^1.49.0"
   }
 }
