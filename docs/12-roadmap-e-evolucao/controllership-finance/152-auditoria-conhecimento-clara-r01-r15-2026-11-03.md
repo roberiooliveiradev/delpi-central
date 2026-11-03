@@ -401,3 +401,20 @@ Novos: `tests/test_pg_clara_retrieval.py` (6 casos controlados + runner do golde
 - **Verificação produtiva (repositório real, canal autorizado):** as 6 consultas técnicas que retornavam **0** agora retornam 12 itens cada — R01/R04/R09/R13 ficha pos. 1, R06 pos. 4, R12 pos. 6; `full_match=false` correto em todas (fill OR).
 - **Resíduos finais:** ranking-policy `DECISION_REQUIRED` (§13.3) pendente de owner; 4 `RETRIEVAL_MISS` documentados; dimensão C (resposta conversacional CLARA/ChatGPT) `TEST_NOT_RUN` — requer sessão autenticada; reads operacionais R04/R09/R12 mantêm PASS do Gate 075 (nenhum SQL/contrato alterado).
 - **Rollback:** `git revert 156c60fa10` + reingestão do corpus anterior pelo pipeline canônico.
+
+
+### 13.11 GPT REVIEW independente — publicação Gate 076 (03/11/2026)
+
+**GitHub:** consulta de `main` retornou HEAD `c078e07940b056eac38347397c159574f4b7a396` (após a publicação do gate). Commits remotos `156c60fa10759e30a12dd67a1aa82019acd0afc9` (15 arquivos de implementação/testes/fichas/docs) e `9b0a9679560260ba50c68a0863cdac93920f9530` (documentação) **PROVEN** por fetch remoto. O SHA do container `156c60fa10`, worktrees limpas e resultados locais de pytest são **reportados pelo executor**, sem acesso direto ao host/ambiente de execução nesta revisão.
+
+**Corpus MCP live:** `knowledge(sources)` retornou `3cdbd991-837a-4ed6-81d4-0b81a304da6a`, publicado 03/11/2026 11:57:01 -03, 2.215 itens/88 fontes, com novos `source_version` das fichas R01, R02, R06 e R09. `PASS` publicação consumível pelo MCP.
+
+**Seis probes antes zerados, agora testados via MCP autenticado `knowledge(search,report_id,query,limit=12)`:** R01/R04/R06/R09/R12/R13 retornaram **12 itens cada**. Posição da ficha específica: R01=1, R04=1, R06=3, R09=3, R12=1, R13=3. Diferem ligeiramente do ranking informado pelo executor; ranking/empate/atualização e query efetiva precisam ser considerados, sem declarar regressão. `full_match` apareceu no payload; correspondências AND/OR: R01 1 true+11 false, demais 0 true+12 false. **PASS** para falha reproduzida de zero resposta, mas `full_match=false` significa somente correspondência parcial de termos, não prova semântica.
+
+**Código:** `clara_knowledge_repository.py` executa AND com filtros status `PUBLISHED`, `access_scope`, `related_report_ids`; em insuficiência de resultados executa fill OR com **mesmos filtros** e exclusão dos IDs já retornados; marca `full_match`. `tool_bridge.py` expõe campo aditivo sem alterar action. Testes PG e golden set existem, com `skipif` quando env de PostgreSQL não configurado; 7/7, 5/5, 68/68 e 100/105 são **reportados pelo executor**, não reproduzidos pelo revisor.
+
+**Regressões MCP live nesta revisão:** `read(report.production_order_consumption)` 2026-09 branch01 `PASS` total 1.243, 2026-10 branch01 `PASS` total 2.381; `read(report.billing_mod_breakdown)` 2026-09 branch01 `PASS` 299 âncoras; `read(report.cost_closing_state)` 2026-09 `PASS` (4 limitações). R04/R09 permanecem `officiality=operational_view`, `officialParity=pending`, R12 `officiality=technical_markers`.
+
+**Limitações:** A bateria local usa marcadores de substring em fragmentos, não avaliação de 105 respostas conversacionais; quatro `RETRIEVAL_MISS` persistem e o quinto caso tem nota de `SOURCE_GAP` corrigido após baseline, requer matriz final não ambígua. Não foi executada avaliação C em canal conversacional da CLARA. Decisão real de alteração da política de ranking por especificidade permanece `DECISION_REQUIRED`, sem executar proposta.
+
+**Veredito GPT REVIEW Gate 076: `ACCEPT_WITH_RESIDUAL`** para integração, publicação, recuperação dos seis probes e quatro leituras reais sem regressão. **Não equivale a certificação de acurácia semântica R01–R15.** Próximo passo: golden-set de respostas conversacionais com avaliação por evidência e decisão específica de ranking por owner, sem reabrir o fallback OR que passou no teste.
