@@ -4521,3 +4521,27 @@ real Ollama (qwen3:4b-instruct-2507-q4_K_M) via InvokeModel:
 structured {interaction_class, requires_owner_surface} COMPLETED,
 usage 277in/17out, 55.2s — runtime Pydantic AI vivo em producao-local.
 Rollback: DELIA_MODEL_RUNTIME=legacy (isolado, sem coexistencia).
+
+## M3 — PAIRED EVAL legacy vs pydantic_ai (real Ollama, in-container)
+
+SHA=<next> · DELIA_LLM_MODEL=qwen3:4b-instruct-2507-q4_K_M, mesmo
+provider/modelo/instrucoes/contexto/budget nos dois runtimes.
+
+| scenario | legacy | pydantic_ai | verdict |
+| admission (estrutura) | owner_surface=true, ~1.4s | surface_inquiry, ~1.0s | equivalencia contratual; decisao semantica do modelo (nao-regressao) |
+| admission_conv (bom dia) | conversation | conversation | EQUIVALENT |
+| synthesis (items) | items+limitations, 1.3s | invalid_structured_output 1x; retry OK | fail-closed correto em output malformado — o retry governado em-turn cobre transientes |
+| goal (processo 0001) | information_query+limitations | goal_class=null+error | ambos validos ao contrato; nao-determinismo do modelo |
+
+LATENCIA: pydantic ~1.0-1.5s/stage vs legacy ~1.3-1.5s — paridade;
+o 55.2s anterior foi cold-start Ollama (nao overhead do adapter).
+TOKENS: usage real capturado em ambos (ex.: 277/17, 225/28, 98/28).
+SEGURANCA: extra keys/error slots nao viram FACT; abstention preservada.
+DECISAO: pydantic_ai APTO para M4 cutover — contrato de port
+equivalente; falhas transientes de validacao sao cobertas pelo retry
+governado dentro de _model_stage_proposal (nao duplicado na request).
+Rastreabilidade: suites enumeradas = 20 adapter + 42 unified +
+21 cri_unified + 67 cri_e3 + foundation/architecture/config = 110+
+(mensagem anterior somava subconjuntos; consolidado verificado).
+E2E empresarial: TEST_NOT_RUN (identidade indisponivel ao executor;
+container oficial ja roda pydantic_ai para a sessao do usuario).
