@@ -2294,3 +2294,57 @@ EVIDENCE_PROJECTION_PARTIAL. Caps 4campos/5registros bypassed na
 apresentacao (persistem so p/ ordering/scan/prompt-LLM).
 Tests: unified 10/10 + CRI e3 67 + ~390 regressao verdes.
 PENDENTE: e2e live (sync container + restart) — sem deploy nesta task.
+
+## T20-UNIFIED-PRESENTATION — REWORK-01 (silent-truncation + decoupling)
+
+TASK=DELIA-C3-UNIFIED-EVIDENCE-PRESENTATION-REWORK-01
+BASE=b9b73bd7e1 (origin/main revalidado; worktree isolado delia-c3-rework-wt —
+checkout principal estava atrasado + staged concorrente, intocado).
+
+DEFEITOS CORRIGIDOS (evidencia em codigo):
+- Depth omit "(estrutura profunda omitida)" sem flag -> OMISSION_MAX_DEPTH
+  + partial=True + omitted_nodes contados.
+- Budget exhaustion nunca propagava (flag computada pre-loop) ->
+  contabilidade real por _Budget; irmaos restantes contam como omitidos.
+- String >2000 chars cortada com "…" silencioso -> corte removido;
+  valor integral escapado, quebras de linha -> continuation lines.
+- Labels cortados em 80 chars -> corte removido; identidade preservada.
+- Bug real: _render_label retornava triple (article,label,suffix) do
+  field_labels governado -> repr de tupla na resposta. Resolver canonico
+  field_display_label movido para o renderer (re-exportado por
+  conversational_response; single source).
+- Projetor plano como gate: record_lines vazio -> return None mesmo com
+  render valido; caps 4campos/5registros/32scan competiam com renderer.
+  compose_cri_response agora recebe records crus + result_context +
+  field_labels e e' o unico owner do render; orchestration vira glue.
+- Contagem: presented vem de items_render.presented_items (dedup
+  top-level por conteudo, E3-G2); presented<delivered -> notice +
+  LIMITATION_EVIDENCE_PROJECTION_PARTIAL (lado apresentacao);
+  RESULT_TRUNCATED permanece lado owner/resultado (baseline 2000 cap).
+- Sanitizacao preservada: _sanitize_renderable em records+result_context
+  no boundary de apresentacao (envelope path chega sem sanitize).
+
+RESIDUAIS (classificados):
+- _business_lines/_md_business_lines/_format_*/_md_format_*/
+  _render_synthesis/_detail_lines/_list_header/_compose_answer:
+  LEGITIMATE — boundary baseline congelado (OFF byte-parity, doc 16
+  MAX_RENDER_CONTENT_CHARS=2000 marcado); drops internos silenciosos
+  documentados como divida fora do escopo deste rework.
+- cri_scalar_text/presented_record: LEGITIMATE — anchor/ordering/
+  diffs de campo (selecao), nao apresentacao de corpo.
+- _sanitize_renderable MAX_RENDER_LIST_ITEMS=50: bound de seguranca
+  pre-existente, silencioso — KNOWN_RESIDUAL (fora do renderer).
+- MAX_PRESENTED_VALUE_CHARS=140: bound de anchor apenas — LEGITIMATE.
+- MAX_FIELDS_PER_RECORD/MAX_PRESENTED_RECORDS/_MAX_FIELD_SCAN_RECORDS/
+  _CRI_RECORD_SCAN/_record_line/_PRESENTATION_MAX_*: REDUNDANT_REMOVED.
+
+EVIDENCIA: 42 unified+cri_unified tests GREEN; cri_e3 67/67;
+suites adjacentes verdes; 5 falhas PRE-EXISTENTES no origin/main
+(vocab v5 stale, pydantic_ai ja presente, env.example, r1 snapshot)
+— nao causadas pelo diff.
+E2E in-process: attempt("Qual a estrutura do 90260148?") -> BOM
+completa (90260148 + 50220013 + 50220015 + 4 MP, qty/unidades).
+E2E live container: TEST_NOT_RUN — sem identidade empresarial
+autorizada; stack local le do checkout sujo concorrente.
+PRODUCTION_DEPLOY=NO
+TASK_STATUS=COMPLETE(code+tests) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
