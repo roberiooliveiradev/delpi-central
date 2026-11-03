@@ -4674,3 +4674,94 @@ honesta sem invencao.
 Rollback legacy preservado (testado vivo antes); LangGraph residual
 mantido. E2E autenticado executado: 01-03 GROUNDED, 04 GROUNDED
 (pos-fix), 05 honesto, 06 selecao correta+denial honesto.
+
+## M7 — FINAL ACCEPTANCE REVIEW (2026-11-03, HEAD=be217b5070)
+
+TASK=DELIA-C3-PYDANTIC-AI-UNIFIED-RUNTIME-M7-FINAL-ACCEPTANCE-01.
+BASE=d280bf81c2 avaliado em M6; HEAD reavaliado be217b5070
+(82 commits incorporados; M6 residual closure contido).
+Repositorio reancorado em main limpo; stack local recriada sobre
+este checkout (mounts repontados de delia-deploy-wt p/ main).
+
+IMPLEMENTACAO (codigo, SHA be217b5070):
+- PydanticAiModelInvocationAdapter composto atras de InvokeModel
+  (root_composer; um adapter por processo). InvokeModel segue
+  boundary governado com _validate_structured_output definitivo.
+- DELIA_MODEL_RUNTIME default=pydantic_ai; allowlist
+  {legacy,pydantic_ai} fail-closed em settings; legacy apenas
+  rollback explicito; sem fallback silencioso.
+- expected_fields REQUIRED no wire (create_model); companions de
+  "applicable" opcionais => abstention legal; model_dump
+  (exclude_unset=True) preserva ausencia real (paridade legacy).
+- Adapter: um invoke bounded por call, Agent SEM tools (nenhum
+  planner executa acao); extras tolerados e strip_extra governado
+  no use case (decision=strip_extra logado); error mapping
+  TIMEOUT/INVALID_STRUCTURED_OUTPUT/PROVIDER_REJECTED/UNAVAILABLE
+  fail-closed; api_key so no provider (nunca prompt/log).
+- SDK pydantic_ai somente sob app/infrastructure/; Domain/
+  Application sem import de SDK (verificado + teste atualizado).
+
+REGRESSOES (container oficial, mesmo config qwen3:4b):
+1417 pass / 3 fail iniciais; as 3 falhas = testes STALE vs contratos
+governados evoluidos, nao regressao de runtime:
+- test_v14_architecture_isolation: invariante "string pydantic_ai
+  ausente de app/" superado por doc 220 (adapter legitimo em
+  app/infrastructure). Corrigido p/ invariante real: import de SDK
+  confinado a infrastructure. GREEN.
+- test_s4_no_records_never_fabricates[delia|langgraph]: exigia
+  insufficient_evidence/non-SUCCESS; ad5424e75a introduziu caveat
+  governado nao-bloqueante goal_mismatch (anota irrelevante sem
+  suprimir evidencia). Assertion ampliada p/ caveats governados de
+  insuficiencia; fabricacao de registros segue proibida. GREEN.
+Pos-fix: 1420 pass / 0 fail (mesma contagem de familias, sem
+somar suites sobrepostas como execucoes independentes).
+Dep eval langgraph-checkpoint-sqlite==3.1.3 instalada efemeramente
+no container p/ suite S5 (dep so de eval; prod backend-free por
+design). Suites docs-schema exigem /docs — copiado efemeramente.
+
+RESIDUAIS REVISADOS:
+- R1 VISTA AuthZ: owner=tv-dashboard-api (servico VIVO, /mcp 200);
+  permissao=acesso vista delegado AuthZ do usuario de teste;
+  evidencia=mcp_authentication_failed denial honesto (nao vazio);
+  impacto=E2E-06 outcome INCONCLUSIVE; acao=PO conceder acesso.
+- R2 comparacao: path REASONING correto; estruturas recuperadas;
+  comparacao depende legitimamente de vista.analyze (mesma AuthZ);
+  sem capability equivalente autorizada p/ usuario de teste;
+  INCONCLUSIVE preservado.
+- R3 qwen3:4b: schema_rejected_retry residual; retries bounded,
+  fail-closed, nenhuma execucao com args invalidos; tokens/latencia
+  medidos; melhoria de modelo = evolucao posterior, sem regressao
+  critica.
+- R4 LangGraph: consumidores legitimos S4 fanout(Send)/S5
+  checkpoint-resume(SqliteSaver eval)/governed attempts/recovery
+  confirmados em codigo; engine=sequenciamento, nao inferencia;
+  langgraph_engine.py preservado.
+- R5 rollback: pydantic_ai default; legacy so explicito; 1 adapter
+  por processo; rollback+retorno testados ao vivo em M6.
+
+E2E EMPRESARIAL (consolidado M6, sem re-execucao desnecessaria):
+01-03 GROUNDED; 04 GROUNDED pos-fix; 05 INCONCLUSIVE; 06 selecao
+VISTA correta+denial honesto. Executados em SHA/config/modelo
+identificaveis (ledger M6). Distincao evidencia-validada vs
+inferida mantida.
+
+PERFORMANCE (medido, nao estimado): ~7 calls LLM/turn estrutura;
+tokens ~11k in/~200 out (turn estrutura); ~1.0-1.5s/stage pydantic
+vs ~1.3-1.5s legacy (paridade M3); 15-30s/turn total Ollama; retries
+governados; falhas transientes cobertas por retry in-turn.
+
+SEGURANCA/ARQUITETURA: Keycloak identidade; Core AuthZ; Domain
+authority; DELIA inteligencia/orquestracao; MCP/A2A fronteiras;
+invariantes model proposal!=authorization, MCP result!=FACT,
+technical success!=business outcome, READ!=WRITE, PREPARE!=ACT,
+simulate!=apply, prediction!=FACT preservados. Sem autoridade
+paralela criada.
+
+PORTAL_VISUAL_QA: preview http://localhost aberto p/ capturas do
+usuario (sessao autenticada depende de credencial do usuario).
+Pendente de evidencia visual ate envio de capturas.
+
+ACRESCIMO UPSTREAM DETECTADO: plugins/engineering commitado com
+marcadores de conflito em src/features/products/ (46da939277) —
+build do MFE quebra na main; fora do escopo DÉLIA; reportado p/
+owner do plugin (nao e regressao da migracao).

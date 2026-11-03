@@ -677,6 +677,7 @@ def test_langgraph_production_requirements_pinned_and_scoped():
 from app.application.capability_provision.orchestration import (
     GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
     GOAL_INSTRUCTION_ID,
+    LIMITATION_GOAL_MISMATCH,
     LIMITATION_INSUFFICIENT_EVIDENCE,
     SYNTHESIS_INSTRUCTION_ID,
 )
@@ -840,10 +841,14 @@ def test_s4_no_records_never_fabricates(engine_id):
     )
     attempt = engine.attempt("registros de terminal bala")
     # Truthful non-success OR success explicitly limited — never an
-    # unqualified records answer.
+    # unqualified records answer. Any governed insufficiency caveat
+    # counts: generic insufficient_evidence OR the non-blocking
+    # goal_mismatch judgment (ad5424e75a) that annotates irrelevant
+    # evidence without suppressing it.
     assert (
         attempt.status is not GovernedCapabilityStatus.SUCCESS
         or LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+        or LIMITATION_GOAL_MISMATCH in attempt.limitations
     )
     for fabricated in ("10080092", "10081004"):
         assert fabricated not in (attempt.content or "")

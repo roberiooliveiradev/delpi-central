@@ -206,14 +206,23 @@ def test_v12_no_tool_execution(harness):
 
 
 def test_v14_architecture_isolation():
-    """pydantic_ai must not appear under app/ — the SDK is confined
-    to the scripts/ evaluation boundary."""
+    """pydantic_ai SDK imports are confined to ``app/infrastructure/``.
+
+    Post-M2 contract (doc 220): the governed adapter lives in
+    infrastructure behind ``ModelInvocationPort``; composition may wire
+    the adapter class by name, but Domain/Application/Interfaces must
+    never import the SDK itself."""
     offenders = []
     for py in (REPO / "app").rglob("*.py"):
+        rel = py.relative_to(REPO)
+        if str(rel).startswith("app/infrastructure/"):
+            continue
         text = py.read_text(encoding="utf-8")
-        if re.search(r"\bpydantic_ai\b", text):
-            offenders.append(str(py.relative_to(REPO)))
-    assert offenders == [], f"pydantic_ai leaked into app/: {offenders}"
+        if re.search(r"^\s*(?:import|from)\s+pydantic_ai\b", text, re.M):
+            offenders.append(str(rel))
+    assert offenders == [], (
+        f"pydantic_ai SDK import outside infrastructure: {offenders}"
+    )
 
 
 def test_v13_no_provider_branching_in_harness(harness):
