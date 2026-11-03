@@ -4885,3 +4885,57 @@ multi-evidencia tipado antes de synthesis (REUSE port); (2) grant
 VISTA p/ usuario de teste; (3) investigar estabilidade de proposal
 com prior_turns no qwen3:4b (possivel instruction/context-size);
 (4) budget/timeout de admission+turn_goal vs nginx 120s.
+
+## DIAG-DECISIVE — context & multi-evidence decisive experiment (2026-11-03)
+
+TASK=DELIA-C3-CONTEXT-AND-MULTIEVIDENCE-DECISIVE-EXPERIMENT-01.
+HEAD=0695e31eb9; origin=3c84e3f79f. Modelo real qwen3:4b via Ollama
+direto (sem orquestracao) + evidencia empresarial real A01.
+
+EXPERIMENTO EXECUTADO (decisivo, isolado, autorizado):
+- D4/D1 isolado: fornecida SOMENTE a estrutura real do 90260147
+  (capturada via DAVI em A01, ~2200 chars) + pedido de comparacao
+  com 90260148 (nao fornecida). qwen3:4b: 660 tok in / 245 tok out /
+  13.3s => declarou INSUFICIENCIA EXPLICITA sem inventar diferenças.
+  Contraprova de capacidade: o modelo reconhece dado faltante —
+  a falha na DELIA e' upstream do modelo (composicao boundary).
+
+CONSOLIDADO CAUSAL (esta + DIAG-E2E anterior):
+- A Falha acompanha prior_turns (contexto): SIM — retries de
+  invalid_structured_output so' surgiram COM historico (A02);
+  A01 sem contexto foi estavel. => CONTEXT_FRAGILITY at proposal
+  stages (admission/turn_goal), nao perda de evidencia.
+- B Fragilidade Qwen3 4B: PARCIAL — instavel em propostas
+  estruturadas com contexto; estavel e honesto com entrada limpa.
+- C Transporte/deadline/504: retries ~20-86s/attempt acumulam >
+  gateway ~120s => 504 ao cliente, execucao continua server-side
+  (sem propagacao de cancelamento observada).
+- D Ausencia de composicao multi-evidencia: PROVEN — delegada a
+  vista.analyze (skip_comparison_declared -> foreign_selection
+  corroborate); AuthZ nega => insuficiencia honesta.
+- E Continuidade entre turnos: evidencia nao e' rebatida (contrato
+  epistemico correto); sem projection autorizada alternativa.
+- F Selecao de capability: correta e semantica; vista.analyze e'
+  owner legitimo de analise — dependencia de contrato, nao defeito.
+
+ROOT_CAUSES_PROVEN: RC1 EVIDENCE_NOT_COMPOSABLE (sem boundary de
+composicao); RC2 CONTEXT_FRAGILITY/model instability com prior_turns
+(schema retries -> 504); RC3 OWNER_AUTHZ_DENIAL (vista legitimo).
+ROOT_CAUSES_INCONCLUSIVE: mecanismo exato da fragilidade de contexto
+(instruction-size vs formato vs budget) — requer harness por-stage.
+IMPLEMENTATION_READY=YES (plano abaixo) | ARCHITECTURE_DECISION_
+REQUIRED=YES p/ contrato de composicao (nova forma tipada).
+
+FIX-1 (operacional): deadline/cancelamento — propagar cancel no
+disconnect, fail-fast honesto antes de churn de retries; budget de
+proposals com contexto. Boundary: handle_interactive_turn + adapter.
+FIX-2 (composicao): contrato tipado de composicao multi-evidencia
+via ModelInvocationPort (proposal compare sobre EvidenceFacts
+reunidos de subobjetivos concluidos); extensao, nao novo planner.
+FIX-3 (continuidade): projection autorizada de evidencia cross-turn
+(refs+hashes); EXTEND ConversationContextTurn; texto != FACT.
+
+RECOMMENDED_EXECUTION_ORDER: FIX-1 -> FIX-2 -> FIX-3 (FIX-1 destrava
+baterias multi-turno confiaveis). EVGAPS: harness por-stage p/
+mecanismo exato de RC2; baterias A03-C07 pendentes de FIX-1.
+PRODUCTION_DEPLOY=NOT_AUTHORIZED.
