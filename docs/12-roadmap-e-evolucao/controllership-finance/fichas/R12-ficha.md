@@ -15,7 +15,7 @@ Publicação: ficha **vigente no corpus produtivo** — estado `PENDING_CONTRACT
 - Owner funcional: Controladoria (executa no Protheus).
 - Owner técnico: rotinas TOTVS/Delpi — `MATA320`, `MATA300`, wizard
   `MATA330`; estado de fechamento via owner canônico do Portal.
-- Implementação: **IMPLEMENTADO** — página «Acompanhamento do fechamento» (design aprovado doc 151, Gate 071) via `cost-closing-state`; sem contrato de relatório
+- Implementação: **IMPLEMENTED** — página «Acompanhamento do fechamento» (design aprovado doc 151, Gate 071) via `cost-closing-state`; sem contrato de relatório
   (comparação governada vigente); estado `STOCK_CLOSED` lido
   pelo fechamento, não como medida.
 - Homologação: G4 `PASS` (bindings), G5 `INCONCLUSIVE` (etapa 4 do

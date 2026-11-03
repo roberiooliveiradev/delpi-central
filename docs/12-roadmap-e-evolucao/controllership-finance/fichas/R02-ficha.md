@@ -22,7 +22,14 @@ Publicação: **release produtivo stage-05** (30/10/2026, srv-api, SHA `297068f1
 
 ## Fonte e dados
 
-- Tabelas: SE5 × SE1 (títulos receber) × SED — `PROVEN` por paridade.
+- **Duas fontes distintas, nunca confundir:**
+  - **Relatório histórico (artefato `DLP06R01`):** SE5 × SE1 (títulos
+    receber) × SED — `PROVEN` por paridade; eixo `E5_DATA`.
+  - **Consulta operacional vigente (api-delpi `settlements_sql.py`):**
+    eventos de baixa `FK1010` (receber), ponte de títulos `FK7010`
+    (`FK7_IDDOC`, `FK7_ALIAS='SE1'`), títulos `SE1010`, naturezas
+    `SED010` — `PROVEN_CODE` (doc 152 §7). Competência = `FK1_DATA`;
+    valor do evento = `FK1_VALOR`.
 - Artefatos: `Recebidos.pdf` (36p), `Recebidos.xlsb` (657 linhas).
 - Grão: baixa financeira. Eixo: `E5_DATA`. Filial: coluna `Orig`
   (semântica distinta da de R01 — doc 85 BR-R02-007 `PROVEN`).

@@ -391,21 +391,74 @@ class ClaraKnowledgeRepository:
         if report_id:
             clauses.append("k.related_report_ids @> %s::jsonb")
             where_params.append(json.dumps([report_id]))
-        rank = "0.0"
-        rank_params: list[Any] = []
-        if query:
-            clauses.append(
-                "k.content_tsv @@ plainto_tsquery('portuguese', %s)"
+        limit = max(1, min(int(limit), 50))
+        if not query:
+            return self._search_rows(
+                clauses=clauses,
+                where_params=where_params,
+                rank="0.0",
+                rank_params=[],
+                limit=limit,
             )
-            where_params.append(query)
-            rank = (
+        items = self._search_rows(
+            clauses=[
+                *clauses,
+                "k.content_tsv @@ plainto_tsquery('portuguese', %s)",
+            ],
+            where_params=[*where_params, query],
+            rank=(
                 "ts_rank(k.content_tsv, "
                 "plainto_tsquery('portuguese', %s))"
+            ),
+            rank_params=[query],
+            limit=limit,
+        )
+        for item in items:
+            item["full_match"] = True
+        if len(items) < limit:
+            # Fallback AND→OR: plainto_tsquery exige TODOS os lexemas
+            # no mesmo segmento — consultas multi-conceito devolviam
+            # zero mesmo com conhecimento existente (Gate 076). O fill
+            # é estritamente aditivo: itens AND mantêm posição/ordem;
+            # candidatos parciais entram depois, marcados full_match
+            # false — ausência real de evidência continua zerada.
+            extra = self._search_rows(
+                clauses=[
+                    *clauses,
+                    "k.content_tsv @@ (replace("
+                    "plainto_tsquery('portuguese', %s)::text,"
+                    " ' & ', ' | '))::tsquery",
+                    "k.knowledge_id::text <> ALL(%s::text[])",
+                ],
+                where_params=[
+                    *where_params,
+                    query,
+                    [str(i["knowledge_id"]) for i in items],
+                ],
+                rank=(
+                    "ts_rank(k.content_tsv, (replace("
+                    "plainto_tsquery('portuguese', %s)::text,"
+                    " ' & ', ' | '))::tsquery)"
+                ),
+                rank_params=[query],
+                limit=limit - len(items),
             )
-            rank_params.append(query)
+            for item in extra:
+                item["full_match"] = False
+            items.extend(extra)
+        return items
+
+    def _search_rows(
+        self,
+        *,
+        clauses: list[str],
+        where_params: list[Any],
+        rank: str,
+        rank_params: list[Any],
+        limit: int,
+    ) -> list[dict]:
         # O placeholder do rank fica no SELECT — antes dos filtros.
         params = (*rank_params, *where_params)
-        limit = max(1, min(int(limit), 50))
         with self._conn() as conn:
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(

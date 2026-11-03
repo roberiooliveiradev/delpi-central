@@ -15,7 +15,7 @@ Publicação: ficha **vigente no corpus produtivo** — estado `PENDING_CONTRACT
 - Owner funcional: Controladoria.
 - Owner técnico: rotinas TOTVS (`MATA330`, `MATA280`) + leitura de
   estado na api-delpi/BFF.
-- Implementação: **IMPLEMENTADO** — visão de acompanhamento R12/R15 (doc 151, Gate 071); estado `STOCK_CLOSED` lido pelo
+- Implementação: **IMPLEMENTED** — visão de acompanhamento R12/R15 (doc 151, Gate 071); estado `STOCK_CLOSED` lido pelo
   fechamento; **não é relatório de medida** → comparação responde
   NOT_COMPARABLE — visão read-only, sem execução de rotina no Portal.
 - Homologação: G3/G4 `PASS`; G5 `INCONCLUSIVE`.

@@ -1315,6 +1315,7 @@ def tool_search_closing_knowledge(
                     "citation_locator": i["citation_locator"],
                     "excerpt": (i["content"] or "")[:600],
                     "rank": i.get("rank"),
+                    "full_match": i.get("full_match", True),
                 }
                 for i in items
             ],

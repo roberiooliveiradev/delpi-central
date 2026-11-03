@@ -274,3 +274,121 @@ O resultado comprova o cenário de busca real por IDs, não exaustividade de tod
 **Resultado:** `PASS` para objetivo P0 de versionamento vigente, integridade de fragmentos R12/R15 em busca real, metadata R04/R14 e regressões operacionais citadas. **Veredito Gate 075 = `ACCEPT_WITH_RESIDUAL`**.
 
 **Resíduos explícitos:** (1) bateria de 105 perguntas R01–R15 `TEST_NOT_RUN`; (2) suite automatizada de cenários transacionais, rollback, publicação parcial, fontes vazias e concorrência não comprovada pelos testes novos apresentados; revisar antes de uma mudança maior; (3) smoke visual autenticado Portal não executado nesta revisão; (4) paridade oficial e decisões de owners permanecem pendentes conforme Documento 152. Não reabrir o incidente P0 sem evidência nova.
+
+
+## 12. Auditoria exploratória de recuperação — 105 consultas R01–R15 (03/11/2026)
+
+**Objetivo:** avançar a prova de qualidade da CLARA no corpus aceito no Gate 075. **Método real:** ferramenta MCP autenticada `knowledge(action="search",report_id=Rxx,query=tema,limit=12)` para todos os 15 relatórios × 7 temas `finalidade, tabelas, SQL, filtros, cálculo, paridade, limitações` = **105 chamadas executadas**. Critério de descoberta: presença da ficha canônica `fichas/Rxx-ficha.md` entre os doze primeiros resultados. Esse critério mede *recuperação*, não correção da resposta de um modelo conversacional, SQL parity, nem teste de `read` de cada relatório. Os temas não equivalem às sete perguntas contextuais adaptadas prometidas nos gates anteriores. Não chamar 105/105 de PASS semântico.
+
+**Baseline:** GitHub main `a2c2020e310c8383f8533be2809622b3365e1f9f`; CLARA corpus `83dddfbe-7aeb-4a78-8cbe-570b6d6a8329`, 2.215 itens / 88 fontes.
+
+| Item | Chamadas | Ficha canônica presente nos top-12 | Observação |
+|---|---:|---:|---|
+| R01 | 7 | 4 | Queries SQL/cálculo/paridade não trouxeram a ficha nos 12 primeiros |
+| R02 | 7 | 3 | Busca genérica frequentemente prioriza docs 84/85/121 |
+| R03 | 7 | 3 | Contratos transversais antecedem a ficha |
+| R04 | 7 | 3 | Ficha não aparece em finalidade/tabelas/cálculo/paridade |
+| R05 | 7 | 3 | Ficha ausente nas primeiras 12 em SQL/filtros/cálculo/paridade |
+| R06 | 7 | 4 | Doc 122 e doc 85 competem com ficha |
+| R07 | 7 | 3 | Mesmo motor documentado em contratos transversais |
+| R08 | 7 | 4 | Ficha apareceu em SQL, não em cálculo |
+| R09 | 7 | 2 | Ficha só apareceu em finalidade/limitações |
+| R10 | 7 | 3 | Regras estão em docs amplos |
+| R11 | 7 | 3 | Consulta genérica de SQL não prioriza ficha |
+| R12 | 7 | 2 | Rotina/estado misturados a temas monetários genéricos |
+| R13 | 7 | 4 | Documentos externos; perguntar SQL exige resposta “não aplicável” |
+| R14 | 7 | 1 | Ficha só apareceu em finalidade |
+| R15 | 7 | 3 | Rotina/cutoff; perguntar SQL exige distinção de fonte/visão |
+| **Total** | **105** | **45/105** | **0/105 tinham a ficha específica na posição 1** |
+
+**Resultado da recuperação genérica:** todas as 105 buscas retornaram algum resultado, mas **60/105 não trouxeram a ficha do ID no top-12**. Isso **não** significa ausência de conhecimento: os resultados podem conter documentos canônicos relevantes (regra doc 85, contratos, crosswalk, ledger); contudo revela baixa priorização da ficha específica sob termos genéricos, mesmo com `report_id` fornecido. Não presumir que documentos transversais estão errados nem que toda resposta seria incorreta.
+
+**Contraprova de consulta específica:** 6 buscas longas `knowledge(search,report_id,query)` com termos técnicos combinados (R01 FK2010/FK7010, R04 SC2/sort, R06 MV_D3ESTOR, R09 source_missing/SG1, R12 human_acceptance, R13 documentos externos) retornaram **0 itens cada**. As mesmas seis referências pesquisadas por ID simples sem `report_id` (`query=R01/R04/R06/R09/R12/R13`) retornaram 12 itens; ficha encontrada em posições 3, 7, 4, 3, 3 e 6, respectivamente. **Suspeita a investigar:** estratégia de matching/combinação de tokens e filtro (provável excesso de termos restritivos), mas a causa interna não foi inspecionada; não chamar “bug de ranking comprovado” sem revisão de implementação.
+
+**Decisão de classificação:** `PASS` para disponibilidade da ferramenta e execução da matriz de 105 consultas de *retrieval*; `INCONCLUSIVE` para acurácia de respostas em linguagem natural e cobertura de SQL/negócios de R01–R15; `PENDING` para 105 avaliações de respostas conversacionais de fato. Não alterar corpus/SQL por esses resultados isolados.
+
+### Próximo gate recomendado — CLARA-KNOW-RETRIEVAL-076
+
+1. Inventariar código atual de `knowledge(search)`, semântica exata de `query` + `report_id`, SQL de ranking, regras de doc transversal, limites e testes; documentar expected retrieval e owner.
+2. Montar golden set de **perguntas adaptadas a cada ID e sua natureza** (relatório SQL, rotina ERP, documento externo), com respostas esperadas e fontes oficiais/HEAD, não só sete termos genéricos.
+3. Testar em separado: (a) disponibilidade de fonte, (b) cobertura de busca, (c) precisão/ranking/citação, (d) resposta semântica produzida pelo canal conversacional habilitado, (e) paridade operacional com `read`. Não colapsar as dimensões em uma porcentagem.
+4. Inspecionar busca de múltiplos termos que devolve zero, priorização `report_id`, seleção de trecho `fichas/Rxx` e fallback de documentos transversais, mantendo segurança e histórico fora da busca vigente.
+5. Só depois de evidência e aprovação de gate, fazer ajuste mínimo e testes de regressão sem alterar permissions, domain de outros contexts ou fontes SQL.
+
+
+## 13. Gate 076 — Auditoria semântica e cobertura de recuperação R01–R15 (03/11/2026)
+
+**Executor:** Devin · **BASE_HEAD:** `b9b73bd7e127017fc28000b534b9c9f9cf18366d` · **ORIGIN_MAIN:** `47358f0c2a32a593a3b16d15909bd425bac08ec3` (1 commit à frente do local — drift de publicação registrado abaixo).
+
+**Baseline de corpus:** produtivo `83dddfbe` (2.215 itens/88 fontes). Corpus local re-ingerido a partir dos docs do HEAD: `d0e7a649` — **2.215 itens / 88 fontes** (iguala a contagem produtiva; versões de ficha batem com Gate 075).
+
+### 13.1 Como funciona a busca (código auditado)
+
+`ClaraKnowledgeRepository.search()` (`clara_knowledge_repository.py`): FTS PostgreSQL — `content_tsv @@ plainto_tsquery('portuguese', q)` com `ORDER BY ts_rank DESC, indexed_at DESC`, `LIMIT 1–50` (default 8). `content_tsv` é coluna gerada `to_tsvector('portuguese', title|business_step|topic|content)` (V011). Filtros: `status='PUBLISHED'`, `access_scope` fail-closed, `topic`/`business_step` ILIKE, `related_report_ids @> [report_id]`.
+
+**Tokenização provada via `ts_debug`:** `_` é separador (`MV_D3ESTOR`→`mv`+`d3estor`; `D3_ESTORNO`→`d3`+`estorn`; `source_missing`→`sourc`+`missing`; `D1_DTDIGIT`→`d1`+`dtdigit`; `F4_ESTOQUE`→`f4`+`estoqu`); `FK2010`/`FK7010`/`MATA330`/`SB9010` permanecem atômicos; `cost-closing-state` gera lexema composto + partes; stemming PT ativo (`estorno`→`estorn`).
+
+### 13.2 Causa confirmada de cada comportamento
+
+| Sintoma | Causa comprovada |
+|---|---|
+| Consultas técnicas longas → 0 | `plainto_tsquery` = **AND** de todos os lexemas; todos devem co-ocorrer no **mesmo segmento ≤6000 chars**. Reproduzido localmente (6/6 queries → 0). |
+| Busca por ID funciona | IDs atômicos (`R04`, `FK2010`) geram lexema único — AND de 1–2 termos quase sempre casa. |
+| Transversais precedem fichas | `report_id` só **filtra**; docs com `related_report_ids=ALL_RIDS` (doc-83/84/85/121, ficha-index) passam no filtro e vencem por frequência em `ts_rank`. |
+| `report_id` não garante ficha | Idem — filtro não é ranking; ficha é 1 de ~10 fontes taggeadas. |
+| Termo no GitHub não localizável | `MV_D3ESTOR` existia em **1 item** (doc-80, sem tag R06) — inalcançável sob `report_id=R06` mesmo com OR. `FK2010/FK1010/FK7010` em 2–3 itens (doc-80/doc-88); fichas R01/R02/R06 não continham a semântica operacional — **lacuna de fonte**, não só de busca. |
+| Desempate | `indexed_at DESC` favorece recém-indexado (invariante anotada). |
+
+### 13.3 Gate contratual (Etapa C)
+
+Contrato público: `knowledge(search,{query,topic,business_step,report_id,limit})` → itens+citações+corpus (doc 119; único consumidor: CLARA MCP/ChatGPT). Matching interno não é contractualizado — a expectativa documentada é "busca retorna itens com citações". AND-only **descumpre comprovadamente** essa finalidade → correção mínima autorizada. **DECISION_REQUIRED registrado (não implementado):** política de ranking por especificidade (`jsonb_array_length(related_report_ids)`, `ts_rank_cd`, title weighting) — nova política de ranking exige owner. Opções medidas em §13.6.
+
+### 13.4 Correção implementada (diff mínimo)
+
+`search()`: AND preferencial idêntico ao vigente; se `len(items) < limit`, preenche com OR `(replace(plainto_tsquery::text,' & ',' | '))::tsquery`, excluindo IDs já retornados, até `limit`. **Estritamente aditivo** — resultados AND mantêm posição/ordem; fills marcados `full_match=false` (campo aditivo no item; `tool_bridge` expõe). Invariantes preservadas: `PUBLISHED` only, `INTERNAL_ONLY` nunca sai, `report_id` inexistente zera, `SUPERSEDED` nunca retorna (testes F).
+
+### 13.5 Correções de fonte (fichas — backlog autorizado doc 152, fatos CODE_PROVEN)
+
+- **R01/R02:** separada origem histórica SE5/`E5_DATA`/FINR190 (R01) / `DLP06R01` (R02) da consulta operacional `FK2010`/`FK1010` + `FK7010` + `SE2010`/`SE1010` + `SED010`, eixo `FK2_DATA`/`FK1_DATA`, valor `FK2_VALOR`/`FK1_VALOR` (CLARA-KNOW-009 P0).
+- **R06:** `D3_ESTORNO<>'S'` qualificado como **condicional** a `MV_D3ESTOR='N'` (live 'N' → estornos excluídos) (CLARA-KNOW-007).
+- **R10:** exclusões 13 TES/MP/benefícios aplicadas **no use case**, não no WHERE do SQL.
+- **R11:** `UNIVERSE = grupo OR TES` (SQL) vs `CANDIDATES = grupo AND TES` (use case).
+- **R09/R12/R15:** token `IMPLEMENTADO` → `IMPLEMENTED` canônico (EN); **R04:** marcado `TARGET` para paridade MATR860 — ambos restauram conformidade com `test_clara_fichas_parity`.
+
+### 13.6 Testes e antes/depois
+
+Novos: `tests/test_pg_clara_retrieval.py` (6 casos controlados + runner do golden set) e `tests/clara_golden_set_r01_r15.py` (**105 casos**, 15×7, marcadores verificados; classifica `PASS_RETRIEVED|RETRIEVAL_MISS|SOURCE_GAP`). Resultado: **100 PASS_RETRIEVED / 4 RETRIEVAL_MISS / 1 SOURCE_GAP** após fix (R13-D3 era marker cruzando quebra de linha — corrigido). Os 4 misses (R11-D7, R12-D5, R13-D6, R14-D6 — perguntas negativas/contrastivas) são limitação de ranking no pool OR, registrados `expect=RETRIEVAL_MISS` → cobertos pelo DECISION_REQUIRED §13.3. **Matriz local (mesmas queries, mesmo corpus):** zeros 28→**0**; ficha-top12 21→**40**. `test_pg_clara` knowledge: 5/5; suítes CLARA não-PG: 68/68.
+
+**Antes (produção/medido):** 105/105 retornavam algo, 45/105 ficha no top-12, 6 consultas longas → 0. **Depois (local):** 0 consultas zeradas, 100/105 com evidência esperada recuperada.
+
+**Falhas pré-existentes no HEAD (não causadas pelo diff, corrigidas):** `test_fichas_have_canonical_structure` (R09/R12/R15 token PT), `test_fichas_use_evidence_classification` (R04), `test_not_implemented_reports_are_honest` (assert codificava estado SUPERADO — rescrito para refletir verdade vigente).
+
+### 13.7 Matriz R01–R15 (cobertura confirmada)
+
+| R | Natureza | Produtor/SQL vigente | Fontes corpus | Status |
+|---|---|---|---|---|
+| R01 | consulta fin. | `settlements_sql` FK2010+FK7010+SE2+SED | ficha v+doc-80/88 | PROVEN |
+| R02 | consulta fin. | `settlements_sql` FK1010+FK7010+SE1+SED | ficha (fonte DLP06R01 ausente) | PROVEN/SOURCE_MISSING declarado |
+| R03 | snapshot | `stock_inventory_sql` SB9010+SB1 | ficha+doc-49/119 | PROVEN (P7 oficial pendente) |
+| R04 | consulta op. | `consumption_audit_sql` SC2+SB1 | ficha v2.0 | PROVEN (MATR860 pending) |
+| R05 | movimentação | `stock_movements_sql` SD1/SD2/SD3/SF4/SB9 | ficha+doc-62 | PROVEN |
+| R06/R07 | kardex/ajustes | `stock_kardex_sql` UNION+MV_D3ESTOR | ficha+doc-61/122 | PROVEN |
+| R08 | wip | `stock_value_historical_sql` SD3 RE*/DE*+SC2+SB9 | ficha+doc-63/64 | PROVEN (fonte MATR989 pendente) |
+| R09 | MOD | use case `billing_mod_breakdown` SD2/SF4/SG1/SHY | ficha v2.0 | PROVEN (DLP204 pending) |
+| R10 | despesas CC | `cost_center_expenses_sql` SD1+split use case | ficha | PROVEN (E10a/b pendentes) |
+| R11 | roster | `billing_exclusion_roster_sql` SD2 OR+use case | ficha | PROVEN (E11a/b pendentes) |
+| R12/R15 | rotinas/estado | `closing-state` SB9010/SX6/TTAT | ficha v2.0+doc-129/151 | PROVEN (marcadores ≠ homologação) |
+| R13/R14 | doc externo | — | ficha+doc-85 §§12-13 | SOURCE_UNAVAILABLE declarado |
+
+### 13.8 Validação semântica (dimensões A–D)
+
+- **A Fonte disponível:** 105/105 casos têm evidência no corpus (após correções R01/R02/R06/R10/R11) — exceto SOURCE_GAP honestos declarados (DLP06R01, SP R09, writer MV_ULMES etc.).
+- **B Fonte recuperada:** 100/105; 4 misses residuais de ranking documentados.
+- **C Resposta correta (canal conversacional):** `TEST_NOT_RUN` — canal ChatGPT autenticado indisponível neste ambiente; avaliação via marcadores de evidência (proxy) acima. Não declarar 105 respostas corretas.
+- **D Resultado operacional:** reads reais `TEST_NOT_RUN` localmente (TOTVS não acessível do runner); últimos PASS live no Gate 075 — sem alteração de SQL/contrato neste gate.
+
+### 13.9 Publicação e resíduos
+
+- **Bloqueio de integração:** WIP alheio staged (`delia-api` orchestration, `execution-ledger.md`, etc.) conflita com o commit `47358f0c` pendente — `pull --ff-only`/rebase recusam sem stash (AGENTS R6). Publicação em `main` pendente de decisão do usuário → `DECISION_REQUIRED` na etapa de push/deploy.
+- **Resíduos:** (1) ranking-policy DECISION_REQUIRED §13.3; (2) 4 RETRIEVAL_MISS residuais; (3) dimensão C/D sem validação live; (4) corpus produtivo `83dddfbe` não re-publicado com as fichas corrigidas — republicação segue gate próprio após merge; (5) desempate `indexed_at` anotado.
+- **Rollback:** corpus = reingestão das fontes anteriores via pipeline canônico; código = revert do commit; testes novos não alteram comportamento alheio.

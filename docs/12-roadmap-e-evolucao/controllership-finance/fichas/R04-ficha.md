@@ -62,7 +62,8 @@ Publicação: atualizada após implementação real — substitui a ficha 1.0
 
 - Visão operacional: evidências para auditoria de consumo; diferenças
   aritméticas entre fontes nunca são acusação de irregularidade.
-- Equivalência MATR860 **pendente** — nunca afirmar paridade oficial.
+- Equivalência MATR860 `TARGET`, não `PROVEN` — nunca afirmar
+  paridade oficial.
 - `not_informed`/ausências são tipadas como ausência de informação,
   não como erro ou reprovação.
 
