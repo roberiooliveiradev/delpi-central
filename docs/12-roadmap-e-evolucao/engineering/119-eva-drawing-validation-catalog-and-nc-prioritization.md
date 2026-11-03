@@ -38,6 +38,56 @@ A prioridade funcional continua concentrada em **VAL-01**, mesmo quando for nece
 
 ---
 
+## 0A. Modelo operacional de planejamento, prompts, revisão e aceite (DECISÃO — 2026-11-03)
+
+**Owner da condução:** Coordination / ChatGPT como arquiteto, autor de prompts fechados e revisor independente; **executor:** Devin; **autoridade de aprovação técnica:** owners de Engenharia; **source of truth:** Domain APIs. Nenhuma revisão por IA concede autoridade de publicação. Esta decisão complementa a Seção 0, sem alterar o Documento 116.
+
+### 0A.1 Fluxo de uma entrega
+
+`ESTUDAR E DELIMITAR → INVENTARIAR AUTHORITIES/FONTES/CONTRATOS → DEFINIR RQ/AC E CRITÉRIOS DE SAÍDA → EMITIR UM PROMPT DE EXECUÇÃO FECHADO → DEVIN IMPLEMENTA/TESTA/CORRIGE INTERNAMENTE → CHATGPT REVISA INDEPENDENTEMENTE (CÓDIGO + CONTRATO + E2E QUANDO DISPONÍVEL) → DECISÃO E REGISTRO NO GITHUB → PRÓXIMA VALIDAÇÃO`.
+
+- **Agora:** somente **estudo técnico e especificação de VAL-01 Estrutura**; nenhuma implementação ou prompt de implementação autorizado nesta decisão.
+- O prompt de execução só será produzido quando o escopo técnico e os AC tiverem sido estudados e delimitados.
+- O executor deverá entregar funcionalidade vertical de ponta a ponta, não só ports, contratos, DTOs ou testes isolados.
+- A revisão ChatGPT deve ser crítica e independente: não repetir nem autoaprovar alegações de deploy ou testes do executor; verificar SHA, integração real, casos positivos/negativos, semântica, permissão, evidências e risco de falso conflito.
+- A aprovação técnica de Engenharia e publicação governada são independentes do aceite de implementação.
+
+### 0A.2 Política antirrecursão e defeitos
+
+1. **Uma frente ativa (E1) e um pacote bounded por entrega.** Não criar subprojetos E1.1/E1.2, prompts exploratórios em cascata ou novos frameworks para contornar falha.
+2. **Primeira devolutiva de revisão consolidada:** classificar todas as falhas relevantes identificadas como `BLOCKING` (contrato, comportamento incorreto, ausência de requisito, segurança, falso positivo, E2E obrigatório), `NON_BLOCKING` (limitação permitida e documentada) ou `OUT_OF_SCOPE` (backlog). Evitar um prompt por defeito.
+3. **O Devin corrige dentro do pacote original**, com causa raiz, regressão e evidência no mesmo SHA. Até três ciclos locais de correção são limite gerencial sugerido no Doc 116, **não** autorização para aprovar falhas obrigatórias.
+4. Ao persistir bloqueio após limite: registrar causa, provas, autoridade/owner, impacto, opções de escopo/abordagem; escalar decisão à Coordination. Não reiniciar automaticamente outra etapa.
+5. **Não buscar perfeição universal fora do escopo** nem usar `INCONCLUSIVE` genérico para mascarar falha em cenários suportados. `PASS` só com comportamento comprovado e AC aplicáveis cumpridos.
+6. Defeitos críticos não podem ser ignorados por exigência de velocidade; melhorias não obrigatórias não bloqueiam uma entrega conforme seu escopo aprovado.
+
+### 0A.3 Atualização contínua do GitHub: obrigação e trilha de decisão
+
+**Doc 119 = plano funcional canônico. Issue #131 = quadro de execução/decisões.** Atualizar os dois em todo evento material: conclusão de inventário, decisão de semântica/escopo, entrada ou alteração de RQ/AC, evidência de testes e E2E, revisão, divergência de implementação, blocker/owner, aceite, mudança de status, release/rollback e passagem de E1 para E2.
+
+Formato mínimo por atualização:
+`DATA | ID DECISÃO | OBJETIVO/ESCOPO | STATUS ANTES→DEPOIS | EVIDÊNCIA (fonte, Git SHA, dataset/revisão) | RQ/AC IMPACTADOS | RISCOS/BLOCKERS+OWNER | RESPONSÁVEL | PRÓXIMA AÇÃO | DECISÃO`.
+
+**Status:** fatos `PROVEN/TO_INVENTORY/PLANNED/TARGET`; execução `PASS/FAIL/PENDING/INCONCLUSIVE/TEST_NOT_RUN/STALE_EVIDENCE`; review `ACCEPT/ACCEPT_WITH_RESIDUAL/REWORK/EXECUTION_DRIFT/INCONCLUSIVE`. `ACCEPT_WITH_RESIDUAL` não aceita requisito obrigatório pendente. Diferenciar código implementado, evidência runtime, qualidade quantificada e aprovação de Engenharia.
+
+### 0A.4 Registro de decisões — corrente
+
+| ID | Data | Decisão | Evidência/razão | Resultado e estado |
+|---|---|---|---|---|
+| DEC-VAL-001 | 2026-11-03 | Um catálogo (Doc 119) e um tracker (issue #131) | Plano mestre Doc 116 e histórico M0–M5; 53 NCs oficiais consultadas | PROVEN no GitHub |
+| DEC-VAL-002 | 2026-11-03 | Somente VAL-01 Estrutura ativa; E2–E7 congeladas | Exigência de qualidade e foco por capacidade | PROVEN como decisão, E1 ainda não implementado integralmente |
+| DEC-VAL-003 | 2026-11-03 | Validação deve ser vertical e completa, com várias famílias suportadas e abstinência fundamentada; "qualquer desenho" permanece TARGET | Diferenças de layout, BOM multinível, semântica e contratos | Critérios de aceite a detalhar no estudo |
+| DEC-VAL-004 | 2026-11-03 | ChatGPT faz planejamento/prompt fechado/revisão crítica independente; Devin executa; owner aprova tecnicamente | Evitar autocertificação e recursões infinitas | Modelo operacional adotado |
+| DEC-VAL-005 | 2026-11-03 | Uma devolutiva consolidada de falhas por rodada, até três ciclos locais gerenciais; sem fase automática adicional | Doc 116 §7; não deixar passar defeitos bloqueantes | Política de revisão adotada |
+| DEC-VAL-006 | 2026-11-03 | Atualização obrigatória de avanço, evidências e decisões no Doc 119 + issue #131 | Rastreabilidade e não perder contexto | Política documental adotada |
+| DEC-VAL-007 | 2026-11-03 | Próxima ação é **estudar a estrutura no desenho** (campos, tabelas, famílias, contratos e NCs), **sem emitir prompt de execução ainda** | Solicitação de sequenciamento do owner do produto | STUDY_PENDING |
+
+### 0A.5 Agenda delimitada do próximo estudo (VAL-01 — ainda não executado)
+
+No estudo seguinte, inventariar **casos reais variados**, fonte PDF/visual e BOM oficial no mesmo contexto autorizado, tabelas de materiais e folhas; diferenças entre estrutura registrada, representação gráfica e estrutura implícita; itens/código/descrição/quantidade; consumos, unidades, multicamadas e repetição; tipos MP/PI; ocorrências de NC estruturais; contrato de revisão e identidade. Delimitar famílias `SUPPORTED`/limitações, fontes/owners, casos de teste + falsos conflitos e AC objetivos. Somente depois construir **um** prompt de implementação E1. Não iniciar carimbo, cotas ou balões como entregas paralelas.
+
+---
+
 ## 1. Objetivo e decisão
 
 Planejar **todas as validações aplicáveis a cada família de desenho**, priorizando falhas reais já registradas. A primeira entrega funcional é **VAL-01 Estrutura BOM cadastrada × lista de materiais do desenho**, sem reinventar R11–M5. O plano deverá evoluir neste arquivo com matriz de evidência, decisões dos owners, resultados de datasets e links de entregas, evitando prompts e subtarefas indefinidas.
