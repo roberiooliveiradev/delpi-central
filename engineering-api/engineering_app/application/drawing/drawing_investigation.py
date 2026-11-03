@@ -120,7 +120,7 @@ def _evidence_of(candidate: dict) -> list[dict]:
 
 
 def _check_component_code(
-    occ, plan, table_rows, idents, document_sha
+    occ, plan, table_rows, idents, document_sha, product_code=None
 ) -> dict:
     """I-01 — código do componente nas evidências da tabela/OCR."""
     code = plan["expected_value"]
@@ -193,6 +193,7 @@ def _check_component_code(
         for fs in idents.values()
         for f in fs
         if f.get("text") != code
+        and f.get("text") != product_code
         and _similarity(code, f.get("text") or "") >= 0.85
     ]
     if non_component or elsewhere or similar:
@@ -296,6 +297,167 @@ def _check_relations(occ, oset) -> dict:
     }
 
 
+def _y_band(cells: list[dict], y: float, tol: float = 12.0) -> list[dict]:
+    """Agrupa células na mesma faixa vertical (linha física)."""
+    def _cy(c):
+        box = c.get("bounding_box_px") or []
+        return (box[1] + (box[5] if len(box) > 5 else box[1])) / 2 if box else 0
+    return [c for c in cells if abs(_cy(c) - y) <= tol]
+
+
+def _contextual_search(plan: dict, u: dict) -> dict:
+    """Etapa 2 (R13): procura o código esperado nas células brutas da
+    tabela e tenta re-associação espacial de linha — sem promover."""
+    code = plan["expected_value"]
+    out = {
+        "stage": "CONTEXTUAL_SEARCH",
+        "result": "NO_CANDIDATE_REGION",
+        "candidate_rows": [],
+        "observations": [],
+    }
+    if not code:
+        return out
+    hits = []
+    for r in ((u.get("component_table") or {}).get("rows") or []):
+        for c in r.get("cells") or []:
+            t = (c.get("text") or "").strip()
+            if t == code:
+                hits.append({"row": r, "cell": c, "similarity": 1.0})
+            elif _similarity(code, t) >= 0.85:
+                hits.append({"row": r, "cell": c, "similarity": _similarity(code, t)})
+    if not hits:
+        return out
+    exact = [h for h in hits if h["similarity"] >= 1.0]
+    out["observations"] = [
+        {
+            "observed_raw_value": h["cell"].get("text"),
+            "candidate_similarity": h["similarity"],
+            "bounding_box": h["cell"].get("bounding_box_px"),
+            "coordinate_system": "pixels_pdfium_top_left",
+        }
+        for h in hits[:10]
+    ]
+    if not exact:
+        out["result"] = "SIMILAR_ONLY"
+        out["candidate_rows"] = [
+            {"row": h["row"].get("row"), "reason": "similar_not_equal"}
+            for h in hits
+        ]
+        return out
+    # re-associação espacial: linha física → campos lógicos
+    for h in exact[:4]:
+        band = _y_band(
+            h["row"].get("cells") or [],
+            ((h["cell"].get("bounding_box_px") or [0, 0])[1]),
+        )
+        out["candidate_rows"].append(
+            {
+                "row": h["row"].get("row"),
+                "reason": "code_in_raw_cell",
+                "cells_in_band": len(band),
+            }
+        )
+    out["result"] = (
+        "ROW_ASSOCIATION_CANDIDATE" if len(exact) == 1
+        else "ROW_ASSOCIATION_AMBIGUOUS"
+    )
+    return out
+
+
+def _targeted_recheck(plan: dict, region_box, opts: dict) -> dict:
+    """Etapa 3 (R13): recorte direcionado + OCR localizado via ports —
+    somente quando evidência existente é insuficiente."""
+    hist = {"stage": "TARGETED_RECHECK", "result": "NOT_ATTEMPTED",
+            "observations": []}
+    renderer = opts.get("renderer")
+    ocr = opts.get("ocr")
+    pdf_bytes = opts.get("pdf_bytes")
+    budget = opts.get("budget") or {}
+    state = opts.setdefault("state", {"crops": 0})
+    if not all([renderer, ocr, pdf_bytes, region_box]):
+        hist["result"] = "CAPABILITY_UNAVAILABLE"
+        return hist
+    if state["crops"] >= int(budget.get("max_crops", 8)):
+        hist["result"] = "RESOURCE_LIMIT_REACHED"
+        return hist
+    state["crops"] += 1
+    try:
+        region = renderer.render_region(
+            pdf_bytes,
+            page=int(opts.get("page") or 1),
+            region_px=region_box,
+            reference_dpi=int(opts.get("reference_dpi") or 150),
+            dpi=min(int(budget.get("max_dpi", 300)), 300),
+            margin_px=8,
+        )
+        if region.width * region.height > int(
+            budget.get("max_pixels", 4_000_000)
+        ):
+            hist["result"] = "RESOURCE_LIMIT_REACHED"
+            return hist
+        res = ocr.extract_text(region.image_bytes)
+        code = plan["expected_value"]
+        found = [
+            {
+                "observed_raw_value": t.text,
+                "candidate_similarity": _similarity(code, t.text or ""),
+                "method": "localized_ocr_recheck",
+                "page": region.page,
+            }
+            for t in (res.tokens or [])
+            if t.text and (t.text == code or _similarity(code, t.text) >= 0.85)
+        ]
+        hist["observations"] = found
+        hist["result"] = (
+            "CODE_OBSERVED" if any(
+                f["observed_raw_value"] == code for f in found
+            )
+            else ("SIMILAR_ONLY" if found else "CODE_NOT_FOUND")
+        )
+    except Exception as exc:  # provider/timeout/OOM — estado honesto
+        hist["result"] = "PROVIDER_ERROR"
+        hist["detail"] = type(exc).__name__
+    return hist
+
+
+def identify_balloon_candidates(u: dict) -> list[dict]:
+    """R13 — primeira capacidade genérica de balões: token alfanumérico
+    curto contido em primitiva circular/elíptica. Nunca fabrica balões."""
+    prims = u.get("graphic_primitives") or []
+    circles = [
+        p for p in prims
+        if (p.get("type") or "").lower() in {"circle", "ellipse", "arc"}
+    ]
+    if not circles:
+        return []
+    toks = u.get("_tokens") or u.get("tokens") or []
+    out = []
+    def _inside(tb, cb):
+        return (
+            len(tb) >= 4 and len(cb) >= 4
+            and cb[0] <= tb[0] and cb[2] >= tb[2]
+            and cb[1] <= tb[1] and cb[3] >= tb[3]
+        )
+    for circ in circles:
+        cbox = circ.get("bounding_box_px") or circ.get("box_px") or []
+        for t in toks:
+            txt = (t.get("normalized_text") or t.get("text") or "").strip()
+            tbox = t.get("bounding_box_px") or []
+            if 1 <= len(txt) <= 3 and txt.isalnum() and _inside(tbox, cbox):
+                out.append(
+                    {
+                        "item_label": txt,
+                        "bounding_box_px": cbox,
+                        "token_bounding_box_px": tbox,
+                        "region": t.get("region"),
+                        "identification_method": "primitive_containment",
+                        "uncertainty_reason": "contenção geométrica é "
+                        "candidata — exige verificação visual",
+                    }
+                )
+    return out
+
+
 def execute_investigations(
     oset,
     plans: list[dict],
@@ -303,6 +465,8 @@ def execute_investigations(
     *,
     document_sha: str | None,
     official_source_state: str | None = None,
+    product_code: str | None = None,
+    progressive: dict | None = None,
 ) -> dict[str, Any]:
     """Executor I-01..I-05 sobre o mesmo DrawingObjectSet.
 
@@ -413,7 +577,9 @@ def execute_investigations(
             )
             totals["not_comparable"] += 1
             continue
-        c1 = _check_component_code(occ, plan, table_rows, idents, document_sha)
+        c1 = _check_component_code(
+            occ, plan, table_rows, idents, document_sha, product_code
+        )
         checks.append(c1)
         row_ref = None
         if c1["state"] in {"MATCH_CANDIDATE", "AMBIGUOUS"} and c1.get(
@@ -470,36 +636,111 @@ def execute_investigations(
         else:
             totals["not_checked"] += 1
 
+    # R13 — investigação visual progressiva sobre ocorrências sem
+    # resolução: EXISTING_EVIDENCE → CONTEXTUAL_SEARCH → TARGETED_RECHECK
+    # (ports, budget governado). Histórico de busca ≠ evidência técnica.
+    balloon_candidates: list[dict] = []
+    if progressive:
+        rows_all = (u.get("component_table") or {}).get("rows") or []
+        for res, plan in zip(results, plans):
+            if res["overall_state"] not in {
+                "INCONCLUSIVE", "EXPECTED_COMPONENT_NOT_LOCATED",
+                "AMBIGUOUS",
+            }:
+                continue
+            hist = [
+                {"stage": "EXISTING_EVIDENCE",
+                 "result": res["overall_state"]}
+            ]
+            ctx = _contextual_search(plan, u)
+            hist.append(ctx)
+            recheck = None
+            if ctx["result"] != "NO_CANDIDATE_REGION":
+                box = None
+                if ctx["candidate_rows"]:
+                    rn = ctx["candidate_rows"][0].get("row")
+                    row = next(
+                        (r for r in rows_all if r.get("row") == rn), None
+                    )
+                    if row:
+                        boxes = [
+                            c["bounding_box_px"]
+                            for c in row.get("cells") or []
+                            if c.get("bounding_box_px")
+                        ]
+                        if boxes:
+                            box = [
+                                min(b[0] for b in boxes),
+                                min(b[1] for b in boxes),
+                                max(b[2] for b in boxes),
+                                max(b[5] if len(b) > 5 else b[3] for b in boxes),
+                            ]
+                recheck = _targeted_recheck(plan, box, progressive)
+                hist.append(recheck)
+            res["search_history"] = hist
+            if recheck and recheck.get("result") == "CODE_OBSERVED":
+                res["overall_state"] = "MATCH_CANDIDATE"
+            elif ctx["result"] == "ROW_ASSOCIATION_CANDIDATE":
+                res["overall_state"] = "INCONCLUSIVE"
+        balloon_candidates = identify_balloon_candidates(u)
+
     # I-05 — reconciliação independente: desenho → estrutura oficial.
+    # R13-01: o identificador do produto raiz NÃO é componente extra.
+    root_ids = {str(product_code or "").strip()} - {""}
     unmatched = []
+    root_identifiers = []
     for c in table_rows:
         code = c["code"]
-        if code and code not in bom_codes and is_component_code(code):
-            unmatched.append(
+        if not code or code in bom_codes:
+            continue
+        if code in root_ids or not is_component_code(code):
+            root_identifiers.append(
                 {
-                    "candidate_type": "drawing_table_item",
+                    "identifier_type": "ROOT_PRODUCT_IDENTIFIER"
+                    if code in root_ids
+                    else "DRAWING_COMPONENT_CANDIDATE",
                     "observed_raw_value": code,
-                    "state": "UNMATCHED_DRAWING_CANDIDATE",
-                    "reason": "sem correspondente oficial — não é prova "
-                    "de componente extra nem erro de BOM",
+                    "state": "IDENTIFIED_NOT_BOM_COMPONENT"
+                    if code in root_ids
+                    else "SKIPPED",
                 }
             )
+            continue
+        unmatched.append(
+            {
+                "candidate_type": "drawing_table_item",
+                "observed_raw_value": code,
+                "state": "UNMATCHED_DRAWING_CANDIDATE",
+                "reason": "sem correspondente oficial — não é prova "
+                "de componente extra nem erro de BOM",
+            }
+        )
     for region, fs in idents.items():
         if region in _NON_COMPONENT_REGIONS:
             continue
         for f in fs:
             t = f.get("text")
-            if t and t not in bom_codes:
-                unmatched.append(
+            if not t or t in bom_codes:
+                continue
+            if t in root_ids:
+                root_identifiers.append(
                     {
-                        "candidate_type": "identifier",
+                        "identifier_type": "ROOT_PRODUCT_IDENTIFIER",
                         "observed_raw_value": t,
                         "region": region,
-                        "state": "UNMATCHED_DRAWING_CANDIDATE",
-                        "reason": "identificador sem correspondente "
-                        "oficial",
+                        "state": "IDENTIFIED_NOT_BOM_COMPONENT",
                     }
                 )
+                continue
+            unmatched.append(
+                {
+                    "candidate_type": "identifier",
+                    "observed_raw_value": t,
+                    "region": region,
+                    "state": "UNMATCHED_DRAWING_CANDIDATE",
+                    "reason": "identificador sem correspondente oficial",
+                }
+            )
 
     return {
         "schema_version": INVESTIGATION_SCHEMA,
@@ -516,6 +757,8 @@ def execute_investigations(
         "plan": plans,
         "occurrence_results": results,
         "unmatched_drawing_candidates": unmatched,
+        "root_product_identifiers": root_identifiers,
+        "balloon_candidates": balloon_candidates,
         "summary": {
             **totals,
             "unmatched_drawing_candidates": len(unmatched),

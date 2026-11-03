@@ -744,6 +744,16 @@ async def _analyze_product_drawing(
             return _err(
                 str(exc), status_code=exc.status_code, code=exc.code
             )
+    # R13 — investigação progressiva: busca contextual sempre ativa;
+    # recorte direcionado depende de ports disponíveis (honesto quando
+    # CAPABILITY_UNAVAILABLE).
+    progressive = (
+        {"budget": {"max_crops": 8, "max_attempts_per_region": 2,
+                    "max_dpi": 300, "max_pixels": 4_000_000}}
+        if params.get("progressive_investigation")
+        or params.get("compose_understanding")
+        else None
+    )
     try:
         report = await analyze_product_drawing(
             code=code,
@@ -752,6 +762,7 @@ async def _analyze_product_drawing(
             visual_observations=observations or None,
             scope=scope,
             understanding=understanding,
+            progressive=progressive,
         )
     except DrawingAnalysisError as exc:
         return _err(
@@ -1270,6 +1281,9 @@ async def _analyze_drawing_understanding(
             if not structure
             else ("EMPTY_CONFIRMED" if not _bom_flat else "AVAILABLE")
         ),
+        product_code=code,
+        progressive={"budget": {"max_crops": 8, "max_dpi": 300,
+                                "max_pixels": 4_000_000}},
         include_investigations=True,
     )
     understanding["report"]["object_profiles"] = understanding[

@@ -127,6 +127,7 @@ async def analyze_product_drawing(
     scope: list[str] | None = None,
     extractor=None,
     understanding: dict[str, Any] | None = None,
+    progressive: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run the full drawing×product×BOM analysis for `code`."""
     # --- official facts (delegated identity) -------------------------------
@@ -965,6 +966,8 @@ async def analyze_product_drawing(
             if structure_error is not None
             else ("EMPTY_CONFIRMED" if not bom_items else "AVAILABLE")
         ),
+        product_code=official_code,
+        progressive=progressive,
         include_investigations=True,
     )
     payload["guided_investigations"] = payload["object_profiles"].get(

@@ -272,6 +272,95 @@ def test_unavailable_source_never_empty_bom():
     assert gi["unmatched_drawing_candidates"] == []
 
 
+# ---------- R13 — investigação progressiva + correções --------------------
+
+
+def test_root_product_identifier_not_component_r13_01():
+    """90264302 no desenho ≠ componente extra — tipo próprio."""
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=_u(idents=[_ident("90264302", "drawing_area"),
+                                 _ident("99999999", "drawing_area")]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        include_investigations=True,
+    )
+    gi = out["guided_investigations"]
+    roots = [x["observed_raw_value"] for x in
+             gi["root_product_identifiers"]]
+    assert "90264302" in roots
+    un = [x["observed_raw_value"] for x in
+          gi["unmatched_drawing_candidates"]]
+    assert "90264302" not in un and "99999999" in un
+
+
+def test_relation_carries_spatial_evidence_r13_02():
+    """REPRESENTED_BY preserva página/bbox da observação, não só o código."""
+    out = _build(rows=[_row(0, "10020033")])
+    rel = [r for r in out["relations"]
+           if r["relation_type"] == "REPRESENTED_BY"][0]
+    kinds = {e["source_kind"] for e in rel["evidence_refs"]}
+    assert "code_match" in kinds
+    assert any(
+        e.get("bounding_box") or e.get("coordinate_system")
+        for e in rel["evidence_refs"]
+    )
+
+
+def test_progressive_contextual_search_recovers_raw_cell_code():
+    """Código exato em célula bruta de linha ambígua → contextual search."""
+    row = _row(0, "10020033")
+    row["fields"] = {}  # associação perdida — linha ambígua
+    row["association_status"] = "UNRESOLVED"
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=_u(rows=[row]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        progressive={"budget": {"max_crops": 2}},
+        include_investigations=True,
+    )
+    res = {r["occurrence_id"]: r for r in
+           out["guided_investigations"]["occurrence_results"]}
+    hist = res["O0002"].get("search_history") or []
+    stages = [h["stage"] for h in hist]
+    assert "EXISTING_EVIDENCE" in stages and "CONTEXTUAL_SEARCH" in stages
+    ctx = hist[1]
+    assert ctx["result"] == "ROW_ASSOCIATION_CANDIDATE"
+
+
+def test_progressive_recheck_capability_unavailable_honest():
+    """Sem ports/pdf, recorte responde CAPABILITY_UNAVAILABLE — não inventa."""
+    row = _row(0, "10020033")
+    row["fields"] = {}
+    row["association_status"] = "UNRESOLVED"
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=_u(rows=[row]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        progressive={"budget": {"max_crops": 2}},
+        include_investigations=True,
+    )
+    res = {r["occurrence_id"]: r for r in
+           out["guided_investigations"]["occurrence_results"]}
+    recheck = [h for h in res["O0002"].get("search_history", [])
+               if h["stage"] == "TARGETED_RECHECK"][0]
+    assert recheck["result"] == "CAPABILITY_UNAVAILABLE"
+
+
+def test_balloons_never_fabricated_without_primitives():
+    out = _build(rows=[_row(0, "10020033")])
+    out2 = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=_u(rows=[_row(0, "10020033")]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        product_code="90264302", progressive={"budget": {}},
+        include_investigations=True,
+    )
+    assert out2["guided_investigations"]["balloon_candidates"] == []
+
+
 def test_empty_confirmed_bom_reconciles():
     """BOM oficialmente vazia pode reconciliar: todo visual é unmatched."""
     out = build_object_profiles(

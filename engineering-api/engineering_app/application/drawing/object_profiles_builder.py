@@ -67,6 +67,8 @@ def build_object_profiles(
     official_source_ref: str | None = None,
     include_investigations: bool = False,
     official_source_state: str | None = None,
+    product_code: str | None = None,
+    progressive: dict | None = None,
 ) -> dict:
     """Monta o conjunto de perfis (oficial≠observado) + relações candidatas.
 
@@ -146,18 +148,21 @@ def build_object_profiles(
             continue
         for occ in occs:
             if occ.attributes.get("component_code") == code:
+                # R13-02 — proveniência espacial completa: reutiliza as
+                # evidências reais da observação (página/bbox/cell/coord).
+                _ev = [
+                    DrawingObjectRef(
+                        source_kind="code_match",
+                        document_sha=document_sha,
+                        raw_value=code,
+                    )
+                ] + list(it.evidence_refs)
                 oset.add_relation(
                     DrawingRelation(
                         source_object_id=occ.object_id,
                         target_object_id=it.object_id,
                         relation_type=RelationType.REPRESENTED_BY,
-                        evidence_refs=[
-                            DrawingObjectRef(
-                                source_kind="code_match",
-                                document_sha=document_sha,
-                                raw_value=code,
-                            )
-                        ],
+                        evidence_refs=_ev,
                         verification_state=VerificationState.NOT_CHECKED,
                         uncertainty_reason=(
                             "code_match é candidato — exige revisão técnica, "
@@ -198,5 +203,7 @@ def build_object_profiles(
             understanding,
             document_sha=document_sha,
             official_source_state=official_source_state,
+            product_code=product_code,
+            progressive=progressive,
         )
     return out
