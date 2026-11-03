@@ -346,3 +346,46 @@ Todos os totais abaixo foram contados da **árvore devolvida pela EVA** (`items`
 | DEC-VAL-009 | 2026-11-03 | Comparação deve preservar ocorrência/hierarquia, completude e vigência; regras de apresentação/quantidade são autoridade do domínio | Código API DELPI Python e Engineering API; retornos de estrutura | Propor políticas owner, GT e casos de comparação |
 | DEC-VAL-010 | 2026-11-03 | Estudo dos desenhos novos não concluído; OCR/análise integrada com erro interno; PDF metadata 7/7 disponível | EVA `product.drawing` e tentativas `product.drawing_analysis` | Recuperar evidência visual via fluxo legítimo antes de decidir layout, sem reabrir implementação |
 
+
+## 9. Estudo E1 — Observações visuais reais das sete topologias (2026-11-03)
+
+**Método:** `EVA.analyze(product.drawing_analysis, compose_understanding=true)` executado em produção, autorizado, sobre os PDFs oficiais dos **mesmos sete produtos** inventariados na §8. A EVA usou PDFium/PaddleOCR/SLANet e mapeamento `DRAWING_TABLE_ITEM`. A leitura foi por saída estruturada de ferramentas, **sem acesso humano ao raster PDF neste estudo**. Tudo aqui é observação candidata, não auditoria de desenho nem ground truth; número de linhas extraídas não equivale ao número efetivo de itens impressos.
+
+### 9.1 Matriz BOM oficial × observação no desenho
+
+| Produto | Topologia oficial (N1 / total ocorrências) | PDF SHA-256 da leitura | DRAWING_TABLE_ITEM candidatos | Achado visual, com exemplo de texto bruto | Estado de comparação |
+|---|---|---|---:|---|---|
+| `90264302` | 2 PI / 6 | `f33447b271a3518643559582d79cf54527b85778537cfb1e20a5ccf5d989f0ef` | 4 | rótulos `a 1 10020033`, `b 1 10080106`; texto bruto também contém `50226113`, `50226114`, descrição de cabo/terminal. Tabela agrupada por intermediário **hipótese**, não regra comprovada | 0 candidatos finais, 6 ambíguas; E1 INCONCLUSIVE |
+| `90264161` | MP + PA / 8 | `8d9fe28a19cae334abd6eaa3b0fb13059aecad715672b0dfd6aaf10462b85195` | 4 | códigos `90350410` e `50090001` extraídos exatamente como candidatos; carimbo/código raiz mistura-se à região identificada | 2 code-match candidatos / 8 ocorrências, 6 ambíguas; E1 INCONCLUSIVE |
+| `90263520` | 4 PI / 18 | `08bf68690401438ab09c0e7ffcd1126bf98b238de776bc680db587704e4fb200` | 6 | uma linha OCR contém `a1 a2 a3 1 1 1 10400040 10080063 10090014`; outras combinam vários `aN` e MP; PI `50230893`, `50232467` aparecem como candidatos. **Linha OCR ≠ item lógico.** | 2 candidatos / 18, 16 ambíguas; E1 INCONCLUSIVE |
+| `90261606` | 3 PI / 12 | `1c1f1412fb6cac22e8e44893dc27a39f45be806c6819bc12856ea4adb3580cd1` | 4 | tokens de etiquetas `10110009`, `10110084`, `10110098`, misturados com cabo `10400078` e terminal `10080147`; associação item↔etiqueta e qty **não resolvida** | 4 candidatos / 12, 8 ambíguas; E1 INCONCLUSIVE |
+| `90263572` | 16 MP + 10 PI N1 / 56 | `9021fce05c608655e538f67cdaac08c7484ebbe16a8888e83fbeec9ecaa28d3e` | **0** | 13 candidatos dimensionais, mas **nenhuma linha estruturada criada pelo parser**; não comprova inexistência de tabela no PDF | 0 candidatos, 56 NOT_LOCATED; E1 INCONCLUSIVE |
+| `90264178` | 6 MP + 10 PI N1 / 40 | `1a78693bd335371f192daceecf7f14f91637443bf03045f0aebec33bd7332fa8` | 13 | observados códigos PI `50215408`, `50233845`, `50233847`, `50233848`; vários registros combinam códigos em uma linha, ex. `50215413 50215412`; raiz `90264178` pode aparecer em seção confundida com tabela | 4 candidatos / 40, 36 ambíguas; E1 INCONCLUSIVE |
+| `90480120` | 10 MP N1 / 10 | `9b64ae2095fa551e6c3b12fa1f6d232646725b2ab9c31eb489abedd972555cd8` | 4 | registros `UNRESOLVED` com texto bruto `0`, `1`, `2`, `3` sem associação segura com código/descrição/quantidade | 0 candidatos, 10 ambíguas; E1 INCONCLUSIVE |
+
+**Precauções:** `match_candidates` é candidatura de identificação, não estrutura validada. Nenhum dos 7 desenhos passou VAL-01. Em `90263572`, `0 DRAWING_TABLE_ITEM` significa falha/insuficiência da extração tipada, jamais estrutura sem itens. Em `90264178`, código do produto raiz não deve ser promovido a componente. `quantity_raw` da BOM não é `assembly_quantity` nem cota; mesmo tokens `1` visíveis não comprovam quantidade da linha até associação de célula.
+
+### 9.2 Padrões de representação candidatos — ainda a confirmar no raster e com Engenharia
+
+1. **Sublistas/grupos por PI:** `90264302` e `90263520` sugerem que uma tabela pode associar um PI a linhas internas com itens como `a1`, `a2`, `a3`; não supor que cada tabela represente apenas N1.
+2. **Lista selecionada de componentes de níveis mistos:** `90264161` observa PA subordinado e PI interno, mas não confirma se todas MPs diretas e internas precisam aparecer.
+3. **Lista de códigos PI com MP do primeiro nível:** `90264178` mostra PI presentes e MP sem associação segura; não presumir omissão de MP.
+4. **Etiquetas diferentes por intermediário:** `90261606` é caso de teste obrigatório para qty/código corretos por ocorrência, preservando os grupos.
+5. **Tabelas grandes ou formatos heterogêneos:** `90263572` demonstra limitação grave do parser em caso de 56 ocorrências oficiais; `90480120` demonstra extração insuficiente mesmo numa BOM N1 simples.
+
+**Hipótese de design para estudo:** tratar a *unidade de análise* como `documento/folha → tabela/região → grupo/submontagem → linha lógica → item/código/descrição/quantidade → vínculo candidato à ocorrência (caminho e nível)`. O parser atual combina várias células em uma mesma linha OCR; segmentação espacial e semântica são requisitos para VAL-01. **Não criar um novo modelo agora**: verificar como aproveitar as células SLANet, tokens brutos, `DrawingObjectSet`, investigações e mapper existentes.
+
+### 9.3 Riscos evidenciados pelos dados
+
+- **Parsing de linhas físicas vs linhas lógicas:** `90263520` agrupa vários códigos em uma única linha; `90261606` embaralha código de etiqueta, cabo e terminal; a priorização é acertar fronteiras e referências, antes de comparar quantidades.
+- **Separar cabeçalho/carimbo/raiz da lista de componentes:** `90264161` e `90264178` têm evidência do código raiz na região rotulada como `component_table`.
+- **Multiplicidade e hierarquia:** mesmos códigos MP sob PI diferentes; correspondência por código sem contexto é insuficiente.
+- **Reconhecimento de quantidades e descrições:** `assembly_quantity` retornou null nos objetos apresentados, mesmo quando aparecem tokens `1`; não validar quantidade ainda.
+- **Completude e governança:** validação global exige BOM completa (limites/paginação), política de quais níveis devem constar, vigência/identidade do PDF, GT por família/layout e thresholds aprovados. Histórico de NC não é prova do PDF atual.
+
+### 9.4 Conclusão e decisão de continuidade
+
+**DEC-VAL-011 (2026-11-03):** as sete estruturas e as sete saídas visuais foram cruzadas; encontradas pelo menos quatro características de apresentação distintas **candidatas** (sublistas por PI, lista parcial/mista, MP direta, agrupamento denso), mas **nenhuma política universal de representação foi comprovada**. Necessidade funcional nº 1 de VAL-01: **reconstruir linha lógica e associação de campos de tabela com evidência independente**, mantendo hierarquia de grupo e nunca promovendo código sozinho a estrutura validada.
+
+**Próximo estudo, ainda antes de prompt:** inspecionar visualmente o raster/PDF original e/ou recuperar células SLANet por região nos casos `90264302`, `90263520`, `90264178`, `90261606`, `90263572`, `90480120`; identificar colunas/linhas e agrupamentos realmente impressos; versionar exemplos anotados por família, perguntar ao owner quais níveis são obrigatórios e como as quantidades se relacionam. **Estado:** `BOM_OFFICIAL=PROVEN`; `DRAWING_OCR_CANDIDATES=PROVEN`; `PRINTED_LAYOUT_RULE=TO_INVENTORY`; `STRUCTURE_VALIDATION=INCONCLUSIVE`; `E1_IMPLEMENTATION=NOT_STARTED`. E2–E7 permanecem congeladas.
+
