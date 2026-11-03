@@ -85,6 +85,54 @@ export function firstActiveFeedback(
   );
 }
 
+/** Mesma normalização do backend / PCP: C2_OP pode vir "030" vs "30". */
+export function normalizeFeedbackOperationCode(
+  code: string | null | undefined,
+): string {
+  const cleaned = (code ?? "").trim().replace(/^0+/, "");
+  return cleaned || "0";
+}
+
+/** Identidade funcional do impedimento na fila: OP + operação (sem CT). */
+export function operatorFeedbackOperationKey(
+  productionOrder: string | null | undefined,
+  operationCode: string | null | undefined,
+): string {
+  return `${(productionOrder ?? "").trim().toUpperCase()}::${normalizeFeedbackOperationCode(operationCode)}`;
+}
+
+/** 1 GET da fila → mapa OP+operação → impedimento ativo (sem N+1). */
+export function indexFeedbackByOperation(
+  items: readonly PublicOperatorFeedback[],
+): Map<string, PublicOperatorFeedback> {
+  const map = new Map<string, PublicOperatorFeedback>();
+  for (const item of items) {
+    map.set(
+      operatorFeedbackOperationKey(item.productionOrder, item.operationCode),
+      item,
+    );
+  }
+  return map;
+}
+
+export function feedbackForOperationKey(
+  map: ReadonlyMap<string, PublicOperatorFeedback>,
+  productionOrder: string,
+  operationCode: string,
+): PublicOperatorFeedback | null {
+  return (
+    map.get(operatorFeedbackOperationKey(productionOrder, operationCode)) ?? null
+  );
+}
+
+/** Tag curta na listagem do cockpit — open vs em tratativa. */
+export function queueFeedbackTagLabel(
+  status: string | null | undefined,
+): string {
+  if (status === "acknowledged") return "Em tratativa";
+  return "Impedimento";
+}
+
 /** O hint realtime só interessa se for exatamente da OP/operação aberta. */
 export function isFeedbackEventForOperation(
   event: MachineLoadRealtimeEvent | null | undefined,

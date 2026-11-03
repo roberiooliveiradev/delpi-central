@@ -11,13 +11,17 @@ import {
   DEFAULT_FEEDBACK_REASON,
   DEFAULT_FEEDBACK_TYPE,
   MATERIAL_SELECTION_REQUIRED,
+  feedbackForOperationKey,
   feedbackReasonLabel,
   feedbackStatusPresentation,
   feedbackSubmitErrorMessage,
   feedbackTypeLabel,
   firstActiveFeedback,
+  indexFeedbackByOperation,
   isFeedbackEventForOperation,
   materialStatusLabel,
+  normalizeFeedbackOperationCode,
+  queueFeedbackTagLabel,
   resolveFeedbackPanelState,
 } from "./operatorFeedback.ts";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime.ts";
@@ -40,6 +44,25 @@ function feedback(partial: Partial<PublicOperatorFeedback> = {}): PublicOperator
 }
 
 // --- presentation ------------------------------------------------------------
+
+describe("queue feedback index", () => {
+  it("indexes by OP+operation ignoring leading zeros and CT", () => {
+    const map = indexFeedbackByOperation([
+      feedback({ operationCode: "03", reportedWorkCenter: "CT-63" }),
+    ]);
+    assert.equal(
+      feedbackForOperationKey(map, "24640401002", "3")?.id,
+      "f-1",
+    );
+    assert.equal(feedbackForOperationKey(map, "24640401002", "99"), null);
+  });
+
+  it("normalizes operation codes and short queue tags", () => {
+    assert.equal(normalizeFeedbackOperationCode("030"), "30");
+    assert.equal(queueFeedbackTagLabel("open"), "Impedimento");
+    assert.equal(queueFeedbackTagLabel("acknowledged"), "Em tratativa");
+  });
+});
 
 describe("operator feedback presentation", () => {
   it("maps open to PCP informado", () => {

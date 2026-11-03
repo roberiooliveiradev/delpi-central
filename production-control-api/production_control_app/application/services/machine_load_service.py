@@ -575,6 +575,38 @@ class MachineLoadService:
             is not None
         )
 
+    def public_queue_operation_keys(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+    ) -> set[tuple[str, str]]:
+        """Chaves (OP, operação) da fila PUBLISHED do posto — sem enrich live.
+
+        Usado pelo cockpit para cruzar impedimentos ativos com a listagem
+        sem N+1 e sem filtrar pelo reported_work_center histórico.
+        """
+        code = self._branch_access.assert_valid_branch(branch)
+        center = str(work_center or "").strip()
+        if not center:
+            return set()
+        center_key = center.upper()
+        row = self._get_publication(branch=code)
+        payload = decode_snapshot_payload(row)
+        operations = visible_operations(
+            payload_operations(payload), withdrawn_marks(payload)
+        )
+        keys: set[tuple[str, str]] = set()
+        for item in operations:
+            item_wc = str(item.get("work_center") or "").strip().upper()
+            if item_wc != center_key:
+                continue
+            order = str(item.get("production_order") or "").strip().upper()
+            operation = str(item.get("operation_code") or "").strip().lstrip("0") or "0"
+            if order:
+                keys.add((order, operation))
+        return keys
+
     def public_operation_balance(
         self,
         *,

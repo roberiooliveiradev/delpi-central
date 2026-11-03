@@ -92,3 +92,31 @@ def list_active_operator_feedbacks(
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)
     return ok(data)
+
+
+@router.get("/{token}/operator-feedbacks/queue-active")
+def list_queue_active_operator_feedbacks(
+    token: str,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    work_center: str = Query(
+        ...,
+        alias="workCenter",
+        description="Centro de trabalho cuja fila publicada será cruzada",
+    ),
+):
+    """Impedimentos ativos das OPs da fila do posto — leitura anônima do cockpit.
+
+    Sem sessão: só sinaliza na listagem. Detalhe/criação continuam exigindo
+    bench session. Escopo limitado às OPs publicadas neste CT.
+    """
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    try:
+        data = build_public_operator_feedback_service().list_active_for_queue(
+            branch=branch,
+            work_center=work_center,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)

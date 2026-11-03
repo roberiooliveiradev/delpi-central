@@ -185,6 +185,45 @@ class PublicOperatorFeedbackService:
             ]
         }
 
+    def list_active_for_queue(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+    ) -> dict[str, Any]:
+        """Impedimentos ativos das OPs publicadas neste posto (leitura anônima).
+
+        Cruza a inbox ativa da filial com as chaves da fila PUBLISHED do CT —
+        sem sessão e sem filtrar por reported_work_center, para o operador
+        ver o sinal na listagem mesmo após transferência entre postos.
+        """
+        center = str(work_center or "").strip()
+        if not center:
+            return {"items": []}
+        code = str(branch or "").strip()
+        queue_keys = self._machine_load.public_queue_operation_keys(
+            branch=code,
+            work_center=center,
+        )
+        if not queue_keys:
+            return {"items": []}
+        rows = self._feedbacks.list_active(branch=code)
+        matched: list[dict[str, Any]] = []
+        for row in rows:
+            order = str(row.get("production_order") or "").strip().upper()
+            operation = (
+                str(row.get("operation_code") or "").strip().lstrip("0") or "0"
+            )
+            if (order, operation) in queue_keys:
+                matched.append(row)
+        grouped = self._materials_for(matched)
+        return {
+            "items": [
+                _to_public_item(row, grouped.get(row.get("id"), []))
+                for row in matched
+            ]
+        }
+
     def _resolve_materials(
         self,
         *,

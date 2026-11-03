@@ -37,6 +37,7 @@
   --pcp-surface: var(--pub-card-bg, #ffffff);
   --pcp-border: var(--pub-card-border, #e4e7ec);
   --pcp-running: #0f7b4a;
+  --pcp-attention: #b54708;
   --pcp-danger: var(--pub-danger, #b42318);
   --pcp-shell: min(1360px, 100%);
   --pcp-gutter: clamp(12px, 2vw, 24px);
@@ -685,6 +686,10 @@
 }
 
 .pcp-pub__queue-seq {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   white-space: nowrap;
 }
 
@@ -698,7 +703,6 @@
 
 .pcp-pub__queue-seq-tag {
   display: inline-block;
-  margin-top: 4px;
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 0.7rem;
@@ -712,6 +716,26 @@
 .pcp-pub__queue-seq-tag--running {
   color: var(--pcp-running);
   background: color-mix(in srgb, var(--pcp-running) 16%, transparent);
+}
+
+.pcp-pub__queue-row--feedback-open {
+  background: color-mix(in srgb, var(--pcp-attention) 10%, var(--pcp-surface));
+  box-shadow: inset 3px 0 0 var(--pcp-attention);
+}
+
+.pcp-pub__queue-row--feedback-ack {
+  background: color-mix(in srgb, var(--pcp-accent) 8%, var(--pcp-surface));
+  box-shadow: inset 3px 0 0 var(--pcp-accent);
+}
+
+.pcp-pub__queue-seq-tag--feedback-open {
+  color: var(--pcp-attention);
+  background: color-mix(in srgb, var(--pcp-attention) 16%, transparent);
+}
+
+.pcp-pub__queue-seq-tag--feedback-ack {
+  color: var(--pcp-accent);
+  background: color-mix(in srgb, var(--pcp-accent) 14%, transparent);
 }
 
 .pcp-pub__queue-op,

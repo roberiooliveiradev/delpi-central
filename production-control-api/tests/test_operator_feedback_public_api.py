@@ -60,13 +60,32 @@ def _session(**overrides: Any) -> dict[str, Any]:
 class FakeMachineLoad:
     """Só o lookup da PUBLISHED — qualquer outro método falha no teste."""
 
-    def __init__(self, context: dict[str, Any] | None) -> None:
+    def __init__(
+        self,
+        context: dict[str, Any] | None,
+        *,
+        queue_keys: set[tuple[str, str]] | None = None,
+    ) -> None:
         self.context = context
         self.calls: list[dict[str, Any]] = []
+        self.queue_keys = queue_keys
+        self.queue_calls: list[dict[str, Any]] = []
 
     def public_operation_feedback_context(self, **kwargs: Any):
         self.calls.append(kwargs)
         return self.context
+
+    def public_queue_operation_keys(self, **kwargs: Any) -> set[tuple[str, str]]:
+        self.queue_calls.append(kwargs)
+        if self.queue_keys is not None:
+            return set(self.queue_keys)
+        if self.context is None:
+            return set()
+        order = str(self.context.get("production_order") or "").strip().upper()
+        operation = (
+            str(self.context.get("operation_code") or "").strip().lstrip("0") or "0"
+        )
+        return {(order, operation)} if order else set()
 
 
 def _context(**overrides: Any) -> dict[str, Any]:
@@ -450,6 +469,59 @@ def test_list_active_follows_the_operation_not_the_reported_center() -> None:
     assert data["items"][0]["reportedWorkCenter"] == "CT-63"
 
 
+def test_list_active_for_queue_matches_published_keys_only() -> None:
+    """Sinalização da fila: só OPs publicadas no posto; sem sessão."""
+    svc, parts = _service()
+    parts["machine"].queue_keys = {("24640401002", "3")}
+    in_queue = parts["repo"].create(
+        branch="01",
+        production_order="24640401002",
+        operation_code="03",
+        reported_work_center="CT-99",
+        feedback_type="cannot_produce",
+        reason_code="missing_material",
+        operator_code="001234",
+        operator_name="Maria Silva",
+    )
+    parts["repo"].create(
+        branch="01",
+        production_order="999",
+        operation_code="01",
+        reported_work_center="CT-02",
+        feedback_type="cannot_produce",
+        reason_code="missing_material",
+        operator_code="001234",
+        operator_name="Maria Silva",
+    )
+    data = svc.list_active_for_queue(branch="01", work_center="CT-02")
+    assert [item["id"] for item in data["items"]] == [in_queue["id"]]
+    assert data["items"][0]["status"] == "open"
+
+
+def test_list_active_for_queue_empty_without_work_center() -> None:
+    svc, _ = _service()
+    assert svc.list_active_for_queue(branch="01", work_center="") == {"items": []}
+
+
+def test_list_active_for_queue_omits_resolved() -> None:
+    svc, parts = _service()
+    parts["machine"].queue_keys = {("24640401002", "3")}
+    item = parts["repo"].create(
+        branch="01",
+        production_order="24640401002",
+        operation_code="03",
+        reported_work_center="CT-02",
+        feedback_type="cannot_produce",
+        reason_code="missing_material",
+        operator_code="001234",
+        operator_name="Maria Silva",
+    )
+    parts["repo"].rows[item["id"]]["status"] = "resolved"
+    assert svc.list_active_for_queue(branch="01", work_center="CT-02") == {
+        "items": []
+    }
+
+
 # --- contrato HTTP ----------------------------------------------------------------
 
 
@@ -584,3 +656,19 @@ def test_http_list_requires_session() -> None:
         "?productionOrder=24640401002&operationCode=03",
     )
     assert resp.status_code == 401
+
+
+def test_http_queue_active_endpoint_no_session() -> None:
+    svc, parts = _service()
+    parts["machine"].queue_keys = {("24640401002", "3")}
+    api = _app(svc)
+    _post(api)
+    resp = api.get(
+        "/public/machine-load/valid-token/operator-feedbacks/queue-active"
+        "?branch=01&workCenter=CT-02",
+    )
+    assert resp.status_code == 200
+    items = resp.json()["data"]["items"]
+    assert len(items) == 1
+    assert items[0]["productionOrder"] == "24640401002"
+    assert items[0]["status"] == "open"

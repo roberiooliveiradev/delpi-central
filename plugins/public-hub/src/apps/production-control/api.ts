@@ -1411,6 +1411,35 @@ export async function fetchActiveOperatorFeedbacks(
 }
 
 /**
+ * Impedimentos ativos das OPs da fila publicada do posto — leitura anônima
+ * para sinalizar a listagem do cockpit (sem bench session).
+ */
+export async function fetchQueueActiveOperatorFeedbacks(
+  token: string,
+  branch: string,
+  workCenter: string,
+): Promise<PublicOperatorFeedback[]> {
+  const params = new URLSearchParams({
+    branch,
+    workCenter,
+  });
+  const path =
+    API_BASE +
+    "/public/machine-load/" +
+    encodeURIComponent(token) +
+    "/operator-feedbacks/queue-active?" +
+    params;
+  const response = await fetch(path, {
+    headers: { Accept: "application/json" },
+  });
+  const data = await readEnvelope<{ items: PublicOperatorFeedback[] }>(
+    response,
+    "Impedimentos da fila indisponíveis.",
+  );
+  return data.items ?? [];
+}
+
+/**
  * Registra impedimento ao PCP. O corpo vai só com OP/operação/tipo/motivo/nota:
  * identidade, filial, posto e contexto da OP são resolvidos no backend (C2).
  */
