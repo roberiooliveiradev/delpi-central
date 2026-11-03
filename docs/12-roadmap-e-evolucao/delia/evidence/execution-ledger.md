@@ -1889,3 +1889,17 @@ custo: +1 dependencia pydantic-ai, ~+15s latency por geracao
 (Agent overhead), sem writes, sem segundo planner, live intacto.
 RESIDUAL: owner davi strict-lexical-match (plural) — classificado
 owner-side; pydantic nao resolve normalizacao lexical do owner.
+
+## PROMOTION — checkpoint stage-1 (SHA 7e38f43d98)
+
+DEPLOY OK: srv-api pull+rebuild -> delpi-delia-api healthy,
+  image nova sha256:eebdb3c4 (rollback target sha256:428dbb2c).
+  pydantic-ai 2.50.0 na imagem. flags live/llm/live (defaults seguros).
+  volume delia_catalog_data -> /data/delia montado.
+BLOQUEIO catalog sync: MCPs exigem JWT de usuario real p/ token-exchange.
+  client_credentials delia-api=401, delpi-core-admin=token OK mas MCP
+  rejeita + exchange 403; password grants=400; internal svc token=opaco.
+  Keycloak admin API acessivel (lista users realm delpi).
+PROXIMO: impersonate usuario valido via admin API -> bind subject ->
+  /tmp/prod_sync.py --apply (script ja no host + container).
+STAGE2 pendente: DELIA_ARGGEN_ENGINE=pydantic_ai vs kimi-k3 (OpenRouter).
