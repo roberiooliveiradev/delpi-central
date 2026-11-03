@@ -338,3 +338,9 @@ Detalhes do contrato backend: [README da API](../../../tv-dashboard-api/README.m
 **Evidência:** execução reportou 12 testes no adaptador e suites correlatas verdes, revisão do código no commit e **confirmação posterior do usuário de que a seleção de branco foi corrigida em produção**. Classificação: `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE`; `CONTRACT_IMPACT=NONE`.
 
 **Escopo do encerramento:** somente cor sólida explícita de ícone. Os conflitos HTTP 409, coordenação entre abas, escritores MCP e testes adversariais multi-cliente permanecem **independentes**; não são considerados resolvidos por este registro. O histórico anterior de edição concorrente neste README é contextual e não deve ser interpretado como encerramento de todos os riscos.
+
+---
+
+## Evolução proposta — KPI responsivo por proporções (2026-11-03)
+
+A proposta de design validada conceitualmente inclui variantes Hero/Standard/Meta/Compacto, ícone visualmente maior, valor dominante e unidade formatada **no valor** (não no título), tamanho proporcional à geometria do card, edição manual preservada e validação por pixels reais na VISTA. **Status: TARGET / PLANNED**. Ver [wireframes, owners, contratos-alvo e aceite do KPI proporcional](./KPI-PROPORTIONAL-VISUAL-TEMPLATE-VISTA.md), complementar ao [PLAYBOOK-KPI-CARD](./PLAYBOOK-KPI-CARD.md).
