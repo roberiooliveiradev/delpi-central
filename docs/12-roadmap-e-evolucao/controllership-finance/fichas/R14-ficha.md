@@ -43,3 +43,12 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Evidências: doc 85 §13 (`BLOQUEADO`); doc 118 §6.
 - Pendências: inventário com o owner; definição de entregável.
 - Referências: doc 85 §13; doc 118 §6.
+
+## Perguntas contraditórias — contexto vigente (Gate 079)
+
+- **"O R14 é comparável numericamente com outros relatórios?"** —
+  **Não.** `NOT_COMPARABLE`: evidência documental externa de
+  importação/câmbio, sem medida financeira comprovada no ERP.
+- **"Existe integração comprovada para o R14?"** — **Não.** Nenhuma
+  tabela, contrato ou integração Protheus comprovada — `SOURCE_UNAVAILABLE`;
+  responder `INSUFFICIENT_EVIDENCE`, nunca inventar endpoint.

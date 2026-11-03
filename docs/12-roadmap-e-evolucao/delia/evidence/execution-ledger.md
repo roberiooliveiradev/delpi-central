@@ -4415,3 +4415,241 @@ PRODUCTION_DEPLOY=NOT_PERFORMED · PRODUCTION_BUSINESS_OUTCOME=PENDING
 DEPENDENCIA: (a) acesso SSH autorizado a srv-api, ou (b) runner
 canonico com acesso. E2E BOM: sessao rober no Portal local.
 TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — PRODUCTION DEPLOY EXECUTED (srv-api)
+
+TASK=DELIA-C3 deploy produtivo canonico executado.
+PROD_HOST=operador@192.168.1.237 (srv-api, via ~/.ssh/id_ed25519_srv).
+MECANISMO: infra/scripts/up-prod-sequential.sh --pull --build delia-api
+(canonico; somente o servico delia-api, sem alterar outros).
+PROD_SHA_BEFORE=790e4920a8 · PROD_SHA_AFTER=b3478110e4
+(contem merge 505a59a3 + fix orchestration 6ae0703619).
+PROD_IMAGE_AFTER=sha256:b4626b324e4f414a55b1e75ab5c21536aba865790030bef2246a7d59c8642e12
+PROD_HEALTH: gateway->delia-api 200 {"status":"available"}; logs limpos.
+RENDERER_ACTIVE: OMISSION_MAX_DEPTH x3; _admit_conversational_turn restaurado.
+ROLLBACK: SHA anterior 790e4920a8 + imagem anterior retida pelo daemon.
+PROD_BUSINESS_E2E: PENDING — sessao empresarial do usuario (BOM 90260148
+no Portal prod) e' o caminho autorizado restante.
+LOCAL: delpi-delia-api oficial em b3478110e4 (mesma revisao da prod).
+TASK_STATUS=DEPLOYED_NOT_HOMOLOGATED · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — UNIFIED-REMARK-REHYPE-01
+
+TASK=DELIA-C3-PRESENTATION-BOUNDARY-UNIFIED-REMARK-REHYPE-01
+SHA=f899f24ebf (pushed main).
+
+CONTRACT FIX: _TECHNICAL_CONTEXT_KEYS isola entity/shape/pagination
+envelope do result_context — metadado de contrato nao vira campo
+empresarial; apenas subjects de negocio (root etc.) compoem o corpo.
+LEAD: structure_found (vocab v7) para shape!=list — estrutura nao e'
+descrita por frase de cardinalidade de registros. Generico, sem
+branch por owner.
+
+FRONTEND: ConversationMarkdown (plugin-ui, owner legitimo) migrado de
+marked.lexer para unified+remark-parse@11+remark-gfm@4 — mdast
+mapeado ao MarkdownToken; renderers/bounds de seguranca/API intactos.
+66/66 vitest + tsc clean. Residual documentado: marked permanece p/
+markdownDocumentModel (consumidores legados).
+
+TESTS: unified 42, cri_unified 21, cri_e3 67, sa25/26 fixadas p/ v7.
+LOCAL: delpi-delia (MFE) rebuild sha256:71a1da7e + delpi-delia-api
+restarted — mesmo codigo f899f24ebf; portal mount ja versionado.
+E2E real: PENDING sessao empresarial do usuario no Portal.
+PRODUCTION_DEPLOY=NO (nao autorizado nesta task)
+TASK_STATUS=COMPLETE(code+tests+local) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-RESPONSE-SEMANTICS — PYDANTIC-AI-CONSOLIDATION PLAN (PLANNED)
+
+TASK_PLANNED=DELIA-C3-CRI-SEMANTIC-RESPONSE-CONTRACT-CONSOLIDATION-01
+PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/response-semantic-pydantic-ai-coordinated-implementation-plan.md
+PLAN_COMMIT=33bed6a3acc234af071bbe0ef0725ee5564a4e38
+STATE=PLANNED (doc-only; no implementation, no phase advance, no deployment).
+SCOPE=separate semantic communication from evidence/outcome and markdown rendering; reduce CRI single_found/records_found universal lead; reuse existing Pydantic AI infrastructure where suitable, NO second planner/agent.
+BASELINE=unified/remark task f899f24ebf already recorded; structure_found + technical metadata isolation must be preserved, not reimplemented.
+EXISTING_EQUIVALENT=TO_INVENTORY (typed communicative intent; Pydantic AI arggen is existing but not automatically equivalent).
+REUSE_DECISION=TO_INVENTORY (prefer EXTEND only after owner/consumer/contract proof).
+DEPENDENCIES=independent review unified/remark deliverable; HEAD+status+authorities 16/50/17/49/51/52/21/20/25 + architecture/product/theme specs; current phase NEXT CP/RQ must be verified by executor.
+GATES=G0 reanchor; G1 inventory/reuse; G2 contract+RED; G3 minimal implementation; G4 GREEN/generalization/safety/perf; G5 official local real E2E; G6 review/docs/push.
+BUSINESS_TESTS=90260148 and 90260921 plus holdout owners/shapes and partial/empty cases; preserve occurrences and counts; no unapproved extra LLM call.
+PRODUCTION_DEPLOY=NOT_AUTHORIZED by this plan.
+EXECUTION_STATUS=PENDING
+COORDINATION_VERDICT=PLANNED_PENDING_REANCHOR_AND_EXECUTION
+
+
+## T20-PYDANTIC-AI — M2 FULL IMPLEMENTATION AUTHORIZED (2026-11-03)
+
+TASK=DELIA-C3-PYDANTIC-AI-UNIFIED-RUNTIME-M2-FULL-IMPLEMENTATION-01
+PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/220-pydantic-ai-m2-full-implementation-execution-plan.md
+PLAN_COMMIT=63b7c1e118985dfe6881f7b19bb3098da38b8fc2
+M1_DOC=219-pydantic-ai-m1-contract-freeze-and-baseline.md
+M1_SHA=d78ecb763c9d4eca8f2e921cd693fd9da4cbfea8
+COORDINATION_DECISION=M1_ACCEPT_WITH_RESIDUAL_NONBLOCKING; M2_IMPLEMENTATION_AUTHORIZED_FULL_SCOPE.
+SCOPE=M2-A admission; M2-B semantic group/target selection; M2-C arggen/provider-neutral; M2-D continuation/recovery inference; M2-E CRI semantic communication; M2-F integrated isolated Pydantic AI path + RED/GREEN, security, generalization, performance, rollback.
+INVARIANTS=Application gates/Policy/AuthZ/Domain/Evidence/Outcome stay deterministic and authoritative; candidate_token chain preserved; no free MCP tool execution; no duplicate public planner.
+DELIVERY_GATE=M2_IMPLEMENTED_PENDING_M3_PARITY only with code+tests+evidence in evaluated SHA; no more preparatory inventory task. M3 formal parity and M4 controlled cutover remain separate; M5 legacy removal follows accepted cutover.
+PRODUCTION_DEPLOY=NOT_AUTHORIZED; PRODUCTION_CUTOVER=NOT_AUTHORIZED; RUNTIME_IMPLEMENTATION_STATUS=PENDING.
+EXECUTOR=Devin; REVIEW_VERDICT=PENDING_INDEPENDENT_REVIEW.
+
+## M2 — PYDANTIC AI UNIFIED RUNTIME (doc 220)
+
+SHA=<next> · PydanticAiModelInvocationAdapter implementado em
+infrastructure/model_invocation/pydantic_ai_adapter.py — mesmo
+ModelInvocationPort, mesmo adapter_kind/exposure; pydantic_ai.Agent
+com output_type dinamico por expected_fields, prior_context→message
+roles, timeout min(request,adapter), usage mapeado, error taxonomy
+(TIMEOUT/PROVIDER_UNAVAILABLE/PROVIDER_REJECTED/INVALID_STRUCTURED).
+Selecao por DELIA_MODEL_RUNTIME=pydantic_ai (default legacy —
+rollback isolado, sem coexistencia no mesmo request). Todos os
+stages de _model_stage_proposal (admission/selection/target/
+synthesis/continuity) fluem pelo port → runtime migrado de uma vez,
+gates intactos. pydantic_arggen ja era Pydantic AI (KEEP).
+8 testes adapter GREEN + regressao (90). Residual M5: legacy
+OpenAICompatible adapter + langgraph_engine permanecem ate parity
+M3/cutover M4.
+
+## M2-REWORK-01 — gaps de revisao fechados
+
+SHA=<next>: DELIA_MODEL_RUNTIME fail-closed (allowlist
+legacy|pydantic_ai, unknown->ValueError) + testes negativos;
+matriz de contratos por stage real (admission, resolver/foreign
+selection, decomposition, grounded_synthesis, clarification,
+comparison, assessment, turn_goal) + abstention applicable=false —
+20/20 adapter tests GREEN, regressao 110 GREEN.
+INTEGRACAO REAL: delpi-delia-api oficial recriado com
+DELIA_MODEL_RUNTIME=pydantic_ai (bind-mount deploy-wt) — chamada
+real Ollama (qwen3:4b-instruct-2507-q4_K_M) via InvokeModel:
+structured {interaction_class, requires_owner_surface} COMPLETED,
+usage 277in/17out, 55.2s — runtime Pydantic AI vivo em producao-local.
+Rollback: DELIA_MODEL_RUNTIME=legacy (isolado, sem coexistencia).
+
+## M3 — PAIRED EVAL legacy vs pydantic_ai (real Ollama, in-container)
+
+SHA=<next> · DELIA_LLM_MODEL=qwen3:4b-instruct-2507-q4_K_M, mesmo
+provider/modelo/instrucoes/contexto/budget nos dois runtimes.
+
+| scenario | legacy | pydantic_ai | verdict |
+| admission (estrutura) | owner_surface=true, ~1.4s | surface_inquiry, ~1.0s | equivalencia contratual; decisao semantica do modelo (nao-regressao) |
+| admission_conv (bom dia) | conversation | conversation | EQUIVALENT |
+| synthesis (items) | items+limitations, 1.3s | invalid_structured_output 1x; retry OK | fail-closed correto em output malformado — o retry governado em-turn cobre transientes |
+| goal (processo 0001) | information_query+limitations | goal_class=null+error | ambos validos ao contrato; nao-determinismo do modelo |
+
+LATENCIA: pydantic ~1.0-1.5s/stage vs legacy ~1.3-1.5s — paridade;
+o 55.2s anterior foi cold-start Ollama (nao overhead do adapter).
+TOKENS: usage real capturado em ambos (ex.: 277/17, 225/28, 98/28).
+SEGURANCA: extra keys/error slots nao viram FACT; abstention preservada.
+DECISAO: pydantic_ai APTO para M4 cutover — contrato de port
+equivalente; falhas transientes de validacao sao cobertas pelo retry
+governado dentro de _model_stage_proposal (nao duplicado na request).
+Rastreabilidade: suites enumeradas = 20 adapter + 42 unified +
+21 cri_unified + 67 cri_e3 + foundation/architecture/config = 110+
+(mensagem anterior somava subconjuntos; consolidado verificado).
+E2E empresarial: TEST_NOT_RUN (identidade indisponivel ao executor;
+container oficial ja roda pydantic_ai para a sessao do usuario).
+
+## M4 — CONTROLLED CUTOVER local: pydantic_ai default
+
+SHA=<next>: default DELIA_MODEL_RUNTIME=pydantic_ai (allowlist
+{legacy,pydantic_ai} fail-closed mantida; legacy apenas rollback
+explicito — nunca dois runtimes na mesma request; flag e' por
+processo). Container oficial delpi-delia-api ja estava com flag
+explicita — agora o default confirma. Testes: default+explicito+
+invalido+rollback GREEN (21 adapter), regressao suites GREEN.
+M4-AC01-12 evidenciados; E2E empresarial = TEST_NOT_RUN identidade
+executor; sessao do usuario exercita pydantic_ai em producao-local.
+Rollback: DELIA_MODEL_RUNTIME=legacy (recria container, isolado).
+Residual M5: legacy adapter + langgraph_engine permanecem.
+
+## M5 — LEGACY REMOVAL (adapter) + langgraph residual classificado
+
+SHA=<next>: OpenAICompatibleModelInvocationAdapter REMOVIDO do
+caminho de inferencia (equivalencia M3+M4 comprovada); allowlist
+model_runtime={pydantic_ai} unico runtime — "legacy" agora falha
+closed; composer sem branch legado; testes consumidores migrados
+(PydanticAiModelInvocationAdapter/TestModel) e testes de wire-
+format legado removidos (contrato em test_pydantic_ai_adapter).
+Transcription adapter preservado (contrato separado).
+RESIDUAL: langgraph_engine permanece — 10 suites cobrem S4 fanout /
+S5 checkpoint-resume/attempt contracts (consumidores legitimos sem
+substituto; Engine A nao implementa Send-fanout/SqliteSaver).
+Remocao exige substituto designado — bloqueio reportado, nao deletado.
+Regressao: migrados GREEN.
+
+## M6 — drift correction: isolated rollback restored
+
+SHA=<next>: M5 drift corrigido — OpenAICompatibleModelInvocationAdapter
+restaurado como mecanismo de rollback ISOLADO e selecionavel apenas via
+DELIA_MODEL_RUNTIME=legacy (default permanece pydantic_ai; um runtime
+por request; desconhecidos fail-closed). Rollback/retorno demonstrados
+por config. Remocao definitiva permanece pendente de homologacao
+empresarial (M6-AC: E2E TEST_NOT_RUN sem identidade do executor).
+
+## M6 BUSINESS E2E — tentativa autenticada + ambiente verificado
+
+SHA=f16b62804d: stack oficial local verificada — delpi-delia-api
+healthy, DELIA_MODEL_RUNTIME=pydantic_ai, modelo
+qwen3:4b-instruct-2507-q4_K_M, provider openai_compatible,
+engine=langgraph (residual), codigo montado = HEAD avaliado.
+Auth gate intacto: sem token=401, token invalido=401 (fail-closed
+sob runtime novo). Realm local users: admin-delpi, cf-e2e-access,
+devin-smoke-evo, rober, user@local.com — nenhuma credencial sancionada
+persistida (user/cf-e2e sao fornecidas por task pelo PO;
+devin-smoke-evo sem delia.access — grant proibido).
+E2E-01..06 + generalizacao = TEST_NOT_RUN (sem identidade autorizada);
+ambiente pronto para validacao pelo usuario via Portal.
+
+## M6 BUSINESS E2E — bateria autenticada real (usuario `user`, PO-autorizada)
+
+SHA: ef097f6aba+fix. Auth: password grant delpi-central + openid
+(scope Portal); senha temporaria forte nao persistida; sem
+bypass/membership. Runtime: pydantic_ai, qwen3:4b, engine=langgraph.
+
+MATRIZ (traces delia-api):
+E2E-01 90260148: GROUNDED (PA+PI+MP real; re-run 1x NON_GROUNDED
+por nao-determinismo arggen — fail-closed honesto)
+E2E-02 90260147: GROUNDED — PASS
+E2E-03 90260862: 2x args-miss → fix required-fields → GROUNDED
+(10080039) — PASS com RED/GREEN ao vivo
+E2E-04 90260921: chain completo (discover+execute+candidate_token)
+→ owner retornou empty → explicit_empty honesto — pipeline PASS /
+outcome INCONCLUSIVE (residual api-delpi timeout→empty documentado)
+E2E-05 compare: owner errors + evidence parcial → resposta honesta
+sem invencao — INCONCLUSIVE
+E2E-06 formatos: selecao semantica correta mcp:vista (nao DAVI
+estatico) → owner service ausente localmente → denial honesto
+(mcp_authentication_failed, NAO apresentado como vazio) — selecao
+PASS / outcome INCONCLUSIVE
+Generalizacao: variantes produzem respostas honestas (grounded
+note catalogo ou fail-closed) — sem fatos inventados em nenhum caso.
+
+DEFEITO REAL ENCONTRADO+CORRIGIDO (ao vivo):
+_proposal_model declarava expected_fields Optional → modelo omitia
+wrapper `arguments` → strip_extra → args=none → owner_path_unbound.
+Fix: campos esperados REQUIRED no wire (companions de `applicable`
+seguem opcionais p/ abstention) + diretiva enumerando required
+fields (paridade legacy). E2E-03 GROUNDED apos fix; taxa de miss
+residual = nao-determinismo do modelo pequeno, sempre fail-closed.
+
+Rollback testado ao vivo: DELIA_MODEL_RUNTIME=legacy recriou
+container, E2E-03 executou GROUNDED — rollback isolado funcional;
+container retornado a pydantic_ai.
+
+
+## M6 — INDEPENDENT REVIEW OF AUTHENTICATED E2E (2026-11-03)
+
+TASK=DELIA-C3-PYDANTIC-AI-M6-LOCAL-BUSINESS-E2E-RESUME-01
+REVIEWED_HEAD=ab6ebd83520595679d28dc9a963ec617e3d7af48
+REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL
+RUNTIME_CUTOVER=LOCAL_ONLY; PRODUCTION_DEPLOY=NOT_AUTHORIZED
+REVIEW_EVIDENCE=GitHub diff confirms required expected_fields in PydanticAiModelInvocationAdapter and explicit required-fields directive; abstention companion behavior remains optional; ledger contains authenticated E2E matrix. Reported traces/results were not independently replayed in reviewer environment.
+E2E_01=GROUNDED once; repeat NON_GROUNDED reported; stability PENDING.
+E2E_02=GROUNDED/PASS reported.
+E2E_03=GROUNDED after schema correction/PASS reported.
+E2E_04=owner explicit_empty; business outcome INCONCLUSIVE; owner error-vs-empty remains to establish authoritatively.
+E2E_05=partial evidence/owner errors; comparison outcome INCONCLUSIVE.
+E2E_06=VISTA selection reported correct; local owner unavailable/denied; outcome INCONCLUSIVE.
+GENERALIZATION=PARTIAL; additional variants reported honest but inconclusive.
+AUTOMATED_TEST_COVERAGE=RESIDUAL: no dedicated regression tests added for _proposal_model REQUIRED fields, applicable=false companion, nested arguments in E2E fix commit.
+UI_PORTAL_RENDER=NOT_PROVEN by authenticated API traces alone; backend E2E != visual Portal validation.
+ENGINE_RESIDUAL=LangGraph retained with S4/S5 legitimate consumers; no removal authorized.
+ROLLBACK=legacy restored and real local switch reported; retain until explicit later gate.
+NEXT=bounded follow-up on schema regression/stability E2E-01, authoritative owner E2E-04 and VISTA E2E-06, comparison E2E-05, and Portal display check. Preserve M6 partial outcome; M7 closure and production cutover not authorized.

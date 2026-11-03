@@ -336,7 +336,7 @@ def _plain(text):
 def test_vocabulary_resource_loads_with_identity_version_hash():
     vocab = _vocabulary()
     assert vocab.resource_id == "delia.cri.presentation_vocabulary"
-    assert vocab.version == "6"
+    assert vocab.version == "7"
     assert len(vocab.content_hash) == 64
     assert set(vocab.sections) == {
         "leads",

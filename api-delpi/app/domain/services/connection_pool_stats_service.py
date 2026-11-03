@@ -37,6 +37,9 @@ def _totvs_disabled_stats() -> dict[str, Any]:
         "in_use": 0,
         "acquire_timeout_seconds": TOTVS_POOL_ACQUIRE_TIMEOUT,
         "acquire_timeouts_total": 0,
+        "waiting": 0,
+        "max_waiters": 0,
+        "rejected_total": 0,
         "discards_total": 0,
     }
 

@@ -40,8 +40,12 @@ def notify_presentation_changed(
     from tv_app.application.services.comunicado_data_enrichment_service import (
         reset_comunicado_data_block_cache,
     )
+    from tv_app.application.services.presentation_payload_service import (
+        reset_presentation_payload_cache,
+    )
 
     reset_comunicado_data_block_cache()
+    reset_presentation_payload_cache()
 
     payload: dict[str, Any] = {
         "type": "presentation_updated",

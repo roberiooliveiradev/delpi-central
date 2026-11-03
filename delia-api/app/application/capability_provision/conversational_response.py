@@ -296,10 +296,29 @@ def compose_cri_response(
         sanitize_omitted += dropped
     context_lines: tuple[str, ...] = ()
     context_partial = False
+    # Presentation contract: technical/contract metadata (entity,
+    # shape, pagination envelope) is never rendered as business
+    # fields — only bounded business subjects (e.g. ``root``) and
+    # other presentable owner fields compose the body.
+    _TECHNICAL_CONTEXT_KEYS = frozenset(
+        {
+            "entity", "shape", "has_more", "total_count", "page",
+            "page_size", "cursor", "next_cursor", "truncated",
+            "items", "records", "count", "limit", "offset",
+        }
+    )
     if isinstance(context, Mapping) and context:
-        _ctx_render = render_business_evidence(context, field_labels)
-        context_lines = _ctx_render.lines
-        context_partial = _ctx_render.partial
+        _ctx_business = {
+            str(k): v
+            for k, v in context.items()
+            if _canonical_key(str(k)) not in _TECHNICAL_CONTEXT_KEYS
+        }
+        if _ctx_business:
+            _ctx_render = render_business_evidence(
+                _ctx_business, field_labels
+            )
+            context_lines = _ctx_render.lines
+            context_partial = _ctx_render.partial
 
     paragraphs: list[str] = []
     if caveat_text:
@@ -369,6 +388,19 @@ def compose_cri_response(
     if req.min_items is not None:
         scope = sanitized[: min(req.min_items, len(sanitized))]
         lead_key = "examples_fulfilled"
+    elif (
+        isinstance(context, Mapping)
+        and context.get("shape") not in (None, "list", "collection")
+    ):
+        # A bounded structure (hierarchy/object/graph) is a single
+        # subject — the records_count lead must never describe it as
+        # a flat record list. Generic shape contract, no owner branch.
+        scope = sanitized
+        lead_key = (
+            "structure_found"
+            if "structure_found" in leads
+            else "single_found"
+        )
     elif len(sanitized) == 1:
         scope = sanitized
         lead_key = "single_found"

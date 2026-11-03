@@ -540,3 +540,178 @@ Resposta correta a "O R04 ainda está bloqueado?": **não** — visão operacion
 
 - Canal ChatGPT externo segue indisponível para automação → **dimensão conversacional `TEST_NOT_RUN`**, procedimento oficial em §14.6.
 - Suíte PG: **13/13**; SUPERSEDED/INTERNAL_ONLY/report_id/`full_match` preservados; nenhum contrato/SQL/ranking alterado; sem deploy (testes+docs apenas).
+
+
+### 15.8 GPT REVIEW independente — Gate 078 (03/11/2026)
+
+**GitHub:** commit `045999fa22d4b64f920ad9c6b4befa4206271414` confirmado remotamente; diff limitado a `tests/test_pg_clara_retrieval.py`, `tests/clara_golden_set_r01_r15.py` e este Documento 152. HEAD observado na revisão posterior `790e4920a8d362c009ebb3f0ad0cf8c26029b3a3`. Limpeza de worktree e 13/13 testes PG são **reportados pelo executor**, não reproduzidos diretamente pelo revisor.
+
+**Enforcement corrigido — PASS por inspeção:** `_check_case_result` exige `actual in KNOWN_VERDICTS` e `actual == case.get("expect","PASS_RETRIEVED")`, aplicada aos testes de recuperação 105, aceitação por evidência 105 e 10 negativos; fixtures mutacionais incluem novo miss inesperado, `CITATION_MISS`, `EVIDENCE_WEAK`, `SOURCE_GAP`, mudança de expectativa, veredito desconhecido e perda de cobertura. O mecanismo antes tolerante foi efetivamente removido. Ainda é prova sobre evidência de recuperação, **não sobre resposta conversacional**.
+
+**Reconciliação quantitativa obrigatória:** o código em `clara_golden_set_r01_r15.py` tem **105 casos GOLDEN_SET únicos** e **4 `expect="RETRIEVAL_MISS"` explícitos**, portanto **101 casos com expectativa `PASS_RETRIEVED`**. NEGATIVE_SET tem 10 casos, 3 misses esperados e 7 PASS esperados. O relato/documentação anterior indicava **100 PASS + 4 MISS = 104**, incompatível com os 105 e com o contrato do novo teste. Este número não foi corrigido por presunção: **101+4 é distribuição esperada pelo código; observado executado requer stdout/log do pytest para comprovação**. Registrar essa divergência como ajuste documental de QA, não como regressão runtime.
+
+**Corpus e busca live:** `knowledge(sources)` confirmou corpus `3cdbd991-837a-4ed6-81d4-0b81a304da6a`, 2.215 itens/88 fontes, sem mudança. Probe `knowledge(search,report_id=R04,query="O R04 ainda está bloqueado?",limit=12)` retornou 12 itens: `doc-85` com BLOQUEADO na posição 5, `doc-83` BLOQUEADO na posição 6, enquanto `ficha-r04` vigente aparece nas posições 8/9 e `ficha-index` na 2. Risco `STALE_EVIDENCE` corretamente conhecido e não resolvido no motor; nova política de ranking/vigência permanece `DECISION_REQUIRED` sob owner.
+
+**Veredito GPT REVIEW: `ACCEPT_WITH_RESIDUAL`** para rework de enforcement e testes mutacionais por inspeção de código, sem necessidade de deploy de runtime para alterações apenas em testes/docs. **Resíduos:** (1) 105 respostas conversacionais live `TEST_NOT_RUN`; (2) sete misses previstos (4 golden + 3 negativos) associados à política de ranking; (3) logs originais PG 13/13 não reproduzidos pelo revisor; (4) reconciliação aritmética acima, requer comprovação de contagem observada para certificação. Não declarar homologação semântica de respostas R01–R15 concluída.
+
+
+## 16. GPT — testes autenticados CLARA e backlog de correção (03/11/2026)
+
+**Issue oficial:** https://github.com/roberiooliveiradev/delpi-central/issues/130 — Gate 079, correção da recuperação e validação semântica R01–R15. A issue contém problemas, evidências e DoD completos.
+
+**Execução independente:** 105 perguntas do golden set mais 10 negativas foram submetidas **literalmente** à CLARA via `knowledge(search,report_id,query,limit=12)` nesta conversa. **115/115 chamadas retornaram 12 itens; nenhuma chamada vazia.** Isto mede disponibilidade de busca, não 115 respostas corretas. Muitas respostas da busca contêm `full_match=false` (match parcial OR). Casos de ficha específica ausente no top-12 incluem R11-D7, R13-D6 e R14-D6, em linha com lacunas já conhecidas, sem equivaler isoladamente a FAIL de conteúdo.
+
+**Evidências completas amostradas por `knowledge(get)`:** R01 SE5 vs FK2010/FK7010, R06 `MV_D3ESTOR` condicional, R09 custo `source_missing`, R10 exclusões no use case, R11 SQL OR vs candidatas AND, R15 marcadores técnicos diferentes de aceite humano. Esses seis exemplos possuem fonte vigente recuperável.
+
+**Risco P0 — R04 `STALE_EVIDENCE`:** na pergunta "O R04 ainda está bloqueado?", `doc-85` BLOQUEADO ocupa posição 5 e `doc-83` BLOQUEADO posição 6, enquanto ficha-r04 atual aparece posições 8 e 9. O motor retorna documentos históricos legítimos sem política de precedência aprovada. Não excluir história nem alterar ranking sem `DECISION_REQUIRED`.
+
+**Sete misses de evidência já esperados pela suíte:** R11-D7, R12-D5, R13-D6, R14-D6 e NEG-R12-EXEC, NEG-R12-60, NEG-R11. O fallback pode retornar 12 fragmentos sem recuperar asserção esperada. `full_match=false` não comprova resposta semântica correta.
+
+**Quatro leituras operacionais reais pela CLARA:** R04 2026-09 filial01 1.243 OPs, R04 2026-10 filial01 2.381 OPs, R09 2026-09 filial01 299 âncoras, R12 2026-09 estado técnico disponível. Todos `success=true`; R04/R09 `officialParity=pending`, R12 `officiality=technical_markers`.
+
+**Rigor da validação:** 105 perguntas GOLDEN_SET e 10 NEGATIVE_SET presentes no código. Expectativa estrutural = **101 PASS + 4 MISS** no principal e **7 PASS + 3 MISS** nos negativos. Contagem anterior "100+4" não perfaz 105; observar stdout real antes de afirmar valores obtidos. Acurácia de 115 respostas finais do LLM host: `TEST_NOT_RUN`, pois MCP `knowledge` não gera o texto conversacional externo.
+
+**Direção Gate 079:** corrigir defeitos comprovados; testar, documentar antes/depois e registrar cada alteração na issue #130. Política de ranking/vigência = `DECISION_REQUIRED` sob owner, não autorização implícita para alterar contrato. GPT executará novamente as 115 perguntas diretamente na CLARA após deploy autorizado e publicações.
+
+
+## 17. Gate 079 — Correção de recuperação e conhecimento vigente R01–R15 (03/11/2026)
+
+**Executor:** Devin · **Issue:** #130 · **BASE:** `origin/main` `8506f0c7` em worktree `.worktrees/g079` · **Corpus local pós:** `ca68aa93` (2.220/88).
+
+### 17.1 Diagnóstico P1 — os 7 misses
+
+Causa única confirmada por inspeção de top-12: **vocabulário/ranking OR** — a evidência corretiva existe no corpus mas não co-ocorre com os lexemas da pergunta nos segmentos que ranqueiam. Nenhum era `SOURCE_GAP` real.
+
+| Caso | Causa | Correção |
+|---|---|---|
+| R11-D7 / NEG-R11 | "nunca exclusão automática" não ranqueava | ficha R11 + seção contraditória |
+| R12-D5 / NEG-R12-60 | "marcadores técnicos" vs formulação 60% | ficha R12 + resposta literal |
+| R13-D6 / R14-D6 | `NOT_COMPARABLE` fora de contexto de pergunta | fichas R13/R14 + resposta literal |
+| NEG-R12-EXEC | "nunca execução ERP" fora do top-12 | ficha R12 + "CLARA nunca executa MATA330" |
+| NEG-R04 (já PASS) | risco ativo: `doc-83/85` BLOQUEADO no top-12 | ficha R04 + contextualização explícita `STALE_EVIDENCE` |
+
+**Correção autorizada (não controversa):** seção "Perguntas contraditórias — contexto vigente" nas fichas R04/R11/R12/R13/R14 com as formulações literais e respostas já comprovadas — conteúdo canônico, não mudança de ranking nem de contrato.
+
+### 17.2 DECISION_REQUIRED — precedência histórico × vigente (P0)
+
+Opções analisadas: **(a)** rerank por especificidade (`jsonb_array_length(related_report_ids)`) — favorece fichas; risco de soterrar docs transversais; **(b)** rerank por vigência (`last_verified_at`) — penaliza histórico; exige metadados confiáveis; **(c)** flag `evidence_temporality` no item + ordenação por (temporalidade, rank) — contrato aditivo, testes A/B viáveis; **(d)** combinação controlada (a+b+c). **Recomendação:** (c) — campo aditivo `is_historical` derivado de metadados, sem alterar universo retornado; mantém auditoria, elimina indução a erro. **Aguarda owner — não implementado.**
+
+### 17.3 Resultados 105 + 10
+
+- Golden: **105/105 PASS_RETRIEVED** (4 misses resolvidos por fonte, `resolved_by` documentado).
+- Negativos: **10/10** (3 misses resolvidos; NEG-R04 mantém `STALE_EVIDENCE` classificado — doc-83/85 ainda recuperados, corretiva presente).
+- `test_acceptance_traceability`: JSONL com 115 registros (id, query, corpus, knowledge_id, citation_locator, rank, full_match, veredito, timestamp).
+- Suíte PG: **14/14**; invariants intactas; mutacionais verdes.
+
+### 17.4 Resíduos
+
+- Conversacional live `TEST_NOT_RUN` (canal ChatGPT externo — procedimento §14.6; GPT reexecutará as 115 perguntas).
+- P0 político em `DECISION_REQUIRED` (§17.2).
+- Issue #130: sem credencial API neste ambiente — registro completo nesta seção + execution report; atualização manual do issue pendente de credencial.
+- Corpus produtivo: republicação via pipeline canônico registrada no report (SHA/commit e corpus_version).
+
+
+### 17.5 GPT REVIEW independente — CLARA produtiva, Gate 079 (03/11/2026)
+
+**GitHub:** commit funcional `0fc5433ddd36a1dc9d123e099c08d8dbecc34460` identificado no histórico de `main`, com 8 arquivos: cinco fichas (R04/R11/R12/R13/R14), golden set, testes PG e doc 152. HEAD `7c468318278d5fb3ba27a24c98196ac840a3b651` observado na primeira inspeção (commits concorrentes posteriores não atribuídos ao Gate). Worktrees limpos e execução local PG 14/14 são **declarações do executor**, sem inspeção direta do host local.
+
+**Corpus confirmado via MCP autenticado:** `c2cbaf7f-103d-4c9f-b5ed-4b735779ea39`, publicado 2026-11-03 13:32:43 -03, **2.220 itens / 88 fontes**. Comparado à versão anterior `3cdbd991` (2.215/88), são cinco novos segmentos, como relatado pelo executor; isso comprova publicação consumível via MCP, não identifica por si só os cinco segmentos sem auditoria granular.
+
+**Sete casos previamente com MISS executados novamente pelo GPT diretamente no MCP, pergunta literal do golden set, `limit=12`:** R11-D7 → `ficha-r11` 1º, `nunca exclusão automática`; R12-D5 → `ficha-r12` 1º, `marcadores técnicos`; R13-D6 → `ficha-r13` 1º, `NOT_COMPARABLE`; R14-D6 → `ficha-r14` 1º, `NOT_COMPARABLE`; NEG-R12-EXEC → `ficha-r12` 1º, `nunca executa MATA330`; NEG-R12-60 → `ficha-r12` 1º, `marcadores técnicos`; NEG-R11 → `ficha-r11` 1º, `nunca exclusão automática`. Para todos, `excerpt` mostrou os marcadores requeridos na fonte corretiva. **PASS** recuperação específica dos sete casos, independentemente do runner do executor.
+
+**Bateria transversal completa executada diretamente nesta conversa:** 115 perguntas extraídas literalmente de `tests/clara_golden_set_r01_r15.py` no commit Gate079 (105 R01–R15 e 10 negativas); **115/115 chamadas** `knowledge(search,report_id,query,limit=12)` concluíram, todas com **12 resultados**, nenhum erro e zero buscas vazias, total **1.380 ocorrências** (com repetições). As sete questões acima foram também verificadas quanto a marcador em `excerpt`. **Não é prova de que as 115 respostas conversacionais estão corretas, nem substitui a checagem do suporte completo por caso.** A política AND→OR ainda produz vários itens `full_match=false`; em alguns casos a ficha de ID não figura no top-12, mas docs transversais podem ser relevantes.
+
+**R04 negativo, contraprova de vigência:** `NEG-R04` ("O R04 ainda está bloqueado?") → `ficha-r04` nova com a explicação vigente e status `IMPLEMENTED` na **posição 1**, `full_match=true`, e `ficha-index` em 3; documentos históricos `doc-83/85` ainda integram o universo de resultados. **Mitigação documental PASS**, eliminação do risco por política de vigência **PENDING / DECISION_REQUIRED**.
+
+**Quatro leituras operacionais reais reexecutadas pelo GPT:** R04 2026-09 filial01 `success=true`, 1.243 OPs; R04 2026-10 filial01 `success=true`, 2.381 OPs; R09 2026-09 filial01 `success=true`, 299 âncoras; R12 2026-09 `success=true`, 4 limitações. R04/R09 `officiality=operational_view` e `officialParity=pending`; R12 `officiality=technical_markers`. **PASS** para leitura operacional desses cenários, não homologação das rotinas oficiais.
+
+**Avaliação de qualidade:** código do novo `test_acceptance_traceability` está versionado; saída JSONL de 115 linhas e pytest 14/14 foram reportados, **não reexecutados diretamente em PostgreSQL por este revisor**. Canal MCP `knowledge` não fornece as 115 respostas em linguagem natural de um host conversacional externo: `TEST_NOT_RUN` para esse objetivo, embora as 115 perguntas tenham sido submetidas ao motor de recuperação do MCP. Classificação Gate079: **`ACCEPT_WITH_RESIDUAL`** para correções autorizadas de conteúdo, atualização de corpus e recuperação das sete evidências; manter issue #130 **aberta** para decisão de ranking/vigência por owner e homologação efetiva de respostas NL. Sem aprovar campo `is_historical` ou alteração de ranking neste parecer.
+
+
+## 18. Gate 080 — Seleção determinística de fontes vigentes (03/11/2026)
+
+**Executor:** Devin · **Issue:** #130 (decisão PO registrada) · **Corpus:** re-publicação via pipeline.
+
+### 18.1 Decisão de produto
+
+PO aprovou: conhecimento canônico vigente + seleção **determinística** de fontes válidas (não preferência probabilística por recência). Implementado: `SUPERSEDED_SEGMENTS` (lista declarativa em `corpus_manifest.py`) — segmentos que afirmam estado comprovadamente superado são marcados `SUPERSEDED` na ingestão. Permanecem no GitHub e no banco para auditoria; nunca concorrem como autoridade vigente. Sem mudança de ranking/contrato/escopo.
+
+### 18.2 Segmentos marcados
+
+- `doc-83` — "R04 — Consumo por OP — **BLOQUEADO (sem artefato novo)**" (R04 está `IMPLEMENTED` — consumption-audit).
+- `doc-85` — "§4 — R04 · Consumo por OP — `BLOQUEADO`" (idem).
+
+Estados ainda verdadeiros preservados: doc-83/doc-85 "R13/R14 BLOQUEADO" (fonte externa — segue vigente), doc-80 histórico, todo o catálogo BR de doc-85 (citado pelas fichas).
+
+### 18.3 Dados dinâmicos (inventário)
+
+Consultas financeiras usam produtores oficiais vigentes: `production_order_consumption` (R04), `billing_mod_breakdown` (R09), `cost_closing_state` (R12/R15), settlements/stock/cost-center/billing-roster (R01–R11) — sempre com competência+filial+permissões; `officialParity` declarada. Nenhum número documental estático substitui dado operacional.
+
+### 18.4 Testes
+
+`test_superseded_state_segments`: query "O R04 ainda está bloqueado?" → zero itens `BLOQUEADO` retornados + ficha vigente presente; 2 segmentos SUPERSEDED; ≥3 segmentos R13/R14 BLOQUEADO permanecem PUBLISHED. Suíte PG: **15/15**. Mutações/enforcement/invariants preservadas.
+
+### 18.5 Resíduos
+
+- Conversacional live `TEST_NOT_RUN` (canal externo; GPT reexecuta).
+- Política futura de `is_historical` granular por item (não fonte/segmento) segue `DECISION_REQUIRED` se demandada.
+- Issue #130: sem credencial API — registro nesta seção.
+
+
+## 19. Gate 080-RW01 — Zero exposição de conteúdo superado (03/11/2026)
+
+**Executor:** Devin · **Issue:** #130 · **Adendo PO:** filtro no backend antes de qualquer entrega ao modelo; não via prompt/reranking.
+
+### 19.1 Defeito reproduzido e inventário
+
+GPT reproduziu: query `R04 está BLOQUEADO?` (sem `report_id`) retornava `doc-80` "27.C — Status por item" (pos. 2, `PUBLISHED`) afirmando `R04/R13/R14 BLOQUEADO` — R04 superado, R13/R14 vigentes no mesmo segmento. Inventário por conteúdo encontrou **16 segmentos** afirmando estados superados de R04/R09/R12/R15 (todos `IMPLEMENTED`): doc-80 ×2, doc-83 ×2, doc-85 ×2, doc-86 ×2, doc-113, doc-118 ×2, doc-120, doc-121, doc-124, doc-23 ×3, ficha-index (linha GATE A). Preservados por ainda verdadeiros: doc-80 "16.F BLOCKED" (artefato sanitizado), doc-112 "R01–R15 sem competência" (DR-C2), R13/R14 BLOQUEADO em doc-83/85.
+
+### 19.2 Correção determinística — `STALE_SEGMENT_FIXES`
+
+`corpus_manifest.py` declara dois modos por segmento (match por `title_contains`):
+- **`drop`** (6): segmento inteiramente datado — sai da ingestão; item antigo vira `SUPERSEDED` pelo sweep por locator.
+- **`fix`** (10): segmento misto — `fix_lines` reescreve **apenas** as linhas superadas; conteúdo corrigido volta pelo mesmo `citation_locator` → versão antiga `SUPERSEDED`, trilha de auditoria íntegra; marcador "Afirmação de estado superado corrigida na ingestão (Gate 080-RW01)" anexado.
+
+Fonte canônica corrigida diretamente: `fichas/README.md` linha R04 (`NOT_IMPLEMENTED` → `IMPLEMENTADO` + capability). **Backend fail-closed:** `get_item` agora filtra `status='PUBLISHED'` — `knowledge(get)` de item superado → `KnowledgeNotFound`. Sem mudança de contrato/schema/ranking/permissão; histórico íntegro em GitHub + linhas SUPERSEDED.
+
+### 19.3 Verificação
+
+- Corpus local `19231723` (2.214/88): `state_fixed` = doc-80×2, doc-83×2, doc-85×2, doc-86×2, doc-113, doc-118×2, doc-120, doc-121, doc-124, doc-23×3; 73 itens SUPERSEDED na trilha.
+- Query `R04 está BLOQUEADO?` **sem** filtro: `doc-80 27.C` agora afirma `R13/R14 BLOQUEADO; R04 implementado` — zero claim superado no top-12; `ficha-r04` pos. 1.
+- `get()` no id superado → `KnowledgeNotFound`.
+- `test_superseded_state_segments` reescrito: invariante de 12 padrões superados ausentes de TODO `PUBLISHED`, conteúdo corrigido presente, `get()` fail-closed, R13/R14 preservados. Suíte PG: **15/15**.
+
+### 19.4 Resíduos
+
+- Conversacional live `TEST_NOT_RUN`; issue #130 sem credencial API neste ambiente (registro aqui + report).
+- Novos docs futuros com afirmações datadas exigem entrada declarativa no manifest — processo, não heurística.
+
+
+## 20. Gate 081 — Auditoria integral do corpus CLARA (03/11/2026)
+
+**Executor:** Devin · **Issue:** #130 · **Escopo:** 100% dos 2.214 itens PUBLISHED (não amostragem/top-12).
+
+### 20.1 Método e cobertura
+
+Scanner programático sobre os 2.214 itens (`/tmp/g081_audit.py` — detecção de afirmações de estado para R01–R15 + claims de handler/contrato/capability). **27 itens flagados → 100% revisados individualmente.** Caminhos de contexto auditados: `search`, `get`, `list_sources`, `list_top_items` — todos filtram `PUBLISHED`; `get_item` fail-closed desde G080-RW01.
+
+### 20.2 Classificação dos 27 flagados
+
+| Classe | Qtd | Itens |
+|---|---|---|
+| CURRENT_VERIFIED (já corrigidos/vigentes) | 10 | doc-80 27.C/48.1 fixados, doc-83/85/86/113/118/120/124 fixados, doc-112 DR-C2, ficha-r04/ficha-r09 |
+| HISTORICAL_ONLY (narrativa datada legítima) | 7 | doc-00 ciclos 2/3, doc-113 §29.22/25.2, doc-117 ANL, doc-118 B, doc-119 11.7 |
+| STALE_CONFIRMED → drop (7) | 7 | doc-121 stage-03, doc-23 G060/STAGE-03/REWORK-008, doc-85 publicação, doc-88 C3-D01/C3-D06 |
+| STALE_CONFIRMED → fix_lines (1) | 1 | doc-86 §9 (lista bloqueados) |
+| STALE_CONFIRMED → fonte corrigida (2) | 2 | README.md ×3 linhas, fichas/README.md R04 (RW01) |
+
+### 20.3 Correções aplicadas
+
+- **13 drops + 11 fix_lines** declarados em `STALE_SEGMENT_FIXES` (auditoria acrescentou 7 drops + 1 fix ao RW01).
+- `README.md` e `fichas/README.md` corrigidos na fonte (docs canônicos vigentes).
+- Teste: 19 padrões superados → zero em `PUBLISHED`; conteúdo corrigido presente; get() fail-closed; R13/R14 preservados. **Suíte 15/15**.
+- Corpus local `5c48899a` (2.207 PUBLISHED / 86 SUPERSEDED — trilha íntegra).
+
+### 20.4 Ressalva honesta
+
+Classificação por regras determinísticas + revisão humana dos flagados — cobre afirmações de estado de relatórios/handlers/contratos; não exaure julgamento semântico de 2.214 itens (dados financeiros estáticos datados permanecem como evidência histórica legítima, nunca apresentados como vigentes pelas fichas). Novos docs datados exigem nova entrada no manifest.

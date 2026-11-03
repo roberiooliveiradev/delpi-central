@@ -150,6 +150,58 @@ def ingest_source(
         },
     )
     segments = segment_markdown(raw)
+    # Gate 080-RW — correção determinística de afirmações superadas
+    # (STALE_SEGMENT_FIXES do manifest): "drop" remove o segmento
+    # datado da ingestão (o item antigo vira SUPERSEDED pelo sweep
+    # por locator); "fix" reescreve apenas as linhas superadas e o
+    # conteúdo corrigido volta pelo mesmo citation_locator — a
+    # versão anterior fica SUPERSEDED, com auditoria preservada.
+    from controllership_finance_app.application.clara.corpus_manifest import (  # noqa: E501
+        STALE_SEGMENT_FIXES,
+    )
+
+    fixes = [
+        entry for entry in STALE_SEGMENT_FIXES
+        if entry["source_id"] == spec.source_id
+    ]
+    state_fixed = 0
+    if fixes:
+        kept: list[Segment] = []
+        for seg in segments:
+            entry = next(
+                (
+                    e for e in fixes
+                    if e["title_contains"] in seg.title
+                    or e["title_contains"] in seg.heading_path
+                ),
+                None,
+            )
+            if entry is None:
+                kept.append(seg)
+                continue
+            state_fixed += 1
+            if entry["action"] == "drop":
+                continue
+            content = seg.content
+            for old, new in entry.get("fix_lines", ()):
+                if old in content:
+                    content = content.replace(old, new)
+            kept.append(
+                Segment(
+                    title=seg.title,
+                    heading_path=seg.heading_path,
+                    content=(
+                        content
+                        + "\n\n> Afirmação de estado superado corrigida na "
+                        "ingestão (Gate 080-RW01); versão anterior "
+                        "SUPERSEDED preservada para auditoria."
+                    ),
+                    line_start=seg.line_start,
+                    line_end=seg.line_end,
+                )
+            )
+        segments = kept
+
     inserted = superseded = deduplicated = 0
     keep_ids: list[str] = []
     for seg in segments:
@@ -188,6 +240,7 @@ def ingest_source(
         "source_id": spec.source_id,
         "segments": len(segments),
         "stale_swept": stale_swept,
+        "state_fixed": state_fixed,
         "inserted": inserted,
         "superseded": superseded,
         "deduplicated": deduplicated,

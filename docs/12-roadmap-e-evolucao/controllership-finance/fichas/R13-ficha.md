@@ -52,3 +52,10 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Limitações: não inventar conteúdo de extrato; não expor dados
   sensíveis no corpus.
 - Referências: doc 85 §12; doc 118 §6; doc 91; doc 115.
+
+## Perguntas contraditórias — contexto vigente (Gate 079)
+
+- **"O R13 é comparável numericamente com outros relatórios?"** —
+  **Não.** `NOT_COMPARABLE`: a evidência é documento bancário externo
+  sem medida numérica no ERP — não há tabela Protheus nem valor
+  computável para comparação.

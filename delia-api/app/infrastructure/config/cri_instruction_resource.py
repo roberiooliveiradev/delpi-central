@@ -49,7 +49,7 @@ _VOCABULARY_KIND = "presentation_vocabulary"
 # ``goal_mismatch``/``relevance_unproven`` insufficiency entries —
 # honest degradation wording when returned evidence does not answer
 # the stated goal or pertinence cannot be proven.
-_VOCABULARY_VERSIONS = frozenset({"2", "3", "4", "5", "6"})
+_VOCABULARY_VERSIONS = frozenset({"2", "3", "4", "5", "6", "7"})
 _VOCABULARY_SECTIONS = (
     "leads",
     "temporal_clauses",

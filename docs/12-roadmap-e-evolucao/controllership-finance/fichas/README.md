@@ -28,7 +28,7 @@ funcional (G6 `PENDING` em todos os relatórios).
 | [R01](R01-ficha.md) | Baixas a pagar | `IMPLEMENTED` (`/closing/financial-settlements*`) | `read(report.settlements_summary)` | ficha + docs 84/85 | produtor R02 compartilha dúvidas; G6 |
 | [R02](R02-ficha.md) | Baixas a receber | `IMPLEMENTED` (mesmo contrato R01) | `read(report.settlements_summary)` | ficha + docs 84/85 | fonte `DLP06R01` ausente (E1); G4/G6 |
 | [R03](R03-ficha.md) | P7 / Registro de Inventário | `IMPLEMENTED` (`/closing/stock-inventory`, IMP-006) | `read(report.stock_inventory)` | ficha + docs 49/84/85/119 | parâmetros MATR460 efetivos (E2); `officialP7=false`; G6 |
-| [R04](R04-ficha.md) | Consumo por OP | `NOT_IMPLEMENTED` (BLOQUEADO, sem artefato) | — (nenhuma) | ficha + docs 85/118 | GAP-01; sem produtor confirmado |
+| [R04](R04-ficha.md) | Consumo por OP | `IMPLEMENTADO` (`/closing/competences/{period}/production-order-consumption`) | `read(report.production_order_consumption)` | ficha + docs 150/152 | paridade MATR860 pendente |
 | [R05](R05-ficha.md) | Entradas e Saídas (MATR320) | `IMPLEMENTED` (`/closing/stock-movements`, IMP-009) | `read(report.stock_movements)` | ficha + docs 84/85 | `officialMatr320=false`; G6 |
 | [R06](R06-ficha.md) | Kardex / saídas × CPV | `IMPLEMENTED` (`/closing/kardex` + `/closing/cpv`, IMP-015) | `read(report.kardex)`, `read(report.cpv)` | ficha + docs 61/84/85/122 | RPO/E7; paridade oficial G6; CPV vivo |
 | [R07](R07-ficha.md) | Inventários | `IMPLEMENTED` (`/closing/inventory-adjustments`, IMP-015) | `read(report.inventory_adjustments)` | ficha + docs 66/84/85/122 | loc de emissão; G6 |

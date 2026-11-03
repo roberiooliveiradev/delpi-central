@@ -116,6 +116,23 @@ class Settings:
             if isinstance(parsed_window, int) and parsed_window > 0
             else None
         )
+        # M5/M6: Pydantic AI is the default intelligence runtime.
+        # "legacy" remains ONLY as the explicitly-selected isolated
+        # rollback mechanism (per M6 drift correction) — one runtime
+        # per request, never both. Unknown values fail closed.
+        _allowed_model_runtimes = frozenset({"legacy", "pydantic_ai"})
+        _model_runtime = (
+            (os.getenv("DELIA_MODEL_RUNTIME") or "pydantic_ai")
+            .strip()
+            .lower()
+        )
+        if _model_runtime not in _allowed_model_runtimes:
+            raise ValueError(
+                "DELIA_MODEL_RUNTIME must be one of "
+                f"{sorted(_allowed_model_runtimes)}, got "
+                f"{_model_runtime!r}"
+            )
+        self.model_runtime = _model_runtime
         # C3-OLLAMA-LOCAL-LLM-TESTING-01: when set, no real provider may be
         # wired — the configured endpoint is external and this environment
         # is not production. Composition stays fail-closed and eval

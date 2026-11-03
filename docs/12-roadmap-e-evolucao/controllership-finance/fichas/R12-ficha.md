@@ -87,3 +87,13 @@ Publicação: ficha **vigente no corpus produtivo** — estado `PENDING_CONTRACT
 - Implementação: api-delpi `GET /financeiro/closing-state` (SB9010, SX6 `MV_ULMES`, TTAT `B1_CUSTD`/`D3_CUSTO1`) → BFF `GET /closing/competences/{period}/cost-closing-state` → MFE `cost-closing-state` → CLARA `read(report.cost_closing_state)`.
 - Semântica C3-D02=A preservada: marcadores técnicos, nunca homologação nem execução ERP. `UNIMPLEMENTED_REPORTS` → `STATE_VIEW` (sem medida comparável — NOT_COMPARABLE preservado).
 - Persistem: E4/E5/E12.5/G5/G6 — declarados em `limitations`.
+
+## Perguntas contraditórias — contexto vigente (Gate 079)
+
+- **"Três de cinco verificações significam 60% do fechamento
+  concluído?"** — **Não.** Os marcadores técnicos observáveis não são
+  percentual de progresso nem homologação: três de cinco evidências
+  não autorizam dizer "60% concluído".
+- **"A CLARA executou o MATA330?"** — **Não.** A CLARA nunca executa
+  MATA330, MATA320, MATA300 nem rotina ERP — consulta somente os
+  marcadores persistidos (visão read-only de acompanhamento).

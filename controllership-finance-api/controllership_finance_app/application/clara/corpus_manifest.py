@@ -352,3 +352,213 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
        "DOCUMENT", "Ficha R15 — Cutoff / virada / SB9",
        "TARGET", "relatorios-r01-r15", report_ids=("R15",)),
 ]
+
+
+# Gate 080 (PO/decisão produto — issue #130): seleção DETERMINÍSTICA
+# de fontes vigentes. Segmentos datados que afirmam um estado hoje
+# superado NÃO podem ser expostos à CLARA:
+#
+#   action="drop" — o segmento inteiro é um registro datado superado;
+#                 sai da ingestão (o item antigo vira SUPERSEDED pelo
+#                 sweep por locator; GitHub/banco preservam o histórico).
+#
+#   action="fix"  — o segmento mistura afirmações vigentes e superadas;
+#                 `fix_lines` reescreve apenas as linhas superadas e o
+#                 conteúdo corrigido volta pelo mesmo citation_locator
+#                 (versão antiga SUPERSEDED, trilha de auditoria íntegra).
+#
+# Critério: somente afirmações comprovadamente falsas hoje (R04/R09/
+# R12/R15 implementados); estados ainda verdadeiros (ex.: R13/R14
+# BLOQUEADO) NÃO são alterados nem removidos.
+STALE_SEGMENT_FIXES: tuple[dict, ...] = (
+    # ---------------- segmentos inteiramente superados ----------------
+    dict(source_id="doc-83",
+         title_contains="R04 — Consumo por OP — **BLOQUEADO",
+         action="drop",
+         reason="R04 implementado (consumption-audit) — ficha vigente"),
+    dict(source_id="doc-85",
+         title_contains="§4 — R04 · Consumo por OP — `BLOQUEADO`",
+         action="drop",
+         reason="R04 implementado (consumption-audit) — ficha vigente"),
+    dict(source_id="doc-121",
+         title_contains="Adendo — stage-04 (31/10/2026): conhecimento governado",
+         action="drop",
+         reason="matriz de capabilities datada — R04/R09/R12/R15 sem contrato superado"),
+    dict(source_id="doc-23",
+         title_contains="G054–G057 — R04/R06/R07 (2026-11-02) — status inicial",
+         action="drop",
+         reason="registro datado — produtores R04/R06/R07 implementados"),
+    dict(source_id="doc-23",
+         title_contains="R04-G059 — owner/contrato confirmados (2026-11-02)",
+         action="drop",
+         reason="registro datado — contrato BFF R04 implementado"),
+    dict(source_id="doc-23",
+         title_contains="IMPLEMENTATION-STAGE-04 — conhecimento especializado",
+         action="drop",
+         reason="registro datado — R04/R13/R14 bloqueados e R09/R12/R15 TARGET_ONLY superados"),
+
+    # ---------------- segmentos mistos: só linhas superadas ----------------
+    dict(source_id="doc-80",
+         title_contains="27.C — Status por item",
+         action="fix",
+         fix_lines=[(
+             "R04/R13/R14 BLOQUEADO (R04 sem artefato de consumo-OP; "
+             "R13 externalidade confirmada por checklist; R14 sem evidência).",
+             "R13/R14 BLOQUEADO (R13 externalidade confirmada por checklist; "
+             "R14 sem evidência); R04 implementado como visão operacional "
+             "(consumption-audit) — paridade MATR860 pendente.",
+         )],
+         reason="afirmação mista: R04 superado, R13/R14 vigentes"),
+    dict(source_id="doc-80",
+         title_contains="48.1 — Validação da matriz",
+         action="fix",
+         fix_lines=[(
+             "- R04/R13/R14: bloqueados por owner — sem artefato/fonte",
+             "- R13/R14: bloqueados por owner — sem fonte; R04 implementado "
+             "(consumption-audit — paridade MATR860 pendente); busca residual",
+         )],
+         reason="afirmação mista: R04 superado, R13/R14 vigentes"),
+    dict(source_id="doc-83",
+         title_contains="§7 — Resultado por item",
+         action="fix",
+         fix_lines=[(
+             "| R04 Consumo por OP | BLOQUEADO | — | — |",
+             "| R04 Consumo por OP | IMPLEMENTADO (visão operacional — "
+             "consumption-audit; paridade MATR860 pendente) | — | — |",
+         )],
+         reason="linha R04 superada em matriz com estados vigentes"),
+    dict(source_id="doc-86",
+         title_contains="8. Readiness — classificação do próximo ciclo",
+         action="fix",
+         fix_lines=[
+             ("| R04 | `BLOCKED_BY_OWNER` | sem artefato/critério oficial |",
+              "| R04 | `IMPLEMENTED` (visão operacional — consumption-audit) | "
+              "paridade MATR860 pendente |"),
+             ("11/15 itens `READY_WITH_CONSTRAINTS` (R01, R02, R05–R12 e R15) "
+              "e 4/15 `BLOCKED_BY_OWNER` (R03, R04, R13 e R14)",
+              "12/15 itens `READY_WITH_CONSTRAINTS` (R01, R02, R04–R12 e R15) "
+              "e 3/15 `BLOCKED_BY_OWNER` (R03, R13 e R14)"),
+         ],
+         reason="linha/contagem R04 superadas em matriz vigente"),
+    dict(source_id="doc-86",
+         title_contains="Matriz canônica R01–R15",
+         action="fix",
+         fix_lines=[(
+             "| R04 | Consumo por OP | `MATR860` (candidato) | sem artefato "
+             "oficial | G1–G4 PENDING · G5 TEST_NOT_RUN | artefato/critério → "
+             "Controladoria |",
+             "| R04 | Consumo por OP | `consumption-audit` + `MATR860` "
+             "(candidato) | implementado; sem artefato oficial MATR860 | "
+             "paridade `PENDING` | paridade → Controladoria |",
+         )],
+         reason="linha R04 superada em matriz vigente"),
+    dict(source_id="doc-113",
+         title_contains="§29.22",
+         action="fix",
+         fix_lines=[(
+             "R04, R13, R14 bloqueados por produtor/owner/fonte específica.",
+             "R13, R14 bloqueados por fonte específica; R04 implementado "
+             "posteriormente a este plano (consumption-audit — paridade "
+             "MATR860 pendente).",
+         )],
+         reason="afirmação mista: R04 superado, R13/R14 vigentes"),
+    dict(source_id="doc-118",
+         title_contains="3. Matriz mestra de evidências",
+         action="fix",
+         fix_lines=[(
+             "| EV-23 | `MATR860` é candidato a consumo por OP; nenhum "
+             "artefato na pasta | doc 83 R04 | `TO_INVENTORY`/`BLOQUEADO` | "
+             "GAP-01 |",
+             "| EV-23 | `MATR860` é candidato a consumo por OP; consumo "
+             "implementado via consumption-audit (artefato oficial MATR860 "
+             "não localizado) | doc 83 R04, ficha R04 | `PROVEN` implementação "
+             "/ paridade `PENDING` | GAP-01 parcial |",
+         )],
+         reason="linha EV-23 superada em matriz de evidências vigente"),
+    dict(source_id="doc-118",
+         title_contains="6. Catálogo canônico de relatórios e transformações",
+         action="fix",
+         fix_lines=[(
+             "| R04 | Consumo por OP | `MATR860` candidato | — | — | ? | "
+             "`BLOQUEADO` (sem artefato) | nenhum → GAP-01 |",
+             "| R04 | Consumo por OP | `consumption-audit` (api-delpi — "
+             "SD4/SD3/SC2/SB1) | competência, filial, OP | nenhuma | "
+             "Controladoria | implementado; paridade MATR860 `PENDING` | "
+             "`/closing/competences/{period}/production-order-consumption` |",
+         )],
+         reason="linha R04 superada em catálogo vigente"),
+    dict(source_id="doc-124",
+         title_contains="4. Lacunas declaradas",
+         action="fix",
+         fix_lines=[(
+             "Reports `R04, R06, R07, R09–R15`: sem handler BFF — "
+             "`NOT_IMPLEMENTED`\n  honesto via `not_implemented` "
+             "(doc 120/122 = TARGET).",
+             "Reports `R13, R14`: sem handler BFF — `NOT_IMPLEMENTED` honesto "
+             "via `not_implemented` (fontes externas — doc 120/122 = TARGET). "
+             "R04/R06/R07/R09–R12/R15 implementados com handlers vigentes.",
+         )],
+         reason="lista de handlers superada — R04/R09/R12/R15 implementados"),
+    dict(source_id="doc-85",
+         title_contains="BR-CMP-005",
+         action="fix",
+         fix_lines=[(
+             "Relatórios sem contrato\nimplementado (R04/R09/R12/R15) → "
+             "`report_not_implemented`; R13/R14 são\nevidência externa sem "
+             "medida numérica.",
+             "R13/R14 são evidência externa sem\nmedida numérica e sem "
+             "contrato implementado → `report_not_implemented`;\n"
+             "R04/R09/R12/R15 possuem contrato implementado.",
+         )],
+         reason="mapeamento report_not_implemented superado na regra"),
+    dict(source_id="doc-120",
+         title_contains="Adendo — Estado de integracao produtivo",
+         action="fix",
+         fix_lines=[(
+             "Pacotes R04 (GAP-01), R09 (E6-D1..D6/E9), R13/R14 (D-5) "
+             "permanecem `DECISION_REQUIRED`/`BLOCKED_BY_EVIDENCE`.",
+             "R13/R14 (D-5) permanecem `BLOCKED_BY_EVIDENCE`; R04 e R09 "
+             "implementados desde então (visão operacional; paridades "
+             "pendentes).",
+         )],
+         reason="afirmação mista: R04/R09 superados, R13/R14 vigentes"),
+
+    # ---------------- Gate 081 — auditoria integral (22214 itens) ----------------
+    dict(source_id="doc-121",
+         title_contains="Adendo — stage-03 (31/10/2026): comparação transversal",
+         action="drop",
+         reason="registro datado — 'demais respondem report_not_implemented' superado"),
+    dict(source_id="doc-23",
+         title_contains="G060 — Correção de classificação (2026-11-02)",
+         action="drop",
+         reason="registro datado — R06 implementado"),
+    dict(source_id="doc-23",
+         title_contains="IMPLEMENTATION-STAGE-03 — comparação transversal",
+         action="drop",
+         reason="registro datado — 'R09/R12/R15 seguem sem contrato' superado"),
+    dict(source_id="doc-23",
+         title_contains="REWORK-008 — Integração P7",
+         action="drop",
+         reason="registro datado — afirmações de produtor superadas"),
+    dict(source_id="doc-85",
+         title_contains="Adendo — Publicacao produtiva",
+         action="drop",
+         reason="registro datado — 'R04 sem contrato' superado"),
+    dict(source_id="doc-88",
+         title_contains="C3-D01 — Escopo mínimo da primeira entrega",
+         action="drop",
+         reason="registro datado — 'R05–R11 sem contrato' superado"),
+    dict(source_id="doc-88",
+         title_contains="C3-D06 — Dependências incompletas",
+         action="drop",
+         reason="registro datado — 'R04 BLOCKED' superado"),
+    dict(source_id="doc-86",
+         title_contains="9. Priorização recomendada",
+         action="fix",
+         fix_lines=[(
+             "Bloqueados** R03/R04/R13/R14",
+             "Bloqueados** R03/R13/R14 (R04 implementado posteriormente — "
+             "visão operacional; paridade MATR860 pendente)",
+         )],
+         reason="lista de bloqueados superada para R04"),
+)

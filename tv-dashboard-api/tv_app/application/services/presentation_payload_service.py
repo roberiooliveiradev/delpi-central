@@ -1,7 +1,14 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 from uuid import UUID
+
+from tv_app.application.security.authorization_fingerprint import (
+    build_authorization_fingerprint,
+)
+from tv_app.infrastructure.cache.bounded_ttl_lru_cache import BoundedTtlLruCache
+from tv_app.infrastructure.cache.single_flight import SingleFlightRegistry
 
 from tv_app.application.services.comunicado_enrichment_service import ComunicadoEnrichmentService
 from tv_app.application.services.native_screen_data_service import NativeScreenDataService
@@ -34,6 +41,56 @@ from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     PlaylistNotFoundError,
     PlaylistRepository,
 )
+
+
+# Payload compartilhado por playlist: cada kiosk fazia polling próprio e cada
+# poll remontava o payload inteiro (todas as telas nativas → blocos → api-delpi),
+# multiplicando as chamadas downstream por kiosk. TTL = heartbeat do player —
+# remontar mais rápido que o refresh da TV é desperdício. Dedup da concorrência
+# pelo mesmo single-flight já usado nas camadas de dados.
+_presentation_payload_cache = BoundedTtlLruCache[dict[str, Any]](
+    ttl_seconds=float(heartbeat_interval_sec()),
+    retention_seconds=300.0,
+    max_entries=256,
+)
+_presentation_payload_inflight = SingleFlightRegistry[dict[str, Any]]()
+
+
+def _presentation_payload_cache_key(
+    *,
+    scope: str,
+    identifier: str,
+    authorization: str | None,
+    user: Any | None,
+    filter_overrides: dict[str, Any] | None,
+) -> str:
+    fingerprint = build_authorization_fingerprint(
+        authorization=authorization,
+        user=user,
+        service_context="user-preview" if user is not None else "presentation-service",
+    )
+    return json.dumps(
+        {
+            "scope": scope,
+            "identifier": identifier,
+            "authorizationFingerprint": f"sha256:{fingerprint}",
+            "filterOverrides": filter_overrides or {},
+        },
+        sort_keys=True,
+        default=str,
+    )
+
+
+def reset_presentation_payload_cache() -> None:
+    _presentation_payload_cache.clear()
+    _presentation_payload_inflight.invalidate_all()
+
+
+def presentation_payload_cache_stats() -> dict[str, Any]:
+    return {
+        **_presentation_payload_cache.stats(),
+        "singleFlight": _presentation_payload_inflight.stats(),
+    }
 
 
 class PresentationPayloadService:
@@ -69,13 +126,29 @@ class PresentationPayloadService:
                 self._repo.touch_view(token)
             except Exception:
                 pass
-        return self._assemble_payload(
-            playlist,
+        cache_key = _presentation_payload_cache_key(
+            scope="public",
+            identifier=token,
             authorization=authorization,
-            public_media_urls=True,
             user=user,
             filter_overrides=filter_overrides,
         )
+        cached = _presentation_payload_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        payload = _presentation_payload_inflight.run(
+            cache_key,
+            lambda: self._assemble_payload(
+                playlist,
+                authorization=authorization,
+                public_media_urls=True,
+                user=user,
+                filter_overrides=filter_overrides,
+            ),
+        )
+        if payload is not None:
+            _presentation_payload_cache.set(cache_key, payload)
+        return payload
 
     def build_by_id(
         self,
@@ -95,13 +168,29 @@ class PresentationPayloadService:
         playlist = self._repo.get_by_id(playlist_id)
         if not playlist:
             raise PlaylistNotFoundError
-        return self._assemble_payload(
-            playlist,
+        cache_key = _presentation_payload_cache_key(
+            scope="preview",
+            identifier=str(playlist_id),
             authorization=authorization,
-            public_media_urls=True,
             user=user,
             filter_overrides=filter_overrides,
         )
+        cached = _presentation_payload_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        payload = _presentation_payload_inflight.run(
+            cache_key,
+            lambda: self._assemble_payload(
+                playlist,
+                authorization=authorization,
+                public_media_urls=True,
+                user=user,
+                filter_overrides=filter_overrides,
+            ),
+        )
+        if payload is not None:
+            _presentation_payload_cache.set(cache_key, payload)
+        return payload
 
     @staticmethod
     def _slide_filter_overrides(

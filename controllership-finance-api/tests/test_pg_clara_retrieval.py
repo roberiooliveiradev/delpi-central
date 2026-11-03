@@ -35,6 +35,7 @@ from controllership_finance_app.infrastructure.persistence import (
 )
 from controllership_finance_app.infrastructure.persistence.clara_knowledge_repository import (  # noqa: E501
     ClaraKnowledgeRepository,
+    KnowledgeNotFound,
 )
 from controllership_finance_app.infrastructure.persistence.plugins_db import (  # noqa: E501
     plugins_db_connect,
@@ -519,3 +520,157 @@ def test_mutation_coverage_loss():
     assert len(shrunk) == 104
     with pytest.raises(AssertionError):
         assert len(shrunk) == 105
+
+
+# ------------------------------------------------------------------
+# Gate 079 — rastreabilidade auditável dos 115 casos
+#
+# Registro por caso: id, pergunta literal, report_id, corpus, itens
+# (knowledge_id, source_id, citation_locator, rank, full_match),
+# evidência esperada, veredito e timestamp. Escreve JSONL quando
+# CLARA_TRACE_OUT aponta um caminho — artefato repetível antes/depois.
+# ------------------------------------------------------------------
+
+
+def _trace_record(case, verdict, hits, corpus_version) -> dict:
+    required = case.get("asserts") or case.get("markers") or []
+    return {
+        "id": case["id"],
+        "query": case["q"],
+        "report_id": case["report_id"],
+        "corpus": str(corpus_version["corpus_version_id"]),
+        "expected_evidence": required,
+        "expect": case.get("expect", "PASS_RETRIEVED"),
+        "verdict": verdict,
+        "limitation": case.get("resolved_by") or case.get("why"),
+        "items": [
+            {
+                "knowledge_id": str(h["knowledge_id"]),
+                "source_id": h["source_id"],
+                "citation_locator": h.get("citation_locator"),
+                "rank": h.get("rank"),
+                "full_match": h.get("full_match"),
+            }
+            for h in hits
+        ],
+    }
+
+
+def test_acceptance_traceability(corpus):
+    """Executa os 115 casos e emite registros auditáveis. Com
+    CLARA_TRACE_OUT=<arquivo> grava JSONL comparável entre execuções."""
+    import datetime
+    import json
+
+    version = corpus.current_corpus_version()
+    records = []
+    for case in GOLDEN_SET + NEGATIVE_SET:
+        hits = corpus.search(
+            query=case["q"], report_id=case["report_id"], limit=12,
+        )
+        verdict = _evaluate_semantic(case, corpus)
+        records.append(_trace_record(case, verdict, hits, version))
+        _check_case_result(case, verdict)
+
+    out = os.getenv("CLARA_TRACE_OUT")
+    if out:
+        stamp = datetime.datetime.now(datetime.UTC).isoformat(
+            timespec="seconds",
+        )
+        with open(out, "w", encoding="utf-8") as fh:
+            for rec in records:
+                rec["executed_at"] = stamp
+                fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    assert len(records) == 115
+
+
+def test_superseded_state_segments(corpus):
+    """Gate 080-RW01 — zero exposição de afirmações superadas:
+    drops e fix_lines removem os estados antigos de R04/R09/R12/R15
+    de TODO o conhecimento PUBLISHED (search com e sem report_id,
+    get por knowledge_id), preservando afirmações vigentes R13/R14
+    e a trilha SUPERSEDED para auditoria."""
+    stale_patterns = [
+        "R04/R13/R14 BLOQUEADO",
+        "R04 Consumo por OP | BLOQUEADO",
+        "R04 | `BLOCKED_BY_OWNER`",
+        "(R04/R09/R12/R15) → `report_not_implemented`",
+        "R04, R06, R07, R09–R15`: sem handler",
+        "R04 | `MATR860` candidato | — | — | ? | `BLOQUEADO`",
+        "Pacotes R04 (GAP-01), R09 (E6-D1..D6/E9)",
+        "R04/R06/R07 (2026-11-02) — status inicial",
+        "R04-G059 — owner/contrato confirmados",
+        "R04 | `NOT_IMPLEMENTED` (BLOQUEADO",
+        "nenhuma) | ficha (bloqueado, honesto)",
+        "EV-23 | `MATR860` é candidato a consumo por OP; nenhum artefato",
+        # Gate 081 — auditoria integral
+        "R04/R09/R12/R15 seguem sem contrato",
+        "demais respondem `report_not_implemented`",
+        "R09/R12/R15 seguem sem contrato",
+        "R05–R11 (paridades provadas, sem contrato",
+        "Bloqueados** R03/R04/R13/R14",
+        "G060 — Correção de classificação (2026-11-02)",
+        "R04/R13/R14 `BLOCKED",
+    ]
+    with plugins_db_connect() as conn, conn.cursor() as cur:
+        for pattern in stale_patterns:
+            cur.execute(
+                "SELECT knowledge_id FROM "
+                "controllership_finance.clara_knowledge_item"
+                " WHERE status='PUBLISHED' AND content ILIKE %s",
+                (f"%{pattern}%",),
+            )
+            found = cur.fetchall()
+            assert not found, (
+                f"afirmação superada ainda PUBLISHED: {pattern!r} → {found}"
+            )
+        # conteúdo corrigido presente nos segmentos mistos (fix_lines)
+        for fixed_claim in (
+            "R13/R14 BLOQUEADO (R13 externalidade confirmada",
+            "R04 Consumo por OP | IMPLEMENTADO (visão operacional",
+            "R04 | `IMPLEMENTED` (visão operacional",
+            "EV-23 | `MATR860` é candidato a consumo por OP; consumo "
+            "implementado",
+            "R13, R14`: sem handler BFF",
+        ):
+            cur.execute(
+                "SELECT count(*) FROM "
+                "controllership_finance.clara_knowledge_item"
+                " WHERE status='PUBLISHED' AND content ILIKE %s",
+                (f"%{fixed_claim}%",),
+            )
+            assert cur.fetchone()[0] >= 1, (
+                f"conteúdo corrigido ausente: {fixed_claim!r}"
+            )
+        # afirmações vigentes R13/R14 preservadas nos segmentos corrigidos
+        cur.execute(
+            "SELECT count(*) FROM controllership_finance.clara_knowledge_item"
+            " WHERE status='PUBLISHED' AND content ILIKE '%BLOQUEADO%'"
+            " AND content ~* '\\mR13'"
+        )
+        assert cur.fetchone()[0] >= 3
+
+    for rid in (None, "R04"):
+        hits = corpus.search(
+            query="O R04 ainda está bloqueado?",
+            report_id=rid,
+            limit=12,
+        )
+        assert hits, "busca vazia"
+        assert not [
+            h["title"] for h in hits if "BLOQUEADO" in h["title"].upper()
+        ]
+        stale_hits = [
+            h["knowledge_id"] for h in hits
+            if any(p.lower() in h["content"].lower() for p in stale_patterns)
+        ]
+        assert not stale_hits, f"conteúdo superado recuperado: {stale_hits}"
+
+    # get() fail-closed: versões SUPERSEDED não são devolvidas nem por id
+    for old_id in (
+        "19846578-e15c-4964-8ea3-74adcc2b3c60",  # doc-80 27.C versão antiga
+        "cede18a7-b186-47f8-916e-c4ebd92e4305",  # doc-83 §7 versão antiga
+        "78e9cd34-5e4c-4d14-ad03-1c677a864de0",  # doc-83 R04-BLOQUEADO drop
+    ):
+        with pytest.raises(KnowledgeNotFound):
+            corpus.get_item(old_id)

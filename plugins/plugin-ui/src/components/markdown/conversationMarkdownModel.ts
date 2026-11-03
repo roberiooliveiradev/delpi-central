@@ -1,8 +1,10 @@
-import { marked } from "marked";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkGfm from "remark-gfm";
 
 /**
  * Token model + deterministic plain-text projection for ConversationMarkdown.
- * Parse-only over marked.lexer — never emits HTML strings.
+ * Parse-only over unified/remark (mdast) — never emits HTML strings.
  */
 
 export type ConversationAuthorizedLink = {
@@ -67,12 +69,126 @@ export function safeConversationLinkDestination(
   }
 }
 
+const _remarkParser = unified()
+  .use(remarkParse)
+  .use(remarkGfm);
+
+type _MdastNode = {
+  type: string;
+  value?: string;
+  depth?: number;
+  ordered?: boolean;
+  start?: number;
+  lang?: string | null;
+  url?: string;
+  alt?: string | null;
+  children?: _MdastNode[];
+  position?: {
+    start?: { offset?: number };
+    end?: { offset?: number };
+  };
+};
+
+function _slice(
+  source: string,
+  node: _MdastNode,
+): string {
+  const s = node.position?.start?.offset;
+  const e = node.position?.end?.offset;
+  return typeof s === "number" && typeof e === "number"
+    ? source.slice(s, e)
+    : (node.value ?? "");
+}
+
+function _mdastToToken(
+  node: _MdastNode,
+  source: string,
+): MarkdownToken {
+  const kids = (node.children ?? []).map((c) =>
+    _mdastToToken(c, source),
+  );
+  const raw = () => _slice(source, node);
+  switch (node.type) {
+    case "root":
+      return { type: "root", tokens: kids };
+    case "paragraph":
+      return { type: "paragraph", tokens: kids, raw: raw() };
+    case "heading":
+      return {
+        type: "heading",
+        depth: node.depth ?? 1,
+        tokens: kids,
+        raw: raw(),
+      };
+    case "text":
+      return { type: "text", text: node.value ?? "", raw: node.value };
+    case "strong":
+      return { type: "strong", tokens: kids, raw: raw() };
+    case "emphasis":
+      return { type: "em", tokens: kids, raw: raw() };
+    case "delete":
+      return { type: "del", tokens: kids, raw: raw() };
+    case "inlineCode":
+      return { type: "codespan", text: node.value ?? "", raw: raw() };
+    case "break":
+      return { type: "br", raw: raw() };
+    case "link":
+      return {
+        type: "link",
+        href: node.url ?? "",
+        tokens: kids,
+        raw: raw(),
+      };
+    case "image":
+      return { type: "image", text: node.alt ?? "", raw: raw() };
+    case "html":
+      return {
+        type: "html",
+        raw: node.value ?? "",
+        text: node.value,
+      };
+    case "code":
+      return {
+        type: "code",
+        lang: node.lang ?? undefined,
+        text: node.value ?? "",
+        raw: raw(),
+      };
+    case "blockquote":
+      return { type: "blockquote", tokens: kids, raw: raw() };
+    case "list":
+      return {
+        type: "list",
+        ordered: node.ordered ?? false,
+        start: node.start ?? 1,
+        items: kids,
+        raw: raw(),
+      };
+    case "listItem":
+      return { type: "list_item", tokens: kids, raw: raw() };
+    case "thematicBreak":
+      return { type: "hr", raw: raw() };
+    case "table":
+      return { type: "table", tokens: kids, raw: raw() };
+    default:
+      return {
+        type: node.type,
+        text: node.value,
+        tokens: kids.length ? kids : undefined,
+        raw: raw(),
+      };
+  }
+}
+
 export function tokenizeConversationMarkdown(
   source: string,
 ): MarkdownToken[] | null {
   if (source.length > CONVERSATION_MARKDOWN_MAX_SOURCE_LENGTH) return null;
   try {
-    const tokens = marked.lexer(source, { gfm: true }) as unknown as MarkdownToken[];
+    const tree = _remarkParser.parse(source) as unknown as _MdastNode;
+    const tokens = (tree.children ?? []).map((c) =>
+      _mdastToToken(c, source),
+    );
     let count = 0;
     let links = 0;
     function inspect(nodes: MarkdownToken[], depth: number): boolean {

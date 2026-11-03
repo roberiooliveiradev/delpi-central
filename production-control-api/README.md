@@ -270,6 +270,10 @@ tem impedimento aberto.
   lookup por branch + OP + operação (nunca por reported_work_center), então
   o CT destino continua vendo o impedimento após transferência. Retorna
   items com open/acknowledged; resolved não entra.
+- GET /public/machine-load/{token}/operator-feedbacks/queue-active?branch=&workCenter=
+  — leitura anônima (só token do cockpit) dos impedimentos ativos cujas
+  OP+operação estão na fila PUBLISHED daquele posto; alimenta a sinalização
+  visual da listagem sem N+1 e sem vazar OPs de outros CTs.
 - run_id é capturado por leitura leve do repositório quando o run ativo do
   posto é exatamente da mesma OP/operação — sem Pulse, sem telemetria;
   feedback não exige run.

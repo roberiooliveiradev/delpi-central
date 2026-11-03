@@ -5,6 +5,7 @@ import {
   confirmRunHandoff,
   fetchActiveProductionRun,
   fetchPublicMachineLoad,
+  fetchQueueActiveOperatorFeedbacks,
   fetchSensorizedWorkCenters,
   isAuthError,
   stopProductionRun,
@@ -12,8 +13,15 @@ import {
   type MachineLoadWorkCenter,
   type ProductionRunSnapshot,
   type PublicMachineLoadPayload,
+  type PublicOperatorFeedback,
   type RunHandoffResult,
 } from "./api.ts";
+import {
+  feedbackForOperationKey,
+  feedbackReasonLabel,
+  indexFeedbackByOperation,
+  queueFeedbackTagLabel,
+} from "./operatorFeedback.ts";
 import {
   clearPendingHandoffIntent,
   handoffConflictView,
@@ -364,6 +372,31 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     [workCenter, payload.selected.work_center, payload.selected.items],
   );
 
+  /** Impedimentos ativos das OPs da fila — sinalização anônima na listagem. */
+  const [queueFeedbackMap, setQueueFeedbackMap] = useState(
+    () => new Map<string, PublicOperatorFeedback>(),
+  );
+
+  useEffect(() => {
+    if (!workCenter) {
+      setQueueFeedbackMap(new Map());
+      return;
+    }
+    let cancelled = false;
+    fetchQueueActiveOperatorFeedbacks(token, branch, workCenter)
+      .then((items) => {
+        if (cancelled) return;
+        setQueueFeedbackMap(indexFeedbackByOperation(items));
+      })
+      .catch(() => {
+        // Falha de leitura não esconde a fila — só deixa de sinalizar.
+        if (!cancelled) setQueueFeedbackMap(new Map());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, branch, workCenter, feedbackUpdatedSignal, payload.snapshot.refreshed_at]);
+
   const orphanRun = useMemo(() => {
     if (!counterRun) return null;
     const inQueue = items.some(
@@ -702,7 +735,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             {shiftMetrics}
             <div className="pcp-pub__hero-aside">
               <OperatorSessionChip
-                blockOperatorSwitch={shouldBlockOperatorSwitch(counterRun)}
+                hasActiveRun={shouldBlockOperatorSwitch(counterRun)}
               />
               <span
                 className={`pcp-pub__live ${connected ? "pcp-pub__live--on" : "pcp-pub__live--off"}`}
@@ -812,6 +845,11 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
                         listedEntries[0] != null &&
                         operationKey(listedEntries[0].operation) ===
                           counterActiveKey;
+                      const feedback = feedbackForOperationKey(
+                        queueFeedbackMap,
+                        entry.operation.production_order,
+                        entry.operation.operation_code,
+                      );
                       const isNext =
                         !isActive && index === (activeOnTop ? 1 : 0);
                       return (
@@ -820,6 +858,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
                           entry={entry}
                           isActive={isActive}
                           isNext={isNext}
+                          feedback={feedback}
                           onOpenDetail={() =>
                             openOperation(
                               entry.operation.production_order,
@@ -1024,44 +1063,73 @@ function UpcomingRow({
   entry,
   isActive,
   isNext,
+  feedback,
   onOpenDetail,
 }: {
   entry: QueueEntry;
   isActive: boolean;
   isNext: boolean;
+  feedback: PublicOperatorFeedback | null;
   onOpenDetail: () => void;
 }) {
   const { operation } = entry;
   const pendingQty = operationPendingQty(operation);
   const { paCode, displayProductCode } = resolveVisualMeta(operation);
+  const hasImpediment = feedback != null;
+  const impedimentTone =
+    feedback?.status === "acknowledged" ? "ack" : hasImpediment ? "open" : null;
+  const impedimentTitle = hasImpediment
+    ? `${feedbackReasonLabel(feedback.reasonCode)} · ${queueFeedbackTagLabel(feedback.status)}`
+    : undefined;
 
   return (
     <tr
       className={[
         "pcp-pub__queue-row",
         isActive ? "pcp-pub__queue-row--running" : "",
-        isNext ? "pcp-pub__queue-row--next" : "",
+        !isActive && impedimentTone === "open"
+          ? "pcp-pub__queue-row--feedback-open"
+          : "",
+        !isActive && impedimentTone === "ack"
+          ? "pcp-pub__queue-row--feedback-ack"
+          : "",
+        isNext && !hasImpediment ? "pcp-pub__queue-row--next" : "",
       ]
         .filter(Boolean)
         .join(" ")}
     >
       <td className="pcp-pub__queue-seq">
-        <span
-          className={
-            paCode
-              ? "pcp-pub__queue-seq-pa pcp-pub__product-code--pa"
-              : "pcp-pub__queue-seq-pa"
-          }
-        >
-          {displayProductCode || "—"}
-        </span>
-        {isActive ? (
-          <span className="pcp-pub__queue-seq-tag pcp-pub__queue-seq-tag--running">
-            Em produção
+        <div className="pcp-pub__queue-seq-stack">
+          <span
+            className={
+              paCode
+                ? "pcp-pub__queue-seq-pa pcp-pub__product-code--pa"
+                : "pcp-pub__queue-seq-pa"
+            }
+          >
+            {displayProductCode || "—"}
           </span>
-        ) : isNext ? (
-          <span className="pcp-pub__queue-seq-tag">Próxima</span>
-        ) : null}
+          {isActive ? (
+            <span className="pcp-pub__queue-seq-tag pcp-pub__queue-seq-tag--running">
+              Em produção
+            </span>
+          ) : null}
+          {hasImpediment ? (
+            <span
+              className={
+                impedimentTone === "ack"
+                  ? "pcp-pub__queue-seq-tag pcp-pub__queue-seq-tag--feedback-ack"
+                  : "pcp-pub__queue-seq-tag pcp-pub__queue-seq-tag--feedback-open"
+              }
+              title={impedimentTitle}
+            >
+              {queueFeedbackTagLabel(feedback.status)}
+            </span>
+          ) : null}
+          {!isActive && !hasImpediment && isNext ? (
+            <span className="pcp-pub__queue-seq-tag">Próxima</span>
+          ) : null}
+        </div>
       </td>
       <td>
         <div className="pcp-pub__queue-op">

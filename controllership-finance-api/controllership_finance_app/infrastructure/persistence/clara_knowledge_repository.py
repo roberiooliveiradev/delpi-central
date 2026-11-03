@@ -295,6 +295,28 @@ class ClaraKnowledgeRepository:
                     )
                     return cur.rowcount
 
+    def mark_segments_superseded(
+        self, *, source_id: str, title_contains: str
+    ) -> int:
+        """Gate 080 — marca SUPERSEDED segmentos PUBLISHED cujo
+        conteúdo afirma um estado hoje comprovadamente superado
+        (lista declarativa do manifest). Determinístico por título;
+        o registro permanece no banco/GitHub para auditoria."""
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor() as cur:
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('clara_knowledge_item')}
+                           SET status = 'SUPERSEDED'
+                         WHERE source_id = %s
+                           AND status = 'PUBLISHED'
+                           AND title ILIKE %s
+                        """,
+                        (source_id, f"%{title_contains}%"),
+                    )
+                    return cur.rowcount
+
     def publish_corpus_version(
         self, *, actor: str, manifest: dict | None = None
     ) -> dict:
@@ -492,6 +514,7 @@ class ClaraKnowledgeRepository:
                       JOIN {_q('clara_knowledge_source')} s
                         ON s.source_id = k.source_id
                      WHERE k.knowledge_id = %s
+                       AND k.status = 'PUBLISHED'
                     """,
                     (knowledge_id,),
                 )

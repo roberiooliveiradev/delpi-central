@@ -117,3 +117,10 @@ atenção especial).
 - Limitações: `view=candidates` default; `out_of_criteria` vazio na
   evidência (visão testada, sem população live em 2026-09).
 - Referências: doc 85 §10; doc 126; doc 121; ficha R10.
+
+## Perguntas contraditórias — contexto vigente (Gate 079)
+
+- **"O R11 exclui/elimina notas do CPV ou DRE automaticamente?"** —
+  **Nunca.** O R11 é investigativo: `nunca exclusão automática` de
+  CPV, faturamento ou DRE. Notas candidatas seguem para investigação
+  humana — nenhum dado é removido do cálculo oficial.
