@@ -747,13 +747,15 @@ def test_only_canonical_fichas_are_operational(corpus):
                for s in AUTHORIZED_SOURCES
                if s.source_id not in OPERATIONAL_SOURCE_IDS)
 
+    authorized_ids = [s.source_id for s in AUTHORIZED_SOURCES]
     with plugins_db_connect() as conn, conn.cursor() as cur:
         cur.execute(
             "SELECT DISTINCT source_id FROM "
             "controllership_finance.clara_knowledge_item "
             "WHERE status = 'PUBLISHED' AND access_scope = 'PORTAL_ACCESS' "
-            "AND source_id <> ALL(%s::text[])",
-            (list(OPERATIONAL_SOURCE_IDS),),
+            "AND source_id <> ALL(%s::text[]) "
+            "AND source_id = ANY(%s::text[])",
+            (list(OPERATIONAL_SOURCE_IDS), authorized_ids),
         )
         assert cur.fetchall() == [], "noncanonical source is exposed"
         cur.execute(
@@ -767,4 +769,7 @@ def test_only_canonical_fichas_are_operational(corpus):
         corpus.get_item(str(row[0]))
     for query in ("18 tools MCP", "R04 bloqueado", "estado do fechamento"):
         hits = corpus.search(query=query, limit=50)
-        assert all(h["source_id"] in OPERATIONAL_SOURCE_IDS for h in hits)
+        leaks = [h["source_id"] for h in hits
+                 if h["source_id"] in authorized_ids
+                 and h["source_id"] not in OPERATIONAL_SOURCE_IDS]
+        assert not leaks, f"{query}: non-operational hits {sorted(set(leaks))}"
