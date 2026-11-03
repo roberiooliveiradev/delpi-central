@@ -534,13 +534,14 @@ STALE_SEGMENT_FIXES: tuple[dict, ...] = (
          )],
          reason="linha de matriz datada com PENDING_CONTRACT (G083)"),
     dict(source_id="doc-100",
-         title_contains="| Knowledge ingestion",
+         title_contains="Estado",
          action="fix",
          fix_lines=[(
              "52 fontes / 1.283 itens / retrieval com citação — "
              "**PASS real**",
-             "52 fontes / 1.283 itens (corpus vigente: 88 fontes / "
-             "2.207 itens) / retrieval com citação — **PASS real**",
+             "corpus da época: 52 fontes e 1.283 itens (vigente: "
+             "88 fontes / 2.208 itens) / retrieval com citação — "
+             "**PASS real**",
          )],
          reason="métrica datada de corpus (G083)"),
     dict(source_id="doc-100",
@@ -604,8 +605,9 @@ STALE_SEGMENT_FIXES: tuple[dict, ...] = (
          action="fix",
          fix_lines=[(
              "18 tools CLARA expostas ao assistente",
-             "18 tools CLARA expostas ao assistente na época "
-             "(vigente: seis tools semânticas + read/analyze)",
+             "tools CLARA expostas ao assistente — contagem "
+             "datada: 18 (vigente: seis tools semânticas + "
+             "read/analyze)",
          )],
          reason="contagem datada de tools (G083)"),
     dict(source_id="doc-117",

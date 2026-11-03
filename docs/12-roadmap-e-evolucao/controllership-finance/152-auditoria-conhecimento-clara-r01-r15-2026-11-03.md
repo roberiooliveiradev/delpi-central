@@ -806,7 +806,7 @@ Ambas no `DIVERGENCE_REGISTRY` emitido em `g082rw-divergences.jsonl` com risco/d
 
 ## 24. Gate 083 — Eliminação de resíduos (03/11/2026)
 
-**Executor:** Devin · **Issue:** #130 · **Corpus:** `7d3ca573` local (2.208/88 — republicado; baseline produtivo `9b2f318f`). Objetivos G083-A/B/C contra os resíduos do `ACCEPT_WITH_RESIDUAL` do G082-RW02.
+**Executor:** Devin · **Issue:** #130 · **Corpus:** `5782708a` local (2.208/88 — republicado; produtivo `59bedb57`→`PENDING` (republicação com resíduos finais)). Objetivos G083-A/B/C contra os resíduos do `ACCEPT_WITH_RESIDUAL` do G082-RW02.
 
 ### 24.1 G083-A — Pendências semânticas
 
