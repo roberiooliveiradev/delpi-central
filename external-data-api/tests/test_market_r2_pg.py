@@ -307,13 +307,19 @@ def test_legacy_tables_unaffected(migrated):
     assert metals == 6
     catalog = mdq.get_catalog()
     metals_list = [i for i in catalog["instruments"] if i["kind"] == "metal"]
-    # Contract evolution (V008 + R12/R13): instruments bound to the
-    # homologated MetalCharts source resolve an effective binding whose
-    # scope grants internal_display — display_allowed=True is now the
-    # canonical state, while the LME-backed Pink Sheet scope itself
-    # keeps its pending quarantine (see SOURCE-RIGHTS evidence §5).
-    assert all(i["display_allowed"] is True for i in metals_list)
-    assert all(i["source_id"] == "metalcharts" for i in metals_list)
+    # Contract evolution (V008 + R12/R13): the five homologated
+    # instruments resolve their effective binding to metalcharts and
+    # are displayable; tin has no homologated binding, keeps the
+    # pending Pink Sheet source and stays quarantined — the LME review
+    # gate thus holds per-instrument, not per-kind.
+    by_code = {i["instrument_code"]: i for i in metals_list}
+    homologated = {"aluminum", "copper", "lead", "nickel", "zinc"}
+    assert {
+        c for c, i in by_code.items() if i["source_id"] == "metalcharts"
+    } == homologated
+    assert all(by_code[c]["display_allowed"] is True for c in homologated)
+    assert by_code["tin"]["source_id"] == "world-bank-pink-sheet"
+    assert by_code["tin"]["display_allowed"] is False
     sources = {s["source_id"]: s for s in catalog["sources"]}
     pink_scope = sources["world-bank-pink-sheet"]["allowed_use_scope"]
     assert "internal_display_pending_lme_review" in pink_scope
