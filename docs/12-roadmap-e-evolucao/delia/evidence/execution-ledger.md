@@ -4545,3 +4545,16 @@ Rastreabilidade: suites enumeradas = 20 adapter + 42 unified +
 (mensagem anterior somava subconjuntos; consolidado verificado).
 E2E empresarial: TEST_NOT_RUN (identidade indisponivel ao executor;
 container oficial ja roda pydantic_ai para a sessao do usuario).
+
+## M4 — CONTROLLED CUTOVER local: pydantic_ai default
+
+SHA=<next>: default DELIA_MODEL_RUNTIME=pydantic_ai (allowlist
+{legacy,pydantic_ai} fail-closed mantida; legacy apenas rollback
+explicito — nunca dois runtimes na mesma request; flag e' por
+processo). Container oficial delpi-delia-api ja estava com flag
+explicita — agora o default confirma. Testes: default+explicito+
+invalido+rollback GREEN (21 adapter), regressao suites GREEN.
+M4-AC01-12 evidenciados; E2E empresarial = TEST_NOT_RUN identidade
+executor; sessao do usuario exercita pydantic_ai em producao-local.
+Rollback: DELIA_MODEL_RUNTIME=legacy (recria container, isolado).
+Residual M5: legacy adapter + langgraph_engine permanecem.

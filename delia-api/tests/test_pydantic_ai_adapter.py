@@ -289,3 +289,12 @@ def test_known_model_runtimes_accepted(monkeypatch):
     assert Settings().model_runtime == "pydantic_ai"
     monkeypatch.setenv("DELIA_MODEL_RUNTIME", "legacy")
     assert Settings().model_runtime == "legacy"
+
+
+def test_model_runtime_defaults_to_pydantic_ai(monkeypatch):
+    """M4 cutover: pydantic_ai is the governed default; legacy exists
+    only as explicit rollback."""
+    from app.infrastructure.config.settings import Settings
+
+    monkeypatch.delenv("DELIA_MODEL_RUNTIME", raising=False)
+    assert Settings().model_runtime == "pydantic_ai"
