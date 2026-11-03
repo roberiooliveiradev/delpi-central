@@ -138,6 +138,9 @@ from app.application.capability_provision.contracts import (
     CapabilityProviderError,
     ProviderCapability,
 )
+from app.application.capability_provision.generic_evidence_renderer import (
+    render_business_evidence,
+)
 from app.application.capability_provision.conversational_response import (
     MAX_RENDER_CONTENT_CHARS,
     CriComposition,
@@ -9339,6 +9342,25 @@ class OperationalCapabilityOrchestrator:
             facts.records, verdict, req, contract_text
         )
         comp_started = time.monotonic()
+        # UNIFIED-PRESENTATION-01: one generic render of the authorized
+        # evidence — records plus owner-declared result context (root)
+        # — replaces the scattered scalar-only projection caps. The
+        # renderer budget protects transport; exhaustion is reported
+        # as partial, never a silent drop.
+        _sr_budget = [0]
+        _ctx = dict(facts.result_context or {})
+        _root = _ctx.get("root")
+        _evidence_value = (
+            {"root": _root, "items": list(facts.records)}
+            if _root
+            else list(facts.records)
+        )
+        _sr_lines, _sr_partial = render_business_evidence(
+            _evidence_value,
+            self._field_labels,
+            _budget=_sr_budget,
+        )
+        structured_render = chr(10).join(_sr_lines) if _sr_lines else None
         cri = compose_cri_response(
             verdict=verdict,
             requirements=req,
@@ -9352,6 +9374,8 @@ class OperationalCapabilityOrchestrator:
             contract_facts=facts.contract_facts,
             projected_content=projected_content,
             limitations=limitations,
+            structured_render=structured_render,
+            structured_partial=_sr_partial,
         )
         comp_ledger = current_call_ledger()
         if comp_ledger is not None:

@@ -57,6 +57,7 @@ from app.application.capability_provision.outcome_assessment import (
     verified_ordering_event,
 )
 from app.application.interaction.contracts import (
+    LIMITATION_EVIDENCE_PROJECTION_PARTIAL,
     LIMITATION_INSUFFICIENT_EVIDENCE,
     LIMITATION_RESULT_TRUNCATED,
 )
@@ -187,6 +188,8 @@ def compose_cri_response(
     contract_facts: Sequence[str] = (),
     projected_content: str | None = None,
     limitations: Sequence[str] = (),
+    structured_render: str | None = None,
+    structured_partial: bool = False,
 ) -> CriComposition | None:
     """Compose the governed conversational response, or ``None``.
 
@@ -349,21 +352,27 @@ def compose_cri_response(
         if lead is None:
             return None
         paragraphs.append(lead)
-        paragraphs.append("\n".join(record_lines))
+        if structured_render is not None:
+            paragraphs.append(structured_render)
+        else:
+            paragraphs.append("\n".join(record_lines))
     elif len(records) == 1:
         record = records[0]
-        if not record.fields:
+        if not record.fields and structured_render is None:
             return None
         lead = _format(leads.get("single_found"), **params)
         if lead is None:
             return None
         paragraphs.append(lead)
-        paragraphs.append(
-            "\n".join(
-                f"- {label}: {value}"
-                for label, value in record.fields[:MAX_FIELDS_PER_RECORD]
+        if structured_render is not None:
+            paragraphs.append(structured_render)
+        else:
+            paragraphs.append(
+                "\n".join(
+                    f"- {label}: {value}"
+                    for label, value in record.fields[:MAX_FIELDS_PER_RECORD]
+                )
             )
-        )
         presented = 1
     else:
         # A declared complete-coverage ask widens the presentation
@@ -390,7 +399,10 @@ def compose_cri_response(
         if lead is None:
             return None
         paragraphs.append(lead)
-        paragraphs.append("\n".join(record_lines))
+        if structured_render is not None:
+            paragraphs.append(structured_render)
+        else:
+            paragraphs.append("\n".join(record_lines))
 
     # ---- presentation-faithfulness notices (E3-G2) -----------------
     # ``delivered_count`` is the canonical distinct-delivered figure
@@ -426,6 +438,12 @@ def compose_cri_response(
     # proven next-turn retrieval binding), so promising detail would
     # offer a capability that cannot be served.
 
+    if structured_partial and (
+        LIMITATION_EVIDENCE_PROJECTION_PARTIAL not in limitations
+    ):
+        limitations = (
+            *limitations, LIMITATION_EVIDENCE_PROJECTION_PARTIAL
+        )
     return CriComposition(
         "\n\n".join(paragraphs), presented, tuple(limitations)
     )

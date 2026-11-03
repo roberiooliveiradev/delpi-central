@@ -2265,3 +2265,19 @@ presented_record) -> remover caps MAX_FIELDS=4/MAX_PRESENTED=5
 dos paths de apresentacao (conv_resp 64-66,153-378) -> synth
 instruction drop object/list -> RED tests R1-R12 -> regressao +
 commit + push (SEM deploy).
+
+## T20-UNIFIED-PRESENTATION — resume 2 (renderer no disco)
+
+GRAVADO: generic_evidence_renderer.py (AST_OK) — render_business_evidence
+recursivo + _md_escape + completeness constants + budget 512/6/2000.
+
+EM CURSO: compose_cri_response ganha kwargs structured_render +
+structured_partial; single/multi branches usam render quando presente;
+partial -> LIMITATION_EVIDENCE_PROJECTION_PARTIAL. (patch pronto,
+falhou so por workdir — re-executar com workdir=C:\)
+
+PENDENTE: call-site orch _compose_cri_response passa raw
+facts.records+result_context via renderer -> structured_render;
+remover caps MAX_FIELDS=4/MAX_PRESENTED=5 dos paths de apresentacao
+(conv_resp 64-66,153-378); synth "never object/list"; RED tests
+R1-R12; regressao; commit+push (SEM deploy).

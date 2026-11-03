@@ -4343,8 +4343,12 @@ class GptActionsDispatchService:
                 # (policy editor_live) e auditoria estrutural — com
                 # basisRevision (estado persistido, não a proposta).
                 try:
+                    from tv_app.application.services.data.slide_preview_render_service import (
+                        get_slide_preview_render_service,
+                    )
                     _svc = get_slide_preview_render_service()
-                    if _sid and _pid and existing_blocks:
+                    _sl = locals().get("_sl") or {}
+                    if _sid and _pid and _sl:
                         _rev = str(
                             self._writes.get_revision(UUID(_pid)) or ""
                         )
@@ -4365,6 +4369,7 @@ class GptActionsDispatchService:
                             rendered=_rnd, preview_svc=_svc,
                         )
                         payload["visualEvidence"] = {
+                            "status": "available",
                             "basisRevision": _rev,
                             "previewUrl": _sp.get("previewUrl"),
                             "rendered": _rnd,
@@ -4373,8 +4378,20 @@ class GptActionsDispatchService:
                                 if isinstance(_native, dict) else {}
                             ),
                         }
+                    elif _sid and _pid:
+                        payload["visualEvidence"] = {
+                            "status": "unavailable",
+                            "failureCode": "SLIDE_NOT_FOUND",
+                        }
+                except GptActionsError:
+                    raise
                 except Exception:
-                    pass
+                    # falha de evidência não é silenciosa nem vira
+                    # sucesso — estado tipado e honesto no resultado.
+                    payload["visualEvidence"] = {
+                        "status": "unavailable",
+                        "failureCode": "PREVIEW_UNAVAILABLE",
+                    }
                 # readiness honesto: layout pronto ≠ dados prontos.
                 if payload["bindingPlan"]["state"] != "RESOLVED":
                     payload["dataReadiness"] = "pending_source_selection"

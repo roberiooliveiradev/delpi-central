@@ -234,20 +234,6 @@ export function ProductionRunControls({
         </div>
       ) : (
         <div className="pcp-pub__run-session">
-
-          {pendingItems && pendingItems.length > 0 ? (
-            <div className="pcp-pub__run-actions">
-              <button
-                type="button"
-                className="pcp-pub__btn pcp-pub__btn--ghost"
-                onClick={() => setPendingModalOpen(true)}
-                disabled={busy}
-              >
-                Paradas sem motivo ({pendingItems.length})
-              </button>
-            </div>
-          ) : null}
-
           {otherRun ? <p className="pcp-pub__run-warn">{otherRun}</p> : null}
 
           {run && runMatchesOperation && deviceOnline === false ? (
@@ -505,15 +491,16 @@ export function ProductionRunControls({
               ) : null}
             </div>
           ) : (
-            <div className="pcp-pub__run-actions">
+            <div className="pcp-pub__run-actions pcp-pub__run-actions--start">
               <button
                 type="button"
-                className="pcp-pub__btn pcp-pub__btn--primary"
+                className="pcp-pub__run-play"
                 onClick={() => void play()}
                 disabled={busy || Boolean(otherRun)}
+                aria-label="Iniciar contagem"
+                title="Iniciar contagem"
               >
-                <Play size={16} aria-hidden="true" />
-                Iniciar contagem
+                <Play size={34} strokeWidth={2.5} aria-hidden="true" />
               </button>
             </div>
           )}

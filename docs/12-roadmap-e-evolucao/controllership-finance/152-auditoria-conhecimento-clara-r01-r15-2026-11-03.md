@@ -145,3 +145,104 @@ Para cada relatório: (1) que problema resolve, momento do PROC-0072 e classific
 - **CLARA-KNOW-011 (P1):** R03 — explicitar motor de snapshot SB9010 versus P7 oficial e não declarar equivalência sem homologação.
 - **R08:** producer SQL literal ainda `TO_INVENTORY` nesta passagem; documentação do domínio recuperada, não extrapolar.
 - **Status:** `CODE_PROVEN` em cinco arquivos SQL e diferenças de explicação; `INCONCLUSIVE` para paridade de produção ou resultado de todos os predicados downstream. `DOCUMENTATION_ONLY`.
+
+
+## 8. GPT REVIEW independente do Gate 072 (03/11/2026, ~10:31 BRT)
+
+**GitHub `main` conferida:** `99e892807715feebcb8d52e91205274c0d4cd68b`; implementação `e83fc8341195e918e89e6f58d51e15b65fc855b8`, documentação `d2fdead52acbdf81c89a00436fb97d4486a174b2` / `99e8928077...`. Commit de código modificou rota BFF R04, `tool_bridge.py` e fichas R04/R09/R12/R15, não os 15 arquivos de fichas. Git status local e SHA de containers não foram verificados diretamente.
+
+**Corpus realmente observado na CLARA conectada:** `497ec9af-00d4-4e07-9b64-b96fcc97f3c5`, publicado `2026-11-03 10:29:04-03`, **2.230 itens / 88 fontes** — `PASS` em existência/versão, não em qualidade semântica de todas as respostas.
+
+### Testes live executados no GPT REVIEW
+
+| Verificação | Resultado | Evidência factual |
+|---|---|---|
+| `read(report.production_order_consumption)` 2026-09, branch 01 | **PASS** | `success=true`, total **1.243**, 25 linhas na página padrão; primeira OP `24841701001` |
+| `read(report.production_order_consumption)` 2026-10, branch 01 | **PASS** | `success=true`, total **2.381**, 25 linhas; primeira OP `24905301001` |
+| `read(report.billing_mod_breakdown)` 2026-09, branch 01 | **PASS** | `success=true`, **299 âncoras**, 8 limitações |
+| `read(report.cost_closing_state)` 2026-09 | **PASS** | `success=true`, quatro limitações |
+| `knowledge(search,query='R04')` | **PASS parcial** | nova ficha `R04-ficha.md` identifica produtor api-delpi, BFF, rota e `IMPLEMENTADO`, preservando MATR860 `pending` |
+| `knowledge(search,query='R09')` | **FAIL semântico** | **mesma ficha R09 atual** retorna seção “Interpretação” com `não pode consultar dados — sem endpoint` e `report_not_implemented`, embora seção “Identificação” diga `IMPLEMENTADO` e read real passe. Busca também retorna bloco de publicação antigo `PENDING_CONTRACT/EXTERNAL`, versão 1.0/31-10 |
+| `knowledge(search,query='R12')` | **Inconsistência histórica recuperável** | seção `Identificação` diz `IMPLEMENTADO` e seção “Atualização v1.1” cita CLARA live, mas cabeçalho inicial ainda diz corpus antigo `5bebf07f` e `sem contrato operacional`; legenda `report_not_implemented` aparece em interpretação histórica |
+| `knowledge(search,query='R15')` | **Inconsistência histórica recuperável** | seção “Identificação” diz `IMPLEMENTADO`, mas título de versão 1.0 cita publicação antiga `5bebf07f` e `sem contrato operacional`; `fichas/README.md` também permanece na versão anterior |
+
+**Causa documentada:** a edição do Gate 072 atualizou linhas de `Implementação`, mas preservou no mesmo documento indexado blocos antigos com afirmações presentes formuladas no presente (“não pode consultar”, “hoje report_not_implemented”), sem marcação estruturada inequívoca de HISTÓRICO OBSOLETO. A ingestão incorporou esses blocos; nova versão publicada **não os tornou inacessíveis**. Não é prova de falha no parser ou no ranking, mas é prova de **contradição na base de recuperação**. Os nomes de fontes do corpus ainda incluem, por exemplo, “Ficha R04 — Consumo por OP (bloqueado)”, mesmo com corpo atualizado, exigindo revisar títulos/manifests se esses títulos forem mostrados aos usuários.
+
+### Veredito por objetivo
+
+- **Incidente P0 CF-UX-050 (CLARA R04 HTTP 400): `PASS` na consulta real positiva em duas competências.** Código no HEAD adiciona `isinstance(value,str)` antes de encaminhar os params do R04, coerente com hipótese de `Query` default leak; correção causal isolada depende de testes de requisição, mas outcome agora comprovado.
+- **Corpus publicado: `PASS`** para versão, data, volume e disponibilidade.
+- **R04 explicação: `PASS parcial`** (identificação atualizada; não comprova bateria de perguntas).
+- **R09 explicação: `FAIL`**: corpus contradiz consulta real na seção “Interpretação”; **precisa de rework documental/publicação**.
+- **R12/R15 explicação: `FAIL parcial/STALE_EVIDENCE`** em trechos históricos que ainda podem ser recuperados sem qualificação.
+- **105 perguntas R01–R15: `TEST_NOT_RUN`**; para correção de conhecimento integral, não declarar 15/15 PASS. Demais fichas não atualizadas conforme relatório Devin e matriz doc 152.
+
+**Veredito de conjunto do Gate 072: `REWORK` para o objetivo de conhecimento correto R01–R15; `ACCEPT_WITH_RESIDUAL` apenas para a correção operacional do R04 + publicação física do corpus.**
+
+**Rework mínimo sugerido:** (1) revisar ficha R09 por inteiro, reescrevendo interpretações presentes falsas e referências históricas, não apenas a linha Implementação; (2) retirar ambiguidades semelhantes do texto ativo R12/R15, preservando eventos históricos somente em seção rotulada “Histórico, não estado atual”; (3) atualizar índice/manifests/títulos de fontes; (4) republicar corpus pela rotina canônica; (5) **retestar knowledge search** para termos negativos (`não pode consultar`, `sem endpoint`, `report_not_implemented`) com report_id e por query, verificando atribuição temporal e referências; (6) executar bateria de perguntas progressiva ao longo de R01–R15 com prova source→SQL→contrato, sem modificar SQL/segurança por aparente drift semântico.
+
+**Segurança e paridade:** nenhuma alteração de SQL/TOTVS/permissions requerida pelo achado. R04 MATR860 e R09 DLP204 continuam `officialParity=pending`. Validação Portal visual autenticada ainda `TEST_NOT_RUN` nesta revisão.
+
+
+## 9. GPT REVIEW independente — Gate 073 (03/11/2026)
+
+**Commits verificados:** `main=5c5f58d5cf4cb91e401a842a5a0ece1356f51ce7`; commit funcional/documental `f11d1f9f644465e2f1be2213739b970faa0b3343` (cinco arquivos: `corpus_manifest.py`, fichas R09/R12/R15, `fichas/README.md`). `git status` local não inspecionado.
+
+**Corpus live:** `knowledge(sources)` devolveu `664c61b3-38f3-469a-8019-a94db5c2c81f`, publicado 03/11/2026 10:40:21 -03, 2.252 itens / 88 fontes — `PASS` publicação.
+
+**R09:** consulta `knowledge(search,query="R09")` recupera trecho de implementação vigente e interpretação reescrita, sem a antiga negativa presente de “não pode consultar — sem endpoint”. Histórico está rotulado como pretérito. `PASS` no caso pontual (não significa 105/105).
+
+**REGRESSÃO CRÍTICA REPRODUZIDA EM GITHUB E CLARA — R12/R15:** arquivos `docs/.../fichas/R12-ficha.md` e `R15-ficha.md` contêm substituição textual global destrutiva de barras `/` pela sequência **` para rotinas (visão read-only)`**. Amostras literais no HEAD:
+- R12 L1 título `Fechamento de custo  para rotinas (visão read-only) Reposição ...`; L3 data `31 para rotinas (visão read-only)10 para rotinas (visão read-only)2026`; L9 `Código para rotinas (visão read-only)nome`; L87 paths `GET para rotinas (visão read-only)financeiro...`.
+- R15 L1 `Cutoff para rotinas (visão read-only) sacramentação...`; L3 data corrompida; L18 `R12 para rotinas (visão read-only)R15`; L78 divisores de campo corrompidos.
+- A CLARA recupera esses mesmos títulos e fragmentos via `knowledge(search)`, logo `CORPUS_SEMANTIC_FAIL` além de `SOURCE_CORRUPTION`.
+- A falha não foi eliminada pela alegada correção de heredoc e foi **commitada e publicada**. Provável classe de causa: substituição indiscriminada de separadores `/`; diagnóstico do comando específico não provado, não presumir além dos bytes constatados.
+
+**Outros resíduos observados:** `knowledge(sources)` ainda descreve fonte `Ficha R04 — Consumo por OP (bloqueado)`, embora `corpus_manifest.py` na main já contenha `(visão operacional)`: atualizar metadados reais/registro de origem e checar cache/source registry; não presumir que atualização do manifest implica renomeação no catálogo já publicado. `knowledge(search,R12)` recupera blocos duplicados com título antigo/nova ficha no mesmo documento, e blocos obsoletos `report_not_implemented`; investigar se são seções ainda presentes, múltiplas versões indexadas ou ambos, não concluir automaticamente supersede perfeito. R15 recupera bloco antigo semelhante.
+
+**Testes live independentes de Gate 073:** `knowledge(sources)`, `knowledge(search,R04/R09/R12/R15)` foram executados. O executor informou `105 perguntas TEST_NOT_RUN` e `read R04/R09/R12 TEST_NOT_RUN`. Não promover para PASS. Último teste positivo R04/R09/R12 foi realizado na revisão do Gate 072, não novamente nesta revisão.
+
+### Decisão do GPT REVIEW
+**`REWORK` obrigatório** para Gate 073: regressão de integridade textual nas fichas R12/R15 confirmada no HEAD e propagada ao corpus. A publicação física e melhoria R09 foram `PASS` pontual, mas a entrega não satisfaz correção e qualidade semântica R01–R15.
+
+### Rework mínimo seguro antes de republicar
+
+1. Restaurar R12/R15 de versão íntegra pre-G073 (por exemplo, comparar blob do commit base do Gate 073) e reaplicar **somente diffs mínimos semânticos**, sem substituição global de `/` e sem reescrever backticks/URLs/paths/datas.
+2. Verificar line-by-line ou diff estrutural; procurar toda ocorrência de `para rotinas (visão read-only)` e outras corrupções em ambas as fichas. Tratar `0 hits` como condição necessária, não suficiente; conferir datas, URLs, links, markdown, contratos e conteúdo original preservado.
+3. Adicionar teste de integridade das fontes e validação de mudanças indevidas em arquivos do corpus (paths intactos, headings, datas, code spans, URLs e hash/citation_locator); executar antes do commit e ingestão.
+4. Corrigir metadados R04 no **registry efetivamente servido** por `knowledge(sources)`, não apenas no manifest de origem; demonstrar output live.
+5. Investigar segmentação/recuperação duplicada R12/R15 (version/supersede) e preservar histórico com distinção temporal explícita. Republicar corpus somente após gates de integridade `PASS`.
+6. Smoke pós-publicação via CLARA autenticada: `knowledge(search)` R04/R09/R12/R15 e perguntas negativas, `read` R04/R09/R12; 105 cenários de explicação R01–R15 seguem como `TEST_NOT_RUN` até executados.
+
+**Sem necessidade de alteração de regras de negócio, SQL TOTVS, boundaries ou permissões a partir destes achados.** Prioridade de correção: **P0 integridade textual R12/R15**.
+
+
+## 10. GPT REVIEW independente — Gate 074 (03/11/2026)
+
+**HEAD GitHub observado:** `06998895d54b716ef0fbe37a3734b1ff15ee351f` (após execução relatada). Commit de reparo `3efc207992546a7a1500087b50a45a8eb73afa94` modificou somente `R12-ficha.md`, `R15-ficha.md`, `test_fichas_integrity.py`. `git status` local do ambiente Devin não verificável neste canal.
+
+**Corpus live:** `knowledge(sources)` retornou versão `60b2b2d9-52d2-46d0-8ce7-28454f4d52ff`, publicada em 03/11/2026 10:47:26 BRT, 2.252 itens/88 fontes — `PASS` para publicação física.
+
+**Integridade dos arquivos no HEAD:** R12/R15 em `main` não contêm `para rotinas (visão read-only)`, e datas/títulos/rotas `GET /financeiro/closing-state`, `R12/R15`, `MATA330/MATA280` estão legíveis. `PASS` no escopo literal verificado. Teste canônico novo `test_fichas_integrity.py` existe com 2 asserts test cases para splice e identificadores; execução `2/2` é **reportada pelo executor**, não reexecutada neste canal.
+
+**FALHA DE SUPSERSEDE/RECUPERAÇÃO COMPROVADA:** `knowledge(search,query="R12",limit=70)` retornou simultaneamente segmentos da fonte `ficha-r12` com `source_version=d7bc370cee33` (versão corrompida G073) **e** `source_version=937a783ca24d` (versão corrigida G074). A versão antiga aparece no próprio `heading_path` e `excerpt`, p.ex. `31 para rotinas (visão read-only)10 para rotinas (visão read-only)2026` e `Código para rotinas (visão read-only)nome`. `knowledge(search,query="R15")` também retorna títulos e trechos corrompidos junto a versões corretas. Logo `knowledge(sources)` apontar hash novo **não comprova** supersede efetivo da coleção pesquisável.
+
+**Metadados live não corrigidos:** `knowledge(sources)` ainda retorna `Ficha R04 — Consumo por OP (bloqueado)` e `Ficha R14 — Importação / câmbio (bloqueado)`, embora o `corpus_manifest.py` tenha nomes atuais no HEAD anterior. `FAIL` no requisito de atualização de registry/sources servido.
+
+**Consultas operacionais executadas independentemente nesta revisão:** `read(report.production_order_consumption)` 2026-09 branch01 `PASS` total 1.243/25 items; 2026-10 branch01 `PASS` total 2.381/25; `read(report.billing_mod_breakdown)` 2026-09 branch01 `PASS` 299 anchors e 8 limitações; `read(report.cost_closing_state)` 2026-09 `PASS`, 4 limitações. Esses resultados validam operação do conector, não eliminam falha no corpus.
+
+**105 verificações de conhecimento:** `TEST_NOT_RUN` (executor não executou e esta revisão amostrou busca pontual, não 105 perguntas).
+
+### Veredito
+
+**`REWORK`** para Gate 074: **fonte GitHub reparada e corpus republicado, mas ainda há dados da versão corrompida recuperáveis em produção, comprovados por `source_version` duplicado sob mesmo `source_id`.** O objetivo de integridade **end-to-end** não está atendido. **`ACCEPT_WITH_RESIDUAL` apenas para reparo dos arquivos-fonte + operação dos relatórios**, não para o corpus.
+
+### Próximo rework mínimo, com gate de segurança
+
+1. Inspecionar mecanismo atual de ingestão/upsert/versionamento, índices de busca e filtros de validade `source_id/source_version/corpus_version_id`; rastrear por que corpus novo mantém itens `source_version=d7bc370cee33` ativos no search de R12. Não apagar versões em lote sem inventário/rollback; confirmar comportamento intended de retenção histórica vs busca default.
+2. Garantir que a busca default de conhecimento vigente exclua/tipifique explicitamente fontes superadas; manter histórico consultável somente em fluxo histórico governado, se já previsto em contrato. Mudança de semântica de retenção/retrieval exige owner approval conforme governança; sem decisão, retornar `DECISION_REQUIRED`.
+3. Corrigir persistência e exposição dos nomes de fontes em `knowledge(sources)` para R04/R14 por mecanismo existente; provar antes/depois.
+4. Publicar corpus controladamente e **chamar CLARA autenticada pós-publish**: `knowledge(search,R12/R15)` deve devolver 0 trechos corrompidos, version correta nos localizadores; `knowledge(sources)` títulos atuais; `read` R04/R09/R12 deve permanecer PASS.
+5. Executar auditoria de recuperação progressiva R01–R15 (105 perguntas quando sessão disponível); nunca deduzir PASS de contagem de ingestão.
+
+Sem evidência para alteração SQL/TOTVS/permissions. Categoria deste achado: `CORPUS_VERSION_DRIFT / STALE_EVIDENCE`, não problema de ficha GitHub.
