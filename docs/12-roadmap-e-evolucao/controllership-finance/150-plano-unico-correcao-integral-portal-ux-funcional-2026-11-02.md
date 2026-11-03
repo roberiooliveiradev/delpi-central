@@ -521,3 +521,8 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 - **Testes:** unit/component e visual autenticado com as seis ajudas; verificar null/ausência, datas, status e detalhe da OP; build/typecheck/regressões.
 
 **Critério de conclusão do rework:** não basta o hero existir. Somente `PASS` após layout responsivo visualmente confirmado e seis helps funcionando no Data Grid, com dados reais e sem regressões; deploy de origem e SHA produtivo comprovados. Nenhum SQL, API, auth ou contrato novo autorizado por estes itens.
+
+## 14. Registro de execução Devin — Gate 069
+
+- **CF-UX-046 → FIXED_PENDING_VERIFY**: `fieldset.cf-hero-filters` perde borda/padding/margem nativos via seletor dedicado em `index.css` (sem tocar fieldsets globais nem `cf-settlements-filters`).
+- **CF-UX-047 → DECISION_REQUIRED**: contrato comprovado sem ordenação — BFF aceita apenas `branch/date_type/page/page_size/search/product/status/work_center/operation`; produtor `consumption_audit_sql.py` aplica `ORDER BY OP.C2_ITEM ASC, OP.C2_SEQUEN ASC` fixo. Ordenação global exigiria extensão de contrato (produtor + BFF) — escolha material do owner; sort local de 25 linhas é proibido pelo próprio gate. Sem implementação unilateral.

@@ -153,6 +153,16 @@
   gap: 12px;
 }
 
+/* CF-UX-046 — fieldset mantém borda/padding/margem nativos;
+ * apenas o agrupamento de filtros do hero perde o contorno externo,
+ * preservando a semântica e os contornos dos inputs. */
+.dashboard-controllership-finance fieldset.cf-hero-filters {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+
 /* Faixa única filtros + ações no hero (CF-UX-016/021). */
 .dashboard-controllership-finance .cf-hero-controls {
   display: flex;
