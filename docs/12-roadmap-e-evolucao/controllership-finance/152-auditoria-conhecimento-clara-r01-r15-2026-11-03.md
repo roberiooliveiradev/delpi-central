@@ -777,3 +777,29 @@ Todos reexaminados statement a statement: 1.486 continham afirmações invisíve
 - Live: `get(SUPERSEDED)` → `KnowledgeNotFound`; `search "R04 bloqueado"` com e sem `report_id` → ficha-r04 no topo, zero claim superado; `list_sources` 88 fontes sem INTERNAL_ONLY; `get_context` projeta só metadados do corpus.
 - `pytest tests/test_pg_clara_retrieval.py` (efêmero + reingestão): **15/15 PASS** — golden 105, negativos 10, guardas SUPERSEDED/INTERNAL/report_id.
 - Sem mudança de corpus/runtime/contrato → `DEPLOY_NOT_APPLICABLE`. Homologação conversacional: **`TEST_NOT_RUN`** (canal ChatGPT externo; protocolo §14.6).
+
+## 23. Gate 082-RW02 — Evidência verificável por revisor independente (03/11/2026)
+
+**Executor:** Devin · **Issue:** #130 · **Corpus local:** `84e92712` (2.207/88 — republicado com fix_lines D1/D2). Resposta ao REWORK do RW01: revisão manual verdadeira, confronto de mecanismos, matriz de divergências e prova adversarial.
+
+### 23.1 Revisão manual verdadeira
+
+`MANUAL_VERDICTS` (regras por fonte com `match="."`) removido. Regras determinísticas passaram a `CURATED_RULES` rotuladas `automático`; decisões humanas vivem em `evidence-g082rw/g082rw-manual-decisions.json` — **22 decisões individuais** vinculadas por `knowledge_id` + `claim_hash`, com autoridade, evidência e justificativa por afirmação. Sem evidência individual → `UNVERIFIED`/`PENDING`.
+
+### 23.2 Contratos e mecanismos confrontados
+
+`_verify_mechanism` distingue regra normativa (A) de afirmação de comportamento implementado (B): `CAPABILITY_MAP`/`PRODUCER_MAP`/`CANON_FACTS`/`_CAP_TOKENS` verificáveis no HEAD. Mecânicas AS-IS de proveniência TO_INVENTORY sem verificação externa → `UNVERIFIED` honesto (não mascarado).
+
+### 23.3 Divergências D1/D2 — registradas e tratadas
+
+- **D1** doc-100 «R01–R15 sem contrato (PENDING_CONTRACT)» — `fix_lines`: linha reescrita com marcação temporal + estado vigente; original SUPERSEDED.
+- **D2** doc-118 «MCP 18 tools / 52 fontes / 1.298 itens» — `fix_lines` idem.
+Ambas no `DIVERGENCE_REGISTRY` emitido em `g082rw-divergences.jsonl` com risco/decisão/evidência. Corpus local `84e92712` (2.207/88) publicado com as correções; **república produtiva pendente** (exige deploy + ingestão no banco produtivo).
+
+### 23.4 Teste adversarial — 16/16
+
+`tests/test_clara_semantic_audit_adversarial.py` — fixtures isoladas, expectativas declaradas. O teste reproduziu 3 defeitos reais do auditor, corrigidos: `no` (preposição) lido como negação; "não possui" ausente do predicado de bloqueio; claims `mechanism` sem surface-token sem confronto.
+
+### 23.5 Contagens finais (corpus `84e92712`)
+
+88 CURRENT_VERIFIED · 1.310 HISTORICAL_ONLY · 238 NOT_APPLICABLE · **571 UNVERIFIED (PENDING)** — 1.341 claims sem autoridade conclusiva, declarados, não homologados. Zero STALE_CONFIRMED/REVIEW/MIXED residuais. `pytest tests/test_pg_clara_retrieval.py`: **15/15**; adversarial: **16/16**. Homologação conversacional: **TEST_NOT_RUN**.

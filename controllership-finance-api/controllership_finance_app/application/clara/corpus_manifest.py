@@ -487,6 +487,33 @@ STALE_SEGMENT_FIXES: tuple[dict, ...] = (
              "`/closing/competences/{period}/production-order-consumption` |",
          )],
          reason="linha R04 superada em catálogo vigente"),
+    dict(source_id="doc-100",
+         title_contains="D2 — Pendências de integração",
+         action="fix",
+         fix_lines=[(
+             "| R01–R15 sem contrato | PROVEN (`PENDING_CONTRACT`, "
+             "sem falso oficial) |",
+             "| R01–R15 sem contrato — registro datado "
+             "(`PENDING_CONTRACT` na época) | estado atual: "
+             "contratos vigentes — read(report.*) + rotas BFF |",
+         )],
+         reason="afirmação datada de ausência de contrato — hoje "
+                "superada; reescrita com marcação temporal (G082-RW02)"),
+    dict(source_id="doc-118",
+         title_contains="8. Matriz AS-IS",
+         action="fix",
+         fix_lines=[(
+             "| CLARA | conhecimento tribal | MCP 18 tools "
+             "publicadas (READ autenticado no ChatGPT, corpus 52 "
+             "fontes/1.298 itens — doc 111); "
+             "`clara_consent_routes` + batch |",
+             "| CLARA | conhecimento tribal | MCP seis tools "
+             "semânticas + read/analyze (vigente); registro datado: "
+             "18 tools / corpus 52 fontes em out/2026 — doc 111 |",
+         )],
+         reason="contagem datada da superfície MCP/corpus — "
+                "superada; reescrita com valor vigente + nota "
+                "datada (G082-RW02)"),
     dict(source_id="doc-124",
          title_contains="4. Lacunas declaradas",
          action="fix",

@@ -32,7 +32,7 @@ import urllib.request
 sys.path.insert(0, "controllership-finance-api")
 os.environ.update(dict(PLUGINS_DB_HOST="localhost", PLUGINS_DB_PORT="5433",
     PLUGINS_DB_NAME="plugins_hub", PLUGINS_DB_USER="plugins_user",
-    PLUGINS_DB_PASSWORD=os.environ["PWP"], PLUGINS_DB_SSLMODE="disable"))
+    PLUGINS_DB_PASSWORD=os.environ.get("PWP", ""), PLUGINS_DB_SSLMODE="disable"))
 from controllership_finance_app.infrastructure.persistence.plugins_db import plugins_db_connect  # noqa: E501
 
 OUT_DIR = os.environ.get(
@@ -112,7 +112,7 @@ CONTRACT_TOKEN = re.compile(
 NEGATED_STATE = re.compile(
     r"(?i)(está|ainda está|continua)\w*\s+\w*"
     r"(bloquead|implementad|pendente|indispon[íi]vel)\w*\??\s*"
-    r"[-—:–]?\s*\**\s*(n[aã]o|no)\b"
+    r"[-—:–]?\s*\**\s*n[aã]o\b"
 )
 PLAN_RE = re.compile(
     r"(?i)(ser[áa]|ser[aã]o|est[áa] planejado|planejad\w*|futur\w*|"
@@ -303,6 +303,18 @@ REPORT_STATE = {
     rid: "IMPLEMENTED" for rid in
     ("R01", "R02", "R03", "R05", "R06", "R07", "R08", "R10", "R11")
 }
+_CAP_TOKENS = {
+    "settlements_summary", "stock_inventory", "stock_movements",
+    "work_in_process", "stock_kardex", "inventory_adjustments",
+    "cost_center_expenses", "billing_exclusion_roster",
+    "cost_closing_state", "billing_mod_breakdown",
+    "production_order_consumption", "report_comparison",
+    "financial-settlements", "stock-inventory", "stock-movements",
+    "work-in-process", "kardex", "inventory-adjustments",
+    "cost-center-expenses", "billing-exclusion-roster",
+    "cost-closing-state", "billing-mod", "production-order",
+}
+
 REPORT_STATE.update({
     "R04": "IMPLEMENTED", "R09": "IMPLEMENTED",
     "R12": "IMPLEMENTED", "R15": "IMPLEMENTED",
@@ -337,8 +349,224 @@ _AUTH_BRIDGE = (
 )
 _AUTH_DOC = (
     "docs/12-roadmap-e-evolucao/controllership-finance/"
-    "152-auditoria-conhecimento-clara-r01-r15-2026-11-03.md §§18–21"
+    "152-auditoria-conhecimento-clara-r01-r15-2026-11-03.md §§18–22"
 )
+
+# ------------------------------------------------------------------
+# Verdade operacional verificável no HEAD (RW02 — contratos e
+# mecanismos). Cada entrada é verificável no arquivo citado.
+# ------------------------------------------------------------------
+
+# Relatório → capability CLARA vigente (semantic_bridge.py READ specs).
+CAPABILITY_MAP = {
+    "R01": "read(report.settlements_summary)",
+    "R02": "read(report.settlements_summary)",
+    "R03": "read(report.stock_inventory)",
+    "R04": "read(report.production_order_consumption)",
+    "R05": "read(report.stock_movements)",
+    "R06": "read(report.stock_kardex) / read(report.cpv)",
+    "R07": "read(report.inventory_adjustments)",
+    "R08": "read(report.work_in_process)",
+    "R09": "read(report.billing_mod_breakdown)",
+    "R10": "read(report.cost_center_expenses)",
+    "R11": "read(report.billing_exclusion_roster)",
+    "R12": "read(report.cost_closing_state)",
+    "R13": "— (SOURCE_UNAVAILABLE)",
+    "R14": "— (SOURCE_UNAVAILABLE)",
+    "R15": "read(report.cost_closing_state)",
+}
+
+# Relatório → produtor/fonte canônico (fichas + doc 118/85).
+# Afirmar um produtor diferente do canônico é candidato a superado.
+PRODUCER_MAP = {
+    "R01": {"FINR190", "FK2010", "SE5", "FK2"},
+    "R02": {"DLP06R01", "FK7010", "SE5", "FK2"},
+    "R03": {"MATR460", "P7", "SB9", "stock_inventory"},
+    "R04": {"consumption-audit", "MATR860", "SD4", "SD3", "SC2",
+            "SB1", "production_order_consumption"},
+    "R05": {"MATR320", "SD3", "stock_movements"},
+    "R06": {"MATR910", "SD3", "kardex", "cpv"},
+    "R07": {"MATR910", "SD3", "inventory_adjustments"},
+    "R08": {"MATR989", "H02", "SB9", "work_in_process"},
+    "R09": {"DLP204", "SG1", "billing_mod_breakdown"},
+    "R10": {"EDAPP", "SD1", "cost_center_expenses"},
+    "R11": {"EDAPP", "SD2", "billing_exclusion_roster"},
+    "R12": {"MV_ULMES", "cost_closing_state", "Acompanha"},
+    "R13": {"externa", "bancos", "XP", "BB"},
+    "R14": {"externa", "importação", "SWIFT", "ACSI"},
+    "R15": {"SB9", "cost_closing_state", "cutoff"},
+}
+ARTIFACT_TOKEN = re.compile(
+    r"\b(MATR\d{3}|DLP\w+|FINR\d+|CT2|SE5|SD1|SD2|SD3|SD4|"
+    r"SB9|SB1|SC2|SG1|FK2\w*|H6_\w+|D1_\w+|D2_\w+|D3_\w+|"
+    r"EDAPP|MV_\w+|STP_\w+|ACSI)\b"
+)
+PRODUCER_ASSERT = re.compile(
+    r"(?i)(produtor|produzid[ao] por|fonte oficial|"
+    r"rotina oficial|é produzid|gerad[ao] por|emitid[ao] por|"
+    r"deve usar)"
+)
+
+# Regras canônicas verificáveis: (id, descrição, padrão da afirmação
+# ERRADA, autoridade). Afirmações que contradizem a regra → STALE.
+CANON_FACTS: tuple[dict, ...] = (
+    dict(
+        id="CF-1",
+        description="fechamento mensal é orquestração manual de "
+                    "processamentos ERP/planilhas (AS-IS)",
+        wrong=re.compile(
+            r"(?i)(fechamento|closing).{0,50}(automatizad|autom[áa]tic|"
+            r"automático|totalmente automático)"
+        ),
+        authority="doc-117/118 — reconstrução AS-IS (orquestração manual)",
+    ),
+    dict(
+        id="CF-2",
+        description="consulta operacional de baixas usa eixo FK2_DATA "
+                    "por competência",
+        wrong=re.compile(
+            r"(?i)(baixas?|R0?1|R0?2).{0,60}(eixo|eixo de data)\W*"
+            r"D2_(EMISSAO|DIGITA)"
+        ),
+        authority="ficha-r01 — eixo FK2_DATA por competência",
+    ),
+    dict(
+        id="CF-3",
+        description="Kardex exclui estornos quando MV_D3ESTOR ativo",
+        wrong=re.compile(
+            r"(?i)(kardex|MATR910).{0,40}inclui.{0,30}estorno|"
+            r"estornos.{0,40}(incluídos|são somados).{0,30}(kardex)"
+        ),
+        authority="ficha-r06 — exclusão de estornos por MV_D3ESTOR",
+    ),
+    dict(
+        id="CF-4",
+        description="paridade monetária oficial é exata (R$ 0,00, "
+                    "sem tolerância/epsilon)",
+        wrong=re.compile(
+            r"(?i)(paridade|diverg[êe]ncia).{0,60}(toler[âa]ncia|"
+            r"epsilon|margem de R\$|arredondamento aceit[áa]vel)"
+        ),
+        authority="doc-04/15.1/118 — regra de paridade exata",
+    ),
+    dict(
+        id="CF-5",
+        description="CLARA tem seis tools semânticas + capabilities "
+                    "read/analyze/knowledge/get_context",
+        wrong=re.compile(
+            r"(?i)(MCP|CLARA|superfície|plano de tools).{0,40}"
+            r"(18|43|dezoito|quarenta)\s*(tools?|ferramentas?)"
+            r"(?!.{0,30}(legadas|não foram removid))"
+        ),
+        authority=_AUTH_BRIDGE,
+    ),
+)
+
+# Superfície técnica própria (endpoint/rota/capability) — afirmações
+# de comportamento implementado exigem confronto com o código.
+SURFACE_TOKEN = re.compile(
+    r"(?i)(/closing/|/apps/|endpoint|rota\b|handler|capability|"
+    r"BFF|MFE|read\(report|knowledge\(|get_context|tool\b|"
+    r"ferramenta|gateway|Portal\b|CLARA\b|MCP)"
+)
+
+
+def _behavior_assertion(claim_text):
+    """True quando a afirmação descreve comportamento implementado
+    (superfície técnica própria ou produtor/fonte de relatório)."""
+    return bool(
+        SURFACE_TOKEN.search(claim_text)
+        or (
+            REPORT_RE.search(claim_text)
+            and ARTIFACT_TOKEN.search(claim_text)
+        )
+    )
+
+
+def _verify_mechanism(claim_text):
+    """Confronto de afirmação de comportamento implementado com
+    autoridade técnica vigente (RW02).
+
+    Ordem: regra canônica contradita → produtor errado → capability/
+    endpoint → sem autoridade suficiente → PENDING honesto."""
+    for fact in CANON_FACTS:
+        if fact["wrong"].search(claim_text):
+            return (
+                "contradicts_authority",
+                "regra canônica " + fact["id"],
+                fact["authority"],
+                "STALE_CONFIRMED", "corrigir_ou_segregar",
+                f"afirmação contradiz {fact['id']}: "
+                f"{fact['description']}",
+            )
+    reports = set(REPORT_RE.findall(claim_text))
+    tokens = {t.upper() for t in ARTIFACT_TOKEN.findall(claim_text)}
+    # produtor atribuído a relatório diferente do canônico
+    if len(reports) == 1 and PRODUCER_ASSERT.search(claim_text):
+        foreign = set()
+        for r in reports:
+            ok = {t.upper() for t in PRODUCER_MAP.get(r, set())}
+            foreign |= tokens - ok
+        foreign -= {
+            t for r in reports for t in
+            {x.upper() for x in PRODUCER_MAP.get(r, set())}
+        }
+        foreign &= {
+            t for t in tokens
+            if t in {x.upper() for s in PRODUCER_MAP.values()
+                     for x in s}
+        }
+        if foreign:
+            return (
+                "contradicts_authority",
+                "produtor/fonte atribuído a relatório divergente",
+                "fichas/*.md + doc-118 — catálogo de produtores",
+                "STALE_CONFIRMED", "escalar",
+                f"{sorted(foreign)} não é produtor canônico de "
+                f"{sorted(reports)} — possível afirmação superada",
+            )
+        return (
+            "consistent_with_authority",
+            "produtor/fonte coerente com o catálogo canônico",
+            "fichas/*.md + doc-118",
+            "CURRENT_VERIFIED", "manter",
+            "associação relatório↔produtor coerente com a matriz "
+            "vigente",
+        )
+    # afirmação sobre capability/endpoint da superfície própria
+    if SURFACE_TOKEN.search(claim_text):
+        cap_hit = any(
+            re.search(re.escape(cap.split("(")[-1].rstrip(")")),
+                      claim_text)
+            for cap in CAPABILITY_MAP.values() if "(" in cap
+        )
+        if cap_hit:
+            return (
+                "consistent_with_authority",
+                "capability existente no bridge semântico",
+                _AUTH_BRIDGE,
+                "CURRENT_VERIFIED", "manter",
+                "afirmação cita capability vigente no HEAD",
+            )
+        return (
+            "authority_not_checkable",
+            "afirmação sobre superfície técnica sem verificação "
+            "conclusiva na tabela",
+            _AUTH_BRIDGE + "; rotas BFF no HEAD",
+            "UNVERIFIED", "escalar",
+            "afirmação de contrato/mecanismo sobre superfície "
+            "própria — evidência insuficiente, mantém PENDING",
+        )
+    # mecanismo de AS-IS ERP — autoridade é a evidência da fonte
+    return (
+        "source_evidence_unconfirmed",
+        "mecânica AS-IS — proveniência TO_INVENTORY da fonte",
+        "doc de inventário (autoridade TÉO/Transformômetro)",
+        "UNVERIFIED", "manter",
+        "descrição mecânica do processo AS-IS — sem verificação "
+        "externa independente; mantida como conhecimento de "
+        "proveniência, PENDING de homologação semântica",
+    )
 
 
 def verify_claim(claim_text, claim_type):
@@ -392,16 +620,24 @@ def verify_claim(claim_text, claim_type):
             "afirmação de estado ancorada em data/rodada — não se "
             "apresenta como estado corrente",
         )
-    if claim_type in ("rule", "contract", "mechanism"):
-        return (
-            "authority_not_needed",
-            "descrição estável (regra/contrato/mecânica)",
-            "conteúdo inspecionado — sem predicado de estado "
-            "sujeito a atualidade",
-            "NOT_APPLICABLE", "manter",
-            "instrução normativa, semântica de contrato ou "
-            "descrição mecânica — não afirma disponibilidade",
-        )
+    if claim_type == "mechanism":
+        return _verify_mechanism(claim_text)
+    if claim_type in ("rule", "contract"):
+        # RW02 — distinção A/B: regra normativa estável não afirma
+        # implementação; afirmação de comportamento implementado
+        # (endpoint retorna, produtor consulta, BFF filtra, CLARA
+        # usa capability, cálculo exclui, relatório usa fonte) exige
+        # confronto com autoridade técnica vigente.
+        if not _behavior_assertion(claim_text):
+            return (
+                "authority_not_needed",
+                "regra normativa / definição estável",
+                "conteúdo inspecionado — não afirma implementação",
+                "NOT_APPLICABLE", "manter",
+                "norma/definição documental sem afirmação de "
+                "comportamento implementado",
+            )
+        return _verify_mechanism(claim_text)
     if claim_type == "plan":
         p_reports = set(REPORT_RE.findall(claim_text))
         p_blocked = bool(_BLOCKED.search(claim_text))
@@ -418,6 +654,21 @@ def verify_claim(claim_text, claim_type):
                 "REVIEW", "escalar",
                 "contexto de plano afirmando bloqueio/ausência "
                 f"de {sorted(p_stale)} já implementado(s)",
+            )
+        if p_stale and re.search(
+                r"(?i)(será implementad|será criad|será "
+                r"disponibilizad|vai ser implementad|"
+                r"está planejad[ao].{0,40}(implement|endpoint|"
+                r"capability)|ainda está planejad)",
+                claim_text):
+            return (
+                "contradicts_authority",
+                "capability/endpoint existente descrito como "
+                "planejado/futuro",
+                _AUTH_FICHA + "; " + _AUTH_BRIDGE,
+                "REVIEW", "escalar",
+                "plano afirma futura implementação de "
+                f"{sorted(p_stale)} já vigente(s)",
             )
         return (
             "authority_not_needed", "plano/futuro declarado",
@@ -450,7 +701,12 @@ def verify_claim(claim_text, claim_type):
 
     # claim_type == "state"
     reports = set(REPORT_RE.findall(claim_text))
-    blocked = bool(_BLOCKED.search(claim_text))
+    blocked = bool(_BLOCKED.search(claim_text)) or bool(
+        re.search(
+            r"(?i)n[aã]o (possui|tem|conta|oferece|há|existe)",
+            claim_text,
+        )
+    )
     impl = bool(_IMPL.search(claim_text))
     if PARITY_ASSERTED_DONE.search(claim_text):
         return (
@@ -513,6 +769,23 @@ def verify_claim(claim_text, claim_type):
                 "afirmação de implementação/disponibilidade "
                 "consistente com a matriz vigente",
             )
+    caps = {c for c in _CAP_TOKENS if c in claim_text}
+    if not blocked and caps:
+        blocked = bool(re.search(
+            r"(?i)(n[aã]o (possui|tem|conta|oferece|expõe)|"
+            r"ausente|inexistente|sem (a )?capability|"
+            r"sem (o )?endpoint)",
+            claim_text))
+    if blocked:
+        if caps:
+            return (
+                "contradicts_authority",
+                "capability vigente descrita como ausente",
+                _AUTH_BRIDGE,
+                "STALE_CONFIRMED", "corrigir_ou_segregar",
+                f"afirma ausência de capability existente: "
+                f"{sorted(caps)}",
+            )
     if blocked and missing:
         return (
             "consistent_with_authority",
@@ -532,112 +805,29 @@ def verify_claim(claim_text, claim_type):
 
 
 # ------------------------------------------------------------------
-# Decisões manuais curadas (Gate 082-RW01) — cada entrada é uma
-# decisão individual do revisor sobre uma família de afirmações que
-# a tabela de verdade não resolveu automaticamente. Aplicada somente
-# a claims ainda UNVERIFIED/REVIEW; registrada por claim_id no JSONL.
+# Regras curadas determinísticas (RW02) — classificação por padrão
+# com autoridade declarada. review_method="automático" — NÃO são
+# revisão manual.
 # ------------------------------------------------------------------
 
-MANUAL_VERDICTS: tuple[dict, ...] = (
+CURATED_RULES: tuple[dict, ...] = (
     dict(
-        match=r"R\$|48\.660|diverg[êe]ncia|paridade|"
-              r"toler[âa]ncia|centavo",
-        sources=("doc-04", "doc-08", "doc-10", "doc-15",
-                 "doc-117", "doc-118", "doc-55", "doc-56",
-                 "doc-57", "doc-119"),
+        match=r"R\$|48\.660|diverg[êe]ncia|paridade|toler[âa]ncia|centavo",
+        sources=("doc-04", "doc-08", "doc-10", "doc-15", "doc-117",
+                 "doc-118", "doc-55", "doc-56", "doc-57", "doc-119"),
         verified_state="consistent_with_authority",
         authority="regra de paridade monetária exata aprovada",
-        authority_reference="doc-04/doc-15.1/doc-118 (APPROVED_RULE, vigente)",
+        authority_reference="doc-04/doc-15.1/doc-118 (APPROVED_RULE)",
         classification="CURRENT_VERIFIED",
         decision="manter",
         rationale="regra monetária aprovada e estável — exemplos de "
                   "valor são ilustração da regra, não dado vigente",
     ),
     dict(
-        match=r"sem contrato|PENDING_CONTRACT",
-        sources=("doc-100",),
-        verified_state="historically_true_then",
-        authority="registro de verificação datado",
-        authority_reference="doc-100 — evidência de runtime na data",
-        classification="HISTORICAL_ONLY",
-        decision="manter",
-        rationale="registro datado de verificação (PENDING_CONTRACT "
-                  "na época); superado hoje, preservado como "
-                  "evidência temporal — consta na matriz de "
-                  "divergências para revisão do GPT",
-    ),
-    dict(
-        match=r"18 tools|52 fontes|1\.298",
-        sources=("doc-118",),
-        verified_state="historically_true_then",
-        authority="snapshot datado da superfície MCP",
-        authority_reference="doc-118 — tabela de gaps datada",
-        classification="HISTORICAL_ONLY",
-        decision="manter",
-        rationale="contagem datada da superfície MCP/corpus; "
-                  "superada hoje — registro histórico, mesma regra "
-                  "dos registros de corpus datados do doc-152",
-    ),
-    dict(
-        match=r"SERÁ|será|TARGET|PLANNED|planejado|futuro|"
-              r"próxima|pendente.*decisão|DECISION_REQUIRED|"
-              r"DEFERRED|desenhado|mockup|aceite|APPROVED|"
-              r"Resultado operacional desejado|Aceite observável",
-        sources=("doc-104", "doc-112", "doc-113", "doc-93",
-                 "doc-116", "doc-123", "doc-124"),
-        verified_state="authority_not_needed",
-        authority="especificação/decisão de produto vigente",
-        authority_reference="doc TARGET/APPROVED_RULE inspecionado",
-        classification="NOT_APPLICABLE",
-        decision="manter",
-        rationale="desenho/critério de aceite — afirma comportamento "
-                  "exigido, não estado de runtime",
-    ),
-    dict(
         match=r".",
-        sources=("doc-08", "doc-09", "doc-10", "doc-11",
-                 "doc-12", "doc-13", "doc-37", "doc-112",
-                 "doc-113", "doc-94", "doc-49", "doc-120",
-                 "doc-122"),
-        verified_state="authority_not_needed",
-        authority="especificação TARGET/APPROVED_RULE",
-        authority_reference="fonte TARGET/APPROVED inspecionada",
-        classification="NOT_APPLICABLE",
-        decision="manter",
-        rationale="espec de comportamento/contrato — não afirma "
-                  "estado operacional corrente",
-    ),
-    dict(
-        match=r".",
-        sources=("doc-55", "doc-56", "doc-57", "doc-116",
-                 "doc-117"),
-        verified_state="historical_evidence",
-        authority="evidência AS-IS datada (TO_INVENTORY)",
-        authority_reference="registro do vídeo/inventário datado",
-        classification="HISTORICAL_ONLY",
-        decision="manter",
-        rationale="reconstrução AS-IS datada — evidência primária "
-                  "com competência/timestamp explícitos; nunca "
-                  "apresentada como dado vigente",
-    ),
-    dict(
-        match=r".",
-        sources=("doc-118", "doc-119", "doc-121", "doc-82",
-                 "doc-90"),
-        verified_state="historically_true_then",
-        authority="matriz/registro datado",
-        authority_reference="doc datado inspecionado",
-        classification="HISTORICAL_ONLY",
-        decision="manter",
-        rationale="registro de investigação/paridade datado — "
-                  "afirmações âncoras no tempo do registro",
-    ),
-    dict(
-        match=r".",
-        sources=("ficha-r01", "ficha-r02", "ficha-r03",
-                 "ficha-r04", "ficha-r05", "ficha-r06",
-                 "ficha-r07", "ficha-r08", "ficha-r09",
-                 "ficha-r10", "ficha-r11", "ficha-r12",
+        sources=("ficha-r01", "ficha-r02", "ficha-r03", "ficha-r04",
+                 "ficha-r05", "ficha-r06", "ficha-r07", "ficha-r08",
+                 "ficha-r09", "ficha-r10", "ficha-r11", "ficha-r12",
                  "ficha-r13", "ficha-r14", "ficha-r15",
                  "ficha-index", "ficha-processo"),
         verified_state="consistent_with_authority",
@@ -645,77 +835,59 @@ MANUAL_VERDICTS: tuple[dict, ...] = (
         authority_reference="fichas/*.md — schema doc 126 §18",
         classification="CURRENT_VERIFIED",
         decision="manter",
-        rationale="afirmação da ficha vigente coerente com a "
-                  "matriz GATE A e capacidades do bridge",
-    ),
-    # -- decisões individuais da fila REVIEW -------------------------
-    dict(
-        match=r"R13/R14|R04 implementado|VALIDADO|PARCIAL",
-        sources=("doc-80",),
-        verified_state="consistent_with_authority",
-        authority="matriz vigente corrigida (Gate 080-RW01)",
-        authority_reference="corpus_manifest.STALE_SEGMENT_FIXES; " + _AUTH_FICHA,
-        classification="CURRENT_VERIFIED",
-        decision="manter",
-        rationale="linha já corrigida: R13/R14 bloqueados seguem "
-                  "verdadeiros e R04 consta implementado",
-    ),
-    dict(
-        match=r"READY_WITH_CONSTRAINTS|BLOCKED_BY_OWNER|"
-              r"Bloqueados|readiness|sem fonte|writer",
-        sources=("doc-86", "doc-85"),
-        verified_state="historically_true_then",
-        authority="classificação de readiness datada (30/10)",
-        authority_reference="doc-86 §8/§9; E1/E2/E4/E5/E12 ainda pendentes",
-        classification="HISTORICAL_ONLY",
-        decision="manter",
-        rationale="taxonomia de readiness datada — R03/R13/R14 "
-                  "blocked-by-owner segue coerente (E2/fontes "
-                  "externas); R04 já fora da lista (linha corrigida)",
-    ),
-    dict(
-        match=r"classifica[cç][aã]o manual|pending",
-        sources=("doc-85",),
-        verified_state="consistent_with_authority",
-        authority="pendências E10/E11 ainda abertas",
-        authority_reference=_AUTH_FICHA,
-        classification="CURRENT_VERIFIED",
-        decision="manter",
-        rationale="classificação manual pós-exportação e testes "
-                  "pending — pendências documentadas seguem vigentes",
-    ),
-    dict(
-        match=r".",
-        sources=("doc-00", "doc-23", "doc-88", "doc-93",
-                 "doc-104", "doc-123", "doc-124", "doc-127"),
-        verified_state="historically_true_then",
-        authority="registro de gate/plano datado",
-        authority_reference="doc datado inspecionado",
-        classification="HISTORICAL_ONLY",
-        decision="manter",
-        rationale="registro de gate/plano/execução datado — "
-                  "afirmações ancoradas na data do registro",
-    ),
-    dict(
-        match=r".",
-        sources=(),
-        verified_state="authority_not_checkable",
-        authority="sem autoridade direta — registrado para GPT",
-        authority_reference="revisão manual inconclusiva",
-        classification="UNVERIFIED",
-        decision="escalar",
-        rationale="afirmação residual sem verificação conclusiva",
+        rationale="afirmação da ficha vigente coerente com a matriz "
+                  "GATE A e capacidades do bridge",
     ),
 )
 
+# ------------------------------------------------------------------
+# Decisões individuais reais (RW02) — arquivo versionado gerado pelo
+# revisor; cada entrada vincula knowledge_id + hash do claim_text a
+# uma decisão individual com autoridade/evidência/justificativa.
+# Uma decisão nunca é aplicada a outra afirmação.
+# ------------------------------------------------------------------
 
-def apply_manual_verdicts(claim, verdict, source_id):
-    """Aplica decisões manuais curadas às afirmações ainda
-    UNVERIFIED/REVIEW. Retorna verdict atualizado ou o original."""
+INDIVIDUAL_PATH = os.environ.get(
+    "AUDIT_MANUAL",
+    "docs/12-roadmap-e-evolucao/controllership-finance/"
+    "evidence-g082rw/g082rw-manual-decisions.json",
+)
+
+
+def _claim_digest(text):
+    import hashlib as _h
+    return _h.sha256(text.strip().encode()).hexdigest()[:16]
+
+
+def _load_individual(path):
+    if not os.path.exists(path):
+        return {}
+    return {
+        (e["knowledge_id"], e["claim_hash"]): e
+        for e in json.load(open(path))
+    }
+
+
+INDIVIDUAL_DECISIONS = _load_individual(INDIVIDUAL_PATH)
+
+
+def apply_review_decisions(claim, verdict, item):
+    """Resolve afirmações ainda UNVERIFIED/REVIEW.
+
+    Ordem: decisão individual (manual, hash-keyed) → regra curada
+    (automático) → mantém UNVERIFIED/REVIEW com PENDING."""
     if verdict[3] not in ("UNVERIFIED", "REVIEW"):
         return verdict, "automático"
-    for entry in MANUAL_VERDICTS:
-        if source_id not in entry["sources"]:
+    key = (item["knowledge_id"], _claim_digest(claim))
+    entry = INDIVIDUAL_DECISIONS.get(key)
+    if entry is not None:
+        return (
+            entry["verified_state"], entry["authority"],
+            entry["authority_reference"], entry["classification"],
+            entry["decision"], entry["rationale"],
+        ), "manual"
+    for entry in CURATED_RULES:
+        if item["source_id"] not in entry["sources"]:
             continue
         if not re.search(entry["match"], claim, re.I):
             continue
@@ -723,13 +895,75 @@ def apply_manual_verdicts(claim, verdict, source_id):
             entry["verified_state"], entry["authority"],
             entry["authority_reference"], entry["classification"],
             entry["decision"], entry["rationale"],
-        ), "manual"
+        ), "automático"
     return verdict, "automático"
 
 
 # ------------------------------------------------------------------
 # Roll-up por item
 # ------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------
+# Registro de divergências históricas conhecidas (RW02) — emitido
+# sempre na matriz de divergências, com disposição. Após fix_lines
+# o conteúdo superado sai do PUBLISHED; o registro documenta o
+# achado, a decisão e a evidência de correção.
+# ------------------------------------------------------------------
+
+DIVERGENCE_REGISTRY: tuple[dict, ...] = (
+    dict(
+        divergence_id="D1",
+        source_id="doc-100",
+        claim_text=(
+            "| R01–R15 sem contrato | PROVEN (`PENDING_CONTRACT`, "
+            "sem falso oficial) |"
+        ),
+        temporal_scope="datado — evidência de runtime na época",
+        current_state=(
+            "todos os relatórios têm capability/contrato vigente "
+            "no HEAD (read(report.*) + rotas BFF)"
+        ),
+        authority="semantic_bridge.py — capabilities read()/analyze()",
+        divergence_type="historical_contradiction",
+        misinterpretation_risk=(
+            "ALTO — tabela de pendências podia ser citada como "
+            "estado atual: afirmava 'sem contrato' para os 15"
+        ),
+        exposure_decision="corrigir",
+        required_action=(
+            "STALE_SEGMENT_FIXES fix_lines em doc-100 D2: linha "
+            "reescrevida com marcação temporal explícita"
+        ),
+        validation_evidence="fix aplicado; item SUPERSEDED preservado",
+    ),
+    dict(
+        divergence_id="D2",
+        source_id="doc-118",
+        claim_text=(
+            "| CLARA | conhecimento tribal | MCP 18 tools publicadas "
+            "(READ autenticado no ChatGPT, corpus 52 fontes/1.298 "
+            "itens — doc 111); `clara_consent_routes` + batch |"
+        ),
+        temporal_scope="datado — snapshot da superfície MCP out/2026",
+        current_state=(
+            "seis tools semânticas + capabilities read/analyze/"
+            "knowledge/get_context; corpus 88 fontes/2.207 itens"
+        ),
+        authority=_AUTH_BRIDGE,
+        divergence_type="historical_contradiction",
+        misinterpretation_risk=(
+            "MÉDIO — contagens datadas da superfície MCP/corpus "
+            "podiam ser citadas como vigentes"
+        ),
+        exposure_decision="corrigir",
+        required_action=(
+            "STALE_SEGMENT_FIXES fix_lines em doc-118 §8: linha "
+            "reescrevida com valor vigente + nota datada"
+        ),
+        validation_evidence="fix aplicado; item SUPERSEDED preservado",
+    ),
+)
 
 def classify_item(item, claims, verdicts):
     if item["access_scope"] != "PORTAL_ACCESS":
@@ -739,6 +973,12 @@ def classify_item(item, claims, verdicts):
             "operacional PORTAL_ACCESS",
         )
     cls = [v[3] for v in verdicts]
+    if not claims:
+        return (
+            "NOT_APPLICABLE",
+            "item sem afirmações extraídas — perfil "
+            "estrutural inspecionado",
+        )
     stale = [v for v in verdicts if v[3] == "STALE_CONFIRMED"]
     mixed = [v for v in verdicts if v[3] == "MIXED"]
     unv = [v for v in verdicts if v[3] == "UNVERIFIED"]
@@ -827,8 +1067,8 @@ def main() -> None:
         methods = []
         for c in claims:
             v = verify_claim(c["claim_text"], c["claim_type"])
-            v, method = apply_manual_verdicts(
-                c["claim_text"], v, sid
+            v, method = apply_review_decisions(
+                c["claim_text"], v, item
             )
             verdicts.append(v)
             methods.append(method)
@@ -873,7 +1113,20 @@ def main() -> None:
                 ),
             }
             claims_out.append(row)
-            if ccls in ("STALE_CONFIRMED", "MIXED", "CONFLICT"):
+            if ccls in ("STALE_CONFIRMED", "MIXED", "CONFLICT",
+                        "REVIEW") or vstate.startswith(
+                            ("contradicts", "partially_consistent")):
+                row.update({
+                    "divergence_type": (
+                        "stale_claim" if vstate.startswith("contradicts")
+                        else "mixed_or_review"),
+                    "current_state": "ver REPORT_STATE/CAPABILITY_MAP",
+                    "misinterpretation_risk":
+                        "claim pode ser citada como estado atual",
+                    "exposure_decision": decision,
+                    "required_action": "avaliar fix_lines/drop",
+                    "validation_evidence": aref,
+                })
                 divs.append(row)
         prev = prior.get(str(kid), {})
         rec = {
@@ -906,6 +1159,8 @@ def main() -> None:
         for r in claims_out:
             fh.write(json.dumps(r, ensure_ascii=False) + "\n")
     with open(f"{args.out}/g082rw-divergences.jsonl", "w") as fh:
+        for r in DIVERGENCE_REGISTRY:
+            fh.write(json.dumps(r, ensure_ascii=False) + "\n")
         for r in divs:
             fh.write(json.dumps(r, ensure_ascii=False) + "\n")
     print("TOTAL:", len(items_out),
