@@ -2206,3 +2206,23 @@ SMOKE NEGOCIO: PENDING — identidade disponivel (mcp-catalog-sync)
 sem permissao empresarial; AuthZ boundary legitimo, sem bypass.
 TASK_STATUS=COMPLETE(code+local+deploy) · PRODUCTION_BUSINESS_OUTCOME=PENDING
 COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-PROJECTION-AUDIT — estado (resume point)
+
+TASK=DELIA-C3-STRUCTURED-EVIDENCE-PROJECTION-AND-PRESENTATION-ROOT-CAUSE-AUDIT-01
+READ-ONLY: proibido codigo/config/deploy — so doc commits.
+
+INCIDENTE: stash pop no worktree principal criou conflito
+<<<<<<< em orchestration.py:11669 (comentario do fix NONBLOCKING
+sobre a versao stash) -> SyntaxError quebrou o delia-api.
+RESOLVIDO: versao commitada (Stashed changes) mantida + staged.
+
+HIPOTESE FORTE (a provar): a perda NAO e na extracao — records
+preservam components aninhados (prova anterior: facts.records[i]
+tem components). A perda e na APRESENTACAO: presented_record/
+_record_line projetam so campos escalares (MAX_FIELDS_PER_RECORD=4)
+e grounded_synthesis manda "never select object/list fields" ->
+components descartados -> "2 registros" planos.
+PROBE: /tmp/proj_trace.py no container — traca outcome_facts ->
+presented_record p/ BOM real. PROXIMO: restart delpi-delia-api,
+rodar probe, matriz de preservacao, report.
