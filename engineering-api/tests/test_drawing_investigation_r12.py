@@ -568,6 +568,66 @@ def test_m4_cross_check_present_even_fail_closed():
     assert occ["attribute_verifications"]
 
 
+# ---------- M5 — release consolidation ------------------------------------
+
+
+def test_m5_consolidation_classes_present():
+    out = _build(rows=[_row(0, "10020033")])
+    rc = out["guided_investigations"]["release_consolidation"]
+    comp = rc["components"][0]
+    assert comp["official"]["class"] == "FATO_OFICIAL"
+    assert comp["observed"]["class"] == "OBSERVAÇÃO"
+    assert comp["hypotheses"]["class"] == "HIPÓTESE"
+    assert comp["verifications"]["class"] == "VERIFICAÇÃO"
+    assert comp["official"]["component_code"] is not None
+
+
+def test_m5_review_package_pending_owner():
+    out = _build()
+    rp = out["guided_investigations"]["release_consolidation"][
+        "review_package"]
+    assert rp["state"] == "PENDING_OWNER_REVIEW"
+    assert rp["automatic_approval"] is False
+    assert rp["owner"]
+
+
+def test_m5_acceptance_matrix_honest():
+    out = _build()
+    am = out["guided_investigations"]["release_consolidation"][
+        "acceptance_matrix"]
+    assert am["M0_evaluation_foundation"]["state"] == "BLOCKED"
+    assert am["M4_governed_cross_check"]["state"] == "PROVEN_STRUCTURE"
+    assert "M5_release" in am
+
+
+def test_m5_divergence_cards_full_provenance():
+    out = _build(rows=[_row(0, "10020033")])
+    cards = out["guided_investigations"]["release_consolidation"][
+        "divergence_cards"]
+    assert cards
+    c = cards[0]
+    assert c["divergence_type"] == "MULTIPLICITY_AMBIGUITY"
+    assert c["official_value"]
+    assert c["observed_value"]
+    assert c["document_sha"] == _SHA
+    assert c["state"] == "UNKNOWN"
+    assert c["severity"] is None
+    assert c["next_action"]
+
+
+def test_m5_fail_closed_has_consolidation():
+    out = build_object_profiles(
+        bom_occurrences=[], visual_observations=[],
+        understanding=_u(), document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="NOT_PROVIDED",
+        include_investigations=True,
+    )
+    rc = out["guided_investigations"]["release_consolidation"]
+    assert rc["review_package"]["state"] == "PENDING_OWNER_REVIEW"
+    assert rc["acceptance_matrix"]["blocked_because"] == \
+        "official_source_blocked"
+
+
 def test_balloons_never_fabricated_without_primitives():
     out = _build(rows=[_row(0, "10020033")])
     out2 = build_object_profiles(

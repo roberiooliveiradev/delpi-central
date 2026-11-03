@@ -465,6 +465,136 @@ def identify_balloon_candidates(u: dict) -> list[dict]:
     return out
 
 
+def _acceptance_matrix(comparison_blocked: bool) -> dict:
+    """Matriz consolidada M0–M4 por evidência real (M5) — honesta."""
+    return {
+        "M0_evaluation_foundation": {
+            "state": "BLOCKED",
+            "evidence": "sem GT aprovado por owner nem thresholds oficiais",
+            "owner": "Engineering/Engenharia",
+        },
+        "M1_document_structure": {
+            "state": "PARTIAL",
+            "evidence": "regiões/tabela/topologia SLANet implementadas; "
+            "acurácia contra GT não medida",
+        },
+        "M2_typed_semantic_extraction": {
+            "state": "PARTIAL",
+            "evidence": "campos tipados item/qty/código/descrição extraídos; "
+            "precisão/recall não medidos sem GT",
+        },
+        "M3_technical_geometric": {
+            "state": "PARTIAL",
+            "evidence": "cotas/geometria candidatas + recorte direcionado; "
+            "balões limitados a primitivas circulares; precisão pendente",
+        },
+        "M4_governed_cross_check": {
+            "state": "PROVEN_STRUCTURE",
+            "evidence": "multiplicity-aware + attribute verifications + "
+            "divergências versionadas executando em prod",
+        },
+        "M5_release": {
+            "state": "PENDING",
+            "evidence": "pacote de revisão entregue; decisão do owner",
+        },
+        "blocked_because": (
+            "official_source_blocked" if comparison_blocked else None
+        ),
+    }
+
+
+def _divergence_cards(divergences: list[dict]) -> list[dict]:
+    """Cartões legíveis por divergência candidata — todos os campos
+    exigidos pelo M5; gravidade somente com classificação autorizada."""
+    return [
+        {
+            **d,
+            "next_action": "revisão técnica humana — contexto adicional "
+            "exigido para pareamento",
+            "severity": None,
+            "severity_reason": "sem classificação técnica autorizada",
+        }
+        for d in divergences
+    ]
+
+
+def build_release_consolidation(
+    oset,
+    *,
+    document_sha: str | None,
+    product_revision: str | None,
+    occurrence_results: list[dict],
+    cross_check: dict,
+    comparison_blocked: bool,
+) -> dict:
+    """M5 — consolidação de produto: FATO_OFICIAL × OBSERVAÇÃO × HIPÓTESE
+    × VERIFICAÇÃO por componente, divergência-cards, pacote de revisão
+    humana e matriz de aceite. Nunca publica nem aprova."""
+    components = []
+    verifs = cross_check.get("attribute_verifications") or []
+    ver_by_occ: dict[str, list[dict]] = {}
+    for v in verifs:
+        ver_by_occ.setdefault(str(v.get("expected_object_id")), []).append(v)
+    res_by_occ = {
+        r.get("occurrence_id"): r for r in (occurrence_results or [])
+    }
+    for o in oset.by_type(ObjectType.BOM_OCCURRENCE):
+        oid = o.object_id
+        res = res_by_occ.get(oid) or {}
+        components.append(
+            {
+                "occurrence_id": oid,
+                "official": {
+                    "component_code": o.attributes.get("component_code"),
+                    "component_type": o.attributes.get("component_type"),
+                    "parent_code": o.attributes.get("parent_code"),
+                    "consumption_quantity": o.attributes.get(
+                        "consumption_quantity"
+                    ),
+                    "consumption_unit": o.attributes.get("consumption_unit"),
+                    "source": o.document_identity,
+                    "class": "FATO_OFICIAL",
+                },
+                "observed": {
+                    "overall_state": res.get("overall_state"),
+                    "class": "OBSERVAÇÃO",
+                },
+                "hypotheses": {
+                    "relations": (res.get("investigations") or [{}, {}, {}])[2]
+                    .get("relation_refs", []),
+                    "class": "HIPÓTESE",
+                },
+                "verifications": {
+                    "checks": ver_by_occ.get(oid, []),
+                    "class": "VERIFICAÇÃO",
+                },
+                "next_action": (
+                    "revisão técnica"
+                    if res.get("overall_state") != "MATCH_CANDIDATE"
+                    else "revisão humana de candidato — não aprovação"
+                ),
+            }
+        )
+    return {
+        "components": components,
+        "divergence_cards": _divergence_cards(
+            cross_check.get("candidate_divergences") or []
+        ),
+        "review_package": {
+            "state": "PENDING_OWNER_REVIEW",
+            "owner": "Engenharia (Portal Engenharia)",
+            "items": len(components),
+            "automatic_approval": False,
+            "dependency": "workflow oficial de revisão inexistente — "
+            "evidências preparadas, decisão permanece no owner",
+        },
+        "acceptance_matrix": _acceptance_matrix(comparison_blocked),
+        "state": "DRAFT/CANDIDATE",
+        "not_official": True,
+        "human_review_required": True,
+    }
+
+
 def _checks_by_state(results: list[dict]) -> dict[str, int]:
     """Contagem global por estado de check — consolidação auditável."""
     counts: dict[str, int] = {}
@@ -731,6 +861,13 @@ def execute_investigations(
             "ausência de BOM não é BOM vazia — cobertura nula por "
             "impossibilidade de comparação",
         ]
+        _empty_xcheck = build_official_cross_check(
+            oset, plans, u,
+            document_sha=document_sha,
+            product_code=product_code,
+            product_revision=product_revision,
+            occurrence_results=[],
+        )
         return {
             "schema_version": INVESTIGATION_SCHEMA,
             "official_source_state": official_source_state,
@@ -758,12 +895,14 @@ def execute_investigations(
                 "effective_coverage": None,
             },
             "limitations": limitations,
-            "official_cross_check": build_official_cross_check(
-                oset, plans, u,
+            "official_cross_check": _empty_xcheck,
+            "release_consolidation": build_release_consolidation(
+                oset,
                 document_sha=document_sha,
-                product_code=product_code,
                 product_revision=product_revision,
                 occurrence_results=[],
+                cross_check=_empty_xcheck,
+                comparison_blocked=comparison_blocked,
             ),
             "state": "DRAFT/CANDIDATE",
             "not_official": True,
@@ -999,6 +1138,13 @@ def execute_investigations(
                 }
             )
 
+    xcheck = build_official_cross_check(
+        oset, plans, u,
+        document_sha=document_sha,
+        product_code=product_code,
+        product_revision=product_revision,
+        occurrence_results=results,
+    )
     return {
         "schema_version": INVESTIGATION_SCHEMA,
         "official_source_state": official_source_state,
@@ -1038,12 +1184,14 @@ def execute_investigations(
             "consumo×montagem×cota não comparáveis sem regra oficial",
             "cobertura depende das evidências do Drawing Understanding",
         ],
-        "official_cross_check": build_official_cross_check(
-            oset, plans, u,
+        "official_cross_check": xcheck,
+        "release_consolidation": build_release_consolidation(
+            oset,
             document_sha=document_sha,
-            product_code=product_code,
             product_revision=product_revision,
             occurrence_results=results,
+            cross_check=xcheck,
+            comparison_blocked=comparison_blocked,
         ),
         "state": "DRAFT/CANDIDATE",
         "not_official": True,

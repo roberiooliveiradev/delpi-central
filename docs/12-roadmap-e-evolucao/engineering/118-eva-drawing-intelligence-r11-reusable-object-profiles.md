@@ -59,3 +59,9 @@
 - **`official_cross_check`** aditivo em `guided_investigations.v1`: `contract_matrix` (fontes/owners/permissões/freshness/regras de comparabilidade), `multiplicity_analysis` (ocorrências×linhas por código: SINGLE_PAIR/MANY_TO_ONE/MANY_TO_MANY/ONE_TO_NONE/PAIR_AMBIGUOUS), `attribute_verifications` (por ocorrência×atributo: MATCH/CONFLICT/UNKNOWN/NOT_COMPARABLE/NOT_CHECKED com expected×observed×evidence), `candidate_divergences` versionadas (MULTIPLICITY_AMBIGUITY → UNKNOWN, nunca confirmada), `bidirectional`.
 - **Semântica**: assembly_quantity×consumption → sempre NOT_COMPARABLE; revisão TOTVS×desenho → NOT_COMPARABLE (ENG-REV-001); ausência de leitura → UNKNOWN, nunca CONFLICT; código exato em linha válida → MATCH (atributo, candidato no objeto).
 - **Testes**: +8 M4 (matriz, MANY_TO_ONE, MATCH só exato, NOT_COMPARABLE qty/revisão, divergência versionada, ausência≠conflito, fail-closed inclui seção); suite 671 pass / 1 fail ambiental.
+
+## 11. M5 — Governed Product Release / consolidação (2026-11-03)
+
+- **`release_consolidation`** aditivo em `guided_investigations.v1`: `components[]` por ocorrência com classes `FATO_OFICIAL` (dados oficiais + fonte), `OBSERVAÇÃO` (estado observado), `HIPÓTESE` (relações candidatas), `VERIFICAÇÃO` (checks M4); `divergence_cards` com proveniência completa (severity=null — sem classificação autorizada); `review_package` = PENDING_OWNER_REVIEW (workflow de revisão inexistente — evidências preparadas, decisão no owner); `acceptance_matrix` M0–M4 por evidência real (M0 BLOCKED/GT, M1–M3 PARTIAL, M4 PROVEN_STRUCTURE, M5 PENDING).
+- **Decision record**: produto tecnicamente preparado; GO/NO-GO depende de GT aprovado, thresholds do owner, workflow de revisão e E2E autenticado — PENDING/NO_GO honesto, não conclusão.
+- **Testes**: +5 M5; suite pass / 1 fail ambiental pré-existente.
