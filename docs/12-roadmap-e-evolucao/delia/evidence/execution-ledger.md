@@ -2377,3 +2377,31 @@ PRODUCTION_DEPLOY=NOT_PERFORMED — gate E2E local nao comprovado;
 sem evidencia equivalente aceita para promover sem E2E.
 PRODUCTION_BUSINESS_OUTCOME=PENDING
 TASK_STATUS=COMPLETE(code+tests) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — LOCAL-AND-PRODUCTION-DEPLOY-01
+
+TASK=DELIA-C3-UNIFIED-EVIDENCE-PRESENTATION-LOCAL-AND-PRODUCTION-DEPLOY-01
+BASE=4f2cb26ae0 (origin/main = REWORK-02 consolidado).
+
+WORKSPACE: checkout principal segue sujo c/ trabalho concorrente —
+NAO tocado (regra: preservar). Worktree isolado delia-c3-rework-wt
+usado como fonte versionada. Nenhum arquivo alheio modificado.
+
+LOCAL: container ISOLADO delpi-delia-api-rw02 (imagem infra-delia-api
+sha256:7e58f811, mount worktree/delia-api:/app, mesma rede
+infra_delpi-network, env replicado do servico oficial, porta 8010).
+delpi-delia-api oficial NAO alterado (bind-mount aponta para
+checkout concorrente — nao sobrescrevido).
+HEALTH: {"service":"delia-api","status":"available"} porta 8010.
+RENDERER_ACTIVE: OMISSION_MAX_DEPTH presente no /app montado.
+LOCAL_RUNTIME_SHA=4f2cb26ae0 · ROLLBACK: docker rm -f delpi-delia-api-rw02.
+
+BUSINESS_E2E local: TEST_NOT_RUN — sem identidade empresarial
+autorizada (mcp-catalog-sync proibido; sem bypass). Evidencia
+in-process previa (REWORK-02) mantida; container isolado pronto
+para smoke quando identidade legitima existir.
+
+PRODUCTION_DEPLOY=NOT_PERFORMED — gates: E2E empresarial local
+nao executado; sem evidencia equivalente aceita p/ promocao.
+ROLLBACK_TARGET=711905a17b (pre-REWORK-02) / imagem sha256:7e58f811.
+TASK_STATUS=INCOMPLETE (deploy pendente de gate) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
