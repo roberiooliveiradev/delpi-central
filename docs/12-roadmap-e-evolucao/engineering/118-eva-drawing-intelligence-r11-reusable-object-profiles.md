@@ -53,3 +53,9 @@
 - **Consolidação**: `summary.checks_by_state` + `summary.global_state` (MATCH_CANDIDATE/INCONCLUSIVE/NOT_COMPARABLE — nunca PASS).
 - **Contenção de quads corrigida**: bounds min/max sobre vértices 8-pontos.
 - **Testes**: recheck com ports fake (CODE_OBSERVED), budget exhaustion, balão→objeto+relações, consolidação; suite 663 pass / 1 fail ambiental pré-existente.
+
+## 10. M4 — Governed Official Cross-check (2026-11-03)
+
+- **`official_cross_check`** aditivo em `guided_investigations.v1`: `contract_matrix` (fontes/owners/permissões/freshness/regras de comparabilidade), `multiplicity_analysis` (ocorrências×linhas por código: SINGLE_PAIR/MANY_TO_ONE/MANY_TO_MANY/ONE_TO_NONE/PAIR_AMBIGUOUS), `attribute_verifications` (por ocorrência×atributo: MATCH/CONFLICT/UNKNOWN/NOT_COMPARABLE/NOT_CHECKED com expected×observed×evidence), `candidate_divergences` versionadas (MULTIPLICITY_AMBIGUITY → UNKNOWN, nunca confirmada), `bidirectional`.
+- **Semântica**: assembly_quantity×consumption → sempre NOT_COMPARABLE; revisão TOTVS×desenho → NOT_COMPARABLE (ENG-REV-001); ausência de leitura → UNKNOWN, nunca CONFLICT; código exato em linha válida → MATCH (atributo, candidato no objeto).
+- **Testes**: +8 M4 (matriz, MANY_TO_ONE, MATCH só exato, NOT_COMPARABLE qty/revisão, divergência versionada, ausência≠conflito, fail-closed inclui seção); suite 671 pass / 1 fail ambiental.

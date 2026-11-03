@@ -69,6 +69,7 @@ def build_object_profiles(
     official_source_state: str | None = None,
     product_code: str | None = None,
     progressive: dict | None = None,
+    product_revision: str | None = None,
 ) -> dict:
     """Monta o conjunto de perfis (oficial≠observado) + relações candidatas.
 
@@ -205,5 +206,6 @@ def build_object_profiles(
             official_source_state=official_source_state,
             product_code=product_code,
             progressive=progressive,
+            product_revision=product_revision,
         )
     return out

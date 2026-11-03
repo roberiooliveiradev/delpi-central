@@ -469,6 +469,105 @@ def test_consolidated_summary_states():
     assert "global_state" != "PASS"
 
 
+# ---------- M4 — governed official cross-check ---------------------------
+
+
+def test_m4_contract_matrix_present():
+    out = _build()
+    cm = out["guided_investigations"]["official_cross_check"][
+        "contract_matrix"]
+    assert any(s["name"] == "product.structure" for s in cm["sources"])
+    rules = {r["rule"] for r in cm["comparability_rules"]}
+    assert any("NOT_COMPARABLE" in r for r in rules)
+
+
+def test_m4_multiplicity_many_to_one_preserved():
+    """2 ocorrências + 1 linha do mesmo código → MANY_TO_ONE, não colapsa."""
+    out = _build(rows=[_row(0, "10020033")])
+    m = out["guided_investigations"]["official_cross_check"][
+        "multiplicity_analysis"]["10020033"]
+    assert m["bom_occurrence_ids"] == ["O0002", "O0003"]
+    assert m["drawing_item_ids"] == ["urow:0"]
+    assert m["pairing"] == "MANY_TO_ONE"
+
+
+def test_m4_component_code_match_only_exact():
+    out = _build(rows=[_row(0, "10020033")])
+    vs = {v["expected_object_id"]: v for v in
+          out["guided_investigations"]["official_cross_check"][
+              "attribute_verifications"]
+          if v["attribute"] == "component_code"}
+    assert vs["O0002"]["state"] == "MATCH"
+    assert vs["O0002"]["observed_value"] == "10020033"
+    assert vs["O0001"]["state"] == "UNKNOWN"  # ausência ≠ divergência
+
+
+def test_m4_quantities_never_comparable():
+    """500mm consumo × 1 montagem → NOT_COMPARABLE por atributo."""
+    out = _build(rows=[_row(0, "10020033")])
+    vs = [v for v in
+          out["guided_investigations"]["official_cross_check"][
+              "attribute_verifications"]
+          if v["attribute"] == "assembly_quantity"]
+    assert all(v["state"] == "NOT_COMPARABLE" for v in vs)
+
+
+def test_m4_revision_domains_not_comparable():
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=dict(_u(), revision_candidates=[{"revision": "02"}]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        product_revision="003", include_investigations=True,
+    )
+    vs = [v for v in
+          out["guided_investigations"]["official_cross_check"][
+              "attribute_verifications"]
+          if v["attribute"] == "revision"]
+    assert vs[0]["state"] == "NOT_COMPARABLE"
+    assert vs[0]["expected_value"] == "003"
+    assert vs[0]["observed_value"] == "02"
+
+
+def test_m4_multiplicity_ambiguity_versioned_divergence():
+    out = _build(rows=[_row(0, "10020033")])
+    divs = out["guided_investigations"]["official_cross_check"][
+        "candidate_divergences"]
+    assert len(divs) == 1
+    d = divs[0]
+    assert d["divergence_type"] == "MULTIPLICITY_AMBIGUITY"
+    assert d["state"] == "UNKNOWN"
+    assert d["official_value"] == ["O0002", "O0003"]
+    assert d["observed_value"] == ["urow:0"]
+    assert d["document_sha"] == _SHA
+
+
+def test_m4_absent_observation_never_conflict():
+    """Componente não lido → UNKNOWN, nunca CONFLICT."""
+    out = _build()  # sem linhas
+    vs = [v for v in
+          out["guided_investigations"]["official_cross_check"][
+              "attribute_verifications"]
+          if v["attribute"] == "component_code"]
+    assert all(v["state"] == "UNKNOWN" for v in vs)
+    assert all(v["state"] != "CONFLICT" for v in
+               out["guided_investigations"]["official_cross_check"][
+                   "attribute_verifications"])
+
+
+def test_m4_cross_check_present_even_fail_closed():
+    out = build_object_profiles(
+        bom_occurrences=[], visual_observations=[],
+        understanding=_u(rows=[_row(0, "99999999")]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="NOT_PROVIDED",
+        include_investigations=True,
+    )
+    occ = out["guided_investigations"]["official_cross_check"]
+    assert occ["multiplicity_analysis"] == {}
+    assert occ["attribute_verifications"]
+
+
 def test_balloons_never_fabricated_without_primitives():
     out = _build(rows=[_row(0, "10020033")])
     out2 = build_object_profiles(

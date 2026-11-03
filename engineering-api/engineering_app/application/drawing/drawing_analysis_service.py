@@ -968,6 +968,7 @@ async def analyze_product_drawing(
         ),
         product_code=official_code,
         progressive=progressive,
+        product_revision=official_rev or None,
         include_investigations=True,
     )
     payload["guided_investigations"] = payload["object_profiles"].get(

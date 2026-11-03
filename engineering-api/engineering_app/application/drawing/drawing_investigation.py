@@ -489,6 +489,209 @@ def _global_state(results: list[dict], comparison_blocked: bool) -> str:
     return "INCONCLUSIVE"
 
 
+def _contract_matrix() -> dict:
+    """Matriz de contratos oficiais (M4) — inventário estático de
+    fontes, owners e regras de comparabilidade autorizadas."""
+    return {
+        "sources": [
+            {
+                "name": "product.detail",
+                "owner": "api-delpi (Domain API)",
+                "access": "delegated_user backend-first, fail-closed",
+                "freshness": "live call",
+                "errors": "typed 502 source_unavailable — nunca mascarado",
+            },
+            {
+                "name": "product.structure",
+                "owner": "api-delpi (Domain API)",
+                "access": "delegated_user backend-first",
+                "freshness": "live call",
+                "errors": "typed — UNAVAILABLE distinto de EMPTY_CONFIRMED",
+            },
+            {
+                "name": "product.drawing_pdf",
+                "owner": "fileserver/DELPI (PDF oficial)",
+                "identity": "document_hash_sha256 + revision quando presente",
+                "errors": "page_out_of_bounds / provider_unavailable tipados",
+            },
+            {
+                "name": "drawing_understanding",
+                "owner": "Engineering API (evidência visual candidata)",
+                "nature": "observação — nunca fato oficial",
+            },
+        ],
+        "comparability_rules": [
+            {"attribute": "component_code", "rule": "EXACT_OBSERVED"},
+            {"attribute": "assembly_quantity vs consumption_quantity",
+             "rule": "NOT_COMPARABLE — conceitos distintos"},
+            {"attribute": "drawing_dimension vs quantity",
+             "rule": "NOT_COMPARABLE — naturezas distintas"},
+            {"attribute": "revision(TOTVS) vs revision(desenho)",
+             "rule": "NOT_COMPARABLE — domínios distintos (ENG-REV-001)"},
+            {"attribute": "raw units MT/MI/PC/etc",
+             "rule": "PENDING_RULE_VALIDATION — sem contrato de unidades"},
+            {"attribute": "item_label/description",
+             "rule": "NOT_CHECKED — sem correspondente oficial tipado"},
+        ],
+    }
+
+
+def _attr(component, attribute, expected, observed, state, reason,
+          evidence=None, observed_raw=None):
+    return {
+        "attribute": attribute,
+        "expected_object_id": component,
+        "expected_value": expected,
+        "observed_value": observed,
+        "observed_raw_value": observed_raw if observed_raw is not None
+        else observed,
+        "state": state,
+        "reason": reason,
+        "evidence_refs": evidence or [],
+    }
+
+
+def build_official_cross_check(
+    oset,
+    plans: list[dict],
+    understanding: dict | None,
+    *,
+    document_sha: str | None,
+    product_code: str | None = None,
+    product_revision: str | None = None,
+    occurrence_results: list[dict] | None = None,
+) -> dict:
+    """M4 — reconciliação técnica governada oficial × desenho.
+
+    Multiplicity-aware: ocorrências repetidas preservam identidades;
+    MATCH/CONFLICT somente com evidência e contrato; ausência de leitura
+    nunca é divergência. Comparação bidirecional versionada."""
+    u = understanding or {}
+    occs = oset.by_type(ObjectType.BOM_OCCURRENCE)
+    items = oset.by_type(ObjectType.DRAWING_TABLE_ITEM)
+    code_of_occ = {
+        o.object_id: o.attributes.get("component_code") for o in occs
+    }
+
+    # --- multiplicidade: occurrences × table rows por código -----------
+    rows_by_code: dict[str, list[str]] = {}
+    for it in items:
+        code = it.attributes.get("component_code_candidate")
+        if code and not it.attributes.get("ambiguities"):
+            rows_by_code.setdefault(code, []).append(it.object_id)
+    occ_by_code: dict[str, list[str]] = {}
+    for o in occs:
+        occ_by_code.setdefault(
+            str(o.attributes.get("component_code") or ""), []
+        ).append(o.object_id)
+    multiplicity = {}
+    for code, oids in occ_by_code.items():
+        rows = rows_by_code.get(code, [])
+        n_o, n_r = len(oids), len(rows)
+        pairing = (
+            "SINGLE_PAIR" if n_o == 1 and n_r == 1
+            else "MANY_TO_ONE" if n_o > 1 and n_r == 1
+            else "MANY_TO_MANY" if n_o > 1 and n_r > 1
+            else "ONE_TO_NONE" if n_r == 0
+            else "PAIR_AMBIGUOUS"
+        )
+        multiplicity[code] = {
+            "bom_occurrence_ids": oids,
+            "drawing_item_ids": rows,
+            "pairing": pairing,
+        }
+
+    # --- verificação por atributo --------------------------------------
+    verifications: list[dict] = []
+    results_by_occ = {
+        r["occurrence_id"]: r for r in (occurrence_results or [])
+    }
+    for o in occs:
+        oid = o.object_id
+        code = code_of_occ.get(oid)
+        res = results_by_occ.get(oid) or {}
+        inv0 = (res.get("investigations") or [{}])[0]
+        st = inv0.get("state")
+        code_state = (
+            "MATCH" if st == "MATCH_CANDIDATE"
+            else "NOT_CHECKED" if st == "NOT_CHECKED"
+            else "UNKNOWN"
+        )
+        verifications.append(_attr(
+            oid, "component_code", code,
+            inv0.get("observed_value"), code_state,
+            "observação exata" if code_state == "MATCH"
+            else "candidata/ambígua/ausente — nunca confirmada",
+            evidence=inv0.get("evidence_refs"),
+        ))
+        verifications.append(_attr(
+            oid, "assembly_quantity",
+            o.attributes.get("consumption_quantity"),
+            (res.get("investigations") or [{}, {}])[1].get(
+                "observed", {}
+            ).get("assembly_quantity"),
+            "NOT_COMPARABLE",
+            "consumo_BOM ≠ quantidade_montagem — conceitos distintos",
+        ))
+        verifications.append(_attr(
+            oid, "component_type",
+            o.attributes.get("component_type"),
+            None, "NOT_CHECKED",
+            "sem campo tipado correspondente no desenho",
+        ))
+        verifications.append(_attr(
+            oid, "description",
+            None, None, "NOT_CHECKED",
+            "ocorrência BOM não carrega descrição oficial comparável",
+        ))
+
+    # --- revisão: domínios distintos → NOT_COMPARABLE ------------------
+    rev_candidates = u.get("revision_candidates") or []
+    verifications.append(_attr(
+        "product", "revision",
+        product_revision,
+        rev_candidates[0].get("revision") if rev_candidates else None,
+        "NOT_COMPARABLE" if (product_revision and rev_candidates)
+        else "NOT_CHECKED",
+        "domínios de revisão distintos (TOTVS≠desenho) — ENG-REV-001"
+        if product_revision
+        else "revisão oficial não consultada neste fluxo",
+    ))
+
+    # --- divergências candidatas versionadas ---------------------------
+    divergences: list[dict] = []
+    for code, m in multiplicity.items():
+        if m["pairing"] in {"MANY_TO_ONE", "MANY_TO_MANY", "PAIR_AMBIGUOUS"}:
+            divergences.append({
+                "divergence_type": "MULTIPLICITY_AMBIGUITY",
+                "component_code": code,
+                "official_value": m["bom_occurrence_ids"],
+                "observed_value": m["drawing_item_ids"],
+                "object_refs": m["bom_occurrence_ids"] + m["drawing_item_ids"],
+                "document_sha": document_sha,
+                "policy": "multiplicity-aware — nenhuma escolha arbitrária",
+                "state": "UNKNOWN",
+                "reason": "ocorrências/linhas repetidas sem contexto "
+                "adicional para pareamento único",
+            })
+    return {
+        "contract_matrix": _contract_matrix(),
+        "multiplicity_analysis": multiplicity,
+        "attribute_verifications": verifications,
+        "candidate_divergences": divergences,
+        "bidirectional": {
+            "bom_to_drawing": "occurrence_results",
+            "drawing_to_bom": "unmatched_drawing_candidates + "
+            "root_product_identifiers",
+            "note": "ausência de leitura/OCR ambíguo/relação não "
+            "verificada ≠ divergência confirmada",
+        },
+        "state": "DRAFT/CANDIDATE",
+        "not_official": True,
+        "human_review_required": True,
+    }
+
+
 def execute_investigations(
     oset,
     plans: list[dict],
@@ -498,6 +701,7 @@ def execute_investigations(
     official_source_state: str | None = None,
     product_code: str | None = None,
     progressive: dict | None = None,
+    product_revision: str | None = None,
 ) -> dict[str, Any]:
     """Executor I-01..I-05 sobre o mesmo DrawingObjectSet.
 
@@ -554,6 +758,13 @@ def execute_investigations(
                 "effective_coverage": None,
             },
             "limitations": limitations,
+            "official_cross_check": build_official_cross_check(
+                oset, plans, u,
+                document_sha=document_sha,
+                product_code=product_code,
+                product_revision=product_revision,
+                occurrence_results=[],
+            ),
             "state": "DRAFT/CANDIDATE",
             "not_official": True,
             "human_review_required": True,
@@ -827,6 +1038,13 @@ def execute_investigations(
             "consumo×montagem×cota não comparáveis sem regra oficial",
             "cobertura depende das evidências do Drawing Understanding",
         ],
+        "official_cross_check": build_official_cross_check(
+            oset, plans, u,
+            document_sha=document_sha,
+            product_code=product_code,
+            product_revision=product_revision,
+            occurrence_results=results,
+        ),
         "state": "DRAFT/CANDIDATE",
         "not_official": True,
         "human_review_required": True,
