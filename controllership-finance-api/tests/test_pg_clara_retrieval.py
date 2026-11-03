@@ -35,6 +35,7 @@ from controllership_finance_app.infrastructure.persistence import (
 )
 from controllership_finance_app.infrastructure.persistence.clara_knowledge_repository import (  # noqa: E501
     ClaraKnowledgeRepository,
+    KnowledgeNotFound,
 )
 from controllership_finance_app.infrastructure.persistence.plugins_db import (  # noqa: E501
     plugins_db_connect,
@@ -584,35 +585,84 @@ def test_acceptance_traceability(corpus):
 
 
 def test_superseded_state_segments(corpus):
-    """Gate 080 — segmentos datados com afirmação de estado superado
-    (SUPERSEDED_SEGMENTS) ficam fora da busca, mas estados ainda
-    verdadeiros (R13/R14 BLOQUEADO) permanecem publicados."""
-    hits = corpus.search(
-        query="O R04 ainda está bloqueado?",
-        report_id="R04",
-        limit=12,
-    )
-    blocked_titles = [
-        h["title"] for h in hits if "BLOQUEADO" in h["title"].upper()
+    """Gate 080-RW01 — zero exposição de afirmações superadas:
+    drops e fix_lines removem os estados antigos de R04/R09/R12/R15
+    de TODO o conhecimento PUBLISHED (search com e sem report_id,
+    get por knowledge_id), preservando afirmações vigentes R13/R14
+    e a trilha SUPERSEDED para auditoria."""
+    stale_patterns = [
+        "R04/R13/R14 BLOQUEADO",
+        "R04 Consumo por OP | BLOQUEADO",
+        "R04 | `BLOCKED_BY_OWNER`",
+        "(R04/R09/R12/R15) → `report_not_implemented`",
+        "R04, R06, R07, R09–R15`: sem handler",
+        "R04 | `MATR860` candidato | — | — | ? | `BLOQUEADO`",
+        "Pacotes R04 (GAP-01), R09 (E6-D1..D6/E9)",
+        "R04/R06/R07 (2026-11-02) — status inicial",
+        "R04-G059 — owner/contrato confirmados",
+        "R04 | `NOT_IMPLEMENTED` (BLOQUEADO",
+        "nenhuma) | ficha (bloqueado, honesto)",
+        "EV-23 | `MATR860` é candidato a consumo por OP; nenhum artefato",
     ]
-    assert not blocked_titles, (
-        f"segmentos superados recuperados: {blocked_titles}"
-    )
-    assert any(h["source_id"] == "ficha-r04" for h in hits), (
-        "ficha vigente ausente no top-12"
-    )
     with plugins_db_connect() as conn, conn.cursor() as cur:
+        for pattern in stale_patterns:
+            cur.execute(
+                "SELECT knowledge_id FROM "
+                "controllership_finance.clara_knowledge_item"
+                " WHERE status='PUBLISHED' AND content ILIKE %s",
+                (f"%{pattern}%",),
+            )
+            found = cur.fetchall()
+            assert not found, (
+                f"afirmação superada ainda PUBLISHED: {pattern!r} → {found}"
+            )
+        # conteúdo corrigido presente nos segmentos mistos (fix_lines)
+        for fixed_claim in (
+            "R13/R14 BLOQUEADO (R13 externalidade confirmada",
+            "R04 Consumo por OP | IMPLEMENTADO (visão operacional",
+            "R04 | `IMPLEMENTED` (visão operacional",
+            "EV-23 | `MATR860` é candidato a consumo por OP; consumo "
+            "implementado",
+            "R13, R14`: sem handler BFF",
+        ):
+            cur.execute(
+                "SELECT count(*) FROM "
+                "controllership_finance.clara_knowledge_item"
+                " WHERE status='PUBLISHED' AND content ILIKE %s",
+                (f"%{fixed_claim}%",),
+            )
+            assert cur.fetchone()[0] >= 1, (
+                f"conteúdo corrigido ausente: {fixed_claim!r}"
+            )
+        # afirmações vigentes R13/R14 preservadas nos segmentos corrigidos
         cur.execute(
             "SELECT count(*) FROM controllership_finance.clara_knowledge_item"
-            " WHERE status='SUPERSEDED' AND source_id IN ('doc-83','doc-85')"
-            " AND title ILIKE '%BLOQUEADO%'"
-        )
-        assert cur.fetchone()[0] == 2
-        cur.execute(
-            "SELECT count(*) FROM controllership_finance.clara_knowledge_item"
-            " WHERE status='PUBLISHED' AND title ILIKE '%BLOQUEADO%'"
-            " AND source_id IN ('doc-83','doc-85')"
-            " AND (related_report_ids @> '[\"R13\"]'"
-            "      OR related_report_ids @> '[\"R14\"]')"
+            " WHERE status='PUBLISHED' AND content ILIKE '%BLOQUEADO%'"
+            " AND content ~* '\\mR13'"
         )
         assert cur.fetchone()[0] >= 3
+
+    for rid in (None, "R04"):
+        hits = corpus.search(
+            query="O R04 ainda está bloqueado?",
+            report_id=rid,
+            limit=12,
+        )
+        assert hits, "busca vazia"
+        assert not [
+            h["title"] for h in hits if "BLOQUEADO" in h["title"].upper()
+        ]
+        stale_hits = [
+            h["knowledge_id"] for h in hits
+            if any(p.lower() in h["content"].lower() for p in stale_patterns)
+        ]
+        assert not stale_hits, f"conteúdo superado recuperado: {stale_hits}"
+
+    # get() fail-closed: versões SUPERSEDED não são devolvidas nem por id
+    for old_id in (
+        "19846578-e15c-4964-8ea3-74adcc2b3c60",  # doc-80 27.C versão antiga
+        "cede18a7-b186-47f8-916e-c4ebd92e4305",  # doc-83 §7 versão antiga
+        "78e9cd34-5e4c-4d14-ad03-1c677a864de0",  # doc-83 R04-BLOQUEADO drop
+    ):
+        with pytest.raises(KnowledgeNotFound):
+            corpus.get_item(old_id)

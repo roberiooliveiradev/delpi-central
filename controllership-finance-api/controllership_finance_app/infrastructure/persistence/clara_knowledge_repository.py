@@ -514,6 +514,7 @@ class ClaraKnowledgeRepository:
                       JOIN {_q('clara_knowledge_source')} s
                         ON s.source_id = k.source_id
                      WHERE k.knowledge_id = %s
+                       AND k.status = 'PUBLISHED'
                     """,
                     (knowledge_id,),
                 )

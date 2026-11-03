@@ -656,3 +656,32 @@ Consultas financeiras usam produtores oficiais vigentes: `production_order_consu
 - Conversacional live `TEST_NOT_RUN` (canal externo; GPT reexecuta).
 - Política futura de `is_historical` granular por item (não fonte/segmento) segue `DECISION_REQUIRED` se demandada.
 - Issue #130: sem credencial API — registro nesta seção.
+
+
+## 19. Gate 080-RW01 — Zero exposição de conteúdo superado (03/11/2026)
+
+**Executor:** Devin · **Issue:** #130 · **Adendo PO:** filtro no backend antes de qualquer entrega ao modelo; não via prompt/reranking.
+
+### 19.1 Defeito reproduzido e inventário
+
+GPT reproduziu: query `R04 está BLOQUEADO?` (sem `report_id`) retornava `doc-80` "27.C — Status por item" (pos. 2, `PUBLISHED`) afirmando `R04/R13/R14 BLOQUEADO` — R04 superado, R13/R14 vigentes no mesmo segmento. Inventário por conteúdo encontrou **16 segmentos** afirmando estados superados de R04/R09/R12/R15 (todos `IMPLEMENTED`): doc-80 ×2, doc-83 ×2, doc-85 ×2, doc-86 ×2, doc-113, doc-118 ×2, doc-120, doc-121, doc-124, doc-23 ×3, ficha-index (linha GATE A). Preservados por ainda verdadeiros: doc-80 "16.F BLOCKED" (artefato sanitizado), doc-112 "R01–R15 sem competência" (DR-C2), R13/R14 BLOQUEADO em doc-83/85.
+
+### 19.2 Correção determinística — `STALE_SEGMENT_FIXES`
+
+`corpus_manifest.py` declara dois modos por segmento (match por `title_contains`):
+- **`drop`** (6): segmento inteiramente datado — sai da ingestão; item antigo vira `SUPERSEDED` pelo sweep por locator.
+- **`fix`** (10): segmento misto — `fix_lines` reescreve **apenas** as linhas superadas; conteúdo corrigido volta pelo mesmo `citation_locator` → versão antiga `SUPERSEDED`, trilha de auditoria íntegra; marcador "Afirmação de estado superado corrigida na ingestão (Gate 080-RW01)" anexado.
+
+Fonte canônica corrigida diretamente: `fichas/README.md` linha R04 (`NOT_IMPLEMENTED` → `IMPLEMENTADO` + capability). **Backend fail-closed:** `get_item` agora filtra `status='PUBLISHED'` — `knowledge(get)` de item superado → `KnowledgeNotFound`. Sem mudança de contrato/schema/ranking/permissão; histórico íntegro em GitHub + linhas SUPERSEDED.
+
+### 19.3 Verificação
+
+- Corpus local `19231723` (2.214/88): `state_fixed` = doc-80×2, doc-83×2, doc-85×2, doc-86×2, doc-113, doc-118×2, doc-120, doc-121, doc-124, doc-23×3; 73 itens SUPERSEDED na trilha.
+- Query `R04 está BLOQUEADO?` **sem** filtro: `doc-80 27.C` agora afirma `R13/R14 BLOQUEADO; R04 implementado` — zero claim superado no top-12; `ficha-r04` pos. 1.
+- `get()` no id superado → `KnowledgeNotFound`.
+- `test_superseded_state_segments` reescrito: invariante de 12 padrões superados ausentes de TODO `PUBLISHED`, conteúdo corrigido presente, `get()` fail-closed, R13/R14 preservados. Suíte PG: **15/15**.
+
+### 19.4 Resíduos
+
+- Conversacional live `TEST_NOT_RUN`; issue #130 sem credencial API neste ambiente (registro aqui + report).
+- Novos docs futuros com afirmações datadas exigem entrada declarativa no manifest — processo, não heurística.
