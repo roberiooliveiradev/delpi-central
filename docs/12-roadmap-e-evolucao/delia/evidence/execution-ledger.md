@@ -2056,3 +2056,17 @@ registros realmente contivessem a estrutura (improvavel — search
 retorna produtos). RESIDUAL: se o davi tiver acao de estrutura nao
 selecionada, e problema de capability-selection; se nao tiver, e
 ausencia de capability no owner (dado legitimo indisponivel).
+
+## T20-SEMANTIC-SEL — resume point (SHA 8768d898dc)
+
+TASK=DELIA-C3-SEMANTIC-CAPABILITY-SELECTION-AND-GOAL-RECOVERY-REMEDIATION-01
+EVIDENCIA EXTERNA PROVADA: davi tem get_product_structure (BOM,
+required=[code], hierarchy) — retorna componentes reais.
+Trace local b66a63f1: discover+execute -> 2 records (product-search)
+-> irrelevant -> insufficient/goal_mismatch -> honesto.
+PRIMEIRA DIVERGENCIA A PROVAR: o discover query "estrutura" surfou
+get_product_structure como candidato? Se sim, selecao LLM errou;
+se nao, a query ao davi perdeu a intencao (arggen de discover).
+PROXIMO: reproduzir discover payload local p/ a mesma pergunta e ler
+candidate list. mint_bearer requer /tmp/env.local no container —
+verificar como evals locais obtem token.
