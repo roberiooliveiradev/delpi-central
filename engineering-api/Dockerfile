@@ -30,4 +30,9 @@ ENV ENGINEERING_API_ROOT_PATH=/apps/engineering-api
 
 EXPOSE 8000
 
+# R9.9 — SLANet persistente via volume /opt/ocr-models/paddlex (provisioning
+# governado, sem docker cp; symlink baked → modelo disponível pós-build/recreate).
+RUN mkdir -p /root/.paddlex \
+    && ln -sfn /opt/ocr-models/paddlex /root/.paddlex/official_models
+
 CMD ["sh", "-c", "find /app -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true; exec python -m uvicorn engineering_app.main:app --host 0.0.0.0 --port 8000 --root-path /apps/engineering-api"]
