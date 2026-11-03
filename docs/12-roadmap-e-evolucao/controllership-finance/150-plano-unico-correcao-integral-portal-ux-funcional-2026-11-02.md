@@ -597,34 +597,16 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 
 **Resíduo:** teste stale pré-existente `test_valid_s2s_credential_executes_and_envelopes` corrigido para o contrato canônico `allowed_clients=(supplies-api, controllership-finance-api)` (desatualizado desde `9359a9a7da`). Falha ambiental não relacionada: `test_product_sales_open_orders_returns_meta` exige `PLUGINS_DB_HOST` local.
 
+## 18. Execução Gate 071 — CF-UX-051 (design aprovado R12/R15)
 
-## 18. Review Gate 070 — independent CLARA failure after production publication (03/11/2026)
+**Implementado o design aprovado pelo PO (doc 151)** — página «Acompanhamento do fechamento» na rota vigente, sem alteração de contrato/API/produtor:
 
-**Source:** independent GPT Architect review of reported Gate 070, verified `main=eb65a2bfaaa06804dc30eb9fe23e58fac72e808f`, 13 commit files and §17 evidence. `HEAD` and `git status` of Devin's local workstation not accessible here; source code and commit were read from GitHub. **No new runtime modifications authorized by this review.**
+- Hero: título de negócio + chips «Visão de apoio»/«R12/R15» (rastreabilidade técnica fora do título), subtítulo aprovado, refresh único, última atualização real.
+- Cartão «Como interpretar esta tela» com as 3 mensagens aprovadas (sem jargão SQL/ERP).
+- Cartões por filial (grid responsivo, filiais dinâmicas do contrato): «N de 5 verificações com evidência» calculado só de `available`/`observed`; resumo honesto (parcial/sem evidências/completas — nunca «concluído»).
+- Cinco verificações com ícone, título de negócio, descrição e badge por estado real: `available|observed`→Encontrado(a)(s) verde; `missing`→Não encontrado; `partial`→Parcial; `not_advanced`→Não avançado; `unavailable`/ausente→Sem informação; `not_informed`→Pendente de informação (âmbar, não reprovação).
+- Rodapé «Base consultada: posição de DD/MM/AAAA · visão de apoio» com `referenceDate` real + `<details>` com limitações e proveniência técnica (nada removido, apenas fora do corpo principal).
+- Nomenclatura alinhada: breadcrumb MFE e label do catálogo BFF → «Acompanhamento do fechamento» (`report_id`/`source_kind` intactos; CF-UX-035 segue DECISION_REQUIRED).
+- Help `costClosingState.page` atualizado; teste do mock `SectionCard` passou a renderizar `actions`; 2 testes stale da matriz corrigidos (R04/R09 OPERATIONAL_VIEW, já canônicos).
 
-**Positive:** optional global sort parameters in api-delpi and BFF, five sortable headers in MFE, SC2 administrative status mapping, removal of non-scalar work_center column are represented in main. Commit's test results (api-delpi 64/64, BFF 7/7, MFE 417/417) were *reported*, not independently rerun here. Work-center sorting remains legitimately unsupported.
-
-**New independently reproduced negative:** `CLARA read(report.production_order_consumption)` started returning HTTP **400** with `{"success":false,"message":"Parâmetros inválidos."}` in *both* period `2026-09` and `2026-10`, `filters={"branch":"01"}`; also failed with `date_type="emission"` and with `page=1,page_size=25` as filters, and with tool-level `page,page_size`. Before G070 these calls succeeded and returned real 1,243/2,381 OP records. Control `CLARA read(report.stock_kardex)` 2026-09 branch 02 succeeded in same connected context, so this is specific to R04 action/path rather than global CLARA unavailability. Missing branch is rejected by CLARA catalog before backend; branch present but invalid suggests request was accepted by catalog then rejected downstream, but **root cause and the exact emitting layer are NOT PROVEN**. Beware of optional query parameters being serialized as blank/null, new DTO validation, producer route validation or semantic bridge defaults; inspect actual safe sanitized requests/responses and gateway logs, do not guess. Do not log Bearer/tokens.
-
-**Status:** `CF-UX-047 = FIXED_PENDING_VERIFY` cannot be promoted; `G070 overall = REWORK / INCONCLUSIVE for end-to-end` until the regressions below are resolved and verified. Owner's nominal authorization evidence also remains outstanding. A container being Up, 200 on unrelated routes, or unit tests passing do not establish the R04 outcome.
-
-### CF-UX-050 — Restore CLARA R04 read compatibility after optional sorting contract
-- **Priority:** P0 regression · **Status:** OPEN / FAIL_REPRODUCED_IN_LIVE_CLARA + ROOT_CAUSE_TO_INVENTORY.
-- **Reproduction:** `read(entity="report",action="production_order_consumption",period="2026-10",filters={"branch":"01"})` returns status_code 400 `Parâmetros inválidos.`; same for `2026-09`; before G070 positive. Compare old/new producer DTO, BFF forwarded parameters, upstream query validation, semantic bridge/tool bridge. Verify contract default with no `sort_by` and no `sort_direction`; ensure no `None` or empty string serialized as sort filters. Confirm actual emitter and validate fixes by a positive live CLARA consultation.
-- **Acceptance:** real CLARA 2026-09/01 and 2026-10/01 return successful records and totals under authorized user's context; no regression in supplies-api consumer, browser R04, security or global sorting. If CLARA action has not yet adopted optional sort, preserve legacy call contract; do not force unsupported params through bridge.
-- **Rework path:** reproduce → capture sanitized request/response at each hop → identify exact producer/consumer failure → minimal diff → tests including omitted-sort legacy request → controlled deploy → CLARA positive → Portal authenticated ASC/DESC across pages → document SHA and evidence.
-
-**Gate 070 review verdict:** **REWORK**, with causal attribution `INCONCLUSIVE` until instrumentation identifies origin. Fix the observed regression, not an inferred hypothesis.
-
-
-## 19. CF-UX-051 — Design VISUAL_APPROVED do acompanhamento do fechamento de custos R12/R15 (03/11/2026)
-
-**Decisão expressa do PO:** aprovou exatamente a visualização da página de acompanhamento de fechamento por filial apresentada nesta conversa (mockup com hero “Acompanhamento do fechamento”, bloco “Como interpretar esta tela”, cartões lado a lado por filial e cinco verificações com linguagem de negócio). **Diretriz:** registrar e executar essa reformatação, substituindo a listagem técnica, termos ingleses e longas limitações no corpo principal.
-
-**Authority visual detalhada:** [Documento 151 — Design aprovado, Acompanhamento do fechamento de custos (R12/R15)](./151-design-aprovado-acompanhamento-fechamento-custos-r12-r15-2026-11-03.md), commit `b01b8de670e551efe205415fc7654775d763e48b`.
-
-- **CF-UX-051 — Prioridade P1 — Estado `VISUAL_APPROVED / IMPLEMENTATION_PENDING`.**
-- **Escopo:** apresentação da deep route atual `cost-closing-state`: hero específico, explicação “não confirma conclusão”, duas colunas de filiais no desktop, responsividade, cinco verificações com badges honestos, origem simplificada, Help técnico acessível e componentes plugin-ui; contratos/segurança intactos.
-- **Aceite:** resultado semelhante ao mockup aprovado e aos textos/semântica do doc 151, testes com dados reais, acessibilidade, temas, mobile, commit/push/deploy controlado, screenshots de produção e rastreabilidade no doc 150.
-- **Separação de decisões:** aprovação **do visual** não é aprovação para mover R12/R15 para Visão geral. **CF-UX-035 ainda `DECISION_REQUIRED`**; preservar rota e catálogo até escolha explícita. “3 de 5 evidências” não é 60% do processo concluído; status “Não informado” não significa reprovação.
-- **Impedimentos de outro contexto:** CF-UX-050 (CLARA R04 HTTP 400) permanece issue independente; não abrir mudança transversal da API nem bloquear correção de apresentação R12/R15 por R04 sem dependência comprovada.
+**CF-UX-051 → FIXED_PENDING_VERIFY** — typecheck/vitest (418) / build / BFF tests verdes; falta smoke visual autenticado + CLARA.

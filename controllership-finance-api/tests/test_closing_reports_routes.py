@@ -158,7 +158,7 @@ def test_matrix_never_marks_operational_as_official(
     assert "não é" in reports["R01"]["note"].lower()
     assert "não substitui" in reports["R05"]["note"].lower()
     assert "não substitui" in reports["R08"]["note"].lower()
-    assert reports["R04"]["source_kind"] == "PENDING_CONTRACT"
+    assert reports["R04"]["source_kind"] == "OPERATIONAL_VIEW"
 
 
 def test_matrix_separates_implementation_from_official_parity(
@@ -179,10 +179,12 @@ def test_matrix_separates_implementation_from_official_parity(
         "R01",
         "R02",
         "R03",
+        "R04",
         "R05",
         "R06",
         "R07",
         "R08",
+        "R09",
         "R10",
         "R11",
         "R12",

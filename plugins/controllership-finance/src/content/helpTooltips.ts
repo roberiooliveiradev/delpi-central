@@ -469,7 +469,7 @@ export const CF_HELP = {
   },
   costClosingState: {
     page:
-      "Estado de fechamento e cutoff (R12/R15): trilha de marcadores técnicos observados no ERP por filial — snapshot SB9010, marcador MV_ULMES, evidências de escrita TTAT (MATA320/MATA330). «Observado» indica marcador presente; nunca é confirmação de execução nem homologação. O ciclo de vida do wizard permanece indisponível (tabela não identificada) e a homologação humana não é informada por esta visão.",
+      "Acompanhamento do fechamento (R12/R15): visão de apoio com sinais técnicos observados no ERP por filial — snapshot SB9010, marcador MV_ULMES, evidências de escrita TTAT (MATA320/MATA330). «Encontrado» indica marcador presente; nunca é confirmação de execução, conclusão nem homologação — a validação final é da equipe responsável. O andamento do processo permanece sem informação (fonte não identificada) e a validação da equipe não é informada por esta visão.",
     provenance:
       "Proveniência: SB9010 (snapshot mensal por B9_DATA), SX6010.MV_ULMES por filial, logs TTAT SB1010/SD3010 na janela da competência +45 dias. Carimbos físicos em UTC (-3h local). Escritor de SB9/MV_ULMES não auditável — marcadores técnicos, não aceite.",
   },

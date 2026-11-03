@@ -143,7 +143,7 @@ REPORT_CATALOG: tuple[dict, ...] = (
     },
     {
         "report_id": "R12",
-        "label": "Estado de fechamento de custos",
+        "label": "Acompanhamento do fechamento",
         "source_kind": "STATE_VIEW",
         "owner": "TOTVS/MATA320-MATA300-MATA330",
         "operational_view": "cost-closing-state",

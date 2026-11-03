@@ -72,7 +72,7 @@ export const REPORT_KEY_LABELS: Record<ReportKey, string> = {
   "cost-center-expenses": "Despesas por centro de custo",
   "billing-exclusion-roster": "Notas fiscais a desconsiderar",
   "work-in-process": "Material em processo",
-  "cost-closing-state": "Estado de fechamento e cutoff",
+  "cost-closing-state": "Acompanhamento do fechamento",
   "billing-mod-breakdown": "Faturamento × MOD",
   "production-order-consumption": "Consumo por OP",
 };

@@ -1591,3 +1591,93 @@
   flex: 1 1 auto;
   margin-bottom: 0;
 }
+
+/* Acompanhamento do fechamento — visão de apoio R12/R15 (doc 151). */
+.dashboard-controllership-finance .cf-r12-hero-title {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-controllership-finance .cf-r12-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-r12-guide {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.dashboard-controllership-finance .cf-r12-branch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+}
+
+.dashboard-controllership-finance .cf-r12-checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.dashboard-controllership-finance .cf-r12-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--cf-border);
+}
+
+.dashboard-controllership-finance .cf-r12-check:last-child {
+  border-bottom: 0;
+}
+
+.dashboard-controllership-finance .cf-r12-check__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--cf-muted, currentColor);
+}
+
+.dashboard-controllership-finance .cf-r12-check__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dashboard-controllership-finance .cf-r12-check__title {
+  font-weight: 500;
+}
+
+.dashboard-controllership-finance .cf-r12-check__desc {
+  font-size: 0.8rem;
+  color: var(--cf-muted, currentColor);
+}
+
+.dashboard-controllership-finance .cf-r12-footer {
+  margin-top: 4px;
+}
+
+.dashboard-controllership-finance .cf-r12-footer__icon {
+  vertical-align: -2px;
+}
+
+.dashboard-controllership-finance .cf-r12-details {
+  margin-top: 8px;
+}
+
+.dashboard-controllership-finance .cf-r12-details summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--cf-muted, currentColor);
+}
+
+.dashboard-controllership-finance .cf-r12-details ul {
+  padding-left: 18px;
+  font-size: 0.85rem;
+}

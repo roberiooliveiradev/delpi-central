@@ -43,7 +43,7 @@ const payload = {
   limitations: ["Marcadores técnicos observados — não são homologação."],
 };
 
-describe("CostClosingStatePage — trilha de nós R12/R15", () => {
+describe("CostClosingStatePage — Acompanhamento do fechamento (doc 151)", () => {
   beforeEach(() => {
     apiMock.mockResolvedValue(payload);
   });
@@ -52,27 +52,72 @@ describe("CostClosingStatePage — trilha de nós R12/R15", () => {
     vi.clearAllMocks();
   });
 
-  it("renderiza nós por filial com estados honestos", async () => {
+  it("renderiza hero aprovado, guia e cartões por filial com estados honestos", async () => {
     render(<CostClosingStatePage reportContext={{ period: "2026-09" }} />);
     await screen.findByText("Filial 01");
+    // hero aprovado — sem título técnico
+    expect(screen.getByText("Acompanhamento do fechamento")).toBeTruthy();
+    expect(screen.getByText("Visão de apoio")).toBeTruthy();
+    expect(screen.getByText("R12/R15")).toBeTruthy();
+    expect(
+      screen.queryByText(/Estado de fechamento e cutoff/),
+    ).toBeNull();
+    // guia de interpretação
+    expect(screen.getByText("Como interpretar esta tela")).toBeTruthy();
+    expect(
+      screen.getByText(/não confirma sozinha/),
+    ).toBeTruthy();
+    // filiais e resumo calculado de dados reais
     expect(screen.getByText("Filial 02")).toBeTruthy();
-    // f01 observada; f02 honestamente negativa
-    expect(screen.getAllByText("Observado").length).toBe(2);
-    expect(screen.getByText("Snapshot ausente")).toBeTruthy();
-    expect(screen.getByText("Não avançado")).toBeTruthy();
-    // wizard e homologação nunca inferidos
-    expect(screen.getAllByText("Indisponível").length).toBeGreaterThanOrEqual(
-      3,
-    );
-    expect(screen.getAllByText("Não informado").length).toBe(2);
-    // nunca afirma conclusão
+    expect(
+      screen.getByText("3 de 5 verificações com evidência"),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("0 de 5 verificações com evidência"),
+    ).toBeTruthy();
+    expect(screen.getByText("Acompanhamento parcial")).toBeTruthy();
+    expect(
+      screen.getByText("Sem evidências registradas"),
+    ).toBeTruthy();
+    // cinco verificações em linguagem de negócio
+    expect(
+      screen.getAllByText("Posição de estoque do fechamento").length,
+    ).toBe(2);
+    expect(
+      screen.getAllByText("Validação da equipe").length,
+    ).toBe(2);
+    // badges honestos por estado real
+    expect(screen.getByText("Encontrado")).toBeTruthy();
+    expect(screen.getByText("Encontrada")).toBeTruthy();
+    expect(screen.getByText("Encontrados")).toBeTruthy();
+    expect(screen.getByText("Não encontrado")).toBeTruthy();
+    expect(
+      screen.getAllByText("Sem informação").length,
+    ).toBeGreaterThanOrEqual(3);
+    expect(
+      screen.getAllByText("Pendente de informação").length,
+    ).toBe(2);
+    // nunca afirma conclusão nem homologação
     expect(screen.queryByText("Concluído")).toBeNull();
     expect(screen.queryByText("Fechado")).toBeNull();
-    // limitações e oficialidade exibidas
+    // rodapé com data real do contrato
+    expect(
+      screen.getByText(/posição de 30\/09\/2026/),
+    ).toBeTruthy();
+  });
+
+  it("mantém limitações e proveniência acessíveis nos detalhes técnicos", async () => {
+    render(<CostClosingStatePage reportContext={{ period: "2026-09" }} />);
+    await screen.findByText("Filial 01");
+    expect(
+      screen.getByText("Detalhes técnicos e limitações"),
+    ).toBeTruthy();
     expect(
       screen.getAllByText(/Marcadores técnicos observados/).length,
     ).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/technical_markers/).length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText(/technical_markers/).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("estado de erro oferece retry sem mascarar falha", async () => {

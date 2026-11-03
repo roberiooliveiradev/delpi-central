@@ -220,12 +220,14 @@ export function createDashboardSectionCard() {
     title?: ReactNode;
     subtitle?: ReactNode;
     children?: ReactNode;
+    actions?: ReactNode;
   }) {
     return el(
       "section",
       null,
       el("h2", null, props.title),
       props.subtitle,
+      props.actions,
       props.children,
     );
   };
