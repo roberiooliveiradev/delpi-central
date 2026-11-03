@@ -567,3 +567,16 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 - **Opções:** A) aprovar evolução transversal do contrato existente (recomendada, condicionada a owner da api-delpi e capacidades de origem); B) limitar ordenação aos campos já suportados no contrato e deixar outros desabilitados com explicação; C) manter ordem fixa atual. Nenhuma opção foi implementada nesta revisão.
 
 **Veredito desta inspeção:** status N **não é comprovadamente defeito de dados**; semântica insuficientemente esclarecida. Centro de trabalho está ausente no payload de listagem amostrado, não necessariamente no TOTVS. Ordenação continua conscientemente `DECISION_REQUIRED`, **não entregue**. Registrar sem atribuir falha de renderização ao frontend sem prova.
+
+
+## 16. Decisão PO — R04 ordenação global via cabeçalhos (Opção A aprovada)
+
+**Decisão explícita do PO nesta conversa:** `APPROVED_OPTION_A` para **extensão backward-compatible de ordenação global do R04**, acionada **diretamente pelos cabeçalhos** do Data Grid, **sujeita à confirmação do owner da api-delpi e das regras de segurança**. Esta aprovação supera o `DECISION_REQUIRED` de escolha A/B/C do CF-UX-047, mas **NÃO** comprova autorização do owner da api-delpi nem aprovação de mudanças semânticas de Status/Centro de trabalho.
+
+**Escopo autorizado após gates:** inventariar producer `supplies/consumption-audit`, consumers e contrato; confirmar owner + matriz de segurança; estender contrato canônico de forma opcional/compatível; propagar parâmetros por BFF existente `controllership-finance-api`; ativar ordenação real no `DataTableSection` por clique em cabeçalhos, antes da paginação. OP, Produto, Descrição, Status, Data são candidatos condicionados à prova de campos e semântica. **Centro de trabalho** só pode ser ordenável se houver fonte/contrato e cardinalidade comprovados; não aplicar ordenação fictícia em `NULL`/traço. Não adicionar seletor externo, BFF extra, novo gateway/auth ou sort local de 25 registros.
+
+**Investigações incorporadas:** CF-UX-048 `status=N` aparece tanto em ordens com produção não iniciada quanto em ordens com `finished_at` preenchido; esclarecer domínio sem alterar código por hipótese. CF-UX-049 `work_center` ausente na resposta de listagem CLARA amostrada; inspecionar detalhe/operacoes/origem e ownership/cardinalidade antes de projetar coluna. Qualquer regra nova de “situação operacional calculada” ou relação entre OP e centro exige `DECISION_REQUIRED` separado.
+
+**Gates de conclusão:** inventário provado no HEAD, owner api-delpi confirmado, segurança effective permissions/resource scope intacta, matriz de campos ordenáveis aprovada, SQL whitelist e tie-break determinístico antes de paginação, testes de todos os consumidores e dados reais multi-page, UI acessível, CLARA/BFF/Portal quando capazes, commit + push em `main`, deploy controlado com rollback, smoke pós-deploy. Se owner/segurança ou campo material não for confirmado: executar partes independentes, reportar `BLOCKED_WITH_EVIDENCE` e não promover `PASS`.
+
+**Status da decisão:** `PO_APPROVED_OPTION_A / OWNER_CONFIRMATION_PENDING`. Não declarar CF-UX-047 entregue antes dos gates de implementação e verificação.
