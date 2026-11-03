@@ -4596,3 +4596,39 @@ persistida (user/cf-e2e sao fornecidas por task pelo PO;
 devin-smoke-evo sem delia.access — grant proibido).
 E2E-01..06 + generalizacao = TEST_NOT_RUN (sem identidade autorizada);
 ambiente pronto para validacao pelo usuario via Portal.
+
+## M6 BUSINESS E2E — bateria autenticada real (usuario `user`, PO-autorizada)
+
+SHA: ef097f6aba+fix. Auth: password grant delpi-central + openid
+(scope Portal); senha temporaria forte nao persistida; sem
+bypass/membership. Runtime: pydantic_ai, qwen3:4b, engine=langgraph.
+
+MATRIZ (traces delia-api):
+E2E-01 90260148: GROUNDED (PA+PI+MP real; re-run 1x NON_GROUNDED
+por nao-determinismo arggen — fail-closed honesto)
+E2E-02 90260147: GROUNDED — PASS
+E2E-03 90260862: 2x args-miss → fix required-fields → GROUNDED
+(10080039) — PASS com RED/GREEN ao vivo
+E2E-04 90260921: chain completo (discover+execute+candidate_token)
+→ owner retornou empty → explicit_empty honesto — pipeline PASS /
+outcome INCONCLUSIVE (residual api-delpi timeout→empty documentado)
+E2E-05 compare: owner errors + evidence parcial → resposta honesta
+sem invencao — INCONCLUSIVE
+E2E-06 formatos: selecao semantica correta mcp:vista (nao DAVI
+estatico) → owner service ausente localmente → denial honesto
+(mcp_authentication_failed, NAO apresentado como vazio) — selecao
+PASS / outcome INCONCLUSIVE
+Generalizacao: variantes produzem respostas honestas (grounded
+note catalogo ou fail-closed) — sem fatos inventados em nenhum caso.
+
+DEFEITO REAL ENCONTRADO+CORRIGIDO (ao vivo):
+_proposal_model declarava expected_fields Optional → modelo omitia
+wrapper `arguments` → strip_extra → args=none → owner_path_unbound.
+Fix: campos esperados REQUIRED no wire (companions de `applicable`
+seguem opcionais p/ abstention) + diretiva enumerando required
+fields (paridade legacy). E2E-03 GROUNDED apos fix; taxa de miss
+residual = nao-determinismo do modelo pequeno, sempre fail-closed.
+
+Rollback testado ao vivo: DELIA_MODEL_RUNTIME=legacy recriou
+container, E2E-03 executou GROUNDED — rollback isolado funcional;
+container retornado a pydantic_ai.
