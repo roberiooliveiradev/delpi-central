@@ -5059,3 +5059,23 @@ G08 PASS (sem retries/504 pós-fix) | G09 PASS (ctx sem leak; admissibility)
 G11 PASS (239/0) | G12 PARTIAL (estruturas corretas; comparacao final
 depende do contrato E4 aprovado).
 BLOCKING p/ FUNCTIONAL_ACCEPTANCE: G04/G05/G07/G12 dependem do E4-ADR.
+
+### PLAN-221-R1 — resultado complementar G05 + status final (mesmo SHA f293258b7b)
+
+G05 single-turn compound "Consulte estruturas 90260147 e 90260148 e
+apresente diferencas": HTTP 200/17.6s, NON_GROUNDED, limitation
+delpi_source_unverified — turno encerrou honesto logo apos admission
+(owner_surface operational) sem alcancar capability; sem retries,
+sem churn. Registrado como INCONCLUSIVE-insuficiencia honesta, nao
+como falha de runtime.
+
+VEREDICTO DA ENTREGA (truth table §14 doc 221):
+- FIX-1 (instructions/context): RESOLVIDO E PROVADO — causa-raiz
+  fechada no wire, live E2E multi-turn estavel, zero schema retries.
+- E4 multi-evidence composition: ARCHITECTURE_DECISION_REQUIRED —
+  contrato tipado ready-to-approve registrado acima; implementacao
+  depende de aprovacao de coordenacao (frozen contract ADR 58).
+  G04/G05/G07/G12 nao podem ser declarados PASS sem o E4.
+- Sem FUNCTIONAL_ACCEPTANCE_CANDIDATE: entrega honesta
+  BLOCKED_WITH_EVIDENCE com FIX-1 entregue + caminho aprovavel.
+- PRODUCTION_DEPLOY=NOT_AUTHORIZED.
