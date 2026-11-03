@@ -47,18 +47,31 @@ class BaseRepository:
             self.cursor = self.connection.cursor()
         except Exception as e:
             log_error(f"Erro ao conectar ao banco: {e}")
+            # Conexão adquirida mas cursor falhou: devolver/descartar antes de
+            # propagar, senão a conexão vaza (nunca volta ao pool).
+            if self.connection is not None:
+                release_connection(self.connection, discard=True)
+                self.connection = None
             raise DatabaseConnectionError(str(e))
 
     def _close(self, *, discard: bool = False):
+        # try separado por recurso: falha no close() do cursor não pode
+        # impedir a devolução/descarte da conexão (vazamento silencioso).
         try:
             if self.cursor:
                 self.cursor.close()
-                self.cursor = None
-            if self.connection:
-                release_connection(self.connection, discard=discard)
-                self.connection = None
         except Exception:
             pass
+        finally:
+            self.cursor = None
+
+        if self.connection:
+            try:
+                release_connection(self.connection, discard=discard)
+            except Exception:
+                pass
+            finally:
+                self.connection = None
 
     # --------------------------------------
     # Execução de queries

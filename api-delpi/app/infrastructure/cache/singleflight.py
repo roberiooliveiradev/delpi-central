@@ -12,7 +12,8 @@ T = TypeVar("T")
 class Singleflight(Generic[T]):
     """Garante que só um caller executa ``fn`` por ``key``; os demais aguardam o resultado."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, wait_timeout_seconds: float | None = 90.0) -> None:
+        self._wait_timeout_seconds = wait_timeout_seconds
         self._lock = threading.Lock()
         self._inflight: dict[str, tuple[threading.Event, dict[str, object]]] = {}
 
@@ -29,7 +30,13 @@ class Singleflight(Generic[T]):
                 is_leader = False
 
         if not is_leader:
-            event.wait()
+            # Espera limitada: um líder travado (pool/query lenta) não pode
+            # segurar todos os followers indefinidamente. TimeoutError é o
+            # mesmo tipo de falha que o próprio compute produziria.
+            if not event.wait(timeout=self._wait_timeout_seconds):
+                raise TimeoutError(
+                    f"singleflight wait timeout após {self._wait_timeout_seconds}s (key={key!r})"
+                )
             if "error" in box:
                 raise box["error"]  # type: ignore[misc]
             return box["value"]  # type: ignore[return-value]

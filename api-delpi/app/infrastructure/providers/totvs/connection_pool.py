@@ -123,21 +123,33 @@ class TotvsConnectionPool:
 
         with self._lock:
             if self._created < self._max_size:
-                connection = create_totvs_connection()
+                # Reserva a vaga sob lock e cria FORA dele: pyodbc.connect pode
+                # levar segundos e bloquearia acquire/release de todo o pool.
                 self._created += 1
-                logger.debug(
-                    "totvs_pool created total=%d max=%d wait_ms=%.0f",
-                    self._created,
-                    self._max_size,
-                    (time.perf_counter() - started) * 1000,
-                )
-                return connection
-            if self._waiting >= TOTVS_POOL_MAX_WAITERS:
+                reserved = True
+            elif self._waiting >= TOTVS_POOL_MAX_WAITERS:
                 self._rejected += 1
+                reserved = False
                 reject = True
             else:
                 self._waiting += 1
+                reserved = False
                 reject = False
+
+        if reserved:
+            try:
+                connection = create_totvs_connection()
+            except Exception:
+                with self._lock:
+                    self._created = max(0, self._created - 1)
+                raise
+            logger.debug(
+                "totvs_pool created total=%d max=%d wait_ms=%.0f",
+                self._created,
+                self._max_size,
+                (time.perf_counter() - started) * 1000,
+            )
+            return connection
 
         if reject:
             # Sem cota de espera ilimitada: requisições enfileiradas por 60s+
@@ -165,9 +177,19 @@ class TotvsConnectionPool:
 
                 with self._lock:
                     if self._created < self._max_size:
-                        connection = create_totvs_connection()
                         self._created += 1
-                        return connection
+                        create_outside = True
+                    else:
+                        create_outside = False
+
+                if create_outside:
+                    try:
+                        connection = create_totvs_connection()
+                    except Exception:
+                        with self._lock:
+                            self._created = max(0, self._created - 1)
+                        raise
+                    return connection
 
                 remaining = timeout_seconds - (time.perf_counter() - started)
                 if remaining <= 0:
@@ -205,6 +227,9 @@ class TotvsConnectionPool:
             return
 
         try:
+            # Transação implícita pendente (autocommit off no pyodbc) não pode
+            # viajar com a conexão para o próximo locatário.
+            connection.rollback()
             cursor = connection.cursor()
             cursor.execute("SELECT 1")
             cursor.close()
