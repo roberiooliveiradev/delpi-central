@@ -806,7 +806,7 @@ Ambas no `DIVERGENCE_REGISTRY` emitido em `g082rw-divergences.jsonl` com risco/d
 
 ## 24. Gate 083 — Eliminação de resíduos (03/11/2026)
 
-**Executor:** Devin · **Issue:** #130 · **Corpus:** `5782708a` local (2.208/88 — republicado; produtivo `59bedb57`→`PENDING` (republicação com resíduos finais)). Objetivos G083-A/B/C contra os resíduos do `ACCEPT_WITH_RESIDUAL` do G082-RW02.
+**Executor:** Devin · **Issue:** #130 · **Corpus:** `5782708a` local / `c3a66e97` produtivo (2.208/88 — republicado; produtivo `c3a66e97` (2.208/88 — publicado e smoke limpo)). Objetivos G083-A/B/C contra os resíduos do `ACCEPT_WITH_RESIDUAL` do G082-RW02.
 
 ### 24.1 G083-A — Pendências semânticas
 
@@ -814,7 +814,7 @@ Ambas no `DIVERGENCE_REGISTRY` emitido em `g082rw-divergences.jsonl` com risco/d
 
 ### 24.2 G083-B — Histórico superado segregado
 
-Varredura integral do corpus (não só top-hits): 22 correções (`g083-corrections.jsonl`) — D1/D2 do RW02 + 20 `fix_lines` G083 anotando afirmações datadas superadas (`PENDING_CONTRACT` de relatórios já implementados, `18 tools`, `52 fontes`, bloqueios datados R04/R03) em doc-00/86/88/90/100/111/117/119/121/122. Originais em SUPERSEDED (141 itens). Padrões `stale_patterns` Gates 080/081 + G083: **0 ocorrências PUBLISHED**.
+Varredura integral do corpus (não só top-hits): 22 correções (`g083-corrections.jsonl`) — D1/D2 do RW02 + 20 `fix_lines` G083 anotando afirmações datadas superadas (`PENDING_CONTRACT` de relatórios já implementados, `18 tools`, `52 fontes`, bloqueios datados R04/R03) em doc-00/86/88/90/100/111/117/119/121/122. Originais em SUPERSEDED (141 itens). Padrões `stale_patterns` Gates 080/081 + G083: **0 ocorrências PUBLISHED** — validado no produtivo (`get(SUPERSEDED)`→not found; `search R04`→ficha topo; 236 SUPERSEDED preservados).
 
 ### 24.3 G083-C — Homologação conversacional
 

@@ -1,6 +1,6 @@
 # G083 — Cobertura e reconciliação
 
-Corpus: `1fd4c8b0`→`9b2f318f`→**`7d3ca573` local** (2.208 itens/88 fontes — +1 item por segmentação após fix_lines).
+Corpus: `1fd4c8b0`→`9b2f318f`→**`5782708a` local / `c3a66e97` produtivo** (2.208 itens/88 fontes — +1 item por segmentação após fix_lines).
 
 ## Pipeline
 
