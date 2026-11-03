@@ -1462,6 +1462,40 @@ def _redact_text(text: object) -> str:
     return out
 
 
+def _sanitize_renderable_counted(node: object) -> tuple[object, int]:
+    """Sanitize AND count list elements dropped by the bound.
+
+    Security contract is identical to ``_sanitize_renderable`` —
+    sensitive keys redact, hostile text redacts, lists stay bounded by
+    ``MAX_RENDER_LIST_ITEMS`` (a legitimate resource control). The
+    difference: the returned count reports every authorized item the
+    bound left out, so callers must propagate partiality instead of
+    mistaking the bounded collection for the complete one.
+    """
+    omitted = [0]
+
+    def rec(n: object) -> object:
+        if isinstance(n, Mapping):
+            return {
+                str(k): (
+                    REDACTION_MARKER
+                    if _is_sensitive_key(k)
+                    else rec(v)
+                )
+                for k, v in n.items()
+            }
+        if isinstance(n, (list, tuple)):
+            items = list(n)
+            if len(items) > MAX_RENDER_LIST_ITEMS:
+                omitted[0] += len(items) - MAX_RENDER_LIST_ITEMS
+            return [rec(v) for v in items[:MAX_RENDER_LIST_ITEMS]]
+        if isinstance(n, str):
+            return _redact_text(n)
+        return n
+
+    return rec(node), omitted[0]
+
+
 def _sanitize_renderable(node: object) -> object:
     """Redact sensitive credential material from rendered structure.
 
@@ -1470,27 +1504,12 @@ def _sanitize_renderable(node: object) -> object:
     redaction marker — the key stays so shape is preserved and no
     secret value, length, prefix or hash is exposed. Recurses into
     mappings and bounded lists; candidate_token is covered by the
-    canonical set.
+    canonical set. List items beyond ``MAX_RENDER_LIST_ITEMS`` stay
+    bounded — callers that present collections must use
+    ``_sanitize_renderable_counted`` so the drop is never silent.
     """
-    if isinstance(node, Mapping):
-        return {
-            str(k): (
-                REDACTION_MARKER
-                if _is_sensitive_key(k)
-                else _sanitize_renderable(v)
-            )
-            for k, v in node.items()
-        }
-    if isinstance(node, (list, tuple)):
-        return [
-            _sanitize_renderable(v)
-            for v in list(node)[:MAX_RENDER_LIST_ITEMS]
-        ]
-    if isinstance(node, str):
-        # Ordinary key + credential-bearing string value: text
-        # redaction still applies — no secret-bearing leaf bypasses.
-        return _redact_text(node)
-    return node
+    sanitized, _ = _sanitize_renderable_counted(node)
+    return sanitized
 
 
 _GENERIC_COMPLETION_TEXTS = frozenset(

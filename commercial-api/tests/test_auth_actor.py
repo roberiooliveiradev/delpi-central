@@ -44,11 +44,11 @@ def test_bind_request_actor_sets_display_and_client(monkeypatch) -> None:
     request = _FakeRequest(
         {"name": "Maria Souza", "preferred_username": "maria", "sub": "u-42"}
     )
-    with bind_request_actor(request):
-        assert peek_actor_display_name() == "Maria Souza"
-        assert peek_actor_client_id() == "client-xyz"
-    assert peek_actor_display_name() is None
-    assert peek_actor_client_id() is None
+    # bind_request_actor agora é chamada por middleware dentro do contexto
+    # da requisição — sem reset: o valor vive apenas neste contexto.
+    bind_request_actor(request)
+    assert peek_actor_display_name() == "Maria Souza"
+    assert peek_actor_client_id() == "client-xyz"
 
 
 def test_bind_falls_back_to_username(monkeypatch) -> None:
@@ -57,6 +57,5 @@ def test_bind_falls_back_to_username(monkeypatch) -> None:
         lambda _request: None,
     )
     request = _FakeRequest({"preferred_username": "vendas.sp", "sub": "sub-1"})
-    with bind_request_actor(request):
-        assert peek_actor_display_name() == "vendas.sp"
-    assert peek_actor_display_name() is None
+    bind_request_actor(request)
+    assert peek_actor_display_name() == "vendas.sp"

@@ -42,6 +42,9 @@ class Settings:
     SI_SERIES_MAX_PARALLEL_PERIODS: int = int(
         _get_env("SI_SERIES_MAX_PARALLEL_PERIODS", default="2") or "2"
     )
+    SI_SNAPSHOT_MAX_PARALLEL_COLLECTORS: int = int(
+        _get_env("SI_SNAPSHOT_MAX_PARALLEL_COLLECTORS", default="3") or "3"
+    )
     SI_WARMUP_ON_STARTUP: bool = (
         str(_get_env("SI_WARMUP_ON_STARTUP", default="false") or "false").lower()
         in {"1", "true", "yes", "on"}

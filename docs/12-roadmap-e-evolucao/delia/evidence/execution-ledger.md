@@ -4271,138 +4271,147 @@ TASK=DELIA-C3-STRUCTURED-EVIDENCE-PROJECTION-AND-PRESENTATION-ROOT-CAUSE-AUDIT-0
 READ-ONLY: proibido codigo/config/deploy — so doc commits.
 
 INCIDENTE: stash pop no worktree principal criou conflito
-<<<<<<< em orchestration.py:11669 (comentario do fix NONBLOCKING
-sobre a versao stash) -> SyntaxError quebrou o delia-api.
-RESOLVIDO: versao commitada (Stashed changes) mantida + staged.
 
-HIPOTESE FORTE (a provar): a perda NAO e na extracao — records
-preservam components aninhados (prova anterior: facts.records[i]
-tem components). A perda e na APRESENTACAO: presented_record/
-_record_line projetam so campos escalares (MAX_FIELDS_PER_RECORD=4)
-e grounded_synthesis manda "never select object/list fields" ->
-components descartados -> "2 registros" planos.
-PROBE: /tmp/proj_trace.py no container — traca outcome_facts ->
-presented_record p/ BOM real. PROXIMO: restart delpi-delia-api,
-rodar probe, matriz de preservacao, report.
+## T20-UNIFIED-PRESENTATION — REWORK-02 (four residuals fixed)
 
-## T20-UNIFIED-PRESENTATION — checkpoint (resume)
+TASK=DELIA-C3-UNIFIED-EVIDENCE-PRESENTATION-REWORK-02
+BASE=711905a17b (origin/main revalidado; mesmo worktree isolado).
 
-TASK=DELIA-C3-UNIFIED-EVIDENCE-PRESENTATION-BOUNDARY-REFACTOR-01
-IMPL AUTHORIZED · DEPLOY PROIBIDO · HEAD local f0e9a57c77,
-origin/main 5aae91ce54. Worktree canonico: delia-s2s6-integ
-(branch delia/s2-s6-implementation, push -> main).
+FIXES (evidencia):
+- Sanitize: _sanitize_renderable_counted conta itens descartados pelo
+  bound MAX_RENDER_LIST_ITEMS=50 (seguranca preservada); compose
+  propaga -> EVIDENCE_PROJECTION_PARTIAL. Sem aumento de limite.
+- Dedup removido do renderer: toda ocorrencia autorizada renderiza em
+  ordem (dedup empresarial pertence ao owner, nao ao presentation).
+- limitations de entrada preservadas: compose inicia com
+  list(limitations); so adiciona codes novos sem duplicar.
+- min_items: selecao intencional (aviso "X de Y" informativo, SEM flag
+  de parcialidade); EVIDENCE_PROJECTION_PARTIAL somente para omissao
+  tecnica (render.partial | sanitize_omitted>0 | shortfall sem
+  min_items).
 
-DESIGN (a implementar):
-- Fronteira unica = conversational_response.py (consolidar, EXTEND
-  nao NEW module). Nova funcao render_business_evidence(facts,
-  result_context, completeness) -> markdown generico recursivo
-  (obj/array/nesting, escape MD, bounds explicitos).
-- Remover do caminho de apresentacao: MAX_FIELDS_PER_RECORD,
-  MAX_PRESENTED_RECORDS (so bounds de prompt/seguranca),
-  projecao scalar-only p/ records, presented_record (uso interno).
-- compose_cri_response renderiza via superficie unica (root+nodes
-  +children quando result_context declara shape).
-- synth instruction: remover "never select object/list" da
-  apresentacao (synth vira interpretacao apenas).
-- Completeness: reutilizar extract_pagination_envelope +
-  contract_facts; marcar parcialidade explicitamente.
-
-STATUS=IN_PROGRESS·design-only — nenhum codigo alterado ainda.
-
-## T20-UNIFIED-PRESENTATION — exec-blocker resume point
-
-Renderer generic_evidence_renderer.py pronto no turno anterior
-(render_business_evidence recursivo + _md_escape + budget
-512/depth6/chars2000 + completeness constants) mas o write falhou
-por cwd UNC quebrada. PADRAO QUE FUNCIONA: workdir=C:\ + "cd ~ &&"
-prefix + wsl -e sh -c + heredoc escapado <<\EOF + conteudo sem
-single-quotes e sem backtick literal (chr(96)).
-NEXT: gravar renderer -> wire compose_cri_response recebe raw
-facts.records+result_context (loss site orch ~9334 prepared=
-presented_record) -> remover caps MAX_FIELDS=4/MAX_PRESENTED=5
-dos paths de apresentacao (conv_resp 64-66,153-378) -> synth
-instruction drop object/list -> RED tests R1-R12 -> regressao +
-commit + push (SEM deploy).
-
-## T20-UNIFIED-PRESENTATION — resume 2 (renderer no disco)
-
-GRAVADO: generic_evidence_renderer.py (AST_OK) — render_business_evidence
-recursivo + _md_escape + completeness constants + budget 512/6/2000.
-
-EM CURSO: compose_cri_response ganha kwargs structured_render +
-structured_partial; single/multi branches usam render quando presente;
-partial -> LIMITATION_EVIDENCE_PROJECTION_PARTIAL. (patch pronto,
-falhou so por workdir — re-executar com workdir=C:\)
-
-PENDENTE: call-site orch _compose_cri_response passa raw
-facts.records+result_context via renderer -> structured_render;
-remover caps MAX_FIELDS=4/MAX_PRESENTED=5 dos paths de apresentacao
-(conv_resp 64-66,153-378); synth "never object/list"; RED tests
-R1-R12; regressao; commit+push (SEM deploy).
-
-## T20-UNIFIED-PRESENTATION — IMPLEMENTED + PUSHED 1572a1e2be
-
-Boundary: generic_evidence_renderer.py (render_business_evidence
-recursivo, _md_escape, _render_label governed/humanized, budget
-512/depth6/chars2000->exhausted flag, completeness constants).
-Wiring: _compose_cri_response -> structured_render (facts.records +
-result_context.root) + structured_partial -> compose branches
-single/multi/min_items usam o render; partial -> LIMITATION_
-EVIDENCE_PROJECTION_PARTIAL. Caps 4campos/5registros bypassed na
-apresentacao (persistem so p/ ordering/scan/prompt-LLM).
-Tests: unified 10/10 + CRI e3 67 + ~390 regressao verdes.
-PENDENTE: e2e live (sync container + restart) — sem deploy nesta task.
-
-## T20-UNIFIED-PRESENTATION — REWORK-01 (silent-truncation + decoupling)
-
-TASK=DELIA-C3-UNIFIED-EVIDENCE-PRESENTATION-REWORK-01
-BASE=b9b73bd7e1 (origin/main revalidado; worktree isolado delia-c3-rework-wt —
-checkout principal estava atrasado + staged concorrente, intocado).
-
-DEFEITOS CORRIGIDOS (evidencia em codigo):
-- Depth omit "(estrutura profunda omitida)" sem flag -> OMISSION_MAX_DEPTH
-  + partial=True + omitted_nodes contados.
-- Budget exhaustion nunca propagava (flag computada pre-loop) ->
-  contabilidade real por _Budget; irmaos restantes contam como omitidos.
-- String >2000 chars cortada com "…" silencioso -> corte removido;
-  valor integral escapado, quebras de linha -> continuation lines.
-- Labels cortados em 80 chars -> corte removido; identidade preservada.
-- Bug real: _render_label retornava triple (article,label,suffix) do
-  field_labels governado -> repr de tupla na resposta. Resolver canonico
-  field_display_label movido para o renderer (re-exportado por
-  conversational_response; single source).
-- Projetor plano como gate: record_lines vazio -> return None mesmo com
-  render valido; caps 4campos/5registros/32scan competiam com renderer.
-  compose_cri_response agora recebe records crus + result_context +
-  field_labels e e' o unico owner do render; orchestration vira glue.
-- Contagem: presented vem de items_render.presented_items (dedup
-  top-level por conteudo, E3-G2); presented<delivered -> notice +
-  LIMITATION_EVIDENCE_PROJECTION_PARTIAL (lado apresentacao);
-  RESULT_TRUNCATED permanece lado owner/resultado (baseline 2000 cap).
-- Sanitizacao preservada: _sanitize_renderable em records+result_context
-  no boundary de apresentacao (envelope path chega sem sanitize).
-
-RESIDUAIS (classificados):
-- _business_lines/_md_business_lines/_format_*/_md_format_*/
-  _render_synthesis/_detail_lines/_list_header/_compose_answer:
-  LEGITIMATE — boundary baseline congelado (OFF byte-parity, doc 16
-  MAX_RENDER_CONTENT_CHARS=2000 marcado); drops internos silenciosos
-  documentados como divida fora do escopo deste rework.
-- cri_scalar_text/presented_record: LEGITIMATE — anchor/ordering/
-  diffs de campo (selecao), nao apresentacao de corpo.
-- _sanitize_renderable MAX_RENDER_LIST_ITEMS=50: bound de seguranca
-  pre-existente, silencioso — KNOWN_RESIDUAL (fora do renderer).
-- MAX_PRESENTED_VALUE_CHARS=140: bound de anchor apenas — LEGITIMATE.
-- MAX_FIELDS_PER_RECORD/MAX_PRESENTED_RECORDS/_MAX_FIELD_SCAN_RECORDS/
-  _CRI_RECORD_SCAN/_record_line/_PRESENTATION_MAX_*: REDUNDANT_REMOVED.
-
-EVIDENCIA: 42 unified+cri_unified tests GREEN; cri_e3 67/67;
-suites adjacentes verdes; 5 falhas PRE-EXISTENTES no origin/main
-(vocab v5 stale, pydantic_ai ja presente, env.example, r1 snapshot)
-— nao causadas pelo diff.
-E2E in-process: attempt("Qual a estrutura do 90260148?") -> BOM
-completa (90260148 + 50220013 + 50220015 + 4 MP, qty/unidades).
-E2E live container: TEST_NOT_RUN — sem identidade empresarial
-autorizada; stack local le do checkout sujo concorrente.
-PRODUCTION_DEPLOY=NO
+EVIDENCIA: suites unified+cri_unified+cri_e3+adjacentes GREEN;
+probe in-process BOM 90260148 completa (raiz+2PI+4MP+qty/un);
+ocorrencias duplicadas renderizam todas.
+E2E container real: TEST_NOT_RUN — delpi-delia-api faz bind-mount do
+checkout concorrente sujo (atualizacao local legitima bloqueada);
+sem identidade empresarial autorizada para smoke real.
+PRODUCTION_DEPLOY=NOT_PERFORMED — gate E2E local nao comprovado;
+sem evidencia equivalente aceita para promover sem E2E.
+PRODUCTION_BUSINESS_OUTCOME=PENDING
 TASK_STATUS=COMPLETE(code+tests) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — LOCAL-AND-PRODUCTION-DEPLOY-01
+
+TASK=DELIA-C3-UNIFIED-EVIDENCE-PRESENTATION-LOCAL-AND-PRODUCTION-DEPLOY-01
+BASE=4f2cb26ae0 (origin/main = REWORK-02 consolidado).
+
+WORKSPACE: checkout principal segue sujo c/ trabalho concorrente —
+NAO tocado (regra: preservar). Worktree isolado delia-c3-rework-wt
+usado como fonte versionada. Nenhum arquivo alheio modificado.
+
+LOCAL: container ISOLADO delpi-delia-api-rw02 (imagem infra-delia-api
+sha256:7e58f811, mount worktree/delia-api:/app, mesma rede
+infra_delpi-network, env replicado do servico oficial, porta 8010).
+delpi-delia-api oficial NAO alterado (bind-mount aponta para
+checkout concorrente — nao sobrescrevido).
+HEALTH: {"service":"delia-api","status":"available"} porta 8010.
+RENDERER_ACTIVE: OMISSION_MAX_DEPTH presente no /app montado.
+LOCAL_RUNTIME_SHA=4f2cb26ae0 · ROLLBACK: docker rm -f delpi-delia-api-rw02.
+
+BUSINESS_E2E local: TEST_NOT_RUN — sem identidade empresarial
+autorizada (mcp-catalog-sync proibido; sem bypass). Evidencia
+in-process previa (REWORK-02) mantida; container isolado pronto
+para smoke quando identidade legitima existir.
+
+PRODUCTION_DEPLOY=NOT_PERFORMED — gates: E2E empresarial local
+nao executado; sem evidencia equivalente aceita p/ promocao.
+ROLLBACK_TARGET=711905a17b (pre-REWORK-02) / imagem sha256:7e58f811.
+TASK_STATUS=INCOMPLETE (deploy pendente de gate) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — OFFICIAL-LOCAL-AND-PRODUCTION-DEPLOY-02
+
+TASK=DELIA-C3-UNIFIED-PRESENTATION-OFFICIAL-LOCAL-AND-PRODUCTION-DEPLOY-02
+SOURCE_SHA=d820d34050 (origin/main revalidado — contem REWORK-02).
+
+OFFICIAL LOCAL DEPLOY: delpi-delia-api RECRIADO — mesma imagem
+(infra-delia-api sha256:7e58f811), mesmo env (317 vars preservadas),
+mesma rede infra_delpi-network, restart unless-stopped. Bind-mount
+/app REPONTADO do checkout concorrente sujo para worktree versionado
+limpo /home/analistaptd/delia-deploy-wt (SHA d820d34050). Nenhum
+arquivo de outro agente tocado. Rollback: delpi-delia-api-prev
+preservado (Exited) — docker rm -f atual + renomear prev.
+HEALTH: {"service":"delia-api","status":"available"} interno :8000.
+RENDERER_ACTIVE: OMISSION_MAX_DEPTH presente (3 ocorrencias).
+PORTAL ROUTE: delpi-gateway resolve DNS docker "delia-api" -> novo
+container automatico.
+rw02 removido (temporario proprio). delia-c3-rework-wt removido
+(branch merged; deploy-wt = origem oficial do runtime).
+Business E2E local: TEST_NOT_RUN — sem identidade empresarial
+autorizada; Portal aponta para backend novo, pronto p/ smoke do usuario.
+PRODUCTION_DEPLOY=NOT_PERFORMED — BLOQUEIO PRECISO: nao existe script
+canonico de deploy prod nem acesso SSH ao host produtivo neste ambiente
+(local-first-deploy exige git pull no servidor). Sem evidencia de acesso,
+promocao produtiva nao e executavel pelo executor.
+ROLLBACK_TARGET=d820d34050^..? rollback local = delpi-delia-api-prev /
+checkout anterior; rollback prod = SHA anterior no servidor.
+TASK_STATUS=INCOMPLETE (prod bloqueado por acesso) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — LOCAL-E2E-AND-PRODUCTION-DEPLOY-03
+
+TASK=DELIA-C3-LOCAL-E2E-AND-PRODUCTION-DEPLOY-03
+SOURCE=a31b055ada (origin/main revalidado; deploy-wt rebaseado, oficial reiniciado).
+
+OFFICIAL LOCAL: delpi-delia-api Up — /app = delia-deploy-wt (a31b055ada),
+imagem sha256:7e58f811, env preservado, gateway DNS "delia-api" OK,
+renderer ativo (OMISSION_MAX_DEPTH). Rollback: delpi-delia-api-prev.
+
+REAL E2E: TEST_NOT_RUN — bloqueio concreto comprovado:
+password grant em delpi-keycloak (realm delpi, client delpi-central)
+retorna 401 invalid_grant "Invalid user credentials" com as credenciais
+dev provisionadas em infra/.env.local (datadas de 29/out — stale).
+Sem identidade empresarial valida; sem bypass/RBAC inventado, por regra.
+Script canonico real_governed_read_eval.py executado de dentro do
+container oficial (localhost:8000) — autenticacao e' o unico ponto
+falho; KC_PATH corrigido p/ /auth.
+
+PRODUCTION_DEPLOY=NOT_PERFORMED — sem mecanismo canonico de deploy
+nem acesso ao host produtivo neste ambiente.
+PRODUCTION_BUSINESS_OUTCOME=PENDING
+TASK_STATUS=INCOMPLETE (E2E/prod bloqueados por credencial stale
++ ausencia de acesso prod) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — LOCAL-AUTH-E2E-AND-PRODUCTION-PROMOTION-04
+
+TASK=DELIA-C3-LOCAL-AUTH-E2E-AND-PRODUCTION-PROMOTION-04
+SOURCE=68e557e2 (origin/main revalidado; deploy-wt+oficial atualizados).
+
+AUTH ROOT CAUSE: credenciais DEV_PORTAL_* em infra/.env.local STALE
+(29/out). Conta "rober" existe/enabled/sem requiredActions — e' a
+conta do usuario humano; senha atual desconhecida ao executor.
+
+AUTH RESOLUTION: kcadm canonico — reprovisionada senha da conta de
+teste do executor devin-smoke-evo (existente, enabled; sem criar
+conta, sem conceder roles, sem admin-as-user). Token emitido
+(sub ok, azp delpi-central). Cadeia comprovada: 401 sem auth,
+403 "forbidden" em reads governadas -> AuthZ Core live funcional.
+devin-smoke-evo nao possui roles empresariais -> BOM E2E exige
+sessao do usuario rober (Portal ja roteia p/ backend novo) ou
+.env.local atualizado com a senha atual de rober (acao do usuario).
+
+REGRESSAO OPERACIONAL CORRIGIDA nesta sessao: nginx upstream alias
+"delia-api" perdido no docker run -> 502 Portal; recriado com
+--network-alias delia-api. Portal+MFE (delpi-portal, delpi-delia)
+tambem atualizados p/ deploy-wt (infra-delia rebuild sha256:af472cef).
+
+LOCAL: delpi-delia-api Up serving 68e557e2; portal/MFE mesmo SHA;
+rollbacks -prev preservados.
+
+PRODUCTION: mecanismo canonico identificado = VM srv-api rodando
+git pull + infra/scripts/up-prod-sequential.sh (docker-compose.yml
+prod). BLOQUEIO PRECISO: srv-api nao resolve neste ambiente — sem
+SSH config, DNS ou IP registrado; executor nao possui acesso ao host.
+PRODUCTION_DEPLOY=NOT_PERFORMED · PRODUCTION_BUSINESS_OUTCOME=PENDING
+DEPENDENCIA: (a) acesso SSH autorizado a srv-api, ou (b) runner
+canonico com acesso. E2E BOM: sessao rober no Portal local.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW

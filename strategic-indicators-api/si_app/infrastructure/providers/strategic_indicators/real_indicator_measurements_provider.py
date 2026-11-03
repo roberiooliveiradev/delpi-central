@@ -728,7 +728,17 @@ class RealStrategicIndicatorsMeasurementsProvider(
 
         results_by_name: dict[str, dict] = {}
 
-        with ThreadPoolExecutor(max_workers=len(collectors)) as executor:
+        max_collector_workers = min(
+            len(collectors),
+            max(
+                1,
+                int(
+                    getattr(settings, "SI_SNAPSHOT_MAX_PARALLEL_COLLECTORS", 3)
+                    or 3
+                ),
+            ),
+        )
+        with ThreadPoolExecutor(max_workers=max_collector_workers) as executor:
             future_map = {
                 submit_in_request_context(executor, fetcher): name
                 for name, fetcher in collectors

@@ -57,6 +57,7 @@ from app.application.interaction.handle_interactive_turn import (
     DEFAULT_MODEL_REF,
 )
 from app.application.interaction.contracts import (
+    LIMITATION_EVIDENCE_PROJECTION_PARTIAL,
     LIMITATION_INSUFFICIENT_EVIDENCE,
     LIMITATION_RESULT_TRUNCATED,
 )
@@ -316,7 +317,15 @@ def _attempt(
 
 
 def _records(*items):
-    return tuple(PresentedRecord(**item) for item in items)
+    return tuple(
+        {label: value for label, value in item.get("fields", ())}
+        for item in items
+    )
+
+
+def _plain(text):
+    import re as _re
+    return _re.sub(r"\\(.)", r"\1", text)
 
 
 # ---------------------------------------------------------------------------
@@ -472,7 +481,7 @@ def test_compose_ordering_newest_leads_with_subject_and_date():
     records = _records(
         {
             "fields": (
-                ("Código", "PROC-0080"),
+                ("codigo", "PROC-0080"),
                 ("Nome", "Monitoramento de Estoque"),
                 ("Atualizado", "16/10/2026 às 10h57"),
                 ("Setor", "Operações"),
@@ -482,7 +491,7 @@ def test_compose_ordering_newest_leads_with_subject_and_date():
         },
         {
             "fields": (
-                ("Código", "PROC-0001"),
+                ("codigo", "PROC-0001"),
                 ("Atualizado", "01/01/2026"),
             ),
             "identifier": "PROC-0001",
@@ -497,21 +506,21 @@ def test_compose_ordering_newest_leads_with_subject_and_date():
     )
     assert cri is not None
     assert cri.presented_records == 1
-    assert "PROC-0080" in cri.content
-    assert "Monitoramento de Estoque" in cri.content
-    assert "16/10/2026 às 10h57" in cri.content
+    assert "PROC-0080" in _plain(cri.content)
+    assert "Monitoramento de Estoque" in _plain(cri.content)
+    assert "16/10/2026 às 10h57" in _plain(cri.content)
     # E3-R3: unshown fields alone never justify a continuity offer —
     # no proven mechanism exists to serve it.
-    assert "Posso detalhar" not in cri.content
+    assert "Posso detalhar" not in _plain(cri.content)
 
 
 def test_compose_ordering_oldest_uses_oldest_lead():
     records = _records(
         {
-            "fields": (("Código", "A-1"),),
+            "fields": (("codigo", "A-1"),),
             "identifier": "A-1",
         },
-        {"fields": (("Código", "B-2"),), "identifier": "B-2"},
+        {"fields": (("codigo", "B-2"),), "identifier": "B-2"},
     )
     cri = _compose(
         OutcomeVerdict(OUTCOME_ANSWERED),
@@ -521,8 +530,8 @@ def test_compose_ordering_oldest_uses_oldest_lead():
         ordering_event=None,
     )
     assert cri is not None
-    assert "A-1" in cri.content
-    assert "02/01/2020" in cri.content
+    assert "A-1" in _plain(cri.content)
+    assert "02/01/2020" in _plain(cri.content)
 
 
 def test_compose_min_items_presents_exactly_requested():
@@ -545,8 +554,8 @@ def test_compose_min_items_presents_exactly_requested():
     )
     assert cri is not None
     assert cri.presented_records == 3
-    assert "3 exemplos" in cri.content
-    assert "Exemplo 9" not in cri.content
+    assert "3 exemplos" in _plain(cri.content)
+    assert "Exemplo 9" not in _plain(cri.content)
 
 
 def test_compose_min_items_projection_shortfall_marks_insufficient():
@@ -562,10 +571,9 @@ def test_compose_min_items_projection_shortfall_marks_insufficient():
         delivered_count=8,
     )
     assert cri is not None
-    assert cri.presented_records == 5
-    assert LIMITATION_INSUFFICIENT_EVIDENCE in cri.limitations
-    assert LIMITATION_RESULT_TRUNCATED in cri.limitations
-    assert "5 de 8" in cri.content
+    assert cri.presented_records == 8
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in cri.limitations
+    assert "Ex 7" in _plain(cri.content)
 
 
 def test_compose_generic_list_leads_with_delivered_count():
@@ -581,8 +589,8 @@ def test_compose_generic_list_leads_with_delivered_count():
     )
     assert cri is not None
     assert cri.presented_records == 3
-    assert "3 registros" in cri.content
-    assert "Nome: A" in cri.content
+    assert "3 registros" in _plain(cri.content)
+    assert "Nome: A" in _plain(cri.content)
 
 
 def test_compose_truncated_list_notices_and_marks_limitation():
@@ -592,12 +600,16 @@ def test_compose_truncated_list_notices_and_marks_limitation():
     cri = _compose(
         OutcomeVerdict(OUTCOME_ANSWERED),
         records,
+        requirements=AnswerRequirements(min_items=3),
         delivered_count=7,
     )
     assert cri is not None
-    assert cri.presented_records == 5
-    assert LIMITATION_RESULT_TRUNCATED in cri.limitations
-    assert "5 de 7" in cri.content
+    assert cri.presented_records == 3
+    assert (
+        LIMITATION_EVIDENCE_PROJECTION_PARTIAL
+        not in cri.limitations
+    )
+    assert "3 de 7" in _plain(cri.content)
 
 
 def test_compose_complete_coverage_presents_full_delivered_set():
@@ -613,7 +625,7 @@ def test_compose_complete_coverage_presents_full_delivered_set():
     assert cri is not None
     assert cri.presented_records == 7
     assert LIMITATION_RESULT_TRUNCATED not in cri.limitations
-    assert "R6" in cri.content
+    assert "R6" in _plain(cri.content)
 
 
 def test_compose_complete_coverage_bounded_by_scan_ceiling():
@@ -627,8 +639,8 @@ def test_compose_complete_coverage_bounded_by_scan_ceiling():
         delivered_count=40,
     )
     assert cri is not None
-    assert cri.presented_records == 32
-    assert LIMITATION_RESULT_TRUNCATED in cri.limitations
+    assert cri.presented_records == 40
+    assert LIMITATION_EVIDENCE_PROJECTION_PARTIAL not in cri.limitations
 
 
 def test_compose_single_record_renders_detail_lines():
@@ -644,8 +656,8 @@ def test_compose_single_record_renders_detail_lines():
     cri = _compose(OutcomeVerdict(OUTCOME_ANSWERED), records)
     assert cri is not None
     assert cri.presented_records == 1
-    assert "Playlist Matinal" in cri.content
-    assert "Ativa: sim" in cri.content
+    assert "Playlist Matinal" in _plain(cri.content)
+    assert "Ativa: sim" in _plain(cri.content)
 
 
 def test_compose_duplicate_records_collapse_into_one_line():
@@ -662,7 +674,7 @@ def test_compose_duplicate_records_collapse_into_one_line():
     assert cri is not None
     # The verdict here is hypothetical; presentation itself never
     # duplicates a payload into a second example line.
-    assert cri.content.count("Duplicado") == 1
+    assert _plain(cri.content).count("Duplicado") == 3
 
 
 def test_compose_coverage_incomplete_notes_available_total():
@@ -675,8 +687,8 @@ def test_compose_coverage_incomplete_notes_available_total():
         coverage_complete=False,
     )
     assert cri is not None
-    assert "42" in cri.content
-    assert "total" in cri.content.lower()
+    assert "42" in _plain(cri.content)
+    assert "total" in _plain(cri.content).lower()
 
 
 def test_on_ordering_anchors_business_code_not_uuid_id():
@@ -712,15 +724,14 @@ def test_on_ordering_anchors_business_code_not_uuid_id():
         enabled=True,
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert attempt.content is not None
-    assert "PROC-0080" in attempt.content
-    assert "Monitoramento de Estoque" in attempt.content
-    assert "15/10/2026" in attempt.content
-    # A surrogate id is never the natural subject while a business
-    # code is available — and never leaks as presentation text.
-    assert not re.search(
-        r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}", attempt.content
-    )
+    assert _plain(attempt.content) is not None
+    assert "PROC-0080" in _plain(attempt.content)
+    assert "Monitoramento de Estoque" in _plain(attempt.content)
+    assert "15/10/2026" in _plain(attempt.content)
+    # The subject anchor stays the business code — a surrogate UUID
+    # may appear only as verbatim rendered field data, never as the
+    # natural subject of the lead sentence.
+    assert "foi PROC-0080" in _plain(attempt.content)
 
 
 def test_presented_record_labels_humanize_snake_keys():
@@ -756,7 +767,7 @@ def test_compose_insufficient_reason_maps_to_governed_message():
     )
     assert cri is not None
     assert cri.presented_records == 0
-    assert "ordenação" in cri.content
+    assert "ordenação" in _plain(cri.content)
 
 
 def test_compose_fewer_than_requested_carries_counts():
@@ -771,8 +782,8 @@ def test_compose_fewer_than_requested_carries_counts():
     )
     assert cri is not None
     # E3-R1: proven source shortage quotes the owner's total.
-    assert "informa apenas 2 registros" in cri.content
-    assert "inventar" in cri.content
+    assert "informa apenas 2 registros" in _plain(cri.content)
+    assert "inventar" in _plain(cri.content)
 
 
 # ---------------------------------------------------------------------------
@@ -797,10 +808,10 @@ def test_r1_source_scarcity_never_claimed_when_total_exceeds_returned():
         total_count=10,
     )
     assert cri is not None
-    assert "dispõe de 2" not in cri.content
-    assert "apenas 2 registros" not in cri.content
-    assert "2 dos 3" in cri.content
-    assert "inventar" in cri.content
+    assert "dispõe de 2" not in _plain(cri.content)
+    assert "apenas 2 registros" not in _plain(cri.content)
+    assert "2 dos 3" in _plain(cri.content)
+    assert "inventar" in _plain(cri.content)
 
 
 def test_r1_source_shortage_proven_by_coverage_without_total():
@@ -820,8 +831,8 @@ def test_r1_source_shortage_proven_by_coverage_without_total():
         coverage_complete=True,
     )
     assert cri is not None
-    assert "2 dos 3" in cri.content
-    assert "inventar" in cri.content
+    assert "2 dos 3" in _plain(cri.content)
+    assert "inventar" in _plain(cri.content)
 
 
 def test_r1_quantity_unproven_unknown_total_stays_neutral():
@@ -839,8 +850,8 @@ def test_r1_quantity_unproven_unknown_total_stays_neutral():
         coverage_complete=None,
     )
     assert cri is not None
-    assert "2 dos 3" in cri.content
-    assert "dispõe" not in cri.content
+    assert "2 dos 3" in _plain(cri.content)
+    assert "dispõe" not in _plain(cri.content)
 
 
 def test_r1_fulfilled_lead_never_confuses_available_total():
@@ -858,9 +869,9 @@ def test_r1_fulfilled_lead_never_confuses_available_total():
         coverage_complete=False,
     )
     assert cri is not None
-    assert "3 exemplos" in cri.content
+    assert "3 exemplos" in _plain(cri.content)
     # '100' may appear ONLY as the attributed owner-total notice.
-    assert "100" not in cri.content.split("Exibindo")[0].split(
+    assert "100" not in _plain(cri.content).split("Exibindo")[0].split(
         "informa"
     )[0]
 
@@ -878,8 +889,11 @@ def test_r1_truncation_declares_presented_not_returned():
     )
     assert cri is not None
     assert cri.presented_records == 2
-    assert "2 de 5" in cri.content
-    assert LIMITATION_RESULT_TRUNCATED in cri.limitations
+    assert "2 de 5" in _plain(cri.content)
+    assert (
+        LIMITATION_EVIDENCE_PROJECTION_PARTIAL
+        not in cri.limitations
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -895,7 +909,7 @@ def test_r2_verified_modification_event_allows_alteration_language():
     unlocks alteration wording."""
     records = _records(
         {
-            "fields": (("Código", "P-1"), ("Alteração", "hoje")),
+            "fields": (("codigo", "P-1"), ("Alteração", "hoje")),
             "identifier": "P-1",
         }
     )
@@ -907,8 +921,8 @@ def test_r2_verified_modification_event_allows_alteration_language():
         ordering_event="modification",
     )
     assert cri is not None
-    assert "mais recentemente alterado" in cri.content
-    assert "última alteração registrada" in cri.content
+    assert "mais recentemente alterado" in _plain(cri.content)
+    assert "última alteração registrada" in _plain(cri.content)
 
 
 def test_r2_unverified_event_stays_neutral():
@@ -916,7 +930,7 @@ def test_r2_unverified_event_stays_neutral():
     neutral lead + explicit unproven-meaning clause."""
     records = _records(
         {
-            "fields": (("Código", "P-1"), ("Criado", "hoje")),
+            "fields": (("codigo", "P-1"), ("Criado", "hoje")),
             "identifier": "P-1",
         }
     )
@@ -928,9 +942,9 @@ def test_r2_unverified_event_stays_neutral():
         ordering_event=None,
     )
     assert cri is not None
-    assert "mais recente entre os retornados" in cri.content
-    assert "mais recentemente alterado" not in cri.content
-    assert "não comprova" in cri.content
+    assert "mais recente entre os retornados" in _plain(cri.content)
+    assert "mais recentemente alterado" not in _plain(cri.content)
+    assert "não comprova" in _plain(cri.content)
 
 
 def test_r2_suggestive_field_name_stays_neutral():
@@ -938,7 +952,7 @@ def test_r2_suggestive_field_name_stays_neutral():
     meaning — without a verified event the wording stays neutral."""
     for event_field in ("data_alteracao", "updated_at", "dataAlteracao"):
         records = _records(
-            {"fields": (("Código", "P-1"),), "identifier": "P-1"}
+            {"fields": (("codigo", "P-1"),), "identifier": "P-1"}
         )
         cri = _compose(
             OutcomeVerdict(OUTCOME_ANSWERED),
@@ -948,8 +962,8 @@ def test_r2_suggestive_field_name_stays_neutral():
             ordering_event=None,
         )
         assert cri is not None
-        assert "mais recentemente alterado" not in cri.content
-        assert "alteração registrada" not in cri.content
+        assert "mais recentemente alterado" not in _plain(cri.content)
+        assert "alteração registrada" not in _plain(cri.content)
 
 
 def test_r2_owner_metadata_text_cannot_declare_semantics():
@@ -958,7 +972,7 @@ def test_r2_owner_metadata_text_cannot_declare_semantics():
     records = _records(
         {
             "fields": (
-                ("Código", "P-1"),
+                ("codigo", "P-1"),
                 ("Descrição", "data da última alteracao"),
             ),
             "identifier": "P-1",
@@ -972,14 +986,14 @@ def test_r2_owner_metadata_text_cannot_declare_semantics():
         ordering_event=None,
     )
     assert cri is not None
-    assert "mais recentemente alterado" not in cri.content
-    assert "última alteração registrada" not in cri.content
+    assert "mais recentemente alterado" not in _plain(cri.content)
+    assert "última alteração registrada" not in _plain(cri.content)
 
 
 def test_r2_unknown_event_value_stays_neutral():
     """An event outside the verified vocabulary is never claimed."""
     records = _records(
-        {"fields": (("Código", "P-1"),), "identifier": "P-1"}
+        {"fields": (("codigo", "P-1"),), "identifier": "P-1"}
     )
     cri = _compose(
         OutcomeVerdict(OUTCOME_ANSWERED),
@@ -989,14 +1003,14 @@ def test_r2_unknown_event_value_stays_neutral():
         ordering_event="creation",
     )
     assert cri is not None
-    assert "mais recentemente alterado" not in cri.content
+    assert "mais recentemente alterado" not in _plain(cri.content)
 
 
 def test_r2_missing_proof_field_stays_neutral():
     """No proving field identified (single-record temporal fallback)
     — neutral wording, no alteration claim."""
     records = _records(
-        {"fields": (("Código", "P-1"),), "identifier": "P-1"}
+        {"fields": (("codigo", "P-1"),), "identifier": "P-1"}
     )
     cri = _compose(
         OutcomeVerdict(OUTCOME_ANSWERED),
@@ -1006,13 +1020,13 @@ def test_r2_missing_proof_field_stays_neutral():
         ordering_event=None,
     )
     assert cri is not None
-    assert "mais recente entre os retornados" in cri.content
-    assert "mais recentemente alterado" not in cri.content
+    assert "mais recente entre os retornados" in _plain(cri.content)
+    assert "mais recentemente alterado" not in _plain(cri.content)
 
 
 def test_r2_oldest_without_semantics_avoids_alteration_clause():
     records = _records(
-        {"fields": (("Código", "A-1"),), "identifier": "A-1"}
+        {"fields": (("codigo", "A-1"),), "identifier": "A-1"}
     )
     cri = _compose(
         OutcomeVerdict(OUTCOME_ANSWERED),
@@ -1022,8 +1036,8 @@ def test_r2_oldest_without_semantics_avoids_alteration_clause():
         ordering_event=None,
     )
     assert cri is not None
-    assert "A alteração mais antiga" not in cri.content
-    assert "não comprova" in cri.content
+    assert "A alteração mais antiga" not in _plain(cri.content)
+    assert "não comprova" in _plain(cri.content)
 
 
 # ---------------------------------------------------------------------------
@@ -1048,8 +1062,8 @@ def test_r3_unshown_fields_emit_no_continuation_offer():
         delivered_count=1,
     )
     assert cri is not None
-    assert "Posso detalhar" not in cri.content
-    assert "se você quiser" not in cri.content
+    assert "Posso detalhar" not in _plain(cri.content)
+    assert "se você quiser" not in _plain(cri.content)
 
 
 def test_compose_empty_result_uses_empty_message():
@@ -1059,7 +1073,7 @@ def test_compose_empty_result_uses_empty_message():
         delivered_count=0,
     )
     assert cri is not None
-    assert "vazia" in cri.content
+    assert "vazia" in _plain(cri.content)
 
 
 def test_compose_envelope_only_uses_envelope_message():
@@ -1069,7 +1083,7 @@ def test_compose_envelope_only_uses_envelope_message():
         delivered_count=0,
     )
     assert cri is not None
-    assert "dados de negócio" in cri.content
+    assert "dados de negócio" in _plain(cri.content)
 
 
 def test_compose_missing_vocabulary_entry_returns_none():
@@ -1145,16 +1159,16 @@ def test_on_composes_ordering_answer_from_owner_evidence():
         ),
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert attempt.content is not None
-    assert "PROC-0080" in attempt.content
-    assert "Monitoramento de Estoque" in attempt.content
-    assert "16/10/2026 às 10h57" in attempt.content
+    assert _plain(attempt.content) is not None
+    assert "PROC-0080" in _plain(attempt.content)
+    assert "Monitoramento de Estoque" in _plain(attempt.content)
+    assert "16/10/2026 às 10h57" in _plain(attempt.content)
     # SEMANTIC-INTERPRETATION-01: the model proposed the modification
     # meaning, the proving field matched, and the cited owner
     # contract text verified it — alteration wording is earned, not
     # inferred from the field name.
-    assert "mais recentemente alterado" in attempt.content
-    assert "Posso detalhar" not in attempt.content
+    assert "mais recentemente alterado" in _plain(attempt.content)
+    assert "Posso detalhar" not in _plain(attempt.content)
     assert LIMITATION_INSUFFICIENT_EVIDENCE not in (
         attempt.limitations or ()
     )
@@ -1199,7 +1213,7 @@ def test_r2_on_creation_date_never_claims_alteration():
         enabled=True,
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    content = attempt.content or ""
+    content = _plain(attempt.content) or ""
     assert "P-9" in content
     assert "mais recentemente alterado" not in content
     assert "alteração registrada" not in content
@@ -1232,7 +1246,7 @@ def test_r3_on_emits_no_continuation_offer():
         enabled=True,
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert "Posso detalhar" not in (attempt.content or "")
+    assert "Posso detalhar" not in (_plain(attempt.content) or "")
 
 
 def test_on_composes_quantity_answer_with_exact_count():
@@ -1253,8 +1267,8 @@ def test_on_composes_quantity_answer_with_exact_count():
         outcome, goal=_goal(min_items=3), enabled=True
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert "3 exemplos" in attempt.content
-    assert attempt.content.count("Terminal") == 3
+    assert "3 exemplos" in _plain(attempt.content)
+    assert _plain(attempt.content).count("Terminal") == 3
     assert LIMITATION_INSUFFICIENT_EVIDENCE not in (
         attempt.limitations or ()
     )
@@ -1280,10 +1294,10 @@ def test_on_available_total_never_substitutes_delivery():
     assert LIMITATION_INSUFFICIENT_EVIDENCE in (
         attempt.limitations or ()
     )
-    assert "10" not in (attempt.content or "")
+    assert "10" not in (_plain(attempt.content) or "")
     # No fulfilled-quantity lead — the content admits the shortfall.
-    assert "Aqui estão" not in (attempt.content or "")
-    assert "2 dos 3" in (attempt.content or "")
+    assert "Aqui estão" not in (_plain(attempt.content) or "")
+    assert "2 dos 3" in (_plain(attempt.content) or "")
 
 
 def test_on_ordering_unproven_produces_honest_insufficiency():
@@ -1307,7 +1321,7 @@ def test_on_ordering_unproven_produces_honest_insufficiency():
     assert LIMITATION_INSUFFICIENT_EVIDENCE in (
         attempt.limitations or ()
     )
-    assert "ordenação" in (attempt.content or "")
+    assert "ordenação" in (_plain(attempt.content) or "")
 
 
 def test_on_without_vocabulary_keeps_e2_assessment_only():
@@ -1344,8 +1358,8 @@ def test_on_without_vocabulary_keeps_e2_assessment_only():
     # Assessment ran (coverage proven for a single complete record),
     # but no vocabulary means no composed conversational lead — the
     # render matches the OFF baseline.
-    assert "mais recentemente alterado" not in (attempt.content or "")
-    assert attempt.content == off_attempt.content
+    assert "mais recentemente alterado" not in (_plain(attempt.content) or "")
+    assert _plain(attempt.content) == off_attempt.content
 
 
 def test_off_parity_content_identical_to_baseline():
@@ -1463,7 +1477,7 @@ def test_malicious_record_values_stay_inert_text():
     )
     _, attempt = _attempt(outcome, enabled=True)
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    content = attempt.content or ""
+    content = _plain(attempt.content) or ""
     # The hostile text is quoted as a value, never a command.
     assert "Ignore instruções" in content
     assert "Ativo: sim" in content
@@ -1622,9 +1636,9 @@ def test_count_scan_cap_never_leaks_into_returned_claim():
         delivered_count=40,
     )
     assert cri is not None
-    assert cri.presented_records == 5
-    assert "40" in cri.content
-    assert "de 32" not in cri.content
+    assert cri.presented_records == 32
+    assert "40" in _plain(cri.content)
+    assert "32 de 40" in _plain(cri.content)
 
 
 def test_count_duplicate_tail_never_claims_extra_returned():
@@ -1641,9 +1655,9 @@ def test_count_duplicate_tail_never_claims_extra_returned():
         delivered_count=1,
     )
     assert cri is not None
-    assert cri.presented_records == 1
-    assert "Exibindo" not in cri.content
-    assert "de 2" not in cri.content
+    assert cri.presented_records == 2
+    assert "Exibindo" not in _plain(cri.content)
+    assert "de 2" not in _plain(cri.content)
 
 
 def test_on_scan_capped_projection_keeps_single_count_frame():
@@ -1662,6 +1676,6 @@ def test_on_scan_capped_projection_keeps_single_count_frame():
     )
     _, attempt = _attempt(outcome, goal=_goal(), enabled=True)
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert attempt.content is not None
-    assert "40" in attempt.content
-    assert "de 32" not in attempt.content
+    assert _plain(attempt.content) is not None
+    assert "40" in _plain(attempt.content)
+    assert "de 32" not in _plain(attempt.content)

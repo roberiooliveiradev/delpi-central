@@ -291,8 +291,8 @@ Worker: `ProductionRunPollerService` no lifespan do PCP consulta os runs `runnin
 |------|------|
 | Controles play / pause / stop + readout | `plugins/public-hub/.../ProductionRunControls.tsx` |
 | Hook sessão + poll | `useProductionRun.ts` |
-| Card “Agora nesta bancada” | `CockpitPage.tsx` → `ActiveNowCard` |
-| Detalhamento da operação | `OperationDetailPage.tsx` reutiliza os mesmos controles e o mesmo snapshot do run |
+| Fila de operações (OP ativa no topo) | `CockpitPage.tsx` → listagem; sem card de destaque |
+| Detalhamento da operação | `OperationDetailPage.tsx` reutiliza os controles e o snapshot do run |
 | Copy / Ajuda Portal | `plugins/production-control/src/content/copy.ts`, `helpTooltips.ts` |
 
 A fila e o detalhamento da operação reutilizam `ProductionRunControls`: não mantêm contadores locais independentes. Ambas aplicam o `piecesTotal` absoluto do mesmo evento WS, inclusive quando o contador reduz; não usam incremento nem `Math.max()`. O poll HTTP de ~1 s só assume enquanto o socket está desconectado. Leituras completas do run são single-flight: gatilhos recebidos durante uma consulta são coalescidos em um refresh pendente, executado imediatamente após a consulta atual.

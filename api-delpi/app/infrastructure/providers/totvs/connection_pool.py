@@ -23,6 +23,7 @@ TOTVS_QUERY_TIMEOUT = int(os.getenv("TOTVS_QUERY_TIMEOUT", "120"))
 TOTVS_POOL_ENABLED = os.getenv("TOTVS_POOL_ENABLED", "true").lower() in ("1", "true", "yes")
 TOTVS_POOL_MAX_SIZE = int(os.getenv("TOTVS_POOL_MAX_SIZE", "10"))
 TOTVS_POOL_ACQUIRE_TIMEOUT = float(os.getenv("TOTVS_POOL_ACQUIRE_TIMEOUT", "60") or "60")
+TOTVS_POOL_MAX_WAITERS = int(os.getenv("TOTVS_POOL_MAX_WAITERS", "30") or "30")
 
 _pool: TotvsConnectionPool | None = None
 _pool_lock = threading.Lock()
@@ -57,6 +58,11 @@ def create_totvs_connection() -> pyodbc.Connection:
         timeout=TOTVS_CONNECT_TIMEOUT,
     )
     connection.timeout = TOTVS_QUERY_TIMEOUT
+    # Leitura TOTVS segue a convenção NOLOCK já usada nas queries do codebase.
+    # Em nível de sessão, cobre também objetos internos de views do ERP que
+    # leem sem hint — evita que uma transação bloqueante no ERP (ex.: lock em
+    # SB1010, observado em 03/11/2026) segure conexões do pool até o timeout.
+    connection.execute("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED")
     return connection
 
 
@@ -67,6 +73,8 @@ class TotvsConnectionPool:
         self._created = 0
         self._acquire_timeouts = 0
         self._discards = 0
+        self._waiting = 0
+        self._rejected = 0
         self._lock = threading.Lock()
 
     @property
@@ -83,6 +91,8 @@ class TotvsConnectionPool:
             created = self._created
             timeouts = self._acquire_timeouts
             discards = self._discards
+            waiting = self._waiting
+            rejected = self._rejected
         available = self._available.qsize()
         in_use = max(0, created - available)
         return {
@@ -91,8 +101,11 @@ class TotvsConnectionPool:
             "created": created,
             "available": available,
             "in_use": in_use,
+            "waiting": waiting,
+            "max_waiters": TOTVS_POOL_MAX_WAITERS,
             "acquire_timeout_seconds": TOTVS_POOL_ACQUIRE_TIMEOUT,
             "acquire_timeouts_total": timeouts,
+            "rejected_total": rejected,
             "discards_total": discards,
         }
 
@@ -101,50 +114,85 @@ class TotvsConnectionPool:
     ) -> pyodbc.Connection:
         started = time.perf_counter()
 
-        while True:
-            try:
-                connection = self._available.get_nowait()
+        try:
+            connection = self._available.get_nowait()
+            logger.debug("totvs_pool reuse wait_ms=0")
+            return connection
+        except queue.Empty:
+            pass
+
+        with self._lock:
+            if self._created < self._max_size:
+                connection = create_totvs_connection()
+                self._created += 1
                 logger.debug(
-                    "totvs_pool reuse wait_ms=%.0f",
+                    "totvs_pool created total=%d max=%d wait_ms=%.0f",
+                    self._created,
+                    self._max_size,
                     (time.perf_counter() - started) * 1000,
                 )
                 return connection
-            except queue.Empty:
-                pass
+            if self._waiting >= TOTVS_POOL_MAX_WAITERS:
+                self._rejected += 1
+                reject = True
+            else:
+                self._waiting += 1
+                reject = False
 
-            with self._lock:
-                if self._created < self._max_size:
-                    connection = create_totvs_connection()
-                    self._created += 1
+        if reject:
+            # Sem cota de espera ilimitada: requisições enfileiradas por 60s+
+            # seguravam worker threads e transformavam um pico transitório em
+            # saturação sustentada (backlog interno do api-delpi em 03/11/2026).
+            logger.warning(
+                "totvs_pool REJECTED created=%d max=%d waiting>=%d",
+                self._created, self._max_size, TOTVS_POOL_MAX_WAITERS,
+            )
+            raise TimeoutError(
+                f"Pool TOTVS saturado (esperando>={TOTVS_POOL_MAX_WAITERS})."
+            )
+
+        try:
+            while True:
+                try:
+                    connection = self._available.get_nowait()
                     logger.debug(
-                        "totvs_pool created total=%d max=%d wait_ms=%.0f",
-                        self._created,
-                        self._max_size,
+                        "totvs_pool acquired_after_wait wait_ms=%.0f",
                         (time.perf_counter() - started) * 1000,
                     )
                     return connection
+                except queue.Empty:
+                    pass
 
-            remaining = timeout_seconds - (time.perf_counter() - started)
-            if remaining <= 0:
                 with self._lock:
-                    self._acquire_timeouts += 1
-                logger.warning(
-                    "totvs_pool TIMEOUT created=%d max=%d waited=%.0fs",
-                    self._created, self._max_size, timeout_seconds,
-                )
-                raise TimeoutError(
-                    f"Timeout aguardando conexão TOTVS no pool (max={self._max_size})."
-                )
+                    if self._created < self._max_size:
+                        connection = create_totvs_connection()
+                        self._created += 1
+                        return connection
 
-            try:
-                connection = self._available.get(timeout=min(remaining, 2.0))
-                logger.debug(
-                    "totvs_pool acquired_after_wait wait_ms=%.0f",
-                    (time.perf_counter() - started) * 1000,
-                )
-                return connection
-            except queue.Empty:
-                continue
+                remaining = timeout_seconds - (time.perf_counter() - started)
+                if remaining <= 0:
+                    with self._lock:
+                        self._acquire_timeouts += 1
+                    logger.warning(
+                        "totvs_pool TIMEOUT created=%d max=%d waited=%.0fs",
+                        self._created, self._max_size, timeout_seconds,
+                    )
+                    raise TimeoutError(
+                        f"Timeout aguardando conexão TOTVS no pool (max={self._max_size})."
+                    )
+
+                try:
+                    connection = self._available.get(timeout=min(remaining, 2.0))
+                    logger.debug(
+                        "totvs_pool acquired_after_wait wait_ms=%.0f",
+                        (time.perf_counter() - started) * 1000,
+                    )
+                    return connection
+                except queue.Empty:
+                    continue
+        finally:
+            with self._lock:
+                self._waiting -= 1
 
     def release(
         self, connection: pyodbc.Connection | None, *, discard: bool = False,

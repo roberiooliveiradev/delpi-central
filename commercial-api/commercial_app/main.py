@@ -66,6 +66,7 @@ from commercial_app.interface.mcp import (
     mcp_metadata_router,
     mcp_mount_path_middleware,
 )
+from commercial_app.middleware.actor_middleware import actor_binding_middleware
 from commercial_app.middleware.auth_middleware import jwt_middleware
 from commercial_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
@@ -141,6 +142,9 @@ async def unhandled_exception_handler(_request: Request, exc: Exception):
 
 # Last registered http middleware runs first: rewrite /mcp → /mcp/
 # for the mounted Starlette MCP app (canonical pattern).
+# actor_binding roda DEPOIS do jwt_middleware (registrado antes → posição
+# interna), quando request.state.user já está populado.
+app.middleware("http")(actor_binding_middleware)
 app.middleware("http")(mcp_mount_path_middleware)
 app.middleware("http")(jwt_middleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)

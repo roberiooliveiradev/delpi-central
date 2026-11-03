@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Request
+from fastapi import APIRouter, Body, Path, Query, Request
 
 from commercial_app.application.security.auth_dependencies import require_any_permission
 from commercial_app.application.security.commercial_permissions import (
@@ -35,7 +35,6 @@ from commercial_app.domain.services.customer_center_assignment_validation import
 )
 from commercial_app.core.auth_actor import (
     actor_sub_from_request,
-    bind_request_actor,
     current_user_from_request,
 )
 from commercial_app.core.responses import fail, ok
@@ -76,16 +75,9 @@ def _verified_customer_center(code: str, store: str, center: str | None) -> str 
     return validate_customer_center_assignment(center, known)
 
 
-def _bind_actor_dependency(request: Request):
-    """Injeta ator do JWT no ContextVar para notify portfolio.changed."""
-    with bind_request_actor(request):
-        yield
-
-
 router = APIRouter(
     prefix="/seller-portfolios",
     tags=["Seller portfolios"],
-    dependencies=[Depends(_bind_actor_dependency)],
 )
 
 
