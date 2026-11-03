@@ -283,12 +283,22 @@ async def get_product_drawing_pdf(product_code: str):
     )
     status = result.get("status")
     if status == "available":
+        import hashlib
+
+        content = result["content"]
+        sha256 = hashlib.sha256(content).hexdigest()
+        filename = result.get("filename") or f"{code}.pdf"
         return Response(
-            content=result["content"],
+            content=content,
             media_type=result.get("content_type") or "application/pdf",
             headers={
+                # attachment — downloadável pelo consumidor (ChatGPT).
                 "Content-Disposition": result.get("content_disposition")
-                or f'inline; filename="{code}.pdf"'
+                or f'attachment; filename="{filename}"',
+                "X-Document-Sha256": sha256,
+                "X-Document-Size": str(len(content)),
+                "X-Document-Filename": filename,
+                "X-Document-Product-Code": code,
             },
         )
     if status == "forbidden":
