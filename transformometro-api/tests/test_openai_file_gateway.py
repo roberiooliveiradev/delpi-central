@@ -207,3 +207,20 @@ def test_generic_azure_wildcard_not_present():
     # The default allowlist must never resolve arbitrary Azure storage.
     assert "blob.core.windows.net" not in mod._allowed_hosts()
     assert "*.blob.core.windows.net" not in mod._allowed_hosts()
+
+
+def test_regional_oaiusercontent_hosts_allowed_by_default_suffix():
+    """R4.4 — fileParams download URLs are served from region-sharded
+    oaiusercontent.com subdomains (observed: sdmntpr*). The shared suffix
+    must be allowed while lookalike hosts still fail closed."""
+    from tm_app.infrastructure.gateways.openai_file_gateway import (
+        _host_allowed,
+    )
+
+    assert _host_allowed("sdmntprbrazilsouth.oaiusercontent.com")
+    assert _host_allowed("sdmntprcentralus.oaiusercontent.com")
+    assert _host_allowed("files.oaiusercontent.com")
+    # Suffix-confusion and foreign hosts still denied.
+    assert not _host_allowed("oaiusercontent.com.evil.example")
+    assert not _host_allowed("evil-oaiusercontent.com")
+    assert not _host_allowed("example.com")

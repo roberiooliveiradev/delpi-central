@@ -565,9 +565,15 @@ def _canonical_catalog() -> dict[str, Any]:
                 "execution_policy. upload_attachment binds the "
                 "user-uploaded file via the openai/fileParams contract "
                 "(file: {download_url, file_id, mime_type?, file_name?} "
-                "bound by the host — never an arbitrary URL or local "
-                "path). Reads via helpdesk_read; delete_ticket moves the "
-                "ticket to the GLPI trash."
+                "bound by the host — never a sandbox path (/mnt/data/...), "
+                "local path or arbitrary URL). INLINE IMAGE IN BODY: "
+                "upload first, then add_followup with content carrying "
+                "<img src='/apps/helpdesk-api/tickets/{ticket_id}/"
+                "attachments/{document_id}'> or "
+                "<img data-attachment-id='{document_id}'> — the BFF "
+                "sanitizer keeps same-ticket image refs only. Reads via "
+                "helpdesk_read; delete_ticket moves the ticket to the "
+                "GLPI trash."
             ),
             "read_write": "MIXED",
             "read_operation": "helpdesk_read",

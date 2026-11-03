@@ -37,7 +37,11 @@ from tm_app.application.helpdesk.helpdesk_write_port import (
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_HOSTS = "files.oaiusercontent.com"
+# Default allowlist: canonical delivery host + shared oaiusercontent.com
+# suffix — ChatGPT fileParams download URLs are region-sharded
+# (e.g. sdmntprbrazilsouth.oaiusercontent.com). The pre-authorized
+# Azure blob host stays an explicit env entry.
+_DEFAULT_HOSTS = "files.oaiusercontent.com,oaiusercontent.com"
 MAX_FILE_BYTES = int(os.getenv("OPENAI_FILE_MAX_BYTES", str(20 * 1024 * 1024)))
 _TIMEOUT_SECONDS = 20.0
 
