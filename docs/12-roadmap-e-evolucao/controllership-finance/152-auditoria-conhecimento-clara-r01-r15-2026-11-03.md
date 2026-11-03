@@ -540,3 +540,16 @@ Resposta correta a "O R04 ainda está bloqueado?": **não** — visão operacion
 
 - Canal ChatGPT externo segue indisponível para automação → **dimensão conversacional `TEST_NOT_RUN`**, procedimento oficial em §14.6.
 - Suíte PG: **13/13**; SUPERSEDED/INTERNAL_ONLY/report_id/`full_match` preservados; nenhum contrato/SQL/ranking alterado; sem deploy (testes+docs apenas).
+
+
+### 15.8 GPT REVIEW independente — Gate 078 (03/11/2026)
+
+**GitHub:** commit `045999fa22d4b64f920ad9c6b4befa4206271414` confirmado remotamente; diff limitado a `tests/test_pg_clara_retrieval.py`, `tests/clara_golden_set_r01_r15.py` e este Documento 152. HEAD observado na revisão posterior `790e4920a8d362c009ebb3f0ad0cf8c26029b3a3`. Limpeza de worktree e 13/13 testes PG são **reportados pelo executor**, não reproduzidos diretamente pelo revisor.
+
+**Enforcement corrigido — PASS por inspeção:** `_check_case_result` exige `actual in KNOWN_VERDICTS` e `actual == case.get("expect","PASS_RETRIEVED")`, aplicada aos testes de recuperação 105, aceitação por evidência 105 e 10 negativos; fixtures mutacionais incluem novo miss inesperado, `CITATION_MISS`, `EVIDENCE_WEAK`, `SOURCE_GAP`, mudança de expectativa, veredito desconhecido e perda de cobertura. O mecanismo antes tolerante foi efetivamente removido. Ainda é prova sobre evidência de recuperação, **não sobre resposta conversacional**.
+
+**Reconciliação quantitativa obrigatória:** o código em `clara_golden_set_r01_r15.py` tem **105 casos GOLDEN_SET únicos** e **4 `expect="RETRIEVAL_MISS"` explícitos**, portanto **101 casos com expectativa `PASS_RETRIEVED`**. NEGATIVE_SET tem 10 casos, 3 misses esperados e 7 PASS esperados. O relato/documentação anterior indicava **100 PASS + 4 MISS = 104**, incompatível com os 105 e com o contrato do novo teste. Este número não foi corrigido por presunção: **101+4 é distribuição esperada pelo código; observado executado requer stdout/log do pytest para comprovação**. Registrar essa divergência como ajuste documental de QA, não como regressão runtime.
+
+**Corpus e busca live:** `knowledge(sources)` confirmou corpus `3cdbd991-837a-4ed6-81d4-0b81a304da6a`, 2.215 itens/88 fontes, sem mudança. Probe `knowledge(search,report_id=R04,query="O R04 ainda está bloqueado?",limit=12)` retornou 12 itens: `doc-85` com BLOQUEADO na posição 5, `doc-83` BLOQUEADO na posição 6, enquanto `ficha-r04` vigente aparece nas posições 8/9 e `ficha-index` na 2. Risco `STALE_EVIDENCE` corretamente conhecido e não resolvido no motor; nova política de ranking/vigência permanece `DECISION_REQUIRED` sob owner.
+
+**Veredito GPT REVIEW: `ACCEPT_WITH_RESIDUAL`** para rework de enforcement e testes mutacionais por inspeção de código, sem necessidade de deploy de runtime para alterações apenas em testes/docs. **Resíduos:** (1) 105 respostas conversacionais live `TEST_NOT_RUN`; (2) sete misses previstos (4 golden + 3 negativos) associados à política de ranking; (3) logs originais PG 13/13 não reproduzidos pelo revisor; (4) reconciliação aritmética acima, requer comprovação de contagem observada para certificação. Não declarar homologação semântica de respostas R01–R15 concluída.
