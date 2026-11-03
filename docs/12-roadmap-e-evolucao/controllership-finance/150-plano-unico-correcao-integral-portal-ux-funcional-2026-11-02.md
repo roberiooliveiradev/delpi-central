@@ -580,3 +580,19 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 **Gates de conclusão:** inventário provado no HEAD, owner api-delpi confirmado, segurança effective permissions/resource scope intacta, matriz de campos ordenáveis aprovada, SQL whitelist e tie-break determinístico antes de paginação, testes de todos os consumidores e dados reais multi-page, UI acessível, CLARA/BFF/Portal quando capazes, commit + push em `main`, deploy controlado com rollback, smoke pós-deploy. Se owner/segurança ou campo material não for confirmado: executar partes independentes, reportar `BLOCKED_WITH_EVIDENCE` e não promover `PASS`.
 
 **Status da decisão:** `PO_APPROVED_OPTION_A / OWNER_CONFIRMATION_PENDING`. Não declarar CF-UX-047 entregue antes dos gates de implementação e verificação.
+
+## 17. Execução Gate 070 — CF-UX-047/048/049 (ordenação global + status + centro de trabalho)
+
+**Extensão de contrato backward-compatible implementada** (Opção A, §16) no fluxo canônico `MFE → BFF → api-delpi → TOTVS`, sem gateway/API paralela e sem sort local de página.
+
+**Contrato novo (opcional, legado preservado):**
+- `GET /supplies/consumption-audit/orders` passa a aceitar `sort_by` ∈ {`production_order`,`product_code`,`product_description`,`status`,`date`} e `sort_direction` ∈ {`asc`,`desc`} (default `asc`). Ausentes → ordem legada `C2_EMISSAO DESC, C2_OP ASC` (comportamento de Suprimentos intacto).
+- Whitelist fechada em `consumption_audit_sql.SEARCH_SORT_FIELDS`/`orders_search_order_by` — nenhum valor do chamador interpolado; desempate determinístico `, OP.C2_OP ASC`; `date` segue o `date_type` da consulta (emission→`C2_EMISSAO`, finished→`C2_DATRF`, appointment→`MIN(H6_DTAPONT)` via EXISTS SH6).
+- `work_center` **fora** da whitelist: na listagem o centro vem de SH8 por operação (multiplicidade) — sem campo escalar comprovado; rejeitado com 400.
+- BFF `production_order_consumption_routes` valida por `pattern` e propaga; erros do produtor seguem passthrough tipado. `serverSort` nativo do `DataTableSection` (kit oficial) ativado nos cabeçalhos OP/Produto/Descrição/Status/Data; clique alterna asc/desc e retorna à página 1.
+
+**CF-UX-047 → FIXED_PENDING_VERIFY** — implementado e testado (64 testes api-delpi + 7 BFF + 417 MFE verdes); falta verificação visual autenticada e CLARA multi-página.
+**CF-UX-048 → RESOLVED_PROVEN** — `C2_STATUS` domínio comprovado nos fontes TOTVS Delpi (`DLP013.PRW`/`DEL016.prw`): `N`/vazio=Normal, `S`=Sacramentada, `U`=Suspensa — flag administrativo **ortogonal** ao progresso (explica `N` em OPs encerradas). Coluna agora exibe `código · rótulo`; Help atualizado com o domínio.
+**CF-UX-049 → RESOLVED_HONEST** — listagem não projeta `work_center` (SH8 multi-operação, sem cardinalidade única); coluna removida da grid, limitação honesta adicionada ao envelope BFF e ao Help; centro disponível no detalhe da OP.
+
+**Resíduo:** teste stale pré-existente `test_valid_s2s_credential_executes_and_envelopes` corrigido para o contrato canônico `allowed_clients=(supplies-api, controllership-finance-api)` (desatualizado desde `9359a9a7da`). Falha ambiental não relacionada: `test_product_sales_open_orders_returns_meta` exige `PLUGINS_DB_HOST` local.

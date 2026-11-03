@@ -139,6 +139,8 @@ class ConsumptionAuditRepository(BaseRepository):
         status: str | None = None,
         work_center: str | None = None,
         operation: str | None = None,
+        sort_by: str | None = None,
+        sort_direction: str | None = None,
         offset: int = 0,
         limit: int = 25,
     ) -> list[dict]:
@@ -153,9 +155,16 @@ class ConsumptionAuditRepository(BaseRepository):
             work_center=work_center,
             operation=operation,
         )
+        order_by_sql = consumption_audit_sql.orders_search_order_by(
+            sort_by=sort_by,
+            sort_direction=sort_direction,
+            date_type=date_type,
+        )
         with self as repo:
             return repo.execute_query(
-                consumption_audit_sql.orders_search_sql(where_sql),
+                consumption_audit_sql.orders_search_sql(
+                    where_sql, order_by_sql
+                ),
                 params + (int(offset), int(limit)),
             )
 

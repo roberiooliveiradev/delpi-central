@@ -85,6 +85,17 @@ def search_consumption_audit_orders(
     ),
     page: int = Query(1, ge=1),
     page_size: int = PAGE_SIZE_QUERY("page_25_50"),
+    sort_by: str | None = Query(
+        None,
+        description=(
+            "Ordenação global opcional: production_order|product_code|"
+            "product_description|status|date. Whitelist; `date` segue o "
+            "date_type da consulta. Ausente = ordem legada."
+        ),
+    ),
+    sort_direction: str | None = Query(
+        None, description="Direção da ordenação: asc|desc (default asc)."
+    ),
 ):
     """operationId: search_consumption_audit_orders."""
     try:
@@ -100,6 +111,8 @@ def search_consumption_audit_orders(
             operation=operation,
             page=page,
             page_size=page_size,
+            sort_by=sort_by,
+            sort_direction=sort_direction,
         )
     except ValueError as exc:
         return error_response(

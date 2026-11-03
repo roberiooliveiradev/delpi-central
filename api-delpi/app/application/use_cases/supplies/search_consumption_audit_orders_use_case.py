@@ -37,6 +37,8 @@ class SearchConsumptionAuditOrdersUseCase:
         total = self._repository.count_orders(**filters)
         items = self._repository.search_orders(
             **filters,
+            sort_by=request.sort_by,
+            sort_direction=request.sort_direction,
             offset=paging["offset"],
             limit=paging["page_size"],
         )

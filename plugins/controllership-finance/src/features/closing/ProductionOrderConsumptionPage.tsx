@@ -22,6 +22,8 @@ import {
   getProductionOrderConsumptionDetail,
   type DateType,
   type ProductionOrderConsumptionPayload,
+  type SortBy,
+  type SortDirection,
 } from "../../api/productionOrderConsumptionApi";
 import { formatCivilDate } from "../../utils/formatters";
 import { CF_HELP } from "../../content/helpTooltips";
@@ -62,6 +64,35 @@ function formatDateCell(row: R04Row, dateType: DateType): string {
   return formatted || "—";
 }
 
+/** C2_STATUS — domínio comprovado nos fontes TOTVS Delpi (DLP013/DEL016). */
+const OP_STATUS_LABELS: Record<string, string> = {
+  "": "Normal",
+  N: "Normal",
+  S: "Sacramentada",
+  U: "Suspensa",
+};
+
+function formatStatus(value: unknown): string {
+  if (value === undefined || value === null) return "—";
+  const code = String(value).trim();
+  const label = OP_STATUS_LABELS[code];
+  if (label === undefined) return code || "—";
+  return code ? `${code} · ${label}` : label;
+}
+
+function formatStatusCell(row: R04Row): string {
+  return formatStatus(row.status);
+}
+
+/** Coluna da UI → campo da whitelist `sort_by` do contrato. */
+const COLUMN_SORT_BY: Record<string, SortBy> = {
+  op: "production_order",
+  product: "product_code",
+  description: "product_description",
+  status: "status",
+  date: "date",
+};
+
 function R04_COLUMNS(dateType: DateType): DataTableColumn<R04Row>[] {
   return [
     {
@@ -70,14 +101,13 @@ function R04_COLUMNS(dateType: DateType): DataTableColumn<R04Row>[] {
       headerHint: R04_COL_HELP.op,
       render: (row) => String(row.productionOrder ?? row.op ?? "—"),
       sortable: true,
-      sortValue: (row) =>
-        String(row.productionOrder ?? row.op ?? "") || null,
     },
     {
       key: "product",
       header: "Produto",
       headerHint: R04_COL_HELP.product,
       render: (row) => String(row.productCode ?? "—"),
+      sortable: true,
     },
     {
       key: "description",
@@ -85,27 +115,24 @@ function R04_COLUMNS(dateType: DateType): DataTableColumn<R04Row>[] {
       headerHint: R04_COL_HELP.description,
       render: (row) =>
         String(row.productDescription ?? row.product ?? "—"),
+      sortable: true,
     },
     {
       key: "status",
       header: "Status",
       headerHint: R04_COL_HELP.status,
       align: "center",
-      // Código técnico do produtor — semântica oficial não
-      // comprovada no contrato; apresentar o código real.
-      render: (row) => String(row.status ?? "—"),
-    },
-    {
-      key: "workCenter",
-      header: "Centro de trabalho",
-      headerHint: R04_COL_HELP.workCenter,
-      render: (row) => String(row.workCenter ?? "—"),
+      // C2_STATUS — flag administrativo comprovado nos fontes
+      // TOTVS Delpi: N/vazio=Normal, S=Sacramentada, U=Suspensa.
+      render: (row) => formatStatusCell(row),
+      sortable: true,
     },
     {
       key: "date",
       header: "Data",
       headerHint: R04_COL_HELP.date,
       render: (row) => formatDateCell(row, dateType),
+      sortable: true,
     },
   ];
 }
@@ -156,7 +183,9 @@ function DetailEntries({ payload }: { payload: R04Row }) {
             {dateKeys.has(label)
               ? formatCivilDate(String(value).slice(0, 10)) ||
                 String(value)
-              : String(value)}
+              : label === "Status"
+                ? formatStatus(value)
+                : String(value)}
           </dd>
         </div>
       ))}
@@ -219,6 +248,10 @@ export function ProductionOrderConsumptionPage({
   const [dateType, setDateType] = useState<DateType>("emission");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<{
+    key: string;
+    direction: SortDirection;
+  } | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [data, setData] = useState<ProductionOrderConsumptionPayload | null>(
     null,
@@ -243,6 +276,8 @@ export function ProductionOrderConsumptionPage({
       dateType,
       search: search || undefined,
       page,
+      sortBy: sort ? COLUMN_SORT_BY[sort.key] : undefined,
+      sortDirection: sort?.direction,
     })
       .then((payload) => {
         if (!cancelled) {
@@ -262,7 +297,7 @@ export function ProductionOrderConsumptionPage({
     return () => {
       cancelled = true;
     };
-  }, [period, branch, dateType, search, page, refreshNonce]);
+  }, [period, branch, dateType, search, page, sort, refreshNonce]);
 
   const openDetail = useCallback(
     (op: string) => {
@@ -418,6 +453,25 @@ export function ProductionOrderConsumptionPage({
                 pageSize: 25,
                 total,
                 onPageChange: setPage,
+              }}
+              serverSort={{
+                sortKey: sort?.key ?? null,
+                sortDirection: sort?.direction ?? "asc",
+                onSortChange: (columnKey) => {
+                  if (!COLUMN_SORT_BY[columnKey]) return;
+                  setSort((current) =>
+                    current?.key === columnKey
+                      ? {
+                          key: columnKey,
+                          direction:
+                            current.direction === "asc"
+                              ? "desc"
+                              : "asc",
+                        }
+                      : { key: columnKey, direction: "asc" },
+                  );
+                  setPage(1);
+                },
               }}
             />
           )}

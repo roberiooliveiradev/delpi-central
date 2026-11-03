@@ -619,9 +619,9 @@ export const CF_HELP = {
       description:
         "Descrição do produto — descrição do produto correspondente ao código informado na ordem de produção.",
       status:
-        "Status da OP — código técnico da situação da ordem de produção retornado pelo TOTVS. A interpretação dos códigos depende do contrato oficial da origem.",
+        "Status da OP — situação administrativa da ordem no TOTVS (campo C2_STATUS): «N» ou vazio = Normal, «S» = Sacramentada, «U» = Suspensa. É um flag administrativo distinto do progresso de produção — uma OP Normal pode estar encerrada ou com produção concluída.",
       workCenter:
-        "Centro de trabalho — centro de trabalho associado à ordem quando essa informação estiver disponível na consulta. O símbolo «—» indica ausência de informação no registro apresentado.",
+        "Centro de trabalho — informado por operação da OP no detalhe (SH8), não na listagem: uma ordem pode envolver vários centros de trabalho.",
       date: "Data da OP — data correspondente ao tipo selecionado no filtro: emissão, finalização ou apontamento. A referência temporal é a definida pela consulta de ordens, não necessariamente a data de movimentação dos materiais consumidos.",
     },
   },

@@ -5,6 +5,8 @@ from datetime import date
 from app.domain.totvs.protheus_branches import normalize_branch_code
 from app.infrastructure.persistence.totvs.production_repositories.consumption_audit_sql import (
     SEARCH_DATE_TYPES,
+    SEARCH_SORT_DIRECTIONS,
+    SEARCH_SORT_FIELDS,
 )
 
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -49,6 +51,8 @@ class SearchConsumptionAuditOrdersRequest:
     operation: str | None = None
     page: int = 1
     page_size: int = 25
+    sort_by: str | None = None
+    sort_direction: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "branch", normalize_branch_code(self.branch))
@@ -101,3 +105,24 @@ class SearchConsumptionAuditOrdersRequest:
             raise ValueError("page_size deve estar entre 1 e 50.")
         object.__setattr__(self, "page", page)
         object.__setattr__(self, "page_size", page_size)
+
+        sort_by = _clean(self.sort_by, 30).lower() or None
+        sort_direction = _clean(self.sort_direction, 4).lower() or None
+        if sort_by and sort_by not in SEARCH_SORT_FIELDS:
+            raise ValueError(
+                f"sort_by inválido: {sort_by!r} — use "
+                f"{'|'.join(SEARCH_SORT_FIELDS)}."
+            )
+        if sort_direction and not sort_by:
+            raise ValueError("sort_direction exige sort_by.")
+        if sort_direction and sort_direction not in SEARCH_SORT_DIRECTIONS:
+            raise ValueError(
+                f"sort_direction inválido: {sort_direction!r} — use "
+                f"{'|'.join(SEARCH_SORT_DIRECTIONS)}."
+            )
+        object.__setattr__(self, "sort_by", sort_by)
+        object.__setattr__(
+            self,
+            "sort_direction",
+            sort_direction or ("asc" if sort_by else None),
+        )

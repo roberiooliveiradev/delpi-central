@@ -452,12 +452,79 @@ _ORDERS_SEARCH_SELECT = """
 """
 
 
-def orders_search_sql(where_sql: str) -> str:
+# ---------------------------------------------------------------------------
+# Ordenação global opcional (CF-UX-047 — extensão backward-compatible).
+#
+# Whitelist fechada de expressões SQL conhecidas: nenhum valor do chamador
+# é interpolado; ``sort_by``/``sort_direction`` só aceitam os tokens abaixo.
+# ``work_center`` fica fora da whitelist — na listagem o centro vem de SH8
+# (múltiplas operações por OP), sem campo escalar comprovado para ordenar.
+# Desempate determinístico por OP.C2_OP ASC mantém paginação estável.
+# ---------------------------------------------------------------------------
+
+SEARCH_SORT_FIELDS = (
+    "production_order",
+    "product_code",
+    "product_description",
+    "status",
+    "date",
+)
+
+SEARCH_SORT_DIRECTIONS = ("asc", "desc")
+
+_DEFAULT_SEARCH_ORDER_BY = "ORDER BY OP.C2_EMISSAO DESC, OP.C2_OP ASC"
+
+_SEARCH_SORT_COLUMNS = {
+    "production_order": "RTRIM(LTRIM(OP.C2_OP))",
+    "product_code": "RTRIM(LTRIM(OP.C2_PRODUTO))",
+    "product_description": "RTRIM(LTRIM(P.B1_DESC))",
+    "status": "RTRIM(LTRIM(OP.C2_STATUS))",
+}
+
+# ``date`` segue o ``date_type`` da consulta — a mesma coluna real que filtra.
+_APPOINTMENT_MIN_DATE_EXPR = (
+    "(SELECT MIN(CONVERT(DATE, NULLIF(H6.H6_DTAPONT, ''), 112))"
+    " FROM SH6010 H6 WITH (NOLOCK)"
+    " WHERE H6.D_E_L_E_T_ = ''"
+    " AND RTRIM(LTRIM(H6.H6_OP)) = RTRIM(LTRIM(OP.C2_OP))"
+    " AND H6.H6_FILIAL = OP.C2_FILIAL)"
+)
+
+_SEARCH_DATE_SORT_COLUMNS = {
+    "emission": "CONVERT(DATE, NULLIF(OP.C2_EMISSAO, ''), 112)",
+    "finished": "CONVERT(DATE, NULLIF(OP.C2_DATRF, ''), 112)",
+    "appointment": _APPOINTMENT_MIN_DATE_EXPR,
+}
+
+
+def orders_search_order_by(
+    *,
+    sort_by: str | None = None,
+    sort_direction: str | None = None,
+    date_type: str = "emission",
+) -> str:
+    """ORDER BY da listagem — ordem legada preservada quando ausente."""
+    if sort_by is None and sort_direction is None:
+        return _DEFAULT_SEARCH_ORDER_BY
+    if sort_by not in SEARCH_SORT_FIELDS:
+        raise ValueError(f"sort_by inválido: {sort_by!r}")
+    if sort_direction not in SEARCH_SORT_DIRECTIONS:
+        raise ValueError(f"sort_direction inválido: {sort_direction!r}")
+    if sort_by == "date":
+        if date_type not in SEARCH_DATE_TYPES:
+            raise ValueError(f"date_type inválido: {date_type!r}")
+        expression = _SEARCH_DATE_SORT_COLUMNS[date_type]
+    else:
+        expression = _SEARCH_SORT_COLUMNS[sort_by]
+    return f"ORDER BY {expression} {sort_direction.upper()}, OP.C2_OP ASC"
+
+
+def orders_search_sql(where_sql: str, order_by_sql: str | None = None) -> str:
     """Listagem paginada de OPs — ordenação estável (emissão desc, OP asc)."""
     return (
         _ORDERS_SEARCH_SELECT
         + f"\n    WHERE {where_sql}\n"
-        + "    ORDER BY OP.C2_EMISSAO DESC, OP.C2_OP ASC\n"
+        + f"    {order_by_sql or _DEFAULT_SEARCH_ORDER_BY}\n"
         + "    OFFSET ? ROWS FETCH NEXT ? ROWS ONLY\n"
     )
 

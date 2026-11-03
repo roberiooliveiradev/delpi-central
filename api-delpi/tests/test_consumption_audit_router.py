@@ -120,7 +120,7 @@ def test_valid_s2s_credential_executes_and_envelopes():
     validator.validate.assert_called_once_with(
         "svc-jwt",
         required_scopes=("consumption-audit.read",),
-        allowed_clients=("supplies-api",),
+        allowed_clients=("supplies-api", "controllership-finance-api"),
     )
     use_case.execute.assert_called_once()
     request = use_case.execute.call_args.args[0]

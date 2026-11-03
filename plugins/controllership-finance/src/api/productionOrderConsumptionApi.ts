@@ -9,6 +9,16 @@ import { cfApiUrl, httpGet } from "./httpClient";
 
 export type DateType = "emission" | "finished" | "appointment";
 
+/** Whitelist do contrato — Centro de trabalho fica fora (sem campo escalar). */
+export type SortBy =
+  | "production_order"
+  | "product_code"
+  | "product_description"
+  | "status"
+  | "date";
+
+export type SortDirection = "asc" | "desc";
+
 export type ProductionOrderConsumptionParams = {
   period: string;
   branch: "01" | "02";
@@ -20,6 +30,8 @@ export type ProductionOrderConsumptionParams = {
   operation?: string;
   page?: number;
   pageSize?: number;
+  sortBy?: SortBy;
+  sortDirection?: SortDirection;
 };
 
 export type ProductionOrderConsumptionPayload = Record<string, unknown> & {
@@ -109,6 +121,9 @@ export function getProductionOrderConsumption(
   if (params.status) query.set("status", params.status);
   if (params.workCenter) query.set("work_center", params.workCenter);
   if (params.operation) query.set("operation", params.operation);
+  if (params.sortBy) query.set("sort_by", params.sortBy);
+  if (params.sortDirection)
+    query.set("sort_direction", params.sortDirection);
   return httpGet<CfEnvelope<ProductionOrderConsumptionPayload>>(
     cfApiUrl(
       `/closing/competences/${encodeURIComponent(

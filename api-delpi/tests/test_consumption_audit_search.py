@@ -149,6 +149,83 @@ def test_search_and_count_sql_are_select_only_with_paging():
     assert where.count("?") == len(params)
 
 
+# --------------------------------------------------------------- sort
+
+
+def test_order_by_default_preserves_legacy_order():
+    order = consumption_audit_sql.orders_search_order_by()
+    assert order == "ORDER BY OP.C2_EMISSAO DESC, OP.C2_OP ASC"
+
+
+@pytest.mark.parametrize(
+    "sort_by,fragment",
+    [
+        ("production_order", "C2_OP"),
+        ("product_code", "C2_PRODUTO"),
+        ("product_description", "B1_DESC"),
+        ("status", "C2_STATUS"),
+    ],
+)
+def test_order_by_whitelist_fields(sort_by, fragment):
+    order = consumption_audit_sql.orders_search_order_by(
+        sort_by=sort_by, sort_direction="asc"
+    )
+    assert fragment in order
+    assert order.endswith(", OP.C2_OP ASC")
+    assert " ASC" in order
+
+
+def test_order_by_desc_and_deterministic_tiebreak():
+    order = consumption_audit_sql.orders_search_order_by(
+        sort_by="product_description", sort_direction="desc"
+    )
+    assert "B1_DESC" in order
+    assert " DESC" in order
+    assert order.endswith(", OP.C2_OP ASC")
+
+
+@pytest.mark.parametrize(
+    "date_type,column",
+    [
+        ("emission", "C2_EMISSAO"),
+        ("finished", "C2_DATRF"),
+        ("appointment", "H6_DTAPONT"),
+    ],
+)
+def test_order_by_date_follows_date_type(date_type, column):
+    order = consumption_audit_sql.orders_search_order_by(
+        sort_by="date", sort_direction="asc", date_type=date_type
+    )
+    assert column in order
+    assert order.endswith(", OP.C2_OP ASC")
+
+
+def test_order_by_rejects_unknown_field_and_direction():
+    with pytest.raises(ValueError):
+        consumption_audit_sql.orders_search_order_by(
+            sort_by="work_center", sort_direction="asc"
+        )
+    with pytest.raises(ValueError):
+        consumption_audit_sql.orders_search_order_by(
+            sort_by="production_order", sort_direction="sideways"
+        )
+    with pytest.raises(ValueError):
+        consumption_audit_sql.orders_search_order_by(
+            sort_by="1; DROP TABLE", sort_direction="asc"
+        )
+
+
+def test_search_sql_with_sort_stays_select_only():
+    where, _ = consumption_audit_sql.orders_search_where(branch="01")
+    order = consumption_audit_sql.orders_search_order_by(
+        sort_by="status", sort_direction="desc"
+    )
+    sql = consumption_audit_sql.orders_search_sql(where, order)
+    _assert_select_only(sql)
+    assert "C2_STATUS" in sql
+    assert "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY" in sql
+
+
 # --------------------------------------------------------------- DTO
 
 
@@ -190,6 +267,28 @@ def test_dto_page_bounds():
         SearchConsumptionAuditOrdersRequest(branch="01", page_size=0)
     with pytest.raises(ValueError):
         SearchConsumptionAuditOrdersRequest(branch="01", page_size=51)
+
+
+def test_dto_sort_defaults_and_validation():
+    dto = SearchConsumptionAuditOrdersRequest(branch="01")
+    assert dto.sort_by is None and dto.sort_direction is None
+    dto = SearchConsumptionAuditOrdersRequest(
+        branch="01", sort_by="PRODUCT_CODE"
+    )
+    assert dto.sort_by == "product_code"
+    assert dto.sort_direction == "asc"
+    with pytest.raises(ValueError):
+        SearchConsumptionAuditOrdersRequest(
+            branch="01", sort_by="work_center"
+        )
+    with pytest.raises(ValueError):
+        SearchConsumptionAuditOrdersRequest(
+            branch="01", sort_direction="desc"
+        )
+    with pytest.raises(ValueError):
+        SearchConsumptionAuditOrdersRequest(
+            branch="01", sort_by="production_order", sort_direction="x"
+        )
 
 
 def test_comparison_dto_rules():
@@ -385,6 +484,7 @@ def _search_call(*, s2s_header="Bearer svc-jwt", use_case=None, **kwargs):
         "date_type": "emission", "period_start": None, "period_end": None,
         "status": None, "work_center": None, "operation": None,
         "page": 1, "page_size": 25,
+        "sort_by": None, "sort_direction": None,
     }
     defaults.update(kwargs)
     try:
@@ -464,6 +564,28 @@ def test_search_route_invalid_params_are_400():
     assert _search_call(period_start="2026-13-99").status_code == 400
     assert _search_call(page=0).status_code == 400
     assert _search_call(page_size=99).status_code == 400
+
+
+def test_search_route_sort_params_reach_dto():
+    uc = Mock()
+    uc.execute.return_value = Page(
+        items=[], total=0, page=1, page_size=25
+    )
+    response = _search_call(
+        use_case=uc, sort_by="status", sort_direction="desc"
+    )
+    assert response.status_code == 200
+    dto = uc.execute.call_args.args[0]
+    assert dto.sort_by == "status"
+    assert dto.sort_direction == "desc"
+
+
+def test_search_route_invalid_sort_is_400():
+    assert _search_call(sort_by="work_center").status_code == 400
+    assert _search_call(sort_direction="desc").status_code == 400
+    assert _search_call(
+        sort_by="production_order", sort_direction="x"
+    ).status_code == 400
 
 
 def test_search_route_missing_branch_is_400():

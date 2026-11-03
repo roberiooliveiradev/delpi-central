@@ -37,6 +37,9 @@ _LIMITATIONS = [
     "(emission|finished|appointment), não sobre a data do movimento de "
     "consumo — OPs que atravessam competências seguem a semântica do "
     "produtor.",
+    "Centro de trabalho não é projetado na listagem — informado por "
+    "operação (SH8) e disponível no detalhe da OP; uma ordem pode "
+    "envolver vários centros.",
 ]
 
 
@@ -82,6 +85,14 @@ def get_production_order_consumption(
     operation: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=50),
+    sort_by: str | None = Query(
+        None,
+        pattern=(
+            "^(production_order|product_code|product_description|"
+            "status|date)$"
+        ),
+    ),
+    sort_direction: str | None = Query(None, pattern="^(asc|desc)$"),
 ):
     """Visão operacional R04 — lista de OPs para auditoria de consumo,
     delegada ao produtor consumption-audit da api-delpi."""
@@ -102,6 +113,8 @@ def get_production_order_consumption(
         ("status", status),
         ("work_center", work_center),
         ("operation", operation),
+        ("sort_by", sort_by),
+        ("sort_direction", sort_direction),
     ):
         if value is not None:
             params[key] = value
