@@ -1995,3 +1995,14 @@ RECEITA (etapa por etapa, cada uma comprovada):
 4. PENDENTE: Accept: application/json (ultimo erro -32600 Not Acceptable)
 Restante = header trivial; depois sync completo davi/teo/vista +
 catalog mode snapshot + arggen pydantic_ai + smoke.
+
+## PROMOTION — catalog SYNCED em producao (SHA bdd4198e71)
+
+AUTH CHAIN RESOLVIDA: usuario mcp-catalog-sync realm delpi -> password
+grant delpi-central+scope=openid -> token-exchange -> Host+Accept ->
+MCP tools/list. SNAPSHOTS ATIVOS em prod (/data/delia/mcp_catalog.db):
+  davi v1 (2 tools, hash b0c1a4d1), teo v1 (6, 5fa2e7bb), vista v1 (6, e90bc471).
+Prod so tem 3 MCPs configurados (davi/teo/vista); caio/clara/eva/suri
+sem base_url -> nao sincronizaveis (sem endpoint).
+PROXIMO: DELIA_MCP_CATALOG_MODE=snapshot_experiment no .env srv-api +
+restart -> verify -> DELIA_ARGGEN_ENGINE=pydantic_ai + smoke.
