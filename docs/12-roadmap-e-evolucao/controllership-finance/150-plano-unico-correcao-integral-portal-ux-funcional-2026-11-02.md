@@ -613,6 +613,6 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 
 ## 19. Execução Gate 072 — CLARA R04 HTTP400 + corpus R01-R15
 
-- **CF-UX-050 (R04 HTTP 400) → ROOT_CAUSE_FIXED:** defaults  de / vazavam como objeto para o produtor quando o MCP tool não repassava os parâmetros (regressão G070). Correção canônica na BFF (só  encaminhada) + tool bridge passou a aceitar /. Testes BFF 7/7.
-- **Corpus CLARA:** ficha R04 reescrita (consumption-audit, sort, C2_STATUS, SH8); R09/R12/R15 corrigidas de / → IMPLEMENTADO. Corpus republicada:  (2.230 itens, 88 fontes).
+- **CF-UX-050 (R04 HTTP 400) → ROOT_CAUSE_FIXED:** defaults Query(...) de sort_by/sort_direction vazavam como objeto para o produtor quando o MCP tool não repassava os parâmetros (regressão G070). Correção canônica na BFF (só str encaminhada) + tool bridge passou a aceitar sort_by/sort_direction. Testes BFF 7/7.
+- **Corpus CLARA:** ficha R04 reescrita (consumption-audit, sort, C2_STATUS, SH8); R09/R12/R15 corrigidas de TARGET_ONLY/not_implemented → IMPLEMENTADO. Corpus republicada: 497ec9af-00d4-4e07-9b64-b96fcc97f3c5 (2.230 itens, 88 fontes).
 - Resíduo: matriz semântica completa R01-R15 e bateria de perguntas por relatório ficam para próximo ciclo; fichas R01–R03/R05–R08/R10/R11/R13/R14 aguardam revisão source→SQL detalhada (doc 152 VERIFY_RUNTIME/OWNER_RULE_PENDING).
