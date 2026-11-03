@@ -2281,3 +2281,16 @@ facts.records+result_context via renderer -> structured_render;
 remover caps MAX_FIELDS=4/MAX_PRESENTED=5 dos paths de apresentacao
 (conv_resp 64-66,153-378); synth "never object/list"; RED tests
 R1-R12; regressao; commit+push (SEM deploy).
+
+## T20-UNIFIED-PRESENTATION — IMPLEMENTED + PUSHED 1572a1e2be
+
+Boundary: generic_evidence_renderer.py (render_business_evidence
+recursivo, _md_escape, _render_label governed/humanized, budget
+512/depth6/chars2000->exhausted flag, completeness constants).
+Wiring: _compose_cri_response -> structured_render (facts.records +
+result_context.root) + structured_partial -> compose branches
+single/multi/min_items usam o render; partial -> LIMITATION_
+EVIDENCE_PROJECTION_PARTIAL. Caps 4campos/5registros bypassed na
+apresentacao (persistem so p/ ordering/scan/prompt-LLM).
+Tests: unified 10/10 + CRI e3 67 + ~390 regressao verdes.
+PENDENTE: e2e live (sync container + restart) — sem deploy nesta task.
