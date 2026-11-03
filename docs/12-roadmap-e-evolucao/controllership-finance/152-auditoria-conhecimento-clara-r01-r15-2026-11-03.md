@@ -182,3 +182,36 @@ Para cada relatório: (1) que problema resolve, momento do PROC-0072 e classific
 **Rework mínimo sugerido:** (1) revisar ficha R09 por inteiro, reescrevendo interpretações presentes falsas e referências históricas, não apenas a linha Implementação; (2) retirar ambiguidades semelhantes do texto ativo R12/R15, preservando eventos históricos somente em seção rotulada “Histórico, não estado atual”; (3) atualizar índice/manifests/títulos de fontes; (4) republicar corpus pela rotina canônica; (5) **retestar knowledge search** para termos negativos (`não pode consultar`, `sem endpoint`, `report_not_implemented`) com report_id e por query, verificando atribuição temporal e referências; (6) executar bateria de perguntas progressiva ao longo de R01–R15 com prova source→SQL→contrato, sem modificar SQL/segurança por aparente drift semântico.
 
 **Segurança e paridade:** nenhuma alteração de SQL/TOTVS/permissions requerida pelo achado. R04 MATR860 e R09 DLP204 continuam `officialParity=pending`. Validação Portal visual autenticada ainda `TEST_NOT_RUN` nesta revisão.
+
+
+## 9. GPT REVIEW independente — Gate 073 (03/11/2026)
+
+**Commits verificados:** `main=5c5f58d5cf4cb91e401a842a5a0ece1356f51ce7`; commit funcional/documental `f11d1f9f644465e2f1be2213739b970faa0b3343` (cinco arquivos: `corpus_manifest.py`, fichas R09/R12/R15, `fichas/README.md`). `git status` local não inspecionado.
+
+**Corpus live:** `knowledge(sources)` devolveu `664c61b3-38f3-469a-8019-a94db5c2c81f`, publicado 03/11/2026 10:40:21 -03, 2.252 itens / 88 fontes — `PASS` publicação.
+
+**R09:** consulta `knowledge(search,query="R09")` recupera trecho de implementação vigente e interpretação reescrita, sem a antiga negativa presente de “não pode consultar — sem endpoint”. Histórico está rotulado como pretérito. `PASS` no caso pontual (não significa 105/105).
+
+**REGRESSÃO CRÍTICA REPRODUZIDA EM GITHUB E CLARA — R12/R15:** arquivos `docs/.../fichas/R12-ficha.md` e `R15-ficha.md` contêm substituição textual global destrutiva de barras `/` pela sequência **` para rotinas (visão read-only)`**. Amostras literais no HEAD:
+- R12 L1 título `Fechamento de custo  para rotinas (visão read-only) Reposição ...`; L3 data `31 para rotinas (visão read-only)10 para rotinas (visão read-only)2026`; L9 `Código para rotinas (visão read-only)nome`; L87 paths `GET para rotinas (visão read-only)financeiro...`.
+- R15 L1 `Cutoff para rotinas (visão read-only) sacramentação...`; L3 data corrompida; L18 `R12 para rotinas (visão read-only)R15`; L78 divisores de campo corrompidos.
+- A CLARA recupera esses mesmos títulos e fragmentos via `knowledge(search)`, logo `CORPUS_SEMANTIC_FAIL` além de `SOURCE_CORRUPTION`.
+- A falha não foi eliminada pela alegada correção de heredoc e foi **commitada e publicada**. Provável classe de causa: substituição indiscriminada de separadores `/`; diagnóstico do comando específico não provado, não presumir além dos bytes constatados.
+
+**Outros resíduos observados:** `knowledge(sources)` ainda descreve fonte `Ficha R04 — Consumo por OP (bloqueado)`, embora `corpus_manifest.py` na main já contenha `(visão operacional)`: atualizar metadados reais/registro de origem e checar cache/source registry; não presumir que atualização do manifest implica renomeação no catálogo já publicado. `knowledge(search,R12)` recupera blocos duplicados com título antigo/nova ficha no mesmo documento, e blocos obsoletos `report_not_implemented`; investigar se são seções ainda presentes, múltiplas versões indexadas ou ambos, não concluir automaticamente supersede perfeito. R15 recupera bloco antigo semelhante.
+
+**Testes live independentes de Gate 073:** `knowledge(sources)`, `knowledge(search,R04/R09/R12/R15)` foram executados. O executor informou `105 perguntas TEST_NOT_RUN` e `read R04/R09/R12 TEST_NOT_RUN`. Não promover para PASS. Último teste positivo R04/R09/R12 foi realizado na revisão do Gate 072, não novamente nesta revisão.
+
+### Decisão do GPT REVIEW
+**`REWORK` obrigatório** para Gate 073: regressão de integridade textual nas fichas R12/R15 confirmada no HEAD e propagada ao corpus. A publicação física e melhoria R09 foram `PASS` pontual, mas a entrega não satisfaz correção e qualidade semântica R01–R15.
+
+### Rework mínimo seguro antes de republicar
+
+1. Restaurar R12/R15 de versão íntegra pre-G073 (por exemplo, comparar blob do commit base do Gate 073) e reaplicar **somente diffs mínimos semânticos**, sem substituição global de `/` e sem reescrever backticks/URLs/paths/datas.
+2. Verificar line-by-line ou diff estrutural; procurar toda ocorrência de `para rotinas (visão read-only)` e outras corrupções em ambas as fichas. Tratar `0 hits` como condição necessária, não suficiente; conferir datas, URLs, links, markdown, contratos e conteúdo original preservado.
+3. Adicionar teste de integridade das fontes e validação de mudanças indevidas em arquivos do corpus (paths intactos, headings, datas, code spans, URLs e hash/citation_locator); executar antes do commit e ingestão.
+4. Corrigir metadados R04 no **registry efetivamente servido** por `knowledge(sources)`, não apenas no manifest de origem; demonstrar output live.
+5. Investigar segmentação/recuperação duplicada R12/R15 (version/supersede) e preservar histórico com distinção temporal explícita. Republicar corpus somente após gates de integridade `PASS`.
+6. Smoke pós-publicação via CLARA autenticada: `knowledge(search)` R04/R09/R12/R15 e perguntas negativas, `read` R04/R09/R12; 105 cenários de explicação R01–R15 seguem como `TEST_NOT_RUN` até executados.
+
+**Sem necessidade de alteração de regras de negócio, SQL TOTVS, boundaries ou permissões a partir destes achados.** Prioridade de correção: **P0 integridade textual R12/R15**.
