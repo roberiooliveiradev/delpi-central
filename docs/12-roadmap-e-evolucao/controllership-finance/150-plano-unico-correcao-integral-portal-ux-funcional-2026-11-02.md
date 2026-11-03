@@ -288,3 +288,33 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 - `vitest run`: **412/417 iniciais → todas as falhas resolvidas** (2 expectativas atualizadas à UX aprovada; 1 drift pré-existente catálogo 9→10; 1 flake DocumentDetailPanel, verde na reexecução). Suites finais afetadas: 48/48 + 39/39 PASS.
 - BFF: matriz R04/R09 alterada no catálogo estático — sem mudança de shape de resposta.
 - Pendente de sessão humana: smoke visual autenticado, CLARA com filtros idênticos (025), breakpoints/temas/keyboard em produção.
+
+
+## 10. Nova leva de revisão visual pelo PO — pós-deploy Plano 150 (02/11/2026)
+
+**Estado desta leva:** REVIEW / REGISTER_ONLY. As alterações do Plano 150 foram publicadas, mas o PO está revisando visualmente e **não autorizou ainda um novo ciclo de correção**. Registrar observações, impactos e verificações necessárias no Documento 150; consolidar esta leva antes de enviar uma nova execução ao Devin.
+
+**Evidência:** captura autenticada da rota `/apps/controllership-finance/closing/monthly-closing` (sem competência selecionada), contendo hero, filtro de mês vazio e seção `Fechamentos abertos` com tabela simples de 10/2026 e 09/2026. Ambas as linhas exibem estado `Aberto`, datas de abertura, `Itens do checklist = 0` e um botão `Abrir fechamento`.
+
+### CF-UX-027 — Substituir tabela simples de fechamentos por grid padronizado do Portal
+- **Prioridade:** P1 · **Estado:** OPEN / OBSERVED_SCREENSHOT + PRODUCT_DIRECTION_RECORDED.
+- **Problema observado:** a tabela recém-criada na landing do fechamento mensal não utiliza o padrão de grid visual/interativo que o Portal já aplica em outras listagens: cabeçalhos/linhas pouco espaçados, sem a estrutura e recursos consistentes com o kit.
+- **Diretriz PO:** utilizar o componente de **Data Grid/Grid UI existente e efetivamente adotado no Portal**, inventariando primeiro `@delpi/plugin-ui`, wrappers e grids compartilhados já usados em outras páginas; não criar tabela própria nem biblioteca nova.
+- **Aceite futuro:** colunas alinhadas, densidade adequada, hover/foco visíveis, legibilidade, estados loading/empty/erro e responsividade; reproduzir a mesma semântica de dados e não inventar métricas. Testar claro/escuro, mobile e teclado.
+- **Dependência:** substitui o layout inicial do CF-UX-018, que fica **reaberto para refinamento visual**, sem invalidar os metadados já existentes.
+
+### CF-UX-028 — Navegar para o fechamento pelo clique na linha do grid
+- **Prioridade:** P1 · **Estado:** OPEN / PRODUCT_DIRECTION_RECORDED.
+- **Problema observado:** cada linha possui botão redundante `Abrir fechamento`, aumentando ruído visual.
+- **Diretriz PO:** a própria linha deve ser superfície de navegação: hover, clique e ativação por teclado (Enter/Espaço quando aplicável ao componente), levando à competência correta; remover o botão por linha **se o grid suportar adequadamente a navegação acessível**, sem prejudicar usuários de teclado/leitor de tela. Usar rota existente e preservar o contexto.
+- **Aceite futuro:** a linha possui affordance clara, nome acessível, foco visível; clique e teclado abrem a competência correta; sem conflito com seleção, ordenação ou eventuais ações secundárias do grid. Retorno pelo breadcrumb/histórico preservado.
+
+### CF-UX-029 — Checklist: investigar zeros e informar a versão efetivamente aplicada à competência
+- **Prioridade:** P1 · **Estado:** OPEN / OBSERVED_SCREENSHOT + TO_VERIFY_DATA_AND_CONTRACT.
+- **Problema observado:** `Itens do checklist` exibe **0** para 09/2026 e 10/2026. O print **não comprova** que não existe checklist: pode ser falta de configuração, versão não vinculada, lista vazia ou uma métrica que conte outro universo.
+- **Diretriz PO:** verificar no contrato/owner do checklist de documentos se existem itens cadastrados, qual checklist está associado a cada competência, qual é o significado exato do contador e se há versão/identificador de template aplicável. Quando houver dados reais, exibir **versão do checklist documental por competência** (e eventualmente seu estado/configuração) para esclarecer diferenças entre fechamentos.
+- **Sem inventar:** não converter ausência de binding em `0` sem prova; preferir `Não configurado` / `Sem checklist vinculado` / `0 itens` somente conforme o contrato real. A versão deve ser identificador existente, não gerada no MFE.
+- **Dependência contratual:** antes de criar nova API ou esquema de versionamento, inventariar os campos e endpoints atuais de P2/P5, Administração, checklist/template e fechamento; se inexistente a capacidade e houver escolha material de contrato/persistência, registrar `DECISION_REQUIRED` com alternativas e impactos, sem implementação unilateral.
+- **Aceite futuro:** para 09/2026 e 10/2026, quadro de origem/binding/contagem/versão, números consistentes com o backend, navegação para detalhes, diferenciação nítida entre checklist obrigatório e documento adicional (relaciona-se a CF-UX-010).
+
+**Relações:** CF-UX-027 e 028 refinam CF-UX-018; CF-UX-029 cruza CF-UX-010, 017 e a governança documental P2/P5. Cada item permanecerá OPEN até reprodução, verificação de contrato, implementação e teste numa **próxima leva consolidada** autorizada pelo PO. **Não gerar prompt agora, não executar deploy nesta etapa de revisão.**
