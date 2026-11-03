@@ -1217,6 +1217,7 @@ async def _analyze_drawing_understanding(
         understanding=understanding,
         document_sha=best.get("document_hash") or None,
         official_source_ref=f"api-delpi:/products/{code}/structure",
+        include_investigations=True,
     )
     understanding["report"]["object_profiles"] = understanding[
         "object_profiles"

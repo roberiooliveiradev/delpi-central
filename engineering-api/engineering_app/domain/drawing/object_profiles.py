@@ -7,8 +7,18 @@ consumo×montagem×dimensão, relações auditáveis e verificações tipadas.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from enum import Enum
+
+# Validador compartilhado de formato de código de componente (R12):
+# fonte canônica única — produção e investigação usam a MESMA regra.
+COMPONENT_CODE_RE = re.compile(r"^\d{6,11}(-\d+)?$")
+
+
+def is_component_code(text: object) -> bool:
+    """True se o texto tem formato canônico de código de componente."""
+    return bool(COMPONENT_CODE_RE.match(str(text or "").strip()))
 
 
 class ObjectType(str, Enum):

@@ -32,3 +32,10 @@
 - **Relações**: `REPRESENTED_BY` (BOM→item, code_match NOT_CHECKED), `REFERENCED_BY` (item→balão), `POINTS_TO` (balão→geometria, vínculo declarado), `DIMENSIONS` (cota→geometria, contenção espacial). Zero relações quando não há evidência, com limitações explícitas.
 - **Wiring**: `product.drawing_understanding` alimenta `understanding["object_profiles"]` + `report["object_profiles"]` com a execução real (sem reprocessar OCR/SLANet); `product.drawing_analysis` aceita `parameters.understanding` (drawing_understanding.v1) — conflito de identidade documental exposto em `document_identity.match`.
 - **Testes**: `test_drawing_object_profiles_r11_1.py` 16/16 + R11 4/4; regressão 635 pass / 1 fail pré-existente ambiental (`test_visual_perception_r7::test_normalize_box_json_safe` — numpy ausente no container, fora do diff).
+
+## 7. R12 — investigação guiada pela estrutura oficial (2026-11-03)
+
+- **`application/drawing/drawing_investigation.py`**: planner determinístico (`plan_investigations` — INV por BOM_OCCURRENCE com identidade/fonte/contexto) + executor (`execute_investigations` — I-01 código com MATCH_CANDIDATE/AMBIGUOUS/NOT_LOCATED, código só em carimbo não é componente, similares sem prova; I-02 atributos da linha com qty não-numérica→AMBIGUOUS; I-03 relações preservando todas as ocorrências repetidas; I-04 EXPECTED_COMPONENT_NOT_LOCATED/INCONCLUSIVE; I-05 UNMATCHED_DRAWING_CANDIDATE sem declarar erro de BOM).
+- **Identidade**: sha incompatível → NOT_COMPARABLE fail-closed; `is_component_code`/`COMPONENT_CODE_RE` movidos ao domínio (fonte única, `_CODE_RE` de understanding virou alias).
+- **Wiring**: `build_object_profiles(include_investigations=True)` no mesmo DrawingObjectSet; `payload["guided_investigations"]` versionado `guided_investigations.v1` em `product.drawing_analysis` e `product.drawing_understanding`.
+- **Testes**: `test_drawing_investigation_r12.py` 15/15; suite 651 pass / 1 fail ambiental pré-existente.

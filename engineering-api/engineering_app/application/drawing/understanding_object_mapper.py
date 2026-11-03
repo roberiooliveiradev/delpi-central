@@ -20,8 +20,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from engineering_app.application.drawing.understanding import _CODE_RE
 from engineering_app.domain.drawing.object_profiles import (
+    COMPONENT_CODE_RE as _CODE_RE,
     DrawingObjectRef,
     DrawingObjectSet,
     DrawingRelation,

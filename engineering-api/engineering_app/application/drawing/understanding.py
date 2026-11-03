@@ -26,6 +26,10 @@ import re
 from collections import Counter
 from typing import Any, Iterable
 
+from engineering_app.domain.drawing.object_profiles import (
+    COMPONENT_CODE_RE as _CODE_RE,
+)
+
 SCHEMA_VERSION = "drawing_understanding.v1"
 
 FIELD_STATES = frozenset(
@@ -90,7 +94,6 @@ _HEADER_TYPE_MAP = {
     "descricao": "description", "descr": "description",
     "obs": "note",
 }
-_CODE_RE = re.compile(r"^\d{6,11}(-\d+)?$")
 _REV_LABEL_RE = re.compile(r"^REV\.?:?$", re.IGNORECASE)
 _REV_VALUE_RE = re.compile(r"^(\d{2}|[A-Z]{1,2})$")
 _NUM_RE = re.compile(r"^\d+([.,]\d+)?$")

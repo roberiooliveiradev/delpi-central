@@ -960,6 +960,10 @@ async def analyze_product_drawing(
         official_source_ref=(
             f"api-delpi:/products/{official_code}/structure"
         ),
+        include_investigations=True,
+    )
+    payload["guided_investigations"] = payload["object_profiles"].get(
+        "guided_investigations"
     )
     payload["sections"] = {
         "A_identification": payload["identification"],

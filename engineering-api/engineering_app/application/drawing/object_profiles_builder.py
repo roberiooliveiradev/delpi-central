@@ -9,6 +9,10 @@ from dataclasses import asdict
 from enum import Enum
 from typing import Any
 
+from engineering_app.application.drawing.drawing_investigation import (
+    execute_investigations,
+    plan_investigations,
+)
 from engineering_app.application.drawing.understanding_object_mapper import (
     populate_from_understanding,
 )
@@ -61,6 +65,7 @@ def build_object_profiles(
     understanding: dict | None = None,
     document_sha: str | None = None,
     official_source_ref: str | None = None,
+    include_investigations: bool = False,
 ) -> dict:
     """Monta o conjunto de perfis (oficial≠observado) + relações candidatas.
 
@@ -161,7 +166,7 @@ def build_object_profiles(
                 )
     objects = [_object_to_dict(o) for o in oset.objects()]
     relations = [_relation_to_dict(r) for r in oset.relations()]
-    return {
+    out = {
         "contract_version": "drawing_object_profiles.v1",
         "document_sha": document_sha,
         "official_source_ref": official_source_ref,
@@ -184,3 +189,9 @@ def build_object_profiles(
         "state": "DRAFT/CANDIDATE",
         "not_official": True,
     }
+    if include_investigations:
+        plans = plan_investigations(oset)
+        out["guided_investigations"] = execute_investigations(
+            oset, plans, understanding, document_sha=document_sha
+        )
+    return out
