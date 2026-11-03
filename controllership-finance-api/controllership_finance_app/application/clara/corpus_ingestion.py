@@ -151,6 +151,7 @@ def ingest_source(
     )
     segments = segment_markdown(raw)
     inserted = superseded = deduplicated = 0
+    keep_ids: list[str] = []
     for seg in segments:
         locator_key = f"{spec.path}::{seg.heading_path}"
         locator = {
@@ -173,15 +174,20 @@ def ingest_source(
             citation_locator=locator,
             access_scope=spec.access_scope,
         )
+        keep_ids.append(str(result["knowledge_id"]))
         if result.get("_deduplicated"):
             deduplicated += 1
         elif result.get("_superseded"):
             superseded += 1
         else:
             inserted += 1
+    stale_swept = repository.supersede_stale_items(
+        source_id=spec.source_id, keep_ids=keep_ids
+    )
     return {
         "source_id": spec.source_id,
         "segments": len(segments),
+        "stale_swept": stale_swept,
         "inserted": inserted,
         "superseded": superseded,
         "deduplicated": deduplicated,

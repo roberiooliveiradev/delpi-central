@@ -273,6 +273,28 @@ class ClaraKnowledgeRepository:
                         row["_superseded"] = True
                     return row
 
+    def supersede_stale_items(
+        self, *, source_id: str, keep_ids: list[str]
+    ) -> int:
+        """Marca SUPERSEDED os itens PUBLISHED da fonte que não foram
+        reconfirmados nesta ingestão — supersede por locator só cobre
+        segmentos que voltaram; headings removidas/renomeadas ficariam
+        recuperáveis para sempre sem este sweep por source_id."""
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor() as cur:
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('clara_knowledge_item')}
+                           SET status = 'SUPERSEDED'
+                         WHERE source_id = %s
+                           AND status = 'PUBLISHED'
+                           AND knowledge_id::text <> ALL(%s::text[])
+                        """,
+                        (source_id, list(keep_ids)),
+                    )
+                    return cur.rowcount
+
     def publish_corpus_version(
         self, *, actor: str, manifest: dict | None = None
     ) -> dict:
