@@ -349,6 +349,126 @@ def test_progressive_recheck_capability_unavailable_honest():
     assert recheck["result"] == "CAPABILITY_UNAVAILABLE"
 
 
+class _FakeRenderer:
+    def render_region(self, pdf, *, page, region_px, reference_dpi,
+                      dpi, margin_px):
+        class _R:
+            image_bytes = b"png"
+            width, height, dpi, page = 40, 20, 300, 1
+            offset_px = (0.0, 0.0)
+        return _R()
+
+
+class _FakeOcr:
+    def __init__(self, tokens):
+        self._tokens = tokens
+
+    def extract_text(self, image):
+        class _T:
+            def __init__(self, text):
+                self.text = text
+        class _Res:
+            def __init__(self, toks):
+                self.tokens = toks
+        return _Res([_T(t) for t in self._tokens])
+
+
+def test_targeted_recheck_with_real_ports_contract():
+    """R13 closure: ports disponíveis → recorte executa de verdade."""
+    row = _row(0, "10020033")
+    row["fields"] = {}
+    row["association_status"] = "UNRESOLVED"
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=_u(rows=[row]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        progressive={
+            "budget": {"max_crops": 4, "max_dpi": 300,
+                       "max_pixels": 4_000_000},
+            "pdf_bytes": b"%PDF-fake",
+            "renderer": _FakeRenderer(),
+            "ocr": _FakeOcr(["10020033", "CABO"]),
+            "page": 1, "reference_dpi": 200,
+        },
+        include_investigations=True,
+    )
+    res = {r["occurrence_id"]: r for r in
+           out["guided_investigations"]["occurrence_results"]}
+    hist = res["O0002"]["search_history"]
+    recheck = [h for h in hist if h["stage"] == "TARGETED_RECHECK"][0]
+    assert recheck["result"] == "CODE_OBSERVED"
+    assert recheck["observations"][0]["method"] == "localized_ocr_recheck"
+    assert res["O0002"]["overall_state"] == "MATCH_CANDIDATE"
+
+
+def test_recheck_budget_exhaustion_inconclusive():
+    row = _row(0, "10020033")
+    row["fields"] = {}
+    row["association_status"] = "UNRESOLVED"
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=_u(rows=[row]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        progressive={
+            "budget": {"max_crops": 0},
+            "pdf_bytes": b"%PDF-fake",
+            "renderer": _FakeRenderer(),
+            "ocr": _FakeOcr(["10020033"]),
+            "page": 1,
+        },
+        include_investigations=True,
+    )
+    res = {r["occurrence_id"]: r for r in
+           out["guided_investigations"]["occurrence_results"]}
+    recheck = [h for h in res["O0002"]["search_history"]
+               if h["stage"] == "TARGETED_RECHECK"][0]
+    assert recheck["result"] == "RESOURCE_LIMIT_REACHED"
+    assert res["O0002"]["overall_state"] != "MATCH_CANDIDATE"
+
+
+def test_balloon_detected_promotes_to_object_with_evidence():
+    """Primitiva circular + token contido → BALLOON objeto + relações."""
+    u = _u(rows=[_row(0, "10020033", item="7")])
+    u["graphic_primitives"] = [
+        {"type": "circle",
+         "bounding_box_px": [40, 50, 70, 50, 70, 80, 40, 80]},
+    ]
+    u["_tokens"] = [
+        {"normalized_text": "7", "region": "drawing_area",
+         "bounding_box_px": [50, 58, 60, 58, 60, 70, 50, 70]},
+    ]
+    u["geometry_regions"] = [
+        {"id": "g1", "type": "geometry", "box_px": [0, 0, 400, 400]},
+    ]
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=u,
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        include_investigations=True,
+    )
+    types = out["objects_by_type"]
+    assert types.get("balloon") == 1
+    rel_types = out["relations_by_type"]
+    assert rel_types.get("REFERENCED_BY") == 1   # item 7 → balão
+    assert rel_types.get("POINTS_TO") == 1       # balão → geometria (containment)
+    gi = out["guided_investigations"]
+    assert gi["balloon_candidates"][0]["item_label"] == "7"
+    assert gi["balloon_candidates"][0]["identification_method"] == \
+        "primitive_containment"
+
+
+def test_consolidated_summary_states():
+    out = _build(rows=[_row(0, "10020033")])
+    s = out["guided_investigations"]["summary"]
+    assert "checks_by_state" in s
+    assert s["checks_by_state"].get("MATCH_CANDIDATE", 0) >= 1
+    assert s["global_state"] in {"MATCH_CANDIDATE", "INCONCLUSIVE"}
+    assert "global_state" != "PASS"
+
+
 def test_balloons_never_fabricated_without_primitives():
     out = _build(rows=[_row(0, "10020033")])
     out2 = build_object_profiles(

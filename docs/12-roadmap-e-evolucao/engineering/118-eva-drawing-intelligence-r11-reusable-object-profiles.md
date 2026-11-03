@@ -45,3 +45,11 @@
 - **Fail-closed sem BOM**: `official_source_state` ∈ {AVAILABLE, NOT_PROVIDED, UNAVAILABLE, EMPTY_CONFIRMED}; NOT_PROVIDED/UNAVAILABLE → `occurrence_results=[]`, `unmatched_drawing_candidates=[]`, `effective_coverage=null`, limitação `OFFICIAL_COMPARISON_NOT_EXECUTED` — observações visuais preservadas como candidatas, nunca divergentes.
 - **Composição legítima**: `_produce_drawing_understanding(context, code)` — caso de uso interno do bridge compartilhado por `product.drawing_understanding` e `product.drawing_analysis` (`compose_understanding=true`, flag-gated); sem handler→handler, sem reprocessar OCR/SLANet por ocorrência.
 - **Timeout `product.detail` (diagnóstico)**: erro tipado `502 source_unavailable` correto, não mascarado; causa raiz na api-delpi — contenção do pool TOTVS mitigada upstream por `28329ea4c0` (READ UNCOMMITTED + cota de espera). Engineering API não era o owner da falha; timeout explícito e sem retries preservado.
+
+## 9. R13 closure — ports conectados + associação governada (2026-11-03)
+
+- **`_produce_drawing_understanding` retorna `_pdf_bytes`** (5-tupla); ambos os call sites alimentam `progressive` com ports reais: `PdfiumExtractionAdapter` + `PaddleOcrAdapter` (lazy), `page`, `reference_dpi=best["dpi"]` — TARGETED_RECHECK executa de verdade quando há evidência e orçamento.
+- **Balões promovidos**: `identify_balloon_candidates` (primitiva circ contendo token ≤3 alfanum) alimenta o mapper → objetos `BALLOON` + `REFERENCED_BY` (item_label) + `POINTS_TO` (contenção contextual, NOT_CHECKED) — nunca fabricados sem evidência.
+- **Consolidação**: `summary.checks_by_state` + `summary.global_state` (MATCH_CANDIDATE/INCONCLUSIVE/NOT_COMPARABLE — nunca PASS).
+- **Contenção de quads corrigida**: bounds min/max sobre vértices 8-pontos.
+- **Testes**: recheck com ports fake (CODE_OBSERVED), budget exhaustion, balão→objeto+relações, consolidação; suite 663 pass / 1 fail ambiental pré-existente.

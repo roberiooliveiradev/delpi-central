@@ -254,7 +254,16 @@ def populate_from_understanding(
         )
 
     # ---------- balões (perfil C) — somente quando identificados ----
-    for i, b in enumerate(u.get("balloons") or []):
+    # R13 — balões declarados + detectados por primitiva circular
+    # (primitive_containment): evidência própria, nunca fabricados.
+    from engineering_app.application.drawing.drawing_investigation import (
+        identify_balloon_candidates,
+    )
+
+    bal_sources = list(u.get("balloons") or [])
+    if not bal_sources:
+        bal_sources = identify_balloon_candidates(u)
+    for i, b in enumerate(bal_sources):
         bobj = balloon(
             f"ubal:{i}",
             item_label=b.get("item_label"),
@@ -267,9 +276,14 @@ def populate_from_understanding(
                     raw_value=b.get("item_label"),
                 )
             ],
+            extra_attributes={
+                "identification_method": b.get(
+                    "identification_method", "declared"
+                ),
+            },
         )
         oset.add_object(bobj)
-        bal_objs.append(bobj)
+        bal_objs.append((bobj, b.get("bounding_box_px") or []))
         added += 1
     if not bal_objs:
         limits.append(
@@ -284,7 +298,7 @@ def populate_from_understanding(
         label = it.attributes.get("item_label")
         if not label or it.attributes.get("ambiguities"):
             continue
-        for bo in bal_objs:
+        for bo, _bb in bal_objs:
             if bo.attributes.get("item_label") == label:
                 oset.add_relation(
                     DrawingRelation(
@@ -304,12 +318,40 @@ def populate_from_understanding(
                     )
                 )
                 relations_added += 1
-    # BALLOON → DRAWING_GEOMETRY: alvo declarado na fonte.
-    for bo in bal_objs:
+    # BALLOON → DRAWING_GEOMETRY: alvo declarado na fonte; fallback por
+    # contenção do contorno na região geométrica (candidato, não verificado).
+    for bo, bbox in bal_objs:
         target_id = None
-        for b in (u.get("balloons") or []):
+        for b in bal_sources:
             if b.get("item_label") == bo.attributes.get("item_label"):
                 target_id = b.get("points_to") or b.get("target_region")
+        if not target_id and bbox:
+            bc = _quad_center(bbox)
+            for gobj, gbox in geo_objs:
+                if gbox and _inside_box(bc, gbox):
+                    target_id = gobj.object_id
+                    break
+            if target_id:
+                oset.add_relation(
+                    DrawingRelation(
+                        source_object_id=bo.object_id,
+                        target_object_id=target_id,
+                        relation_type=RelationType.POINTS_TO,
+                        evidence_refs=[_ref(
+                            source_kind="spatial_containment",
+                            document_sha=u_doc,
+                            bounding_box=bbox,
+                            raw_value=bo.attributes.get("item_label"),
+                        )],
+                        verification_state=VerificationState.NOT_CHECKED,
+                        uncertainty_reason=(
+                            "contenção espacial é candidata — "
+                            "não verificada"
+                        ),
+                    )
+                )
+                relations_added += 1
+                continue
         if target_id and target_id in geo_id_map:
             oset.add_relation(
                 DrawingRelation(

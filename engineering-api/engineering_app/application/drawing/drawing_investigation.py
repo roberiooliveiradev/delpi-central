@@ -432,11 +432,18 @@ def identify_balloon_candidates(u: dict) -> list[dict]:
         return []
     toks = u.get("_tokens") or u.get("tokens") or []
     out = []
+    def _bounds(box):
+        xs = box[0::2]
+        ys = box[1::2]
+        return min(xs), min(ys), max(xs), max(ys)
+
     def _inside(tb, cb):
+        if len(tb) < 4 or len(cb) < 4:
+            return False
+        tx1, ty1, tx2, ty2 = _bounds(tb)
+        cx1, cy1, cx2, cy2 = _bounds(cb)
         return (
-            len(tb) >= 4 and len(cb) >= 4
-            and cb[0] <= tb[0] and cb[2] >= tb[2]
-            and cb[1] <= tb[1] and cb[3] >= tb[3]
+            cx1 <= tx1 and cx2 >= tx2 and cy1 <= ty1 and cy2 >= ty2
         )
     for circ in circles:
         cbox = circ.get("bounding_box_px") or circ.get("box_px") or []
@@ -456,6 +463,30 @@ def identify_balloon_candidates(u: dict) -> list[dict]:
                     }
                 )
     return out
+
+
+def _checks_by_state(results: list[dict]) -> dict[str, int]:
+    """Contagem global por estado de check — consolidação auditável."""
+    counts: dict[str, int] = {}
+    for r in results:
+        for c in r.get("investigations") or []:
+            s = str(c.get("state") or "NOT_CHECKED")
+            counts[s] = counts.get(s, 0) + 1
+    return counts
+
+
+def _global_state(results: list[dict], comparison_blocked: bool) -> str:
+    """Estado global honesto — nunca PASS; consolidação por cobertura."""
+    if comparison_blocked:
+        return "INCONCLUSIVE"
+    if not results:
+        return "INCONCLUSIVE"
+    states = {r.get("overall_state") for r in results}
+    if "NOT_COMPARABLE" in states and len(states) == 1:
+        return "NOT_COMPARABLE"
+    if states <= {"MATCH_CANDIDATE"}:
+        return "MATCH_CANDIDATE"
+    return "INCONCLUSIVE"
 
 
 def execute_investigations(
@@ -684,6 +715,21 @@ def execute_investigations(
                 res["overall_state"] = "INCONCLUSIVE"
         balloon_candidates = identify_balloon_candidates(u)
 
+    if not balloon_candidates:
+        balloon_candidates = [
+            {
+                "item_label": b.attributes.get("item_label"),
+                "bounding_box_px": (
+                    (b.evidence_refs[0].bounding_box
+                     if b.evidence_refs else None)
+                ),
+                "identification_method": b.attributes.get(
+                    "identification_method", "declared"
+                ),
+            }
+            for b in oset.by_type(ObjectType.BALLOON)
+        ]
+
     # I-05 — reconciliação independente: desenho → estrutura oficial.
     # R13-01: o identificador do produto raiz NÃO é componente extra.
     root_ids = {str(product_code or "").strip()} - {""}
@@ -762,6 +808,10 @@ def execute_investigations(
         "summary": {
             **totals,
             "unmatched_drawing_candidates": len(unmatched),
+            "root_product_identifiers": len(root_identifiers),
+            "balloon_candidates": len(balloon_candidates),
+            "checks_by_state": _checks_by_state(results),
+            "global_state": _global_state(results, comparison_blocked),
             "effective_coverage": (
                 round(
                     totals["match_candidates"] / totals["expected_occurrences"], 3
