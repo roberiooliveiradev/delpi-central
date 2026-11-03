@@ -215,3 +215,34 @@ Para cada relatório: (1) que problema resolve, momento do PROC-0072 e classific
 6. Smoke pós-publicação via CLARA autenticada: `knowledge(search)` R04/R09/R12/R15 e perguntas negativas, `read` R04/R09/R12; 105 cenários de explicação R01–R15 seguem como `TEST_NOT_RUN` até executados.
 
 **Sem necessidade de alteração de regras de negócio, SQL TOTVS, boundaries ou permissões a partir destes achados.** Prioridade de correção: **P0 integridade textual R12/R15**.
+
+
+## 10. GPT REVIEW independente — Gate 074 (03/11/2026)
+
+**HEAD GitHub observado:** `06998895d54b716ef0fbe37a3734b1ff15ee351f` (após execução relatada). Commit de reparo `3efc207992546a7a1500087b50a45a8eb73afa94` modificou somente `R12-ficha.md`, `R15-ficha.md`, `test_fichas_integrity.py`. `git status` local do ambiente Devin não verificável neste canal.
+
+**Corpus live:** `knowledge(sources)` retornou versão `60b2b2d9-52d2-46d0-8ce7-28454f4d52ff`, publicada em 03/11/2026 10:47:26 BRT, 2.252 itens/88 fontes — `PASS` para publicação física.
+
+**Integridade dos arquivos no HEAD:** R12/R15 em `main` não contêm `para rotinas (visão read-only)`, e datas/títulos/rotas `GET /financeiro/closing-state`, `R12/R15`, `MATA330/MATA280` estão legíveis. `PASS` no escopo literal verificado. Teste canônico novo `test_fichas_integrity.py` existe com 2 asserts test cases para splice e identificadores; execução `2/2` é **reportada pelo executor**, não reexecutada neste canal.
+
+**FALHA DE SUPSERSEDE/RECUPERAÇÃO COMPROVADA:** `knowledge(search,query="R12",limit=70)` retornou simultaneamente segmentos da fonte `ficha-r12` com `source_version=d7bc370cee33` (versão corrompida G073) **e** `source_version=937a783ca24d` (versão corrigida G074). A versão antiga aparece no próprio `heading_path` e `excerpt`, p.ex. `31 para rotinas (visão read-only)10 para rotinas (visão read-only)2026` e `Código para rotinas (visão read-only)nome`. `knowledge(search,query="R15")` também retorna títulos e trechos corrompidos junto a versões corretas. Logo `knowledge(sources)` apontar hash novo **não comprova** supersede efetivo da coleção pesquisável.
+
+**Metadados live não corrigidos:** `knowledge(sources)` ainda retorna `Ficha R04 — Consumo por OP (bloqueado)` e `Ficha R14 — Importação / câmbio (bloqueado)`, embora o `corpus_manifest.py` tenha nomes atuais no HEAD anterior. `FAIL` no requisito de atualização de registry/sources servido.
+
+**Consultas operacionais executadas independentemente nesta revisão:** `read(report.production_order_consumption)` 2026-09 branch01 `PASS` total 1.243/25 items; 2026-10 branch01 `PASS` total 2.381/25; `read(report.billing_mod_breakdown)` 2026-09 branch01 `PASS` 299 anchors e 8 limitações; `read(report.cost_closing_state)` 2026-09 `PASS`, 4 limitações. Esses resultados validam operação do conector, não eliminam falha no corpus.
+
+**105 verificações de conhecimento:** `TEST_NOT_RUN` (executor não executou e esta revisão amostrou busca pontual, não 105 perguntas).
+
+### Veredito
+
+**`REWORK`** para Gate 074: **fonte GitHub reparada e corpus republicado, mas ainda há dados da versão corrompida recuperáveis em produção, comprovados por `source_version` duplicado sob mesmo `source_id`.** O objetivo de integridade **end-to-end** não está atendido. **`ACCEPT_WITH_RESIDUAL` apenas para reparo dos arquivos-fonte + operação dos relatórios**, não para o corpus.
+
+### Próximo rework mínimo, com gate de segurança
+
+1. Inspecionar mecanismo atual de ingestão/upsert/versionamento, índices de busca e filtros de validade `source_id/source_version/corpus_version_id`; rastrear por que corpus novo mantém itens `source_version=d7bc370cee33` ativos no search de R12. Não apagar versões em lote sem inventário/rollback; confirmar comportamento intended de retenção histórica vs busca default.
+2. Garantir que a busca default de conhecimento vigente exclua/tipifique explicitamente fontes superadas; manter histórico consultável somente em fluxo histórico governado, se já previsto em contrato. Mudança de semântica de retenção/retrieval exige owner approval conforme governança; sem decisão, retornar `DECISION_REQUIRED`.
+3. Corrigir persistência e exposição dos nomes de fontes em `knowledge(sources)` para R04/R14 por mecanismo existente; provar antes/depois.
+4. Publicar corpus controladamente e **chamar CLARA autenticada pós-publish**: `knowledge(search,R12/R15)` deve devolver 0 trechos corrompidos, version correta nos localizadores; `knowledge(sources)` títulos atuais; `read` R04/R09/R12 deve permanecer PASS.
+5. Executar auditoria de recuperação progressiva R01–R15 (105 perguntas quando sessão disponível); nunca deduzir PASS de contagem de ingestão.
+
+Sem evidência para alteração SQL/TOTVS/permissions. Categoria deste achado: `CORPUS_VERSION_DRIFT / STALE_EVIDENCE`, não problema de ficha GitHub.
