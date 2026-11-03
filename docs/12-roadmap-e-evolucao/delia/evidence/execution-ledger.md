@@ -4653,3 +4653,24 @@ UI_PORTAL_RENDER=NOT_PROVEN by authenticated API traces alone; backend E2E != vi
 ENGINE_RESIDUAL=LangGraph retained with S4/S5 legitimate consumers; no removal authorized.
 ROLLBACK=legacy restored and real local switch reported; retain until explicit later gate.
 NEXT=bounded follow-up on schema regression/stability E2E-01, authoritative owner E2E-04 and VISTA E2E-06, comparison E2E-05, and Portal display check. Preserve M6 partial outcome; M7 closure and production cutover not authorized.
+## M6-FINAL RESIDUAL CLOSURE — frentes A-D
+
+SHA: <next>. Frente A (Pydantic AI args): required-fields contract
+regression tests + exclude_unset parity (omitted optional -> ABSENT
+key like legacy JSON-mode, never null-as-present); 27+ adapter tests
+GREEN. Residual: schema_rejected_retry nondeterminism do modelo
+pequeno (arguments emitido mas conteudo fora do schema da capability)
+— fail-closed honesto, retry governado existente, nao-regressao vs
+legacy (mesmo prompt+validacao).
+Frente B (90260921): ROOT CAUSE = arggen miss (nao owner) — rerun
+pos-fix GROUNDED com upstream real GET /products/90260921/structure
+200 (135ms). Residual api-delpi timeout->empty nao exercido aqui.
+Frente C (VISTA): servico VIVO (tv-dashboard-api /mcp responde 200s);
+mcp_authentication_failed = denial AuthZ delegada (user sem vista
+access) — bloco externo correto, apresentado como denial nao vazio.
+Frente D (comparacao): path REASONING corretamente selecionado;
+vista.analyze bloqueado (mesma AuthZ) + miss residual -> resposta
+honesta sem invencao.
+Rollback legacy preservado (testado vivo antes); LangGraph residual
+mantido. E2E autenticado executado: 01-03 GROUNDED, 04 GROUNDED
+(pos-fix), 05 honesto, 06 selecao correta+denial honesto.

@@ -302,3 +302,88 @@ def test_model_runtime_defaults_to_pydantic_ai(monkeypatch):
 
     monkeypatch.delenv("DELIA_MODEL_RUNTIME", raising=False)
     assert Settings().model_runtime == "pydantic_ai"
+
+
+# ---------- M6-FINAL: required-fields contract regression ----------
+
+def test_required_field_missing_fails_closed():
+    """RC-A regression: when the model omits a required wrapper like
+    'arguments', output validation must fail — never a silent
+    args=none that ends the turn unbound."""
+    adapter = _adapter(TestModel(custom_output_args={}))
+    with pytest.raises(ModelInvocationError) as exc:
+        InvokeModel(adapter).execute(
+            _request(expected_fields=("arguments",))
+        )
+    assert exc.value.code == INVALID_STRUCTURED_OUTPUT
+
+
+def test_applicable_true_with_missing_companion_fails():
+    """applicable=true proposes a companion id — its absence is a
+    contract violation at the governed boundary."""
+    adapter = _adapter(
+        TestModel(custom_output_args={"applicable": True})
+    )
+    with pytest.raises(ModelInvocationError) as exc:
+        InvokeModel(adapter).execute(
+            _request(expected_fields=("applicable", "remote_name"))
+        )
+    assert exc.value.code == INVALID_STRUCTURED_OUTPUT
+
+
+def test_nested_objects_and_arrays_preserved():
+    adapter = _adapter(
+        TestModel(
+            custom_output_args={
+                "subobjectives": [
+                    {"goal": "a", "refs": [1, 2]},
+                    {"goal": "b"},
+                ]
+            }
+        )
+    )
+    result = InvokeModel(adapter).execute(
+        _request(expected_fields=("subobjectives",))
+    )
+    assert result.structured_output["subobjectives"][0]["refs"] == [1, 2]
+
+
+def test_numeric_codes_stay_strings():
+    """Enterprise codes are strings even when numeric-looking —
+    coercion would corrupt 90260148-class identifiers."""
+    adapter = _adapter(
+        TestModel(custom_output_args={"arguments": {"code": "90260148"}})
+    )
+    result = InvokeModel(adapter).execute(
+        _request(expected_fields=("arguments",))
+    )
+    assert result.structured_output["arguments"]["code"] == "90260148"
+
+
+def test_malformed_output_maps_to_invalid_not_fabrication():
+    class _Malformed(TestModel):
+        async def request(self, messages, model_settings, params):
+            from pydantic_ai.messages import ModelResponse, TextPart
+
+            return ModelResponse(parts=[TextPart("not json at all")])
+
+    adapter = _adapter(_Malformed())
+    with pytest.raises(ModelInvocationError):
+        InvokeModel(adapter).execute(_request())
+
+
+def test_extra_keys_survive_but_never_authorize():
+    adapter = _adapter(
+        TestModel(
+            custom_output_args={
+                "goal_class": "operational",
+                "surprise": "model-invented",
+            }
+        )
+    )
+    result = InvokeModel(adapter).execute(
+        _request(expected_fields=("goal_class",))
+    )
+    assert result.structured_output["surprise"] == "model-invented"
+    # Governed projection (allowed_keys) happens downstream — the
+    # adapter must carry, never adjudicate.

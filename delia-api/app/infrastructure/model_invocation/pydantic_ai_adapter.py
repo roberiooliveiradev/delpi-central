@@ -222,7 +222,11 @@ class PydanticAiModelInvocationAdapter:
                 "provider returned no structured output",
             )
         structured = (
-            output.model_dump()
+            # exclude_unset: an omitted optional field must surface as
+            # an ABSENT key — exactly like the legacy JSON-mode path —
+            # so the governed presence check can distinguish "model
+            # returned null" from "model never emitted the field".
+            output.model_dump(exclude_unset=True)
             if hasattr(output, "model_dump")
             else dict(output)
             if isinstance(output, Mapping)
