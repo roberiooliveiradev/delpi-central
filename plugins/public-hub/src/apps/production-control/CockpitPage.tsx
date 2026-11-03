@@ -735,7 +735,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             {shiftMetrics}
             <div className="pcp-pub__hero-aside">
               <OperatorSessionChip
-                blockOperatorSwitch={shouldBlockOperatorSwitch(counterRun)}
+                hasActiveRun={shouldBlockOperatorSwitch(counterRun)}
               />
               <span
                 className={`pcp-pub__live ${connected ? "pcp-pub__live--on" : "pcp-pub__live--off"}`}
