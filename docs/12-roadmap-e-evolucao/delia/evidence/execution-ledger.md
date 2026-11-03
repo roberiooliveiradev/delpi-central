@@ -4765,3 +4765,75 @@ ACRESCIMO UPSTREAM DETECTADO: plugins/engineering commitado com
 marcadores de conflito em src/features/products/ (46da939277) —
 build do MFE quebra na main; fora do escopo DÉLIA; reportado p/
 owner do plugin (nao e regressao da migracao).
+
+## DIAGNOSTIC — contextual intelligence, continuity & multi-capability composition (2026-11-03)
+
+TASK=DELIA-C3-CONTEXTUAL-INTELLIGENCE-MULTISTEP-AND-COMPARISON-DIAGNOSTIC-01.
+EVALUATED_HEAD=ee885c4c2e (main; origin=988ddf0b5f7d na reancoragem).
+STACK: delia-api pydantic_ai default, engine=langgraph (residual),
+qwen3:4b-instruct-2507-q4_K_M confirmado em ollama local.
+
+AUTENTICACAO E2E = TEST_NOT_RUN: delpi-keycloak estava parado
+(Exited 3h; reiniciado e UP); credencial `rober` em infra/.env.local
+INVALIDA — Keycloak registrou LOGIN_ERROR invalid_user_credentials.
+Sem identidade autorizada: baterias A/B/C/E/G live = TEST_NOT_RUN;
+executados apenas experimentos tecnicos legitimos (trace de codigo +
+analise de contrato). Nao modificadas permissoes/membership.
+
+CAUSAL TRACE (codigo, SHA avaliado):
+- USER TURN -> session/prior_turns: ConversationContextTurn bounded,
+  _validate_prior_context com admissibility; prior_turns propagado
+  a admission/selection/arggen/recovery/synthesis.
+- CAPABILITY SELECTION: instrucao select_group e' semantica sobre
+  catalogo vivo (match por dominio, nao keyword); sem regex/hardcode
+  de provider; grupo dono do surface e' escolhido por significado.
+- SYNTHESIS (_synthesize_content): modelo pode apenas SELECIONAR e
+  ORGANIZAR evidencia do owner — "no model-authored prose channel";
+  runtime deterministico copia valores e compoe resposta.
+- COMPARISON: existe caminho deterministico (COMPARISON_INSTRUCTION_ID,
+  _compare_records) porem bounded a atributos escalares/tipados de
+  records selecionados — "escopo nao equivalente" -> inconclusiva.
+  NAO existe estagio governado que entregue DUAS estruturas (arvores
+  BOM) a um boundary de raciocinio comparativo.
+- CONTINUITY: "prior data is never replayed as current evidence" —
+  payloads de owner de turnos anteriores NAO reentram como evidencia;
+  apenas prior_observation textual p/ resolver referencias.
+- VISTA: catalogo tem mcp:vista.analyze como owner de analise; na
+  comparacao o caminho legitimo e' REASONING -> vista.analyze, que
+  cai na AuthZ delegada (owner vivo; denial honesto).
+
+ROOT CAUSE MATRIX (contraprova por codigo, nao live):
+- RC1 EVIDENCE_COMPOSITION_DEFECT (arquitetura, nao bug): sem estagio
+  governado de composicao multi-evidencia para raciocinio; comparacao
+  estrutural BOM excede o contrato tipado _compare_records. Primeiro
+  boundary insuficiente = pos-evidence, pre-synthesis.
+- RC2 SESSION_CONTINUITY boundary por design: evidencia nao e'
+  rebatida entre turnos (intencional: texto != FACT); T3 de C01
+  precisaria re-buscar ou depender de projection autorizada —
+  aparenta "perda de contexto", e' contrato epistemico.
+- RC3 OWNER_AUTHZ_DENIAL: vista.analyze selecionado corretamente
+  (dono do surface de analise); bloqueio = AuthZ do usuario, nao
+  selecao indevida. NAO ha routing keyword/hardcode.
+- RC4 (descartado como causa primaria) MODEL_CAPABILITY: nao
+  comprovada — falta de estagio de composicao antecede a capacidade
+  do modelo; "LLM pequeno" nao explica ausencia de boundary.
+- NOT_A_DEFECT: ausencia de estado interno do Agent pydantic_ai —
+  history e' reconstruido por invocacao via prior_turns.
+
+PYDANTIC_AI_USAGE: usado como boundary de inferencia estruturada
+pontual por stage (admission/selection/arggen/relevance/communication);
+NAO usado: sessions do framework, tools, multi-step agent loops,
+structured conversation state — decisoes corretas (governanca fica
+na Application), nao gap a ser "ligado" cegamente.
+
+RECOMENDACOES p/ coordenacao (nao executadas):
+- R1: contrato de composicao multi-evidencia governado (compare
+  contract por subobjetivo reunido; EvidenceFacts->proposal tipada
+  antes de synthesis), reutilizando ModelInvocationPort — REUSE.
+- R2: projection autorizada de evidencia cross-turn (refs+hashes,
+  nao replay de payload) — EXTEND ConversationContextTurn/evidence
+  refs; texto continua sem virar FACT.
+- R3: grant VISTA p/ usuario de teste (owner tv-dashboard-api) p/
+  habilitar vista.analyze como surface legitima.
+- R4: credencial dev valida em .env.local p/ destravar E2E.
+- Prioridade: R1 > R3 > R2 > R4.
