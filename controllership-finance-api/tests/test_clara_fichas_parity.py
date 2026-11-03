@@ -119,10 +119,26 @@ def test_fichas_only_reference_canonical_report_ids():
 
 
 def test_not_implemented_reports_are_honest():
-    """R04/R09/R12/R13/R14/R15 não podem declarar capability CLARA de
-    consulta — o motor responde report_not_implemented."""
-    for rid in ("R04", "R09", "R12", "R13", "R14", "R15"):
+    """Honestidade de capability por natureza do relatório:
+
+    - R04/R09/R12/R15 são IMPLEMENTED/visão de acompanhamento —
+      `report_not_implemented` só pode aparecer como registro
+      histórico superado, nunca como estado vigente;
+    - R13/R14 seguem `SOURCE_UNAVAILABLE` (fonte externa) e não
+      podem declarar capability de consulta de dados.
+    """
+    for rid in ("R04", "R09", "R12", "R15"):
         text = _ficha_path(rid).read_text(encoding="utf-8")
-        assert "report_not_implemented" in text or "nenhuma" in text, (
+        assert "IMPLEMENTED" in text, (
+            f"{rid}: ficha deve declarar estado implementado"
+        )
+        impl = text.split("## Interpretação")[0]
+        assert "report_not_implemented" not in impl or (
+            "SUPERAD" in impl.upper() or "HISTÓRIC" in impl.upper()
+            or "superad" in impl.lower()
+        ), f"{rid}: report_not_implemented declarado como vigente"
+    for rid in ("R13", "R14"):
+        text = _ficha_path(rid).read_text(encoding="utf-8")
+        assert "SOURCE_UNAVAILABLE" in text or "nenhuma" in text, (
             f"{rid}: ficha deve declarar ausência de contrato"
         )

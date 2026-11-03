@@ -19,7 +19,7 @@ vigente; paridade oficial DLP204 **pendente**.
 - Produtor oficial: `DLP204.prw` (acervo, autor Gabriel, 2019) +
   SP `STP_DELPI_FORMA_PRECO_<empresa>` — SP **ausente dos bancos
   acessíveis** (E9); recursão SG1 por nível.
-- Implementação: **IMPLEMENTADO** — Portal → BFF
+- Implementação: **IMPLEMENTED** — Portal → BFF
   `controllership-finance-api` → api-delpi → TOTVS (read-only).
 - CLARA: `read(report.billing_mod_breakdown)` — consulta real
   positiva registrada (doc 152 §6: 2026-09 filial 01, 299 âncoras).

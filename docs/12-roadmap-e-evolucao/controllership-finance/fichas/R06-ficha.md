@@ -43,8 +43,12 @@ Publicação: **release produtivo stage-05** (30/10/2026, srv-api, SHA `297068f1
 ## Regras de negócio (doc 85 §6)
 
 - BR-R06-001 produtor/modelo UNION + SB1 — `PROVEN`.
-- BR-R06-002 filtros: `F4_ESTOQUE='S'` (SD1/SD2), `D3_ESTORNO<>'S'`,
+- BR-R06-002 filtros: `F4_ESTOQUE='S'` (SD1/SD2),
   `D*_ORIGLAN<>'LF'`, `D1_REMITO=''`, `D3_SERVIC`/CQ — `PROVEN`.
+  `D3_ESTORNO<>'S'` é **condicional ao parâmetro `MV_D3ESTOR='N'`**
+  (`stock_kardex_sql.py`: `exclude_estorno` só aplica a cláusula com
+  o parâmetro em 'N'; valor live 'N' → estornos excluídos) —
+  `PROVEN_CODE` (doc 152 §6).
 - BR-R06-003 eixos de data por tabela — `PROVEN`.
 - BR-R06-004 ordenação por data + `*_NUMSEQ` — `PROVEN`.
 - BR-R06-005 coluna REF (F-fornecedor / P-pedido / OP / CC) — `PROVEN`.

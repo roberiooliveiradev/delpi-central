@@ -38,6 +38,12 @@ atenção especial).
   80 das 353 linhas têm `D1_EMISSAO` fora de setembro; filtro narrado
   pelo owner ("data de digitação no mês") + prova física.
 - Filial: `D1_FILIAL` — dimensão de dado, não fronteira RBAC.
+- **Onde a regra é aplicada:** o SQL
+  (`cost_center_expenses_sql.py`) devolve o universo SD1 da
+  competência **sem excluir TES/MP/benefícios no WHERE**; a
+  classificação `calculation`×`investigation` (13 TES, `D1_TP='MP'`,
+  6 benefícios) é aplicada linha a linha no **use case** —
+  `PROVEN_CODE` (doc 152 §7).
 - Universos:
   - `calculation` — universo da apuração: **353 linhas** — as 686 linhas
     SD1 em competência **menos** as exclusões BR-R10-003/004/005

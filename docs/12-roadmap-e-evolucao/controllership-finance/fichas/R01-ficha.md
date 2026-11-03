@@ -23,8 +23,16 @@ Publicação: **release produtivo stage-05** (30/10/2026, srv-api, SHA `297068f1
 
 ## Fonte e dados
 
-- Tabelas: SE5 (baixas) × SE2 (títulos pagar) × SED (naturezas) × F7G —
-  `PROVEN` (doc 85 §1).
+- **Duas fontes distintas, nunca confundir:**
+  - **Relatório histórico (artefato FINR190):** SE5 (baixas) × SE2
+    (títulos pagar) × SED (naturezas) × F7G — `PROVEN` (doc 85 §1);
+    eixo `E5_DATA` (data da baixa).
+  - **Consulta operacional vigente (api-delpi `settlements_sql.py`):**
+    eventos de baixa `FK2010` (pagar), ponte de títulos `FK7010`
+    (`FK7_IDDOC`, `FK7_ALIAS='SE2'`), títulos `SE2010`, naturezas
+    `SED010` — `PROVEN_CODE` (doc 152 §7). Competência = `FK2_DATA`
+    (não `E5_DATA`); valor do evento = `FK2_VALOR` (não `E2_VALOR`);
+    `LEFT JOIN`/`OUTER APPLY TOP 1` preservam baixa sem vínculo.
 - Artefatos de referência: `pagos 09 26.xlsb` (948 linhas de dados),
   `Pagos por dt.pdf` (33p), `Pagos por nat.pdf` (35p).
 - Grão: baixa financeira (linha SE5).

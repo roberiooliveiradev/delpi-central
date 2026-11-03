@@ -39,6 +39,12 @@ atenção especial).
   Em set/2026 os dois predicados coincidem bidirecionalmente; all-time,
   grupo 9035 aparece com outros TES — **a interseção é a evidência, não
   uma regra universal** (E11b).
+- **Onde a regra é aplicada:** o SQL
+  (`billing_exclusion_roster_sql.py`) seleciona o **universo** por
+  `D2_GRUPO = grupo OR D2_TES = tes` (união — inclui linhas
+  relacionadas fora do critério para investigação); as **candidatas**
+  `grupo AND tes` são classificadas no **use case** —
+  `PROVEN_CODE` (doc 152 §7). `UNIVERSE = OR`; `CANDIDATES = AND`.
 - Visões: `candidates` (interseção observada — default),
   `out_of_criteria` (linhas relacionadas fora do predicado —
   DV-R11-04), `all`; totalizadores separados, nunca somados.
