@@ -2015,3 +2015,12 @@ delia-api restartado healthy. Snapshots: davi/teo/vista v1 ACTIVE
 discovery; (b) DELIA_ARGGEN_ENGINE=pydantic_ai + restart + smoke
 P1=30190123 (code field) P2=10080047 P3=conectores P5=outro owner.
 Rollback=catalog->live e arggen->llm no .env (linha unica cada).
+
+## PROMOTION — ambas flags ativas em prod (SHA c5e1bb4827)
+
+STATE: DELIA_MCP_CATALOG_MODE=snapshot_experiment +
+DELIA_ARGGEN_ENGINE=pydantic_ai — ambas no .env srv-api, container
+healthy. Snapshots davi/teo/vista v1 VERIFY PASS.
+PROXIMO: smoke via scripts/r4_authenticated_resume_eval._compose (o
+import compose_interactive_turn_handler nao existe — reusar o composer
+do eval) + bind subject mcp-catalog-sync(scope=openid) -> P1 30190123.
