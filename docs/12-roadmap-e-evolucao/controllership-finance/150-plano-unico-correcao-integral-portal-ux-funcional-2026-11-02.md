@@ -431,3 +431,36 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 ### Verificação
 - `tsc -b`: **0 erros** · `vite build`: **OK (2.63s)** · `vitest`: **416/417** (1 flake pré-existente `MonthlyDocumentsPanel` — verde isolado; `DocumentDetailPanel` avatar também flake conhecido)
 - Pendente sessão humana: screenshots antes/depois, CLARA com OP `24841701001` (2026-09/filial 01), breakpoints/temas em produção
+
+
+## 12. Revisão pós-Gate 066 — Consumo por OP outubro/2026 (capturas do PO)
+
+**Fase:** REVIEW / REGISTER_ONLY — não autoriza nova implementação ou deploy. **Evidência:** duas capturas de sessão autenticada em `/apps/controllership-finance/closing/monthly-closing/2026-10/reports/production-order-consumption`, com filial 01 e tipo de data “Emissão da OP”.
+
+**Resultado visual positivo:** o R04 agora utiliza Data Grid padronizado, com cabeçalhos `OP, Produto, Descrição, Status, Centro de trabalho, Data`, linhas efetivamente preenchidas, paginação de servidor visível e rodapé `Exibindo 1–25 de 2381 · Página 1 de 96`. A captura mostra **2.381 OPs** para a consulta apresentada, não uma homologação de valores por CLARA ou paridade MATR860. **CF-UX-032: prova visual parcial de renderização e paginação**; ainda não há prova de clique/detalhe, filtros ou acessibilidade.
+
+### CF-UX-040 — R04: o cabeçalho de contexto/consulta continua pouco hierarquizado
+- **Prioridade:** P1 · **Estado:** OPEN / OBSERVED_SCREENSHOT + TO_VERIFY.
+- **Observação:** após o breadcrumb, há um bloco de texto plano “Visão operacional — paridade oficial pendente”, filtros de filial/tipo/busca concentrados à direita, grande área de respiro e linha de contagem/proveniência solta antes do grid. Diferente dos demais relatórios, o R04 não apresenta hero específico compacto/toolbar claramente agrupada.
+- **Diretriz de revisão:** conferir componentes já existentes e harmonizar R04 com o hero **específico do relatório** aprovado em CF-UX-021/039: nome do relatório, competência, indicação curta de visão operacional, filtros e ações coerentemente agrupados, contagem e proveniência em posição legível; **não** reintroduzir o hero geral “Fechamento mensal” nas deep routes. Não inventar botões ou KPIs. Integrar CLARA/Portal somente com contrato vigente.
+- **Aceite futuro:** menos espaço vazio antes da grade, filtros responsivos e com label/placeholder íntegros, escopo/period claros, aviso MATR860 `pending` visível sem dominar a página, teclado/mobile/temas. Validar primeiro no HEAD se CSS/hero atual é intencional.
+
+### CF-UX-041 — R04: melhorar semântica da grade sem alterar dados
+- **Prioridade:** P1 · **Estado:** OPEN / OBSERVED_SCREENSHOT + TO_VERIFY.
+- **Observação:** a coluna `Status` exibe código cru `N` em todas as linhas visíveis; `Centro de trabalho` mostra `—`; datas estão em ISO `2026-10-30` apesar da UX PT-BR. O screenshot não prova erro do produtor, mas há baixa legibilidade para o usuário.
+- **Diretriz de revisão:** verificar enums e significados no **contrato do produtor** antes de traduzir `N`; apresentar rótulo humano com código técnico acessível em detalhe, se comprovado. Formatar datas exibidas como `30/10/2026` no padrão brasileiro, sem alterar eixo `dateType` nem timezone de referência; distinguir “sem informação de centro” de valor zero, sem inventar. Conferir texto/tooltip de cada coluna e relação entre produto e descrição. Validar linhas e detalhe de uma OP real; considerar affordance de drilldown somente se a rota vigente suportar.
+- **Aceite futuro:** sem códigos opacos ou falsa tradução, colunas acessíveis, datas corretas, campos ausentes honestos; paridade operacional preservada.
+
+### CF-UX-042 — Breadcrumb R04 em viewport: truncamento e identificação do mês
+- **Prioridade:** P2 · **Estado:** OPEN / OBSERVED_SCREENSHOT + TO_VERIFY_RESPONSIVE.
+- **Observação:** captura de outubro mostra `Início / … / 10/2026 / Relatórios e divergências / Consumo por OP`. O mês está presente, confirmando parte de CF-UX-033, mas o nível “Fechamento mensal” foi reduzido a reticências apesar de existir espaço na linha em desktop.
+- **Diretriz de revisão:** conferir regra responsiva/overflow do componente de breadcrumb do kit e se `…` é comportamento intencional em viewport larga. Sempre que houver espaço, mostrar explicitamente `Fechamento mensal` e competência legível (`Outubro/2026` ou `10/2026` conforme padrão); em largura limitada, usar colapso acessível com menu/tooltip e navegação preservada. Não substituir componente canônico nem perder contexto da competência.
+- **Aceite futuro:** navegação clicável correta para `/closing/monthly-closing`, `/2026-10` e aba de relatórios, refresh/back/forward, desktop/mobile, foco/leitor de tela.
+
+### CF-UX-043 — Grid R04: paginação, controles auxiliares e descoberta de detalhe
+- **Prioridade:** P2 · **Estado:** OPEN / OBSERVED_SCREENSHOT + TO_VERIFY_INTERACTION.
+- **Observação:** a paginação canônica apresenta 96 páginas (25 linhas/página) e vários ícones de ajuda `?` próximos a seletor, navegação e `Ir para`; sem interação na imagem não é possível confirmar se tooltips são úteis, duplicados ou confusos. O grid não indica claramente como acessar detalhes da OP, se existentes.
+- **Diretriz de revisão:** exercitar tamanho de página, próximo/anterior, última página, `Ir para`, filtros e estado de loading; avaliar tooltips/labels do componente existente sem customização desnecessária; verificar se linha ou célula de OP permite drilldown com mouse e teclado conforme contrato. Não implementar função que não existe no contrato.
+- **Aceite futuro:** paginação correta (inclusive página 96, total e mudanças de filtro), foco/teclado, sem requests duplicados; evidência visual e network; detalhe de OP real se houver suporte.
+
+**Resultado desta leva:** CF-UX-040..043 são novos itens de revisão. A visualização de dados e paginação R04 após G066 tem **evidência visual parcial positiva**; não promover CF-UX-032 a homologação completa nem declarar causa técnica de qualquer melhoria sugerida sem inspeção. Continuar acumulando a revisão para correção consolidada autorizada pelo PO.
