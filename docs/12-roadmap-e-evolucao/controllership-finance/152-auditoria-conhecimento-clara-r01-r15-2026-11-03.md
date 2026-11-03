@@ -246,3 +246,31 @@ Para cada relatório: (1) que problema resolve, momento do PROC-0072 e classific
 5. Executar auditoria de recuperação progressiva R01–R15 (105 perguntas quando sessão disponível); nunca deduzir PASS de contagem de ingestão.
 
 Sem evidência para alteração SQL/TOTVS/permissions. Categoria deste achado: `CORPUS_VERSION_DRIFT / STALE_EVIDENCE`, não problema de ficha GitHub.
+
+
+## 11. GPT REVIEW independente — Gate 075 (03/11/2026)
+
+**GitHub:** commit funcional `5f54491018ef4927749d608f23ef9f711e01d5a6` alterou apenas `corpus_ingestion.py`, `clara_knowledge_repository.py` e `test_corpus_stale_sweep.py`. O HEAD da main consultado durante a revisão foi `47a6ae201660f11c3aa49d66c052b45b3ec34306`, já posterior ao `3e9ec63d10` relatado pelo executor. Git status local e digest do container não verificados diretamente.
+
+**Publicação real:** CLARA `knowledge(sources)` retornou corpus `83dddfbe-7aeb-4a78-8cbe-570b6d6a8329`, publicado 03/11/2026 10:55:11 -03, 2.215 itens/88 fontes. `PASS` de leitura produtiva.
+
+**Causa raiz confirmada por inspeção do código:** ingestão antes substituía segmentos coincidentes por locator/heading, mas não varria itens ainda `PUBLISHED` de headings removidas ou renomeadas. O novo `supersede_stale_items(source_id, keep_ids)` atualiza status dos itens não reconfirmados para `SUPERSEDED`, preservando histórico; `ingest_source` recolhe IDs atuais e chama sweep. O teste novo com FakeRepo prova chamada ao sweep e reporte de `stale_swept`; **não substitui testes SQL reais/concorrência/rollback por si só**. 2/2 da integridade de fichas e teste novo são resultados informados pelo executor, não reexecutados localmente pelo revisor.
+
+**Teste MCP de recuperação vigente (independente):** `knowledge(search,query=R12/R15/R04/R09,limit=70)`, filtrados por `citation_locator.document` da respectiva ficha:
+- R12: **5 itens da ficha**, exclusivamente `source_version=937a783ca24d`, **0** fragmentos de `d7bc370cee33` / splice.
+- R15: **3 itens da ficha**, exclusivamente `source_version=8be9bacb3c5b`, **0** fragmentos corrompidos.
+- R04: **2 itens da ficha**, exclusivamente `source_version=e9ea1ba60ebc`.
+- R09: **4 itens da ficha**, exclusivamente `source_version=417222eaf0f7`, sem negativa presente de endpoint nos segmentos retornados.
+O resultado comprova o cenário de busca real por IDs, não exaustividade de todas as expressões e tópicos.
+
+**Metadados reais:** `knowledge(sources)` agora retorna `Ficha R04 — Consumo por OP (visão operacional)` e `Ficha R14 — Importação / câmbio (evidência documental externa)`. `PASS`.
+
+**Consultas operacionais CLARA reais:**
+- `read(report.production_order_consumption)` 2026-09 branch01: `success=true`, `total=1243`, 25 itens, `officiality=operational_view`, `officialParity=pending`.
+- Mesmo relatório 2026-10 branch01: `success=true`, `total=2381`, 25 itens, `officialParity=pending`.
+- `read(report.billing_mod_breakdown)` 2026-09 branch01: `success=true`, 299 âncoras, 8 limitações, `officiality=operational_view`, `officialParity=pending`.
+- `read(report.cost_closing_state)` 2026-09: `success=true`, 4 limitações, `officiality=technical_markers`.
+
+**Resultado:** `PASS` para objetivo P0 de versionamento vigente, integridade de fragmentos R12/R15 em busca real, metadata R04/R14 e regressões operacionais citadas. **Veredito Gate 075 = `ACCEPT_WITH_RESIDUAL`**.
+
+**Resíduos explícitos:** (1) bateria de 105 perguntas R01–R15 `TEST_NOT_RUN`; (2) suite automatizada de cenários transacionais, rollback, publicação parcial, fontes vazias e concorrência não comprovada pelos testes novos apresentados; revisar antes de uma mudança maior; (3) smoke visual autenticado Portal não executado nesta revisão; (4) paridade oficial e decisões de owners permanecem pendentes conforme Documento 152. Não reabrir o incidente P0 sem evidência nova.
