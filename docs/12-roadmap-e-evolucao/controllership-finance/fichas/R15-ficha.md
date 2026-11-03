@@ -19,6 +19,7 @@ Publicação: ficha **vigente no corpus produtivo** — estado `PENDING_CONTRACT
   fechamento; **não é relatório de medida** → comparação responde
   NOT_COMPARABLE — visão read-only, sem execução de rotina no Portal.
 - Homologação: G3/G4 `PASS`; G5 `INCONCLUSIVE`.
+- **Evidência humana ausente:** a ausência de evidência humana de aceite não é, por si só, reprovação comprovada do fechamento. O aceite humano fica `PENDING`/não demonstrado; não declarar `PASS` nem `FAIL` automaticamente. O estado técnico de cutoff deve ser consultado separadamente em `MV_ULMES`/`SB9` por filial. Essa distinção não substitui o aceite funcional da Controladoria.
 
 ## Fonte e dados
 
