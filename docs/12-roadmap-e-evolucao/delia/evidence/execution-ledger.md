@@ -4632,3 +4632,24 @@ residual = nao-determinismo do modelo pequeno, sempre fail-closed.
 Rollback testado ao vivo: DELIA_MODEL_RUNTIME=legacy recriou
 container, E2E-03 executou GROUNDED — rollback isolado funcional;
 container retornado a pydantic_ai.
+
+
+## M6 — INDEPENDENT REVIEW OF AUTHENTICATED E2E (2026-11-03)
+
+TASK=DELIA-C3-PYDANTIC-AI-M6-LOCAL-BUSINESS-E2E-RESUME-01
+REVIEWED_HEAD=ab6ebd83520595679d28dc9a963ec617e3d7af48
+REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL
+RUNTIME_CUTOVER=LOCAL_ONLY; PRODUCTION_DEPLOY=NOT_AUTHORIZED
+REVIEW_EVIDENCE=GitHub diff confirms required expected_fields in PydanticAiModelInvocationAdapter and explicit required-fields directive; abstention companion behavior remains optional; ledger contains authenticated E2E matrix. Reported traces/results were not independently replayed in reviewer environment.
+E2E_01=GROUNDED once; repeat NON_GROUNDED reported; stability PENDING.
+E2E_02=GROUNDED/PASS reported.
+E2E_03=GROUNDED after schema correction/PASS reported.
+E2E_04=owner explicit_empty; business outcome INCONCLUSIVE; owner error-vs-empty remains to establish authoritatively.
+E2E_05=partial evidence/owner errors; comparison outcome INCONCLUSIVE.
+E2E_06=VISTA selection reported correct; local owner unavailable/denied; outcome INCONCLUSIVE.
+GENERALIZATION=PARTIAL; additional variants reported honest but inconclusive.
+AUTOMATED_TEST_COVERAGE=RESIDUAL: no dedicated regression tests added for _proposal_model REQUIRED fields, applicable=false companion, nested arguments in E2E fix commit.
+UI_PORTAL_RENDER=NOT_PROVEN by authenticated API traces alone; backend E2E != visual Portal validation.
+ENGINE_RESIDUAL=LangGraph retained with S4/S5 legitimate consumers; no removal authorized.
+ROLLBACK=legacy restored and real local switch reported; retain until explicit later gate.
+NEXT=bounded follow-up on schema regression/stability E2E-01, authoritative owner E2E-04 and VISTA E2E-06, comparison E2E-05, and Portal display check. Preserve M6 partial outcome; M7 closure and production cutover not authorized.
