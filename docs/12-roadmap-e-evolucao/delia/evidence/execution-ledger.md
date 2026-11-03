@@ -4582,3 +4582,17 @@ DELIA_MODEL_RUNTIME=legacy (default permanece pydantic_ai; um runtime
 por request; desconhecidos fail-closed). Rollback/retorno demonstrados
 por config. Remocao definitiva permanece pendente de homologacao
 empresarial (M6-AC: E2E TEST_NOT_RUN sem identidade do executor).
+
+## M6 BUSINESS E2E — tentativa autenticada + ambiente verificado
+
+SHA=f16b62804d: stack oficial local verificada — delpi-delia-api
+healthy, DELIA_MODEL_RUNTIME=pydantic_ai, modelo
+qwen3:4b-instruct-2507-q4_K_M, provider openai_compatible,
+engine=langgraph (residual), codigo montado = HEAD avaliado.
+Auth gate intacto: sem token=401, token invalido=401 (fail-closed
+sob runtime novo). Realm local users: admin-delpi, cf-e2e-access,
+devin-smoke-evo, rober, user@local.com — nenhuma credencial sancionada
+persistida (user/cf-e2e sao fornecidas por task pelo PO;
+devin-smoke-evo sem delia.access — grant proibido).
+E2E-01..06 + generalizacao = TEST_NOT_RUN (sem identidade autorizada);
+ambiente pronto para validacao pelo usuario via Portal.
