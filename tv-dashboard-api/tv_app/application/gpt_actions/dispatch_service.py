@@ -4298,9 +4298,45 @@ class GptActionsDispatchService:
                 # recipe ganham data_source + bind_visual canônicos,
                 # heading recebe o título do briefing e componentes
                 # não pedidos saem do plano.
+                existing_blocks: list[dict[str, Any]] = []
+                _sid = str(
+                    (payload.get("host_context") or {}).get("slideId")
+                    or (host or {}).get("slideId")
+                    or ""
+                ).strip()
+                _pid = str(
+                    (payload.get("host_context") or {}).get("playlistId")
+                    or (host or {}).get("playlistId")
+                    or ""
+                ).strip()
+                if _sid and _pid:
+                    try:
+                        _sl = self._writes.get_slide(
+                            UUID(_sid), playlist_id=UUID(_pid)
+                        )
+                        for _b in (
+                            (self._writes.slide_blocks(_sl) or [])
+                            if hasattr(self._writes, "slide_blocks")
+                            else (
+                                (_sl.get("nativeConfig") or {}).get("blocks") or []
+                            )
+                        ):
+                            if isinstance(_b, dict) and _b.get("id"):
+                                existing_blocks.append(
+                                    {
+                                        "id": str(_b["id"]),
+                                        "type": str(
+                                            _b.get("type") or ""
+                                        ),
+                                        "frame": _b.get("frame") or {},
+                                    }
+                                )
+                    except Exception:
+                        existing_blocks = []
                 self._enrich_composition_ops(
                     payload, blocks, message,
                     request_goals=set(goal_map),
+                    existing_blocks=existing_blocks,
                 )
                 # readiness honesto: layout pronto ≠ dados prontos.
                 if payload["bindingPlan"]["state"] != "RESOLVED":
@@ -4333,6 +4369,7 @@ class GptActionsDispatchService:
         blocks: list[dict[str, Any]],
         message: Any,
         request_goals: set[str] | None = None,
+        existing_blocks: list[dict[str, Any]] | None = None,
     ) -> None:
         """DI-E2E-DESIGN-01 — ONE REQUEST → COMPLETE DASHBOARD.
 
@@ -4460,6 +4497,26 @@ class GptActionsDispatchService:
             set(_meta_cand.get("goals") or []) if _meta_cand else set()
         )
 
+        # reconciliação com estado persistido (issue #129 F3):
+        # blocos existentes do mesmo papel são reutilizados
+        # (upsert com id persistido = update, não add); sobras de
+        # redesign saem por delete_block (gate de confirmação).
+        _existing = list(existing_blocks or [])
+        _redesign = bool(
+            re.search(
+                r"desenvolva|design|redesenh|reorganiz|refaz"
+                r"|refazer|rework|redesign|substitua|substituir",
+                msg_norm,
+                re.I,
+            )
+        )
+
+        def _take_existing(btype):
+            for i, eb in enumerate(_existing):
+                if eb.get("type") == btype:
+                    return _existing.pop(i)
+            return None
+
         enriched: list[dict[str, Any]] = []
         dropped_types: set[str] = set()
         _bound_goals: set[str] = set()
@@ -4473,6 +4530,11 @@ class GptActionsDispatchService:
                 continue
             blk = op["block"]
             btype = str(blk.get("type") or "")
+            # reconciliação: reutiliza bloco existente do mesmo
+            # papel — upsert com id persistido = update, não add.
+            _eb = _take_existing(btype)
+            if _eb:
+                blk["id"] = str(_eb["id"])
             plan = plan_by_type.get(btype)
             plan_cands = (
                 plan.get("candidates") or [] if plan else []
@@ -4684,6 +4746,14 @@ class GptActionsDispatchService:
                 "missingParams": spec.get("missingParams") or [],
             }
             _bound_goals |= set(cand.get("goals") or [])
+        # sobras de redesign: existentes não consumidos saem por
+        # delete_block — boundary decide a policy (confirm quando
+        # destrutivo); sem redesign, conteúdo é preservado.
+        if _redesign and _existing:
+            for eb in _existing:
+                enriched.append(
+                    {"op": "delete_block", "blockId": str(eb["id"])}
+                )
         payload["ops"] = enriched
         # meta é representação independente: quando o pedido pede
         # comparação e existe fonte TARGET justificada, emite um

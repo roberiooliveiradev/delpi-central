@@ -1903,3 +1903,124 @@ BLOQUEIO catalog sync: MCPs exigem JWT de usuario real p/ token-exchange.
 PROXIMO: impersonate usuario valido via admin API -> bind subject ->
   /tmp/prod_sync.py --apply (script ja no host + container).
 STAGE2 pendente: DELIA_ARGGEN_ENGINE=pydantic_ai vs kimi-k3 (OpenRouter).
+
+## PROMOTION — auth root cause (SHA 5a8ce83705)
+
+TOKEN-EXCHANGE flow: bound subject JWT -> exchange via delia-api client
+  -> audience=CANONICAL_MCP_CLIENT_IDS[owner] -> MCP token. Exige JWT de
+  usuario do realm delpi (claims de usuario). Service-account nao funciona.
+Caminho legitimo: client publico delpi-central tem
+  directAccessGrantsEnabled=True -> password grant com usuario do realm.
+  "admin" do Keycloak master NAO e usuario do realm delpi (401).
+  Impersonation = workaround proibido pela coordenacao.
+PLANO: criar usuario operacional mcp-catalog-sync no realm delpi via
+  admin API (auditable, escopo minimo) -> password grant delpi-central ->
+  bind subject -> token-exchange -> sync 3 owners ativos (davi/teo/vista;
+  caio/clara/eva/suri sem base_url em prod = nao configurados).
+
+## PROMOTION — auth progress (SHA 15a7bc3c75)
+
+Caminho validado: client publico delpi-central tem directAccessGrants.
+Usuario operacional mcp-catalog-sync CRIADO no realm delpi (admin API),
+requiredActions limpos. PENDENTE: password grant retorna 400 —
+depurar qual etapa (reset-password PUT vs grant). Script /tmp/prod_sync.py
+no host+container: reset password gerado in-process -> password grant ->
+bind -> _live_capture + capture_and_activate (davi/teo/vista).
+
+## PROMOTION — auth progress 2 (SHA 73d170a232)
+
+AVANCO: usuario mcp-catalog-sync realm delpi -> USER_TOKEN_OK via
+delpi-central password grant (apos email+firstName+lastName via admin
+PUT — "Account is not fully set up" resolvido). roles=default-roles-delpi
+(= usuario funcional). BLOQUEIO RESTANTE: MCPs rejeitam — provavelmente
+o token-exchange (audience mcp-api-delpi p/ davi) falha p/ usuario novo
+ou token passthrough rejeitado. PROXIMO: decodificar o exchanged token
+p/ davi e isolar exchange-403 vs mcp-reject; se exchange exigir role/
+client-scope, atribuir minimo necessario via admin API (auditable).
+
+## PROMOTION — auth progress 3 (SHA cbaa4637d6)
+
+EXCHANGE FUNCIONA: subject sync-user -> exchanged token aud=
+[delpi-central, https://minhadelpi.com.br/apps/api-delpi/mcp, account,
+mcp-api-delpi] iss=keycloak realm delpi — aud correto.
+MAS davi MCP responde 401 Unauthorized p/ esse token — o MCP valida algo
+alem de aud (issuer/JWKS/claim especifico). PROXIMO: encontrar a
+validacao real em api-delpi/app/interface/mcp/server.py (routes.py sem
+match) — verificar se exige azp, signature path ou claim de cliente.
+
+## PROMOTION — auth progress 4 (SHA 3c1b47fe2c)
+
+CAUSA-RAIZ REFINADA: sync user JWT valido + exchanged token aud correto
+MAS davi MCP 401 porque get_current_user()=None — o contexto e populado
+por middleware que resolve JWT->usuario no Core/RBAC; usuario criado
+só no Keycloak nao e provisionado -> Unauthorized.
+PROXIMO: encontrar onde set_current_user e chamado (middleware) —
+jwt_validator->core lookup; confirmar se precisa provisioning no Core
+(users table) ou claim adicional. Alternativa: usuario existente real
+(sem password disponivel) — investigar JIT provisioning do Core.
+
+## PROMOTION — auth progress 5 (SHA 29e93fb8d7)
+
+MCP middleware chain: Bearer -> validate_token (JWKS via OIDC discovery,
+iss/aud) -> claims sub+email OBRIGATORIOS -> load_user_rbac (Core,
+fallback=claims). "Unauthorized" gen = validate_token exception.
+Suspeita: exchanged token pode nao carregar claim email -> 401, OU iss
+rejeitado. PROXIMO: decodificar claims do exchanged token p/ conferir
+email + azp + iss vs validate_token. Se email ausente -> fix =
+garantir email no usuario (ja setado, talvez exchange nao encaminhe —
+testar grant direto sem exchange? MCP espera token do seu audience,
+entao exchange e obrigatorio — o fallback _rbac_from_claims cobre).
+
+## PROMOTION — auth progress 6 (SHA 38d1f14748)
+
+EXCHANGED token completo: email OK, azp=delia-api, iss=realm public,
+aud=[delpi-central,resource-url,account,mcp-api-delpi]. DAVI MCP segue
+401 "Unauthorized" — aud=api-delpi exchange NAO permitido p/ o client.
+Suspeita restante: validate_token no MCP pode exigir aud=api-delpi OU
+validar azp/typ especifico; ou load_user_rbac->Core nao conhece o
+usuario (sub novo) -> middleware falha antes do user build.
+PROXIMO: ler audience check em jwt_validator.py validate_token e, se
+aud OK, instrumentar o MCP log p/ ver a falha exata (signature vs
+claims vs rbac). ALTERNATIVA LEGITIMA: executar sync via service-token
+path (request_has_valid_internal_service_token) — se o adapter
+delegation nao aceita, avaliar contrato admin sync com service user.
+
+## PROMOTION — auth chain QUASE resolvida (SHA c82dd59f96)
+
+RECEITA (etapa por etapa, cada uma comprovada):
+1. usuario mcp-catalog-sync realm delpi -> password grant client
+   delpi-central + scope=openid (era MISSING_REQUIRED_SCOPE no MCP log)
+2. token-exchange delia-api client -> audience=mcp-api-delpi (aud correto)
+3. MCP call: Host: minhadelpi.com.br (era Invalid Host header)
+4. PENDENTE: Accept: application/json (ultimo erro -32600 Not Acceptable)
+Restante = header trivial; depois sync completo davi/teo/vista +
+catalog mode snapshot + arggen pydantic_ai + smoke.
+
+## PROMOTION — catalog SYNCED em producao (SHA bdd4198e71)
+
+AUTH CHAIN RESOLVIDA: usuario mcp-catalog-sync realm delpi -> password
+grant delpi-central+scope=openid -> token-exchange -> Host+Accept ->
+MCP tools/list. SNAPSHOTS ATIVOS em prod (/data/delia/mcp_catalog.db):
+  davi v1 (2 tools, hash b0c1a4d1), teo v1 (6, 5fa2e7bb), vista v1 (6, e90bc471).
+Prod so tem 3 MCPs configurados (davi/teo/vista); caio/clara/eva/suri
+sem base_url -> nao sincronizaveis (sem endpoint).
+PROXIMO: DELIA_MCP_CATALOG_MODE=snapshot_experiment no .env srv-api +
+restart -> verify -> DELIA_ARGGEN_ENGINE=pydantic_ai + smoke.
+
+## PROMOTION — stage-1 catalog ACTIVE em prod (SHA 2498dcf7e0)
+
+DELIA_MCP_CATALOG_MODE=snapshot_experiment SET no .env srv-api (L409) +
+delia-api restartado healthy. Snapshots: davi/teo/vista v1 ACTIVE
+(/data/delia/mcp_catalog.db persistente). PROXIMO: (a) smoke snapshot
+discovery; (b) DELIA_ARGGEN_ENGINE=pydantic_ai + restart + smoke
+P1=30190123 (code field) P2=10080047 P3=conectores P5=outro owner.
+Rollback=catalog->live e arggen->llm no .env (linha unica cada).
+
+## PROMOTION — ambas flags ativas em prod (SHA c5e1bb4827)
+
+STATE: DELIA_MCP_CATALOG_MODE=snapshot_experiment +
+DELIA_ARGGEN_ENGINE=pydantic_ai — ambas no .env srv-api, container
+healthy. Snapshots davi/teo/vista v1 VERIFY PASS.
+PROXIMO: smoke via scripts/r4_authenticated_resume_eval._compose (o
+import compose_interactive_turn_handler nao existe — reusar o composer
+do eval) + bind subject mcp-catalog-sync(scope=openid) -> P1 30190123.
