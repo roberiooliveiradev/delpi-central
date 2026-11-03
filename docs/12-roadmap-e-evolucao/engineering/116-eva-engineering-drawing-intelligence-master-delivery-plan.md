@@ -207,3 +207,233 @@ Produzir: current-head/ledger reanchor, lista proposta de desenhos e autorizaç�
 
 ---
 **Nota de evidência:** este documento registra a proposta e os resultados de chat anteriormente observados. Não declara novo código executado, avaliação técnica validada, novo deploy, GT existente ou release aprovado.
+
+
+---
+
+# ANEXO A — Playbook operacional do Devin por marco (M0–M5)
+
+**Natureza:** detalhamento executivo do plano aprovado para documentação; tarefas futuras propostas, não evidência de execução. **Regra de precedência:** este anexo complementa os gates e responsabilidades das seções 1–12. Autoridades do repositório, owners e contratos efetivos prevalecem sobre sugestões de arquivos/classes/implementações. Não criar convenções paralelas.
+
+## A.1 Contrato de execução comum — válido em todos os marcos
+
+**Antes de trabalhar:** ler \`AGENTS.md\`, rules, plano 116, docs 107–115, ledger e artefatos canônicos; coletar \`HEAD\`, branch, status, worktrees, \`origin/main\`, versões de modelos e runtime. Inventariar equivalentes antes de abstrair. Para cada tarefa registrar \`RQ → AC → owner → source → consumer → contract → implementation → tests/evals → outcome\`.
+
+**Pacote fechado do Devin:**
+1. \`INVENTORY\`: mapa de arquivos/contratos/executáveis, dados e owners de cada capability.
+2. \`SPEC\`: RQ/AC verificáveis, matriz de risco, dataset e critério de conclusão.
+3. \`DESIGN GATE\`: demonstrar por que mudança é necessária, onde pertence e por que o contrato existente não resolve; mapear read/write e draft/publish.
+4. \`IMPLEMENT\`: menor diff correto; sem import cross-context, DB de outro owner ou dependência do Chat legado.
+5. \`TEST\`: unit/contract/integration/negative/regression + eval real e holdout, conforme fase; testados no mesmo SHA/config/model.
+6. \`VALIDATE\`: comparar expected vs actual; registrar falsos positivos, falsos negativos, ambiguidade, evidência, erro e limitação; não confundir confidence com accuracy.
+7. \`FIX\`: corrigir causas reproduzíveis sob autoridade do executor; regressões reiniciam gates afetados.
+8. \`HANDOFF\`: somente após AC obrigatórios PASS, ou BLOCKED com causa, owner, evidência e ação requerida. Limite de gestão de **até três ciclos de correção por incremento**; se não convergir, exigir decisão de Coordination (não é PASS parcial).
+9. \`DEPLOY\`: apenas se necessário ao marco e autorizado pelas regras vigentes de operação; testar pré-deploy e pós-deploy, hash/digest, resource fit, baseline/fallback e postcondition.
+10. \`INDEPENDENT ACCEPT\`: ChatGPT verifica MCP onde disponível; responsável de Engenharia valida conteúdo técnico. Executor não se autoaprova.
+
+**A cada marco, o Devin entrega** um changelog com SHA, RQ/AC matrix (PASS/FAIL/BLOCKED/TEST_NOT_RUN), diff, teste executável + comando, dataset/model/config SHA, matriz por desenho e por campo, exemplos de erros, overlays/evidence references, segurança, recursos, testes negativos, relatório de regressão, residual search, status de deploy e limitações. Preferir anexos pequenos e referenciados a um relatório sem evidências.
+
+**Stop-the-line:** erro de autenticação/autorização, output técnico fabricado, contaminação de holdout, alteração de fonte oficial, teste crítico FAIL ou regressão produtiva => interromper promoção e recuperar/rollback conforme processo autorizado.
+
+## A.2 M0 — Evaluation Foundation: backlog executável
+
+**Entrada:** R9.9 funcional reportado/testado pelo ChatGPT em dois desenhos, mas sem GT aprovado, threshold nem cobertura de generalização. **Dono de execução:** Devin / Engineering Intelligence; **aprovação:** GT owner de Engenharia + Coordination.
+
+| ID | Ação específica do Devin | Evidência de saída |
+|---|---|---|
+| M0-T01 | Inventariar arquivos e contratos de desenho, OCR, SLANet, understanding, métricas, API/MCP e scripts. Localizar GT/eval harness existente antes de criar algo. | capability/source/owner map; referências de arquivo e SHA |
+| M0-T02 | Executar baseline read-only nos dois PDFs conhecidos e congelar entradas SHA, revisão, modelo, flags, latência, RSS, CPU e JSON candidato. | baseline manifest + raw results sanitizados |
+| M0-T03 | Levantar com o owner candidatos a 18 desenhos adicionais e autorizações para DELPI/cliente; evitar usar conteúdo confidencial em fixtures públicas. | document selection register: família, layout, revisão, acesso, status |
+| M0-T04 | Propor split desenvolvimento/validação/holdout por família e revisão (evitar desenhos quase idênticos em splits diferentes). Travar holdout e suas regras de acesso. | dataset v1 manifest, split rationale, hash e política anti-leak |
+| M0-T05 | Elaborar annotation guideline com classes de região, células/spans, token references, código/item/qtd/descrição, revisão, dimensões, conflitos e UNKNOWN. | annotation schema + examples positivos/negativos |
+| M0-T06 | Definir protocolo de anotação: anotador, revisor de Engenharia, adjudicação, versão, discrepâncias e trilha de decisão. | owner/annotation workflow aprovado ou OWNER_BLOCKED |
+| M0-T07 | Implementar/adaptar harness offline sem acesso de escrita a dados oficiais; gerar overlay, diff expected/observed, métricas com denominadores e relatório por classe. | testes do harness + relatório reproduzível por SHA |
+| M0-T08 | Executar baseline contra GT disponível; marcar ausência de referência como EVAL_PENDING, nunca accuracy PASS. | scorecard inicial + failure taxonomy |
+| M0-T09 | Propor thresholds por criticidade (ex.: componente/quantidade/cota) e regras de abstenção, depois obter decisão explícita do owner. | threshold matrix versionada e decisão |
+| M0-T10 | Auditar segurança do corpus, retention, secrets, permissão de cliente e rastreabilidade de revisão. | data access/privacy gate |
+
+**Testes M0:** determinismo do harness em execuções repetidas; hash/split leakage; anotações conflitantes; GT incompleto; ausência de PDF; dataset version mismatch; overlay crop→página; controle de acesso; qualidade de métricas. Exigir checks sobre nenhum caso com expected vazio contado como acerto.
+
+**AC de saída M0:** (a) versão e fonte das amostras aprovadas; (b) GT validado ao menos para o escopo inicial acordado; (c) harness reproduzível; (d) baseline scorecard por família/classe; (e) thresholds e metodologia aprovados; (f) release/test split guardado; (g) ledger atualizado. **Dependência externa:** se GT/owner não estiver disponível, concluir apenas inventário PREPARED e registrar M0 BLOCKED — não iniciar tuning M1 para declarar qualidade.
+
+**Não fazer no M0:** implementar novo OCR, novo modelo, novo serviço, tipagem de BOM ou modificar contrato produtivo sem defeito demonstrado.
+
+## A.3 M1 — Document Structure: backlog executável
+
+**Entrada:** M0 com dataset/GT e thresholds region/table aprovados.
+
+| ID | Ação específica do Devin | Evidência de saída |
+|---|---|---|
+| M1-T01 | Medir no GT onde o current understanding confunde title block, revision, component table, notes e drawing area. | confusion matrix por região/layout |
+| M1-T02 | Formalizar coordenadas px/página/crop, escala, rotação, page index, offsets e versões; testar transformações bidirecionais. | coordinate invariants + image overlays |
+| M1-T03 | Normalizar regiões candidatas com estados DETECTED/AMBIGUOUS/UNKNOWN, sem transformá-las em áreas oficiais. | contrato compatível + testes |
+| M1-T04 | Validar SLANet grid, rows/cols, spans e bbox, inclusive células parcialmente fora do crop e conteúdo administrativo na mesma banda. | grid/topology metrics e casos específicos |
+| M1-T05 | Reconciliar tokens OCR completos com regiões/células, armazenando IDs/ref e justificativas de conflitos/unassigned em output candidato. | token→cell trace e contagens reproduzíveis |
+| M1-T06 | Melhorar apenas falhas comprovadas de segmentação e topologia; não reclassificar arbitrariamente uma região para inflar recall. | fixes ligados a casos e diffs de eval |
+| M1-T07 | Comparar baseline anterior vs implementação em validation e holdout, separando aumento de células de acurácia estrutural. | benchmark with matched PDF/config, FP/FN |
+| M1-T08 | Executar regressão MCP, contratos v1, OCR/SLANet model load, budget e read-only. | E2E + operational safety report |
+
+**Testes M1:** layouts com múltiplas tabelas, title block perto da tabela, colunas mescladas, rotação, multipágina quando suportada, OCR vazio, escala/crop variados, overlaps e offsets inválidos. Guardar overlays por caso para auditoria humana.
+
+**AC de saída M1:** regiões corretas dentro dos limites aprovados; estrutura de células/spans GT; referência espacial verificável; menos falsos positivos de admin como tabela; preservação de baseline e contrato; holdout satisfaz thresholds. **Não sair de M1** por “SLANet reconheceu mais células”.
+
+## A.4 M2 — Typed Semantic Extraction: backlog executável
+
+**Entrada:** M1 aprovado; ground truth de campos por tipo de tabela, origem da revisão e owner da semântica definidos.
+
+| ID | Ação específica do Devin | Evidência de saída |
+|---|---|---|
+| M2-T01 | Inventariar padrões reais de item, código, quantidade e descrição nas famílias de desenhos. Registrar variantes e ambiguidades sem inventar regra empresarial. | field taxonomy aprovada ou TO_INVENTORY |
+| M2-T02 | Definir estrutura candidata compatível: table_id, row_id, cell_id, token_refs, raw/normalized text, field_type, association_status, confidence metodológica e provenance. | contrato/compatibilidade + serialização |
+| M2-T03 | Detectar cabeçalhos e mapear semanticamente colunas (item, quantity, code, description), sem assumir posição fixa; distinguir área administrativa e BOM candidate. | header mapping cases e GT diffs |
+| M2-T04 | Associar itens, quantidades, códigos e descrições por linha/spans; tratar multilinear, rótulos quebrados, páginas múltiplas no escopo e duplicidades. | row linkage tests |
+| M2-T05 | Definir normalização lossless: nunca sobrescrever texto original ou converter unidades/códigos sem regra validada; reportar transform rules. | normalized vs raw audit |
+| M2-T06 | Emitir UNKNOWN/AMBIGUOUS/NOT_EXTRACTED para campos faltantes ou associação insegura, sem completar a partir da BOM oficial. | ambiguity negative cases |
+| M2-T07 | Rodar field-level evaluation e linked-row accuracy; mensurar falso componente e falso valor de quantidade por criticidade. | field scorecard por classe e família |
+| M2-T08 | Revisar com Engenharia amostras difíceis; congelar regras aceitas e erros conhecidos. | adjudication log + approved cases |
+| M2-T09 | Validar MCP retorno candidate e backward compatibility, segurança e regressão dos dois desenhos de referência. | contract/E2E evidence |
+
+**Testes M2:** texto administrativo parecido com código, várias quantidades na mesma região, itens repetidos, colunas invertidas, spans, OCR incompleto, descrições quebradas, unidades misturadas, quantidade ilegível e código sem item. Verificar todos os claims com token_ref ou span de origem.
+
+**AC de saída M2:** campos tipados e linhas associados conforme thresholds por risco, falso componente crítico dentro do limite aprovado, nenhuma inferência não sustentada, cobertura e abstenção medidas e revisão humana em amostra. Não criar BOM oficial nem gravar dados.
+
+## A.5 M3 — Technical / Geometric Interpretation: backlog executável
+
+**Entrada:** M2 aprovado; Engenharia define classes e severidade técnicas. **Não presumir** que todo desenho tem geometria interpretável a partir de raster.
+
+| ID | Ação específica do Devin | Evidência de saída |
+|---|---|---|
+| M3-T01 | Inventariar famílias de cotas, unidades, tolerâncias, notas e símbolos presentes no corpus e o que a infraestrutura atual suporta. | supported/unsupported matrix |
+| M3-T02 | Submeter escopo inicial fechado e riscos à Engenharia (por exemplo cotas explícitas em texto versus associação à geometria). | scope decision |
+| M3-T03 | Criar/estender observações candidatas diferenciando TEXT_DETECTED, GEOMETRY_LINKED, VERIFIED_BY_RULE e UNKNOWN, conforme contrato aprovado. | state semantics tests |
+| M3-T04 | Extrair valor numérico/unidade e tolerância somente quando explicitamente suportados, sem transformar OCR em medição geométrica validada. | unit/tolerance parsing suite |
+| M3-T05 | Associar anotação a dimensão/vista/feature somente quando regras e GT permitirem; conflito de setas e vistas requer abstenção. | association overlays e error cases |
+| M3-T06 | Tratar indicação de revisão, nota e conflito de cotas com provenance; não inferir material/norma ausente. | failure taxonomy e case review |
+| M3-T07 | Avaliar dimensional correctness, unsupported claims, revision correctness, precision/recall por classe e qualidade da abstenção. | risk-weighted scorecard |
+| M3-T08 | Executar avaliação humana em amostras críticas e regressão funcional das etapas anteriores. | review record e E2E |
+
+**Testes M3:** tolerâncias simétricas/assimétricas, unidades implícitas não autorizadas, números em notas confundidos com cotas, ângulos/diâmetros, marcas gráficas ambíguas, multipágina/revisões divergentes e simbologia fora do escopo. Marcar classe não suportada \`NOT_CHECKED\` em vez de fingir interpretação.
+
+**AC de saída M3:** apenas classes aprovadas cumprem thresholds técnicos e revisão humana; erros críticos não geram parecer afirmativo; classes restantes são exclusões explícitas. Se uma classe não convergir, ela pode ser retirada do release **por decisão formal de escopo antes do gate**, nunca por omissão silenciosa.
+
+## A.6 M4 — Official Cross-check: backlog executável
+
+**Entrada:** M2/M3 aprovados no escopo de comparação; contratos reais e owners oficiais inventariados.
+
+| ID | Ação específica do Devin | Evidência de saída |
+|---|---|---|
+| M4-T01 | Inventariar API/autorização/freshness/error semantics de cadastro de produto, BOM e revisão; classificar roteiros/inspeção/standards sem contrato como owner-blocked. | owner-source-contract matrix |
+| M4-T02 | Elaborar matriz de correspondência entre documento/revisão/component_code/qty e campos oficiais disponíveis; exigir autorização de leitura e versionamento. | mapping specification |
+| M4-T03 | Implementar comparação multiplicity-aware de itens e quantidade, nunca apenas set-membership; não alterar BOM oficial. | duplicates/quantity comparison tests |
+| M4-T04 | Distinguir MATCH, CONFLICT, UNKNOWN, NOT_COMPARABLE, NOT_CHECKED e erro de fonte; OCR omisso não significa componente ausente no desenho. | decision table e negative eval |
+| M4-T05 | Testar identificação errada do desenho, revisão divergente, PDF sem revisão, source unavailable e BOM indisponível; preservar faixas de permissão. | source/error matrix |
+| M4-T06 | Medir precisão/recall de conflitos contra GT, incluindo falsos alarmes de componente e de quantidade. | conflict scorecard |
+| M4-T07 | Executar testes de AuthZ negativa, ausência de escalada via MCP, proteção de documento de cliente e fail-closed. | security test results |
+| M4-T08 | Testar E2E nos casos oficiais autorizados com provenance cruzada drawing×source e revisão técnica do owner. | comparison candidate report |
+
+**AC de saída M4:** contratos verificados, comparação correta no escopo, nenhum dado oficial modificado, falsos positivos críticos dentro do limite aprovado, permissões negativas PASS e NOT_COMPARABLE preservado. Faltando contrato oficial, bloquear esse subescopo e escalar; não criar um “source of truth” substituto.
+
+## A.7 M5 — Governed Release: backlog executável
+
+**Entrada:** M0–M4 aceitos no escopo do release; decisões de risco e owners registradas.
+
+| ID | Ação específica do Devin | Evidência de saída |
+|---|---|---|
+| M5-T01 | Consolidar relatório candidato estruturado: documento/revisão/hash, observações tipadas, evidência por claim, fontes oficiais, estados, conflitos e limitações. | report candidate schema + samples |
+| M5-T02 | Integrar na superfície legítima do Portal/EVA sem ocultar origem ou permitir aprovação por UI; loading/empty/error/permission states claros. | UI/contract review e E2E |
+| M5-T03 | Instrumentar correlação, métricas de recursos e qualidade, erro tipado, payload bounded, no secrets; manter logs sanitizados. | observability/security evidence |
+| M5-T04 | Congelar versão de release, datasets e thresholds; executar avaliação final no holdout sem tuning retroativo e com review de Engenharia. | final eval package |
+| M5-T05 | Executar suite completa: unit/contract/integration/architecture/regression/negative/permission/safety/prompt injection/real drawings, incluindo rollback/recreate. | SHA-bound acceptance results |
+| M5-T06 | Validar CPU/RSS/latência/concurrency no ambiente elegível e planejar gate shadow/assistido sem trocar baseline por omissão. | capacity/gating report |
+| M5-T07 | Obter aprovação técnica para uso assistido no escopo, decisão de Core/Domain quando aplicável e autorização operacional do rollout. | sign-off / explicit BLOCKED |
+| M5-T08 | Implantar por procedimento canônico autorizado, validar image digest + runtime SHA, flags, fallback, smoke e E2E MCP autenticado. | deployment manifest + postconditions |
+| M5-T09 | ChatGPT executa verificação independente pelo contrato EVA, e Engineering owner valida amostras técnicas. | dual acceptance record |
+| M5-T10 | Produzir runbook de incidentes, rollback, limites conhecidos, versionamento de models e critérios de monitoring/exit. | operational playbook |
+
+**AC de saída M5:** relatório candidato correto e rastreável; todos gates essenciais PASS; holdout cumpre thresholds; security e AuthZ PASS; revisão humana do owner; deployment sem regressão; ChatGPT E2E independente PASS; não publicar como desenho aprovado ou alterar cadastro/BOM por automação.
+
+## A.8 Matriz de gates, responsáveis e stop conditions
+
+| Gate | Quem decide | Bloqueia se |
+|---|---|---|
+| Escopo/RQ/AC | Coordination + Product owner | requisito crítico não especificado |
+| Dataset/GT | Engineering owner | GT ausente, anotação não validada ou direitos de uso ausentes |
+| Contrato/boundary | Engineering API/Core owners + Coordination conforme impacto | authority deslocada, API inexistente, breaking não aprovado |
+| Qualidade/permissões | Engineering reviewer + Security | falsos claims técnicos críticos, vazamento, bypass |
+| Recursos/deploy | Operação autorizada | resource fit insuficiente, rollback inviável ou postcondition falha |
+| Chat E2E | ChatGPT via EVA conectada | operação retorna erro, motor/contrato não demonstrado |
+| Release assistido | Engineering owner + Coordination | thresholds, qualidade, segurança ou aceites não atendidos |
+
+**Regra de descida:** M1 precisa M0 aceito; M2 precisa M1; M3 pode ser subdividido por classe técnica, mas o escopo prometido deve estar fechado; M4 somente sobre campos suficientemente confiáveis e contratos oficiais disponíveis; M5 não libera subescopo que falhou. Preparação paralela e inventário são permitidos, mas não promoção implícita.
+
+## A.9 Planejamento concreto de entregas do Devin (sem cronograma fictício)
+
+- **Pacote 0 — M0 inventory/spec:** sem mudança produtiva; obter owner/GT/dataset, localizar harness e congelar baseline.
+- **Pacote 1 — M0 eval harness:** diff limitado ao tooling de eval; executar baseline, obter revisão de GT/threshold.
+- **Pacote 2 — M1 region + cell provenance:** corrigir somente falhas de regiões/topologia observadas em baseline.
+- **Pacote 3 — M2 typed table:** produzir tabelas tipadas e verificação por campo.
+- **Pacote 4 — M3 technical class 1:** trabalhar uma classe de cotas/tolerâncias por vez, se aprovada; demais NOT_CHECKED.
+- **Pacote 5 — M4 official comparison:** vincular contrato a campos tipados em leitura autorizada.
+- **Pacote 6 — M5 release:** holdout, sign-offs, produção, ChatGPT E2E e runbook.
+
+Cada pacote tem commit/diff/testes/AC próprios. Se uma alteração requer novo owner/source ou breaking contract, **parar e retornar à Coordination**. Critérios não podem ser relaxados para “fechar” o pacote.
+
+## A.10 Template padrão de task do Devin
+
+\`\`\`text
+TASK:
+MILESTONE:
+BASE_HEAD:
+OWNER:
+OBJECTIVE:
+IN_SCOPE:
+OUT_OF_SCOPE:
+CANONICAL_SOURCES:
+CONSUMERS:
+CONTRACTS:
+RQ:
+AC:
+DATASET_VERSION_AND_SPLITS:
+EXPECTED_GT_AND_THRESHOLDS:
+SECURITY_AUTHZ_AND_RESOURCE_LIMITS:
+FILES_TO_INVENTORY:
+IMPLEMENTATION_BOUNDARY:
+TEST_MATRIX:
+E2E_DRAWINGS:
+NEGATIVE_CASES:
+MAX_INTERNAL_CORRECTION_CYCLES: 3
+BLOCKER_ESCALATION:
+DEPLOY_GATE:
+INDEPENDENT_ACCEPTANCE:
+REQUIRED_EVIDENCE:
+\`\`\`
+
+**Template de conclusão:**
+\`\`\`text
+EVA EXECUTION REPORT
+TASK:
+BASE_HEAD:
+FINAL_HEAD:
+TESTED_SHA:
+PUSHED_SHA:
+DEPLOYED_SHA:
+DATASET_VERSION:
+GROUND_TRUTH_OWNER_AND_VERSION:
+RQS_AND_ACS:
+TESTS_UNIT_CONTRACT_INTEGRATION_REGRESSION:
+EVAL_METRICS_EXPECTED_VS_OBSERVED:
+HOLDOUT_RESULTS:
+NEGATIVE_SECURITY_PERMISSION_TESTS:
+RESOURCE_MEASUREMENTS:
+PROVENANCE_AND_EXAMPLES:
+FAILED_CASES_AND_ROOT_CAUSES:
+ITERATIONS_EXECUTED:
+RESIDUAL_SEARCH:
+EXECUTION_DRIFT:
+OWNER_BLOCKERS:
+ARCHITECTURE_DECISION_REQUIRED:
+FINAL_STATUS:
+NEXT_MILESTONE_GATE:
+\`\`\`
+
+**Não confundir:** aceite de funcionalidade (OCR/SLANet rodando) não é aceite de qualidade técnica; aceite de GT não autoriza publicação; documentação de deploy não comprova runtime. O programa termina quando o escopo versionado estiver tecnicamente validado, não quando toda funcionalidade futura de engenharia estiver implementada.
