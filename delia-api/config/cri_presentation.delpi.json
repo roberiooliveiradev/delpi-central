@@ -1,6 +1,6 @@
 {
   "resource_id": "delia.cri.presentation_vocabulary",
-  "version": 6,
+  "version": 7,
   "kind": "presentation_vocabulary",
   "owner": "DELPI",
   "leads": {
@@ -10,7 +10,8 @@
     "ordering_oldest_single": "O registro mais antigo disponível foi {identifier}.",
     "examples_fulfilled": "Aqui estão {count} exemplos:",
     "records_found": "Encontrei {count} registros:",
-    "single_found": "Encontrei este registro:"
+    "single_found": "Encontrei este registro:",
+    "structure_found": "Estrutura apresentada:"
   },
   "temporal_clauses": {
     "newest_first_modified": "A última alteração registrada ocorreu em {date}.",
