@@ -2129,3 +2129,27 @@ PROXIMO: POST tools/list c/ service token -> candidatos de
 (discover+execute), nao candidates — candidates vem de
 discover_delpi_information invocation que exige subject? Nao — o
 MCP aceita service token p/ READ; testar discover call direto.
+
+## T20-SEMANTIC-SEL — ROOT CAUSE comprovada (local probe)
+
+CADEIA (turn b66a63f1 + probes in-process no delpi-api-delpi):
+1. discover query = input_text verbatim -> davi retorna APENAS
+   get_product_structure como candidato (score top; probe exato).
+2. candidate_token vincula action -> execute RODOU
+   get_product_structure (probe executor ASGI: GET
+   /products/90260148/structure -> 200, BOM real: root=90260148
+   CHICOTE, items=2 nos PI c/ components MP aninhados, total=2).
+3. outcome.structured = {action_id,status,entity=product_structure,
+   shape=hierarchy, data:{root,items,total}} — CONTRATO PRESENTE.
+4. extract_pagination_envelope pega data.items -> 2 records nos;
+   DESCARTA data.root (o produto perguntado) e entity/shape.
+5. _judge_goal_evidence block = {business_subject, records:[2 nos sem
+   mencao a 90260148]} -> LLM julga irrelevant (corretamente, dado
+   contexto cortado) -> goal_mismatch -> resposta honesta-mas-errada.
+PRIMEIRA DIVERGENCIA CAUSAL = projecao de evidencia: dropa
+entity/shape/root do resultado antes do juiz de relevancia.
+NAO foi selecao (capability correta executou), NAO foi arggen
+(code correto), NAO foi discover.
+FIX canonico: projetar contexto declarado do owner (entity/shape +
+root subject node) em EvidenceFacts e incluir no bloco do juiz —
+generico p/ qualquer resultado enraizado, sem regra por palavra.
