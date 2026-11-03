@@ -4338,6 +4338,43 @@ class GptActionsDispatchService:
                     request_goals=set(goal_map),
                     existing_blocks=existing_blocks,
                 )
+                # consumo da capability de visão (issue #129 doc51):
+                # evidência canônica — previewUrl assinada, rendered
+                # (policy editor_live) e auditoria estrutural — com
+                # basisRevision (estado persistido, não a proposta).
+                try:
+                    _svc = get_slide_preview_render_service()
+                    if _sid and _pid and existing_blocks:
+                        _rev = str(
+                            self._writes.get_revision(UUID(_pid)) or ""
+                        )
+                        _native = _sl.get("nativeConfig") or {}
+                        _sp = _svc.build_preview_payload(
+                            playlist_id=_pid, slide_id=_sid,
+                            revision=_rev, native_config=_native,
+                            title=str(_sl.get("title") or "") or None,
+                        )
+                        _rnd = _svc.build_rendered_payload(
+                            playlist_id=_pid, slide_id=_sid,
+                            revision=_rev, renderable=True,
+                        )
+                        _rnd = self._apply_live_editor_visual_policy(
+                            playlist_id=UUID(_pid), slide=_sl,
+                            revision=_rev,
+                            actor=self._access.actor_id(user) or "",
+                            rendered=_rnd, preview_svc=_svc,
+                        )
+                        payload["visualEvidence"] = {
+                            "basisRevision": _rev,
+                            "previewUrl": _sp.get("previewUrl"),
+                            "rendered": _rnd,
+                            "designAudit": (
+                                DesignIntelligenceService.design_audit(_native)
+                                if isinstance(_native, dict) else {}
+                            ),
+                        }
+                except Exception:
+                    pass
                 # readiness honesto: layout pronto ≠ dados prontos.
                 if payload["bindingPlan"]["state"] != "RESOLVED":
                     payload["dataReadiness"] = "pending_source_selection"
