@@ -635,17 +635,18 @@
   max-width: 100%;
 }
 
-/* issue #129 — fill: comparação/hint/status/progress proporcionais
-   ao card; pt fixos ficavam microscópicos em cards grandes. */
-.delpi-kpi-card--fill .delpi-kpi-comparison {
-  font-size: clamp(9px, 4.2cqmin, 22px);
+/* issue #129 — fill: use the actual DelpiKpiCard part class names.
+ * The prior selectors missed the DOM completely (comparison/hint/track).
+ * Keep explicit per-part inline typography overrides authoritative.
+ * Viewport-relative fallback avoids requiring a new CSS size container. */
+.delpi-kpi-card--fill .delpi-kpi-card__comparison {
+  font-size: clamp(14px, 1.15vw, 22px);
   line-height: 1.25;
 }
-.delpi-kpi-card--fill .delpi-kpi-hint,
-.delpi-kpi-card--fill .delpi-kpi-context-label {
-  font-size: clamp(8px, 3.4cqmin, 18px);
+.delpi-kpi-card--fill .delpi-kpi-card__hint {
+  font-size: clamp(12px, 0.95vw, 18px);
   line-height: 1.25;
 }
-.delpi-kpi-card--fill .delpi-kpi-progress__bar {
-  height: clamp(6px, 3cqmin, 18px);
+.delpi-kpi-card--fill .delpi-kpi-progress__track {
+  height: clamp(6px, 0.65vw, 12px);
 }
