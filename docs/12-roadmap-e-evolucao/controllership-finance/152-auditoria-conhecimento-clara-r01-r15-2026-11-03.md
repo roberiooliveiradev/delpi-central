@@ -145,3 +145,40 @@ Para cada relatório: (1) que problema resolve, momento do PROC-0072 e classific
 - **CLARA-KNOW-011 (P1):** R03 — explicitar motor de snapshot SB9010 versus P7 oficial e não declarar equivalência sem homologação.
 - **R08:** producer SQL literal ainda `TO_INVENTORY` nesta passagem; documentação do domínio recuperada, não extrapolar.
 - **Status:** `CODE_PROVEN` em cinco arquivos SQL e diferenças de explicação; `INCONCLUSIVE` para paridade de produção ou resultado de todos os predicados downstream. `DOCUMENTATION_ONLY`.
+
+
+## 8. GPT REVIEW independente do Gate 072 (03/11/2026, ~10:31 BRT)
+
+**GitHub `main` conferida:** `99e892807715feebcb8d52e91205274c0d4cd68b`; implementação `e83fc8341195e918e89e6f58d51e15b65fc855b8`, documentação `d2fdead52acbdf81c89a00436fb97d4486a174b2` / `99e8928077...`. Commit de código modificou rota BFF R04, `tool_bridge.py` e fichas R04/R09/R12/R15, não os 15 arquivos de fichas. Git status local e SHA de containers não foram verificados diretamente.
+
+**Corpus realmente observado na CLARA conectada:** `497ec9af-00d4-4e07-9b64-b96fcc97f3c5`, publicado `2026-11-03 10:29:04-03`, **2.230 itens / 88 fontes** — `PASS` em existência/versão, não em qualidade semântica de todas as respostas.
+
+### Testes live executados no GPT REVIEW
+
+| Verificação | Resultado | Evidência factual |
+|---|---|---|
+| `read(report.production_order_consumption)` 2026-09, branch 01 | **PASS** | `success=true`, total **1.243**, 25 linhas na página padrão; primeira OP `24841701001` |
+| `read(report.production_order_consumption)` 2026-10, branch 01 | **PASS** | `success=true`, total **2.381**, 25 linhas; primeira OP `24905301001` |
+| `read(report.billing_mod_breakdown)` 2026-09, branch 01 | **PASS** | `success=true`, **299 âncoras**, 8 limitações |
+| `read(report.cost_closing_state)` 2026-09 | **PASS** | `success=true`, quatro limitações |
+| `knowledge(search,query='R04')` | **PASS parcial** | nova ficha `R04-ficha.md` identifica produtor api-delpi, BFF, rota e `IMPLEMENTADO`, preservando MATR860 `pending` |
+| `knowledge(search,query='R09')` | **FAIL semântico** | **mesma ficha R09 atual** retorna seção “Interpretação” com `não pode consultar dados — sem endpoint` e `report_not_implemented`, embora seção “Identificação” diga `IMPLEMENTADO` e read real passe. Busca também retorna bloco de publicação antigo `PENDING_CONTRACT/EXTERNAL`, versão 1.0/31-10 |
+| `knowledge(search,query='R12')` | **Inconsistência histórica recuperável** | seção `Identificação` diz `IMPLEMENTADO` e seção “Atualização v1.1” cita CLARA live, mas cabeçalho inicial ainda diz corpus antigo `5bebf07f` e `sem contrato operacional`; legenda `report_not_implemented` aparece em interpretação histórica |
+| `knowledge(search,query='R15')` | **Inconsistência histórica recuperável** | seção “Identificação” diz `IMPLEMENTADO`, mas título de versão 1.0 cita publicação antiga `5bebf07f` e `sem contrato operacional`; `fichas/README.md` também permanece na versão anterior |
+
+**Causa documentada:** a edição do Gate 072 atualizou linhas de `Implementação`, mas preservou no mesmo documento indexado blocos antigos com afirmações presentes formuladas no presente (“não pode consultar”, “hoje report_not_implemented”), sem marcação estruturada inequívoca de HISTÓRICO OBSOLETO. A ingestão incorporou esses blocos; nova versão publicada **não os tornou inacessíveis**. Não é prova de falha no parser ou no ranking, mas é prova de **contradição na base de recuperação**. Os nomes de fontes do corpus ainda incluem, por exemplo, “Ficha R04 — Consumo por OP (bloqueado)”, mesmo com corpo atualizado, exigindo revisar títulos/manifests se esses títulos forem mostrados aos usuários.
+
+### Veredito por objetivo
+
+- **Incidente P0 CF-UX-050 (CLARA R04 HTTP 400): `PASS` na consulta real positiva em duas competências.** Código no HEAD adiciona `isinstance(value,str)` antes de encaminhar os params do R04, coerente com hipótese de `Query` default leak; correção causal isolada depende de testes de requisição, mas outcome agora comprovado.
+- **Corpus publicado: `PASS`** para versão, data, volume e disponibilidade.
+- **R04 explicação: `PASS parcial`** (identificação atualizada; não comprova bateria de perguntas).
+- **R09 explicação: `FAIL`**: corpus contradiz consulta real na seção “Interpretação”; **precisa de rework documental/publicação**.
+- **R12/R15 explicação: `FAIL parcial/STALE_EVIDENCE`** em trechos históricos que ainda podem ser recuperados sem qualificação.
+- **105 perguntas R01–R15: `TEST_NOT_RUN`**; para correção de conhecimento integral, não declarar 15/15 PASS. Demais fichas não atualizadas conforme relatório Devin e matriz doc 152.
+
+**Veredito de conjunto do Gate 072: `REWORK` para o objetivo de conhecimento correto R01–R15; `ACCEPT_WITH_RESIDUAL` apenas para a correção operacional do R04 + publicação física do corpus.**
+
+**Rework mínimo sugerido:** (1) revisar ficha R09 por inteiro, reescrevendo interpretações presentes falsas e referências históricas, não apenas a linha Implementação; (2) retirar ambiguidades semelhantes do texto ativo R12/R15, preservando eventos históricos somente em seção rotulada “Histórico, não estado atual”; (3) atualizar índice/manifests/títulos de fontes; (4) republicar corpus pela rotina canônica; (5) **retestar knowledge search** para termos negativos (`não pode consultar`, `sem endpoint`, `report_not_implemented`) com report_id e por query, verificando atribuição temporal e referências; (6) executar bateria de perguntas progressiva ao longo de R01–R15 com prova source→SQL→contrato, sem modificar SQL/segurança por aparente drift semântico.
+
+**Segurança e paridade:** nenhuma alteração de SQL/TOTVS/permissions requerida pelo achado. R04 MATR860 e R09 DLP204 continuam `officialParity=pending`. Validação Portal visual autenticada ainda `TEST_NOT_RUN` nesta revisão.
