@@ -739,6 +739,38 @@
       "Responder 'melhore o visual' só reaplicando KPI+área sem visual_selection"
     ]
   },
+  "visual_self_review": {
+    "principle": "SELF_REVIEW_AFTER_VISUAL_MUTATION",
+    "summary": "Após mutação visual persistida e autorizada, a VISTA revisa o próprio trabalho: captura o palco canônico, inspeciona os pixels contra o briefing, propõe correção tipada mínima quando houver defeito e recaptura para verificar. Sem pixels entregues ao avaliador = pendência visual declarada — nunca VISUAL_PASS.",
+    "when": [
+      "Após VERIFIED/commit de criar ou alterar conteúdo visual do slide (blocos, layout, tema, chrome, dados visuais).",
+      "Pedido implícito de qualidade ('monte um dashboard profissional') — a revisão faz parte do pedido único, sem comando extra do usuário."
+    ],
+    "pipeline": [
+      "1) READ-BACK autoritativo: playlistId, slideId e revisão realmente gravados.",
+      "2) get_context com includePreview=true → slidePreview.rendered.",
+      "3) Validar proveniência: status=ready, source=editor_live, slideId e revision corretos; EDITOR_CAPTURE_PENDING → retries limitados e declarar VISUAL_PENDING se indisponível.",
+      "4) Inspecionar os pixels entregues (ImageContent/artifact canônico) contra o briefing original — schematic/designAudit não substituem inspeção de pixels.",
+      "5) Findings tipados: problema, evidência visual, local, impacto na leitura, ação sugerida — sem score estético arbitrário.",
+      "6) Correção mínima via boundary governado: PREPARE → confirmação quando exigida → COMMIT → READ-BACK.",
+      "7) RECAPTURE + VERIFY: nova captura revision-bound e comparação antes/depois; reportar melhoria e defeitos remanescentes.",
+      "8) Máximo de ciclos limitado; interromper sem melhoria material, sem autorização ou sem captura disponível."
+    ],
+    "rules": [
+      "Evidence ladder (knowledge_orchestration.visual_evidence): pixels do canonical_stage > schematic; schematic prova estrutura, não pixels.",
+      "Findings viram ops tipadas só via PresentationMutation — o avaliador nunca escreve direto.",
+      "VERIFIED estrutural/layoutGatePassed/canCommit/previewUrl/ImageContent serializado ≠ inspeção de pixel; só pixels lidos contam.",
+      "Se o host não entregar pixels: declarar inspeção de pixel NOT RUN + pendência visual — nunca aprovar por preview esquemático.",
+      "Não alterar slide de terceiros/LAB de demonstração sem autorização específica da mutação."
+    ],
+    "forbidden": [
+      "Declarar VISUAL_PASS sem pixels revision-bound inspecionados",
+      "Reformular findings do designAudit como percepção multimodal",
+      "Loop de refinamento ilimitado ou silencioso",
+      "Converter sugestão visual em escrita fora do boundary PREPARE/CONFIRM/COMMIT",
+      "Confundir widget/previewUrl/ImageContent no servidor com modelo vendo pixels"
+    ]
+  },
   "object_resolution": {
     "principle": "ALTER_EXISTING_BEFORE_CREATE",
     "summary": "Antes de criar, resolver o objeto que o usuário já referenciou. Alteração ≠ novo objeto. Referente multi-turn = último slide/bloco INFORMED. Emparelhar com continuous_review.",
