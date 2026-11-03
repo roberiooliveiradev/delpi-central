@@ -4939,3 +4939,18 @@ RECOMMENDED_EXECUTION_ORDER: FIX-1 -> FIX-2 -> FIX-3 (FIX-1 destrava
 baterias multi-turno confiaveis). EVGAPS: harness por-stage p/
 mecanismo exato de RC2; baterias A03-C07 pendentes de FIX-1.
 PRODUCTION_DEPLOY=NOT_AUTHORIZED.
+
+
+## PLAN-221 — framework-native context, continuity and multi-evidence simplification (2026-11-03)
+
+TASK=DELIA-C3-FRAMEWORK-NATIVE-CONTEXT-CONTINUITY-MULTIEVIDENCE-PLAN-01.
+BASE_REVIEW_SHA=6bac3df1af61b356fd38a6b76d905e48625b0e03.
+PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/221-framework-native-context-continuity-and-multievidence-architecture-execution-plan.md.
+STATUS=PLAN_RECORDED; RUNTIME_CHANGE=NONE; TESTS=TEST_NOT_RUN (planning task); PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE.
+PRODUCT_DIRECTION=Use existing Pydantic AI and LangGraph for framework mechanics; explicitly remove duplicated local implementation once producer/consumer/contract/eval/safety equivalence is proven. Keep DÉLIA Application semantic authority, Evidence, Policy, Decision, Domain facts and existing rollback gates.
+CRITICAL_ADAPTER_HYPOTHESIS=Current PydanticAiModelInvocationAdapter creates Agent(system_prompt=stage_instruction) while reconstructing nonempty message_history from only user/assistant turns. Official Pydantic AI documents omission of new system_prompt with nonempty history; current-agent instructions or ReinjectSystemPrompt is candidate. PROVEN code + DOCUMENTED framework behavior, LOCAL_WIRE_CAUSAL_TEST=PENDING; do not label 504 cause PROVEN.
+ROOT_CAUSES_INPUT=DIAG-E2E and DIAG-DECISIVE: real Qwen3 A01 GROUNDED; A02 schema retries/504; B01 VISTA delegation/AuthZ; no full two-tree Qwen3 comparison yet (TEST_NOT_RUN).
+REUSE_GATE=EXISTING_EQUIVALENT YES for model invocation, conversation transport, LangGraph sequencing/checkpoint, evidence provenance; hierarchical multi-evidence composition PARTIAL/TO_INVENTORY; REUSE_DECISION REUSE/EXTEND/REMOVE_REDUNDANT_ONLY_AFTER_PROOF; NEW_ENGINE=NO.
+DOCUMENTARY_DRIFT=16 historical 30s snapshot versus later PO doc 103 60s/3 attempts/300s; reanchor and explicitly resolve before editing numerical budget policy; no silent supersession.
+EXECUTION_BRIEFS: A instructions/history adapter correction; B stage context + bounded cancellation simplification; C multi-evidence contract ADR; D approved composition implementation; E cross-turn continuity + cleanup. See doc 221 for exact task IDs, tests and handoffs.
+NEXT=DELIA-C3-FRAMEWORK-NATIVE-INSTRUCTIONS-HISTORY-STABILIZATION-01 (after reanchor); architecture decision gate required before composition contract implementation; no autonomous production cutover.
