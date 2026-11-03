@@ -7,6 +7,37 @@
 **Vinculação:** [Doc 116](116-eva-engineering-drawing-intelligence-master-delivery-plan.md) (M0–M5, evidência/GT/thresholds) e [Doc 118](118-eva-drawing-intelligence-r11-reusable-object-profiles.md) (surface R11–M5).  
 **Natureza:** SOMENTE documentação e backlog de validações; não muda código, RBAC, contratos de autoridade nem publica desenho.
 
+## 0. Regra mandatória de execução — uma validação completa por vez
+
+**Decisão de direção do produto (2026-11-03): concentração, fechamento e generalização real.** Este documento é o plano vivo e o tracker do desenvolvimento; não iniciar debates ou prompts fragmentados sem fim. **Somente E1 / VAL-01 (estrutura registrada no desenho × estrutura oficial) está ATIVA. E2–E7 ficam congeladas como BACKLOG, sem desenvolvimento paralelo, até o aceite completo de E1 no escopo de desenho aprovado.** Corrigir defeitos necessários ao E1 dentro da própria entrega; não abrir E1.1/E1.2 automaticamente.
+
+### 0.1 O que significa "fechar" uma validação
+
+Cada componente de análise deve ser **verticalmente completo**, desde a leitura oficial até o resultado no relatório: descoberta de fontes/regras → leitura do desenho → interpretação estruturada → associação de ocorrências → comparação autorizada → identificação de diferenças/lacunas → evidências → testes reais e casos históricos de NC → revisão/aceite do owner. Não considerar concluído por criar ports, modelos, relações ou um relatório que sempre retorna INCONCLUSIVE.
+
+**E1 precisa cobrir todas as informações estruturais aplicáveis e verificáveis:** identidade/efetividade da estrutura; cabeçalhos; item/posição; código e descrição do componente; quantidades e unidades com equivalência autorizada; ocorrência repetida e multiplicidade; estrutura multinível/subconjunto e política de representação na tabela; componentes extras/faltantes somente quando há observação confiável; vínculos item↔balão quando necessários para identificar a estrutura; revisão/documento; coerência da tabela e rastreabilidade bidirecional. Sem inventar regras quando fontes oficiais não existem.
+
+**Regra de aceite:** `PASS` por requisito com evidência real e critérios de qualidade previamente aprovados; `FAIL` quando há comportamento incorreto; `INCONCLUSIVE`/`NOT_COMPARABLE` quando há abstenção correta e justificada — **esses estados não podem disfarçar cobertura insuficiente**. Aceite completo de E1 exige que a família de desenhos-alvo e os requisitos obrigatórios tenham validação de qualidade do owner, incluindo casos positivos, negativos e variantes, não apenas unit tests. A decisão de uso oficial continua com Engenharia.
+
+### 0.2 Generalizar sem prometer o impossível
+
+**Objetivo de produto:** chegar a validar estruturas de desenhos variados, sem regras hardcoded por código de produto, cliente, layout fixo ou PDF de regressão. “Qualquer tipo de estrutura em qualquer tipo de desenho” é **aspiração TARGET**, não capability PROVEN nem um critério instantâneo tecnicamente demonstrável: desenhos podem ter estrutura implícita, listas parciais, formato não suportado, arquivo ausente e revisões incompatíveis. Para cada família/layout/revisão coberta, o sistema deve declarar explicitamente **SUPPORTED / UNSUPPORTED / INCONCLUSIVE**, com razão verificável; novos tipos só entram na cobertura após corpus representativo, testes de generalização e aprovação técnica. Não extrapolar um resultado para todos os desenhos.
+
+A prioridade funcional continua concentrada em **VAL-01**, mesmo quando for necessário melhorar OCR, layout, item/código/descrição/quantidade ou associação de balões: esses são meios para concluir a estrutura, **não frentes de produtos independentes**. Balões, cotas, carimbo e outras áreas só serão desenvolvidos integralmente na própria entrega futura, salvo o mínimo necessário para estabelecer identidade e integridade de E1.
+
+### 0.3 Protocolo de gestão sem iterações infinitas
+
+1. Manter **um plano (Doc 119) e um tracker (issue #131)**; atualizar RQ/AC, escopo, evidência, impedimento, decisão e progresso ali, sem proliferar issues/prompts para a mesma falha.
+2. Antes de executar: `HEAD/branch/status → owner → fonte oficial → contrato → RQ/AC → GT/threshold → implementação/testes → E2E/avaliação → aceite`. Reusar R11–M5, sem novas autoridades ou infraestrutura paralela.
+3. Resolver os defeitos pertencentes ao escopo em **um pacote bounded**; como gestão, usar até três ciclos locais de reproduzir/corrigir/testar. Esse limite **não permite aprovar requisito obrigatório parcial**. Ao esgotar, produzir evidência do bloqueio, causa, owner e decisão de escopo/abordagem; não gerar automaticamente nova fase.
+4. Critério de saída de E1: matriz AC por atributo/família, desenhos variados e holdout aprovado, NCs reais reavaliadas na versão correta, desempenho/segurança/AuthZ, casos de não comparabilidade corretos, relatório global e por item, autorização do owner. Somente depois promover E2 a ATIVA.
+5. NC histórica orienta risco e testes de regressão; não é ground truth da revisão corrente sem checagem e anotação aprovada.
+6. Mudança de owner, authority, fonte oficial ou bounded context exige `ARCHITECTURE_DECISION_REQUIRED` e retorno à Coordination.
+
+**Estado inicial:** E1 = ATIVA PARA ESPECIFICAÇÃO E FECHAMENTO; critérios/contratos/GT oficiais pendentes não equivalem a implementação concluída. E2–E7 = BACKLOG CONGELADO. O M5 existente é base técnica reaproveitada, não validação de estrutura já aprovada.
+
+---
+
 ## 1. Objetivo e decisão
 
 Planejar **todas as validações aplicáveis a cada família de desenho**, priorizando falhas reais já registradas. A primeira entrega funcional é **VAL-01 Estrutura BOM cadastrada × lista de materiais do desenho**, sem reinventar R11–M5. O plano deverá evoluir neste arquivo com matriz de evidência, decisões dos owners, resultados de datasets e links de entregas, evitando prompts e subtarefas indefinidas.
@@ -88,14 +119,14 @@ Famílias iniciais a inventariar: desenho DELPI de montagem/chicote, componente/
 
 | Ordem | Entrega | Definition of done | Owner principal | Status |
 |---|---|---|---|---|
-| E0 | Catálogo, NC, regras, escopo por família, corpus e rastreabilidade | Documento no GitHub + decisão owner sobre corpus/contratos | Coordination / Engenharia | PLANNED (este documento) |
-| **E1** | **VAL-01 Estrutura** | 10 AC VAL-01 comprovados por testes, GT, E2E e owner | Engineering API + Engenharia | PLANNED |
-| E2 | VAL-02/05 Carimbo, revisão, documentos | checks aplicáveis, contratos oficiais e GT | Engineering API / owner documental | PLANNED |
-| E3 | VAL-03 Cotas | atribuição geométrica, tolerância/units, regras e GT | Engenharia | PLANNED |
-| E4 | VAL-04 Balões | cadeia item-balão-geometria rastreável, GT | Engenharia | PLANNED |
-| E5 | VAL-06/07/13 Notas, material, cliente×DELPI | contratos e GT por família | Domain owners / Engenharia | PLANNED |
-| E6 | VAL-08–11 Vistas/símbolos/processos/inspeção | catálogo suportado e fontes autorizadas | Engineering owners | PLANNED |
-| E7 | Consolidação por desenho | checks obrigatórios completos, decisão de revisão humana | Portal Engenharia + Engenharia | PLANNED |
+| E0 | Catálogo, NC, regras, escopo por família, corpus e rastreabilidade | Documento no GitHub + decisão owner sobre corpus/contratos | Coordination / Engenharia | DOCUMENTADO; regras/GT ainda pendentes |
+| **E1** | **VAL-01 Estrutura** | todos os AC VAL-01 comprovados por famílias suportadas, GT, E2E e owner; relatório completo | Engineering API + Engenharia | **ÚNICA ENTREGA ATIVA — especificação/contratos pendentes** |
+| E2 | VAL-02/05 Carimbo, revisão, documentos | checks aplicáveis, contratos oficiais e GT | Engineering API / owner documental | BACKLOG CONGELADO |
+| E3 | VAL-03 Cotas | atribuição geométrica, tolerância/units, regras e GT | Engenharia | BACKLOG CONGELADO |
+| E4 | VAL-04 Balões | cadeia item-balão-geometria rastreável, GT | Engenharia | BACKLOG CONGELADO |
+| E5 | VAL-06/07/13 Notas, material, cliente×DELPI | contratos e GT por família | Domain owners / Engenharia | BACKLOG CONGELADO |
+| E6 | VAL-08–11 Vistas/símbolos/processos/inspeção | catálogo suportado e fontes autorizadas | Engineering owners | BACKLOG CONGELADO |
+| E7 | Consolidação por desenho | checks obrigatórios completos, decisão de revisão humana | Portal Engenharia + Engenharia | BACKLOG CONGELADO |
 
 Cada entrega é única e bounded; sem criar revisões automáticas E1.1/E1.2. Registre em cada linha: `source/owner, RQ/AC, contract_version, SHA tested/deployed, dataset SHA, GT/threshold version, métricas com denominadores, permission outcomes, false alarms, residuals, owner decision`.
 
