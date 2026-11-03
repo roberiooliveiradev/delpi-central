@@ -1947,3 +1947,14 @@ MAS davi MCP responde 401 Unauthorized p/ esse token — o MCP valida algo
 alem de aud (issuer/JWKS/claim especifico). PROXIMO: encontrar a
 validacao real em api-delpi/app/interface/mcp/server.py (routes.py sem
 match) — verificar se exige azp, signature path ou claim de cliente.
+
+## PROMOTION — auth progress 4 (SHA 3c1b47fe2c)
+
+CAUSA-RAIZ REFINADA: sync user JWT valido + exchanged token aud correto
+MAS davi MCP 401 porque get_current_user()=None — o contexto e populado
+por middleware que resolve JWT->usuario no Core/RBAC; usuario criado
+só no Keycloak nao e provisionado -> Unauthorized.
+PROXIMO: encontrar onde set_current_user e chamado (middleware) —
+jwt_validator->core lookup; confirmar se precisa provisioning no Core
+(users table) ou claim adicional. Alternativa: usuario existente real
+(sem password disponivel) — investigar JIT provisioning do Core.
