@@ -15,7 +15,7 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Owner técnico: nenhum implementado (candidato `api-delpi`).
 - Produtor oficial: `DLP204.prw` — `SOURCE_AVAILABLE` no acervo
   (autor Gabriel, 2019); `CODE_DEPLOYED` não vinculado (E9).
-- Implementação: **`TARGET_ONLY`** — modelo físico `PROVEN` (rodada 24),
+- Implementação: **IMPLEMENTADO** — produtor api-delpi `billing-mod-breakdown`, BFF e página Portal vigentes; paridade oficial DLP204 `pending`.
   **sem contrato implementado** (doc 118 §6; E9/G5).
 - Homologação: G4 `PASS`, G5 `INCONCLUSIVE`.
 

@@ -15,7 +15,7 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Owner funcional: Controladoria (executa no Protheus).
 - Owner técnico: rotinas TOTVS/Delpi — `MATA320`, `MATA300`, wizard
   `MATA330`; estado de fechamento via owner canônico do Portal.
-- Implementação: **`TARGET_ONLY`** — sem contrato de relatório
+- Implementação: **IMPLEMENTADO** — página «Acompanhamento do fechamento» (design aprovado doc 151, Gate 071) via `cost-closing-state`; sem contrato de relatório
   (`report_not_implemented` na comparação); estado `STOCK_CLOSED` lido
   pelo fechamento, não como medida.
 - Homologação: G4 `PASS` (bindings), G5 `INCONCLUSIVE` (etapa 4 do

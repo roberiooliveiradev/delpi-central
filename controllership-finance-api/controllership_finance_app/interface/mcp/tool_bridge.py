@@ -803,6 +803,8 @@ def tool_get_production_order_consumption(
     operation: str | None = None,
     page: int = 1,
     page_size: int = 25,
+    sort_by: str | None = None,
+    sort_direction: str | None = None,
 ) -> CallToolResult:
     """R04 — consumo por OP (visão operacional): passthrough governado
     da rota BFF; proveniência e limitações preservadas — a CLARA nunca
@@ -821,6 +823,8 @@ def tool_get_production_order_consumption(
         operation=operation,
         page=page,
         page_size=page_size,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
     )
 
 

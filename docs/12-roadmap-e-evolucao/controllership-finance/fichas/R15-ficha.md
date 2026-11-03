@@ -15,7 +15,7 @@ Publicação: ficha **publicada no corpus produtivo** `5bebf07f-a66a-479f-aa2b-e
 - Owner funcional: Controladoria.
 - Owner técnico: rotinas TOTVS (`MATA330`, `MATA280`) + leitura de
   estado na api-delpi/BFF.
-- Implementação: **`TARGET_ONLY`** — estado `STOCK_CLOSED` lido pelo
+- Implementação: **IMPLEMENTADO** — visão de acompanhamento R12/R15 (doc 151, Gate 071); estado `STOCK_CLOSED` lido pelo
   fechamento; **não é relatório de medida** → comparação responde
   `report_not_implemented`/`NOT_COMPARABLE`.
 - Homologação: G3/G4 `PASS`; G5 `INCONCLUSIVE`.

@@ -116,7 +116,9 @@ def get_production_order_consumption(
         ("sort_by", sort_by),
         ("sort_direction", sort_direction),
     ):
-        if value is not None:
+        # Chamadas diretas (MCP tool bridge) deixam defaults Query(...) —
+        # só strings reais são encaminhadas ao produtor.
+        if isinstance(value, str) and value:
             params[key] = value
     try:
         body = ApiDelpiSettlementsGateway().get(
