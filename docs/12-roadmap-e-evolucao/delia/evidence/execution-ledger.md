@@ -2024,3 +2024,12 @@ healthy. Snapshots davi/teo/vista v1 VERIFY PASS.
 PROXIMO: smoke via scripts/r4_authenticated_resume_eval._compose (o
 import compose_interactive_turn_handler nao existe — reusar o composer
 do eval) + bind subject mcp-catalog-sync(scope=openid) -> P1 30190123.
+
+## PROMOTION — smoke P1/P2 prod (SHA b9a0f538ac)
+
+FLAGS ativas: catalog=snapshot_experiment + arggen=pydantic_ai (healthy).
+SMOKE P1(30190123)+P2(10080047): ambas "não há registro" (honesto mas
+indica arggen pydantic nao produziu args validos — possivelmente
+structured output no kimi-k3/OpenRouter difere do Ollama local, ou
+exception engolida). PROXIMO: log stage=candidate_arguments engine=
+em prod p/ ver produced=True/False + erro real do provider.
