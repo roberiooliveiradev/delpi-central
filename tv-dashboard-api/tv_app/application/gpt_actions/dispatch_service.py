@@ -4343,6 +4343,9 @@ class GptActionsDispatchService:
                 # (policy editor_live) e auditoria estrutural — com
                 # basisRevision (estado persistido, não a proposta).
                 try:
+                    from tv_app.application.services.data.slide_preview_render_service import (
+                        get_slide_preview_render_service,
+                    )
                     _svc = get_slide_preview_render_service()
                     _sl = locals().get("_sl") or {}
                     if _sid and _pid and _sl:
