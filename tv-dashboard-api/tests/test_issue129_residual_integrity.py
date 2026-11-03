@@ -459,6 +459,77 @@ def test_c12_gibberish_never_triggers_redesign_sweep():
     assert not any(op.get("op") == "delete_block" for op in ops)
 
 
+def _enrich_kpi(candidates, request_goals):
+    blocks = [
+        {"blockType": "kpi_view", "state": "NEEDS_SOURCE_SELECTION",
+         "candidates": candidates}
+    ]
+    payload = {
+        "ops": [
+            {"op": "upsert_block",
+             "block": {"type": "kpi_view", "frame": {}}}
+        ],
+        "interpretedGoals": [],
+        "bindingPlan": {"state": "NEEDS_SOURCE_SELECTION",
+                        "blocks": [dict(blocks[0])]},
+    }
+    GptActionsDispatchService._enrich_composition_ops(
+        payload, [dict(blocks[0])], "crie um painel de OEE",
+        request_goals=request_goals, existing_blocks=[],
+    )
+    return payload["ops"]
+
+
+def test_c04a_meta_source_never_binds_realized_kpi():
+    """C04 — with only target-role candidates the realized KPI stays
+    honestly unbound (meta nunca substitui realizado)."""
+    ops = _enrich_kpi(
+        [
+            {"operationId": "get_si_indicator_production_oee_meta",
+             "goals": ["meta"], "metaShape": "scalar", "score": 9.0},
+            {"operationId": "get_si_indicator_production_costs_meta",
+             "goals": ["meta"], "metaShape": "scalar", "score": 8.0},
+        ],
+        {"meta"},
+    )
+    realized_ds = [
+        o for o in ops
+        if o.get("op") == "upsert_data_source"
+        and o.get("blockId") == "ds_kpi_view"
+    ]
+    assert realized_ds == []
+
+
+def test_c04b_realized_candidate_wins_over_meta_for_realized_kpi():
+    """C04 — when a realized-role source exists it binds the realized
+    KPI; target-role sources only feed the dedicated meta KPI."""
+    ops = _enrich_kpi(
+        [
+            {"operationId": "get_si_indicator_production_oee_realized",
+             "goals": ["oee"], "metaShape": "scalar", "score": 9.0},
+            {"operationId": "get_si_indicator_production_oee_meta",
+             "goals": ["meta"], "metaShape": "scalar", "score": 9.0},
+        ],
+        {"oee", "meta"},
+    )
+    realized_ds = next(
+        o for o in ops
+        if o.get("op") == "upsert_data_source"
+        and o.get("blockId") == "ds_kpi_view"
+    )
+    assert realized_ds["operationId"] == (
+        "get_si_indicator_production_oee_realized"
+    )
+    meta_ds = next(
+        o for o in ops
+        if o.get("op") == "upsert_data_source"
+        and o.get("blockId") == "ds_meta_view"
+    )
+    assert meta_ds["operationId"] == (
+        "get_si_indicator_production_oee_meta"
+    )
+
+
 def test_c10_candidate_vs_persisted_preview_are_distinct():
     """C10 — the suggest visualEvidence carries basisRevision of the
     PERSISTED state; the candidate preview lives in the mutation
