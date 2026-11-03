@@ -1984,3 +1984,14 @@ aud OK, instrumentar o MCP log p/ ver a falha exata (signature vs
 claims vs rbac). ALTERNATIVA LEGITIMA: executar sync via service-token
 path (request_has_valid_internal_service_token) — se o adapter
 delegation nao aceita, avaliar contrato admin sync com service user.
+
+## PROMOTION — auth chain QUASE resolvida (SHA c82dd59f96)
+
+RECEITA (etapa por etapa, cada uma comprovada):
+1. usuario mcp-catalog-sync realm delpi -> password grant client
+   delpi-central + scope=openid (era MISSING_REQUIRED_SCOPE no MCP log)
+2. token-exchange delia-api client -> audience=mcp-api-delpi (aud correto)
+3. MCP call: Host: minhadelpi.com.br (era Invalid Host header)
+4. PENDENTE: Accept: application/json (ultimo erro -32600 Not Acceptable)
+Restante = header trivial; depois sync completo davi/teo/vista +
+catalog mode snapshot + arggen pydantic_ai + smoke.
