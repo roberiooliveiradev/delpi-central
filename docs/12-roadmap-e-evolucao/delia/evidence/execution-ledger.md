@@ -4954,3 +4954,15 @@ REUSE_GATE=EXISTING_EQUIVALENT YES for model invocation, conversation transport,
 DOCUMENTARY_DRIFT=16 historical 30s snapshot versus later PO doc 103 60s/3 attempts/300s; reanchor and explicitly resolve before editing numerical budget policy; no silent supersession.
 EXECUTION_BRIEFS: A instructions/history adapter correction; B stage context + bounded cancellation simplification; C multi-evidence contract ADR; D approved composition implementation; E cross-turn continuity + cleanup. See doc 221 for exact task IDs, tests and handoffs.
 NEXT=DELIA-C3-FRAMEWORK-NATIVE-INSTRUCTIONS-HISTORY-STABILIZATION-01 (after reanchor); architecture decision gate required before composition contract implementation; no autonomous production cutover.
+
+
+## PLAN-221-R1 — independent execution-plan review, complete delivery gates (2026-11-03)
+
+TASK=DELIA-C3-FRAMEWORK-NATIVE-CONTEXT-CONTINUITY-MULTIEVIDENCE-PLAN-R1-REVIEW-01.
+PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/221-framework-native-context-continuity-and-multievidence-architecture-execution-plan.md (controlling overlay sections 11–18).
+STATUS=EXECUTION_PLAN_REVIEWED_AND_TIGHTENED; RUNTIME_CHANGE=NONE; TESTS=TEST_NOT_RUN_IN_PLAN_REVIEW; PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE.
+EXECUTION_MODE=ONE coordinated bounded implementation program (E0→E6), not E1-only terminal; task DELIA-C3-FRAMEWORK-NATIVE-CONTEXT-AND-MULTIEVIDENCE-ENDTOEND-DELIVERY-01. Preserve separate independent decision gates for frozen synthesis/authority/persistence contracts; continue other authorized bounded work if blocked.
+FINISH_CONTRACT=G01–G12 mandatory real local Qwen3/Ollama + Pydantic AI + LangGraph + user@local.com + DAVI/Domain outcomes on final SHA, including conversation 90260147→90260148→compare, single-turn two-tree comparison, deterministic oracle, context wire/timeout/cancel, security negatives, evidence composition, actual redundant code removal proof. Missing mandatory G04/G05/G06/G07/G12 means NOT FUNCTIONAL_ACCEPTANCE.
+PROVEN_EVIDENCE=prior A01 GROUNDED; A02 schema retries/504; B01 VISTA AuthZ; framework prompt/history wire root cause PENDING, model two-full-tree comparison TEST_NOT_RUN until executor runs it. Cannot mark PASS from docs, one tree refusal or unit-only tests.
+CLEANUP=owner+consumers+contract mapped KEEP/SIMPLIFY/REPLACE/REMOVE, actual REMOVED_SYMBOLS/LOC/NEW_LOC; framework feature native only within infrastructure; existing legitimate safety/owners preserved.
+NEXT=execute integrated task against reanchored HEAD with scoped architectural approval if and only if required; no production deployment or unilateral acceptance.
