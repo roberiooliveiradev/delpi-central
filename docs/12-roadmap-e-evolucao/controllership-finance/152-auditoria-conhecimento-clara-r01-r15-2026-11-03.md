@@ -47,3 +47,65 @@ Para cada relatório: (1) que problema resolve, momento do PROC-0072 e classific
 - **CLARA-KNOW-006 (P1):** regressão da CLARA R04 HTTP400 (CF-UX-050) é problema operacional separado; o corpus não conserta gateway/contrato e não deve mascará-lo.
 
 **Status final deste documento:** `AUDIT_INVENTORY_COMPLETE` das fichas CLARA para os 15 IDs; `INCONCLUSIVE` para garantia de conhecimento de SQL real em todos os produtores; sem alteracão de código ou runtime. Próximo gate deve fechar matriz fonte→SQL→contrato por relatório e atualizar corpus com provas.
+
+
+## 6. Segunda passagem — confronto direto com SQL e contratos no HEAD (03/11/2026)
+
+**Alcance e evidência:** leitura direta de arquivos `main` via GitHub; SQL verificado em `api-delpi` para R04, R05, R06/R07; use case e BFF para R04/R09; cliente MFE R04; fichas GitHub R04/R06/R09/R12. Além disso, CLARA `knowledge(search)` foi consultada individualmente R01–R15 com seleção de até 40 itens por ID, e `read(report.production_order_consumption)` e `read(report.billing_mod_breakdown)` foram chamados neste gate. **Não foi executada query SQL diretamente no banco.** Branch GitHub `main`; HEAD GitHub foi conferido via search commits. `git status` local de um runner não foi obtido. O trecho abaixo é `CODE_PROVEN` para condições SQL literais, `CLARA_PROVEN` para respostas do connector, e `PENDING` para paridade/execução em produção não comprovadas.
+
+### R04 — Consumo por OP: produtor real versus ficha CLARA
+
+**Contradição comprovada e alta prioridade:**
+- `fichas/R04-ficha.md` (e resultado da CLARA, corpus 30/10) ainda afirma que não existe operação Portal/CLARA, produtor técnico ou regra registrável. `STALE_EVIDENCE` frente à implementação atual.
+- **Fonte real da listagem:** `api-delpi/app/infrastructure/persistence/totvs/production_repositories/consumption_audit_sql.py`. Grão **uma OP** (`SC2010 OP` com `SB1010 P` para descrição; paginação `OFFSET/FETCH`); BFF `production_order_consumption_routes.py` preserva `officiality=operational_view`, `officialParity=pending`. Detalhe reutiliza diversas fontes (SC2/SD4/SD3/SH6/HZA/SH8/SG2/SG1/SB1).
+- **Campos listados:** `C2_FILIAL`, `C2_OP`, `C2_NUM`, `C2_ITEM`, `C2_SEQUEN`, `C2_PRODUTO`, `B1_DESC`, `C2_UM`, `C2_QUANT`, `C2_QUJE`, `C2_STATUS`, `C2_TPOP`, `C2_EMISSAO`, `C2_DATPRI`, `C2_DATPRF`, `C2_DATRF`.
+- **Datas reais:** `emission=C2_EMISSAO`; `finished=C2_DATRF`; `appointment` seleciona OP via `EXISTS SH6010.H6_DTAPONT` dentro do período; datas planejadas `C2_DATPRI/DATPRF` não são filtros `date_type`.
+- **Filtros SQL:** filial obrigatória e deleção lógica; `search` por `C2_OP/C2_NUM`; `product` por código/descrição; `status=C2_STATUS`; `work_center`/`operation` por `EXISTS SH8010` (multiplicidade SH8, **não** coluna escalar na listagem). LIKE com escape de curinga e parâmetros bindados.
+- **Ordenação global atual:** allowlist `production_order,product_code,product_description,status,date`; `date` usa a data escolhida por `date_type` (appointment ordena pelo `MIN(H6_DTAPONT)`); direção asc/desc; desempate por OP asc. **Sem sort:** ordem legada `C2_EMISSAO DESC,C2_OP ASC`; `sort_direction` sem `sort_by` é inválido. Valor externo não é interpolado no SQL.
+- **Serviço já existe:** `GET /supplies/consumption-audit/orders` com S2S `consumption-audit.read` e clients `supplies-api`, `controllership-finance-api`; BFF `GET /closing/competences/{period}/production-order-consumption`, client MFE `productionOrderConsumptionApi.ts` normaliza snake_case.
+- **Runtime nesta auditoria:** CLARA `read(report.production_order_consumption)` `period=2026-09,branch=01` → **HTTP 400 “Parâmetros inválidos.”** (`FAIL`, reproduzido). Não declarar operacionalmente restabelecido; CF-UX-050 permanece aberto. A comparação documental não prova causa do 400.
+- **Limite de conhecimento:** contrato `consumption-audit` não implica paridade oficial `MATR860`; equivalência permanece `pending`. Descrever a semântica administrativa `C2_STATUS` separada do progresso da OP.
+
+**Ação concreta:** reescrever seção `identificação/fonte/regras/operação` da ficha R04 com código/SQL/owner e marcação de oficialidade, depois republicar corpus; criar teste de pergunta CLARA que rejeite “não implementado” e não confunda sort, período e progressão.
+
+### R09 — Faturamento × MOD: motor atual versus ficha recuperada
+
+- No corpus CLARA (30/10), ficha ainda diz: “CLARA não pode consultar dados — sem endpoint”, “report_not_implemented” e “owner técnico nenhum”, embora `fichas/R09-ficha.md` no GitHub **já possua apêndices** de implementação G049/G051. **Defasagem de publicação/indexação do corpus**, distinta da manutenção de arquivo-fonte.
+- O use case do HEAD `api-delpi/app/application/use_cases/financeiro_billing_mod_breakdown/get_billing_mod_breakdown_use_case.py` seleciona âncoras de PA faturado via SD2/SF4 `F4_DUPLIC='S'`, expande componentes diretos SG1 por nível, propaga quantidades, associa operações/recursos e emite custo tipado `source_missing` quando a taxa dependente de SP não existe. Não substituir taxa ausente por zero.
+- O mesmo código executa `_build_branch_anchors` para pré-carregar arestas/ operações por filial e expõe `officialParity=pending`.
+- **Teste live independente neste gate:** `CLARA read(report.billing_mod_breakdown)` `period=2026-09,branch=01` → **PASS**; `anchors=299`, `limitations=8`. Portanto **a afirmação do corpus “sem endpoint” é falsificada por consulta positiva real**, mas paridade DLP204 oficial continua `pending`.
+- **Ação:** republicar ficha R09 vigente com identificação do contrato e regra `source_missing`, atualizar resumo de capacidade e teste live positivo sem congelar números históricos como invariantes.
+
+### R05 — Entradas e saídas: SQL diretamente verificado
+
+- Fonte: `api-delpi/app/infrastructure/persistence/totvs/financeiro_stock_movements/stock_movements_sql.py` (`CODE_PROVEN`).
+- SD1: `D1_DTDIGIT`, `D1_ORIGLAN<>'LF'`, TES SF4 exigindo `F4_ESTOQUE='S'`; SD2: `D2_EMISSAO`, `D2_ORIGLAN<>'LF'`, TES estoque; SD3: `D3_ESTORNO<>'S'`, custo `D3_CUSTO1` assinado conforme direção. Produto/categoria `SB1.B1_TIPO`; universo de saldos `SB9`.
+- **Comparação ficha:** BR-R05-002..012 descreve as famílias e reconstrução TTAT `as_of` sem contradição conclusiva nesta leitura. Mas ainda falta auditar cada predicado de TES, sinal, intervalo e join e comparar com dados reais; **não declarar SQL 100% equivalente só por correspondência de fontes**.
+
+### R06/R07 — um motor, dois recortes; condicionais que a CLARA deve explicar
+
+- Fonte: `api-delpi/app/infrastructure/persistence/totvs/financeiro_stock_kardex/stock_kardex_sql.py` + use case `financeiro_stock_kardex/get_stock_kardex_use_case.py` + `stock_kardex_router.py`.
+- Kardex: UNION SD1/SD2/SD3; SD1/SD2 via SF4 com restrições `F4_ESTOQUE='S'`; `D1_REMITO=''`; exclui `D1_ORIGLAN='LF'`/`D2_ORIGLAN='LF'`; SB9 define saldo anterior por grão; TTAT históricos de custo em logs SD2/SD3 com custo as-of; movimentos separados do CPV gerencial.
+- **Nuance relevante que a ficha simplifica:** exclusão `D3_ESTORNO='S'` no SQL do Kardex é **condicional ao parâmetro `MV_D3ESTOR='N'`**. A ficha BR-R06-002 descreve o filtro como regra incondicional. Não afirmar que isso necessariamente altera resultados; é **potencial divergência de explicação** a validar com parâmetros produtivos e owner.
+- R07: o próprio router expõe leitura dedicada inventory-adjustments; o mesmo SQL acrescenta `D3_DOC='INVENT'` para o recorte. Não inventar motor separado. `fichas/R07-ficha.md` descreve 45/45 linhas históricas — não confundir com quantidade viva de todos os filtros/filiais.
+- **Ação:** revisar ficha R06 BR-R06-002 para explicitar `MV_D3ESTOR`, separar custo as-of por tabela e CPV, revisar ficha R07 com os parâmetros históricos da amostra versus consulta viva; a paridade oficial por competência permanece pendente.
+
+### R12/R15 — documentação publicada versus CLARA e tela
+
+- `fichas/R12-ficha.md` atual no GitHub já descreve `GET /financeiro/closing-state` → BFF `/closing/competences/{period}/cost-closing-state` → MFE/CLARA `read(report.cost_closing_state)`, com cautela `technical_markers`.
+- O corpus CLARA ainda recupera segmentos `TARGET` de 31/10 e não incorpora integralmente o design aprovado Doc 151, executado Gate 071. **Atualizar publicação do corpus** com a versão GitHub atual, garantindo que `3/5` evidências não sejam explicadas como 60% de rotina executada.
+- R15 continua processo de virada no TOTVS (`MATA330/MATA280`) e estado técnico observado; nenhuma leitura equivale execução/homologação.
+
+### Veredicto de evidência desta passagem
+
+| Escopo | Resultado |
+|---|---|
+| R04 SQL + filtro + sort + BFF + MFE | `PROVEN` em código, CLARA runtime `FAIL` HTTP400 |
+| R09 use case + consulta CLARA real | `PROVEN` / `PASS`; conhecimento indexado `STALE_EVIDENCE` |
+| R05 SQL vs regra CLARA | Famílias confirmadas; paridade completa `INCONCLUSIVE` |
+| R06/R07 SQL vs ficha | Fontes confirmadas; divergência de **descrição condicional** `MV_D3ESTOR` precisa validação |
+| R12/R15 ficha do GitHub versus CLARA | Desatualização do corpus e design recente `PROVEN`; homologação `PENDING` |
+| R01/R02/R03/R08/R10/R11 SQL literal completo | `TO_INVENTORY` neste gate (documentação consultada, SQL linha a linha não revisado) |
+| R13/R14 | Documentos externos, não relatórios SQL TOTVS |
+
+**Prioridade seguinte:** `CLARA-KNOW-001` correção R04/R09; `CLARA-KNOW-007` verificar e ajustar a descrição R06 da condição `MV_D3ESTOR`; `CLARA-KNOW-008` republicar R12/R15 e registrar SHA/versão de corpus. Não mudar SQL por discrepância documental sem evidência. Este gate é **DOCUMENTATION_ONLY**.
