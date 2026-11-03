@@ -2006,3 +2006,12 @@ Prod so tem 3 MCPs configurados (davi/teo/vista); caio/clara/eva/suri
 sem base_url -> nao sincronizaveis (sem endpoint).
 PROXIMO: DELIA_MCP_CATALOG_MODE=snapshot_experiment no .env srv-api +
 restart -> verify -> DELIA_ARGGEN_ENGINE=pydantic_ai + smoke.
+
+## PROMOTION — stage-1 catalog ACTIVE em prod (SHA 2498dcf7e0)
+
+DELIA_MCP_CATALOG_MODE=snapshot_experiment SET no .env srv-api (L409) +
+delia-api restartado healthy. Snapshots: davi/teo/vista v1 ACTIVE
+(/data/delia/mcp_catalog.db persistente). PROXIMO: (a) smoke snapshot
+discovery; (b) DELIA_ARGGEN_ENGINE=pydantic_ai + restart + smoke
+P1=30190123 (code field) P2=10080047 P3=conectores P5=outro owner.
+Rollback=catalog->live e arggen->llm no .env (linha unica cada).
