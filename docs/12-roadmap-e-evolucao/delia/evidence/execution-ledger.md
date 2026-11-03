@@ -2081,3 +2081,14 @@ realm local ou testar container delia-t21-main (tem eval env).
 PROXIMO: probe _live_capture("mcp:davi") c/ query "estrutura" ->
 candidate list -> get_product_structure presente? -> se sim, selecao
 LLM errou; se nao, discover-query perdeu intencao.
+
+## T20-SEMANTIC-SEL — auth path p/ probe local (SHA bc309d9c75)
+
+mint_bearer precisa /tmp/env.local (ausente no container local).
+Alternativa validada em prod: password grant delpi-central+scope=openid
+-> bind_subject_bearer -> adapter usa host_header+accept+exchange.
+Local: mesmo keycloak realm delpi — tentar password grant com usuario
+realm local ou testar container delia-t21-main (tem eval env).
+PROXIMO: probe _live_capture("mcp:davi") c/ query "estrutura" ->
+candidate list -> get_product_structure presente? -> se sim, selecao
+LLM errou; se nao, discover-query perdeu intencao.
