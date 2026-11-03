@@ -1,0 +1,36 @@
+{
+  "scenario_id": "CMP-28",
+  "specialist": "davi",
+  "run_number": 0,
+  "outcome": "PASS",
+  "first_divergence": "",
+  "capabilities_invoked": [
+    "davi.discover_delpi_information",
+    "davi.discover_delpi_information"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "davi.discover_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "query": "consultar solicitação empresarial por entidade homônima em d",
+        "top_k": "5"
+      }
+    },
+    {
+      "capability_id": "davi.discover_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "query": "buscar solicitação empresarial por entidade homônima em dado",
+        "top_k": "10"
+      }
+    }
+  ],
+  "response_full_text": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+  "grounding": "GroundingStatus.GROUNDED",
+  "limitations": [
+    "insufficient_evidence"
+  ],
+  "elapsed_ms": 15899,
+  "error": null
+}

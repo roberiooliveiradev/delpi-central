@@ -1,0 +1,28 @@
+{
+  "scenario_id": "CMP-17",
+  "specialist": "teo",
+  "run_number": 0,
+  "question_full_text": "TÉO, analise iniciativas e processos de transformação digital dos últimos 90 dias com dados oficiais do Transformômetro: andamento, metas, atrasos, benefícios registrados, dependências, riscos e evidências de progresso. Cruze categorias e status somente quando publicados e comparáveis. Identifique cinco prioridades por impacto e urgência, diferenciando benefício realizado, estimativa e hipótese; proponha ações e métricas de 30 dias. Não criar nem modificar iniciativas.",
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "teo.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "teo.analyze",
+      "status": "COMPLETED",
+      "args": {
+        "view": "processes",
+        "limit": "5"
+      }
+    }
+  ],
+  "response_full_text": "A fonte retornou registros, mas não consegui comprovar a ordenação completa — não posso afirmar com segurança qual é a posição exata.",
+  "grounding": "GroundingStatus.GROUNDED",
+  "limitations": [
+    "insufficient_evidence"
+  ],
+  "elapsed_ms": 29059,
+  "error": null
+}

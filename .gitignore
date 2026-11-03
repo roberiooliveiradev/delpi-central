@@ -58,3 +58,4 @@ plugins/bpmn-modeler/test-results/
 plugins/bpmn-modeler/playwright-report/
 # Snapshots de sessão E2E (tokens — nunca commitar)
 plugins/bpmn-modeler/e2e/.auth/
+.worktrees/

@@ -1,0 +1,3983 @@
+{
+ "summary": {
+  "executions": 28,
+  "model_calls": 330,
+  "input_tokens": 792096,
+  "output_tokens": 18091,
+  "outcomes": {
+   "FAIL": 19,
+   "PASS": 9
+  }
+ },
+ "runs": [
+  {
+   "scenario": "cmp_01",
+   "run": 0,
+   "elapsed_ms": 34018,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: analysis_type 'portfolio' não implementado.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1213,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null,
+      "goal_class": "analyze",
+      "business_subject": "situação comercial da DELPI",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5811,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:caio"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1756,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "situação comercial da DELPI",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": "newest_first",
+       "complete_coverage": true
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3002,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 757,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "situação comercial da DELPI",
+       "entity": "None",
+       "selected_ref": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 7544,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis_type": "portfolio",
+       "subject_refs": "None",
+       "question": "diagnóstico completo da situação comercial da DELPI nos últimos 90 dias com dado",
+       "parameters": "{'time_range': 'last_90_days', 'coverage': 'full', 'depth': 'detailed', 'output_"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "caio.get_context",
+     "arg_keys": [
+      "topic"
+     ],
+     "args": {
+      "topic": "situação comercial da DELPI"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "caio.analyze",
+     "arg_keys": [
+      "analysis_type",
+      "parameters",
+      "question"
+     ],
+     "args": {
+      "analysis_type": "portfolio",
+      "question": "diagnóstico completo da situação comercial da DELPI nos últi",
+      "parameters": "{'time_range': 'last_90_days', 'coverage': 'full', 'depth': "
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "caio.analyze",
+     "caio.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_02",
+   "run": 0,
+   "elapsed_ms": 15371,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Entidade 'clientes e carteiras' desconhecida.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:caio"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2730,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "clientes e carteiras com queda de compras",
+      "scope_constraints": {
+       "period": "últimos 180 dias",
+       "sazonalidade": "disponível",
+       "períodos_equivalentes": "comparação"
+      },
+      "prior_evidence_sufficient": false,
+      "comparison_requested": true,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": "newest_first",
+       "complete_coverage": true
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5224,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "clara.get_context"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 771,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "queda de compras em clientes e carteiras nos últimos 180 dias",
+       "entity": "clientes e carteiras",
+       "selected_ref": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "caio.get_context",
+     "arg_keys": [
+      "entity",
+      "topic"
+     ],
+     "args": {
+      "topic": "queda de compras em clientes e carteiras nos últimos 180 dia",
+      "entity": "clientes e carteiras"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "caio.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_03",
+   "run": 0,
+   "elapsed_ms": 21312,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: analysis_type 'portfolio' não implementado.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:caio"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2730,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "proposals and opportunities",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": null,
+       "ordering": null,
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3002,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 757,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "proposals and opportunities",
+       "entity": "None",
+       "selected_ref": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 7446,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis_type": "portfolio",
+       "subject_refs": "['proposal']",
+       "question": "Avalie as propostas e oportunidades abertas dos últimos 120 dias: quantidade, va",
+       "parameters": "{'time_range': 'last_120_days', 'include_stages': True, 'include_conversion_rate"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "caio.get_context",
+     "arg_keys": [
+      "topic"
+     ],
+     "args": {
+      "topic": "proposals and opportunities"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "caio.analyze",
+     "arg_keys": [
+      "analysis_type",
+      "parameters",
+      "question",
+      "subject_refs"
+     ],
+     "args": {
+      "analysis_type": "portfolio",
+      "subject_refs": "['proposal']",
+      "question": "Avalie as propostas e oportunidades abertas dos últimos 120 ",
+      "parameters": "{'time_range': 'last_120_days', 'include_stages': True, 'inc"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "caio.analyze",
+     "caio.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_04",
+   "run": 0,
+   "elapsed_ms": 11836,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Entidade 'pedidos' desconhecida.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:caio"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2730,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "pedidos abertos, atrasados e previstos para entrega nos próximos 30 dias",
+      "scope_constraints": {
+       "entrega": "nos próximos 30 dias",
+       "status": "abertos, atrasados, previstos",
+       "exposição": "financeira",
+       "atraso": "confirmado, previsto, impedimento",
+       "cliente": "concentração por cliente/carteira"
+      },
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "complete_coverage": true,
+       "min_items": null,
+       "ordering": null
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3047,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 802,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "consolide pedidos abertos, atrasados e previstos para entrega nos próximos 30 di",
+       "entity": "pedidos",
+       "selected_ref": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "caio.get_context",
+     "arg_keys": [
+      "entity",
+      "topic"
+     ],
+     "args": {
+      "topic": "consolide pedidos abertos, atrasados e previstos para entreg",
+      "entity": "pedidos"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "caio.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_05",
+   "run": 0,
+   "elapsed_ms": 8010,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: topic desconhecido: 'CLARA' — use summary|actor|catalog|schema|persona.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:clara"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2787,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "fechamentos mensais",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": "newest_first",
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3052,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 941,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "CLARA",
+       "entity": "fechamentos mensais",
+       "action": "analise",
+       "scope": "últimos três fechamentos mensais",
+       "selected_ref": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "clara.get_context",
+     "arg_keys": [
+      "action",
+      "entity",
+      "scope",
+      "topic"
+     ],
+     "args": {
+      "topic": "CLARA",
+      "entity": "fechamentos mensais",
+      "action": "analise",
+      "scope": "últimos três fechamentos mensais"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "clara.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_06",
+   "run": 0,
+   "elapsed_ms": 14867,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: topic desconhecido: 'desvios orçado versus realizado' — use summary|actor|catalog|schema|persona.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:clara"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2787,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "desvios orçado versus realizado",
+      "scope_constraints": {
+       "period": "últimos 90 dias",
+       "centro_de_custo_or_rubrica": "quando disponível"
+      },
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": "newest_first",
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3064,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 953,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "desvios orçado versus realizado",
+       "action": "buscar desvios por centro de custo ou rubrica",
+       "scope": "últimos 90 dias"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "clara.get_context",
+     "arg_keys": [
+      "action",
+      "scope",
+      "topic"
+     ],
+     "args": {
+      "topic": "desvios orçado versus realizado",
+      "action": "buscar desvios por centro de custo ou rubrica",
+      "scope": "últimos 90 dias"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "clara.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_07",
+   "run": 0,
+   "elapsed_ms": 10641,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: topic desconhecido: 'prontidão do fechamento mensal' — use summary|actor|catalog|schema|persona.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:clara"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2787,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "prontidão do fechamento mensal",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": null,
+       "ordering": null,
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3063,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 952,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "prontidão do fechamento mensal",
+       "action": "avaliar",
+       "entity": "CLARA",
+       "scope": "fechamento mensal mais recente e dos dois anteriores"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "clara.get_context",
+     "arg_keys": [
+      "action",
+      "entity",
+      "scope",
+      "topic"
+     ],
+     "args": {
+      "topic": "prontidão do fechamento mensal",
+      "action": "avaliar",
+      "entity": "CLARA",
+      "scope": "fechamento mensal mais recente e dos dois anteriores"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "clara.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_08",
+   "run": 0,
+   "elapsed_ms": 10969,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: topic desconhecido: 'exposição a variações de receitas e custos' — use summary|actor|catalog|schema|persona.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:clara"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2787,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "exposição a variações de receitas e custos",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": null,
+       "ordering": null,
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3075,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 964,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "exposição a variações de receitas e custos",
+       "entity": "None",
+       "action": "None",
+       "scope": "None",
+       "selected_ref": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "clara.get_context",
+     "arg_keys": [
+      "topic"
+     ],
+     "args": {
+      "topic": "exposição a variações de receitas e custos"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "clara.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_09",
+   "run": 0,
+   "elapsed_ms": 25879,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A fonte retornou registros, mas não consegui comprovar a ordenação completa — não posso afirmar com segurança qual é a posição exata.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:suri"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2190,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "pedidos de compra em aberto e entregas previstas",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": "newest_first",
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 2483,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2408,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [
+       "product_code",
+       "supplier_code",
+       "order_number"
+      ],
+      "arguments": {
+       "analysis": "purchase_orders_summary",
+       "filters": "{'branch': ['01'], 'expected_delivery_from': '2024-04-01', 'expected_delivery_to",
+       "sample_size": "5"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "suri.analyze",
+     "arg_keys": [
+      "analysis",
+      "filters",
+      "sample_size"
+     ],
+     "args": {
+      "analysis": "purchase_orders_summary",
+      "filters": "{'branch': ['01'], 'expected_delivery_from': '2024-04-01', '",
+      "sample_size": "5"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "suri.analyze"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_10",
+   "run": 0,
+   "elapsed_ms": 28354,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "comparison_source_unavailable"
+   ],
+   "content": "Facts:\n  - Label: total_lines\n    Valor: 0\n  - Label: total_open_value\n    Valor: 0.0\n  - Label: late_lines\n    Valor: 0\n  - Label: on_time_lines\n    Valor: 0\n  - Label: no_date_lines\n    Valor: 0\nCalculations:\n  - Label: sample_size\n    Valor: 0\n  - Label: sample_late_share_pct\n    Valor: 0.0\n  - Label: sample_no_date_lines\n    Valor: 0\n  - Label: sample_open_value\n    Valor: 0\n  - Label: sample_lines_by_branch\n  - Label: sample_truncated\n    Valor: False\nRecommendations:\n  - Label: no_open_lines\n    Detail: Nenhuma linha em aberto no filtro atual — verifique se o escopo de unidade e os filtros estão corretos.\nInput hash: 810d74a2608d733aed8f5fc0b943d8a4726ff1b9020b26f8b2a43d084eab94fd\nSample:\n  Requested: 50\n  Returned: 0\n  Total: 0",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:suri"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2190,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "desempenho de fornecedores",
+      "scope_constraints": {
+       "period": "últimos 180 dias",
+       "criteria": [
+        "prazo",
+        "quantidade",
+        "incidência de atraso",
+        "valor das compras"
+       ]
+      },
+      "prior_evidence_sufficient": false,
+      "comparison_requested": true,
+      "answer_requirements": {
+       "min_items": 5,
+       "complete_coverage": true,
+       "ordering": "newest_first"
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5317,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "clara.get_context"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2413,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [
+       "filters"
+      ],
+      "arguments": {
+       "analysis": "purchase_orders_summary",
+       "sample_size": "50"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 948,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [
+       "topic",
+       "entity",
+       "action",
+       "scope"
+      ],
+      "arguments": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2564,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis": "purchase_orders_summary",
+       "filters": "{'branch': ['01'], 'expected_delivery_from': '2024-01-01', 'expected_delivery_to",
+       "sample_size": "50"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "suri.analyze",
+     "arg_keys": [
+      "analysis",
+      "sample_size"
+     ],
+     "args": {
+      "analysis": "purchase_orders_summary",
+      "sample_size": "50"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "suri.get_context",
+     "arg_keys": [
+      "action"
+     ],
+     "args": {
+      "action": "context"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "suri.analyze",
+     "arg_keys": [
+      "analysis",
+      "filters",
+      "sample_size"
+     ],
+     "args": {
+      "analysis": "purchase_orders_summary",
+      "filters": "{'branch': ['01'], 'expected_delivery_from': '2024-01-01', '",
+      "sample_size": "50"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "suri.analyze",
+     "suri.get_context"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_11",
+   "run": 0,
+   "elapsed_ms": 13530,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Encontrei 5 registros:\n\n- Label: total_lines · Valor: 0\n- Label: total_open_value · Valor: 0.0\n- Label: late_lines · Valor: 0\n- Label: on_time_lines · Valor: 0\n- Label: no_date_lines · Valor: 0",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:suri"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2190,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "solicitações e pedidos de compra",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": null,
+       "ordering": null,
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 2467,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2321,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "analysis": "purchase_orders_summary",
+       "filters": "{'branch': ['01'], 'expected_delivery_from': '2024-04-01', 'expected_delivery_to",
+       "sample_size": "50"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 294,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "suri.analyze",
+     "arg_keys": [
+      "analysis",
+      "filters",
+      "sample_size"
+     ],
+     "args": {
+      "analysis": "purchase_orders_summary",
+      "filters": "{'branch': ['01'], 'expected_delivery_from': '2024-04-01', '",
+      "sample_size": "50"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "suri.analyze"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_12",
+   "run": 0,
+   "elapsed_ms": 30712,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A fonte retornou registros reais, mas eles não correspondem ao que foi pedido — não vou apresentá-los como resposta.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "CONTINUING",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:suri"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2190,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "ciclo de compra",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": null,
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 2450,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2347,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis": "purchase_orders_summary",
+       "filters": "{'branch': ['01'], 'late_only': True}",
+       "sample_size": "50"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 332,
+     "block_valid": true,
+     "proposal": {}
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5499,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:suri"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2876,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3051,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 3070,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [
+       "analysis",
+       "filters.branch",
+       "filters.order_number",
+       "filters.product_code",
+       "filters.supplier_code",
+       "filters.expected_delivery_from",
+       "filters.expected_delivery_to",
+       "filters.late_only"
+      ],
+      "arguments": null
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "suri.analyze",
+     "arg_keys": [
+      "analysis",
+      "filters",
+      "sample_size"
+     ],
+     "args": {
+      "analysis": "purchase_orders_summary",
+      "filters": "{'branch': ['01'], 'late_only': True}",
+      "sample_size": "50"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "suri.analyze"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_13",
+   "run": 0,
+   "elapsed_ms": 24584,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "Foram obtidos somente 3 dos 5 exemplos pedidos — a fonte não comprova quantos existem no escopo consultado.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:eva"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2730,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "demandas e solicitações de Engenharia",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": null,
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3011,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 767,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "demandas e solicitações de Engenharia dos últimos 90 dias",
+       "entity": "None",
+       "selected_ref": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 6311,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis_type": "lmp.performance",
+       "subject_refs": "None",
+       "question": "analise as demandas e solicitações de Engenharia dos últimos 90 dias: volumes, s",
+       "parameters": "{'business_subject': 'demandas e solicitações de Engenharia', 'declared_requirem"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "eva.get_context",
+     "arg_keys": [
+      "topic"
+     ],
+     "args": {
+      "topic": "demandas e solicitações de Engenharia dos últimos 90 dias"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "eva.analyze",
+     "arg_keys": [
+      "analysis_type",
+      "parameters",
+      "question"
+     ],
+     "args": {
+      "analysis_type": "lmp.performance",
+      "question": "analise as demandas e solicitações de Engenharia dos últimos",
+      "parameters": "{'business_subject': 'demandas e solicitações de Engenharia'"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "eva.analyze",
+     "eva.get_context"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_14",
+   "run": 0,
+   "elapsed_ms": 17458,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "Foram obtidos somente 3 dos 5 exemplos pedidos — a fonte não comprova quantos existem no escopo consultado.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:eva"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2730,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "LMPs e documentos de engenharia",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": null,
+       "complete_coverage": false
+      },
+      "output_mode": "unspecified",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3009,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 761,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "LMPs e documentos de engenharia",
+       "entity": "None",
+       "selected_ref": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 6305,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis_type": "lmp.performance",
+       "subject_refs": "['lmp', 'engineering']",
+       "question": "Liste cinco riscos ou melhorias com referência documental, necessidade de valida",
+       "parameters": "{'min_items': 5}"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "eva.get_context",
+     "arg_keys": [
+      "topic"
+     ],
+     "args": {
+      "topic": "LMPs e documentos de engenharia"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "eva.analyze",
+     "arg_keys": [
+      "analysis_type",
+      "parameters",
+      "question",
+      "subject_refs"
+     ],
+     "args": {
+      "analysis_type": "lmp.performance",
+      "subject_refs": "['lmp', 'engineering']",
+      "question": "Liste cinco riscos ou melhorias com referência documental, n",
+      "parameters": "{'min_items': 5}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "eva.analyze",
+     "eva.get_context"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_15",
+   "run": 0,
+   "elapsed_ms": 19957,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: analysis_type 'evolução do fluxo de solicitações técnicas' não implementado.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:eva"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2730,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "evolução do fluxo de solicitações técnicas",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": null,
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3016,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 772,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "evolução do fluxo de solicitações técnicas",
+       "entity": "None",
+       "selected_ref": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 6316,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis_type": "evolução do fluxo de solicitações técnicas",
+       "question": "analise a evolução do fluxo de solicitações técnicas ao longo dos últimos 180 di",
+       "parameters": "{'period_days': 180, 'metrics': ['throughput', 'time_per_stage', 'halted_demands"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "eva.get_context",
+     "arg_keys": [
+      "topic"
+     ],
+     "args": {
+      "topic": "evolução do fluxo de solicitações técnicas"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "eva.analyze",
+     "arg_keys": [
+      "analysis_type",
+      "parameters",
+      "question"
+     ],
+     "args": {
+      "analysis_type": "evolução do fluxo de solicitações técnicas",
+      "question": "analise a evolução do fluxo de solicitações técnicas ao long",
+      "parameters": "{'period_days': 180, 'metrics': ['throughput', 'time_per_sta"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "eva.analyze",
+     "eva.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_16",
+   "run": 0,
+   "elapsed_ms": 21783,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Qual o tipo de análise técnica a ser realizado e quais os referenciais técnicos específicos que devem ser considerados para identificar as cadeias críticas e seus vínculos?",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:eva"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2730,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "demandas técnicas com prazo próximo, atrasadas ou dependentes de documentos, desenhos ou LMPs",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3067,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 823,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "demandas técnicas com prazo próximo, atrasadas ou dependentes de documentos, des",
+       "entity": "None",
+       "selected_ref": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 6324,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis_type": "technical_dependency_analysis",
+       "subject_refs": "['lmp', 'nonconformity', 'product']",
+       "question": "Identifique vínculos comprovados, bloqueios e incertezas em demandas técnicas co",
+       "parameters": "{'max_critical_chains': 5, 'time_frame': '30 dias', 'require_verified_links': Tr"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.clarification_wording",
+     "block_len": 323,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "eva.get_context",
+     "arg_keys": [
+      "topic"
+     ],
+     "args": {
+      "topic": "demandas técnicas com prazo próximo, atrasadas ou dependente"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "eva.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_17",
+   "run": 0,
+   "elapsed_ms": 18065,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A fonte retornou registros, mas não consegui comprovar a ordenação completa — não posso afirmar com segurança qual é a posição exata.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2827,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "iniciativas e processos de transformação digital",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": "newest_first",
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3119,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 896,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "section": "overview",
+       "entity": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 3860,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "view": "processes",
+       "params": "{'filter': 'publicado_e_comparavel', 'categorization': 'impacto_e_urgencia', 'pr",
+       "competencia_inicio": "2024-03-01",
+       "competencia_fim": "2024-05-31",
+       "limit": "5"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_context",
+     "arg_keys": [
+      "section"
+     ],
+     "args": {
+      "section": "overview"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "teo.analyze",
+     "arg_keys": [
+      "limit",
+      "params",
+      "view"
+     ],
+     "args": {
+      "view": "processes",
+      "params": "{'filter': 'publicado_e_comparavel', 'categorization': 'impa",
+      "limit": "5"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "teo.analyze",
+     "teo.get_context"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_18",
+   "run": 0,
+   "elapsed_ms": 32949,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A fonte retornou registros reais, mas eles não correspondem ao que foi pedido — não vou apresentá-los como resposta.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2827,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "processos ou iniciativas",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": null,
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3095,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 872,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "section": "overview",
+       "entity": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 3808,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "view": "processes",
+       "limit": "5",
+       "params": "{'lacunas': 'documentação, handoffs, indicadores', 'examine_sipec': 'only if reg"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 2910,
+     "block_valid": true,
+     "proposal": {}
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5508,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5985,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3067,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 7855,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_context",
+     "arg_keys": [
+      "section"
+     ],
+     "args": {
+      "section": "overview"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "teo.analyze",
+     "arg_keys": [
+      "limit",
+      "params",
+      "view"
+     ],
+     "args": {
+      "view": "processes",
+      "limit": "5",
+      "params": "{'lacunas': 'documentação, handoffs, indicadores', 'examine_"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "teo.analyze",
+     "teo.get_context"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_19",
+   "run": 0,
+   "elapsed_ms": 16788,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: processo_id is required for view 'process_revision_comparison'.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2827,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "iniciativas com atrasos repetidos ou mudanças de prazo",
+      "scope_constraints": {
+       "period": "últimos 180 dias"
+      },
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": "newest_first",
+       "complete_coverage": false
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3125,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 902,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "section": "overview",
+       "entity": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 3866,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "view": "process_revision_comparison",
+       "params": "None",
+       "competencia_inicio": "2024-01-01",
+       "competencia_fim": "2024-12-31",
+       "limit": "5"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5538,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 3544,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3718,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 4535,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [
+       "processo_id"
+      ],
+      "arguments": null
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_context",
+     "arg_keys": [
+      "section"
+     ],
+     "args": {
+      "section": "overview"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "teo.analyze",
+     "arg_keys": [
+      "limit",
+      "view"
+     ],
+     "args": {
+      "view": "process_revision_comparison",
+      "limit": "5"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "teo.analyze",
+     "teo.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_20",
+   "run": 0,
+   "elapsed_ms": 10485,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Qual visão de analise você deseja utilizar para avaliar as iniciativas recentes e identificar as lacunas de medição?",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2827,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "iniciativas recentes",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3091,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 868,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "section": "overview"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 3761,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [
+       "view"
+      ],
+      "arguments": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.clarification_wording",
+     "block_len": 298,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_context",
+     "arg_keys": [
+      "section"
+     ],
+     "args": {
+      "section": "overview"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "teo.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_21",
+   "run": 0,
+   "elapsed_ms": 13310,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Filtro(s) não suportado(s) em read.data_route.search: coverage, type.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2805,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "read",
+      "goal_class": "read",
+      "business_subject": "painéis e indicadores",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": null,
+       "ordering": null,
+       "complete_coverage": true
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3062,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 7908,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "entity": "data_route",
+       "action": "search",
+       "filters": "{'category': 'operational_dashboard', 'type': 'indicator', 'coverage': 'complete",
+       "pagination": "{'page_size': 100}"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5505,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 3440,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "read"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3606,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 8524,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [
+       "entity",
+       "action"
+      ],
+      "arguments": null
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.get_context",
+     "arg_keys": [
+      "action"
+     ],
+     "args": {
+      "action": "context"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "vista.read",
+     "arg_keys": [
+      "action",
+      "entity",
+      "filters",
+      "pagination"
+     ],
+     "args": {
+      "entity": "data_route",
+      "action": "search",
+      "filters": "{'category': 'operational_dashboard', 'type': 'indicator', '",
+      "pagination": "{'page_size': 100}"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "vista.get_context",
+     "vista.read"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_22",
+   "run": 0,
+   "elapsed_ms": 37298,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Análise desconhecida: 'Análise de indicadores operacionais com série recente e tendências dos últimos 90 dias'.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2805,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "indicadores operacionais",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": true,
+      "answer_requirements": {
+       "min_items": 5,
+       "ordering": "newest_first",
+       "complete_coverage": true
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5195,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "caio.get_context"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 7831,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis": "Selecione indicadores operacionais efetivamente acessíveis com série recente e e",
+       "subject_refs": "None",
+       "parameters": "{'min_items': 5, 'ordering': 'newest_first', 'complete_coverage': True}"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 754,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "indicadores operacionais",
+       "entity": "None",
+       "selected_ref": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 1238,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "indicadores operacionais",
+       "entity": "None",
+       "selected_ref": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 8975,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis": "Análise de indicadores operacionais com série recente e tendências dos últimos 9",
+       "subject_refs": "None",
+       "parameters": "{'period': '90 days', 'comparison': 'equivalent periods', 'requirement': 'five p"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5508,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 3530,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3705,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 8534,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis": "Análise de indicadores operacionais com série recente e tendências dos últimos 9",
+       "subject_refs": "None",
+       "parameters": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 8534,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis": "Análise de indicadores operacionais com série recente e tendências dos últimos 9",
+       "subject_refs": "None",
+       "parameters": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.get_context",
+     "arg_keys": [
+      "action"
+     ],
+     "args": {
+      "action": "context"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "caio.get_context",
+     "arg_keys": [
+      "topic"
+     ],
+     "args": {
+      "topic": "indicadores operacionais"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "vista.analyze",
+     "arg_keys": [
+      "analysis",
+      "parameters"
+     ],
+     "args": {
+      "analysis": "Análise de indicadores operacionais com série recente e tend",
+      "parameters": "{'period': '90 days', 'comparison': 'equivalent periods', 'r"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "vista.analyze",
+     "arg_keys": [
+      "analysis"
+     ],
+     "args": {
+      "analysis": "Análise de indicadores operacionais com série recente e tend"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "caio.get_context",
+     "vista.analyze",
+     "vista.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_23",
+   "run": 0,
+   "elapsed_ms": 44713,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Análise desconhecida: 'verificar se uma mesma métrica pode ser consultada em diferentes formatos ou painéis publicados, comparando definições, filtros, atualiza",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2805,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "métrica",
+      "scope_constraints": {
+       "formatos": "diferentes",
+       "painéis": "publicados",
+       "definições": "comparadas",
+       "filtros": "comparados",
+       "atualização": "comparada",
+       "unidades": "comparadas",
+       "agregações": "comparadas",
+       "totalizadores": "comparados"
+      },
+      "prior_evidence_sufficient": false,
+      "comparison_requested": true,
+      "answer_requirements": {
+       "complete_coverage": true,
+       "ordering": null
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5178,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "caio.get_context"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 7770,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis": "verificar se uma mesma métrica pode ser consultada em diferentes formatos ou pai",
+       "subject_refs": "None",
+       "parameters": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 737,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "métrica",
+       "entity": "None",
+       "selected_ref": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 1143,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "métrica",
+       "entity": "None",
+       "selected_ref": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 8914,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis": "verificar se uma mesma métrica pode ser consultada em diferentes formatos ou pai",
+       "subject_refs": "None",
+       "parameters": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5491,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 3809,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3984,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 8801,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis": "verificar se uma mesma métrica pode ser consultada em diferentes formatos ou pai",
+       "subject_refs": "None",
+       "parameters": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 8801,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis": "verificar se uma mesma métrica pode ser consultada em diferentes formatos ou pai",
+       "subject_refs": "None",
+       "parameters": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.get_context",
+     "arg_keys": [
+      "action"
+     ],
+     "args": {
+      "action": "context"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "caio.get_context",
+     "arg_keys": [
+      "topic"
+     ],
+     "args": {
+      "topic": "métrica"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "vista.analyze",
+     "arg_keys": [
+      "analysis"
+     ],
+     "args": {
+      "analysis": "verificar se uma mesma métrica pode ser consultada em difere"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "vista.analyze",
+     "arg_keys": [
+      "analysis"
+     ],
+     "args": {
+      "analysis": "verificar se uma mesma métrica pode ser consultada em difere"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "caio.get_context",
+     "vista.analyze",
+     "vista.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_24",
+   "run": 0,
+   "elapsed_ms": 15998,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Análise desconhecida: 'avaliação das métricas disponíveis para uma revisão gerencial mensal, com foco em cobertura, atualidade, permissões, filtros possíveis e ",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 2805,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "analyze",
+      "business_subject": "métricas disponíveis para uma revisão gerencial mensal",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "complete_coverage": true
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3105,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 7817,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "analysis": "avaliação das métricas disponíveis para uma revisão gerencial mensal, com foco e"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5538,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 3688,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3864,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 8648,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [
+       "analysis",
+       "subject_refs"
+      ],
+      "arguments": null
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.get_context",
+     "arg_keys": [
+      "action"
+     ],
+     "args": {
+      "action": "context"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "vista.analyze",
+     "arg_keys": [
+      "analysis"
+     ],
+     "args": {
+      "analysis": "avaliação das métricas disponíveis para uma revisão gerencia"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "vista.analyze",
+     "vista.get_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_25",
+   "run": 0,
+   "elapsed_ms": 15271,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminal pino, terminal bala, conector",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 10,
+       "complete_coverage": true
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1179,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 915,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição terminal pino, terminal bala, conector e variantes",
+       "top_k": "10"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição terminal pino, terminal bala, ",
+      "top_k": "10"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal pino, terminal bala, conector'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_26",
+   "run": 0,
+   "elapsed_ms": 9121,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "entidade",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1153,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 814,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "consultar registros oficiais e relações sobre uma entidade com identificação emp"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "consultar registros oficiais e relações sobre uma entidade c"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJleGVjdXRlX3JlYWRvbmx5X3NxbCIsImFjdG9yX2lk",
+      "arguments": "{'sql': 'DAVI'}"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_27",
+   "run": 0,
+   "elapsed_ms": 10431,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null,
+      "goal_class": "compare",
+      "business_subject": "consultas oficiais",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": true,
+      "answer_requirements": {},
+      "output_mode": "dynamic",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1213,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null,
+      "goal_class": "compare",
+      "business_subject": "consultas oficiais",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": true,
+      "answer_requirements": {},
+      "output_mode": "dynamic",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5811,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "capability_group_id": null
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "cmp_28",
+   "run": 0,
+   "elapsed_ms": 12874,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5437,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null,
+      "goal_class": "clarify",
+      "business_subject": null,
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1213,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null,
+      "goal_class": "clarify",
+      "business_subject": null,
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5811,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "capability_group_id": null
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": null,
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  }
+ ]
+}

@@ -1,0 +1,30 @@
+{
+  "scenario_id": "CMP-06",
+  "specialist": "clara",
+  "run_number": 0,
+  "question_full_text": "CLARA, investigue os maiores desvios orçado versus realizado dos últimos 90 dias, por centro de custo ou rubrica quando disponível. Separe efeito preço, volume, classificação e competência apenas se os dados permitirem, incluindo ponte matemática reproduzível e reconciliação de totais. Mostre os cinco desvios mais relevantes e as fontes de cada valor; assinale insuficiência de evidências sem preencher lacunas por suposição. Recomende verificações e indicadores para os próximos 30 dias, sem lançamentos ou mudanças em orçamento.",
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "clara.get_context"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "clara.get_context",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "topic": "desvios orçado versus realizado",
+        "entity": "centro de custo",
+        "action": "investigar",
+        "scope": "últimos 90 dias"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: topic desconhecido: 'desvios orçado versus realizado' — use summary|actor|catalog|schema|persona.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 14640,
+  "error": null
+}

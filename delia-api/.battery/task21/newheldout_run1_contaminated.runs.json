@@ -1,0 +1,2107 @@
+{
+ "summary": {
+  "executions": 21,
+  "model_calls": 197,
+  "input_tokens": 145886,
+  "output_tokens": 2487,
+  "outcomes": {
+   "PASS": 11,
+   "FAIL": 10
+  }
+ },
+ "runs": [
+  {
+   "scenario": "nh_conector",
+   "run": 0,
+   "elapsed_ms": 101497,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "result_truncated"
+   ],
+   "content": "Aqui estão 2 exemplos:\n\n- Código do produto: 10091052 · Descrição: CONECTOR ELETRICO DIN 43650-A PARA SOLENOIDES SOCKETPUPR · Categoria do grupo: 1009\n- Código do produto: 90263705 · Descrição: CHICOTE ELETRICO P22 TSE 30/34 SLIM AMPSS - 12/24V COM CONECTOR TYCO AMPSS · Categoria do grupo: 9026\n\nExibindo 2 de 4 registros retornados.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "conectores elétricos",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 2
+      },
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1165,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 869,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição conector elétrico",
+       "top_k": "2"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 701,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição conector elétrico",
+      "top_k": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'conectores elétricos', 'page_size': 50}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'conector elétrico', 'page_size': 50}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "80014158",
+     "20070084",
+     "30194225",
+     "20070174",
+     "30193941",
+     "20070213",
+     "80015324",
+     "20070122",
+     "20070020",
+     "10090661",
+     "10091052",
+     "90263705",
+     "90263712",
+     "80016408"
+    ],
+    "pertinent_codes": [
+     "80014158",
+     "20070084",
+     "30194225",
+     "20070174",
+     "30193941",
+     "20070213",
+     "80015324",
+     "20070122",
+     "20070020",
+     "10090661",
+     "10091052",
+     "90263705",
+     "90263712",
+     "80016408"
+    ],
+    "names": [
+     "CABO CONECTOR M8 CI3-8 3 PINOS FEMEA RETO 2M",
+     "ALICATE PRA COMPRESSAO DE CONECTOR RJ45-RJ12-RJ11",
+     "ALICATE P/CRIMPAR HT-214 PARA CONECTOR LATCH",
+     "ALICATE PRA COMPRESSAO CONECTOR RJ50 10VIAS",
+     "4 CONECTOR CIRCULAR M23",
+     "ALICATE  PARA CRIMPAR CONECTOR LATCH E DB PARA FLAT CABLE",
+     "CABO 5M C/ CONECTOR FEMEA M12",
+     "CABO MANGA, 2 X 26AWG, PRETO, C CONECTOR JST 2,5MM 2 VIAS OV2972",
+     "ALICATE PRA COMPRESSAO CONECTOR RJ45 CAT5",
+     "ACESSORIOS DO CONECTOR 10 VIAS AMPHENOL MS3100F 18-S1",
+     "CONECTOR ELETRICO DIN 43650-A PARA SOLENOIDES SOCKETPUPR",
+     "CHICOTE ELETRICO P22 TSE 30/34 SLIM AMPSS - 12/24V COM CONECTOR TYCO AMPSS",
+     "CHICOTE ELETRICO P40 TSE NEW BT 24V AMPSS - BI TEMPERATURA R404A COM CONECTOR TYCO AMPSS",
+     "CORDAO ELETRICO PLUG 180 - OV000151 - CONECTOR ALTERNATIVO"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "nh_disjuntor",
+   "run": 0,
+   "elapsed_ms": 112815,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "result_truncated"
+   ],
+   "content": "Encontrei 50 registros:\n\n- Código do produto: 80015938 · Descrição: CABO DISJUNTOR CHAVE DZ OV003351 · Categoria do grupo: 8001\n- Código do produto: 90261545 · Descrição: CHAVE DE LIG TRIFASICA COM MINI DISJUNTOR WEG · Categoria do grupo: 9026\n- Código do produto: 80003503 · Descrição: CHAVE DE LIGACAO TRIFASICA COM MINI DISJUNTOR 40A · Categoria do grupo: 8000\n- Código do produto: 80013633 · Descrição: CHICOTE CONTACTORA NR12 X DISJUNTOR J5 OV2070 · Categoria do grupo: 8001\n- Código do produto: 90261489 · Descrição: CHICOTE DE LIGACAO MINI DISJUNTOR 40A · Categoria do grupo: 9026\n\nExibindo 5 de 50 registros retornados.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "disjuntor",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1154,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 815,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição disjuntor"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 1835,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição disjuntor"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'disjuntor'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "80015938",
+     "80013567",
+     "90261489",
+     "80013633",
+     "80003503",
+     "90264098",
+     "80006171",
+     "80015546",
+     "90261545",
+     "30193935",
+     "10190050",
+     "10190022",
+     "80012963",
+     "10210609",
+     "10210608",
+     "10211642"
+    ],
+    "pertinent_codes": [
+     "80015938",
+     "80013567",
+     "90261489",
+     "80013633",
+     "80003503",
+     "90264098",
+     "80006171",
+     "80015546",
+     "90261545",
+     "30193935",
+     "10190050",
+     "10190022",
+     "80012963",
+     "10210609",
+     "10210608",
+     "10211642"
+    ],
+    "names": [
+     "CHICOTE DE LIGACAO MINI DISJUNTOR 40A \"043 15\"",
+     "CHICOTE CONTACTORA NR12 X DISJUNTOR J5 OV2070",
+     "CHICOTE SECCIONADORA X DISJUNTOR LX - 0020/02738 OU BSMK-12848-001",
+     "CHAVE DE LIGACAO TRIFASICA COM MINI DISJUNTOR 40A",
+     "CHAVE DE LIG TRIFASICA COM MINI DISJUNTOR WEG",
+     "CHICOTE DISJUNTOR X TRILHO DIN 220V OV2070",
+     "CABO DISJUNTOR CHAVE DZ OV003351",
+     "DISJUNTOR  NEMA TRIFASICO 50A PRETO",
+     "CHICOTE DE LIGACAO MINI DISJUNTOR 40A",
+     "CHICOTE SECCIONADORA X DISJUNTOR LX OV003128",
+     "CAIXA PVC SOBREPOR PARA 04 DISJUNTORES DIN COM BARRAMENTO BRANCA 277X113X70MM",
+     "CAIXA PVC SOBREPOR PARA 08 DISJUNTORES DIN COM BARRAMENTO BRANCA",
+     "CHICOTE DE LIGAÇÃO DISJUNTORES A TOMADA 10 POLOS OV1737",
+     "QUADRO DE EMBUTIR PVC 12/16  DISJUNTORES - TAMPA BRANCA",
+     "QUADRO DE EMBUTIR PVC 24 DISJUNTORES - TAMPA BRANCA",
+     "QUADRO DE EMBUTIR PVC 36 DISJUNTORES - TAMPA BRANCA"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "nh_ilhos",
+   "run": 0,
+   "elapsed_ms": 15948,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "A palavra 'ilhó' não corresponde a um conceito válido em português ou geografia",
+    "Não há registros ou dados oficiais sobre esse termo"
+   ],
+   "content": "Não há exemplos de \"ilhó\" conhecidos no contexto português ou geográfico. A palavra \"ilhó\" não se refere a um conceito ou entidade comum em português, nem é um termo oficial em geografia, produção ou operação de sistemas. Pode ser um erro de digitação ou um termo fictício.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10320038",
+     "10211473",
+     "10140102",
+     "10140177",
+     "10450130",
+     "10450435",
+     "10140137",
+     "10140247",
+     "10450429",
+     "10140161",
+     "10211159",
+     "10211521",
+     "10211451"
+    ],
+    "pertinent_codes": [
+     "10320038",
+     "10211473",
+     "10140102",
+     "10140177",
+     "10450130",
+     "10450435",
+     "10140137",
+     "10140247",
+     "10450429",
+     "10140161",
+     "10211159",
+     "10211521",
+     "10211451"
+    ],
+    "names": [
+     "ALICATE TERMINAL ILHOS 6-16MM ATB-16PT",
+     "ILHOS DE BORRACHA NITRILICA FRANKLIN",
+     "ILHOS DE BORRACHA NITRILICA ØINT. 11,3MM",
+     "BORRACHA ILHOS PARA FUROS DE MONTAGEM - ROHS",
+     "ILHOS DE BORRACHA NITRILICA ØINT. 13,0MM",
+     "ILHOS 2,9X5,7 SN 5UM A 6UM. CU 8 PORC - ROHS",
+     "ALICATE TERMINAL ILHOS 0,5-6MM WORKER",
+     "ILHOS DE BORRACHA NITRILICA ØINT. 12,8MM",
+     "ILHOS DE BORRACHA NITRILICA ØINT. 12,9MM",
+     "ILHO BORRACHANBR PRETO 6,2MM 10,8X14 WEG",
+     "ILHO DE PVC 6,4MM PRETO",
+     "TERMINAL ILHO SIMPLES - FORNECIDO PELA FALCON"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "nh_espaguete",
+   "run": 0,
+   "elapsed_ms": 59792,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Encontrei 4 registros:\n\n- Código do produto: 80014273 · Descrição: COLOCAR TUBO ISOLANTE (ESPAGUETE) NO RESISTOR · Categoria do grupo: 8001\n- Código do produto: 80001654 · Descrição: ESPAGUETE Ø4X40MM CLASSE B 130°C · Categoria do grupo: 8000\n- Código do produto: 80001655 · Descrição: ESPAGUETE Ø4X60MM CLASSE B 130°C · Categoria do grupo: 8000\n- Código do produto: 80014274 · Descrição: SOLDAR UM FIO NO RESISTOR E COLOCAR TUBO ISOLANTE (ESPAGUETE) · Categoria do grupo: 8001",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "espaguete termorretrátil",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1169,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 830,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição espaguete termorretrátil"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 556,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição espaguete termorretrátil"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'espaguete termorretrátil'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'espaguete'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "80014273",
+     "80014274",
+     "80001654",
+     "80001655"
+    ],
+    "pertinent_codes": [
+     "80014273",
+     "80014274",
+     "80001654",
+     "80001655"
+    ],
+    "names": [
+     "COLOCAR TUBO ISOLANTE (ESPAGUETE) NO RESISTOR",
+     "ESPAGUETE Ø4X40MM CLASSE B 130°C",
+     "SOLDAR UM FIO NO RESISTOR E COLOCAR TUBO ISOLANTE (ESPAGUETE)",
+     "ESPAGUETE Ø4X60MM CLASSE B 130°C"
+    ],
+    "total": 4
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "nh_estanho",
+   "run": 0,
+   "elapsed_ms": 99634,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Encontrei 2 registros:\n\n- Código do produto: 10450548 · Descrição: PISTOLA DE SOLDA AUTOMATICA PARA ESTANHO 60W 110V · Categoria do grupo: 1045\n- Código do produto: 30194367 · Descrição: PISTOLA DE SOLDA FERRO AUTOMÁTICA PARA ESTANHO 60W · Categoria do grupo: 3019",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "solda de estanho",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1161,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 822,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição solda de estanho"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 327,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição solda de estanho"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'solda de estanho'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "20070036",
+     "10450548",
+     "30194367",
+     "10140206",
+     "10140090",
+     "10140257",
+     "10140022",
+     "10140027",
+     "10140125",
+     "10140231"
+    ],
+    "pertinent_codes": [
+     "20070036",
+     "10450548",
+     "30194367",
+     "10140206",
+     "10140090",
+     "10140257",
+     "10140022",
+     "10140027",
+     "10140125",
+     "10140231"
+    ],
+    "names": [
+     "FIO DE ESTANHO Ø1,0 99,3%SN 0,7%CU LEAD FREE",
+     "FIO DE ESTANHO Ø1,0 99,3%SN 0,7%CU LEAD FREE - ROHS",
+     "FIO DE ESTANHO Ø1,0MM COM CHUMBO",
+     "ESTANHO EM DRAGEAS LF 99,3%EM 0,7%CU LEAD FREE",
+     "FIO DE ESTANHO LEAD FREE SN96,5 AG3CU0,5 2MM C/REIA WEG - ROHS",
+     "PISTOLA DE SOLDA AUTOMATICA PARA ESTANHO 60W 110V",
+     "CADINHO PARA ESTANHO",
+     "PISTOLA DE SOLDA FERRO AUTOMÁTICA PARA ESTANHO 60W",
+     "FIO DE ESTANHO  99,3%SN 0,7%=227A10=1/2 (TRACTIAN)",
+     "FIO DE ESTANHO Ø1,0 50/50"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "nh_conduite",
+   "run": 0,
+   "elapsed_ms": 216070,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_query_miss"
+   ],
+   "content": "A fonte consultada informou que não há registro para esta solicitação. Nenhum dado operacional foi inventado.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "conduite",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1153,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 814,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição conduite"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 1198,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição conduite"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5698,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5962,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5988,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 1201,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição conduite"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição conduite"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10210763",
+     "10210707",
+     "10210523"
+    ],
+    "pertinent_codes": [
+     "10210763",
+     "10210707",
+     "10210523"
+    ],
+    "names": [
+     "CONDUITE KANAFLEX KV 2,1/2",
+     "CONDUÍTE FLEXÍVEL PA 6 DIÂMETRO EXTERNO 15,8MM – INTERNO 13MM COM CERTIFICAÇÃO UL – CSA.",
+     "CONDUÍTE SEALFLEX 2\""
+    ],
+    "total": 3
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "EVIDENCE_RELEVANCE",
+    "invoked_caps": [
+     "davi.discover_delpi_information"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "nh_tomada",
+   "run": 0,
+   "elapsed_ms": 113893,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "result_truncated"
+   ],
+   "content": "Aqui estão 2 exemplos:\n\n- Código do produto: 10210424 · Descrição: BASE ADAPTADOR TOMADA · Categoria do grupo: 1021\n- Código do produto: 10210417 · Descrição: BASE ADAPTADOR TOMADA PINO CHATO · Categoria do grupo: 1021\n\nExibindo 2 de 50 registros retornados.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "tomada",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 2
+      },
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1151,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 855,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar tomadas por cadastro",
+       "top_k": "2"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 2137,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar tomadas por cadastro",
+      "top_k": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'page_size': 50, 'description': 'tomada'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10060110",
+     "10210408",
+     "10210406",
+     "10210407",
+     "10210405",
+     "10210417",
+     "30191124",
+     "80004701",
+     "10210424",
+     "10060111",
+     "10450169",
+     "10211555",
+     "30191803",
+     "10450201",
+     "10450189",
+     "80005958",
+     "80005962",
+     "90263583",
+     "80012247",
+     "80014747"
+    ],
+    "pertinent_codes": [
+     "10060110",
+     "10210408",
+     "10210406",
+     "10210407",
+     "10210405",
+     "10210417",
+     "30191124",
+     "80004701",
+     "10210424",
+     "10060111",
+     "10450169",
+     "10211555",
+     "30191803",
+     "10450201",
+     "10450189",
+     "80005958",
+     "80005962",
+     "90263583",
+     "80012247",
+     "80014747"
+    ],
+    "names": [
+     "BASE INTERRUPTOR ABA LONGA 1 TECLA SIMPLES + 1 TOMADA 2 BORNES",
+     "BASE ADAPTADOR TOMADA",
+     "BASE INTERRUPTOR ABA LONGA 2 TECLA SIMPLES + 1 TOMADA 4 BORNES",
+     "BASE INTERRUPTOR ABA LONGA 1 TECLA PARALELO + 1 TOMADA 3 BORNES",
+     "CABO PP PVC/PVC TOMADA 2P 10A 180° 2X0,75X230MM PT AL/MR 250V NBR 13249",
+     "CABO PP PVC/PVC TOMADA IEC 10A 180° 3X0,75X360MM PT AL/MR/VDAR 250V NBR 13249",
+     "BASE INTERRUPTOR ABA LONGA 2 TECLA PARALELO + 1 TOMADA 6 BORNES",
+     "BASE ADAPTADOR TOMADA PINO CHATO",
+     "CAIXA P/ TOMADA FIXAR EM PERFILADO",
+     "CABO CONEXAO COMPLETO EG CX TOMADA INVE",
+     "BANCADA DE MONTAGEM TECLAS E TOMADAS 800X800MM",
+     "CAIXA DE TOMADAS PARA EMBUTIR MOVEIS ESCRITORIO VAZIA FULL 90X90X75",
+     "CALHA 19 COM 12 TOMADAS E PLUG PADRAO NOVO ACK0063",
+     "CARRINHO DISTRIBUICAO DE TOMADAS",
+     "CARRINHO MONTAGEM DE TOMADAS 630X430MM",
+     "CHICOTE DE LIGAÇAO \"294 14\" EXTENSÃO TOMADAS DE CAIS",
+     "CHICOTE DE LIGAÇAO \"294 14\" TOMADAS FOGÃO MICROONDAS",
+     "CHICOTE FFR 0019 ALIM 20 TOMADAS (2+T) GONDOLA",
+     "CHICOTE FFR 0019 ALIM 20 TOMADAS (2+T) GONDOLA OV1340",
+     "CHICOTE LIGACAO CAIXA ELETRICA 4 TOMADAS OV2647"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "nh_code",
+   "run": 0,
+   "elapsed_ms": 15489,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "dados do produto não estão disponíveis na estrutura operacional da DELPI",
+    "não há acesso direto a cadastros de produtos por código sem integração válida"
+   ],
+   "content": "Não é possível descrever o produto de código 80002437, pois a informação não está disponível na estrutura operacional da DELPI. A descrição de produtos opera por integração com sistemas de cadastro e gestão interna — não é possível acessar diretamente dados não sincronizados ou não autorizados nesta camada.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "explanation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "80002437"
+    ],
+    "pertinent_codes": [
+     "80002437"
+    ],
+    "names": [
+     "CABO DE LIG. 2,5MM² 390MM C/ TERM. OLHAL Ø 4MM \"879 06\""
+    ],
+    "total": 1
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "nh_absent",
+   "run": 0,
+   "elapsed_ms": 256188,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A fonte retornou registros reais, mas eles não correspondem ao que foi pedido — não vou apresentá-los como resposta.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "CONTINUING",
+    "CONTINUING",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "placa acrílica",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1159,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 820,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição placa acrílica"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 1888,
+     "block_valid": true,
+     "proposal": {}
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5704,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 3306,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3502,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 3609,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "consultar produtos por descrição placa acrílica",
+       "top_k": "10"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição placa acrílica"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'placa acrílica'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'placa'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "consultar produtos por descrição placa acrílica",
+      "top_k": "10"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [],
+    "pertinent_codes": [],
+    "names": [],
+    "total": 0
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "nh_teo_ctx",
+   "run": 0,
+   "elapsed_ms": 149159,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Erro interno do servidor.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CONTINUING",
+    "CAPABILITY_SELECTED",
+    "CONTINUING",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_process_context",
+      "goal_class": "read",
+      "business_subject": "processo PROC-0105",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5802,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 567,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "process_id": "PROC-0105"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 544,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "entity": "processo PROC-0105"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_process_context",
+     "arg_keys": [
+      "process_id"
+     ],
+     "args": {
+      "process_id": "PROC-0105"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [
+      "entity"
+     ],
+     "args": {
+      "entity": "processo PROC-0105"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "teo.get_catalog",
+     "teo.get_process_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "nh_teo_hist",
+   "run": 0,
+   "elapsed_ms": 126781,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CONTINUING",
+    "CAPABILITY_SELECTED",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_process_timeline",
+      "goal_class": "read",
+      "business_subject": "processo PROC-0105",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "dynamic",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5799,
+     "block_valid": true,
+     "proposal": null
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 593,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "nh_teo_list",
+   "run": 0,
+   "elapsed_ms": 544,
+   "error": "model_unavailable",
+   "grounding": "",
+   "limitations": [],
+   "content": "",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "CONTINUING",
+    "FAILED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": null
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "",
+    "error": "model_unavailable"
+   }
+  },
+  {
+   "scenario": "nh_vista",
+   "run": 0,
+   "elapsed_ms": 69,
+   "error": "model_unavailable",
+   "grounding": "",
+   "limitations": [],
+   "content": "",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "CONTINUING",
+    "FAILED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": null
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "",
+    "error": "model_unavailable"
+   }
+  },
+  {
+   "scenario": "nh_explicit_davi",
+   "run": 0,
+   "elapsed_ms": 60,
+   "error": "model_unavailable",
+   "grounding": "",
+   "limitations": [],
+   "content": "",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "CONTINUING",
+    "FAILED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": null
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "",
+    "error": "model_unavailable"
+   }
+  },
+  {
+   "scenario": "nh_cont",
+   "run": 0,
+   "elapsed_ms": 64,
+   "error": "model_unavailable",
+   "grounding": "",
+   "limitations": [],
+   "content": "",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "CONTINUING",
+    "FAILED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": null
+    },
+    {
+     "purpose": "delia.capability_orchestration.turn_goal",
+     "block_len": 2,
+     "block_valid": true,
+     "proposal": null
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5878,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "",
+    "error": "model_unavailable"
+   }
+  },
+  {
+   "scenario": "nh_neg_update",
+   "run": 0,
+   "elapsed_ms": 1066,
+   "error": "model_unavailable",
+   "grounding": "",
+   "limitations": [],
+   "content": "",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "CONTINUING",
+    "FAILED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": null
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "",
+    "error": "model_unavailable"
+   }
+  },
+  {
+   "scenario": "nh_neg_whatsapp",
+   "run": 0,
+   "elapsed_ms": 64,
+   "error": "model_unavailable",
+   "grounding": "",
+   "limitations": [],
+   "content": "",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "CONTINUING",
+    "FAILED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": null
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "",
+    "error": "model_unavailable"
+   }
+  },
+  {
+   "scenario": "nh_ctrl_greet",
+   "run": 0,
+   "elapsed_ms": 115,
+   "error": "model_unavailable",
+   "grounding": "",
+   "limitations": [],
+   "content": "",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "CONTINUING",
+    "FAILED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": null
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "",
+    "error": "model_unavailable"
+   }
+  },
+  {
+   "scenario": "nh_ctrl_math",
+   "run": 0,
+   "elapsed_ms": 64,
+   "error": "model_unavailable",
+   "grounding": "",
+   "limitations": [],
+   "content": "",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "CONTINUING",
+    "FAILED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": null
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "",
+    "error": "model_unavailable"
+   }
+  },
+  {
+   "scenario": "nh_surface",
+   "run": 0,
+   "elapsed_ms": 62,
+   "error": "model_unavailable",
+   "grounding": "",
+   "limitations": [],
+   "content": "",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "CONTINUING",
+    "FAILED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": null
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "",
+    "error": "model_unavailable"
+   }
+  },
+  {
+   "scenario": "nh_prep",
+   "run": 0,
+   "elapsed_ms": 61,
+   "error": "model_unavailable",
+   "grounding": "",
+   "limitations": [],
+   "content": "",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "CONTINUING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "CONTINUING",
+    "FAILED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": null
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GOAL_INTERPRETATION",
+    "invoked_caps": [],
+    "grounding": "",
+    "error": "model_unavailable"
+   }
+  }
+ ]
+}

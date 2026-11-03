@@ -1,0 +1,28 @@
+{
+  "scenario_id": "CMP-16",
+  "specialist": "eva",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "eva.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "eva.analyze",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "analysis_type": "technical_dependency_mapping",
+        "question": "Identifique vínculos comprovados, bloqueios e incertezas em ",
+        "parameters": "{}"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: analysis_type 'technical_dependency_mapping' não implementado.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 16598,
+  "error": null
+}

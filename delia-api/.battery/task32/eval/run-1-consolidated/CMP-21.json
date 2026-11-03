@@ -1,0 +1,22 @@
+{
+  "scenario_id": "CMP-21",
+  "specialist": "vista",
+  "run_number": 0,
+  "outcome": "PASS",
+  "first_divergence": "",
+  "capabilities_invoked": [
+    "vista.get_catalog"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "vista.get_catalog",
+      "status": "COMPLETED",
+      "args": {}
+    }
+  ],
+  "response_full_text": "Qual o painel específico que você deseja analisar para identificar os indicadores, sua definição, granularidade, período coberto, fonte e atualização, bem como os riscos de interpretação e o plano de validação necessários?",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [],
+  "elapsed_ms": 39413,
+  "error": null
+}

@@ -1,0 +1,29 @@
+{
+  "scenario_id": "CMP-12",
+  "specialist": "suri",
+  "run_number": 0,
+  "question_full_text": "SURI, avalie os tempos e estados de um ciclo de compra — solicitação, aprovação, pedido e recebimento — para o período recente, somente nas etapas publicadas pelas APIs autorizadas. Localize possíveis filas, exceções e retrabalhos com timestamps verificáveis; se uma etapa não estiver disponível, marque lacuna. Apresente cinco gargalos priorizados com evidências, cálculo do atraso, hipótese causal separada de fato e plano de melhoria de 30 dias. Nenhuma execução operacional.",
+  "outcome": "PASS",
+  "first_divergence": "",
+  "capabilities_invoked": [
+    "suri.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "suri.analyze",
+      "status": "COMPLETED",
+      "args": {
+        "analysis": "purchase_orders_summary",
+        "filters": "{'branch': ['01'], 'late_only': True}",
+        "sample_size": "50"
+      }
+    }
+  ],
+  "response_full_text": "A fonte retornou registros reais, mas eles não correspondem ao que foi pedido — não vou apresentá-los como resposta.",
+  "grounding": "GroundingStatus.GROUNDED",
+  "limitations": [
+    "insufficient_evidence"
+  ],
+  "elapsed_ms": 39840,
+  "error": null
+}

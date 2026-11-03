@@ -1,0 +1,28 @@
+{
+  "scenario_id": "CMP-08",
+  "specialist": "clara",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "clara.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "clara.analyze",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "analysis_type": "exposição a variações de receitas e custos",
+        "period": "30-90 dias",
+        "question": "avalie exposição a variações de receitas e custos para os pr"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: analysis_type desconhecido: 'exposição a variações de receitas e custos' — disponíveis: ['closing_blockers', 'report_comparison'].",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 15403,
+  "error": null
+}

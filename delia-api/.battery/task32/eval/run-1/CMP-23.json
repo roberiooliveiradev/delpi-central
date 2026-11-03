@@ -1,0 +1,22 @@
+{
+  "scenario_id": "CMP-23",
+  "specialist": "vista",
+  "run_number": 0,
+  "outcome": "PASS",
+  "first_divergence": "",
+  "capabilities_invoked": [
+    "vista.get_catalog"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "vista.get_catalog",
+      "status": "COMPLETED",
+      "args": {}
+    }
+  ],
+  "response_full_text": "Qual o identificador da playlist e qual o ID do slide que você deseja analisar para verificar se uma mesma métrica é apresentada de forma consistente em diferentes formatos ou painéis?",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [],
+  "elapsed_ms": 15125,
+  "error": null
+}

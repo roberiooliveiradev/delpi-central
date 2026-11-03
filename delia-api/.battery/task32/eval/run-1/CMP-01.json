@@ -1,0 +1,16 @@
+{
+  "scenario_id": "CMP-01",
+  "specialist": "caio",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "ADMISSION_ERROR",
+  "capabilities_invoked": [],
+  "invoke_statuses": [],
+  "response_full_text": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "owner_path_unbound"
+  ],
+  "elapsed_ms": 43465,
+  "error": null
+}

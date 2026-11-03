@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0}</style>
+<link rel="stylesheet" href="/apps/metalography/assets/style-BPdEkNx3.css">
+</head>
+<body>
+<div class="dashboard-metalography dashboard-page editor-active">
+<div class="toolbar">
+ <div class="toolbar-note"><strong>Relatório editável — A4.</strong> Salve para continuar a análise depois; os relatórios salvos ficam disponíveis na tela inicial.</div>
+ <div class="actions"><button class="secondary" type="button">← Página inicial</button><button class="save-button" type="button">Salvar relatório</button><button class="primary" type="button">Exportar PDF</button><button class="secondary" type="button">Imprimir</button></div>
+</div>
+<main class="sheet">
+ <header class="report-head">
+  <div class="logo-wrap"><img src="/apps/metalography/assets/delpi-logo-B6IBpObh.png" alt="Delpi — conexões elétricas"></div>
+  <div class="title-block"><h1>ANÁLISE METALOGRÁFICA<br>DE CRIMPAGEM</h1><p>Avaliação da seção transversal do terminal</p></div>
+  <div class="meta-card">
+   <div class="meta-field report-no"><label class="label">Relatório nº</label><input class="entry" placeholder="000001" readonly></div>
+   <div class="meta-field"><label class="label">Data</label><input class="entry" placeholder="DD/MM/AAAA"></div>
+   <div class="meta-field"><label class="label">Rev.</label><input class="entry" placeholder="—"></div>
+  </div>
+ </header>
+ <section class="sec">
+  <div class="sec-heading"><span class="sec-number">01</span><h2>Identificação da amostra</h2><p class="sub">Preencha os dados do terminal, cabo e processo avaliados.</p></div>
+  <div class="id-grid">
+   <div class="field-card"><label class="label">Terminal</label><input class="entry" placeholder="Código DELPI"></div>
+   <div class="field-card"><label class="label">Part number do terminal</label><input class="entry" placeholder="Número da peça"></div>
+   <div class="field-card"><label class="label">Produto ou chicote</label><input class="entry" placeholder="Código / revisão"></div>
+   <div class="field-card"><label class="label">Cabo</label><input class="entry" placeholder="Código DELPI / descrição"></div>
+   <div class="field-card"><label class="label">Seção do condutor</label><input class="entry" placeholder="mm² / AWG"></div>
+   <div class="field-card"><label class="label">Aplicador / ferramenta</label><input class="entry" placeholder="Identificação"></div>
+   <div class="field-card"><label class="label">Prensa / equipamento</label><input class="entry" placeholder="Identificação"></div>
+   <div class="field-card"><label class="label">Lote / ordem de produção</label><input class="entry" placeholder="Código / nº"></div>
+   <div class="field-card"><label class="label">Amostra analisada</label><input class="entry" placeholder="Nº da amostra / total"></div>
+  </div>
+ </section>
+ <section class="sec">
+  <div class="sec-heading"><span class="sec-number">02</span><h2>Análise da seção transversal</h2><p class="sub">Registre a micrografia original e a seção com análise visual.</p></div>
+  <div class="image-grid">
+   <article class="image-card"><div class="image-title">Micrografia original</div><div class="image-caption">Imagem óptica sem marcações</div><div class="image-frame"><div class="image-placeholder"><strong>INSERIR MICROGRAFIA</strong>Selecione a imagem obtida no microscópio</div></div><div class="upload-row"><span class="hint">Imagem óptica sem marcações</span><div class="upload-actions"><label>Selecionar imagem</label><button class="adjust-btn" disabled>Recortar / centralizar</button></div></div></article>
+   <article class="image-card"><div class="image-title">Seção com medições</div><div class="image-caption">Área avaliada e dimensões indicadas pelo software</div><div class="image-frame"><div class="image-placeholder"><strong>INSERIR IMAGEM DAS MEDIÇÕES</strong>Selecione a imagem com áreas e cotas identificadas</div></div><div class="upload-row"><span class="hint">Imagem da seção com medições</span><div class="upload-actions"><label>Selecionar imagem</label><button class="adjust-btn" disabled>Recortar / centralizar</button></div></div></article>
+  </div>
+ </section>
+ <section class="sec">
+  <div class="sec-heading"><span class="sec-number">03</span><h2>Resultados da medição</h2><p class="sub">Registre o critério aplicável e o valor obtido para cada característica.</p></div>
+  <div class="measure-layout">
+   <div class="measure-table">
+    <div class="th">Parâmetro</div><div class="th">Critério / tolerância</div><div class="th">Valor medido</div>
+    <div class="cell param">Altura de crimpagem (CH) [mm]</div><div class="cell"><input class="entry" placeholder="mín. – máx."></div><div class="cell"><input class="entry" placeholder="mm"></div>
+    <div class="cell param">Largura de crimpagem (CB) [mm]</div><div class="cell"><input class="entry" placeholder="mín. – máx."></div><div class="cell"><input class="entry" placeholder="mm"></div>
+    <div class="cell param">Porcentagem de vazios (AV) [%]</div><div class="cell"><input class="entry" placeholder="máx. %"></div><div class="cell"><input class="entry" placeholder="%"></div>
+    <div class="cell param">Altura da rebarba esquerda (GH-E) [mm]</div><div class="cell"><input class="entry" placeholder="máx. mm"></div><div class="cell"><input class="entry" placeholder="mm"></div>
+    <div class="cell param">Altura da rebarba direita (GH-D) [mm]</div><div class="cell"><input class="entry" placeholder="máx. mm"></div><div class="cell"><input class="entry" placeholder="mm"></div>
+   </div>
+   <figure class="diagram-card"><img src="/apps/metalography/assets/measurement-scheme-BY8_X57N.png" alt="Esquema"></figure>
+  </div>
+ </section>
+ <section class="sec">
+  <div class="sec-heading"><span class="sec-number">04</span><h2>Conclusão técnica</h2><p class="sub">Selecione o resultado final e registre observações ou desvios.</p></div>
+  <div class="verdict-card">
+   <div><div class="verdict-title">Resultado geral</div><div class="choices"><label class="choice"><input type="radio"><span>Conforme</span></label><label class="choice"><input type="radio"><span>Não conforme</span></label></div></div>
+   <div><div class="obs-label">Observações / desvios</div><textarea placeholder="Registre observações relevantes, desvios e/ou justificativas do resultado."></textarea></div>
+  </div>
+ </section>
+ <section class="sec">
+  <div class="sec-heading"><span class="sec-number">05</span><h2>Responsável pela análise</h2></div>
+  <div class="analyst-card"><label class="label">Análise realizada por</label><input class="entry" placeholder="Nome do responsável pela análise"></div>
+ </section>
+ <footer class="footer"><div><strong>DELPI&nbsp;&nbsp;|&nbsp;&nbsp;RELATÓRIO DE ANÁLISE METALOGRÁFICA</strong><small>Resultados referentes às amostras descritas neste documento.</small></div><div class="page">1 / 1</div></footer>
+</main>
+</div>
+</body>
+</html>

@@ -166,22 +166,10 @@ export function OperatorSessionProvider({
 
 /**
  * Chip de identidade no hero do cockpit: nome oficial + matrícula, ou o
- * acionador de identificação.
- *
- * `blockOperatorSwitch` (legado: hasActiveRun) bloqueia a troca só enquanto
- * a produção está **contando** neste posto. Parada aberta (automática ou
- * pausa) — inclusive aguardando motivo — **não** impede outro operador de
- * entrar: classificar motivo não é pré-requisito de identificação.
+ * acionador de identificação. hasActiveRun bloqueia a troca enquanto há
+ * produção em andamento no posto (handover não pertence à C4).
  */
-export function OperatorSessionChip({
-  hasActiveRun,
-  blockOperatorSwitch,
-}: {
-  /** @deprecated Preferir blockOperatorSwitch — mantido por compatibilidade. */
-  hasActiveRun?: boolean;
-  blockOperatorSwitch?: boolean;
-}) {
-  const blockedByProduction = blockOperatorSwitch ?? hasActiveRun ?? false;
+export function OperatorSessionChip({ hasActiveRun }: { hasActiveRun: boolean }) {
   const { session, status, logout, openIdentify } = useOperatorSession();
   const [blocked, setBlocked] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -209,7 +197,7 @@ export function OperatorSessionChip({
   }
 
   const requestSwitch = async () => {
-    if (blockedByProduction) {
+    if (hasActiveRun) {
       setBlocked(true);
       return;
     }
@@ -242,8 +230,8 @@ export function OperatorSessionChip({
       </button>
       {blocked ? (
         <p className="pcp-pub__operator-blocked" role="status">
-          Existe uma produção em contagem neste posto. Encerre a produção antes
-          de trocar o operador. Parada aguardando motivo não impede a troca.
+          Existe uma produção em andamento neste posto. Encerre a produção antes
+          de trocar o operador.
         </p>
       ) : null}
     </div>

@@ -1,0 +1,35 @@
+{
+  "scenario_id": "CMP-19",
+  "specialist": "teo",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "teo.analyze",
+    "teo.get_catalog"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "teo.analyze",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "view": "process_revision_comparison",
+        "limit": "5"
+      }
+    },
+    {
+      "capability_id": "teo.get_catalog",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "entity": "iniciativas com atrasos repetidos ou mudanças de prazo"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: processo_id is required for view 'process_revision_comparison'.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 21740,
+  "error": null
+}

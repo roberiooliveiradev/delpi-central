@@ -1,0 +1,22 @@
+{
+  "scenario_id": "CMP-23",
+  "specialist": "vista",
+  "run_number": 0,
+  "outcome": "PASS",
+  "first_divergence": "",
+  "capabilities_invoked": [
+    "vista.get_catalog"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "vista.get_catalog",
+      "status": "COMPLETED",
+      "args": {}
+    }
+  ],
+  "response_full_text": "Qual métrica específica você deseja verificar em diferentes formatos ou painéis publicados e quais cinco aspectos de definição e exibição devem ser comparados para garantir a coerência entre os relatórios?",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [],
+  "elapsed_ms": 15406,
+  "error": null
+}

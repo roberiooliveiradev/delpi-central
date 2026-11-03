@@ -1,0 +1,26 @@
+{
+  "scenario_id": "CMP-18",
+  "specialist": "teo",
+  "run_number": 0,
+  "outcome": "PASS",
+  "first_divergence": "CAPABILITY_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "teo.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "teo.analyze",
+      "status": "COMPLETED",
+      "args": {
+        "view": "processes"
+      }
+    }
+  ],
+  "response_full_text": "A fonte retornou registros reais, mas eles não correspondem ao que foi pedido — não vou apresentá-los como resposta.",
+  "grounding": "GroundingStatus.GROUNDED",
+  "limitations": [
+    "insufficient_evidence"
+  ],
+  "elapsed_ms": 54181,
+  "error": null
+}

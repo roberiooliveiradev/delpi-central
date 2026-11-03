@@ -24,7 +24,6 @@ import {
   piecesToOperatorUnit,
   resolveProductionRunProgress,
 } from "./productionRunProgress.ts";
-import { useOptionalCockpitActivityRefresh } from "./CockpitActivityContext";
 import { useOperatorSession } from "./OperatorSessionContext.ts";
 import { useProductionRun } from "./useProductionRun.ts";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime.ts";
@@ -58,7 +57,6 @@ export function ProductionRunControls({
   // consome; identificação/troca acontecem no nível do cockpit.
   const { session, status: sessionStatus, invalidate: invalidateSession, openIdentify } =
     useOperatorSession();
-  const refreshActivity = useOptionalCockpitActivityRefresh();
   const {
     run,
     runMatchesOperation,
@@ -534,7 +532,6 @@ export function ProductionRunControls({
             );
             setManualTarget(null);
             await refreshPending();
-            await refreshActivity();
             if (returnToPending) {
               setReturnToPending(false);
               setPendingModalOpen(true);
@@ -546,7 +543,6 @@ export function ProductionRunControls({
             return;
           }
           await classifyDowntime(reasonCode, note, modalDowntime?.id ?? null);
-          await refreshActivity();
           if (resumeFinishAfterClassifyRef.current) {
             resumeFinishAfterClassifyRef.current = false;
             handoff.open();

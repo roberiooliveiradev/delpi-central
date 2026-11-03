@@ -1,0 +1,14 @@
+{
+  "scenario_id": "CMP-20",
+  "specialist": "teo",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "ADMISSION_ERROR",
+  "capabilities_invoked": [],
+  "invoke_statuses": [],
+  "response_full_text": "Qual visão de análise você deseja utilizar para avaliar as iniciativas recentes e identificar as lacunas de medição?",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [],
+  "elapsed_ms": 13645,
+  "error": null
+}

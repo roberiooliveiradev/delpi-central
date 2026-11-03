@@ -1,0 +1,27 @@
+{
+  "scenario_id": "CMP-02",
+  "specialist": "caio",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "caio.get_context"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "caio.get_context",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "topic": "queda de compras nos últimos 180 dias",
+        "entity": "clientes e carteiras"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Entidade 'clientes e carteiras' desconhecida.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 15498,
+  "error": null
+}

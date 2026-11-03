@@ -1,0 +1,27 @@
+{
+  "scenario_id": "CMP-11",
+  "specialist": "suri",
+  "run_number": 0,
+  "question_full_text": "SURI, examine solicitações e pedidos de compra disponíveis que possam impactar as próximas seis semanas. Agrupe por item, prazo, status e dependência legítima; identifique duplicidades possíveis sem afirmar que são duplicatas sem identificadores e prova. Calcule saldo pendente e exposição de valor somente quando campos oficiais permitirem. Monte uma sequência sugerida de acompanhamento com cinco prioridades, indicadores, limites e dados faltantes. Não criar requisições nem aprovar compras.",
+  "outcome": "PASS",
+  "first_divergence": "",
+  "capabilities_invoked": [
+    "suri.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "suri.analyze",
+      "status": "COMPLETED",
+      "args": {
+        "analysis": "purchase_orders_summary",
+        "filters": "{'branch': ['01'], 'expected_delivery_from': '2024-01-01', '",
+        "sample_size": "50"
+      }
+    }
+  ],
+  "response_full_text": "Encontrei 5 registros:\n\n- Label: total_lines · Valor: 0\n- Label: total_open_value · Valor: 0.0\n- Label: late_lines · Valor: 0\n- Label: on_time_lines · Valor: 0\n- Label: no_date_lines · Valor: 0",
+  "grounding": "GroundingStatus.GROUNDED",
+  "limitations": [],
+  "elapsed_ms": 48705,
+  "error": null
+}

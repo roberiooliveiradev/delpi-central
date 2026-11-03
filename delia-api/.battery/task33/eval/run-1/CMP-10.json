@@ -1,0 +1,46 @@
+{
+  "scenario_id": "CMP-10",
+  "specialist": "suri",
+  "run_number": 0,
+  "question_full_text": "SURI, compare desempenho de fornecedores em janelas equivalentes dos últimos 180 dias por prazo, quantidade, incidência de atraso e valor das compras, conforme a fonte oficial permitir. Evite rankings sem denominadores comparáveis ou julgamentos não documentados. Apresente padrões de recorrência, cinco riscos e cinco oportunidades de melhoria com evidências de pedidos, premissas e recomendações de acompanhamento em 30 dias. Não enviar cobrança, avaliação formal ou mensagem a fornecedores.",
+  "outcome": "PASS",
+  "first_divergence": "CAPABILITY_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "davi.discover_delpi_information",
+    "davi.execute_delpi_information",
+    "suri.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "davi.discover_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "query": "consultar desempenho de fornecedores em janelas equivalentes"
+      }
+    },
+    {
+      "capability_id": "davi.execute_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "candidate_token": "eyJhY3Rpb25faWQiOiJyZWFkX2dvdmVybmVkX3RlY2huaWNhbF9rbm93bGVk",
+        "arguments": "{'topic': 'purchase_order_otd', 'corpus_version': 2, 'page':"
+      }
+    },
+    {
+      "capability_id": "suri.analyze",
+      "status": "COMPLETED",
+      "args": {
+        "analysis": "purchase_orders_summary",
+        "filters": "{'branch': ['01'], 'expected_delivery_from': '2024-04-01', '",
+        "sample_size": "50"
+      }
+    }
+  ],
+  "response_full_text": "Comparação inconclusiva.",
+  "grounding": "GroundingStatus.GROUNDED",
+  "limitations": [
+    "comparison_inconclusive"
+  ],
+  "elapsed_ms": 75079,
+  "error": null
+}

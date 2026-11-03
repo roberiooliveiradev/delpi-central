@@ -1,0 +1,5287 @@
+{
+ "summary": {
+  "executions": 47,
+  "model_calls": 311,
+  "input_tokens": 610366,
+  "output_tokens": 8609,
+  "outcomes": {
+   "PASS": 31,
+   "FAIL": 15,
+   "PARTIAL": 1
+  }
+ },
+ "runs": [
+  {
+   "scenario": "b_pino",
+   "run": 0,
+   "elapsed_ms": 50545,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Aqui estão 2 exemplos:\n\n- Código do produto: 10080683 · Descrição: TERMINAL PINO FEMEA 1,83MM 24-18AWG BRONZE DE FÓSFORO ESTANHADO - ROHS · Categoria do grupo: 1008\n- Código do produto: 10081935 · Descrição: TERMINAL PINO MACHO USINADO 16AWG COMP. 21,4MM S/ ISOLACAO GRANEL - WEIPU · Categoria do grupo: 1008\n\nA fonte informa 287 registros no total.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminal pino",
+      "scope_constraints": {},
+      "answer_requirements": {
+       "min_items": 2
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1158,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 862,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar terminais pino",
+       "top_k": "2"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 411,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar terminais pino",
+      "top_k": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal pino', 'page_size': 2}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10080683",
+     "10081935",
+     "23-516",
+     "23.105",
+     "23.208",
+     "23.107",
+     "23.121",
+     "23.123",
+     "30193436",
+     "10090025"
+    ],
+    "pertinent_codes": [
+     "10080683",
+     "10081935",
+     "23-516",
+     "23.105",
+     "23.208",
+     "23.107",
+     "23.121",
+     "23.123",
+     "30193436",
+     "10090025"
+    ],
+    "names": [
+     "TERMINAL PINO FEMEA 1,83MM 24-18AWG BRONZE DE FÓSFORO ESTANHADO - ROHS",
+     "TERMINAL PINO MACHO USINADO 16AWG COMP. 21,4MM S/ ISOLACAO GRANEL - WEIPU",
+     "DISPOSITIVO P/ CRIMPAGEM DE TERMINAL PINO",
+     "MINI APLICADOR LATERAL \"TERMINAL PINO MACHO RED.\"",
+     "MINI APLICADOR LATERAL \"TERMINAL PINO MACHO RED.\"",
+     "MINI APLICADOR LATERAL \"TERMINAL PINO PLUGUE RED.\"",
+     "MINI APLICADOR LATERAL \"TERMINAL PINO\"",
+     "MINI APLICADOR LATERAL \"TERMINAL PINO''",
+     "PINO POSICIONDOR DO TERMINAL",
+     "PROTETOR PARA TERMINAL PINO"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "b_illustrative",
+   "run": 0,
+   "elapsed_ms": 33353,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "record_read",
+      "goal_class": "read",
+      "business_subject": "terminal",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {
+       "min_items": 2
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5995,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 4691,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "action": "search",
+       "entity": "process",
+       "q": "terminal",
+       "page_size": "2"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.record_read",
+     "arg_keys": [
+      "action",
+      "entity",
+      "page_size",
+      "q"
+     ],
+     "args": {
+      "action": "search",
+      "entity": "process",
+      "q": "terminal",
+      "page_size": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": null,
+    "invoked_caps": [
+     "teo.record_read"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "c_davi_explicit",
+   "run": 0,
+   "elapsed_ms": 23059,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "result_truncated"
+   ],
+   "content": "Aqui estão 1 exemplos:\n\n- Código do produto: 10080092 · Descrição: TERM. BALA 0,50-2,27MM2 ESTANHADO CARRETEL S/ISOLACAO · Categoria do grupo: 1008\n\nExibindo 1 de 6 registros retornados.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminal bala",
+      "answer_requirements": {
+       "min_items": 1
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1158,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 862,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "encontrar terminal bala",
+       "top_k": "10"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 958,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "encontrar terminal bala",
+      "top_k": "10"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal bala'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "c_teo_explicit",
+   "run": 0,
+   "elapsed_ms": 19303,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "helpdesk_read",
+      "goal_class": "read",
+      "business_subject": "processo",
+      "scope_constraints": {
+       "sort": "newest_first"
+      },
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "ordering": "newest_first"
+      },
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5997,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2388,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "action": "tickets",
+       "sort": "updated_at",
+       "order": "desc",
+       "limit": "1"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2388,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "action": "tickets",
+       "sort": "updated_at",
+       "order": "desc",
+       "limit": "1"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "c_vista_explicit",
+   "run": 0,
+   "elapsed_ms": 16324,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5093,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "list_playlists",
+      "goal_class": "read",
+      "business_subject": "playlist",
+      "answer_requirements": {
+       "min_items": null,
+       "ordering": null,
+       "complete_coverage": false
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5351,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.list_playlists",
+     "arg_keys": [
+      "limit",
+      "offset"
+     ],
+     "args": {
+      "limit": "50",
+      "offset": "0"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "vista.list_playlists"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "a_playlist_ctx",
+   "run": 0,
+   "elapsed_ms": 32279,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5093,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5427,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5313,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5040,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5374,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 1310,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1213,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GOAL_INTERPRETATION",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "a_playlist_noctx",
+   "run": 0,
+   "elapsed_ms": 29445,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5093,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5427,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5313,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5040,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5374,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 1310,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1213,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GOAL_INTERPRETATION",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "d_catalog_exec",
+   "run": 0,
+   "elapsed_ms": 25898,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "result_truncated"
+   ],
+   "content": "Aqui estão 1 exemplos:\n\n- Código do produto: 10080092 · Descrição: TERM. BALA 0,50-2,27MM2 ESTANHADO CARRETEL S/ISOLACAO · Categoria do grupo: 1008\n\nExibindo 1 de 6 registros retornados.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminal bala",
+      "answer_requirements": {
+       "min_items": 1
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1158,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 862,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "consultar produtos terminal bala",
+       "top_k": "1"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 958,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "consultar produtos terminal bala",
+      "top_k": "1"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal bala', 'page': 1, 'page_size': 50}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "d_catalog_only",
+   "run": 0,
+   "elapsed_ms": 2187,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Discover governed DELPI business data — products, materials, parts, registers, records and other entities exposed by eligible DELPI read surfaces. Find the READ capability that bes\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_workspace_context: Current Transformômetro workspace the user is viewing (process/instance/revision/area refs). Navigation hint only — never domain truth, never authorization. For 'this process', 'cu\n  - get_catalog: Discovery catalog: entities, workflows, analysis, registration_guide, diagram_catalog, capability_surface. Use before writes. Optional entity (e.g. decomposition_tree) returns only\n  - get_methodology_guide: READ-only TÉO process-methodology playbooks. Optional method (macroprocess, key_process, end_to_end, sipoc, lean, ishikawa, five_whys, ctp, tdr, kpi, swot, as_is, to_be) and/or tas\n  - get_product_guide: READ-only product usage guidance for Portal/Transformômetro features — how/when/why to use a capability correctly (GUIDANCE, never domain truth, AuthZ or execution policy; live con\n  - solution_read: READ-only Minha DELPI solution intelligence (Core metadata). action=catalog: discovery of ALL registered active solutions — id, name, description, category, routes, features, permi\n- VISTA:\n  - list_playlists: Lista as programações (playlists) do TV Dashboard visíveis ao usuário autenticado, com paginação. Ponto de partida para descobrir playlist_id canônico.\n  - get_playlist_context: Retorna o contexto compacto de uma programação: identidade, telas, blocos, filtros e revisão — sem conteúdo pesado de renderização. Opcionalmente foca uma fonte de dados legada (da\n  - get_",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "e_proc_followup",
+   "run": 0,
+   "elapsed_ms": 13955,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "prior_turn_evidence_only"
+   ],
+   "content": "O processo mais recente é PROC-0105 — G5 E2E Processo g5e2e-mvb3ecyu, atualizado em 16/10/2026.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.turn_goal",
+     "block_len": 2,
+     "block_valid": true,
+     "proposal": {
+      "goal_class": "read",
+      "business_subject": "processo PROC-0105",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": true,
+      "comparison_requested": false,
+      "answer_requirements": null,
+      "output_mode": "snapshot",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.grounded_synthesis",
+     "block_len": 167,
+     "block_valid": true,
+     "proposal": {
+      "items": 1
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "e_prod_followup",
+   "run": 0,
+   "elapsed_ms": 14210,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "prior_turn_evidence_only",
+    "insufficient_evidence"
+   ],
+   "content": "Com as evidências disponíveis não consigo responder a esse pedido de forma fundamentada. O que a fonte retornou não sustenta a conclusão pedida — não invento dados para completar a resposta.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.turn_goal",
+     "block_len": 2,
+     "block_valid": true,
+     "proposal": {
+      "goal_class": "read",
+      "business_subject": "terminal bala",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": true,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 2
+      },
+      "output_mode": "snapshot",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.grounded_synthesis",
+     "block_len": 189,
+     "block_valid": true,
+     "proposal": {
+      "items": 3
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ord_latest",
+   "run": 0,
+   "elapsed_ms": 42968,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_process_timeline",
+      "goal_class": "read",
+      "business_subject": "processo",
+      "scope_constraints": {
+       "ordering": "newest_first"
+      },
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 1,
+       "ordering": "newest_first"
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5542,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "read",
+      "business_subject": "processo",
+      "scope_constraints": {
+       "ordering": "newest_first"
+      },
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "ordering": "newest_first"
+      },
+      "output_mode": "dynamic",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5987,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2266,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "view": "processes",
+       "limit": "1",
+       "ordering": "newest_first"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2266,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "view": "processes",
+       "limit": "1",
+       "ordering": "newest_first"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "b_bala_phrase",
+   "run": 0,
+   "elapsed_ms": 24677,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Aqui estão 2 exemplos:\n\n- Código do produto: 10080092 · Descrição: TERM. BALA 0,50-2,27MM2 ESTANHADO CARRETEL S/ISOLACAO · Categoria do grupo: 1008\n- Código do produto: 10081004 · Descrição: TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE · Categoria do grupo: 1008\n\nA fonte informa 6 registros no total.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminal bala",
+      "scope_constraints": {},
+      "answer_requirements": {
+       "min_items": 2
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1158,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 862,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar terminais bala por descrição fusível",
+       "top_k": "2"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 380,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar terminais bala por descrição fusível",
+      "top_k": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal bala', 'page_size': 2}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10080092",
+     "10081004",
+     "10080681",
+     "10081844",
+     "10081845",
+     "10080624"
+    ],
+    "pertinent_codes": [
+     "10080092",
+     "10081004",
+     "10080681",
+     "10081844",
+     "10081845",
+     "10080624"
+    ],
+    "names": [
+     "TERM. BALA 0,50-2,27MM2 ESTANHADO CARRETEL S/ISOLACAO",
+     "TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE",
+     "TERM. BALA 20-16AWG NU FITADO FEMEA",
+     "TERM. BALA FEMEA 1,50-2,50 MM² COMP. 23,5 LATÃO ESTANHADO C/ ISOLAMENTO GRANEL - ROHS",
+     "TERM. BALA MACHO 1,50-2,50MM2 COMP 23,50MM ESTANHADO C/ISOLACAO GRANEL ROHS",
+     "TERM. FEMEA 14-18AWG ESTANHADO FITADO S/ISOLACAO DIAM 3,96MM CONTRA PECA BALA MACHO"
+    ],
+    "total": 6
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "b_faston",
+   "run": 0,
+   "elapsed_ms": 31295,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A fonte retornou registros reais, mas eles não correspondem ao que foi pedido — não vou apresentá-los como resposta.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "conector faston",
+      "scope_constraints": {},
+      "answer_requirements": {
+       "min_items": 3
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1160,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 864,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar conectores faston",
+       "top_k": "3"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 348,
+     "block_valid": true,
+     "proposal": {}
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5705,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1594,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1790,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 1628,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "tipos de conector faston",
+       "top_k": "3"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 348,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar conectores faston",
+      "top_k": "3"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'page_size': 3}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "tipos de conector faston",
+      "top_k": "3"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'page_size': 3}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10091365",
+     "10091572",
+     "10090981",
+     "10090982",
+     "10090980",
+     "10090141",
+     "10091019",
+     "10091020"
+    ],
+    "pertinent_codes": [
+     "10091365",
+     "10091572",
+     "10090981",
+     "10090982",
+     "10090980",
+     "10090141",
+     "10091019",
+     "10091020"
+    ],
+    "names": [
+     "CONECTOR ALOJAMENTO 2 VIAS NU P/ TERM FASTON ROHS",
+     "CONECTOR RAST5 4 VIAS BN PORTA FASTON FEMEA QUARTA CASA BLOQUEADA",
+     "CONECTOR RAST5 4 VIAS BN PORTA FASTON FEMEA SEGUNDA CASA BLOQUEADA",
+     "CONECTOR RAST5 4 VIAS NU PORTA FASTON FEMEA PRIMEIRA CASA BLOQUEADA",
+     "CONECTOR RAST5 8 VIAS BN PORTA FASTON FEMEA",
+     "CONECTOR RETO 4 VIAS NU 2X2 FASTON FEMEA 6,3MM",
+     "CONECTOR RETO FEMEA 3 VIAS NU FASTON",
+     "CONECTOR RETO FEMEA 4 VIAS NU FASTON"
+    ],
+    "total": 8
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "EVIDENCE_REJECTION",
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "neg_sentimento",
+   "run": 0,
+   "elapsed_ms": 25239,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Entity 'sentimento' has no registered write schema.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_methodology_guide",
+      "goal_class": "read",
+      "business_subject": "sentimento",
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {
+       "min_items": 2
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5796,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 536,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "entity": "sentimento"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [
+      "entity"
+     ],
+     "args": {
+      "entity": "sentimento"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": null,
+    "invoked_caps": [
+     "teo.get_catalog"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "neg_planetas",
+   "run": 0,
+   "elapsed_ms": 16672,
+   "error": "invalid_model_output",
+   "grounding": "",
+   "limitations": [],
+   "content": "",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "FAILED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "hypothetical",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "",
+    "error": "invalid_model_output"
+   }
+  },
+  {
+   "scenario": "ctrl_oi",
+   "run": 0,
+   "elapsed_ms": 4885,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Olá! Como posso ajudar você hoje?",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ctrl_sipoc",
+   "run": 0,
+   "elapsed_ms": 8247,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "SIPOC é um mapa de processos que define os principais elementos de um processo de negócio, abreviando as siglas: Supplier (Fornecedor), Input (Entrada), Process (Processo), Output (Saída) e Customer (Cliente). É uma ferramenta utilizada para mapear e entender os limites de um processo, facilitando a comunicação e a análise de fluxos operacionais.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "explanation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "surf_inquiry",
+   "run": 0,
+   "elapsed_ms": 1642,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Discover governed DELPI business data — products, materials, parts, registers, records and other entities exposed by eligible DELPI read surfaces. Find the READ capability that bes\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_workspace_context: Current Transformômetro workspace the user is viewing (process/instance/revision/area refs). Navigation hint only — never domain truth, never authorization. For 'this process', 'cu\n  - get_catalog: Discovery catalog: entities, workflows, analysis, registration_guide, diagram_catalog, capability_surface. Use before writes. Optional entity (e.g. decomposition_tree) returns only\n  - get_methodology_guide: READ-only TÉO process-methodology playbooks. Optional method (macroprocess, key_process, end_to_end, sipoc, lean, ishikawa, five_whys, ctp, tdr, kpi, swot, as_is, to_be) and/or tas\n  - get_product_guide: READ-only product usage guidance for Portal/Transformômetro features — how/when/why to use a capability correctly (GUIDANCE, never domain truth, AuthZ or execution policy; live con\n  - solution_read: READ-only Minha DELPI solution intelligence (Core metadata). action=catalog: discovery of ALL registered active solutions — id, name, description, category, routes, features, permi\n- VISTA:\n  - list_playlists: Lista as programações (playlists) do TV Dashboard visíveis ao usuário autenticado, com paginação. Ponto de partida para descobrir playlist_id canônico.\n  - get_playlist_context: Retorna o contexto compacto de uma programação: identidade, telas, blocos, filtros e revisão — sem conteúdo pesado de renderização. Opcionalmente foca uma fonte de dados legada (da\n  - get_",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "c_teo_proc_id",
+   "run": 0,
+   "elapsed_ms": 15635,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Erro interno do servidor.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_process_context",
+      "goal_class": "read",
+      "business_subject": "processo",
+      "scope_constraints": {
+       "process_id": "PROC-0105"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5792,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 557,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "process_id": "PROC-0105"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 534,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "entity": "processo"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_process_context",
+     "arg_keys": [
+      "process_id"
+     ],
+     "args": {
+      "process_id": "PROC-0105"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [
+      "entity"
+     ],
+     "args": {
+      "entity": "processo"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "teo.get_catalog",
+     "teo.get_process_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "missing_email",
+   "run": 0,
+   "elapsed_ms": 14581,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Não posso enviar emails diretamente, mas posso ajudar a preparar o conteúdo do email. Por favor, forneça os detalhes necessários, como o assunto, a mensagem e os destinatários.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "capability_group_id": null
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ambig_proc",
+   "run": 0,
+   "elapsed_ms": 22420,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Erro interno do servidor.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_process_context",
+      "goal_class": "read",
+      "business_subject": "processo",
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {
+       "min_items": 1
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5536,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_process_timeline",
+      "goal_class": "read",
+      "business_subject": "processo",
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {
+       "min_items": 1
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5792,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 600,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "process_id": "processo"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 534,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "entity": "processo"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_process_context",
+     "arg_keys": [
+      "process_id"
+     ],
+     "args": {
+      "process_id": "processo"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [
+      "entity"
+     ],
+     "args": {
+      "entity": "processo"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "teo.get_catalog",
+     "teo.get_process_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "biz_bala3",
+   "run": 0,
+   "elapsed_ms": 23995,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Aqui estão 3 exemplos:\n\n- Código do produto: 10080092 · Descrição: TERM. BALA 0,50-2,27MM2 ESTANHADO CARRETEL S/ISOLACAO · Categoria do grupo: 1008\n- Código do produto: 10081004 · Descrição: TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE · Categoria do grupo: 1008\n- Código do produto: 10080681 · Descrição: TERM. BALA 20-16AWG NU FITADO FEMEA · Categoria do grupo: 1008\n\nA fonte informa 6 registros no total.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminal bala",
+      "scope_constraints": {},
+      "answer_requirements": {
+       "min_items": 3
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1158,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 862,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar terminais bala",
+       "top_k": "3"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 490,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar terminais bala",
+      "top_k": "3"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal bala', 'page_size': 3}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10080092",
+     "10081004",
+     "10080681",
+     "10081844",
+     "10081845",
+     "10080624"
+    ],
+    "pertinent_codes": [
+     "10080092",
+     "10081004",
+     "10080681",
+     "10081844",
+     "10081845",
+     "10080624"
+    ],
+    "names": [
+     "TERM. BALA 0,50-2,27MM2 ESTANHADO CARRETEL S/ISOLACAO",
+     "TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE",
+     "TERM. BALA 20-16AWG NU FITADO FEMEA",
+     "TERM. BALA FEMEA 1,50-2,50 MM² COMP. 23,5 LATÃO ESTANHADO C/ ISOLAMENTO GRANEL - ROHS",
+     "TERM. BALA MACHO 1,50-2,50MM2 COMP 23,50MM ESTANHADO C/ISOLACAO GRANEL ROHS",
+     "TERM. FEMEA 14-18AWG ESTANHADO FITADO S/ISOLACAO DIAM 3,96MM CONTRA PECA BALA MACHO"
+    ],
+    "total": 6
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 3,
+    "oracle_codes": 6,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminal bala",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "biz_o2_2",
+   "run": 0,
+   "elapsed_ms": 22198,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Aqui estão 2 exemplos:\n\n- Código do produto: 30190123 · Descrição: # · Categoria do grupo: 3019\n- Código do produto: 30190125 · Descrição: # · Categoria do grupo: 3019\n\nA fonte informa 55357 registros no total.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminal O2",
+      "scope_constraints": {},
+      "answer_requirements": {
+       "min_items": 2
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1156,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 860,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar terminais O2",
+       "top_k": "2"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 268,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar terminais O2",
+      "top_k": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal O2', 'page_size': 2}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'page_size': 2}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [],
+    "pertinent_codes": [],
+    "names": [],
+    "total": 0
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "FABRICATED_ABSENCE",
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminal O2",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "biz_pino",
+   "run": 0,
+   "elapsed_ms": 20839,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Aqui estão 2 exemplos:\n\n- Código do produto: 10080683 · Descrição: TERMINAL PINO FEMEA 1,83MM 24-18AWG BRONZE DE FÓSFORO ESTANHADO - ROHS · Categoria do grupo: 1008\n- Código do produto: 10081935 · Descrição: TERMINAL PINO MACHO USINADO 16AWG COMP. 21,4MM S/ ISOLACAO GRANEL - WEIPU · Categoria do grupo: 1008\n\nA fonte informa 287 registros no total.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminal pino",
+      "answer_requirements": {
+       "min_items": 2
+      },
+      "output_mode": "dynamic"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1154,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 862,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar terminais pino",
+       "top_k": "2"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 411,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar terminais pino",
+      "top_k": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal pino', 'page_size': 2}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10080683",
+     "10081935",
+     "23-516",
+     "23.105",
+     "23.208",
+     "23.107",
+     "23.121",
+     "23.123",
+     "30193436",
+     "10090025"
+    ],
+    "pertinent_codes": [
+     "10080683",
+     "10081935",
+     "23-516",
+     "23.105",
+     "23.208",
+     "23.107",
+     "23.121",
+     "23.123",
+     "30193436",
+     "10090025"
+    ],
+    "names": [
+     "TERMINAL PINO FEMEA 1,83MM 24-18AWG BRONZE DE FÓSFORO ESTANHADO - ROHS",
+     "TERMINAL PINO MACHO USINADO 16AWG COMP. 21,4MM S/ ISOLACAO GRANEL - WEIPU",
+     "DISPOSITIVO P/ CRIMPAGEM DE TERMINAL PINO",
+     "MINI APLICADOR LATERAL \"TERMINAL PINO MACHO RED.\"",
+     "MINI APLICADOR LATERAL \"TERMINAL PINO MACHO RED.\"",
+     "MINI APLICADOR LATERAL \"TERMINAL PINO PLUGUE RED.\"",
+     "MINI APLICADOR LATERAL \"TERMINAL PINO\"",
+     "MINI APLICADOR LATERAL \"TERMINAL PINO''",
+     "PINO POSICIONDOR DO TERMINAL",
+     "PROTETOR PARA TERMINAL PINO"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 2,
+    "oracle_codes": 10,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminal pino",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "biz_code",
+   "run": 0,
+   "elapsed_ms": 19304,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "Encontrei registros, mas a fonte não confirma que eles cobrem todo o conjunto — não posso garantir que este seja o resultado definitivo.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "produto",
+      "scope_constraints": {
+       "identifier": "10080092"
+      },
+      "answer_requirements": {
+       "complete_coverage": true
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1152,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 867,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "detalhes do produto código 10080092",
+       "top_k": "1"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "detalhes do produto código 10080092",
+      "top_k": "1"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJnZXRfcHJvZHVjdF9kZXRhaWwiLCJhY3Rvcl9pZCI6",
+      "arguments": "{'code': '10080092'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10080092"
+    ],
+    "pertinent_codes": [
+     "10080092"
+    ],
+    "names": [
+     "TERM. BALA 0,50-2,27MM2 ESTANHADO CARRETEL S/ISOLACAO"
+    ],
+    "total": 1
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "INCONCLUSIVE",
+    "oracle_hits": 0,
+    "oracle_codes": 1,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "produto",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "nom_colloq",
+   "run": 0,
+   "elapsed_ms": 23654,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "ilhó",
+      "scope_constraints": {
+       "query": "cabo de 4 milímetros"
+      },
+      "answer_requirements": {
+       "min_items": 1
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1149,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 853,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "ilhós pra cabo de 4 milímetros",
+       "top_k": "10"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "ilhós pra cabo de 4 milímetros",
+      "top_k": "10"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'ilhós pra cabo de 4 milímetros'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'ilhós pra cabo de 4 milímetros', 'page_size"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [],
+    "pertinent_codes": [],
+    "names": [],
+    "total": 0
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "ilhó",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "nom_technical",
+   "run": 0,
+   "elapsed_ms": 23880,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Aqui estão 1 exemplos:\n\n- Código do produto: 10080092 · Descrição: TERM. BALA 0,50-2,27MM2 ESTANHADO CARRETEL S/ISOLACAO · Categoria do grupo: 1008",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "TERM. BALA 0,50-2,27MM2",
+      "answer_requirements": {
+       "min_items": 1
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1168,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 872,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição TERM. BALA 0,50-2,27MM2",
+       "top_k": "10"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 256,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição TERM. BALA 0,50-2,27MM2",
+      "top_k": "10"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'TERM. BALA 0,50-2,27MM2', 'page': 1, 'page_"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10080092",
+     "10081004",
+     "10080681",
+     "10081844",
+     "10081845",
+     "10080624"
+    ],
+    "pertinent_codes": [
+     "10080092",
+     "10081004",
+     "10080681",
+     "10081844",
+     "10081845",
+     "10080624"
+    ],
+    "names": [
+     "TERM. BALA 0,50-2,27MM2 ESTANHADO CARRETEL S/ISOLACAO",
+     "TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE",
+     "TERM. BALA 20-16AWG NU FITADO FEMEA",
+     "TERM. BALA FEMEA 1,50-2,50 MM² COMP. 23,5 LATÃO ESTANHADO C/ ISOLAMENTO GRANEL - ROHS",
+     "TERM. BALA MACHO 1,50-2,50MM2 COMP 23,50MM ESTANHADO C/ISOLACAO GRANEL ROHS",
+     "TERM. FEMEA 14-18AWG ESTANHADO FITADO S/ISOLACAO DIAM 3,96MM CONTRA PECA BALA MACHO"
+    ],
+    "total": 6
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PARTIAL",
+    "first_divergent": "INCONCLUSIVE",
+    "oracle_hits": 1,
+    "oracle_codes": 6,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "TERM. BALA 0,50-2,27MM2",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "nom_incomplete",
+   "run": 0,
+   "elapsed_ms": 24956,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminal",
+      "scope_constraints": {
+       "attribute": "fio de 2,5mm"
+      },
+      "answer_requirements": {
+       "min_items": 1
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1153,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 857,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "terminal pra fio de 2,5mm",
+       "top_k": "10"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "terminal pra fio de 2,5mm",
+      "top_k": "10"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal pra fio de 2,5mm'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal pra fio de 2,5mm', 'page_size': 50"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10090181",
+     "10080642",
+     "10081799",
+     "10081186",
+     "80002437",
+     "80015595",
+     "80015594",
+     "80015592",
+     "80015593",
+     "10081007"
+    ],
+    "pertinent_codes": [
+     "10090181",
+     "10080642",
+     "10081799",
+     "10081186",
+     "80002437",
+     "80015595",
+     "80015594",
+     "80015592",
+     "80015593",
+     "10081007"
+    ],
+    "names": [
+     "CONECTOR RETO 2 VIAS BN PASSO 2,5MM P/TERMINAL CRIMP POLARIDADA V-0",
+     "TERM. MIZU P-25 2,5MM (REF.PK-50038-001)",
+     "TERM. PINO 2,5MM FEMEA 0,75-1,00MM ESTANHADO S/ISOLACAO FITADO P/ CONECTOR HDY0214A-2-21",
+     "TERM. PINO MACHO 15-13AWG 1,5-2,5MM ESPESSURA 1,50MM ESTANHADO S/ISOLACAO FITADO ROHS",
+     "CABO DE LIG. 2,5MM² 390MM C/ TERM. OLHAL Ø 4MM \"879 06\"",
+     "CABO KDJ 2,5MM² 150MM C/ TERM. OLHAL M6 E M5 OV3157",
+     "CABO KDJ 2,5MM² 200MM C/ TERM. OLHAL M6 E M5 OV3157",
+     "CABO KDJ 2,5MM² 300MM C/ TERM. LINGUETA  E DECAPE 10MM OV3157",
+     "CABO KDJ 2,5MM² 480MM C/ TERM. OLHAL M6 E M5 OV3157",
+     "TERM M F 1,5 - 2,5MM2 ESTANHADO S PARA FUSIVEL LAMINA"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "INCONCLUSIVE",
+    "oracle_hits": 0,
+    "oracle_codes": 10,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminal",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "nom_multi",
+   "run": 0,
+   "elapsed_ms": 25366,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminal tubular pré-isolado azul 2,5mm",
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {
+       "min_items": 1
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1184,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 888,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "terminal tubular pré-isolado azul 2,5mm",
+       "top_k": "10"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "terminal tubular pré-isolado azul 2,5mm",
+      "top_k": "10"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal tubular pré-isolado azul 2,5mm', '"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [],
+    "pertinent_codes": [],
+    "names": [],
+    "total": 0
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminal tubular pré-isolado azul 2,5mm",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "cont_explicit",
+   "run": 0,
+   "elapsed_ms": 28502,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.turn_goal",
+     "block_len": 2,
+     "block_valid": true,
+     "proposal": {
+      "goal_class": "read",
+      "business_subject": "terminal bala 4mm",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 2
+      },
+      "output_mode": "snapshot",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5707,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 938,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1159,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 866,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar terminais bala 4mm",
+       "top_k": "2"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar terminais bala 4mm",
+      "top_k": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal bala 4mm', 'page_size': 2}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [],
+    "pertinent_codes": [],
+    "names": [],
+    "total": 0
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminal bala 4mm",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "cont_prior",
+   "run": 0,
+   "elapsed_ms": 22347,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Aqui estão 2 exemplos:\n\n- Código do produto: 30190123 · Descrição: # · Categoria do grupo: 3019\n- Código do produto: 30190125 · Descrição: # · Categoria do grupo: 3019\n\nA fonte informa 55357 registros no total.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.turn_goal",
+     "block_len": 2,
+     "block_valid": true,
+     "proposal": {
+      "goal_class": "read",
+      "business_subject": "terminal bala",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 2
+      },
+      "output_mode": "snapshot",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5703,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 934,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1155,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 862,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "terminal bala",
+       "top_k": "2"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 270,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "terminal bala",
+      "top_k": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'page_size': 2}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10080092",
+     "10081004",
+     "10080681",
+     "10081844",
+     "10081845",
+     "10080624"
+    ],
+    "pertinent_codes": [
+     "10080092",
+     "10081004",
+     "10080681",
+     "10081844",
+     "10081845",
+     "10080624"
+    ],
+    "names": [
+     "TERM. BALA 0,50-2,27MM2 ESTANHADO CARRETEL S/ISOLACAO",
+     "TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE",
+     "TERM. BALA 20-16AWG NU FITADO FEMEA",
+     "TERM. BALA FEMEA 1,50-2,50 MM² COMP. 23,5 LATÃO ESTANHADO C/ ISOLAMENTO GRANEL - ROHS",
+     "TERM. BALA MACHO 1,50-2,50MM2 COMP 23,50MM ESTANHADO C/ISOLACAO GRANEL ROHS",
+     "TERM. FEMEA 14-18AWG ESTANHADO FITADO S/ISOLACAO DIAM 3,96MM CONTRA PECA BALA MACHO"
+    ],
+    "total": 6
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "INCONCLUSIVE",
+    "oracle_hits": 0,
+    "oracle_codes": 6,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminal bala",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "cont_obs",
+   "run": 0,
+   "elapsed_ms": 15883,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "prior_turn_evidence_only",
+    "insufficient_evidence"
+   ],
+   "content": "Com as evidências disponíveis não consigo responder a esse pedido de forma fundamentada. O que a fonte retornou não sustenta a conclusão pedida — não invento dados para completar a resposta.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.turn_goal",
+     "block_len": 2,
+     "block_valid": true,
+     "proposal": {
+      "goal_class": "read",
+      "business_subject": "terminal bala",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": true,
+      "comparison_requested": false,
+      "answer_requirements": {
+       "min_items": 0,
+       "complete_coverage": false
+      },
+      "output_mode": "snapshot",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.grounded_synthesis",
+     "block_len": 202,
+     "block_valid": true,
+     "proposal": {
+      "items": 4
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": "terminal bala",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "cont_nonauth",
+   "run": 0,
+   "elapsed_ms": 20245,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora porque a requisição não foi validada contra as operações autorizadas no momento. Para obter informações sobre terminais, é necessário que a solicitação seja processada pela camada de orquestração, que verifica se há permissão e recursos disponíveis para atendê-la.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.turn_goal",
+     "block_len": 2,
+     "block_valid": true,
+     "proposal": {
+      "goal_class": "clarify",
+      "business_subject": null,
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": null,
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "capability_group_id": null
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "guide_term",
+   "run": 0,
+   "elapsed_ms": 11464,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Um terminal bala é um tipo de terminal de carga e descarga de navios, geralmente utilizado para o transporte de produtos líquidos ou semi-líquidos, como petróleo, derivados do petróleo, químicos e outras substâncias similares. Ele é projetado para permitir a transferência segura e eficiente desses produtos entre o navio e as instalações de armazenamento ou processamento em terra, possuindo estruturas específicas para lidar com pressões e temperaturas variáveis, além de sistemas de segurança para evitar vazamentos ou acidentes.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "explanation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": false,
+    "interaction_class": "explanation",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "guide_proc",
+   "run": 0,
+   "elapsed_ms": 41694,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Título:\nMelhoria / Instância operacional\n\nResumo:\nA ocorrência operacional do processo: processo × unidade × setor(es). É a entidade que representa a melhoria operacional no produto.\n\nFinalidade:\nEnsinar que 'melhoria' no Portal corresponde à entity instance, quando criá-la e como registrar escopo, fase e responsáveis com qualidade.\n\nOrientação de uso:\n- O usuário quer cadastrar uma melhoria concreta numa unidade/setor\n- É preciso acompanhar fase, prioridade e responsável local de uma implantação\n- O processo-mestre já existe e vai ganhar uma ocorrência operacional\n\nInstruções de uso:\n- Exige ao menos um setor; informe filial_id OU marque todas_filiais_ativas para escopo corporativo\n- Preencha resumo_melhoria com o que muda e por quê\n- Use fase e prioridade conforme os enums do contrato\n- responsavel_local e data_alvo_go_live somente quando forem dados reais\n- contexto operacional é documento estruturado validado — update apenas, conforme contrato\n\nRestrições de uso:\n- O usuário quer criar um novo cenário de cálculo — isso é revision, não nova instance\n- O pedido é sobre o processo de negócio em geral — isso é process\n- Não duplicar uma instance só para criar outra revisão/cenário",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_product_guide",
+      "goal_class": "read",
+      "business_subject": "produto",
+      "answer_requirements": {
+       "min_items": 1
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 6000,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.index_select",
+     "block_len": 6029,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_product_guide",
+     "arg_keys": [],
+     "args": {},
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_product_guide",
+     "arg_keys": [
+      "topic"
+     ],
+     "args": {
+      "topic": "instance"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [
+     "teo.get_product_guide"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:teo",
+    "proposed_cap": "get_product_guide",
+    "chosen_group": "mcp:teo",
+    "chosen_cap": "get_product_guide",
+    "business_subject": "produto",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "guide_caps",
+   "run": 0,
+   "elapsed_ms": 9824,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Discover governed DELPI business data — products, materials, parts, registers, records and other entities exposed by eligible DELPI read surfaces. Find the READ capability that bes\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_workspace_context: Current Transformômetro workspace the user is viewing (process/instance/revision/area refs). Navigation hint only — never domain truth, never authorization. For 'this process', 'cu\n  - get_catalog: Discovery catalog: entities, workflows, analysis, registration_guide, diagram_catalog, capability_surface. Use before writes. Optional entity (e.g. decomposition_tree) returns only\n  - get_methodology_guide: READ-only TÉO process-methodology playbooks. Optional method (macroprocess, key_process, end_to_end, sipoc, lean, ishikawa, five_whys, ctp, tdr, kpi, swot, as_is, to_be) and/or tas\n  - get_product_guide: READ-only product usage guidance for Portal/Transformômetro features — how/when/why to use a capability correctly (GUIDANCE, never domain truth, AuthZ or execution policy; live con\n  - solution_read: READ-only Minha DELPI solution intelligence (Core metadata). action=catalog: discovery of ALL registered active solutions — id, name, description, category, routes, features, permi\n- VISTA:\n  - list_playlists: Lista as programações (playlists) do TV Dashboard visíveis ao usuário autenticado, com paginação. Ponto de partida para descobrir playlist_id canônico.\n  - get_playlist_context: Retorna o contexto compacto de uma programação: identidade, telas, blocos, filtros e revisão — sem conteúdo pesado de renderização. Opcionalmente foca uma fonte de dados legada (da\n  - get_",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "disc_candidate",
+   "run": 0,
+   "elapsed_ms": 32426,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Encontrei 2 registros:\n\n- Código do produto: 10330001 · Descrição: CALIBRACAO DE PRODUTOS · Categoria do grupo: 1033\n- Código do produto: 20170165 · Descrição: DVD PRODUTOS ELECTRO GRAPHICS 2017 BRA · Categoria do grupo: 2017",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "produtos",
+      "answer_requirements": {
+       "complete_coverage": true
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1153,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 868,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "consultar produtos",
+       "top_k": "10"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 334,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "consultar produtos",
+      "top_k": "10"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'produtos'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "produtos",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "disc_exec",
+   "run": 0,
+   "elapsed_ms": 25184,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Título:\nDescoberta de rotas de dados\n\nResumo:\nBusca semântica nas rotas DELPI autorizadas para TV — descoberta, não execução. SEARCH MISS IS_NOT ABSENCE.\n\nFinalidade:\nExplicar como descobrir rotas de dados aprovadas, interpretar misses e não confundir allowlist com o ecossistema inteiro.\n\nOrientação de uso:\n- O usuário quer saber qual rota alimenta um determinado dado\n- É preciso explicar que a busca é semântica e limitada ao allowlist de TV\n- É preciso explicar por que um miss não prova ausência\n\nInstruções de uso:\n- search_data_routes busca por intenção de negócio em linguagem natural\n- O resultado traz operationId, paramSchema e metadados para uso posterior\n- Um resultado vazio significa 'não encontrei neste allowlist' — nunca 'não existe na DELPI'\n- Preview do bloco/dado confirma a resolução real antes de qualquer escrita\n\nRestrições de uso:\n- O usuário quer executar a rota — a tool só descobre\n- A pergunta é sobre o schema de uma rota específica — contrato api-delpi\n- O usuário assume que a lista de rotas cobre toda a DELPI — não cobre",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5093,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_product_guide",
+      "goal_class": "read",
+      "business_subject": "terminal",
+      "answer_requirements": {
+       "min_items": 1
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5354,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.index_select",
+     "block_len": 2435,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.get_product_guide",
+     "arg_keys": [],
+     "args": {},
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "vista.get_product_guide",
+     "arg_keys": [
+      "topic"
+     ],
+     "args": {
+      "topic": "data_route_discovery"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [
+     "vista.get_product_guide"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:vista",
+    "proposed_cap": "get_product_guide",
+    "chosen_group": "mcp:vista",
+    "chosen_cap": "get_product_guide",
+    "business_subject": "terminal",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "disc_none",
+   "run": 0,
+   "elapsed_ms": 22842,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "O MCP SAP é uma ferramenta de consulta de dados de produtos no sistema SAP, mas para utilizá-lo, é necessário acesso autorizado e permissões específicas dentro do ambiente SAP. Não posso acessar ou realizar consultas diretamente no sistema. Se você precisar de ajuda com a consulta de produtos, por favor, entre em contato com a equipe responsável pela operação do SAP ou consultoria técnica.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "cmp_legit",
+   "run": 0,
+   "elapsed_ms": 22988,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Entity 'terminal bala' has no registered write schema.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_catalog",
+      "goal_class": "compare",
+      "business_subject": "terminal bala",
+      "scope_constraints": {
+       "entity": "terminal bala"
+      },
+      "comparison_requested": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 3845,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "vista.get_catalog"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 539,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "entity": "terminal pino"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 1561,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "entity": "terminal bala"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.get_catalog",
+     "arg_keys": [],
+     "args": {},
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [
+      "entity"
+     ],
+     "args": {
+      "entity": "terminal bala"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [
+     "teo.get_catalog",
+     "vista.get_catalog"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:teo",
+    "proposed_cap": "get_catalog",
+    "chosen_group": "mcp:teo",
+    "chosen_cap": "get_catalog",
+    "business_subject": "terminal bala",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "cmp_partial",
+   "run": 0,
+   "elapsed_ms": 59238,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_query_miss"
+   ],
+   "content": "A fonte consultada informou que não há registro para esta solicitação. Nenhum dado operacional foi inventado.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "compare",
+      "business_subject": "estoque",
+      "scope_constraints": {
+       "product_ids": [
+        "10080092",
+        "10081004"
+       ]
+      },
+      "comparison_requested": true,
+      "answer_requirements": {
+       "min_items": 2
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5138,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "vista.get_playlist_history"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 856,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "comparar estoque dos produtos 10080092 e 10081004",
+       "top_k": "2"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 780,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "playlist_id": "10080092",
+       "snapshot_id": "10081003"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5697,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1280,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1478,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 1242,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "comparar estoque dos produtos 10080092 e 10081004",
+       "top_k": "2"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "comparar estoque dos produtos 10080092 e 10081004",
+      "top_k": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [
+     "davi.discover_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "estoque",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "exhaust",
+   "run": 0,
+   "elapsed_ms": 25930,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Encontrei 6 registros:\n\n- Código do produto: 10080092 · Descrição: TERM. BALA 0,50-2,27MM2 ESTANHADO CARRETEL S/ISOLACAO · Categoria do grupo: 1008\n- Código do produto: 10081004 · Descrição: TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE · Categoria do grupo: 1008\n- Código do produto: 10080681 · Descrição: TERM. BALA 20-16AWG NU FITADO FEMEA · Categoria do grupo: 1008\n- Código do produto: 10081844 · Descrição: TERM. BALA FEMEA 1,50-2,50 MM² COMP. 23,5 LATÃO ESTANHADO C/ ISOLAMENTO GRANEL - ROHS · Categoria do grupo: 1008\n- Código do produto: 10081845 · Descrição: TERM. BALA MACHO 1,50-2,50MM2 COMP 23,50MM ESTANHADO C/ISOLACAO GRANEL ROHS · Categoria do grupo: 1008\n- Código do produto: 10080624 · Descrição: TERM. FEMEA 14-18AWG ESTANHADO FITADO S/ISOLACAO DIAM 3,96MM CONTRA PECA BALA MACHO · Categoria do grupo: 1008",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminal bala",
+      "scope_constraints": {
+       "complete_coverage": true
+      },
+      "answer_requirements": {
+       "complete_coverage": true
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1158,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 873,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "listar terminais bala cadastrados",
+       "top_k": "10"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 996,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "listar terminais bala cadastrados",
+      "top_k": "10"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'terminal bala'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10080092",
+     "10081004",
+     "10080681",
+     "10081844",
+     "10081845",
+     "10080624"
+    ],
+    "pertinent_codes": [
+     "10080092",
+     "10081004",
+     "10080681",
+     "10081844",
+     "10081845",
+     "10080624"
+    ],
+    "names": [
+     "TERM. BALA 0,50-2,27MM2 ESTANHADO CARRETEL S/ISOLACAO",
+     "TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE",
+     "TERM. BALA 20-16AWG NU FITADO FEMEA",
+     "TERM. BALA FEMEA 1,50-2,50 MM² COMP. 23,5 LATÃO ESTANHADO C/ ISOLAMENTO GRANEL - ROHS",
+     "TERM. BALA MACHO 1,50-2,50MM2 COMP 23,50MM ESTANHADO C/ISOLACAO GRANEL ROHS",
+     "TERM. FEMEA 14-18AWG ESTANHADO FITADO S/ISOLACAO DIAM 3,96MM CONTRA PECA BALA MACHO"
+    ],
+    "total": 6
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 6,
+    "oracle_codes": 6,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminal bala",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "neg_scope",
+   "run": 0,
+   "elapsed_ms": 40457,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5893,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null,
+      "goal_class": "read",
+      "business_subject": "salário",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {
+       "min_items": null,
+       "ordering": null,
+       "complete_coverage": true
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 4089,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null,
+      "goal_class": "read",
+      "business_subject": "salário de funcionários",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {
+       "complete_coverage": true
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1213,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null,
+      "business_subject": "funcionários",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {},
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 4653,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "capability_group_id": null
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:teo",
+    "proposed_cap": null,
+    "chosen_group": "mcp:teo",
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "neg_write",
+   "run": 0,
+   "elapsed_ms": 24085,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "CONTINUING",
+    "CONTINUING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "execute_delpi_information",
+      "goal_class": "create_or_modify",
+      "business_subject": "produto",
+      "scope_constraints": {
+       "code": "10080092"
+      },
+      "execution_bound": "unrestricted"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 466,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1158,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 824,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "execute_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "execute_delpi_information",
+    "business_subject": "produto",
+    "invalid_structured": true,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "neg_inject",
+   "run": 0,
+   "elapsed_ms": 23112,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "Encontrei registros, mas a fonte não confirma que eles cobrem todo o conjunto — não posso garantir que este seja o resultado definitivo.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "produto",
+      "scope_constraints": {
+       "complete_coverage": true
+      },
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {
+       "complete_coverage": true
+      },
+      "output_mode": "snapshot"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1149,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 867,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos sem filtro",
+       "top_k": "10"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar produtos sem filtro",
+      "top_k": "10"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "produto",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "neg_nobiz",
+   "run": 0,
+   "elapsed_ms": 5962,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Bom dia! Estou aqui, pronto para ajudar com o que precisar. Como posso ser útil?",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": false,
+    "interaction_class": "conversation",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  }
+ ]
+}

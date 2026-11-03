@@ -1,0 +1,23 @@
+{
+  "scenario_id": "CMP-24",
+  "specialist": "vista",
+  "run_number": 0,
+  "question_full_text": "VISTA, avalie as métricas disponíveis para uma revisão gerencial mensal, identificando cobertura, atualidade, permissões, filtros possíveis e ausência de denominadores. Proponha um quadro textual de até cinco indicadores prioritários com definição, evidência, risco de uso incorreto, responsável pelo dado somente quando oficialmente identificado e validação recomendada em 30 dias. Não invente KPIs ou resultados ausentes.",
+  "outcome": "PASS",
+  "first_divergence": "",
+  "capabilities_invoked": [
+    "vista.get_catalog"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "vista.get_catalog",
+      "status": "COMPLETED",
+      "args": {}
+    }
+  ],
+  "response_full_text": "Quais são os indicadores de desempenho disponíveis para análise gerencial mensal, com foco em cobertura, atualidade, permissões, filtros aplicáveis e presença de denominadores para cada um?",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [],
+  "elapsed_ms": 16384,
+  "error": null
+}

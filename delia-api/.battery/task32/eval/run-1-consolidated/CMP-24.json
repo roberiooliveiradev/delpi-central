@@ -1,0 +1,22 @@
+{
+  "scenario_id": "CMP-24",
+  "specialist": "vista",
+  "run_number": 0,
+  "outcome": "PASS",
+  "first_divergence": "",
+  "capabilities_invoked": [
+    "vista.get_catalog"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "vista.get_catalog",
+      "status": "COMPLETED",
+      "args": {}
+    }
+  ],
+  "response_full_text": "Quais são os indicadores de desempenho disponíveis para análise gerencial mensal, com foco em cobertura, atualidade, permissões, filtros aplicáveis e presença de denominadores para cada um?",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [],
+  "elapsed_ms": 16384,
+  "error": null
+}

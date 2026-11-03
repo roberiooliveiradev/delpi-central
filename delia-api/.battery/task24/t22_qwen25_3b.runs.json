@@ -1,0 +1,2539 @@
+{
+ "summary": {
+  "executions": 20,
+  "model_calls": 150,
+  "input_tokens": 314884,
+  "output_tokens": 5701,
+  "outcomes": {
+   "FAIL": 13,
+   "PASS": 7
+  }
+ },
+ "runs": [
+  {
+   "scenario": "t2_parafuso",
+   "run": 0,
+   "elapsed_ms": 74278,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A fonte retornou registros reais, mas eles não correspondem ao que foi pedido — não vou apresentá-los como resposta.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CONTINUING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5093,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "search_data_routes",
+      "goal_class": "read",
+      "prior_evidence_sufficient": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5349,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 567,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "parafusos cadastrados",
+       "limit": "2"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 1049,
+     "block_valid": true,
+     "proposal": {}
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5666,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5731,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "search_data_routes"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5321,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2323,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [
+       "query"
+      ],
+      "arguments": null
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.search_data_routes",
+     "arg_keys": [
+      "limit",
+      "query"
+     ],
+     "args": {
+      "query": "parafusos cadastrados",
+      "limit": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30193688",
+     "10210603",
+     "10210604",
+     "80016218",
+     "10091279",
+     "10091706",
+     "10210194",
+     "10210195",
+     "10210192",
+     "10210193"
+    ],
+    "pertinent_codes": [
+     "30193688",
+     "10210603",
+     "10210604",
+     "80016218",
+     "10091279",
+     "10091706",
+     "10210194",
+     "10210195",
+     "10210192",
+     "10210193"
+    ],
+    "names": [
+     "ABRACADEIRA COM PARAFUSO TIPO D 3/4",
+     "BORNE K TIPO PARAFUSO AZUL 10MM",
+     "BORNE K TIPO PARAFUSO CINZA 10MM",
+     "CHICOTE MOTOR CHILLER CGAM - OV003695 - CONECTOR PARAFUSO",
+     "CONECTOR CIRCULAR 3 VIAS PT 20A TRAVA PARAFUSO UL 94V-0",
+     "CONECTOR CIRCULAR MACHO 4 VIAS PRETO/AZUL FIXAÇÃO POR PARAFUSO IP68 IEC 60529 WEIPU",
+     "CONECTOR PARAFUSO THT 6 VIAS 5MM (TAMPOGRAFIA 1AL)",
+     "CONECTOR PARAFUSO THT 6 VIAS 5MM (TAMPOGRAFIA 1CA)",
+     "CONECTOR PARAFUSO THT 6 VIAS 5MM (TAMPOGRAFIA 1CA+1AL)",
+     "CONECTOR PARAFUSO THT 6 VIAS 5MM (TAMPOGRAFIA 2CA)"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "vista.search_data_routes"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_porca",
+   "run": 0,
+   "elapsed_ms": 15627,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_my_context",
+      "goal_class": "read",
+      "business_subject": "porca sextavada",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": null,
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5794,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 194,
+     "block_valid": true,
+     "proposal": {}
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5705,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1445,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1641,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 1388,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "porca sextavada"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 1189,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "porca sextavada"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_my_context",
+     "arg_keys": [],
+     "args": {},
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "porca sextavada"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10140211",
+     "10211142",
+     "10210152",
+     "10211503",
+     "10210070",
+     "30194303",
+     "10350030",
+     "10211200",
+     "30191320",
+     "10211502",
+     "30190199",
+     "10210181",
+     "30190262",
+     "30191067",
+     "10320015",
+     "10210289",
+     "10210575",
+     "10211492",
+     "10211198",
+     "10320052"
+    ],
+    "pertinent_codes": [
+     "10140211",
+     "10211142",
+     "10210152",
+     "10211503",
+     "10210070",
+     "30194303",
+     "10350030",
+     "10211200",
+     "30191320",
+     "10211502",
+     "30190199",
+     "10210181",
+     "30190262",
+     "30191067",
+     "10320015",
+     "10210289",
+     "10210575",
+     "10211492",
+     "10211198",
+     "10320052"
+    ],
+    "names": [
+     "PARAFUSO DE FIXACAO COM PORCA PARA DB",
+     "ABRAÇADEIRA CABEÇA DE CLIPE DE PORCA PUSH NYLON CINZA 28MM - ROHS",
+     "PARAFUSO SEM CABEÇA (FRANCES) 3/16X3/4 C/ PORCA ZB",
+     "PARAFUSO COM PORCA SX 1/4X2 PS ZB",
+     "CONTRA PORCA PLASTICA M-63X1.5 PT",
+     "CONTRA PORCA PG16",
+     "CONTRA-PORCA PRENS CAB LATAO (15765202)",
+     "PORCA",
+     "COTOVELO C/ PORCA 1/2\"X10MM BSP IBLG10-04 - TTD",
+     "CONTRA PORCA PLASTICA PG-29 PT",
+     "PORCA SEXTAVADA",
+     "PORCA SEXTAVADA  DE ACO 1/4''",
+     "PORCA SEXTAVADA / MOLA DO FREIO",
+     "PORCA SEXTAVADA 6MM",
+     "PORCA SEXTAVADA AÇO1020M8X1.25",
+     "PORCA SEXTAVADA M10X1,50 ACO (GALVANIZADA)",
+     "PORCA SEXTAVADA M3",
+     "PORCA SEXTAVADA M4X0,70 CH7 DIN934 TRIV (A)",
+     "PORCA SEXTAVADA M5X0,80 CH8 DIN934 BC",
+     "PORCA SEXTAVADA M8X1,25 CH13 BIC DIN 934"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "teo.get_my_context"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_arruela",
+   "run": 0,
+   "elapsed_ms": 2602,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Um exemplo simples de arruela pode ser encontrado em sistemas de suspensão de veículos. Ela é uma estrutura que transmite a pressão da tração do veículo ao eixo rodoviário, ajudando a mitigar a oscilação do pneu e proporcionando um trajeto mais confortável. Se você precisa de mais detalhes ou exemplos específicos, por favor, informe.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "20170405",
+     "30193558",
+     "30191642",
+     "30190674",
+     "30190203",
+     "10210060",
+     "10210057",
+     "10210058",
+     "10210059",
+     "10211360"
+    ],
+    "pertinent_codes": [
+     "20170405",
+     "30193558",
+     "30191642",
+     "30190674",
+     "30190203",
+     "10210060",
+     "10210057",
+     "10210058",
+     "10210059",
+     "10211360"
+    ],
+    "names": [
+     "ARRUELA",
+     "ARRUELA",
+     "ARRUELA  LISA 5/16",
+     "ARRUELA  LISA M12",
+     "ARRUELA DA PLACA DE AJUSTE",
+     "ARRUELA DE ACO 10X18X1,5MM BICROMATIZADO",
+     "ARRUELA DE ACO 5X10X0,9MM BICROMATIZADO",
+     "ARRUELA DE ACO 6X12,5X1,5MM BICROMATIZADO",
+     "ARRUELA DE ACO 8X14X0,9MM BICROMATIZADO",
+     "ARRUELA DE ACO CATERPILLAR - ROHS"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_abracadeira",
+   "run": 0,
+   "elapsed_ms": 6654,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5093,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "list_playlists",
+      "goal_class": "read",
+      "business_subject": "abracadeiras",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "output_mode": "snapshot",
+      "execution_bound": "prepare_only"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5352,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.list_playlists",
+     "arg_keys": [
+      "limit",
+      "offset"
+     ],
+     "args": {
+      "limit": "50",
+      "offset": "0"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688"
+    ],
+    "pertinent_codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688"
+    ],
+    "names": [
+     "ABRACADEIRA  MICRO CARB (5/8 X 11/16)9MM (COMPRESSOR)",
+     "ABRACADEIRA  WETZEL 3/4 PVC CINZA",
+     "ABRACADEIRA 1'' PVC  CINZA",
+     "ABRACADEIRA 1/2 PVC CINZA",
+     "ABRACADEIRA 1/2'' PVC  CINZA",
+     "ABRACADEIRA 3/4 PVC CINZA",
+     "ABRACADEIRA 3/4'' PVC  PRETO",
+     "ABRACADEIRA AMERICANA 1,1/2",
+     "ABRACADEIRA CLAMP ARM FRANKLIN",
+     "ABRACADEIRA COM PARAFUSO TIPO D 3/4"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "vista.list_playlists"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_rolamento",
+   "run": 0,
+   "elapsed_ms": 5349,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Não consegui identificar uma consulta ou ação adequada nas fontes disponíveis para este pedido. Pode dizer se precisa de dados cadastrais da DELPI, orientação de um especialista, ou se é uma pergunta geral / exemplo hipotético?",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": 1,
+      "remote_name": "get_process_timeline",
+      "goal_class": "read",
+      "business_subject": "rolamento",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": 0,
+      "answer_requirements": {},
+      "output_mode": "snapshot",
+      "execution_bound": "unrestricted"
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30190716",
+     "30191608",
+     "30190644",
+     "30190703",
+     "30191611",
+     "30190758",
+     "30192120",
+     "30192140",
+     "30191346",
+     "30190752"
+    ],
+    "pertinent_codes": [
+     "30190716",
+     "30191608",
+     "30190644",
+     "30190703",
+     "30191611",
+     "30190758",
+     "30192120",
+     "30192140",
+     "30191346",
+     "30190752"
+    ],
+    "names": [
+     "BEARING SPHERICAL (ROLAMENTO)",
+     "BOLA DE ROLAMENTO 2,5MM EVO7",
+     "BUSCHING, BALL (ROLAMENTO)",
+     "BUSCHING, BALL (ROLAMENTO)",
+     "CAIXA P/ ROLAMENTO SNA 515",
+     "CILINDRO EMBORRACHADO SUPERIOR E INFERIOR COM ROLAMENTO",
+     "EIXO COM ROLAMENTO",
+     "POLIA COM ROLAMENTO",
+     "ROLAMENTO",
+     "ROLAMENTO 6000-ZZ"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_correia",
+   "run": 0,
+   "elapsed_ms": 9836,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Quem precisa fornecer detalhes sobre uso de uma correia dentada neste contexto? Isso está associado a qual seção ou tópico? Por favor, informe essa informação para que eu possa alocar a correia dentada corretamente.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_product_guide",
+      "goal_class": "read",
+      "business_subject": "correia dentada",
+      "prior_evidence_sufficient": false,
+      "execution_bound": "prepare_only"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5797,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.index_select",
+     "block_len": 6029,
+     "block_valid": true,
+     "proposal": {}
+    },
+    {
+     "purpose": "delia.capability_orchestration.clarification_wording",
+     "block_len": 310,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_product_guide",
+     "arg_keys": [],
+     "args": {},
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30192157",
+     "30192185",
+     "30193528",
+     "30190726",
+     "30190092",
+     "30191281",
+     "30190734",
+     "30190748",
+     "30194329",
+     "30191020",
+     "30190612",
+     "30190502",
+     "30191981",
+     "30191935",
+     "30191906",
+     "30191916",
+     "30190995",
+     "30190996",
+     "30190997",
+     "30192102"
+    ],
+    "pertinent_codes": [
+     "30192157",
+     "30192185",
+     "30193528",
+     "30190726",
+     "30190092",
+     "30191281",
+     "30190734",
+     "30190748",
+     "30194329",
+     "30191020",
+     "30190612",
+     "30190502",
+     "30191981",
+     "30191935",
+     "30191906",
+     "30191916",
+     "30190995",
+     "30190996",
+     "30190997",
+     "30192102"
+    ],
+    "names": [
+     "CORREIA 1160MOTOR SUPERIOR",
+     "CORREIA DE BORRACHA",
+     "CORREIA DE TRANSPORTE T5-255-BORRACHA 20MM C/COB. LINATEX SCHLEUNIGER",
+     "CORREIA COM 13,00MM 234 - 3M",
+     "CONJUNTO ROLETE PARA CORREIA - KOMAX 263",
+     "CORREIA DE TRANSMISSAO",
+     "CORREIA DE BORRACHA SINCRON",
+     "CORREIA COM 8MM 267 - 3M",
+     "CORREIA A-49",
+     "CORREIA  710 5M-36MM",
+     "CORREIA DENTADA",
+     "CORREIA DENTADA  300 H 100",
+     "CORREIA DENTADA 610 5M BRACO GIRATORIO 2",
+     "CORREIA DENTADA COMPRESSOR ATLAS COPCO",
+     "CORREIA DENTADA DE BORRACHA ROLETES",
+     "CORREIA DENTADA FACA HTD330",
+     "CORREIA DENTADA GT-3MR-180-12",
+     "CORREIA DENTADA GT-3MR-240-12",
+     "CORREIA DENTADA HTD330 (FACA)",
+     "CORREIA DENTADA KOMAX 0320502"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "teo.get_product_guide"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_tubo",
+   "run": 0,
+   "elapsed_ms": 14199,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5093,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "search_data_routes",
+      "goal_class": "read",
+      "business_subject": "tubo cadastrado",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5358,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 606,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "tubo cadastrado"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 3273,
+     "block_valid": true,
+     "proposal": {}
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5705,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5856,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "list_playlists"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5326,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.search_data_routes",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "tubo cadastrado"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "vista.list_playlists",
+     "arg_keys": [
+      "limit",
+      "offset"
+     ],
+     "args": {
+      "limit": "50",
+      "offset": "0"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30193991",
+     "30191880",
+     "80005921",
+     "80005923",
+     "80014526",
+     "80005201",
+     "80004385",
+     "80004386",
+     "80004387",
+     "80004516"
+    ],
+    "pertinent_codes": [
+     "30193991",
+     "30191880",
+     "80005921",
+     "80005923",
+     "80014526",
+     "80005201",
+     "80004385",
+     "80004386",
+     "80004387",
+     "80004516"
+    ],
+    "names": [
+     "CABO DA SOLENOIDE TUBO GUIA",
+     "CHAVE PARA TUBO",
+     "CHICOTE DE LGAÇAO \"261 14\"  SEM TUBO",
+     "CHICOTE DE LGAÇAO \"261 14\" TERMINAIS COM TRAVA E TUBO ISOLANTE",
+     "CHICOTE DE LIGACAO  OV002482 TUBO 130°C",
+     "CHICOTE DE LIGACAO \"153 13\" SEM TUBO ISOLANTE",
+     "CHICOTE DE LIGACAO \"307 11\" 4 CABOS 16AWG + 2 CABOS 18AWG COM TUBO",
+     "CHICOTE DE LIGACAO \"307 11\" 6 CABOS 18AWG COM TUBO ISOLANTE",
+     "CHICOTE DE LIGACAO \"307 11\" 6 CABOS 18AWG COM TUBO ISOLANTE",
+     "CHICOTE DE LIGACAO ''014 12'' TROCA DO TUBO ISOLANTE"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "vista.list_playlists",
+     "vista.search_data_routes"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_code",
+   "run": 0,
+   "elapsed_ms": 9352,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Preciso de mais informações para continuar. Quais itens ou informações você quer usar?",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "CONTINUING",
+    "CONTINUING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_product_guide",
+      "goal_class": "read",
+      "business_subject": "produto 10080683",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "answer_requirements": null,
+      "output_mode": "snapshot",
+      "execution_bound": "unrestricted"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5795,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.index_select",
+     "block_len": 6029,
+     "block_valid": true,
+     "proposal": {}
+    },
+    {
+     "purpose": "delia.capability_orchestration.clarification_wording",
+     "block_len": 310,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_product_guide",
+     "arg_keys": [],
+     "args": {},
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10080683"
+    ],
+    "pertinent_codes": [
+     "10080683"
+    ],
+    "names": [
+     "TERMINAL PINO FEMEA 1,83MM 24-18AWG BRONZE DE FÓSFORO ESTANHADO - ROHS"
+    ],
+    "total": 1
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "teo.get_product_guide"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_absent",
+   "run": 0,
+   "elapsed_ms": 10038,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5093,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": "list_playlists",
+      "goal_class": "read",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "answer_requirements": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5427,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "search_data_routes",
+      "goal_class": "read",
+      "business_subject": "sensor de proximidade",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "dynamic",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5364,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 612,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "sensor de proximidade"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.search_data_routes",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "sensor de proximidade"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30190790",
+     "80016433",
+     "30192226",
+     "10540094",
+     "30193709",
+     "10210276",
+     "80013093",
+     "80016435",
+     "80016223",
+     "30192068",
+     "10211353",
+     "30194590"
+    ],
+    "pertinent_codes": [
+     "30190790",
+     "80016433",
+     "30192226",
+     "10540094",
+     "30193709",
+     "10210276",
+     "80013093",
+     "80016435",
+     "80016223",
+     "30192068",
+     "10211353",
+     "30194590"
+    ],
+    "names": [
+     "ABRACADEIRA DO SENSOR",
+     "CABO DE CONEXÃO DE SENSOR",
+     "CHICOTE DE LIGACAO OV003506 SENSOR DE PRESENCA DE AGUA",
+     "CABO PARA MOODULO SENSOR - OV003620 - TERMINAL 22AWG",
+     "CABO PARA SENSOR 90 GRAUS 3X0,25 5M",
+     "CABO SENSOR DE VELOCIDADE PAINEL/CORRIMAO 537/554",
+     "CABO TERRA  - SENSOR PROXIMAL",
+     "BOIA  ANAUGER SENSOR CONTROL",
+     "CABO CONEXAO SENSOR KOMAX GAMMA 263 (COD.7634)",
+     "CABO PARA MOODULO SENSOR - OV003620",
+     "SENSOR DE PROXIMIDADE MAGN. COM CABO PP PVC 2X0,34MM2 70°C - 2000MM (MM12-70A-N-ZW0) - ROHS",
+     "SENSOR DE PROXIMIDADE PARA MAQUINA WL-FS550"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "vista.search_data_routes"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_teo_resp",
+   "run": 0,
+   "elapsed_ms": 5479,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Erro interno do servidor.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_process_context",
+      "goal_class": "read",
+      "business_subject": "PROC-0105",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": null,
+      "answer_requirements": {},
+      "execution_bound": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5793,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 558,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "process_id": "PROC-0105"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 535,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "entity": "PROC-0105"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_process_context",
+     "arg_keys": [
+      "process_id"
+     ],
+     "args": {
+      "process_id": "PROC-0105"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [
+      "entity"
+     ],
+     "args": {
+      "entity": "PROC-0105"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "teo.get_catalog",
+     "teo.get_process_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_teo_status",
+   "run": 0,
+   "elapsed_ms": 6811,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Erro interno do servidor.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_process_context",
+      "goal_class": "read",
+      "business_subject": "PROC-0105",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {},
+      "execution_bound": "unrestricted"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5793,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 558,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "process_id": "PROC-0105"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 535,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "entity": "PROC-0105"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_process_context",
+     "arg_keys": [
+      "process_id"
+     ],
+     "args": {
+      "process_id": "PROC-0105"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [
+      "entity"
+     ],
+     "args": {
+      "entity": "PROC-0105"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "teo.get_catalog",
+     "teo.get_process_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_vista_screens",
+   "run": 0,
+   "elapsed_ms": 14208,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5093,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_playlist_context",
+      "goal_class": "read",
+      "business_subject": "televisões",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "output_mode": "snapshot",
+      "execution_bound": "prepare_only"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 4597,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "search_data_routes",
+      "goal_class": "read",
+      "business_subject": "telas de TV",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": null,
+      "output_mode": "unspecified",
+      "execution_bound": "prepare_only",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5358,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 602,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "telas de TV",
+       "limit": "8"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 2749,
+     "block_valid": true,
+     "proposal": {}
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5701,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5796,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "list_playlists"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5326,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.search_data_routes",
+     "arg_keys": [
+      "limit",
+      "query"
+     ],
+     "args": {
+      "query": "telas de TV",
+      "limit": "8"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "vista.list_playlists",
+     "arg_keys": [
+      "limit",
+      "offset"
+     ],
+     "args": {
+      "limit": "50",
+      "offset": "0"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "vista.list_playlists",
+     "vista.search_data_routes"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_davi_explicit",
+   "run": 0,
+   "elapsed_ms": 6571,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5093,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "search_data_routes",
+      "goal_class": "read",
+      "business_subject": "programações (playlists)",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "prepare_only"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5371,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 615,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "porcas",
+       "limit": "8"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.search_data_routes",
+     "arg_keys": [
+      "limit",
+      "query"
+     ],
+     "args": {
+      "query": "porcas",
+      "limit": "8"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "vista.search_data_routes"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_cont",
+   "run": 0,
+   "elapsed_ms": 8732,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.turn_goal",
+     "block_len": 2,
+     "block_valid": true,
+     "proposal": {
+      "goal_class": "read",
+      "business_subject": "PORCA SEXTAVADA",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": null,
+      "output_mode": "snapshot",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5893,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1124,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1157,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 821,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "segundo item PORCA SEXTAVADA M8 ZINCADA"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 1213,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "segundo item PORCA SEXTAVADA M8 ZINCADA"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "segundo item PORCA SEXTAVADA M8 ZINCADA"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "e o segundo item, qual é o código? traga porcas sextavadas E"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_workspace",
+   "run": 0,
+   "elapsed_ms": 9451,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "produto selecionado no catálogo",
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {},
+      "execution_bound": "prepare_only"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1176,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 837,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "descrição deste item"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "descrição deste item"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'page': 1, 'page_size': 50, 'description': 'produto selecio"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'produto selecionado no catálogo'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "EVIDENCE_RELEVANCE",
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_prep",
+   "run": 0,
+   "elapsed_ms": 13423,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Preciso de mais informações para continuar. Quais itens ou informações você quer usar?",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "CONTINUING",
+    "CONTINUING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "prepare_governed_operation",
+      "goal_class": "create_or_modify",
+      "business_subject": "process",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {},
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5813,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 533,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [
+       "limit",
+       "page_size"
+      ],
+      "arguments": {
+       "entity": "process"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 4239,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [
+       "id",
+       "processo_id",
+       "revisao_id",
+       "competencia_inicio",
+       "competencia_fim",
+       "recurso_compartilhado_id",
+       "valor_mensal",
+       "vigente_desde",
+       "observacoes",
+       "instance",
+       "baseline",
+       "scenario",
+       "candidate_xml_override",
+       "xml",
+       "expected_version",
+       "resolutions",
+       "name",
+       "description"
+      ],
+      "arguments": {
+       "action": "prepare",
+       "description": "auditoria",
+       "displayName": "auditoria",
+       "name": "auditoria",
+       "process": "{'nome_processo': 'auditoria', 'status_processo': 'ativo'}"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_resolver",
+     "block_len": 4735,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": "get_my_context"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_resolver",
+     "block_len": 4735,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": "get_my_context"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.clarification_wording",
+     "block_len": 427,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [
+      "entity"
+     ],
+     "args": {
+      "entity": "process"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "teo.get_catalog"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_neg_delete",
+   "run": 0,
+   "elapsed_ms": 10870,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_query_miss"
+   ],
+   "content": "A fonte consultada informou que não há registro para esta solicitação. Nenhum dado operacional foi inventado.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "execute_delpi_information",
+      "goal_class": "delete_or_modify",
+      "business_subject": "produto 10080683",
+      "prior_evidence_sufficient": false,
+      "execution_bound": "unrestricted"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 466,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "create_or_modify",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {},
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1159,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 782,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "produto 10080683"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 1145,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "produto 10080683"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5666,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5924,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "prepare_record_change"
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "produto 10080683"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "AUTHZ_DENIED_EXPECTED",
+    "invoked_caps": [
+     "davi.discover_delpi_information"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_neg_whatsapp",
+   "run": 0,
+   "elapsed_ms": 2234,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "Não possuo permissão para enviar mensagens de WhatsApp diretamente aos clientes."
+   ],
+   "content": "Desculpe, não tenho acesso direto a enviar mensagens de WhatsApp aos clientes. Você pode me fornecer mais detalhes sobre o cliente e a mensagem que deseja enviar?",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_ctrl_greet",
+   "run": 0,
+   "elapsed_ms": 1653,
+   "error": "invalid_model_output",
+   "grounding": "",
+   "limitations": [],
+   "content": "",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "CONTINUING",
+    "CONTINUING",
+    "FAILED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "",
+    "error": "invalid_model_output"
+   }
+  },
+  {
+   "scenario": "t2_ctrl_concept",
+   "run": 0,
+   "elapsed_ms": 2588,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Um banco de dados relacional é um tipo de banco de dados onde as entidades são representadas como tabelas que estão relacionadas entre si, geralmente através de chaves estrangeiras. As informações são armazenadas em colunas e cada linha da tabela representa um registro ou uma entidade. As relações entre entidades são criadas através de chaves primárias e estrangeiras, que permitem a integração e união de diferentes tabelas.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "explanation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  }
+ ]
+}

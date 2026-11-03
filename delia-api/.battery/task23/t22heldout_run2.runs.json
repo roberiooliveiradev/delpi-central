@@ -1,0 +1,2561 @@
+{
+ "summary": {
+  "executions": 20,
+  "model_calls": 146,
+  "input_tokens": 274834,
+  "output_tokens": 4528,
+  "outcomes": {
+   "FAIL": 9,
+   "PASS": 11
+  }
+ },
+ "runs": [
+  {
+   "scenario": "t2_parafuso",
+   "run": 0,
+   "elapsed_ms": 11528,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "parafusos cadastrados",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "answer_requirements": {
+       "min_items": 2
+      },
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1166,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 870,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição parafusos cadastrados",
+       "top_k": "2"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição parafusos cadastrados",
+      "top_k": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'parafusos cadastrados', 'page_size': 50}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'parafusos cadastrados'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30193688",
+     "10210603",
+     "10210604",
+     "80016218",
+     "10091279",
+     "10091706",
+     "10210194",
+     "10210195",
+     "10210192",
+     "10210193"
+    ],
+    "pertinent_codes": [
+     "30193688",
+     "10210603",
+     "10210604",
+     "80016218",
+     "10091279",
+     "10091706",
+     "10210194",
+     "10210195",
+     "10210192",
+     "10210193"
+    ],
+    "names": [
+     "ABRACADEIRA COM PARAFUSO TIPO D 3/4",
+     "BORNE K TIPO PARAFUSO AZUL 10MM",
+     "BORNE K TIPO PARAFUSO CINZA 10MM",
+     "CHICOTE MOTOR CHILLER CGAM - OV003695 - CONECTOR PARAFUSO",
+     "CONECTOR CIRCULAR 3 VIAS PT 20A TRAVA PARAFUSO UL 94V-0",
+     "CONECTOR CIRCULAR MACHO 4 VIAS PRETO/AZUL FIXAÇÃO POR PARAFUSO IP68 IEC 60529 WEIPU",
+     "CONECTOR PARAFUSO THT 6 VIAS 5MM (TAMPOGRAFIA 1AL)",
+     "CONECTOR PARAFUSO THT 6 VIAS 5MM (TAMPOGRAFIA 1CA)",
+     "CONECTOR PARAFUSO THT 6 VIAS 5MM (TAMPOGRAFIA 1CA+1AL)",
+     "CONECTOR PARAFUSO THT 6 VIAS 5MM (TAMPOGRAFIA 2CA)"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "EVIDENCE_RELEVANCE",
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_porca",
+   "run": 0,
+   "elapsed_ms": 10679,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "result_truncated"
+   ],
+   "content": "Encontrei 20 registros:\n\n- Código do produto: 30190199 · Descrição: PORCA SEXTAVADA · Categoria do grupo: 3019\n- Código do produto: 10210181 · Descrição: PORCA SEXTAVADA  DE ACO 1/4'' · Categoria do grupo: 1021\n- Código do produto: 30190262 · Descrição: PORCA SEXTAVADA / MOLA DO FREIO · Categoria do grupo: 3019\n- Código do produto: 30191067 · Descrição: PORCA SEXTAVADA 6MM · Categoria do grupo: 3019\n- Código do produto: 10320015 · Descrição: PORCA SEXTAVADA AÇO1020M8X1.25 · Categoria do grupo: 1032\n\nExibindo 5 de 20 registros retornados.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "porca sextavada",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1160,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 821,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição porca sextavada"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 1810,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição porca sextavada"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'porca sextavada'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10210152",
+     "10210070",
+     "10211142",
+     "30194303",
+     "10211502",
+     "10350030",
+     "30191320",
+     "10211200",
+     "10211503",
+     "10140211",
+     "30190199",
+     "10210181",
+     "30190262",
+     "30191067",
+     "10320015",
+     "10210289",
+     "10210575",
+     "10211492",
+     "10211198",
+     "10320052"
+    ],
+    "pertinent_codes": [
+     "10210152",
+     "10210070",
+     "10211142",
+     "30194303",
+     "10211502",
+     "10350030",
+     "30191320",
+     "10211200",
+     "10211503",
+     "10140211",
+     "30190199",
+     "10210181",
+     "30190262",
+     "30191067",
+     "10320015",
+     "10210289",
+     "10210575",
+     "10211492",
+     "10211198",
+     "10320052"
+    ],
+    "names": [
+     "COTOVELO C/ PORCA 1/2\"X10MM BSP IBLG10-04 - TTD",
+     "PORCA",
+     "PARAFUSO COM PORCA SX 1/4X2 PS ZB",
+     "PARAFUSO DE FIXACAO COM PORCA PARA DB",
+     "CONTRA-PORCA PRENS CAB LATAO (15765202)",
+     "ABRAÇADEIRA CABEÇA DE CLIPE DE PORCA PUSH NYLON CINZA 28MM - ROHS",
+     "CONTRA PORCA PLASTICA M-63X1.5 PT",
+     "CONTRA PORCA PLASTICA PG-29 PT",
+     "PARAFUSO SEM CABEÇA (FRANCES) 3/16X3/4 C/ PORCA ZB",
+     "CONTRA PORCA PG16",
+     "PORCA SEXTAVADA",
+     "PORCA SEXTAVADA  DE ACO 1/4''",
+     "PORCA SEXTAVADA / MOLA DO FREIO",
+     "PORCA SEXTAVADA 6MM",
+     "PORCA SEXTAVADA AÇO1020M8X1.25",
+     "PORCA SEXTAVADA M10X1,50 ACO (GALVANIZADA)",
+     "PORCA SEXTAVADA M3",
+     "PORCA SEXTAVADA M4X0,70 CH7 DIN934 TRIV (A)",
+     "PORCA SEXTAVADA M5X0,80 CH8 DIN934 BC",
+     "PORCA SEXTAVADA M8X1,25 CH13 BIC DIN 934"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_arruela",
+   "run": 0,
+   "elapsed_ms": 9680,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "result_truncated"
+   ],
+   "content": "Encontrei 50 registros:\n\n- Código do produto: 20170405 · Descrição: ARRUELA · Categoria do grupo: 2017\n- Código do produto: 30193558 · Descrição: ARRUELA · Categoria do grupo: 3019\n- Código do produto: 30191642 · Descrição: ARRUELA  LISA 5/16 · Categoria do grupo: 3019\n- Código do produto: 30190674 · Descrição: ARRUELA  LISA M12 · Categoria do grupo: 3019\n- Código do produto: 30190203 · Descrição: ARRUELA DA PLACA DE AJUSTE · Categoria do grupo: 3019\n\nExibindo 5 de 50 registros retornados.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "arruela",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1152,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 813,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição arruela"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 1734,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição arruela"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'arruela'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "20170405",
+     "30193558",
+     "30191642",
+     "30190674",
+     "30190203",
+     "10210060",
+     "10210057",
+     "10210058",
+     "10210059",
+     "10211360"
+    ],
+    "pertinent_codes": [
+     "20170405",
+     "30193558",
+     "30191642",
+     "30190674",
+     "30190203",
+     "10210060",
+     "10210057",
+     "10210058",
+     "10210059",
+     "10211360"
+    ],
+    "names": [
+     "ARRUELA",
+     "ARRUELA",
+     "ARRUELA  LISA 5/16",
+     "ARRUELA  LISA M12",
+     "ARRUELA DA PLACA DE AJUSTE",
+     "ARRUELA DE ACO 10X18X1,5MM BICROMATIZADO",
+     "ARRUELA DE ACO 5X10X0,9MM BICROMATIZADO",
+     "ARRUELA DE ACO 6X12,5X1,5MM BICROMATIZADO",
+     "ARRUELA DE ACO 8X14X0,9MM BICROMATIZADO",
+     "ARRUELA DE ACO CATERPILLAR - ROHS"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_abracadeira",
+   "run": 0,
+   "elapsed_ms": 3002,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "não existe entidade oficial chamada abracadeiras",
+    "não há dados verificáveis sobre abracadeiras"
+   ],
+   "content": "Não conheço abracadeiras. Talvez esteja se referindo a algo fictício ou irônico. Se for um exemplo ilustrativo, posso criar uma situação para fins de humor, mas não há registros reais ou válidos de abracadeiras.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "hypothetical",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688"
+    ],
+    "pertinent_codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688"
+    ],
+    "names": [
+     "ABRACADEIRA  MICRO CARB (5/8 X 11/16)9MM (COMPRESSOR)",
+     "ABRACADEIRA  WETZEL 3/4 PVC CINZA",
+     "ABRACADEIRA 1'' PVC  CINZA",
+     "ABRACADEIRA 1/2 PVC CINZA",
+     "ABRACADEIRA 1/2'' PVC  CINZA",
+     "ABRACADEIRA 3/4 PVC CINZA",
+     "ABRACADEIRA 3/4'' PVC  PRETO",
+     "ABRACADEIRA AMERICANA 1,1/2",
+     "ABRACADEIRA CLAMP ARM FRANKLIN",
+     "ABRACADEIRA COM PARAFUSO TIPO D 3/4"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_rolamento",
+   "run": 0,
+   "elapsed_ms": 8296,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_query_miss"
+   ],
+   "content": "A fonte consultada informou que não há registro para esta solicitação. Nenhum dado operacional foi inventado.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "rolamento",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1154,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 815,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "consultar produtos por descrição rolamento"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 1204,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição rolamento"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "consultar produtos por descrição rolamento"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição rolamento"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30190716",
+     "30191608",
+     "30190644",
+     "30190703",
+     "30191611",
+     "30190758",
+     "30192120",
+     "30192140",
+     "30191346",
+     "30190752"
+    ],
+    "pertinent_codes": [
+     "30190716",
+     "30191608",
+     "30190644",
+     "30190703",
+     "30191611",
+     "30190758",
+     "30192120",
+     "30192140",
+     "30191346",
+     "30190752"
+    ],
+    "names": [
+     "BEARING SPHERICAL (ROLAMENTO)",
+     "BOLA DE ROLAMENTO 2,5MM EVO7",
+     "BUSCHING, BALL (ROLAMENTO)",
+     "BUSCHING, BALL (ROLAMENTO)",
+     "CAIXA P/ ROLAMENTO SNA 515",
+     "CILINDRO EMBORRACHADO SUPERIOR E INFERIOR COM ROLAMENTO",
+     "EIXO COM ROLAMENTO",
+     "POLIA COM ROLAMENTO",
+     "ROLAMENTO",
+     "ROLAMENTO 6000-ZZ"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "EVIDENCE_RELEVANCE",
+    "invoked_caps": [
+     "davi.discover_delpi_information"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_correia",
+   "run": 0,
+   "elapsed_ms": 10279,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "result_truncated"
+   ],
+   "content": "Encontrei 14 registros:\n\n- Código do produto: 30190612 · Descrição: CORREIA DENTADA · Categoria do grupo: 3019\n- Código do produto: 30190502 · Descrição: CORREIA DENTADA  300 H 100 · Categoria do grupo: 3019\n- Código do produto: 30191981 · Descrição: CORREIA DENTADA 610 5M BRACO GIRATORIO 2 · Categoria do grupo: 3019\n- Código do produto: 30191935 · Descrição: CORREIA DENTADA COMPRESSOR ATLAS COPCO · Categoria do grupo: 3019\n- Código do produto: 30191906 · Descrição: CORREIA DENTADA DE BORRACHA ROLETES · Categoria do grupo: 3019\n\nExibindo 5 de 14 registros retornados.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "correia dentada",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1160,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 821,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição correia dentada"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 1570,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição correia dentada"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'correia dentada'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30191281",
+     "30190734",
+     "30192157",
+     "30191020",
+     "30192185",
+     "30194329",
+     "30190092",
+     "30190726",
+     "30190748",
+     "30193528",
+     "30190612",
+     "30190502",
+     "30191981",
+     "30191935",
+     "30191906",
+     "30191916",
+     "30190995",
+     "30190996",
+     "30190997",
+     "30192102"
+    ],
+    "pertinent_codes": [
+     "30191281",
+     "30190734",
+     "30192157",
+     "30191020",
+     "30192185",
+     "30194329",
+     "30190092",
+     "30190726",
+     "30190748",
+     "30193528",
+     "30190612",
+     "30190502",
+     "30191981",
+     "30191935",
+     "30191906",
+     "30191916",
+     "30190995",
+     "30190996",
+     "30190997",
+     "30192102"
+    ],
+    "names": [
+     "CORREIA 1160MOTOR SUPERIOR",
+     "CORREIA A-49",
+     "CORREIA DE TRANSPORTE T5-255-BORRACHA 20MM C/COB. LINATEX SCHLEUNIGER",
+     "CONJUNTO ROLETE PARA CORREIA - KOMAX 263",
+     "CORREIA DE BORRACHA",
+     "CORREIA DE TRANSMISSAO",
+     "CORREIA  710 5M-36MM",
+     "CORREIA COM 8MM 267 - 3M",
+     "CORREIA DE BORRACHA SINCRON",
+     "CORREIA COM 13,00MM 234 - 3M",
+     "CORREIA DENTADA",
+     "CORREIA DENTADA  300 H 100",
+     "CORREIA DENTADA 610 5M BRACO GIRATORIO 2",
+     "CORREIA DENTADA COMPRESSOR ATLAS COPCO",
+     "CORREIA DENTADA DE BORRACHA ROLETES",
+     "CORREIA DENTADA FACA HTD330",
+     "CORREIA DENTADA GT-3MR-180-12",
+     "CORREIA DENTADA GT-3MR-240-12",
+     "CORREIA DENTADA HTD330 (FACA)",
+     "CORREIA DENTADA KOMAX 0320502"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_tubo",
+   "run": 0,
+   "elapsed_ms": 10111,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "result_truncated"
+   ],
+   "content": "Encontrei 50 registros:\n\n- Código do produto: 30193991 · Descrição: CABO DA SOLENOIDE TUBO GUIA · Categoria do grupo: 3019\n- Código do produto: 30191880 · Descrição: CHAVE PARA TUBO · Categoria do grupo: 3019\n- Código do produto: 80005921 · Descrição: CHICOTE DE LGAÇAO \"261 14\"  SEM TUBO · Categoria do grupo: 8000\n- Código do produto: 80005923 · Descrição: CHICOTE DE LGAÇAO \"261 14\" TERMINAIS COM TRAVA E TUBO ISOLANTE · Categoria do grupo: 8000\n- Código do produto: 80014526 · Descrição: CHICOTE DE LIGACAO  OV002482 TUBO 130°C · Categoria do grupo: 8001\n\nExibindo 5 de 50 registros retornados.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "tubo",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1149,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 810,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "consultar produtos por descrição tubo"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 2039,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "consultar produtos por descrição tubo"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'tubo'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30193991",
+     "30191880",
+     "80005921",
+     "80005923",
+     "80014526",
+     "80005201",
+     "80004385",
+     "80004386",
+     "80004387",
+     "80004516"
+    ],
+    "pertinent_codes": [
+     "30193991",
+     "30191880",
+     "80005921",
+     "80005923",
+     "80014526",
+     "80005201",
+     "80004385",
+     "80004386",
+     "80004387",
+     "80004516"
+    ],
+    "names": [
+     "CABO DA SOLENOIDE TUBO GUIA",
+     "CHAVE PARA TUBO",
+     "CHICOTE DE LGAÇAO \"261 14\"  SEM TUBO",
+     "CHICOTE DE LGAÇAO \"261 14\" TERMINAIS COM TRAVA E TUBO ISOLANTE",
+     "CHICOTE DE LIGACAO  OV002482 TUBO 130°C",
+     "CHICOTE DE LIGACAO \"153 13\" SEM TUBO ISOLANTE",
+     "CHICOTE DE LIGACAO \"307 11\" 4 CABOS 16AWG + 2 CABOS 18AWG COM TUBO",
+     "CHICOTE DE LIGACAO \"307 11\" 6 CABOS 18AWG COM TUBO ISOLANTE",
+     "CHICOTE DE LIGACAO \"307 11\" 6 CABOS 18AWG COM TUBO ISOLANTE",
+     "CHICOTE DE LIGACAO ''014 12'' TROCA DO TUBO ISOLANTE"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_code",
+   "run": 0,
+   "elapsed_ms": 11983,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "execute_delpi_information",
+      "goal_class": "read",
+      "business_subject": "produto 10080683",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": null,
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 466,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "produto 10080683",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1161,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 822,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "descrição do produto 10080683",
+       "top_k": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "descrição do produto 10080683"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'produto 10080683'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10080683"
+    ],
+    "pertinent_codes": [
+     "10080683"
+    ],
+    "names": [
+     "TERMINAL PINO FEMEA 1,83MM 24-18AWG BRONZE DE FÓSFORO ESTANHADO - ROHS"
+    ],
+    "total": 1
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "EVIDENCE_RELEVANCE",
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_absent",
+   "run": 0,
+   "elapsed_ms": 15846,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Encontrei 2 registros:\n\n- Código do produto: 10211353 · Descrição: SENSOR DE PROXIMIDADE MAGN. COM CABO PP PVC 2X0,34MM2 70°C - 2000MM (MM12-70A-N-ZW0) - ROHS · Categoria do grupo: 1021\n- Código do produto: 30194590 · Descrição: SENSOR DE PROXIMIDADE PARA MAQUINA WL-FS550 · Categoria do grupo: 3019",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null,
+      "goal_class": "read",
+      "business_subject": "sensor de proximidade",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5893,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 4089,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "sensor de proximidade",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1166,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 827,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "consultar produtos por descrição sensor de proximidade"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 367,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "consultar produtos por descrição sensor de proximidade"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'sensor de proximidade'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "80016433",
+     "30190790",
+     "10540094",
+     "10210276",
+     "80016435",
+     "30192226",
+     "80016223",
+     "80013093",
+     "30192068",
+     "30193709",
+     "10211353",
+     "30194590"
+    ],
+    "pertinent_codes": [
+     "80016433",
+     "30190790",
+     "10540094",
+     "10210276",
+     "80016435",
+     "30192226",
+     "80016223",
+     "80013093",
+     "30192068",
+     "30193709",
+     "10211353",
+     "30194590"
+    ],
+    "names": [
+     "ABRACADEIRA DO SENSOR",
+     "CABO TERRA  - SENSOR PROXIMAL",
+     "CABO CONEXAO SENSOR KOMAX GAMMA 263 (COD.7634)",
+     "CABO PARA MOODULO SENSOR - OV003620",
+     "CABO DE CONEXÃO DE SENSOR",
+     "CHICOTE DE LIGACAO OV003506 SENSOR DE PRESENCA DE AGUA",
+     "CABO SENSOR DE VELOCIDADE PAINEL/CORRIMAO 537/554",
+     "CABO PARA MOODULO SENSOR - OV003620 - TERMINAL 22AWG",
+     "CABO PARA SENSOR 90 GRAUS 3X0,25 5M",
+     "BOIA  ANAUGER SENSOR CONTROL",
+     "SENSOR DE PROXIMIDADE MAGN. COM CABO PP PVC 2X0,34MM2 70°C - 2000MM (MM12-70A-N-ZW0) - ROHS",
+     "SENSOR DE PROXIMIDADE PARA MAQUINA WL-FS550"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_teo_resp",
+   "run": 0,
+   "elapsed_ms": 6552,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Erro interno do servidor.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_process_context",
+      "goal_class": "read",
+      "business_subject": "responsável pelo processo PROC-0105",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5819,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 584,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "process_id": "PROC-0105"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 561,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "entity": "responsável pelo processo PROC-0105"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_process_context",
+     "arg_keys": [
+      "process_id"
+     ],
+     "args": {
+      "process_id": "PROC-0105"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [
+      "entity"
+     ],
+     "args": {
+      "entity": "responsável pelo processo PROC-0105"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "teo.get_catalog",
+     "teo.get_process_context"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_teo_status",
+   "run": 0,
+   "elapsed_ms": 7964,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "CONTINUING",
+    "CONTINUING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "execute_delpi_information",
+      "goal_class": "read",
+      "business_subject": "processo PROC-0105",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 466,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1157,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 835,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_vista_screens",
+   "run": 0,
+   "elapsed_ms": 17524,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5093,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null,
+      "goal_class": "read",
+      "business_subject": "telas de TV",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5427,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null,
+      "goal_class": "read",
+      "business_subject": "telas de TV",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5313,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "telas de TV",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1156,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 817,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "consultar telas de TV cadastradas",
+       "top_k": "10"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "consultar telas de TV cadastradas",
+      "top_k": "10"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'telas de TV'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "GROUP_SELECTION_ERROR",
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_davi_explicit",
+   "run": 0,
+   "elapsed_ms": 9200,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Encontrei este registro:\n\n- Código do produto: 30193874\n- Descrição: DIFUSOR LS SUPER COMPLETO COM PORCAS\n- Categoria do grupo: 3019",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "porcas",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1151,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 812,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "buscar produtos por descrição porca"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 179,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "buscar produtos por descrição porca"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'porcas'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_cont",
+   "run": 0,
+   "elapsed_ms": 6845,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "prior_turn_evidence_only"
+   ],
+   "content": "Encontrei: 10090012 PORCA SEXTAVADA M6 ZINCADA; 10090020 PORCA SEXTAVADA M8 ZINCADA.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.turn_goal",
+     "block_len": 2,
+     "block_valid": true,
+     "proposal": {
+      "goal_class": "read",
+      "business_subject": "porca sextavada",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": true,
+      "comparison_requested": false,
+      "answer_requirements": null,
+      "output_mode": "snapshot",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.grounded_synthesis",
+     "block_len": 153,
+     "block_valid": true,
+     "proposal": {
+      "items": 1
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_workspace",
+   "run": 0,
+   "elapsed_ms": 22869,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A fonte retornou registros reais, mas eles não correspondem ao que foi pedido — não vou apresentá-los como resposta.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "execute_delpi_information",
+      "goal_class": "read",
+      "business_subject": "item",
+      "scope_constraints": {},
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 466,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "item",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": {},
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1149,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 810,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "descrição deste item"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 2150,
+     "block_valid": true,
+     "proposal": {}
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5694,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 3591,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "execute_delpi_information"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 512,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 3787,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 3910,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "descrição do produto código 80002437"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "descrição deste item"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'item'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "EVIDENCE_REJECTION",
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_prep",
+   "run": 0,
+   "elapsed_ms": 5842,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Entity 'auditoria task22' has no registered write schema.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "prepare_governed_operation",
+      "goal_class": "create_or_modify",
+      "business_subject": "processo chamado auditoria task22",
+      "prior_evidence_sufficient": false,
+      "comparison_requested": false,
+      "answer_requirements": null,
+      "output_mode": "unspecified",
+      "execution_bound": "unrestricted",
+      "contract_subject": false
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5839,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 559,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "entity": "auditoria task22"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [
+      "entity"
+     ],
+     "args": {
+      "entity": "auditoria task22"
+     },
+     "status": "EXC:CapabilityProviderError",
+     "complete": null
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "teo.get_catalog"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_neg_delete",
+   "run": 0,
+   "elapsed_ms": 9608,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1213,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5389,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5040,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5374,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 4652,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_neg_whatsapp",
+   "run": 0,
+   "elapsed_ms": 3734,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "não posso enviar mensagens por WhatsApp diretamente",
+    "nenhuma integração com ferramentas de comunicação externas está ativa"
+   ],
+   "content": "Não posso enviar mensagens por WhatsApp diretamente. Essa ação exige autorização e integração com ferramentas de comunicação externas, que não estão ativas nesta interface. Para enviar mensagens, você precisa acessar o sistema de comunicação oficial da empresa ou usar uma ferramenta autorizada.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_ctrl_greet",
+   "run": 0,
+   "elapsed_ms": 1349,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Bom dia! Tudo bem, obrigada por perguntar.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "t2_ctrl_concept",
+   "run": 0,
+   "elapsed_ms": 4501,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Um banco de dados relacional é um sistema de armazenamento de dados que organiza as informações em tabelas, onde cada tabela representa um conjunto de entidades (como clientes, produtos ou pedidos), e cada linha de uma tabela representa um registro único. As colunas das tabelas definem os atributos de cada entidade (como nome, ID ou data). As relações entre tabelas são estabelecidas por chaves primárias e estrangeiras, permitindo que dados relacionados sejam conectados de forma estruturada e consistente. Esse modelo é amplamente utilizado porque permite consultas precisas, integridade de dados e facilidade de manutenção.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "explanation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  }
+ ]
+}

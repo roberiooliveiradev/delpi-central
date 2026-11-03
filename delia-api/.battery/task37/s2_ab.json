@@ -1,0 +1,98 @@
+[
+  {
+    "scenario": "cmp_05",
+    "capability": "clara.get_context",
+    "schema_keys": [
+      "topic",
+      "entity",
+      "action",
+      "scope",
+      "selected_ref"
+    ],
+    "pydantic_ai": {
+      "ok": true,
+      "args": {
+        "topic": "fechamentos mensais",
+        "entity": "\u00faltimos tr\u00eas per\u00edodos",
+        "action": null,
+        "scope": null,
+        "selected_ref": null
+      }
+    }
+  },
+  {
+    "scenario": "cmp_03",
+    "capability": "caio.analyze",
+    "schema_keys": [
+      "analysis_type",
+      "subject_refs",
+      "question",
+      "parameters"
+    ],
+    "pydantic_ai": {
+      "ok": true,
+      "args": {
+        "analysis_type": "opportunity.collaborator_summary",
+        "subject_refs": null,
+        "question": "propostas e oportunidades abertas dos \u00faltimos 120 dias",
+        "parameters": null
+      }
+    }
+  },
+  {
+    "scenario": "cmp_13",
+    "capability": "eva.analyze",
+    "schema_keys": [
+      "analysis_type",
+      "subject_refs",
+      "question",
+      "parameters"
+    ],
+    "pydantic_ai": {
+      "ok": true,
+      "args": {
+        "analysis_type": "product.drawing_analysis",
+        "subject_refs": null,
+        "question": "demandas e solicita\u00e7\u00f5es de engenharia recentes",
+        "parameters": null
+      }
+    }
+  },
+  {
+    "scenario": "cmp_19",
+    "capability": "teo.analyze",
+    "schema_keys": [
+      "view",
+      "params",
+      "filial_id",
+      "setor_id",
+      "processo_id",
+      "revisao_id",
+      "instancia_id",
+      "familia_processo",
+      "competencia",
+      "competencia_inicio",
+      "competencia_fim",
+      "horizonte_meses",
+      "limit"
+    ],
+    "pydantic_ai": {
+      "ok": true,
+      "args": {
+        "view": "dashboard_alerts",
+        "params": null,
+        "filial_id": null,
+        "setor_id": null,
+        "processo_id": null,
+        "revisao_id": null,
+        "instancia_id": null,
+        "familia_processo": null,
+        "competencia": null,
+        "competencia_inicio": null,
+        "competencia_fim": null,
+        "horizonte_meses": null,
+        "limit": null
+      }
+    }
+  }
+]

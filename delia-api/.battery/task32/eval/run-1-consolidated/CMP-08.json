@@ -1,0 +1,29 @@
+{
+  "scenario_id": "CMP-08",
+  "specialist": "clara",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "clara.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "clara.analyze",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "analysis_type": "closing_blockers",
+        "period": "30-90 dias",
+        "question": "avaliar exposição a variações de receitas e custos para os p",
+        "filters": "{'tipo_de_disponibilidade': 'números oficiais disponíveis'}"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Parâmetros desconhecidos para a action: ['tipo_de_disponibilidade'].",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 13172,
+  "error": null
+}

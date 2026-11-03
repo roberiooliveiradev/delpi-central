@@ -1,0 +1,28 @@
+{
+  "scenario_id": "CMP-02",
+  "specialist": "caio",
+  "run_number": 0,
+  "question_full_text": "CAIO, investigue os clientes e carteiras com maior queda de compras nos últimos 180 dias, comparando períodos equivalentes e sazonalidade disponível. Separe perda de frequência, redução de ticket, concentração de receita, clientes inativos e migração de mix; confronte pedidos, propostas e histórico de faturamento onde houver vínculo oficial. Produza ranking de até cinco riscos e até cinco oportunidades, com critérios transparentes, cliente/carteira apenas se autorizado, magnitude monetária e lacunas. Para cada item proponha abordagem comercial e indicador de acompanhamento para 30 dias, sem inferir motivos do cliente sem evidência nem disparar contato.",
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "caio.get_context"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "caio.get_context",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "topic": "queda de compras em clientes e carteiras nos últimos 180 dia",
+        "entity": "clientes e carteiras"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Entidade 'clientes e carteiras' desconhecida.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 66807,
+  "error": null
+}

@@ -1,0 +1,22 @@
+{
+  "scenario_id": "CMP-22",
+  "specialist": "vista",
+  "run_number": 0,
+  "outcome": "PASS",
+  "first_divergence": "",
+  "capabilities_invoked": [
+    "vista.get_catalog"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "vista.get_catalog",
+      "status": "COMPLETED",
+      "args": {}
+    }
+  ],
+  "response_full_text": "Qual é o conjunto de indicadores operacionais que você deseja analisar com base nos dados mais recentes e que apresentem tendências consistentes nos últimos 90 dias?",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [],
+  "elapsed_ms": 17158,
+  "error": null
+}

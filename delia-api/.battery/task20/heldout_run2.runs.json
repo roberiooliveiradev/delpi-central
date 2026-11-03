@@ -1,0 +1,1842 @@
+{
+ "summary": {
+  "executions": 20,
+  "model_calls": 103,
+  "input_tokens": 186457,
+  "output_tokens": 3420,
+  "outcomes": {
+   "FAIL": 7,
+   "PASS": 13
+  }
+ },
+ "runs": [
+  {
+   "scenario": "ho_cabo",
+   "run": 0,
+   "elapsed_ms": 11329,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "cabo flexível cadastrado",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1169,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 841,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "dois exemplos de cabo flexível cadastrado",
+       "top_k": "2"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query",
+      "top_k"
+     ],
+     "args": {
+      "query": "cabo flexível cadastrado",
+      "top_k": "2"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+      "arguments": "{'description': 'cabo flexível cadastrado', 'page_size': 2}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30191080",
+     "80010742",
+     "80010744",
+     "80013254",
+     "80013257",
+     "80010745",
+     "80013256",
+     "80010750",
+     "80013255",
+     "80010741"
+    ],
+    "pertinent_codes": [
+     "30191080",
+     "80010742",
+     "80010744",
+     "80013254",
+     "80013257",
+     "80010745",
+     "80013256",
+     "80010750",
+     "80013255",
+     "80010741"
+    ],
+    "names": [
+     "CABO FLEXIVEL 1KV 3X6MM PRETO",
+     "CABO FLEXIVEL 2X0.75",
+     "CABO FLEXIVEL 2X0.75 PC",
+     "CABO FLEXIVEL 2X0.75MM² COM MICRO INTERRUPTOR OV1934",
+     "CABO FLEXIVEL 2X0.75MM² COM MICRO INTERRUPTOR OV1934",
+     "CABO FLEXIVEL 2X0.75X1075 PC",
+     "CABO FLEXIVEL 2X1,5MM² C/ PLUG E MICRO INTERRUPTOR OV1934",
+     "CABO FLEXIVEL 2X1.5X1065 PC",
+     "CABO FLEXIVEL 2X1MM² C/ PLUG E MICRO INTERRUPTOR OV1934",
+     "CABO FLEXIVEL 2X1X1065 PC"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "EVIDENCE_RELEVANCE",
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_fusivel",
+   "run": 0,
+   "elapsed_ms": 6855,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "fusível"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1152,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 824,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "exemplo de fusível"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "fusível"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10211483",
+     "80014867",
+     "80015063",
+     "80013070",
+     "10320003",
+     "30191019",
+     "30190808",
+     "30190809",
+     "30190729",
+     "20170100"
+    ],
+    "pertinent_codes": [
+     "10211483",
+     "80014867",
+     "80015063",
+     "80013070",
+     "30191019",
+     "30190808",
+     "30190809",
+     "30190729",
+     "20170100"
+    ],
+    "names": [
+     "BORNE FUSIVEL PARA CABOS ATÉ 4MM (5X2OMM) BEGE",
+     "CHICOTE LIGACAO OV002698 OPCAO COM FUSIVEL EMENDADO",
+     "CHICOTE LIGAÇÃO OV002698 SOMENTE FUSIVEL",
+     "CONJUNTO CABO ALIMENTACAO/FUSIVEL FAMILIA PR5",
+     "FIO FÚSIVEL  10048640",
+     "FUSIVEL 10A 240V DEK L1722",
+     "FUSIVEL 15A 240V DEK L1722",
+     "FUSIVEL 16A 240V DEK L1722",
+     "FUSIVEL 20A 240V DEK L1722",
+     "FUSIVEL A GAS MP 2X"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "EVIDENCE_RELEVANCE",
+    "invoked_caps": [
+     "davi.discover_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_emenda",
+   "run": 0,
+   "elapsed_ms": 8403,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "adaptador de emenda com redução",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1176,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 805,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "adaptador de emenda com redução",
+       "top_k": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "adaptador de emenda com redução"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30191713",
+     "30191714",
+     "30191733",
+     "20060117",
+     "30194288",
+     "30193767",
+     "30191363",
+     "30194474",
+     "80002198",
+     "80002200"
+    ],
+    "pertinent_codes": [
+     "30191713",
+     "30191714",
+     "30191733",
+     "20060117",
+     "30194288",
+     "30193767",
+     "30191363",
+     "30194474",
+     "80002198",
+     "80002200"
+    ],
+    "names": [
+     "ADAPTADOR EMENDA COM REDUCAO T10XT8 PVC",
+     "ADAPTADOR EMENDA COM REDUCAO T12XT10 PVC",
+     "ADAPTADOR UNIAO TEE EMENDA T8 PVC",
+     "BANCADA DE MONTAGEM DE CABOS SISTEMA DE PRESSA DE TERMINAIS EMENDA E SISTEMA DE TESTE CABOS ELETROPOLL",
+     "BASE FRONTAL EMENDA",
+     "BIGORNA ESPECIAL DE EMENDA",
+     "BIGORNA TERMINAL EMENDA",
+     "BLOCO - MAQ. CHINESA EMENDA",
+     "CHAVE MENEGOTTI COM TERMINAL EMENDA  \"838 06\"",
+     "CHAVE MENEGOTTI COM TERMINAL EMENDA  \"838 06\""
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "EVIDENCE_RELEVANCE",
+    "invoked_caps": [
+     "davi.discover_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_fita",
+   "run": 0,
+   "elapsed_ms": 9165,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "fita isolante",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1158,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 787,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "existe fita isolante cadastrada?"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "fita isolante"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10211126",
+     "10211134",
+     "20050077",
+     "20050042",
+     "10211561",
+     "10211562",
+     "10211455",
+     "10211028",
+     "10211563",
+     "10211478"
+    ],
+    "pertinent_codes": [
+     "10211126",
+     "10211134",
+     "20050077",
+     "20050042",
+     "10211561",
+     "10211562",
+     "10211455",
+     "10211028",
+     "10211563",
+     "10211478"
+    ],
+    "names": [
+     "FITA ISOLANTE 3M IMPERIAL 18MM",
+     "FITA ISOLANTE 3M SCOTCH 33+ ANTI CHAMA - ROHS",
+     "FITA ISOLANTE ALTA FUSAO 1-10",
+     "FITA ISOLANTE LIQUIDA  200ML TAPMATIC",
+     "FITA ISOLANTE PVC 18MM X 20M AMARELA",
+     "FITA ISOLANTE PVC 18MM X 20M AZUL",
+     "FITA ISOLANTE PVC 18MM X 20M BRANCA",
+     "FITA ISOLANTE PVC 18MM X 20M PRETA",
+     "FITA ISOLANTE PVC 18MM X 20M VERMELHA",
+     "FITA ISOLANTE PVC 18MM X 20M X 0,10MM PRETA"
+    ],
+    "total": 10
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "EVIDENCE_RELEVANCE",
+    "invoked_caps": [
+     "davi.discover_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_code",
+   "run": 0,
+   "elapsed_ms": 15806,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Encontrei este registro:\n\n- Código: 80002437\n- Descrição: CABO DE LIG. 2,5MM² 390MM C/ TERM. OLHAL Ø 4MM \"879 06\"\n- Tipo: PA\n- Código do grupo: 8000",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "produto",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1152,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 781,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "descrição do produto de código 80002437"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 823,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "produto"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.execute_delpi_information",
+     "arg_keys": [
+      "arguments",
+      "candidate_token"
+     ],
+     "args": {
+      "candidate_token": "eyJhY3Rpb25faWQiOiJnZXRfcHJvZHVjdF9kZXRhaWwiLCJhY3Rvcl9pZCI6",
+      "arguments": "{'code': '80002437'}"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "80002437"
+    ],
+    "pertinent_codes": [
+     "80002437"
+    ],
+    "names": [
+     "CABO DE LIG. 2,5MM² 390MM C/ TERM. OLHAL Ø 4MM \"879 06\""
+    ],
+    "total": 1
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "davi.execute_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_absent",
+   "run": 0,
+   "elapsed_ms": 9097,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "tubo termocontrátil",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1160,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 793,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "traga um tubo termocontrátil",
+       "top_k": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "tubo termocontrátil"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [],
+    "pertinent_codes": [],
+    "names": [],
+    "total": 0
+   },
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_teo_proc",
+   "run": 0,
+   "elapsed_ms": 19685,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_process_context",
+      "goal_class": "read",
+      "business_subject": "processo PROC-0105",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5802,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 540,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "process_id": "PROC-0105"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_process_context",
+     "arg_keys": [
+      "process_id"
+     ],
+     "args": {
+      "process_id": "PROC-0105"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "teo.get_process_context"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_teo_timeline",
+   "run": 0,
+   "elapsed_ms": 18019,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "Encontrei este registro:\n\n- Entity type: processo\n- Action: create\n- User email: e2e-manager@delpi.e2e\n- User name: E2E e2e-manager",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_process_timeline",
+      "goal_class": "read",
+      "business_subject": "processo PROC-0105",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5799,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 566,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "processo_id": "PROC-0105",
+       "page": "1",
+       "page_size": "100"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 770,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_process_timeline",
+     "arg_keys": [
+      "page",
+      "page_size",
+      "processo_id"
+     ],
+     "args": {
+      "processo_id": "PROC-0105",
+      "page": "1",
+      "page_size": "100"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "teo.get_process_timeline"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_teo_ordinal",
+   "run": 0,
+   "elapsed_ms": 21605,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "result_truncated"
+   ],
+   "content": "Encontrei 200 registros:\n\n- Codigo processo: PROC-0011 · Nome processo: Tela Alimentadores de linha · Setor id: producao · Competencia: 2026-10\n- Codigo processo: PROC-0035 · Nome processo: Avaliações de Desempenho · Setor id: rh · Familia processo: automação\n- Codigo processo: PROC-0034 · Nome processo: DELPI Indicadores · Setor id: comercial · Familia processo: BI\n- Codigo processo: PROC-0001 · Nome processo: Acompanhamento de refugo · Setor id: qualidade · Competencia: 2026-10\n- Codigo processo: PROC-0028 · Nome processo: Importação Tabela de Preços · Setor id: compras · Familia processo: automação\n\nExibindo 5 de 200 registros retornados.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "get_process_timeline",
+      "goal_class": "read",
+      "business_subject": "processo",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5542,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "analyze",
+      "goal_class": "read",
+      "business_subject": "processo",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5991,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2184,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "view": "processes"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.goal_evidence_relevance",
+     "block_len": 3437,
+     "block_valid": true,
+     "proposal": {}
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.analyze",
+     "arg_keys": [
+      "view"
+     ],
+     "args": {
+      "view": "processes"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "invoked_caps": [
+     "teo.analyze"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_vista_playlists",
+   "run": 0,
+   "elapsed_ms": 14848,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [],
+   "content": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:vista"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5093,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "list_playlists",
+      "goal_class": "read",
+      "business_subject": "playlists",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5352,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "vista.list_playlists",
+     "arg_keys": [
+      "limit",
+      "offset"
+     ],
+     "args": {
+      "limit": "50",
+      "offset": "0"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "vista.list_playlists"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_explicit_davi",
+   "run": 0,
+   "elapsed_ms": 838,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Discover governed DELPI business data — products, materials, parts, registers, records and other entities exposed by eligible DELPI read surfaces. Find the READ capability that bes\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_workspace_context: Current Transformômetro workspace the user is viewing (process/instance/revision/area refs). Navigation hint only — never domain truth, never authorization. For 'this process', 'cu\n  - get_catalog: Discovery catalog: entities, workflows, analysis, registration_guide, diagram_catalog, capability_surface. Use before writes. Optional entity (e.g. decomposition_tree) returns only\n  - get_methodology_guide: READ-only TÉO process-methodology playbooks. Optional method (macroprocess, key_process, end_to_end, sipoc, lean, ishikawa, five_whys, ctp, tdr, kpi, swot, as_is, to_be) and/or tas\n  - get_product_guide: READ-only product usage guidance for Portal/Transformômetro features — how/when/why to use a capability correctly (GUIDANCE, never domain truth, AuthZ or execution policy; live con\n  - solution_read: READ-only Minha DELPI solution intelligence (Core metadata). action=catalog: discovery of ALL registered active solutions — id, name, description, category, routes, features, permi\n- VISTA:\n  - list_playlists: Lista as programações (playlists) do TV Dashboard visíveis ao usuário autenticado, com paginação. Ponto de partida para descobrir playlist_id canônico.\n  - get_playlist_context: Retorna o contexto compacto de uma programação: identidade, telas, blocos, filtros e revisão — sem conteúdo pesado de renderização. Opcionalmente foca uma fonte de dados legada (da\n  - get_",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_absent_provider",
+   "run": 0,
+   "elapsed_ms": 5844,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "não posso acessar sistemas operacionais como o MCP Totvs",
+    "não possuo permissões de autenticação ou operação",
+    "não posso realizar consultas reais ao cadastro de produtos"
+   ],
+   "content": "Não posso acessar ou usar o MCP Totvs para consultar um produto, pois isso exige autenticação, permissões e conexão direta com sistemas operacionais da empresa. Além disso, minha função é fornecer explicações conceituais e orientações, não realizar ações operacionais em sistemas como o MCP Totvs. Para consultar um produto, você precisará acessar o MCP Totvs diretamente com os dados de login e permissão apropriadas.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_ctrl_thanks",
+   "run": 0,
+   "elapsed_ms": 1265,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "De nada! Fico feliz em ajudar.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_ctrl_concept",
+   "run": 0,
+   "elapsed_ms": 2992,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "Um número primo é um número natural maior que 1 que só pode ser dividido por 1 e por ele mesmo. Por exemplo, 2, 3, 5, 7, 11 e 13 são números primos. O número 4 não é primo porque pode ser dividido por 1, 2 e 4.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "explanation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_surface",
+   "run": 0,
+   "elapsed_ms": 585,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Discover governed DELPI business data — products, materials, parts, registers, records and other entities exposed by eligible DELPI read surfaces. Find the READ capability that bes\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_workspace_context: Current Transformômetro workspace the user is viewing (process/instance/revision/area refs). Navigation hint only — never domain truth, never authorization. For 'this process', 'cu\n  - get_catalog: Discovery catalog: entities, workflows, analysis, registration_guide, diagram_catalog, capability_surface. Use before writes. Optional entity (e.g. decomposition_tree) returns only\n  - get_methodology_guide: READ-only TÉO process-methodology playbooks. Optional method (macroprocess, key_process, end_to_end, sipoc, lean, ishikawa, five_whys, ctp, tdr, kpi, swot, as_is, to_be) and/or tas\n  - get_product_guide: READ-only product usage guidance for Portal/Transformômetro features — how/when/why to use a capability correctly (GUIDANCE, never domain truth, AuthZ or execution policy; live con\n  - solution_read: READ-only Minha DELPI solution intelligence (Core metadata). action=catalog: discovery of ALL registered active solutions — id, name, description, category, routes, features, permi\n- VISTA:\n  - list_playlists: Lista as programações (playlists) do TV Dashboard visíveis ao usuário autenticado, com paginação. Ponto de partida para descobrir playlist_id canônico.\n  - get_playlist_context: Retorna o contexto compacto de uma programação: identidade, telas, blocos, filtros e revisão — sem conteúdo pesado de renderização. Opcionalmente foca uma fonte de dados legada (da\n  - get_",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_cont_code",
+   "run": 0,
+   "elapsed_ms": 5428,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "prior_turn_evidence_only"
+   ],
+   "content": "Encontrei: 30191080 CABO FLEXIVEL 1KV 3X6MM PRETO; 80010742 CABO FLEXIVEL 2X0.75.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.turn_goal",
+     "block_len": 2,
+     "block_valid": true,
+     "proposal": {
+      "goal_class": "read",
+      "business_subject": "produto",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.grounded_synthesis",
+     "block_len": 142,
+     "block_valid": true,
+     "proposal": {
+      "items": 1
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_cont_another",
+   "run": 0,
+   "elapsed_ms": 10116,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "OUTCOME_PREPARING",
+    "COMPLETED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.turn_goal",
+     "block_len": 2,
+     "block_valid": true,
+     "proposal": {
+      "goal_class": "read",
+      "business_subject": "fita isolante",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5896,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1127,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1155,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 787,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "outro tipo ou outra marca de fita isolante"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "outro tipo ou outra marca de fita isolante"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "tem outra marca ou tipo? mostre fita isolante Encontrei: 102"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "davi.discover_delpi_information"
+    ],
+    "grounding": "GroundingStatus.GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_prepare_record",
+   "run": 0,
+   "elapsed_ms": 21455,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "CONTINUING",
+    "CONTINUING",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:teo"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 5742,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "prepare_governed_operation",
+      "goal_class": "create_or_modify",
+      "business_subject": "processo chamado verificação held-out",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 5839,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 531,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "entity": "None"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 9894,
+     "block_valid": true,
+     "proposal": null
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [],
+     "args": {},
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [
+     "teo.get_catalog"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_neg_delete",
+   "run": 0,
+   "elapsed_ms": 4844,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": false,
+      "remote_name": null
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "invoked_caps": [],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  },
+  {
+   "scenario": "ho_workspace",
+   "run": 0,
+   "elapsed_ms": 12411,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "retried_on_auth": true,
+   "stages": [],
+   "activities": [
+    "REQUEST_RECEIVED",
+    "CONTEXTUALIZING",
+    "CAPABILITY_SELECTED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "SOURCE_QUERY_STARTED",
+    "SOURCE_QUERY_COMPLETED",
+    "BLOCKED"
+   ],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5643,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 879,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "produto",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1148,
+     "block_valid": true,
+     "proposal": {
+      "status": "sufficient"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 781,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "detalhes deste produto",
+       "top_k": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "produto"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "oracle_latest": "PROC-0105",
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "EVIDENCE_RELEVANCE",
+    "invoked_caps": [
+     "davi.discover_delpi_information"
+    ],
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "error": null
+   }
+  }
+ ]
+}

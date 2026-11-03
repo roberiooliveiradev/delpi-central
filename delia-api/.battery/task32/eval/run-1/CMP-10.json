@@ -1,0 +1,45 @@
+{
+  "scenario_id": "CMP-10",
+  "specialist": "suri",
+  "run_number": 0,
+  "outcome": "PASS",
+  "first_divergence": "CAPABILITY_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "davi.discover_delpi_information",
+    "davi.execute_delpi_information",
+    "suri.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "davi.discover_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "query": "consultar desempenho de fornecedores em janelas equivalentes"
+      }
+    },
+    {
+      "capability_id": "davi.execute_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "candidate_token": "eyJhY3Rpb25faWQiOiJyZWFkX2dvdmVybmVkX3RlY2huaWNhbF9rbm93bGVk",
+        "arguments": "{'topic': 'purchase_order_otd', 'page': 1, 'page_size': 3}"
+      }
+    },
+    {
+      "capability_id": "suri.analyze",
+      "status": "COMPLETED",
+      "args": {
+        "analysis": "purchase_orders_summary",
+        "filters": "{'branch': ['01'], 'expected_delivery_from': '2024-04-01', '",
+        "sample_size": "50"
+      }
+    }
+  ],
+  "response_full_text": "Comparação inconclusiva.",
+  "grounding": "GroundingStatus.GROUNDED",
+  "limitations": [
+    "comparison_inconclusive"
+  ],
+  "elapsed_ms": 56245,
+  "error": null
+}

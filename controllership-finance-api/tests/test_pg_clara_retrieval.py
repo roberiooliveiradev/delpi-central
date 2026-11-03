@@ -17,6 +17,7 @@ CF_TEST_PG_ALLOW_DESTRUCTIVE=1.
 from __future__ import annotations
 
 import os
+import re
 import uuid
 from pathlib import Path
 
@@ -39,7 +40,7 @@ from controllership_finance_app.infrastructure.persistence.plugins_db import (  
     plugins_db_connect,
 )
 
-from clara_golden_set_r01_r15 import GOLDEN_SET
+from clara_golden_set_r01_r15 import GOLDEN_SET, NEGATIVE_SET
 
 PG_ENV = (
     "CF_TEST_PG_HOST",
@@ -317,3 +318,94 @@ def test_golden_set_105(corpus):
         ).get("expect", "PASS_RETRIEVED")
     }
     assert not unexpected, f"resultados inesperados: {unexpected}"
+
+
+# ------------------------------------------------------------------
+# Gate 077 — aceitação semântica (nível evidência/citação)
+#
+# O canal conversacional real é o conector ChatGPT externo — não
+# automatizável neste ambiente. O que se homologa aqui: a evidência
+# recuperada é SUFICIENTE e LIMPA para uma resposta correta —
+# fonte citável (`cite`), asserções exigidas (`asserts`/`markers`)
+# e ausência de asserções enganosas no item de suporte (`forbids`).
+# ------------------------------------------------------------------
+
+
+def _evaluate_semantic(case, repo) -> str:
+    hits = repo.search(
+        query=case["q"], report_id=case["report_id"], limit=12,
+    )
+    required = case.get("asserts") or case.get("markers") or []
+    forbids = [f.lower() for f in case.get("forbids", [])]
+    cite = case.get("cite")
+    supporting = None
+    for h in hits:
+        content = h["content"].lower()
+        if all(
+            re.search(
+                r"(?<!\w)" + re.escape(m.lower()) + r"(?!\w)", content,
+            )
+            for m in required
+        ):
+            supporting = h
+            break
+    if supporting is not None:
+        if any(f in supporting["content"].lower() for f in forbids):
+            return "EVIDENCE_WEAK"
+        if cite and supporting["source_id"] not in cite:
+            # evidência existe mas fora das fontes canônicas aceitáveis
+            return "CITATION_MISS"
+        return "PASS_RETRIEVED"
+    return (
+        "RETRIEVAL_MISS"
+        if _corpus_has_evidence(required)
+        else "SOURCE_GAP"
+    )
+
+
+def test_semantic_acceptance_105(corpus):
+    results = {
+        case["id"]: _evaluate_semantic(case, corpus)
+        for case in GOLDEN_SET
+    }
+    for case in GOLDEN_SET:
+        print(f"{case['id']}: {results[case['id']]}")
+    by = {}
+    for v in results.values():
+        by[v] = by.get(v, 0) + 1
+    print("SEMANTIC SUMMARY:", by)
+    allowed = {"PASS_RETRIEVED", "RETRIEVAL_MISS"}  # misses já triados
+    unexpected = {
+        cid: v
+        for cid, v in results.items()
+        if v not in allowed
+        and v != next(
+            c for c in GOLDEN_SET if c["id"] == cid
+        ).get("expect", "PASS_RETRIEVED")
+    }
+    weak = {k: v for k, v in results.items() if v in ("EVIDENCE_WEAK", "CITATION_MISS")}
+    assert not unexpected, f"vereditos inesperados: {unexpected}"
+    assert not weak, f"evidência fraca/citação incorreta: {weak}"
+
+
+def test_negative_contradictory_set(corpus):
+    """Os 10 casos contraditórios: a evidência que corrige a premissa
+    falsa deve ser recuperável das fontes canônicas; itens stale que
+    sustentam a premissa são registrados como risco informacional."""
+    for case in NEGATIVE_SET:
+        verdict = _evaluate_semantic(case, corpus)
+        hits = corpus.search(
+            query=case["q"], report_id=case["report_id"], limit=12,
+        )
+        stale = [
+            h["source_id"]
+            for h in hits
+            if h["source_id"] in case.get("stale_risk", [])
+        ]
+        print(
+            f"{case['id']}: {verdict} stale_hits={stale}"
+        )
+        expect = case.get("expect", "PASS_RETRIEVED")
+        assert verdict == expect, (
+            f"{case['id']}: {verdict} != {expect}"
+        )

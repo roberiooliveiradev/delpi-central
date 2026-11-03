@@ -1,0 +1,30 @@
+{
+  "scenario_id": "CMP-15",
+  "specialist": "eva",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "clara.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "clara.analyze",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "analysis_type": "closing_blockers",
+        "period": "180 days",
+        "filters": "{'type_of_request': 'technical', 'status': 'official', 'time",
+        "question": "evolução do fluxo de solicitações técnicas ao longo dos últi",
+        "parameters": "{'throughput': 'calculated', 'stage_duration': 'per_stage', "
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Parâmetros desconhecidos para a action: ['auto_work_redistribution', 'demand_type', 'evidence', 'flow_restrictions', 'hypotheses', 'idle_demands', 'monitoring_i",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 29008,
+  "error": null
+}

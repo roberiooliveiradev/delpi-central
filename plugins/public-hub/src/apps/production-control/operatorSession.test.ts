@@ -6,7 +6,6 @@ import {
   normalizeRegistration,
   readStoredSession,
   sessionStorageKey,
-  shouldBlockOperatorSwitch,
   storeSession,
 } from "./operatorSession.ts";
 
@@ -40,29 +39,6 @@ describe("normalizeRegistration", () => {
     assert.equal(normalizeRegistration("   "), null);
     assert.equal(normalizeRegistration("1".repeat(31)), null);
     assert.equal(normalizeRegistration("1".repeat(30)), "1".repeat(30));
-  });
-});
-
-describe("shouldBlockOperatorSwitch", () => {
-  it("bloqueia só com run ativo sem parada aberta", () => {
-    assert.equal(shouldBlockOperatorSwitch(null), false);
-    assert.equal(shouldBlockOperatorSwitch({ downtime: null }), true);
-    assert.equal(shouldBlockOperatorSwitch({ downtime: undefined }), true);
-  });
-
-  it("não bloqueia com parada aberta (motivo pendente ou classificado)", () => {
-    assert.equal(
-      shouldBlockOperatorSwitch({
-        downtime: { id: "dt-1", reasonCode: null, confirmed: false },
-      }),
-      false,
-    );
-    assert.equal(
-      shouldBlockOperatorSwitch({
-        downtime: { id: "dt-1", reasonCode: "setup", confirmed: true },
-      }),
-      false,
-    );
   });
 });
 

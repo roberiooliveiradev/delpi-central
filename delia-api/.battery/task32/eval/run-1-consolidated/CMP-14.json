@@ -1,0 +1,14 @@
+{
+  "scenario_id": "CMP-14",
+  "specialist": "eva",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "ADMISSION_ERROR",
+  "capabilities_invoked": [],
+  "invoke_statuses": [],
+  "response_full_text": "Preciso de mais informações para continuar. Quais itens ou informações você quer usar?",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [],
+  "elapsed_ms": 54110,
+  "error": null
+}

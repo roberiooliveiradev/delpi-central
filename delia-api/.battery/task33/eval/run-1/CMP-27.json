@@ -1,0 +1,15 @@
+{
+  "scenario_id": "CMP-27",
+  "specialist": "davi",
+  "run_number": 0,
+  "question_full_text": "DAVI, examine duas consultas oficiais relacionadas a um mesmo assunto empresarial conforme fixtures/oráculos previamente preparados, usando discovery e execução governada. Identifique se os resultados são realmente comparáveis em período, unidade, entidade e escopo; explique possíveis divergências e se podem ou não ser conciliadas. Gere tabela de fontes, evidências, conclusões sustentadas e pontos que exigem validação do owner. Não resolver inconsistências inventando uma versão da verdade.",
+  "outcome": "FAIL",
+  "first_divergence": "ADMISSION_ERROR",
+  "capabilities_invoked": [],
+  "invoke_statuses": [],
+  "response_full_text": "Qual o tipo de análise a ser realizada sobre os dados, considerando o período, filtros e referências envolvidos?",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [],
+  "elapsed_ms": 33640,
+  "error": null
+}

@@ -1,0 +1,37 @@
+{
+  "scenario_id": "CMP-03",
+  "specialist": "caio",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "caio.get_context",
+    "caio.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "caio.get_context",
+      "status": "COMPLETED",
+      "args": {
+        "topic": "propostas e oportunidades abertas dos últimos 120 dias"
+      }
+    },
+    {
+      "capability_id": "caio.analyze",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "analysis_type": "portfolio",
+        "subject_refs": "['opportunity']",
+        "question": "Avalie as propostas e oportunidades abertas dos últimos 120 ",
+        "parameters": "{'period': '120 days', 'metrics': ['quantity', 'value', 'sta"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: analysis_type 'portfolio' não implementado.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 86554,
+  "error": null
+}

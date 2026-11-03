@@ -1,0 +1,29 @@
+{
+  "scenario_id": "CMP-07",
+  "specialist": "clara",
+  "run_number": 0,
+  "question_full_text": "CLARA, avalie a prontidão do fechamento mensal mais recente e dos dois anteriores: tarefas concluídas, atrasadas, evidências anexadas, responsáveis formalmente designados, dependências e exceções. Cruze a evolução dos atrasos com os registros de controladoria disponíveis, distinguindo falha de processo de ausência de informação. Produza matriz de risco, cinco ações priorizadas com criticidade e evidência, e plano de conferência semanal. Não aprovar, concluir nem modificar tarefas.",
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "clara.get_context"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "clara.get_context",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "topic": "prontidão do fechamento mensal",
+        "action": "avaliar",
+        "scope": "fechamento mensal recente e dois anteriores"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: topic desconhecido: 'prontidão do fechamento mensal' — use summary|actor|catalog|schema|persona.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 24845,
+  "error": null
+}

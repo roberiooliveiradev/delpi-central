@@ -1,0 +1,29 @@
+{
+  "scenario_id": "CMP-05",
+  "specialist": "clara",
+  "run_number": 0,
+  "question_full_text": "CLARA, analise os últimos três fechamentos mensais disponíveis: receitas, custos, despesas, margem, desvios contra orçamento e pendências de fechamento conforme evidências oficiais acessíveis. Explique a base contábil e os períodos antes de cruzar valores; identifique inconsistências e tarefas com evidência ausente, distinguindo pendência documental de erro contábil. Ordene cinco riscos ou melhorias por materialidade e urgência, com valores, origem, causa comprovada versus hipótese, responsáveis documentados quando houver e ações de controle para 30 dias. Apenas relatório; não fechar tarefas nem lançar ajustes.",
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "clara.get_context"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "clara.get_context",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "topic": "fechamentos mensais",
+        "action": "analise",
+        "scope": "últimos três"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: topic desconhecido: 'fechamentos mensais' — use summary|actor|catalog|schema|persona.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 11543,
+  "error": null
+}

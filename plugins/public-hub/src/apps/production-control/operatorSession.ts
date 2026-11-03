@@ -1,17 +1,6 @@
 import { ApiError, type BenchSessionSnapshot } from "./api.ts";
 
 /**
- * Troca de operador só é bloqueada enquanto a produção está contando.
- * Parada aberta (automática/pausa), inclusive sem motivo, não impede
- * outro operador de entrar no posto.
- */
-export function shouldBlockOperatorSwitch(
-  activeRun: { downtime?: unknown } | null | undefined,
-): boolean {
-  return Boolean(activeRun) && !activeRun?.downtime;
-}
-
-/**
  * C4 — sessão do operador por posto (branch + workCenter).
  * Módulo puro/testável: storage, validação de matrícula e mapeamento de erro.
  * O token da sessão fica em sessionStorage (escopo da aba) — nunca localStorage.

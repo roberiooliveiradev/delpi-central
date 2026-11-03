@@ -1,0 +1,29 @@
+{
+  "scenario_id": "CMP-01",
+  "specialist": "caio",
+  "run_number": 0,
+  "question_full_text": "CAIO, produza um diagnóstico completo da situação comercial da DELPI nos últimos 90 dias com dados oficiais do Portal Comercial. Examine ROL, faturamento e evolução temporal, metas, taxa de fechamento e tendências; concentração por carteira e cliente, clientes que reduziram compras e oportunidades; pedidos em aberto, atrasos, OTD e saldo a faturar; propostas, etapas do funil, oportunidades estagnadas e impacto potencial. Concilie definições, períodos e denominadores antes de comparar. Identifique as cinco prioridades por impacto e urgência; para cada uma inclua números e evidências, entidades autorizadas, impacto financeiro calculável, causa comprovada ou hipótese, ação recomendada, responsável sugerido apenas com fundamento e KPI. Termine com plano de ação textual de 30 dias, dependências e limitações. Não crie tarefas nem execute mudanças.",
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "clara.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "clara.analyze",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "analysis_type": "closing_blockers",
+        "period": "90 dias",
+        "question": "diagnóstico completo da situação comercial da DELPI nos últi"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Competência 90 dias não está aberta.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 195460,
+  "error": null
+}

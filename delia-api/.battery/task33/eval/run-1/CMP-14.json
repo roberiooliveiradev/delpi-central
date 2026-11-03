@@ -1,0 +1,15 @@
+{
+  "scenario_id": "CMP-14",
+  "specialist": "eva",
+  "run_number": 0,
+  "question_full_text": "EVA, investigue LMPs e documentos de engenharia disponíveis, sua revisão, vinculações com solicitações e inconsistências formalmente registradas. Diferencie revisão vigente, obsoleta e desconhecida conforme contrato e evidências; não deduza conformidade técnica ou segurança física a partir de texto livre. Liste cinco riscos ou melhorias com referência documental, necessidade de validação humana e plano textual de revisão em 30 dias. Não publicar, aprovar ou editar arquivos.",
+  "outcome": "FAIL",
+  "first_divergence": "ADMISSION_ERROR",
+  "capabilities_invoked": [],
+  "invoke_statuses": [],
+  "response_full_text": "Preciso de mais informações para continuar. Quais itens ou informações você quer usar?",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [],
+  "elapsed_ms": 54110,
+  "error": null
+}

@@ -1,0 +1,35 @@
+{
+  "scenario_id": "CMP-26",
+  "specialist": "davi",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "davi.discover_delpi_information",
+    "davi.execute_delpi_information"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "davi.discover_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "query": "consultar registros oficiais e relações sobre uma entidade c"
+      }
+    },
+    {
+      "capability_id": "davi.execute_delpi_information",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "candidate_token": "eyJhY3Rpb25faWQiOiJleGVjdXRlX3JlYWRvbmx5X3NxbCIsImFjdG9yX2lk",
+        "arguments": "{'sql': 'DAVI'}"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 8789,
+  "error": null
+}

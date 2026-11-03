@@ -1,0 +1,36 @@
+{
+  "scenario_id": "CMP-26",
+  "specialist": "davi",
+  "run_number": 0,
+  "question_full_text": "DAVI, com base em um identificador empresarial autorizado fornecido pelo contexto de teste, investigue quais registros oficiais e relações podem ser consultados sobre essa entidade. Diferencie identificação direta, associação comprovada e mera coincidência textual; respeite a fronteira de cada Domain API. Produza linha de evidências com origem, timestamps quando disponíveis, relações encontradas e lacunas; se o identificador não estiver fornecido, não escolha arbitrariamente outro. Nenhuma alteração.",
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "davi.discover_delpi_information",
+    "davi.execute_delpi_information"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "davi.discover_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "query": "consultar registros oficiais e relações sobre uma entidade c"
+      }
+    },
+    {
+      "capability_id": "davi.execute_delpi_information",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "candidate_token": "eyJhY3Rpb25faWQiOiJleGVjdXRlX3JlYWRvbmx5X3NxbCIsImFjdG9yX2lk",
+        "arguments": "{'sql': 'DAVI'}"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 8789,
+  "error": null
+}

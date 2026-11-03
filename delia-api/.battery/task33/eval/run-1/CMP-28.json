@@ -1,0 +1,36 @@
+{
+  "scenario_id": "CMP-28",
+  "specialist": "davi",
+  "run_number": 0,
+  "question_full_text": "DAVI, receba uma solicitação empresarial ambígua com múltiplas entidades homônimas existentes nos dados de teste. Mostre como identifica o objetivo, descobre as superfícies autorizadas e decide quando precisa de esclarecimento, sem escolher um registro sem evidência suficiente. Quando a desambiguação for possível por contexto oficial, conclua a consulta com rastreabilidade; caso contrário apresente alternativas comprovadas e a informação faltante. Não executar writes.",
+  "outcome": "PASS",
+  "first_divergence": "",
+  "capabilities_invoked": [
+    "davi.discover_delpi_information",
+    "davi.discover_delpi_information"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "davi.discover_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "query": "consultar solicitação empresarial por entidade homônima em d",
+        "top_k": "5"
+      }
+    },
+    {
+      "capability_id": "davi.discover_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "query": "buscar solicitação empresarial por entidade homônima em dado"
+      }
+    }
+  ],
+  "response_full_text": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+  "grounding": "GroundingStatus.GROUNDED",
+  "limitations": [
+    "insufficient_evidence"
+  ],
+  "elapsed_ms": 11570,
+  "error": null
+}

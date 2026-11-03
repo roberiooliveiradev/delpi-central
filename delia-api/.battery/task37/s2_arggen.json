@@ -1,0 +1,143 @@
+[
+  {
+    "scenario": "cmp_05",
+    "capability": "clara.get_context",
+    "closed_fields": {
+      "topic": 5
+    },
+    "args": {
+      "topic": "summary",
+      "action": "buscar fechamentos mensais por período",
+      "scope": "últimos três períodos"
+    },
+    "missing": [],
+    "enum_check": {
+      "topic": {
+        "value": "summary",
+        "allowed_n": 5,
+        "in_enum": true
+      }
+    },
+    "enum_ok": true,
+    "schema_valid": true
+  },
+  {
+    "scenario": "cmp_05b",
+    "capability": "clara.analyze",
+    "closed_fields": {},
+    "args": {
+      "analysis_type": "closing_blockers",
+      "period": "ultimos_três_fechamentos_mensais",
+      "question": "analise os últimos três fechamentos mensais disponíveis"
+    },
+    "missing": [],
+    "enum_check": {},
+    "enum_ok": true,
+    "schema_valid": true
+  },
+  {
+    "scenario": "cmp_03",
+    "capability": "caio.analyze",
+    "closed_fields": {
+      "analysis_type": 21
+    },
+    "args": {
+      "analysis_type": "opportunity.collaborator_summary",
+      "question": "propostas e oportunidades abertas dos últimos 120 dias"
+    },
+    "missing": [],
+    "enum_check": {
+      "analysis_type": {
+        "value": "opportunity.collaborator_summary",
+        "allowed_n": 21,
+        "in_enum": true
+      }
+    },
+    "enum_ok": true,
+    "schema_valid": true
+  },
+  {
+    "scenario": "cmp_03b",
+    "capability": "caio.knowledge",
+    "closed_fields": {
+      "topic": 17
+    },
+    "args": {
+      "topic": "caio.usage",
+      "query": "orientação de uso das ferramentas semânticas"
+    },
+    "missing": [],
+    "enum_check": {
+      "topic": {
+        "value": "caio.usage",
+        "allowed_n": 17,
+        "in_enum": true
+      }
+    },
+    "enum_ok": true,
+    "schema_valid": true
+  },
+  {
+    "scenario": "cmp_13",
+    "capability": "eva.analyze",
+    "closed_fields": {
+      "analysis_type": 5
+    },
+    "args": {
+      "analysis_type": "nonconformity.recurrence",
+      "question": "demandas e solicitações de engenharia recentes"
+    },
+    "missing": [],
+    "enum_check": {
+      "analysis_type": {
+        "value": "nonconformity.recurrence",
+        "allowed_n": 5,
+        "in_enum": true
+      }
+    },
+    "enum_ok": true,
+    "schema_valid": true
+  },
+  {
+    "scenario": "cmp_19",
+    "capability": "teo.analyze",
+    "closed_fields": {
+      "view": 23
+    },
+    "args": {
+      "view": "processes",
+      "limit": 10
+    },
+    "missing": [],
+    "enum_check": {
+      "view": {
+        "value": "processes",
+        "allowed_n": 23,
+        "in_enum": true
+      }
+    },
+    "enum_ok": true,
+    "schema_valid": true
+  },
+  {
+    "scenario": "cmp_suri",
+    "capability": "suri.analyze",
+    "closed_fields": {
+      "analysis": 2
+    },
+    "args": {
+      "analysis": "purchase_orders_summary",
+      "sample_size": 50
+    },
+    "missing": [],
+    "enum_check": {
+      "analysis": {
+        "value": "purchase_orders_summary",
+        "allowed_n": 2,
+        "in_enum": true
+      }
+    },
+    "enum_ok": true,
+    "schema_valid": true
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "scenario_id": "CMP-15",
+  "specialist": "eva",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "eva.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "eva.analyze",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "analysis_type": "evolução do fluxo de solicitações técnicas",
+        "question": "analise a evolução do fluxo de solicitações técnicas ao long",
+        "parameters": "{'period_days': 180, 'metrics': ['throughput', 'tempo_por_es"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: analysis_type 'evolução do fluxo de solicitações técnicas' não implementado.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 22803,
+  "error": null
+}

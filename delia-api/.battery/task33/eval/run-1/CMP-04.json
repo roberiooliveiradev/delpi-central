@@ -1,0 +1,28 @@
+{
+  "scenario_id": "CMP-04",
+  "specialist": "caio",
+  "run_number": 0,
+  "question_full_text": "CAIO, consolide pedidos abertos, atrasados e previstos para entrega nos próximos 30 dias. Relacione OTD, saldo a faturar, prazo prometido, histórico de entrega e concentração por cliente/carteira conforme as fontes autorizadas. Diferencie atraso confirmado, risco previsto e impedimento cuja causa não esteja documentada; não atribua culpa à produção ou suprimentos sem evidência. Estime exposição financeira sem dupla contagem, liste prioridades com pedidos identificados quando autorizado, proponha mitigação e painel textual de acompanhamento semanal. Nenhuma alteração de pedido nem comunicação externa.",
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "caio.get_context"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "caio.get_context",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "topic": "CAIO",
+        "entity": "pedidos abertos, atrasados e previstos para entrega nos próx"
+      }
+    }
+  ],
+  "response_full_text": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido. A fonte informou: Entidade 'pedidos abertos, atrasados e previstos para entrega nos próximos 30 dias' desconhecida.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "delpi_source_unverified"
+  ],
+  "elapsed_ms": 17387,
+  "error": null
+}

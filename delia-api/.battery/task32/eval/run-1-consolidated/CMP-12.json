@@ -1,0 +1,28 @@
+{
+  "scenario_id": "CMP-12",
+  "specialist": "suri",
+  "run_number": 0,
+  "outcome": "PASS",
+  "first_divergence": "",
+  "capabilities_invoked": [
+    "suri.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "suri.analyze",
+      "status": "COMPLETED",
+      "args": {
+        "analysis": "purchase_orders_summary",
+        "filters": "{'branch': ['01'], 'late_only': True}",
+        "sample_size": "50"
+      }
+    }
+  ],
+  "response_full_text": "A fonte retornou registros reais, mas eles não correspondem ao que foi pedido — não vou apresentá-los como resposta.",
+  "grounding": "GroundingStatus.GROUNDED",
+  "limitations": [
+    "insufficient_evidence"
+  ],
+  "elapsed_ms": 39840,
+  "error": null
+}

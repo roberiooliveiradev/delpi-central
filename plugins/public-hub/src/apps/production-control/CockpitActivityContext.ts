@@ -20,9 +20,3 @@ export function useCockpitActivity(): CockpitActivityState {
   }
   return ctx;
 }
-
-/** Refresh da lista diária quando o provider existir (no-op fora do cockpit). */
-export function useOptionalCockpitActivityRefresh(): () => Promise<void> {
-  const ctx = useContext(CockpitActivityContext);
-  return ctx?.refresh ?? (async () => undefined);
-}

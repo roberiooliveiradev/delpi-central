@@ -1,0 +1,36 @@
+{
+  "scenario_id": "CMP-13",
+  "specialist": "eva",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "davi.discover_delpi_information",
+    "eva.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "davi.discover_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "query": "buscar demandas e solicitações de Engenharia por volumes, st"
+      }
+    },
+    {
+      "capability_id": "eva.analyze",
+      "status": "EXC:CapabilityProviderError",
+      "args": {
+        "analysis_type": "engineering_demands_analysis",
+        "question": "analise as demandas e solicitações de Engenharia dos últimos",
+        "parameters": "{'min_items': 5, 'scope': 'last_90_days', 'metrics': ['volum"
+      }
+    }
+  ],
+  "response_full_text": "A fonte consultada informou que não há registro para esta solicitação. Nenhum dado operacional foi inventado.",
+  "grounding": "GroundingStatus.NON_GROUNDED",
+  "limitations": [
+    "owner_query_miss"
+  ],
+  "elapsed_ms": 33085,
+  "error": null
+}

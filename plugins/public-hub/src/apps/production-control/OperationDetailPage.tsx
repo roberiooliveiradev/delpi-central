@@ -48,7 +48,6 @@ type Props = {
   realtimeConnected: boolean;
   feedbackUpdatedSignal: number;
   feedbackRealtimeEvent: MachineLoadRealtimeEvent | null;
-  /** true = produção contando (sem parada aberta) — bloqueia troca de operador. */
   hasActiveRun: boolean;
   /** E2: troca guiada confirmada — o cockpit reconcilia e navega. */
   onHandoffCompleted?: (result: RunHandoffResult) => void;

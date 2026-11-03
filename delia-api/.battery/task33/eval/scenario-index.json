@@ -1,0 +1,314 @@
+[
+  {
+    "scenario_id": "CMP-01",
+    "specialist": "caio",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "clara.analyze"
+    ],
+    "elapsed_ms": 195460,
+    "response_file": "CMP-01.md"
+  },
+  {
+    "scenario_id": "CMP-02",
+    "specialist": "caio",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "caio.get_context"
+    ],
+    "elapsed_ms": 66807,
+    "response_file": "CMP-02.md"
+  },
+  {
+    "scenario_id": "CMP-03",
+    "specialist": "caio",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "caio.get_context",
+      "caio.analyze"
+    ],
+    "elapsed_ms": 86554,
+    "response_file": "CMP-03.md"
+  },
+  {
+    "scenario_id": "CMP-04",
+    "specialist": "caio",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "caio.get_context"
+    ],
+    "elapsed_ms": 17387,
+    "response_file": "CMP-04.md"
+  },
+  {
+    "scenario_id": "CMP-05",
+    "specialist": "clara",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "clara.get_context"
+    ],
+    "elapsed_ms": 11543,
+    "response_file": "CMP-05.md"
+  },
+  {
+    "scenario_id": "CMP-06",
+    "specialist": "clara",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "clara.get_context"
+    ],
+    "elapsed_ms": 14640,
+    "response_file": "CMP-06.md"
+  },
+  {
+    "scenario_id": "CMP-07",
+    "specialist": "clara",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "clara.get_context"
+    ],
+    "elapsed_ms": 24845,
+    "response_file": "CMP-07.md"
+  },
+  {
+    "scenario_id": "CMP-08",
+    "specialist": "clara",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "clara.analyze"
+    ],
+    "elapsed_ms": 13172,
+    "response_file": "CMP-08.md"
+  },
+  {
+    "scenario_id": "CMP-09",
+    "specialist": "suri",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "suri.analyze"
+    ],
+    "elapsed_ms": 32723,
+    "response_file": "CMP-09.md"
+  },
+  {
+    "scenario_id": "CMP-10",
+    "specialist": "suri",
+    "outcome": "PASS",
+    "first_divergence": "CAPABILITY_SELECTION_ERROR",
+    "capabilities": [
+      "davi.discover_delpi_information",
+      "davi.execute_delpi_information",
+      "suri.analyze"
+    ],
+    "elapsed_ms": 75079,
+    "response_file": "CMP-10.md"
+  },
+  {
+    "scenario_id": "CMP-11",
+    "specialist": "suri",
+    "outcome": "PASS",
+    "first_divergence": "",
+    "capabilities": [
+      "suri.analyze"
+    ],
+    "elapsed_ms": 48705,
+    "response_file": "CMP-11.md"
+  },
+  {
+    "scenario_id": "CMP-12",
+    "specialist": "suri",
+    "outcome": "PASS",
+    "first_divergence": "",
+    "capabilities": [
+      "suri.analyze"
+    ],
+    "elapsed_ms": 39840,
+    "response_file": "CMP-12.md"
+  },
+  {
+    "scenario_id": "CMP-13",
+    "specialist": "eva",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "eva.analyze"
+    ],
+    "elapsed_ms": 18849,
+    "response_file": "CMP-13.md"
+  },
+  {
+    "scenario_id": "CMP-14",
+    "specialist": "eva",
+    "outcome": "FAIL",
+    "first_divergence": "ADMISSION_ERROR",
+    "capabilities": [],
+    "elapsed_ms": 54110,
+    "response_file": "CMP-14.md"
+  },
+  {
+    "scenario_id": "CMP-15",
+    "specialist": "eva",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "clara.analyze"
+    ],
+    "elapsed_ms": 29008,
+    "response_file": "CMP-15.md"
+  },
+  {
+    "scenario_id": "CMP-16",
+    "specialist": "eva",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "eva.analyze"
+    ],
+    "elapsed_ms": 16598,
+    "response_file": "CMP-16.md"
+  },
+  {
+    "scenario_id": "CMP-17",
+    "specialist": "teo",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "teo.analyze"
+    ],
+    "elapsed_ms": 29059,
+    "response_file": "CMP-17.md"
+  },
+  {
+    "scenario_id": "CMP-18",
+    "specialist": "teo",
+    "outcome": "PASS",
+    "first_divergence": "CAPABILITY_SELECTION_ERROR",
+    "capabilities": [
+      "teo.analyze"
+    ],
+    "elapsed_ms": 54181,
+    "response_file": "CMP-18.md"
+  },
+  {
+    "scenario_id": "CMP-19",
+    "specialist": "teo",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "teo.analyze",
+      "teo.get_catalog"
+    ],
+    "elapsed_ms": 21740,
+    "response_file": "CMP-19.md"
+  },
+  {
+    "scenario_id": "CMP-20",
+    "specialist": "teo",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "caio.get_context",
+      "caio.analyze"
+    ],
+    "elapsed_ms": 37472,
+    "response_file": "CMP-20.md"
+  },
+  {
+    "scenario_id": "CMP-21",
+    "specialist": "vista",
+    "outcome": "PASS",
+    "first_divergence": "",
+    "capabilities": [
+      "vista.get_catalog"
+    ],
+    "elapsed_ms": 39413,
+    "response_file": "CMP-21.md"
+  },
+  {
+    "scenario_id": "CMP-22",
+    "specialist": "vista",
+    "outcome": "PASS",
+    "first_divergence": "",
+    "capabilities": [
+      "vista.get_catalog"
+    ],
+    "elapsed_ms": 17030,
+    "response_file": "CMP-22.md"
+  },
+  {
+    "scenario_id": "CMP-23",
+    "specialist": "vista",
+    "outcome": "PASS",
+    "first_divergence": "",
+    "capabilities": [
+      "vista.get_catalog"
+    ],
+    "elapsed_ms": 15406,
+    "response_file": "CMP-23.md"
+  },
+  {
+    "scenario_id": "CMP-24",
+    "specialist": "vista",
+    "outcome": "PASS",
+    "first_divergence": "",
+    "capabilities": [
+      "vista.get_catalog"
+    ],
+    "elapsed_ms": 16384,
+    "response_file": "CMP-24.md"
+  },
+  {
+    "scenario_id": "CMP-25",
+    "specialist": "davi",
+    "outcome": "PASS",
+    "first_divergence": "",
+    "capabilities": [
+      "davi.discover_delpi_information",
+      "davi.execute_delpi_information"
+    ],
+    "elapsed_ms": 20486,
+    "response_file": "CMP-25.md"
+  },
+  {
+    "scenario_id": "CMP-26",
+    "specialist": "davi",
+    "outcome": "FAIL",
+    "first_divergence": "GROUP_SELECTION_ERROR",
+    "capabilities": [
+      "davi.discover_delpi_information",
+      "davi.execute_delpi_information"
+    ],
+    "elapsed_ms": 8789,
+    "response_file": "CMP-26.md"
+  },
+  {
+    "scenario_id": "CMP-27",
+    "specialist": "davi",
+    "outcome": "FAIL",
+    "first_divergence": "ADMISSION_ERROR",
+    "capabilities": [],
+    "elapsed_ms": 33640,
+    "response_file": "CMP-27.md"
+  },
+  {
+    "scenario_id": "CMP-28",
+    "specialist": "davi",
+    "outcome": "PASS",
+    "first_divergence": "",
+    "capabilities": [
+      "davi.discover_delpi_information",
+      "davi.discover_delpi_information"
+    ],
+    "elapsed_ms": 11570,
+    "response_file": "CMP-28.md"
+  }
+]

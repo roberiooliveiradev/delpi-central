@@ -1,0 +1,34 @@
+{
+  "scenario_id": "CMP-25",
+  "specialist": "davi",
+  "run_number": 0,
+  "outcome": "PASS",
+  "first_divergence": "",
+  "capabilities_invoked": [
+    "davi.discover_delpi_information",
+    "davi.execute_delpi_information"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "davi.discover_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "query": "consultar produtos por descrição terminal pino, terminal bal",
+        "top_k": "10"
+      }
+    },
+    {
+      "capability_id": "davi.execute_delpi_information",
+      "status": "COMPLETED",
+      "args": {
+        "candidate_token": "eyJhY3Rpb25faWQiOiJzZWFyY2hfcHJvZHVjdHMiLCJhY3Rvcl9pZCI6Ijhi",
+        "arguments": "{'description': 'terminal pino, terminal bala, conector'}"
+      }
+    }
+  ],
+  "response_full_text": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
+  "grounding": "GroundingStatus.GROUNDED",
+  "limitations": [],
+  "elapsed_ms": 20486,
+  "error": null
+}

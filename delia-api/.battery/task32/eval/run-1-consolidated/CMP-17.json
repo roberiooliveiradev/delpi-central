@@ -1,0 +1,27 @@
+{
+  "scenario_id": "CMP-17",
+  "specialist": "teo",
+  "run_number": 0,
+  "outcome": "FAIL",
+  "first_divergence": "GROUP_SELECTION_ERROR",
+  "capabilities_invoked": [
+    "teo.analyze"
+  ],
+  "invoke_statuses": [
+    {
+      "capability_id": "teo.analyze",
+      "status": "COMPLETED",
+      "args": {
+        "view": "processes",
+        "limit": "5"
+      }
+    }
+  ],
+  "response_full_text": "A fonte retornou registros, mas não consegui comprovar a ordenação completa — não posso afirmar com segurança qual é a posição exata.",
+  "grounding": "GroundingStatus.GROUNDED",
+  "limitations": [
+    "insufficient_evidence"
+  ],
+  "elapsed_ms": 29059,
+  "error": null
+}
