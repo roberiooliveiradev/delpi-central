@@ -2457,3 +2457,38 @@ nem acesso ao host produtivo neste ambiente.
 PRODUCTION_BUSINESS_OUTCOME=PENDING
 TASK_STATUS=INCOMPLETE (E2E/prod bloqueados por credencial stale
 + ausencia de acesso prod) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — LOCAL-AUTH-E2E-AND-PRODUCTION-PROMOTION-04
+
+TASK=DELIA-C3-LOCAL-AUTH-E2E-AND-PRODUCTION-PROMOTION-04
+SOURCE=68e557e2 (origin/main revalidado; deploy-wt+oficial atualizados).
+
+AUTH ROOT CAUSE: credenciais DEV_PORTAL_* em infra/.env.local STALE
+(29/out). Conta "rober" existe/enabled/sem requiredActions — e' a
+conta do usuario humano; senha atual desconhecida ao executor.
+
+AUTH RESOLUTION: kcadm canonico — reprovisionada senha da conta de
+teste do executor devin-smoke-evo (existente, enabled; sem criar
+conta, sem conceder roles, sem admin-as-user). Token emitido
+(sub ok, azp delpi-central). Cadeia comprovada: 401 sem auth,
+403 "forbidden" em reads governadas -> AuthZ Core live funcional.
+devin-smoke-evo nao possui roles empresariais -> BOM E2E exige
+sessao do usuario rober (Portal ja roteia p/ backend novo) ou
+.env.local atualizado com a senha atual de rober (acao do usuario).
+
+REGRESSAO OPERACIONAL CORRIGIDA nesta sessao: nginx upstream alias
+"delia-api" perdido no docker run -> 502 Portal; recriado com
+--network-alias delia-api. Portal+MFE (delpi-portal, delpi-delia)
+tambem atualizados p/ deploy-wt (infra-delia rebuild sha256:af472cef).
+
+LOCAL: delpi-delia-api Up serving 68e557e2; portal/MFE mesmo SHA;
+rollbacks -prev preservados.
+
+PRODUCTION: mecanismo canonico identificado = VM srv-api rodando
+git pull + infra/scripts/up-prod-sequential.sh (docker-compose.yml
+prod). BLOQUEIO PRECISO: srv-api nao resolve neste ambiente — sem
+SSH config, DNS ou IP registrado; executor nao possui acesso ao host.
+PRODUCTION_DEPLOY=NOT_PERFORMED · PRODUCTION_BUSINESS_OUTCOME=PENDING
+DEPENDENCIA: (a) acesso SSH autorizado a srv-api, ou (b) runner
+canonico com acesso. E2E BOM: sessao rober no Portal local.
+TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
