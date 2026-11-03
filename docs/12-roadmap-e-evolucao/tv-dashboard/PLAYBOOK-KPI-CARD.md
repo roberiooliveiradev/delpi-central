@@ -169,3 +169,9 @@ Mini-chart completo, drill-through, import PPTX de cards, forecast ML.
 | Ribbon fonte | `plugins/tv-dashboard/src/utils/selectedTextFormatTarget.ts` + `FormatRibbonTypographySections.tsx` |
 | Float KPI | `plugins/tv-dashboard/src/components/KpiSelectionFloatToolbar.tsx` |
 | Catálogo elementos | `plugins/plugin-ui/src/components/layout/kpiElementCatalog.ts` |
+
+---
+
+## 10. Evolução proposta (nov/2026) — KPI proporcional + VISTA
+
+As Ondas 0–D acima permanecem registradas como **implementadas historicamente**. O refinamento posterior de **hierarquia tipográfica proporcional ao card**, glyph do ícone com maior presença, unidade no valor, variantes Hero/Standard/Meta/Compacto e verificação pixel-based é **TARGET / PLANNED**, não parte do aceite histórico. A especificação detalhada (wireframes textuais, constraints, contract impact, owners e testes) é [KPI proporcional — template VISTA](./KPI-PROPORTIONAL-VISUAL-TEMPLATE-VISTA.md). O código atual possui parts/options/variants/format e deve ser estendido no owner, sem novo renderer ou segunda lógica de formatação.
