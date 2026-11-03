@@ -530,3 +530,13 @@ A implementação diz `"Content-Disposition": result.get("content_disposition") 
 5. Rollback: `git checkout <sha-anterior>` + mesmo script.
 
 **Estado: `PROD_DEPLOY_OWNER_BLOCKED`** — acesso SSH ao `srv-api` indisponível para o executor; código publicado e pronto. `CHATGPT_CONNECTOR_PENDING` permanece até o deploy produtivo + verificação de materialização `EmbeddedResource` pelo host.
+
+## 16. Deploy produtivo `srv-api` executado (2026-11-03) — DEP-01/DEP-02 PROVEN
+
+**Procedimento oficial:** `ssh operador@srv-api` → `git pull --ff-only origin main` (21 commits) → `./infra/scripts/up-prod-sequential.sh --build engineering-api`. HEAD prod = `98ea06709f` contendo `drawing_download` (grep confirmado no container). `delpi-engineering-api` recriado: `Up (healthy)`, `/health` online, `POST /apps/engineering-api/mcp` sem token → **401** na URL pública `https://minhadelpi.com.br` (fail-closed em produção — DEP-06 parcial).
+
+**Pendência legítima — DEP-03..05:** E2E com PDF oficial exige **token humano real** (client `mcp-engineering`, authorization-code flow no Keycloak prod `minhadelpi.com.br/auth`) — não há direct grant/admin creds disponíveis ao executor, e fabricar identidade é proibido. Script pronto e versionado em produção: `engineering-api/sandbox/eva_pdf_mcp_e2e.py` (montar `MCP_URL=https://minhadelpi.com.br/apps/engineering-api/mcp` + Bearer do usuário autorizado, sem Host override). Os 7 produtos (`90264302`+) serão servidos pelo acervo prod populado.
+
+**ChatGPT (DEP-07/08):** `CONNECTOR_PENDING` — discovery ocorre via `tools/list` ao reconectar; materialização de `EmbeddedResource` pelo host não comprovada.
+
+**Estado: `PROD_DEPLOYED / E2E_HUMAN_TOKEN_PENDING / CONNECTOR_PENDING`.**
