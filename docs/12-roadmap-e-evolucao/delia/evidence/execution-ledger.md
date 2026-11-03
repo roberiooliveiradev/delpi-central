@@ -1937,3 +1937,13 @@ o token-exchange (audience mcp-api-delpi p/ davi) falha p/ usuario novo
 ou token passthrough rejeitado. PROXIMO: decodificar o exchanged token
 p/ davi e isolar exchange-403 vs mcp-reject; se exchange exigir role/
 client-scope, atribuir minimo necessario via admin API (auditable).
+
+## PROMOTION — auth progress 3 (SHA cbaa4637d6)
+
+EXCHANGE FUNCIONA: subject sync-user -> exchanged token aud=
+[delpi-central, https://minhadelpi.com.br/apps/api-delpi/mcp, account,
+mcp-api-delpi] iss=keycloak realm delpi — aud correto.
+MAS davi MCP responde 401 Unauthorized p/ esse token — o MCP valida algo
+alem de aud (issuer/JWKS/claim especifico). PROXIMO: encontrar a
+validacao real em api-delpi/app/interface/mcp/server.py (routes.py sem
+match) — verificar se exige azp, signature path ou claim de cliente.
