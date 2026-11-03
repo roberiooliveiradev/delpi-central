@@ -1104,6 +1104,84 @@ async def _analyze_drawing_understanding(
                 "state": "ENGINE_AVAILABLE",
             }
         ]
+    # Relatório candidato consolidado (R10) — seções A–H do doc 116-B,
+    # montado dos dados já governados; additive, DRAFT/CANDIDATE.
+    _comp = (understanding.get("component_table") or {}).get("rows") or []
+    _sl_e = (understanding.get("table_structure_engines") or [{}])[0]
+    understanding["report"] = {
+        "kind": "drawing_analysis_report",
+        "state": "DRAFT/CANDIDATE",
+        "identification": {
+            "product_code": code,
+            "document_id": understanding.get("document"),
+            "revision": understanding.get("revision"),
+            "customer": understanding.get("customer"),
+            "document_sha": best.get("document_hash"),
+            "analyzed_at_source": best.get("provider_id"),
+        },
+        "summary": {
+            "regions_identified": len(understanding.get("regions") or []),
+            "component_rows": len(_comp),
+            "slanet_cells": _sl_e.get("cell_count"),
+            "slanet_cells_with_text": _sl_e.get("cells_with_text"),
+            "slanet_executed": _sl_e.get("executed"),
+            "structure_score": _sl_e.get("structure_score"),
+        },
+        "structure": {
+            "regions": understanding.get("regions") or [],
+            "title_block": understanding.get("title_block"),
+            "revisions": understanding.get("revisions") or [],
+            "notes": understanding.get("notes") or [],
+        },
+        "component_candidates": [
+            {
+                "item": r.get("item"),
+                "quantity": r.get("quantity"),
+                "component_code": r.get("component_code"),
+                "description": r.get("description"),
+                "region": r.get("region"),
+                "cell_refs": r.get("cells") or [],
+                "evidence": r.get("evidence"),
+                "association_status": r.get("status", "CANDIDATE"),
+            }
+            for r in _comp
+        ],
+        "technical_information": {
+            "dimensions": understanding.get("dimensions") or [],
+            "state": "PENDING_ENGINEERING_VALIDATION",
+            "limitations": (
+                "cotas/tolerancias/materiais/simbolos ainda nao validados "
+                "pela Engenharia (catalogo M3 pendente)"
+            ),
+        },
+        "official_comparison": understanding.get("bom_comparison")
+        or {"state": "NOT_CHECKED"},
+        "alerts": {
+            "ambiguous": understanding.get("ambiguous_fields") or [],
+            "unassigned_tokens": (
+                (_sl_e.get("association") or {}).get("unassigned") or []
+            ),
+            "conflicts": (
+                (_sl_e.get("association") or {}).get("conflicts") or []
+            ),
+            "limitations": understanding.get("limitations") or [],
+        },
+        "evidence": {
+            "document_sha": best.get("document_hash"),
+            "page": 1,
+            "engines": {
+                "ocr": best.get("provider_id"),
+                "table_structure": _sl_e.get("provider_id"),
+                "model": _sl_e.get("model_version"),
+            },
+            "cell_bounding_boxes": [
+                c.get("bounding_box_px")
+                for c in (_sl_e.get("cells") or [])
+            ],
+        },
+        "quality_gate": "EVAL_PENDING",
+        "not_official": True,
+    }
     return _ok(
         {
             "analysis_type": "product.drawing_understanding",
