@@ -188,12 +188,16 @@ def balloon(
     object_id: str, *, item_label: str | None,
     document_sha: str | None = None,
     evidence_refs: list[DrawingObjectRef] | None = None,
+    extra_attributes: dict | None = None,
 ) -> DrawingObject:
     """Perfil C — balão somente quando realmente identificado na fonte."""
+    attributes = {"item_label": item_label}
+    if extra_attributes:
+        attributes.update(extra_attributes)
     return DrawingObject(
         object_id=object_id,
         object_type=ObjectType.BALLOON,
-        attributes={"item_label": item_label},
+        attributes=attributes,
         document_identity=document_sha,
         evidence_refs=list(evidence_refs or []),
         observation_state=ObservationState.CANDIDATE,

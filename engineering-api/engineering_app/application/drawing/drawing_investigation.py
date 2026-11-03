@@ -120,7 +120,7 @@ def _evidence_of(candidate: dict) -> list[dict]:
 
 
 def _check_component_code(
-    occ, plan, table_rows, idents, document_sha
+    occ, plan, table_rows, idents, document_sha, product_code=None
 ) -> dict:
     """I-01 — código do componente nas evidências da tabela/OCR."""
     code = plan["expected_value"]
@@ -193,6 +193,7 @@ def _check_component_code(
         for fs in idents.values()
         for f in fs
         if f.get("text") != code
+        and f.get("text") != product_code
         and _similarity(code, f.get("text") or "") >= 0.85
     ]
     if non_component or elsewhere or similar:
@@ -296,6 +297,531 @@ def _check_relations(occ, oset) -> dict:
     }
 
 
+def _y_band(cells: list[dict], y: float, tol: float = 12.0) -> list[dict]:
+    """Agrupa células na mesma faixa vertical (linha física)."""
+    def _cy(c):
+        box = c.get("bounding_box_px") or []
+        return (box[1] + (box[5] if len(box) > 5 else box[1])) / 2 if box else 0
+    return [c for c in cells if abs(_cy(c) - y) <= tol]
+
+
+def _contextual_search(plan: dict, u: dict) -> dict:
+    """Etapa 2 (R13): procura o código esperado nas células brutas da
+    tabela e tenta re-associação espacial de linha — sem promover."""
+    code = plan["expected_value"]
+    out = {
+        "stage": "CONTEXTUAL_SEARCH",
+        "result": "NO_CANDIDATE_REGION",
+        "candidate_rows": [],
+        "observations": [],
+    }
+    if not code:
+        return out
+    hits = []
+    for r in ((u.get("component_table") or {}).get("rows") or []):
+        for c in r.get("cells") or []:
+            t = (c.get("text") or "").strip()
+            if t == code:
+                hits.append({"row": r, "cell": c, "similarity": 1.0})
+            elif _similarity(code, t) >= 0.85:
+                hits.append({"row": r, "cell": c, "similarity": _similarity(code, t)})
+    if not hits:
+        return out
+    exact = [h for h in hits if h["similarity"] >= 1.0]
+    out["observations"] = [
+        {
+            "observed_raw_value": h["cell"].get("text"),
+            "candidate_similarity": h["similarity"],
+            "bounding_box": h["cell"].get("bounding_box_px"),
+            "coordinate_system": "pixels_pdfium_top_left",
+        }
+        for h in hits[:10]
+    ]
+    if not exact:
+        out["result"] = "SIMILAR_ONLY"
+        out["candidate_rows"] = [
+            {"row": h["row"].get("row"), "reason": "similar_not_equal"}
+            for h in hits
+        ]
+        return out
+    # re-associação espacial: linha física → campos lógicos
+    for h in exact[:4]:
+        band = _y_band(
+            h["row"].get("cells") or [],
+            ((h["cell"].get("bounding_box_px") or [0, 0])[1]),
+        )
+        out["candidate_rows"].append(
+            {
+                "row": h["row"].get("row"),
+                "reason": "code_in_raw_cell",
+                "cells_in_band": len(band),
+            }
+        )
+    out["result"] = (
+        "ROW_ASSOCIATION_CANDIDATE" if len(exact) == 1
+        else "ROW_ASSOCIATION_AMBIGUOUS"
+    )
+    return out
+
+
+def _targeted_recheck(plan: dict, region_box, opts: dict) -> dict:
+    """Etapa 3 (R13): recorte direcionado + OCR localizado via ports —
+    somente quando evidência existente é insuficiente."""
+    hist = {"stage": "TARGETED_RECHECK", "result": "NOT_ATTEMPTED",
+            "observations": []}
+    renderer = opts.get("renderer")
+    ocr = opts.get("ocr")
+    pdf_bytes = opts.get("pdf_bytes")
+    budget = opts.get("budget") or {}
+    state = opts.setdefault("state", {"crops": 0})
+    if not all([renderer, ocr, pdf_bytes, region_box]):
+        hist["result"] = "CAPABILITY_UNAVAILABLE"
+        return hist
+    if state["crops"] >= int(budget.get("max_crops", 8)):
+        hist["result"] = "RESOURCE_LIMIT_REACHED"
+        return hist
+    state["crops"] += 1
+    try:
+        region = renderer.render_region(
+            pdf_bytes,
+            page=int(opts.get("page") or 1),
+            region_px=region_box,
+            reference_dpi=int(opts.get("reference_dpi") or 150),
+            dpi=min(int(budget.get("max_dpi", 300)), 300),
+            margin_px=8,
+        )
+        if region.width * region.height > int(
+            budget.get("max_pixels", 4_000_000)
+        ):
+            hist["result"] = "RESOURCE_LIMIT_REACHED"
+            return hist
+        res = ocr.extract_text(region.image_bytes)
+        code = plan["expected_value"]
+        found = [
+            {
+                "observed_raw_value": t.text,
+                "candidate_similarity": _similarity(code, t.text or ""),
+                "method": "localized_ocr_recheck",
+                "page": region.page,
+            }
+            for t in (res.tokens or [])
+            if t.text and (t.text == code or _similarity(code, t.text) >= 0.85)
+        ]
+        hist["observations"] = found
+        hist["result"] = (
+            "CODE_OBSERVED" if any(
+                f["observed_raw_value"] == code for f in found
+            )
+            else ("SIMILAR_ONLY" if found else "CODE_NOT_FOUND")
+        )
+    except Exception as exc:  # provider/timeout/OOM — estado honesto
+        hist["result"] = "PROVIDER_ERROR"
+        hist["detail"] = type(exc).__name__
+    return hist
+
+
+def identify_balloon_candidates(u: dict) -> list[dict]:
+    """R13 — primeira capacidade genérica de balões: token alfanumérico
+    curto contido em primitiva circular/elíptica. Nunca fabrica balões."""
+    prims = u.get("graphic_primitives") or []
+    circles = [
+        p for p in prims
+        if (p.get("type") or "").lower() in {"circle", "ellipse", "arc"}
+    ]
+    if not circles:
+        return []
+    toks = u.get("_tokens") or u.get("tokens") or []
+    out = []
+    def _bounds(box):
+        xs = box[0::2]
+        ys = box[1::2]
+        return min(xs), min(ys), max(xs), max(ys)
+
+    def _inside(tb, cb):
+        if len(tb) < 4 or len(cb) < 4:
+            return False
+        tx1, ty1, tx2, ty2 = _bounds(tb)
+        cx1, cy1, cx2, cy2 = _bounds(cb)
+        return (
+            cx1 <= tx1 and cx2 >= tx2 and cy1 <= ty1 and cy2 >= ty2
+        )
+    for circ in circles:
+        cbox = circ.get("bounding_box_px") or circ.get("box_px") or []
+        for t in toks:
+            txt = (t.get("normalized_text") or t.get("text") or "").strip()
+            tbox = t.get("bounding_box_px") or []
+            if 1 <= len(txt) <= 3 and txt.isalnum() and _inside(tbox, cbox):
+                out.append(
+                    {
+                        "item_label": txt,
+                        "bounding_box_px": cbox,
+                        "token_bounding_box_px": tbox,
+                        "region": t.get("region"),
+                        "identification_method": "primitive_containment",
+                        "uncertainty_reason": "contenção geométrica é "
+                        "candidata — exige verificação visual",
+                    }
+                )
+    return out
+
+
+def _acceptance_matrix(comparison_blocked: bool) -> dict:
+    """Matriz consolidada M0–M4 por evidência real (M5) — honesta."""
+    return {
+        "M0_evaluation_foundation": {
+            "state": "BLOCKED",
+            "evidence": "sem GT aprovado por owner nem thresholds oficiais",
+            "owner": "Engineering/Engenharia",
+        },
+        "M1_document_structure": {
+            "state": "PARTIAL",
+            "evidence": "regiões/tabela/topologia SLANet implementadas; "
+            "acurácia contra GT não medida",
+        },
+        "M2_typed_semantic_extraction": {
+            "state": "PARTIAL",
+            "evidence": "campos tipados item/qty/código/descrição extraídos; "
+            "precisão/recall não medidos sem GT",
+        },
+        "M3_technical_geometric": {
+            "state": "PARTIAL",
+            "evidence": "cotas/geometria candidatas + recorte direcionado; "
+            "balões limitados a primitivas circulares; precisão pendente",
+        },
+        "M4_governed_cross_check": {
+            "state": "PROVEN_STRUCTURE",
+            "evidence": "multiplicity-aware + attribute verifications + "
+            "divergências versionadas executando em prod",
+        },
+        "M5_release": {
+            "state": "PENDING",
+            "evidence": "pacote de revisão entregue; decisão do owner",
+        },
+        "blocked_because": (
+            "official_source_blocked" if comparison_blocked else None
+        ),
+    }
+
+
+def _divergence_cards(divergences: list[dict]) -> list[dict]:
+    """Cartões legíveis por divergência candidata — todos os campos
+    exigidos pelo M5; gravidade somente com classificação autorizada."""
+    return [
+        {
+            **d,
+            "next_action": "revisão técnica humana — contexto adicional "
+            "exigido para pareamento",
+            "severity": None,
+            "severity_reason": "sem classificação técnica autorizada",
+        }
+        for d in divergences
+    ]
+
+
+def build_release_consolidation(
+    oset,
+    *,
+    document_sha: str | None,
+    product_revision: str | None,
+    occurrence_results: list[dict],
+    cross_check: dict,
+    comparison_blocked: bool,
+) -> dict:
+    """M5 — consolidação de produto: FATO_OFICIAL × OBSERVAÇÃO × HIPÓTESE
+    × VERIFICAÇÃO por componente, divergência-cards, pacote de revisão
+    humana e matriz de aceite. Nunca publica nem aprova."""
+    components = []
+    verifs = cross_check.get("attribute_verifications") or []
+    ver_by_occ: dict[str, list[dict]] = {}
+    for v in verifs:
+        ver_by_occ.setdefault(str(v.get("expected_object_id")), []).append(v)
+    res_by_occ = {
+        r.get("occurrence_id"): r for r in (occurrence_results or [])
+    }
+    for o in oset.by_type(ObjectType.BOM_OCCURRENCE):
+        oid = o.object_id
+        res = res_by_occ.get(oid) or {}
+        components.append(
+            {
+                "occurrence_id": oid,
+                "official": {
+                    "component_code": o.attributes.get("component_code"),
+                    "component_type": o.attributes.get("component_type"),
+                    "parent_code": o.attributes.get("parent_code"),
+                    "consumption_quantity": o.attributes.get(
+                        "consumption_quantity"
+                    ),
+                    "consumption_unit": o.attributes.get("consumption_unit"),
+                    "source": o.document_identity,
+                    "class": "FATO_OFICIAL",
+                },
+                "observed": {
+                    "overall_state": res.get("overall_state"),
+                    "class": "OBSERVAÇÃO",
+                },
+                "hypotheses": {
+                    "relations": (res.get("investigations") or [{}, {}, {}])[2]
+                    .get("relation_refs", []),
+                    "class": "HIPÓTESE",
+                },
+                "verifications": {
+                    "checks": ver_by_occ.get(oid, []),
+                    "class": "VERIFICAÇÃO",
+                },
+                "next_action": (
+                    "revisão técnica"
+                    if res.get("overall_state") != "MATCH_CANDIDATE"
+                    else "revisão humana de candidato — não aprovação"
+                ),
+            }
+        )
+    return {
+        "components": components,
+        "divergence_cards": _divergence_cards(
+            cross_check.get("candidate_divergences") or []
+        ),
+        "review_package": {
+            "state": "PENDING_OWNER_REVIEW",
+            "owner": "Engenharia (Portal Engenharia)",
+            "items": len(components),
+            "automatic_approval": False,
+            "dependency": "workflow oficial de revisão inexistente — "
+            "evidências preparadas, decisão permanece no owner",
+        },
+        "acceptance_matrix": _acceptance_matrix(comparison_blocked),
+        "state": "DRAFT/CANDIDATE",
+        "not_official": True,
+        "human_review_required": True,
+    }
+
+
+def _checks_by_state(results: list[dict]) -> dict[str, int]:
+    """Contagem global por estado de check — consolidação auditável."""
+    counts: dict[str, int] = {}
+    for r in results:
+        for c in r.get("investigations") or []:
+            s = str(c.get("state") or "NOT_CHECKED")
+            counts[s] = counts.get(s, 0) + 1
+    return counts
+
+
+def _global_state(results: list[dict], comparison_blocked: bool) -> str:
+    """Estado global honesto — nunca PASS; consolidação por cobertura."""
+    if comparison_blocked:
+        return "INCONCLUSIVE"
+    if not results:
+        return "INCONCLUSIVE"
+    states = {r.get("overall_state") for r in results}
+    if "NOT_COMPARABLE" in states and len(states) == 1:
+        return "NOT_COMPARABLE"
+    if states <= {"MATCH_CANDIDATE"}:
+        return "MATCH_CANDIDATE"
+    return "INCONCLUSIVE"
+
+
+def _contract_matrix() -> dict:
+    """Matriz de contratos oficiais (M4) — inventário estático de
+    fontes, owners e regras de comparabilidade autorizadas."""
+    return {
+        "sources": [
+            {
+                "name": "product.detail",
+                "owner": "api-delpi (Domain API)",
+                "access": "delegated_user backend-first, fail-closed",
+                "freshness": "live call",
+                "errors": "typed 502 source_unavailable — nunca mascarado",
+            },
+            {
+                "name": "product.structure",
+                "owner": "api-delpi (Domain API)",
+                "access": "delegated_user backend-first",
+                "freshness": "live call",
+                "errors": "typed — UNAVAILABLE distinto de EMPTY_CONFIRMED",
+            },
+            {
+                "name": "product.drawing_pdf",
+                "owner": "fileserver/DELPI (PDF oficial)",
+                "identity": "document_hash_sha256 + revision quando presente",
+                "errors": "page_out_of_bounds / provider_unavailable tipados",
+            },
+            {
+                "name": "drawing_understanding",
+                "owner": "Engineering API (evidência visual candidata)",
+                "nature": "observação — nunca fato oficial",
+            },
+        ],
+        "comparability_rules": [
+            {"attribute": "component_code", "rule": "EXACT_OBSERVED"},
+            {"attribute": "assembly_quantity vs consumption_quantity",
+             "rule": "NOT_COMPARABLE — conceitos distintos"},
+            {"attribute": "drawing_dimension vs quantity",
+             "rule": "NOT_COMPARABLE — naturezas distintas"},
+            {"attribute": "revision(TOTVS) vs revision(desenho)",
+             "rule": "NOT_COMPARABLE — domínios distintos (ENG-REV-001)"},
+            {"attribute": "raw units MT/MI/PC/etc",
+             "rule": "PENDING_RULE_VALIDATION — sem contrato de unidades"},
+            {"attribute": "item_label/description",
+             "rule": "NOT_CHECKED — sem correspondente oficial tipado"},
+        ],
+    }
+
+
+def _attr(component, attribute, expected, observed, state, reason,
+          evidence=None, observed_raw=None):
+    return {
+        "attribute": attribute,
+        "expected_object_id": component,
+        "expected_value": expected,
+        "observed_value": observed,
+        "observed_raw_value": observed_raw if observed_raw is not None
+        else observed,
+        "state": state,
+        "reason": reason,
+        "evidence_refs": evidence or [],
+    }
+
+
+def build_official_cross_check(
+    oset,
+    plans: list[dict],
+    understanding: dict | None,
+    *,
+    document_sha: str | None,
+    product_code: str | None = None,
+    product_revision: str | None = None,
+    occurrence_results: list[dict] | None = None,
+) -> dict:
+    """M4 — reconciliação técnica governada oficial × desenho.
+
+    Multiplicity-aware: ocorrências repetidas preservam identidades;
+    MATCH/CONFLICT somente com evidência e contrato; ausência de leitura
+    nunca é divergência. Comparação bidirecional versionada."""
+    u = understanding or {}
+    occs = oset.by_type(ObjectType.BOM_OCCURRENCE)
+    items = oset.by_type(ObjectType.DRAWING_TABLE_ITEM)
+    code_of_occ = {
+        o.object_id: o.attributes.get("component_code") for o in occs
+    }
+
+    # --- multiplicidade: occurrences × table rows por código -----------
+    rows_by_code: dict[str, list[str]] = {}
+    for it in items:
+        code = it.attributes.get("component_code_candidate")
+        if code and not it.attributes.get("ambiguities"):
+            rows_by_code.setdefault(code, []).append(it.object_id)
+    occ_by_code: dict[str, list[str]] = {}
+    for o in occs:
+        occ_by_code.setdefault(
+            str(o.attributes.get("component_code") or ""), []
+        ).append(o.object_id)
+    multiplicity = {}
+    for code, oids in occ_by_code.items():
+        rows = rows_by_code.get(code, [])
+        n_o, n_r = len(oids), len(rows)
+        pairing = (
+            "SINGLE_PAIR" if n_o == 1 and n_r == 1
+            else "MANY_TO_ONE" if n_o > 1 and n_r == 1
+            else "MANY_TO_MANY" if n_o > 1 and n_r > 1
+            else "ONE_TO_NONE" if n_r == 0
+            else "PAIR_AMBIGUOUS"
+        )
+        multiplicity[code] = {
+            "bom_occurrence_ids": oids,
+            "drawing_item_ids": rows,
+            "pairing": pairing,
+        }
+
+    # --- verificação por atributo --------------------------------------
+    verifications: list[dict] = []
+    results_by_occ = {
+        r["occurrence_id"]: r for r in (occurrence_results or [])
+    }
+    for o in occs:
+        oid = o.object_id
+        code = code_of_occ.get(oid)
+        res = results_by_occ.get(oid) or {}
+        inv0 = (res.get("investigations") or [{}])[0]
+        st = inv0.get("state")
+        code_state = (
+            "MATCH" if st == "MATCH_CANDIDATE"
+            else "NOT_CHECKED" if st == "NOT_CHECKED"
+            else "UNKNOWN"
+        )
+        verifications.append(_attr(
+            oid, "component_code", code,
+            inv0.get("observed_value"), code_state,
+            "observação exata" if code_state == "MATCH"
+            else "candidata/ambígua/ausente — nunca confirmada",
+            evidence=inv0.get("evidence_refs"),
+        ))
+        verifications.append(_attr(
+            oid, "assembly_quantity",
+            o.attributes.get("consumption_quantity"),
+            (res.get("investigations") or [{}, {}])[1].get(
+                "observed", {}
+            ).get("assembly_quantity"),
+            "NOT_COMPARABLE",
+            "consumo_BOM ≠ quantidade_montagem — conceitos distintos",
+        ))
+        verifications.append(_attr(
+            oid, "component_type",
+            o.attributes.get("component_type"),
+            None, "NOT_CHECKED",
+            "sem campo tipado correspondente no desenho",
+        ))
+        verifications.append(_attr(
+            oid, "description",
+            None, None, "NOT_CHECKED",
+            "ocorrência BOM não carrega descrição oficial comparável",
+        ))
+
+    # --- revisão: domínios distintos → NOT_COMPARABLE ------------------
+    rev_candidates = u.get("revision_candidates") or []
+    verifications.append(_attr(
+        "product", "revision",
+        product_revision,
+        rev_candidates[0].get("revision") if rev_candidates else None,
+        "NOT_COMPARABLE" if (product_revision and rev_candidates)
+        else "NOT_CHECKED",
+        "domínios de revisão distintos (TOTVS≠desenho) — ENG-REV-001"
+        if product_revision
+        else "revisão oficial não consultada neste fluxo",
+    ))
+
+    # --- divergências candidatas versionadas ---------------------------
+    divergences: list[dict] = []
+    for code, m in multiplicity.items():
+        if m["pairing"] in {"MANY_TO_ONE", "MANY_TO_MANY", "PAIR_AMBIGUOUS"}:
+            divergences.append({
+                "divergence_type": "MULTIPLICITY_AMBIGUITY",
+                "component_code": code,
+                "official_value": m["bom_occurrence_ids"],
+                "observed_value": m["drawing_item_ids"],
+                "object_refs": m["bom_occurrence_ids"] + m["drawing_item_ids"],
+                "document_sha": document_sha,
+                "policy": "multiplicity-aware — nenhuma escolha arbitrária",
+                "state": "UNKNOWN",
+                "reason": "ocorrências/linhas repetidas sem contexto "
+                "adicional para pareamento único",
+            })
+    return {
+        "contract_matrix": _contract_matrix(),
+        "multiplicity_analysis": multiplicity,
+        "attribute_verifications": verifications,
+        "candidate_divergences": divergences,
+        "bidirectional": {
+            "bom_to_drawing": "occurrence_results",
+            "drawing_to_bom": "unmatched_drawing_candidates + "
+            "root_product_identifiers",
+            "note": "ausência de leitura/OCR ambíguo/relação não "
+            "verificada ≠ divergência confirmada",
+        },
+        "state": "DRAFT/CANDIDATE",
+        "not_official": True,
+        "human_review_required": True,
+    }
+
+
 def execute_investigations(
     oset,
     plans: list[dict],
@@ -303,6 +829,9 @@ def execute_investigations(
     *,
     document_sha: str | None,
     official_source_state: str | None = None,
+    product_code: str | None = None,
+    progressive: dict | None = None,
+    product_revision: str | None = None,
 ) -> dict[str, Any]:
     """Executor I-01..I-05 sobre o mesmo DrawingObjectSet.
 
@@ -332,6 +861,13 @@ def execute_investigations(
             "ausência de BOM não é BOM vazia — cobertura nula por "
             "impossibilidade de comparação",
         ]
+        _empty_xcheck = build_official_cross_check(
+            oset, plans, u,
+            document_sha=document_sha,
+            product_code=product_code,
+            product_revision=product_revision,
+            occurrence_results=[],
+        )
         return {
             "schema_version": INVESTIGATION_SCHEMA,
             "official_source_state": official_source_state,
@@ -359,6 +895,15 @@ def execute_investigations(
                 "effective_coverage": None,
             },
             "limitations": limitations,
+            "official_cross_check": _empty_xcheck,
+            "release_consolidation": build_release_consolidation(
+                oset,
+                document_sha=document_sha,
+                product_revision=product_revision,
+                occurrence_results=[],
+                cross_check=_empty_xcheck,
+                comparison_blocked=comparison_blocked,
+            ),
             "state": "DRAFT/CANDIDATE",
             "not_official": True,
             "human_review_required": True,
@@ -413,7 +958,9 @@ def execute_investigations(
             )
             totals["not_comparable"] += 1
             continue
-        c1 = _check_component_code(occ, plan, table_rows, idents, document_sha)
+        c1 = _check_component_code(
+            occ, plan, table_rows, idents, document_sha, product_code
+        )
         checks.append(c1)
         row_ref = None
         if c1["state"] in {"MATCH_CANDIDATE", "AMBIGUOUS"} and c1.get(
@@ -470,37 +1017,134 @@ def execute_investigations(
         else:
             totals["not_checked"] += 1
 
+    # R13 — investigação visual progressiva sobre ocorrências sem
+    # resolução: EXISTING_EVIDENCE → CONTEXTUAL_SEARCH → TARGETED_RECHECK
+    # (ports, budget governado). Histórico de busca ≠ evidência técnica.
+    balloon_candidates: list[dict] = []
+    if progressive:
+        rows_all = (u.get("component_table") or {}).get("rows") or []
+        for res, plan in zip(results, plans):
+            if res["overall_state"] not in {
+                "INCONCLUSIVE", "EXPECTED_COMPONENT_NOT_LOCATED",
+                "AMBIGUOUS",
+            }:
+                continue
+            hist = [
+                {"stage": "EXISTING_EVIDENCE",
+                 "result": res["overall_state"]}
+            ]
+            ctx = _contextual_search(plan, u)
+            hist.append(ctx)
+            recheck = None
+            if ctx["result"] != "NO_CANDIDATE_REGION":
+                box = None
+                if ctx["candidate_rows"]:
+                    rn = ctx["candidate_rows"][0].get("row")
+                    row = next(
+                        (r for r in rows_all if r.get("row") == rn), None
+                    )
+                    if row:
+                        boxes = [
+                            c["bounding_box_px"]
+                            for c in row.get("cells") or []
+                            if c.get("bounding_box_px")
+                        ]
+                        if boxes:
+                            box = [
+                                min(b[0] for b in boxes),
+                                min(b[1] for b in boxes),
+                                max(b[2] for b in boxes),
+                                max(b[5] if len(b) > 5 else b[3] for b in boxes),
+                            ]
+                recheck = _targeted_recheck(plan, box, progressive)
+                hist.append(recheck)
+            res["search_history"] = hist
+            if recheck and recheck.get("result") == "CODE_OBSERVED":
+                res["overall_state"] = "MATCH_CANDIDATE"
+            elif ctx["result"] == "ROW_ASSOCIATION_CANDIDATE":
+                res["overall_state"] = "INCONCLUSIVE"
+        balloon_candidates = identify_balloon_candidates(u)
+
+    if not balloon_candidates:
+        balloon_candidates = [
+            {
+                "item_label": b.attributes.get("item_label"),
+                "bounding_box_px": (
+                    (b.evidence_refs[0].bounding_box
+                     if b.evidence_refs else None)
+                ),
+                "identification_method": b.attributes.get(
+                    "identification_method", "declared"
+                ),
+            }
+            for b in oset.by_type(ObjectType.BALLOON)
+        ]
+
     # I-05 — reconciliação independente: desenho → estrutura oficial.
+    # R13-01: o identificador do produto raiz NÃO é componente extra.
+    root_ids = {str(product_code or "").strip()} - {""}
     unmatched = []
+    root_identifiers = []
     for c in table_rows:
         code = c["code"]
-        if code and code not in bom_codes and is_component_code(code):
-            unmatched.append(
+        if not code or code in bom_codes:
+            continue
+        if code in root_ids or not is_component_code(code):
+            root_identifiers.append(
                 {
-                    "candidate_type": "drawing_table_item",
+                    "identifier_type": "ROOT_PRODUCT_IDENTIFIER"
+                    if code in root_ids
+                    else "DRAWING_COMPONENT_CANDIDATE",
                     "observed_raw_value": code,
-                    "state": "UNMATCHED_DRAWING_CANDIDATE",
-                    "reason": "sem correspondente oficial — não é prova "
-                    "de componente extra nem erro de BOM",
+                    "state": "IDENTIFIED_NOT_BOM_COMPONENT"
+                    if code in root_ids
+                    else "SKIPPED",
                 }
             )
+            continue
+        unmatched.append(
+            {
+                "candidate_type": "drawing_table_item",
+                "observed_raw_value": code,
+                "state": "UNMATCHED_DRAWING_CANDIDATE",
+                "reason": "sem correspondente oficial — não é prova "
+                "de componente extra nem erro de BOM",
+            }
+        )
     for region, fs in idents.items():
         if region in _NON_COMPONENT_REGIONS:
             continue
         for f in fs:
             t = f.get("text")
-            if t and t not in bom_codes:
-                unmatched.append(
+            if not t or t in bom_codes:
+                continue
+            if t in root_ids:
+                root_identifiers.append(
                     {
-                        "candidate_type": "identifier",
+                        "identifier_type": "ROOT_PRODUCT_IDENTIFIER",
                         "observed_raw_value": t,
                         "region": region,
-                        "state": "UNMATCHED_DRAWING_CANDIDATE",
-                        "reason": "identificador sem correspondente "
-                        "oficial",
+                        "state": "IDENTIFIED_NOT_BOM_COMPONENT",
                     }
                 )
+                continue
+            unmatched.append(
+                {
+                    "candidate_type": "identifier",
+                    "observed_raw_value": t,
+                    "region": region,
+                    "state": "UNMATCHED_DRAWING_CANDIDATE",
+                    "reason": "identificador sem correspondente oficial",
+                }
+            )
 
+    xcheck = build_official_cross_check(
+        oset, plans, u,
+        document_sha=document_sha,
+        product_code=product_code,
+        product_revision=product_revision,
+        occurrence_results=results,
+    )
     return {
         "schema_version": INVESTIGATION_SCHEMA,
         "official_source_state": official_source_state,
@@ -516,9 +1160,15 @@ def execute_investigations(
         "plan": plans,
         "occurrence_results": results,
         "unmatched_drawing_candidates": unmatched,
+        "root_product_identifiers": root_identifiers,
+        "balloon_candidates": balloon_candidates,
         "summary": {
             **totals,
             "unmatched_drawing_candidates": len(unmatched),
+            "root_product_identifiers": len(root_identifiers),
+            "balloon_candidates": len(balloon_candidates),
+            "checks_by_state": _checks_by_state(results),
+            "global_state": _global_state(results, comparison_blocked),
             "effective_coverage": (
                 round(
                     totals["match_candidates"] / totals["expected_occurrences"], 3
@@ -534,6 +1184,15 @@ def execute_investigations(
             "consumo×montagem×cota não comparáveis sem regra oficial",
             "cobertura depende das evidências do Drawing Understanding",
         ],
+        "official_cross_check": xcheck,
+        "release_consolidation": build_release_consolidation(
+            oset,
+            document_sha=document_sha,
+            product_revision=product_revision,
+            occurrence_results=results,
+            cross_check=xcheck,
+            comparison_blocked=comparison_blocked,
+        ),
         "state": "DRAFT/CANDIDATE",
         "not_official": True,
         "human_review_required": True,

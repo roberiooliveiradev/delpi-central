@@ -179,6 +179,7 @@ def test_metal_observation_upsert_idempotent(repo):
 
     rows = repo.list_metal_observations(
         instrument_id=inst.instrument_id,
+        source_id="world-bank-pink-sheet",
         date_from=date(2026, 9, 1),
         date_to=date(2026, 9, 30),
         limit=10,
@@ -224,6 +225,7 @@ def test_quote_basis_precedence_last_never_overwrites_close(repo):
 
     rows = repo.list_metal_observations(
         instrument_id=inst.instrument_id,
+        source_id="world-bank-pink-sheet",
         date_from=date(2026, 9, 2),
         date_to=date(2026, 9, 2),
         limit=10,
@@ -267,6 +269,7 @@ def test_quote_basis_close_supersedes_last(repo):
 
     rows = repo.list_metal_observations(
         instrument_id=inst.instrument_id,
+        source_id="world-bank-pink-sheet",
         date_from=date(2026, 9, 3),
         date_to=date(2026, 9, 3),
         limit=10,
@@ -417,6 +420,7 @@ def test_decimal_precision_roundtrip(repo):
     repo.commit()
     rows = repo.list_metal_observations(
         instrument_id=inst.instrument_id,
+        source_id="world-bank-pink-sheet",
         date_from=date(2026, 9, 1),
         date_to=date(2026, 9, 30),
         limit=10,

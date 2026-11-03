@@ -353,9 +353,14 @@ class MarketDataIngestionService:
         is pre-charged against the monthly + per-minute weight budget
         and recorded in the ledger; rows land in ``metal_quote_cache``
         with a mandatory ``expires_at`` (operational cache, not
-        permanent retention)."""
+        permanent retention).
+
+        R12 — the destination follows the source's recorded retention
+        policy: ``permanent`` sources persist daily closes in
+        ``metal_quote_observations`` (authorized ``collect``+``store``),
+        ``ttl_cache`` sources stay on the expiring cache."""
         source_id = PROVIDER_METALCHARTS
-        self._check_cache_source(source_id)
+        source = self._quote_source(FEED_METALS_DAILY)
         if self._metalcharts_provider is None or not getattr(
             self._metalcharts_provider, "configured", lambda: True
         )():
@@ -377,6 +382,10 @@ class MarketDataIngestionService:
             repository=self._repo, clock=self._clock
         )
         retrieved_at = self._clock()
+        permanent = (
+            getattr(source, "observation_retention", None)
+            == RETENTION_PERMANENT
+        )
         expires_at = retrieved_at + timedelta(
             hours=Settings.METALCHARTS_CACHE_TTL_HOURS
         )
@@ -405,29 +414,47 @@ class MarketDataIngestionService:
                 ):
                     skipped += 1
                     continue
-                outcome = self._repo.upsert_metal_cache(
-                    instrument_id=binding.instrument_id,
-                    source_id=source_id,
-                    observation_date=bar["observation_date"],
-                    native_price=bar["close"],
-                    native_currency=binding.native_currency,
-                    unit_code=binding.unit_code or "unknown",
-                    quote_basis=binding.quotation_basis,
-                    source_record_key=(
-                        f"metalcharts:{binding.source_series_key}:"
-                        f"{bar['observation_date'].isoformat()}"
-                    ),
-                    retrieved_at=retrieved_at,
-                    expires_at=expires_at,
-                    quality_status=QUALITY_VALIDATED,
-                )
+                if permanent:
+                    outcome = self._repo.upsert_metal_observation(
+                        instrument_id=binding.instrument_id,
+                        observation_date=bar["observation_date"],
+                        native_price=bar["close"],
+                        native_currency=binding.native_currency,
+                        unit_code=binding.unit_code or "unknown",
+                        quote_basis=binding.quotation_basis,
+                        source_id=source_id,
+                        source_record_key=(
+                            f"metalcharts:{binding.source_series_key}:"
+                            f"{bar['observation_date'].isoformat()}"
+                        ),
+                        retrieved_at=retrieved_at,
+                        quality_status=QUALITY_VALIDATED,
+                    )
+                else:
+                    outcome = self._repo.upsert_metal_cache(
+                        instrument_id=binding.instrument_id,
+                        source_id=source_id,
+                        observation_date=bar["observation_date"],
+                        native_price=bar["close"],
+                        native_currency=binding.native_currency,
+                        unit_code=binding.unit_code or "unknown",
+                        quote_basis=binding.quotation_basis,
+                        source_record_key=(
+                            f"metalcharts:{binding.source_series_key}:"
+                            f"{bar['observation_date'].isoformat()}"
+                        ),
+                        retrieved_at=retrieved_at,
+                        expires_at=expires_at,
+                        quality_status=QUALITY_VALIDATED,
+                    )
                 if outcome == "inserted":
                     inserted += 1
                 elif outcome == "updated":
                     updated += 1
                 else:
                     skipped += 1
-        self._repo.purge_expired_cache()
+        if not permanent:
+            self._repo.purge_expired_cache()
         return fetched, inserted, updated, skipped
 
     def _quote_source(self, feed: str) -> Any:

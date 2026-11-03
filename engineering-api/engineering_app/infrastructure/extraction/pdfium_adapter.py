@@ -14,6 +14,7 @@ from typing import Any
 from engineering_app.application.drawing.extraction_ports import (
     ProviderCapability,
     RenderedPage,
+    RenderedRegion,
 )
 from engineering_app.application.drawing.pdf_text_extractor import (
     MAX_CHARS_PER_PAGE,
@@ -145,6 +146,70 @@ class PdfiumExtractionAdapter:
                 scale=scale, rotation=rotation,
                 page_width_pt=page_width_pt,
                 page_height_pt=page_height_pt,
+            )
+        finally:
+            pdf.close()
+
+    def render_region(
+        self,
+        pdf_bytes: bytes,
+        *,
+        page: int,
+        region_px: list[float],
+        reference_dpi: int,
+        dpi: int = 300,
+        margin_px: int = 8,
+    ) -> RenderedRegion:
+        """Recorte direcionado via crop nativo do PDFium (R13) —
+        re-renderiza a fonte vetorial, nunca amplia raster degradado."""
+        if not _PDFIUM_AVAILABLE:
+            raise PdfExtractionError(
+                "provider_unavailable:pypdfium2_not_installed"
+            )
+        if not pdf_bytes:
+            raise PdfExtractionError("empty_document")
+        if dpi < 1 or dpi > _MAX_DPI:
+            raise PdfExtractionError(f"dpi_limit:{dpi}>{_MAX_DPI}")
+        if not region_px or len(region_px) < 4:
+            raise PdfExtractionError("invalid_region")
+        x1, y1 = float(region_px[0]), float(region_px[1])
+        if len(region_px) >= 8:
+            x2, y2 = float(region_px[4]), float(region_px[5])
+        else:
+            x2, y2 = float(region_px[2]), float(region_px[3])
+        pdf = pdfium.PdfDocument(pdf_bytes)
+        try:
+            if page < 1 or page > len(pdf) or page > _MAX_RENDER_PAGES:
+                raise PdfExtractionError(f"page_out_of_bounds:{page}")
+            pdf_page = pdf[page - 1]
+            try:
+                rotation = int(pdf_page.get_rotation() or 0)
+            except Exception:
+                rotation = 0
+            ref_scale = max(float(reference_dpi or dpi), 1.0) / 72.0
+            margin_pt = float(margin_px) / ref_scale
+            left = max(0.0, x1 / ref_scale - margin_pt)
+            top = max(0.0, y1 / ref_scale - margin_pt)
+            right = max(left + 1.0, x2 / ref_scale + margin_pt)
+            bottom = max(top + 1.0, y2 / ref_scale + margin_pt)
+            scale = dpi / 72
+            bitmap = pdf_page.render(
+                scale=scale, crop=(left, top, right, bottom)
+            )
+            pil = bitmap.to_pil()
+            buf = io.BytesIO()
+            pil.save(buf, format="PNG")
+            return RenderedRegion(
+                page=page,
+                image_bytes=buf.getvalue(),
+                width=pil.width,
+                height=pil.height,
+                dpi=dpi,
+                provider_id="pdfium_experimental",
+                region_px=[x1, y1, x2, y2],
+                offset_px=(left * scale, top * scale),
+                scale=scale,
+                rotation=rotation,
             )
         finally:
             pdf.close()

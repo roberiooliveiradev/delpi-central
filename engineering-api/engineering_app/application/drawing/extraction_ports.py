@@ -32,6 +32,27 @@ class PdfRenderingPort(Protocol):
         self, pdf_bytes: bytes, *, page: int, dpi: int = 150
     ) -> "RenderedPage": ...
 
+    def render_region(
+        self,
+        pdf_bytes: bytes,
+        *,
+        page: int,
+        region_px: list[float],
+        reference_dpi: int,
+        dpi: int = 300,
+        margin_px: int = 8,
+    ) -> "RenderedRegion":
+        """Recorte direcionado (R13): renderiza do PDF original apenas a
+        região indicada — nunca upscaling de raster já degradado.
+
+        ``region_px`` está em ``pixels_pdfium_top_left`` no espaço de
+        ``reference_dpi`` (o DPI do render que produziu as coordenadas);
+        ``dpi`` é a resolução efetiva do novo render. Capacidade opcional:
+        adapters que não implementam devem declarar
+        ``capabilities["region_render"]=False``.
+        """
+        ...
+
 
 class OcrExtractionPort(Protocol):
     """Raster image bytes → recognized text + coordinates."""
@@ -66,6 +87,25 @@ class RenderedPage:
     page_width_pt: float | None = None  # dimensão da página em pontos PDF
     page_height_pt: float | None = None
     coordinate_system: str = "pixels_pdfium_top_left"
+
+
+@dataclass
+class RenderedRegion:
+    """Raster de um recorte direcionado com transformação explícita (R13)."""
+
+    page: int
+    image_bytes: bytes
+    width: int
+    height: int
+    dpi: int
+    provider_id: str
+    region_px: list[float]  # recorte no espaço de reference_dpi
+    offset_px: tuple[float, float]  # origem do recorte (px @ dpi)
+    scale: float
+    coordinate_system: str = "pixels_pdfium_top_left"
+    format: str = "png"
+    rotation: int | None = None
+    limitations: list[str] = field(default_factory=list)
 
 
 @dataclass

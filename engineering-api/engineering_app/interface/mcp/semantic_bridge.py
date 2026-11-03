@@ -737,12 +737,40 @@ async def _analyze_product_drawing(
                 code="feature_disabled",
             )
         try:
-            understanding, _structure, _best, _tokens = (
+            understanding, _structure, _best, _tokens, _pdf_bytes = (
                 await _produce_drawing_understanding(context, code)
             )
         except DrawingAnalysisError as exc:
             return _err(
                 str(exc), status_code=exc.status_code, code=exc.code
+            )
+    # R13 — investigação progressiva: busca contextual sempre ativa;
+    # recorte direcionado via ports REAIS quando o fluxo produziu
+    # understanding+PDF (compose) — CAPABILITY_UNAVAILABLE honesto senão.
+    progressive = None
+    if params.get("progressive_investigation") or params.get(
+        "compose_understanding"
+    ):
+        progressive = {
+            "budget": {"max_crops": 8, "max_attempts_per_region": 2,
+                       "max_dpi": 300, "max_pixels": 4_000_000},
+        }
+        if understanding is not None:
+            from engineering_app.infrastructure.extraction.pdfium_adapter import (  # noqa: E501
+                PdfiumExtractionAdapter,
+            )
+            from engineering_app.infrastructure.extraction.paddleocr_adapter import (  # noqa: E501
+                PaddleOcrAdapter,
+            )
+
+            progressive.update(
+                {
+                    "pdf_bytes": _pdf_bytes,
+                    "renderer": PdfiumExtractionAdapter(),
+                    "ocr": PaddleOcrAdapter(),
+                    "page": 1,
+                    "reference_dpi": int(_best.get("dpi") or 200),
+                }
             )
     try:
         report = await analyze_product_drawing(
@@ -752,6 +780,7 @@ async def _analyze_product_drawing(
             visual_observations=observations or None,
             scope=scope,
             understanding=understanding,
+            progressive=progressive,
         )
     except DrawingAnalysisError as exc:
         return _err(
@@ -1061,6 +1090,17 @@ async def _produce_drawing_understanding(context, code: str):
     }
     # R9.8 — motor SLANet: estrutura de tabela real sobre a região
     # detectada, com associação OCR↔célula; candidate, nunca autoridade.
+    _pdf_raw = None
+    _pdf_bytes = None
+    try:
+        _pdf_raw = await bridge.build_delegated_auxiliary_source().fetch_product_drawing_pdf(  # noqa: E501
+            ctx, code=code
+        )
+        _pdf_bytes = (
+            _pdf_raw.get("content") if isinstance(_pdf_raw, dict) else None
+        )
+    except Exception:
+        _pdf_bytes = None
     try:
         from engineering_app.infrastructure.extraction.engine_adapters import (
             TableStructureEngine,
@@ -1069,12 +1109,6 @@ async def _produce_drawing_understanding(context, code: str):
         _tbl_box = (
             understanding.get("component_table") or {}
         ).get("box") or None
-        _pdf_raw = await bridge.build_delegated_auxiliary_source().fetch_product_drawing_pdf(  # noqa: E501
-            ctx, code=code
-        )
-        _pdf_bytes = (
-            _pdf_raw.get("content") if isinstance(_pdf_raw, dict) else None
-        )
         _sl = TableStructureEngine().run(
             bytes(_pdf_bytes) if _pdf_bytes else b"",
             document_hash_sha256=best.get("document_hash") or "",
@@ -1117,7 +1151,7 @@ async def _produce_drawing_understanding(context, code: str):
                 "state": "ENGINE_AVAILABLE",
             }
         ]
-    return understanding, structure, best, tokens
+    return understanding, structure, best, tokens, _pdf_bytes
 
 
 async def _analyze_drawing_understanding(
@@ -1168,7 +1202,7 @@ async def _analyze_drawing_understanding(
             code="validation",
         )
     try:
-        understanding, structure, best, tokens = (
+        understanding, structure, best, tokens, _pdf_bytes = (
             await _produce_drawing_understanding(context, code)
         )
     except DrawingAnalysisError as exc:
@@ -1259,6 +1293,13 @@ async def _analyze_drawing_understanding(
     # R12.1 — sem fonte oficial carregada a comparação é fail-closed:
     # sem occurrence_results nem unmatched_drawing_candidates.
     _bom_flat = flatten_bom_occurrences(structure, code)
+    from engineering_app.infrastructure.extraction.pdfium_adapter import (
+        PdfiumExtractionAdapter,
+    )
+    from engineering_app.infrastructure.extraction.paddleocr_adapter import (
+        PaddleOcrAdapter,
+    )
+
     understanding["object_profiles"] = build_object_profiles(
         bom_occurrences=_bom_flat,
         visual_observations=[],
@@ -1270,6 +1311,18 @@ async def _analyze_drawing_understanding(
             if not structure
             else ("EMPTY_CONFIRMED" if not _bom_flat else "AVAILABLE")
         ),
+        product_code=code,
+        progressive={
+            "budget": {"max_crops": 8, "max_dpi": 300,
+                       "max_pixels": 4_000_000},
+            # R13 closure — ports reais do pipeline visual (lazy, sem
+            # reprocessar por ocorrência; orçamento governado).
+            "pdf_bytes": _pdf_bytes,
+            "renderer": PdfiumExtractionAdapter(),
+            "ocr": PaddleOcrAdapter(),
+            "page": 1,
+            "reference_dpi": int(best.get("dpi") or 200),
+        },
         include_investigations=True,
     )
     understanding["report"]["object_profiles"] = understanding[

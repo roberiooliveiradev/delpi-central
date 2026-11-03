@@ -272,6 +272,374 @@ def test_unavailable_source_never_empty_bom():
     assert gi["unmatched_drawing_candidates"] == []
 
 
+# ---------- R13 — investigação progressiva + correções --------------------
+
+
+def test_root_product_identifier_not_component_r13_01():
+    """90264302 no desenho ≠ componente extra — tipo próprio."""
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=_u(idents=[_ident("90264302", "drawing_area"),
+                                 _ident("99999999", "drawing_area")]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        include_investigations=True,
+    )
+    gi = out["guided_investigations"]
+    roots = [x["observed_raw_value"] for x in
+             gi["root_product_identifiers"]]
+    assert "90264302" in roots
+    un = [x["observed_raw_value"] for x in
+          gi["unmatched_drawing_candidates"]]
+    assert "90264302" not in un and "99999999" in un
+
+
+def test_relation_carries_spatial_evidence_r13_02():
+    """REPRESENTED_BY preserva página/bbox da observação, não só o código."""
+    out = _build(rows=[_row(0, "10020033")])
+    rel = [r for r in out["relations"]
+           if r["relation_type"] == "REPRESENTED_BY"][0]
+    kinds = {e["source_kind"] for e in rel["evidence_refs"]}
+    assert "code_match" in kinds
+    assert any(
+        e.get("bounding_box") or e.get("coordinate_system")
+        for e in rel["evidence_refs"]
+    )
+
+
+def test_progressive_contextual_search_recovers_raw_cell_code():
+    """Código exato em célula bruta de linha ambígua → contextual search."""
+    row = _row(0, "10020033")
+    row["fields"] = {}  # associação perdida — linha ambígua
+    row["association_status"] = "UNRESOLVED"
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=_u(rows=[row]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        progressive={"budget": {"max_crops": 2}},
+        include_investigations=True,
+    )
+    res = {r["occurrence_id"]: r for r in
+           out["guided_investigations"]["occurrence_results"]}
+    hist = res["O0002"].get("search_history") or []
+    stages = [h["stage"] for h in hist]
+    assert "EXISTING_EVIDENCE" in stages and "CONTEXTUAL_SEARCH" in stages
+    ctx = hist[1]
+    assert ctx["result"] == "ROW_ASSOCIATION_CANDIDATE"
+
+
+def test_progressive_recheck_capability_unavailable_honest():
+    """Sem ports/pdf, recorte responde CAPABILITY_UNAVAILABLE — não inventa."""
+    row = _row(0, "10020033")
+    row["fields"] = {}
+    row["association_status"] = "UNRESOLVED"
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=_u(rows=[row]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        progressive={"budget": {"max_crops": 2}},
+        include_investigations=True,
+    )
+    res = {r["occurrence_id"]: r for r in
+           out["guided_investigations"]["occurrence_results"]}
+    recheck = [h for h in res["O0002"].get("search_history", [])
+               if h["stage"] == "TARGETED_RECHECK"][0]
+    assert recheck["result"] == "CAPABILITY_UNAVAILABLE"
+
+
+class _FakeRenderer:
+    def render_region(self, pdf, *, page, region_px, reference_dpi,
+                      dpi, margin_px):
+        class _R:
+            image_bytes = b"png"
+            width, height, dpi, page = 40, 20, 300, 1
+            offset_px = (0.0, 0.0)
+        return _R()
+
+
+class _FakeOcr:
+    def __init__(self, tokens):
+        self._tokens = tokens
+
+    def extract_text(self, image):
+        class _T:
+            def __init__(self, text):
+                self.text = text
+        class _Res:
+            def __init__(self, toks):
+                self.tokens = toks
+        return _Res([_T(t) for t in self._tokens])
+
+
+def test_targeted_recheck_with_real_ports_contract():
+    """R13 closure: ports disponíveis → recorte executa de verdade."""
+    row = _row(0, "10020033")
+    row["fields"] = {}
+    row["association_status"] = "UNRESOLVED"
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=_u(rows=[row]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        progressive={
+            "budget": {"max_crops": 4, "max_dpi": 300,
+                       "max_pixels": 4_000_000},
+            "pdf_bytes": b"%PDF-fake",
+            "renderer": _FakeRenderer(),
+            "ocr": _FakeOcr(["10020033", "CABO"]),
+            "page": 1, "reference_dpi": 200,
+        },
+        include_investigations=True,
+    )
+    res = {r["occurrence_id"]: r for r in
+           out["guided_investigations"]["occurrence_results"]}
+    hist = res["O0002"]["search_history"]
+    recheck = [h for h in hist if h["stage"] == "TARGETED_RECHECK"][0]
+    assert recheck["result"] == "CODE_OBSERVED"
+    assert recheck["observations"][0]["method"] == "localized_ocr_recheck"
+    assert res["O0002"]["overall_state"] == "MATCH_CANDIDATE"
+
+
+def test_recheck_budget_exhaustion_inconclusive():
+    row = _row(0, "10020033")
+    row["fields"] = {}
+    row["association_status"] = "UNRESOLVED"
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=_u(rows=[row]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        progressive={
+            "budget": {"max_crops": 0},
+            "pdf_bytes": b"%PDF-fake",
+            "renderer": _FakeRenderer(),
+            "ocr": _FakeOcr(["10020033"]),
+            "page": 1,
+        },
+        include_investigations=True,
+    )
+    res = {r["occurrence_id"]: r for r in
+           out["guided_investigations"]["occurrence_results"]}
+    recheck = [h for h in res["O0002"]["search_history"]
+               if h["stage"] == "TARGETED_RECHECK"][0]
+    assert recheck["result"] == "RESOURCE_LIMIT_REACHED"
+    assert res["O0002"]["overall_state"] != "MATCH_CANDIDATE"
+
+
+def test_balloon_detected_promotes_to_object_with_evidence():
+    """Primitiva circular + token contido → BALLOON objeto + relações."""
+    u = _u(rows=[_row(0, "10020033", item="7")])
+    u["graphic_primitives"] = [
+        {"type": "circle",
+         "bounding_box_px": [40, 50, 70, 50, 70, 80, 40, 80]},
+    ]
+    u["_tokens"] = [
+        {"normalized_text": "7", "region": "drawing_area",
+         "bounding_box_px": [50, 58, 60, 58, 60, 70, 50, 70]},
+    ]
+    u["geometry_regions"] = [
+        {"id": "g1", "type": "geometry", "box_px": [0, 0, 400, 400]},
+    ]
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=u,
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        include_investigations=True,
+    )
+    types = out["objects_by_type"]
+    assert types.get("balloon") == 1
+    rel_types = out["relations_by_type"]
+    assert rel_types.get("REFERENCED_BY") == 1   # item 7 → balão
+    assert rel_types.get("POINTS_TO") == 1       # balão → geometria (containment)
+    gi = out["guided_investigations"]
+    assert gi["balloon_candidates"][0]["item_label"] == "7"
+    assert gi["balloon_candidates"][0]["identification_method"] == \
+        "primitive_containment"
+
+
+def test_consolidated_summary_states():
+    out = _build(rows=[_row(0, "10020033")])
+    s = out["guided_investigations"]["summary"]
+    assert "checks_by_state" in s
+    assert s["checks_by_state"].get("MATCH_CANDIDATE", 0) >= 1
+    assert s["global_state"] in {"MATCH_CANDIDATE", "INCONCLUSIVE"}
+    assert "global_state" != "PASS"
+
+
+# ---------- M4 — governed official cross-check ---------------------------
+
+
+def test_m4_contract_matrix_present():
+    out = _build()
+    cm = out["guided_investigations"]["official_cross_check"][
+        "contract_matrix"]
+    assert any(s["name"] == "product.structure" for s in cm["sources"])
+    rules = {r["rule"] for r in cm["comparability_rules"]}
+    assert any("NOT_COMPARABLE" in r for r in rules)
+
+
+def test_m4_multiplicity_many_to_one_preserved():
+    """2 ocorrências + 1 linha do mesmo código → MANY_TO_ONE, não colapsa."""
+    out = _build(rows=[_row(0, "10020033")])
+    m = out["guided_investigations"]["official_cross_check"][
+        "multiplicity_analysis"]["10020033"]
+    assert m["bom_occurrence_ids"] == ["O0002", "O0003"]
+    assert m["drawing_item_ids"] == ["urow:0"]
+    assert m["pairing"] == "MANY_TO_ONE"
+
+
+def test_m4_component_code_match_only_exact():
+    out = _build(rows=[_row(0, "10020033")])
+    vs = {v["expected_object_id"]: v for v in
+          out["guided_investigations"]["official_cross_check"][
+              "attribute_verifications"]
+          if v["attribute"] == "component_code"}
+    assert vs["O0002"]["state"] == "MATCH"
+    assert vs["O0002"]["observed_value"] == "10020033"
+    assert vs["O0001"]["state"] == "UNKNOWN"  # ausência ≠ divergência
+
+
+def test_m4_quantities_never_comparable():
+    """500mm consumo × 1 montagem → NOT_COMPARABLE por atributo."""
+    out = _build(rows=[_row(0, "10020033")])
+    vs = [v for v in
+          out["guided_investigations"]["official_cross_check"][
+              "attribute_verifications"]
+          if v["attribute"] == "assembly_quantity"]
+    assert all(v["state"] == "NOT_COMPARABLE" for v in vs)
+
+
+def test_m4_revision_domains_not_comparable():
+    out = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=dict(_u(), revision_candidates=[{"revision": "02"}]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        product_revision="003", include_investigations=True,
+    )
+    vs = [v for v in
+          out["guided_investigations"]["official_cross_check"][
+              "attribute_verifications"]
+          if v["attribute"] == "revision"]
+    assert vs[0]["state"] == "NOT_COMPARABLE"
+    assert vs[0]["expected_value"] == "003"
+    assert vs[0]["observed_value"] == "02"
+
+
+def test_m4_multiplicity_ambiguity_versioned_divergence():
+    out = _build(rows=[_row(0, "10020033")])
+    divs = out["guided_investigations"]["official_cross_check"][
+        "candidate_divergences"]
+    assert len(divs) == 1
+    d = divs[0]
+    assert d["divergence_type"] == "MULTIPLICITY_AMBIGUITY"
+    assert d["state"] == "UNKNOWN"
+    assert d["official_value"] == ["O0002", "O0003"]
+    assert d["observed_value"] == ["urow:0"]
+    assert d["document_sha"] == _SHA
+
+
+def test_m4_absent_observation_never_conflict():
+    """Componente não lido → UNKNOWN, nunca CONFLICT."""
+    out = _build()  # sem linhas
+    vs = [v for v in
+          out["guided_investigations"]["official_cross_check"][
+              "attribute_verifications"]
+          if v["attribute"] == "component_code"]
+    assert all(v["state"] == "UNKNOWN" for v in vs)
+    assert all(v["state"] != "CONFLICT" for v in
+               out["guided_investigations"]["official_cross_check"][
+                   "attribute_verifications"])
+
+
+def test_m4_cross_check_present_even_fail_closed():
+    out = build_object_profiles(
+        bom_occurrences=[], visual_observations=[],
+        understanding=_u(rows=[_row(0, "99999999")]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="NOT_PROVIDED",
+        include_investigations=True,
+    )
+    occ = out["guided_investigations"]["official_cross_check"]
+    assert occ["multiplicity_analysis"] == {}
+    assert occ["attribute_verifications"]
+
+
+# ---------- M5 — release consolidation ------------------------------------
+
+
+def test_m5_consolidation_classes_present():
+    out = _build(rows=[_row(0, "10020033")])
+    rc = out["guided_investigations"]["release_consolidation"]
+    comp = rc["components"][0]
+    assert comp["official"]["class"] == "FATO_OFICIAL"
+    assert comp["observed"]["class"] == "OBSERVAÇÃO"
+    assert comp["hypotheses"]["class"] == "HIPÓTESE"
+    assert comp["verifications"]["class"] == "VERIFICAÇÃO"
+    assert comp["official"]["component_code"] is not None
+
+
+def test_m5_review_package_pending_owner():
+    out = _build()
+    rp = out["guided_investigations"]["release_consolidation"][
+        "review_package"]
+    assert rp["state"] == "PENDING_OWNER_REVIEW"
+    assert rp["automatic_approval"] is False
+    assert rp["owner"]
+
+
+def test_m5_acceptance_matrix_honest():
+    out = _build()
+    am = out["guided_investigations"]["release_consolidation"][
+        "acceptance_matrix"]
+    assert am["M0_evaluation_foundation"]["state"] == "BLOCKED"
+    assert am["M4_governed_cross_check"]["state"] == "PROVEN_STRUCTURE"
+    assert "M5_release" in am
+
+
+def test_m5_divergence_cards_full_provenance():
+    out = _build(rows=[_row(0, "10020033")])
+    cards = out["guided_investigations"]["release_consolidation"][
+        "divergence_cards"]
+    assert cards
+    c = cards[0]
+    assert c["divergence_type"] == "MULTIPLICITY_AMBIGUITY"
+    assert c["official_value"]
+    assert c["observed_value"]
+    assert c["document_sha"] == _SHA
+    assert c["state"] == "UNKNOWN"
+    assert c["severity"] is None
+    assert c["next_action"]
+
+
+def test_m5_fail_closed_has_consolidation():
+    out = build_object_profiles(
+        bom_occurrences=[], visual_observations=[],
+        understanding=_u(), document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="NOT_PROVIDED",
+        include_investigations=True,
+    )
+    rc = out["guided_investigations"]["release_consolidation"]
+    assert rc["review_package"]["state"] == "PENDING_OWNER_REVIEW"
+    assert rc["acceptance_matrix"]["blocked_because"] == \
+        "official_source_blocked"
+
+
+def test_balloons_never_fabricated_without_primitives():
+    out = _build(rows=[_row(0, "10020033")])
+    out2 = build_object_profiles(
+        bom_occurrences=_BOM, visual_observations=[],
+        understanding=_u(rows=[_row(0, "10020033")]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        product_code="90264302", progressive={"budget": {}},
+        include_investigations=True,
+    )
+    assert out2["guided_investigations"]["balloon_candidates"] == []
+
+
 def test_empty_confirmed_bom_reconciles():
     """BOM oficialmente vazia pode reconciliar: todo visual é unmatched."""
     out = build_object_profiles(

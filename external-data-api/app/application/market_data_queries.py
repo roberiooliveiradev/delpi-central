@@ -421,6 +421,7 @@ def list_metal_observations(
         else:
             rows = repo.list_metal_observations(
                 instrument_id=instrument.instrument_id,
+                source_id=effective_source_id,
                 date_from=date_from,
                 date_to=date_to,
                 limit=limit,

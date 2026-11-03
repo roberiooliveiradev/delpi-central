@@ -386,7 +386,7 @@ def test_budget_allows_within_caps():
 
 # --- ingestion: metals-daily ---------------------------------------------------
 
-def _mc_source(active=True, scope=None):
+def _mc_source(active=True, scope=None, retention=RETENTION_TTL_CACHE):
     return MarketDataSource(
         source_id=PROVIDER_METALCHARTS,
         provider_id=PROVIDER_METALCHARTS,
@@ -398,7 +398,7 @@ def _mc_source(active=True, scope=None):
         or "collect;derive;internal_display;store_cache_only;"
         "no_redistribute",
         active=active,
-        observation_retention=RETENTION_TTL_CACHE,
+        observation_retention=retention,
     )
 
 
@@ -422,6 +422,7 @@ class _McRepo:
     def __init__(self, **kw):
         self.kw = kw
         self.upserts = []
+        self.obs_upserts = []
         self.purged = 0
         self.finished = None
 
@@ -461,6 +462,10 @@ class _McRepo:
 
     def upsert_metal_cache(self, **kw):
         self.upserts.append(kw)
+        return "inserted"
+
+    def upsert_metal_observation(self, **kw):
+        self.obs_upserts.append(kw)
         return "inserted"
 
     def purge_expired_cache(self):
@@ -601,6 +606,130 @@ def test_metals_daily_happy_path_writes_ttl_cache(monkeypatch):
         hours=Settings.METALCHARTS_CACHE_TTL_HOURS
     )
     assert repo.purged == 1
+
+
+# --- ingestion: metals-daily permanent routing (R12) ----------------------------
+
+def _bars(*entries):
+    return [
+        {
+            "observation_date": obs_date,
+            "open": Decimal("6.5"),
+            "high": Decimal("6.7"),
+            "low": Decimal("6.4"),
+            "close": close,
+            "volume": 100,
+        }
+        for obs_date, close in entries
+    ]
+
+
+def test_metals_daily_permanent_writes_observations(monkeypatch):
+    """R12 — a permanent-policy source persists daily closes in
+    ``metal_quote_observations``; nothing goes to the TTL cache."""
+    _enable_daily(monkeypatch)
+    src = _mc_source(
+        scope="collect;store;derive;internal_display",
+        retention=RETENTION_PERMANENT,
+    )
+    repo = _McRepo(
+        sources={PROVIDER_METALCHARTS: src},
+        bindings=[_binding()],
+    )
+    provider = _McProvider(
+        bars=_bars(
+            (date(2026, 10, 26), Decimal("6.69")),
+            (date(2026, 10, 27), Decimal("6.72")),
+        )
+    )
+    service = MarketDataIngestionService(
+        repository=repo, metalcharts_provider=provider
+    )
+    result = service.run(
+        FEED_METALS_DAILY,
+        date_from=date(2026, 10, 1),
+        date_to=date(2026, 10, 27),
+    )
+    assert result.outcome == "success"
+    assert result.inserted_count == 2
+    assert repo.upserts == []
+    assert repo.purged == 0
+    assert len(repo.obs_upserts) == 2
+    assert repo.obs_upserts[0]["observation_date"] == date(2026, 10, 26)
+    assert repo.obs_upserts[0]["quote_basis"] == "daily_close"
+    assert repo.obs_upserts[0]["source_id"] == PROVIDER_METALCHARTS
+
+
+def test_metals_daily_permanent_without_store_fails(monkeypatch):
+    """R12 — permanent retention without a ``store`` grant stays
+    fail-closed; no close is persisted."""
+    _enable_daily(monkeypatch)
+    src = _mc_source(retention=RETENTION_PERMANENT)
+    repo = _McRepo(
+        sources={PROVIDER_METALCHARTS: src},
+        bindings=[_binding()],
+    )
+    service = MarketDataIngestionService(
+        repository=repo,
+        metalcharts_provider=_McProvider(bars=_bars(
+            (date(2026, 10, 26), Decimal("6.69"))
+        )),
+    )
+    result = service.run(
+        FEED_METALS_DAILY,
+        date_from=date(2026, 10, 1),
+        date_to=date(2026, 10, 27),
+    )
+    assert result.outcome == "failed"
+    assert result.error_code == "EXTERNAL_DATA_SOURCE_NOT_LICENSED"
+    assert repo.obs_upserts == []
+    assert repo.upserts == []
+
+
+def test_metals_daily_permanent_preserves_history(monkeypatch):
+    """R12 — a new collection adds the new date; earlier observations
+    are upserted again, never deleted (history preservation lives in
+    the idempotent upsert)."""
+    _enable_daily(monkeypatch)
+    src = _mc_source(
+        scope="collect;store;derive;internal_display",
+        retention=RETENTION_PERMANENT,
+    )
+    repo = _McRepo(
+        sources={PROVIDER_METALCHARTS: src},
+        bindings=[_binding()],
+    )
+    provider = _McProvider(
+        bars=_bars(
+            (date(2026, 10, 26), Decimal("6.69")),
+            (date(2026, 10, 27), Decimal("6.72")),
+        )
+    )
+    service = MarketDataIngestionService(
+        repository=repo, metalcharts_provider=provider
+    )
+    first = service.run(
+        FEED_METALS_DAILY,
+        date_from=date(2026, 10, 1),
+        date_to=date(2026, 10, 27),
+    )
+    assert first.outcome == "success"
+    provider.bars = _bars(
+        (date(2026, 10, 26), Decimal("6.69")),
+        (date(2026, 10, 27), Decimal("6.72")),
+        (date(2026, 10, 28), Decimal("6.80")),
+    )
+    second = service.run(
+        FEED_METALS_DAILY,
+        date_from=date(2026, 10, 1),
+        date_to=date(2026, 10, 28),
+    )
+    assert second.outcome == "success"
+    dates = [u["observation_date"] for u in repo.obs_upserts]
+    assert dates == [
+        date(2026, 10, 26), date(2026, 10, 27),
+        date(2026, 10, 26), date(2026, 10, 27), date(2026, 10, 28),
+    ]
 
 
 # --- query path: effective binding ---------------------------------------------
@@ -784,6 +913,37 @@ def test_observations_read_from_cache_for_ttl_source(monkeypatch):
     assert out["meta"]["source_ids"] == [PROVIDER_METALCHARTS]
     assert out["items"][0]["price"] == "6.69"
     assert out["items"][0]["unit"] == "US$/lb"
+
+
+def test_observations_read_filters_effective_source(monkeypatch):
+    """R12 — a permanent-retention effective source reads
+    ``metal_quote_observations`` scoped to ITS source_id, so a second
+    permanent provider can never blend into the served series."""
+    repo = _QRepo(
+        sources=[
+            _pink_source(),
+            _mc_source(
+                active=True,
+                scope="collect;store;derive;internal_display",
+                retention=RETENTION_PERMANENT,
+            ),
+        ],
+        instruments=[_q_instrument()],
+        bindings=[_binding()],
+        permanent_rows=[],
+    )
+    _wire_queries(monkeypatch, repo)
+    mdq.list_metal_observations(
+        instrument_code="copper",
+        date_from_raw="2026-10-01",
+        date_to_raw="2026-10-27",
+        limit_raw=None,
+        cursor_raw=None,
+    )
+    permanent_calls = [c for c in repo.calls if c[0] == "permanent"]
+    assert len(permanent_calls) == 1
+    assert permanent_calls[0][1]["source_id"] == PROVIDER_METALCHARTS
+    assert not any(c[0] == "cache" for c in repo.calls)
 
 
 def test_observations_pending_source_still_denied(monkeypatch):

@@ -15,6 +15,7 @@ from typing import Any, Iterable
 from app.domain.market_data import (
     AUTHORITATIVE_QUOTE_BASES,
     MetalInstrumentBinding,
+    PROVIDER_METALCHARTS,
     RETENTION_PERMANENT,
     FeedStatus,
     FxObservation,
@@ -184,12 +185,18 @@ class MarketDataRepository:
         self,
         *,
         instrument_id: int,
+        source_id: str,
         date_from: date,
         date_to: date,
         limit: int,
         cursor: tuple[date, int] | None = None,
     ) -> list[dict[str, Any]]:
-        """Rows ordered by (observation_date, observation_id) ascending."""
+        """Rows of one source, ordered by (date, id) ascending.
+
+        ``source_id`` is mandatory: a series is always one provider's
+        observations — the effective binding resolved by the read layer
+        decides which source supplies the whole series (R12 — two
+        permanent sources must never blend inside a chart)."""
         sql = f"""
             SELECT o.observation_id, o.observation_date, o.native_price,
                    o.native_currency, o.unit_code, o.quote_basis,
@@ -197,9 +204,10 @@ class MarketDataRepository:
                    o.retrieved_at, o.revised_at, o.observation_timestamp
             FROM {self._t('metal_quote_observations')} o
             WHERE o.instrument_id = %s
+              AND o.source_id = %s
               AND o.observation_date BETWEEN %s AND %s
         """
-        params: list[Any] = [instrument_id, date_from, date_to]
+        params: list[Any] = [instrument_id, source_id, date_from, date_to]
         if cursor is not None:
             sql += " AND (o.observation_date, o.observation_id) > (%s, %s)"
             params.extend([cursor[0], cursor[1]])
@@ -962,21 +970,53 @@ class MarketDataRepository:
                 # R11 — both MetalCharts feeds write the same TTL cache
                 # table; freshness is reported per feed name so the
                 # status endpoint tracks each schedule independently.
-                freshness_sql += f"""
-                UNION ALL
-                SELECT feed, latest, n FROM (
-                    SELECT 'metals-daily' AS feed,
-                           MAX(c.observation_date) AS latest,
-                           COUNT(*) AS n
-                    FROM {self._t('metal_quote_cache')} c
-                    WHERE c.expires_at > NOW()
+                # R12 — when the source policy is 'permanent' the rows
+                # live in metal_quote_observations instead; counting
+                # only the cache would report a stale/empty feed while
+                # authorized history exists.
+                cur.execute(
+                    f"SELECT observation_retention AS retention "
+                    f"FROM {self._t('market_data_sources')} "
+                    "WHERE source_id = %s",
+                    (PROVIDER_METALCHARTS,),
+                )
+                mc_row = cur.fetchone()
+                mc_permanent = (
+                    mc_row is not None
+                    and mc_row["retention"] == RETENTION_PERMANENT
+                )
+                if mc_permanent:
+                    freshness_sql += f"""
                     UNION ALL
-                    SELECT 'metals-prices-daily',
-                           MAX(c.observation_date), COUNT(*)
-                    FROM {self._t('metal_quote_cache')} c
-                    WHERE c.expires_at > NOW()
-                ) metals_cache
-                """
+                    SELECT feed, latest, n FROM (
+                        SELECT 'metals-daily' AS feed,
+                               MAX(o.observation_date) AS latest,
+                               COUNT(*) AS n
+                        FROM {self._t('metal_quote_observations')} o
+                        WHERE o.source_id = 'metalcharts'
+                        UNION ALL
+                        SELECT 'metals-prices-daily',
+                               MAX(o.observation_date), COUNT(*)
+                        FROM {self._t('metal_quote_observations')} o
+                        WHERE o.source_id = 'metalcharts'
+                    ) metals_permanent
+                    """
+                else:
+                    freshness_sql += f"""
+                    UNION ALL
+                    SELECT feed, latest, n FROM (
+                        SELECT 'metals-daily' AS feed,
+                               MAX(c.observation_date) AS latest,
+                               COUNT(*) AS n
+                        FROM {self._t('metal_quote_cache')} c
+                        WHERE c.expires_at > NOW()
+                        UNION ALL
+                        SELECT 'metals-prices-daily',
+                               MAX(c.observation_date), COUNT(*)
+                        FROM {self._t('metal_quote_cache')} c
+                        WHERE c.expires_at > NOW()
+                    ) metals_cache
+                    """
                 feeds.append("metals-daily")
                 feeds.append("metals-prices-daily")
             cur.execute(freshness_sql)
