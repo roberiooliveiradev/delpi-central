@@ -1958,3 +1958,15 @@ PROXIMO: encontrar onde set_current_user e chamado (middleware) —
 jwt_validator->core lookup; confirmar se precisa provisioning no Core
 (users table) ou claim adicional. Alternativa: usuario existente real
 (sem password disponivel) — investigar JIT provisioning do Core.
+
+## PROMOTION — auth progress 5 (SHA 29e93fb8d7)
+
+MCP middleware chain: Bearer -> validate_token (JWKS via OIDC discovery,
+iss/aud) -> claims sub+email OBRIGATORIOS -> load_user_rbac (Core,
+fallback=claims). "Unauthorized" gen = validate_token exception.
+Suspeita: exchanged token pode nao carregar claim email -> 401, OU iss
+rejeitado. PROXIMO: decodificar claims do exchanged token p/ conferir
+email + azp + iss vs validate_token. Se email ausente -> fix =
+garantir email no usuario (ja setado, talvez exchange nao encaminhe —
+testar grant direto sem exchange? MCP espera token do seu audience,
+entao exchange e obrigatorio — o fallback _rbac_from_claims cobre).
