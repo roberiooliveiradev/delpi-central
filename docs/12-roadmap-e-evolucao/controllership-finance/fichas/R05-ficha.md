@@ -36,6 +36,7 @@ Publicação: **release produtivo stage-05** (30/10/2026, srv-api, SHA `297068f1
 - BR-R05-001 eixos do relatório — `PROVEN` (fonte).
 - BR-R05-002 Saldo Atual = SB9 no recorte — `PROVEN` (10/10 tipos).
 - BR-R05-003 seleção física por tabela — `PROVEN`.
+- Para entradas SD1, o eixo de competência do R05 é `D1_DTDIGIT` (data de digitação), não `D1_EMISSAO`. SD2 usa `D2_EMISSAO`; SD3 usa `D3_EMISSAO`. Evidência: doc 85 §5, BR-R05-003 (`PROVEN`, fonte + dados). A identidade da SP binária MAT056 permanece `TO_INVENTORY` em BR-R05-010.
 - BR-R05-004/005 classificação SD1/SD2 e SD3 — `PROVEN` (matches exatos).
 - BR-R05-006 Saldo Atual e Saldo Inicial — `PROVEN`.
 - BR-R05-007 reconciliação coluna a coluna — `PROVEN` (ao centavo).
