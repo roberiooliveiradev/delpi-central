@@ -2101,3 +2101,15 @@ local admin URL/senha diferem. Sync user pode nao existir no realm
 local. ALTERNATIVA SIMPLES: rodar o probe no container delia-t21-main
 (avaliador ja tinha auth funcional) OU ler os invocations gravados no
 runs do turn real b66a63f1 — ja mostrava o que o discover produziu.
+
+## T20-SEMANTIC-SEL — handoff (SHA deeb492239)
+
+PROBES locais bloqueados: delpi-delia-api nao tem admin/user env p/
+password grant; delia-t21-main env.local ausente mas o eval
+local_orchestration_reliability_eval RODOU nele (auth diferente —
+mint via scripts, talvez keycloak local user ou token fixture).
+PROXIMO: rodar disc_probe via path eval do t21
+(scripts/r4_authenticated_resume_eval._compose + _mint_bearer de
+semantic_fidelity_eval) -> _live_capture davi query "estrutura" ->
+candidate list. Se get_product_structure aparece -> selecao LLM errou
+(root cause). Se nao -> arggen do discover perdeu intencao.
