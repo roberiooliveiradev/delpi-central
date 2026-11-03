@@ -615,3 +615,16 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 - **Rework path:** reproduce → capture sanitized request/response at each hop → identify exact producer/consumer failure → minimal diff → tests including omitted-sort legacy request → controlled deploy → CLARA positive → Portal authenticated ASC/DESC across pages → document SHA and evidence.
 
 **Gate 070 review verdict:** **REWORK**, with causal attribution `INCONCLUSIVE` until instrumentation identifies origin. Fix the observed regression, not an inferred hypothesis.
+
+
+## 19. CF-UX-051 — Design VISUAL_APPROVED do acompanhamento do fechamento de custos R12/R15 (03/11/2026)
+
+**Decisão expressa do PO:** aprovou exatamente a visualização da página de acompanhamento de fechamento por filial apresentada nesta conversa (mockup com hero “Acompanhamento do fechamento”, bloco “Como interpretar esta tela”, cartões lado a lado por filial e cinco verificações com linguagem de negócio). **Diretriz:** registrar e executar essa reformatação, substituindo a listagem técnica, termos ingleses e longas limitações no corpo principal.
+
+**Authority visual detalhada:** [Documento 151 — Design aprovado, Acompanhamento do fechamento de custos (R12/R15)](./151-design-aprovado-acompanhamento-fechamento-custos-r12-r15-2026-11-03.md), commit `b01b8de670e551efe205415fc7654775d763e48b`.
+
+- **CF-UX-051 — Prioridade P1 — Estado `VISUAL_APPROVED / IMPLEMENTATION_PENDING`.**
+- **Escopo:** apresentação da deep route atual `cost-closing-state`: hero específico, explicação “não confirma conclusão”, duas colunas de filiais no desktop, responsividade, cinco verificações com badges honestos, origem simplificada, Help técnico acessível e componentes plugin-ui; contratos/segurança intactos.
+- **Aceite:** resultado semelhante ao mockup aprovado e aos textos/semântica do doc 151, testes com dados reais, acessibilidade, temas, mobile, commit/push/deploy controlado, screenshots de produção e rastreabilidade no doc 150.
+- **Separação de decisões:** aprovação **do visual** não é aprovação para mover R12/R15 para Visão geral. **CF-UX-035 ainda `DECISION_REQUIRED`**; preservar rota e catálogo até escolha explícita. “3 de 5 evidências” não é 60% do processo concluído; status “Não informado” não significa reprovação.
+- **Impedimentos de outro contexto:** CF-UX-050 (CLARA R04 HTTP 400) permanece issue independente; não abrir mudança transversal da API nem bloquear correção de apresentação R12/R15 por R04 sem dependência comprovada.
