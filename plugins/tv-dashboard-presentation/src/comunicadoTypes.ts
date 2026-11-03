@@ -804,6 +804,8 @@ export type ComunicadoDataResolved = {
     valueDisplay?: string;
     comparisonDisplay?: string | null;
     comparisonTone?: "positive" | "negative" | "neutral";
+    /** Posição vs referência calculada no backend (Acima/Abaixo/Na meta). */
+    statusLabel?: string | null;
     progressPct?: number | null;
     sparklinePoints?: number[] | null;
     showComparison?: boolean;
