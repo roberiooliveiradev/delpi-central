@@ -487,6 +487,246 @@ STALE_SEGMENT_FIXES: tuple[dict, ...] = (
              "`/closing/competences/{period}/production-order-consumption` |",
          )],
          reason="linha R04 superada em catálogo vigente"),
+    # Gate 083 — eliminação de resíduos superados em contexto datado.
+    # Cada fix_lines anota a afirmação superada com a verdade vigente;
+    # o texto original permanece em SUPERSEDED para auditoria.
+    dict(source_id="doc-00",
+         title_contains="Ciclo 2 — Correção de classificação",
+         action="fix",
+         fix_lines=[(
+             "Bloqueados por owner: R03 (fonte MATR460 — E2), "
+             "R04/R13/R14 (sem artefato/fonte)",
+             "Bloqueados por owner na época: R03 (fonte MATR460 — "
+             "E2), R04/R13/R14 (sem artefato/fonte) — R03/R04 "
+             "implementadas posteriormente",
+         ),(
+             "`BLOCKED_BY_OWNER` para R03/R04/R13/R14",
+             "`BLOCKED_BY_OWNER` para R03/R04/R13/R14 na época — "
+             "hoje implementadas (R13/R14 seguem sem fonte)",
+         )],
+         reason="índice datado repete bloqueios já resolvidos (G083)"),
+    dict(source_id="doc-00",
+         title_contains="G2 aprovado",
+         action="fix",
+         fix_lines=[(
+             "T03/T05/R04+, seeds e fontes G1 pendentes",
+             "T03/T05/G1 pendentes na época — R04 implementado "
+             "posteriormente (consumption-audit)",
+         )],
+         reason="registro de aceite datado afirmava R04 pendente — "
+                "anotado com estado vigente (G083)"),
+    dict(source_id="doc-100",
+         title_contains="4. Pauta G1 consolidada",
+         action="fix",
+         fix_lines=[(
+             "`PENDING_CONTRACT` (R04, R06, R07, R09, R12, R15)",
+             "`PENDING_CONTRACT` (R04, R06, R07, R09, R12, R15) "
+             "— registro datado; hoje contratos vigentes",
+         )],
+         reason="lista datada de contratos pendentes — superada (G083)"),
+    dict(source_id="doc-100",
+         title_contains="5. Matriz de homologação G2",
+         action="fix",
+         fix_lines=[(
+             "catálogos P6; R04/R06/R07/R09/R12/R15 `PENDING_CONTRACT`",
+             "catálogos P6; R04/R06/R07/R09/R12/R15 `PENDING_CONTRACT` "
+             "*(datado — contratos vigentes)*",
+         )],
+         reason="linha de matriz datada com PENDING_CONTRACT (G083)"),
+    dict(source_id="doc-100",
+         title_contains="| Knowledge ingestion",
+         action="fix",
+         fix_lines=[(
+             "52 fontes / 1.283 itens / retrieval com citação — "
+             "**PASS real**",
+             "52 fontes / 1.283 itens (corpus vigente: 88 fontes / "
+             "2.207 itens) / retrieval com citação — **PASS real**",
+         )],
+         reason="métrica datada de corpus (G083)"),
+    dict(source_id="doc-100",
+         title_contains="Estado honesto",
+         action="fix",
+         fix_lines=[(
+             "owners/contratos das fontes `PENDING_CONTRACT`",
+             "owners/contratos das fontes `PENDING_CONTRACT` "
+             "*(datado — pauta G1 segue para fontes oficiais "
+             "ausentes)*",
+         )],
+         reason="pauta datada sobre fontes PENDING_CONTRACT (G083)"),
+    dict(source_id="doc-100",
+         title_contains="Evidência de execução",
+         action="fix",
+         fix_lines=[(
+             "13 passed — 18 tools, schemas sem flag de consentimento",
+             "13 passed — 18 tools na época (hoje seis tools "
+             "semânticas + read/analyze), schemas sem flag de "
+             "consentimento",
+         )],
+         reason="contagem datada de tools MCP (G083)"),
+    dict(source_id="doc-100",
+         title_contains="Implementado",
+         action="fix",
+         fix_lines=[(
+             "**52 fontes autorizadas**",
+             "**52 fontes autorizadas** *(na época; hoje 88)*",
+         ),(
+             "52 fontes → 1.283 itens",
+             "52 fontes → 1.283 itens *(na época; hoje 88 → "
+             "2.207)*",
+         ),(
+             "R07, R09, R12, R15 `PENDING_CONTRACT`",
+             "R07, R09, R12, R15 `PENDING_CONTRACT` *(datado — "
+             "contratos vigentes)*",
+         )],
+         reason="métricas e estados datados de corpus/contratos (G083)"),
+    dict(source_id="doc-100",
+         title_contains="F3 — R01",
+         action="fix",
+         fix_lines=[(
+             "`PENDING_CONTRACT` (R04/R06/R07/R09/R12/R15)",
+             "`PENDING_CONTRACT` (R04/R06/R07/R09/R12/R15) "
+             "*(datado — contratos vigentes)*",
+         )],
+         reason="status datado de relatórios (G083)"),
+    dict(source_id="doc-100",
+         title_contains="Pauta G1 consolidada (decisões",
+         action="fix",
+         fix_lines=[(
+             "Owners/contratos das fontes `PENDING_CONTRACT` "
+             "(R04, R06, R07,",
+             "Owners/contratos das fontes `PENDING_CONTRACT` "
+             "*(datado — pauta de fontes oficiais segue vigente)* "
+             "(R04, R06, R07,",
+         )],
+         reason="item de pauta datado (G083)"),
+    dict(source_id="doc-111",
+         title_contains="2. Matriz de evidência",
+         action="fix",
+         fix_lines=[(
+             "18 tools CLARA expostas ao assistente",
+             "18 tools CLARA expostas ao assistente na época "
+             "(vigente: seis tools semânticas + read/analyze)",
+         )],
+         reason="contagem datada de tools (G083)"),
+    dict(source_id="doc-117",
+         title_contains="10. Matriz de análises",
+         action="fix",
+         fix_lines=[(
+             "R04 (PENDING_CONTRACT)",
+             "R04 (PENDING_CONTRACT — datado; implementado)",
+         ),(
+             "R06 (PENDING_CONTRACT)",
+             "R06 (PENDING_CONTRACT — datado; implementado)",
+         ),(
+             "R07 (PENDING_CONTRACT)",
+             "R07 (PENDING_CONTRACT — datado; implementado)",
+         )],
+         reason="estados datados de relatórios na matriz (G083)"),
+    dict(source_id="doc-117",
+         title_contains="14. Comparação",
+         action="fix",
+         fix_lines=[(
+             "R04/R06/R07/R09/R12/R15 PENDING_CONTRACT; "
+             "R13/R14 EXTERNAL_SOURCE",
+             "R04/R06/R07/R09/R12/R15 PENDING_CONTRACT *(datado — "
+             "contratos vigentes)*; R13/R14 EXTERNAL_SOURCE",
+         )],
+         reason="linha de matriz datada (G083)"),
+    dict(source_id="doc-119",
+         title_contains="REWORK-008",
+         action="fix",
+         fix_lines=[(
+             "**Estado de R05/R08 (CP5):** sem produtor em api-delpi",
+             "**Estado de R05/R08 (CP5), na época:** sem produtor "
+             "em api-delpi — hoje com produtores vigentes",
+         )],
+         reason="rótulo de estado datado (G083)"),
+    dict(source_id="doc-121",
+         title_contains="5. Relatórios operacionais",
+         action="fix",
+         fix_lines=[(
+             "| R04, R09, R12, R15 | consumo OP, Fat×MOD, wizard, "
+             "cutoff | — | PENDING_CONTRACT | — | — | PLANNED",
+             "| R04, R09, R12, R15 | consumo OP, Fat×MOD, wizard, "
+             "cutoff | — | PENDING_CONTRACT *(datado — "
+             "implementadas)* | — | — | PLANNED",
+         )],
+         reason="linha de plano datada com estados superados (G083)"),
+    dict(source_id="doc-121",
+         title_contains="Adendo",
+         action="fix",
+         fix_lines=[(
+             "R11, CPV; demais respondem "
+             "`report_not_implemented`/`unknown_report`.",
+             "R11, CPV; demais relatórios respondiam "
+             "`report_not_implemented`/`unknown_report` na época "
+             "— hoje todas as capabilities vigentes respondem.",
+         ),(
+             "linha 137 superada parcialmente — **R12/R15** deixam "
+             "`PENDING_CONTRACT`",
+             "linha 137 superada parcialmente — **R12/R15** deixam "
+             "`PENDING_CONTRACT` (atualização G083: R04/R09/R12/R15 "
+             "todas implementadas)",
+         )],
+         reason="nota de superação parcial — complementada (G083)"),
+    dict(source_id="doc-122",
+         title_contains="1. Preflight",
+         action="fix",
+         fix_lines=[(
+             "`REPORT_CATALOG` (`reports_routes.py:90-107`) tem "
+             "R06/R07 `PENDING_CONTRACT`",
+             "`REPORT_CATALOG` (`reports_routes.py:90-107`) tinha "
+             "R06/R07 `PENDING_CONTRACT` na época — hoje contratos "
+             "vigentes",
+         )],
+         reason="baseline datado de catálogo (G083)"),
+    dict(source_id="doc-86",
+         title_contains="8. Readiness",
+         action="fix",
+         fix_lines=[(
+             "sem contrato TARGET",
+             "sem contrato TARGET na época — hoje "
+             "read(report.cost_closing_state) vigente",
+         ),(
+             "R03 | `BLOCKED_BY_OWNER` | fonte MATR460/params/"
+             "emissão resumida (E2)",
+             "R03 | `BLOCKED_BY_OWNER` na época — implementada via "
+             "read(report.stock_inventory); fonte oficial MATR460 "
+             "(E2) segue pendente | (E2)",
+         )],
+         reason="classificação de readiness datada (G083)"),
+    dict(source_id="doc-86",
+         title_contains="9. Priorização",
+         action="fix",
+         fix_lines=[(
+             "**Bloqueados** R03/R13/R14",
+             "**Bloqueados** R03/R13/R14 *(R03 implementada desde "
+             "então; R13/R14 seguem bloqueados)*",
+         ),(
+             "**Bloqueados** R03/R04/R13/R14",
+             "**Bloqueados** *(lista datada)*: R03/R04/R13/R14 "
+             "— hoje apenas R13/R14 permanecem bloqueados",
+         )],
+         reason="priorização datada listando R03 bloqueado (G083)"),
+    dict(source_id="doc-88",
+         title_contains="11. Estado e encaminhamento",
+         action="fix",
+         fix_lines=[(
+             "Runtime permanece bloqueado",
+             "Runtime permanecia bloqueado na época — read-only "
+             "autorizado posteriormente",
+         )],
+         reason="condição de gate datada (G083)"),
+    dict(source_id="doc-90",
+         title_contains="9. Registro de lacunas",
+         action="fix",
+         fix_lines=[(
+             "R04/R13/R14 externos sem fonte",
+             "R04/R13/R14 externos sem fonte *(datado — R04 "
+             "implementado via consumption-audit; artefato oficial "
+             "MATR860 pendente)*",
+         )],
+         reason="registro de lacuna datado (G083)"),
     dict(source_id="doc-100",
          title_contains="D2 — Pendências de integração",
          action="fix",

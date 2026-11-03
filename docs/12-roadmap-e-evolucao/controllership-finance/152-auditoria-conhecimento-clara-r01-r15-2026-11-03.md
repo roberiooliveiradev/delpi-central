@@ -803,3 +803,23 @@ Ambas no `DIVERGENCE_REGISTRY` emitido em `g082rw-divergences.jsonl` com risco/d
 ### 23.5 Contagens finais (corpus `84e92712`)
 
 88 CURRENT_VERIFIED · 1.310 HISTORICAL_ONLY · 238 NOT_APPLICABLE · **571 UNVERIFIED (PENDING)** — 1.341 claims sem autoridade conclusiva, declarados, não homologados. Zero STALE_CONFIRMED/REVIEW/MIXED residuais. `pytest tests/test_pg_clara_retrieval.py`: **15/15**; adversarial: **16/16**. Homologação conversacional: **TEST_NOT_RUN**.
+
+## 24. Gate 083 — Eliminação de resíduos (03/11/2026)
+
+**Executor:** Devin · **Issue:** #130 · **Corpus:** `7d3ca573` local (2.208/88 — republicado; baseline produtivo `9b2f318f`). Objetivos G083-A/B/C contra os resíduos do `ACCEPT_WITH_RESIDUAL` do G082-RW02.
+
+### 24.1 G083-A — Pendências semânticas
+
+1.341 afirmações `UNVERIFIED` reconciliadas em `g083-claim-authority-matrix.jsonl` com natureza/autoridade/disposição individual: **806 NOT_APPLICABLE** (spec/contrato aprovado), **346 VALID_HISTORICAL** (evidência AS-IS TO_INVENTORY), **189 PENDING_AUTHORITY** (declaradas como pendências — não PASS). 29 decisões individuais hash-keyed em `g083-manual-decisions.json`.
+
+### 24.2 G083-B — Histórico superado segregado
+
+Varredura integral do corpus (não só top-hits): 22 correções (`g083-corrections.jsonl`) — D1/D2 do RW02 + 20 `fix_lines` G083 anotando afirmações datadas superadas (`PENDING_CONTRACT` de relatórios já implementados, `18 tools`, `52 fontes`, bloqueios datados R04/R03) em doc-00/86/88/90/100/111/117/119/121/122. Originais em SUPERSEDED (141 itens). Padrões `stale_patterns` Gates 080/081 + G083: **0 ocorrências PUBLISHED**.
+
+### 24.3 G083-C — Homologação conversacional
+
+**TEST_NOT_RUN** — canal oficial ChatGPT/CLARA indisponível neste ambiente; protocolo executável em `g083-conversational-115.md` e §14.6 (105 golden + 10 negativos).
+
+### 24.4 Evidências e testes
+
+`evidence-g083/`: residual-inventory, claim-authority-matrix, historical-exposure, corrections, retrieval-validation, tests, conversational-115, coverage. Testes: auditoria claim-level (0 REVIEW/STALE), adversarial **16/16**, suíte PG **15/15** (golden 105 + 10 negativos + invariantes SUPERSEDED/escopo). Artefatos intermediários descobertos pelo próprio teste de invariante (doc-121 `report_not_implemented`, variante doc-86, índice doc-00) corrigidos e revalidados.
