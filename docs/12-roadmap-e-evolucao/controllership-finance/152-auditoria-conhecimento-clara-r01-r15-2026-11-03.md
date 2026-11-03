@@ -274,3 +274,43 @@ O resultado comprova o cenário de busca real por IDs, não exaustividade de tod
 **Resultado:** `PASS` para objetivo P0 de versionamento vigente, integridade de fragmentos R12/R15 em busca real, metadata R04/R14 e regressões operacionais citadas. **Veredito Gate 075 = `ACCEPT_WITH_RESIDUAL`**.
 
 **Resíduos explícitos:** (1) bateria de 105 perguntas R01–R15 `TEST_NOT_RUN`; (2) suite automatizada de cenários transacionais, rollback, publicação parcial, fontes vazias e concorrência não comprovada pelos testes novos apresentados; revisar antes de uma mudança maior; (3) smoke visual autenticado Portal não executado nesta revisão; (4) paridade oficial e decisões de owners permanecem pendentes conforme Documento 152. Não reabrir o incidente P0 sem evidência nova.
+
+
+## 12. Auditoria exploratória de recuperação — 105 consultas R01–R15 (03/11/2026)
+
+**Objetivo:** avançar a prova de qualidade da CLARA no corpus aceito no Gate 075. **Método real:** ferramenta MCP autenticada `knowledge(action="search",report_id=Rxx,query=tema,limit=12)` para todos os 15 relatórios × 7 temas `finalidade, tabelas, SQL, filtros, cálculo, paridade, limitações` = **105 chamadas executadas**. Critério de descoberta: presença da ficha canônica `fichas/Rxx-ficha.md` entre os doze primeiros resultados. Esse critério mede *recuperação*, não correção da resposta de um modelo conversacional, SQL parity, nem teste de `read` de cada relatório. Os temas não equivalem às sete perguntas contextuais adaptadas prometidas nos gates anteriores. Não chamar 105/105 de PASS semântico.
+
+**Baseline:** GitHub main `a2c2020e310c8383f8533be2809622b3365e1f9f`; CLARA corpus `83dddfbe-7aeb-4a78-8cbe-570b6d6a8329`, 2.215 itens / 88 fontes.
+
+| Item | Chamadas | Ficha canônica presente nos top-12 | Observação |
+|---|---:|---:|---|
+| R01 | 7 | 4 | Queries SQL/cálculo/paridade não trouxeram a ficha nos 12 primeiros |
+| R02 | 7 | 3 | Busca genérica frequentemente prioriza docs 84/85/121 |
+| R03 | 7 | 3 | Contratos transversais antecedem a ficha |
+| R04 | 7 | 3 | Ficha não aparece em finalidade/tabelas/cálculo/paridade |
+| R05 | 7 | 3 | Ficha ausente nas primeiras 12 em SQL/filtros/cálculo/paridade |
+| R06 | 7 | 4 | Doc 122 e doc 85 competem com ficha |
+| R07 | 7 | 3 | Mesmo motor documentado em contratos transversais |
+| R08 | 7 | 4 | Ficha apareceu em SQL, não em cálculo |
+| R09 | 7 | 2 | Ficha só apareceu em finalidade/limitações |
+| R10 | 7 | 3 | Regras estão em docs amplos |
+| R11 | 7 | 3 | Consulta genérica de SQL não prioriza ficha |
+| R12 | 7 | 2 | Rotina/estado misturados a temas monetários genéricos |
+| R13 | 7 | 4 | Documentos externos; perguntar SQL exige resposta “não aplicável” |
+| R14 | 7 | 1 | Ficha só apareceu em finalidade |
+| R15 | 7 | 3 | Rotina/cutoff; perguntar SQL exige distinção de fonte/visão |
+| **Total** | **105** | **45/105** | **0/105 tinham a ficha específica na posição 1** |
+
+**Resultado da recuperação genérica:** todas as 105 buscas retornaram algum resultado, mas **60/105 não trouxeram a ficha do ID no top-12**. Isso **não** significa ausência de conhecimento: os resultados podem conter documentos canônicos relevantes (regra doc 85, contratos, crosswalk, ledger); contudo revela baixa priorização da ficha específica sob termos genéricos, mesmo com `report_id` fornecido. Não presumir que documentos transversais estão errados nem que toda resposta seria incorreta.
+
+**Contraprova de consulta específica:** 6 buscas longas `knowledge(search,report_id,query)` com termos técnicos combinados (R01 FK2010/FK7010, R04 SC2/sort, R06 MV_D3ESTOR, R09 source_missing/SG1, R12 human_acceptance, R13 documentos externos) retornaram **0 itens cada**. As mesmas seis referências pesquisadas por ID simples sem `report_id` (`query=R01/R04/R06/R09/R12/R13`) retornaram 12 itens; ficha encontrada em posições 3, 7, 4, 3, 3 e 6, respectivamente. **Suspeita a investigar:** estratégia de matching/combinação de tokens e filtro (provável excesso de termos restritivos), mas a causa interna não foi inspecionada; não chamar “bug de ranking comprovado” sem revisão de implementação.
+
+**Decisão de classificação:** `PASS` para disponibilidade da ferramenta e execução da matriz de 105 consultas de *retrieval*; `INCONCLUSIVE` para acurácia de respostas em linguagem natural e cobertura de SQL/negócios de R01–R15; `PENDING` para 105 avaliações de respostas conversacionais de fato. Não alterar corpus/SQL por esses resultados isolados.
+
+### Próximo gate recomendado — CLARA-KNOW-RETRIEVAL-076
+
+1. Inventariar código atual de `knowledge(search)`, semântica exata de `query` + `report_id`, SQL de ranking, regras de doc transversal, limites e testes; documentar expected retrieval e owner.
+2. Montar golden set de **perguntas adaptadas a cada ID e sua natureza** (relatório SQL, rotina ERP, documento externo), com respostas esperadas e fontes oficiais/HEAD, não só sete termos genéricos.
+3. Testar em separado: (a) disponibilidade de fonte, (b) cobertura de busca, (c) precisão/ranking/citação, (d) resposta semântica produzida pelo canal conversacional habilitado, (e) paridade operacional com `read`. Não colapsar as dimensões em uma porcentagem.
+4. Inspecionar busca de múltiplos termos que devolve zero, priorização `report_id`, seleção de trecho `fichas/Rxx` e fallback de documentos transversais, mantendo segurança e histórico fora da busca vigente.
+5. Só depois de evidência e aprovação de gate, fazer ajuste mínimo e testes de regressão sem alterar permissions, domain de outros contexts ou fontes SQL.

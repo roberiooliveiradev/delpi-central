@@ -138,9 +138,6 @@ from app.application.capability_provision.contracts import (
     CapabilityProviderError,
     ProviderCapability,
 )
-from app.application.capability_provision.generic_evidence_renderer import (
-    render_business_evidence,
-)
 from app.application.capability_provision.conversational_response import (
     MAX_RENDER_CONTENT_CHARS,
     CriComposition,
@@ -158,7 +155,6 @@ from app.application.capability_provision.conversational_response import (
     field_clause_label,
     field_display_label,
     ordering_presentation,
-    presented_record,
     records_are_prior_excerpts,
 )
 from app.application.capability_provision.outcome_assessment import (
@@ -9298,8 +9294,6 @@ class OperationalCapabilityOrchestrator:
 
     # ---- CRI E3 — grounded conversational composition ------------
 
-    _CRI_RECORD_SCAN = 32
-
     def _compose_cri_response(
         self,
         facts: EvidenceFacts | None,
@@ -9330,41 +9324,22 @@ class OperationalCapabilityOrchestrator:
             return None
         if records_are_prior_excerpts(facts.records):
             return None
-        # R3/M05: record presentation and ordering preparation live
-        # in the composition owner; the coordinator keeps activation
-        # gating, call ledger and observability as minimal glue.
-        prepared = tuple(
-            presented_record(record, self._field_labels)
-            for record in facts.records[: self._CRI_RECORD_SCAN]
-        )
+        # UNIFIED-PRESENTATION-01 (rework): the composition owner
+        # renders the authorized evidence itself through the generic
+        # surface — the coordinator only binds the typed facts (raw
+        # records + owner-declared result context + governed labels),
+        # never formats, projects or caps business data.
         req = goal.answer_requirements
         ordering_date, ordering_event = ordering_presentation(
             facts.records, verdict, req, contract_text
         )
         comp_started = time.monotonic()
-        # UNIFIED-PRESENTATION-01: one generic render of the authorized
-        # evidence — records plus owner-declared result context (root)
-        # — replaces the scattered scalar-only projection caps. The
-        # renderer budget protects transport; exhaustion is reported
-        # as partial, never a silent drop.
-        _sr_budget = [0]
-        _ctx = dict(facts.result_context or {})
-        _root = _ctx.get("root")
-        _evidence_value = (
-            {"root": _root, "items": list(facts.records)}
-            if _root
-            else list(facts.records)
-        )
-        _sr_lines, _sr_partial = render_business_evidence(
-            _evidence_value,
-            self._field_labels,
-            _budget=_sr_budget,
-        )
-        structured_render = chr(10).join(_sr_lines) if _sr_lines else None
         cri = compose_cri_response(
             verdict=verdict,
             requirements=req,
-            records=prepared,
+            records=facts.records,
+            field_labels=self._field_labels,
+            result_context=facts.result_context,
             delivered_count=distinct_delivered_count(facts.records),
             total_count=facts.total_count,
             coverage_complete=facts.coverage_complete,
@@ -9374,8 +9349,6 @@ class OperationalCapabilityOrchestrator:
             contract_facts=facts.contract_facts,
             projected_content=projected_content,
             limitations=limitations,
-            structured_render=structured_render,
-            structured_partial=_sr_partial,
         )
         comp_ledger = current_call_ledger()
         if comp_ledger is not None:
