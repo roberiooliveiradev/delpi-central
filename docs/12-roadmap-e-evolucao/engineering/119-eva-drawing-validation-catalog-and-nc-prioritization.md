@@ -455,3 +455,25 @@ A implementação diz `"Content-Disposition": result.get("content_disposition") 
 **Estado de encerramento proposto: `API_PASS / CONNECTOR_PENDING`** — contrato HTTP/OpenAPI corrigido e comprovado; a entrega do arquivo ao ChatGPT depende exclusivamente do registro da Action pelo owner externo (façade GPT Actions ou capability MCP comprovada), com o contrato pronto: `GET /v1/products/{product_code}/drawing/pdf` → `200 application/pdf` + `Content-Disposition: attachment` + `X-Document-Sha256|Size|Filename|Product-Code`, OAuth Keycloak user-parity via JWT delegado já existente.
 
 **Não é `PASS` ponta a ponta** — o arquivo ainda não foi demonstrado abrindo no ChatGPT.
+
+## 12. Exportação do PDF oficial via MCP — DEC-VAL-016 (2026-11-03, SHA `cad4308b53`)
+
+**Implementação (bounded):** ação semântica `product.drawing_download` na tool `read` existente — os bytes do desenho oficial trafegam como `EmbeddedResource`/`BlobResourceContents` (base64) dentro do `tools/call`, com `filename`, `size_bytes`, `sha256`, `mime_type`, `resource_uri` e `provenance` no payload tipado. Reutiliza `fetch_product_drawing_pdf` do adapter delegado (mesma cadeia JWT humano → api-delpi, sem service token/elevação/fileserver). `core/filenames.safe_pdf_filename` é a fonte única de nome seguro (rota REST + bridge). `_wrap` semântico passou a preservar conteúdo não-texto. **Nenhum endpoint novo, nenhuma ferramenta MCP nova, VAL-01 intocada.**
+
+**Inventário de transporte (mcp==2.2.0, protocolo 2025-11-25):** `tools/call` suporta `EmbeddedResource` (blob base64) — escolhido por entregar bytes na mesma chamada autorizada; `resources/read`/ResourceLink ficam como alternativa documentada, sem necessidade real agora.
+
+**Evidência E2E (cliente real, sem mocks — `sandbox/eva_pdf_mcp_e2e.py`):**
+
+| Gate | Resultado |
+|---|---|
+| Transporte | `initialize` + `tools/list` (6 tools) + discovery via `get_context` — `drawing_download` anunciada |
+| Recebimento | `99900001` (PDF real no acervo oficial local): `EmbeddedResource` → 551 B materializados em `.pdf`, **sha256 e size conferidos**, MIME `application/pdf`, magic `%PDF-` |
+| Renderização | página 1 renderizada 612×792 via pypdfium2 (2 páginas) |
+| Negativo | sem token → **401**; token `delpi-central` sem aud/scope MCP → **401**; usuário sem `engineering.access` → **403** tipado; produto inexistente → **404**; upstream indisponível → **502** |
+| Compatibilidade | `product.drawing` (metadados) e demais ações intactas — suíte 705 passed (1 falha ambiental pré-existente R7) |
+| Sete oficiais | 404 local — **biblioteca `/drawing-pdfs` vazia neste ambiente** (fileserver `/mnt/x/` não populado): `ENV_BLOCKED` local; transporte provado com arquivo real no mesmo caminho do owner |
+| ChatGPT | materialização de `EmbeddedResource` por tool result **não é capability comprovada do host** — `OWNER_BLOCKED` para `PASS_E2E_CHATGPT`; o conector EVA é MCP (sem registro manual de Action — descoberta automática via `tools/list`) |
+
+**Provisões temporárias do smoke (revertidas):** usuários `devin-eva-pdf`/`devin-eva-denied` (Keycloak+Core RBAC) removidos; `directAccessGrants` do client `mcp-engineering` habilitado e revertido ao fim; PDF sintético removido do acervo.
+
+**Estado: `PASS_E2E_MCP`** — documento real recebido, materializado e renderizado por cliente MCP compatível. `PASS_E2E_CHATGPT` permanece `OWNER_BLOCKED` (capability do host não comprovada — não inferir a partir do cliente Python).
