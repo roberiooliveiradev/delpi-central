@@ -96,3 +96,9 @@ Revisão corrigiu pontos bloqueantes sem implementar código:
 ## Current product direction and complete execution plan (2026-10-30)
 
 **Read [15 — D-6 Product Direction and Full Refactoring Implementation Master Plan](15-d6-product-direction-and-master-plan.md)** for the latest user-requested target scope and cross-program execution order. All eight D-6 blocks are now INCLUDED in the desired product roadmap, including previously deferred history restore/templates/MDD and previously excluded shares/invites/permissions. This **overrides earlier D-6 recommendations only**, not approved owners/ADRs, security requirements or runtime. Owner approvals remain PENDING; do not infer READY_FOR_EXECUTION from product direction.
+
+---
+
+## Evolução de componentes — KPI proporcional e revisão visual (2026-11-03)
+
+**TARGET / PLANNED** — a VISTA deverá selecionar Hero/Standard/Meta/Compacto pelo papel semântico, aplicar formatação real no valor e revisar a proporção valor/ícone/contexto por captura `editor_live`, sem duplicar renderer, formatter ou autoridade de escrita. **Especificação e wireframes:** [KPI proporcional — template visual e contratos-alvo](../KPI-PROPORTIONAL-VISUAL-TEMPLATE-VISTA.md). A entrada é de planejamento/design; **não implica implementação da evolução de KPI** nem fechamento da Issue #129.
