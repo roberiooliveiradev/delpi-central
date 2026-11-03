@@ -33,6 +33,62 @@ describe("resolveKpiViewPresentation", () => {
     expect(presentation.progressPct).toBeCloseTo(110);
   });
 
+  it("pinta status posicional do backend junto da comparação sem recalcular meta", () => {
+    const presentation = resolveKpiViewPresentation(
+      {
+        kpi: { value: 93.73, label: "OEE realizado", displayValue: "93,73%" },
+        kpiPresentation: {
+          valueDisplay: "93,73%",
+          comparisonDisplay: "▲ +8,73 p.p. vs meta",
+          comparisonTone: "positive",
+          statusLabel: "Acima da meta",
+          showComparison: true,
+        },
+      },
+      { comparisonMode: "target", showComparison: true, variant: "hero" },
+    );
+    expect(presentation.valueText).toBe("93,73%");
+    expect(presentation.comparisonText).toBe("▲ +8,73 p.p. vs meta · Acima da meta");
+    expect(presentation.comparisonTone).toBe("positive");
+  });
+
+  it("preserva apresentação legada e não cria status quando o backend não entregou", () => {
+    const presentation = resolveKpiViewPresentation({
+      kpi: { value: 91, label: "OEE", displayValue: "91,00%" },
+      kpiPresentation: {
+        comparisonDisplay: "▼ −2,00 p.p. vs meta",
+        comparisonTone: "negative",
+        showComparison: true,
+      },
+    });
+    expect(presentation.comparisonText).toBe("▼ −2,00 p.p. vs meta");
+    expect(presentation.comparisonTone).toBe("negative");
+  });
+
+  it("não exibe status stale se backend desabilitou comparação", () => {
+    const presentation = resolveKpiViewPresentation({
+      kpi: { value: 85, label: "Meta", displayValue: "85,00%" },
+      kpiPresentation: {
+        statusLabel: "Na meta",
+        comparisonDisplay: null,
+        showComparison: false,
+      },
+    });
+    expect(presentation.comparisonText).toBeUndefined();
+  });
+
+  it("não duplica texto quando status já compõe comparisonDisplay no servidor", () => {
+    const presentation = resolveKpiViewPresentation({
+      kpi: { value: 93, label: "OEE", displayValue: "93,00%" },
+      kpiPresentation: {
+        comparisonDisplay: "▲ +8,00 p.p. vs meta · Acima da meta",
+        statusLabel: "Acima da meta",
+        showComparison: true,
+      },
+    });
+    expect(presentation.comparisonText).toBe("▲ +8,00 p.p. vs meta · Acima da meta");
+  });
+
   it("expõe sparkline do enrich ou da série do resolved", () => {
     const presentation = resolveKpiViewPresentation(
       {
