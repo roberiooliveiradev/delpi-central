@@ -96,7 +96,22 @@ export function resolveKpiViewPresentation(
   const comparison =
     serverPres != null
       ? {
-          comparisonText: serverPres.comparisonDisplay ?? undefined,
+          // statusLabel vem do backend e só é concatenada — renderer
+          // nunca recalcula posição frente à meta (issue #129 / PR-135).
+          // Não pinta status stale quando a comparação está desativada
+          // e não duplica texto já composto pelo servidor.
+          comparisonText:
+            [
+              serverPres.comparisonDisplay,
+              serverPres.showComparison !== false &&
+              typeof serverPres.statusLabel === "string" &&
+              serverPres.statusLabel.trim() !== "" &&
+              !(serverPres.comparisonDisplay ?? "").includes(serverPres.statusLabel)
+                ? serverPres.statusLabel
+                : undefined,
+            ]
+              .filter((p): p is string => typeof p === "string" && p.trim() !== "")
+              .join(" · ") || undefined,
           comparisonTone: serverPres.comparisonTone ?? undefined,
           progressPct: serverPres.progressPct ?? null,
         }
