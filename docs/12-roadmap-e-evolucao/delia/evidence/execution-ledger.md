@@ -4457,3 +4457,20 @@ restarted — mesmo codigo f899f24ebf; portal mount ja versionado.
 E2E real: PENDING sessao empresarial do usuario no Portal.
 PRODUCTION_DEPLOY=NO (nao autorizado nesta task)
 TASK_STATUS=COMPLETE(code+tests+local) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-RESPONSE-SEMANTICS — PYDANTIC-AI-CONSOLIDATION PLAN (PLANNED)
+
+TASK_PLANNED=DELIA-C3-CRI-SEMANTIC-RESPONSE-CONTRACT-CONSOLIDATION-01
+PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/response-semantic-pydantic-ai-coordinated-implementation-plan.md
+PLAN_COMMIT=33bed6a3acc234af071bbe0ef0725ee5564a4e38
+STATE=PLANNED (doc-only; no implementation, no phase advance, no deployment).
+SCOPE=separate semantic communication from evidence/outcome and markdown rendering; reduce CRI single_found/records_found universal lead; reuse existing Pydantic AI infrastructure where suitable, NO second planner/agent.
+BASELINE=unified/remark task f899f24ebf already recorded; structure_found + technical metadata isolation must be preserved, not reimplemented.
+EXISTING_EQUIVALENT=TO_INVENTORY (typed communicative intent; Pydantic AI arggen is existing but not automatically equivalent).
+REUSE_DECISION=TO_INVENTORY (prefer EXTEND only after owner/consumer/contract proof).
+DEPENDENCIES=independent review unified/remark deliverable; HEAD+status+authorities 16/50/17/49/51/52/21/20/25 + architecture/product/theme specs; current phase NEXT CP/RQ must be verified by executor.
+GATES=G0 reanchor; G1 inventory/reuse; G2 contract+RED; G3 minimal implementation; G4 GREEN/generalization/safety/perf; G5 official local real E2E; G6 review/docs/push.
+BUSINESS_TESTS=90260148 and 90260921 plus holdout owners/shapes and partial/empty cases; preserve occurrences and counts; no unapproved extra LLM call.
+PRODUCTION_DEPLOY=NOT_AUTHORIZED by this plan.
+EXECUTION_STATUS=PENDING
+COORDINATION_VERDICT=PLANNED_PENDING_REANCHOR_AND_EXECUTION
