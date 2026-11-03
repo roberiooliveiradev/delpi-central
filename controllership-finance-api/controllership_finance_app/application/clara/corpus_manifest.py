@@ -354,6 +354,40 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
 ]
 
 
+# Gate 085 — corpus operacional enxuto, conforme decisão do PO.
+# Documentos de projeto, timelines, testes e inventários permanecem
+# armazenados para auditoria, mas não entram na recuperação da CLARA.
+# As fichas são a superfície operacional candidata; seus rótulos
+# TARGET/TO_INVENTORY continuam explícitos, sem fingir runtime provado.
+OPERATIONAL_SOURCE_IDS = frozenset(
+    {"ficha-index", "ficha-processo"}
+    | {f"ficha-r{n:02d}" for n in range(1, 16)}
+)
+
+
+def _operational_scope_only(spec: SourceSpec) -> SourceSpec:
+    if spec.source_id in OPERATIONAL_SOURCE_IDS:
+        return spec
+    return SourceSpec(
+        source_id=spec.source_id,
+        path=spec.path,
+        source_type=spec.source_type,
+        name=spec.name,
+        origin_authority=spec.origin_authority,
+        evidence_classification=spec.evidence_classification,
+        topic=spec.topic,
+        business_step=spec.business_step,
+        related_report_ids=spec.related_report_ids,
+        access_scope="INTERNAL_ONLY",
+        description=spec.description,
+    )
+
+
+AUTHORIZED_SOURCES = [_operational_scope_only(spec) for spec in AUTHORIZED_SOURCES]
+assert len(OPERATIONAL_SOURCE_IDS) == 17
+assert {s.source_id for s in AUTHORIZED_SOURCES if s.access_scope == "PORTAL_ACCESS"} == OPERATIONAL_SOURCE_IDS
+
+
 # Gate 080 (PO/decisão produto — issue #130): seleção DETERMINÍSTICA
 # de fontes vigentes. Segmentos datados que afirmam um estado hoje
 # superado NÃO podem ser expostos à CLARA:

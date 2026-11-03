@@ -732,3 +732,39 @@ def test_reingest_identical_segment_updates_access_scope(repo):
     assert second["access_scope"] == "INTERNAL_ONLY"
     with pytest.raises(KnowledgeNotFound):
         repo.get_item(str(first["knowledge_id"]))
+
+
+# Gate 085 — allowlist source-level; fail closed for all historical docs.
+def test_only_canonical_fichas_are_operational(corpus):
+    from controllership_finance_app.application.clara.corpus_manifest import (
+        AUTHORIZED_SOURCES, OPERATIONAL_SOURCE_IDS,
+    )
+    assert len(OPERATIONAL_SOURCE_IDS) == 17
+    assert len({s.source_id for s in AUTHORIZED_SOURCES}) == len(AUTHORIZED_SOURCES)
+    assert {s.source_id for s in AUTHORIZED_SOURCES
+            if s.access_scope == "PORTAL_ACCESS"} == OPERATIONAL_SOURCE_IDS
+    assert all(s.access_scope == "INTERNAL_ONLY"
+               for s in AUTHORIZED_SOURCES
+               if s.source_id not in OPERATIONAL_SOURCE_IDS)
+
+    with plugins_db_connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT DISTINCT source_id FROM "
+            "controllership_finance.clara_knowledge_item "
+            "WHERE status = 'PUBLISHED' AND access_scope = 'PORTAL_ACCESS' "
+            "AND source_id <> ALL(%s::text[])",
+            (list(OPERATIONAL_SOURCE_IDS),),
+        )
+        assert cur.fetchall() == [], "noncanonical source is exposed"
+        cur.execute(
+            "SELECT knowledge_id FROM "
+            "controllership_finance.clara_knowledge_item "
+            "WHERE source_id = 'doc-118' AND status = 'PUBLISHED' LIMIT 1"
+        )
+        row = cur.fetchone()
+    assert row, "audit record should be retained"
+    with pytest.raises(KnowledgeNotFound):
+        corpus.get_item(str(row[0]))
+    for query in ("18 tools MCP", "R04 bloqueado", "estado do fechamento"):
+        hits = corpus.search(query=query, limit=50)
+        assert all(h["source_id"] in OPERATIONAL_SOURCE_IDS for h in hits)
