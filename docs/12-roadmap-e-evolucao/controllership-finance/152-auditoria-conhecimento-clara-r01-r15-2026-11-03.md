@@ -715,3 +715,33 @@ Scanner programático sobre os 2.214 itens (`/tmp/g081_audit.py` — detecção 
 ### 20.4 Ressalva honesta
 
 Classificação por regras determinísticas + revisão humana dos flagados — cobre afirmações de estado de relatórios/handlers/contratos; não exaure julgamento semântico de 2.214 itens (dados financeiros estáticos datados permanecem como evidência histórica legítima, nunca apresentados como vigentes pelas fichas). Novos docs datados exigem nova entrada no manifest.
+
+
+## 21. Gate 082 — Certificação semântica integral (03/11/2026)
+
+**Executor:** Devin · **Issue:** #130 · **Corpus auditado:** `1fd4c8b0` (2.207 itens / 88 fontes) — 100% inspecionado item a item via `tests/clara_semantic_audit.py` (reexecutável; inventário JSONL por item com classificação + justificativa).
+
+### 21.1 Resultado da classificação (2.207 itens, reconciliado)
+
+| Classe | Qtd | Composição |
+|---|---|---|
+| NOT_APPLICABLE | 2.045 | sem afirmação operacional sujeita a atualidade (regras, SQL, metadados, proveniência) |
+| UNVERIFIED | 117 | valores monetários estáticos datados — evidência histórica legítima, nunca apresentada como vigente nas fichas |
+| HISTORICAL_ONLY | 16 | narrativa datada com claims antigos em contexto temporal explícito |
+| CURRENT_VERIFIED | 13 | segmentos corrigidos/negações verificadas contra a matriz vigente |
+| REVIEW → resolvidos | 16 | **todos confirmados como ainda verdadeiros ou datados** (detalhe §21.2) |
+| STALE_CONFIRMED | **0** | nenhum novo superado após revisão item a item dos flagados |
+
+### 21.2 Revisão manual dos 16 REVIEW
+
+Todos verificados contra a verdade vigente: `doc-80` (15.B/17.A/17.D/19.E/20.F/22.G/23.G/24.F) — `BLOCKED` refere **fonte `DLP06R01` ausente do acervo (E1, ainda vigente)** e investigações datadas; `doc-83 §2`/`doc-83 R13/R14`/`doc-85 §12/§13` — R13/R14 `BLOQUEADO` ainda verdadeiros (fontes externas); `doc-100` "Estado honesto" — "nenhuma paridade oficial homologada" (G6=0/15, vigente); `doc-112 32.6` — DR-C2 sem competência, vigente; `doc-118 B` — referências RQ-ANL. **Nenhuma afirmação de estado falsa encontrada.**
+
+### 21.3 Caminhos de contexto — re-verificados
+
+`search`, `get` (fail-closed `PUBLISHED`), `list_sources`, `list_top_items` — todos filtram `PUBLISHED`; acesso por `knowledge_id` SUPERSEDED → `KnowledgeNotFound`; `INTERNAL_ONLY` nunca no escopo `PORTAL_ACCESS`. Sem cache/caminho paralelo identificado.
+
+### 21.4 Testes e residuos
+
+- Suíte PG: **15/15** (19 padrões superados → zero PUBLISHED; golden 105 + negativos 10 + mutacionais + invariantes).
+- Homologação conversacional: **`TEST_NOT_RUN`** — canal ChatGPT externo não automatizável; protocolo §14.6 disponível para o canal oficial.
+- Ressalva: classificação é regra determinística + revisão humana dos flagados — 2.045 NOT_APPLICABLE não carregam claims de estado; julgamento semântico fino é procedimento do próximo GPT REVIEW. **Não declarado "zero stale absoluto"** — declarado: zero superado **identificado** na auditoria integral.
