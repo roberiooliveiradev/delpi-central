@@ -37,6 +37,10 @@ from tm_app.application.gpt_actions.entities import (
     ENTITY_DESCRIPTIONS,
     GptEntity,
 )
+from tm_app.application.helpdesk.helpdesk_write_capabilities import (
+    HELPDESK_ACTION_TO_CAPABILITY,
+    HELPDESK_CAPABILITIES,
+)
 from tm_app.application.gpt_actions.parity_capabilities_service import (
     MEETING_MINUTE_READ_ACTION_VALUES,
 )
@@ -540,6 +544,46 @@ def _canonical_catalog() -> dict[str, Any]:
                 "room_participants",
                 "room_impact",
                 "resolve_room",
+            ],
+            "read_back_policy": "authoritative",
+        },
+        {
+            "id": "helpdesk_change",
+            "kind": "workflow",
+            "owner": "helpdesk-api",
+            "description": (
+                "Helpdesk/GLPI governed writes via the Helpdesk BFF "
+                "(same-user Bearer — GLPI stays ticket authority): "
+                "create_ticket | set_assignee | add_followup | "
+                "update_followup | update_ticket_classification | "
+                "create_task | add_solution | request_validation | "
+                "accept_solution | reject_solution | "
+                "submit_satisfaction | accept_validation | "
+                "reject_validation | delete_ticket | "
+                "unlink_glpi_session | upload_attachment — closed action "
+                "enum selected by args.action; per-capability "
+                "execution_policy. upload_attachment binds the "
+                "user-uploaded file via the openai/fileParams contract "
+                "(file: {download_url, file_id, mime_type?, file_name?} "
+                "bound by the host — never an arbitrary URL or local "
+                "path). Reads via helpdesk_read; delete_ticket moves the "
+                "ticket to the GLPI trash."
+            ),
+            "read_write": "MIXED",
+            "read_operation": "helpdesk_read",
+            "prepare_operation": "prepare_helpdesk_change",
+            "commit_via": "commit_proposal",
+            # Mixed policies — derived per semantic capability below;
+            # never a single workflow-level boolean.
+            "capability_execution_policy": sorted(HELPDESK_CAPABILITIES),
+            "actions": sorted(HELPDESK_ACTION_TO_CAPABILITY),
+            "read_actions": [
+                "session",
+                "capabilities",
+                "tickets",
+                "ticket",
+                "attachment",
+                "catalog",
             ],
             "read_back_policy": "authoritative",
         },

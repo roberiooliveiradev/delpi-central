@@ -428,6 +428,16 @@ def _resolve_write_target(
             status_code=400,
             error_code="validation",
         )
+    # Fail closed at the transport boundary: the fileParams contract is
+    # bound to helpdesk upload_attachment only. A file on any other
+    # capability is a transport error, never silently dropped.
+    if body.get("file") is not None and resolved != "helpdesk_upload_attachment":
+        return _b._error_result(
+            f"'file' is only valid for capability 'upload_attachment' "
+            f"(resolved '{resolved}').",
+            status_code=400,
+            error_code="validation",
+        )
     # Family action vocabularies travel inside args for action-scoped
     # capabilities (diagnostic manage, meeting-minute manage/workflow,
     # evidence, collaboration, helpdesk) — the caller's `capability`
@@ -654,6 +664,7 @@ def tool_execute(
     proposal_handle: str | None = None,
     proposal_id: str | None = None,
     confirmation: bool | None = None,
+    file: dict[str, Any] | None = None,
 ) -> CallToolResult:
     """Governed writes: PREPARE→(policy gate)→ACT→authoritative read-back.
 
@@ -663,6 +674,10 @@ def tool_execute(
     ``proposal_id``+``confirmation=true``. ``ops`` runs a typed multi-action
     sequence: refs ``$ops.N.<path>`` consume earlier read-backs; the chain
     stops on the first failure or pending-confirmation op.
+
+    ``file`` is the canonical openai/fileParams object bound by the host
+    (helpdesk ``upload_attachment`` only) — merged into the sealed args;
+    it cannot ride a multi-op sequence.
     """
     try:
         request = _b.build_mcp_request()
@@ -674,6 +689,18 @@ def tool_execute(
                 confirmation=confirmation,
                 require_delete_class=False,
             )
+        if file is not None and ops:
+            return _b._error_result(
+                "'file' cannot be combined with ops — run "
+                "upload_attachment as a single execute call.",
+                status_code=400,
+                error_code="validation",
+            )
+        op_args = dict(args or {})
+        if file is not None:
+            # Host-bound fileParams object wins — an args-carried value is
+            # model-supplied and never authoritative over the bound file.
+            op_args["file"] = file
         if ops:
             if not isinstance(ops, list) or not all(
                 isinstance(o, dict) for o in ops
@@ -741,7 +768,7 @@ def tool_execute(
                 "operation": operation,
                 "record_id": record_id,
                 "changes": changes,
-                "args": args,
+                "args": op_args,
             },
         )
         if isinstance(outcome, CallToolResult):

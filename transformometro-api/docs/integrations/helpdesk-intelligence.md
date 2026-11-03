@@ -816,6 +816,37 @@ not source-code evidence. Status: ACCEPT / CLOSED.
 `upload_attachment` enum) requires GPT Builder reimport —
 **PENDING_MANUAL** (admin step; does not invalidate MCP acceptance).
 
+### 23.1 R4.3 — Semantic V3 fileParams parity corrective
+
+- **Defect (regression)**: the Semantic V3 cutover (`aa297973d4`,
+  issue #124) tombstoned `prepare_helpdesk_change` — the only tool that
+  declared `_meta["openai/fileParams"]`. On the V3 surface no tool
+  declared the binding, so the host could not deliver user uploads and
+  `upload_attachment` was unreachable; a call with a non-existent
+  capability name failed only as a typed validation error (surfaced by
+  the client as "tool failed internally").
+- **Fix**: `execute` now declares `_meta["openai/fileParams"] = ["file"]`
+  and accepts a top-level `file` argument; the host-bound object is
+  merged into the sealed args (`args.file` wins nothing over the bound
+  file). `file` on any capability other than `upload_attachment`, or
+  combined with `ops`, fails closed with a typed validation error.
+- **Discovery**: the `helpdesk_change` workflow is now published in the
+  capability surface catalog (actions + per-capability
+  `execution_policy`, both transports) — the canonical name is
+  discoverable instead of guessed.
+- **Unchanged**: AUTO_ACT policy, PREPARE→ACT→read-back chain,
+  `OpenAIFileGateway` allowlist/limits, BFF multipart contract,
+  idempotency — the same canonical pipeline proven in §22.2.
+- **Tests**: `test_teo_mcp_v3_surface.py` — wire declaration
+  (`_meta` + inputSchema), host-bound file merged into sealed args,
+  typed rejections (wrong capability / args-carried file / ops combo),
+  incident-name regression (`helpdesk_add_attachment` → typed
+  `ARGUMENT_VALIDATION`), catalog advertises `upload_attachment` on
+  both projections.
+- **Runtime residual**: live ChatGPT upload through the V3 surface is
+  PENDING_RUNTIME_ACCEPTANCE (requires a real fileParams binding from
+  the host — not mockable end-to-end).
+
 ## 24. Requester identity corrective — authenticated session user = GLPI requester
 
 **Defect (evidence: GLPI #1303)**: tickets created via `POST /tickets`

@@ -358,10 +358,17 @@ def create_mcp_server() -> MCPServer:
             "ops=[{capability|entity/operation, args|changes}, ...] runs "
             "a typed sequence: $ops.N.<path> refs consume earlier "
             "read-backs; the chain stops on first failure or pending "
-            "proposal. Destructive deletes belong to the delete tool."
+            "proposal. Destructive deletes belong to the delete tool. "
+            "helpdesk upload_attachment binds the user-uploaded file via "
+            "the file argument (openai/fileParams object bound by the "
+            "host) — never an arbitrary URL or local path."
         ),
         annotations=_annotations("execute", "Execute"),
-        meta=meta,
+        # Canonical openai/fileParams binding (R4.2 parity on the V3
+        # surface): the host binds the user-uploaded file to the ``file``
+        # argument — same closed contract the V2 prepare_helpdesk_change
+        # descriptor declared. Single-op writes only.
+        meta={**meta, "openai/fileParams": ["file"]},
     )
     def execute(
         capability: Annotated[
@@ -420,10 +427,22 @@ def create_mcp_server() -> MCPServer:
                 )
             ),
         ] = None,
+        file: Annotated[
+            dict | None,
+            Field(
+                description=(
+                    "Canonical openai/fileParams object bound by the "
+                    "host — helpdesk upload_attachment only "
+                    "({download_url, file_id, mime_type?, file_name?}). "
+                    "Never an arbitrary URL or local path."
+                )
+            ),
+        ] = None,
     ) -> CallToolResult:
         return bridge_v3.tool_execute(
             capability=capability,
             args=args,
+            file=file,
             entity=entity,
             operation=operation,
             record_id=record_id,

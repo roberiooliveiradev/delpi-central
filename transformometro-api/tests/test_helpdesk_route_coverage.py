@@ -140,6 +140,16 @@ ROUTE_LEDGER: dict[tuple[str, str], tuple[str, str]] = {
         "EXPOSED_READ",
         "helpdesk_read(action=capabilities)",
     ),
+    ("GET", "/session/context"): (
+        "UI_ONLY",
+        "creation-form disclosure for the Portal create form — no agent "
+        "capability today (helpdesk_read(action=session) covers link state)",
+    ),
+    ("GET", "/ticket-items"): (
+        "UI_ONLY",
+        "ticket-item association search for the Portal UI — not an agent "
+        "capability",
+    ),
     # --- Tickets -------------------------------------------------------------
     ("GET", "/tickets"): (
         "EXPOSED_READ",
@@ -157,8 +167,9 @@ ROUTE_LEDGER: dict[tuple[str, str], tuple[str, str]] = {
     ),
     ("POST", "/tickets/{ticket_id}/attachments"): (
         "EXPOSED_WRITE",
-        "prepare_helpdesk_change(action=upload_attachment, file= "
-        "openai/fileParams object bound by the host)",
+        "execute(capability=upload_attachment, file= openai/fileParams "
+        "object bound by the host) — V3 semantic route of the canonical "
+        "prepare_helpdesk_change family",
     ),
     # --- Governed writes ------------------------------------------------------
     ("POST", "/tickets"): (
@@ -218,6 +229,11 @@ ROUTE_LEDGER: dict[tuple[str, str], tuple[str, str]] = {
         "EXPOSED_WRITE",
         "prepare_helpdesk_change(action=reject_validation)",
     ),
+    ("PATCH", "/tickets/{ticket_id}/description"): (
+        "NOT_AGENT_CAPABILITY",
+        "description edit is Portal UI-owned today — no governed "
+        "capability exposes it (update_followup covers timeline edits)",
+    ),
     ("DELETE", "/tickets/{ticket_id}"): (
         "EXPOSED_WRITE",
         "prepare_helpdesk_change(action=delete_ticket) — GLPI trash",
@@ -260,7 +276,7 @@ def _bff_routes() -> set[tuple[str, str]]:
 def test_bff_route_source_inventory_matches_runtime():
     """Sanity: the source scan finds the expected route surface."""
     routes = _bff_routes()
-    assert len(routes) == 42  # +3 classification catalogs + PATCH classification
+    assert len(routes) == 45  # +3 classification catalogs + PATCH classification
     assert ("DELETE", "/tickets/{ticket_id}") in routes
 
 

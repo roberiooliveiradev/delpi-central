@@ -660,6 +660,150 @@ def test_delete_commit_rejects_non_delete_proposal() -> None:
         _cleanup(tokens)
 
 
+# --- fileParams / upload_attachment (R4.2 parity on the V3 surface) -----------------
+
+_FILEPARAMS = {
+    "download_url": "https://files.oaiusercontent.com/file-abc?sig=1",
+    "file_id": "file-abc",
+    "mime_type": "image/png",
+    "file_name": "evidencia.png",
+}
+
+
+def test_execute_tool_declares_openai_fileparams_binding() -> None:
+    """R4.2 regression — the V3 cutover dropped the ``openai/fileParams``
+    declaration with the tombstoned prepare_helpdesk_change tool; without
+    it the host cannot bind a user-uploaded file to any argument."""
+    tools = asyncio.run(create_mcp_server().list_tools())
+    execute = next(t for t in tools if t.name == "execute")
+    dumped = execute.model_dump(by_alias=True)
+    meta = dumped.get("_meta") or {}
+    assert meta.get("openai/fileParams") == ["file"]
+    props = (dumped.get("inputSchema") or {}).get("properties") or {}
+    assert "file" in props
+
+
+def test_execute_merges_host_bound_file_into_sealed_args() -> None:
+    tokens = _auth_context()
+    try:
+        with patch(
+            "tm_app.interface.mcp.tool_bridge._orchestrator.prepare",
+            return_value=_fake_prepare(
+                capability="helpdesk_upload_attachment"
+            ),
+        ) as prep, patch(
+            "tm_app.interface.mcp.tool_bridge._orchestrator.act",
+            return_value={
+                "capability": "helpdesk_upload_attachment",
+                "proposal_id": "gp_1",
+                "data": {"document_id": 1345},
+                "verified": True,
+            },
+        ) as act:
+            result = v3.tool_execute(
+                capability="upload_attachment",
+                args={"ticket_id": 1442},
+                file=_FILEPARAMS,
+            )
+            assert result.is_error is False
+            sealed = prep.call_args.kwargs["args"]
+            assert sealed["file"] == _FILEPARAMS
+            assert sealed["ticket_id"] == 1442
+            # auto_act policy — the host-bound file reaches ACT in one call.
+            data = result.structured_content["data"]
+            assert data["outcome"] == "executed_verified"
+            assert data["data"] == {"document_id": 1345}
+            act.assert_called_once()
+    finally:
+        _cleanup(tokens)
+
+
+def test_execute_rejects_file_on_non_upload_capabilities() -> None:
+    """The fileParams contract binds to upload_attachment only — a file on
+    any other capability fails closed, never silently dropped."""
+    tokens = _auth_context()
+    try:
+        for cap in ("create_task", "helpdesk_add_followup"):
+            result = v3.tool_execute(
+                capability=cap,
+                args={"ticket_id": 1, "content": "x"},
+                file=_FILEPARAMS,
+            )
+            assert result.is_error is True, cap
+            assert "upload_attachment" in (
+                result.structured_content["message"]
+            )
+        # Same guard when the file rides inside args instead of the
+        # host-bound top-level argument.
+        result = v3.tool_execute(
+            capability="create_task",
+            args={"ticket_id": 1, "file": _FILEPARAMS},
+        )
+        assert result.is_error is True
+        assert "upload_attachment" in result.structured_content["message"]
+    finally:
+        _cleanup(tokens)
+
+
+def test_execute_rejects_file_with_ops() -> None:
+    tokens = _auth_context()
+    try:
+        result = v3.tool_execute(
+            file=_FILEPARAMS,
+            ops=[
+                {
+                    "capability": "upload_attachment",
+                    "args": {"ticket_id": 1442},
+                }
+            ],
+        )
+        assert result.is_error is True
+        assert "ops" in result.structured_content["message"]
+    finally:
+        _cleanup(tokens)
+
+
+def test_execute_unknown_capability_fails_typed() -> None:
+    """Incident regression — the reported call used a capability name that
+    never existed (``helpdesk_add_attachment``). The surface answers a
+    typed, recoverable validation error — never an opaque failure."""
+    tokens = _auth_context()
+    try:
+        result = v3.tool_execute(
+            capability="helpdesk_add_attachment",
+            args={"ticket_id": 1442, "filename": "evidencia.png"},
+        )
+        assert result.is_error is True
+        payload = result.structured_content
+        assert payload["status_code"] == 400
+        assert payload["code"] == "ARGUMENT_VALIDATION"
+        assert payload["recoverable"] is True
+        assert "Unknown write capability" in payload["message"]
+    finally:
+        _cleanup(tokens)
+
+
+def test_catalog_advertises_helpdesk_upload_attachment() -> None:
+    """Discovery regression — the helpdesk write workflow must be
+    published in the canonical capability surface so the canonical
+    action/capability names are discoverable on both transports."""
+    from tm_app.application.gpt_actions.capability_descriptors import (
+        build_capability_surface_catalog,
+    )
+
+    for transport in ("mcp", "gpt_actions"):
+        catalog = build_capability_surface_catalog(projection=transport)
+        workflow = next(
+            w for w in catalog["workflows"] if w["id"] == "helpdesk_change"
+        )
+        assert "upload_attachment" in workflow["actions"]
+        # Canonical policy value — identical on both transports.
+        assert (
+            workflow["execution_policy"]["helpdesk_upload_attachment"]
+            == "auto_act"
+        )
+
+
 # --- unauthenticated -----------------------------------------------------------------
 
 
