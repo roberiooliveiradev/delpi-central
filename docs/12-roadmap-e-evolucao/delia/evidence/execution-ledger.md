@@ -2250,3 +2250,18 @@ DESIGN (a implementar):
   contract_facts; marcar parcialidade explicitamente.
 
 STATUS=IN_PROGRESS·design-only — nenhum codigo alterado ainda.
+
+## T20-UNIFIED-PRESENTATION — exec-blocker resume point
+
+Renderer generic_evidence_renderer.py pronto no turno anterior
+(render_business_evidence recursivo + _md_escape + budget
+512/depth6/chars2000 + completeness constants) mas o write falhou
+por cwd UNC quebrada. PADRAO QUE FUNCIONA: workdir=C:\ + "cd ~ &&"
+prefix + wsl -e sh -c + heredoc escapado <<\EOF + conteudo sem
+single-quotes e sem backtick literal (chr(96)).
+NEXT: gravar renderer -> wire compose_cri_response recebe raw
+facts.records+result_context (loss site orch ~9334 prepared=
+presented_record) -> remover caps MAX_FIELDS=4/MAX_PRESENTED=5
+dos paths de apresentacao (conv_resp 64-66,153-378) -> synth
+instruction drop object/list -> RED tests R1-R12 -> regressao +
+commit + push (SEM deploy).
