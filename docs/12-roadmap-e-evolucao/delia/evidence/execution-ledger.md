@@ -2113,3 +2113,19 @@ PROXIMO: rodar disc_probe via path eval do t21
 semantic_fidelity_eval) -> _live_capture davi query "estrutura" ->
 candidate list. Se get_product_structure aparece -> selecao LLM errou
 (root cause). Se nao -> arggen do discover perdeu intencao.
+
+## T20-SEMANTIC-SEL — auth bloqueio total local (SHA 22b36b26df)
+
+mint_bearer do eval tambem 401 no t21 (keycloak reiniciado pode ter
+invalidado fixture/credencial). ALTERNATIVA SEM TOKEN: a davi tem
+internal-service-token path no middleware
+(request_has_valid_internal_service_token -> service_user
+is_superadmin) — usar API_DELPI_INTERNAL_SERVICE_TOKEN do .env local
+como Bearer direto no MCP HTTP call (nao via delegated-credential —
+o adapter exige JWT mas o service-token path do middleware e
+passthrough legitimo service->service, READ tools/list).
+PROXIMO: POST tools/list c/ service token -> candidatos de
+"estrutura" em discover sem bearer? tools/list so lista tools
+(discover+execute), nao candidates — candidates vem de
+discover_delpi_information invocation que exige subject? Nao — o
+MCP aceita service token p/ READ; testar discover call direto.
