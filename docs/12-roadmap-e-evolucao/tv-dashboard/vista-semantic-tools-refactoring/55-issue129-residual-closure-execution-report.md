@@ -84,3 +84,25 @@ Base HEAD: b9b73bd7e1 (observado a2c2020e31 + 1 commit public-hub não relaciona
   por drift de contrato em semantic_delete — fora do escopo.
 - Deploy em homolog + MCP smoke autenticado + read-back da fixture
   LAB: pendente de autorização/credenciais.
+<<<<<<< HEAD
+=======
+
+## Addendum — C04 semantic binding (2º commit b73110cbcb)
+
+Pós-deploy smoke na fixture LAB (produção) revelou resíduo semântico:
+no REDESIGN, o KPI de realizado ligava `get_kaizen_summary`. Causas:
+tokens de instrução/remoção viravam goals (remova/antiga/preserve/
+sobreposição → kaizen tinha 4 goals-lixo); o cap de 6 do goal_map por
+ordem de set excluía "oee"; elegibilidade por papel era soft.
+
+Correções: stop-words de instrução/componente; _metric_tok prioritário
+no budget; papel = restrição (pool+fallback respeitam _ROLE_ELIGIBLE).
+
+Smoke pós-deploy em produção (b73110cbcb):
+- CREATE → realized=oee_realized, chart=oee_series, meta=oee_meta,
+  RESOLVED, zero deletes.
+- REDESIGN → delete_block(blk_95a53a164d), chart=oee_series,
+  meta=oee_meta, realized KPI NEEDS_SOURCE_SELECTION com 3 candidatos
+  realized elegíveis (ambiguidade honesta, sem pick silencioso, sem
+  kaizen). evidence available + basisRevision=3 + EDITOR_NOT_OPEN.
+>>>>>>> origin/main

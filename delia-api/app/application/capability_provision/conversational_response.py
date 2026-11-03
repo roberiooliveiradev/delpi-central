@@ -51,6 +51,7 @@ from app.application.capability_provision.outcome_assessment import (
     _canonical_key,
     _record_identifier,
     _sanitize_renderable,
+    _sanitize_renderable_counted,
     _synthesis_selections,
     ordering_proof_fields,
     parse_temporal_value,
@@ -61,10 +62,15 @@ from app.application.interaction.contracts import (
     LIMITATION_INSUFFICIENT_EVIDENCE,
     LIMITATION_RESULT_TRUNCATED,
 )
+from app.application.capability_provision.generic_evidence_renderer import (
+    FieldLabels,
+    field_clause_label,
+    field_display_label,
+    field_label_parts,
+    render_business_evidence,
+    unmapped_field_label,
+)
 
-MAX_PRESENTED_RECORDS = 5
-MAX_FIELDS_PER_RECORD = 4
-_MAX_FIELD_SCAN_RECORDS = 32
 # Owner-published contract rows are capability-surface metadata —
 # bounded in count and per-row size so a large catalog can never
 # flood the response.
@@ -151,19 +157,6 @@ def _format(template: object, **params: object) -> str | None:
         return None
 
 
-def _record_line(record: PresentedRecord) -> str | None:
-    """One bounded evidence line — `Label: value` pairs inline."""
-
-    fields = record.fields[:MAX_FIELDS_PER_RECORD]
-    if not fields:
-        if record.identifier:
-            return f"- {record.identifier}"
-        return None
-    return "- " + " · ".join(
-        f"{label}: {value}" for label, value in fields
-    )
-
-
 def _subject(record: PresentedRecord) -> str | None:
     """Verbatim anchor for a single-record lead sentence."""
 
@@ -178,7 +171,7 @@ def compose_cri_response(
     *,
     verdict: OutcomeVerdict,
     requirements: AnswerRequirements | None,
-    records: Sequence[PresentedRecord],
+    records: Sequence[Mapping[str, Any]],
     delivered_count: int,
     total_count: int | None,
     coverage_complete: bool | None,
@@ -188,8 +181,8 @@ def compose_cri_response(
     contract_facts: Sequence[str] = (),
     projected_content: str | None = None,
     limitations: Sequence[str] = (),
-    structured_render: str | None = None,
-    structured_partial: bool = False,
+    field_labels: FieldLabels | None = None,
+    result_context: Mapping[str, Any] | None = None,
 ) -> CriComposition | None:
     """Compose the governed conversational response, or ``None``.
 
@@ -282,16 +275,44 @@ def compose_cri_response(
     if verdict.decision != OUTCOME_ANSWERED or not records:
         return None
 
-    # ---- answered: ordering extreme (single focused record) -------
+    # UNIFIED-PRESENTATION-01 (rework): the business body is rendered
+    # exclusively by the generic evidence surface. Records are
+    # sanitized here at the presentation boundary (envelope
+    # projections may arrive unredacted); the former flat scalar-only
+    # projection no longer gates, counts or duplicates the
+    # presentation — it survives only as the ordering *anchor*
+    # (identifier/title selection), never as the record body.
+    sanitized_list: list[Mapping[str, Any]] = []
+    sanitize_omitted = 0
+    for record in records:
+        item, dropped = _sanitize_renderable_counted(record)
+        sanitize_omitted += dropped
+        if isinstance(item, Mapping):
+            sanitized_list.append(item)
+    sanitized = tuple(sanitized_list)
+    context = None
+    if isinstance(result_context, Mapping):
+        context, dropped = _sanitize_renderable_counted(result_context)
+        sanitize_omitted += dropped
+    context_lines: tuple[str, ...] = ()
+    context_partial = False
+    if isinstance(context, Mapping) and context:
+        _ctx_render = render_business_evidence(context, field_labels)
+        context_lines = _ctx_render.lines
+        context_partial = _ctx_render.partial
+
     paragraphs: list[str] = []
     if caveat_text:
         paragraphs.append(caveat_text)
-    limitations: list[str] = []
-    presented = 0
-    record_lines: list[str] = []
+    # Received limitations are preserved verbatim — composition only
+    # adds presentation-side limitations, never drops or converts
+    # existing ones.
+    limitations: list[str] = list(limitations)
+
+    # ---- answered: ordering extreme (single focused record) -------
     ordering = req.ordering
-    if ordering in ("newest_first", "oldest_first"):
-        subject = _subject(records[0])
+    if ordering in ("newest_first", "oldest_first") and sanitized:
+        subject = _subject(presented_record(sanitized[0], field_labels))
         # E3-R2 / SEMANTIC-INTERPRETATION-01: ordering proves ORDER
         # only. Alteration wording is allowed solely when the proven
         # ordering carries a verified event meaning — a model-proposed,
@@ -324,90 +345,63 @@ def compose_cri_response(
                 if clause is None:
                     return None
                 paragraphs.append(clause)
-            presented = 1
-            return CriComposition(
-                "\n\n".join(paragraphs), presented, tuple(limitations)
+            focused = render_business_evidence(
+                sanitized[:1], field_labels
             )
-
-    # ---- answered: requested quantity of examples -----------------
-    seen_lines: set[str] = set()
-    if req.min_items is not None:
-        target = min(req.min_items, len(records))
-        record_lines = []
-        for record in records[:_MAX_FIELD_SCAN_RECORDS]:
-            if len(record_lines) >= min(target, MAX_PRESENTED_RECORDS):
-                break
-            line = _record_line(record)
-            if line is None or line in seen_lines:
-                continue
-            seen_lines.add(line)
-            record_lines.append(line)
-        presented = len(record_lines)
-        if not record_lines:
-            return None
-        lead = _format(
-            leads.get("examples_fulfilled"),
-            **{**params, "count": presented},
-        )
-        if lead is None:
-            return None
-        paragraphs.append(lead)
-        if structured_render is not None:
-            paragraphs.append(structured_render)
-        else:
-            paragraphs.append("\n".join(record_lines))
-    elif len(records) == 1:
-        record = records[0]
-        if not record.fields and structured_render is None:
-            return None
-        lead = _format(leads.get("single_found"), **params)
-        if lead is None:
-            return None
-        paragraphs.append(lead)
-        if structured_render is not None:
-            paragraphs.append(structured_render)
-        else:
-            paragraphs.append(
-                "\n".join(
-                    f"- {label}: {value}"
-                    for label, value in record.fields[:MAX_FIELDS_PER_RECORD]
+            body = "\n".join(context_lines + focused.lines)
+            if body:
+                paragraphs.append(body)
+            if (context_partial or focused.partial) and (
+                LIMITATION_EVIDENCE_PROJECTION_PARTIAL
+                not in limitations
+            ):
+                limitations.append(
+                    LIMITATION_EVIDENCE_PROJECTION_PARTIAL
                 )
+            return CriComposition(
+                "\n\n".join(paragraphs),
+                focused.presented_items,
+                tuple(limitations),
             )
-        presented = 1
+        # No usable anchor — fall through to the generic shapes.
+
+    # ---- answered: unified body render ----------------------------
+    if req.min_items is not None:
+        scope = sanitized[: min(req.min_items, len(sanitized))]
+        lead_key = "examples_fulfilled"
+    elif len(sanitized) == 1:
+        scope = sanitized
+        lead_key = "single_found"
     else:
-        # A declared complete-coverage ask widens the presentation
-        # bound to the field-scan ceiling — the truncation notice
-        # still fires when the delivered set exceeds it.
-        scan_limit = (
-            _MAX_FIELD_SCAN_RECORDS
-            if req.complete_coverage
-            else MAX_PRESENTED_RECORDS
-        )
-        for record in records[:scan_limit]:
-            line = _record_line(record)
-            if line is None or line in seen_lines:
-                continue
-            seen_lines.add(line)
-            record_lines.append(line)
-        presented = len(record_lines)
-        if not record_lines:
-            return None
-        lead = _format(
-            leads.get("records_found"),
-            **{**params, "count": delivered_count},
-        )
-        if lead is None:
-            return None
-        paragraphs.append(lead)
-        if structured_render is not None:
-            paragraphs.append(structured_render)
-        else:
-            paragraphs.append("\n".join(record_lines))
+        scope = sanitized
+        lead_key = "records_found"
+
+    render = render_business_evidence(scope, field_labels)
+    body = "\n".join(context_lines + render.lines)
+    presented = render.presented_items
+    if not body:
+        return None
+    lead = _format(
+        leads.get(lead_key),
+        **{
+            **params,
+            "count": (
+                presented if lead_key == "examples_fulfilled"
+                else delivered_count
+            ),
+        },
+    )
+    if lead is None:
+        return None
+    paragraphs.append(lead)
+    paragraphs.append(body)
 
     # ---- presentation-faithfulness notices (E3-G2) -----------------
     # ``delivered_count`` is the canonical distinct-delivered figure
-    # (same source as the lead) — ``records`` is the scan-capped
-    # projection and must never surface as a user-facing count.
+    # (same source as the lead); ``presented`` is what the unified
+    # render actually emitted. A shortfall is a *presentation*
+    # limitation — owner-side pagination stays a separate axis and
+    # keeps its own attributed notices.
     if presented < delivered_count:
         notice = _format(
             labels.get("truncation_notice"),
@@ -415,10 +409,15 @@ def compose_cri_response(
         )
         if notice is not None:
             paragraphs.append(notice)
-        if LIMITATION_RESULT_TRUNCATED not in limitations:
-            limitations.append(LIMITATION_RESULT_TRUNCATED)
+        # A requested-subset (min_items) shortfall is an intentional
+        # selection, not a technical omission — only unexplained
+        # presentation shortfalls flag projection-partial.
+        if req.min_items is None and (
+            LIMITATION_EVIDENCE_PROJECTION_PARTIAL not in limitations
+        ):
+            limitations.append(LIMITATION_EVIDENCE_PROJECTION_PARTIAL)
     elif coverage_complete is False:
-        if total_count is not None and total_count > len(records):
+        if total_count is not None and total_count > len(sanitized):
             notice = _format(
                 labels.get("available_notice"), **params
             )
@@ -427,23 +426,25 @@ def compose_cri_response(
         if notice is not None:
             paragraphs.append(notice)
 
-    # A request the projection could not fully present re-marks
+    # A request the presentation could not fulfill re-marks
     # insufficiency — the count claim never exceeds what was rendered.
     if req.min_items is not None and presented < req.min_items:
         if LIMITATION_INSUFFICIENT_EVIDENCE not in limitations:
             limitations.append(LIMITATION_INSUFFICIENT_EVIDENCE)
+
+    # Technical render bounds (node budget, depth) are surfaced
+    # separately from owner pagination — partiality is always
+    # explicit, never a silent drop.
+    if (context_partial or render.partial or sanitize_omitted > 0) and (
+        LIMITATION_EVIDENCE_PROJECTION_PARTIAL not in limitations
+    ):
+        limitations.append(LIMITATION_EVIDENCE_PROJECTION_PARTIAL)
 
     # E3-R3: no continuity offer is emitted — the governed contracts
     # carry no serviceable mechanism (no expandable-detail block, no
     # proven next-turn retrieval binding), so promising detail would
     # offer a capability that cannot be served.
 
-    if structured_partial and (
-        LIMITATION_EVIDENCE_PROJECTION_PARTIAL not in limitations
-    ):
-        limitations = (
-            *limitations, LIMITATION_EVIDENCE_PROJECTION_PARTIAL
-        )
     return CriComposition(
         "\n\n".join(paragraphs), presented, tuple(limitations)
     )
@@ -452,77 +453,12 @@ def compose_cri_response(
 # ------------------------------------------------------------------
 # Field-label resolution (C3-S3 / RQ-SA05 / D8)
 #
-# Single governed projection for owner field names across every
-# presentation path — detail lines, focused-answer clauses, CRI
-# presented records and comparisons. The vocabulary itself lives in
-# the versioned ``cri_presentation`` resource (``field_labels``
-# section); this module is the only resolver, so CRI and baseline
+# Canonical home: ``generic_evidence_renderer.py`` — the unified
+# evidence surface owns the single governed projection for owner
+# field names. This module re-exports the resolver so every consumer
+# (detail lines, focused-answer clauses, CRI anchors, comparisons
+# and the orchestration glue) resolves through one source and the
 # paths can never diverge.
-#
-# A key absent from the governed map is *unknown*: the owner wording
-# is preserved verbatim — words humanize (underscores become
-# spaces), digit-bearing code-shaped keys stay byte-exact. A field
-# name is never translated nor merged (``codigo_processo`` must
-# never render as ``Codigoprocesso`` or an invented meaning).
-
-FieldLabels = Mapping[str, tuple[str, str, str]]
-"""Canonical field key → (article, label, suffix) parts."""
-
-
-def field_label_parts(
-    canon: str,
-    field_labels: FieldLabels | None,
-) -> tuple[str, str, str] | None:
-    """Governed label parts for a canonicalized key, or ``None``."""
-    if field_labels:
-        return field_labels.get(canon)
-    return None
-
-
-def unmapped_field_label(key: object, *, capitalized: bool = True) -> str:
-    """Presentation label for a field absent from the governed map.
-
-    Digit-bearing keys are code-shaped identifiers (``b2_cm1``) and
-    stay byte-exact — mangling corrupts a searchable business code.
-    Word keys humanize: the owner's words are preserved verbatim,
-    only underscores become spaces — a label is never translated.
-    """
-    raw = str(key).strip()
-    if not raw or any(ch.isdigit() for ch in raw):
-        return raw
-    spaced = raw.replace("_", " ").strip()
-    if not capitalized:
-        return spaced
-    return spaced[:1].upper() + spaced[1:]
-
-
-def field_display_label(
-    canon: str,
-    raw_key: object,
-    field_labels: FieldLabels | None = None,
-) -> str:
-    """Title-case label for detail/record rendering — governed label
-    or neutral fallback. First-char casing only, so acronym labels
-    (``CNPJ``, ``SKU``) keep their canonical form."""
-    parts = field_label_parts(canon, field_labels)
-    if parts is not None:
-        return parts[1][:1].upper() + parts[1][1:]
-    return unmapped_field_label(raw_key)
-
-
-def field_clause_label(
-    canon: str,
-    raw_key: object,
-    field_labels: FieldLabels | None = None,
-) -> str:
-    """Bounded pt-BR subject for one selected field — governed
-    ``article label suffix`` or the neutral ``o campo "…"`` clause."""
-    parts = field_label_parts(canon, field_labels)
-    if parts is not None:
-        article, label, participle = parts
-        return f"{article} {label} {participle}"
-    return f'o campo "{unmapped_field_label(raw_key, capitalized=False)}"'
-
 
 # ------------------------------------------------------------------
 # CRI presentation projection (R3/M05, plan 125). Record rendering

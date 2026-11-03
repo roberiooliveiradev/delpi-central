@@ -2294,3 +2294,142 @@ EVIDENCE_PROJECTION_PARTIAL. Caps 4campos/5registros bypassed na
 apresentacao (persistem so p/ ordering/scan/prompt-LLM).
 Tests: unified 10/10 + CRI e3 67 + ~390 regressao verdes.
 PENDENTE: e2e live (sync container + restart) — sem deploy nesta task.
+
+## T20-UNIFIED-PRESENTATION — REWORK-01 (silent-truncation + decoupling)
+
+TASK=DELIA-C3-UNIFIED-EVIDENCE-PRESENTATION-REWORK-01
+BASE=b9b73bd7e1 (origin/main revalidado; worktree isolado delia-c3-rework-wt —
+checkout principal estava atrasado + staged concorrente, intocado).
+
+DEFEITOS CORRIGIDOS (evidencia em codigo):
+- Depth omit "(estrutura profunda omitida)" sem flag -> OMISSION_MAX_DEPTH
+  + partial=True + omitted_nodes contados.
+- Budget exhaustion nunca propagava (flag computada pre-loop) ->
+  contabilidade real por _Budget; irmaos restantes contam como omitidos.
+- String >2000 chars cortada com "…" silencioso -> corte removido;
+  valor integral escapado, quebras de linha -> continuation lines.
+- Labels cortados em 80 chars -> corte removido; identidade preservada.
+- Bug real: _render_label retornava triple (article,label,suffix) do
+  field_labels governado -> repr de tupla na resposta. Resolver canonico
+  field_display_label movido para o renderer (re-exportado por
+  conversational_response; single source).
+- Projetor plano como gate: record_lines vazio -> return None mesmo com
+  render valido; caps 4campos/5registros/32scan competiam com renderer.
+  compose_cri_response agora recebe records crus + result_context +
+  field_labels e e' o unico owner do render; orchestration vira glue.
+- Contagem: presented vem de items_render.presented_items (dedup
+  top-level por conteudo, E3-G2); presented<delivered -> notice +
+  LIMITATION_EVIDENCE_PROJECTION_PARTIAL (lado apresentacao);
+  RESULT_TRUNCATED permanece lado owner/resultado (baseline 2000 cap).
+- Sanitizacao preservada: _sanitize_renderable em records+result_context
+  no boundary de apresentacao (envelope path chega sem sanitize).
+
+RESIDUAIS (classificados):
+- _business_lines/_md_business_lines/_format_*/_md_format_*/
+  _render_synthesis/_detail_lines/_list_header/_compose_answer:
+  LEGITIMATE — boundary baseline congelado (OFF byte-parity, doc 16
+  MAX_RENDER_CONTENT_CHARS=2000 marcado); drops internos silenciosos
+  documentados como divida fora do escopo deste rework.
+- cri_scalar_text/presented_record: LEGITIMATE — anchor/ordering/
+  diffs de campo (selecao), nao apresentacao de corpo.
+- _sanitize_renderable MAX_RENDER_LIST_ITEMS=50: bound de seguranca
+  pre-existente, silencioso — KNOWN_RESIDUAL (fora do renderer).
+- MAX_PRESENTED_VALUE_CHARS=140: bound de anchor apenas — LEGITIMATE.
+- MAX_FIELDS_PER_RECORD/MAX_PRESENTED_RECORDS/_MAX_FIELD_SCAN_RECORDS/
+  _CRI_RECORD_SCAN/_record_line/_PRESENTATION_MAX_*: REDUNDANT_REMOVED.
+
+EVIDENCIA: 42 unified+cri_unified tests GREEN; cri_e3 67/67;
+suites adjacentes verdes; 5 falhas PRE-EXISTENTES no origin/main
+(vocab v5 stale, pydantic_ai ja presente, env.example, r1 snapshot)
+— nao causadas pelo diff.
+E2E in-process: attempt("Qual a estrutura do 90260148?") -> BOM
+completa (90260148 + 50220013 + 50220015 + 4 MP, qty/unidades).
+E2E live container: TEST_NOT_RUN — sem identidade empresarial
+autorizada; stack local le do checkout sujo concorrente.
+PRODUCTION_DEPLOY=NO
+TASK_STATUS=COMPLETE(code+tests) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — REWORK-02 (four residuals fixed)
+
+TASK=DELIA-C3-UNIFIED-EVIDENCE-PRESENTATION-REWORK-02
+BASE=711905a17b (origin/main revalidado; mesmo worktree isolado).
+
+FIXES (evidencia):
+- Sanitize: _sanitize_renderable_counted conta itens descartados pelo
+  bound MAX_RENDER_LIST_ITEMS=50 (seguranca preservada); compose
+  propaga -> EVIDENCE_PROJECTION_PARTIAL. Sem aumento de limite.
+- Dedup removido do renderer: toda ocorrencia autorizada renderiza em
+  ordem (dedup empresarial pertence ao owner, nao ao presentation).
+- limitations de entrada preservadas: compose inicia com
+  list(limitations); so adiciona codes novos sem duplicar.
+- min_items: selecao intencional (aviso "X de Y" informativo, SEM flag
+  de parcialidade); EVIDENCE_PROJECTION_PARTIAL somente para omissao
+  tecnica (render.partial | sanitize_omitted>0 | shortfall sem
+  min_items).
+
+EVIDENCIA: suites unified+cri_unified+cri_e3+adjacentes GREEN;
+probe in-process BOM 90260148 completa (raiz+2PI+4MP+qty/un);
+ocorrencias duplicadas renderizam todas.
+E2E container real: TEST_NOT_RUN — delpi-delia-api faz bind-mount do
+checkout concorrente sujo (atualizacao local legitima bloqueada);
+sem identidade empresarial autorizada para smoke real.
+PRODUCTION_DEPLOY=NOT_PERFORMED — gate E2E local nao comprovado;
+sem evidencia equivalente aceita para promover sem E2E.
+PRODUCTION_BUSINESS_OUTCOME=PENDING
+TASK_STATUS=COMPLETE(code+tests) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — LOCAL-AND-PRODUCTION-DEPLOY-01
+
+TASK=DELIA-C3-UNIFIED-EVIDENCE-PRESENTATION-LOCAL-AND-PRODUCTION-DEPLOY-01
+BASE=4f2cb26ae0 (origin/main = REWORK-02 consolidado).
+
+WORKSPACE: checkout principal segue sujo c/ trabalho concorrente —
+NAO tocado (regra: preservar). Worktree isolado delia-c3-rework-wt
+usado como fonte versionada. Nenhum arquivo alheio modificado.
+
+LOCAL: container ISOLADO delpi-delia-api-rw02 (imagem infra-delia-api
+sha256:7e58f811, mount worktree/delia-api:/app, mesma rede
+infra_delpi-network, env replicado do servico oficial, porta 8010).
+delpi-delia-api oficial NAO alterado (bind-mount aponta para
+checkout concorrente — nao sobrescrevido).
+HEALTH: {"service":"delia-api","status":"available"} porta 8010.
+RENDERER_ACTIVE: OMISSION_MAX_DEPTH presente no /app montado.
+LOCAL_RUNTIME_SHA=4f2cb26ae0 · ROLLBACK: docker rm -f delpi-delia-api-rw02.
+
+BUSINESS_E2E local: TEST_NOT_RUN — sem identidade empresarial
+autorizada (mcp-catalog-sync proibido; sem bypass). Evidencia
+in-process previa (REWORK-02) mantida; container isolado pronto
+para smoke quando identidade legitima existir.
+
+PRODUCTION_DEPLOY=NOT_PERFORMED — gates: E2E empresarial local
+nao executado; sem evidencia equivalente aceita p/ promocao.
+ROLLBACK_TARGET=711905a17b (pre-REWORK-02) / imagem sha256:7e58f811.
+TASK_STATUS=INCOMPLETE (deploy pendente de gate) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — OFFICIAL-LOCAL-AND-PRODUCTION-DEPLOY-02
+
+TASK=DELIA-C3-UNIFIED-PRESENTATION-OFFICIAL-LOCAL-AND-PRODUCTION-DEPLOY-02
+SOURCE_SHA=d820d34050 (origin/main revalidado — contem REWORK-02).
+
+OFFICIAL LOCAL DEPLOY: delpi-delia-api RECRIADO — mesma imagem
+(infra-delia-api sha256:7e58f811), mesmo env (317 vars preservadas),
+mesma rede infra_delpi-network, restart unless-stopped. Bind-mount
+/app REPONTADO do checkout concorrente sujo para worktree versionado
+limpo /home/analistaptd/delia-deploy-wt (SHA d820d34050). Nenhum
+arquivo de outro agente tocado. Rollback: delpi-delia-api-prev
+preservado (Exited) — docker rm -f atual + renomear prev.
+HEALTH: {"service":"delia-api","status":"available"} interno :8000.
+RENDERER_ACTIVE: OMISSION_MAX_DEPTH presente (3 ocorrencias).
+PORTAL ROUTE: delpi-gateway resolve DNS docker "delia-api" -> novo
+container automatico.
+rw02 removido (temporario proprio). delia-c3-rework-wt removido
+(branch merged; deploy-wt = origem oficial do runtime).
+Business E2E local: TEST_NOT_RUN — sem identidade empresarial
+autorizada; Portal aponta para backend novo, pronto p/ smoke do usuario.
+PRODUCTION_DEPLOY=NOT_PERFORMED — BLOQUEIO PRECISO: nao existe script
+canonico de deploy prod nem acesso SSH ao host produtivo neste ambiente
+(local-first-deploy exige git pull no servidor). Sem evidencia de acesso,
+promocao produtiva nao e executavel pelo executor.
+ROLLBACK_TARGET=d820d34050^..? rollback local = delpi-delia-api-prev /
+checkout anterior; rollback prod = SHA anterior no servidor.
+TASK_STATUS=INCOMPLETE (prod bloqueado por acesso) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW

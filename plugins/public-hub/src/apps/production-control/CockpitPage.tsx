@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { MouseEvent, ReactNode } from "react";
-import { BarChart3, Eye, MoreVertical, RefreshCw, Search, User } from "lucide-react";
+import type { ReactNode } from "react";
+import { BarChart3, MoreVertical, RefreshCw, Search } from "lucide-react";
 import {
   confirmRunHandoff,
   fetchActiveProductionRun,
@@ -31,11 +31,9 @@ import {
   formatUnit,
   operationKey,
   operationPendingQty,
-  resolveStatus,
   MesShiftMetrics,
   SourceStatusMetrics,
   WorkCenterShiftMetrics,
-  type StatusView,
 } from "./cockpitShared";
 import { OperationDetailPage } from "./OperationDetailPage";
 import { CockpitActivityProvider } from "./CockpitActivityProvider";
@@ -46,7 +44,6 @@ import {
   OperatorSessionProvider,
 } from "./OperatorSessionProvider";
 import { shouldBlockOperatorSwitch } from "./operatorSession.ts";
-import { ProductionRunControls } from "./ProductionRunControls";
 import { useOperatorSession } from "./OperatorSessionContext.ts";
 import {
   usePublicMachineLoadRealtime,
@@ -149,7 +146,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     /** POST confirmado, mas a releitura falhou/está incoerente — Atualizar. */
     refreshPending: boolean;
   } | null>(null);
-  // Run ativo no contador Pulse deste posto — decide o card "Agora nesta bancada".
+  // Run ativo no contador Pulse deste posto — sobe a OP correspondente no topo da lista.
   const [counterRun, setCounterRun] = useState<ProductionRunSnapshot | null>(null);
   const [runRealtimeEvent, setRunRealtimeEvent] = useState<MachineLoadRealtimeEvent | null>(null);
   const [feedbackUpdatedSignal, setFeedbackUpdatedSignal] = useState(0);
@@ -367,23 +364,6 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     [workCenter, payload.selected.work_center, payload.selected.items],
   );
 
-  const activeEntry = useMemo<QueueEntry | null>(() => {
-    if (items.length === 0) return null;
-    // Regra: "Agora nesta bancada" é sempre a operação do run ativo no
-    // contador (Pulse/MES). Sem run ativo na fila, cai no topo da fila —
-    // cronômetro aberto no TOTVS não disputa o destaque do cockpit.
-    const counterOperation = counterRun
-      ? items.find(
-          (item) =>
-            item.production_order === counterRun.productionOrder &&
-            item.operation_code === counterRun.operationCode,
-        )
-      : null;
-    const operation = counterOperation ?? items[0]!;
-    const position = items.findIndex((item) => operationKey(item) === operationKey(operation)) + 1;
-    return { operation, position: Math.max(1, position) };
-  }, [items, counterRun]);
-
   const orphanRun = useMemo(() => {
     if (!counterRun) return null;
     const inQueue = items.some(
@@ -394,17 +374,32 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     return inQueue ? null : counterRun;
   }, [counterRun, items]);
 
-  const upcomingEntries = useMemo(() => {
+  /** Fila única: OP do contador (se na publicação) sobe ao topo; demais na ordem publicada. */
+  const listedEntries = useMemo(() => {
     const term = queueQuery.trim().toLowerCase();
-    const activeKey = activeEntry ? operationKey(activeEntry.operation) : null;
-    return items
-      .map((operation) => {
-        const position = items.findIndex((item) => operationKey(item) === operationKey(operation)) + 1;
-        return { operation, position: Math.max(1, position) };
-      })
-      .filter(({ operation }) => operationKey(operation) !== activeKey)
-      .filter(({ operation }) => matchesQueueSearch(operation, term));
-  }, [items, queueQuery, activeEntry]);
+    const filtered = items.filter((operation) => matchesQueueSearch(operation, term));
+    const counterKey =
+      counterRun != null
+        ? `${counterRun.productionOrder}|${counterRun.operationCode}`
+        : null;
+    const ordered =
+      counterKey == null
+        ? filtered
+        : [
+            ...filtered.filter((item) => operationKey(item) === counterKey),
+            ...filtered.filter((item) => operationKey(item) !== counterKey),
+          ];
+    return ordered.map((operation) => {
+      const position =
+        items.findIndex((item) => operationKey(item) === operationKey(operation)) + 1;
+      return { operation, position: Math.max(1, position) };
+    });
+  }, [items, queueQuery, counterRun]);
+
+  const counterActiveKey =
+    counterRun != null
+      ? `${counterRun.productionOrder}|${counterRun.operationCode}`
+      : null;
 
   const selectedOperation = useMemo(() => {
     if (view.kind !== "operation") return null;
@@ -764,81 +759,67 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
               : "Nenhuma ordem pendente para este posto."}
           </p>
         ) : (
-          <>
-            {activeEntry && workCenter ? (
-              <ActiveNowCard
-                entry={activeEntry}
-                token={token}
-                branch={branch}
-                workCenter={workCenter}
-                counterActive={Boolean(
-                  counterRun &&
-                    counterRun.productionOrder === activeEntry.operation.production_order &&
-                    counterRun.operationCode === activeEntry.operation.operation_code,
-                )}
-                runUpdatedSignal={runUpdatedSignal}
-                runRealtimeEvent={runRealtimeEvent}
-                realtimeConnected={connected}
-                onOpenVisual={setVisualTarget}
-                onHandoffCompleted={handleHandoffCompleted}
-                onOpenDetail={() =>
-                  openOperation(
-                    activeEntry.operation.production_order,
-                    activeEntry.operation.operation_code,
-                  )
-                }
-              />
-            ) : null}
-
-            <section className="pcp-pub__upcoming" aria-labelledby="pcp-pub-upcoming-title">
-              <div className="pcp-pub__upcoming-head">
-                <div className="pcp-pub__upcoming-titles">
-                  <h3 id="pcp-pub-upcoming-title">Próximas operações</h3>
-                  <span className="pcp-pub__upcoming-count">
-                    {upcomingEntries.length} na fila
-                  </span>
-                </div>
-                <label className="pcp-pub__search-field pcp-pub__search-field--inline">
-                  <Search className="pcp-pub__search-icon" size={18} strokeWidth={2} aria-hidden="true" />
-                  <input
-                    className="pcp-pub__search"
-                    type="search"
-                    value={queueQuery}
-                    onChange={(event) => setQueueQuery(event.target.value)}
-                    placeholder="Buscar OP ou PA"
-                    aria-label="Buscar operação por OP ou PA"
-                    autoComplete="off"
-                    enterKeyHint="search"
-                  />
-                </label>
+          <section className="pcp-pub__upcoming" aria-labelledby="pcp-pub-upcoming-title">
+            <div className="pcp-pub__upcoming-head">
+              <div className="pcp-pub__upcoming-titles">
+                <h3 id="pcp-pub-upcoming-title">Fila de operações</h3>
+                <span className="pcp-pub__upcoming-count">
+                  {listedEntries.length} na fila
+                </span>
               </div>
+              <label className="pcp-pub__search-field pcp-pub__search-field--inline">
+                <Search className="pcp-pub__search-icon" size={18} strokeWidth={2} aria-hidden="true" />
+                <input
+                  className="pcp-pub__search"
+                  type="search"
+                  value={queueQuery}
+                  onChange={(event) => setQueueQuery(event.target.value)}
+                  placeholder="Buscar OP ou PA"
+                  aria-label="Buscar operação por OP ou PA"
+                  autoComplete="off"
+                  enterKeyHint="search"
+                />
+              </label>
+            </div>
 
-              {upcomingEntries.length === 0 ? (
-                <p className="pcp-pub__empty pcp-pub__empty--soft">
-                  {queueQuery.trim()
-                    ? `Nenhuma operação encontrada para “${queueQuery.trim()}”.`
-                    : "Não há outras operações na fila deste posto."}
-                </p>
-              ) : (
-                <div className="pcp-pub__queue-table-wrap">
-                  <table className="pcp-pub__queue-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">PA</th>
-                        <th scope="col">OP / Produto</th>
-                        <th scope="col">Operação</th>
-                        <th scope="col">Pendente</th>
-                        <th scope="col">Programada</th>
-                        <th scope="col">Entrega</th>
-                        <th scope="col">Consulta</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {upcomingEntries.map((entry, index) => (
+            {listedEntries.length === 0 ? (
+              <p className="pcp-pub__empty pcp-pub__empty--soft">
+                {queueQuery.trim()
+                  ? `Nenhuma operação encontrada para “${queueQuery.trim()}”.`
+                  : "Não há operações na fila deste posto."}
+              </p>
+            ) : (
+              <div className="pcp-pub__queue-table-wrap">
+                <table className="pcp-pub__queue-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">PA</th>
+                      <th scope="col">OP / Produto</th>
+                      <th scope="col">Operação</th>
+                      <th scope="col">Pendente</th>
+                      <th scope="col">Programada</th>
+                      <th scope="col">Entrega</th>
+                      <th scope="col">Consulta</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {listedEntries.map((entry, index) => {
+                      const isActive =
+                        counterActiveKey != null &&
+                        operationKey(entry.operation) === counterActiveKey;
+                      const activeOnTop =
+                        counterActiveKey != null &&
+                        listedEntries[0] != null &&
+                        operationKey(listedEntries[0].operation) ===
+                          counterActiveKey;
+                      const isNext =
+                        !isActive && index === (activeOnTop ? 1 : 0);
+                      return (
                         <UpcomingRow
                           key={operationKey(entry.operation)}
                           entry={entry}
-                          isNext={index === 0}
+                          isActive={isActive}
+                          isNext={isNext}
                           onOpenDetail={() =>
                             openOperation(
                               entry.operation.production_order,
@@ -846,13 +827,13 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
                             )
                           }
                         />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
-          </>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
         )}
 
         <footer className="pcp-pub__footer">
@@ -1039,177 +1020,14 @@ function WorkCenterPicker({ branch, workCenters, onSelect }: PickerProps) {
   );
 }
 
-function ActiveNowCard({
-  entry,
-  token,
-  branch,
-  workCenter,
-  counterActive = false,
-  runUpdatedSignal,
-  runRealtimeEvent,
-  realtimeConnected,
-  onOpenVisual,
-  onOpenDetail,
-  onHandoffCompleted,
-}: {
-  entry: QueueEntry;
-  token: string;
-  branch: string;
-  workCenter: string;
-  counterActive?: boolean;
-  runUpdatedSignal: number;
-  runRealtimeEvent: MachineLoadRealtimeEvent | null;
-  realtimeConnected: boolean;
-  onOpenVisual: (target: VisualTarget) => void;
-  onOpenDetail: () => void;
-  /** E2: troca guiada confirmada — o cockpit reconcilia e navega. */
-  onHandoffCompleted?: (result: RunHandoffResult) => void;
-}) {
-  const { operation } = entry;
-  const baseStatus = resolveStatus(operation);
-  // Ativa no contador mesmo sem apontamento TOTVS em aberto: ainda é a
-  // operação em produção nesta bancada.
-  const status: StatusView =
-    counterActive && baseStatus.tone !== "running"
-      ? {
-          tone: "running",
-          label: "Em produção",
-          operatorNote: baseStatus.operatorNote ?? "Contagem ativa neste posto",
-        }
-      : baseStatus;
-  const pendingQty = operationPendingQty(operation);
-  const { paCode, productCode, has3dModel, canOpenVisual, visualLabel, displayProductCode } =
-    resolveVisualMeta(operation);
-
-  const openFromCard = (event: MouseEvent<HTMLElement>) => {
-    if ((event.target as HTMLElement).closest("button, input, form, .pcp-pub__run")) return;
-    onOpenDetail();
-  };
-
-  const scheduled =
-    operation.scheduled_start_time
-      ? `${formatDate(operation.scheduled_date)} ${operation.scheduled_start_time}`
-      : formatDate(operation.scheduled_date);
-
-  return (
-    <section className="pcp-pub__now" aria-labelledby="pcp-pub-now-title">
-      <div className="pcp-pub__now-head">
-        <h3 id="pcp-pub-now-title">Agora nesta bancada</h3>
-        <span className={`pcp-pub__badge pcp-pub__badge--${status.tone}`}>
-          {status.tone === "running" ? (
-            <span className="pcp-pub__badge-dot" aria-hidden="true" />
-          ) : null}
-          {status.label}
-        </span>
-      </div>
-
-      <article
-        className={`pcp-pub__now-card pcp-pub__now-card--${status.tone}`}
-        onClick={openFromCard}
-      >
-        <div className="pcp-pub__now-main">
-          <div className="pcp-pub__now-identity">
-            <div className="pcp-pub__now-order">
-              <strong>{operation.production_order}</strong>
-              <CopyValueButton value={operation.production_order} label="Copiar OP" />
-            </div>
-            <p className="pcp-pub__now-product">
-              <strong className={paCode ? "pcp-pub__product-code--pa" : undefined}>
-                {displayProductCode}
-              </strong>{" "}
-              {operation.product_description}
-            </p>
-          </div>
-
-          <div className="pcp-pub__now-qty" aria-label="Quantidade pendente">
-            <span className="pcp-pub__now-qty-label">Quantidade pendente</span>
-            <strong className="pcp-pub__now-qty-value">
-              {formatQty(pendingQty)} {formatUnit(operation.unit, pendingQty)}
-            </strong>
-          </div>
-        </div>
-
-        <dl className="pcp-pub__now-facts">
-          <div>
-            <dt>Operação</dt>
-            <dd>
-              {operation.operation_code} · {operation.operation_description}
-            </dd>
-          </div>
-          <div>
-            <dt>Ferramenta</dt>
-            <dd>{operation.tool || "—"}</dd>
-          </div>
-          <div>
-            <dt>Programada</dt>
-            <dd>{scheduled}</dd>
-          </div>
-          <div>
-            <dt>Entrega</dt>
-            <dd>{formatDate(operation.pa_due_date)}</dd>
-          </div>
-        </dl>
-
-        <div className="pcp-pub__now-foot">
-          <div className="pcp-pub__now-operator">
-            <span className="pcp-pub__now-operator-avatar" aria-hidden="true">
-              <User size={18} strokeWidth={2} />
-            </span>
-            <div>
-              <p className="pcp-pub__now-operator-name">
-                {operation.active_operator_name?.trim() || "Sem operador apontado"}
-              </p>
-              <p className="pcp-pub__now-operator-note">
-                {status.operatorNote ||
-                  (status.tone === "running" ? "Em produção neste posto" : "Próxima da fila")}
-              </p>
-            </div>
-          </div>
-
-          <div className="pcp-pub__now-actions">
-            <button type="button" className="pcp-pub__btn pcp-pub__btn--ghost" onClick={onOpenDetail}>
-              Detalhes da OP
-            </button>
-            {canOpenVisual ? (
-              <button
-                type="button"
-                className="pcp-pub__btn pcp-pub__btn--primary"
-                onClick={() =>
-                  onOpenVisual({
-                    paCode: paCode || null,
-                    productCode: productCode || null,
-                    has3dModel,
-                  })
-                }
-              >
-                <Eye size={18} strokeWidth={2} aria-hidden="true" />
-                {visualLabel}
-              </button>
-            ) : null}
-          </div>
-        </div>
-
-        <ProductionRunControls
-          token={token}
-          branch={branch}
-          workCenter={workCenter}
-          operation={operation}
-          runUpdatedSignal={runUpdatedSignal}
-          runRealtimeEvent={runRealtimeEvent}
-          realtimeConnected={realtimeConnected}
-          onHandoffCompleted={onHandoffCompleted}
-        />
-      </article>
-    </section>
-  );
-}
-
 function UpcomingRow({
   entry,
+  isActive,
   isNext,
   onOpenDetail,
 }: {
   entry: QueueEntry;
+  isActive: boolean;
   isNext: boolean;
   onOpenDetail: () => void;
 }) {
@@ -1221,6 +1039,7 @@ function UpcomingRow({
     <tr
       className={[
         "pcp-pub__queue-row",
+        isActive ? "pcp-pub__queue-row--running" : "",
         isNext ? "pcp-pub__queue-row--next" : "",
       ]
         .filter(Boolean)
@@ -1236,7 +1055,13 @@ function UpcomingRow({
         >
           {displayProductCode || "—"}
         </span>
-        {isNext ? <span className="pcp-pub__queue-seq-tag">Próxima</span> : null}
+        {isActive ? (
+          <span className="pcp-pub__queue-seq-tag pcp-pub__queue-seq-tag--running">
+            Em produção
+          </span>
+        ) : isNext ? (
+          <span className="pcp-pub__queue-seq-tag">Próxima</span>
+        ) : null}
       </td>
       <td>
         <div className="pcp-pub__queue-op">
