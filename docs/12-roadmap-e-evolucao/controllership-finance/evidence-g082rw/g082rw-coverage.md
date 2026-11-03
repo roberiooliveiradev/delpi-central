@@ -37,5 +37,5 @@ D1 e D2 registrados e tratados (fix_lines + SUPERSEDED). Live divergences pós-c
 
 - 571 itens UNVERIFIED = afirmações operacionais/mecânicas sem autoridade conclusiva — PENDING de homologação, não aprovadas.
 - "Zero stale" = zero superado **identificado** na leitura claim-level; o adversarial prova detecção nos 15 cenários controlados, não prova universal.
-- Corpus produtivo `1fd4c8b0` segue com D1/D2 não corrigidos — a república em produção exige deploy do manifest + ingestão no banco produtivo (pendência operacional registrada).
+- Corpus produtivo `9b2f318f` (2.207/88) publicado após deploy; resíduo declarado: menções datadas a `PENDING_CONTRACT`/`18 tools` em registros datados (HISTORICAL_ONLY) — avaliáveis para segregação futura.
 - Homologação conversacional: **TEST_NOT_RUN** (canal ChatGPT oficial; protocolo §14.6).

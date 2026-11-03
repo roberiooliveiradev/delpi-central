@@ -794,7 +794,7 @@ Todos reexaminados statement a statement: 1.486 continham afirmações invisíve
 
 - **D1** doc-100 «R01–R15 sem contrato (PENDING_CONTRACT)» — `fix_lines`: linha reescrita com marcação temporal + estado vigente; original SUPERSEDED.
 - **D2** doc-118 «MCP 18 tools / 52 fontes / 1.298 itens» — `fix_lines` idem.
-Ambas no `DIVERGENCE_REGISTRY` emitido em `g082rw-divergences.jsonl` com risco/decisão/evidência. Corpus local `84e92712` (2.207/88) publicado com as correções; **república produtiva pendente** (exige deploy + ingestão no banco produtivo).
+Ambas no `DIVERGENCE_REGISTRY` emitido em `g082rw-divergences.jsonl` com risco/decisão/evidência. Corpus local `84e92712` e **corpus produtivo `9b2f318f`** (2.207/88) publicados via `corpus_ingestion --publish` (actor `clara-g082rw02`), após deploy do serviço. Smoke produtivo: `get(SUPERSEDED)`→KnowledgeNotFound; `search «R04 bloqueado»`→ficha-r04 topo; `sources`→88/0 INTERNAL. Resíduo declarado: menções datadas a `PENDING_CONTRACT`/`18 tools` permanecem em registros de pauta/evidência datados (HISTORICAL_ONLY) — candidatas a segregação futura se o PO estender a política a qualquer ocorrência textual.
 
 ### 23.4 Teste adversarial — 16/16
 
