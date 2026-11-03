@@ -2405,3 +2405,31 @@ PRODUCTION_DEPLOY=NOT_PERFORMED — gates: E2E empresarial local
 nao executado; sem evidencia equivalente aceita p/ promocao.
 ROLLBACK_TARGET=711905a17b (pre-REWORK-02) / imagem sha256:7e58f811.
 TASK_STATUS=INCOMPLETE (deploy pendente de gate) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — OFFICIAL-LOCAL-AND-PRODUCTION-DEPLOY-02
+
+TASK=DELIA-C3-UNIFIED-PRESENTATION-OFFICIAL-LOCAL-AND-PRODUCTION-DEPLOY-02
+SOURCE_SHA=d820d34050 (origin/main revalidado — contem REWORK-02).
+
+OFFICIAL LOCAL DEPLOY: delpi-delia-api RECRIADO — mesma imagem
+(infra-delia-api sha256:7e58f811), mesmo env (317 vars preservadas),
+mesma rede infra_delpi-network, restart unless-stopped. Bind-mount
+/app REPONTADO do checkout concorrente sujo para worktree versionado
+limpo /home/analistaptd/delia-deploy-wt (SHA d820d34050). Nenhum
+arquivo de outro agente tocado. Rollback: delpi-delia-api-prev
+preservado (Exited) — docker rm -f atual + renomear prev.
+HEALTH: {"service":"delia-api","status":"available"} interno :8000.
+RENDERER_ACTIVE: OMISSION_MAX_DEPTH presente (3 ocorrencias).
+PORTAL ROUTE: delpi-gateway resolve DNS docker "delia-api" -> novo
+container automatico.
+rw02 removido (temporario proprio). delia-c3-rework-wt removido
+(branch merged; deploy-wt = origem oficial do runtime).
+Business E2E local: TEST_NOT_RUN — sem identidade empresarial
+autorizada; Portal aponta para backend novo, pronto p/ smoke do usuario.
+PRODUCTION_DEPLOY=NOT_PERFORMED — BLOQUEIO PRECISO: nao existe script
+canonico de deploy prod nem acesso SSH ao host produtivo neste ambiente
+(local-first-deploy exige git pull no servidor). Sem evidencia de acesso,
+promocao produtiva nao e executavel pelo executor.
+ROLLBACK_TARGET=d820d34050^..? rollback local = delpi-delia-api-prev /
+checkout anterior; rollback prod = SHA anterior no servidor.
+TASK_STATUS=INCOMPLETE (prod bloqueado por acesso) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
