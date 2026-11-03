@@ -5113,3 +5113,13 @@ HEAD=e22b6de9d0+impl. Doc 222 APPROVE_WITH_CONDITIONS executado:
   goal_understanding) -> owner_query_miss honesto; composicao nao
   disparou nesta execucao — residual de classificacao de goal, nao
   defeito do boundary implementado.
+
+### E4-IMPL — live trace same-session (SHA bce3fbb5ff)
+A03 "compare as duas" com 6 turnos de contexto: goal=compare ->>
+subobjective_decomposition decomposed count=4 ->> subobjective_
+investigation PARTIAL x4 ->> SOURCE_UNAVAILABLE honesto
+(delpi_source_unverified), zero churn. MECANISMO E4 disparou
+corretamente (decompose->fanin); composicao nao rodou porque os
+READs subordinados nao completaram fontes suficientes — residual:
+sub-goals gerados pelo modelo precisam recuperar estrutura como
+no single-read (descobrir+candidato+execute), nao falha do boundary.
