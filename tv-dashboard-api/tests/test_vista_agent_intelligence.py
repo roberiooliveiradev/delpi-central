@@ -330,3 +330,24 @@ def test_continuous_review_always_review_existing():
         "existente" in str(item).lower() and ("novo" in str(item).lower() or "montar" in str(item).lower())
         for item in directives["anti_patterns"]
     )
+
+
+def test_visual_self_review_projected_on_both_transports():
+    """Issue #129 — visual_self_review must reach the specialist via
+    the canonical catalog projection (MCP and GPT Actions), not only
+    exist inside the JSON document."""
+    from tv_app.application.gpt_actions.vista_agent_intelligence_service import (
+        VistaAgentIntelligenceService,
+    )
+
+    doc = VistaAgentIntelligenceService.document()
+    assert doc["visual_self_review"]["principle"] == (
+        "SELF_REVIEW_AFTER_VISUAL_MUTATION"
+    )
+    for transport in ("mcp", "actions"):
+        directives = VistaAgentIntelligenceService.agent_directives(
+            transport=transport
+        )
+        assert directives["visual_self_review"]["principle"] == (
+            "SELF_REVIEW_AFTER_VISUAL_MUTATION"
+        ), transport

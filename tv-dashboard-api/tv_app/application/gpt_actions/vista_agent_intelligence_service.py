@@ -191,6 +191,9 @@ class VistaAgentIntelligenceService:
             # only, never AuthZ/capability/tool authority.
             "character": cls.persona_context(),
             "continuous_review": doc.get("continuous_review") or {},
+            # issue #129 — autorrevisão visual pós-mutação projetada aos
+            # dois transportes (MCP-primary e Actions envelope).
+            "visual_self_review": doc.get("visual_self_review") or {},
             "visual_impact": doc.get("visual_impact") or {},
             "visual_selection": doc.get("visual_selection") or {},
             "composed_visuals": doc.get("composed_visuals") or {},
