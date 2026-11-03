@@ -2092,3 +2092,12 @@ realm local ou testar container delia-t21-main (tem eval env).
 PROXIMO: probe _live_capture("mcp:davi") c/ query "estrutura" ->
 candidate list -> get_product_structure presente? -> se sim, selecao
 LLM errou; se nao, discover-query perdeu intencao.
+
+## T20-SEMANTIC-SEL — probe local 401 (SHA 04ff68659d)
+
+disc_probe.py /tmp: 401 no admin token — a troca
+KEYCLOAK_ADMIN_URL replace(keycloak,delpi-gateway) era heuristic;
+local admin URL/senha diferem. Sync user pode nao existir no realm
+local. ALTERNATIVA SIMPLES: rodar o probe no container delia-t21-main
+(avaliador ja tinha auth funcional) OU ler os invocations gravados no
+runs do turn real b66a63f1 — ja mostrava o que o discover produziu.
