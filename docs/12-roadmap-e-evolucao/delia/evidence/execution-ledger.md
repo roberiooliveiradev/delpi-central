@@ -2153,3 +2153,26 @@ NAO foi selecao (capability correta executou), NAO foi arggen
 FIX canonico: projetar contexto declarado do owner (entity/shape +
 root subject node) em EvidenceFacts e incluir no bloco do juiz —
 generico p/ qualquer resultado enraizado, sem regra por palavra.
+
+## T20-SEMANTIC-SEL — FIX provado (local real-LLM judge)
+
+FIX: EvidenceFacts.result_context — projecao bounded do contrato
+declarado do owner (entity/shape + no raiz root/parent/subject,
+sanitizado, max 12 campos escalares) + incluso no bloco do juiz
+goal_evidence_relevance e no preview de recovery + instrucao
+governada ensina: root binding SO aplica quando contexto nomeia
+raiz concreta e o objetivo pede estrutura/composicao/conteudo dela.
+SEM regra lexical por palavra — generico p/ qualquer resultado
+enraizado (BOM, filhos, membros, itens de pai).
+PROVA (probe real in-container, qwen3:4b):
+- BOM get_product_structure 90260148: irrelevant -> corresponds
+- product_search descricao produto (sibling): corresponds (ok)
+- records off-subject p/ goal estrutura (negativo): irrelevant (ok)
+RED->GREEN: test_rooted_result_projects_result_context +
+test_unrooted_result_has_no_root_context; suites
+evidence_to_answer_isolation(12) + contextual_discovery(71) +
+goal_evidence_relevance + semantic_decision + engine_b_recovery
+(~87) verdes.
+INCIDENTE OPERACIONAL: docker cp em bind-mount sobrescreveu 4
+arquivos do worktree principal; trabalho concorrente recuperado de
+stash@{0} (WIP 08:00:15); zero residuo result_context no worktree.

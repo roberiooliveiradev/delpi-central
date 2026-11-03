@@ -237,6 +237,11 @@ class EvidenceFacts:
     # only for DISCOVERY-class outcomes without business records —
     # capability-surface metadata, never domain facts.
     contract_facts: tuple[str, ...] = ()
+    # Bounded owner-declared result contract — ``entity``/``shape``
+    # plus the subject node the collection is rooted at (e.g. a BOM
+    # ``root`` product). Never a business record, never invented:
+    # only what the owner payload itself declares.
+    result_context: Mapping[str, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -1508,6 +1513,93 @@ def _is_generic_status(text: str) -> bool:
 # ------------------------------------------------------------------
 
 
+_RESULT_CONTEXT_LABEL_KEYS = frozenset({"entity", "shape"})
+_RESULT_CONTEXT_SUBJECT_KEYS = ("root", "parent", "subject")
+_RESULT_CONTEXT_INNER_KEYS = ("data", "result", "payload", "response")
+_RESULT_CONTEXT_LABEL_MAX_CHARS = 64
+_RESULT_CONTEXT_SUBJECT_MAX_FIELDS = 12
+_RESULT_CONTEXT_SUBJECT_STR_MAX_CHARS = 80
+
+
+def _bounded_subject_node(node: object) -> Mapping[str, Any] | None:
+    """Bounded scalar projection of an owner-declared subject node.
+
+    The root/parent record binds *which* business subject the returned
+    collection belongs to — scalar leaves only, sanitized; nested
+    collections stay on the item records themselves.
+    """
+    if not isinstance(node, Mapping):
+        return None
+    bound: dict[str, Any] = {}
+    for key, value in _mapping_items_excluding_control(node)[
+        : _RESULT_CONTEXT_SUBJECT_MAX_FIELDS * 2
+    ]:
+        if len(bound) >= _RESULT_CONTEXT_SUBJECT_MAX_FIELDS:
+            break
+        if isinstance(value, str):
+            text = _redact_text(value)[
+                : _RESULT_CONTEXT_SUBJECT_STR_MAX_CHARS
+            ]
+            if text:
+                bound[key] = text
+        elif isinstance(value, bool):
+            bound[key] = value
+        elif isinstance(value, (int, float)):
+            bound[key] = value
+    return bound or None
+
+
+def _result_contract_context(
+    structured: object,
+) -> Mapping[str, Any] | None:
+    """Bounded owner-declared result contract for judgment context.
+
+    ``entity``/``shape`` labels and the subject node (``root``/
+    ``parent``/``subject``) are capability-level metadata the owner
+    itself publishes — bounded and sanitized, never treated as
+    records and never invented. ``None`` when the owner declares
+    nothing usable.
+    """
+    doc = _unwrap_owner_payload(structured)
+    if not isinstance(doc, Mapping):
+        return None
+    context: dict[str, Any] = {}
+    # Labels may live on the transport wrapper the unwrap step strips
+    # — scan the raw payload first, then the unwrapped document.
+    label_docs = [
+        node
+        for node in (structured, doc)
+        if isinstance(node, Mapping)
+    ]
+    for label_doc in label_docs:
+        for key, value in _mapping_items_excluding_control(label_doc):
+            canon = _canonical_key(key)
+            if canon in context:
+                continue
+            if canon not in _RESULT_CONTEXT_LABEL_KEYS:
+                continue
+            if isinstance(value, str) and value.strip():
+                context[canon] = value.strip()[
+                    : _RESULT_CONTEXT_LABEL_MAX_CHARS
+                ]
+    nodes: list[Mapping[str, Any]] = [doc]
+    for key in _RESULT_CONTEXT_INNER_KEYS:
+        inner = doc.get(key)
+        if isinstance(inner, Mapping):
+            nodes.append(inner)
+    for node in nodes:
+        for label in _RESULT_CONTEXT_SUBJECT_KEYS:
+            subject = _bounded_subject_node(node.get(label))
+            if subject is not None:
+                context[label] = subject
+                break
+        if any(
+            label in context for label in _RESULT_CONTEXT_SUBJECT_KEYS
+        ):
+            break
+    return context or None
+
+
 def outcome_facts(
     outcome: SpecialistOutcome,
     operation_class: SpecialistOperationClass | None = None,
@@ -1529,6 +1621,7 @@ def outcome_facts(
     (synthesis records incl. guidance machinery); when absent, the
     resolver-entity projection is used.
     """
+    result_context = _result_contract_context(outcome.structured)
     envelope = extract_pagination_envelope(outcome.structured)
     if envelope is not None:
         if envelope.has_more is True:
@@ -1555,6 +1648,7 @@ def outcome_facts(
             is_complete=outcome.is_complete,
             coverage_complete=coverage,
             total_count=envelope.total_count,
+            result_context=result_context,
         )
     resolver = (
         record_resolver
@@ -1582,6 +1676,7 @@ def outcome_facts(
         ),
         is_complete=outcome.is_complete,
         contract_facts=contract_facts,
+        result_context=result_context,
     )
 
 

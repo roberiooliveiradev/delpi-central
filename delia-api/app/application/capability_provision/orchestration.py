@@ -11085,6 +11085,12 @@ class OperationalCapabilityOrchestrator:
             "scope_constraints": dict(goal.scope_constraints),
             "records": list(facts.records)[:MAX_RELEVANCE_RECORDS],
         }
+        if facts.result_context:
+            # Bounded owner-declared result contract — lets the judge
+            # see that flat item rows belong to the requested subject
+            # (e.g. hierarchy children of the queried product) instead
+            # of judging orphan rows.
+            block["result_context"] = dict(facts.result_context)
         if requirements is not None:
             declared = {
                 "min_items": requirements.min_items,
@@ -11204,6 +11210,10 @@ class OperationalCapabilityOrchestrator:
             if facts is not None
             else []
         }
+        if facts is not None and facts.result_context:
+            preview_block["result_context"] = dict(
+                facts.result_context
+            )
         feedback_payload: dict[str, Any] = {
             "prior_correspondence": judgment.correspondence,
             "mismatch_hint": (judgment.mismatch_hint or "")[

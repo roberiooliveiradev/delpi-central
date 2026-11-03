@@ -27,6 +27,8 @@ business/entity-resolution payloads keep projecting.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from app.application.capability_provision.orchestration import (
     _activity_outcome_summary,
     _synthesis_records,
@@ -345,3 +347,85 @@ def test_entity_resolution_candidates_still_project():
     facts = _facts(outcome, SpecialistOperationClass.READ)
     assert facts.has_business_evidence is True
     assert len(facts.records) == 2
+
+
+_BOM_STRUCTURED = {
+    "action_id": "get_product_structure",
+    "status": "ok",
+    "entity": "product_structure",
+    "shape": "hierarchy",
+    "projection": "approved_fields",
+    "data": {
+        "root": {
+            "code": "90260148",
+            "description": "CHICOTE DE LIGACAO",
+            "type": "PA",
+            "unit": "MI",
+            "quantity": 1,
+        },
+        "items": [
+            {
+                "code": "50220013",
+                "description": "CB18BRAN-00368/06/15-3100-0000",
+                "type": "PI",
+                "quantity": 2.0,
+                "components": [
+                    {"code": "10030015", "description": "CABO EPR"}
+                ],
+            },
+            {
+                "code": "50220015",
+                "description": "CB18VERM-00318/06/15-3100-0000",
+                "type": "PI",
+                "quantity": 2.0,
+                "components": [],
+            },
+        ],
+        "total": 2,
+    },
+}
+
+
+def test_rooted_result_projects_result_context():
+    """Hierarchy-shaped owner results keep their declared contract —
+    entity/shape and the bound subject node — so downstream semantic
+    judgment can see that the item rows belong to the requested
+    subject (goal-mismatch root cause, DELIA-C3-SEMANTIC-SEL)."""
+    outcome = _outcome(
+        "davi",
+        "execute_delpi_information",
+        "Estrutura carregada.",
+        structured=_BOM_STRUCTURED,
+    )
+    facts = _facts(outcome, SpecialistOperationClass.READ)
+    assert facts.has_business_evidence is True
+    assert len(facts.records) == 2
+    context = facts.result_context
+    assert context is not None
+    assert context.get("entity") == "product_structure"
+    assert context.get("shape") == "hierarchy"
+    root = context.get("root")
+    assert isinstance(root, Mapping)
+    assert root.get("code") == "90260148"
+
+
+def test_unrooted_result_has_no_root_context():
+    """Ordinary paged rows do not invent a root subject — the context
+    may carry declared entity/shape but never a fabricated root."""
+    outcome = _outcome(
+        "davi",
+        "execute_delpi_information",
+        "Registros.",
+        structured={
+            "entity": "product_search",
+            "shape": "paged_list",
+            "data": {
+                "total": 1,
+                "items": [{"code": "X1", "description": "Item A"}],
+            },
+        },
+    )
+    facts = _facts(outcome, SpecialistOperationClass.READ)
+    assert facts.result_context is not None
+    assert facts.result_context.get("entity") == "product_search"
+    assert facts.result_context.get("root") is None
