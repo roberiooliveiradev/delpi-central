@@ -129,9 +129,10 @@ storage e pede nova matrícula; falha transitória mantém o snapshot local.
 Logout: `DELETE /bench-sessions/current` + limpeza local mesmo se já
 expirada.
 
-Regras de troca: run ativo no posto bloqueia "Trocar operador" (handover
-não pertence à C4); sessão não migra entre CTs — cada posto restaura a
-sua própria.
+Regras de troca: "Trocar operador" encerra a bench-session atual e pede
+a matrícula do próximo — a OP/run em andamento permanece no posto (o
+próximo operador assume a bancada sem Stop). Sessão não migra entre CTs —
+cada posto restaura a sua própria.
 
 Backend: `GET`/`DELETE bench-sessions/current` resolvem o token
 persistido (hash + expiração + não encerrada) e devolvem

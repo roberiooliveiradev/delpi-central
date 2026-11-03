@@ -51,7 +51,6 @@ import {
   OperatorSessionChip,
   OperatorSessionProvider,
 } from "./OperatorSessionProvider";
-import { shouldBlockOperatorSwitch } from "./operatorSession.ts";
 import { useOperatorSession } from "./OperatorSessionContext.ts";
 import {
   usePublicMachineLoadRealtime,
@@ -664,7 +663,6 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           realtimeConnected={connected}
           feedbackUpdatedSignal={feedbackUpdatedSignal}
           feedbackRealtimeEvent={feedbackRealtimeEvent}
-          hasActiveRun={shouldBlockOperatorSwitch(counterRun)}
           onHandoffCompleted={handleHandoffCompleted}
           onBack={openQueue}
           onPrevious={
@@ -734,9 +732,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             </div>
             {shiftMetrics}
             <div className="pcp-pub__hero-aside">
-              <OperatorSessionChip
-                hasActiveRun={shouldBlockOperatorSwitch(counterRun)}
-              />
+              <OperatorSessionChip />
               <span
                 className={`pcp-pub__live ${connected ? "pcp-pub__live--on" : "pcp-pub__live--off"}`}
                 title={
@@ -1269,8 +1265,8 @@ function DowntimeItemsModal({
 }
 
 /** Run aberto cuja OP saiu da fila publicada (apontada/retirada no TOTVS).
- * Sem este card o run ficaria invisível e bloquearia a troca de operador —
- * aqui o posto sempre consegue encerrar a produção órfã. */
+ * Sem este card o run ficaria invisível; aqui o posto consegue encerrar a
+ * produção órfã. */
 function OrphanRunCard({
   run,
   token,
@@ -1385,7 +1381,7 @@ function OrphanRunCard({
           </div>
         </div>
         <p className="pcp-pub__run-note">
-          Esta OP saiu da fila deste posto. Encerre a produção para liberar a troca de operador.
+          Esta OP saiu da fila deste posto. Encerre a produção para liberar o posto.
         </p>
         {handoffPending ? (
           <p className="pcp-pub__run-note">

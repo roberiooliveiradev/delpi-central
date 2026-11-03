@@ -3427,25 +3427,6 @@ button.pcp-pub-timeline__body--action:focus-visible {
   background: rgba(255, 255, 255, 0.18);
 }
 
-.pcp-pub__operator-blocked {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  z-index: 5;
-  width: 260px;
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-size: 0.78rem;
-  font-weight: 500;
-  line-height: 1.35;
-  text-align: left;
-  color: var(--pcp-text);
-  background: var(--pcp-surface);
-  border: 1px solid var(--pcp-border);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-}
-
 /* No detalhe (fundo claro do brandbar), o chip usa tokens padrão. */
 .pcp-pub__brandbar .pcp-pub__operator {
   flex-shrink: 0;

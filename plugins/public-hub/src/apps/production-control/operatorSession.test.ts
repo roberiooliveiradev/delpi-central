@@ -6,7 +6,6 @@ import {
   normalizeRegistration,
   readStoredSession,
   sessionStorageKey,
-  shouldBlockOperatorSwitch,
   storeSession,
 } from "./operatorSession.ts";
 
@@ -40,14 +39,6 @@ describe("normalizeRegistration", () => {
     assert.equal(normalizeRegistration("   "), null);
     assert.equal(normalizeRegistration("1".repeat(31)), null);
     assert.equal(normalizeRegistration("1".repeat(30)), "1".repeat(30));
-  });
-});
-
-describe("shouldBlockOperatorSwitch", () => {
-  it("bloqueia só com run ativo sem downtime", () => {
-    assert.equal(shouldBlockOperatorSwitch(null), false);
-    assert.equal(shouldBlockOperatorSwitch({}), true);
-    assert.equal(shouldBlockOperatorSwitch({ downtime: { id: "d1" } }), false);
   });
 });
 

@@ -166,12 +166,11 @@ export function OperatorSessionProvider({
 
 /**
  * Chip de identidade no hero do cockpit: nome oficial + matrícula, ou o
- * acionador de identificação. hasActiveRun bloqueia a troca enquanto há
- * produção em andamento no posto (handover não pertence à C4).
+ * acionador de identificação. Troca de operador é sempre permitida — a OP
+ * em andamento permanece no posto; o próximo login assume a bancada.
  */
-export function OperatorSessionChip({ hasActiveRun }: { hasActiveRun: boolean }) {
+export function OperatorSessionChip() {
   const { session, status, logout, openIdentify } = useOperatorSession();
-  const [blocked, setBlocked] = useState(false);
   const [busy, setBusy] = useState(false);
 
   if (status === "restoring") {
@@ -197,11 +196,6 @@ export function OperatorSessionChip({ hasActiveRun }: { hasActiveRun: boolean })
   }
 
   const requestSwitch = async () => {
-    if (hasActiveRun) {
-      setBlocked(true);
-      return;
-    }
-    setBlocked(false);
     setBusy(true);
     try {
       await logout();
@@ -228,12 +222,6 @@ export function OperatorSessionChip({ hasActiveRun }: { hasActiveRun: boolean })
       >
         <X size={14} aria-hidden="true" />
       </button>
-      {blocked ? (
-        <p className="pcp-pub__operator-blocked" role="status">
-          Existe uma produção em andamento neste posto. Encerre a produção antes
-          de trocar o operador.
-        </p>
-      ) : null}
     </div>
   );
 }

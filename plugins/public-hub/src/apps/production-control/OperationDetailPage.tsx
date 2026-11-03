@@ -48,7 +48,6 @@ type Props = {
   realtimeConnected: boolean;
   feedbackUpdatedSignal: number;
   feedbackRealtimeEvent: MachineLoadRealtimeEvent | null;
-  hasActiveRun: boolean;
   /** E2: troca guiada confirmada — o cockpit reconcilia e navega. */
   onHandoffCompleted?: (result: RunHandoffResult) => void;
   onBack: () => void;
@@ -74,7 +73,6 @@ export function OperationDetailPage({
   realtimeConnected,
   feedbackUpdatedSignal,
   feedbackRealtimeEvent,
-  hasActiveRun,
   onHandoffCompleted,
   onBack,
   onPrevious,
@@ -157,7 +155,7 @@ export function OperationDetailPage({
         }
         actions={
           <>
-            <OperatorSessionChip hasActiveRun={hasActiveRun} />
+            <OperatorSessionChip />
             <nav className="pcp-pub__queue-nav" aria-label="Navegação na fila">
             <button
               type="button"

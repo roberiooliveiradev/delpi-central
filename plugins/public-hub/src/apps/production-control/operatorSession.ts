@@ -66,14 +66,3 @@ export function identifyErrorMessage(err: unknown): string {
   }
   return "Não foi possível validar a matrícula no momento. Tente novamente.";
 }
-
-/**
- * Troca de operador só é bloqueada enquanto a produção está contando.
- * Parada aberta (automática/pausa), inclusive sem motivo, não impede
- * outro operador de entrar no posto.
- */
-export function shouldBlockOperatorSwitch(
-  activeRun: { downtime?: unknown } | null | undefined,
-): boolean {
-  return Boolean(activeRun) && !activeRun?.downtime;
-}
