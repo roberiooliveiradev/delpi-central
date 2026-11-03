@@ -77,7 +77,10 @@ def propose_arguments(
         OpenAIChatModel(model, provider=provider),
         model_settings=ModelSettings(max_tokens=2048),
         output_type=args_model,
-        system_prompt=(
+        # ``instructions=``: delivered on the new ModelRequest even if
+        # a history is ever attached — ``system_prompt`` would be
+        # silently dropped by pydantic-ai in that case.
+        instructions=(
             "You produce arguments for one approved capability call. "
             "Return ONLY the argument values themselves — never "
             "explanations, comments or JSON-encoded strings inside "

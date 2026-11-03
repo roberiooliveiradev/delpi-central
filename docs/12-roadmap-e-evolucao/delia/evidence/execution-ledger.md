@@ -4966,3 +4966,96 @@ FINISH_CONTRACT=G01–G12 mandatory real local Qwen3/Ollama + Pydantic AI + Lang
 PROVEN_EVIDENCE=prior A01 GROUNDED; A02 schema retries/504; B01 VISTA AuthZ; framework prompt/history wire root cause PENDING, model two-full-tree comparison TEST_NOT_RUN until executor runs it. Cannot mark PASS from docs, one tree refusal or unit-only tests.
 CLEANUP=owner+consumers+contract mapped KEEP/SIMPLIFY/REPLACE/REMOVE, actual REMOVED_SYMBOLS/LOC/NEW_LOC; framework feature native only within infrastructure; existing legitimate safety/owners preserved.
 NEXT=execute integrated task against reanchored HEAD with scoped architectural approval if and only if required; no production deployment or unilateral acceptance.
+
+## PLAN-221-R1 EXECUTION — E1 fix + real E2E evidence (2026-11-03)
+
+TASK=DELIA-C3-FRAMEWORK-NATIVE-CONTEXT-AND-MULTIEVIDENCE-ENDTOEND-DELIVERY-01.
+HEAD evaluado=442b23e1f0. pydantic-ai 2.50.0, langgraph 1.2.16,
+qwen3:4b-instruct-2507-q4_K_M real, user@local.com auth real.
+
+### E0 — baseline e causa-raiz (PROVEN wire-level)
+- pydantic_ai_adapter.invoke: Agent(system_prompt=...) + message_history
+  nao-vazio => outbound NAO contem SystemPromptPart (verificado com
+  FunctionModel na versao instalada): com prior_turns o modelo perdia
+  integralmente a instrucao de stage+schema => invalid_structured_output
+  churn (ate 6 retries, ~130s+, nginx 504). Sem history, SystemPromptPart
+  era emitido corretamente => falha acompanha presence de prior_context.
+- instructions= coloca ModelRequest.instructions no request novo
+  INDEPENDENTE de historico (verificado mesmo probe). ReinjectSystemPrompt
+  nao existe em 2.50.0; history_processors privado.
+- Simbolos E0.S2: ConversationContextTurn (9 consumidores: contracts,
+  invoke_model, capability_attempt, handle_interactive_turn, orchestration,
+  governed_stage_gates, langgraph_engine, interaction_routes) — KEEP;
+  ModelInvocationRequest.prior_context — KEEP (boundary); context_budget
+  helpers — KEEP; montagem ModelRequest/Response no adapter — SIMPLIFY
+  (mecanica de protocolo; ja' minimal, framework nao oferece converter
+  semantico que preserve tags trusted/untrusted).
+
+### E1 — implementacao (FIX-1A)
+- pydantic_ai_adapter.py: system_prompt= -> instructions= (mesmo
+  conteudo, entrega garantida com/sem historico). pydantic_arggen.py:
+  idem por consistencia de contrato.
+- ADAPTER SUITE: 47 pass; regression lote: 239 pass/0 fail.
+- LIVE E2E (user@local.com, DAVI real, mesmo SHA):
+  A01 "estrutura 90260147" sem ctx: GROUNDED ~20s.
+  A02 "estrutura 90260148" COM prior_turns: todos stages ok 1a tentativa
+  (admission 30.5s, turn_goal 6.6s, select 4.7/3.8s...) => 200/59s,
+  CLARIFICATION_REQUIRED (candidate token) — antes: 504 c/ ~6 retries.
+  A02b confirmacao: GROUNDED estrutura 90260148 via discover+execute
+  (17.6s). A03 "compare as duas": goal=compare -> teo.analyze
+  (ANALYSIS) -> skip_comparison_declared -> foreign davi.discover ->
+  args missing -> clarificacao honesta (40s, zero retries).
+- EVIDENCIA: fragilidade de contexto era instrucao perdida no wire,
+  nao tamanho/formato de historico. CAUSA-RAIZ FECHADA p/ familia A.
+
+### E4-G06 — oraculo de comparacao (mandatorio, executado)
+- Ambas estruturas reais extraidas (DAVI). Oraculo deterministico:
+  comuns={50220013,10030015,10080031} qtd identicas; exclusivos
+  147={50220014,10030019}; 148={50220015,10030012}; 10080031 repete.
+- Qwen3 c/ AMBAS arvores (1249->800 tok, 25s): comparou com acertos
+  (comuns 50220013/10080031, exclusivos 50220014/50220015, hierarquia)
+  mas ERROU: 10030012 como "em ambas"; omitiu 10030015 comum.
+  => modelo compara PARCIALMENTE: proposta util + validacao
+  deterministica obrigatoria. Sem fabricacao massiva mas sem precisao
+  suficiente p/ FACT direto.
+
+### E4 — CONTRATO READY-TO-APPROVE (gate coordenacao)
+Proposta: "multi-evidence-composition-proposal-v1"
+- INPUT: colecao tipada de EvidenceFacts verificadas (refs+provenance+
+  scope+hierarquia+unidades+cardinalidade+completude+TTL) reunidas de
+  subobjetivos concluidos (LangGraph fan-in existente).
+- STAGE: nova proposta tipada via InvokeModel/ModelInvocationPort —
+  "compare_proposal": mapeamentos candidatos item-a-item, diferencas
+  propostas, referencia de evidencia por claim, incertezas, limitacoes.
+- VALIDACAO deterministica (extensao _compare_records/verifier): cada
+  diferenca afirmada deve ter ref owner-backed; escopos/unidades nao
+  equivalentes => insuficiencia; ids/codes verbatim; proposta nunca vira
+  FACT (ADR 58 §6.145 preservado — sem prosa factual modelada).
+- OUTCOME: resposta factual renderizada por contrato existente +
+  limitacoes explicitas.
+- OWNER: DELIA orchestration (composicao sobre evidencia ja' legitimamente
+  obtida); NAO substitui vista.analyze (analytics owner) nem shadow.
+- BLOCKER: requer aprovacao de coordenacao (novo contrato governado).
+  Implementacao NAO iniciada nesta sessao — ARCHITECTURE_DECISION_REQUIRED.
+
+### E3 — deadline/cancelamento
+- Churn eliminado na fonte (instrucao); TurnDeadline+LLM_CALL_MAX_ATTEMPTS
+  governam retries bounded. Residual honesto: sem cancelamento de
+  requisicao in-flight no disconnect do cliente — execucao segue ate
+  terminal bounded; nginx 504 corta a resposta, nao o trabalho (documentado).
+
+### E5 — continuidade cross-turn (demonstrado live)
+- prior_turns client-carried resolveu referencias ("o produto 90260148",
+  confirmacao de candidato); evidencia anterior NAO e' rebatida como FACT
+  (contrato epistemico correto); nova leitura via discovery — legitimo.
+
+### GATES STATUS
+G01 PASS (auth real) | G02 PASS (wire provado) | G03 PASS (2 estruturas
+GROUNDED) | G04 PARTIAL (multi-turn fluiu; A03=clarificacao honesta,
+nao comparacao) | G05 TEST_NOT_RUN | G06 PASS-executado (parcial: modelo
+impreciso, validacao necessaria) | G07 BLOCKED-ADR (composicao gate) |
+G08 PASS (sem retries/504 pós-fix) | G09 PASS (ctx sem leak; admissibility)
+| G10 PARTIAL (instructions framework-native; sem novos planners) |
+G11 PASS (239/0) | G12 PARTIAL (estruturas corretas; comparacao final
+depende do contrato E4 aprovado).
+BLOCKING p/ FUNCTIONAL_ACCEPTANCE: G04/G05/G07/G12 dependem do E4-ADR.

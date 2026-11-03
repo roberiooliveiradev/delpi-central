@@ -175,7 +175,14 @@ class PydanticAiModelInvocationAdapter:
             float(request.timeout_seconds), float(self._timeout_seconds)
         )
         started = time.monotonic()
-        system_prompt = (
+        # ``instructions=`` (not ``system_prompt=``): with a nonempty
+        # ``message_history`` pydantic-ai does NOT emit a
+        # SystemPromptPart, silently dropping the current stage
+        # instruction — observed invalid_structured_output churn on
+        # multi-turn requests. ``instructions`` is set on the new
+        # ModelRequest regardless of history (verified on wire,
+        # pydantic-ai 2.50.0).
+        stage_instructions = (
             (request.instruction_content or "").strip()
             + "\n\n"
             + _structured_output_directive(request)
@@ -183,7 +190,7 @@ class PydanticAiModelInvocationAdapter:
         agent = Agent(
             self._model_impl,
             output_type=_proposal_model(tuple(request.expected_fields)),
-            system_prompt=system_prompt,
+            instructions=stage_instructions,
         )
         history: list[Any] = []
         for turn in request.prior_context:
