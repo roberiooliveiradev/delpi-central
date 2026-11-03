@@ -4432,3 +4432,28 @@ PROD_BUSINESS_E2E: PENDING — sessao empresarial do usuario (BOM 90260148
 no Portal prod) e' o caminho autorizado restante.
 LOCAL: delpi-delia-api oficial em b3478110e4 (mesma revisao da prod).
 TASK_STATUS=DEPLOYED_NOT_HOMOLOGATED · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — UNIFIED-REMARK-REHYPE-01
+
+TASK=DELIA-C3-PRESENTATION-BOUNDARY-UNIFIED-REMARK-REHYPE-01
+SHA=f899f24ebf (pushed main).
+
+CONTRACT FIX: _TECHNICAL_CONTEXT_KEYS isola entity/shape/pagination
+envelope do result_context — metadado de contrato nao vira campo
+empresarial; apenas subjects de negocio (root etc.) compoem o corpo.
+LEAD: structure_found (vocab v7) para shape!=list — estrutura nao e'
+descrita por frase de cardinalidade de registros. Generico, sem
+branch por owner.
+
+FRONTEND: ConversationMarkdown (plugin-ui, owner legitimo) migrado de
+marked.lexer para unified+remark-parse@11+remark-gfm@4 — mdast
+mapeado ao MarkdownToken; renderers/bounds de seguranca/API intactos.
+66/66 vitest + tsc clean. Residual documentado: marked permanece p/
+markdownDocumentModel (consumidores legados).
+
+TESTS: unified 42, cri_unified 21, cri_e3 67, sa25/26 fixadas p/ v7.
+LOCAL: delpi-delia (MFE) rebuild sha256:71a1da7e + delpi-delia-api
+restarted — mesmo codigo f899f24ebf; portal mount ja versionado.
+E2E real: PENDING sessao empresarial do usuario no Portal.
+PRODUCTION_DEPLOY=NO (nao autorizado nesta task)
+TASK_STATUS=COMPLETE(code+tests+local) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
