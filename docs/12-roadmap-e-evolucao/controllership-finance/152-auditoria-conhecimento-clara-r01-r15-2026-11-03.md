@@ -553,3 +553,22 @@ Resposta correta a "O R04 ainda está bloqueado?": **não** — visão operacion
 **Corpus e busca live:** `knowledge(sources)` confirmou corpus `3cdbd991-837a-4ed6-81d4-0b81a304da6a`, 2.215 itens/88 fontes, sem mudança. Probe `knowledge(search,report_id=R04,query="O R04 ainda está bloqueado?",limit=12)` retornou 12 itens: `doc-85` com BLOQUEADO na posição 5, `doc-83` BLOQUEADO na posição 6, enquanto `ficha-r04` vigente aparece nas posições 8/9 e `ficha-index` na 2. Risco `STALE_EVIDENCE` corretamente conhecido e não resolvido no motor; nova política de ranking/vigência permanece `DECISION_REQUIRED` sob owner.
 
 **Veredito GPT REVIEW: `ACCEPT_WITH_RESIDUAL`** para rework de enforcement e testes mutacionais por inspeção de código, sem necessidade de deploy de runtime para alterações apenas em testes/docs. **Resíduos:** (1) 105 respostas conversacionais live `TEST_NOT_RUN`; (2) sete misses previstos (4 golden + 3 negativos) associados à política de ranking; (3) logs originais PG 13/13 não reproduzidos pelo revisor; (4) reconciliação aritmética acima, requer comprovação de contagem observada para certificação. Não declarar homologação semântica de respostas R01–R15 concluída.
+
+
+## 16. GPT — testes autenticados CLARA e backlog de correção (03/11/2026)
+
+**Issue oficial:** https://github.com/roberiooliveiradev/delpi-central/issues/130 — Gate 079, correção da recuperação e validação semântica R01–R15. A issue contém problemas, evidências e DoD completos.
+
+**Execução independente:** 105 perguntas do golden set mais 10 negativas foram submetidas **literalmente** à CLARA via `knowledge(search,report_id,query,limit=12)` nesta conversa. **115/115 chamadas retornaram 12 itens; nenhuma chamada vazia.** Isto mede disponibilidade de busca, não 115 respostas corretas. Muitas respostas da busca contêm `full_match=false` (match parcial OR). Casos de ficha específica ausente no top-12 incluem R11-D7, R13-D6 e R14-D6, em linha com lacunas já conhecidas, sem equivaler isoladamente a FAIL de conteúdo.
+
+**Evidências completas amostradas por `knowledge(get)`:** R01 SE5 vs FK2010/FK7010, R06 `MV_D3ESTOR` condicional, R09 custo `source_missing`, R10 exclusões no use case, R11 SQL OR vs candidatas AND, R15 marcadores técnicos diferentes de aceite humano. Esses seis exemplos possuem fonte vigente recuperável.
+
+**Risco P0 — R04 `STALE_EVIDENCE`:** na pergunta "O R04 ainda está bloqueado?", `doc-85` BLOQUEADO ocupa posição 5 e `doc-83` BLOQUEADO posição 6, enquanto ficha-r04 atual aparece posições 8 e 9. O motor retorna documentos históricos legítimos sem política de precedência aprovada. Não excluir história nem alterar ranking sem `DECISION_REQUIRED`.
+
+**Sete misses de evidência já esperados pela suíte:** R11-D7, R12-D5, R13-D6, R14-D6 e NEG-R12-EXEC, NEG-R12-60, NEG-R11. O fallback pode retornar 12 fragmentos sem recuperar asserção esperada. `full_match=false` não comprova resposta semântica correta.
+
+**Quatro leituras operacionais reais pela CLARA:** R04 2026-09 filial01 1.243 OPs, R04 2026-10 filial01 2.381 OPs, R09 2026-09 filial01 299 âncoras, R12 2026-09 estado técnico disponível. Todos `success=true`; R04/R09 `officialParity=pending`, R12 `officiality=technical_markers`.
+
+**Rigor da validação:** 105 perguntas GOLDEN_SET e 10 NEGATIVE_SET presentes no código. Expectativa estrutural = **101 PASS + 4 MISS** no principal e **7 PASS + 3 MISS** nos negativos. Contagem anterior "100+4" não perfaz 105; observar stdout real antes de afirmar valores obtidos. Acurácia de 115 respostas finais do LLM host: `TEST_NOT_RUN`, pois MCP `knowledge` não gera o texto conversacional externo.
+
+**Direção Gate 079:** corrigir defeitos comprovados; testar, documentar antes/depois e registrar cada alteração na issue #130. Política de ranking/vigência = `DECISION_REQUIRED` sob owner, não autorização implícita para alterar contrato. GPT executará novamente as 115 perguntas diretamente na CLARA após deploy autorizado e publicações.
