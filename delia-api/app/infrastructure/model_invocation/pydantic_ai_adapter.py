@@ -42,25 +42,40 @@ from app.domain.model_invocation.model import (
 
 _logger = logging.getLogger(__name__)
 
-_STRUCTURED_OUTPUT_DIRECTIVE = (
-    "Respond ONLY with the structured output matching the declared "
-    "fields. Use JSON types that match each field (string, number, "
-    "boolean, object, or array). You MAY include \"limitations\": an "
-    "array of short strings describing what could not be verified — "
-    "omit it when the required fields alone answer the schema."
-)
+def _structured_output_directive(request) -> str:
+    """Same required-fields enumeration the legacy JSON-mode directive
+    sent — the model must see the obligated field names explicitly
+    (M6 finding: without it the model omitted required wrappers like
+    "arguments" and emitted surplus keys instead)."""
+    fields = ", ".join(f'"{name}"' for name in request.expected_fields)
+    return (
+        "Respond ONLY with a single JSON object matching the declared "
+        f"fields. Required fields: {fields}. Use JSON types that match "
+        "each field (string, number, boolean, object, or array). "
+        'You MAY include "limitations": an array of short strings '
+        "describing what could not be verified — omit it when the "
+        "required fields alone answer the schema."
+    )
 
 
 def _proposal_model(expected_fields: tuple[str, ...] | list[str]):
-    """Dynamic output model — declared fields optional at the wire,
-    extras allowed (limitations etc.); presence is enforced by the
-    use case's governed validation downstream, mirroring the legacy
-    JSON-mode contract exactly."""
-    fields = {
-        name: (Any | None, None)
+    """Dynamic output model — declared fields REQUIRED at the wire
+    (the governed contract lists them as required), extras allowed
+    for governed surplus keys like "limitations". Companion fields of
+    an "applicable" proposal stay optional so abstention
+    (applicable=false without companion ids) remains legal."""
+    declared = [
+        name
         for name in expected_fields
         if isinstance(name, str) and name
-    }
+    ]
+    abstains = "applicable" in declared
+    fields = {}
+    for name in declared:
+        if abstains and name != "applicable":
+            fields[name] = (Any | None, None)
+        else:
+            fields[name] = (Any | None, ...)
     return create_model(
         "StageProposal", __config__=ConfigDict(extra="allow"), **fields
     )
@@ -163,7 +178,7 @@ class PydanticAiModelInvocationAdapter:
         system_prompt = (
             (request.instruction_content or "").strip()
             + "\n\n"
-            + _STRUCTURED_OUTPUT_DIRECTIVE
+            + _structured_output_directive(request)
         ).strip()
         agent = Agent(
             self._model_impl,
