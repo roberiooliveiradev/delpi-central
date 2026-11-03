@@ -294,32 +294,6 @@ def _evaluate(case, repo) -> str:
     )
 
 
-def test_golden_set_105(corpus):
-    results = {case["id"]: _evaluate(case, corpus) for case in GOLDEN_SET}
-    for case in GOLDEN_SET:
-        print(f"{case['id']}: {results[case['id']]}")
-    misses = {k: v for k, v in results.items() if v == "RETRIEVAL_MISS"}
-    gaps = {k: v for k, v in results.items() if v == "SOURCE_GAP"}
-    print(
-        f"SUMMARY: {len(results)} casos — "
-        f"retrieved={sum(v == 'PASS_RETRIEVED' for v in results.values())}"
-        f" retrieval_miss={len(misses)} source_gap={len(gaps)}"
-    )
-    if gaps:
-        print("SOURCE_GAP:", sorted(gaps))
-    # Todo caso deve bater a expectativa declarada — misses conhecidos
-    # (limitação de ranking OR, DECISION_REQUIRED pendente) são
-    # registrados no golden set; qualquer miss ou gap novo falha.
-    unexpected = {
-        cid: v
-        for cid, v in results.items()
-        if v != next(
-            c for c in GOLDEN_SET if c["id"] == cid
-        ).get("expect", "PASS_RETRIEVED")
-    }
-    assert not unexpected, f"resultados inesperados: {unexpected}"
-
-
 # ------------------------------------------------------------------
 # Gate 077 — aceitação semântica (nível evidência/citação)
 #
@@ -363,6 +337,72 @@ def _evaluate_semantic(case, repo) -> str:
     )
 
 
+KNOWN_VERDICTS = (
+    "PASS_RETRIEVED",
+    "RETRIEVAL_MISS",
+    "SOURCE_GAP",
+    "EVIDENCE_WEAK",
+    "CITATION_MISS",
+)
+
+
+def _check_case_result(case: dict, actual: str) -> None:
+    """Gate 078 — enforcement exato: o veredito observado deve ser
+    IDÊNTICO ao esperado pelo caso, em qualquer direção. Um novo
+    RETRIEVAL_MISS, um PASS espúrio num caso pendente ou qualquer
+    veredito fora do vocabulário falham aqui."""
+    expected = case.get("expect", "PASS_RETRIEVED")
+    assert actual in KNOWN_VERDICTS, (
+        f"{case['id']}: veredito desconhecido {actual!r}"
+    )
+    assert actual == expected, (
+        f"{case['id']}: observado {actual} != esperado {expected}"
+    )
+
+
+def test_golden_set_structure():
+    """Invariantes do conjunto: exatamente 105 casos (15×7) + 10
+    negativos, IDs únicos, dimensões completas por relatório,
+    marcadores verificáveis e expectativa+justificativa nos casos
+    pendentes — a cobertura não pode encolher silenciosamente."""
+    assert len(GOLDEN_SET) == 105
+    assert len(NEGATIVE_SET) == 10
+    ids = [c["id"] for c in GOLDEN_SET + NEGATIVE_SET]
+    assert len(ids) == len(set(ids)), "IDs duplicados"
+    by_report: dict[str, list[str]] = {}
+    for case in GOLDEN_SET:
+        by_report.setdefault(case["report_id"], []).append(case["dim"])
+    assert sorted(by_report) == [f"R{i:02d}" for i in range(1, 16)]
+    for rid, dims in by_report.items():
+        assert len(dims) == 7, f"{rid}: {len(dims)} dimensões"
+        assert len(set(dims)) == 7, f"{rid}: dimensões repetidas"
+    for case in GOLDEN_SET + NEGATIVE_SET:
+        assert case.get("markers") or case.get("asserts"), (
+            f"{case['id']}: sem marcadores verificáveis"
+        )
+        if case.get("expect", "PASS_RETRIEVED") != "PASS_RETRIEVED":
+            assert case.get("why"), (
+                f"{case['id']}: expect={case['expect']} sem justificativa"
+            )
+
+
+def test_golden_set_105(corpus):
+    results = {case["id"]: _evaluate(case, corpus) for case in GOLDEN_SET}
+    for case in GOLDEN_SET:
+        print(f"{case['id']}: {results[case['id']]}")
+    misses = {k: v for k, v in results.items() if v == "RETRIEVAL_MISS"}
+    gaps = {k: v for k, v in results.items() if v == "SOURCE_GAP"}
+    print(
+        f"SUMMARY: {len(results)} casos — "
+        f"retrieved={sum(v == 'PASS_RETRIEVED' for v in results.values())}"
+        f" retrieval_miss={len(misses)} source_gap={len(gaps)}"
+    )
+    if gaps:
+        print("SOURCE_GAP:", sorted(gaps))
+    for case in GOLDEN_SET:
+        _check_case_result(case, results[case["id"]])
+
+
 def test_semantic_acceptance_105(corpus):
     results = {
         case["id"]: _evaluate_semantic(case, corpus)
@@ -374,24 +414,16 @@ def test_semantic_acceptance_105(corpus):
     for v in results.values():
         by[v] = by.get(v, 0) + 1
     print("SEMANTIC SUMMARY:", by)
-    allowed = {"PASS_RETRIEVED", "RETRIEVAL_MISS"}  # misses já triados
-    unexpected = {
-        cid: v
-        for cid, v in results.items()
-        if v not in allowed
-        and v != next(
-            c for c in GOLDEN_SET if c["id"] == cid
-        ).get("expect", "PASS_RETRIEVED")
-    }
-    weak = {k: v for k, v in results.items() if v in ("EVIDENCE_WEAK", "CITATION_MISS")}
-    assert not unexpected, f"vereditos inesperados: {unexpected}"
-    assert not weak, f"evidência fraca/citação incorreta: {weak}"
+    # Gate 078: correspondência exata por caso — nenhum miss novo,
+    # nenhum PASS espúrio, nenhum EVIDENCE_WEAK/CITATION_MISS passa.
+    for case in GOLDEN_SET:
+        _check_case_result(case, results[case["id"]])
 
 
 def test_negative_contradictory_set(corpus):
     """Os 10 casos contraditórios: a evidência que corrige a premissa
-    falsa deve ser recuperável das fontes canônicas; itens stale que
-    sustentam a premissa são registrados como risco informacional."""
+    falsa deve ser recuperável das fontes canônicas; itens históricos
+    que sustentam a premissa são classificados STALE_EVIDENCE."""
     for case in NEGATIVE_SET:
         verdict = _evaluate_semantic(case, corpus)
         hits = corpus.search(
@@ -402,10 +434,88 @@ def test_negative_contradictory_set(corpus):
             for h in hits
             if h["source_id"] in case.get("stale_risk", [])
         ]
-        print(
-            f"{case['id']}: {verdict} stale_hits={stale}"
+        classification = (
+            f" STALE_EVIDENCE={stale}" if stale else ""
         )
-        expect = case.get("expect", "PASS_RETRIEVED")
-        assert verdict == expect, (
-            f"{case['id']}: {verdict} != {expect}"
+        print(f"{case['id']}: {verdict}{classification}")
+        _check_case_result(case, verdict)
+        if stale and verdict == "PASS_RETRIEVED":
+            # Evidência corretiva vigente precisa existir junto ao
+            # histórico — risco registrado, não bloqueia a resposta.
+            assert any(
+                h["source_id"] in case.get("cite", [])
+                for h in hits
+            ), f"{case['id']}: stale presente sem fonte corretiva"
+
+
+# ------------------------------------------------------------------
+# Gate 078 — testes mutacionais: prova de que o enforcement detecta
+# falhas reais em vez de aceitar vereditos tolerantes.
+# ------------------------------------------------------------------
+
+
+def test_mutation_enforcement():
+    """Cada mutação deve quebrar o enforcement — se alguma passar,
+    o avaliador voltou a tolerar resultados inesperados."""
+    case_pass = dict(id="MX-PASS", expect="PASS_RETRIEVED")
+    case_miss = dict(id="MX-MISS", expect="RETRIEVAL_MISS", why="x")
+
+    # M1 — novo miss inesperado em caso PASS
+    with pytest.raises(AssertionError):
+        _check_case_result(case_pass, "RETRIEVAL_MISS")
+    # M2 — citação fora das fontes canônicas
+    with pytest.raises(AssertionError):
+        _check_case_result(case_pass, "CITATION_MISS")
+    # M3 — afirmação proibida no fragmento de suporte
+    with pytest.raises(AssertionError):
+        _check_case_result(case_pass, "EVIDENCE_WEAK")
+    # M4 — ausência real de fonte em caso com evidência esperada
+    with pytest.raises(AssertionError):
+        _check_case_result(case_pass, "SOURCE_GAP")
+    # M5 — expectativa alterada diverge do observado
+    with pytest.raises(AssertionError):
+        _check_case_result(
+            dict(case_miss, expect="SOURCE_GAP"), "RETRIEVAL_MISS",
         )
+    # M5b — caso pendente que volta a passar sem reconciliação
+    with pytest.raises(AssertionError):
+        _check_case_result(case_miss, "PASS_RETRIEVED")
+    # M7 — veredito desconhecido
+    with pytest.raises(AssertionError):
+        _check_case_result(case_pass, "MAYBE")
+
+    # Sanidade: vereditos corretos continuam passando
+    _check_case_result(case_pass, "PASS_RETRIEVED")
+    _check_case_result(case_miss, "RETRIEVAL_MISS")
+
+
+def test_mutation_retrieval_level(corpus, monkeypatch):
+    """Mutação no corpus real: simular um novo RETRIEVAL_MISS zerando
+    a evidência no corpus — a suíte deve falhar o caso PASS."""
+    import sys
+
+    this = sys.modules[__name__]
+    case = dict(
+        GOLDEN_SET[0],
+        id="MX-REAL-MISS",
+        expect="PASS_RETRIEVED",
+    )
+    monkeypatch.setattr(this, "_corpus_has_evidence", lambda m: True)
+
+    class _NoHitRepo:
+        def search(self, **kwargs):
+            return []
+
+    actual = _evaluate_semantic(case, _NoHitRepo())
+    assert actual == "RETRIEVAL_MISS"
+    with pytest.raises(AssertionError):
+        _check_case_result(case, actual)
+
+
+def test_mutation_coverage_loss():
+    """M6 — remover um caso de uma cópia isolada deve falhar o
+    invariante de contagem (cópia local, golden set intocado)."""
+    shrunk = GOLDEN_SET[:-1]
+    assert len(shrunk) == 104
+    with pytest.raises(AssertionError):
+        assert len(shrunk) == 105

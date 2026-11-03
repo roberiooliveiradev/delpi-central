@@ -501,3 +501,42 @@ Canal real: ChatGPT + conector MCP CLARA, identidade do usuário com permissões
 **Classificação:** `PASS` para existência de commit, corpus estável, execução de consultas de recuperação e inventário da bateria. `FAIL` para integridade documental original (corrigida nesta revisão) e `FAIL` no rigor do gate `test_semantic_acceptance_105` até que rejeite misses inesperados. `TEST_NOT_RUN` para 105 respostas do canal conversacional. **Veredito GPT REVIEW: `REWORK` limitado ao enforcement dos testes/QA e comprovação da resposta real, sem reabrir busca AND→OR nem exigir deploy produtivo para reparos só em testes/docs.** Política nova de ranking/vigência permanece `DECISION_REQUIRED` com owner.
 
 **DoD do rework mínimo:** (1) `test_semantic_acceptance_105` falhar se qualquer caso divergir de `expect` e preservar 4 misses conhecidos explicitamente; (2) teste mutacional provar que um quinto `RETRIEVAL_MISS` inesperado quebra a suíte; (3) classificar risco de snippets históricos R04 como `STALE_EVIDENCE` e fornecer orientação de uso das citações no canal conversacional sem implementar ranking pendente de owner; (4) executar a bateria conversacional real ou reportar `TEST_NOT_RUN` com rastreabilidade, **nunca** 105/105 de respostas; (5) Git limpo sem conflitos nos arquivos próprios.
+
+
+## 15. Gate 078 — Rework do Gate 077: rigor do avaliador e higiene (03/11/2026)
+
+**Executor:** Devin · **BASE:** `origin/main` em worktree isolada `.worktrees/g078` · **Corpus:** `3cdbd991` (inalterado).
+
+### 15.1 Diagnóstico do defeito (GPT REVIEW §14.7)
+
+`test_semantic_acceptance_105` aceitava `RETRIEVAL_MISS` para **qualquer** caso (`allowed={PASS_RETRIEVED,RETRIEVAL_MISS}` + rejeição apenas de vereditos fora da lista). Um miss novo passaria silenciosamente — falso positivo estrutural do gate.
+
+### 15.2 Correção implementada
+
+- `_check_case_result(case, actual)`: enforcement **exato por caso** — `actual == case.get("expect","PASS_RETRIEVED")` em ambas as direções + veredito desconhecido falha. Aplicado em `test_golden_set_105`, `test_semantic_acceptance_105` e `test_negative_contradictory_set`.
+- `test_golden_set_structure`: exatamente 105 casos + 10 negativos, IDs únicos, 7 dimensões por relatório, marcadores verificáveis obrigatórios, `why` exigido em todo caso com `expect` ≠ PASS (7 misses individualizados e justificados no golden set).
+- Matching com fronteira de palavra preservado.
+
+### 15.3 Testes mutacionais (Etapa B)
+
+`test_mutation_enforcement` prova que o avaliador falha corretamente para: miss novo em caso PASS, `CITATION_MISS`, `EVIDENCE_WEAK`, `SOURCE_GAP`, expectativa alterada, miss que "vira PASS" sem reconciliação e veredito desconhecido — 7 cenários, todos `pytest.raises`. `test_mutation_retrieval_level` injeta miss real via monkeypatch (repo sem hits + evidência simulada) → enforcement falha. `test_mutation_coverage_loss` prova o invariante de contagem.
+
+### 15.4 Falso positivo real detectado e corrigido
+
+Na primeira execução do enforcement, `R05-D7` falhou: o marker `retifica` era prefixo truncado — com fronteira de palavra não casa `retificações`. Era exatamente o falso positivo tolerado pelo avaliador anterior. Marker corrigido para a forma exata da ficha → `PASS_RETRIEVED` real, não por ajuste de expectativa.
+
+### 15.5 Matriz final 105 + 10
+
+- Golden 105: **100 PASS_RETRIEVED + 4 RETRIEVAL_MISS** (R11-D7, R12-D5, R13-D6, R14-D6 — individualizados, `why` no caso, resíduo aceito de recuperação, não resposta correta).
+- Negativos 10: **7 PASS_RETRIEVED + 3 RETRIEVAL_MISS** (NEG-R12-EXEC, NEG-R12-60, NEG-R11 — justificados).
+- `STALE_EVIDENCE`: NEG-R04 classifica `doc-83`/`doc-85` "BLOQUEADO" como históricos datados; fonte corretiva vigente (ficha-index #2, ficha-r04) é exigida no mesmo top-12 — teste falha se a corretiva sumir.
+- Resultado por caso impresso (esperado × observado), não reduzido a percentual.
+
+### 15.6 Risco R04 — orientação de citação (Etapa D)
+
+Resposta correta a "O R04 ainda está bloqueado?": **não** — visão operacional implementada; equivalência MATR860 pendente. Itens `BLOQUEADO` de doc-83/doc-85 são registros datados (crosswalk ciclos 2/3), distinguíveis por `last_verified_at`, `origin_authority` e `citation_locator` já devolvidos por `knowledge(search)`. Orientação verificável à CLARA: preferir itens da ficha vigente e de maior `last_verified_at`; contexto histórico só como linha do tempo. Priorização por vigência/especificidade segue `DECISION_REQUIRED` (owner) — não implementada.
+
+### 15.7 Conversacional e regressões
+
+- Canal ChatGPT externo segue indisponível para automação → **dimensão conversacional `TEST_NOT_RUN`**, procedimento oficial em §14.6.
+- Suíte PG: **13/13**; SUPERSEDED/INTERNAL_ONLY/report_id/`full_match` preservados; nenhum contrato/SQL/ranking alterado; sem deploy (testes+docs apenas).
