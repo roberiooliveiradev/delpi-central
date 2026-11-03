@@ -558,14 +558,57 @@ def _structure_table(
                 cell["alternatives"] = ties
                 ambiguous += 1
             cells.append(cell)
-        rows_out.append(
-            {
-                "row": r_i,
-                "y_px": round(row["y"], 1),
-                "cells": cells,
-                "col_count": len(col_centers),
-            }
-        )
+        # R10 — tipagem de campos por linha a partir de col_type:
+        # item/quantity/component_code/description com proveniência real.
+        fields: dict[str, dict] = {}
+        for cell in cells:
+            ct = cell.get("col_type")
+            if not ct:
+                continue
+            if ct not in fields:
+                fields[ct] = {
+                    "raw_text": cell["text"],
+                    "normalized_value": cell["text"],
+                    "bounding_box_px": cell.get("bounding_box_px"),
+                    "col": cell["col"],
+                    "association_method": "col_type_header_or_content",
+                    "association_state": "FIELD_IDENTIFIED",
+                }
+            else:
+                # mesma coluna tipada → concatena (multilinha/descrição)
+                fields[ct]["raw_text"] += " " + cell["text"]
+                fields[ct]["normalized_value"] = fields[ct]["raw_text"]
+                b = fields[ct]["bounding_box_px"]
+                nb = cell.get("bounding_box_px")
+                if b and nb:
+                    fields[ct]["bounding_box_px"] = [
+                        min(b[0], nb[0]), min(b[1], nb[1]),
+                        max(b[2], nb[2]), max(b[3], nb[3]),
+                    ]
+        # quantity → número só se formato válido
+        if "quantity" in fields:
+            q = fields["quantity"]["raw_text"].strip()
+            if q.replace(",", ".").replace(".", "", 1).isdigit() or q.isdigit():
+                fields["quantity"]["normalized_value"] = q
+        typed = {
+            "row": r_i,
+            "y_px": round(row["y"], 1),
+            "cells": cells,
+            "col_count": len(col_centers),
+            "fields": fields,
+            "item": fields.get("item", {}).get("normalized_value"),
+            "quantity": fields.get("quantity", {}).get("normalized_value"),
+            "component_code": fields.get(
+                "component_code", {}
+            ).get("normalized_value"),
+            "description": fields.get(
+                "description", {}
+            ).get("normalized_value"),
+            "association_status": (
+                "FIELD_IDENTIFIED" if fields else "UNRESOLVED"
+            ),
+        }
+        rows_out.append(typed)
     return rows_out, ambiguous, col_types
 
 
