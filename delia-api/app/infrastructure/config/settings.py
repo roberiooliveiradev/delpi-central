@@ -116,12 +116,11 @@ class Settings:
             if isinstance(parsed_window, int) and parsed_window > 0
             else None
         )
-        # M5 (doc 220): Pydantic AI is the single intelligence runtime —
-        # the legacy OpenAI-compatible adapter was removed after M3+M4
-        # equivalence. Rollback is the git revert of the cutover
-        # commits, never a runtime flag: one runtime per request, never
-        # both. Unknown values are rejected fail-closed.
-        _allowed_model_runtimes = frozenset({"pydantic_ai"})
+        # M5/M6: Pydantic AI is the default intelligence runtime.
+        # "legacy" remains ONLY as the explicitly-selected isolated
+        # rollback mechanism (per M6 drift correction) — one runtime
+        # per request, never both. Unknown values fail closed.
+        _allowed_model_runtimes = frozenset({"legacy", "pydantic_ai"})
         _model_runtime = (
             (os.getenv("DELIA_MODEL_RUNTIME") or "pydantic_ai")
             .strip()

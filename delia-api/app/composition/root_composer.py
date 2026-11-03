@@ -633,21 +633,34 @@ def _wire_real_provider_handler(settings: Settings, interop, connections):
         and settings.llm_api_key
     ):
         return None
-    # M5 (doc 220): single runtime — Pydantic AI behind the same
-    # ModelInvocationPort contract; legacy adapter removed, no
-    # concurrent inference path.
-    from app.infrastructure.model_invocation.pydantic_ai_adapter import (
-        PydanticAiModelInvocationAdapter,
-    )
+    # M6: pydantic_ai is the governed default; "legacy" selects the
+    # isolated rollback adapter — never both in one request.
+    if settings.model_runtime == "legacy":
+        from app.infrastructure.model_invocation.openai_compatible_adapter import (
+            OpenAICompatibleModelInvocationAdapter,
+        )
 
-    adapter = PydanticAiModelInvocationAdapter(
-        base_url=settings.llm_base_url,
-        api_key=settings.llm_api_key,
-        model=settings.llm_model,
-        timeout_seconds=settings.llm_timeout_seconds,
-        default_max_output_units=settings.llm_max_output_tokens,
-        context_window_tokens=settings.llm_context_tokens,
-    )
+        adapter = OpenAICompatibleModelInvocationAdapter(
+            base_url=settings.llm_base_url,
+            api_key=settings.llm_api_key,
+            model=settings.llm_model,
+            timeout_seconds=settings.llm_timeout_seconds,
+            default_max_output_units=settings.llm_max_output_tokens,
+            context_window_tokens=settings.llm_context_tokens,
+        )
+    else:
+        from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+            PydanticAiModelInvocationAdapter,
+        )
+
+        adapter = PydanticAiModelInvocationAdapter(
+            base_url=settings.llm_base_url,
+            api_key=settings.llm_api_key,
+            model=settings.llm_model,
+            timeout_seconds=settings.llm_timeout_seconds,
+            default_max_output_units=settings.llm_max_output_tokens,
+            context_window_tokens=settings.llm_context_tokens,
+        )
     model_ref = ModelRef(
         model_id=settings.llm_model,
         version="configured",

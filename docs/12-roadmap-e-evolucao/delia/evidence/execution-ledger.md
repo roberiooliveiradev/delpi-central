@@ -4573,3 +4573,12 @@ S5 checkpoint-resume/attempt contracts (consumidores legitimos sem
 substituto; Engine A nao implementa Send-fanout/SqliteSaver).
 Remocao exige substituto designado — bloqueio reportado, nao deletado.
 Regressao: migrados GREEN.
+
+## M6 — drift correction: isolated rollback restored
+
+SHA=<next>: M5 drift corrigido — OpenAICompatibleModelInvocationAdapter
+restaurado como mecanismo de rollback ISOLADO e selecionavel apenas via
+DELIA_MODEL_RUNTIME=legacy (default permanece pydantic_ai; um runtime
+por request; desconhecidos fail-closed). Rollback/retorno demonstrados
+por config. Remocao definitiva permanece pendente de homologacao
+empresarial (M6-AC: E2E TEST_NOT_RUN sem identidade do executor).

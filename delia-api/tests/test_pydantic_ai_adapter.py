@@ -290,8 +290,9 @@ def test_known_model_runtimes_accepted(monkeypatch):
     monkeypatch.setenv("DELIA_MODEL_RUNTIME", "pydantic_ai")
     assert Settings().model_runtime == "pydantic_ai"
     monkeypatch.setenv("DELIA_MODEL_RUNTIME", "legacy")
-    with pytest.raises(ValueError):
-        Settings()
+    # M6: "legacy" remains accepted as the explicit isolated rollback
+    # — only unknown values fail closed.
+    assert Settings().model_runtime == "legacy"
 
 
 def test_model_runtime_defaults_to_pydantic_ai(monkeypatch):
