@@ -2226,3 +2226,27 @@ components descartados -> "2 registros" planos.
 PROBE: /tmp/proj_trace.py no container — traca outcome_facts ->
 presented_record p/ BOM real. PROXIMO: restart delpi-delia-api,
 rodar probe, matriz de preservacao, report.
+
+## T20-UNIFIED-PRESENTATION — checkpoint (resume)
+
+TASK=DELIA-C3-UNIFIED-EVIDENCE-PRESENTATION-BOUNDARY-REFACTOR-01
+IMPL AUTHORIZED · DEPLOY PROIBIDO · HEAD local f0e9a57c77,
+origin/main 5aae91ce54. Worktree canonico: delia-s2s6-integ
+(branch delia/s2-s6-implementation, push -> main).
+
+DESIGN (a implementar):
+- Fronteira unica = conversational_response.py (consolidar, EXTEND
+  nao NEW module). Nova funcao render_business_evidence(facts,
+  result_context, completeness) -> markdown generico recursivo
+  (obj/array/nesting, escape MD, bounds explicitos).
+- Remover do caminho de apresentacao: MAX_FIELDS_PER_RECORD,
+  MAX_PRESENTED_RECORDS (so bounds de prompt/seguranca),
+  projecao scalar-only p/ records, presented_record (uso interno).
+- compose_cri_response renderiza via superficie unica (root+nodes
+  +children quando result_context declara shape).
+- synth instruction: remover "never select object/list" da
+  apresentacao (synth vira interpretacao apenas).
+- Completeness: reutilizar extract_pagination_envelope +
+  contract_facts; marcar parcialidade explicitamente.
+
+STATUS=IN_PROGRESS·design-only — nenhum codigo alterado ainda.
