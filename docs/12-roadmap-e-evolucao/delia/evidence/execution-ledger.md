@@ -5123,3 +5123,12 @@ corretamente (decompose->fanin); composicao nao rodou porque os
 READs subordinados nao completaram fontes suficientes — residual:
 sub-goals gerados pelo modelo precisam recuperar estrutura como
 no single-read (descobrir+candidato+execute), nao falha do boundary.
+
+
+## E4-R1 — coordination review and generalized subobjective READ rework (2026-11-03)
+
+TASK=DELIA-C3-E4-SUBOBJECTIVE-READ-TO-COMPOSITION-REWORK-01.
+INPUT_SHA=0f1985217584. PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/223-e4-subobjective-read-completion-and-composition-rework.md.
+STATUS=REWORK_REQUIRED; E4_COMPONENT_UNIT_EVIDENCE=PASS_REPORTED(8/8); REAL_E2E_BUSINESS_COMPARISON=FAIL/NOT_PROVEN. A03 actual trace: goal compare, subobjectives 4, PARTIAL x4, SOURCE_UNAVAILABLE; no two-source fan-in, so verifier not executed live. Main inspected: _investigate_subobjectives calls _governed_owner_path on each subgoal; source-id re.search from sub_goal infers identity from model text, violating authoritative provenance; review requires typed source refs from owner evidence. Parent success-on-any-content semantics require complete objective verification.
+ROOT_CAUSE_EXACT_SUBREAD_FAILURE=TO_INVENTORY (only aggregate PARTIAL outcome available; must trace per-stage discovery/candidate/execute and budget; not assume prose problem). REUSE_DECISION=REUSE/EXTEND existing governed path, evidence, verifier and LangGraph; no new planner or product-specific routing.
+NEXT=Execute doc223 RED/GREEN; real Qwen3+user@local.com+DAVI/Domain A01/A02/A03, single-turn compare, hierarchy/occurrence/unit and negative tests, full regressions on final SHA. G04/G05/G07/G12 not PASS. Production deployment NOT_AUTHORIZED; no phase advancement.
