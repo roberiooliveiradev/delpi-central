@@ -3761,8 +3761,20 @@ class GptActionsDispatchService:
                     # função gramatical não são objetivos de negócio:
                     "desenvolva", "desenvolver", "usando", "mantendo",
                     "mantenha", "inventar", "fontes", "oficiais",
-                    "dados", "reais", "deste", "este", "esta",
-                    "essa", "esse", "neste", "nesse", "nesta",
+                    "oficial", "dados", "reais", "deste", "desta",
+                    "este", "esta", "essa", "esse", "neste", "nesse",
+                    "nesta",
+                    # instruções de remoção/design não são objetivos de
+                    # negócio — justificavam fontes erradas (#129 C04):
+                    "remova", "remover", "removendo", "antiga",
+                    "antigo", "antigas", "antigos", "preserve",
+                    "preservar", "preservando", "sobreposição",
+                    "sobreposicao", "realizado", "realizada",
+                    "redesenhe", "redesenhar", "redesign",
+                    "reorganize", "reorganizar", "reorganização",
+                    "refaca", "refaça", "refazer", "rework",
+                    "substitua", "substituir", "substituição",
+                    "composicao", "composição", "parte", "tabela",
                     "também", "tambem", "então", "entao", "cada",
                     "quando", "onde", "como", "deve", "deveria",
                     "preciso", "precisa", "gostaria", "poderia",
@@ -3843,7 +3855,19 @@ class GptActionsDispatchService:
                         str(c.get("operationId") or "")
                         for c in qualified
                     }
-                    for tok in list(_mtok)[:6]:
+                    # budget cap preservado, mas tokens de métrica
+                    # com evidência direta no catálogo têm prioridade
+                    # — antes, a ordem de set podia deixar "oee" fora
+                    # do goal_map quando o briefing trazia ruído
+                    # de instrução (#129 C04).
+                    for tok in (
+                        sorted(_metric_tok)
+                        + [
+                            t
+                            for t in sorted(_mtok)
+                            if t not in _metric_tok
+                        ]
+                    )[:6]:
                         tok_sugg = []
                         for variant in (tok, tok.rstrip("s")):
                             if variant == tok and tok_sugg:
@@ -4746,17 +4770,17 @@ class GptActionsDispatchService:
                 ]
                 if _shaped:
                     pool = _shaped
-            # elegibilidade por papel — candidato com papel
-            # incompatível sai antes do ranking.
+            # elegibilidade por papel é RESTRIÇÃO, não preferência
+            # (issue #129 C04): fonte de meta nunca alimenta KPI de
+            # realizado — sem elegível, o bloco fica sem binding
+            # honesto em vez de ligar fonte de papel incompatível.
             _eligible_roles = _ROLE_ELIGIBLE.get(btype, set())
             if _eligible_roles:
-                _role_pool = [
+                pool = [
                     c
                     for c in pool
                     if _cand_role(c) in _eligible_roles
                 ]
-                if _role_pool:
-                    pool = _role_pool
             # role pref ordena mas não exclui: indicador meta que
             # cobre oee+meta é a comparação oficial pedida, não
             # contaminação — a chave de cobertura decide.
@@ -4813,8 +4837,17 @@ class GptActionsDispatchService:
             ):
                 enriched.append(op)
                 continue
+            # fallback também respeita a elegibilidade de papel —
+            # plan_cands[0] arbitrário podia ligar meta/série ao
+            # bloco errado quando o pool esvaziava (#129 C04).
+            _fallback = [
+                c
+                for c in plan_cands
+                if not _eligible_roles
+                or _cand_role(c) in _eligible_roles
+            ]
             cand = role_ok[0] if role_ok else (
-                plan_cands[0] if plan_cands else None
+                _fallback[0] if _fallback else None
             )
             oid = (
                 str(cand.get("operationId") or "").strip()
