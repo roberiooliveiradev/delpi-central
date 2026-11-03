@@ -116,3 +116,50 @@ def test_canvas_display_series():
     series = out["src-1"].get("displaySeries") or {}
     assert "oee" in series
     assert series["oee"] == [10.0, 20.0, 30.0]
+
+
+def test_kpi_presentation_percent_metric_compares_in_pp_and_status_label():
+    """Issue #129/PR-134 — métrica percentual vs meta compara em
+    pontos percentuais (p.p.), não % relativo; status posicional
+    separado do tom de avaliação."""
+    from tv_app.application.services.data.display_format_service import (
+        DisplayFormatService,
+    )
+    resolved = {"kpi": {"value": 93.73, "displayValue": "93,73%"}}
+    block = {
+        "kpiOptions": {
+            "contextMode": "auto",
+            "showComparison": True,
+            "comparisonMode": "target",
+            "valueFormat": "percent",
+        },
+        "kpiProjection": {"metrics": [{"format": "percent", "target": 85.0}]},
+    }
+    DisplayFormatService._apply_kpi_presentation(resolved, block)
+    pres = resolved["kpiPresentation"]
+    assert "p.p." in pres["comparisonDisplay"]
+    assert "8,73" in pres["comparisonDisplay"]
+    assert pres["statusLabel"] == "Acima da meta"
+    assert pres["comparisonTone"] == "positive"
+
+
+def test_kpi_presentation_non_percent_keeps_relative_delta():
+    """Sibling — métrica não-percentual segue com delta relativo %."""
+    from tv_app.application.services.data.display_format_service import (
+        DisplayFormatService,
+    )
+    resolved = {"kpi": {"value": 1100.0, "displayValue": "1.100"}}
+    block = {
+        "kpiOptions": {
+            "contextMode": "auto",
+            "showComparison": True,
+            "comparisonMode": "target",
+            "valueFormat": "number",
+        },
+        "kpiProjection": {"metrics": [{"format": "number", "target": 1000.0}]},
+    }
+    DisplayFormatService._apply_kpi_presentation(resolved, block)
+    pres = resolved["kpiPresentation"]
+    assert "p.p." not in pres["comparisonDisplay"]
+    assert "+10" in pres["comparisonDisplay"]
+    assert pres["statusLabel"] == "Acima da meta"

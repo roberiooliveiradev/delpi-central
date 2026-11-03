@@ -2427,15 +2427,64 @@ class DisplayFormatService:
 
         comparison_display: str | None = None
         comparison_tone: str | None = None
+        status_label: str | None = None
         if show_comparison and numeric is not None and baseline is not None and baseline != 0:
-            delta_pct = ((numeric - baseline) / abs(baseline)) * 100
-            favorable = delta_pct >= 0 if higher_is_better else delta_pct <= 0
-            arrow = "▲" if delta_pct > 0 else "▼" if delta_pct < 0 else "●"
-            label = str(options.get("comparisonLabel") or "").strip()
-            comparison_display = label or f"{arrow} {cls._format_signed_pct(delta_pct)} {vs_label}"
-            comparison_tone = (
-                "neutral" if abs(delta_pct) < 0.05 else ("positive" if favorable else "negative")
+            value_spec = cls.resolve_spec(
+                display_format=primary_override.get("displayFormat")
+                or options.get("displayValueFormat"),
+                legacy_format=str(
+                    primary_override.get("format") or options.get("valueFormat") or ""
+                )
+                or None,
+                decimal_places=primary_override.get(
+                    "decimalPlaces", options.get("decimalPlaces")
+                ),
+                kind="kpi",
             )
+            is_percent = value_spec.get("category") == "percent"
+            # Métrica percentual vs meta/período compara em pontos
+            # percentuais (p.p.), nunca em % relativo — spec PR-132/134.
+            delta = (
+                numeric - baseline
+                if is_percent
+                else ((numeric - baseline) / abs(baseline)) * 100
+            )
+            favorable = delta >= 0 if higher_is_better else delta <= 0
+            arrow = "▲" if delta > 0 else "▼" if delta < 0 else "●"
+            label = str(options.get("comparisonLabel") or "").strip()
+            if is_percent:
+                delta_text = cls.format_value(
+                    abs(delta),
+                    {
+                        "category": "number",
+                        "decimalPlaces": 2,
+                    },
+                )
+                if delta > 0:
+                    delta_text = "+" + delta_text
+                elif delta < 0:
+                    delta_text = "−" + delta_text
+                comparison_display = label or (
+                    f"{arrow} {delta_text} p.p. {vs_label}"
+                )
+            else:
+                comparison_display = label or (
+                    f"{arrow} {cls._format_signed_pct(delta)} {vs_label}"
+                )
+            comparison_tone = (
+                "neutral"
+                if abs(delta) < (0.005 if is_percent else 0.05)
+                else ("positive" if favorable else "negative")
+            )
+            # Posição vs referência (direção ≠ avaliação — tone leva isso).
+            if mode == "target":
+                status_label = (
+                    "Acima da meta"
+                    if delta > 0
+                    else "Abaixo da meta"
+                    if delta < 0
+                    else "Na meta"
+                )
         elif show_comparison and str(options.get("comparisonLabel") or "").strip():
             comparison_display = str(options.get("comparisonLabel")).strip()
             comparison_tone = "neutral"
@@ -2448,6 +2497,7 @@ class DisplayFormatService:
             "valueDisplay": value_display,
             "comparisonDisplay": comparison_display,
             "comparisonTone": comparison_tone,
+            "statusLabel": status_label,
             "progressPct": progress_pct,
             "sparklinePoints": sparkline if options.get("showSparkline") else None,
             "showComparison": show_comparison,
