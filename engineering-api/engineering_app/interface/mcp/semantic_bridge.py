@@ -681,6 +681,8 @@ async def _analyze_product_drawing(
     context, params: dict, question: str | None
 ) -> CallToolResult:
     """analyze(product.drawing_analysis) — desenho oficial × cadastro × BOM."""
+    import os
+
     from engineering_app.application.drawing.drawing_analysis_service import (
         DrawingAnalysisError,
         analyze_product_drawing,
@@ -720,6 +722,28 @@ async def _analyze_product_drawing(
             status_code=400,
             code="validation",
         )
+    # R12.1 — composição legítima: understanding produzido pelo mesmo
+    # caso de uso interno (sem handler→handler, sem reprocessar por
+    # ocorrência) quando solicitado e flags habilitadas.
+    if params.get("compose_understanding") and understanding is None:
+        if (
+            os.environ.get(_BENCHMARK_FLAG) != "true"
+            or os.environ.get(_OCR_BENCHMARK_FLAG) != "true"
+        ):
+            return _err(
+                "compose_understanding exige perfil visual "
+                "experimental habilitado neste ambiente.",
+                status_code=403,
+                code="feature_disabled",
+            )
+        try:
+            understanding, _structure, _best, _tokens = (
+                await _produce_drawing_understanding(context, code)
+            )
+        except DrawingAnalysisError as exc:
+            return _err(
+                str(exc), status_code=exc.status_code, code=exc.code
+            )
     try:
         report = await analyze_product_drawing(
             code=code,
@@ -943,85 +967,48 @@ def _structure_codes(payload: dict) -> list[str]:
     return codes
 
 
-async def _analyze_drawing_understanding(
-    context, params: dict, question: str | None
-) -> CallToolResult:
-    """analyze(product.drawing_understanding) — R8 experimental:
-    candidatos estruturados (regiões/carimbo/tabela/cotas/revisão) a
-    partir da evidência OCR já governada. Perfil fixo visual; consumidor
-    não escolhe algoritmo; resultado permanece DRAFT/candidate."""
-    import os
-
+async def _produce_drawing_understanding(context, code: str):
+    """Produção compartilhada de evidência visual (R12.1) — caso de uso
+    interno do bridge, NÃO um handler MCP. Chamável por composição
+    legítima em `product.drawing_analysis` e `product.drawing_understanding`
+    sem dependência circular entre handlers. Retorna
+    (understanding, structure, best_run, tokens) ou lança
+    DrawingAnalysisError."""
     from engineering_app.application.drawing.document_benchmark_service import (  # noqa: E501
         run_official_document_benchmark,
     )
     from engineering_app.application.drawing.drawing_analysis_service import (  # noqa: E501
         DrawingAnalysisError,
-        flatten_bom_occurrences,
     )
     from engineering_app.application.drawing.drawing_contracts import (
         unwrap_delegated,
-    )
-    from engineering_app.application.drawing.object_profiles_builder import (
-        build_object_profiles,
     )
     from engineering_app.application.drawing.understanding import (
         build_understanding,
     )
 
-    if os.environ.get(_BENCHMARK_FLAG) != "true":
-        return _err(
-            "Benchmark experimental de desenho desabilitado neste "
-            "ambiente.",
-            status_code=403,
-            code="feature_disabled",
-        )
-    if os.environ.get(_OCR_BENCHMARK_FLAG) != "true":
-        return _err(
-            "Perfil visual OCR experimental desabilitado neste "
-            "ambiente.",
-            status_code=403,
-            code="feature_disabled",
-            data={"required_flag": _OCR_BENCHMARK_FLAG},
-        )
-    code = str(params.get("product_code") or "").strip()
-    if not code:
-        return _err(
-            "product_code obrigatório para product.drawing_understanding.",
-            code="validation",
-        )
     spec = _BENCHMARK_PROFILES["approved_local_visual_ocr"]
     ctx = bridge._source_context(context)
-    try:
-        out = await run_official_document_benchmark(
-            code=code,
-            source=bridge.build_delegated_auxiliary_source(),
-            ctx=ctx,
-            providers=None,
-            visual_pipelines=spec.get("pipelines"),
-            corpus_id="official_drawing",
-            environment="mcp_governed",
-        )
-    except DrawingAnalysisError as exc:
-        return _err(
-            str(exc), status_code=exc.status_code, code=exc.code
-        )
+    out = await run_official_document_benchmark(
+        code=code,
+        source=bridge.build_delegated_auxiliary_source(),
+        ctx=ctx,
+        providers=None,
+        visual_pipelines=spec.get("pipelines"),
+        corpus_id="official_drawing",
+        environment="mcp_governed",
+    )
     runs = [
         r
         for r in out["runs"]
         if r.get("status") in {"ok", "partial"} and r.get("_tokens_sample")
     ]
     if not runs:
-        return _err(
+        raise DrawingAnalysisError(
             "Nenhum pipeline visual retornou evidência OCR para "
             "interpretação.",
             status_code=422,
             code="no_ocr_evidence",
-            data={
-                "run_statuses": [
-                    r.get("status") for r in out["runs"]
-                ]
-            },
         )
     best = max(runs, key=lambda r: r.get("token_count") or 0)
     tokens = [
@@ -1130,6 +1117,64 @@ async def _analyze_drawing_understanding(
                 "state": "ENGINE_AVAILABLE",
             }
         ]
+    return understanding, structure, best, tokens
+
+
+async def _analyze_drawing_understanding(
+    context, params: dict, question: str | None
+) -> CallToolResult:
+    """analyze(product.drawing_understanding) — R8 experimental:
+    candidatos estruturados (regiões/carimbo/tabela/cotas/revisão) a
+    partir da evidência OCR já governada. Perfil fixo visual; consumidor
+    não escolhe algoritmo; resultado permanece DRAFT/candidate."""
+    import os
+
+    from engineering_app.application.drawing.document_benchmark_service import (  # noqa: E501
+        run_official_document_benchmark,
+    )
+    from engineering_app.application.drawing.drawing_analysis_service import (  # noqa: E501
+        DrawingAnalysisError,
+        flatten_bom_occurrences,
+    )
+    from engineering_app.application.drawing.drawing_contracts import (
+        unwrap_delegated,
+    )
+    from engineering_app.application.drawing.object_profiles_builder import (
+        build_object_profiles,
+    )
+    from engineering_app.application.drawing.understanding import (
+        build_understanding,
+    )
+
+    if os.environ.get(_BENCHMARK_FLAG) != "true":
+        return _err(
+            "Benchmark experimental de desenho desabilitado neste "
+            "ambiente.",
+            status_code=403,
+            code="feature_disabled",
+        )
+    if os.environ.get(_OCR_BENCHMARK_FLAG) != "true":
+        return _err(
+            "Perfil visual OCR experimental desabilitado neste "
+            "ambiente.",
+            status_code=403,
+            code="feature_disabled",
+            data={"required_flag": _OCR_BENCHMARK_FLAG},
+        )
+    code = str(params.get("product_code") or "").strip()
+    if not code:
+        return _err(
+            "product_code obrigatório para product.drawing_understanding.",
+            code="validation",
+        )
+    try:
+        understanding, structure, best, tokens = (
+            await _produce_drawing_understanding(context, code)
+        )
+    except DrawingAnalysisError as exc:
+        return _err(
+            str(exc), status_code=exc.status_code, code=exc.code
+        )
     # Relatório candidato consolidado (R10) — seções A–H do doc 116-B,
     # montado dos dados já governados; additive, DRAFT/CANDIDATE.
     _comp = (understanding.get("component_table") or {}).get("rows") or []
@@ -1211,12 +1256,20 @@ async def _analyze_drawing_understanding(
     # R11.1 — perfis reutilizáveis alimentados pela evidência visual
     # real desta execução (sem reprocessar OCR/SLANet): ocorrências BOM
     # (oficial, proveniência própria) + candidatos do understanding.
+    # R12.1 — sem fonte oficial carregada a comparação é fail-closed:
+    # sem occurrence_results nem unmatched_drawing_candidates.
+    _bom_flat = flatten_bom_occurrences(structure, code)
     understanding["object_profiles"] = build_object_profiles(
-        bom_occurrences=flatten_bom_occurrences(structure, code),
+        bom_occurrences=_bom_flat,
         visual_observations=[],
         understanding=understanding,
         document_sha=best.get("document_hash") or None,
         official_source_ref=f"api-delpi:/products/{code}/structure",
+        official_source_state=(
+            "NOT_PROVIDED"
+            if not structure
+            else ("EMPTY_CONFIRMED" if not _bom_flat else "AVAILABLE")
+        ),
         include_investigations=True,
     )
     understanding["report"]["object_profiles"] = understanding[

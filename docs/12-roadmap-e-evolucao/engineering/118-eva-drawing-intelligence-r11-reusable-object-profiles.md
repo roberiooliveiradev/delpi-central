@@ -39,3 +39,9 @@
 - **Identidade**: sha incompatível → NOT_COMPARABLE fail-closed; `is_component_code`/`COMPONENT_CODE_RE` movidos ao domínio (fonte única, `_CODE_RE` de understanding virou alias).
 - **Wiring**: `build_object_profiles(include_investigations=True)` no mesmo DrawingObjectSet; `payload["guided_investigations"]` versionado `guided_investigations.v1` em `product.drawing_analysis` e `product.drawing_understanding`.
 - **Testes**: `test_drawing_investigation_r12.py` 15/15; suite 651 pass / 1 fail ambiental pré-existente.
+
+## 8. R12.1 — fechamento funcional (2026-11-03)
+
+- **Fail-closed sem BOM**: `official_source_state` ∈ {AVAILABLE, NOT_PROVIDED, UNAVAILABLE, EMPTY_CONFIRMED}; NOT_PROVIDED/UNAVAILABLE → `occurrence_results=[]`, `unmatched_drawing_candidates=[]`, `effective_coverage=null`, limitação `OFFICIAL_COMPARISON_NOT_EXECUTED` — observações visuais preservadas como candidatas, nunca divergentes.
+- **Composição legítima**: `_produce_drawing_understanding(context, code)` — caso de uso interno do bridge compartilhado por `product.drawing_understanding` e `product.drawing_analysis` (`compose_understanding=true`, flag-gated); sem handler→handler, sem reprocessar OCR/SLANet por ocorrência.
+- **Timeout `product.detail` (diagnóstico)**: erro tipado `502 source_unavailable` correto, não mascarado; causa raiz na api-delpi — contenção do pool TOTVS mitigada upstream por `28329ea4c0` (READ UNCOMMITTED + cota de espera). Engineering API não era o owner da falha; timeout explícito e sem retries preservado.

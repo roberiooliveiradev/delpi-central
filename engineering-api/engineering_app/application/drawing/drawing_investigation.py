@@ -21,6 +21,16 @@ from engineering_app.domain.drawing.object_profiles import (
 
 INVESTIGATION_SCHEMA = "guided_investigations.v1"
 _NON_COMPONENT_REGIONS = {"title_block", "revision_history"}
+# R12.1 — disponibilidade/comparabilidade da fonte oficial (fail-closed):
+OFFICIAL_STATES = frozenset(
+    {
+        "AVAILABLE",
+        "NOT_PROVIDED",
+        "UNAVAILABLE",
+        "EMPTY_CONFIRMED",
+    }
+)
+_COMPARISON_BLOCKED = {"NOT_PROVIDED", "UNAVAILABLE"}
 _REQUIRED_EVIDENCE = ["raw_text", "document_identity", "page", "bounding_box"]
 
 
@@ -292,13 +302,67 @@ def execute_investigations(
     understanding: dict | None,
     *,
     document_sha: str | None,
+    official_source_state: str | None = None,
 ) -> dict[str, Any]:
-    """Executor I-01..I-05 sobre o mesmo DrawingObjectSet."""
+    """Executor I-01..I-05 sobre o mesmo DrawingObjectSet.
+
+    ``official_source_state`` declara a disponibilidade da estrutura
+    oficial: AVAILABLE | NOT_PROVIDED | UNAVAILABLE | EMPTY_CONFIRMED.
+    Sem BOM oficial (NOT_PROVIDED/UNAVAILABLE) a comparação é fail-closed:
+    nenhum UNMATCHED_DRAWING_CANDIDATE pode ser afirmado.
+    """
     u = understanding or {}
+    if official_source_state is None:
+        official_source_state = (
+            "AVAILABLE"
+            if oset.by_type(ObjectType.BOM_OCCURRENCE)
+            else "NOT_PROVIDED"
+        )
+    comparison_blocked = official_source_state in _COMPARISON_BLOCKED
     u_doc = u.get("document_hash_sha256")
     identity_conflict = bool(
         document_sha and u_doc and document_sha != u_doc
     )
+    if comparison_blocked:
+        limitations = [
+            "OFFICIAL_COMPARISON_NOT_EXECUTED — fonte oficial "
+            f"{official_source_state}: observações visuais preservadas "
+            "como candidatas, nunca classificadas como divergentes ou "
+            "sem correspondência oficial",
+            "ausência de BOM não é BOM vazia — cobertura nula por "
+            "impossibilidade de comparação",
+        ]
+        return {
+            "schema_version": INVESTIGATION_SCHEMA,
+            "official_source_state": official_source_state,
+            "document_identity": {
+                "set_document_sha": document_sha,
+                "understanding_document_sha": u_doc,
+                "match": (
+                    None
+                    if not (document_sha and u_doc)
+                    else not identity_conflict
+                ),
+            },
+            "plan": plans,
+            "occurrence_results": [],
+            "unmatched_drawing_candidates": [],
+            "summary": {
+                "expected_occurrences": 0,
+                "investigations_executed": 0,
+                "match_candidates": 0,
+                "ambiguous": 0,
+                "not_located": 0,
+                "not_comparable": 0,
+                "not_checked": 0,
+                "unmatched_drawing_candidates": 0,
+                "effective_coverage": None,
+            },
+            "limitations": limitations,
+            "state": "DRAFT/CANDIDATE",
+            "not_official": True,
+            "human_review_required": True,
+        }
     table_rows = _table_candidates(u)
     idents = _identifiers_by_region(u)
     bom_codes = {
@@ -439,6 +503,7 @@ def execute_investigations(
 
     return {
         "schema_version": INVESTIGATION_SCHEMA,
+        "official_source_state": official_source_state,
         "document_identity": {
             "set_document_sha": document_sha,
             "understanding_document_sha": u_doc,

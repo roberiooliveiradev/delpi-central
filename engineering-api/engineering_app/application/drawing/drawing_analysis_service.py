@@ -960,6 +960,11 @@ async def analyze_product_drawing(
         official_source_ref=(
             f"api-delpi:/products/{official_code}/structure"
         ),
+        official_source_state=(
+            "UNAVAILABLE"
+            if structure_error is not None
+            else ("EMPTY_CONFIRMED" if not bom_items else "AVAILABLE")
+        ),
         include_investigations=True,
     )
     payload["guided_investigations"] = payload["object_profiles"].get(

@@ -227,3 +227,62 @@ def test_domain_module_still_pure():
     for bad in ("cv2", "paddle", "requests", "httpx", "sqlalchemy",
                 "fastapi"):
         assert bad not in src
+
+
+# ---------- R12.1 — fonte oficial ausente / indisponível ------------------
+
+
+def test_no_bom_no_unmatched_fail_closed():
+    """R12.1-A: sem estrutura oficial, zero unmatched e cobertura nula."""
+    out = build_object_profiles(
+        bom_occurrences=[], visual_observations=[],
+        understanding=_u(rows=[_row(0, "99999999")],
+                         idents=[_ident("12345678", "drawing_area")]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="NOT_PROVIDED",
+        include_investigations=True,
+    )
+    gi = out["guided_investigations"]
+    assert gi["official_source_state"] == "NOT_PROVIDED"
+    assert gi["unmatched_drawing_candidates"] == []
+    assert gi["occurrence_results"] == []
+    s = gi["summary"]
+    assert s["expected_occurrences"] == 0
+    assert s["investigations_executed"] == 0
+    assert s["effective_coverage"] is None
+    assert any(
+        "OFFICIAL_COMPARISON_NOT_EXECUTED" in lim
+        for lim in gi["limitations"]
+    )
+    # observações visuais preservadas como objetos candidatos
+    assert out["objects_by_type"].get("drawing_table_item") == 1
+
+
+def test_unavailable_source_never_empty_bom():
+    """Indisponibilidade ≠ BOM vazia: estado explícito, sem reconciliação."""
+    out = build_object_profiles(
+        bom_occurrences=[], visual_observations=[],
+        understanding=_u(rows=[_row(0, "99999999")]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="UNAVAILABLE",
+        include_investigations=True,
+    )
+    gi = out["guided_investigations"]
+    assert gi["official_source_state"] == "UNAVAILABLE"
+    assert gi["unmatched_drawing_candidates"] == []
+
+
+def test_empty_confirmed_bom_reconciles():
+    """BOM oficialmente vazia pode reconciliar: todo visual é unmatched."""
+    out = build_object_profiles(
+        bom_occurrences=[], visual_observations=[],
+        understanding=_u(rows=[_row(0, "99999999")]),
+        document_sha=_SHA, official_source_ref=_SRC,
+        official_source_state="EMPTY_CONFIRMED",
+        include_investigations=True,
+    )
+    gi = out["guided_investigations"]
+    assert gi["official_source_state"] == "EMPTY_CONFIRMED"
+    un = gi["unmatched_drawing_candidates"]
+    assert len(un) == 1
+    assert un[0]["observed_raw_value"] == "99999999"

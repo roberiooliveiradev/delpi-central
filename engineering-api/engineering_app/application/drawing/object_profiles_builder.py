@@ -66,6 +66,7 @@ def build_object_profiles(
     document_sha: str | None = None,
     official_source_ref: str | None = None,
     include_investigations: bool = False,
+    official_source_state: str | None = None,
 ) -> dict:
     """Monta o conjunto de perfis (oficial≠observado) + relações candidatas.
 
@@ -192,6 +193,10 @@ def build_object_profiles(
     if include_investigations:
         plans = plan_investigations(oset)
         out["guided_investigations"] = execute_investigations(
-            oset, plans, understanding, document_sha=document_sha
+            oset,
+            plans,
+            understanding,
+            document_sha=document_sha,
+            official_source_state=official_source_state,
         )
     return out
