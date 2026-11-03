@@ -71,17 +71,22 @@ def propose_arguments(
 
     args_model = _model_from_schema(schema)
     provider = OpenAIProvider(base_url=base_url, api_key=api_key)
+    from pydantic_ai.settings import ModelSettings
+
     agent = Agent(
         OpenAIChatModel(model, provider=provider),
+        model_settings=ModelSettings(max_tokens=2048),
         output_type=args_model,
         system_prompt=(
             "You produce arguments for one approved capability call. "
-            "Map each user-supplied identifier, code or entity to the "
-            "semantically matching field declared by the schema — e.g. "
-            "an exact product code goes to the identifier/code field, "
-            "free searchable text to the description field. Respect "
-            "required fields, enums and types exactly. Never invent "
-            "fields or values."
+            "Return ONLY the argument values themselves — never "
+            "explanations, comments or JSON-encoded strings inside "
+            "field values. Map each user-supplied identifier, code or "
+            "entity to the semantically matching field declared by "
+            "the schema — an exact product code goes to the typed "
+            "identifier/code field, free searchable text to the "
+            "description field. Omit optional fields you cannot fill "
+            "from the objective. Never invent fields or values."
         ),
     )
     prompt_parts = [
@@ -120,6 +125,23 @@ def propose_arguments(
         payload = dict(data)
     else:
         return {}
-    return {
-        k: v for k, v in payload.items() if v is not None
-    }
+    out: dict[str, Any] = {}
+    for key, value in payload.items():
+        if value is None:
+            continue
+        # Deterministic unwrap: a field value that is itself a
+        # single-key JSON object string naming the same field unwraps
+        # to the inner value (model-side double-serialization).
+        if isinstance(value, str):
+            try:
+                inner = json.loads(value)
+            except Exception:
+                inner = None
+            if (
+                isinstance(inner, dict)
+                and len(inner) == 1
+                and key in inner
+            ):
+                value = inner[key]
+        out[key] = value
+    return out

@@ -2033,3 +2033,11 @@ indica arggen pydantic nao produziu args validos — possivelmente
 structured output no kimi-k3/OpenRouter difere do Ollama local, ou
 exception engolida). PROXIMO: log stage=candidate_arguments engine=
 em prod p/ ver produced=True/False + erro real do provider.
+
+## PROMOTION — pydantic-ai prod fix (SHA c82dd59f96)
+
+CAUSA-RAIZ arggen em prod: Agent pedia max_tokens=131072 (default do
+modelo) -> OpenRouter 402 credits. FIX: ModelSettings(max_tokens=2048)
++ prompt "somente valores" + unwrap determinístico de dict-string
+single-key (modelo embrulhava code={"code":"30190123"} e enchia
+description com prosa). Aguardando deploy+re-smoke P1.
