@@ -78,15 +78,12 @@ vi.mock("./MonthlyReportPage", async (importOriginal) => {
     MonthlyReportPage: ({
       period,
       reportKey,
-      onBack,
     }: {
       period: string;
       reportKey: string;
-      onBack: () => void;
     }) => (
       <div data-testid="report-page">
         report:{reportKey}:{period}
-        <button onClick={onBack}>report-back</button>
       </div>
     ),
   };
@@ -211,11 +208,7 @@ describe("mês de referência — seleção livre e landing honesta", () => {
     render(<MonthlyClosingPage basePath={BASE} />);
 
     await screen.findByText("Fechamentos abertos");
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /Abrir fechamento de 10\/2026/,
-      }),
-    );
+    fireEvent.click(screen.getByText("10/2026"));
     expect(window.location.pathname).toBe(
       `${BASE}/closing/monthly-closing/2026-10`,
     );
@@ -565,7 +558,11 @@ describe("Relatórios V0.3 — páginas contextuais de relatório (UX-011)", () 
       ).toContain("report:stock-inventory:2026-10"),
     );
 
-    fireEvent.click(screen.getByText("report-back"));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Relatórios e divergências",
+      }),
+    );
 
     await waitFor(() =>
       expect(window.location.search).toContain("report=stock"),
@@ -648,7 +645,11 @@ describe("Relatórios V0.3 — páginas contextuais de relatório (UX-011)", () 
     await waitFor(() =>
       expect(screen.getByTestId("report-page")).toBeTruthy(),
     );
-    fireEvent.click(screen.getByText("report-back"));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Relatórios e divergências",
+      }),
+    );
 
     await waitFor(() =>
       expect(window.location.search).toContain("report=settlements"),

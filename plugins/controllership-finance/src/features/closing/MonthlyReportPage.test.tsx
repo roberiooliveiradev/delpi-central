@@ -43,7 +43,6 @@ describe("MonthlyReportPage — dispatcher contextual (UX-011)", () => {
       <MonthlyReportPage
         period="2026-10"
         reportKey="financial-settlements"
-        onBack={vi.fn()}
       />,
     );
 
@@ -61,7 +60,6 @@ describe("MonthlyReportPage — dispatcher contextual (UX-011)", () => {
       <MonthlyReportPage
         period="2026-10"
         reportKey="stock-inventory"
-        onBack={vi.fn()}
       />,
     );
 
@@ -72,22 +70,19 @@ describe("MonthlyReportPage — dispatcher contextual (UX-011)", () => {
     expect(settlementsSpy).not.toHaveBeenCalled();
   });
 
-  it("voltar restaura a aba Relatórios e divergências", () => {
-    const onBack = vi.fn();
+  it("não renderiza botão de retorno — navegação é do breadcrumb (CF-UX-037)", () => {
     render(
       <MonthlyReportPage
         period="2026-10"
         reportKey="financial-settlements"
-        onBack={onBack}
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", {
+    expect(
+      screen.queryByRole("button", {
         name: /Voltar para Relatórios e divergências/,
       }),
-    );
-    expect(onBack).toHaveBeenCalledTimes(1);
+    ).toBeNull();
   });
 
   it("chave desconhecida é estado honesto, não página vazia inventada", () => {
@@ -95,7 +90,6 @@ describe("MonthlyReportPage — dispatcher contextual (UX-011)", () => {
       <MonthlyReportPage
         period="2026-10"
         reportKey="relatorio-x"
-        onBack={vi.fn()}
       />,
     );
 

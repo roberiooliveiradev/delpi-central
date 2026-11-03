@@ -10,6 +10,10 @@ import {
   FilterInputField,
 } from "../../app/cfFiltersUi";
 import {
+  DataTableSection,
+  type DataTableColumn,
+} from "../../app/cfDataTableUi";
+import {
   getProductionOrderConsumption,
   type DateType,
   type ProductionOrderConsumptionPayload,
@@ -24,6 +28,46 @@ const DATE_TYPES: { value: DateType; label: string }[] = [
   { value: "emission", label: "Emissão da OP" },
   { value: "finished", label: "Finalização" },
   { value: "appointment", label: "Apontamento" },
+];
+
+type R04Row = Record<string, unknown>;
+
+const R04_COLUMNS: DataTableColumn<R04Row>[] = [
+  {
+    key: "op",
+    header: "OP",
+    render: (row) => String(row.productionOrder ?? row.op ?? "—"),
+    sortable: true,
+    sortValue: (row) =>
+      String(row.productionOrder ?? row.op ?? "") || null,
+  },
+  {
+    key: "product",
+    header: "Produto",
+    render: (row) => String(row.productCode ?? "—"),
+  },
+  {
+    key: "description",
+    header: "Descrição",
+    render: (row) =>
+      String(row.productDescription ?? row.product ?? "—"),
+  },
+  {
+    key: "status",
+    header: "Status",
+    align: "center",
+    render: (row) => String(row.status ?? "—"),
+  },
+  {
+    key: "workCenter",
+    header: "Centro de trabalho",
+    render: (row) => String(row.workCenter ?? "—"),
+  },
+  {
+    key: "date",
+    header: "Data",
+    render: (row) => String(row.date ?? row.emissionDate ?? "—"),
+  },
 ];
 
 /** R04 — Consumo por OP (visão operacional; paridade MATR860 pendente). */
@@ -139,51 +183,30 @@ export function ProductionOrderConsumptionPage({
       ) : (
         <>
           <p className="cf-muted" aria-live="polite">
-            {total} OP(s) — página {data?.page ?? page} | proveniência:{" "}
+            {total} OP(s) — proveniência:{" "}
             {String(data?.provenance ?? "api-delpi consumption-audit")}
           </p>
-          <table className="cf-table" aria-label="Ordens de produção">
-            <thead>
-              <tr>
-                <th>OP</th>
-                <th>Produto</th>
-                <th>Status</th>
-                <th>Centro de trabalho</th>
-                <th>Data</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, idx) => (
-                <tr key={String(row.productionOrder ?? row.op ?? idx)}>
-                  <td>{String(row.productionOrder ?? row.op ?? "—")}</td>
-                  <td>
-                    {String(
-                      row.productDescription ?? row.product ?? "—",
-                    )}
-                  </td>
-                  <td>{String(row.status ?? "—")}</td>
-                  <td>{String(row.workCenter ?? "—")}</td>
-                  <td>{String(row.date ?? row.emissionDate ?? "—")}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="cf-settlements-actions">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Anterior
-            </button>
-            <button
-              type="button"
-              disabled={page * 25 >= total}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Próxima
-            </button>
-          </div>
+          <DataTableSection<Record<string, unknown>>
+            title="Ordens de produção"
+            columns={R04_COLUMNS}
+            rows={rows}
+            rowKey={(row) =>
+              String(
+                row.productionOrder ??
+                  row.op ??
+                  row.orderNumber ??
+                  "row",
+              )
+            }
+            hideSearch
+            emptyMessage="Nenhuma OP encontrada para os filtros informados."
+            serverPagination={{
+              page,
+              pageSize: 25,
+              total,
+              onPageChange: setPage,
+            }}
+          />
           {Array.isArray(data?.limitations) && data!.limitations!.length > 0 ? (
             <ul className="cf-muted" aria-label="Limitações">
               {data!.limitations!.map((lim, i) => (

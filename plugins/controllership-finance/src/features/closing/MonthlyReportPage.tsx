@@ -11,10 +11,7 @@
  * relatório), sem duplicar filtros/tabela/paginação. O slot de PDF é o
  * mesmo estado honesto para todo relatório sem produtor homologado.
  */
-import type { ReactNode } from "react";
-
 import {
-  CfActionButton,
   CfEmptyState,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
@@ -99,24 +96,13 @@ export function isReportKey(value: string | undefined): value is ReportKey {
 export function MonthlyReportPage({
   period,
   reportKey,
-  onBack,
 }: {
   period: string;
   reportKey: string;
-  onBack: () => void;
 }) {
-  const backButton: ReactNode = (
-    <div className="cf-settlements-actions">
-      <CfActionButton variant="ghost" onClick={onBack}>
-        ← Voltar para Relatórios e divergências
-      </CfActionButton>
-    </div>
-  );
-
   if (!isReportKey(reportKey)) {
     return (
       <div className="cf-page-stack">
-        {backButton}
         <CfEmptyState
           classNames={cfEmptyStateClassNames}
           defaultMessage="Este relatório ainda não possui uma página contextual — verifique a matriz R01–R15 na aba Relatórios e divergências."
@@ -130,7 +116,6 @@ export function MonthlyReportPage({
       className="cf-page-stack"
       aria-label={`Relatório ${REPORT_KEY_LABELS[reportKey]}`}
     >
-      {backButton}
       {reportKey === "financial-settlements" ? (
         <FinancialSettlementsPage reportContext={{ period }} />
       ) : reportKey === "stock-movements" ? (

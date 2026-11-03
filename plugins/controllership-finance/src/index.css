@@ -144,11 +144,13 @@
   gap: var(--cf-grid-gap, 16px);
 }
 
+/* CF-UX-030/038 — faixa de filtros sem borda redundante: os
+ * controles mantêm seus próprios contornos acessíveis. */
 .dashboard-controllership-finance .cf-hero-filters {
-  border: 1px solid var(--cf-border);
-  border-radius: var(--radius, 12px);
-  padding: var(--cf-grid-gap, 16px);
-  background: color-mix(in srgb, var(--cf-surface-muted) 62%, transparent);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
 }
 
 /* Faixa única filtros + ações no hero (CF-UX-016/021). */
@@ -165,6 +167,15 @@
 
 .dashboard-controllership-finance .cf-hero-controls > .cf-settlements-actions {
   margin-left: auto;
+}
+
+/* CF-UX-034 — famílias funcionais do catálogo de relatórios. */
+.dashboard-controllership-finance .cf-catalog-group__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cf-text-muted);
+  margin: var(--cf-grid-gap, 16px) 0 8px;
+  text-transform: none;
 }
 
 .dashboard-controllership-finance .cf-hero-updated {

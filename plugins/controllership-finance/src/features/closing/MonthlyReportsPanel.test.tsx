@@ -734,26 +734,26 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(onOpen).toHaveBeenCalledWith("stock-inventory");
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Entradas e saídas — R05/ }),
+      screen.getByRole("button", { name: /Entradas e saídas — MATR320/ }),
     );
     expect(onOpen).toHaveBeenCalledWith("stock-movements");
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Despesas por centro de custo — R10/,
+        name: /Despesas por centro de custo/,
       }),
     );
     expect(onOpen).toHaveBeenCalledWith("cost-center-expenses");
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Notas fiscais a desconsiderar — R11/,
+        name: /Notas fiscais a desconsiderar/,
       }),
     );
     expect(onOpen).toHaveBeenCalledWith("billing-exclusion-roster");
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Material em processo — R08/ }),
+      screen.getByRole("button", { name: /Material em processo — MATR989/ }),
     );
     expect(onOpen).toHaveBeenCalledWith("work-in-process");
   });
@@ -765,7 +765,7 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(screen.queryByText("RELATÓRIO")).toBeNull();
     expect(screen.queryByText("DESCRIÇÃO")).toBeNull();
     expect(screen.getAllByText("Disponível").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Abrir relatório").length).toBe(10);
+    expect(screen.getAllByText("Abrir relatório").length).toBe(11);
   });
 
   it("cards sem probe próprio exibem «Não verificado» e não inflam o contador", async () => {
@@ -776,7 +776,7 @@ describe("catálogo em cartões — navegação contextual", () => {
     // existe no HEAD, sem confundir com disponibilidade medida.
     expect(
       screen.getAllByText("Consulta implementada").length,
-    ).toBe(6);
+    ).toBe(7);
     const counter = document.querySelector(
       '[aria-label^="Relatórios disponíveis:"]',
     );
@@ -843,7 +843,7 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(within(table).getByText("Paridade pendente")).toBeTruthy();
     // R04 sem contrato: nenhuma dimensão inventada.
     const r04Row = within(table)
-      .getByText("Consumo por OP")
+      .getByText(/Consumo por OP/)
       .closest("tr");
     expect(r04Row?.textContent).toContain("Contrato pendente");
   });

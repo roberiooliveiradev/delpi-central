@@ -151,25 +151,25 @@ const REPORT_META: Record<
     origin: "TOTVS/SB9 + MATR989 — consulta operacional",
   },
   "stock-movements": {
-    name: "Entradas e saídas — R05",
+    name: "Entradas e saídas — MATR320",
     description:
       "Movimentações do mês por tipo de produto e saldo do fechamento — regra MATR320.",
     origin: "TOTVS/SD1·SD2·SD3·SF4 + SB9",
   },
   "stock-kardex": {
-    name: "Kardex e CPV — R06",
+    name: "Kardex e CPV — MATR910",
     description:
       "Movimentações por produto com saldo inicial do fechamento anterior, custo histórico e CPV gerencial — regra MATR910.",
     origin: "TOTVS/SD1·SD2·SD3·SF4 + SB9 + TTAT",
   },
   "inventory-adjustments": {
-    name: "Inventários — R07",
+    name: "Inventários — MATR910",
     description:
       "Ajustes de inventário positivos e negativos do período — recorte INVENT do MATR910.",
     origin: "TOTVS/SD3 INVENT + SB9",
   },
   "cost-center-expenses": {
-    name: "Despesas por centro de custo — R10",
+    name: "Despesas por centro de custo",
     description:
       "Despesas por centro de custo com a seleção histórica do fechamento (eixo de digitação), universo investigativo separado e possíveis divergências para conferência no ERP.",
     origin: "TOTVS/SD1 + SB1 + CTT",
@@ -181,7 +181,7 @@ const REPORT_META: Record<
     origin: "TOTVS/SD2 + SF4 + SB1",
   },
   "work-in-process": {
-    name: "Material em processo — R08",
+    name: "Material em processo — MATR989",
     description:
       "Material em processo físico (armazém 99) e alocado em ordens vivas — regra MATR989.",
     origin: "TOTVS/SB9 + SD3/SC2",
@@ -193,13 +193,13 @@ const REPORT_META: Record<
     origin: "api-delpi/SD2+SG1+SHY — visão operacional",
   },
   "production-order-consumption": {
-    name: "Consumo por OP — R04",
+    name: "Consumo por OP — visão operacional",
     description:
       "Ordens de produção para auditoria de consumo — visão operacional; equivalência MATR860 pendente.",
     origin: "api-delpi/SC2+SG1+SD4+SD3 — consumption-audit",
   },
   "cost-closing-state": {
-    name: "Estado de fechamento e cutoff — R12/R15",
+    name: "Acompanhamento do fechamento de custos",
     description:
       "Marcadores técnicos do fechamento de custos e da virada por filial (SB9, MV_ULMES, TTAT) — não é homologação nem execução.",
     origin: "TOTVS/SB9010 + SX6 + TTAT",
@@ -217,6 +217,40 @@ const CATALOG_REPORT_KEYS: ReportKey[] = [
   "work-in-process",
   "cost-closing-state",
   "production-order-consumption",
+];
+
+/** CF-UX-034 — agrupamento por famílias funcionais do fechamento
+ *  (doc 118 orquestração paralela; não é sequência oficial linear).
+ *  R12/R15 permanece no catálogo em grupo próprio de estado técnico
+ *  até decisão do PO sobre realocação (CF-UX-035, DECISION_REQUIRED). */
+const CATALOG_GROUPS: { title: string; keys: ReportKey[] }[] = [
+  {
+    title: "Financeiro",
+    keys: ["financial-settlements"],
+  },
+  {
+    title: "Estoque, custos e conciliação",
+    keys: [
+      "stock-inventory",
+      "stock-movements",
+      "stock-kardex",
+      "inventory-adjustments",
+      "work-in-process",
+    ],
+  },
+  {
+    title: "Conferências complementares",
+    keys: [
+      "production-order-consumption",
+      "billing-mod-breakdown",
+      "cost-center-expenses",
+      "billing-exclusion-roster",
+    ],
+  },
+  {
+    title: "Acompanhamento do fechamento de custos — visão técnica",
+    keys: ["cost-closing-state"],
+  },
 ];
 
 const DOMAIN_LABELS: Record<ReconciliationDomain, string> = {
@@ -907,11 +941,16 @@ export function MonthlyReportsPanel({
   period,
   selectedReport,
   onOpenReport,
+  refreshNonce = 0,
 }: {
   period: string;
   selectedReport: ReportFamily | null;
   /** Abre a página contextual do relatório (UX-011 D3). */
   onOpenReport: (key: ReportKey) => void;
+  /** Tick do refresh do hero — comando único de atualização
+   *  por contexto (CF-UX-031): o «Atualizar consulta» do hero
+   *  dispara todas as fontes do painel. */
+  refreshNonce?: number;
 }) {
   const [nonce, setNonce] = useState(0);
   const reload = useCallback(() => setNonce((n) => n + 1), []);
@@ -932,7 +971,7 @@ export function MonthlyReportsPanel({
   const stockId = useRef(0);
   const reconId = useRef(0);
 
-  const sourceKey = `${period}:${nonce}`;
+  const sourceKey = `${period}:${nonce}:${refreshNonce}`;
   const { startDate, endDate } = useMemo(
     () => periodRange(period),
     [period],
@@ -1263,11 +1302,6 @@ export function MonthlyReportsPanel({
         title="O que precisa de atenção"
         hint={CF_HELP.monthlyClosing.reportsAttention}
       >
-        <div className="cf-settlements-actions">
-          <CfActionButton variant="ghost" onClick={reload}>
-            Atualizar dados
-          </CfActionButton>
-        </div>
         <section
           id="cf-reports-attention"
           tabIndex={-1}
@@ -1321,10 +1355,19 @@ export function MonthlyReportsPanel({
         <div
           id="cf-reports-catalog"
           tabIndex={-1}
-          className="cf-report-cards"
           aria-label="Catálogo de relatórios"
         >
-          {CATALOG_REPORT_KEYS.map((key) => {
+          {CATALOG_GROUPS.map((group) => (
+            <section
+              key={group.title}
+              className="cf-catalog-group"
+              aria-label={group.title}
+            >
+              <h3 className="cf-catalog-group__title">
+                {group.title}
+              </h3>
+              <div className="cf-report-cards">
+                {group.keys.map((key) => {
             const meta = REPORT_META[key];
             let status: string | null;
             let updated: Date | null = null;
@@ -1410,8 +1453,11 @@ export function MonthlyReportsPanel({
                   </span>
                 </div>
               </CfInteractiveDataCard>
-            );
-          })}
+                );
+              })}
+              </div>
+            </section>
+          ))}
         </div>
       </CfSectionCard>
 

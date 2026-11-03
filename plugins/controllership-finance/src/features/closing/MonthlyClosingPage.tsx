@@ -50,13 +50,16 @@ import {
   FilterInputField,
   FiltersRow,
 } from "../../app/cfFiltersUi";
+import {
+  DataTableSection,
+  type DataTableColumn,
+} from "../../app/cfDataTableUi";
 import { ClosingHero } from "../../app/ClosingHero";
 import {
   CfActionButton,
   CfEmptyState,
   CfLoadingCard,
   CfPagePath,
-  CfSectionCard,
   CfSegmentToggle,
   CfTitleWithHelp,
   cfEmptyStateClassNames,
@@ -148,6 +151,52 @@ function formatPeriod(period: string): string {
   const [year, month] = period.split("-");
   return `${month}/${year}`;
 }
+
+/** CF-UX-027/029 — grade canônica de fechamentos abertos. O contrato
+ *  distingue `template_version_id NULL` (snapshot legitimamente vazio,
+ *  competência aberta sem template publicado) de contagem real de itens;
+ *  «0 itens» só aparece quando há checklist vinculado. */
+const COMPETENCE_COLUMNS: DataTableColumn<ClosingCompetence>[] = [
+  {
+    key: "period",
+    header: "Competência",
+    render: (row) => formatPeriod(row.period),
+    sortable: true,
+    sortValue: (row) => row.period,
+  },
+  {
+    key: "status",
+    header: "Estado",
+    render: (row) => (row.status === "OPEN" ? "Aberto" : row.status),
+  },
+  {
+    key: "opened",
+    header: "Abertura",
+    render: (row) =>
+      row.opened_at
+        ? new Date(row.opened_at).toLocaleDateString("pt-BR")
+        : "—",
+  },
+  {
+    key: "checklist",
+    header: "Checklist",
+    render: (row) =>
+      row.template_version_id === null
+        ? "Sem checklist vinculado"
+        : row.template_version != null
+          ? `Versão ${row.template_version}`
+          : "Vinculado",
+  },
+  {
+    key: "items",
+    header: "Itens",
+    align: "right",
+    render: (row) =>
+      row.template_version_id === null
+        ? "—"
+        : String(row.item_count ?? "—"),
+  },
+];
 
 type CockpitResult =
   | { key: string; kind: "ready"; data: Cockpit; at: Date }
@@ -580,17 +629,28 @@ export function MonthlyClosingPage({
         : "Relatório"
       : (TAB_OPTIONS.find((option) => option.value === tab)?.label ??
         "Visão geral");
+  const monthlyListCrumb = {
+    id: "monthly-closing",
+    label: "Fechamento mensal",
+    href: monthlyPath(base, "", "overview"),
+    onNavigate: (event: { preventDefault: () => void }) => {
+      event.preventDefault();
+      navigatePluginPath(monthlyPath(base, "", "overview"));
+    },
+  };
+  const competenceCrumb = {
+    id: "period",
+    label: period ? formatPeriod(period) : "",
+    href: monthlyPath(base, period, "overview"),
+    onNavigate: (event: { preventDefault: () => void }) => {
+      event.preventDefault();
+      navigatePluginPath(monthlyPath(base, period, "overview"));
+    },
+  };
   const pathItems = reportMode
     ? [
-        {
-          id: "monthly-closing",
-          label: "Fechamento mensal",
-          href: monthlyPath(base, period, "overview"),
-          onNavigate: (event: { preventDefault: () => void }) => {
-            event.preventDefault();
-            navigatePluginPath(monthlyPath(base, period, "overview"));
-          },
-        },
+        monthlyListCrumb,
+        competenceCrumb,
         {
           id: "reports",
           label: "Relatórios e divergências",
@@ -603,15 +663,8 @@ export function MonthlyClosingPage({
       ]
     : detailMode
     ? [
-        {
-          id: "monthly-closing",
-          label: "Fechamento mensal",
-          href: monthlyPath(base, period, "overview"),
-          onNavigate: (event: { preventDefault: () => void }) => {
-            event.preventDefault();
-            navigatePluginPath(monthlyPath(base, period, "overview"));
-          },
-        },
+        monthlyListCrumb,
+        competenceCrumb,
         {
           id: "documents",
           label: "Documentos e interações",
@@ -623,15 +676,8 @@ export function MonthlyClosingPage({
         },
       ]
     : [
-        {
-          id: "monthly-closing",
-          label: "Fechamento mensal",
-          href: monthlyPath(base, period, "overview"),
-          onNavigate: (event: { preventDefault: () => void }) => {
-            event.preventDefault();
-            navigatePluginPath(monthlyPath(base, period, "overview"));
-          },
-        },
+        monthlyListCrumb,
+        ...(period ? [competenceCrumb] : []),
       ];
 
   return (
@@ -696,7 +742,6 @@ export function MonthlyClosingPage({
           <MonthlyReportPage
             period={period}
             reportKey={reportKey ?? ""}
-            onBack={backToReports}
           />
         </div>
       ) : period && detailMode ? (
@@ -775,6 +820,7 @@ export function MonthlyClosingPage({
 
             {tab === "reports" ? (
               <MonthlyReportsPanel
+                refreshNonce={retryNonce}
                 period={period}
                 selectedReport={selectedReport}
                 onOpenReport={openReport}
@@ -791,58 +837,18 @@ export function MonthlyClosingPage({
             />
           ) : null}
           {competences && competences.length > 0 ? (
-            <CfSectionCard
+            <DataTableSection<ClosingCompetence>
               title="Fechamentos abertos"
-              hint={CF_HELP.monthlyClosing.page}
-            >
-              <table className="cf-table" aria-label="Fechamentos abertos">
-                <thead>
-                  <tr>
-                    <th>Competência</th>
-                    <th>Estado</th>
-                    <th>Abertura</th>
-                    <th>Itens do checklist</th>
-                    <th>Ação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {competences.map((competence) => (
-                    <tr key={competence.competence_id}>
-                      <td>{formatPeriod(competence.period)}</td>
-                      <td>
-                        {competence.status === "OPEN"
-                          ? "Aberto"
-                          : competence.status}
-                      </td>
-                      <td>
-                        {competence.opened_at
-                          ? new Date(
-                              competence.opened_at,
-                            ).toLocaleDateString("pt-BR")
-                          : "—"}
-                      </td>
-                      <td>
-                        {competence.item_count !== undefined
-                          ? competence.item_count
-                          : "—"}
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="cf-competence-link"
-                          aria-label={`Abrir fechamento de ${formatPeriod(competence.period)}`}
-                          onClick={() =>
-                            navigateToPeriod(competence.period, "overview")
-                          }
-                        >
-                          Abrir fechamento
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </CfSectionCard>
+              titleHint={CF_HELP.monthlyClosing.page}
+              columns={COMPETENCE_COLUMNS}
+              rows={competences}
+              rowKey={(row) => row.competence_id}
+              hideSearch
+              emptyMessage="Nenhum fechamento aberto."
+              onRowClick={(row) =>
+                navigateToPeriod(row.period, "overview")
+              }
+            />
           ) : null}
           {competences && competences.length === 0 ? (
             <CfEmptyState

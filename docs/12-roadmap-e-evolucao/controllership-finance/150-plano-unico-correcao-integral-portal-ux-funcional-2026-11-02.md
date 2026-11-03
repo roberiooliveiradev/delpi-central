@@ -396,3 +396,38 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 - **Matriz obrigatória por página:** título/hero, breadcrumb, competências/filtros, toggles, grupos de botões, exportações, densidade, overflow, loading/disabled, desktop/mobile, light/dark, foco/teclado, resultado observado, issue vinculada e critério de aceite.
 - **Entrega desejada:** uma correção **compartilhada** para todos os casos equivalentes, variações somente conforme capacidade de cada relatório; sem regressões na leitura dos dados, downloads, navegação ou estados. Relaciona CF-UX-016/020/021/022/026/030/031/033/037/038; validar página por página, sem assumir que componente comum basta.
 - **Fase atual:** somente registro no Documento 150 e acúmulo de evidências para próxima leva consolidada do Devin. **Não gerar prompt isolado, não editar runtime, não realizar deploy.**
+
+## 10. Registro de execução Devin — segunda leva Gate 066 (02/11/2026)
+
+**BASE_HEAD:** `7b79bdfbe4` · **MERGE:** `ac2404d915` (fast-forward; doc 150 já trazia os 13 itens) · WIP de terceiros preservado (delia-api, supplies-api, public-hub — sem stage).
+
+### Diffs executados
+| Arquivo | Mudança | IDs |
+|---|---|---|
+| `features/closing/MonthlyClosingPage.tsx` | landing → `DataTableSection` com `COMPETENCE_COLUMNS` (semântica honesta `template_version_id NULL` = «Sem checklist vinculado»); navegação por linha (`onRowClick`); breadcrumb com segmento de competência (`Início → Fechamento mensal → MM/AAAA → Relatórios e divergências → relatório`); `refreshNonce={retryNonce}` ao painel | 027, 028, 029, 031, 033 |
+| `features/closing/ProductionOrderConsumptionPage.tsx` | tabela → `DataTableSection` com `R04_COLUMNS` e `serverPagination` fiel ao backend | 032 |
+| `features/closing/MonthlyReportPage.tsx` | removido `onBack` + botão «Voltar para Relatórios e divergências» (navegação migrada ao breadcrumb) | 037 |
+| `features/closing/MonthlyReportsPanel.tsx` | `refreshNonce` no `sourceKey` (refresh único no hero); removido «Atualizar dados» duplicado; nomes de negócio + rotinas reais (MATR320/910/989, «visão operacional» para R04); `CATALOG_GROUPS` por famílias funcionais + render agrupado (11 cards, R09 incluído no grupo de conferências) | 031, 034, 036 |
+| `index.css` | `.cf-hero-filters` sem borda/container redundante (mesma faixa visual dos controles); `.cf-catalog-group__title` | 030, 038, 034 |
+| `*.test.tsx` (3 arquivos) | expectativas atualizadas à nova UX (row click, breadcrumb como retorno, nomes, contagens); mock `MonthlyReportPage` sem `onBack` | — |
+
+### Matriz por item
+| ID | Estado | Evidência |
+|---|---|---|
+| 027 | FIXED_VERIFIED | `DataTableSection` canônico (`cfDataTableUi`, usado em 10+ páginas); typecheck+tests |
+| 028 | FIXED_VERIFIED | `onRowClick` com role/button+teclado nativos do DataTable; botão por linha removido |
+| 029 | FIXED_PENDING_VERIFY | causa raiz CONFIRMADA_NO_CONTRATO: `template_version_id NULL` ⇒ snapshot legitimamente vazio; exibido «Sem checklist vinculado» + versão quando há; dados reais 09/10-2026 a confirmar em sessão |
+| 030 | FIXED_PENDING_VERIFY | `.cf-hero-filters` sem borda; input/label/foco preservados; visual a confirmar |
+| 031 | FIXED_VERIFIED | um único refresh por contexto: hero `retry` → `retryNonce` cobre todas as 5 fontes do painel; «Atualizar dados» removido; queries preservadas |
+| 032 | FIXED_VERIFIED | `DataTableSection` + paginação servidor `page*25`; campos R04 preservados do CF-UX-001; detalhe via contrato mantido |
+| 033 | FIXED_VERIFIED | segmento competência clicável (rota real, não data corrente); testes de navegação por breadcrumb |
+| 034 | FIXED_VERIFIED | 4 famílias funcionais (Financeiro / Estoque-custos-conciliação / Conferências complementares / Acompanhamento técnico) — sem alegar ordem oficial Joici |
+| 035 | DECISION_REQUIRED | R12/R15 permanece no catálogo em grupo próprio «Acompanhamento do fechamento de custos — visão técnica»; realocação aguarda escolha A/B do PO |
+| 036 | FIXED_VERIFIED | títulos sem RXX; rotinas reais só onde comprovadas (MATR320/910/989, P7); R04 sem alegar MATR860 |
+| 037 | FIXED_VERIFIED | botão de retorno removido; navegação via breadcrumb validada em testes |
+| 038 | FIXED_PENDING_VERIFY | borda redundante removida em todos os heroes via `.cf-hero-filters` compartilhado; visual a confirmar |
+| 039 | FIXED_PENDING_VERIFY | auditoria aplicada via componentes compartilhados (ClosingHero/DataTableSection/CSS); varredura visual pós-deploy pendente |
+
+### Verificação
+- `tsc -b`: **0 erros** · `vite build`: **OK (2.63s)** · `vitest`: **416/417** (1 flake pré-existente `MonthlyDocumentsPanel` — verde isolado; `DocumentDetailPanel` avatar também flake conhecido)
+- Pendente sessão humana: screenshots antes/depois, CLARA com OP `24841701001` (2026-09/filial 01), breakpoints/temas em produção
