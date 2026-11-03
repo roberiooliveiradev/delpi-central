@@ -494,3 +494,30 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 - `tsc -b`: **0 erros** · `vite build`: **OK** · `vitest`: **416/417** (1 flake pré-existente, verde isolado)
 - CF-UX-044 → FIXED_PENDING_VERIFY (visual autenticado pendente) · CF-UX-045 → FIXED_PENDING_VERIFY
 - Pendente: CLARA 2026-09/2026-10, screenshots, temas/mobile em sessão.
+
+## 13. REWORK pós-Gate 067 — hero R04 e ajuda nas colunas (capturas 02/11/2026)
+
+**Origem da evidência:** duas capturas autenticadas do PO em `/closing/monthly-closing/2026-10/reports/production-order-consumption`, após deploy reportado de `2c3b217817`. A consulta exibiu 2.381 OPs, o hero novo e a tabela com dados; **o layout do hero ficou visualmente inadequado**. Nesta rodada o PO pediu **corrigir hero e colocar helps em todas as colunas da tabela**.
+
+### CF-UX-044 — Corrigir composição do hero R04, com filtros horizontais e sem área morta
+- **Prioridade:** P0 de apresentação · **Estado:** REWORK / ROOT_CAUSE_PROVEN_IN_HEAD + OBSERVED_SCREENSHOT.
+- **Evidência visual:** filtros `Filial`, `Tipo de data`, `Busca OP / produto` estão em coluna estreita à esquerda dentro de contorno de fieldset, enquanto ações `Limpar filtros` e `Atualizar consulta` ficam separadas, no extremo direito, com grande área vazia; a página está excessivamente alta.
+- **Causa comprovada em código:** `ProductionOrderConsumptionPage.tsx` passa `<fieldset className="cf-settlements-filters">` ao slot `filters` de `ClosingHero`; a regra compartilhada em `index.css` para `.cf-settlements-filters` define `display:flex; flex-direction:column`. Outros relatórios usam essa classe em contextos próprios; **não alterar globalmente** sua direção e causar regressões.
+- **Correção contratada:** usar composição de filtros própria do hero existente (classes/wrappers já usados em R05/R06/R07), com layout horizontal responsivo, largura proporcional e grupos alinhados; remover contorno redundante do fieldset preservando semântica, `legend` acessível quando necessário e foco do input. Reaproveitar `ClosingHero`, sem novo hero nem CSS exclusivo injustificado. Agrupar filtros e ações na mesma faixa quando houver largura e criar quebra organizada no mobile.
+- **Revisar o KPI Paridade:** cartão grande com texto `Pendente` chama atenção desproporcional; verificar padrão de `ClosingHero` e, sem omitir a pendência, priorizar contagem de OP e apresentar paridade em aviso compacto/sem duplicar “pendente” no KPI e no notice. Não modificar semântica `operational_view` nem `officialParity=pending`.
+- **Aceite:** screenshots desktop e mobile antes/depois, filtros em linha (desktop), nenhum retângulo estreito, sem espaço morto, ações agrupadas, acesso teclado/foco, claro/escuro; filial/tipo de data/busca/reload/clear funcionais com dados reais de 2026-09 e 2026-10. Testar regressão dos outros relatórios que compartilham CSS.
+
+### CF-UX-045 — Helps oficiais em todas as colunas do grid R04
+- **Prioridade:** P1 · **Estado:** OPEN / PRODUCT_DIRECTION_RECORDED.
+- **Colunas existentes no `R04_COLUMNS`:** `OP`, `Produto`, `Descrição`, `Status`, `Centro de trabalho`, `Data`. Todos os **seis headers** precisam de ajuda contextual pelo mecanismo oficial de help do `DataTableSection` / `@delpi/plugin-ui`; verificar a propriedade do tipo `DataTableColumn` no HEAD do kit, não criar tooltip flutuante custom e não supor nome da prop.
+- **Texto funcional requerido, derivado do contrato:**
+  - OP: identificador da ordem de produção retornado pelo produtor.
+  - Produto: código do produto vinculado à OP.
+  - Descrição: descrição do produto na origem.
+  - Status: código de status retornado pelo TOTVS; **significado do código `N` não homologado** — não traduzir por hipótese.
+  - Centro de trabalho: informação de centro de trabalho **quando disponibilizada pelo contrato**; `—` indica ausência no registro apresentado, não centro inexistente.
+  - Data: data referente ao **tipo selecionado** (emissão, finalização ou apontamento); exibir em PT-BR e lembrar que o filtro temporal se refere à OP, **não necessariamente ao consumo do período**.
+- **Critério:** cada header mostra affordance de help no padrão do plugin-ui, interação hover/foco/teclado/touch, rótulos acessíveis `Ajuda: [Coluna]`, tooltips claros em PT-BR, sem obstruir ordenação/paginação nem falsificar semântica da origem. Se houver grid de `Materiais e consumo` no detalhe com colunas dinâmicas, auditar seus headers também: não usar help genérico enganoso para campos sem contrato documentado.
+- **Testes:** unit/component e visual autenticado com as seis ajudas; verificar null/ausência, datas, status e detalhe da OP; build/typecheck/regressões.
+
+**Critério de conclusão do rework:** não basta o hero existir. Somente `PASS` após layout responsivo visualmente confirmado e seis helps funcionando no Data Grid, com dados reais e sem regressões; deploy de origem e SHA produtivo comprovados. Nenhum SQL, API, auth ou contrato novo autorizado por estes itens.
