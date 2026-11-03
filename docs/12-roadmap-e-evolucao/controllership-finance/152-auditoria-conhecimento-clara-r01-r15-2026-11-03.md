@@ -392,8 +392,6 @@ Novos: `tests/test_pg_clara_retrieval.py` (6 casos controlados + runner do golde
 - **Bloqueio de integração:** WIP alheio staged (`delia-api` orchestration, `execution-ledger.md`, etc.) conflita com o commit `47358f0c` pendente — `pull --ff-only`/rebase recusam sem stash (AGENTS R6). Publicação em `main` pendente de decisão do usuário → `DECISION_REQUIRED` na etapa de push/deploy.
 - **Resíduos:** (1) ranking-policy DECISION_REQUIRED §13.3; (2) 4 RETRIEVAL_MISS residuais; (3) dimensão C/D sem validação live; (4) corpus produtivo `83dddfbe` não re-publicado com as fichas corrigidas — republicação segue gate próprio após merge; (5) desempate `indexed_at` anotado.
 - **Rollback:** corpus = reingestão das fontes anteriores via pipeline canônico; código = revert do commit; testes novos não alteram comportamento alheio.
-<<<<<<< HEAD
-=======
 
 ### 13.10 Adendo — publicação efetivada (03/11/2026)
 
@@ -420,7 +418,6 @@ Novos: `tests/test_pg_clara_retrieval.py` (6 casos controlados + runner do golde
 **Limitações:** A bateria local usa marcadores de substring em fragmentos, não avaliação de 105 respostas conversacionais; quatro `RETRIEVAL_MISS` persistem e o quinto caso tem nota de `SOURCE_GAP` corrigido após baseline, requer matriz final não ambígua. Não foi executada avaliação C em canal conversacional da CLARA. Decisão real de alteração da política de ranking por especificidade permanece `DECISION_REQUIRED`, sem executar proposta.
 
 **Veredito GPT REVIEW Gate 076: `ACCEPT_WITH_RESIDUAL`** para integração, publicação, recuperação dos seis probes e quatro leituras reais sem regressão. **Não equivale a certificação de acurácia semântica R01–R15.** Próximo passo: golden-set de respostas conversacionais com avaliação por evidência e decisão específica de ranking por owner, sem reabrir o fallback OR que passou no teste.
->>>>>>> origin/main
 
 
 ## 14. Gate 077 — Homologação semântica end-to-end da CLARA (03/11/2026)
@@ -486,3 +483,21 @@ Canal real: ChatGPT + conector MCP CLARA, identidade do usuário com permissões
 - Sem alteração de código/fontes → **sem deploy e sem republicação de corpus** (diretriz: nenhum artefato de runtime alterado).
 - Resíduos: (1) ranking-policy `DECISION_REQUIRED` §13.3 cobre os 3+4 misses residuais; (2) stale docs datados co-presentes no top-12 — mitigar por política de vigência/ranking ou metadados (owner); (3) homologação conversacional live pendente de execução humana no canal oficial (§14.6).
 - Testes: `test_pg_clara_retrieval.py` 9/9; suítes CLARA não-PG 68/68.
+
+
+### 14.7 GPT REVIEW independente — Gate 077 (03/11/2026)
+
+**Verificação GitHub:** HEAD `b6aee79f86d8192ff06ee620142bbe0c9ef25ddc` confirmado em `main`, commit altera apenas `tests/clara_golden_set_r01_r15.py`, `tests/test_pg_clara_retrieval.py` e Documento 152. Corpus MCP `3cdbd991-837a-4ed6-81d4-0b81a304da6a`, 2.215 itens / 88 fontes, inalterado; **sem novo deploy necessário** para mudança restrita a testes/docs.
+
+**Achado documental:** o Documento 152 continha marcadores de conflito Git literais nas linhas originais 395/396/423 (`<<<<<<< HEAD`, `=======`, `>>>>>>> origin/main`), deixando o trecho 13.10–13.11 em forma de conflito não resolvido. Corrigido mecanicamente nesta revisão, preservando ambos os históricos/trechos (§13.9 e §13.10–13.11). A origem cronológica exata do conflito não foi atribuída sem diff adicional.
+
+**Achado de rigor dos testes:** `test_semantic_acceptance_105` permite `RETRIEVAL_MISS` para **qualquer cenário**, pois `allowed={"PASS_RETRIEVED","RETRIEVAL_MISS"}` e só rejeita `v not in allowed`; portanto um **novo miss inesperado** pode passar e o teste não garante 100/105 nem que os quatro misses conhecidos permaneçam os únicos. O teste `test_golden_set_105` já contém uma checagem melhor de equivalência de `expect` por caso: reutilizar o contrato de expectativa exata na aceitação semântica e negativos, preservando status conhecidos. O teste presente também valida apenas presença de marcadores numa única fonte, ausência literal de algumas expressões e `source_id` dentro de uma lista de fontes canônicas; isso não homologa factualidade, contradições entre trechos ou qualidade de resposta NL.
+
+**Contraprova MCP autenticada (5 perguntas negativas):**
+- `R04: "O R04 ainda está bloqueado?"` → 12 itens, **0 full_match**; ficha vigente na posição **8** e também documentos históricos `doc-85 BLOQUEADO` na posição **5**, `doc-83 BLOQUEADO` na **6**. Risco ativo de indução ao erro ao host conversacional, mesmo com fonte correta presente.
+- R09 negação de endpoint → 12 itens, ficha atual em primeiro; R06 estornos e R12 3/5 perguntas → 12 itens cada, resultados parciais; R15 homologação SB9/MV_ULMES → 12 itens, ficha em primeiro.
+- Todos esses resultados são **recuperação**, não resposta conversacional. **Nenhuma resposta de host foi capturada**.
+
+**Classificação:** `PASS` para existência de commit, corpus estável, execução de consultas de recuperação e inventário da bateria. `FAIL` para integridade documental original (corrigida nesta revisão) e `FAIL` no rigor do gate `test_semantic_acceptance_105` até que rejeite misses inesperados. `TEST_NOT_RUN` para 105 respostas do canal conversacional. **Veredito GPT REVIEW: `REWORK` limitado ao enforcement dos testes/QA e comprovação da resposta real, sem reabrir busca AND→OR nem exigir deploy produtivo para reparos só em testes/docs.** Política nova de ranking/vigência permanece `DECISION_REQUIRED` com owner.
+
+**DoD do rework mínimo:** (1) `test_semantic_acceptance_105` falhar se qualquer caso divergir de `expect` e preservar 4 misses conhecidos explicitamente; (2) teste mutacional provar que um quinto `RETRIEVAL_MISS` inesperado quebra a suíte; (3) classificar risco de snippets históricos R04 como `STALE_EVIDENCE` e fornecer orientação de uso das citações no canal conversacional sem implementar ranking pendente de owner; (4) executar a bateria conversacional real ou reportar `TEST_NOT_RUN` com rastreabilidade, **nunca** 105/105 de respostas; (5) Git limpo sem conflitos nos arquivos próprios.
