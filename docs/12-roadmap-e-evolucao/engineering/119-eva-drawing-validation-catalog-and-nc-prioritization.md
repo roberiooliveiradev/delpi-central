@@ -512,3 +512,21 @@ A implementação diz `"Content-Disposition": result.get("content_disposition") 
 **Estados por ambiente:** `SOURCE_PUBLISHED=PROVEN`; `LOCAL_BIND_MOUNT_DEPLOY=PASS_REPORTED_BY_EXECUTOR`; `PROD_SRV_API_DEPLOY=OWNER_BLOCKED` (sem acesso do executor ao host), `OFFICIAL_7_PDFS_E2E=INCONCLUSIVE_ENV`, `CHATGPT_CONNECTOR=NOT_UPDATED_IN_THIS_SESSION`. O PDF `99900001` usado para smoke, de 551 bytes, foi **sintético e removido**; sua renderização não substitui teste com desenho oficial preexistente. Não confundir um container no host local com deploy produtivo.
 
 **DEC-VAL-018 — única saída operacional pendente:** operador com acesso ao `srv-api` executa o procedimento canônico de deploy no commit publicado (revalidando HEAD/status/rollback) e comprova SHA runtime; em seguida valida `tools/list` + `get_context` do endpoint realmente conectado ao ChatGPT, testa transferência autenticada de `90264302.pdf` do acervo oficial e verifica SHA/bytes/abertura. O owner da integração verifica se o host ChatGPT materializa `EmbeddedResource`; se não, registra `OWNER_BLOCKED` com evidência e avalia a alternativa governada, sem refazer a Engineering API ou fazer workaround inseguro. Preservar apenas VAL-01 ativa.
+
+## 15. Tentativa de deploy produtivo `srv-api` — evidência objetiva de bloqueio (2026-11-03)
+
+**Verificado nesta execução:** `origin/main` contém a implementação (`semantic_registry`, `tool_get_product_drawing_pdf`, `EmbeddedResource/BlobResourceContents`, `core/filenames`) e o deploy no ambiente local oficial já provou E2E MCP (§14). A única pendência é executar o procedimento canônico no `srv-api`.
+
+**Evidência objetiva de acesso bloqueado (neste host de execução):**
+- `ssh srv-api` → `Could not resolve hostname` (sem alias/DNS).
+- `ssh {root,ubuntu,debian,analistaptd,delpi,devin}@192.168.1.237` com `id_ed25519` e `id_ed25519_srv` → `Permission denied (publickey,password)` em todas as combinações.
+- Nenhum `docker context` remoto configurado; sem automação de deploy remoto no repo.
+
+**Runbook para o operador autorizado (srv-api):**
+1. No repo em produção: `git fetch origin && git checkout main && git pull` — confirmar HEAD contém `cad4308b53`.
+2. `./infra/scripts/up-prod-sequential.sh --fase core --build` (escopo mínimo: `engineering-api`; o MCP vive no mesmo processo/container).
+3. Prova de versão: `curl <host>/apps/engineering-api/openapi.json` contém `drawing/pdf` + MCP `tools/list` anuncia `read` com `product.drawing_download` no `get_context`.
+4. E2E: `engineering-api/sandbox/eva_pdf_mcp_e2e.py` com token humano autorizado (client `mcp-engineering`, auth-code) contra `https://minhadelpi.com.br/apps/engineering-api/mcp` — produtos `90264302` + 6 demais; fileserver prod populado resolve os PDFs oficiais.
+5. Rollback: `git checkout <sha-anterior>` + mesmo script.
+
+**Estado: `PROD_DEPLOY_OWNER_BLOCKED`** — acesso SSH ao `srv-api` indisponível para o executor; código publicado e pronto. `CHATGPT_CONNECTOR_PENDING` permanece até o deploy produtivo + verificação de materialização `EmbeddedResource` pelo host.
