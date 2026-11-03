@@ -502,3 +502,13 @@ A implementação diz `"Content-Disposition": result.get("content_disposition") 
 **ChatGPT:** `OWNER_BLOCKED` — materialização de `EmbeddedResource` pelo host não comprovada; discovery automática via `tools/list` ocorrerá quando o conector reconectar à versão implantada. Alternativa governada: façade GPT Actions (rota `attachment` já PROVEN).
 
 **Estado: `DEPLOYED (ambiente local oficial) / E2E_MCP_PROVEN / PROD_DEPLOY_OWNER_BLOCKED / CHATGPT_CONNECTOR_PENDING`.**
+
+### 14.1 Revisão independente pós-publicação (DEC-VAL-018 — 2026-11-03)
+
+**Confirmado por consulta ao GitHub:** commit de documentação `71c9ba8ccd16e020c62f081cc738cf5070350dd3` existe em `main`, Doc 119 §14 publicado; código do branch `main` contém `("product", "drawing_download")` em `engineering_app/interface/mcp/semantic_bridge.py`, `tool_get_product_drawing_pdf` e `EmbeddedResource/BlobResourceContents` em `tool_bridge.py`, além de `safe_pdf_filename` em `core/filenames.py`. Isso remove o antigo bloqueio `UNPUBLISHED` da DEC-VAL-017. A publicação de código é **PROVEN**; a prova executável E2E foi **relatada pelo executor**, não repetida pelo reviewer.
+
+**Teste independente do ChatGPT nesta sessão:** `get_context(topic=product.drawing_download,entity=product,selected_ref=90264302)` ainda retorna catálogo `1.0` sem a ação `product.drawing_download`. O conector efetivamente acessível ao ChatGPT não apresenta o transporte novo. Nenhum PDF, `EmbeddedResource`, arquivo materializado ou imagem de página foi recebido neste ambiente. **`CHATGPT_DISCOVERY=FAIL`; `CHATGPT_PDF_RECEIVED=TEST_NOT_RUN`.**
+
+**Estados por ambiente:** `SOURCE_PUBLISHED=PROVEN`; `LOCAL_BIND_MOUNT_DEPLOY=PASS_REPORTED_BY_EXECUTOR`; `PROD_SRV_API_DEPLOY=OWNER_BLOCKED` (sem acesso do executor ao host), `OFFICIAL_7_PDFS_E2E=INCONCLUSIVE_ENV`, `CHATGPT_CONNECTOR=NOT_UPDATED_IN_THIS_SESSION`. O PDF `99900001` usado para smoke, de 551 bytes, foi **sintético e removido**; sua renderização não substitui teste com desenho oficial preexistente. Não confundir um container no host local com deploy produtivo.
+
+**DEC-VAL-018 — única saída operacional pendente:** operador com acesso ao `srv-api` executa o procedimento canônico de deploy no commit publicado (revalidando HEAD/status/rollback) e comprova SHA runtime; em seguida valida `tools/list` + `get_context` do endpoint realmente conectado ao ChatGPT, testa transferência autenticada de `90264302.pdf` do acervo oficial e verifica SHA/bytes/abertura. O owner da integração verifica se o host ChatGPT materializa `EmbeddedResource`; se não, registra `OWNER_BLOCKED` com evidência e avalia a alternativa governada, sem refazer a Engineering API ou fazer workaround inseguro. Preservar apenas VAL-01 ativa.
