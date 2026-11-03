@@ -803,6 +803,8 @@ export type ComunicadoDataResolved = {
   kpiPresentation?: {
     valueDisplay?: string;
     comparisonDisplay?: string | null;
+    /** Estado posicional materializado no backend; não recalcular na UI. */
+    statusLabel?: string | null;
     comparisonTone?: "positive" | "negative" | "neutral";
     progressPct?: number | null;
     sparklinePoints?: number[] | null;
