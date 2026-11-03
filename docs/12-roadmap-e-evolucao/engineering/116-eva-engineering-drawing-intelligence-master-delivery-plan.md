@@ -437,3 +437,128 @@ NEXT_MILESTONE_GATE:
 \`\`\`
 
 **Não confundir:** aceite de funcionalidade (OCR/SLANet rodando) não é aceite de qualidade técnica; aceite de GT não autoriza publicação; documentação de deploy não comprova runtime. O programa termina quando o escopo versionado estiver tecnicamente validado, não quando toda funcionalidade futura de engenharia estiver implementada.
+
+---
+
+# ADENDO B — Replanejamento de entrega: relatório funcional primeiro, validação técnica progressiva
+
+**Decisão de produto (2026-11-03):** reordenar o programa para entregar **agora** um relatório de análise de desenho funcional na EVA, recuperando comportamento útil do relatório que existia no Minha DELPI Chat legado. A validação de regras específicas de Engenharia permanece uma trilha posterior de qualidade; **não bloqueia** implementar, testar e publicar uma funcionalidade **read-only, assistida e rotulada DRAFT/CANDIDATE**, desde que seus limites sejam evidentes, os controles de autorização sejam respeitados e não existam afirmações técnicas injustificadas.
+
+**Precedência:** este adendo substitui a interpretação de dependência rígida de GT aprovado como pré-requisito para **todo** código e deploy de M1–M5. Não elimina nem reduz gates de owner, AuthZ, segurança, contrato, resource fit, qualidade mínima observável, aceite técnico de capacidades que se apresentem como validadas ou aprovação de artefato oficial. Os marcos M0–M5 continuam válidos, mas as atividades de relatório funcional podem avançar em paralelo às avaliações e aprovações específicas. Nenhuma seção anterior deve ser interpretada como permissão para declarar qualidade técnica comprovada antes da avaliação de Engenharia.
+
+## B.1 Objetivo imediato e escopo do primeiro release
+
+**Release alvo:** `EVA.DRAWING.REPORT.CANDIDATE.V1` (TARGET, sujeito ao inventário/contrato antes de materializar nome de API).
+
+**História de usuário:** usuário autorizado pede análise de um desenho oficial de produto, recebe **relatório estruturado e legível** com identificação, informações extraídas, tabelas e componentes candidatos, dados oficiais autorizados quando disponíveis, estado de comparação, observações, ambiguidades, lacunas, fontes e revisão. A experiência equivalente funcional já existia no Chat legado e precisa ser **inventariada antes de ser recriada**.
+
+**Princípios de produto:**
+- Não depender de catálogo M3 completo, GT de todos os desenhos nem dataset de ~20 para fornecer relatório assistido inicial.
+- Não chamar resultado de “aprovado”, “correto por Engenharia” ou “divergência confirmada” sem suporte explícito.
+- Relatório inclui apenas classes de conteúdo efetivamente suportadas; detalhes de cotas/tolerâncias não validadas aparecem como `NOT_CHECKED` / `PENDING_ENGINEERING_VALIDATION`, nunca como características técnicas inventadas.
+- Desenho oficial, BOM e cadastro não são alterados. Relatório é `DRAFT/CANDIDATE`; publicação/aprovação continua com owner.
+- MVP funcional não equivale a encerramento de M0–M5: aprovação de qualidade, generalização, casos complexos e classes M3 seguem avaliações e decisões próprias.
+
+## B.2 Prioridade zero — inventário do relatório do Minha DELPI Chat legado
+
+**Regra de reutilização:** o Chat legado serve exclusivamente de **referência de comportamento, conteúdo e fluxo**. É vedado criar dependência de runtime em agents, prompts, services, tabelas, bancos ou APIs internas do Chat; qualquer reuso exige extração neutra, contrato, ownership na Engenharia e testes.
+
+**B0-T01** Localizar no repositório atual e demais fontes canônicas autorizadas o fluxo legado de análise/relatório de desenhos: pontos de entrada, exemplos, prompts, builders/renderers, services, adapters, templates, formatos JSON/Markdown/PDF, chamadas ao domínio e decisões de negócio. Não presumir a localização; não importar código entre bounded contexts.
+**B0-T02** Reproduzir exemplos legados no ambiente controlado, quando disponível. Capturar 1–3 exemplos sanitizados e diferenciar `PROVEN` (código + teste), `TO_INVENTORY` (referência) e `PLANNED` (capacidade desejada). Quando não houver acesso ao legado, registrar `LEGACY_REFERENCE_UNAVAILABLE`, não inventar saídas e continuar a implementação com contrato definido a partir do comportamento aprovado neste adendo e da EVA atual.
+**B0-T03** Montar matriz `legacy section → purpose → source of truth → new consumer → EVA/Domain API contract → evidence → status → reusability`. Eliminar qualquer parte que dependia de autoridade indevida, LLM sem grounding ou consultas diretas a dados de outro domínio.
+**B0-T04** Identificar renderização/UX preexistentes no Portal Engenharia; preferir estendê-las em vez de criar um segundo host ou fluxo.
+**B0-T05** Registrar decision log sobre reuso extraído, partes substituídas e limitações. Se extrair módulo com mudança de owner/authority, abrir `ARCHITECTURE_DECISION_REQUIRED` e não executar essa mudança sem decisão.
+
+## B.3 Backlog de implementação do relatório funcional
+
+**B1 — Contrato candidato antes da implementação.**
+Inventariar contratos reais `drawing_understanding.v1`, `drawing_perception_candidate.v1`, `table_structure_engines`, BOM e interfaces de relatório; definir schema **aditivo ou composição de saída existente**, com `source_document_sha256`, `product_code`, `revision` (quando disponível), `generation_run_id`, `source_refs`, `sections`, `observations`, `comparison_status`, `warnings`, `limitations`, `state=DRAFT/CANDIDATE`. Definir owner, consumer, request/response, erros, AuthN/AuthZ, campos nulos, bounded payload, idempotência de leitura/geração, compatibility, observability e postcondition. Não materializar nova API se a composição do endpoint semântico existente for suficiente. Não expor tokens/secrets/PDF bruto em resposta comum ou logs.
+
+**B2 — Coleta e preparação governada.**
+Recuperar PDF e metadados pela fonte oficial autorizada; conferir documento, revisão, SHA e política de acesso; executar OCR/SLANet da baseline R9.9; preservar texto original e localização; não copiar PDF para Chat legado nem fazer rede não autorizada.
+
+**B3 — Estrutura documental e evidência.**
+Usar os resultados atuais de regiões/tabelas. Classificar `title_block`, `component_table_candidate`, `revision`, `notes`, `other/unknown` no escopo suportado. Criar vínculo rastreável `token→cell→row→field`, com `token_refs` ou `source_spans` efetivamente resolúveis; quando não comprovado, `UNKNOWN/AMBIGUOUS` com box e texto bruto, nunca ID fabricado. Resolver confusão de linhas de componentes com cabeçalhos administrativos por regras testadas e GT provisório rotulado como tal.
+
+**B4 — Extração tipada no escopo atual.**
+Candidatos: produto/documento, cliente, revisão, item, quantidade, código e descrição; manter `raw_value`, `normalized_value`, `field_status`, `evidence`, `confidence` (se suportada, não tratada como accuracy), `missing_fields`. Evitar assumir posição fixa de colunas. Se não houver evidência inequívoca, deixar campo ausente/ambíguo. Não produzir cotas, materiais, normas e tolerâncias ausentes; categorias M3 não validadas aparecem como `NOT_CHECKED`.
+
+**B5 — Cruzamento com dados oficiais (read-only).**
+Consultar cadastro/BOM/revisão somente via contratos oficiais existentes e permissão live. Separar `drawing_observation` de `official_source_fact` e `comparison_candidate`. Aplicar estados `MATCH/CONFLICT/UNKNOWN/NOT_COMPARABLE/NOT_CHECKED`; preservar BOM gate fail-closed, duplicidade e quantidade, versões e indisponibilidade de fonte; sem banco cross-context, escrita ou remapeamento silencioso.
+
+**B6 — Composição do relatório.**
+Produzir estrutura legível com no mínimo, quando houver evidência:
+1. Cabeçalho: produto/desenho, revisão, PDF SHA, data/run e `DRAFT/CANDIDATE`.
+2. Resumo: o que foi analisado; resultados observados; confiança/limitações explicadas.
+3. Documento: identificação e cliente/revisão candidatos.
+4. Regiões: identificação, tabela(s), notas e áreas não verificadas.
+5. Componentes: linhas candidatas com item, quantidade, código, descrição e referência à origem.
+6. Comparação oficial: fontes, revisão, status e divergências *candidatas* explicadas ou `NOT_COMPARABLE`.
+7. Características técnicas: somente classes suportadas; demais `NOT_CHECKED`.
+8. Alertas: ambiguidades, campos ausentes, conflitos de fonte, OCR limitado.
+9. Evidências: páginas, caixas, spans/token refs, origem e versão do pipeline.
+10. Limitações e próximo passo: revisão humana requerida; nenhuma aprovação/publicação.
+
+**B7 — Experiência de usuário.**
+Expor a operação no Portal Engenharia/EVA por superfície existente e permissões legítimas. Renderizar relatório com estados loading/empty/error/permission, navegação até evidências quando tecnicamente suportado, linguagem que distingue fonte oficial de candidato. Não inventar frontend como autoridade. Se o fluxo do produto já é via MCP, preservar a mesma semântica e entregar também saída consumível no chat; quando o Portal exigir mudança, implementar adapter/consumer correto em vez de acoplar diretamente ao provider.
+
+**B8 — Observabilidade e operação.**
+Traces `source→OCR→SLANet→understanding→comparison→report→MCP/UI`; corr IDs, duração, RAM/CPU, tamanho da resposta, erro tipado e modelo/config SHA; segurança e sanitização. Manter persistência governada dos modelos e cronograma de rollback. Não aceitar `health=true` como prova de E2E.
+
+## B.4 Gates funcionais de release — sem esperar validação definitiva das regras
+
+**G-F01:** relatório gerado de ponta a ponta para `90264302` e `90264161` via caminho autorizado, usando PDFs com hashes canônicos e modelos atuais.
+**G-F02:** seção de componentes contém texto real e, quando a linha é tipada, associação auditável e sem falsos dados administrativos apresentados como componentes confirmados; campos incertos ficam candidatos/UNKNOWN.
+**G-F03:** cada afirmação técnica do relatório tem evidência, ou aparece explicitamente `NOT_CHECKED/UNKNOWN`; nenhuma cota/tolerância/material/norma inventada.
+**G-F04:** fontes oficiais diferenciadas de observações; comparação preserva BOM gate, `NOT_COMPARABLE`, identidade/revisão e live AuthZ.
+**G-F05:** resposta é estruturada/serializável, bounded, retrocompatível e legível no consumer EVA/Portal existente.
+**G-F06:** testes unit, contracts, integration, negative, permissions e regressão reais PASS; falhas de OCR/SLANet/source produzem erro tipado e não sucesso enganoso.
+**G-F07:** deploy canônico governado, SHA/digest confirmado, pre/post-deploy E2E read-only, capacidade dentro do orçamento, restart/recreate e rollback plano/teste.
+**G-F08:** execução autenticada por consumidor independente quando disponível; caso executor não disponha de OAuth, `TEST_NOT_RUN` em vez de PASS. O aceite ChatGPT permanece independente.
+**G-F09:** relatório e UI explicitam `DRAFT/CANDIDATE — NÃO VALIDADO TECNICAMENTE PELA ENGENHARIA`. Sem publicação/aprovação/alteração oficial.
+**G-F10:** legado não é dependência de runtime, sem import ou rede para suas tabelas/agents/services; testes de boundary/residual search PASS.
+
+**Regra de bloqueio:** para implementar e implantar relatório candidato, **não se exige** GT aprovado para o catálogo completo de Engenharia, threshold universal ou dataset de ~20. Exigem-se todos os gates de segurança/contrato/read-only/operacional e os gates funcionais demonstráveis. Não converter parte não testada em PASS; não declarar acurácia de Engenharia.
+
+## B.5 Reinterpretação dos marcos M0–M5 e sequenciamento executável
+
+| Marco | Trabalho agora (sem GT final) | Gate de qualidade técnica que permanece pendente |
+|---|---|---|
+| M0 | dataset manifest, schema, eval harness efetivo, baseline, pacote de anotação para Engenharia | GT revisado, corpus representativo, thresholds de acurácia |
+| M1 | regions, source spans e token→cell candidate; correções comprovadas com testes | métricas estruturais em GT/holdout |
+| M2 | typed fields e row linkage de tabelas suportadas; abstenção para ambíguos | precisão/recall e revisão técnica por classe |
+| M3 | inventário/catalogação e `NOT_CHECKED` para dimensões/tolerâncias não validadas | catálogo técnico aprovado, GT dimensional e classes suportadas |
+| M4 | compare read-only com Domain APIs e BOM gate fail-closed no escopo atual | taxa de conflitos falsos/true positivos e validação do owner |
+| M5 | relatório candidato funcional e integração Portal/EVA, E2E, deploy governado, observabilidade | aceite da Engenharia para uso como análise tecnicamente validada |
+
+**Recomposição do fluxo de entrega:** `LEGACY INVENTORY → R9.9 PERCEPTION → CANDIDATE FIELD MAPPING → OFFICIAL READ-ONLY CROSS-CHECK → REPORT CANDIDATE → E2E → GOVERNED PRODUCTION DEPLOY`. Ao mesmo tempo, preparar GT/evals sem obrigar qualidade futura para habilitar o relatório read-only atual.
+
+**Critério de conclusão do release inicial:** `FUNCTIONAL_REPORT_V1_PASS` somente com G-F01..F10 demonstrados no nível aplicável, com G-F08 claramente independente; `ENGINEERING_QUALITY_APPROVAL=PENDING` até owner. `PROGRAM_M0_M5_COMPLETION` continua `IN_PROGRESS` até os gates originais de qualidade serem concluídos. Não confundir os dois estados.
+
+## B.6 Protocolo do Devin — implementação e deploy com continuidade
+
+1. Ler authorities, verificar HEAD/status/worktrees/origin, docs 116/117 e legado real, inventariar adapters/templates/report existentes e estabelecer contrato antes de código.
+2. Executar todo o trabalho técnico sob autoridade existente sem interromper após cada bug: `diagnose→fix→unit→contract→integration→E2E→regression`; evitar nova rodada de prompts para problema solucionável.
+3. Em paralelo, preparar GT/annotation/eval e a tabela de assuntos que exigirão Engenharia, sem tratá-los como bloqueadores de código funcional candidato.
+4. Não reabrir o que R9.9 provou sem teste de regressão que indique necessidade. Não fazer substituição arquitetural nem introduzir runtime Chat legado.
+5. Commit/push/deploy seguem `AGENTS.md`, incluindo `main`, fast-forward e script canônico. Nenhum atalho em branches, chaves, AuthZ, feature gates e rollback. Se o código falhar no gate pré-deploy, corrigir antes de publicar; se falhar pós-deploy, rollback autorizado e novo ciclo.
+6. Exibir relatório final separado por `LEGACY_RECOVERY, FUNCTIONAL_REPORT, OCR/SLANET_REGRESSION, OFFICIAL_COMPARISON, MCP_E2E, PORTAL_UI, DEPLOY_SHA/DIGEST, ENGINEERING_GT_PENDING, RESIDUALS`.
+7. Se legado inacessível, declarar `LEGACY_REFERENCE_UNAVAILABLE` e ainda entregar a experiência candidata compatível com as fontes atuais. Se uma authority real bloquear uma operação específica, continuar o restante sem fabricar sucesso.
+8. O objetivo é **entregar o relatório utilizável em produção**, não mais um documento descrevendo por que o projeto não avançou. Porém nenhum executor pode conceder a si próprio aprovação técnica ou de produção fora das políticas vigentes.
+
+## B.7 RQ/AC de produto para a task única de implementação
+
+**Task executora recomendada:** `EVA.DRAWING.REPORT.LEGACY.RECOVERY.FUNCTIONAL.V1.PRODUCTION`.
+
+- `RQ-REPORT-01`: inventário funcional do relatório legado, proveniência e contrato neutro.
+- `RQ-REPORT-02`: composição de relatório candidato com dados R9.9 e campos tipados quando suportados.
+- `RQ-REPORT-03`: comparação oficial read-only sob AuthZ e BOM gate.
+- `RQ-REPORT-04`: report UX/consumer na superfície legítima Portal/EVA.
+- `RQ-REPORT-05`: provenance, estado, incerteza, revisão e limitações em todos os claims.
+- `RQ-REPORT-06`: segurança, desempenho, modelos persistentes e observabilidade.
+- `RQ-REPORT-07`: testes unitários, contratuais, regressão, negativos e E2E dos dois PDFs.
+- `RQ-REPORT-08`: deploy canônico autorizado, SHA/digest/rollback e aceite independente.
+
+**Entrega mínima:** relatório funcional demonstrado em runtime real para os dois desenhos, exemplares sanitizados, API/contrato e UI/consumidor em produção quando aplicável, testes e evidência de deploy, e backlog de GT/qualidade não bloqueante claramente separado.
+
+**Nota de status:** este adendo é uma **decisão de planejamento** e não afirma que a funcionalidade já foi implementada, que o legado foi localizado, que o GT está aprovado ou que a produção está modificada.
