@@ -27,6 +27,7 @@ from app.application.capability_provision.orchestration import (
     _NATIVE_ASSESSMENT_LEDGER,
 )
 from app.application.interaction.contracts import (
+    LIMITATION_GOAL_MISMATCH,
     LIMITATION_INSUFFICIENT_EVIDENCE,
 )
 from tests.test_governed_attempt_contract import build_engine
@@ -309,10 +310,12 @@ def test_r4_reuse_cannot_accept_irrelevant_evidence():
         _reuse_proposal(final_correspondence="irrelevant"),
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
-    assert (
-        LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
-        or attempt.status is GovernedCapabilityStatus.FAILED
-    )
+    # NONBLOCKING-01: authorized evidence still composes — the
+    # persistent mismatch is annotated as a governed caveat, never
+    # suppressed into insufficiency or failure.
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert LIMITATION_GOAL_MISMATCH in attempt.limitations
 
 
 # ---------------- R5: authorization invariance ----------------
@@ -391,7 +394,9 @@ def test_r7_recovery_ceiling_unchanged_under_reuse():
     orch, model = _engine("langgraph", [pa, pb], proposal)
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert len(pa.calls) == 2
-    assert "insufficient_evidence" in attempt.limitations
+    # NONBLOCKING-01: bounded recovery still caps at one round; the
+    # persistent mismatch is annotated, never suppressed.
+    assert LIMITATION_GOAL_MISMATCH in attempt.limitations
 
 
 # ---------------- R8: traceability ----------------

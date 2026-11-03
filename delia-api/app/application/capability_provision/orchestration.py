@@ -98,6 +98,7 @@ from app.application.interaction.contracts import (
     GovernedCapabilityProvenance,
     LIMITATION_CAPABILITY_SURFACE_LISTING,
     LIMITATION_EVIDENCE_PROJECTION_PARTIAL,
+    LIMITATION_GOAL_MISMATCH,
     LIMITATION_INSUFFICIENT_EVIDENCE,
     LIMITATION_PRIOR_TURN_CONTINUATION,
     LIMITATION_RESULT_TRUNCATED,
@@ -163,8 +164,6 @@ from app.application.capability_provision.outcome_assessment import (
     OUTCOME_ANSWERED,
     OUTCOME_ENVELOPE_ONLY,
     OUTCOME_INSUFFICIENT,
-    REASON_GOAL_MISMATCH,
-    REASON_RELEVANCE_UNPROVEN,
     AnswerRequirements,
     EvidenceFacts,
     GoalEvidenceJudgment,
@@ -6605,6 +6604,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
                 contract_text=descriptor.description,
                 projected_content=outcome.projected_content,
+                limitations=outcome.limitations,
             )
             if cri_verdict is not None
             else None
@@ -9306,6 +9306,7 @@ class OperationalCapabilityOrchestrator:
         *,
         contract_text: str | None = None,
         projected_content: str | None = None,
+        limitations: Sequence[str] = (),
     ) -> CriComposition | None:
         """CRI E3 — one grounded conversational composition.
 
@@ -9350,6 +9351,7 @@ class OperationalCapabilityOrchestrator:
             vocabulary=self._cri_vocabulary,
             contract_facts=facts.contract_facts,
             projected_content=projected_content,
+            limitations=limitations,
         )
         comp_ledger = current_call_ledger()
         if comp_ledger is not None:
@@ -11555,15 +11557,19 @@ class OperationalCapabilityOrchestrator:
     ]:
         """Semantic-relevance edge (plan 125 adendum).
 
-        An ``answered`` verdict on business evidence is conclusive
-        only after the bounded correspondence judgment:
+        The bounded correspondence judgment annotates, never gates
+        (DELIA-C3-NONBLOCKING-EVIDENCE-INTERPRETATION-01):
         - ``corresponds`` -> the verdict stands;
         - ``irrelevant``  -> ONE governed READ recovery round (when
-          not already used this interaction); a still-mismatched or
-          absent recovery degrades to honest ``goal_mismatch``
+          not already used this interaction); a still-mismatched final
+          judgment annotates ``LIMITATION_GOAL_MISMATCH`` on the
+          outcome so composition presents the authorized evidence
+          with a governed caveat - never suppressed into
           insufficiency;
-        - ``uncertain``/absent/invalid proposal -> ``relevance_
-          unproven`` insufficiency, never a confident fabrication.
+        - ``uncertain``/absent/invalid proposal -> no annotation,
+          verdict unchanged: deterministic outcome assessment owns
+          sufficiency; semantic interpretation belongs to
+          composition, never to a probabilistic presentation gate.
         """
         unchanged = (
             outcome,
@@ -11658,20 +11664,20 @@ class OperationalCapabilityOrchestrator:
                 cri_facts,
                 cri_verdict,
             )
-        if judgment is None or (
-            judgment.correspondence != GOAL_EVIDENCE_CORRESPONDS
+        # DELIA-C3-NONBLOCKING-EVIDENCE-INTERPRETATION-01: the bounded
+        # semantic judgment annotates, never gates — authorized owner
+        # evidence still composes. An explicit irrelevant outcome
+        # carries the governed mismatch caveat as a limitation; absent
+        # or uncertain proposals add nothing.
+        if (
+            judgment is not None
+            and judgment.correspondence == GOAL_EVIDENCE_IRRELEVANT
+            and LIMITATION_GOAL_MISMATCH not in outcome.limitations
         ):
-            cri_verdict = OutcomeVerdict(
-                OUTCOME_INSUFFICIENT,
-                (
-                    (REASON_GOAL_MISMATCH,)
-                    if (
-                        judgment is not None
-                        and judgment.correspondence
-                        == GOAL_EVIDENCE_IRRELEVANT
-                    )
-                    else (REASON_RELEVANCE_UNPROVEN,)
-                ),
+            outcome = dataclasses.replace(
+                outcome,
+                limitations=outcome.limitations
+                + (LIMITATION_GOAL_MISMATCH,),
             )
         return (
             outcome,

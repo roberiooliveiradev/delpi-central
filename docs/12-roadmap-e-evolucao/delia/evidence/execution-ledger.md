@@ -2176,3 +2176,18 @@ goal_evidence_relevance + semantic_decision + engine_b_recovery
 INCIDENTE OPERACIONAL: docker cp em bind-mount sobrescreveu 4
 arquivos do worktree principal; trabalho concorrente recuperado de
 stash@{0} (WIP 08:00:15); zero residuo result_context no worktree.
+
+## T20-NONBLOCKING — gate semantico removido (tests green)
+
+CONTRATO NOVO (DELIA-C3-NONBLOCKING-EVIDENCE-INTERPRETATION-01):
+julgamento semantico ANOTA, nunca suprime evidencia autorizada.
+- irrelevant -> 1 recovery bounded (preservado) -> se persistir,
+  LIMITATION_GOAL_MISMATCH no outcome + caveat caveats.goal_mismatch
+  na composicao; verdict ANSWERED mantido.
+- uncertain/absent/invalid -> nada anota; deterministica decide.
+- insufficiency.goal_mismatch/relevance_unproven (vocab),
+  REASON_* constants, _REASON_MESSAGES rows -> orfaos removidos.
+- cri_presentation v6 + section caveats (loader fail-closed ok).
+REGRESSAO: 317/317 verdes (goal_evidence_relevance, evidence_iso,
+contextual_discovery, cri_e2, cri_e3, semantic_decision,
+engine_b_recovery).

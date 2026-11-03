@@ -48,6 +48,12 @@ LIMITATION_CAPABILITY_SURFACE_LISTING = "capability_surface_listing"
 # evidence list is partial, never proof of owner-side completeness.
 LIMITATION_EVIDENCE_PROJECTION_PARTIAL = "evidence_projection_partial"
 
+# DELIA-C3-NONBLOCKING-EVIDENCE-INTERPRETATION-01: bounded caveat — the
+# semantic judgment found returned records non-corresponding to the
+# goal. An annotation, never suppression: the authorized evidence is
+# still composed and the caveat tells the user it may not match.
+LIMITATION_GOAL_MISMATCH = "goal_mismatch"
+
 # C3-EXECUTION-SCOPE (§6.184): the published MFE echoes these exact
 # fixed labels on a structured confirmation turn. During the typed-
 # command migration window they are the ONLY free text a decision turn

@@ -46,6 +46,7 @@ from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
 )
 from app.application.interaction.contracts import (
+    LIMITATION_GOAL_MISMATCH,
     LIMITATION_INSUFFICIENT_EVIDENCE,
 )
 from app.application.model_invocation.contracts import (
@@ -360,7 +361,7 @@ def test_answered_with_correspondence_stays_answered(capture_mode_logs):
     )
 
 
-def test_absent_judgment_degrades_to_honest_insufficiency(
+def test_absent_judgment_never_blocks_answered_evidence(
     capture_mode_logs,
 ):
     proposal = _select("mcp:alpha", "read_items")
@@ -374,11 +375,13 @@ def test_absent_judgment_degrades_to_honest_insufficiency(
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
-    assert "relevance_unproven" in capture_mode_logs.text
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert LIMITATION_GOAL_MISMATCH not in attempt.limitations
 
 
-def test_invalid_judgment_fails_closed(capture_mode_logs):
+def test_invalid_judgment_never_blocks_answered_evidence(
+    capture_mode_logs,
+):
     proposal = _select("mcp:alpha", "read_items")
     proposal[GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID] = {
         "correspondence": "definitely"
@@ -392,10 +395,13 @@ def test_invalid_judgment_fails_closed(capture_mode_logs):
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert LIMITATION_GOAL_MISMATCH not in attempt.limitations
 
 
-def test_uncertain_judgment_is_not_an_answer(capture_mode_logs):
+def test_uncertain_judgment_never_blocks_answered_evidence(
+    capture_mode_logs,
+):
     proposal = _select("mcp:alpha", "read_items")
     proposal[GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID] = {
         "correspondence": "uncertain"
@@ -409,7 +415,8 @@ def test_uncertain_judgment_is_not_an_answer(capture_mode_logs):
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert LIMITATION_GOAL_MISMATCH not in attempt.limitations
     # Uncertainty never justifies a second governed read.
     assert provider.calls == [("read_items", {})]
 
@@ -486,7 +493,7 @@ def test_irrelevant_then_recovered_relevant_is_answered(
     )
 
 
-def test_irrelevant_persistent_is_honest_insufficiency(
+def test_irrelevant_persistent_annotates_mismatch_not_insufficiency(
     capture_mode_logs,
 ):
     irrelevant = _outcome(
@@ -527,10 +534,12 @@ def test_irrelevant_persistent_is_honest_insufficiency(
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    # Evidence is presented with a governed mismatch caveat — never
+    # suppressed into insufficiency by the semantic judgment alone.
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert LIMITATION_GOAL_MISMATCH in attempt.limitations
     # One recovery round maximum — never a third invocation.
     assert len(provider.calls) == 2
-    assert "goal_mismatch" in capture_mode_logs.text
 
 
 def test_identical_recovery_arguments_are_never_repeated(
@@ -565,7 +574,8 @@ def test_identical_recovery_arguments_are_never_repeated(
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert LIMITATION_GOAL_MISMATCH in attempt.limitations
     # Identical query never re-executes — bounded, no loop.
     assert provider.calls == [
         ("search_items", {"query": "terminal bala"})
@@ -757,7 +767,10 @@ def test_injection_in_mismatch_hint_stays_bounded(
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    # Oversized hostile hint invalidates the proposal — a malformed
+    # judgment annotates nothing and never gates the evidence.
+    assert LIMITATION_GOAL_MISMATCH not in attempt.limitations
     assert provider.calls == [
         ("search_items", {"query": "terminal bala"})
     ]
@@ -1048,7 +1061,8 @@ def test_recovery_never_selects_non_resumable_capability(
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert LIMITATION_GOAL_MISMATCH in attempt.limitations
     assert ("create_item", {"query": "terminal bala"}) not in (
         provider.calls
     )
@@ -2173,7 +2187,8 @@ def test_recovery_reinvoke_failure_keeps_original_insufficiency(
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert LIMITATION_GOAL_MISMATCH in attempt.limitations
     assert "relevance_recovery decision=reinvoke" in (
         capture_mode_logs.text
     )
@@ -2337,7 +2352,8 @@ def test_recoverable_rejection_repeated_invalid_args_stops(
         proposal,
     )
     attempt = orch.attempt("terminal ilhos")
-    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert LIMITATION_GOAL_MISMATCH in attempt.limitations
     assert len(provider.calls) == 2
     assert "identical_arguments" in capture_mode_logs.text
 

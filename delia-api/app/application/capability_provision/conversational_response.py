@@ -76,8 +76,6 @@ _MAX_CONTRACT_FACT_CHARS = 300
 _REASON_MESSAGES = (
     # Semantic relevance reasons lead the proximate-cause ordering:
     # they name WHY the evidence cannot answer (plan 125 adendum).
-    ("goal_mismatch", "goal_mismatch"),
-    ("relevance_unproven", "relevance_unproven"),
     ("coverage_unproven", "coverage_unproven"),
     ("ordering_unproven", "ordering_unproven"),
     ("fewer_than_requested", "fewer_than_requested"),
@@ -188,6 +186,7 @@ def compose_cri_response(
     vocabulary: Mapping[str, Mapping[str, str]],
     contract_facts: Sequence[str] = (),
     projected_content: str | None = None,
+    limitations: Sequence[str] = (),
 ) -> CriComposition | None:
     """Compose the governed conversational response, or ``None``.
 
@@ -206,6 +205,12 @@ def compose_cri_response(
     temporal = vocabulary.get("temporal_clauses") or {}
     insufficiency = vocabulary.get("insufficiency") or {}
     labels = vocabulary.get("labels") or {}
+    caveats = vocabulary.get("caveats") or {}
+    caveat_text = (
+        _format(caveats.get("goal_mismatch"), **{})
+        if "goal_mismatch" in limitations
+        else None
+    )
     req = requirements or AnswerRequirements()
     params = {
         "identifier": "",
@@ -276,6 +281,8 @@ def compose_cri_response(
 
     # ---- answered: ordering extreme (single focused record) -------
     paragraphs: list[str] = []
+    if caveat_text:
+        paragraphs.append(caveat_text)
     limitations: list[str] = []
     presented = 0
     record_lines: list[str] = []
