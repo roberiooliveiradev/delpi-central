@@ -2,8 +2,7 @@
 
 Versão da ficha: 2.0 · 03/11/2026 · doc 152 + Gates 059–070.
 
-Publicação: atualizada após implementação real — substitui a ficha 1.0
-(31/10) que declarava `NOT_IMPLEMENTED`. Contrato operacional vigente.
+Estado operacional: `IMPLEMENTED` (visão read-only `consumption-audit`); paridade oficial MATR860 pendente.
 
 ## Identificação
 
@@ -95,6 +94,5 @@ Publicação: atualizada após implementação real — substitui a ficha 1.0
 
 - **"O R04 ainda está bloqueado?"** — **Não.** O R04 tem visão
   operacional `IMPLEMENTED` (`consumption-audit`, SC2/SB1). Registros
-  `BLOQUEADO` em doc-83/doc-85 são históricos datados dos ciclos 2/3,
-  antes da implementação — `STALE_EVIDENCE`, nunca estado vigente.
-  Pendência real: equivalência oficial MATR860 `pending`.
+  de fases antigas não descrevem o contrato vigente. A equivalência
+  oficial MATR860 continua `pending`.

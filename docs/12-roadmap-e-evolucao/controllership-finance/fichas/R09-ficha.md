@@ -2,9 +2,7 @@
 
 Versão da ficha: 2.0 · 03/11/2026 · doc 152 + Gate 073.
 
-Publicação: ficha **vigente no corpus produtivo** — substitui a 1.0
-(31/10) que ainda declarava ausência de endpoint. Contrato operacional
-vigente; paridade oficial DLP204 **pendente**.
+Estado operacional: `IMPLEMENTED` (`billing-mod-breakdown`); paridade oficial DLP204 pendente.
 
 ## Identificação
 

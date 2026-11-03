@@ -2,7 +2,7 @@
 
 Versão da ficha: 1.0 · 31/10/2026 · doc 127 Etapa 4.
 
-Publicação: ficha **vigente no corpus produtivo** — estado `PENDING_CONTRACT/EXTERNAL` superado pela visão de acompanhamento (doc 151, Gate 071). Versão 2.0 · 03/11/2026.
+Estado operacional: visão de acompanhamento read-only implementada; execução de rotinas e aceite humano exigem evidência separada.
 
 ## Identificação
 

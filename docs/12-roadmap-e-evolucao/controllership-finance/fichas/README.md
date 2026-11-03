@@ -4,9 +4,7 @@ Versão 1.1 · 31/10/2026 · Execução
 `CF-PROC0072-CLARA-KNOWLEDGE-R01-R15-IMPLEMENTATION-STAGE-04`
 (doc 127 Etapa 4; decisão D-06 do doc 126).
 
-Publicação produtiva: corpus `5bebf07f-a66a-479f-aa2b-e7d0e6c7ea00`
-(88 fontes / 2.186 itens) no release stage-05, 30/10/2026 —
-`CF-PROC0072-CONTROLLERSHIP-RELEASE-STAGE-05` (doc 127 Etapa 5).
+Vigência: versão operacional do corpus determinada pela publicação governada do ambiente, não por identificador fixado na ficha.
 
 Conjunto canônico e versionado de fichas técnicas dos relatórios do
 processo de fechamento mensal (PROC-0072). Cada ficha consolida —
@@ -48,7 +46,7 @@ Legenda de implementação: `IMPLEMENTED` (contrato em runtime),
 
 Capabilities transversais além do `read` por relatório:
 `analyze(report_comparison)` (stage-03 — matriz de compatibilidade nas
-fichas §comparação), `knowledge` (estas fichas + docs canônicos),
+fichas §comparação), `knowledge` (somente as 17 fichas operacionais),
 `get_context` (catálogo e schemas). Superfície MCP permanece com seis
 tools — nenhuma tool plana por relatório.
 

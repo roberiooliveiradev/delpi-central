@@ -826,6 +826,17 @@ STALE_SEGMENT_FIXES: tuple[dict, ...] = (
          )],
          reason="afirmação mista: R04/R09 superados, R13/R14 vigentes"),
 
+    # Gate 085: R09 operational corpus excludes superseded timelines.
+    dict(source_id="ficha-r09", title_contains="Histórico de implementação",
+         action="drop", reason="timeline is not operational knowledge"),
+    dict(source_id="ficha-r09", title_contains="Atualização — Gate 040",
+         action="drop", reason="obsolete deployment snapshot"),
+    dict(source_id="ficha-r09", title_contains="Atualização — Gate 041",
+         action="drop", reason="obsolete implementation snapshot"),
+    dict(source_id="ficha-r09", title_contains="Atualização — Gate 042",
+         action="drop", reason="obsolete calculation snapshot"),
+    dict(source_id="ficha-r09", title_contains="Registro anterior",
+         action="drop", reason="superseded ficha version preserved in GitHub"),
     # ---------------- Gate 081 — auditoria integral (22214 itens) ----------------
     dict(source_id="doc-121",
          title_contains="Adendo — stage-03 (31/10/2026): comparação transversal",
