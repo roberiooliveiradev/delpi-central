@@ -431,3 +431,19 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 ### Verificação
 - `tsc -b`: **0 erros** · `vite build`: **OK (2.63s)** · `vitest`: **416/417** (1 flake pré-existente `MonthlyDocumentsPanel` — verde isolado; `DocumentDetailPanel` avatar também flake conhecido)
 - Pendente sessão humana: screenshots antes/depois, CLARA com OP `24841701001` (2026-09/filial 01), breakpoints/temas em produção
+
+## 11. Registro de execução Devin — Gate 067 (correção integral R04)
+
+**BASE_HEAD:** `7e38f43d98` · WIP de terceiros preservado.
+
+### Diff
+`plugins/controllership-finance/src/features/closing/ProductionOrderConsumptionPage.tsx` — reescrita de apresentação (contrato inalterado):
+
+- **Hero específico** (`ClosingHero` canônico, mesmo padrão R05/R06/R07): título «Consumo por OP», subtítulo, métricas reais (ordens encontradas + estado de paridade), filtros integrados em `fieldset` (Filial, Tipo de data, Busca OP/produto), «Limpar filtros» + «Atualizar consulta» únicos, aviso «Visão operacional — equivalência MATR860 pendente» via `notice`.
+- **Grid**: `DataTableSection` preservada (Gate 066); coluna Data formatada PT-BR por `formatCivilDate` e respeita o `date_type` selecionado (emission/finished/appointment); `status` mantido como código do produtor (semântica oficial não comprovada); `workCenter` ausência honesta «—» (contrato não fornece na listagem).
+- **Detalhe da OP**: `onRowClick` → contrato existente `getProductionOrderConsumptionDetail` (sem nova rota/produtor); painel com campos escalares conhecidos (fallback snake_case) + tabela de materiais quando o contrato retorna lista (`materials|components|consumption|order_items`).
+- **Loading**: `CfLoadingCard` compacto; refresh mantém dados visíveis (sem «0 registros» transitório); proveniência no `titleHint` do grid.
+
+### Verificação
+- `tsc -b`: **0 erros** · `vite build`: **OK (2.78s)** · `vitest`: **417/417 PASS**
+- Pendente sessão autenticada: CLARA `read(report.production_order_consumption)` (2026-09 OP 24841701001 / 2026-10 pág.1), screenshots, breakpoints/temas.
