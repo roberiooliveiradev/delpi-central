@@ -1970,3 +1970,17 @@ email + azp + iss vs validate_token. Se email ausente -> fix =
 garantir email no usuario (ja setado, talvez exchange nao encaminhe —
 testar grant direto sem exchange? MCP espera token do seu audience,
 entao exchange e obrigatorio — o fallback _rbac_from_claims cobre).
+
+## PROMOTION — auth progress 6 (SHA 38d1f14748)
+
+EXCHANGED token completo: email OK, azp=delia-api, iss=realm public,
+aud=[delpi-central,resource-url,account,mcp-api-delpi]. DAVI MCP segue
+401 "Unauthorized" — aud=api-delpi exchange NAO permitido p/ o client.
+Suspeita restante: validate_token no MCP pode exigir aud=api-delpi OU
+validar azp/typ especifico; ou load_user_rbac->Core nao conhece o
+usuario (sub novo) -> middleware falha antes do user build.
+PROXIMO: ler audience check em jwt_validator.py validate_token e, se
+aud OK, instrumentar o MCP log p/ ver a falha exata (signature vs
+claims vs rbac). ALTERNATIVA LEGITIMA: executar sync via service-token
+path (request_has_valid_internal_service_token) — se o adapter
+delegation nao aceita, avaliar contrato admin sync com service user.
