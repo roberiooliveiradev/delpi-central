@@ -421,3 +421,68 @@ Novos: `tests/test_pg_clara_retrieval.py` (6 casos controlados + runner do golde
 
 **Veredito GPT REVIEW Gate 076: `ACCEPT_WITH_RESIDUAL`** para integração, publicação, recuperação dos seis probes e quatro leituras reais sem regressão. **Não equivale a certificação de acurácia semântica R01–R15.** Próximo passo: golden-set de respostas conversacionais com avaliação por evidência e decisão específica de ranking por owner, sem reabrir o fallback OR que passou no teste.
 >>>>>>> origin/main
+
+
+## 14. Gate 077 — Homologação semântica end-to-end da CLARA (03/11/2026)
+
+**Executor:** Devin · **BASE:** `9b0a967956` (doc 152 §13.10) · **Corpus produtivo:** `3cdbd991` (2.215/88) — sem alteração de runtime nem de fontes neste gate.
+
+### 14.1 Canal conversacional — inventário
+
+A cf-api não possui endpoint conversacional próprio. A CLARA responde **exclusivamente pelo conector ChatGPT externo** via servidor MCP (`knowledge`/`get`/`sources` + tools operacionais); a composição em linguagem natural é feita pelo LLM do host, fora do código auditável aqui. Não existe orquestrador conversacional interno no repositório (minha-delpi-ai-api não roteia para o MCP CLARA). **Consequência:** a dimensão "texto efetivamente produzido" não é automatizável neste ambiente — procedimento oficial proposto em §14.6. Não foi criado chatbot paralelo.
+
+O que foi homologado (automatizável): existência da fonte, recuperação, **suficiência e pureza da evidência para compor a resposta correta**, citação em fonte canônica, e resistência a premissas falsas — sobre o corpus produtivo real.
+
+### 14.2 Golden set ampliado — 105 + 10
+
+`tests/clara_golden_set_r01_r15.py` passou a declarar por caso: `markers`/`asserts` (asserções exigidas), `cite` (fontes canônicas aceitáveis), `forbids` (asserções enganosas no item de suporte), `expect`. Novo `NEGATIVE_SET` com os 10 casos contraditórios do gate ("R04 ainda bloqueado?", "CLARA executou MATA330?", "custo ausente = zero?", etc.).
+
+Avaliador `test_semantic_acceptance_105` + `test_negative_contradictory_set` (em `test_pg_clara_retrieval.py`): matching com **fronteira de palavra** (evita falso positivo `NOT_IMPLEMENTED` → `IMPLEMENTED`), vereditos `PASS_RETRIEVED | RETRIEVAL_MISS | SOURCE_GAP | EVIDENCE_WEAK | CITATION_MISS`.
+
+### 14.3 Resultado — 105 perguntas
+
+| Veredito | Casos | Detalhe |
+|---|---|---|
+| PASS_RETRIEVED | 100 | evidência correta + citação canônica |
+| RETRIEVAL_MISS | 4 | R11-D7, R12-D5, R13-D6, R14-D6 — limitação de ranking OR (DECISION_REQUIRED §13.3) |
+| SOURCE_GAP | 0 | R13-D3 do Gate 076 era marker cruzando quebra de linha — **reconciliado: PASS_RETRIEVED** |
+| EVIDENCE_WEAK / CITATION_MISS | 0 | após calibração de `cite` para fontes canônicas (ficha-index, doc-85, doc-119, doc-121) |
+
+### 14.4 Resultado — 10 casos contraditórios
+
+| Caso | Veredito | Observação |
+|---|---|---|
+| "R04 ainda bloqueado?" | PASS | evidência corretiva no top-12 (`ficha-index` #2, `ficha-r04` #8); **itens stale `BLOQUEADO` também recuperados (doc-83/doc-85 #5/#6) — risco documentado** |
+| "R09 não possui endpoint?" | PASS | `billing_mod_breakdown` citável |
+| "CLARA executou MATA330?" | RETRIEVAL_MISS | evidência "nunca execução ERP" existe (ficha-r12 v1.1, doc-120/121) mas não ranqueia sob essa formulação — residual §13.3 |
+| "3 de 5 evidências = 60%?" | RETRIEVAL_MISS | idem (assert "marcadores técnicos") |
+| "custo ausente = zero?" | PASS | `source_missing` citável |
+| "toda SD3 estornada excluída?" | PASS | `MV_D3ESTOR` + "condicional" em ficha-r06 |
+| "R11 elimina notas do CPV?" | RETRIEVAL_MISS | "nunca exclusão automática" não ranqueia sob essa formulação |
+| "P7 operacional = MATR460?" | PASS | `officialP7` citável (doc-119/ficha-r03) |
+| "R13 tem tabela TOTVS?" | PASS | ficha-r13 #10 — "não há tabela Protheus" |
+| "ausência de evidência humana = reprovação?" | PASS | `PENDING` citável (doc-121) |
+
+**7 PASS / 3 RETRIEVAL_MISS documentados.** Nenhum caso retornou evidência que sustente a premissa falsa como vigente quando a citação canônica é respeitada; o risco material é a **co-presença de itens stale datados no mesmo top-12** — mitigável porque cada item expõe `last_verified_at`/`origin_authority`/`citation_locator` para a CLARA distinguir vigência (e pela política de ranking pendente).
+
+### 14.5 Factualidade × dimensões
+
+- **Factualidade:** evidência dos casos críticos (R01/R02 SE5×FK*, R06 MV_D3ESTOR condicional, R10/R11 SQL×use case, R12/R15 marcadores≠homologação) está CODE_PROVEN no corpus — sem `EVIDENCE_WEAK`.
+- **Completude/Proveniência:** `CITATION_MISS` zerado após reconhecer fontes canônicas além das fichas.
+- **Limitações:** declaradas (paridades pending, SOURCE_MISSING declarados).
+- **Segurança:** fail-closed preservado (INTERNAL_ONLY/report_id inexistente nunca retornam — testes Gate 076).
+- **Dimensão "texto produzido":** `TEST_NOT_RUN` — ver §14.6.
+
+### 14.6 Homologação conversacional oficial (procedimento)
+
+Canal real: ChatGPT + conector MCP CLARA, identidade do usuário com permissões do Portal. Procedimento para o responsável:
+1. Executar as 105 perguntas do golden set + 10 contraditórias na conversa oficial.
+2. Para cada resposta, avaliar as 5 dimensões do gate (factualidade, completude, proveniência, limitações, segurança) contra `asserts`/`forbids`/`cite` do golden set.
+3. Falhas bloqueantes esperadas zero: inventar SQL/regra/valor, `SOURCE_MISSING`→zero, paridade inexistente, marcador técnico como aceite, histórico como vigente, execução ERP fictícia.
+4. Registrar artefatos auditáveis (export de conversa ou log de respostas) anexados ao próximo gate.
+
+### 14.7 Decisões e resíduos
+
+- Sem alteração de código/fontes → **sem deploy e sem republicação de corpus** (diretriz: nenhum artefato de runtime alterado).
+- Resíduos: (1) ranking-policy `DECISION_REQUIRED` §13.3 cobre os 3+4 misses residuais; (2) stale docs datados co-presentes no top-12 — mitigar por política de vigência/ranking ou metadados (owner); (3) homologação conversacional live pendente de execução humana no canal oficial (§14.6).
+- Testes: `test_pg_clara_retrieval.py` 9/9; suítes CLARA não-PG 68/68.
