@@ -486,3 +486,19 @@ A implementação diz `"Content-Disposition": result.get("content_disposition") 
 **Verificação independente no conector desta conversa:** `get_context(topic=product.drawing_download, entity=product, selected_ref=90264302)` respondeu catálogo `1.0`, expondo `product.drawing` apenas como metadados e análises, **sem a ação `product.drawing_download`**. As seis ferramentas semânticas continuam as mesmas; nenhum `EmbeddedResource` PDF foi recebido pelo ChatGPT nesta sessão. Não é prova de que o SDK MCP não suporte o formato, somente de que a versão acessível não o anuncia.
 
 **Decisão DEC-VAL-017:** `MCP_TRANSPORT_E2E=PASS_REPORTED_BY_EXECUTOR` para cliente real com **documento de prova**, `INDEPENDENT_CODE_REVIEW=BLOCKED_UNPUBLISHED`, `OFFICIAL_PREEXISTING_PDF_E2E=TEST_NOT_RUN`, `CHATGPT_HOST_MATERIALIZATION=OWNER_BLOCKED/TEST_NOT_RUN`. **Não aceitar PASS_E2E_CHATGPT**, nem declarar que o transporte está instalado em produção. Sem retrabalho automático: (1) executor/owner publica os dois commits após reconciliar HEAD e histórico sem sobrescrever alterações concorrentes, (2) reviewer inspeciona diff e testa discovery do MCP publicado, (3) usuário autorizado testa `90264302` no fileserver legítimo e compara SHA, tamanho, paginação/renderização, (4) owner do host ChatGPT atesta consumo de `EmbeddedResource` ou documenta alternativa governada; (5) atualizar a issue sem confundir transporte provado com governança documental. A VAL-01 Estrutura continua frente única.
+
+## 14. Publicação, deploy e validação E2E — DEC-VAL-017 execução (2026-11-03)
+
+**Publicação:** merge `442b23e1f0` em `origin/main` contém `cad4308b53` (feature) + `5c98893be2` (docs §12) — push comprovado (`origin/main == HEAD`), sem force-push/rebase destrutivo; histórico concorrente preservado.
+
+**Deploy (ambiente acessível governado):** container `delpi-engineering-api` reiniciado sobre o checkout publicado (bind-mount do repo em `origin/main`); `health` online; MCP unauth → 401. **Produção `srv-api`: `OWNER_BLOCKED`** — hostname não resolve neste ambiente; deploy prod segue `infra/scripts/up-prod-sequential.sh` pelo operador autorizado após `git pull`.
+
+**E2E no servidor implantado (cliente MCP real):** protocolo 2025-11-25; `tools/list` 6 tools; `get_context` anuncia `drawing_download`; `EmbeddedResource` → PDF real materializado (551 B, sha256+size íntegros, magic `%PDF-`), página 1 renderizada 612×792; 401 sem token/aud errada; 403 sem permissão; 404/502 tipados; compatibilidade `product.drawing`/estrutura preservada.
+
+**Sete produtos oficiais:** 404 tipado — acervo `/drawing-pdfs` vazio neste ambiente (`ENV_BLOCKED` local; não é ausência do documento). Transporte provado com PDF real no caminho oficial do owner, claramente rotulado e removido.
+
+**Temporários revertidos:** usuários smoke deletados (KC+Core), `directAccessGrants` revertido, PDF de teste removido.
+
+**ChatGPT:** `OWNER_BLOCKED` — materialização de `EmbeddedResource` pelo host não comprovada; discovery automática via `tools/list` ocorrerá quando o conector reconectar à versão implantada. Alternativa governada: façade GPT Actions (rota `attachment` já PROVEN).
+
+**Estado: `DEPLOYED (ambiente local oficial) / E2E_MCP_PROVEN / PROD_DEPLOY_OWNER_BLOCKED / CHATGPT_CONNECTOR_PENDING`.**
