@@ -69,6 +69,12 @@ export type KpiPartStyle = {
    * Com `frame`, largura/altura vêm de `frame.w`/`frame.h` (% do card).
    */
   iconSize?: number;
+  /**
+   * - `auto`: box proporcional ao card (seed de legibilidade / sistema).
+   * - `fixed`: px explícito do usuário (inspetor) — inline vence o CSS.
+   * - Ausente: iconSize > default canônico ⇒ manual; até o default ⇒ auto.
+   */
+  iconSizeMode?: "auto" | "fixed";
 };
 
 /** Frame relativo ao card (0–100%), como chartParts title/legend. */
@@ -554,11 +560,9 @@ export function resolveKpiPartLayoutStyle(
     css.boxSizing = "border-box";
   } else if (
     options?.iconSizeFallback &&
-    style?.iconSize != null &&
-    Number.isFinite(style.iconSize) &&
-    style.iconSize > 0
+    iconSizeIsManual(style)
   ) {
-    const size = Math.max(16, Math.min(160, Math.round(style.iconSize)));
+    const size = Math.max(16, Math.min(160, Math.round(style?.iconSize ?? 0)));
     css.width = `${size}px`;
     css.height = `${size}px`;
   }
@@ -616,6 +620,21 @@ export function kpiPartSupportsTypography(ref: KpiPartRef | null | undefined): b
 }
 
 /** Estilo do box do ícone a partir de `kpiParts.icon` (cores, raio, frame/% ou size px). */
+/**
+ * `iconSize` manual vs seed de legibilidade (issue #129 / PR-132):
+ * - `iconSizeMode: "fixed"` → usuário gravou px (ribbon/inspetor) → inline vence.
+ * - `iconSizeMode: "auto"` → seed do chrome/sistema → CSS proporcional manda.
+ * - legado sem modo: `iconSize` até o default canônico (36) é tratado como
+ *   seed → automático; acima disso respeita como escolha manual.
+ */
+export function iconSizeIsManual(style?: KpiPartStyle | null): boolean {
+  const size = style?.iconSize;
+  if (size == null || !Number.isFinite(size) || size <= 0) return false;
+  if (style?.iconSizeMode === "fixed") return true;
+  if (style?.iconSizeMode === "auto") return false;
+  return size > KPI_ICON_DEFAULT_SIZE_PX;
+}
+
 export function resolveKpiIconBoxStyle(
   state: KpiPartState | null | undefined,
   contrastBackground?: string | null,

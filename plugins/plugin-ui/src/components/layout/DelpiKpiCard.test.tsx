@@ -223,6 +223,39 @@ describe("DelpiKpiCard chrome", () => {
     expect(icon.style.height).toBe("96px");
   });
 
+  it("iconSize seed (≤36) sem modo não emite inline — CSS proporcional manda", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="OEE"
+        value="93,73%"
+        fill
+        icon={<span>g</span>}
+        kpiParts={{ icon: { style: { iconSize: 32 } } }}
+      />,
+    );
+    const icon = container.querySelector(".delpi-kpi-icon") as HTMLElement;
+    expect(icon).toBeTruthy();
+    expect(icon.style.width).toBe("");
+    expect(icon.style.height).toBe("");
+  });
+
+  it("iconSizeMode=fixed preserva tamanho manual mesmo abaixo do default", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="OEE"
+        value="93,73%"
+        fill
+        icon={<span>g</span>}
+        kpiParts={{
+          icon: { style: { iconSize: 24, iconSizeMode: "fixed" } },
+        }}
+      />,
+    );
+    const icon = container.querySelector(".delpi-kpi-icon") as HTMLElement;
+    expect(icon.style.width).toBe("24px");
+    expect(icon.style.height).toBe("24px");
+  });
+
   it("valor sem frame em fill usa auto-fit (não trava em 40px)", () => {
     const { container } = render(
       <DelpiKpiCard label="Consumo" value="10" fill />,

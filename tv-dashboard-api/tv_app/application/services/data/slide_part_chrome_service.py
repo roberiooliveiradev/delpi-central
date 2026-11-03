@@ -302,6 +302,13 @@ def _rebalance_kpi_hierarchy(
         icon_style, "iconSize", target_icon, legibility_min=icon_min, authored=authored
     ):
         changed = True
+    # issue #129 — iconSize semeado pelo sistema = auto (proporcional);
+    # tamanho authored do usuário = fixed (override manual preservado).
+    if icon_style.get("iconSize") is not None:
+        icon_style.setdefault(
+            "iconSizeMode",
+            "fixed" if authored.contains(icon_style, "iconSize") else "auto",
+        )
     if icon_style.get("color") in (None, ""):
         icon_style["color"] = kpi.get("iconColor") or "#089bdb"
         changed = True
@@ -534,6 +541,11 @@ def _rebalance_input_hierarchy(
             icon_style, "fontSize", target_icon, legibility_min=icon_min, authored=authored
         ):
             changed = True
+        if icon_style.get("iconSize") is not None:
+            icon_style.setdefault(
+                "iconSizeMode",
+                "fixed" if authored.contains(icon_style, "iconSize") else "auto",
+            )
 
     return changed
 
@@ -725,6 +737,8 @@ def _apply_kpi(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
     )
     if _set_if_missing_or_below(icon_style, "iconSize", icon_def, min_value=icon_min):
         changed = True
+        # seed do sistema → auto proporcional (issue #129)
+        icon_style.setdefault("iconSizeMode", "auto")
     if icon_style.get("color") in (None, ""):
         icon_style["color"] = kpi.get("iconColor") or "#089bdb"
         changed = True

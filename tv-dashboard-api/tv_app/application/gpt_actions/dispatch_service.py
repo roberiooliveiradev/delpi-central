@@ -4941,6 +4941,8 @@ class GptActionsDispatchService:
                                     "x": 3, "y": 50,
                                     "w": 22, "h": 22,
                                 },
+                                # issue #129 — meta/referência = scorecard
+                                "kpiOptions": {"variant": "scorecard"},
                                 "style": {
                                     "color": "#0f172a",
                                     "backgroundColor": "#ffffff",
