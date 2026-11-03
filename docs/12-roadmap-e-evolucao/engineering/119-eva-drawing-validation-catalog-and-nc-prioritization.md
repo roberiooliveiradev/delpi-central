@@ -389,3 +389,21 @@ Todos os totais abaixo foram contados da **árvore devolvida pela EVA** (`items`
 
 **Próximo estudo, ainda antes de prompt:** inspecionar visualmente o raster/PDF original e/ou recuperar células SLANet por região nos casos `90264302`, `90263520`, `90264178`, `90261606`, `90263572`, `90480120`; identificar colunas/linhas e agrupamentos realmente impressos; versionar exemplos anotados por família, perguntar ao owner quais níveis são obrigatórios e como as quantidades se relacionam. **Estado:** `BOM_OFFICIAL=PROVEN`; `DRAWING_OCR_CANDIDATES=PROVEN`; `PRINTED_LAYOUT_RULE=TO_INVENTORY`; `STRUCTURE_VALIDATION=INCONCLUSIVE`; `E1_IMPLEMENTATION=NOT_STARTED`. E2–E7 permanecem congeladas.
 
+
+## 10. Tentativa de obtenção dos PDFs originais para inspeção humana (2026-11-03)
+
+**Solicitação:** obter diretamente os **sete PDFs originais** `90264302`, `90264161`, `90263520`, `90261606`, `90263572`, `90264178`, `90480120` e examinar visualmente suas páginas, tabelas, grupos e colunas — não somente o output OCR do §9.
+
+**Resultado da disponibilidade:**
+- EVA `read(product,drawing)`: os sete PDFs foram identificados no fileserver (`found=true`), mas o contrato MCP retorna somente **metadata**, não bytes PDF. O próprio catálogo EVA indica os bytes pela rota autenticada da Engineering API `/v1/products/{code}/drawing/pdf`.
+- `drawing_analysis` autenticado já produziu tokens/células/objetos, SHAs e comparações para os sete casos (§9), mas **não oferece neste fluxo o raster/PDF físico para inspeção direta**.
+- Busca exata pelos sete códigos no Google Drive conectado: **0 resultados**. Busca/listagem da Library/Project e inspeção do container da sessão: **nenhum dos sete PDFs disponível como arquivo diretamente manipulável** (a Library contém PDFs de outros códigos).
+- Tentativa de acesso HTTP à rota pública conhecida no runtime do container: falhou por resolução DNS do ambiente, sem obter resposta HTTP; **não foi possível confirmar se exigiria OAuth**, e não se deve usar atalho/credenciais fora dos contratos.
+- Logo `PDF_BYTES_ACQUIRED=FAIL/UNAVAILABLE` neste ambiente; `RASTER_VISUAL_REVIEW=TEST_NOT_RUN` para os sete. Isso **não contradiz** a existência dos arquivos nem o sucesso do serviço EVA ao processar PDF internamente.
+
+**Dado comprovado disponível:** sete árvores BOM e sete outputs OCR/SLANet no §9; hipóteses sobre agrupamento em sublistas e itens múltiplos em linha devem permanecer **CANDIDATE/INCONCLUSIVE**. Não aprovar regra de layout nem quantidade sem visualização do PDF original.
+
+**Caminhos legítimos para fechar a inspeção:** (a) anexar os sete PDFs à conversa; ou (b) disponibilizá-los em Drive/Project/Library que o usuário autorize e que permita leitura dos bytes; ou (c) conectar uma capacidade de download autenticado da rota oficial da Engineering API, com delegated_user e AuthZ live, sem vazar tokens, sem URL improvisada e sem segunda fonte de autoridade. Assim que os bytes forem acessíveis, renderizar páginas com hashes, ampliar recortes das tabelas, anotar linhas lógicas/células/colunas e confrontar com BOM por ocorrência. Preservar NC/revisão/validity.
+
+**DEC-VAL-012:** o estudo visual segue com **bloqueio de acesso ao PDF bruto**, não com falta de dados da BOM. Não criar prompt de implementação, não iniciar E2 e não declarar `VAL-01=PASS`. Um único bloqueio de acesso deve ser resolvido antes de inventar regras de representação.
+
