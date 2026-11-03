@@ -18,6 +18,8 @@ Rotas oficiais consumidas:
 from __future__ import annotations
 
 import logging
+from email.message import Message
+from email.utils import collapse_rfc2231_value
 from typing import Any
 
 from engineering_app.application.ports.home_sources import HomeSourceContext
@@ -59,6 +61,24 @@ def _lmp_date(value: str | None) -> str | None:
     if len(stripped) == 10 and stripped[4] == "-" and stripped[7] == "-":
         return stripped.replace("-", "")
     return stripped
+
+
+def _disposition_filename(disposition: str | None) -> str | None:
+    """Extrai `filename`/`filename*` do Content-Disposition upstream.
+
+    Metadado informativo para identificar o documento — a disposição
+    final da resposta é decidida pela borda, nunca ecoada."""
+    if not disposition:
+        return None
+    message = Message()
+    message["content-disposition"] = disposition
+    for key, value in message.get_params(header="content-disposition")[1:]:
+        if key.lower() not in ("filename", "filename*"):
+            continue
+        if isinstance(value, tuple):
+            value = collapse_rfc2231_value(value)
+        return str(value)
+    return None
 
 
 def _map_error(exc: Exception) -> dict[str, Any]:
@@ -293,7 +313,9 @@ class ApiDelpiDelegatedAuxiliary:
             "status_code": status,
             "content": content,
             "content_type": headers.get("content-type", "application/pdf"),
-            "content_disposition": headers.get("content-disposition", ""),
+            "filename": _disposition_filename(
+                headers.get("content-disposition")
+            ),
         }
 
     async def fetch_product_purchase_price_history(

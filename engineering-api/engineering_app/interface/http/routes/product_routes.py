@@ -14,6 +14,9 @@ permanece no owner downstream — 401/403 → `forbidden` honesto, 404 →
 
 from __future__ import annotations
 
+import hashlib
+import re
+
 from fastapi import APIRouter, Query, Response
 from delpi_auth.authorization import require_any_permission
 from delpi_auth.context_resolver import resolve_user_context
@@ -30,6 +33,23 @@ from engineering_app.middleware.request_observability_middleware import (
 router = APIRouter()
 
 ENGINEERING_ACCESS = "engineering.access"
+
+_FILENAME_UNSAFE = re.compile(r"[^A-Za-z0-9._-]+")
+
+
+def _attachment_filename(raw: str | None, *, fallback: str) -> str:
+    """Filename seguro para `Content-Disposition: attachment`.
+
+    O nome vindo do upstream é dado não confiável: separadores de path,
+    aspas, CRLF e não-ASCII são removidos — nunca escapados no header de
+    saída. Fallback para o código do produto quando não sobra nome válido."""
+    name = (raw or "").rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+    name = _FILENAME_UNSAFE.sub("_", name).strip("._ ")
+    if not name:
+        name = _FILENAME_UNSAFE.sub("_", fallback).strip("._ ") or "drawing"
+    if not name.lower().endswith(".pdf"):
+        name = f"{name}.pdf"
+    return name
 
 
 def _human_context(operation_id: str):
@@ -267,6 +287,28 @@ async def get_product_drawing(product_code: str):
     "/v1/products/{product_code}/drawing/pdf",
     operation_id="get_product_drawing_pdf",
     summary="PDF do desenho técnico — proxy binário governado ao owner",
+    response_class=Response,
+    responses={
+        200: {
+            "description": "PDF oficial do produto (binário)",
+            "content": {
+                "application/pdf": {
+                    "schema": {"type": "string", "format": "binary"}
+                }
+            },
+        },
+        400: {"description": "product_code inválido — envelope JSON"},
+        403: {
+            "description": "Sem engineering.access ou acesso negado pelo "
+            "owner do acervo — envelope JSON"
+        },
+        404: {
+            "description": "Produto sem desenho disponível — envelope JSON"
+        },
+        502: {
+            "description": "Acervo de desenhos indisponível — envelope JSON"
+        },
+    },
 )
 @require_any_permission([ENGINEERING_ACCESS])
 async def get_product_drawing_pdf(product_code: str):
@@ -283,19 +325,16 @@ async def get_product_drawing_pdf(product_code: str):
     )
     status = result.get("status")
     if status == "available":
-        import hashlib
-
         content = result["content"]
-        sha256 = hashlib.sha256(content).hexdigest()
-        filename = result.get("filename") or f"{code}.pdf"
+        filename = _attachment_filename(result.get("filename"), fallback=code)
         return Response(
             content=content,
-            media_type=result.get("content_type") or "application/pdf",
+            media_type="application/pdf",
             headers={
-                # attachment — downloadável pelo consumidor (ChatGPT).
-                "Content-Disposition": result.get("content_disposition")
-                or f'attachment; filename="{filename}"',
-                "X-Document-Sha256": sha256,
+                # attachment fixo — downloadável pelo consumidor (ChatGPT);
+                # a disposição upstream (inline) nunca é ecoada.
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "X-Document-Sha256": hashlib.sha256(content).hexdigest(),
                 "X-Document-Size": str(len(content)),
                 "X-Document-Filename": filename,
                 "X-Document-Product-Code": code,
