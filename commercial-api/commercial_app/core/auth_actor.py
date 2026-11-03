@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import re
-from contextlib import contextmanager
 from contextvars import ContextVar
-from typing import Iterator
 
 from fastapi import Request
 
@@ -77,15 +75,18 @@ def peek_actor_client_id() -> str | None:
     return _actor_client_id.get()
 
 
-@contextmanager
-def bind_request_actor(request: Request) -> Iterator[None]:
-    """Propaga nome/clientId do request até `_append_audit` / notify realtime."""
+def bind_request_actor(request: Request) -> None:
+    """Propaga nome/clientId do request até `_append_audit` / notify realtime.
+
+    Deve ser chamada **dentro do contexto da requisição** (middleware http):
+    os valores ficam no ContextVar do contexto corrente, herdado pelo handler
+    e pelos use cases. Não usa `reset()` — a dependência sync com `yield` que
+    fazia isso quebrava (`ValueError: Token created in a different Context`)
+    porque enter/exit de dependências FastAPI rodam em contextos distintos.
+    Como cada requisição executa em contexto próprio, o valor não vaza entre
+    requisições concorrentes.
+    """
     from commercial_app.interface.http.client_id import client_id_from_request
 
-    name_token = _actor_display_name.set(actor_display_name_from_request(request))
-    client_token = _actor_client_id.set(client_id_from_request(request))
-    try:
-        yield
-    finally:
-        _actor_display_name.reset(name_token)
-        _actor_client_id.reset(client_token)
+    _actor_display_name.set(actor_display_name_from_request(request))
+    _actor_client_id.set(client_id_from_request(request))
