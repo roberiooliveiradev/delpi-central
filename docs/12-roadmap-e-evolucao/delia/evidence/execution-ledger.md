@@ -1926,3 +1926,14 @@ requiredActions limpos. PENDENTE: password grant retorna 400 —
 depurar qual etapa (reset-password PUT vs grant). Script /tmp/prod_sync.py
 no host+container: reset password gerado in-process -> password grant ->
 bind -> _live_capture + capture_and_activate (davi/teo/vista).
+
+## PROMOTION — auth progress 2 (SHA 73d170a232)
+
+AVANCO: usuario mcp-catalog-sync realm delpi -> USER_TOKEN_OK via
+delpi-central password grant (apos email+firstName+lastName via admin
+PUT — "Account is not fully set up" resolvido). roles=default-roles-delpi
+(= usuario funcional). BLOQUEIO RESTANTE: MCPs rejeitam — provavelmente
+o token-exchange (audience mcp-api-delpi p/ davi) falha p/ usuario novo
+ou token passthrough rejeitado. PROXIMO: decodificar o exchanged token
+p/ davi e isolar exchange-403 vs mcp-reject; se exchange exigir role/
+client-scope, atribuir minimo necessario via admin API (auditable).
