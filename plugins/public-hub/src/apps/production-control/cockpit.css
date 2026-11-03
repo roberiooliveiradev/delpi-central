@@ -685,12 +685,18 @@
   box-shadow: inset 3px 0 0 var(--pcp-running);
 }
 
+/* table-cell explícito: display:flex neste <td> tira a célula do
+   table-layout no Chromium e desalinha as colunas abaixo do cabeçalho. */
 .pcp-pub__queue-seq {
+  display: table-cell;
+  white-space: nowrap;
+}
+
+.pcp-pub__queue-seq-stack {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  white-space: nowrap;
 }
 
 .pcp-pub__queue-seq-pa {

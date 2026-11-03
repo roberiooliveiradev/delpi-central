@@ -1099,35 +1099,37 @@ function UpcomingRow({
         .join(" ")}
     >
       <td className="pcp-pub__queue-seq">
-        <span
-          className={
-            paCode
-              ? "pcp-pub__queue-seq-pa pcp-pub__product-code--pa"
-              : "pcp-pub__queue-seq-pa"
-          }
-        >
-          {displayProductCode || "—"}
-        </span>
-        {isActive ? (
-          <span className="pcp-pub__queue-seq-tag pcp-pub__queue-seq-tag--running">
-            Em produção
-          </span>
-        ) : null}
-        {hasImpediment ? (
+        <div className="pcp-pub__queue-seq-stack">
           <span
             className={
-              impedimentTone === "ack"
-                ? "pcp-pub__queue-seq-tag pcp-pub__queue-seq-tag--feedback-ack"
-                : "pcp-pub__queue-seq-tag pcp-pub__queue-seq-tag--feedback-open"
+              paCode
+                ? "pcp-pub__queue-seq-pa pcp-pub__product-code--pa"
+                : "pcp-pub__queue-seq-pa"
             }
-            title={impedimentTitle}
           >
-            {queueFeedbackTagLabel(feedback.status)}
+            {displayProductCode || "—"}
           </span>
-        ) : null}
-        {!isActive && !hasImpediment && isNext ? (
-          <span className="pcp-pub__queue-seq-tag">Próxima</span>
-        ) : null}
+          {isActive ? (
+            <span className="pcp-pub__queue-seq-tag pcp-pub__queue-seq-tag--running">
+              Em produção
+            </span>
+          ) : null}
+          {hasImpediment ? (
+            <span
+              className={
+                impedimentTone === "ack"
+                  ? "pcp-pub__queue-seq-tag pcp-pub__queue-seq-tag--feedback-ack"
+                  : "pcp-pub__queue-seq-tag pcp-pub__queue-seq-tag--feedback-open"
+              }
+              title={impedimentTitle}
+            >
+              {queueFeedbackTagLabel(feedback.status)}
+            </span>
+          ) : null}
+          {!isActive && !hasImpediment && isNext ? (
+            <span className="pcp-pub__queue-seq-tag">Próxima</span>
+          ) : null}
+        </div>
       </td>
       <td>
         <div className="pcp-pub__queue-op">
