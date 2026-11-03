@@ -316,7 +316,11 @@ async function mountCockpit() {
       initial={machineLoadPayload([OPERATION, NEXT_ITEM])}
     />,
   );
-  // Espera a sessão identificar e o card "Agora nesta bancada" subir.
+  // Fila única: abre o detalhe da OP com contagem ativa para achar Encerrar.
+  const detailButtons = await screen.findAllByRole("button", {
+    name: /^Detalhes$/i,
+  });
+  fireEvent.click(detailButtons[0]!);
   await screen.findByRole("button", { name: /^Encerrar$/i });
 }
 

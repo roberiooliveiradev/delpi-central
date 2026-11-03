@@ -368,7 +368,7 @@
   text-align: right;
 }
 
-/* ---------- Agora nesta bancada ---------- */
+/* ---------- Card órfão (contagem fora da fila publicada) ---------- */
 
 .pcp-pub__now {
   margin-top: 8px;
@@ -599,7 +599,7 @@
   margin-bottom: 14px;
 }
 
-/* ---------- Próximas operações ---------- */
+/* ---------- Fila de operações ---------- */
 
 .pcp-pub__upcoming {
   margin-top: 22px;
@@ -679,6 +679,11 @@
   box-shadow: inset 3px 0 0 var(--pcp-accent);
 }
 
+.pcp-pub__queue-row--running {
+  background: color-mix(in srgb, var(--pcp-running) 10%, var(--pcp-surface));
+  box-shadow: inset 3px 0 0 var(--pcp-running);
+}
+
 .pcp-pub__queue-seq {
   white-space: nowrap;
 }
@@ -702,6 +707,11 @@
   text-transform: uppercase;
   color: var(--pcp-accent);
   background: color-mix(in srgb, var(--pcp-accent) 14%, transparent);
+}
+
+.pcp-pub__queue-seq-tag--running {
+  color: var(--pcp-running);
+  background: color-mix(in srgb, var(--pcp-running) 16%, transparent);
 }
 
 .pcp-pub__queue-op,
@@ -2641,7 +2651,7 @@
   }
 }
 
-/* Contagem MES (Pulso) no card "Agora nesta bancada" */
+/* Contagem MES (Pulso) — detalhe da OP e card órfão fora da fila. */
 .pcp-pub__run {
   margin-top: 1rem;
   padding-top: 1rem;

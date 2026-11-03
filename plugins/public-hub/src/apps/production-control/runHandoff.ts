@@ -62,9 +62,9 @@ export function newHandoffRequestId(): string | null {
  * Intenção com resultado desconhecido — registrada antes do POST e só
  * removida quando o backend responde de forma definitiva (sucesso ou
  * erro estruturado). Vive no módulo (não no React): sobrevive a remount
- * do controlador ao navegar entre o card "Agora nesta bancada" e o
- * detalhe da operação, e impede que fechar/remontar a interface descarte
- * a intenção antes da reconciliação segura (E2.RQ-06).
+ * do controlador ao navegar entre a fila e o detalhe da operação, e
+ * impede que fechar/remontar a interface descarte a intenção antes da
+ * reconciliação segura (E2.RQ-06).
  *
  * Também é espelhada em `sessionStorage` para sobreviver a F5: o que é
  * persistido é apenas a intenção (requestId + alvo + contexto) — NÃO é

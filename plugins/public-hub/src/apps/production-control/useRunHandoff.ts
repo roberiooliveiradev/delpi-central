@@ -54,12 +54,12 @@ type Options = {
 
 /**
  * Controlador da troca guiada (E2): prévia oficial + confirmação atômica
- * E1 com requestId por intenção. O mesmo controlador serve o card
- * "Agora nesta bancada" e o detalhe da operação (E2.RQ-01).
+ * E1 com requestId por intenção. O mesmo controlador serve o detalhe
+ * da operação e o card órfão fora da fila (E2.RQ-01).
  *
  * A intenção pendente (resultado desconhecido) NÃO vive só neste hook:
  * `pendingHandoffIntents` em runHandoff.ts é module-level e sobrevive a
- * remount ao alternar card ↔ detalhe — reabrir a finalização restaura a
+ * remount ao alternar fila ↔ detalhe — reabrir a finalização restaura a
  * tela de retry com o mesmo requestId em vez de iniciar uma nova intenção.
  */
 export function useRunHandoff({
