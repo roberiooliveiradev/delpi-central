@@ -932,6 +932,18 @@ async def analyze_product_drawing(
         for f in serialized_findings
         if f.get("recommended_correction")
     ]
+    # R11 — perfis reutilizáveis de objetos (doc 116-B): ocorrências BOM
+    # (oficial) + observações visuais (candidato) + relações auditáveis.
+    from engineering_app.application.drawing.object_profiles_builder import (
+        build_object_profiles,
+    )
+    payload["object_profiles"] = build_object_profiles(
+        bom_occurrences=payload["bom_occurrences"],
+        visual_observations=payload["visual_observations"],
+        component_rows=None,
+        document_sha=payload.get("identification", {}).get("document_sha")
+        or payload.get("document_sha"),
+    )
     payload["sections"] = {
         "A_identification": payload["identification"],
         "B_executive_summary": payload["executive_summary"],
