@@ -4489,3 +4489,20 @@ INVARIANTS=Application gates/Policy/AuthZ/Domain/Evidence/Outcome stay determini
 DELIVERY_GATE=M2_IMPLEMENTED_PENDING_M3_PARITY only with code+tests+evidence in evaluated SHA; no more preparatory inventory task. M3 formal parity and M4 controlled cutover remain separate; M5 legacy removal follows accepted cutover.
 PRODUCTION_DEPLOY=NOT_AUTHORIZED; PRODUCTION_CUTOVER=NOT_AUTHORIZED; RUNTIME_IMPLEMENTATION_STATUS=PENDING.
 EXECUTOR=Devin; REVIEW_VERDICT=PENDING_INDEPENDENT_REVIEW.
+
+## M2 — PYDANTIC AI UNIFIED RUNTIME (doc 220)
+
+SHA=<next> · PydanticAiModelInvocationAdapter implementado em
+infrastructure/model_invocation/pydantic_ai_adapter.py — mesmo
+ModelInvocationPort, mesmo adapter_kind/exposure; pydantic_ai.Agent
+com output_type dinamico por expected_fields, prior_context→message
+roles, timeout min(request,adapter), usage mapeado, error taxonomy
+(TIMEOUT/PROVIDER_UNAVAILABLE/PROVIDER_REJECTED/INVALID_STRUCTURED).
+Selecao por DELIA_MODEL_RUNTIME=pydantic_ai (default legacy —
+rollback isolado, sem coexistencia no mesmo request). Todos os
+stages de _model_stage_proposal (admission/selection/target/
+synthesis/continuity) fluem pelo port → runtime migrado de uma vez,
+gates intactos. pydantic_arggen ja era Pydantic AI (KEEP).
+8 testes adapter GREEN + regressao (90). Residual M5: legacy
+OpenAICompatible adapter + langgraph_engine permanecem ate parity
+M3/cutover M4.

@@ -116,6 +116,15 @@ class Settings:
             if isinstance(parsed_window, int) and parsed_window > 0
             else None
         )
+        # M2 (doc 220): intelligence runtime selection for the real
+        # provider path. "legacy" keeps the hand-rolled OpenAI-compatible
+        # adapter; "pydantic_ai" selects the Pydantic AI adapter behind
+        # the same ModelInvocationPort — one runtime per request, never
+        # both. Unknown values fail closed to the known-good legacy
+        # path pending M4 cutover.
+        self.model_runtime = (
+            (os.getenv("DELIA_MODEL_RUNTIME") or "legacy").strip().lower()
+        )
         # C3-OLLAMA-LOCAL-LLM-TESTING-01: when set, no real provider may be
         # wired — the configured endpoint is external and this environment
         # is not production. Composition stays fail-closed and eval
