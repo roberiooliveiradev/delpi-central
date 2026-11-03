@@ -24,3 +24,11 @@
 ## 5. Residuais
 
 `component_rows=None` (tabela tipada do `understanding` ainda não alimenta a superfície — mapper pendente); balões/geometria modelados mas **não reconhecidos** pela pipeline atual (honesto).
+
+## 6. R11.1 — integração das evidências visuais (2026-11-03)
+
+- **Identidade**: `object_profiles.document_sha` agora recebe `extraction.document_hash` (= `audit.document_hash_sha256`); `document_identity` por objeto separa proveniência oficial (`official_source_ref` = `api-delpi:/products/{code}/structure` para BOM_OCCURRENCE) da identidade do PDF (objetos visuais).
+- **Mapper**: `application/drawing/understanding_object_mapper.py` converte `drawing_understanding.v1` → `DrawingObjectSet` (linhas tipadas→DRAWING_TABLE_ITEM, `dimension_candidates`→DIMENSION, regiões `drawing_area/geometry/figure/view`→DRAWING_GEOMETRY, `balloons[]`→BALLOON só quando identificados). Ambiguidades (`quantity_not_numeric`, `component_code_not_code_shaped`, `association_unresolved`, `ambiguous_cells`) preservam evidência bruta e nunca geram relação.
+- **Relações**: `REPRESENTED_BY` (BOM→item, code_match NOT_CHECKED), `REFERENCED_BY` (item→balão), `POINTS_TO` (balão→geometria, vínculo declarado), `DIMENSIONS` (cota→geometria, contenção espacial). Zero relações quando não há evidência, com limitações explícitas.
+- **Wiring**: `product.drawing_understanding` alimenta `understanding["object_profiles"]` + `report["object_profiles"]` com a execução real (sem reprocessar OCR/SLANet); `product.drawing_analysis` aceita `parameters.understanding` (drawing_understanding.v1) — conflito de identidade documental exposto em `document_identity.match`.
+- **Testes**: `test_drawing_object_profiles_r11_1.py` 16/16 + R11 4/4; regressão 635 pass / 1 fail pré-existente ambiental (`test_visual_perception_r7::test_normalize_box_json_safe` — numpy ausente no container, fora do diff).

@@ -1,6 +1,6 @@
 """Composição de perfis de objetos do desenho (R11) — converte evidências
-existentes (`bom_occurrences` + `visual_observations`) em
-`DrawingObjectSet` serializado. Aditivo, candidate/DRAFT, sem nova
+existentes (`bom_occurrences` + `visual_observations` + `understanding`)
+em `DrawingObjectSet` serializado. Aditivo, candidate/DRAFT, sem nova
 pipeline nem source of truth."""
 
 from __future__ import annotations
@@ -9,9 +9,16 @@ from dataclasses import asdict
 from enum import Enum
 from typing import Any
 
+from engineering_app.application.drawing.understanding_object_mapper import (
+    populate_from_understanding,
+)
 from engineering_app.domain.drawing.object_profiles import (
+    DrawingObjectRef,
     DrawingObjectSet,
+    DrawingRelation,
     ObjectType,
+    RelationType,
+    VerificationState,
     bom_occurrence,
     dimension,
     table_item,
@@ -39,19 +46,43 @@ def _relation_to_dict(r) -> dict:
     return d
 
 
+def _by_type(seq: list[dict], key: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for v in seq:
+        k = str(v[key])
+        counts[k] = counts.get(k, 0) + 1
+    return counts
+
+
 def build_object_profiles(
     *, bom_occurrences: list[dict],
     visual_observations: list[dict],
     component_rows: list[dict] | None = None,
+    understanding: dict | None = None,
     document_sha: str | None = None,
+    official_source_ref: str | None = None,
 ) -> dict:
     """Monta o conjunto de perfis (oficial≠observado) + relações candidatas.
 
-    `bom_occurrences` (oficial) e `component_rows` (observado) viram
-    objetos tipados; relações REPRESENTED_BY são candidatas por
-    correspondência de código — NUNCA verificadas por mera igualdade.
+    `document_sha` identifica o documento analisado (PDF do desenho);
+    `official_source_ref` identifica a proveniência oficial da BOM —
+    uma ocorrência oficial nunca vira evidência visual por receber o
+    SHA do desenho.
+
+    `understanding` (contrato drawing_understanding.v1) alimenta itens
+    de tabela, cotas, geometria e balões via mapper — evidências
+    ambíguas preservadas, nunca promovidas. Relações REPRESENTED_BY são
+    candidatas por correspondência de código — NUNCA verificadas por
+    mera igualdade.
     """
     oset = DrawingObjectSet(document_sha=document_sha)
+    limitations: list[str] = [
+        "consumo da estrutura, quantidade de montagem e cota são "
+        "conceitos distintos — nunca comparados diretamente",
+        "unidades brutas da estrutura sem contrato oficial de "
+        "conversão permanecem PENDING_RULE_VALIDATION/NOT_COMPARABLE",
+    ]
+    ambiguous_total = 0
     for occ in bom_occurrences or []:
         oset.add_object(
             bom_occurrence(
@@ -62,7 +93,7 @@ def build_object_profiles(
                 bom_path=str(occ.get("path") or ""),
                 consumption_quantity=occ.get("quantity_raw"),
                 consumption_unit=occ.get("unit_raw"),
-                document_sha=document_sha,
+                document_sha=official_source_ref,
             )
         )
     for i, row in enumerate(component_rows or []):
@@ -89,18 +120,23 @@ def build_object_profiles(
                 document_sha=document_sha,
             )
         )
+    u_summary: dict[str, Any] = {}
+    if understanding:
+        u_summary = populate_from_understanding(
+            oset, understanding, document_sha=document_sha
+        )
+        limitations.extend(u_summary.get("limitations") or [])
+        ambiguous_total += u_summary.get("ambiguous_observations") or 0
+    u_doc = (understanding or {}).get("document_hash_sha256")
+
     # relações candidatas: table_item REPRESENTED_BY bom_occurrence por
-    # component_code — candidata (não verificada por igualdade simples).
+    # component_code — candidata (não verificada por igualdade simples);
+    # observações ambíguas nunca geram relação.
     items = oset.by_type(ObjectType.DRAWING_TABLE_ITEM)
     occs = oset.by_type(ObjectType.BOM_OCCURRENCE)
-    from engineering_app.domain.drawing.object_profiles import (
-        DrawingRelation,
-        RelationType,
-        VerificationState,
-    )
     for it in items:
         code = it.attributes.get("component_code_candidate")
-        if not code:
+        if not code or it.attributes.get("ambiguities"):
             continue
         for occ in occs:
             if occ.attributes.get("component_code") == code:
@@ -109,6 +145,13 @@ def build_object_profiles(
                         source_object_id=occ.object_id,
                         target_object_id=it.object_id,
                         relation_type=RelationType.REPRESENTED_BY,
+                        evidence_refs=[
+                            DrawingObjectRef(
+                                source_kind="code_match",
+                                document_sha=document_sha,
+                                raw_value=code,
+                            )
+                        ],
                         verification_state=VerificationState.NOT_CHECKED,
                         uncertainty_reason=(
                             "code_match é candidato — exige revisão técnica, "
@@ -116,11 +159,28 @@ def build_object_profiles(
                         ),
                     )
                 )
+    objects = [_object_to_dict(o) for o in oset.objects()]
+    relations = [_relation_to_dict(r) for r in oset.relations()]
     return {
         "contract_version": "drawing_object_profiles.v1",
         "document_sha": document_sha,
-        "objects": [_object_to_dict(o) for o in oset.objects()],
-        "relations": [_relation_to_dict(r) for r in oset.relations()],
+        "official_source_ref": official_source_ref,
+        "document_identity": {
+            "set_document_sha": document_sha,
+            "understanding_document_sha": u_doc,
+            "match": (
+                None
+                if not (document_sha and u_doc)
+                else document_sha == u_doc
+            ),
+        },
+        "understanding_integrated": bool(understanding),
+        "objects": objects,
+        "relations": relations,
+        "objects_by_type": _by_type(objects, "object_type"),
+        "relations_by_type": _by_type(relations, "relation_type"),
+        "ambiguous_observations": ambiguous_total,
+        "limitations": limitations,
         "state": "DRAFT/CANDIDATE",
         "not_official": True,
     }

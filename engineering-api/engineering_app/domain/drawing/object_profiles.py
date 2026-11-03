@@ -53,6 +53,8 @@ class DrawingObjectRef:
     page: int | None = None
     bounding_box: list[float] | None = None
     raw_value: str | None = None
+    # sistema de coordenadas do bbox (ex.: "pixels_pdfium_top_left")
+    coordinate_system: str | None = None
 
 
 @dataclass
@@ -114,28 +116,42 @@ def table_item(
     assembly_quantity: str | None, component_code_candidate: str | None,
     description_candidate: str | None, table_region: str | None,
     document_sha: str | None = None, row_evidence: DrawingObjectRef | None = None,
+    evidence_refs: list[DrawingObjectRef] | None = None,
+    ambiguities: list[str] | None = None,
+    extra_attributes: dict | None = None,
 ) -> DrawingObject:
     """Perfil B — item da tabela do desenho (observado, montagem ≠ consumo)."""
+    attributes = {
+        "item_label": item_label,
+        "assembly_quantity": assembly_quantity,
+        "component_code_candidate": component_code_candidate,
+        "description_candidate": description_candidate,
+        "table_region": table_region,
+    }
+    if ambiguities:
+        attributes["ambiguities"] = list(ambiguities)
+    if extra_attributes:
+        attributes.update(extra_attributes)
+    refs = [row_evidence] if row_evidence else []
+    refs.extend(evidence_refs or [])
     return DrawingObject(
         object_id=object_id,
         object_type=ObjectType.DRAWING_TABLE_ITEM,
-        attributes={
-            "item_label": item_label,
-            "assembly_quantity": assembly_quantity,
-            "component_code_candidate": component_code_candidate,
-            "description_candidate": description_candidate,
-            "table_region": table_region,
-        },
+        attributes=attributes,
         document_identity=document_sha,
-        evidence_refs=[row_evidence] if row_evidence else [],
+        evidence_refs=refs,
         observation_state=ObservationState.CANDIDATE,
         official=False,
+        limitations=(
+            [f"evidência ambígua: {a}" for a in (ambiguities or [])]
+        ),
     )
 
 
 def dimension(
     object_id: str, *, raw_value: str, unit: str | None,
     dimension_kind: str | None, document_sha: str | None = None,
+    evidence_refs: list[DrawingObjectRef] | None = None,
 ) -> DrawingObject:
     """Perfil D — cota observada; nunca promove a geometria sem prova."""
     return DrawingObject(
@@ -149,10 +165,52 @@ def dimension(
             "geometry_linked": False,
         },
         document_identity=document_sha,
+        evidence_refs=list(evidence_refs or []),
         observation_state=ObservationState.OBSERVED,
         official=False,
         limitations=[
             "associação a geometria exige relação explícita, não proximidade"
+        ],
+    )
+
+
+def balloon(
+    object_id: str, *, item_label: str | None,
+    document_sha: str | None = None,
+    evidence_refs: list[DrawingObjectRef] | None = None,
+) -> DrawingObject:
+    """Perfil C — balão somente quando realmente identificado na fonte."""
+    return DrawingObject(
+        object_id=object_id,
+        object_type=ObjectType.BALLOON,
+        attributes={"item_label": item_label},
+        document_identity=document_sha,
+        evidence_refs=list(evidence_refs or []),
+        observation_state=ObservationState.CANDIDATE,
+        official=False,
+        limitations=[
+            "vínculo balão↔item/geometria exige relação explícita"
+        ],
+    )
+
+
+def drawing_geometry(
+    object_id: str, *, region_type: str | None,
+    document_sha: str | None = None,
+    evidence_refs: list[DrawingObjectRef] | None = None,
+) -> DrawingObject:
+    """Perfil E — região de geometria candidata observada no desenho."""
+    return DrawingObject(
+        object_id=object_id,
+        object_type=ObjectType.DRAWING_GEOMETRY,
+        attributes={"region_type": region_type},
+        document_identity=document_sha,
+        evidence_refs=list(evidence_refs or []),
+        observation_state=ObservationState.CANDIDATE,
+        official=False,
+        limitations=[
+            "geometria candidata — associação a cotas/balões exige "
+            "evidência espacial ou estrutural verificável"
         ],
     )
 

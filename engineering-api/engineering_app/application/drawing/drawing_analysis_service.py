@@ -95,6 +95,29 @@ def _first_code_value(codes: list[str], official: str) -> bool:
     return official in set(codes)
 
 
+def flatten_bom_occurrences(
+    structure: Any, code: str
+) -> list[dict[str, Any]]:
+    """Ocorrências BOM achatadas com proveniência determinística —
+    projeção canônica consumida pelo relatório e pelos perfis R11."""
+    items: list[dict[str, Any]] = []
+    if isinstance(structure, dict):
+        _flatten_bom(structure, items, parent_code=code)
+    return [
+        {
+            "occurrence_id": i.get("_occurrence_id"),
+            "component_code": i.get("code"),
+            "component_type": i.get("product_type") or i.get("type"),
+            "parent_code": i.get("_parent_code"),
+            "depth": i.get("_depth"),
+            "path": i.get("_path"),
+            "quantity_raw": i.get("quantity"),
+            "unit_raw": i.get("unit"),
+        }
+        for i in items
+    ]
+
+
 async def analyze_product_drawing(
     *,
     code: str,
@@ -103,6 +126,7 @@ async def analyze_product_drawing(
     visual_observations: list[DrawingVisualObservation] | None = None,
     scope: list[str] | None = None,
     extractor=None,
+    understanding: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run the full drawing×product×BOM analysis for `code`."""
     # --- official facts (delegated identity) -------------------------------
@@ -902,19 +926,9 @@ async def analyze_product_drawing(
     ]
     payload["comparison_results"] = visual_results
     payload["reconciliations"] = reconciliations
-    payload["bom_occurrences"] = [
-        {
-            "occurrence_id": i.get("_occurrence_id"),
-            "component_code": i.get("code"),
-            "component_type": i.get("product_type") or i.get("type"),
-            "parent_code": i.get("_parent_code"),
-            "depth": i.get("_depth"),
-            "path": i.get("_path"),
-            "quantity_raw": i.get("quantity"),
-            "unit_raw": i.get("unit"),
-        }
-        for i in bom_items
-    ]
+    payload["bom_occurrences"] = flatten_bom_occurrences(
+        structure if isinstance(structure, dict) else {}, code
+    )
     payload["scope"] = scope or ["all"]
     if visual_observations:
         payload["executive_summary"]["visual_observations_total"] = len(
@@ -941,8 +955,11 @@ async def analyze_product_drawing(
         bom_occurrences=payload["bom_occurrences"],
         visual_observations=payload["visual_observations"],
         component_rows=None,
-        document_sha=payload.get("identification", {}).get("document_sha")
-        or payload.get("document_sha"),
+        understanding=understanding,
+        document_sha=extraction.document_hash,
+        official_source_ref=(
+            f"api-delpi:/products/{official_code}/structure"
+        ),
     )
     payload["sections"] = {
         "A_identification": payload["identification"],

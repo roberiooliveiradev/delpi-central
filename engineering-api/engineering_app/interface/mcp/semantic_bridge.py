@@ -713,6 +713,13 @@ async def _analyze_product_drawing(
         else None
     )
     ctx = bridge._source_context(context)
+    understanding = params.get("understanding")
+    if understanding is not None and not isinstance(understanding, dict):
+        return _err(
+            "understanding deve ser um objeto drawing_understanding.v1.",
+            status_code=400,
+            code="validation",
+        )
     try:
         report = await analyze_product_drawing(
             code=code,
@@ -720,6 +727,7 @@ async def _analyze_product_drawing(
             ctx=ctx,
             visual_observations=observations or None,
             scope=scope,
+            understanding=understanding,
         )
     except DrawingAnalysisError as exc:
         return _err(
@@ -949,6 +957,13 @@ async def _analyze_drawing_understanding(
     )
     from engineering_app.application.drawing.drawing_analysis_service import (  # noqa: E501
         DrawingAnalysisError,
+        flatten_bom_occurrences,
+    )
+    from engineering_app.application.drawing.drawing_contracts import (
+        unwrap_delegated,
+    )
+    from engineering_app.application.drawing.object_profiles_builder import (
+        build_object_profiles,
     )
     from engineering_app.application.drawing.understanding import (
         build_understanding,
@@ -1020,13 +1035,24 @@ async def _analyze_drawing_understanding(
         for t in (best.get("_tokens_sample") or [])
     ]
     bom_codes: list[str] | None = None
+    structure: dict | None = None
     try:
-        structure = await bridge.build_delegated_auxiliary_source().fetch_product_structure(  # noqa: E501
+        _raw_structure = await bridge.build_delegated_auxiliary_source().fetch_product_structure(  # noqa: E501
             ctx, code=code
         )
-        bom_codes = _structure_codes(structure or {}) or None
+        bom_codes = _structure_codes(_raw_structure or {}) or None
+        try:
+            structure = unwrap_delegated(
+                _raw_structure,
+                what="product.structure",
+                not_found_code="structure_not_found",
+                not_found_message="",
+            )
+        except DrawingAnalysisError:
+            structure = None
     except Exception:
         bom_codes = None
+        structure = None
     understanding = build_understanding(
         tokens,
         document_hash=best.get("document_hash") or "",
@@ -1182,6 +1208,19 @@ async def _analyze_drawing_understanding(
         "quality_gate": "EVAL_PENDING",
         "not_official": True,
     }
+    # R11.1 — perfis reutilizáveis alimentados pela evidência visual
+    # real desta execução (sem reprocessar OCR/SLANet): ocorrências BOM
+    # (oficial, proveniência própria) + candidatos do understanding.
+    understanding["object_profiles"] = build_object_profiles(
+        bom_occurrences=flatten_bom_occurrences(structure, code),
+        visual_observations=[],
+        understanding=understanding,
+        document_sha=best.get("document_hash") or None,
+        official_source_ref=f"api-delpi:/products/{code}/structure",
+    )
+    understanding["report"]["object_profiles"] = understanding[
+        "object_profiles"
+    ]
     return _ok(
         {
             "analysis_type": "product.drawing_understanding",
