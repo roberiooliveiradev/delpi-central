@@ -2433,3 +2433,27 @@ promocao produtiva nao e executavel pelo executor.
 ROLLBACK_TARGET=d820d34050^..? rollback local = delpi-delia-api-prev /
 checkout anterior; rollback prod = SHA anterior no servidor.
 TASK_STATUS=INCOMPLETE (prod bloqueado por acesso) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — LOCAL-E2E-AND-PRODUCTION-DEPLOY-03
+
+TASK=DELIA-C3-LOCAL-E2E-AND-PRODUCTION-DEPLOY-03
+SOURCE=a31b055ada (origin/main revalidado; deploy-wt rebaseado, oficial reiniciado).
+
+OFFICIAL LOCAL: delpi-delia-api Up — /app = delia-deploy-wt (a31b055ada),
+imagem sha256:7e58f811, env preservado, gateway DNS "delia-api" OK,
+renderer ativo (OMISSION_MAX_DEPTH). Rollback: delpi-delia-api-prev.
+
+REAL E2E: TEST_NOT_RUN — bloqueio concreto comprovado:
+password grant em delpi-keycloak (realm delpi, client delpi-central)
+retorna 401 invalid_grant "Invalid user credentials" com as credenciais
+dev provisionadas em infra/.env.local (datadas de 29/out — stale).
+Sem identidade empresarial valida; sem bypass/RBAC inventado, por regra.
+Script canonico real_governed_read_eval.py executado de dentro do
+container oficial (localhost:8000) — autenticacao e' o unico ponto
+falho; KC_PATH corrigido p/ /auth.
+
+PRODUCTION_DEPLOY=NOT_PERFORMED — sem mecanismo canonico de deploy
+nem acesso ao host produtivo neste ambiente.
+PRODUCTION_BUSINESS_OUTCOME=PENDING
+TASK_STATUS=INCOMPLETE (E2E/prod bloqueados por credencial stale
++ ausencia de acesso prod) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
