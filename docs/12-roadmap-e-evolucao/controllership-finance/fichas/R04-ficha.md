@@ -90,3 +90,11 @@ Publicação: atualizada após implementação real — substitui a ficha 1.0
   OP, não do movimento de consumo.
 - Referências: doc 150 §16–17; doc 152; `consumption_audit_sql.py`;
   `production_order_consumption_routes.py`.
+
+## Perguntas contraditórias — contexto vigente (Gate 079)
+
+- **"O R04 ainda está bloqueado?"** — **Não.** O R04 tem visão
+  operacional `IMPLEMENTED` (`consumption-audit`, SC2/SB1). Registros
+  `BLOQUEADO` em doc-83/doc-85 são históricos datados dos ciclos 2/3,
+  antes da implementação — `STALE_EVIDENCE`, nunca estado vigente.
+  Pendência real: equivalência oficial MATR860 `pending`.

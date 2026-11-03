@@ -519,3 +519,65 @@ def test_mutation_coverage_loss():
     assert len(shrunk) == 104
     with pytest.raises(AssertionError):
         assert len(shrunk) == 105
+
+
+# ------------------------------------------------------------------
+# Gate 079 — rastreabilidade auditável dos 115 casos
+#
+# Registro por caso: id, pergunta literal, report_id, corpus, itens
+# (knowledge_id, source_id, citation_locator, rank, full_match),
+# evidência esperada, veredito e timestamp. Escreve JSONL quando
+# CLARA_TRACE_OUT aponta um caminho — artefato repetível antes/depois.
+# ------------------------------------------------------------------
+
+
+def _trace_record(case, verdict, hits, corpus_version) -> dict:
+    required = case.get("asserts") or case.get("markers") or []
+    return {
+        "id": case["id"],
+        "query": case["q"],
+        "report_id": case["report_id"],
+        "corpus": str(corpus_version["corpus_version_id"]),
+        "expected_evidence": required,
+        "expect": case.get("expect", "PASS_RETRIEVED"),
+        "verdict": verdict,
+        "limitation": case.get("resolved_by") or case.get("why"),
+        "items": [
+            {
+                "knowledge_id": str(h["knowledge_id"]),
+                "source_id": h["source_id"],
+                "citation_locator": h.get("citation_locator"),
+                "rank": h.get("rank"),
+                "full_match": h.get("full_match"),
+            }
+            for h in hits
+        ],
+    }
+
+
+def test_acceptance_traceability(corpus):
+    """Executa os 115 casos e emite registros auditáveis. Com
+    CLARA_TRACE_OUT=<arquivo> grava JSONL comparável entre execuções."""
+    import datetime
+    import json
+
+    version = corpus.current_corpus_version()
+    records = []
+    for case in GOLDEN_SET + NEGATIVE_SET:
+        hits = corpus.search(
+            query=case["q"], report_id=case["report_id"], limit=12,
+        )
+        verdict = _evaluate_semantic(case, corpus)
+        records.append(_trace_record(case, verdict, hits, version))
+        _check_case_result(case, verdict)
+
+    out = os.getenv("CLARA_TRACE_OUT")
+    if out:
+        stamp = datetime.datetime.now(datetime.UTC).isoformat(
+            timespec="seconds",
+        )
+        with open(out, "w", encoding="utf-8") as fh:
+            for rec in records:
+                rec["executed_at"] = stamp
+                fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    assert len(records) == 115

@@ -572,3 +572,40 @@ Resposta correta a "O R04 ainda está bloqueado?": **não** — visão operacion
 **Rigor da validação:** 105 perguntas GOLDEN_SET e 10 NEGATIVE_SET presentes no código. Expectativa estrutural = **101 PASS + 4 MISS** no principal e **7 PASS + 3 MISS** nos negativos. Contagem anterior "100+4" não perfaz 105; observar stdout real antes de afirmar valores obtidos. Acurácia de 115 respostas finais do LLM host: `TEST_NOT_RUN`, pois MCP `knowledge` não gera o texto conversacional externo.
 
 **Direção Gate 079:** corrigir defeitos comprovados; testar, documentar antes/depois e registrar cada alteração na issue #130. Política de ranking/vigência = `DECISION_REQUIRED` sob owner, não autorização implícita para alterar contrato. GPT executará novamente as 115 perguntas diretamente na CLARA após deploy autorizado e publicações.
+
+
+## 17. Gate 079 — Correção de recuperação e conhecimento vigente R01–R15 (03/11/2026)
+
+**Executor:** Devin · **Issue:** #130 · **BASE:** `origin/main` `8506f0c7` em worktree `.worktrees/g079` · **Corpus local pós:** `ca68aa93` (2.220/88).
+
+### 17.1 Diagnóstico P1 — os 7 misses
+
+Causa única confirmada por inspeção de top-12: **vocabulário/ranking OR** — a evidência corretiva existe no corpus mas não co-ocorre com os lexemas da pergunta nos segmentos que ranqueiam. Nenhum era `SOURCE_GAP` real.
+
+| Caso | Causa | Correção |
+|---|---|---|
+| R11-D7 / NEG-R11 | "nunca exclusão automática" não ranqueava | ficha R11 + seção contraditória |
+| R12-D5 / NEG-R12-60 | "marcadores técnicos" vs formulação 60% | ficha R12 + resposta literal |
+| R13-D6 / R14-D6 | `NOT_COMPARABLE` fora de contexto de pergunta | fichas R13/R14 + resposta literal |
+| NEG-R12-EXEC | "nunca execução ERP" fora do top-12 | ficha R12 + "CLARA nunca executa MATA330" |
+| NEG-R04 (já PASS) | risco ativo: `doc-83/85` BLOQUEADO no top-12 | ficha R04 + contextualização explícita `STALE_EVIDENCE` |
+
+**Correção autorizada (não controversa):** seção "Perguntas contraditórias — contexto vigente" nas fichas R04/R11/R12/R13/R14 com as formulações literais e respostas já comprovadas — conteúdo canônico, não mudança de ranking nem de contrato.
+
+### 17.2 DECISION_REQUIRED — precedência histórico × vigente (P0)
+
+Opções analisadas: **(a)** rerank por especificidade (`jsonb_array_length(related_report_ids)`) — favorece fichas; risco de soterrar docs transversais; **(b)** rerank por vigência (`last_verified_at`) — penaliza histórico; exige metadados confiáveis; **(c)** flag `evidence_temporality` no item + ordenação por (temporalidade, rank) — contrato aditivo, testes A/B viáveis; **(d)** combinação controlada (a+b+c). **Recomendação:** (c) — campo aditivo `is_historical` derivado de metadados, sem alterar universo retornado; mantém auditoria, elimina indução a erro. **Aguarda owner — não implementado.**
+
+### 17.3 Resultados 105 + 10
+
+- Golden: **105/105 PASS_RETRIEVED** (4 misses resolvidos por fonte, `resolved_by` documentado).
+- Negativos: **10/10** (3 misses resolvidos; NEG-R04 mantém `STALE_EVIDENCE` classificado — doc-83/85 ainda recuperados, corretiva presente).
+- `test_acceptance_traceability`: JSONL com 115 registros (id, query, corpus, knowledge_id, citation_locator, rank, full_match, veredito, timestamp).
+- Suíte PG: **14/14**; invariants intactas; mutacionais verdes.
+
+### 17.4 Resíduos
+
+- Conversacional live `TEST_NOT_RUN` (canal ChatGPT externo — procedimento §14.6; GPT reexecutará as 115 perguntas).
+- P0 político em `DECISION_REQUIRED` (§17.2).
+- Issue #130: sem credencial API neste ambiente — registro completo nesta seção + execution report; atualização manual do issue pendente de credencial.
+- Corpus produtivo: republicação via pipeline canônico registrada no report (SHA/commit e corpus_version).
