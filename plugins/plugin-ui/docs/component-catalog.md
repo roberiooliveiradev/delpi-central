@@ -1637,3 +1637,9 @@ Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
 | `UserDirectoryPicker` | Fachada sobre `EntityDirectoryPicker` para usuários (`searchUsers`); `showSelectedList={false}` quando o consumidor renderiza a própria lista; `showEmail={false}` para listar só o nome; `maxSelected={1}` para single-select |
 
 CSS: `styles/cipa-shared.css` (classes `.delpi-ui-*`).
+
+---
+
+## `DelpiKpiCard` — evolução contextual moderna para TV (TARGET 2026-11-03)
+
+**O componente real é `DelpiKpiCard`**, com parts `card/title/value/hint/icon/comparison/progress/sparkline`, variantes Hero/Standard/Scorecard/Compact/Row, `contextMode` e `iconSizeMode` já existentes. O kit **pinta** os estados recebidos; não calcula metas, avaliação de desempenho, delta, percentual nem escolhe fontes. Inventário detalhado de funções existentes vs gaps e wireframes textuais: [KPI contextual moderno — status/meta/setas/progresso/ícones](../../../docs/12-roadmap-e-evolucao/tv-dashboard/KPI-CONTEXTUAL-MODERN-VARIANTS-INVENTORY.md). Regras de status, limites, texto dinâmico e receitas futuras são **TARGET/TO_INVENTORY**, não declarações de features prontas. Preservar também o `KpiCard` departamental listado acima, sem confundir ambos.
