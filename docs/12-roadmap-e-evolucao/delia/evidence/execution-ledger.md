@@ -1903,3 +1903,17 @@ BLOQUEIO catalog sync: MCPs exigem JWT de usuario real p/ token-exchange.
 PROXIMO: impersonate usuario valido via admin API -> bind subject ->
   /tmp/prod_sync.py --apply (script ja no host + container).
 STAGE2 pendente: DELIA_ARGGEN_ENGINE=pydantic_ai vs kimi-k3 (OpenRouter).
+
+## PROMOTION — auth root cause (SHA 5a8ce83705)
+
+TOKEN-EXCHANGE flow: bound subject JWT -> exchange via delia-api client
+  -> audience=CANONICAL_MCP_CLIENT_IDS[owner] -> MCP token. Exige JWT de
+  usuario do realm delpi (claims de usuario). Service-account nao funciona.
+Caminho legitimo: client publico delpi-central tem
+  directAccessGrantsEnabled=True -> password grant com usuario do realm.
+  "admin" do Keycloak master NAO e usuario do realm delpi (401).
+  Impersonation = workaround proibido pela coordenacao.
+PLANO: criar usuario operacional mcp-catalog-sync no realm delpi via
+  admin API (auditable, escopo minimo) -> password grant delpi-central ->
+  bind subject -> token-exchange -> sync 3 owners ativos (davi/teo/vista;
+  caio/clara/eva/suri sem base_url em prod = nao configurados).
