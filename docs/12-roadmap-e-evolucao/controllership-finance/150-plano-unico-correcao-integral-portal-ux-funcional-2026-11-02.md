@@ -481,3 +481,16 @@ BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, git status/WIP, commits, diffs, suite de tes
 - **Aceite futuro:** paginação correta (inclusive página 96, total e mudanças de filtro), foco/teclado, sem requests duplicados; evidência visual e network; detalhe de OP real se houver suporte.
 
 **Resultado desta leva:** CF-UX-040..043 são novos itens de revisão. A visualização de dados e paginação R04 após G066 tem **evidência visual parcial positiva**; não promover CF-UX-032 a homologação completa nem declarar causa técnica de qualquer melhoria sugerida sem inspeção. Continuar acumulando a revisão para correção consolidada autorizada pelo PO.
+
+## 13. Registro de execução Devin — Gate 068 (rework hero R04 + helps)
+
+**BASE_HEAD:** `2c3b217817` · WIP alheio preservado.
+
+### Diffs
+- `ProductionOrderConsumptionPage.tsx`: `fieldset` de filtros migra de `cf-settlements-filters` (coluna) para `cf-hero-filters` (faixa horizontal compartilhada, sem alterar a classe global); seis `headerHint` oficiais nas colunas do `DataTableSection`.
+- `helpTooltips.ts`: `productionOrderConsumption.columns` com os seis textos aprovados (OP, Produto, Descrição, Status, Centro de trabalho, Data).
+
+### Verificação
+- `tsc -b`: **0 erros** · `vite build`: **OK** · `vitest`: **416/417** (1 flake pré-existente, verde isolado)
+- CF-UX-044 → FIXED_PENDING_VERIFY (visual autenticado pendente) · CF-UX-045 → FIXED_PENDING_VERIFY
+- Pendente: CLARA 2026-09/2026-10, screenshots, temas/mobile em sessão.

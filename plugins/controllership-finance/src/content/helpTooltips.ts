@@ -611,6 +611,20 @@ export const CF_HELP = {
     requests:
       "Solicitação de ajuste ou revisão: descreva o motivo e envie — o pedido fica registrado com autor, data e a versão do documento em vigor no momento. A Controladoria responde na mesma tela; a resposta não conclui o pedido automaticamente — quando estiver de acordo, use «Confirmar» para encerrar.",
   },
+  productionOrderConsumption: {
+    columns: {
+      op: "Ordem de produção — identificador da ordem de produção retornado pelo sistema TOTVS/Protheus. Permite localizar e consultar os detalhes da ordem.",
+      product:
+        "Código do produto — código do produto associado à ordem de produção, conforme o cadastro utilizado pelo produtor.",
+      description:
+        "Descrição do produto — descrição do produto correspondente ao código informado na ordem de produção.",
+      status:
+        "Status da OP — código técnico da situação da ordem de produção retornado pelo TOTVS. A interpretação dos códigos depende do contrato oficial da origem.",
+      workCenter:
+        "Centro de trabalho — centro de trabalho associado à ordem quando essa informação estiver disponível na consulta. O símbolo «—» indica ausência de informação no registro apresentado.",
+      date: "Data da OP — data correspondente ao tipo selecionado no filtro: emissão, finalização ou apontamento. A referência temporal é a definida pela consulta de ordens, não necessariamente a data de movimentação dos materiais consumidos.",
+    },
+  },
   dreHome: {
     hero:
       "Página inicial do Portal Controladoria & Finanças para a sua conta DRE: somente as funcionalidades que a Controladoria liberou ao seu destinatário aparecem aqui — nada interno (relatórios, administração, dashboards) é oferecido. «Fechamento Mensal» em Caminhos e funcionalidades abre Documentos e interações — os fechamentos, arquivos, conversas e solicitações de ajuste enviados à sua área.",

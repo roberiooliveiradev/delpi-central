@@ -24,6 +24,9 @@ import {
   type ProductionOrderConsumptionPayload,
 } from "../../api/productionOrderConsumptionApi";
 import { formatCivilDate } from "../../utils/formatters";
+import { CF_HELP } from "../../content/helpTooltips";
+
+const R04_COL_HELP = CF_HELP.productionOrderConsumption.columns;
 
 const BRANCHES = [
   { value: "01", label: "Filial 01" },
@@ -64,6 +67,7 @@ function R04_COLUMNS(dateType: DateType): DataTableColumn<R04Row>[] {
     {
       key: "op",
       header: "OP",
+      headerHint: R04_COL_HELP.op,
       render: (row) => String(row.productionOrder ?? row.op ?? "—"),
       sortable: true,
       sortValue: (row) =>
@@ -72,17 +76,20 @@ function R04_COLUMNS(dateType: DateType): DataTableColumn<R04Row>[] {
     {
       key: "product",
       header: "Produto",
+      headerHint: R04_COL_HELP.product,
       render: (row) => String(row.productCode ?? "—"),
     },
     {
       key: "description",
       header: "Descrição",
+      headerHint: R04_COL_HELP.description,
       render: (row) =>
         String(row.productDescription ?? row.product ?? "—"),
     },
     {
       key: "status",
       header: "Status",
+      headerHint: R04_COL_HELP.status,
       align: "center",
       // Código técnico do produtor — semântica oficial não
       // comprovada no contrato; apresentar o código real.
@@ -91,11 +98,13 @@ function R04_COLUMNS(dateType: DateType): DataTableColumn<R04Row>[] {
     {
       key: "workCenter",
       header: "Centro de trabalho",
+      headerHint: R04_COL_HELP.workCenter,
       render: (row) => String(row.workCenter ?? "—"),
     },
     {
       key: "date",
       header: "Data",
+      headerHint: R04_COL_HELP.date,
       render: (row) => formatDateCell(row, dateType),
     },
   ];
@@ -316,7 +325,7 @@ export function ProductionOrderConsumptionPage({
         refreshing={loading}
         metrics={heroMetrics}
         filters={
-          <fieldset className="cf-settlements-filters">
+          <fieldset className="cf-hero-filters">
             <CfSelectField
               label="Filial"
               value={branch}
