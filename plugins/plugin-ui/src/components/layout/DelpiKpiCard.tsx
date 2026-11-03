@@ -476,8 +476,12 @@ export function DelpiKpiCard({
   const valueFontSizePx = resolveKpiPartFontSize("value", parts.value?.style);
   const titleAutoFit = kpiPartUsesAutoFitFont("title", parts.title?.style);
   const titleFontSizePx = resolveKpiPartFontSize("title", parts.title?.style);
-  // Paridade título: FitText só com frame (layout livre). Sem frame = px escalado no resize do bloco.
-  const valueUsesFitText = valueAutoFit && valueFramed;
+  // Valor dominante (issue #129 / PR-132 spec): auto-fit não exige frame
+  // manual — em `fill` (deck/TV) o host flex já tem bbox estável e o
+  // FitText mede o espaço real; em host não-fill (card compacto de UI) o
+  // px canônico segue o resize do bloco pai. `typographyMode=fixed` /
+  // fontSize manual continuam respeitados (valueAutoFit=false).
+  const valueUsesFitText = valueAutoFit && (valueFramed || fill);
   const titleUsesFitText = titleAutoFit && titleFramed;
 
   const titleTextStyle: CSSProperties = {
@@ -632,8 +636,10 @@ export function DelpiKpiCard({
   const layoutVariant =
     variantProp ??
     (kpiOptions?.variant === "hero" ||
-    kpiOptions?.variant === "row" ||
-    kpiOptions?.variant === "scorecard"
+    kpiOptions?.variant === "standard" ||
+    kpiOptions?.variant === "scorecard" ||
+    kpiOptions?.variant === "compact" ||
+    kpiOptions?.variant === "row"
       ? kpiOptions.variant
       : undefined);
 

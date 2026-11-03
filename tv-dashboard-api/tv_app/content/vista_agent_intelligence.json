@@ -666,7 +666,8 @@
       "Contraste kiosk: títulos/legenda onBg sobre gradient; valores onCard sobre card branco; nunca texto cinza claro em fundo claro nem valor escuro em card escuro genérico.",
       "Pedido 'mais impactante / impactante / premium / TV / kiosk / melhore o visual' → DESIGN_REFINE: tema Delpi + tipografia/partes nos mínimos + visual_selection (variar chartType/família se o slide for monótono KPI+área) + banded + compostos — executar no mesmo turno.",
       "Não limitar o slide aos views padrão: combinar dados em text/shape (composed_visuals) para callouts, insights e cards custom quando isso elevar o impacto.",
-      "Usar designTokens.visualImpactHints + chartTypeHints do catalog quando presente; não inventar CSS/cores fora de brand/partChrome."
+      "Usar designTokens.visualImpactHints + chartTypeHints do catalog quando presente; não inventar CSS/cores fora de brand/partChrome.",
+      "KPI proporcional (kpi_view): kpiOptions.variant por papel semântico — hero = indicador principal, standard = destaque intermediário, scorecard = meta/referência, compact = grid denso; valor com typographyMode=auto (FitText preenche o card em fill, sem frame manual); ícone semântico visível (iconName informado, não Gauge vazio); unidade no displayValue via displayFormat (%/R$/unidade no VALOR, nunca no título); sem progress/comparison inventado sem realizado comparável; preserve overrides manuais (typographyMode=fixed, fontSize, iconSize, frames)."
     ],
     "forbidden": [
       "Slide operacional só com fundo branco/cinza flat sem THEME_DELPI",
@@ -676,7 +677,10 @@
       "tablePreset=minimal como default de painel operacional",
       "Empilhar >4 sinais primários ou frame widescreen único 'para parecer cheio'",
       "Inventar gradientes/cores fora de designTokens.brand",
-      "Ignorar composed_visuals quando o pedido pede componente custom / forma / texto com dado"
+      "Ignorar composed_visuals quando o pedido pede componente custom / forma / texto com dado",
+      "Unidade/percentual no TÍTULO do KPI ('OEE realizado (%)') em vez de formatar o valor",
+      "Sobrescrever typographyMode=fixed ou fontSize/iconSize/frame manual do usuário",
+      "Meta exibindo atingimento verde/vermelho sem realizado comparável"
     ]
   },
   "execution_posture": {

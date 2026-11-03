@@ -171,7 +171,12 @@ const KPI_PART_KIND_CAPABILITIES: Record<KpiPartRef["kind"], KpiPartCapabilities
 export type KpiContextMode = "auto" | "off" | "manual";
 
 /** Layout semântico do card — kit pinta; presentation/recipes escolhem. */
-export type KpiLayoutVariant = "hero" | "row" | "scorecard";
+export type KpiLayoutVariant =
+  | "hero"
+  | "standard"
+  | "scorecard"
+  | "compact"
+  | "row";
 
 /** Options flat do card (legado / inspetor) — espelho de SeriesChartOptions. */
 export type KpiCardFlatOptions = {

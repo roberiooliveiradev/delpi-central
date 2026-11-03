@@ -525,6 +525,15 @@
   color: var(--delpi-kpi-icon-fg, var(--delpi-ui-accent, #089bdb));
 }
 
+/* Ícone proporcional (issue #129 / PR-132): sem frame, o box acompanha a
+ * altura útil do card em vez de travar em 36px — glyph segue a % do box.
+ * `iconSize` persistido (inline w+h px) e frames continuam respeitados. */
+.delpi-kpi-card--fill .delpi-kpi-icon:not(.delpi-kpi-icon--framed) {
+  width: auto;
+  height: clamp(26px, 26%, 96px);
+  aspect-ratio: 1;
+}
+
 /* Variantes semânticas — densificam o card (menos whitespace morto). */
 .delpi-kpi-card--variant-hero {
   justify-content: flex-start;
@@ -573,6 +582,53 @@
 .delpi-kpi-card--variant-scorecard .delpi-kpi-card__value {
   flex: 1 1 auto;
   min-height: 34%;
+}
+
+/* STANDARD — destaque intermediário (issue #129 / PR-132): número
+ * continua dominante, contexto reduz antes do valor em pouco espaço. */
+.delpi-kpi-card--variant-standard {
+  padding: 8px 10px;
+}
+
+.delpi-kpi-card--variant-standard .delpi-kpi-card__body {
+  justify-content: flex-start;
+  gap: 3px;
+}
+
+.delpi-kpi-card--variant-standard .delpi-kpi-card__value {
+  flex: 1 1 auto;
+  min-height: 34%;
+}
+
+/* COMPACT — grids densos: reorganiza as partes, contexto opcional cede
+ * primeiro e o valor preserva identidade sem clipping. */
+.delpi-kpi-card--variant-compact {
+  padding: 6px 8px;
+}
+
+.delpi-kpi-card--variant-compact .delpi-kpi-card__body {
+  justify-content: center;
+  gap: 2px;
+}
+
+.delpi-kpi-card--variant-compact .delpi-kpi-card__value {
+  flex: 1 1 auto;
+  min-height: 46%;
+}
+
+.delpi-kpi-card--variant-compact .delpi-kpi-card__label {
+  max-height: 24%;
+  font-size: 12px;
+}
+
+.delpi-kpi-card--variant-compact .delpi-kpi-card__hint,
+.delpi-kpi-card--variant-compact .delpi-kpi-card__comparison {
+  max-height: 18%;
+  font-size: 12px;
+}
+
+.delpi-kpi-card--variant-compact .delpi-kpi-icon:not(.delpi-kpi-icon--framed) {
+  height: clamp(20px, 22%, 64px);
 }
 
 .delpi-ui-fit-text {

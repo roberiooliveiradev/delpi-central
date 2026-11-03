@@ -223,9 +223,19 @@ describe("DelpiKpiCard chrome", () => {
     expect(icon.style.height).toBe("96px");
   });
 
-  it("valor sem frame usa px canônico (acompanha resize do bloco pai)", () => {
+  it("valor sem frame em fill usa auto-fit (não trava em 40px)", () => {
     const { container } = render(
       <DelpiKpiCard label="Consumo" value="10" fill />,
+    );
+    const fit = container.querySelector(".delpi-ui-fit-text") as HTMLElement;
+    expect(fit).toBeTruthy();
+    /* fixedPx ausente → auto-fit engajado (jsdom sem layout = minPx). */
+    expect(fit.style.fontSize).not.toBe("40px");
+  });
+
+  it("valor sem frame sem fill mantém px canônico (resize do bloco pai)", () => {
+    const { container } = render(
+      <DelpiKpiCard label="Consumo" value="10" />,
     );
     const fit = container.querySelector(".delpi-ui-fit-text") as HTMLElement;
     expect(fit).toBeTruthy();
@@ -333,6 +343,16 @@ describe("DelpiKpiCard chrome", () => {
     expect(container.querySelector(".delpi-kpi-card--variant-hero")).toBeTruthy();
     rerender(<DelpiKpiCard label="OTD" value="98%" variant="row" />);
     expect(container.querySelector(".delpi-kpi-card--variant-row")).toBeTruthy();
+    rerender(
+      <DelpiKpiCard label="Horas" value="12,4 h" variant="standard" />,
+    );
+    expect(
+      container.querySelector(".delpi-kpi-card--variant-standard"),
+    ).toBeTruthy();
+    rerender(<DelpiKpiCard label="OEE F01" value="95,9%" variant="compact" />);
+    expect(
+      container.querySelector(".delpi-kpi-card--variant-compact"),
+    ).toBeTruthy();
     rerender(
       <DelpiKpiCard
         label="Meta"
