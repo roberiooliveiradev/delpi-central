@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import pytest
 
+from pydantic_ai.models.test import TestModel
+
 from app.application.interaction.contracts import (
     InteractiveTurnRequest,
 )
@@ -32,8 +34,8 @@ from app.domain.model_invocation.model import ProviderExposureClass
 from app.infrastructure.model_invocation.deterministic_test_adapter import (
     DeterministicTestAdapter,
 )
-from app.infrastructure.model_invocation.openai_compatible_adapter import (
-    OpenAICompatibleModelInvocationAdapter,
+from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+    PydanticAiModelInvocationAdapter,
 )
 
 
@@ -443,12 +445,12 @@ def _make_adapter(captured: list):
 
         return _Resp()
 
-    return OpenAICompatibleModelInvocationAdapter(
+    return PydanticAiModelInvocationAdapter(
         base_url="https://provider.example/v1",
         api_key="sk-test-secret",
         model="vendor/model",
         timeout_seconds=30,
-        http_post=fake_post,
+        model_impl=TestModel(),
     )
 
 
@@ -480,55 +482,10 @@ def _invocation_request(prior=()):
     )
 
 
-def test_adapter_maps_context_to_provider_roles_in_order():
-    captured = []
-    adapter = _make_adapter(captured)
-    prior = (
-        _turn(TurnKind.USER_INPUT, "first user"),
-        _turn(TurnKind.DELIA_RESULT, "first delia", EpistemicClass.HYPOTHESIS),
-        _turn(TurnKind.USER_INPUT, "second user"),
-        _turn(TurnKind.DELIA_RESULT, "second delia", EpistemicClass.HYPOTHESIS),
-    )
-    adapter.invoke(_invocation_request(prior=prior))
-    messages = captured[0]["json"]["messages"]
-    roles = [m["role"] for m in messages]
-    assert roles == [
-        "system",
-        "system",
-        "user",
-        "assistant",
-        "user",
-        "assistant",
-        "user",
-    ]
-    assert messages[-1]["content"] == "current question"
-    assert messages[2]["content"] == "first user"
-    assert messages[3]["content"] == "first delia"
-
-
-def test_adapter_without_context_keeps_three_messages():
-    captured = []
-    _make_adapter(captured).invoke(_invocation_request())
-    roles = [m["role"] for m in captured[0]["json"]["messages"]]
-    assert roles == ["system", "system", "user"]
-
-
-def test_adapter_sends_no_tools_or_authority():
-    captured = []
-    _make_adapter(captured).invoke(
-        _invocation_request(prior=_pair())
-    )
-    body = captured[0]["json"]
-    assert "tools" not in body
-    assert "functions" not in body
-    assert "tool_choice" not in body
-    serialized = str(body).lower()
-    for leaked in ("api_key", "permission", "is_superadmin", "sk-test"):
-        assert leaked not in serialized
-
-
-# --- No persistence introduced ----------------------------------------------
-
+# M5: legacy adapter wire-format internals tests removed — the
+# Pydantic AI adapter carries prior context via message_history and
+# has no tools/function-calling surface at all; the equivalent
+# contract is covered in test_pydantic_ai_adapter.py.
 
 def test_no_persistence_symbols_in_interaction_app():
     import ast

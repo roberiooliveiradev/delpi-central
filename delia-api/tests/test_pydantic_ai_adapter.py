@@ -283,12 +283,15 @@ def test_unknown_model_runtime_fails_closed(monkeypatch):
 
 
 def test_known_model_runtimes_accepted(monkeypatch):
+    """M5: pydantic_ai is the single runtime — the removed legacy
+    value fails closed like any unknown runtime."""
     from app.infrastructure.config.settings import Settings
 
     monkeypatch.setenv("DELIA_MODEL_RUNTIME", "pydantic_ai")
     assert Settings().model_runtime == "pydantic_ai"
     monkeypatch.setenv("DELIA_MODEL_RUNTIME", "legacy")
-    assert Settings().model_runtime == "legacy"
+    with pytest.raises(ValueError):
+        Settings()
 
 
 def test_model_runtime_defaults_to_pydantic_ai(monkeypatch):

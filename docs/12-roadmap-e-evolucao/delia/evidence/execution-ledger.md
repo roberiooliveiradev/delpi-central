@@ -4558,3 +4558,18 @@ M4-AC01-12 evidenciados; E2E empresarial = TEST_NOT_RUN identidade
 executor; sessao do usuario exercita pydantic_ai em producao-local.
 Rollback: DELIA_MODEL_RUNTIME=legacy (recria container, isolado).
 Residual M5: legacy adapter + langgraph_engine permanecem.
+
+## M5 — LEGACY REMOVAL (adapter) + langgraph residual classificado
+
+SHA=<next>: OpenAICompatibleModelInvocationAdapter REMOVIDO do
+caminho de inferencia (equivalencia M3+M4 comprovada); allowlist
+model_runtime={pydantic_ai} unico runtime — "legacy" agora falha
+closed; composer sem branch legado; testes consumidores migrados
+(PydanticAiModelInvocationAdapter/TestModel) e testes de wire-
+format legado removidos (contrato em test_pydantic_ai_adapter).
+Transcription adapter preservado (contrato separado).
+RESIDUAL: langgraph_engine permanece — 10 suites cobrem S4 fanout /
+S5 checkpoint-resume/attempt contracts (consumidores legitimos sem
+substituto; Engine A nao implementa Send-fanout/SqliteSaver).
+Remocao exige substituto designado — bloqueio reportado, nao deletado.
+Regressao: migrados GREEN.

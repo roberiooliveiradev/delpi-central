@@ -269,9 +269,10 @@ class PydanticAiModelInvocationAdapter:
                 INVALID_STRUCTURED_OUTPUT,
                 "provider output failed structured validation",
             )
-        if "status" in name or "modelhttp" in name:
-            # pydantic-ai ModelHTTPError carries status_code.
-            status = getattr(exc, "status_code", None)
+        # pydantic-ai ModelHTTPError and transport errors may carry
+        # status_code — map it regardless of the wrapper type.
+        status = getattr(exc, "status_code", None)
+        if status is not None:
             if status in (401, 403):
                 return ModelInvocationError(
                     PROVIDER_REJECTED,

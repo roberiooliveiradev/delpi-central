@@ -26,6 +26,8 @@ import time
 
 import pytest
 
+from pydantic_ai.models.test import TestModel
+
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityAttempt,
     GovernedCapabilityStatus,
@@ -95,8 +97,8 @@ from app.domain.model_invocation.model import (
     ModelInvocationId,
     ProviderExposureClass,
 )
-from app.infrastructure.model_invocation.openai_compatible_adapter import (
-    OpenAICompatibleModelInvocationAdapter,
+from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+    PydanticAiModelInvocationAdapter,
 )
 from tests.test_specialist_capability_orchestration import (
     CANDIDATE_EXECUTOR_SCHEMA,
@@ -736,7 +738,7 @@ def test_trickle_server_never_outlives_wall_clock_deadline():
             conn.close()
 
     port, done = _serve_forever(trickle)
-    adapter = OpenAICompatibleModelInvocationAdapter(
+    adapter = PydanticAiModelInvocationAdapter(
         base_url=f"http://127.0.0.1:{port}",
         api_key="test-key",
         model="vendor/model",
@@ -790,7 +792,7 @@ def test_normal_fast_provider_preserves_response_contract():
             conn.close()
 
     port, done = _serve_forever(fast)
-    adapter = OpenAICompatibleModelInvocationAdapter(
+    adapter = PydanticAiModelInvocationAdapter(
         base_url=f"http://127.0.0.1:{port}",
         api_key="test-key",
         model="vendor/model",

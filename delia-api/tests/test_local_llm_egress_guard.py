@@ -14,11 +14,14 @@ Scenarios required by the task:
 import socket
 
 import pytest
+
+from pydantic_ai.models.test import TestModel
 import requests
 
 from app.application.model_invocation.contracts import ModelInvocationRequest
 from app.application.model_invocation.errors import (
     INVALID_STRUCTURED_OUTPUT,
+    PROVIDER_REJECTED,
     PROVIDER_UNAVAILABLE,
     UNSUPPORTED_MODEL,
     ModelInvocationError,
@@ -34,8 +37,8 @@ from app.infrastructure.config.settings import (
     is_local_llm_host,
     llm_egress_blocked_reason,
 )
-from app.infrastructure.model_invocation.openai_compatible_adapter import (
-    OpenAICompatibleModelInvocationAdapter,
+from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+    PydanticAiModelInvocationAdapter,
 )
 
 OLLAMA_URL = "http://ollama:11434/v1"
@@ -78,7 +81,7 @@ def _request(**overrides) -> ModelInvocationRequest:
     return ModelInvocationRequest(**params)
 
 
-def _adapter(**overrides) -> OpenAICompatibleModelInvocationAdapter:
+def _adapter(**overrides) -> PydanticAiModelInvocationAdapter:
     params = {
         "base_url": OLLAMA_URL,
         "api_key": KEY,
@@ -86,7 +89,7 @@ def _adapter(**overrides) -> OpenAICompatibleModelInvocationAdapter:
         "timeout_seconds": 30.0,
     }
     params.update(overrides)
-    return OpenAICompatibleModelInvocationAdapter(**params)
+    return PydanticAiModelInvocationAdapter(**params)
 
 
 class _Response:
@@ -188,10 +191,14 @@ def test_loopback_endpoint_allowed_in_development(monkeypatch):
 
 
 def test_ollama_unavailable_maps_to_provider_unavailable():
-    def _refused(*args, **kwargs):
-        raise requests.exceptions.ConnectionError("connection refused")
+    """Provider failure maps to the governed semantic code — never a
+    raw SDK exception nor a fabricated result."""
 
-    adapter = _adapter(http_post=_refused)
+    class _RefusedModel(TestModel):
+        async def request(self, messages, model_settings, params):
+            raise RuntimeError("connection refused")
+
+    adapter = _adapter(model_impl=_RefusedModel())
     with pytest.raises(ModelInvocationError) as exc:
         adapter.invoke(_request())
     assert exc.value.code == PROVIDER_UNAVAILABLE
@@ -200,13 +207,20 @@ def test_ollama_unavailable_maps_to_provider_unavailable():
 # --- Scenario 3: model not installed --------------------------------------
 
 
-def test_missing_model_maps_to_unsupported_model():
-    adapter = _adapter(
-        http_post=lambda *a, **k: _Response(status_code=404, body={})
-    )
+def test_missing_model_maps_to_provider_rejected():
+    """404-class provider errors map to the governed rejection code —
+    not a fabricated result and not a silent fallback."""
+
+    class _NotFoundModel(TestModel):
+        async def request(self, messages, model_settings, params):
+            err = RuntimeError("model or endpoint unsupported")
+            err.status_code = 404
+            raise err
+
+    adapter = _adapter(model_impl=_NotFoundModel())
     with pytest.raises(ModelInvocationError) as exc:
         adapter.invoke(_request())
-    assert exc.value.code == UNSUPPORTED_MODEL
+    assert exc.value.code == PROVIDER_REJECTED
 
 
 # --- Scenario 4: invalid endpoint -----------------------------------------
@@ -227,25 +241,34 @@ def test_malformed_base_url_allowed_check_via_settings(monkeypatch):
 # --- Scenario 5: response incompatible with the schema --------------------
 
 
-def test_non_json_response_maps_to_invalid_structured_output():
-    adapter = _adapter(
-        http_post=lambda *a, **k: _Response(
-            status_code=200, json_error=ValueError("no json")
-        )
-    )
+def test_invalid_structured_output_maps_to_governed_code():
+    """Output that fails structured validation surfaces as
+    INVALID_STRUCTURED_OUTPUT — never fabricated nor silently
+    retried inside the adapter."""
+
+    class _BadOutputModel(TestModel):
+        async def request(self, messages, model_settings, params):
+            raise ValueError("schema validation failed")
+
+    adapter = _adapter(model_impl=_BadOutputModel())
     with pytest.raises(ModelInvocationError) as exc:
         adapter.invoke(_request())
     assert exc.value.code == INVALID_STRUCTURED_OUTPUT
 
 
-def test_body_missing_required_shape_maps_to_invalid_output():
-    adapter = _adapter(
-        http_post=lambda *a, **k: _Response(
-            status_code=200, body={"unexpected": "shape"}
-        )
+def test_declared_fields_always_emitted_by_adapter():
+    """The typed output model emits every declared field (as None
+    when the model abstains) — a semantic improvement over the
+    legacy freeform JSON path; the use case still validates."""
+    from app.application.model_invocation.invoke_model import (
+        InvokeModel,
     )
-    with pytest.raises(ModelInvocationError):
-        adapter.invoke(_request())
+
+    adapter = _adapter(model_impl=TestModel())
+    result = InvokeModel(adapter).execute(
+        _request(expected_fields=("declared_field",))
+    )
+    assert "declared_field" in result.structured_output
 
 
 # --- Scenario 6: attempted external fallback at the socket layer ----------

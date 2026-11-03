@@ -93,7 +93,7 @@ def test_composition_root_wires_bounded_invocation_only():
     """C3-INTERACTION-RUNTIME-01R2 composition boundary.
 
     Composition may wire InvokeModel + DeterministicTestAdapter
-    (testing/injection) or OpenAICompatibleModelInvocationAdapter (complete
+    (testing/injection) or PydanticAiModelInvocationAdapter (complete
     DELIA_LLM_* config). It must not import provider SDKs, hardcode
     provider endpoints, or expose the port as application configuration.
     """

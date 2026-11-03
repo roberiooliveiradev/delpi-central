@@ -15,6 +15,8 @@ import time
 
 import pytest
 
+from pydantic_ai.models.test import TestModel
+
 from app.application.capability_provision.contracts import (
     CapabilityGroup,
     ProviderCapability,
@@ -1070,11 +1072,11 @@ def _real_model_configured() -> bool:
 
 
 def _real_orchestrator(provider):
-    from app.infrastructure.model_invocation.openai_compatible_adapter import (
-        OpenAICompatibleModelInvocationAdapter,
+    from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+        PydanticAiModelInvocationAdapter,
     )
 
-    adapter = OpenAICompatibleModelInvocationAdapter(
+    adapter = PydanticAiModelInvocationAdapter(
         base_url=os.environ["DELIA_LLM_BASE_URL"],
         api_key=os.environ["DELIA_LLM_API_KEY"],
         model=os.environ["DELIA_LLM_MODEL"],
