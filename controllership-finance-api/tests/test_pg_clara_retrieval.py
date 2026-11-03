@@ -603,6 +603,14 @@ def test_superseded_state_segments(corpus):
         "R04 | `NOT_IMPLEMENTED` (BLOQUEADO",
         "nenhuma) | ficha (bloqueado, honesto)",
         "EV-23 | `MATR860` é candidato a consumo por OP; nenhum artefato",
+        # Gate 081 — auditoria integral
+        "R04/R09/R12/R15 seguem sem contrato",
+        "demais respondem `report_not_implemented`",
+        "R09/R12/R15 seguem sem contrato",
+        "R05–R11 (paridades provadas, sem contrato",
+        "Bloqueados** R03/R04/R13/R14",
+        "G060 — Correção de classificação (2026-11-02)",
+        "R04/R13/R14 `BLOCKED",
     ]
     with plugins_db_connect() as conn, conn.cursor() as cur:
         for pattern in stale_patterns:

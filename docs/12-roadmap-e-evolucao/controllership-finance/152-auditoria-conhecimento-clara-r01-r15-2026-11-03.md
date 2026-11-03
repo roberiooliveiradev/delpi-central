@@ -685,3 +685,33 @@ Fonte canônica corrigida diretamente: `fichas/README.md` linha R04 (`NOT_IMPLEM
 
 - Conversacional live `TEST_NOT_RUN`; issue #130 sem credencial API neste ambiente (registro aqui + report).
 - Novos docs futuros com afirmações datadas exigem entrada declarativa no manifest — processo, não heurística.
+
+
+## 20. Gate 081 — Auditoria integral do corpus CLARA (03/11/2026)
+
+**Executor:** Devin · **Issue:** #130 · **Escopo:** 100% dos 2.214 itens PUBLISHED (não amostragem/top-12).
+
+### 20.1 Método e cobertura
+
+Scanner programático sobre os 2.214 itens (`/tmp/g081_audit.py` — detecção de afirmações de estado para R01–R15 + claims de handler/contrato/capability). **27 itens flagados → 100% revisados individualmente.** Caminhos de contexto auditados: `search`, `get`, `list_sources`, `list_top_items` — todos filtram `PUBLISHED`; `get_item` fail-closed desde G080-RW01.
+
+### 20.2 Classificação dos 27 flagados
+
+| Classe | Qtd | Itens |
+|---|---|---|
+| CURRENT_VERIFIED (já corrigidos/vigentes) | 10 | doc-80 27.C/48.1 fixados, doc-83/85/86/113/118/120/124 fixados, doc-112 DR-C2, ficha-r04/ficha-r09 |
+| HISTORICAL_ONLY (narrativa datada legítima) | 7 | doc-00 ciclos 2/3, doc-113 §29.22/25.2, doc-117 ANL, doc-118 B, doc-119 11.7 |
+| STALE_CONFIRMED → drop (7) | 7 | doc-121 stage-03, doc-23 G060/STAGE-03/REWORK-008, doc-85 publicação, doc-88 C3-D01/C3-D06 |
+| STALE_CONFIRMED → fix_lines (1) | 1 | doc-86 §9 (lista bloqueados) |
+| STALE_CONFIRMED → fonte corrigida (2) | 2 | README.md ×3 linhas, fichas/README.md R04 (RW01) |
+
+### 20.3 Correções aplicadas
+
+- **13 drops + 11 fix_lines** declarados em `STALE_SEGMENT_FIXES` (auditoria acrescentou 7 drops + 1 fix ao RW01).
+- `README.md` e `fichas/README.md` corrigidos na fonte (docs canônicos vigentes).
+- Teste: 19 padrões superados → zero em `PUBLISHED`; conteúdo corrigido presente; get() fail-closed; R13/R14 preservados. **Suíte 15/15**.
+- Corpus local `5c48899a` (2.207 PUBLISHED / 86 SUPERSEDED — trilha íntegra).
+
+### 20.4 Ressalva honesta
+
+Classificação por regras determinísticas + revisão humana dos flagados — cobre afirmações de estado de relatórios/handlers/contratos; não exaure julgamento semântico de 2.214 itens (dados financeiros estáticos datados permanecem como evidência histórica legítima, nunca apresentados como vigentes pelas fichas). Novos docs datados exigem nova entrada no manifest.
