@@ -5079,3 +5079,13 @@ VEREDICTO DA ENTREGA (truth table §14 doc 221):
 - Sem FUNCTIONAL_ACCEPTANCE_CANDIDATE: entrega honesta
   BLOCKED_WITH_EVIDENCE com FIX-1 entregue + caminho aprovavel.
 - PRODUCTION_DEPLOY=NOT_AUTHORIZED.
+
+
+## COORDINATION E4-222 — conditional evidence composition approval (2026-11-03)
+
+DECISION_ID=DELIA-C3-MULTIEVIDENCE-COMPOSITION-E4-COORDINATION-DECISION-01.
+DOCUMENT=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/222-e4-multievidence-composition-architecture-decision-and-execution-authorization.md.
+INPUT_EXECUTION_SHA=989746ccdb; COORDINATION_VERDICT=FIX1_ACCEPT_WITH_RESIDUAL; OVERALL_PLAN221=BLOCKED_WITH_EVIDENCE; E4_CONTRACT=APPROVE_WITH_CONDITIONS for additive internal typed proposal + deterministic claim verification on authorized multi-source EvidenceFacts, using existing InvokeModel/Pydantic AI and graph fan-in. NO override ADR58 or section 6.145; MODEL_PROPOSAL_NOT_FACT; MODEL_AUTHORED_FACTUAL_PROSE=NONE. No shadow VISTA/TEO business owner or unauthorized AuthZ grants. Legacy rollback stays.
+VALIDATED_IN_GITHUB=adapter Agent(instructions=...) present on main and DIAG/E1 live evidence recorded in ledger. Local independently repeated E2E by coordination=TEST_NOT_RUN. Full multi-turn and single-turn comparison gates G04/G05/G07/G12 remain PENDING, not PASS; Qwen3 two-tree model has known false common component and omission, requiring deterministic coverage validation.
+NEXT_TASK=DELIA-C3-GOVERNED-MULTIEVIDENCE-E4-IMPLEMENTATION-01, including complete E2/E3/E5/E6 residual gates of doc221. Mandatory user test user@local.com + real local Qwen3 + live DAVI/Domain; final SHA acceptance; no production deploy. If frozen skip_comparison_declared/owner semantics conflict, STOP affected step ARCHITECTURE_DECISION_REQUIRED rather than silently rewriting authority.
+RUNTIME_CHANGED_BY_COORDINATION=NO; PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE.
