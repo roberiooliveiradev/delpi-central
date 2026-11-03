@@ -37,7 +37,10 @@ from tv_app.application.services.data.tv_data_route_suggest_service import (
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.presentation_payload_service import PresentationPayloadService
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
-from tv_app.application.services.tv_presentation_write_service import TvPresentationWriteService
+from tv_app.application.services.tv_presentation_write_service import (
+    PresentationWriteError,
+    TvPresentationWriteService,
+)
 import tv_app.core.security as core_security
 from tv_app.core.security import (
     TV_TEMPLATES_MANAGE,
@@ -4309,18 +4312,50 @@ class GptActionsDispatchService:
                     or (host or {}).get("playlistId")
                     or ""
                 ).strip()
+                # estado de leitura explícito (issue #129 F1):
+                # ausência tipada/id malformado ≠ falha de leitura ≠
+                # slide vazio — erro inesperado nunca vira
+                # existing_blocks=[].
+                _sl: dict[str, Any] | None = None
+                _slide_missing = False
                 if _sid and _pid:
                     try:
-                        _sl = self._writes.get_slide(
-                            UUID(_sid), playlist_id=UUID(_pid)
-                        )
-                        for _b in (
-                            (self._writes.slide_blocks(_sl) or [])
+                        _slide_uuid = UUID(_sid)
+                        _playlist_uuid = UUID(_pid)
+                    except ValueError:
+                        # referência malformada no host_context —
+                        # mesmo contrato de ausência, não é defeito.
+                        _slide_missing = True
+                    else:
+                        try:
+                            _sl = self._writes.get_slide(
+                                _slide_uuid, playlist_id=_playlist_uuid
+                            )
+                        except PresentationWriteError as exc:
+                            if str(exc.code or "") == "RESOURCE_NOT_FOUND":
+                                _slide_missing = True
+                            else:
+                                raise
+                        except GptActionsError:
+                            raise
+                        except Exception:
+                            logger.exception(
+                                "suggest_change: slide read failed "
+                                "(playlist_id=%s, slide_id=%s)",
+                                _pid, _sid,
+                            )
+                            raise
+                    if _sl:
+                        _raw_blocks = (
+                            self._writes.slide_blocks(_sl)
                             if hasattr(self._writes, "slide_blocks")
                             else (
-                                (_sl.get("nativeConfig") or {}).get("blocks") or []
+                                (_sl.get("nativeConfig") or {})
+                                .get("blocks")
+                                or []
                             )
-                        ):
+                        )
+                        for _b in _raw_blocks or []:
                             if isinstance(_b, dict) and _b.get("id"):
                                 existing_blocks.append(
                                     {
@@ -4331,8 +4366,6 @@ class GptActionsDispatchService:
                                         "frame": _b.get("frame") or {},
                                     }
                                 )
-                    except Exception:
-                        existing_blocks = []
                 self._enrich_composition_ops(
                     payload, blocks, message,
                     request_goals=set(goal_map),
@@ -4347,7 +4380,6 @@ class GptActionsDispatchService:
                         get_slide_preview_render_service,
                     )
                     _svc = get_slide_preview_render_service()
-                    _sl = locals().get("_sl") or {}
                     if _sid and _pid and _sl:
                         _rev = str(
                             self._writes.get_revision(UUID(_pid)) or ""
@@ -4378,7 +4410,9 @@ class GptActionsDispatchService:
                                 if isinstance(_native, dict) else {}
                             ),
                         }
-                    elif _sid and _pid:
+                    elif _sid and _pid and (_slide_missing or not _sl):
+                        # ausência comprovada — só chega aqui quando a
+                        # leitura não falhou (falha sobe exceção acima).
                         payload["visualEvidence"] = {
                             "status": "unavailable",
                             "failureCode": "SLIDE_NOT_FOUND",
@@ -4386,12 +4420,16 @@ class GptActionsDispatchService:
                 except GptActionsError:
                     raise
                 except Exception:
-                    # falha de evidência não é silenciosa nem vira
-                    # sucesso — estado tipado e honesto no resultado.
-                    payload["visualEvidence"] = {
-                        "status": "unavailable",
-                        "failureCode": "PREVIEW_UNAVAILABLE",
-                    }
+                    # defeito de construção da evidência não é
+                    # indisponibilidade operacional — sobe diagnosticável
+                    # com log sanitizado, nunca vira PREVIEW_UNAVAILABLE
+                    # fabricado (issue #129 F1).
+                    logger.exception(
+                        "suggest_change: visual evidence build failed "
+                        "(playlist_id=%s, slide_id=%s)",
+                        _pid, _sid,
+                    )
+                    raise
                 # readiness honesto: layout pronto ≠ dados prontos.
                 if payload["bindingPlan"]["state"] != "RESOLVED":
                     payload["dataReadiness"] = "pending_source_selection"
@@ -4518,6 +4556,20 @@ class GptActionsDispatchService:
                 re.I,
             )
         )
+        # pedido de REMOÇÃO não é pedido de presença (issue #129 F2):
+        # «remova a tabela antiga» contém "tabela" mas exige a saída
+        # do componente — mencionar para remover não pode manter o
+        # scaffold nem impedir o delete_block do redesign.
+        _table_removed = bool(
+            re.search(
+                r"(remov|exclu|elimin|apag|delet|tir|retir|descart|sem)\w*"
+                r"\s+(?:a|o|as|os|uma|da|do)?\s*tabela",
+                msg_norm,
+                re.I,
+            )
+        )
+        if _table_removed:
+            want_table = False
         plan_by_type = {
             str(b.get("blockType") or ""): b
             for b in blocks
@@ -4556,10 +4608,13 @@ class GptActionsDispatchService:
         # (upsert com id persistido = update, não add); sobras de
         # redesign saem por delete_block (gate de confirmação).
         _existing = list(existing_blocks or [])
+        # redesign só por intenção explícita de substituição —
+        # «design»/«desenvolva» descrevem qualidade/criação, não
+        # autorizam varrer blocos persistidos (issue #129 F2/C02).
         _redesign = bool(
             re.search(
-                r"desenvolva|design|redesenh|reorganiz|refaz"
-                r"|refazer|rework|redesign|substitua|substituir",
+                r"redesenh|reorganiz|refaz|refazer|rework"
+                r"|redesign|substitua|substituir",
                 msg_norm,
                 re.I,
             )
@@ -4584,11 +4639,6 @@ class GptActionsDispatchService:
                 continue
             blk = op["block"]
             btype = str(blk.get("type") or "")
-            # reconciliação: reutiliza bloco existente do mesmo
-            # papel — upsert com id persistido = update, não add.
-            _eb = _take_existing(btype)
-            if _eb:
-                blk["id"] = str(_eb["id"])
             plan = plan_by_type.get(btype)
             plan_cands = (
                 plan.get("candidates") or [] if plan else []
@@ -4619,16 +4669,32 @@ class GptActionsDispatchService:
                     for c in justified
                     for g in (c.get("goals") or [])
                 }
-                if not justified or (
-                    _explicit_visuals
-                    and _own_goals
-                    <= (_bound_goals | _meta_goals)
+                # remoção explícita («remova a tabela») descarta o
+                # scaffold incondicionalmente — não depende de
+                # justificativa/redundância de fontes (issue #129 F2).
+                if (
+                    _table_removed
+                    or not justified
+                    or (
+                        _explicit_visuals
+                        and _own_goals
+                        <= (_bound_goals | _meta_goals)
+                    )
                 ):
                     dropped_types.add(btype)
                     continue
             if btype == "heading" and title:
                 blk["content"] = title
                 blk["contentRuns"] = [{"text": title}]
+            # reconciliação: reutiliza bloco existente do mesmo
+            # papel — upsert com id persistido = update, não add.
+            # O consumo só acontece depois do drop de scaffold: um
+            # bloco persistido "comido" por um op descartado sumia
+            # de `_existing` e escapava do delete_block do redesign
+            # (issue #129 F2 — tabela antiga sobrevivia ao redesign).
+            _eb = _take_existing(btype)
+            if _eb:
+                blk["id"] = str(_eb["id"])
             if plan is None:
                 enriched.append(op)
                 continue
