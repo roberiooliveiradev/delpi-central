@@ -109,3 +109,39 @@ Para cada relatório: (1) que problema resolve, momento do PROC-0072 e classific
 | R13/R14 | Documentos externos, não relatórios SQL TOTVS |
 
 **Prioridade seguinte:** `CLARA-KNOW-001` correção R04/R09; `CLARA-KNOW-007` verificar e ajustar a descrição R06 da condição `MV_D3ESTOR`; `CLARA-KNOW-008` republicar R12/R15 e registrar SHA/versão de corpus. Não mudar SQL por discrepância documental sem evidência. Este gate é **DOCUMENTATION_ONLY**.
+
+
+## 7. Terceira passagem — SQL literal R01/R02/R03/R10/R11 (03/11/2026)
+
+**Escopo:** leitura direta dos arquivos SQL `financeiro_settlements/settlements_sql.py`, `financeiro_stock_inventory/stock_inventory_sql.py`, `financeiro_cost_center_expenses/cost_center_expenses_sql.py`, `financeiro_billing_exclusion_roster/billing_exclusion_roster_sql.py`, com comparação às fichas R01/R02/R03/R10/R11 disponíveis na CLARA. Sem execução de queries live aqui.
+
+### R01/R02 — distinção crítica entre artefato histórico SE5 e consulta operacional atual
+
+- **Fonte do SQL ativo:** `api-delpi/app/infrastructure/persistence/totvs/financeiro_settlements/settlements_sql.py` e não simplesmente a tabela `SE5`. O builder usa eventos de baixa `FK2010` (pagar) / `FK1010` (receber), join de títulos via `FK7010` (`FK7_IDDOC`, `FK7_ALIAS='SE2'|'SE1'`), títulos `SE2010`/`SE1010` e naturezas `SED010`.
+- O valor de evento é `FK2_VALOR`/`FK1_VALOR`, não valor total original do título `E2_VALOR`/`E1_VALOR`; competência usa `FK2_DATA`/`FK1_DATA`, não presumir `E5_DATA` como eixo da API operacional. `LEFT JOIN` e `OUTER APPLY TOP 1` preservam baixa sem título/natureza ligados e informam qualidade do vínculo.
+- A CLARA recupera fichas R01/R02 com `SE5×SE2/SE1×SED`, `E5_DATA`, descrição da **emissão documental histórica** e também o termo “consulta operacional” — documentação pode induzir usuário a explicar o cálculo atual a partir da fonte errada.
+- **Classificação:** `KNOWLEDGE_BOUNDARY_MISMATCH`, não `SQL_BUG`. Separar na resposta da CLARA: (a) relatório histórico / layout custom comprovado, (b) consulta operacional atual `FK1/FK2+FK7+SE1/SE2+SED`, (c) paridade com emissão oficial **não homologada**. Atualizar fichas e respostas com dois blocos explícitos, fonte/versão distintos. **Prioridade P0** (erro de orientação sobre tabelas).
+
+### R03 — snapshot P7
+
+- **SQL verificado:** `financeiro_stock_inventory/stock_inventory_sql.py` lê `SB9010` no encerramento do mês com `SB1010`, por filial × armazém × produto. O cabeçalho SQL distingue o snapshot exato de estimadores de saldo pela última SB9 + SD3.
+- **Ficha CLARA:** descreve emissão histórica MATR460 e composição P7, inclusive bloco “em processo” do MATR989. Isso não prova que a consulta de snapshot R03 seja uma emissão oficial MATR460. Explicar separadamente o motor operacional do Portal (`SB9` exata) e os conceitos do relatório oficial; composição e limites devem ser verificados contra o use case (não inteiramente nesta passagem).
+
+### R10 — seleção operacional na aplicação, não filtro SQL pré-aplicado
+
+- **SQL verificado:** `financeiro_cost_center_expenses/cost_center_expenses_sql.py` traz linhas `SD1010` por `D1_DTDIGIT`, com dimensões `SB1010`, `SA2010` e `CTT010` (`OUTER APPLY TOP 1` por filial/CC). A query **não aplica o conjunto de exclusões 13 TES / MP / benefícios no WHERE**; devolve os atributos para classificação no use case `calculation` versus `investigation`.
+- A ficha CLARA sabe os 13 TES, exclusão MP e distinção apuração/investigação. Aperfeiçoar a explicação dizendo **qual etapa executa a regra**, evitando a afirmação falsa de que o SQL já elimina os documentos excluídos. Não muda a decisão humana Direto/Indireto/Adm pendente.
+
+### R11 — SQL de universo OR e classificação investigativa no use case
+
+- **SQL verificado:** `financeiro_billing_exclusion_roster/billing_exclusion_roster_sql.py` lê `SD2010` no eixo `D2_EMISSAO` com predicado de **universo** `D2_GRUPO = grupo-alvo OR D2_TES = TES-alvo`; `SF4010` via `OUTER APPLY TOP 1`, `SB1` e `SA1` via LEFT. Document siblings de mesmo `filial+doc+série` têm métricas correlacionadas.
+- A ficha CLARA descreve o conjunto de **candidatas** como `9035∩594` (interseção). **Não é contradição necessariamente:** SQL inclui também linhas relacionadas fora do critério para investigação; a **classificação de candidatas/out_of_criteria é responsabilidade do use case**, não do SQL. Explicar claramente: `UNIVERSE = grupo OR TES`; `CANDIDATES = grupo AND TES`; não confundir “encontrado para investigação” com “deve excluir NF”.
+- **Classificação:** `KNOWLEDGE_EXPLANATION_GAP`, não defeito SQL provado. Sem mudança de regra sem autorização do owner.
+
+### Consolidação das novas ações
+
+- **CLARA-KNOW-009 (P0):** R01/R02 — separar semântica de relatório histórico SE5 do **SQL operacional FK2010/FK1010+FK7**; perguntas “qual tabela?”, “qual data?”, “qual valor?” devem retornar a fonte da visão explicitamente indicada.
+- **CLARA-KNOW-010 (P1):** R10/R11 — explicar corretamente distinção entre `SELECT do universo` e `classificação no use case`, com dois exemplos de linha candidata/fora de critério.
+- **CLARA-KNOW-011 (P1):** R03 — explicitar motor de snapshot SB9010 versus P7 oficial e não declarar equivalência sem homologação.
+- **R08:** producer SQL literal ainda `TO_INVENTORY` nesta passagem; documentação do domínio recuperada, não extrapolar.
+- **Status:** `CODE_PROVEN` em cinco arquivos SQL e diferenças de explicação; `INCONCLUSIVE` para paridade de produção ou resultado de todos os predicados downstream. `DOCUMENTATION_ONLY`.
