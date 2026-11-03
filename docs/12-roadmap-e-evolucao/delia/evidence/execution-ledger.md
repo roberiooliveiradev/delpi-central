@@ -1917,3 +1917,12 @@ PLANO: criar usuario operacional mcp-catalog-sync no realm delpi via
   admin API (auditable, escopo minimo) -> password grant delpi-central ->
   bind subject -> token-exchange -> sync 3 owners ativos (davi/teo/vista;
   caio/clara/eva/suri sem base_url em prod = nao configurados).
+
+## PROMOTION — auth progress (SHA 15a7bc3c75)
+
+Caminho validado: client publico delpi-central tem directAccessGrants.
+Usuario operacional mcp-catalog-sync CRIADO no realm delpi (admin API),
+requiredActions limpos. PENDENTE: password grant retorna 400 —
+depurar qual etapa (reset-password PUT vs grant). Script /tmp/prod_sync.py
+no host+container: reset password gerado in-process -> password grant ->
+bind -> _live_capture + capture_and_activate (davi/teo/vista).
