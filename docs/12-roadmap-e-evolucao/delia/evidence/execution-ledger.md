@@ -2041,3 +2041,18 @@ modelo) -> OpenRouter 402 credits. FIX: ModelSettings(max_tokens=2048)
 + prompt "somente valores" + unwrap determinístico de dict-string
 single-key (modelo embrulhava code={"code":"30190123"} e enchia
 description com prosa). Aguardando deploy+re-smoke P1.
+
+## DIAGNOSTICO — "qual a estrutura do 90260148" (local live)
+
+LOG do turn (b66a63f1): discover+execute -> 2 records retornados ->
+goal_evidence_relevance=irrelevant -> cri_response presented=0
+delivered=2 -> outcome_assessment=insufficient/goal_mismatch ->
+resposta honesta "registros reais mas nao correspondem ao pedido".
+VEREDICTO: correto — os 2 registros provavelmente sao resultados de
+product-search (code/descricao), nao dados de ESTRUTURA (BOM) — a
+DÉLIA honestamente recusou apresentar dados que nao respondem a
+pergunta. NAO e defeito de interpretacao: seria defeito se os
+registros realmente contivessem a estrutura (improvavel — search
+retorna produtos). RESIDUAL: se o davi tiver acao de estrutura nao
+selecionada, e problema de capability-selection; se nao tiver, e
+ausencia de capability no owner (dado legitimo indisponivel).
