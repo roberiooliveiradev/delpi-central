@@ -257,3 +257,92 @@ Nenhuma NC histórica é ground truth automaticamente; somente referência de ri
 3. Preparar annotation guide e GT controlado; definir thresholds antes do holdout.
 4. Executar E1/VAL-01 sobre a superfície R11–M5 existente; preencher resultado por ocorrência/estado e documentar evidências e limitações no mesmo plano.
 5. Corrigir discrepância `recurrence(group_by=problem_tag)` vs `tags`/search no owner, sem alterar registros de NC.
+
+## 8. Estudo E1 / VAL-01 — Inventário dos contratos e topologias reais (2026-11-03)
+
+**Natureza:** estudo/inventário factual, sem proposta de alteração de código e **sem** validar os desenhos. Fonte oficial dos exemplos = EVA `product.structure` e `product.drawing` com acesso delegado; leitura do código no GitHub para contratos/transformações. Visuais apenas das execuções anteriores de `drawing_analysis(compose_understanding=true)`, explicitamente distinguidas de observação atual: novas chamadas em 2026-11-03 falharam internamente e **não** permitem afirmar leitura atual dos novos PDFs.
+
+### 8.1 Owner, rota, schema e transformação existente
+
+| Camada | Recurso verificado | Contrato / observação | Autoridade |
+|---|---|---|---|
+| API DELPI Python (repo `roberiooliveiradev/api-delpi-py`) | `GET /products/{code}/structure`, route `app/routes/product_routes.py` | `max_depth` default 10, 1–15; `page` default 1; `page_size` default 100, 1–500; `get_structure` delega `ProductRepository.list_structure` | Owner do cadastro/BOM, não EVA |
+| API DELPI Python repository | `app/repositories/product_repository.py` | CTE SG1010 (`G1_COD` pai, `G1_COMP` filho, `G1_QUANT`, `G1_INI/G1_FIM` em contrato real); SB1010 (`B1_DESC/B1_TIPO/B1_UM`); árvore `data: {code,description,type,unit,quantity,components:[...]}` e paginação **só no 1º nível** | Fonte operacional; verificar runtime/ref antes de declarar equivalência a qualquer outro backend |
+| API DELPI Node (repo `roberiooliveiradev/api-delpi`) | `GET /api/products/code/:code/structure` | **Outra rota/contrato**: `recursive`, `direction=where-used|explosion`, `maxDepth`; não assumir que seja a rota atualmente consumida pela Engineering API | Interface distinta, não misturar schemas nem direção |
+| EVA / Engineering API | `read(entity=product,action=structure,ref=code)` | Envelope observado: `data.status=available`, `data.data.root` + `data.data.items[]`; cada item `code,description,type,unit,quantity,components[],secondary_unit?,conversion_factor?,conversion_type?`; `page/page_size/total/total_pages`; `bom_validity.filter=current`, referência `server_date` | Engineering API delega sob identidade e AuthZ live; não cria nova BOM |
+| Engineering API análise | `application/drawing/drawing_analysis_service.py::_flatten_bom` / `flatten_bom_occurrences` | Aceita `items/components/children`, achata em `occurrence_id, component_code, component_type, parent_code, depth, path, quantity_raw, unit_raw`. `bom_stats` registra vínculos, códigos repetidos, profundidade. `_MAX_BOM_ITEMS=300` no código — auditoria de truncamento antes de VALIDATED | Projeção de análise, **não** fonte oficial |
+| Engineering API objetos | `object_profiles_builder.py` e `drawing_investigation.py` | `BOM_OCCURRENCE` preserva path/nível/código/consumo/unidade; `DRAWING_TABLE_ITEM` tem item, code candidate, description, qty observados; M4 `multiplicity_analysis` e verificação `DRAFT/CANDIDATE` | Interpretação e matching candidatos |
+| Engenharia PDF | `read(entity=product,action=drawing,ref=code)`; `product.drawing_analysis` | Metadata de PDF (filename, revision, size, modified_at), PDF por gateway; drawing understanding via OCR/SLANet quando disponível | O PDF é documento fonte, não truth de BOM |
+
+**Pseudo-schema observado do wrapper EVA:**
+```json
+{
+  "status": "available",
+  "data": {
+    "root": {"code": "PA", "description": "...", "type": "PA", "unit": "MI", "quantity": 1},
+    "items": [
+      {"code": "PI-ou-MP", "description": "...", "type": "PI", "unit": "MI", "quantity": 1,
+       "components": [{"code": "MP", "description": "...", "type": "MP", "unit": "MT", "quantity": 643, "components": []}]}
+    ],
+    "page": null, "page_size": null, "total": 2, "total_pages": null,
+    "bom_validity": {"filter": "current", "reference": "server_date", "validityColumns": "G1_INI,G1_FIM"}
+  }
+}
+```
+*Os literais PA/PI/MP e 643 ilustram a forma; não substituem as instâncias completas ou o contrato normativo. O wrapper acima não é automaticamente o mesmo JSON bruto da rota Python. `quantity`, `unit`, `conversion_type` e `conversion_factor` devem manter semântica **não aprovada** até contrato do owner. O histórico/current effective BOM pode diferir da revisão do PDF.*
+
+**Pontos de atenção de contrato para investigar antes da implementação:** paginação raiz vs recursão; se a API limita/trunca silenciosamente (incluindo limite de 300 ocorrências da análise); representação de ocorrências repetidas do mesmo código; `path` por códigos pode não diferenciar irmãos com códigos iguais sem índice/id de vínculo; validade `current/server_date` ≠ automaticamente estrutura aplicável à revisão histórica do desenho; `secondary_unit/conversion_factor/conversion_type` presentes mas não justificam assumir equivalências de quantidade. Verificar o owner para qual **instância de API DELPI** e contrato da Engineering API são usados em produção. A leitura do código Python é evidência do repositório, não prova de SHA de runtime daquela API.
+
+### 8.2 Amostragem das estruturas oficiais reais
+
+Todos os totais abaixo foram contados da **árvore devolvida pela EVA** (`items` e `components`) em 2026-11-03, com `max_depth=15,page_size=500`. `N1` significa filho direto do PA raiz; `N2` filho de N1; `N3` filho de N2. Quantidades brutas **não convertidas**.
+
+| Produto | Filhos N1 | N1 por tipo | Ocorrências N1/N2/N3 | Topologia observada e relevância |
+|---|---:|---|---|---|
+| `90264302` | 2 | 2 PI | 2/4/0 = 6 | PA→2 PI; cada PI→MP cabo+terminal; mesmos códigos MP em dois pais, consumos distintos |
+| `90264161` | 2 | 1 MP + 1 PA | 2/5/1 = 8 | **PA→MP direta + PA subconjunto**; PA subordinado→4 MP + 1 PI; PI→1 MP; 3 níveis |
+| `90263520` | 4 | 4 PI | 4/14/0 = 18 | PA→PI→MP; vários códigos MP repetidos entre PI; caso NC de balões |
+| `90261606` | 3 | 3 PI | 3/9/0 = 12 | PA→3 PI com etiquetas de códigos diferentes em cada; NC de quantidade de etiqueta |
+| `90263572` | 26 | 16 MP + 10 PI | 26/30/0 = 56 | **MP e PI diretamente no N1**; muitos MP reutilizados nos PI; NC código de conector |
+| `90264178` | 16 | 6 MP + 10 PI | 16/24/0 = 40 | MP+PI N1; descrições de intermediários × medidas; NC de descrição |
+| `90480120` | 10 | 10 MP | 10/0/0 = 10 | **Só MP diretas** no N1, sem PI; NC letras de balões |
+
+**Exemplos de vínculos concretos (estrutura, não desenho):**
+- `90264302` → PI `50226113` (1 MI) → MP cabo `10020033` (643 MT) e terminal `10080106` (1000 PC); o outro PI `50226114` (1 MI) reutiliza o mesmo cabo `10020033` com **663 MT** e o terminal `10080106`. Não usar 643/663 como cota automaticamente, nem 1000 PC como 1000 terminais montados.
+- `90264161` → MP direta `10210771` (1000 PC) **e** PA `90350410` (1 MI) → MP `10070954` (15550 MT), MP `10210500` (20 KG), MP `10210501` (3.2 KG), MP `10350016` (1000 PC), PI `50090001` (1 MI) → MP `10211300` (2 KG).
+- `90261606` → 3 PI `50222382`, `50222383`, `50222384`, cada um com terminal/cabo e etiqueta respectiva `10110009`, `10110084`, `10110098`: caso ideal para associar `quantidade da etiqueta` por **ocorrência e contexto**, não por código único.
+
+**Documentos encontrados:** `product.drawing` retornou `found=true` e `filename={code}.pdf` para todos os sete produtos. Campo `revision=null` em todos; não confundir null de metadado com prova de inexistência de revisão no próprio PDF. Ex.: `90264302.pdf` 103498 bytes, `90264161.pdf` 202428 bytes; `90263572.pdf` 626133 bytes.
+
+### 8.3 Estrutura NO desenho: o que já é visível, o que não sabemos
+
+**Evidência visual integrada previamente verificada (M5/R13), não refeita neste estudo:** no `90264302` a análise tinha 6 ocorrências BOM e **4 DRAWING_TABLE_ITEM candidatos**, sem correspondências finais; `90264161` 8 ocorrências BOM e **4 itens candidatos**, com 2 correspondências exatas de código (`90350410`, `50090001`). Isso mostra que **linhas OCR != ocorrências oficiais**; não autoriza declarar quantos itens reais estão impressos no PDF. Persistiram associações ambíguas de linhas e necessidade de distinguir notas, carimbo, tabela e desenho.
+
+**Neste estudo:** chamadas de `drawing_analysis(compose_understanding=true)` retornaram **erro interno** mesmo para casos anteriormente funcionais; não há observação visual nova dos PDFs `90263572`, `90261606`, `90264178`, `90263520`, `90480120`. **Metadata de existência do PDF não equivale a inspeção visual.** Não inferir layout/tabela, quantidade ou hierarquia representada a partir da BOM.
+
+### 8.4 Decisões de modelagem a fechar com o owner (não implementar ainda)
+
+1. **Escopo de representação:** por família de desenho, quando a tabela mostra N1 inteiro, só PI, MP diretas, MP internas ou combinação? Existe tabela de vários níveis, desenho de PI individual ou arquivos complementares? *TO_INVENTORY/OWNER_DECISION_REQUIRED.*
+2. **PA no N1:** como `90350410` é representado/identificado na lista de materiais? O relatório precisa tratar PA subordinado como item, não forçar PI/MP.
+3. **MP N1 junto com PI N1:** não apagar MP direta só por existir PI; nem exigir toda MP interna no mesmo desenho.
+4. **Quantidade por vínculo:** significado de `MI/MT/PC/KG`, quantidade por 1000, conversão, escala de pai, `conversion_type`, relação com quantidade impressa na tabela. **Sem regra owner, NOT_COMPARABLE.**
+5. **Ocorrência única:** chave `produto raiz + caminho de instâncias/vínculos + identidade da fonte e vigência`; códigos repetidos sob pais diferentes e sob o mesmo pai devem ser tratados com integridade, sem dedup por código.
+6. **Efetividade e documento:** estrutura válida na data do servidor é snapshot atual; PDF pode ser anterior e a NC histórica ainda mais antiga; definir correspondência versão/vigência em contrato antes de validar conflito.
+7. **Limites:** profundidade, paginação, cap 300, BOM truncada; resultado global `VALIDATED` só com evidência de **completude da fonte** e desenho compatível.
+8. **Comparação com desenho:** ler tabela item×code×description×qty com bbox/SHAs; vincular por evidência e contexto de montagem; investigar casos sem lista explícita e declarar UNSUPPORTED/INCONCLUSIVE corretamente.
+9. **Testes de regressão NC:** `90261606` (etiqueta/quantidade), `90263572` (código de conector), `90264178` (descrição/medida). Conferir versões originais das NC e PDF corretos; não considerar o arquivo atual errado por existir NC histórica.
+
+### 8.5 Recorte fechado do próximo estudo (sem prompt de implementação)
+
+**Passo de análise seguinte:** conseguir leitura visual auditável dos PDFs existentes, pelo fluxo oficial e AuthZ, e observar tabela efetivamente desenhada nos casos (a) 2 PI+MP internos, (b) 1 MP+PA subordinado/PI interno, (c) 16 MP+10 PI diretos, (d) só MP, (e) etiqueta/quantidade. Construir por caso mapa `BOM N1/N2/N3 → linhas efetivas da tabela → possíveis regras de apresentação`, com imagens/boxes e abstenção quando OCR insuficiente. Coletar política do owner de Engenharia sobre representação e quantidade; só então congelar AC/GT de E1 e preparar um único prompt bounded.
+
+**STATUS deste estudo:** `CONTRACT_INVENTORY=PASS` para rotas/schema analisados (runtime da API DELPI específica TO_INVENTORY); `BOM_TOPOLOGY_SAMPLING=PASS` 7 árvores oficiais; `DRAWING_METADATA=PASS` 7/7; `VISUAL_LAYOUT_STUDY=INCONCLUSIVE` novos desenhos (erro interno do analisar), evidência prévia parcial 2 PDFs; `BUSINESS_RULES=OWNER_PENDING`; `E1_IMPLEMENTATION=NOT_STARTED`. Não avançar para E2 nem implementar E1 automaticamente.
+
+### 8.6 Decisão/ledger incremental
+
+| ID | Data | Decisão e observação | Evidência | Próxima ação |
+|---|---|---|---|---|
+| DEC-VAL-008 | 2026-11-03 | Estrutura é árvore com casos PA→PI→MP, PA→MP+PA→PI→MP, MP+PI N1 e somente MP. Amostra de 7 produtos representativa **de formas**, não de todos layouts de desenho | EVA `product.structure`, 7 consultas | Mapear representações visuais, não inferir do cadastro |
+| DEC-VAL-009 | 2026-11-03 | Comparação deve preservar ocorrência/hierarquia, completude e vigência; regras de apresentação/quantidade são autoridade do domínio | Código API DELPI Python e Engineering API; retornos de estrutura | Propor políticas owner, GT e casos de comparação |
+| DEC-VAL-010 | 2026-11-03 | Estudo dos desenhos novos não concluído; OCR/análise integrada com erro interno; PDF metadata 7/7 disponível | EVA `product.drawing` e tentativas `product.drawing_analysis` | Recuperar evidência visual via fluxo legítimo antes de decidir layout, sem reabrir implementação |
+
