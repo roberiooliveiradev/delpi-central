@@ -674,3 +674,61 @@ def test_superseded_state_segments(corpus):
     ):
         with pytest.raises(KnowledgeNotFound):
             corpus.get_item(old_id)
+
+
+# Gate 084 — source-level operational exclusion for historical journals.
+def test_historical_runtime_journals_are_not_operational(corpus):
+    """Old deployment narratives remain auditable but cannot reach CLARA."""
+    from controllership_finance_app.application.clara.corpus_manifest import (
+        AUTHORIZED_SOURCES,
+    )
+
+    journal_ids = {"doc-00", "doc-100", "doc-111"}
+    journal_specs = [s for s in AUTHORIZED_SOURCES if s.source_id in journal_ids]
+    assert {s.source_id for s in journal_specs} == journal_ids
+    assert all(s.access_scope == "INTERNAL_ONLY" for s in journal_specs)
+
+    with plugins_db_connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT source_id, count(*) FROM "
+            "controllership_finance.clara_knowledge_item "
+            "WHERE source_id = ANY(%s) AND status = 'PUBLISHED' "
+            "AND access_scope <> 'INTERNAL_ONLY' GROUP BY source_id",
+            (list(journal_ids),),
+        )
+        assert cur.fetchall() == [], "historical journal exposed to CLARA"
+        cur.execute(
+            "SELECT knowledge_id FROM "
+            "controllership_finance.clara_knowledge_item "
+            "WHERE source_id = 'doc-100' AND status = 'PUBLISHED' "
+            "AND access_scope = 'INTERNAL_ONLY' LIMIT 1"
+        )
+        row = cur.fetchone()
+    assert row, "journal must remain preserved for audit"
+    with pytest.raises(KnowledgeNotFound):
+        corpus.get_item(str(row[0]))
+    for query in ("DEPLOY_STATUS não deployado", "PENDING_CONTRACT R04"):
+        assert all(
+            h["source_id"] not in journal_ids
+            for h in corpus.search(query=query, limit=30)
+        )
+
+
+def test_reingest_identical_segment_updates_access_scope(repo):
+    """Scope change must not be ignored by content-hash deduplication."""
+    sid = "t-scope-reingest"
+    key = sid + "::stable"
+    first = _item(
+        repo, source_id=sid, topic="t", title="Historical status",
+        content="DEPLOY_STATUS não deployado", locator_key=key,
+    )
+    second = repo.ingest_item(
+        source_id=sid, topic="t", title="Historical status",
+        content="DEPLOY_STATUS não deployado",
+        citation_locator={"key": key, "document": sid + ".md"},
+        access_scope="INTERNAL_ONLY",
+    )
+    assert first["knowledge_id"] == second["knowledge_id"]
+    assert second["access_scope"] == "INTERNAL_ONLY"
+    with pytest.raises(KnowledgeNotFound):
+        repo.get_item(str(first["knowledge_id"]))

@@ -203,11 +203,15 @@ class ClaraKnowledgeRepository:
                                 UPDATE {_q('clara_knowledge_item')}
                                    SET last_verified_at = now(),
                                        status = 'PUBLISHED',
+                                       access_scope = %s,
+                                       evidence_classification = %s,
                                        citation_locator = %s::jsonb
                                  WHERE knowledge_id = %s
                                 RETURNING *
                                 """,
                                 (
+                                    access_scope,
+                                    evidence_classification,
                                     json.dumps(locator),
                                     row["knowledge_id"],
                                 ),
