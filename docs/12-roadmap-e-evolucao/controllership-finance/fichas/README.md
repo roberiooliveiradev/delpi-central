@@ -33,13 +33,13 @@ funcional (G6 `PENDING` em todos os relatórios).
 | [R06](R06-ficha.md) | Kardex / saídas × CPV | `IMPLEMENTED` (`/closing/kardex` + `/closing/cpv`, IMP-015) | `read(report.kardex)`, `read(report.cpv)` | ficha + docs 61/84/85/122 | RPO/E7; paridade oficial G6; CPV vivo |
 | [R07](R07-ficha.md) | Inventários | `IMPLEMENTED` (`/closing/inventory-adjustments`, IMP-015) | `read(report.inventory_adjustments)` | ficha + docs 66/84/85/122 | loc de emissão; G6 |
 | [R08](R08-ficha.md) | Material em Processo (MATR989/H02) | `IMPLEMENTED` (`/closing/work-in-process`, IMP-009) | `read(report.work_in_process)` | ficha + docs 63/64/84/85 | fonte MATR989 ausente (E8); `officialMatr989=false` |
-| [R09](R09-ficha.md) | Faturamento × MOD (DLP204) | `TARGET_ONLY` (modelo físico PROVEN, sem contrato) | — (nenhuma) | ficha + docs 65/85 | SP `STP_DELPI_FORMA_PRECO` ausente (E9); G5 |
+| [R09](R09-ficha.md) | Faturamento × MOD (DLP204) | `IMPLEMENTADO` (visão operacional; paridade pendente) | `read(report.billing_mod_breakdown)` | ficha + docs 142–144/152 | SP `STP_DELPI_FORMA_PRECO` ausente (E9); taxas `source_missing` |
 | [R10](R10-ficha.md) | Notas/Despesas por Centro de Custo | `IMPLEMENTED` (`/closing/cost-center-expenses`, stage-01) | `read(report.cost_center_expenses)` | ficha + docs 77/85/126/127 | E10a/E10b (classe/audit); CTT; TES 12-vs-13; G6 |
 | [R11](R11-ficha.md) | NF a desconsiderar | `IMPLEMENTED` (`/closing/billing-exclusion-roster`, stage-02) | `read(report.billing_exclusion_roster)` | ficha + docs 67/85/126/127 | E11a/E11b; predicado oficial; G6 |
-| [R12](R12-ficha.md) | Fechamento de custo / Reposição / Refaz | `TARGET_ONLY` (execução no ERP; estado consultável) | — (sem medida numérica) | ficha + docs 85/118 | etapa 4 do wizard (G5); writer MV_ULMES (E5) |
+| [R12](R12-ficha.md) | Fechamento de custo / Reposição / Refaz | `IMPLEMENTADO` («Acompanhamento do fechamento», read-only; execução segue no ERP) | `read(report.cost_closing_state)` | ficha + docs 85/118/151 | etapa 4 do wizard (G5); writer MV_ULMES (E5) |
 | [R13](R13-ficha.md) | Extratos e aplicações | `SOURCE_UNAVAILABLE` (fonte externa bancária) | — (nenhuma) | ficha + docs 85/118 | contrato de entrada externo; P2 upload TARGET |
 | [R14](R14-ficha.md) | Importação / câmbio | `SOURCE_UNAVAILABLE` (sem evidência) | — (nenhuma) | ficha + docs 85/118 | `BLOQUEADO`; nenhum artefato |
-| [R15](R15-ficha.md) | Cutoff / virada / SB9 | `TARGET_ONLY` (estado lido via fechamento, sem relatório) | — (sem medida numérica) | ficha + docs 85/118 | writer SB9 por timing (E5); reabertura (E12) |
+| [R15](R15-ficha.md) | Cutoff / virada / SB9 | `IMPLEMENTADO` (visão de acompanhamento read-only, sem relatório) | `read(report.cost_closing_state)` | ficha + docs 85/118/151 | writer SB9 por timing (E5); reabertura (E12) |
 
 Legenda de implementação: `IMPLEMENTED` (contrato em runtime),
 `OPERATIONAL_VIEW` (visão auxiliar sem relatório oficial),
