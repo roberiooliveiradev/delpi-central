@@ -4415,3 +4415,20 @@ PRODUCTION_DEPLOY=NOT_PERFORMED · PRODUCTION_BUSINESS_OUTCOME=PENDING
 DEPENDENCIA: (a) acesso SSH autorizado a srv-api, ou (b) runner
 canonico com acesso. E2E BOM: sessao rober no Portal local.
 TASK_STATUS=INCOMPLETE · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — PRODUCTION DEPLOY EXECUTED (srv-api)
+
+TASK=DELIA-C3 deploy produtivo canonico executado.
+PROD_HOST=operador@192.168.1.237 (srv-api, via ~/.ssh/id_ed25519_srv).
+MECANISMO: infra/scripts/up-prod-sequential.sh --pull --build delia-api
+(canonico; somente o servico delia-api, sem alterar outros).
+PROD_SHA_BEFORE=790e4920a8 · PROD_SHA_AFTER=b3478110e4
+(contem merge 505a59a3 + fix orchestration 6ae0703619).
+PROD_IMAGE_AFTER=sha256:b4626b324e4f414a55b1e75ab5c21536aba865790030bef2246a7d59c8642e12
+PROD_HEALTH: gateway->delia-api 200 {"status":"available"}; logs limpos.
+RENDERER_ACTIVE: OMISSION_MAX_DEPTH x3; _admit_conversational_turn restaurado.
+ROLLBACK: SHA anterior 790e4920a8 + imagem anterior retida pelo daemon.
+PROD_BUSINESS_E2E: PENDING — sessao empresarial do usuario (BOM 90260148
+no Portal prod) e' o caminho autorizado restante.
+LOCAL: delpi-delia-api oficial em b3478110e4 (mesma revisao da prod).
+TASK_STATUS=DEPLOYED_NOT_HOMOLOGATED · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
