@@ -195,7 +195,7 @@ export function OperatorSessionChip({
       <div className="pcp-pub__operator">
         <UserRound size={16} strokeWidth={2} aria-hidden="true" />
         <span className="pcp-pub__operator-text">
-          <span className="pcp-pub__operator-reg">Nenhum operador identificado</span>
+          <span className="pcp-pub__operator-reg">Sem operador</span>
         </span>
         <button
           type="button"

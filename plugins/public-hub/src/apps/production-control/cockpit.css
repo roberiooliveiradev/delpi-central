@@ -3300,8 +3300,12 @@ button.pcp-pub-timeline__body--action:focus-visible {
 .pcp-pub__operator {
   position: relative;
   display: inline-flex;
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
+  max-width: min(100%, 22rem);
+  min-width: 0;
   padding: 8px 12px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 999px;
@@ -3311,13 +3315,16 @@ button.pcp-pub-timeline__body--action:focus-visible {
 }
 
 .pcp-pub__operator-switch--identify {
+  flex: 0 0 auto;
   width: auto;
+  min-width: max-content;
   height: auto;
   padding: 5px 12px;
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 700;
   border: 1px solid rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
 }
 
 .pcp-pub__brandbar .pcp-pub__operator-switch--identify {
@@ -3332,13 +3339,28 @@ button.pcp-pub-timeline__body--action:focus-visible {
 
 .pcp-pub__operator-text {
   display: inline-flex;
+  flex: 1 1 auto;
   flex-direction: column;
   align-items: flex-start;
+  min-width: 0;
   line-height: 1.15;
   text-align: left;
 }
 
+.pcp-pub__operator-text strong {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .pcp-pub__operator-reg {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.72rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.72);
@@ -3346,6 +3368,7 @@ button.pcp-pub-timeline__body--action:focus-visible {
 
 .pcp-pub__operator-switch {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   width: 22px;
@@ -3385,9 +3408,15 @@ button.pcp-pub-timeline__body--action:focus-visible {
 
 /* No detalhe (fundo claro do brandbar), o chip usa tokens padrão. */
 .pcp-pub__brandbar .pcp-pub__operator {
+  flex-shrink: 0;
   border: 1px solid var(--pcp-border);
   color: var(--pcp-text);
   background: var(--pcp-surface);
+}
+
+.pcp-pub__actions .pcp-pub__operator {
+  /* Não deixa o chip ser espremido até o texto cobrir o «Identificar». */
+  flex-shrink: 0;
 }
 
 .pcp-pub__brandbar .pcp-pub__operator-reg {
