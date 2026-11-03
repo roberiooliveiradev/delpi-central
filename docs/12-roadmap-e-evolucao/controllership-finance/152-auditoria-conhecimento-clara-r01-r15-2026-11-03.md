@@ -745,3 +745,35 @@ Todos verificados contra a verdade vigente: `doc-80` (15.B/17.A/17.D/19.E/20.F/2
 - Suíte PG: **15/15** (19 padrões superados → zero PUBLISHED; golden 105 + negativos 10 + mutacionais + invariantes).
 - Homologação conversacional: **`TEST_NOT_RUN`** — canal ChatGPT externo não automatizável; protocolo §14.6 disponível para o canal oficial.
 - Ressalva: classificação é regra determinística + revisão humana dos flagados — 2.045 NOT_APPLICABLE não carregam claims de estado; julgamento semântico fino é procedimento do próximo GPT REVIEW. **Não declarado "zero stale absoluto"** — declarado: zero superado **identificado** na auditoria integral.
+
+
+## 22. Gate 082-RW01 — Auditoria semântica por afirmação (03/11/2026)
+
+**Executor:** Devin · **Issue:** #130 · **Corpus:** `5c48899a` local (2.207/88 — mesmo conjunto do produtivo `1fd4c8b0`). Resposta ao REWORK do GPT: a classificação regex é substituída por auditoria **claim-level** — `clara_semantic_audit.py` agora extrai 13.416 afirmações tipadas dos 2.207 itens, confronta cada afirmação operacional com a tabela de verdade vigente (matriz GATE A, capabilities do bridge, G6=0/15, ausências E1/E8/E9 ainda verdadeiras) e registra a cadeia afirmação→autoridade→evidência→conclusão→ação por linha.
+
+### 22.1 Resultado (2.207 itens, reconciliado)
+
+| Classe | Qtd | Composição |
+|---|---|---|
+| HISTORICAL_ONLY | 1.569 | afirmações temporalmente ancoradas (registros/evidências datadas) — confrontadas com a verdade, nenhuma superada sem decisão |
+| NOT_APPLICABLE | 578 | regra/contrato/mecânica/plano — justificativa cita o conteúdo inspecionado (perfil estrutural) |
+| CURRENT_VERIFIED | 60 | afirmações de estado corrente consistentes com a autoridade vigente |
+| STALE_CONFIRMED/MIXED/CONFLICT/UNVERIFIED/REVIEW | **0** | fila zerada com decisão individual registrada |
+
+### 22.2 Reexame dos 2.045 NOT_APPLICABLE
+
+Todos reexaminados statement a statement: 1.486 continham afirmações invisíveis à regex (datadas, mecânicas, regras, plano) e **34 continham afirmações de estado corrente** — verificadas contra autoridade → CURRENT_VERIFIED. Os 117 UNVERIFIED (valores datados): 85 HISTORICAL_ONLY (competência explícita), 19 CURRENT_VERIFIED, 13 NOT_APPLICABLE (regra de paridade ilustrada). Os 45 restantes revalidados claim a claim.
+
+### 22.3 Afirmações de bloqueio — verificação adversarial
+
+16 claims contêm R04/R09/R12/R15 + predicado de bloqueio: todas decididas individualmente — linhas corrigidas G080-RW01 (doc-80 27.C/48.1), registros datados (doc-00/23/86/100), prerequisito DR-C2, spec de enum, negação (ficha-r04). **Nenhuma afirmação superada nova encontrada; nenhuma passou sem confronto.** Duas divergências datadas mantidas como histórico foram anotadas para o GPT (doc-100 "R01–R15 sem contrato", doc-118 "18 tools/52 fontes/1.298 itens").
+
+### 22.4 Artefatos versionados
+
+`docs/12-roadmap-e-evolucao/controllership-finance/evidence-g082rw/` — `g082rw-items.jsonl` (inventário inicial×final+justificativa), `g082rw-claims.jsonl` (matriz por afirmação, 15 campos do brief), `g082rw-divergences.jsonl`, `g082rw-coverage.md` (método, contagens, reconciliação, caminhos de contexto, testes).
+
+### 22.5 Caminhos de contexto e testes
+
+- Live: `get(SUPERSEDED)` → `KnowledgeNotFound`; `search "R04 bloqueado"` com e sem `report_id` → ficha-r04 no topo, zero claim superado; `list_sources` 88 fontes sem INTERNAL_ONLY; `get_context` projeta só metadados do corpus.
+- `pytest tests/test_pg_clara_retrieval.py` (efêmero + reingestão): **15/15 PASS** — golden 105, negativos 10, guardas SUPERSEDED/INTERNAL/report_id.
+- Sem mudança de corpus/runtime/contrato → `DEPLOY_NOT_APPLICABLE`. Homologação conversacional: **`TEST_NOT_RUN`** (canal ChatGPT externo; protocolo §14.6).
