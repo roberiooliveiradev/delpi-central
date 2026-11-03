@@ -120,11 +120,20 @@ class Settings:
         # provider path. "legacy" keeps the hand-rolled OpenAI-compatible
         # adapter; "pydantic_ai" selects the Pydantic AI adapter behind
         # the same ModelInvocationPort — one runtime per request, never
-        # both. Unknown values fail closed to the known-good legacy
-        # path pending M4 cutover.
-        self.model_runtime = (
+        # both. Unknown values are rejected fail-closed: an unrecognized
+        # runtime name must never silently route inference to an
+        # unintended implementation.
+        _allowed_model_runtimes = frozenset({"legacy", "pydantic_ai"})
+        _model_runtime = (
             (os.getenv("DELIA_MODEL_RUNTIME") or "legacy").strip().lower()
         )
+        if _model_runtime not in _allowed_model_runtimes:
+            raise ValueError(
+                "DELIA_MODEL_RUNTIME must be one of "
+                f"{sorted(_allowed_model_runtimes)}, got "
+                f"{_model_runtime!r}"
+            )
+        self.model_runtime = _model_runtime
         # C3-OLLAMA-LOCAL-LLM-TESTING-01: when set, no real provider may be
         # wired — the configured endpoint is external and this environment
         # is not production. Composition stays fail-closed and eval

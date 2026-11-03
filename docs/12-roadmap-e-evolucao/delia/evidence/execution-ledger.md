@@ -4506,3 +4506,18 @@ gates intactos. pydantic_arggen ja era Pydantic AI (KEEP).
 8 testes adapter GREEN + regressao (90). Residual M5: legacy
 OpenAICompatible adapter + langgraph_engine permanecem ate parity
 M3/cutover M4.
+
+## M2-REWORK-01 — gaps de revisao fechados
+
+SHA=<next>: DELIA_MODEL_RUNTIME fail-closed (allowlist
+legacy|pydantic_ai, unknown->ValueError) + testes negativos;
+matriz de contratos por stage real (admission, resolver/foreign
+selection, decomposition, grounded_synthesis, clarification,
+comparison, assessment, turn_goal) + abstention applicable=false —
+20/20 adapter tests GREEN, regressao 110 GREEN.
+INTEGRACAO REAL: delpi-delia-api oficial recriado com
+DELIA_MODEL_RUNTIME=pydantic_ai (bind-mount deploy-wt) — chamada
+real Ollama (qwen3:4b-instruct-2507-q4_K_M) via InvokeModel:
+structured {interaction_class, requires_owner_surface} COMPLETED,
+usage 277in/17out, 55.2s — runtime Pydantic AI vivo em producao-local.
+Rollback: DELIA_MODEL_RUNTIME=legacy (isolado, sem coexistencia).

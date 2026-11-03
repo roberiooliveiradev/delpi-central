@@ -181,3 +181,111 @@ def test_constructor_contract_parity_with_legacy():
             timeout_seconds=5.0,
             model_impl=TestModel(),
         )
+
+
+# ---------- M2-REWORK: per-stage typed contracts (doc 220 §5) ----------
+
+_STAGE_CONTRACTS = [
+    # (stage purpose, expected_fields, valid args)
+    (
+        "admission",
+        ("interaction_class", "requires_owner_surface"),
+        {"interaction_class": "operational", "requires_owner_surface": True},
+    ),
+    (
+        "resolver_selection",
+        ("applicable", "remote_name"),
+        {"applicable": True, "remote_name": "davi"},
+    ),
+    (
+        "foreign_selection",
+        ("foreign_capability_id",),
+        {"foreign_capability_id": "get_product_structure"},
+    ),
+    (
+        "subobjective_decomposition",
+        ("subobjectives",),
+        {"subobjectives": [{"goal": "resolve structure"}]},
+    ),
+    (
+        "grounded_synthesis",
+        ("items",),
+        {"items": [{"ref": 1, "text": "x"}]},
+    ),
+    (
+        "clarification_wording",
+        ("question",),
+        {"question": "Qual produto?"},
+    ),
+    (
+        "evidence_comparison",
+        ("left", "right"),
+        {"left": [1], "right": [2]},
+    ),
+    (
+        "native_assessment",
+        ("status",),
+        {"status": "answered"},
+    ),
+    (
+        "turn_goal",
+        ("goal_class",),
+        {"goal_class": "operational"},
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "purpose,expected_fields,args", _STAGE_CONTRACTS
+)
+def test_stage_typed_contracts_through_port(
+    purpose, expected_fields, args
+):
+    """Every real model stage flows the same governed contract through
+    the Pydantic AI port — typed output, surplus tolerated, presence
+    enforced downstream exactly as the legacy path."""
+    adapter = _adapter(TestModel(custom_output_args=dict(args)))
+    result = InvokeModel(adapter).execute(
+        _request(
+            task_purpose_id=f"c3.{purpose}",
+            output_schema_id=f"c3.{purpose}",
+            expected_fields=expected_fields,
+        )
+    )
+    assert result.finish_status is InvocationFinishStatus.COMPLETED
+    for field in expected_fields:
+        assert field in result.structured_output
+
+
+def test_abstention_proposal_survives_governed_path():
+    """Abstain (applicable=false without companion ids) is a legal
+    stage output — the port must carry it unmodified so the
+    orchestrator's deterministic gate decides."""
+    adapter = _adapter(TestModel(custom_output_args={"applicable": False}))
+    result = InvokeModel(adapter).execute(
+        _request(expected_fields=("applicable", "remote_name"))
+    )
+    assert result.structured_output["applicable"] is False
+    assert "remote_name" not in result.structured_output or (
+        result.structured_output["remote_name"] is None
+    )
+
+
+# ---------- M2-REWORK: runtime flag fail-closed ----------
+
+def test_unknown_model_runtime_fails_closed(monkeypatch):
+    from app.infrastructure.config.settings import Settings
+
+    monkeypatch.setenv("DELIA_MODEL_RUNTIME", "totally-not-a-runtime")
+    with pytest.raises(ValueError) as exc:
+        Settings()
+    assert "DELIA_MODEL_RUNTIME" in str(exc.value)
+
+
+def test_known_model_runtimes_accepted(monkeypatch):
+    from app.infrastructure.config.settings import Settings
+
+    monkeypatch.setenv("DELIA_MODEL_RUNTIME", "pydantic_ai")
+    assert Settings().model_runtime == "pydantic_ai"
+    monkeypatch.setenv("DELIA_MODEL_RUNTIME", "legacy")
+    assert Settings().model_runtime == "legacy"
