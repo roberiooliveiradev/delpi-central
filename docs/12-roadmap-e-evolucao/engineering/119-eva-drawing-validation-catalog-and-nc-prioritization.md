@@ -411,3 +411,26 @@ Todos os totais abaixo foram contados da **árvore devolvida pela EVA** (`items`
 ### 10.1 Esclarecimento de autoridade e capacidade (DEC-VAL-013 — 2026-11-03)
 
 **Correção explícita:** a EVA **já obtém os bytes do PDF** da Engineering API no backend e realiza análise de imagem/OCR; isso foi PROVEN nos sete relatórios `product.drawing_analysis(compose_understanding=true)` (document SHA, página, bbox e observações). **Não há impedimento da EVA em buscar PDFs**, nem necessidade de nova integração com fileserver ou de solicitar downloads manuais ao usuário como requisito do produto. O bloqueio do §10 é **exclusivamente para entregar os bytes brutos do backend ao ambiente desta conversa** para renderização e inspeção humana direta: o MCP `product.drawing` fornece metadados; `drawing_analysis` retorna resultados tipados, e o contrato semântico atual não inclui `download_pdf`/`rendered_page`. A rota oficial `/v1/products/{code}/drawing/pdf` permanece pertencente à Engineering API e sujeita a AuthZ. **Próximo passo:** aproveitar o fluxo backend já existente e, apenas se a inspeção humana do original for indispensável, avaliar acesso autorizado à representação visual já gerada, sem expor tokens, duplicar acesso ou criar source of truth. `EVA_PDF_FETCH_AND_OCR=PROVEN`; `ASSISTANT_RAW_PDF_BYTES=UNAVAILABLE`; `DIRECT_VISUAL_REVIEW=TEST_NOT_RUN`. Essa distinção substitui qualquer leitura anterior de "EVA não consegue obter PDFs".
+
+## 11. Revisão independente da entrega PDF → ChatGPT (2026-11-03)
+
+**Origem:** relatório final do executor Devin para o commit `3394a29cefa1e2fae3357c6337fee477ee139adf` (`engineering_app/interface/http/routes/product_routes.py`). **Fatos confirmados por revisão independente:** commit existe no repositório; diff altera somente esta rota HTTP; acrescenta `hashlib.sha256(content)`, `X-Document-Sha256`, `X-Document-Size`, `X-Document-Filename`, `X-Document-Product-Code`; preserva operação, fluxo delegado, guarda de permissão e contexto humano no código. Não houve execução independente dos testes, inspeção direta do SHA em produção, nem abertura binária no consumidor ChatGPT neste momento.
+
+### 11.1 Defeito identificado, relevante ao resultado alegado
+
+A implementação diz `"Content-Disposition": result.get("content_disposition") or f'attachment; filename="{filename}"'`. **Se o adapter/origem retornar valor `inline; ...`, esse valor prevalece; a resposta NÃO será `attachment`**. A mudança não garante o efeito declarado pelo executor. Marcar `REWORK/BLOCKING` para a garantia do header ou comprovar por teste de comportamento que o contrato da origem nunca o preenche com inline; a correção mais simples deve impedir retorno de disposição insegura/não prevista sem descartar identificação segura do arquivo. Não assumir que `attachment` isolado faz ChatGPT anexar arquivo.
+
+### 11.2 Demais gates ainda sem evidência final
+
+- `OPENAPI_BINARY_RESPONSE`: **TO_INVENTORY** — verificar `/openapi.json` efetivo para a operação `get_product_drawing_pdf`, especialmente `200.content.application/pdf` com schema `type: string, format: binary`; `operation_id` existente não comprova automaticamente contrato de arquivo.
+- `CONNECTOR_ACTION_REGISTERED`: **FAIL / NOT PRESENT IN AVAILABLE TOOLS** — o conector EVA desta conversa expõe `read(product,drawing)` para metadados, não uma action/binário de PDF. Cadastro/importação e capacidades da integração podem depender do owner externo.
+- `CHAT_PDF_RECEIVED_AND_RENDERED`: **TEST_NOT_RUN** — não houve transferência nem renderização demonstrada no cliente ChatGPT. Não confundir resposta HTTP attachment com entrega do host de ferramentas.
+- `AUTHZ_NEGATIVE`: comportamento fail-closed sem credencial relatado pelo executor; **não reproduzido independentemente**. Não equivale a autorização positiva.
+- `TESTS`: 87/87 e 676 pass / 1 fail ambiental informados pelo executor; **não reproduzidos** nesta revisão. `TESTED_SHA` e `DEPLOYED_SHA` informados, não confirmados no runtime por ferramenta autorizada.
+- `7_PRODUCT_E2E`: **TEST_NOT_RUN**, reconhecido pelo executor sem OAuth delegada.
+
+### 11.3 Decisão DEC-VAL-014 — fechar o pacote, sem recursão
+
+**Decisão:** `REWORK` delimitado para a garantia `Content-Disposition` e conferência do OpenAPI binário; `INCONCLUSIVE` para entrega de arquivo ao ChatGPT. **Não abrir nova frente/etapa/prompt em cascata.** Exigir ao executor somente (1) prova/correção do header nas respostas positiva com `content_disposition=inline` e sem campo; (2) teste/assert do corpo SHA+size+MIME e headers; (3) verificação do OpenAPI efetivo `application/pdf`/binary; (4) evidência do deploy no SHA; (5) reportar o gate do owner do conector para registrar a Action e validar recebimento real. Se o registro do conector for tecnicamente impossível pelo owner atual, marcar `OWNER_BLOCKED` e escalar à Coordination, sem afirmar PASS ponta a ponta.
+
+**A VAL-01 Estrutura permanece como única funcionalidade de análise ativa.** Transporte de PDF é enabler técnico de inspeção; não introduzir outra implementação de BOM, OCR nem outra authority.
