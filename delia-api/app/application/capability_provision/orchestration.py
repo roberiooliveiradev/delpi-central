@@ -398,6 +398,9 @@ SUBOBJECTIVES_INSTRUCTION_ID = (
 COMPARISON_INSTRUCTION_ID = (
     "delia.capability_orchestration.comparison"
 )
+EVIDENCE_COMPOSITION_INSTRUCTION_ID = (
+    "delia.capability_orchestration.evidence_composition"
+)
 
 # Write-class operation classes (C3-CI-02): PREPARE and ACT carry
 # material-effect potential — they are structurally incompatible
@@ -1443,6 +1446,251 @@ _INCONCLUSIVE_INSUFFICIENT = (
 _INCONCLUSIVE_SCOPE = (
     "Comparação inconclusiva: escopo não equivalente entre as fontes."
 )
+
+_EVIDENCE_CODE_KEYS = (
+    "code",
+    "product_code",
+    "component_code",
+    "item_code",
+    "material_code",
+    "codigo",
+)
+_EVIDENCE_QTY_KEYS = ("quantity", "qty", "quantidade")
+_EVIDENCE_UNIT_KEYS = ("unit", "unidade", "un")
+_EVIDENCE_TYPE_KEYS = ("type", "tipo")
+_EVIDENCE_DESC_KEYS = ("description", "descricao", "desc", "name")
+_EVIDENCE_CHILD_KEYS = ("components", "children", "componentes", "items")
+
+
+def _flatten_evidence_records(
+    records: Any, path: tuple[int, ...] = ()
+) -> list[dict[str, Any]]:
+    """Flatten owner evidence records — flat lists or nested BOM
+    trees — into typed rows (code, path, qty, unit, type, desc).
+    Codes are preserved verbatim as strings; path marks structural
+    occurrence so identical codes at different positions are never
+    silently collapsed."""
+    rows: list[dict[str, Any]] = []
+    for index, rec in enumerate(records or ()):
+        if not isinstance(rec, Mapping):
+            continue
+        node_path = path + (index,)
+        code = None
+        for key in _EVIDENCE_CODE_KEYS:
+            if rec.get(key) not in (None, ""):
+                code = str(rec[key])
+                break
+        if code:
+            qty = next(
+                (
+                    rec[k]
+                    for k in _EVIDENCE_QTY_KEYS
+                    if rec.get(k) is not None
+                ),
+                None,
+            )
+            unit = next(
+                (
+                    str(rec[k])
+                    for k in _EVIDENCE_UNIT_KEYS
+                    if rec.get(k) not in (None, "")
+                ),
+                None,
+            )
+            rtype = next(
+                (
+                    str(rec[k])
+                    for k in _EVIDENCE_TYPE_KEYS
+                    if rec.get(k) not in (None, "")
+                ),
+                None,
+            )
+            desc = next(
+                (
+                    str(rec[k])
+                    for k in _EVIDENCE_DESC_KEYS
+                    if rec.get(k) not in (None, "")
+                ),
+                "",
+            )
+            rows.append(
+                {
+                    "code": code,
+                    "path": node_path,
+                    "qty": qty,
+                    "unit": unit,
+                    "type": rtype,
+                    "description": desc,
+                }
+            )
+        for key in _EVIDENCE_CHILD_KEYS:
+            child = rec.get(key)
+            if isinstance(child, (list, tuple)) and child:
+                rows.extend(_flatten_evidence_records(child, node_path))
+                break
+    return rows
+
+
+def _evidence_rows_by_code(
+    rows: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(row["code"], []).append(row)
+    return grouped
+
+
+def _verify_evidence_composition(
+    sources: dict[str, list[dict[str, Any]]],
+    proposal: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Deterministic full-coverage comparison of two evidence
+    sources plus strict validation of model-proposed claims.
+
+    Per doc 222: the model may only propose candidate
+    correspondences — every FACT comes from this deterministic
+    diff over ALL flattened records; a fabricated/out-of-range
+    reference is rejected and an omitted true match is still
+    covered (coverage is never model-bounded)."""
+    limitations: list[str] = []
+    grouped = {
+        sid: _evidence_rows_by_code(_flatten_evidence_records(records))
+        for sid, records in sources.items()
+    }
+    ids = [sid for sid, g in grouped.items() if g]
+    if len(ids) < 2:
+        return {
+            "verdict": "inconclusive",
+            "claims": (),
+            "limitations": ("evidence_partial",),
+        }
+    left, right = ids[0], ids[1]
+    left_codes, right_codes = set(grouped[left]), set(grouped[right])
+    common: list[dict[str, Any]] = []
+    qty_diffs: list[dict[str, Any]] = []
+    occurrence_diffs: list[dict[str, Any]] = []
+    for code in sorted(left_codes & right_codes):
+        lrows, rrows = grouped[left][code], grouped[right][code]
+        left_qty = sum(
+            (r["qty"] if isinstance(r["qty"], (int, float)) else 0)
+            for r in lrows
+        )
+        right_qty = sum(
+            (r["qty"] if isinstance(r["qty"], (int, float)) else 0)
+            for r in rrows
+        )
+        entry = {
+            "code": code,
+            "description": lrows[0]["description"],
+            "left_qty": left_qty,
+            "right_qty": right_qty,
+            "unit": lrows[0]["unit"] or rrows[0]["unit"],
+            "left_occurrences": len(lrows),
+            "right_occurrences": len(rrows),
+        }
+        common.append(entry)
+        if len(lrows) != len(rrows):
+            occurrence_diffs.append(entry)
+        if left_qty != right_qty:
+            qty_diffs.append(entry)
+        if (lrows[0]["unit"] or "") != (rrows[0]["unit"] or ""):
+            limitations.append(f"unit_mismatch:{code}")
+    claims = {
+        "common": common,
+        "exclusive_left": [
+            {"code": c, "description": grouped[left][c][0]["description"]}
+            for c in sorted(left_codes - right_codes)
+        ],
+        "exclusive_right": [
+            {
+                "code": c,
+                "description": grouped[right][c][0]["description"],
+            }
+            for c in sorted(right_codes - left_codes)
+        ],
+        "qty_differences": qty_diffs,
+        "occurrence_differences": occurrence_diffs,
+    }
+    all_codes = left_codes | right_codes
+    rejected = 0
+    for pair in (proposal or {}).get("proposed_pairs") or ():
+        if not isinstance(pair, Mapping):
+            rejected += 1
+            continue
+        for key in ("left_code", "right_code"):
+            ref = pair.get(key)
+            if ref is not None and str(ref) not in all_codes:
+                rejected += 1
+    if rejected:
+        limitations.append(f"unsupported_proposal_refs:{rejected}")
+    verdict = (
+        "agreement"
+        if not claims["exclusive_left"]
+        and not claims["exclusive_right"]
+        and not qty_diffs
+        and not occurrence_diffs
+        else "differences_found"
+    )
+    return {
+        "verdict": verdict,
+        "claims": claims,
+        "limitations": tuple(limitations),
+        "source_ids": (left, right),
+    }
+
+
+def _render_evidence_comparison(result: Mapping[str, Any]) -> str:
+    """Deterministic PT-BR comparison render — verbatim evidence
+    values only; every line traces to a verified record ref."""
+    claims = result["claims"]
+    left, right = result["source_ids"]
+    lines = ["**Comparação das estruturas:**", ""]
+    lines.append(f"**Componentes comuns ({len(claims['common'])}):**")
+    for e in claims["common"]:
+        lines.append(
+            f"- {e['code']} — {e['description']} "
+            f"(qtd {e['left_qty']} × {e['right_qty']} {e['unit'] or ''})"
+            .rstrip()
+        )
+    if claims["exclusive_left"]:
+        lines.append("")
+        lines.append(
+            f"**Exclusivos de {left} "
+            f"({len(claims['exclusive_left'])}):**"
+        )
+        for e in claims["exclusive_left"]:
+            lines.append(f"- {e['code']} — {e['description']}")
+    if claims["exclusive_right"]:
+        lines.append("")
+        lines.append(
+            f"**Exclusivos de {right} "
+            f"({len(claims['exclusive_right'])}):**"
+        )
+        for e in claims["exclusive_right"]:
+            lines.append(f"- {e['code']} — {e['description']}")
+    if claims["qty_differences"]:
+        lines.append("")
+        lines.append("**Diferenças de quantidade:**")
+        for e in claims["qty_differences"]:
+            lines.append(
+                f"- {e['code']}: {e['left_qty']} vs {e['right_qty']} "
+                f"{e['unit'] or ''}".rstrip()
+            )
+    if claims["occurrence_differences"]:
+        lines.append("")
+        lines.append("**Diferenças hierárquicas (ocorrências):**")
+        for e in claims["occurrence_differences"]:
+            lines.append(
+                f"- {e['code']}: {e['left_occurrences']} ocorrências "
+                f"em {left} vs {e['right_occurrences']} em {right}"
+            )
+    if result["limitations"]:
+        lines.append("")
+        lines.append("**Limitações:**")
+        for lim in result["limitations"]:
+            lines.append(f"- {lim}")
+    return "\n".join(lines)
+
 
 def _compare_records(
     left_records: tuple[Mapping[str, Any], ...],
@@ -4258,6 +4506,7 @@ ORCHESTRATION_INSTRUCTION_KEYS = frozenset(
         INTERACTION_ADMISSION_INSTRUCTION_ID,
         GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
         SUBOBJECTIVES_INSTRUCTION_ID,
+        EVIDENCE_COMPOSITION_INSTRUCTION_ID,
     }
 )
 
@@ -5278,12 +5527,16 @@ class OperationalCapabilityOrchestrator:
         # fail-closed; a single subobjective or no proposal continues
         # the efficient single-capability path unchanged. Sub-investigations
         # run at depth>0 and never decompose further.
-        if depth == 0 and self._subobjective_investigation_enabled:
+        if depth == 0 and (
+            self._subobjective_investigation_enabled
+            or (goal is not None and goal.comparison_requested)
+        ):
             subobjectives = self._decompose_objective(
                 input_text,
                 correlation=correlation,
                 workspace_context=workspace_context,
                 deadline=deadline,
+                prior_turns=prior_turns,
             )
             if subobjectives is not None:
                 return self._investigate_subobjectives(
@@ -5296,6 +5549,9 @@ class OperationalCapabilityOrchestrator:
                     prepare_only=prepare_only,
                     deadline=deadline,
                     depth=depth + 1,
+                    comparison=bool(
+                        goal is not None and goal.comparison_requested
+                    ),
                 )
 
         # Selection must not receive full prior transcript (Stage 05
@@ -6671,6 +6927,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         workspace_context: WorkspaceContext | None,
         deadline: TurnDeadline,
+        prior_turns: tuple[ConversationContextTurn, ...] = (),
     ) -> tuple[SubObjective, ...] | None:
         """Bounded decomposition proposal for a compound objective.
 
@@ -6703,6 +6960,7 @@ class OperationalCapabilityOrchestrator:
             workspace_context=workspace_context,
             correlation=correlation,
             deadline=deadline,
+            prior_turns=prior_turns,
         )
         if proposal is None:
             return None
@@ -6779,6 +7037,7 @@ class OperationalCapabilityOrchestrator:
         prepare_only: bool,
         deadline: TurnDeadline,
         depth: int,
+        comparison: bool = False,
     ) -> GovernedCapabilityAttempt:
         """Run tracked subobjectives through the SAME governed owner
         path — one sub-investigation per subobjective, dependencies
@@ -6788,6 +7047,7 @@ class OperationalCapabilityOrchestrator:
         tracker = SubObjectiveTracker(objectives)
         contents: list[str] = []
         limitations: list[str] = []
+        completed: list[tuple[str, GovernedCapabilityAttempt]] = []
         saw_source_unavailable = False
         saw_authz_denied = False
         while not tracker.is_finished():
@@ -6847,9 +7107,47 @@ class OperationalCapabilityOrchestrator:
                     and sub_attempt.content
                 ):
                     contents.append(sub_attempt.content)
+                    completed.append((sub.goal or "", sub_attempt))
                 limitations.extend(
                     f"{oid}: {lim}" for lim in sub_attempt.limitations
                 )
+        if comparison:
+            # Doc 222 E4: when the declared goal is a comparison, the
+            # completed READ subobjectives' evidence is composed
+            # through the governed typed boundary instead of merely
+            # concatenated — the model proposes correspondences and
+            # the deterministic verifier computes all facts.
+            import re
+
+            sources: dict[str, tuple[Mapping[str, Any], ...]] = {}
+            for sub_goal, attempt in completed:
+                outcome = attempt.outcome
+                records = (
+                    _comparison_records(outcome)
+                    if outcome is not None
+                    else ()
+                )
+                if not records:
+                    continue
+                match = re.search(r"\d{4,}", sub_goal or "")
+                sid = (
+                    match.group(0)
+                    if match
+                    else f"source_{len(sources) + 1}"
+                )
+                sources[sid] = records
+            if len(sources) >= 2:
+                composed = self._compose_multi_evidence(
+                    sources,
+                    input_text,
+                    correlation=correlation,
+                    workspace_context=workspace_context,
+                    deadline=deadline,
+                )
+                if composed is not None:
+                    comp_content, comp_limitations = composed
+                    contents.append(comp_content)
+                    limitations.extend(comp_limitations)
         return self._subobjective_attempt_result(
             tracker,
             contents,
@@ -6857,6 +7155,56 @@ class OperationalCapabilityOrchestrator:
             correlation=correlation,
             saw_source_unavailable=saw_source_unavailable,
             saw_authz_denied=saw_authz_denied,
+        )
+
+    def _compose_multi_evidence(
+        self,
+        sources: dict[str, tuple[Mapping[str, Any], ...]],
+        input_text: str,
+        *,
+        correlation: str,
+        workspace_context: WorkspaceContext | None,
+        deadline: TurnDeadline | None,
+    ) -> tuple[str, tuple[str, ...]] | None:
+        """Doc 222 E4 — governed multi-evidence composition.
+
+        The model only proposes candidate correspondences between
+        records of different authorized sources; the deterministic
+        verifier computes every fact over the full projected
+        coverage and rejects fabricated/out-of-range refs. Output
+        is rendered verbatim from verified evidence — no model
+        factual prose (ADR 58 / §6.145)."""
+        instruction = self._instruction(EVIDENCE_COMPOSITION_INSTRUCTION_ID)
+        if not instruction or len(sources) < 2:
+            return None
+        block = {
+            sid: _flatten_evidence_records(records)
+            for sid, records in sources.items()
+        }
+        proposal = self._propose(
+            input_text,
+            block_tag="evidence_sources",
+            block_payload=_fit_json_block(block, MAX_SURFACE_CHARS),
+            instruction_id=EVIDENCE_COMPOSITION_INSTRUCTION_ID,
+            instruction=instruction,
+            instruction_version=self._cri_instruction_version,
+            expected_fields=("proposed_pairs",),
+            input_kind="evidence_composition",
+            allowed_keys=frozenset({"proposed_pairs", "limitations"}),
+            workspace_context=workspace_context,
+            correlation=correlation,
+            deadline=deadline,
+        )
+        result = _verify_evidence_composition(sources, proposal)
+        _logger.info(
+            "orchestration stage=evidence_composition decision=%s "
+            "sources=%d correlation_id=%s",
+            result["verdict"],
+            len(sources),
+            correlation,
+        )
+        return _render_evidence_comparison(result), tuple(
+            result["limitations"]
         )
 
     def _record_subobjective_outcome(

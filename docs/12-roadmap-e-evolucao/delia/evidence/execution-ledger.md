@@ -5089,3 +5089,27 @@ INPUT_EXECUTION_SHA=989746ccdb; COORDINATION_VERDICT=FIX1_ACCEPT_WITH_RESIDUAL; 
 VALIDATED_IN_GITHUB=adapter Agent(instructions=...) present on main and DIAG/E1 live evidence recorded in ledger. Local independently repeated E2E by coordination=TEST_NOT_RUN. Full multi-turn and single-turn comparison gates G04/G05/G07/G12 remain PENDING, not PASS; Qwen3 two-tree model has known false common component and omission, requiring deterministic coverage validation.
 NEXT_TASK=DELIA-C3-GOVERNED-MULTIEVIDENCE-E4-IMPLEMENTATION-01, including complete E2/E3/E5/E6 residual gates of doc221. Mandatory user test user@local.com + real local Qwen3 + live DAVI/Domain; final SHA acceptance; no production deploy. If frozen skip_comparison_declared/owner semantics conflict, STOP affected step ARCHITECTURE_DECISION_REQUIRED rather than silently rewriting authority.
 RUNTIME_CHANGED_BY_COORDINATION=NO; PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE.
+
+## E4-IMPL — multi-evidence governed composition (2026-11-03)
+
+TASK=DELIA-C3-GOVERNED-MULTIEVIDENCE-E4-IMPLEMENTATION-01.
+HEAD=e22b6de9d0+impl. Doc 222 APPROVE_WITH_CONDITIONS executado:
+- contrato tipado `evidence_composition` via InvokeModel (proposta de
+  pares/dimensoes) + verifier deterministico `_verify_evidence_composition`
+  (cobertura completa: comuns/exclusivos/qtd/unidade/ocorrencias, refs
+  fabricadas rejeitadas, omissoes do modelo cobertas).
+- helpers: `_flatten_evidence_records` (BOM aninhada/flat, codes verbatim,
+  path p/ ocorrencia), `_render_evidence_comparison` (PT-BR factual).
+- wiring: `goal.comparison_requested` ativa decomposicao (bounded, sem
+  flag global) -> `_investigate_subobjectives` coleta outcomes -> fontes
+  por sub -> `_compose_multi_evidence` -> `_subobjective_attempt_result`.
+- `_decompose_objective` agora recebe prior_turns (referentes cross-turn).
+- instrucao registrada em ORCHESTRATION_INSTRUCTION_KEYS + JSON (fix de
+  resource_invalid: chave dentro de `instructions`, sem `{placeholders}`).
+- 8 testes unitarios PASS (par real 147x148, falso-comum 10030012
+  rejeitado, omissao 10030015 coberta, escopo/unit/ocorrencia).
+- Live E2E pos-fix: orchestration estavel sem fail_closed; run de
+  single-turn compound classificou class=read (variancia do modelo no
+  goal_understanding) -> owner_query_miss honesto; composicao nao
+  disparou nesta execucao — residual de classificacao de goal, nao
+  defeito do boundary implementado.
