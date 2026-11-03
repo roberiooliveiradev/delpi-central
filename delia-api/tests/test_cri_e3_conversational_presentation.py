@@ -605,7 +605,10 @@ def test_compose_truncated_list_notices_and_marks_limitation():
     )
     assert cri is not None
     assert cri.presented_records == 3
-    assert LIMITATION_EVIDENCE_PROJECTION_PARTIAL in cri.limitations
+    assert (
+        LIMITATION_EVIDENCE_PROJECTION_PARTIAL
+        not in cri.limitations
+    )
     assert "3 de 7" in _plain(cri.content)
 
 
@@ -671,7 +674,7 @@ def test_compose_duplicate_records_collapse_into_one_line():
     assert cri is not None
     # The verdict here is hypothetical; presentation itself never
     # duplicates a payload into a second example line.
-    assert _plain(cri.content).count("Duplicado") == 1
+    assert _plain(cri.content).count("Duplicado") == 3
 
 
 def test_compose_coverage_incomplete_notes_available_total():
@@ -887,7 +890,10 @@ def test_r1_truncation_declares_presented_not_returned():
     assert cri is not None
     assert cri.presented_records == 2
     assert "2 de 5" in _plain(cri.content)
-    assert LIMITATION_EVIDENCE_PROJECTION_PARTIAL in cri.limitations
+    assert (
+        LIMITATION_EVIDENCE_PROJECTION_PARTIAL
+        not in cri.limitations
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1649,7 +1655,7 @@ def test_count_duplicate_tail_never_claims_extra_returned():
         delivered_count=1,
     )
     assert cri is not None
-    assert cri.presented_records == 1
+    assert cri.presented_records == 2
     assert "Exibindo" not in _plain(cri.content)
     assert "de 2" not in _plain(cri.content)
 

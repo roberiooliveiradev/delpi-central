@@ -312,16 +312,6 @@ def _render_node(
     return presented
 
 
-def _dedup_key(item: object) -> str:
-    """Exact-content identity for top-level collection items — the
-    same dedup bound the delivered count uses: duplicate payloads
-    collapse, never inflate what was presented."""
-    try:
-        return json.dumps(item, sort_keys=True, default=str)
-    except (TypeError, ValueError):
-        return repr(item)
-
-
 def render_business_evidence(
     value: object,
     field_labels: FieldLabels | None = None,
@@ -338,18 +328,15 @@ def render_business_evidence(
     budget = _Budget(_PRESENTATION_NODE_BUDGET)
     out: list[str] = []
     if isinstance(value, (list, tuple)):
-        seen: set[str] = set()
-        distinct: list[object] = []
-        for item in value:
-            key = _dedup_key(item)
-            if key in seen:
-                continue
-            seen.add(key)
-            distinct.append(item)
+        # Every authorized occurrence renders — order and positions
+        # preserved. Identical payloads may be legitimate business
+        # occurrences; deduplication belongs to the owner's contract,
+        # never to a generic presentation surface.
+        items = list(value)
         presented = _render_node(
-            distinct, 0, field_labels, budget, out, count_items=True
+            items, 0, field_labels, budget, out, count_items=True
         )
-        total = len(distinct)
+        total = len(items)
     else:
         _render_node(value, 0, field_labels, budget, out)
         presented = 1 if out else 0

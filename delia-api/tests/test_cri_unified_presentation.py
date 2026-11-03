@@ -141,7 +141,11 @@ def test_r18_requested_subset_reports_honest_count():
     text = _unmd(cri.content)
     assert "3 de 7" in text
     assert "R3" not in text
-    assert LIMITATION_EVIDENCE_PROJECTION_PARTIAL in cri.limitations
+    # Intentional requested-subset selection is not a technical
+    # omission — the notice informs, no partiality flag.
+    assert (
+        LIMITATION_EVIDENCE_PROJECTION_PARTIAL not in cri.limitations
+    )
 
 
 def test_r18_single_record_many_fields():
@@ -154,12 +158,46 @@ def test_r18_single_record_many_fields():
     assert LIMITATION_EVIDENCE_PROJECTION_PARTIAL not in cri.limitations
 
 
-def test_r18_duplicate_records_collapse():
+def test_r18_repeated_occurrences_all_presented():
+    """REWORK-02: identical payloads may be legitimate business
+    occurrences — the renderer has no authority to deduplicate."""
     rec = {"nome": "Dup", "codigo": "D-1"}
     cri = _compose((rec, dict(rec), dict(rec)), delivered_count=1)
     assert cri is not None
-    assert cri.presented_records == 1
-    assert _unmd(cri.content).count("Dup") == 1
+    assert cri.presented_records == 3
+    assert _unmd(cri.content).count("Dup") == 3
+
+
+def test_sanitize_over_bound_marks_partial_not_silent():
+    """A nested list beyond MAX_RENDER_LIST_ITEMS stays bounded by
+    security policy — but the drop must flag partiality explicitly."""
+    rec = {"nome": "big", "items": [f"v{i}" for i in range(60)]}
+    cri = _compose((rec,))
+    assert cri is not None
+    text = _unmd(cri.content)
+    assert "v49" in text
+    assert "v50" not in text
+    assert LIMITATION_EVIDENCE_PROJECTION_PARTIAL in cri.limitations
+
+
+def test_sanitize_within_bound_no_partial():
+    rec = {"nome": "ok", "items": [f"v{i}" for i in range(50)]}
+    cri = _compose((rec,))
+    assert cri is not None
+    assert "v49" in _unmd(cri.content)
+    assert (
+        LIMITATION_EVIDENCE_PROJECTION_PARTIAL not in cri.limitations
+    )
+
+
+def test_received_limitations_preserved():
+    cri = _compose(
+        ({"nome": "A"},),
+        limitations=("goal_mismatch", "some_owner_limit"),
+    )
+    assert cri is not None
+    assert "goal_mismatch" in cri.limitations
+    assert "some_owner_limit" in cri.limitations
 
 
 # ---------------------------------------------------------------------------

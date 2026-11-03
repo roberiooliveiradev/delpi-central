@@ -51,6 +51,7 @@ from app.application.capability_provision.outcome_assessment import (
     _canonical_key,
     _record_identifier,
     _sanitize_renderable,
+    _sanitize_renderable_counted,
     _synthesis_selections,
     ordering_proof_fields,
     parse_temporal_value,
@@ -281,16 +282,18 @@ def compose_cri_response(
     # projection no longer gates, counts or duplicates the
     # presentation — it survives only as the ordering *anchor*
     # (identifier/title selection), never as the record body.
-    sanitized = tuple(
-        item
-        for item in (_sanitize_renderable(r) for r in records)
-        if isinstance(item, Mapping)
-    )
-    context = (
-        _sanitize_renderable(result_context)
-        if isinstance(result_context, Mapping)
-        else None
-    )
+    sanitized_list: list[Mapping[str, Any]] = []
+    sanitize_omitted = 0
+    for record in records:
+        item, dropped = _sanitize_renderable_counted(record)
+        sanitize_omitted += dropped
+        if isinstance(item, Mapping):
+            sanitized_list.append(item)
+    sanitized = tuple(sanitized_list)
+    context = None
+    if isinstance(result_context, Mapping):
+        context, dropped = _sanitize_renderable_counted(result_context)
+        sanitize_omitted += dropped
     context_lines: tuple[str, ...] = ()
     context_partial = False
     if isinstance(context, Mapping) and context:
@@ -301,7 +304,10 @@ def compose_cri_response(
     paragraphs: list[str] = []
     if caveat_text:
         paragraphs.append(caveat_text)
-    limitations: list[str] = []
+    # Received limitations are preserved verbatim — composition only
+    # adds presentation-side limitations, never drops or converts
+    # existing ones.
+    limitations: list[str] = list(limitations)
 
     # ---- answered: ordering extreme (single focused record) -------
     ordering = req.ordering
@@ -403,7 +409,12 @@ def compose_cri_response(
         )
         if notice is not None:
             paragraphs.append(notice)
-        if LIMITATION_EVIDENCE_PROJECTION_PARTIAL not in limitations:
+        # A requested-subset (min_items) shortfall is an intentional
+        # selection, not a technical omission — only unexplained
+        # presentation shortfalls flag projection-partial.
+        if req.min_items is None and (
+            LIMITATION_EVIDENCE_PROJECTION_PARTIAL not in limitations
+        ):
             limitations.append(LIMITATION_EVIDENCE_PROJECTION_PARTIAL)
     elif coverage_complete is False:
         if total_count is not None and total_count > len(sanitized):
@@ -424,7 +435,7 @@ def compose_cri_response(
     # Technical render bounds (node budget, depth) are surfaced
     # separately from owner pagination — partiality is always
     # explicit, never a silent drop.
-    if (context_partial or render.partial) and (
+    if (context_partial or render.partial or sanitize_omitted > 0) and (
         LIMITATION_EVIDENCE_PROJECTION_PARTIAL not in limitations
     ):
         limitations.append(LIMITATION_EVIDENCE_PROJECTION_PARTIAL)

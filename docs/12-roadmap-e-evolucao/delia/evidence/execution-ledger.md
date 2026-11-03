@@ -2348,3 +2348,32 @@ E2E live container: TEST_NOT_RUN — sem identidade empresarial
 autorizada; stack local le do checkout sujo concorrente.
 PRODUCTION_DEPLOY=NO
 TASK_STATUS=COMPLETE(code+tests) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
+
+## T20-UNIFIED-PRESENTATION — REWORK-02 (four residuals fixed)
+
+TASK=DELIA-C3-UNIFIED-EVIDENCE-PRESENTATION-REWORK-02
+BASE=711905a17b (origin/main revalidado; mesmo worktree isolado).
+
+FIXES (evidencia):
+- Sanitize: _sanitize_renderable_counted conta itens descartados pelo
+  bound MAX_RENDER_LIST_ITEMS=50 (seguranca preservada); compose
+  propaga -> EVIDENCE_PROJECTION_PARTIAL. Sem aumento de limite.
+- Dedup removido do renderer: toda ocorrencia autorizada renderiza em
+  ordem (dedup empresarial pertence ao owner, nao ao presentation).
+- limitations de entrada preservadas: compose inicia com
+  list(limitations); so adiciona codes novos sem duplicar.
+- min_items: selecao intencional (aviso "X de Y" informativo, SEM flag
+  de parcialidade); EVIDENCE_PROJECTION_PARTIAL somente para omissao
+  tecnica (render.partial | sanitize_omitted>0 | shortfall sem
+  min_items).
+
+EVIDENCIA: suites unified+cri_unified+cri_e3+adjacentes GREEN;
+probe in-process BOM 90260148 completa (raiz+2PI+4MP+qty/un);
+ocorrencias duplicadas renderizam todas.
+E2E container real: TEST_NOT_RUN — delpi-delia-api faz bind-mount do
+checkout concorrente sujo (atualizacao local legitima bloqueada);
+sem identidade empresarial autorizada para smoke real.
+PRODUCTION_DEPLOY=NOT_PERFORMED — gate E2E local nao comprovado;
+sem evidencia equivalente aceita para promover sem E2E.
+PRODUCTION_BUSINESS_OUTCOME=PENDING
+TASK_STATUS=COMPLETE(code+tests) · COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
