@@ -15,7 +15,6 @@ permanece no owner downstream — 401/403 → `forbidden` honesto, 404 →
 from __future__ import annotations
 
 import hashlib
-import re
 
 from fastapi import APIRouter, Query, Response
 from delpi_auth.authorization import require_any_permission
@@ -25,6 +24,7 @@ from engineering_app.application.ports.home_sources import HomeSourceContext
 from engineering_app.composition.lmp_composer import (
     build_delegated_auxiliary_source,
 )
+from engineering_app.core.filenames import safe_pdf_filename
 from engineering_app.core.responses import fail, ok
 from engineering_app.middleware.request_observability_middleware import (
     get_request_id,
@@ -33,23 +33,6 @@ from engineering_app.middleware.request_observability_middleware import (
 router = APIRouter()
 
 ENGINEERING_ACCESS = "engineering.access"
-
-_FILENAME_UNSAFE = re.compile(r"[^A-Za-z0-9._-]+")
-
-
-def _attachment_filename(raw: str | None, *, fallback: str) -> str:
-    """Filename seguro para `Content-Disposition: attachment`.
-
-    O nome vindo do upstream é dado não confiável: separadores de path,
-    aspas, CRLF e não-ASCII são removidos — nunca escapados no header de
-    saída. Fallback para o código do produto quando não sobra nome válido."""
-    name = (raw or "").rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
-    name = _FILENAME_UNSAFE.sub("_", name).strip("._ ")
-    if not name:
-        name = _FILENAME_UNSAFE.sub("_", fallback).strip("._ ") or "drawing"
-    if not name.lower().endswith(".pdf"):
-        name = f"{name}.pdf"
-    return name
 
 
 def _human_context(operation_id: str):
@@ -326,7 +309,7 @@ async def get_product_drawing_pdf(product_code: str):
     status = result.get("status")
     if status == "available":
         content = result["content"]
-        filename = _attachment_filename(result.get("filename"), fallback=code)
+        filename = safe_pdf_filename(result.get("filename"), fallback=code)
         return Response(
             content=content,
             media_type="application/pdf",

@@ -243,7 +243,7 @@ async def test_adapter_maps_upstream_errors():
 
 
 def test_attachment_filename_fallback_and_edges():
-    fn = product_routes._attachment_filename
+    from engineering_app.core.filenames import safe_pdf_filename as fn
     assert fn(None, fallback="0156") == "0156.pdf"
     assert fn("  ", fallback="0156") == "0156.pdf"
     assert fn("../../etc/passwd", fallback="0156") == "passwd.pdf"

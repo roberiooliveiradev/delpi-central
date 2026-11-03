@@ -29,7 +29,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from mcp.types import CallToolResult
+from mcp.types import CallToolResult, TextContent
 from pydantic import BaseModel, Field
 
 from delpi_mcp.errors import mcp_tool_result
@@ -95,11 +95,18 @@ def _err(
 
 def _wrap(entity: str, action: str, result: CallToolResult) -> CallToolResult:
     """Semantic envelope — action/entity stamped on top of the official
-    result payload; legacy error/success semantics preserved."""
+    result payload; legacy error/success semantics preserved.
+    Non-text content items (e.g. EmbeddedResource with binary
+    payloads) are preserved — the envelope only re-wraps the typed
+    structured content."""
     payload = dict(getattr(result, "structured_content", None) or {})
     payload.setdefault("entity", entity)
     payload.setdefault("action", action)
-    return mcp_tool_result(payload, is_error=bool(result.is_error))
+    wrapped = mcp_tool_result(payload, is_error=bool(result.is_error))
+    wrapped.content.extend(
+        item for item in result.content if not isinstance(item, TextContent)
+    )
+    return wrapped
 
 
 def _handle_error(exc: Exception) -> CallToolResult:
@@ -451,6 +458,9 @@ _READ_DISPATCH = {
     ),
     ("product", "drawing"): (
         lambda a: bridge.tool_get_product_drawing(**a)
+    ),
+    ("product", "drawing_download"): (
+        lambda a: bridge.tool_get_product_drawing_pdf(**a)
     ),
     ("product", "history"): (
         lambda a: bridge.tool_get_product_history(**a)

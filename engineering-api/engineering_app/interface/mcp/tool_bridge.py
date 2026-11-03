@@ -17,12 +17,18 @@ closed por ambiente; delete/import são reforçados
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import logging
 import os
 import re
 from typing import Any
 
-from mcp.types import CallToolResult
+from mcp.types import (
+    BlobResourceContents,
+    CallToolResult,
+    EmbeddedResource,
+)
 
 from delpi_auth.authz_core import has_any_permission
 from delpi_mcp.errors import mcp_tool_result
@@ -58,6 +64,7 @@ from engineering_app.domain.nonconformity.errors import (
     NcValidationError,
 )
 from engineering_app.application.ports.overview_sources import OverviewQuery
+from engineering_app.core.filenames import safe_pdf_filename
 from engineering_app.composition.home_composer import (
     build_get_engineering_home_use_case,
 )
@@ -1747,6 +1754,79 @@ async def tool_get_product_drawing(*, product_code: str) -> CallToolResult:
         return _lmp_result(
             result, not_found_message=f"Produto {code} sem desenho disponível."
         )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_product_drawing_pdf(*, product_code: str) -> CallToolResult:
+    """read(product.drawing_download) — PDF oficial como EmbeddedResource.
+
+    Os bytes trafegam como ``BlobResourceContents`` (base64) dentro do
+    ``tools/call`` — nunca como texto da conversa. O payload tipado
+    carrega filename/size/sha256 para verificação; a materialização do
+    arquivo depende da capacidade do cliente MCP de consumir recursos
+    embutidos. Mesma delegação governada das rotas REST — sem service
+    token, sem elevação, sem fileserver direto."""
+    try:
+        context = _require_engineering_human()
+        code, error = _product_code_or_error(product_code)
+        if error:
+            return error
+        result = await build_delegated_auxiliary_source().fetch_product_drawing_pdf(
+            _source_context(context), code=code
+        )
+        status = result.get("status")
+        if status == "forbidden":
+            return _error_result(
+                "Acesso negado pelo owner do acervo de desenhos.",
+                status_code=403,
+                error_code="forbidden",
+                data={"error_kind": "authz"},
+            )
+        if status == "not_found":
+            return _error_result(
+                f"Produto {code} sem desenho disponível.",
+                status_code=404,
+                error_code="not_found",
+                data={"error_kind": "not_found"},
+            )
+        if status != "available":
+            return _error_result(
+                "Acervo de desenhos indisponível.",
+                status_code=502,
+                error_code="unavailable",
+                data={"error_kind": "unavailable"},
+            )
+        content = result["content"]
+        filename = safe_pdf_filename(result.get("filename"), fallback=code)
+        resource_uri = f"eva://products/{code}/drawing/{filename}"
+        result_obj = _ok_result(
+            {
+                "product_code": code,
+                "filename": filename,
+                "mime_type": "application/pdf",
+                "size_bytes": len(content),
+                "sha256": hashlib.sha256(content).hexdigest(),
+                "resource_uri": resource_uri,
+                "transport": "embedded_resource",
+                "provenance": (
+                    "api-delpi product/drawing/pdf "
+                    "(delegated user identity)"
+                ),
+            },
+            "PDF oficial do produto.",
+        )
+        result_obj.content.append(
+            EmbeddedResource(
+                type="resource",
+                resource=BlobResourceContents(
+                    uri=resource_uri,
+                    mimeType="application/pdf",
+                    blob=base64.b64encode(content).decode("ascii"),
+                ),
+            )
+        )
+        return result_obj
     except Exception as exc:
         return handle_tool_error(exc)
 

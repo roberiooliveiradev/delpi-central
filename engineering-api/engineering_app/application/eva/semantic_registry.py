@@ -235,8 +235,25 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         ref_description="Product code in the official catalog.",
         notes=(
             "PDF bytes are served by the Engineering API route "
-            "/v1/products/{code}/drawing/pdf — MCP returns metadata "
-            "only.",
+            "/v1/products/{code}/drawing/pdf — and by the MCP action "
+            "product.drawing_download as an embedded resource.",
+        ),
+    ),
+    _a(
+        "product", "drawing_download", "read",
+        "Official technical drawing PDF bytes (full document) — "
+        "delivered as an MCP EmbeddedResource (BlobResourceContents "
+        "base64, mimeType application/pdf) alongside filename, size "
+        "and SHA-256 in the typed payload. Read-only, delegated "
+        "user identity; the client must materialize embedded "
+        "resources to obtain the file.",
+        "read", ref_arg="product_code",
+        ref_description="Product code in the official catalog.",
+        notes=(
+            "Transport = EmbeddedResource inside tools/call (MCP "
+            "spec 2025-06-18+); base64 in a typed blob — never plain "
+            "text. Not every MCP host surfaces binary content: "
+            "materialization depends on the client's capabilities.",
         ),
     ),
     _a(
