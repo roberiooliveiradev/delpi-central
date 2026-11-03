@@ -253,6 +253,11 @@ class SlideLayoutQualityService:
             if not isinstance(block, dict):
                 continue
             btype = str(block.get("type") or "")
+            if btype == "data_source":
+                # nó de dados — binding sem geometria renderizada;
+                # classificação canônica por type, não por prefixo de id
+                # (issue #129: ds_* nunca pode gerar finding visual).
+                continue
             if btype in _KPI_TYPES:
                 kpi_count += 1
             fr = _frame(block)

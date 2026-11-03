@@ -538,3 +538,22 @@ def test_c10_candidate_vs_persisted_preview_are_distinct():
     ev = out.get("visualEvidence") or {}
     assert ev.get("basisRevision") == "7"
     assert "candidatePreview" not in ev
+
+
+def test_ds_nodes_are_not_audited_as_visual_blocks():
+    """Issue #129 §7.1 — data_source nodes are data bindings, not
+    renderable visuals: projected ds_* must never raise frame/overlap
+    findings even when the projection leaves geometry on the node."""
+    from tv_app.application.services.data.slide_layout_quality_service import (
+        SlideLayoutQualityService,
+    )
+    cfg = {
+        "blocks": [
+            {"id": "v_kpi", "type": "kpi_view",
+             "frame": {"x": 0, "y": 0, "w": 30, "h": 30}},
+            {"id": "ds_kpi_view", "type": "data_source",
+             "frame": {"x": 0, "y": 0, "w": 30, "h": 30}},
+        ]
+    }
+    issues = SlideLayoutQualityService.collect_native_layout_issues(cfg)
+    assert not any("ds_kpi_view" in i for i in issues), issues
