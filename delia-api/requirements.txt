@@ -19,5 +19,6 @@ langchain-protocol==0.0.20
 langsmith==0.14.14
 pydantic==2.14.1
 pydantic-core==2.50.1
+pydantic-ai[openai]==2.50.0
 ormsgpack==1.13.0
 xxhash==4.0.2

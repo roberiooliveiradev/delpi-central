@@ -1992,6 +1992,9 @@ services:
     container_name: delpi-delia-api
     restart: unless-stopped
 
+    volumes:
+      - delia_catalog_data:/data/delia
+
     env_file:
       - .env
 
@@ -2096,6 +2099,10 @@ services:
       # config only; unknown values fail closed at startup. Rollback =
       # DELIA_ORCHESTRATION_ENGINE=delia + redeploy, never per-request.
       DELIA_ORCHESTRATION_ENGINE: ${DELIA_ORCHESTRATION_ENGINE:-langgraph}
+      DELIA_MCP_CATALOG_MODE: ${DELIA_MCP_CATALOG_MODE:-live}
+      DELIA_MCP_CATALOG_DB: ${DELIA_MCP_CATALOG_DB:-/data/delia/mcp_catalog.db}
+      DELIA_ARGGEN_ENGINE: ${DELIA_ARGGEN_ENGINE:-llm}
+      DELIA_TOOL_SELECTION_MODE: ${DELIA_TOOL_SELECTION_MODE:-live}
       # CRI E1: central ON/OFF for conversational response intelligence —
       # default OFF; fail-closed to baseline on invalid/absent resources.
       # Stays unset in prod .env unless rollout is separately authorized.
@@ -3825,6 +3832,7 @@ networks:
 
 
 volumes:
+  delia_catalog_data:
   postgres_core_data:
   keycloak_data:
   postgres_plugins_data:
