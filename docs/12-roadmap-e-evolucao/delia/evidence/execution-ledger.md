@@ -2191,3 +2191,18 @@ julgamento semantico ANOTA, nunca suprime evidencia autorizada.
 REGRESSAO: 317/317 verdes (goal_evidence_relevance, evidence_iso,
 contextual_discovery, cri_e2, cri_e3, semantic_decision,
 engine_b_recovery).
+
+## T20-NONBLOCKING — deploy produtivo verificado
+
+PROD: pull ad5424e75 -> rebuild delia-api -> healthy, imagem nova
+sha256:af506735460c (anterior sha256:428dbb2c = rollback alvo).
+cri_presentation v6 carregado (log root_composer), caveats ativo,
+NONBLOCKING no orchestration. Flags preservadas:
+MCP_CATALOG_MODE=snapshot_experiment + ARGGEN_ENGINE=pydantic_ai +
+TOOL_SELECTION=live.
+LOCAL: stack dev com mesmo contrato (worktree patch idêntico ao
+commit -> merge limpo).
+SMOKE NEGOCIO: PENDING — identidade disponivel (mcp-catalog-sync)
+sem permissao empresarial; AuthZ boundary legitimo, sem bypass.
+TASK_STATUS=COMPLETE(code+local+deploy) · PRODUCTION_BUSINESS_OUTCOME=PENDING
+COORDINATION_VERDICT=PENDING_INDEPENDENT_REVIEW
