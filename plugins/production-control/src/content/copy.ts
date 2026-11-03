@@ -167,6 +167,47 @@ export const copy = {
       busy: "Otimizando fila…",
       error: "Não foi possível otimizar a fila.",
     },
+    horizon: {
+      action: "Ampliar horizonte",
+      actionHint:
+        "Consulta operações futuras só deste centro de trabalho, além da janela-base da atualização.",
+      modalTitle: "Ampliar horizonte do centro de trabalho",
+      lead: (center: string) =>
+        `Amplie temporariamente a programação de ${center}. Os demais centros e a janela global da filial permanecem iguais.`,
+      presetsLegend: "Horizonte",
+      presetDays: (days: number) => `${days} dias`,
+      customLabel: "Data final personalizada",
+      baseWindow: (end: string) => `Janela-base atual até ${end}`,
+      additionalRange: (from: string, to: string) =>
+        `Intervalo adicional consultado: ${from} até ${to}`,
+      previewBusy: "Consultando operações adicionais…",
+      previewEmpty: "Nenhuma operação adicional elegível neste horizonte.",
+      previewCount: (n: number) =>
+        n === 1
+          ? "1 operação adicional será incluída na preparação."
+          : `${n} operações adicionais serão incluídas na preparação.`,
+      publishWarning:
+        "A ampliação fica só na preparação do PCP. Os operadores só veem após «Enviar para máquinas».",
+      liveBlocked:
+        "A fila está enviada às máquinas. Execute «Atualizar» antes de ampliar o horizonte.",
+      cancel: "Cancelar",
+      previewAction: "Calcular prévia",
+      confirm: "Incluir na preparação",
+      applyBusy: "Incluindo operações…",
+      success: (n: number) =>
+        n === 0
+          ? "Horizonte registrado. Nenhuma operação nova para incluir."
+          : n === 1
+            ? "1 operação incluída na preparação. Envie para as máquinas quando estiver pronto."
+            : `${n} operações incluídas na preparação. Envie para as máquinas quando estiver pronto.`,
+      error: "Não foi possível ampliar o horizonte.",
+      badge: (label: string) => `Horizonte ampliado: ${label}`,
+      badgeDays: (days: number) => `${days} dias`,
+      badgeUntil: (end: string) => `até ${end}`,
+      expandedRowHint: "Além da janela-base",
+      filterHidesHint:
+        "O filtro «até» da tela pode ocultar operações ampliadas. Use «Voltar ao padrão» para ver o resultado.",
+    },
     hideFinished: {
       show: "Ocultar finalizadas",
       hide: "Mostrar finalizadas",

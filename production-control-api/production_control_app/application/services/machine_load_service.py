@@ -47,6 +47,19 @@ from production_control_app.domain.services.machine_load_delivery_window import 
     filter_by_delivery_window,
     missing_due_date_count,
 )
+from production_control_app.domain.services.machine_load_horizon import (
+    HORIZON_PRESET_DAYS,
+    MAX_HORIZON_DAYS_FROM_TODAY,
+    additional_period_start,
+    append_operations_after_center,
+    days_from_today,
+    existing_operation_identities,
+    filter_new_horizon_operations,
+    parse_horizon_end,
+    present_horizon_exceptions,
+    upsert_horizon_exception,
+    validate_horizon_end,
+)
 from production_control_app.domain.services.machine_load_snapshot_payload import (
     decode_snapshot_payload,
     dict_items,
@@ -996,6 +1009,296 @@ class MachineLoadService:
         # poderia não ter sido persistida.
         self._notify_change(branch=code, reason="publish")
         return {"publication": self._present_publication(published, changed=True)}
+
+    def preview_horizon_expansion(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        work_center: str,
+        end_date: str,
+        expected_generation_id: str,
+    ) -> dict[str, Any]:
+        """Prévia somente leitura — consulta o intervalo adicional do CT no TOTVS."""
+        self._assert_can_view(user, branch)
+        code = self._branch_access.assert_valid_branch(branch)
+        center = normalize_work_center(work_center)
+        if not center:
+            raise ValueError("workCenter é obrigatório para ampliar o horizonte.")
+        expected_generation = str(expected_generation_id or "").strip()
+        if not expected_generation:
+            raise ValueError(
+                "generation_id da fila WORKING é obrigatório para a prévia."
+            )
+
+        row = self._snapshots.get(branch=code)
+        if row is None:
+            raise SnapshotNotFound(
+                "Não há carga máquina congelada nesta filial. Atualize a partir do TOTVS."
+            )
+        self._assert_horizon_mutable(
+            branch=code, row=row, expected_generation_id=expected_generation
+        )
+        preview = self._build_horizon_preview(
+            branch=code,
+            row=row,
+            work_center=center,
+            end_date=end_date,
+        )
+        return preview
+
+    def apply_horizon_expansion(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        work_center: str,
+        end_date: str,
+        expected_generation_id: str,
+        expected_new_operation_count: int | None = None,
+    ) -> dict[str, Any]:
+        """Aplica a ampliação somente no WORKING (DRAFT/unpublished) — nunca no cockpit.
+
+        Revalida geração, estado de publicação e a prévia dentro do lock. Em
+        LIVE exige «Atualizar» antes (comporta não atravessa `_persist_queue_change`
+        ingenuamente). Refresh seguinte descarta as exceções automaticamente.
+        """
+        self._assert_can_view(user, branch)
+        code = self._branch_access.assert_valid_branch(branch)
+        center = normalize_work_center(work_center)
+        if not center:
+            raise ValueError("workCenter é obrigatório para ampliar o horizonte.")
+        expected_generation = str(expected_generation_id or "").strip()
+        if not expected_generation:
+            raise ValueError(
+                "generation_id da fila WORKING é obrigatório para aplicar o horizonte."
+            )
+
+        # Busca TOTVS fora do lock (custosa); a revalidação dentro do mutate
+        # confere geração/estado e recalcula o delta antes de gravar.
+        row = self._snapshots.get(branch=code)
+        if row is None:
+            raise SnapshotNotFound(
+                "Não há carga máquina congelada nesta filial. Atualize a partir do TOTVS."
+            )
+        self._assert_horizon_mutable(
+            branch=code, row=row, expected_generation_id=expected_generation
+        )
+        preview = self._build_horizon_preview(
+            branch=code,
+            row=row,
+            work_center=center,
+            end_date=end_date,
+        )
+        if (
+            expected_new_operation_count is not None
+            and int(expected_new_operation_count)
+            != int(preview["new_operation_count"])
+        ):
+            raise MachineLoadSequenceConflict(
+                "A prévia do horizonte ficou obsoleta. Confira novamente antes de aplicar."
+            )
+
+        new_operations = list(preview.get("_candidates") or [])
+        requested_end = parse_horizon_end(preview["requested_end_date"])
+        base_end = parse_horizon_end(preview["base_end_date"])
+        if requested_end is None or base_end is None:
+            raise ValueError("Datas do horizonte ampliado inválidas.")
+
+        def mutate(locked_row: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+            self._assert_horizon_mutable(
+                branch=code,
+                row=locked_row,
+                expected_generation_id=expected_generation,
+            )
+            # LIVE nunca chega aqui — a asserção acima rejeita. Mesmo assim o
+            # caminho usa `_persist_queue_change`, que em DRAFT só grava WORKING.
+            stored = payload_operations(payload)
+            identities = existing_operation_identities(stored)
+            additional_start = additional_period_start(base_end)
+            eligible = filter_new_horizon_operations(
+                candidates=new_operations,
+                work_center=center,
+                existing=identities,
+                additional_start=additional_start,
+                additional_end=requested_end,
+            )
+            if not eligible:
+                # Idempotente: só atualiza metadados do horizonte escolhido.
+                now = datetime.now(timezone.utc).isoformat()
+                upsert_horizon_exception(
+                    payload,
+                    work_center=center,
+                    end_date=requested_end,
+                    base_end_date=base_end,
+                    added_count=0,
+                    expanded_at=now,
+                    expanded_by=_user_label(user),
+                )
+                return {"added_count": 0, "idempotent": True}
+
+            merged = append_operations_after_center(
+                stored, work_center=center, new_operations=eligible
+            )
+            payload["operations"] = merged
+            summary = payload.get("summary")
+            if not isinstance(summary, dict):
+                summary = {}
+                payload["summary"] = summary
+            summary["operation_count"] = len(merged)
+            summary["order_count"] = len(
+                {
+                    order
+                    for item in merged
+                    if (order := _norm_code(item.get("production_order")))
+                }
+            )
+            summary["missing_due_date_count"] = missing_due_date_count(merged)
+            centers = payload_work_centers(payload)
+            payload["work_centers"] = self._recompute_center_counts(
+                centers,
+                visible_operations(merged, withdrawn_marks(payload)),
+                recount_totals=True,
+                drop_empty=False,
+            )
+            now = datetime.now(timezone.utc).isoformat()
+            upsert_horizon_exception(
+                payload,
+                work_center=center,
+                end_date=requested_end,
+                base_end_date=base_end,
+                added_count=len(eligible),
+                expanded_at=now,
+                expanded_by=_user_label(user),
+            )
+            payload["sequence_updated_at"] = now
+            payload["sequence_updated_by"] = _user_label(user)
+            return {"added_count": len(eligible), "idempotent": False}
+
+        updated, info = self._persist_queue_change(
+            branch=code,
+            mutate=mutate,
+            reason="horizon_expand",
+            work_center=center,
+        )
+        presented = self._present(
+            updated,
+            work_center=center,
+            seeded=False,
+            branch=code,
+        )
+        presented["horizon_expansion"] = {
+            "work_center": center,
+            "added_count": int((info or {}).get("added_count") or 0),
+            "idempotent": bool((info or {}).get("idempotent")),
+            "end_date": requested_end.isoformat(),
+            "base_end_date": base_end.isoformat(),
+            "requires_publish": True,
+        }
+        return presented
+
+    def _assert_horizon_mutable(
+        self,
+        *,
+        branch: str,
+        row: dict[str, Any],
+        expected_generation_id: str,
+    ) -> None:
+        generation = str(row.get("generation_id") or "")
+        if generation != expected_generation_id:
+            raise MachineLoadSequenceConflict(
+                "A programação foi atualizada. Recarregue e confira o horizonte novamente."
+            )
+        publication = self._publication_state(branch=branch, working_row=row)
+        if publication.get("state") == "live":
+            raise MachineLoadSequenceConflict(
+                "A fila está enviada às máquinas. Execute «Atualizar» para abrir uma "
+                "nova preparação antes de ampliar o horizonte de um centro de trabalho."
+            )
+
+    def _build_horizon_preview(
+        self,
+        *,
+        branch: str,
+        row: dict[str, Any],
+        work_center: str,
+        end_date: str,
+    ) -> dict[str, Any]:
+        cfg = _machine_load_settings()
+        timezone_name = str(cfg.get("timezone") or "America/Sao_Paulo")
+        today = today_in_timezone(timezone_name)
+        requested_end = parse_horizon_end(end_date)
+        if requested_end is None:
+            raise ValueError("Informe a data final do horizonte no formato YYYY-MM-DD.")
+
+        base_end = _parse_iso_date(_row_date(row.get("end_date")))
+        if base_end is None:
+            raise ValueError("A janela-base da carga máquina está inválida.")
+        validate_horizon_end(
+            requested_end=requested_end, base_end=base_end, today=today
+        )
+        additional_start = additional_period_start(base_end)
+        if additional_start > requested_end:
+            raise ValueError("Intervalo adicional do horizonte inválido.")
+
+        payload = decode_snapshot_payload(row)
+        stored = payload_operations(payload)
+        page_size = _as_int(cfg.get("operationsPageSize"), 300)
+        candidates = self._fetch_all_operations(
+            branch=branch,
+            delivery_start=additional_start.isoformat(),
+            delivery_end=requested_end.isoformat(),
+            page_size=page_size,
+            work_center=work_center,
+            include_operations_outside_period=(),
+        )
+        identities = existing_operation_identities(stored)
+        eligible = filter_new_horizon_operations(
+            candidates=candidates,
+            work_center=work_center,
+            existing=identities,
+            additional_start=additional_start,
+            additional_end=requested_end,
+        )
+        centers = payload_work_centers(payload)
+        center_name = ""
+        for item in centers:
+            if normalize_work_center(item.get("work_center")) == work_center:
+                center_name = str(item.get("work_center_name") or "").strip()
+                break
+        existing_center_count = sum(
+            1
+            for item in stored
+            if normalize_work_center(item.get("work_center")) == work_center
+        )
+        publication = self._publication_state(branch=branch, working_row=row)
+        return {
+            "branch": branch,
+            "work_center": work_center,
+            "work_center_name": center_name or None,
+            "generation_id": str(row.get("generation_id") or ""),
+            "publication_state": publication.get("state"),
+            "base_end_date": base_end.isoformat(),
+            "requested_end_date": requested_end.isoformat(),
+            "additional_start_date": additional_start.isoformat(),
+            "additional_end_date": requested_end.isoformat(),
+            "horizon_days": days_from_today(requested_end, today=today),
+            "preset_days": list(HORIZON_PRESET_DAYS),
+            "max_horizon_days_from_today": MAX_HORIZON_DAYS_FROM_TODAY,
+            "existing_operation_count": existing_center_count,
+            "new_operation_count": len(eligible),
+            "requires_publish": True,
+            "message": (
+                "Nenhuma operação adicional elegível neste horizonte."
+                if not eligible
+                else (
+                    f"{len(eligible)} operação(ões) adicional(is) serão incluídas "
+                    "na preparação. Ainda será necessário «Enviar para máquinas»."
+                )
+            ),
+            # Interno — a rota remove antes de serializar a prévia.
+            "_candidates": eligible,
+        }
 
     def _publication_state(
         self, *, branch: str, working_row: dict[str, Any]
@@ -3239,6 +3542,7 @@ class MachineLoadService:
         delivery_end: str,
         page_size: int,
         include_operations_outside_period: Sequence[str] = (),
+        work_center: str | None = None,
     ) -> list[dict[str, Any]]:
         page = 1
         collected: list[dict[str, Any]] = []
@@ -3250,7 +3554,9 @@ class MachineLoadService:
                         branch=branch,
                         delivery_start=delivery_start,
                         delivery_end=delivery_end,
-                        work_center=None,
+                        # Refresh geral: filial inteira. Ampliação de horizonte:
+                        # só o CT pedido no intervalo adicional.
+                        work_center=work_center,
                         # Cronologia pura do SH8: quem está «em produção» é o run
                         # do cockpit, não o apontamento HZA — a fila nova não pode
                         # herdar a prioridade por coletor do sort legado nem
@@ -3417,7 +3723,11 @@ class MachineLoadService:
                 "schema_version": _as_int(row.get("schema_version"), _SNAPSHOT_SCHEMA_VERSION),
                 "sequence_updated_at": _iso_timestamp(payload.get("sequence_updated_at")),
                 "sequence_updated_by": payload.get("sequence_updated_by"),
+                # Concorrência das mutações WORKING (horizonte, etc.) — o cliente
+                # devolve o valor na confirmação; ausência = cliente legado.
+                "generation_id": str(row.get("generation_id") or "") or None,
             },
+            "horizon_exceptions": present_horizon_exceptions(payload),
             "withdrawn": {
                 "conjunto_count": len(entries),
                 "operation_count": sum(

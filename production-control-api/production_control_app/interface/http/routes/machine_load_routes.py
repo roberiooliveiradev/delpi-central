@@ -108,6 +108,34 @@ class MachineLoadOptimizeBody(BaseModel):
     )
 
 
+class HorizonExpansionBody(BaseModel):
+    """Ampliação temporária do horizonte de entrega do PA para um CT."""
+
+    work_center: str = Field(..., alias="workCenter", min_length=1, max_length=20)
+    end_date: str = Field(
+        ...,
+        alias="endDate",
+        min_length=10,
+        max_length=10,
+        description="Data final do horizonte ampliado (YYYY-MM-DD)",
+    )
+    expected_generation_id: str = Field(
+        ...,
+        alias="expectedGenerationId",
+        min_length=1,
+        max_length=64,
+        description="generation_id da fila WORKING vista pelo PCP",
+    )
+    expected_new_operation_count: int | None = Field(
+        default=None,
+        alias="expectedNewOperationCount",
+        ge=0,
+        description="Contagem da prévia — divergência vira 409",
+    )
+
+    model_config = {"populate_by_name": True}
+
+
 def _query_params(
     branch: str,
     work_center: str | None,
@@ -325,6 +353,60 @@ def publish_machine_load(
             if changed
             else "A carga máquina atual já está enviada para as máquinas."
         ),
+    )
+
+
+@router.post(
+    "/machine-load/horizon/preview",
+    operation_id="preview_machine_load_horizon_expansion",
+)
+def preview_machine_load_horizon_expansion(
+    request: Request,
+    body: HorizonExpansionBody = Body(...),
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+):
+    """Prévia somente leitura das operações adicionais de um CT além da janela-base."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().preview_horizon_expansion(
+            user,
+            branch=branch,
+            work_center=body.work_center,
+            end_date=body.end_date,
+            expected_generation_id=body.expected_generation_id,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    public = {key: value for key, value in data.items() if not str(key).startswith("_")}
+    return ok(public)
+
+
+@router.post(
+    "/machine-load/horizon/apply",
+    operation_id="apply_machine_load_horizon_expansion",
+)
+def apply_machine_load_horizon_expansion(
+    request: Request,
+    body: HorizonExpansionBody = Body(...),
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    include_all_centers: bool = _include_all_centers_query(),
+):
+    """Inclui operações adicionais do CT na fila WORKING (nunca publica no cockpit)."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().apply_horizon_expansion(
+            user,
+            branch=branch,
+            work_center=body.work_center,
+            end_date=body.end_date,
+            expected_generation_id=body.expected_generation_id,
+            expected_new_operation_count=body.expected_new_operation_count,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(
+        _scoped(data, include_all_centers),
+        message="Horizonte do centro de trabalho ampliado na preparação.",
     )
 
 

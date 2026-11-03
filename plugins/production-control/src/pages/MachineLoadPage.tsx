@@ -15,8 +15,9 @@ import {
   underlineNavBemClasses,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
-import { ArrowDownNarrowWide, CalendarOff, CheckCircle2, CircleAlert, CircleDashed, Eye, EyeOff, GripVertical, ListChecks, ListOrdered, MessagesSquare, SendHorizontal } from "lucide-react";
+import { ArrowDownNarrowWide, CalendarOff, CalendarPlus, CheckCircle2, CircleAlert, CircleDashed, Eye, EyeOff, GripVertical, ListChecks, ListOrdered, MessagesSquare, SendHorizontal } from "lucide-react";
 
+import { MachineLoadHorizonModal } from "../components/MachineLoadHorizonModal";
 import { MachineLoadLocateModal } from "../components/MachineLoadLocateModal";
 import { MachineLoadLocatePanel } from "../components/MachineLoadLocatePanel";
 import { MachineLoadOptimizationModal } from "../components/MachineLoadOptimizationModal";
@@ -30,10 +31,12 @@ import { OperatorCockpitLinkButton } from "../components/OperatorCockpitLinkButt
 import { usePpcConfirm } from "../components/PpcConfirmDialogProvider";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import {
+  applyMachineLoadHorizon,
   createMachineLoadProcessIssue,
   fetchMachineLoadLocate,
   optimizeMachineLoadSequence,
   patchMachineLoadSequence,
+  previewMachineLoadHorizon,
   prioritizeMachineLoadConjunto,
   restoreMachineLoadConjunto,
   restoreMachineLoadOperations,
@@ -65,6 +68,7 @@ import {
   useMachineLoadSequenceHistory,
 } from "../hooks/useMachineLoadSequenceHistory";
 import type {
+  MachineLoadHorizonPreview,
   MachineLoadLocatePayload,
   MachineLoadWithdrawnOperation,
   MachineLoadLocateStop,
@@ -190,6 +194,13 @@ export function MachineLoadPage({
   const [conjuntoModalResult, setConjuntoModalResult] = useState<MachineLoadLocatePayload | null>(null);
   const [withdrawnModalOpen, setWithdrawnModalOpen] = useState(false);
   const [optimizationModalOpen, setOptimizationModalOpen] = useState(false);
+  const [horizonModalOpen, setHorizonModalOpen] = useState(false);
+  const [horizonPreview, setHorizonPreview] = useState<MachineLoadHorizonPreview | null>(
+    null,
+  );
+  const [horizonBusy, setHorizonBusy] = useState(false);
+  const [horizonPreviewBusy, setHorizonPreviewBusy] = useState(false);
+  const [horizonError, setHorizonError] = useState<string | null>(null);
   const [optimizationError, setOptimizationError] = useState<string | null>(null);
   const [transferOperation, setTransferOperation] = useState<MachineLoadOperation | null>(null);
   const [processIssueOperation, setProcessIssueOperation] = useState<MachineLoadOperation | null>(null);
@@ -1295,6 +1306,79 @@ export function MachineLoadPage({
     }
   };
 
+  const openHorizonModal = () => {
+    setHorizonError(null);
+    setHorizonPreview(null);
+    setHorizonModalOpen(true);
+  };
+
+  const runHorizonPreview = async (endDateIso: string) => {
+    if (!selectedCenter || !data?.snapshot?.generation_id) {
+      setHorizonError(copy.machineLoad.horizon.error);
+      return;
+    }
+    setHorizonPreviewBusy(true);
+    setHorizonError(null);
+    setHorizonPreview(null);
+    try {
+      const preview = await previewMachineLoadHorizon({
+        branch,
+        workCenter: selectedCenter,
+        endDate: endDateIso,
+        expectedGenerationId: data.snapshot.generation_id,
+      });
+      setHorizonPreview(preview);
+    } catch (err: unknown) {
+      setHorizonError(
+        err instanceof Error ? err.message : copy.machineLoad.horizon.error,
+      );
+    } finally {
+      setHorizonPreviewBusy(false);
+    }
+  };
+
+  const runHorizonApply = async (endDateIso: string) => {
+    if (!selectedCenter || !data?.snapshot?.generation_id || !horizonPreview) {
+      setHorizonError(copy.machineLoad.horizon.error);
+      return;
+    }
+    setHorizonBusy(true);
+    setHorizonError(null);
+    try {
+      const payload = await applyMachineLoadHorizon({
+        branch,
+        workCenter: selectedCenter,
+        endDate: endDateIso,
+        expectedGenerationId: data.snapshot.generation_id,
+        expectedNewOperationCount: horizonPreview.new_operation_count,
+      });
+      applyPayload(payload);
+      setHorizonModalOpen(false);
+      setHorizonPreview(null);
+      setSequenceNotice(
+        copy.machineLoad.horizon.success(payload.horizon_expansion?.added_count ?? 0),
+      );
+      // Limpa filtro local que poderia ocultar ops além da janela-base.
+      if (startDate || endDate) {
+        goTo({ startDate: null, endDate: null });
+      }
+    } catch (err: unknown) {
+      setHorizonError(
+        err instanceof Error ? err.message : copy.machineLoad.horizon.error,
+      );
+    } finally {
+      setHorizonBusy(false);
+    }
+  };
+
+  const selectedHorizonException = useMemo(() => {
+    if (!selectedCenter || !data?.horizon_exceptions?.length) return null;
+    return (
+      data.horizon_exceptions.find((item) => item.work_center === selectedCenter) ??
+      null
+    );
+  }, [data?.horizon_exceptions, selectedCenter]);
+
   const publicationView = data ? describeMachineLoadPublication(data.publication) : null;
 
   const onPublishClick = async () => {
@@ -1647,9 +1731,48 @@ export function MachineLoadPage({
             aria-busy={refreshing || undefined}
             aria-labelledby={selectedCenter ? `ppc-load-tab-${selectedCenter}` : undefined}
           >
-            {activeCenter?.work_center_name ? (
-              <p className="ppc-load__center-name">{activeCenter.work_center_name}</p>
-            ) : null}
+            <div className="ppc-load__center-bar">
+              <div className="ppc-load__center-meta">
+                {activeCenter?.work_center_name ? (
+                  <p className="ppc-load__center-name">{activeCenter.work_center_name}</p>
+                ) : null}
+                {selectedHorizonException ? (
+                  <span className="ppc-load__horizon-badge" title={copy.machineLoad.horizon.actionHint}>
+                    {copy.machineLoad.horizon.badge(
+                      selectedHorizonException.end_date
+                        ? copy.machineLoad.horizon.badgeUntil(
+                            formatIsoDate(selectedHorizonException.end_date),
+                          )
+                        : copy.machineLoad.horizon.badgeDays(
+                            selectedHorizonException.added_count,
+                          ),
+                    )}
+                  </span>
+                ) : null}
+                {selectedHorizonException && (startDate || endDate) ? (
+                  <span className="ppc-load__horizon-filter-hint" role="status">
+                    {copy.machineLoad.horizon.filterHidesHint}
+                  </span>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                className="ppc-load__horizon-action"
+                onClick={openHorizonModal}
+                disabled={
+                  !selectedCenter ||
+                  !data?.snapshot?.generation_id ||
+                  sequenceBusy ||
+                  refreshing ||
+                  publishing ||
+                  horizonBusy
+                }
+                title={copy.machineLoad.horizon.actionHint}
+              >
+                <CalendarPlus size={14} strokeWidth={1.9} aria-hidden />
+                {copy.machineLoad.horizon.action}
+              </button>
+            </div>
             {(() => {
               const hintVisible = displayRows.length > 1 && !selection.hasMultiple;
               return (
@@ -1705,6 +1828,7 @@ export function MachineLoadPage({
               getRowClassName={(row, index) =>
                 [
                   machineLoadRowModifierClass(row),
+                  row.horizon_expanded ? "ppc-load__row--horizon" : null,
                   feedbackForOperation(feedbackMap, row)
                     ? feedbackForOperation(feedbackMap, row)?.status === "open"
                       ? "ppc-load__row--feedback-open"
@@ -1856,6 +1980,25 @@ export function MachineLoadPage({
         error={optimizationError}
         onClose={() => setOptimizationModalOpen(false)}
         onConfirm={(groupByTool) => void runOptimization(groupByTool)}
+      />
+
+      <MachineLoadHorizonModal
+        open={horizonModalOpen}
+        workCenter={selectedCenter ?? ""}
+        workCenterName={activeCenter?.work_center_name}
+        baseEndDate={data?.period?.pulled_end ?? data?.period?.end_date ?? null}
+        publicationState={data?.publication?.state}
+        busy={horizonBusy}
+        previewBusy={horizonPreviewBusy}
+        error={horizonError}
+        preview={horizonPreview}
+        onClose={() => {
+          setHorizonModalOpen(false);
+          setHorizonPreview(null);
+          setHorizonError(null);
+        }}
+        onPreview={(iso) => void runHorizonPreview(iso)}
+        onConfirm={(iso) => void runHorizonApply(iso)}
       />
 
       <MachineLoadWithdrawnModal

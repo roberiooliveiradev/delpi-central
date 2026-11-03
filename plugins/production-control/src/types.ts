@@ -637,6 +637,8 @@ export type MachineLoadOperation = {
   execution_started_at?: string | null;
   /** Centro de trabalho de origem, quando o PCP transferiu a operação. */
   transferred_from?: string | null;
+  /** Incluída por ampliação temporária de horizonte além da janela-base. */
+  horizon_expanded?: boolean;
 };
 
 /** Run aberto do cockpit — item do snapshot de execução (fonte oficial). */
@@ -790,6 +792,45 @@ export type MachineLoadPublicationResult = MachineLoadPublicationInfo & {
   changed: boolean;
 };
 
+/** Exceção de horizonte por CT na geração WORKING atual. */
+export type MachineLoadHorizonException = {
+  work_center: string;
+  end_date: string | null;
+  base_end_date: string | null;
+  added_count: number;
+  expanded_at?: string | null;
+  expanded_by?: string | null;
+};
+
+/** Prévia de ampliação de horizonte (somente leitura). */
+export type MachineLoadHorizonPreview = {
+  branch: string;
+  work_center: string;
+  work_center_name?: string | null;
+  generation_id: string;
+  publication_state?: string | null;
+  base_end_date: string;
+  requested_end_date: string;
+  additional_start_date: string;
+  additional_end_date: string;
+  horizon_days: number;
+  preset_days: number[];
+  max_horizon_days_from_today: number;
+  existing_operation_count: number;
+  new_operation_count: number;
+  requires_publish: boolean;
+  message: string;
+};
+
+export type MachineLoadHorizonExpansionResult = {
+  work_center: string;
+  added_count: number;
+  idempotent?: boolean;
+  end_date: string;
+  base_end_date: string;
+  requires_publish: boolean;
+};
+
 export type MachineLoadPayload = {
   branch: string;
   /** Janela por **entrega do PA**: a fila congelada é uma só; «De/até» é lente de leitura. */
@@ -820,11 +861,16 @@ export type MachineLoadPayload = {
     schema_version?: number;
     sequence_updated_at?: string | null;
     sequence_updated_by?: string | null;
+    /** generation_id WORKING — concorrência de horizonte e mutações. */
+    generation_id?: string | null;
   };
   /** Presente no payload autenticado (E5); o cockpit publico nao recebe. */
   publication?: MachineLoadPublicationInfo;
+  /** Exceções de horizonte da geração WORKING atual (somem no próximo Atualizar). */
+  horizon_exceptions?: MachineLoadHorizonException[];
   withdrawn?: MachineLoadWithdrawnSummary;
   work_centers: MachineLoadWorkCenter[];
+  horizon_expansion?: MachineLoadHorizonExpansionResult;
   /**
    * Fila completa da filial (todos os centros), presente quando a leitura pede
    * `includeAllCenters`. Trocar de centro de trabalho é recorte local, sem nova leitura.

@@ -6,6 +6,7 @@ import type {
   DemandPayload,
   MachineLoadBalancesPayload,
   MachineLoadCockpitStatusPayload,
+  MachineLoadHorizonPreview,
   MachineLoadLocatePayload,
   MachineLoadOptimizePayload,
   MachineLoadPayload,
@@ -455,6 +456,59 @@ export async function publishMachineLoad(params: {
     "Não foi possível enviar a carga máquina para as máquinas.",
   );
   return data.publication;
+}
+
+/** Prévia das operações adicionais de um CT além da janela-base (sem gravar). */
+export async function previewMachineLoadHorizon(params: {
+  branch: string;
+  workCenter: string;
+  endDate: string;
+  expectedGenerationId: string;
+  signal?: AbortSignal;
+}): Promise<MachineLoadHorizonPreview> {
+  const search = new URLSearchParams({ branch: params.branch });
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadHorizonPreview;
+  }>(
+    ppcApiUrl(`/machine-load/horizon/preview?${search.toString()}`),
+    {
+      workCenter: params.workCenter,
+      endDate: params.endDate,
+      expectedGenerationId: params.expectedGenerationId,
+    },
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível calcular a prévia do horizonte.");
+}
+
+/** Aplica a ampliação no WORKING (nunca publica no cockpit). */
+export async function applyMachineLoadHorizon(params: {
+  branch: string;
+  workCenter: string;
+  endDate: string;
+  expectedGenerationId: string;
+  expectedNewOperationCount?: number;
+  signal?: AbortSignal;
+}): Promise<MachineLoadPayload> {
+  const search = machineLoadSearch({ branch: params.branch });
+  search.set("workCenter", params.workCenter);
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadPayload;
+  }>(
+    ppcApiUrl(`/machine-load/horizon/apply?${search.toString()}`),
+    {
+      workCenter: params.workCenter,
+      endDate: params.endDate,
+      expectedGenerationId: params.expectedGenerationId,
+      expectedNewOperationCount: params.expectedNewOperationCount,
+    },
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível ampliar o horizonte do centro de trabalho.");
 }
 
 /** Leva todas as OPs do conjunto (C2_NUM) ao topo da fila de cada centro de trabalho. */
