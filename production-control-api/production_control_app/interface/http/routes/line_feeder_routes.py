@@ -102,6 +102,33 @@ def preview_line_feeder_horizon(
     return ok(data)
 
 
+@router.post(
+    "/line-feeder/materials/preview",
+    operation_id="preview_line_feeder_materials",
+)
+def preview_line_feeder_materials(
+    request: Request,
+    body: HorizonPreviewBody = Body(...),
+):
+    """Prévia dinâmica de materiais do horizonte — somente leitura.
+
+    ``to_collect = max(0, necessidade − saldo do ponto de uso)``. Não persiste
+    lista, não usa status de coleta e não desconta o almoxarifado como se já
+    estivesse na fábrica.
+    """
+    user = resolve_user(request)
+    try:
+        data = build_line_feeder_service().preview_materials(
+            user,
+            branch=body.branch,
+            work_centers=body.work_centers,
+            hours_per_work_center=body.hours_per_work_center,
+        )
+    except Exception as exc:
+        return _handle_line_feeder_errors(exc)
+    return ok(data)
+
+
 @router.get(
     "/line-feeder/published-queue",
     operation_id="get_line_feeder_published_queue",

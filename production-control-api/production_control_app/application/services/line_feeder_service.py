@@ -56,6 +56,12 @@ from production_control_app.domain.services.line_feeder_horizon import (
     allocate_work_center_horizon,
     work_center_result_payload,
 )
+from production_control_app.domain.services.line_feeder_materials import (
+    CoveredOperationDemand,
+    apply_factory_stock,
+    build_material_demands,
+    summarize_materials,
+)
 from production_control_app.domain.services.line_feeder_published_queue import (
     list_visible_published_queues,
     project_published_queue,
@@ -422,6 +428,180 @@ class LineFeederService:
             ),
             "standard_time_calls": st_calls,
             "work_centers": ct_results,
+        }
+
+    def preview_materials(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        work_centers: Sequence[str],
+        hours_per_work_center: float,
+    ) -> dict[str, Any]:
+        """Prévia dinâmica de materiais — saldo real do ponto de uso (99).
+
+        Reutiliza o horizonte (E2). Empenhos SD4 vigentes. Não persiste lista,
+        não usa status de coleta e não desconta o almoxarifado (01) da falta.
+        """
+        horizon = self.preview_horizon(
+            user,
+            branch=branch,
+            work_centers=work_centers,
+            hours_per_work_center=hours_per_work_center,
+        )
+        code = _text(horizon.get("branch"))
+        expected_revision = _text(
+            (horizon.get("publication") or {}).get("publication_revision")
+        )
+        # shortfall (fila menor que as horas) é válido para materiais: toda a
+        # produção disponível já entrou. incomplete (saldo/ST) bloqueia a lista.
+        horizon_safe = all(
+            group.get("completeness") != "incomplete"
+            for group in (horizon.get("work_centers") or [])
+        )
+
+        covered_ops: list[CoveredOperationDemand] = []
+        for group in horizon.get("work_centers") or []:
+            for op in group.get("operations") or []:
+                covered = _optional_decimal(op.get("covered_qty"))
+                pending = _optional_decimal(op.get("pending_qty"))
+                if covered is None or pending is None:
+                    continue
+                if covered <= 0:
+                    continue
+                covered_ops.append(
+                    CoveredOperationDemand(
+                        work_center=_text(op.get("work_center")),
+                        work_center_name=_text(op.get("work_center_name")),
+                        production_order=_text(op.get("production_order")),
+                        operation_code=_text(op.get("operation_code")),
+                        operation_id=_text(op.get("operation_id")),
+                        sequence_position=int(op.get("sequence_position") or 0),
+                        covered_qty=covered,
+                        pending_qty=pending,
+                    )
+                )
+
+        orders: list[str] = []
+        seen_orders: set[str] = set()
+        for op in covered_ops:
+            if op.production_order and op.production_order not in seen_orders:
+                seen_orders.add(op.production_order)
+                orders.append(op.production_order)
+        ceiling = commitment_batch_size() * max_commitment_batches()
+        if len(orders) > ceiling:
+            raise ValueError(
+                "A prévia de materiais excede o limite de ordens consultáveis "
+                f"({ceiling}). Reduza o horizonte ou a seleção de postos."
+            )
+
+        commitments = (
+            self._fetch_commitments(branch=code, production_orders=orders)
+            if orders
+            else {}
+        )
+        buckets, demand_warnings, proportional_ok = build_material_demands(
+            covered_ops, commitments
+        )
+        product_codes = sorted({bucket.product_code for bucket in buckets})
+        stock_as_of = datetime.now(timezone.utc).isoformat()
+        factory, source, balances_available, stock_complete = (
+            self._fetch_balances_for_materials(
+                branch=code, product_codes=product_codes
+            )
+        )
+        locations = self._fetch_pickup_locations(
+            branch=code, product_codes=product_codes
+        )
+        inventory_blocks = self._fetch_inventory_blocks(
+            branch=code, product_codes=product_codes
+        )
+
+        items = apply_factory_stock(
+            buckets,
+            factory_balances=factory if balances_available else None,
+            source_balances=source if balances_available else None,
+            balances_available=balances_available and stock_complete,
+        )
+        for item in items:
+            code_prod = item["product_code"]
+            item["pickup_location"] = locations.get(code_prod, "")
+            item["inventory_blocked"] = bool(
+                inventory_blocks.get(code_prod, False)
+            )
+
+        if self._publications is None:
+            raise SnapshotNotFound(
+                "A fila desta filial ainda não foi enviada pelo PCP."
+            )
+        row_end = self._publications.get(branch=code)
+        if row_end is None:
+            raise SnapshotNotFound(
+                "A fila desta filial ainda não foi enviada pelo PCP."
+            )
+        revision_end = _text(row_end.get("row_version"))
+        if expected_revision and revision_end != expected_revision:
+            raise HorizonPreviewStale(
+                "A programação publicada mudou durante a prévia de materiais. "
+                "Consulte novamente."
+            )
+
+        complete = (
+            horizon_safe
+            and proportional_ok
+            and balances_available
+            and stock_complete
+        )
+        stop_reasons: list[str] = []
+        if not horizon_safe:
+            stop_reasons.append("horizon_incomplete")
+        if not proportional_ok:
+            stop_reasons.append("proportional_demand_incomplete")
+        if not balances_available:
+            stop_reasons.append("stock_unavailable")
+        elif not stock_complete:
+            stop_reasons.append("stock_pagination_incomplete")
+
+        return {
+            "branch": code,
+            "hours_per_work_center": horizon.get("hours_per_work_center"),
+            "publication": horizon.get("publication"),
+            "horizon_balances_as_of": horizon.get("balances_as_of"),
+            "stock_as_of": stock_as_of,
+            "sources": {
+                "queue": "published",
+                "horizon": "line_feeder_horizon",
+                "commitments": "api-delpi:operation-materials/batch",
+                "factory_stock": "api-delpi:stock-balances/items",
+                "point_of_use_warehouse": setting_str("pointOfUseWarehouse", "99"),
+                "source_warehouse": setting_str("sourceWarehouse", "01"),
+            },
+            "business_rule": {
+                "to_collect": "max(0, required_from_horizon - factory_available)",
+                "factory_stock_authority": True,
+                "prior_pick_lists_do_not_reduce_demand": True,
+                "source_warehouse_informational_only": True,
+            },
+            "preview_completeness": "complete" if complete else "incomplete",
+            "operational_list_safe": complete,
+            "stop_reasons": stop_reasons,
+            "demand_warnings": demand_warnings,
+            "horizon": {
+                "preview_completeness": horizon.get("preview_completeness"),
+                "work_centers": [
+                    {
+                        "work_center": group.get("work_center"),
+                        "completeness": group.get("completeness"),
+                        "hours_covered": group.get("hours_covered"),
+                        "operation_count": len(group.get("operations") or []),
+                        "stop_reason": group.get("stop_reason"),
+                    }
+                    for group in horizon.get("work_centers") or []
+                ],
+                "covered_operation_count": len(covered_ops),
+            },
+            "summary": summarize_materials(items),
+            "materials": items,
         }
 
     # ------------------------------------------------------------------ #
@@ -1008,6 +1188,41 @@ class LineFeederService:
             return {}, {}, False
         return point_of_use, source, True
 
+    def _fetch_balances_for_materials(
+        self,
+        *,
+        branch: str,
+        product_codes: list[str],
+    ) -> tuple[dict[str, float], dict[str, float], bool, bool]:
+        """Estoque para E3: (fábrica, almox, available, pagination_complete).
+
+        Falha de integração → available=False (não inventar zero). Paginação
+        estourada → complete=False (não omitir saldo silenciosamente).
+        """
+        if not product_codes:
+            return {}, {}, True, True
+        warehouses = (
+            setting_str("pointOfUseWarehouse", "99"),
+            setting_str("sourceWarehouse", "01"),
+        )
+        try:
+            results = fan_out(
+                lambda warehouse: self._fetch_warehouse_balances_complete(
+                    branch=branch,
+                    warehouse=warehouse,
+                    product_codes=product_codes,
+                ),
+                warehouses,
+                failure="Não foi possível carregar os saldos por armazém.",
+                max_workers=len(warehouses),
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("line_feeder_materials_balances_unavailable: %s", exc)
+            return {}, {}, False, False
+        point_of_use, pu_complete = results[0]
+        source, source_complete = results[1]
+        return point_of_use, source, True, bool(pu_complete and source_complete)
+
     def _fetch_warehouse_balances(
         self,
         *,
@@ -1017,10 +1232,24 @@ class LineFeederService:
     ) -> dict[str, float]:
         """Saldo por produto no armazém. ``only_positive=False`` para distinguir
         zero de negativo — negativo no armazém não é material disponível."""
+        balances, _complete = self._fetch_warehouse_balances_complete(
+            branch=branch, warehouse=warehouse, product_codes=product_codes
+        )
+        return balances
+
+    def _fetch_warehouse_balances_complete(
+        self,
+        *,
+        branch: str,
+        warehouse: str,
+        product_codes: list[str],
+    ) -> tuple[dict[str, float], bool]:
+        """Retorna saldos + se a paginação terminou sem truncar no teto local."""
         page_size = max(setting_int("balancesPageSize", 500), 1)
         max_pages = max(setting_int("maxBalancePages", 20), 1)
         balances: dict[str, float] = {}
         page = 1
+        complete = True
         while page <= max_pages:
             payload = self._gateway.fetch_stock_balances_items(
                 branch=branch,
@@ -1038,8 +1267,11 @@ class LineFeederService:
                 balances[code] = balances.get(code, 0.0) + _number(row.get("quantity"))
             if len(rows) < page_size:
                 break
+            if page == max_pages:
+                complete = False
+                break
             page += 1
-        return balances
+        return balances, complete
 
     def _fetch_pickup_locations(
         self,
