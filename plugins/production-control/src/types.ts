@@ -1138,16 +1138,28 @@ export type LineFeederMaterialsSummary = {
   to_collect_qty: number;
 };
 
+export type LineFeederHorizonDiagnostic = {
+  code?: string | null;
+  work_center?: string | null;
+  production_order?: string | null;
+  operation_code?: string | null;
+  operation_id?: string | null;
+  stop_reason?: string | null;
+  message?: string | null;
+};
+
 export type LineFeederMaterialsPreviewPayload = {
   branch: string;
   hours_per_work_center: number;
   publication: LineFeederPublishedQueuePayload["publication"];
   horizon_balances_as_of?: string | null;
   stock_as_of?: string | null;
-  preview_completeness: "complete" | "incomplete";
+  preview_completeness: "complete" | "incomplete" | "shortfall";
   operational_list_safe: boolean;
   stop_reasons: string[];
   demand_warnings: Array<{ code: string; detail?: string; [key: string]: unknown }>;
+  /** Diagnósticos por CT (aditivo; respostas legadas podem omitir). */
+  diagnostics?: LineFeederHorizonDiagnostic[];
   horizon: {
     preview_completeness?: string;
     covered_operation_count: number;
@@ -1157,6 +1169,12 @@ export type LineFeederMaterialsPreviewPayload = {
       hours_covered?: number;
       operation_count?: number;
       stop_reason?: string | null;
+      blocking_operation?: {
+        production_order?: string | null;
+        operation_code?: string | null;
+        operation_id?: string | null;
+      } | null;
+      diagnostic_message?: string | null;
     }>;
   };
   summary: LineFeederMaterialsSummary;

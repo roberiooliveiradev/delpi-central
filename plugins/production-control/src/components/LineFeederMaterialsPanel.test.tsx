@@ -174,6 +174,33 @@ describe("LineFeederMaterialsPanel", () => {
     expect(screen.queryByText(/Coletar:.*60/i)).toBeNull();
   });
 
+  it("exibe diagnóstico específico do CT sem perder a orientação de nova consulta", () => {
+    render(
+      <LineFeederMaterialsPanel
+        data={basePayload({
+          operational_list_safe: false,
+          preview_completeness: "incomplete",
+          stop_reasons: ["horizon_incomplete"],
+          diagnostics: [
+            {
+              work_center: "012",
+              stop_reason: "standard_time_unavailable",
+              production_order: "OP9",
+              operation_code: "01",
+              message:
+                "Não foi possível calcular o horizonte do CT 012 porque uma operação está sem tempo padrão válido. Verifique o cadastro da operação.",
+            },
+          ],
+          materials: [],
+        })}
+        query={{ workCenters: ["012"], hoursPerWorkCenter: 8 }}
+      />,
+    );
+    expect(screen.getByText(/sem tempo padrão válido/i)).toBeTruthy();
+    expect(screen.getByText(/seleção de postos e horas foi mantida/i)).toBeTruthy();
+    expect(screen.queryByText(/Coletar:.*60/i)).toBeNull();
+  });
+
   it("mensagem adequada quando não há empenhos", () => {
     render(
       <LineFeederMaterialsPanel
