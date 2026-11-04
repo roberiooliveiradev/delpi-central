@@ -65,6 +65,37 @@ def _handle_line_feeder_errors(exc: Exception):
     raise exc
 
 
+@router.get(
+    "/line-feeder/published-queue",
+    operation_id="get_line_feeder_published_queue",
+)
+def get_line_feeder_published_queue(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    work_center: str | None = Query(
+        default=None,
+        alias="workCenter",
+        description="Recorte opcional por centro de trabalho; vazio = todos os postos da filial",
+    ),
+):
+    """Fila PUBLISHED na ordem do operador — fundação do Alimentador (somente leitura).
+
+    Fonte: ``machine_load_publications``. Sem fallback para WORKING, sem refresh
+    e sem reordenação por horário TOTVS. Revisão efetiva: ``publication_revision``
+    (derivada de ``row_version``/xmin), sensível a mutações LIVE.
+    """
+    user = resolve_user(request)
+    try:
+        data = build_line_feeder_service().get_published_queue(
+            user,
+            branch=branch,
+            work_center=work_center,
+        )
+    except Exception as exc:
+        return _handle_line_feeder_errors(exc)
+    return ok(data)
+
+
 @router.get("/line-feeder/requirements")
 def get_line_feeder_requirements(
     request: Request,

@@ -302,11 +302,13 @@ def build_line_feeder_service(
     *,
     snapshots: MachineLoadSnapshotRepositoryPort | None = None,
     pick_plans: LineFeederPickPlanRepositoryPort | None = None,
+    publications: MachineLoadPublicationRepositoryPort | None = None,
 ) -> LineFeederService:
     return LineFeederService(
         gateway or DelpiProductionGateway(),
         snapshots=snapshots or build_machine_load_snapshot_repository(),
         pick_plans=pick_plans or build_line_feeder_pick_plan_repository(),
+        publications=publications or build_machine_load_publication_repository(),
         branch_access=build_branch_access_service(),
     )
 

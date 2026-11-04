@@ -38,11 +38,17 @@ from production_control_app.domain.errors import DelpiGatewayError, SnapshotNotF
 from production_control_app.domain.ports.line_feeder_pick_plan_repository import (
     LineFeederPickPlanRepositoryPort,
 )
+from production_control_app.domain.ports.machine_load_publication_repository import (
+    MachineLoadPublicationRepositoryPort,
+)
 from production_control_app.domain.ports.machine_load_snapshot_repository import (
     MachineLoadSnapshotRepositoryPort,
 )
 from production_control_app.domain.ports.production_orders_gateway import ProductionOrdersGateway
 from production_control_app.domain.services.branch_access_service import BranchAccessService
+from production_control_app.domain.services.line_feeder_published_queue import (
+    project_published_queue,
+)
 from production_control_app.domain.services.line_feeder_requirements import (
     MaterialRequirement,
     ProductPickLine,
@@ -123,12 +129,14 @@ class LineFeederService:
         *,
         snapshots: MachineLoadSnapshotRepositoryPort,
         pick_plans: LineFeederPickPlanRepositoryPort,
+        publications: MachineLoadPublicationRepositoryPort | None = None,
         branch_access: BranchAccessService | None = None,
         cache: _RequirementsCache | None = None,
     ) -> None:
         self._gateway = gateway
         self._snapshots = snapshots
         self._pick_plans = pick_plans
+        self._publications = publications
         self._branch_access = branch_access or BranchAccessService()
         self._cache = cache if cache is not None else _CACHE
 
@@ -144,6 +152,38 @@ class LineFeederService:
                 "Você não tem permissão para o cockpit do alimentador de linha."
             )
         return code
+
+    # ------------------------------------------------------------------ #
+    # Fila PUBLISHED (fundação para horizonte/materiais — Etapa 1)
+    # ------------------------------------------------------------------ #
+
+    def get_published_queue(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        work_center: str | None = None,
+    ) -> dict[str, Any]:
+        """Leitura autenticada da fila PUBLISHED na ordem do operador.
+
+        Nunca faz fallback para WORKING, nunca dispara refresh/publish e não
+        reordena por ``scheduled_*`` do TOTVS. A revisão efetiva vem de
+        ``row_version`` (xmin) — mutações LIVE mudam a revisão sem trocar
+        ``generation_id``.
+        """
+        code = self._authorize(user, branch=branch)
+        if self._publications is None:
+            raise SnapshotNotFound(
+                "A fila desta filial ainda não foi enviada pelo PCP."
+            )
+        row = self._publications.get(branch=code)
+        if row is None:
+            raise SnapshotNotFound(
+                "A fila desta filial ainda não foi enviada pelo PCP."
+            )
+        return project_published_queue(
+            row, branch=code, work_center=_text(work_center) or None
+        )
 
     # ------------------------------------------------------------------ #
     # Necessidade por bancada
