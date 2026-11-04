@@ -1637,3 +1637,9 @@ Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
 | `UserDirectoryPicker` | Fachada sobre `EntityDirectoryPicker` para usuários (`searchUsers`); `showSelectedList={false}` quando o consumidor renderiza a própria lista; `showEmail={false}` para listar só o nome; `maxSelected={1}` para single-select |
 
 CSS: `styles/cipa-shared.css` (classes `.delpi-ui-*`).
+
+---
+
+## Evolução visual proposta — `DelpiKpiCard` para TVs (2026-11-03)
+
+**TARGET / PLANNED**, sem alteração do componente nesta entrada. O kit continua como owner do `DelpiKpiCard`, `kpiCardParts`, `FitText` e `styles/kpi-card.css`. A proposta visual para TV prevê auto-fit proporcional, glyph/box de ícone expressivos, hierarquia valor→título→contexto, variantes Hero/Standard/Meta/Compacto e respeito a overrides manuais, sem CSS de componente no MFE. Wireframes e matriz detalhada de contratos/consumidores: [KPI proporcional — especificação VISTA/TV](../../../docs/12-roadmap-e-evolucao/tv-dashboard/KPI-PROPORTIONAL-VISUAL-TEMPLATE-VISTA.md). A formatação de dados permanece no backend TV Dashboard, não no kit.
