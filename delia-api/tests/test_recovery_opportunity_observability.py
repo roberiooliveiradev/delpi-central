@@ -134,7 +134,7 @@ class TestAssessmentCounting:
     def test_o2_recovery_round1_assessment_counted(self):
         """O2 — the S11 turn's real assessments appear verbatim; no
         phantom call is invented for the reused decision."""
-        attempt, ledger, model, _p = _run("pydantic_ai")
+        attempt, ledger, model, _p = _run("delia")
         obs = _obs(ledger)
         real = len(_assessment_calls(model))
         assert obs["native_assessment_calls"] == real
@@ -160,14 +160,16 @@ class TestRecoveryEvents:
         assert obs["reuse_candidates"] >= 1
         assert obs["reuse_eligible"] >= 1
 
-    def test_o8_b1_reuse_performed(self):
-        """O8 — B1 actually reuses: performed==1 AND the avoided call
-        is absent from native_assessment_calls."""
-        attempt, ledger, model, _p = _run("pydantic_ai")
+    def test_o8_application_sequencer_does_not_apply_reuse(self):
+        """O8 — Application ``delia`` observes eligible windows but
+        still reassesses (reuse apply lived on the retired LG/B1
+        owner-path binding; pydantic_ai no longer re-enters that
+        sequencer)."""
+        attempt, ledger, model, _p = _run("delia")
         obs = _obs(ledger)
-        assert obs["reuse_performed"] >= 1
-        assert obs["native_assessment_calls"] == 1
-        assert obs["reassessments"] == 0
+        assert obs["reuse_performed"] == 0
+        assert obs["native_assessment_calls"] == 2
+        assert obs["reassessments"] >= 1
 
     def test_o7_engine_a_reassessment_counted(self):
         """O7 — Engine A's legitimate second assessment is a
@@ -278,7 +280,7 @@ class TestLifecycle:
         def cancel():
             return "PROCESSING_TIMEOUT"
 
-        attempt, ledger, _m, _p = _run("pydantic_ai", cancel_check=cancel)
+        attempt, ledger, _m, _p = _run("delia", cancel_check=cancel)
         obs = _obs(ledger)
         assert obs["reuse_performed"] == 0
         assert obs["reuse_eligible"] <= obs["reuse_candidates"]
@@ -293,7 +295,7 @@ class TestLifecycle:
         def worker(idx):
             try:
                 barrier.wait(timeout=10)
-                _a, ledger, _m, _p = _run("pydantic_ai")
+                _a, ledger, _m, _p = _run("delia")
                 results[idx] = _obs(ledger)
             except BaseException as exc:  # noqa: BLE001 — test asserts
                 errors.append(exc)
@@ -307,12 +309,13 @@ class TestLifecycle:
             t.join(timeout=60)
         assert not errors
         assert results[0] == results[1]
-        assert results[0]["reuse_performed"] >= 1
+        assert results[0]["reuse_performed"] == 0
+        assert results[0]["native_assessment_calls"] >= 1
 
     def test_sequential_turns_reset(self):
         """A second turn observes a fresh carrier — no accumulation."""
-        _a, ledger1, _m, _p = _run("pydantic_ai")
-        _a2, ledger2, _m2, _p2 = _run("pydantic_ai")
+        _a, ledger1, _m, _p = _run("delia")
+        _a2, ledger2, _m2, _p2 = _run("delia")
         assert _obs(ledger1) == _obs(ledger2)
         assert ledger1 is not ledger2
 
@@ -325,7 +328,7 @@ class TestContractSafety:
         """O12 — the observation projection carries counters only:
         no input text, premise hashes, decisions beyond counters,
         evidence or reasoning."""
-        attempt, ledger, _m, _p = _run("pydantic_ai")
+        attempt, ledger, _m, _p = _run("delia")
         obs = _obs(ledger)
         blob = str(obs)
         assert INPUT not in blob

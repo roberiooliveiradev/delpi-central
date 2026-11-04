@@ -364,61 +364,52 @@ class TestLedgerLifecycle:
 
 class TestEngineLifecycle:
     def test_c1_engine_concurrent_attempts_no_cross_talk(self):
-        """Two engines built on the same gates pattern run attempts in
-        parallel threads; each B1 attempt gets its own ledger — the
-        trace events of one attempt never appear in the other."""
+        """Two Application sequencers run attempts in parallel threads
+        without cross-talk on the ambient ledger."""
         orch1, _ = _engine(
-            "pydantic_ai", _providers(), _reuse_proposal()
+            "delia", _providers(), _reuse_proposal()
         )
         orch2, _ = _engine(
-            "pydantic_ai",
+            "delia",
             _providers(),
             _reuse_proposal(first_status="sufficient"),
         )
         barrier = threading.Barrier(2)
-        outcomes: dict[str, tuple] = {}
+        outcomes: dict[str, object] = {}
 
         def run(tag, orch):
             barrier.wait(timeout=5)
-            attempt = orch.attempt("2 exemplos de terminal bala")
-            outcomes[tag] = (attempt, list(orch.last_node_trace))
+            outcomes[tag] = orch.attempt("2 exemplos de terminal bala")
 
-        t1 = threading.Thread(target=run, args=("b1a", orch1))
-        t2 = threading.Thread(target=run, args=("b1b", orch2))
+        t1 = threading.Thread(target=run, args=("a", orch1))
+        t2 = threading.Thread(target=run, args=("b", orch2))
         t1.start()
         t2.start()
         t1.join(timeout=20)
         t2.join(timeout=20)
-        a1, trace1 = outcomes["b1a"]
-        a2, trace2 = outcomes["b1b"]
-        assert "assessment_reused" in trace1
-        assert "assessment_reused" not in trace2
-        assert "assessment_reassessed" in trace2
-        assert a1.status == a2.status == GovernedCapabilityStatus.SUCCESS
+        assert outcomes["a"].status is GovernedCapabilityStatus.SUCCESS
+        assert outcomes["b"].status is GovernedCapabilityStatus.SUCCESS
+        assert _NATIVE_ASSESSMENT_LEDGER.get() is None
 
     def test_c3_engine_retry_gets_fresh_ledger(self):
-        """C3 — repeated graph invocations bind a fresh ledger each
-        time: a second attempt() call re-establishes decisions rather
-        than inheriting them."""
-        orch, model = _engine(
-            "pydantic_ai", _providers(), _reuse_proposal()
+        """C3 — each Application attempt() starts without ambient ledger
+        residue from the previous call."""
+        orch, _ = _engine(
+            "delia", _providers(), _reuse_proposal()
         )
         orch.attempt("2 exemplos de terminal bala")
-        assert "assessment_reused" in orch.last_node_trace
-        # Second independent attempt — fresh ledger, decisions are
-        # re-established by new assessment calls (proposal queue
-        # exhausted -> replays last; the point is no inherited state).
-        orch2, model2 = _engine(
-            "pydantic_ai", _providers(), _reuse_proposal()
+        assert _NATIVE_ASSESSMENT_LEDGER.get() is None
+        orch2, _ = _engine(
+            "delia", _providers(), _reuse_proposal()
         )
         orch2.attempt("2 exemplos de terminal bala")
-        assert "assessment_reused" in orch2.last_node_trace
+        assert _NATIVE_ASSESSMENT_LEDGER.get() is None
 
     def test_c4_cancellation_leaves_no_ledger(self):
         """C4 — a cancelled attempt must not leave a bound ledger
         visible to later code in the same context."""
         orch, model = _engine(
-            "pydantic_ai", _providers(), _reuse_proposal()
+            "delia", _providers(), _reuse_proposal()
         )
         attempt = orch.attempt(
             "2 exemplos de terminal bala", cancel_check=lambda: True
@@ -432,22 +423,22 @@ class TestEngineLifecycle:
         """C5 — even if the governed path raises, the ambient binding
         is cleaned up (set/reset pair in owner_path)."""
         orch, model = _engine(
-            "pydantic_ai", _providers(), _reuse_proposal()
+            "delia", _providers(), _reuse_proposal()
         )
 
         def boom(*a, **k):
             raise RuntimeError("simulated governed-path failure")
 
-        gates = orch._gates
-        original = gates._governed_owner_path
-        gates._governed_owner_path = boom
+        # Application sequencer IS the gates object.
+        original = orch._governed_owner_path
+        orch._governed_owner_path = boom
         try:
             try:
                 orch.attempt("2 exemplos de terminal bala")
             except Exception:
                 pass
         finally:
-            gates._governed_owner_path = original
+            orch._governed_owner_path = original
         assert _NATIVE_ASSESSMENT_LEDGER.get() is None
 
     def test_c8_ledger_never_authorizes(self):
@@ -463,7 +454,7 @@ class TestEngineLifecycle:
                 foreign_capability_id="ghost.cap"
             )
             orch, model = _engine(
-                "pydantic_ai", port_providers, proposal
+                "delia", port_providers, proposal
             )
             attempt = orch.attempt("2 exemplos de terminal bala")
             assert all(

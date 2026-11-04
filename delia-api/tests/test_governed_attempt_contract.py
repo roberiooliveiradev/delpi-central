@@ -74,7 +74,10 @@ from tests.test_governed_stage_resume import _FlakyStageModel
 # --- engine registry (one entry per SupportsGovernedCapabilityAttempt
 # implementation authorized for the boundary) -------------------------
 
-ENGINE_IDS: tuple[str, ...] = ("delia", "pydantic_ai")
+# Owner-path contract matrix stays on Application sequencer (`delia`).
+# Pydantic AI investigation is covered by dedicated rework/runtime
+# suites — it must not silently re-enter ``_governed_owner_path``.
+ENGINE_IDS: tuple[str, ...] = ("delia",)
 
 
 def _build_pydantic_ai_engine(
@@ -88,10 +91,13 @@ def _build_pydantic_ai_engine(
     max_governed_attempts=1,
     llm_call_max_attempts=1,
     recovery_reuse_enabled=True,
+    investigation_model=None,
     **gates_kwargs,
 ) -> SupportsGovernedCapabilityAttempt:
     """Pydantic AI investigation runtime over shared governed gates."""
-    from pydantic_ai.models.test import TestModel
+    from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
+    from pydantic_ai.models.function import FunctionModel
+    from app.application.interaction.turn_budget import TurnDeadline
     from app.infrastructure.orchestration.pydantic_ai_investigation import (
         PydanticAiInvestigationOrchestrator,
     )
@@ -114,12 +120,39 @@ def _build_pydantic_ai_engine(
         **gates_kwargs,
         **kwargs,
     )
-    # Contract parity: the Agent must exercise a real tool call; the
-    # governed investigation tool reuses Application owner-path gates
-    # (same authority as Engine A / former LangGraph owner_path node).
+    if investigation_model is None:
+        catalog = gates._project_semantic_tool_catalog(
+            correlation="test-build",
+            deadline=TurnDeadline.start(30.0),
+        )
+        read_caps = [
+            entry
+            for entry in catalog
+            if entry.get("operation_class") == "READ"
+        ]
+        cap_id = (
+            str(read_caps[0]["capability_id"]) if read_caps else ""
+        )
+
+        def _scripted_agent(messages, _info):
+            if not any(isinstance(m, ModelResponse) for m in messages):
+                return ModelResponse(
+                    parts=[
+                        ToolCallPart(
+                            "invoke_read_capability",
+                            {
+                                "capability_id": cap_id,
+                                "arguments_json": "{}",
+                            },
+                        )
+                    ]
+                )
+            return ModelResponse(parts=[TextPart("done")])
+
+        investigation_model = FunctionModel(_scripted_agent)
     return PydanticAiInvestigationOrchestrator(
         gates,
-        model=TestModel(call_tools=["run_governed_investigation"]),
+        model=investigation_model,
         recovery_reuse_enabled=recovery_reuse_enabled,
     )
 

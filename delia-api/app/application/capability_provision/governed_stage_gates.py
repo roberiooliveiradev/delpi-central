@@ -128,10 +128,13 @@ class SupportsGovernedStageGates(Protocol):
         *,
         correlation: str,
         deadline: TurnDeadline,
+        actor_user_id: str | None = None,
     ) -> list[dict[str, Any]]:
         """Bounded live READ/DISCOVERY/ANALYSIS catalog for Agent tools.
 
         Metadata only — never authorization. Write classes omitted.
+        ``actor_user_id`` is accepted for audit lineage; live surface
+        already reflects Core AuthZ via ``_groups``.
         """
         ...
 
@@ -153,6 +156,23 @@ class SupportsGovernedStageGates(Protocol):
 
         Discovery-first candidate binding stays inside Application.
         PREPARE/ACT are rejected on this tool surface.
+        """
+        ...
+
+    def _finalize_semantic_investigation(
+        self,
+        *,
+        input_text: str,
+        collected: tuple[GovernedCapabilityAttempt, ...],
+        correlation: str,
+        workspace_context: WorkspaceContext | None,
+        deadline: TurnDeadline,
+        unbound_outcome: str | None,
+    ) -> GovernedCapabilityAttempt:
+        """Goal-coverage finalizer for Agent-collected tool attempts.
+
+        A single tool SUCCESS is never automatically the turn outcome
+        when material obligations remain (compare / multi-target).
         """
         ...
 

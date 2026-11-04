@@ -5610,3 +5610,16 @@ RESIDUALS=RC-B/RC-C/REF05 OPEN; semantic-once inside run_governed_investigation 
 ARCHITECTURE_DECISION_REQUIRED=RECORDED (LangGraph retired).
 VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
 
+## Pydantic AI semantic consolidation rework (2026-11-04)
+
+TASK=DELIA-C3-PYDANTIC-AI-UNIFIED-RUNTIME-SEMANTIC-CONSOLIDATION-AND-FUNCTIONAL-REWORK-01.
+REPORT=doc 233. BASELINE=d989ab3716/doc232. PRODUCTION_DEPLOY=NOT_AUTHORIZED. PHASE_ADVANCE=NONE.
+R1=removed `run_governed_investigation` + silent `_governed_owner_path` fallthrough from pydantic_ai adapter.
+R2=`_finalize_semantic_investigation` goal-coverage (REF05 targets + multi-source compose reuse); lone SUCCESS ≠ completion.
+R3=actor/session audit retained; AuthZ via live `_groups`; writes still rejected on tool surface.
+R4=structural `_bounded_json` (valid JSON under truncation).
+REGRESSION=delia-api pytest GREEN; new `test_pydantic_ai_semantic_rework.py`.
+LIVE_E2E=NOT_REACHED EXTERNAL_BLOCKER (docker.sock/Ollama intermittent on executor host).
+VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO (no durable real-owner READs).
+
+

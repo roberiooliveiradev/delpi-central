@@ -3484,6 +3484,299 @@ def _compare_insufficiency_attempt(
         ),
     )
 
+
+_COMPARE_INTENT = re.compile(
+    r"\b(compar(?:ar|e|ison|ação|acao)?|versus|\bvs\.?\b|"
+    r"diferen[cç]a|side[\s-]?by[\s-]?side)\b",
+    re.IGNORECASE,
+)
+# Identifier-like tokens only (must include a digit) so verbs such as
+# "compare" are never mistaken for REF05 targets.
+_TARGET_TOKEN = re.compile(
+    r"\b(?=[A-Z0-9._-]*\d)([A-Z0-9][A-Z0-9._-]{5,})\b"
+)
+
+
+def _declared_investigation_targets(text: str) -> tuple[str, ...]:
+    """Provider-neutral target tokens declared in the user ask (REF05)."""
+    found = [
+        token.upper()
+        for token in _TARGET_TOKEN.findall((text or "").upper())
+    ]
+    return tuple(dict.fromkeys(found))
+
+
+def _requests_multi_source_investigation(
+    text: str, targets: tuple[str, ...]
+) -> bool:
+    return bool(_COMPARE_INTENT.search(text or "")) or len(targets) >= 2
+
+
+def _is_business_evidence_attempt(
+    attempt: GovernedCapabilityAttempt,
+) -> bool:
+    if attempt.status is not GovernedCapabilityStatus.SUCCESS:
+        return False
+    if not (attempt.content or "").strip():
+        return False
+    if attempt.provenance is None or not attempt.provenance.is_complete:
+        return False
+    if "discovery_metadata_observation" in attempt.limitations:
+        return False
+    outcome = attempt.outcome
+    if outcome is not None and not outcome.is_complete:
+        return False
+    return True
+
+
+def _attempt_covers_target(
+    attempt: GovernedCapabilityAttempt, target: str
+) -> bool:
+    needle = (target or "").upper()
+    if not needle:
+        return False
+    haystacks = [
+        attempt.content or "",
+        attempt.markdown_content or "",
+    ]
+    if attempt.provenance is not None:
+        haystacks.extend(
+            ref.source_id for ref in attempt.provenance.source_refs
+        )
+    if attempt.outcome is not None:
+        haystacks.append(str(attempt.outcome.structured or ""))
+    blob = "\n".join(haystacks).upper()
+    return needle in blob
+
+
+def _finalize_agent_collected_attempts(
+    orchestrator: "OperationalCapabilityOrchestrator",
+    *,
+    input_text: str,
+    collected: tuple[GovernedCapabilityAttempt, ...],
+    correlation: str,
+    workspace_context: WorkspaceContext | None,
+    deadline: TurnDeadline,
+    unbound_outcome: str | None,
+) -> GovernedCapabilityAttempt:
+    """Goal-coverage finalizer for Pydantic AI tool observations (R2).
+
+    Never promotes a lone tool SUCCESS into a grounded comparison when
+    declared targets or multi-source obligations remain unmet.
+    """
+    if not collected:
+        _logger.info(
+            "orchestration stage=semantic_finalize "
+            "decision=no_tool_observations correlation_id=%s",
+            correlation,
+        )
+        return GovernedCapabilityAttempt(
+            status=GovernedCapabilityStatus.NOT_APPLICABLE,
+            correlation_id=correlation,
+            admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+            limitations=(LIMITATION_INSUFFICIENT_EVIDENCE,),
+            error_code="investigation_no_tool_observations",
+        )
+
+    business = tuple(
+        item for item in collected if _is_business_evidence_attempt(item)
+    )
+    targets = _declared_investigation_targets(input_text)
+    multi = _requests_multi_source_investigation(input_text, targets)
+    limitations: list[str] = []
+
+    if multi:
+        if len(business) < 2:
+            limitations.append(LIMITATION_INSUFFICIENT_EVIDENCE)
+            limitations.append("comparison_source_missing")
+            _logger.info(
+                "orchestration stage=semantic_finalize "
+                "decision=insufficient_sources business=%d "
+                "targets=%d correlation_id=%s",
+                len(business),
+                len(targets),
+                correlation,
+            )
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                limitations=tuple(dict.fromkeys(limitations))[:24],
+                error_code="investigation_incomplete_coverage",
+            )
+        unmatched = [
+            target
+            for target in targets
+            if not any(
+                _attempt_covers_target(item, target) for item in business
+            )
+        ]
+        if unmatched:
+            limitations.append(LIMITATION_INSUFFICIENT_EVIDENCE)
+            limitations.append("ref05_target_unbound")
+            limitations.extend(
+                f"ref05_missing_target:{token}" for token in unmatched[:8]
+            )
+            _logger.info(
+                "orchestration stage=semantic_finalize "
+                "decision=ref05_unbound missing=%s correlation_id=%s",
+                unmatched[:8],
+                correlation,
+            )
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                limitations=tuple(dict.fromkeys(limitations))[:24],
+                error_code="investigation_target_binding_failed",
+            )
+
+        sources: dict[str, tuple[Mapping[str, Any], ...]] = {}
+        lineages: dict[str, tuple] = {}
+        observations: list[str] = []
+        for item in business:
+            outcome = item.outcome
+            provenance = item.provenance
+            if outcome is None or provenance is None:
+                continue
+            records = _comparison_records(outcome)
+            if not records:
+                continue
+            rows = _flatten_evidence_records(records)
+            if not rows:
+                continue
+            min_depth = min(len(row["path"]) for row in rows)
+            roots = [
+                row for row in rows if len(row["path"]) == min_depth
+            ]
+            if len(roots) != 1 or not roots[0].get("code"):
+                continue
+            root_id = str(roots[0]["code"])
+            if root_id in sources:
+                continue
+            sources[root_id] = records
+            lineages[root_id] = provenance.source_refs
+            observations.append(outcome.provenance.observed_at)
+
+        if len(sources) != 2:
+            limitations.append(LIMITATION_INSUFFICIENT_EVIDENCE)
+            limitations.append("comparison_source_missing")
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                limitations=tuple(dict.fromkeys(limitations))[:24],
+                error_code="investigation_incomplete_coverage",
+            )
+
+        composed = orchestrator._compose_multi_evidence(
+            sources,
+            input_text,
+            correlation=correlation,
+            workspace_context=workspace_context,
+            deadline=deadline,
+        )
+        if composed is None:
+            limitations.append(LIMITATION_INSUFFICIENT_EVIDENCE)
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                limitations=tuple(dict.fromkeys(limitations))[:24],
+                error_code="investigation_composition_unavailable",
+            )
+        content, comp_limitations, verdict = composed
+        if verdict not in ("agreement", "differences_found"):
+            limitations.extend(comp_limitations)
+            limitations.append(LIMITATION_INSUFFICIENT_EVIDENCE)
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                limitations=tuple(dict.fromkeys(limitations))[:24],
+                error_code="investigation_composition_unverified",
+            )
+        roots = tuple(sources)
+        verified = VerifiedCompositeEvidence(
+            source_roots=(roots[0], roots[1]),
+            source_lineage=(lineages[roots[0]], lineages[roots[1]]),
+            observed_at=max(observations),
+            correlation_id=correlation,
+            verdict=verdict,
+        )
+        _logger.info(
+            "orchestration stage=semantic_finalize "
+            "decision=verified_composition verdict=%s "
+            "correlation_id=%s",
+            verdict,
+            correlation,
+        )
+        return GovernedCapabilityAttempt(
+            status=GovernedCapabilityStatus.SUCCESS,
+            correlation_id=correlation,
+            content=content,
+            limitations=tuple(comp_limitations)[:24],
+            verified_composition=verified,
+        )
+
+    # Simple single-source ask: one business evidence SUCCESS is enough.
+    if len(business) == 1:
+        if targets and not _attempt_covers_target(business[0], targets[0]):
+            # Soft check for a single declared target — fail closed when
+            # the only token is clearly unbound (REF05 sibling).
+            if len(targets) == 1 and len(targets[0]) >= 6:
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                    correlation_id=correlation,
+                    admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                    limitations=(
+                        LIMITATION_INSUFFICIENT_EVIDENCE,
+                        "ref05_target_unbound",
+                        f"ref05_missing_target:{targets[0]}",
+                    ),
+                    error_code="investigation_target_binding_failed",
+                )
+        return business[0]
+
+    if business:
+        # Multiple non-compare successes without a compose path —
+        # return the last business observation with an honest limitation.
+        last = business[-1]
+        return GovernedCapabilityAttempt(
+            status=last.status,
+            correlation_id=correlation,
+            content=last.content,
+            limitations=tuple(
+                list(last.limitations)
+                + ["multiple_observations_without_compose"]
+            )[:24],
+            provenance=last.provenance,
+            outcome=last.outcome,
+            markdown_content=last.markdown_content,
+        )
+
+    last = collected[-1]
+    _logger.info(
+        "orchestration stage=semantic_finalize "
+        "decision=no_business_evidence status=%s correlation_id=%s",
+        last.status.value,
+        correlation,
+    )
+    return GovernedCapabilityAttempt(
+        status=last.status
+        if last.status is not GovernedCapabilityStatus.SUCCESS
+        else GovernedCapabilityStatus.NOT_APPLICABLE,
+        correlation_id=correlation,
+        content=last.content,
+        limitations=tuple(
+            list(last.limitations) + [LIMITATION_INSUFFICIENT_EVIDENCE]
+        )[:24],
+        error_code=last.error_code or "investigation_no_business_evidence",
+        admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+        provenance=last.provenance,
+        outcome=last.outcome,
+    )
+
 def _project_surface(
     groups: Mapping[str, CapabilityGroup],
 ) -> list[tuple[str, ProviderCapability]]:
@@ -12707,12 +13000,21 @@ class OperationalCapabilityOrchestrator:
         *,
         correlation: str,
         deadline: TurnDeadline,
+        actor_user_id: str | None = None,
     ) -> list[dict[str, Any]]:
         """Live READ/DISCOVERY/ANALYSIS catalog for Agent tools (doc 231).
 
         Write classes are omitted. Entries are untrusted metadata —
-        never authorization. Schemas are size-bounded.
+        never authorization. Schemas are size-bounded. Live Core AuthZ
+        is applied by ``_groups`` (request-scoped identity); the actor
+        id is logged for audit lineage only.
         """
+        _logger.info(
+            "orchestration stage=semantic_tool_catalog "
+            "decision=project actor=%s correlation_id=%s",
+            (actor_user_id or "")[:64] or "-",
+            correlation,
+        )
         groups, _failures = self._groups(correlation, deadline)
         catalog: list[dict[str, Any]] = []
         for group in groups.values():
@@ -12787,9 +13089,23 @@ class OperationalCapabilityOrchestrator:
         write classes on this surface, validates arguments against the
         owner schema, and routes through ``_invoke_selected`` so
         discovery-first candidate binding stays Application-owned.
+
+        AuthZ: live surface from ``_groups`` (Core identity already
+        bound on the request). ``prepare_only`` cannot elevate writes —
+        write classes are rejected on this tool surface. Actor/session
+        are retained for audit lineage.
         """
-        del actor_user_id, session_id, prepare_only
         cap_id = (capability_id or "").strip()
+        _logger.info(
+            "orchestration stage=semantic_tool_invoke "
+            "decision=start capability=%s actor=%s session=%s "
+            "prepare_only=%s correlation_id=%s",
+            cap_id[:120],
+            (actor_user_id or "")[:64] or "-",
+            (session_id or "")[:64] or "-",
+            bool(prepare_only),
+            correlation,
+        )
         if not cap_id:
             return GovernedCapabilityAttempt(
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,
@@ -12826,6 +13142,9 @@ class OperationalCapabilityOrchestrator:
                 correlation_id=correlation,
                 error_code="write_capability_not_exposed_to_agent_tools",
             )
+        # READ tool surface never executes prepare/act even when the
+        # turn ceiling is prepare_only — writes stay on confirmation
+        # chain. prepare_only is recorded for audit only.
         args = dict(arguments or {})
         if descriptor.input_schema is not None:
             try:
@@ -12901,11 +13220,51 @@ class OperationalCapabilityOrchestrator:
                 field_labels=self._field_labels,
             )
 
-        return _success_attempt(
+        attempt = _success_attempt(
             correlation_id=correlation,
             binding=binding,
             outcome=outcome,
             render=_render,
+        )
+        # Tag discovery so goal finalization never treats catalog
+        # metadata as business evidence (R2).
+        if descriptor.operation_class is SpecialistOperationClass.DISCOVERY:
+            limitations = tuple(attempt.limitations) + (
+                "discovery_metadata_observation",
+            )
+            return GovernedCapabilityAttempt(
+                status=attempt.status,
+                correlation_id=attempt.correlation_id,
+                content=attempt.content,
+                limitations=limitations,
+                error_code=attempt.error_code,
+                provenance=attempt.provenance,
+                outcome=attempt.outcome,
+                markdown_content=attempt.markdown_content,
+                admission_outcome=attempt.admission_outcome,
+                verified_composition=attempt.verified_composition,
+            )
+        return attempt
+
+    def _finalize_semantic_investigation(
+        self,
+        *,
+        input_text: str,
+        collected: tuple[GovernedCapabilityAttempt, ...],
+        correlation: str,
+        workspace_context: WorkspaceContext | None,
+        deadline: TurnDeadline,
+        unbound_outcome: str | None,
+    ) -> GovernedCapabilityAttempt:
+        """R2 — conclude from goal coverage, not a lone tool SUCCESS."""
+        return _finalize_agent_collected_attempts(
+            self,
+            input_text=input_text,
+            collected=collected,
+            correlation=correlation,
+            workspace_context=workspace_context,
+            deadline=deadline,
+            unbound_outcome=unbound_outcome,
         )
 
     def _select_group(

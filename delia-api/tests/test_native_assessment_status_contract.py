@@ -255,7 +255,7 @@ def _assessment_decisions(caplog):
     ]
 
 
-@pytest.mark.parametrize("engine", ["delia", "pydantic_ai"])
+@pytest.mark.parametrize("engine", ["delia"])
 def test_r9_r10_r13_r14_invalid_status_turn_stays_governed(
     engine, capture_assessment_logs
 ):
@@ -279,7 +279,7 @@ def test_r9_r10_r13_r14_invalid_status_turn_stays_governed(
     assert attempt is not None
 
 
-@pytest.mark.parametrize("engine", ["delia", "pydantic_ai"])
+@pytest.mark.parametrize("engine", ["delia"])
 def test_r18_valid_statuses_turn_parity(
     engine, capture_assessment_logs
 ):
@@ -292,7 +292,7 @@ def test_r18_valid_statuses_turn_parity(
     assert pa.calls
 
 
-@pytest.mark.parametrize("engine", ["delia", "pydantic_ai"])
+@pytest.mark.parametrize("engine", ["delia"])
 def test_r18b_missing_status_turn_fails_closed(
     engine, capture_assessment_logs
 ):
