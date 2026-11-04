@@ -219,6 +219,36 @@ def test_project_preserves_published_order_and_leading_zeros() -> None:
     assert result["work_center_queues"][1]["work_center"] == "TOR-02"
 
 
+def test_project_work_centers_catalog_sorted_by_code() -> None:
+    """Seleção de postos: catálogo alfabético pelo código (≠ ordem PUBLISHED)."""
+    row = {
+        "generation_id": "g1",
+        "row_version": "1",
+        "payload_json": _payload(
+            [
+                _op(work_center="TOR-02", order="OP1"),
+                _op(work_center="CNC-01", order="OP2"),
+                _op(work_center="015", order="OP3"),
+                _op(work_center="012", order="OP4"),
+            ]
+        ),
+    }
+    result = project_published_queue(row, branch="01")
+    assert [item["work_center"] for item in result["work_centers"]] == [
+        "012",
+        "015",
+        "CNC-01",
+        "TOR-02",
+    ]
+    # Filas por CT continuam na ordem de primeira aparição na publicação.
+    assert [group["work_center"] for group in result["work_center_queues"]] == [
+        "TOR-02",
+        "CNC-01",
+        "015",
+        "012",
+    ]
+
+
 def test_closed_balance_excluded_unknown_kept() -> None:
     row = {
         "generation_id": "g1",

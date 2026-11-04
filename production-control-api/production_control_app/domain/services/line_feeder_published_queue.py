@@ -196,14 +196,20 @@ def project_published_queue(
             "end_date": _iso(row.get("end_date")),
         },
         "queue_status": "empty" if operation_count == 0 else "available",
-        "work_centers": [
-            {
-                "work_center": group["work_center"],
-                "work_center_name": group["work_center_name"],
-                "operation_count": len(group["operations"]),
-            }
-            for group in groups
-        ],
+        # Catálogo de seleção: código do CT em ordem alfabética.
+        # work_center_queues mantém a ordem de primeira aparição na PUBLISHED
+        # (sequência operacional por CT permanece intacta).
+        "work_centers": sorted(
+            [
+                {
+                    "work_center": group["work_center"],
+                    "work_center_name": group["work_center_name"],
+                    "operation_count": len(group["operations"]),
+                }
+                for group in groups
+            ],
+            key=lambda item: str(item["work_center"]).casefold(),
+        ),
         "work_center_queues": groups,
         "operation_count": operation_count,
         "work_center_count": len(groups),

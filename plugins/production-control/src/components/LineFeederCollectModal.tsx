@@ -86,12 +86,19 @@ export function LineFeederCollectModal({
 
   const options = useMemo(
     () =>
-      centers.map((center) => ({
-        value: center.work_center,
-        label: center.work_center_name
-          ? `${center.work_center} · ${center.work_center_name}`
-          : center.work_center,
-      })),
+      [...centers]
+        .sort((a, b) =>
+          a.work_center.localeCompare(b.work_center, "pt-BR", {
+            numeric: true,
+            sensitivity: "base",
+          }),
+        )
+        .map((center) => ({
+          value: center.work_center,
+          label: center.work_center_name
+            ? `${center.work_center} · ${center.work_center_name}`
+            : center.work_center,
+        })),
     [centers],
   );
 
