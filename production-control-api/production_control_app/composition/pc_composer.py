@@ -297,6 +297,22 @@ def build_line_feeder_pick_plan_repository() -> LineFeederPickPlanRepositoryPort
     return PostgresLineFeederPickPlanRepository()
 
 
+def build_myweg_needs_repository():
+    from production_control_app.infrastructure.persistence.postgres_myweg_needs_repository import (
+        PostgresMyWegNeedsRepository,
+    )
+
+    return PostgresMyWegNeedsRepository()
+
+
+def build_myweg_needs_service(repository=None):
+    from production_control_app.application.services.myweg_needs_service import (
+        MyWegNeedsService,
+    )
+
+    return MyWegNeedsService(repository or build_myweg_needs_repository())
+
+
 def build_line_feeder_service(
     gateway: DelpiProductionGateway | None = None,
     *,

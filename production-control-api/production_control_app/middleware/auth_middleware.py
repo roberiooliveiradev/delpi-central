@@ -26,7 +26,12 @@ def _is_public_route(path: str) -> bool:
 
 def _is_internal_integration(path: str) -> bool:
     normalized = normalize_path(path)
-    return normalized.startswith("/integrations/mes/") or "/production-control-api/integrations/mes/" in normalized
+    return (
+        normalized.startswith("/integrations/mes/")
+        or "/production-control-api/integrations/mes/" in normalized
+        or normalized.startswith("/integrations/myweg/")
+        or "/production-control-api/integrations/myweg/" in normalized
+    )
 
 
 async def jwt_middleware(request: Request, call_next):

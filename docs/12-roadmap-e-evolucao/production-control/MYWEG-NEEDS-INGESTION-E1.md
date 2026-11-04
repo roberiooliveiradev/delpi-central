@@ -144,7 +144,7 @@ quantidade_mi = quantidade_original_un / 1000
 
 Códigos de erro estáveis (domínio): `branch_not_allowed`, `filial_01_forbidden`, `company_mismatch`, `work_center_mismatch`, `record_count_mismatch`, `totals_mismatch`, `payload_sha256_mismatch`, `duplicate_line`, `invalid_record`, `contract_version_unsupported`, `missing_required_field`, `invalid_source_files`.
 
-## 6. Transporte proposto (não implementado em E1)
+## 6. Transporte (implementado na E2)
 
 ```text
 Linux connector (homologado)
@@ -157,12 +157,7 @@ Linux connector (homologado)
      Body: myweg.needs.batch.v1
 ```
 
-Alinhamento ao padrão existente:
-
-- estender `_is_internal_integration` para `/integrations/myweg/` (espelho de MES);
-- handler com `request_has_valid_internal_service_token`;
-- envelope de resposta PC `{ success, message, data }`;
-- **persistência e aceite produtivo ficam para etapa posterior**.
+Detalhe de persistência, consultas JWT e idempotência: [MYWEG-NEEDS-INGESTION-E2.md](./MYWEG-NEEDS-INGESTION-E2.md).
 
 ## 7. Atividades manuais no Linux (responsável da origem)
 

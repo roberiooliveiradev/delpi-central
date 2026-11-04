@@ -71,6 +71,12 @@
       "module": "production-control"
     },
     {
+      "code": "production-control.myweg-needs.view",
+      "name": "Necessidades WEG",
+      "description": "Consultar o histórico de coletas MyWEG (Necessidades) da filial 02.",
+      "module": "production-control"
+    },
+    {
       "code": "production-control.view.filial-01",
       "name": "Portal PCP — filial 01 (SC)",
       "description": "Consultar dados TOTVS da filial 01.",

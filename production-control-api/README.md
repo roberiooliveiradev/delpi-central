@@ -62,6 +62,13 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | POST | `/integrations/mes/downtime-reasons` | S2S interno — administração: cria motivo (201; duplicado → 409) |
 | PUT | `/integrations/mes/downtime-reasons/{code}` | S2S interno — administração: edita label/category/requiresNote/sortOrder (`code` imutável; 404 se inexistente) |
 | PATCH | `/integrations/mes/downtime-reasons/{code}/active` | S2S interno — administração: ativa/desativa motivo (`setup` protegido → 409) |
+| POST | `/integrations/myweg/need-batches` | S2S interno — ingestão de lote `myweg.needs.batch.v1` (filial 02; Idempotency-Key) |
+| GET | `/myweg/need-batches` | JWT + `myweg-needs.view` + filial 02 — lista coletas aceitas |
+| GET | `/myweg/need-batches/latest` | JWT — última coleta válida |
+| GET | `/myweg/need-batches/{batchId}` | JWT — resumo da coleta |
+| GET | `/myweg/need-batches/{batchId}/items` | JWT — itens paginados (`search`, `remessaFrom`, `remessaTo`) |
+
+Contrato e persistência: [MYWEG-NEEDS-INGESTION-E2.md](../docs/12-roadmap-e-evolucao/production-control/MYWEG-NEEDS-INGESTION-E2.md).
 
 ### Integração Production Pulse (MES shadow)
 

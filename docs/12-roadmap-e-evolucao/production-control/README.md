@@ -59,7 +59,8 @@ A Análise de problemas é **grade de detectores**: cada card é uma regra regis
 
 ## Integração MyWEG (Necessidades · filial 02)
 
-Etapa 1 (contrato versionado `myweg.needs.batch.v1` + normalização Decimal UN→MI, sem importação produtiva): [MYWEG-NEEDS-INGESTION-E1.md](./MYWEG-NEEDS-INGESTION-E1.md). Não há endpoint HTTP nem tabela histórica nesta etapa.
+- Etapa 1 (contrato `myweg.needs.batch.v1` + normalização): [MYWEG-NEEDS-INGESTION-E1.md](./MYWEG-NEEDS-INGESTION-E1.md).
+- Etapa 2 (persistência V025, POST S2S, consultas JWT, sem MFE): [MYWEG-NEEDS-INGESTION-E2.md](./MYWEG-NEEDS-INGESTION-E2.md).
 
 ## Produto relacionado
 

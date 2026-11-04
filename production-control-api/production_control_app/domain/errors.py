@@ -267,3 +267,19 @@ class SequencingProfileNotFound(ProductionControlError):
 
 class SequencingProfileConflict(ProductionControlError):
     """Revisão divergente ou estado incompatível com a alteração pedida."""
+
+
+class MyWegNeedsBatchConflict(ProductionControlError):
+    """Mesmo collection_id com payload diferente — lote original preservado."""
+
+
+class MyWegNeedsBatchNotFound(ProductionControlError):
+    """Lote MyWEG inexistente no histórico da filial 02."""
+
+
+class MyWegNeedsValidationFailed(ProductionControlError):
+    """Lote MyWEG rejeitado pela validação do contrato v1."""
+
+    def __init__(self, message: str, *, issues: list[dict] | None = None) -> None:
+        super().__init__(message)
+        self.issues = issues or []
