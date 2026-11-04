@@ -66,14 +66,12 @@ Sem backfill em massa. Sem ativar agenda.
 
 | Item | Estado |
 |------|--------|
-| Commit | `9d0abef0db` em `main` (ancestral de `origin/main`) |
-| Testes locais | `24 passed` (`test_myweg_needs_publisher` + `test_myweg_needs_e2`) |
-| Gates | Phase3 + platform guardrails OK vs `b37ed287dc` |
+| Feature + fixes | `9d0abef0db` … `30eea7225f` em `main` |
+| Testes locais | publisher + E1/E2 + CSV `;`/aliases |
 | Agendamento | **DESATIVADO** (`profiles: [manual]`; sem cron/timer) |
-| Deploy srv-api (`production-control-api`) | **PROVEN** — pull `13a4e11d76` + rebuild/recreate OK |
-| Smoke dry-run / reenvio publisher | **PENDING** — 1ª tentativa em `infra/` rejeitou normalização (CSV real ≠ fixture); correção de delimitador/aliases em andamento |
-
-> Se dry-run ainda falhar, cole `head -1` do CSV e o trecho `chaves_recebidas=` do erro.
+| Deploy srv-api | **PROVEN** — rebuild `production-control-api` |
+| Smoke dry-run | **PROVEN** — 532 · 745746 UN · 2 refs vazias · `http.sent=false` |
+| Smoke reenvio | **PROVEN** — HTTP 200 · `created=false` · id `bcf31e45-c812-4316-95e2-9bb9f6e46707` · sha `f2c20b35…` |
 
 ## Correção /latest (E2 follow-up)
 
