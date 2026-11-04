@@ -63,3 +63,30 @@ Verified existing domain models at input SHA:
 ## 5. Devin master instruction
 
 **TASK_ID=DELIA-C3-E4-R6-CANONICAL-ENTITY-BINDING-AND-FUNCTIONAL-CLOSURE-01**. Reanchor main and all authorities. Execute doc228 S0–S7 as one authorized program. Before claiming missing reference capability, prove existing EntityRef/EvidenceRef/SourceRef/SessionContext producers and consumers. Bind scoped session references into semantic-goal handling without turning history/model into FACT. Validate/revalidate targets through live Core/Domain-capability owner; use existing graph to fulfill minimal authorized READ obligations without regex or product-hardcoded prompt building. Ensure comparison matches exact requested evidence and deterministic oracle, repeated same-session and single-turn real Qwen3+DAVI E2E with client-visible grounded responses and bounded latency. If 4B is still intrinsically unstable after correct reference binding, run already-authorized local available larger-model A/B; no cutover. RED→GREEN, full regression, adversarial/sibling, evidence, report, ledger, safe main push. Do not stop after diagnosis/first GREEN; report functional candidate only if REF01–REF08/G04/G05/G07/G12 pass; otherwise precise authority or infrastructure blocker. Production deploy not authorized.
+
+
+## 6. Coordination review after S0 — continue same R6 task; correction of contract inventory (2026-11-03)
+
+**INPUT_SHA:** `91716edd31`, verified main. **STATUS:** `S0_ACCEPTED_WITH_CORRECTION / R6_IMPLEMENTATION_PENDING`; NO new planning round. S0 commit updated **only the execution-ledger**, not runtime. **THE SAME R6 TASK MUST EXECUTE S1–S7** without returning S0-only as its terminal deliverable.
+
+### Direct source correction (code checked at input SHA)
+
+- `EntityRef`, `EvidenceRef`, `SourceRef`: **PROVEN** in `app/domain/evidence/model.py`.
+- `SessionContext.entity_refs`: **PROVEN** in `app/domain/interaction/model.py`.
+- `InteractionTurn.entity_refs`: **NOT PRESENT** in `app/domain/interaction/model.py` (contains `evidence_refs`, `source_refs`, but no `entity_refs`). The S0 ledger/report statement claiming an existing `InteractionTurn.entity_refs` is **FACTUAL_DRIFT**; do not implement it as if already existing.
+- `handle_interactive_turn._grounded_result` currently writes only `source_refs` to `InteractionTurn` and `InteractiveTurnResult`; complete owner outcome exists as `attempt.outcome` only before projection; trace exact lifecycle before choosing where to project references.
+- `GovernedCapabilityProvenance.source_refs` references source origin, **not specific business entity**. Never convert a source ref or transport capability name into an `EntityRef` without typed real owner-record validation.
+- The runtime producer/consumer of `ConversationContextTurn.entity_refs`, actual serialization and whether client-supplied prior-turn fields are trustworthy MUST be verified; typed fields in a contract do not prove provenance. **A client could replay forged references** if server fails to correlate with authenticated session or fresh owner evidence.
+- S0's notion of simply wiring `InteractionTurn.entity_refs` is not currently an existing field. A small additive **internal** field may be created if legitimate consumers require it, under existing doc228 approval, but only after producer/consumer/transport analysis and no change to public HTTP/session retention behavior; if public schema/retention changes are required, STOP the affected contract decision.
+
+### Mandatory S1–S7 execution focus (no handoff loop)
+
+1. Write RED tests for (a) accurate owner-backed entity refs at grounded turn close, (b) absence/partial/ambiguous owner data yields no fabricated ref, (c) binding references to the SAME authenticated session/turn source, (d) cross-user/session client spoof/replay cannot grant a verified referent, (e) corrected `as duas` reference order and three-entity ambiguity, (f) real two-tree result/negative AuthZ.
+2. Prefer existing context/attempt/model objects and minimal additive internal projection to carry typed entities where they have **legitimate producer evidence**. Never create a new TargetRef/store/registry. Distinguish owner record codes (typed) from arbitrary extracted strings in model-created payload; owner still revalidates ref at read time.
+3. Implement same R6 producer→consumer binding through existing Application boundaries, and prove exactly where grounded evidence is turned into scoped context, how `ConversationContextTurn` is reconstructed securely, and how reauthorization occurs on follow-up. Do not put untrusted user-provided entity_refs into an elevated trusted channel.
+4. Reuse current semantic goal proposal and authorized capability selection; build READ obligations without another product-specific natural-language builder or numeric regex; if no generic typed requirement can be transported in the existing SubObjective/port, document the *minimal* additive internal contract with consumers and compatibility, then implement only if within bounded approval. No new planner.
+5. Verify exact intended target set vs owner-backed source-set, preserve entity scope, owner and duplicate occurrence distinction; correct oracle and normal PT-BR response, no extra analysis owner unless legitimately requested.
+6. Run final SHA real local Qwen3/Pydantic AI/LangGraph/Keycloak/Core/DAVI-typed outcome, both one-turn and same-session A01→A02→A03, with repeated, sibling, negative, unknown, revoked/cancel and gateway timing tests. Report **all** trials, stage failure taxonomy and exact authoritative proof; no lucky single 200.
+7. Complete REG/REF01–REF08/G04/G05/G07/G12, cleanup, docs/ledger, safe main commit/push; report `FUNCTIONAL_ACCEPTANCE_CANDIDATE` only if ALL mandatory customer-visible outcomes verified. Otherwise precise governance/external blocker, not another S1-only inventory return.
+
+**S0 ACCEPTED:** factual search for missing wiring; **S0 CONTRACT ASSERTION CORRECTED:** `InteractionTurn.entity_refs` not present. **CONTINUE_TASK:** `DELIA-C3-E4-R6-CANONICAL-ENTITY-BINDING-AND-FUNCTIONAL-CLOSURE-01`, stages S1–S7. **PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
