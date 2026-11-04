@@ -1,5 +1,7 @@
 # 153 — R09 Faturamento × MOD: plano de reorganização visual, wireframes e reuso do plugin-ui
 
+> **Adendo de revisão (04/11/2026):** houve implementação parcial no commit `b3435e7ec1`, sem deploy autorizado. A auditoria independente e o backlog de correções estão no [Documento 154](./154-auditoria-residuais-r09-master-detail-2026-11-04.md). Este documento 153 permanece o **plano de design**, não um registro de aceite ou homologação.
+
 **Produto:** Portal Controladoria & Finanças · **Processo:** PROC-0072 · **Página:** R09 — Faturamento × MOD · **Data:** 2026-11-04.
 **Estado:** `TARGET / PLAN_ONLY / PENDING_PO_VISUAL_APPROVAL`. Este documento **não** atesta implementação, homologação, testes, smoke ou deploy; nenhum contrato foi alterado.
 **Owner proposto:** Portal Controladoria & Finanças (experiência MFE); contrato e semântica operacional permanecem com os respectivos owners BFF/TOTVS/Controladoria.
