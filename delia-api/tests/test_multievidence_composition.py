@@ -168,17 +168,23 @@ def _orc():
     return o
 
 
-def test_session_refs_two_distinct_bind():
-    refs = [
+def test_client_carried_two_distinct_refs_do_not_auto_bind():
+    # Even two distinct well-formed refs may be client-forged; neither
+    # DELIA_RESULT labeling nor a successful READ attests prior-turn origin.
+    refs = (
         _ERef("produto", "90260147", "delpi"),
         _ERef("produto", "90260148", "delpi"),
-    ]
-    out = _orc()._subobjectives_from_session_refs(
-        (_RefTurn((refs[0],)), _RefTurn((refs[1],))), _Goal()
     )
-    assert out is not None and len(out) == 2
-    ids = {s.goal for s in out}
-    assert ids == {"produto 90260147", "produto 90260148"}
+    turns = (_RefTurn((refs[0],)), _RefTurn((refs[1],)))
+    assert _orc()._subobjectives_from_session_refs(turns, _Goal()) is None
+
+
+def test_client_forged_two_distinct_refs_do_not_trigger_reads():
+    forged = (
+        _RefTurn((_ERef("qualquer", "forged-A", "other-owner"),)),
+        _RefTurn((_ERef("qualquer", "forged-B", "other-owner"),)),
+    )
+    assert _orc()._subobjectives_from_session_refs(forged, _Goal()) is None
 
 
 def test_session_refs_ambiguous_three_returns_none():
