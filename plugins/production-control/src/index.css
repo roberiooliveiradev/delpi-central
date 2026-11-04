@@ -4451,10 +4451,22 @@
 }
 
 /*
- * Atmosfera do Alimentador: o PNG já traz ondas + bobinas no canto superior direito.
- * Não empilhar wash extra (escondia a foto). Preencher a área útil e ancorar em right top.
+ * Atmosfera do Alimentador: o PNG (1672×941) concentra ondas/bobinas no terço superior
+ * e fica quase branco na metade inferior. Por isso:
+ * 1) a cena precisa ocupar a coluna até o fim da viewport;
+ * 2) a arte é ampliada a partir do topo-direito para cobrir a área útil sem
+ *    “faixa vazia” (a faixa clara inferior do PNG é cortada pelo overflow).
  */
+.dashboard-production-control:has(.ppc-feeder-scene).dashboard-page,
+.dashboard-production-control:has(.ppc-feeder-scene) .ppc-app-shell {
+  min-height: 100%;
+  min-height: 100dvh;
+}
+
 .dashboard-production-control .ppc-workspace:has(> .ppc-feeder-scene) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
   min-height: 100%;
 }
 
@@ -4463,7 +4475,9 @@
   isolation: isolate;
   overflow: hidden;
   flex: 1 1 auto;
-  min-height: max(100%, calc(100dvh - 96px));
+  width: 100%;
+  min-height: 100%;
+  min-height: calc(100svh - 72px);
   background-color: #eef6fb;
 }
 
@@ -4477,6 +4491,8 @@
   background-repeat: no-repeat;
   background-size: cover;
   background-position: right top;
+  transform: scale(1.45);
+  transform-origin: top right;
 }
 
 .dashboard-production-control .ppc-feeder-scene > * {
@@ -4486,18 +4502,21 @@
 
 @media (max-width: 1100px) {
   .dashboard-production-control .ppc-feeder-scene::before {
-    background-position: 70% top;
+    background-position: 72% top;
+    transform: scale(1.55);
+    transform-origin: top right;
   }
 }
 
 @media (max-width: 768px) {
   .dashboard-production-control .ppc-feeder-scene {
-    min-height: max(100%, calc(100dvh - 140px));
+    min-height: calc(100svh - 120px);
   }
 
   .dashboard-production-control .ppc-feeder-scene::before {
-    background-position: 62% top;
-    opacity: 0.9;
+    background-position: 64% top;
+    transform: scale(1.7);
+    opacity: 0.92;
   }
 }
 
