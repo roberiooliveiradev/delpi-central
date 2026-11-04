@@ -207,3 +207,68 @@ G) Produtivo autenticado — rota/contexto; somente após gate release
 - **Relatório do executor** `CF-PROC0072-R09-VISUAL-IMPLEMENTATION-001`: informou `430/431` e a falha `DocumentDetailPanel`; não foi reexecutado neste review.
 
 **Próximo passo:** aprovar/ajustar decisões `7`, executar G0 e G1 com minimal diff, validar G2–G4; solicitar novo GPT REVIEW antes de qualquer deploy. Sem esse gate, **`NO_DEPLOY`**.
+
+---
+
+## 10. Fechamento de execução — RW02-VERIFICATION (2026-11-04)
+
+Executor: Devin · HEAD de execução: `a3657c0699`+ · Commits: `8ab969db27` (RW01) + verificação RW02.
+**Inventário do produtor BFF (PROVEN):** `billing_mod_breakdown_projection.py` é pass-through — não filtra/trunca âncoras; grão da âncora = `(branch, product)` único por construção (`billed` dict por produto em `_build_branch_anchors`); repositório api-delpi sem `TOP`/`LIMIT`/`OFFSET`; estados reais de `TypedNumber.state`: `source_missing`, `computed`, `shy_frozen_op`, `sg2_cadastral` (lowercase); códigos `sourceMissing`: `cost_rate_basis`, `route_operations_missing`, `resource_mod_bridge_unmapped`; `costProduct` **nunca é emitido** pelo produtor (campo só de contrato → renderiza «—»); `measuredAt` é data civil `YYYY-MM-DD`; `homologationStatus` textual «pending (DR-3, Controladoria)». Completude = «registros retornados pela consulta», sem total universal declarado.
+
+### 10.1 Matriz de resíduos R09-01 a R09-24
+
+| ID | Estado | Evidência/teste |
+|---|---|---|
+| R09-01 costProduct | **FIX_VERIFIED** (coluna existe; produtor nunca emite → «—») | Teste dedicado (valor/zero/null/estados) |
+| R09-02 getSearchText | **FIX_VERIFIED** | 6 testes no `DataTableSection` real (código, descrição, filial, sem-resultado, limpar, 521 itens) |
+| R09-03 completude | **FIX_VERIFIED parcial** — textos «registros retornados»; produtor sem LIMIT comprovado; total universal não declarado | Inventário BFF/api-delpi |
+| R09-04 autorização decisões | **DECISION_REQUIRED** — doc 153 segue `PLAN_ONLY/PENDING_PO_VISUAL_APPROVAL` | Ledger §7 preservado |
+| R09-05 validação visual integral | **PARTIAL** — hero+master comprovados (PO + capturas); matriz completa viewports/zoom em RW02 | Capturas RW02 |
+| R09-06 loading | **FIX_VERIFIED** — `CfLoadingCard` | Código + render |
+| R09-07 erro seguro | **FIX_VERIFIED** — mensagens públicas por status, sem interpolação técnica | Teste retry/erro |
+| R09-08 updatedAt | **FIX_VERIFIED** — só seta em sucesso; erro preserva último sucesso | Código |
+| R09-09 estados tipados | **FIX_VERIFIED** — labels por estados reais do produtor + `title` com `reason`/`detail`; null nunca vira zero | Inventário + teste lowercase |
+| R09-10 precisão | **FIX_VERIFIED** — `\|v\|<0.0001` → algarismos significativos (nunca «0» visual falso) | Teste 0,00001 |
+| R09-11 chaves | **PARTIAL** — `sourceOp` incluído; unicidade do grão master PROVEN por construção; unicidade intra-âncora `TO_INVENTORY` | Inventário produtor |
+| R09-12 seleção | **FIX_VERIFIED** — detalhe derivado do payload corrente (`find` por chave); some se âncora não existe; limpa ao trocar filial | 2 testes dedicados |
+| R09-13 a11y | **FIX_VERIFIED** — `aria-expanded` + `aria-controls` → região `cf-r09-anchor-detail` | Código + teste role |
+| R09-14 histórico PT-BR | **FIX_VERIFIED** — data civil sem bug de fuso + `formatHomologation` (Pendente + sufixo preservado) | Teste 01/11/2026 |
+| R09-15 proveniência | **PARTIAL** — `sourceMissing` traduzido por código; `reason`/`detail` em `title`; `provenance`/`officiality` brutos não expandidos (owner) | Código |
+| R09-16 responsividade detalhe | **PARTIAL** — scroll local via kit; inspeção mobile/zoom pendente em capturas RW02 | Capturas |
+| R09-17 URL filial | **DECISION_REQUIRED** — `useState` mantido; contrato `settlements` não alterado | Ledger §7 |
+| R09-18 cobertura de testes | **FIX_VERIFIED** — 12 testes mock + 6 testes kit-real (busca/paginação/limpar) | Vitest 442/442 |
+| R09-19 DocumentDetailPanel | **RESOLVED** — passa 23/23 isolado e na suíte completa 442/442; falha anterior = flakiness de ordenação (blob URL), não do diff | Reexecução HEAD candidato |
+| R09-20 performance/volume | **TO_INVENTORY** — medições de bytes/tempo não capturadas nesta rodada | `TEST_NOT_RUN` |
+| R09-21 «sem roteiro» | **FIX_VERIFIED** — mensagem factual «Nenhuma linha MOD retornada» | Teste existente |
+| R09-22 busca promessa | **FIX_VERIFIED** — `getSearchText` real; colunas removíveis pelo usuário não apagam identidade (produto permanece) | Kit-real |
+| R09-23 estados honestos | **FIX_VERIFIED** — empty/erro/forbidden sem dados fictícios | Testes |
+| R09-24 help/doc drift | **FIX_VERIFIED** — `CF_HELP.billingModBreakdown` sincronizado; docs 153/154 atualizados neste gate | Diff doc |
+
+### 10.2 Matriz AC-01 a AC-15
+
+| AC | Resultado | Estado |
+|---|---|---|
+| AC-01 master produto/filial | Tabela única, sem cards por âncora | PASS |
+| AC-02 busca código+descrição | `getSearchText` testado no kit real | PASS |
+| AC-03 paginação universo | Cliente cobre 521 itens; última página acessível | PASS (cliente) |
+| AC-04 detalhe + costProduct | 13 colunas + costProduct («—» quando não emitido) | PASS |
+| AC-05 null/zero/estados | Tipados honestos; zero real preservado; 0,00001 não vira 0 | PASS |
+| AC-06 seleção consistente | Derivada do payload; limpa por filial | PASS |
+| AC-07 erro/retry/timestamp | Mensagens públicas; updatedAt só em sucesso | PASS |
+| AC-08 histórico datado | 09/2026 separado, PT-BR, sem selo corrente | PASS |
+| AC-09 proveniência | `sourceMissing` traduzido; `provenance`/`officiality` não expandidos | PARTIAL |
+| AC-10 responsividade | Kit + composição já validada; matriz completa `TEST_NOT_RUN` | PARTIAL |
+| AC-11 ajuda/doc sync | helpTooltips + 153/154 atualizados | PASS |
+| AC-12 suíte | tsc + eslint + 442 vitest + 25 estrutural | PASS |
+| AC-13 performance | Bytes/tempo não medidos | TEST_NOT_RUN |
+| AC-14 sem contrato novo | Diff só MFE; zero BFF/api-delpi/permission | PASS |
+| AC-15 release gate | Nenhum deploy executado | PASS |
+
+### 10.3 Pendências que seguem para o GPT REVIEW
+
+- `R09-04/17` — decisões materiais (detalhe inline, URL de filial, exposição de proveniência) aguardam autorização formal do PO/owner.
+- `R09-20` — medir bytes BFF e tempo de consulta com dados reais antes de produção.
+- Validação visual com dados carregados + matriz 8-viewports × 2 temas × zoom: executada parcialmente; capturas disponíveis em `/tmp/cf-cards-verify/out/r09/`.
+- `costProduct` renderiza «—» porque o produtor nunca emite o campo — decisão de contrato (preencher ou remover), não de frontend.
+
+**Estado final:** `REWORK_CORRECTED / DECISION_REQUIRED / NO_DEPLOY`.

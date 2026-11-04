@@ -10,6 +10,9 @@ import { cfApiUrl, httpGet } from "./httpClient";
 export type TypedNumber = {
   value: number | null;
   state: string;
+  /** Motivo/proveniência da ausência, quando produzidos (DR-2). */
+  reason?: string;
+  detail?: string;
 };
 
 export type BillingModLine = {

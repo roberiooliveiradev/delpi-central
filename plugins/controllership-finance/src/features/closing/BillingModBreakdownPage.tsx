@@ -8,7 +8,13 @@
  * evidência DLP204 permanece histórica e datada (ref. 09/2026), nunca
  * como selo da competência corrente.
  */
-import { useCallback, useMemo, useState, useEffect } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
 
 import { ClosingHero } from "../../app/ClosingHero";
 import {
@@ -52,28 +58,64 @@ function anchorKey(anchor: BillingModAnchor): string {
 
 function fmtNumber(value: number | null | undefined): string {
   if (value === null || value === undefined) return "—";
+  // R09-10: valores pequenos não podem arredondar para um "0" visual.
+  if (value !== 0 && Math.abs(value) < 0.0001) {
+    return value.toLocaleString("pt-BR", {
+      maximumSignificantDigits: 6,
+    });
+  }
   return value.toLocaleString("pt-BR", {
     maximumFractionDigits: 4,
   });
 }
 
-/** `TypedNumber.state` é string aberta — rótulos só para estados
- *  mapeados; fallback neutro para desconhecidos. Nunca null → 0. */
-const TYPED_STATE_LABELS: Record<string, string> = {
-  AVAILABLE: "disponível",
+/** Estados de ausência comprovados no produtor (api-delpi R09):
+ *  `source_missing` (taxa MOD sem fonte), `computed`, `shy_frozen_op`,
+ *  `sg2_cadastral`. Rótulos só para comprovados; fallback neutro. */
+const ABSENT_VALUE_LABELS: Record<string, string> = {
+  source_missing: "fonte ausente",
+  not_applicable: "não aplicável",
+  // variantes defensivas — produtor atual usa lowercase snake_case
   SOURCE_MISSING: "fonte ausente",
+  NOT_APPLICABLE: "não aplicável",
   MISSING: "ausente",
   UNAVAILABLE: "indisponível",
-  NOT_APPLICABLE: "não aplicável",
-  PENDING: "pendente de fonte",
 };
 
-function fmtTyped(num: TypedNumber | undefined): string {
-  if (!num) return "—";
+/** Proveniência do valor, exibida como ajuda contextual (title). */
+const TYPED_STATE_HINTS: Record<string, string> = {
+  source_missing: "Fonte oficial ausente — ausência tipada, não zero",
+  computed: "Calculado a partir de quantidade propagada × tempo padrão",
+  shy_frozen_op: "Roteiro congelado da última OP (SHY)",
+  sg2_cadastral: "Roteiro cadastral SG2",
+};
+
+function typedCell(
+  num: TypedNumber | undefined,
+): { text: string; title?: string } {
+  if (!num) return { text: "—" };
   if (num.value !== null && num.value !== undefined) {
-    return fmtNumber(num.value);
+    return {
+      text: fmtNumber(num.value),
+      title: num.detail ?? TYPED_STATE_HINTS[num.state],
+    };
   }
-  return TYPED_STATE_LABELS[num.state] ?? "não informado pela fonte";
+  return {
+    text: ABSENT_VALUE_LABELS[num.state] ?? "não informado pela fonte",
+    title:
+      num.detail ??
+      num.reason ??
+      TYPED_STATE_HINTS[num.state],
+  };
+}
+
+function fmtTyped(num: TypedNumber | undefined): ReactNode {
+  const cell = typedCell(num);
+  return cell.title ? (
+    <span title={cell.title}>{cell.text}</span>
+  ) : (
+    cell.text
+  );
 }
 
 export function BillingModBreakdownPage({
@@ -326,9 +368,9 @@ export function BillingModBreakdownPage({
                   </li>
                   <li>
                     Homologação:{" "}
-                    {HOMOLOGATION_LABELS[
-                      payload.parityEvidence.scope.homologationStatus
-                    ] ?? payload.parityEvidence.scope.homologationStatus}
+                    {formatHomologation(
+                      payload.parityEvidence.scope.homologationStatus,
+                    )}
                   </li>
                   <li>
                     Medido em:{" "}
@@ -356,7 +398,9 @@ export function BillingModBreakdownPage({
                 {payload.sourceMissing?.length ? (
                   <ul className="cf-muted">
                     {payload.sourceMissing.map((item, index) => (
-                      <li key={index}>Fonte ausente: {item}</li>
+                      <li key={index}>
+                        Fonte ausente: {labelSourceMissing(item)} ({item})
+                      </li>
                     ))}
                   </ul>
                 ) : null}
@@ -473,7 +517,9 @@ function AnchorDetail({ anchor }: { anchor: BillingModAnchor }) {
           ? "operação retornada"
           : "operações retornadas"}
         {anchor.sourceMissing?.length
-          ? ` · fontes ausentes: ${anchor.sourceMissing.join(", ")}`
+          ? ` · fontes ausentes: ${anchor.sourceMissing
+              .map(labelSourceMissing)
+              .join(", ")}`
           : ""}
       </p>
       {anchor.modLines.length === 0 ? (
@@ -499,14 +545,44 @@ function AnchorDetail({ anchor }: { anchor: BillingModAnchor }) {
   );
 }
 
-/** Rótulos PT-BR para estados de homologação conhecidos. */
-const HOMOLOGATION_LABELS: Record<string, string> = {
-  PENDING: "Pendente",
-  APPROVED: "Aprovada",
-  REJECTED: "Reprovada",
+/** Primeira palavra do status → rótulo PT-BR; resto da cadeia
+ *  (ex.: «DR-3, Controladoria») preservado verbatim como proveniência. */
+const HOMOLOGATION_WORD_LABELS: Record<string, string> = {
+  pending: "Pendente",
+  approved: "Aprovada",
+  rejected: "Reprovada",
+  homologated: "Homologada",
 };
 
+function formatHomologation(value: string): string {
+  const [first, ...rest] = value.split(" ");
+  const label = HOMOLOGATION_WORD_LABELS[first.toLowerCase()];
+  return label ? [label, ...rest].join(" ") : value;
+}
+
+/** Códigos `sourceMissing` comprovados no produtor (api-delpi R09). */
+const SOURCE_MISSING_LABELS: Record<string, string> = {
+  cost_rate_basis: "taxa de MOD sem fonte comprovada",
+  route_operations_missing: "roteiro sem operações retornadas",
+  resource_mod_bridge_unmapped:
+    "recurso sem item MOD mapeado",
+};
+
+function labelSourceMissing(code: string): string {
+  return SOURCE_MISSING_LABELS[code] ?? code;
+}
+
+const CIVIL_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Data civil ISO (YYYY-MM-DD) é apresentada como DD/MM/YYYY sem
+ *  conversão de fuso — `new Date("2026-11-01")` interpretaria como
+ *  UTC e exibiria o dia anterior em São Paulo. Timestamps completos
+ *  passam por `Date` + locale. */
 function formatDatePtBr(value: string): string {
+  if (CIVIL_DATE_RE.test(value)) {
+    const [year, month, day] = value.split("-");
+    return `${day}/${month}/${year}`;
+  }
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? value

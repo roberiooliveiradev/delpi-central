@@ -384,3 +384,22 @@ Essas recomendações **não** autorizam implementação por si só. Sem decisã
 - Código: `plugins/controllership-finance/src/features/closing/BillingModBreakdownPage.tsx`; `src/api/billingModBreakdownApi.ts`; `src/app/ClosingHero.tsx`; `src/app/controllershipFinanceUi.ts`; `src/app/cfDataTableUi.tsx`; consumidores R10/R11; `src/content/helpTooltips.ts`.
 
 **Gate atual:** `PLAN_RECORDED`. **Próximo passo:** PO validar o wireframe e as decisões `11`; em seguida inventário de cardinalidade/estados e elaboração do GPT BRIEF por gate. **Nenhum código executado ou deploy realizado por este documento.**
+
+---
+
+## 14. Estado de implementação (2026-11-04, RW02)
+
+**Implementado em `main`:** `b3435e7ec1` (master/detail) + `8ab969db27` (rework P1) + correções RW02 em seguida. Documento permanece `PLAN_ONLY / PENDING_PO_VISUAL_APPROVAL` — a implementação **não** constitui aprovação formal das decisões §11.
+
+| Decisão §11 | Estado |
+|---|---|
+| Detalhe inline (A) | Implementado — aguarda autorização formal |
+| Filtros: filial + busca local (A) | Implementado sobre «registros retornados»; completude universal não declarada |
+| Paginação client-side (A condicional) | Implementada — 521 âncoras / página 50 comprovados em browser real |
+| Histórico em disclosure datado (A) | Implementado — data civil corrigida (bug de fuso), rótulos PT-BR |
+| Estados de custo sem regra nova (A) | Implementado — labels por estados reais do produtor, null nunca vira zero |
+| URL de filial | Não implementado — `DECISION_REQUIRED` (contrato `settlements`) |
+
+**Evidências RW02:** 12 testes com mock + 6 testes no `DataTableSection` real (busca/paginação), suíte 442/442 + 25 estruturais, capturas `/tmp/cf-cards-verify/out/r09-rw2/` (dados reais: 521 âncoras, 4.659 linhas MOD, 11 sem linhas — competência 09/2026), zero overflow de página em 1600px e 390px, 932 nós DOM (vs. DOM proporcional a todas as âncoras na versão cards).
+
+**Resíduos:** inventário fechado no doc 154 §10 — `R09-04/17` DECISION_REQUIRED, `R09-20` performance bytes/tempo `TO_INVENTORY`, `costProduct` nunca emitido pelo produtor (campo só de contrato, renderiza «—»).

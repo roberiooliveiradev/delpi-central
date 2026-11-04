@@ -206,4 +206,152 @@ describe("R09 — Faturamento × MOD (master/detail)", () => {
       ),
     ).toBeTruthy();
   });
+
+  it("coluna Custo produto preserva valor real e ausência tipada", async () => {
+    getMod.mockResolvedValue(
+      payload({
+        anchors: [
+          anchor({
+            product: "CP1",
+            modLines: [
+              {
+                level: "02",
+                operation: "MONTAR",
+                costProduct: { value: 1234.5, state: "computed" },
+              },
+              {
+                level: "04",
+                operation: "SOLDAR",
+                costProduct: { value: null, state: "source_missing" },
+              },
+            ],
+          }),
+        ],
+      }),
+    );
+    render(<BillingModBreakdownPage reportContext={CONTEXT} />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: /Ver operações MOD do produto CP1/,
+      }),
+    );
+    await screen.findAllByText("Custo produto");
+    expect(screen.getByText("1.234,5")).toBeTruthy();
+    expect(screen.getAllByText("fonte ausente").length).toBeGreaterThan(0);
+  });
+
+  it("data civil do histórico não perde um dia por fuso (2026-11-01 → 01/11/2026)", async () => {
+    getMod.mockResolvedValue(
+      payload({
+        anchors: [anchor()],
+        parityEvidence: {
+          scope: {
+            referencePeriod: "09/2026",
+            branches: ["01"],
+            artifact: "DLP204",
+            measuredAt: "2026-11-01",
+            gate: "G042",
+            homologationStatus: "pending (DR-3, Controladoria)",
+          },
+          metrics: {
+            artifactLines: 1,
+            calculatedLines: 1,
+            matchedKeys: 1,
+            keyCoveragePct: 0,
+            qtdFatCorrectPct: 0,
+            stdTimeCorrectPct: 0,
+            hoursCorrectPct: 0,
+            missingLines: 0,
+            extraLines: 0,
+          },
+          semantics: "x",
+        },
+      }),
+    );
+    render(<BillingModBreakdownPage reportContext={CONTEXT} />);
+    await screen.findAllByText("Produtos faturados");
+    expect(screen.getByText(/Medido em:\s*01\/11\/2026/)).toBeTruthy();
+    // status de homologação traduzido, sufixo preservado
+    expect(
+      screen.getByText(/Pendente \(DR-3, Controladoria\)/),
+    ).toBeTruthy();
+  });
+
+  it("estados reais lowercase do produtor: source_missing e precisão pequena", async () => {
+    getMod.mockResolvedValue(
+      payload({
+        anchors: [
+          anchor({
+            product: "SM1",
+            modLines: [
+              {
+                level: "02",
+                stdTime: { value: 0.00001, state: "shy_frozen_op" },
+                costUnit: { value: null, state: "source_missing" },
+              },
+            ],
+          }),
+        ],
+      }),
+    );
+    render(<BillingModBreakdownPage reportContext={CONTEXT} />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: /Ver operações MOD do produto SM1/,
+      }),
+    );
+    await screen.findByText(/Operações MOD — SM1/);
+    // 0,00001 nunca renderiza como "0"
+    expect(screen.getByText(/0,00001/)).toBeTruthy();
+    expect(screen.getAllByText("fonte ausente").length).toBeGreaterThan(0);
+  });
+
+  it("troca de filial limpa seleção e dispara nova consulta", async () => {
+    getMod.mockResolvedValue(
+      payload({ anchors: [anchor({ product: "B1", branch: "01" })] }),
+    );
+    const { container } = render(
+      <BillingModBreakdownPage reportContext={CONTEXT} />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: /Ver operações MOD do produto B1/,
+      }),
+    );
+    await screen.findByText(/Operações MOD — B1/);
+    fireEvent.change(container.querySelector(".cf-hero-filters select")!, {
+      target: { value: "02" },
+    });
+    await screen.findAllByText("Produtos faturados");
+    expect(
+      screen.queryByText(/Operações MOD — B1/),
+    ).toBeNull();
+    expect(getMod).toHaveBeenLastCalledWith("2026-10", "02");
+  });
+
+  it("detalhe some se âncora selecionada não existe no novo payload", async () => {
+    getMod
+      .mockResolvedValueOnce(
+        payload({ anchors: [anchor({ product: "OLD1" })] }),
+      )
+      .mockResolvedValueOnce(
+        payload({ anchors: [anchor({ product: "NEW1", branch: "02" })] }),
+      );
+    const { container } = render(
+      <BillingModBreakdownPage reportContext={CONTEXT} />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: /Ver operações MOD do produto OLD1/,
+      }),
+    );
+    await screen.findByText(/Operações MOD — OLD1/);
+    fireEvent.change(container.querySelector(".cf-hero-filters select")!, {
+      target: { value: "02" },
+    });
+    await screen.findByText("NEW1");
+    expect(
+      screen.queryByText(/Operações MOD — OLD1/),
+    ).toBeNull();
+  });
 });
