@@ -5585,3 +5585,13 @@ HYPOTHESIS_FRAGMENTATION=PARTIALLY_PROVEN. RECOMMENDED=OPTION_B consolidate sema
 NEXT=coordination authorize R1–R5 roadmap in doc229 (sticky typed goal / RC-B / RC-C / REF05 / admission budget).
 
 FOLLOW-UP (same day): call-graph/LLM inventories confirmed FAST/OPERATIONAL/REASONING are **telemetry only** (no stage skip); 21 orchestration purposes + `delia.interaction.turn` fallback; redundancy ADM↔GRP, GOAL×N, ARGS↔CAND_ARGS, CMP↔EVID_COMP. Doc 229 amended; no product code change.
+
+## Framework overlap runtime flow inventory (2026-11-04)
+
+TASK=DELIA-C3-FRAMEWORK-OVERLAP-RUNTIME-FLOW-INVENTORY-01.
+DOC=230. BASE_HEAD=`3496551f30`. PRODUCT_CODE_CHANGED=NO. PRODUCTION_DEPLOY=NOT_AUTHORIZED. PHASE_ADVANCE=NONE.
+FINDINGS: LangGraph=KEEP stage sequencer (prod default); Pydantic AI=KEEP ModelInvocationPort adapter (no tool loop); Application=KEEP gates/semantics owner.
+DUPLICATIONS_PROVEN: dual sequencer A/B (mutually exclusive per process); dual subobjective schedulers PARTIAL (App decompose vs LG fan-out opt-in); dual arggen flag-exclusive.
+COMPLEMENTARY_PROVEN: LG sequences → App decides → PA structured transport.
+EXECUTION_DRIFT: langgraph_engine docstring still claims eval-only while `DELIA_ORCHESTRATION_ENGINE` default=`langgraph`.
+ARCHITECTURE_DECISION_REQUIRED=YES (roles + fan-out/checkpoint/arggen policy). NEXT=coordination ADR; Option B semantic consolidation remains separate (doc 229).
