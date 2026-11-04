@@ -31,7 +31,10 @@ from app.application.capability_provision.contracts import (
     CapabilityProviderError,
 )
 from app.application.interaction.activity import ActivityEventSink
-from app.application.interaction.contracts import GovernedCapabilityProvenance
+from app.application.interaction.contracts import (
+    GovernedCapabilityProvenance,
+    VerifiedCompositeEvidence,
+)
 from app.application.interaction.turn_budget import TurnDeadline
 from app.application.interaction.workspace_context import WorkspaceContext
 from app.application.model_invocation.contracts import ConversationContextTurn
@@ -108,6 +111,8 @@ class GovernedCapabilityAttempt:
     correlation_id: str
     outcome: SpecialistOutcome | None = None
     provenance: GovernedCapabilityProvenance | None = None
+    # Verified DÉLIA composition is NOT an owner SpecialistOutcome.
+    verified_composition: VerifiedCompositeEvidence | None = None
     error_code: str | None = None
     owner_hint: str | None = None
     content: str | None = None
