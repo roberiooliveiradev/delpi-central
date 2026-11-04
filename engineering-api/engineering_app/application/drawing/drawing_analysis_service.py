@@ -467,6 +467,16 @@ async def analyze_product_drawing(
         ),
         tokens=drawing_tokens,
         drawing_pages=extraction.page_count,
+        code_contexts=(
+            (understanding or {}).get("code_contexts")
+            if isinstance(understanding, dict)
+            else None
+        ),
+        page_coverage=(
+            (understanding or {}).get("page_coverage")
+            if isinstance(understanding, dict)
+            else None
+        ),
         bom_error=(
             {"code": structure_error.code,
              "status_code": structure_error.status_code}

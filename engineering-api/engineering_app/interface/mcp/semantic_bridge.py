@@ -1062,6 +1062,26 @@ async def _produce_drawing_understanding(context, code: str):
         }
         for t in (best.get("_tokens_sample") or [])
     ]
+    # RQ-VAL-029 — evidência por página: tamanhos, primitivas gráficas e
+    # status OCR por página para interpretação e cobertura verificável.
+    _render_by_page: dict[int, tuple[int, int]] = {}
+    _page_status: dict[int, dict[str, Any]] = {}
+    for _st in best.get("pages") or []:
+        _p = _st.get("page")
+        _r = _st.get("render") or {}
+        if _p and _r.get("width") and _r.get("height"):
+            _render_by_page[int(_p)] = (
+                int(_r["width"]),
+                int(_r["height"]),
+            )
+        if _p:
+            _page_status[int(_p)] = {
+                "status": _st.get("status"),
+                "error": _st.get("error"),
+            }
+    _prims_by_page = best.get("_graphic_primitives_by_page") or {}
+    if not _prims_by_page and best.get("_graphic_primitives"):
+        _prims_by_page = {1: best["_graphic_primitives"]}
     bom_codes: list[str] | None = None
     structure: dict | None = None
     try:
@@ -1081,19 +1101,44 @@ async def _produce_drawing_understanding(context, code: str):
     except Exception:
         bom_codes = None
         structure = None
-    understanding = build_understanding(
+    from engineering_app.application.drawing.understanding import (
+        build_document_understanding,
+    )
+
+    understanding = build_document_understanding(
         tokens,
         document_hash=best.get("document_hash") or "",
-        page=1,
         bom_codes=bom_codes,
         product_code=code,
-        render_size_px=(
-            tuple(best.get("page_size_px"))
-            if best.get("page_size_px")
-            else None
-        ),
-        graphic_primitives=best.get("_graphic_primitives"),
+        render_size_by_page=_render_by_page,
+        graphic_primitives_by_page=_prims_by_page,
     )
+    _pdf_pages = best.get("pdf_page_count")
+    _attempted = sorted(_page_status)
+    _failed = [
+        {"page": p, "error": s.get("error")}
+        for p, s in sorted(_page_status.items())
+        if s.get("status") not in {"ok"}
+    ]
+    _not_processed = (
+        [p for p in range(1, _pdf_pages + 1) if p not in _page_status]
+        if _pdf_pages
+        else []
+    )
+    understanding["page_coverage"] = {
+        "pdf_page_count": _pdf_pages,
+        "pages_attempted": _attempted,
+        "pages_ocr_ok": [
+            p for p, s in sorted(_page_status.items())
+            if s.get("status") == "ok"
+        ],
+        "pages_failed": _failed,
+        "pages_not_processed": _not_processed,
+        "token_count": best.get("token_count"),
+        "token_sample_truncated": (
+            len(tokens) < (best.get("token_count") or 0)
+        ),
+    }
     understanding["source_run"] = {
         "provider_id": best.get("provider_id"),
         "token_count": best.get("token_count"),

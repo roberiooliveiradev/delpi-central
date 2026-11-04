@@ -15,6 +15,7 @@ from engineering_app.application.drawing.extraction_ports import (
     ProviderCapability,
     RenderedPage,
     RenderedRegion,
+    max_render_pages,
 )
 from engineering_app.application.drawing.pdf_text_extractor import (
     MAX_CHARS_PER_PAGE,
@@ -37,7 +38,6 @@ except Exception:  # pragma: no cover
     _PDFIUM_AVAILABLE = False
     _PDFIUM_VERSION = "not_installed"
 
-_MAX_RENDER_PAGES = 5
 _MAX_DPI = 300
 
 
@@ -119,8 +119,11 @@ class PdfiumExtractionAdapter:
             raise PdfExtractionError(f"dpi_limit:{dpi}>{_MAX_DPI}")
         pdf = pdfium.PdfDocument(pdf_bytes)
         try:
-            if page < 1 or page > len(pdf) or page > _MAX_RENDER_PAGES:
+            cap = max_render_pages()
+            if page < 1 or page > len(pdf):
                 raise PdfExtractionError(f"page_out_of_bounds:{page}")
+            if page > cap:
+                raise PdfExtractionError(f"page_render_cap:{page}>{cap}")
             pdf_page = pdf[page - 1]
             try:
                 rotation = int(pdf_page.get_rotation() or 0)
@@ -179,8 +182,11 @@ class PdfiumExtractionAdapter:
             x2, y2 = float(region_px[2]), float(region_px[3])
         pdf = pdfium.PdfDocument(pdf_bytes)
         try:
-            if page < 1 or page > len(pdf) or page > _MAX_RENDER_PAGES:
+            cap = max_render_pages()
+            if page < 1 or page > len(pdf):
                 raise PdfExtractionError(f"page_out_of_bounds:{page}")
+            if page > cap:
+                raise PdfExtractionError(f"page_render_cap:{page}>{cap}")
             pdf_page = pdf[page - 1]
             try:
                 rotation = int(pdf_page.get_rotation() or 0)
@@ -214,6 +220,21 @@ class PdfiumExtractionAdapter:
         finally:
             pdf.close()
 
+    def page_count(self, pdf_bytes: bytes) -> int:
+        """Número de páginas do PDF (sem render) — planejamento de
+        cobertura multipágina (RQ-VAL-029)."""
+        if not _PDFIUM_AVAILABLE:
+            raise PdfExtractionError(
+                "provider_unavailable:pypdfium2_not_installed"
+            )
+        if not pdf_bytes:
+            raise PdfExtractionError("empty_document")
+        pdf = pdfium.PdfDocument(pdf_bytes)
+        try:
+            return len(pdf)
+        finally:
+            pdf.close()
+
     def capability_descriptor(self) -> ProviderCapability:
         return ProviderCapability(
             provider_id="pdfium_experimental",
@@ -237,7 +258,7 @@ class PdfiumExtractionAdapter:
             limits={
                 "max_bytes": MAX_PDF_BYTES,
                 "max_pages": MAX_PAGES,
-                "max_render_pages": _MAX_RENDER_PAGES,
+                "max_render_pages": max_render_pages(),
                 "max_dpi": _MAX_DPI,
             },
             license_notes="BSD-3 permissiva; binário PDFium bundled.",

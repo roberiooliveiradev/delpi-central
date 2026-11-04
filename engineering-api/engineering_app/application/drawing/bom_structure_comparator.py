@@ -71,25 +71,108 @@ def _row_codes(row: dict[str, Any]) -> list[str]:
     return codes
 
 
+# Regiões cujo conteúdo textual nunca comprova presença estrutural
+# vigente (RQ-VAL-027 R3): histórico de revisão, notas e carimbo.
+# Alinhado a ``drawing_investigation._NON_COMPONENT_REGIONS`` + notes.
+_NON_COMPARABLE_REGIONS = {"revision_history", "notes", "title_block"}
+
+
+def _code_region_index(
+    code_contexts: list[dict] | None,
+) -> dict[str, dict[str, Any]]:
+    """code → {regions:set, pages:set} a partir de code_contexts."""
+    idx: dict[str, dict[str, Any]] = {}
+    for c in code_contexts or []:
+        code = _norm_code(c.get("code"))
+        if not code:
+            continue
+        e = idx.setdefault(code, {"regions": set(), "pages": set()})
+        e["regions"].add(c.get("region") or "unknown")
+        if c.get("page") is not None:
+            e["pages"].add(int(c["page"]))
+    return idx
+
+
+def _row_page(row: dict[str, Any]) -> int | None:
+    if row.get("page") is not None:
+        return int(row["page"])
+    for cell in row.get("cells") or []:
+        if cell.get("page") is not None:
+            return int(cell["page"])
+    return None
+
+
 def _drawing_occurrences(
     component_table: dict | None,
     product_code: str,
     tokens: list[dict] | None = None,
-) -> tuple[list[dict[str, Any]], list[str]]:
+    code_contexts: list[dict] | None = None,
+) -> tuple[list[dict[str, Any]], list[str], list[dict[str, Any]]]:
     """Extrai ocorrências tipadas das linhas da ``component_table``.
 
-    Regra de hierarquia: uma linha cujo código infere ``PI`` abre um
-    grupo — linhas subsequentes associam-se a ela como pai até o
-    próximo código ``PI``/``PA``. Quando nenhum grupo foi aberto,
-    ``parent_code=None`` e a associação é declarada não verificada.
-    Retorna ``(occurrences, limitations)``."""
+    Regra de hierarquia (RQ-VAL-028): quando a tabela possui coluna de
+    conjuntos tipada (≥2 colunas de código), códigos nela são âncoras
+    explícitas de nível raiz; códigos nas demais colunas associam-se ao
+    conjunto ativo (mesma linha = ``set_member``, célula mesclada/
+    continuação = ``set_span``). Sem coluna de conjuntos, vale o
+    fallback vigente: PI/PA abre grupo (``set_anchor`` raiz),
+    ``row_group`` por âncora única na linha, ``pi_group_inference`` por
+    carry-over. ``set_span`` é verificado para matching mas nunca
+    promovido a divergência — célula vazia pode não ser continuação.
+    Retorna ``(occurrences, limitations, contextual_codes)``."""
     rows = (component_table or {}).get("rows") or []
     table_is_candidate = bool((component_table or {}).get("candidate"))
     occurrences: list[dict[str, Any]] = []
     limitations: list[str] = []
+    contextual_codes: list[dict[str, Any]] = []
     current_parent: str | None = None
+    set_anchor_by_page: dict[int, str | None] = {}
+    region_idx = _code_region_index(code_contexts)
+    last_page: int | None = None
     for row in rows:
         codes = [c for c in _row_codes(row) if c != product_code]
+        # Coluna de cada código na linha (evidência tabular real).
+        code_cols: dict[str, set[int]] = {}
+        for cell in row.get("cells") or []:
+            col_i = cell.get("col")
+            if col_i is None:
+                continue
+            for c in _CODE_IN_TEXT_RE.findall(str(cell.get("text") or "")):
+                if c != product_code:
+                    code_cols.setdefault(c, set()).add(int(col_i))
+        row_col_types = row.get("col_types") or (
+            component_table or {}
+        ).get("col_types") or {}
+        if row_col_types and all(
+            isinstance(v, dict) for v in row_col_types.values()
+        ):
+            row_col_types = row_col_types.get(
+                str(_row_page(row)), {}
+            ) or {}
+        code_typed_cols = sorted(
+            int(k)
+            for k, v in row_col_types.items()
+            if v == "component_code" and str(k).lstrip("-").isdigit()
+        )
+        set_col = code_typed_cols[0] if len(code_typed_cols) >= 2 else None
+        page = _row_page(row)
+        if page != last_page:
+            current_parent = None
+            last_page = page
+        set_codes = (
+            sorted(
+                c for c in codes
+                if set_col is not None
+                and set_col in (code_cols.get(c) or set())
+            )
+            if set_col is not None
+            else []
+        )
+        if len(set_codes) == 1:
+            set_anchor_by_page[page] = set_codes[0]
+        elif len(set_codes) > 1:
+            set_anchor_by_page[page] = None
+        current_set = set_anchor_by_page.get(page)
         # Âncoras da linha: códigos PI/PA presentes na MESMA linha —
         # evidência geométrica real de agrupamento. Uma âncora única
         # verifica a associação dos demais códigos da linha; mais de
@@ -99,7 +182,30 @@ def _drawing_occurrences(
         ]
         for code in codes:
             item_type = _infer_item_type(code)
-            if item_type in {"PI", "PA"}:
+            cols = code_cols.get(code) or set()
+            if (
+                set_col is not None
+                and set_col in cols
+                and code in set_codes
+            ):
+                current_parent = code
+                parent = product_code
+                parent_source = "set_anchor"
+                verified = True
+            elif set_col is not None and code in set_codes:
+                # múltiplos códigos na coluna de conjuntos na mesma
+                # linha — âncora ambígua, não inventa raiz
+                current_parent = code
+                parent = product_code
+                parent_source = "set_anchor"
+                verified = len(set_codes) == 1
+            elif set_col is not None and current_set:
+                parent = current_set
+                parent_source = (
+                    "set_member" if set_codes else "set_span"
+                )
+                verified = True
+            elif item_type in {"PI", "PA"} and set_col is None:
                 current_parent = code
                 parent = product_code
                 parent_source = "set_anchor"
@@ -120,6 +226,11 @@ def _drawing_occurrences(
                 parent = None
                 parent_source = None
                 verified = False
+            mentions = sorted(
+                r
+                for r in (region_idx.get(code) or {}).get("regions", set())
+                if r in _NON_COMPARABLE_REGIONS
+            )
             occurrences.append(
                 {
                     "item_code": code,
@@ -133,6 +244,9 @@ def _drawing_occurrences(
                     "quantity": row.get("quantity"),
                     "y_px": row.get("y_px"),
                     "row": row.get("row"),
+                    "page": page,
+                    "region": "component_table",
+                    "also_mentioned_in_regions": mentions or None,
                     "cells": row.get("cells") or [],
                 }
             )
@@ -145,11 +259,34 @@ def _drawing_occurrences(
     # tipadas (ex.: tabela detectada mas células não segmentadas).
     # Conta como evidência de presença — nunca como DRAWING_ONLY, pois
     # sem linha não se comprova que é item da tabela de componentes.
+    # RQ-VAL-027: código cuja ÚNICA menção está em revision_history/
+    # notes/title_block é evidência contextual — registrado separado,
+    # não participa da comparação vigente (não consome BOM).
     typed = {o["item_code"] for o in occurrences}
     residual = 0
     if table_is_candidate:
-        for code in sorted(_token_code_set(tokens) - typed):
+        pool = (
+            set(region_idx)
+            if code_contexts is not None
+            else _token_code_set(tokens)
+        )
+        for code in sorted(pool - typed):
             if code == product_code:
+                continue
+            ctx = region_idx.get(code)
+            regions = (ctx or {}).get("regions") or set()
+            if (
+                code_contexts is not None
+                and regions
+                and regions <= _NON_COMPARABLE_REGIONS
+            ):
+                contextual_codes.append(
+                    {
+                        "code": code,
+                        "regions": sorted(regions),
+                        "pages": sorted((ctx or {}).get("pages") or []),
+                    }
+                )
                 continue
             occurrences.append(
                 {
@@ -173,7 +310,17 @@ def _drawing_occurrences(
             f"presence_by_token_only: {residual} código(s) visíveis "
             "fora das linhas tipadas — presença conta, relação não."
         )
-    return occurrences, limitations
+    if contextual_codes:
+        limitations.append(
+            "contextual_code_mentions: código(s) citados apenas em "
+            "regiões não comparáveis (histórico/notas/carimbo) — "
+            "evidência contextual preservada, não presença estrutural: "
+            + ", ".join(
+                f"{c['code']}@{'/'.join(c['regions'])}"
+                for c in contextual_codes
+            )
+        )
+    return occurrences, limitations, contextual_codes
 
 
 def _token_code_set(tokens: list[dict] | None) -> set[str]:
@@ -194,6 +341,8 @@ def compare_bom_to_drawing(
     tokens: list[dict] | None = None,
     drawing_pages: int | None = None,
     bom_error: dict[str, Any] | None = None,
+    code_contexts: list[dict] | None = None,
+    page_coverage: dict | None = None,
 ) -> dict[str, Any]:
     """Diff bidirecional por ocorrência estrutural.
 
@@ -237,12 +386,22 @@ def compare_bom_to_drawing(
             bom_by_code.setdefault(code, []).append(occ)
 
     # ---------- lado desenho -------------------------------------------------
-    drawing_occ, ext_limitations = _drawing_occurrences(
-        component_table, product_code, tokens
+    drawing_occ, ext_limitations, contextual_codes = _drawing_occurrences(
+        component_table, product_code, tokens, code_contexts
     )
     limitations.extend(ext_limitations)
     table_meta = component_table or {}
-    visible_codes = _token_code_set(tokens)
+    _ctx_regions = _code_region_index(code_contexts)
+    if code_contexts is not None:
+        # Código com menção apenas em região não comparável NÃO conta
+        # como presença visual vigente (RQ-VAL-027 R3/R5).
+        visible_codes = {
+            c
+            for c, ctx in _ctx_regions.items()
+            if not (ctx["regions"] <= _NON_COMPARABLE_REGIONS)
+        }
+    else:
+        visible_codes = _token_code_set(tokens)
 
     if not drawing_occ:
         limitations.append(
@@ -264,9 +423,20 @@ def compare_bom_to_drawing(
             "limitations": limitations,
         }
 
+    # Cobertura integral exige tabela confiável E todas as páginas do
+    # documento processadas (RQ-VAL-029): página não lida pode conter
+    # outra tabela de componentes — conclusão parcial nunca é integral.
+    pages_missing = sorted(
+        (page_coverage or {}).get("pages_not_processed") or []
+    ) + sorted(
+        f.get("page")
+        for f in (page_coverage or {}).get("pages_failed") or []
+        if f.get("page") is not None
+    )
     coverage_complete = bool(
         table_meta.get("candidate")
         and not table_meta.get("unreliable_boundary")
+        and not pages_missing
     )
 
     # ---------- matching por ocorrência -------------------------------------
@@ -277,6 +447,7 @@ def compare_bom_to_drawing(
     drawing_only_parents: set[str] = set()
     occurrence_excess: list[str] = []
     unverified_relations: list[str] = []
+    unprovenanced: list[str] = []
 
     # Passe 0: pais ausentes primeiro — necessário para guardar os
     # filhos órfãos antes dos passes de matching.
@@ -319,6 +490,23 @@ def compare_bom_to_drawing(
                 occurrence_excess.append(code)
                 continue
             page = _occurrence_page(occ, tokens)
+            if page is None:
+                # RQ-VAL-027 R7: finding estrutural exige proveniência
+                # verificável — sem página/região comprovada degrada a
+                # candidato não promovido, nunca DRAWING_ONLY.
+                unprovenanced.append(code)
+                continue
+            evidence = {
+                "drawing_page": page,
+                "drawing_region": "component_table",
+                "drawing_row": occ.get("row"),
+                "drawing_y_px": occ.get("y_px"),
+                "bom_relationship": "ABSENT_IN_CURRENT_STRUCTURE",
+            }
+            if occ.get("also_mentioned_in_regions"):
+                evidence["also_mentioned_in_regions"] = occ[
+                    "also_mentioned_in_regions"
+                ]
             findings.append(
                 _finding(
                     type="DRAWING_ONLY",
@@ -327,13 +515,7 @@ def compare_bom_to_drawing(
                     item_description=occ.get("item_description"),
                     parent_code=occ.get("parent_code") or product_code,
                     level=1 if occ["item_type"] in {"PI", "PA"} else None,
-                    evidence={
-                        "drawing_page": page,
-                        "drawing_region": "component_table",
-                        "drawing_row": occ.get("row"),
-                        "drawing_y_px": occ.get("y_px"),
-                        "bom_relationship": "ABSENT_IN_CURRENT_STRUCTURE",
-                    },
+                    evidence=evidence,
                     explanation=(
                         f"O item {code} consta na tabela do desenho "
                         "oficial, mas não possui ocorrência na "
@@ -354,10 +536,12 @@ def compare_bom_to_drawing(
         matched += 1
         # Divergência de relação só quando o pai do desenho é
         # VERIFICADO por evidência real (não heurística de grupo).
-        # Pai inferido por agrupamento registra-se como relação não
-        # verificada — nunca promovido a divergência comprovada.
+        # Pai inferido por agrupamento ou por continuação de conjunto
+        # (célula mesclada) registra-se como relação não verificada —
+        # nunca promovido a divergência comprovada (RQ-VAL-028 R6/R7).
         if (
-            occ.get("parent_source") in ("pi_group_inference", "row_group")
+            occ.get("parent_source")
+            in ("pi_group_inference", "row_group", "set_member", "set_span")
             and chosen.get("parent_code") != occ["parent_code"]
             and not same_parent
             and all(
@@ -531,6 +715,18 @@ def compare_bom_to_drawing(
             "inferida diverge da BOM — evidência, não fato: "
             + ", ".join(unverified_relations)
         )
+    if unprovenanced:
+        limitations.append(
+            "unprovenanced_drawing_occurrence: código(s) extraído(s) "
+            "sem página/região comprovável — degradado a inconclusivo, "
+            f"não DRAWING_ONLY: {sorted(unprovenanced)}"
+        )
+    if pages_missing:
+        limitations.append(
+            "pages_not_processed: página(s) do documento sem cobertura "
+            f"OCR efetiva: {pages_missing} — ausência em página não "
+            "lida nunca é ausência comprovada."
+        )
 
     # ---------- quantidades — sem contrato de conversão ---------------------
     limitations.append(
@@ -555,6 +751,8 @@ def compare_bom_to_drawing(
         + len(unclassified)
         + unverified_typed
         + token_only
+        + len(unprovenanced)
+        + len(pages_missing)
         + (0 if coverage_complete else 1)
     )
     if findings:
@@ -567,23 +765,54 @@ def compare_bom_to_drawing(
     analyzed_pages = sorted(
         {int(t.get("page") or 1) for t in tokens or []}
     )
+    tables_by_page = table_meta.get("tables_by_page") or []
+    tables_identified = sum(
+        1 for t in tables_by_page if t.get("candidate")
+    )
+    tables_verified = sum(
+        1
+        for t in tables_by_page
+        if t.get("candidate") and not t.get("unreliable_boundary")
+    )
+    coverage = {
+        "bom_available": True,
+        "drawing_pages": drawing_pages,
+        "analyzed_pages": analyzed_pages or None,
+        "component_table_detected": bool(table_meta.get("candidate")),
+        "component_table_rows": table_meta.get("row_count"),
+        "component_table_codes": table_meta.get("code_count"),
+        "unreliable_boundary": bool(
+            table_meta.get("unreliable_boundary")
+        ),
+        "complete_for_requested_scope": coverage_complete
+        and not verification_gaps,
+        "unverified_parent_occurrences": unverified_typed,
+        "token_only_occurrences": token_only,
+        "contextual_code_mentions": len(contextual_codes),
+    }
+    if page_coverage:
+        coverage.update(
+            {
+                "pdf_page_count": page_coverage.get("pdf_page_count"),
+                "pages_ocr_ok": page_coverage.get("pages_ocr_ok"),
+                "pages_failed": page_coverage.get("pages_failed"),
+                "pages_not_processed": pages_missing or None,
+                "pages_attempted": page_coverage.get("pages_attempted"),
+                "token_sample_truncated": page_coverage.get(
+                    "token_sample_truncated"
+                ),
+            }
+        )
+    if tables_by_page:
+        coverage["tables_identified"] = tables_identified
+        coverage["tables_verified"] = tables_verified
+        coverage["tables_by_page"] = [
+            {k: v for k, v in t.items() if k != "col_types"}
+            for t in tables_by_page
+        ]
     return {
         "status": status,
-        "coverage": {
-            "bom_available": True,
-            "drawing_pages": drawing_pages,
-            "analyzed_pages": analyzed_pages or None,
-            "component_table_detected": bool(table_meta.get("candidate")),
-            "component_table_rows": table_meta.get("row_count"),
-            "component_table_codes": table_meta.get("code_count"),
-            "unreliable_boundary": bool(
-                table_meta.get("unreliable_boundary")
-            ),
-            "complete_for_requested_scope": coverage_complete
-            and not verification_gaps,
-            "unverified_parent_occurrences": unverified_typed,
-            "token_only_occurrences": token_only,
-        },
+        "coverage": coverage,
         "counts": {
             "drawing_occurrences": len(drawing_occ),
             "bom_occurrences": len(bom_occurrences),
@@ -601,9 +830,12 @@ def compare_bom_to_drawing(
             "bom_occurrences_unverified": bom_only_unverified,
             "occurrence_excess": len(set(occurrence_excess)),
             "unverified_parent_relations": len(unverified_relations),
+            "unprovenanced_occurrences": len(unprovenanced),
+            "contextual_codes": len(contextual_codes),
             "ocr_ambiguous_pairs": len(ambiguous_pairs),
             "divergences": len(findings),
         },
+        "contextual_codes": contextual_codes,
         "findings": findings,
         "limitations": limitations,
     }

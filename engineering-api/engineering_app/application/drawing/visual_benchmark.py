@@ -22,11 +22,14 @@ from typing import Any
 from engineering_app.infrastructure.extraction.registry import (
     resolve_visual_provider,
 )
+from engineering_app.application.drawing.extraction_ports import (
+    max_render_pages,
+    token_sample_limit,
+)
 from engineering_app.application.drawing.pdf_text_extractor import (
     PdfExtractionError,
 )
 
-_MAX_RENDER_PAGES = 5
 _RETRY_DPI = 110  # retry único em falhas de recurso (dense pages)
 _STRIP_BANDS = 3  # faixas horizontais no retry (preserva resolução)
 
@@ -116,7 +119,6 @@ def _is_resource_error(exc: Exception) -> bool:
             "runtimeerror",
         )
     )
-_TOKEN_SAMPLE_LIMIT = 200
 _DEDUP_ENTRY_LIMIT = 500
 
 # Backend-defined pipelines — the consumer never picks classes/modules.
@@ -291,15 +293,19 @@ def run_visual_benchmark(
         text_parts: list[str] = []
         tokens_sample: list[dict[str, Any]] = []
         page_errors = 0
+        page_cap_hit = False
         limitations: list[str] = []
         try:
-            for page_no in range(1, _MAX_RENDER_PAGES + 1):
+            for page_no in range(1, max_render_pages() + 1):
                 try:
                     rendered = renderer.render_page(
                         pdf_bytes, page=page_no, dpi=dpi
                     )
                 except PdfExtractionError as exc:
                     if str(exc).startswith("page_out_of_bounds"):
+                        break
+                    if str(exc).startswith("page_render_cap"):
+                        page_cap_hit = True
                         break
                     raise
                 stage: dict[str, Any] = {
@@ -431,7 +437,7 @@ def run_visual_benchmark(
                 }
                 text_parts.append(result.text)
                 for token in result.tokens:
-                    if len(tokens_sample) >= _TOKEN_SAMPLE_LIMIT:
+                    if len(tokens_sample) >= token_sample_limit():
                         break
                     tokens_sample.append(
                         _token_sample_entry(
@@ -491,6 +497,15 @@ def run_visual_benchmark(
             ),
             None,
         )
+        if page_cap_hit:
+            limitations.append(
+                f"page_render_cap:{max_render_pages()}_pages_rendered"
+            )
+        if len(tokens_sample) >= token_sample_limit():
+            limitations.append(
+                "token_sample_truncated:"
+                f"{token_sample_limit()}_of_{rec.get('token_count', 0)}"
+            )
         rec.update(
             {
                 "status": status,
@@ -510,6 +525,16 @@ def run_visual_benchmark(
                 "_text_blob": " ".join(text_parts),
                 "_tokens_sample": tokens_sample,
                 "_graphic_primitives": _gp,
+                "_graphic_primitives_by_page": {
+                    p["page"]: p["graphic_primitives"]
+                    for p in pages
+                    if p.get("graphic_primitives") and p.get("page")
+                },
+                "pdf_page_count": (
+                    renderer.page_count(pdf_bytes)
+                    if getattr(renderer, "page_count", None)
+                    else None
+                ),
                 "page_size_px": (
                     [
                         pages[0]["render"]["width"],

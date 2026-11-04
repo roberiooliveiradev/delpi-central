@@ -101,7 +101,13 @@ def run_pipeline_isolated(
 ) -> dict[str, Any]:
     """Execute one visual pipeline in a bounded, killable subprocess."""
     limits = _limits()
-    timeout = float(timeout_s or _DEFAULT_TIMEOUT_S)
+    # O timeout pai deve superar o RLIMIT_CPU do filho — senão documentos
+    # extensos são mortos antes do teto de CPU e TODA a evidência coletada
+    # é descartada (RQ-VAL-029: cobertura multipágina). O teto de CPU
+    # permanece a proteção real contra runaway.
+    timeout = float(
+        timeout_s or max(_DEFAULT_TIMEOUT_S, limits["cpu_seconds"] + 60)
+    )
     corr = correlation_id or uuid.uuid4().hex[:12]
     doc_hash = hashlib.sha256(pdf_bytes).hexdigest()
     record: dict[str, Any] = {

@@ -7,12 +7,51 @@ is injected by the composition root via `set_default_extractor_factory`.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol
 
 from engineering_app.application.drawing.pdf_text_extractor import (
     PdfTextExtraction,
 )
+
+_MAX_RENDER_PAGES_ENV = "ENG_DRAWING_MAX_RENDER_PAGES"
+_TOKEN_SAMPLE_LIMIT_ENV = "ENG_DRAWING_TOKEN_SAMPLE_LIMIT"
+# RQ-VAL-029: desenhos oficiais multipágina (≥14 páginas observadas no
+# acervo) exigem cobertura além do teto legado de 5 páginas; o cap é
+# único e governado — não um número hardcoded por consumidor.
+_DEFAULT_MAX_RENDER_PAGES = 25
+_DEFAULT_TOKEN_SAMPLE_LIMIT = 5000
+
+
+def max_render_pages() -> int:
+    """Teto de páginas renderizadas/OCR por documento (visual pipeline).
+
+    ``ENG_DRAWING_MAX_RENDER_PAGES`` ajusta o limite operacional sem
+    deploy; default 25 cobre os documentos extensos do acervo DELPI."""
+    try:
+        value = int(
+            os.getenv(_MAX_RENDER_PAGES_ENV, "").strip()
+            or _DEFAULT_MAX_RENDER_PAGES
+        )
+    except ValueError:
+        return _DEFAULT_MAX_RENDER_PAGES
+    return max(1, min(value, 50))
+
+
+def token_sample_limit() -> int:
+    """Teto de tokens OCR preservados por página/documento no run record.
+
+    O sample alimenta ``build_understanding`` — não é depuração, é a
+    evidência de trabalho; ``ENG_DRAWING_TOKEN_SAMPLE_LIMIT`` governa."""
+    try:
+        value = int(
+            os.getenv(_TOKEN_SAMPLE_LIMIT_ENV, "").strip()
+            or _DEFAULT_TOKEN_SAMPLE_LIMIT
+        )
+    except ValueError:
+        return _DEFAULT_TOKEN_SAMPLE_LIMIT
+    return max(100, min(value, 20000))
 
 
 class PdfExtractionPort(Protocol):

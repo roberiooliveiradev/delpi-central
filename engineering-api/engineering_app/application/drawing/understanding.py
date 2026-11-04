@@ -97,6 +97,7 @@ _HEADER_TYPE_MAP = {
 _REV_LABEL_RE = re.compile(r"^REV\.?:?$", re.IGNORECASE)
 _REV_VALUE_RE = re.compile(r"^(\d{2}|[A-Z]{1,2})$")
 _NUM_RE = re.compile(r"^\d+([.,]\d+)?$")
+_CODE_FIND_RE = re.compile(r"\d{8,11}")
 # cota explícita: tolerância ±/±n ou unidade escrita — nunca só número
 _DIM_EXPLICIT_RE = re.compile(
     r"^\d+([.,]\d+)?\s*([±+/-]\s*\d+([.,]\d+)?|mm|pol|in|[°ºøØ])\s*$",
@@ -361,14 +362,22 @@ def _has_admin_word(text: str) -> bool:
 
 
 def _detect_component_table(
-    tokens: list[dict], w: float, h: float, tb_box: list[float] | None
+    tokens: list[dict], w: float, h: float, tb_box: list[float] | None,
+    excluded_ids: set[int] | None = None,
 ) -> dict | None:
     """Tabela = coluna de ≥2 códigos (6-11 dígitos) alinhados em X +
-    linhas adjacentes, em qualquer posição (D2)."""
+    linhas adjacentes, em qualquer posição (D2).
+
+    ``excluded_ids`` (RQ-VAL-027): tokens já apropriados por outras
+    regiões (carimbo, histórico de revisão) nunca são âncoras de
+    coluna nem membros de linhas da tabela de componentes."""
+    ex = excluded_ids or set()
     code_tokens = [
         t
         for t in tokens
-        if _CODE_RE.match(_text_of(t)) and _tok_center(t)
+        if id(t) not in ex
+        and _CODE_RE.match(_text_of(t))
+        and _tok_center(t)
     ]
     if len(code_tokens) < 2:
         return None
@@ -400,7 +409,7 @@ def _detect_component_table(
     # linhas da tabela = tokens na mesma faixa Y dos códigos (vizinhança)
     rows: list[list[dict]] = []
     for t in sorted(
-        [t for t in tokens if _tok_center(t)],
+        [t for t in tokens if _tok_center(t) and id(t) not in ex],
         key=lambda t: _tok_center(t)[1],
     ):
         c = _tok_center(t)
@@ -450,7 +459,9 @@ def _detect_component_table(
         "tokens": [
             t
             for t in tokens
-            if _tok_center(t) and _inside(_tok_center(t), table_box)
+            if id(t) not in ex
+            and _tok_center(t)
+            and _inside(_tok_center(t), table_box)
         ],
     }
 
@@ -567,6 +578,8 @@ def _structure_table(
                 "bounding_box_px": t.get("bounding_box_px"),
                 "confidence": t.get("confidence"),
             }
+            if t.get("page") is not None:
+                cell["page"] = t.get("page")
             if best_i in col_types:
                 cell["col_type"] = col_types[best_i]
             if len(ties) > 1:
@@ -710,10 +723,16 @@ def build_understanding(
     annotated: list[dict] = []
 
     tb = _detect_title_block(tokens, w, h)
-    table = _detect_component_table(
-        tokens, w, h, tb["box"] if tb else None
-    )
     tb_ids = set(id(t) for t in (tb["tokens"] if tb else []))
+    # RQ-VAL-027: histórico de revisão detectado ANTES da tabela —
+    # códigos citados em histórico (ex.: terminal substituído) nunca
+    # são ocorrência vigente de componente.
+    revh = _detect_revision_history(tokens, w, h, tb_ids)
+    revh_ids = set(id(t) for t in (revh["tokens"] if revh else []))
+    table = _detect_component_table(
+        tokens, w, h, tb["box"] if tb else None,
+        excluded_ids=tb_ids | revh_ids,
+    )
     # R8.2.2: fronteira gráfica real — retângulos detectados contendo a
     # coluna de códigos delimitam a tabela; sem evidência → fallback
     # token-derived com limitação explícita (nunca promove inferência).
@@ -766,13 +785,7 @@ def build_understanding(
     tbl_ids = {
         i
         for i in set(id(t) for t in (table["tokens"] if table else []))
-        if i not in tb_ids
-    }
-    revh = _detect_revision_history(tokens, w, h, tb_ids | tbl_ids)
-    revh_ids = {
-        i
-        for i in set(id(t) for t in (revh["tokens"] if revh else []))
-        if i not in tb_ids and i not in tbl_ids
+        if i not in tb_ids and i not in revh_ids
     }
 
     # isolamento (AC02): um token pertence a exatamente uma região;
@@ -929,6 +942,27 @@ def build_understanding(
         else:
             excluded.append({"text": a["text"], "reason": reason})
 
+    # ---------- contextos de códigos (RQ-VAL-027) ----------
+    # Todo token contendo código 8-11 dígitos ganha região+página —
+    # menções em revision_history/notes/title_block são evidência
+    # contextual, nunca presença estrutural comparável.
+    code_contexts: list[dict] = []
+    _ctx_seen: set[tuple] = set()
+    for a in annotated:
+        for code in _CODE_FIND_RE.findall(a["text"]):
+            key = (code, a["region"], a["page"])
+            if key in _ctx_seen:
+                continue
+            _ctx_seen.add(key)
+            code_contexts.append(
+                {
+                    "code": code,
+                    "region": a["region"],
+                    "page": a["page"],
+                    "bounding_box_px": a["bounding_box_px"],
+                }
+            )
+
     # ---------- comparação BOM (fail-closed, D5) ----------
     bom_comparison: dict | None = None
     if bom_codes is not None:
@@ -1060,6 +1094,7 @@ def build_understanding(
             "confidence": "rule_based",
         },
         "identifier_candidates": fields,
+        "code_contexts": code_contexts,
         "revision_history": {
             "candidate": revh is not None,
             "box_px": revh["box"] if revh else None,
@@ -1085,6 +1120,193 @@ def build_understanding(
             "classificar errado",
             "associação cota↔geometria não verificada automaticamente",
             "confidence de OCR não é confiança técnica",
+            "tabela candidata parcial não representa BOM completa",
+        ],
+    }
+    return out
+
+
+def build_document_understanding(
+    tokens: list[dict],
+    *,
+    document_hash: str,
+    bom_codes: list[str] | None = None,
+    bom_quantities: dict[str, int] | None = None,
+    product_code: str | None = None,
+    render_size_by_page: dict[int, tuple[int, int]] | None = None,
+    graphic_primitives_by_page: dict[int, dict] | None = None,
+) -> dict[str, Any]:
+    """Understanding de documento multipágina (RQ-VAL-027/029).
+
+    Interpreta cada página separadamente — regiões, tabelas e históricos
+    são conceitos por página — e consolida num payload
+    ``drawing_understanding.v1`` compatível, com proveniência de página
+    em cada linha/região e resumo de cobertura por página."""
+    by_page: dict[int, list[dict]] = {}
+    for t in tokens:
+        p = int(t.get("page") or 1)
+        by_page.setdefault(p, []).append(t)
+    if not by_page:
+        by_page[1] = []
+
+    regions_all: list[dict] = []
+    conflicts_all: list[dict] = []
+    fields_all: list[dict] = []
+    dims_all: list[dict] = []
+    excluded_all: list[dict] = []
+    revs_all: list[dict] = []
+    ctx_all: list[dict] = []
+    rows_all: list[dict] = []
+    tables_by_page: list[dict] = []
+    page_results: list[dict] = []
+    tb_labels: list[str] = []
+    revh_labels: list[str] = []
+    headers_all: list[str] = []
+    tb_box = revh_box = None
+    ambiguous_cells = 0
+    regions_seen: Counter = Counter()
+    tokens_processed = 0
+    graphic_boundary_any = False
+    unreliable_any = False
+
+    for p in sorted(by_page):
+        u = build_understanding(
+            by_page[p],
+            document_hash=document_hash,
+            page=p,
+            bom_codes=bom_codes,
+            bom_quantities=bom_quantities,
+            product_code=product_code,
+            render_size_px=(render_size_by_page or {}).get(p),
+            graphic_primitives=(graphic_primitives_by_page or {}).get(p),
+        )
+        tokens_processed += u.get("tokens_processed") or 0
+        ct = u.get("component_table") or {}
+        ambiguous_cells += ct.get("ambiguous_cells") or 0
+        graphic_boundary_any = graphic_boundary_any or bool(
+            ct.get("graphic_boundary")
+        )
+        unreliable_any = unreliable_any or bool(
+            ct.get("unreliable_boundary")
+        )
+        tables_by_page.append(
+            {
+                "page": p,
+                "candidate": bool(ct.get("candidate")),
+                "row_count": ct.get("row_count") or 0,
+                "code_count": ct.get("code_count") or 0,
+                "unreliable_boundary": bool(
+                    ct.get("unreliable_boundary")
+                ),
+                "col_types": ct.get("col_types") or {},
+            }
+        )
+        for r in ct.get("rows") or []:
+            r2 = dict(r)
+            r2["page"] = p
+            r2["col_types"] = ct.get("col_types") or {}
+            r2["unreliable_boundary"] = bool(ct.get("unreliable_boundary"))
+            rows_all.append(r2)
+        for reg in u.get("regions") or []:
+            reg2 = dict(reg)
+            reg2["page"] = p
+            regions_all.append(reg2)
+        conflicts_all.extend(u.get("ownership_conflicts") or [])
+        fields_all.extend(u.get("identifier_candidates") or [])
+        dims_all.extend(u.get("dimension_candidates") or [])
+        excluded_all.extend(u.get("dimension_excluded") or [])
+        revs_all.extend(u.get("revision_candidates") or [])
+        ctx_all.extend(u.get("code_contexts") or [])
+        regions_seen.update(u.get("regions_summary") or {})
+        tb = u.get("title_block") or {}
+        if tb.get("candidate"):
+            tb_labels = sorted(set(tb_labels) | set(tb.get("labels") or []))
+            tb_box = tb_box or tb.get("box_px")
+        revh = u.get("revision_history") or {}
+        if revh.get("candidate"):
+            revh_labels = sorted(
+                set(revh_labels) | set(revh.get("labels") or [])
+            )
+            revh_box = revh_box or revh.get("box_px")
+        for htxt in ct.get("headers") or []:
+            if htxt not in headers_all:
+                headers_all.append(htxt)
+        page_results.append(
+            {
+                "page": p,
+                "tokens": len(by_page[p]),
+                "component_table_candidate": bool(ct.get("candidate")),
+                "component_table_rows": ct.get("row_count") or 0,
+                "revision_history_candidate": bool(revh.get("candidate")),
+                "title_block_candidate": bool(tb.get("candidate")),
+            }
+        )
+
+    merged_table = {
+        "candidate": any(t["candidate"] for t in tables_by_page),
+        "rows": rows_all,
+        "row_count": len(rows_all),
+        "code_count": sum(t["code_count"] for t in tables_by_page),
+        "headers": headers_all,
+        "ambiguous_cells": ambiguous_cells,
+        "col_types": {
+            str(t["page"]): t["col_types"] for t in tables_by_page
+        },
+        "graphic_boundary": graphic_boundary_any,
+        "unreliable_boundary": unreliable_any,
+        "boundary_source": (
+            "graphic_rects" if graphic_boundary_any else "tokens_inferred"
+        ),
+        "tables_by_page": tables_by_page,
+        "detection": "code_column_cluster + row_y_proximity (per page)",
+        "confidence": "rule_based",
+    }
+
+    out: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
+        "scope": "multi_page_document",
+        "document_hash_sha256": document_hash,
+        "page": min(by_page),
+        "pages_analyzed": sorted(by_page),
+        "page_results": page_results,
+        "regions": regions_all,
+        "ownership_conflicts": conflicts_all,
+        "regions_summary": dict(regions_seen),
+        "tokens_processed": tokens_processed,
+        "title_block": {
+            "candidate": tb_box is not None,
+            "box_px": tb_box,
+            "labels": tb_labels,
+            "detection": "label_cluster (≥2 rótulos conhecidos)",
+        },
+        "component_table": merged_table,
+        "identifier_candidates": fields_all,
+        "code_contexts": ctx_all,
+        "revision_history": {
+            "candidate": revh_box is not None,
+            "box_px": revh_box,
+            "labels": revh_labels,
+            "detection": "revhist_label_cluster (≥2 rótulos fora do "
+            "carimbo)",
+        },
+        "revision_candidates": revs_all,
+        "dimension_candidates": dims_all,
+        "dimension_excluded": excluded_all,
+        "bom_comparison": None,
+        "states": {
+            "fields": sorted(FIELD_STATES),
+            "dimensions": sorted(DIMENSION_STATES),
+        },
+        "validation": {
+            "status": "DRAFT",
+            "engineering_validated": False,
+            "note": "candidatos — revisão técnica pelo owner de Engenharia",
+        },
+        "limitations": [
+            "cobertura por página depende do OCR efetivamente executado "
+            "— páginas sem evidência não comprovam ausência",
+            "região por estrutura+rótulos — layout atípico pode ainda "
+            "classificar errado",
             "tabela candidata parcial não representa BOM completa",
         ],
     }
