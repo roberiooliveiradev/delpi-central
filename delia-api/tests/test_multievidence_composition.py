@@ -436,3 +436,103 @@ def test_cold_single_turn_comparison_reaches_verified_fan_in():
     assert set(verified.source_roots) == {"90260147", "90260148"}
     assert verified.verdict == "differences_found"
     assert len(provider.calls) == 2
+
+
+# --- E4-R6: analytical subobjectives delegate to parent composition ---
+
+def _sub(oid, goal, deps=()):
+    from app.application.capability_provision.subobjective_tracker import (
+        SubObjective,
+    )
+    return SubObjective(
+        subobjective_id=oid, goal=goal, dependencies=deps
+    )
+
+
+def test_analytical_subs_filtered_reads_kept():
+    orch = _orc()
+    classes = {
+        "ler estrutura 90260147": "read",
+        "ler estrutura 90260148": "read",
+        "componentes comuns": "compare",
+        "diferenças de quantidade": "analyze",
+    }
+    orch._understand_goal = (
+        lambda text, correlation, workspace_context, prior_turns, deadline: orch._TurnGoal(
+            goal_class=classes[text],
+            comparison_requested=classes[text] == "compare",
+            declared=True,
+        )
+    )
+    kept = orch._acquisition_subobjectives(
+        (
+            _sub("so_1", "ler estrutura 90260147"),
+            _sub("so_2", "ler estrutura 90260148"),
+            _sub("so_3", "componentes comuns", deps=("so_1", "so_2")),
+            _sub("so_4", "diferenças de quantidade", deps=("so_1",)),
+        ),
+        correlation="c",
+        workspace_context=None,
+        prior_turns=(),
+        deadline=None,
+    )
+    assert [s.subobjective_id for s in kept] == ["so_1", "so_2"]
+
+
+def test_unclassifiable_sub_stays_tracked_fail_closed():
+    orch = _orc()
+
+    def _boom(*a, **k):
+        raise RuntimeError("model down")
+
+    orch._understand_goal = _boom
+    kept = orch._acquisition_subobjectives(
+        (
+            _sub("so_1", "ler estrutura 90260147"),
+            _sub("so_2", "componentes comuns", deps=("so_1",)),
+        ),
+        correlation="c",
+        workspace_context=None,
+        prior_turns=(),
+        deadline=None,
+    )
+    # classification failed closed: nothing is dropped by guesswork
+    assert [s.subobjective_id for s in kept] == ["so_1", "so_2"]
+    assert kept[1].dependencies == ("so_1",)
+
+
+def test_undeclared_goal_keeps_sub_tracked():
+    orch = _orc()
+    orch._understand_goal = (
+        lambda *a, **k: orch._TurnGoal(goal_class="read", declared=False)
+    )
+    kept = orch._acquisition_subobjectives(
+        (_sub("so_1", "componentes comuns"),),
+        correlation="c",
+        workspace_context=None,
+        prior_turns=(),
+        deadline=None,
+    )
+    assert [s.subobjective_id for s in kept] == ["so_1"]
+
+
+def test_dropped_dep_does_not_block_read():
+    orch = _orc()
+    classes = {"read A": "read", "compare both": "compare"}
+    orch._understand_goal = (
+        lambda text, *a, **k: orch._TurnGoal(
+            goal_class=classes[text], declared=True
+        )
+    )
+    kept = orch._acquisition_subobjectives(
+        (
+            _sub("so_1", "compare both"),
+            _sub("so_2", "read A", deps=("so_1",)),
+        ),
+        correlation="c",
+        workspace_context=None,
+        prior_turns=(),
+        deadline=None,
+    )
+    assert [s.subobjective_id for s in kept] == ["so_2"]
+    assert kept[0].dependencies == ()

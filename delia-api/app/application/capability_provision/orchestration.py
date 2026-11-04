@@ -7159,6 +7159,118 @@ class OperationalCapabilityOrchestrator:
             prior_turns=prior_turns,
         )
 
+    # Doc 228 §14 residual: analytical subobjective classes — the ones
+    # the deterministic parent fan-in answers by construction. A sub
+    # classified (or unclassifiable) outside this set is an evidence
+    # obligation and is always investigated; nothing is dropped by
+    # text, index or position.
+    _ANALYTICAL_SUBOBJECTIVE_CLASSES = frozenset({"analyze", "compare"})
+
+    def _acquisition_subobjectives(
+        self,
+        objectives: tuple[SubObjective, ...],
+        *,
+        correlation: str,
+        workspace_context: WorkspaceContext | None,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        deadline: TurnDeadline,
+    ) -> tuple[SubObjective, ...]:
+        """Filter a comparison proposal down to evidence-acquisition
+        subobjectives.
+
+        The model sometimes mirrors the user's analytical phrasing
+        (common/exclusive/differences) into extra subobjectives that no
+        owner READ can answer — the deterministic composition computes
+        those facts over the gathered sources. Investigating them is
+        redundant work that starves the real READs inside the shared
+        turn budget. Each proposed sub is classified by the SAME
+        governed goal instruction; a classification that fails or is
+        undeclared keeps the sub tracked (fail-closed: investigate an
+        obligation rather than drop it).
+        """
+
+        def _classify(
+            sub: SubObjective,
+        ) -> "OperationalCapabilityOrchestrator._TurnGoal | None":
+            try:
+                return self._understand_goal(
+                    sub.goal,
+                    f"{correlation}-{sub.subobjective_id}-cls",
+                    workspace_context,
+                    prior_turns,
+                    deadline,
+                )
+            except Exception:
+                _logger.exception(
+                    "orchestration subobjective_classify_failed "
+                    "oid=%s correlation_id=%s",
+                    sub.subobjective_id,
+                    correlation,
+                )
+                return None
+
+        goals: dict[
+            str, "OperationalCapabilityOrchestrator._TurnGoal | None"
+        ] = {}
+        if len(objectives) > 1:
+            from concurrent.futures import ThreadPoolExecutor
+
+            with ThreadPoolExecutor(
+                max_workers=min(4, len(objectives)),
+                thread_name_prefix="delia_subobj_cls",
+            ) as pool:
+                future_map = {
+                    pool.submit(
+                        contextvars.copy_context().run, _classify, sub
+                    ): sub
+                    for sub in objectives
+                }
+                for fut, sub in future_map.items():
+                    try:
+                        goals[sub.subobjective_id] = fut.result()
+                    except Exception:
+                        goals[sub.subobjective_id] = None
+        elif objectives:
+            goals[objectives[0].subobjective_id] = _classify(
+                objectives[0]
+            )
+
+        dropped: set[str] = set()
+        kept: list[SubObjective] = []
+        for sub in objectives:
+            sub_goal = goals.get(sub.subobjective_id)
+            if (
+                sub_goal is not None
+                and getattr(sub_goal, "declared", False)
+                and sub_goal.goal_class
+                in self._ANALYTICAL_SUBOBJECTIVE_CLASSES
+            ):
+                dropped.add(sub.subobjective_id)
+                _logger.info(
+                    "orchestration stage=subobjective_decomposition "
+                    "decision=delegated_to_composition class=%s "
+                    "correlation_id=%s",
+                    sub_goal.goal_class,
+                    f"{correlation}-{sub.subobjective_id}",
+                )
+                continue
+            kept.append(sub)
+        if dropped:
+            # Dependencies on delegated subs are fulfilled by the
+            # composition itself — never block a READ on them.
+            kept = [
+                dataclasses.replace(
+                    sub,
+                    dependencies=tuple(
+                        dep
+                        for dep in sub.dependencies
+                        if dep not in dropped
+                    ),
+                )
+                for sub in kept
+            ]
+        return tuple(kept)
+
     def _investigate_subobjectives(
         self,
         objectives: tuple[SubObjective, ...],
@@ -7179,6 +7291,14 @@ class OperationalCapabilityOrchestrator:
         enforced by the tracker, budgets shared with the parent turn
         (the same TurnDeadline bounds the whole investigation).
         Sub-investigations run at depth>0 and never decompose."""
+        if comparison:
+            objectives = self._acquisition_subobjectives(
+                objectives,
+                correlation=correlation,
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                deadline=deadline,
+            )
         tracker = SubObjectiveTracker(objectives)
         contents: list[str] = []
         limitations: list[str] = []
