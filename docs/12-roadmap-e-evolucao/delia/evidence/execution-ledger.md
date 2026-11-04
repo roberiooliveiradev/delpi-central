@@ -5639,4 +5639,20 @@ IMPLEMENTATION_SHA=5e89b51bf6 (pushed main).
 LIVE_E2E=TEST_NOT_RUN — Docker/Ollama/stack available, but PRODUCTION_DEPLOY=NOT_AUTHORIZED blocked rebuild; container still stale vs EVALUATED_SHA (STALE_EVIDENCE if run).
 VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
 
+## Pydantic AI native-first generalist investigation (2026-11-04)
+
+TASK=DELIA-C3-PYDANTIC-AI-NATIVE-FIRST-GENERALIST-INVESTIGATION-CONSOLIDATION-01.
+PLAN=doc 235. REPORT=doc 236. PRODUCTION_DEPLOY=NOT_AUTHORIZED. PHASE_ADVANCE=NONE.
+EXISTING_EQUIVALENT=YES (Agent/gates/TurnGoal/compose/CLARIFICATION_REQUIRED).
+REUSE_DECISION=EXTEND (optional declare; typed args; clarification tool; optional compose tool; heterogeneous obligations).
+EXECUTION_DRIFT=NONE.
+NATIVE=pydantic-ai 2.50.0 Agent+FunctionToolset+UsageLimits; no new planner/engine.
+REMOVED_OR_SOFTENED=mandatory declare; hardwired compare-as-sole multi-source path (compose now agent-optional).
+LEGACY_RETAINED=`DELIA_ORCHESTRATION_ENGINE=delia` rollback + `_governed_owner_path` for rollback only.
+REGRESSION=delia-api pytest tests/ GREEN; new `test_pydantic_ai_native_first_consolidation.py`.
+LOCAL_STACK=docker-compose.dev.yml (volume-mounted delia-api; NOT up-prod-sequential).
+LIVE_E2E=PARTIAL — auth password-grant OK; E01 conceptual NON_GROUNDED honest; E02/E03/E07 NON_GROUNDED owner_path_unbound / intermittent agent_error; FALSE_GROUNDED=0; MCP health online; OWNER_READS=0 this matrix.
+RUNTIME_LABEL_NOTE=container env DELIA_RUNTIME_SHA lagged bind-mounted code; label refresh after push.
+VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
+
 

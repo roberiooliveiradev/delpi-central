@@ -176,6 +176,18 @@ class SupportsGovernedStageGates(Protocol):
         """
         ...
 
+    def _compose_observation_pair(
+        self,
+        *,
+        left: GovernedCapabilityAttempt,
+        right: GovernedCapabilityAttempt,
+        correlation: str,
+        workspace_context: WorkspaceContext | None,
+        deadline: TurnDeadline,
+    ) -> GovernedCapabilityAttempt | None:
+        """Optional deterministic composition of two verified observations."""
+        ...
+
     def _finalize_semantic_investigation(
         self,
         *,
@@ -186,13 +198,14 @@ class SupportsGovernedStageGates(Protocol):
         deadline: TurnDeadline,
         unbound_outcome: str | None,
         plan: object | None = None,
+        clarification_question: str | None = None,
+        composed_attempt: GovernedCapabilityAttempt | None = None,
     ) -> GovernedCapabilityAttempt:
         """Goal-coverage finalizer for Agent-collected tool attempts.
 
-        A single tool SUCCESS is never automatically the turn outcome
-        when material obligations remain (compare / multi-target).
-        Coverage uses the typed plan + authoritative REF05 roots —
-        never regex intent or rendered-text identity.
+        Clarification and agent-requested composition are first-class.
+        Typed plan is optional for simple READ. Material obligations and
+        authoritative identity binding remain Application-owned.
         """
         ...
 

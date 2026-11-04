@@ -142,7 +142,7 @@ def _build_pydantic_ai_engine(
                             "invoke_read_capability",
                             {
                                 "capability_id": cap_id,
-                                "arguments_json": "{}",
+                                "arguments": {},
                             },
                         )
                     ]

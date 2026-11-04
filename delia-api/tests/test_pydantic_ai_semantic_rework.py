@@ -513,8 +513,8 @@ def test_r1_simple_read_never_calls_governed_owner_path():
                         {
                             "goal_class": "read",
                             "comparison_requested": False,
-                            "target_identities_json": '["90260147"]',
-                            "evidence_needed_json": '["90260147"]',
+                            "target_identities": ["90260147"],
+                            "evidence_needed": ["90260147"],
                         },
                     )
                 ]
@@ -526,7 +526,7 @@ def test_r1_simple_read_never_calls_governed_owner_path():
                         "invoke_read_capability",
                         {
                             "capability_id": read["capability_id"],
-                            "arguments_json": "{}",
+                            "arguments": {},
                         },
                     )
                 ]
@@ -614,8 +614,8 @@ def test_declare_goal_tool_wires_plan_into_finalize():
                         {
                             "goal_class": "compare",
                             "comparison_requested": True,
-                            "target_identities_json": '["T1","T2"]',
-                            "evidence_needed_json": '["T1","T2"]',
+                            "target_identities": ["T1", "T2"],
+                            "evidence_needed": ["T1", "T2"],
                         },
                     )
                 ]

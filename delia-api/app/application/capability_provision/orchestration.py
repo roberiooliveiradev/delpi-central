@@ -3602,6 +3602,37 @@ def _normalize_identity_tuple(raw: object) -> tuple[str, ...]:
     return tuple(unique)
 
 
+def _attempt_satisfies_obligation(
+    attempt: GovernedCapabilityAttempt, obligation: str
+) -> bool:
+    """Heterogeneous obligation match — root, source_id, or capability.
+
+    Structure roots remain authoritative for BOM/product identities.
+    Non-structure owners bind via provenance source_id / remote /
+    action identifiers — never rendered text mentions.
+    """
+    needle = (obligation or "").strip()
+    if not needle:
+        return False
+    key = needle.casefold()
+    root = _authoritative_structure_root(attempt)
+    if root is not None and root.casefold() == key:
+        return True
+    prov = attempt.provenance
+    if prov is None:
+        return False
+    for ref in prov.source_refs:
+        if (ref.source_id or "").strip().casefold() == key:
+            return True
+    if (prov.remote_capability or "").strip().casefold() == key:
+        return True
+    if (prov.action_id or "").strip().casefold() == key:
+        return True
+    if (prov.specialist_id or "").strip().casefold() == key:
+        return True
+    return False
+
+
 def _evaluate_material_obligations(
     *,
     obligations: tuple[str, ...],
@@ -3609,19 +3640,17 @@ def _evaluate_material_obligations(
 ) -> tuple[tuple[str, str], ...]:
     """Return ``(obligation_id, state)`` for each material obligation."""
     results: list[tuple[str, str]] = []
-    used_roots: set[str] = set()
+    used: set[int] = set()
     for obligation in obligations:
         matched = None
-        for attempt in business:
-            root = _authoritative_structure_root(attempt)
-            if root is None:
+        for index, attempt in enumerate(business):
+            if index in used:
                 continue
-            if root.casefold() in used_roots:
+            if not _attempt_satisfies_obligation(attempt, obligation):
                 continue
-            if root.casefold() == obligation.casefold():
-                matched = attempt
-                used_roots.add(root.casefold())
-                break
+            matched = attempt
+            used.add(index)
+            break
         if matched is None:
             unavailable = any(
                 item.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
@@ -3651,14 +3680,42 @@ def _finalize_agent_collected_attempts(
     deadline: TurnDeadline,
     unbound_outcome: str | None,
     plan: SemanticInvestigationPlan | None = None,
+    clarification_question: str | None = None,
+    composed_attempt: GovernedCapabilityAttempt | None = None,
 ) -> GovernedCapabilityAttempt:
     """Goal-coverage finalizer for Pydantic AI tool observations.
 
-    Uses the typed ``SemanticInvestigationPlan`` (Agent-declared,
-    Application-validated). Never classifies compare-intent via regex
-    or binds REF05 via rendered text mentions.
+    Native-first: clarification and optional agent-requested composition
+    take precedence. Typed plan remains optional (not mandatory for
+    simple READ). Never classifies intent via regex or binds REF05 via
+    rendered text mentions.
     """
     del input_text  # identity/coverage come from plan + owner records
+
+    if clarification_question:
+        missing = _normalize_identity_tuple(
+            plan.evidence_needed if plan is not None else ()
+        ) or ("clarification",)
+        content = (
+            str(clarification_question).strip()[:MAX_RENDER_CONTENT_CHARS]
+            or _clarification_content(missing)
+        )
+        return GovernedCapabilityAttempt(
+            status=GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
+            correlation_id=correlation,
+            content=content,
+            limitations=("agent_requested_clarification",),
+            error_code="investigation_clarification_required",
+            admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+        )
+
+    if (
+        composed_attempt is not None
+        and composed_attempt.status is GovernedCapabilityStatus.SUCCESS
+        and composed_attempt.verified_composition is not None
+    ):
+        return composed_attempt
+
     if not collected:
         _logger.info(
             "orchestration stage=semantic_finalize "
@@ -13453,6 +13510,68 @@ class OperationalCapabilityOrchestrator:
             evidence_needed=needed,
         )
 
+    def _compose_observation_pair(
+        self,
+        *,
+        left: GovernedCapabilityAttempt,
+        right: GovernedCapabilityAttempt,
+        correlation: str,
+        workspace_context: WorkspaceContext | None,
+        deadline: TurnDeadline,
+    ) -> GovernedCapabilityAttempt | None:
+        """Optional deterministic composition of two verified observations.
+
+        Agent-requested analysis capability — not an intent router.
+        Both sides must be business evidence with authoritative roots.
+        """
+        if not (
+            _is_business_evidence_attempt(left)
+            and _is_business_evidence_attempt(right)
+        ):
+            return None
+        left_root = _authoritative_structure_root(left)
+        right_root = _authoritative_structure_root(right)
+        if (
+            left_root is None
+            or right_root is None
+            or left_root.casefold() == right_root.casefold()
+        ):
+            return None
+        left_records = _comparison_records(left.outcome)  # type: ignore[arg-type]
+        right_records = _comparison_records(right.outcome)  # type: ignore[arg-type]
+        composed = self._compose_multi_evidence(
+            {left_root: left_records, right_root: right_records},
+            "",
+            correlation=correlation,
+            workspace_context=workspace_context,
+            deadline=deadline,
+        )
+        if composed is None:
+            return None
+        content, limitations, verdict = composed
+        if verdict not in ("agreement", "differences_found"):
+            return None
+        verified = VerifiedCompositeEvidence(
+            source_roots=(left_root, right_root),
+            source_lineage=(
+                left.provenance.source_refs,  # type: ignore[union-attr]
+                right.provenance.source_refs,  # type: ignore[union-attr]
+            ),
+            observed_at=max(
+                left.outcome.provenance.observed_at,  # type: ignore[union-attr]
+                right.outcome.provenance.observed_at,  # type: ignore[union-attr]
+            ),
+            correlation_id=correlation,
+            verdict=verdict,
+        )
+        return GovernedCapabilityAttempt(
+            status=GovernedCapabilityStatus.SUCCESS,
+            correlation_id=correlation,
+            content=content,
+            limitations=tuple(limitations)[:24],
+            verified_composition=verified,
+        )
+
     def _finalize_semantic_investigation(
         self,
         *,
@@ -13463,8 +13582,10 @@ class OperationalCapabilityOrchestrator:
         deadline: TurnDeadline,
         unbound_outcome: str | None,
         plan: SemanticInvestigationPlan | None = None,
+        clarification_question: str | None = None,
+        composed_attempt: GovernedCapabilityAttempt | None = None,
     ) -> GovernedCapabilityAttempt:
-        """Conclude from typed goal coverage + authoritative REF05 roots."""
+        """Conclude from typed coverage + authoritative evidence."""
         return _finalize_agent_collected_attempts(
             self,
             input_text=input_text,
@@ -13474,6 +13595,8 @@ class OperationalCapabilityOrchestrator:
             deadline=deadline,
             unbound_outcome=unbound_outcome,
             plan=plan,
+            clarification_question=clarification_question,
+            composed_attempt=composed_attempt,
         )
 
     def _select_group(
