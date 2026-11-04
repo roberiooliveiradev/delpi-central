@@ -3485,31 +3485,38 @@ def _compare_insufficiency_attempt(
     )
 
 
-_COMPARE_INTENT = re.compile(
-    r"\b(compar(?:ar|e|ison|ação|acao)?|versus|\bvs\.?\b|"
-    r"diferen[cç]a|side[\s-]?by[\s-]?side)\b",
-    re.IGNORECASE,
+# Material obligation coverage states for agent investigation finalize
+# (doc 233 rework). Mapped onto SubObjectiveTracker vocabulary when
+# equivalent; kept as explicit labels for finalize projections.
+OBLIGATION_REQUIRED = "REQUIRED"
+OBLIGATION_SATISFIED = "SATISFIED"
+OBLIGATION_UNSATISFIED = "UNSATISFIED"
+OBLIGATION_UNAVAILABLE = "UNAVAILABLE"
+OBLIGATION_INCONCLUSIVE = "INCONCLUSIVE"
+
+_OBLIGATION_STATES = frozenset(
+    {
+        OBLIGATION_REQUIRED,
+        OBLIGATION_SATISFIED,
+        OBLIGATION_UNSATISFIED,
+        OBLIGATION_UNAVAILABLE,
+        OBLIGATION_INCONCLUSIVE,
+    }
 )
-# Identifier-like tokens only (must include a digit) so verbs such as
-# "compare" are never mistaken for REF05 targets.
-_TARGET_TOKEN = re.compile(
-    r"\b(?=[A-Z0-9._-]*\d)([A-Z0-9][A-Z0-9._-]{5,})\b"
-)
 
 
-def _declared_investigation_targets(text: str) -> tuple[str, ...]:
-    """Provider-neutral target tokens declared in the user ask (REF05)."""
-    found = [
-        token.upper()
-        for token in _TARGET_TOKEN.findall((text or "").upper())
-    ]
-    return tuple(dict.fromkeys(found))
+@dataclasses.dataclass(frozen=True, slots=True)
+class SemanticInvestigationPlan:
+    """Application-validated investigation plan from the Agent tool.
 
+    Semantic proposal only — never authorization. Target identities and
+    evidence_needed are the REF05/material-obligation contract for
+    finalize; comparison_requested comes from the typed ``_TurnGoal``.
+    """
 
-def _requests_multi_source_investigation(
-    text: str, targets: tuple[str, ...]
-) -> bool:
-    return bool(_COMPARE_INTENT.search(text or "")) or len(targets) >= 2
+    goal: "OperationalCapabilityOrchestrator._TurnGoal"
+    target_identities: tuple[str, ...] = ()
+    evidence_needed: tuple[str, ...] = ()
 
 
 def _is_business_evidence_attempt(
@@ -3529,24 +3536,109 @@ def _is_business_evidence_attempt(
     return True
 
 
-def _attempt_covers_target(
+def _authoritative_structure_root(
+    attempt: GovernedCapabilityAttempt,
+) -> str | None:
+    """REF05 oracle: unique min-depth structure root from owner records.
+
+    Never derived from rendered content/Markdown/text mentions.
+    """
+    outcome = attempt.outcome
+    if outcome is None or not outcome.is_complete:
+        return None
+    if attempt.provenance is None or not attempt.provenance.is_complete:
+        return None
+    if "discovery_metadata_observation" in attempt.limitations:
+        return None
+    records = _comparison_records(outcome)
+    if not records:
+        return None
+    rows = _flatten_evidence_records(records)
+    if not rows:
+        return None
+    min_depth = min(len(row["path"]) for row in rows)
+    roots = [row for row in rows if len(row["path"]) == min_depth]
+    if len(roots) != 1:
+        return None
+    code = roots[0].get("code")
+    if not isinstance(code, str) or not code.strip():
+        return None
+    return code.strip()
+
+
+def _bind_attempt_to_target(
     attempt: GovernedCapabilityAttempt, target: str
 ) -> bool:
-    needle = (target or "").upper()
+    """True only when authoritative root equals the requested identity."""
+    needle = (target or "").strip()
     if not needle:
         return False
-    haystacks = [
-        attempt.content or "",
-        attempt.markdown_content or "",
-    ]
-    if attempt.provenance is not None:
-        haystacks.extend(
-            ref.source_id for ref in attempt.provenance.source_refs
-        )
-    if attempt.outcome is not None:
-        haystacks.append(str(attempt.outcome.structured or ""))
-    blob = "\n".join(haystacks).upper()
-    return needle in blob
+    root = _authoritative_structure_root(attempt)
+    if root is None:
+        return False
+    return root.casefold() == needle.casefold()
+
+
+def _normalize_identity_tuple(raw: object) -> tuple[str, ...]:
+    if not isinstance(raw, (list, tuple)):
+        return ()
+    out: list[str] = []
+    for item in raw:
+        if not isinstance(item, str):
+            continue
+        token = item.strip()
+        if not token or len(token) > 64:
+            continue
+        out.append(token)
+    # Preserve order, drop duplicates (case-insensitive).
+    seen: set[str] = set()
+    unique: list[str] = []
+    for token in out[:16]:
+        key = token.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(token)
+    return tuple(unique)
+
+
+def _evaluate_material_obligations(
+    *,
+    obligations: tuple[str, ...],
+    business: tuple[GovernedCapabilityAttempt, ...],
+) -> tuple[tuple[str, str], ...]:
+    """Return ``(obligation_id, state)`` for each material obligation."""
+    results: list[tuple[str, str]] = []
+    used_roots: set[str] = set()
+    for obligation in obligations:
+        matched = None
+        for attempt in business:
+            root = _authoritative_structure_root(attempt)
+            if root is None:
+                continue
+            if root.casefold() in used_roots:
+                continue
+            if root.casefold() == obligation.casefold():
+                matched = attempt
+                used_roots.add(root.casefold())
+                break
+        if matched is None:
+            unavailable = any(
+                item.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+                for item in business
+            )
+            state = (
+                OBLIGATION_UNAVAILABLE
+                if unavailable
+                else OBLIGATION_UNSATISFIED
+            )
+            results.append((obligation, state))
+            continue
+        if matched.provenance is None or not matched.provenance.is_complete:
+            results.append((obligation, OBLIGATION_INCONCLUSIVE))
+            continue
+        results.append((obligation, OBLIGATION_SATISFIED))
+    return tuple(results)
 
 
 def _finalize_agent_collected_attempts(
@@ -3558,12 +3650,15 @@ def _finalize_agent_collected_attempts(
     workspace_context: WorkspaceContext | None,
     deadline: TurnDeadline,
     unbound_outcome: str | None,
+    plan: SemanticInvestigationPlan | None = None,
 ) -> GovernedCapabilityAttempt:
-    """Goal-coverage finalizer for Pydantic AI tool observations (R2).
+    """Goal-coverage finalizer for Pydantic AI tool observations.
 
-    Never promotes a lone tool SUCCESS into a grounded comparison when
-    declared targets or multi-source obligations remain unmet.
+    Uses the typed ``SemanticInvestigationPlan`` (Agent-declared,
+    Application-validated). Never classifies compare-intent via regex
+    or binds REF05 via rendered text mentions.
     """
+    del input_text  # identity/coverage come from plan + owner records
     if not collected:
         _logger.info(
             "orchestration stage=semantic_finalize "
@@ -3581,22 +3676,36 @@ def _finalize_agent_collected_attempts(
     business = tuple(
         item for item in collected if _is_business_evidence_attempt(item)
     )
-    targets = _declared_investigation_targets(input_text)
-    multi = _requests_multi_source_investigation(input_text, targets)
     limitations: list[str] = []
+    comparison = bool(
+        plan is not None
+        and (
+            plan.goal.comparison_requested
+            or plan.goal.goal_class == "compare"
+        )
+    )
+    targets = plan.target_identities if plan is not None else ()
+    obligations = (
+        plan.evidence_needed
+        if plan is not None and plan.evidence_needed
+        else targets
+    )
 
-    if multi:
-        if len(business) < 2:
-            limitations.append(LIMITATION_INSUFFICIENT_EVIDENCE)
-            limitations.append("comparison_source_missing")
-            _logger.info(
-                "orchestration stage=semantic_finalize "
-                "decision=insufficient_sources business=%d "
-                "targets=%d correlation_id=%s",
-                len(business),
-                len(targets),
-                correlation,
+    if comparison:
+        if plan is None:
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                limitations=(
+                    LIMITATION_INSUFFICIENT_EVIDENCE,
+                    "goal_plan_undeclared",
+                ),
+                error_code="investigation_goal_plan_required",
             )
+        if len(targets) < 2:
+            limitations.append(LIMITATION_INSUFFICIENT_EVIDENCE)
+            limitations.append("comparison_targets_undeclared")
             return GovernedCapabilityAttempt(
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,
                 correlation_id=correlation,
@@ -3604,25 +3713,64 @@ def _finalize_agent_collected_attempts(
                 limitations=tuple(dict.fromkeys(limitations))[:24],
                 error_code="investigation_incomplete_coverage",
             )
-        unmatched = [
-            target
-            for target in targets
-            if not any(
-                _attempt_covers_target(item, target) for item in business
-            )
-        ]
-        if unmatched:
+
+        coverage = _evaluate_material_obligations(
+            obligations=obligations or targets,
+            business=business,
+        )
+        for obligation_id, state in coverage:
+            if state != OBLIGATION_SATISFIED:
+                limitations.append(f"obligation_{state.lower()}:{obligation_id}")
+        if any(state != OBLIGATION_SATISFIED for _, state in coverage):
             limitations.append(LIMITATION_INSUFFICIENT_EVIDENCE)
-            limitations.append("ref05_target_unbound")
-            limitations.extend(
-                f"ref05_missing_target:{token}" for token in unmatched[:8]
+            limitations.append("material_obligations_incomplete")
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                limitations=tuple(dict.fromkeys(limitations))[:24],
+                error_code="investigation_incomplete_coverage",
             )
-            _logger.info(
-                "orchestration stage=semantic_finalize "
-                "decision=ref05_unbound missing=%s correlation_id=%s",
-                unmatched[:8],
-                correlation,
+
+        # Bind each declared target to a distinct authoritative root.
+        sources: dict[str, tuple[Mapping[str, Any], ...]] = {}
+        lineages: dict[str, tuple] = {}
+        observations: list[str] = []
+        bound_attempts: dict[str, GovernedCapabilityAttempt] = {}
+        for target in targets:
+            match = next(
+                (
+                    item
+                    for item in business
+                    if _bind_attempt_to_target(item, target)
+                    and _authoritative_structure_root(item) is not None
+                    and _authoritative_structure_root(item).casefold()
+                    not in {
+                        _authoritative_structure_root(prior).casefold()
+                        for prior in bound_attempts.values()
+                        if _authoritative_structure_root(prior) is not None
+                    }
+                ),
+                None,
             )
+            if match is None:
+                limitations.append("ref05_target_unbound")
+                limitations.append(f"ref05_missing_target:{target}")
+                continue
+            root = _authoritative_structure_root(match)
+            assert root is not None
+            if root.casefold() != target.casefold():
+                limitations.append("ref05_target_unbound")
+                limitations.append(f"ref05_missing_target:{target}")
+                continue
+            records = _comparison_records(match.outcome)  # type: ignore[arg-type]
+            sources[root] = records
+            lineages[root] = match.provenance.source_refs  # type: ignore[union-attr]
+            observations.append(match.outcome.provenance.observed_at)  # type: ignore[union-attr]
+            bound_attempts[target] = match
+
+        if limitations:
+            limitations.append(LIMITATION_INSUFFICIENT_EVIDENCE)
             return GovernedCapabilityAttempt(
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,
                 correlation_id=correlation,
@@ -3631,34 +3779,7 @@ def _finalize_agent_collected_attempts(
                 error_code="investigation_target_binding_failed",
             )
 
-        sources: dict[str, tuple[Mapping[str, Any], ...]] = {}
-        lineages: dict[str, tuple] = {}
-        observations: list[str] = []
-        for item in business:
-            outcome = item.outcome
-            provenance = item.provenance
-            if outcome is None or provenance is None:
-                continue
-            records = _comparison_records(outcome)
-            if not records:
-                continue
-            rows = _flatten_evidence_records(records)
-            if not rows:
-                continue
-            min_depth = min(len(row["path"]) for row in rows)
-            roots = [
-                row for row in rows if len(row["path"]) == min_depth
-            ]
-            if len(roots) != 1 or not roots[0].get("code"):
-                continue
-            root_id = str(roots[0]["code"])
-            if root_id in sources:
-                continue
-            sources[root_id] = records
-            lineages[root_id] = provenance.source_refs
-            observations.append(outcome.provenance.observed_at)
-
-        if len(sources) != 2:
+        if len(sources) != len(targets) or len(sources) < 2:
             limitations.append(LIMITATION_INSUFFICIENT_EVIDENCE)
             limitations.append("comparison_source_missing")
             return GovernedCapabilityAttempt(
@@ -3669,9 +3790,31 @@ def _finalize_agent_collected_attempts(
                 error_code="investigation_incomplete_coverage",
             )
 
+        # Compose uses the first two bound roots in target declaration
+        # order (order of acquisition must not decide success).
+        ordered_roots = tuple(
+            _authoritative_structure_root(bound_attempts[t])  # type: ignore[arg-type]
+            for t in targets
+            if t in bound_attempts
+        )
+        if len(ordered_roots) < 2:
+            limitations.append(LIMITATION_INSUFFICIENT_EVIDENCE)
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                limitations=tuple(dict.fromkeys(limitations))[:24],
+                error_code="investigation_incomplete_coverage",
+            )
+        compose_sources = {
+            ordered_roots[0]: sources[ordered_roots[0]],
+            ordered_roots[1]: sources[ordered_roots[1]],
+        }
         composed = orchestrator._compose_multi_evidence(
-            sources,
-            input_text,
+            compose_sources,
+            # Pass-through empty — composition proposal uses owner
+            # records only for verified facts (ADR 58).
+            "",
             correlation=correlation,
             workspace_context=workspace_context,
             deadline=deadline,
@@ -3696,10 +3839,12 @@ def _finalize_agent_collected_attempts(
                 limitations=tuple(dict.fromkeys(limitations))[:24],
                 error_code="investigation_composition_unverified",
             )
-        roots = tuple(sources)
         verified = VerifiedCompositeEvidence(
-            source_roots=(roots[0], roots[1]),
-            source_lineage=(lineages[roots[0]], lineages[roots[1]]),
+            source_roots=(ordered_roots[0], ordered_roots[1]),
+            source_lineage=(
+                lineages[ordered_roots[0]],
+                lineages[ordered_roots[1]],
+            ),
             observed_at=max(observations),
             correlation_id=correlation,
             verdict=verdict,
@@ -3719,12 +3864,12 @@ def _finalize_agent_collected_attempts(
             verified_composition=verified,
         )
 
-    # Simple single-source ask: one business evidence SUCCESS is enough.
+    # Non-compare: optional single-target REF05 via authoritative root.
     if len(business) == 1:
-        if targets and not _attempt_covers_target(business[0], targets[0]):
-            # Soft check for a single declared target — fail closed when
-            # the only token is clearly unbound (REF05 sibling).
-            if len(targets) == 1 and len(targets[0]) >= 6:
+        if targets:
+            if len(targets) != 1 or not _bind_attempt_to_target(
+                business[0], targets[0]
+            ):
                 return GovernedCapabilityAttempt(
                     status=GovernedCapabilityStatus.NOT_APPLICABLE,
                     correlation_id=correlation,
@@ -3732,15 +3877,36 @@ def _finalize_agent_collected_attempts(
                     limitations=(
                         LIMITATION_INSUFFICIENT_EVIDENCE,
                         "ref05_target_unbound",
-                        f"ref05_missing_target:{targets[0]}",
+                        *(
+                            f"ref05_missing_target:{token}"
+                            for token in targets[:8]
+                        ),
                     ),
                     error_code="investigation_target_binding_failed",
+                )
+        if obligations and obligations != targets:
+            coverage = _evaluate_material_obligations(
+                obligations=obligations,
+                business=business,
+            )
+            if any(state != OBLIGATION_SATISFIED for _, state in coverage):
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                    correlation_id=correlation,
+                    admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                    limitations=tuple(
+                        [LIMITATION_INSUFFICIENT_EVIDENCE]
+                        + [
+                            f"obligation_{state.lower()}:{oid}"
+                            for oid, state in coverage
+                            if state != OBLIGATION_SATISFIED
+                        ]
+                    )[:24],
+                    error_code="investigation_incomplete_coverage",
                 )
         return business[0]
 
     if business:
-        # Multiple non-compare successes without a compose path —
-        # return the last business observation with an honest limitation.
         last = business[-1]
         return GovernedCapabilityAttempt(
             status=last.status,
@@ -13246,6 +13412,47 @@ class OperationalCapabilityOrchestrator:
             )
         return attempt
 
+    def _accept_semantic_investigation_plan(
+        self,
+        *,
+        goal_class: str,
+        comparison_requested: bool,
+        target_identities: object,
+        evidence_needed: object = (),
+        business_subject: str | None = None,
+        correlation: str,
+    ) -> SemanticInvestigationPlan | None:
+        """Validate Agent-declared investigation plan into typed contract.
+
+        Reuses ``_TurnGoal`` vocabulary — no parallel goal model.
+        """
+        klass = (goal_class or "").strip()
+        if klass not in self._GOAL_CLASSES:
+            _logger.info(
+                "orchestration stage=semantic_plan "
+                "decision=invalid_class correlation_id=%s",
+                correlation,
+            )
+            return None
+        if klass == "compare":
+            comparison_requested = True
+        subject = (
+            str(business_subject).strip()[:240] if business_subject else None
+        ) or None
+        goal = self._TurnGoal(
+            goal_class=klass,
+            comparison_requested=bool(comparison_requested),
+            business_subject=subject,
+            declared=True,
+        )
+        targets = _normalize_identity_tuple(target_identities)
+        needed = _normalize_identity_tuple(evidence_needed) or targets
+        return SemanticInvestigationPlan(
+            goal=goal,
+            target_identities=targets,
+            evidence_needed=needed,
+        )
+
     def _finalize_semantic_investigation(
         self,
         *,
@@ -13255,8 +13462,9 @@ class OperationalCapabilityOrchestrator:
         workspace_context: WorkspaceContext | None,
         deadline: TurnDeadline,
         unbound_outcome: str | None,
+        plan: SemanticInvestigationPlan | None = None,
     ) -> GovernedCapabilityAttempt:
-        """R2 — conclude from goal coverage, not a lone tool SUCCESS."""
+        """Conclude from typed goal coverage + authoritative REF05 roots."""
         return _finalize_agent_collected_attempts(
             self,
             input_text=input_text,
@@ -13265,6 +13473,7 @@ class OperationalCapabilityOrchestrator:
             workspace_context=workspace_context,
             deadline=deadline,
             unbound_outcome=unbound_outcome,
+            plan=plan,
         )
 
     def _select_group(

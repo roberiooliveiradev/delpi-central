@@ -96,8 +96,9 @@ def test_no_langgraph_import_in_investigation_module():
     from pathlib import Path
     import re
 
-    src = Path(
-        "app/infrastructure/orchestration/pydantic_ai_investigation.py"
+    src = (
+        Path(__file__).resolve().parents[1]
+        / "app/infrastructure/orchestration/pydantic_ai_investigation.py"
     ).read_text(encoding="utf-8")
     assert not re.search(r"\blanggraph\b", src)
 

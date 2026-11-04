@@ -5622,4 +5622,20 @@ REGRESSION=delia-api pytest GREEN; new `test_pydantic_ai_semantic_rework.py`.
 LIVE_E2E=NOT_REACHED EXTERNAL_BLOCKER (docker.sock/Ollama intermittent on executor host).
 VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO (no durable real-owner READs).
 
+## Pydantic AI evidence / goal completion / REF05 rework (2026-11-04)
+
+TASK=DELIA-C3-PYDANTIC-AI-EVIDENCE-GOAL-COMPLETION-AND-REF05-REWORK-01.
+REPORT=doc 234. BASE_HEAD=`9d0abef0db`. PRODUCTION_DEPLOY=NOT_AUTHORIZED. PHASE_ADVANCE=NONE.
+EXISTING_EQUIVALENT=YES (TurnGoal/comparison_records/compose/VerifiedCompositeEvidence/gates).
+REUSE_DECISION=EXTEND (SemanticInvestigationPlan + declare_investigation_goal + authoritative REF05 root + material obligations).
+EXECUTION_DRIFT=NONE.
+R1=REF05 binds authoritative structure root only (no text/Markdown/discovery identity).
+R2=removed `_COMPARE_INTENT`/`_TARGET_TOKEN`; typed plan from Agent tool; Application verifies.
+R3=material obligations REQUIRED/SATISFIED/UNSATISFIED/UNAVAILABLE/INCONCLUSIVE before composition.
+R4=Pydantic AI remains sole semantic runtime; no LangGraph/owner_path/legacy planner.
+R5=AuthZ tests behavioral (schema reject without owner call; write surface; revoke; injection).
+REGRESSION=delia-api pytest tests/ GREEN (ignore live).
+LIVE_E2E=TEST_NOT_RUN EXTERNAL_BLOCKER (docker.sock absent; Ollama/API unreachable).
+VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
+
 

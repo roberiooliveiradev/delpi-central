@@ -159,6 +159,23 @@ class SupportsGovernedStageGates(Protocol):
         """
         ...
 
+    def _accept_semantic_investigation_plan(
+        self,
+        *,
+        goal_class: str,
+        comparison_requested: bool,
+        target_identities: object,
+        evidence_needed: object = (),
+        business_subject: str | None = None,
+        correlation: str,
+    ) -> object | None:
+        """Validate Agent-declared typed investigation plan.
+
+        Semantic proposal only — never authorization. Returns None when
+        the declaration is invalid.
+        """
+        ...
+
     def _finalize_semantic_investigation(
         self,
         *,
@@ -168,11 +185,14 @@ class SupportsGovernedStageGates(Protocol):
         workspace_context: WorkspaceContext | None,
         deadline: TurnDeadline,
         unbound_outcome: str | None,
+        plan: object | None = None,
     ) -> GovernedCapabilityAttempt:
         """Goal-coverage finalizer for Agent-collected tool attempts.
 
         A single tool SUCCESS is never automatically the turn outcome
         when material obligations remain (compare / multi-target).
+        Coverage uses the typed plan + authoritative REF05 roots —
+        never regex intent or rendered-text identity.
         """
         ...
 
