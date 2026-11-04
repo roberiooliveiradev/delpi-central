@@ -90,3 +90,33 @@ Verified existing domain models at input SHA:
 7. Complete REG/REF01–REF08/G04/G05/G07/G12, cleanup, docs/ledger, safe main commit/push; report `FUNCTIONAL_ACCEPTANCE_CANDIDATE` only if ALL mandatory customer-visible outcomes verified. Otherwise precise governance/external blocker, not another S1-only inventory return.
 
 **S0 ACCEPTED:** factual search for missing wiring; **S0 CONTRACT ASSERTION CORRECTED:** `InteractionTurn.entity_refs` not present. **CONTINUE_TASK:** `DELIA-C3-E4-R6-CANONICAL-ENTITY-BINDING-AND-FUNCTIONAL-CLOSURE-01`, stages S1–S7. **PRODUCTION_DEPLOY=NOT_AUTHORIZED**.
+
+
+## 7. Coordination review after S2–S4 implementation at fe6f722a42 (2026-11-03)
+
+**REVIEW STATUS:** `REWORK / EXECUTION_DRIFT` for referential trust and repeated product-specific goal strings. **CODE SHA:** `fe6f722a42`, verified current main at review. The R6 implementation added actual code, but S1/S5/S6/S7 and final real E2E are `TEST_NOT_RUN`; functional acceptance remains `NO`.
+
+### Source-confirmed findings
+
+- `interaction_routes._parse_context` accepts client-supplied `entity_refs` (bounded up to 8 per turn, required type/id strings), without cryptographic or live session-turn correlation. Formatting validation does NOT validate provenance.
+- `HandleInteractiveTurn._validate_prior_context` checks kinds, epistemic class, alternation and character budget but does not attest that `entity_refs` were issued by the server as the grounded result of that same authenticated session. Accepting a client-echoed ref as "previous grounded ref" changes reference binding trust, even though downstream Domain AuthZ still validates access.
+- `_subobjectives_from_session_refs` collects `prior_turns[].entity_refs`, sorts and takes first four with `[:4]`, not semantically selected exactly requested targets; this may silently drop requested targets and choose wrong ones if the conversation contains three or more. It creates a product-like fixed textual subgoal `"Consulte as informações completas de {entity_type} {entity_id}"` rather than carrying a typed authorized target through the real governed READ contract. This reintroduces the fragile string-builder pattern prohibited by docs 227–228.
+- `_entity_refs_from_outcome` produces one root EntityRef from typed `_comparison_records(outcome)` and provenance specialist id. Confirm `source_system` semantics against authoritative owner/source record; the specialist/interoperability id is not automatically the canonical source system. A single `min(path)` root may be ambiguous if multi-root or mixed source results; do not invent a source identity.
+- `InteractionTurn.entity_refs` now exists and is set for grounded results, but `InteractiveTurnResult` has no `entity_refs` field; `interaction_routes` returns `serialize_result(result)`. A user-facing projection carrying refs is **NOT verified or implemented** by this code.
+- S1 RED tests, S5 exact target coverage, real E2E and full regressions were **not executed** (executor admits this). No user-facing functional result has been proven.
+
+### Mandatory corrective sequence — same R6 task, no more intermediate documentation-only returns
+
+**C1 TRUST FIRST (RED):** simulate forged `context[].entity_refs` in DELIA_RESULT, different session, actor swap, injected `OBSERVATION` labels, owner mismatch, original turn content/ref mismatch, stale/denied source and forged source_system. Prove these cannot activate authoritative target binding or cross-user context use; Domain/AuthZ must still deny real unauthorized READs. A ref returned to a client remains untrusted on replay unless explicitly server-attested/session-checked.
+
+**C2 USE EXISTING SESSION PROVENANCE:** inspect real interaction session lifecycle, server-owned turns, `SessionContext` producers, context transport and authentication-scoped state. Prefer server-side lookup of already trusted refs by session/turn ID through existing legitimate Application interface; avoid adding persistence, public `entity_refs` echoes or opaque tokens by default. If the current runtime is genuinely stateless, the architecture decision must explicitly cover an additive, bounded, authenticated session-bound reference attestation/receipt using an established trusted mechanism, with expiry, replay prevention/scope and no secrets in prompts or logs. **Do not implement a new store, signing system, or public contract silently**. A mere ref list from client is NOT sufficient.
+
+**C3 CANONICAL SOURCE REFS:** map root business record to real `EntityRef` fields with owner/domain metadata, not `specialist_id` as unproven source_system. Map multiple roots and missing/mixed record identities to explicit ambiguity/insufficient, not `min(path)` arbitrarily. No regex/no source ref elevation/no silent identity overwrite.
+
+**C4 TYPED CONSUMER:** remove fixed textual `SubObjective.goal` business query builder; reuse/extend existing internal typed binding where real consumer exists. Distinguish a validated target set from all historical refs; when 3+ candidate entities exist, let the existing semantic model propose selection and validate against authorized scoped refs, or ask clarification. Never silently `[:4]` the sorted list. No new planner/engine/registry or endpoint selector.
+
+**C5 CONTRACT GATE:** if server-owned session refs cannot be read and legitimate ref transport requires a new public request/response schema, expiry/retention, backend lookup or signed handle, STOP only the affected scope with `ARCHITECTURE_DECISION_REQUIRED`. Provide exact request/response, owner, consumers, threat model, session/actor binding, compatibility, limits, observability, expiry and revocation, and authorization checks for separate approval. Do independent C1/C3/C4 tests and fixes where safe. Do not use the absence of a transport to justify insecure client echo.
+
+**C6 IMPLEMENT AND EVALUATE:** RED→GREEN, verify original and sibling product/other-owner references, same-session `A01→A02→A03`, direct single-turn, correction/ambiguity, mixed roots, spoof, owner revocation, timeout/gateway, model proposal variability, evidence full tree oracle, HTTP/NDJSON actual client output. Run full relevant suite and repeat trials on FINAL SHA. `REF01–REF08 / G04/G05/G07/G12` all mandatory.
+
+**STOP CLASSIFICATION:** `EXECUTION_DRIFT` on unvalidated client-origin refs and text-hardcoded typed goals; `REWORK` until corrected. **PRODUCTION_DEPLOY=NOT_AUTHORIZED**. This review does not authorize expanding public APIs, storage, session retention or authority.
