@@ -171,10 +171,39 @@ class ProductGuideRegistry:
         ]
 
 
-@lru_cache(maxsize=1)
-def get_product_guide_registry() -> ProductGuideRegistry:
+def _content_signature(content_dir: Path) -> tuple[tuple[str, int, int], ...]:
+    """Filesystem signature of the guide set.
+
+    Content lands on live filesystems out-of-band (bind-mounted runtimes
+    pick up merges without a process restart), so the cached registry must
+    be keyed by what is actually on disk — not by first-load time.
+    """
+    try:
+        return tuple(
+            sorted(
+                (p.name, p.stat().st_mtime_ns, p.stat().st_size)
+                for p in content_dir.glob("*.json")
+            )
+        )
+    except OSError:
+        return ()
+
+
+@lru_cache(maxsize=4)
+def _registry_for_signature(_signature: tuple) -> ProductGuideRegistry:
     return ProductGuideRegistry()
 
 
+def get_product_guide_registry() -> ProductGuideRegistry:
+    """Process-cached registry keyed by the content signature.
+
+    The load stays fail-closed and amortized — a signature change (added,
+    removed or edited guide) triggers exactly one reload, then subsequent
+    calls reuse the cached instance. An unchanged directory costs a
+    ``glob`` + ``stat`` per file, never a rebuild.
+    """
+    return _registry_for_signature(_content_signature(CONTENT_DIR))
+
+
 def clear_product_guide_registry_cache() -> None:
-    get_product_guide_registry.cache_clear()
+    _registry_for_signature.cache_clear()

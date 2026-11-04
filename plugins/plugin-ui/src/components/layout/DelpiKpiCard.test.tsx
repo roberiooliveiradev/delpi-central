@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 
@@ -396,5 +399,60 @@ describe("DelpiKpiCard chrome", () => {
       />,
     );
     expect(container.querySelector(".delpi-kpi-card--variant-scorecard")).toBeTruthy();
+  });
+});
+
+describe("DelpiKpiCard — seletores CSS vivos (issue #129)", () => {
+  // Guarda contra a classe de regressão do commit 646f11ae04: CSS escrito
+  // para classes que o DOM nunca emite (ou DOM emitindo classes sem estilo).
+  // O teste falha se qualquer lado divergir.
+  const KPI_CARD_CSS_PATH = resolve(__dirname, "../../styles/kpi-card.css");
+  const css = readFileSync(KPI_CARD_CSS_PATH, "utf-8");
+
+  const renderDemoCard = () =>
+    render(
+      <DelpiKpiCard
+        label="OEE"
+        value="78,04%"
+        hint="Turno A · Linha 1"
+        comparisonText="▼ −6,96 p.p. vs meta · Abaixo da meta"
+        comparisonTone="negative"
+        progressPct={91.81}
+        kpiOptions={{ showComparison: true, showProgress: true }}
+      />,
+    );
+
+  it("emite .delpi-kpi-card__comparison com comparação + statusLabel", () => {
+    const { container } = renderDemoCard();
+    const el = container.querySelector(".delpi-kpi-card__comparison");
+    expect(el).toBeTruthy();
+    expect(el?.textContent).toContain("−6,96");
+    expect(el?.textContent).toContain("Abaixo da meta");
+    expect(el?.className).toContain("delpi-kpi-card__comparison--negative");
+  });
+
+  it("emite .delpi-kpi-card__hint com conteúdo", () => {
+    const { container } = renderDemoCard();
+    const el = container.querySelector(".delpi-kpi-card__hint");
+    expect(el).toBeTruthy();
+    expect(el?.textContent?.trim().length).toBeGreaterThan(0);
+  });
+
+  it("emite .delpi-kpi-progress__track com fill proporcional", () => {
+    const { container } = renderDemoCard();
+    const track = container.querySelector(".delpi-kpi-progress__track");
+    expect(track).toBeTruthy();
+    const fill = track?.querySelector(".delpi-kpi-progress__fill") as HTMLElement | null;
+    expect(fill).toBeTruthy();
+    expect(fill?.style.width).toBe("91.81%");
+  });
+
+  it.each([
+    ".delpi-kpi-card__comparison",
+    ".delpi-kpi-card__hint",
+    ".delpi-kpi-progress__track",
+    ".delpi-kpi-progress__fill",
+  ])("seletor %s existe em kpi-card.css (paridade DOM↔CSS)", (selector) => {
+    expect(css).toContain(selector);
   });
 });
