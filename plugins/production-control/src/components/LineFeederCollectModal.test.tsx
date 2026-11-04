@@ -193,6 +193,33 @@ describe("LineFeederCollectModal", () => {
     });
   });
 
+  it("lista postos em ordem alfabética pelo código", async () => {
+    queueMock.mockResolvedValue({
+      work_centers: [
+        { work_center: "TOR-02", work_center_name: "Torno", operation_count: 1 },
+        { work_center: "012", work_center_name: "Banco", operation_count: 1 },
+        { work_center: "CNC-01", work_center_name: "CNC", operation_count: 1 },
+      ],
+    });
+    render(
+      <LineFeederCollectModal
+        open
+        branch="01"
+        onClose={() => undefined}
+        onSubmit={() => undefined}
+      />,
+    );
+    const first = await screen.findByText(/012 · Banco/);
+    const second = screen.getByText(/CNC-01 · CNC/);
+    const third = screen.getByText(/TOR-02 · Torno/);
+    expect(
+      first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      second.compareDocumentPosition(third) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("bloqueia submit sem CT ou com horas inválidas", async () => {
     queueMock.mockResolvedValue({
       work_centers: [
