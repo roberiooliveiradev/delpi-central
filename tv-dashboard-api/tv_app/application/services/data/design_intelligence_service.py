@@ -610,9 +610,14 @@ class DesignIntelligenceService:
         block_types = {
             str(b.get("type") or "").lower() for b in blocks
         }
-        data_types = block_types & {
-            "data_kpi", "data_chart", "data_table", "canvas_table",
-        }
+        from tv_app.application.services.tv_data_route_catalog_service import (
+            DATA_VIEW_BLOCK_TYPES,
+        )
+
+        data_types = block_types & (
+            {"data_kpi", "data_chart", "data_table", "canvas_table"}
+            | DATA_VIEW_BLOCK_TYPES
+        )
 
         def _criterion(
             key: str,
@@ -727,6 +732,12 @@ class DesignIntelligenceService:
                 "Contraste ou tamanho de fonte abaixo do mínimo TV."
                 if leg_issues else
                 "Sem violações de legibilidade detectadas."
+            ),
+            limitation=(
+                "Certifica somente os mínimos de designTokens.partChrome "
+                "e contraste — não comprova legibilidade percebida à "
+                "distância nem escala efetiva do palco (exige evidência "
+                "visual)."
             ),
             severity="error" if leg_issues else "info",
             recommendation=(

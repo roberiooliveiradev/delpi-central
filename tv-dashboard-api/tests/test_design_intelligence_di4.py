@@ -39,6 +39,29 @@ def test_good_fixture_passes_q1_q2():
     assert r["Q8_DATA_INTEGRITY"]["status"] == "NOT_EVALUABLE"
 
 
+def test_kpi_view_counts_as_data_visual_issue_129():
+    """VISTA-TV-READABILITY-001 — data bound blocks in the current
+    vocabulary (kpi_view/chart_view/table_view) must satisfy Q1/Q2;
+    the rubric previously only counted legacy data_* types."""
+    a = _audit({
+        "title": "OEE",
+        "blocks": [{"type": "kpi_view", "dataSourceId": "ds1"},
+                   {"type": "data_source", "id": "ds1"}],
+    })
+    r = a["rubric"]["criteria"]
+    assert r["Q1_OBJECTIVE"]["status"] == "PASS"
+    assert r["Q2_INDICATORS"]["status"] == "PASS"
+
+
+def test_legibility_pass_declares_min_scope_limitation():
+    """Q5 PASS certifies token minimums only — perceived readability
+    at distance requires visual evidence; the rubric must say so."""
+    a = _audit({"blocks": [{"type": "kpi_view"}]})
+    q5 = a["rubric"]["criteria"]["Q5_LEGIBILITY"]
+    assert q5["status"] == "PASS"
+    assert "percebida" in q5["limitation"].lower()
+
+
 def test_no_data_blocks_fails_q1():
     a = _audit({"blocks": [{"type": "text"}]})
     assert a["rubric"]["criteria"]["Q1_OBJECTIVE"]["status"] == "FAIL"
