@@ -174,6 +174,63 @@ class GovernedCapabilityProvenance:
 
 
 @dataclass(frozen=True, slots=True)
+class VerifiedCompositeEvidence:
+    """DÉLIA-owned evidence lineage for a verified two-source comparison.
+
+    This is not a SpecialistOutcome or a grant. Sources are copied only
+    from fresh governed owner READ attempts; roots are obtained from the
+    admitted owner records, never from model or client-authored strings.
+    """
+
+    source_roots: tuple[str, str]
+    source_lineage: tuple[tuple[SourceRef, ...], tuple[SourceRef, ...]]
+    observed_at: str
+    correlation_id: str
+    verdict: str
+
+    def __post_init__(self) -> None:
+        if (
+            len(self.source_roots) != 2
+            or len(set(self.source_roots)) != 2
+            or len(self.source_lineage) != 2
+            or not all(refs for refs in self.source_lineage)
+            or self.verdict not in ("agreement", "differences_found")
+        ):
+            raise ValueError("verified comparison needs two distinct owner-backed sources")
+
+    @property
+    def source_refs(self) -> tuple[SourceRef, ...]:
+        return tuple(ref for lineage in self.source_lineage for ref in lineage)
+
+    def to_projection(self) -> dict:
+        """Bounded, provider-neutral projection; never invent one owner."""
+        return {
+            "source": None,
+            "sources": [
+                {
+                    "source_id": ref.source_id,
+                    "source_system": ref.source_system,
+                    "observed_at": ref.observed_at,
+                    "root_id": root,
+                }
+                for root, lineage in zip(self.source_roots, self.source_lineage)
+                for ref in lineage
+            ],
+            "specialist_id": None,
+            "remote_capability": None,
+            "action_id": None,
+            "protocol": None,
+            "observed_at": self.observed_at,
+            "correlation_id": self.correlation_id,
+            "is_complete": True,
+            "composition": {
+                "verdict": self.verdict,
+                "source_roots": list(self.source_roots),
+            },
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class InteractiveTurnResult:
     """Bounded application response for one interaction turn.
 
@@ -203,7 +260,7 @@ class InteractiveTurnResult:
     generated_at: str
     model_invocation_id: str | None
     grounding_status: GroundingStatus = GroundingStatus.NON_GROUNDED
-    provenance: GovernedCapabilityProvenance | None = None
+    provenance: GovernedCapabilityProvenance | VerifiedCompositeEvidence | None = None
     confirmation_request: Mapping[str, Any] | None = None
     # C3-CENTRAL-INTERACTION-EXPERIENCE-BACKEND-01: additive semantic
     # hints consumed by the presentation projection. ``message_kind``
