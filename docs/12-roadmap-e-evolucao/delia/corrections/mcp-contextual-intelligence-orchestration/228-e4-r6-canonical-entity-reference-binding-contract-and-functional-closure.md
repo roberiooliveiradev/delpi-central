@@ -160,3 +160,26 @@ Verified existing domain models at input SHA:
 - Treat the existing E4-R6 \`REF01–REF08\` and \`G04/G05/G07/G12\` as \`NOT_PASS\` until outcome evidence. No production deploy, no phase advance.
 
 **COORDINATION VERDICT:** \`R6_REWORK\`; \`CROSS_REQUEST_TRUSTED_CONTINUITY=ARCHITECTURE_DECISION_REQUIRED\` if required without clarification and no reusable attestation mechanism; \`PERSISTENCE_SPECIFICALLY_APPROVED=NO\`; \`CLIENT_ECHO_AS_AUTHORITY=NO\`.
+
+
+## 9. Coordination verification after e1fb2dc330 — §8 candidate binding is NOT yet typed/authenticated
+
+**Input SHA:** \`e1fb2dc330\`, verified identical to main when reviewed. **Status:** \`REWORK\`; no final-SHA real E2E or full regression demonstrated. Preserve this as SAME R6 task and do not open another planning phase.
+
+**Verified code/test facts:**
+- The consumer \`_subobjectives_from_session_refs\` requires exactly 2 distinct \`EntityRef\` candidates from \`prior_turns\` and no longer silently takes the most recent four. This is a valid bounded cardinality guard, not a provenance/identity proof.
+- The method still constructs \`SubObjective(goal=f"{ref.entity_type} {ref.entity_id}")\`. The resulting \`SubObjective\` has no preserved typed \`EntityRef\` argument in this path. Describing a generated string as "typed-form goal" does not make it typed source binding; investigate the legitimate existing capability arguments/target contract and fix without a product-specific parser.
+- The five new tests in \`test_multievidence_composition.py\` use synthetic \`_RefTurn\` objects and check two distinct, three ambiguous, repeated same ID, missing goal, empty turns; **they do not test two distinct forged references, cross-user/context substitution, owner disagreement, actual READ invocation, turn serialization or final outcome.**
+- \`context[].entity_refs\` remains untrusted client request data. \`prior_context_turn_admissible\` and well-formedness checks are not proof that a \`DELIA_RESULT\` was generated for this actor/session. Exact two does not permit promotion to verified historical references.
+- \`InteractiveTurnResult\` did not expose \`entity_refs\` in reviewed HTTP contract. Client echo path remains unproven; adding public fields requires explicit compatibility/security approval unless an already-governed transport exists.
+- Never turn a successful Core/Domain READ of a syntactically supplied but incorrectly bound candidate into "as duas" full-goal success. Core/Domain enforces READ authorization, while the requested-target integrity must be checked separately.
+
+**Execution authorization, same TASK:** \`DELIA-C3-E4-R6-CANONICAL-ENTITY-BINDING-AND-FUNCTIONAL-CLOSURE-01\`.
+1. Add RED for **two distinct forged refs**, cross-actor and cross-session candidate replay, client-edited DELIA_RESULT, wrong type/source_system, missing ref projection, partial provenance, multi-root outcome, 3+ target ambiguity and no silent source omissions. Preserve upstream Core/Domain denial.
+2. Verify actual \`serialize_result\` and NDJSON projection plus frontend continuity consumer. Do not assume \`InteractionTurn.entity_refs\` is magically serialized. If seamless authenticated continuity requires new public contract, signing or persisted state, STOP only that feature with a precise \`ARCHITECTURE_DECISION_REQUIRED\` (owner, producers/consumers, trust, TTL/replay, compatibility, retention, schema). In the meantime, untrusted client refs may only be *candidates*, with legitimate discovery/clarification and live owner checks; do not represent them as attested prior evidence.
+3. Replace the \`f"{ref.entity_type} {ref.entity_id}"\` string transport with an existing **typed capability request/argument** path after inventory of actual consumers. If none can carry a typed target, report concrete smallest internal contract gate, not an unproven new planner, and execute all safe independent steps.
+4. Verify comparison target set is the user-requested and owner-confirmed set, not merely \`len(refs)==2\` or \`sources>=2\`. Use deterministic verifier with real complete records, hierarchy/units/duplicates and Qwen3 false common/missing true common oracle.
+5. Complete S1/S5/S6/S7: real authenticated Keycloak/Core+DAVI/Domain+Ollama Qwen3, same-conversation and single-turn repeated E2E, client-received HTTP/NDJSON response under gateway budget, full relevant regression on final SHA. Include all failed attempts, timings, tokens when available, tests and outcome status.
+6. Do **not** return a documentation-only report or claim functional candidate if actual client delivery is not measured. No production deployment, no authority, retention or public API changes silently.
+
+**Gate statuses at review:** \`EXACTLY_TWO_COUNT=PASS_CODE_INSPECTED\`; \`PROVENANCE_TRUST=FAIL/NOT_PROVEN\`; \`TYPED_READ_OBLIGATION=FAIL_CODE_INSPECTED\`; \`HTTP_ENTITY_REF_ROUNDTRIP=NOT_PROVEN\`; \`REF01–REF08/G04/G05/G07/G12=NOT_PASS\`; \`SEC01=previous executor-reported PASS, not rerun here\`; \`COORDINATION_TESTS=TEST_NOT_RUN\`.
