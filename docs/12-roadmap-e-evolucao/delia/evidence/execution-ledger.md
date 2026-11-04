@@ -5651,8 +5651,10 @@ REMOVED_OR_SOFTENED=mandatory declare; hardwired compare-as-sole multi-source pa
 LEGACY_RETAINED=`DELIA_ORCHESTRATION_ENGINE=delia` rollback + `_governed_owner_path` for rollback only.
 REGRESSION=delia-api pytest tests/ GREEN; new `test_pydantic_ai_native_first_consolidation.py`.
 LOCAL_STACK=docker-compose.dev.yml (volume-mounted delia-api; NOT up-prod-sequential).
+IMPLEMENTATION_SHA=57ca0e2684 (pushed main).
 LIVE_E2E=PARTIAL — auth password-grant OK; E01 conceptual NON_GROUNDED honest; E02/E03/E07 NON_GROUNDED owner_path_unbound / intermittent agent_error; FALSE_GROUNDED=0; MCP health online; OWNER_READS=0 this matrix.
-RUNTIME_LABEL_NOTE=container env DELIA_RUNTIME_SHA lagged bind-mounted code; label refresh after push.
+LOCAL_RUNTIME_SHA=57ca0e2684 MATCHES EVALUATED after local `docker compose ... up -d --force-recreate --no-deps delia-api` (dev compose; NOT up-prod-sequential).
+E02_POST_METRICS=LLM≈1 in=1422 out=29 latency_ms≈8977 tool_calls=1 collected=0.
 VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
 
 

@@ -90,8 +90,17 @@ MCP health from delia-api: api-delpi / transformometro-api / tv-dashboard-api **
 
 `FALSE_GROUNDED_COUNT=0` on executed live negatives.
 
-`DELIA_RUNTIME_SHA` env label was stale (`d8fdc646…`) relative to working tree; code served via bind-mount. Label refresh tracked in ledger after commit SHA.
+Post-push local recreate (dev compose only):
+
+```text
+EVALUATED_SHA=57ca0e26842aeb0d55ce5da21d93e42afe887cd3
+LOCAL_RUNTIME_SHA=57ca0e26842aeb0d55ce5da21d93e42afe887cd3
+ENGINE=pydantic_ai
+E02_POST: HTTP 200, NON_GROUNDED, owner_path_unbound, tool_calls=1, collected=0,
+          LLM_REQUESTS≈1, INPUT_TOKENS=1422, OUTPUT_TOKENS=29, LATENCY_MS≈8977,
+          OWNER_READS=0, TIME_TO_FIRST_OWNER_READ=N/A
+```
 
 ## Verdict
 
-`ACCEPT_WITH_RESIDUAL` — native-first agent surface + evidence generalization shipped and unit/regression green; live multi-owner READ/compare functional acceptance still residual (owner bind / agent RuntimeError under Ollama). PRODUCTION_DEPLOY NOT_AUTHORIZED.
+`ACCEPT_WITH_RESIDUAL` — native-first agent surface + evidence generalization shipped; unit/regression green; SHA-matched local runtime; live multi-owner READ/compare still residual (catalog list without successful owner bind in this matrix). PRODUCTION_DEPLOY NOT_AUTHORIZED.
