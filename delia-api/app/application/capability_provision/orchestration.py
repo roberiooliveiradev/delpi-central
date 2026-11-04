@@ -5427,7 +5427,16 @@ class OperationalCapabilityOrchestrator:
                 prior_turns,
                 deadline,
             )
-            if goal.goal_class != "create_or_modify":
+            # Doc 228 §11 trust gate: prior-continuation (answering
+            # from an earlier OBSERVATION turn) is a TOP-LEVEL
+            # privilege only. Subobjectives inherit prior_turns solely
+            # for referent resolution in goal_understanding/discovery —
+            # a sub READ obligation must execute its own governed read,
+            # never conclude from history synthesis.
+            if (
+                depth == 0
+                and goal.goal_class != "create_or_modify"
+            ):
                 prior_turn = self._prior_result_turn(prior_turns)
                 if (
                     prior_turn is None
