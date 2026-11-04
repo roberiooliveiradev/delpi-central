@@ -192,8 +192,18 @@ class VerifiedCompositeEvidence:
         if (
             len(self.source_roots) != 2
             or len(set(self.source_roots)) != 2
+            or not all(isinstance(root, str) and root.strip() for root in self.source_roots)
             or len(self.source_lineage) != 2
             or not all(refs for refs in self.source_lineage)
+            or not all(
+                isinstance(ref, SourceRef)
+                and ref.source_id.strip()
+                and ref.source_system.strip()
+                for lineage in self.source_lineage
+                for ref in lineage
+            )
+            or not isinstance(self.observed_at, str)
+            or not self.observed_at.strip()
             or self.verdict not in ("agreement", "differences_found")
         ):
             raise ValueError("verified comparison needs two distinct owner-backed sources")
