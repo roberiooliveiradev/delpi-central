@@ -79,7 +79,11 @@ export function KpiMetricsProjectionEditor({
           !metric.format &&
           metric.decimalPlaces == null &&
           !metric.colorRules?.length &&
-          !metric.label,
+          !metric.label &&
+          metric.target == null &&
+          !metric.targetField &&
+          metric.comparisonMode == null &&
+          metric.higherIsBetter == null,
       );
     if (allFirst) {
       onChange(undefined);
@@ -182,12 +186,57 @@ export function KpiMetricsProjectionEditor({
                     patchMetric(metric.field, { label: value.trim() || undefined })
                   }
                 />
+                <label
+                  className="td-deck-inspector__field-label"
+                  htmlFor={`${idPrefix}-${metric.field}-target-field`}
+                >
+                  Meta (campo do DataModel)
+                </label>
+                <FormSelectControl
+                  id={`${idPrefix}-${metric.field}-target-field`}
+                  className={compact ? "delpi-ui-select--compact" : undefined}
+                  ariaLabel={`Campo de meta de ${label}`}
+                  value={metric.targetField ?? ""}
+                  onChange={(value) =>
+                    patchMetric(metric.field, {
+                      targetField: value.trim() || undefined,
+                      targetAggregation: value.trim() ? "first" : undefined,
+                      target: value.trim() ? undefined : metric.target,
+                      comparisonMode: value.trim() ? "target" : metric.comparisonMode,
+                    })
+                  }
+                  options={[
+                    { value: "", label: "Sem meta dinâmica" },
+                    ...options.map((opt) => ({
+                      value: opt.field,
+                      label: opt.label?.trim() || opt.field,
+                    })),
+                  ]}
+                />
+                {!metric.targetField ? (
+                  <NativeTextControl
+                    id={`${idPrefix}-${metric.field}-target`}
+                    className={compact ? "delpi-ui-native-control--compact" : undefined}
+                    type="number"
+                    placeholder="Meta literal (opcional)"
+                    value={metric.target ?? ""}
+                    onChange={(raw) => {
+                      const trimmed = raw.trim();
+                      patchMetric(metric.field, {
+                        target: trimmed === "" ? undefined : Number(trimmed),
+                        comparisonMode:
+                          trimmed === "" ? metric.comparisonMode : "target",
+                      });
+                    }}
+                  />
+                ) : null}
                 <div className="td-deck-inspector__kpi-metric-rules">
                   <p className="td-deck-inspector__hint">Cores condicionais desta métrica</p>
                   <KpiColorRulesEditor
                     idPrefix={`${idPrefix}-${metric.field}-rules`}
                     rules={metric.colorRules ?? []}
                     compact={compact}
+                    fieldOptions={options}
                     onChange={(colorRules) => patchMetric(metric.field, { colorRules })}
                   />
                 </div>

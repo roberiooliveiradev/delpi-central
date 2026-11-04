@@ -1,242 +1,223 @@
+/**
+ * Inspector de opções de KPI: comparação, meta (literal/campo), título/subtítulo
+ * dinâmicos e cores condicionais. Bindings tipados — resolução no enrich BE.
+ */
 import {
   FormSelectControl,
-  LucideIconField,
   NativeTextControl,
   type DelpiKpiCardTone,
+  type DelpiKpiColorRule,
 } from "@delpi/plugin-ui/index";
-import {
-  KPI_ELEMENT_CATALOG,
-  applyKpiElementVisibility,
-  isKpiElementEnabled,
-  isKpiElementOpenForPart,
-  kpiElementPrimaryPartRef,
-  mergeComunicadoKpiOptions,
-  mergeKpiPartsWithOptions,
-  partsToKpiOptions,
-  type ComunicadoKpiOptions,
-  type ComunicadoKpiViewBlock,
-  type KpiElementId,
-  type ComunicadoBlock,
-} from "@delpi/tv-dashboard-presentation";
+import type { ComunicadoKpiOptions } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { useKpiBoundFieldOptions } from "../hooks/useKpiBoundFieldOptions";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { InspectorElementRow } from "./InspectorElementRow";
-import { KpiColorRulesEditor } from "./KpiColorRulesEditor";
-import { KpiPartInspector } from "./KpiPartInspector";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
+import { KpiColorRulesEditor } from "./KpiColorRulesEditor";
+import { KpiDynamicFieldSelect } from "./KpiDynamicFieldSelect";
 
-type Props = { pane?: boolean };
+type Props = {
+  pane?: boolean;
+};
 
-const TONE_OPTIONS: Array<{ value: DelpiKpiCardTone; label: string }> = [
-  { value: "default", label: "Padrão" },
-  { value: "positive", label: "Positivo" },
-  { value: "negative", label: "Negativo" },
-  { value: "warning", label: "Atenção" },
-];
+type MetaMode = "none" | "literal" | "field";
+
+function resolveMetaMode(options: ComunicadoKpiOptions): MetaMode {
+  if (options.targetField?.trim()) return "field";
+  if (typeof options.target === "number" && Number.isFinite(options.target)) return "literal";
+  return "none";
+}
 
 export function KpiViewOptionsInspector({ pane = false }: Props) {
-  const { selected, updateSelected, selectKpiPart, selectedKpiPart } = useComunicadoEditor();
+  const { selected, updateSelected } = useComunicadoEditor();
+  const fieldOptions = useKpiBoundFieldOptions(selected?.id);
 
   if (!selected || selected.type !== "kpi_view") return null;
 
-  const block = selected as ComunicadoKpiViewBlock;
-  const options = mergeComunicadoKpiOptions({
-    ...block.kpiOptions,
-    ...partsToKpiOptions(block.kpiParts),
-  });
-  const hasPartSelection = Boolean(selectedKpiPart);
-  const rules = options.colorRules ?? [];
+  const options = selected.kpiOptions ?? {};
+  const colorRules: DelpiKpiColorRule[] = options.colorRules ?? [];
+  const metaMode = resolveMetaMode(options);
 
-  const persistOptions = (nextOptions: ComunicadoKpiOptions) => {
+  const patch = (partial: Partial<ComunicadoKpiOptions>) => {
     updateSelected({
-      kpiOptions: nextOptions,
-      kpiParts: mergeKpiPartsWithOptions(block.kpiParts, nextOptions),
-    } as Partial<ComunicadoBlock>);
+      kpiOptions: {
+        ...options,
+        ...partial,
+      },
+    });
   };
 
-  const patchOptions = (patch: Partial<ComunicadoKpiOptions>) => {
-    const next = mergeComunicadoKpiOptions({ ...options, ...patch });
-    if ("decimalPlaces" in patch && patch.decimalPlaces == null) {
-      delete next.decimalPlaces;
-    }
-    persistOptions(next);
-  };
-
-  const focusElement = (elementId: KpiElementId) => {
-    selectKpiPart(block.id, kpiElementPrimaryPartRef(elementId));
-  };
-
-  const toggleElement = (elementId: KpiElementId, enabled: boolean) => {
-    if ((elementId === "kpiValue" || elementId === "kpiCard") && !enabled) {
-      focusElement(elementId);
+  const setMetaMode = (mode: MetaMode) => {
+    if (mode === "none") {
+      patch({
+        target: undefined,
+        targetField: undefined,
+        targetAggregation: undefined,
+        comparisonMode: "none",
+      });
       return;
     }
-    const result = applyKpiElementVisibility(elementId, enabled, options, block.kpiParts);
-    updateSelected({
-      kpiOptions: mergeComunicadoKpiOptions(result.options),
-      kpiParts: result.parts,
-    } as Partial<ComunicadoBlock>);
-    if (enabled) focusElement(elementId);
+    if (mode === "field") {
+      const field = options.targetField?.trim() || fieldOptions[0]?.field;
+      patch({
+        targetField: field,
+        targetAggregation: options.targetAggregation ?? "first",
+        target: undefined,
+        comparisonMode: "target",
+      });
+      return;
+    }
+    patch({
+      targetField: undefined,
+      targetAggregation: undefined,
+      target: typeof options.target === "number" ? options.target : 0,
+      comparisonMode: "target",
+    });
   };
 
   return (
-    <>
-      <KpiPartInspector pane={pane} block={block} />
+    <DeckPropertySection
+      title="KPI"
+      hint={TV_DASHBOARD_HELP_TOOLTIPS.ribbon.kpiDynamicMeta}
+      pane={pane}
+    >
+      <DeckField id="kpi-comparison-mode" label="Modo de comparação">
+        <FormSelectControl
+          id="kpi-comparison-mode"
+          ariaLabel="Modo de comparação"
+          value={options.comparisonMode ?? "none"}
+          onChange={(value) =>
+            patch({
+              comparisonMode: value as ComunicadoKpiOptions["comparisonMode"],
+            })
+          }
+          options={[
+            { value: "none", label: "Nenhuma" },
+            { value: "target", label: "Versus meta" },
+            { value: "previous", label: "Versus período anterior" },
+          ]}
+        />
+      </DeckField>
 
-      {!hasPartSelection ? (
-        <>
-          <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
-            Duplo clique no palco para selecionar uma parte. Detalhes abrem ao selecionar a parte.
-          </p>
+      <DeckField id="kpi-meta-mode" label="Fonte da meta">
+        <FormSelectControl
+          id="kpi-meta-mode"
+          ariaLabel="Fonte da meta"
+          value={metaMode}
+          onChange={(value) => setMetaMode(value as MetaMode)}
+          options={[
+            { value: "none", label: "Sem meta" },
+            { value: "literal", label: "Valor fixo" },
+            ...(fieldOptions.length > 0
+              ? [{ value: "field", label: "Campo do DataModel" }]
+              : []),
+          ]}
+        />
+      </DeckField>
 
-          <DeckPropertySection
-            pane={pane}
-            title="Elementos do KPI"
-            hint={TV_DASHBOARD_HELP_TOOLTIPS.data.kpiElements}
-            defaultOpen
-          >
-            <div
-              id="td-kpi-pane-elements"
-              className="td-chart-elements"
-              role="group"
-              aria-label="Elementos do KPI"
-            >
-              {KPI_ELEMENT_CATALOG.map((element) => {
-                const enabled = isKpiElementEnabled(element.id, options, block.kpiParts);
-                const focused = isKpiElementOpenForPart(element.id, selectedKpiPart);
-                return (
-                  <InspectorElementRow
-                    key={element.id}
-                    id={`td-kpi-element-${element.id}`}
-                    label={element.label}
-                    hint={element.description}
-                    enabled={enabled}
-                    focused={focused}
-                    onToggle={(next) => toggleElement(element.id, next)}
-                    onSelect={() => focusElement(element.id)}
-                  />
-                );
-              })}
-            </div>
-          </DeckPropertySection>
-
-          <DeckPropertySection
-            pane={pane}
-            title="Aparência"
-            hint={TV_DASHBOARD_HELP_TOOLTIPS.data.kpiCard}
-            defaultOpen
-          >
-            <DeckField id="td-kpi-unit" label="Unidade">
-              <NativeTextControl
-                id="td-kpi-unit"
-                value={options.unit ?? ""}
-                placeholder="%, R$, un…"
-                onChange={(value) => patchOptions({ unit: value.trim() || undefined })}
-              />
-            </DeckField>
-            <DeckField id="td-kpi-tone" label="Cor base (tone)">
-              <FormSelectControl
-                id="td-kpi-tone"
-                ariaLabel="Cor base"
-                value={options.tone ?? "default"}
-                onChange={(value) => patchOptions({ tone: value as DelpiKpiCardTone })}
-                options={TONE_OPTIONS}
-              />
-            </DeckField>
-            {options.showIcon !== false ? (
-              <DeckField id="td-kpi-icon" label="Ícone">
-                <LucideIconField
-                  value={options.iconName ?? "Gauge"}
-                  defaultIcon="Gauge"
-                  nameFormat="pascal"
-                  curatedOnly={false}
-                  labels={{ clear: "Usar ícone padrão", close: "Fechar" }}
-                  onChange={(name) =>
-                    patchOptions({ iconName: name?.trim() || "Gauge", showIcon: true })
-                  }
-                  ariaLabel="Selecionar ícone do KPI"
-                />
-              </DeckField>
-            ) : null}
-          </DeckPropertySection>
-
-          <DeckPropertySection
-            pane={pane}
-            title="Meta e comparação"
-            hint="Meta numérica, direção do delta e comparação vs período."
-            defaultOpen={Boolean(options.target != null || options.showComparison)}
-          >
-            <div id="td-view-kpi-target" />
-            <DeckField id="td-kpi-target" label="Meta">
-              <NativeTextControl
-                id="td-kpi-target"
-                value={options.target != null ? String(options.target) : ""}
-                placeholder="Ex.: 100"
-                onChange={(value) => {
-                  const trimmed = value.trim().replace(",", ".");
-                  if (!trimmed) {
-                    patchOptions({ target: undefined });
-                    return;
-                  }
-                  const numeric = Number(trimmed);
-                  patchOptions({
-                    target: Number.isFinite(numeric) ? numeric : options.target,
-                  });
-                }}
-              />
-            </DeckField>
-            <DeckField id="td-kpi-comparison-mode" label="Comparação">
-              <FormSelectControl
-                id="td-kpi-comparison-mode"
-                ariaLabel="Modo de comparação"
-                value={options.comparisonMode ?? "none"}
-                onChange={(value) => {
-                  const mode = value as NonNullable<ComunicadoKpiOptions["comparisonMode"]>;
-                  patchOptions({
-                    comparisonMode: mode,
-                    showComparison: mode !== "none",
-                  });
-                }}
-                options={[
-                  { value: "none", label: "Nenhuma" },
-                  { value: "target", label: "Vs meta" },
-                  { value: "previous", label: "Vs período anterior" },
-                ]}
-              />
-            </DeckField>
-            <DeckField id="td-kpi-higher-is-better" label="Direção">
-              <FormSelectControl
-                id="td-kpi-higher-is-better"
-                ariaLabel="Direção do indicador"
-                value={options.higherIsBetter === false ? "lower" : "higher"}
-                onChange={(value) =>
-                  patchOptions({ higherIsBetter: value !== "lower" })
-                }
-                options={[
-                  { value: "higher", label: "Maior é melhor" },
-                  { value: "lower", label: "Menor é melhor" },
-                ]}
-              />
-            </DeckField>
-          </DeckPropertySection>
-
-          <DeckPropertySection
-            pane={pane}
-            title="Cores condicionais"
-            hint={TV_DASHBOARD_HELP_TOOLTIPS.data.kpiColorRules}
-            defaultOpen={rules.length > 0}
-          >
-            <div id="td-view-kpi-color-rules" />
-            <KpiColorRulesEditor
-              idPrefix="td-kpi-global-rules"
-              rules={rules}
-              onChange={(colorRules) => patchOptions({ colorRules })}
-            />
-          </DeckPropertySection>
-        </>
+      {metaMode === "literal" ? (
+        <DeckField id="kpi-target" label="Meta (número)">
+          <NativeTextControl
+            id="kpi-target"
+            type="number"
+            value={options.target ?? ""}
+            onChange={(raw) => {
+              const trimmed = raw.trim();
+              patch({
+                target: trimmed === "" ? undefined : Number(trimmed),
+                comparisonMode: trimmed === "" ? "none" : "target",
+              });
+            }}
+          />
+        </DeckField>
       ) : null}
-    </>
+
+      {metaMode === "field" ? (
+        <KpiDynamicFieldSelect
+          id="kpi-target-field"
+          label="Campo da meta"
+          value={options.targetField}
+          fieldOptions={fieldOptions}
+          noneLabel="Selecione o campo"
+          onChange={(field) =>
+            patch({
+              targetField: field,
+              targetAggregation: "first",
+              target: undefined,
+              comparisonMode: field ? "target" : "none",
+            })
+          }
+        />
+      ) : null}
+
+      <DeckField id="kpi-higher-is-better" label="Direção">
+        <FormSelectControl
+          id="kpi-higher-is-better"
+          ariaLabel="Direção do indicador"
+          value={options.higherIsBetter === false ? "lower" : "higher"}
+          onChange={(value) => patch({ higherIsBetter: value !== "lower" })}
+          options={[
+            { value: "higher", label: "Maior é melhor" },
+            { value: "lower", label: "Menor é melhor" },
+          ]}
+        />
+      </DeckField>
+
+      <DeckField id="kpi-title" label="Título (literal)">
+        <NativeTextControl
+          id="kpi-title"
+          value={options.title ?? ""}
+          onChange={(value) => patch({ title: value || undefined })}
+        />
+      </DeckField>
+      <KpiDynamicFieldSelect
+        id="kpi-title-field"
+        label="Título dinâmico (campo)"
+        value={options.titleField}
+        fieldOptions={fieldOptions}
+        onChange={(field) => patch({ titleField: field })}
+      />
+
+      <DeckField id="kpi-subtitle" label="Subtítulo (literal)">
+        <NativeTextControl
+          id="kpi-subtitle"
+          value={options.subtitle ?? ""}
+          onChange={(value) => patch({ subtitle: value || undefined })}
+        />
+      </DeckField>
+      <KpiDynamicFieldSelect
+        id="kpi-subtitle-field"
+        label="Subtítulo dinâmico (campo)"
+        value={options.subtitleField}
+        fieldOptions={fieldOptions}
+        onChange={(field) => patch({ subtitleField: field })}
+      />
+
+      <DeckField id="kpi-tone" label="Tom padrão">
+        <FormSelectControl
+          id="kpi-tone"
+          ariaLabel="Tom padrão do KPI"
+          value={options.tone ?? "default"}
+          onChange={(value) => patch({ tone: value as DelpiKpiCardTone })}
+          options={[
+            { value: "default", label: "Padrão" },
+            { value: "positive", label: "Positivo" },
+            { value: "negative", label: "Negativo" },
+            { value: "warning", label: "Atenção" },
+          ]}
+        />
+      </DeckField>
+
+      <DeckField id="kpi-color-rules" label="Cores condicionais">
+        <KpiColorRulesEditor
+          idPrefix="kpi"
+          rules={colorRules}
+          fieldOptions={fieldOptions}
+          onChange={(next) => patch({ colorRules: next })}
+        />
+      </DeckField>
+    </DeckPropertySection>
   );
 }

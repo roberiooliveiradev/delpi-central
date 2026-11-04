@@ -227,6 +227,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     chartAxes: "Eixos, grade, meta e ordenação A→Z das categorias (centros de trabalho).",
     chartGaugeMeta:
       "Meta do velocímetro: ligue a meta e escolha uma coluna do modelo de dados ou um valor numérico no inspetor.",
+    kpiDynamicMeta:
+      "Meta do KPI: valor fixo, campo do mesmo DataModel (targetField) ou sem meta. Título/subtítulo e cores condicionais também podem ligar a campos; a TV calcula comparação, progresso e tom no enrich.",
     chartFormat: "Estilo, preenchimento, contorno e raio da área do gráfico na aba Elemento.",
     chartSeriesColor: "Cor principal da série de dados do gráfico.",
     canvasTable:
