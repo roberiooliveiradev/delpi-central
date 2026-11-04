@@ -272,3 +272,18 @@ PRODUCTION_DEPLOY: NOT_AUTHORIZED
 The user has explicitly authorized software refactor and deletion. Do not interrupt for repeated routine PO approvals or leave an unneeded duplicate engine merely for convenience. **However, full migration does not permit removing legitimate auth/security/evidence gates or inventing success when the real owner service is inaccessible.** Keep phases within this task to preserve causal attribution and easy local rollback.
 
 **Success is a working governed investigation runtime that makes genuine progress on real user tasks, not simply "LangGraph removed" or "Pydantic AI Agent constructed."**
+
+
+---
+
+## Continuidade canônica — 2026-11-04 — Pydantic AI Native-First (doc 235)
+
+**Status histórico desta task 231: EXECUTED; não reabrir nem reescrever a evidência de migração.** A execução original está nos docs 232–234; LangGraph foi aposentado, Pydantic AI `Agent` + tools já integra o produto, porém **aceite funcional completo segue INCONCLUSIVE** sem E2E no evaluated SHA. O próximo passo não é criar novo planner, decompositor, comparador hardcoded ou infraestrutura paralela.
+
+**NOVA DIREÇÃO DE CONTINUIDADE:** [doc 235 — Consolidação Pydantic AI Native-First / Agente Investigativo Generalista](235-pydantic-ai-native-first-generalist-investigation-consolidation-plan.md) (**TASK_ID** `DELIA-C3-PYDANTIC-AI-NATIVE-FIRST-GENERALIST-INVESTIGATION-CONSOLIDATION-01`; `STATUS=PLANNED`). Documento 235 é o **plano executável sucessor** e prevalece sobre recomendações desta task histórica quanto à próxima implementação de inteligência semântica. Preservar hierarquia canônica superior e contrato de Evidence, Policy, Domain e AuthZ.
+
+Objetivo de continuidade: o usuário expressa objetivo; Pydantic AI investiga dinamicamente via capabilities governadas (A→B→análise→C, com MCPs e owners distintos), pede esclarecimentos e retoma contexto quando necessário, produz síntese com claims/evidence refs, e a DÉLIA verifica os fatos/outcomes. Comparação de estruturas é **cenário de avaliação, não um fluxo fixo**. Priorizar toolsets, schemas tipados, deps, history, tool loop, validação, usage/limits, observabilidade e mecanismos nativos efetivamente disponíveis na versão instalada. Remover seletores/finalizadores/retries/instruções próprios somente com prova de consumidores e equivalência; **nenhuma lógica de agente duplicada**.
+
+**Infraestrutura de teste:** rebuild em ambiente **local isolado** é autorizado; rebuild/deploy em produção não. Doc 234 registra Docker/Ollama/API disponíveis, mas runtime local obsoleto; homologação no SHA novo é obrigatória, sem reutilizar scripts/volumes/contexto produtivos. Sem prova real: `TEST_NOT_RUN/INCONCLUSIVE`, nunca `PASS`.
+
+**Reanchor:** HEAD/git status → Project Instructions/.cursor → 16→50→17→49→51→52→21→20→25 → arquitetura/specs → docs 226, 228–235 → ledger. O plano 235 é continuidade, não avanço de fase por documentação.
