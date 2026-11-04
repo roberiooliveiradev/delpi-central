@@ -35,14 +35,20 @@ python -m production_control_app.jobs.myweg_needs_publisher \
   [--json]
 ```
 
-Compose (agendamento desativado — só `--profile manual`):
+Compose (agendamento desativado — só `--profile manual`). **Obrigatório** rodar a partir de `infra/` (ou passar `-f`):
 
 ```bash
-cd ~/projetos/delpi-central/infra
-docker compose --profile manual run --rm myweg-needs-publisher --dry-run --latest --json
-docker compose --profile manual run --rm myweg-needs-publisher \
-  --publish --collection-id 20261104_172829_20261104_142827_EXPORT_20261104_142826 --json
+cd /home/operador/projetos/delpi-central/infra
+docker compose -f docker-compose.yml --env-file .env --profile manual run --rm \
+  myweg-needs-publisher --dry-run \
+  --collection-id 20261104_172829_20261104_142827_EXPORT_20261104_142826 --json
+
+docker compose -f docker-compose.yml --env-file .env --profile manual run --rm \
+  myweg-needs-publisher --publish \
+  --collection-id 20261104_172829_20261104_142827_EXPORT_20261104_142826 --json
 ```
+
+Se `no configuration file provided: not found` aparecer, o cwd não era `infra/`.
 
 Token S2S vem do `.env` do compose (`API_DELPI_INTERNAL_SERVICE_TOKEN`), montagem RO dos normalizados, estado em volume separado. Sem Docker socket.
 
@@ -62,9 +68,10 @@ Sem backfill em massa. Sem ativar agenda.
 | Testes locais | `24 passed` (`test_myweg_needs_publisher` + `test_myweg_needs_e2`) |
 | Gates | Phase3 + platform guardrails OK vs `b37ed287dc` |
 | Agendamento | **DESATIVADO** (`profiles: [manual]`; sem cron/timer) |
-| Deploy srv-api + smoke dry-run/reenvio | **PENDING** — SSH `operador@192.168.1.237` sem chave nesta sessão WSL |
+| Deploy srv-api (`production-control-api`) | **PROVEN** — pull `13a4e11d76` + rebuild/recreate OK |
+| Smoke dry-run / reenvio publisher | **PENDING** — `docker compose` fora de `infra/` → `no configuration file provided` |
 
-> Não marcar deploy/homologação live como PROVEN até `git pull` + rebuild + dry-run + reenvio `created=false` no srv-api.
+> Reexecutar dry-run + `--publish` a partir de `infra/` antes de marcar smoke como PROVEN.
 
 ## Correção /latest (E2 follow-up)
 
