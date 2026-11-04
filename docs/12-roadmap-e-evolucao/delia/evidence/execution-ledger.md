@@ -5635,7 +5635,8 @@ R3=material obligations REQUIRED/SATISFIED/UNSATISFIED/UNAVAILABLE/INCONCLUSIVE 
 R4=Pydantic AI remains sole semantic runtime; no LangGraph/owner_path/legacy planner.
 R5=AuthZ tests behavioral (schema reject without owner call; write surface; revoke; injection).
 REGRESSION=delia-api pytest tests/ GREEN (ignore live).
-LIVE_E2E=TEST_NOT_RUN EXTERNAL_BLOCKER (docker.sock absent; Ollama/API unreachable).
+IMPLEMENTATION_SHA=5e89b51bf6 (pushed main).
+LIVE_E2E=TEST_NOT_RUN — Docker/Ollama/stack available, but PRODUCTION_DEPLOY=NOT_AUTHORIZED blocked rebuild; container still stale vs EVALUATED_SHA (STALE_EVIDENCE if run).
 VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
 
 

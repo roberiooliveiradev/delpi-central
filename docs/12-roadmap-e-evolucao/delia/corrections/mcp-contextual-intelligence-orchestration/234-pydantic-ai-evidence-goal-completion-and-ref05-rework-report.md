@@ -63,10 +63,13 @@ Removed mechanisms with substitution: `_COMPARE_INTENT`, `_TARGET_TOKEN`, text-s
 
 ```text
 LOCAL_E2E=TEST_NOT_RUN
-BLOCKER=docker.sock / Ollama / delia health unreachable on executor host
-PRODUCTION_DEPLOY=NOT_AUTHORIZED
+DOCKER=AVAILABLE (docker.sock present; compose stack up)
+OLLAMA=AVAILABLE (http://127.0.0.1:11434 → 200)
+DELIA_API_INTERNAL=AVAILABLE (delia-api:8000/health → available)
+LOCAL_RUNTIME_SHA=STALE_RELATIVE_TO_EVALUATED (container image predates 5e89b51bf6)
+BLOCKER=PRODUCTION_DEPLOY=NOT_AUTHORIZED — rebuild/up-prod-sequential of delia-api not executed; E01–E10 against stale runtime would be STALE_EVIDENCE
 ```
 
 ## Verdict
 
-`ACCEPT_WITH_RESIDUAL` — REF05/goal/obligation contracts corrected under PA runtime; functional live owner comparison still requires authorized local stack (not claimed here).
+`ACCEPT_WITH_RESIDUAL` — REF05/goal/obligation contracts corrected under PA runtime with full unit/regression GREEN; live E01–E10 deferred until an authorized rebuild binds `LOCAL_RUNTIME_SHA` to `EVALUATED_SHA`.
