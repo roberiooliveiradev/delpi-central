@@ -551,6 +551,7 @@ export {
   applyFillPaintBackground,
   cssAngleToSvgGradientLine,
   createSvgLinearGradientDef,
+  resolveContrastFillHex,
   resolveStyleFillCss,
   resolveStyleStrokeCss,
   resolveSvgPaintRef,

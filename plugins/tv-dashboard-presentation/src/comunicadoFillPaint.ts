@@ -46,6 +46,32 @@ export function resolveStyleStrokeCss(
   return style?.stroke ?? style?.borderColor ?? fallback;
 }
 
+/**
+ * Hex opaco para contraste automático de texto (não para paint CSS rico).
+ *
+ * Precedência alinhada aos readers de fill:
+ * `fillPaint` (solid / primeiro stop de gradient / none) → `fill` → `backgroundColor` → fallback.
+ *
+ * Gradiente: usa o primeiro stop — mesma aproximação de `solidFromFill` / stroke gradient
+ * no SVG; não inventa luminância média do gradiente.
+ */
+export function resolveContrastFillHex(
+  style:
+    | Pick<ComunicadoBlockStyle, "fill" | "fillPaint" | "backgroundColor">
+    | null
+    | undefined,
+  fallback = "transparent",
+): string {
+  if (style?.fillPaint) {
+    if (style.fillPaint.kind === "none") return "transparent";
+    const fromPaint = solidFromFill(style.fillPaint);
+    if (fromPaint && fromPaint !== "transparent") return fromPaint;
+  }
+  const hex = style?.fill ?? style?.backgroundColor;
+  if (typeof hex === "string" && hex.trim()) return hex;
+  return fallback;
+}
+
 export function resolveSvgPaintRef(
   paint: DelpiFill | undefined,
   hex: string,

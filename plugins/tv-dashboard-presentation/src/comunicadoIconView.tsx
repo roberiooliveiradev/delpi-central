@@ -7,7 +7,11 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { CSSProperties } from "react";
 
-import { applyFillPaintBackground } from "./comunicadoFillPaint";
+import {
+  applyCssShapePaints,
+  applyFillPaintBackground,
+  resolveStyleStrokeCss,
+} from "./comunicadoFillPaint";
 import type { ComunicadoIconBlock } from "./comunicadoTypes";
 
 /** Cores legadas tratadas como «sem escolha explícita» → accent das formas. */
@@ -43,10 +47,10 @@ export function resolveComunicadoIconStrokeWidth(block: ComunicadoIconBlock): nu
   if (typeof dedicated === "number" && Number.isFinite(dedicated) && dedicated > 0) {
     return dedicated;
   }
-  const stroke = block.style?.stroke;
-  const hasBoxStroke =
-    typeof stroke === "string" && stroke.trim() !== "" && stroke !== "transparent";
-  const legacy = block.style?.strokeWidth;
+  const style = block.style ?? {};
+  const effectiveStroke = resolveStyleStrokeCss(style, "transparent");
+  const hasBoxStroke = effectiveStroke !== "transparent";
+  const legacy = style.strokeWidth;
   if (
     !hasBoxStroke &&
     typeof legacy === "number" &&
@@ -60,7 +64,8 @@ export function resolveComunicadoIconStrokeWidth(block: ComunicadoIconBlock): nu
 }
 
 /**
- * Chrome da caixa atrás do glifo (paridade com formas): fill, contorno, raio, sombra.
+ * Chrome da caixa atrás do glifo — mesmos resolvers de fill/stroke das formas
+ * (`applyCssShapePaints` / `resolveStyleStrokeCss` / `applyFillPaintBackground`).
  */
 export function resolveComunicadoIconChromeStyle(
   block: ComunicadoIconBlock,
@@ -77,21 +82,34 @@ export function resolveComunicadoIconChromeStyle(
     boxSizing: "border-box",
   };
 
-  const fill = style.fill;
-  if (style.fillPaint?.kind === "gradient" || (typeof fill === "string" && fill.trim() && fill !== "transparent")) {
-    applyFillPaintBackground(css, style.fillPaint, fill);
-  }
+  const fillHex = style.fill ?? style.backgroundColor;
+  const strokeHex = resolveStyleStrokeCss(style, "transparent");
+  const strokeWidth =
+    typeof style.strokeWidth === "number" && Number.isFinite(style.strokeWidth)
+      ? Math.max(0, style.strokeWidth * fontScale)
+      : 0;
 
-  const stroke = style.stroke;
-  const strokeWidth = style.strokeWidth;
-  if (
-    typeof stroke === "string" &&
-    stroke.trim() &&
-    stroke !== "transparent" &&
-    typeof strokeWidth === "number" &&
-    strokeWidth > 0
-  ) {
-    css.border = `${Math.max(0, strokeWidth * fontScale)}px solid ${stroke}`;
+  if (style.strokePaint?.kind === "gradient" && strokeWidth > 0) {
+    applyCssShapePaints(css, {
+      fillPaint: style.fillPaint,
+      strokePaint: style.strokePaint,
+      fillHex,
+      strokeHex,
+      strokeWidth,
+    });
+  } else {
+    const hasFillPaint =
+      style.fillPaint?.kind === "solid" ||
+      style.fillPaint?.kind === "gradient" ||
+      style.fillPaint?.kind === "none";
+    const hasFillHex =
+      typeof fillHex === "string" && fillHex.trim() !== "" && fillHex !== "transparent";
+    if (hasFillPaint || hasFillHex) {
+      applyFillPaintBackground(css, style.fillPaint, fillHex);
+    }
+    if (strokeHex !== "transparent" && strokeWidth > 0) {
+      css.border = `${strokeWidth}px solid ${strokeHex}`;
+    }
   }
 
   if (typeof style.borderRadius === "number" && Number.isFinite(style.borderRadius)) {

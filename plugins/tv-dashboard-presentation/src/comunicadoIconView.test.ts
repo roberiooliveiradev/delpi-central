@@ -116,6 +116,44 @@ describe("comunicadoIconView", () => {
     expect(chrome.boxShadow).toBe("0 4px 12px rgba(0,0,0,.2)");
   });
 
+  it("chrome Case B: fillPaint/strokePaint solid vencem hex legado (paridade shape)", () => {
+    const chrome = resolveComunicadoIconChromeStyle(
+      iconBlock({
+        style: {
+          fill: "transparent",
+          fillPaint: { kind: "solid", color: "#e8f4fc" },
+          stroke: "#00ff00",
+          strokePaint: { kind: "solid", color: "#089bdb" },
+          strokeWidth: 2,
+        },
+      }),
+    );
+    expect(chrome.backgroundColor).toBe("#e8f4fc");
+    expect(chrome.border).toBe("2px solid #089bdb");
+  });
+
+  it("chrome strokePaint gradient usa applyCssShapePaints (camada dual)", () => {
+    const chrome = resolveComunicadoIconChromeStyle(
+      iconBlock({
+        style: {
+          fill: "#89b4e8",
+          stroke: "#166534",
+          strokeWidth: 4,
+          strokePaint: {
+            kind: "gradient",
+            angle: 135,
+            stops: [
+              { color: "#166534", position: 0 },
+              { color: "#7c3aed", position: 100 },
+            ],
+          },
+        },
+      }),
+    );
+    expect(String(chrome.backgroundImage)).toContain("linear-gradient");
+    expect(chrome.border).toBe("4px solid transparent");
+  });
+
   it("createBlock icon nasce com chrome transparente e iconStrokeWidth", () => {
     const created = createBlock("icon", "Factory") as ComunicadoIconBlock;
     expect(created.style?.fill).toBe("transparent");

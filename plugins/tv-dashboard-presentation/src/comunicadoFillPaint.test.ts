@@ -5,6 +5,7 @@ import {
   applyCssShapePaints,
   applyFillPaintBackground,
   cssAngleToSvgGradientLine,
+  resolveContrastFillHex,
   resolveStyleFillCss,
   resolveStyleStrokeCss,
   resolveSvgPaintRef,
@@ -82,6 +83,47 @@ describe("comunicadoFillPaint", () => {
       applyColorPaintToCss(text, { kind: "solid", color: "#ffffff" }),
     ).toBe(true);
     expect(text.color).toBe("#ffffff");
+  });
+
+  it("Case B residual: fillPaint/strokePaint solid vencem hex legado divergente", () => {
+    expect(
+      resolveStyleFillCss({
+        fill: "#ffffff",
+        fillPaint: { kind: "solid", color: "#000000" },
+      }),
+    ).toBe("#000000");
+    expect(
+      resolveStyleStrokeCss({
+        stroke: "#00ff00",
+        strokePaint: { kind: "solid", color: "#ff0000" },
+      }),
+    ).toBe("#ff0000");
+    const box: Record<string, unknown> = {};
+    applyFillPaintBackground(
+      box,
+      { kind: "solid", color: "#111111" },
+      "#ffffff",
+    );
+    expect(box.backgroundColor).toBe("#111111");
+  });
+
+  it("resolveContrastFillHex usa fillPaint residual; gradient → primeiro stop", () => {
+    expect(
+      resolveContrastFillHex({
+        fill: "#ffffff",
+        fillPaint: { kind: "solid", color: "#0f172a" },
+      }),
+    ).toBe("#0f172a");
+    expect(resolveContrastFillHex({ fill: "#089bdb" })).toBe("#089bdb");
+    expect(
+      resolveContrastFillHex({
+        fill: "#ffffff",
+        fillPaint: gradient,
+      }),
+    ).toBe("#0f172a");
+    expect(resolveContrastFillHex({ fillPaint: { kind: "none" } }, "#ccc")).toBe(
+      "transparent",
+    );
   });
 
   it("colorPaint auto/none/ausente não aplica — caller usa style.color", () => {

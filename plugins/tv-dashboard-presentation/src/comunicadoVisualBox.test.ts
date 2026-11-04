@@ -300,4 +300,17 @@ describe("cor explícita de texto — TV-TEXT-COLOR-EXPLICIT-PAINT-FIX", () => {
     expect(blockCssStyle(block).color).toBe("#000000");
     expect(comunicadoTextInnerStyle(block).color).toBe("#000000");
   });
+
+  it("automático contrasta com fillPaint solid residual, não com fill hex divergente", () => {
+    const block = createBlock("text", "X");
+    block.style = {
+      ...block.style,
+      color: "auto",
+      fill: "#ffffff",
+      fillPaint: { kind: "solid", color: "#0f172a" },
+    };
+    expect(resolveVisualBoxContentLayoutStyle(block).color).toBe("#ffffff");
+    expect(blockCssStyle(block).color).toBe("#ffffff");
+    expect(comunicadoTextInnerStyle(block).color).toBe("#ffffff");
+  });
 });

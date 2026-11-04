@@ -28,6 +28,16 @@ describe("containerTypographyOverride", () => {
     ).toEqual(["fontWeight", "color"]);
   });
 
+  it("colorPaint no patch implica strip de color nos runs (sem colorPaint em run)", () => {
+    expect(
+      typographyKeysFromContainerPatch({
+        colorPaint: { kind: "solid", color: "#000000" },
+      }),
+    ).toEqual(["color"]);
+    const next = stripContentRunStylesOverriddenByContainer(runs, ["color"]);
+    expect(next?.[0]).toEqual({ text: "Meta ", style: { fontWeight: "bold" } });
+  });
+
   it("strip remove tipografia do container e preserva dataRef / outras chaves", () => {
     const next = stripContentRunStylesOverriddenByContainer(runs, ["fontWeight", "fontStyle"]);
     expect(next).toEqual([

@@ -258,11 +258,22 @@ export type ComunicadoBlockStyle = {
   zIndex?: number;
   fill?: string;
   stroke?: string;
-  /** Preenchimento rico; o renderer usa `fillPaint ?? fill`. */
+  /**
+   * Preenchimento rico; o renderer usa `fillPaint ?? fill`.
+   * Contrato de escrita (delpiFillAdapter): solid → canonicaliza em `fill`/`backgroundColor`
+   * e limpa `fillPaint`; gradient/none persistem em `fillPaint`. Residual `fillPaint.solid`
+   * (legado/import) ainda vence `fill` nos readers (`resolveStyleFillCss`).
+   */
   fillPaint?: DelpiFill;
-  /** Cor de texto rica (`background-clip: text` no presentation). */
+  /**
+   * Cor de texto rica. Diferente de fill/stroke: solid **persiste** `colorPaint`
+   * (marcador de escolha explícita; vence `style.color` divergente em `applyColorPaintToCss`).
+   */
   colorPaint?: DelpiFill;
-  /** Contorno rico; se o motor não pintar gradiente, cai no primeiro stop. */
+  /**
+   * Contorno rico. Escrita solid → canonicaliza em `stroke`/`borderColor` e limpa paint;
+   * residual `strokePaint` vence hex nos readers de shape (`resolveStyleStrokeCss`).
+   */
   strokePaint?: DelpiFill;
   strokeWidth?: number;
   /**

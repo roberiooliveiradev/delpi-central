@@ -99,7 +99,16 @@ function prunePartialRunStyle(
 export function typographyKeysFromContainerPatch(
   patch: Record<string, unknown>,
 ): ContainerTypographyStyleKey[] {
-  return CONTAINER_TYPOGRAPHY_KEYS.filter((key) => key in patch);
+  const keys = CONTAINER_TYPOGRAPHY_KEYS.filter((key) => key in patch);
+  /*
+   * Runs só têm `style.color` (sem colorPaint). Patch de container com `colorPaint`
+   * implica a mesma autoridade visual de tipografia — strip dos runs.color.
+   * Writer dual (`fillToColorStylePatch`) já envia `color`; isto cobre path só-paint.
+   */
+  if ("colorPaint" in patch && !keys.includes("color")) {
+    keys.push("color");
+  }
+  return keys;
 }
 
 /**

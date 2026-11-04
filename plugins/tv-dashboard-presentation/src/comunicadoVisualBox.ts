@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 
 import { DECK_SHAPE_DEFAULTS, resolvePaintTextColor } from "@delpi/plugin-ui/index";
 
-import { applyColorPaintToCss } from "./comunicadoFillPaint";
+import { applyColorPaintToCss, resolveContrastFillHex } from "./comunicadoFillPaint";
 
 import type {
   ComunicadoBlock,
@@ -243,8 +243,9 @@ export function resolveVisualBoxContentLayoutStyle(
   }
 
   if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-  /* Contraste contra a superfície efetivamente pintada — não um default não pintado. */
-  const fillForContrast = resolveVisualBoxChrome(block).fill;
+  /* Contraste contra a superfície efetivamente pintada (`fillPaint` residual incluso). */
+  const chromeFill = resolveVisualBoxChrome(block).fill;
+  const fillForContrast = resolveContrastFillHex(style, chromeFill);
   if (!applyColorPaintToCss(css, style.colorPaint)) {
     const paintColor = resolvePaintTextColor(style.color, fillForContrast, {
       unsetIsAutomatic: false,
