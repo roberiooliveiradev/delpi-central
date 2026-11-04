@@ -4481,12 +4481,21 @@
   background-color: #eef6fb;
 }
 
+/*
+ * Fundo ancorado na viewport — NÃO usar inset:0 no eixo vertical.
+ * Quando a lista de materiais cresce (ex.: filtro «Todos os materiais»),
+ * o container alonga; com inset:0 + cover a arte parecia dar «zoom».
+ */
 .dashboard-production-control .ppc-feeder-scene::before {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 0;
   pointer-events: none;
+  width: 100%;
+  height: calc(100svh - 72px);
   background-image: var(--ppc-feeder-scene-image);
   background-repeat: no-repeat;
   background-size: cover;
@@ -4514,6 +4523,7 @@
   }
 
   .dashboard-production-control .ppc-feeder-scene::before {
+    height: calc(100svh - 120px);
     background-position: 64% top;
     transform: scale(1.7);
     opacity: 0.92;
