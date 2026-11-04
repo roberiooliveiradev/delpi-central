@@ -5444,3 +5444,11 @@ differences_found sources=2` -> COMPLETEDx2/BLOCKEDx1 ->
 `request_completed 200` em ~105-115s. A propagação fechou a cadeia.
 Residual: latencia marginal na borda do gateway (~105-118s);
 decompose ainda produz sub de comparacao redundante em alguns runs.
+
+
+## E4-R6 — client outcome and subgoal-context security gate (2026-11-03)
+
+INPUT_SHA=f37a1a2c08. REVIEW_PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/228-e4-r6-canonical-entity-reference-binding-contract-and-functional-closure.md section11.
+CODE_PROVEN=_investigate_subobjectives now accepts parent prior_turns, each _run_sub forwards them to _governed_owner_path; this preserves referent candidates. EXECUTOR_REPORTED_CORRELATION=3aa7e739: 2 DAVI READs, third blocked, composition differences_found sources=2, server request_completed 200 in ~105-115s. This is progress, not final client acceptance. Actual client full-body receipt, source identities 90260147/90260148, full independent oracle and repeated runs NOT_PROVEN.
+SAFETY_RISK_PROVEN_BY_CODE=_governed_owner_path at depth>0 with nonempty prior_turns can enter prior_continuation_attempt and return before authorized fresh owner READ; no depth gate. Do not let untrusted client prior OBSERVATION synthesize apparent subobjective grounded READ. RED negative tests then minimal depth-scoped guard retaining referents for selection/args; maintain top-level prior transforms.
+EXACT_TARGET_SET_GAP=source count>=2 currently triggers comparison without exact requested owner-backed roots assertion. NEXT=DELIA-C3-E4-R6-CLIENT-OUTCOME-AND-SUBGOAL-TRUST-GATE-01: tests for shortcut and unauthorized/forged references, real owner-target identity/complete oracle, >=5 repeated client-visible A01-A03/B01 if feasible, latency/gateway, negative cases, regression final SHA and no prod deploy. STATUS=ACCEPT_WITH_RESIDUAL bounded context flow, overall REWORK. REF05-08/G04/G05/G07/G12 NOT_PASS; TESTS_BY_COORDINATION=TEST_NOT_RUN; PHASE_ADVANCEMENT=NONE.
