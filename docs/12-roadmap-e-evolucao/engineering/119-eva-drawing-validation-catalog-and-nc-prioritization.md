@@ -800,3 +800,13 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **Evidência final:** 90264017 — 14/14 páginas, 8 tabelas, `divergences: 0`, `10080535` contextual. 90264030 — 13/13 páginas, 11 tabelas, `mismatches: 0`; candidatos reais `DRAWING_ONLY 10080535` p9-12, `10081686` p7, `BOM_ONLY 10080438`×4/`10080292` — todos `PENDING_HUMAN_REVIEW`. Relação demonstrável `10110676→50225512` preservada como evidência não verificada.
 
 **Estado:** `REGRESSIONS_FIXED=PASS`, `COVERAGE_IMPROVED=PASS`, `REGRESSION_13_PDFS=PASS` (prod), `PROD_DEPLOYED=PASS`, `MCP_CHATGPT_PASS=PENDING` (aguardando execução independente), `ISSUE_131=PENDING` (sem credencial GitHub API no ambiente).
+
+## 30. DEC-VAL-030 — E2E MCP de análise multipágina via jobs governados (2026-11-04)
+
+**Causa-raiz (PROVEN):** `ClientDisconnect` no `streamable_http_manager` — o cliente MCP (ChatGPT) abandona a chamada enquanto o servidor executa ~10min de OCR síncrono (`compose_understanding` em 13-14 páginas × 2 pipelines). Evidência: logs ASGI com `raise ClientDisconnect()` após `drawing/pdf 200 OK`.
+
+**Correção (contrato explícito de execução prolongada — RQ-VAL-033):** `compose_understanding` agora dispara um job desacoplado (`analysis_jobs.py`, process-local single-worker) e responde `RUNNING + job_id` em ~0s; o consumidor repete a chamada com `parameters.job_id` até `COMPLETED` (relatório completo) ou erro tipado (`timeout`/`analysis_incomplete`/`job_not_found`). Dedup por produto+identidade+parâmetros, isolamento por owner, TTL 1h, cap 2700s. Fingerprint do owner = user_id+access_token (request_id instável corrigido). Resposta do job usa projeção compacta (`_compact_report_for_consumer`) — remove `_`-prefixed e amostras de tokens OCR (1.3MB→contrato tipado), preserva cobertura/findings/limitações/contextuais.
+
+**Evidência prod (`srv-api`):** 90264017 `RUNNING(0.0s)→COMPLETED(~90s)` relatório integral; 90264030 `RUNNING`+job encontrado (isolamento de owner verificado: identidade diferente → `job_not_found` correto). `ClientDisconnect` eliminado. Sync path sem compose inalterado (INCONCLUSIVE honesto).
+
+**Estado:** `MCP_SERVER_PASS=PASS`, `BACKEND_PASS=PASS`, `MCP_CLIENT_PASS=PENDING` (ChatGPT reteste — contrato: chamar com `compose_understanding=true` → RUNNING → repetir com `job_id`), `CHATGPT_CONSUMER_PASS=PENDING`, `ISSUE_131=PENDING` (sem credencial API).
