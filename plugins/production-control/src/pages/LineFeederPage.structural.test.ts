@@ -21,6 +21,7 @@ describe("Line feeder E4 wiring", () => {
     const page = source("./LineFeederPage.tsx");
     const api = source("../api/ppcApi.ts");
     expect(page).toMatch(/LineFeederCollectModal/);
+    expect(page).toMatch(/LineFeederIdleCard/);
     expect(page).toMatch(/useLineFeederMaterialsPreview/);
     expect(page).toMatch(/LineFeederUrgentRequestsPanel/);
     expect(page).not.toMatch(/fetchLineFeederRequirements/);
@@ -29,6 +30,17 @@ describe("Line feeder E4 wiring", () => {
     expect(page).not.toMatch(/closeLineFeederPickPlan/);
     expect(api).toMatch(/\/line-feeder\/materials\/preview/);
     expect(api).toMatch(/\/line-feeder\/published-queue/);
+  });
+
+  it("idle state usa cartão Liquid Glass com CTA Coletar", () => {
+    const idle = source("../components/LineFeederIdleCard.tsx");
+    const css = source("../index.css");
+    const copy = sliceBetween(source("../content/copy.ts"), "lineFeeder:", "materials:");
+    expect(idle).toMatch(/ppc-feeder-idle__cta/);
+    expect(idle).toMatch(/emptyTitle/);
+    expect(copy).toMatch(/emptyTitle:\s*"Pronto para abastecer"/);
+    expect(css).toMatch(/backdrop-filter:\s*saturate\(190%\) blur\(36px\)/);
+    expect(css).toMatch(/ppc-feeder-idle__card/);
   });
 
   it("não vaza códigos técnicos de estoque na copy nem na ajuda", () => {

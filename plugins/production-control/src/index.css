@@ -4663,6 +4663,242 @@
   font-size: var(--ppc-font-sm);
 }
 
+/* Idle — cartão Liquid Glass central antes da primeira consulta. */
+.dashboard-production-control .ppc-feeder-idle {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: min(52vh, 420px);
+  padding: 28px 16px 40px;
+}
+
+.dashboard-production-control .ppc-feeder-idle__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: min(420px, 100%);
+  padding: 36px 32px 30px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  background:
+    linear-gradient(
+      165deg,
+      rgba(255, 255, 255, 0.72) 0%,
+      rgba(255, 255, 255, 0.42) 48%,
+      rgba(236, 246, 252, 0.38) 100%
+    );
+  box-shadow:
+    0 28px 64px rgba(3, 40, 70, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 -1px 0 rgba(3, 56, 102, 0.04) inset;
+  -webkit-backdrop-filter: saturate(190%) blur(36px);
+  backdrop-filter: saturate(190%) blur(36px);
+  text-align: center;
+  overflow: hidden;
+  animation: ppc-feeder-idle-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.dashboard-production-control .ppc-feeder-idle__card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 42%;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    transparent 100%
+  );
+  opacity: 0.85;
+}
+
+.dashboard-production-control .ppc-feeder-idle__glyph {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--ppc-title, #003866);
+  box-shadow:
+    0 8px 20px rgba(3, 40, 70, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset;
+}
+
+.dashboard-production-control .ppc-feeder-idle__title {
+  position: relative;
+  z-index: 1;
+  margin: 4px 0 0;
+  color: var(--ppc-title, #003866);
+  font-size: clamp(1.2rem, 2.4vw, 1.45rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.dashboard-production-control .ppc-feeder-idle__body {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  max-width: 32ch;
+  color: color-mix(in srgb, var(--ppc-text, #1f3a54) 82%, transparent);
+  font-size: var(--ppc-font-sm, 0.92rem);
+  line-height: 1.5;
+  font-weight: 450;
+}
+
+.dashboard-production-control .ppc-feeder-idle__cta {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  min-width: 168px;
+  margin-top: 10px;
+  padding: 12px 28px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ppc-accent, #089bdb) 92%, #fff) 0%,
+      var(--ppc-accent, #089bdb) 100%
+    );
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  box-shadow:
+    0 12px 28px color-mix(in srgb, var(--ppc-accent, #089bdb) 34%, transparent),
+    0 1px 0 rgba(255, 255, 255, 0.35) inset;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
+}
+
+.dashboard-production-control .ppc-feeder-idle__cta:hover:not(:disabled) {
+  filter: brightness(1.04);
+  box-shadow:
+    0 16px 34px color-mix(in srgb, var(--ppc-accent, #089bdb) 42%, transparent),
+    0 1px 0 rgba(255, 255, 255, 0.4) inset;
+  transform: translateY(-1px);
+}
+
+.dashboard-production-control .ppc-feeder-idle__cta:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ppc-accent, #089bdb) 70%, #fff);
+  outline-offset: 3px;
+}
+
+.dashboard-production-control .ppc-feeder-idle__cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+@keyframes ppc-feeder-idle-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .dashboard-production-control .ppc-feeder-idle__card {
+    background: rgba(255, 255, 255, 0.94);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .dashboard-production-control .ppc-feeder-idle__card {
+    background: color-mix(in srgb, var(--ppc-surface, #fff) 92%, #e8f4fb);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-production-control .ppc-feeder-idle__card {
+    animation: none;
+  }
+
+  .dashboard-production-control .ppc-feeder-idle__cta {
+    transition: none;
+  }
+
+  .dashboard-production-control .ppc-feeder-idle__cta:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-feeder-idle__card {
+  border-color: rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(
+      165deg,
+      rgba(28, 48, 68, 0.72) 0%,
+      rgba(14, 28, 42, 0.58) 100%
+    );
+  box-shadow:
+    0 28px 64px rgba(0, 0, 0, 0.45),
+    0 1px 0 rgba(255, 255, 255, 0.12) inset;
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-feeder-idle__card::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    transparent 100%
+  );
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-feeder-idle__glyph {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e8f4fb;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-feeder-idle__title {
+  color: #f2f7fb;
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-feeder-idle__body {
+  color: color-mix(in srgb, #d7e6f2 78%, transparent);
+}
+
+@media (max-width: 640px) {
+  .dashboard-production-control .ppc-feeder-idle {
+    min-height: min(46vh, 360px);
+    padding: 18px 12px 28px;
+  }
+
+  .dashboard-production-control .ppc-feeder-idle__card {
+    padding: 28px 22px 24px;
+    border-radius: 24px;
+  }
+
+  .dashboard-production-control .ppc-feeder-idle__cta {
+    width: 100%;
+  }
+}
+
 .dashboard-production-control .ppc-feeder-materials__collect {
   font-size: 1.05rem;
   font-weight: 750;

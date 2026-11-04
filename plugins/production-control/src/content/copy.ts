@@ -724,8 +724,9 @@ export const copy = {
     collectAction: "Coletar",
     refreshQuery: "Atualizar consulta",
     refreshBusy: "Atualizando…",
+    emptyTitle: "Pronto para abastecer",
     emptyGuidance:
-      "Selecione os postos de trabalho e informe quantas horas de produção deseja abastecer.",
+      "Escolha os postos e as horas de produção. A consulta mostra o que falta coletar — sem reservar material.",
     loading: "Calculando materiais do horizonte…",
     loadingHint: "Lendo a programação publicada, empenhos e o saldo no ponto de uso.",
     loadError: "Não foi possível carregar a necessidade das bancadas.",

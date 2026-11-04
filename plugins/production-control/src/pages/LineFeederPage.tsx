@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 
 import warehouseSpoolsUrl from "../assets/line-feeder/warehouse-spools.png";
 import { LineFeederCollectModal } from "../components/LineFeederCollectModal";
+import { LineFeederIdleCard } from "../components/LineFeederIdleCard";
 import { LineFeederMaterialsPanel } from "../components/LineFeederMaterialsPanel";
 import { LineFeederUrgentRequestsPanel } from "../components/LineFeederUrgentRequestsPanel";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
@@ -102,9 +103,10 @@ export function LineFeederPage({ branch }: LineFeederPageProps) {
       <LineFeederUrgentRequestsPanel branch={branch} />
 
       {!preview.hasQuery && !preview.loading ? (
-        <div className="ppc-state ppc-feeder-materials__guide" role="status">
-          {texts.emptyGuidance}
-        </div>
+        <LineFeederIdleCard
+          onCollect={() => setModalOpen(true)}
+          disabled={preview.loading}
+        />
       ) : null}
 
       {preview.loading ? (
