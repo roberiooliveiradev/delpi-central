@@ -758,8 +758,14 @@ async def _analyze_product_drawing(
         import hashlib as _hl
         import json as _js
 
+        # Identidade estável do dono do job — request_id varia por
+        # chamada; só o sujeito+token delegado identificam o owner.
         _ident_fp = _hl.sha256(
-            _js.dumps(ctx, sort_keys=True, default=str).encode()
+            (
+                str(getattr(ctx, "user_id", "") or "")
+                + "|"
+                + str(getattr(ctx, "access_token", "") or "")
+            ).encode()
         ).hexdigest()[:20]
         _params_fp = _hl.sha256(
             _js.dumps(
@@ -886,7 +892,9 @@ async def _analyze_product_drawing(
                             "data_class": (
                                 "OBSERVED|CALCULATED|INFERRED|UNKNOWN"
                             ),
-                            "report": report,
+                            "report": _compact_report_for_consumer(
+                                report
+                            ),
                             "provenance": (
                                 "api-delpi product/drawing/structure "
                                 "(identidade delegada) + extração "
@@ -906,7 +914,7 @@ async def _analyze_product_drawing(
                     )
 
             _aio.create_task(_run_job())
-        return _ok(
+        return _ok(  # noqa: E501
             {
                 "analysis_type": "product.drawing_analysis",
                 "status": "RUNNING",
@@ -990,6 +998,42 @@ async def _analyze_product_drawing(
         },
         "Análise técnica do desenho oficial do produto.",
     )
+
+
+_HEAVY_RESULT_KEYS = frozenset(
+    {
+        "_tokens_sample",
+        "_text_blob",
+        "_graphic_primitives",
+        "_graphic_primitives_by_page",
+        "tokens",
+        "tokens_sample",
+        "token_sample",
+        "ocr_tokens",
+        "sampled_tokens",
+    }
+)
+
+
+def _compact_report_for_consumer(report):
+    """RQ-VAL-032 — projeção compacta e auditável do relatório.
+
+    Remove campos internos/pesados (amostras de tokens OCR, blobs,
+    primitivas) preservando o contrato: cobertura, contagens, findings,
+    limitações, códigos contextuais, proveniência e evidências tipadas.
+    """
+    if isinstance(report, dict):
+        out = {}
+        for k, v in report.items():
+            if k in _HEAVY_RESULT_KEYS or (
+                isinstance(k, str) and k.startswith("_")
+            ):
+                continue
+            out[k] = _compact_report_for_consumer(v)
+        return out
+    if isinstance(report, list):
+        return [_compact_report_for_consumer(v) for v in report]
+    return report
 
 
 _BENCHMARK_FLAG = "ENG_DRAWING_BENCHMARK_ENABLED"
