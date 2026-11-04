@@ -5253,3 +5253,21 @@ COORDINATION_VERDICT=REWORK. R3 DIFF OBSERVED: a0d83ffce412 -> d1188aafef modifi
 APPROVED_DIRECTION=Reuse validated typed semantic goal+authorized typed target refs to derive minimal legitimate READ obligations with existing governed orchestration/graph; unnecessary second LLM decomposition and so_compare should not be mandatory for already-known targets. Do not create second planner, prompt hacks, product-specific routing or bypass owner-specific analytics. Ensure requested target-set exact evidence coverage; sources>=2 insufficient. Keep deterministic factual verifier and ADR58 no model-authored factual prose.
 MODEL_AB=CONDITIONALLY_AUTHORIZED on local already-approved/available larger model, only after controlled Qwen3 baseline and typed-goal reuse A/B; no production model switch/upgrade automatically. No generic retries or nginx-only timeout changes. SEC01 previous results remain executor-reported with revocation residual, cancellation and concurrency gates remain.
 NEXT=execute doc226 end-to-end implementation and repeated real Qwen3+Keycloak/Core+DAVI+Domain client-visible comparison, final SHA, independent oracle, full negative safety and regression. PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE; COORDINATION_TESTS=TEST_NOT_RUN.
+
+## E4-R4 — typed-goal reuse (doc 226)
+
+TASK=DELIA-C3-E4-R4-TYPED-GOAL-EXECUTION-AND-MODEL-AB-CLOSURE-01.
+W2 implementado: `_read_obligations_from_goal` deriva READ
+obligations deterministicamente quando o goal tipado validado
+declara comparacao com >=2 alvos resolviveis (business_subject/
+input_text), eliminando re-decomposicao LLM nos casos com alvos
+explicitos; sem alvos suficientes -> LLM decompose (caminho
+complexo preservado). Sub-goals sao "Consulte a estrutura
+completa do produto {target}" — hipoteses validadas a jusante
+pelo owner.
+LIVE residual: single-turn compound ainda classificou
+comparison=False em run (variancia do goal_understanding ->
+single-path owner_query_miss); A03 produziu COMPLETEDx4 com
+so_compare redundante delegando vista. Typed-path so dispara com
+codes presentes — cobre o caso explicito; referentes "as duas"
+ainda dependem de decompose LLM variavel.

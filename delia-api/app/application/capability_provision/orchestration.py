@@ -5531,14 +5531,18 @@ class OperationalCapabilityOrchestrator:
             self._subobjective_investigation_enabled
             or (goal is not None and goal.comparison_requested)
         ):
-            subobjectives = self._decompose_objective(
-                input_text,
-                correlation=correlation,
-                workspace_context=workspace_context,
-                deadline=deadline,
-                prior_turns=prior_turns,
-                goal=goal,
+            subobjectives = self._read_obligations_from_goal(
+                goal, input_text
             )
+            if subobjectives is None:
+                subobjectives = self._decompose_objective(
+                    input_text,
+                    correlation=correlation,
+                    workspace_context=workspace_context,
+                    deadline=deadline,
+                    prior_turns=prior_turns,
+                    goal=goal,
+                )
             if (
                 subobjectives is None
                 and goal is not None
@@ -6940,6 +6944,50 @@ class OperationalCapabilityOrchestrator:
 
     _SUBOBJECTIVE_ALLOWED_KEYS = frozenset({"subobjectives"})
     _SUBOBJECTIVE_MAX_GOAL_CHARS = 240
+
+    def _read_obligations_from_goal(
+        self,
+        goal: "OperationalCapabilityOrchestrator._TurnGoal | None",
+        input_text: str,
+    ) -> tuple[SubObjective, ...] | None:
+        """Doc 226 §2.2 — typed-goal reuse for multi-source compare.
+
+        When the validated turn goal already declares a comparison
+        over distinct resolvable target references, the required
+        READ obligations are derivable deterministically — no LLM
+        re-decomposition of obligations the goal already implies.
+        Targets are extracted from the VALIDATED typed goal's
+        business_subject (and, as referent fallback, the literal
+        user input), never from prior-turn text. The obligations
+        remain model hypotheses downstream: each READ is verified
+        against the owner catalogue — a wrong or unresolvable
+        target fails honestly at the governed boundary."""
+        if goal is None or not getattr(goal, "comparison_requested", False):
+            return None
+        import re
+
+        subject = str(getattr(goal, "business_subject", "") or "")
+        candidates = set(re.findall(r"\b\d{5,}\b", subject))
+        if len(candidates) < 2:
+            candidates = set(re.findall(r"\b\d{5,}\b", input_text))
+        if len(candidates) < 2:
+            return None
+        targets = sorted(candidates)[:4]
+        _logger.info(
+            "orchestration stage=typed_goal_obligations "
+            "decision=derived count=%d correlation_excluded",
+            len(targets),
+        )
+        return tuple(
+            SubObjective(
+                subobjective_id=f"read_{index}",
+                goal=(
+                    "Consulte a estrutura completa do produto "
+                    f"{target}"
+                ),
+            )
+            for index, target in enumerate(targets)
+        )
 
     def _decompose_objective(
         self,
