@@ -4450,11 +4450,21 @@
   font-size: var(--ppc-font-xs);
 }
 
-/* Atmosfera fotográfica só no Alimentador — foto à direita + wash legível à esquerda. */
+/*
+ * Atmosfera do Alimentador: o PNG já traz ondas + bobinas no canto superior direito.
+ * Não empilhar wash extra (escondia a foto). Preencher a área útil e ancorar em right top.
+ */
+.dashboard-production-control .ppc-workspace:has(> .ppc-feeder-scene) {
+  min-height: 100%;
+}
+
 .dashboard-production-control .ppc-feeder-scene {
   position: relative;
   isolation: isolate;
   overflow: hidden;
+  flex: 1 1 auto;
+  min-height: max(100%, calc(100dvh - 96px));
+  background-color: #eef6fb;
 }
 
 .dashboard-production-control .ppc-feeder-scene::before {
@@ -4463,25 +4473,10 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-color: var(--ppc-canvas);
-  background-image:
-    linear-gradient(
-      105deg,
-      color-mix(in srgb, var(--ppc-canvas) 96%, transparent) 0%,
-      color-mix(in srgb, var(--ppc-canvas) 88%, transparent) 28%,
-      color-mix(in srgb, var(--ppc-canvas) 55%, transparent) 52%,
-      color-mix(in srgb, var(--ppc-canvas) 18%, transparent) 72%,
-      transparent 88%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ppc-accent, #089bdb) 8%, transparent) 0%,
-      transparent 42%
-    ),
-    var(--ppc-feeder-scene-image);
+  background-image: var(--ppc-feeder-scene-image);
   background-repeat: no-repeat;
-  background-size: cover, cover, cover;
-  background-position: center, center, right center;
+  background-size: cover;
+  background-position: right top;
 }
 
 .dashboard-production-control .ppc-feeder-scene > * {
@@ -4489,29 +4484,38 @@
   z-index: 1;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1100px) {
   .dashboard-production-control .ppc-feeder-scene::before {
-    background-position: center, center, 70% center;
-    opacity: 0.72;
+    background-position: 70% top;
   }
+}
+
+@media (max-width: 768px) {
+  .dashboard-production-control .ppc-feeder-scene {
+    min-height: max(100%, calc(100dvh - 140px));
+  }
+
+  .dashboard-production-control .ppc-feeder-scene::before {
+    background-position: 62% top;
+    opacity: 0.9;
+  }
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-feeder-scene {
+  background-color: var(--ppc-canvas);
 }
 
 :root[data-theme="dark"] .dashboard-production-control .ppc-feeder-scene::before {
   background-image:
     linear-gradient(
       105deg,
-      color-mix(in srgb, var(--ppc-canvas) 97%, transparent) 0%,
-      color-mix(in srgb, var(--ppc-canvas) 90%, transparent) 34%,
-      color-mix(in srgb, var(--ppc-canvas) 62%, transparent) 58%,
-      color-mix(in srgb, var(--ppc-canvas) 28%, transparent) 78%,
-      transparent 92%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ppc-accent, #089bdb) 12%, transparent) 0%,
-      transparent 46%
+      color-mix(in srgb, var(--ppc-canvas) 88%, transparent) 0%,
+      color-mix(in srgb, var(--ppc-canvas) 45%, transparent) 48%,
+      transparent 78%
     ),
     var(--ppc-feeder-scene-image);
+  background-size: cover, cover;
+  background-position: center, right top;
 }
 
 .dashboard-production-control .ppc-feeder-toolbar {
