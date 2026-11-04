@@ -5421,3 +5421,11 @@ COMPLETEDx3/BLOCKEDx1 in ~172s, no composition (subs produced
 empty/irrelevant evidence); B01 single-turn HTTP 200/48.6s
 NON_GROUNDED owner_query_miss (goal_understanding classified
 comparison=False this run).
+
+
+## E4-R6 — final SHA model A/B and subgoal→READ review (2026-11-03)
+
+INPUT_SHA=91a8e86b9b; TASK=DELIA-C3-E4-R6-SUBOBJECTIVE-READ-RELEVANCE-AND-DELIVERY-REWORK-01; PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/228-e4-r6-canonical-entity-reference-binding-contract-and-functional-closure.md section 10.
+EXECUTOR_REPORTED=HTTP500 structural handler fixed; local decompose A/B 4B 5/5 ~6.2s p50 vs 8B 3/5 ~90-120s and two timeouts. Real A03 at SHA 91a8e86b9b ~172s and client timeout ~118s with no source comparison; B01 HTTP200/48.6s NON_GROUNDED owner_query_miss. FULL_BUSINESS_OUTCOME=FAIL; no production deploy.
+COORDINATION_CODE_REVIEW=PROVEN _investigate_subobjectives calls _governed_owner_path for every model-text sub.goal with prior_turns=() and no parent typed semantic goal/validated target obligations directly; owner path repeats group/selection/discover/arggen/relevance. This is a likely causal boundary for subgoal relevance/empty owner records, but not exclusive proven root cause until paired stage trace. Separate B01 single-turn goal classification issue remains. Source root count>=2 is not target-set coverage. No authority bypass, no new planner or model switch permitted.
+COORDINATION_VERDICT=REWORK. REUSE_DECISION=EXTEND existing semantically scoped governed owner path/goal/subobjective contracts only after consumer evidence; preserve live Core/Domain and deterministic Evidence. RED reproduction first, compare authorized direct vs subgoal owner stages, minimal code correction and full Qwen3 4B E2E on final SHA with client terminal and gateway margin, security and 500-regression. REF/G NOT_PASS. TESTS_BY_COORDINATION=TEST_NOT_RUN. PRODUCTION_DEPLOY=NOT_AUTHORIZED; phase unchanged.
