@@ -5538,3 +5538,14 @@ TESTS: test_e4_r6_rca_composition_eligibility.py PASS; diagnostics updated PASS;
 E2E_HOMOLOGATION=INCONCLUSIVE (local stack unavailable; no prod deploy).
 RC_A=IMPLEMENTED (synthetic). RC_B/RC_C/REF05 unchanged. REF01-REF08/G04/G05/G07/G12=NOT_PASS. FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
 NEXT=authorized homologation of RC-A branch; then RC-C discovery-first; RC-B selection; REF05 target oracle.
+
+
+## E4-R6 — RC-A governed homologation + semantic safety (2026-11-04)
+
+TASK=DELIA-C3-E4-R6-RCA-GOVERNED-HOMOLOGATION-AND-SEMANTIC-SAFETY-01.
+CODE_SHA=151d5b8701. DOC=228 §18. PRODUCTION_DEPLOY=NOT_AUTHORIZED.
+ENV: local docker/health DOWN; srv-api 192.168.1.237 unreachable from executor → E2E BLOCKED/TEST_NOT_RUN.
+REGRESSION_FOCUSED: eligibility+diagnostics+verified_composite+multievidence+interaction_runtime+multistep+delegated_credentials+interop_security PASS.
+SEMANTIC_SAFETY: C01/C02/C04 PASS; C03/C05 FAIL FALSE_GROUNDED — `_subgoal_is_composition_auxiliary` at eligibility can discard tracked material obligations when LLM labels analyze/compare; tests xfail(strict) pending rework. NO auto-fix.
+RC_A_VERDICT=FAIL. RC_B/RC_C OPEN. REF05 NOT_PASS. REF/G=NOT_PASS. FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
+NEXT=bounded rework: persist material obligation class (do not re-promote material→auxiliary on eligibility reclass); then restore governed homologation for B01 live.

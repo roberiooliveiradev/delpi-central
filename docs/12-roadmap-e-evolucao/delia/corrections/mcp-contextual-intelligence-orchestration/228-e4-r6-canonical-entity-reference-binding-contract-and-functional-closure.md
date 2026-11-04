@@ -445,3 +445,59 @@ In `_investigate_subobjectives` (comparison fan-in):
 ### Gates
 
 `REF01–REF08/G04/G05/G07/G12=NOT_PASS`. `RC_A_STATUS=IMPLEMENTED` (unit/integration). `RC_B/RC_C/REF05` unchanged open. `FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO`.
+
+## 18. RC-A governed homologation + semantic safety (2026-11-04)
+
+**TASK_ID:** `DELIA-C3-E4-R6-RCA-GOVERNED-HOMOLOGATION-AND-SEMANTIC-SAFETY-01`.
+**REFERENCE_SHA / CODE_UNDER_TEST:** `151d5b8701`.
+**PRODUCTION_DEPLOY:** NOT_AUTHORIZED.
+
+### Environment baseline
+
+| Check | Result |
+|---|---|
+| Local `127.0.0.1:8000` | DOWN |
+| Local Docker daemon (`/var/run/docker.sock`) | ABSENT / not running |
+| srv-api `192.168.1.237` SSH | Network unreachable from executor WSL |
+| Restore governed stack | BLOCKED (no authorized procedure completed this window) |
+| E2E B01–B03 | `TEST_NOT_RUN` / `INCONCLUSIVE` |
+| Model live Qwen3:4b | `TEST_NOT_RUN` |
+
+### Synthetic regression (executor)
+
+- `test_e4_r6_rca_composition_eligibility.py` PASS
+- `test_e4_r6_composite_root_cause_diagnostics.py` PASS
+- verified_composite / multievidence / interaction_runtime / multistep / delegated_credentials / specialist_interop_security PASS
+
+### Semantic safety (synthetic adversarial) — **FAIL finding**
+
+Suite: `tests/test_e4_r6_rca_semantic_safety_homologation.py`
+
+| Case | Result | Notes |
+|---|---|---|
+| C01 true auxiliary | PASS | analyze/compare leftovers + 2 sources → compose |
+| C02 true material third | PASS | incomplete material → reject + `comparison_material_obligation_incomplete` |
+| C03 material reclass→analyze | **FAIL / FALSE_GROUNDED** | eligibility `_subgoal_is_composition_auxiliary` trusts later `analyze` and discards tracked material obligation; `VerifiedCompositeEvidence` emitted |
+| C04 classifier exception | PASS | fail-closed |
+| C05 analyze + external spec | **FAIL / FALSE_GROUNDED** | `goal_class=analyze` alone drops external-spec obligation |
+
+**CAUSE:** `orchestration.py` → `_investigate_subobjectives` eligibility loop → `_subgoal_is_composition_auxiliary` → continue (skip material check).
+**REPRODUCTION:** `test_c03_material_reclassified_analyze_must_not_ground`, `test_c05_analyze_phrasing_with_external_spec_dependency_blocks` (recorded as `xfail(strict=True)` pending rework; do not delete).
+**SECURITY_IMPACT:** LLM classification can authorize ignoring a tracked material evidence obligation and still produce verified composite grounding.
+**REWORK_REQUIRED:** YES — coordination-bounded; **no auto-fix in this task**.
+
+### Verdict
+
+```text
+RC_A_VERDICT=FAIL
+RC_A_RUNTIME_STATUS=BLOCKED_ENV / TEST_NOT_RUN
+RC_A_SEMANTIC_SAFETY=FAIL
+RC_A_GENERALIZATION=INCONCLUSIVE (no live model A/B)
+FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO
+RC_B_STATUS=OPEN
+RC_C_STATUS=OPEN
+REF05_STATUS=NOT_PASS
+REF01–REF08/G04/G05/G07/G12=NOT_PASS
+```
+
+Cardinality decoupling under *consistent* labels remains useful but **cannot be homologated as safe** until auxiliary classification cannot discard material obligations (e.g. persist acquisition-time obligation class; never re-promote material→auxiliary at eligibility without stronger contract).
