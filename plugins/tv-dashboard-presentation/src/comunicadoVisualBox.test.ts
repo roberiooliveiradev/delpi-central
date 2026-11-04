@@ -286,4 +286,18 @@ describe("cor explícita de texto — TV-TEXT-COLOR-EXPLICIT-PAINT-FIX", () => {
     expect(blockCssStyle(block).color).toBe("#ffffff");
     expect(comunicadoTextInnerStyle(block).color).toBe("#ffffff");
   });
+
+  it("colorPaint solid vence style.color divergente — paridade ribbon↔render (caso Meta PPM)", () => {
+    /* Produção: ribbon lia colorPaint=#000000; canvas pintava style.color=#ffffff. */
+    const block = createBlock("text", "Meta: 1.400 PPM");
+    block.style = {
+      ...block.style,
+      color: "#ffffff",
+      colorPaint: { kind: "solid", color: "#000000" },
+      fontSize: 28,
+    };
+    expect(resolveVisualBoxContentLayoutStyle(block).color).toBe("#000000");
+    expect(blockCssStyle(block).color).toBe("#000000");
+    expect(comunicadoTextInnerStyle(block).color).toBe("#000000");
+  });
 });

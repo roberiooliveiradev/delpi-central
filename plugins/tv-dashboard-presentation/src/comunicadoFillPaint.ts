@@ -3,6 +3,7 @@ import { createElement } from "react";
 
 import {
   fillToCssBackground,
+  isAutomaticTextColor,
   normalizeFillAngle,
   normalizeGradientStops,
   solidFromFill,
@@ -113,10 +114,28 @@ export function applyFillPaintBackground(
   if (color && color !== "transparent") css.backgroundColor = color;
 }
 
+/**
+ * Aplica `style.colorPaint` ao CSS de texto.
+ *
+ * - `solid`: escolha explícita do seletor — mesma autoridade de
+ *   `resolveComunicadoIconColor` (vence `style.color` legado divergente).
+ * - `gradient`: clip de texto via background-image.
+ * - `none` / ausente / `auto`: não aplica; o caller resolve `style.color`.
+ */
 export function applyColorPaintToCss(
   css: CSSProperties,
   paint: DelpiFill | undefined,
 ): boolean {
+  if (paint?.kind === "solid") {
+    const color = typeof paint.color === "string" ? paint.color.trim() : "";
+    if (!color || isAutomaticTextColor(color)) return false;
+    delete css.backgroundImage;
+    delete css.backgroundClip;
+    delete css.WebkitBackgroundClip;
+    delete css.WebkitTextFillColor;
+    css.color = color;
+    return true;
+  }
   if (paint?.kind !== "gradient") return false;
   css.backgroundImage = fillToCssBackground(paint);
   css.backgroundClip = "text";

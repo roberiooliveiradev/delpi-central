@@ -66,4 +66,37 @@ describe("comunicadoFillPaint", () => {
     expect(box.backgroundImage).toEqual(expect.stringContaining("linear-gradient"));
     expect(box.backgroundColor).toBe("transparent");
   });
+
+  it("colorPaint solid explícito pinta o texto e vence style.color divergente", () => {
+    const text: Record<string, unknown> = { color: "#ffffff" };
+    expect(
+      applyColorPaintToCss(text, { kind: "solid", color: "#000000" }),
+    ).toBe(true);
+    expect(text.color).toBe("#000000");
+    expect(text.backgroundClip).toBeUndefined();
+  });
+
+  it("colorPaint solid branco explícito não é tratado como ausência", () => {
+    const text: Record<string, unknown> = { color: "#000000" };
+    expect(
+      applyColorPaintToCss(text, { kind: "solid", color: "#ffffff" }),
+    ).toBe(true);
+    expect(text.color).toBe("#ffffff");
+  });
+
+  it("colorPaint auto/none/ausente não aplica — caller usa style.color", () => {
+    const autoCss: Record<string, unknown> = { color: "#ffffff" };
+    expect(applyColorPaintToCss(autoCss, { kind: "solid", color: "auto" })).toBe(
+      false,
+    );
+    expect(autoCss.color).toBe("#ffffff");
+
+    const noneCss: Record<string, unknown> = { color: "#089bdb" };
+    expect(applyColorPaintToCss(noneCss, { kind: "none" })).toBe(false);
+    expect(noneCss.color).toBe("#089bdb");
+
+    const missing: Record<string, unknown> = { color: "#089bdb" };
+    expect(applyColorPaintToCss(missing, undefined)).toBe(false);
+    expect(missing.color).toBe("#089bdb");
+  });
 });
