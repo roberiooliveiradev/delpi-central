@@ -38,8 +38,15 @@ export type KpiMetricProjection = {
   decimalPlaces?: number;
   colorRules?: DelpiKpiColorRule[];
   visible?: boolean;
-  /** Meta por métrica (multi-KPI). */
+  /** Meta literal por métrica (multi-KPI). Ausência ≠ 0. */
   target?: number;
+  /**
+   * Meta dinâmica do mesmo DataModel (espelho de `chartProjection.goalField`).
+   * Precedência na resolução: `targetField` → `target` literal → sem meta.
+   */
+  targetField?: string;
+  /** Agregação da coluna de meta. Default `first`. */
+  targetAggregation?: ViewAggregation;
   comparisonMode?: "none" | "target" | "previous";
   higherIsBetter?: boolean;
 };
@@ -187,6 +194,25 @@ export function normalizeKpiProjection(raw: unknown): KpiViewProjection | undefi
       }
       if (typeof (item as KpiMetricProjection).visible === "boolean") {
         metric.visible = (item as KpiMetricProjection).visible;
+      }
+      const target = (item as KpiMetricProjection).target;
+      if (typeof target === "number" && Number.isFinite(target)) {
+        metric.target = target;
+      }
+      const targetField = String((item as KpiMetricProjection).targetField ?? "").trim();
+      if (targetField) metric.targetField = targetField;
+      const targetAgg = (item as KpiMetricProjection).targetAggregation;
+      if (targetAgg) metric.targetAggregation = targetAgg;
+      const comparisonMode = (item as KpiMetricProjection).comparisonMode;
+      if (
+        comparisonMode === "none" ||
+        comparisonMode === "target" ||
+        comparisonMode === "previous"
+      ) {
+        metric.comparisonMode = comparisonMode;
+      }
+      if (typeof (item as KpiMetricProjection).higherIsBetter === "boolean") {
+        metric.higherIsBetter = (item as KpiMetricProjection).higherIsBetter;
       }
       return metric;
     })

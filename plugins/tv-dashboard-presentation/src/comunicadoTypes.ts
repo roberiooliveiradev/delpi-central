@@ -822,6 +822,19 @@ export type ComunicadoDataResolved = {
     showComparison?: boolean;
     showProgress?: boolean;
     showSparkline?: boolean;
+    /** Meta efetiva resolvida (literal ou targetField). */
+    targetValue?: number | null;
+    /** Título dinâmico materializado (titleField). */
+    titleDisplay?: string | null;
+    /** Subtítulo dinâmico materializado (subtitleField). */
+    subtitleDisplay?: string | null;
+    /**
+     * colorRules com limiares já resolvidos (compareField → número).
+     * Paint usa isto quando presente (FE-BE-002).
+     */
+    resolvedColorRules?: import("@delpi/plugin-ui").DelpiKpiColorRule[] | null;
+    /** Diagnósticos tipados de resolução (campo ausente, tipo inválido). */
+    bindingDiagnostics?: Array<{ code: string; message: string; field?: string }>;
   };
   /** G25 — pin CT com % formatada no enrich. */
   efficiencyPinPresentation?: {

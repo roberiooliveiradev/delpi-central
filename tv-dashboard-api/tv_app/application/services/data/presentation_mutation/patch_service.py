@@ -463,7 +463,12 @@ _TEXT_PROJECTION_PRESENTATION_KEYS = frozenset({
     "label",
 })
 
-_KPI_METRIC_DATA_KEYS = frozenset({"field", "aggregation"})
+_KPI_METRIC_DATA_KEYS = frozenset({
+    "field",
+    "aggregation",
+    "targetField",
+    "targetAggregation",
+})
 _KPI_METRIC_PRESENTATION_KEYS = frozenset({
     "label",
     "format",

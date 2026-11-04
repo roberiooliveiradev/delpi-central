@@ -150,8 +150,17 @@ export type DelpiKpiColorRuleOp = "gt" | "gte" | "lt" | "lte" | "eq" | "between"
 
 export type DelpiKpiColorRule = {
   op: DelpiKpiColorRuleOp;
+  /**
+   * Limiar literal. Quando `compareField` está setado na configuração de authoring,
+   * o enrich materializa o número em `kpiPresentation.resolvedColorRules` e o paint
+   * usa apenas o limiar resolvido (FE-BE-002).
+   */
   value: number;
   valueTo?: number;
+  /** Campo do DataModel a comparar (authoring). */
+  compareField?: string;
+  /** Agregação de `compareField`. Default `first`. */
+  compareAggregation?: "first" | "sum" | "avg" | "min" | "max" | "count" | "list";
   tone?: MetricKpiCardTone;
   valueColor?: string;
   backgroundColor?: string;

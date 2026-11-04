@@ -29,8 +29,19 @@ export type ComunicadoKpiOptions = {
    */
   decimalPlaces?: number;
   colorRules?: DelpiKpiColorRule[];
-  /** Meta numérica para comparação / barra de progresso. */
+  /** Meta numérica literal para comparação / barra de progresso. Ausência ≠ 0. */
   target?: number;
+  /**
+   * Meta dinâmica (campo do DataModel ligado). Vence `target` literal quando
+   * resolvido no enrich (`DisplayFormatService`).
+   */
+  targetField?: string;
+  /** Agregação de `targetField`. Default `first`. */
+  targetAggregation?: import("./fieldValueProjection").ViewAggregation;
+  /** Título a partir de campo do modelo (enrich → titleDisplay). */
+  titleField?: string;
+  /** Subtítulo a partir de campo do modelo (enrich → subtitleDisplay). */
+  subtitleField?: string;
   /** Comparação: meta, período anterior (série) ou desligada. */
   comparisonMode?: "none" | "target" | "previous";
   /** Direção semântica do delta (↑ bom vs ↓ bom). Default: true. */
