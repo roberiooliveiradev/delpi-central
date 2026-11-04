@@ -7293,6 +7293,7 @@ class OperationalCapabilityOrchestrator:
                 len(sources) != 2
                 or len(completed) != 2
                 or len(tracker.objectives) != 2
+                or any(obj.state != SUBOBJECTIVE_COMPLETED for obj in tracker.objectives)
                 or any(lim.startswith("comparison_") for lim in limitations)
             ):
                 limitations.append(
