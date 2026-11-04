@@ -111,6 +111,9 @@ def _is_resource_error(exc: Exception) -> bool:
             "image_too_large",
             "image_pixels_limit",
             "resource",
+            # PaddleOCR encapsula OOM de predição em RuntimeError —
+            # retry (faixas/menor dpi) é limitado e fail-closed.
+            "runtimeerror",
         )
     )
 _TOKEN_SAMPLE_LIMIT = 200

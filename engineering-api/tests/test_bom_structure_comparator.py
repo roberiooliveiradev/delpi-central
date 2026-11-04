@@ -480,9 +480,10 @@ def test_quantities_never_compared_without_rule():
 
 
 def test_row_anchor_verifies_child_parent():
-    """Código na mesma linha que UMA âncora PI/PA → pai verificado por
-    evidência de linha (layout de duas colunas). Se a BOM discorda,
-    a divergência é candidata com evidência real."""
+    """Código na mesma linha que UMA âncora PI/PA → associação por
+    evidência de linha usada no matching, mas linha extraída pode
+    fundir linhas visuais — divergência de relação registrada como
+    unverified, não finding (INV-02/03)."""
     table = _table([_group_row("50000001", "10400040", 10)])
     bom = _bom(
         ("50000001", PRODUCT, 1),
@@ -495,12 +496,32 @@ def test_row_anchor_verifies_child_parent():
         component_table=table,
         tokens=_tokens("10400040"),
     )
+    assert all(
+        f["type"] != "PARENT_RELATION_MISMATCH" for f in out["findings"]
+    )
+    assert any("10400040" in l for l in out["limitations"])
+    assert out["coverage"]["unverified_parent_occurrences"] == 0
+
+
+def test_set_anchor_root_item_flags_real_mismatch():
+    """Código tipado como item raiz (set_anchor) mas nested na BOM →
+    candidato PARENT_RELATION_MISMATCH com evidência de coluna."""
+    table = _table([_row("50090001", 10)])
+    bom = _bom(
+        ("90350410", PRODUCT, 1),
+        ("50090001", "90350410", 2),
+    )
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=table,
+        tokens=_tokens("50090001"),
+    )
     mismatch = [
         f for f in out["findings"]
         if f["type"] == "PARENT_RELATION_MISMATCH"
     ]
-    assert mismatch and mismatch[0]["item_code"] == "10400040"
-    assert mismatch[0]["confidence"] == "row_associated"
+    assert mismatch and mismatch[0]["item_code"] == "50090001"
 
 
 def test_multi_anchor_row_keeps_association_ambiguous():

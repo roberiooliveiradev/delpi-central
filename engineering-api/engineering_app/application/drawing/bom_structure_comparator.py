@@ -357,7 +357,7 @@ def compare_bom_to_drawing(
         # Pai inferido por agrupamento registra-se como relação não
         # verificada — nunca promovido a divergência comprovada.
         if (
-            occ.get("parent_source") == "pi_group_inference"
+            occ.get("parent_source") in ("pi_group_inference", "row_group")
             and chosen.get("parent_code") != occ["parent_code"]
             and not same_parent
             and all(
@@ -368,9 +368,13 @@ def compare_bom_to_drawing(
             unverified_relations.append(
                 f"{code}@drawing:{occ['parent_code']}≠bom:{chosen.get('parent_code')}"
             )
+        # Só set_anchor (código tipado como item de nível raiz na
+        # coluna de conjuntos) é elegível — row_group usa a linha
+        # extraída, que pode fundir linhas visuais de grupos distintos;
+        # esses casos viram unverified_relations, nunca finding.
         if (
             occ["parent_verified"]
-            and occ.get("parent_source") != "pi_group_inference"
+            and occ.get("parent_source") == "set_anchor"
             and chosen.get("parent_code") != occ["parent_code"]
             and occ["parent_code"] not in drawing_only_parents
             and not same_parent
