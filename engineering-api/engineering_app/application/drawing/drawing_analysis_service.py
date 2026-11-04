@@ -465,6 +465,55 @@ async def analyze_product_drawing(
     from engineering_app.application.drawing.bom_structure_comparator import (  # noqa: E501
         compare_bom_to_drawing,
     )
+    # DEC-VAL-033 evolução — recuperação genérica de células de tabela
+    # densa perdidas pelo OCR de página: re-OCR localizado das regiões
+    # de tabela (crop vetorial em DPI alto) procura os códigos da BOM
+    # sem evidência — presença recuperada entra como token com
+    # proveniência `localized_ocr_recheck` (conta presença, nunca
+    # fabrica relação). Código esperado nunca é evidência por si só.
+    if progressive and drawing_tokens is not None and bom_items:
+        from engineering_app.application.drawing.bom_structure_comparator import (  # noqa: E501
+            _token_code_set,
+        )
+        from engineering_app.application.drawing.drawing_investigation import (  # noqa: E501
+            recover_absent_table_cells,
+        )
+        from engineering_app.domain.drawing.object_profiles import (
+            is_component_code,
+        )
+
+        _ct = (understanding or {}).get("component_table") or {}
+        _cell_codes = {
+            str(c.get("text") or "").strip()
+            for r in _ct.get("rows") or []
+            for c in r.get("cells") or []
+            if is_component_code(c.get("text"))
+        }
+        _visible = _cell_codes | _token_code_set(drawing_tokens)
+        _missing = [
+            str(it.get("component_code") or "").strip()
+            for it in bom_items
+            if str(it.get("component_code") or "").strip()
+            and str(it.get("component_code") or "").strip()
+            not in _visible
+        ]
+        if _missing:
+            _recovered = recover_absent_table_cells(
+                missing_codes=_missing,
+                component_table=_ct,
+                opts=progressive,
+            )
+            for _rc in _recovered:
+                drawing_tokens.append(
+                    {
+                        "normalized_text": _rc["code"],
+                        "raw_text": _rc["observed_raw_value"],
+                        "page": _rc["page"],
+                        "confidence": _rc["confidence"],
+                        "bounding_box_px": _rc["box"],
+                        "provenance": "localized_ocr_recheck",
+                    }
+                )
     bom_structure_comparison = compare_bom_to_drawing(
         product_code=official_code,
         bom_occurrences=(

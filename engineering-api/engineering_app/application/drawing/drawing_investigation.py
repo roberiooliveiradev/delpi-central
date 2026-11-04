@@ -1197,3 +1197,98 @@ def execute_investigations(
         "not_official": True,
         "human_review_required": True,
     }
+
+
+def recover_absent_table_cells(
+    *,
+    missing_codes: list[str],
+    component_table: dict | None,
+    opts: dict,
+) -> list[dict]:
+    """DEC-VAL-033 evolução — recuperação genérica de células de
+    tabela densa perdidas pelo OCR de página inteira.
+
+    Re-renderiza (crop nativo vetorial, DPI máximo do budget) cada
+    região de tabela de componentes UMA vez e procura TODOS os códigos
+    ausentes — 1 crop por região cobre N códigos. Orçamento compartilhado
+    com `_targeted_recheck` via ``opts["state"]["crops"]``.
+
+    Retorna ocorrências ``{code, page, confidence, box, method}`` —
+    presença com proveniência ``localized_ocr_recheck``; nunca inventa
+    célula e nunca usa o código esperado como evidência (só conta
+    quando o token OCR coincide com o código ou similaridade ≥0.85).
+    """
+    rows = (component_table or {}).get("rows") or []
+    renderer = opts.get("renderer")
+    ocr = opts.get("ocr")
+    pdf_bytes = opts.get("pdf_bytes")
+    if not rows or not renderer or not ocr or not pdf_bytes:
+        return []
+    regions: dict[int, list[float]] = {}
+    for row in rows:
+        page = int(row.get("page") or 1)
+        for cell in row.get("cells") or []:
+            box = cell.get("bounding_box_px") or []
+            if len(box) < 4:
+                continue
+            cur = regions.setdefault(page, list(box[:4]))
+            cur[0] = min(cur[0], float(box[0]))
+            cur[1] = min(cur[1], float(box[1]))
+            cur[2] = max(cur[2], float(box[2]))
+            cur[3] = max(cur[3], float(box[3]))
+    if not regions:
+        return []
+    budget = opts.get("budget") or {}
+    state = opts.setdefault("state", {"crops": 0})
+    ref_dpi = int(opts.get("reference_dpi") or 150)
+    dpi = min(int(budget.get("max_dpi", 300)), 300)
+    max_px = int(budget.get("max_pixels", 4_000_000))
+    max_crops = int(budget.get("max_crops", 8))
+    remaining = {str(c) for c in missing_codes if c}
+    found: list[dict] = []
+    for page in sorted(regions):
+        if not remaining or state["crops"] >= max_crops:
+            break
+        region = renderer.render_region(
+            pdf_bytes,
+            page=page,
+            region_px=regions[page],
+            reference_dpi=ref_dpi,
+            dpi=dpi,
+            margin_px=8,
+        )
+        if region.width * region.height > max_px:
+            continue
+        state["crops"] += 1
+        try:
+            res = ocr.extract_text(region.image_bytes)
+        except Exception:
+            continue
+        page_tokens = [
+            (str(getattr(t, "text", "") or "").strip(),
+             float(getattr(t, "confidence", 0.0) or 0.0),
+             getattr(t, "bounding_box_px", None))
+            for t in (getattr(res, "tokens", None) or [])
+        ]
+        for code in sorted(remaining):
+            hit = next(
+                (
+                    (txt, conf, box)
+                    for txt, conf, box in page_tokens
+                    if txt == code or _similarity(code, txt) >= 0.85
+                ),
+                None,
+            )
+            if hit:
+                found.append(
+                    {
+                        "code": code,
+                        "page": page,
+                        "confidence": hit[1],
+                        "box": hit[2],
+                        "observed_raw_value": hit[0],
+                        "method": "localized_ocr_recheck",
+                    }
+                )
+        remaining -= {f["code"] for f in found}
+    return found
