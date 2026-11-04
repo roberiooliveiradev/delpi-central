@@ -5202,3 +5202,14 @@ retornam colecoes vazias ou decompose vazio (fallback honesto
 owner_path_unbound/NON_GROUNDED). Nao e mais defeito de boundary
 (auth paralela provada) nem de latencia bruta — e confiabilidade
 de proposta do modelo pequeno sobre referentes de contexto.
+
+
+## E4-R3 — coordination semantic reliability and grounded outcome review (2026-11-03)
+
+TASK=DELIA-C3-E4-R3-SEMANTIC-RELIABILITY-AND-OUTCOME-CLOSURE-01.
+SOURCE_SHA=61087a87e5. PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/225-e4-r3-semantic-reliability-and-end-to-end-outcome-closure.md.
+VERDICT=REWORK; SECURITY_SEC01=PASS_REPORTED_WITH_REVOCATION_RESIDUAL; PARALLEL_SUBOBJECTIVES=IMPLEMENTED; CLIENT_HTTP200=PASS_SOME_RUNS (117.8s/59.4s); GROUNDED_COMPARISON_RELIABILITY=NOT_PROVEN; G04/G05/G07/G12 NOT PASS.
+COORDINATION_REVIEW=main verified; _investigate_subobjectives uses ThreadPoolExecutor/contextvars.copy_context to run shared owner path concurrently, source count sources=3 alone does not prove requested target identity coverage; validate shared state/thread safety, Core/Domain AuthZ and effective cancellation. Variable decompose/owner_path_unbound results observed but Qwen3 intrinsic incapacity causal attribution INCONCLUSIVE without exact-stage matched A/B.
+DECISION=NO automatic model size upgrade, no blanket retry inflation, no nginx timeout-only fix. First paired tests on identical stage/schema/context, then minimal generalized correction for typed targets, redundant semantic subgoals and reliability through existing InvokeModel/Pydantic AI/LangGraph, exact target coverage, verified deterministic evidence. Larger local model benchmark CONDITIONAL on proven 4B stage inadequacy, availability and approved model. No second planner/provider/owner.
+REUSE_GATE=EXISTING_EQUIVALENT YES/PARTIAL existing model/graph/Evidence; REUSE_DECISION REUSE/EXTEND or REMOVE redundant implementation after consumer/safety proof.
+NEXT=execute doc225 full E4-R3 with repeated real local Qwen3+Keycloak+Core+DAVI/Domain, two target trees, same-session and single-turn, client delivery before gateway, security and concurrency tests on final SHA. STATUS_REWORK; PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE; TESTS_BY_COORDINATION=TEST_NOT_RUN.
