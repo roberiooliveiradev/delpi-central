@@ -1,0 +1,151 @@
+{
+  "schema": "product_guide_v1",
+  "id": "kpi",
+  "title": "KPI — variantes, partes e comparações",
+  "summary": "Guia de uso de kpi_view: variantes hero/scorecard/compact/standard, partes configuráveis, fontes oficiais, comparação com meta, status e progresso; os schemas e cálculos pertencem aos contratos vivos.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Orientar a VISTA a descobrir, configurar e verificar KPIs existentes sem duplicar schema, regras de domínio ou renderer.",
+  "use_when": [
+    "O usuário pede criar, editar, otimizar ou explicar um KPI",
+    "É necessário escolher entre hero, scorecard, compact e standard",
+    "É necessário configurar comparação, meta, status, barra de progresso, hint ou ícone",
+    "O usuário relata recurso habilitado mas ausente na apresentação"
+  ],
+  "do_not_use_when": [
+    "A questão pede cálculo de domínio ou autorização: usar o backend TV canônico",
+    "É necessário conhecer campos/tipos válidos para escrita: consultar o catálogo vivo de operações e o schema no HEAD",
+    "Há pedido de mudar fontes oficiais sem confirmar DataModel/rota e escopo",
+    "A verificação é somente um layout digest: usar visual_verification, sem alegar pixel"
+  ],
+  "how_to_use": [
+    "READ estado atual da playlist e bloco selecionado; verificar dataSourceId/modelId e kpiProjection, confirmar origem e permissões antes de propor edições.",
+    "Selecionar variante por papel: hero para métrica principal; scorecard para meta/referência; compact para grade densa; standard para valor com contexto/progresso. Conferir enum e defaults no contrato vivo.",
+    "Configurar title, value, icon, comparison, hint, progress e sparkline usando kpiParts e kpiOptions somente se os campos existirem no contrato atual; evitar inventar aliases.",
+    "Usar kpiProjection e displayValueFormat para exibir porcentagem/unidade no valor; não codificar formatação semântica em texto livre.",
+    "Para comparação com meta, confirmar target, comparisonMode=target, higherIsBetter e showComparison; statusLabel, comparisonDisplay e progressPct são materializados pelo backend quando as condições aplicáveis forem atendidas.",
+    "Comparação em p.p. é diferença entre métricas percentuais comparáveis; não confundir diferença em pontos percentuais com diferença relativa nem target cadastrado com comparable_goal do período.",
+    "ProgressPct é dado semântico do backend; a barra visual pode ter clamp, sem alterar ou inventar o valor. Sem meta/valor válido, não inventar progresso.",
+    "Preservar explicitamente typographyMode=fixed, iconSizeMode=fixed, estilos/frames manuais e parts ocultas; não sobrescrever intenção do autor por fallback automático.",
+    "Executar mutation apenas por operações tipadas do catálogo, usando READ → PREPARE → CONFIRM quando exigido → COMMIT → READ-BACK → VERIFY; catalog informa, backend autoriza.",
+    "Verificar em sequência: configuração persistida → payload enriquecido kpiPresentation → renderer compartilhado → DOM/CSS → screenshot editor_live revision-bound. Estado de persistência e layout gate não comprovam pixel.",
+    "Se statusLabel não aparecer, investigar gates do backend, payload, composição do renderer, conteúdo manual da part, CSS e versão do bundle; não resolver com status hardcoded no frontend.",
+    "Reutilizar motor compartilhado editor/preview/TV e DelpiKpiCard; não criar shape, segunda barra ou formatter paralelo para simular recurso ausente."
+  ],
+  "field_guidance": [
+    {
+      "field": "kpiOptions.variant",
+      "guidance": "Papel visual do KPI; selecionar a variante conforme contexto. Validar valores aceitos no schema/código atual.",
+      "contract_ref": "upsert_block"
+    },
+    {
+      "field": "kpiOptions.comparisonMode",
+      "guidance": "Modo de comparação; target exige referência válida e materialização backend. Não afirmar status sem ler kpiPresentation.",
+      "contract_ref": "upsert_block"
+    },
+    {
+      "field": "kpiOptions.target",
+      "guidance": "Referência cadastrada na apresentação. Distinguir de metas proporcionais e fonte dinâmica; verificar proveniência.",
+      "contract_ref": "upsert_block"
+    },
+    {
+      "field": "kpiOptions.showComparison",
+      "guidance": "Habilita apresentação de comparação, não concede cálculo nem garante statusLabel.",
+      "contract_ref": "upsert_block"
+    },
+    {
+      "field": "kpiOptions.showProgress",
+      "guidance": "Habilita progress part quando houver materialização numérica válida.",
+      "contract_ref": "upsert_block"
+    },
+    {
+      "field": "kpiOptions.iconName",
+      "guidance": "Usar ícone semântico existente e verificar disponibilidade; não presumir todos os nomes.",
+      "contract_ref": "upsert_block"
+    },
+    {
+      "field": "kpiParts",
+      "guidance": "Partes e estilos de título, valor, hint, comparação, ícone, progresso e sparkline; visibilidade e overrides manuais prevalecem conforme contrato.",
+      "contract_ref": "upsert_block"
+    },
+    {
+      "field": "kpiProjection",
+      "guidance": "Ligação de campos da fonte à métrica do KPI; valor exibido vem de dado oficial resolvido.",
+      "contract_ref": "bind_visual"
+    },
+    {
+      "field": "resolved.kpiPresentation",
+      "guidance": "Saída materializada de comparação/status/progresso; não é input de mutation nem source of truth na VISTA."
+    }
+  ],
+  "quality_rules": [
+    "Usar 1 KPI hero quando houver uma métrica principal clara e variantes secundárias conforme densidade; evitar quatro cartões indistinguíveis.",
+    "Meta isolada em scorecard não deve ganhar avaliação positiva/negativa inventada.",
+    "Testar abaixo, igual e acima da meta; em valor percentual reportar delta p.p. apenas quando contrato autorizar.",
+    "Verificar tipografia e contraste por estilos computados e pixel real; viewport vw não é dimensão do card.",
+    "Paridade editor ≡ preview ≡ TV; formatter e renderer únicos; dados e escopo definidos pelo backend.",
+    "Informar com honestidade o nível da evidência: persistido, materializado, DOM, visual ou indisponível."
+  ],
+  "common_mistakes": [
+    "Confundir mutation persistida com recurso exibido no palco.",
+    "Inventar statusLabel em frontend ou texto manual para mascarar ausência do dado enriquecido.",
+    "Assumir que content guide concede autorização de escrita.",
+    "Aplicar comparação com base em meta sem validar data source, período e escopo.",
+    "Sobrescrever typographyMode/iconSizeMode fixed ou partes manualmente ocultas.",
+    "Usar CSS seletor inexistente no DOM ou afirmar PIXEL_PASS apenas pelo asset servido.",
+    "Gerar novo renderer, segundo cálculo ou barra shape em vez de resolver o proprietário canônico."
+  ],
+  "related_topics": [
+    "block_types",
+    "data_bindings",
+    "data_sources",
+    "display_formats",
+    "visual_verification",
+    "slide"
+  ],
+  "capability_refs": [
+    "presentation_change"
+  ],
+  "operation_refs": [
+    "upsert_block",
+    "bind_visual",
+    "upsert_data_source",
+    "patch_data_source_params",
+    "set_display_format"
+  ],
+  "read_refs": [
+    "get_context",
+    "read",
+    "analyze",
+    "knowledge"
+  ],
+  "write_refs": [
+    "execute"
+  ],
+  "source_refs": [
+    {
+      "ref": "plugins/plugin-ui/src/components/layout/DelpiKpiCard.tsx e kpiCardParts (HEAD)",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "plugins/tv-dashboard-presentation/src/resolveKpiPresentation.ts e kpiViewBlockView.tsx (HEAD)",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "tv_app/application/services/data/display_format_service.py (HEAD)",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "tv_app/content/design_intelligence.json componentSpecs (HEAD)",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "tv_app/content/vista_agent_intelligence.json KPI guidance (HEAD)",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "tv_app/content/presentation_ops_content.json operations (HEAD)",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "Para tarefas de KPI, buscar este guia + catálogo vivo antes de editar; inventariar equivalente e autorizar no backend. Após mutação fazer authoritative read-back; renderização e pixel são verificações separadas. Se faltar status/progresso, não afirmar que o guia corrige o renderer: rastrear o payload real e proprietário do erro."
+}
