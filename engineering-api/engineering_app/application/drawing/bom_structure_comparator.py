@@ -424,19 +424,32 @@ def compare_bom_to_drawing(
         }
 
     # Cobertura integral exige tabela confiável E todas as páginas do
-    # documento processadas (RQ-VAL-029): página não lida pode conter
-    # outra tabela de componentes — conclusão parcial nunca é integral.
-    pages_missing = sorted(
-        (page_coverage or {}).get("pages_not_processed") or []
-    ) + sorted(
-        f.get("page")
-        for f in (page_coverage or {}).get("pages_failed") or []
-        if f.get("page") is not None
+    # documento processadas E evidência não truncada (RQ-VAL-029):
+    # página não lida ou tokens descartados por sampling podem conter
+    # outra tabela — conclusão parcial nunca é integral.
+    _pc = page_coverage or {}
+    _total = _pc.get("pdf_page_count") or drawing_pages
+    _attempted = set(_pc.get("pages_attempted") or [])
+    _missing = sorted(
+        p for p in range(1, _total + 1) if p not in _attempted
+    ) if (_pc and _total) else list(
+        _pc.get("pages_not_processed") or []
     )
+    pages_missing = sorted(
+        set(_missing)
+        | set(_pc.get("pages_not_processed") or [])
+        | {
+            f.get("page")
+            for f in _pc.get("pages_failed") or []
+            if f.get("page") is not None
+        }
+    )
+    evidence_truncated = bool(_pc.get("token_sample_truncated"))
     coverage_complete = bool(
         table_meta.get("candidate")
         and not table_meta.get("unreliable_boundary")
         and not pages_missing
+        and not evidence_truncated
     )
 
     # ---------- matching por ocorrência -------------------------------------
@@ -727,6 +740,12 @@ def compare_bom_to_drawing(
             f"OCR efetiva: {pages_missing} — ausência em página não "
             "lida nunca é ausência comprovada."
         )
+    if evidence_truncated:
+        limitations.append(
+            "evidence_truncated: amostra de tokens OCR atingiu o limite "
+            "operacional — parte do documento sem evidência; ausência "
+            "não comprovada."
+        )
 
     # ---------- quantidades — sem contrato de conversão ---------------------
     limitations.append(
@@ -753,6 +772,7 @@ def compare_bom_to_drawing(
         + token_only
         + len(unprovenanced)
         + len(pages_missing)
+        + (1 if evidence_truncated else 0)
         + (0 if coverage_complete else 1)
     )
     if findings:
