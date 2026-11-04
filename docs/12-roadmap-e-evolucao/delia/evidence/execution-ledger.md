@@ -5384,3 +5384,10 @@ a evidencia; refs falsificados produzem leitura autorizada real de
 outra entidade (sem escalonamento/fake). Tests: +5 (bind 2, ambiguous
 3->None, forged dedupe->None, no-compare->None, empty->None) 13 PASS.
 
+
+
+## E4-R6 §9 — review of exact-two candidate binding (2026-11-03)
+
+INPUT_SHA=e1fb2dc330. SAME_TASK=DELIA-C3-E4-R6-CANONICAL-ENTITY-BINDING-AND-FUNCTIONAL-CLOSURE-01. SOURCE=doc228 section9.
+REVIEW=REWORK. Confirmed exactly-two distinct client-carried refs cardinality guard and five new synthetic unit tests. But two distinct forged refs pass candidate selection; the tests do not cover cross-session/actor spoof, actual Domain READ or HTTP roundtrip. SubObjective is still constructed with goal=f'{entity_type} {entity_id}' (text, not typed authoritative read request). The client-provided context entity_refs have no server-issued provenance check; InteractiveTurnResult lacks entity_refs and actual serialize_result/NDJSON not evidenced. Full target-set integrity and client delivered outcome remain NOT_PROVEN.
+NEXT=execute doc228 section9 RED security/transport, minimal legitimate typed capability argument path, exact target-set verifier, final SHA real repeated Qwen3+Keycloak/Core+DAVI/Domain E2E and full regressions; if authenticated cross-request continuity requires new public contract/retention/crypto, STOP only that feature for precise architecture decision; keep stateless candidate+clarification honest. REF01-REF08/G04/G05/G07/G12=NOT_PASS; TESTS_BY_COORDINATION=TEST_NOT_RUN; PRODUCTION_DEPLOY=NOT_AUTHORIZED.
