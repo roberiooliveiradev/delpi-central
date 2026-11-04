@@ -1,0 +1,18 @@
+{
+  "contract_version": "myweg.needs.batch.v1",
+  "reference_label": "homologacao-conhecida",
+  "branch": "02",
+  "myweg_company_code": "1009",
+  "myweg_work_center": "1106",
+  "record_count": 532,
+  "quantidade_original_un_total": "745746",
+  "quantidade_mi_total": "745.746",
+  "un_to_mi_divisor": "1000",
+  "source_artifacts": [
+    "necessidades_tratadas.csv",
+    "necessidades_tratadas.xlsx",
+    "para_conferencia_pcp.csv",
+    "resumo.json"
+  ],
+  "notes": "Totais do corpus homologado no Linux. Fixture sintética em testes reproduz count e totais; linhas individuais não são dump fiel do CSV produtivo."
+}
