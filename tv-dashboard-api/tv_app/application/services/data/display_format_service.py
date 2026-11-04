@@ -2322,8 +2322,11 @@ class DisplayFormatService:
             return dict(options)
         points = cls._sparkline_points_from_resolved(resolved)
         has_series = len(points) >= 2
+        target_field = str(
+            metric_override.get("targetField") or options.get("targetField") or ""
+        ).strip()
         target = metric_override.get("target", options.get("target"))
-        has_target = cls._as_finite_number(target) is not None
+        has_target = bool(target_field) or cls._as_finite_number(target) is not None
         next_opts = dict(options)
         variant = next_opts.get("variant") or "hero"
         next_opts["variant"] = variant
@@ -2379,6 +2382,112 @@ class DisplayFormatService:
         return text
 
     @classmethod
+    def _resolve_kpi_target_number(
+        cls,
+        resolved: dict[str, Any],
+        primary_override: dict[str, Any],
+        options: dict[str, Any],
+        diagnostics: list[dict[str, str]],
+    ) -> float | None:
+        """targetField (DataModel) vence target literal; ausência ≠ 0."""
+        target_field = str(
+            primary_override.get("targetField") or options.get("targetField") or ""
+        ).strip()
+        if target_field:
+            agg = str(
+                primary_override.get("targetAggregation")
+                or options.get("targetAggregation")
+                or "first"
+            )
+            projected = cls.resolve_projected_field(resolved, target_field, agg)
+            if projected.get("kind") == "scalar":
+                target_n = cls._as_finite_number(projected.get("scalar"))
+                if target_n is not None:
+                    return target_n
+            diagnostics.append(
+                {
+                    "code": "kpi_target_field_unresolved",
+                    "message": f"Meta dinâmica não resolvida para o campo '{target_field}'.",
+                    "field": target_field,
+                }
+            )
+            return None
+        return cls._as_finite_number(
+            primary_override.get("target", options.get("target"))
+        )
+
+    @classmethod
+    def _resolve_kpi_text_field(
+        cls,
+        resolved: dict[str, Any],
+        field: str | None,
+        diagnostics: list[dict[str, str]],
+        *,
+        code: str,
+    ) -> str | None:
+        key = str(field or "").strip()
+        if not key:
+            return None
+        projected = cls.resolve_projected_field(resolved, key, "first")
+        if projected.get("kind") == "empty":
+            diagnostics.append(
+                {
+                    "code": code,
+                    "message": f"Campo textual '{key}' não encontrado no DataModel.",
+                    "field": key,
+                }
+            )
+            return None
+        if projected.get("kind") == "scalar":
+            scalar = projected.get("scalar")
+            if scalar is None or scalar == "":
+                return None
+            return str(scalar)
+        values = projected.get("values") if isinstance(projected.get("values"), list) else []
+        if values and values[0] is not None and values[0] != "":
+            return str(values[0])
+        return None
+
+    @classmethod
+    def _resolve_kpi_color_rules(
+        cls,
+        resolved: dict[str, Any],
+        rules: list[Any] | None,
+        diagnostics: list[dict[str, str]],
+    ) -> list[dict[str, Any]] | None:
+        """Materializa compareField → limiar numérico para paint-only."""
+        if not isinstance(rules, list) or not rules:
+            return None
+        out: list[dict[str, Any]] = []
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+            next_rule = dict(rule)
+            compare_field = str(rule.get("compareField") or "").strip()
+            if compare_field:
+                agg = str(rule.get("compareAggregation") or "first")
+                projected = cls.resolve_projected_field(resolved, compare_field, agg)
+                threshold = None
+                if projected.get("kind") == "scalar":
+                    threshold = cls._as_finite_number(projected.get("scalar"))
+                if threshold is None:
+                    diagnostics.append(
+                        {
+                            "code": "kpi_color_compare_field_unresolved",
+                            "message": (
+                                f"Limiar dinâmico não resolvido para '{compare_field}'."
+                            ),
+                            "field": compare_field,
+                        }
+                    )
+                    continue
+                next_rule["value"] = threshold
+                next_rule.pop("compareField", None)
+                next_rule.pop("compareAggregation", None)
+            out.append(next_rule)
+        return out or None
+
+    @classmethod
     def _apply_kpi_presentation(cls, resolved: dict[str, Any], block: dict[str, Any]) -> None:
         """G11/G28 — materialize kpiPresentation for paint-only MFE."""
         options_raw = (
@@ -2402,14 +2511,16 @@ class DisplayFormatService:
             if isinstance(kpi.get("displayValue"), str)
             else EMPTY_DISPLAY
         )
+        diagnostics: list[dict[str, str]] = []
 
         mode = (
             primary_override.get("comparisonMode")
             or options.get("comparisonMode")
             or "none"
         )
-        target = primary_override.get("target", options.get("target"))
-        target_n = cls._as_finite_number(target)
+        target_n = cls._resolve_kpi_target_number(
+            resolved, primary_override, options, diagnostics
+        )
         higher_is_better = primary_override.get(
             "higherIsBetter", options.get("higherIsBetter", True)
         )
@@ -2493,6 +2604,25 @@ class DisplayFormatService:
         if show_progress and numeric is not None and target_n is not None and target_n != 0:
             progress_pct = (numeric / target_n) * 100
 
+        title_display = cls._resolve_kpi_text_field(
+            resolved,
+            options.get("titleField"),
+            diagnostics,
+            code="kpi_title_field_unresolved",
+        )
+        subtitle_display = cls._resolve_kpi_text_field(
+            resolved,
+            options.get("subtitleField"),
+            diagnostics,
+            code="kpi_subtitle_field_unresolved",
+        )
+        authoring_rules = primary_override.get("colorRules")
+        if not isinstance(authoring_rules, list):
+            authoring_rules = options.get("colorRules")
+        resolved_color_rules = cls._resolve_kpi_color_rules(
+            resolved, authoring_rules if isinstance(authoring_rules, list) else None, diagnostics
+        )
+
         presentation: dict[str, Any] = {
             "valueDisplay": value_display,
             "comparisonDisplay": comparison_display,
@@ -2503,6 +2633,11 @@ class DisplayFormatService:
             "showComparison": show_comparison,
             "showProgress": show_progress,
             "showSparkline": options.get("showSparkline") is True,
+            "targetValue": target_n,
+            "titleDisplay": title_display,
+            "subtitleDisplay": subtitle_display,
+            "resolvedColorRules": resolved_color_rules,
+            "bindingDiagnostics": diagnostics or None,
         }
         resolved["kpiPresentation"] = presentation
 
