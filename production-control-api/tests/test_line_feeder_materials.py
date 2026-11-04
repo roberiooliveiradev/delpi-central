@@ -13,13 +13,16 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from production_control_app.application.services.line_feeder_service import LineFeederService
-from production_control_app.domain.errors import HorizonPreviewStale
+from production_control_app.domain.errors import DelpiGatewayError, HorizonPreviewStale
 from production_control_app.domain.services.branch_access_service import BranchAccessService
 from production_control_app.domain.services.line_feeder_materials import (
     CoveredOperationDemand,
     apply_factory_stock,
     build_material_demands,
     proportional_material_qty,
+)
+from production_control_app.domain.services.operation_materials_batch import (
+    validated_operation_materials_batch_items,
 )
 
 FULL_PERMS = (
@@ -438,6 +441,7 @@ class FakeGateway:
         factory_stock: dict[str, float],
         source_stock: dict[str, float] | None = None,
         stock_fail: bool = False,
+        commitments_mode: str = "ok",
     ) -> None:
         self.balances_ops = balances_ops
         self.standard_times = standard_times
@@ -445,7 +449,10 @@ class FakeGateway:
         self.factory_stock = factory_stock
         self.source_stock = source_stock or {}
         self.stock_fail = stock_fail
+        # ok | missing_items | malformed | fail
+        self.commitments_mode = commitments_mode
         self.stock_calls = 0
+        self.commitment_calls = 0
 
     def fetch_machine_load_operation_balances(self, *, branch: str, items: list[dict[str, str]]):
         out = []
@@ -462,15 +469,35 @@ class FakeGateway:
         return self.standard_times[(production_order, operation_code)]
 
     def fetch_operation_materials_batch(self, *, branch: str, production_orders: list[str]):
+        self.commitment_calls += 1
+        if self.commitments_mode == "fail":
+            raise DelpiGatewayError("empenhos offline")
+        if self.commitments_mode == "missing_items":
+            return {
+                "success": True,
+                "data": {
+                    "branch": branch,
+                    "production_orders": list(production_orders),
+                    "summary": {"requested_count": len(production_orders)},
+                },
+            }
+        if self.commitments_mode == "malformed":
+            return "not-a-dict"
         wanted = set(production_orders)
+        items = [
+            row for row in self.commitments if row["production_order"] in wanted
+        ]
         return {
             "success": True,
             "data": {
-                "items": [
-                    row
-                    for row in self.commitments
-                    if row["production_order"] in wanted
-                ]
+                "branch": branch,
+                "production_orders": list(production_orders),
+                "items": items,
+                "summary": {
+                    "requested_count": len(production_orders),
+                    "returned_count": len(items),
+                    "order_count": len({row["production_order"] for row in items}),
+                },
             },
         }
 
@@ -532,6 +559,24 @@ def _op(work_center: str, order: str) -> dict[str, Any]:
     }
 
 
+def _horizon_ready_op(order: str = "OP1") -> dict[str, Any]:
+    return {
+        "published": _payload([_op("CT-A", order)]),
+        "balances_ops": {
+            (order, "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0},
+        },
+        "standard_times": {
+            (order, "01"): {
+                "ideal_cycle_seconds": 60,
+                "setup_seconds": 0,
+                "pieces_conversion_factor": 1,
+                "standard_time_source": "shy_tempad",
+                "data_quality": "complete",
+            },
+        },
+    }
+
+
 def _service(**kwargs: Any) -> LineFeederService:
     pubs = FakePublications()
     pubs.put("01", kwargs["published"])
@@ -542,6 +587,7 @@ def _service(**kwargs: Any) -> LineFeederService:
         factory_stock=kwargs["factory_stock"],
         source_stock=kwargs.get("source_stock") or {},
         stock_fail=kwargs.get("stock_fail", False),
+        commitments_mode=kwargs.get("commitments_mode", "ok"),
     )
     from production_control_app.application.services.line_feeder_service import (
         _RequirementsCache,
@@ -786,3 +832,154 @@ def test_rbac_denied() -> None:
             work_centers=["CT-A"],
             hours_per_work_center=1,
         )
+
+
+# --------------------------------------------------------------------------- #
+# Rework E3 — ausência legítima × falha de integração
+# --------------------------------------------------------------------------- #
+
+
+def test_validated_empty_items_is_legitimate_absence() -> None:
+    items = validated_operation_materials_batch_items(
+        {
+            "success": True,
+            "data": {
+                "branch": "01",
+                "production_orders": ["OP1"],
+                "items": [],
+                "summary": {
+                    "requested_count": 1,
+                    "returned_count": 0,
+                    "order_count": 0,
+                },
+            },
+        },
+        branch="01",
+        requested=["OP1"],
+    )
+    assert items == []
+
+
+def test_validated_missing_items_key_is_invalid() -> None:
+    assert (
+        validated_operation_materials_batch_items(
+            {
+                "success": True,
+                "data": {
+                    "branch": "01",
+                    "production_orders": ["OP1"],
+                    "summary": {"requested_count": 1},
+                },
+            },
+            branch="01",
+            requested=["OP1"],
+        )
+        is None
+    )
+
+
+def test_validated_malformed_payload_is_invalid() -> None:
+    assert (
+        validated_operation_materials_batch_items(
+            "broken", branch="01", requested=["OP1"]
+        )
+        is None
+    )
+
+
+def test_service_legitimate_no_commitments_is_safe() -> None:
+    """Cenário A: consulta íntegra sem SD4 ativo — lista segura, sem MP inventada."""
+    base = _horizon_ready_op("OP1")
+    service = _service(
+        **base,
+        commitments=[],
+        factory_stock={},
+    )
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=1,
+    )
+    assert data["operational_list_safe"] is True
+    assert data["preview_completeness"] == "complete"
+    assert data["materials"] == []
+    assert "commitments_incomplete" not in data["stop_reasons"]
+    assert any(w["code"] == "no_commitments" for w in data["demand_warnings"])
+
+
+def test_service_missing_items_not_treated_as_absence() -> None:
+    """Cenário B: sem items[] obrigatório — não é ausência legítima."""
+    base = _horizon_ready_op("OP1")
+    service = _service(
+        **base,
+        commitments=[],
+        factory_stock={},
+        commitments_mode="missing_items",
+    )
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=1,
+    )
+    assert data["operational_list_safe"] is False
+    assert "commitments_incomplete" in data["stop_reasons"]
+    assert any(
+        w["code"] == "commitments_response_invalid" for w in data["demand_warnings"]
+    )
+
+
+def test_service_malformed_commitments_not_safe() -> None:
+    base = _horizon_ready_op("OP1")
+    service = _service(
+        **base,
+        commitments=[],
+        factory_stock={},
+        commitments_mode="malformed",
+    )
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=1,
+    )
+    assert data["operational_list_safe"] is False
+    assert "commitments_incomplete" in data["stop_reasons"]
+
+
+def test_service_commitments_batch_failure_raises() -> None:
+    """Falha de integração em lote — erro controlado, não lista completa falsa."""
+    base = _horizon_ready_op("OP1")
+    service = _service(
+        **base,
+        commitments=[],
+        factory_stock={},
+        commitments_mode="fail",
+    )
+    with pytest.raises(DelpiGatewayError):
+        service.preview_materials(
+            _user(*FULL_PERMS),
+            branch="01",
+            work_centers=["CT-A"],
+            hours_per_work_center=1,
+        )
+
+
+def test_domain_no_commitments_warning_keeps_proportional_ok() -> None:
+    ops = [
+        CoveredOperationDemand(
+            work_center="CT-A",
+            work_center_name="A",
+            production_order="OP1",
+            operation_code="01",
+            operation_id="x",
+            sequence_position=1,
+            covered_qty=Decimal("10"),
+            pending_qty=Decimal("10"),
+        )
+    ]
+    buckets, warnings, ok = build_material_demands(ops, {})
+    assert ok is True
+    assert buckets == []
+    assert warnings[0]["code"] == "no_commitments"

@@ -62,6 +62,9 @@ from production_control_app.domain.services.line_feeder_materials import (
     build_material_demands,
     summarize_materials,
 )
+from production_control_app.domain.services.operation_materials_batch import (
+    validated_operation_materials_batch_items,
+)
 from production_control_app.domain.services.line_feeder_published_queue import (
     list_visible_published_queues,
     project_published_queue,
@@ -495,14 +498,26 @@ class LineFeederService:
                 f"({ceiling}). Reduza o horizonte ou a seleção de postos."
             )
 
-        commitments = (
-            self._fetch_commitments(branch=code, production_orders=orders)
-            if orders
-            else {}
-        )
+        commitments: dict[tuple[str, str], list[dict[str, Any]]] = {}
+        commitments_ok = True
+        if orders:
+            commitments, commitments_ok = self._fetch_commitments_for_materials(
+                branch=code, production_orders=orders
+            )
         buckets, demand_warnings, proportional_ok = build_material_demands(
             covered_ops, commitments
         )
+        if not commitments_ok:
+            demand_warnings = [
+                *demand_warnings,
+                {
+                    "code": "commitments_response_invalid",
+                    "detail": (
+                        "Resposta de empenhos inválida ou incompleta; "
+                        "não confundir com ausência legítima de SD4."
+                    ),
+                },
+            ]
         product_codes = sorted({bucket.product_code for bucket in buckets})
         stock_as_of = datetime.now(timezone.utc).isoformat()
         factory, source, balances_available, stock_complete = (
@@ -548,6 +563,7 @@ class LineFeederService:
 
         complete = (
             horizon_safe
+            and commitments_ok
             and proportional_ok
             and balances_available
             and stock_complete
@@ -555,6 +571,8 @@ class LineFeederService:
         stop_reasons: list[str] = []
         if not horizon_safe:
             stop_reasons.append("horizon_incomplete")
+        if not commitments_ok:
+            stop_reasons.append("commitments_incomplete")
         if not proportional_ok:
             stop_reasons.append("proportional_demand_incomplete")
         if not balances_available:
@@ -1140,6 +1158,10 @@ class LineFeederService:
         O custo do empenho é ~45 ms por OP, linear: um corte de 550 OPs em série
         passava de 20 s. Os lotes vão em paralelo com pool limitado, como o
         progresso do mapa de entrega.
+
+        Preserva o comportamento legado de ``/requirements`` e pick-plans:
+        envelope incompleto vira lista vazia via ``_items``. A prévia de
+        materiais (E3) usa ``_fetch_commitments_for_materials``.
         """
         size = commitment_batch_size()
         orders = list(production_orders)
@@ -1155,6 +1177,47 @@ class LineFeederService:
         ):
             commitments.update(normalize_commitments(_items(payload)))
         return commitments
+
+    def _fetch_commitments_for_materials(
+        self,
+        *,
+        branch: str,
+        production_orders: Sequence[str],
+    ) -> tuple[dict[tuple[str, str], list[dict[str, Any]]], bool]:
+        """Empenhos para a prévia E3 — distingue ausência legítima de falha.
+
+        Cenário A: lote íntegro com ``items: []`` → mapa vazio e ``ok=True``.
+        Cenário B: envelope inválido/incompleto → ``ok=False`` (lista insegura).
+        Falha de transporte/lote → ``DelpiGatewayError`` (não degrada como vazio).
+        """
+        size = commitment_batch_size()
+        orders = list(production_orders)
+        chunks = [orders[start : start + size] for start in range(0, len(orders), size)]
+        commitments: dict[tuple[str, str], list[dict[str, Any]]] = {}
+        response_ok = True
+        payloads = fan_out(
+            lambda chunk: self._gateway.fetch_operation_materials_batch(
+                branch=branch,
+                production_orders=chunk,
+            ),
+            chunks,
+            failure="Não foi possível carregar os empenhos das ordens de produção.",
+        )
+        for chunk, payload in zip(chunks, payloads, strict=True):
+            items = validated_operation_materials_batch_items(
+                payload, branch=branch, requested=chunk
+            )
+            if items is None:
+                response_ok = False
+                logger.warning(
+                    "line_feeder_materials commitments batch invalid "
+                    "branch=%s orders=%s",
+                    branch,
+                    chunk,
+                )
+                continue
+            commitments.update(normalize_commitments(items))
+        return commitments, response_ok
 
     def _fetch_balances(
         self,
