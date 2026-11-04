@@ -753,3 +753,122 @@ def test_r2_exchange_slow_server_total_wall_clock():
         assert time.monotonic() - started < 2.0
     finally:
         server.shutdown()
+
+
+# --- E4-R2 (doc 224 SEC-01): mid-turn subject expiry cache-first ------
+from app.infrastructure.interoperability.delegation import _subject_fingerprint
+
+
+def _provider_with_cache(*, subject=None, cache=None, **kw):
+    """Same wiring as _provider but exposes the cache instance."""
+    recorded: list = []
+
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
+        recorded.append(data)
+        return FakeResponse(
+            200, {"access_token": _exchanged()}
+        )
+
+    def validator_default(token: str) -> Mapping[str, Any]:
+        return json.loads(
+            base64.urlsafe_b64decode(token.split(".")[1] + "==")
+        )
+
+    cache = cache or InMemoryDelegatedTokenCache(max_ttl_seconds=120.0)
+    provider = KeycloakDelegatedCredentialProvider(
+        token_url="http://kc/token",
+        client_id="delia-api",
+        client_secret="test-secret",
+        timeout_seconds=5.0,
+        http_post=http_post,
+        subject_bearer_getter=lambda: subject
+        if subject is not None
+        else _subject(),
+        token_validator=validator_default,
+        cache=cache,
+        known_resource_audiences=ALL_RESOURCES,
+    )
+    return provider, recorded, cache
+
+
+def test_expired_subject_with_valid_delegated_cache_serves():
+    """Mid-turn expiry (proven E4-R1 cause): subject JWT exp passed
+    while a delegated token legitimately issued under the valid
+    subject is still inside ITS OWN bounded TTL — the cache-first
+    path must serve it, not fail-closed with no alternative."""
+    expired = _subject(exp=NOW - 5)
+    provider, posts, cache = _provider_with_cache(subject=expired)
+    delegated = _exchanged(exp=NOW + 240)
+    cache.put(
+        _subject_fingerprint(expired),
+        DAVI_RESOURCE,
+        delegated,
+        token_exp_epoch=NOW + 240,
+    )
+    assert provider.credential_for(_profile()) == delegated
+    assert posts == []  # no re-exchange needed
+
+
+def test_expired_subject_cache_isolation_other_subject_denied():
+    """Cache hit is bound to the SAME subject fingerprint — an
+    expired subject can never ride on another user's delegation."""
+    expired = _subject(exp=NOW - 5)
+    provider, posts, cache = _provider_with_cache(subject=expired)
+    other = _subject(sub="user-9999")
+    cache.put(
+        _subject_fingerprint(other),
+        DAVI_RESOURCE,
+        _exchanged(sub="user-9999"),
+        token_exp_epoch=NOW + 240,
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        provider.credential_for(_profile())
+    assert exc.value.code == MCP_AUTHENTICATION_FAILED
+
+
+def test_expired_subject_stale_delegated_cache_denied():
+    """A delegated token past its own bounded TTL is evicted — no
+    stale credential survives to serve an expired subject."""
+    expired = _subject(exp=NOW - 5)
+    provider, posts, cache = _provider_with_cache(subject=expired)
+    cache.put(
+        _subject_fingerprint(expired),
+        DAVI_RESOURCE,
+        _exchanged(exp=NOW + 240),
+        token_exp_epoch=NOW - 60,  # delegated itself already stale
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        provider.credential_for(_profile())
+    assert exc.value.code == MCP_AUTHENTICATION_FAILED
+
+
+def test_missing_bearer_never_reaches_cache():
+    """No subject credential in request scope → no fingerprint →
+    cache is unreachable; a new request with no bearer stays
+    fail-closed even when a cache entry exists for someone else."""
+    provider, posts, cache = _provider_with_cache(subject="")
+    cache.put(
+        _subject_fingerprint(_subject(sub="other-user")),
+        DAVI_RESOURCE,
+        _exchanged(sub="other-user"),
+        token_exp_epoch=NOW + 240,
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        provider.credential_for(_profile())
+    assert exc.value.code == MCP_AUTHENTICATION_FAILED
+
+
+def test_resource_isolation_expired_subject_wrong_audience_denied():
+    """Cached delegation for a DIFFERENT resource audience is never
+    served under an expired subject."""
+    expired = _subject(exp=NOW - 5)
+    provider, posts, cache = _provider_with_cache(subject=expired)
+    cache.put(
+        _subject_fingerprint(expired),
+        TEO_RESOURCE,  # cached for TÉO, request is for DAVI
+        _exchanged(),
+        token_exp_epoch=NOW + 240,
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        provider.credential_for(_profile())
+    assert exc.value.code == MCP_AUTHENTICATION_FAILED

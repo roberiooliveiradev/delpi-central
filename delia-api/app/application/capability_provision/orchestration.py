@@ -5537,6 +5537,7 @@ class OperationalCapabilityOrchestrator:
                 workspace_context=workspace_context,
                 deadline=deadline,
                 prior_turns=prior_turns,
+                goal=goal,
             )
             if subobjectives is not None:
                 return self._investigate_subobjectives(
@@ -6928,6 +6929,7 @@ class OperationalCapabilityOrchestrator:
         workspace_context: WorkspaceContext | None,
         deadline: TurnDeadline,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
+        goal: "OperationalCapabilityOrchestrator._TurnGoal | None" = None,
     ) -> tuple[SubObjective, ...] | None:
         """Bounded decomposition proposal for a compound objective.
 
@@ -6947,10 +6949,22 @@ class OperationalCapabilityOrchestrator:
             return None
         if deadline is not None and deadline.remaining_seconds() <= 0:
             return None
+        # Typed goal context: the already-interpreted turn goal gives
+        # the decomposer resolved semantic referents as structure —
+        # never extracted from free prior text by the small model.
+        block: dict[str, Any] = {}
+        if goal is not None:
+            if getattr(goal, "business_subject", None):
+                block["business_subject"] = goal.business_subject
+            if getattr(goal, "comparison_requested", False):
+                block["comparison_requested"] = True
+            goal_class = getattr(goal, "goal_class", None)
+            if goal_class:
+                block["goal_class"] = goal_class
         proposal = self._propose(
             input_text,
             block_tag="subobjective_decomposition",
-            block_payload="{}",
+            block_payload=json.dumps(block, ensure_ascii=False),
             instruction_id=SUBOBJECTIVES_INSTRUCTION_ID,
             instruction=instruction,
             instruction_version=self._cri_instruction_version,
@@ -7065,6 +7079,14 @@ class OperationalCapabilityOrchestrator:
             ]
             if not schedulable:
                 break
+            # Doc 224 LAT: dependency-satisfied subobjectives are
+            # independent authorized investigations — they run
+            # concurrently via request-context propagation (bound
+            # subject credential, deadline and cancellation travel
+            # with copy_context). Tracker mutations stay serialized
+            # in the main thread; a worker failure is fail-closed,
+            # never silent success.
+            begun: list[tuple[str, SubObjective]] = []
             for oid in schedulable:
                 if deadline is not None and (
                     deadline.remaining_seconds() <= 0
@@ -7078,9 +7100,12 @@ class OperationalCapabilityOrchestrator:
                     tracker.begin_attempt(oid)
                 except ValueError:
                     continue
-                sub_attempt = self._governed_owner_path(
+                begun.append((oid, sub))
+
+            def _run_sub(sub: SubObjective) -> GovernedCapabilityAttempt:
+                return self._governed_owner_path(
                     sub.goal,
-                    correlation=f"{correlation}-{oid}",
+                    correlation=f"{correlation}-{sub.subobjective_id}",
                     actor_user_id=actor_user_id,
                     session_id=session_id,
                     workspace_context=workspace_context,
@@ -7090,6 +7115,43 @@ class OperationalCapabilityOrchestrator:
                     deadline=deadline,
                     depth=depth,
                 )
+
+            if len(begun) > 1:
+                from concurrent.futures import ThreadPoolExecutor
+
+                # Context is copied on the MAIN thread (where the
+                # bound subject credential/deadline/cancellation
+                # actually live) — one FRESH Context per worker,
+                # because a single Context object cannot be entered
+                # concurrently by multiple threads.
+                results: dict[str, GovernedCapabilityAttempt] = {}
+                with ThreadPoolExecutor(
+                    max_workers=min(4, len(begun)),
+                    thread_name_prefix="delia_subobj",
+                ) as pool:
+                    future_map = {
+                        pool.submit(
+                            contextvars.copy_context().run,
+                            _run_sub,
+                            sub,
+                        ): oid
+                        for oid, sub in begun
+                    }
+                    for fut, oid in future_map.items():
+                        try:
+                            results[oid] = fut.result()
+                        except Exception:
+                            tracker.fail(oid, recoverable=False)
+                attempts = [
+                    (oid, sub.goal, results[oid])
+                    for oid, sub in begun
+                    if oid in results
+                ]
+            else:
+                attempts = [
+                    (oid, sub.goal, _run_sub(sub)) for oid, sub in begun
+                ]
+            for oid, sub_goal, sub_attempt in attempts:
                 self._record_subobjective_outcome(
                     tracker, oid, sub_attempt
                 )
@@ -7107,7 +7169,7 @@ class OperationalCapabilityOrchestrator:
                     and sub_attempt.content
                 ):
                     contents.append(sub_attempt.content)
-                    completed.append((sub.goal or "", sub_attempt))
+                    completed.append((sub_goal or "", sub_attempt))
                 limitations.extend(
                     f"{oid}: {lim}" for lim in sub_attempt.limitations
                 )

@@ -5165,3 +5165,29 @@ STATUS=REWORK; LIVE_SERVER_SIDE_COMPOSITION=REPORTED_PASS; CLIENT_DELIVERY=FAIL_
 SECURITY_REVIEW_REQUIRED=delegation.py checks per-subject-token fingerprint+resource cache before expired subject JWT check. Delegated token TTL/safety margin are bounded, but ongoing entitlement, session revocation, Core/Domain live AuthZ, reused expired bearer in new request and cross-resource behavior are NOT PROVEN by TTL alone. Verify and correct SEC01 fail-closed; no silent security acceptance or permission changes.
 PERFORMANCE_REVIEW_REQUIRED=full per-stage budget, possible redundant fourth analytic subgoal, sequential governed reads, LangGraph safe fan-out applicability, gateway/stream terminal and cancel/disconnect; NEVER raise timeout alone. Complete same-session and single-turn end-to-end client-visible grounded comparison against independent oracle. Preserve framework-native ModelInvocation/graph and existing authority contracts.
 TESTS_IN_COORDINATION=TEST_NOT_RUN; PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE. NEXT=doc224 integrated R2 task, gates LAT01-LAT08, SEC01, REG01 and G04/G05/G07/G12.
+
+## E4-R2 — latency/delegation/delivery closure (doc 224)
+
+TASK=DELIA-C3-E4-R2-LATENCY-DELEGATION-AND-DELIVERY-CLOSURE-01.
+SEC-01: cache-first em `credential_for` revisado — isolamento
+(subject_fingerprint, resource_audience), TTL=min(max_ttl hard-capped,
+token_exp-margin), evict-on-get, thread-safe, process-local, so
+consultado dentro do path MCP (nunca na admissao HTTP). AuthZ por
+invocacao permanece viva (_policy_invocable). Token delegado ja
+emitido serve ate seu proprio exp — semantica OAuth padrao; revogacao
+em tempo real NAO suportada (documentado, nao reivindicado).
+5 testes negativos adicionados (expired+valid delegated serve;
+outro sujeito/resource negado; delegated stale negado; bearer
+ausente nunca alcanca cache; audience errada negada) — 38 total PASS.
+LAT: `_investigate_subobjectives` paraleliza subs independentes via
+ThreadPoolExecutor(max_workers=4)+contextvars.copy_context() por
+worker — credencial/deadline/cancel propagados; mutacoes do tracker
+serializadas; falha de worker e fail-closed. Decompose recebe goal
+tipado (business_subject/comparison_requested). Instrucao de
+decomposicao orienta subs apenas de evidencia.
+LIVE: subs paralelos intercalados (so_1..4), READs reais,
+`evidence_composition differences_found sources=3`, COMPLETEDx4,
+interaction_completed ~119s, servidor respondeu 200 — MAS o
+cliente viu timeout aos ~115-118s (entrega na borda do gateway).
+Residual: variancia de retries model-calls (invalid_structured_
+output/provider_unavailable) decide a entrega; mecanismo correto.
