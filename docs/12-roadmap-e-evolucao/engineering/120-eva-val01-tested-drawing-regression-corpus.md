@@ -85,3 +85,14 @@ Bateria em runtime produtivo `srv-api` deployado (worker com caps novos). 11/13 
 | `90264030` (13p) | `PARENT_RELATION_MISMATCH 50225512` FP, 3/13 | **13/13 páginas**, 11 tabelas, `mismatches: 0`; `DRAWING_ONLY 10080535`×4 p9-12 + `10081686` p7 (linhas tipadas, candidatos reais `PENDING_HUMAN_REVIEW`); `BOM_ONLY 10080438`×4+`10080292` (ausência declarada apenas com cobertura integral) | **PASS** — AC-03/04/05; candidatos pendentes de revisão humana |
 
 `DRAWING_ONLY`/`BOM_ONLY` emitidos são candidatos com proveniência de página — aprovação final cabe à Engenharia. `unverified_parent_relations` preserva evidências (ex.: `10110676→50225512` ≠ BOM `70260010`).
+
+## Log de execução — 2026-11-04 (DEC-VAL-032, reteste independente consumidor ChatGPT)
+
+**Publicação confirmada via GitHub:** HEAD `7d5b3667fd51d90a96211b885cf38643edb18605`. **Deploy SHA `0d18a76bbf` foi reportado por Devin, não verificado de modo independente no host pelo ChatGPT.** Conectado ao MCP EVA do usuário, via `analyze(product.drawing_analysis,{product_code,compose_understanding:true})`, seguido de `analyze(...,job_id)` com mesma identidade: ambos os jobs retornaram o relatório final tipado, sem `job_not_found` nem `product.detail forbidden`. Os hashes de PDFs no índice original não foram reconferidos nesta execução; não declarar que arquivos oficiais não mudaram.
+
+| Produto | Job ID | Resultado consumidor | Cobertura e achados | Estado |
+|---|---|---|---|---|
+| `90264017` | `aj-db90f319b8df4895` | `INCONCLUSIVE`; 0 divergências; 0 `DRAWING_ONLY 10080535` | 14/14 `pages_ocr_ok`, 8/8 tabelas verificadas, 87 códigos de tabela, 72/96 ocorrências BOM correspondidas; 2 contextuais, `complete_for_requested_scope=false` por relações ainda não comprovadas | `MCP_CHATGPT_CRITICAL_PASS`; validação técnica final pendente |
+| `90264030` | `aj-af52bd893b9d4a63` | `DIVERGENCES_CANDIDATES`; 10 achados; 0 `PARENT_RELATION_MISMATCH` | 13/13 `pages_ocr_ok`, 11/11 tabelas; 80 códigos; 77/82 BOM correspondidas; 5 `DRAWING_ONLY`: `10081686` p7 e `10080535` p9,p10,p11,p12; 5 `BOM_ONLY`: `10080292` sob `70260049` e `10080438` sob `70260050/51/52/53`. Todos são candidatos pendentes de owner; `complete_for_requested_scope=false`, com 5 relações pai-filho não verificadas | `MCP_CHATGPT_CRITICAL_PASS` de transporte; `ENGINEERING_FINDINGS_REVIEW=PENDING` |
+
+**Importante:** todas as páginas processadas por OCR ≠ análise estrutural completa. A presença dos dez findings tipados em `90264030` não comprova divergências reais no desenho. Não converter em NC ou aprovação automática. Demais **11 desenhos não foram reexecutados pelo consumidor ChatGPT nesta rodada**: `TEST_NOT_RUN`, ainda que Devin reporte regressão backend anterior. Preservar todas as entradas e logs históricos.
