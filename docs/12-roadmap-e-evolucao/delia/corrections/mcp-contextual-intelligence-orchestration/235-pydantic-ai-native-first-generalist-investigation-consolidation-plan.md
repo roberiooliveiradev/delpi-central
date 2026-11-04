@@ -215,3 +215,14 @@ PRODUCTION_DEPLOY: NOT_AUTHORIZED
 ## H. Direct execution instruction
 
 Do not submit a new architecture-only proposal, an endless discovery loop, a generic 'Agent Framework', or another hardcoded comparison workflow. **Implement the full authorized native-first consolidation in one task**: reanchor → prove version/API → write REDs → switch to native Pydantic AI capabilities → remove replaced bespoke code → preserve trusted ports/gates → generalize evidence-aware answers → evaluate real dynamic multi-action tasks → document → commit/push → report. If local E2E remains impossible, say exactly so, with independent tests and no fabricated functional pass.
+
+
+---
+
+## Sucessão operacional — relatório 236 → rework 237 (2026-11-04)
+
+**Histórico preservado:** a implementação do plano 235 foi publicada em `57ca0e26842aeb0d55ce5da21d93e42afe887cd3`, com relatório [236](236-pydantic-ai-native-first-generalist-investigation-execution-report.md) e HEAD documental `3830bd5b94d3002b4277b41103508f6729941264`. O agente Pydantic AI recebeu tools nativas e novos caminhos opcionais para esclarecimento/composição. Testes unitários/regressão foram reportados GREEN. O E2E local isolado já correspondeu ao evaluated SHA, mas **E02_POST=tool_calls 1 (list), collected=0, owner READs=0, NON_GROUNDED, owner_path_unbound**. E03 teve erro intermitente. Logo a **aceitação funcional integral ainda é REWORK**, não encerrada por suíte verde ou HTTP 200.
+
+**CONTINUAÇÃO CANÔNICA EXECUTÁVEL:** [Documento 237 — Real Owner Tool Loop / Binding / Evidence Rework](237-native-first-real-owner-tool-loop-binding-and-evidence-hardening-rework-plan.md), `TASK_ID=DELIA-C3-PYDANTIC-AI-REAL-OWNER-TOOL-LOOP-AND-EVIDENCE-REWORK-01`, `STATUS=PLANNED`. O 237 especifica diagnóstico causal catálogo→Agent→invoke→owner READ, correção nativa sem fallback semântico, E02/E03 cross-owner real, risco de short-circuit de composição que omite obrigação C, risco de `remote_capability`/metadata como prova factual, continuidade, testes de segurança e homologação no SHA correto. É a prioridade de execução seguinte, dentro da direção Native-First já aprovada.
+
+**Autorização:** rebuild/testes **locais isolados** permitidos, **produção não autorizada**; preservar Core/Domain/Policy/Evidence/Outcome, read/write e arquitetura. O doc 235 permanece plano histórico executado, não é reaberto para alegar aceite funcional. Nova implementação só pode ser considerada aceita com owner READs e task outcomes reais verificados.
