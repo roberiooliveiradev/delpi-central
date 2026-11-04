@@ -386,9 +386,16 @@ Per part state properties:
 | kpi_view | `kpiProjection.metrics[].colorRules` | FE | FE+BE | yes | rules | enrich | value color | KEEP |
 | kpi_view | `kpiProjection.metrics[].visible` | FE | BE | yes | wells | bake | metrics | MIGRATE_BE |
 | kpi_view | `kpiProjection.metrics[].target` | FE | FE+BE | yes | KPI appearance | kpiPresentation | comparison | KEEP |
+| kpi_view | `kpiProjection.metrics[].targetField` | FE | FE+BE | yes | KPI / VISTA upsert | DisplayFormat → targetValue | comparison/progress | KEEP |
+| kpi_view | `kpiProjection.metrics[].targetAggregation` | FE | FE+BE | yes | KPI / VISTA upsert | DisplayFormat | comparison | KEEP |
 | kpi_view | `kpiProjection.metrics[].comparisonMode` | FE | FE+BE | yes | KPI appearance | kpiPresentation | comparison | KEEP |
 | kpi_view | `kpiProjection.metrics[].higherIsBetter` | FE | FE | yes | KPI appearance | kpiPresentation | tone | KEEP |
+| kpi_view | `kpiProjection.metrics[].colorRules[].compareField` | FE | FE+BE | yes | rules editor | resolvedColorRules | tone | KEEP |
 | kpi_view | `resolved` | BE | BE | **no** | — | enrich | KPI card | RUNTIME_ONLY |
+| kpi_view | `resolved.kpiPresentation.targetValue` | BE | BE | **no** | — | DisplayFormat | progress | RUNTIME_ONLY |
+| kpi_view | `resolved.kpiPresentation.titleDisplay` | BE | BE | **no** | — | DisplayFormat | label | RUNTIME_ONLY |
+| kpi_view | `resolved.kpiPresentation.subtitleDisplay` | BE | BE | **no** | — | DisplayFormat | hint | RUNTIME_ONLY |
+| kpi_view | `resolved.kpiPresentation.resolvedColorRules` | BE | BE | **no** | — | DisplayFormat | tone | RUNTIME_ONLY |
 
 ### I2. `kpiOptions` (`comunicadoKpiOptions.ts` L13–50)
 
@@ -408,6 +415,10 @@ Per part state properties:
 | kpi_view | `kpiOptions.decimalPlaces` | FE | BE | yes | NumberFormat | DisplayFormatService | value | MIGRATE_BE |
 | kpi_view | `kpiOptions.colorRules` | FE | FE+BE | yes | rules | enrich | value | KEEP |
 | kpi_view | `kpiOptions.target` | FE | FE+BE | yes | appearance | kpiPresentation | progress | KEEP |
+| kpi_view | `kpiOptions.targetField` | FE | FE+BE | yes | appearance | DisplayFormat → targetValue | progress | KEEP |
+| kpi_view | `kpiOptions.targetAggregation` | FE | FE+BE | yes | appearance | DisplayFormat | progress | KEEP |
+| kpi_view | `kpiOptions.titleField` | FE | FE+BE | yes | appearance | titleDisplay | label | KEEP |
+| kpi_view | `kpiOptions.subtitleField` | FE | FE+BE | yes | appearance | subtitleDisplay | hint | KEEP |
 | kpi_view | `kpiOptions.comparisonMode` | FE | FE+BE | yes | appearance | kpiPresentation | comparison | KEEP |
 | kpi_view | `kpiOptions.higherIsBetter` | FE | FE | yes | appearance | kpiPresentation | tone | KEEP |
 | kpi_view | `kpiOptions.showComparison` | FE | FE | yes | appearance | — | comparison part | KEEP |

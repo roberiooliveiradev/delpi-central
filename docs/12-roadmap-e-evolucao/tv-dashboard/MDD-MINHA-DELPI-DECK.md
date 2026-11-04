@@ -17,6 +17,8 @@
 
 O mercado (PPTX/OOXML, Figma, OPF) usa **pacote com manifest + JSON + binários** quando o objetivo é portabilidade fiel entre contas. PNG/PDF/PPTX no editor são **saídas de consumo**; o **MDD** é a **fonte de verdade portátil** da programação DELPI (slides, seções, mídias e bindings operacionais).
 
+**KPI dinâmico:** `targetField` / `titleField` / `subtitleField` / `colorRules[].compareField` viajam no `nativeConfig` do slide. Displays materializados (`kpiPresentation.*Display`, `resolvedColorRules`, `targetValue`) são **runtime-only** no enrich — não entram no MDD; no import o paint recalcula a partir dos dados.
+
 Use MDD quando precisar:
 
 - copiar uma programação para **outra conta** Minha Delpi;

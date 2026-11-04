@@ -1471,15 +1471,78 @@
        },
        "kpiProjection": {
         "type": "object",
-        "additionalProperties": true,
-        "description": "KPI field binding. Prefer metrics[].format|displayFormat (number|percent|currency|raw). Never leave empty after bind_visual.",
-        "x-delpi-gpt-opaque-object": true,
-        "properties": {}
+        "additionalProperties": false,
+        "description": "KPI field binding. metrics[].field = value; metrics[].targetField = dynamic goal (same DataModel). Prefer metrics[].format|displayFormat. Never leave empty after bind_visual.",
+        "properties": {
+         "metrics": {
+          "type": "array",
+          "items": {
+           "type": "object",
+           "additionalProperties": true,
+           "required": ["field"],
+           "properties": {
+            "field": { "type": "string", "description": "Value field from DataModel." },
+            "aggregation": {
+             "type": "string",
+             "enum": ["first", "sum", "avg", "min", "max", "count", "list"]
+            },
+            "label": { "type": "string" },
+            "format": {
+             "type": "string",
+             "enum": ["number", "percent", "compact", "raw", "currency"]
+            },
+            "visible": { "type": "boolean" },
+            "target": {
+             "type": "number",
+             "description": "Literal goal. Ignored when targetField resolves."
+            },
+            "targetField": {
+             "type": "string",
+             "description": "Dynamic goal field (sibling of chartProjection.goalField)."
+            },
+            "targetAggregation": {
+             "type": "string",
+             "enum": ["first", "sum", "avg", "min", "max", "count"]
+            },
+            "comparisonMode": {
+             "type": "string",
+             "enum": ["none", "target", "previous"]
+            },
+            "higherIsBetter": { "type": "boolean" },
+            "colorRules": {
+             "type": "array",
+             "description": "Conditional colors. value=literal threshold OR compareField=DataModel field (BE resolves).",
+             "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+               "op": {
+                "type": "string",
+                "enum": ["gt", "gte", "lt", "lte", "eq", "between"]
+               },
+               "value": { "type": "number" },
+               "valueTo": { "type": "number" },
+               "compareField": { "type": "string" },
+               "compareAggregation": {
+                "type": "string",
+                "enum": ["first", "sum", "avg", "min", "max", "count"]
+               },
+               "tone": {
+                "type": "string",
+                "enum": ["default", "positive", "negative", "warning"]
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        }
        },
        "kpiOptions": {
         "type": "object",
         "additionalProperties": true,
-        "description": "KPI card options: valueFormat / displayValueFormat (auto|number|currency|percent|compact|raw).",
+        "description": "KPI card options: formats, literal/dynamic target (targetField), titleField/subtitleField, colorRules. Resolved displays live in enrich kpiPresentation only (not persisted).",
         "properties": {
          "valueFormat": {
           "type": "string",
@@ -1494,7 +1557,21 @@
          },
          "decimalPlaces": {
           "type": "number"
-         }
+         },
+         "target": { "type": "number" },
+         "targetField": { "type": "string" },
+         "targetAggregation": {
+          "type": "string",
+          "enum": ["first", "sum", "avg", "min", "max", "count"]
+         },
+         "titleField": { "type": "string" },
+         "subtitleField": { "type": "string" },
+         "comparisonMode": {
+          "type": "string",
+          "enum": ["none", "target", "previous"]
+         },
+         "higherIsBetter": { "type": "boolean" },
+         "colorRules": { "type": "array" }
         }
        },
        "chartOptions": {

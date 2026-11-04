@@ -302,6 +302,12 @@ P9 go-live was verified through the real VISTA MCP connector, not only by reposi
 `blockId` + `owner` (`contentRunDataRef` or `textProjection`) + `field`; repeated
 content-run fields require `occurrence`. No new GPT Action or client formatter exists.
 
+**KPI multi-field bindings (VISTA-TV-DYNAMIC-BINDINGS-001):** `kpiProjection.metrics[]`
+is typed in the ops catalog (`field`, `targetField`, `targetAggregation`,
+`colorRules[].compareField`, …). Configure value+meta+rules via `upsert_block` /
+`bind_visual` — no new Action. Enrich materializes `kpiPresentation` (runtime-only);
+MDD keeps authoring bindings only.
+
 The current typed mutation covers the active text binding owners. The editor
 also stores canonical specs in `kpiOptions.displayValueFormat`,
 `kpiProjection.metrics[].displayFormat`, `chartOptions.displayValueFormat`,
