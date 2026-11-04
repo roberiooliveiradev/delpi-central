@@ -562,6 +562,104 @@ def test_max_categories_collapses_to_outros():
     assert len(labels) == 3
 
 
+def test_bar_chart_keeps_all_period_columns_without_outros():
+    """30 dias em colunas: sem soft-cap default (paridade chartDataPolicy.ts)."""
+    rows = [
+        {"periodo": f"dia-{i:02d}", "valor": float(i + 1)} for i in range(30)
+    ]
+    resolved = {
+        "table": {
+            "columns": [
+                {"key": "periodo", "label": "Período"},
+                {"key": "valor", "label": "Valor"},
+            ],
+            "rows": rows,
+        }
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "bar",
+        "chartProjection": {
+            "categoryField": "periodo",
+            "series": [{"field": "valor", "aggregation": "sum", "label": "Valor"}],
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    labels = [p["label"] for p in next_resolved["chart"]["points"]]
+    assert "Outros" not in labels
+    assert len(labels) == 30
+    assert labels[0] == "dia-00"
+    assert labels[-1] == "dia-29"
+
+
+def test_stacked_and_horizontal_bar_also_keep_all_categories():
+    rows = [{"cat": f"c{i}", "v": 1} for i in range(25)]
+    resolved = {
+        "table": {
+            "columns": [{"key": "cat", "label": "Cat"}, {"key": "v", "label": "V"}],
+            "rows": rows,
+        }
+    }
+    for chart_type in ("stacked_bar", "horizontal_bar"):
+        block = {
+            "type": "chart_view",
+            "chartType": chart_type,
+            "chartProjection": {
+                "categoryField": "cat",
+                "series": [{"field": "v", "aggregation": "sum", "label": "V"}],
+            },
+        }
+        next_resolved = apply_view_projection_to_resolved(resolved, block)
+        labels = [p["label"] for p in next_resolved["chart"]["points"]]
+        assert "Outros" not in labels, chart_type
+        assert len(labels) == 25, chart_type
+
+
+def test_bar_still_collapses_when_max_categories_override_is_set():
+    rows = [{"cat": f"c{i}", "v": 1} for i in range(10)]
+    resolved = {
+        "table": {
+            "columns": [{"key": "cat", "label": "Cat"}, {"key": "v", "label": "V"}],
+            "rows": rows,
+        }
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "bar",
+        "chartProjection": {
+            "categoryField": "cat",
+            "series": [{"field": "v", "aggregation": "sum", "label": "V"}],
+            "maxCategories": 3,
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    labels = [p["label"] for p in next_resolved["chart"]["points"]]
+    assert "Outros" in labels
+    assert len(labels) == 3
+
+
+def test_pie_default_soft_cap_still_collapses_without_override():
+    rows = [{"cat": f"c{i}", "v": 1} for i in range(12)]
+    resolved = {
+        "table": {
+            "columns": [{"key": "cat", "label": "Cat"}, {"key": "v", "label": "V"}],
+            "rows": rows,
+        }
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "pie",
+        "chartProjection": {
+            "categoryField": "cat",
+            "series": [{"field": "v", "aggregation": "sum", "label": "V"}],
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    labels = [p["label"] for p in next_resolved["chart"]["points"]]
+    assert "Outros" in labels
+    assert len(labels) == 8
+
+
 def test_projected_goal_baked():
     resolved = {
         "table": {

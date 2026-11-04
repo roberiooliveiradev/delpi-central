@@ -910,13 +910,12 @@ def _series_display_name(item: dict[str, Any], field: str) -> str:
 
 
 # Soft caps alinhados a chartDataPolicy.ts (maxCategories).
+# bar / stacked_bar / horizontal_bar: sem teto — períodos diários (ex. 30 dias),
+# CTs e dimensões operacionais precisam de todas as colunas (não «Outros»).
 _DEFAULT_MAX_CATEGORIES: dict[str, int] = {
     "pie": 8,
     "doughnut": 8,
     "funnel": 12,
-    "bar": 24,
-    "stacked_bar": 24,
-    "horizontal_bar": 24,
 }
 
 
