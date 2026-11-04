@@ -156,6 +156,7 @@ describe("LineFeederMaterialsPanel", () => {
       />,
     );
     expect(screen.getByText(/Coletar:.*60/i)).toBeTruthy();
+    expect(screen.getByText(/^CT:\s*CT-A$/i)).toBeTruthy();
     fireEvent.click(screen.getByText(/MP-001/i).closest("button")!);
     expect(screen.getByText(/CT-A · OP OP1 · 90262910/)).toBeTruthy();
     expect(screen.getByText(/CT-B · OP OP2 · 90262911/)).toBeTruthy();

@@ -4906,6 +4906,13 @@
   color: var(--ppc-title);
 }
 
+.dashboard-production-control .ppc-feeder-materials__ct {
+  margin: 0;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+  font-variant-numeric: tabular-nums;
+}
+
 .dashboard-production-control .ppc-feeder-materials__card {
   display: flex;
   flex-direction: column;

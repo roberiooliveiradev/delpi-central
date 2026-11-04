@@ -743,7 +743,7 @@ export const copy = {
     stockUnavailable: "Estoque indisponível — quantidades desconhecidas não são tratadas como zero.",
     tableTitle: "Materiais consolidados",
     tableHint:
-      "Priorize a coluna Coletar. Expanda a linha para ver CTs e OPs de origem. Não há marcação de separado/entregue nesta consulta.",
+      "Priorize a coluna Coletar. CT mostra o primeiro posto que usará o material; expanda a linha para ver todas as origens. Não há marcação de separado/entregue nesta consulta.",
     emptyCollect:
       "Nenhuma coleta necessária para os postos e horas selecionados.",
     emptyNoCommitments:
@@ -759,8 +759,10 @@ export const copy = {
     inventoryBlockedShort: "Bloqueado",
     inventoryFreeShort: "Livre",
     pickupLocationEmpty: "Sem local cadastrado",
+    firstWorkCenterEmpty: "—",
     columns: {
       product: "Material",
+      workCenter: "CT",
       unit: "UM",
       required: "Necessário",
       factory: "Na fábrica",

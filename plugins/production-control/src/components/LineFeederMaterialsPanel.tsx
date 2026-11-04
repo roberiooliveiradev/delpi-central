@@ -35,6 +35,12 @@ function qty(value: number | null | undefined, unit: string): string {
   return `${formatOpQuantity(value)} ${unit}`.trim();
 }
 
+/** Primeiro posto que demanda o material na prévia (só o código). */
+function firstWorkCenterCode(workCenters: string[] | undefined): string {
+  const code = workCenters?.find((item) => item.trim())?.trim();
+  return code ?? "";
+}
+
 export function LineFeederMaterialsPanel({ data, query }: Props) {
   const texts = copy.lineFeeder;
   const [filter, setFilter] = useState<MaterialsListFilter>("to_collect");
@@ -68,6 +74,11 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
           ) : null}
         </span>
       ),
+    },
+    {
+      key: "work_center",
+      header: texts.columns.workCenter,
+      render: (row) => firstWorkCenterCode(row.work_centers) || texts.firstWorkCenterEmpty,
     },
     {
       key: "unit",
@@ -274,7 +285,7 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
             : texts.emptyCollect
         }
         searchPlaceholder={texts.searchPlaceholder}
-        columnPreferencesKey="production-control:line-feeder:materials:columns:v1"
+        columnPreferencesKey="production-control:line-feeder:materials:columns:v2"
         viewLayoutPreferencesKey="production-control:line-feeder:materials:layout:v1"
         viewLayoutMobileMaxWidthPx={1280}
         renderCard={(row) => (
@@ -283,6 +294,10 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
               <strong>{row.product_code}</strong>
               {row.description ? <span>{row.description}</span> : null}
             </header>
+            <p className="ppc-feeder-materials__ct">
+              {texts.columns.workCenter}:{" "}
+              {firstWorkCenterCode(row.work_centers) || texts.firstWorkCenterEmpty}
+            </p>
             <p>
               Necessário: {qty(row.required_qty, row.unit)}
               {" · "}
