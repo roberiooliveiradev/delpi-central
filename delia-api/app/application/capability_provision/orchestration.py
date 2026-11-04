@@ -1559,7 +1559,7 @@ def _verify_evidence_composition(
         for sid, records in sources.items()
     }
     ids = [sid for sid, g in grouped.items() if g]
-    if len(ids) < 2:
+    if len(ids) != 2 or len(sources) != 2:
         return {
             "verdict": "inconclusive",
             "claims": (),
@@ -7351,7 +7351,7 @@ class OperationalCapabilityOrchestrator:
         is rendered verbatim from verified evidence — no model
         factual prose (ADR 58 / §6.145)."""
         instruction = self._instruction(EVIDENCE_COMPOSITION_INSTRUCTION_ID)
-        if not instruction or len(sources) < 2:
+        if not instruction or len(sources) != 2:
             return None
         block = {
             sid: _flatten_evidence_records(records)
