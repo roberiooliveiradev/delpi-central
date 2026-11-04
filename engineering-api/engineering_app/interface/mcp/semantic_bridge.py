@@ -829,6 +829,34 @@ async def _analyze_product_drawing(
 
             async def _run_job() -> None:
                 try:
+                    # DEC-VAL-032 — leituras oficiais delegadas PRIMEIRO
+                    # (credencial do usuário ainda válida); OCR depois —
+                    # sem autenticação tardia. Evita `product.detail:
+                    # forbidden` por token expirado no meio do job.
+                    _src = bridge.build_delegated_auxiliary_source()
+                    _pf = {
+                        "detail_raw": await _src.fetch_product_detail(
+                            _ctx_snapshot, code=code, view="engineering"
+                        ),
+                        "drawing_meta_raw": (
+                            await _src.fetch_product_drawing(
+                                _ctx_snapshot, code=code
+                            )
+                        ),
+                        "pdf_result": (
+                            await _src.fetch_product_drawing_pdf(
+                                _ctx_snapshot, code=code
+                            )
+                        ),
+                        "structure_raw": (
+                            await _src.fetch_product_structure(
+                                _ctx_snapshot,
+                                code=code,
+                                max_depth=6,
+                                page_size=200,
+                            )
+                        ),
+                    }
                     (
                         u,
                         _s,
@@ -868,13 +896,14 @@ async def _analyze_product_drawing(
                         )
                     report = await analyze_product_drawing(
                         code=code,
-                        source=bridge.build_delegated_auxiliary_source(),
+                        source=_src,
                         ctx=_ctx_snapshot,
                         visual_observations=observations or None,
                         scope=scope,
                         understanding=u,
                         progressive=prog,
                         drawing_tokens=tokens,
+                        prefetched=_pf,
                     )
                     _store.complete(
                         job.job_id,
@@ -903,13 +932,17 @@ async def _analyze_product_drawing(
                     )
                 except DrawingAnalysisError as exc:
                     _store.fail(
-                        job.job_id, exc.code, str(exc)
+                        job.job_id,
+                        exc.code,
+                        str(exc),
+                        status_code=exc.status_code,
                     )
                 except Exception as exc:  # noqa: BLE001 — job nunca vaza
                     _store.fail(
                         job.job_id,
                         "analysis_incomplete",
                         f"{type(exc).__name__}: {exc}",
+                        status_code=500,
                     )
 
             _aio.create_task(_run_job())

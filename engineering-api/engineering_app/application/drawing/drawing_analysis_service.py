@@ -129,18 +129,26 @@ async def analyze_product_drawing(
     understanding: dict[str, Any] | None = None,
     progressive: dict[str, Any] | None = None,
     drawing_tokens: list[dict[str, Any]] | None = None,
+    prefetched: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run the full drawing×product×BOM analysis for `code`."""
     # --- official facts (delegated identity) -------------------------------
-    detail_raw = await source.fetch_product_detail(ctx, code=code,
-                                                   view="engineering")
+    # DEC-VAL-032: `prefetched` permite que o chamador execute as
+    # leituras delegadas enquanto a credencial do usuário está válida
+    # (jobs prolongados — OCR posterior não exige autenticação).
+    _pf = prefetched or {}
+    detail_raw = _pf.get("detail_raw") or await source.fetch_product_detail(
+        ctx, code=code, view="engineering"
+    )
     detail = unwrap_delegated(
         detail_raw,
         what="product.detail",
         not_found_code="product_not_found",
         not_found_message=f"Produto {code} não encontrado.",
     )
-    drawing_meta_raw = await source.fetch_product_drawing(ctx, code=code)
+    drawing_meta_raw = _pf.get(
+        "drawing_meta_raw"
+    ) or await source.fetch_product_drawing(ctx, code=code)
     drawing_meta = unwrap_delegated(
         drawing_meta_raw,
         what="product.drawing",
@@ -158,7 +166,9 @@ async def analyze_product_drawing(
             f"Produto {code} não possui desenho PDF oficial no acervo.",
             404,
         )
-    pdf_result = await source.fetch_product_drawing_pdf(ctx, code=code)
+    pdf_result = _pf.get(
+        "pdf_result"
+    ) or await source.fetch_product_drawing_pdf(ctx, code=code)
     content = (pdf_result or {}).get("content") or b""
     if not content:
         raise DrawingAnalysisError(
@@ -166,7 +176,9 @@ async def analyze_product_drawing(
             "Metadados do desenho existem mas o PDF não foi entregue.",
             502,
         )
-    structure_raw = await source.fetch_product_structure(
+    structure_raw = _pf.get(
+        "structure_raw"
+    ) or await source.fetch_product_structure(
         ctx, code=code, max_depth=6, page_size=200
     )
     try:

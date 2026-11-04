@@ -133,12 +133,22 @@ class AnalysisJobStore:
             job.finished_ts = time.time()
             job.result = result
 
-    def fail(self, job_id: str, code: str, message: str) -> None:
+    def fail(
+        self,
+        job_id: str,
+        code: str,
+        message: str,
+        status_code: int = 500,
+    ) -> None:
         job = self._jobs.get(job_id)
         if job and job.status == "RUNNING":
             job.status = "FAILED"
             job.finished_ts = time.time()
-            job.error = {"code": code, "message": message}
+            job.error = {
+                "code": code,
+                "message": message,
+                "status_code": status_code,
+            }
 
 
 _store: AnalysisJobStore | None = None
