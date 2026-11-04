@@ -111,8 +111,6 @@ class GovernedCapabilityAttempt:
     correlation_id: str
     outcome: SpecialistOutcome | None = None
     provenance: GovernedCapabilityProvenance | None = None
-    # Verified DÉLIA composition is NOT an owner SpecialistOutcome.
-    verified_composition: VerifiedCompositeEvidence | None = None
     error_code: str | None = None
     owner_hint: str | None = None
     content: str | None = None
@@ -135,6 +133,8 @@ class GovernedCapabilityAttempt:
     #     (1 unless bounded resume re-entered).
     composition_mode: str | None = None
     governed_attempts: int | None = None
+    # Verified multi-owner fan-in, appended to preserve positional callers.
+    verified_composition: VerifiedCompositeEvidence | None = None
 
 
 @dataclass(frozen=True, slots=True)
