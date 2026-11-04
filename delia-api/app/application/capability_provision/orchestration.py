@@ -7271,44 +7271,6 @@ class OperationalCapabilityOrchestrator:
             ]
         return tuple(kept)
 
-    def _subgoal_is_composition_auxiliary(
-        self,
-        goal_text: str,
-        *,
-        correlation: str,
-        workspace_context: WorkspaceContext | None,
-        prior_turns: tuple[ConversationContextTurn, ...],
-        deadline: TurnDeadline | None,
-    ) -> bool:
-        """True when a leftover subgoal is analytical/compare-class.
-
-        Same governed classifier as ``_acquisition_subobjectives``.
-        Classification failure or undeclared class is fail-closed
-        (returns False → treat as material evidence obligation).
-        """
-        try:
-            sub_goal = self._understand_goal(
-                goal_text,
-                f"{correlation}-elig-cls",
-                workspace_context,
-                prior_turns,
-                deadline,
-            )
-        except Exception:
-            _logger.exception(
-                "orchestration stage=evidence_composition "
-                "decision=obligation_classify_failed "
-                "correlation_id=%s",
-                correlation,
-            )
-            return False
-        return (
-            sub_goal is not None
-            and getattr(sub_goal, "declared", False)
-            and sub_goal.goal_class
-            in self._ANALYTICAL_SUBOBJECTIVE_CLASSES
-        )
-
     def _investigate_subobjectives(
         self,
         objectives: tuple[SubObjective, ...],
@@ -7486,17 +7448,9 @@ class OperationalCapabilityOrchestrator:
                     or not provenance.is_complete
                     or not provenance.source_refs
                 ):
-                    # Analytical leftovers may produce SUCCESS content
-                    # without owner provenance — they are not material
-                    # source obligations (doc 228 §17).
-                    if self._subgoal_is_composition_auxiliary(
-                        sub_goal,
-                        correlation=f"{correlation}-{oid}",
-                        workspace_context=workspace_context,
-                        prior_turns=prior_turns,
-                        deadline=deadline,
-                    ):
-                        continue
+                    # Tracked acquisition leftovers are material
+                    # obligations (doc 228 §19): never demote them to
+                    # auxiliary via a fresh LLM classification.
                     limitations.append(
                         "comparison_source_missing_or_incomplete"
                     )
@@ -7528,11 +7482,12 @@ class OperationalCapabilityOrchestrator:
                 observations.append(outcome.provenance.observed_at)
                 satisfied_oids.add(oid)
 
-            # Doc 228 §17 RC-A: eligibility tracks MATERIAL acquisition
-            # obligations and verified sources — not raw
-            # ``len(tracker.objectives)``. Auxiliary analytical
-            # leftovers do not block; undeclared/incomplete material
-            # obligations still fail closed. Two-structure scope kept.
+            # Doc 228 §19 RC-A: after ``_acquisition_subobjectives``,
+            # every remaining tracked objective is a material evidence
+            # obligation. Eligibility must NOT re-ask the model to
+            # demote material→auxiliary (C03/C05 false GROUNDED).
+            # True analytical work is delegated earlier by the
+            # acquisition filter, not at fan-in time.
             rejection_reasons: list[str] = [
                 lim
                 for lim in limitations
@@ -7542,14 +7497,6 @@ class OperationalCapabilityOrchestrator:
                 if obj.subobjective_id in satisfied_oids:
                     continue
                 if obj.subobjective_id in rejected_source_oids:
-                    continue
-                if self._subgoal_is_composition_auxiliary(
-                    obj.goal,
-                    correlation=f"{correlation}-{obj.subobjective_id}",
-                    workspace_context=workspace_context,
-                    prior_turns=prior_turns,
-                    deadline=deadline,
-                ):
                     continue
                 rejection_reasons.append(
                     "comparison_material_obligation_incomplete"

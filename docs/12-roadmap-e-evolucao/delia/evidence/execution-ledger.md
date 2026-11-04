@@ -5549,3 +5549,15 @@ REGRESSION_FOCUSED: eligibility+diagnostics+verified_composite+multievidence+int
 SEMANTIC_SAFETY: C01/C02/C04 PASS; C03/C05 FAIL FALSE_GROUNDED — `_subgoal_is_composition_auxiliary` at eligibility can discard tracked material obligations when LLM labels analyze/compare; tests xfail(strict) pending rework. NO auto-fix.
 RC_A_VERDICT=FAIL. RC_B/RC_C OPEN. REF05 NOT_PASS. REF/G=NOT_PASS. FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
 NEXT=bounded rework: persist material obligation class (do not re-promote material→auxiliary on eligibility reclass); then restore governed homologation for B01 live.
+
+
+## E4-R6 — RC-A definitive remediation + live E2E (2026-11-04)
+
+TASK=DELIA-C3-E4-R6-RCA-DEFINITIVE-REMEDIATION-AND-LIVE-E2E-01.
+DOC=228 §19. PRODUCTION_DEPLOY=NOT_AUTHORIZED.
+FIX=remove eligibility `_subgoal_is_composition_auxiliary`; tracked post-acquisition obligations stay material; true auxiliaries delegated only by `_acquisition_subobjectives`.
+TESTS: C01–C05 PASS (xfail removed); S01–S16 PASS; eligibility+diagnostics PASS; focused regression PASS. Baseline debt trickle/ChatCompletion fixture unchanged.
+HOMOLOGATION: local docker-compose.dev stack restored (prior “sock missing” was sandbox probe artifact). Bind-mount reload + restart delia-api. Auth via gateway Host=localhost iss match.
+LIVE_E2E: real `/interaction/turns` JSON+NDJSON; compare → NON_GROUNDED `delpi_source_unverified`; composition log `decision=insufficient` reasons include `comparison_material_obligation_incomplete` with material_satisfied=0; FALSE_GROUNDED=0. Oracle 90260147/48 NOT_REACHED (RC-B/C owner path).
+RC_A_VERDICT=PASS_SYNTHETIC+LIVE_NO_FALSE_GROUNDED. RC_B/RC_C OPEN. REF05 NOT_PASS. FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
+NEXT=RC-C discovery-first / RC-B selection; then REF05 target oracle; rebuild image to refresh DELIA_RUNTIME_SHA label.

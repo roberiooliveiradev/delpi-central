@@ -501,3 +501,95 @@ REF01–REF08/G04/G05/G07/G12=NOT_PASS
 ```
 
 Cardinality decoupling under *consistent* labels remains useful but **cannot be homologated as safe** until auxiliary classification cannot discard material obligations (e.g. persist acquisition-time obligation class; never re-promote material→auxiliary at eligibility without stronger contract).
+
+## 19. RC-A definitive remediation + live E2E (2026-11-04)
+
+**TASK_ID:** `DELIA-C3-E4-R6-RCA-DEFINITIVE-REMEDIATION-AND-LIVE-E2E-01`.
+**REFERENCE_SHA (task):** `a99883ec1c`.
+**PRODUCTION_DEPLOY:** NOT_AUTHORIZED.
+
+### Root cause (confirmed, then closed)
+
+Eligibility-time `_subgoal_is_composition_auxiliary` re-invoked `_understand_goal` and could `continue` past incomplete tracked obligations when the later label was `analyze`/`compare` → false `VerifiedCompositeEvidence` (C03/C05).
+
+### Correction (minimal owner surface)
+
+File: `delia-api/app/application/capability_provision/orchestration.py`
+
+1. **Removed** `_subgoal_is_composition_auxiliary` entirely.
+2. After `_acquisition_subobjectives`, every remaining tracked objective is a **material** evidence obligation.
+3. Eligibility evaluates verified sources + incomplete tracked oids only — **no fresh LLM classify** at fan-in.
+4. True auxiliaries remain nonblocking because the **acquisition filter** (same governed classifier) already drops declared `analyze`/`compare` before the tracker.
+
+`EXISTING_EQUIVALENT=YES` · `REUSE_DECISION=EXTEND` · no new planner/registry/obligation store.
+
+### Synthetic gates
+
+| Case | Result |
+|---|---|
+| C01 true auxiliary | PASS (real acquisition filter) |
+| C02 true material third | PASS |
+| C03 material→analyze reclass | **PASS** (xfail removed) |
+| C04 classifier exception | PASS |
+| C05 analyze + external-spec tracked | **PASS** (xfail removed) |
+| S01–S16 adversarial | PASS (effects on `VerifiedCompositeEvidence` / no false GROUNDED) |
+
+Also: `test_e4_r6_rca_composition_eligibility.py`, `test_e4_r6_composite_root_cause_diagnostics.py`, verified_composite, multievidence, interaction_runtime, multistep, delegated_credentials, specialist_interop_security, goal_evidence, semantic_path — PASS on focused runs.
+
+Known baseline debt (pre-existing, not introduced): trickle wall-clock timeout; ChatCompletion structured-validation fixture.
+
+### Homologation environment (restored)
+
+Previous window blocked on sandboxed probes. With full host access:
+
+| Check | Result |
+|---|---|
+| Docker daemon + `delpi-delia-api` | UP (healthy); bind-mount `delia-api:/app` |
+| Gateway `:80` | UP; `/apps/delia-api/` → delia-api; `/auth/` → Keycloak |
+| Keycloak + Core `/me` | OK when token minted via gateway Host=`localhost` (iss=`http://localhost/auth/realms/delpi`) |
+| Ollama `qwen3:4b-instruct-2507-q4_K_M` | Present; cold load can exceed 60s |
+| srv-api prod `192.168.1.237` | Not used (PRODUCTION_DEPLOY=NOT_AUTHORIZED) |
+
+Deploy model: **code live via bind-mount + `docker restart delpi-delia-api`** (dev homologation compose). `DELIA_RUNTIME_SHA` env still shows older `0b2bd91fd5` until image rebuild — runtime code path verified by in-container grep of §19 / absence of `_subgoal_is_composition_auxiliary`.
+
+### Live E2E (real interaction path)
+
+Probe: `delia-api/scripts/e2e_rca_compare_probe.py` (password grant → gateway issuer → Core `/me` → `POST /interaction/turns`).
+
+Observed (direct API base inside container; NDJSON + JSON):
+
+| Run | HTTP | grounding | Notes |
+|---|---|---|---|
+| compare NDJSON | 200 | terminal `turn_result` present (~236s) | keepalives/activity delivered |
+| compare JSON | 200 | **NON_GROUNDED** | `delpi_source_unverified`; content refuses unverified source |
+| third-spec JSON | 401 once (token TTL) / remint added | — | remint-per-turn in probe |
+
+Server log (authoritative for RC-A eligibility under live model):
+
+```text
+stage=evidence_composition decision=insufficient
+declared_objectives=6|4 material_satisfied=0 eligible_sources=0
+reasons=['comparison_material_obligation_incomplete','comparison_source_missing']
+```
+
+**FALSE_GROUNDED_COUNT (executed live set): 0**  
+Independent oracle 90260147/90260148 item codes: **NOT_REACHED** — owner READs did not satisfy material sources (`material_satisfied=0`). Blocker class: **RC-B/RC-C / owner acquisition**, not RC-A false composition.
+
+### Residual risks
+
+1. Acquisition-time **declared** `analyze`/`compare` still drops subs before tracking. C05 production safety for “analyze phrasing + mandatory external third source” that the model declares as analyze at acquisition remains an **ARCHITECTURE residual** (no keyword heuristic; no new obligation schema this task). Tracked obligations (fail-closed keep / explicit read) are safe under §19.
+2. Gateway `proxy_read_timeout 120s` still truncates long **JSON** responses; NDJSON remains the durable client path.
+3. Functional E4-R6 acceptance still blocked on RC-B, RC-C, REF05.
+
+### Verdict
+
+```text
+RC_A_VERDICT=PASS_SYNTHETIC + LIVE_NO_FALSE_GROUNDED
+RC_A_SEMANTIC_SAFETY=PASS (C01–C05, S01–S16)
+RC_A_LIVE_COMPARISON_ORACLE=NOT_REACHED (owner reads unsatisfied)
+RC_B_STATUS=OPEN
+RC_C_STATUS=OPEN
+REF05_STATUS=NOT_PASS
+FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO
+PRODUCTION_DEPLOY=NOT_AUTHORIZED
+```

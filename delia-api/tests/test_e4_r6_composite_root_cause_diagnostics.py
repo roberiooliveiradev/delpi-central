@@ -116,13 +116,11 @@ def test_rc_a_two_complete_reads_rejected_when_objectives_gt_two():
 
     Pre-fix: sources=2 + third incomplete → SOURCE_UNAVAILABLE with
     empty comparison_* reasons (objectives cardinality coupling).
-    Post-fix (doc 228 §17): third classified analyze/compare is
-    auxiliary → composition eligible with structured path.
+    Post-fix (doc 228 §19): declared analyze is delegated by the
+    acquisition filter; eligibility never demotes tracked material.
     """
     orch = _orch()
-    orch._acquisition_subobjectives = (
-        lambda objectives, **kw: objectives
-    )
+    # Real ``_acquisition_subobjectives`` — do not keep-all mock.
     orch._understand_goal = (
         lambda text, correlation, workspace_context, prior_turns, deadline: (
             orch._TurnGoal(

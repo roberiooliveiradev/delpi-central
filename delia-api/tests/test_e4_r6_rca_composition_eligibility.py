@@ -1,6 +1,10 @@
 """E4-R6 RC-A — evidence-obligation composition eligibility (RED→GREEN).
 
 TASK: DELIA-C3-E4-R6-EVIDENCE-OBLIGATION-AND-COMPOSITION-ELIGIBILITY-FIX-01
+Rework: DELIA-C3-E4-R6-RCA-DEFINITIVE-REMEDIATION-AND-LIVE-E2E-01 (doc 228 §19)
+
+Tracked survivors after ``_acquisition_subobjectives`` are material.
+Eligibility must not demote them via a fresh LLM classify.
 """
 
 from __future__ import annotations
@@ -12,20 +16,9 @@ from app.application.capability_provision.subobjective_tracker import (
     SubObjective,
 )
 from app.application.interaction.capability_attempt import (
-    GovernedCapabilityAttempt,
     GovernedCapabilityStatus,
 )
-from app.application.interaction.contracts import (
-    GovernedCapabilityProvenance,
-)
 from app.application.interaction.turn_budget import TurnDeadline
-from app.domain.evidence.model import SourceRef
-from app.domain.specialist_interop.model import (
-    InteropProtocol,
-    SpecialistOutcome,
-    SpecialistResultProvenance,
-    SpecialistResultStatus,
-)
 from tests.test_e4_r6_composite_root_cause_diagnostics import (
     _clarify,
     _success,
@@ -38,9 +31,17 @@ def _sub(oid: str, goal: str) -> SubObjective:
     return SubObjective(subobjective_id=oid, goal=goal, dependencies=())
 
 
-def _orch_with_classes(classes: dict[str, str]) -> OperationalCapabilityOrchestrator:
+def _orch_with_classes(
+    classes: dict[str, str],
+    *,
+    keep_all_acquisition: bool = False,
+) -> OperationalCapabilityOrchestrator:
+    """Wire goal classes. Default: real acquisition filter (drop
+    declared analyze/compare). ``keep_all_acquisition`` forces every
+    proposed sub into the tracker — for material-obligation probes
+    that must remain tracked regardless of later labels.
+    """
     orch = object.__new__(OperationalCapabilityOrchestrator)
-    orch._acquisition_subobjectives = lambda objectives, **kw: objectives
 
     def _understand(text, correlation, workspace_context, prior_turns, deadline):
         goal_class = classes[text]
@@ -51,6 +52,10 @@ def _orch_with_classes(classes: dict[str, str]) -> OperationalCapabilityOrchestr
         )
 
     orch._understand_goal = _understand
+    if keep_all_acquisition:
+        orch._acquisition_subobjectives = (
+            lambda objectives, **kw: objectives
+        )
     return orch
 
 
@@ -78,7 +83,7 @@ def _run(orch, objectives, by_goal, *, compose=True):
 
 
 def test_t01_two_sources_plus_analytical_incomplete_composes():
-    """Auxiliary analytical leftover must not block two good sources."""
+    """True auxiliary analyze is delegated by acquisition filter."""
     orch = _orch_with_classes(
         {
             "acquire tree alpha": "read",
@@ -96,6 +101,7 @@ def test_t01_two_sources_plus_analytical_incomplete_composes():
         {
             "acquire tree alpha": _success(_TREE_A, source_id="90260147"),
             "acquire tree beta": _success(_TREE_B, source_id="90260148"),
+            # Would poison if investigated; filter must drop it.
             "list exclusive differences": _unavailable(),
         },
     )
@@ -171,7 +177,7 @@ def test_t05_clarify_without_provenance_on_material_rejects():
 
 
 def test_t07_analytical_clarify_does_not_poison_two_sources():
-    """Analytical SUCCESS without provenance is not a material source miss."""
+    """Declared analyze is delegated before owner path — clarify never runs."""
     orch = _orch_with_classes(
         {
             "acquire tree alpha": "read",
