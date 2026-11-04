@@ -5503,3 +5503,14 @@ TESTS_BY_COORDINATION=TEST_NOT_RUN; DEPLOY=NOT_RUN; E2E=TEST_NOT_RUN; FUNCTIONAL
 DEVIN_NEXT=Reanchor HEAD; run tests/test_verified_composite_grounding.py, test_multievidence_composition.py, test_interaction_runtime.py, delegation and full relevant suite; fix regressions minimally, deploy only to existing authorized HOMOLOGATION with rollback, repeatedly perform client-terminal and source-target oracle E2E; update ledger after measured evidence. REF01-REF08/G04/G05/G07/G12=NOT_PASS until verified. PRODUCTION_DEPLOY=NOT_AUTHORIZED.
 
 ADDITIONAL_CODE_HARDENING=26ffe389ea0cc1e1bb9f6ae4c51b3de6e8418bdc (composite root/source identity fail-closed validation); tests still TEST_NOT_RUN pending Devin. Evaluate latest main SHA, not earlier doc SHA.
+
+
+## E4-R6 §14 — homologation deploy + real E2E (Devin, 2026-11-04)
+
+TASK=DELIA-C3-E4-R6-COMPOSITE-PATCH-HOMOLOGATION-E2E-01. BASE=9b1ff2c2de. FINAL=0b2bd91fd5. DEPLOYED_SHA=0b2bd91fd5 (runtime_sha log + health 200 via gateway). ENV=local governed dev stack (homologation). PRODUCTION_DEPLOY=NOT_AUTHORIZED.
+COMMITS=05bfd091e3 (cold-turn post-binding decompose gate B01), d32a4dd065 (instruction v40 acquisition-only subs), e1d2de09f2 (_acquisition_subobjectives: compare/analyze-class subs delegate to fan-in, fail-closed keep), 0b2bd91fd5 (insufficient-reason observability log).
+TESTS: verified_composite 6 PASS, multievidence 19 PASS, interaction_runtime 146 PASS, multistep PASS, interop security/usecase PASS, SEC-01 delegated_credentials 38 PASS, r1_instruction PASS; suite 2895 collected, 2892 PASS, 3 FAIL pre-existing at BASE (pydantic-ai fixture/deadline + env.example substring) unrelated to patch.
+E2E REAL: Keycloak+Core+DAVI+Qwen3:4b. Env fixes: keycloak restarted; dev token requires scope=openid. A01 GROUNDED x3 (provenance api-delpi, full 90260147 tree). NDJSON delivers turn_result past 120s gateway JSON cutoff (143.6s/183.8s/244.9s http 200). Analytical-sub filter live-proven (so_3..so_6 delegated_to_composition, class=compare/analyze).
+NOT_PROVEN: client-visible GROUNDED comparison. Run 9ca3cf18: 2 DAVI discover->execute reads COMPLETED distinct roots 90260147+90260148, relevance=corresponds, composition still SOURCE_UNAVAILABLE — comparison_* reason UNRESOLVED (log line deployed after). Run 4a945dea: subs misrouted to mcp:teo -> sources=0 completed=0 objectives=3 -> correct refusal. Earlier: direct-execute subs stall at candidate_token; A02 discovery ask-back variance.
+GATES: REF01-REF08/G04/G05/G07/G12=NOT_PASS. FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
+NEXT=bounded task: capture insufficient reasons on repro of 2-completed-reads run (new log); sub-goal owner/specialist selection + discovery-first candidate_token plan contract.

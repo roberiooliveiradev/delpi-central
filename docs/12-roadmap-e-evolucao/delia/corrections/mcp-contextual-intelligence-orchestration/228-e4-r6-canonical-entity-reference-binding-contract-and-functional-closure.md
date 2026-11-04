@@ -307,3 +307,41 @@ Verified existing domain models at input SHA:
 5. Current \`SourceRef\` source metadata follows canonical business source but is a provenance descriptor, not authorization. \`VerifiedCompositeEvidence\` reflects deterministic owner-evidence observation; factual satisfaction of the user goal remains a **separate outcome gate**.
 
 **NEXT EXECUTOR (Devin):** \`DELIA-C3-E4-R6-COMPOSITE-PATCH-HOMOLOGATION-E2E-01\` — reanchor HEAD, run tests and fix any actual failures, review diff/invariant, deploy only to existing authorized homologation, verify deployed SHA, Keycloak/Core+DAVI/Domain/Qwen3 4B E2E with JSON+NDJSON and user-facing UI, repeated target/oracle/gateway checks, rollback readiness; log exact PASS/FAIL and update ledger. Production remains NOT_AUTHORIZED. \`REF/G=NOT_PASS\` until client receives exact completed authoritative comparison.
+
+
+## 15. E4-R6 homologation deploy + real E2E by Devin (2026-11-04)
+
+**TASK_ID:** `DELIA-C3-E4-R6-COMPOSITE-PATCH-HOMOLOGATION-E2E-01`.
+**ENV:** local governed stack (docker-compose.dev) — homologation; PRODUCTION_DEPLOY=NOT_AUTHORIZED.
+
+### Commits (fixes on top of coordination patch)
+
+- `05bfd091e3` — post-goal-binding decomposition gate for cold single-turn comparisons (B01 path: goal binds inside `_select_target` fused interpretation; early gate ran with `goal=None`). Extracted `_decomposed_investigation`; re-runs governed decompose after binding; regression test `test_cold_single_turn_comparison_reaches_verified_fan_in`.
+- `d32a4dd065` — orchestration instruction resource v40: `subobjectives` now requires one acquisition subobjective per source and explicitly forbids analytical questions (common/exclusive/differences) as subobjectives.
+- `e1d2de09f2` — `_acquisition_subobjectives`: under a comparison parent each proposed sub is classified by the SAME governed goal instruction; `compare`/`analyze`-class subs are answered by deterministic fan-in, never investigated. Undeclared/unclassifiable stays tracked (fail-closed); deps on delegated subs released. Unit tests: filter, fail-closed keep, undeclared keep, dep release.
+- `0b2bd91fd5` — observability: `evidence_composition decision=insufficient` now logs sources/completed/objectives/reasons (previously invisible behind `delpi_source_unverified`).
+
+### Tests (delia-api/.venv, HEAD final)
+
+- `test_verified_composite_grounding.py` 6 PASS; `test_multievidence_composition.py` 19 PASS (incl. 4 new filter tests); `test_interaction_runtime.py` 146 PASS; `test_generic_multistep_orchestration.py` PASS; `test_specialist_interop_security/usecase` PASS; `test_delegated_credentials.py` (SEC-01) 38 PASS; `test_r1_instruction_resource.py` PASS.
+- Full suite 2895 collected: 2892 PASS / **3 FAIL pre-existing at BASE** (`test_trickle_server_never_outlives_wall_clock_deadline` hang >90s — real adapter total-deadline gap in `pydantic_ai_adapter`; `test_normal_fast_provider_preserves_response_contract` — fake fixture missing ChatCompletion fields vs pydantic-ai 2.50.0 strict validation; `test_infra_and_env_carry_no_direct_delpi_wiring` — committed comment in `env.example` contains banned substring). None caused by this diff; files untouched by patch.
+
+### Deploy
+
+- `DEPLOYED_SHA=0b2bd91fd5333bfbc432c8c3633579de3ea7a7ca` verified via startup log `runtime_sha=` + health 200 through gateway `/apps/delia-api/`. Rollback: prior container `delpi-delia-api-prev-manual` retained + `DELIA_RUNTIME_SHA` revert + recreate.
+
+### Real E2E (Keycloak+Core+DAVI+Qwen3:4b, JSON and NDJSON)
+
+- Env fixes discovered: Keycloak container was down (502) — restarted; dev token needs `scope=openid` (password grant default lacks it → MCP 401 `MISSING_REQUIRED_SCOPE openid`).
+- A01 `GROUNDED` ×3 runs (88–97s) with provenance `api-delpi`, full tree 90260147 incl. oracle codes — PROVEN.
+- NDJSON transport delivers terminal `turn_result` past the 120s JSON gateway cutoff (`proxy_read_timeout 120s` on `/apps/delia-api/`): bodies received at 143.59s, 183.77s, 244.88s — PROVEN.
+- Analytical-sub filter live-proven: run e63a9e03 decomposed=6 → so_3..so_6 `delegated_to_composition` (class=compare); run 4a945dea decomposed=6 → so_3/so_4/so_6 delegated (so_5 classified acquisition, kept).
+- **NOT achieved:** client-visible GROUNDED comparison. Blocking evidence:
+  - Run 9ca3cf18: two DAVI discover→execute READs COMPLETED (`execute_delpi_information` on 90260147 and 90260148 per api-delpi log, `goal_evidence_relevance=corresponds` both) yet composition returned `SOURCE_UNAVAILABLE` — source-collection rejected before `_compose_multi_evidence`; exact `comparison_*` reason NOT captured (observability line deployed after this run) — UNRESOLVED.
+  - Run 4a945dea: sub-goal group selection misrouted all kept subs to `mcp:teo` (wrong specialist) → `insufficient sources=0 completed=0 objectives=3 reasons=[]` — gate correctly refused; 4B selection nondeterminism, pre-existing variance.
+  - Earlier runs: subs selecting `execute_delpi_information` directly stalled at `candidate_token` (orchestrator-supplied state, needs discovery-first plan) → clarification → BLOCKED; A02 discovery ask-back variance; JSON runs >120s die at gateway (504) while server completes ~280s.
+- Oracle: common 50220013/10030015/10080031, exclusive-147 50220014/10030019 verified inside A01 grounded content; full comparison oracle NOT PROVEN end-to-end.
+
+### Gate status
+
+`REF01–REF08/G04/G05/G07/G12=NOT_PASS`. FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO — correct two-target comparison not delivered to client repeatedly. Remaining known blockers (bounded, next task): (1) unexplained collection rejection on run with 2 completed distinct-root DAVI reads (capture `reasons` via the new insufficient log on next repro); (2) sub-goal specialist/argument nondeterminism (TEO misroute, direct-execute `candidate_token` stall) in the governed chain — contract for subobjectives selecting the domain owner's discovery-first path.
