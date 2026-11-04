@@ -2,6 +2,7 @@ import {
   clampAlpha,
   colorToCss,
   cssToColorValue,
+  isAutomaticTextColor,
   resolveColorTriggerPreviewMode,
   type ColorTriggerPreviewMode,
 } from "./colorUtils";
@@ -77,6 +78,25 @@ export type FillTriggerPreview = {
    */
   background?: string;
 };
+
+/**
+ * Hex efetivo para seleção na grade do popover — mesma autoridade do gatilho:
+ * `fill` solid/none manda sobre `value` (evita ribbon preto / grade branco quando
+ * `colorPaint` e `style.color` divergem no host).
+ */
+export function resolveColorPickerSelectionValue(
+  fill?: DelpiFill,
+  value?: string | null,
+): string | undefined {
+  if (fill?.kind === "solid") {
+    const color = typeof fill.color === "string" ? fill.color.trim() : "";
+    if (color && color !== "transparent" && !isAutomaticTextColor(color)) {
+      return color;
+    }
+  }
+  if (fill?.kind === "none") return "transparent";
+  return value ?? undefined;
+}
 
 /**
  * Prévia do gatilho: `fill` manda; hex `value` só entra se não houver paint rico.

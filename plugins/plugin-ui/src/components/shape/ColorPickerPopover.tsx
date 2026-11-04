@@ -10,6 +10,7 @@ import { resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, 
 import { FillGradientPanel } from "./FillGradientPanel";
 import {
   normalizeGradientStops,
+  resolveColorPickerSelectionValue,
   resolveFillKindTabChange,
   resolveFillTriggerPreview,
   type DelpiFill,
@@ -117,10 +118,18 @@ export function ColorPickerPopover({
   const noFillEnabled = resolveNoFillEnabled(variant, showNoFill);
   const automaticEnabled = resolveAutomaticEnabled(variant, showAutomatic);
   const eyedropperEnabled = Boolean(onEyedropper) || isEyedropperSupported();
-  const noFillSelected = noFillEnabled && isTransparentCssColor(value);
-  const automaticSelected = automaticEnabled && isAutomaticTextColor(value);
+  /* Grade e «selecionado» usam a mesma autoridade do gatilho (fill solid > value). */
+  const selectionValue = resolveColorPickerSelectionValue(fill, value);
+  const noFillSelected = noFillEnabled && isTransparentCssColor(selectionValue);
+  const automaticSelected =
+    automaticEnabled &&
+    fill?.kind !== "solid" &&
+    fill?.kind !== "none" &&
+    isAutomaticTextColor(value);
   const gridValue =
-    automaticSelected && automaticPreview?.trim() ? automaticPreview : value;
+    automaticSelected && automaticPreview?.trim()
+      ? automaticPreview
+      : selectionValue;
   const recent =
     recentColors?.filter(
       (color) => typeof color === "string" && color.trim() && color !== "transparent" && color !== "auto",
@@ -390,7 +399,7 @@ export function ColorPickerPopover({
           onDismiss={() => setMoreOpen(false)}
         >
           <ColorMorePanel
-            value={swatchHex ?? value}
+            value={swatchHex ?? selectionValue ?? value}
             labels={labels}
             onConfirm={(color) => {
               handleSelect(color);

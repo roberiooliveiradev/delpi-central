@@ -307,6 +307,23 @@ describe("ColorPickerPopover", () => {
     expect((preview as HTMLElement).style.background).toMatch(/#166534|rgb\(22,\s*101,\s*52\)/i);
   });
 
+  it("grade destaca fill solid quando value diverge (ribbon preto / grade branco)", () => {
+    const { container } = render(
+      <ColorPickerPopover
+        variant="text"
+        value="#ffffff"
+        fill={{ kind: "solid", color: "#000000" }}
+        onChange={vi.fn()}
+        onFillChange={vi.fn()}
+      />,
+    );
+    const view = within(container);
+    const blacks = view.getAllByRole("button", { name: "#000000" });
+    const whites = view.getAllByRole("button", { name: "#ffffff" });
+    expect(blacks.some((el) => el.getAttribute("aria-pressed") === "true")).toBe(true);
+    expect(whites.every((el) => el.getAttribute("aria-pressed") !== "true")).toBe(true);
+  });
+
   it("gatilho com fill gradient usa preview CSS do helper", () => {
     const { container } = render(
       <ColorPickerPopoverTrigger

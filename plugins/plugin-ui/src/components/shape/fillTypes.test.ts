@@ -4,6 +4,7 @@ import {
   fillToCssBackground,
   normalizeFillAngle,
   normalizeGradientStops,
+  resolveColorPickerSelectionValue,
   resolveFillKindTabChange,
   resolveFillTriggerPreview,
   solidFromFill,
@@ -53,6 +54,22 @@ describe("fillTypes", () => {
     const preview = resolveFillTriggerPreview({ kind: "solid", color: "#089bdb" }, undefined, "fill");
     expect(preview.mode).toBe("color");
     expect(preview.background).toBe("#089bdb");
+  });
+
+  it("resolveColorPickerSelectionValue: fill solid vence value divergente", () => {
+    expect(
+      resolveColorPickerSelectionValue(
+        { kind: "solid", color: "#000000" },
+        "#ffffff",
+      ),
+    ).toBe("#000000");
+    expect(resolveColorPickerSelectionValue({ kind: "none" }, "#ffffff")).toBe(
+      "transparent",
+    );
+    expect(resolveColorPickerSelectionValue(undefined, "#089bdb")).toBe("#089bdb");
+    expect(
+      resolveColorPickerSelectionValue({ kind: "solid", color: "auto" }, "#089bdb"),
+    ).toBe("#089bdb");
   });
 
   it("resolveFillTriggerPreview: gradiente usa background CSS, não borderColor", () => {

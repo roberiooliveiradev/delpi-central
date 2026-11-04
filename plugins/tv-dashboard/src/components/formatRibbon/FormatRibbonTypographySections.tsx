@@ -421,6 +421,16 @@ export function FormatRibbonTypographySections({
             textEditSelectionStyle.fontFamily !== "mixed"
           ? textEditSelectionStyle.fontFamily
           : (formatStyle?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]);
+  const containerTextColorFill = styleToColorFill({
+    color: formatStyle?.color,
+    colorPaint: formatStyle?.colorPaint ?? selected?.style?.colorPaint,
+  });
+  const containerTextColorHex =
+    containerTextColorFill.kind === "solid"
+      ? containerTextColorFill.color
+      : containerTextColorFill.kind === "none"
+        ? "transparent"
+        : formatStyle?.color;
   const currentTextColor =
     multiVisualBox && aggregatedColor === "mixed"
       ? undefined
@@ -430,7 +440,7 @@ export function FormatRibbonTypographySections({
             textEditSelectionStyle?.color != null &&
             textEditSelectionStyle.color !== "mixed"
           ? textEditSelectionStyle.color
-          : formatStyle?.color;
+          : containerTextColorHex;
   const currentTextHighlight =
     multiVisualBox && aggregatedHighlight === "mixed"
       ? undefined
@@ -1000,10 +1010,20 @@ export function FormatRibbonTypographySections({
               ariaLabel="Cor do texto"
               inline
               variant="text"
-              fill={styleToColorFill({
-                color: currentTextColor,
-                colorPaint: selected?.style?.colorPaint,
-              })}
+              fill={
+                /* Trecho parcial: fill = cor do run (não colorPaint do container). */
+                partialTextSelectionActive
+                  ? currentTextColor &&
+                    currentTextColor !== "transparent" &&
+                    !isAutomaticTextColor(currentTextColor)
+                    ? { kind: "solid", color: currentTextColor }
+                    : undefined
+                  : styleToColorFill({
+                      color: currentTextColor,
+                      colorPaint:
+                        formatStyle?.colorPaint ?? selected?.style?.colorPaint,
+                    })
+              }
               onFillChange={(next) => applyTextFormatStyle(fillToColorStylePatch(next))}
               allowedFillKinds={TV_ALLOWED_FILL_KINDS}
               contrastBackground={

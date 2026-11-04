@@ -114,6 +114,7 @@ export {
   fillToCssBackground,
   normalizeFillAngle,
   normalizeGradientStops,
+  resolveColorPickerSelectionValue,
   resolveFillKindTabChange,
   resolveFillTriggerPreview,
   solidFromFill,
