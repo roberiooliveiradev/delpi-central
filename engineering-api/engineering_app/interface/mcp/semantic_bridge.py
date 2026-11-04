@@ -747,14 +747,185 @@ async def _analyze_product_drawing(
                 status_code=403,
                 code="feature_disabled",
             )
-        try:
-            understanding, _structure, _best, _tokens, _pdf_bytes = (
-                await _produce_drawing_understanding(context, code)
+        # DEC-VAL-030 — execução prolongada governada: a análise visual
+        # integral de documentos multipágina excede o orçamento de uma
+        # chamada MCP interativa (ClientDisconnect comprovado). O job
+        # executa desacoplado; o consumidor consulta por job_id.
+        from engineering_app.application.drawing.analysis_jobs import (
+            analysis_job_store,
+        )
+        import asyncio as _aio
+        import hashlib as _hl
+        import json as _js
+
+        _ident_fp = _hl.sha256(
+            _js.dumps(ctx, sort_keys=True, default=str).encode()
+        ).hexdigest()[:20]
+        _params_fp = _hl.sha256(
+            _js.dumps(
+                {
+                    "code": code,
+                    "scope": scope,
+                    "obs": bool(observations),
+                    "progressive": bool(
+                        params.get("progressive_investigation")
+                    ),
+                },
+                sort_keys=True,
+                default=str,
+            ).encode()
+        ).hexdigest()[:20]
+        _store = analysis_job_store()
+        _job_id = params.get("job_id")
+        if _job_id:
+            job = _store.get_for_owner(str(_job_id), _ident_fp)
+            if job is None:
+                return _err(
+                    "job_id não encontrado ou expirado.",
+                    status_code=404,
+                    code="job_not_found",
+                )
+            if job.status == "RUNNING":
+                return _ok(
+                    {
+                        "analysis_type": "product.drawing_analysis",
+                        "status": "RUNNING",
+                        "job_id": job.job_id,
+                        "retry": {
+                            "analysis_type": "product.drawing_analysis",
+                            "parameters": {
+                                "product_code": code,
+                                "compose_understanding": True,
+                                "job_id": job.job_id,
+                            },
+                        },
+                    },
+                    "Análise visual em execução — consulte o job_id.",
+                )
+            if job.status == "FAILED":
+                err = job.error or {}
+                return _err(
+                    err.get("message")
+                    or "Execução da análise falhou.",
+                    status_code=err.get("status_code", 500),
+                    code=err.get("code") or "analysis_incomplete",
+                )
+            return _ok(
+                job.result or {},
+                "Análise técnica do desenho oficial do produto.",
             )
-        except DrawingAnalysisError as exc:
-            return _err(
-                str(exc), status_code=exc.status_code, code=exc.code
-            )
+        job, created = _store.get_or_start(
+            product_code=code,
+            identity_fingerprint=_ident_fp,
+            params_fingerprint=_params_fp,
+        )
+        if created:
+            _ctx_snapshot = ctx
+
+            async def _run_job() -> None:
+                try:
+                    (
+                        u,
+                        _s,
+                        best,
+                        tokens,
+                        pdf_bytes,
+                    ) = await _produce_drawing_understanding(
+                        _ctx_snapshot, code
+                    )
+                    prog = None
+                    if params.get("progressive_investigation") or True:
+                        prog = {
+                            "budget": {
+                                "max_crops": 8,
+                                "max_attempts_per_region": 2,
+                                "max_dpi": 300,
+                                "max_pixels": 4_000_000,
+                            },
+                        }
+                        from engineering_app.infrastructure.extraction.pdfium_adapter import (  # noqa: E501
+                            PdfiumExtractionAdapter,
+                        )
+                        from engineering_app.infrastructure.extraction.paddleocr_adapter import (  # noqa: E501
+                            PaddleOcrAdapter,
+                        )
+
+                        prog.update(
+                            {
+                                "pdf_bytes": pdf_bytes,
+                                "renderer": PdfiumExtractionAdapter(),
+                                "ocr": PaddleOcrAdapter(),
+                                "page": 1,
+                                "reference_dpi": int(
+                                    best.get("dpi") or 200
+                                ),
+                            }
+                        )
+                    report = await analyze_product_drawing(
+                        code=code,
+                        source=bridge.build_delegated_auxiliary_source(),
+                        ctx=_ctx_snapshot,
+                        visual_observations=observations or None,
+                        scope=scope,
+                        understanding=u,
+                        progressive=prog,
+                        drawing_tokens=tokens,
+                    )
+                    _store.complete(
+                        job.job_id,
+                        {
+                            "analysis_type": "product.drawing_analysis",
+                            "question": question,
+                            "method": (
+                                "Extração determinística + OCR visual "
+                                "do PDF oficial + comparação com "
+                                "cadastro e BOM oficiais — evidências "
+                                "por página, nenhuma inferência "
+                                "promovida a fato."
+                            ),
+                            "data_class": (
+                                "OBSERVED|CALCULATED|INFERRED|UNKNOWN"
+                            ),
+                            "report": report,
+                            "provenance": (
+                                "api-delpi product/drawing/structure "
+                                "(identidade delegada) + extração "
+                                "neutra engineering-api"
+                            ),
+                        },
+                    )
+                except DrawingAnalysisError as exc:
+                    _store.fail(
+                        job.job_id, exc.code, str(exc)
+                    )
+                except Exception as exc:  # noqa: BLE001 — job nunca vaza
+                    _store.fail(
+                        job.job_id,
+                        "analysis_incomplete",
+                        f"{type(exc).__name__}: {exc}",
+                    )
+
+            _aio.create_task(_run_job())
+        return _ok(
+            {
+                "analysis_type": "product.drawing_analysis",
+                "status": "RUNNING",
+                "job_id": job.job_id,
+                "retry": {
+                    "analysis_type": "product.drawing_analysis",
+                    "parameters": {
+                        "product_code": code,
+                        "compose_understanding": True,
+                        "job_id": job.job_id,
+                    },
+                },
+                "note": (
+                    "Análise visual integral em execução prolongada; "
+                    "repita a chamada com o job_id retornado."
+                ),
+            },
+            "Análise visual em execução — consulte o job_id.",
+        )
     # R13 — investigação progressiva: busca contextual sempre ativa;
     # recorte direcionado via ports REAIS quando o fluxo produziu
     # understanding+PDF (compose) — CAPABILITY_UNAVAILABLE honesto senão.
