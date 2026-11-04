@@ -5243,3 +5243,13 @@ Residual REAL: confiabilidade de proposta do qwen3:4b em
 decomposicao/referentes — nao e boundary/auth/latencia/arquitetura.
 Decisao de coordenacao: modelo maior local OU retries/budget OU
 streaming gateway — fora do escopo autorizado de implementacao.
+
+
+## E4-R4 — coordination review of R3 and typed-goal execution decision (2026-11-03)
+
+TASK=DELIA-C3-E4-R4-TYPED-GOAL-EXECUTION-AND-MODEL-AB-CLOSURE-01.
+INPUT_SHA=d1188aafef. PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/226-e4-r4-typed-goal-execution-and-model-ab-closure.md.
+COORDINATION_VERDICT=REWORK. R3 DIFF OBSERVED: a0d83ffce412 -> d1188aafef modifies ONLY this execution-ledger; no corrective runtime change. MODEL_VARIABILITY=OBSERVED, EXACT_MODEL_SIZE_AS_DOMINANT_CAUSE=INCONCLUSIVE pending paired stage A/B; prior proof H2 from repeated end-to-end variation alone is not controlled causal isolation. GROUNDED_CLIENT_OUTCOME=NOT_ACCEPTED, G04/G05/G07/G12 not PASS.
+APPROVED_DIRECTION=Reuse validated typed semantic goal+authorized typed target refs to derive minimal legitimate READ obligations with existing governed orchestration/graph; unnecessary second LLM decomposition and so_compare should not be mandatory for already-known targets. Do not create second planner, prompt hacks, product-specific routing or bypass owner-specific analytics. Ensure requested target-set exact evidence coverage; sources>=2 insufficient. Keep deterministic factual verifier and ADR58 no model-authored factual prose.
+MODEL_AB=CONDITIONALLY_AUTHORIZED on local already-approved/available larger model, only after controlled Qwen3 baseline and typed-goal reuse A/B; no production model switch/upgrade automatically. No generic retries or nginx-only timeout changes. SEC01 previous results remain executor-reported with revocation residual, cancellation and concurrency gates remain.
+NEXT=execute doc226 end-to-end implementation and repeated real Qwen3+Keycloak/Core+DAVI+Domain client-visible comparison, final SHA, independent oracle, full negative safety and regression. PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE; COORDINATION_TESTS=TEST_NOT_RUN.
