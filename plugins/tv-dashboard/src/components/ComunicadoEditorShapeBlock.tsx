@@ -26,6 +26,7 @@ import {
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 import { useVisualBoxTextEditorBridge } from "../hooks/useVisualBoxTextEditorBridge";
 import { shouldPreserveTextEditOnBlur } from "../utils/preserveTextEditFocus";
+import { reconcileDraftContentRunsForCommit } from "../utils/reconcileDraftContentRuns";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Props = {
@@ -153,16 +154,26 @@ function ComunicadoEditorShapeBlockInner({
     [fontScale],
   );
 
+  const explicitRunStyleKeysRef = useRef<
+    () => ReadonlySet<import("@delpi/tv-dashboard-presentation").ContainerTypographyStyleKey>
+  >(() => new Set());
+
   const commitDraft = useCallback(
     (runs?: ReturnType<typeof contentRunsFromEditableRoot>) => {
       const fromEditor =
         runs ?? (editorRef.current ? contentRunsFromEditableRoot(editorRef.current) : null);
       if (!fromEditor) return;
-      const synced = syncTextBlockFromRuns(fromEditor);
-      draftRef.current = synced;
       const blockNow = blockRef.current;
+      const reconciledRuns =
+        reconcileDraftContentRunsForCommit({
+          draftRuns: fromEditor,
+          containerStyle: blockNow.style,
+          explicitRunStyleKeys: explicitRunStyleKeysRef.current(),
+        }) ?? fromEditor;
+      const synced = syncTextBlockFromRuns(reconciledRuns);
+      draftRef.current = synced;
       const projection = blockNow.textProjection;
-      const hasDataRuns = fromEditor.some((run) => run.dataRef?.field?.trim());
+      const hasDataRuns = reconciledRuns.some((run) => run.dataRef?.field?.trim());
       if (hasDataRuns) {
         updateBlock(blockNow.id, {
           content: synced.content,
@@ -202,6 +213,9 @@ function ComunicadoEditorShapeBlockInner({
     insertDataRefAtSelection,
     reportSelectionFromEditor,
     clearPartialRangeFallback,
+    applyContainerTypographyOverride,
+    getExplicitRunStyleKeys,
+    resetExplicitRunStyleKeys,
   } = useVisualBoxTextEditorBridge({
     blockId: block.id,
     editorRef,
@@ -212,6 +226,7 @@ function ComunicadoEditorShapeBlockInner({
     reportTextEditSelection,
     selectionSyncEnabled: isEditing,
   });
+  explicitRunStyleKeysRef.current = getExplicitRunStyleKeys;
 
   function exitEditing() {
     /* Commit fica no cleanup do effect [isEditing] — evita undo fantasma (blur+cleanup). */
@@ -247,6 +262,7 @@ function ComunicadoEditorShapeBlockInner({
     }
     if (editingInitBlockIdRef.current === block.id) return;
     editingInitBlockIdRef.current = block.id;
+    resetExplicitRunStyleKeys();
 
     const editorRuns = shapeEditorRuns(block);
     draftRef.current = syncTextBlockFromRuns(editorRuns);
@@ -258,7 +274,7 @@ function ComunicadoEditorShapeBlockInner({
     const end = plainTextFromContentRuns(editorRuns).length;
     restoreEditableTextSelection(editor, end, end);
     reportTextEditSelection({ blockId: block.id, start: end, end }, editorRuns);
-  }, [isEditing, block.id, syncEditorHtml, reportTextEditSelection]);
+  }, [isEditing, block.id, syncEditorHtml, reportTextEditSelection, resetExplicitRunStyleKeys]);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -290,6 +306,8 @@ function ComunicadoEditorShapeBlockInner({
       refreshSelectionState: reportSelectionFromEditor,
       commitPending,
       insertDataRefAtSelection,
+      applyContainerTypographyOverride,
+      getExplicitRunStyleKeys,
     });
 
     return () => registerTextEditorBridge(block.id, null);
@@ -304,6 +322,8 @@ function ComunicadoEditorShapeBlockInner({
     reportSelectionFromEditor,
     registerTextEditorBridge,
     commitPending,
+    applyContainerTypographyOverride,
+    getExplicitRunStyleKeys,
   ]);
 
   if (isEditing) {

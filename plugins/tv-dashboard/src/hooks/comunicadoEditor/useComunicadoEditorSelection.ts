@@ -908,6 +908,25 @@ export function useComunicadoEditorSelection({
     [resolveActiveTextBridgeId],
   );
 
+  /**
+   * Tipografia de container aplicada pela ribbon: sincroniza draft/DOM dos
+   * editores ativos para não flushar overrides stale no blur.
+   */
+  const notifyContainerTypographyOverride = useCallback(
+    (
+      blockIds: string[],
+      keys: readonly import("@delpi/tv-dashboard-presentation").ContainerTypographyStyleKey[],
+    ) => {
+      if (keys.length === 0 || blockIds.length === 0) return;
+      for (const blockId of blockIds) {
+        textEditorBridgesRef.current
+          .get(blockId)
+          ?.applyContainerTypographyOverride?.(keys);
+      }
+    },
+    [],
+  );
+
   const toggleSelectedTextListType = useCallback((listType: ComunicadoListType) => {
     let target: ComunicadoBlock | null =
       editingTextId != null
@@ -1073,6 +1092,7 @@ export function useComunicadoEditorSelection({
     reportTextEditSelection,
     toggleEditingTextRunStyle,
     applyEditingTextRunStylePatch,
+    notifyContainerTypographyOverride,
     toggleSelectedTextListType,
     applySelectedNamedTextStyle,
     insertDataFieldAtCursor,

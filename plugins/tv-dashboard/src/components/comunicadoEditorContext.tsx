@@ -1004,6 +1004,7 @@ export function ComunicadoEditorProvider({
     resolveWriteGuard,
     onWriteCommitted,
     onWriteError,
+    onContainerTypographyApplied: selection.notifyContainerTypographyOverride,
     pendingProjection: pendingMutationProjection,
   });
 

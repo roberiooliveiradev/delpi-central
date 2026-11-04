@@ -61,6 +61,17 @@ export type TextEditorBridge = {
   commitPending?: () => void;
   /** Insere run dinâmico (`dataRef`) na posição do cursor. */
   insertDataRefAtSelection?: (dataRef: import("@delpi/tv-dashboard-presentation").ComunicadoTextDataRef) => void;
+  /**
+   * Tipografia de container aplicada enquanto o contentEditable está ativo:
+   * sincroniza draft/DOM e limpa dirty keys das propriedades sobrescritas.
+   */
+  applyContainerTypographyOverride?: (
+    keys: readonly import("@delpi/tv-dashboard-presentation").ContainerTypographyStyleKey[],
+  ) => void;
+  /** Chaves de tipografia alteradas explicitamente por trecho nesta sessão. */
+  getExplicitRunStyleKeys?: () => ReadonlySet<
+    import("@delpi/tv-dashboard-presentation").ContainerTypographyStyleKey
+  >;
 };
 
 /** Visual criado junto com a fonte no wizard «Como apresentar?». */

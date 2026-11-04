@@ -161,8 +161,16 @@ export function ColorPickerPopover({
     variant === "outline" ? L.noOutline : L.noFill;
 
   const handleSelect = (color: string) => {
+    /*
+     * Uma intenção de cor → um write. Com onFillChange o host tipado (tv-dashboard)
+     * já aplica hex+paint; chamar onChange em seguida duplicava PresentationMutation
+     * para o mesmo gesto (TV-EDITOR-STALE-DRAFT / TV-ICON-CONFLICT family).
+     */
+    if (onFillChange) {
+      onFillChange({ kind: "solid", color });
+      return;
+    }
     onChange(color);
-    onFillChange?.({ kind: "solid", color });
   };
 
   const switchMode = (next: DelpiFillKind) => {
@@ -192,6 +200,10 @@ export function ColorPickerPopover({
     <div
       ref={pickerRef}
       className={["delpi-ui-color-picker", className].filter(Boolean).join(" ")}
+      onMouseDown={(event) => {
+        /* Evita blur do contentEditable ao escolher swatch no portal. */
+        event.preventDefault();
+      }}
     >
       {showGradient ? (
         <div className="delpi-ui-fill-mode" role="tablist" aria-label={L.fill}>

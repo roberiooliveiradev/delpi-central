@@ -27,6 +27,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 import { useVisualBoxTextEditorBridge } from "../hooks/useVisualBoxTextEditorBridge";
+import { reconcileDraftContentRunsForCommit } from "../utils/reconcileDraftContentRuns";
 import { shouldPreserveTextEditOnBlur } from "../utils/preserveTextEditFocus";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
@@ -149,14 +150,24 @@ export function ComunicadoEditorTextBlock({
     [fontScale],
   );
 
+  const explicitRunStyleKeysRef = useRef<
+    () => ReadonlySet<import("@delpi/tv-dashboard-presentation").ContainerTypographyStyleKey>
+  >(() => new Set());
+
   const commitDraft = useCallback(
     (runs?: ReturnType<typeof contentRunsFromEditableRoot>) => {
       const fromEditor = runs ?? (editorRef.current ? contentRunsFromEditableRoot(editorRef.current) : null);
       if (fromEditor) {
-        const { runs: contentRuns, href } = partitionTextBlockRunsAndHref(fromEditor);
+        const { runs: rawRuns, href } = partitionTextBlockRunsAndHref(fromEditor);
+        const blockNow = blockRef.current;
+        const contentRuns =
+          reconcileDraftContentRunsForCommit({
+            draftRuns: rawRuns,
+            containerStyle: blockNow.style,
+            explicitRunStyleKeys: explicitRunStyleKeysRef.current(),
+          }) ?? rawRuns;
         draftRef.current = syncTextBlockFromRuns(contentRuns);
         const hasDataRuns = contentRuns.some((run) => run.dataRef?.field?.trim());
-        const blockNow = blockRef.current;
         const projection = blockNow.textProjection;
         if (hasDataRuns) {
           updateBlock(block.id, {
@@ -180,7 +191,16 @@ export function ComunicadoEditorTextBlock({
         updateBlockLink(block.id, href);
         return;
       }
-      updateBlockTextFields(block.id, draftRef.current);
+      const blockNow = blockRef.current;
+      const reconciled = reconcileDraftContentRunsForCommit({
+        draftRuns: draftRef.current.contentRuns,
+        containerStyle: blockNow.style,
+        explicitRunStyleKeys: explicitRunStyleKeysRef.current(),
+      });
+      updateBlockTextFields(block.id, {
+        content: draftRef.current.content,
+        contentRuns: reconciled,
+      });
     },
     [block.id, updateBlock, updateBlockLink, updateBlockTextFields],
   );
@@ -218,6 +238,9 @@ export function ComunicadoEditorTextBlock({
     insertDataRefAtSelection,
     reportSelectionFromEditor,
     clearPartialRangeFallback,
+    applyContainerTypographyOverride,
+    getExplicitRunStyleKeys,
+    resetExplicitRunStyleKeys,
   } = useVisualBoxTextEditorBridge({
     blockId: block.id,
     editorRef,
@@ -230,6 +253,7 @@ export function ComunicadoEditorTextBlock({
     onDataRefInserted,
     selectionSyncEnabled: isEditing,
   });
+  explicitRunStyleKeysRef.current = getExplicitRunStyleKeys;
 
   function exitEditing() {
     /* Commit fica no cleanup do effect [isEditing] — evita undo fantasma (blur+cleanup). */
@@ -265,6 +289,7 @@ export function ComunicadoEditorTextBlock({
     }
     if (editingInitBlockIdRef.current === block.id) return;
     editingInitBlockIdRef.current = block.id;
+    resetExplicitRunStyleKeys();
 
     const blockNow = blockRef.current;
     lastSyncedExternalKeyRef.current = externalTextBlockEditorKey(blockNow, fontScale);
@@ -279,7 +304,7 @@ export function ComunicadoEditorTextBlock({
     const end = editorRuns.map((run) => run.text).join("").length;
     restoreEditableTextSelection(editor, end, end);
     reportTextEditSelection({ blockId: block.id, start: end, end }, editorRuns);
-  }, [isEditing, block.id, fontScale, syncEditorHtml, reportTextEditSelection]);
+  }, [isEditing, block.id, fontScale, syncEditorHtml, reportTextEditSelection, resetExplicitRunStyleKeys]);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -323,6 +348,8 @@ export function ComunicadoEditorTextBlock({
       refreshSelectionState: reportSelectionFromEditor,
       commitPending,
       insertDataRefAtSelection,
+      applyContainerTypographyOverride,
+      getExplicitRunStyleKeys,
     });
 
     return () => registerTextEditorBridge(block.id, null);
@@ -337,6 +364,8 @@ export function ComunicadoEditorTextBlock({
     registerTextEditorBridge,
     commitPending,
     insertDataRefAtSelection,
+    applyContainerTypographyOverride,
+    getExplicitRunStyleKeys,
   ]);
 
   if (isEditing) {

@@ -262,7 +262,8 @@ describe("ColorPickerPopover", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Cor" }));
     fireEvent.click(screen.getByRole("button", { name: "#ff0000" }));
     expect(onFillChange).toHaveBeenCalledWith({ kind: "solid", color: "#ff0000" });
-    expect(onChange).toHaveBeenCalledWith("#ff0000");
+    // Com onFillChange presente, onChange não dispara (um gesto → um write).
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it("menu de preenchimento usa fill sólido na prévia mesmo sem value", () => {

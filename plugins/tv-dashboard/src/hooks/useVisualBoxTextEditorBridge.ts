@@ -13,6 +13,7 @@ import {
   insertDataRefAtOffset,
   insertLineBreakAtOffset,
   plainTextFromContentRuns,
+  stripContentRunStylesOverriddenByContainer,
   syncTextBlockFromRuns,
   toggleContentRunStyleInRange,
   toggleListTypeInRange,
@@ -20,9 +21,21 @@ import {
   type ComunicadoListType,
   type ComunicadoNamedTextStyle,
   type ComunicadoTextDataRef,
+  type ContainerTypographyStyleKey,
   type ContentRunStylePatch,
   type ContentRunStyleToggleKey,
 } from "@delpi/tv-dashboard-presentation";
+
+import { containerTypographyKeysFromRunPatch } from "../utils/reconcileDraftContentRuns";
+
+function toggleKeyToContainerTypography(
+  toggleKey: ContentRunStyleToggleKey,
+): ContainerTypographyStyleKey | null {
+  if (toggleKey === "fontWeight") return "fontWeight";
+  if (toggleKey === "fontStyle") return "fontStyle";
+  if (toggleKey === "underline" || toggleKey === "strikethrough") return "textDecoration";
+  return null;
+}
 
 type TextFields = { content: string; contentRuns?: ComunicadoContentRun[] };
 type TextRange = { start: number; end: number };
@@ -70,6 +83,12 @@ export function useVisualBoxTextEditorBridge({
 }: Options) {
   /** Última seleção parcial — fallback se o clique na ribbon perder o Range do DOM. */
   const lastPartialRangeRef = useRef<TextRange | null>(null);
+  /** Tipografia de trecho alterada nesta sessão — não stripar no flush vs container. */
+  const explicitRunStyleKeysRef = useRef(new Set<ContainerTypographyStyleKey>());
+
+  const markExplicitRunStyleKeys = useCallback((keys: readonly ContainerTypographyStyleKey[]) => {
+    for (const key of keys) explicitRunStyleKeysRef.current.add(key);
+  }, []);
 
   const resolvePartialRange = useCallback((): TextRange | null => {
     const editor = editorRef.current;
@@ -97,6 +116,8 @@ export function useVisualBoxTextEditorBridge({
       if (!editor) return false;
       const selection = resolvePartialRange();
       if (!selection) return false;
+      const containerKey = toggleKeyToContainerTypography(toggleKey);
+      if (containerKey) markExplicitRunStyleKeys([containerKey]);
       const runs = contentRunsFromEditableRoot(editor);
       const nextRuns = toggleContentRunStyleInRange(
         runs,
@@ -120,6 +141,7 @@ export function useVisualBoxTextEditorBridge({
       commitDraft,
       draftRef,
       editorRef,
+      markExplicitRunStyleKeys,
       normalizeEditorRuns,
       renderedSignatureRef,
       reportTextEditSelection,
@@ -134,6 +156,9 @@ export function useVisualBoxTextEditorBridge({
       if (!editor) return false;
       const selection = resolvePartialRange();
       if (!selection) return false;
+      markExplicitRunStyleKeys(
+        containerTypographyKeysFromRunPatch(patch as Record<string, unknown>),
+      );
       const runs = contentRunsFromEditableRoot(editor);
       const nextRuns = applyContentRunStyleInRange(
         runs,
@@ -157,12 +182,38 @@ export function useVisualBoxTextEditorBridge({
       commitDraft,
       draftRef,
       editorRef,
+      markExplicitRunStyleKeys,
       normalizeEditorRuns,
       renderedSignatureRef,
       reportTextEditSelection,
       resolvePartialRange,
       syncEditorHtml,
     ],
+  );
+
+  const applyContainerTypographyOverride = useCallback(
+    (keys: readonly ContainerTypographyStyleKey[]) => {
+      if (keys.length === 0) return;
+      for (const key of keys) explicitRunStyleKeysRef.current.delete(key);
+      const editor = editorRef.current;
+      const source =
+        editor != null
+          ? contentRunsFromEditableRoot(editor)
+          : draftRef.current.contentRuns;
+      if (!source?.length) return;
+      const raw = normalizeEditorRuns ? normalizeEditorRuns(source) : source;
+      const nextRuns = stripContentRunStylesOverriddenByContainer(raw, keys) ?? raw;
+      const selection = editor ? getEditableTextSelectionOffsets(editor) : null;
+      draftRef.current = syncTextBlockFromRuns(nextRuns);
+      renderedSignatureRef.current = "";
+      if (editor) syncEditorHtml(nextRuns, selection);
+    },
+    [draftRef, editorRef, normalizeEditorRuns, renderedSignatureRef, syncEditorHtml],
+  );
+
+  const getExplicitRunStyleKeys = useCallback(
+    () => new Set(explicitRunStyleKeysRef.current),
+    [],
   );
 
   const applyListToggle = useCallback(
@@ -323,6 +374,10 @@ export function useVisualBoxTextEditorBridge({
     lastPartialRangeRef.current = null;
   }, []);
 
+  const resetExplicitRunStyleKeys = useCallback(() => {
+    explicitRunStyleKeysRef.current = new Set();
+  }, []);
+
   return {
     applyPartialStyleToggle,
     applyPartialStylePatch,
@@ -333,5 +388,8 @@ export function useVisualBoxTextEditorBridge({
     reportSelectionFromEditor,
     readRuns,
     clearPartialRangeFallback,
+    applyContainerTypographyOverride,
+    getExplicitRunStyleKeys,
+    resetExplicitRunStyleKeys,
   };
 }

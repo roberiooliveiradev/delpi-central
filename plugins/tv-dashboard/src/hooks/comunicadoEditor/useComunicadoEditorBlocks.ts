@@ -71,7 +71,9 @@ import {
   transformContentRunsCase,
   translateLineEndpoints,
   patchBackgroundUnderlay,
+  typographyKeysFromContainerPatch,
   type ComunicadoBackground,
+  type ContainerTypographyStyleKey,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartType,
@@ -227,6 +229,14 @@ type Options = {
   /** Persist failures (incl. 409 REVISION_CONFLICT) surfaced to the owner. */
   onWriteError?: MutationErrorHandler;
   /**
+   * Notifica editores de texto ativos quando tipografia de container muda —
+   * sincroniza draft/DOM e evita flush stale no blur.
+   */
+  onContainerTypographyApplied?: (
+    blockIds: string[],
+    keys: readonly ContainerTypographyStyleKey[],
+  ) => void;
+  /**
    * Read-back de ACK de uma mutação que já projetou estado local: aplica o
    * canônico sem nova entrada de Undo (a projeção já registrou a ação).
    * Quando ausente, cai em `commitWithHistory` (comportamento legado).
@@ -302,6 +312,7 @@ export function useComunicadoEditorBlocks({
   resolveWriteGuard,
   onWriteCommitted,
   onWriteError,
+  onContainerTypographyApplied,
   applyServerConfig,
   pendingProjection,
 }: Options) {
@@ -1248,9 +1259,24 @@ export function useComunicadoEditorBlocks({
         });
       });
       updateBlocks(nextBlocks);
+      const typographyKeys = typographyKeysFromContainerPatch(patch as Record<string, unknown>);
+      if (typographyKeys.length > 0) {
+        onContainerTypographyApplied?.(
+          nextBlocks.filter((b) => idSet.has(b.id)).map((b) => b.id),
+          typographyKeys,
+        );
+      }
       ackBlocksMutation(nextBlocks.filter((b) => idSet.has(b.id)));
     },
-    [ackBlocksMutation, configRef, selected, selectedBlocks, selectedInputPart, updateBlocks],
+    [
+      ackBlocksMutation,
+      configRef,
+      onContainerTypographyApplied,
+      selected,
+      selectedBlocks,
+      selectedInputPart,
+      updateBlocks,
+    ],
   );
 
   /** Tipografia da ribbon Formatar — bloco text/heading/shape ou tipografia de complexo/parte. */
