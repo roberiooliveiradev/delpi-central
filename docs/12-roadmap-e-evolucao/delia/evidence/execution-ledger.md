@@ -5356,3 +5356,11 @@ SPEC minimo (S2/S3) — produtor/consumidor:
     vivos). Ambiguidade/<2 refs -> decompose LLM (preservado).
 STATUS: spec aprovado-bounded, implementacao pendente (contexto).
 
+
+
+## E4-R6 S2-S4 coordination security review of typed entity chain (2026-11-03)
+
+INPUT_SHA=fe6f722a42. PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/228-e4-r6-canonical-entity-reference-binding-contract-and-functional-closure.md section 7.
+CODE_REVIEW_PROVEN=InteractionTurn.entity_refs populated from root outcome; _parse_context accepts client-origin entity_refs; _validate_prior_context does not prove session/actor/source provenance; _subobjectives_from_session_refs trusts candidate list, sorts and truncates [:4], and creates a fixed natural-language business query string; _entity_refs_from_outcome uses specialist_id as source_system (must validate Domain semantics). InteractiveTurnResult lacks entity_refs, so public echo path unimplemented. S1/S5/S6/S7 tests not run.
+DECISION=REWORK/EXECUTION_DRIFT: typed field and owner auth do not elevate client-provided ref to a trusted server prior turn; no proof of session provenance or exact intended target selection. Core/Domain READ validation stays mandatory and mitigates authorization but not semantic misbinding. Fix trust boundary RED first; prefer existing server-owned session/turn lookup and bounded context; never add public ref echo, signing/store or retention without owner/security/contract gate. Remove hardcoded textual SubObjective builder, avoid sorted [:4] silent loss, use real canonical business source metadata and multi-root handling.
+NEXT=SAME TASK DELIA-C3-E4-R6-CANONICAL-ENTITY-BINDING-AND-FUNCTIONAL-CLOSURE-01, doc228 section7 C1-C6 and S1/S5/S6/S7; only return end-to-end candidate after final SHA repeated real auth Qwen3+DAVI/Domain comparisons, target coverage and safety gates. If a truly required public contract/session state change, precise ARCHITECTURE_DECISION_REQUIRED; no unilateral public changes. TESTS_IN_COORDINATION=TEST_NOT_RUN. G04/G05/G07/G12=NOT_PASS. PRODUCTION_DEPLOY=NOT_AUTHORIZED.
