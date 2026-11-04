@@ -66,13 +66,14 @@ HTTP POST /interaction/turns
 
 Engine note: homologation logs show **both** `app.infrastructure.orchestration.langgraph_engine` and `capability_provision.orchestration` emitting `interaction_admission` — dual sequencing surfaces sharing the same admission contract (**TO_INVENTORY** ownership clarity; not changed here).
 
-FAST / OPERATIONAL / REASONING mapping (as coded, not product marketing labels):
+**PROVEN (call-graph audit):** `select_decision_path` / labels FAST·OPERATIONAL·REASONING are **post-plan telemetry only** — they do **not** skip selection or LLM stages. Real control branches are admission class, `path_mode` (native/corroborate/enrichment), `comparison_requested`, and interaction status dispatch.
 
-| Path | Trigger | Typical LLM |
+| Runtime branch | Trigger | Typical LLM |
 |---|---|---|
-| Early conversational | admission `requires_owner_surface=false` | admission + optional free-form fallback |
+| Early conversational | admission `requires_owner_surface=false` | admission + optional free-form fallback (`delia.interaction.turn`) |
 | Surface inquiry | admission `surface_inquiry` | admission; answer = live surface projection |
 | Owner / compare | admission owner required or fallthrough | full orchestration stack |
+| Complex investigation (real) | `path_mode != native` **or** `comparison_requested` | decomposition, foreign/corroborate, multi-source |
 
 ---
 
@@ -104,24 +105,27 @@ FAST / OPERATIONAL / REASONING mapping (as coded, not product marketing labels):
 
 ## 5. LLM call matrix (instruction catalog)
 
-Source: `delia-api/config/orchestration_instructions.delpi.json` (**20** instructions) + runtime `_propose` sites in `orchestration.py` (~26 call sites).
+Sources: `orchestration_instructions.delpi.json` (**20** catalog keys) + runtime inventory (**21** orchestration purposes including fused `select_capability#with_goal`) + conversational fallback `delia.interaction.turn`. Hub: `_model_stage_proposal` → `InvokeModel.execute`; optional `DELIA_ARGGEN_ENGINE=pydantic_ai` bypasses InvokeModel for candidate args only.
 
 | Instruction / purpose | Class (audit) | New information? | Often redundant? | Verify how |
 |---|---|---|---|---|
-| `interaction_admission` | ESSENTIAL_SEMANTIC_REASONING | owner vs conversational | Retried under load | Typed fields + fail-closed |
-| `turn_goal` | ESSENTIAL / **REDUNDANT_REINTERPRETATION** when repeated per sub | goal_class, comparison, answer_requirements | **Yes** on every acquisition sub | Declared schema |
+| `interaction_admission` | ESSENTIAL_SEMANTIC_REASONING | owner vs conversational | Cascades with GRP “needs owner?” | Typed fields + fail-closed |
+| `turn_goal` | ESSENTIAL / **REDUNDANT_REINTERPRETATION** when repeated per sub | goal_class, comparison, answer_requirements | **Yes** on every acquisition sub (+ prior_turns path) | Declared schema |
+| `select_capability#with_goal` | USEFUL (fusion reduces separate GOAL) | capability + goal | Still followed by per-sub GOAL classify | Schema |
 | `subobjectives` | USEFUL_CONTEXTUAL_REASONING | plan + evidence_needed | Over-fires on simple compare | Fail-closed validate |
-| `select_group` | USEFUL_CONTEXTUAL_REASONING | group id | Per-sub repeat | Live catalog only |
-| `select_capability` (+`#with_goal`) | USEFUL_CONTEXTUAL_REASONING | remote name | Per-sub + retry | Schema + dead-end |
-| `arguments` / `candidate_arguments` | USEFUL / sometimes DETERMINISTIC_RESPONSIBILITY | args | High retry on invalid_structured_output | Schema validate |
+| `select_group` | USEFUL_CONTEXTUAL_REASONING | group id | Per-sub repeat; overlaps ADM intent | Live catalog only |
+| `select_capability` | USEFUL_CONTEXTUAL_REASONING | remote name | Per-sub + retry | Schema + dead-end |
+| `arguments` / `candidate_arguments` | USEFUL / dual projectors | args | **Alto** ARGS↔CAND_ARGS (+ pydantic path) | Schema validate |
 | `index_probe` / `index_select` | USEFUL | index membership | Path-specific | Exact declared ids |
-| `native_assessment` / `goal_evidence_relevance` | ESSENTIAL_SEMANTIC_REASONING | correspondence | Can rejudge same payload | Typed verdict |
+| `native_assessment` / `goal_evidence_relevance` | ESSENTIAL_SEMANTIC_REASONING | correspondence | REL can reopen GRP/CAP/ARGS | Typed verdict + ledger reuse |
 | `foreign_selection` | USEFUL | alternate owner | Risk of wrong specialist | Catalog+policy |
-| `evidence_composition` | USEFUL (correspondence only) | candidate links | Must not invent facts | Deterministic verifier |
-| `grounded_synthesis` / clarification / continuation | USEFUL | wording / transform | Fallback cost | Epistemic gates |
-| Free-form interaction fallback | UNVERIFIED_MODEL_AUTHORITY if used after owner miss | prose | Blocked when OWNER_PATH_UNBOUND | Deterministic messages preferred |
+| `comparison` vs `evidence_composition` | USEFUL | pairing / multi-evidence | **Dois** comparadores tipados | Deterministic verifier |
+| `grounded_synthesis` (prior vs outcome) | USEFUL | transform / record select | Same purpose, two contexts | Epistemic gates |
+| Free-form `delia.interaction.turn` | UNVERIFIED if after owner miss | prose | Blocked when OWNER_PATH_UNBOUND | Deterministic messages preferred |
 
-Retry: shared governed retry loop; homologation often `max_attempts=3` on timeout/invalid_structured_output/provider_unavailable — **amplifies** fragmentation cost.
+Retry: `call_retry_eligible` ≤3 per logical call (TIMEOUT / PROVIDER_UNAVAILABLE / INVALID_STRUCTURED_OUTPUT); `DELIA_LLM_CALL_MAX_ATTEMPTS` default 1, homologation often 3 — **amplifies** fragmentation. Plus stage-level re-`_propose` loops and `MAX_GOVERNED_ATTEMPTS=2` turn resume.
+
+**Material redundancies (PROVEN inventory):** ADM↔GRP; GOAL×N after fused CAP+GOAL; ARGS↔CAND_ARGS; SYN_PRIOR↔SYN_OUT; CMP↔EVID_COMP; NAT+REL recovery reopening selection.
 
 ---
 

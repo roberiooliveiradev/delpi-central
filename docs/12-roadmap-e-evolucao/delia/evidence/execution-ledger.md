@@ -5583,3 +5583,5 @@ DOC=229. HEAD_REANCHOR=`7d5b3667fd`. PRODUCT_CODE_CHANGED=NO. PRODUCTION_DEPLOY=
 FINDINGS: ≥20 LLM instruction purposes; fragmentation PARTIALLY_PROVEN (per-sub turn_goal/select before owner READ); doc226 “semantic once” DRIFT_PARTIAL vs runtime; RC-A preserve_material_dependency live OK; RC-B/C/REF05 OPEN; E01 SIPOC client timeout~90s; E06 NON_GROUNDED honest.
 HYPOTHESIS_FRAGMENTATION=PARTIALLY_PROVEN. RECOMMENDED=OPTION_B consolidate semantic decisions (no implement). PHASE_ADVANCE=NONE.
 NEXT=coordination authorize R1–R5 roadmap in doc229 (sticky typed goal / RC-B / RC-C / REF05 / admission budget).
+
+FOLLOW-UP (same day): call-graph/LLM inventories confirmed FAST/OPERATIONAL/REASONING are **telemetry only** (no stage skip); 21 orchestration purposes + `delia.interaction.turn` fallback; redundancy ADM↔GRP, GOAL×N, ARGS↔CAND_ARGS, CMP↔EVID_COMP. Doc 229 amended; no product code change.
