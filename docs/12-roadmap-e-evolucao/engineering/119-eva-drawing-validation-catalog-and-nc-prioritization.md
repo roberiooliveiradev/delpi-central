@@ -704,3 +704,34 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **Limitações residuais (declaradas):** códigos `token_only` contam presença, não relação; `qty` OCR é ruído (INCONCLUSIVE sempre); `unreliable_boundary`/`tokens_inferred` marcam cobertura parcial; distância-2 OCR ambígua pode permanecer como candidato (escolha por não ocultar divergências reais); hierarquia pai-filho fina permanece `INCONCLUSIVE` até evidência verificável de associação (fora de escopo inferir mais).
 
 **Estado: `REGRESSION_FIXED / PROD_DEPLOYED (1fee6a996e) / VAL01_CORRECTNESS=PROVEN nos 7 oficiais / E2E_MCP_CHATGPT_PENDING_RETEST` — próxima validação pelo consumidor ChatGPT com as mesmas perguntas.**
+
+## 24. Ampliação de cobertura estrutural — multi-coluna, retry por faixas, âncoras de linha (DEC-VAL-026 — 2026-11-03)
+
+**SHAs:** feat `78d95e34f2` + fix `5ca883007d` — publicados e implantados em `srv-api` (`delpi-engineering-api` healthy, `_ocr_in_strips` no runtime, MCP público 401 fail-closed).
+
+**Correções implementadas (genéricas, sem hardcode de produto/código):**
+
+1. **OCR em faixas horizontais** (`visual_benchmark._ocr_in_strips`): página que falha por recurso (MemoryError/**RuntimeError** — PaddleOCR encapsula OOM) é retentada em 3 faixas sobrepostas no mesmo DPI (~1/3 da memória, resolução preservada) antes do fallback `dpi=110`. `RuntimeError` adicionado a `_is_resource_error` (regressão observada no runtime).
+2. **Detecção multi-coluna** (`understanding._detect_component_table`): união de todas as colunas com ≥3 códigos (antes só a maior) — layouts com coluna de conjunto (PI/PA) + coluna de componentes agora ancoram linhas nos dois eixos.
+3. **`keep_cols` estendido**: colunas tipadas `component_code` por conteúdo mantêm-se mesmo com gap >15% — células de colunas afastadas não são mais descartadas.
+4. **Associação pai-filho por âncora de linha** (`bom_structure_comparator`): código na mesma linha de UMA âncora PI/PA → `parent_source="row_group"` com `parent_verified=True` (matching exato); múltiplas âncoras → ambíguo não verificado; carry-over permanece `pi_group_inference`. `PARENT_RELATION_MISMATCH` elegível **apenas** para `set_anchor` (item tipado como raiz na coluna de conjuntos × nested na BOM) — `row_group` registra `unverified_parent_relations` porque a linha extraída pode fundir linhas visuais de grupos distintos.
+
+**Matriz antes × depois (runtime prod, PDF+BOM reais — reval_out4):**
+
+| Produto | Antes (baseline §23) | Depois | Veredito |
+|---|---|---|---|
+| 90263520 | `DRAWING_ONLY 50213064` | idem; codes 15→21; `unverified_rel:3`; matched 18/18 | **BASELINE PRESERVED** |
+| 90264302 | INCONCLUSIVE 6/6 | idem; codes 4→7 | coverage ↑ |
+| 90264161 | mismatch não confirmado | `PARENT_RELATION_MISMATCH 50090001` `confidence=column_anchor` — evidência de coluna real | **CANDIDATE FORTIFIED** |
+| 90261606 | INCONCLUSIVE 11/12 | idem; codes 9→12 | coverage ↑ |
+| 90263572 | pág.2 lida via dpi-110 | pág.2 lida via **faixas** (`retry ok`); 0 falsos; 1 par ambíguo; 49 não verificadas | **REGRESSION FIXED + METHOD UPGRADED** |
+| 90264178 | codes 30, 6 relações não verificadas | codes **41** (coluna de conjuntos detectada); 38/40 matched; `unverified_rel:4` | **COVERAGE ↑ + HIERARCHY ↓ FPs** |
+| 90480120 | 10/10 matched | idem; ambas as páginas via retry | **PRESERVED** |
+
+**BOM_ONLY positivo (AC-04):** cenário controlado no comparador — BOM com 9 itens, desenho cobre 8 com rendimento → `BOM_ONLY` emitido para o ausente (`test_bom_only_when_full_coverage`); gate bloqueia com rendimento baixo (`test_bom_only_blocked_by_low_extraction_yield`, 56×7 → 0 falsos). Em produção, nenhum dos 7 desenhos atinge cobertura integral → corretamente nenhum `BOM_ONLY` emitido.
+
+**Testes:** 21 testes do comparador (âncora única verificada, multi-âncora ambígua, set_anchor→mismatch candidato, gate de rendimento, par ambíguo, excesso) — todos PASS; suíte **725 passed** / 1 falha ambiental pré-existente R7.
+
+**Limitações residuais:** `unreliable_boundary` (tokens_inferred) persiste em 90264178/90264161; `token_only` codes contam presença apenas; `qty` sempre INCONCLUSIVE; `row_group` não promove a finding (linha extraída pode fundir grupos) — evidência preservada em `unverified_parent_relations`; cobertura integral de hierarquia continua `INCONCLUSIVE` onde a estrutura da tabela não é verificável.
+
+**Estado: `COVERAGE_EXTENDED / PROD_DEPLOYED (5ca883007d) / BASELINE_7_PRESERVED / E2E_MCP_CHATGPT_READY_FOR_RETEST`**
