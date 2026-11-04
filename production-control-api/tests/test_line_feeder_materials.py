@@ -69,6 +69,7 @@ def test_partial_coverage_uses_full_open_commitment() -> None:
             sequence_position=1,
             covered_qty=Decimal("40"),
             pending_qty=Decimal("100"),
+            pa_product_code="90262910",
         )
     ]
     commitments = {
@@ -90,6 +91,7 @@ def test_partial_coverage_uses_full_open_commitment() -> None:
     assert origin.open_qty == 100.0
     assert origin.fraction == 0.4
     assert origin.demand_basis == "open_commitment"
+    assert origin.pa_product_code == "90262910"
     items = apply_factory_stock(
         buckets,
         factory_balances={"MP1": 70},
@@ -98,6 +100,7 @@ def test_partial_coverage_uses_full_open_commitment() -> None:
     )
     assert items[0]["required_qty"] == 100.0
     assert items[0]["to_collect_qty"] == 30.0
+    assert items[0]["origins"][0]["pa_product_code"] == "90262910"
 
 
 def test_stock_partial_and_repeat_same_result() -> None:
@@ -606,6 +609,7 @@ def _op(work_center: str, order: str) -> dict[str, Any]:
         "production_order": order,
         "operation_code": "01",
         "product_code": f"P-{order}",
+        "pa_product_code": f"PA-{order}",
         "unit": "PC",
         "pieces_conversion_factor": 1.0,
     }
@@ -1168,6 +1172,7 @@ def test_materials_partial_horizon_uses_full_sd4_and_skips_later_ops() -> None:
     origins = data["materials"][0]["origins"]
     assert len(origins) == 1
     assert origins[0]["production_order"] == "OP1"
+    assert origins[0]["pa_product_code"] == "PA-OP1"
     assert origins[0]["required_qty"] == 100.0
     assert origins[0]["fraction"] == pytest.approx(0.2)
     assert origins[0]["demand_basis"] == "open_commitment"

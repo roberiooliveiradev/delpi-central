@@ -1115,6 +1115,8 @@ export type LineFeederMaterialOrigin = {
   fraction: number;
   required_qty: number;
   demand_basis?: "open_commitment" | string;
+  /** Código do PA da OP de origem (aditivo; respostas legadas podem omitir). */
+  pa_product_code?: string | null;
 };
 
 export type LineFeederMaterialItem = {

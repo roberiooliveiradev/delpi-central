@@ -490,6 +490,7 @@ class LineFeederService:
                         sequence_position=int(op.get("sequence_position") or 0),
                         covered_qty=covered,
                         pending_qty=pending,
+                        pa_product_code=_text(op.get("pa_product_code")),
                     )
                 )
         horizon_summary["covered_operation_count"] = len(covered_ops)
@@ -814,6 +815,7 @@ class LineFeederService:
             pieces_conversion_factor=pieces_conversion_factor,
             standard_time_quality=standard_time_quality,
             standard_time_source=standard_time_source,
+            pa_product_code=_text(op.get("pa_product_code")),
         )
 
     def _allocate_work_center_progressively(

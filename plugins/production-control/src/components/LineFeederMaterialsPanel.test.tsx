@@ -109,6 +109,7 @@ function basePayload(
             open_qty: 50,
             fraction: 1,
             required_qty: 50,
+            pa_product_code: "90262910",
           },
           {
             work_center: "CT-B",
@@ -121,6 +122,7 @@ function basePayload(
             open_qty: 50,
             fraction: 1,
             required_qty: 50,
+            pa_product_code: "90262911",
           },
         ],
       },
@@ -155,8 +157,9 @@ describe("LineFeederMaterialsPanel", () => {
     );
     expect(screen.getByText(/Coletar:.*60/i)).toBeTruthy();
     fireEvent.click(screen.getByText(/MP-001/i).closest("button")!);
-    expect(screen.getByText(/CT-A · OP OP1/)).toBeTruthy();
-    expect(screen.getByText(/CT-B · OP OP2/)).toBeTruthy();
+    expect(screen.getByText(/CT-A · OP OP1 · 90262910/)).toBeTruthy();
+    expect(screen.getByText(/CT-B · OP OP2 · 90262911/)).toBeTruthy();
+    expect(screen.queryByText(/Op\./)).toBeNull();
   });
 
   it("não apresenta lista operacional quando operational_list_safe=false", () => {

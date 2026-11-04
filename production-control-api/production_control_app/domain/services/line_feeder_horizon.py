@@ -108,6 +108,7 @@ class HorizonOperationInput:
     pieces_conversion_factor: Decimal | None
     standard_time_quality: str
     standard_time_source: str
+    pa_product_code: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -137,6 +138,7 @@ class HorizonOperationAllocation:
     standard_time_quality: str
     standard_time_source: str
     balance_state: str
+    pa_product_code: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -316,6 +318,7 @@ def allocate_work_center_horizon(
                 standard_time_quality=item.standard_time_quality,
                 standard_time_source=item.standard_time_source,
                 balance_state=item.balance_state,
+                pa_product_code=item.pa_product_code,
             )
         )
 
@@ -411,6 +414,7 @@ def work_center_result_payload(result: WorkCenterHorizonResult) -> dict[str, Any
                 "production_order": op.production_order,
                 "operation_code": op.operation_code,
                 "product_code": op.product_code,
+                "pa_product_code": op.pa_product_code or None,
                 "unit": op.unit,
                 "coverage": op.coverage,
                 "pending_qty": op.pending_qty,

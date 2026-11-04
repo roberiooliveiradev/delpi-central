@@ -342,7 +342,7 @@ function OriginsDetail({
               {texts.originRow(
                 origin.work_center,
                 origin.production_order,
-                origin.operation_code,
+                (origin.pa_product_code ?? "").trim(),
               )}
               {" — "}
               {qty(origin.required_qty, item.unit)}
