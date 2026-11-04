@@ -823,6 +823,9 @@ async def _analyze_product_drawing(
         )
         if created:
             _ctx_snapshot = ctx
+            _mcp_context = context  # contexto MCP cru — exigido por
+            # _produce_drawing_understanding (ele resolve
+            # _source_context internamente sobre .user/.authorization)
 
             async def _run_job() -> None:
                 try:
@@ -833,7 +836,7 @@ async def _analyze_product_drawing(
                         tokens,
                         pdf_bytes,
                     ) = await _produce_drawing_understanding(
-                        _ctx_snapshot, code
+                        _mcp_context, code
                     )
                     prog = None
                     if params.get("progressive_investigation") or True:
