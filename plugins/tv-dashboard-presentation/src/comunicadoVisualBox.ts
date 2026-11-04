@@ -243,14 +243,8 @@ export function resolveVisualBoxContentLayoutStyle(
   }
 
   if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-  const fillForContrast =
-    style.fill && style.fill !== "transparent"
-      ? style.fill
-      : style.backgroundColor && style.backgroundColor !== "transparent"
-        ? style.backgroundColor
-        : profile.mode === "shape"
-          ? DECK_SHAPE_DEFAULTS.fill
-          : "#ffffff";
+  /* Contraste contra a superfície efetivamente pintada — não um default não pintado. */
+  const fillForContrast = resolveVisualBoxChrome(block).fill;
   if (!applyColorPaintToCss(css, style.colorPaint)) {
     const paintColor = resolvePaintTextColor(style.color, fillForContrast, {
       unsetIsAutomatic: false,

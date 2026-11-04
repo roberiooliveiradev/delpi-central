@@ -114,18 +114,32 @@ describe("shape colorUtils", () => {
     expect(resolveAutomaticTextColor("transparent")).toBe("#000000");
   });
 
-  it("corrige branco ilegível em fundo claro no paint", () => {
+  it("detecta combinações ilegíveis, mas não substitui cor explícita no paint", () => {
     expect(hasIllegibleTextContrast("#ffffff", "#ffffff")).toBe(true);
     expect(hasIllegibleTextContrast("#0f172a", "#ffffff")).toBe(false);
-    expect(resolvePaintTextColor("#ffffff", "#f8fafc")).toBe("#000000");
+    expect(hasIllegibleTextContrast("#000000", "#0f172a")).toBe(true);
+    /* Escolha explícita do usuário manda — contraste não a sobrescreve. */
+    expect(resolvePaintTextColor("#ffffff", "#f8fafc")).toBe("#ffffff");
+    expect(resolvePaintTextColor("#ffffff", "#0f172a")).toBe("#ffffff");
+    expect(resolvePaintTextColor("#000000", "#089bdb")).toBe("#000000");
+    expect(resolvePaintTextColor("#002b55", "#0f172a")).toBe("#002b55");
+    expect(resolvePaintTextColor("#800000", "#0f172a")).toBe("#800000");
+    /* Automático e ausente seguem resolvidos por contraste. */
     expect(resolvePaintTextColor("auto", "#0f172a")).toBe("#ffffff");
+    expect(resolvePaintTextColor("auto", "#ffffff")).toBe("#000000");
+    expect(resolvePaintTextColor("auto", "transparent")).toBe("#000000");
+    expect(resolvePaintTextColor(undefined, "#0f172a")).toBe("#ffffff");
+    expect(
+      resolvePaintTextColor(undefined, "#0f172a", { unsetIsAutomatic: false }),
+    ).toBeUndefined();
   });
 
   it("foreground de bloco complexo usa fundo do bloco, não tema do host", () => {
     expect(resolveComplexBlockForeground(AUTOMATIC_TEXT_COLOR, "#ffffff")).toBe("#000000");
     expect(resolveComplexBlockForeground("auto", "#0f172a")).toBe("#ffffff");
-    expect(resolveComplexBlockForeground("#e2e8f0", "#ffffff")).toBe("#000000");
+    expect(resolveComplexBlockForeground("#e2e8f0", "#ffffff")).toBe("#e2e8f0");
     expect(resolveComplexBlockForeground("#0f172a", "#ffffff")).toBe("#0f172a");
+    expect(resolveComplexBlockForeground("#000000", "#0f172a")).toBe("#000000");
     expect(
       resolveComplexBlockForeground("auto", "#ffffff", { role: "muted" }),
     ).toBe("#475569");

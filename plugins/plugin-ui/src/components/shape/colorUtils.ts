@@ -384,7 +384,9 @@ export function resolveColorTriggerPreviewMode(
 
 /**
  * Cor efetiva para paint: explícita, ou Automático (contraste com o fundo).
- * `unsetIsAutomatic` — quando true, ausência de cor também resolve por contraste.
+ * Cor explícita nunca é substituída por heurística de contraste — a escolha do
+ * usuário (picker grava `colorPaint`) manda. `unsetIsAutomatic` — quando true,
+ * ausência de cor também resolve por contraste.
  */
 export function resolvePaintTextColor(
   color: string | null | undefined,
@@ -393,9 +395,6 @@ export function resolvePaintTextColor(
 ): string | undefined {
   const unsetIsAutomatic = options?.unsetIsAutomatic ?? true;
   if (color != null && color.trim() !== "" && !isAutomaticTextColor(color)) {
-    if (hasIllegibleTextContrast(color, background)) {
-      return resolveAutomaticTextColor(background);
-    }
     return color;
   }
   if (!unsetIsAutomatic && (color == null || color.trim() === "")) {
@@ -440,7 +439,7 @@ export function resolveComplexBlockForeground(
   const auto = resolveAutomaticTextColor(contrastBackground);
   const muted =
     options?.mutedColor ?? (auto === "#000000" ? "#475569" : "#94a3b8");
-  if (isAutomaticTextColor(explicit) || hasIllegibleTextContrast(explicit, contrastBackground)) {
+  if (isAutomaticTextColor(explicit)) {
     return role === "emphasis" ? auto : muted;
   }
   const trimmed = explicit?.trim();

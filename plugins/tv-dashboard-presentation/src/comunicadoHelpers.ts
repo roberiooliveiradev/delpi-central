@@ -184,6 +184,7 @@ import {
   comunicadoVerticalAlignToJustifyContent,
   defaultVerticalAlignForVisualBox,
   isComunicadoVisualBoxBlock,
+  resolveVisualBoxChrome,
   resolveVisualBoxProfile,
 } from "./comunicadoVisualBox";
 import { sanitizeTextBindingForPersist } from "./textBindingOwner";
@@ -1969,7 +1970,7 @@ export function comunicadoTextInnerStyle(
   if (style.baselineShift === "sub") css.verticalAlign = "sub";
   if (style.baselineShift === "super") css.verticalAlign = "super";
   if (!applyColorPaintToCss(css, style.colorPaint)) {
-    const paintColor = resolvePaintTextColor(style.color, style.backgroundColor ?? style.fill ?? "#ffffff", {
+    const paintColor = resolvePaintTextColor(style.color, resolveVisualBoxChrome(block).fill, {
       unsetIsAutomatic: false,
     });
     if (paintColor) css.color = paintColor;
@@ -2088,7 +2089,7 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
       if (!applyColorPaintToCss(css, style.colorPaint)) {
         const textPaint = resolvePaintTextColor(
           style.color,
-          style.backgroundColor ?? style.fill ?? "#ffffff",
+          resolveVisualBoxChrome(block).fill,
           { unsetIsAutomatic: false },
         );
         if (textPaint) css.color = textPaint;
@@ -2103,7 +2104,7 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
 
     if (block.content) {
       if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-      const shapeFill = style.fill ?? DECK_SHAPE_DEFAULTS.fill;
+      const shapeFill = resolveVisualBoxChrome(block).fill;
       if (!applyColorPaintToCss(css, style.colorPaint)) {
         css.color = resolvePaintTextColor(style.color, shapeFill) ?? DECK_COLOR_TEXT_STRONG;
       }

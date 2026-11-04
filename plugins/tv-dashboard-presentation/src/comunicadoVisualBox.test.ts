@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createBlock, createShapeBlock } from "./comunicadoHelpers";
+import {
+  blockCssStyle,
+  comunicadoTextInnerStyle,
+  createBlock,
+  createShapeBlock,
+} from "./comunicadoHelpers";
 import {
   isComunicadoVisualBoxBlock,
   resolveVisualBoxChrome,
@@ -214,5 +219,71 @@ describe("comunicadoVisualBox", () => {
     const block = { ...createBlock("text", "X"), shape: "ellipse" as const };
     expect(resolveVisualBoxShapeKind(block)).toBe("ellipse");
     expect(resolveVisualBoxChrome(block).shapeKind).toBe("ellipse");
+  });
+});
+
+describe("cor explícita de texto — TV-TEXT-COLOR-EXPLICIT-PAINT-FIX", () => {
+  it("cor escura explícita permanece sobre fill escuro (todas as camadas)", () => {
+    for (const color of ["#000000", "#002B55", "#800000"]) {
+      for (const fill of ["#089bdb", "#0f172a"]) {
+        const shape = {
+          ...createShapeBlock("rounded-rect"),
+          content: "Meta mensal: 0,10%",
+          style: { ...createShapeBlock("rounded-rect").style, color, fill },
+        };
+        expect(resolveVisualBoxContentLayoutStyle(shape).color).toBe(color);
+        expect(blockCssStyle(shape).color).toBe(color);
+      }
+    }
+  });
+
+  it("branco explícito permanece sobre fundo claro", () => {
+    const block = createBlock("text", "Meta mensal: 0,10%");
+    block.style = { ...block.style, color: "#ffffff" };
+    expect(resolveVisualBoxContentLayoutStyle(block).color).toBe("#ffffff");
+    expect(comunicadoTextInnerStyle(block).color).toBe("#ffffff");
+  });
+
+  it("forma transparente não usa accent não pintado como fundo de contraste", () => {
+    const shape = {
+      ...createShapeBlock("rounded-rect"),
+      content: "X",
+      style: { ...createShapeBlock("rounded-rect").style, color: "auto", fill: "transparent" },
+    };
+    const layout = resolveVisualBoxContentLayoutStyle(shape);
+    /* transparente ⇒ automático assume fundo claro ⇒ preto (paridade com texto e camada interna). */
+    expect(layout.color).toBe("#000000");
+    const explicit = {
+      ...shape,
+      style: { ...shape.style, color: "#000000" },
+    };
+    expect(resolveVisualBoxContentLayoutStyle(explicit).color).toBe("#000000");
+    expect(comunicadoTextInnerStyle({ ...explicit, type: "text" } as never).color).toBe("#000000");
+  });
+
+  it("automático segue resolvendo por contraste no fundo pintado", () => {
+    const dark = {
+      ...createShapeBlock("rounded-rect"),
+      content: "X",
+      style: { ...createShapeBlock("rounded-rect").style, color: "auto", fill: "#0f172a" },
+    };
+    expect(resolveVisualBoxContentLayoutStyle(dark).color).toBe("#ffffff");
+    const light = createBlock("text", "X");
+    light.style = { ...light.style, color: "auto" };
+    expect(resolveVisualBoxContentLayoutStyle(light).color).toBe("#000000");
+  });
+
+  it("automático contrasta com o fill pintado, não com backgroundColor divergente (todas as camadas)", () => {
+    /* fill (pintado) escuro + backgroundColor claro ⇒ branco nas 3 camadas. */
+    const block = createBlock("text", "X");
+    block.style = {
+      ...block.style,
+      color: "auto",
+      fill: "#0f172a",
+      backgroundColor: "#ffffff",
+    };
+    expect(resolveVisualBoxContentLayoutStyle(block).color).toBe("#ffffff");
+    expect(blockCssStyle(block).color).toBe("#ffffff");
+    expect(comunicadoTextInnerStyle(block).color).toBe("#ffffff");
   });
 });
