@@ -1,0 +1,65 @@
+# 228 — DÉLIA · E4 R6 — canonical entity-reference binding and complete functional outcome
+
+**Date:** 2026-11-03. **INPUT_SHA:** `af545421b9` (verified on main in coordination read). **DECISION_ID:** `DELIA-C3-E4-R6-ENTITY-REFERENCE-BINDING-DECISION-01`. **TASK_ID:** `DELIA-C3-E4-R6-CANONICAL-ENTITY-BINDING-AND-FUNCTIONAL-CLOSURE-01`. **Status:** `ARCHITECTURE_DIRECTION_APPROVED_WITH_GATES`; implementation unexecuted, no production deployment.
+
+## 1. Reanchor / direct code proof
+
+Read latest HEAD/status, .cursor rules, canonical 16→50→17→49→51→52→21→20→25, docs 02/24/42, ADR58, 103, 187–227, ledger. Phase/CP/NEXT are from actual HEAD, not this artifact. Concurrent unrelated repository changes must remain untouched.
+
+Verified existing domain models at input SHA:
+- `app/domain/evidence/model.py`: `EntityRef(entity_type, entity_id, source_system, label?, revision?)`, `EvidenceRef(evidence_id)`, `SourceRef(source_id, source_system, provider_name?, revision?, observed_at?)`. **Their documentation explicitly denies that refs are business authority or access grants.**
+- `app/domain/interaction/model.py`: `SessionContext.entity_refs/evidence_refs/source_refs` and `InteractionTurn.evidence_refs/source_refs`; contextual refs are descriptive, not resolutions. Session is not source of truth/permission.
+- `app/domain/planning/model.py`: existing `PlanStep.required_evidence_refs`, `PlanCandidate.evidence_refs/source_refs`.
+- At R5, `_read_obligations_from_goal` regex-based numeric target builder was removed (git verified). `_TurnGoal` still uses semantic `business_subject` text without direct authoritative entity resolution. There is no demonstrated complete runtime passage from cross-turn scoped refs to live authorized target resolution. **Existing-equivalent YES for core reference types; live binding path PARTIAL/TO_INVENTORY.**
+- This is NOT permission to declare `SessionContext.entity_refs` already populated correctly by production or to turn `business_subject` into an authoritative ref. Verify actual producers/consumers and transport request trust.
+
+## 2. Architecture decision: REUSE canonical refs, don't create new truth
+
+**EXISTING_EQUIVALENT=YES** for `EntityRef`/`EvidenceRef`/`SourceRef`/`SessionContext`; **REUSE_DECISION=REUSE/EXTEND` only bounded application binding.** New `TargetRef`, memory store, context engine, planner, entity matcher, registry, product-specific builder or migration is **NOT APPROVED**. Adding a small internal resolved-target collection or goal field is conditional on proving current consumers cannot transport the references; prefer existing DTO/port with explicit semantic distinction between candidates, validated reference descriptors and owner-backed results. Never claim an EntityRef itself proves an actual current entity or permission.
+
+**Three trust stages (required):**
+1. `RequestTargetCandidate` (conceptual, reuse existing fields where possible): literal/semantic referent from CURRENT user text or scoped conversation as untrusted candidate, preserving origin/turn order. Model may propose type/intent/relation. No regex business-ID inference, numerical arity assumption or owner identity claim.
+2. `ScopedEntityRef` (conceptual existing `EntityRef` + proven session/turn binding): a descriptive pointer supplied by the legitimate interaction/owner evidence path. It is NOT authorization and may be stale or cross-user. No hallucinated refs from model. If ambiguous or unavailable, clarify or run legitimate capability discovery.
+3. `ResolvedAuthorizedTarget` (conceptual resolved state **not a new Domain authority/type by default**): target descriptor confirmed by live capability/Domain result and current Core/Domain auth; carry owner, source, scope, evidence/provenance and completeness. Only this may seed source-specific factual evidence and comparison. Re-check on use; no chat text/LLM output as FACT.
+
+**Owner chain:** Interaction Application supplies bounded conversation/session references already legitimately obtained; goal-understanding LLM proposes semantic operation and referent relationships only; Application binds proposed referents to scoped existing EntityRef if unambiguous; live Core/Domain/MCP authority validates access and factual target, existing subobjective/graph path carries result; Evidence verifier/Outcome determines answer; Pydantic AI handles typed proposal transport, LangGraph state/fan-in where proven. `EntityRef` is not capability authorization, `SourceRef` is not source authority, and `EvidenceRef` is not live evidence without dereference.
+
+**No magical zero-LLM interpretation:** implicit `as duas` requires relevant, correctly ordered scoped references from earlier turns plus an intentional semantic relation proposal. When no legitimate refs exist, the deterministic runtime must not infer entities from prior prose; ask minimal clarification or authorized rediscovery, without blocking direct single-read. When a validated comparison goal has two valid scoped targets, avoid another unnecessary free-form decomposition and create only required authorized READ obligations using existing governed capability/arguments contract — not English/Portuguese hardcoded product query strings.
+
+**Comparison goal robustness:** on Qwen3 `comparison_requested=False` but `goal_class=compare` or independently consistent typed proposal, follow existing semantic consistency/validation logic, do not introduce lexical keyword override. Correct contradictions with a bounded second semantic decision only when justified by tests and existing budget, never blanket retries. Persist no chain of thought.
+
+## 3. Contract-first bounded execution sequence
+
+**S0 reanchor + consumers:** inspect concrete producers of SessionContext / InteractionTurn / ConversationContextTurn, goal proposal/consumer, evidence results, authorized DAVI candidate tokens, LangGraph state. Trace one REAL A01→A02→A03 conversation to find where scoped refs are/aren't populated. Record inventory `YES/PARTIAL/NO`, do not infer runtime existence solely from types.
+
+**S1 RED:** tests for two distinct refs across turns; same code/different owners; nonnumeric IDs; user correction; ambiguous `as duas` with 3+ prior entities; stale evidence; cross-session spoof; model proposal contradicting scoped refs; false `comparison_requested`; source count3 with wrong target; missing owner permission; nonexistent target; 5+ targets with no silent drop. Keep original read flows.
+
+**S2 minimal binding:** use canonical EntityRef in existing bounded context/goal application contract; connect actual owner-backed structured evidence to future scoped references. A turn's assistant text, cached UI and model output alone do not create authoritative references. Use supported typed source/record refs and current request context only where proven. Adapt existing `_TurnGoal` or application request DTO when necessary; if breaking public shape/retention/authorization boundary, STOP with specific ADR/contract approval rather than silent change. Do not create a new generic reference service.
+
+**S3 fulfil goal without needless decomposition:** once goal is validated and references are unambiguous, use existing subobjective tracker's typed needs and owner capability catalog to fulfill authorized READs. A model's free text is not an executable endpoint/selector. Reuse existing candidate selection/Domain API read and graph fan-in. No hardcoded product-specific instructions; no new planner.
+
+**S4 full comparison correctness:** ensure requested target coverage is exact, independent of `sources>=2`; preserve EntityRef owners/source systems/scope/occurrence/cardinality and distinct codes across owners. Compare full records, hierarchy and units with deterministic verifier; false-common `10030012` must be rejected, true-common `10030015` included; partial/denied outcomes truthful, no model-generated factual prose (ADR58).
+
+**S5 controlled model A/B:** repeat same-stage Qwen3 4B with same schema/prompt/context/temperature and recorded config, before/after binding corrections. If remaining model-origin failure persists, benchmark a larger model ONLY if already available and authorized locally as doc226/227 permits; log presence/config/quantization/latency p50/p95/real token usage/accuracy and cost envelope. No automatic model cutover, no generic timeout/retry inflation.
+
+**S6 real acceptance:** repeat local real Keycloak/Core + DAVI/Domain + Ollama/Pydantic AI/LangGraph on final SHA: single-turn two-structure comparison, same-session A01→A02→A03 and correction, sibling case with unrelated entity type, ambiguous and unknown refs, AuthZ/revoked, stale prior evidence, concurrency/cancel; independent oracle on complete owner evidence, client-visible PT-BR grounded response reliably within gateway, no 504. Repeat minimum 5 original and 5 sibling unless genuine environment gate, and report any failures. Unit tests alone no acceptance.
+
+**S7 regress/cleanup:** full relevant backend/adapter/graph/interaction/CRI/evidence/security tests and external outcomes on final SHA/config; prove code removed or simplified and no new parallel registry/planner/stores; update ledger and execution report; safe push main preserving concurrent modifications.
+
+## 4. Measurable terminal gates
+
+- `REF01` current user/session referent relationship correctly resolves to existing scoped EntityRefs, including correction, multiple entities and ambiguity.
+- `REF02` Core/Domain validation authoritatively binds target at READ time; no model/cached text/SessionContext ref grants access.
+- `REF03` existing contracts reused, no regex/product-specific builder or duplicate `TargetRef` service.
+- `REF04` correct authorized READ obligations with exact source identities, no needless fourth compare subgoal; unrelated legitimate owner analytics remain allowed.
+- `REF05` verifier compares EXACT intended sources, not just 2/3 collected; deterministic full oracle.
+- `REF06` Qwen3 controlled stage reliability before/after and conditional model A/B are recorded.
+- `REF07` client sees accurate, grounded, complete PT-BR comparison for single-turn and same-session in repeated final-SHA runs; no 504.
+- `REF08` security (AuthZ, JWT delegation, isolation, injection, owner denial), concurrency, deadline, cancellation constraints and relevant regressions PASS on final SHA.
+- `G04/G05/G07/G12` all PASS as doc221; otherwise `REWORK/INCONCLUSIVE/BLOCKED_WITH_EVIDENCE`.
+
+**Approval:** Bounded extension of existing Application/context contracts with canonical EntityRef is approved as long as public contract, ownership, retention, frozen policies and security are unchanged. If actual consumer inventory shows missing legitimate persisted/session reference binding requiring new public schema/store/retention policy, return specific `ARCHITECTURE_DECISION_REQUIRED`, not a fabricated new type. **No production deployment or phase advance.**
+
+## 5. Devin master instruction
+
+**TASK_ID=DELIA-C3-E4-R6-CANONICAL-ENTITY-BINDING-AND-FUNCTIONAL-CLOSURE-01**. Reanchor main and all authorities. Execute doc228 S0–S7 as one authorized program. Before claiming missing reference capability, prove existing EntityRef/EvidenceRef/SourceRef/SessionContext producers and consumers. Bind scoped session references into semantic-goal handling without turning history/model into FACT. Validate/revalidate targets through live Core/Domain-capability owner; use existing graph to fulfill minimal authorized READ obligations without regex or product-hardcoded prompt building. Ensure comparison matches exact requested evidence and deterministic oracle, repeated same-session and single-turn real Qwen3+DAVI E2E with client-visible grounded responses and bounded latency. If 4B is still intrinsically unstable after correct reference binding, run already-authorized local available larger-model A/B; no cutover. RED→GREEN, full regression, adversarial/sibling, evidence, report, ledger, safe main push. Do not stop after diagnosis/first GREEN; report functional candidate only if REF01–REF08/G04/G05/G07/G12 pass; otherwise precise authority or infrastructure blocker. Production deploy not authorized.
