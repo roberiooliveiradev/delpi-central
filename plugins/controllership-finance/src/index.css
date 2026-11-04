@@ -171,12 +171,29 @@
   gap: var(--cf-grid-gap, 16px);
 }
 
+/* CF-PROC0072-RW01 — com base mínima de ~560px, as ações caem para a
+   linha seguinte quando não couberem ao lado dos campos (medida real:
+   ações ~710px comprimiam a faixa de filtros a ~460px). */
 .dashboard-controllership-finance .cf-hero-controls > .cf-hero-filters {
-  flex: 1 1 320px;
+  flex: 1 1 560px;
+}
+
+/* O form/fieldset filho direto ocupa toda a largura do painel — sem
+   isso ele ficava no tamanho intrínseco (~260px) e o grid do
+   FiltersRow (auto-fit minmax 11.5rem) colapsava em uma coluna. */
+.dashboard-controllership-finance .cf-hero-filters > form,
+.dashboard-controllership-finance .cf-hero-filters > fieldset {
+  flex: 1 1 100%;
 }
 
 .dashboard-controllership-finance .cf-hero-controls > .cf-settlements-actions {
   margin-left: auto;
+}
+
+/* R09 — filtro único de filial mantém largura proporcional dentro do
+   CfSectionCard, sem esticar pela faixa inteira. */
+.dashboard-controllership-finance .cf-r09-filter {
+  max-width: 20rem;
 }
 
 /* CF-UX-034 — famílias funcionais do catálogo de relatórios. */

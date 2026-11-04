@@ -85,12 +85,14 @@ export function BillingModBreakdownPage({
       </CfStateBanner>
 
       <CfSectionCard title="Filtros">
-        <CfSelectField
+        <div className="cf-r09-filter">
+          <CfSelectField
           label="Filial"
           value={branch}
           options={BRANCH_OPTIONS}
           onChange={(value) => setBranch(value)}
-        />
+          />
+        </div>
       </CfSectionCard>
 
       {state === null ? (
