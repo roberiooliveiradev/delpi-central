@@ -74,3 +74,14 @@ Runtime de diagnóstico em `srv-api` (código patcheado via overlay `/tmp/eva_ap
 | `90264030` | `DIVERGENCES_CANDIDATES` — falso `PARENT_RELATION_MISMATCH 50225512` | `INCONCLUSIVE`, `divergences: 0`; `10110676→50225512` em `unverified_parent_relations` | **PASS** — AC-03/AC-04 |
 
 Demais 11 produtos: `TEST_NOT_RUN` na rodada patched (bateria integral condicionada ao deploy canônico com worker atualizado — pages cap/sample/sha efetivos). Cobertura multipágina: `tables_by_page`/`pages_not_processed`/`evidence_truncated` agora declarados; `90264017` manteve `complete_for_requested_scope=false` (14p não integrais).
+
+## Log de execução — 2026-11-04 (DEC-VAL-029 produção, SHA `6876f6f535`)
+
+Bateria em runtime produtivo `srv-api` deployado (worker com caps novos). 11/13 produtos: `divergences: 0`, `INCONCLUSIVE` honesto, sem falsos positivos nem `BOM_ONLY` fabricado. Os dois documentos extensos:
+
+| Produto | Baseline | Produção `6876f6f535` | Resultado |
+|---|---|---|---|
+| `90264017` (14p) | `DRAWING_ONLY 10080535` FP, 2/14 páginas | **14/14 páginas**, 8 tabelas, `drawing_only: 0`, `divergences: 0`, `contextual_codes: 2` | **PASS** — AC-01/02/05 |
+| `90264030` (13p) | `PARENT_RELATION_MISMATCH 50225512` FP, 3/13 | **13/13 páginas**, 11 tabelas, `mismatches: 0`; `DRAWING_ONLY 10080535`×4 p9-12 + `10081686` p7 (linhas tipadas, candidatos reais `PENDING_HUMAN_REVIEW`); `BOM_ONLY 10080438`×4+`10080292` (ausência declarada apenas com cobertura integral) | **PASS** — AC-03/04/05; candidatos pendentes de revisão humana |
+
+`DRAWING_ONLY`/`BOM_ONLY` emitidos são candidatos com proveniência de página — aprovação final cabe à Engenharia. `unverified_parent_relations` preserva evidências (ex.: `10110676→50225512` ≠ BOM `70260010`).

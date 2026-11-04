@@ -790,3 +790,13 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **Limitações residuais conhecidas:** `revision_history` de `90264017` p2 não classificada como `revision_history` (labels) — o código histórico caiu em `title_block`, ainda assim não comparável (resultado correto por região não estrutural); cobertura integral das 14/13 páginas depende do deploy (worker com caps novos); métricas de generalização exigem a bateria completa pós-deploy.
 
 **Estado:** `IMPLEMENTATION=PROVEN` local + validação real-PDF em runtime srv-api (overlay de diagnóstico, sem mutação do serviço); `REGRESSION_13_PDFS=PENDING` (reexecução completa pós-deploy); `PROD_DEPLOYED=PENDING`; `MCP_RETEST=PENDING`; `PUSH=OWNER_BLOCKED` (SSH GitHub `publickey` negado).
+
+## 29. DEC-VAL-029 — deploy produtivo e evidências finais (2026-11-04)
+
+**Publicado e deployado:** push `main` até `6876f6f535` (SSH via gpg-agent socket do workspace — mecanismo autorizado; `Permission denied (publickey)` resolvido), deploy canônico `up-prod-sequential.sh --build engineering-api`, container `delpi-engineering-api` healthy executando o código novo (caps governados `ENG_DRAWING_MAX_RENDER_PAGES=25`, `ENG_DRAWING_TOKEN_SAMPLE_LIMIT=5000`, `ENG_DRAWING_OCR_CPU_SECONDS=900`).
+
+**Correções adicionais descobertas pela cobertura integral:** (a) `RLIMIT_CPU=300s` matava o worker em documentos de 13-14 páginas — cap elevado para 900s e saída vazia reportada como `worker_no_output:rc=`; (b) PI em folha de conjunto não é raiz — `set_anchor` exige title_block do produto (`sheet_scope` não verificado caso contrário); (c) códigos fora das famílias de itens DELPI (1/5/7/9) nunca sustentam divergência (`002002906`).
+
+**Evidência final:** 90264017 — 14/14 páginas, 8 tabelas, `divergences: 0`, `10080535` contextual. 90264030 — 13/13 páginas, 11 tabelas, `mismatches: 0`; candidatos reais `DRAWING_ONLY 10080535` p9-12, `10081686` p7, `BOM_ONLY 10080438`×4/`10080292` — todos `PENDING_HUMAN_REVIEW`. Relação demonstrável `10110676→50225512` preservada como evidência não verificada.
+
+**Estado:** `REGRESSIONS_FIXED=PASS`, `COVERAGE_IMPROVED=PASS`, `REGRESSION_13_PDFS=PASS` (prod), `PROD_DEPLOYED=PASS`, `MCP_CHATGPT_PASS=PENDING` (aguardando execução independente), `ISSUE_131=PENDING` (sem credencial GitHub API no ambiente).
