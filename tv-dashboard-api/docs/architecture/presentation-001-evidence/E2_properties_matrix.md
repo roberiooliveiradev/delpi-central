@@ -100,9 +100,9 @@ Applies to **all** block types unless noted.
 | * | `style.zIndex` | FE | FE | yes | layers bring/send | — | stacking | KEEP |
 | * | `style.fill` | FE | FE | yes | shape chrome | — | SVG/CSS | KEEP |
 | * | `style.stroke` | FE | FE | yes | shape chrome | — | SVG | KEEP |
-| * | `style.fillPaint` | FE | FE | yes | paint picker | — | DelpiFill | KEEP |
-| * | `style.colorPaint` | FE | FE | yes | paint picker | — | text fill | KEEP |
-| * | `style.strokePaint` | FE | FE | yes | paint picker | — | stroke | KEEP |
+| * | `style.fillPaint` | FE | FE | yes | paint picker | — | DelpiFill (`fillPaint ?? fill`); solid write canonicaliza hex e limpa paint | KEEP |
+| * | `style.colorPaint` | FE | FE | yes | paint picker | — | text fill; solid **persiste** paint e vence `color` (`applyColorPaintToCss`, 59b86f1473) | KEEP |
+| * | `style.strokePaint` | FE | FE | yes | paint picker | — | stroke (`strokePaint ?? stroke`); solid write limpa paint | KEEP |
 | * | `style.strokeWidth` | FE | FE | yes | shape chrome | — | SVG | KEEP |
 | * | `style.iconStrokeWidth` | FE | FE | yes | icon section | — | Lucide | KEEP |
 | * | `style.markerRadius` | FE | FE | yes | point shape | — | marker | KEEP |

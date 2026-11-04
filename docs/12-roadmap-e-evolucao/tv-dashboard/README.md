@@ -338,3 +338,23 @@ Detalhes do contrato backend: [README da API](../../../tv-dashboard-api/README.m
 **Evidência:** execução reportou 12 testes no adaptador e suites correlatas verdes, revisão do código no commit e **confirmação posterior do usuário de que a seleção de branco foi corrigida em produção**. Classificação: `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE`; `CONTRACT_IMPACT=NONE`.
 
 **Escopo do encerramento:** somente cor sólida explícita de ícone. Os conflitos HTTP 409, coordenação entre abas, escritores MCP e testes adversariais multi-cliente permanecem **independentes**; não são considerados resolvidos por este registro. O histórico anterior de edição concorrente neste README é contextual e não deve ser interpretado como encerramento de todos os riscos.
+
+---
+
+## Contrato canônico de pintura (atualizado 04/11/2026)
+
+Auditoria: `TV-CROSS-CUTTING-STYLE-CONTRACT-AUTHORITY-INVENTORY` (HEAD base `a3657c0699`).
+
+| Campo | Escrita solid | Precedência de leitura | Notas |
+|---|---|---|---|
+| `colorPaint` | **Persiste** paint + hex (`fillToColorStylePatch`) | `applyColorPaintToCss` solid vence `style.color` | Fix renderer [`59b86f1473`](https://github.com/roberiooliveiradev/delpi-central/commit/59b86f1473); picker [`a3657c0699`](https://github.com/roberiooliveiradev/delpi-central/commit/a3657c0699) |
+| `fillPaint` | Canonicaliza em `fill`/`backgroundColor` e **limpa** paint | Residual `fillPaint` vence hex (`resolveStyleFillCss`) | Assimetria **intencional** vs texto (sem sentinela branco) |
+| `strokePaint` | Canonicaliza em `stroke`/`borderColor` e limpa paint | Residual vence hex (`resolveStyleStrokeCss`); ícone reutiliza os mesmos resolvers | Gradiente → dual-layer / SVG |
+
+Contraste automático de tipografia usa `resolveContrastFillHex` (fillPaint residual / 1º stop de gradient / fill), sem substituir cor explícita.
+
+`contentRuns` no backend: **replace wholesale** (não deep-merge) — contrato PresentationMutation. Integridade no editor: `reconcileDraftContentRunsForCommit` + strip tipográfico (`colorPaint` no patch implica strip de `color` nos runs).
+
+Export PPTX: solid/1º stop via `exportSlidePptxPaint` (gradiente completo não suportado pelo formato).
+
+KPI/chart/input: modelo hex intencional em parts (`plugin-ui`) — **não** migrar para `DelpiFill` sem contrato novo.
