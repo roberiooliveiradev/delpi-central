@@ -5599,7 +5599,7 @@ ARCHITECTURE_DECISION_REQUIRED=YES (roles + fan-out/checkpoint/arggen policy). N
 ## Pydantic AI unified investigation migration (2026-11-04)
 
 TASK=DELIA-C3-PYDANTIC-AI-UNIFIED-INVESTIGATION-RUNTIME-MIGRATION-01.
-PLAN=doc 231. REPORT=doc 232. PRODUCT_CODE_CHANGED=YES. PRODUCTION_DEPLOY=NOT_AUTHORIZED. PHASE_ADVANCE=NONE.
+IMPLEMENTATION_SHA=d989ab3716. PLAN=doc 231. REPORT=doc 232. PRODUCT_CODE_CHANGED=YES. PRODUCTION_DEPLOY=NOT_AUTHORIZED. PHASE_ADVANCE=NONE.
 RUNTIME_BEFORE=DELIA_ORCHESTRATION_ENGINE=langgraph (StateGraph sequencer).
 RUNTIME_AFTER=DELIA_ORCHESTRATION_ENGINE=pydantic_ai (PydanticAiInvestigationOrchestrator Agent+tools); rollback `delia`.
 REMOVED=langgraph_engine.py; langgraph/langchain pins; LG fan-out/checkpoint flags fail-closed; LG-only tests/scripts.

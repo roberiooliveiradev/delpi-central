@@ -51,10 +51,10 @@ No claim of rollback to LangGraph without restoring those packages.
 ```text
 DÉLIA EXECUTION REPORT — PYDANTIC AI UNIFIED MIGRATION
 TASK_ID: DELIA-C3-PYDANTIC-AI-UNIFIED-INVESTIGATION-RUNTIME-MIGRATION-01
-BASE_HEAD: (pre-migration working tree on main; planning OBSERVED_HEAD bfa270939c)
-FINAL_HEAD: (filled after commit/push)
-ORIGIN_MAIN: (filled after push verify)
-PUSH_VERIFIED: PENDING_AT_REPORT_DRAFT
+BASE_HEAD: planning OBSERVED_HEAD bfa270939c; migration parent after rebase includes origin 9c6e92d233
+FINAL_HEAD: d989ab3716f28fc5c27ba1dc4bd61eee1383403c
+ORIGIN_MAIN: d989ab3716f28fc5c27ba1dc4bd61eee1383403c
+PUSH_VERIFIED: YES (git push origin main fast-forward 9c6e92d233..d989ab3716)
 GIT_STATUS: path-scoped delia-api + docs 231/232 + ledger + compose engine defaults; concurrent WIP (controllership-finance, tv-dashboard-presentation, engineering-api) preserved unstaged
 AUTHORITIES_READ: docs 16/50/17/49/51/52/21/20/25 + 192–196, 220, 226, 228–231; delia-execution-protocol; platform-* material to orchestration/security/contracts
 CP_RQ: C3 orchestration runtime migration; Evidence/AuthZ/Policy contracts preserved; no CP phase advance claimed
@@ -91,7 +91,7 @@ TOKENS_BEFORE_AFTER: NOT_MEASURED (no live provider)
 LATENCY_BEFORE_AFTER: NOT_MEASURED (no live provider)
 TIME_TO_FIRST_OWNER_READ: NOT_MEASURED (no live owner)
 MODEL_CONFIG: local intended qwen/openai-compatible via DELIA_LLM_*; not reachable this host
-EVALUATED_SHA: (post-commit)
+EVALUATED_SHA: d989ab3716f28fc5c27ba1dc4bd61eee1383403c
 LOCAL_DEPLOY_SHA: N/A — PRODUCTION_DEPLOY NOT_AUTHORIZED; local Docker unavailable
 LIVE_E2E_SCENARIOS: NOT_REACHED — docker.sock absent; no Ollama/API listeners
 REAL_OWNER_READS: NOT_REACHED
