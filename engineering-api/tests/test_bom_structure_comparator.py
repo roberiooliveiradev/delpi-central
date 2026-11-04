@@ -158,41 +158,67 @@ def test_merged_ocr_cell_yields_distinct_codes():
 
 
 def test_bom_only_when_full_coverage():
-    table = _table([_row("50000001", 10)])
-    bom = _bom(("50000001", PRODUCT, 1), ("50000002", PRODUCT, 1))
+    """BOM_ONLY exige cobertura integral: BOM 9 itens, desenho cobre 8,
+    o 9º ausente com rendimento suficiente → ausência provável."""
+    shared = [f"5000000{i}" for i in range(1, 9)]
+    table = _table([_row(c, 10 * i) for i, c in enumerate(shared, 1)])
+    bom = _bom(*[(c, PRODUCT, 1) for c in shared], ("50000009", PRODUCT, 1))
     out = compare_bom_to_drawing(
         product_code=PRODUCT,
         bom_occurrences=bom,
         component_table=table,
-        tokens=_tokens("50000001"),
+        tokens=_tokens(*shared),
     )
     types = {f["type"] for f in out["findings"]}
     assert "BOM_ONLY" in types
     f = next(f for f in out["findings"] if f["type"] == "BOM_ONLY")
-    assert f["item_code"] == "50000002"
+    assert f["item_code"] == "50000009"
     assert f["level"] == 1
 
 
-def test_multiple_divergences():
-    table = _table(
-        [_row("50000001", 10), _row("50000003", 20), _row("50000009", 30)]
-    )
-    bom = _bom(("50000001", PRODUCT, 1), ("50000002", PRODUCT, 1))
+def test_bom_only_blocked_by_low_extraction_yield():
+    """REGRESSÃO 90263572: 56 ocorrências BOM × 7 tipadas no desenho —
+    ausência não é provável; nenhum BOM_ONLY não comprovado."""
+    table = _table([_row("50000001", 10)])
+    bom = _bom(*[(f"5000000{i % 9 + 1}", PRODUCT, 1) for i in range(56)])
     out = compare_bom_to_drawing(
         product_code=PRODUCT,
         bom_occurrences=bom,
         component_table=table,
         tokens=_tokens("50000001"),
     )
+    assert all(f["type"] != "BOM_ONLY" for f in out["findings"])
+    assert out["status"] == "INCONCLUSIVE"
+    assert out["counts"]["bom_occurrences_unverified"] > 40
+
+
+def test_multiple_divergences():
+    """Várias divergências independentes com cobertura suficiente."""
+    shared = [f"5000001{i}" for i in range(8)]
+    table = _table(
+        [_row(c, 10 * i) for i, c in enumerate(shared, 1)]
+        + [_row("50000303", 90), _row("50000909", 100)]
+    )
+    bom = _bom(
+        *[(c, PRODUCT, 1) for c in shared], ("50000202", PRODUCT, 1)
+    )
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=table,
+        tokens=_tokens(*shared),
+    )
     assert out["status"] == "DIVERGENCES_CANDIDATES"
     codes = {(f["type"], f["item_code"]) for f in out["findings"]}
-    assert ("DRAWING_ONLY", "50000003") in codes
-    assert ("DRAWING_ONLY", "50000009") in codes
-    assert ("BOM_ONLY", "50000002") in codes
+    assert ("DRAWING_ONLY", "50000303") in codes
+    assert ("DRAWING_ONLY", "50000909") in codes
+    assert ("BOM_ONLY", "50000202") in codes
 
 
 def test_same_code_under_different_parent_flagged():
-    """Código presente nos dois lados mas sob pais verificados distintos."""
+    """Código presente nos dois lados sob pais diferentes — pai do
+    desenho é apenas inferência de grupo → relação não verificada,
+    não divergência comprovada (INV-02/INV-03)."""
     table = _table(
         [
             _row("50000001", 10),
@@ -211,13 +237,11 @@ def test_same_code_under_different_parent_flagged():
         tokens=_tokens("10400040", "50000002"),
     )
     kinds = {f["type"] for f in out["findings"]}
-    assert "PARENT_RELATION_MISMATCH" in kinds
-    f = next(
-        f
-        for f in out["findings"]
-        if f["type"] == "PARENT_RELATION_MISMATCH"
+    assert "PARENT_RELATION_MISMATCH" not in kinds
+    assert any(
+        "unverified_parent_relations" in l for l in out["limitations"]
     )
-    assert f["evidence"]["bom_parents"] == ["50000002"]
+    assert any("10400040" in l for l in out["limitations"])
 
 
 def test_repeated_code_same_parent_is_occurrence_match():
@@ -265,18 +289,67 @@ def test_unknown_parent_matches_by_code_with_limitation():
 
 
 def test_table_on_page_two():
-    table = _table([_row("50000001", 10, page=2)])
-    bom = _bom(("50000001", PRODUCT, 1), ("50000002", PRODUCT, 1))
+    shared = [f"5000002{i}" for i in range(8)]
+    table = _table([_row(c, 10 * i, page=2) for i, c in enumerate(shared, 1)])
+    bom = _bom(*[(c, PRODUCT, 1) for c in shared], ("50000300", PRODUCT, 1))
     out = compare_bom_to_drawing(
         product_code=PRODUCT,
         bom_occurrences=bom,
         component_table=table,
-        tokens=_tokens("50000001", page=2),
+        tokens=_tokens(*shared, page=2),
         drawing_pages=2,
     )
     assert 2 in (out["coverage"]["analyzed_pages"] or [])
     bom_only = [f for f in out["findings"] if f["type"] == "BOM_ONLY"]
-    assert bom_only and bom_only[0]["item_code"] == "50000002"
+    assert bom_only and bom_only[0]["item_code"] == "50000300"
+
+
+def test_ocr_ambiguous_near_code_pair_not_divergence():
+    """REGRESSÃO 90263572: código mal-lido 10060004≈BOM 10080004 —
+    par espelho é ambiguidade OCR, não DRAWING_ONLY+BOM_ONLY."""
+    shared = [f"5000001{i}" for i in range(8)]
+    table = _table(
+        [_row(c, 10 * i) for i, c in enumerate(shared, 1)]
+        + [_row("10060004", 90)]
+    )
+    bom = _bom(
+        *[(c, PRODUCT, 1) for c in shared], ("10080004", PRODUCT, 1)
+    )
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=table,
+        tokens=_tokens(*shared),
+    )
+    assert all(
+        f["item_code"] != "10060004" and f["item_code"] != "10080004"
+        for f in out["findings"]
+    )
+    assert any("ocr_ambiguous_code" in l for l in out["limitations"])
+    assert out["counts"]["ocr_ambiguous_pairs"] == 1
+
+
+def test_occurrence_excess_not_drawing_only():
+    """Código extraído mais vezes que na BOM (duplicata OCR ou
+    ocorrência extra) não prova ausência — limitation, não finding."""
+    table = _table(
+        [_row("50000001", 10), _row("10400040", 20), _row("10400040", 30)]
+    )
+    bom = _bom(
+        ("50000001", PRODUCT, 1),
+        ("10400040", "50000001", 2),
+    )
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=table,
+        tokens=_tokens("10400040"),
+    )
+    assert all(
+        f["type"] != "DRAWING_ONLY" or f["item_code"] != "10400040"
+        for f in out["findings"]
+    )
+    assert any("occurrence_excess" in l for l in out["limitations"])
 
 
 def test_partial_extraction_is_inconclusive():

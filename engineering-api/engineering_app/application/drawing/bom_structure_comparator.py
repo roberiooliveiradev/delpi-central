@@ -257,6 +257,8 @@ def compare_bom_to_drawing(
     }
     matched = 0
     drawing_only_parents: set[str] = set()
+    occurrence_excess: list[str] = []
+    unverified_relations: list[str] = []
 
     # Passe 0: pais ausentes primeiro — necessário para guardar os
     # filhos órfãos antes dos passes de matching.
@@ -290,6 +292,13 @@ def compare_bom_to_drawing(
         candidates = bom_remaining.get(code)
         if not candidates:
             if not occ.get("flaggable"):
+                continue
+            # Código existe na BOM mas todas as ocorrências já foram
+            # consumidas — excesso de multiplicidade, não ausência.
+            # Pode ser duplicata OCR (célula fundida) ou ocorrência
+            # extra real: candidato a revisão, não prova de divergência.
+            if code in bom_by_code:
+                occurrence_excess.append(code)
                 continue
             page = _occurrence_page(occ, tokens)
             findings.append(
@@ -325,8 +334,25 @@ def compare_bom_to_drawing(
         if not candidates:
             bom_remaining.pop(code)
         matched += 1
+        # Divergência de relação só quando o pai do desenho é
+        # VERIFICADO por evidência real (não heurística de grupo).
+        # Pai inferido por agrupamento registra-se como relação não
+        # verificada — nunca promovido a divergência comprovada.
         if (
             occ["parent_verified"]
+            and occ.get("parent_source") == "pi_group_inference"
+            and chosen.get("parent_code") != occ["parent_code"]
+            and all(
+                o.get("parent_code") != occ["parent_code"]
+                for o in bom_by_code[code]
+            )
+        ):
+            unverified_relations.append(
+                f"{code}@drawing:{occ['parent_code']}≠bom:{chosen.get('parent_code')}"
+            )
+        if (
+            occ["parent_verified"]
+            and occ.get("parent_source") != "pi_group_inference"
             and chosen.get("parent_code") != occ["parent_code"]
             and occ["parent_code"] not in drawing_only_parents
             and not same_parent
@@ -367,11 +393,66 @@ def compare_bom_to_drawing(
                 )
             )
 
-    # ---------- BOM_ONLY só com cobertura completa ---------------------------
+    # ---------- reconciliação por similaridade OCR ---------------------------
+    # Par espelho: um código mal-lido pelo OCR gera DRAWING_ONLY do
+    # falso + BOM_ONLY do verdadeiro. Se um código só-no-desenho difere
+    # por ≤2 dígitos de um código só-na-BOM (mesmo comprimento), ambos
+    # são ambiguidade de extração — não divergência comprovada.
+    def _near_code(a: str, b: str) -> bool:
+        if len(a) != len(b) or not a or not b:
+            return False
+        # distância 1: famílias de códigos com prefixo comum colidem
+        # com distância 2 — restrito a um dígito para não ocultar
+        # divergências reais (candidatos demais → FN).
+        return sum(x != y for x, y in zip(a, b)) <= 1
+
+    bom_only_codes = set(bom_remaining)
+    ambiguous_pairs: list[tuple[str, str]] = []
+    drawing_only_finds = [
+        f for f in findings if f["type"] == "DRAWING_ONLY"
+    ]
+    for f in drawing_only_finds:
+        d_code = f["item_code"]
+        for b_code in sorted(bom_only_codes):
+            if _near_code(d_code, b_code):
+                ambiguous_pairs.append((d_code, b_code))
+                break
+    if ambiguous_pairs:
+        ambiguous_d = {p[0] for p in ambiguous_pairs}
+        ambiguous_b = {p[1] for p in ambiguous_pairs}
+        findings = [
+            f for f in findings
+            if not (f["type"] == "DRAWING_ONLY"
+                    and f["item_code"] in ambiguous_d)
+        ]
+        for code, occs in list(bom_remaining.items()):
+            if code in ambiguous_b:
+                bom_remaining.pop(code)
+                bom_by_code.pop(code, None)
+        limitations.append(
+            "ocr_ambiguous_code: pares visualmente similares entre "
+            "desenho e BOM tratados como ambiguidade de extração, não "
+            f"divergência: "
+            + ", ".join(f"{d}≈{b}" for d, b in ambiguous_pairs)
+        )
+
+    # ---------- BOM_ONLY só com cobertura suficiente -------------------------
+    # Ausência no desenho exige escopo integralmente lido: tabela
+    # detectada + boundary confiável + rendimento de matching alto o
+    # bastante para que a ausência seja provável (parcial não prova).
+    visible_bom = sum(
+        len(occs)
+        for code, occs in bom_remaining.items()
+        if code in visible_codes
+    )
+    accounted_ratio = (
+        (matched + visible_bom) / max(1, len(bom_occurrences))
+    )
+    bom_only_allowed = coverage_complete and accounted_ratio >= 0.6
     bom_only_unverified = 0
     unclassified: list[str] = []
     for code, occs in bom_remaining.items():
-        if not coverage_complete:
+        if not bom_only_allowed:
             bom_only_unverified += len(occs)
             continue
         if code in visible_codes:
@@ -411,6 +492,19 @@ def compare_bom_to_drawing(
         limitations.append(
             f"extracted_but_unclassified: {sorted(unclassified)} "
             "visíveis no documento fora das células tipadas."
+        )
+    if occurrence_excess:
+        limitations.append(
+            f"occurrence_excess: {sorted(set(occurrence_excess))} — "
+            "código(s) com mais ocorrências extraídas no desenho do "
+            "que na BOM; possível duplicata OCR ou ocorrência extra "
+            "real — candidato a revisão, não divergência comprovada."
+        )
+    if unverified_relations:
+        limitations.append(
+            "unverified_parent_relations: associação pai-filho "
+            "inferida diverge da BOM — evidência, não fato: "
+            + ", ".join(unverified_relations)
         )
 
     # ---------- quantidades — sem contrato de conversão ---------------------
@@ -480,6 +574,9 @@ def compare_bom_to_drawing(
                 if f["type"] == "PARENT_RELATION_MISMATCH"
             ),
             "bom_occurrences_unverified": bom_only_unverified,
+            "occurrence_excess": len(set(occurrence_excess)),
+            "unverified_parent_relations": len(unverified_relations),
+            "ocr_ambiguous_pairs": len(ambiguous_pairs),
             "divergences": len(findings),
         },
         "findings": findings,
