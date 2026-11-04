@@ -6,7 +6,7 @@ import warehouseSpoolsUrl from "../assets/line-feeder/warehouse-spools.png";
 import { LineFeederCollectModal } from "../components/LineFeederCollectModal";
 import { LineFeederIdleCard } from "../components/LineFeederIdleCard";
 import { LineFeederMaterialsPanel } from "../components/LineFeederMaterialsPanel";
-import { LineFeederUrgentRequestsPanel } from "../components/LineFeederUrgentRequestsPanel";
+import { LineFeederUrgentBell } from "../components/LineFeederUrgentBell";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
@@ -73,6 +73,7 @@ export function LineFeederPage({ branch }: LineFeederPageProps) {
         subpluginId="line-feeder"
         actions={
           <div className="ppc-feeder-toolbar">
+            <LineFeederUrgentBell branch={branch} />
             {preview.hasQuery ? (
               <button
                 type="button"
@@ -99,8 +100,6 @@ export function LineFeederPage({ branch }: LineFeederPageProps) {
         onRefresh={preview.hasQuery ? () => preview.reload() : undefined}
         refreshBusy={preview.loading && preview.hasQuery}
       />
-
-      <LineFeederUrgentRequestsPanel branch={branch} />
 
       {!preview.hasQuery && !preview.loading ? (
         <LineFeederIdleCard

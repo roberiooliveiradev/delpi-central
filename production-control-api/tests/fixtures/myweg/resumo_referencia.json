@@ -1,0 +1,34 @@
+{
+  "contract_version": "myweg.needs.batch.v1",
+  "reference_label": "amostra-homologada-sanitizada",
+  "branch": "02",
+  "myweg_company_code": "1009",
+  "myweg_work_center": "1106",
+  "record_count": 532,
+  "quantidade_original_un_total": "745746",
+  "quantidade_mi_total": "745.746",
+  "un_to_mi_divisor": "1000",
+  "codigo_referencia_weg_distribution": {
+    "start_9": 528,
+    "start_8": 2,
+    "empty": 2
+  },
+  "source_artifacts": [
+    "necessidades_tratadas.csv",
+    "necessidades_tratadas.xlsx",
+    "para_conferencia_pcp.csv",
+    "resumo.json"
+  ],
+  "real_format_columns": [
+    "material_weg_tratado",
+    "codigo_referencia_weg",
+    "origem_material_weg",
+    "quantidade",
+    "unidade",
+    "data_remessa",
+    "documento",
+    "linha_fonte",
+    "assinatura_registro"
+  ],
+  "notes": "Metadados da AMOSTRA homologada. Nao sao restricoes permanentes do contrato nem de coletas futuras. Fixture: planilha_real_sanitizada.json."
+}

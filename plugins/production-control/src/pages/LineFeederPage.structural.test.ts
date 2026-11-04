@@ -23,7 +23,8 @@ describe("Line feeder E4 wiring", () => {
     expect(page).toMatch(/LineFeederCollectModal/);
     expect(page).toMatch(/LineFeederIdleCard/);
     expect(page).toMatch(/useLineFeederMaterialsPreview/);
-    expect(page).toMatch(/LineFeederUrgentRequestsPanel/);
+    expect(page).toMatch(/LineFeederUrgentBell/);
+    expect(page).not.toMatch(/LineFeederUrgentRequestsPanel/);
     expect(page).not.toMatch(/fetchLineFeederRequirements/);
     expect(page).not.toMatch(/createLineFeederPickPlan/);
     expect(page).not.toMatch(/patchLineFeederPickItem/);

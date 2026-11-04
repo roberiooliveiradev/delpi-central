@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { LineFeederUrgentRequest } from "../types";
-import { LineFeederUrgentRequestsPanel } from "./LineFeederUrgentRequestsPanel";
+import { LineFeederUrgentBell } from "./LineFeederUrgentBell";
 
 const listMock = vi.fn();
 const patchMock = vi.fn();
@@ -12,6 +12,23 @@ const patchMock = vi.fn();
 vi.mock("../api/ppcApi", () => ({
   fetchLineFeederUrgentRequests: (...args: unknown[]) => listMock(...args),
   patchLineFeederUrgentRequest: (...args: unknown[]) => patchMock(...args),
+}));
+
+vi.mock("@delpi/plugin-ui/index", () => ({
+  AnchoredPanelPortal: ({
+    open,
+    children,
+    "aria-label": ariaLabel,
+  }: {
+    open: boolean;
+    children: React.ReactNode;
+    "aria-label"?: string;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label={ariaLabel}>
+        {children}
+      </div>
+    ) : null,
 }));
 
 function makeRequest(
@@ -49,14 +66,18 @@ function queueOf(items: LineFeederUrgentRequest[]) {
   };
 }
 
+async function openBell() {
+  fireEvent.click(await screen.findByRole("button", { name: /solicita/i }));
+}
+
 afterEach(() => {
   cleanup();
   listMock.mockReset();
   patchMock.mockReset();
 });
 
-describe("LineFeederUrgentRequestsPanel (C5)", () => {
-  it("mostra contador e itens pending/picked", async () => {
+describe("LineFeederUrgentBell (C5)", () => {
+  it("mostra badge no sino e lista materiais no popover", async () => {
     listMock.mockResolvedValue(
       queueOf([
         makeRequest({ id: "m-1" }),
@@ -68,21 +89,26 @@ describe("LineFeederUrgentRequestsPanel (C5)", () => {
         }),
       ]),
     );
-    render(<LineFeederUrgentRequestsPanel branch="01" />);
+    render(<LineFeederUrgentBell branch="01" />);
 
-    expect(await screen.findByText("Solicitações urgentes (2)")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /2 solicitações urgentes/i })).toBeTruthy();
+    expect(screen.getByText("2")).toBeTruthy();
+
+    await openBell();
+    expect(screen.getByRole("dialog", { name: /Urgentes/i })).toBeTruthy();
     expect(screen.getByText("10081234")).toBeTruthy();
     expect(screen.getByText("10085678")).toBeTruthy();
-    expect(screen.getByText("Aguardando separação")).toBeTruthy();
+    expect(screen.getByText("Aguardando")).toBeTruthy();
     expect(screen.getByText("Em separação")).toBeTruthy();
-    // CT atual divergente do reportado (os dois itens compartilham os CTs)
     expect(screen.getAllByText("Destino atual CT-64")).toHaveLength(2);
     expect(screen.getAllByText("Reportado no CT-63")).toHaveLength(2);
   });
 
-  it("lista vazia mostra estado limpo", async () => {
+  it("lista vazia mostra estado limpo no popover", async () => {
     listMock.mockResolvedValue(queueOf([]));
-    render(<LineFeederUrgentRequestsPanel branch="01" />);
+    render(<LineFeederUrgentBell branch="01" />);
+    expect(await screen.findByRole("button", { name: /^Solicitações urgentes$/i })).toBeTruthy();
+    await openBell();
     expect(
       await screen.findByText("Nenhuma solicitação urgente nesta filial."),
     ).toBeTruthy();
@@ -92,19 +118,21 @@ describe("LineFeederUrgentRequestsPanel (C5)", () => {
     listMock.mockResolvedValue(
       queueOf([makeRequest({ outOfQueue: true, currentWorkCenter: null })]),
     );
-    render(<LineFeederUrgentRequestsPanel branch="01" />);
+    render(<LineFeederUrgentBell branch="01" />);
+    await openBell();
     expect(await screen.findByText("OP fora da fila atual")).toBeTruthy();
     expect(screen.getByText("10081234")).toBeTruthy();
   });
 
-  it("Iniciar separação chama PATCH picked e recarrega", async () => {
+  it("Separar chama PATCH picked e recarrega", async () => {
     listMock
       .mockResolvedValueOnce(queueOf([makeRequest()]))
       .mockResolvedValueOnce(queueOf([makeRequest({ status: "picked" })]));
     patchMock.mockResolvedValue(makeRequest({ status: "picked" }));
-    render(<LineFeederUrgentRequestsPanel branch="01" />);
+    render(<LineFeederUrgentBell branch="01" />);
 
-    fireEvent.click(await screen.findByText("Iniciar separação"));
+    await openBell();
+    fireEvent.click(await screen.findByText("Separar"));
     await waitFor(() => expect(patchMock).toHaveBeenCalledTimes(1));
     expect(patchMock).toHaveBeenCalledWith({
       branch: "01",
@@ -115,14 +143,15 @@ describe("LineFeederUrgentRequestsPanel (C5)", () => {
     expect(await screen.findByText("Em separação")).toBeTruthy();
   });
 
-  it("Marcar como entregue chama PATCH delivered e item sai da fila", async () => {
+  it("Entregar chama PATCH delivered e item sai da fila", async () => {
     listMock
       .mockResolvedValueOnce(queueOf([makeRequest({ status: "picked" })]))
       .mockResolvedValueOnce(queueOf([]));
     patchMock.mockResolvedValue(makeRequest({ status: "delivered" }));
-    render(<LineFeederUrgentRequestsPanel branch="01" />);
+    render(<LineFeederUrgentBell branch="01" />);
 
-    fireEvent.click(await screen.findByText("Marcar como entregue"));
+    await openBell();
+    fireEvent.click(await screen.findByText("Entregar"));
     await waitFor(() => expect(patchMock).toHaveBeenCalledTimes(1));
     expect(patchMock).toHaveBeenCalledWith({
       branch: "01",
@@ -136,7 +165,8 @@ describe("LineFeederUrgentRequestsPanel (C5)", () => {
 
   it("erro da API mostra mensagem amigável", async () => {
     listMock.mockRejectedValue(new Error("falhou"));
-    render(<LineFeederUrgentRequestsPanel branch="01" />);
+    render(<LineFeederUrgentBell branch="01" />);
+    await openBell();
     expect(await screen.findByRole("alert")).toBeTruthy();
   });
 });

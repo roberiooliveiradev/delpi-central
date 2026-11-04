@@ -1,0 +1,35 @@
+[
+  {
+    "material_weg_tratado": "PARAFUSO M6 TRATADO",
+    "codigo_referencia_weg": "91234567",
+    "origem_material_weg": "ESTOQUE-WEG",
+    "quantidade": "1500",
+    "unidade": "UN",
+    "data_remessa": "15/11/2026",
+    "documento": "DOC-A1",
+    "linha_fonte": 2,
+    "assinatura_registro": "sig-sample-1"
+  },
+  {
+    "material_weg_tratado": "ARRUELA LISA",
+    "codigo_referencia_weg": "",
+    "origem_material_weg": "COMPRA-WEG",
+    "quantidade": "250",
+    "unidade": "UN",
+    "data_remessa": "2026-11-20",
+    "documento": null,
+    "linha_fonte": 3,
+    "assinatura_registro": "sig-sample-2"
+  },
+  {
+    "material_weg_tratado": "PORCA M6",
+    "codigo_referencia_weg": "81234567",
+    "origem_material_weg": "ESTOQUE-WEG",
+    "quantidade": "1000",
+    "unidade": "UN",
+    "data_remessa": "21/11/2026",
+    "documento": "DOC-B2",
+    "linha_fonte": 4,
+    "assinatura_registro": "sig-sample-3"
+  }
+]
