@@ -856,21 +856,23 @@ export const copy = {
       loadError: "Não foi possível carregar as listas de coleta.",
     },
     urgent: {
-      title: "Solicitações urgentes",
-      titleCount: (count: number) =>
-        count === 1
-          ? "Solicitações urgentes (1)"
-          : "Solicitações urgentes (" + count + ")",
-      hint: "Materiais que o operador sinalizou como faltantes na bancada. Separe e entregue direto — não entram na lista de coleta planejada.",
+      panelTitle: "Urgentes",
+      bellAria: (count: number) =>
+        count === 0
+          ? "Solicitações urgentes"
+          : count === 1
+            ? "1 solicitação urgente"
+            : count + " solicitações urgentes",
+      hint: "Materiais faltantes sinalizados pelo operador. Separe e entregue direto — fora da coleta planejada.",
       empty: "Nenhuma solicitação urgente nesta filial.",
-      loading: "Carregando solicitações urgentes…",
+      loading: "Carregando…",
       loadError: "Não foi possível carregar as solicitações urgentes.",
       updateError: "Não foi possível atualizar a solicitação.",
-      pendingBadge: "Aguardando separação",
+      pendingBadge: "Aguardando",
       pickedBadge: "Em separação",
-      startPicking: "Iniciar separação",
+      startPicking: "Separar",
       startPickingBusy: "Iniciando…",
-      markDelivered: "Marcar como entregue",
+      markDelivered: "Entregar",
       markDeliveredBusy: "Entregando…",
       reportedCenter: (center: string) => "Reportado no " + center,
       currentCenter: (center: string) => "Destino atual " + center,
@@ -884,7 +886,7 @@ export const copy = {
         qty === null
           ? "Saldo da OP indisponível"
           : "Saldo da OP: " + qty + " " + unit,
-      noteLabel: "Observação do operador",
+      noteLabel: "Observação",
     },
     detail: {
       openHint: "Abrir detalhe",
