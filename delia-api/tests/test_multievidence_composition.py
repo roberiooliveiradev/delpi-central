@@ -147,3 +147,60 @@ def test_render_contains_ptbr_sections_and_verbatim_values():
     assert "Exclusivos de 90260147" in text
     assert "Exclusivos de 90260148" in text
     assert "50220014" in text and "50220015" in text
+
+
+# --- Doc 228 §8: scoped entity-ref candidates — security/ambiguity ---
+from app.domain.evidence.model import EntityRef as _ERef
+
+
+class _RefTurn:
+    def __init__(self, refs):
+        self.entity_refs = refs
+
+
+class _Goal:
+    comparison_requested = True
+
+
+def _orc():
+    import app.application.capability_provision.orchestration as O
+    o = object.__new__(O.OperationalCapabilityOrchestrator)
+    return o
+
+
+def test_session_refs_two_distinct_bind():
+    refs = [
+        _ERef("produto", "90260147", "delpi"),
+        _ERef("produto", "90260148", "delpi"),
+    ]
+    out = _orc()._subobjectives_from_session_refs(
+        (_RefTurn((refs[0],)), _RefTurn((refs[1],))), _Goal()
+    )
+    assert out is not None and len(out) == 2
+    ids = {s.goal for s in out}
+    assert ids == {"produto 90260147", "produto 90260148"}
+
+
+def test_session_refs_ambiguous_three_returns_none():
+    turns = (
+        _RefTurn((_ERef("produto", "1", "delpi"),)),
+        _RefTurn((_ERef("produto", "2", "delpi"),)),
+        _RefTurn((_ERef("produto", "3", "delpi"),)),
+    )
+    assert _orc()._subobjectives_from_session_refs(turns, _Goal()) is None
+
+
+def test_session_refs_forged_same_id_collapses():
+    forged = (_RefTurn((_ERef("produto", "9", "delpi"),)),) * 3
+    assert _orc()._subobjectives_from_session_refs(forged, _Goal()) is None
+
+
+def test_session_refs_no_compare_goal_returns_none():
+    class G:
+        comparison_requested = False
+    turns = (_RefTurn((_ERef("p", "1", "d"),)), _RefTurn((_ERef("p", "2", "d"),)))
+    assert _orc()._subobjectives_from_session_refs(turns, G()) is None
+
+
+def test_session_refs_empty_turns_returns_none():
+    assert _orc()._subobjectives_from_session_refs((), _Goal()) is None

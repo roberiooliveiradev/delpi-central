@@ -6964,28 +6964,33 @@ class OperationalCapabilityOrchestrator:
             or not prior_turns
         ):
             return None
-        # Doc 228 §7: recency binds the referents — "as duas" means
-        # the most recently grounded distinct entities in-session,
-        # not an indiscriminate alphabetical sort of all history.
+        # Doc 228 §8: scoped candidates bind ONLY when the referent
+        # is unambiguous — exactly two distinct refs is the declared
+        # two-way comparison referent. More than two distinct prior
+        # entities is AMBIGUOUS ("as duas" cannot be resolved without
+        # semantic relation) → None → model decomposition/clarify.
         distinct: dict[tuple[str, str, str], Any] = {}
-        for turn in reversed(prior_turns):
-            for ref in reversed(
-                getattr(turn, "entity_refs", ()) or ()
-            ):
-                key = (
-                    ref.entity_type,
-                    ref.entity_id,
-                    ref.source_system,
+        for turn in prior_turns:
+            for ref in getattr(turn, "entity_refs", ()) or ():
+                distinct.setdefault(
+                    (
+                        ref.entity_type,
+                        ref.entity_id,
+                        ref.source_system,
+                    ),
+                    ref,
                 )
-                distinct.setdefault(key, ref)
-        if len(distinct) < 2:
+        if len(distinct) != 2:
             return None
-        refs = list(distinct.values())[:4]
+        refs = list(distinct.values())
         _logger.info(
             "orchestration stage=session_ref_binding "
             "decision=bound count=%d",
             len(refs),
         )
+        # Typed-form goal: the canonical ref descriptor itself —
+        # entity_type + entity_id from owner records, not a fixed
+        # imperative sentence nor an invented target.
         return tuple(
             SubObjective(
                 subobjective_id=f"read_{index}",

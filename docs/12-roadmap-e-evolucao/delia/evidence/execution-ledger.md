@@ -5373,3 +5373,14 @@ REVIEW=R6_REWORK. VERIFIED request-scoped InteractionSession new uuid4 per HTTP 
 DECISION_ID=DELIA-C3-E4-R6-STATELESS-CONTINUITY-BOUNDARY-DECISION-01. NO new persistent store by default: absence of server history does not establish storage as sole solution. Client refs may be UNTRUSTED CANDIDATES only; Domain/Core live READ does not authenticate prior conversational provenance or user-intended target selection. APPROVED minimal honest path: direct explicit-source authorized READ+compare; on ambiguous same-conversation 'as duas' clarify unless scoped attested binding exists. Remove silent top-four/text goal builder, prove multi-root provenance and exact target coverage, RED security tests and real E2E on final SHA.
 TRUSTED_CROSS_REQUEST_CONTINUITY=ARCHITECTURE_DECISION_REQUIRED if seamless past-ref use is mandatory and existing trusted continuation mechanism absent. First inventory reusable owner-managed signed receipt/attestation or existing session state; if absent compare bounded authenticated stateless receipt vs backend session store with retention vs clarification-based UX; no new public API/crypto/storage approved silently.
 REF01-REF08/G04-G05-G07-G12=NOT_PASS; COORDINATION_TESTS=TEST_NOT_RUN; PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE. NEXT=continue existing R6 task with documented decision, code/test outcomes not another S0 report.
+## E4-R6 §8 — binding exato + testes de seguranca de refs
+Consumidor corrigido: exatamente 2 refs distintos = referente
+nao-ambiguo de comparacao; 3+/forged/sem-goal -> None -> decompose/
+clarificacao honesta. Sub-goal = forma tipada minima `type id`
+(sem frase imperativa). Client `context[].entity_refs` = candidatos
+camada-i apenas; cada READ revalida via Core/Domain vivo. Sem
+session-store (request-scoped) -> refs client-echoed nunca elevados
+a evidencia; refs falsificados produzem leitura autorizada real de
+outra entidade (sem escalonamento/fake). Tests: +5 (bind 2, ambiguous
+3->None, forged dedupe->None, no-compare->None, empty->None) 13 PASS.
+
