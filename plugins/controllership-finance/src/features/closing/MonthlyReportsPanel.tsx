@@ -301,6 +301,16 @@ const DOMAIN_LABELS: Record<ReconciliationDomain, string> = {
   H02: "Posição H02 (R08)",
 };
 
+/** Domínio da conciliação P3 → página contextual correspondente
+ *  (R05/R03/R08). Fonte única para os links «Abrir relatório» da
+ *  área de atenção — fonte indisponível, pendência e divergência
+ *  comprovada convergem aqui (CF-PROC0072-RW01). */
+const DOMAIN_TO_REPORT_KEY: Record<ReconciliationDomain, ReportKey> = {
+  ENTRADAS_SAIDAS: "stock-movements",
+  P7: "stock-inventory",
+  H02: "work-in-process",
+};
+
 const DOMAIN_OPERAND_LABELS: Record<string, string> = {
   entradasSaidas: "Entradas e saídas (R05)",
   p7: "Posição de estoque P7 (R03)",
@@ -530,11 +540,7 @@ function buildAttentionItems(args: {
         const snapshotMissing = operandStatus === "SOURCE_MISSING";
         const technicalFailure = operandStatus === "UNAVAILABLE";
         const partialData = operandStatus === "INCOMPLETE";
-        const reportKey = DOMAIN_TO_OPERAND[recon.domain] === "entradasSaidas"
-          ? ("stock-movements" as const)
-          : DOMAIN_TO_OPERAND[recon.domain] === "h02"
-            ? ("work-in-process" as const)
-            : ("stock-inventory" as const);
+        const reportKey = DOMAIN_TO_REPORT_KEY[recon.domain];
         // A dimensão operacional rotula apenas o domínio nunca
         // registrado — a fonte P3 registrada tem estado autoritativo
         // próprio, com a consulta operacional exibida como fato.
@@ -678,7 +684,7 @@ function buildAttentionItems(args: {
             label +
             ") e, após o ajuste manual, revalide a conciliação no " +
             "painel P3 do checklist.",
-          reportKey: "stock-inventory",
+          reportKey: DOMAIN_TO_REPORT_KEY[recon.domain],
         });
       }
     }

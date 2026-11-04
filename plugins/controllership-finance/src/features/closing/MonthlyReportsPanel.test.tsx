@@ -290,6 +290,46 @@ describe("indicadores e área de atenção", () => {
     ).toBeTruthy();
   });
 
+  // CF-PROC0072-RW01 — divergência comprovada abre o relatório do
+  // domínio real (antes: sempre apontava para stock-inventory).
+  it.each([
+    ["ENTRADAS_SAIDAS", "stock-movements"],
+    ["P7", "stock-inventory"],
+    ["H02", "work-in-process"],
+  ])(
+    "divergência de %s abre relatório %s",
+    async (domain, reportKey) => {
+      const onOpen = vi.fn();
+      p3Mock.mockResolvedValue(
+        p3State([
+          recon(domain as string, {
+            expected_amount: "1000.00",
+            reported_amount: "1100.00",
+            divergence: "100.00",
+          }),
+        ]),
+      );
+      renderPanel({ onOpenReport: onOpen });
+
+      await screen.findByText("Divergência comprovada");
+      const link = screen
+        .getAllByRole("link", { name: /Abrir relatório/ })
+        .find((l) => l.closest("#cf-reports-attention"));
+      expect(link).toBeTruthy();
+      const href = (link as Element).getAttribute("href") ?? "";
+      expect(href).toContain(`/reports/${reportKey}`);
+      expect(href).not.toContain(
+        reportKey === "stock-inventory" ? "stock-movements" : "stock-inventory",
+      );
+      fireEvent.click(link as Element);
+      expect(onOpen).toHaveBeenCalledWith(reportKey);
+      // Modificadores não acionam a SPA — o navegador decide a aba.
+      fireEvent.click(link as Element, { ctrlKey: true });
+      fireEvent.click(link as Element, { metaKey: true });
+      expect(onOpen).toHaveBeenCalledTimes(1);
+    },
+  );
+
   it("P7 com consulta disponível e P3 sem registro mostra conciliação pendente", async () => {
     p3Mock.mockResolvedValue(
       p3State([
