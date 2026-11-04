@@ -88,6 +88,14 @@ def build_search_products_use_case() -> SearchProductsUseCase:
     repository = ProductRepository()
     return SearchProductsUseCase(repository)
 
+
+def build_sb1_identity_lookup_use_case():
+    from app.application.use_cases.product.sb1_identity_lookup_use_case import (
+        Sb1IdentityLookupUseCase,
+    )
+
+    return Sb1IdentityLookupUseCase(ProductRepository())
+
 def build_list_structure_use_case() -> ListProductStructureUseCase:
     repository = ProductStructureRepository()
     return ListProductStructureUseCase(repository)

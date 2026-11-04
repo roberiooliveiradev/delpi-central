@@ -71,10 +71,25 @@ function formatRemessa(value: string | null | undefined): string {
 
 function sb1Label(status: string | null | undefined): string {
   const normalized = (status ?? "").trim().toLowerCase();
-  if (!normalized || normalized === "pending") {
-    return copy.mywegNeeds.sb1Pending;
+  switch (normalized) {
+    case "confirmed":
+      return copy.mywegNeeds.sb1Confirmed;
+    case "not_found":
+      return copy.mywegNeeds.sb1NotFound;
+    case "divergent":
+      return copy.mywegNeeds.sb1Divergent;
+    case "ambiguous":
+      return copy.mywegNeeds.sb1Ambiguous;
+    case "blocked":
+      return copy.mywegNeeds.sb1Blocked;
+    case "unavailable":
+      return copy.mywegNeeds.sb1Unavailable;
+    case "pending":
+    case "":
+      return copy.mywegNeeds.sb1Pending;
+    default:
+      return copy.mywegNeeds.sb1Other(status ?? "");
   }
-  return copy.mywegNeeds.sb1Other(status ?? "");
 }
 
 export function MyWegNeedsPage({
@@ -173,11 +188,43 @@ export function MyWegNeedsPage({
       },
       {
         key: "codigo_referencia_weg",
-        header: texts.columns.referencia,
+        header: texts.columns.informedCode,
+        render: (row) => {
+          const informed =
+            row.sb1_resolution?.informed_product_code?.trim() ||
+            row.codigo_referencia_weg?.trim();
+          return informed || texts.referenciaEmpty;
+        },
+      },
+      {
+        key: "sb1_verified_code",
+        header: texts.columns.verifiedCode,
         render: (row) =>
-          row.codigo_referencia_weg?.trim()
-            ? row.codigo_referencia_weg
-            : texts.referenciaEmpty,
+          row.sb1_resolution?.protheus_product_code?.trim() || "—",
+      },
+      {
+        key: "sb1_verified_description",
+        header: texts.columns.verifiedDescription,
+        render: (row) =>
+          row.sb1_resolution?.verified_description?.trim() || "—",
+      },
+      {
+        key: "sb1_resolution",
+        header: texts.columns.sb1,
+        headerHint: helpTooltips.mywegNeedsSb1,
+        render: (row) => {
+          const label = sb1Label(row.sb1_resolution?.status);
+          const reason = row.sb1_resolution?.reason?.trim();
+          if (
+            reason &&
+            (row.sb1_resolution?.status === "divergent" ||
+              row.sb1_resolution?.status === "ambiguous" ||
+              row.sb1_resolution?.status === "unavailable")
+          ) {
+            return `${label} — ${reason}`;
+          }
+          return label;
+        },
       },
       {
         key: "documento",
@@ -200,11 +247,6 @@ export function MyWegNeedsPage({
         header: texts.columns.qtyMi,
         align: "right",
         render: (row) => formatDecimalString(row.quantidade_mi),
-      },
-      {
-        key: "sb1_resolution",
-        header: texts.columns.sb1,
-        render: (row) => sb1Label(row.sb1_resolution?.status),
       },
     ],
     [texts],
@@ -373,7 +415,7 @@ export function MyWegNeedsPage({
             loading={loading}
             refreshing={refreshing}
             emptyMessage={texts.emptyItems}
-            columnPreferencesKey="production-control:myweg-needs:columns:v1"
+            columnPreferencesKey="production-control:myweg-needs:columns:v2"
             serverPagination={{
               page: items?.page ?? filters.page,
               pageSize: items?.pageSize ?? filters.pageSize,

@@ -33,6 +33,8 @@ export const helpTooltips = {
     "Anexe um arquivo .glb ao código do produto da ordem de produção (PI ou PA). No cockpit, o operador vê o 3D na operação daquele produto; o desenho PDF continua sendo o do PA.",
   sequencingProfiles:
     "Cadastro das regras que o botão Otimizar planejamento aplica por centro de trabalho. A entrega do PA é sempre o primeiro critério. Critérios opcionais: Ferramenta (agrupa quem usa a mesma ferramenta) e Código do cabo (agrupa pelo código exato do material — os grupos SB1 só dizem quais materiais entram na verificação). Um perfil em rascunho pode ser editado e ativado; somente perfis ativos podem ser vinculados a um CT. Nada aqui altera a fila na hora — as regras valem na próxima otimização.",
+  mywegNeedsSb1:
+    "Situação do vínculo com o cadastro SB1 do Protheus. Código informado na origem só vira confirmado após validação real. Divergência e ambiguidade mostram o motivo sem editar cadastro.",
   mywegNeeds:
-    "Histórico de planejamento MyWEG da filial 02 (ES). Mostra a última coleta importada, totais em UN/MI e a lista paginada de necessidades. Referência WEG vazia aparece como «Não informado». O vínculo com produto DELPI fica «Aguardando vínculo DELPI» enquanto a resolução SB1 não existir. Use o histórico para abrir coletas anteriores sem misturar linhas. Não é atualização em tempo real nem gera OP.",
+    "Histórico de planejamento MyWEG da filial 02 (ES). Mostra a última coleta importada, totais em UN/MI e a lista paginada de necessidades. O campo «Código DELPI (origem)» reflete o valor informado na coleta (contrato E1: codigo_referencia_weg). O código verificado e a situação do vínculo vêm da consulta SB1 no Protheus — não confundir código informado com vínculo confirmado. Referência/material ausente aparece como «Não informado». Use o histórico para abrir coletas anteriores. Não é tempo real nem gera OP.",
 } as const;

@@ -26,6 +26,7 @@ _DOMAIN_LABELS: dict[str, str] = {
 }
 
 _ENTITY_LABELS: dict[str, str] = {
+    "product_sb1_identity": "identidade cadastral SB1 (código/referência exatos)",
     "commercial_rol_target": "meta percentual ROL comercial",
     "commercial_rol_series": "série temporal de ROL comercial",
     "commercial_rol_by_customer": "ranking de ROL comercial por cliente",

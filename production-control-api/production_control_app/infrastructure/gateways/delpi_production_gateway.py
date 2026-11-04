@@ -554,6 +554,31 @@ class DelpiProductionGateway:
             },
         )
 
+    def lookup_products_sb1_identity(
+        self,
+        *,
+        branch: str,
+        items: Sequence[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Identidade cadastral SB1 em lote — igualdade exata B1_COD/B1_REFEREN."""
+        payload_items: list[dict[str, Any]] = []
+        for item in items or ():
+            payload_items.append(
+                {
+                    "client_key": str(item.get("client_key") or "").strip(),
+                    "product_code": item.get("product_code"),
+                    "customer_reference": item.get("customer_reference"),
+                }
+            )
+        return self._request(
+            "POST",
+            "/products/sb1-identity-lookup",
+            json_body={
+                "branch": branch,
+                "items": [item for item in payload_items if item["client_key"]],
+            },
+        )
+
     def fetch_product_inventory_blocks(
         self,
         *,

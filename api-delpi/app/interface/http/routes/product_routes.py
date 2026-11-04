@@ -56,6 +56,10 @@ from app.application.use_cases.product.get_product_safety_stock_use_case import 
 from app.application.dto.product.list_product_physical_locations_request import (
     ListProductPhysicalLocationsRequest,
 )
+from app.application.dto.product.sb1_identity_lookup_request import (
+    Sb1IdentityLookupItem,
+    Sb1IdentityLookupRequest,
+)
 from app.application.dto.product.list_product_inventory_blocks_request import (
     ListProductInventoryBlocksRequest,
 )
@@ -167,6 +171,7 @@ from app.composition.product_composer import (
     build_list_product_stock_use_case,
     build_get_product_safety_stock_use_case,
     build_list_product_physical_locations_use_case,
+    build_sb1_identity_lookup_use_case,
     build_list_product_inventory_blocks_use_case,
     build_list_product_inbound_invoice_items_use_case,
     build_list_product_outbound_invoice_items_use_case,
@@ -280,9 +285,33 @@ class PhysicalLocationsBatchRequest(BaseModel):
     product_codes: list[str] = Field(default_factory=list)
 
 
+class Sb1IdentityLookupItemBody(BaseModel):
+    client_key: str = Field(..., min_length=1, max_length=120)
+    product_code: str | None = Field(default=None, max_length=60)
+    customer_reference: str | None = Field(default=None, max_length=120)
+
+
+class Sb1IdentityLookupBatchRequest(BaseModel):
+    """Consulta somente leitura — igualdade exata B1_COD / B1_REFEREN em lote."""
+
+    branch: str = Field(..., min_length=2, max_length=2)
+    items: list[Sb1IdentityLookupItemBody] = Field(default_factory=list)
+
+
 _PHYSICAL_LOCATIONS_FIELDS = {
     "product_code": {"label": "Produto", "type": "string"},
     "physical_location": {"label": "Local físico", "type": "string"},
+}
+
+_SB1_IDENTITY_FIELDS = {
+    "client_key": {"label": "Chave do cliente", "type": "string"},
+    "match_status": {"label": "Situação da correspondência", "type": "string"},
+    "product_code": {"label": "Código informado", "type": "string"},
+    "customer_reference": {"label": "Referência do cliente", "type": "string"},
+    "verified_product_code": {"label": "Código DELPI verificado", "type": "string"},
+    "verified_description": {"label": "Descrição DELPI", "type": "string"},
+    "matched_by": {"label": "Método de vínculo", "type": "string"},
+    "reason": {"label": "Motivo", "type": "string"},
 }
 
 
@@ -320,6 +349,51 @@ def list_product_physical_locations(
         log_error(f"Erro em products/physical-locations: {e}")
         return error_response(
             "Erro interno ao buscar locais físicos dos produtos.",
+            status_code=500,
+        )
+
+
+@router.post(
+    "/sb1-identity-lookup",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "lookup_products_sb1_identity",
+        path="/products/sb1-identity-lookup",
+    ),
+)
+@require_permission(API_DELPI_ACCESS)
+def lookup_products_sb1_identity(
+    body: Sb1IdentityLookupBatchRequest = Body(...),
+):
+    """Identidade cadastral SB1 em lote — igualdade exata B1_COD/B1_REFEREN (somente leitura)."""
+    try:
+        result = build_sb1_identity_lookup_use_case().execute(
+            Sb1IdentityLookupRequest(
+                branch=body.branch,
+                items=tuple(
+                    Sb1IdentityLookupItem(
+                        client_key=item.client_key,
+                        product_code=item.product_code,
+                        customer_reference=item.customer_reference,
+                    )
+                    for item in body.items
+                ),
+            )
+        )
+        return product_success(
+            result,
+            operation_id="lookup_products_sb1_identity",
+            entity="product_sb1_identity",
+            shape="list",
+            fields=_SB1_IDENTITY_FIELDS,
+            message="Correspondências SB1 classificadas com sucesso.",
+        )
+    except ValueError as e:
+        log_error(f"Erro de validação em products/sb1-identity-lookup: {e}")
+        return error_response(str(e), status_code=400)
+    except Exception as e:
+        log_error(f"Erro em products/sb1-identity-lookup: {e}")
+        return error_response(
+            "Erro interno ao consultar identidade SB1 dos produtos.",
             status_code=500,
         )
 

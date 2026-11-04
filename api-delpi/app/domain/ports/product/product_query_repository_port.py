@@ -14,6 +14,16 @@ class ProductQueryRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def lookup_products_by_codes(self, codes: list[str]) -> list[dict]:
+        """Busca exata em lote por B1_COD (sem LIKE). Pode retornar 0..N linhas."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def lookup_products_by_customer_references(self, references: list[str]) -> list[dict]:
+        """Busca exata em lote por B1_REFEREN (sem LIKE). Retorna todos os hits."""
+        raise NotImplementedError
+
+    @abstractmethod
     def search_products(
         self,
         code: Optional[str],

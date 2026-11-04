@@ -54,6 +54,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "search_products_by_supplier_part_number": RouteContract(
         "product_by_supplier_part_number", "paged_list"
     ),
+    "lookup_products_sb1_identity": RouteContract(
+        "product_sb1_identity", "composite_analysis"
+    ),
     "get_product_detail": RouteContract("product", "product_snapshot"),
     "get_product_summary": RouteContract("product", "product_snapshot"),
     "get_product_structure": RouteContract("product_structure", "hierarchy"),

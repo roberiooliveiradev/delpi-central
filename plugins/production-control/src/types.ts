@@ -1512,6 +1512,10 @@ export type MyWegNeedsSb1Resolution = {
   protheus_product_code: string | null;
   matched_by: string | null;
   resolved_at: string | null;
+  verified_description?: string | null;
+  reason?: string | null;
+  informed_product_code?: string | null;
+  candidates?: Array<Record<string, unknown>>;
 };
 
 export type MyWegNeedsBatchSummary = {

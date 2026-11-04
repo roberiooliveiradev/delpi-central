@@ -2,7 +2,8 @@
 
 > **Status:** tela JWT no MFE Production Control  
 > **TASK_ID:** `MYWEG-NEEDS-E3-PORTAL-PCP`  
-> **URL:** `/apps/production-control/myweg-needs?branch=02`
+> **URL:** `/apps/production-control/myweg-needs?branch=02`  
+> **E4 (SB1):** ver [MYWEG-NEEDS-PROTHEUS-E4.md](./MYWEG-NEEDS-PROTHEUS-E4.md) — colunas de código verificado / situação do vínculo.
 
 ## EXISTING_EQUIVALENT / REUSE_DECISION
 

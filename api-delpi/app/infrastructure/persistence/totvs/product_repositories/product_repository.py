@@ -8,6 +8,12 @@ from app.domain.ports.product.product_query_repository_port import ProductQueryR
 from app.infrastructure.persistence.totvs.product_repositories.product_description_matching import (
     build_description_matching,
 )
+from app.infrastructure.persistence.totvs.product_repositories.product_sb1_identity_lookup_sql import (
+    CHUNK_SIZE,
+    chunk_values,
+    lookup_by_codes_sql,
+    lookup_by_customer_references_sql,
+)
 
 
 class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
@@ -338,3 +344,39 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
         """
         with self as repo:
             return repo.execute_one(sql, (reference,))
+
+    def lookup_products_by_codes(
+        self,
+        codes: list[str],
+        *,
+        chunk_size: int = CHUNK_SIZE,
+    ) -> list[dict]:
+        """Igualdade exata RTRIM(B1_COD) IN (...). Sem LIKE. Sem TOP 1."""
+        normalized = [str(code).strip() for code in codes if str(code or "").strip()]
+        if not normalized:
+            return []
+        found: list[dict] = []
+        with self as repo:
+            for chunk in chunk_values(normalized, chunk_size):
+                sql = lookup_by_codes_sql(len(chunk))
+                found.extend(repo.execute_query(sql, tuple(chunk)))
+        return found
+
+    def lookup_products_by_customer_references(
+        self,
+        references: list[str],
+        *,
+        chunk_size: int = CHUNK_SIZE,
+    ) -> list[dict]:
+        """Igualdade exata RTRIM(B1_REFEREN) IN (...). Retorna todos os hits (ambiguidade visível)."""
+        normalized = [
+            str(ref).strip() for ref in references if str(ref or "").strip()
+        ]
+        if not normalized:
+            return []
+        found: list[dict] = []
+        with self as repo:
+            for chunk in chunk_values(normalized, chunk_size):
+                sql = lookup_by_customer_references_sql(len(chunk))
+                found.extend(repo.execute_query(sql, tuple(chunk)))
+        return found
