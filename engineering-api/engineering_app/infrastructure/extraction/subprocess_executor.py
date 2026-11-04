@@ -199,6 +199,17 @@ def run_pipeline_isolated(
                 }
             )
             return record
+        if not out.strip():
+            # Worker morto por limite de recurso (RLIMIT_CPU/RSS) antes
+            # de escrever o record — rc negativo expõe o sinal real;
+            # nunca mascarar como schema_mismatch.
+            record.update(
+                {
+                    "status": "provider_error",
+                    "error": f"worker_no_output:rc={proc.returncode}",
+                }
+            )
+            return record
         if response.get("schema_version") != _RESPONSE_SCHEMA:
             record.update(
                 {
