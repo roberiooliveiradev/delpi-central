@@ -233,9 +233,9 @@ export const CF_HELP = {
     filters:
       "Filial restringe o universo da consulta à BFF (Todas, 01 ou 02) — recarrega os dados sem alterar permissões. A busca da tabela filtra localmente sobre todo o universo retornado; a paginação é no cliente sobre o conjunto completo.",
     indicators:
-      "Indicadores derivados apenas do payload ativo: âncoras produto/filial retornadas, total de linhas MOD e quantidade de âncoras sem linhas retornadas — sem deduplicação presumida e sem valores monetários inferidos.",
+      "Indicadores derivados dos registros retornados pela consulta ativa: âncoras produto/filial, total de linhas MOD e quantidade de âncoras sem linhas retornadas — sem deduplicação presumida e sem valores monetários inferidos.",
     table:
-      "Tabela principal por âncora (produto + filial): código, descrição, filial, quantidade faturada, contagem de linhas MOD e situação. «Ver» abre o detalhe das operações da âncora abaixo da tabela. A busca cobre todo o universo retornado e a paginação é local — nenhum registro é omitido.",
+      "Tabela principal por âncora (produto + filial): código, descrição, filial, quantidade faturada, contagem de linhas MOD e situação. «Ver» abre o detalhe das operações da âncora abaixo da tabela. Busca e paginação atuam sobre os registros retornados pela consulta.",
     detail:
       "Operações MOD da âncora selecionada: nível, produto componente, operação, recurso, item MOD, unidade, quantidade propagada, tempo padrão, horas e custos — cada campo numérico preserva o estado da fonte («fonte ausente», «não aplicável», «indisponível») e valor ausente nunca aparece como zero.",
     historical:

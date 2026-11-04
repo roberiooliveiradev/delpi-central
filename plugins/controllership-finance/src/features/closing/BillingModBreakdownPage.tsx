@@ -13,6 +13,7 @@ import { useCallback, useMemo, useState, useEffect } from "react";
 import { ClosingHero } from "../../app/ClosingHero";
 import {
   CfActionButton,
+  CfLoadingCard,
   CfEmptyState,
   CfSectionCard,
   CfSelectField,
@@ -124,13 +125,13 @@ export function BillingModBreakdownPage({
         id: "anchors",
         label: "Âncoras produto/filial",
         value: String(payload.anchors.length),
-        hint: "universo completo retornado",
+        hint: "registros retornados pela consulta",
       },
       {
         id: "mod-lines",
         label: "Linhas MOD retornadas",
         value: String(totalLines),
-        hint: "soma das operações das âncoras",
+        hint: "soma das operações retornadas",
       },
       {
         id: "without-lines",
@@ -201,6 +202,7 @@ export function BillingModBreakdownPage({
                 row.branch ? `, filial ${row.branch}` : ""
               }`}
               aria-expanded={active}
+              aria-controls="cf-r09-anchor-detail"
               onClick={() =>
                 setSelectedKey(active ? null : key)
               }
@@ -260,13 +262,20 @@ export function BillingModBreakdownPage({
       />
 
       {loading && !payload ? (
-        <p aria-live="polite">Carregando faturamento × MOD…</p>
+        <CfLoadingCard
+          title="Carregando faturamento × MOD"
+          aria-label="Carregando faturamento × MOD"
+        />
       ) : state?.kind === "error" ? (
         <CfEmptyState
           classNames={cfEmptyStateClassNames}
-          defaultMessage={`Não foi possível carregar o relatório R09${
-            state.error?.message ? ` — ${state.error.message}` : ""
-          }.`}
+          defaultMessage={
+            state.error?.status === 401 || state.error?.status === 403
+              ? "Acesso ao relatório R09 não autorizado para o seu usuário."
+              : state.error?.status === 404
+                ? "Relatório R09 não encontrado para a competência/filial selecionadas."
+                : "Não foi possível carregar o relatório R09. Tente novamente em instantes."
+          }
         >
           <CfActionButton
             variant="primary"
@@ -284,6 +293,9 @@ export function BillingModBreakdownPage({
             columns={columns}
             rows={payload.anchors}
             rowKey={anchorKey}
+            getSearchText={(row) =>
+              `${row.product} ${row.productDescription ?? ""} ${row.branch ?? ""}`
+            }
             loading={loading}
             emptyMessage="Nenhuma âncora faturada encontrada para a competência/filial selecionadas."
             columnPreferencesKey="cf:closing:billing-mod-breakdown:v1"
@@ -314,10 +326,13 @@ export function BillingModBreakdownPage({
                   </li>
                   <li>
                     Homologação:{" "}
-                    {payload.parityEvidence.scope.homologationStatus}
+                    {HOMOLOGATION_LABELS[
+                      payload.parityEvidence.scope.homologationStatus
+                    ] ?? payload.parityEvidence.scope.homologationStatus}
                   </li>
                   <li>
-                    Medido em: {payload.parityEvidence.scope.measuredAt}
+                    Medido em:{" "}
+                    {formatDatePtBr(payload.parityEvidence.scope.measuredAt)}
                   </li>
                 </ul>
               </div>
@@ -432,6 +447,12 @@ function AnchorDetail({ anchor }: { anchor: BillingModAnchor }) {
         align: "right",
         render: (row) => fmtTyped(row.costTotal),
       },
+      {
+        key: "costProduct",
+        header: "Custo produto",
+        align: "right",
+        render: (row) => fmtTyped(row.costProduct),
+      },
       { key: "sourceOp", header: "OP ref.", render: (row) => row.sourceOp ?? "—" },
     ],
     [],
@@ -443,6 +464,7 @@ function AnchorDetail({ anchor }: { anchor: BillingModAnchor }) {
         anchor.branch ? ` / Filial ${anchor.branch}` : ""
       }`}
     >
+      <div id="cf-r09-anchor-detail">
       <p className="cf-muted">
         {anchor.productDescription ? `${anchor.productDescription} · ` : ""}
         Qtd faturada {fmtNumber(anchor.billedQty)} ·{" "}
@@ -466,12 +488,27 @@ function AnchorDetail({ anchor }: { anchor: BillingModAnchor }) {
           columns={columns}
           rows={anchor.modLines}
           rowKey={(row) =>
-            `${row.level}|${row.product ?? ""}|${row.operation ?? ""}|${row.resource ?? ""}|${row.modItem ?? ""}`
+            `${row.level}|${row.product ?? ""}|${row.operation ?? ""}|${row.resource ?? ""}|${row.modItem ?? ""}|${row.sourceOp ?? ""}`
           }
           hideSearch
           emptyMessage="Nenhuma operação retornada."
         />
       )}
+      </div>
     </CfSectionCard>
   );
+}
+
+/** Rótulos PT-BR para estados de homologação conhecidos. */
+const HOMOLOGATION_LABELS: Record<string, string> = {
+  PENDING: "Pendente",
+  APPROVED: "Aprovada",
+  REJECTED: "Reprovada",
+};
+
+function formatDatePtBr(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleString("pt-BR");
 }
