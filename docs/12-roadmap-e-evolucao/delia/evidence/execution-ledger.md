@@ -5574,3 +5574,12 @@ HOMOLOGATION: recreate delia-api; `DELIA_RUNTIME_SHA` gitignored label → `2681
 LIVE: preserve_material_dependency observed (compare + evidence_needed); composition insufficient; FALSE_GROUNDED=0; oracle NOT_REACHED (RC-B/C).
 RC_A_STATUS=IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW. RC_B/RC_C OPEN. REF05 NOT_PASS. FUNCTIONAL_ACCEPTANCE=NO.
 NEXT=RC-C/RC-B owner path; REF05; align runtime SHA label to commit after push.
+
+
+## Systemic intelligence-flow architecture audit (2026-11-04)
+
+TASK=DELIA-C3-INTELLIGENCE-FLOW-SYSTEMIC-ARCHITECTURE-AUDIT-01.
+DOC=229. HEAD_REANCHOR=`7d5b3667fd`. PRODUCT_CODE_CHANGED=NO. PRODUCTION_DEPLOY=NOT_AUTHORIZED.
+FINDINGS: ≥20 LLM instruction purposes; fragmentation PARTIALLY_PROVEN (per-sub turn_goal/select before owner READ); doc226 “semantic once” DRIFT_PARTIAL vs runtime; RC-A preserve_material_dependency live OK; RC-B/C/REF05 OPEN; E01 SIPOC client timeout~90s; E06 NON_GROUNDED honest.
+HYPOTHESIS_FRAGMENTATION=PARTIALLY_PROVEN. RECOMMENDED=OPTION_B consolidate semantic decisions (no implement). PHASE_ADVANCE=NONE.
+NEXT=coordination authorize R1–R5 roadmap in doc229 (sticky typed goal / RC-B / RC-C / REF05 / admission budget).
