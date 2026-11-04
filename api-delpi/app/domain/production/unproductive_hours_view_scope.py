@@ -33,7 +33,18 @@ METRIC_COST = "cost"
 METRIC_VALUES = (METRIC_HOURS, METRIC_COST)
 
 GRANULARITY_DAY = "day"
+GRANULARITY_WEEK = "week"
+GRANULARITY_MONTH = "month"
+GRANULARITY_YEAR = "year"
+# Série permanece diária até haver bucketing multi-grão no SQL de series.
 GRANULARITY_VALUES = (GRANULARITY_DAY,)
+# Ranking: day|week|month|year — omitido = top N no intervalo inteiro (compat).
+RANKING_GRANULARITY_VALUES = (
+    GRANULARITY_DAY,
+    GRANULARITY_WEEK,
+    GRANULARITY_MONTH,
+    GRANULARITY_YEAR,
+)
 
 
 def parse_resource_filter(raw: str | None) -> tuple[str, ...]:

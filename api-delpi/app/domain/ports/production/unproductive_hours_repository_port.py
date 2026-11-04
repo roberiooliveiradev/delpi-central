@@ -67,6 +67,7 @@ class UnproductiveHoursRepositoryPort(ABC):
         cost_center: str | None = None,
         operator_code: str | None = None,
         shift: str | None = None,
+        granularity: str | None = None,
     ) -> list[dict[str, Any]]:
         ...
 

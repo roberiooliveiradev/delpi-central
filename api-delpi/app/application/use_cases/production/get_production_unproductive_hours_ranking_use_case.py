@@ -23,6 +23,7 @@ class GetProductionUnproductiveHoursRankingUseCase:
             rank_by=request.rank_by,
             metric=request.metric,
             limit=request.limit,
+            granularity=request.granularity,
         )
         return UnproductiveHoursResponseAssembler.to_ranking(
             request=request, rows=rows

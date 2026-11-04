@@ -31,8 +31,9 @@ Consultas de **horas improdutivas / paradas PCP** alimentadas pela view TOTVS `d
 | `sort` | items | `date_desc\|date_asc\|hours_desc\|hours_asc\|cost_desc\|cost_asc` |
 | `rank_by` | ranking | **obrigatório** — ver abaixo |
 | `metric` | ranking | `hours` (default) \| `cost` |
-| `limit` | ranking | 1–50, default 10 |
+| `limit` | ranking | 1–50, default 10; com `granularity`, top N **por bucket** |
 | `granularity` | series | só `day` |
+| `granularity` | ranking | opcional `day` \| `week` \| `month` \| `year`; omitido = top N no intervalo inteiro |
 
 ### `rank_by`
 
@@ -51,7 +52,7 @@ Consultas de **horas improdutivas / paradas PCP** alimentadas pela view TOTVS `d
 
 **items:** `items[]` com `dataReferencia` (ISO), `motivo`, **`motivoDescricao`**, horas/custo, etc. + `pagination`.
 
-**ranking:** `rankBy`, `metric`, `limit`, `items[]` com `rank` + campos da dimensão ativa + métricas.
+**ranking:** `rankBy`, `metric`, `limit`, `items[]` com `rank` + campos da dimensão ativa + métricas. Com `granularity`, cada item inclui `period`/`periodo`/`date` (início do bucket) e o `limit` aplica-se por bucket.
 
 **series:** `granularity`, `items[]` com `date` (ISO), `total_hours`, `total_appointments`, `total_cost` — `SUM(TEMPO_HORAS) GROUP BY DATA_REFERENCIA`. Dia sem parada não aparece na série.
 

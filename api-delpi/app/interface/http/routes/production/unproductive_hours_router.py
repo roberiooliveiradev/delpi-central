@@ -51,6 +51,7 @@ from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     FACTORY_SHIFT_QUERY,
     GRANULARITY_QUERY_DAY_ONLY,
+    GRANULARITY_QUERY_OPTIONAL,
 )
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
@@ -113,6 +114,10 @@ _SERIES_FIELDS = {
 
 _RANKING_FIELDS = {
     "rank": {"label": "Posição", "type": "integer"},
+    "period": {"label": "Period", "type": "string", "format": "date"},
+    "periodo": {"label": "Período", "type": "string", "format": "date"},
+    "date": {"label": "Date", "type": "string", "format": "date"},
+    "dataReferencia": {"label": "Data de referência", "type": "string", "format": "date"},
     "motivo": {"label": "Motivo", "type": "string"},
     "motivoDescricao": {"label": "Descrição do motivo", "type": "string"},
     "recurso": {"label": "Recurso", "type": "string"},
@@ -444,6 +449,7 @@ def get_production_unproductive_hours_ranking(
         pattern="^(" + "|".join(METRIC_VALUES) + ")$",
     ),
     limit: int = LIMIT_QUERY("limit_ranking_10_50", description="Top N rows (max 50)."),
+    granularity: str | None = GRANULARITY_QUERY_OPTIONAL(),
 ):
     try:
         period = _build_period(
@@ -462,6 +468,7 @@ def get_production_unproductive_hours_ranking(
             rank_by=rank_by,
             metric=metric,
             limit=limit,
+            granularity=granularity,
         )
         result = build_get_production_unproductive_hours_ranking_use_case().execute(
             request

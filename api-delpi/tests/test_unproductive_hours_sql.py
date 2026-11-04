@@ -158,3 +158,59 @@ def test_ranking_invalid_rank_by_raises() -> None:
             metric="hours",
             limit=10,
         )
+
+
+def test_ranking_without_granularity_keeps_full_range_top_n() -> None:
+    query, _ = sql.build_ranking_query(
+        start_date="2025-07-01",
+        end_date="2026-07-01",
+        branch="01",
+        rank_by="stop_reason",
+        metric="hours",
+        limit=10,
+        granularity=None,
+    )
+    assert "SELECT TOP 10" in query
+    assert "data_periodo" not in query
+    assert "ROW_NUMBER()" not in query
+
+
+@pytest.mark.parametrize("granularity", ("day", "week", "month", "year"))
+def test_ranking_with_granularity_partitions_top_n_per_bucket(
+    granularity: str,
+) -> None:
+    query, params = sql.build_ranking_query(
+        start_date="2025-07-01",
+        end_date="2026-07-01",
+        branch="01",
+        rank_by="resource",
+        metric="hours",
+        limit=5,
+        granularity=granularity,
+    )
+    assert "data_periodo" in query
+    assert "ROW_NUMBER()" in query
+    assert "PARTITION BY" in query
+    assert "rank_pos <= 5" in query
+    assert "SELECT TOP" not in query
+    assert params == ("2025-07-01", "2026-07-01", "01")
+    if granularity == "week":
+        assert "19000101" in query
+    if granularity == "month":
+        assert "DATEFROMPARTS" in query
+        assert "MONTH(" in query
+    if granularity == "year":
+        assert "DATEFROMPARTS" in query
+
+
+def test_ranking_invalid_granularity_raises() -> None:
+    with pytest.raises(ValueError, match="granularity"):
+        sql.build_ranking_query(
+            start_date="2025-07-01",
+            end_date="2026-07-01",
+            branch="01",
+            rank_by="stop_reason",
+            metric="hours",
+            limit=10,
+            granularity="fortnight",
+        )

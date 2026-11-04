@@ -145,13 +145,16 @@ class UnproductiveHoursResponseAssembler:
         request: UnproductiveHoursRankingRequest,
         rows: list[dict[str, Any]],
     ) -> dict[str, Any]:
-        items = [
-            UnproductiveHoursItemMapper.map_ranking_item(
-                rank=index, rank_by=request.rank_by, row=row
+        items = []
+        for index, row in enumerate(rows, start=1):
+            rank_from_row = row.get("rank_pos")
+            rank = as_int(rank_from_row) if rank_from_row not in (None, "") else index
+            items.append(
+                UnproductiveHoursItemMapper.map_ranking_item(
+                    rank=rank, rank_by=request.rank_by, row=row
+                )
             )
-            for index, row in enumerate(rows, start=1)
-        ]
-        return {
+        payload: dict[str, Any] = {
             "periodo": request.periodo_dict(),
             "rank_by": request.rank_by,
             "rankBy": request.rank_by,
@@ -159,3 +162,6 @@ class UnproductiveHoursResponseAssembler:
             "limit": request.limit,
             "items": items,
         }
+        if request.granularity:
+            payload["granularity"] = request.granularity
+        return payload

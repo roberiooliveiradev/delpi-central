@@ -70489,9 +70489,22 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Top N rows (max 50).",
+          "description": "Top N rows (max 50). With granularity, top N per period bucket.",
           "type": "integer",
           "default": 10
+        },
+        {
+          "name": "granularity",
+          "in": "query",
+          "required": false,
+          "description": "Optional period bucket: day, week, month or year. Omit to aggregate over the full date range.",
+          "type": "string",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
         },
         {
           "name": "branch",
@@ -70513,14 +70526,14 @@
         "locale": {
           "en": {
             "summary": "Unproductive hours ranking",
-            "description": "Top N unproductive hours by stop reason, resource, cost center, operator, product or operation.",
-            "whenToUse": "Use for bar charts or ranking widgets on the production TV board.",
+            "description": "Top N unproductive hours by stop reason, resource, cost center, operator, product or operation. Optional granularity buckets the ranking by day, week, month or year.",
+            "whenToUse": "Use for bar charts or ranking widgets on the production TV board. Set granularity for period-bucketed rankings.",
             "label": "Unproductive hours ranking"
           },
           "pt-BR": {
             "summary": "Ranking de horas improdutivas",
-            "description": "Top N de horas improdutivas por motivo, recurso, centro de custo, operador, produto ou operação.",
-            "whenToUse": "Usar em gráfico de barras ou widget de ranking no painel de produção.",
+            "description": "Top N de horas improdutivas por motivo, recurso, centro de custo, operador, produto ou operação. Granularity opcional agrupa o ranking por dia, semana, mês ou ano.",
+            "whenToUse": "Usar em gráfico de barras ou widget de ranking no painel de produção. Defina granularidade para ranking por bucket de período.",
             "label": "Ranking de horas improdutivas"
           }
         },
@@ -70629,6 +70642,52 @@
               }
             },
             "format": "date"
+          },
+          "granularity": {
+            "locale": {
+              "en": {
+                "description": "Optional period bucket: day, week, month or year. Omit to aggregate over the full date range.",
+                "label": "Granularity"
+              },
+              "pt-BR": {
+                "description": "Bucket opcional do ranking: day (dia), week (semana), month (mês) ou year (ano). Omitido = top N no intervalo inteiro.",
+                "label": "Granularidade"
+              }
+            },
+            "enumLabels": {
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "week": {
+                "en": {
+                  "label": "Week"
+                },
+                "pt-BR": {
+                  "label": "Semana"
+                }
+              },
+              "month": {
+                "en": {
+                  "label": "Month"
+                },
+                "pt-BR": {
+                  "label": "Mês"
+                }
+              },
+              "year": {
+                "en": {
+                  "label": "Year"
+                },
+                "pt-BR": {
+                  "label": "Ano"
+                }
+              }
+            }
           },
           "limit": {
             "locale": {

@@ -128,7 +128,8 @@ class UnproductiveHoursItemMapper:
         total_hours = round_hours(row.get("total_horas"))
         total_cost = round_cost(row.get("total_custo"))
         hours_without_cost = round_hours(row.get("horas_sem_custo"))
-        return {
+        period = iso_date(row.get("data_periodo"))
+        item = {
             "rank": rank,
             **cls.map_ranking_dimension(rank_by, row),
             "total_appointments": total_appointments,
@@ -140,3 +141,9 @@ class UnproductiveHoursItemMapper:
             "totalCusto": total_cost,
             "horasSemCusto": hours_without_cost,
         }
+        if period:
+            item["period"] = period
+            item["periodo"] = period
+            item["date"] = period
+            item["dataReferencia"] = period
+        return item

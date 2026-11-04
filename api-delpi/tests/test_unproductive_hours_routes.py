@@ -183,6 +183,55 @@ def test_ranking_invalid_rank_by_pattern(unproductive_hours_client: TestClient) 
 
 @patch(
     "app.interface.http.routes.production.unproductive_hours_router"
+    ".build_get_production_unproductive_hours_ranking_use_case"
+)
+def test_ranking_forwards_month_granularity(
+    mock_builder, unproductive_hours_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "periodo": {"dataInicio": "2025-07-01", "dataFim": "2026-07-01", "filial": "01"},
+        "rankBy": "stop_reason",
+        "metric": "hours",
+        "limit": 10,
+        "granularity": "month",
+        "items": [],
+    }
+    mock_builder.return_value = use_case
+
+    response = unproductive_hours_client.get(
+        "/production/unproductive-hours/ranking",
+        params={
+            "rank_by": "stop_reason",
+            "branch": "01",
+            "start_date": "2025-07-01",
+            "end_date": "2026-07-01",
+            "granularity": "month",
+        },
+    )
+    assert response.status_code == 200
+    request = use_case.execute.call_args.args[0]
+    assert request.granularity == "month"
+    assert _body(response)["data"]["granularity"] == "month"
+
+
+def test_ranking_rejects_invalid_granularity(
+    unproductive_hours_client: TestClient,
+) -> None:
+    response = unproductive_hours_client.get(
+        "/production/unproductive-hours/ranking",
+        params={
+            "rank_by": "stop_reason",
+            "start_date": "2025-07-01",
+            "end_date": "2026-07-01",
+            "granularity": "fortnight",
+        },
+    )
+    assert response.status_code == 422
+
+
+@patch(
+    "app.interface.http.routes.production.unproductive_hours_router"
     ".build_get_production_unproductive_hours_series_use_case"
 )
 def test_series_returns_envelope(mock_builder, unproductive_hours_client: TestClient) -> None:

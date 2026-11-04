@@ -56,3 +56,26 @@ def test_map_ranking_item_dual_keys() -> None:
     assert item["motivo"] == "OT"
     assert item["total_hours"] == 3.0
     assert item["totalHoras"] == 3.0
+    assert "period" not in item
+
+
+def test_map_ranking_item_includes_period_when_bucketed() -> None:
+    item = UnproductiveHoursItemMapper.map_ranking_item(
+        rank=2,
+        rank_by="resource",
+        row={
+            "data_periodo": "2026-03-01",
+            "recurso": "CT-12",
+            "centro_custo": "CC01",
+            "total_apontamentos": 1,
+            "total_horas": 2.0,
+            "total_custo": 10.0,
+            "horas_sem_custo": 0.0,
+            "rank_pos": 2,
+        },
+    )
+    assert item["rank"] == 2
+    assert item["period"] == "2026-03-01"
+    assert item["periodo"] == "2026-03-01"
+    assert item["date"] == "2026-03-01"
+    assert item["resource"] == "CT-12"

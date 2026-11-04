@@ -110,6 +110,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
         cost_center: str | None = None,
         operator_code: str | None = None,
         shift: str | None = None,
+        granularity: str | None = None,
     ) -> list[dict]:
         query, params = build_ranking_query(
             start_date=start_date,
@@ -123,6 +124,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
             cost_center=cost_center,
             operator_code=operator_code,
             shift=shift,
+            granularity=granularity,
         )
         with self:
             return self.execute_query(query, params)

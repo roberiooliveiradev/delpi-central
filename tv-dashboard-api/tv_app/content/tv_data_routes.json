@@ -22536,11 +22536,12 @@
       "path": "/production/unproductive-hours/ranking",
       "allowedDisplayModes": [
         "kpi",
+        "bar_chart",
         "auto"
       ],
       "metaShape": "list",
-      "description": "Top N de horas improdutivas por motivo, recurso, centro de custo, operador, produto ou operação.",
-      "whenToUse": "Usar em gráfico de barras ou widget de ranking no painel de produção.",
+      "description": "Top N de horas improdutivas por motivo, recurso, centro de custo, operador, produto ou operação. Granularity opcional agrupa o ranking por dia, semana, mês ou ano.",
+      "whenToUse": "Usar em gráfico de barras ou widget de ranking no painel de produção. Defina granularidade para ranking por bucket de período.",
       "paramSchema": {
         "rank_by": {
           "type": "string",
@@ -22611,6 +22612,18 @@
           "label": "Limite",
           "default": 10,
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        },
+        "granularity": {
+          "type": "string",
+          "optional": true,
+          "label": "Granularidade",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "description": "Bucket opcional do ranking: day (dia), week (semana), month (mês) ou year (ano). Omitido = top N no intervalo inteiro."
         },
         "branch": {
           "type": "string",

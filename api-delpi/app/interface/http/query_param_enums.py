@@ -245,6 +245,19 @@ def GRANULARITY_QUERY_DAY_ONLY():
     )
 
 
+def GRANULARITY_QUERY_OPTIONAL():
+    """Optional day|week|month|year — omit = no period bucketing (full-range aggregate)."""
+    return Query(
+        None,
+        description=(
+            "Optional period bucket: day, week, month or year. "
+            "Omit to aggregate over the full date range."
+        ),
+        pattern=_enum_pattern(GRANULARITY_VALUES),
+        json_schema_extra={"enum": list(GRANULARITY_VALUES)},
+    )
+
+
 def GRANULARITY_QUERY_REQUIRED():
     return Query(
     ...,

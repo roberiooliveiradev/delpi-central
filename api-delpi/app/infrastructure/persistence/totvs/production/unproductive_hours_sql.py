@@ -21,6 +21,7 @@ from app.domain.production.unproductive_hours_view_scope import (
     RANK_BY_RESOURCE,
     RANK_BY_STOP_REASON,
     RANK_BY_VALUES,
+    RANKING_GRANULARITY_VALUES,
     UNPRODUCTIVE_HOURS_VIEW,
     VALID_UNPRODUCTIVE_HOURS_BRANCHES,
 )
@@ -280,6 +281,28 @@ def build_top_operator_query(
     )
 
 
+def ranking_period_expr(granularity: str) -> str:
+    """Bucket SQL Server a partir de ``v.DATA_REFERENCIA`` (date)."""
+    grain = (granularity or "").strip().lower()
+    if grain not in RANKING_GRANULARITY_VALUES:
+        raise ValueError(
+            f"granularity inválida: {granularity!r}. "
+            f"Use um de: {', '.join(RANKING_GRANULARITY_VALUES)}."
+        )
+    ref = "CONVERT(date, v.DATA_REFERENCIA)"
+    if grain == "day":
+        return ref
+    if grain == "week":
+        # Segunda-feira da semana (âncora 1900-01-01 = segunda).
+        return (
+            "CONVERT(date, DATEADD(DAY, "
+            f"-(DATEDIFF(DAY, '19000101', {ref}) % 7), {ref}))"
+        )
+    if grain == "year":
+        return f"CONVERT(date, DATEFROMPARTS(YEAR({ref}), 1, 1))"
+    return f"CONVERT(date, DATEFROMPARTS(YEAR({ref}), MONTH({ref}), 1))"
+
+
 def build_ranking_query(
     *,
     start_date: str,
@@ -293,6 +316,7 @@ def build_ranking_query(
     cost_center: str | None = None,
     operator_code: str | None = None,
     shift: str | None = None,
+    granularity: str | None = None,
 ) -> tuple[str, tuple]:
     if rank_by not in RANK_BY_VALUES:
         raise ValueError(f"rank_by inválido: {rank_by}")
@@ -308,8 +332,10 @@ def build_ranking_query(
         operator_code=operator_code,
         shift=shift,
     )
-    return (
-        f"""
+    grain = (granularity or "").strip().lower() or None
+    if not grain:
+        return (
+            f"""
         SELECT TOP {int(limit)}
             {spec.select_keys},
             {_aggregate_metrics_select()}
@@ -318,6 +344,36 @@ def build_ranking_query(
           AND {spec.non_empty_predicate}
         GROUP BY {spec.group_by}
         ORDER BY {order_column} DESC
+        """,
+            params,
+        )
+
+    period_expr = ranking_period_expr(grain)
+    return (
+        f"""
+        WITH aggregated AS (
+            SELECT
+                {period_expr} AS data_periodo,
+                {spec.select_keys},
+                {_aggregate_metrics_select()}
+            {_from_view()}
+            WHERE {where_clause}
+              AND {spec.non_empty_predicate}
+            GROUP BY {period_expr}, {spec.group_by}
+        ),
+        ranked AS (
+            SELECT
+                aggregated.*,
+                ROW_NUMBER() OVER (
+                    PARTITION BY aggregated.data_periodo
+                    ORDER BY aggregated.{order_column} DESC
+                ) AS rank_pos
+            FROM aggregated
+        )
+        SELECT *
+        FROM ranked
+        WHERE rank_pos <= {int(limit)}
+        ORDER BY data_periodo ASC, rank_pos ASC
         """,
         params,
     )

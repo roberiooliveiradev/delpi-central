@@ -15,6 +15,7 @@ from app.domain.production.unproductive_hours_view_scope import (
     GRANULARITY_DAY,
     GRANULARITY_VALUES,
     ITEMS_SORT_VALUES,
+    RANKING_GRANULARITY_VALUES,
     MAX_MONTHS_WINDOW,
     MAX_PAGE_SIZE,
     MAX_RANKING_LIMIT,
@@ -232,6 +233,7 @@ class UnproductiveHoursRankingRequest(UnproductiveHoursQueryRequest):
     rank_by: str = ""
     metric: str = METRIC_HOURS
     limit: int = DEFAULT_RANKING_LIMIT
+    granularity: str | None = None
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -251,3 +253,10 @@ class UnproductiveHoursRankingRequest(UnproductiveHoursQueryRequest):
             MAX_RANKING_LIMIT,
             max(1, int(self.limit or DEFAULT_RANKING_LIMIT)),
         )
+        granularity = clean_text(self.granularity).lower() or None
+        if granularity is not None and granularity not in RANKING_GRANULARITY_VALUES:
+            raise ValueError(
+                "granularity inválida. Use um de: "
+                f"{', '.join(RANKING_GRANULARITY_VALUES)} (ou omita)."
+            )
+        self.granularity = granularity
