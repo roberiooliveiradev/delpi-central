@@ -5399,3 +5399,25 @@ TASK=DELIA-C3-E4-R6-CANONICAL-ENTITY-BINDING-AND-FUNCTIONAL-CLOSURE-01; PATCHES=
 CODE_FIX=orchestration._subobjectives_from_session_refs now returns None for client-supplied prior entity refs, so unverified HTTP context no longer generates automatic entity-target READ obligations; existing governed semantic decomposition/clarification path remains available. Prior implementation accepted exactly two forged refs and built textual SubObjective goals; removed this promotion. TEST_ADDED=two distinct well-formed untrusted refs and two distinct forged refs must not auto-bind; previous positive binding test changed to secure refusal. No new public API, store, signer, provider or authority.
 REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL for fail-closed isolated code change (static inspection), NOT functional E4 acceptance. TESTS=TEST_NOT_RUN here; LIVE_E2E=TEST_NOT_RUN; HTTP_REF_ROUNDTRIP=NOT_PROVEN; G04/G05/G07/G12 NOT_PASS. This is a protective correction, not completed cross-turn solution.
 NEXT=Devin must reanchor current HEAD, run tests/regressions, inspect existing secure continuity/typed capability-arg boundaries and complete remaining functional work under doc228. Deploy requested by user: authorize only existing governed non-production test environment by default; if production environment is targeted, explicit environment-specific authorization and rollback gates required. Real Keycloak/Core/DAVI/Domain Qwen3 validation, negative user/owner scope tests and gateway client delivery before functional candidate. No silent production deployment or change to session storage/public contract.
+
+## E4-R6 — functional closure evidence + model A/B (doc 228)
+
+TASK=DELIA-C3-E4-R6-FUNCTIONAL-CLOSURE-DEPLOY-AND-E2E-01.
+STRUCTURAL FIX (0c28844633): `_entity_refs_from_outcome` module-level
+at col 0 mid-class swallowed ALL methods after line 967 in
+HandleInteractiveConversationTurn -> HTTP 500 AttributeError on every
+turn. Moved before class; AST-verified class restored. Coordination
+fail-closed `_subobjectives_from_session_refs` preserved.
+MODEL A/B (decompose stage, same instr+input+schema, 5x each):
+  qwen3:4b-instruct-2507: 5/5 VALID subs=3, ~6.2s, ~229 tok — RELIABLE
+  qwen3:8b:               3/5 VALID subs=2, ~90-120s (2 timeouts),
+                          ~1100+ tok — SLOWER/LESS reliable on hw
+FINDING: 4B decomposes reliably in isolation — in-pipeline variance is
+in sub-goal->READ chain (goal_evidence_relevance=irrelevant,
+empty_result, source_unavailable), not decompose structured-output.
+8B not a viable upgrade (latency/hardware). 
+E2E real (current SHA): A03 same-session decomposed=4 ->
+COMPLETEDx3/BLOCKEDx1 in ~172s, no composition (subs produced
+empty/irrelevant evidence); B01 single-turn HTTP 200/48.6s
+NON_GROUNDED owner_query_miss (goal_understanding classified
+comparison=False this run).
