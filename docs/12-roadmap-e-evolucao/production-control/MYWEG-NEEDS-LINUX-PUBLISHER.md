@@ -39,16 +39,18 @@ Compose (agendamento desativado — só `--profile manual`). **Obrigatório** ro
 
 ```bash
 cd /home/operador/projetos/delpi-central/infra
-docker compose -f docker-compose.yml --env-file .env --profile manual run --rm \
+# Após rebuild do production-control-api, o publisher reutiliza a mesma imagem.
+docker compose -f docker-compose.yml --env-file .env --profile manual run --rm --no-deps \
   myweg-needs-publisher --dry-run \
   --collection-id 20261104_172829_20261104_142827_EXPORT_20261104_142826 --json
 
-docker compose -f docker-compose.yml --env-file .env --profile manual run --rm \
+docker compose -f docker-compose.yml --env-file .env --profile manual run --rm --no-deps \
   myweg-needs-publisher --publish \
   --collection-id 20261104_172829_20261104_142827_EXPORT_20261104_142826 --json
 ```
 
-Se `no configuration file provided: not found` aparecer, o cwd não era `infra/`.
+Se `no configuration file provided: not found` aparecer, o cwd não era `infra/`.  
+Se o erro de normalização **não** trouxer `chaves_recebidas=`, a imagem do publisher está stale — rode `docker compose ... build production-control-api` de novo.
 
 Token S2S vem do `.env` do compose (`API_DELPI_INTERNAL_SERVICE_TOKEN`), montagem RO dos normalizados, estado em volume separado. Sem Docker socket.
 

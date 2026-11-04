@@ -2896,8 +2896,10 @@ services:
       - delpi-network
 
   # One-shot manual — profiles: [manual]. Sem cron/timer.
+  # Reutiliza a mesma imagem do production-control-api (evita imagem stale no run).
   myweg-needs-publisher:
     profiles: ["manual"]
+    image: infra-production-control-api
     build:
       context: ..
       dockerfile: production-control-api/Dockerfile
