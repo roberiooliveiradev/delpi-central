@@ -1098,7 +1098,11 @@ export type LineFeederPublishedQueuePayload = {
   work_center_count: number;
 };
 
-/** Origem da demanda proporcional — Etapa 3. */
+/**
+ * Origem da demanda — Etapa 3.
+ * `fraction` = cobertura temporal do horizonte (informativo).
+ * `required_qty` = saldo SD4 aberto integral (`demand_basis: open_commitment`).
+ */
 export type LineFeederMaterialOrigin = {
   work_center: string;
   production_order: string;
@@ -1110,6 +1114,7 @@ export type LineFeederMaterialOrigin = {
   open_qty: number;
   fraction: number;
   required_qty: number;
+  demand_basis?: "open_commitment" | string;
 };
 
 export type LineFeederMaterialItem = {

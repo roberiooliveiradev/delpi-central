@@ -106,6 +106,26 @@ def test_allocate_partial_quantity_within_horizon() -> None:
     assert op.remaining_outside_qty == 2.0
     assert op.productive_seconds == 3600.0
     assert op.setup_seconds_applied == 0.0
+    # Residual zero neste caso → complete; parcial com residual também é complete.
+    assert result.completeness == "complete"
+    assert horizon_needs_more_operations(result) is False
+
+
+def test_allocate_partial_with_residual_is_not_queue_shortfall() -> None:
+    """AC-01 domínio: parcial com sobra < 1 peça → complete (não queue_shorter)."""
+    ops = [
+        _hop(order="A", pending=10, cycle=1400, position=1),
+        _hop(order="B", pending=10, cycle=1400, position=2),
+    ]
+    result = allocate_work_center_horizon(ops, hours=1, work_center="CT-A")
+    assert len(result.operations) == 1
+    assert result.operations[0].coverage == "partial"
+    assert result.operations[0].covered_qty == 2.0
+    assert result.seconds_covered == pytest.approx(2800.0)
+    assert result.hours_shortfall == pytest.approx(800 / 3600)
+    assert result.completeness == "complete"
+    assert result.stop_reason is None
+    assert horizon_needs_more_operations(result) is False
 
 
 def test_three_work_centers_independent_budgets() -> None:
@@ -801,6 +821,45 @@ def test_progressive_partial_operation_matches_batch_motor() -> None:
     )
     assert group["operations"][0]["covered_qty"] == batch.operations[0].covered_qty
     assert group["operations"][0]["offset_end_seconds"] == batch.operations[0].offset_end_seconds
+
+
+def test_progressive_partial_with_residual_skips_later_standard_times() -> None:
+    """AC-01: 3600s, ciclo 1400s, 10 pendentes + ops posteriores → 1 ST apenas."""
+    ops = [_op_row(work_center="CT-A", order=f"OP{i}") for i in range(1, 6)]
+    for index, op in enumerate(ops, start=1):
+        op["sequence_position"] = index
+    balances = {
+        (f"OP{i}", "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0}
+        for i in range(1, 6)
+    }
+    st = {(f"OP{i}", "01"): _complete_st(1400) for i in range(1, 6)}
+    # Se consultasse OP2+, inventaria incompleto — prova que não consultou.
+    for i in range(2, 6):
+        st[(f"OP{i}", "01")] = {
+            "ideal_cycle_seconds": None,
+            "setup_seconds": 0,
+            "pieces_conversion_factor": 1,
+            "standard_time_source": "unavailable",
+            "data_quality": "standard_time_unavailable",
+        }
+    service, _, _, gateway = _service(
+        published=_payload(ops), balances=balances, standard_times=st
+    )
+    data = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=1,
+    )
+    assert gateway.st_calls == 1
+    assert data["standard_time_calls"] == 1
+    assert data["standard_time_calls_avoided"] == 4
+    group = data["work_centers"][0]
+    assert group["completeness"] == "complete"
+    assert group["stop_reason"] is None
+    assert len(group["operations"]) == 1
+    assert group["operations"][0]["coverage"] == "partial"
+    assert group["operations"][0]["covered_qty"] == 2.0
 
 
 def test_progressive_multi_ct_independent_budgets() -> None:

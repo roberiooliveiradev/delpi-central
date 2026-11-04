@@ -177,6 +177,7 @@ def allocate_work_center_horizon(
     completeness = COMPLETENESS_COMPLETE
     stop_reason: str | None = None
     setup_uncertain = False
+    stopped_on_partial = False
     blocking_production_order: str | None = None
     blocking_operation_code: str | None = None
     blocking_operation_id: str | None = None
@@ -322,9 +323,10 @@ def allocate_work_center_horizon(
         remaining_budget -= total_seconds
 
         if coverage == COVERAGE_PARTIAL:
-            if remaining_budget > 0 and remaining_budget < cycle:
-                # sobra menor que uma peça — shortfall residual transparente
-                pass
+            # Horizonte esgotado nesta operação (sobra < 1 peça desta OP).
+            # Não marcar queue_shorter — isso faria a orquestração progressiva
+            # buscar ST da próxima OP sem necessidade.
+            stopped_on_partial = True
             break
 
     seconds_covered = budget - remaining_budget
@@ -333,8 +335,13 @@ def allocate_work_center_horizon(
     hours_covered = seconds_covered / _SECONDS_PER_HOUR
     hours_shortfall = remaining_budget / _SECONDS_PER_HOUR
 
-    if completeness == COMPLETENESS_COMPLETE and remaining_budget > 0:
-        # Ainda há orçamento mas a fila (até aqui) acabou.
+    if (
+        completeness == COMPLETENESS_COMPLETE
+        and remaining_budget > 0
+        and not stopped_on_partial
+    ):
+        # Ainda há orçamento mas a fila (até aqui) acabou — pode haver mais ops
+        # publicadas a consultar na orquestração progressiva.
         _mark_shortfall(STOP_QUEUE_SHORTER_THAN_HORIZON)
 
     if completeness == COMPLETENESS_COMPLETE and setup_uncertain:
@@ -366,15 +373,18 @@ def horizon_needs_more_operations(result: WorkCenterHorizonResult) -> bool:
     Usado pela orquestração progressiva: só consulta tempo padrão da próxima
     operação aberta se o horizonte ainda não estiver resolvido.
 
-    - ``complete`` → orçamento preenchido (inclui cobertura parcial final).
+    - ``complete`` → orçamento preenchido **ou** última op parcial (residual < 1 peça).
     - ``incomplete`` → bloqueio técnico; não avança.
-    - ``shortfall`` com fila esgotada no prefixo atual → continua se houver mais
-      ops na PUBLISHED.
+    - ``shortfall`` ``queue_shorter_than_horizon`` → continua se houver mais ops
+      na PUBLISHED (fila do prefixo esgotou com orçamento restante).
     - demais ``shortfall`` (setup/orçamento) → não há ganho em avançar.
     """
     if result.completeness == COMPLETENESS_INCOMPLETE:
         return False
     if result.completeness == COMPLETENESS_COMPLETE:
+        return False
+    if result.operations and result.operations[-1].coverage == COVERAGE_PARTIAL:
+        # Defesa: parcial nunca deve pedir mais ST.
         return False
     return result.stop_reason == STOP_QUEUE_SHORTER_THAN_HORIZON
 

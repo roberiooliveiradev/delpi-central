@@ -7,10 +7,16 @@ Fórmula canônica (por material, saldo compartilhado da fábrica):
 O saldo do ponto de uso (armazém 99) é descontado **uma única vez** na
 consolidação global. O almoxarifado (01) é apenas informativo.
 
-Proporção do empenho (consumo proporcional comprovado via ``open_qty``):
+Seleção de operações: horizonte de horas (coberta total ou parcial).
 
-``fraction = covered_qty / pending_qty``  (clamp 0..1)
-``material_needed = open_qty × fraction``
+Demanda de material (decisão de negócio vigente):
+
+``material_needed = open_qty``  (saldo SD4 aberto da operação contemplada)
+
+Não há proporcionalidade ``covered_qty / pending_qty`` sobre o empenho.
+``origins[].fraction`` permanece como **razão informativa de cobertura do
+horizonte** (``covered_qty / pending_qty``); ``required_qty`` da origem é o
+empenho aberto integral (``demand_basis = open_commitment``).
 
 Não usa SG1, listas anteriores, status de coleta nem ``original_qty``.
 """
@@ -32,6 +38,8 @@ STATUS_COVERED = "covered"
 STATUS_TO_PICK = "to_pick"
 STATUS_AT_RISK = "at_risk"
 STATUS_UNKNOWN = "unknown"
+
+DEMAND_BASIS_OPEN_COMMITMENT = "open_commitment"
 
 
 def _dec(value: Any) -> Decimal | None:
@@ -91,6 +99,7 @@ class MaterialOriginLine:
     open_qty: float
     fraction: float
     required_qty: float
+    demand_basis: str = DEMAND_BASIS_OPEN_COMMITMENT
 
 
 @dataclass
@@ -103,45 +112,75 @@ class _MaterialBucket:
     work_centers: list[str] = field(default_factory=list)
 
 
+def commitment_material_qty(*, open_qty: Decimal) -> Decimal | None:
+    """Demanda = saldo SD4 aberto. None só se o valor for inválido."""
+    if open_qty < 0:
+        return None
+    if open_qty <= _EPSILON:
+        return Decimal("0")
+    return open_qty
+
+
 def proportional_material_qty(
     *,
     open_qty: Decimal,
     covered_qty: Decimal,
     pending_qty: Decimal,
 ) -> Decimal | None:
-    """Demanda proporcional; None se a regra proporcional não puder ser aplicada."""
-    if open_qty <= _EPSILON:
-        return Decimal("0")
+    """Compat: antigos callers de teste. Preferir ``commitment_material_qty``.
+
+    Mantido apenas como utilitário de cobertura informativa; **não** é a regra
+    de demanda do Alimentador.
+    """
+    _ = (covered_qty, pending_qty)
+    return commitment_material_qty(open_qty=open_qty)
+
+
+def _coverage_fraction(covered_qty: Decimal, pending_qty: Decimal) -> Decimal:
+    """Razão informativa covered/pending (clamp 0..1); não define required_qty."""
     if pending_qty <= _EPSILON:
-        return None
-    if covered_qty < 0 or open_qty < 0:
-        return None
+        return Decimal("0")
+    if covered_qty < 0:
+        return Decimal("0")
     fraction = covered_qty / pending_qty
     if fraction < 0:
-        return None
+        return Decimal("0")
     if fraction > 1:
-        fraction = Decimal("1")
-    return open_qty * fraction
+        return Decimal("1")
+    return fraction
 
 
 def build_material_demands(
     operations: Sequence[CoveredOperationDemand],
     commitments_by_operation: Mapping[tuple[str, str], list[dict[str, Any]]],
 ) -> tuple[list[_MaterialBucket], list[dict[str, Any]], bool]:
-    """Agrega demanda por (produto, unidade).
+    """Agrega demanda por (produto, unidade) com empenho SD4 integral.
 
-    Retorna (buckets ordenáveis, avisos, proportional_ok).
-    ``proportional_ok=False`` quando alguma linha não pôde ser calculada.
+    Retorna (buckets, avisos, demands_ok).
+    ``demands_ok=False`` quando alguma linha de empenho for semanticamente inválida.
     """
     buckets: dict[tuple[str, str], _MaterialBucket] = {}
     warnings: list[dict[str, Any]] = []
-    proportional_ok = True
+    demands_ok = True
+    # Evita duplicar o mesmo empenho se a mesma OP/operação aparecer 2× no horizonte.
+    seen_ops: set[tuple[str, str]] = set()
 
     for op in operations:
         if op.covered_qty <= _EPSILON:
             continue
-        key = (op.production_order, _normalize_operation_code(op.operation_code))
-        materials = commitments_by_operation.get(key) or []
+        op_key = (op.production_order, _normalize_operation_code(op.operation_code))
+        if op_key in seen_ops:
+            warnings.append(
+                {
+                    "code": "duplicate_contemplated_operation_skipped",
+                    "production_order": op.production_order,
+                    "operation_code": op.operation_code,
+                    "work_center": op.work_center,
+                }
+            )
+            continue
+        seen_ops.add(op_key)
+        materials = commitments_by_operation.get(op_key) or []
         if not materials:
             warnings.append(
                 {
@@ -152,6 +191,7 @@ def build_material_demands(
                 }
             )
             continue
+        coverage_fraction = _coverage_fraction(op.covered_qty, op.pending_qty)
         for material in materials:
             product_code = _text(material.get("product_code"))
             if not product_code:
@@ -159,18 +199,23 @@ def build_material_demands(
             if not _is_raw_material(material.get("product_type")):
                 continue
             open_qty = _dec(material.get("open_qty"))
-            if open_qty is None or open_qty <= _EPSILON:
-                continue
-            needed = proportional_material_qty(
-                open_qty=open_qty,
-                covered_qty=op.covered_qty,
-                pending_qty=op.pending_qty,
-            )
-            if needed is None:
-                proportional_ok = False
+            if open_qty is None:
+                demands_ok = False
                 warnings.append(
                     {
-                        "code": "non_proportional_or_invalid",
+                        "code": "commitment_open_qty_invalid",
+                        "product_code": product_code,
+                        "production_order": op.production_order,
+                        "operation_code": op.operation_code,
+                    }
+                )
+                continue
+            needed = commitment_material_qty(open_qty=open_qty)
+            if needed is None:
+                demands_ok = False
+                warnings.append(
+                    {
+                        "code": "commitment_open_qty_invalid",
                         "product_code": product_code,
                         "production_order": op.production_order,
                         "operation_code": op.operation_code,
@@ -189,13 +234,6 @@ def build_material_demands(
                     unit=unit,
                 )
                 buckets[bucket_key] = bucket
-            fraction = (
-                op.covered_qty / op.pending_qty
-                if op.pending_qty > _EPSILON
-                else Decimal("0")
-            )
-            if fraction > 1:
-                fraction = Decimal("1")
             bucket.required_qty += needed
             if not bucket.description:
                 bucket.description = _text(material.get("description"))
@@ -211,15 +249,16 @@ def build_material_demands(
                     covered_qty=_round_qty(op.covered_qty),
                     pending_qty=_round_qty(op.pending_qty),
                     open_qty=_round_qty(open_qty),
-                    fraction=_round_qty(fraction),
+                    fraction=_round_qty(coverage_fraction),
                     required_qty=_round_qty(needed),
+                    demand_basis=DEMAND_BASIS_OPEN_COMMITMENT,
                 )
             )
 
     result_buckets = [
         buckets[key] for key in sorted(buckets.keys(), key=lambda item: (item[0], item[1]))
     ]
-    return result_buckets, warnings, proportional_ok
+    return result_buckets, warnings, demands_ok
 
 
 def apply_factory_stock(
@@ -292,8 +331,10 @@ def apply_factory_stock(
                         "covered_qty": origin.covered_qty,
                         "pending_qty": origin.pending_qty,
                         "open_qty": origin.open_qty,
+                        # Informativo: cobertura temporal do horizonte (≠ fator de demanda).
                         "fraction": origin.fraction,
                         "required_qty": origin.required_qty,
+                        "demand_basis": origin.demand_basis,
                     }
                     for origin in bucket.origins
                 ],

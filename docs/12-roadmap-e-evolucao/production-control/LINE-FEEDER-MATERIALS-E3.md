@@ -53,11 +53,18 @@ Limites de lote: BFF fatia por `commitmentBatchSize` / `maxCommitmentBatches`; f
 
 ## Fórmulas
 
-1. Operações com `covered_qty > 0` do horizonte.
-2. MP com `open_qty > 0`: `needed = open_qty × min(1, covered_qty/pending_qty)`.
+1. Operações com `covered_qty > 0` do horizonte (total **ou** parcial).
+2. MP com `open_qty > 0`: `needed = open_qty` (saldo SD4 aberto **integral** da operação contemplada).
+   - Não há proporcionalidade `covered_qty / pending_qty` sobre o empenho.
+   - `origins[].fraction` permanece como razão **informativa** de cobertura do horizonte.
+   - `origins[].demand_basis = open_commitment`.
 3. Consolida por `(product_code, unit)`.
 4. Desconta saldo 99 **uma vez** no total consolidado.
 5. Almox 01: disponibilidade informativa (`to_pick`/`at_risk`), não reduz `to_collect`.
+
+> Decisão vigente (rework): a seleção das operações é determinada pelo horizonte de horas.
+> Para cada operação contemplada, a necessidade de materiais considera integralmente o
+> saldo aberto dos empenhos SD4.
 
 ## Ausência legítima × falha de integração (rework)
 
@@ -65,7 +72,7 @@ Limites de lote: BFF fatia por `commitmentBatchSize` / `maxCommitmentBatches`; f
 |---|---|---|
 | **A** Consulta íntegra, sem SD4 | `items` é lista (pode ser `[]`); envelope/filial/eco de OPs coerentes | `operational_list_safe` segue demais regras; `no_commitments` é diagnóstico; **não** inventa MP |
 | **B** Resposta inválida/incompleta | sem `items[]`, payload não-dict, `success: false`, `returned_count` incoerente, OP/filial estranha | `commitments_incomplete` + `operational_list_safe=false`; **não** tratar como ausência |
-| **C** Com empenhos | validação OK + linhas SD4 | cálculo proporcional inalterado |
+| **C** Com empenhos | validação OK + linhas SD4 | demanda = `open_qty` integral por OP contemplada |
 | Transporte/lote falhou | exceção no gateway | `DelpiGatewayError` — não lista completa falsa |
 
 `returned_count = 0` **nunca** sozinho prova falha.

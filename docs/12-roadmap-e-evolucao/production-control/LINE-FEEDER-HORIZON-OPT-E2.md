@@ -40,6 +40,15 @@ saldos em lote (inalterado)
 | Pooling HTTP / batch ST | Fora desta etapa (sem evidência de necessidade pós-progressivo) |
 | Contrato | Aditivo: `standard_time_calls_avoided`, `progressive_allocation` no CT |
 
+## Rework — parcial não pede mais ST
+
+Cobertura **parcial** (sobra < 1 peça da OP atual) mantém `completeness=complete` e **não** marca
+`queue_shorter_than_horizon`. Assim `horizon_needs_more_operations` encerra o CT sem consultar
+ops posteriores (evita falso `standard_time_call_limit`).
+
+Materiais: ver [LINE-FEEDER-MATERIALS-E3.md](./LINE-FEEDER-MATERIALS-E3.md) — demanda = empenho SD4
+aberto integral das ops contempladas (sem proporção por peças cobertas).
+
 ## Baseline vs depois (testes)
 
 Cenário AC-01 (1 CT, 55 ops, 8 h, 5 suficientes):

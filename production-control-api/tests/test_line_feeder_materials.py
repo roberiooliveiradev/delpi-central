@@ -19,6 +19,7 @@ from production_control_app.domain.services.line_feeder_materials import (
     CoveredOperationDemand,
     apply_factory_stock,
     build_material_demands,
+    commitment_material_qty,
     proportional_material_qty,
 )
 from production_control_app.domain.services.operation_materials_batch import (
@@ -46,12 +47,57 @@ def _user(*permissions: str):
 # --------------------------------------------------------------------------- #
 
 
-def test_proportional_partial_operation() -> None:
+def test_commitment_qty_is_full_open_even_when_partial_coverage() -> None:
+    """AC-02: cobertura temporal parcial → demanda = empenho aberto integral."""
+    assert commitment_material_qty(open_qty=Decimal("100")) == Decimal("100")
+    # Compat wrapper não aplica mais proporção covered/pending.
     assert proportional_material_qty(
         open_qty=Decimal("100"),
         covered_qty=Decimal("40"),
         pending_qty=Decimal("100"),
-    ) == Decimal("40")
+    ) == Decimal("100")
+
+
+def test_partial_coverage_uses_full_open_commitment() -> None:
+    ops = [
+        CoveredOperationDemand(
+            work_center="CT-A",
+            work_center_name="A",
+            production_order="OP3",
+            operation_code="01",
+            operation_id="x",
+            sequence_position=1,
+            covered_qty=Decimal("40"),
+            pending_qty=Decimal("100"),
+        )
+    ]
+    commitments = {
+        ("OP3", "1"): [
+            {
+                "product_code": "MP1",
+                "description": "Aço",
+                "unit": "KG",
+                "product_type": "MP",
+                "open_qty": 100,
+            }
+        ]
+    }
+    buckets, _, ok = build_material_demands(ops, commitments)
+    assert ok
+    assert buckets[0].required_qty == Decimal("100")
+    origin = buckets[0].origins[0]
+    assert origin.required_qty == 100.0
+    assert origin.open_qty == 100.0
+    assert origin.fraction == 0.4
+    assert origin.demand_basis == "open_commitment"
+    items = apply_factory_stock(
+        buckets,
+        factory_balances={"MP1": 70},
+        source_balances={"MP1": 1000},
+        balances_available=True,
+    )
+    assert items[0]["required_qty"] == 100.0
+    assert items[0]["to_collect_qty"] == 30.0
 
 
 def test_stock_partial_and_repeat_same_result() -> None:
@@ -455,6 +501,7 @@ class FakeGateway:
         self.commitment_calls = 0
         self.location_calls = 0
         self.inventory_block_calls = 0
+        self.st_calls = 0
 
     def fetch_machine_load_operation_balances(self, *, branch: str, items: list[dict[str, str]]):
         out = []
@@ -468,6 +515,7 @@ class FakeGateway:
         return {"success": True, "data": {"items": out}}
 
     def fetch_operation_standard_time(self, *, branch: str, production_order: str, operation_code: str):
+        self.st_calls += 1
         return self.standard_times[(production_order, operation_code)]
 
     def fetch_operation_materials_batch(self, *, branch: str, production_orders: list[str]):
@@ -1037,8 +1085,97 @@ def test_materials_shortfall_queue_remains_safe() -> None:
     assert "horizon_incomplete" not in data["stop_reasons"]
 
 
+def test_materials_partial_horizon_uses_full_sd4_and_skips_later_ops() -> None:
+    """AC-02/AC-03: parcial → required=open_qty; ops fora do horizonte não entram."""
+    ops = [_op("CT-A", f"OP{i}") for i in range(1, 4)]
+    for index, op in enumerate(ops, start=1):
+        op["sequence_position"] = index
+    service = _service(
+        published=_payload(ops),
+        balances_ops={
+            ("OP1", "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0},
+            ("OP2", "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0},
+            ("OP3", "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0},
+        },
+        standard_times={
+            ("OP1", "01"): {
+                "ideal_cycle_seconds": 1400,
+                "setup_seconds": 0,
+                "pieces_conversion_factor": 1,
+                "standard_time_source": "shy_tempad",
+                "data_quality": "complete",
+            },
+            ("OP2", "01"): {
+                "ideal_cycle_seconds": 1400,
+                "setup_seconds": 0,
+                "pieces_conversion_factor": 1,
+                "standard_time_source": "shy_tempad",
+                "data_quality": "complete",
+            },
+            ("OP3", "01"): {
+                "ideal_cycle_seconds": 1400,
+                "setup_seconds": 0,
+                "pieces_conversion_factor": 1,
+                "standard_time_source": "shy_tempad",
+                "data_quality": "complete",
+            },
+        },
+        commitments=[
+            {
+                "production_order": "OP1",
+                "operation": "01",
+                "product_code": "MP1",
+                "description": "Aço",
+                "unit": "KG",
+                "product_type": "MP",
+                "open_qty": 100,
+            },
+            {
+                "production_order": "OP2",
+                "operation": "01",
+                "product_code": "MP1",
+                "description": "Aço",
+                "unit": "KG",
+                "product_type": "MP",
+                "open_qty": 80,
+            },
+            {
+                "production_order": "OP3",
+                "operation": "01",
+                "product_code": "MP1",
+                "description": "Aço",
+                "unit": "KG",
+                "product_type": "MP",
+                "open_qty": 90,
+            },
+        ],
+        factory_stock={"MP1": 70},
+        source_stock={"MP1": 1000},
+    )
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=1,
+    )
+    assert data["operational_list_safe"] is True
+    assert data["business_rule"]["material_demand"] == (
+        "open_commitment_qty_of_contemplated_operations"
+    )
+    # Só OP1 entra (parcial); demanda = 100 kg, não 20% de 100.
+    assert data["materials"][0]["required_qty"] == 100.0
+    assert data["materials"][0]["to_collect_qty"] == 30.0
+    origins = data["materials"][0]["origins"]
+    assert len(origins) == 1
+    assert origins[0]["production_order"] == "OP1"
+    assert origins[0]["required_qty"] == 100.0
+    assert origins[0]["fraction"] == pytest.approx(0.2)
+    assert origins[0]["demand_basis"] == "open_commitment"
+    assert service._gateway.st_calls == 1
+
+
 def test_materials_missing_standard_time_is_incomplete_not_shortfall() -> None:
-    """AC-02: tempo padrão inválido → incomplete + diagnóstico."""
+    """AC-09: tempo padrão inválido → incomplete + diagnóstico."""
     published = _payload([_op("CT-A", "OP1")])
     service = _service(
         published=published,

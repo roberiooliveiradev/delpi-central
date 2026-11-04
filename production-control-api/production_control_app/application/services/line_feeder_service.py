@@ -451,6 +451,8 @@ class LineFeederService:
                 },
                 "business_rule": {
                     "to_collect": "max(0, required_from_horizon - factory_available)",
+                    "material_demand": "open_commitment_qty_of_contemplated_operations",
+                    "origins_fraction": "horizon_coverage_ratio_informational",
                     "factory_stock_authority": True,
                     "prior_pick_lists_do_not_reduce_demand": True,
                     "source_warehouse_informational_only": True,
@@ -513,7 +515,7 @@ class LineFeederService:
                     branch=code, production_orders=orders
                 )
         with phases.measure("build_material_demands"):
-            buckets, demand_warnings, proportional_ok = build_material_demands(
+            buckets, demand_warnings, demands_ok = build_material_demands(
                 covered_ops, commitments
             )
         if not commitments_ok:
@@ -577,7 +579,7 @@ class LineFeederService:
         complete = (
             horizon_safe
             and commitments_ok
-            and proportional_ok
+            and demands_ok
             and balances_available
             and stock_complete
         )
@@ -586,7 +588,10 @@ class LineFeederService:
             stop_reasons.append("horizon_incomplete")
         if not commitments_ok:
             stop_reasons.append("commitments_incomplete")
-        if not proportional_ok:
+        if not demands_ok:
+            # Novo código canônico; alias legado para consumidores que ainda
+            # filtram o nome anterior da proporcionalidade.
+            stop_reasons.append("commitment_demand_incomplete")
             stop_reasons.append("proportional_demand_incomplete")
         if not balances_available:
             stop_reasons.append("stock_unavailable")
@@ -616,6 +621,8 @@ class LineFeederService:
             },
             "business_rule": {
                 "to_collect": "max(0, required_from_horizon - factory_available)",
+                "material_demand": "open_commitment_qty_of_contemplated_operations",
+                "origins_fraction": "horizon_coverage_ratio_informational",
                 "factory_stock_authority": True,
                 "prior_pick_lists_do_not_reduce_demand": True,
                 "source_warehouse_informational_only": True,
