@@ -400,8 +400,13 @@ def test_repeated_code_in_distinct_sets():
         component_table=table,
         tokens=_tokens("70260010", "70260020", "10440001"),
     )
-    assert out["status"] == "NO_DIVERGENCE_DETECTED"
+    # Pais dos conjuntos não demonstrados pela tabela — matched por
+    # código, relações não verificadas declaradas: INCONCLUSIVE honesto.
+    assert out["status"] == "INCONCLUSIVE"
     assert out["counts"]["matched_occurrences"] == 4
+    assert all(
+        f["type"] != "PARENT_RELATION_MISMATCH" for f in out["findings"]
+    )
 
 
 def test_root_anchor_still_flags_real_mismatch():

@@ -183,22 +183,16 @@ def _drawing_occurrences(
         for code in codes:
             item_type = _infer_item_type(code)
             cols = code_cols.get(code) or set()
-            if (
-                set_col is not None
-                and set_col in cols
-                and code in set_codes
-            ):
+            other_anchors = [a for a in row_anchors if a != code]
+            if set_col is not None and code in set_codes:
+                # Código na coluna de conjuntos de tabela multi-coluna:
+                # é PAI dos itens da linha — seu próprio pai não é
+                # determinado por esta tabela. Nunca âncora de raiz
+                # (RQ-VAL-028 R5: não inventar relação com a raiz).
                 current_parent = code
-                parent = product_code
-                parent_source = "set_anchor"
-                verified = True
-            elif set_col is not None and code in set_codes:
-                # múltiplos códigos na coluna de conjuntos na mesma
-                # linha — âncora ambígua, não inventa raiz
-                current_parent = code
-                parent = product_code
-                parent_source = "set_anchor"
-                verified = len(set_codes) == 1
+                parent = None
+                parent_source = "set_parent"
+                verified = False
             elif set_col is not None and current_set:
                 parent = current_set
                 parent_source = (
@@ -210,11 +204,18 @@ def _drawing_occurrences(
                 parent = product_code
                 parent_source = "set_anchor"
                 verified = True
-            elif len(row_anchors) == 1:
-                parent = row_anchors[0]
+            elif item_type in {"PI", "PA"}:
+                # multi-coluna: PI/PA fora da coluna de conjuntos e sem
+                # conjunto ativo — pai indeterminado, não raiz fabricada
+                current_parent = code
+                parent = None
+                parent_source = None
+                verified = False
+            elif len(other_anchors) == 1:
+                parent = other_anchors[0]
                 parent_source = "row_group"
                 verified = True
-            elif len(row_anchors) > 1:
+            elif len(other_anchors) > 1:
                 parent = None
                 parent_source = None
                 verified = False
