@@ -609,3 +609,53 @@ def test_tables_by_page_coverage_declared():
     )
     assert out["coverage"]["tables_identified"] == 2
     assert out["coverage"]["tables_verified"] == 1
+
+
+# --- DEC-VAL-033 — BOM_ONLY exige cobertura estrutural suficiente ----
+
+
+def test_bom_only_blocked_on_partial_structural_coverage():
+    """Tabela densa: ~57% das ocorrências BOM com contraparte —
+    ausência NÃO pode ser declarada (falso positivo real)."""
+    table = _table([_row(f"1008001{i}", 100 + i * 20) for i in range(8)])
+    bom = _bom(
+        PRODUCT,
+        *[
+            (f"1008001{i}", "50225512" if i % 2 else PRODUCT, 2)
+            for i in range(14)
+        ],
+    )
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=table,
+        drawing_pages=1,
+    )
+    types = [f["type"] for f in out["findings"]]
+    assert "BOM_ONLY" not in types, types
+    assert any(
+        "bom_only_unverified" in lim for lim in out["limitations"]
+    )
+
+
+def test_bom_only_allowed_on_sufficient_structural_coverage():
+    """Cobertura alta (≥90% contabilizado) — ausência residual é
+    candidata legítima a BOM_ONLY."""
+    rows = [_row(f"1008001{i}", 100 + i * 20) for i in range(13)]
+    table = _table(rows)
+    bom = _bom(
+        PRODUCT,
+        *[
+            (f"1008001{i}", "50225512" if i % 2 else PRODUCT, 2)
+            for i in range(14)
+        ],
+    )
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=table,
+        drawing_pages=1,
+    )
+    bom_only = [f for f in out["findings"] if f["type"] == "BOM_ONLY"]
+    assert len(bom_only) == 1
+    assert bom_only[0]["item_code"] == "100800113"
