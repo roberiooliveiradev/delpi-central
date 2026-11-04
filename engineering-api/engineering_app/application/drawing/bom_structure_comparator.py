@@ -22,8 +22,10 @@ a Engenharia permanece autoridade de aprovação e NC.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
+_CODE_IN_TEXT_RE = re.compile(r"\d{6,11}")
 _CODE_PREFIX_TYPES = {"5": "PI", "1": "MP", "9": "PA"}
 _STATUS_DIVERGENT = "DIVERGENCES_CANDIDATES"
 _STATUS_MATCH = "NO_DIVERGENCE_DETECTED"
@@ -36,6 +38,27 @@ def _infer_item_type(code: str) -> str:
 
 def _norm_code(raw: Any) -> str:
     return "".join(ch for ch in str(raw or "") if ch.isdigit())
+
+
+def _row_codes(row: dict[str, Any]) -> list[str]:
+    """Códigos por linha — OCR pode fundir múltiplos códigos num mesmo
+    campo/célula; extrair todos os tokens numéricos por célula tipada
+    (fallback para o campo agregado da linha)."""
+    texts: list[str] = [
+        str(c.get("text") or "")
+        for c in (row.get("cells") or [])
+        if c.get("col_type") == "component_code"
+    ]
+    if not texts:
+        texts = [str(row.get("component_code") or "")]
+    seen: set[str] = set()
+    codes: list[str] = []
+    for text in texts:
+        for code in _CODE_IN_TEXT_RE.findall(text):
+            if code not in seen:
+                seen.add(code)
+                codes.append(code)
+    return codes
 
 
 def _drawing_occurrences(
@@ -53,30 +76,30 @@ def _drawing_occurrences(
     limitations: list[str] = []
     current_parent: str | None = None
     for row in rows:
-        code = _norm_code(row.get("component_code"))
-        if not code or code == product_code:
-            continue
-        item_type = _infer_item_type(code)
-        if item_type in {"PI", "PA"}:
-            current_parent = code
-            parent = product_code
-        elif current_parent:
-            parent = current_parent
-        else:
-            parent = None
-        occurrences.append(
-            {
-                "item_code": code,
-                "item_type": item_type,
-                "item_description": row.get("description"),
-                "parent_code": parent,
-                "parent_verified": parent is not None,
-                "quantity": row.get("quantity"),
-                "y_px": row.get("y_px"),
-                "row": row.get("row"),
-                "cells": row.get("cells") or [],
-            }
-        )
+        for code in _row_codes(row):
+            if code == product_code:
+                continue
+            item_type = _infer_item_type(code)
+            if item_type in {"PI", "PA"}:
+                current_parent = code
+                parent = product_code
+            elif current_parent:
+                parent = current_parent
+            else:
+                parent = None
+            occurrences.append(
+                {
+                    "item_code": code,
+                    "item_type": item_type,
+                    "item_description": row.get("description"),
+                    "parent_code": parent,
+                    "parent_verified": parent is not None,
+                    "quantity": row.get("quantity"),
+                    "y_px": row.get("y_px"),
+                    "row": row.get("row"),
+                    "cells": row.get("cells") or [],
+                }
+            )
     if any(o["parent_code"] is None for o in occurrences):
         limitations.append(
             "parent_relation_unverified: parte das linhas sem grupo "

@@ -120,6 +120,43 @@ def test_canonical_90263520_drawing_only():
     assert out["counts"]["matched_occurrences"] >= 6
 
 
+def test_merged_ocr_cell_yields_distinct_codes():
+    """OCR pode fundir códigos num campo: cada código vira ocorrência.
+
+    Shape real observado no pipeline: component_code da linha chega como
+    ``"a 50213064 90263520 50230890"`` — três códigos distintos."""
+    row = {
+        "row": 0,
+        "y_px": 10.0,
+        "component_code": "a 50213064 90263520 50230890",
+        "description": None,
+        "quantity": "cf20verm-00042/11/03-0000-0000",
+        "cells": [
+            {"text": "a 50213064 90263520 50230890",
+             "col": 0, "row": 0, "col_type": "component_code"},
+        ],
+    }
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=_bom(
+            ("50230890", PRODUCT, 1),
+            ("50230893", PRODUCT, 1),
+            ("50232466", PRODUCT, 1),
+            ("50232467", PRODUCT, 1),
+        ),
+        component_table=_table([row] + [
+            _row("50230893", 20), _row("50232466", 30),
+            _row("50232467", 40),
+        ]),
+        tokens=_tokens("50213064"),
+    )
+    drawing_only = [
+        f for f in out["findings"] if f["type"] == "DRAWING_ONLY"
+    ]
+    assert [f["item_code"] for f in drawing_only] == ["50213064"]
+    assert out["counts"]["matched_occurrences"] == 4
+
+
 def test_bom_only_when_full_coverage():
     table = _table([_row("50000001", 10)])
     bom = _bom(("50000001", PRODUCT, 1), ("50000002", PRODUCT, 1))
