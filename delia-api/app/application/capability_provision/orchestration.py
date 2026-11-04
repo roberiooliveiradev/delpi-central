@@ -5531,7 +5531,11 @@ class OperationalCapabilityOrchestrator:
             self._subobjective_investigation_enabled
             or (goal is not None and goal.comparison_requested)
         ):
-            subobjectives = self._decompose_objective(
+            subobjectives = self._subobjectives_from_session_refs(
+                prior_turns, goal
+            )
+            if subobjectives is None:
+                subobjectives = self._decompose_objective(
                     input_text,
                     correlation=correlation,
                     workspace_context=workspace_context,
@@ -6940,6 +6944,56 @@ class OperationalCapabilityOrchestrator:
 
     _SUBOBJECTIVE_ALLOWED_KEYS = frozenset({"subobjectives"})
     _SUBOBJECTIVE_MAX_GOAL_CHARS = 240
+
+    def _subobjectives_from_session_refs(
+        self,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        goal: "OperationalCapabilityOrchestrator._TurnGoal | None",
+    ) -> tuple[SubObjective, ...] | None:
+        """Doc 228 S4 — typed referent binding for comparison goals.
+
+        Scoped EntityRef candidates echoed from prior server-grounded
+        turns are descriptive pointers (never authority): two or more
+        distinct unambiguous refs become READ obligations whose entity
+        ids came from owner records — each READ still revalidates live
+        Core/Domain via the governed discovery→execute path. Below two
+        refs or ambiguity returns None → model decomposition."""
+        if (
+            goal is None
+            or not getattr(goal, "comparison_requested", False)
+            or not prior_turns
+        ):
+            return None
+        distinct: dict[tuple[str, str, str], Any] = {}
+        for turn in prior_turns:
+            for ref in getattr(turn, "entity_refs", ()) or ():
+                key = (
+                    ref.entity_type,
+                    ref.entity_id,
+                    ref.source_system,
+                )
+                distinct[key] = ref
+        if len(distinct) < 2:
+            return None
+        refs = sorted(
+            distinct.values(),
+            key=lambda r: (r.entity_type, r.entity_id),
+        )[:4]
+        _logger.info(
+            "orchestration stage=session_ref_binding "
+            "decision=bound count=%d",
+            len(refs),
+        )
+        return tuple(
+            SubObjective(
+                subobjective_id=f"read_{index}",
+                goal=(
+                    "Consulte as informações completas de "
+                    f"{ref.entity_type} {ref.entity_id}"
+                ),
+            )
+            for index, ref in enumerate(refs)
+        )
 
     def _decompose_objective(
         self,

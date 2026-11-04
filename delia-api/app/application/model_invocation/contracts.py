@@ -10,6 +10,7 @@ from typing import Any, Mapping
 
 from app.domain.evidence.model import (
     AuthorityPolicySnapshot,
+    EntityRef,
     EpistemicClass,
     EvidenceRef,
     ModelRef,
@@ -40,6 +41,10 @@ class ConversationContextTurn:
     kind: TurnKind
     content: str
     epistemic_class: EpistemicClass | None = None
+    # Doc 228: scoped entity-ref CANDIDATES echoed from prior
+    # server-grounded turns — descriptive pointers only, never
+    # authority; each READ re-validates through live Core/Domain.
+    entity_refs: tuple[EntityRef, ...] = ()
 
     def grants_authorization(self) -> bool:
         return False

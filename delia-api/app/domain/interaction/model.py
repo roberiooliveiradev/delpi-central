@@ -135,6 +135,7 @@ class InteractionTurn:
     content: str
     occurred_at: str
     epistemic_class: EpistemicClass | None = None
+    entity_refs: tuple[EntityRef, ...] = ()
     evidence_refs: tuple[EvidenceRef, ...] = ()
     source_refs: tuple[SourceRef, ...] = ()
     decision_path_result: DecisionPathResult | None = None

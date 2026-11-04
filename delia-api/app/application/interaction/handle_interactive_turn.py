@@ -41,6 +41,9 @@ from app.application.interaction.contracts import (
     InteractiveTurnRequest,
     InteractiveTurnResult,
 )
+from app.application.capability_provision.outcome_assessment import (
+    _comparison_records,
+)
 from app.application.capability_provision.contracts import (
     OWNER_RECORD_NOT_FOUND,
 )
@@ -113,7 +116,12 @@ from app.application.model_invocation.invoke_model import (
     InvokeModel,
 )
 from app.application.platform_access import PlatformAccessContext
-from app.domain.evidence.model import EpistemicClass, ModelRef, UserRef
+from app.domain.evidence.model import (
+    EntityRef,
+    EpistemicClass,
+    ModelRef,
+    UserRef,
+)
 from app.domain.interaction.model import (
     GroundingStatus,
     InteractionSession,
@@ -956,6 +964,36 @@ class HandleInteractiveConversationTurn:
             grounding_status=GroundingStatus.NON_GROUNDED,
         )
 
+def _entity_refs_from_outcome(
+    outcome: object,
+    provenance: object,
+) -> tuple[EntityRef, ...]:
+    """Doc 228: scoped EntityRef candidates derived from owner-typed
+    outcome records — the root entity identity only, never from turn
+    or model text. Descriptive pointer, not authority."""
+    if outcome is None or provenance is None:
+        return ()
+    records = _comparison_records(outcome)
+    if not records:
+        return ()
+    def _depth(record) -> int:
+        path = record.get("path") or record.get("parent_path") or ()
+        return len(path) if isinstance(path, (list, tuple)) else 0
+    root = min(records, key=_depth)
+    code = str(root.get("code") or root.get("id") or "").strip()
+    if not code:
+        return ()
+    return (
+        EntityRef(
+            entity_type=str(root.get("type") or "entity"),
+            entity_id=code,
+            source_system=(
+                getattr(provenance, "specialist_id", "") or ""
+            ),
+        ),
+    )
+
+
     def _grounded_result(
         self,
         session: InteractionSession,
@@ -994,6 +1032,7 @@ class HandleInteractiveConversationTurn:
             content=content,
             occurred_at=_now_utc(),
             epistemic_class=EpistemicClass.OBSERVATION,
+            entity_refs=_entity_refs_from_outcome(outcome, provenance),
             source_refs=source_refs,
             limitations=limitations,
         )
@@ -1065,6 +1104,11 @@ class HandleInteractiveConversationTurn:
             content=content,
             occurred_at=_now_utc(),
             epistemic_class=epistemic_class,
+            entity_refs=(
+                _entity_refs_from_outcome(outcome, provenance)
+                if grounded
+                else ()
+            ),
             source_refs=(
                 provenance.source_refs if grounded else ()
             ),

@@ -62,7 +62,7 @@ from app.application.interaction.workspace_context import (
 from app.application.model_invocation.contracts import (
     ConversationContextTurn,
 )
-from app.domain.evidence.model import EpistemicClass
+from app.domain.evidence.model import EntityRef, EpistemicClass
 from app.domain.interaction.model import TurnKind
 
 
@@ -506,9 +506,41 @@ def _parse_context(
                     f"context[{index}].epistemic_class is not a "
                     "canonical class"
                 )
+        entity_refs: list[EntityRef] = []
+        refs_raw = item.get("entity_refs")
+        if refs_raw is not None:
+            if not isinstance(refs_raw, list) or len(refs_raw) > 8:
+                return (), (
+                    f"context[{index}].entity_refs must be a "
+                    "bounded list"
+                )
+            for raw_ref in refs_raw:
+                if not isinstance(raw_ref, dict):
+                    return (), (
+                        f"context[{index}].entity_refs[] must be "
+                        "typed refs"
+                    )
+                r_type = str(raw_ref.get("entity_type") or "")
+                r_id = str(raw_ref.get("entity_id") or "")
+                r_sys = str(raw_ref.get("source_system") or "")
+                if not (r_type.strip() and r_id.strip()):
+                    return (), (
+                        f"context[{index}].entity_refs[] requires "
+                        "entity_type/entity_id"
+                    )
+                entity_refs.append(
+                    EntityRef(
+                        entity_type=r_type.strip(),
+                        entity_id=r_id.strip(),
+                        source_system=r_sys.strip(),
+                    )
+                )
         turns.append(
             ConversationContextTurn(
-                kind=kind, content=content, epistemic_class=epistemic
+                kind=kind,
+                content=content,
+                epistemic_class=epistemic,
+                entity_refs=tuple(entity_refs),
             )
         )
     return tuple(turns), None
