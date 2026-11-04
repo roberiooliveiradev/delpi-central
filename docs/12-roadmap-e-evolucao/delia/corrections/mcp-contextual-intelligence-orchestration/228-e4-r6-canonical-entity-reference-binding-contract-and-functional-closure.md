@@ -284,3 +284,26 @@ Verified existing domain models at input SHA:
 **FIX 4 — regression on final SHA:** handler HTTP500 structural, \`depth>0\` trust gate and forged history, SEC01, deadline/cancel, parallel worker context, owner Core/Domain AuthZ, single-turn B01 and multi-turn A01→A02→A03→A04, missing sources and sibling domains, Qwen3:4b local. Repeated live runs with exact client terminal body and independent deterministic oracle. Record SHA/config, current revision and evidence; only then classify G04/G05/G07/G12 and REF01–REF08.
 
 **No production deploy;** only existing authorized test environment with rollback/observability. \`FUNCTIONAL_ACCEPTANCE_CANDIDATE\` requires correct *two intended authoritative targets*, full comparison, COMPOSITE grounding with real evidence lineage and delivery to user, repeatedly on final SHA. A grounded label with no authoritative evidence is a hard FAIL.
+
+
+## 14. E4-R6 composite evidence implementation by coordination (2026-11-04)
+
+**STATUS:** CODE_COMMITTED, TESTS_ADDED, runtime and live E2E **TEST_NOT_RUN** by coordination. User requested code implementation here and handoff of deploy/tests to Devin. No production deployment. Keep original authority chain, do not advance phase.
+
+**Commits (main):**
+- \`0509ac33aba7\`: additive internal \`VerifiedCompositeEvidence\` in existing \`application/interaction/contracts.py\`: two distinct owner-record roots, source-lineage per root, deterministic verdict, bounded multi-source projection; does not impersonate \`SpecialistOutcome\`.
+- \`cd070a83eef2\` and \`670173868bf9\`: \`GovernedCapabilityAttempt.verified_composition\`, appended to preserve existing positional constructor behavior.
+- \`4f00b3fcd897\`, \`35a59f69c3d4\`, \`f22abd4b4470\`: collection from genuine owner-backed SUCCESS outcomes, provenance per root, require exactly two distinct complete sources AND both tracked subgoals completed, refuse duplicate/partial/extra roots. Deterministic comparator no longer silently compares the first two of 3+ sources. Fan-in carries proof separately from specialist outcome.
+- \`52e07362c9af\`: \`HandleInteractiveConversationTurn\` distinguishes \`verified_composition\` from ordinary \`outcome\` and ungrounded prior-continuation; emits OBSERVATION+GROUNDED only when typed aggregate proof exists, with source-lineage and no manufactured specialist metadata.
+- \`f7f56b0ab534\`: targeted regression tests in \`test_verified_composite_grounding.py\` for no fabricated single specialist, duplicate/missing source rejection, composite grounded serialization, ordinary SUCCESS still non-grounded, 3-source verifier inconclusive, internal fan-in field.
+
+**EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND.** This is the smallest internal carrier at Application/interaction seam; no new provider/store/planner/authority/token, no public request schema or retention modification. Output's existing \`provenance\` field now can represent verified composed lineage via \`to_projection\`, with \`source=None\`, source records and composition roots/verdict. Check actual Portal UI handling of \`source=None\` and additive \`composition\` during integration tests. Existing single-owner branch remains untouched.
+
+**Important constraints and known residuals:**
+1. The implemented **strict two-source gate** deliberately blocks older \`decomposed=3/4\` paths rather than falsely accept a first-two comparison. This may lead to truthful insufficient outcomes until semantic decomposition avoids redundant/non-target subobjectives; do not silently drop subgoals or loosen coverage. Two real owner roots do NOT alone prove these are the user's intended targets. A functional review must assert expected 90260147/90260148 with independent oracle and actual business scope.
+2. This patch is **not yet runtime-verified**. New tests and all regression suites must be executed by Devin, with repairs to this bounded patch if necessary. No tests were run by coordination.
+3. The NDJSON implementation already exists; validate that a complete \`turn_result\` traverses HTTP gateway and reaches Portal client, not simply upstream 200. Curl previously timed out at ~118 seconds.
+4. Validate context guard (\`depth>0\` cannot synthesize prior history), bearer propagation, AuthZ, source completeness/multi-root handling, root-to-source correlation, false common 10030012 and true common 10030015.
+5. Current \`SourceRef\` source metadata follows canonical business source but is a provenance descriptor, not authorization. \`VerifiedCompositeEvidence\` reflects deterministic owner-evidence observation; factual satisfaction of the user goal remains a **separate outcome gate**.
+
+**NEXT EXECUTOR (Devin):** \`DELIA-C3-E4-R6-COMPOSITE-PATCH-HOMOLOGATION-E2E-01\` — reanchor HEAD, run tests and fix any actual failures, review diff/invariant, deploy only to existing authorized homologation, verify deployed SHA, Keycloak/Core+DAVI/Domain/Qwen3 4B E2E with JSON+NDJSON and user-facing UI, repeated target/oracle/gateway checks, rollback readiness; log exact PASS/FAIL and update ledger. Production remains NOT_AUTHORIZED. \`REF/G=NOT_PASS\` until client receives exact completed authoritative comparison.
