@@ -1,12 +1,14 @@
 """Contrato versionado MyWEG Necessidades — `myweg.needs.batch.v1`.
 
 Somente constantes, fingerprints e hash canônico. Sem I/O, sem Protheus.
+Totais de uma coleta homologada NÃO são invariantes permanentes do contrato.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import re
 from decimal import Decimal
 from typing import Any, Mapping, Sequence
 
@@ -20,11 +22,6 @@ MYWEG_WORK_CENTER = "1106"
 UN_TO_MI_DIVISOR = Decimal("1000")
 EXPECTED_UNIT = "UN"
 
-# Referência homologada (corpus conhecido).
-REFERENCE_RECORD_COUNT = 532
-REFERENCE_TOTAL_UN = Decimal("745746")
-REFERENCE_TOTAL_MI = Decimal("745.746")
-
 SB1_STATUS_PENDING = "pending"
 
 ERROR_BRANCH_NOT_ALLOWED = "branch_not_allowed"
@@ -37,6 +34,17 @@ ERROR_PAYLOAD_SHA256_MISMATCH = "payload_sha256_mismatch"
 ERROR_DUPLICATE_LINE = "duplicate_line"
 ERROR_INVALID_RECORD = "invalid_record"
 ERROR_CONTRACT_VERSION_UNSUPPORTED = "contract_version_unsupported"
+ERROR_MISSING_REQUIRED_FIELD = "missing_required_field"
+ERROR_INVALID_SOURCE_FILES = "invalid_source_files"
+
+REQUIRED_SOURCE_FILE_HASH_KEYS = (
+    "necessidades_tratadas_csv_sha256",
+    "necessidades_tratadas_xlsx_sha256",
+    "para_conferencia_pcp_csv_sha256",
+    "resumo_json_sha256",
+)
+
+_SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
 
 _RECORD_HASH_FIELDS = (
     "material_weg_tratado",
@@ -48,6 +56,8 @@ _RECORD_HASH_FIELDS = (
     "data_remessa",
     "documento",
     "rastreabilidade",
+    "linha_fonte",
+    "assinatura_registro",
 )
 
 
@@ -63,21 +73,26 @@ def decimal_to_canonical_str(value: Decimal) -> str:
 def build_line_fingerprint(
     *,
     material_weg_tratado: str,
-    codigo_referencia_weg: str,
+    codigo_referencia_weg: str | None,
     origem_material_weg: str,
     data_remessa: str,
     documento: str | None,
     quantidade_original_un: Decimal,
+    linha_fonte: str | None = None,
 ) -> str:
-    """Chave de deduplicação estável dentro do lote."""
+    """Fingerprint de deduplicação **dentro do lote**.
+
+    Não usar `assinatura_registro` como identidade entre coletas.
+    """
     payload = "|".join(
         [
             material_weg_tratado.strip(),
-            codigo_referencia_weg.strip(),
+            (codigo_referencia_weg or "").strip(),
             origem_material_weg.strip(),
             data_remessa.strip(),
             (documento or "").strip(),
             decimal_to_canonical_str(quantidade_original_un),
+            (linha_fonte or "").strip(),
         ]
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
@@ -101,6 +116,10 @@ def sha256_hex(text: str) -> str:
 
 def compute_payload_sha256(records: Sequence[Mapping[str, Any]]) -> str:
     return sha256_hex(canonical_records_payload(records))
+
+
+def is_sha256_hex(value: str) -> bool:
+    return bool(_SHA256_HEX_RE.fullmatch(value.strip().lower()))
 
 
 def pending_sb1_resolution() -> dict[str, Any]:
