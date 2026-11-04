@@ -5305,3 +5305,26 @@ INPUT_SHA=af545421b9. PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-cont
 REVIEW_VERDICT=R5 EXECUTION_DRIFT_REMOVAL_VERIFIED; FULL_BUSINESS_OUTCOME=NOT_PROVEN. At input SHA, domain Evidence already defines EntityRef, EvidenceRef, SourceRef; SessionContext already has entity_refs/evidence_refs/source_refs and InteractionTurn has evidence/source refs; references are descriptive, NOT authority, SoT or permission. Thus blanket claim 'no typed target references exist' is inaccurate: existing reference types PROVEN, valid runtime binding/consumers across turns PARTIAL/TO_INVENTORY.
 ARCHITECTURE_DECISION=APPROVED_BOUNDED_REUSE/EXTEND existing canonical refs and scoped Application binding, not create new TargetRef store/registry/planner/engine. A model-proposed referent remains HYPOTHESIS; only live authorized Core/Domain read makes actual factual target/evidence. Do not infer from regex/user text/assistant output. If public contract or retention change truly required, STOP precise ARCHITECTURE_DECISION_REQUIRED. Exact requested target set and true source provenance required, not len(sources)>=2.
 IMPLEMENTATION=NOT_RUN_BY_COORDINATION. TESTS=TEST_NOT_RUN. NEXT=execute doc228 RED/GREEN, owners/consumers trace, real local Qwen3+Keycloak/Core+DAVI/Domain same-session and single-turn comparison, repeated final SHA client-visible oracle and security regression. Conditional larger-model A/B only if locally available and needed after correct binding. G04/G05/G07/G12 NOT_PASS; PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE.
+
+## E4-R6 — S0 inventario de refs tipadas (doc 228)
+
+TASK=DELIA-C3-E4-R6-CANONICAL-ENTITY-BINDING-AND-FUNCTIONAL-CLOSURE-01.
+INVENTARIO simbolico provado (main af545421b9):
+- `EntityRef(entity_type, entity_id, source_system, label?, revision?)`,
+  `EvidenceRef`, `SourceRef` EXISTEM em `domain/evidence/model.py`.
+- `ConversationContextTurn.entity_refs/evidence_refs/source_refs`,
+  `InteractionTurn.entity_refs`, `SessionContext.*` — campos EXISTEM.
+- PRODUTORES: `source_refs` populado via provenance em
+  `handle_interactive_turn.py` (~987/1068) e `capability_attempt.py:183`.
+  `entity_refs` NAO tem produtor em application/ — so
+  `WorkspaceEntityRef` (workspace_context.py:135, request-scoped).
+- CONSUMIDORES de entity_refs em prior_turns na orchestration: NENHUM.
+EXISTING_EQUIVALENT=YES (tipos canonicos); BINDING_PATH=NO —
+o campo existe mas nunca e populado de evidencia tipada nem lido.
+WIRING BOUNDED APROVADO doc228 (sem novo tipo/store/planner):
+(a) produtor: ao fechar turno grounded, derivar EntityRefs dos
+    RECORDS tipados do outcome (code/type do owner — nunca regex
+    de texto) -> `InteractionTurn.entity_refs`/`SessionContext`.
+(b) consumidor: gate de comparacao le `prior_turns[].entity_refs`
+    -> refs unicos/nao ambiguos -> READ obligations tipadas via
+    `SubObjective` com entidade resolvida (nao texto produto).
