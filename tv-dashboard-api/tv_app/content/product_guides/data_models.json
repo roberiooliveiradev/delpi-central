@@ -13,12 +13,12 @@
   ],
   "do_not_use_when": [
     "O usuário quer o estado atual de um DataModel — isso é inspect_data_model",
-    "A dúvida é sobre a sintaxe M do transform — contrato api-delpi/M Query",
+    "A dúvida é sobre a semântica interna do transform — detalhe de contrato do backend, não deste guia",
     "A pergunta é sobre binding visual — use data_bindings"
   ],
   "how_to_use": [
     "DataModel = { id, label, primaryInputId, inputs[], transform } — unidade lógica dentro do slide",
-    "inputs[] referenciam fontes de dados; transform (M) combina/deriva o resultado",
+    "inputs[] referenciam fontes de dados; transform tipado (steps v1) combina/deriva o resultado",
     "outputSchema descreve as colunas que o model expõe aos bindings",
     "Preview/inspect executam o model sem persistir — use antes de qualquer mutação"
   ],
@@ -30,7 +30,7 @@
     },
     {
       "field": "transform",
-      "guidance": "Expressão M DELPI que deriva o output; perfil e funções são contrato do backend.",
+      "guidance": "TransformPlan v1 {version, steps} que deriva o output; somente ops tipadas do catálogo — script/M/DAX/SQL são proibidos (mForbidden).",
       "contract_ref": "patch_data_model"
     }
   ],

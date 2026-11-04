@@ -12,7 +12,7 @@
   ],
   "do_not_use_when": [
     "O usuário quer saber quais campos uma rota expõe — isso é contrato api-delpi/OpenAPI",
-    "A dúvida é sobre transform M — detalhe de contrato, não deste guia",
+    "A dúvida é sobre o transform tipado (steps) — detalhe de contrato, não deste guia",
     "O usuário quer descobrir uma rota — use data_route_discovery"
   ],
   "how_to_use": [
