@@ -5271,3 +5271,12 @@ single-path owner_query_miss); A03 produziu COMPLETEDx4 com
 so_compare redundante delegando vista. Typed-path so dispara com
 codes presentes — cobre o caso explicito; referentes "as duas"
 ainda dependem de decompose LLM variavel.
+
+
+## E4-R5 — coordination architectural drift in typed-goal target binding (2026-11-03)
+
+TASK=DELIA-C3-E4-R5-TYPED-TARGET-REFERENCES-AND-MODEL-AB-01.
+INPUT_SHA=c42d95e4f0. PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/227-e4-r5-target-reference-contract-remediation-and-controlled-model-benchmark.md.
+VERDICT=REWORK/EXECUTION_DRIFT: _read_obligations_from_goal in orchestration.py uses regex to infer >=5-digit product IDs from LLM-produced business_subject or user input, silently limits up to four and fabricates product-specific natural-language READ goals. This is not a validated typed target reference and cannot resolve implicit as duas; violates generic documented typed-provenance design. Must REMOVE regex/product-specific obligation generator and reuse/extend existing legitimate scoped references and owner-bound resolution. No new planner or authority.
+MODEL_RELIABILITY=variable stage proposals OBSERVED; intrinsic 4B insufficiency NOT ISOLATED from missing typed refs. Benchmark larger local model CONDITIONALLY AUTHORIZED after target contract correction, only if already available/approved and with controlled A/B. No automatic model cutover, no blind retries or gateway timeout inflation.
+G04/G05/G07/G12=NOT_PASS; SEC01=PASS_REPORTED_WITH_REVOCATION_RESIDUAL; CLIENT_OUTCOME=INCONCLUSIVE; MODEL_EVAL_ON_COORDINATION=TEST_NOT_RUN. NEXT=execute doc227 with RED/GREEN, real Keycloak/Core/DAVI/Qwen3 same-session + one-turn E2E, deterministic oracle, source coverage, negatives and full regressions, report final SHA; PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE.
