@@ -269,6 +269,45 @@ def _decision_turn_content(confirmation: Mapping[str, Any] | None) -> str:
     return "Decisão estruturada: cancelar a proposta preparada."
 
 
+def _entity_refs_from_outcome(
+    outcome: object,
+    provenance: object,
+) -> tuple[EntityRef, ...]:
+    """Doc 228: scoped EntityRef candidates derived from owner-typed
+    outcome records — the root entity identity only, never from turn
+    or model text. Descriptive pointer, not authority."""
+    if outcome is None or provenance is None:
+        return ()
+    records = _comparison_records(outcome)
+    if not records:
+        return ()
+    def _depth(record) -> int:
+        path = record.get("path") or record.get("parent_path") or ()
+        return len(path) if isinstance(path, (list, tuple)) else 0
+    root = min(records, key=_depth)
+    code = str(root.get("code") or root.get("id") or "").strip()
+    if not code:
+        return ()
+    # Doc 228 §7: source_system is the CANONICAL business origin
+    # carried by the outcome's own source refs — never conflated
+    # with the transport specialist id.
+    source_refs = getattr(provenance, "source_refs", None) or ()
+    source_system = str(
+        getattr(source_refs[0], "source_system", "")
+        if source_refs
+        else ""
+    ).strip()
+    if not source_system:
+        return ()
+    return (
+        EntityRef(
+            entity_type=str(root.get("type") or "entity"),
+            entity_id=code,
+            source_system=source_system,
+        ),
+    )
+
+
 class HandleInteractiveConversationTurn:
     """One text turn through the canonical interaction + invocation chain."""
 
@@ -963,45 +1002,6 @@ class HandleInteractiveConversationTurn:
             model_invocation_id=None,
             grounding_status=GroundingStatus.NON_GROUNDED,
         )
-
-def _entity_refs_from_outcome(
-    outcome: object,
-    provenance: object,
-) -> tuple[EntityRef, ...]:
-    """Doc 228: scoped EntityRef candidates derived from owner-typed
-    outcome records — the root entity identity only, never from turn
-    or model text. Descriptive pointer, not authority."""
-    if outcome is None or provenance is None:
-        return ()
-    records = _comparison_records(outcome)
-    if not records:
-        return ()
-    def _depth(record) -> int:
-        path = record.get("path") or record.get("parent_path") or ()
-        return len(path) if isinstance(path, (list, tuple)) else 0
-    root = min(records, key=_depth)
-    code = str(root.get("code") or root.get("id") or "").strip()
-    if not code:
-        return ()
-    # Doc 228 §7: source_system is the CANONICAL business origin
-    # carried by the outcome's own source refs — never conflated
-    # with the transport specialist id.
-    source_refs = getattr(provenance, "source_refs", None) or ()
-    source_system = str(
-        getattr(source_refs[0], "source_system", "")
-        if source_refs
-        else ""
-    ).strip()
-    if not source_system:
-        return ()
-    return (
-        EntityRef(
-            entity_type=str(root.get("type") or "entity"),
-            entity_id=code,
-            source_system=source_system,
-        ),
-    )
-
 
     def _grounded_result(
         self,
