@@ -61,3 +61,16 @@ Este é o **índice canônico cumulativo de PDFs já usados em testes**, inclusi
 **RQ-VAL-029 (documentos extensos):** planejar cobertura por páginas/tabelas dentro de limites de custo e memória; analisar todas as regiões pertinentes ou declarar páginas não verificadas; não chamar documento de 13/14 páginas de integralmente analisado após 2/3.
 
 **Gate:** preservar os 13 casos atuais, adicionar casos sintéticos positivos/negativos com ground truth, exercitar E2E real em produção após deploy correto. Não implementar MFE/visual nem outras verificações do desenho enquanto esta etapa estiver ativa. `ARCHITECTURE_DECISION_REQUIRED` para mudança de owner/boundary/source of truth.
+
+---
+
+## Log de execução — 2026-11-04 (DEC-VAL-029 implementação)
+
+Runtime de diagnóstico em `srv-api` (código patcheado via overlay `/tmp/eva_app`, serviço intacto; worker legado — cobertura multipágina real depende do deploy). Commits locais `c220937cc5`+`427020a61a`+`ad2838c0cb`, não publicados (push bloqueado: SSH GitHub negado).
+
+| Produto | Antes (baseline srv-api) | Depois (patched) | Resultado |
+|---|---|---|---|
+| `90264017` | `DIVERGENCES_CANDIDATES` — falso `DRAWING_ONLY 10080535` (`drawing_page=null`) | `DIVERGENCES_CANDIDATES`, `drawing_only: 0`; `10080535` em `contextual_codes` (title_block p2); `10080438` reconhecido | **PASS** — AC-01/AC-02 |
+| `90264030` | `DIVERGENCES_CANDIDATES` — falso `PARENT_RELATION_MISMATCH 50225512` | `INCONCLUSIVE`, `divergences: 0`; `10110676→50225512` em `unverified_parent_relations` | **PASS** — AC-03/AC-04 |
+
+Demais 11 produtos: `TEST_NOT_RUN` na rodada patched (bateria integral condicionada ao deploy canônico com worker atualizado — pages cap/sample/sha efetivos). Cobertura multipágina: `tables_by_page`/`pages_not_processed`/`evidence_truncated` agora declarados; `90264017` manteve `complete_for_requested_scope=false` (14p não integrais).
