@@ -5561,3 +5561,16 @@ HOMOLOGATION: local docker-compose.dev stack restored (prior “sock missing” 
 LIVE_E2E: real `/interaction/turns` JSON+NDJSON; compare → NON_GROUNDED `delpi_source_unverified`; composition log `decision=insufficient` reasons include `comparison_material_obligation_incomplete` with material_satisfied=0; FALSE_GROUNDED=0. Oracle 90260147/48 NOT_REACHED (RC-B/C owner path).
 RC_A_VERDICT=PASS_SYNTHETIC+LIVE_NO_FALSE_GROUNDED. RC_B/RC_C OPEN. REF05 NOT_PASS. FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
 NEXT=RC-C discovery-first / RC-B selection; then REF05 target oracle; rebuild image to refresh DELIA_RUNTIME_SHA label.
+
+
+## E4-R6 — acquisition obligation preservation (2026-11-04)
+
+TASK=DELIA-C3-E4-R6-ACQUISITION-OBLIGATION-PRESERVATION-REWORK-01.
+DOC=228 §20. BASE=`268183f9ab`. PRODUCTION_DEPLOY=NOT_AUTHORIZED.
+UNSAFE=`_acquisition_subobjectives` dropped declared analyze/compare before tracker even with uncovered `evidence_needed`.
+FIX=extend acquisition filter: delegate analytical only when `evidence_needed` empty or exact-covered by acquisition siblings; else `preserve_material_dependency`.
+TESTS=`test_e4_r6_acquisition_obligation_preservation.py` T01–T16 PASS (real filter); prior RC-A suites PASS.
+HOMOLOGATION: recreate delia-api; `DELIA_RUNTIME_SHA` gitignored label → `268183f9ab`; bind-mount §20 code verified.
+LIVE: preserve_material_dependency observed (compare + evidence_needed); composition insufficient; FALSE_GROUNDED=0; oracle NOT_REACHED (RC-B/C).
+RC_A_STATUS=IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW. RC_B/RC_C OPEN. REF05 NOT_PASS. FUNCTIONAL_ACCEPTANCE=NO.
+NEXT=RC-C/RC-B owner path; REF05; align runtime SHA label to commit after push.

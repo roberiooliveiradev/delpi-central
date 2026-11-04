@@ -593,3 +593,72 @@ REF05_STATUS=NOT_PASS
 FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO
 PRODUCTION_DEPLOY=NOT_AUTHORIZED
 ```
+
+## 20. Acquisition obligation preservation (2026-11-04)
+
+**TASK_ID:** `DELIA-C3-E4-R6-ACQUISITION-OBLIGATION-PRESERVATION-REWORK-01`.
+**REFERENCE_SHA:** `396fd083cf`. **OBSERVED_MAIN_HEAD (reanchor):** `268183f9ab`.
+**PRODUCTION_DEPLOY:** NOT_AUTHORIZED.
+
+### First unsafe decision
+
+`_acquisition_subobjectives` delegated every declared `analyze`/`compare` subobjective to composition **before** `SubObjectiveTracker`, discarding unresolved structured `evidence_needed` that siblings did not cover.
+
+### Existing contract reused
+
+`SubObjective.evidence_needed` (decomposition proposal → tracker) — already validated fail-closed in `_subobjectives_from_proposal`.
+
+`EXISTING_EQUIVALENT=YES` · `REUSE_DECISION=EXTEND` · no new obligation engine.
+
+### Mechanism
+
+`_analytical_evidence_covered_by_acquisitions`:
+
+- empty `evidence_needed` → legitimate auxiliary (delegate);
+- non-empty entries must exact-match `evidence_needed` on a sibling that remains an acquisition obligation;
+- otherwise `decision=preserve_material_dependency` and the sub stays tracked.
+
+No goal-text keywords; no specialist hardcoding; eligibility remains deterministic (§19).
+
+### Tests
+
+`tests/test_e4_r6_acquisition_obligation_preservation.py` — T01–T16 + filter unit cases; **real** `_acquisition_subobjectives` (no keep-all).
+
+Critical T02: analyze + uncovered specification evidence → no `VerifiedCompositeEvidence`.
+
+Prior suites: semantic safety C01–C05, eligibility, diagnostics, multievidence filter cases, verified_composite, interaction_runtime, multistep, goal_evidence, interop security, delegated_credentials — PASS on focused runs.
+
+### Homologation / runtime identity
+
+Local governed stack recreated `delia-api` with gitignored `DELIA_RUNTIME_SHA` aligned to evaluated HEAD (was stale `0b2bd91fd5`). Bind-mount carries §20 code (`preserve_material_dependency` present). Model: `qwen3:4b-instruct-2507-q4_K_M`.
+
+### Live E2E (captured)
+
+Runtime env `DELIA_RUNTIME_SHA=268183f9ab…` after compose recreate; bind-mount carried §20 code (`preserve_material_dependency` count=1). Model `qwen3:4b-instruct-2507-q4_K_M`.
+
+| Scenario | HTTP | grounding | RC-A signal |
+|---|---|---|---|
+| E01 compare NDJSON | 200 ~300s | NON_GROUNDED | `preserve_material_dependency` on compare subs with `evidence_needed≥1`; composition `insufficient` |
+| E01 compare JSON | 200 ~175s | NON_GROUNDED | `delpi_source_unverified`; no VerifiedCompositeEvidence |
+| E02 third-spec ask | 200 ~300s | NON_GROUNDED | no false GROUNDED; owner path still incomplete (RC-B/C) |
+
+Log excerpt:
+
+```text
+decision=preserve_material_dependency class=compare evidence_needed=1|2
+decision=insufficient … reasons=['comparison_material_obligation_incomplete','comparison_source_missing']
+```
+
+**FALSE_GROUNDED_COUNT=0**. Independent oracle 90260147/48 NOT_REACHED (owner acquisition).
+
+### Verdict
+
+```text
+RC_A_STATUS=IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+RC_A_LIVE_OUTCOME=VERIFIED_NO_FALSE_GROUNDED + PRESERVE_MATERIAL_DEPENDENCY_OBSERVED
+RC_B_STATUS=OPEN
+RC_C_STATUS=OPEN
+REF05_STATUS=NOT_PASS
+FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO
+PRODUCTION_DEPLOY=NOT_AUTHORIZED
+```

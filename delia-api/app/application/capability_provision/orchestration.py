@@ -7166,6 +7166,28 @@ class OperationalCapabilityOrchestrator:
     # text, index or position.
     _ANALYTICAL_SUBOBJECTIVE_CLASSES = frozenset({"analyze", "compare"})
 
+    @staticmethod
+    def _analytical_evidence_covered_by_acquisitions(
+        sub: SubObjective,
+        acquisition_pool: Mapping[str, SubObjective],
+    ) -> bool:
+        """True when declared analytical work needs no extra acquisition.
+
+        Uses the existing decomposition contract ``evidence_needed``
+        (doc 228 §20) — never goal-text heuristics. Empty
+        ``evidence_needed`` means the work is fully derivable from
+        sources the acquisition pool will gather. Non-empty entries
+        must already appear on a sibling that remains an acquisition
+        obligation (exact structured match).
+        """
+        needed = sub.evidence_needed
+        if not needed:
+            return True
+        available: set[str] = set()
+        for other in acquisition_pool.values():
+            available.update(other.evidence_needed)
+        return all(item in available for item in needed)
+
     def _acquisition_subobjectives(
         self,
         objectives: tuple[SubObjective, ...],
@@ -7178,15 +7200,13 @@ class OperationalCapabilityOrchestrator:
         """Filter a comparison proposal down to evidence-acquisition
         subobjectives.
 
-        The model sometimes mirrors the user's analytical phrasing
-        (common/exclusive/differences) into extra subobjectives that no
-        owner READ can answer — the deterministic composition computes
-        those facts over the gathered sources. Investigating them is
-        redundant work that starves the real READs inside the shared
-        turn budget. Each proposed sub is classified by the SAME
-        governed goal instruction; a classification that fails or is
-        undeclared keeps the sub tracked (fail-closed: investigate an
-        obligation rather than drop it).
+        Declared ``analyze``/``compare`` subs may be delegated to
+        deterministic composition only when their structured
+        ``evidence_needed`` is already covered by siblings that remain
+        acquisition obligations (doc 228 §20). A classification label
+        alone never discards an unresolved material dependency.
+        Classification failure or undeclared class keeps the sub
+        tracked (fail-closed).
         """
 
         def _classify(
@@ -7235,8 +7255,7 @@ class OperationalCapabilityOrchestrator:
                 objectives[0]
             )
 
-        dropped: set[str] = set()
-        kept: list[SubObjective] = []
+        provisional_analytical: set[str] = set()
         for sub in objectives:
             sub_goal = goals.get(sub.subobjective_id)
             if (
@@ -7245,16 +7264,47 @@ class OperationalCapabilityOrchestrator:
                 and sub_goal.goal_class
                 in self._ANALYTICAL_SUBOBJECTIVE_CLASSES
             ):
+                provisional_analytical.add(sub.subobjective_id)
+
+        # Acquisition pool = every sub that is not a declared
+        # analytical candidate. Unresolved evidence on an analytical
+        # candidate is measured against this pool only.
+        acquisition_pool = {
+            sub.subobjective_id: sub
+            for sub in objectives
+            if sub.subobjective_id not in provisional_analytical
+        }
+
+        dropped: set[str] = set()
+        kept: list[SubObjective] = []
+        for sub in objectives:
+            if sub.subobjective_id not in provisional_analytical:
+                kept.append(sub)
+                continue
+            sub_goal = goals.get(sub.subobjective_id)
+            if self._analytical_evidence_covered_by_acquisitions(
+                sub, acquisition_pool
+            ):
                 dropped.add(sub.subobjective_id)
                 _logger.info(
                     "orchestration stage=subobjective_decomposition "
                     "decision=delegated_to_composition class=%s "
                     "correlation_id=%s",
-                    sub_goal.goal_class,
+                    getattr(sub_goal, "goal_class", None),
                     f"{correlation}-{sub.subobjective_id}",
                 )
                 continue
+            # Declared analyze/compare with unresolved evidence_needed
+            # stays tracked as a material acquisition obligation.
             kept.append(sub)
+            _logger.info(
+                "orchestration stage=subobjective_decomposition "
+                "decision=preserve_material_dependency class=%s "
+                "evidence_needed=%d correlation_id=%s",
+                getattr(sub_goal, "goal_class", None),
+                len(sub.evidence_needed),
+                f"{correlation}-{sub.subobjective_id}",
+            )
         if dropped:
             # Dependencies on delegated subs are fulfilled by the
             # composition itself — never block a READ on them.
