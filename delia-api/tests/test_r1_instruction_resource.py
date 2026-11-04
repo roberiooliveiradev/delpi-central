@@ -115,12 +115,16 @@ _SNAPSHOT = {
         5235,
     ),
     "delia.capability_orchestration.goal_evidence_relevance": (
-        "14effd87356774e92ba7b6bd77cd825369114d2a52ff091bfb12ae5aa2ba4755",
-        2388,
+        "622e28cc4b104d7fcd9a05eddfad86c416029519b7ea7db6045efdfd91dcdb39",
+        2966,
     ),
     "delia.capability_orchestration.subobjectives": (
-        "9d50a9bce8b7f9a1437237c856eb3db5df1015b5e2ebb89fc2cdd846cb11014a",
-        1248,
+        "821c7ff28ab7866950bf83d506618b22c46cf58aa68c8e924fb10e75a904cbfc",
+        1482,
+    ),
+    "delia.capability_orchestration.evidence_composition": (
+        "e352ddf8036faa9321bfe7a43c6e6bb1269c6ddb54749ba0570778a627ced39b",
+        792,
     ),
 }
 

@@ -5541,54 +5541,20 @@ class OperationalCapabilityOrchestrator:
             self._subobjective_investigation_enabled
             or (goal is not None and goal.comparison_requested)
         ):
-            subobjectives = self._subobjectives_from_session_refs(
-                prior_turns, goal
+            investigated = self._decomposed_investigation(
+                input_text,
+                correlation=correlation,
+                actor_user_id=actor_user_id,
+                session_id=session_id,
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                prepare_only=prepare_only,
+                deadline=deadline,
+                depth=depth,
+                goal=goal,
             )
-            if subobjectives is None:
-                subobjectives = self._decompose_objective(
-                    input_text,
-                    correlation=correlation,
-                    workspace_context=workspace_context,
-                    deadline=deadline,
-                    prior_turns=prior_turns,
-                    goal=goal,
-                )
-            if (
-                subobjectives is None
-                and goal is not None
-                and goal.comparison_requested
-                and deadline is not None
-                and deadline.remaining_seconds() > 0
-            ):
-                # Doc 224: a declared comparison that failed to
-                # decompose once gets ONE bounded retry — the
-                # proposal is model-bounded and the small model is
-                # nondeterministic; a single governed retry is the
-                # same recovery pattern every proposal stage uses.
-                subobjectives = self._decompose_objective(
-                    input_text,
-                    correlation=correlation,
-                    workspace_context=workspace_context,
-                    deadline=deadline,
-                    prior_turns=prior_turns,
-                    goal=goal,
-                )
-            if subobjectives is not None:
-                return self._investigate_subobjectives(
-                    subobjectives,
-                    input_text,
-                    correlation=correlation,
-                    actor_user_id=actor_user_id,
-                    session_id=session_id,
-                    workspace_context=workspace_context,
-                    prepare_only=prepare_only,
-                    deadline=deadline,
-                    depth=depth + 1,
-                    comparison=bool(
-                        goal is not None and goal.comparison_requested
-                    ),
-                    prior_turns=prior_turns,
-                )
+            if investigated is not None:
+                return investigated
 
         # Selection must not receive full prior transcript (Stage 05
         # latency). A bounded untrusted prior_observation may be embedded in the
@@ -5772,6 +5738,32 @@ class OperationalCapabilityOrchestrator:
         prepare_only = prepare_only or (
             goal.execution_bound == "prepare_only"
         )
+
+        # Cold turns bind the goal inside _select_target's fused
+        # interpretation — the early decomposition gate ran before the
+        # comparison class was known, so it is re-checked here, after
+        # goal binding and before any foreign/corroborate route. Same
+        # governed fan-in, same untrusted context, same fail-closed
+        # proposal validation; never a second planner.
+        if (
+            depth == 0
+            and goal is not None
+            and goal.comparison_requested
+        ):
+            investigated = self._decomposed_investigation(
+                input_text,
+                correlation=correlation,
+                actor_user_id=actor_user_id,
+                session_id=session_id,
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                prepare_only=prepare_only,
+                deadline=deadline,
+                depth=depth,
+                goal=goal,
+            )
+            if investigated is not None:
+                return investigated
 
         # Staged semantic path selection (C3-INTELLIGENCE-LOOP-02R1):
         # native sufficiency is assessed BEFORE any foreign surface is
@@ -7095,6 +7087,77 @@ class OperationalCapabilityOrchestrator:
             correlation,
         )
         return tuple(objectives)
+
+    def _decomposed_investigation(
+        self,
+        input_text: str,
+        *,
+        correlation: str,
+        actor_user_id: str | None,
+        session_id: str | None,
+        workspace_context: WorkspaceContext | None,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        prepare_only: bool,
+        deadline: TurnDeadline,
+        depth: int,
+        goal: "OperationalCapabilityOrchestrator._TurnGoal | None",
+    ) -> GovernedCapabilityAttempt | None:
+        """Shared depth-0 decomposition seam for compound objectives.
+
+        Resolves scoped session referents, asks the model for a bounded
+        subobjective proposal (validated fail-closed) and investigates
+        through the SAME governed path. ``None`` means "not decomposable"
+        — the caller continues the efficient single-capability path.
+        """
+        subobjectives = self._subobjectives_from_session_refs(
+            prior_turns, goal
+        )
+        if subobjectives is None:
+            subobjectives = self._decompose_objective(
+                input_text,
+                correlation=correlation,
+                workspace_context=workspace_context,
+                deadline=deadline,
+                prior_turns=prior_turns,
+                goal=goal,
+            )
+        if (
+            subobjectives is None
+            and goal is not None
+            and goal.comparison_requested
+            and deadline is not None
+            and deadline.remaining_seconds() > 0
+        ):
+            # Doc 224: a declared comparison that failed to
+            # decompose once gets ONE bounded retry — the
+            # proposal is model-bounded and the small model is
+            # nondeterministic; a single governed retry is the
+            # same recovery pattern every proposal stage uses.
+            subobjectives = self._decompose_objective(
+                input_text,
+                correlation=correlation,
+                workspace_context=workspace_context,
+                deadline=deadline,
+                prior_turns=prior_turns,
+                goal=goal,
+            )
+        if subobjectives is None:
+            return None
+        return self._investigate_subobjectives(
+            subobjectives,
+            input_text,
+            correlation=correlation,
+            actor_user_id=actor_user_id,
+            session_id=session_id,
+            workspace_context=workspace_context,
+            prepare_only=prepare_only,
+            deadline=deadline,
+            depth=depth + 1,
+            comparison=bool(
+                goal is not None and goal.comparison_requested
+            ),
+            prior_turns=prior_turns,
+        )
 
     def _investigate_subobjectives(
         self,

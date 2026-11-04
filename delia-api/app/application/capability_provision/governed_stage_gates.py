@@ -97,10 +97,14 @@ class SupportsGovernedStageGates(Protocol):
         correlation: str,
         workspace_context: WorkspaceContext | None,
         deadline: TurnDeadline,
+        prior_turns: tuple[ConversationContextTurn, ...] = (),
+        goal: Any | None = None,
     ) -> tuple["SubObjective", ...] | None:
         """Bounded decomposition proposal for a compound objective —
         validated fail-closed; ``None`` keeps the single-capability
-        path."""
+        path. ``prior_turns``/``goal`` carry untrusted referent
+        candidates and the validated semantic goal for referent
+        binding — they never grant authority or evidence."""
         ...
 
     def _governed_owner_path(

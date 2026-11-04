@@ -290,7 +290,7 @@ def _entity_refs_from_outcome(
         return ()
     # Doc 228 §7: source_system is the CANONICAL business origin
     # carried by the outcome's own source refs — never conflated
-    # with the transport specialist id.
+    # with the transport-level provider id.
     source_refs = getattr(provenance, "source_refs", None) or ()
     source_system = str(
         getattr(source_refs[0], "source_system", "")
@@ -1081,7 +1081,7 @@ class HandleInteractiveConversationTurn:
     ) -> InteractiveTurnResult:
         """Project DÉLIA-verified multi-source evidence, not fake owner data.
 
-        The individual SpecialistOutcomes stay on their READ attempts.
+        The individual owner outcomes stay on their READ attempts.
         A composite provenance value is accepted only from the governed
         deterministic fan-in; client history and prose never create it.
         """

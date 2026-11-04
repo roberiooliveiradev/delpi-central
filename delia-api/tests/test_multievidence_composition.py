@@ -210,3 +210,229 @@ def test_session_refs_no_compare_goal_returns_none():
 
 def test_session_refs_empty_turns_returns_none():
     assert _orc()._subobjectives_from_session_refs((), _Goal()) is None
+
+
+# --- E4-R6: cold single-turn comparison decomposes after fused goal ---
+
+def _nested_tree(root, children):
+    return {
+        "items": [
+            {
+                "code": root,
+                "quantity": 1,
+                "unit": "MI",
+                "type": "PA",
+                "components": children,
+            }
+        ]
+    }
+
+
+_TREE_A = _nested_tree(
+    "90260147",
+    [
+        {
+            "code": "50220013",
+            "quantity": 2,
+            "unit": "MI",
+            "type": "PI",
+            "components": [
+                {"code": "10030015", "quantity": 368, "unit": "MT"},
+                {"code": "10080031", "quantity": 1000, "unit": "PC"},
+            ],
+        },
+        {
+            "code": "50220014",
+            "quantity": 2,
+            "unit": "MI",
+            "type": "PI",
+            "components": [
+                {"code": "10030019", "quantity": 318, "unit": "MT"},
+            ],
+        },
+    ],
+)
+_TREE_B = _nested_tree(
+    "90260148",
+    [
+        {
+            "code": "50220013",
+            "quantity": 2,
+            "unit": "MI",
+            "type": "PI",
+            "components": [
+                {"code": "10030015", "quantity": 368, "unit": "MT"},
+                {"code": "10080031", "quantity": 1000, "unit": "PC"},
+            ],
+        },
+        {
+            "code": "50220015",
+            "quantity": 2,
+            "unit": "MI",
+            "type": "PI",
+            "components": [
+                {"code": "10030012", "quantity": 318, "unit": "MT"},
+            ],
+        },
+    ],
+)
+
+
+def test_cold_single_turn_comparison_reaches_verified_fan_in():
+    """R6 regression: with no prior_turns the goal binds only inside
+    ``_select_target``'s fused interpretation — the early decompose
+    gate saw ``goal=None`` and the turn fell into the foreign
+    corroborate route instead of two governed READs. The post-binding
+    gate must run the same decompose+investigate path and surface a
+    ``VerifiedCompositeEvidence`` with both real roots."""
+    from app.application.capability_provision.orchestration import (
+        ARGUMENTS_INSTRUCTION_ID,
+        CAPABILITY_SELECTION_INSTRUCTION_ID,
+        EVIDENCE_COMPOSITION_INSTRUCTION_ID,
+        GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
+        GROUP_SELECTION_INSTRUCTION_ID,
+        OperationalCapabilityOrchestrator,
+        SUBOBJECTIVES_INSTRUCTION_ID,
+    )
+    from app.application.interaction.capability_attempt import (
+        GovernedCapabilityStatus,
+    )
+    from app.application.model_invocation.contracts import (
+        ProviderInvocationPayload,
+    )
+    from app.application.model_invocation.invoke_model import InvokeModel
+    from app.domain.specialist_interop.model import (
+        InteropProtocol,
+        SpecialistOperationClass,
+        SpecialistOutcome,
+        SpecialistResultProvenance,
+        SpecialistResultStatus,
+    )
+    from tests.test_subobjective_investigation import (
+        _SUBOBJECTIVES_INSTRUCTION,
+        FakeProposalModel,
+        FakeProvider,
+        _cap,
+        _group,
+    )
+
+    def _tree_outcome(structured, correlation="c"):
+        return SpecialistOutcome(
+            status=SpecialistResultStatus.COMPLETED,
+            provenance=SpecialistResultProvenance(
+                specialist_id="davi",
+                remote_name="read_tree",
+                protocol=InteropProtocol.MCP,
+                correlation_id=correlation,
+                observed_at="2026-01-01T00:00:00+00:00",
+            ),
+            content_text="tree",
+            structured=structured,
+        )
+
+    class _SeqProvider(FakeProvider):
+        def __init__(self, provider_id, groups, outcomes_seq):
+            super().__init__(provider_id, groups)
+            self._seq = list(outcomes_seq)
+
+        def invoke(
+            self, capability, arguments, *, correlation_id,
+            timeout_seconds=None,
+        ):
+            self.calls.append((capability.remote_name, dict(arguments)))
+            return self._seq.pop(0)
+
+    provider = _SeqProvider(
+        "p1",
+        [
+            _group(
+                "p1",
+                "davi",
+                [
+                    _cap(
+                        "davi",
+                        "p1",
+                        "read_tree",
+                        SpecialistOperationClass.READ,
+                        schema={"type": "object", "properties": {}},
+                    )
+                ],
+            )
+        ],
+        [_tree_outcome(_TREE_A), _tree_outcome(_TREE_B)],
+    )
+    proposal = [
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "p1:davi",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "read_tree",
+                "goal_class": "compare",
+                "comparison_requested": True,
+            },
+        },
+        {
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "read_tree",
+                "goal_class": "read",
+            },
+            SUBOBJECTIVES_INSTRUCTION_ID: {
+                "subobjectives": [
+                    {
+                        "goal": "ler estrutura do produto 90260147",
+                        "depends_on": [],
+                        "evidence_needed": ["estrutura 90260147"],
+                    },
+                    {
+                        "goal": "ler estrutura do produto 90260148",
+                        "depends_on": [],
+                        "evidence_needed": ["estrutura 90260148"],
+                    },
+                ]
+            },
+        },
+        {
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "read_tree",
+                "goal_class": "read",
+            },
+        },
+        {
+            ARGUMENTS_INSTRUCTION_ID: {"arguments": {}},
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+            EVIDENCE_COMPOSITION_INSTRUCTION_ID: {
+                "proposed_pairs": [],
+                "limitations": [],
+            },
+        },
+    ]
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(FakeProposalModel(proposal)),
+        model_ref=__import__(
+            "tests.test_subobjective_investigation",
+            fromlist=["TEST_MODEL_REF"],
+        ).TEST_MODEL_REF,
+        orchestration_instructions={
+            SUBOBJECTIVES_INSTRUCTION_ID: _SUBOBJECTIVES_INSTRUCTION,
+            EVIDENCE_COMPOSITION_INSTRUCTION_ID: "x",
+        },
+    )
+    attempt = orch.attempt(
+        "compare as estruturas 90260147 e 90260148",
+        actor_user_id="u1",
+        session_id="s1",
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    verified = attempt.verified_composition
+    assert verified is not None
+    assert set(verified.source_roots) == {"90260147", "90260148"}
+    assert verified.verdict == "differences_found"
+    assert len(provider.calls) == 2
