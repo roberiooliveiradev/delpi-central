@@ -21,6 +21,11 @@ export type PpcRoute = {
   cutoffTime: string | null;
   lineFeederStatus: string | null;
   planId: string | null;
+  mywegNeedsSearch: string | null;
+  mywegNeedsBatchId: string | null;
+  mywegNeedsRemessaFrom: string | null;
+  mywegNeedsRemessaTo: string | null;
+  mywegNeedsPage: number | null;
   branch: PpcBranch;
   pathname: string;
 };
@@ -80,6 +85,11 @@ function parseSearch(search: string): {
   cutoffTime: string | null;
   lineFeederStatus: string | null;
   planId: string | null;
+  mywegNeedsSearch: string | null;
+  mywegNeedsBatchId: string | null;
+  mywegNeedsRemessaFrom: string | null;
+  mywegNeedsRemessaTo: string | null;
+  mywegNeedsPage: number | null;
   branch: PpcBranch | null;
 } {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
@@ -88,6 +98,7 @@ function parseSearch(search: string): {
   const issueRaw = params.get("issue")?.trim() || "";
   const reportRaw = params.get("report")?.trim() || "";
   const sharedSearch = params.get("q")?.trim() || null;
+  const pageRaw = Number.parseInt(params.get("page")?.trim() || "", 10);
   return {
     detectorId: params.get("detector")?.trim() || null,
     workCenter: params.get("ct")?.trim() || null,
@@ -110,6 +121,11 @@ function parseSearch(search: string): {
     cutoffTime: clockTimeOrNull(params.get("cutoffTime")),
     lineFeederStatus: LINE_FEEDER_STATUSES.has(statusRaw) ? statusRaw : null,
     planId: params.get("plan")?.trim() || null,
+    mywegNeedsSearch: sharedSearch,
+    mywegNeedsBatchId: params.get("batch")?.trim() || null,
+    mywegNeedsRemessaFrom: isoDateOrNull(params.get("remessaFrom")),
+    mywegNeedsRemessaTo: isoDateOrNull(params.get("remessaTo")),
+    mywegNeedsPage: Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : null,
     branch: isBranch(branchRaw) ? branchRaw : null,
   };
 }
@@ -142,6 +158,11 @@ export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBra
     cutoffTime: query.cutoffTime,
     lineFeederStatus: query.lineFeederStatus,
     planId: query.planId,
+    mywegNeedsSearch: query.mywegNeedsSearch,
+    mywegNeedsBatchId: query.mywegNeedsBatchId,
+    mywegNeedsRemessaFrom: query.mywegNeedsRemessaFrom,
+    mywegNeedsRemessaTo: query.mywegNeedsRemessaTo,
+    mywegNeedsPage: query.mywegNeedsPage,
     branch: query.branch ?? storedBranch,
     pathname: path || PPC_BASE_PATH,
   };
@@ -179,6 +200,11 @@ export function buildPpcHref(input: {
   cutoffTime?: string | null;
   lineFeederStatus?: string | null;
   planId?: string | null;
+  mywegNeedsSearch?: string | null;
+  mywegNeedsBatchId?: string | null;
+  mywegNeedsRemessaFrom?: string | null;
+  mywegNeedsRemessaTo?: string | null;
+  mywegNeedsPage?: number | null;
 }): string {
   const path =
     input.subpluginId === DEFAULT_SUBPLUGIN
@@ -206,6 +232,13 @@ export function buildPpcHref(input: {
   if (input.cutoffTime) params.set("cutoffTime", input.cutoffTime);
   if (input.lineFeederStatus) params.set("status", input.lineFeederStatus);
   if (input.planId) params.set("plan", input.planId);
+  if (input.mywegNeedsSearch) params.set("q", input.mywegNeedsSearch);
+  if (input.mywegNeedsBatchId) params.set("batch", input.mywegNeedsBatchId);
+  if (input.mywegNeedsRemessaFrom) params.set("remessaFrom", input.mywegNeedsRemessaFrom);
+  if (input.mywegNeedsRemessaTo) params.set("remessaTo", input.mywegNeedsRemessaTo);
+  if (input.mywegNeedsPage && input.mywegNeedsPage > 1) {
+    params.set("page", String(input.mywegNeedsPage));
+  }
   return `${path}?${params.toString()}`;
 }
 

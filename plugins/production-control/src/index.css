@@ -6526,3 +6526,101 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+/* —— Necessidades WEG (MyWEG) —— */
+.dashboard-production-control .ppc-myweg-needs__planning-note {
+  margin: 0 0 12px;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-sm);
+}
+
+.dashboard-production-control .ppc-myweg-needs__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dashboard-production-control .ppc-myweg-needs__kpi {
+  border: 1px solid var(--ppc-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--ppc-surface);
+}
+
+.dashboard-production-control .ppc-myweg-needs__kpi h3 {
+  margin: 0 0 6px;
+  font-size: var(--ppc-font-xs);
+  font-weight: 600;
+  color: var(--ppc-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.dashboard-production-control .ppc-myweg-needs__kpi p {
+  margin: 0;
+  font-size: var(--ppc-font-lg);
+  font-weight: 600;
+  color: var(--ppc-text);
+}
+
+.dashboard-production-control .ppc-myweg-needs__kpi-tag {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: var(--ppc-font-xs);
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-myweg-needs__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.dashboard-production-control .ppc-myweg-needs__history,
+.dashboard-production-control .ppc-myweg-needs__date,
+.dashboard-production-control .ppc-myweg-needs__search {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--ppc-font-sm);
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-myweg-needs__history select,
+.dashboard-production-control .ppc-myweg-needs__date input,
+.dashboard-production-control .ppc-myweg-needs__search input {
+  min-height: 36px;
+  min-width: 160px;
+  padding: 6px 10px;
+  border: 1px solid var(--ppc-border);
+  border-radius: 8px;
+  background: var(--ppc-surface);
+  color: var(--ppc-text);
+}
+
+.dashboard-production-control .ppc-myweg-needs__search input {
+  min-width: 220px;
+}
+
+.dashboard-production-control .ppc-myweg-needs__branch-gate {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+  .dashboard-production-control .ppc-myweg-needs__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-production-control .ppc-myweg-needs__search input,
+  .dashboard-production-control .ppc-myweg-needs__history select {
+    min-width: 0;
+    width: 100%;
+  }
+}

@@ -12,6 +12,7 @@ import { DemandPage } from "./pages/DemandPage";
 import { LineFeederPage } from "./pages/LineFeederPage";
 import { MachineLoadPage } from "./pages/MachineLoadPage";
 import { MaterialsPage } from "./pages/MaterialsPage";
+import { MyWegNeedsPage } from "./pages/MyWegNeedsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { ProblemAnalysisPage } from "./pages/ProblemAnalysisPage";
 import { ProductModelsPage } from "./pages/ProductModelsPage";
@@ -37,6 +38,7 @@ const WORKSPACES = new Set([
   "reports",
   "product-models",
   "sequencing-profiles",
+  "myweg-needs",
 ]);
 
 export type AppProps = {
@@ -124,6 +126,17 @@ export default function App({ getAccessToken, pathname: pathnameFromHost, permis
         branch={route.branch}
         permissions={permissions}
         isSuperadmin={isSuperadmin}
+      />
+    );
+  } else if (route.subpluginId === "myweg-needs") {
+    workspace = (
+      <MyWegNeedsPage
+        branch={route.branch}
+        batchId={route.mywegNeedsBatchId}
+        search={route.mywegNeedsSearch}
+        remessaFrom={route.mywegNeedsRemessaFrom}
+        remessaTo={route.mywegNeedsRemessaTo}
+        page={route.mywegNeedsPage}
       />
     );
   }

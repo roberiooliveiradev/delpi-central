@@ -1,0 +1,399 @@
+import { createDashboardLoadingActivityCard } from "@delpi/plugin-ui/index";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { DataTableSection, type DataTableColumn } from "../components/dataTableUi";
+import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
+import { copy } from "../content/copy";
+import { helpTooltips } from "../content/helpTooltips";
+import { useMyWegNeeds } from "../hooks/useMyWegNeeds";
+import type { MyWegNeedsRecord, PpcBranch } from "../types";
+import { formatDecimalString } from "../utils/formatDecimalString";
+import { formatRefreshedAt } from "../utils/formatRefreshedAt";
+import { buildPpcHref, navigatePpc } from "../utils/routeParser";
+
+const LoadingCard = createDashboardLoadingActivityCard({
+  prefix: "ppc",
+  labels: {
+    progressRemaining: (n) => `Faltam ${n}%`,
+    progressAriaDeterminate: (n) => `Faltam ${n} por cento`,
+    progressAriaIndeterminate: copy.mywegNeeds.loading,
+  },
+});
+
+type MyWegNeedsPageProps = {
+  branch: PpcBranch;
+  batchId: string | null;
+  search: string | null;
+  remessaFrom: string | null;
+  remessaTo: string | null;
+  page: number | null;
+};
+
+function syncUrl(input: {
+  branch: PpcBranch;
+  batchId?: string | null;
+  search?: string | null;
+  remessaFrom?: string | null;
+  remessaTo?: string | null;
+  page?: number | null;
+}) {
+  navigatePpc(
+    buildPpcHref({
+      subpluginId: "myweg-needs",
+      branch: input.branch,
+      mywegNeedsBatchId: input.batchId ?? null,
+      mywegNeedsSearch: input.search || null,
+      mywegNeedsRemessaFrom: input.remessaFrom ?? null,
+      mywegNeedsRemessaTo: input.remessaTo ?? null,
+      mywegNeedsPage: input.page && input.page > 1 ? input.page : null,
+    }),
+  );
+}
+
+function formatCollectedAt(value: string | null | undefined): string {
+  if (!value) return "—";
+  try {
+    return formatRefreshedAt(value);
+  } catch {
+    return value;
+  }
+}
+
+function formatRemessa(value: string | null | undefined): string {
+  const text = (value ?? "").trim();
+  if (!text) return "—";
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
+    const [y, m, d] = text.slice(0, 10).split("-");
+    return `${d}/${m}/${y}`;
+  }
+  return text;
+}
+
+function sb1Label(status: string | null | undefined): string {
+  const normalized = (status ?? "").trim().toLowerCase();
+  if (!normalized || normalized === "pending") {
+    return copy.mywegNeeds.sb1Pending;
+  }
+  return copy.mywegNeeds.sb1Other(status ?? "");
+}
+
+export function MyWegNeedsPage({
+  branch,
+  batchId,
+  search,
+  remessaFrom,
+  remessaTo,
+  page,
+}: MyWegNeedsPageProps) {
+  const texts = copy.mywegNeeds;
+  const [searchDraft, setSearchDraft] = useState(search ?? "");
+  const [remessaFromDraft, setRemessaFromDraft] = useState(remessaFrom ?? "");
+  const [remessaToDraft, setRemessaToDraft] = useState(remessaTo ?? "");
+
+  const filters = useMemo(
+    () => ({
+      batchId,
+      search: search ?? "",
+      remessaFrom,
+      remessaTo,
+      page: page && page > 0 ? page : 1,
+      pageSize: 50,
+    }),
+    [batchId, page, remessaFrom, remessaTo, search],
+  );
+
+  const { latest, selected, history, items, loading, refreshing, error, status, reload } =
+    useMyWegNeeds(branch, filters);
+
+  useEffect(() => {
+    setSearchDraft(search ?? "");
+    setRemessaFromDraft(remessaFrom ?? "");
+    setRemessaToDraft(remessaTo ?? "");
+  }, [remessaFrom, remessaTo, search]);
+
+  const applyFilters = useCallback(() => {
+    syncUrl({
+      branch: "02",
+      batchId: batchId,
+      search: searchDraft.trim() || null,
+      remessaFrom: remessaFromDraft.trim() || null,
+      remessaTo: remessaToDraft.trim() || null,
+      page: 1,
+    });
+  }, [batchId, remessaFromDraft, remessaToDraft, searchDraft]);
+
+  const clearFilters = useCallback(() => {
+    setSearchDraft("");
+    setRemessaFromDraft("");
+    setRemessaToDraft("");
+    syncUrl({
+      branch: "02",
+      batchId,
+      search: null,
+      remessaFrom: null,
+      remessaTo: null,
+      page: 1,
+    });
+  }, [batchId]);
+
+  const selectBatch = useCallback(
+    (nextBatchId: string) => {
+      syncUrl({
+        branch: "02",
+        batchId: nextBatchId === latest?.id ? null : nextBatchId,
+        search: search ?? null,
+        remessaFrom,
+        remessaTo,
+        page: 1,
+      });
+    },
+    [latest?.id, remessaFrom, remessaTo, search],
+  );
+
+  const goToFilial02 = useCallback(() => {
+    syncUrl({
+      branch: "02",
+      batchId: null,
+      search: null,
+      remessaFrom: null,
+      remessaTo: null,
+      page: 1,
+    });
+  }, []);
+
+  const isLatest = Boolean(selected && latest && selected.id === latest.id);
+  const historyOptions = history?.items ?? [];
+
+  const columns = useMemo<DataTableColumn<MyWegNeedsRecord>[]>(
+    () => [
+      {
+        key: "material_weg_tratado",
+        header: texts.columns.material,
+        render: (row) => row.material_weg_tratado || "—",
+      },
+      {
+        key: "codigo_referencia_weg",
+        header: texts.columns.referencia,
+        render: (row) =>
+          row.codigo_referencia_weg?.trim()
+            ? row.codigo_referencia_weg
+            : texts.referenciaEmpty,
+      },
+      {
+        key: "documento",
+        header: texts.columns.documento,
+        render: (row) => row.documento?.trim() || "—",
+      },
+      {
+        key: "data_remessa",
+        header: texts.columns.remessa,
+        render: (row) => formatRemessa(row.data_remessa),
+      },
+      {
+        key: "quantidade_original_un",
+        header: texts.columns.qtyUn,
+        align: "right",
+        render: (row) => formatDecimalString(row.quantidade_original_un),
+      },
+      {
+        key: "quantidade_mi",
+        header: texts.columns.qtyMi,
+        align: "right",
+        render: (row) => formatDecimalString(row.quantidade_mi),
+      },
+      {
+        key: "sb1_resolution",
+        header: texts.columns.sb1,
+        render: (row) => sb1Label(row.sb1_resolution?.status),
+      },
+    ],
+    [texts],
+  );
+
+  if (branch !== "02") {
+    return (
+      <div className="ppc-page-stack ppc-page-stack--myweg-needs">
+        <PpcWorkspaceHeader
+          title={texts.title}
+          subtitle={texts.subtitle}
+          titleHint={helpTooltips.mywegNeeds}
+          branch={branch}
+          subpluginId="myweg-needs"
+        />
+        <div className="ppc-state ppc-myweg-needs__branch-gate" role="status">
+          <p>{texts.branch01Message}</p>
+          <button type="button" className="ppc-btn ppc-btn--primary" onClick={goToFilial02}>
+            {texts.branch01Action}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const forbidden = status === 403;
+  const notFound = status === 404;
+
+  return (
+    <div className="ppc-page-stack ppc-page-stack--myweg-needs">
+      <PpcWorkspaceHeader
+        title={texts.title}
+        subtitle={texts.subtitle}
+        titleHint={helpTooltips.mywegNeeds}
+        period={selected ? texts.collectedAt(formatCollectedAt(selected.collectedAt)) : null}
+        stats={
+          selected ? (
+            <span className="ppc-header__stat">
+              {texts.recordCount(selected.recordCount)}
+            </span>
+          ) : null
+        }
+        branch={branch}
+        subpluginId="myweg-needs"
+        mywegNeedsBatchId={batchId}
+        mywegNeedsSearch={search}
+        mywegNeedsRemessaFrom={remessaFrom}
+        mywegNeedsRemessaTo={remessaTo}
+        mywegNeedsPage={page}
+        onRefresh={() => void reload()}
+        refreshBusy={refreshing}
+      />
+
+      <p className="ppc-myweg-needs__planning-note">{texts.planningNote}</p>
+
+      {loading ? <LoadingCard title={texts.loading} description={texts.loadingHint} /> : null}
+
+      {forbidden ? (
+        <div className="ppc-state ppc-state--error" role="alert">
+          {texts.forbidden}
+        </div>
+      ) : null}
+
+      {!forbidden && error && !loading ? (
+        <div className="ppc-state ppc-state--error" role="alert">
+          {notFound ? texts.notFound : error}
+        </div>
+      ) : null}
+
+      {!forbidden && !loading && !error && !selected ? (
+        <div className="ppc-state" role="status">
+          {texts.emptyCollections}
+        </div>
+      ) : null}
+
+      {selected ? (
+        <>
+          <section className="ppc-myweg-needs__summary" aria-label={texts.summaryAria}>
+            <article className="ppc-myweg-needs__kpi">
+              <h3>{texts.kpi.collectedAt}</h3>
+              <p>{formatCollectedAt(selected.collectedAt)}</p>
+              <span className="ppc-myweg-needs__kpi-tag">
+                {isLatest ? texts.latestBadge : texts.historyBadge}
+              </span>
+            </article>
+            <article className="ppc-myweg-needs__kpi">
+              <h3>{texts.kpi.records}</h3>
+              <p>{selected.recordCount.toLocaleString("pt-BR")}</p>
+            </article>
+            <article className="ppc-myweg-needs__kpi">
+              <h3>{texts.kpi.qtyUn}</h3>
+              <p>{formatDecimalString(selected.totals.quantidade_original_un)}</p>
+            </article>
+            <article className="ppc-myweg-needs__kpi">
+              <h3>{texts.kpi.qtyMi}</h3>
+              <p>{formatDecimalString(selected.totals.quantidade_mi)}</p>
+            </article>
+            <article className="ppc-myweg-needs__kpi">
+              <h3>{texts.kpi.branch}</h3>
+              <p>{texts.branch02Label}</p>
+            </article>
+          </section>
+
+          <div className="ppc-myweg-needs__toolbar">
+            <label className="ppc-myweg-needs__history">
+              <span>{texts.historyLabel}</span>
+              <select
+                value={selected.id}
+                onChange={(event) => selectBatch(event.target.value)}
+                aria-label={texts.historyAria}
+              >
+                {historyOptions.map((batch) => (
+                  <option key={batch.id} value={batch.id}>
+                    {formatCollectedAt(batch.collectedAt)}
+                    {latest?.id === batch.id ? ` — ${texts.latestBadge}` : ""}
+                    {` (${batch.recordCount.toLocaleString("pt-BR")})`}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="ppc-myweg-needs__search">
+              <span className="ppc-sr-only">{texts.searchAria}</span>
+              <input
+                type="search"
+                value={searchDraft}
+                placeholder={texts.searchPlaceholder}
+                onChange={(event) => setSearchDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") applyFilters();
+                }}
+              />
+            </label>
+
+            <label className="ppc-myweg-needs__date">
+              <span>{texts.remessaFrom}</span>
+              <input
+                type="date"
+                value={remessaFromDraft}
+                onChange={(event) => setRemessaFromDraft(event.target.value)}
+              />
+            </label>
+            <label className="ppc-myweg-needs__date">
+              <span>{texts.remessaTo}</span>
+              <input
+                type="date"
+                value={remessaToDraft}
+                onChange={(event) => setRemessaToDraft(event.target.value)}
+              />
+            </label>
+
+            <button type="button" className="ppc-btn ppc-btn--secondary" onClick={applyFilters}>
+              {texts.applyFilters}
+            </button>
+            <button type="button" className="ppc-btn ppc-btn--ghost" onClick={clearFilters}>
+              {texts.clearFilters}
+            </button>
+          </div>
+
+          <DataTableSection<MyWegNeedsRecord>
+            title={texts.tableTitle}
+            hint={texts.tableHint}
+            columns={columns}
+            rows={items?.items ?? []}
+            rowKey={(row) => row.id}
+            loading={loading}
+            refreshing={refreshing}
+            emptyMessage={texts.emptyItems}
+            columnPreferencesKey="production-control:myweg-needs:columns:v1"
+            serverPagination={{
+              page: items?.page ?? filters.page,
+              pageSize: items?.pageSize ?? filters.pageSize,
+              total: items?.total ?? 0,
+              onPageChange: (nextPage) =>
+                syncUrl({
+                  branch: "02",
+                  batchId,
+                  search,
+                  remessaFrom,
+                  remessaTo,
+                  page: nextPage,
+                }),
+              onPageSizeChange: () => {
+                /* pageSize fixo 50 nesta etapa */
+              },
+            }}
+          />
+        </>
+      ) : null}
+    </div>
+  );
+}

@@ -38,6 +38,11 @@ type PpcWorkspaceHeaderProps = {
   cutoffTime?: string | null;
   lineFeederStatus?: string | null;
   planId?: string | null;
+  mywegNeedsBatchId?: string | null;
+  mywegNeedsSearch?: string | null;
+  mywegNeedsRemessaFrom?: string | null;
+  mywegNeedsRemessaTo?: string | null;
+  mywegNeedsPage?: number | null;
   /** Ações extras à direita do header (ex.: link discreto p/ área admin). */
   actions?: ReactNode;
   onRefresh?: () => void;
@@ -70,6 +75,11 @@ export function PpcWorkspaceHeader({
   cutoffTime,
   lineFeederStatus,
   planId,
+  mywegNeedsBatchId,
+  mywegNeedsSearch,
+  mywegNeedsRemessaFrom,
+  mywegNeedsRemessaTo,
+  mywegNeedsPage,
   actions,
   onRefresh,
   refreshBusy,
@@ -94,6 +104,11 @@ export function PpcWorkspaceHeader({
         cutoffTime,
         lineFeederStatus,
         planId,
+        mywegNeedsBatchId,
+        mywegNeedsSearch,
+        mywegNeedsRemessaFrom,
+        mywegNeedsRemessaTo,
+        mywegNeedsPage,
       }),
     );
   };

@@ -2,6 +2,7 @@ import {
   Box,
   CalendarClock,
   ClipboardList,
+  Factory,
   FileSpreadsheet,
   Gauge,
   House,
@@ -29,6 +30,7 @@ const ICONS: Record<string, LucideIcon> = {
   box: Box,
   truck: Truck,
   "list-ordered": ListOrdered,
+  factory: Factory,
 };
 
 type PpcRailProps = {

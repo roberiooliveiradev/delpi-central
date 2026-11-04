@@ -91,6 +91,15 @@
       "permission": "production-control.machine-load.view"
     },
     {
+      "id": "myweg-needs",
+      "label": "Necessidades WEG",
+      "description": "Histórico de planejamento MyWEG da filial ES: última coleta, registros e coletas anteriores.",
+      "icon": "factory",
+      "route": "/myweg-needs",
+      "status": "active",
+      "permission": "production-control.myweg-needs.view"
+    },
+    {
       "id": "capacity",
       "label": "Capacidade",
       "description": "Subplugin futuro — carga e capacidade de centros.",

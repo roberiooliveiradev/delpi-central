@@ -44,6 +44,9 @@ import type {
   StockBalancesReportPayload,
   ProductionOrdersReportPayload,
   Subplugin,
+  MyWegNeedsBatchListPayload,
+  MyWegNeedsBatchSummary,
+  MyWegNeedsItemsPayload,
 } from "../types";
 
 export async function fetchSubplugins(signal?: AbortSignal): Promise<Subplugin[]> {
@@ -1277,6 +1280,76 @@ export async function fetchMachineLoadWorkCenters(params: {
 }
 
 /** Abre uma solicitacao de correcao a Processos para a operacao clicada. */
+export async function fetchMyWegNeedBatches(params: {
+  page?: number;
+  pageSize?: number;
+  signal?: AbortSignal;
+}): Promise<MyWegNeedsBatchListPayload> {
+  const search = new URLSearchParams();
+  search.set("page", String(params.page ?? 1));
+  search.set("pageSize", String(params.pageSize ?? 20));
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: MyWegNeedsBatchListPayload;
+  }>(ppcApiUrl(`/myweg/need-batches?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível carregar o histórico de coletas MyWEG.");
+}
+
+export async function fetchLatestMyWegNeedBatch(params?: {
+  signal?: AbortSignal;
+}): Promise<MyWegNeedsBatchSummary> {
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: MyWegNeedsBatchSummary;
+  }>(ppcApiUrl("/myweg/need-batches/latest"), { signal: params?.signal });
+  return unwrapEnvelope(envelope, "Não há coleta MyWEG disponível.");
+}
+
+export async function fetchMyWegNeedBatch(params: {
+  batchId: string;
+  signal?: AbortSignal;
+}): Promise<MyWegNeedsBatchSummary> {
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: MyWegNeedsBatchSummary;
+  }>(ppcApiUrl(`/myweg/need-batches/${encodeURIComponent(params.batchId)}`), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(envelope, "Coleta MyWEG não encontrada.");
+}
+
+export async function fetchMyWegNeedBatchItems(params: {
+  batchId: string;
+  search?: string;
+  remessaFrom?: string | null;
+  remessaTo?: string | null;
+  page?: number;
+  pageSize?: number;
+  signal?: AbortSignal;
+}): Promise<MyWegNeedsItemsPayload> {
+  const search = new URLSearchParams();
+  if (params.search?.trim()) search.set("search", params.search.trim());
+  if (params.remessaFrom) search.set("remessaFrom", params.remessaFrom);
+  if (params.remessaTo) search.set("remessaTo", params.remessaTo);
+  search.set("page", String(params.page ?? 1));
+  search.set("pageSize", String(params.pageSize ?? 50));
+  const qs = search.toString();
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: MyWegNeedsItemsPayload;
+  }>(
+    ppcApiUrl(
+      `/myweg/need-batches/${encodeURIComponent(params.batchId)}/items${qs ? `?${qs}` : ""}`,
+    ),
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível carregar os itens da coleta MyWEG.");
+}
+
 export async function createMachineLoadProcessIssue(params: {
   branch: string;
   workCenter: string;

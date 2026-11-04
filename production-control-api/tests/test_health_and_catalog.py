@@ -184,6 +184,36 @@ def test_product_models_subplugin_requires_its_own_permission() -> None:
     assert "machine-load" not in ids
 
 
+def test_myweg_needs_subplugin_requires_its_own_permission() -> None:
+    from production_control_app.application.services.subplugin_catalog_service import (
+        SubpluginCatalogService,
+        load_subplugin_catalog,
+    )
+
+    load_subplugin_catalog.cache_clear()
+    catalog = load_subplugin_catalog()
+    assert any(item.id == "myweg-needs" for item in catalog)
+    entry = next(item for item in catalog if item.id == "myweg-needs")
+    assert entry.permission == "production-control.myweg-needs.view"
+    assert entry.status == "active"
+
+    service = SubpluginCatalogService()
+    visible = service.list_visible(
+        _user(
+            permissions=[
+                "production-control.access",
+                "production-control.myweg-needs.view",
+            ]
+        )
+    )
+    ids = {item.id for item in visible}
+    assert "myweg-needs" in ids
+    assert "materials" not in ids
+
+    without = service.list_visible(_user(permissions=["production-control.access"]))
+    assert "myweg-needs" not in {item.id for item in without}
+
+
 def test_subplugins_route_returns_envelope() -> None:
     test_app = FastAPI()
 

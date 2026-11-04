@@ -36,6 +36,13 @@ O ownership dos fatos MES permanece temporariamente neste BFF, sem transformá-l
 
 Shell híbrido Linear (rail compacta) + MES (cards de exceção, semáforo). Home = gestão à vista (logo Delpi, OTD do mês, OPs atrasadas, fila com scroll).
 
+## MyWEG Necessidades
+
+- [E1 contrato/normalização](./MYWEG-NEEDS-INGESTION-E1.md)
+- [E2 persistência/S2S](./MYWEG-NEEDS-INGESTION-E2.md)
+- [Publicador Linux manual](./MYWEG-NEEDS-LINUX-PUBLISHER.md)
+- [E3 Portal PCP](./MYWEG-NEEDS-PORTAL-E3.md)
+
 ## Wireframe v1
 
 Home: `/apps/production-control?branch=01`. Demanda: `/apps/production-control/demand?branch=01&status=at_risk`. Carga máquina: `/apps/production-control/machine-load?branch=01&ct={centro}`. Análise: `/apps/production-control/problem-analysis?branch=01&detector=incomplete-order-sets`. Materiais: `/apps/production-control/materials?branch=01&issue=excess` (consulta de ruptura: `?issue=pa-shortage&q=90263114`). Alimentador de linha: `/apps/production-control/line-feeder?branch=01` (coleta dinâmica por horizonte — [LINE-FEEDER-UI-E4.md](./LINE-FEEDER-UI-E4.md); parâmetros legados de corte na URL são ignorados com segurança). Mapa de entrega: `/apps/production-control/delivery-map?branch=01`.

@@ -1500,3 +1500,66 @@ export type MachineLoadProcessIssueResult = {
   status: string | null;
   message: string | null;
 };
+
+/** Totais do lote MyWEG — strings decimais canônicas (não usar float). */
+export type MyWegNeedsTotals = {
+  quantidade_original_un: string;
+  quantidade_mi: string;
+};
+
+export type MyWegNeedsSb1Resolution = {
+  status: string;
+  protheus_product_code: string | null;
+  matched_by: string | null;
+  resolved_at: string | null;
+};
+
+export type MyWegNeedsBatchSummary = {
+  id: string;
+  collectionId: string;
+  branch: string;
+  status: string;
+  collectedAt: string;
+  exportedAt?: string | null;
+  collectionDate: string;
+  importedAt: string;
+  recordCount: number;
+  totals: MyWegNeedsTotals;
+  payloadSha256?: string;
+};
+
+export type MyWegNeedsBatchListPayload = {
+  page: number;
+  pageSize: number;
+  total: number;
+  items: MyWegNeedsBatchSummary[];
+};
+
+export type MyWegNeedsRecord = {
+  id: string;
+  batch_id: string;
+  line_no: number;
+  material_weg_tratado: string;
+  codigo_referencia_weg: string | null;
+  origem_material_weg: string;
+  quantidade_original_un: string;
+  quantidade_mi: string;
+  unidade: string;
+  data_remessa: string;
+  documento: string | null;
+  linha_fonte?: string | null;
+  assinatura_registro?: string | null;
+  rastreabilidade?: string | null;
+  line_fingerprint?: string;
+  sb1_resolution: MyWegNeedsSb1Resolution;
+};
+
+export type MyWegNeedsItemsPayload = {
+  branch: string;
+  batchId: string;
+  collectionId: string;
+  page: number;
+  pageSize: number;
+  total: number;
+  items: MyWegNeedsRecord[];
+};

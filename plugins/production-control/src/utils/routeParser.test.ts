@@ -298,4 +298,33 @@ describe("line feeder deep link", () => {
       "/apps/production-control/line-feeder?branch=01&ct=CT-01&cutoffDate=2026-09-22&cutoffTime=14%3A00&status=to_pick&plan=plan-1",
     );
   });
+
+  it("reads myweg-needs filters from the deep link", () => {
+    const route = parsePpcPath(
+      "/apps/production-control/myweg-needs",
+      "?branch=02&batch=abc-1&q=parafuso&remessaFrom=2026-11-01&remessaTo=2026-11-30&page=3",
+      "01",
+    );
+    expect(route.subpluginId).toBe("myweg-needs");
+    expect(route.branch).toBe("02");
+    expect(route.mywegNeedsBatchId).toBe("abc-1");
+    expect(route.mywegNeedsSearch).toBe("parafuso");
+    expect(route.mywegNeedsRemessaFrom).toBe("2026-11-01");
+    expect(route.mywegNeedsRemessaTo).toBe("2026-11-30");
+    expect(route.mywegNeedsPage).toBe(3);
+  });
+
+  it("builds myweg-needs href with shareable filters", () => {
+    const href = buildPpcHref({
+      subpluginId: "myweg-needs",
+      branch: "02",
+      mywegNeedsBatchId: "batch-9",
+      mywegNeedsSearch: "doc-1",
+      mywegNeedsRemessaFrom: "2026-11-10",
+      mywegNeedsPage: 2,
+    });
+    expect(href).toBe(
+      "/apps/production-control/myweg-needs?branch=02&q=doc-1&batch=batch-9&remessaFrom=2026-11-10&page=2",
+    );
+  });
 });

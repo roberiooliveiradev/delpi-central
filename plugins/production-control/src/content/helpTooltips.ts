@@ -33,4 +33,6 @@ export const helpTooltips = {
     "Anexe um arquivo .glb ao código do produto da ordem de produção (PI ou PA). No cockpit, o operador vê o 3D na operação daquele produto; o desenho PDF continua sendo o do PA.",
   sequencingProfiles:
     "Cadastro das regras que o botão Otimizar planejamento aplica por centro de trabalho. A entrega do PA é sempre o primeiro critério. Critérios opcionais: Ferramenta (agrupa quem usa a mesma ferramenta) e Código do cabo (agrupa pelo código exato do material — os grupos SB1 só dizem quais materiais entram na verificação). Um perfil em rascunho pode ser editado e ativado; somente perfis ativos podem ser vinculados a um CT. Nada aqui altera a fila na hora — as regras valem na próxima otimização.",
+  mywegNeeds:
+    "Histórico de planejamento MyWEG da filial 02 (ES). Mostra a última coleta importada, totais em UN/MI e a lista paginada de necessidades. Referência WEG vazia aparece como «Não informado». O vínculo com produto DELPI fica «Aguardando vínculo DELPI» enquanto a resolução SB1 não existir. Use o histórico para abrir coletas anteriores sem misturar linhas. Não é atualização em tempo real nem gera OP.",
 } as const;
