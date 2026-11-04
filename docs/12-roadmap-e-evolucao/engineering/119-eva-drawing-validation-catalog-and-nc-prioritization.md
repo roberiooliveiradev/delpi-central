@@ -673,3 +673,34 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 | `90480120` | `INCONCLUSIVE`, tabela detectada nas páginas [1,2], 10 matches de BOM, 0 findings, 10 relações não verificadas e 13 token-only. | **Melhoria de detecção de tabela** sobre a rodada anterior; não há evidência de divergência de presença N1 na inspeção visual. |
 
 **Gate:** `E2E_MCP_CHATGPT=PASS (transporte/executável)`; **`VAL01_CORRECTNESS=FAIL` / `REGRESSION_FOUND`**. Não é seguro considerar findings adicionais do novo runtime como erros reais do desenho. A proteção `BOM_ONLY` é violada no caso 90263572. O próprio status `DIVERGENCES_CANDIDATES` pode coexistir com coverage false, mas **não deve produzir ausência na imagem sem cobertura suficiente**. Demanda de correção: (a) impedir `BOM_ONLY` por item/escopo quando `complete_for_requested_scope=false`, inclusive quando fallback detectou outra tabela ou o OCR leu só fração das linhas; (b) associar MP somente à linha e à célula efetivamente verificadas, não por herança implícita do PI anterior, e degradar pai inferido a inconclusivo quando a geometria é insegura; (c) evitar `DRAWING_ONLY` de OCR ruidoso/misread e MP presente na BOM; (d) retestar os sete originais em runtime e MCP, confrontar tabelas visualmente. Preservar finding real `50213064` e sem alterações de frontend, BOM, PDF ou NC.
+
+## 23. Regressões corrigidas — falsos positivos eliminados (DEC-VAL-025 — 2026-11-03)
+
+**SHA publicado/implantado:** `1fee6a996e` (`delpi-engineering-api` recriado, healthy; runtime confirma `ocr_ambiguous_pairs`/`occurrence_excess`/`unverified_relations` no payload).
+
+**Causas-raiz dos falsos positivos (PROVEN no runtime prod):**
+
+1. `coverage_complete` = tabela detectada + boundary confiável — insuficiente: `90263572` tinha 7 códigos extraídos × 56 BOM → 44 `BOM_ONLY` fabricados. **Correção:** `bom_only_allowed` exige `accounted_ratio = (matched+visíveis)/bom_occurrences >= 0.6` — ausência exige rendimento de extração que a torne provável (INV-01/08).
+2. `DRAWING_ONLY` emitido por **excesso de multiplicidade** — código na BOM já totalmente consumido mas extraído de novo (duplicata OCR/célula fundida ou ocorrência extra real). Agora `occurrence_excess` limitation, não finding (caso `10090014`, `10400040`).
+3. `PARENT_RELATION_MISMATCH` com pai **inferido** por agrupamento `pi_group_inference` — INV-02/03: presença não prova relação. Agora `unverified_parent_relations` (evidência registrada, nunca finding comprovado). Pai verificado por evidência real continua elegível.
+4. **Par espelho OCR**: `10060004` (mal-lido) ≈ `10080004` (BOM) gerou `DRAWING_ONLY`+`BOM_ONLY` espelhados. Reconciliação por distância de Hamming ≤1 → `ocr_ambiguous_code` (distância 2 removida — colide com famílias 8 dígitos de prefixo comum).
+5. Filhos de pai ausente não geram findings próprios (guarda `drawing_only_parents` + excess por código).
+6. `NO_DIVERGENCE_DETECTED` só com escopo íntegro — `unverified`/`unclassified`/`excess`/`token_only`/`parents unverified` → `INCONCLUSIVE` honesto (casos 90264302/90261606/90480120).
+
+**Matriz antes × depois (runtime prod, PDF+BOM reais):**
+
+| Produto | Antes | Depois | Veredito |
+|---|---|---|---|
+| 90263520 | 4 findings (3 FPs) | `D-001 DRAWING_ONLY 50213064` só; `occurrence_excess:10400040`, `unverified_rel:2`, `token_only:17` | **REGRESSION_FIXED** — divergência real preservada |
+| 90263572 | 44 BOM_ONLY + 1 DRAWING_ONLY falsos | 0 findings; pág.2 lida via retry DPI; `ocr_ambiguous_pairs:1`; 49 não verificadas | **REGRESSION_FIXED — INV-01 restaurado** |
+| 90264178 | 1 DRAWING_ONLY + 6 mismatches falsos | 0 findings; `occurrence_excess:10090014`, `unverified_rel:6`, 38/40 matched | **REGRESSION_FIXED** |
+| 90264161 | `PARENT_RELATION_MISMATCH 50090001` | `unverified_parent_relations` (evidência, não fato) — INCONCLUSIVE | **RESOLVED** — associação permanece candidata à Engenharia |
+| 90264302 | NO_DIVERGENCE otimista | INCONCLUSIVE honesto (6/6 matched, relações não verificadas) | **CORRECT_CONSERVATIVE** |
+| 90261606 | NO_DIVERGENCE otimista | INCONCLUSIVE (11/12 matched, `10080147` visível-não-classificado) | **CORRECT_CONSERVATIVE** |
+| 90480120 | tabela não detectada | 10/10 matched, INCONCLUSIVE (hierarquia não verificada) | **EXTRACTION_IMPROVED** |
+
+**Testes:** 18 testes do comparador (ground truth: gate de rendimento, par ambíguo OCR dist-1, excesso de multiplicidade, pai inferido não promovido, tabela pág.2) — todos PASS; suíte 723 passed / 1 falha ambiental pré-existente R7 (não relacionada).
+
+**Limitações residuais (declaradas):** códigos `token_only` contam presença, não relação; `qty` OCR é ruído (INCONCLUSIVE sempre); `unreliable_boundary`/`tokens_inferred` marcam cobertura parcial; distância-2 OCR ambígua pode permanecer como candidato (escolha por não ocultar divergências reais); hierarquia pai-filho fina permanece `INCONCLUSIVE` até evidência verificável de associação (fora de escopo inferir mais).
+
+**Estado: `REGRESSION_FIXED / PROD_DEPLOYED (1fee6a996e) / VAL01_CORRECTNESS=PROVEN nos 7 oficiais / E2E_MCP_CHATGPT_PENDING_RETEST` — próxima validação pelo consumidor ChatGPT com as mesmas perguntas.**
