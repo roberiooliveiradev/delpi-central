@@ -206,14 +206,14 @@ const REPORT_META: Record<
   "cost-center-expenses": {
     name: "Despesas por centro de custo",
     description:
-      "Despesas por centro de custo com a seleção histórica do fechamento (eixo de digitação), universo investigativo separado e possíveis divergências para conferência no ERP.",
+      "Despesas por centro de custo na seleção histórica do fechamento (eixo de digitação), com possíveis divergências para conferência no ERP.",
     origin: "TOTVS/SD1 + SB1 + CTT",
     icon: Building2,
   },
   "billing-exclusion-roster": {
     name: "Notas fiscais a desconsiderar — R11",
     description:
-      "Notas fiscais de saída selecionadas pelo critério histórico observado (grupo 9035 ∩ TES 594, eixo de emissão), com possíveis divergências e orientação de conferência no ERP — lista investigativa, não é exclusão automática.",
+      "Notas fiscais de saída pelo critério histórico observado (grupo 9035 ∩ TES 594, eixo de emissão), com divergências para conferência no ERP — lista investigativa, não é exclusão automática.",
     origin: "TOTVS/SD2 + SF4 + SB1",
     icon: FileX2,
   },
@@ -1493,29 +1493,38 @@ export function MonthlyReportsPanel({
                 ariaLabel={`Abrir relatório ${meta.name}${
                   selected ? " — último relatório aberto" : ""
                 }`}
-                leading={<Icon size={22} strokeWidth={1.75} />}
-                title={meta.name}
+                title={
+                  // Ícone + nome na linha superior; a situação ocupa
+                  // linha própria (flex-basis 100%) e nunca disputa
+                  // largura com o título — CF-PROC0072-REWORK.
+                  <span className="cf-report-card__head">
+                    <Icon size={18} strokeWidth={1.9} aria-hidden={true} />
+                    <span className="cf-report-card__name">
+                      {meta.name}
+                    </span>
+                    <span className="cf-report-card__badge">
+                      <CfStatusBadge
+                        label={status ?? "—"}
+                        variant={
+                          status === "Disponível"
+                            ? "success"
+                            : status !== null &&
+                                status !== "Parcialmente disponível" &&
+                                status !== "Sem dados para o filtro"
+                              ? "warning"
+                              : "info"
+                        }
+                      />
+                    </span>
+                  </span>
+                }
                 subtitle={meta.description}
                 status={
-                  <span className="cf-report-card__status">
-                    <CfStatusBadge
-                      label={status ?? "—"}
-                      variant={
-                        status === "Disponível"
-                          ? "success"
-                          : status !== null &&
-                              status !== "Parcialmente disponível" &&
-                              status !== "Sem dados para o filtro"
-                            ? "warning"
-                            : "info"
-                      }
-                    />
-                    <ChevronRight
-                      size={16}
-                      aria-hidden={true}
-                      className="cf-report-card__chevron"
-                    />
-                  </span>
+                  <ChevronRight
+                    size={18}
+                    aria-hidden={true}
+                    className="cf-report-card__chevron"
+                  />
                 }
                 fields={fields}
                 context={

@@ -1313,10 +1313,22 @@
   font-weight: 500;
 }
 
+/* CF-PROC0072 — cards navegáveis: largura útil mínima real por card.
+   `auto-fill` mantém grupos de um único card na medida do card; o
+   teto de 4 colunas preserva legibilidade em telas muito largas. */
 .dashboard-controllership-finance .cf-report-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(min(100%, 320px), 1fr)
+  );
   gap: var(--cf-grid-gap, 16px);
+}
+
+@media (min-width: 1700px) {
+  .dashboard-controllership-finance .cf-report-cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .dashboard-controllership-finance .cf-report-card--selected {
@@ -1333,13 +1345,32 @@
   flex-wrap: wrap;
 }
 
-/* CF-PROC0072 — cartões do catálogo são <a> reais (CfDataRecordCard):
-   situação + indicador de navegação no cabeçalho e link visível no
-   rodapé. O hover/focus vem do kit (data-record-card.css). */
-.dashboard-controllership-finance .cf-report-card__status {
-  display: inline-flex;
+/* CF-PROC0072 — hierarquia interna do card (CfDataRecordCard):
+   [ícone + título + seta] → [situação] → [descrição] →
+   [origem/atualizado] → [Abrir relatório]. O wrapper flex dentro do
+   `__title` do kit neutraliza o line-clamp para estes títulos longos
+   — a quebra fica natural, por palavras, sem truncamento. */
+.dashboard-controllership-finance .cf-report-card__head {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px 10px;
+}
+
+.dashboard-controllership-finance .cf-report-card__head .lucide {
+  flex: 0 0 auto;
+  color: var(--cf-accent, var(--primary, currentColor));
+}
+
+.dashboard-controllership-finance .cf-report-card__name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Situação sempre em linha própria — nunca comprime o título. */
+.dashboard-controllership-finance .cf-report-card__badge {
+  flex: 0 0 100%;
+  font-weight: 400;
 }
 
 .dashboard-controllership-finance .cf-report-card__chevron {
@@ -1354,6 +1385,14 @@
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--cf-accent, var(--primary, currentColor));
+}
+
+/* <640px o kit empilha o header — a seta perderia o sentido de
+   topo-direita; o «Abrir relatório →» do rodapé já sinaliza a ação. */
+@media (max-width: 639px) {
+  .dashboard-controllership-finance .cf-report-card__chevron {
+    display: none;
+  }
 }
 
 .dashboard-controllership-finance .cf-disclosure {
