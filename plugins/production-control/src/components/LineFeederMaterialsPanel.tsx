@@ -184,14 +184,6 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
 
   return (
     <div className="ppc-board">
-      <p className="ppc-feeder-materials__meta">
-        {query.workCenters.length} posto(s) · {query.hoursPerWorkCenter} h por posto
-        {data.stock_as_of
-          ? ` · consulta ${new Date(data.stock_as_of).toLocaleString("pt-BR")}`
-          : ""}
-      </p>
-      <p className="ppc-feeder-materials__snapshot">{texts.snapshotHint}</p>
-
       {data.summary.unknown_count > 0 ? (
         <div className="ppc-state ppc-state--error" role="status">
           {texts.stockUnavailable}

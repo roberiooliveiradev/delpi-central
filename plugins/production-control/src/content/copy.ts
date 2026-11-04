@@ -726,8 +726,6 @@ export const copy = {
     refreshBusy: "Atualizando…",
     emptyGuidance:
       "Selecione os postos de trabalho e informe quantas horas de produção deseja abastecer.",
-    snapshotHint:
-      "Resultado é uma fotografia dos dados consultados — não reserva material nem confirma retirada.",
     loading: "Calculando materiais do horizonte…",
     loadingHint: "Lendo a programação publicada, empenhos e o saldo no ponto de uso.",
     loadError: "Não foi possível carregar a necessidade das bancadas.",

@@ -4663,13 +4663,6 @@
   font-size: var(--ppc-font-sm);
 }
 
-.dashboard-production-control .ppc-feeder-materials__meta,
-.dashboard-production-control .ppc-feeder-materials__snapshot {
-  margin: 0 0 8px;
-  color: var(--ppc-text-muted);
-  font-size: var(--ppc-font-xs);
-}
-
 .dashboard-production-control .ppc-feeder-materials__collect {
   font-size: 1.05rem;
   font-weight: 750;
