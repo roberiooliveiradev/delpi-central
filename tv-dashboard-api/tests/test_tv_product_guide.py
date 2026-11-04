@@ -30,6 +30,7 @@ from tv_app.application.product_guide.product_guide_registry import (
     CONTENT_DIR,
     REGISTRY_VERSION,
     ProductGuideRegistry,
+    clear_product_guide_registry_cache,
     get_product_guide_registry,
 )
 from tv_app.application.product_guide.product_guide_schema import (
@@ -60,6 +61,8 @@ WAVE_1_TOPICS = {
     "visual_verification",
 }
 
+EXPECTED_TOPICS = WAVE_1_TOPICS | {"kpi"}
+
 _INTERNAL_FIELDS = {
     "schema",
     "capability_refs",
@@ -72,7 +75,7 @@ _INTERNAL_FIELDS = {
 
 
 def _registry() -> ProductGuideRegistry:
-    get_product_guide_registry.cache_clear()
+    clear_product_guide_registry_cache()
     clear_vista_agent_intelligence_cache()
     return get_product_guide_registry()
 
@@ -144,15 +147,15 @@ def test_schema_rejects_bad_source_ref_classification():
 # ---------------------------------------------------------------------------
 
 
-def test_wave_1_registry_loads_exactly_11_topics():
+def test_registry_loads_every_topic_on_disk():
     registry = _registry()
-    assert set(registry.topic_ids()) == WAVE_1_TOPICS
+    assert set(registry.topic_ids()) == EXPECTED_TOPICS
     assert registry.version == REGISTRY_VERSION
 
 
 def test_registry_index_shape():
     index = _registry().index()
-    assert len(index) == 11
+    assert len(index) == len(EXPECTED_TOPICS)
     for entry in index:
         assert set(entry) == {"id", "title", "summary", "authority"}
         assert entry["authority"] == PRODUCT_GUIDE_AUTHORITY
@@ -235,6 +238,29 @@ def test_registry_rejects_invalid_read_and_write_refs(tmp_path):
         )
 
 
+def test_cached_registry_reflects_content_added_after_first_load(
+    tmp_path, monkeypatch
+):
+    """Guide merged to the live filesystem must reach the knowledge surface
+    without a process restart — bind-mounted runtimes serve content updates
+    out-of-band, so the process cache is keyed by the content signature."""
+    from tv_app.application.product_guide import product_guide_registry as mod
+
+    _write_topic(tmp_path, "alpha_topic")
+    monkeypatch.setattr(mod, "CONTENT_DIR", tmp_path)
+    mod.clear_product_guide_registry_cache()
+    try:
+        first = mod.get_product_guide_registry()
+        assert first.topic_ids() == ["alpha_topic"]
+
+        _write_topic(tmp_path, "beta_topic")
+        second = mod.get_product_guide_registry()
+        assert second.topic_ids() == ["alpha_topic", "beta_topic"]
+        assert second.get("beta_topic") is not None
+    finally:
+        mod.clear_product_guide_registry_cache()
+
+
 # ---------------------------------------------------------------------------
 # Service — bounded reads, typed failures
 # ---------------------------------------------------------------------------
@@ -245,7 +271,7 @@ def test_service_index_and_topic():
     index = service.get_product_guide()
     assert index["schema"] == "product_guide_index_v1"
     assert index["registryVersion"] == REGISTRY_VERSION
-    assert {t["id"] for t in index["topics"]} == WAVE_1_TOPICS
+    assert {t["id"] for t in index["topics"]} == EXPECTED_TOPICS
 
     full = service.get_product_guide(topic="playlist")
     assert full["schema"] == "product_guide_v1"
@@ -258,6 +284,43 @@ def test_service_unknown_topic_fails_typed():
         service.get_product_guide(topic="ghost")
     with pytest.raises(ProductGuideNotFoundError):
         service.get_help_view(topic="ghost")
+
+
+def test_kpi_topic_discoverable_and_fetches_full_guide():
+    """The merged KPI guide is a first-class topic: indexed, searchable and
+    fetchable with schema/id/expected sections — prior topics preserved."""
+    service = ProductGuideService(_registry())
+    index = service.get_product_guide()
+    ids = {t["id"] for t in index["topics"]}
+    assert "kpi" in ids
+    assert WAVE_1_TOPICS <= ids
+
+    payload = service.get_product_guide(topic="kpi")
+    assert payload["schema"] == "product_guide_v1"
+    guide = payload["guide"]
+    assert guide["id"] == "kpi"
+    assert guide["authority"] == PRODUCT_GUIDE_AUTHORITY
+    assert guide["related_topics"]
+    assert guide["field_guidance"]
+    blob = json.dumps(guide, ensure_ascii=False).lower()
+    for variant in ("hero", "scorecard", "compact", "standard"):
+        assert variant in blob
+
+
+def test_dispatch_knowledge_search_finds_kpi():
+    from tv_app.application.gpt_actions.dispatch_service import (
+        GptActionsDispatchService,
+    )
+
+    dispatch = GptActionsDispatchService.__new__(GptActionsDispatchService)
+    user = SimpleNamespace(permissions=["tv-dashboard.read"], id="u1")
+    out = dispatch.semantic_knowledge(user=user, action="search", query="KPI")
+    ids = {t["id"] for t in out["topics"]}
+    assert "kpi" in ids
+    assert out["source"] == "product_guide_registry"
+
+    fetched = dispatch.semantic_knowledge(user=user, action="get", topic="kpi")
+    assert fetched["guide"]["id"] == "kpi"
 
 
 def test_service_invalid_section_fails_typed():
@@ -283,7 +346,7 @@ def test_help_view_strips_internal_fields():
     service = ProductGuideService(_registry())
     view = service.get_help_view()
     assert view["schema"] == "product_guide_help_v1"
-    assert len(view["topics"]) == 11
+    assert len(view["topics"]) == len(EXPECTED_TOPICS)
     for topic in view["topics"]:
         assert set(topic) <= set(HELP_VIEW_FIELDS)
         assert not (set(topic) & _INTERNAL_FIELDS)
@@ -402,7 +465,7 @@ def test_get_catalog_embeds_compact_index_not_bodies():
     index = doc["productGuide"]
     assert index["schema"] == "product_guide_index_v1"
     assert index["readCapability"] == "knowledge"
-    assert {t["id"] for t in index["topics"]} == WAVE_1_TOPICS
+    assert {t["id"] for t in index["topics"]} == EXPECTED_TOPICS
     # Index entries carry no bodies — on-demand fetch only.
     for entry in index["topics"]:
         assert "how_to_use" not in entry

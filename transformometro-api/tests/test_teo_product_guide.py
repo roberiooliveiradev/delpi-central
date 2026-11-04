@@ -124,6 +124,44 @@ def test_registry_capability_refs_resolve_against_live_catalog() -> None:
     assert reg.topic_ids()
 
 
+def test_cached_registry_reflects_content_added_after_first_load(
+    tmp_path, monkeypatch
+) -> None:
+    """Guide merged to the live filesystem must reach the knowledge surface
+    without a process restart — bind-mounted runtimes serve content updates
+    out-of-band, so the process cache is keyed by the content signature."""
+    from tm_app.application.product_guide import product_guide_registry as mod
+
+    def _write(topic_id: str) -> None:
+        (tmp_path / f"{topic_id}.json").write_text(
+            json.dumps(
+                {
+                    "schema": "product_guide_v1",
+                    "id": topic_id,
+                    "title": "t",
+                    "summary": "s",
+                    "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+                    "purpose": "p",
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    _write("alpha_topic")
+    monkeypatch.setattr(mod, "CONTENT_DIR", tmp_path)
+    mod.clear_product_guide_registry_cache()
+    try:
+        first = mod.get_product_guide_registry()
+        assert first.topic_ids() == ["alpha_topic"]
+
+        _write("beta_topic")
+        second = mod.get_product_guide_registry()
+        assert second.topic_ids() == ["alpha_topic", "beta_topic"]
+        assert second.get("beta_topic") is not None
+    finally:
+        mod.clear_product_guide_registry_cache()
+
+
 # ------------------------------------------------------------------ service
 
 

@@ -143,6 +143,31 @@ def test_kpi_presentation_percent_metric_compares_in_pp_and_status_label():
     assert pres["comparisonTone"] == "positive"
 
 
+def test_kpi_presentation_below_target_percent_reports_negative_pp_and_status():
+    """Issue #129 demo (OEE 78,04% vs meta 85) — delta −6,96 p.p. e
+    statusLabel 'Abaixo da meta' materializados pelo backend."""
+    from tv_app.application.services.data.display_format_service import (
+        DisplayFormatService,
+    )
+
+    resolved = {"kpi": {"value": 78.04, "displayValue": "78,04%"}}
+    block = {
+        "kpiOptions": {
+            "contextMode": "auto",
+            "showComparison": True,
+            "comparisonMode": "target",
+            "valueFormat": "percent",
+        },
+        "kpiProjection": {"metrics": [{"format": "percent", "target": 85.0}]},
+    }
+    DisplayFormatService._apply_kpi_presentation(resolved, block)
+    pres = resolved["kpiPresentation"]
+    assert "−6,96" in pres["comparisonDisplay"]
+    assert "p.p." in pres["comparisonDisplay"]
+    assert pres["statusLabel"] == "Abaixo da meta"
+    assert pres["comparisonTone"] == "negative"
+
+
 def test_kpi_presentation_non_percent_keeps_relative_delta():
     """Sibling — métrica não-percentual segue com delta relativo %."""
     from tv_app.application.services.data.display_format_service import (
