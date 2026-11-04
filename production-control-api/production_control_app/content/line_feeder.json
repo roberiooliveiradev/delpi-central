@@ -11,6 +11,11 @@
   "maxPickItems": 500,
   "productDetailLookbackDays": 30,
   "productDetailTransferPageSize": 20,
+  "horizonMaxHoursPerWorkCenter": 24,
+  "horizonMaxWorkCenters": 40,
+  "horizonMaxOperationsPerRequest": 500,
+  "horizonMaxStandardTimeCalls": 200,
+  "horizonStandardTimeWorkers": 6,
   "didactic": {
     "title": "Como o cockpit calcula",
     "body": "A necessidade vem das ordens empenhadas na programação até o horário escolhido. O que já está no ponto de uso é descontado, e o restante é o que precisa ser entregue na bancada.",

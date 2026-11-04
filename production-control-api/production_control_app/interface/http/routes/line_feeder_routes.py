@@ -11,6 +11,7 @@ from production_control_app.core.responses import fail, ok
 from production_control_app.domain.errors import (
     BranchAccessDenied,
     DelpiGatewayError,
+    HorizonPreviewStale,
     InvalidBranch,
     OperatorFeedbackMaterialNotFound,
     OperatorFeedbackMaterialStateError,
@@ -56,6 +57,8 @@ def _handle_line_feeder_errors(exc: Exception):
         return fail(str(exc), 404)
     if isinstance(exc, OperatorFeedbackMaterialStateError):
         return fail(str(exc), 409)
+    if isinstance(exc, HorizonPreviewStale):
+        return fail(str(exc), 409)
     if isinstance(exc, LookupError):
         return fail(str(exc), 404)
     if isinstance(exc, ValueError):
@@ -63,6 +66,40 @@ def _handle_line_feeder_errors(exc: Exception):
     if isinstance(exc, DelpiGatewayError):
         return fail(str(exc), 502)
     raise exc
+
+
+class HorizonPreviewBody(BaseModel):
+    branch: str = Field(..., min_length=2, max_length=2)
+    work_centers: list[str] = Field(..., alias="workCenters", min_length=1)
+    hours_per_work_center: float = Field(..., alias="hoursPerWorkCenter", gt=0)
+
+    model_config = {"populate_by_name": True}
+
+
+@router.post(
+    "/line-feeder/horizon/preview",
+    operation_id="preview_line_feeder_horizon",
+)
+def preview_line_feeder_horizon(
+    request: Request,
+    body: HorizonPreviewBody = Body(...),
+):
+    """Prévia do horizonte de produção por CT — somente leitura, sem persistência.
+
+    Orçamento ``hoursPerWorkCenter`` aplica-se **a cada** centro selecionado.
+    Sequência: fila PUBLISHED. Saldos vivos + tempo padrão canônico (api-delpi).
+    """
+    user = resolve_user(request)
+    try:
+        data = build_line_feeder_service().preview_horizon(
+            user,
+            branch=body.branch,
+            work_centers=body.work_centers,
+            hours_per_work_center=body.hours_per_work_center,
+        )
+    except Exception as exc:
+        return _handle_line_feeder_errors(exc)
+    return ok(data)
 
 
 @router.get(

@@ -134,6 +134,16 @@ class ProductionOrdersGateway(Protocol):
     ) -> dict[str, Any]:
         ...
 
+    def fetch_operation_standard_time(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation_code: str,
+    ) -> dict[str, Any]:
+        """Tempo padrão canônico (S2S) — segundos por peça física."""
+        ...
+
     def fetch_operation_materials_batch(
         self,
         *,

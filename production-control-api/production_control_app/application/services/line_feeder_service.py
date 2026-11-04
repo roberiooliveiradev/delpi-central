@@ -18,7 +18,8 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal, InvalidOperation
 from typing import Any, Sequence
 from uuid import UUID
 
@@ -34,7 +35,11 @@ from production_control_app.application.services.line_feeder_settings import (
     setting_str,
 )
 from production_control_app.core.security import PC_LINE_FEEDER_VIEW, can
-from production_control_app.domain.errors import DelpiGatewayError, SnapshotNotFound
+from production_control_app.domain.errors import (
+    DelpiGatewayError,
+    HorizonPreviewStale,
+    SnapshotNotFound,
+)
 from production_control_app.domain.ports.line_feeder_pick_plan_repository import (
     LineFeederPickPlanRepositoryPort,
 )
@@ -46,8 +51,20 @@ from production_control_app.domain.ports.machine_load_snapshot_repository import
 )
 from production_control_app.domain.ports.production_orders_gateway import ProductionOrdersGateway
 from production_control_app.domain.services.branch_access_service import BranchAccessService
+from production_control_app.domain.services.line_feeder_horizon import (
+    HorizonOperationInput,
+    allocate_work_center_horizon,
+    work_center_result_payload,
+)
 from production_control_app.domain.services.line_feeder_published_queue import (
+    list_visible_published_queues,
     project_published_queue,
+)
+from production_control_app.domain.services.machine_load_transfer import (
+    normalize_work_center,
+)
+from production_control_app.domain.services.production_run_standard_time import (
+    normalize_standard_time_snapshot,
 )
 from production_control_app.domain.services.line_feeder_requirements import (
     MaterialRequirement,
@@ -183,6 +200,403 @@ class LineFeederService:
             )
         return project_published_queue(
             row, branch=code, work_center=_text(work_center) or None
+        )
+
+    def preview_horizon(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        work_centers: Sequence[str],
+        hours_per_work_center: float,
+    ) -> dict[str, Any]:
+        """Prévia somente leitura: produção contemplada por CT no horizonte.
+
+        Orçamento de horas é **por CT** (paralelo entre postos). Fonte da
+        sequência: PUBLISHED. Saldos vivos: lote SH6/SC2. Tempo: standard-time
+        S2S da api-delpi. Sem persistência e sem fallback WORKING.
+        """
+        code = self._authorize(user, branch=branch)
+        centers = self._normalize_horizon_work_centers(work_centers)
+        hours = self._normalize_horizon_hours(hours_per_work_center)
+        if self._publications is None:
+            raise SnapshotNotFound(
+                "A fila desta filial ainda não foi enviada pelo PCP."
+            )
+
+        row = self._publications.get(branch=code)
+        if row is None:
+            raise SnapshotNotFound(
+                "A fila desta filial ainda não foi enviada pelo PCP."
+            )
+        revision_start = _text(row.get("row_version"))
+        queues = list_visible_published_queues(
+            row, branch=code, work_centers=centers
+        )
+        self._assert_work_centers_in_publication(queues, centers)
+
+        selected_queues = [
+            group
+            for group in queues["work_center_queues"]
+            if group["work_center"] in set(centers)
+        ]
+        # Preserva a ordem pedida pelo cliente entre CTs; dentro do CT, a
+        # ordem publicada.
+        by_center = {group["work_center"]: group for group in selected_queues}
+        ordered_queues = [
+            by_center[center] for center in centers if center in by_center
+        ]
+        for center in centers:
+            if center not in by_center:
+                ordered_queues.append(
+                    {
+                        "work_center": center,
+                        "work_center_name": "",
+                        "operations": [],
+                    }
+                )
+
+        total_ops = sum(len(group["operations"]) for group in ordered_queues)
+        max_ops = setting_int("horizonMaxOperationsPerRequest", 500)
+        if total_ops > max_ops:
+            raise ValueError(
+                f"A seleção excede o limite de {max_ops} operações por prévia."
+            )
+
+        flat_ops = [
+            op for group in ordered_queues for op in group["operations"]
+        ]
+        balances_as_of = datetime.now(timezone.utc).isoformat()
+        balance_map = self._fetch_live_operation_balances(
+            branch=code, operations=flat_ops
+        )
+
+        st_cache: dict[tuple[str, str], dict[str, Any]] = {}
+        st_calls = 0
+        st_limit = setting_int("horizonMaxStandardTimeCalls", 200)
+        ct_results: list[dict[str, Any]] = []
+        preview_complete = True
+
+        for group in ordered_queues:
+            inputs: list[HorizonOperationInput] = []
+            incomplete_reason: str | None = None
+            for op in group["operations"]:
+                key = (
+                    _text(op.get("production_order")),
+                    _text(op.get("operation_code")),
+                )
+                live = balance_map.get(key)
+                if live is None:
+                    pending = None
+                    produced = None
+                    balance_state = "unknown"
+                else:
+                    pending = _optional_decimal(live.get("operation_pending_qty"))
+                    produced = _optional_decimal(live.get("operation_produced_qty"))
+                    if pending is None:
+                        balance_state = "unknown"
+                    elif pending <= 0:
+                        balance_state = "closed"
+                    else:
+                        balance_state = "open"
+
+                if balance_state == "closed":
+                    inputs.append(
+                        self._horizon_input(
+                            op,
+                            pending_qty=Decimal("0"),
+                            produced_qty=produced,
+                            balance_state="closed",
+                            ideal_cycle_seconds=None,
+                            setup_seconds=None,
+                            pieces_conversion_factor=_optional_decimal(
+                                op.get("pieces_conversion_factor")
+                            ),
+                            standard_time_quality="n/a",
+                            standard_time_source="n/a",
+                        )
+                    )
+                    continue
+
+                if balance_state == "unknown":
+                    incomplete_reason = "balance_unknown"
+                    preview_complete = False
+                    break
+
+                if key not in st_cache:
+                    if st_calls >= st_limit:
+                        incomplete_reason = "standard_time_call_limit"
+                        preview_complete = False
+                        break
+                    st_cache[key] = self._lookup_standard_time(
+                        branch=code,
+                        production_order=key[0],
+                        operation_code=key[1],
+                    )
+                    st_calls += 1
+                snap = st_cache[key]
+                quality = str(
+                    snap.get("standard_time_data_quality_snapshot") or "upstream_unavailable"
+                )
+                factor = _optional_decimal(op.get("pieces_conversion_factor"))
+                # Preferir fator do standard-time quando o snapshot não trouxe.
+                if factor is None:
+                    raw_st = snap.get("_raw") if isinstance(snap.get("_raw"), dict) else {}
+                    factor = _optional_decimal(
+                        (raw_st or {}).get("pieces_conversion_factor")
+                    )
+                inputs.append(
+                    self._horizon_input(
+                        op,
+                        pending_qty=pending,
+                        produced_qty=produced,
+                        balance_state=balance_state,
+                        ideal_cycle_seconds=_optional_decimal(
+                            snap.get("ideal_cycle_seconds_snapshot")
+                        ),
+                        setup_seconds=_optional_decimal(
+                            snap.get("setup_seconds_snapshot")
+                        ),
+                        pieces_conversion_factor=factor,
+                        standard_time_quality=quality,
+                        standard_time_source=str(
+                            snap.get("standard_time_source") or "unavailable"
+                        ),
+                    )
+                )
+
+            result = allocate_work_center_horizon(
+                inputs,
+                hours=hours,
+                work_center=group["work_center"],
+                work_center_name=_text(group.get("work_center_name")),
+            )
+            payload = work_center_result_payload(result)
+            if incomplete_reason and result.completeness == "complete":
+                payload["completeness"] = "incomplete"
+                payload["stop_reason"] = incomplete_reason
+                preview_complete = False
+            elif result.completeness != "complete":
+                preview_complete = False
+            ct_results.append(payload)
+
+        row_end = self._publications.get(branch=code)
+        if row_end is None:
+            raise SnapshotNotFound(
+                "A fila desta filial ainda não foi enviada pelo PCP."
+            )
+        revision_end = _text(row_end.get("row_version"))
+        if revision_start != revision_end:
+            raise HorizonPreviewStale(
+                "A programação publicada mudou durante a prévia. Consulte novamente."
+            )
+
+        return {
+            "branch": code,
+            "hours_per_work_center": hours,
+            "publication": {
+                "generation_id": _text(row.get("generation_id")) or None,
+                "publication_revision": revision_end or None,
+                "published_at": _iso(row.get("published_at")),
+            },
+            "balances_as_of": balances_as_of,
+            "sources": {
+                "queue": "published",
+                "balances": "api-delpi:machine-load/operation-balances",
+                "standard_time": "api-delpi:get_production_operation_standard_time",
+            },
+            "temporal_projection": {
+                "mode": "relative_offsets",
+                "note": (
+                    "Offsets em segundos a partir do início do horizonte por CT. "
+                    "Não são horários absolutos de fábrica (sem turno/calendário/paradas)."
+                ),
+            },
+            "setup_policy": {
+                "waived_when": "operation_produced_qty > 0",
+                "applicable_when": "operation_produced_qty == 0",
+                "uncertain_when": "operation_produced_qty ausente na consulta de saldos",
+            },
+            "preview_completeness": (
+                "complete" if preview_complete else "incomplete"
+            ),
+            "standard_time_calls": st_calls,
+            "work_centers": ct_results,
+        }
+
+    # ------------------------------------------------------------------ #
+    # Horizonte — helpers
+    # ------------------------------------------------------------------ #
+
+    def _normalize_horizon_work_centers(self, work_centers: Sequence[str]) -> list[str]:
+        if not work_centers:
+            raise ValueError("Informe ao menos um centro de trabalho.")
+        max_centers = setting_int("horizonMaxWorkCenters", 40)
+        if len(work_centers) > max_centers:
+            raise ValueError(
+                f"Selecione no máximo {max_centers} centros de trabalho por prévia."
+            )
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for raw in work_centers:
+            center = normalize_work_center(raw)
+            if not center:
+                raise ValueError("Centro de trabalho inválido na seleção.")
+            if center in seen:
+                raise ValueError(
+                    f"Centro de trabalho duplicado na seleção: {center}."
+                )
+            seen.add(center)
+            normalized.append(center)
+        return normalized
+
+    def _normalize_horizon_hours(self, hours: float) -> float:
+        try:
+            value = float(hours)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Informe um horizonte de horas numérico.") from exc
+        if value != value or value <= 0:  # NaN or non-positive
+            raise ValueError("O horizonte em horas deve ser finito e positivo.")
+        ceiling = float(setting_int("horizonMaxHoursPerWorkCenter", 24))
+        if value > ceiling:
+            raise ValueError(
+                f"O horizonte máximo por centro de trabalho é {ceiling:g} horas."
+            )
+        return value
+
+    @staticmethod
+    def _assert_work_centers_in_publication(
+        queues: dict[str, Any],
+        centers: Sequence[str],
+    ) -> None:
+        available = {
+            normalize_work_center(item.get("work_center"))
+            for item in queues.get("available_work_centers") or []
+            if normalize_work_center(item.get("work_center"))
+        }
+        # Também aceita CT que só aparece nas operações (catálogo vazio).
+        for group in queues.get("work_center_queues") or []:
+            center = normalize_work_center(group.get("work_center"))
+            if center:
+                available.add(center)
+        missing = [center for center in centers if center not in available]
+        if missing:
+            raise ValueError(
+                "Centro(s) fora da programação publicada: "
+                + ", ".join(missing)
+                + "."
+            )
+
+    def _fetch_live_operation_balances(
+        self,
+        *,
+        branch: str,
+        operations: list[dict[str, Any]],
+    ) -> dict[tuple[str, str], dict[str, Any]]:
+        pairs: list[dict[str, str]] = []
+        seen: set[tuple[str, str]] = set()
+        for item in operations:
+            key = (
+                _text(item.get("production_order")),
+                _text(item.get("operation_code")),
+            )
+            if not all(key) or key in seen:
+                continue
+            seen.add(key)
+            pairs.append(
+                {"production_order": key[0], "operation_code": key[1]}
+            )
+        if not pairs:
+            return {}
+        try:
+            payload = self._gateway.fetch_machine_load_operation_balances(
+                branch=branch, items=pairs
+            )
+        except DelpiGatewayError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise DelpiGatewayError(
+                "Não foi possível consultar os saldos das operações."
+            ) from exc
+        data = payload.get("data") if isinstance(payload, dict) else None
+        source = data if isinstance(data, dict) else payload
+        rows = source.get("items") if isinstance(source, dict) else None
+        result: dict[tuple[str, str], dict[str, Any]] = {}
+        if not isinstance(rows, list):
+            raise DelpiGatewayError(
+                "Resposta inválida dos saldos de operação."
+            )
+        for raw in rows:
+            if not isinstance(raw, dict):
+                continue
+            key = (
+                _text(raw.get("production_order")),
+                _text(raw.get("operation_code")),
+            )
+            if all(key):
+                result[key] = raw
+        # Pares sem retorno = desconhecido (não inventar zero).
+        return result
+
+    def _lookup_standard_time(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation_code: str,
+    ) -> dict[str, Any]:
+        lookup = getattr(self._gateway, "fetch_operation_standard_time", None)
+        if not callable(lookup):
+            return normalize_standard_time_snapshot(None)
+        try:
+            raw = lookup(
+                branch=branch,
+                production_order=production_order,
+                operation_code=operation_code,
+            )
+        except DelpiGatewayError as exc:
+            snap = normalize_standard_time_snapshot(None)
+            if exc.status_code == 404:
+                snap["standard_time_data_quality_snapshot"] = (
+                    "standard_time_unavailable"
+                )
+            return snap
+        except Exception:  # noqa: BLE001
+            return normalize_standard_time_snapshot(None)
+        snap = normalize_standard_time_snapshot(raw if isinstance(raw, dict) else None)
+        snap["_raw"] = raw if isinstance(raw, dict) else {}
+        return snap
+
+    @staticmethod
+    def _horizon_input(
+        op: dict[str, Any],
+        *,
+        pending_qty: Decimal | None,
+        produced_qty: Decimal | None,
+        balance_state: str,
+        ideal_cycle_seconds: Decimal | None,
+        setup_seconds: Decimal | None,
+        pieces_conversion_factor: Decimal | None,
+        standard_time_quality: str,
+        standard_time_source: str,
+    ) -> HorizonOperationInput:
+        return HorizonOperationInput(
+            operation_id=_text(op.get("operation_id")),
+            sequence_position=int(op.get("sequence_position") or 0),
+            work_center=_text(op.get("work_center")),
+            work_center_name=_text(op.get("work_center_name")),
+            production_order=_text(op.get("production_order")),
+            operation_code=_text(op.get("operation_code")),
+            product_code=_text(op.get("product_code")),
+            unit=_text(op.get("unit")),
+            pending_qty=pending_qty,
+            produced_qty=produced_qty,
+            balance_state=balance_state,
+            ideal_cycle_seconds=ideal_cycle_seconds,
+            setup_seconds=setup_seconds,
+            pieces_conversion_factor=pieces_conversion_factor,
+            standard_time_quality=standard_time_quality,
+            standard_time_source=standard_time_source,
         )
 
     # ------------------------------------------------------------------ #
@@ -988,6 +1402,18 @@ def _iso(value: Any) -> str | None:
 
 def _text(value: Any) -> str:
     return str(value or "").strip()
+
+
+def _optional_decimal(value: Any) -> Decimal | None:
+    if value is None or value == "":
+        return None
+    try:
+        number = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+    if not number.is_finite():
+        return None
+    return number
 
 
 def _number(value: Any) -> float:

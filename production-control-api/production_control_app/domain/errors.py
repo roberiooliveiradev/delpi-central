@@ -33,6 +33,10 @@ class SnapshotNotFound(ProductionControlError):
     """Snapshot da carga máquina ausente para o escopo pedido."""
 
 
+class HorizonPreviewStale(ProductionControlError):
+    """A publicação mudou durante a montagem da prévia de horizonte."""
+
+
 class MachineLoadOperationNotFound(ProductionControlError):
     """A operação não consta na fila WORKING vigente da filial."""
 

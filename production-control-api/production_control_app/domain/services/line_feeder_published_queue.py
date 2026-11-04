@@ -208,3 +208,109 @@ def project_published_queue(
         "operation_count": operation_count,
         "work_center_count": len(groups),
     }
+
+
+def list_visible_published_queues(
+    row: dict[str, Any],
+    *,
+    branch: str,
+    work_centers: list[str] | None = None,
+) -> dict[str, Any]:
+    """Fila PUBLISHED visível por CT **sem** filtrar saldo fechado do snapshot.
+
+    O motor de horizonte (Etapa 2) precisa consultar o saldo vivo antes de
+    descartar operações — o ``pending`` congelado na publicação pode estar
+    desatualizado.
+    """
+    code = _literal(branch)
+    payload = decode_snapshot_payload(row)
+    marks = withdrawn_marks(payload)
+    visible = visible_operations(payload_operations(payload), marks)
+
+    wanted = {
+        normalize_work_center(center)
+        for center in (work_centers or [])
+        if normalize_work_center(center)
+    }
+    if wanted:
+        visible = [
+            item
+            for item in visible
+            if normalize_work_center(item.get("work_center")) in wanted
+        ]
+
+    names = {
+        normalize_work_center(item.get("work_center")): _literal(
+            item.get("work_center_name")
+        )
+        for item in payload_work_centers(payload)
+        if normalize_work_center(item.get("work_center"))
+    }
+
+    groups: list[dict[str, Any]] = []
+    index_by_center: dict[str, int] = {}
+    for item in visible:
+        center = normalize_work_center(item.get("work_center"))
+        if not center:
+            continue
+        if center not in index_by_center:
+            index_by_center[center] = len(groups)
+            groups.append(
+                {
+                    "work_center": center,
+                    "work_center_name": names.get(center)
+                    or _literal(item.get("work_center_name")),
+                    "operations": [],
+                }
+            )
+        group = groups[index_by_center[center]]
+        position = len(group["operations"]) + 1
+        production_order = _literal(item.get("production_order"))
+        operation_code = _literal(item.get("operation_code"))
+        group["operations"].append(
+            {
+                "operation_id": build_operation_id(
+                    branch=code,
+                    work_center=center,
+                    production_order=production_order,
+                    operation_code=operation_code,
+                ),
+                "sequence_position": position,
+                "branch": code,
+                "work_center": center,
+                "work_center_name": group["work_center_name"],
+                "production_order": production_order,
+                "operation_code": operation_code,
+                "product_code": _literal(item.get("product_code")),
+                "product_description": _literal(item.get("product_description")),
+                "unit": _literal(item.get("unit")),
+                "pieces_conversion_factor": _optional_float(
+                    item.get("pieces_conversion_factor")
+                ),
+                # Snapshot — apenas referência; o motor usa saldo vivo.
+                "snapshot_pending_qty": pending_balance(item)[0],
+                "snapshot_balance_state": pending_balance(item)[1],
+            }
+        )
+
+    return {
+        "branch": code,
+        "publication": {
+            "generation_id": _literal(row.get("generation_id")) or None,
+            "publication_revision": _literal(row.get("row_version")) or None,
+            "published_at": _iso(row.get("published_at")),
+            "published_by": _literal(row.get("published_by")) or None,
+            "source_refreshed_at": _iso(row.get("source_refreshed_at")),
+            "start_date": _iso(row.get("start_date")),
+            "end_date": _iso(row.get("end_date")),
+        },
+        "work_center_queues": groups,
+        "available_work_centers": [
+            {
+                "work_center": normalize_work_center(item.get("work_center")),
+                "work_center_name": _literal(item.get("work_center_name")),
+            }
+            for item in payload_work_centers(payload)
+            if normalize_work_center(item.get("work_center"))
+        ],
+    }
