@@ -983,13 +983,22 @@ def _entity_refs_from_outcome(
     code = str(root.get("code") or root.get("id") or "").strip()
     if not code:
         return ()
+    # Doc 228 §7: source_system is the CANONICAL business origin
+    # carried by the outcome's own source refs — never conflated
+    # with the transport specialist id.
+    source_refs = getattr(provenance, "source_refs", None) or ()
+    source_system = str(
+        getattr(source_refs[0], "source_system", "")
+        if source_refs
+        else ""
+    ).strip()
+    if not source_system:
+        return ()
     return (
         EntityRef(
             entity_type=str(root.get("type") or "entity"),
             entity_id=code,
-            source_system=(
-                getattr(provenance, "specialist_id", "") or ""
-            ),
+            source_system=source_system,
         ),
     )
 
