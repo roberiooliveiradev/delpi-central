@@ -54,6 +54,18 @@ Coleta já persistida (idempotente esperado `HTTP 200 created=false`):
 
 Sem backfill em massa. Sem ativar agenda.
 
+### Evidência de entrega (TASK `MYWEG-NEEDS-LINUX-PUBLISHER-MANUAL`)
+
+| Item | Estado |
+|------|--------|
+| Commit | `9d0abef0db` em `main` (ancestral de `origin/main`) |
+| Testes locais | `24 passed` (`test_myweg_needs_publisher` + `test_myweg_needs_e2`) |
+| Gates | Phase3 + platform guardrails OK vs `b37ed287dc` |
+| Agendamento | **DESATIVADO** (`profiles: [manual]`; sem cron/timer) |
+| Deploy srv-api + smoke dry-run/reenvio | **PENDING** — SSH `operador@192.168.1.237` sem chave nesta sessão WSL |
+
+> Não marcar deploy/homologação live como PROVEN até `git pull` + rebuild + dry-run + reenvio `created=false` no srv-api.
+
 ## Correção /latest (E2 follow-up)
 
 `get_latest_batch` / `list_batches` ordenam por `collected_at DESC, imported_at DESC, collection_id ASC` — import tardio de coleta antiga **não** vira latest.
