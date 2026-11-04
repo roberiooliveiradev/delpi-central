@@ -7271,6 +7271,44 @@ class OperationalCapabilityOrchestrator:
             ]
         return tuple(kept)
 
+    def _subgoal_is_composition_auxiliary(
+        self,
+        goal_text: str,
+        *,
+        correlation: str,
+        workspace_context: WorkspaceContext | None,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        deadline: TurnDeadline | None,
+    ) -> bool:
+        """True when a leftover subgoal is analytical/compare-class.
+
+        Same governed classifier as ``_acquisition_subobjectives``.
+        Classification failure or undeclared class is fail-closed
+        (returns False → treat as material evidence obligation).
+        """
+        try:
+            sub_goal = self._understand_goal(
+                goal_text,
+                f"{correlation}-elig-cls",
+                workspace_context,
+                prior_turns,
+                deadline,
+            )
+        except Exception:
+            _logger.exception(
+                "orchestration stage=evidence_composition "
+                "decision=obligation_classify_failed "
+                "correlation_id=%s",
+                correlation,
+            )
+            return False
+        return (
+            sub_goal is not None
+            and getattr(sub_goal, "declared", False)
+            and sub_goal.goal_class
+            in self._ANALYTICAL_SUBOBJECTIVE_CLASSES
+        )
+
     def _investigate_subobjectives(
         self,
         objectives: tuple[SubObjective, ...],
@@ -7302,7 +7340,9 @@ class OperationalCapabilityOrchestrator:
         tracker = SubObjectiveTracker(objectives)
         contents: list[str] = []
         limitations: list[str] = []
-        completed: list[tuple[str, GovernedCapabilityAttempt]] = []
+        # (oid, goal_text, attempt) — oid preserves obligation identity
+        # for material-coverage checks (doc 228 §17 RC-A).
+        completed: list[tuple[str, str, GovernedCapabilityAttempt]] = []
         saw_source_unavailable = False
         saw_authz_denied = False
         while not tracker.is_finished():
@@ -7422,7 +7462,7 @@ class OperationalCapabilityOrchestrator:
                     and sub_attempt.content
                 ):
                     contents.append(sub_attempt.content)
-                    completed.append((sub_goal or "", sub_attempt))
+                    completed.append((oid, sub_goal or "", sub_attempt))
                 limitations.extend(
                     f"{oid}: {lim}" for lim in sub_attempt.limitations
                 )
@@ -7434,7 +7474,9 @@ class OperationalCapabilityOrchestrator:
             sources: dict[str, tuple[Mapping[str, Any], ...]] = {}
             lineages: dict[str, tuple] = {}
             observations: list[str] = []
-            for _sub_goal, attempt in completed:
+            satisfied_oids: set[str] = set()
+            rejected_source_oids: set[str] = set()
+            for oid, sub_goal, attempt in completed:
                 outcome = attempt.outcome
                 provenance = attempt.provenance
                 if (
@@ -7444,60 +7486,110 @@ class OperationalCapabilityOrchestrator:
                     or not provenance.is_complete
                     or not provenance.source_refs
                 ):
-                    limitations.append("comparison_source_missing_or_incomplete")
+                    # Analytical leftovers may produce SUCCESS content
+                    # without owner provenance — they are not material
+                    # source obligations (doc 228 §17).
+                    if self._subgoal_is_composition_auxiliary(
+                        sub_goal,
+                        correlation=f"{correlation}-{oid}",
+                        workspace_context=workspace_context,
+                        prior_turns=prior_turns,
+                        deadline=deadline,
+                    ):
+                        continue
+                    limitations.append(
+                        "comparison_source_missing_or_incomplete"
+                    )
+                    rejected_source_oids.add(oid)
                     continue
                 records = _comparison_records(outcome)
                 if not records:
                     limitations.append("comparison_source_empty")
+                    rejected_source_oids.add(oid)
                     continue
                 rows = _flatten_evidence_records(records)
                 if not rows:
                     limitations.append("comparison_source_empty")
+                    rejected_source_oids.add(oid)
                     continue
                 min_depth = min(len(row["path"]) for row in rows)
                 roots = [row for row in rows if len(row["path"]) == min_depth]
                 if len(roots) != 1 or not roots[0].get("code"):
                     limitations.append("comparison_root_ambiguous")
+                    rejected_source_oids.add(oid)
                     continue
                 root_id = str(roots[0]["code"])
                 if root_id in sources:
                     limitations.append("comparison_duplicate_root")
+                    rejected_source_oids.add(oid)
                     continue
                 sources[root_id] = records
                 lineages[root_id] = provenance.source_refs
                 observations.append(outcome.provenance.observed_at)
+                satisfied_oids.add(oid)
 
-            # Exact cardinality is a necessary but not sufficient
-            # correctness gate: owner-backed target-to-source matching
-            # must still be proven by functional E2E/oracle. Fail closed
-            # for extra/duplicate/partial roots instead of comparing the
-            # first two sources and presenting incomplete facts.
-            if (
-                len(sources) != 2
-                or len(completed) != 2
-                or len(tracker.objectives) != 2
-                or any(obj.state != SUBOBJECTIVE_COMPLETED for obj in tracker.objectives)
-                or any(lim.startswith("comparison_") for lim in limitations)
-            ):
+            # Doc 228 §17 RC-A: eligibility tracks MATERIAL acquisition
+            # obligations and verified sources — not raw
+            # ``len(tracker.objectives)``. Auxiliary analytical
+            # leftovers do not block; undeclared/incomplete material
+            # obligations still fail closed. Two-structure scope kept.
+            rejection_reasons: list[str] = [
+                lim
+                for lim in limitations
+                if lim.startswith("comparison_")
+            ]
+            for obj in tracker.objectives:
+                if obj.subobjective_id in satisfied_oids:
+                    continue
+                if obj.subobjective_id in rejected_source_oids:
+                    continue
+                if self._subgoal_is_composition_auxiliary(
+                    obj.goal,
+                    correlation=f"{correlation}-{obj.subobjective_id}",
+                    workspace_context=workspace_context,
+                    prior_turns=prior_turns,
+                    deadline=deadline,
+                ):
+                    continue
+                rejection_reasons.append(
+                    "comparison_material_obligation_incomplete"
+                )
+            if len(sources) < 2:
+                rejection_reasons.append("comparison_source_missing")
+            elif len(sources) > 2:
+                rejection_reasons.append(
+                    "comparison_unexpected_material_source"
+                )
+            # Dedupe while preserving order.
+            rejection_reasons = list(dict.fromkeys(rejection_reasons))
+            for reason in rejection_reasons:
+                if reason not in limitations:
+                    limitations.append(reason)
+
+            eligible = (
+                len(sources) == 2
+                and not rejection_reasons
+            )
+            _logger.info(
+                "orchestration stage=evidence_composition "
+                "decision=%s declared_objectives=%d "
+                "material_satisfied=%d eligible_sources=%d "
+                "rejected_sources=%d reasons=%s correlation_id=%s",
+                "eligible" if eligible else "insufficient",
+                len(tracker.objectives),
+                len(satisfied_oids),
+                len(sources),
+                len(rejected_source_oids),
+                rejection_reasons,
+                correlation,
+            )
+            if not eligible:
                 limitations.append(
                     "evidence_composition_insufficient: "
-                    "expected exactly two complete distinct owner reads"
+                    "material acquisition obligations not satisfied "
+                    "for verified two-source composition"
                 )
                 saw_source_unavailable = True
-                _logger.info(
-                    "orchestration stage=evidence_composition "
-                    "decision=insufficient sources=%d completed=%d "
-                    "objectives=%d reasons=%s correlation_id=%s",
-                    len(sources),
-                    len(completed),
-                    len(tracker.objectives),
-                    [
-                        lim
-                        for lim in limitations
-                        if lim.startswith("comparison_")
-                    ],
-                    correlation,
-                )
             else:
                 composed = self._compose_multi_evidence(
                     sources,

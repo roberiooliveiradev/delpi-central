@@ -407,3 +407,41 @@ OR any(lim.startswith("comparison_"))
 2. RC-C discovery-first on candidate-bound surfaces.  
 3. RC-B specialist selection reliability (eval + bounded ranking).  
 4. Expected-target oracle / REF05 (still separate — gate does not yet match requested entity ids).
+
+## 17. RC-A fix — evidence obligations & composition eligibility (2026-11-04)
+
+**TASK_ID:** `DELIA-C3-E4-R6-EVIDENCE-OBLIGATION-AND-COMPOSITION-ELIGIBILITY-FIX-01`.
+**BASE_HEAD:** `1031a35c75`. **MODE:** MINIMAL FIX RC-A ONLY. **PRODUCTION_DEPLOY:** NOT_AUTHORIZED.
+**EXISTING_EQUIVALENT:** YES. **REUSE_DECISION:** EXTEND (`_investigate_subobjectives` + same `_understand_goal` classifier as `_acquisition_subobjectives`).
+**ABSTRACTION_GATE:** PASS — no new planner/obligation type/registry.
+
+### Cause (from §16)
+
+Gate required `len(tracker.objectives)==2` (and all COMPLETED / `completed==2`), rejecting two authoritative distinct-root READs when a leftover analytical/failed sub remained tracked; `reasons=[]` when no `comparison_*` lim.
+
+### Correction
+
+In `_investigate_subobjectives` (comparison fan-in):
+
+1. Track obligation id on each completed attempt.
+2. Skip provenance-less SUCCESS for goals classified as declared `analyze`/`compare` (composition auxiliary).
+3. Eligibility = exactly two verified owner sources **and** every non-auxiliary tracked obligation either satisfied a source or already raised a structured `comparison_*` reject; incomplete material → `comparison_material_obligation_incomplete`.
+4. Remove coupling to raw `len(objectives)` / `len(completed)` / all-COMPLETED.
+5. Structured log: `declared_objectives`, `material_satisfied`, `eligible_sources`, `rejected_sources`, `reasons`.
+6. Two-structure scope preserved (`sources==2`); `comparison_unexpected_material_source` if >2.
+
+**Not changed:** RC-B specialist selection, RC-C discovery-first/candidate_token, REF05 expected-target binding (still NOT_PASS — no regex ID binding added).
+
+### Tests
+
+- RED/GREEN: `tests/test_e4_r6_rca_composition_eligibility.py` (T01/T02/T03/T05/T07/T08/T09/T11).
+- Updated characterization: `test_e4_r6_composite_root_cause_diagnostics.py`.
+- Regression: verified_composite, multievidence, interaction_runtime, multistep, delegated_credentials, cycle3, semantic_path — PASS on executor run.
+
+### Homologation E2E
+
+`TEST_NOT_RUN` / `INCONCLUSIVE` this window: no local governed stack (`127.0.0.1:8000` down); production deploy forbidden. Runtime proof of the corrected branch deferred to authorized homologation.
+
+### Gates
+
+`REF01–REF08/G04/G05/G07/G12=NOT_PASS`. `RC_A_STATUS=IMPLEMENTED` (unit/integration). `RC_B/RC_C/REF05` unchanged open. `FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO`.

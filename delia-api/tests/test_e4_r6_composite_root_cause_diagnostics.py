@@ -112,19 +112,28 @@ def _orch() -> OperationalCapabilityOrchestrator:
 
 
 def test_rc_a_two_complete_reads_rejected_when_objectives_gt_two():
-    """RC-A: sources=2 completed=2 objectives=3 → insufficient, reasons=[].
+    """Characterization→fix: analytical leftover no longer blocks.
 
-    Homologation: when a third tracked acquisition fails without
-    entering ``completed`` (no SUCCESS+content), the cardinality gate
-    rejects with empty ``comparison_*`` reasons — matching the
-    insufficient log shape ``sources=N completed=2 objectives=3
-    reasons=[]``.
+    Pre-fix: sources=2 + third incomplete → SOURCE_UNAVAILABLE with
+    empty comparison_* reasons (objectives cardinality coupling).
+    Post-fix (doc 228 §17): third classified analyze/compare is
+    auxiliary → composition eligible with structured path.
     """
     orch = _orch()
-    # Simulate acquisition filter leaving a third non-delegated sub
-    # (misclassified / undeclared keep — live so_5 pattern).
     orch._acquisition_subobjectives = (
         lambda objectives, **kw: objectives
+    )
+    orch._understand_goal = (
+        lambda text, correlation, workspace_context, prior_turns, deadline: (
+            orch._TurnGoal(
+                goal_class=(
+                    "analyze"
+                    if "diferen" in text.casefold()
+                    else "read"
+                ),
+                declared=True,
+            )
+        )
     )
 
     by_goal = {
@@ -133,12 +142,9 @@ def test_rc_a_two_complete_reads_rejected_when_objectives_gt_two():
         "detalhar diferenças relevantes": _unavailable(),
     }
 
-    def _path(sub_goal, **kw):
-        return by_goal[sub_goal]
-
-    orch._governed_owner_path = _path
+    orch._governed_owner_path = lambda sub_goal, **kw: by_goal[sub_goal]
     orch._compose_multi_evidence = lambda *a, **k: (
-        "should-not-run",
+        "comparacao",
         (),
         "differences_found",
     )
@@ -160,18 +166,12 @@ def test_rc_a_two_complete_reads_rejected_when_objectives_gt_two():
         comparison=True,
         prior_turns=(),
     )
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
-    assert attempt.verified_composition is None
-    comparison_reasons = [
-        lim
-        for lim in attempt.limitations
-        if lim.startswith("comparison_")
-    ]
-    assert comparison_reasons == []
-    assert any(
-        "evidence_composition_insufficient" in lim
-        for lim in attempt.limitations
-    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert attempt.verified_composition is not None
+    assert set(attempt.verified_composition.source_roots) == {
+        "90260147",
+        "90260148",
+    }
 
 
 def test_rc_a_third_success_without_provenance_emits_comparison_reason():

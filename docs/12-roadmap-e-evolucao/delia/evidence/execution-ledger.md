@@ -5527,3 +5527,14 @@ RC-C=PROVEN: candidate_token capabilities are orchestrated dead-ends for direct 
 SHARED_ROOT_CAUSE=NOT_PROVEN (related family: free-text sub investigation without typed two-target evidence plan).
 REF01-REF08/G04/G05/G07/G12=NOT_PASS. FUNCTIONAL_ACCEPTANCE=NO.
 NEXT=coordination-authorized bounded fixes in order RC-A → RC-C → RC-B → REF05 target oracle; no auto-implement.
+
+
+## E4-R6 — RC-A evidence-obligation composition eligibility fix (2026-11-04)
+
+TASK=DELIA-C3-E4-R6-EVIDENCE-OBLIGATION-AND-COMPOSITION-ELIGIBILITY-FIX-01.
+BASE=1031a35c75. DOC=228 §17. PRODUCTION_DEPLOY=NOT_AUTHORIZED.
+FIX=`_investigate_subobjectives` eligibility uses material obligations + verified sources (exactly two), not `len(tracker.objectives)==2`; analytical leftovers via same `_understand_goal` classifier; structured `comparison_*` reasons incl. `comparison_material_obligation_incomplete`; log fields declared/satisfied/eligible/rejected/reasons.
+TESTS: test_e4_r6_rca_composition_eligibility.py PASS; diagnostics updated PASS; verified_composite/multievidence/interaction_runtime/multistep/delegated_credentials/cycle3/semantic_path PASS.
+E2E_HOMOLOGATION=INCONCLUSIVE (local stack unavailable; no prod deploy).
+RC_A=IMPLEMENTED (synthetic). RC_B/RC_C/REF05 unchanged. REF01-REF08/G04/G05/G07/G12=NOT_PASS. FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
+NEXT=authorized homologation of RC-A branch; then RC-C discovery-first; RC-B selection; REF05 target oracle.
