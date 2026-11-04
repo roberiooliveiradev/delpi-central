@@ -14,7 +14,9 @@ vi.mock("./httpClient", () => ({
 
 import { getBillingModBreakdown } from "./billingModBreakdownApi";
 
-/** Forma real emitida por GetBillingModBreakdownUseCase (doc 154). */
+/** Forma real emitida por GetBillingModBreakdownUseCase (doc 154):
+ *  o produtor não emite `productDescription` nem `costProduct` — a
+ *  fixture representa a AUSÊNCIA da chave, não `null` produzido. */
 const PRODUCER_PAYLOAD = {
   report: "billing-mod-breakdown",
   period: "2026-09",
@@ -24,7 +26,6 @@ const PRODUCER_PAYLOAD = {
       product: "80014579",
       branch: "01",
       billedQty: 0.01,
-      productDescription: null,
       modLines: [
         {
           level: "02",
@@ -101,6 +102,9 @@ describe("getBillingModBreakdown — normalização de contrato", () => {
     const line = payload.anchors[0].modLines[0];
     expect(line.costProduct).toBeUndefined();
     expect(line.productDescription).toBeUndefined();
+    // âncora também não ganha descrição simulada — chave inexistente
+    // no emissor continua inexistente após a normalização
+    expect(payload.anchors[0]).not.toHaveProperty("productDescription");
     // estados tipados intactos
     expect(line.costUnit?.state).toBe("source_missing");
     expect(line.hours?.state).toBe("computed");

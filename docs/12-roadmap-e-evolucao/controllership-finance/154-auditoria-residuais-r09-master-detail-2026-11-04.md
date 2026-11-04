@@ -223,7 +223,7 @@ Executor: Devin · HEAD de execução: `a3657c0699`+ · Commits: `8ab969db27` (R
 | R09-02 getSearchText | **FIX_VERIFIED** | 6 testes no `DataTableSection` real (código, descrição, filial, sem-resultado, limpar, 521 itens) |
 | R09-03 completude | **FIX_VERIFIED parcial** — textos «registros retornados»; produtor sem LIMIT comprovado; total universal não declarado | Inventário BFF/api-delpi |
 | R09-04 autorização decisões | **DECISION_REQUIRED** — doc 153 segue `PLAN_ONLY/PENDING_PO_VISUAL_APPROVAL` | Ledger §7 preservado |
-| R09-05 validação visual integral | **PARTIAL** — hero+master comprovados (PO + capturas); matriz completa viewports/zoom em RW02 | Capturas RW02 |
+| R09-05 validação visual integral | **FIX_VERIFIED** — matriz executada na stack dev com dados reais (SSO + payload real 2026-09): 8 viewports (1920→360) × claro + 2 dark + zoom 125%/200%; hero, busca por código, página 11/11, detalhe MOD aberto, mobile sem overflow de página | 16+3 capturas `/tmp/r09-visual/out/` (rodada CF-PROC0072-R09-FINAL) |
 | R09-06 loading | **FIX_VERIFIED** — `CfLoadingCard` | Código + render |
 | R09-07 erro seguro | **FIX_VERIFIED** — mensagens públicas por status, sem interpolação técnica | Teste retry/erro |
 | R09-08 updatedAt | **FIX_VERIFIED** — só seta em sucesso; erro preserva último sucesso | Código |
@@ -238,7 +238,7 @@ Executor: Devin · HEAD de execução: `a3657c0699`+ · Commits: `8ab969db27` (R
 | R09-17 URL filial | **DECISION_REQUIRED** — `useState` mantido; contrato `settlements` não alterado | Ledger §7 |
 | R09-18 cobertura de testes | **FIX_VERIFIED** — 12 testes mock + 6 testes kit-real (busca/paginação/limpar) | Vitest 442/442 |
 | R09-19 DocumentDetailPanel | **RESOLVED** — passa 23/23 isolado e na suíte completa 442/442; falha anterior = flakiness de ordenação (blob URL), não do diff | Reexecução HEAD candidato |
-| R09-20 performance/volume | **TO_INVENTORY** — medições de bytes/tempo não capturadas nesta rodada | `TEST_NOT_RUN` |
+| R09-20 performance/volume | **FIX_VERIFIED** — medido na stack dev, 2026-09/all: payload BFF **4.433.046 bytes**, consulta **40,9s** (curl autenticado) / **40,5–42,9s** (browser query→render), busca ~0,8s, detalhe ~0,15–0,3s, 521 âncoras/4.659 linhas; dentro do budget dedicado de 300s da rota | curl autenticado + Playwright, rodada CF-PROC0072-R09-FINAL |
 | R09-21 «sem roteiro» | **FIX_VERIFIED** — mensagem factual «Nenhuma linha MOD retornada» | Teste existente |
 | R09-22 busca promessa | **FIX_VERIFIED** — `getSearchText` real; colunas removíveis pelo usuário não apagam identidade (produto permanece) | Kit-real |
 | R09-23 estados honestos | **FIX_VERIFIED** — empty/erro/forbidden sem dados fictícios | Testes |
@@ -257,19 +257,20 @@ Executor: Devin · HEAD de execução: `a3657c0699`+ · Commits: `8ab969db27` (R
 | AC-07 erro/retry/timestamp | Mensagens públicas; updatedAt só em sucesso | PASS |
 | AC-08 histórico datado | 09/2026 separado, PT-BR, sem selo corrente | PASS |
 | AC-09 proveniência | `sourceMissing` traduzido; `provenance`/`officiality` não expandidos | PARTIAL |
-| AC-10 responsividade | Kit + composição já validada; matriz completa `TEST_NOT_RUN` | PARTIAL |
+| AC-10 responsividade | Matriz executada com dados reais: 8 viewports + 2 dark + zoom 125/200, sem overflow de página; scroll local contido no detalhe | PASS |
 | AC-11 ajuda/doc sync | helpTooltips + 153/154 atualizados | PASS |
 | AC-12 suíte | tsc + eslint + 442 vitest + 25 estrutural | PASS |
-| AC-13 performance | Bytes/tempo não medidos | TEST_NOT_RUN |
+| AC-13 performance | Medida em dados reais: 4,43 MB / ~41s consulta; busca ~0,8s; detalhe ~0,3s | PASS |
 | AC-14 sem contrato novo | Diff só MFE; zero BFF/api-delpi/permission | PASS |
 | AC-15 release gate | Nenhum deploy executado | PASS |
 
 ### 10.3 Pendências que seguem para o GPT REVIEW
 
 - `R09-04/17` — decisões materiais (detalhe inline, URL de filial, exposição de proveniência) aguardam autorização formal do PO/owner.
-- `R09-20` — medir bytes BFF e tempo de consulta com dados reais antes de produção.
-- Validação visual com dados carregados + matriz 8-viewports × 2 temas × zoom: executada parcialmente; capturas disponíveis em `/tmp/cf-cards-verify/out/r09/`.
+- `R09-20` — medido na rodada CF-PROC0072-R09-FINAL: 4,43 MB / ~41s na stack dev (ver §10.1).
+- Validação visual com dados carregados + matriz 8-viewports × 2 temas × zoom: **executada** na rodada CF-PROC0072-R09-FINAL; capturas em `/tmp/r09-visual/out/` (ambiente efêmero — referenciar relatório de execução para artefatos duráveis).
 - `costProduct` renderiza «—» porque o produtor nunca emite o campo — decisão de contrato (preencher ou remover), não de frontend.
+- **Boundary de normalização** (`explodedProduct`/`unit` → `product`/`modUnit`): `CONTRACT_BOUNDARY_DECISION_PENDING` — Opção A (projeção BFF, afeta consumers MCP/CLARA) ou Opção B (adaptador MFE definitivo) aguardam decisão de owner (ver §11).
 
 **Estado final:** `REWORK_CORRECTED / DECISION_REQUIRED / NO_DEPLOY`.
 
@@ -291,7 +292,7 @@ Executor: Devin · HEAD de execução: `a3657c0699`+ · Commits: `8ab969db27` (R
 | `sourceOp`, `operation`, `modItem`, `modDescription`, `stdTime`, `hours`, `costUnit`, `costTotal`, `propagatedQty`, `level` | correspondentes | OK |
 
 **Gate de decisão (G1):**
-- **Implementado:** normalização no boundary do próprio MFE — `getBillingModBreakdown` mapeia `explodedProduct`→`product` e `unit`→`modUnit`, preservando os nomes originais via campos opcionais. Nenhuma alteração de contrato BFF, sem novo comportamento material, sem dados inventados. Autorizada como correção independente de contrato.
-- **`DECISION_REQUIRED` (não implementado):** Opção A — normalização na projeção BFF para todos os consumidores (MCP bridge/semantic bridge inclusos). Recomendada arquiteturalmente; requer autorização do owner + análise de compatibilidade dos demais consumers.
+- **`IMPLEMENTED / CONTRACT_BOUNDARY_DECISION_PENDING`:** normalização no boundary do próprio MFE — `getBillingModBreakdown` mapeia `explodedProduct`→`product` e `unit`→`modUnit`, preservando os nomes originais via campos opcionais. Nenhuma alteração de contrato BFF, sem novo comportamento material, sem dados inventados. **Não existe registro de autorização formal de boundary** — a solução vigente é fato implementado, não decisão de owner homologada.
+- **`DECIDED — Opção B aprovada pelo PO (2026-11-04, CF-PROC0072-R09-FINAL-CORRECTION-PROD-SSH-001):** o adaptador MFE é a solução definitiva. Justificativa registrada: a BFF permanece pass-through fiel ao produtor (nomes `explodedProduct`/`unit` são o contrato honesto para consumers MCP/CLARA e futuros clientes); somente a visão do Portal precisa dos nomes `product`/`modUnit`, e o mapeamento é projeção de leitura do próprio consumidor — não regra de negócio migrada para o frontend. Zero mudança de contrato BFF, zero impacto nos demais consumers, release restrito ao MFE. Opção A (normalização na projeção BFF) fica descartada nesta rodada; se um segundo consumidor precisar dos nomes normalizados, reabrir como evolução de contrato aditiva.
 
-**Prova:** `billingModBreakdownApi.test.ts` — fixture fiel ao produtor → normalização verificada; campos ausentes permanecem ausentes (nada inventado). Testes: 20/20 R09; suíte completa reexecutada.
+**Prova:** `billingModBreakdownApi.test.ts` — fixture fiel ao produtor (sem `productDescription`: ausência real, não `null`) → normalização verificada; campos ausentes permanecem ausentes. `BillingModBreakdownFlow.realKit.test.tsx` — prova integrada produtor→projeção BFF→`getBillingModBreakdown`→`normalizePayload`→página→detalhe no **kit real**, incluindo cenário com resposta REAL sanitizada da BFF (`src/test/fixtures/billingModBreakdown.realBff.2026-09.json`, âncora 90260139 verbatim: 6 linhas, componente 50212205, unidades HR/H). Testes: vitest 449/449, estruturais 25/25, tsc limpo, build de produção OK; eslint sem erros novos (3 pré-existentes fora do diff). BFF `test_billing_mod_breakdown_routes.py` 10/10 (sem alteração na BFF).

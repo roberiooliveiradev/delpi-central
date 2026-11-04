@@ -1,0 +1,229 @@
+{
+  "_provenance": "Resposta REAL sanitizada da BFF controllership-finance-api (GET /closing/competences/2026-09/billing-mod-breakdown?branch=all), ambiente dev, 2026-11-04. Âncora 90260139/filial 01 verbatim do produtor api-delpi (6 linhas, níveis 02/04, unidades HR/H, sem product/modUnit/productDescription/costProduct). Blocos officiality/parityEvidence/limitations espelham build_billing_mod_breakdown_projection.",
+  "success": true,
+  "message": "Faturamento × MOD carregado (visão operacional).",
+  "data": {
+    "report": "billing-mod-breakdown",
+    "reportId": "R09",
+    "period": "2026-09",
+    "branch": "all",
+    "anchors": [
+      {
+        "product": "90260139",
+        "branch": "01",
+        "billedQty": 0.02,
+        "modLines": [
+          {
+            "level": "02",
+            "anchorProduct": "90260139",
+            "explodedProduct": "90260139",
+            "modItem": "MOD254",
+            "modDescription": "MAO DE OBRA DIRETA DE CENTRAL DE IMPRESSAO CT-19",
+            "unit": "HR",
+            "operation": "01",
+            "operationDescription": "CORTAR TUBO MAIOR E MENOR",
+            "resource": "CT-19",
+            "stdTime": { "value": 1.07, "state": "shy_frozen_op" },
+            "sourceOp": "24801801001",
+            "propagatedQty": 0.02,
+            "hours": { "value": 0.021400000000000002, "state": "computed" },
+            "costUnit": {
+              "value": null,
+              "state": "source_missing",
+              "reason": "cost_rate_basis_unavailable",
+              "detail": "Taxa de MOD sem fonte comprovada: SP STP_DELPI_FORMA_PRECO_* ausente dos bancos acessíveis (E9). DR-2: ausência tipada, nunca zero nem valor inferido."
+            },
+            "costTotal": {
+              "value": null,
+              "state": "source_missing",
+              "reason": "cost_rate_basis_unavailable",
+              "detail": "Taxa de MOD sem fonte comprovada: SP STP_DELPI_FORMA_PRECO_* ausente dos bancos acessíveis (E9). DR-2: ausência tipada, nunca zero nem valor inferido."
+            },
+            "modItemState": "mapped"
+          },
+          {
+            "level": "02",
+            "anchorProduct": "90260139",
+            "explodedProduct": "90260139",
+            "modItem": "MOD21101",
+            "modDescription": "MAO DE OBRA DIRETA DE MONTAGEM CT-12",
+            "unit": "HR",
+            "operation": "02",
+            "operationDescription": "CORTAR E DECAPAR TERMISTOR",
+            "resource": "CT-12",
+            "stdTime": { "value": 4.42, "state": "shy_frozen_op" },
+            "sourceOp": "24801801001",
+            "propagatedQty": 0.02,
+            "hours": { "value": 0.0884, "state": "computed" },
+            "costUnit": {
+              "value": null,
+              "state": "source_missing",
+              "reason": "cost_rate_basis_unavailable",
+              "detail": "Taxa de MOD sem fonte comprovada: SP STP_DELPI_FORMA_PRECO_* ausente dos bancos acessíveis (E9). DR-2: ausência tipada, nunca zero nem valor inferido."
+            },
+            "costTotal": {
+              "value": null,
+              "state": "source_missing",
+              "reason": "cost_rate_basis_unavailable",
+              "detail": "Taxa de MOD sem fonte comprovada: SP STP_DELPI_FORMA_PRECO_* ausente dos bancos acessíveis (E9). DR-2: ausência tipada, nunca zero nem valor inferido."
+            },
+            "modItemState": "mapped"
+          },
+          {
+            "level": "02",
+            "anchorProduct": "90260139",
+            "explodedProduct": "90260139",
+            "modItem": "MOD21101",
+            "modDescription": "MAO DE OBRA DIRETA DE MONTAGEM CT-12",
+            "unit": "HR",
+            "operation": "03",
+            "operationDescription": "INSERIR TUBO MAIOR E MENOR",
+            "resource": "CT-12",
+            "stdTime": { "value": 10.22, "state": "shy_frozen_op" },
+            "sourceOp": "24801801001",
+            "propagatedQty": 0.02,
+            "hours": { "value": 0.20440000000000003, "state": "computed" },
+            "costUnit": {
+              "value": null,
+              "state": "source_missing",
+              "reason": "cost_rate_basis_unavailable",
+              "detail": "Taxa de MOD sem fonte comprovada: SP STP_DELPI_FORMA_PRECO_* ausente dos bancos acessíveis (E9). DR-2: ausência tipada, nunca zero nem valor inferido."
+            },
+            "costTotal": {
+              "value": null,
+              "state": "source_missing",
+              "reason": "cost_rate_basis_unavailable",
+              "detail": "Taxa de MOD sem fonte comprovada: SP STP_DELPI_FORMA_PRECO_* ausente dos bancos acessíveis (E9). DR-2: ausência tipada, nunca zero nem valor inferido."
+            },
+            "modItemState": "mapped"
+          },
+          {
+            "level": "02",
+            "anchorProduct": "90260139",
+            "explodedProduct": "90260139",
+            "modItem": "MOD21101",
+            "modDescription": "MAO DE OBRA DIRETA DE MONTAGEM CT-12",
+            "unit": "HR",
+            "operation": "04",
+            "operationDescription": "EMENDAR TERMISTOR, ESTANHAR E ALINHAR",
+            "resource": "CT-12",
+            "stdTime": { "value": 11.97, "state": "shy_frozen_op" },
+            "sourceOp": "24801801001",
+            "propagatedQty": 0.02,
+            "hours": { "value": 0.23940000000000003, "state": "computed" },
+            "costUnit": {
+              "value": null,
+              "state": "source_missing",
+              "reason": "cost_rate_basis_unavailable",
+              "detail": "Taxa de MOD sem fonte comprovada: SP STP_DELPI_FORMA_PRECO_* ausente dos bancos acessíveis (E9). DR-2: ausência tipada, nunca zero nem valor inferido."
+            },
+            "costTotal": {
+              "value": null,
+              "state": "source_missing",
+              "reason": "cost_rate_basis_unavailable",
+              "detail": "Taxa de MOD sem fonte comprovada: SP STP_DELPI_FORMA_PRECO_* ausente dos bancos acessíveis (E9). DR-2: ausência tipada, nunca zero nem valor inferido."
+            },
+            "modItemState": "mapped"
+          },
+          {
+            "level": "02",
+            "anchorProduct": "90260139",
+            "explodedProduct": "90260139",
+            "modItem": "MOD349",
+            "modDescription": "INSPECAO FINAL",
+            "unit": "H",
+            "operation": "05",
+            "operationDescription": "INSPECIONAR",
+            "resource": "CT-70",
+            "stdTime": { "value": 0.02, "state": "shy_frozen_op" },
+            "sourceOp": "24801801001",
+            "propagatedQty": 0.02,
+            "hours": { "value": 0.0004, "state": "computed" },
+            "costUnit": {
+              "value": null,
+              "state": "source_missing",
+              "reason": "cost_rate_basis_unavailable",
+              "detail": "Taxa de MOD sem fonte comprovada: SP STP_DELPI_FORMA_PRECO_* ausente dos bancos acessíveis (E9). DR-2: ausência tipada, nunca zero nem valor inferido."
+            },
+            "costTotal": {
+              "value": null,
+              "state": "source_missing",
+              "reason": "cost_rate_basis_unavailable",
+              "detail": "Taxa de MOD sem fonte comprovada: SP STP_DELPI_FORMA_PRECO_* ausente dos bancos acessíveis (E9). DR-2: ausência tipada, nunca zero nem valor inferido."
+            },
+            "modItemState": "mapped"
+          },
+          {
+            "level": "04",
+            "anchorProduct": "90260139",
+            "explodedProduct": "50212205",
+            "modItem": "MOD248",
+            "modDescription": "MAO DE OBRA DIRETA DE CORTE CT-33",
+            "unit": "HR",
+            "operation": "01",
+            "operationDescription": "CORTAR E DECAPAR",
+            "resource": "CT-33",
+            "stdTime": { "value": 2.52, "state": "shy_frozen_op" },
+            "sourceOp": "24801801002",
+            "propagatedQty": 0.02,
+            "hours": { "value": 0.0504, "state": "computed" },
+            "costUnit": {
+              "value": null,
+              "state": "source_missing",
+              "reason": "cost_rate_basis_unavailable",
+              "detail": "Taxa de MOD sem fonte comprovada: SP STP_DELPI_FORMA_PRECO_* ausente dos bancos acessíveis (E9). DR-2: ausência tipada, nunca zero nem valor inferido."
+            },
+            "costTotal": {
+              "value": null,
+              "state": "source_missing",
+              "reason": "cost_rate_basis_unavailable",
+              "detail": "Taxa de MOD sem fonte comprovada: SP STP_DELPI_FORMA_PRECO_* ausente dos bancos acessíveis (E9). DR-2: ausência tipada, nunca zero nem valor inferido."
+            },
+            "modItemState": "mapped"
+          }
+        ],
+        "sourceMissing": ["cost_rate_basis", "route_operations_missing"],
+        "diagnostics": {
+          "productsWithoutRouteOperations": [
+            "10080891",
+            "10120002",
+            "10120108",
+            "10140027",
+            "10380052"
+          ],
+          "unmappedResourceMod": []
+        }
+      }
+    ],
+    "limitations": [
+      "A seleção do roteiro congelado (última OP com SHY) pode divergir do snapshot histórico usado pelo DLP204.",
+      "A taxa histórica de MOD não foi localizada: costUnit/costTotal/costProduct são ausência tipada, nunca zero.",
+      "Paridade oficial pendente de homologação item a item pela Controladoria (DR-3)."
+    ],
+    "officiality": "operational_view",
+    "officialParity": "pending",
+    "parityEvidence": {
+      "scope": {
+        "referencePeriod": "2026-09",
+        "branches": ["01", "02"],
+        "artifact": "Fat x MOD.xlsb (DLP204)",
+        "measuredAt": "2026-11-01",
+        "gate": "G042 (doc 144)",
+        "homologationStatus": "pending (DR-3, Controladoria)"
+      },
+      "metrics": {
+        "artifactLines": 4476,
+        "calculatedLines": 4659,
+        "matchedKeys": 3694,
+        "keyCoveragePct": 82.5,
+        "qtdFatCorrectPct": 99.6,
+        "stdTimeCorrectPct": 82.2,
+        "hoursCorrectPct": 81.9,
+        "missingLines": 782,
+        "extraLines": 965
+      },
+      "semantics": "Historical point-in-time comparison between the reconstructed engine and the DLP204 artifact for 2026-09; not a live score and not extendable to other competences."
+    },
+    "provenance": { "engine": "api-delpi" }
+  }
+}
