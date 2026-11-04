@@ -120,3 +120,43 @@ Verified existing domain models at input SHA:
 **C6 IMPLEMENT AND EVALUATE:** RED→GREEN, verify original and sibling product/other-owner references, same-session `A01→A02→A03`, direct single-turn, correction/ambiguity, mixed roots, spoof, owner revocation, timeout/gateway, model proposal variability, evidence full tree oracle, HTTP/NDJSON actual client output. Run full relevant suite and repeat trials on FINAL SHA. `REF01–REF08 / G04/G05/G07/G12` all mandatory.
 
 **STOP CLASSIFICATION:** `EXECUTION_DRIFT` on unvalidated client-origin refs and text-hardcoded typed goals; `REWORK` until corrected. **PRODUCTION_DEPLOY=NOT_AUTHORIZED**. This review does not authorize expanding public APIs, storage, session retention or authority.
+
+
+## 8. Coordination decision after §7 implementation at 65eacb396c (2026-11-03)
+
+**INPUT_SHA:** \`65eacb396c\`, verified against main for DÉLIA sources; subsequent unrelated production-control changes were preserved. **REVIEW:** \`REWORK\`, with a genuine **cross-request provenance/continuity contract decision**; no functional acceptance. Coordination did not run local E2E.
+
+### 8.1 Verified facts vs unsupported conclusions
+
+1. **PROVEN:** \`HandleInteractiveConversationTurn.execute()\` constructs a fresh \`InteractionSession(session_id=uuid4())\` per HTTP request. Its module-level request-scoped/no-history note is consistent with the code. \`prior_turns\` come from incoming request context, parsed by \`interaction_routes._parse_context\` and checked for well-formed sequence, but not cryptographically or server-side correlated to prior issued result turns.
+2. **PROVEN:** \`_entity_refs_from_outcome()\` now uses \`provenance.source_refs[0].source_system\`, instead of \`specialist_id\`. This removes the specific conflation of specialist transport and source-system, but does not prove a single unambiguous owner business root in multi-root/multi-source results. SourceRefs are source descriptors, never grants.
+3. **PROVEN:** \`_subobjectives_from_session_refs()\` iterates \`reversed(prior_turns)\`, takes \`list(distinct.values())[:4]\`, and constructs \`SubObjective(goal=f"{ref.entity_type} {ref.entity_id}")\`. These are still **positional recency heuristics and text-synthesized READ goals**, not a genuinely typed target obligation or exact semantic referent selection. With 3+ prior entities, "as duas" is not guaranteed to resolve correctly; with 5+ it silently drops refs. Do not mark doc228 S4/REF01/REF03/REF04 complete.
+4. **PROVEN:** \`InteractionTurn.entity_refs\` now receives internal owner-derived pointers. **NOT PROVEN / absent in reviewed response contract:** user-facing \`InteractiveTurnResult\` did not acquire an \`entity_refs\` field; the JSON path calls \`serialize_result(result)\`. There is no proven reference-echo field leaving HTTP, and no trust attestation for a replayed value.
+5. **SECURITY PRECISION:** client-provided \`entity_refs\` can be treated as **untrusted semantic candidate data** for authorized discovery/READ, but **may not be promoted to a trusted "server-issued previous grounded reference"**. Live Domain/Core authorization still protects the requested READ; it does **not** validate that the read target represents the user's intended prior referent or that the echoed history is truthful.
+6. **CONCLUSION:** absence of server session persistence makes *server-owned history lookup unavailable through the reviewed handler*, but does NOT logically prove that **new persistent storage is the only solution**. Other approaches (request-scoped candidates + clarification or existing attested continuation mechanism) need evaluation at their real boundary. No new store, signing scheme, token format or public API is silently approved.
+
+### 8.2 Architecture decision — preserve stateless mode, choose the minimum honest continuity path
+
+**DECISION_ID:** \`DELIA-C3-E4-R6-STATELESS-CONTINUITY-BOUNDARY-DECISION-01\`.
+**APPROVED NOW:**
+- Keep the current request-scoped/session-nonpersistent architecture by default. Do **not** add a server session DB or retention/migration just to rescue E4.
+- Allow bounded client-carried context only as transient **untrusted candidates**, irrespective of whether it is well-typed or previously emitted by the DÉLIA UI.
+- Use currently authorized discovery/resolver + live Core/Domain verification for proposed targets. Require accurate **semantic intent and exact intended target-set matching** before full comparison outcome. When "as duas" is ambiguous without a legitimate evidence-backed referent binding, ask a targeted clarification rather than silently compare recent four.
+- If a model/legitimate owner can resolve explicit targets via the existing authorized request, compare them without relying on untrusted historic FACT. Do not force new persistence as a prerequisite for single-turn E2E.
+- Fix source provenance/ambiguous roots and deny incorrect/fabricated refs; remove silent \`[:4]\` and string-generated subgoals. Only use a truly typed existing capability/arguments boundary; if missing, freeze a minimal additive **internal** contract with owner and consumers, not a second planner.
+- Continue **independent** tests and single-turn E2E, and test same-turn continuation as honest clarification when provenance cannot be established.
+
+**CONTRACT GATE REQUIRED FOR TRUSTED CROSS-REQUEST CONTINUITY:** If the product requirement is that "as duas" reliably refers to previously observed and validated entities **without reconfirmation**, the present stateless echo cannot prove origin/actor/session. First inventory existing trusted continuation/receipt/token infrastructure and current client contract. If a suitable mechanism already exists, **REUSE** through its owner, with subject, turn/conversation identity, bounded refs, TTL, anti-replay/scope, compatibility and server-side verification. If none exists, return a **single concrete architecture decision** contrasting: (A) stateless authenticated bounded receipt/attestation at an authorized existing boundary; (B) server-owned session state with explicit retention/cleanup/revocation; (C) untrusted context + clarification as an intentionally reduced UX. This requires product/security/contract approval before new public fields, persistence or signing. DO NOT assert "storage is mandatory" nor implement an ad hoc signer/cookie/database.
+
+**FORBIDDEN:** taking \`context[].entity_refs\` plus \`kind=DELIA_RESULT\` plus \`epistemic_class=OBSERVATION\` as proof of prior DÉLIA issuance; treating successful Domain READ of the wrong entity as a grounded fulfillment of the intended comparison; adding any client echo field before the trusted/untrusted contract is explicit.
+
+### 8.3 Evidence and completion obligations — continue one R6 task, no another documentation-only terminal
+
+- RED tests: client-forged DELIA_RESULT/entity_ref; swapped actor/session; wrong owner system; 3/5 historical refs and "as duas"; a repeated/revoked source; mixed multi-root owner output; fabricated entity type; explicit two-target direct request; no referenced entities; broad sibling read. Ensure authenticated user permissions still apply at every actual Domain READ.
+- Repair minimal SOURCE producer: choose an entity only if owner evidence confirms a singular typed business root and canonical source system, otherwise produce no entity ref or bounded ambiguity.
+- Repair consumer: typed validated target set or explicit clarification (not reverse-and-take-first-four and not \`f"{type} {id}"\`). Do not issue uncontrolled owner requests from an untrusted echoed ref and call them authorized prior referents.
+- Prove exact source-target reconciliation, no fabricated provenance and final factual verifier oracle. Do not mark \`sources>=2\` as exact coverage.
+- Run full relevant RED→GREEN regression on final SHA; real local Keycloak/Core+DAVI/Domain+Qwen3 same-turn, and same-conversation with **declared continuity mode** (clarification or legitimately attested refs), client-visible response and gateway/cancel timings. Record all success/failure runs.
+- Treat the existing E4-R6 \`REF01–REF08\` and \`G04/G05/G07/G12\` as \`NOT_PASS\` until outcome evidence. No production deploy, no phase advance.
+
+**COORDINATION VERDICT:** \`R6_REWORK\`; \`CROSS_REQUEST_TRUSTED_CONTINUITY=ARCHITECTURE_DECISION_REQUIRED\` if required without clarification and no reusable attestation mechanism; \`PERSISTENCE_SPECIFICALLY_APPROVED=NO\`; \`CLIENT_ECHO_AS_AUTHORITY=NO\`.
