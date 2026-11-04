@@ -5328,3 +5328,9 @@ WIRING BOUNDED APROVADO doc228 (sem novo tipo/store/planner):
 (b) consumidor: gate de comparacao le `prior_turns[].entity_refs`
     -> refs unicos/nao ambiguos -> READ obligations tipadas via
     `SubObjective` com entidade resolvida (nao texto produto).
+
+
+## E4-R6 S0 coordination verification — correction and continue S1–S7 (2026-11-03)
+
+INPUT_SHA=91716edd31; S0_ONLY=ledger documentation commit, no implementation. SOURCE_VERIFIED EntityRef/EvidenceRef/SourceRef in domain evidence, SessionContext.entity_refs in interaction model. FACTUAL_DRIFT: S0 report/ledger says InteractionTurn.entity_refs exists, but current InteractionTurn has evidence_refs/source_refs only; no entity_refs. handle_interactive_turn._grounded_result assigns only source_refs; owner outcome exists before projection. Existing SessionContext and conversation reference typing do not prove runtime trust chain or populated fields.
+DECISION=S0_ACCEPTED_WITH_CORRECTION; SAME TASK DELIA-C3-E4-R6-CANONICAL-ENTITY-BINDING-AND-FUNCTIONAL-CLOSURE-01 MUST CONTINUE S1–S7 as authorized by doc228 section6. No new target store/planner; derive refs only from typed owner records; current user/client supplied prior entity_refs cannot be elevated without same-session provenance and live Core/Domain reauthorization. Additive internal field only with consumer proof; if new public schema/retention required, stop exact decision. TESTS=TEST_NOT_RUN by coordination, REF01-REF08 and G04/G05/G07/G12 NOT_PASS. NEXT=R6 S1–S7 RED/GREEN real E2E final SHA; no production deployment or phase advance.
