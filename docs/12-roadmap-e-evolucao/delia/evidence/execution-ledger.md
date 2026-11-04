@@ -5191,3 +5191,14 @@ interaction_completed ~119s, servidor respondeu 200 — MAS o
 cliente viu timeout aos ~115-118s (entrega na borda do gateway).
 Residual: variancia de retries model-calls (invalid_structured_
 output/provider_unavailable) decide a entrega; mecanismo correto.
+
+### E4-R2 residual (doc 224) — entrega e variancia do modelo
+Runs E2E pos-paralelizacao+retry: HTTP 200 entregue ao cliente em
+117.8s e 59.4s; composition differences_found sources=3 provada
+server-side com COMPLETEDx4 e READs reais paralelos. Residual
+remanescente: qwen3:4b decompose/proposals variam por run —
+alguns runs produzem 2 READs limpos (composicao completa), outros
+retornam colecoes vazias ou decompose vazio (fallback honesto
+owner_path_unbound/NON_GROUNDED). Nao e mais defeito de boundary
+(auth paralela provada) nem de latencia bruta — e confiabilidade
+de proposta do modelo pequeno sobre referentes de contexto.

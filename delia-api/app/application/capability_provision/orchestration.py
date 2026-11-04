@@ -5539,6 +5539,26 @@ class OperationalCapabilityOrchestrator:
                 prior_turns=prior_turns,
                 goal=goal,
             )
+            if (
+                subobjectives is None
+                and goal is not None
+                and goal.comparison_requested
+                and deadline is not None
+                and deadline.remaining_seconds() > 0
+            ):
+                # Doc 224: a declared comparison that failed to
+                # decompose once gets ONE bounded retry — the
+                # proposal is model-bounded and the small model is
+                # nondeterministic; a single governed retry is the
+                # same recovery pattern every proposal stage uses.
+                subobjectives = self._decompose_objective(
+                    input_text,
+                    correlation=correlation,
+                    workspace_context=workspace_context,
+                    deadline=deadline,
+                    prior_turns=prior_turns,
+                    goal=goal,
+                )
             if subobjectives is not None:
                 return self._investigate_subobjectives(
                     subobjectives,
