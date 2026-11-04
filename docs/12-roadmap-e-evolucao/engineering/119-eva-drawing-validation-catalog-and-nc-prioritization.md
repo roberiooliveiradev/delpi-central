@@ -810,3 +810,16 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **Evidência prod (`srv-api`):** 90264017 `RUNNING(0.0s)→COMPLETED(~90s)` relatório integral; 90264030 `RUNNING`+job encontrado (isolamento de owner verificado: identidade diferente → `job_not_found` correto). `ClientDisconnect` eliminado. Sync path sem compose inalterado (INCONCLUSIVE honesto).
 
 **Estado:** `MCP_SERVER_PASS=PASS`, `BACKEND_PASS=PASS`, `MCP_CLIENT_PASS=PENDING` (ChatGPT reteste — contrato: chamar com `compose_understanding=true` → RUNNING → repetir com `job_id`), `CHATGPT_CONSUMER_PASS=PENDING`, `ISSUE_131=PENDING` (sem credencial API).
+
+## 31. DEC-VAL-031 — recuperação de jobs MCP (2026-11-04)
+
+**Causa-raiz (PROVEN, 3 defeitos):**
+1. `access_token` no fingerprint do owner — o consumidor OAuth renova o token a cada chamada → `get_for_owner` falhava → `404 job_not_found` até no poll imediato (evidência ChatGPT). Fix: `_drawing_job_owner_fingerprint` deriva só do `user_id` (subject estável Keycloak). Token segue AuthN delegada; identidade lógica é o subject.
+2. `_run_job` passava `HomeSourceContext` derivado a `_produce_drawing_understanding`, que resolve `_source_context` sobre o contexto MCP cru (.user/.authorization) → contexto vazio → 401 nas chamadas delegadas do job. Fix: job captura o contexto MCP original (`_mcp_context`) para o produtor.
+3. `get_or_start` devolvia `RUNNING` para job FAILED dentro do TTL → consumidor não conseguia retry por 1h. Fix: FAILED libera a chave e cria novo job.
+
+**Verificado em prod (`268183f9ab`):** create→`RUNNING`; job buscou drawing/pdf/structure com contexto válido (200s); **poll com token renovado → job encontrado (`RUNNING`)** — antes: 404. Isolamento owner: user diferente → `job_not_found` (fail-closed). Single-worker uvicorn → registry process-local correto; restart do container perde jobs (limitação documentada — persistência compartilhada exigiria ARCHITECTURE_DECISION).
+
+**AuthZ:** `_require_engineering_human` revalida a cada chamada — revogação bloqueia polling. Job de outro usuário não revela existência.
+
+**Estado:** `JOB_RECOVERY_PASS` (lógica verificada no runtime deployado) · `MCP_CLIENT_PASS=PENDING` · `CHATGPT_CONSUMER_PASS=PENDING` (reteste independente — ciclo: `compose_understanding` → `job_id` → repetir chamada com `job_id`).
