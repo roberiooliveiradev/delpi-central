@@ -96,6 +96,7 @@ from app.application.interaction.capability_attempt import (
 )
 from app.application.interaction.contracts import (
     GovernedCapabilityProvenance,
+    VerifiedCompositeEvidence,
     LIMITATION_CAPABILITY_SURFACE_LISTING,
     LIMITATION_EVIDENCE_PROJECTION_PARTIAL,
     LIMITATION_GOAL_MISMATCH,
@@ -7242,47 +7243,61 @@ class OperationalCapabilityOrchestrator:
                 limitations.extend(
                     f"{oid}: {lim}" for lim in sub_attempt.limitations
                 )
+        verified_composition: VerifiedCompositeEvidence | None = None
         if comparison:
-            # Doc 222/223 E4: when the declared goal is a comparison,
-            # the completed READ subobjectives' evidence is composed
-            # through the governed typed boundary instead of merely
-            # concatenated — the model proposes correspondences and
-            # the deterministic verifier computes all facts. Source
-            # identity is typed: the root record code of each
-            # flattened owner evidence set — never derived from
-            # model-generated sub-goal text.
+            # A comparison's terminal content is the deterministic
+            # verified render, never concatenated unrelated sub-answers.
+            contents.clear()
             sources: dict[str, tuple[Mapping[str, Any], ...]] = {}
-            for sub_goal, attempt in completed:
+            lineages: dict[str, tuple] = {}
+            observations: list[str] = []
+            for _sub_goal, attempt in completed:
                 outcome = attempt.outcome
-                records = (
-                    _comparison_records(outcome)
-                    if outcome is not None
-                    else ()
-                )
+                provenance = attempt.provenance
+                if (
+                    outcome is None
+                    or provenance is None
+                    or not outcome.is_complete
+                    or not provenance.is_complete
+                    or not provenance.source_refs
+                ):
+                    limitations.append("comparison_source_missing_or_incomplete")
+                    continue
+                records = _comparison_records(outcome)
                 if not records:
+                    limitations.append("comparison_source_empty")
                     continue
                 rows = _flatten_evidence_records(records)
-                root = (
-                    min(rows, key=lambda r: len(r["path"]))
-                    if rows
-                    else None
-                )
-                if root is None:
+                if not rows:
+                    limitations.append("comparison_source_empty")
                     continue
-                sid = root["code"]
-                if sid in sources:
-                    # same root identity as an earlier source — the
-                    # occurrences stay separate, disambiguated by the
-                    # tracked subobjective id rather than overwritten.
-                    sid = f"{sid}#{len(sources)}"
-                sources[sid] = records
-            if len(sources) < 2:
-                # A comparison requires two complete authorized
-                # evidence sets — individual partial reads are never
-                # marketed as a full comparison.
+                min_depth = min(len(row["path"]) for row in rows)
+                roots = [row for row in rows if len(row["path"]) == min_depth]
+                if len(roots) != 1 or not roots[0].get("code"):
+                    limitations.append("comparison_root_ambiguous")
+                    continue
+                root_id = str(roots[0]["code"])
+                if root_id in sources:
+                    limitations.append("comparison_duplicate_root")
+                    continue
+                sources[root_id] = records
+                lineages[root_id] = provenance.source_refs
+                observations.append(outcome.provenance.observed_at)
+
+            # Exact cardinality is a necessary but not sufficient
+            # correctness gate: owner-backed target-to-source matching
+            # must still be proven by functional E2E/oracle. Fail closed
+            # for extra/duplicate/partial roots instead of comparing the
+            # first two sources and presenting incomplete facts.
+            if (
+                len(sources) != 2
+                or len(completed) != 2
+                or len(tracker.objectives) != 2
+                or any(lim.startswith("comparison_") for lim in limitations)
+            ):
                 limitations.append(
                     "evidence_composition_insufficient: "
-                    "fewer than two complete authorized sources"
+                    "expected exactly two complete distinct owner reads"
                 )
                 saw_source_unavailable = True
             else:
@@ -7294,9 +7309,20 @@ class OperationalCapabilityOrchestrator:
                     deadline=deadline,
                 )
                 if composed is not None:
-                    comp_content, comp_limitations = composed
-                    contents.append(comp_content)
+                    comp_content, comp_limitations, verdict = composed
                     limitations.extend(comp_limitations)
+                    if verdict in ("agreement", "differences_found"):
+                        roots = tuple(sources)
+                        verified_composition = VerifiedCompositeEvidence(
+                            source_roots=(roots[0], roots[1]),
+                            source_lineage=(lineages[roots[0]], lineages[roots[1]]),
+                            observed_at=max(observations),
+                            correlation_id=correlation,
+                            verdict=verdict,
+                        )
+                        contents.append(comp_content)
+                    else:
+                        saw_source_unavailable = True
         return self._subobjective_attempt_result(
             tracker,
             contents,
@@ -7304,6 +7330,7 @@ class OperationalCapabilityOrchestrator:
             correlation=correlation,
             saw_source_unavailable=saw_source_unavailable,
             saw_authz_denied=saw_authz_denied,
+            verified_composition=verified_composition,
         )
 
     def _compose_multi_evidence(
@@ -7314,7 +7341,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         workspace_context: WorkspaceContext | None,
         deadline: TurnDeadline | None,
-    ) -> tuple[str, tuple[str, ...]] | None:
+    ) -> tuple[str, tuple[str, ...], str] | None:
         """Doc 222 E4 — governed multi-evidence composition.
 
         The model only proposes candidate correspondences between
@@ -7352,9 +7379,8 @@ class OperationalCapabilityOrchestrator:
             len(sources),
             correlation,
         )
-        return _render_evidence_comparison(result), tuple(
-            result["limitations"]
-        )
+        return (_render_evidence_comparison(result),
+                tuple(result["limitations"]), result["verdict"])
 
     def _record_subobjective_outcome(
         self,
@@ -7394,6 +7420,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         saw_source_unavailable: bool,
         saw_authz_denied: bool,
+        verified_composition: VerifiedCompositeEvidence | None = None,
     ) -> GovernedCapabilityAttempt:
         """Deterministic fan-in: honest coverage of the original
         objective — every subobjective gap surfaces as a limitation;
@@ -7437,6 +7464,11 @@ class OperationalCapabilityOrchestrator:
             correlation_id=correlation,
             content=content,
             limitations=bounded_limitations,
+            verified_composition=(
+                verified_composition
+                if status is GovernedCapabilityStatus.SUCCESS
+                else None
+            ),
         )
 
     def _resolve_missing_inputs(
