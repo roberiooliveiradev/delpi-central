@@ -659,3 +659,31 @@ def test_bom_only_allowed_on_sufficient_structural_coverage():
     bom_only = [f for f in out["findings"] if f["type"] == "BOM_ONLY"]
     assert len(bom_only) == 1
     assert bom_only[0]["item_code"] == "100800113"
+
+
+def test_bom_only_blocked_when_token_visibility_inflates_coverage():
+    """Códigos visíveis como token solto NÃO contam para a barra de
+    cobertura estrutural — caso real 90263572: 57% matches tipados,
+    91% com tokens → ausência segue não declarada."""
+    table = _table([_row(f"1008001{i}", 100 + i * 20) for i in range(8)])
+    bom = _bom(
+        PRODUCT,
+        *[
+            (f"1008001{i}", "50225512" if i % 2 else PRODUCT, 2)
+            for i in range(14)
+        ],
+    )
+    # códigos não tipados aparecem como contexto em região comparável
+    ctxs = [
+        {"code": f"1008001{i}", "region": "component_table", "page": 1}
+        for i in range(8, 14)
+    ]
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=table,
+        drawing_pages=1,
+        code_contexts=ctxs,
+    )
+    types = [f["type"] for f in out["findings"]]
+    assert "BOM_ONLY" not in types, types

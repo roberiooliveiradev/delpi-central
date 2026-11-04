@@ -689,21 +689,13 @@ def compare_bom_to_drawing(
     # Ausência no desenho exige escopo integralmente lido: tabela
     # detectada + boundary confiável + rendimento de matching alto o
     # bastante para que a ausência seja provável (parcial não prova).
-    visible_bom = sum(
-        len(occs)
-        for code, occs in bom_remaining.items()
-        if code in visible_codes
-    )
-    accounted_ratio = (
-        (matched + visible_bom) / max(1, len(bom_occurrences))
-    )
-    # DEC-VAL-033 — barra de evidência elevada: `BOM_ONLY` declara
-    # ausência ESTRUTURAL e só é legítimo quando a evidência do
-    # desenho cobre de fato o escopo — com ≤10% das ocorrências da
-    # BOM sem contraparte a ausência restante é um candidato provável.
-    # Em tabelas densas o OCR perde células reais (comprovado: código
-    # presente no desenho emitido como BOM_ONLY com 57% de cobertura) —
-    # abaixo do limiar a ausência vira limitação, nunca divergência.
+    # DEC-VAL-033 — a cobertura que autoriza `BOM_ONLY` mede matches
+    # TIPADOS (células de tabela), nunca visibilidade por token: um
+    # código visto como texto solto prova presença, mas não prova que
+    # a extração tabular cobriu o escopo. Em tabela densa o OCR perde
+    # células reais (caso comprovado: BOM_ONLY falso com apenas 57%
+    # de matches tipados e 91% por visibilidade inflada por tokens).
+    accounted_ratio = matched / max(1, len(bom_occurrences))
     bom_only_allowed = coverage_complete and accounted_ratio >= 0.9
     bom_only_unverified = 0
     unclassified: list[str] = []
