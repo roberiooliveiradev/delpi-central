@@ -69,9 +69,9 @@ Sem backfill em massa. Sem ativar agenda.
 | Gates | Phase3 + platform guardrails OK vs `b37ed287dc` |
 | Agendamento | **DESATIVADO** (`profiles: [manual]`; sem cron/timer) |
 | Deploy srv-api (`production-control-api`) | **PROVEN** — pull `13a4e11d76` + rebuild/recreate OK |
-| Smoke dry-run / reenvio publisher | **PENDING** — `docker compose` fora de `infra/` → `no configuration file provided` |
+| Smoke dry-run / reenvio publisher | **PENDING** — 1ª tentativa em `infra/` rejeitou normalização (CSV real ≠ fixture); correção de delimitador/aliases em andamento |
 
-> Reexecutar dry-run + `--publish` a partir de `infra/` antes de marcar smoke como PROVEN.
+> Se dry-run ainda falhar, cole `head -1` do CSV e o trecho `chaves_recebidas=` do erro.
 
 ## Correção /latest (E2 follow-up)
 

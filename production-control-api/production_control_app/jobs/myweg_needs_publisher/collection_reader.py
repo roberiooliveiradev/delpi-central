@@ -7,10 +7,11 @@ import hashlib
 import json
 import re
 import time
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 from zoneinfo import ZoneInfo
 
 from production_control_app.jobs.myweg_needs_publisher import REQUIRED_ARTIFACTS
@@ -143,23 +144,116 @@ def _hash_required_files(directory: Path) -> dict[str, str]:
     return hashes
 
 
+def _detect_csv_delimiter(sample: str) -> str:
+    """Detecta delimitador de CSV (Excel BR costuma usar ';')."""
+    if not sample.strip():
+        return ","
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+        if dialect.delimiter:
+            return dialect.delimiter
+    except csv.Error:
+        pass
+    header = sample.splitlines()[0] if sample.splitlines() else sample
+    scores = {delim: header.count(delim) for delim in (",", ";", "\t", "|")}
+    best = max(scores, key=scores.get)
+    return best if scores[best] > 0 else ","
+
+
+def _fold_header(name: str) -> str:
+    """Normaliza cabeçalho para comparação (sem acento, lower, snake)."""
+    text = unicodedata.normalize("NFKD", str(name or ""))
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    text = text.strip().lower()
+    out: list[str] = []
+    for ch in text:
+        if ch.isalnum():
+            out.append(ch)
+        else:
+            out.append("_")
+    folded = "".join(out)
+    while "__" in folded:
+        folded = folded.replace("__", "_")
+    return folded.strip("_")
+
+
+# Cabeçalhos ETL / planilha → campos canônicos E1.
+_HEADER_CANONICAL: dict[str, str] = {
+    "material_weg_tratado": "material_weg_tratado",
+    "material_weg": "material_weg_tratado",
+    "material": "material_weg_tratado",
+    "codigo_referencia_weg": "codigo_referencia_weg",
+    "codigo_referencia": "codigo_referencia_weg",
+    "codigo_de_referencia_weg": "codigo_referencia_weg",
+    "referencia_weg": "codigo_referencia_weg",
+    "origem_material_weg": "origem_material_weg",
+    "origem_material": "origem_material_weg",
+    "origem": "origem_material_weg",
+    "quantidade": "quantidade",
+    "quantidade_original_un": "quantidade_original_un",
+    "quantidade_original": "quantidade",
+    "qtde": "quantidade",
+    "qtd": "quantidade",
+    "unidade": "unidade",
+    "um": "unidade",
+    "data_remessa": "data_remessa",
+    "data_de_remessa": "data_remessa",
+    "dt_remessa": "data_remessa",
+    "remessa": "data_remessa",
+    "documento": "documento",
+    "doc": "documento",
+    "linha_fonte": "linha_fonte",
+    "linha": "linha_fonte",
+    "n_linha": "linha_fonte",
+    "num_linha": "linha_fonte",
+    "assinatura_registro": "assinatura_registro",
+    "assinatura": "assinatura_registro",
+    "hash_linha": "assinatura_registro",
+    "rastreabilidade": "rastreabilidade",
+    "traceability": "rastreabilidade",
+}
+
+
+def _remap_row_headers(raw: Mapping[str, Any]) -> dict[str, Any]:
+    remapped: dict[str, Any] = {}
+    for key, value in raw.items():
+        if key is None:
+            continue
+        canonical = _HEADER_CANONICAL.get(_fold_header(str(key)), str(key).strip())
+        # Prefer first non-empty when aliases colidem.
+        if canonical in remapped and str(remapped[canonical] or "").strip():
+            continue
+        remapped[canonical] = value.strip() if isinstance(value, str) else value
+    return remapped
+
+
 def _read_csv_rows(path: Path) -> list[dict[str, Any]]:
     try:
         with path.open("r", encoding="utf-8-sig", newline="") as handle:
-            reader = csv.DictReader(handle)
+            sample = handle.read(8192)
+            handle.seek(0)
+            delimiter = _detect_csv_delimiter(sample)
+            reader = csv.DictReader(handle, delimiter=delimiter)
             if not reader.fieldnames:
                 raise CollectionIncompleteError("CSV sem cabeçalho.")
             rows: list[dict[str, Any]] = []
-            for raw in reader:
+            for data_index, raw in enumerate(reader):
                 if raw is None:
                     continue
-                cleaned = {
-                    str(key).strip(): (value.strip() if isinstance(value, str) else value)
-                    for key, value in raw.items()
-                    if key is not None
-                }
+                cleaned = _remap_row_headers(
+                    {
+                        str(key).strip(): (
+                            value.strip() if isinstance(value, str) else value
+                        )
+                        for key, value in raw.items()
+                        if key is not None
+                    }
+                )
                 if not any(str(v or "").strip() for v in cleaned.values()):
                     continue
+                # Planilha: cabeçalho = linha 1; primeira data = linha 2.
+                if not str(cleaned.get("linha_fonte") or "").strip():
+                    cleaned["linha_fonte"] = str(data_index + 2)
                 rows.append(cleaned)
             return rows
     except (OSError, UnicodeError, csv.Error) as exc:

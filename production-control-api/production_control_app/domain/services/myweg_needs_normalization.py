@@ -129,6 +129,11 @@ def _parse_remessa(value: Any) -> str | None:
     text = _text(value)
     if not text:
         return None
+    # Aceita sufixo de horário comum em export Excel ("15/11/2026 00:00:00").
+    if " " in text and len(text) > 10:
+        text = text.split(" ", 1)[0].strip()
+    if "T" in text and len(text) >= 10 and text[4] == "-":
+        text = text.split("T", 1)[0].strip()
     if len(text) >= 10 and text[4] == "-" and text[7] == "-":
         try:
             date.fromisoformat(text[:10])
@@ -246,14 +251,26 @@ def normalize_source_record(
             "Quantidade",
         )
 
-        if not material or not origem or remessa is None or not rastreabilidade:
+        missing_bits: list[str] = []
+        if not material:
+            missing_bits.append("material_weg_tratado")
+        if not origem:
+            missing_bits.append("origem_material_weg")
+        if remessa is None:
+            missing_bits.append("data_remessa")
+        if not rastreabilidade:
+            missing_bits.append(
+                "rastreabilidade (linha_fonte/assinatura_registro ausentes)"
+            )
+        if missing_bits:
+            available = sorted(str(k) for k in raw.keys())
             issues.append(
                 MyWegNeedsValidationIssue(
                     code=ERROR_INVALID_RECORD,
                     message=(
-                        "Campos obrigatórios ausentes, data_remessa inválida "
-                        "ou rastreabilidade não derivável "
-                        "(rastreabilidade / linha_fonte / assinatura_registro)."
+                        "Campos obrigatórios ausentes ou inválidos: "
+                        + ", ".join(missing_bits)
+                        + f". chaves_recebidas={available}."
                     ),
                     path=path,
                 )

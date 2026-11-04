@@ -129,6 +129,52 @@ def test_ac03_valid_collection_builds_e1_payload():
     assert ":" in built["idempotency_key"]
 
 
+def test_csv_semicolon_and_portuguese_headers(tmp_path):
+    """Excel BR: delimitador ';' + cabeçalhos com acento/espaço."""
+    from production_control_app.jobs.myweg_needs_publisher.collection_reader import (
+        _read_csv_rows,
+    )
+
+    csv_path = tmp_path / "necessidades_tratadas.csv"
+    csv_path.write_text(
+        "Material WEG Tratado;Código Referência WEG;Origem Material WEG;"
+        "Quantidade;Unidade;Data Remessa;Documento\n"
+        "MAT-A;90000001;ORIGEM;1000;UN;15/11/2026 00:00:00;D1\n"
+        "MAT-B;;ORIGEM;500;UN;16/11/2026;\n",
+        encoding="utf-8",
+    )
+    rows = _read_csv_rows(csv_path)
+    assert len(rows) == 2
+    assert rows[0]["material_weg_tratado"] == "MAT-A"
+    assert rows[0]["codigo_referencia_weg"] == "90000001"
+    assert rows[0]["linha_fonte"] == "2"
+    assert rows[1]["linha_fonte"] == "3"
+    built = build_ingest_payload(
+        type(
+            "A",
+            (),
+            {
+                "collection_id": "col-semi",
+                "directory": tmp_path,
+                "file_hashes": {
+                    "necessidades_tratadas.csv": "a" * 64,
+                    "necessidades_tratadas.xlsx": "b" * 64,
+                    "para_conferencia_pcp.csv": "c" * 64,
+                    "resumo.json": "d" * 64,
+                },
+                "resumo": {},
+                "source_rows": rows,
+                "collected_at": __import__("datetime").datetime(
+                    2026, 11, 4, 14, 28, 27, tzinfo=__import__("datetime").timezone.utc
+                ),
+                "lock_present": False,
+            },
+        )()
+    )
+    assert built["record_count"] == 2
+    assert built["empty_referencia_count"] == 1
+
+
 def test_ac04_idempotent_resubmit_via_client(monkeypatch):
     responses = [
         httpx.Response(201, json={"success": True, "data": {"created": True, "id": "b1", "recordCount": 3}}),
