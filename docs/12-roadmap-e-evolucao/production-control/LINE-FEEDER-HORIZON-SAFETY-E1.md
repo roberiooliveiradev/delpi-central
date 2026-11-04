@@ -22,9 +22,12 @@ Consultas longas (ex.: 8 h) podiam terminar com `Horizon incomplete` / `horizon_
 
 Logs estruturados (`line_feeder_horizon_preview`, `line_feeder_materials_preview`) com `phases_ms`, contadores de CTs/ops/chamadas ST e flag `materials_skipped`. Sem PII/SQL/secrets. Resposta pode incluir `timing` (não obrigatório no FE).
 
-## Fora desta etapa (Etapa 2 / 3)
+## Fora desta etapa (histórico)
 
-- Consulta progressiva de tempo padrão até cobrir o horizonte  
+A consulta progressiva de tempo padrão foi entregue em [LINE-FEEDER-HORIZON-OPT-E2.md](./LINE-FEEDER-HORIZON-OPT-E2.md).
+
+Ainda fora (Etapa 3 / pós-OPT):
+
 - Paralelização / pooling HTTP / batch ST na api-delpi  
 - Otimização SQL Protheus / mudança de armazéns 99/01  
 

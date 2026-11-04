@@ -55,8 +55,10 @@ from production_control_app.domain.services.line_feeder_horizon import (
     COMPLETENESS_INCOMPLETE,
     COMPLETENESS_SHORTFALL,
     HorizonOperationInput,
+    WorkCenterHorizonResult,
     allocate_work_center_horizon,
     format_horizon_block_message,
+    horizon_needs_more_operations,
     is_material_block_stop_reason,
     work_center_result_payload,
 )
@@ -295,145 +297,30 @@ class LineFeederService:
 
         st_cache: dict[tuple[str, str], dict[str, Any]] = {}
         st_calls = 0
+        st_calls_avoided = 0
         st_limit = setting_int("horizonMaxStandardTimeCalls", 200)
         ct_results: list[dict[str, Any]] = []
         operations_evaluated = 0
 
         with phases.measure("allocate_horizons"):
             for group in ordered_queues:
-                inputs: list[HorizonOperationInput] = []
-                incomplete_reason: str | None = None
-                blocking_op: dict[str, Any] | None = None
-                for op in group["operations"]:
-                    operations_evaluated += 1
-                    key = (
-                        _text(op.get("production_order")),
-                        _text(op.get("operation_code")),
-                    )
-                    live = balance_map.get(key)
-                    if live is None:
-                        pending = None
-                        produced = None
-                        balance_state = "unknown"
-                    else:
-                        pending = _optional_decimal(live.get("operation_pending_qty"))
-                        produced = _optional_decimal(live.get("operation_produced_qty"))
-                        if pending is None:
-                            balance_state = "unknown"
-                        elif pending <= 0:
-                            balance_state = "closed"
-                        else:
-                            balance_state = "open"
-
-                    if balance_state == "closed":
-                        inputs.append(
-                            self._horizon_input(
-                                op,
-                                pending_qty=Decimal("0"),
-                                produced_qty=produced,
-                                balance_state="closed",
-                                ideal_cycle_seconds=None,
-                                setup_seconds=None,
-                                pieces_conversion_factor=_optional_decimal(
-                                    op.get("pieces_conversion_factor")
-                                ),
-                                standard_time_quality="n/a",
-                                standard_time_source="n/a",
-                            )
-                        )
-                        continue
-
-                    if balance_state == "unknown":
-                        incomplete_reason = "balance_unknown"
-                        blocking_op = op
-                        break
-
-                    if key not in st_cache:
-                        if st_calls >= st_limit:
-                            incomplete_reason = "standard_time_call_limit"
-                            blocking_op = op
-                            break
-                        with phases.measure("fetch_standard_time"):
-                            st_cache[key] = self._lookup_standard_time(
-                                branch=code,
-                                production_order=key[0],
-                                operation_code=key[1],
-                            )
-                        st_calls += 1
-                    snap = st_cache[key]
-                    quality = str(
-                        snap.get("standard_time_data_quality_snapshot")
-                        or "upstream_unavailable"
-                    )
-                    factor = _optional_decimal(op.get("pieces_conversion_factor"))
-                    # Preferir fator do standard-time quando o snapshot não trouxe.
-                    if factor is None:
-                        raw_st = (
-                            snap.get("_raw") if isinstance(snap.get("_raw"), dict) else {}
-                        )
-                        factor = _optional_decimal(
-                            (raw_st or {}).get("pieces_conversion_factor")
-                        )
-                    inputs.append(
-                        self._horizon_input(
-                            op,
-                            pending_qty=pending,
-                            produced_qty=produced,
-                            balance_state=balance_state,
-                            ideal_cycle_seconds=_optional_decimal(
-                                snap.get("ideal_cycle_seconds_snapshot")
-                            ),
-                            setup_seconds=_optional_decimal(
-                                snap.get("setup_seconds_snapshot")
-                            ),
-                            pieces_conversion_factor=factor,
-                            standard_time_quality=quality,
-                            standard_time_source=str(
-                                snap.get("standard_time_source") or "unavailable"
-                            ),
-                        )
-                    )
-
-                result = allocate_work_center_horizon(
-                    inputs,
+                (
+                    payload,
+                    st_calls,
+                    st_calls_avoided,
+                    operations_evaluated,
+                ) = self._allocate_work_center_progressively(
+                    group=group,
                     hours=hours,
-                    work_center=group["work_center"],
-                    work_center_name=_text(group.get("work_center_name")),
+                    branch=code,
+                    balance_map=balance_map,
+                    st_cache=st_cache,
+                    st_calls=st_calls,
+                    st_calls_avoided=st_calls_avoided,
+                    st_limit=st_limit,
+                    operations_evaluated=operations_evaluated,
+                    phases=phases,
                 )
-                payload = work_center_result_payload(result)
-                # Bloqueio técnico na preparação (antes do motor) prevalece sobre
-                # shortfall/complete derivado só das ops já montadas — senão uma
-                # fila interrompida vira «programação insuficiente» falsa.
-                if incomplete_reason:
-                    payload["completeness"] = COMPLETENESS_INCOMPLETE
-                    payload["stop_reason"] = incomplete_reason
-                    payload["blocking_operation"] = {
-                        "production_order": _text((blocking_op or {}).get("production_order"))
-                        or None,
-                        "operation_code": _text((blocking_op or {}).get("operation_code"))
-                        or None,
-                        "operation_id": _text((blocking_op or {}).get("operation_id"))
-                        or None,
-                    }
-                payload["diagnostic_message"] = format_horizon_block_message(
-                    work_center=_text(group.get("work_center")),
-                    stop_reason=_text(payload.get("stop_reason")) or None,
-                    production_order=(
-                        ((payload.get("blocking_operation") or {}) or {}).get(
-                            "production_order"
-                        )
-                    ),
-                    operation_code=(
-                        ((payload.get("blocking_operation") or {}) or {}).get(
-                            "operation_code"
-                        )
-                    ),
-                ) if (
-                    payload.get("completeness") == COMPLETENESS_INCOMPLETE
-                    or is_material_block_stop_reason(
-                        _text(payload.get("stop_reason")) or None
-                    )
-                ) else None
                 ct_results.append(payload)
 
         row_end = self._publications.get(branch=code)
@@ -450,6 +337,7 @@ class LineFeederService:
         preview_completeness = _horizon_preview_completeness(ct_results)
         phases.meta(
             standard_time_calls=st_calls,
+            standard_time_calls_avoided=st_calls_avoided,
             operations_evaluated=operations_evaluated,
             preview_completeness=preview_completeness,
         )
@@ -483,6 +371,7 @@ class LineFeederService:
             },
             "preview_completeness": preview_completeness,
             "standard_time_calls": st_calls,
+            "standard_time_calls_avoided": st_calls_avoided,
             "work_centers": ct_results,
             "timing": phases.as_dict(),
         }
@@ -919,6 +808,191 @@ class LineFeederService:
             standard_time_quality=standard_time_quality,
             standard_time_source=standard_time_source,
         )
+
+    def _allocate_work_center_progressively(
+        self,
+        *,
+        group: dict[str, Any],
+        hours: float,
+        branch: str,
+        balance_map: dict[tuple[str, str], dict[str, Any]],
+        st_cache: dict[tuple[str, str], dict[str, Any]],
+        st_calls: int,
+        st_calls_avoided: int,
+        st_limit: int,
+        operations_evaluated: int,
+        phases: _PhaseTimer,
+    ) -> tuple[dict[str, Any], int, int, int]:
+        """Aloca o CT consultando tempo padrão só enquanto o horizonte precisar.
+
+        Reusa ``allocate_work_center_horizon`` a cada op aberta adicionada.
+        Ops posteriores ao horizonte resolvido não disparam ST (Etapa OPT-E2).
+        """
+        inputs: list[HorizonOperationInput] = []
+        incomplete_reason: str | None = None
+        blocking_op: dict[str, Any] | None = None
+        result: WorkCenterHorizonResult | None = None
+        ops = list(group.get("operations") or [])
+        saturated = False
+
+        for index, op in enumerate(ops):
+            operations_evaluated += 1
+            key = (
+                _text(op.get("production_order")),
+                _text(op.get("operation_code")),
+            )
+            live = balance_map.get(key)
+            if live is None:
+                pending = None
+                produced = None
+                balance_state = "unknown"
+            else:
+                pending = _optional_decimal(live.get("operation_pending_qty"))
+                produced = _optional_decimal(live.get("operation_produced_qty"))
+                if pending is None:
+                    balance_state = "unknown"
+                elif pending <= 0:
+                    balance_state = "closed"
+                else:
+                    balance_state = "open"
+
+            if balance_state == "closed":
+                inputs.append(
+                    self._horizon_input(
+                        op,
+                        pending_qty=Decimal("0"),
+                        produced_qty=produced,
+                        balance_state="closed",
+                        ideal_cycle_seconds=None,
+                        setup_seconds=None,
+                        pieces_conversion_factor=_optional_decimal(
+                            op.get("pieces_conversion_factor")
+                        ),
+                        standard_time_quality="n/a",
+                        standard_time_source="n/a",
+                    )
+                )
+                continue
+
+            if balance_state == "unknown":
+                incomplete_reason = "balance_unknown"
+                blocking_op = op
+                break
+
+            if key not in st_cache:
+                if st_calls >= st_limit:
+                    incomplete_reason = "standard_time_call_limit"
+                    blocking_op = op
+                    break
+                with phases.measure("fetch_standard_time"):
+                    st_cache[key] = self._lookup_standard_time(
+                        branch=branch,
+                        production_order=key[0],
+                        operation_code=key[1],
+                    )
+                st_calls += 1
+            snap = st_cache[key]
+            quality = str(
+                snap.get("standard_time_data_quality_snapshot")
+                or "upstream_unavailable"
+            )
+            factor = _optional_decimal(op.get("pieces_conversion_factor"))
+            if factor is None:
+                raw_st = snap.get("_raw") if isinstance(snap.get("_raw"), dict) else {}
+                factor = _optional_decimal(
+                    (raw_st or {}).get("pieces_conversion_factor")
+                )
+            inputs.append(
+                self._horizon_input(
+                    op,
+                    pending_qty=pending,
+                    produced_qty=produced,
+                    balance_state=balance_state,
+                    ideal_cycle_seconds=_optional_decimal(
+                        snap.get("ideal_cycle_seconds_snapshot")
+                    ),
+                    setup_seconds=_optional_decimal(
+                        snap.get("setup_seconds_snapshot")
+                    ),
+                    pieces_conversion_factor=factor,
+                    standard_time_quality=quality,
+                    standard_time_source=str(
+                        snap.get("standard_time_source") or "unavailable"
+                    ),
+                )
+            )
+            result = allocate_work_center_horizon(
+                inputs,
+                hours=hours,
+                work_center=group["work_center"],
+                work_center_name=_text(group.get("work_center_name")),
+            )
+            if not horizon_needs_more_operations(result):
+                saturated = True
+                # Conta ops abertas restantes que deixariam de consultar ST.
+                for later in ops[index + 1 :]:
+                    later_key = (
+                        _text(later.get("production_order")),
+                        _text(later.get("operation_code")),
+                    )
+                    later_live = balance_map.get(later_key)
+                    if later_live is None:
+                        continue
+                    later_pending = _optional_decimal(
+                        later_live.get("operation_pending_qty")
+                    )
+                    if later_pending is not None and later_pending > 0:
+                        st_calls_avoided += 1
+                break
+
+        if result is None:
+            result = allocate_work_center_horizon(
+                inputs,
+                hours=hours,
+                work_center=group["work_center"],
+                work_center_name=_text(group.get("work_center_name")),
+            )
+
+        payload = work_center_result_payload(result)
+        # Bloqueio técnico na preparação prevalece sobre shortfall do prefixo.
+        if incomplete_reason:
+            payload["completeness"] = COMPLETENESS_INCOMPLETE
+            payload["stop_reason"] = incomplete_reason
+            payload["blocking_operation"] = {
+                "production_order": _text((blocking_op or {}).get("production_order"))
+                or None,
+                "operation_code": _text((blocking_op or {}).get("operation_code"))
+                or None,
+                "operation_id": _text((blocking_op or {}).get("operation_id")) or None,
+            }
+        payload["diagnostic_message"] = (
+            format_horizon_block_message(
+                work_center=_text(group.get("work_center")),
+                stop_reason=_text(payload.get("stop_reason")) or None,
+                production_order=(
+                    ((payload.get("blocking_operation") or {}) or {}).get(
+                        "production_order"
+                    )
+                ),
+                operation_code=(
+                    ((payload.get("blocking_operation") or {}) or {}).get(
+                        "operation_code"
+                    )
+                ),
+            )
+            if (
+                payload.get("completeness") == COMPLETENESS_INCOMPLETE
+                or is_material_block_stop_reason(
+                    _text(payload.get("stop_reason")) or None
+                )
+            )
+            else None
+        )
+        payload["progressive_allocation"] = {
+            "saturated": saturated or not horizon_needs_more_operations(result),
+            "inputs_considered": len(inputs),
+        }
+        return payload, st_calls, st_calls_avoided, operations_evaluated
 
     # ------------------------------------------------------------------ #
     # Necessidade por bancada

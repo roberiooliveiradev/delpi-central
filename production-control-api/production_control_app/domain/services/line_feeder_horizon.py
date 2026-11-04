@@ -38,6 +38,9 @@ COMPLETENESS_COMPLETE = "complete"
 COMPLETENESS_INCOMPLETE = "incomplete"
 COMPLETENESS_SHORTFALL = "shortfall"
 
+# Shortfall legítimo enquanto ainda restam operações publicadas a avaliar.
+STOP_QUEUE_SHORTER_THAN_HORIZON = "queue_shorter_than_horizon"
+
 _SECONDS_PER_HOUR = Decimal("3600")
 _QTY_QUANTUM = Decimal("0.000001")
 
@@ -331,8 +334,8 @@ def allocate_work_center_horizon(
     hours_shortfall = remaining_budget / _SECONDS_PER_HOUR
 
     if completeness == COMPLETENESS_COMPLETE and remaining_budget > 0:
-        # Ainda há orçamento mas a fila acabou.
-        _mark_shortfall("queue_shorter_than_horizon")
+        # Ainda há orçamento mas a fila (até aqui) acabou.
+        _mark_shortfall(STOP_QUEUE_SHORTER_THAN_HORIZON)
 
     if completeness == COMPLETENESS_COMPLETE and setup_uncertain:
         completeness = COMPLETENESS_INCOMPLETE
@@ -355,6 +358,25 @@ def allocate_work_center_horizon(
         blocking_operation_code=blocking_operation_code,
         blocking_operation_id=blocking_operation_id,
     )
+
+
+def horizon_needs_more_operations(result: WorkCenterHorizonResult) -> bool:
+    """True quando o motor ainda precisa de ops publicadas posteriores.
+
+    Usado pela orquestração progressiva: só consulta tempo padrão da próxima
+    operação aberta se o horizonte ainda não estiver resolvido.
+
+    - ``complete`` → orçamento preenchido (inclui cobertura parcial final).
+    - ``incomplete`` → bloqueio técnico; não avança.
+    - ``shortfall`` com fila esgotada no prefixo atual → continua se houver mais
+      ops na PUBLISHED.
+    - demais ``shortfall`` (setup/orçamento) → não há ganho em avançar.
+    """
+    if result.completeness == COMPLETENESS_INCOMPLETE:
+        return False
+    if result.completeness == COMPLETENESS_COMPLETE:
+        return False
+    return result.stop_reason == STOP_QUEUE_SHORTER_THAN_HORIZON
 
 
 def work_center_result_payload(result: WorkCenterHorizonResult) -> dict[str, Any]:

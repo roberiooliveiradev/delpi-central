@@ -18,6 +18,7 @@ from production_control_app.domain.services.branch_access_service import BranchA
 from production_control_app.domain.services.line_feeder_horizon import (
     HorizonOperationInput,
     allocate_work_center_horizon,
+    horizon_needs_more_operations,
 )
 
 FULL_PERMS = (
@@ -579,3 +580,332 @@ def test_http_preview_envelope() -> None:
         assert body["data"]["publication"]["publication_revision"]
     finally:
         line_feeder_routes.build_line_feeder_service = original  # type: ignore[assignment]
+
+
+# --------------------------------------------------------------------------- #
+# Otimização Etapa 2 — consulta progressiva de tempo padrão
+# --------------------------------------------------------------------------- #
+
+
+def _complete_st(cycle: float = 3600) -> dict[str, Any]:
+    return {
+        "ideal_cycle_seconds": cycle,
+        "setup_seconds": 0,
+        "pieces_conversion_factor": 1,
+        "standard_time_source": "shy_tempad",
+        "data_quality": "complete",
+    }
+
+
+def test_horizon_needs_more_only_for_queue_shortfall() -> None:
+    short = allocate_work_center_horizon(
+        [_hop(order="ONLY", pending=1, cycle=600)],
+        hours=3,
+        work_center="CT-A",
+    )
+    assert short.completeness == "shortfall"
+    assert horizon_needs_more_operations(short) is True
+
+    filled = allocate_work_center_horizon(
+        [_hop(order="FULL", pending=10, cycle=3600)],
+        hours=1,
+        work_center="CT-A",
+    )
+    assert filled.completeness == "complete"
+    assert horizon_needs_more_operations(filled) is False
+
+    bad = allocate_work_center_horizon(
+        [_hop(order="BAD", pending=1, cycle=100, quality="standard_time_unavailable")],
+        hours=1,
+        work_center="CT-A",
+    )
+    assert bad.completeness == "incomplete"
+    assert horizon_needs_more_operations(bad) is False
+
+
+def test_progressive_stops_standard_time_after_horizon_covered() -> None:
+    """AC-01: 55 ops, 5 cobrem 8h → só 5 consultas ST."""
+    ops = [_op_row(work_center="CT-A", order=f"OP{i:02d}") for i in range(1, 56)]
+    for index, op in enumerate(ops, start=1):
+        op["sequence_position"] = index
+    balances = {
+        (f"OP{i:02d}", "01"): {"operation_pending_qty": 1, "operation_produced_qty": 0}
+        for i in range(1, 56)
+    }
+    # 1 peça × 3600s = 1h; 5 ops = 5h… use 5760s ≈ 1.6h → 5 ops cobrem 8h.
+    cycle = 5760
+    st = {(f"OP{i:02d}", "01"): _complete_st(cycle) for i in range(1, 56)}
+    # Marca ops 6+ como inválidas: se consultadas, incompletaría o CT.
+    for i in range(6, 56):
+        st[(f"OP{i:02d}", "01")] = {
+            "ideal_cycle_seconds": None,
+            "setup_seconds": 0,
+            "pieces_conversion_factor": 1,
+            "standard_time_source": "unavailable",
+            "data_quality": "standard_time_unavailable",
+        }
+    service, _, _, gateway = _service(
+        published=_payload(ops), balances=balances, standard_times=st
+    )
+    data = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=8,
+    )
+    assert gateway.st_calls == 5
+    assert data["standard_time_calls"] == 5
+    assert data["standard_time_calls_avoided"] == 50
+    group = data["work_centers"][0]
+    assert group["completeness"] == "complete"
+    assert len(group["operations"]) == 5
+    assert sum(op["covered_qty"] for op in group["operations"]) == pytest.approx(5.0)
+
+
+def test_progressive_ignores_invalid_ops_beyond_horizon() -> None:
+    """AC-02: op inválida depois do horizonte não é consultada."""
+    ops = [
+        _op_row(work_center="CT-A", order="OP1"),
+        _op_row(work_center="CT-A", order="OP2"),
+        _op_row(work_center="CT-A", order="BAD"),
+    ]
+    for index, op in enumerate(ops, start=1):
+        op["sequence_position"] = index
+    balances = {
+        ("OP1", "01"): {"operation_pending_qty": 1, "operation_produced_qty": 0},
+        ("OP2", "01"): {"operation_pending_qty": 1, "operation_produced_qty": 0},
+        ("BAD", "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0},
+    }
+    st = {
+        ("OP1", "01"): _complete_st(3600),
+        ("OP2", "01"): _complete_st(3600),
+        ("BAD", "01"): {
+            "ideal_cycle_seconds": None,
+            "setup_seconds": 0,
+            "pieces_conversion_factor": 1,
+            "standard_time_source": "unavailable",
+            "data_quality": "standard_time_unavailable",
+        },
+    }
+    service, _, _, gateway = _service(
+        published=_payload(ops), balances=balances, standard_times=st
+    )
+    data = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=2,
+    )
+    assert gateway.st_calls == 2
+    assert data["standard_time_calls_avoided"] == 1
+    assert data["work_centers"][0]["completeness"] == "complete"
+    assert "BAD" not in {
+        op["production_order"] for op in data["work_centers"][0]["operations"]
+    }
+
+
+def test_progressive_invalid_inside_horizon_is_incomplete() -> None:
+    """AC-03: ST inválido na op necessária → incomplete."""
+    ops = [
+        _op_row(work_center="CT-A", order="BAD"),
+        _op_row(work_center="CT-A", order="OK"),
+    ]
+    balances = {
+        ("BAD", "01"): {"operation_pending_qty": 2, "operation_produced_qty": 0},
+        ("OK", "01"): {"operation_pending_qty": 2, "operation_produced_qty": 0},
+    }
+    st = {
+        ("BAD", "01"): {
+            "ideal_cycle_seconds": None,
+            "setup_seconds": 0,
+            "pieces_conversion_factor": 1,
+            "standard_time_source": "unavailable",
+            "data_quality": "standard_time_unavailable",
+        },
+        ("OK", "01"): _complete_st(3600),
+    }
+    service, _, _, gateway = _service(
+        published=_payload(ops), balances=balances, standard_times=st
+    )
+    data = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=2,
+    )
+    assert gateway.st_calls == 1
+    assert data["work_centers"][0]["completeness"] == "incomplete"
+    assert data["work_centers"][0]["stop_reason"] == "standard_time_unavailable"
+
+
+def test_progressive_shortfall_when_queue_short() -> None:
+    """AC-04: fila válida menor que o horizonte → shortfall."""
+    published = _payload([_op_row(work_center="CT-A", order="ONLY")])
+    balances = {
+        ("ONLY", "01"): {"operation_pending_qty": 1, "operation_produced_qty": 0},
+    }
+    st = {("ONLY", "01"): _complete_st(1800)}
+    service, _, _, gateway = _service(
+        published=published, balances=balances, standard_times=st
+    )
+    data = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=3,
+    )
+    assert gateway.st_calls == 1
+    assert data["work_centers"][0]["completeness"] == "shortfall"
+    assert data["work_centers"][0]["stop_reason"] == "queue_shorter_than_horizon"
+
+
+def test_progressive_partial_operation_matches_batch_motor() -> None:
+    """AC-05: cobertura parcial equivalente ao motor canônico em lote."""
+    ops = [
+        _op_row(work_center="CT-A", order="OP1"),
+        _op_row(work_center="CT-A", order="OP2"),
+    ]
+    for index, op in enumerate(ops, start=1):
+        op["sequence_position"] = index
+    balances = {
+        ("OP1", "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0},
+        ("OP2", "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0},
+    }
+    st = {
+        ("OP1", "01"): _complete_st(1800),
+        ("OP2", "01"): _complete_st(1800),
+    }
+    service, _, _, gateway = _service(
+        published=_payload(ops), balances=balances, standard_times=st
+    )
+    data = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=1,
+    )
+    # 1h = 3600s → 2 peças de 1800s na OP1; OP2 fora.
+    assert gateway.st_calls == 1
+    group = data["work_centers"][0]
+    assert group["completeness"] == "complete"
+    assert len(group["operations"]) == 1
+    assert group["operations"][0]["coverage"] == "partial"
+    assert group["operations"][0]["covered_qty"] == 2.0
+    batch = allocate_work_center_horizon(
+        [
+            _hop(order="OP1", pending=10, cycle=1800, position=1),
+            _hop(order="OP2", pending=10, cycle=1800, position=2),
+        ],
+        hours=1,
+        work_center="CT-A",
+    )
+    assert group["operations"][0]["covered_qty"] == batch.operations[0].covered_qty
+    assert group["operations"][0]["offset_end_seconds"] == batch.operations[0].offset_end_seconds
+
+
+def test_progressive_multi_ct_independent_budgets() -> None:
+    """AC-06: cada CT encerra suas próprias consultas ST."""
+    ops = [
+        *[_op_row(work_center="CT-A", order=f"A{i}") for i in range(1, 6)],
+        *[_op_row(work_center="CT-B", order=f"B{i}") for i in range(1, 4)],
+        *[_op_row(work_center="CT-C", order=f"C{i}") for i in range(1, 8)],
+    ]
+    balances = {
+        (op["production_order"], "01"): {
+            "operation_pending_qty": 1,
+            "operation_produced_qty": 0,
+        }
+        for op in ops
+    }
+    st = {
+        (op["production_order"], "01"): _complete_st(3600) for op in ops
+    }
+    service, _, _, gateway = _service(
+        published=_payload(ops), balances=balances, standard_times=st
+    )
+    data = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A", "CT-B", "CT-C"],
+        hours_per_work_center=2,
+    )
+    # 2h ⇒ 2 ST por CT (cycle 1h).
+    assert gateway.st_calls == 6
+    assert data["standard_time_calls"] == 6
+    by_ct = {g["work_center"]: g for g in data["work_centers"]}
+    assert len(by_ct["CT-A"]["operations"]) == 2
+    assert len(by_ct["CT-B"]["operations"]) == 2
+    assert len(by_ct["CT-C"]["operations"]) == 2
+    assert by_ct["CT-A"]["completeness"] == "complete"
+    assert by_ct["CT-B"]["completeness"] == "complete"
+    assert by_ct["CT-C"]["completeness"] == "complete"
+
+
+def test_progressive_global_call_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    """AC-07: limite global conta apenas chamadas efetivas."""
+    ops = [
+        _op_row(work_center="CT-A", order="A1"),
+        _op_row(work_center="CT-A", order="A2"),
+        _op_row(work_center="CT-B", order="B1"),
+    ]
+    balances = {
+        ("A1", "01"): {"operation_pending_qty": 1, "operation_produced_qty": 0},
+        ("A2", "01"): {"operation_pending_qty": 1, "operation_produced_qty": 0},
+        ("B1", "01"): {"operation_pending_qty": 1, "operation_produced_qty": 0},
+    }
+    st = {
+        ("A1", "01"): _complete_st(600),
+        ("A2", "01"): _complete_st(600),
+        ("B1", "01"): _complete_st(600),
+    }
+    service, _, _, gateway = _service(
+        published=_payload(ops), balances=balances, standard_times=st
+    )
+    from production_control_app.application.services import line_feeder_service as lfs
+
+    original = lfs.setting_int
+
+    def limited(key: str, default: int) -> int:
+        if key == "horizonMaxStandardTimeCalls":
+            return 1
+        return original(key, default)
+
+    monkeypatch.setattr(lfs, "setting_int", limited)
+    data = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A", "CT-B"],
+        hours_per_work_center=8,
+    )
+    assert gateway.st_calls == 1
+    assert data["standard_time_calls"] == 1
+    # CT-A consome o único call; A2 ou CT-B fica incomplete por limite.
+    statuses = {g["work_center"]: g["completeness"] for g in data["work_centers"]}
+    assert "incomplete" in statuses.values()
+    assert any(
+        g.get("stop_reason") == "standard_time_call_limit" for g in data["work_centers"]
+    )
+
+
+def test_progressive_reuses_standard_time_cache_across_cts() -> None:
+    """Mesma OP/operação em CTs distintos reusa o cache da requisição."""
+    # Na prática a mesma OP não aparece em dois CTs; o cache é por (OP, op_code).
+    ops = [
+        _op_row(work_center="CT-A", order="SHARED"),
+        _op_row(work_center="CT-B", order="SHARED"),
+    ]
+    balances = {
+        ("SHARED", "01"): {"operation_pending_qty": 1, "operation_produced_qty": 0},
+    }
+    st = {("SHARED", "01"): _complete_st(1800)}
+    service, _, _, gateway = _service(
+        published=_payload(ops), balances=balances, standard_times=st
+    )
+    data = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A", "CT-B"],
+        hours_per_work_center=1,
+    )
+    assert gateway.st_calls == 1
+    assert data["standard_time_calls"] == 1
