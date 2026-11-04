@@ -4,6 +4,12 @@ import {
   mapComunicadoBlocksToPptxElements,
   type PptxSlideElement,
 } from "./exportSlidePptxElements";
+import {
+  normalizePptxHex,
+  resolvePptxFillColor,
+  resolvePptxStrokeColor,
+  resolvePptxTextColor,
+} from "./exportSlidePptxPaint";
 
 export type { PptxSlideElement };
 export { mapComunicadoBlocksToPptxElements };
@@ -20,11 +26,6 @@ function pptxPosition(frame: ComunicadoFrame) {
   };
 }
 
-function color(value: string | undefined, fallback: string): string {
-  const normalized = value?.trim().replace(/^#/, "");
-  return normalized && /^[0-9a-f]{6}$/i.test(normalized) ? normalized : fallback;
-}
-
 type PptxDeck = Awaited<ReturnType<typeof loadPptxCtor>> extends new () => infer I ? I : never;
 type PptxSlide = ReturnType<PptxDeck["addSlide"]>;
 
@@ -35,7 +36,7 @@ async function loadPptxCtor() {
 
 function paintPptxSlide(pptx: PptxDeck, slide: PptxSlide, config: ComunicadoConfig) {
   if (config.background?.type === "color") {
-    slide.background = { color: color(config.background.value, "FFFFFF") };
+    slide.background = { color: normalizePptxHex(config.background.value, "FFFFFF") };
   } else if (config.background?.type === "image" && config.background.url) {
     try {
       slide.addImage({ path: config.background.url, x: 0, y: 0, w: SLIDE_WIDTH, h: SLIDE_HEIGHT });
@@ -54,7 +55,7 @@ function paintPptxSlide(pptx: PptxDeck, slide: PptxSlide, config: ComunicadoConf
         fontSize: style.fontSize ? Math.max(8, style.fontSize * 0.75) : 18,
         bold: style.fontWeight === "bold",
         italic: style.fontStyle === "italic",
-        color: color(style.color, "1F2937"),
+        color: resolvePptxTextColor(style),
         align: style.textAlign === "justify" ? "justify" : style.textAlign,
         valign: style.verticalAlign,
         margin: 0.08,
@@ -62,13 +63,20 @@ function paintPptxSlide(pptx: PptxDeck, slide: PptxSlide, config: ComunicadoConf
     } else if (element.kind === "shape") {
       slide.addShape(pptx.ShapeType.rect, {
         ...position,
-        fill: { color: color(style.fill ?? style.backgroundColor, "DCE6F1") },
+        fill: { color: resolvePptxFillColor(style) },
         line: {
-          color: color(style.stroke ?? style.borderColor, "64748B"),
+          color: resolvePptxStrokeColor(style),
           width: style.strokeWidth ?? style.borderWidth ?? 1,
         },
       });
-      if (element.text) slide.addText(element.text, { ...position, align: "center", valign: "middle" });
+      if (element.text) {
+        slide.addText(element.text, {
+          ...position,
+          align: "center",
+          valign: "middle",
+          color: resolvePptxTextColor(style),
+        });
+      }
     } else if (element.kind === "image") {
       try {
         slide.addImage({ path: element.url, ...position });
@@ -85,9 +93,13 @@ function paintPptxSlide(pptx: PptxDeck, slide: PptxSlide, config: ComunicadoConf
         ),
         {
           ...position,
-          border: { type: "solid", color: color(style.borderColor, "94A3B8"), pt: 1 },
-          color: color(style.color, "1F2937"),
-          fill: { color: color(style.backgroundColor, "FFFFFF") },
+          border: {
+            type: "solid",
+            color: resolvePptxStrokeColor(style, "94A3B8"),
+            pt: 1,
+          },
+          color: resolvePptxTextColor(style),
+          fill: { color: resolvePptxFillColor(style, "FFFFFF") },
           fontFace: style.fontFamily?.split(",")[0]?.trim() || "Arial",
           fontSize: style.fontSize ? Math.max(8, style.fontSize * 0.75) : 14,
           margin: 0.05,

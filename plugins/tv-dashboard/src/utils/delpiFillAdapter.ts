@@ -109,6 +109,11 @@ export function styleToColorFill(
   return { kind: "solid", color: style.color };
 }
 
+/**
+ * Fill solid → canonicaliza em hex (`fill`/`backgroundColor`) e limpa `fillPaint`.
+ * Diferente de `fillToColorStylePatch`: texto solid **mantém** `colorPaint` (marcador
+ * de escolha explícita). Gradiente/none persistem em `fillPaint`.
+ */
 export function fillToFillStylePatch(fill: DelpiFill): Partial<ComunicadoBlockStyle> {
   if (fill.kind === "none") {
     return { fill: "transparent", backgroundColor: "transparent", fillPaint: undefined };
@@ -120,6 +125,7 @@ export function fillToFillStylePatch(fill: DelpiFill): Partial<ComunicadoBlockSt
   return { fill: hex, backgroundColor: hex, fillPaint: fill };
 }
 
+/** Stroke solid → hex + limpa paint (mesma canonicalização de fill). */
 export function fillToStrokeStylePatch(
   fill: DelpiFill,
   extra?: Partial<ComunicadoBlockStyle>,
@@ -134,6 +140,7 @@ export function fillToStrokeStylePatch(
   return { stroke: hex, borderColor: hex, strokePaint: fill, ...extra };
 }
 
+/** Texto: solid persiste `colorPaint` (autoridade tipográfica / anti-sentinel). */
 export function fillToColorStylePatch(fill: DelpiFill): Partial<ComunicadoBlockStyle> {
   if (fill.kind === "none") {
     return { color: "transparent", colorPaint: undefined };

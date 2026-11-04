@@ -109,6 +109,19 @@ describe("reconcileDraftContentRunsForCommit", () => {
     ]);
   });
 
+  it("container só com colorPaint ainda remove color stale dos runs (TV-CT-011)", () => {
+    const reconciled = reconcileDraftContentRunsForCommit({
+      draftRuns: whiteRuns,
+      containerStyle: {
+        colorPaint: { kind: "solid", color: "#000000" },
+      },
+    });
+    expect(reconciled?.every((run) => run.style?.color == null)).toBe(true);
+    expect(containerTypographyKeysFromRunPatch({ colorPaint: { kind: "solid", color: "#000" } })).toEqual([
+      "color",
+    ]);
+  });
+
   it("cores irmãs: preto, azul-escuro, vermelho e branco no container", () => {
     for (const color of ["#000000", "#1e3a5f", "#7f1d1d", "#ffffff"]) {
       const after = applyComunicadoBlockStylePatch(
