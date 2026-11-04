@@ -64,8 +64,16 @@ export function ActionButton(props: {
   );
 }
 
-export function EmptyState(props: { defaultMessage?: string }) {
-  return el("p", { "data-testid": "empty-state" }, props.defaultMessage);
+export function EmptyState(props: {
+  defaultMessage?: string;
+  children?: ReactNode;
+}) {
+  return el(
+    "div",
+    { "data-testid": "empty-state" },
+    el("p", null, props.defaultMessage),
+    props.children,
+  );
 }
 
 /** Mesma regra do kit: só o clique esquerdo limpo vira navegação SPA. */

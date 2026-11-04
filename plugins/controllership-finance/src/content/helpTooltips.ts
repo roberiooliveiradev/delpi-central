@@ -227,6 +227,20 @@ export const CF_HELP = {
         "Regras disparadas na linha — sempre candidatos a revisão ou explicações estruturais, nunca erro confirmado.",
     },
   },
+  billingModBreakdown: {
+    page:
+      "Faturamento × MOD — R09: visão operacional do faturamento de produtos acabados por filial, com as operações MOD retornadas pelo roteiro congelado da última OP. A paridade oficial com o relatório histórico DLP204 segue pendente — existem divergências conhecidas em roteiros, quantidades e horas, e a taxa histórica de MOD não foi comprovada: custos dependentes dela permanecem indisponíveis e nunca são estimados. A comparação histórica exibida refere-se à referência 09/2026 — não é selo da competência consultada.",
+    filters:
+      "Filial restringe o universo da consulta à BFF (Todas, 01 ou 02) — recarrega os dados sem alterar permissões. A busca da tabela filtra localmente sobre todo o universo retornado; a paginação é no cliente sobre o conjunto completo.",
+    indicators:
+      "Indicadores derivados apenas do payload ativo: âncoras produto/filial retornadas, total de linhas MOD e quantidade de âncoras sem linhas retornadas — sem deduplicação presumida e sem valores monetários inferidos.",
+    table:
+      "Tabela principal por âncora (produto + filial): código, descrição, filial, quantidade faturada, contagem de linhas MOD e situação. «Ver» abre o detalhe das operações da âncora abaixo da tabela. A busca cobre todo o universo retornado e a paginação é local — nenhum registro é omitido.",
+    detail:
+      "Operações MOD da âncora selecionada: nível, produto componente, operação, recurso, item MOD, unidade, quantidade propagada, tempo padrão, horas e custos — cada campo numérico preserva o estado da fonte («fonte ausente», «não aplicável», «indisponível») e valor ausente nunca aparece como zero.",
+    historical:
+      "Evidência histórica de paridade com o DLP204, referente exclusivamente ao recorte 09/2026 — cobertura de chaves e divergências do estudo. Não representa homologação da competência corrente.",
+  },
   workInProcess: {
     page:
       "Material em Processo — R08: relatório do material em processo no fechamento do mês, com a mesma composição MATR989 que o motor P7 certifica — bloco físico do armazém de processo (99) mais o saldo alocado em ordens de produção vivas. A paridade por competência contra uma nova emissão oficial MATR989 ainda está pendente de homologação — use os valores como referência verificável, não como selo oficial.",
