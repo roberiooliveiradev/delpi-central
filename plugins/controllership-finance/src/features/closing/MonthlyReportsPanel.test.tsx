@@ -719,11 +719,45 @@ describe("catálogo em cartões — navegação contextual", () => {
     renderPanel({ onOpenReport: onOpen });
 
     await screen.findByText("Conciliação pendente");
-    const buttons = screen.getAllByRole("button", {
-      name: "Abrir relatório",
+    const links = screen.getAllByRole("link", {
+      name: /Abrir relatório/,
     });
-    fireEvent.click(buttons[0]);
+    const stockLink = links.find((l) =>
+      (l.getAttribute("href") ?? "").includes("/reports/stock-inventory"),
+    );
+    expect(stockLink).toBeTruthy();
+    fireEvent.click(stockLink as HTMLElement);
     expect(onOpen).toHaveBeenCalledWith("stock-inventory");
+  });
+
+  it("link de atenção ignora modificadores — navegador decide nova aba", async () => {
+    const onOpen = vi.fn();
+    p3Mock.mockResolvedValue(
+      p3State([
+        recon("P7", {
+          source_state: "UNAVAILABLE",
+          expected_amount: null,
+          reported_amount: null,
+          divergence: null,
+          fetched_at: null,
+        }),
+      ]),
+    );
+    renderPanel({ onOpenReport: onOpen });
+
+    await screen.findByText("Conciliação pendente");
+    const link = screen.getAllByRole("link", {
+      name: /Abrir relatório/,
+    })[0];
+    fireEvent.click(link, { ctrlKey: true });
+    fireEvent.click(link, { metaKey: true });
+    expect(onOpen).not.toHaveBeenCalled();
+    // «Ver detalhes» permanece botão e não navega.
+    const details = screen.getByRole("button", {
+      name: "Ver detalhes",
+    });
+    fireEvent.click(details);
+    expect(onOpen).not.toHaveBeenCalled();
   });
 
   it("cartão é um link real para a página contextual — clique navega em SPA", async () => {
@@ -815,9 +849,9 @@ describe("catálogo em cartões — navegação contextual", () => {
     renderPanel();
 
     await screen.findByText("Relatórios para análise");
+    await screen.findAllByText("Disponível");
     expect(screen.queryByText("RELATÓRIO")).toBeNull();
     expect(screen.queryByText("DESCRIÇÃO")).toBeNull();
-    expect(screen.getAllByText("Disponível").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Abrir relatório").length).toBe(11);
   });
 

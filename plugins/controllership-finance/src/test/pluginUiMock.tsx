@@ -23,14 +23,34 @@ function el(
 
 export function ActionButton(props: {
   children?: ReactNode;
-  onClick?: () => void;
+  onClick?: (event?: unknown) => void;
   variant?: string;
   type?: "button" | "submit";
+  href?: string;
+  title?: string;
   disabled?: boolean;
   softDisabled?: boolean;
   "aria-label"?: string;
 }) {
   const soft = Boolean(props.disabled && props.softDisabled);
+  if (props.href != null) {
+    // Modo âncora do kit: preventDefault + onClick só no clique limpo.
+    return el(
+      "a",
+      {
+        href: props.href,
+        title: props.title,
+        "aria-label": props["aria-label"] ?? props.title,
+        onClick: (event: MouseEvent & { preventDefault(): void }) => {
+          if (!shouldHandleInlineNavClick(event)) return;
+          if (!props.onClick) return;
+          event.preventDefault();
+          props.onClick(event);
+        },
+      },
+      props.children,
+    );
+  }
   return el(
     "button",
     {

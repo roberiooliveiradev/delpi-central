@@ -100,6 +100,7 @@ import {
   formatDateTime,
 } from "../../utils/formatters";
 import {
+  REPORT_KEY_LABELS,
   REPORT_KEY_TO_FAMILY,
   type ReportFamily,
   type ReportKey,
@@ -896,11 +897,15 @@ function AttentionRow({
   expanded,
   onToggle,
   onOpenReport,
+  reportHref,
 }: {
   item: AttentionItem;
   expanded: boolean;
   onToggle: () => void;
   onOpenReport: (key: ReportKey) => void;
+  /** Destino canônico da página contextual — href real do link
+   *  «Abrir relatório» (CF-PROC0072). */
+  reportHref: (key: ReportKey) => string;
 }) {
   const badge = KIND_BADGE[item.kind];
   const detailId = `cf-attn-detail-${item.id}`;
@@ -933,8 +938,13 @@ function AttentionRow({
       </div>
       <div className="cf-attention-item__actions">
         {item.reportKey ? (
+          // `<a>` real (CfActionButton href-mode): clique limpo navega
+          // em SPA via onClick; Ctrl/Cmd+clique, botão do meio e menu
+          // de contexto seguem o comportamento nativo do navegador.
           <CfActionButton
             variant="primary"
+            href={reportHref(item.reportKey)}
+            title={`Abrir relatório ${REPORT_KEY_LABELS[item.reportKey]}`}
             onClick={() => onOpenReport(item.reportKey as ReportKey)}
           >
             Abrir relatório
@@ -1377,6 +1387,7 @@ export function MonthlyReportsPanel({
                     )
                   }
                   onOpenReport={onOpenReport}
+                  reportHref={reportHref}
                 />
               ))}
             </ul>
