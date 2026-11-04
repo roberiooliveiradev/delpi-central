@@ -7484,6 +7484,20 @@ class OperationalCapabilityOrchestrator:
                     "expected exactly two complete distinct owner reads"
                 )
                 saw_source_unavailable = True
+                _logger.info(
+                    "orchestration stage=evidence_composition "
+                    "decision=insufficient sources=%d completed=%d "
+                    "objectives=%d reasons=%s correlation_id=%s",
+                    len(sources),
+                    len(completed),
+                    len(tracker.objectives),
+                    [
+                        lim
+                        for lim in limitations
+                        if lim.startswith("comparison_")
+                    ],
+                    correlation,
+                )
             else:
                 composed = self._compose_multi_evidence(
                     sources,
