@@ -639,3 +639,21 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **Hashes PDFs originais analisados:** `90264302=f33447b271a3518643559582d79cf54527b85778537cfb1e20a5ccf5d989f0ef`, `90264161=8d9fe28a19cae334abd6eaa3b0fb13059aecad715672b0dfd6aaf10462b85195`, `90261606=1c1f1412fb6cac22e8e44893dc27a39f45be806c6819bc12856ea4adb3580cd1`, `90263572=9021fce05c608655e538f67cdaac08c7484ebbe16a8888e83fbeec9ecaa28d3e`, `90264178=1a78693bd335371f192daceecf7f14f91637443bf03045f0aebec33bd7332fa8`, `90480120=9b64ae2095fa551e6c3b12fa1f6d232646725b2ab9c31eb489abedd972555cd8`.
 
 **Gates após lote:** `E2E_MCP_CHATGPT_PASS` permanece comprovado para `90263520`; generalização **PARTIAL/INCONCLUSIVE**, não declarar `VAL-01_PASS`. Sem falsos `BOM_ONLY` nos casos de extração insuficiente (bom fail-closed); **um novo finding candidato de hierarquia** (`90264161/50090001`), não aprovado pelo owner. Em dois PDFs com tabelas claras (`90263572` e `90480120`), detecção automática falha; priorizar correção de localizador de `component_table` em tabelas na página 2 e na página 1, seguida de revalidação completa dos sete PDFs. Também rever o status `NO_DIVERGENCE_DETECTED` quando `parent_relation_unverified`/códigos fora de células afetarem escopo integral. Não iniciar frontend ainda; preservar a UX TARGET do §18.
+
+## 22. Correção da extração visual — causas-raiz por PDF oficial (DEC-VAL-024 follow-up — 2026-11-03)
+
+**Diagnóstico no runtime produtivo (6 PDFs oficiais, pipeline real):**
+
+| Produto | Causa-raiz identificada | Correção |
+|---|---|---|
+| `90263572` | `PAGE 2 ocr_failed:MemoryError` — pág. 2 (tabela densa) estourava memória do worker; tokens só pág.1 | `visual_benchmark`: retry único por página com DPI reduzido (`_RETRY_DPI=110`) em falhas de recurso — genérico |
+| `90480120` | `component_table` detectada mas `cells`/`fields` vazios — coluna de códigos não tipada | `_row_codes`: união de todas as superfícies (células tipadas+não tipadas+campos) regex 8–11 dígitos; fallback `code_token` |
+| `90264178` | boundary `tokens_inferred` → `unreliable`; 30 códigos vs 10 tipados (linhas/células fundidas) | união de superfícies + fallback token-only |
+| `90264161` | `PARENT_RELATION_MISMATCH 50090001` — heurística PI-abre-grupo atribuiu raiz (BOM: filho de `90350410`) | `parent_source="pi_group_inference"`; finding mantido candidato com `confidence="inferred_parent"` — evidência real mostrava linha separada (plausível, não confirmado) |
+| `90264302/90261606` | `NO_DIVERGENCE_DETECTED` otimista — MPs em coluna `item` não tipada / pais não verificados | `complete_for_requested_scope` inclui unclassified+pais não verificados → `INCONCLUSIVE` honesto em vez de falso PASS integral |
+
+**Regra de fallback aditiva:** códigos visíveis fora das linhas tipadas (`code_token`) **contam presença** (consomem ocorrências BOM por código) mas **nunca geram `DRAWING_ONLY`** — sem linha tipada não há prova de que sejam itens da tabela de componentes.
+
+**Semântica de status:** `DIVERGENCES_CANDIDATES` quando há findings; `NO_DIVERGENCE_DETECTED` apenas com escopo integralmente coberto; `INCONCLUSIVE` caso contrário — distingue match de presença N1 de validação integral da hierarquia.
+
+**Testes:** 15 testes do comparador + regressão (suíte 719+15). SHA `0d750e7625` publicado/implantado no `srv-api`. Validação dos 7 PDFs no runtime em `diag_extraction.py` — resultados reportados abaixo desta seção quando concluída a varredura.
