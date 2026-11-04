@@ -48,6 +48,23 @@ export function EmptyState(props: { defaultMessage?: string }) {
   return el("p", { "data-testid": "empty-state" }, props.defaultMessage);
 }
 
+/** Mesma regra do kit: só o clique esquerdo limpo vira navegação SPA. */
+export function shouldHandleInlineNavClick(event: {
+  defaultPrevented: boolean;
+  button: number;
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+}): boolean {
+  if (event.defaultPrevented) return false;
+  if (event.button !== 0) return false;
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return false;
+  }
+  return true;
+}
+
 export function PluginErrorBoundary(props: { children?: ReactNode }) {
   return el("div", null, props.children);
 }

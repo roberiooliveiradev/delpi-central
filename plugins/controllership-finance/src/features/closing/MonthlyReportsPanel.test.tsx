@@ -48,6 +48,10 @@ import { ApiError } from "../../api/httpClient";
 import { MonthlyReportsPanel } from "./MonthlyReportsPanel";
 
 const PERIOD = "2026-10";
+const BASE = "/apps/controllership-finance";
+
+const reportHref = (key: string) =>
+  `${BASE}/closing/monthly-closing/${PERIOD}/reports/${key}`;
 
 function recon(domain: string, overrides: Record<string, unknown> = {}) {
   return {
@@ -235,6 +239,7 @@ function renderPanel(props: Partial<Parameters<typeof MonthlyReportsPanel>[0]> =
       period={PERIOD}
       selectedReport={null}
       onOpenReport={vi.fn()}
+      reportHref={reportHref}
       {...props}
     />,
   );
@@ -247,6 +252,9 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  // Clicks nos cartões navegam de verdade (pushState) — restaurar a
+  // URL do jsdom para não vazar contexto entre testes.
+  window.history.replaceState(null, "", "/");
 });
 
 describe("indicadores e área de atenção", () => {
@@ -718,44 +726,89 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(onOpen).toHaveBeenCalledWith("stock-inventory");
   });
 
-  it("cartão abre a página do relatório via callback", async () => {
-    const onOpen = vi.fn();
-    renderPanel({ onOpenReport: onOpen });
+  it("cartão é um link real para a página contextual — clique navega em SPA", async () => {
+    renderPanel();
 
     await screen.findByText("Relatórios para análise");
-    fireEvent.click(
-      screen.getByRole("button", { name: /Baixas financeiras/ }),
+    const settlementsCard = screen.getByRole("link", {
+      name: /Abrir relatório Baixas financeiras/,
+    });
+    expect(settlementsCard.getAttribute("href")).toBe(
+      reportHref("financial-settlements"),
     );
-    expect(onOpen).toHaveBeenCalledWith("financial-settlements");
+    fireEvent.click(settlementsCard);
+    expect(window.location.pathname).toBe(
+      `${BASE}/closing/monthly-closing/${PERIOD}/reports/financial-settlements`,
+    );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /Estoque histórico — P7/ }),
+    const inventoryCard = screen.getByRole("link", {
+      name: /Abrir relatório Estoque histórico — P7/,
+    });
+    expect(inventoryCard.getAttribute("href")).toBe(
+      reportHref("stock-inventory"),
     );
-    expect(onOpen).toHaveBeenCalledWith("stock-inventory");
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /Entradas e saídas — MATR320/ }),
+    const movementsCard = screen.getByRole("link", {
+      name: /Abrir relatório Entradas e saídas — MATR320/,
+    });
+    expect(movementsCard.getAttribute("href")).toBe(
+      reportHref("stock-movements"),
     );
-    expect(onOpen).toHaveBeenCalledWith("stock-movements");
+    fireEvent.click(movementsCard);
+    expect(window.location.pathname).toBe(
+      `${BASE}/closing/monthly-closing/${PERIOD}/reports/stock-movements`,
+    );
 
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /Despesas por centro de custo/,
-      }),
+    const expensesCard = screen.getByRole("link", {
+      name: /Abrir relatório Despesas por centro de custo/,
+    });
+    expect(expensesCard.getAttribute("href")).toBe(
+      reportHref("cost-center-expenses"),
     );
-    expect(onOpen).toHaveBeenCalledWith("cost-center-expenses");
 
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /Notas fiscais a desconsiderar/,
-      }),
+    const rosterCard = screen.getByRole("link", {
+      name: /Abrir relatório Notas fiscais a desconsiderar/,
+    });
+    expect(rosterCard.getAttribute("href")).toBe(
+      reportHref("billing-exclusion-roster"),
     );
-    expect(onOpen).toHaveBeenCalledWith("billing-exclusion-roster");
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /Material em processo — MATR989/ }),
+    const wipCard = screen.getByRole("link", {
+      name: /Abrir relatório Material em processo — MATR989/,
+    });
+    expect(wipCard.getAttribute("href")).toBe(
+      reportHref("work-in-process"),
     );
-    expect(onOpen).toHaveBeenCalledWith("work-in-process");
+  });
+
+  it("os 11 cartões possuem href real para suas páginas contextuais", async () => {
+    renderPanel();
+
+    await screen.findByText("Relatórios para análise");
+    const catalog = document.getElementById("cf-reports-catalog");
+    expect(catalog).toBeTruthy();
+    const links = within(catalog as HTMLElement).getAllByRole("link");
+    expect(links).toHaveLength(11);
+    for (const link of links) {
+      expect(link.getAttribute("href")).toMatch(
+        new RegExp(
+          `^${BASE}/closing/monthly-closing/${PERIOD}/reports/[a-z-]+$`,
+        ),
+      );
+    }
+  });
+
+  it("clique com modificadores não dispara navegação SPA — o navegador decide", async () => {
+    renderPanel();
+
+    await screen.findByText("Relatórios para análise");
+    const card = screen.getByRole("link", {
+      name: /Abrir relatório Baixas financeiras/,
+    });
+    fireEvent.click(card, { ctrlKey: true });
+    expect(window.location.pathname).toBe("/");
+    fireEvent.click(card, { metaKey: true });
+    expect(window.location.pathname).toBe("/");
   });
 
   it("cartões compactos não repetem rótulos de campos", async () => {
@@ -882,6 +935,7 @@ describe("catálogo em cartões — navegação contextual", () => {
         period="2026-11"
         selectedReport={null}
         onOpenReport={vi.fn()}
+        reportHref={reportHref}
       />,
     );
 

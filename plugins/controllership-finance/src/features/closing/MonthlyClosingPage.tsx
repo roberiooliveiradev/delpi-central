@@ -338,8 +338,10 @@ export function MonthlyClosingPage({
   // do hub pode carregar os filtros da última família analisada — eles
   // só são repassados quando `report` corresponde à família aberta, o
   // que evita vazamento de contexto entre relatórios (ex.: `page`).
-  const openReport = useCallback(
-    (key: ReportKey) => {
+  // `reportPath` é a fonte única do destino — usada pelo href real dos
+  // cartões do catálogo (nova aba/compartilhar) e pela navegação SPA.
+  const reportPath = useCallback(
+    (key: ReportKey): string => {
       const family = REPORT_KEY_TO_FAMILY[key];
       const current = new URLSearchParams(window.location.search);
       let query = "";
@@ -350,11 +352,16 @@ export function MonthlyClosingPage({
         ).toString();
         if (familyParams) query = `?${familyParams}`;
       }
-      navigatePluginPath(
-        `${base}/closing/monthly-closing/${period}/reports/${key}${query}`,
-      );
+      return `${base}/closing/monthly-closing/${period}/reports/${key}${query}`;
     },
     [base, period],
+  );
+
+  const openReport = useCallback(
+    (key: ReportKey) => {
+      navigatePluginPath(reportPath(key));
+    },
+    [reportPath],
   );
 
   const backToReports = useCallback(() => {
@@ -824,6 +831,7 @@ export function MonthlyClosingPage({
                 period={period}
                 selectedReport={selectedReport}
                 onOpenReport={openReport}
+                reportHref={reportPath}
               />
             ) : null}
           </div>

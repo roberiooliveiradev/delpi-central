@@ -1324,18 +1324,6 @@
   outline-offset: 2px;
 }
 
-.dashboard-controllership-finance .cf-report-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.dashboard-controllership-finance .cf-report-card__name {
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-.dashboard-controllership-finance .cf-report-card__desc,
 .dashboard-controllership-finance .cf-report-card__meta {
   color: var(--cf-muted, currentColor);
   font-size: 0.85rem;
@@ -1343,6 +1331,29 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* CF-PROC0072 — cartões do catálogo são <a> reais (CfDataRecordCard):
+   situação + indicador de navegação no cabeçalho e link visível no
+   rodapé. O hover/focus vem do kit (data-record-card.css). */
+.dashboard-controllership-finance .cf-report-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-report-card__chevron {
+  color: var(--cf-text-muted, currentColor);
+  flex: 0 0 auto;
+}
+
+.dashboard-controllership-finance .cf-report-card__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cf-accent, var(--primary, currentColor));
 }
 
 .dashboard-controllership-finance .cf-disclosure {

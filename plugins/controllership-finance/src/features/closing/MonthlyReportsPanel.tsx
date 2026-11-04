@@ -7,6 +7,10 @@
  * completo em PÁGINA CONTEXTUAL do relatório (supersede o `inline`
  * da V0.2 — rota `closing/monthly-closing/{period}/reports/{key}`),
  * PDF contextual na página do relatório. Sem quarta aba.
+ * CF-PROC0072: cada cartão do catálogo é um `<a href>` real
+ * (`CfDataRecordCard` + `reportHref`) — clique/Enter navegam em SPA,
+ * Ctrl/Cmd+clique e menu de contexto seguem o comportamento nativo
+ * do navegador (nova aba, copiar/compartilhar endereço).
  *
  * Contratos canônicos consumidos (todos via BFF `controllership-
  * finance-api`; nenhum cálculo financeiro no navegador):
@@ -30,6 +34,23 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  ArrowDownUp,
+  ArrowRight,
+  Boxes,
+  Building2,
+  CalendarCheck,
+  ChevronRight,
+  CircleDollarSign,
+  ClipboardList,
+  Factory,
+  FileX2,
+  Gauge,
+  ListOrdered,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+import { shouldHandleInlineNavClick } from "@delpi/plugin-ui/index";
 
 import { ApiError } from "../../api/httpClient";
 import {
@@ -63,13 +84,16 @@ import {
 } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
+  CfDataRecordCard,
   CfEmptyState,
   CfInteractiveDataCard,
   CfLoadingCard,
   CfSectionCard,
   CfStatusBadge,
   cfEmptyStateClassNames,
+  type DataRecordCardField,
 } from "../../app/controllershipFinanceUi";
+import { navigatePluginPath } from "../../app/pluginNavigation";
 import { CF_HELP } from "../../content/helpTooltips";
 import {
   formatAmount,
@@ -136,73 +160,90 @@ type Keyed<T> = { key: string; result: Source<T> };
 /** Metadados do catálogo — um cartão por relatório implementado. */
 const REPORT_META: Record<
   ReportKey,
-  { name: string; description: string; origin: string }
+  {
+    name: string;
+    description: string;
+    origin: string;
+    /** Ícone do cartão — reutilizado do kit visual (lucide). */
+    icon: LucideIcon;
+  }
 > = {
   "financial-settlements": {
     name: "Baixas financeiras",
     description:
       "Pagamentos e recebimentos do período, agrupados por natureza e tipo de movimento.",
     origin: "TOTVS/SE5 — consulta operacional",
+    icon: CircleDollarSign,
   },
   "stock-inventory": {
     name: "Estoque histórico — P7",
     description:
       "Posição de estoque do fechamento (EM ESTOQUE + EM PROCESSO) pelo motor P7.",
     origin: "TOTVS/SB9 + MATR989 — consulta operacional",
+    icon: Boxes,
   },
   "stock-movements": {
     name: "Entradas e saídas — MATR320",
     description:
       "Movimentações do mês por tipo de produto e saldo do fechamento — regra MATR320.",
     origin: "TOTVS/SD1·SD2·SD3·SF4 + SB9",
+    icon: ArrowDownUp,
   },
   "stock-kardex": {
     name: "Kardex e CPV — MATR910",
     description:
       "Movimentações por produto com saldo inicial do fechamento anterior, custo histórico e CPV gerencial — regra MATR910.",
     origin: "TOTVS/SD1·SD2·SD3·SF4 + SB9 + TTAT",
+    icon: ListOrdered,
   },
   "inventory-adjustments": {
     name: "Inventários — MATR910",
     description:
       "Ajustes de inventário positivos e negativos do período — recorte INVENT do MATR910.",
     origin: "TOTVS/SD3 INVENT + SB9",
+    icon: ClipboardList,
   },
   "cost-center-expenses": {
     name: "Despesas por centro de custo",
     description:
       "Despesas por centro de custo com a seleção histórica do fechamento (eixo de digitação), universo investigativo separado e possíveis divergências para conferência no ERP.",
     origin: "TOTVS/SD1 + SB1 + CTT",
+    icon: Building2,
   },
   "billing-exclusion-roster": {
     name: "Notas fiscais a desconsiderar — R11",
     description:
       "Notas fiscais de saída selecionadas pelo critério histórico observado (grupo 9035 ∩ TES 594, eixo de emissão), com possíveis divergências e orientação de conferência no ERP — lista investigativa, não é exclusão automática.",
     origin: "TOTVS/SD2 + SF4 + SB1",
+    icon: FileX2,
   },
   "work-in-process": {
     name: "Material em processo — MATR989",
     description:
       "Material em processo físico (armazém 99) e alocado em ordens vivas — regra MATR989.",
     origin: "TOTVS/SB9 + SD3/SC2",
+    icon: Factory,
   },
   "billing-mod-breakdown": {
     name: "Faturamento × MOD",
     description:
       "Mão de obra direta por PA faturado — visão operacional; paridade oficial pendente de homologação.",
     origin: "api-delpi/SD2+SG1+SHY — visão operacional",
+    icon: Users,
   },
   "production-order-consumption": {
     name: "Consumo por OP — visão operacional",
     description:
       "Ordens de produção para auditoria de consumo — visão operacional; equivalência MATR860 pendente.",
     origin: "api-delpi/SC2+SG1+SD4+SD3 — consumption-audit",
+    icon: Gauge,
   },
   "cost-closing-state": {
     name: "Acompanhamento do fechamento de custos",
     description:
       "Marcadores técnicos do fechamento de custos e da virada por filial (SB9, MV_ULMES, TTAT) — não é homologação nem execução.",
     origin: "TOTVS/SB9010 + SX6 + TTAT",
+    icon: CalendarCheck,
   },
 };
 
@@ -941,12 +982,17 @@ export function MonthlyReportsPanel({
   period,
   selectedReport,
   onOpenReport,
+  reportHref,
   refreshNonce = 0,
 }: {
   period: string;
   selectedReport: ReportFamily | null;
   /** Abre a página contextual do relatório (UX-011 D3). */
   onOpenReport: (key: ReportKey) => void;
+  /** Destino canônico da página contextual — href real dos cartões
+   *  do catálogo (CF-PROC0072: navegação SPA + nova aba/compartilhar
+   *  nativos do navegador). */
+  reportHref: (key: ReportKey) => string;
   /** Tick do refresh do hero — comando único de atualização
    *  por contexto (CF-UX-031): o «Atualizar consulta» do hero
    *  dispara todas as fontes do painel. */
@@ -1413,26 +1459,45 @@ export function MonthlyReportsPanel({
             }
             const selected =
               selectedReport === REPORT_KEY_TO_FAMILY[key];
+            const href = reportHref(key);
+            const Icon = meta.icon;
+            // «Atualizado» só entra quando há dado real de consulta —
+            // ausência nunca vira placeholder.
+            const fields: DataRecordCardField[] = [
+              { id: "origin", label: "Origem", value: meta.origin },
+              ...(updated
+                ? [
+                    {
+                      id: "updated",
+                      label: "Atualizado",
+                      value: formatDateTime(updated.toISOString()),
+                    } satisfies DataRecordCardField,
+                  ]
+                : []),
+            ];
             return (
-              <CfInteractiveDataCard
+              <CfDataRecordCard
                 key={key}
                 className={
                   selected ? "cf-report-card--selected" : undefined
                 }
-                ariaLabel={`${meta.name}${
+                href={href}
+                onNavigate={(event) => {
+                  // Clique limpo: navegação SPA. Modificadores e
+                  // botão do meio seguem o comportamento nativo do
+                  // navegador (nova aba/janela, menu de contexto).
+                  if (!shouldHandleInlineNavClick(event)) return;
+                  event.preventDefault();
+                  navigatePluginPath(href);
+                }}
+                ariaLabel={`Abrir relatório ${meta.name}${
                   selected ? " — último relatório aberto" : ""
                 }`}
-                openHint="Abrir relatório"
-                onActivate={() => onOpenReport(key)}
-              >
-                <div className="cf-report-card">
-                  <strong className="cf-report-card__name">
-                    {meta.name}
-                  </strong>
-                  <span className="cf-report-card__desc">
-                    {meta.description}
-                  </span>
-                  <span className="cf-report-card__meta">
+                leading={<Icon size={22} strokeWidth={1.75} />}
+                title={meta.name}
+                subtitle={meta.description}
+                status={
+                  <span className="cf-report-card__status">
                     <CfStatusBadge
                       label={status ?? "—"}
                       variant={
@@ -1445,16 +1510,23 @@ export function MonthlyReportsPanel({
                             : "info"
                       }
                     />
-                    {updated
-                      ? `Atualizado em ${formatDateTime(
-                          updated.toISOString(),
-                        )}`
-                      : meta.origin}
+                    <ChevronRight
+                      size={16}
+                      aria-hidden={true}
+                      className="cf-report-card__chevron"
+                    />
                   </span>
-                </div>
-              </CfInteractiveDataCard>
-                );
-              })}
+                }
+                fields={fields}
+                context={
+                  <span className="cf-report-card__open">
+                    Abrir relatório
+                    <ArrowRight size={14} aria-hidden={true} />
+                  </span>
+                }
+              />
+            );
+            })}
               </div>
             </section>
           ))}
