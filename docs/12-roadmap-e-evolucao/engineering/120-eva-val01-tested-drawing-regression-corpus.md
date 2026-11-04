@@ -148,3 +148,23 @@ Após executar os 13 testes, foi baixado novamente o **PDF oficial atual** `9026
 **Conclusões:** `FALSE_POSITIVE_BOM_ONLY_10080004=FIXED_BY_FAIL_CLOSED` **PASS observado**, mas `OCR_CELL_RECOGNITION_10080004=NOT_FIXED`; `MCP_CHATGPT_PRIMARY_CASE=PASS`; `CORPUS_13_COMPARISON=INCONCLUSIVE (6/13 comparações; 7 fontes timeout)`; `VAL01_FINAL_APPROVAL_PENDING`. A condição 0 findings não é aprovação de desenho; `complete_for_requested_scope` e a quantidade de matches continuam essenciais. A bateria paralela apresentou indisponibilidade de fontes: próxima rodada deve controlar a concorrência (batches pequenos/serializados) e separar comportamento de rate limit da fonte, lifecycle do job e permissão de usuário, sem mascarar 502.
 
 **Proveniência:** este log registra resultados da conexão live observados pelo ChatGPT; fingerprints novos de PDFs/BOM não foram coletados para os treze nesta rodada. Preservar baselines históricos e revisão de Engenharia pendente.
+
+## Log adicional — 2026-11-04 (reteste controlado dos 7 `source_unavailable` + revisão visual `90264030`)
+
+**Contexto:** continuação da bateria DEC-VAL-033. Repetição com concorrência reduzida (inicialmente um job, depois até dois), por `EVA.analyze(product.drawing_analysis,{product_code,compose_understanding:true})` + polls do mesmo `job_id`. A primeira tentativa para `90264017` teve `job_not_found` no poll, mas novo START criou outro job e este concluiu; anotar intermitência de lifecycle/roteamento (não declarar correção permanente). **Todos os 7 produtos antes impedidos por `product.drawing source_unavailable 502` concluíram agora a comparação.** A fonte de metadados `read(product,drawing)` estava acessível para os sete na rodada.
+
+| Produto | Job final | Cobertura | Match BOM | Findings | Estado |
+|---|---|---|---|---|---|
+| `90264017` | COMPLETED | 14/14 páginas | 72/96 | 0; `bom_occurrences_unverified=24` | INCONCLUSIVE; sem falso `DRAWING_ONLY 10080535` |
+| `90264030` | COMPLETED | 13/13 páginas | 77/82 | 10: cinco `DRAWING_ONLY`, cinco `BOM_ONLY` | DIVERGENCES_CANDIDATES; revisão visual parcial detalhada abaixo |
+| `90480120` | COMPLETED | 2/2 | 10/10 | 0 | INCONCLUSIVE |
+| `90264004` | COMPLETED | 1/1 | 14/14 | 0 | INCONCLUSIVE |
+| `90264014` | COMPLETED | 1/1 | 16/16 | 0 | INCONCLUSIVE; relação `10380042` não verificada |
+| `90264043` | COMPLETED | 1/1 | 19/20 | 0 | INCONCLUSIVE; três relações não verificadas |
+| `90264050` | COMPLETED | 2/2 | 7/7 | 0 | INCONCLUSIVE |
+
+**PDF oficial do `90264030` conferido novamente:** `read(product,drawing_download)` retornou `90264030.pdf` de 13 páginas, SHA-256 `909b440a84fb00868ead4825f8c558ccf2c233b673655941bb7d32b6d1c59692`, igual ao baseline histórico. Renderizadas páginas 2, 7 e 9–12, com inspeção das tabelas. **Evidência visual direta:** código `10080535` efetivamente está na coluna `Componente` / item B de cada tabela das páginas **9, 10, 11 e 12**, sob os conjuntos **`70260050`, `70260051`, `70260052`, `70260053`**, respectivamente; não são meras menções em revision_history. Página 7, tabela do conjunto `70260049`, contém em célula de componente o código candidato `10081686` (a leitura é visível em região pequena; guardar referência visual e, antes de homologação técnica, confirmar os dígitos em resolução apropriada). **Defeito/limitação adicional constatado:** os cinco `DRAWING_ONLY` no relatório MCP tiveram `parent_code=90264030` (raiz), mas a tabela impressa explicita pais de conjunto `70260049/50/51/52/53`. O vínculo **deve ser investigado e tratado como relação de parentesco não comprovada**, não corrigido arbitrariamente com dados da BOM. Não declarar relação com a raiz se a tabela fornece conjunto interno.
+
+**Cinco `BOM_ONLY` continuam sem confirmação visual de ausência:** `10080292` sob `70260049`; `10080438` sob `70260050/51/52/53`. São candidatos de comparação estrutural, mas ausência exige examinar todas as regiões relevantes e qualidade de OCR, inclusive possíveis variantes de revisão; não homologar como NC a partir do finding isolado. A ocorrência `10080535` na página 7 não substitui prova da ausência de `10080292`. **Nenhuma publicação de NC ou desenho oficial.**
+
+**Resultado operacional:** `SEVEN_BLOCKED_RETEST=PASS (7/7 jobs completed)`; `CORPUS_MCP_COMPARISON=13/13` **somando as duas rodadas DEC-VAL-033 no mesmo dia** (seis completados antes + sete agora). `VAL01_TECHNICAL_APPROVAL=PENDING`, com OCR da célula `A1/10080004` do `90263572` ainda não corrigido, falsa ausência já bloqueada por fail-closed e dez candidatos de `90264030` ainda sob revisão. Nenhuma mudança de código/deploy foi executada pelo ChatGPT. Esta rodada não recoletou fingerprint de BOM para cada produto, logo não afirmar igualdade temporal das fontes.
