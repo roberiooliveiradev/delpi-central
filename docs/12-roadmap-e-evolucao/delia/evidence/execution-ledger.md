@@ -5514,3 +5514,16 @@ E2E REAL: Keycloak+Core+DAVI+Qwen3:4b. Env fixes: keycloak restarted; dev token 
 NOT_PROVEN: client-visible GROUNDED comparison. Run 9ca3cf18: 2 DAVI discover->execute reads COMPLETED distinct roots 90260147+90260148, relevance=corresponds, composition still SOURCE_UNAVAILABLE — comparison_* reason UNRESOLVED (log line deployed after). Run 4a945dea: subs misrouted to mcp:teo -> sources=0 completed=0 objectives=3 -> correct refusal. Earlier: direct-execute subs stall at candidate_token; A02 discovery ask-back variance.
 GATES: REF01-REF08/G04/G05/G07/G12=NOT_PASS. FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
 NEXT=bounded task: capture insufficient reasons on repro of 2-completed-reads run (new log); sub-goal owner/specialist selection + discovery-first candidate_token plan contract.
+
+
+## E4-R6 — composite root-cause investigation (diagnostic only, 2026-11-04)
+
+TASK=DELIA-C3-E4-R6-COMPOSITE-ROOT-CAUSE-INVESTIGATION-01.
+HEAD=`f69639ef24` (revalidated). PRODUCTION_DEPLOY=NOT_AUTHORIZED. IMPLEMENTATION=DIAGNOSTIC_ONLY.
+DOC=228 §16. TESTS=`delia-api/tests/test_e4_r6_composite_root_cause_diagnostics.py` PASS.
+RC-A=PROVEN: `_investigate_subobjectives` gate requires `len(tracker.objectives)==2` (+ completed/sources/all COMPLETED/no comparison_*); two distinct-root SUCCESS READs rejected when a third acquisition remains tracked; empty `reasons=[]` when no `comparison_*` lim (cardinality-only). Sibling clarify SUCCESS emits `comparison_source_missing_or_incomplete`.
+RC-B=PROVEN_PARTIAL: per-sub select_group on free-text goals can choose `mcp:teo` (run 4a945dea); no typed owner obligation; stochastic path INCONCLUSIVE without controlled A/B.
+RC-C=PROVEN: candidate_token capabilities are orchestrated dead-ends for direct select; reuse `_invoke_selected` discover chain + dead-end retry; do not invent tokens.
+SHARED_ROOT_CAUSE=NOT_PROVEN (related family: free-text sub investigation without typed two-target evidence plan).
+REF01-REF08/G04/G05/G07/G12=NOT_PASS. FUNCTIONAL_ACCEPTANCE=NO.
+NEXT=coordination-authorized bounded fixes in order RC-A → RC-C → RC-B → REF05 target oracle; no auto-implement.

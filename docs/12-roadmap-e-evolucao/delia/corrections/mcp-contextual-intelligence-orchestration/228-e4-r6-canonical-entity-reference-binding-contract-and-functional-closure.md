@@ -345,3 +345,65 @@ Verified existing domain models at input SHA:
 ### Gate status
 
 `REF01–REF08/G04/G05/G07/G12=NOT_PASS`. FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO — correct two-target comparison not delivered to client repeatedly. Remaining known blockers (bounded, next task): (1) unexplained collection rejection on run with 2 completed distinct-root DAVI reads (capture `reasons` via the new insufficient log on next repro); (2) sub-goal specialist/argument nondeterminism (TEO misroute, direct-execute `candidate_token` stall) in the governed chain — contract for subobjectives selecting the domain owner's discovery-first path.
+
+## 16. Root-cause investigation — composite / specialist / discovery (2026-11-04)
+
+**TASK_ID:** `DELIA-C3-E4-R6-COMPOSITE-ROOT-CAUSE-INVESTIGATION-01`.  
+**MODE:** DIAGNOSTIC ONLY. **PRODUCTION_DEPLOY:** NOT_AUTHORIZED. **FUNCTIONAL_ACCEPTANCE:** NOT_YET_AUTHORIZED.  
+**HEAD_AT_INVESTIGATION:** `f69639ef24` (main; homologation baseline `0b2bd91fd5` superseded by later main).  
+**GATES PRESERVED:** `REF01–REF08/G04/G05/G07/G12=NOT_PASS`.
+
+### RC-A — two completed READs rejected before composition — **PROVEN**
+
+**FIRST_FAILURE_POINT:** `orchestration.py` → `_investigate_subobjectives` cardinality gate (~L7475–7480):
+
+```text
+len(sources) != 2
+OR len(completed) != 2
+OR len(tracker.objectives) != 2
+OR any(obj.state != SUBOBJECTIVE_COMPLETED)
+OR any(lim.startswith("comparison_"))
+```
+
+**ACTUAL (diagnostic + homologation alignment):** with two owner-backed SUCCESS READs (distinct roots, complete provenance) and a **third tracked acquisition** that does not enter `completed`, fan-in refuses composition. The insufficient log’s `reasons=` filter only includes `comparison_*` prefixes; the cardinality branch alone emits `evidence_composition_insufficient:…` **without** a `comparison_*` lim → **`reasons=[]`**. Sibling: a third SUCCESS clarify **with content** enters `completed` then emits `comparison_source_missing_or_incomplete`.
+
+**EXPECTED:** when parent comparison has exactly two authorized evidence obligations fulfilled with distinct owner roots matching requested targets, composition proceeds; extra analytical obligations must already be delegated (or not tracked). Fail-closed for wrong/duplicate/partial roots remains.
+
+**CAUSAL_MECHANISM:** intentional strict two-objective gate (§14) + residual that `_acquisition_subobjectives` / decompose can leave `objectives>2` (undeclared/misclassified keep — live so_5). Two good READs are necessary but not sufficient under this predicate.
+
+**REPRODUCTION:** `delia-api/tests/test_e4_r6_composite_root_cause_diagnostics.py` — `test_rc_a_two_complete_reads_rejected_when_objectives_gt_two` (+ controls).
+
+**MINIMAL_CORRECTION_CANDIDATE (proposal only):** (1) ensure acquisition set for comparison is exactly the two evidence READs (strengthen classify/decompose contract — no product hardcode); **and/or** (2) change eligibility to “exactly two complete distinct owner sources matching bound targets” without requiring `len(objectives)==2` when extra tracked subs are non-evidence; (3) log cardinality reasons as structured fields (`objectives_mismatch`, `completed_mismatch`) so `reasons` is never empty on this path. Do not loosen fail-closed for duplicate/wrong roots.
+
+### RC-B — product-structure subs → `mcp:teo` — **PROVEN_PARTIAL / mechanism INCONCLUSIVE on stochastic path**
+
+**FIRST_DIVERGENCE:** per-sub `_governed_owner_path` → `select_group` / `select_capability` on `sub.goal` text (parent `prior_turns` propagated since §10, but **no typed owner obligation**).
+
+**OBSERVED:** run `4a945dea` kept 3 acquisitions; all group-selected `mcp:teo`; `sources=0`.
+
+**EXPECTED_OWNER_BOUNDARY:** product structure READ is DAVI/Domain owner via live capability contract — not TEO methodology — without `if product → DAVI` hardcode.
+
+**CAUSAL_MECHANISM (code-proven parts):** selection is model-proposed against group surfaces; decompose yields free-text goals; acquisition filter classification is a separate `_understand_goal` pass that can keep non-READ phrasing. **Not proven** as sole “4B hallucination” without controlled same-config selection A/B of identical surfaces.
+
+**PROPOSED_MINIMAL_FIX:** reuse typed goal/business_subject + owner capability ranking already used for parent; constrain sub selection to groups whose live surface can satisfy the declared evidence need; optional bounded re-rank when selected group has zero invocable READ matching subject — no specialist-name branch.
+
+### RC-C — execute without candidate_token state — **PROVEN**
+
+**INVALID_TRANSITION:** model selects candidate-bound `execute_*` as capability target.
+
+**CAUSE:** `_capability_requires_orchestrated_input` / `_capability_dead_end` treat `candidate_token` as orchestrator-only; direct pick is a typed dead-end. Bounded retry prefers discover when listed (`test_select_capability_retries_orchestrated_input_pick`). If execute stands (no alternative / retry fails), args/clarification or discover-inside-`_invoke_selected` may still stall. `_invoke_selected` **does** chain discover→token→execute when invoke is reached — stall is usually **before** successful chain or when discover returns no usable candidate.
+
+**EXISTING_REUSE:** `_is_candidate_bound`, `_invoke_selected` / `_discover_candidate`, dead-end retry — `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND` (prefer discover in sub plans; do not invent tokens).
+
+**PROPOSED_MINIMAL_FIX:** for comparison acquisition subs, bias plan to discovery-first when group advertises candidate-bound READ (existing plan/`_discovery_capability` patterns); never accept model-supplied tokens; surface honest clarification when discover yields zero candidates.
+
+### Shared root cause
+
+**NOT_PROVEN as single cause.** RC-A is structural cardinality/filter coupling. RC-B is selection/context. RC-C is discovery-first contract at selection time. Shared *family*: per-sub free-text investigation without a typed two-target evidence plan. `REF/G` remain **NOT_PASS**.
+
+### Correction order (coordination)
+
+1. RC-A cardinality + acquisition filter (unblocks fan-in when READs already succeed).  
+2. RC-C discovery-first on candidate-bound surfaces.  
+3. RC-B specialist selection reliability (eval + bounded ranking).  
+4. Expected-target oracle / REF05 (still separate — gate does not yet match requested entity ids).
