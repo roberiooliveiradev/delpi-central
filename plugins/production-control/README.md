@@ -29,7 +29,7 @@ O MFE **não** chama `/apps/api-delpi`. Header: `X-Delpi-Caller-App: production-
 | `…/machine-load?branch=01\|02&ct=&startDate=&endDate=&locate=` | Carga máquina (abas por centro de trabalho) |
 | `…/problem-analysis?branch=01\|02&detector=` | Análise de problemas (grade de detectores + registros) |
 | `…/materials?branch=01\|02&issue=&q=&request=&item=` | Materiais (excesso e falta de SC1; `issue=pa-shortage` consulta ruptura de MP no conjunto) |
-| `…/line-feeder?branch=01\|02&cutoffDate=&cutoffTime=&ct=&status=&plan=` | Alimentador de linha (o que precisa estar nas bancadas até um horário + lista de coleta) |
+| `…/line-feeder?branch=01\|02` | Alimentador de linha (coleta dinâmica por horizonte; urgentes do operador em painel separado) |
 | `…/delivery-map?branch=01\|02&q=` | Mapa de entrega (OPs PA com saldo, agrupadas por entrega prevista) |
 | `…/reports?branch=01\|02&report=` | Relatórios operacionais |
 | `…/product-models?branch=01\|02` | Modelos 3D (.glb) anexados ao código do produto da OP (PI ou PA) |
@@ -58,9 +58,7 @@ Subplugins futuros (`capacity`) aparecem na rail com estado *Em breve*.
 
 O terceiro card (`?issue=pa-shortage&q=90263114`) é uma **consulta**: o PCP informa o PA e o BFF (`GET /materials/finished-product-shortages`) devolve as OPs mãe do conjunto com semáforo de MP pelos **empenhos abertos (SD4)** — substitutos entram; empenho zerado ou item só da SG1 sem empenho não entram na lista. A conta é a do extrato (saldo `01+98+99` + SC7 − SD4); ruptura quando o saldo projetado fica negativo no empenho daquele conjunto. Sem `q` a tela só conta a história — não chama o extrato. Chips `?status=shortage|no_commitment|ok|all`. Após mudar empenho no Protheus, atualize a consulta (`refresh`; cache do BFF ~120 s). Atalhos: Carga máquina (`?locate=`), Mapa de entrega (`?q=`), Estoque de segurança (link no código da MP). **Exportar Excel** baixa os conjuntos visíveis. Sem preço e sem escrita no TOTVS. O MFE é render-only e **não** chama `/apps/api-delpi`. O exemplo `90263114` tem OPs abertas na filial **02** no TOTVS atual; a filial 01 devolve o estado sem conjunto aberto.
 
-**Alimentador de linha:** cockpit de quem abastece as bancadas (`GET /line-feeder/requirements`). O alimentador escolhe um **corte** (data + hora) e a tela responde, por bancada, as **matérias-primas** que as operações programadas até ali vão exigir (intermediários e acabados da estrutura não entram): necessidade (empenho em aberto), o que já está no ponto de uso (armazém `99`), o que falta entregar, o que há no almoxarifado (armazém `01`), se o produto está **bloqueado para inventário** no armazém `01` (`SB2.B2_DTINV`/`B2_DINVFIM`), a situação e o horário da primeira operação que precisa daquele material. Em viewport de tablet (≤1280px) a grade abre em **cards** por padrão (toggle Tabela/Cards na toolbar), evitando scroll horizontal. Sem hora, o corte vale o dia inteiro; operação sem horário programado entra no corte da data em vez de desaparecer. Conjunto fora da programação não gera necessidade — o dono de «está na fila» continua sendo o snapshot da carga máquina. Filtros de bancada e situação vão na URL (`?cutoffDate=&cutoffTime=&ct=&status=`); o rateio do saldo é sempre **global**, então filtrar bancada não infla o disponível. Como o saldo é por produto e não por bancada, duas bancadas que disputam o mesmo material não contam o mesmo saldo duas vezes: o rateio é **FIFO pelo horário programado** (quem começa antes consome primeiro) e quem ficou sem saldo aparece como *Em risco*. Clique na linha da necessidade para abrir o detalhe da matéria-prima (`GET /line-feeder/products/{code}`): visão geral com identidade, **saldo real** do almoxarifado e o que falta coletar; abas de bancadas e de transferências recentes entre armazéns. Se o estoque não responder, a necessidade ainda aparece com aviso de saldo indisponível e situação *A confirmar* — nunca como «coberto».
-
-**Lista de coleta:** o botão *Gerar lista de coleta* congela o que falta entregar naquele corte (`POST /line-feeder/pick-plans`) em **um item por produto** (soma entre bancadas), ordenado pelo código, com o **local de retirada** do cadastro do produto na filial. O checklist segue `pendente → separado → entregue` por produto (`PATCH …/items/{itemId}`). *Concluir lista* fecha o plano (`POST …/close`) e o torna somente leitura; `?plan=` reabre uma lista pelo link. A lista nasce do saldo medido: se o estoque estiver indisponível, a geração é recusada. **Nada é escrito no Protheus**.
+**Alimentador de linha:** fluxo principal **Coletar** → escolher postos da fila **publicada** (`GET /line-feeder/published-queue`) → informar horas por posto → consultar (`POST /line-feeder/materials/preview`). A lista consolidada mostra necessidade, saldo na fábrica (ponto de uso), **quantidade a coletar** e local de retirada; o cálculo fica no BFF (`to_collect = max(0, required − factory)`). Sem marcação de separado/entregue no fluxo novo; cada consulta é fotografia. Respeita `operational_list_safe`. Solicitações urgentes do operador permanecem em painel separado. Endpoints legados de corte/`pick-plans` seguem no BFF para compatibilidade, fora da UX principal. Detalhe: `docs/12-roadmap-e-evolucao/production-control/LINE-FEEDER-UI-E4.md`.
 
 **Mapa de entrega:** grade estilo planilha (`GET /delivery-map`) com OPs **mãe** de PA (`8`/`9`) com saldo > 0. O primeiro bloco agrega **hoje + atrasadas**; os demais seguem a data prevista (`DT_ENTREGA`). Observações vêm do TOTVS (`observation` / `C2_OBS`); **MP-OK** e **Feedback** são marcações manuais do PCP no snapshot congelado. Snapshot congelado por filial — só **Atualizar** repuxa o TOTVS. Linha riscada quando o **conjunto** atinge 100% de progresso fabril (barra ao lado da OP). Barra de progresso (`GET /delivery-map/progress`, polling ~15 s): só nas **3 primeiras tabelas** da grade (hoje+atrasadas primeiro); demais datas ficam sem barra. **Exportar Excel** baixa o mapa visível (blocos por data, mesmas colunas da tela). `?q=` filtra OP/produto/observação/feedback.
 
@@ -110,13 +108,16 @@ Base: `/apps/production-control-api`
 | GET | `/demand?branch=&search=&status=&dueFrom=&dueTo=&sort=&direction=&page=&pageSize=&refresh=` | Carteira a entregar com cobertura por estoque e OP |
 | GET | `/materials?branch=&view=&search=&sort=&direction=&page=&pageSize=&refresh=` | Excesso ou falta de SC1 de MP vs ESTSEG |
 | GET | `/materials/finished-product-shortages?branch=&product=&status=&refresh=` | Ruptura de MP no conjunto do PA |
-| GET | `/line-feeder/requirements?branch=&cutoffDate=&cutoffTime=&workCenter=&status=&refresh=` | Material por bancada até o corte (necessidade, ponto de uso, a entregar, almoxarifado) |
-| GET | `/line-feeder/products/{code}?branch=&cutoffDate=&cutoffTime=` | Detalhe da MP no corte: saldo do almoxarifado, bancadas e transferências recentes |
-| POST | `/line-feeder/pick-plans` | Congela o que falta entregar no corte como lista de coleta |
-| GET | `/line-feeder/pick-plans?branch=&status=&limit=` | Listas de coleta da filial (`open` / `closed`) |
-| GET | `/line-feeder/pick-plans/{planId}?branch=` | Lista de coleta com os itens |
-| PATCH | `/line-feeder/pick-plans/{planId}/items/{itemId}` | Situação do item (`pending` / `picked` / `delivered`) |
-| POST | `/line-feeder/pick-plans/{planId}/close` | Fecha a lista de coleta |
+| GET | `/line-feeder/published-queue?branch=&workCenter=` | Fila PUBLISHED (catálogo de CTs para Coletar) |
+| POST | `/line-feeder/horizon/preview` | Prévia de horizonte por CT (E2; usada internamente pelo BFF na E3) |
+| POST | `/line-feeder/materials/preview` | Prévia dinâmica de materiais (fluxo principal E4) |
+| GET | `/line-feeder/requirements?branch=&cutoffDate=&cutoffTime=&workCenter=&status=&refresh=` | Legado: material por bancada até o corte |
+| GET | `/line-feeder/products/{code}?branch=&cutoffDate=&cutoffTime=` | Legado: detalhe da MP no corte |
+| POST | `/line-feeder/pick-plans` | Legado: congela lista de coleta |
+| GET | `/line-feeder/pick-plans?branch=&status=&limit=` | Legado: listas de coleta |
+| GET | `/line-feeder/pick-plans/{planId}?branch=` | Legado: lista com itens |
+| PATCH | `/line-feeder/pick-plans/{planId}/items/{itemId}` | Legado: situação do item |
+| POST | `/line-feeder/pick-plans/{planId}/close` | Legado: fecha lista |
 | GET | `/delivery-map?branch=&search=` | Mapa de entrega (snapshot congelado) |
 | POST | `/delivery-map/refresh?branch=&search=` | Repuxa OPs PA do TOTVS |
 | PATCH | `/delivery-map/overrides?branch=&search=` | Salva MP-OK / Feedback manuais |
@@ -149,7 +150,7 @@ Contrato TOTVS (não duplicado aqui): [production-pcp-orders.md](../../api-delpi
 
 `production-control.access`, `production-control.demand.view`, `production-control.machine-load.view`, `production-control.problem-analysis.view`, `production-control.materials.view`, `production-control.line-feeder.view`, `production-control.delivery-map.view`, `production-control.reports.view`, `production-control.product-3d-models.manage`, `production-control.view.filial-01`, `production-control.view.filial-02`. A rail só mostra Materiais / Alimentador de linha / Mapa de entrega / Relatórios / Modelos 3D para quem tem a permissão correspondente — o grant no Keycloak é operação (código e manifesto já declaram a permissão).
 
-`production-control.line-feeder.view` governa **leitura e as ações da lista de coleta**: o papel operacional é um só (quem enxerga o que falta na bancada é quem separa e entrega). Decisão registrada aqui para não ser lida como permissão de escrita esquecida.
+`production-control.line-feeder.view` governa a consulta dinâmica do Alimentador (e as ações legadas de pick-plan / urgentes ainda expostas). O papel operacional é um só por filial.
 
 ## Desenvolvimento
 

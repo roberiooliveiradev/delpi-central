@@ -16,13 +16,19 @@ function sliceBetween(text: string, start: string, end: string): string {
   return from >= 0 && to > from ? text.slice(from, to) : text;
 }
 
-describe("Line feeder product detail wiring", () => {
-  it("abre o detalhe pelo clique na linha da necessidade", () => {
+describe("Line feeder E4 wiring", () => {
+  it("usa materials/preview e published-queue no fluxo principal", () => {
     const page = source("./LineFeederPage.tsx");
-    expect(page).toMatch(/onRowClick=\{\(row\) => setSelectedProductCode\(row\.product_code\)\}/);
-    expect(page).toMatch(/fetchLineFeederProductDetail/);
-    expect(page).toMatch(/LineFeederProductDetailModal/);
-    expect(page).not.toMatch(/\/apps\/api-delpi/);
+    const api = source("../api/ppcApi.ts");
+    expect(page).toMatch(/LineFeederCollectModal/);
+    expect(page).toMatch(/useLineFeederMaterialsPreview/);
+    expect(page).toMatch(/LineFeederUrgentRequestsPanel/);
+    expect(page).not.toMatch(/fetchLineFeederRequirements/);
+    expect(page).not.toMatch(/createLineFeederPickPlan/);
+    expect(page).not.toMatch(/patchLineFeederPickItem/);
+    expect(page).not.toMatch(/closeLineFeederPickPlan/);
+    expect(api).toMatch(/\/line-feeder\/materials\/preview/);
+    expect(api).toMatch(/\/line-feeder\/published-queue/);
   });
 
   it("não vaza códigos técnicos de estoque na copy nem na ajuda", () => {
@@ -32,10 +38,10 @@ describe("Line feeder product detail wiring", () => {
       "lineFeeder:",
       "lineFeederPickPlan:",
     );
-    for (const leak of ["SD3", "D3_CF", "SB2", "DE0", "RE0", "PR0"]) {
+    for (const leak of ["SD3", "D3_CF", "SB2", "DE0", "RE0", "PR0", "SD4"]) {
       expect(copy).not.toContain(leak);
       expect(help).not.toContain(leak);
     }
-    expect(help).toContain("Clique na linha");
+    expect(help.toLowerCase()).toContain("coletar");
   });
 });

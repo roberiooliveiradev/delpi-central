@@ -1074,6 +1074,101 @@ export type Product3DModelListPayload = {
 export type LineFeederStatus = "covered" | "to_pick" | "at_risk" | "unknown";
 export type LineFeederItemStatus = "pending" | "picked" | "delivered";
 
+/** Fila PUBLISHED — Etapa 1 (catálogo de CTs para o modal Coletar). */
+export type LineFeederPublishedWorkCenter = {
+  work_center: string;
+  work_center_name: string;
+  operation_count: number;
+};
+
+export type LineFeederPublishedQueuePayload = {
+  branch: string;
+  queue_status: "available" | "empty";
+  publication: {
+    generation_id: string | null;
+    publication_revision: string | null;
+    published_at: string | null;
+    published_by: string | null;
+    source_refreshed_at: string | null;
+    start_date: string | null;
+    end_date: string | null;
+  };
+  work_centers: LineFeederPublishedWorkCenter[];
+  operation_count: number;
+  work_center_count: number;
+};
+
+/** Origem da demanda proporcional — Etapa 3. */
+export type LineFeederMaterialOrigin = {
+  work_center: string;
+  production_order: string;
+  operation_code: string;
+  operation_id: string;
+  sequence_position: number;
+  covered_qty: number;
+  pending_qty: number;
+  open_qty: number;
+  fraction: number;
+  required_qty: number;
+};
+
+export type LineFeederMaterialItem = {
+  product_code: string;
+  description: string;
+  unit: string;
+  required_qty: number;
+  factory_available_qty: number | null;
+  to_collect_qty: number | null;
+  source_available_qty: number | null;
+  point_of_use_warehouse?: string;
+  source_warehouse?: string;
+  status: LineFeederStatus;
+  work_centers: string[];
+  origins: LineFeederMaterialOrigin[];
+  pickup_location?: string;
+  inventory_blocked?: boolean;
+};
+
+export type LineFeederMaterialsSummary = {
+  material_count: number;
+  covered_count: number;
+  to_pick_count: number;
+  at_risk_count: number;
+  unknown_count: number;
+  to_collect_qty: number;
+};
+
+export type LineFeederMaterialsPreviewPayload = {
+  branch: string;
+  hours_per_work_center: number;
+  publication: LineFeederPublishedQueuePayload["publication"];
+  horizon_balances_as_of?: string | null;
+  stock_as_of?: string | null;
+  preview_completeness: "complete" | "incomplete";
+  operational_list_safe: boolean;
+  stop_reasons: string[];
+  demand_warnings: Array<{ code: string; detail?: string; [key: string]: unknown }>;
+  horizon: {
+    preview_completeness?: string;
+    covered_operation_count: number;
+    work_centers: Array<{
+      work_center: string;
+      completeness?: string;
+      hours_covered?: number;
+      operation_count?: number;
+      stop_reason?: string | null;
+    }>;
+  };
+  summary: LineFeederMaterialsSummary;
+  materials: LineFeederMaterialItem[];
+  business_rule?: {
+    to_collect?: string;
+    factory_stock_authority?: boolean;
+    prior_pick_lists_do_not_reduce_demand?: boolean;
+    source_warehouse_informational_only?: boolean;
+  };
+};
+
 export type LineFeederStatusMeta = {
   label: string;
   description?: string;

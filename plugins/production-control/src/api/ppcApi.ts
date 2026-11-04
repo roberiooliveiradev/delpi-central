@@ -20,11 +20,13 @@ import type {
   PcpOperatorFeedback,
   FinishedProductShortagePayload,
   LineFeederItemStatus,
+  LineFeederMaterialsPreviewPayload,
   LineFeederPickItem,
   LineFeederPickPlan,
   LineFeederPickPlanListPayload,
   LineFeederPickPlanPayload,
   LineFeederProductDetail,
+  LineFeederPublishedQueuePayload,
   LineFeederRequirementsPayload,
   MaterialsPayload,
   OverviewPayload,
@@ -874,6 +876,53 @@ export async function deleteProduct3DModel(params: {
     signal: params.signal,
   });
   return unwrapEnvelope(envelope, "Não foi possível excluir o modelo 3D.");
+}
+
+/** Fila PUBLISHED do Alimentador — Etapa 1 (catálogo de CTs). */
+export async function fetchLineFeederPublishedQueue(params: {
+  branch: string;
+  workCenter?: string | null;
+  signal?: AbortSignal;
+}): Promise<LineFeederPublishedQueuePayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.workCenter) search.set("workCenter", params.workCenter);
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: LineFeederPublishedQueuePayload;
+  }>(ppcApiUrl(`/line-feeder/published-queue?${search.toString()}`), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(
+    envelope,
+    "Não foi possível carregar a programação publicada.",
+  );
+}
+
+/** Prévia dinâmica de materiais — Etapa 3 (somente leitura). */
+export async function previewLineFeederMaterials(params: {
+  branch: string;
+  workCenters: string[];
+  hoursPerWorkCenter: number;
+  signal?: AbortSignal;
+}): Promise<LineFeederMaterialsPreviewPayload> {
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: LineFeederMaterialsPreviewPayload;
+  }>(
+    ppcApiUrl("/line-feeder/materials/preview"),
+    {
+      branch: params.branch,
+      workCenters: params.workCenters,
+      hoursPerWorkCenter: params.hoursPerWorkCenter,
+    },
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(
+    envelope,
+    "Não foi possível calcular a necessidade de materiais.",
+  );
 }
 
 export async function fetchLineFeederRequirements(params: {

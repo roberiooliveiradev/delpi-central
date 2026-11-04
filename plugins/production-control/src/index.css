@@ -4450,6 +4450,168 @@
   font-size: var(--ppc-font-xs);
 }
 
+.dashboard-production-control .ppc-feeder-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.dashboard-production-control .ppc-feeder__collect-cta {
+  font-weight: 700;
+  border-color: color-mix(in srgb, var(--ppc-accent) 45%, var(--ppc-border));
+  background: color-mix(in srgb, var(--ppc-accent) 12%, var(--ppc-surface));
+}
+
+.dashboard-production-control .ppc-feeder-collect {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 2px 8px;
+}
+
+.dashboard-production-control .ppc-feeder-collect__intro {
+  margin: 0;
+  color: var(--ppc-text);
+  font-size: var(--ppc-font-sm);
+  line-height: 1.45;
+}
+
+.dashboard-production-control .ppc-feeder-collect__hint {
+  margin: 0;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-feeder-collect__error {
+  margin: 0;
+  color: var(--danger, #b42318);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-feeder-collect__hours {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-production-control .ppc-feeder-collect__hours input[type="number"] {
+  min-height: 44px;
+  min-width: 7rem;
+  padding: 8px 12px;
+  border: 1px solid var(--ppc-border);
+  border-radius: var(--ppc-radius);
+  background: var(--ppc-surface);
+  color: var(--ppc-text);
+  font: inherit;
+}
+
+.dashboard-production-control .ppc-feeder-collect__shortcuts,
+.dashboard-production-control .ppc-feeder-materials__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-production-control .ppc-feeder-collect__chip {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--ppc-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ppc-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-feeder-collect__chip--active,
+.dashboard-production-control .ppc-feeder-collect__chip[aria-pressed="true"] {
+  border-color: var(--ppc-accent);
+  background: color-mix(in srgb, var(--ppc-accent) 14%, transparent);
+  font-weight: 650;
+}
+
+.dashboard-production-control .ppc-feeder-collect__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dashboard-production-control .ppc-feeder-materials__guide {
+  font-size: var(--ppc-font-sm);
+}
+
+.dashboard-production-control .ppc-feeder-materials__meta,
+.dashboard-production-control .ppc-feeder-materials__snapshot {
+  margin: 0 0 8px;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-feeder-materials__collect {
+  font-size: 1.05rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--ppc-title);
+}
+
+.dashboard-production-control .ppc-feeder-materials__card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+
+.dashboard-production-control .ppc-feeder-materials__card header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-production-control .ppc-feeder-materials__origins {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--ppc-border);
+  border-radius: 14px;
+  background: var(--ppc-surface);
+}
+
+.dashboard-production-control .ppc-feeder-materials__origins-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashboard-production-control .ppc-feeder-materials__origins h3 {
+  margin: 0;
+  font-size: var(--ppc-font-md);
+}
+
+.dashboard-production-control .ppc-feeder-materials__origins ul {
+  margin: 8px 0 0;
+  padding-left: 1.1rem;
+}
+
+.dashboard-production-control .ppc-feeder-materials__diag {
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-production-control .ppc-feeder-toolbar {
+    width: 100%;
+  }
+
+  .dashboard-production-control .ppc-feeder-toolbar .ppc-icon-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
 .dashboard-production-control .ppc-pick {
   display: flex;
   flex-direction: column;
