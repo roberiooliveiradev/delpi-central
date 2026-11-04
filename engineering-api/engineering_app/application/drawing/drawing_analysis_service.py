@@ -128,6 +128,7 @@ async def analyze_product_drawing(
     extractor=None,
     understanding: dict[str, Any] | None = None,
     progressive: dict[str, Any] | None = None,
+    drawing_tokens: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Run the full drawing×product×BOM analysis for `code`."""
     # --- official facts (delegated identity) -------------------------------
@@ -443,6 +444,55 @@ async def analyze_product_drawing(
             label="Desenho × estrutura (BOM)",
             status=bom_status,
             summary=bom_summary,
+            evidence_class=EvidenceClass.CALCULATED,
+        )
+    )
+
+    # R15/DEC-VAL-022 — diff estrutural por ocorrência: desenho
+    # (component_table do understanding visual) × BOM vigente.
+    from engineering_app.application.drawing.bom_structure_comparator import (  # noqa: E501
+        compare_bom_to_drawing,
+    )
+    bom_structure_comparison = compare_bom_to_drawing(
+        product_code=official_code,
+        bom_occurrences=(
+            flatten_bom_occurrences(structure, code)
+            if isinstance(structure, dict) and structure_error is None
+            else None
+        ),
+        component_table=(
+            (understanding or {}).get("component_table")
+            if isinstance(understanding, dict)
+            else None
+        ),
+        tokens=drawing_tokens,
+        drawing_pages=extraction.page_count,
+        bom_error=(
+            {"code": structure_error.code,
+             "status_code": structure_error.status_code}
+            if structure_error is not None
+            else None
+        ),
+    )
+    _bsc_status = bom_structure_comparison["status"]
+    verifications.append(
+        Verification(
+            key="bom_structure_comparison",
+            label="Estrutura — desenho × BOM por ocorrência",
+            status=(
+                VerificationStatus.WARNING
+                if _bsc_status == "DIVERGENCES_CANDIDATES"
+                else (
+                    VerificationStatus.INCONCLUSIVE
+                    if _bsc_status == "INCONCLUSIVE"
+                    else VerificationStatus.PASS
+                )
+            ),
+            summary=(
+                f"{_bsc_status}: "
+                f"{bom_structure_comparison['counts'].get('divergences', 0)} "
+                "divergência(s) candidata(s) por ocorrência."
+            ),
             evidence_class=EvidenceClass.CALCULATED,
         )
     )
@@ -930,6 +980,7 @@ async def analyze_product_drawing(
     payload["bom_occurrences"] = flatten_bom_occurrences(
         structure if isinstance(structure, dict) else {}, code
     )
+    payload["bom_structure_comparison"] = bom_structure_comparison
     payload["scope"] = scope or ["all"]
     if visual_observations:
         payload["executive_summary"]["visual_observations_total"] = len(
@@ -988,7 +1039,8 @@ async def analyze_product_drawing(
         "D_official_crosschecks": [
             v for v in serialized_verifications
             if v["key"] in {
-                "bom_availability", "bom_comparison", "quantity_semantics",
+                "bom_availability", "bom_comparison",
+                "bom_structure_comparison", "quantity_semantics",
                 "mp_description", "pi_description",
                 "mp_items_descriptions", "pi_items_descriptions",
             }

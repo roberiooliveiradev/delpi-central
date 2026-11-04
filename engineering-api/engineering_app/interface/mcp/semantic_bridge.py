@@ -735,6 +735,7 @@ async def _analyze_product_drawing(
     # R12.1 — composição legítima: understanding produzido pelo mesmo
     # caso de uso interno (sem handler→handler, sem reprocessar por
     # ocorrência) quando solicitado e flags habilitadas.
+    _tokens: list[dict] | None = None
     if params.get("compose_understanding") and understanding is None:
         if (
             os.environ.get(_BENCHMARK_FLAG) != "true"
@@ -791,6 +792,7 @@ async def _analyze_product_drawing(
             scope=scope,
             understanding=understanding,
             progressive=progressive,
+            drawing_tokens=_tokens,
         )
     except DrawingAnalysisError as exc:
         return _err(
