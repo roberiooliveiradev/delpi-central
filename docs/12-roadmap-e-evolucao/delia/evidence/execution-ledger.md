@@ -5468,3 +5468,11 @@ sem receber corpo — latencia marginal na borda do gateway (~120s).
 Residual: decompose+4subs+composicao+sintese ~110-170s > gateway;
 a cadeia funciona mas a entrega client-visible consistente ainda
 depende da variancia de retries por stage.
+
+
+## E4-R6 — §12 review of client timeout vs fan-in source/grounding (2026-11-03)
+
+INPUT_SHA=95f9168ef3. PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/228-e4-r6-canonical-entity-reference-binding-contract-and-functional-closure.md section12. TASK=DELIA-C3-E4-R6-FANIN-PROVENANCE-TARGET-COVERAGE-AND-NDJSON-DELIVERY-01.
+SOURCE_VERIFIED=prior_continuation depth==0 trust gate implemented; E4 _subobjective_attempt_result returns SUCCESS+content without outcome/provenance, so handle_interactive_turn routes its fan-in to _prior_continuation_result NON_GROUNDED. Composition of genuine owner outcomes is not properly projected as multi-source grounded result. Source count>=2 currently allows comparison without exact two requested target roots; 4 sources in reported correlation are not proof of requested correct two-structure comparison. Existing NDJSON with activity/heartbeat/terminal/cancellation is implemented, verify UI/gateway actual delivery before proposing new streaming or timeouts.
+EXECUTOR_REPORTED=correlation 1eb1302e, decomposed4/COMPLETED4/sources4/differences_found/server 200 ~105-115s, curl timed out ~118s with no complete client body; CLIENT_OUTCOME=FAIL, SOURCE_TARGET_ORACLE=NOT_PROVEN, COMPOSITE_GROUNDING=FAIL_CODE_PATH. REF05–REF08/G04/G05/G07/G12=NOT_PASS. COORDINATION_TESTS=TEST_NOT_RUN; SEC01 pass executor-reported only.
+DECISION=REWORK/EXECUTION_DRIFT, not latency-only; fix fan-in provenance/grounding from valid owner-backed multi-source evidence using existing contracts, exact intended source reconciliation, then measure optimize stages and validate existing NDJSON end-to-end; RED/GREEN regression/full authenticated E2E final SHA; no model upgrade, no blanket retry or gateway-only timeout. PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE.
