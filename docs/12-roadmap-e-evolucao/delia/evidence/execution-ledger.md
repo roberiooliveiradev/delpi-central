@@ -5296,3 +5296,12 @@ transportar referencias autorizadas de alvo — inventa-lo exige
 gate de coordenacao, nao regex improvisado. Tres camadas doc227:
 literal do usuario=candidato, proposta do modelo=hipotese, ref
 owner-backed=admissivel — a segunda->terceira precisa de contrato.
+
+
+## E4-R6 — canonical EntityRef binding decision and full outcome execution (2026-11-03)
+
+DECISION_ID=DELIA-C3-E4-R6-ENTITY-REFERENCE-BINDING-DECISION-01. TASK=DELIA-C3-E4-R6-CANONICAL-ENTITY-BINDING-AND-FUNCTIONAL-CLOSURE-01.
+INPUT_SHA=af545421b9. PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/228-e4-r6-canonical-entity-reference-binding-contract-and-functional-closure.md.
+REVIEW_VERDICT=R5 EXECUTION_DRIFT_REMOVAL_VERIFIED; FULL_BUSINESS_OUTCOME=NOT_PROVEN. At input SHA, domain Evidence already defines EntityRef, EvidenceRef, SourceRef; SessionContext already has entity_refs/evidence_refs/source_refs and InteractionTurn has evidence/source refs; references are descriptive, NOT authority, SoT or permission. Thus blanket claim 'no typed target references exist' is inaccurate: existing reference types PROVEN, valid runtime binding/consumers across turns PARTIAL/TO_INVENTORY.
+ARCHITECTURE_DECISION=APPROVED_BOUNDED_REUSE/EXTEND existing canonical refs and scoped Application binding, not create new TargetRef store/registry/planner/engine. A model-proposed referent remains HYPOTHESIS; only live authorized Core/Domain read makes actual factual target/evidence. Do not infer from regex/user text/assistant output. If public contract or retention change truly required, STOP precise ARCHITECTURE_DECISION_REQUIRED. Exact requested target set and true source provenance required, not len(sources)>=2.
+IMPLEMENTATION=NOT_RUN_BY_COORDINATION. TESTS=TEST_NOT_RUN. NEXT=execute doc228 RED/GREEN, owners/consumers trace, real local Qwen3+Keycloak/Core+DAVI/Domain same-session and single-turn comparison, repeated final SHA client-visible oracle and security regression. Conditional larger-model A/B only if locally available and needed after correct binding. G04/G05/G07/G12 NOT_PASS; PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE.
