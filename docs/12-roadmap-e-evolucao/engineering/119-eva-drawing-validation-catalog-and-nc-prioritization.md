@@ -735,3 +735,19 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **Limitações residuais:** `unreliable_boundary` (tokens_inferred) persiste em 90264178/90264161; `token_only` codes contam presença apenas; `qty` sempre INCONCLUSIVE; `row_group` não promove a finding (linha extraída pode fundir grupos) — evidência preservada em `unverified_parent_relations`; cobertura integral de hierarquia continua `INCONCLUSIVE` onde a estrutura da tabela não é verificável.
 
 **Estado: `COVERAGE_EXTENDED / PROD_DEPLOYED (5ca883007d) / BASELINE_7_PRESERVED / E2E_MCP_CHATGPT_READY_FOR_RETEST`**
+
+## 25. E2E MCP ChatGPT pós-DEC-VAL-026 — 7/7 consultas concluídas (DEC-VAL-027 — 2026-11-03)
+
+**Consumo real:** via conector EVA autorizado, `get_context(topic=product.drawing_analysis)` e `analyze(analysis_type=product.drawing_analysis,parameters={product_code:<code>,compose_understanding:true})` nos sete produtos. Uma consulta `90264302` retornou `source_unavailable/502` (timeout), porém retry concluiu. Os dados abaixo são retornados pelo **backend**, não refeitos manualmente. Este teste comprova a integração do consumidor e o resultado atual; o SHA produtivo `5ca883007d` é a evidência informada em §24, não uma nova verificação independente do SHA nesta chamada.
+
+| Produto | status | component_table_codes | findings | detalhes relevantes |
+|---|---|---:|---:|---|
+| `90263520` | `DIVERGENCES_CANDIDATES` | 21 | 1 | Único `DRAWING_ONLY 50213064` (pai 90263520). `unverified_parent_relations=3`, `occurrence_excess=1` apenas limitations. |
+| `90263572` | `INCONCLUSIVE` | 7 | 0 | 2 páginas analisadas; `bom_only=0`, `bom_occurrences_unverified=49`, OCR `10060004≈10080004` classificado como ambiguidade. Cobertura ainda muito parcial. |
+| `90264178` | `INCONCLUSIVE` | 41 | 0 | `matched_occurrences=38/40`, `unreliable_boundary=true`, `unverified_parent_relations=4`; falso positivo antigo `10090014` não retornou. |
+| `90264161` | `DIVERGENCES_CANDIDATES` | 9 | 1 | `PARENT_RELATION_MISMATCH 50090001`, confidence=`column_anchor`, fronteira não confiável e cobertura incompleta. **CANDIDATE**, NÃO confirmado pela Engenharia. A nova âncora elegível reintroduziu um finding que na rodada anterior aparecia só em limitations. |
+| `90264302` | `INCONCLUSIVE` | 7 | 0 | `matched_occurrences=6/6`, `token_only=7`, cobertura parcial. Retry após 502 bem-sucedido. |
+| `90261606` | `INCONCLUSIVE` | 12 | 0 | `matched_occurrences=11/12`, `token_only=11`, limites de classificação. |
+| `90480120` | `INCONCLUSIVE` | 10 | 0 | 2 páginas, `matched_occurrences=10/10`, `unverified_parent_occurrences=10`, cobertura parcial. |
+
+**Veredito:** `E2E_MCP_CHATGPT_PASS` para execução e resultados observados; **regressões críticas de `BOM_ONLY` e `DRAWING_ONLY` falsos não reapareceram nesses sete**, e `90263520` preserva o achado legítimo. A versão possui ganho mensurável em códigos reconhecidos em alguns documentos, sem ganho relevante ainda para a tabela da página 2 em `90263572`. **`VAL01_FINAL_APPROVAL_PENDING`**, pois cobertura/hierarquia/quantidades seguem parciais, e `90264161` exige revisão técnica do finding de pai. Não interpretar 0 findings como desenho aprovado. Não avançar frontend antes do gate acordado.
