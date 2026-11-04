@@ -816,6 +816,9 @@ export const copy = {
       incompleteDiagnostics: "Diagnósticos",
       unsafeListHidden:
         "A lista não é exibida como coleta confiável enquanto a prévia estiver incompleta.",
+      keepSelectionHint:
+        "Sua seleção de postos e horas foi mantida — ajuste o cadastro ou a integração e consulte novamente.",
+      stopReasonFallback: (reason: string) => `Motivo técnico: ${reason}`,
       forbidden: "Você não tem permissão para consultar o Alimentador nesta filial.",
       gateway:
         "A integração de empenhos ou estoque falhou. Tente novamente em instantes.",

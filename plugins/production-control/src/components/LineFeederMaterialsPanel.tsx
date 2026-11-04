@@ -123,18 +123,40 @@ export function LineFeederMaterialsPanel({ data, query }: Props) {
   ];
 
   if (!safe) {
+    const diagnostics = data.diagnostics ?? [];
+    const horizonMessages = (data.horizon?.work_centers ?? [])
+      .map((center) => center.diagnostic_message?.trim())
+      .filter((message): message is string => Boolean(message));
+    const hasRichDiag = diagnostics.length > 0 || horizonMessages.length > 0;
     return (
       <div className="ppc-board">
         <div className="ppc-state ppc-state--error" role="alert">
           <strong>{texts.materialsPreview.incompleteTitle}</strong>
           <p>{texts.materialsPreview.incompleteMessage}</p>
           <p>{texts.materialsPreview.unsafeListHidden}</p>
-          {(data.stop_reasons?.length || data.demand_warnings?.length) ? (
-            <details className="ppc-feeder-materials__diag">
+          <p>{texts.materialsPreview.keepSelectionHint}</p>
+          {hasRichDiag || data.stop_reasons?.length || data.demand_warnings?.length ? (
+            <details className="ppc-feeder-materials__diag" open={hasRichDiag}>
               <summary>{texts.materialsPreview.incompleteDiagnostics}</summary>
               <ul>
+                {diagnostics.map((item, index) => (
+                  <li key={`${item.work_center}-${item.stop_reason}-${index}`}>
+                    {item.message?.trim()
+                      ? item.message
+                      : texts.materialsPreview.stopReasonFallback(
+                          String(item.stop_reason || item.code || "horizon_incomplete"),
+                        )}
+                  </li>
+                ))}
+                {!diagnostics.length
+                  ? horizonMessages.map((message) => (
+                      <li key={message}>{message}</li>
+                    ))
+                  : null}
                 {(data.stop_reasons ?? []).map((reason) => (
-                  <li key={reason}>{reason}</li>
+                  <li key={`stop-${reason}`}>
+                    {texts.materialsPreview.stopReasonFallback(reason)}
+                  </li>
                 ))}
                 {(data.demand_warnings ?? []).map((warning, index) => (
                   <li key={`${warning.code}-${index}`}>

@@ -453,6 +453,8 @@ class FakeGateway:
         self.commitments_mode = commitments_mode
         self.stock_calls = 0
         self.commitment_calls = 0
+        self.location_calls = 0
+        self.inventory_block_calls = 0
 
     def fetch_machine_load_operation_balances(self, *, branch: str, items: list[dict[str, str]]):
         out = []
@@ -526,11 +528,13 @@ class FakeGateway:
         return {"success": True, "data": {"items": rows}}
 
     def fetch_product_physical_locations(self, *, branch: str, product_codes: list[str]):
+        self.location_calls += 1
         return {"success": True, "data": {"items": []}}
 
     def fetch_product_inventory_blocks(
         self, *, branch: str, product_codes: list[str], warehouse: str = "01"
     ):
+        self.inventory_block_calls += 1
         return {"success": True, "data": {"items": []}}
 
 
@@ -983,3 +987,305 @@ def test_domain_no_commitments_warning_keeps_proportional_ok() -> None:
     assert ok is True
     assert buckets == []
     assert warnings[0]["code"] == "no_commitments"
+
+
+# --------------------------------------------------------------------------- #
+# Etapa 1 — segurança / shortfall vs incomplete / early-stop
+# --------------------------------------------------------------------------- #
+
+
+def test_materials_shortfall_queue_remains_safe() -> None:
+    """AC-01: fila menor que o horizonte, dados válidos → shortfall, lista segura."""
+    published = _payload([_op("CT-A", "OP1")])
+    service = _service(
+        published=published,
+        balances_ops={
+            ("OP1", "01"): {"operation_pending_qty": 1, "operation_produced_qty": 0},
+        },
+        standard_times={
+            ("OP1", "01"): {
+                "ideal_cycle_seconds": 60,
+                "setup_seconds": 0,
+                "pieces_conversion_factor": 1,
+                "standard_time_source": "shy_tempad",
+                "data_quality": "complete",
+            },
+        },
+        commitments=[
+            {
+                "production_order": "OP1",
+                "operation": "01",
+                "product_code": "MP1",
+                "description": "X",
+                "unit": "PC",
+                "product_type": "MP",
+                "open_qty": 1,
+            }
+        ],
+        factory_stock={"MP1": 0},
+        source_stock={"MP1": 10},
+    )
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=8,
+    )
+    assert data["horizon"]["work_centers"][0]["completeness"] == "shortfall"
+    assert data["operational_list_safe"] is True
+    assert data["materials"]
+    assert "horizon_incomplete" not in data["stop_reasons"]
+
+
+def test_materials_missing_standard_time_is_incomplete_not_shortfall() -> None:
+    """AC-02: tempo padrão inválido → incomplete + diagnóstico."""
+    published = _payload([_op("CT-A", "OP1")])
+    service = _service(
+        published=published,
+        balances_ops={
+            ("OP1", "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0},
+        },
+        standard_times={
+            ("OP1", "01"): {
+                "ideal_cycle_seconds": None,
+                "setup_seconds": 0,
+                "pieces_conversion_factor": 1,
+                "standard_time_source": "unavailable",
+                "data_quality": "standard_time_unavailable",
+            },
+        },
+        commitments=[],
+        factory_stock={},
+    )
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=2,
+    )
+    assert data["operational_list_safe"] is False
+    assert data["horizon"]["work_centers"][0]["completeness"] == "incomplete"
+    assert data["horizon"]["work_centers"][0]["stop_reason"] == "standard_time_unavailable"
+    assert data["diagnostics"]
+    assert "tempo padrão" in (data["diagnostics"][0]["message"] or "").lower()
+
+
+def test_materials_call_limit_does_not_become_shortfall(monkeypatch: pytest.MonkeyPatch) -> None:
+    """AC-05: limite de ST após ops válidas → incomplete (não shortfall)."""
+    ops = [_op("CT-A", f"OP{i}") for i in range(1, 4)]
+    for index, op in enumerate(ops, start=1):
+        op["sequence_position"] = index
+    published = _payload(ops)
+    balances = {
+        (f"OP{i}", "01"): {"operation_pending_qty": 1, "operation_produced_qty": 0}
+        for i in range(1, 4)
+    }
+    times = {
+        (f"OP{i}", "01"): {
+            "ideal_cycle_seconds": 60,
+            "setup_seconds": 0,
+            "pieces_conversion_factor": 1,
+            "standard_time_source": "shy_tempad",
+            "data_quality": "complete",
+        }
+        for i in range(1, 4)
+    }
+    service = _service(
+        published=published,
+        balances_ops=balances,
+        standard_times=times,
+        commitments=[],
+        factory_stock={},
+    )
+    from production_control_app.application.services import line_feeder_service as lfs
+
+    original = lfs.setting_int
+
+    def limited(key: str, default: int) -> int:
+        if key == "horizonMaxStandardTimeCalls":
+            return 1
+        return original(key, default)
+
+    # setting_int é importado por nome no service — patch no módulo consumidor.
+    monkeypatch.setattr(lfs, "setting_int", limited)
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=8,
+    )
+
+    group = data["horizon"]["work_centers"][0]
+    assert group["completeness"] == "incomplete"
+    assert group["stop_reason"] == "standard_time_call_limit"
+    assert data["operational_list_safe"] is False
+    assert any(
+        d.get("code") == "standard_time_call_limit" for d in (data.get("diagnostics") or [])
+    )
+
+
+def test_materials_blocked_ct_skips_stock_and_commitments() -> None:
+    """AC-06/AC-07: CT bloqueado → sem lista + sem consultas de material."""
+    published = _payload([_op("CT-A", "OP1"), _op("CT-B", "OP2")])
+    service = _service(
+        published=published,
+        balances_ops={
+            ("OP1", "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0},
+            ("OP2", "01"): {"operation_pending_qty": None, "operation_produced_qty": None},
+        },
+        standard_times={
+            ("OP1", "01"): {
+                "ideal_cycle_seconds": 60,
+                "setup_seconds": 0,
+                "pieces_conversion_factor": 1,
+                "standard_time_source": "shy_tempad",
+                "data_quality": "complete",
+            },
+        },
+        commitments=[
+            {
+                "production_order": "OP1",
+                "operation": "01",
+                "product_code": "MP1",
+                "description": "X",
+                "unit": "PC",
+                "product_type": "MP",
+                "open_qty": 10,
+            }
+        ],
+        factory_stock={"MP1": 0},
+    )
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A", "CT-B"],
+        hours_per_work_center=1,
+    )
+    gateway = service._gateway
+    assert data["operational_list_safe"] is False
+    assert data["materials"] == []
+    assert gateway.commitment_calls == 0
+    assert gateway.stock_calls == 0
+    assert gateway.location_calls == 0
+    assert gateway.inventory_block_calls == 0
+    assert any(d.get("work_center") == "CT-B" for d in data["diagnostics"])
+    assert "timing" in data
+
+
+def test_materials_upstream_unavailable_not_shortfall() -> None:
+    """AC-03: falha de integração de ST → incomplete."""
+    published = _payload([_op("CT-A", "OP1")])
+    service = _service(
+        published=published,
+        balances_ops={
+            ("OP1", "01"): {"operation_pending_qty": 5, "operation_produced_qty": 0},
+        },
+        standard_times={
+            ("OP1", "01"): {
+                "ideal_cycle_seconds": None,
+                "setup_seconds": None,
+                "pieces_conversion_factor": None,
+                "standard_time_source": "unavailable",
+                "data_quality": "upstream_unavailable",
+            },
+        },
+        commitments=[],
+        factory_stock={},
+    )
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=2,
+    )
+    assert data["horizon"]["work_centers"][0]["completeness"] == "incomplete"
+    assert data["horizon"]["work_centers"][0]["stop_reason"] == "upstream_unavailable"
+    assert data["operational_list_safe"] is False
+
+
+@pytest.mark.parametrize(
+    ("op_factor", "st_factor", "produced", "expected_reason"),
+    [
+        (None, None, 0, "piece_conversion_unavailable"),
+        (1.0, 1, None, "setup_uncertain"),
+    ],
+)
+def test_materials_data_blocks_are_not_operationally_safe(
+    op_factor: float | None,
+    st_factor: float | None,
+    produced: float | None,
+    expected_reason: str,
+) -> None:
+    """AC-04: conversão ausente / setup incerto → lista insegura."""
+    op = _op("CT-A", "OP1")
+    if op_factor is None:
+        op.pop("pieces_conversion_factor", None)
+    else:
+        op["pieces_conversion_factor"] = op_factor
+    published = _payload([op])
+    service = _service(
+        published=published,
+        balances_ops={
+            ("OP1", "01"): {
+                "operation_pending_qty": 5,
+                "operation_produced_qty": produced,
+            },
+        },
+        standard_times={
+            ("OP1", "01"): {
+                "ideal_cycle_seconds": 60,
+                "setup_seconds": 30,
+                "pieces_conversion_factor": st_factor,
+                "standard_time_source": "shy_tempad",
+                "data_quality": "complete",
+            },
+        },
+        commitments=[],
+        factory_stock={},
+    )
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=2,
+    )
+    assert data["operational_list_safe"] is False
+    assert data["materials"] == []
+    assert data["horizon"]["work_centers"][0]["completeness"] == "incomplete"
+    assert data["horizon"]["work_centers"][0]["stop_reason"] == expected_reason
+    assert any(d.get("stop_reason") == expected_reason for d in data["diagnostics"])
+
+
+def test_materials_timing_payload_is_present_without_secrets() -> None:
+    """AC-09: instrumentação de fases sem alterar o cálculo nem expor segredos."""
+    ready = _horizon_ready_op("OP1")
+    service = _service(
+        **ready,
+        commitments=[
+            {
+                "production_order": "OP1",
+                "operation": "01",
+                "product_code": "MP1",
+                "description": "X",
+                "unit": "PC",
+                "product_type": "MP",
+                "open_qty": 10,
+            }
+        ],
+        factory_stock={"MP1": 0},
+        source_stock={"MP1": 10},
+    )
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=1,
+    )
+    timing = data["timing"]
+    assert isinstance(timing, dict)
+    assert "total_ms" in timing or "phases_ms" in timing
+    blob = str(timing).lower()
+    for forbidden in ("password", "secret", "authorization", "bearer ", "sql"):
+        assert forbidden not in blob
+    assert data["operational_list_safe"] is True
+    assert data["materials"]

@@ -150,6 +150,9 @@ class WorkCenterHorizonResult:
     setup_uncertain: bool
     operations: tuple[HorizonOperationAllocation, ...]
     skipped_closed_count: int
+    blocking_production_order: str | None = None
+    blocking_operation_code: str | None = None
+    blocking_operation_id: str | None = None
 
 
 def allocate_work_center_horizon(
@@ -171,11 +174,30 @@ def allocate_work_center_horizon(
     completeness = COMPLETENESS_COMPLETE
     stop_reason: str | None = None
     setup_uncertain = False
+    blocking_production_order: str | None = None
+    blocking_operation_code: str | None = None
+    blocking_operation_id: str | None = None
+
+    def _mark_incomplete(reason: str, item: HorizonOperationInput) -> None:
+        nonlocal completeness, stop_reason
+        nonlocal blocking_production_order, blocking_operation_code, blocking_operation_id
+        completeness = COMPLETENESS_INCOMPLETE
+        stop_reason = reason
+        blocking_production_order = item.production_order or None
+        blocking_operation_code = item.operation_code or None
+        blocking_operation_id = item.operation_id or None
+
+    def _mark_shortfall(reason: str) -> None:
+        nonlocal completeness, stop_reason
+        # Incomplete técnico nunca vira shortfall «legítimo».
+        if completeness == COMPLETENESS_INCOMPLETE:
+            return
+        completeness = COMPLETENESS_SHORTFALL
+        stop_reason = reason
 
     for item in operations:
         if remaining_budget <= 0:
-            completeness = COMPLETENESS_SHORTFALL
-            stop_reason = "budget_exhausted"
+            _mark_shortfall("budget_exhausted")
             break
 
         if item.balance_state == "closed" or (
@@ -185,25 +207,24 @@ def allocate_work_center_horizon(
             continue
 
         if item.balance_state == "unknown" or item.pending_qty is None:
-            completeness = COMPLETENESS_INCOMPLETE
-            stop_reason = "balance_unknown"
+            _mark_incomplete("balance_unknown", item)
             break
 
         if item.standard_time_quality != "complete":
-            completeness = COMPLETENESS_INCOMPLETE
-            stop_reason = item.standard_time_quality or "standard_time_unavailable"
+            _mark_incomplete(
+                item.standard_time_quality or "standard_time_unavailable",
+                item,
+            )
             break
 
         cycle = _positive_dec(item.ideal_cycle_seconds)
         if cycle is None:
-            completeness = COMPLETENESS_INCOMPLETE
-            stop_reason = "standard_time_unavailable"
+            _mark_incomplete("standard_time_unavailable", item)
             break
 
         factor = _positive_dec(item.pieces_conversion_factor)
         if factor is None:
-            completeness = COMPLETENESS_INCOMPLETE
-            stop_reason = "piece_conversion_unavailable"
+            _mark_incomplete("piece_conversion_unavailable", item)
             break
 
         pending = item.pending_qty
@@ -218,20 +239,17 @@ def allocate_work_center_horizon(
             setup_uncertain = True
             # Não apresentar estimativa como exata — CT incompleto, mas
             # ainda aloca com setup incluído (fail-closed conservador).
-            completeness = COMPLETENESS_INCOMPLETE
-            if stop_reason is None:
-                stop_reason = "setup_uncertain"
+            if completeness != COMPLETENESS_INCOMPLETE:
+                _mark_incomplete("setup_uncertain", item)
 
         if setup_applied > remaining_budget:
             # Setup não cabe inteiro: não inicia operação nem inventa qty.
-            completeness = COMPLETENESS_SHORTFALL
-            stop_reason = "insufficient_time_for_setup"
+            _mark_shortfall("insufficient_time_for_setup")
             break
 
         productive_budget = remaining_budget - setup_applied
         if productive_budget <= 0:
-            completeness = COMPLETENESS_SHORTFALL
-            stop_reason = "no_productive_time_after_setup"
+            _mark_shortfall("no_productive_time_after_setup")
             break
 
         max_physical = (productive_budget / cycle).to_integral_value(
@@ -244,8 +262,7 @@ def allocate_work_center_horizon(
 
         covered_physical = min(remaining_physical, max_physical)
         if covered_physical <= 0:
-            completeness = COMPLETENESS_SHORTFALL
-            stop_reason = "no_productive_time_after_setup"
+            _mark_shortfall("no_productive_time_after_setup")
             break
 
         covered_operational = (covered_physical / factor).quantize(
@@ -315,8 +332,7 @@ def allocate_work_center_horizon(
 
     if completeness == COMPLETENESS_COMPLETE and remaining_budget > 0:
         # Ainda há orçamento mas a fila acabou.
-        completeness = COMPLETENESS_SHORTFALL
-        stop_reason = stop_reason or "queue_shorter_than_horizon"
+        _mark_shortfall("queue_shorter_than_horizon")
 
     if completeness == COMPLETENESS_COMPLETE and setup_uncertain:
         completeness = COMPLETENESS_INCOMPLETE
@@ -335,11 +351,14 @@ def allocate_work_center_horizon(
         setup_uncertain=setup_uncertain,
         operations=tuple(allocations),
         skipped_closed_count=skipped_closed,
+        blocking_production_order=blocking_production_order,
+        blocking_operation_code=blocking_operation_code,
+        blocking_operation_id=blocking_operation_id,
     )
 
 
 def work_center_result_payload(result: WorkCenterHorizonResult) -> dict[str, Any]:
-    return {
+    payload: dict[str, Any] = {
         "work_center": result.work_center,
         "work_center_name": result.work_center_name,
         "hours_requested": result.hours_requested,
@@ -382,3 +401,92 @@ def work_center_result_payload(result: WorkCenterHorizonResult) -> dict[str, Any
             for op in result.operations
         ],
     }
+    if result.blocking_production_order or result.blocking_operation_code:
+        payload["blocking_operation"] = {
+            "production_order": result.blocking_production_order,
+            "operation_code": result.blocking_operation_code,
+            "operation_id": result.blocking_operation_id,
+        }
+    return payload
+
+
+INCOMPLETE_STOP_REASONS = frozenset(
+    {
+        "balance_unknown",
+        "standard_time_unavailable",
+        "upstream_unavailable",
+        "standard_time_call_limit",
+        "piece_conversion_unavailable",
+        "setup_uncertain",
+    }
+)
+
+
+def is_material_block_stop_reason(reason: str | None) -> bool:
+    """True quando o motivo impede lista operacional segura (≠ shortfall)."""
+    if not reason:
+        return False
+    if reason in INCOMPLETE_STOP_REASONS:
+        return True
+    # Qualidades de tempo padrão fora de "complete" são bloqueios materiais.
+    if reason.endswith("_unavailable") or reason.endswith("_uncertain"):
+        return True
+    if "call_limit" in reason:
+        return True
+    return False
+
+
+def format_horizon_block_message(
+    *,
+    work_center: str,
+    stop_reason: str | None,
+    production_order: str | None = None,
+    operation_code: str | None = None,
+) -> str:
+    """Mensagem compreensível para o usuário (sem stack/SQL)."""
+    ct = (work_center or "").strip() or "?"
+    op_ref = ""
+    if production_order and operation_code:
+        op_ref = f" (OP {production_order} / operação {operation_code})"
+    elif production_order:
+        op_ref = f" (OP {production_order})"
+    reason = (stop_reason or "").strip()
+    if reason == "standard_time_unavailable":
+        return (
+            f"Não foi possível calcular o horizonte do CT {ct} porque uma operação "
+            f"está sem tempo padrão válido{op_ref}. Verifique o cadastro da operação."
+        )
+    if reason == "upstream_unavailable":
+        return (
+            f"A consulta de tempo padrão do CT {ct} não foi concluída{op_ref}. "
+            "Tente novamente ou solicite a verificação da integração."
+        )
+    if reason == "standard_time_call_limit":
+        return (
+            f"O cálculo do CT {ct} atingiu o limite de consultas permitido. "
+            "O horizonte não pôde ser concluído com segurança."
+        )
+    if reason == "balance_unknown":
+        return (
+            f"O saldo da operação no CT {ct} não pôde ser determinado{op_ref}. "
+            "Sem saldo confiável o horizonte não é seguro para coleta."
+        )
+    if reason == "piece_conversion_unavailable":
+        return (
+            f"Falta o fator de conversão peça/unidade no CT {ct}{op_ref}. "
+            "O horizonte não pôde ser calculado com segurança."
+        )
+    if reason == "setup_uncertain":
+        return (
+            f"O setup da operação no CT {ct} está incerto{op_ref}. "
+            "A prévia não é tratada como lista operacional segura."
+        )
+    if reason:
+        return (
+            f"O horizonte do CT {ct} ficou incompleto ({reason}){op_ref}. "
+            "Consulte novamente após corrigir a causa."
+        )
+    return (
+        f"O horizonte do CT {ct} ficou incompleto{op_ref}. "
+        "Consulte novamente após verificar saldos e tempos padrão."
+    )
