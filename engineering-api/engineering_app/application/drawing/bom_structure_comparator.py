@@ -89,27 +89,45 @@ def _drawing_occurrences(
     limitations: list[str] = []
     current_parent: str | None = None
     for row in rows:
-        for code in _row_codes(row):
-            if code == product_code:
-                continue
+        codes = [c for c in _row_codes(row) if c != product_code]
+        # Âncoras da linha: códigos PI/PA presentes na MESMA linha —
+        # evidência geométrica real de agrupamento. Uma âncora única
+        # verifica a associação dos demais códigos da linha; mais de
+        # uma torna a associação ambígua (não inventa relação).
+        row_anchors = [
+            c for c in codes if _infer_item_type(c) in {"PI", "PA"}
+        ]
+        for code in codes:
             item_type = _infer_item_type(code)
             if item_type in {"PI", "PA"}:
                 current_parent = code
                 parent = product_code
+                parent_source = "set_anchor"
+                verified = True
+            elif len(row_anchors) == 1:
+                parent = row_anchors[0]
+                parent_source = "row_group"
+                verified = True
+            elif len(row_anchors) > 1:
+                parent = None
+                parent_source = None
+                verified = False
             elif current_parent:
                 parent = current_parent
+                parent_source = "pi_group_inference"
+                verified = False
             else:
                 parent = None
+                parent_source = None
+                verified = False
             occurrences.append(
                 {
                     "item_code": code,
                     "item_type": item_type,
                     "item_description": row.get("description"),
                     "parent_code": parent,
-                    "parent_verified": parent is not None,
-                    "parent_source": (
-                        "pi_group_inference" if parent else None
-                    ),
+                    "parent_verified": verified,
+                    "parent_source": parent_source,
                     "extraction_source": "typed_table_cell",
                     "flaggable": True,
                     "quantity": row.get("quantity"),
@@ -339,9 +357,9 @@ def compare_bom_to_drawing(
         # Pai inferido por agrupamento registra-se como relação não
         # verificada — nunca promovido a divergência comprovada.
         if (
-            occ["parent_verified"]
-            and occ.get("parent_source") == "pi_group_inference"
+            occ.get("parent_source") == "pi_group_inference"
             and chosen.get("parent_code") != occ["parent_code"]
+            and not same_parent
             and all(
                 o.get("parent_code") != occ["parent_code"]
                 for o in bom_by_code[code]
@@ -382,7 +400,10 @@ def compare_bom_to_drawing(
                         "bom_relationship": "PRESENT_UNDER_OTHER_PARENT",
                         "parent_source": occ.get("parent_source"),
                     },
-                    confidence="inferred_parent",
+                    confidence={
+                        "row_group": "row_associated",
+                        "set_anchor": "column_anchor",
+                    }.get(occ.get("parent_source"), "inferred_parent"),
                     explanation=(
                         f"O item {code} aparece no desenho sob "
                         f"{occ['parent_code']} (associação inferida "

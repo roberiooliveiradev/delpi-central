@@ -385,10 +385,17 @@ def _detect_component_table(
                 break
         else:
             cols.append([t])
+    # Multi-coluna: além da maior, unir colunas com ≥3 códigos —
+    # layouts com coluna de conjunto (PI/PA) + coluna de componentes
+    # perdem linhas quando só a maior ancora as faixas Y.
     code_col = max(cols, key=len)
     if len(code_col) < 2:
         return None
-    col_box = _box(code_col)
+    anchor_cols = [code_col] + [
+        c for c in cols if c is not code_col and len(c) >= 3
+    ]
+    anchor_tokens = [t for c in anchor_cols for t in c]
+    col_box = _box(anchor_tokens)
     y_tol = h * 0.02
     # linhas da tabela = tokens na mesma faixa Y dos códigos (vizinhança)
     rows: list[list[dict]] = []
@@ -398,7 +405,7 @@ def _detect_component_table(
     ):
         c = _tok_center(t)
         row_y = None
-        for code_t in code_col:
+        for code_t in anchor_tokens:
             if abs(c[1] - _tok_center(code_t)[1]) <= y_tol:
                 row_y = _tok_center(code_t)[1]
                 break
@@ -437,7 +444,7 @@ def _detect_component_table(
     return {
         "box": table_box,
         "code_col_x": (col_box[0] + col_box[2]) / 2,
-        "code_count": len(code_col),
+        "code_count": len(anchor_tokens),
         "rows": rows,
         "header_tokens": header,
         "tokens": [
@@ -529,6 +536,12 @@ def _structure_table(
             if col_centers[i] - col_centers[i - 1] > gap:
                 break
             keep_cols.add(i)
+    # Colunas tipadas component_code por conteúdo mantêm-se mesmo com
+    # gap — layouts multi-coluna (conjunto + componentes) usam faixas
+    # X não contíguas.
+    keep_cols.update(
+        i for i, tpe in col_types.items() if tpe == "component_code"
+    )
     rows_out = []
     ambiguous = 0
     for r_i, row in enumerate(sorted(table["rows"], key=lambda r: r["y"])):

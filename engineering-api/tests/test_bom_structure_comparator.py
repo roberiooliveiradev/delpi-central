@@ -69,6 +69,35 @@ def _tokens(*codes, page=1):
     return [{"normalized_text": c, "page": page} for c in codes]
 
 
+def _group_row(parent, code, y, *, page=1):
+    """Row de duas colunas (layout real): coluna de conjunto com o
+    PI/PA + coluna de componentes — associação por evidência de linha."""
+    return {
+        "row": y,
+        "y_px": float(y),
+        "component_code": parent,
+        "description": None,
+        "quantity": None,
+        "cells": [
+            {
+                "text": parent,
+                "col": 0,
+                "row": y,
+                "col_type": "component_code",
+                "bounding_box_px": [10, y, 60, y + 8],
+                "page": page,
+            },
+            {
+                "text": code,
+                "col": 1,
+                "row": y,
+                "bounding_box_px": [120, y, 180, y + 8],
+                "page": page,
+            },
+        ],
+    }
+
+
 # --- caso canônico 90263520 ---------------------------------------------------
 
 
@@ -247,9 +276,8 @@ def test_same_code_under_different_parent_flagged():
 def test_repeated_code_same_parent_is_occurrence_match():
     table = _table(
         [
-            _row("50000001", 10),
-            _row("10400040", 20),
-            _row("10400040", 30),
+            _group_row("50000001", "10400040", 10),
+            _group_row("50000001", "10400040", 20),
         ]
     )
     bom = _bom(
@@ -405,9 +433,7 @@ def test_bom_unavailable_is_inconclusive():
 
 
 def test_full_match_no_divergence():
-    table = _table(
-        [_row("50000001", 10), _row("10400040", 20)]
-    )
+    table = _table([_group_row("50000001", "10400040", 10)])
     bom = _bom(
         ("50000001", PRODUCT, 1), ("10400040", "50000001", 2)
     )
@@ -451,3 +477,56 @@ def test_quantities_never_compared_without_rule():
         "quantitative_comparison: INCONCLUSIVE" in l
         for l in out["limitations"]
     )
+
+
+def test_row_anchor_verifies_child_parent():
+    """Código na mesma linha que UMA âncora PI/PA → pai verificado por
+    evidência de linha (layout de duas colunas). Se a BOM discorda,
+    a divergência é candidata com evidência real."""
+    table = _table([_group_row("50000001", "10400040", 10)])
+    bom = _bom(
+        ("50000001", PRODUCT, 1),
+        ("50000002", PRODUCT, 1),
+        ("10400040", "50000002", 2),
+    )
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=table,
+        tokens=_tokens("10400040"),
+    )
+    mismatch = [
+        f for f in out["findings"]
+        if f["type"] == "PARENT_RELATION_MISMATCH"
+    ]
+    assert mismatch and mismatch[0]["item_code"] == "10400040"
+    assert mismatch[0]["confidence"] == "row_associated"
+
+
+def test_multi_anchor_row_keeps_association_ambiguous():
+    """Duas âncoras na mesma linha → associação não verificada,
+    sem divergência de relação."""
+    row = {
+        "row": 10, "y_px": 10.0,
+        "component_code": "50000001 50000002",
+        "description": None, "quantity": None,
+        "cells": [
+            {"text": "50000001 50000002", "col": 0, "row": 10,
+             "col_type": "component_code"},
+            {"text": "10400040", "col": 1, "row": 10},
+        ],
+    }
+    bom = _bom(
+        ("50000001", PRODUCT, 1), ("50000002", PRODUCT, 1),
+        ("10400040", "50000002", 2),
+    )
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=_table([row]),
+        tokens=_tokens("10400040"),
+    )
+    assert all(
+        f["type"] != "PARENT_RELATION_MISMATCH" for f in out["findings"]
+    )
+    assert out["coverage"]["unverified_parent_occurrences"] >= 1

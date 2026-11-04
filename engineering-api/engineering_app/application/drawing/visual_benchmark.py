@@ -28,6 +28,74 @@ from engineering_app.application.drawing.pdf_text_extractor import (
 
 _MAX_RENDER_PAGES = 5
 _RETRY_DPI = 110  # retry único em falhas de recurso (dense pages)
+_STRIP_BANDS = 3  # faixas horizontais no retry (preserva resolução)
+
+
+def _ocr_in_strips(
+    image_bytes: bytes, ocr: Any, bands: int = _STRIP_BANDS,
+    overlap: float = 0.15,
+) -> Any:
+    """OCR por faixas horizontais sobrepostas — cada chamada usa ~1/bands
+    da memória; tokens voltam com offsets de Y aplicados ao sistema da
+    página. Retorna um OcrResult agregado."""
+    import io
+
+    import cv2
+    import numpy as np
+
+    from engineering_app.application.drawing.extraction_ports import (
+        OcrResult,
+        OcrToken,
+    )
+
+    arr = np.frombuffer(image_bytes, dtype=np.uint8)
+    img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    if img is None:
+        return None
+    height, width = int(img.shape[0]), int(img.shape[1])
+    step = height / bands
+    pad = int(step * overlap)
+    tokens: list[OcrToken] = []
+    texts: list[str] = []
+    duration = 0
+    provider_id = ""
+    limitations: list[str] = []
+    metadata: dict[str, Any] = {}
+    for b in range(bands):
+        y0 = max(0, int(b * step) - pad)
+        y1 = min(height, int((b + 1) * step) + pad)
+        strip = img[y0:y1, :]
+        ok, buf = cv2.imencode(".png", strip)
+        if not ok:
+            continue
+        res = ocr.extract_text(buf.tobytes())
+        if res is None:
+            continue
+        provider_id = res.provider_id or provider_id
+        metadata = res.metadata or metadata
+        duration += res.duration_ms or 0
+        texts.append(res.text or "")
+        for t in res.tokens or []:
+            box = t.box
+            if box and len(box) >= 4:
+                box = [
+                    box[0], box[1] + y0, box[2], box[3] + y0,
+                ]
+            tokens.append(
+                OcrToken(text=t.text, confidence=t.confidence, box=box)
+            )
+        for lim in res.limitations or []:
+            limitations.append(f"band{b}:{lim}")
+    if not tokens:
+        return None
+    return OcrResult(
+        provider_id=provider_id or "strip_retry",
+        text="\n".join(texts),
+        tokens=tokens,
+        duration_ms=duration,
+        limitations=limitations + [f"strips:{bands}x_overlap"],
+        metadata=metadata,
+    )
 
 
 def _is_resource_error(exc: Exception) -> bool:
@@ -258,50 +326,65 @@ def run_visual_benchmark(
                 result = None
                 last_exc: Exception | None = None
                 # Páginas densas podem estourar recursos do OCR —
-                # uma única retentativa com DPI reduzido, genérica.
-                for attempt_dpi in (dpi, _RETRY_DPI):
+                # retentativa em faixas horizontais no mesmo DPI
+                # (menos memória por chamada, resolução preservada) e,
+                # por fim, página inteira com DPI reduzido.
+                try:
+                    img = rendered.image_bytes
+                    if preprocessor is not None:
+                        pre = preprocessor.preprocess(
+                            img, mode=spec["preprocess_mode"]
+                        )
+                        stage["preprocess"] = {
+                            "profile": pre.profile,
+                            "ops_applied": pre.ops_applied,
+                            "provider_id": pre.provider_id,
+                        }
+                        img = pre.image_bytes
+                    result = ocr.extract_text(img)
+                except Exception as exc:
+                    last_exc = exc
+                if result is None and _is_resource_error(last_exc):
                     try:
-                        if attempt_dpi != dpi:
-                            rendered = renderer.render_page(
-                                pdf_bytes,
-                                page=page_no,
-                                dpi=attempt_dpi,
-                            )
-                            stage["render"].update(
-                                {
-                                    "width": rendered.width,
-                                    "height": rendered.height,
-                                    "dpi": rendered.dpi,
-                                    "scale": rendered.scale,
-                                }
-                            )
-                        img = rendered.image_bytes
-                        if preprocessor is not None:
-                            pre = preprocessor.preprocess(
-                                img, mode=spec["preprocess_mode"]
-                            )
-                            if attempt_dpi == dpi:
-                                stage["preprocess"] = {
-                                    "profile": pre.profile,
-                                    "ops_applied": pre.ops_applied,
-                                    "provider_id": pre.provider_id,
-                                }
-                            img = pre.image_bytes
-                        result = ocr.extract_text(img)
-                        if attempt_dpi != dpi:
+                        result = _ocr_in_strips(
+                            rendered.image_bytes, ocr,
+                            bands=_STRIP_BANDS,
+                        )
+                        if result is not None and result.tokens:
                             stage["retry"] = {
-                                "dpi": attempt_dpi,
+                                "mode": "horizontal_strips",
+                                "bands": _STRIP_BANDS,
                                 "reason": str(last_exc),
                             }
-                        break
-                    except PdfExtractionError as exc:
-                        last_exc = exc
-                        if not _is_resource_error(exc):
-                            break
                     except Exception as exc:
                         last_exc = exc
-                        if not _is_resource_error(exc):
-                            break
+                        result = None
+                if result is None and _is_resource_error(last_exc):
+                    try:
+                        rendered = renderer.render_page(
+                            pdf_bytes, page=page_no, dpi=_RETRY_DPI,
+                        )
+                        stage["render"].update(
+                            {
+                                "width": rendered.width,
+                                "height": rendered.height,
+                                "dpi": rendered.dpi,
+                                "scale": rendered.scale,
+                            }
+                        )
+                        img = rendered.image_bytes
+                        if preprocessor is not None:
+                            img = preprocessor.preprocess(
+                                img, mode=spec["preprocess_mode"]
+                            ).image_bytes
+                        result = ocr.extract_text(img)
+                        stage["retry"] = {
+                            "dpi": _RETRY_DPI,
+                            "reason": str(last_exc),
+                        }
+                    except Exception as exc:
+                        last_exc = exc
+                        result = None
                 if result is None:
                     page_errors += 1
                     stage["status"] = "error"
