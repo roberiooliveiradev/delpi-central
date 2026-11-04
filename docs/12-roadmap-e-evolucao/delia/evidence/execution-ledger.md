@@ -5490,3 +5490,14 @@ FIX necessario (bounded, sem fabricar): `composed` deve carregar um
 outcome cuja proveniencia DERIVE dos outcomes reais dos subs
 (source_refs/evidence do owner) — uniao de proveniencia valida, nao
 um SpecialistOutcome inventado.
+
+
+## E4-R6 — coordination implemented composite grounding patch (2026-11-04)
+
+TASK=DELIA-C3-E4-R6-COMPOSITE-PATCH-HOMOLOGATION-E2E-01.
+CODE_COMMITS=0509ac33aba7,cd070a83eef2,4f00b3fcd897,52e07362c9af,670173868bf9,35a59f69c3d4,f22abd4b4470.
+TEST_COMMIT=f7f56b0ab534.
+PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/228-e4-r6-canonical-entity-reference-binding-contract-and-functional-closure.md section14.
+IMPLEMENTED=VerifiedCompositeEvidence internal multi-source lineage, separate from SpecialistOutcome; GovernedCapabilityAttempt.verified_composition; real owner-backed 2-complete-distinct-source fan-in; fail-closed 3+ source comparison; interaction emits GROUNDED OBSERVATION only for internally verified composition; no-owner SUCCESS remains NON_GROUNDED. No new planner/store/authority/token. REUSE_DECISION=EXTEND EXISTING_EQUIVALENT=YES.
+TESTS_BY_COORDINATION=TEST_NOT_RUN; DEPLOY=NOT_RUN; E2E=TEST_NOT_RUN; FUNCTIONAL_ACCEPTANCE=NO. Strict two-read gate will reject 3/4-sub paths until redundant/irrelevant objectives are semantically handled; does not self-prove requested target-set. Must validate final SHA+config, full suite and production-equivalent nonproduction HTTP/NDJSON client responses with real Keycloak/Core+DAVI/Domain+Qwen3 4B, exact 90260147/90260148 oracle, cancel/authz/gateway latency, and preservation of 500 regression fix.
+DEVIN_NEXT=Reanchor HEAD; run tests/test_verified_composite_grounding.py, test_multievidence_composition.py, test_interaction_runtime.py, delegation and full relevant suite; fix regressions minimally, deploy only to existing authorized HOMOLOGATION with rollback, repeatedly perform client-terminal and source-target oracle E2E; update ledger after measured evidence. REF01-REF08/G04/G05/G07/G12=NOT_PASS until verified. PRODUCTION_DEPLOY=NOT_AUTHORIZED.
