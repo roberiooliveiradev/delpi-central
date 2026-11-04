@@ -771,8 +771,10 @@ export const copy = {
     },
     originsTitle: "Origem da demanda",
     originsEmpty: "Sem origens detalhadas nesta resposta.",
-    originRow: (center: string, order: string, operation: string) =>
-      `${center} · OP ${order} · Op. ${operation}`,
+    originRow: (center: string, order: string, paCode: string) =>
+      paCode
+        ? `${center} · OP ${order} · ${paCode}`
+        : `${center} · OP ${order}`,
     collectModal: {
       title: "Coletar materiais",
       description:

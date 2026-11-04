@@ -289,6 +289,7 @@ def list_visible_published_queues(
                 "operation_code": operation_code,
                 "product_code": _literal(item.get("product_code")),
                 "product_description": _literal(item.get("product_description")),
+                "pa_product_code": _literal(item.get("pa_product_code")) or None,
                 "unit": _literal(item.get("unit")),
                 "pieces_conversion_factor": _optional_float(
                     item.get("pieces_conversion_factor")

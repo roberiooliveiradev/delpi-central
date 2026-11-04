@@ -85,6 +85,7 @@ class CoveredOperationDemand:
     sequence_position: int
     covered_qty: Decimal
     pending_qty: Decimal
+    pa_product_code: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,6 +101,7 @@ class MaterialOriginLine:
     fraction: float
     required_qty: float
     demand_basis: str = DEMAND_BASIS_OPEN_COMMITMENT
+    pa_product_code: str = ""
 
 
 @dataclass
@@ -252,6 +254,7 @@ def build_material_demands(
                     fraction=_round_qty(coverage_fraction),
                     required_qty=_round_qty(needed),
                     demand_basis=DEMAND_BASIS_OPEN_COMMITMENT,
+                    pa_product_code=op.pa_product_code,
                 )
             )
 
@@ -335,6 +338,7 @@ def apply_factory_stock(
                         "fraction": origin.fraction,
                         "required_qty": origin.required_qty,
                         "demand_basis": origin.demand_basis,
+                        "pa_product_code": origin.pa_product_code or None,
                     }
                     for origin in bucket.origins
                 ],
