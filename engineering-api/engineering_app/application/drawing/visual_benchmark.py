@@ -27,6 +27,24 @@ from engineering_app.application.drawing.pdf_text_extractor import (
 )
 
 _MAX_RENDER_PAGES = 5
+_RETRY_DPI = 110  # retry único em falhas de recurso (dense pages)
+
+
+def _is_resource_error(exc: Exception) -> bool:
+    """Falha de recurso (memória/limite de imagem) — elegível a retry
+    com DPI reduzido; erros lógicos de extração não tentam de novo."""
+    msg = f"{type(exc).__name__}:{exc}".lower()
+    return any(
+        key in msg
+        for key in (
+            "memoryerror",
+            "out_of_memory",
+            "oom",
+            "image_too_large",
+            "image_pixels_limit",
+            "resource",
+        )
+    )
 _TOKEN_SAMPLE_LIMIT = 200
 _DEDUP_ENTRY_LIMIT = 500
 
@@ -237,28 +255,57 @@ def run_visual_benchmark(
                     )
                 except Exception:
                     stage["graphic_primitives"] = None
-                try:
-                    if preprocessor is not None:
-                        pre = preprocessor.preprocess(
-                            image, mode=spec["preprocess_mode"]
-                        )
-                        stage["preprocess"] = {
-                            "profile": pre.profile,
-                            "ops_applied": pre.ops_applied,
-                            "provider_id": pre.provider_id,
-                        }
-                        image = pre.image_bytes
-                    result = ocr.extract_text(image)
-                except PdfExtractionError as exc:
+                result = None
+                last_exc: Exception | None = None
+                # Páginas densas podem estourar recursos do OCR —
+                # uma única retentativa com DPI reduzido, genérica.
+                for attempt_dpi in (dpi, _RETRY_DPI):
+                    try:
+                        if attempt_dpi != dpi:
+                            rendered = renderer.render_page(
+                                pdf_bytes,
+                                page=page_no,
+                                dpi=attempt_dpi,
+                            )
+                            stage["render"].update(
+                                {
+                                    "width": rendered.width,
+                                    "height": rendered.height,
+                                    "dpi": rendered.dpi,
+                                    "scale": rendered.scale,
+                                }
+                            )
+                        img = rendered.image_bytes
+                        if preprocessor is not None:
+                            pre = preprocessor.preprocess(
+                                img, mode=spec["preprocess_mode"]
+                            )
+                            if attempt_dpi == dpi:
+                                stage["preprocess"] = {
+                                    "profile": pre.profile,
+                                    "ops_applied": pre.ops_applied,
+                                    "provider_id": pre.provider_id,
+                                }
+                            img = pre.image_bytes
+                        result = ocr.extract_text(img)
+                        if attempt_dpi != dpi:
+                            stage["retry"] = {
+                                "dpi": attempt_dpi,
+                                "reason": str(last_exc),
+                            }
+                        break
+                    except PdfExtractionError as exc:
+                        last_exc = exc
+                        if not _is_resource_error(exc):
+                            break
+                    except Exception as exc:
+                        last_exc = exc
+                        if not _is_resource_error(exc):
+                            break
+                if result is None:
                     page_errors += 1
                     stage["status"] = "error"
-                    stage["error"] = str(exc)
-                    pages.append(stage)
-                    continue
-                except Exception as exc:
-                    page_errors += 1
-                    stage["status"] = "error"
-                    stage["error"] = f"{type(exc).__name__}"
+                    stage["error"] = str(last_exc)
                     pages.append(stage)
                     continue
                 confidences = [

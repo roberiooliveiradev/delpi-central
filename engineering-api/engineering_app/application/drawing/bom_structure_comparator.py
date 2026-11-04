@@ -25,7 +25,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-_CODE_IN_TEXT_RE = re.compile(r"\d{6,11}")
+_CODE_IN_TEXT_RE = re.compile(r"\d{8,11}")
 _CODE_PREFIX_TYPES = {"5": "PI", "1": "MP", "9": "PA"}
 _STATUS_DIVERGENT = "DIVERGENCES_CANDIDATES"
 _STATUS_MATCH = "NO_DIVERGENCE_DETECTED"
@@ -41,16 +41,26 @@ def _norm_code(raw: Any) -> str:
 
 
 def _row_codes(row: dict[str, Any]) -> list[str]:
-    """Códigos por linha — OCR pode fundir múltiplos códigos num mesmo
-    campo/célula; extrair todos os tokens numéricos por célula tipada
-    (fallback para o campo agregado da linha)."""
+    """Códigos por linha — união das superfícies textuais da linha.
+
+    OCR pode fundir códigos num mesmo campo ou deixar o código em uma
+    coluna não tipada (ex.: coluna ``item`` com ``"a 1 10020033"``).
+    Extrai tokens 8–11 dígitos de células tipadas, de todas as células
+    e dos campos tipados da linha — nunca inventa valores."""
     texts: list[str] = [
         str(c.get("text") or "")
         for c in (row.get("cells") or [])
         if c.get("col_type") == "component_code"
     ]
-    if not texts:
-        texts = [str(row.get("component_code") or "")]
+    texts += [
+        str(c.get("text") or "")
+        for c in (row.get("cells") or [])
+        if c.get("col_type") != "component_code"
+    ]
+    for f in (row.get("fields") or {}).values():
+        texts.append(str(f.get("raw_text") or ""))
+        texts.append(str(f.get("normalized_value") or ""))
+    texts.append(str(row.get("component_code") or ""))
     seen: set[str] = set()
     codes: list[str] = []
     for text in texts:
@@ -62,7 +72,9 @@ def _row_codes(row: dict[str, Any]) -> list[str]:
 
 
 def _drawing_occurrences(
-    component_table: dict | None, product_code: str
+    component_table: dict | None,
+    product_code: str,
+    tokens: list[dict] | None = None,
 ) -> tuple[list[dict[str, Any]], list[str]]:
     """Extrai ocorrências tipadas das linhas da ``component_table``.
 
@@ -72,6 +84,7 @@ def _drawing_occurrences(
     ``parent_code=None`` e a associação é declarada não verificada.
     Retorna ``(occurrences, limitations)``."""
     rows = (component_table or {}).get("rows") or []
+    table_is_candidate = bool((component_table or {}).get("candidate"))
     occurrences: list[dict[str, Any]] = []
     limitations: list[str] = []
     current_parent: str | None = None
@@ -94,6 +107,11 @@ def _drawing_occurrences(
                     "item_description": row.get("description"),
                     "parent_code": parent,
                     "parent_verified": parent is not None,
+                    "parent_source": (
+                        "pi_group_inference" if parent else None
+                    ),
+                    "extraction_source": "typed_table_cell",
+                    "flaggable": True,
                     "quantity": row.get("quantity"),
                     "y_px": row.get("y_px"),
                     "row": row.get("row"),
@@ -104,6 +122,38 @@ def _drawing_occurrences(
         limitations.append(
             "parent_relation_unverified: parte das linhas sem grupo "
             "PI/PA identificado — correspondência por código apenas."
+        )
+    # Presença residual: códigos visíveis no documento fora das linhas
+    # tipadas (ex.: tabela detectada mas células não segmentadas).
+    # Conta como evidência de presença — nunca como DRAWING_ONLY, pois
+    # sem linha não se comprova que é item da tabela de componentes.
+    typed = {o["item_code"] for o in occurrences}
+    residual = 0
+    if table_is_candidate:
+        for code in sorted(_token_code_set(tokens) - typed):
+            if code == product_code:
+                continue
+            occurrences.append(
+                {
+                    "item_code": code,
+                    "item_type": _infer_item_type(code),
+                    "item_description": None,
+                    "parent_code": None,
+                    "parent_verified": False,
+                    "parent_source": None,
+                    "extraction_source": "code_token",
+                    "flaggable": False,
+                    "quantity": None,
+                    "y_px": None,
+                    "row": None,
+                    "cells": [],
+                }
+            )
+            residual += 1
+    if residual:
+        limitations.append(
+            f"presence_by_token_only: {residual} código(s) visíveis "
+            "fora das linhas tipadas — presença conta, relação não."
         )
     return occurrences, limitations
 
@@ -170,7 +220,7 @@ def compare_bom_to_drawing(
 
     # ---------- lado desenho -------------------------------------------------
     drawing_occ, ext_limitations = _drawing_occurrences(
-        component_table, product_code
+        component_table, product_code, tokens
     )
     limitations.extend(ext_limitations)
     table_meta = component_table or {}
@@ -239,6 +289,8 @@ def compare_bom_to_drawing(
         code = occ["item_code"]
         candidates = bom_remaining.get(code)
         if not candidates:
+            if not occ.get("flaggable"):
+                continue
             page = _occurrence_page(occ, tokens)
             findings.append(
                 _finding(
@@ -302,11 +354,15 @@ def compare_bom_to_drawing(
                             }
                         ),
                         "bom_relationship": "PRESENT_UNDER_OTHER_PARENT",
+                        "parent_source": occ.get("parent_source"),
                     },
+                    confidence="inferred_parent",
                     explanation=(
                         f"O item {code} aparece no desenho sob "
-                        f"{occ['parent_code']}, mas a BOM vigente o "
-                        "associa a outro(s) conjunto(s)."
+                        f"{occ['parent_code']} (associação inferida "
+                        "por agrupamento), mas a BOM vigente o "
+                        "associa a outro(s) conjunto(s) — candidato "
+                        "a verificação, não fato."
                     ),
                 )
             )
@@ -364,9 +420,27 @@ def compare_bom_to_drawing(
     )
 
     # ---------- status agregado ----------------------------------------------
+    unverified_typed = sum(
+        1
+        for o in drawing_occ
+        if o.get("extraction_source") == "typed_table_cell"
+        and not o["parent_verified"]
+    )
+    token_only = sum(
+        1
+        for o in drawing_occ
+        if o.get("extraction_source") == "code_token"
+    )
+    verification_gaps = (
+        bom_only_unverified
+        + len(unclassified)
+        + unverified_typed
+        + token_only
+        + (0 if coverage_complete else 1)
+    )
     if findings:
         status = _STATUS_DIVERGENT
-    elif not coverage_complete or bom_only_unverified:
+    elif verification_gaps:
         status = _STATUS_INCONCLUSIVE
     else:
         status = _STATUS_MATCH
@@ -386,7 +460,10 @@ def compare_bom_to_drawing(
             "unreliable_boundary": bool(
                 table_meta.get("unreliable_boundary")
             ),
-            "complete_for_requested_scope": coverage_complete,
+            "complete_for_requested_scope": coverage_complete
+            and not verification_gaps,
+            "unverified_parent_occurrences": unverified_typed,
+            "token_only_occurrences": token_only,
         },
         "counts": {
             "drawing_occurrences": len(drawing_occ),

@@ -359,7 +359,9 @@ def test_bom_code_visible_outside_cells_not_bom_only():
         tokens=_tokens("50000001", "50000002"),
     )
     assert all(f["type"] != "BOM_ONLY" for f in out["findings"])
-    assert any("50000002" in l for l in out["limitations"])
+    # presença por token (não tipado) conta como match, com limitation
+    assert out["counts"]["matched_occurrences"] == 2
+    assert any("presence_by_token_only" in l for l in out["limitations"])
 
 
 def test_quantities_never_compared_without_rule():
