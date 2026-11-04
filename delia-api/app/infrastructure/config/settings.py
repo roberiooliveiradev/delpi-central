@@ -268,27 +268,26 @@ class Settings:
         # (retry OFF), so production can never retry involuntarily.
         # The PO-approved capacity ceiling is LLM_CALL_MAX_ATTEMPTS=3;
         # config can only lower it, never raise past it.
-        # Task 07 (product-owner authorization): production
-        # orchestration-engine selection — backend-controlled config
-        # ONLY; never request/model/provider-sourced. Validated
-        # fail-closed at composition; default `langgraph` (B1),
-        # `delia` = legacy Engine A rollback.
+        # Doc 231: production orchestration-engine selection —
+        # backend-controlled config ONLY; never request/model/
+        # provider-sourced. Default `pydantic_ai` (unified
+        # investigation); `delia` = Application sequencer rollback.
+        # LangGraph values fail closed at composition.
         self.orchestration_engine = (
-            os.getenv("DELIA_ORCHESTRATION_ENGINE") or "langgraph"
+            os.getenv("DELIA_ORCHESTRATION_ENGINE") or "pydantic_ai"
         ).strip()
         # S3 (doc 214): compound-objective decomposition — composition
         # config ONLY, backend-controlled; OFF by default.
         self.subobjective_investigation_enabled = _env_flag(
             "DELIA_SUBOBJECTIVE_INVESTIGATION"
         )
-        # S4 (doc 214): LangGraph Send fan-out for independent
-        # subobjectives — composition config ONLY; OFF by default.
+        # Doc 231: LangGraph Send fan-out retired — flag retained only
+        # so composition can fail closed when stale env enables it.
         self.subobjective_fanout_enabled = _env_flag(
             "DELIA_SUBOBJECTIVE_FANOUT"
         )
-        # S5 (doc 214): durable checkpoint storage for investigation
-        # resume — composition config ONLY; unset means no durable
-        # checkpointer (in-process behavior, unchanged default).
+        # Doc 231: LangGraph SqliteSaver retired — non-empty path fails
+        # closed at composition.
         self.checkpoint_db_path = (
             os.getenv("DELIA_CHECKPOINT_DB") or ""
         ).strip() or None
@@ -391,4 +390,8 @@ class Settings:
         settings.environment = "testing"
         settings.debug = False
         settings.log_level = "WARNING"
+        # Unit composition must not require live LLM credentials —
+        # Application sequencer covers gate wiring without the
+        # Pydantic AI investigation model (doc 231).
+        settings.orchestration_engine = "delia"
         return settings

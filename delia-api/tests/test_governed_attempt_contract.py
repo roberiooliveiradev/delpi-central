@@ -74,10 +74,10 @@ from tests.test_governed_stage_resume import _FlakyStageModel
 # --- engine registry (one entry per SupportsGovernedCapabilityAttempt
 # implementation authorized for the boundary) -------------------------
 
-ENGINE_IDS: tuple[str, ...] = ("delia", "langgraph")
+ENGINE_IDS: tuple[str, ...] = ("delia", "pydantic_ai")
 
 
-def _build_langgraph_engine(
+def _build_pydantic_ai_engine(
     *,
     port: FakePort,
     specialist_ids: tuple[str, ...],
@@ -90,14 +90,10 @@ def _build_langgraph_engine(
     recovery_reuse_enabled=True,
     **gates_kwargs,
 ) -> SupportsGovernedCapabilityAttempt:
-    """Engine B — LangGraph sequencing over the same governed
-    primitives. Skipped entirely when the optional eval dependency is
-    absent (never a production requirement). ``recovery_reuse_enabled``
-    toggles the H5 sequencing strategy (B1 vs the B0 framework
-    baseline) — a sequencing knob, never a production setting."""
-    pytest.importorskip("langgraph")
-    from app.infrastructure.orchestration.langgraph_engine import (
-        LangGraphCapabilityOrchestrator,
+    """Pydantic AI investigation runtime over shared governed gates."""
+    from pydantic_ai.models.test import TestModel
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
     )
 
     if providers is None:
@@ -108,10 +104,6 @@ def _build_langgraph_engine(
     kwargs = {}
     if turn_budget_seconds is not None:
         kwargs["turn_budget_seconds"] = turn_budget_seconds
-    # Composition is a harness concern: the same governed-primitives
-    # provider instance Engine A would run is injected through the
-    # application-owned gates contract — the adapter never constructs
-    # or imports it (doc 195, F2).
     gates = OperationalCapabilityOrchestrator(
         providers,
         orchestration_instructions=load_test_orchestration_instructions(),
@@ -122,8 +114,12 @@ def _build_langgraph_engine(
         **gates_kwargs,
         **kwargs,
     )
-    return LangGraphCapabilityOrchestrator(
+    # Contract parity: the Agent must exercise a real tool call; the
+    # governed investigation tool reuses Application owner-path gates
+    # (same authority as Engine A / former LangGraph owner_path node).
+    return PydanticAiInvestigationOrchestrator(
         gates,
+        model=TestModel(call_tools=["run_governed_investigation"]),
         recovery_reuse_enabled=recovery_reuse_enabled,
     )
 
@@ -146,17 +142,9 @@ def build_engine(
     Per-engine wiring lives ONLY here: each id maps the shared fake
     owner surface and its own model-stub scripts onto the same attempt
     boundary. Contract tests below never see engine internals.
-
-    ``providers`` overrides the FakePort→McpCapabilityProvider wiring
-    for scenarios that need richer provider-level fixtures (relevance
-    judgments, typed outcomes). ``turn_budget_seconds`` defaults to
-    the implementation default — a smaller budget legitimately
-    changes behavior (optional probes are skipped for headroom), so
-    tests that need a bounded window pass ``turn_deadline`` on
-    ``attempt()`` instead.
     """
-    if engine_id in ("langgraph", "langgraph_b0"):
-        return _build_langgraph_engine(
+    if engine_id == "pydantic_ai":
+        return _build_pydantic_ai_engine(
             port=port,
             specialist_ids=specialist_ids,
             proposal=proposal,
@@ -165,7 +153,6 @@ def build_engine(
             turn_budget_seconds=turn_budget_seconds,
             max_governed_attempts=max_governed_attempts,
             llm_call_max_attempts=llm_call_max_attempts,
-            recovery_reuse_enabled=(engine_id == "langgraph"),
             **gates_kwargs,
         )
     if engine_id != "delia":
@@ -540,41 +527,30 @@ def test_correlation_id_round_trips(engine_id):
     assert attempt.provenance.correlation_id == "corr-1"
 
 
-# --- Engine-B-specific: real graph, non-delegation, isolation ----------
+# --- Pydantic AI investigation runtime: sequencing + isolation --------
 
 
 @pytest.fixture
-def langgraph_engine():
-    pytest.importorskip("langgraph")
-    return _build_langgraph_engine(
+def pydantic_ai_engine():
+    return _build_pydantic_ai_engine(
         port=FakePort(tools_by_specialist={"teo": TEO_TOOLS}),
         specialist_ids=("teo",),
         proposal=_select("teo", "analyze", {"view": "summary"}),
     )
 
 
-def test_engine_b_executes_real_graph_nodes(langgraph_engine):
-    """A genuine implementation runs real LangGraph nodes/edges — the
-    engine records the executed node trace per invocation. A wrapper
-    delegating to attempt() produces no node trace."""
-    from langgraph.graph.state import CompiledStateGraph
-
-    assert isinstance(
-        langgraph_engine._compiled_graph, CompiledStateGraph
-    )
-    attempt = langgraph_engine.attempt("resumo dos indicadores")
+def test_pydantic_ai_records_stage_trace(pydantic_ai_engine):
+    attempt = pydantic_ai_engine.attempt("resumo dos indicadores")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    trace = langgraph_engine.last_node_trace
-    # Real sequencing: preflight -> admission routing -> owner path.
+    trace = pydantic_ai_engine.last_node_trace
     assert trace[0] == "preflight"
     assert "admission" in trace
-    assert trace[-1] == "owner_path"
+    assert "investigation" in trace
 
 
-def test_engine_b_never_delegates_to_engine_a(langgraph_engine):
-    """If OperationalCapabilityOrchestrator._attempt were called, this
-    spy would record it — Engine B must sequence governed primitives
-    itself, never delegate the complete flow."""
+def test_pydantic_ai_never_delegates_to_application_attempt(
+    pydantic_ai_engine,
+):
     calls = []
     original = OperationalCapabilityOrchestrator._attempt
 
@@ -586,19 +562,16 @@ def test_engine_b_never_delegates_to_engine_a(langgraph_engine):
         mp.setattr(
             OperationalCapabilityOrchestrator, "_attempt", _spy
         )
-        attempt = langgraph_engine.attempt("resumo dos indicadores")
-    assert calls == [], "Engine B delegated to Engine A _attempt"
+        attempt = pydantic_ai_engine.attempt("resumo dos indicadores")
+    assert calls == [], "pydantic_ai delegated to Application _attempt"
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
 
 
-def test_engine_b_uses_shared_governed_primitives(langgraph_engine):
-    """Engine B must consume the SAME governed machinery — no
-    duplicated validation, selection, invoke or synthesis logic."""
+def test_pydantic_ai_uses_shared_governed_primitives():
     import inspect as _inspect
-    import app.infrastructure.orchestration.langgraph_engine as mod
+    import app.infrastructure.orchestration.pydantic_ai_investigation as mod
 
     src = _inspect.getsource(mod)
-    # The engine module must not re-implement governed gates.
     for forbidden in (
         "def _validate_instance",
         "def _propose(",
@@ -613,17 +586,11 @@ def test_engine_b_uses_shared_governed_primitives(langgraph_engine):
         "def _attempt_confirmation",
     ):
         assert forbidden not in src, (
-            f"Engine B duplicates governed gate: {forbidden}"
+            f"investigation runtime duplicates gate: {forbidden}"
         )
 
 
 def test_engine_selection_is_config_gated_not_request_driven():
-    """Task 07: B1 is the authorized production default selected by
-    backend config only. The composer resolves ONE attempt
-    implementation from DELIA_ORCHESTRATION_ENGINE via the supported
-    set — request input, provider metadata and model output have no
-    selection path."""
-    from pathlib import Path
     import inspect
 
     from app.composition.root_composer import (
@@ -632,40 +599,33 @@ def test_engine_selection_is_config_gated_not_request_driven():
     )
 
     assert _SUPPORTED_ORCHESTRATION_ENGINES == frozenset(
-        {"langgraph", "delia"}
+        {"pydantic_ai", "delia"}
     )
     assert list(
         inspect.signature(_resolve_orchestration_attempt).parameters
     ) == [
         "engine_name",
         "gates",
+        "investigation_model",
         "subobjective_fanout_enabled",
         "checkpoint_db_path",
     ]
 
 
-def test_langgraph_production_requirements_pinned_and_scoped():
-    """Task 07: the promoted dependency is pinned exactly and stays
-    scoped to the sequencing runtime — no agents, vector stores,
-    model providers, LangGraph Cloud or checkpointer backends."""
+def test_langgraph_absent_from_production_requirements():
     from pathlib import Path
 
     req = (
         Path(__file__).resolve().parent.parent / "requirements.txt"
     ).read_text().lower()
-    assert "langgraph==1.2.16" in req
-    for forbidden in (
-        "langchain-community",
-        "langchain-openai",
-        "langchain-anthropic",
-        "langgraph-checkpoint-postgres",
-        "langgraph-checkpoint-sqlite",
-        "langgraph-cli",
-        "langserve",
-        "faiss",
-        "chroma",
-    ):
-        assert forbidden not in req, forbidden
+    pins = "\n".join(
+        line
+        for line in req.splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    )
+    assert "langgraph" not in pins
+    assert "langchain" not in pins
+    assert "pydantic-ai" in pins
 
 
 # --- doc-192 scenario matrix (S2, S3, S4, S6, S7) ---------------------

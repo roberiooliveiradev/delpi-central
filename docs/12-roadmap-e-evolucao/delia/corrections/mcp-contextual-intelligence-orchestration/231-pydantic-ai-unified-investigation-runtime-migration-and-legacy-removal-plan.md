@@ -2,11 +2,11 @@
 
 **TASK_ID:** `DELIA-C3-PYDANTIC-AI-UNIFIED-INVESTIGATION-RUNTIME-MIGRATION-01`  
 **DATE:** 2026-11-04  
-**STATUS:** EXECUTION_PLAN — user-authorized implementation, local validation, legacy removal; **NOT** proof of completed execution  
+**STATUS:** EXECUTED — see [doc 232](232-pydantic-ai-unified-investigation-runtime-execution-report.md); PRODUCTION_DEPLOY NOT_AUTHORIZED  
 **REPOSITORY:** `roberiooliveiradev/delpi-central`  
 **OBSERVED_HEAD_AT_PLANNING:** `bfa270939c5bed85023553be852c95cb7996063c` (reconfirm before work)  
 **PRIMARY SOURCES:** doc 230 (framework inventory), 229 (systemic intelligence audit), 226 (semantic-once), 228 §§12–20 (RC-A/RC-B/RC-C/REF05), docs 192–196 (Engine B), 220 (Pydantic AI), canonical authorities and execution ledger.  
-**EXECUTOR:** Devin  
+**EXECUTOR:** Cursor agent (Composer)  
 **EXECUTION MODE:** **ONE END-TO-END ITERATION**, including implementation, removal, regression, local real-model evaluation, documentation, commit, push and report. Intermediate phases below are internal steps, NOT requests for new prompts/PO check-ins.  
 **PRODUCTION DEPLOY:** NOT_AUTHORIZED.  
 **LOCAL / GOVERNED HOMOLOGATION:** AUTHORIZED, using legitimate local credentials/configuration.  

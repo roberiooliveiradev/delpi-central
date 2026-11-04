@@ -193,13 +193,12 @@ def _reuse_proposal(
 # ---------------- R1: reusable assessment ----------------
 
 
-@pytest.mark.parametrize("engine", ["delia", "langgraph_b0", "langgraph"])
+@pytest.mark.parametrize("engine", ["delia", "pydantic_ai"])
 def test_r1_prior_foreign_required_is_reused_only_by_strategy(
     engine,
 ):
-    """R1 — equivalent assessment inputs: Engine B (strategy on)
-    skips the redundant second native_assessment call; Engine A and
-    B0 still pay it. All reach the same business outcome."""
+    """R1 — pydantic_ai binds the reuse ledger; Application `delia`
+    does not. Both reach the same business outcome."""
     orch, model = _engine(
         engine, _providers(), _reuse_proposal()
     )
@@ -207,7 +206,7 @@ def test_r1_prior_foreign_required_is_reused_only_by_strategy(
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert "TERM. BALA" in (attempt.content or "")
     calls = _assessment_calls(model)
-    if engine == "langgraph":
+    if engine == "pydantic_ai":
         assert len(calls) == 1  # the second decision was reused
     else:
         assert len(calls) == 2
@@ -229,7 +228,7 @@ def test_r1_reuse_still_runs_foreign_leg_with_feedback():
         outcomes={("beta", "read_guidance"): _doc_outcome()},
     )
     orch, model = _engine(
-        "langgraph", [pa, pb], _reuse_proposal()
+        "pydantic_ai", [pa, pb], _reuse_proposal()
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
@@ -271,7 +270,7 @@ def test_r2_changed_target_invalidates_reuse():
     )
     proposal = _reuse_proposal(reselect_capability="lookup_items")
     # Recovery re-selects a different capability -> reassess runs.
-    orch, model = _engine("langgraph", [pa, pb], proposal)
+    orch, model = _engine("pydantic_ai", [pa, pb], proposal)
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert len(_assessment_calls(model)) == 2
     assert [name for name, _args in pa.calls] == [
@@ -287,7 +286,7 @@ def test_r3_sufficient_prior_never_reused():
     """R3 — round-1 'sufficient' was refuted by the mismatch: reuse
     would bypass a mandatory decision on confirmed divergence."""
     orch, model = _engine(
-        "langgraph",
+        "pydantic_ai",
         _providers(),
         _reuse_proposal(first_status="sufficient"),
     )
@@ -303,7 +302,7 @@ def test_r4_reuse_cannot_accept_irrelevant_evidence():
     """R4 — even with reuse, a persistently irrelevant owner result
     degrades to honest insufficiency; reuse never fabricates."""
     orch, model = _engine(
-        "langgraph",
+        "pydantic_ai",
         _providers(
             alpha_outcomes=[_IRRELEVANT, _IRRELEVANT]
         ),
@@ -330,7 +329,7 @@ def test_r5_reuse_grants_no_authorization():
         foreign_capability_id="ghost.read_guidance"
     )
     pa, pb = _providers()
-    orch, model = _engine("langgraph", [pa, pb], proposal)
+    orch, model = _engine("pydantic_ai", [pa, pb], proposal)
     attempt = orch.attempt("2 exemplos de terminal bala")
     # The foreign leg failed closed; no ghost invocation occurred.
     assert pb.calls == []
@@ -344,7 +343,7 @@ def test_r5b_candidate_token_opacity_preserved_under_reuse():
     """R5 — reuse never leaks capability identifiers or candidate
     tokens into the presented answer (token opacity invariant)."""
     orch, model = _engine(
-        "langgraph", _providers(), _reuse_proposal()
+        "pydantic_ai", _providers(), _reuse_proposal()
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
@@ -358,7 +357,7 @@ def test_r5b_candidate_token_opacity_preserved_under_reuse():
 def test_r6_cancellation_overrides_reuse():
     """R6 — cancellation short-circuits before any optimization."""
     orch, model = _engine(
-        "langgraph",
+        "pydantic_ai",
         _providers(),
         _reuse_proposal(),
     )
@@ -391,7 +390,7 @@ def test_r7_recovery_ceiling_unchanged_under_reuse():
         outcomes={("beta", "read_guidance"): _doc_outcome()},
     )
     proposal = _reuse_proposal(final_correspondence="irrelevant")
-    orch, model = _engine("langgraph", [pa, pb], proposal)
+    orch, model = _engine("pydantic_ai", [pa, pb], proposal)
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert len(pa.calls) == 2
     # NONBLOCKING-01: bounded recovery still caps at one round; the
@@ -403,23 +402,21 @@ def test_r7_recovery_ceiling_unchanged_under_reuse():
 
 
 def test_r8_trace_marks_reused_decision():
-    """R8 — the graph trace records whether the recovery assessment
-    was reused or reassessed (no secrets, no chain-of-thought)."""
+    """R8 — investigation trace records recovery assessment reuse."""
     orch, model = _engine(
-        "langgraph", _providers(), _reuse_proposal()
+        "pydantic_ai", _providers(), _reuse_proposal()
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     trace = orch.last_node_trace
-    assert "evidence_session" in trace
+    assert "investigation" in trace
     assert "assessment_reused" in trace
 
 
 def test_r8_trace_marks_reassessed_when_premises_differ():
-    """R8 — with a 'sufficient' prior the trace shows a genuine
-    reassessment, not a silent skip."""
+    """R8 — with a 'sufficient' prior the trace shows reassessment."""
     orch, model = _engine(
-        "langgraph",
+        "pydantic_ai",
         _providers(),
         _reuse_proposal(first_status="sufficient"),
     )
@@ -450,7 +447,7 @@ def test_r9b_engine_b_baseline_without_strategy_pays_both_calls():
     framework baseline: identical calls to Engine A."""
     pa, pb = _providers()
     orch, model = _engine(
-        "langgraph_b0", [pa, pb], _reuse_proposal()
+        "delia", [pa, pb], _reuse_proposal()
     )
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
@@ -461,22 +458,19 @@ def test_r9b_engine_b_baseline_without_strategy_pays_both_calls():
 
 
 def test_r10_strategy_produces_visible_alternative_transition():
-    """R10 — the strategy is a real graph-level divergence: the B1
-    trace carries the reuse decision event while B0's identical run
-    does not."""
+    """R10 — pydantic_ai binds the reuse ledger; Application `delia`
+    does not expose a node trace (sequencer-only observability)."""
     orch1, _ = _engine(
-        "langgraph", _providers(), _reuse_proposal()
+        "pydantic_ai", _providers(), _reuse_proposal()
     )
     orch0, _ = _engine(
-        "langgraph_b0", _providers(), _reuse_proposal()
+        "delia", _providers(), _reuse_proposal()
     )
     a1 = orch1.attempt("2 exemplos de terminal bala")
     a0 = orch0.attempt("2 exemplos de terminal bala")
     t1 = orch1.last_node_trace
-    t0 = orch0.last_node_trace
     assert "assessment_reused" in t1
-    assert "assessment_reused" not in t0
-    # Same governed outcome either way.
+    assert not hasattr(orch0, "last_node_trace")
     assert a1.status == a0.status == GovernedCapabilityStatus.SUCCESS
 
 
@@ -488,10 +482,9 @@ def test_ledger_is_none_by_default():
     assert _NATIVE_ASSESSMENT_LEDGER.get() is None
 
 
-def test_engine_b_does_not_construct_engine_a():
-    """Regression guard — the adapter still delegates to injected
-    gates only (strategies don't re-couple to Engine A)."""
-    import app.infrastructure.orchestration.langgraph_engine as mod
+def test_investigation_runtime_does_not_construct_application_orchestrator():
+    """Regression guard — the adapter delegates to injected gates only."""
+    import app.infrastructure.orchestration.pydantic_ai_investigation as mod
     import ast
     import inspect
 

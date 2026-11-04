@@ -40,11 +40,29 @@ from tests.test_engine_b_recovery_reuse import (
 )
 from tests.test_goal_evidence_relevance import (
     FakeProposalModel as RelevanceProposalModel,
+    _group,
+    _query_cap,
 )
 from tests.test_governed_attempt_contract import _cri_clause
 
 
 INPUT = "2 exemplos de terminal bala"
+
+
+def _make_premise(**over):
+    """Canonical premise tuple matching the record/reuse call sites."""
+    group = _group("pa", "alpha", [_query_cap()])
+    premise = {
+        "input_text": INPUT,
+        "group": group,
+        "group_key": "pa:alpha",
+        "descriptor": group.capabilities[0],
+        "goal": None,
+        "workspace_context": None,
+        "prior_turns": (),
+    }
+    premise.update(over)
+    return premise
 
 
 def _run(engine_id, *, cancel_check=None):
@@ -116,7 +134,7 @@ class TestAssessmentCounting:
     def test_o2_recovery_round1_assessment_counted(self):
         """O2 — the S11 turn's real assessments appear verbatim; no
         phantom call is invented for the reused decision."""
-        attempt, ledger, model, _p = _run("langgraph")
+        attempt, ledger, model, _p = _run("pydantic_ai")
         obs = _obs(ledger)
         real = len(_assessment_calls(model))
         assert obs["native_assessment_calls"] == real
@@ -145,7 +163,7 @@ class TestRecoveryEvents:
     def test_o8_b1_reuse_performed(self):
         """O8 — B1 actually reuses: performed==1 AND the avoided call
         is absent from native_assessment_calls."""
-        attempt, ledger, model, _p = _run("langgraph")
+        attempt, ledger, model, _p = _run("pydantic_ai")
         obs = _obs(ledger)
         assert obs["reuse_performed"] >= 1
         assert obs["native_assessment_calls"] == 1
@@ -175,10 +193,6 @@ class TestRecoveryEvents:
             _native_assessment_reuse_verdict,
             _record_native_assessment,
         )
-        from tests.test_engine_b_recovery_hardening import (
-            _make_premise,
-        )
-
         ledger = ModelCallLedger()
         token = bind_turn_call_ledger(ledger)
         try:
@@ -214,10 +228,6 @@ class TestRecoveryEvents:
             _native_assessment_reuse_verdict,
             _record_native_assessment,
         )
-        from tests.test_engine_b_recovery_hardening import (
-            _make_premise,
-        )
-
         ledger = ModelCallLedger()
         token = bind_turn_call_ledger(ledger)
         try:
@@ -268,7 +278,7 @@ class TestLifecycle:
         def cancel():
             return "PROCESSING_TIMEOUT"
 
-        attempt, ledger, _m, _p = _run("langgraph", cancel_check=cancel)
+        attempt, ledger, _m, _p = _run("pydantic_ai", cancel_check=cancel)
         obs = _obs(ledger)
         assert obs["reuse_performed"] == 0
         assert obs["reuse_eligible"] <= obs["reuse_candidates"]
@@ -283,7 +293,7 @@ class TestLifecycle:
         def worker(idx):
             try:
                 barrier.wait(timeout=10)
-                _a, ledger, _m, _p = _run("langgraph")
+                _a, ledger, _m, _p = _run("pydantic_ai")
                 results[idx] = _obs(ledger)
             except BaseException as exc:  # noqa: BLE001 — test asserts
                 errors.append(exc)
@@ -301,8 +311,8 @@ class TestLifecycle:
 
     def test_sequential_turns_reset(self):
         """A second turn observes a fresh carrier — no accumulation."""
-        _a, ledger1, _m, _p = _run("langgraph")
-        _a2, ledger2, _m2, _p2 = _run("langgraph")
+        _a, ledger1, _m, _p = _run("pydantic_ai")
+        _a2, ledger2, _m2, _p2 = _run("pydantic_ai")
         assert _obs(ledger1) == _obs(ledger2)
         assert ledger1 is not ledger2
 
@@ -315,7 +325,7 @@ class TestContractSafety:
         """O12 — the observation projection carries counters only:
         no input text, premise hashes, decisions beyond counters,
         evidence or reasoning."""
-        attempt, ledger, _m, _p = _run("langgraph")
+        attempt, ledger, _m, _p = _run("pydantic_ai")
         obs = _obs(ledger)
         blob = str(obs)
         assert INPUT not in blob

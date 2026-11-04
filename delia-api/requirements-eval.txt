@@ -1,29 +1,20 @@
 # Optional LOCAL-EVALUATION dependencies — never installed into the
-# production image (Dockerfile/requirements.txt untouched).
+# production image (Dockerfile/requirements.txt untouched) unless an
+# eval task explicitly requires them.
 #
-# Task 07: langgraph==1.2.16 (+ pinned transitive tree) was promoted
-# to production requirements.txt under product-owner authorization
-# (DELIA-C3-LANGGRAPH-PRODUCTION-ACTIVATION-01). This file retains
-# the slot for future opt-in evaluation-only dependencies.
+# Doc 231: LangGraph / checkpoint-sqlite retired from product and
+# eval runtime for DÉLIA orchestration. Historical A/B scripts that
+# imported langgraph are obsolete.
 #
 # Task 08 (DELIA-C3-PYDANTICAI-STRUCTURED-DECISION-AB-01):
-# evaluation-only candidate arm — MIT, Python >=3.10, published
-# 2026-09-24. Slim tree only (no agent framework, no extra model
-# providers). Used exclusively by
-# scripts/pydanticai_structured_output_eval.py via direct-request
-# APIs; zero framework retries; never imported by app/.
+# evaluation-only candidate arm — MIT, Python >=3.10.
+# Used exclusively by scripts/pydanticai_structured_output_eval.py;
+# zero framework retries; never imported by app/ domain.
 pydantic-ai-slim==2.50.0
-
-# S5 (DELIA-C3-AGENTIC-S2-S6, doc 214 §8): evaluation-only durable
-# checkpointer backend for restart/resume evidence. Production stays
-# checkpointer-backend-free (Task 07 scope pin): operators opting in
-# via DELIA_CHECKPOINT_DB must supply a production-grade saver —
-# composition fails closed if the driver is absent.
-langgraph-checkpoint-sqlite==3.1.3
 #
 # Task 10 (DELIA-C3-SEMANTIC-INTELLIGENCE-PLUGGABLE-AB-01):
-# evaluation-only candidate arm — MIT, Python >=3.10, published
-# 2026-10-12. Used exclusively by scripts/semantic_decision_eval.py
-# via dspy.Predict + JSONAdapter against the local Ollama eval model;
-# dspy imports stay inside function bodies — never imported by app/.
+# evaluation-only candidate arm — MIT, Python >=3.10.
+# Used exclusively by scripts/semantic_decision_eval.py via
+# dspy.Predict + JSONAdapter; dspy imports stay inside function
+# bodies — never imported by app/.
 dspy==3.4.1

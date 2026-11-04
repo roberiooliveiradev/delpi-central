@@ -5595,3 +5595,18 @@ DUPLICATIONS_PROVEN: dual sequencer A/B (mutually exclusive per process); dual s
 COMPLEMENTARY_PROVEN: LG sequences → App decides → PA structured transport.
 EXECUTION_DRIFT: langgraph_engine docstring still claims eval-only while `DELIA_ORCHESTRATION_ENGINE` default=`langgraph`.
 ARCHITECTURE_DECISION_REQUIRED=YES (roles + fan-out/checkpoint/arggen policy). NEXT=coordination ADR; Option B semantic consolidation remains separate (doc 229).
+
+## Pydantic AI unified investigation migration (2026-11-04)
+
+TASK=DELIA-C3-PYDANTIC-AI-UNIFIED-INVESTIGATION-RUNTIME-MIGRATION-01.
+PLAN=doc 231. REPORT=doc 232. PRODUCT_CODE_CHANGED=YES. PRODUCTION_DEPLOY=NOT_AUTHORIZED. PHASE_ADVANCE=NONE.
+RUNTIME_BEFORE=DELIA_ORCHESTRATION_ENGINE=langgraph (StateGraph sequencer).
+RUNTIME_AFTER=DELIA_ORCHESTRATION_ENGINE=pydantic_ai (PydanticAiInvestigationOrchestrator Agent+tools); rollback `delia`.
+REMOVED=langgraph_engine.py; langgraph/langchain pins; LG fan-out/checkpoint flags fail-closed; LG-only tests/scripts.
+PRESERVED=OperationalCapabilityOrchestrator gates; Evidence/VerifiedCompositeEvidence; Core/Domain AuthZ; confirmation/write chain; ModelInvocationPort; native_assessment fail-closed + recovery hardening suites (retargeted to pydantic_ai).
+REGRESSION=delia-api pytest tests/ GREEN (timeout=60); ceiling wall-clock + OpenAI ChatCompletion fixture fixes included.
+LIVE_E2E=NOT_REACHED EXTERNAL_BLOCKER (docker.sock absent; no local Ollama/API).
+RESIDUALS=RC-B/RC-C/REF05 OPEN; semantic-once inside run_governed_investigation still uses Application _propose stages.
+ARCHITECTURE_DECISION_REQUIRED=RECORDED (LangGraph retired).
+VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
+

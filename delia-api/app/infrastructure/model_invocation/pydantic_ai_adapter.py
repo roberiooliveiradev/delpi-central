@@ -16,6 +16,7 @@ contract check).
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from datetime import datetime, timezone
 from typing import Any, Mapping
@@ -210,11 +211,38 @@ class PydanticAiModelInvocationAdapter:
         if max_output_units:
             settings["max_tokens"] = int(max_output_units)
         try:
-            result = agent.run_sync(
-                request.input_text,
-                message_history=history or None,
-                model_settings=settings,
+            # httpx/OpenAI per-read timeouts reset on every trickle
+            # chunk — ModelSettings.timeout alone cannot bound a
+            # never-finishing body. Enforce the absolute wall-clock
+            # deadline here (parity with the retired requests adapter).
+            # Daemon worker: after TIMEOUT the caller returns without
+            # joining a still-trickling HTTP read (non-daemon pools
+            # keep the interpreter alive and hang pytest teardown).
+            box: dict[str, Any] = {}
+
+            def _run_agent() -> None:
+                try:
+                    box["result"] = agent.run_sync(
+                        request.input_text,
+                        message_history=history or None,
+                        model_settings=settings,
+                    )
+                except BaseException as exc:  # noqa: BLE001 — re-raise below
+                    box["error"] = exc
+
+            worker = threading.Thread(
+                target=_run_agent, name="delia-model-invoke", daemon=True
             )
+            worker.start()
+            worker.join(timeout=timeout)
+            if worker.is_alive():
+                raise ModelInvocationError(
+                    TIMEOUT,
+                    "provider request exceeded its wall-clock deadline",
+                )
+            if "error" in box:
+                raise box["error"]
+            result = box["result"]
         except ModelInvocationError:
             raise
         except Exception as exc:

@@ -57,59 +57,62 @@ from app.interfaces.http.request_logging import register_request_logging
 
 _logger = logging.getLogger(__name__)
 
-# Task 07 (product-owner authorization): the production
-# orchestration-engine identifiers selectable through
-# DELIA_ORCHESTRATION_ENGINE — backend config only, never a request,
-# model, provider or metadata input. `langgraph` = B1 (recovery
-# reuse enabled); `delia` = legacy Engine A rollback.
-_SUPPORTED_ORCHESTRATION_ENGINES = frozenset({"langgraph", "delia"})
+# Doc 231: Pydantic AI unified investigation is the sole production
+# orchestration runtime. `delia` remains an explicit rollback to the
+# Application sequencer (OperationalCapabilityOrchestrator.attempt).
+# LangGraph identifiers are rejected fail-closed (retired).
+_SUPPORTED_ORCHESTRATION_ENGINES = frozenset({"pydantic_ai", "delia"})
 
 
 def _resolve_orchestration_attempt(
     engine_name: str,
     gates,
     *,
+    investigation_model=None,
     subobjective_fanout_enabled: bool = False,
     checkpoint_db_path: str | None = None,
 ):
     """Select ONE governed-attempt implementation for the composed
     application. Unknown identifiers fail closed — a misspelled
-    engine must never silently select another engine. The LangGraph
-    adapter is imported lazily so the `delia` selection runs without
-    the framework installed."""
+    engine must never silently select another engine.
+
+    Doc 231: ``pydantic_ai`` is the unified investigation runtime.
+    Retired LangGraph flags (fan-out / checkpoint path) are accepted
+    only as no-ops when empty/false so stale env files do not crash
+    boot; non-empty checkpoint paths fail closed.
+    """
     if engine_name not in _SUPPORTED_ORCHESTRATION_ENGINES:
         raise ValueError(
             "DELIA_ORCHESTRATION_ENGINE unsupported: "
             f"{engine_name!r} — expected one of "
             f"{sorted(_SUPPORTED_ORCHESTRATION_ENGINES)}"
         )
-    if engine_name == "langgraph":
-        from app.infrastructure.orchestration.langgraph_engine import (
-            LangGraphCapabilityOrchestrator,
+    if subobjective_fanout_enabled:
+        raise ValueError(
+            "DELIA_SUBOBJECTIVE_FANOUT is retired with LangGraph "
+            "(doc 231) — unset the flag"
+        )
+    if checkpoint_db_path:
+        raise ValueError(
+            "DELIA_CHECKPOINT_DB is retired with LangGraph "
+            "(doc 231) — unset the path"
+        )
+    if engine_name == "pydantic_ai":
+        from app.infrastructure.orchestration.pydantic_ai_investigation import (
+            PydanticAiInvestigationOrchestrator,
         )
 
-        checkpointer = None
-        if checkpoint_db_path:
-            # S5: durable resume — configured path means the operator
-            # opted in; an unavailable driver fails composition
-            # closed rather than silently degrading to ephemeral.
-            import sqlite3
-
-            from langgraph.checkpoint.sqlite import SqliteSaver
-
-            checkpointer = SqliteSaver(
-                sqlite3.connect(
-                    checkpoint_db_path, check_same_thread=False
-                )
+        if investigation_model is None:
+            raise ValueError(
+                "pydantic_ai investigation runtime requires a "
+                "composed model implementation"
             )
-        return LangGraphCapabilityOrchestrator(
+        return PydanticAiInvestigationOrchestrator(
             gates,
+            model=investigation_model,
             recovery_reuse_enabled=True,
-            subobjective_fanout_enabled=subobjective_fanout_enabled,
-            checkpointer=checkpointer,
         )
     return gates
-
 # CRI E2-R3/E3: governed declarative resources — fixed repo
 # artifacts, never request/env-supplied paths.
 _CRI_INSTRUCTIONS_PATH = (
@@ -439,7 +442,7 @@ def _compose_turn_handler(
         )
         orchestration_instructions = None
     cri_effective = cri_requested and cri_vocabulary is not None
-    # Task 07: engine selection is validated unconditionally — an
+    # Doc 231: engine selection is validated unconditionally — an
     # invalid DELIA_ORCHESTRATION_ENGINE fails startup even when no
     # capability surface is configured; nothing is silently selected.
     if (
@@ -483,10 +486,27 @@ def _compose_turn_handler(
         if providers and orchestration_instructions is not None
         else None
     )
+    investigation_model = None
+    if (
+        gates is not None
+        and settings.orchestration_engine == "pydantic_ai"
+    ):
+        # Model construction stays inside the infrastructure adapter
+        # module so composition never imports pydantic_ai SDK.
+        from app.infrastructure.orchestration.pydantic_ai_investigation import (
+            build_openai_compatible_investigation_model,
+        )
+
+        investigation_model = build_openai_compatible_investigation_model(
+            base_url=settings.llm_base_url,
+            api_key=settings.llm_api_key,
+            model=settings.llm_model,
+        )
     orchestration = (
         _resolve_orchestration_attempt(
             settings.orchestration_engine,
             gates,
+            investigation_model=investigation_model,
             subobjective_fanout_enabled=(
                 settings.subobjective_fanout_enabled
             ),

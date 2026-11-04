@@ -1,23 +1,21 @@
-"""Shared governed-stage gate contract — doc 195.
+"""Shared governed-stage gate contract — docs 195 / 231.
 
 Narrow Application-owned Protocol describing the governed primitives
 a `SupportsGovernedCapabilityAttempt` implementation may consume for
 sequencing: admission, typed confirmation, live-surface listing,
-surface inquiry, the governed owner path and the bounded attempt
-runner.
+surface inquiry, semantic tool catalog/invoke, the governed owner
+path and the bounded attempt runner.
 
-It exists so an alternative engine (e.g. the LangGraph infrastructure
-adapter) can depend on a stable application contract instead of the
-concrete `OperationalCapabilityOrchestrator` class. The primitives'
-single implementation remains that orchestrator — this Protocol is
-structural typing only; it carries no second implementation and no
-new authority.
+It exists so an infrastructure investigation runtime (Pydantic AI
+adapter, historically LangGraph) can depend on a stable application
+contract instead of the concrete `OperationalCapabilityOrchestrator`
+class. The primitives' single implementation remains that
+orchestrator — this Protocol is structural typing only; it carries no
+second implementation and no new authority.
 
-Residual note (accepted, doc 195 §F2): the sole runtime provider of
-these gates today is Engine A itself. Splitting them into a separate
-collaborator would require migrating a large coupled method set with
-no behavior change to show for it — deferred to a bounded task only
-if a genuine third consumer or owner-split need appears.
+Residual note (accepted, doc 195 §F2 / retained doc 231): the sole
+runtime provider of these gates today is the Application orchestrator
+itself.
 """
 
 from __future__ import annotations
@@ -123,6 +121,39 @@ class SupportsGovernedStageGates(Protocol):
     ) -> GovernedCapabilityAttempt:
         """Post-admission governed owner path: surface → selection →
         invoke → judgment → recovery → synthesis."""
+        ...
+
+    def _project_semantic_tool_catalog(
+        self,
+        *,
+        correlation: str,
+        deadline: TurnDeadline,
+    ) -> list[dict[str, Any]]:
+        """Bounded live READ/DISCOVERY/ANALYSIS catalog for Agent tools.
+
+        Metadata only — never authorization. Write classes omitted.
+        """
+        ...
+
+    def _governed_semantic_tool_invoke(
+        self,
+        *,
+        capability_id: str,
+        arguments: Mapping[str, Any],
+        input_text: str,
+        correlation: str,
+        actor_user_id: str | None,
+        session_id: str | None,
+        workspace_context: WorkspaceContext | None,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        prepare_only: bool,
+        deadline: TurnDeadline,
+    ) -> GovernedCapabilityAttempt:
+        """Invoke one catalog capability under live AuthZ/schema gates.
+
+        Discovery-first candidate binding stays inside Application.
+        PREPARE/ACT are rejected on this tool surface.
+        """
         ...
 
     def _run_governed_attempts(

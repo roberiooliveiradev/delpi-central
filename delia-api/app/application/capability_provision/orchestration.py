@@ -12702,6 +12702,212 @@ class OperationalCapabilityOrchestrator:
             markdown_content=content,
         )
 
+    def _project_semantic_tool_catalog(
+        self,
+        *,
+        correlation: str,
+        deadline: TurnDeadline,
+    ) -> list[dict[str, Any]]:
+        """Live READ/DISCOVERY/ANALYSIS catalog for Agent tools (doc 231).
+
+        Write classes are omitted. Entries are untrusted metadata —
+        never authorization. Schemas are size-bounded.
+        """
+        groups, _failures = self._groups(correlation, deadline)
+        catalog: list[dict[str, Any]] = []
+        for group in groups.values():
+            for cap in group.capabilities:
+                if cap.operation_class in _WRITE_OPERATION_CLASSES:
+                    continue
+                if cap.operation_class not in {
+                    SpecialistOperationClass.READ,
+                    SpecialistOperationClass.DISCOVERY,
+                    SpecialistOperationClass.ANALYSIS,
+                }:
+                    continue
+                schema = cap.input_schema if isinstance(
+                    cap.input_schema, Mapping
+                ) else {}
+                # Bound schema projection — property names + types only.
+                props = schema.get("properties") if isinstance(
+                    schema.get("properties"), Mapping
+                ) else {}
+                slim_props = {
+                    str(name): {
+                        "type": (
+                            spec.get("type")
+                            if isinstance(spec, Mapping)
+                            else None
+                        ),
+                        "description": (
+                            str(spec.get("description") or "")[:160]
+                            if isinstance(spec, Mapping)
+                            else None
+                        ),
+                    }
+                    for name, spec in list(props.items())[:24]
+                }
+                catalog.append(
+                    {
+                        "capability_id": cap.capability_id,
+                        "group_id": group.group_id,
+                        "provider_id": group.provider_id,
+                        "remote_name": cap.remote_name,
+                        "owner": cap.owner,
+                        "operation_class": cap.operation_class.value,
+                        "description": (cap.description or "")[:320],
+                        "input_schema": {
+                            "type": "object",
+                            "properties": slim_props,
+                            "required": list(schema.get("required") or [])[
+                                :24
+                            ],
+                        },
+                    }
+                )
+        return catalog[:80]
+
+    def _governed_semantic_tool_invoke(
+        self,
+        *,
+        capability_id: str,
+        arguments: Mapping[str, Any],
+        input_text: str,
+        correlation: str,
+        actor_user_id: str | None,
+        session_id: str | None,
+        workspace_context: WorkspaceContext | None,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        prepare_only: bool,
+        deadline: TurnDeadline,
+    ) -> GovernedCapabilityAttempt:
+        """Single-capability Agent tool invoke under live gates (doc 231).
+
+        Resolves ``capability_id`` on the fresh live surface, rejects
+        write classes on this surface, validates arguments against the
+        owner schema, and routes through ``_invoke_selected`` so
+        discovery-first candidate binding stays Application-owned.
+        """
+        del actor_user_id, session_id, prepare_only
+        cap_id = (capability_id or "").strip()
+        if not cap_id:
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                error_code="capability_id_required",
+            )
+        groups, failures = self._groups(correlation, deadline)
+        if not groups and failures:
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+                correlation_id=correlation,
+                error_code=failures[0],
+            )
+        matched: tuple[str, CapabilityGroup, ProviderCapability] | None = None
+        for group_key, group in groups.items():
+            for cap in group.capabilities:
+                if cap.capability_id == cap_id or (
+                    f"{group.group_id}:{cap.remote_name}" == cap_id
+                ):
+                    matched = (group_key, group, cap)
+                    break
+            if matched is not None:
+                break
+        if matched is None:
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                error_code="capability_not_on_surface",
+            )
+        group_key, group, descriptor = matched
+        if descriptor.operation_class in _WRITE_OPERATION_CLASSES:
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                error_code="write_capability_not_exposed_to_agent_tools",
+            )
+        args = dict(arguments or {})
+        if descriptor.input_schema is not None:
+            try:
+                validated = _validate_instance(args, descriptor.input_schema)
+            except Exception:
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                    correlation_id=correlation,
+                    error_code="arguments_schema_rejected",
+                )
+            if validated is None:
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                    correlation_id=correlation,
+                    error_code="arguments_schema_rejected",
+                )
+            args = dict(validated)
+        try:
+            invoked = self._invoke_selected(
+                group_key,
+                descriptor.remote_name,
+                args,
+                group,
+                input_text,
+                correlation,
+                prior_turns=prior_turns,
+                deadline=deadline,
+                goal=None,
+                workspace_context=workspace_context,
+            )
+        except CapabilityProviderError as exc:
+            return _error_attempt(correlation, exc)
+        except (_StageDeadlineExceeded, TurnBudgetExhausted, _TurnCancelled):
+            raise
+        except Exception:
+            _logger.exception(
+                "orchestration stage=semantic_tool_invoke "
+                "decision=error capability=%s correlation_id=%s",
+                cap_id,
+                correlation,
+            )
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+                correlation_id=correlation,
+                error_code="semantic_tool_invoke_failed",
+            )
+        if invoked is None:
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                error_code="owner_no_resolvable_candidate",
+            )
+        outcome, action_id, remote_used = invoked
+        binding = GovernedCapabilityBinding(
+            binding_id=f"{correlation}:{group.group_id}:{remote_used}",
+            group_key=group_key,
+            remote_capability=remote_used,
+            action_id=str(action_id or remote_used),
+            source=SourceRef(
+                source_id=group.group_id,
+                source_system=group.provider_id,
+                provider_name=group.provider_id,
+            ),
+            provider_id=group.provider_id,
+            capability_group_id=group.group_id,
+        )
+
+        def _render(out: SpecialistOutcome) -> RenderedSpecialistOutcome:
+            return render_specialist_outcome_rich(
+                out,
+                input_text=input_text,
+                invocation_arguments=args,
+                field_labels=self._field_labels,
+            )
+
+        return _success_attempt(
+            correlation_id=correlation,
+            binding=binding,
+            outcome=outcome,
+            render=_render,
+        )
+
     def _select_group(
         self,
         input_text: str,

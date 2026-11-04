@@ -763,18 +763,28 @@ def test_normal_fast_provider_preserves_response_contract():
     def fast(conn):
         try:
             conn.recv(65536)
+            # openai>=2.x ChatCompletion validation requires id/object/
+            # model/role/index/total_tokens — minimal bodies are rejected.
             body = json.dumps(
                 {
+                    "id": "chatcmpl-test",
+                    "object": "chat.completion",
+                    "created": 1,
+                    "model": "vendor/model",
                     "choices": [
                         {
+                            "index": 0,
                             "message": {
-                                "content": '{"answer": "ok"}'
-                            }
+                                "role": "assistant",
+                                "content": '{"answer": "ok"}',
+                            },
+                            "finish_reason": "stop",
                         }
                     ],
                     "usage": {
                         "prompt_tokens": 3,
                         "completion_tokens": 1,
+                        "total_tokens": 4,
                     },
                 }
             ).encode()

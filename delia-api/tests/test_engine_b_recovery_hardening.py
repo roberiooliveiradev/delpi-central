@@ -13,7 +13,7 @@ monotonic rule (H-tests).
 
 F2 — ledger lifecycle: the mutable ContextVar-bound ledger must be
 request-scoped, exception-safe and free of cross-attempt leakage —
-LangGraph nodes run in copied contexts (C-tests).
+investigation attempts bind per-call contexts (C-tests).
 """
 
 from __future__ import annotations
@@ -368,10 +368,10 @@ class TestEngineLifecycle:
         parallel threads; each B1 attempt gets its own ledger — the
         trace events of one attempt never appear in the other."""
         orch1, _ = _engine(
-            "langgraph", _providers(), _reuse_proposal()
+            "pydantic_ai", _providers(), _reuse_proposal()
         )
         orch2, _ = _engine(
-            "langgraph",
+            "pydantic_ai",
             _providers(),
             _reuse_proposal(first_status="sufficient"),
         )
@@ -401,7 +401,7 @@ class TestEngineLifecycle:
         time: a second attempt() call re-establishes decisions rather
         than inheriting them."""
         orch, model = _engine(
-            "langgraph", _providers(), _reuse_proposal()
+            "pydantic_ai", _providers(), _reuse_proposal()
         )
         orch.attempt("2 exemplos de terminal bala")
         assert "assessment_reused" in orch.last_node_trace
@@ -409,7 +409,7 @@ class TestEngineLifecycle:
         # re-established by new assessment calls (proposal queue
         # exhausted -> replays last; the point is no inherited state).
         orch2, model2 = _engine(
-            "langgraph", _providers(), _reuse_proposal()
+            "pydantic_ai", _providers(), _reuse_proposal()
         )
         orch2.attempt("2 exemplos de terminal bala")
         assert "assessment_reused" in orch2.last_node_trace
@@ -418,7 +418,7 @@ class TestEngineLifecycle:
         """C4 — a cancelled attempt must not leave a bound ledger
         visible to later code in the same context."""
         orch, model = _engine(
-            "langgraph", _providers(), _reuse_proposal()
+            "pydantic_ai", _providers(), _reuse_proposal()
         )
         attempt = orch.attempt(
             "2 exemplos de terminal bala", cancel_check=lambda: True
@@ -432,7 +432,7 @@ class TestEngineLifecycle:
         """C5 — even if the governed path raises, the ambient binding
         is cleaned up (set/reset pair in owner_path)."""
         orch, model = _engine(
-            "langgraph", _providers(), _reuse_proposal()
+            "pydantic_ai", _providers(), _reuse_proposal()
         )
 
         def boom(*a, **k):
@@ -463,7 +463,7 @@ class TestEngineLifecycle:
                 foreign_capability_id="ghost.cap"
             )
             orch, model = _engine(
-                "langgraph", port_providers, proposal
+                "pydantic_ai", port_providers, proposal
             )
             attempt = orch.attempt("2 exemplos de terminal bala")
             assert all(
