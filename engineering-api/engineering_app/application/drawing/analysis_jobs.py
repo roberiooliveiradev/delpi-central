@@ -90,7 +90,7 @@ class AnalysisJobStore:
         existing_id = self._by_key.get(key)
         if existing_id:
             job = self._jobs.get(existing_id)
-            if job and (
+            if job and job.status in {"RUNNING", "COMPLETED"} and (
                 job.status == "RUNNING"
                 or (
                     job.finished_ts
@@ -98,6 +98,7 @@ class AnalysisJobStore:
                 )
             ):
                 return job, False
+            # FAILED/expirado não bloqueia retry — libera a chave.
             self._by_key.pop(key, None)
         if len(self._jobs) >= _JOB_MAX:
             self._sweep(now + self._ttl_s + 1)
