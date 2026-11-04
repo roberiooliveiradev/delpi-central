@@ -515,6 +515,78 @@ def test_failed_page_blocks_bom_only_even_with_yield():
     assert any("pages_not_processed" in l for l in out["limitations"])
 
 
+def test_pi_on_subassembly_sheet_not_root_mismatch():
+    """Caso real 90264030 p5: PIs tipados em folha cujo title_block
+    descreve outro objeto — pai indeterminado, sem falso mismatch."""
+    table = _table([
+        _row("50225518", 10, page=5),
+        _row("50225519", 20, page=5),
+    ])
+    bom = _bom(
+        "90264030",
+        ("50225518", "70260044", 2),
+        ("50225519", "70260044", 2),
+    )
+    out = compare_bom_to_drawing(
+        product_code="90264030",
+        bom_occurrences=bom,
+        component_table=table,
+        tokens=_tokens("50225518", "50225519", page=5),
+        code_contexts=[
+            _ctx("010010067", "title_block", 5),
+            _ctx("50225518", "component_table", 5),
+        ],
+    )
+    assert all(
+        f["type"] != "PARENT_RELATION_MISMATCH" for f in out["findings"]
+    )
+    assert out["counts"]["matched_occurrences"] == 2
+
+
+def test_pi_on_product_sheet_still_root_mismatch():
+    """PI tipado na folha do produto (title_block = código do produto)
+    divergente da BOM — candidato a mismatch preservado."""
+    table = _table([_row("50225518", 10, page=1)])
+    bom = _bom(
+        "90264030",
+        ("70260010", "90264030", 1),
+        ("50225518", "70260010", 2),
+    )
+    out = compare_bom_to_drawing(
+        product_code="90264030",
+        bom_occurrences=bom,
+        component_table=table,
+        tokens=_tokens("50225518", "90264030", page=1),
+        code_contexts=[
+            _ctx("90264030", "title_block", 1),
+            _ctx("50225518", "component_table", 1),
+        ],
+    )
+    mismatch = [
+        f for f in out["findings"]
+        if f["type"] == "PARENT_RELATION_MISMATCH"
+    ]
+    assert mismatch and mismatch[0]["item_code"] == "50225518"
+
+
+def test_drawing_doc_number_never_component_finding():
+    """Número de documento (família não-item) em coluna tipada →
+    nunca DRAWING_ONLY; tipologia DELPI governa, não regex pura."""
+    table = _table([_row("002002906", 10, page=4),
+                    _row("50000001", 20, page=4)])
+    bom = _bom(PRODUCT, ("50000001", PRODUCT, 1))
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=table,
+        tokens=_tokens("002002906", "50000001", page=4),
+    )
+    assert all(
+        f["item_code"] != "002002906" for f in out["findings"]
+    )
+    assert out["counts"]["matched_occurrences"] == 1
+
+
 def test_tables_by_page_coverage_declared():
     """Tabelas identificadas/verificadas por página — cobertura
     auditável do escopo analisado."""

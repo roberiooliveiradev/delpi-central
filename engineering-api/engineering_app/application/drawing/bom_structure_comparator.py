@@ -75,6 +75,10 @@ def _row_codes(row: dict[str, Any]) -> list[str]:
 # vigente (RQ-VAL-027 R3): histórico de revisão, notas e carimbo.
 # Alinhado a ``drawing_investigation._NON_COMPONENT_REGIONS`` + notes.
 _NON_COMPARABLE_REGIONS = {"revision_history", "notes", "title_block"}
+# Famílias de itens DELPI (MP=1, PI=5, conjunto=7, produto=9) — códigos
+# fora dessas famílias (números de desenho, doc ids tipo 002xxxxxx) não
+# são componentes e nunca sustentam divergência.
+_FLAGGABLE_PREFIXES = frozenset("1579")
 
 
 def _code_region_index(
@@ -128,6 +132,16 @@ def _drawing_occurrences(
     current_parent: str | None = None
     set_anchor_by_page: dict[int, str | None] = {}
     region_idx = _code_region_index(code_contexts)
+    # RQ-VAL-028: assunto da folha por página — código do title_block da
+    # página identifica o objeto que a folha descreve (produto ou
+    # conjunto). PI/PA só é evidência de nível raiz na folha do produto.
+    subject_by_page: dict[int, set[str]] = {}
+    for ctx in code_contexts or []:
+        if ctx.get("region") == "title_block" and ctx.get("page"):
+            subject_by_page.setdefault(int(ctx["page"]), set()).add(
+                str(ctx.get("code") or "")
+            )
+    contexts_provided = code_contexts is not None
     last_page: int | None = None
     for row in rows:
         codes = [c for c in _row_codes(row) if c != product_code]
@@ -201,9 +215,21 @@ def _drawing_occurrences(
                 verified = True
             elif item_type in {"PI", "PA"} and set_col is None:
                 current_parent = code
-                parent = product_code
-                parent_source = "set_anchor"
-                verified = True
+                if not contexts_provided or product_code in (
+                    subject_by_page.get(page) or set()
+                ):
+                    # Folha do produto (ou sem contexto — legado):
+                    # PI tipado na tabela é evidência de nível raiz.
+                    parent = product_code
+                    parent_source = "set_anchor"
+                    verified = True
+                else:
+                    # Folha de conjunto/submontagem: a tabela descreve
+                    # o conjunto da folha — atribuir o PI à raiz seria
+                    # inventar parentesco (R1/R5). Pai indeterminado.
+                    parent = None
+                    parent_source = "sheet_scope"
+                    verified = False
             elif item_type in {"PI", "PA"}:
                 # multi-coluna: PI/PA fora da coluna de conjuntos e sem
                 # conjunto ativo — pai indeterminado, não raiz fabricada
@@ -241,7 +267,7 @@ def _drawing_occurrences(
                     "parent_verified": verified,
                     "parent_source": parent_source,
                     "extraction_source": "typed_table_cell",
-                    "flaggable": True,
+                    "flaggable": code[:1] in _FLAGGABLE_PREFIXES,
                     "quantity": row.get("quantity"),
                     "y_px": row.get("y_px"),
                     "row": row.get("row"),
