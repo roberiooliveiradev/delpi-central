@@ -96,3 +96,9 @@ Revisão corrigiu pontos bloqueantes sem implementar código:
 ## Current product direction and complete execution plan (2026-10-30)
 
 **Read [15 — D-6 Product Direction and Full Refactoring Implementation Master Plan](15-d6-product-direction-and-master-plan.md)** for the latest user-requested target scope and cross-program execution order. All eight D-6 blocks are now INCLUDED in the desired product roadmap, including previously deferred history restore/templates/MDD and previously excluded shares/invites/permissions. This **overrides earlier D-6 recommendations only**, not approved owners/ADRs, security requirements or runtime. Owner approvals remain PENDING; do not infer READY_FOR_EXECUTION from product direction.
+
+---
+
+## KPI — seleção visual contextual pela VISTA (2026-11-03)
+
+**TARGET/PLANNED:** VISTA escolherá as variantes Hero/Standard/Meta/Compact, progress/sparkline/compare/status e proporções conforme os dados reais e a capacidade existente; o backend produz o estado semântico e `displayValue`, não a VISTA nem o renderer. Ler [KPI contextual — inventário de funcionalidades, contratos e wireframes](../KPI-CONTEXTUAL-MODERN-VARIANTS-INVENTORY.md). Guardas: same-scope comparability, higher/lower is better, sem metas inventadas, autorrevisão pixel-based e mutações tipadas/confirmadas.

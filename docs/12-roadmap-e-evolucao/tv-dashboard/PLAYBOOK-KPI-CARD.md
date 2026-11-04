@@ -169,3 +169,9 @@ Mini-chart completo, drill-through, import PPTX de cards, forecast ML.
 | Ribbon fonte | `plugins/tv-dashboard/src/utils/selectedTextFormatTarget.ts` + `FormatRibbonTypographySections.tsx` |
 | Float KPI | `plugins/tv-dashboard/src/components/KpiSelectionFloatToolbar.tsx` |
 | Catálogo elementos | `plugins/plugin-ui/src/components/layout/kpiElementCatalog.ts` |
+
+---
+
+## 10. Evolução contextual moderna — status, metas e variantes (nov/2026)
+
+As Ondas B–D históricas registradas acima permanecem implementadas; isso não equivale ao novo produto contextual completo. O inventário da evolução **TARGET/PLANNED** para badges Acima/Abaixo/Na/Dentro da meta, setas de tendência, barras de progresso com escala oficial, texto de apoio dinâmico, variantes visuais, posicionamento do ícone, cores semanticamente corretas e controle de VISTA foi documentado em [KPI contextual — inventário e wireframes](./KPI-CONTEXTUAL-MODERN-VARIANTS-INVENTORY.md). A referência proporcional aprovada permanece no [PR #132](https://github.com/roberiooliveiradev/delpi-central/pull/132). Não implementar cálculo de status/porcentagem no React.
