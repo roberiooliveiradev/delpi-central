@@ -42,6 +42,8 @@ export type KpiMetricPresentationOverrides = Pick<
   | "label"
   | "field"
   | "target"
+  | "targetField"
+  | "targetAggregation"
   | "comparisonMode"
   | "higherIsBetter"
 >;
@@ -60,7 +62,11 @@ export function resolveKpiViewPresentation(
   const options = resolveKpiOptionsWithAutoContext(merged, resolved, metricOverrides);
   const rawValue = resolved?.kpi?.value;
   const numeric = parseKpiNumericValue(rawValue);
-  const colorRules = metricOverrides?.colorRules ?? options.colorRules;
+  /* Prefer limiares já resolvidos pelo enrich (compareField → número). */
+  const colorRules =
+    Array.isArray(serverPres?.resolvedColorRules) && serverPres.resolvedColorRules.length > 0
+      ? serverPres.resolvedColorRules
+      : (metricOverrides?.colorRules ?? options.colorRules);
   const toneResult = resolveDelpiKpiTone(numeric, colorRules, options.tone ?? "default");
 
   const fieldKey =
@@ -73,8 +79,13 @@ export function resolveKpiViewPresentation(
     projectionLabel.trim() &&
     (!fieldKey || !isAutoBakedFieldLabel(projectionLabel, fieldKey));
 
+  const dynamicTitle =
+    typeof serverPres?.titleDisplay === "string" && serverPres.titleDisplay.trim()
+      ? serverPres.titleDisplay.trim()
+      : undefined;
   const label =
     (meaningfulProjection ? projectionLabel : undefined) ||
+    dynamicTitle ||
     options.title?.trim() ||
     resolved?.kpi?.label ||
     resolved?.label ||
@@ -88,7 +99,11 @@ export function resolveKpiViewPresentation(
       : typeof serverPres?.valueDisplay === "string"
         ? serverPres.valueDisplay
         : "—";
-  const hint = options.subtitle?.trim() || undefined;
+  const dynamicSubtitle =
+    typeof serverPres?.subtitleDisplay === "string" && serverPres.subtitleDisplay.trim()
+      ? serverPres.subtitleDisplay.trim()
+      : undefined;
+  const hint = dynamicSubtitle || options.subtitle?.trim() || undefined;
   const sparklinePoints =
     Array.isArray(serverPres?.sparklinePoints)
       ? serverPres.sparklinePoints

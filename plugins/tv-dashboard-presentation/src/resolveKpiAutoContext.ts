@@ -12,6 +12,7 @@ import type { ComunicadoDataResolved } from "./comunicadoTypes";
 
 type AutoContextMetricOverrides = {
   target?: number;
+  targetField?: string;
   comparisonMode?: "none" | "target" | "previous";
   higherIsBetter?: boolean;
 };
@@ -58,7 +59,16 @@ export function resolveKpiOptionsWithAutoContext(
   const points = sparklinePointsFromResolved(resolved);
   const hasSeries = points.length >= 2;
   const target = metricOverrides?.target ?? options.target;
-  const hasTarget = target != null && Number.isFinite(Number(target));
+  const targetField = (
+    metricOverrides?.targetField ||
+    options.targetField ||
+    ""
+  ).trim();
+  const resolvedTarget = resolved?.kpiPresentation?.targetValue;
+  const hasTarget =
+    Boolean(targetField) ||
+    (target != null && Number.isFinite(Number(target))) ||
+    (resolvedTarget != null && Number.isFinite(Number(resolvedTarget)));
   const variant: KpiLayoutVariant = options.variant ?? "hero";
 
   const next: ComunicadoKpiOptions = {
