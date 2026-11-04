@@ -491,7 +491,11 @@ class HandleInteractiveConversationTurn:
         ):
             # Prior-turn continuity returns SUCCESS without a fresh
             # owner outcome — honest NON_GROUNDED, never fake grounding.
-            if attempt.outcome is None:
+            if attempt.verified_composition is not None:
+                result = self._grounded_composite_result(
+                    session, user_turn, attempt
+                )
+            elif attempt.outcome is None:
                 result = self._prior_continuation_result(
                     session, user_turn, attempt
                 )
@@ -1067,6 +1071,58 @@ class HandleInteractiveConversationTurn:
             presentation_markdown=getattr(
                 attempt, "markdown_content", None
             ),
+        )
+
+    def _grounded_composite_result(
+        self,
+        session: InteractionSession,
+        user_turn: InteractionTurn,
+        attempt,
+    ) -> InteractiveTurnResult:
+        """Project DÉLIA-verified multi-source evidence, not fake owner data.
+
+        The individual SpecialistOutcomes stay on their READ attempts.
+        A composite provenance value is accepted only from the governed
+        deterministic fan-in; client history and prose never create it.
+        """
+        verified = attempt.verified_composition
+        if (
+            verified is None
+            or attempt.status is not GovernedCapabilityStatus.SUCCESS
+            or not isinstance(attempt.content, str)
+            or not attempt.content.strip()
+            or len(verified.source_roots) != 2
+            or not verified.source_refs
+        ):
+            raise InteractionError(
+                INTERNAL_ERROR, "verified composition requires owner evidence"
+            )
+        result_turn = InteractionTurn(
+            turn_id=str(uuid.uuid4()),
+            session_id=session.session_id,
+            kind=TurnKind.DELIA_RESULT,
+            content=attempt.content,
+            occurred_at=_now_utc(),
+            epistemic_class=EpistemicClass.OBSERVATION,
+            source_refs=verified.source_refs,
+            limitations=attempt.limitations,
+        )
+        session, validation = record_interaction_turn(session, result_turn)
+        if not validation.valid:
+            raise InteractionError(
+                INTERNAL_ERROR, "composite DELIA_RESULT rejected by session rules"
+            )
+        return InteractiveTurnResult(
+            session_id=session.session_id,
+            user_turn_id=user_turn.turn_id,
+            result_turn_id=result_turn.turn_id,
+            content=attempt.content,
+            epistemic_class=EpistemicClass.OBSERVATION,
+            limitations=attempt.limitations,
+            generated_at=verified.observed_at,
+            model_invocation_id=None,
+            grounding_status=GroundingStatus.GROUNDED,
+            provenance=verified,
         )
 
     def _write_lifecycle_result(
