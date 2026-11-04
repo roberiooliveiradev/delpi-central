@@ -5132,3 +5132,26 @@ INPUT_SHA=0f1985217584. PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-co
 STATUS=REWORK_REQUIRED; E4_COMPONENT_UNIT_EVIDENCE=PASS_REPORTED(8/8); REAL_E2E_BUSINESS_COMPARISON=FAIL/NOT_PROVEN. A03 actual trace: goal compare, subobjectives 4, PARTIAL x4, SOURCE_UNAVAILABLE; no two-source fan-in, so verifier not executed live. Main inspected: _investigate_subobjectives calls _governed_owner_path on each subgoal; source-id re.search from sub_goal infers identity from model text, violating authoritative provenance; review requires typed source refs from owner evidence. Parent success-on-any-content semantics require complete objective verification.
 ROOT_CAUSE_EXACT_SUBREAD_FAILURE=TO_INVENTORY (only aggregate PARTIAL outcome available; must trace per-stage discovery/candidate/execute and budget; not assume prose problem). REUSE_DECISION=REUSE/EXTEND existing governed path, evidence, verifier and LangGraph; no new planner or product-specific routing.
 NEXT=Execute doc223 RED/GREEN; real Qwen3+user@local.com+DAVI/Domain A01/A02/A03, single-turn compare, hierarchy/occurrence/unit and negative tests, full regressions on final SHA. G04/G05/G07/G12 not PASS. Production deployment NOT_AUTHORIZED; no phase advancement.
+
+## E4-R1 — sub-READ completion + composition live (doc 223)
+
+TASK=DELIA-C3-E4-SUBOBJECTIVE-READ-TO-COMPOSITION-REWORK-01.
+ROOT CAUSE PROVADA (cadeia): `credential_for` (delegation.py)
+re-checa `exp` do JWT do sujeito ANTES do cache de token delegado —
+a credencial do request expirava mid-turn (52s de model-calls) e
+todo `list_groups`/invoke posterior falhava em 0ms com
+`mcp_authentication_failed` -> subs SOURCE_UNAVAILABLE -> PARTIAL x4.
+FIX (bounded, sem bypass): cache de token delegado legitimamente
+emitido consultado antes do exp-check — o TTL do proprio token
+delegado governa a validade residual.
+S4: removido `re.search(r"\d{4,}", sub_goal)` — identidade de fonte
+agora tipada (root record code do `_flatten_evidence_records`,
+disambiguada por subobjective_id em colisao explicita).
+S5/SR07: comparacao com <2 fontes marca
+`evidence_composition_insufficient` + SOURCE_UNAVAILABLE (leitura
+individual nunca e vendida como comparacao completa).
+LIVE E2E (fresh token, 6-turn context, compare-as-duas):
+decomposed=4 -> so_1..3 davi.discover+execute REAIS -> so_4 compare
+-> `evidence_composition decision=differences_found sources=2` ->
+COMPLETED x4 SUCCESS. Resposta computada server-side; HTTP 504
+(gateway 120s < turno ~131s) — residual de LATENCIA nao-correctness.

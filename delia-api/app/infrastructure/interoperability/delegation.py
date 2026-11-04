@@ -213,12 +213,26 @@ class KeycloakDelegatedCredentialProvider:
         timeout_seconds: float | None = None,
     ) -> str:
         subject_token = (self._subject_bearer_getter() or "").strip()
+        subject_claims = _decode_claims(subject_token)
+        resource = profile.resource_audience
+        # A delegated token legitimately issued while the subject
+        # credential was live keeps serving until ITS OWN expiry —
+        # a subject JWT expiring mid-turn does not revoke an
+        # already-delegated credential inside its validity window.
+        # Only when no valid delegated credential is cached does
+        # this path require a live subject credential to exchange.
+        fingerprint = (
+            _subject_fingerprint(subject_token) if subject_token else None
+        )
+        if fingerprint is not None:
+            cached = self._cache.get(fingerprint, resource)
+            if cached is not None:
+                return cached
         if not subject_token:
             raise SpecialistInteropError(
                 MCP_AUTHENTICATION_FAILED,
                 "no authenticated subject credential in request scope",
             )
-        subject_claims = _decode_claims(subject_token)
         subject_sub = subject_claims.get("sub")
         if not isinstance(subject_sub, str) or not subject_sub:
             raise SpecialistInteropError(
@@ -233,11 +247,6 @@ class KeycloakDelegatedCredentialProvider:
                 MCP_AUTHENTICATION_FAILED,
                 "subject credential is expired or malformed",
             )
-        fingerprint = _subject_fingerprint(subject_token)
-        resource = profile.resource_audience
-        cached = self._cache.get(fingerprint, resource)
-        if cached is not None:
-            return cached
 
         if not (
             self._token_url

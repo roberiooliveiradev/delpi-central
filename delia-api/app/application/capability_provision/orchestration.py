@@ -7112,13 +7112,14 @@ class OperationalCapabilityOrchestrator:
                     f"{oid}: {lim}" for lim in sub_attempt.limitations
                 )
         if comparison:
-            # Doc 222 E4: when the declared goal is a comparison, the
-            # completed READ subobjectives' evidence is composed
+            # Doc 222/223 E4: when the declared goal is a comparison,
+            # the completed READ subobjectives' evidence is composed
             # through the governed typed boundary instead of merely
             # concatenated — the model proposes correspondences and
-            # the deterministic verifier computes all facts.
-            import re
-
+            # the deterministic verifier computes all facts. Source
+            # identity is typed: the root record code of each
+            # flattened owner evidence set — never derived from
+            # model-generated sub-goal text.
             sources: dict[str, tuple[Mapping[str, Any], ...]] = {}
             for sub_goal, attempt in completed:
                 outcome = attempt.outcome
@@ -7129,14 +7130,31 @@ class OperationalCapabilityOrchestrator:
                 )
                 if not records:
                     continue
-                match = re.search(r"\d{4,}", sub_goal or "")
-                sid = (
-                    match.group(0)
-                    if match
-                    else f"source_{len(sources) + 1}"
+                rows = _flatten_evidence_records(records)
+                root = (
+                    min(rows, key=lambda r: len(r["path"]))
+                    if rows
+                    else None
                 )
+                if root is None:
+                    continue
+                sid = root["code"]
+                if sid in sources:
+                    # same root identity as an earlier source — the
+                    # occurrences stay separate, disambiguated by the
+                    # tracked subobjective id rather than overwritten.
+                    sid = f"{sid}#{len(sources)}"
                 sources[sid] = records
-            if len(sources) >= 2:
+            if len(sources) < 2:
+                # A comparison requires two complete authorized
+                # evidence sets — individual partial reads are never
+                # marketed as a full comparison.
+                limitations.append(
+                    "evidence_composition_insufficient: "
+                    "fewer than two complete authorized sources"
+                )
+                saw_source_unavailable = True
+            else:
                 composed = self._compose_multi_evidence(
                     sources,
                     input_text,
