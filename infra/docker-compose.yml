@@ -3624,6 +3624,36 @@ services:
     networks:
       - delpi-network
 
+  # One-shot manual — NÃO sobe com `up` padrão (profiles: manual). Sem cron/timer.
+  myweg-needs-publisher:
+    profiles: ["manual"]
+    build:
+      context: ..
+      dockerfile: production-control-api/Dockerfile
+    container_name: delpi-myweg-needs-publisher
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ}
+      API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+      MYWEG_PC_API_URL: ${MYWEG_PC_API_URL:-http://production-control-api:8000}
+      MYWEG_NORMALIZED_ROOT: /data/myweg/normalizados
+      MYWEG_PUBLISHER_STATE_DIR: /data/myweg/publisher-state
+      MYWEG_PUBLISHER_CALLER_APP: myweg-needs-publisher
+      MYWEG_PUBLISHER_TIMEOUT_SECONDS: ${MYWEG_PUBLISHER_TIMEOUT_SECONDS:-60}
+      MYWEG_PUBLISHER_MAX_ATTEMPTS: ${MYWEG_PUBLISHER_MAX_ATTEMPTS:-3}
+      MYWEG_PUBLISHER_STABILITY_WAIT_SECONDS: ${MYWEG_PUBLISHER_STABILITY_WAIT_SECONDS:-0.75}
+    volumes:
+      - ${MYWEG_NORMALIZED_HOST_DIR:-/home/michael/.local/share/MyWEG-Automacao/normalizados}:/data/myweg/normalizados:ro
+      - ${MYWEG_PUBLISHER_STATE_HOST_DIR:-/var/lib/delpi/myweg-publisher-state}:/data/myweg/publisher-state
+    depends_on:
+      - production-control-api
+    networks:
+      - delpi-network
+    entrypoint: ["python", "-m", "production_control_app.jobs.myweg_needs_publisher"]
+    # Ex.: docker compose --profile manual run --rm myweg-needs-publisher --dry-run --latest --json
+
   delpi-mes-api:
     build:
       context: ..

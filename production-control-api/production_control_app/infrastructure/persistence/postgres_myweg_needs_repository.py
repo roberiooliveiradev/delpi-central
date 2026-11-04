@@ -200,7 +200,7 @@ class PostgresMyWegNeedsRepository:
         list_sql = f"""
             SELECT {_BATCH_COLUMNS}
             FROM {_BATCHES}
-            ORDER BY imported_at DESC, collection_id ASC
+            ORDER BY collected_at DESC, imported_at DESC, collection_id ASC
             LIMIT %s OFFSET %s
         """
         with get_connection() as connection:
@@ -217,10 +217,11 @@ class PostgresMyWegNeedsRepository:
         }
 
     def get_latest_batch(self) -> dict[str, Any] | None:
+        """Última coleta pela data real da coleta (collected_at), não pelo import."""
         query = f"""
             SELECT {_BATCH_COLUMNS}
             FROM {_BATCHES}
-            ORDER BY imported_at DESC, collection_id ASC
+            ORDER BY collected_at DESC, imported_at DESC, collection_id ASC
             LIMIT 1
         """
         with get_connection() as connection:

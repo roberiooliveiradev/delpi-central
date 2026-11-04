@@ -61,6 +61,8 @@ Permissões: `production-control.access` + `production-control.myweg-needs.view`
 
 Query de items: `search`, `remessaFrom`, `remessaTo`, `page`, `pageSize`.
 
+Ordenação de listagem/`latest`: `collected_at DESC`, depois `imported_at DESC`, depois `collection_id ASC` — importar coleta antiga depois **não** altera a última coleta válida.
+
 ## Recuperação de falhas
 
 1. Validação E1 falha → 422, nada persistido.

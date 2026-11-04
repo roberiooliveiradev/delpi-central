@@ -1,0 +1,4 @@
+material_weg_tratado,codigo_referencia_weg,origem_material_weg,quantidade,unidade,data_remessa,documento,linha_fonte,assinatura_registro
+MAT-A,90000001,ORIGEM,1000,UN,15/11/2026,D1,2,sig-1
+MAT-B,,ORIGEM,500,UN,16/11/2026,,3,sig-2
+MAT-C,80000001,ORIGEM,250,UN,17/11/2026,D3,4,sig-3

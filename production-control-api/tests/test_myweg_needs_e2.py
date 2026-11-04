@@ -118,7 +118,11 @@ class InMemoryMyWegNeedsRepository:
     def list_batches(self, *, page: int, page_size: int) -> dict:
         items = sorted(
             self.batches.values(),
-            key=lambda row: (row["imported_at"], row["collection_id"]),
+            key=lambda row: (
+                row["collected_at"],
+                row["imported_at"],
+                row["collection_id"],
+            ),
             reverse=True,
         )
         offset = (page - 1) * page_size
