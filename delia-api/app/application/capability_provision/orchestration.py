@@ -6950,54 +6950,22 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...],
         goal: "OperationalCapabilityOrchestrator._TurnGoal | None",
     ) -> tuple[SubObjective, ...] | None:
-        """Doc 228 S4 — typed referent binding for comparison goals.
+        """Fail closed for unverified client-carried historical entity refs.
 
-        Scoped EntityRef candidates echoed from prior server-grounded
-        turns are descriptive pointers (never authority): two or more
-        distinct unambiguous refs become READ obligations whose entity
-        ids came from owner records — each READ still revalidates live
-        Core/Domain via the governed discovery→execute path. Below two
-        refs or ambiguity returns None → model decomposition."""
-        if (
-            goal is None
-            or not getattr(goal, "comparison_requested", False)
-            or not prior_turns
-        ):
-            return None
-        # Doc 228 §8: scoped candidates bind ONLY when the referent
-        # is unambiguous — exactly two distinct refs is the declared
-        # two-way comparison referent. More than two distinct prior
-        # entities is AMBIGUOUS ("as duas" cannot be resolved without
-        # semantic relation) → None → model decomposition/clarify.
-        distinct: dict[tuple[str, str, str], Any] = {}
-        for turn in prior_turns:
-            for ref in getattr(turn, "entity_refs", ()) or ():
-                distinct.setdefault(
-                    (
-                        ref.entity_type,
-                        ref.entity_id,
-                        ref.source_system,
-                    ),
-                    ref,
-                )
-        if len(distinct) != 2:
-            return None
-        refs = list(distinct.values())
-        _logger.info(
-            "orchestration stage=session_ref_binding "
-            "decision=bound count=%d",
-            len(refs),
-        )
-        # Typed-form goal: the canonical ref descriptor itself —
-        # entity_type + entity_id from owner records, not a fixed
-        # imperative sentence nor an invented target.
-        return tuple(
-            SubObjective(
-                subobjective_id=f"read_{index}",
-                goal=f"{ref.entity_type} {ref.entity_id}",
-            )
-            for index, ref in enumerate(refs)
-        )
+        The current HTTP interaction is request-scoped and accepts prior
+        turns supplied by the client. Even exactly two well-formed
+        EntityRefs cannot prove who originally observed those entities,
+        which earlier turn they belong to, or that they are the user's
+        intended comparison targets. Do not turn those candidates into
+        executable subobjectives. Use the existing semantic decomposition
+        and governed owner discovery/clarification instead.
+
+        A future trusted continuation path may bind EntityRefs only after
+        its producer/session attestation and typed capability arguments
+        are established under the documented contract gate. This method
+        deliberately never promotes client context to owner evidence.
+        """
+        return None
 
     def _decompose_objective(
         self,
