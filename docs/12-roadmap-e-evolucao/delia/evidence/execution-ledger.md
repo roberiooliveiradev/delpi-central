@@ -5476,3 +5476,17 @@ INPUT_SHA=95f9168ef3. PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-cont
 SOURCE_VERIFIED=prior_continuation depth==0 trust gate implemented; E4 _subobjective_attempt_result returns SUCCESS+content without outcome/provenance, so handle_interactive_turn routes its fan-in to _prior_continuation_result NON_GROUNDED. Composition of genuine owner outcomes is not properly projected as multi-source grounded result. Source count>=2 currently allows comparison without exact two requested target roots; 4 sources in reported correlation are not proof of requested correct two-structure comparison. Existing NDJSON with activity/heartbeat/terminal/cancellation is implemented, verify UI/gateway actual delivery before proposing new streaming or timeouts.
 EXECUTOR_REPORTED=correlation 1eb1302e, decomposed4/COMPLETED4/sources4/differences_found/server 200 ~105-115s, curl timed out ~118s with no complete client body; CLIENT_OUTCOME=FAIL, SOURCE_TARGET_ORACLE=NOT_PROVEN, COMPOSITE_GROUNDING=FAIL_CODE_PATH. REF05–REF08/G04/G05/G07/G12=NOT_PASS. COORDINATION_TESTS=TEST_NOT_RUN; SEC01 pass executor-reported only.
 DECISION=REWORK/EXECUTION_DRIFT, not latency-only; fix fan-in provenance/grounding from valid owner-backed multi-source evidence using existing contracts, exact intended source reconciliation, then measure optimize stages and validate existing NDJSON end-to-end; RED/GREEN regression/full authenticated E2E final SHA; no model upgrade, no blanket retry or gateway-only timeout. PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE.
+
+## E4-R6 §12 — fan-in provenance gap (causa provada)
+TASK=DELIA-C3-E4-R6-FANIN-PROVENANCE-TARGET-COVERAGE-AND-NDJSON-DELIVERY-01.
+CAUSA PROVADA: `_subobjective_attempt_result` retorna
+`GovernedCapabilityAttempt` com `outcome=None` — a composicao
+`_compose_multi_evidence` produz `(content, limitations)` mas a
+proveniencia real das READs dos subs NUNCA chega ao outcome final.
+A camada de interacao marca NON_GROUNDED porque `attempt.outcome`
+esta ausente — a composicao disparou (differences_found sources=4)
+mas sem transporte de proveniencia ate a projecao.
+FIX necessario (bounded, sem fabricar): `composed` deve carregar um
+outcome cuja proveniencia DERIVE dos outcomes reais dos subs
+(source_refs/evidence do owner) — uniao de proveniencia valida, nao
+um SpecialistOutcome inventado.
