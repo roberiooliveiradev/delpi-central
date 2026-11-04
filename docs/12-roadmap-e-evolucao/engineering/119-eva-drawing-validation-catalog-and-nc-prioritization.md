@@ -833,3 +833,11 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **Evidência prod:** `GET /products/90264017?view=engineering → 200` como primeira chamada do job → 4 leituras oficiais upfront → OCR → poll com token renovado → `DONE`, `14/14` páginas, `divergences: 0`, `INCONCLUSIVE` honesto, `cross-user → job_not_found`. Nenhuma permissão ampliada; credencial não armazenada em resultado/log.
 
 **Estado:** `JOB_AUTH_CONTEXT_FIXED` · `MCP_SERVER_PASS` · `CHATGPT_CONSUMER_PASS=PENDING`.
+
+## 33. DEC-VAL-033 — BOM_ONLY exige matches tipados ≥90% (2026-11-04)
+
+**Causa-raiz (PROVEN em 90263572/10080004):** o OCR perdeu a célula do código na tabela densa da pág.2 (389 tokens, sem truncamento; irmãos 10080032/11/96 lidos). Duas iterações do gate falharam: `accounted_ratio ≥0.6` e depois `≥0.9` — ambas infladas por `visible_bom` (códigos visíveis como token solto = 91% de "cobertura" com só 32/56=57% de matches tipados). **Regra final:** `accounted_ratio = matched/total` (matches tipados de célula) — `BOM_ONLY` só com cobertura completa + ≥90%; abaixo disso as ocorrências viram limitação `bom_only_unverified`, nunca divergência.
+
+**Evidência prod (`f5f27499c7`):** `status: INCONCLUSIVE`, `bom_only: 0`, `divergences: 0`, `bom_occurrences_unverified: 24` — ausência não declarada; `presence_by_token_only` e demais limitações preservadas; nenhum finding legítimo descartado.
+
+**Testes:** +3 (bloqueio a 57%, bloqueio com inflação por tokens, ausência legítima a ≥90%) — 23/23 comparator.
