@@ -823,3 +823,13 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **AuthZ:** `_require_engineering_human` revalida a cada chamada — revogação bloqueia polling. Job de outro usuário não revela existência.
 
 **Estado:** `JOB_RECOVERY_PASS` (lógica verificada no runtime deployado) · `MCP_CLIENT_PASS=PENDING` · `CHATGPT_CONSUMER_PASS=PENDING` (reteste independente — ciclo: `compose_understanding` → `job_id` → repetir chamada com `job_id`).
+
+## 32. DEC-VAL-032 — contexto AuthN/AuthZ em jobs prolongados (2026-11-04)
+
+**Causa-raiz (PROVEN):** o job executava ~90s+ de OCR **antes** de `analyze_product_drawing`, cujas leituras oficiais (detail/drawing/pdf/structure) iam à api-delpi com o Bearer do usuário já expirado → 401 → `forbidden`. `product.detail` era a primeira leitura pós-OCR — única a falhar. Hipóteses descartadas: RBAC (`require_any` inclui `api-delpi.access` — structure/drawing passavam com a mesma identidade), contexto (capturado corretamente desde DEC-VAL-031).
+
+**Correção (RQ-VAL-040/041):** `_run_job` executa TODAS as leituras delegadas primeiro — credencial fresca — e injeta os fatos em `analyze_product_drawing` via novo parâmetro `prefetched` (aditivo; caminho standalone inalterado). OCR roda depois, sem auth. Também elimina fetch duplicado e preserva `status_code` no erro do job (403 não vira mais 500).
+
+**Evidência prod:** `GET /products/90264017?view=engineering → 200` como primeira chamada do job → 4 leituras oficiais upfront → OCR → poll com token renovado → `DONE`, `14/14` páginas, `divergences: 0`, `INCONCLUSIVE` honesto, `cross-user → job_not_found`. Nenhuma permissão ampliada; credencial não armazenada em resultado/log.
+
+**Estado:** `JOB_AUTH_CONTEXT_FIXED` · `MCP_SERVER_PASS` · `CHATGPT_CONSUMER_PASS=PENDING`.
