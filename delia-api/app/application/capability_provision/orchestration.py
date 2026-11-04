@@ -5577,6 +5577,7 @@ class OperationalCapabilityOrchestrator:
                     comparison=bool(
                         goal is not None and goal.comparison_requested
                     ),
+                    prior_turns=prior_turns,
                 )
 
         # Selection must not receive full prior transcript (Stage 05
@@ -7098,6 +7099,7 @@ class OperationalCapabilityOrchestrator:
         deadline: TurnDeadline,
         depth: int,
         comparison: bool = False,
+        prior_turns: tuple[ConversationContextTurn, ...] = (),
     ) -> GovernedCapabilityAttempt:
         """Run tracked subobjectives through the SAME governed owner
         path — one sub-investigation per subobjective, dependencies
@@ -7155,7 +7157,13 @@ class OperationalCapabilityOrchestrator:
                     actor_user_id=actor_user_id,
                     session_id=session_id,
                     workspace_context=workspace_context,
-                    prior_turns=(),
+                    # Doc 228 §10: the sub inherits the PARENT's
+                    # bounded prior-turn context — the referents the
+                    # parent already resolved ("as duas") must not be
+                    # lost crossing the execution boundary. Same
+                    # untrusted-context contract; the worker never
+                    # sees internal turn state beyond this scope.
+                    prior_turns=prior_turns,
                     prepare_only=prepare_only,
                     unbound_outcome=None,
                     deadline=deadline,
@@ -7187,6 +7195,12 @@ class OperationalCapabilityOrchestrator:
                         try:
                             results[oid] = fut.result()
                         except Exception:
+                            _logger.exception(
+                                "orchestration "
+                                "subobjective_worker_failed "
+                                "oid=%s",
+                                oid,
+                            )
                             tracker.fail(oid, recoverable=False)
                 attempts = [
                     (oid, sub.goal, results[oid])
