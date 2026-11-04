@@ -758,15 +758,11 @@ async def _analyze_product_drawing(
         import hashlib as _hl
         import json as _js
 
-        # Identidade estável do dono do job — request_id varia por
-        # chamada; só o sujeito+token delegado identificam o owner.
-        _ident_fp = _hl.sha256(
-            (
-                str(getattr(ctx, "user_id", "") or "")
-                + "|"
-                + str(getattr(ctx, "access_token", "") or "")
-            ).encode()
-        ).hexdigest()[:20]
+        # DEC-VAL-031 — identidade LÓGICA do owner: o subject do
+        # usuário (Keycloak, estável entre renovações de token).
+        # access_token NÃO é identidade — muda a cada chamada OAuth
+        # e produzia 404 job_not_found no polling do ChatGPT.
+        _ident_fp = _drawing_job_owner_fingerprint(ctx)
         _params_fp = _hl.sha256(
             _js.dumps(
                 {
@@ -1013,6 +1009,21 @@ _HEAVY_RESULT_KEYS = frozenset(
         "sampled_tokens",
     }
 )
+
+
+def _drawing_job_owner_fingerprint(ctx) -> str:
+    """DEC-VAL-031 — fingerprint da identidade lógica do owner do job.
+
+    Usa apenas o subject estável do usuário (``user_id`` do
+    HomeSourceContext — derivado do principal autenticado). O
+    access_token continua necessário para as chamadas delegadas
+    (AuthN), mas sua renovação não pode invalidar a propriedade do
+    job — token não é identidade.
+    """
+    import hashlib
+
+    user_id = str(getattr(ctx, "user_id", "") or "").strip()
+    return hashlib.sha256(f"uid:{user_id}".encode()).hexdigest()[:20]
 
 
 def _compact_report_for_consumer(report):

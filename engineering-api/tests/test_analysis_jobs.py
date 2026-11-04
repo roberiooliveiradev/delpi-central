@@ -63,3 +63,58 @@ def test_running_cap_fails_over_budget():
         params_fingerprint="p1")
     assert s.get_for_owner(job.job_id, "u1").status == "FAILED"
     assert s.get_for_owner(job.job_id, "u1").error["code"] == "timeout"
+
+
+# --- DEC-VAL-031 — recuperação por identidade lógica estável --------
+
+
+class _CtxStub:
+    def __init__(self, user_id, token):
+        self.user_id = user_id
+        self.access_token = token
+        self.request_id = "r1"
+
+
+def _fp(ctx):
+    from engineering_app.interface.mcp.semantic_bridge import (
+        _drawing_job_owner_fingerprint,
+    )
+    return _drawing_job_owner_fingerprint(ctx)
+
+
+def test_owner_fingerprint_stable_across_token_renewal():
+    """RQ-VAL-035 — renovação de token não invalida ownership."""
+    c1 = _CtxStub("user-42", "token-A")
+    c2 = _CtxStub("user-42", "token-B")  # token renovado
+    c2.request_id = "r2"  # request_id varia por chamada
+    assert _fp(c1) == _fp(c2)
+
+
+def test_owner_fingerprint_differs_between_users():
+    assert _fp(_CtxStub("user-42", "t")) != _fp(_CtxStub("user-7", "t"))
+
+
+def test_job_recovered_after_token_renewal():
+    """Ciclo completo: criar com token-A, consultar com token-B."""
+    s = AnalysisJobStore()
+    job, created = s.get_or_start(
+        product_code="90264017",
+        identity_fingerprint=_fp(_CtxStub("u1", "token-A")),
+        params_fingerprint="p1")
+    assert created
+    found = s.get_for_owner(
+        job.job_id, _fp(_CtxStub("u1", "token-B-renewed")))
+    assert found is job
+    s.complete(job.job_id, {"report": {}})
+    assert s.get_for_owner(
+        job.job_id, _fp(_CtxStub("u1", "token-C"))).status == "COMPLETED"
+
+
+def test_job_invisible_to_other_user_even_with_job_id():
+    s = AnalysisJobStore()
+    job, _ = s.get_or_start(
+        product_code="90264017",
+        identity_fingerprint=_fp(_CtxStub("u1", "t")),
+        params_fingerprint="p1")
+    assert s.get_for_owner(
+        job.job_id, _fp(_CtxStub("u2", "t"))) is None
