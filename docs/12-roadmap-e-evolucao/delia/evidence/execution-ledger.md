@@ -5213,3 +5213,33 @@ COORDINATION_REVIEW=main verified; _investigate_subobjectives uses ThreadPoolExe
 DECISION=NO automatic model size upgrade, no blanket retry inflation, no nginx timeout-only fix. First paired tests on identical stage/schema/context, then minimal generalized correction for typed targets, redundant semantic subgoals and reliability through existing InvokeModel/Pydantic AI/LangGraph, exact target coverage, verified deterministic evidence. Larger local model benchmark CONDITIONAL on proven 4B stage inadequacy, availability and approved model. No second planner/provider/owner.
 REUSE_GATE=EXISTING_EQUIVALENT YES/PARTIAL existing model/graph/Evidence; REUSE_DECISION REUSE/EXTEND or REMOVE redundant implementation after consumer/safety proof.
 NEXT=execute doc225 full E4-R3 with repeated real local Qwen3+Keycloak+Core+DAVI/Domain, two target trees, same-session and single-turn, client delivery before gateway, security and concurrency tests on final SHA. STATUS_REWORK; PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE; TESTS_BY_COORDINATION=TEST_NOT_RUN.
+
+## E4-R3 — semantic reliability closure (doc 225)
+
+TASK=DELIA-C3-E4-R3-SEMANTIC-RELIABILITY-AND-OUTCOME-CLOSURE-01.
+Evidence acumulada das runs E2E reais pos-todas as correcoes:
+- composicao completa provada server-side (differences_found,
+  sources=3, COMPLETEDx4, paralelo com credenciais, READs reais).
+- entrega ao cliente comprovada em 59.4s e 117.8s em runs bem
+  sucedidos.
+- variancia residual CONFIRMADA: mesmo turno de comparacao produz
+  por run alternativamente (a) decompose=4->COMPLETEDx4->composition,
+  (b) decompose vazio->owner_path_unbound, (c) decompose=3 com
+  reads vazios. Sem alteracao de codigo/modelo entre runs — a
+  unica variavel e a proposta do modelo por stage.
+Classificacao doc225 por hipotese:
+  H2 (confiabilidade de schema do qwen3:4b em entradas com
+      referentes) = CAUSA DOMINANTE provada — subs/decompose
+      variam identicamente sob mesma entrada; stages de READ
+      unitarios sao estaveis (single-reads sempre GROUNDED).
+  H3 (decompose propoe subs extras/incorretos) = parcialmente
+      confirmado (so_compare redundante delega vista.analyze).
+  H5/H7 (binding/coverage) = mitigados por identity tipada e
+      evidence_composition_insufficient honesto.
+Correcoes aplicadas e provadas: delegation cache-first (SEC-01),
+parallel subs+contexto, typed goal block, instrucao evidencia,
+bounded decompose retry, identity tipada, insuficiencia honesta.
+Residual REAL: confiabilidade de proposta do qwen3:4b em
+decomposicao/referentes — nao e boundary/auth/latencia/arquitetura.
+Decisao de coordenacao: modelo maior local OU retries/budget OU
+streaming gateway — fora do escopo autorizado de implementacao.
