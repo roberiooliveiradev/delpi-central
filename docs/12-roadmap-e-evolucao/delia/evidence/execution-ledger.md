@@ -5155,3 +5155,13 @@ decomposed=4 -> so_1..3 davi.discover+execute REAIS -> so_4 compare
 -> `evidence_composition decision=differences_found sources=2` ->
 COMPLETED x4 SUCCESS. Resposta computada server-side; HTTP 504
 (gateway 120s < turno ~131s) — residual de LATENCIA nao-correctness.
+
+
+## E4-R2 — coordination security and user-visible latency gate (2026-11-03)
+
+TASK=DELIA-C3-E4-R2-LATENCY-DELEGATION-AND-DELIVERY-CLOSURE-01.
+INPUT_SHA=23648e9ee0; PLAN=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/224-e4-r2-latency-and-delegation-security-closure.md.
+STATUS=REWORK; LIVE_SERVER_SIDE_COMPOSITION=REPORTED_PASS; CLIENT_DELIVERY=FAIL_HTTP_504 (~131s vs ~120s gateway). NOT FUNCTIONAL_ACCEPTANCE. Source provenance regex removed and root-code source identity employed; collision typing still requires verifier.
+SECURITY_REVIEW_REQUIRED=delegation.py checks per-subject-token fingerprint+resource cache before expired subject JWT check. Delegated token TTL/safety margin are bounded, but ongoing entitlement, session revocation, Core/Domain live AuthZ, reused expired bearer in new request and cross-resource behavior are NOT PROVEN by TTL alone. Verify and correct SEC01 fail-closed; no silent security acceptance or permission changes.
+PERFORMANCE_REVIEW_REQUIRED=full per-stage budget, possible redundant fourth analytic subgoal, sequential governed reads, LangGraph safe fan-out applicability, gateway/stream terminal and cancel/disconnect; NEVER raise timeout alone. Complete same-session and single-turn end-to-end client-visible grounded comparison against independent oracle. Preserve framework-native ModelInvocation/graph and existing authority contracts.
+TESTS_IN_COORDINATION=TEST_NOT_RUN; PRODUCTION_DEPLOY=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NONE. NEXT=doc224 integrated R2 task, gates LAT01-LAT08, SEC01, REG01 and G04/G05/G07/G12.
