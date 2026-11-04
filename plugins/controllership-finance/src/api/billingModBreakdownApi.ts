@@ -17,6 +17,7 @@ export type TypedNumber = {
 
 export type BillingModLine = {
   level: string;
+  /** Componente MOD normalizado a partir de `explodedProduct`. */
   product?: string | null;
   productDescription?: string | null;
   operation?: string | null;
@@ -24,6 +25,7 @@ export type BillingModLine = {
   resource?: string | null;
   modItem?: string | null;
   modDescription?: string | null;
+  /** Unidade MOD normalizada a partir de `unit`. */
   modUnit?: string | null;
   propagatedQty?: number | null;
   stdTime?: TypedNumber;
@@ -32,6 +34,11 @@ export type BillingModLine = {
   costUnit?: TypedNumber;
   costTotal?: TypedNumber;
   costProduct?: TypedNumber;
+  // Nomes reais emitidos pelo produtor api-delpi (ver doc 154 §11).
+  explodedProduct?: string | null;
+  unit?: string | null;
+  anchorProduct?: string | null;
+  modItemState?: string | null;
 };
 
 export type BillingModAnchor = {
@@ -98,5 +105,25 @@ export function getBillingModBreakdown(
         period,
       )}/billing-mod-breakdown?${params.toString()}`,
     ),
-  ).then((envelope) => envelope.data);
+  ).then((envelope) => normalizePayload(envelope.data));
+}
+
+/** Normaliza os nomes reais do produtor api-delpi para o contrato
+ *  público do Portal (`explodedProduct`→`product`, `unit`→`modUnit`).
+ *  Boundary do próprio MFE — não altera BFF nem esconde os nomes
+ *  originais, que permanecem acessíveis via os campos opcionais. */
+function normalizePayload(
+  payload: BillingModBreakdownPayload,
+): BillingModBreakdownPayload {
+  return {
+    ...payload,
+    anchors: payload.anchors.map((anchor) => ({
+      ...anchor,
+      modLines: anchor.modLines.map((line) => ({
+        ...line,
+        product: line.product ?? line.explodedProduct ?? null,
+        modUnit: line.modUnit ?? line.unit ?? null,
+      })),
+    })),
+  };
 }

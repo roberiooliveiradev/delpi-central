@@ -272,3 +272,26 @@ Executor: Devin · HEAD de execução: `a3657c0699`+ · Commits: `8ab969db27` (R
 - `costProduct` renderiza «—» porque o produtor nunca emite o campo — decisão de contrato (preencher ou remover), não de frontend.
 
 **Estado final:** `REWORK_CORRECTED / DECISION_REQUIRED / NO_DEPLOY`.
+
+---
+
+## 11. Reconciliação contratual produtor↔MFE (2026-11-04)
+
+**Divergência comprovada por inspeção do produtor** (`GetBillingModBreakdownUseCase`):
+
+| Emissor (api-delpi) | Contrato MFE | Estado |
+|---|---|---|
+| `explodedProduct` | `product` | DIVERGÊNCIA → normalizado no boundary do MFE |
+| `unit` | `modUnit` | DIVERGÊNCIA → normalizado no boundary do MFE |
+| `anchorProduct` | — (não consumido) | Proveniência agora tipada |
+| `modItemState` | — (não consumido) | Tipado; exposição = owner |
+| `productDescription` (âncora e linha) | `productDescription` | **Nunca emitido** — renderiza «—» honesto; adicioná-la exige nova fonte = `DECISION_REQUIRED` |
+| `costProduct` | `costProduct` | **Nunca emitido** — «—»; decisão de contrato = owner |
+| `diagnostics` (âncora) | — | Não renderizado (exposição pendente owner) |
+| `sourceOp`, `operation`, `modItem`, `modDescription`, `stdTime`, `hours`, `costUnit`, `costTotal`, `propagatedQty`, `level` | correspondentes | OK |
+
+**Gate de decisão (G1):**
+- **Implementado:** normalização no boundary do próprio MFE — `getBillingModBreakdown` mapeia `explodedProduct`→`product` e `unit`→`modUnit`, preservando os nomes originais via campos opcionais. Nenhuma alteração de contrato BFF, sem novo comportamento material, sem dados inventados. Autorizada como correção independente de contrato.
+- **`DECISION_REQUIRED` (não implementado):** Opção A — normalização na projeção BFF para todos os consumidores (MCP bridge/semantic bridge inclusos). Recomendada arquiteturalmente; requer autorização do owner + análise de compatibilidade dos demais consumers.
+
+**Prova:** `billingModBreakdownApi.test.ts` — fixture fiel ao produtor → normalização verificada; campos ausentes permanecem ausentes (nada inventado). Testes: 20/20 R09; suíte completa reexecutada.
