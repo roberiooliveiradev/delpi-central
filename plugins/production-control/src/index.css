@@ -4450,6 +4450,70 @@
   font-size: var(--ppc-font-xs);
 }
 
+/* Atmosfera fotográfica só no Alimentador — foto à direita + wash legível à esquerda. */
+.dashboard-production-control .ppc-feeder-scene {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.dashboard-production-control .ppc-feeder-scene::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--ppc-canvas);
+  background-image:
+    linear-gradient(
+      105deg,
+      color-mix(in srgb, var(--ppc-canvas) 96%, transparent) 0%,
+      color-mix(in srgb, var(--ppc-canvas) 88%, transparent) 28%,
+      color-mix(in srgb, var(--ppc-canvas) 55%, transparent) 52%,
+      color-mix(in srgb, var(--ppc-canvas) 18%, transparent) 72%,
+      transparent 88%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ppc-accent, #089bdb) 8%, transparent) 0%,
+      transparent 42%
+    ),
+    var(--ppc-feeder-scene-image);
+  background-repeat: no-repeat;
+  background-size: cover, cover, cover;
+  background-position: center, center, right center;
+}
+
+.dashboard-production-control .ppc-feeder-scene > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .dashboard-production-control .ppc-feeder-scene::before {
+    background-position: center, center, 70% center;
+    opacity: 0.72;
+  }
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-feeder-scene::before {
+  background-image:
+    linear-gradient(
+      105deg,
+      color-mix(in srgb, var(--ppc-canvas) 97%, transparent) 0%,
+      color-mix(in srgb, var(--ppc-canvas) 90%, transparent) 34%,
+      color-mix(in srgb, var(--ppc-canvas) 62%, transparent) 58%,
+      color-mix(in srgb, var(--ppc-canvas) 28%, transparent) 78%,
+      transparent 92%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ppc-accent, #089bdb) 12%, transparent) 0%,
+      transparent 46%
+    ),
+    var(--ppc-feeder-scene-image);
+}
+
 .dashboard-production-control .ppc-feeder-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -4457,10 +4521,33 @@
   align-items: center;
 }
 
+/* CTA no header azul: fundo claro + texto escuro (mesmo padrão do pill de filial ativo). */
 .dashboard-production-control .ppc-feeder__collect-cta {
   font-weight: 700;
-  border-color: color-mix(in srgb, var(--ppc-accent) 45%, var(--ppc-border));
-  background: color-mix(in srgb, var(--ppc-accent) 12%, var(--ppc-surface));
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ppc-title, #003866);
+}
+
+.dashboard-production-control .ppc-feeder__collect-cta:hover:not(:disabled),
+.dashboard-production-control .ppc-feeder__collect-cta:focus-visible {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: var(--ppc-title, #003866);
+}
+
+/* No modal (fundo claro), o mesmo CTA vira accent sólido com texto branco. */
+.dashboard-production-control .ppc-feeder-collect .ppc-feeder__collect-cta {
+  border-color: var(--ppc-accent, #089bdb);
+  background: var(--ppc-accent, #089bdb);
+  color: #ffffff;
+}
+
+.dashboard-production-control .ppc-feeder-collect .ppc-feeder__collect-cta:hover:not(:disabled),
+.dashboard-production-control .ppc-feeder-collect .ppc-feeder__collect-cta:focus-visible {
+  border-color: var(--ppc-accent, #089bdb);
+  background: color-mix(in srgb, var(--ppc-accent, #089bdb) 88%, #000);
+  color: #ffffff;
 }
 
 .dashboard-production-control .ppc-feeder-collect {

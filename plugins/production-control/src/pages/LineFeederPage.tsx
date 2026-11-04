@@ -1,7 +1,8 @@
 import { createDashboardLoadingActivityCard } from "@delpi/plugin-ui/index";
 import { PackageSearch, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 
+import warehouseSpoolsUrl from "../assets/line-feeder/warehouse-spools.png";
 import { LineFeederCollectModal } from "../components/LineFeederCollectModal";
 import { LineFeederMaterialsPanel } from "../components/LineFeederMaterialsPanel";
 import { LineFeederUrgentRequestsPanel } from "../components/LineFeederUrgentRequestsPanel";
@@ -54,8 +55,15 @@ export function LineFeederPage({ branch }: LineFeederPageProps) {
     return preview.error.message;
   })();
 
+  const sceneStyle = {
+    ["--ppc-feeder-scene-image" as string]: `url(${JSON.stringify(warehouseSpoolsUrl)})`,
+  } as CSSProperties;
+
   return (
-    <div className="ppc-page-stack ppc-page-stack--demand">
+    <div
+      className="ppc-page-stack ppc-page-stack--demand ppc-feeder-scene"
+      style={sceneStyle}
+    >
       <PpcWorkspaceHeader
         title={texts.title}
         subtitle={texts.subtitle}
