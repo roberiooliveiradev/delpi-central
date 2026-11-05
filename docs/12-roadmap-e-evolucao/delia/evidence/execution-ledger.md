@@ -5829,8 +5829,8 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 |---|---|
 | Base | `981360de` |
 | Residual | CLEAN — deleções confirmadas, zero consumidores, zero segundo runtime |
-| RQ | 18 IMPLEMENTED / 10 PARTIAL / 0 NOT_IMPLEMENTED / 0 BLOCKED |
-| Cobertura | 64% implemented (partial=zero credito) |
+| RQ | 21 IMPLEMENTED / 7 PARTIAL / 0 NOT_IMPLEMENTED / 0 BLOCKED — correção aritmética da tabela G8 doc 256 (review 267) |
+| Cobertura | 75% de classificação reportada (21/28; parciais=0); **não equivale a 75% de aceite independente** |
 | E01–E10 | TEST_NOT_RUN — ambiente autorizado indisponível |
 | Suíte | PASS (exit 0) |
 | Veredicto | ACCEPT_WITH_RESIDUAL proposto |
