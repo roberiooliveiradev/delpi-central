@@ -94,6 +94,7 @@ describe("ComunicadoTextSurface — formatação parcial em forma", () => {
         prefix: "IDD ",
       },
       resolved: {
+        displayText: "IDD 6,57",
         kpi: { value: 6.57, label: "IDD" },
         kpiMetrics: [{ field: "idd", value: 6.57, label: "IDD" }],
         table: {

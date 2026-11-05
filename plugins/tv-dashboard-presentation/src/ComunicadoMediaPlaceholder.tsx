@@ -7,6 +7,8 @@ type Props = {
   kind: Kind;
   state?: State;
   label?: string;
+  /** Classe do host (ex.: overlay de vídeo). Não substitui o placeholder do kit. */
+  className?: string;
 };
 
 const LABELS: Record<Kind, Record<State, string>> = {
@@ -66,7 +68,12 @@ function PlaceholderGraphic({ kind, state }: { kind: Kind; state: State }) {
 }
 
 /** Ícone + rótulo para blocos de mídia sem arquivo ou em carregamento. */
-export function ComunicadoMediaPlaceholder({ kind, state = "empty", label }: Props) {
+export function ComunicadoMediaPlaceholder({
+  kind,
+  state = "empty",
+  label,
+  className,
+}: Props) {
   const text = label ?? LABELS[kind][state];
 
   return (
@@ -76,6 +83,7 @@ export function ComunicadoMediaPlaceholder({ kind, state = "empty", label }: Pro
           "tdp-comunicado__placeholder",
           state === "loading" ? "tdp-comunicado__placeholder--loading" : null,
           state === "error" ? "tdp-comunicado__placeholder--error" : null,
+          className,
         ]
           .filter(Boolean)
           .join(" "),

@@ -23,7 +23,11 @@ export function ComunicadoVideoLoadOverlay({ visible, className = "" }: Props) {
       aria-live="polite"
       aria-busy="true"
     >
-      <ComunicadoMediaPlaceholder kind="video" state="loading" />
+      <ComunicadoMediaPlaceholder
+        kind="video"
+        state="loading"
+        className="tdp-presentation-video__placeholder"
+      />
     </div>
   );
 }

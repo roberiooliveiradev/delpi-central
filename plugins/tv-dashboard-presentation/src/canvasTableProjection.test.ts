@@ -17,6 +17,7 @@ import type { ComunicadoCanvasTableBlock, ComunicadoDataResolved } from "./comun
 
 const resolved: ComunicadoDataResolved = {
   kpi: { value: 42, label: "ROL" },
+  displayRuns: [{ text: "35", dataRef: { field: "rol", format: "number" } }],
   table: {
     columns: ["rol", "mes"],
     rows: [
@@ -36,14 +37,20 @@ const multiFieldResolved: ComunicadoDataResolved = {
     { field: "meta", value: 1400, label: "Meta" },
     { field: "value", value: 1146.3, label: "Realizado" },
   ],
+  displayRuns: [
+    { text: "1400", dataRef: { field: "meta", format: "number" } },
+    { text: "1146,3", dataRef: { field: "value", format: "number" } },
+  ],
 };
 
 const realizadoResolved: ComunicadoDataResolved = {
   kpiMetrics: [{ field: "value", value: 1135.73, label: "PPM" }],
+  displayRuns: [{ text: "1135,73", dataRef: { field: "value", format: "number" } }],
 };
 
 const metaResolved: ComunicadoDataResolved = {
   kpiMetrics: [{ field: "ppm", value: 1400, label: "Meta PPM" }],
+  displayRuns: [{ text: "1400", dataRef: { field: "ppm", format: "number" } }],
 };
 
 function makeTable(rows: number, cols: number): ComunicadoCanvasTableBlock {

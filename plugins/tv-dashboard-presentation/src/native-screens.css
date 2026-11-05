@@ -575,8 +575,7 @@
   background: color-mix(in srgb, #0b1220 72%, transparent);
 }
 
-.tdp-presentation-video__load-overlay .tdp-comunicado__placeholder,
-.tdp-presentation-video__load-overlay .delpi-ui-comunicado__placeholder {
+.tdp-presentation-video__placeholder {
   background: transparent;
   border: none;
 }
@@ -1174,7 +1173,7 @@
   text-overflow: ellipsis;
 }
 
-/* Espelha `.delpi-ui-config-table__frame` — TV usa classes `tdp-*` (sem dual-class no frame). */
+/* Espelha o frame de tabela do kit — TV usa classes tdp-* (sem dual-class no frame). */
 .tdp-table-frame {
   flex: 1 1 auto;
   min-height: 0;

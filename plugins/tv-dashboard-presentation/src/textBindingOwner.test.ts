@@ -103,7 +103,15 @@ describe("textBindingOwner", () => {
 
   it("negativo: sem escrever Campo, multi-run continua no paint", () => {
     expect(resolveTextBindingOwner(dualBindBlock)).toBe("contentRuns");
-    const painted = resolveTextBlockDisplayRuns(dualBindBlock, resolved);
+    const painted = resolveTextBlockDisplayRuns(dualBindBlock, {
+      ...resolved,
+      displayRuns: [
+        { text: "ACUMULADO " },
+        { text: "01/01/2025", dataRef: { field: "filter.start_date", format: "date" } },
+        { text: " - " },
+        { text: "24/09/2025", dataRef: { field: "filter.end_date", format: "date" } },
+      ],
+    });
     const text = painted.map((r) => r.text).join("");
     expect(text).toMatch(/01\/01\/2025/);
     expect(text).toMatch(/24\/09\/2025/);

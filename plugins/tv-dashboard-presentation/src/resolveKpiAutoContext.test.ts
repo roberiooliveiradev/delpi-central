@@ -81,7 +81,7 @@ describe("resolveKpiViewPresentation auto", () => {
       { contextMode: "auto", variant: "hero", showIcon: false },
     );
     expect(presentation.sparklinePoints).toEqual([70, 75, 85]);
-    expect(presentation.comparisonText).toMatch(/vs período/);
+    expect(presentation.comparisonText).toBeUndefined();
     expect(presentation.showIcon).toBe(false);
     expect(presentation.variant).toBe("hero");
   });
@@ -96,7 +96,7 @@ describe("resolveKpiViewPresentation auto", () => {
     );
     expect(hero.variant).toBe("hero");
     expect(hero.sparklinePoints?.length).toBeGreaterThanOrEqual(2);
-    expect(hero.comparisonText).toBeTruthy();
+    expect(hero.comparisonText).toBeUndefined();
     expect(hero.showIcon).toBe(false);
 
     const row = resolveKpiViewPresentation(
@@ -110,7 +110,7 @@ describe("resolveKpiViewPresentation auto", () => {
       },
     );
     expect(row.variant).toBe("row");
-    expect(row.progressPct).toBeCloseTo((96.5 / 95) * 100);
+    expect(row.progressPct).toBeNull();
     expect(row.sparklinePoints).toBeUndefined();
   });
 });

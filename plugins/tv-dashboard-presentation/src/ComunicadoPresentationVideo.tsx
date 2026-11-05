@@ -185,7 +185,11 @@ export function ComunicadoPresentationVideo({
       />
       {phase === "error" ? (
         <div className={ensureComunicadoDualClass("tdp-presentation-video__load-overlay")}>
-          <ComunicadoMediaPlaceholder kind="video" state="error" />
+          <ComunicadoMediaPlaceholder
+            kind="video"
+            state="error"
+            className="tdp-presentation-video__placeholder"
+          />
         </div>
       ) : (
         <ComunicadoVideoLoadOverlay visible={showLoadingOverlay} />

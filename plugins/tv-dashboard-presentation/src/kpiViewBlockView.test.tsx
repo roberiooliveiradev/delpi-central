@@ -9,7 +9,10 @@ function kpiWithResolved(block: ReturnType<typeof createKpiViewBlock>): Comunica
   if (block.type !== "kpi_view") throw new Error("expected kpi_view");
   return {
     ...block,
-    resolved: { kpi: { value: 10, label: "Consumo" }, label: "Consumo" },
+    resolved: {
+      kpi: { value: 10, label: "Consumo", displayValue: "10" },
+      label: "Consumo",
+    },
   };
 }
 
@@ -60,10 +63,10 @@ describe("KpiViewBlockView icon visibility", () => {
       ...base,
       dataSourceId: "src-1",
       resolved: {
-        kpi: { value: 42, label: "Total de LMPs" },
+        kpi: { value: 42, label: "Total de LMPs", displayValue: "42" },
         kpiMetrics: [
-          { field: "total_lmps", value: 42, label: "Total de LMPs" },
-          { field: "avg_lead_time", value: 3.2, label: "Lead time médio" },
+          { field: "total_lmps", value: 42, label: "Total de LMPs", displayValue: "42" },
+          { field: "avg_lead_time", value: 3.2, label: "Lead time médio", displayValue: "3,2" },
         ],
       },
     };
