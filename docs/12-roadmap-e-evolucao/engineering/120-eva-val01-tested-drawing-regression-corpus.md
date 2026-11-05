@@ -234,3 +234,7 @@ O consumidor ChatGPT encontrou `502 upstream_error` e depois erro interno. Diagn
 ## Log adicional — 2026-11-05 (DEC-VAL-034 rev2 — PATH_DRIFT corrigido)
 
 O `drawing_understanding` síncrono nunca executava `recover_absent_table_cells` (só `product.drawing_analysis`). `apply_localized_recovery` agora roda em ambos os caminhos (`abcdcc63f6`). Verificado em prod: `O0001/10080004` → `MATCH_CANDIDATE` + `evidence_refs` completos (método, página, region_box, box real, SHA `9021fce0…`, conf 0.9999). 772/773 overlay (1 falha fixture lmp_domain não relacionada). `CHATGPT_CONSUMER_PASS` permanece PENDING até reteste independente.
+
+## Log adicional — 2026-11-05 (Framework-First SLANet — F1 trace + 2 fixes mínimos)
+
+Trace produtivo comprovado: células SLANet alimentam apenas o resumo do relatório; a grade `i//8` é código morto semântico (component_table vem de understanding.py). Defeitos reais corrigidos (`00befcff78`/`2cb89f61a3`): `association` (OCR↔célula) propagada — estava calculada e descartada; fallback de crop fixo → `NO_TABLE_REGION` fail-closed. 101/101 overlay. `90263572`/`90264030` comportamento de percepção inalterado (SLANet cells não entram no component_table). `CHATGPT_CONSUMER_PASS` PENDING.

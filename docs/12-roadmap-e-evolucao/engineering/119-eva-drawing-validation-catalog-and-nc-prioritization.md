@@ -897,3 +897,13 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **Testes:** 772/773 no overlay (falha isolada `test_lmp_domain` FileNotFound — fixture ausente no overlay, não-regressão). `90264030`: hierarquia/gate preservados (sem mudança de código do comparador nesta rev).
 
 **Estado:** `PATH_DRIFT=FIXED` · `DRAWING_UNDERSTANDING_PATH=RECOVERING` · `CHATGPT_CONSUMER_PASS=PENDING` (reteste: `product.drawing_understanding` `90263572` → O0001 MATCH_CANDIDATE + evidence_refs; `90264030` → 5 pais + 10 findings).
+
+## 38. Framework-First SLANet — trace produtivo + 2 fixes mínimos (2026-11-05)
+
+**Trace F1 (PROVEN):** `TableStructureEngine` executa em prod via `_produce_drawing_understanding` (ambos os caminhos MCP) — só página 0, escala 2.7778, `crop_box=component_table.box`. Células SLANet (`table_structure_engines[0].cells`) são consumidas **somente** pelo resumo do relatório (`cell_count`, `cells_with_text`, `cell_bounding_boxes`) — `row`/`col` da grade `i//8` **não têm consumidor semântico** (`component_table` vem de `understanding.py`). Logo `i//8` é defeito cosmético, não a fronteira produtiva dos parents/O0001 — classificado `BENCHMARK_REQUIRED`, não implementado.
+
+**Dois defeitos reais corrigidos (`00befcff78`, merge `2cb89f61a3`):**
+1. `associate_tokens_to_cells()` era calculada e **descartada** — bridge/report leem `_sl_e["association"].unassigned/.conflicts` (campo contratual morto). Propagado no resultado.
+2. Fallback de crop fixo `[41,31,2295,262]` fabricava estrutura em coordenada arbitrária → **fail-closed `NO_TABLE_REGION`** com erro tipado.
+
+**Evidência:** 101/101 testes focados; prod `2cb89f61a3` healthy com `NO_TABLE_REGION` em `/app`. Contrato: aditivo (`association` restaurado, `error_kind` tipado). Sem mudança em comparador, gates, investigação, parents.
