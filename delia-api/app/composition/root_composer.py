@@ -133,7 +133,6 @@ def _resolve_orchestration_attempt(
         gates,
         model=investigation_model,
         model_factory=investigation_model_factory,
-        recovery_reuse_enabled=True,
         request_limit=request_limit,
         tool_calls_limit=tool_calls_limit,
         agent_retries=agent_retries,

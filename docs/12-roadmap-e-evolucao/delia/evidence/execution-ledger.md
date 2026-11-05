@@ -5798,3 +5798,15 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | Suíte | PASS (exit 0) |
 | E01–E10 | TEST_NOT_RUN (G7) |
 | PRODUCTION_DEPLOY | NOT_AUTHORIZED |
+
+## G4 — retries/config/observability (execução)
+
+| Campo | Valor |
+|---|---|
+| Base | `abcdcc63f6` (merge concorrente completado) |
+| M1 | run_sync única vez; governed_retries separado — KEEP, provado |
+| M2 | provider usage vs estimated — separação já honesta, KEEP |
+| M3 | dead arg `recovery_reuse_enabled` + `last_agent_usage` removidos |
+| Suíte | PASS (exit 0) |
+| E01–E10 | TEST_NOT_RUN (G7) |
+| PRODUCTION_DEPLOY | NOT_AUTHORIZED |

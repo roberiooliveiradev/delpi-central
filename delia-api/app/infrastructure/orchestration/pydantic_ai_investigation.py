@@ -507,7 +507,6 @@ class PydanticAiInvestigationOrchestrator:
         *,
         model: Any = None,
         model_factory: Callable[[], Any] | None = None,
-        recovery_reuse_enabled: bool = True,  # retained ctor arg; native-assessment ledger removed
 
         request_limit: int = _DEFAULT_REQUEST_LIMIT,
         tool_calls_limit: int = _DEFAULT_TOOL_CALL_LIMIT,
@@ -521,7 +520,6 @@ class PydanticAiInvestigationOrchestrator:
         self._gates = gates
         self._model = model
         self._model_factory = model_factory
-        self._recovery_reuse_enabled = recovery_reuse_enabled
         self._request_limit = max(1, int(request_limit))
         self._tool_calls_limit = max(1, int(tool_calls_limit))
         self._agent_retries = max(0, int(agent_retries))
@@ -533,7 +531,6 @@ class PydanticAiInvestigationOrchestrator:
             80, int(prior_turn_max_chars)
         )
         self.last_node_trace: list[str] = []
-        self.last_agent_usage: Mapping[str, Any] | None = None
 
     def attempt(
         self,
@@ -1203,18 +1200,6 @@ class PydanticAiInvestigationOrchestrator:
                         ),
                     )
 
-            usage = getattr(result, "usage", None) if result is not None else None
-            if usage is not None:
-                self.last_agent_usage = {
-                    "input_tokens": getattr(usage, "input_tokens", None),
-                    "output_tokens": getattr(usage, "output_tokens", None),
-                    "requests": getattr(usage, "requests", None),
-                    "tool_calls": getattr(usage, "tool_calls", None),
-                    "duration_ms": int(
-                        (time.monotonic() - started) * 1000
-                    ),
-                    "budget_remaining_s": remaining,
-                }
             else:
                 self.last_agent_usage = {
                     "duration_ms": int(

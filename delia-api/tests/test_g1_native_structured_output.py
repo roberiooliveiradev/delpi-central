@@ -447,3 +447,44 @@ def test_clarification_ignored_only_when_obligations_fully_met():
     )
     assert out.status is GovernedCapabilityStatus.SUCCESS
     assert "declared_clarification_ignored" in out.limitations
+
+
+# ------------------------------------------------------------------
+# G4 M1: the investigation Agent runs run_sync exactly once per
+# attempt — no external retry loop multiplies physical model calls.
+# ------------------------------------------------------------------
+
+
+def test_agent_run_sync_is_single_invocation_per_attempt():
+    """The investigation attempt calls ``agent.run_sync`` exactly once —
+    governed_retries never wraps the Agent path, so retries can never
+    multiply (doc 261 M1). Agent-internal native retries (tool calls +
+    ModelRetry output) remain bounded by UsageLimits."""
+    import inspect
+    from app.infrastructure.orchestration import (
+        pydantic_ai_investigation as inv,
+    )
+
+    src = inspect.getsource(inv)
+    # exactly one run_sync call site in the whole module
+    assert src.count(".run_sync(") == 1
+    # no governed-retries loop wraps the Agent path
+    assert "call_retry_eligible" not in src
+
+
+def test_governed_retries_serves_non_agent_paths_only():
+    """call_retry_eligible stays for the conversational + model-stage
+    invocation paths (invoke_model outside the Agent) — separate
+    legitimate contract, clamped to the PO ceiling (doc 261 M1)."""
+    from app.application.model_invocation.governed_retries import (
+        LLM_CALL_MAX_ATTEMPTS,
+        call_retry_eligible,
+    )
+
+    assert LLM_CALL_MAX_ATTEMPTS == 3
+    # recoverable + within limit → eligible
+    assert call_retry_eligible("timeout", 1, 2) is True
+    # definitive codes never retry
+    assert call_retry_eligible("rejected", 1, 2) is False
+    # config can never exceed the PO ceiling
+    assert call_retry_eligible("timeout", 3, 99) is False

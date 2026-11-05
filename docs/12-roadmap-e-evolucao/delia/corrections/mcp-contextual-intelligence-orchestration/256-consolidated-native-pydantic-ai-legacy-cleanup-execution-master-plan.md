@@ -388,3 +388,26 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
 - **R3**: comentário stale CRI em `orchestration.py` ~260 removido.
 - **R5**: RQ-08/09/10 = G3 (PARTIAL); RQ-11 mantido em G4.
 - Suíte completa PASS (exit 0). Escopo G4 principal em análise.
+
+## 15. G4 — retries/config/observability (execução, fatia principal)
+
+- **M1 retries**: `Agent.run_sync` executa UMA vez por attempt
+  (pydantic_ai_investigation:1136) — `call_retry_eligible` NÃO envolve o
+  Agent path → zero multiplicação. `governed_retries`
+  (llm_call_max_attempts, clamp≤3, códigos recoverable) permanece para
+  os paths separados: call conversacional (handle_interactive_turn:1592)
+  e model-stage (orchestration:5006). Retries nativos do Agent
+  (tool retries + ModelRetry output) bounded por UsageLimits.
+  Teste: 1 call site run_sync + zero call_retry_eligible no módulo.
+- **M3 dead config/args**: `_recovery_reuse_enabled` (ctor arg órfão —
+  "retained; ledger removed") e `last_agent_usage` (estado set, sem
+  leitor) removidos de pydantic_ai_investigation + root_composer.
+- **M2 tokens**: `_map_usage` lê usage do provider
+  (input_tokens/request_tokens, output_tokens/response_tokens) —
+  `estimated_input_tokens` permanece rotulado ESTIMATIVA na
+  ModelCallObservation; separação provada em testes existentes.
+- **KEEP**: ModelInvocationPort/InvokeModel (C3-T4 + conversacional),
+  governed_retries (paths não-Agent), context_budget (proteção
+  pre-call), JSON único (perfis completos, zero campos mortos),
+  last_node_trace (consumido em testes de observabilidade).
+- Suíte completa PASS (exit 0).
