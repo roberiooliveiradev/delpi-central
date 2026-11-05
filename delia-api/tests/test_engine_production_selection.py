@@ -13,11 +13,10 @@ from app.composition.root_composer import (
     _resolve_orchestration_attempt,
     _SUPPORTED_ORCHESTRATION_ENGINES,
 )
-from tests.test_engine_b_recovery_reuse import (
+from tests.support.capability_fixtures import (
     _providers,
-    _reuse_proposal,
 )
-from tests.test_goal_evidence_relevance import (
+from tests.support.capability_fixtures import (
     FakeProposalModel as RelevanceProposalModel,
 )
 
@@ -27,19 +26,14 @@ def _gates():
         OperationalCapabilityOrchestrator,
     )
     from app.application.model_invocation.invoke_model import InvokeModel
-    from tests.test_governed_attempt_contract import (
-        _cri_clause,
+    from tests.support.capability_fixtures import (
         load_test_orchestration_instructions,
     )
 
-    clause = _cri_clause()
     return OperationalCapabilityOrchestrator(
         _providers(),
         orchestration_instructions=load_test_orchestration_instructions(),
-        invoke_model=InvokeModel(RelevanceProposalModel(_reuse_proposal())),
-        response_intelligence_enabled=True,
-        cri_instruction_clause=clause.text,
-        cri_instruction_version=clause.version,
+        invoke_model=InvokeModel(RelevanceProposalModel(())),
     )
 
 
@@ -52,7 +46,7 @@ def _test_model():
 class TestSelection:
     def test_default_supported_engines(self):
         assert _SUPPORTED_ORCHESTRATION_ENGINES == frozenset(
-            {"pydantic_ai", "delia"}
+            {"pydantic_ai"}
         )
         assert "langgraph" not in _SUPPORTED_ORCHESTRATION_ENGINES
 
@@ -67,13 +61,11 @@ class TestSelection:
         assert isinstance(attempt, PydanticAiInvestigationOrchestrator)
         assert callable(getattr(attempt, "attempt", None))
 
-    def test_delia_selects_application_sequencer(self):
-        from app.application.capability_provision.orchestration import (
-            OperationalCapabilityOrchestrator,
-        )
-
-        attempt = _resolve_orchestration_attempt("delia", _gates())
-        assert isinstance(attempt, OperationalCapabilityOrchestrator)
+    def test_delia_rollback_retired_and_rejected(self):
+        # The `delia` Application-sequencer rollback is retired — its
+        # semantic engine was removed; the identifier fails closed.
+        with pytest.raises(ValueError):
+            _resolve_orchestration_attempt("delia", _gates())
 
     def test_langgraph_rejected(self):
         for bogus in ("langgraph", "langgraph_b0", "LANGGRAPH"):

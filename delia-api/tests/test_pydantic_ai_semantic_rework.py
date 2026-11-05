@@ -49,31 +49,26 @@ from app.infrastructure.orchestration.pydantic_ai_investigation import (
 from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.models.test import TestModel
-from tests.test_engine_b_recovery_reuse import _providers, _reuse_proposal
-from tests.test_goal_evidence_relevance import (
+from tests.support.capability_fixtures import _providers, _reuse_proposal
+from tests.support.capability_fixtures import (
     FakeProposalModel as RelevanceProposalModel,
     FakeProvider,
     _cap,
     _group,
     _outcome,
 )
-from tests.test_governed_attempt_contract import (
-    _cri_clause,
+from tests.support.capability_fixtures import (
     load_test_orchestration_instructions,
 )
 
 
 def _gates(providers=None, proposal=None):
-    clause = _cri_clause()
     return OperationalCapabilityOrchestrator(
         providers or _providers(),
         orchestration_instructions=load_test_orchestration_instructions(),
         invoke_model=InvokeModel(
-            RelevanceProposalModel(proposal or _reuse_proposal())
+            RelevanceProposalModel(proposal or ())
         ),
-        response_intelligence_enabled=True,
-        cri_instruction_clause=clause.text,
-        cri_instruction_version=clause.version,
     )
 
 
@@ -491,14 +486,8 @@ def test_r3_discovery_without_authoritative_read():
 
 def test_r1_simple_read_never_calls_governed_owner_path():
     gates = _gates()
-    calls: list[str] = []
-    original = gates._governed_owner_path
-
-    def _spy(*a, **k):
-        calls.append("owner_path")
-        return original(*a, **k)
-
-    gates._governed_owner_path = _spy  # type: ignore[method-assign]
+    # The legacy owner path was deleted — there is nothing to call.
+    assert not hasattr(gates, "_governed_owner_path")
     catalog = gates._project_semantic_tool_catalog(
         correlation="c", deadline=TurnDeadline.start(30.0)
     )
@@ -537,16 +526,12 @@ def test_r1_simple_read_never_calls_governed_owner_path():
         gates, model=FunctionModel(_fn), tool_calls_limit=6
     )
     engine.attempt("estrutura do produto 90260147")
-    assert calls == []
 
 
 def test_r1_compare_never_calls_legacy_owner_path():
     gates = _gates()
-    calls: list[str] = []
-    gates._governed_owner_path = (  # type: ignore[method-assign]
-        lambda *a, **k: calls.append("owner_path")
-        or _success_attempt(content="x", root="x")
-    )
+    # The legacy owner path was deleted — there is nothing to call.
+    assert not hasattr(gates, "_governed_owner_path")
 
     def _fn(messages, _info):
         return ModelResponse(parts=[TextPart("no tools")])
@@ -555,18 +540,14 @@ def test_r1_compare_never_calls_legacy_owner_path():
         gates, model=FunctionModel(_fn)
     )
     attempt = engine.attempt("compare 90260147 and 90260148")
-    assert calls == []
     assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert attempt.error_code == "investigation_no_tool_observations"
 
 
 def test_r1_agent_error_does_not_start_second_investigation():
     gates = _gates()
-    calls: list[str] = []
-    gates._governed_owner_path = (  # type: ignore[method-assign]
-        lambda *a, **k: calls.append("owner_path")
-        or _success_attempt(content="x", root="x")
-    )
+    # The legacy owner path was deleted — there is nothing to call.
+    assert not hasattr(gates, "_governed_owner_path")
 
     def _boom(messages, _info):
         raise RuntimeError("simulated model failure")
@@ -575,22 +556,17 @@ def test_r1_agent_error_does_not_start_second_investigation():
         gates, model=FunctionModel(_boom)
     )
     attempt = engine.attempt("estrutura 90260147")
-    assert calls == []
     assert attempt.error_code == "investigation_agent_error"
 
 
 def test_r1_no_tool_calls_does_not_fallback_to_legacy():
     gates = _gates()
-    calls: list[str] = []
-    gates._governed_owner_path = (  # type: ignore[method-assign]
-        lambda *a, **k: calls.append("owner_path")
-        or _success_attempt(content="x", root="x")
-    )
+    # The legacy owner path was deleted — there is nothing to call.
+    assert not hasattr(gates, "_governed_owner_path")
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=TestModel(call_tools=[])
     )
     attempt = engine.attempt("estrutura 90260147")
-    assert calls == []
     assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
 
 

@@ -268,19 +268,14 @@ class Settings:
         # (retry OFF), so production can never retry involuntarily.
         # The PO-approved capacity ceiling is LLM_CALL_MAX_ATTEMPTS=3;
         # config can only lower it, never raise past it.
-        # Doc 231: production orchestration-engine selection —
+        # Doc 231+241: production orchestration-engine selection —
         # backend-controlled config ONLY; never request/model/
-        # provider-sourced. Default `pydantic_ai` (unified
-        # investigation); `delia` = Application sequencer rollback.
-        # LangGraph values fail closed at composition.
+        # provider-sourced. `pydantic_ai` is the only supported engine;
+        # the `delia` Application sequencer rollback is retired (the
+        # semantic engine it selected no longer exists).
         self.orchestration_engine = (
             os.getenv("DELIA_ORCHESTRATION_ENGINE") or "pydantic_ai"
         ).strip()
-        # S3 (doc 214): compound-objective decomposition — composition
-        # config ONLY, backend-controlled; OFF by default.
-        self.subobjective_investigation_enabled = _env_flag(
-            "DELIA_SUBOBJECTIVE_INVESTIGATION"
-        )
         # Doc 231: LangGraph Send fan-out retired — flag retained only
         # so composition can fail closed when stale env enables it.
         self.subobjective_fanout_enabled = _env_flag(
@@ -299,17 +294,6 @@ class Settings:
         self.mcp_catalog_db = (
             os.getenv("DELIA_MCP_CATALOG_DB") or ""
         ).strip() or None
-        # Doc 217: composable tool-selection experiment — live default;
-        # retrieval / retrieval_llm / retrieval_llm_progressive are
-        # eval-only composition config, never request-sourced.
-        self.tool_selection_mode = (
-            os.getenv("DELIA_TOOL_SELECTION_MODE") or "live"
-        ).strip().lower()
-        # Doc 217+ remediation: argument-generation engine — llm
-        # default; pydantic_ai is eval-only structured arggen.
-        self.arggen_engine = (
-            os.getenv("DELIA_ARGGEN_ENGINE") or "llm"
-        ).strip().lower()
         _call_attempts_raw = os.getenv("DELIA_LLM_CALL_MAX_ATTEMPTS")
         self.llm_call_max_attempts_config_source = (
             "environment"
@@ -390,8 +374,4 @@ class Settings:
         settings.environment = "testing"
         settings.debug = False
         settings.log_level = "WARNING"
-        # Unit composition must not require live LLM credentials —
-        # Application sequencer covers gate wiring without the
-        # Pydantic AI investigation model (doc 231).
-        settings.orchestration_engine = "delia"
         return settings

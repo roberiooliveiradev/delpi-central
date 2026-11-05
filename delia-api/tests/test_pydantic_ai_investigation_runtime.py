@@ -14,27 +14,22 @@ from app.infrastructure.orchestration.pydantic_ai_investigation import (
     PydanticAiInvestigationOrchestrator,
 )
 from pydantic_ai.models.test import TestModel
-from tests.test_engine_b_recovery_reuse import _providers, _reuse_proposal
-from tests.test_goal_evidence_relevance import (
+from tests.support.capability_fixtures import _providers, _reuse_proposal
+from tests.support.capability_fixtures import (
     FakeProposalModel as RelevanceProposalModel,
 )
-from tests.test_governed_attempt_contract import (
-    _cri_clause,
+from tests.support.capability_fixtures import (
     load_test_orchestration_instructions,
 )
 
 
 def _gates(proposal=None):
-    clause = _cri_clause()
     return OperationalCapabilityOrchestrator(
         _providers(),
         orchestration_instructions=load_test_orchestration_instructions(),
         invoke_model=InvokeModel(
-            RelevanceProposalModel(proposal or _reuse_proposal())
+            RelevanceProposalModel(proposal or ())
         ),
-        response_intelligence_enabled=True,
-        cri_instruction_clause=clause.text,
-        cri_instruction_version=clause.version,
     )
 
 
@@ -69,17 +64,13 @@ def test_conversational_admission_skips_agent_tools():
                 finish_status=InvocationFinishStatus.COMPLETED,
             )
 
-    from tests.test_governed_attempt_contract import TEST_MODEL_REF
+    from tests.support.capability_fixtures import TEST_MODEL_REF
 
-    clause = _cri_clause()
     gates = OperationalCapabilityOrchestrator(
         _providers(),
         orchestration_instructions=load_test_orchestration_instructions(),
         invoke_model=InvokeModel(_AdmissionOnlyModel()),
         model_ref=TEST_MODEL_REF,
-        response_intelligence_enabled=True,
-        cri_instruction_clause=clause.text,
-        cri_instruction_version=clause.version,
     )
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=TestModel(call_tools=[])

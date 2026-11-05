@@ -3,7 +3,8 @@
 Production ``SupportsGovernedCapabilityAttempt`` implementation.
 Semantic investigation is a bounded ``pydantic_ai.Agent`` tool loop.
 Tools delegate ONLY to Application governed execution gates — never to
-the legacy ``_governed_owner_path`` semantic sequencer.
+any second Application semantic controller (doc 241 — the
+legacy ``_governed_owner_path`` sequencer was removed).
 
 Native-first (doc 235): typed tool args, optional goal declaration,
 clarification ask-back, agent-requested multi-source composition,
@@ -39,7 +40,6 @@ from app.application.capability_provision.governed_stage_gates import (
 from app.application.capability_provision.orchestration import (
     _IDENTIFIER_LITERAL_RE,
     _LAST_CATALOG_FAILURES,
-    _NATIVE_ASSESSMENT_LEDGER,
     _authoritative_structure_root,
     _emit_activity,
     _is_business_evidence_attempt,
@@ -468,12 +468,19 @@ def _prior_context_block(
     )
 
 
+def build_test_investigation_model():
+    """Deterministic framework test model — test composition only."""
+    from pydantic_ai.models.test import TestModel
+
+    return TestModel()
+
+
 class PydanticAiInvestigationOrchestrator:
     """``SupportsGovernedCapabilityAttempt`` via Pydantic AI tools.
 
     Deterministic stages (confirmation, admission, surface inquiry)
-    remain Application gates. Owner-path semantic selection/sequencing
-    is NOT delegated back to ``_governed_owner_path``.
+    remain Application gates. The former owner-path semantic
+    selection/sequencing engine was removed (doc 241).
     """
 
     def __init__(
@@ -482,7 +489,8 @@ class PydanticAiInvestigationOrchestrator:
         *,
         model: Any = None,
         model_factory: Callable[[], Any] | None = None,
-        recovery_reuse_enabled: bool = True,
+        recovery_reuse_enabled: bool = True,  # retained ctor arg; native-assessment ledger removed
+
         request_limit: int = _DEFAULT_REQUEST_LIMIT,
         tool_calls_limit: int = _DEFAULT_TOOL_CALL_LIMIT,
     ) -> None:
@@ -1046,11 +1054,6 @@ class PydanticAiInvestigationOrchestrator:
         )
 
         remaining = max(1.0, deadline.remaining_seconds())
-        ledger_token = None
-        if self._recovery_reuse_enabled:
-            ledger_token = _NATIVE_ASSESSMENT_LEDGER.set(
-                {"records": {}, "events": []}
-            )
         started = time.monotonic()
         prompt = _prior_context_block(prior_turns) + input_text
         result = None
@@ -1211,15 +1214,7 @@ class PydanticAiInvestigationOrchestrator:
                 deps.composed_attempt is not None,
                 correlation,
             )
-            ledger = _NATIVE_ASSESSMENT_LEDGER.get()
-            if ledger is not None:
-                self.last_node_trace = list(self.last_node_trace) + [
-                    f"assessment_{event}"
-                    for event, _group_key, _cap_id in ledger["events"]
-                ]
             return terminal
         finally:
             if self._model_factory is not None:
                 _close_investigation_client(model)
-            if ledger_token is not None:
-                _NATIVE_ASSESSMENT_LEDGER.reset(ledger_token)

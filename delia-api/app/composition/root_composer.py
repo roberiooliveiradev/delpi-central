@@ -57,11 +57,11 @@ from app.interfaces.http.request_logging import register_request_logging
 
 _logger = logging.getLogger(__name__)
 
-# Doc 231: Pydantic AI unified investigation is the sole production
-# orchestration runtime. `delia` remains an explicit rollback to the
-# Application sequencer (OperationalCapabilityOrchestrator.attempt).
-# LangGraph identifiers are rejected fail-closed (retired).
-_SUPPORTED_ORCHESTRATION_ENGINES = frozenset({"pydantic_ai", "delia"})
+# Doc 231+241: Pydantic AI unified investigation is the sole production
+# orchestration runtime. The `delia` Application-sequencer rollback is
+# retired — its semantic engine was removed; `delia`/LangGraph
+# identifiers are rejected fail-closed.
+_SUPPORTED_ORCHESTRATION_ENGINES = frozenset({"pydantic_ai"})
 
 
 def _resolve_orchestration_attempt(
@@ -77,10 +77,11 @@ def _resolve_orchestration_attempt(
     application. Unknown identifiers fail closed — a misspelled
     engine must never silently select another engine.
 
-    Doc 231: ``pydantic_ai`` is the unified investigation runtime.
-    Retired LangGraph flags (fan-out / checkpoint path) are accepted
-    only as no-ops when empty/false so stale env files do not crash
-    boot; non-empty checkpoint paths fail closed.
+    Doc 231+241: ``pydantic_ai`` is the unified investigation
+    runtime and the only supported engine. Retired LangGraph flags
+    (fan-out / checkpoint path) are accepted only as no-ops when
+    empty/false so stale env files do not crash boot; non-empty
+    checkpoint paths fail closed.
     """
     if engine_name not in _SUPPORTED_ORCHESTRATION_ENGINES:
         raise ValueError(
@@ -98,23 +99,21 @@ def _resolve_orchestration_attempt(
             "DELIA_CHECKPOINT_DB is retired with LangGraph "
             "(doc 231) — unset the path"
         )
-    if engine_name == "pydantic_ai":
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            PydanticAiInvestigationOrchestrator,
-        )
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
 
-        if investigation_model is None:
-            raise ValueError(
-                "pydantic_ai investigation runtime requires a "
-                "composed model implementation"
-            )
-        return PydanticAiInvestigationOrchestrator(
-            gates,
-            model=investigation_model,
-            model_factory=investigation_model_factory,
-            recovery_reuse_enabled=True,
+    if investigation_model is None:
+        raise ValueError(
+            "pydantic_ai investigation runtime requires a "
+            "composed model implementation"
         )
-    return gates
+    return PydanticAiInvestigationOrchestrator(
+        gates,
+        model=investigation_model,
+        model_factory=investigation_model_factory,
+        recovery_reuse_enabled=True,
+    )
 # CRI E2-R3/E3: governed declarative resources — fixed repo
 # artifacts, never request/env-supplied paths.
 _CRI_INSTRUCTIONS_PATH = (
@@ -468,22 +467,8 @@ def _compose_turn_handler(
             ),
             max_governed_attempts=settings.max_governed_attempts,
             llm_call_max_attempts=settings.llm_call_max_attempts,
-            response_intelligence_enabled=cri_effective,
-            cri_instruction_clause=cri_clause,
-            cri_instruction_version=cri_version,
-            cri_presentation_vocabulary=cri_vocabulary,
             field_labels=field_labels,
             orchestration_instructions=orchestration_instructions,
-            subobjective_investigation_enabled=(
-                settings.subobjective_investigation_enabled
-            ),
-            tool_selection_mode=settings.tool_selection_mode,
-            arggen_engine=settings.arggen_engine,
-            arggen_model_config={
-                "base_url": settings.llm_base_url,
-                "api_key": settings.llm_api_key,
-                "model": settings.llm_model,
-            },
         )
         if providers and orchestration_instructions is not None
         else None
@@ -510,6 +495,15 @@ def _compose_turn_handler(
 
         investigation_model_factory = _investigation_model_factory
         investigation_model = _investigation_model_factory()
+    elif gates is not None and settings.environment == "testing":
+        # Unit composition must not require live LLM credentials —
+        # the governed gates are exercised through the same production
+        # engine with a framework test model (doc 241).
+        from app.infrastructure.orchestration.pydantic_ai_investigation import (
+            build_test_investigation_model,
+        )
+
+        investigation_model = build_test_investigation_model()
     orchestration = (
         _resolve_orchestration_attempt(
             settings.orchestration_engine,

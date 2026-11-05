@@ -3,8 +3,8 @@
 Narrow Application-owned Protocol describing the governed primitives
 a `SupportsGovernedCapabilityAttempt` implementation may consume for
 sequencing: admission, typed confirmation, live-surface listing,
-surface inquiry, semantic tool catalog/invoke, the governed owner
-path and the bounded attempt runner.
+surface inquiry, semantic tool catalog/invoke and the bounded
+attempt runner.
 
 It exists so an infrastructure investigation runtime (Pydantic AI
 adapter, historically LangGraph) can depend on a stable application
@@ -86,41 +86,6 @@ class SupportsGovernedStageGates(Protocol):
         correlation: str,
     ) -> GovernedCapabilityAttempt:
         """Deterministic surface-inquiry answer attempt."""
-        ...
-
-    def _decompose_objective(
-        self,
-        input_text: str,
-        *,
-        correlation: str,
-        workspace_context: WorkspaceContext | None,
-        deadline: TurnDeadline,
-        prior_turns: tuple[ConversationContextTurn, ...] = (),
-        goal: Any | None = None,
-    ) -> tuple["SubObjective", ...] | None:
-        """Bounded decomposition proposal for a compound objective —
-        validated fail-closed; ``None`` keeps the single-capability
-        path. ``prior_turns``/``goal`` carry untrusted referent
-        candidates and the validated semantic goal for referent
-        binding — they never grant authority or evidence."""
-        ...
-
-    def _governed_owner_path(
-        self,
-        input_text: str,
-        *,
-        correlation: str,
-        actor_user_id: str | None,
-        session_id: str | None,
-        workspace_context: WorkspaceContext | None,
-        prior_turns: tuple[ConversationContextTurn, ...],
-        prepare_only: bool,
-        unbound_outcome: str | None,
-        deadline: TurnDeadline,
-        depth: int = 0,
-    ) -> GovernedCapabilityAttempt:
-        """Post-admission governed owner path: surface → selection →
-        invoke → judgment → recovery → synthesis."""
         ...
 
     def _project_semantic_tool_catalog(

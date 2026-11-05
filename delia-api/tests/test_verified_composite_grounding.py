@@ -106,22 +106,3 @@ def test_verifier_refuses_three_sources_instead_of_comparing_first_two():
         {"A": row, "B": row, "C": row}, None
     )
     assert result["verdict"] == "inconclusive"
-
-
-def test_verified_fan_in_remains_separate_from_specialist_outcome():
-    class Tracker:
-        objectives = ()
-        @staticmethod
-        def coverage():
-            return {"completed": 2}
-    orch = object.__new__(OperationalCapabilityOrchestrator)
-    result = orch._subobjective_attempt_result(
-        Tracker(), ["comparação"], [],
-        correlation="comparison-1",
-        saw_source_unavailable=False,
-        saw_authz_denied=False,
-        verified_composition=_proof(),
-    )
-    assert result.status is GovernedCapabilityStatus.SUCCESS
-    assert result.outcome is None
-    assert result.verified_composition is not None

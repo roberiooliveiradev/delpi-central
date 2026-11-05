@@ -1892,8 +1892,8 @@ services:
       # invalid values fail closed to 1 (OFF).
       DELIA_LLM_CALL_MAX_ATTEMPTS: ${DELIA_LLM_CALL_MAX_ATTEMPTS:-3}
       DELIA_INTERACTION_TOTAL_BUDGET_SECONDS: ${DELIA_INTERACTION_TOTAL_BUDGET_SECONDS:-300}
-      # Doc 231: Pydantic AI unified investigation (default) or delia
-      # (Application sequencer rollback). LangGraph retired.
+      # Doc 231+241: pydantic_ai is the only orchestration engine.
+      # `delia` rollback retired (engine deleted).
       DELIA_ORCHESTRATION_ENGINE: ${DELIA_ORCHESTRATION_ENGINE:-pydantic_ai}
       # CRI E1: central ON/OFF for conversational response intelligence —
       # default OFF; fail-closed to baseline on invalid/absent resources.

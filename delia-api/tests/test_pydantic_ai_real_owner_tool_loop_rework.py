@@ -16,7 +16,7 @@ from app.application.capability_provision.orchestration import (
     _listing_failure_is_transient,
 )
 from app.domain.specialist_interop.model import SpecialistOperationClass
-from tests.test_goal_evidence_relevance import FakeProvider, _cap, _group, _outcome
+from tests.support.capability_fixtures import FakeProvider, _cap, _group, _outcome
 from app.application.interaction.capability_attempt import (
     OWNER_PATH_UNBOUND,
     GovernedCapabilityAttempt,

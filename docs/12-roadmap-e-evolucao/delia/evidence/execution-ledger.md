@@ -5716,3 +5716,16 @@ REGRESSION=delia-api pytest tests/ --ignore=tests/live exit 0 no diff final.
 VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO para a matriz multi-step completa.
 
 
+
+## Capability-provision full legacy removal + Pydantic AI consolidation (2026-11-05)
+
+TASK=DELIA-C3-CAPABILITY-PROVISION-FULL-LEGACY-REMOVAL-AND-PYDANTIC-AI-CONSOLIDATION-01.
+REPORT=doc 242. BASE_HEAD=c311e75e14. PRODUCTION_DEPLOY=NOT_AUTHORIZED. PHASE_ADVANCE=NONE.
+EXISTING_EQUIVALENT=YES (Agent/FunctionToolset/tool loop/gates já adotados; nenhum framework novo).
+REUSE_DECISION=REUSE (Pydantic AI nativo + gates Application retidos; sem nova camada).
+EXECUTION_DRIFT=NONE.
+REMOVED=orchestration.py 16287→6476 linhas (-60%); pacote 21844→11550 (-47%); attempt/_attempt/_governed_owner_path; planners, seletores, arggen, índice, subobjetivos, recovery, síntese, continuação, foreign/resolver; _select_candidate/_propose_candidate_arguments; capability_retrieval.py; subobjective_tracker.py; app/infrastructure/arggen/; 18 instruction IDs (20→2); DELIA_ORCHESTRATION_ENGINE=delia (fail-closed); DELIA_ARGGEN_ENGINE; DELIA_TOOL_SELECTION_MODE; DELIA_SUBOBJECTIVE_INVESTIGATION; _NATIVE_ASSESSMENT_LEDGER; 77 suites de teste acopladas.
+KEPT=admissão tipada (1 _propose), compose_verified_observations (1 _propose + verificador), SemanticInvestigationPlan/_TurnGoal, discovery→chain determinística, candidate_token passthrough, gates AuthZ/evidência/outcome/paginação, PREPARE/ACT+confirmação+pending+auditoria (dormente, tool surface READ-only), observabilidade/cancelamento/deadline.
+REGRESSION=delia-api pytest tests/ --ignore=tests/live exit 0 no SHA avaliado (~1150 testes); 74 testes nativos de contrato PASS; test_v14_architecture_isolation PASS.
+E01_E10=TEST_NOT_RUN (runtime real exige rebuild do container local; não executado nesta sessão). FALSE_GROUNDED=0 na suíte executada.
+VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; gate de runtime real pendente; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
