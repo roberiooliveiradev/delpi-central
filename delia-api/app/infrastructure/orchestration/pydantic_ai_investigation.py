@@ -27,12 +27,14 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import inspect
 import json
+import keyword
 import logging
 import os
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Literal, Mapping
 
 from app.application.capability_provision.contracts import (
     InvestigationAnswer,
@@ -172,6 +174,109 @@ def _safe_tool_name(capability_id: str) -> str:
     if name[0].isdigit():
         name = f"cap_{name}"
     return name[:64]
+
+
+_JSON_TYPE_ANNOTATIONS = {
+    "string": str,
+    "integer": int,
+    "number": float,
+    "boolean": bool,
+    "object": dict,
+    "array": list,
+}
+
+# Names the synthesized signature may never advertise: the RunContext
+# receiver, the actual **kwargs catch-all of the generated function,
+# and Python keywords (``isidentifier()`` alone accepts them).
+_TOOL_PARAM_DENYLIST = frozenset({"ctx", "kwargs"})
+
+
+def _capability_tool_signature(
+    input_schema: object,
+) -> inspect.Signature:
+    """Build the native tool signature from an owner ``input_schema``.
+
+    The agent-facing tool surface mirrors the owner-declared argument
+    names — never a generic ``arguments`` envelope, which small models
+    leave empty. All schema-derived parameters are ``KEYWORD_ONLY``:
+    JSON Schema ``properties`` has no required-before-optional ordering
+    contract, and the model always supplies named arguments, so making
+    them keyword-only keeps any property order legal without dropping
+    ``required`` semantics.
+
+    Untrusted schema data is bounded: non-identifier names, Python
+    keywords and reserved names are skipped; unknown ``type`` values
+    fall back to ``Any``; at most 24 properties are advertised (the
+    catalog slim-props bound). When ``arguments`` is not a declared
+    property it is appended as an optional bag — capabilities whose
+    schema exceeds the declared props keep an escape hatch, and the
+    application gate revalidates every call against the live owner
+    schema regardless.
+    """
+    params = [
+        inspect.Parameter("ctx", inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    ]
+    required_set: frozenset[str] = frozenset()
+    props: object = None
+    if isinstance(input_schema, Mapping):
+        required = input_schema.get("required")
+        if isinstance(required, (list, tuple)):
+            required_set = frozenset(str(r) for r in required)
+        props = input_schema.get("properties")
+    declared: set[str] = set()
+    if isinstance(props, Mapping):
+        for name, spec in list(props.items())[:24]:
+            if (
+                not isinstance(name, str)
+                or name in declared
+                or not name.isidentifier()
+                or keyword.iskeyword(name)
+                or name in _TOOL_PARAM_DENYLIST
+            ):
+                continue
+            annotation = _JSON_TYPE_ANNOTATIONS.get(
+                spec.get("type") if isinstance(spec, Mapping) else None,
+                Any,
+            )
+            # Owner-declared value sets must reach the model — an
+            # unadvertised enum forces the model to guess valid
+            # values (observed: owner_argument_rejected on TÉO entity
+            # selection). Literal[] keeps the constraint inside the
+            # native JSON schema, bounded like every other prop.
+            options = (
+                spec.get("enum")
+                if isinstance(spec, Mapping)
+                else None
+            )
+            if isinstance(options, (list, tuple)) and 0 < len(
+                options
+            ) <= 64 and all(
+                isinstance(o, (str, int, float, bool)) for o in options
+            ):
+                annotation = Literal[tuple(options)]
+            declared.add(name)
+            params.append(
+                inspect.Parameter(
+                    name,
+                    inspect.Parameter.KEYWORD_ONLY,
+                    annotation=annotation,
+                    default=(
+                        inspect.Parameter.empty
+                        if name in required_set
+                        else None
+                    ),
+                )
+            )
+    if "arguments" not in declared:
+        params.append(
+            inspect.Parameter(
+                "arguments",
+                inspect.Parameter.KEYWORD_ONLY,
+                annotation=dict | None,
+                default=None,
+            )
+        )
+    return inspect.Signature(params)
 
 
 @dataclass
@@ -1178,83 +1283,19 @@ class PydanticAiInvestigationOrchestrator:
                 owner_tool.__doc__ = description
                 return owner_tool
 
-            # The tool signature mirrors the owner's declared input
-            # schema (native function-schema surface): the agent calls
-            # e.g. discover(query="...") or
-            # execute(candidate_token="...", arguments={"code": "..."})
-            # — never a generic ``arguments`` envelope, which small
-            # models leave empty.
-            import inspect as _inspect
-
-            _ann_map = {
-                "string": str,
-                "integer": int,
-                "number": float,
-                "boolean": bool,
-                "object": dict,
-                "array": list,
-            }
-            params = [
-                _inspect.Parameter(
-                    "ctx", _inspect.Parameter.POSITIONAL_OR_KEYWORD
-                )
-            ]
-            required_set = frozenset(
-                str(r)
-                for r in (
-                    schema_props.get("required") or ()
-                )
-                if isinstance(schema_props, Mapping)
-            )
-            if isinstance(schema_props, Mapping):
-                props = schema_props.get("properties")
-                if isinstance(props, Mapping):
-                    for name, spec in list(props.items())[:24]:
-                        if not isinstance(name, str) or (
-                            not name.isidentifier() or name == "ctx"
-                        ):
-                            continue
-                        annotation = _ann_map.get(
-                            spec.get("type")
-                            if isinstance(spec, Mapping)
-                            else None,
-                            Any,
-                        )
-                        params.append(
-                            _inspect.Parameter(
-                                name,
-                                _inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                                annotation=annotation,
-                                default=(
-                                    _inspect.Parameter.empty
-                                    if name in required_set
-                                    else None
-                                ),
-                            )
-                        )
-            declared = {p.name for p in params}
-            if "arguments" not in declared:
-                # Capabilities without a declared bag keep the generic
-                # escape hatch (owner revalidates every call anyway).
-                params.append(
-                    _inspect.Parameter(
-                        "arguments",
-                        _inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                        annotation=dict | None,
-                        default=None,
-                    )
-                )
             tool_fn = _make_owner_tool()
-            tool_fn.__signature__ = _inspect.Signature(params)
+            tool_fn.__signature__ = _capability_tool_signature(
+                schema_props
+            )
             # pydantic function_schema resolves hints by NAME, so the
             # synthesized parameters must also exist in annotations.
             tool_fn.__annotations__ = {
                 p.name: (
                     p.annotation
-                    if p.annotation is not _inspect.Parameter.empty
+                    if p.annotation is not inspect.Parameter.empty
                     else Any
                 )
-                for p in params
+                for p in tool_fn.__signature__.parameters.values()
             }
             tool_fn.__annotations__["return"] = str
             toolset.add_function(

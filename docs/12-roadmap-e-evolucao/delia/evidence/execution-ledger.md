@@ -5846,3 +5846,19 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | Drift | DELIA_RUNTIME_SHA stale vs mounted HEAD |
 | Suíte | PASS (exit 0) |
 | PRODUCTION_DEPLOY | NOT_AUTHORIZED |
+
+## P0 SourceRefs + dynamic tool contract hardening (execução)
+
+| Campo | Valor |
+|---|---|
+| TASK_ID | `DELIA-C3-P0-SOURCE-REFS-AND-DYNAMIC-TOOL-CONTRACT-HARDENING-01` |
+| Base | `745ae26ae6` (origin/main sincronizado; inclui review doc 287) |
+| SourceRefs | **falso residual** — refs já serializadas em `provenance.sources` (source_id=davi, source_system=mcp, observed_at); matriz boundary→cliente completa, sem perda |
+| Dynamic signature | `_capability_tool_signature` extraída — KEYWORD_ONLY (ordem opcional→obrigatório resolvida), denylist keyword/ctx/kwargs, enum→Literal (fix `owner_argument_rejected` TÉO) |
+| candidate_token | extração bounded antes de `validate_arguments` + repasse verbatim — positivo + 9 negativos testados |
+| InvestigationAnswer | `Literal["1"]` — const no schema, `"1.0"` rejeita com retry, 10 testes |
+| Testes novos | 41 (signature 18, token 13, contract 10) |
+| Suíte | PASS (exit 0, suite completa) |
+| Eval real | A PASS GROUNDED+prov | B PASS (estrutura, code+max_depth) | C TÉO `teo.get_context` SUCCESS | D VISTA knowledge/get_context SUCCESS; read/analyze `mcp_protocol_error` owner-side | E PASS via context | F INCONCLUSIVE (registro existe no owner, coverage não vinculou) | G PASS clarificação honesta |
+| Residual | `vista.read`/`vista.analyze` mcp_protocol_error (owner tv-dashboard); coverage-binding de registro detalhado único (F); `davi.discover` falha transitória isolada |
+| PRODUCTION_DEPLOY | NOT_AUTHORIZED |
