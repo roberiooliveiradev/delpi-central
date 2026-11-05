@@ -62,6 +62,7 @@ def compare_myweg_need_batches(
     search: str = Query(""),
     page: int = Query(1, ge=1),
     pageSize: int = Query(50, alias="pageSize", ge=1, le=200),
+    changesOnly: bool = Query(True, alias="changesOnly"),
 ):
     """Evolução do planejamento entre dois snapshots — faturamento só indicativo."""
     user = resolve_user(request)
@@ -74,12 +75,14 @@ def compare_myweg_need_batches(
             product_search=search,
             page=page,
             page_size=pageSize,
+            changes_only=changesOnly,
         )
     except MyWegNeedsBatchNotFound as exc:
         return fail(str(exc), 404)
     except MyWegNeedsValidationFailed as exc:
         status = 422
-        if any(i.get("code") == "insufficient_batches" for i in (exc.issues or [])):
+        issue_codes = {i.get("code") for i in (exc.issues or [])}
+        if "insufficient_batches" in issue_codes or "insufficient_operational_days" in issue_codes:
             status = 409
         return fail(str(exc), status, data={"issues": exc.issues})
     except BranchAccessDenied as exc:

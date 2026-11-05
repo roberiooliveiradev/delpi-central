@@ -1328,6 +1328,7 @@ export async function fetchMyWegNeedBatchesCompare(params: {
   search?: string;
   page?: number;
   pageSize?: number;
+  changesOnly?: boolean;
   signal?: AbortSignal;
 }): Promise<import("../types").MyWegComparePayload> {
   const search = new URLSearchParams();
@@ -1337,6 +1338,7 @@ export async function fetchMyWegNeedBatchesCompare(params: {
   if (params.search?.trim()) search.set("search", params.search.trim());
   search.set("page", String(params.page ?? 1));
   search.set("pageSize", String(params.pageSize ?? 50));
+  search.set("changesOnly", String(params.changesOnly ?? true));
   const envelope = await httpGet<{
     success: boolean;
     message?: string;

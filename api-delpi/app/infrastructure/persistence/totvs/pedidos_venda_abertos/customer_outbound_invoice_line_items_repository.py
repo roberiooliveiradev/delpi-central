@@ -57,6 +57,8 @@ class CustomerOutboundInvoiceLineItemsRepository(BaseRepository):
                             "product_code": _trim(row.get("product_code")),
                             "product_description": _trim(row.get("product_description")),
                             "unit": _trim(row.get("unit")),
+                            "invoice_unit": _trim(row.get("invoice_unit")),
+                            "catalog_unit": _trim(row.get("catalog_unit")),
                             "quantity": _trim(row.get("quantity")) or "0",
                             "issue_date": _iso_date(row.get("issue_date_raw")),
                             "customer_code": _trim(row.get("customer_code")),

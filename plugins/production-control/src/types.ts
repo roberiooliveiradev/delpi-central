@@ -1582,12 +1582,28 @@ export type MyWegCompareChange = {
   codigoReferenciaWeg?: string | null;
 };
 
+export type MyWegCompareIndicativeProduct = {
+  productCode: string;
+  unit?: string | null;
+  candidateQuantityUn?: string | null;
+  previousNeedUn: string;
+  currentNeedUn: string;
+  hypotheticallyAbatedUn?: string | null;
+  fifoExpectedBalanceUn?: string | null;
+  residualVsCurrentUn?: string | null;
+  comparable: boolean;
+  fifoAvailable: boolean;
+  reason?: string | null;
+};
+
 export type MyWegComparePayload = {
   branch: string;
   scope: {
     customerName: string;
     protheusCustomerCode: string;
     protheusCustomerStore: string;
+    mywegCompanyCode?: string;
+    mywegWorkCenter?: string;
   };
   fromBatch: MyWegNeedsBatchSummary & { collectionId?: string };
   toBatch: MyWegNeedsBatchSummary & { collectionId?: string };
@@ -1596,14 +1612,42 @@ export type MyWegComparePayload = {
     disclaimer: string;
     horizonDays: number;
     referenceDate: string;
+    probableDateShifts?: Array<Record<string, string>>;
   };
   billing: {
     status: string;
     disclaimer?: string;
     reason?: string | null;
+    message?: string | null;
+    period?: { start: string; end: string };
+    periodCriterion?: string;
+    periodTimezone?: string;
+    periodGranularity?: string;
+    cutoffUncertainty?: string;
+    periodLimitations?: string[];
+    totalsByProduct?: Array<{
+      productCode: string;
+      quantityUn?: string | null;
+      quantity?: string;
+      unit?: string | null;
+      comparable?: boolean;
+      reason?: string | null;
+    }>;
+    incompatibleProducts?: Array<{
+      productCode: string;
+      quantity?: string;
+      unit?: string | null;
+      reason?: string | null;
+    }>;
+    indicativeProducts?: MyWegCompareIndicativeProduct[];
+    fifoScenarios?: Array<Record<string, unknown>>;
+    itemCount?: number;
   };
   page: number;
   pageSize: number;
   total: number;
+  totalCompared?: number;
+  totalChanges?: number;
+  changesOnly?: boolean;
   items: MyWegCompareChange[];
 };

@@ -11,6 +11,8 @@ from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_outboun
 
 MAX_PRODUCT_CODES = 500
 ALLOWED_BRANCHES = frozenset({"01", "02"})
+# Necessidades MyWEG são em UN; sem fator confiável, outras UMs não entram no FIFO.
+COMPARABLE_NEED_UNITS = frozenset({"UN", "UN."})
 
 
 class ListCustomerOutboundInvoiceLineItemsUseCase:
@@ -55,16 +57,68 @@ class ListCustomerOutboundInvoiceLineItemsUseCase:
             exclude_returns=exclude_returns,
         )
 
-        totals: dict[str, Decimal] = {}
+        # Dedup por identidade fiscal (filial+doc+série+item) — defesa se JOIN SB1 vazar.
+        unique_items: list[dict[str, Any]] = []
+        seen_keys: set[tuple[str, str, str, str]] = set()
         for item in items:
+            key = (
+                str(item.get("branch") or ""),
+                str(item.get("invoice_number") or ""),
+                str(item.get("invoice_series") or ""),
+                str(item.get("item") or ""),
+            )
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            unique_items.append(item)
+
+        totals: dict[str, dict[str, Any]] = {}
+        for item in unique_items:
             if item.get("is_return"):
                 continue
             code = item["product_code"]
+            unit = self._effective_unit(item)
             try:
                 qty = Decimal(str(item.get("quantity") or "0"))
             except (InvalidOperation, ValueError):
                 qty = Decimal("0")
-            totals[code] = totals.get(code, Decimal("0")) + qty
+            bucket = totals.get(code)
+            if bucket is None:
+                totals[code] = {
+                    "quantity": qty,
+                    "unit": unit,
+                    "units_seen": {unit} if unit else set(),
+                    "comparable": unit in COMPARABLE_NEED_UNITS if unit else False,
+                }
+            else:
+                bucket["quantity"] = bucket["quantity"] + qty
+                if unit:
+                    bucket["units_seen"].add(unit)
+                if len(bucket["units_seen"]) > 1:
+                    bucket["comparable"] = False
+                    bucket["unit"] = "|".join(sorted(bucket["units_seen"]))
+                elif unit and unit not in COMPARABLE_NEED_UNITS:
+                    bucket["comparable"] = False
+
+        totals_by_product: list[dict[str, Any]] = []
+        for code, bucket in sorted(totals.items()):
+            comparable = bool(bucket["comparable"])
+            reason = None
+            if not comparable:
+                units = sorted(bucket["units_seen"]) or [bucket.get("unit") or ""]
+                reason = (
+                    "Unidade fiscal incompatível ou mista sem fator de conversão "
+                    f"confiável para UN ({', '.join(u or '?' for u in units)})."
+                )
+            totals_by_product.append(
+                {
+                    "product_code": code,
+                    "quantity": str(bucket["quantity"]),
+                    "unit": bucket.get("unit") or None,
+                    "comparable": comparable,
+                    "incompatibility_reason": reason,
+                }
+            )
 
         return {
             "branch": branch_n,
@@ -76,12 +130,9 @@ class ListCustomerOutboundInvoiceLineItemsUseCase:
             "read_only": True,
             "side_effects": False,
             "requested_product_codes": codes,
-            "returned_item_count": len(items),
-            "items": items,
-            "totals_by_product": [
-                {"product_code": code, "quantity": str(qty)}
-                for code, qty in sorted(totals.items())
-            ],
+            "returned_item_count": len(unique_items),
+            "items": unique_items,
+            "totals_by_product": totals_by_product,
             "coverage": {
                 "filters": {
                     "D2_FILIAL": branch_n,
@@ -91,9 +142,22 @@ class ListCustomerOutboundInvoiceLineItemsUseCase:
                 "cancellations": "soft_delete_SF2_SD2",
                 "returns": "excluded" if exclude_returns else "included",
                 "quantity_authority": "D2_QUANT_as_decimal_string",
+                "unit_authority": "D2_UM_preferred_B1_UM_catalog_fallback",
+                "sb1_join": "B1_FILIAL=D2_FILIAL to avoid duplicate catalog rows",
                 "limitations": [
                     "Não prova reconhecimento do abatimento pela WEG.",
                     "Granularidade temporal é a data de emissão (sem horário de fechamento).",
+                    "Unidades diferentes de UN não são convertidas automaticamente.",
                 ],
             },
         }
+
+    @staticmethod
+    def _effective_unit(item: dict[str, Any]) -> str:
+        invoice = str(item.get("invoice_unit") or "").strip().upper()
+        if invoice:
+            return invoice
+        unit = str(item.get("unit") or "").strip().upper()
+        if unit:
+            return unit
+        return str(item.get("catalog_unit") or "").strip().upper()

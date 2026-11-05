@@ -2,6 +2,9 @@
 
 Somente leitura. Soft-delete SF2/SD2 exclui canceladas. Tipo D = devolução.
 Quantidades retornadas como texto decimal (sem float na autoridade de cálculo).
+
+Unidade efetiva: D2_UM (item faturado). B1_UM é catálogo auxiliar, filtrado por
+B1_FILIAL = D2_FILIAL para não duplicar linhas SB1.
 """
 
 from __future__ import annotations
@@ -27,7 +30,9 @@ def line_items_sql(*, product_count: int, exclude_returns: bool) -> str:
             RTRIM(D2.D2_ITEM) AS item,
             RTRIM(D2.D2_COD) AS product_code,
             RTRIM(ISNULL(SB1.B1_DESC, '')) AS product_description,
-            RTRIM(ISNULL(SB1.B1_UM, ISNULL(D2.D2_UM, ''))) AS unit,
+            RTRIM(ISNULL(NULLIF(RTRIM(D2.D2_UM), ''), ISNULL(SB1.B1_UM, ''))) AS unit,
+            RTRIM(ISNULL(D2.D2_UM, '')) AS invoice_unit,
+            RTRIM(ISNULL(SB1.B1_UM, '')) AS catalog_unit,
             CONVERT(VARCHAR(40), D2.D2_QUANT) AS quantity,
             RTRIM(D2.D2_EMISSAO) AS issue_date_raw,
             RTRIM(D2.D2_CLIENTE) AS customer_code,
@@ -41,6 +46,7 @@ def line_items_sql(*, product_count: int, exclude_returns: bool) -> str:
             AND F2.D_E_L_E_T_ = ''
         LEFT JOIN SB1010 SB1 WITH (NOLOCK)
             ON SB1.B1_COD = D2.D2_COD
+            AND SB1.B1_FILIAL = D2.D2_FILIAL
             AND SB1.D_E_L_E_T_ = ''
         WHERE D2.D_E_L_E_T_ = ''
           AND RTRIM(D2.D2_FILIAL) = ?

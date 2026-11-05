@@ -4,7 +4,11 @@ import { fetchMyWegNeedBatchesCompare } from "../api/ppcApi";
 import { httpErrorStatus } from "../api/httpClient";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
-import type { MyWegComparePayload, MyWegNeedsBatchSummary } from "../types";
+import type {
+  MyWegCompareIndicativeProduct,
+  MyWegComparePayload,
+  MyWegNeedsBatchSummary,
+} from "../types";
 import { formatDecimalString } from "../utils/formatDecimalString";
 import { DataTableSection, type DataTableColumn } from "./dataTableUi";
 
@@ -14,6 +18,7 @@ type Props = {
 };
 
 const texts = copy.mywegNeeds.evolution;
+const PAGE_SIZE = 50;
 
 function movementLabel(movement: string): string {
   switch (movement) {
@@ -32,31 +37,64 @@ function movementLabel(movement: string): string {
   }
 }
 
+function pickDefaultPair(
+  historyItems: MyWegNeedsBatchSummary[],
+  selectedBatchId: string | null,
+): { fromId: string; toId: string } {
+  if (historyItems.length < 2) {
+    return { fromId: "", toId: "" };
+  }
+  const to =
+    historyItems.find((item) => item.id === selectedBatchId) ?? historyItems[0];
+  const toDay = to.collectionDate;
+  const fromDistinct = historyItems.find(
+    (item) => item.id !== to.id && item.collectionDate !== toDay,
+  );
+  if (fromDistinct) {
+    return { fromId: fromDistinct.id, toId: to.id };
+  }
+  // Sem dias distintos: deixa vazio para o backend sinalizar insuficiência automática;
+  // usuário ainda pode escolher manualmente o mesmo dia.
+  return { fromId: "", toId: to.id };
+}
+
+function formatQty(value: string | null | undefined): string {
+  if (value == null || value === "") return "—";
+  return formatDecimalString(value);
+}
+
 export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: Props) {
   const [fromId, setFromId] = useState<string>("");
   const [toId, setToId] = useState<string>("");
   const [billingMode, setBillingMode] = useState<"none" | "indicative">("none");
+  const [searchDraft, setSearchDraft] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [payload, setPayload] = useState<MyWegComparePayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<number | null>(null);
 
   useEffect(() => {
-    if (historyItems.length < 2) {
-      setFromId("");
-      setToId("");
-      return;
-    }
-    const to = selectedBatchId || historyItems[0]?.id || "";
-    const from =
-      historyItems.find((item) => item.id !== to)?.id || historyItems[1]?.id || "";
-    setToId(to);
-    setFromId(from);
+    const pair = pickDefaultPair(historyItems, selectedBatchId);
+    setFromId(pair.fromId);
+    setToId(pair.toId);
+    setPage(1);
+    setSearch("");
+    setSearchDraft("");
   }, [historyItems, selectedBatchId]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [fromId, toId, billingMode, search]);
 
   useEffect(() => {
     if (!fromId || !toId || fromId === toId) {
       setPayload(null);
+      if (fromId && toId && fromId === toId) {
+        setError(texts.chronoInvalid);
+        setStatus(422);
+      }
       return;
     }
     const controller = new AbortController();
@@ -67,8 +105,10 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
       fromBatchId: fromId,
       toBatchId: toId,
       billingMode,
-      page: 1,
-      pageSize: 50,
+      search,
+      page,
+      pageSize: PAGE_SIZE,
+      changesOnly: true,
       signal: controller.signal,
     })
       .then((data) => {
@@ -84,7 +124,7 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [fromId, toId, billingMode]);
+  }, [fromId, toId, billingMode, search, page]);
 
   const columns = useMemo<DataTableColumn<MyWegComparePayload["items"][number]>[]>(
     () => [
@@ -129,6 +169,58 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
     [],
   );
 
+  const indicativeColumns = useMemo<DataTableColumn<MyWegCompareIndicativeProduct>[]>(
+    () => [
+      {
+        key: "product",
+        header: texts.columns.product,
+        render: (row) => row.productCode,
+      },
+      {
+        key: "unit",
+        header: texts.columns.unit,
+        render: (row) => row.unit || "—",
+      },
+      {
+        key: "candidate",
+        header: texts.columns.candidate,
+        align: "right",
+        render: (row) => formatQty(row.candidateQuantityUn),
+      },
+      {
+        key: "prevNeed",
+        header: texts.columns.previousNeed,
+        align: "right",
+        render: (row) => formatDecimalString(row.previousNeedUn),
+      },
+      {
+        key: "currNeed",
+        header: texts.columns.currentNeed,
+        align: "right",
+        render: (row) => formatDecimalString(row.currentNeedUn),
+      },
+      {
+        key: "abated",
+        header: texts.columns.abated,
+        align: "right",
+        render: (row) => formatQty(row.hypotheticallyAbatedUn),
+      },
+      {
+        key: "fifo",
+        header: texts.columns.fifoBalance,
+        align: "right",
+        render: (row) => formatQty(row.fifoExpectedBalanceUn),
+      },
+      {
+        key: "residual",
+        header: texts.columns.residual,
+        align: "right",
+        render: (row) => formatQty(row.residualVsCurrentUn),
+      },
+    ],
+    [],
+  );
+
   if (historyItems.length < 2) {
     return (
       <section className="ppc-myweg-needs__evolution" aria-label={texts.title}>
@@ -139,7 +231,14 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
   }
 
   const summary = payload?.observed.summary;
-  const changedItems = (payload?.items ?? []).filter((row) => row.movement !== "unchanged");
+  const billing = payload?.billing;
+  const indicativeRows = billing?.indicativeProducts ?? [];
+  const showBillingTable =
+    billingMode === "indicative" &&
+    billing != null &&
+    billing.status !== "skipped" &&
+    billing.status !== "unavailable" &&
+    indicativeRows.length > 0;
 
   return (
     <section className="ppc-myweg-needs__evolution" aria-label={texts.title}>
@@ -154,6 +253,7 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
             onChange={(event) => setFromId(event.target.value)}
             aria-label={texts.fromLabel}
           >
+            <option value="">—</option>
             {historyItems.map((item) => (
               <option key={`from-${item.id}`} value={item.id}>
                 {item.collectionDate} · {item.recordCount} regs
@@ -175,6 +275,29 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
             ))}
           </select>
         </label>
+        <label className="ppc-myweg-needs__search">
+          {texts.searchLabel}
+          <input
+            type="search"
+            value={searchDraft}
+            placeholder={texts.searchPlaceholder}
+            onChange={(event) => setSearchDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                setSearch(searchDraft.trim());
+              }
+            }}
+            aria-label={texts.searchLabel}
+          />
+        </label>
+        <button
+          type="button"
+          className="ppc-btn ppc-btn--secondary"
+          onClick={() => setSearch(searchDraft.trim())}
+        >
+          {copy.mywegNeeds.applyFilters}
+        </button>
         <label className="ppc-myweg-needs__history">
           {texts.billingLabel}
           <select
@@ -197,10 +320,15 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
       ) : null}
       {status === 409 ? (
         <div className="ppc-state" role="status">
-          {texts.insufficient}
+          {error || texts.insufficient}
         </div>
       ) : null}
-      {error && status !== 403 && status !== 409 ? (
+      {status === 422 ? (
+        <div className="ppc-state ppc-state--error" role="alert">
+          {error || texts.chronoInvalid}
+        </div>
+      ) : null}
+      {error && status !== 403 && status !== 409 && status !== 422 ? (
         <div className="ppc-state ppc-state--error" role="alert">
           {error}
         </div>
@@ -211,6 +339,10 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
           <p className="ppc-myweg-needs__evolution-scope">
             {payload.scope.customerName} · cliente {payload.scope.protheusCustomerCode}/
             {payload.scope.protheusCustomerStore}
+          </p>
+          <p className="ppc-myweg-needs__evolution-note" role="status">
+            {texts.observedLabel}:{" "}
+            {texts.totalsHint(payload.totalCompared ?? 0, payload.totalChanges ?? 0)}
           </p>
           <div className="ppc-myweg-needs__summary" aria-label={texts.summaryAria}>
             <article className="ppc-myweg-needs__kpi">
@@ -235,23 +367,85 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
             </article>
           </div>
           <p className="ppc-myweg-needs__evolution-note">{payload.observed.disclaimer}</p>
+
           <aside className="ppc-myweg-needs__billing" aria-label={texts.billingAria}>
             <h3>{texts.billingTitle}</h3>
-            <p>{payload.billing.disclaimer || texts.billingSkipped}</p>
-            {payload.billing.status === "unavailable" ? (
-              <p role="status">{texts.billingUnavailable}</p>
-            ) : null}
+            {billingMode === "none" || billing?.status === "skipped" ? (
+              <p>{texts.billingSkipped}</p>
+            ) : (
+              <>
+                {billing?.period ? (
+                  <p>
+                    <strong>{texts.periodLabel}:</strong> {billing.period.start} →{" "}
+                    {billing.period.end}
+                    {billing.periodTimezone ? ` (${billing.periodTimezone})` : ""}
+                  </p>
+                ) : null}
+                {billing?.periodCriterion ? (
+                  <p>
+                    <strong>{texts.periodCriterionLabel}:</strong> {billing.periodCriterion}
+                  </p>
+                ) : null}
+                {billing?.cutoffUncertainty ? (
+                  <p>
+                    <strong>{texts.cutoffLabel}:</strong> {billing.cutoffUncertainty}
+                  </p>
+                ) : null}
+                <p>{billing?.disclaimer || texts.billingSkipped}</p>
+                {billing?.status === "unavailable" ? (
+                  <p role="status">{texts.billingUnavailable}</p>
+                ) : null}
+                {billing?.status === "empty" ? (
+                  <p role="status">{texts.billingEmpty}</p>
+                ) : null}
+                {billing?.status === "incompatible_units" ? (
+                  <p role="status">{texts.billingIncompatible}</p>
+                ) : null}
+                {billing?.status === "partial" ? (
+                  <p role="status">{texts.billingPartial}</p>
+                ) : null}
+                {showBillingTable ? (
+                  <>
+                    <p className="ppc-myweg-needs__evolution-note">
+                      {texts.candidateLabel} · {texts.fifoLabel} · {texts.residualLabel}
+                    </p>
+                    <DataTableSection
+                      title={texts.indicativeTableTitle}
+                      rows={indicativeRows}
+                      columns={indicativeColumns}
+                      rowKey={(row) => row.productCode}
+                      emptyMessage={texts.billingEmpty}
+                      columnPreferencesKey="production-control:myweg-evolution-billing:columns:v1"
+                    />
+                  </>
+                ) : null}
+              </>
+            )}
           </aside>
-          {changedItems.length === 0 ? (
+
+          {(payload.totalChanges ?? 0) === 0 && (payload.total ?? 0) === 0 && !search ? (
             <p role="status">{texts.noChanges}</p>
           ) : (
             <DataTableSection
               title={texts.tableTitle}
-              rows={changedItems}
+              rows={payload.items}
               columns={columns}
               rowKey={(row) => `${row.productKey}|${row.remessa}|${row.movement}`}
-              emptyMessage={texts.noChanges}
+              emptyMessage={
+                search
+                  ? copy.tableSection.emptyMessage
+                  : texts.noChanges
+              }
               columnPreferencesKey="production-control:myweg-evolution:columns:v1"
+              serverPagination={{
+                page: payload.page,
+                pageSize: payload.pageSize,
+                total: payload.total,
+                onPageChange: (nextPage) => setPage(nextPage),
+                onPageSizeChange: () => {
+                  /* pageSize fixo 50 nesta etapa */
+                },
+              }}
             />
           )}
         </>
