@@ -65,12 +65,16 @@ def _sse_chunk(text: str) -> bytes:
     return ("data: " + payload + "\n\n").encode("utf-8")
 
 
-def _adapter() -> OpenAICompatibleTranscriptionAdapter:
+def _adapter(
+    http_post=None,
+) -> OpenAICompatibleTranscriptionAdapter:
+    kwargs = {"http_post": http_post} if http_post is not None else {}
     return OpenAICompatibleTranscriptionAdapter(
         base_url="https://provider.example/api/v1",
         api_key="test-key",  # noqa: S106 — fixture value
         model="vendor/model",
         timeout_seconds=30.0,
+        **kwargs,
     )
 
 
@@ -83,46 +87,46 @@ def _request() -> SpeechTranscriptionRequest:
     )
 
 
-def test_sse_utf8_ptbr_not_corrupted_by_latin1_default(monkeypatch):
+def test_sse_utf8_ptbr_not_corrupted_by_latin1_default():
     """RED: 'Alô, alô' must not arrive as 'AlÃ´, alÃ´' (PO incident B)."""
-    adapter = _adapter()
     response = _sse_response([_sse_chunk("Alô, alô"), b"data: [DONE]\n\n"])
-    monkeypatch.setattr(requests, "post", lambda *a, **k: response)
+    adapter = _adapter(http_post=lambda *a, **k: response)
     snapshots = list(adapter.stream_transcribe(_request()))
     assert snapshots == ["Alô, alô"]
 
 
-def test_sse_utf8_full_accent_set(monkeypatch):
+def test_sse_utf8_full_accent_set():
     text = "áàâãéêíóôõúç — Transcrição correta"
-    adapter = _adapter()
     response = _sse_response([_sse_chunk(text), b"data: [DONE]\n\n"])
-    monkeypatch.setattr(requests, "post", lambda *a, **k: response)
+    adapter = _adapter(http_post=lambda *a, **k: response)
     snapshots = list(adapter.stream_transcribe(_request()))
     assert snapshots == [text]
 
 
-def test_sse_multibyte_split_across_chunks_survives(monkeypatch):
+def test_sse_multibyte_split_across_chunks_survives():
     """A UTF-8 char split between iter_content chunks stays intact."""
     payload = _sse_chunk("Alô ô ô")
     mid = payload.index("ô".encode("utf-8")) + 1  # inside the 2-byte char
-    adapter = _adapter()
+    adapter = _adapter(
+        http_post=lambda *a, **k: response
+    )
     response = _sse_response(
         [payload[:mid], payload[mid:], b"data: [DONE]\n\n"]
     )
-    monkeypatch.setattr(requests, "post", lambda *a, **k: response)
     snapshots = list(adapter.stream_transcribe(_request()))
     assert snapshots == ["Alô ô ô"]
 
 
-def test_sse_json_split_across_chunks_survives(monkeypatch):
+def test_sse_json_split_across_chunks_survives():
     """A single SSE event split anywhere across chunks still parses."""
     payload = _sse_chunk("transcrição parcial")
     cut = len(payload) // 2
-    adapter = _adapter()
+    adapter = _adapter(
+        http_post=lambda *a, **k: response
+    )
     response = _sse_response(
         [payload[:cut], payload[cut:], b"data: [DONE]\n\n"]
     )
-    monkeypatch.setattr(requests, "post", lambda *a, **k: response)
     snapshots = list(adapter.stream_transcribe(_request()))
     assert snapshots == ["transcrição parcial"]
 

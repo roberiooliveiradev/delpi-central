@@ -449,3 +449,21 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
   delegation.py — todos consumidos. KEEP integral; discovery!=FACT,
   AuthZ/gates preservados.
 - Suíte completa PASS (exit 0).
+
+## 18. G6 — streaming STT governado (execução)
+
+- `stream_transcribe` (openai_compatible_transcription_adapter.py) usava
+  `requests.post` cru — sem `deadline_scope`: DNS/connect/TLS e reads
+  SSE não governados; stall mid-stream só limitado por inactivity
+  timeout, nunca pelo deadline absoluto. Corrigido: `self._http_post`
+  (deadline_http_post governado) dentro de `with deadline_scope(deadline)`
+  cobrindo post + iteração SSE — trickling provider não estica o
+  deadline; erros mapeados (BoundedHttpTimeout/Timeout→PROVIDER_TIMEOUT,
+  Transport/RequestException→PROVIDER_UNAVAILABLE).
+- Testes: 4 casos SSE migrados para injeção `http_post` (design do
+  adapter) — sem patch de requests.post; +2 testes novos
+  (governed transport + timeout→PROVIDER_TIMEOUT).
+- Preservado: deadline total, size limits, cancelamento, SSE parcial,
+  auth/privacy, byte-line UTF-8, port de transcrição, bounded_request
+  no path não-streaming. Zero segundo transporte.
+- Suíte completa PASS (exit 0).

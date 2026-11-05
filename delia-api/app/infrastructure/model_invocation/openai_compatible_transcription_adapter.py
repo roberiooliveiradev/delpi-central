@@ -37,7 +37,10 @@ from app.infrastructure.http.bounded_request import (
     BoundedHttpTransportError,
     bounded_request,
 )
-from app.infrastructure.http.deadline_transport import deadline_http_post
+from app.infrastructure.http.deadline_transport import (
+    deadline_http_post,
+    deadline_scope,
+)
 
 _TRANSCRIPTION_INSTRUCTION = (
     "Transcreva exatamente a fala em português brasileiro (pt-BR). "
@@ -178,57 +181,78 @@ class OpenAICompatibleTranscriptionAdapter:
             "stream": True,
         }
         try:
-            response = requests.post(
-                self._endpoint,
-                headers={
-                    "Authorization": f"Bearer {self._api_key}",
-                    "Content-Type": "application/json",
-                    "Accept": "text/event-stream",
-                },
-                json=payload,
-                stream=True,
-                timeout=(min(10.0, timeout), timeout),
-            )
-        except requests.exceptions.RequestException as exc:
+            # The governed transport callable + deadline_scope give the
+            # stream the SAME total wall-clock deadline as transcribe:
+            # DNS/connect/TLS/status and EVERY SSE read share it — a
+            # trickling provider cannot stretch the deadline by sending
+            # bytes inside inactivity windows.
+            with deadline_scope(deadline):
+                response = self._http_post(
+                    self._endpoint,
+                    headers={
+                        "Authorization": f"Bearer {self._api_key}",
+                        "Content-Type": "application/json",
+                        "Accept": "text/event-stream",
+                    },
+                    json=payload,
+                    stream=True,
+                    timeout=(min(10.0, timeout), timeout),
+                )
+                try:
+                    self._check_status(response.status_code)
+                    cumulative = ""
+                    # SSE is UTF-8 by spec, but requests decodes text/*
+                    # bodies as ISO-8859-1 when no charset is present —
+                    # the exact mojibake observed in production ("Alô" →
+                    # "AlÃ´"). Iterating byte lines is also multibyte-
+                    # safe: UTF-8 never contains 0x0A, so framing on
+                    # bytes and decoding whole lines keeps every
+                    # sequence intact even across chunk boundaries.
+                    for raw in response.iter_lines():
+                        if time.monotonic() > deadline:
+                            raise DictationError(
+                                PROVIDER_TIMEOUT,
+                                "transcription provider timed out",
+                            )
+                        if not raw:
+                            continue
+                        line = raw.decode(
+                            "utf-8", errors="replace"
+                        ).strip()
+                        if not line.startswith("data:"):
+                            continue
+                        data = line[5:].strip()
+                        if data == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(data)
+                        except json.JSONDecodeError:
+                            continue
+                        delta = self._map_delta(chunk)
+                        if not delta:
+                            continue
+                        cumulative += delta
+                        yield cumulative
+                finally:
+                    close = getattr(response, "close", None)
+                    if callable(close):
+                        close()
+        except DictationError:
+            raise
+        except (
+            BoundedHttpTimeout,
+            requests.exceptions.Timeout,
+        ) as exc:
+            raise DictationError(
+                PROVIDER_TIMEOUT, "transcription provider timed out"
+            ) from exc
+        except (
+            BoundedHttpTransportError,
+            requests.exceptions.RequestException,
+        ) as exc:
             raise DictationError(
                 PROVIDER_UNAVAILABLE, "transcription provider unreachable"
             ) from exc
-        try:
-            self._check_status(response.status_code)
-            cumulative = ""
-            # SSE is UTF-8 by spec, but requests decodes text/* bodies as
-            # ISO-8859-1 when no charset is present — the exact mojibake
-            # observed in production ("Alô" → "AlÃ´"). Iterating byte
-            # lines is also multibyte-safe: UTF-8 never contains 0x0A,
-            # so framing on bytes and decoding whole lines keeps every
-            # sequence intact even across chunk boundaries.
-            for raw in response.iter_lines():
-                if time.monotonic() > deadline:
-                    raise DictationError(
-                        PROVIDER_TIMEOUT,
-                        "transcription provider timed out",
-                    )
-                if not raw:
-                    continue
-                line = raw.decode("utf-8", errors="replace").strip()
-                if not line.startswith("data:"):
-                    continue
-                data = line[5:].strip()
-                if data == "[DONE]":
-                    break
-                try:
-                    chunk = json.loads(data)
-                except json.JSONDecodeError:
-                    continue
-                delta = self._map_delta(chunk)
-                if not delta:
-                    continue
-                cumulative += delta
-                yield cumulative
-        finally:
-            close = getattr(response, "close", None)
-            if callable(close):
-                close()
 
     @staticmethod
     def _map_delta(chunk: Any) -> str:

@@ -487,3 +487,77 @@ def test_internal_error_never_logs_audio_token_or_transcript():
     # Legitimate observability is preserved: typed code + exc_type.
     assert "internal_error" in logged
     assert "RuntimeError" in logged
+
+
+def test_incremental_stream_uses_governed_transport():
+    """Streaming path uses the injected governed post (deadline-http),
+    never raw requests.post — SSE reads share the total deadline
+    (doc 264 G6)."""
+    from app.infrastructure.model_invocation.openai_compatible_transcription_adapter import (
+        OpenAICompatibleTranscriptionAdapter,
+    )
+    from app.application.ports.speech_transcription_port import (
+        SpeechTranscriptionRequest,
+    )
+
+    calls = []
+
+    class _Resp:
+        status_code = 200
+        def iter_lines(self):
+            yield b"data: [DONE]"
+        def close(self):
+            pass
+
+    def _fake_post(url, **kwargs):
+        calls.append((url, kwargs))
+        return _Resp()
+
+    adapter = OpenAICompatibleTranscriptionAdapter(
+        base_url="https://stt.example",
+        api_key="k",
+        model="m",
+        timeout_seconds=30.0,
+        http_post=_fake_post,
+    )
+    req = SpeechTranscriptionRequest(
+        audio_bytes=b"fake-audio", provider_format="wav",
+        language_hint="pt-BR",
+    )
+    list(adapter.stream_transcribe(req))
+    assert calls and calls[0][1].get("stream") is True
+
+
+def test_incremental_stream_timeout_maps_provider_timeout():
+    """A transport timeout during streaming maps to PROVIDER_TIMEOUT,
+    never unhandled (doc 264 G6)."""
+    import pytest
+    import requests
+    from app.infrastructure.model_invocation.openai_compatible_transcription_adapter import (
+        OpenAICompatibleTranscriptionAdapter,
+    )
+    from app.application.ports.speech_transcription_port import (
+        SpeechTranscriptionRequest,
+    )
+    from app.application.dictation.errors import (
+        PROVIDER_TIMEOUT,
+        DictationError,
+    )
+
+    def _timeout_post(url, **kwargs):
+        raise requests.exceptions.Timeout("deadline")
+
+    adapter = OpenAICompatibleTranscriptionAdapter(
+        base_url="https://stt.example",
+        api_key="k",
+        model="m",
+        timeout_seconds=30.0,
+        http_post=_timeout_post,
+    )
+    req = SpeechTranscriptionRequest(
+        audio_bytes=b"fake-audio", provider_format="wav",
+        language_hint="pt-BR",
+    )
+    with pytest.raises(DictationError) as exc:
+        list(adapter.stream_transcribe(req))
+    assert exc.value.code == PROVIDER_TIMEOUT
