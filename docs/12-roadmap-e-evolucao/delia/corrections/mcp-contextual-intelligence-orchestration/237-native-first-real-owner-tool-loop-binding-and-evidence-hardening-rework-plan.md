@@ -154,3 +154,12 @@ PRODUCTION_DEPLOY: NOT_AUTHORIZED
 ## 9. Execution order
 
 **No additional plan-only iteration.** Reanchor; capture actual trace for E02; write REDs; fix root cause in native agent/toolset or catalog/invoke boundary; get E02 real owner READ; run E03/multi-step; fix evidence E1–E4; run security/generalization/NDJSON/full regression; local SHA-matched E2E; update execution doc/ledger; commit/push; report. If a genuine external blocker prevents parts, provide exact proof and execute all remaining independent steps; never mark blocked scenarios PASS.
+
+
+---
+
+## Update after execution (2026-11-04) — doc 238 + native capability reference 239
+
+This task was executed and reported in [doc 238](238-native-first-real-owner-tool-loop-binding-and-evidence-hardening-execution-report.md), implementation SHA `0b40e42af6d3bb6b6f7d2e185fe92db92e70b46d`. **E02 real owner READ now GROUNDED/OBSERVATION**, discover→execute→get_product_structure, approximately 41s; backend pytest GREEN and 11-line NDJSON verified by executor. **E03/E04/E05/E10 multi-step remain residual**; the complete generalist-agent functional acceptance is **not proven**. Production deploy remains NOT_AUTHORIZED.
+
+A permanent feature/API inventory, examples, native-first adoption gates, historical prompt outcomes and next experiments are recorded in **[doc 239 — Pydantic AI native capabilities & execution evidence register](239-pydantic-ai-native-capabilities-reference-and-execution-evidence-register.md)**. Before any new agent capability, consult doc 239 **and independently verify installed SDK signatures and owner contracts**; do not create another bespoke planner or provider-specific flow. Doc 239 is a technical reference, not evidence of tests or phase advancement.
