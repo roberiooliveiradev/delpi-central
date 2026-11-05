@@ -567,3 +567,14 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
 - Modelo: `qwen3:4b-instruct-2507-q4_K_M` (ollama local);
   config fingerprint `2e3bb1c6ead760da`, profile `local_ollama`.
 - Suíte completa PASS (exit 0) pós-fix.
+
+## 22. G7 rework — proteção de composição (doc 268)
+
+- `test_composition_surface_regression.py`: 3 testes comportamentais
+  no `_compose_turn_handler` real — (a) provider habilitado + resource
+  válido → `capability_orchestration` não-nulo (surface=configured);
+  (b) instruções inválidas → fail-closed observável, sem confundir
+  ausência de recurso com ausência de dados; (c) resource cobre todas
+  `ORCHESTRATION_INSTRUCTION_KEYS`. Guarda a regressão do loader.
+- Controle positivo live + E01–E10 por-oráculo + contexto 4096:
+  pendente de próxima fatia (ambiente autorizado).
