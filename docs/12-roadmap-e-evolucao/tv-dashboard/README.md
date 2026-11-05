@@ -20,6 +20,8 @@ Fontes canônicas: [vista-capability-matrix](../../../tv-dashboard-api/docs/inte
 
 ---
 
+**Plano TARGET para evolução de KPIs componíveis e 100% orientados a DataModel:** [KPI-DATA-DRIVEN-COMPOSABLE-PLAN.md](./KPI-DATA-DRIVEN-COMPOSABLE-PLAN.md) — wireframes, contratos backend/frontend, visibilidade por parte, texto misto, meta dinâmica e fases E0–E7. É proposta de produto, não capability implementada.
+
 ## Visão geral
 
 | Superfície | Quem usa | Onde | Login |
