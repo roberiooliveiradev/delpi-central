@@ -26,7 +26,8 @@ import re
 from typing import Any
 
 _CODE_IN_TEXT_RE = re.compile(r"\d{8,11}")
-_CODE_PREFIX_TYPES = {"5": "PI", "1": "MP", "9": "PA"}
+# Famílias de itens DELPI: PI=5, MP=1, PA=9, CONJ/submontagem=7.
+_CODE_PREFIX_TYPES = {"5": "PI", "1": "MP", "9": "PA", "7": "CONJ"}
 _STATUS_DIVERGENT = "DIVERGENCES_CANDIDATES"
 _STATUS_MATCH = "NO_DIVERGENCE_DETECTED"
 _STATUS_INCONCLUSIVE = "INCONCLUSIVE"
@@ -131,6 +132,15 @@ def _drawing_occurrences(
     contextual_codes: list[dict[str, Any]] = []
     current_parent: str | None = None
     set_anchor_by_page: dict[int, str | None] = {}
+    # Conjunto único por página (tabela dedicada a uma submontagem —
+    # código na região component_table da folha): pré-conta os códigos
+    # CONJ por página para associar linhas não ancoradas (set_span).
+    page_set_counts: dict[int, set[str]] = {}
+    for row in rows:
+        page0 = _row_page(row)
+        for c in _row_codes(row):
+            if c != product_code and _infer_item_type(c) == "CONJ":
+                page_set_counts.setdefault(page0, set()).add(c)
     region_idx = _code_region_index(code_contexts)
     # RQ-VAL-028: assunto da folha por página — código do title_block da
     # página identifica o objeto que a folha descreve (produto ou
@@ -194,10 +204,21 @@ def _drawing_occurrences(
         row_anchors = [
             c for c in codes if _infer_item_type(c) in {"PI", "PA"}
         ]
+        # Conjuntos (família 7) na mesma linha: em tabelas agrupadas o
+        # código do conjunto pode ocupar coluna não tipada como código
+        # (ex.: ``description``/``quantity``) — a coocorrência na linha
+        # ainda é evidência geométrica real de agrupamento (RQ-VAL-028),
+        # portanto filhos da linha associam-se ao conjunto.
+        row_sets = [
+            c for c in codes if _infer_item_type(c) == "CONJ"
+        ]
+        if len(row_sets) == 1:
+            current_parent = row_sets[0]
         for code in codes:
             item_type = _infer_item_type(code)
             cols = code_cols.get(code) or set()
             other_anchors = [a for a in row_anchors if a != code]
+            other_sets = [s for s in row_sets if s != code]
             if set_col is not None and code in set_codes:
                 # Código na coluna de conjuntos de tabela multi-coluna:
                 # é PAI dos itens da linha — seu próprio pai não é
@@ -237,6 +258,13 @@ def _drawing_occurrences(
                 parent = None
                 parent_source = None
                 verified = False
+            elif item_type == "CONJ" or len(other_sets) > 1:
+                # Conjunto é âncora de agrupamento — seu próprio pai não
+                # é determinado por esta tabela (RQ-VAL-028 R5); dois
+                # conjuntos na linha tornam a associação ambígua.
+                parent = None
+                parent_source = "set_parent" if item_type == "CONJ" else None
+                verified = False
             elif len(other_anchors) == 1:
                 parent = other_anchors[0]
                 parent_source = "row_group"
@@ -245,6 +273,19 @@ def _drawing_occurrences(
                 parent = None
                 parent_source = None
                 verified = False
+            elif len(other_sets) == 1:
+                # Conjunto na mesma linha = associação geométrica real
+                # (tabela agrupada com código em coluna não tipada).
+                parent = other_sets[0]
+                parent_source = "row_group"
+                verified = True
+            elif len(page_set_counts.get(page) or set()) == 1:
+                # Folha dedicada a um conjunto único: a tabela tipada da
+                # página lista os componentes dele — associação por
+                # página, não fabricação de raiz (RQ-VAL-028).
+                parent = next(iter(page_set_counts[page]))
+                parent_source = "set_span"
+                verified = True
             elif current_parent:
                 parent = current_parent
                 parent_source = "pi_group_inference"
@@ -542,6 +583,12 @@ def compare_bom_to_drawing(
                 "drawing_row": occ.get("row"),
                 "drawing_y_px": occ.get("y_px"),
                 "bom_relationship": "ABSENT_IN_CURRENT_STRUCTURE",
+                # RQ-VAL-028 R5: parentesco não comprovado nunca é
+                # fabricado como raiz — a fonte da associação é
+                # declarada e o pai fica nulo quando não há evidência.
+                "drawing_parent": occ.get("parent_code"),
+                "parent_verified": bool(occ.get("parent_verified")),
+                "parent_source": occ.get("parent_source"),
             }
             if occ.get("also_mentioned_in_regions"):
                 evidence["also_mentioned_in_regions"] = occ[
@@ -553,7 +600,7 @@ def compare_bom_to_drawing(
                     item_code=code,
                     item_type=occ["item_type"],
                     item_description=occ.get("item_description"),
-                    parent_code=occ.get("parent_code") or product_code,
+                    parent_code=occ.get("parent_code"),
                     level=1 if occ["item_type"] in {"PI", "PA"} else None,
                     evidence=evidence,
                     explanation=(

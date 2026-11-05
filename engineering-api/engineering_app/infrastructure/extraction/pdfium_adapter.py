@@ -192,15 +192,39 @@ class PdfiumExtractionAdapter:
                 rotation = int(pdf_page.get_rotation() or 0)
             except Exception:
                 rotation = 0
+            try:
+                page_w_pt, page_h_pt = (
+                    float(v) for v in pdf_page.get_size()
+                )
+            except Exception as exc:
+                raise PdfExtractionError(
+                    f"page_size_unavailable:{type(exc).__name__}"
+                ) from exc
             ref_scale = max(float(reference_dpi or dpi), 1.0) / 72.0
             margin_pt = float(margin_px) / ref_scale
             left = max(0.0, x1 / ref_scale - margin_pt)
             top = max(0.0, y1 / ref_scale - margin_pt)
-            right = max(left + 1.0, x2 / ref_scale + margin_pt)
-            bottom = max(top + 1.0, y2 / ref_scale + margin_pt)
+            right = min(
+                page_w_pt, max(left + 1.0, x2 / ref_scale + margin_pt)
+            )
+            bottom = min(
+                page_h_pt, max(top + 1.0, y2 / ref_scale + margin_pt)
+            )
+            if left >= page_w_pt or top >= page_h_pt:
+                raise PdfExtractionError("region_out_of_page")
             scale = dpi / 72
+            # pdfium crop = quantidade cortada de CADA borda da página
+            # (left, bottom, right, top) em pt — não o retângulo a
+            # manter. Região top-left → cortes convertidos pelas bordas
+            # opostas; região é clampada à página antes do render.
             bitmap = pdf_page.render(
-                scale=scale, crop=(left, top, right, bottom)
+                scale=scale,
+                crop=(
+                    left,
+                    page_h_pt - bottom,
+                    page_w_pt - right,
+                    top,
+                ),
             )
             pil = bitmap.to_pil()
             buf = io.BytesIO()

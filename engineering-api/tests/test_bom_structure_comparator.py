@@ -187,11 +187,12 @@ def test_merged_ocr_cell_yields_distinct_codes():
 
 
 def test_bom_only_when_full_coverage():
-    """BOM_ONLY exige cobertura integral: BOM 9 itens, desenho cobre 8,
-    o 9º ausente com rendimento suficiente → ausência provável."""
-    shared = [f"5000000{i}" for i in range(1, 9)]
+    """BOM_ONLY exige cobertura integral: BOM 10 itens, desenho cobre 9
+    (rendimento 0.9 — limite DEC-VAL-033), o 10º ausente → ausência
+    provável."""
+    shared = [f"5000000{i}" for i in range(1, 10)]
     table = _table([_row(c, 10 * i) for i, c in enumerate(shared, 1)])
-    bom = _bom(*[(c, PRODUCT, 1) for c in shared], ("50000009", PRODUCT, 1))
+    bom = _bom(*[(c, PRODUCT, 1) for c in shared], ("50000010", PRODUCT, 1))
     out = compare_bom_to_drawing(
         product_code=PRODUCT,
         bom_occurrences=bom,
@@ -201,7 +202,7 @@ def test_bom_only_when_full_coverage():
     types = {f["type"] for f in out["findings"]}
     assert "BOM_ONLY" in types
     f = next(f for f in out["findings"] if f["type"] == "BOM_ONLY")
-    assert f["item_code"] == "50000009"
+    assert f["item_code"] == "50000010"
     assert f["level"] == 1
 
 
@@ -223,7 +224,7 @@ def test_bom_only_blocked_by_low_extraction_yield():
 
 def test_multiple_divergences():
     """Várias divergências independentes com cobertura suficiente."""
-    shared = [f"5000001{i}" for i in range(8)]
+    shared = [f"5000001{i}" for i in range(9)]
     table = _table(
         [_row(c, 10 * i) for i, c in enumerate(shared, 1)]
         + [_row("50000303", 90), _row("50000909", 100)]
@@ -317,8 +318,8 @@ def test_unknown_parent_matches_by_code_with_limitation():
 
 
 def test_table_on_page_two():
-    shared = [f"5000002{i}" for i in range(8)]
-    table = _table([_row(c, 10 * i, page=2) for i, c in enumerate(shared, 1)])
+    shared = [f"5000002{i}" for i in range(9)]
+    table = _table([_row(c, 10 * i) for i, c in enumerate(shared, 1)])
     bom = _bom(*[(c, PRODUCT, 1) for c in shared], ("50000300", PRODUCT, 1))
     out = compare_bom_to_drawing(
         product_code=PRODUCT,

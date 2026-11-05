@@ -12,6 +12,7 @@ UNMATCHED_DRAWING_CANDIDATE.
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from engineering_app.domain.drawing.object_profiles import (
@@ -364,7 +365,8 @@ def _contextual_search(plan: dict, u: dict) -> dict:
     return out
 
 
-def _targeted_recheck(plan: dict, region_box, opts: dict) -> dict:
+def _targeted_recheck(plan: dict, region_box, opts: dict,
+                      page: int | None = None) -> dict:
     """Etapa 3 (R13): recorte direcionado + OCR localizado via ports —
     somente quando evidência existente é insuficiente."""
     hist = {"stage": "TARGETED_RECHECK", "result": "NOT_ATTEMPTED",
@@ -381,12 +383,17 @@ def _targeted_recheck(plan: dict, region_box, opts: dict) -> dict:
         hist["result"] = "RESOURCE_LIMIT_REACHED"
         return hist
     state["crops"] += 1
+    page_no = int(page or opts.get("page") or 1)
+    ref_dpi = int(
+        (opts.get("reference_dpi_by_page") or {}).get(page_no)
+        or opts.get("reference_dpi") or 150
+    )
     try:
         region = renderer.render_region(
             pdf_bytes,
-            page=int(opts.get("page") or 1),
+            page=page_no,
             region_px=region_box,
-            reference_dpi=int(opts.get("reference_dpi") or 150),
+            reference_dpi=ref_dpi,
             dpi=min(int(budget.get("max_dpi", 300)), 300),
             margin_px=8,
         )
@@ -1056,7 +1063,10 @@ def execute_investigations(
                                 max(b[2] for b in boxes),
                                 max(b[5] if len(b) > 5 else b[3] for b in boxes),
                             ]
-                recheck = _targeted_recheck(plan, box, progressive)
+                recheck = _targeted_recheck(
+                    plan, box, progressive,
+                    page=(row or {}).get("page") if row else None,
+                )
                 hist.append(recheck)
             res["search_history"] = hist
             if recheck and recheck.get("result") == "CODE_OBSERVED":
@@ -1199,19 +1209,50 @@ def execute_investigations(
     }
 
 
+def _rect_of(box: Any) -> list[float] | None:
+    """Normaliza bounding box para ``[x1, y1, x2, y2]``.
+
+    Células/tokens carregam quadriláteros de 8 pontos
+    (``[x1,y1,x2,y2,x3,y3,x4,y4]``, top-left origin) — truncar em 4
+    produzia faixa degenerada que perdia metade inferior da célula.
+    """
+    if not box or len(box) < 4:
+        return None
+    if len(box) >= 8:
+        xs = [float(v) for v in box[0::2]]
+        ys = [float(v) for v in box[1::2]]
+        return [min(xs), min(ys), max(xs), max(ys)]
+    return [float(box[0]), float(box[1]), float(box[2]), float(box[3])]
+
+
+def _merge(dst: list[float], rect: list[float]) -> None:
+    dst[0] = min(dst[0], rect[0])
+    dst[1] = min(dst[1], rect[1])
+    dst[2] = max(dst[2], rect[2])
+    dst[3] = max(dst[3], rect[3])
+
+
 def recover_absent_table_cells(
     *,
     missing_codes: list[str],
     component_table: dict | None,
     opts: dict,
+    tokens: list[dict] | None = None,
 ) -> list[dict]:
     """DEC-VAL-033 evolução — recuperação genérica de células de
     tabela densa perdidas pelo OCR de página inteira.
 
-    Re-renderiza (crop nativo vetorial, DPI máximo do budget) cada
-    região de tabela de componentes UMA vez e procura TODOS os códigos
-    ausentes — 1 crop por região cobre N códigos. Orçamento compartilhado
-    com `_targeted_recheck` via ``opts["state"]["crops"]``.
+    Re-renderiza (crop nativo vetorial) cada faixa de tabela de
+    componentes UMA vez e procura TODOS os códigos ausentes — 1 crop
+    por faixa cobre N códigos. A região é a faixa de linhas da tabela
+    tipada **expandida por tokens na mesma faixa vertical** — blocos
+    de colunas paralelas que a segmentação não tipou (ex.: grupo
+    ``Item|QTD|Componente`` à direita de ``Cabo|Código``) continuam
+    dentro da inspeção. ``reference_dpi`` é resolvido por página
+    (``opts["reference_dpi_by_page"]``) porque cada folha pode ser
+    renderizada em resolução própria. Orçamento compartilhado com
+    `_targeted_recheck` via ``opts["state"]["crops"]``; falha de
+    render/OCR degrada honestamente, nunca derruba a análise.
 
     Retorna ocorrências ``{code, page, confidence, box, method}`` —
     presença com proveniência ``localized_ocr_recheck``; nunca inventa
@@ -1228,35 +1269,65 @@ def recover_absent_table_cells(
     for row in rows:
         page = int(row.get("page") or 1)
         for cell in row.get("cells") or []:
-            box = cell.get("bounding_box_px") or []
-            if len(box) < 4:
+            rect = _rect_of(cell.get("bounding_box_px"))
+            if rect is None:
                 continue
-            cur = regions.setdefault(page, list(box[:4]))
-            cur[0] = min(cur[0], float(box[0]))
-            cur[1] = min(cur[1], float(box[1]))
-            cur[2] = max(cur[2], float(box[2]))
-            cur[3] = max(cur[3], float(box[3]))
+            if page in regions:
+                _merge(regions[page], rect)
+            else:
+                regions[page] = list(rect)
     if not regions:
         return []
+    # Expansão por faixa: tokens cuja linha vertical coincide com a
+    # faixa da tabela tipada pertencem ao mesmo material impresso —
+    # blocos de colunas que a segmentação não tipou entram na região.
+    y_band = {p: (r[1], r[3]) for p, r in regions.items()}
+    for t in tokens or []:
+        page = int(t.get("page") or 1)
+        band = y_band.get(page)
+        if band is None:
+            continue
+        rect = _rect_of(t.get("bounding_box_px"))
+        if rect is None:
+            continue
+        if band[0] <= (rect[1] + rect[3]) / 2 <= band[1]:
+            _merge(regions[page], rect)
     budget = opts.get("budget") or {}
     state = opts.setdefault("state", {"crops": 0})
-    ref_dpi = int(opts.get("reference_dpi") or 150)
-    dpi = min(int(budget.get("max_dpi", 300)), 300)
+    ref_by_page = opts.get("reference_dpi_by_page") or {}
+    fallback_ref = int(opts.get("reference_dpi") or 150)
     max_px = int(budget.get("max_pixels", 4_000_000))
     max_crops = int(budget.get("max_crops", 8))
+    max_dpi = min(int(budget.get("max_dpi", 300)), 300)
     remaining = {str(c) for c in missing_codes if c}
     found: list[dict] = []
     for page in sorted(regions):
         if not remaining or state["crops"] >= max_crops:
             break
-        region = renderer.render_region(
-            pdf_bytes,
-            page=page,
-            region_px=regions[page],
-            reference_dpi=ref_dpi,
-            dpi=dpi,
-            margin_px=8,
-        )
+        x1, y1, x2, y2 = regions[page]
+        w_px, h_px = x2 - x1, y2 - y1
+        if w_px <= 0 or h_px <= 0:
+            continue
+        ref_dpi = int(ref_by_page.get(page) or fallback_ref)
+        # DPI adaptativo ao orçamento de pixels: render_px cresce com
+        # dpi/ref_dpi e a margem aplicada no crop é contabilizada —
+        # nunca abaixo do espaço de referência da página (crop com
+        # menos resolução que a leitura original não agrega evidência).
+        margin = 8
+        w_eff, h_eff = w_px + 2 * margin, h_px + 2 * margin
+        dpi_fit = int(ref_dpi * math.sqrt(max_px / (w_eff * h_eff)))
+        dpi = min(max_dpi, max(dpi_fit, ref_dpi))
+        try:
+            region = renderer.render_region(
+                pdf_bytes,
+                page=page,
+                region_px=regions[page],
+                reference_dpi=ref_dpi,
+                dpi=dpi,
+                margin_px=margin,
+            )
+        except Exception:
+            continue
         if region.width * region.height > max_px:
             continue
         state["crops"] += 1
@@ -1264,6 +1335,8 @@ def recover_absent_table_cells(
             res = ocr.extract_text(region.image_bytes)
         except Exception:
             continue
+        ox, oy = getattr(region, "offset_px", (0.0, 0.0)) or (0.0, 0.0)
+        to_page = ref_dpi / float(region.dpi or dpi or ref_dpi)
         page_tokens = [
             (str(getattr(t, "text", "") or "").strip(),
              float(getattr(t, "confidence", 0.0) or 0.0),
@@ -1280,12 +1353,20 @@ def recover_absent_table_cells(
                 None,
             )
             if hit:
+                box = _rect_of(hit[2])
+                if box is not None:
+                    box = [
+                        (box[0] + ox) * to_page,
+                        (box[1] + oy) * to_page,
+                        (box[2] + ox) * to_page,
+                        (box[3] + oy) * to_page,
+                    ]
                 found.append(
                     {
                         "code": code,
                         "page": page,
                         "confidence": hit[1],
-                        "box": hit[2],
+                        "box": box or hit[2],
                         "observed_raw_value": hit[0],
                         "method": "localized_ocr_recheck",
                     }

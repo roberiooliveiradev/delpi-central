@@ -502,6 +502,7 @@ async def analyze_product_drawing(
                 missing_codes=_missing,
                 component_table=_ct,
                 opts=progressive,
+                tokens=drawing_tokens,
             )
             for _rc in _recovered:
                 drawing_tokens.append(

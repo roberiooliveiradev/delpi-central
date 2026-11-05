@@ -892,6 +892,9 @@ async def _analyze_product_drawing(
                                 "reference_dpi": int(
                                     best.get("dpi") or 200
                                 ),
+                                "reference_dpi_by_page": (
+                                    _render_dpi_by_page(best)
+                                ),
                             }
                         )
                     report = await analyze_product_drawing(
@@ -992,6 +995,7 @@ async def _analyze_product_drawing(
                     "ocr": PaddleOcrAdapter(),
                     "page": 1,
                     "reference_dpi": int(_best.get("dpi") or 200),
+                    "reference_dpi_by_page": _render_dpi_by_page(_best),
                 }
             )
     try:
@@ -1045,6 +1049,18 @@ _HEAVY_RESULT_KEYS = frozenset(
         "sampled_tokens",
     }
 )
+
+
+def _render_dpi_by_page(best: dict) -> dict[int, int]:
+    """DPI de render por página do pipeline vencedor — o espaço de
+    coordenadas px de tokens/células varia por folha (orçamento de
+    pixels por página). ``None`` quando o provider não declara."""
+    out: dict[int, int] = {}
+    for p in (best or {}).get("pages") or []:
+        dpi = (p.get("render") or {}).get("dpi")
+        if p.get("page") and dpi:
+            out[int(p["page"])] = int(dpi)
+    return out
 
 
 def _drawing_job_owner_fingerprint(ctx) -> str:
@@ -1641,6 +1657,7 @@ async def _analyze_drawing_understanding(
             "ocr": PaddleOcrAdapter(),
             "page": 1,
             "reference_dpi": int(best.get("dpi") or 200),
+            "reference_dpi_by_page": _render_dpi_by_page(best),
         },
         include_investigations=True,
     )
