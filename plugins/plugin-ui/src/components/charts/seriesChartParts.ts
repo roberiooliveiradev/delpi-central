@@ -1386,13 +1386,21 @@ export function applyMarkerStyleToAll(
  * Pontos efetivos para desenhar a série: remove índices com marker visible:false.
  * Índices originais preservados via `sourceIndex` para hit-test.
  */
-export function filterVisibleSeriesPoints<T extends { value?: number | null }>(
+export function filterVisibleSeriesPoints<
+  T extends { value?: number | null; sourceIndex?: number },
+>(
   points: T[],
   parts: ChartPartsMap | null | undefined,
   seriesIndex = 0,
 ): Array<T & { sourceIndex: number }> {
   return points
-    .map((point, sourceIndex) => ({ ...point, sourceIndex }))
+    .map((point, index) => ({
+      ...point,
+      sourceIndex:
+        typeof point.sourceIndex === "number" && Number.isFinite(point.sourceIndex)
+          ? point.sourceIndex
+          : index,
+    }))
     .filter((point) => {
       const marker = getChartPartState(parts, {
         kind: "marker",

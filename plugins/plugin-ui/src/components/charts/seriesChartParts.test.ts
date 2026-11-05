@@ -269,6 +269,22 @@ describe("seriesChartParts", () => {
     expect(filtered.map((p) => p.sourceIndex)).toEqual([0, 2]);
   });
 
+  it("filterVisibleSeriesPoints respeita sourceIndex já gravado após reordenação", () => {
+    const parts = upsertChartPartState({}, { kind: "marker", seriesIndex: 0, pointIndex: 1 }, {
+      visible: false,
+    });
+    const filtered = filterVisibleSeriesPoints(
+      [
+        { value: 75, sourceIndex: 1, displayPercentageOfTotal: "75,00%" },
+        { value: 25, sourceIndex: 0, displayPercentageOfTotal: "25,00%" },
+      ],
+      parts,
+      0,
+    );
+    expect(filtered.map((p) => p.sourceIndex)).toEqual([0]);
+    expect(filtered.map((p) => p.displayPercentageOfTotal)).toEqual(["25,00%"]);
+  });
+
   it("nudgeChartPartFrame move título com clamp", () => {
     const nudged = nudgeChartPartFrame(
       upsertChartPartState({}, { kind: "title" }, { frame: { x: 10, y: 10 } }),

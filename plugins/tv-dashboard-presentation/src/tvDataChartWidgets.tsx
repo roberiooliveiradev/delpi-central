@@ -3,7 +3,11 @@ import { resolveChartDisplayOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartInteraction, ComunicadoChartPartsMap } from "./comunicadoChartParts";
 import { pieInnerRadiusForChartType, toSeriesChartKind } from "./comunicadoChartView";
-import type { ComunicadoChartType, ComunicadoDataResolved } from "./comunicadoTypes";
+import type {
+  ComunicadoChartPoint,
+  ComunicadoChartType,
+  ComunicadoDataResolved,
+} from "./comunicadoTypes";
 
 export function formatCellValue(value: unknown): string {
   // Paint-only residual: sem display* do servidor → unresolved (não formatDisplayValue).
@@ -31,15 +35,16 @@ export function TvDataSeriesChartWidget({
   emptyMessage = "Sem dados",
 }: ChartWidgetProps) {
   const kind = toSeriesChartKind(chartType) ?? "line";
-  const mapPoint = (point: {
-    label?: unknown;
-    value?: unknown;
-    size?: unknown;
-    displayLabel?: string;
-    displayValue?: string;
-  }) => {
+  const mapPoint = (point: ComunicadoChartPoint) => {
     const hasDisplayLabel = typeof point.displayLabel === "string";
-    return {
+    const mapped: {
+      label?: string;
+      value: number | null;
+      size: number | null;
+      displayValue?: string;
+      percentageOfTotal?: number | null;
+      displayPercentageOfTotal?: string | null;
+    } = {
       label: hasDisplayLabel
         ? point.displayLabel
         : point.label != null
@@ -52,10 +57,18 @@ export function TvDataSeriesChartWidget({
           : Number.isFinite(Number(point.size))
             ? Number(point.size)
             : null,
-      ...(typeof point.displayValue === "string"
-        ? { displayValue: point.displayValue }
-        : {}),
     };
+    if (typeof point.displayValue === "string") mapped.displayValue = point.displayValue;
+    /* Ausente = payload antigo. `null` fica `null` — não vira undefined nem 0%. */
+    if (Object.prototype.hasOwnProperty.call(point, "percentageOfTotal")) {
+      const raw = point.percentageOfTotal;
+      mapped.percentageOfTotal = typeof raw === "number" && Number.isFinite(raw) ? raw : null;
+    }
+    if (Object.prototype.hasOwnProperty.call(point, "displayPercentageOfTotal")) {
+      const raw = point.displayPercentageOfTotal;
+      mapped.displayPercentageOfTotal = typeof raw === "string" ? raw : null;
+    }
+    return mapped;
   };
   const seriesList = (resolved.chart?.series ?? [])
     .filter((series) =>

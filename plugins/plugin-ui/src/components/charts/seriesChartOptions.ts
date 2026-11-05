@@ -489,11 +489,19 @@ export function resolveSeriesChartLegendSort(args: {
 }
 
 export function usableSeriesChartPoints(points: SeriesChartPoint[]): SeriesChartPoint[] {
-  return points.filter((point) => {
-    const raw = point.value;
-    if (raw === null || raw === undefined) return false;
-    return Number.isFinite(Number(raw));
-  });
+  return points
+    .map((point, index) => ({
+      ...point,
+      sourceIndex:
+        typeof point.sourceIndex === "number" && Number.isFinite(point.sourceIndex)
+          ? point.sourceIndex
+          : index,
+    }))
+    .filter((point) => {
+      const raw = point.value;
+      if (raw === null || raw === undefined) return false;
+      return Number.isFinite(Number(raw));
+    });
 }
 
 export function resolveSeriesChartValueDisplaySpec(
