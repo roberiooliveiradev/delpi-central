@@ -23,19 +23,25 @@ cat <<EOF
 Installed units in ${TARGET_DIR}.
 Timer NOT enabled yet (ACTIVATION_PENDING until watermark + dry-run smoke).
 
+Schedule (America/Sao_Paulo): 06:00, 06:15, 06:30, 06:45.
+Persistent=true may catch-up outside that window after reboot (exceptional).
+
 Next steps (operador@srv-api):
-  1) Definir MYWEG_PUBLISHER_ACTIVATION_COLLECTED_AT no infra/.env
-     (ISO America/Sao_Paulo do último lote já persistido / marco desejado)
-     OU gravar watermark:
-       docker compose --profile manual run --rm --no-deps myweg-needs-publisher \\
+  1) Confirmar última coleta persistida e permissões de
+     /var/lib/delpi/myweg-publisher-state
+  2) Definir watermark (último lote já persistido / marco desejado):
+       cd infra
+       docker compose -f docker-compose.yml --env-file .env --profile manual \\
+         run --rm --no-deps myweg-needs-publisher \\
          --set-activation-watermark '2026-11-04T14:28:27-03:00' --json
-  2) Dry-run pending:
-       ./infra/scripts/run-myweg-needs-publisher-pending.sh
-       # (trocar temporariamente --publish por --dry-run no script OU:
-       docker compose --profile manual run --rm --no-deps myweg-needs-publisher \\
-         --dry-run --publish-pending --json)
-  3) Ativar:
+     # ou MYWEG_PUBLISHER_ACTIVATION_COLLECTED_AT no infra/.env
+  3) Dry-run pending (NÃO editar run-myweg-needs-publisher-pending.sh):
+       docker compose -f docker-compose.yml --env-file .env --profile manual \\
+         run --rm --no-deps myweg-needs-publisher \\
+         --dry-run --publish-pending --json
+  4) Avaliar eligible / blocked / conflict / before_watermark
+  5) Somente se gates OK — ativar:
        sudo systemctl enable --now myweg-needs-publisher.timer
-  4) Desativar:
+  6) Desativar:
        sudo systemctl disable --now myweg-needs-publisher.timer
 EOF

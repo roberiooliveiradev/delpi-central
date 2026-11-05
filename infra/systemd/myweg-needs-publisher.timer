@@ -1,14 +1,19 @@
 [Unit]
-Description=Timer MyWEG Necessidades — tenta publicar pendências após a janela do ETL
+Description=Timer MyWEG Necessidades — publica pendências às 06:00/15/30/45 America/Sao_Paulo
 Documentation=file:docs/12-roadmap-e-evolucao/production-control/MYWEG-NEEDS-LINUX-PUBLISHER.md
 
 [Timer]
-# ETL costuma correr de madrugada; não fixar 05h00 como término.
-# Janela operacional: a cada 30 min entre 05:30 e 14:00 America/Sao_Paulo.
-OnCalendar=*-*-* 05:30:00
-OnCalendar=*-*-* 06..13:00/30:00
+# Origem MyWEG agenda envio às 05:00 America/Sao_Paulo.
+# Quatro tentativas matinais explícitas no fuso SP (host srv-api usa Etc/UTC).
+OnCalendar=*-*-* 06:00:00 America/Sao_Paulo
+OnCalendar=*-*-* 06:15:00 America/Sao_Paulo
+OnCalendar=*-*-* 06:30:00 America/Sao_Paulo
+OnCalendar=*-*-* 06:45:00 America/Sao_Paulo
+# Persistent=true: após reinício, systemd pode disparar catch-up fora da janela
+# matinal (recuperação excepcional; não é o horário nominal do agendamento).
 Persistent=true
-RandomizedDelaySec=90
+RandomizedDelaySec=0
+AccuracySec=1min
 Unit=myweg-needs-publisher.service
 
 [Install]
