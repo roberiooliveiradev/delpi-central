@@ -907,3 +907,78 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 2. Fallback de crop fixo `[41,31,2295,262]` fabricava estrutura em coordenada arbitrária → **fail-closed `NO_TABLE_REGION`** com erro tipado.
 
 **Evidência:** 101/101 testes focados; prod `2cb89f61a3` healthy com `NO_TABLE_REGION` em `/app`. Contrato: aditivo (`association` restaurado, `error_kind` tipado). Sem mudança em comparador, gates, investigação, parents.
+
+
+## 39. DEC-VAL-035 — Direção executável do Cursor: fechar VAL-01 E1 estrutura do produto para a biblioteca atual (2026-11-05)
+
+**DECISÃO DE PRODUTO / STATUS:** \`PLANNED\` para implementação, \`E1=ACTIVE\`, \`E2–E7=FROZEN\`. **Documento único de execução:** este Doc 119; Doc 116 permanece referência de arquitetura/qualidade e Doc 120 permanece índice histórico do corpus, **não criar novos planos, subplanos ou documentos**. A Issue #131 é exclusivamente tracker, não especificação concorrente. Atualizar **este mesmo parágrafo/seção, suas tabelas de AC e o ledger já existente** a cada marco de código/teste; não gerar novas seções para cada bug. Cursor/implementador consome esta seção como task executável. Esta decisão **não** declara funcionalidades implementadas, deploy, nem GT técnico aprovado.
+
+### 39.1 Outcome e limite de promessa
+
+**Entrega única:** EVA consegue ler a **estrutura do produto efetivamente representada nos desenhos das famílias existentes na biblioteca oficial e autorizada**, relacionar ocorrências da tabela de materiais com a BOM oficial **da mesma identidade/efetividade**, avaliar código, item, descrição, quantidade/unidade, multiplicidade, níveis, subconjuntos, grupos e parentesco, com decisão e evidência por ocorrência e consolidada por desenho. Detectar diferenças reais sem produzir ausência a partir de falha de OCR. Resultado sempre \`DRAFT/CANDIDATE\`; Engenharia aprova as regras, GT e decisões finais.
+
+**“Qualquer tipo de estrutura hoje na biblioteca” é TARGET de cobertura da biblioteca, não alegação PROVEN nem promessa de 100% de automação.** Não restringir a heurísticas por código de produto, família específica ou layout fixo. Toda família/layout presente no acervo deve ser classificada por evidência como \`SUPPORTED\`, \`UNSUPPORTED\` ou \`INCONCLUSIVE\` e ter motivo, versão e limites; ampliar suporte até a cobertura-alvo que o owner aprovar. Desenhos sem tabela explícita, revisões incompatíveis e estruturas implícitas exigem políticas oficiais de representação, ou abstenção governada. A família suportada precisa passar critérios de qualidade, inclusive exemplos positivos, negativos e holdout; \`INCONCLUSIVE\` não mascara incapacidade de casos declarados suportados.
+
+**Proibição de retrabalho:** reutilizar inventários e decisões E1, Doc 120 (13 PDFs), 53 NCs, contratos, investigação guiada, SLANet Framework-First §38, DEC-VAL-033/034 e demais evidências vigentes. Não repetir auditorias de frameworks, inventário genérico do código ou benchmarking amplo. Fazer apenas **delta de cobertura**: contrastar o índice Doc 120 com as famílias/layouts/estruturas efetivamente presentes na biblioteca via API oficial autorizada; acrescentar casos faltantes ao corpus canônico existente **somente se necessários** para cumprir cobertura de família e holdout; não criar novo catálogo. Guardar identidade PDF SHA, BOM \`as_of\`/revisão, configuração/modelo e histórico; evidência antiga sem identidade temporal atual = \`STALE_EVIDENCE\`.
+
+### 39.2 Subplano técnico *dentro de E1* — OCR/visão apenas como dependência da validação estrutural
+
+O subplano **não é nova frente, serviço, camada, documento nem autorização de provider**. É a decomposição executável da mesma VAL-01:
+
+| Passo | RQ | Resultado funcional esperado | Gate/owner |
+|---|---|---|---|
+| E1-A — baseline e regras | \`RQ-E1-01\` | Reutilizar os 13 PDFs, comparar famílias atuais da biblioteca, registrar apenas gaps; obter políticas oficiais por família: quais níveis devem aparecer, equivalência de unidades, multiplicidade e revisão/efetividade | Engenharia owner para regra/GT; \`OWNER_BLOCKED\` explícito se indisponível |
+| E1-B — percepção de estrutura | \`RQ-E1-02\` | Ler regiões/tabelas vigentes, linha, coluna, rowspan/colspan, item, código, descrição, quantidade/unidade e referências espaciais em páginas relevantes; recuperar OCR por região quando necessário, com fonte real e sem falsificar ausência | Framework-first; manter \`understanding.py\` como caminho semântico até ganho demonstrado |
+| E1-C — modelo de ocorrência | \`RQ-E1-03\` | Representar cada ocorrência desenho com caminho pai-filho, agrupamento/subconjunto, repetição, item/linha, quantidade, página/célula, confiança metodológica, ambiguidade, fonte e SHA; nunca colapsar códigos repetidos | Application/Domain; contrato compatível e sem authority implícita |
+| E1-D — comparação governada | \`RQ-E1-04\` | Matching desenho↔BOM multiplicity-aware, sem atribuição por ordem/raiz fictícia; comparar atributos apenas sob política oficial; \`BOM_ONLY\` somente com cobertura e ausência provadas; \`DRAWING_ONLY\` somente com linha de tabela atual e bbox real | Domain APIs owner; fail-closed e AuthZ live |
+| E1-E — relatório e revisão | \`RQ-E1-05\` | Resultado por atributo/ocorrência e global: MATCH/CONFLICT/UNKNOWN/NOT_COMPARABLE/NOT_CHECKED + estados candidatos compatíveis, evidências bidirecionais, gaps, cobertura e next_action; nunca aprovação automática | Portal/EVA como consumer; Engenharia aprova tecnicamente |
+| E1-F — qualidade e release | \`RQ-E1-06\` | Testes sintéticos e reais, corpus regressão, holdout por família, métricas com denominador e owner-approved threshold; E2E MCP autenticado, deploy governado e rollback | Review independente + engenharia owner + operação autorizada |
+
+**Abstraction Gate obrigatório antes de novo código:** identificar necessidade, owner, consumer, boundary, contrato e alternativa mais simples; usar recursos nativos PaddleOCR/SLANet/PP-StructureV3/PDFium **apenas quando evidência demonstrar ganho**. O trace §38 provou que \`row=i//8\` do adapter SLANet **não alimenta** \`component_table\` nem parentesco produtivo: não reabrir esse ajuste como prioridade sem novo callsite/resultado. Reaproveitar correção de \`association\` e \`NO_TABLE_REGION\`; preservar recuperação \`10080004\` e OCR localizado. PP-StructureV3 produtivo requer gate explícito de modelos/owner/plataforma; Docling indisponível não bloqueia E1.
+
+**Correção perceptiva só é necessária quando houver falha funcional reproduzida** em campo da estrutura. Diagnosticar a primeira perda \`PDF → OCR/região → células/tokens → linha tipada → ocorrência → comparação\`; corrigir a fronteira real, menor diff, e comparar antes/depois no mesmo PDF/modelo/BOM. Não introduzir algoritmo local de OCR, parser de tabela ou inferência por produto para contornar uso incompleto do framework.
+
+### 39.3 Requisitos de aceitação verificáveis — um gate por atributo e por família
+
+| AC | Critério de fechamento | Evidência exigida |
+|---|---|---|
+| \`AC-E1-01\` | Biblioteca atual tem matriz de famílias/layouts, políticas de representação e escopo da BOM definidos; exceções explícitas | API oficial + decisões do owner, sem listagem redundante dos PDFs |
+| \`AC-E1-02\` | Tabela vigente separada de revision_history/title_block/notes; página/célula/coords corretas, spans e múltiplos blocos preservados | GT visual aprovado para casos e negativos, PDF SHA |
+| \`AC-E1-03\` | Código, item, descrição, qty/unidade vinculados à **mesma ocorrência**, sem campos fabricados | Métricas por atributo com recall, precision, associação e abstenção |
+| \`AC-E1-04\` | Relação pai-filho, grupos, níveis e multiplicidade corretos; sem raiz inventada ou merge de ocorrência repetida | Árvore esperada × observada por documento |
+| \`AC-E1-05\` | Comparador usa BOM/revisão/efetividade oficiais e política por família; ausência exige cobertura comprovada | Casos positivos/negativos e mudanças temporais de BOM |
+| \`AC-E1-06\` | Relatório por ocorrência e por desenho coerente, evidências bidirecionais e razões de \`INCONCLUSIVE\` | Consumer MCP e contrato/serialização |
+| \`AC-E1-07\` | Corpus conhecido sem regressões críticas: \`90263572\` O0001 \`10080004\` (p2 com evidência, sem falso BOM_ONLY); \`90264030\` 5 pais + 10 findings candidatos sujeitos a revisão; \`90264017\` sem falso vigente por histórico; \`90263520\` baseline BOM vigente | Reexecução autenticada, hash e \`as_of\`, sem converter candidatos em NC |
+| \`AC-E1-08\` | Todas as famílias declaradas \`SUPPORTED\` cumprem limiares técnicos **aprovados antes do holdout**; não apenas testes verdes | GT owner-approved, holdout sem tuning, métricas/erros por layout |
+| \`AC-E1-09\` | Fontes indisponíveis, permissões negadas, páginas não lidas e timeout devolvem estados honestos; sem vazamento de secrets ou acesso cross-domain | Testes negativos AuthZ, performance, logs sanitizados |
+| \`AC-E1-10\` | SHA código/modelo/dataset/config, regressão, comparação E2E e release autorizados; rollback/observabilidade | Evidência em runtime e aprovação de owner, não apenas docs |
+
+**Estados:** \`PROVEN | TO_INVENTORY | PLANNED | TARGET\` para afirmações; \`PASS | FAIL | PENDING | INCONCLUSIVE | TEST_NOT_RUN | STALE_EVIDENCE\` para testes. Não marcar AC com \`PASS\` por relatório do executor, HTTP 200, container healthy, 0 findings ou OCR confidence. Um AC obrigatório pendente impede declarar \`VAL01_COMPLETED\`; owner indisponível = \`OWNER_BLOCKED\`, sem workaround de autorização.
+
+### 39.4 Sequência obrigatória para o Cursor — um pacote bounded, sem refazer levantamentos
+
+1. **Reancorar:** \`AGENTS.md\`, autoridades e contratos existentes, HEAD/branch/status, SHA runtime, seção 39, ledger e Issue #131. Não copiar prompts antigos nem reabrir estudos concluídos. Usar caminhos reais, não inventar infraestrutura.
+2. **Gap list funcional:** para os AC acima, mapear \`PROVEN/PENDING/FAIL/OWNER_BLOCKED\` com as evidências atuais (§§17–38, Doc 120). Reduzir a uma lista curta de lacunas **que impedem o outcome**; apenas consultar famílias não catalogadas na biblioteca por API owner. Não produzir relatório de inventário genérico.
+3. **Contratos/políticas:** definir entrada/saída \`structure_validation.v1\` **como TARGET até gate**, compatível/aditivo ao \`product.drawing_analysis\`; formalizar owner, consumers, versão, erros, AuthN/AuthZ, limite, idempotência e postconditions quando houver; obter decisões de representação por família, quantidade e revisões. Se owner não decidir, avançar onde possível, declarar bloqueio sem criar regra fictícia.
+4. **Vertical slice e correção mínima:** seguir \`fonte oficial → percepção → ocorrência tipada → comparação → relatório candidato\`. Corrigir primeiro defeito **funcional de maior risco** com RQ/AC e PDF específico; até três ciclos locais de diagnose/fix/tests no mesmo pacote, sem abrir subprojetos. Reaproveitar pipeline/jobs governados; não duplicar \`drawing_analysis\` e \`drawing_understanding\`.
+5. **Testar no SHA:** casos positivos e negativos por atributo, múltiplas famílias/layouts, PDFs 13/13 com identidade atual quando acessíveis, famílias adicionais necessárias e holdout sem vazamento; controlar concorrência/timeout com job canônico e separar falha da fonte de bug. Testes unitários, contrato, integração, permissão, regressão e outcomes. Evidências e métricas com denominador por classe/família.
+6. **Revisão independente e deploy governado:** corrigir BLOCKING dentro do pacote. Mudança runtime exige autorização e procedimento canônico + rollback, SHA/digest e postconditions reais; MCP/ChatGPT deve retestar resultados técnicos, não apenas transporte. Aprovação técnica/publicação continua com Engineering owner.
+7. **Atualização contínua:** modificar **somente o Doc 119 como especificação/plano central** e a **Issue #131 como tracker**; atualizar AC, decisões, commits e resultados na seção 39 e ledger existente após cada etapa. Doc 120 continua índice de corpus, com atualização de linha apenas quando novo desenho/versão for efetivamente testado — **não criar novos documentos**. Não apagar evidência histórica nem duplicar plano em README/prompt/issue.
+
+**Gates de saída:** \`E1_FUNCTIONAL_CANDIDATE_PASS\` se fluxo candidato completo e seguro comprovado; \`E1_ENGINEERING_QUALITY_PASS\` somente com políticas/GT/thresholds/holdout aprovados por Engenharia no escopo suportado; \`VAL01_COMPLETED\` apenas com todos AC aplicáveis, E2E independente, operacional e owner. \`E2–E7\` permanecem congeladas até esse gate.
+
+### 39.5 Estado inicial registrado e próximo passo
+
+| Item | Estado em 2026-11-05 | Evidência/pendência |
+|---|---|---|
+| Pipeline PDF/OCR/investigação/comparador candidato | \`PROVEN\` parcial | Implementações e E2E §§17–38 |
+| O0001 de \`90263572\` com evidência p2 | \`PASS\` no consumer anterior | \`MATCH_CANDIDATE\`, \`localized_ocr_recheck\`, SHA PDF confirmado |
+| \`90264030\` 5 parents / 10 findings | \`PASS\` histórico; reteste atual \`INCONCLUSIVE\` | MCP atual retornou erro interno; não invalidar histórico nem afirmar revalidação |
+| 13 PDFs catalogados | \`PROVEN\` como corpus histórico | Não equivale a cobertura de toda biblioteca nem GT aprovado |
+| Políticas de níveis/quantidade e GT owner | \`OWNER_BLOCKED / PENDING\` | Solicitar decisão concreta por família, não inventar |
+| Cobertura validada para todos layouts atuais | \`TARGET\` | Gap-delta com biblioteca oficial, avaliação por família |
+| Qualidade estrutural e aceite final E1 | \`PENDING\` | AC-E1-01..10, holdout, Engineering owner |
+
+**NEXT_BOUNDED_STEP (Cursor):** reancorar e executar **E1-A→E1-F** como **uma entrega vertical**, iniciando pelos atributos de ocorrência (item/código/descrição/quantidade/pai-filho) que ainda não possuem evidência de qualidade. Registrar primeiro o delta de AC no Doc 119/Issue #131; implementar o menor conjunto de mudanças que leva o resultado completo por ocorrência até o consumidor. Não executar novo audit Framework-First nem criar novo documento. **A ausência de GT/decisão de owner bloqueia qualidade oficial, não precisa bloquear implementação segura e claramente candidata.**
+
+**VERDICT DE PLANEJAMENTO:** \`ACCEPT\` como direção de produto; **EXECUTION_STATUS:** \`PLANNED\` até evidência de Cursor/código/testes/runtime.
