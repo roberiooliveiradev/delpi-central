@@ -59,7 +59,6 @@ _SECTION_KEYS: Mapping[str, frozenset[str]] = {
         {
             "effective_context_window_tokens",
             "prior_turns_limit",
-            "prior_turn_max_chars",
         }
     ),
     "budgets": frozenset(
@@ -120,7 +119,6 @@ _INT_RANGES: Mapping[str, tuple[int, int]] = {
     "llm_call_max_attempts": (1, LLM_CALL_MAX_ATTEMPTS),
     "effective_context_window_tokens": (256, 2_000_000),
     "prior_turns_limit": (0, 16),
-    "prior_turn_max_chars": (80, 2_000),
     "max_governed_attempts": (1, MAX_GOVERNED_ATTEMPTS),
     "max_projection_chars": (500, 20_000),
 }
@@ -171,7 +169,6 @@ class ContextConfig:
 
     effective_context_window_tokens: int | None
     prior_turns_limit: int
-    prior_turn_max_chars: int
 
 
 @dataclass(frozen=True)
@@ -484,12 +481,6 @@ def _profile(
             prior_turns_limit=_int_field(
                 context,
                 "prior_turns_limit",
-                profile_name=profile_name,
-                section_name="context",
-            ),
-            prior_turn_max_chars=_int_field(
-                context,
-                "prior_turn_max_chars",
                 profile_name=profile_name,
                 section_name="context",
             ),

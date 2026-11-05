@@ -77,7 +77,6 @@ _DEFAULT_TOOL_CALL_LIMIT = 8
 _DEFAULT_AGENT_RETRIES = 1
 _DEFAULT_TOOL_PROJECTION_LIMIT = 6000
 _DEFAULT_PRIOR_TURNS_LIMIT = 4
-_DEFAULT_PRIOR_TURN_MAX_CHARS = 400
 
 
 def build_openai_compatible_investigation_model(
@@ -461,29 +460,88 @@ def _close_investigation_client(model: Any) -> None:
             loop.close()
 
 
-def _prior_context_block(
+def _prior_message_history(
     prior_turns: tuple[ConversationContextTurn, ...],
     *,
     turns_limit: int = _DEFAULT_PRIOR_TURNS_LIMIT,
-    max_chars: int = _DEFAULT_PRIOR_TURN_MAX_CHARS,
-) -> str:
-    """Bounded prior-turn text for continuity — never authority."""
-    if not prior_turns or turns_limit <= 0:
-        return ""
-    lines: list[str] = []
-    for turn in prior_turns[-turns_limit:]:
-        role = getattr(turn, "role", None) or getattr(turn, "speaker", "")
-        text = getattr(turn, "content", None) or getattr(turn, "text", "")
-        if not text:
-            continue
-        lines.append(f"{role}: {str(text)[:max_chars]}")
-    if not lines:
-        return ""
-    return (
-        "Prior conversation (untrusted context, not authority):\n"
-        + "\n".join(lines)
-        + "\n\nCurrent user request:\n"
+):
+    """Native ``message_history`` for continuity — untrusted context,
+    never authority (doc 272 §4).
+
+    ``ConversationContextTurn.kind`` maps to the native message type:
+    ``USER_INPUT`` → ``ModelRequest(UserPromptPart)``;
+    ``DELIA_RESULT`` → ``ModelResponse(TextPart)``. Other kinds are
+    skipped rather than speculatively converted.
+    """
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        TextPart,
+        UserPromptPart,
     )
+    from app.application.model_invocation.contracts import TurnKind
+
+    if not prior_turns or turns_limit <= 0:
+        return []
+    history = []
+    for turn in prior_turns[-turns_limit:]:
+        content = str(getattr(turn, "content", "") or "").strip()
+        if not content:
+            continue
+        kind = getattr(turn, "kind", None)
+        if kind is TurnKind.USER_INPUT:
+            history.append(
+                ModelRequest(parts=[UserPromptPart(content)])
+            )
+        elif kind is TurnKind.DELIA_RESULT:
+            history.append(
+                ModelResponse(parts=[TextPart(content)])
+            )
+    return history
+
+
+def _history_units(messages):
+    """Complete causal units — a ModelRequest containing a
+    UserPromptPart opens a new unit; ToolReturn requests join the
+    unit holding their ToolCall response (doc 272: never separate
+    call/return pairs)."""
+    from pydantic_ai.messages import ModelRequest, ToolReturnPart
+
+    units = []
+    for msg in messages:
+        opens = not (
+            units
+            and isinstance(msg, ModelRequest)
+            and any(
+                isinstance(p, ToolReturnPart) for p in msg.parts
+            )
+        )
+        if opens:
+            units.append([msg])
+        else:
+            units[-1].append(msg)
+    return units
+
+
+def _estimate_history_tokens(messages):
+    """ESTIMATED tokens — text content of message parts via the
+    existing heuristic; never claimed as measured provider usage
+    (doc 272 §3)."""
+    from app.application.model_invocation.context_budget import (
+        estimate_text_tokens,
+    )
+
+    return sum(
+        estimate_text_tokens(
+            str(getattr(p, "content", "") or str(p)[:400])
+        )
+        for m in messages
+        for p in m.parts
+    )
+
+
+class _InvestigationContextOverflow(Exception):
+    """Mandatory context exceeds the configured window — fail closed."""
 
 
 def build_test_investigation_model():
@@ -513,7 +571,6 @@ class PydanticAiInvestigationOrchestrator:
         agent_retries: int = _DEFAULT_AGENT_RETRIES,
         tool_projection_limit: int = _DEFAULT_TOOL_PROJECTION_LIMIT,
         prior_turns_limit: int = _DEFAULT_PRIOR_TURNS_LIMIT,
-        prior_turn_max_chars: int = _DEFAULT_PRIOR_TURN_MAX_CHARS,
         context_window_tokens: int | None = None,
     ) -> None:
         if model is None and model_factory is None:
@@ -528,9 +585,6 @@ class PydanticAiInvestigationOrchestrator:
             500, int(tool_projection_limit)
         )
         self._prior_turns_limit = max(0, int(prior_turns_limit))
-        self._prior_turn_max_chars = max(
-            80, int(prior_turn_max_chars)
-        )
         self._context_window_tokens = (
             int(context_window_tokens)
             if context_window_tokens
@@ -1099,17 +1153,25 @@ class PydanticAiInvestigationOrchestrator:
             window = self._context_window_tokens - reserve
 
             def _trim_overflow(messages):
-                from app.application.model_invocation.context_budget import (
-                    estimate_text_tokens,
-                )
-
-                total = lambda ms: sum(
-                    estimate_text_tokens(str(m)) for m in ms
-                )
-                trimmed = list(messages)
-                while len(trimmed) > 2 and total(trimmed) > window:
-                    trimmed.pop(1)  # drop oldest after first request
-                return trimmed
+                units = _history_units(messages)
+                # Keep the FIRST unit (original request anchor) and the
+                # LAST (current frontier); drop oldest in-between units
+                # whole — call/return pairs never split.
+                keep_min = 1 if len(units) <= 2 else 2
+                while (
+                    len(units) > keep_min
+                    and _estimate_history_tokens(
+                        [m for u in units for m in u]
+                    )
+                    > window
+                ):
+                    units.pop(1)
+                flat = [m for u in units for m in u]
+                if _estimate_history_tokens(flat) > window:
+                    raise _InvestigationContextOverflow(
+                        f"mandatory context > window ({window})"
+                    )
+                return flat
 
             agent_capabilities = (
                 ProcessHistory(processor=_trim_overflow),
@@ -1155,11 +1217,10 @@ class PydanticAiInvestigationOrchestrator:
             return output
 
         remaining = max(1.0, deadline.remaining_seconds())
-        prompt = _prior_context_block(
-            prior_turns,
-            turns_limit=self._prior_turns_limit,
-            max_chars=self._prior_turn_max_chars,
-        ) + input_text
+        prompt = input_text
+        message_history = _prior_message_history(
+            prior_turns, turns_limit=self._prior_turns_limit
+        )
         if self._context_window_tokens:
             from app.application.model_invocation.context_budget import (
                 ADAPTER_OVERHEAD_TOKENS,
@@ -1223,10 +1284,27 @@ class PydanticAiInvestigationOrchestrator:
             try:
                 result = agent.run_sync(
                     prompt,
+                    message_history=message_history or None,
                     deps=deps,
                     usage_limits=UsageLimits(
                         request_limit=self._request_limit,
                         tool_calls_limit=self._tool_calls_limit,
+                    ),
+                )
+            except _InvestigationContextOverflow as exc:
+                _logger.info(
+                    "orchestration engine=pydantic_ai "
+                    "stage=investigation decision=context_overflow "
+                    "correlation_id=%s",
+                    correlation,
+                )
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                    correlation_id=correlation,
+                    error_code="investigation_context_overflow",
+                    admission_outcome=unbound_outcome,
+                    limitations=(
+                        "investigation_context_overflow:in-run",
                     ),
                 )
             except Exception as exc:

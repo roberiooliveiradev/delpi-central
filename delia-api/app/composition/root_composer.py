@@ -75,7 +75,6 @@ def _investigation_runtime_kwargs(settings: Settings) -> dict:
             settings.tool_result_max_projection_chars
         ),
         "prior_turns_limit": settings.prior_turns_limit,
-        "prior_turn_max_chars": settings.prior_turn_max_chars,
         "context_window_tokens": settings.llm_context_tokens,
     }
 
@@ -93,7 +92,6 @@ def _resolve_orchestration_attempt(
     agent_retries: int = 1,
     tool_projection_limit: int = 6000,
     prior_turns_limit: int = 4,
-    prior_turn_max_chars: int = 400,
     context_window_tokens: int | None = None,
 ):
     """Select ONE governed-attempt implementation for the composed
@@ -140,7 +138,6 @@ def _resolve_orchestration_attempt(
         agent_retries=agent_retries,
         tool_projection_limit=tool_projection_limit,
         prior_turns_limit=prior_turns_limit,
-        prior_turn_max_chars=prior_turn_max_chars,
         context_window_tokens=context_window_tokens,
     )
 # Governed declarative resource — fixed repo artifact, never a

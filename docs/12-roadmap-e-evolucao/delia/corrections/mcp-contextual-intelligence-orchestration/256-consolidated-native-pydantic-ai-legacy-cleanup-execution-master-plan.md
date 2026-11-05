@@ -636,3 +636,28 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
 - Controle positivo: INCONCLUSIVE por dados dev (sem registro
   positivo confirmado nos owners); clarificação estruturada real
   provada.
+
+## 26. G7 rework — migração histórico nativo + aposentadoria (doc 272)
+
+- **message_history nativo**: `_prior_context_block` (serialização
+  textual) substituído por `_prior_message_history` — cada
+  ConversationContextTurn vira `ModelRequest(UserPromptPart)` /
+  `ModelResponse(TextPart)` nativos; outros kinds ignorados sem
+  conversão especulativa. `run_sync(message_history=...)`.
+- **Pair integrity**: `_history_units` agrupa unidades causais
+  completas — `ModelRequest(ToolReturnPart)` pertence à unidade do
+  `ModelResponse(ToolCallPart)` precedente; trim remove UNIDADES
+  inteiras (nunca separa call/return); anchor+frontier preservados;
+  overflow obrigatório → `_InvestigationContextOverflow` tipado →
+  `investigation_context_overflow`, zero requests incompatíveis.
+- **str(ModelMessage)** não usado como medida — estimativa só sobre
+  `part.content` rotulada ESTIMATED.
+- **Legado removido fisicamente**: `_prior_context_block`,
+  `prior_turn_max_chars` (ctor arg, resolver kwarg, settings attr,
+  runtime_config field+bounds, JSON profile, teste assinatura),
+  `_DEFAULT_PRIOR_TURN_MAX_CHARS`, `InvestigationAnswer.__dict__` como
+  schema, `units[-1]+[m]` bug. Zero refs restantes.
+- `context_budget.py` KEEP — consumidores legítimos em invoke_model.
+- Testes: pair integrity (4 units reais), message_history nativo
+  chegando ao modelo, gate/envelope/composition. Suite PASS (exit 0).
+- Controle positivo: INCONCLUSIVE por dados dev.

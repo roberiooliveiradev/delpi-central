@@ -119,6 +119,5 @@ class TestUntrustedSurfaces:
             "agent_retries",
             "tool_projection_limit",
             "prior_turns_limit",
-            "prior_turn_max_chars",
             "context_window_tokens",
         ]

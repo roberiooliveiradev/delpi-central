@@ -202,7 +202,6 @@ class Settings:
             _profile.tool_results.max_projection_chars
         )
         self.prior_turns_limit = _profile.context.prior_turns_limit
-        self.prior_turn_max_chars = _profile.context.prior_turn_max_chars
         self.observability_record_model_id = (
             _profile.observability.record_model_id
         )

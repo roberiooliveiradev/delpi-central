@@ -784,3 +784,91 @@ def test_context_envelope_includes_tool_schemas_and_reserve():
     attempt = engine.attempt("oi")
     assert attempt.error_code == "investigation_context_overflow"
     assert calls == []
+
+
+# ------------------------------------------------------------------
+# G7 (doc 272): native message_history migration + ProcessHistory
+# pair integrity — prior turns arrive as ModelMessages, tool
+# call/return pairs never split, mandatory overflow fails typed.
+# ------------------------------------------------------------------
+
+
+def test_prior_turns_arrive_as_native_message_history():
+    """ConversationContextTurn converts to native message_history —
+    FunctionModel receives the prior turns as ModelRequest/
+    ModelResponse messages, NOT embedded in the prompt text."""
+    from tests.test_pydantic_ai_semantic_rework import _gates
+    from app.application.model_invocation.contracts import (
+        ConversationContextTurn,
+        TurnKind,
+    )
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from pydantic_ai.messages import ModelRequest, ModelResponse
+    from pydantic_ai.models.function import FunctionModel
+
+    seen = []
+
+    def _fn(messages, _info):
+        seen.extend(messages)
+        return _final_answer("ok", status="insufficient")
+
+    prior = (
+        ConversationContextTurn(
+            kind=TurnKind.USER_INPUT,
+            content="pergunta anterior",
+            epistemic_class=None,
+            entity_refs=(),
+        ),
+        ConversationContextTurn(
+            kind=TurnKind.DELIA_RESULT,
+            content="resposta anterior",
+            epistemic_class=None,
+            entity_refs=(),
+        ),
+    )
+    engine = PydanticAiInvestigationOrchestrator(
+        _gates(), model=FunctionModel(_fn)
+    )
+    engine.attempt("nova pergunta", prior_turns=prior)
+    kinds = {
+        (type(m).__name__, tuple(getattr(p, "part_kind", "") for p in m.parts))
+        for m in seen[:2]
+    }
+    assert ("ModelRequest", ("user-prompt",)) in kinds
+    assert ("ModelResponse", ("text",)) in kinds
+
+
+def test_history_processor_preserves_tool_call_return_pairs():
+    """Under overflow pressure the processor drops COMPLETE units —
+    a ModelRequest carrying ToolReturnParts is never orphaned from
+    its ModelResponse ToolCallParts (doc 272 §2). Exercises the
+    PRODUCTION _history_units grouping."""
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        _history_units,
+    )
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        TextPart,
+        ToolCallPart,
+        ToolReturnPart,
+        UserPromptPart,
+    )
+
+    msgs = [
+        ModelRequest(parts=[UserPromptPart("x" * 3000)]),
+        ModelResponse(parts=[ToolCallPart("tool_a", {"a": 1})]),
+        ModelRequest(parts=[ToolReturnPart("tool_a", "y" * 3000)]),
+        ModelResponse(parts=[TextPart("interim")]),
+        ModelRequest(parts=[UserPromptPart("next")]),
+    ]
+    units = _history_units(msgs)
+    # [user] [call+return] [interim-text] [next-user] — the call and
+    # its return form ONE unit, never separable
+    assert len(units) == 4
+    assert len(units[1]) == 2
+    flat = units[1]
+    assert any(isinstance(p, ToolCallPart) for p in flat[0].parts)
+    assert any(isinstance(p, ToolReturnPart) for p in flat[1].parts)

@@ -307,7 +307,6 @@ def test_composer_maps_snapshot_to_investigation_kwargs(monkeypatch):
     assert kwargs["agent_retries"] == 1
     assert kwargs["tool_projection_limit"] == 6000
     assert kwargs["prior_turns_limit"] == 4
-    assert kwargs["prior_turn_max_chars"] == 400
 
 
 def test_resolve_orchestration_attempt_forwards_limits():
@@ -340,14 +339,12 @@ def test_resolve_orchestration_attempt_forwards_limits():
         agent_retries=2,
         tool_projection_limit=1234,
         prior_turns_limit=2,
-        prior_turn_max_chars=120,
     )
     assert orchestrator._request_limit == 5
     assert orchestrator._tool_calls_limit == 3
     assert orchestrator._agent_retries == 2
     assert orchestrator._tool_projection_limit == 1234
     assert orchestrator._prior_turns_limit == 2
-    assert orchestrator._prior_turn_max_chars == 120
 
 
 def test_json_change_changes_effective_limits(tmp_path):
