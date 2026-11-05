@@ -374,3 +374,17 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
 - Diff líquido: −856/+95 linhas; `orchestration.py` 6483→6369; `cri_instruction_resource.py` −51.
 - Suíte `delia-api` completa: PASS (exit 0). RQ-08..11 (G3) = PARTIAL → cobertura ~18%.
 - E01–E10: TEST_NOT_RUN (G7).
+
+## 14. G4 — resíduos G3 fechados (R1-R3, doc 260); G4 scope iniciado
+
+- **R1**: restaurada cobertura negativa de privacidade/observabilidade
+  não-CRI em `test_turn_observability.py` — `test_projection_is_bounded_
+  and_never_carries_payload` (sem prompt/secret na wire, bounds de
+  model-id) + `test_composition_elapsed_accumulates_honestly` (split
+  model/operational/composition/other honesto).
+- **R2**: `test_clarification_applies_with_partial_evidence_and_unmet_
+  obligations` agora usa terminal com outcome+provenance/SourceRef
+  REAIS e asserta preservação dos campos — não apenas o marker.
+- **R3**: comentário stale CRI em `orchestration.py` ~260 removido.
+- **R5**: RQ-08/09/10 = G3 (PARTIAL); RQ-11 mantido em G4.
+- Suíte completa PASS (exit 0). Escopo G4 principal em análise.

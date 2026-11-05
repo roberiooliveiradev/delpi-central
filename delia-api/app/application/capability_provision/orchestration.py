@@ -257,13 +257,9 @@ MAX_ARGUMENTS_BLOCK_CHARS = 14000
 
 
 
-# CRI E2 (doc 73 §3-§6 / spec 75): when the response-intelligence
-# switch is ON, the SAME goal stage also proposes typed sufficiency
-# requirements — a hypothesis the runtime verifies against typed
-# evidence at the outcome edge. The clause itself is a governed
-# declarative resource (governed instruction resource)
-# injected by composition; baseline instructions stay byte-identical
-# and the mode deactivates when the resource is absent.
+# Goal stage proposals include typed sufficiency requirements — a
+# hypothesis the runtime verifies against typed evidence at the
+# outcome edge. Baseline instructions stay byte-identical.
 
 
 # Write-class operation classes (C3-CI-02): PREPARE and ACT carry

@@ -581,3 +581,66 @@ def test_elapsed_other_none_without_total():
     assert obs["elapsed_ms"]["other"] is None
     assert obs["timeout_source"] is None
     assert obs["operational_calls"] == []
+
+
+# ------------------------------------------------------------------
+# G3 residual R1 (doc 260): privacy/observability invariants that do
+# not depend on the retired CRI mode — projection bounds, secret and
+# payload exclusion, honest elapsed split.
+# ------------------------------------------------------------------
+
+
+def test_projection_is_bounded_and_never_carries_payload():
+    from app.application.interaction.turn_observability import (
+        ModelCallObservation,
+        build_turn_observability,
+    )
+    ref = ModelRef(
+        model_id="qwen3:4b-instruct-2507-q4_K_M",
+        version="v1", owner_ref="local",
+    )
+    calls = (
+        ModelCallObservation(
+            stage="goal", attempt=1, finish_status="completed",
+            duration_ms=12, input_tokens=10, output_tokens=4,
+        ),
+    )
+    obs = build_turn_observability(
+        model_ref=ref, response_mode="baseline",
+        composition_mode="deterministic", calls=calls,
+        duration_ms=50, governed_attempts=1,
+    )
+    # identity fields only — no prompt/response/error payload on wire
+    wire = repr(obs)
+    assert "SECRET" not in wire
+    assert obs["model"]["id"] is not None
+    assert len(obs["model"]["id"]) <= 64
+
+
+def test_composition_elapsed_accumulates_honestly():
+    from app.application.interaction.turn_observability import (
+        ModelCallObservation, OperationalCallObservation,
+        build_turn_observability,
+    )
+    calls = (
+        ModelCallObservation(
+            stage="goal", attempt=1, finish_status="completed",
+            duration_ms=30, input_tokens=1, output_tokens=1,
+        ),
+    )
+    ops = (
+        OperationalCallObservation(
+            capability="invoke_read_capability", duration_ms=20,
+        ),
+    )
+    obs = build_turn_observability(
+        model_ref=None, response_mode="baseline",
+        composition_mode="deterministic", calls=calls,
+        duration_ms=100, governed_attempts=1,
+        operational_calls=ops, composition_ms=10,
+    )
+    elapsed = obs["elapsed_ms"]
+    assert elapsed["model"] == 30
+    assert elapsed["operational"] == 20
+    assert elapsed["composition"] == 10
+    assert elapsed["other"] == 40

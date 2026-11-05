@@ -403,8 +403,14 @@ def test_clarification_applies_with_partial_evidence_and_unmet_obligations():
         status=InvestigationAnswerStatus.NEEDS_CLARIFICATION,
         clarification_question="Qual armazém consultar para o estoque?",
     )
+    # terminal carries REAL verified owner evidence (outcome+provenance)
+    verified_terminal = dataclasses.replace(
+        _terminal(),
+        outcome=_outcome(),
+        provenance=_attempt().provenance,
+    )
     out = _apply_declared_answer(
-        terminal=_terminal(),
+        terminal=verified_terminal,
         declared_answer=declared,
         collected=(_attempt(),),
         plan=_Plan(),
@@ -412,8 +418,12 @@ def test_clarification_applies_with_partial_evidence_and_unmet_obligations():
         unbound_outcome=None,
     )
     assert out.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
-    # verified evidence preserved — never silently discarded
+    # verified evidence preserved — real fields survive the
+    # clarification, not merely the marker
     assert "verified_evidence_preserved" in out.limitations
+    assert out.outcome is verified_terminal.outcome
+    assert out.provenance is verified_terminal.provenance
+    assert out.provenance.source_refs[0].source_id == "pa"
 
 
 def test_clarification_ignored_only_when_obligations_fully_met():
