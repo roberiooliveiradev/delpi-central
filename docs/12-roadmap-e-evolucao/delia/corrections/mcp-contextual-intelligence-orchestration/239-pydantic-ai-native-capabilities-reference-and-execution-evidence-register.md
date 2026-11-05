@@ -172,3 +172,10 @@ When not measured: `NOT_MEASURED`, `TEST_NOT_RUN`, `INCONCLUSIVE`, never PASS. A
 ## 7. Execution direction and safety
 
 Next implementation should be one bounded executor task, with first objective **real multi-step E03/E04/E05/E10**, using Pydantic AI native tools and genuine owners, no branch by query shape and no new agent framework. Formal phase/NEXT stays tied to authority 16+ledger in real HEAD. `PRODUCTION_DEPLOY=NOT_AUTHORIZED` unless separately authorized. Local isolated build/E2E is allowed with legitimate access; no prod script, prod volumes, impersonation or secrets in prompts.
+
+
+---
+
+## Audit update — capability_provision full-folder legacy cleanup (2026-11-04)
+
+The **[doc 241 — full-folder inventory and native-first deletion plan](241-capability-provision-full-folder-native-first-inventory-and-legacy-removal-plan.md)** surveys **13/13 direct files** under `delia-api/app/application/capability_provision/` at HEAD `6a7fdc65c16132726749c1ebfccd3415a0ecdd63`, enumerates top-level declared symbols and orchestration class methods, and classifies candidate removals vs legitimate owner/Evidence/write boundaries. Main finding: `orchestration.py` retains 16,174 lines and a legacy semantic orchestration engine in addition to live Pydantic AI governed gates. **Plan is PLANNED, not implementation or proof that any symbol is dead**. The executor must establish exact transitive/dynamic consumers and RED/GREEN parity before deletes. No second planner/selector or cosmetic splitting; deletion and measured net LOC reduction required. Production deploy NOT_AUTHORIZED.
