@@ -3553,7 +3553,8 @@
     grid-template-columns: 1fr;
   }
 
-  .dashboard-production-control .ppc-page-stack--demand {
+  .dashboard-production-control .ppc-page-stack--demand,
+  .dashboard-production-control .ppc-page-stack--myweg-needs {
     padding: 8px 14px 20px;
   }
 
@@ -6615,6 +6616,12 @@
 }
 
 /* —— Necessidades WEG (MyWEG) —— */
+.dashboard-production-control .ppc-page-stack--myweg-needs {
+  gap: 16px;
+  padding: 8px 20px 24px;
+  box-sizing: border-box;
+}
+
 .dashboard-production-control .ppc-myweg-needs__planning-note {
   margin: 0 0 14px;
   display: inline-flex;
