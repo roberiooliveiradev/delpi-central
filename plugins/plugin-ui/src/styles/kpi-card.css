@@ -134,9 +134,11 @@
 
 .delpi-kpi-card__target {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  /* Meta opt-in precisa ser legível em TV, sem competir com o valor principal. */
+  font-size: 22px;
+  font-weight: 700;
   line-height: 1.2;
+  font-variant-numeric: tabular-nums;
   color: var(--delpi-kpi-hint-color, #64748b);
 }
 
