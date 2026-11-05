@@ -535,7 +535,27 @@ class TableStructureEngine:
                     os.unlink(tmp)
                 except OSError:
                     pass
-            cb = crop_box or [41, 31, 2295, 262]
+            cb = crop_box
+            if cb is None:
+                # Fail-closed: sem região de tabela detectada por
+                # evidência, coordenadas fixas fabricariam estrutura em
+                # área arbitrária da folha.
+                return make_result(
+                    provider_id=self.provider_id,
+                    provider_version="slanet_7.67MB",
+                    document_hash_sha256=document_hash_sha256,
+                    product_code=product_code,
+                    model_version="SLANet",
+                    execution_mode="local_isolated",
+                    error_kind="NO_TABLE_REGION",
+                    error_detail=(
+                        "Sem região de tabela detectada — recorte "
+                        "arbitrário removido (região deve derivar de "
+                        "evidência, não de coordenadas fixas)"
+                    ),
+                    quality_status="FAILED",
+                    duration_ms=round((time.monotonic() - t0) * 1000, 1),
+                )
             crop = img[cb[1] : cb[3], cb[0] : cb[2]]
             # RQ-01: tokens OCR reais via pipeline governado (não só amostra)
             from engineering_app.infrastructure.extraction.subprocess_executor import (  # noqa: E501
@@ -590,7 +610,7 @@ class TableStructureEngine:
                         ),
                     )
                 )
-            return make_result(
+            _res = make_result(
                 provider_id=self.provider_id,
                 provider_version="slanet_7.67MB",
                 document_hash_sha256=document_hash_sha256,
@@ -607,6 +627,14 @@ class TableStructureEngine:
                 duration_ms=round((time.monotonic() - t0) * 1000, 1),
                 quality_status="EVAL_PENDING",
             )
+            # DEC-VAL-034/FF-01 — a associação OCR↔célula era calculada
+            # e descartada; o relatório já lê association.unassigned /
+            # .conflicts. Propagar o que o framework produziu.
+            _res["association"] = {
+                "unassigned": assoc.get("unassigned") or [],
+                "conflicts": assoc.get("conflicts") or [],
+            }
+            return _res
         except ImportError as exc:
             return make_result(
                 provider_id=self.provider_id,
