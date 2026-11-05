@@ -353,3 +353,15 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
 - `_apply_declared_answer` (acceptor determinístico pós-finalize): refs ligam só a attempts de evidência de negócio reais (`_is_business_evidence_attempt`); COMPLETE só honrado com refs válidos + obrigações satisfeitas (`_evaluate_material_obligations`) + terminal SUCCESS; clarificação usa o path bounded existente; limitações/obrigações declaradas mergeam bounded; refs fabricadas reportadas `evidence_ref_unbound:N`.
 - RQ-01..RQ-04: IMPLEMENTED ao nível do gate — a resposta tipada nativa existe, é validada deterministicamente e nunca promove claims do modelo a FACT. Cobertura verificada plano: **4/28 = 14,3%** (RQ-01,02,03,05,06 impl; RQ-04,07 parcial).
 - Mocks migrados para a output tool `final_result`. Suíte PASS (exit 0).
+
+## 12. G1 grounding rework — review 258 (execução)
+
+- `_apply_declared_answer` reescrito fail-closed: prosa do modelo **nunca** substitui o conteúdo determinístico verificado — SourceRef válido comprova proveniência da observação, não a verdade de frases geradas.
+- `schema_version != "1"` → `declared_schema_rejected`, terminal inalterado.
+- `NEEDS_CLARIFICATION` declarado ignorado quando o terminal já carrega evidência de negócio verificada (`declared_clarification_ignored`); caso contrário, path bounded existente.
+- Refs: qualquer ref inválido/não-evidência → `evidence_ref_unbound:N` + COMPLETE rebaixado (`declared_status_overridden`); `plan=None` ou `evidence_needed` vazio → cobertura desconhecida → COMPLETE nunca provado (`coverage_unknown`).
+- COMPLETE consistente mantém conteúdo determinístico — a declaração só afina status/limitações honestamente.
+- Testes: 14 casos em `test_g1_native_structured_output.py` (prosa alucinada + ref válido, evidência irrelevante plan=None, refs mistas, schema inválido, clarificação indevida, ref não-evidência, bound de resposta).
+- Suíte `delia-api` completa: PASS (exit 0).
+- RQ-03: gate factual fechado → IMPLEMENTED; RQ-04, RQ-07 = PARTIAL. Cobertura verificada: 5/28 = 17,9%.
+- G1_REAL_MODEL_EVAL=TEST_NOT_RUN (E01–E10 pendente em G7).

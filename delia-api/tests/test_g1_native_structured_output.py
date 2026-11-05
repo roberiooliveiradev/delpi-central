@@ -129,8 +129,143 @@ def test_out_of_range_evidence_ref_is_dropped():
         unbound_outcome=None,
     )
     assert "evidence_ref_unbound:7" in out.limitations
-    # complete claim honored for the one valid ref (no obligations)
-    assert out.content == "synthesized"
+    # mixed valid/invalid refs + plan=None → COMPLETE never honored;
+    # verified deterministic content is always the authoritative answer
+    assert out.content == "deterministic content"
+    assert "declared_status_overridden" in out.limitations
+
+
+def test_valid_sourceref_never_promotes_hallucinated_prose():
+    """A valid indexed SourceRef proves the observation's provenance —
+    never the truth of generated prose. Model wording must not replace
+    the verified deterministic answer (doc 258 §1)."""
+    terminal = _terminal()
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="the product costs R$ 999,90 and ships tomorrow",
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=terminal,
+        declared_answer=declared,
+        collected=(_attempt(),),
+        plan=None,
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert "999" not in (out.content or "")
+    assert out.content == "deterministic content"
+
+
+def test_real_but_irrelevant_evidence_does_not_ground_complete():
+    """Real observation exists but coverage is unknown (plan=None) —
+    a COMPLETE claim can never be proven vacuously (doc 258 §4)."""
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="anything",
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(_attempt(),),
+        plan=None,
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert "declared_status_overridden" in out.limitations
+    assert "coverage_unknown" in out.limitations
+    assert out.content == "deterministic content"
+
+
+def test_complete_proven_only_when_all_refs_bind_and_obligations_met():
+    """Fully consistent COMPLETE (all refs valid, obligations satisfied)
+    is accepted as consistent — but STILL never replaces the verified
+    deterministic content (doc 258 §1)."""
+    class _Plan:
+        evidence_needed = ()
+
+    terminal = _terminal()
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="model wording",
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=terminal,
+        declared_answer=declared,
+        collected=(_attempt(),),
+        plan=_Plan(),
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    # coverage_unknown (evidence_needed empty) — or consistent; either
+    # way the deterministic content stays authoritative
+    assert out.content == "deterministic content"
+
+
+def test_unknown_schema_version_rejects_whole_declaration():
+    declared = InvestigationAnswer(
+        schema_version="2",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="x",
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(_attempt(),),
+        plan=None,
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert "declared_schema_rejected" in out.limitations
+    assert out.content == "deterministic content"
+
+
+def test_clarification_never_discards_verified_answer():
+    """Model-declared clarification must not throw away a terminal that
+    already carries verified business evidence (doc 258 §5)."""
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.NEEDS_CLARIFICATION,
+        clarification_question="Qual registro?",
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(_attempt(),),
+        plan=None,
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert out.status is GovernedCapabilityStatus.SUCCESS
+    assert "declared_clarification_ignored" in out.limitations
+
+
+def test_clarification_still_applies_when_no_verified_evidence():
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.NEEDS_CLARIFICATION,
+        clarification_question="Qual registro consultar?",
+    )
+    empty_terminal = GovernedCapabilityAttempt(
+        status=GovernedCapabilityStatus.NOT_APPLICABLE,
+        correlation_id="c1",
+        limitations=("insufficient_evidence",),
+    )
+    out = _apply_declared_answer(
+        terminal=empty_terminal,
+        declared_answer=declared,
+        collected=(),
+        plan=None,
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert out.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
 
 
 def test_ref_to_non_business_attempt_is_dropped():

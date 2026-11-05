@@ -2301,14 +2301,37 @@ def _apply_declared_answer(
     if declared_answer is None:
         return terminal
 
-    # Declared clarification takes the existing bounded clarification
-    # path — the model asked for input, so the deterministic insufficiency
-    # answer is replaced by its own bounded question.
+    # Schema identity is validated explicitly (doc 258 §3): an
+    # unknown version is rejected whole — never partially trusted.
+    if declared_answer.schema_version != "1":
+        return dataclasses.replace(
+            terminal,
+            limitations=tuple(terminal.limitations)
+            + ("declared_schema_rejected",)[:24],
+        )
+
+    business = tuple(
+        item for item in collected if _is_business_evidence_attempt(item)
+    )
+
+    # Declared clarification may only fill a real gap: it never discards
+    # a terminal already carrying verified business evidence (doc 258
+    # §5). Without verified evidence the existing bounded clarification
+    # path applies unchanged.
     if (
         declared_answer.status
         is InvestigationAnswerStatus.NEEDS_CLARIFICATION
         and declared_answer.clarification_question
     ):
+        if (
+            terminal.status is GovernedCapabilityStatus.SUCCESS
+            and business
+        ):
+            return dataclasses.replace(
+                terminal,
+                limitations=tuple(terminal.limitations)
+                + ("declared_clarification_ignored",)[:24],
+            )
         return GovernedCapabilityAttempt(
             status=GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
             correlation_id=correlation,
@@ -2320,12 +2343,11 @@ def _apply_declared_answer(
             admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
         )
 
-    business = tuple(
-        item for item in collected if _is_business_evidence_attempt(item)
-    )
     collected_count = len(collected)
 
-    # Bind declared refs to real collected attempts.
+    # Bind declared refs to real collected attempts. A valid index
+    # proves the *observation's* provenance — never the truth of any
+    # sentence the model generated.
     accepted_refs = 0
     dropped_refs: list[str] = []
     for index in declared_answer.evidence_refs:
@@ -2351,36 +2373,27 @@ def _apply_declared_answer(
         declared_answer.status is InvestigationAnswerStatus.COMPLETE
     )
     if declared_complete:
-        obligations_met = True
-        if (
-            plan is not None
-            and plan.evidence_needed
-        ):
+        # A COMPLETE declaration is consistent only when EVERY declared
+        # ref binds to real business evidence, at least one does, and
+        # material obligations are demonstrably satisfied. ``plan=None``
+        # means coverage is unknown — the claim can never be proven and
+        # is honestly downgraded (doc 258 §2/§4). Even a fully
+        # consistent COMPLETE never replaces the deterministic verified
+        # content: the model's prose stays a proposal, not the answer.
+        if dropped_refs or accepted_refs == 0:
+            extra_limitations.append("declared_status_overridden")
+        elif plan is None or not plan.evidence_needed:
+            extra_limitations.append("declared_status_overridden")
+            extra_limitations.append("coverage_unknown")
+        else:
             coverage = _evaluate_material_obligations(
                 obligations=plan.evidence_needed,
                 business=business,
             )
-            obligations_met = all(
+            if not all(
                 state == OBLIGATION_SATISFIED for _, state in coverage
-            )
-        proven = (
-            terminal.status is GovernedCapabilityStatus.SUCCESS
-            and accepted_refs > 0
-            and obligations_met
-            and bool(declared_answer.answer.strip())
-        )
-        if proven:
-            return dataclasses.replace(
-                terminal,
-                content=declared_answer.answer[
-                    :MAX_RENDER_CONTENT_CHARS
-                ],
-                limitations=tuple(terminal.limitations)
-                + tuple(extra_limitations)[:24],
-            )
-        # Model declared COMPLETE but coverage/refs do not prove it —
-        # honest downgrade, never fabricated grounding.
-        extra_limitations.append("declared_status_overridden")
+            ):
+                extra_limitations.append("declared_status_overridden")
 
     if extra_limitations:
         return dataclasses.replace(

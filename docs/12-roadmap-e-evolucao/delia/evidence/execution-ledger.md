@@ -5775,3 +5775,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | RQ | RQ-01,02,03,05,06 impl (4+); RQ-04,07 parcial → cobertura 14,3% |
 | E01–E10 | TEST_NOT_RUN (G7) |
 | PRODUCTION_DEPLOY | NOT_AUTHORIZED |
+
+## G1 grounding rework — review 258 (execução)
+
+| Campo | Valor |
+|---|---|
+| Base | `a034fc69` |
+| Accepto | `_apply_declared_answer` fail-closed — prosa nunca substitui conteúdo verificado; refs bound; schema rejeitado; clarification guardada; plan=None → coverage_unknown |
+| Testes | 14 PASS (test_g1); suite completa PASS |
+| RQ-03 | IMPLEMENTED (gate factual fechado) |
+| E01–E10 | TEST_NOT_RUN (G7) |
+| PRODUCTION_DEPLOY | NOT_AUTHORIZED |
