@@ -1149,18 +1149,24 @@
   min-height: clamp(168px, 22vw, 220px);
   background-color: #003866;
   background-image:
+    /* Fade largo: azul → transparente, sem corte vertical nítido */
     linear-gradient(
       90deg,
-      rgba(0, 56, 102, 0.55) 0%,
-      rgba(0, 56, 102, 0.28) 34%,
-      rgba(0, 56, 102, 0.08) 58%,
-      transparent 78%
+      #003866 0%,
+      #003866 32%,
+      rgba(0, 56, 102, 0.92) 42%,
+      rgba(0, 56, 102, 0.55) 58%,
+      rgba(0, 56, 102, 0.18) 74%,
+      transparent 92%
     ),
     var(--ppc-myweg-header-banner);
   background-repeat: no-repeat;
-  /* auto 100%: cabe a altura do header sem “crop” agressivo do cover */
-  background-size: auto 100%, auto 100%;
-  background-position: left center, right center;
+  /*
+   * Zoom leve (auto 155%) alarga a foto no header;
+   * âncora right + ~70% vertical prioriza a fábrica na parte inferior.
+   */
+  background-size: auto, auto 155%;
+  background-position: left center, right 70%;
   box-shadow: 0 12px 32px rgba(0, 40, 70, 0.28);
 }
 
@@ -1238,18 +1244,17 @@
 
 @media (max-width: 1100px) {
   .dashboard-production-control .ppc-header--myweg {
-    /* um pouco mais alto + âncora à direita para preservar a fábrica */
     min-height: clamp(152px, 26vw, 200px);
-    background-size: auto 110%, auto 110%;
-    background-position: left center, right 42%;
+    background-size: auto, auto 165%;
+    background-position: left center, right 72%;
   }
 }
 
 @media (max-width: 860px) {
   .dashboard-production-control .ppc-header--myweg {
     min-height: 148px;
-    background-size: auto 125%, auto 125%;
-    background-position: left center, 82% 45%;
+    background-size: auto, auto 175%;
+    background-position: left center, 88% 75%;
   }
 
   .dashboard-production-control .ppc-header--myweg .ppc-header__identity {
