@@ -752,3 +752,35 @@ def test_context_window_gate_disabled_when_unset():
     )
     engine.attempt("oi")
     assert calls
+
+
+def test_context_envelope_includes_tool_schemas_and_reserve():
+    """The pre-call estimate accounts for tool schemas + overhead +
+    generation reserve — with the real 10-cap catalog a tiny prompt +
+    window just above raw text still triggers overflow because the
+    envelope terms push it over (doc 270 §2)."""
+    from tests.test_pydantic_ai_semantic_rework import _gates
+    from app.application.model_invocation.context_budget import (
+        estimate_text_tokens,
+    )
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from pydantic_ai.models.function import FunctionModel
+
+    calls = []
+
+    def _fn(messages, _info):
+        calls.append(len(messages))
+        return _final_answer("ok", status="insufficient")
+
+    # window larger than instructions+prompt alone but smaller than the
+    # full envelope → gate must fire (envelope terms counted)
+    engine = PydanticAiInvestigationOrchestrator(
+        _gates(),
+        model=FunctionModel(_fn),
+        context_window_tokens=estimate_text_tokens("oi") + 1_200,
+    )
+    attempt = engine.attempt("oi")
+    assert attempt.error_code == "investigation_context_overflow"
+    assert calls == []

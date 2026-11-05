@@ -602,3 +602,18 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   dados dev do owner → controle positivo INCONCLUSIVE (sem registro
   positivo confirmado no owner dev); plumbing ponta-a-ponta provado.
 - Suíte completa PASS (exit 0).
+
+## 24. G7 rework — envelope real de contexto + controle positivo (doc 270)
+
+- **Envelope**: gate pré-call estendido de `instructions+prompt` para
+  `instructions + prompt + tool_schemas serializados + output_schema +
+  ADAPTER_OVERHEAD_TOKENS + DEFAULT_GENERATION_RESERVE_TOKENS` —
+  constantes do context_budget existente (rotuladas estimativa, não
+  transplantadas como overhead nativo exato). Crescimento pós-call
+  limitado por `tool_projection_limit`/`tool_calls_limit` existentes.
+- **Testes**: boundary test com catálogo real — window maior que
+  texto cru mas menor que envelope → overflow typed, zero calls.
+- **Controle positivo live**: 2 turns reais — clarificação estruturada
+  real (options bound), honest unbound; owners dev sem registro
+  positivo confirmado → INCONCLUSIVE por dados, não código.
+- Suíte completa PASS (exit 0).

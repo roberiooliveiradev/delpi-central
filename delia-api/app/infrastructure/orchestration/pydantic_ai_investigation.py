@@ -1133,12 +1133,41 @@ class PydanticAiInvestigationOrchestrator:
         ) + input_text
         if self._context_window_tokens:
             from app.application.model_invocation.context_budget import (
+                ADAPTER_OVERHEAD_TOKENS,
+                DEFAULT_GENERATION_RESERVE_TOKENS,
                 estimate_text_tokens,
             )
+            import json as _json
 
-            estimated = estimate_text_tokens(
-                instructions
-            ) + estimate_text_tokens(prompt)
+            # Full pre-call envelope (doc 270 §2-3): instructions +
+            # prompt + serialized tool schemas + output schema +
+            # protocol overhead + generation reserve — never just
+            # instructions+prompt. Constants are the existing budget
+            # module's bounded estimates (labeled, not exact native
+            # overhead); tool_result growth is bounded separately by
+            # tool_projection_limit/tool_calls_limit.
+            tool_schemas = _json.dumps(
+                [
+                    {
+                        "id": c.get("capability_id"),
+                        "description": c.get("description") or "",
+                        "input_schema": c.get("input_schema") or {},
+                    }
+                    for c in live_catalog
+                ],
+                ensure_ascii=False,
+                default=str,
+            )
+            estimated = (
+                estimate_text_tokens(instructions)
+                + estimate_text_tokens(prompt)
+                + estimate_text_tokens(tool_schemas)
+                + estimate_text_tokens(
+                    _json.dumps(InvestigationAnswer.__dict__, default=str)
+                )
+                + ADAPTER_OVERHEAD_TOKENS
+                + DEFAULT_GENERATION_RESERVE_TOKENS
+            )
             if estimated >= self._context_window_tokens:
                 _logger.info(
                     "orchestration engine=pydantic_ai "
