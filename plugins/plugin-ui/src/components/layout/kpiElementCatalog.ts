@@ -16,6 +16,7 @@ export type KpiElementId =
   | "kpiTitle"
   | "kpiValue"
   | "kpiHint"
+  | "kpiTarget"
   | "kpiIcon"
   | "kpiCard"
   | "kpiComparison"
@@ -33,6 +34,7 @@ export const KPI_ELEMENT_CATALOG: KpiElementDefinition[] = [
   { id: "kpiTitle", label: "Título", description: "Rótulo do indicador" },
   { id: "kpiValue", label: "Valor", description: "Número principal" },
   { id: "kpiHint", label: "Subtítulo", description: "Texto auxiliar abaixo do valor" },
+  { id: "kpiTarget", label: "Meta", description: "Número da meta formatado pelo enrich" },
   { id: "kpiIcon", label: "Ícone", description: "Ícone à direita do card" },
   { id: "kpiComparison", label: "Comparação", description: "Delta vs meta ou período" },
   { id: "kpiProgress", label: "Progresso", description: "Barra até a meta" },
@@ -44,6 +46,9 @@ export type KpiAddElementChoiceId =
   | "title:off"
   | "hint:on"
   | "hint:off"
+  | "value:keep"
+  | "target:on"
+  | "target:off"
   | "icon:on"
   | "icon:off"
   | "comparison:target"
@@ -68,6 +73,8 @@ export function kpiElementPrimaryPartRef(elementId: KpiElementId): KpiPartRef {
       return { kind: "value" };
     case "kpiHint":
       return { kind: "hint" };
+    case "kpiTarget":
+      return { kind: "target" };
     case "kpiIcon":
       return { kind: "icon" };
     case "kpiComparison":
@@ -93,6 +100,8 @@ export function kpiElementIdForPartRef(ref: KpiPartRef): KpiElementId {
       return "kpiValue";
     case "hint":
       return "kpiHint";
+    case "target":
+      return "kpiTarget";
     case "icon":
       return "kpiIcon";
     case "comparison":
@@ -126,6 +135,10 @@ export function isKpiElementEnabled(
     if (options?.showTitle === false) return false;
     return state?.visible !== false;
   }
+  if (elementId === "kpiTarget") {
+    if (state?.visible != null) return state.visible !== false;
+    return options?.showTarget === true;
+  }
   if (elementId === "kpiHint") {
     if (state?.visible === false) return false;
     return Boolean(options?.subtitle?.trim() || state?.content?.trim() || state?.visible === true);
@@ -152,6 +165,12 @@ export function applyKpiElementVisibility(
   options?: KpiCardFlatOptions | null,
   parts?: KpiPartsMap | null,
 ): { options: KpiCardFlatOptions; parts: KpiPartsMap } {
+  if (elementId === "kpiValue" && !enabled) {
+    return {
+      options: { ...(options ?? {}) },
+      parts: mergeKpiPartsWithOptions(parts, options),
+    };
+  }
   const ref = kpiElementPrimaryPartRef(elementId);
   let nextParts = upsertKpiPartState(parts, ref, { visible: enabled });
   const nextOptions: KpiCardFlatOptions = {
@@ -159,6 +178,7 @@ export function applyKpiElementVisibility(
     ...partsToKpiOptions(nextParts),
   };
   if (
+    elementId === "kpiTarget" ||
     elementId === "kpiComparison" ||
     elementId === "kpiProgress" ||
     elementId === "kpiSparkline" ||
@@ -226,6 +246,7 @@ export const KPI_LAYOUT_PRESET_FRAMES: Record<
     title: { x: 4, y: 6, w: 70, h: 18 },
     value: { x: 4, y: 28, w: 92, h: 48 },
     hint: { x: 4, y: 78, w: 70, h: 14 },
+    target: { x: 74, y: 78, w: 22, h: 14 },
     icon: { x: 78, y: 6, w: 18, h: 20 },
     comparison: { x: 4, y: 72, w: 60, h: 12 },
     sparkline: { x: 62, y: 70, w: 34, h: 22 },
@@ -237,6 +258,7 @@ export const KPI_LAYOUT_PRESET_FRAMES: Record<
     comparison: { x: 4, y: 66, w: 55, h: 14 },
     sparkline: { x: 60, y: 58, w: 36, h: 28 },
     hint: { x: 4, y: 82, w: 55, h: 12 },
+    target: { x: 62, y: 82, w: 34, h: 12 },
     icon: { x: 80, y: 4, w: 16, h: 18 },
     progress: { x: 4, y: 92, w: 92, h: 5 },
   },
@@ -246,6 +268,7 @@ export const KPI_LAYOUT_PRESET_FRAMES: Record<
     comparison: { x: 4, y: 62, w: 50, h: 12 },
     progress: { x: 4, y: 78, w: 92, h: 8 },
     hint: { x: 4, y: 88, w: 70, h: 10 },
+    target: { x: 66, y: 20, w: 30, h: 16 },
     icon: { x: 78, y: 4, w: 18, h: 18 },
     sparkline: { x: 62, y: 52, w: 34, h: 22 },
   },
@@ -272,6 +295,7 @@ export function applyKpiLayoutPreset(
       kind !== "title" &&
       kind !== "value" &&
       kind !== "hint" &&
+      kind !== "target" &&
       kind !== "icon" &&
       kind !== "comparison" &&
       kind !== "progress" &&
@@ -331,6 +355,12 @@ export function applyKpiAddElementChoice(
       return applyKpiElementVisibility("kpiHint", true, options, parts);
     case "hint:off":
       return applyKpiElementVisibility("kpiHint", false, options, parts);
+    case "value:keep":
+      return applyKpiElementVisibility("kpiValue", true, options, parts);
+    case "target:on":
+      return applyKpiElementVisibility("kpiTarget", true, options, parts);
+    case "target:off":
+      return applyKpiElementVisibility("kpiTarget", false, options, parts);
     case "icon:on":
       return applyKpiElementVisibility("kpiIcon", true, options, parts);
     case "icon:off":
@@ -396,6 +426,12 @@ export function isKpiAddElementChoiceActive(
       return isKpiElementEnabled("kpiHint", options, parts);
     case "hint:off":
       return !isKpiElementEnabled("kpiHint", options, parts);
+    case "value:keep":
+      return true;
+    case "target:on":
+      return isKpiElementEnabled("kpiTarget", options, parts);
+    case "target:off":
+      return !isKpiElementEnabled("kpiTarget", options, parts);
     case "icon:on":
       return isKpiElementEnabled("kpiIcon", options, parts);
     case "icon:off":
@@ -435,6 +471,8 @@ export function isKpiAddElementChoiceActive(
 export function kpiElementIdForAddChoice(choiceId: KpiAddElementChoiceId): KpiElementId {
   if (choiceId.startsWith("title:")) return "kpiTitle";
   if (choiceId.startsWith("hint:")) return "kpiHint";
+  if (choiceId.startsWith("value:")) return "kpiValue";
+  if (choiceId.startsWith("target:")) return "kpiTarget";
   if (choiceId.startsWith("icon:")) return "kpiIcon";
   if (choiceId.startsWith("comparison:")) return "kpiComparison";
   if (choiceId.startsWith("progress:")) return "kpiProgress";

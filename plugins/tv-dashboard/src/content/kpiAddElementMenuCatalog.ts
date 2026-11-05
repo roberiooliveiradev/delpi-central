@@ -1,7 +1,9 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
+  Flag,
   Gauge,
+  Hash,
   Heading,
   LayoutTemplate,
   LineChart,
@@ -46,6 +48,23 @@ export function resolveKpiAddElementMenuRoots(): KpiAddElementMenuRoot[] {
       choices: [
         { id: "hint:on", label: "Mostrar", icon: Type },
         { id: "hint:off", label: "Ocultar", icon: X },
+      ],
+    },
+    {
+      elementId: "kpiValue",
+      label: "Valor principal",
+      icon: Hash,
+      moreOptionsLabel: "Formatar valor…",
+      choices: [{ id: "value:keep", label: "Obrigatório", icon: Hash }],
+    },
+    {
+      elementId: "kpiTarget",
+      label: "Meta",
+      icon: Flag,
+      moreOptionsLabel: "Formatar meta…",
+      choices: [
+        { id: "target:on", label: "Mostrar", icon: Flag },
+        { id: "target:off", label: "Ocultar", icon: X },
       ],
     },
     {

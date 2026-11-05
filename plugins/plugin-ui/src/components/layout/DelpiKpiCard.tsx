@@ -401,6 +401,7 @@ export function DelpiKpiCard({
   const iconHostRef = useRef<HTMLDivElement>(null);
   const cardHostRef = useRef<HTMLElement>(null);
   const comparisonHostRef = useRef<HTMLParagraphElement>(null);
+  const targetHostRef = useRef<HTMLParagraphElement>(null);
   const progressHostRef = useRef<HTMLDivElement>(null);
   const sparklineHostRef = useRef<HTMLDivElement>(null);
 
@@ -433,6 +434,11 @@ export function DelpiKpiCard({
     kpiOptions?.showProgress === true && progressPct != null,
   );
   const sparkPoints = (sparklinePoints ?? []).filter((n) => Number.isFinite(n));
+  const showTarget = isKpiPartVisible(
+    parts,
+    { kind: "target" },
+    kpiOptions?.showTarget === true,
+  );
   const showSparkline = isKpiPartVisible(
     parts,
     { kind: "sparkline" },
@@ -466,6 +472,7 @@ export function DelpiKpiCard({
   const hintState = getKpiPartState(parts, { kind: "hint" }) ?? parts.hint;
   const iconState = getKpiPartState(parts, { kind: "icon" }) ?? parts.icon;
   const comparisonState = getKpiPartState(parts, { kind: "comparison" }) ?? parts.comparison;
+  const targetState = getKpiPartState(parts, { kind: "target" }) ?? parts.target;
   const progressState = getKpiPartState(parts, { kind: "progress" }) ?? parts.progress;
   const sparklineState = getKpiPartState(parts, { kind: "sparkline" }) ?? parts.sparkline;
   const cardState = getKpiPartState(parts, { kind: "card" }) ?? parts.card;
@@ -474,12 +481,14 @@ export function DelpiKpiCard({
   const hintFramed = Boolean(resolveKpiPartFrame(hintState));
   const iconFramed = Boolean(resolveKpiPartFrame(iconState));
   const comparisonFramed = Boolean(resolveKpiPartFrame(comparisonState));
+  const targetFramed = Boolean(resolveKpiPartFrame(targetState));
   const progressFramed = Boolean(resolveKpiPartFrame(progressState));
   const sparklineFramed = Boolean(resolveKpiPartFrame(sparklineState));
   const titleLayoutStyle = resolveKpiPartLayoutStyle(titleState, { partKind: "title" });
   const valueLayoutStyle = resolveKpiPartLayoutStyle(valueState, { partKind: "value" });
   const hintLayoutStyle = resolveKpiPartLayoutStyle(hintState, { partKind: "hint" });
   const comparisonLayoutStyle = resolveKpiPartLayoutStyle(comparisonState, { partKind: "comparison" });
+  const targetLayoutStyle = resolveKpiPartLayoutStyle(targetState, { partKind: "target" });
   const progressLayoutStyle = resolveKpiPartLayoutStyle(progressState, { partKind: "progress" });
   const sparklineLayoutStyle = resolveKpiPartLayoutStyle(sparklineState, { partKind: "sparkline" });
   const cardLayoutStyle = resolveKpiPartLayoutStyle(cardState, { partKind: "card" });
@@ -540,6 +549,17 @@ export function DelpiKpiCard({
     ),
     ...hintLayoutStyle,
   };
+  const targetTextStyle: CSSProperties = {
+    ...resolveKpiPartTypographyStyle(
+      {
+        ...parts.target?.style,
+        fontSize: resolveKpiPartFontSize("target", parts.target?.style),
+        color: parts.target?.style?.color ?? resolvedHintColor,
+      },
+      { flexPart: false, fillHost: targetFramed },
+    ),
+    ...targetLayoutStyle,
+  };
   const comparisonTextStyle: CSSProperties = {
     ...resolveKpiPartTypographyStyle(
       {
@@ -558,6 +578,7 @@ export function DelpiKpiCard({
   const hintPtr = bindKpiPartPointer({ kind: "hint" }, interaction);
   const iconPtr = bindKpiPartPointer({ kind: "icon" }, interaction);
   const comparisonPtr = bindKpiPartPointer({ kind: "comparison" }, interaction);
+  const targetPtr = bindKpiPartPointer({ kind: "target" }, interaction);
   const progressPtr = bindKpiPartPointer({ kind: "progress" }, interaction);
   const sparklinePtr = bindKpiPartPointer({ kind: "sparkline" }, interaction);
 
@@ -572,6 +593,11 @@ export function DelpiKpiCard({
     Boolean(interaction?.onPartResizePointerDown);
   const iconShowResize =
     iconPtr.selected && !iconPtr.editing && kpiPartAllowsResize({ kind: "icon" }) &&
+    Boolean(interaction?.onPartResizePointerDown);
+  const targetShowResize =
+    targetPtr.selected &&
+    !targetPtr.editing &&
+    kpiPartAllowsResize({ kind: "target" }) &&
     Boolean(interaction?.onPartResizePointerDown);
   const comparisonShowResize =
     comparisonPtr.selected &&
@@ -804,9 +830,32 @@ export function DelpiKpiCard({
                 />
               </strong>
             ) : null}
-            {kpiOptions?.showTarget === true && targetText?.trim() ? (
-              <p className="delpi-kpi-card__target" data-kpi-target="true">
-                {targetText.trim()}
+            {showTarget ? (
+              <p
+                ref={targetHostRef}
+                className={[
+                  "delpi-kpi-card__target",
+                  targetFramed ? "delpi-kpi-part--framed" : "",
+                  targetShowResize ? "delpi-kpi-part--resizable" : "",
+                  targetPtr.selected ? "delpi-kpi-part--selected" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                style={targetTextStyle}
+                {...{
+                  [KPI_PART_DATA_ATTR]: targetPtr[KPI_PART_DATA_ATTR],
+                  "aria-selected": targetPtr["aria-selected"],
+                }}
+                onPointerDown={targetPtr.onPointerDown}
+                onDoubleClick={targetPtr.onDoubleClick}
+              >
+                {targetText?.trim() || "—"}
+                <KpiPartResizeHandles
+                  visible={targetShowResize}
+                  onResizePointerDown={(handle, event) =>
+                    interaction?.onPartResizePointerDown?.({ kind: "target" }, event, handle)
+                  }
+                />
               </p>
             ) : null}
             {showComparison && comparisonContent ? (

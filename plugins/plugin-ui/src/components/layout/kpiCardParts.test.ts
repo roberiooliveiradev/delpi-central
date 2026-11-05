@@ -132,6 +132,33 @@ describe("kpiCardParts adapters", () => {
   });
 });
 
+describe("kpi target part", () => {
+  it("oculta a meta sem desligar comparação nem progresso", () => {
+    const off = applyKpiElementVisibility(
+      "kpiTarget",
+      false,
+      { showTarget: true, showComparison: true, showProgress: true },
+      { target: { visible: true } },
+    );
+    expect(off.options.showTarget).toBe(false);
+    expect(off.options.showComparison).toBe(true);
+    expect(off.options.showProgress).toBe(true);
+    expect(off.parts.target?.visible).toBe(false);
+  });
+
+  it("mostrar a meta grava part e showTarget juntos", () => {
+    const on = applyKpiElementVisibility("kpiTarget", true, { showTarget: false }, {});
+    expect(on.options.showTarget).toBe(true);
+    expect(on.parts.target?.visible).toBe(true);
+  });
+
+  it("não oculta o valor principal", () => {
+    const blocked = applyKpiElementVisibility("kpiValue", false, {}, { value: { visible: true } });
+    expect(isKpiElementEnabled("kpiValue", blocked.options, blocked.parts)).toBe(true);
+    expect(blocked.parts.value?.visible).not.toBe(false);
+  });
+});
+
 describe("kpiElementCatalog", () => {
   it("liga/desliga hint e ícone", () => {
     const off = applyKpiElementVisibility("kpiHint", false, { subtitle: "a" }, {});

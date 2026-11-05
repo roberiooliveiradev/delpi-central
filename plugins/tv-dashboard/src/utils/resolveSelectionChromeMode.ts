@@ -88,6 +88,8 @@ export function kpiPartSelectionLabel(part: ComunicadoKpiPartRef): string {
       return "Valor";
     case "hint":
       return "Subtítulo";
+    case "target":
+      return "Meta";
     case "icon":
       return "Ícone";
     case "comparison":

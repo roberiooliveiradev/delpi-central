@@ -658,7 +658,7 @@ O primeiro incremento adicionou `kpiPresentation.targetDisplay` e o controle `kp
 - Respeitar variações hero, standard, compact, scorecard, sem overflow e com contraste adequado para 1080p. **Não transformar a meta em valor fixo** nem duplicar seu formatter.
 - Tratar o VALOR principal como obrigatório no novo modelo de autoria sem quebrar snapshots legados; inventariar e preservar compatibilidade antes de endurecer regra.
 
-**Não decidido sem inventário:** nome final da part (`target` é candidato coerente com o domínio atual), regra de leitura de `showTarget` e defaults/seed de layout. Fechar contrato explicitamente em E0/E1; não inventar uma nova propriedade se a atual puder ser adaptada.
+**Contrato fechado na implementação:** a parte canônica é `KpiPartRef.kind = "target"`. Visibilidade autoritativa é `kpiParts.target.visible`. `kpiOptions.showTarget` permanece como espelho de leitura/escrita (ausente ou `false` = oculta; `true` = visível). Ocultar a parte não apaga `targetField` nem desliga comparação, progresso ou cores. O número pintado continua sendo só `kpiPresentation.targetDisplay`. O valor principal não pode ser ocultado por `applyKpiElementVisibility` / `deleteKpiPart`.
 
 ### 18.4 Critérios de aceite específicos
 

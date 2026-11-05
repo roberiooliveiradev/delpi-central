@@ -310,7 +310,7 @@ export function resolveSelectedTextFormatTarget(params: {
   if (selected.type === "kpi_view") {
     if (isKpiTextFormatPart(selectedKpiPart) && selectedKpiPart) {
       const partStyle = getKpiPartState(selected.kpiParts, selectedKpiPart)?.style;
-      const kind = selectedKpiPart.kind as "title" | "value" | "hint" | "comparison";
+      const kind = selectedKpiPart.kind as "title" | "value" | "hint" | "target" | "comparison";
       const fontSizeAuto = kpiPartUsesAutoFitFont(kind, partStyle);
       const style = snapshotFromPartStyle(
         partStyle,

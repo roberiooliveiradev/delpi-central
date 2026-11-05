@@ -8,7 +8,10 @@ import {
   type DelpiKpiCardTone,
   type DelpiKpiColorRule,
 } from "@delpi/plugin-ui/index";
-import type { ComunicadoKpiOptions } from "@delpi/tv-dashboard-presentation";
+import {
+  upsertKpiPartState,
+  type ComunicadoKpiOptions,
+} from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useKpiBoundFieldOptions } from "../hooks/useKpiBoundFieldOptions";
@@ -157,7 +160,13 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
           id="kpi-show-target"
           ariaLabel="Exibir valor da meta"
           value={options.showTarget === true ? "on" : "off"}
-          onChange={(value) => patch({ showTarget: value === "on" })}
+          onChange={(value) => {
+            const visible = value === "on";
+            updateSelected({
+              kpiOptions: { ...options, showTarget: visible },
+              kpiParts: upsertKpiPartState(selected.kpiParts, { kind: "target" }, { visible }),
+            });
+          }}
           options={[
             { value: "off", label: "Oculta (binding preservado)" },
             { value: "on", label: "Exibir número formatado" },

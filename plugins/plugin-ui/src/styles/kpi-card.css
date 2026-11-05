@@ -134,7 +134,6 @@
 
 .delpi-kpi-card__target {
   margin: 0;
-  font-size: 14px;
   font-weight: 600;
   line-height: 1.2;
   color: var(--delpi-kpi-hint-color, #64748b);

@@ -337,6 +337,29 @@ describe("DelpiKpiCard chrome", () => {
     expect(fit?.style.fontSize).toBe("72px");
   });
 
+  it("seleciona a meta pelo atributo canônico da parte", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="OEE"
+        value="93,70%"
+        targetText="85,00%"
+        kpiOptions={{ showTarget: true }}
+        kpiParts={{ target: { visible: true, style: { fontSize: 28, typographyMode: "fixed" } } }}
+      />,
+    );
+    const meta = container.querySelector("[data-kpi-part='target']") as HTMLElement;
+    expect(meta?.textContent).toContain("85,00%");
+    expect(meta?.style.fontSize).toBe("28px");
+    expect(container.querySelector("[data-kpi-target]")).toBeNull();
+  });
+
+  it("não mostra a meta quando showTarget está ausente", () => {
+    const { container } = render(
+      <DelpiKpiCard label="OEE" value="93,70%" targetText="85,00%" />,
+    );
+    expect(container.querySelector("[data-kpi-part='target']")).toBeNull();
+  });
+
   it("renderiza comparação e sparkline quando habilitados", () => {
     const { container } = render(
       <DelpiKpiCard

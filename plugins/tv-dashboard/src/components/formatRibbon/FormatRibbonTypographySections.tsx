@@ -236,9 +236,13 @@ export function FormatRibbonTypographySections({
           ? KPI_PART_FONT_SIZE_DEFAULTS.value
           : kpiPartKind === "title"
             ? KPI_PART_FONT_SIZE_DEFAULTS.title
-            : kpiPartKind === "hint" || kpiPartKind === "comparison"
+            : kpiPartKind === "hint" || kpiPartKind === "comparison" || kpiPartKind === "target"
               ? KPI_PART_FONT_SIZE_DEFAULTS[
-                  kpiPartKind === "comparison" ? "comparison" : "hint"
+                  kpiPartKind === "comparison"
+                    ? "comparison"
+                    : kpiPartKind === "target"
+                      ? "target"
+                      : "hint"
                 ]
               : chartPartKind && chartPartKind in CHART_PART_FONT_SIZE_DEFAULTS
                 ? CHART_PART_FONT_SIZE_DEFAULTS[

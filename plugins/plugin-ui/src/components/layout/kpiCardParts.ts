@@ -23,6 +23,8 @@ export type KpiPartRef =
   | { kind: "value" }
   | { kind: "hint" }
   | { kind: "icon" }
+  /** Número da meta já formatado pelo enrich (não é literal editável). */
+  | { kind: "target" }
   /** Delta vs meta/período (BAN). */
   | { kind: "comparison" }
   /** Barra/anel de progresso até a meta. */
@@ -163,6 +165,7 @@ const KPI_PART_KIND_CAPABILITIES: Record<KpiPartRef["kind"], KpiPartCapabilities
   title: { movable: true, editable: true, deletable: true, resizable: true },
   value: { movable: true, editable: false, deletable: false, resizable: true },
   hint: { movable: true, editable: true, deletable: true, resizable: true },
+  target: { movable: true, editable: false, deletable: true, resizable: true },
   icon: { movable: true, editable: false, deletable: true, resizable: true },
   comparison: { movable: true, editable: false, deletable: true, resizable: true },
   progress: { movable: true, editable: false, deletable: true, resizable: true },
@@ -227,13 +230,14 @@ export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 76, y: 3, w: 20, h: 22 
  * Empilhamento denso — valor ocupa quase toda a altura (hint sobrepõe o rodapé se visível).
  */
 export const KPI_PART_DEFAULT_FRAMES: Record<
-  "card" | "title" | "value" | "hint" | "icon" | "comparison" | "progress" | "sparkline",
+  "card" | "title" | "value" | "hint" | "target" | "icon" | "comparison" | "progress" | "sparkline",
   KpiPartFrame
 > = {
   card: { x: 0, y: 0, w: 100, h: 100 },
   title: { x: 3, y: 2, w: 70, h: 20 },
   value: { x: 3, y: 22, w: 70, h: 54 },
   hint: { x: 3, y: 78, w: 55, h: 14 },
+  target: { x: 62, y: 78, w: 34, h: 14 },
   icon: KPI_ICON_DEFAULT_FRAME,
   comparison: { x: 3, y: 72, w: 52, h: 14 },
   progress: { x: 3, y: 90, w: 94, h: 6 },
@@ -245,6 +249,7 @@ export const KPI_FREE_LAYOUT_PART_KINDS = [
   "title",
   "value",
   "hint",
+  "target",
   "icon",
   "comparison",
   "progress",
@@ -310,6 +315,7 @@ export const KPI_PART_FONT_SIZE_DEFAULTS = {
   /** Valor do card — legível no deck TV sem depender de FitText agressivo. */
   value: 40,
   hint: 14,
+  target: 14,
   comparison: 14,
 } as const;
 
@@ -380,6 +386,7 @@ export function kpiPartAllowsFrame(ref: KpiPartRef): boolean {
     ref.kind === "title" ||
     ref.kind === "value" ||
     ref.kind === "hint" ||
+    ref.kind === "target" ||
     ref.kind === "icon" ||
     ref.kind === "comparison" ||
     ref.kind === "progress" ||
@@ -617,6 +624,7 @@ export function kpiPartSupportsTypography(ref: KpiPartRef | null | undefined): b
       (ref.kind === "title" ||
         ref.kind === "value" ||
         ref.kind === "hint" ||
+        ref.kind === "target" ||
         ref.kind === "comparison"),
   );
 }
@@ -676,6 +684,7 @@ export function parseKpiPartRef(raw: string | null | undefined): KpiPartRef | nu
     value === "title" ||
     value === "value" ||
     value === "hint" ||
+    value === "target" ||
     value === "icon" ||
     value === "comparison" ||
     value === "progress" ||
@@ -843,7 +852,7 @@ export function materializeMissingKpiPartFramesFromRoot(
 }
 
 /** Partes tipográficas irmãs (Excel: Apply to All em texto do KPI). */
-export const KPI_TEXT_PART_KINDS = ["title", "value", "hint", "comparison"] as const;
+export const KPI_TEXT_PART_KINDS = ["title", "value", "hint", "target", "comparison"] as const;
 
 export function isKpiTextPartKind(kind: KpiPartRef["kind"]): kind is KpiTextPartKind {
   return (KPI_TEXT_PART_KINDS as readonly string[]).includes(kind);
@@ -1018,6 +1027,13 @@ export function kpiOptionsToParts(options?: KpiCardFlatOptions | null): KpiParts
         color: AUTOMATIC_TEXT_COLOR,
       },
     },
+    target: {
+      visible: options?.showTarget === true,
+      style: {
+        fontWeight: 600,
+        color: AUTOMATIC_TEXT_COLOR,
+      },
+    },
     icon: {
       visible: options?.showIcon !== false,
       style: {
@@ -1047,6 +1063,7 @@ export function partsToKpiOptions(parts?: KpiPartsMap | null): Partial<KpiCardFl
   const patch: Partial<KpiCardFlatOptions> = {};
   const title = parts.title;
   const hint = parts.hint;
+  const target = parts.target;
   const icon = parts.icon;
   const card = parts.card;
   const value = parts.value;
@@ -1057,6 +1074,7 @@ export function partsToKpiOptions(parts?: KpiPartsMap | null): Partial<KpiCardFl
   if (title?.visible != null) patch.showTitle = title.visible !== false;
   if (hint?.content != null) patch.subtitle = hint.content;
   if (hint?.visible === false) patch.subtitle = undefined;
+  if (target?.visible != null) patch.showTarget = target.visible === true;
   if (icon?.visible != null) patch.showIcon = icon.visible !== false;
   if (card?.style?.fill !== undefined) patch.backgroundColor = card.style.fill;
   if (value?.style?.color !== undefined) patch.valueColor = value.style.color;
@@ -1120,9 +1138,13 @@ export function deleteKpiPart(
     ...(options ?? {}),
     ...partsToKpiOptions(nextParts),
   };
+  if (ref.kind === "value") {
+    return { parts: parts ?? {}, options: { ...(options ?? {}) } };
+  }
   if (ref.kind === "icon") nextOptions.showIcon = false;
   if (ref.kind === "title") nextOptions.showTitle = false;
   if (ref.kind === "hint") nextOptions.subtitle = undefined;
+  if (ref.kind === "target") nextOptions.showTarget = false;
   return { parts: nextParts, options: nextOptions };
 }
 
