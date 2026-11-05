@@ -5,8 +5,8 @@ import {
   CalendarCheck,
   CheckCircle2,
   Clock,
+  Inbox,
   PiggyBank,
-  Sparkles,
   TrendingUp,
   Wrench,
 } from "lucide-react";
@@ -239,6 +239,7 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
   const hasPeriod = summary?.has_period ?? false;
   const savingsHint = hasPeriod ? "no período selecionado" : "acumulado (validade de 1 ano)";
   const implantedHint = hasPeriod ? "no período selecionado" : "total aprovados/implantados";
+  const recebidosHint = hasPeriod ? "no período selecionado" : "aguardando aprovação do comitê";
 
   const total = summary?.total ?? 0;
   const showEmptyCatalog =
@@ -376,13 +377,15 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
               value={formatInteger(summary.period_implanted_count)}
               sub={implantedHint}
             />
-            <KpiCard
-              icon={<Sparkles size={22} />}
-              tone="accent"
-              label="Total de kaizens"
-              value={formatInteger(summary.total)}
-              sub={`${formatInteger(summary.aprovados ?? 0)} aprovados · ${formatInteger(summary.implantados)} implantados`}
-            />
+            {(summary.recebidos ?? 0) > 0 ? (
+              <KpiCard
+                icon={<Inbox size={22} />}
+                tone="muted"
+                label="Kaizens recebidos"
+                value={formatInteger(summary.recebidos)}
+                sub={recebidosHint}
+              />
+            ) : null}
             <KpiCard
               icon={<TrendingUp size={22} />}
               tone="success"
