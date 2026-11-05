@@ -5810,3 +5810,15 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | Suíte | PASS (exit 0) |
 | E01–E10 | TEST_NOT_RUN (G7) |
 | PRODUCTION_DEPLOY | NOT_AUTHORIZED |
+
+## G5 — MCP/OpenAPI/snapshot boundary (execução)
+
+| Campo | Valor |
+|---|---|
+| Base | `cb9668c2` |
+| Snapshot | aprovado+deployado — boundary Application→Infra corrigida via Protocol+injeção |
+| OpenAPI | C3-T5 foundation KEEP (46 testes); direct adapter já aposentado |
+| MCP | zero dead code — KEEP integral |
+| Suíte | PASS (exit 0) |
+| E01–E10 | TEST_NOT_RUN (G7) |
+| PRODUCTION_DEPLOY | NOT_AUTHORIZED |

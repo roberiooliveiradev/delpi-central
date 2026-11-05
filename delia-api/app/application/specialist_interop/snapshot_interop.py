@@ -27,10 +27,17 @@ from app.application.specialist_interop.errors import (
 from app.application.specialist_interop.specialist_interop import (
     SpecialistInterop,
 )
-from app.infrastructure.interoperability.mcp.catalog_store import (
-    McpCatalogStore,
-    contract_hash,
-)
+from typing import Callable, Mapping, Protocol, Sequence
+
+
+class _SnapshotCatalogStore(Protocol):
+    """Structural contract for the persisted snapshot store — the
+    infrastructure adapter satisfies it; application never imports
+    infrastructure directly (boundary fix, doc 263)."""
+
+    def active(
+        self, owner_id: str, scope: str
+    ) -> Mapping | None: ...
 
 _logger = logging.getLogger(__name__)
 
@@ -38,9 +45,17 @@ _logger = logging.getLogger(__name__)
 class SnapshotDiscoverInterop(SpecialistInterop):
     """Discovery from the persisted snapshot; invoke stays live."""
 
-    def __init__(self, port, store: McpCatalogStore, *, scope: str = "global") -> None:
+    def __init__(
+        self,
+        port,
+        store: _SnapshotCatalogStore,
+        contract_hash: Callable[[Sequence[Mapping]], str],
+        *,
+        scope: str = "global",
+    ) -> None:
         super().__init__(port)
         self._store = store
+        self._contract_hash = contract_hash
         self._scope = scope
 
     def _remote_tools(
@@ -54,7 +69,7 @@ class SnapshotDiscoverInterop(SpecialistInterop):
                 MCP_UNAVAILABLE,
                 "snapshot catalog absent for specialist",
             )
-        if contract_hash(snap["tools"]) != snap["contract_hash"]:
+        if self._contract_hash(snap["tools"]) != snap["contract_hash"]:
             raise SpecialistInteropError(
                 MCP_UNAVAILABLE,
                 "snapshot catalog hash verification failed",

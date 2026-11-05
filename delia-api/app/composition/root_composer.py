@@ -236,10 +236,13 @@ def create_application(
         )
         from app.infrastructure.interoperability.mcp.catalog_store import (
             McpCatalogStore,
+            contract_hash,
         )
 
         interop = SnapshotDiscoverInterop(
-            adapter, McpCatalogStore(settings.mcp_catalog_db)
+            adapter,
+            McpCatalogStore(settings.mcp_catalog_db),
+            contract_hash,
         )
     elif settings.mcp_catalog_mode != "live":
         raise RuntimeError(

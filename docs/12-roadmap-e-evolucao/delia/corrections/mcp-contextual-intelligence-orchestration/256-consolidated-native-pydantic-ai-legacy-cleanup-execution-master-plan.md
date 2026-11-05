@@ -427,3 +427,25 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
 - RQ-11=PARTIAL (consolidation bounded), RQ-12=PARTIAL (runtime único
   provado), RQ-13=PARTIAL (JSON único KEEP, zero campos mortos),
   RQ-14/15=NOT_IMPLEMENTED (G5+).
+
+## 17. G5 — MCP/OpenAPI/snapshot boundary (execução)
+
+- **Snapshot**: experimento APROVADO e deployado
+  (DELIA_MCP_CATALOG_MODE=snapshot_experiment no srv-api +
+  /data/delia/mcp_catalog.db) — NÃO aposentado. Boundary violation
+  corrigida: `snapshot_interop.py` (application) não importa mais
+  `infrastructure/mcp/catalog_store` — `_SnapshotCatalogStore`
+  Protocol estrutural + `contract_hash` injetado via construtor;
+  composition (root_composer) constrói o adapter infra e injeta.
+  9/9 testes snapshot PASS.
+- **OpenAPI C3-T5**: foundation aprovada intacta
+  (`openapi_provider.py` + `infrastructure/openapi/` — capability
+  catalog adapter + http invoker + source loader; 46 testes PASS).
+  Direct DELPI adapter já aposentado anteriormente
+  (DELIA_OPENAPI_TIMEOUT_SECONDS removida — comentário em settings).
+  KEEP — não excluído por ausência de wiring em produção.
+- **MCP live**: zero dead symbols em specialist_interop.py,
+  specialist_interop_port.py, mcp/adapter.py, mcp/transport.py,
+  delegation.py — todos consumidos. KEEP integral; discovery!=FACT,
+  AuthZ/gates preservados.
+- Suíte completa PASS (exit 0).
