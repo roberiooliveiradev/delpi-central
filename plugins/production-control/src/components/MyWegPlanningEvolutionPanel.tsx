@@ -1,4 +1,18 @@
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import {
+  createDashboardKpiCard,
+  HelpTooltip,
+} from "@delpi/plugin-ui/index";
+import {
+  ArrowRight,
+  CalendarClock,
+  Eraser,
+  LogIn,
+  LogOut,
+  Package,
+  Search,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { fetchMyWegNeedBatchesCompare } from "../api/ppcApi";
@@ -29,6 +43,11 @@ type Props = {
 
 const texts = copy.mywegNeeds.evolution;
 const PAGE_SIZE = 50;
+
+const KpiCard = createDashboardKpiCard({
+  prefix: "ppc",
+  labels: copy.kpi,
+});
 
 function movementLabel(movement: string): string {
   switch (movement) {
@@ -63,8 +82,6 @@ function pickDefaultPair(
   if (fromDistinct) {
     return { fromId: fromDistinct.id, toId: to.id };
   }
-  // Sem dias distintos: deixa vazio para o backend sinalizar insuficiência automática;
-  // usuário ainda pode escolher manualmente o mesmo dia.
   return { fromId: "", toId: to.id };
 }
 
@@ -270,6 +287,12 @@ export function MyWegPlanningEvolutionPanel({
     [],
   );
 
+  const applySearch = () => setSearch(searchDraft.trim());
+  const clearSearch = () => {
+    setSearchDraft("");
+    setSearch("");
+  };
+
   if (historyItems.length < 2) {
     return (
       <section className="ppc-myweg-needs__evolution" aria-label={texts.title}>
@@ -298,7 +321,7 @@ export function MyWegPlanningEvolutionPanel({
       </p>
 
       <div
-        className="ppc-myweg-needs__analysis-toggle"
+        className="ppc-myweg-needs__analysis-hub"
         role="group"
         aria-label={texts.analysisToggleAria}
       >
@@ -306,65 +329,97 @@ export function MyWegPlanningEvolutionPanel({
           type="button"
           className={
             activeAnalysis === "remessa"
-              ? "ppc-btn ppc-btn--secondary ppc-myweg-needs__analysis-toggle--active"
-              : "ppc-btn ppc-btn--secondary"
+              ? "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--active"
+              : "ppc-myweg-needs__hub-card"
           }
+          aria-label={`${texts.analysisRemessa} — ${texts.analysisRemessaDesc}`}
           aria-pressed={activeAnalysis === "remessa"}
           onClick={() => onAnalysisChange?.("remessa")}
         >
-          {texts.analysisRemessa}
-          <HelpTooltip content={helpTooltips.mywegNeedsAnalysisRemessa} trigger="icon" />
+          <span className="ppc-myweg-needs__hub-icon" aria-hidden="true">
+            <CalendarClock size={22} strokeWidth={1.75} />
+          </span>
+          <span className="ppc-myweg-needs__hub-body">
+            <span className="ppc-myweg-needs__hub-title">
+              {texts.analysisRemessa}
+              <HelpTooltip content={helpTooltips.mywegNeedsAnalysisRemessa} trigger="icon" />
+            </span>
+            <span className="ppc-myweg-needs__hub-desc">{texts.analysisRemessaDesc}</span>
+          </span>
+          <span className="ppc-myweg-needs__hub-go" aria-hidden="true">
+            <ArrowRight size={18} strokeWidth={2} />
+          </span>
         </button>
+
         <button
           type="button"
           className={
             activeAnalysis === "products"
-              ? "ppc-btn ppc-btn--secondary ppc-myweg-needs__analysis-toggle--active"
-              : "ppc-btn ppc-btn--secondary"
+              ? "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--active"
+              : "ppc-myweg-needs__hub-card"
           }
+          aria-label={`${texts.analysisProducts} — ${texts.analysisProductsDesc}`}
           aria-pressed={activeAnalysis === "products"}
           onClick={() => onAnalysisChange?.("products")}
         >
-          {texts.analysisProducts}
-          <HelpTooltip content={helpTooltips.mywegNeedsAnalysisProducts} trigger="icon" />
+          <span className="ppc-myweg-needs__hub-icon" aria-hidden="true">
+            <Package size={22} strokeWidth={1.75} />
+          </span>
+          <span className="ppc-myweg-needs__hub-body">
+            <span className="ppc-myweg-needs__hub-title">
+              {texts.analysisProducts}
+              <HelpTooltip content={helpTooltips.mywegNeedsAnalysisProducts} trigger="icon" />
+            </span>
+            <span className="ppc-myweg-needs__hub-desc">{texts.analysisProductsDesc}</span>
+          </span>
+          <span className="ppc-myweg-needs__hub-go" aria-hidden="true">
+            <ArrowRight size={18} strokeWidth={2} />
+          </span>
         </button>
       </div>
 
-      <div className="ppc-myweg-needs__filters" aria-label={texts.title}>
-        <div className="ppc-myweg-needs__filters-pair">
-          <label className="ppc-myweg-needs__history">
-            <span>{texts.fromLabel}</span>
-            <select
-              value={fromId}
-              onChange={(event) => setFromId(event.target.value)}
-              aria-label={texts.fromLabel}
-            >
-              <option value="">—</option>
-              {historyItems.map((item) => (
-                <option key={`from-${item.id}`} value={item.id}>
-                  {formatRemessaBr(item.collectionDate)} · {item.recordCount} regs
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="ppc-myweg-needs__history">
-            <span>{texts.toLabel}</span>
-            <select
-              value={toId}
-              onChange={(event) => setToId(event.target.value)}
-              aria-label={texts.toLabel}
-            >
-              {historyItems.map((item) => (
-                <option key={`to-${item.id}`} value={item.id}>
-                  {formatRemessaBr(item.collectionDate)} · {item.recordCount} regs
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+      <section className="ppc-myweg-needs__filters-card" aria-label={texts.filtersAria}>
+        <header className="ppc-myweg-needs__filters-header">
+          <span className="ppc-myweg-needs__filters-icon" aria-hidden="true">
+            <Search size={18} strokeWidth={1.75} />
+          </span>
+          <h3 className="ppc-myweg-needs__filters-title">{texts.filtersTitle}</h3>
+        </header>
 
-        <div className="ppc-myweg-needs__filters-search">
-          <label className="ppc-myweg-needs__search">
+        <div className="ppc-myweg-needs__filters-grid ppc-myweg-needs__filters-grid--compare">
+          <div className="ppc-myweg-needs__filters-pair">
+            <label className="ppc-myweg-needs__history">
+              <span>{texts.fromLabel}</span>
+              <select
+                value={fromId}
+                onChange={(event) => setFromId(event.target.value)}
+                aria-label={texts.fromLabel}
+              >
+                <option value="">—</option>
+                {historyItems.map((item) => (
+                  <option key={`from-${item.id}`} value={item.id}>
+                    {formatRemessaBr(item.collectionDate)} · {item.recordCount} regs
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="ppc-myweg-needs__history">
+              <span>{texts.toLabel}</span>
+              <select
+                value={toId}
+                onChange={(event) => setToId(event.target.value)}
+                aria-label={texts.toLabel}
+              >
+                {historyItems.map((item) => (
+                  <option key={`to-${item.id}`} value={item.id}>
+                    {formatRemessaBr(item.collectionDate)} · {item.recordCount} regs
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <label className="ppc-myweg-needs__search ppc-myweg-needs__filters-search">
             <span>
               {texts.searchLabel}{" "}
               <HelpTooltip content={texts.searchHint} trigger="icon" />
@@ -377,23 +432,14 @@ export function MyWegPlanningEvolutionPanel({
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
-                  setSearch(searchDraft.trim());
+                  applySearch();
                 }
               }}
               aria-label={texts.searchLabel}
             />
           </label>
-          <button
-            type="button"
-            className="ppc-btn ppc-btn--secondary"
-            onClick={() => setSearch(searchDraft.trim())}
-          >
-            {copy.mywegNeeds.applyFilters}
-          </button>
-        </div>
 
-        {activeAnalysis === "remessa" ? (
-          <div className="ppc-myweg-needs__filters-extra">
+          {activeAnalysis === "remessa" ? (
             <label className="ppc-myweg-needs__history ppc-myweg-needs__billing-toggle">
               <span>{texts.billingLabel}</span>
               <select
@@ -406,9 +452,20 @@ export function MyWegPlanningEvolutionPanel({
                 <option value="indicative">{texts.billingIndicative}</option>
               </select>
             </label>
-          </div>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
+
+        <div className="ppc-myweg-needs__filters-actions">
+          <button type="button" className="ppc-btn ppc-btn--ghost" onClick={clearSearch}>
+            <Eraser size={15} strokeWidth={1.75} aria-hidden />
+            {texts.clearFilters}
+          </button>
+          <button type="button" className="ppc-btn ppc-btn--primary" onClick={applySearch}>
+            <Search size={15} strokeWidth={1.75} aria-hidden />
+            {texts.applyFilters}
+          </button>
+        </div>
+      </section>
 
       {activeAnalysis === "products" && fromId && toId && fromId !== toId ? (
         <MyWegProductConsolidationPanel fromId={fromId} toId={toId} search={search} />
@@ -419,7 +476,11 @@ export function MyWegPlanningEvolutionPanel({
         </div>
       ) : null}
 
-      {activeAnalysis === "remessa" && loading ? <p role="status">{texts.loading}</p> : null}
+      {activeAnalysis === "remessa" && loading ? (
+        <p className="ppc-myweg-needs__evolution-note" role="status">
+          {texts.loading}
+        </p>
+      ) : null}
       {activeAnalysis === "remessa" && status === 403 ? (
         <div className="ppc-state ppc-state--error" role="alert">
           {texts.forbidden}
@@ -457,43 +518,47 @@ export function MyWegPlanningEvolutionPanel({
             </span>
           </div>
 
-          <div className="ppc-myweg-needs__summary" aria-label={texts.summaryAria}>
-            <article className="ppc-myweg-needs__kpi ppc-myweg-needs__kpi--up">
-              <h3>
-                {texts.kpi.increased}
-                <HelpTooltip content={helpTooltips.mywegNeedsKpiIncreased} trigger="icon" />
-              </h3>
-              <p>{summary?.increased ?? 0}</p>
-            </article>
-            <article className="ppc-myweg-needs__kpi ppc-myweg-needs__kpi--down">
-              <h3>
-                {texts.kpi.decreased}
-                <HelpTooltip content={helpTooltips.mywegNeedsKpiDecreased} trigger="icon" />
-              </h3>
-              <p>{summary?.decreased ?? 0}</p>
-            </article>
-            <article className="ppc-myweg-needs__kpi ppc-myweg-needs__kpi--up">
-              <h3>
-                {texts.kpi.appeared}
-                <HelpTooltip content={helpTooltips.mywegNeedsKpiAppeared} trigger="icon" />
-              </h3>
-              <p>{summary?.appeared ?? 0}</p>
-            </article>
-            <article className="ppc-myweg-needs__kpi ppc-myweg-needs__kpi--down">
-              <h3>
-                {texts.kpi.disappeared}
-                <HelpTooltip content={helpTooltips.mywegNeedsKpiDisappeared} trigger="icon" />
-              </h3>
-              <p>{summary?.disappeared ?? 0}</p>
-            </article>
-            <article className="ppc-myweg-needs__kpi ppc-myweg-needs__kpi--horizon">
-              <h3>
-                {texts.kpi.horizon}
-                <HelpTooltip content={helpTooltips.mywegNeedsKpiHorizon} trigger="icon" />
-              </h3>
-              <p>{summary?.horizon_14d_changes ?? 0}</p>
-            </article>
-          </div>
+          <section className="ppc-myweg-needs__summary" aria-label={texts.summaryAria}>
+            <KpiCard
+              className="ppc-board-card ppc-myweg-needs__kpi-card ppc-myweg-needs__kpi-card--up"
+              title={texts.kpi.increased}
+              titleHint={helpTooltips.mywegNeedsKpiIncreased}
+              icon={<TrendingUp size={20} strokeWidth={1.75} />}
+              value={String(summary?.increased ?? 0)}
+              comparisonTone="positive"
+            />
+            <KpiCard
+              className="ppc-board-card ppc-myweg-needs__kpi-card ppc-myweg-needs__kpi-card--down"
+              title={texts.kpi.decreased}
+              titleHint={helpTooltips.mywegNeedsKpiDecreased}
+              icon={<TrendingDown size={20} strokeWidth={1.75} />}
+              value={String(summary?.decreased ?? 0)}
+              comparisonTone="negative"
+            />
+            <KpiCard
+              className="ppc-board-card ppc-myweg-needs__kpi-card ppc-myweg-needs__kpi-card--up"
+              title={texts.kpi.appeared}
+              titleHint={helpTooltips.mywegNeedsKpiAppeared}
+              icon={<LogIn size={20} strokeWidth={1.75} />}
+              value={String(summary?.appeared ?? 0)}
+              comparisonTone="positive"
+            />
+            <KpiCard
+              className="ppc-board-card ppc-myweg-needs__kpi-card ppc-myweg-needs__kpi-card--down"
+              title={texts.kpi.disappeared}
+              titleHint={helpTooltips.mywegNeedsKpiDisappeared}
+              icon={<LogOut size={20} strokeWidth={1.75} />}
+              value={String(summary?.disappeared ?? 0)}
+              comparisonTone="negative"
+            />
+            <KpiCard
+              className="ppc-board-card ppc-myweg-needs__kpi-card ppc-myweg-needs__kpi-card--horizon"
+              title={texts.kpi.horizon}
+              titleHint={helpTooltips.mywegNeedsKpiHorizon}
+              icon={<CalendarClock size={20} strokeWidth={1.75} />}
+              value={String(summary?.horizon_14d_changes ?? 0)}
+            />
+          </section>
 
           <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
             {texts.disclaimerCompact}
@@ -507,28 +572,28 @@ export function MyWegPlanningEvolutionPanel({
           {(payload.totalChanges ?? 0) === 0 && (payload.total ?? 0) === 0 && !search ? (
             <p role="status">{texts.noChanges}</p>
           ) : (
-            <DataTableSection
-              title={texts.tableTitle}
-              rows={payload.items}
-              columns={columns}
-              rowKey={(row) => `${row.productKey}|${row.remessa}|${row.movement}`}
-              emptyMessage={
-                search
-                  ? copy.tableSection.emptyMessage
-                  : texts.noChanges
-              }
-              hideSearch
-              columnPreferencesKey="production-control:myweg-evolution:columns:v1"
-              serverPagination={{
-                page: payload.page,
-                pageSize: payload.pageSize,
-                total: payload.total,
-                onPageChange: (nextPage) => setPage(nextPage),
-                onPageSizeChange: () => {
-                  /* pageSize fixo 50 nesta etapa */
-                },
-              }}
-            />
+            <div data-testid="myweg-compare-table">
+              <DataTableSection
+                title={texts.tableTitle}
+                rows={payload.items}
+                columns={columns}
+                rowKey={(row) => `${row.productKey}|${row.remessa}|${row.movement}`}
+                emptyMessage={
+                  search ? copy.tableSection.emptyMessage : texts.noChanges
+                }
+                hideSearch
+                columnPreferencesKey="production-control:myweg-evolution:columns:v1"
+                serverPagination={{
+                  page: payload.page,
+                  pageSize: payload.pageSize,
+                  total: payload.total,
+                  onPageChange: (nextPage) => setPage(nextPage),
+                  onPageSizeChange: () => {
+                    /* pageSize fixo 50 nesta etapa */
+                  },
+                }}
+              />
+            </div>
           )}
 
           <aside

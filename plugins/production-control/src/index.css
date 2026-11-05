@@ -7039,17 +7039,10 @@
   color: #cf222e;
 }
 
-.dashboard-production-control .ppc-myweg-needs__billing {
-  margin-top: 12px;
-  padding: 12px 14px;
-  border: 1px solid var(--ppc-border);
-  border-radius: 10px;
-  background: var(--ppc-surface);
-}
-
 .dashboard-production-control .ppc-myweg-needs__billing--quiet {
   padding: 8px 10px;
   background: transparent;
+  box-shadow: none;
 }
 
 .dashboard-production-control .ppc-myweg-needs__billing-quiet {
@@ -7192,33 +7185,129 @@
   margin-top: 10px;
 }
 
-.dashboard-production-control .ppc-myweg-needs__analysis-toggle {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 14px;
+.dashboard-production-control .ppc-myweg-needs__analysis-hub {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 4px;
 }
 
-.dashboard-production-control .ppc-myweg-needs__analysis-toggle .ppc-btn {
+.dashboard-production-control .ppc-myweg-needs__hub-title {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
-.dashboard-production-control .ppc-myweg-needs__analysis-toggle--active {
-  border-color: color-mix(in srgb, var(--ppc-accent, #1f6feb) 55%, var(--ppc-border));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ppc-accent, #1f6feb) 35%, transparent);
+.dashboard-production-control .ppc-myweg-needs__evolution {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-grid--compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-grid--compare .ppc-myweg-needs__filters-pair,
+.dashboard-production-control .ppc-myweg-needs__filters-grid--compare .ppc-myweg-needs__filters-search,
+.dashboard-production-control .ppc-myweg-needs__filters-grid--compare .ppc-myweg-needs__billing-toggle {
+  grid-column: span 1;
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-grid--compare .ppc-myweg-needs__filters-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboard-production-control .ppc-myweg-needs__history {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--ppc-font-sm);
+  color: var(--ppc-text-muted);
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-myweg-needs__history select {
+  min-height: 36px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--ppc-border);
+  border-radius: 8px;
+  background: var(--ppc-surface);
+  color: var(--ppc-text);
+}
+
+.dashboard-production-control .ppc-myweg-needs__kpi-card--up {
+  border-color: color-mix(in srgb, #1a7f37 28%, var(--ppc-border));
+}
+
+.dashboard-production-control .ppc-myweg-needs__kpi-card--down {
+  border-color: color-mix(in srgb, #cf222e 28%, var(--ppc-border));
+}
+
+.dashboard-production-control .ppc-myweg-needs__kpi-card--horizon {
+  border-style: dashed;
+}
+
+.dashboard-production-control .ppc-myweg-needs__billing {
+  margin-top: 0;
+  padding: 16px;
+  border: 1px solid var(--ppc-border);
+  border-radius: 16px;
+  background: var(--ppc-surface);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--ppc-title, #003866) 5%, transparent);
+}
+
+.dashboard-production-control .ppc-myweg-needs__shifts {
+  border-radius: 16px;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--ppc-title, #003866) 5%, transparent);
+}
+
+@media (max-width: 900px) {
+  .dashboard-production-control .ppc-myweg-needs__analysis-hub {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-production-control .ppc-myweg-needs__filters-grid--compare {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-production-control .ppc-myweg-needs__filters-grid--compare .ppc-myweg-needs__filters-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-myweg-needs__billing,
+:root[data-theme="dark"] .dashboard-production-control .ppc-myweg-needs__shifts {
+  box-shadow: 0 10px 24px rgb(0 0 0 / 28%);
 }
 
 .dashboard-production-control .ppc-myweg-needs__products {
-  margin: 0 0 16px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .dashboard-production-control .ppc-myweg-needs__products-header {
-  margin-bottom: 14px;
+  margin-bottom: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--ppc-border);
+  border-radius: 16px;
+  background: var(--ppc-surface);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--ppc-title, #003866) 5%, transparent);
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-myweg-needs__products-header {
+  box-shadow: 0 10px 24px rgb(0 0 0 / 28%);
 }
 
 .dashboard-production-control .ppc-myweg-needs__products-stats {

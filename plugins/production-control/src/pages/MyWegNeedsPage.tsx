@@ -620,12 +620,10 @@ export function MyWegNeedsPage({
           ) : null}
         </section>
       ) : (
-        <section className="ppc-myweg-needs__view" aria-label={texts.viewCompare.sectionTitle}>
-          <div className="ppc-myweg-needs__view-heading">
-            <h2 className="ppc-myweg-needs__view-title">{texts.viewCompare.sectionTitle}</h2>
-            <HelpTooltip content={helpTooltips.mywegNeedsEvolution} trigger="icon" />
-          </div>
-
+        <section
+          className="ppc-myweg-needs__view ppc-myweg-needs__view--compare"
+          aria-label={texts.viewCompare.sectionAria}
+        >
           {forbidden ? (
             <div className="ppc-state ppc-state--error" role="alert">
               {texts.forbidden}

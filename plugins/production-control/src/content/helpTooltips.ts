@@ -39,7 +39,7 @@ export const helpTooltips = {
   mywegNeedsEvolution:
     "Compara duas fotografias MyWEG. «Por remessa» mostra movimentos e reprogramações; «Por produto» consolida totais e diferença líquida. Variação observada ≠ abatimento WEG. Faturamento/FIFO são hipóteses separadas.",
   mywegNeeds:
-    "Necessidades WEG (filial 02 · ES). «Consulta de necessidades» mostra KPIs, histórico de coletas e filtros da tabela. «Comparação entre coletas» analisa mudanças entre duas datas (por remessa ou por produto). Clique nas barras do histórico para trocar a coleta. Sem tempo real nem geração de OP.",
+    "Necessidades WEG (filial 02 · ES). «Consulta de necessidades» mostra KPIs, histórico e filtros. «Comparação entre coletas» usa cards Por remessa/Por produto, filtros do par e KPIs de variação. Clique nas barras do histórico na consulta para trocar a coleta. Sem tempo real nem geração de OP.",
   mywegNeedsKpiIncreased:
     "A mesma combinação produto/remessa existe nas duas coletas e a quantidade aumentou.",
   mywegNeedsKpiDecreased:
