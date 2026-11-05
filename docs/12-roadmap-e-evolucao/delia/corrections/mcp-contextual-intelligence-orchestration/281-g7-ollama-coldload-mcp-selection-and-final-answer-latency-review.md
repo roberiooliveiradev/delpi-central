@@ -1,0 +1,31 @@
+# 281 — DÉLIA · Review local Ollama: cold-load/memory cap, seleção MCP e resposta final pendente
+
+**DATA:** 2026-11-05  
+**REVIEWED_TASK:** `DELIA-C3-G7-OLLAMA-ADMISSION-LATENCY-PROFILE-AND-MCP-SELECTION-01`  
+**BASE_REPORTED:** `9f0b008ded64b98008de11f6b05caef8b1f74d6d`  
+**REVIEWED_SHA:** `a828b051424f3c4b87845bea05f350fab04d6b7d`  
+**VERDICT:** `ACCEPT_WITH_RESIDUAL` for measured diagnosis and first reported live MCP selection/invocation; complete customer-facing positive READ outcome `INCONCLUSIVE`; `PRODUCTION_DEPLOY=BLOCKED`.
+
+## GitHub review evidence
+
+- The direct `a828b051...` commit changes **only docs**: appends doc256 section 34 with measured local narrative. It does **not** version a Compose/Docker memory change, model config, Pydantic AI code, or automated live evaluation. Repo diff from base includes an unrelated Kaizometro change.
+- Executor reports local model `qwen3:4b-instruct-2507-q4_K_M`, Pydantic AI 2.50.0, CPU-only Ollama (no GPU DeviceRequests in container), 6GB physical GPU unused; model footprint ~5.1GB, prior Docker limit 4.5GB, cold load 70.7s and total cold latency 72.5s; warm small prompt ~1s. `/api/generate` prompt_eval_count 3016, eval_count 48; warm gen 48 tokens over 8.1s (~5.9 token/s). These are executor-reported metrics, not independently reproduced in review.
+- `OLLAMA_MEMORY_LIMIT 4500M→6800M` was changed in running environment according to executor, **not committed to a canonical deployment configuration** by this commit. Claim “thrashing eliminated” requires multiple cold/warm stability runs and memory/eviction evidence; document as promising observed improvement, not durable code fix. Host RAM previously reported ~9.9GB total with ~1.3GB free; assess effect on other services and OOM risk before persisting or increasing limits.
+- Live selection path reported: admission ~32s, catalog 10 caps/3 owners, `davi.discover_delpi_information` 248ms then `davi.execute_delpi_information` READ `search_products` 423ms with `uncovered=50220013`. The evidence suggests **real MCP tool selection and governed invocation**, unlike previous pre-call context rejection. However user-facing final response did not reach client before gateway/turn budget. Owner data payload/source refs/expected answer not included; positive business outcome remains `INCONCLUSIVE`. Avoid declaring end-to-end success from HTTP/tool success.
+- The measured 3016 prompt tokens and 48 generated tokens originate from an Ollama native small/warm probe, not necessarily the actual DÉLIA request with full tool schemas. The previous ~7.6k context estimate remains heuristic. Do not present these as exact full-run DÉLIA counts.
+- Root cause **cold-load due to memory pressure** is plausible and backed by observed cap below model footprint, but repeated-run evidence is not included. The ongoing generation bottleneck may involve CPU-only throughput, unnecessary output verbosity, number of calls, gateway timeout layering or output caps. Must measure full request-level timing and actual delivery.
+- Stale `DELIA_RUNTIME_SHA` remains reported `EXECUTION_DRIFT`. Production remains blocked; RQ24/RQ28 PARTIAL. The reviewer inspected GitHub sources, not local runtime or pytest.
+
+## Next bounded task, avoid architecture loop
+
+**TASK_ID:** `DELIA-C3-G7-LOCAL-OLLAMA-ANSWER-DELIVERY-AND-RESOURCE-PROFILING-01`.
+
+1. Reanchor HEAD/status, Project Instructions/.cursor and canonical 16→50→17→49→51→52→21→20→25, relevant specs/contracts/ledger/docs256/278–281. Check current local runtime/model/profile, effective environment config, cgroup memory limits, competing workloads, gateway deadline and exact SHA. No production deploy.
+2. Measure repeated **cold and warm** short prompts and authentic DÉLIA tool-using query at fixed profile 16384 with actual per-stage and request counts; derive observed load, prefill, generation, tool, finalization, streaming delivery and deadline; use native Ollama metrics where possible, separate full-run measurements from side probes, report estimated vs measured tokens.
+3. Validate safety and memory: 6.8GB cgroup limit vs ~9.9GB host, RAM swap/OOM and process eviction; inspect approved compose/source for where limits are legitimately owned. Persist only validated configuration at the legitimate deployment boundary; don't change production profile or increase memory blindly. Check Ollama model keep-alive handling and whether eviction is genuine vs intentional shutdown. GPU access optional only if pre-existing supported host/driver/compose capability is verified and phase approved; never assume availability.
+4. Target **complete final answer**: first independently confirm READ owner data for `50220013` (or another authorized known-present record) and its expected value, then ask through DÉLIA. Prove the response reaches actual client before effective gateway budget, is consistent with owner response and SourceRefs, and no false-grounding. Determine if there are repeated LLM calls, unnecessary long text generation, retry loops, output verbosity, output limit, streaming limitations, or timeout layering. Don't bypass Pydantic AI or create a second planner; adjust supported existing profile if justified.
+5. If true implementation/config defect discovered: RED→GREEN, smallest legitimate change, same-delivery removal of replaced legacy and consumer repair, full backend/security/architecture tests, residual search. Otherwise measurement-only and precise blocker. Do not increase timeout solely to mask slow model.
+6. Gate production stays blocked absent live answered positive READ outcome, valid production provider/config and independent release/security/rollback approval. Report explicit `LOCAL_MCP_SELECTION`, `OWNER_DATA_CONFIRMED`, `ANSWER_DELIVERED`, `BUSINESS_OUTCOME`, `MODEL_TIMINGS`, `RESOURCE_SAFETY`, `PRODUCTION_RELEASE_GATE`, `RUNTIME_SHA`, `CONFIG_FINGERPRINT`, `LEGACY_REMOVED`, `RESIDUAL_SEARCH`, and RQ24/RQ28 status.
+7. Document factual measurements in doc256/ledger and publish SHA while preserving unrelated changes.
+
+**Review conclusion:** real tool selection is a meaningful advancement; focus on bounded **final-answer delivery and resource stability**, not further speculative Pydantic AI refactoring.
