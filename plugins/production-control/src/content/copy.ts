@@ -1164,6 +1164,9 @@ export const copy = {
     label: "Filial",
     "01": "SC · 01",
     "02": "ES · 02",
+    noAccessTitle: "Acesso não disponível",
+    noAccess:
+      "Seu perfil ainda não possui filial habilitada no Portal PCP. Solicite a liberação da filial correspondente ao administrador.",
   },
   reports: {
     title: "Relatórios",

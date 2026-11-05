@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
+import { PpcAllowedBranchesProvider } from "./branchAccessContext";
 import { PpcAppShell } from "./components/PpcAppShell";
 import { PpcConfirmDialogProvider } from "./components/PpcConfirmDialogProvider";
 import { copy } from "./content/copy";
-import { DEFAULT_SUBPLUGIN } from "./constants/routes";
+import { DEFAULT_SUBPLUGIN, PPC_BASE_PATH } from "./constants/routes";
 import { usePpcRouterPath } from "./hooks/usePpcRouterPath";
 import { useSubplugins } from "./hooks/useSubplugins";
 import { DeliveryMapPage } from "./pages/DeliveryMapPage";
@@ -18,6 +19,10 @@ import { ProblemAnalysisPage } from "./pages/ProblemAnalysisPage";
 import { ProductModelsPage } from "./pages/ProductModelsPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { SequencingProfilesPage } from "./pages/SequencingProfilesPage";
+import {
+  resolveActiveBranch,
+  resolveAllowedBranches,
+} from "./utils/branchAccess";
 import {
   buildPpcHref,
   navigatePpc,
@@ -48,42 +53,92 @@ export type AppProps = {
   isSuperadmin?: boolean;
 };
 
-export default function App({ getAccessToken, pathname: pathnameFromHost, permissions, isSuperadmin }: AppProps) {
+export default function App({
+  getAccessToken,
+  pathname: pathnameFromHost,
+  permissions,
+  isSuperadmin = false,
+}: AppProps) {
   configureHttpClient(() => getAccessToken?.());
   const { pathname, search } = usePpcRouterPath(pathnameFromHost);
   const storedBranch = readStoredBranch();
   const route = parsePpcPath(pathname, search, storedBranch);
   const { items, error } = useSubplugins();
 
-  useEffect(() => {
-    storeBranch(route.branch);
-  }, [route.branch]);
+  const allowedBranches = useMemo(
+    () => resolveAllowedBranches(permissions, isSuperadmin),
+    [permissions, isSuperadmin],
+  );
+  const activeBranch = resolveActiveBranch(allowedBranches, route.branch);
 
   useEffect(() => {
+    if (!activeBranch) return;
+    storeBranch(activeBranch);
+  }, [activeBranch]);
+
+  // Canoniza URL/session quando a filial pedida não está autorizada
+  // (ex.: DEFAULT/session em 01 para quem só tem filial 02).
+  useEffect(() => {
+    if (!activeBranch) return;
+    if (!window.location.pathname.startsWith(PPC_BASE_PATH)) return;
+    if (route.branch === activeBranch) return;
+    navigatePpc(
+      buildPpcHref({
+        subpluginId: route.subpluginId,
+        branch: activeBranch,
+        detectorId: route.detectorId,
+        workCenter: route.workCenter,
+        startDate: route.startDate,
+        endDate: route.endDate,
+        locateQuery: route.locateQuery,
+        demandSearch: route.demandSearch,
+        demandStatus: route.demandStatus,
+        materialsSearch: route.materialsSearch,
+        materialsIssue: route.materialsIssue,
+        materialsStatus: route.materialsStatus,
+        deliveryMapSearch: route.deliveryMapSearch,
+        requestNumber: route.requestNumber,
+        requestItem: route.requestItem,
+        reportId: route.reportId,
+        cutoffDate: route.cutoffDate,
+        cutoffTime: route.cutoffTime,
+        lineFeederStatus: route.lineFeederStatus,
+        planId: route.planId,
+        mywegNeedsSearch: route.mywegNeedsSearch,
+        mywegNeedsBatchId: route.mywegNeedsBatchId,
+        mywegNeedsRemessaFrom: route.mywegNeedsRemessaFrom,
+        mywegNeedsRemessaTo: route.mywegNeedsRemessaTo,
+        mywegNeedsPage: route.mywegNeedsPage,
+      }),
+    );
+  }, [activeBranch, route]);
+
+  useEffect(() => {
+    if (!activeBranch) return;
     if (WORKSPACES.has(route.subpluginId)) return;
     const known = items.find((item) => item.id === route.subpluginId);
     if (known?.status === "coming_soon") {
-      navigatePpc(buildPpcHref({ subpluginId: DEFAULT_SUBPLUGIN, branch: route.branch }));
+      navigatePpc(buildPpcHref({ subpluginId: DEFAULT_SUBPLUGIN, branch: activeBranch }));
     }
-  }, [items, route.branch, route.subpluginId]);
+  }, [activeBranch, items, route.subpluginId]);
 
-      let workspace = (
-        <OverviewPage branch={route.branch} startDate={route.startDate} endDate={route.endDate} />
-      );
-  if (route.subpluginId === "demand") {
+  let workspace = activeBranch ? (
+    <OverviewPage branch={activeBranch} startDate={route.startDate} endDate={route.endDate} />
+  ) : null;
+  if (activeBranch && route.subpluginId === "demand") {
     workspace = (
       <DemandPage
-        branch={route.branch}
+        branch={activeBranch}
         search={route.demandSearch}
         status={route.demandStatus}
       />
     );
-  } else if (route.subpluginId === "problem-analysis") {
-    workspace = <ProblemAnalysisPage branch={route.branch} detectorId={route.detectorId} />;
-  } else if (route.subpluginId === "materials") {
+  } else if (activeBranch && route.subpluginId === "problem-analysis") {
+    workspace = <ProblemAnalysisPage branch={activeBranch} detectorId={route.detectorId} />;
+  } else if (activeBranch && route.subpluginId === "materials") {
     workspace = (
       <MaterialsPage
-        branch={route.branch}
+        branch={activeBranch}
         search={route.materialsSearch}
         issue={route.materialsIssue}
         status={route.materialsStatus}
@@ -91,10 +146,10 @@ export default function App({ getAccessToken, pathname: pathnameFromHost, permis
         requestItem={route.requestItem}
       />
     );
-  } else if (route.subpluginId === "line-feeder") {
+  } else if (activeBranch && route.subpluginId === "line-feeder") {
     workspace = (
       <LineFeederPage
-        branch={route.branch}
+        branch={activeBranch}
         cutoffDate={route.cutoffDate}
         cutoffTime={route.cutoffTime}
         workCenter={route.workCenter}
@@ -102,36 +157,36 @@ export default function App({ getAccessToken, pathname: pathnameFromHost, permis
         planId={route.planId}
       />
     );
-  } else if (route.subpluginId === "machine-load") {
+  } else if (activeBranch && route.subpluginId === "machine-load") {
     workspace = (
       <MachineLoadPage
-        branch={route.branch}
+        branch={activeBranch}
         workCenter={route.workCenter}
         startDate={route.startDate}
         endDate={route.endDate}
         locateQuery={route.locateQuery}
       />
     );
-  } else if (route.subpluginId === "delivery-map") {
+  } else if (activeBranch && route.subpluginId === "delivery-map") {
     workspace = (
-      <DeliveryMapPage branch={route.branch} search={route.deliveryMapSearch} />
+      <DeliveryMapPage branch={activeBranch} search={route.deliveryMapSearch} />
     );
-  } else if (route.subpluginId === "reports") {
-    workspace = <ReportsPage branch={route.branch} reportId={route.reportId} />;
-  } else if (route.subpluginId === "product-models") {
-    workspace = <ProductModelsPage branch={route.branch} />;
-  } else if (route.subpluginId === "sequencing-profiles") {
+  } else if (activeBranch && route.subpluginId === "reports") {
+    workspace = <ReportsPage branch={activeBranch} reportId={route.reportId} />;
+  } else if (activeBranch && route.subpluginId === "product-models") {
+    workspace = <ProductModelsPage branch={activeBranch} />;
+  } else if (activeBranch && route.subpluginId === "sequencing-profiles") {
     workspace = (
       <SequencingProfilesPage
-        branch={route.branch}
+        branch={activeBranch}
         permissions={permissions}
         isSuperadmin={isSuperadmin}
       />
     );
-  } else if (route.subpluginId === "myweg-needs") {
+  } else if (activeBranch && route.subpluginId === "myweg-needs") {
     workspace = (
       <MyWegNeedsPage
-        branch={route.branch}
+        branch={activeBranch}
         batchId={route.mywegNeedsBatchId}
         search={route.mywegNeedsSearch}
         remessaFrom={route.mywegNeedsRemessaFrom}
@@ -141,18 +196,27 @@ export default function App({ getAccessToken, pathname: pathnameFromHost, permis
     );
   }
 
+  const shellBranch = activeBranch ?? allowedBranches[0] ?? "01";
+
   return (
-    <PpcConfirmDialogProvider>
-      <PpcAppShell items={items} activeId={route.subpluginId || DEFAULT_SUBPLUGIN} branch={route.branch}>
-        {error ? (
-          <div className="ppc-state ppc-state--error" role="alert">
-            {error}
-          </div>
-        ) : (
-          workspace
-        )}
-        <span className="ppc-sr-only">{copy.productName}</span>
-      </PpcAppShell>
-    </PpcConfirmDialogProvider>
+    <PpcAllowedBranchesProvider allowedBranches={allowedBranches}>
+      <PpcConfirmDialogProvider>
+        <PpcAppShell items={items} activeId={route.subpluginId || DEFAULT_SUBPLUGIN} branch={shellBranch}>
+          {error ? (
+            <div className="ppc-state ppc-state--error" role="alert">
+              {error}
+            </div>
+          ) : !activeBranch ? (
+            <section className="ppc-state ppc-state--error" role="alert">
+              <h2>{copy.branch.noAccessTitle}</h2>
+              <p>{copy.branch.noAccess}</p>
+            </section>
+          ) : (
+            workspace
+          )}
+          <span className="ppc-sr-only">{copy.productName}</span>
+        </PpcAppShell>
+      </PpcConfirmDialogProvider>
+    </PpcAllowedBranchesProvider>
   );
 }
