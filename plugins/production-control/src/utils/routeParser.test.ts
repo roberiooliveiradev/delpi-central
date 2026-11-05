@@ -312,6 +312,28 @@ describe("line feeder deep link", () => {
     expect(route.mywegNeedsRemessaFrom).toBe("2026-11-01");
     expect(route.mywegNeedsRemessaTo).toBe("2026-11-30");
     expect(route.mywegNeedsPage).toBe(3);
+    expect(route.mywegNeedsView).toBeNull();
+  });
+
+  it("reads myweg-needs view=compare and defaults absent view to null", () => {
+    const compare = parsePpcPath(
+      "/apps/production-control/myweg-needs",
+      "?branch=02&view=compare",
+      "02",
+    );
+    expect(compare.mywegNeedsView).toBe("compare");
+    const needs = parsePpcPath(
+      "/apps/production-control/myweg-needs",
+      "?branch=02&view=needs",
+      "02",
+    );
+    expect(needs.mywegNeedsView).toBe("needs");
+    const unknown = parsePpcPath(
+      "/apps/production-control/myweg-needs",
+      "?branch=02&view=other",
+      "02",
+    );
+    expect(unknown.mywegNeedsView).toBeNull();
   });
 
   it("builds myweg-needs href with shareable filters", () => {
@@ -326,5 +348,14 @@ describe("line feeder deep link", () => {
     expect(href).toBe(
       "/apps/production-control/myweg-needs?branch=02&q=doc-1&batch=batch-9&remessaFrom=2026-11-10&page=2",
     );
+  });
+
+  it("builds myweg-needs href with view=compare", () => {
+    const href = buildPpcHref({
+      subpluginId: "myweg-needs",
+      branch: "02",
+      mywegNeedsView: "compare",
+    });
+    expect(href).toBe("/apps/production-control/myweg-needs?branch=02&view=compare");
   });
 });

@@ -1,4 +1,5 @@
-import { createDashboardLoadingActivityCard } from "@delpi/plugin-ui/index";
+import { createDashboardLoadingActivityCard, HelpTooltip } from "@delpi/plugin-ui/index";
+import { ClipboardList, GitCompareArrows } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { DataTableSection, type DataTableColumn } from "../components/dataTableUi";
@@ -10,7 +11,12 @@ import { useMyWegNeeds } from "../hooks/useMyWegNeeds";
 import type { MyWegNeedsRecord, PpcBranch } from "../types";
 import { formatDecimalString } from "../utils/formatDecimalString";
 import { formatRefreshedAt } from "../utils/formatRefreshedAt";
-import { buildPpcHref, navigatePpc } from "../utils/routeParser";
+import {
+  buildPpcHref,
+  navigatePpc,
+  resolveMyWegNeedsView,
+  type MyWegNeedsView,
+} from "../utils/routeParser";
 
 const LoadingCard = createDashboardLoadingActivityCard({
   prefix: "ppc",
@@ -28,6 +34,7 @@ type MyWegNeedsPageProps = {
   remessaFrom: string | null;
   remessaTo: string | null;
   page: number | null;
+  view: MyWegNeedsView | null;
 };
 
 function syncUrl(input: {
@@ -37,6 +44,7 @@ function syncUrl(input: {
   remessaFrom?: string | null;
   remessaTo?: string | null;
   page?: number | null;
+  view?: MyWegNeedsView | null;
 }) {
   navigatePpc(
     buildPpcHref({
@@ -47,6 +55,7 @@ function syncUrl(input: {
       mywegNeedsRemessaFrom: input.remessaFrom ?? null,
       mywegNeedsRemessaTo: input.remessaTo ?? null,
       mywegNeedsPage: input.page && input.page > 1 ? input.page : null,
+      mywegNeedsView: input.view ?? null,
     }),
   );
 }
@@ -100,8 +109,10 @@ export function MyWegNeedsPage({
   remessaFrom,
   remessaTo,
   page,
+  view,
 }: MyWegNeedsPageProps) {
   const texts = copy.mywegNeeds;
+  const activeView = resolveMyWegNeedsView(view);
   const [searchDraft, setSearchDraft] = useState(search ?? "");
   const [remessaFromDraft, setRemessaFromDraft] = useState(remessaFrom ?? "");
   const [remessaToDraft, setRemessaToDraft] = useState(remessaTo ?? "");
@@ -130,13 +141,14 @@ export function MyWegNeedsPage({
   const applyFilters = useCallback(() => {
     syncUrl({
       branch: "02",
-      batchId: batchId,
+      batchId,
       search: searchDraft.trim() || null,
       remessaFrom: remessaFromDraft.trim() || null,
       remessaTo: remessaToDraft.trim() || null,
       page: 1,
+      view: activeView,
     });
-  }, [batchId, remessaFromDraft, remessaToDraft, searchDraft]);
+  }, [activeView, batchId, remessaFromDraft, remessaToDraft, searchDraft]);
 
   const clearFilters = useCallback(() => {
     setSearchDraft("");
@@ -149,8 +161,9 @@ export function MyWegNeedsPage({
       remessaFrom: null,
       remessaTo: null,
       page: 1,
+      view: activeView,
     });
-  }, [batchId]);
+  }, [activeView, batchId]);
 
   const selectBatch = useCallback(
     (nextBatchId: string) => {
@@ -161,9 +174,25 @@ export function MyWegNeedsPage({
         remessaFrom,
         remessaTo,
         page: 1,
+        view: activeView,
       });
     },
-    [latest?.id, remessaFrom, remessaTo, search],
+    [activeView, latest?.id, remessaFrom, remessaTo, search],
+  );
+
+  const setView = useCallback(
+    (next: MyWegNeedsView) => {
+      syncUrl({
+        branch: "02",
+        batchId,
+        search: search ?? null,
+        remessaFrom,
+        remessaTo,
+        page: activeView === "needs" ? page : 1,
+        view: next,
+      });
+    },
+    [batchId, remessaFrom, remessaTo, search, page, activeView],
   );
 
   const goToFilial02 = useCallback(() => {
@@ -174,11 +203,13 @@ export function MyWegNeedsPage({
       remessaFrom: null,
       remessaTo: null,
       page: 1,
+      view: "needs",
     });
   }, []);
 
   const isLatest = Boolean(selected && latest && selected.id === latest.id);
   const historyOptions = history?.items ?? [];
+  const historyReady = historyOptions.length >= 2;
 
   const columns = useMemo<DataTableColumn<MyWegNeedsRecord>[]>(
     () => [
@@ -275,6 +306,7 @@ export function MyWegNeedsPage({
 
   const forbidden = status === 403;
   const notFound = status === 404;
+  const latestWhen = latest ? formatCollectedAt(latest.collectedAt) : null;
 
   return (
     <div className="ppc-page-stack ppc-page-stack--myweg-needs">
@@ -282,9 +314,13 @@ export function MyWegNeedsPage({
         title={texts.title}
         subtitle={texts.subtitle}
         titleHint={helpTooltips.mywegNeeds}
-        period={selected ? texts.collectedAt(formatCollectedAt(selected.collectedAt)) : null}
+        period={
+          selected && activeView === "needs"
+            ? texts.collectedAt(formatCollectedAt(selected.collectedAt))
+            : null
+        }
         stats={
-          selected ? (
+          selected && activeView === "needs" ? (
             <span className="ppc-header__stat">
               {texts.recordCount(selected.recordCount)}
             </span>
@@ -297,153 +333,247 @@ export function MyWegNeedsPage({
         mywegNeedsRemessaFrom={remessaFrom}
         mywegNeedsRemessaTo={remessaTo}
         mywegNeedsPage={page}
+        mywegNeedsView={activeView}
         onRefresh={() => void reload()}
         refreshBusy={refreshing}
       />
 
-      <p className="ppc-myweg-needs__planning-note">{texts.planningNote}</p>
+      <p className="ppc-myweg-needs__planning-note">{texts.hubNote}</p>
 
-      {!forbidden && historyOptions.length > 0 ? (
-        <MyWegPlanningEvolutionPanel
-          historyItems={historyOptions}
-          selectedBatchId={selected?.id ?? batchId}
-        />
-      ) : null}
+      <nav className="ppc-myweg-needs__hub" aria-label={texts.hubAria}>
+        <button
+          type="button"
+          className={
+            activeView === "needs"
+              ? "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--active"
+              : "ppc-myweg-needs__hub-card"
+          }
+          aria-label={texts.viewNeeds.cardAction}
+          aria-pressed={activeView === "needs"}
+          onClick={() => setView("needs")}
+        >
+          <span className="ppc-myweg-needs__hub-icon" aria-hidden="true">
+            <ClipboardList size={22} strokeWidth={1.75} />
+          </span>
+          <span className="ppc-myweg-needs__hub-body">
+            <span className="ppc-myweg-needs__hub-title">{texts.viewNeeds.cardTitle}</span>
+            <span className="ppc-myweg-needs__hub-desc">{texts.viewNeeds.cardDescription}</span>
+            <span className="ppc-myweg-needs__hub-meta">
+              {latestWhen
+                ? texts.viewNeeds.cardMetaLatest(latestWhen)
+                : texts.viewNeeds.cardMetaEmpty}
+              {latest ? ` · ${texts.viewNeeds.cardMetaRecords(latest.recordCount)}` : ""}
+              {` · ${texts.viewNeeds.cardMetaBranch}`}
+            </span>
+            <span className="ppc-myweg-needs__hub-action">{texts.viewNeeds.cardAction}</span>
+          </span>
+        </button>
 
-      {loading ? <LoadingCard title={texts.loading} description={texts.loadingHint} /> : null}
+        <button
+          type="button"
+          className={
+            activeView === "compare"
+              ? "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--active ppc-myweg-needs__hub-card--compare"
+              : "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--compare"
+          }
+          aria-label={texts.viewCompare.cardAction}
+          aria-pressed={activeView === "compare"}
+          onClick={() => setView("compare")}
+        >
+          <span className="ppc-myweg-needs__hub-icon" aria-hidden="true">
+            <GitCompareArrows size={22} strokeWidth={1.75} />
+          </span>
+          <span className="ppc-myweg-needs__hub-body">
+            <span className="ppc-myweg-needs__hub-title">{texts.viewCompare.cardTitle}</span>
+            <span className="ppc-myweg-needs__hub-desc">{texts.viewCompare.cardDescription}</span>
+            <span className="ppc-myweg-needs__hub-meta">
+              {latestWhen ? texts.viewCompare.cardMetaCurrent(latestWhen) : texts.viewNeeds.cardMetaEmpty}
+              {` · ${
+                historyReady
+                  ? texts.viewCompare.cardMetaHistoryReady
+                  : texts.viewCompare.cardMetaHistoryShort
+              }`}
+            </span>
+            <span className="ppc-myweg-needs__hub-action">{texts.viewCompare.cardAction}</span>
+          </span>
+        </button>
+      </nav>
 
-      {forbidden ? (
-        <div className="ppc-state ppc-state--error" role="alert">
-          {texts.forbidden}
-        </div>
-      ) : null}
+      {activeView === "needs" ? (
+        <section className="ppc-myweg-needs__view" aria-label={texts.viewNeeds.sectionTitle}>
+          <h2 className="ppc-myweg-needs__view-title">{texts.viewNeeds.sectionTitle}</h2>
 
-      {!forbidden && error && !loading ? (
-        <div className="ppc-state ppc-state--error" role="alert">
-          {notFound ? texts.notFound : error}
-        </div>
-      ) : null}
+          {loading ? <LoadingCard title={texts.loading} description={texts.loadingHint} /> : null}
 
-      {!forbidden && !loading && !error && !selected ? (
-        <div className="ppc-state" role="status">
-          {texts.emptyCollections}
-        </div>
-      ) : null}
+          {forbidden ? (
+            <div className="ppc-state ppc-state--error" role="alert">
+              {texts.forbidden}
+            </div>
+          ) : null}
 
-      {selected ? (
-        <>
-          <section className="ppc-myweg-needs__summary" aria-label={texts.summaryAria}>
-            <article className="ppc-myweg-needs__kpi">
-              <h3>{texts.kpi.collectedAt}</h3>
-              <p>{formatCollectedAt(selected.collectedAt)}</p>
-              <span className="ppc-myweg-needs__kpi-tag">
-                {isLatest ? texts.latestBadge : texts.historyBadge}
-              </span>
-            </article>
-            <article className="ppc-myweg-needs__kpi">
-              <h3>{texts.kpi.records}</h3>
-              <p>{selected.recordCount.toLocaleString("pt-BR")}</p>
-            </article>
-            <article className="ppc-myweg-needs__kpi">
-              <h3>{texts.kpi.qtyUn}</h3>
-              <p>{formatDecimalString(selected.totals.quantidade_original_un)}</p>
-            </article>
-            <article className="ppc-myweg-needs__kpi">
-              <h3>{texts.kpi.qtyMi}</h3>
-              <p>{formatDecimalString(selected.totals.quantidade_mi)}</p>
-            </article>
-            <article className="ppc-myweg-needs__kpi">
-              <h3>{texts.kpi.branch}</h3>
-              <p>{texts.branch02Label}</p>
-            </article>
-          </section>
+          {!forbidden && error && !loading ? (
+            <div className="ppc-state ppc-state--error" role="alert">
+              {notFound ? texts.notFound : error}
+            </div>
+          ) : null}
 
-          <div className="ppc-myweg-needs__toolbar">
-            <label className="ppc-myweg-needs__history">
-              <span>{texts.historyLabel}</span>
-              <select
-                value={selected.id}
-                onChange={(event) => selectBatch(event.target.value)}
-                aria-label={texts.historyAria}
-              >
-                {historyOptions.map((batch) => (
-                  <option key={batch.id} value={batch.id}>
-                    {formatCollectedAt(batch.collectedAt)}
-                    {latest?.id === batch.id ? ` — ${texts.latestBadge}` : ""}
-                    {` (${batch.recordCount.toLocaleString("pt-BR")})`}
-                  </option>
-                ))}
-              </select>
-            </label>
+          {!forbidden && !loading && !error && !selected ? (
+            <div className="ppc-state" role="status">
+              {texts.emptyCollections}
+            </div>
+          ) : null}
 
-            <label className="ppc-myweg-needs__search">
-              <span className="ppc-sr-only">{texts.searchAria}</span>
-              <input
-                type="search"
-                value={searchDraft}
-                placeholder={texts.searchPlaceholder}
-                onChange={(event) => setSearchDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") applyFilters();
+          {selected ? (
+            <>
+              <section className="ppc-myweg-needs__summary" aria-label={texts.summaryAria}>
+                <article className="ppc-myweg-needs__kpi">
+                  <h3>{texts.kpi.collectedAt}</h3>
+                  <p>{formatCollectedAt(selected.collectedAt)}</p>
+                  <span className="ppc-myweg-needs__kpi-tag">
+                    {isLatest ? texts.latestBadge : texts.historyBadge}
+                  </span>
+                </article>
+                <article className="ppc-myweg-needs__kpi">
+                  <h3>{texts.kpi.records}</h3>
+                  <p>{selected.recordCount.toLocaleString("pt-BR")}</p>
+                </article>
+                <article className="ppc-myweg-needs__kpi">
+                  <h3>{texts.kpi.qtyUn}</h3>
+                  <p>{formatDecimalString(selected.totals.quantidade_original_un)}</p>
+                </article>
+                <article className="ppc-myweg-needs__kpi">
+                  <h3>{texts.kpi.qtyMi}</h3>
+                  <p>{formatDecimalString(selected.totals.quantidade_mi)}</p>
+                </article>
+                <article className="ppc-myweg-needs__kpi">
+                  <h3>{texts.kpi.branch}</h3>
+                  <p>{texts.branch02Label}</p>
+                </article>
+              </section>
+
+              <div className="ppc-myweg-needs__toolbar" aria-label={texts.viewNeeds.sectionTitle}>
+                <label className="ppc-myweg-needs__history">
+                  <span>{texts.historyLabel}</span>
+                  <select
+                    value={selected.id}
+                    onChange={(event) => selectBatch(event.target.value)}
+                    aria-label={texts.historyAria}
+                  >
+                    {historyOptions.map((batch) => (
+                      <option key={batch.id} value={batch.id}>
+                        {formatCollectedAt(batch.collectedAt)}
+                        {latest?.id === batch.id ? ` — ${texts.latestBadge}` : ""}
+                        {` (${batch.recordCount.toLocaleString("pt-BR")})`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="ppc-myweg-needs__search">
+                  <span className="ppc-sr-only">{texts.searchAria}</span>
+                  <input
+                    type="search"
+                    value={searchDraft}
+                    placeholder={texts.searchPlaceholder}
+                    onChange={(event) => setSearchDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") applyFilters();
+                    }}
+                  />
+                </label>
+
+                <label className="ppc-myweg-needs__date">
+                  <span>{texts.remessaFrom}</span>
+                  <input
+                    type="date"
+                    value={remessaFromDraft}
+                    onChange={(event) => setRemessaFromDraft(event.target.value)}
+                  />
+                </label>
+                <label className="ppc-myweg-needs__date">
+                  <span>{texts.remessaTo}</span>
+                  <input
+                    type="date"
+                    value={remessaToDraft}
+                    onChange={(event) => setRemessaToDraft(event.target.value)}
+                  />
+                </label>
+
+                <button type="button" className="ppc-btn ppc-btn--secondary" onClick={applyFilters}>
+                  {texts.applyFilters}
+                </button>
+                <button type="button" className="ppc-btn ppc-btn--ghost" onClick={clearFilters}>
+                  {texts.clearFilters}
+                </button>
+              </div>
+
+              <div data-testid="myweg-needs-table">
+              <DataTableSection<MyWegNeedsRecord>
+                title={texts.tableTitle}
+                hint={texts.tableHint}
+                columns={columns}
+                rows={items?.items ?? []}
+                rowKey={(row) => row.id}
+                loading={loading}
+                refreshing={refreshing}
+                emptyMessage={texts.emptyItems}
+                columnPreferencesKey="production-control:myweg-needs:columns:v2"
+                serverPagination={{
+                  page: items?.page ?? filters.page,
+                  pageSize: items?.pageSize ?? filters.pageSize,
+                  total: items?.total ?? 0,
+                  onPageChange: (nextPage) =>
+                    syncUrl({
+                      branch: "02",
+                      batchId,
+                      search,
+                      remessaFrom,
+                      remessaTo,
+                      page: nextPage,
+                      view: "needs",
+                    }),
+                  onPageSizeChange: () => {
+                    /* pageSize fixo 50 nesta etapa */
+                  },
                 }}
               />
-            </label>
-
-            <label className="ppc-myweg-needs__date">
-              <span>{texts.remessaFrom}</span>
-              <input
-                type="date"
-                value={remessaFromDraft}
-                onChange={(event) => setRemessaFromDraft(event.target.value)}
-              />
-            </label>
-            <label className="ppc-myweg-needs__date">
-              <span>{texts.remessaTo}</span>
-              <input
-                type="date"
-                value={remessaToDraft}
-                onChange={(event) => setRemessaToDraft(event.target.value)}
-              />
-            </label>
-
-            <button type="button" className="ppc-btn ppc-btn--secondary" onClick={applyFilters}>
-              {texts.applyFilters}
-            </button>
-            <button type="button" className="ppc-btn ppc-btn--ghost" onClick={clearFilters}>
-              {texts.clearFilters}
-            </button>
+              </div>
+            </>
+          ) : null}
+        </section>
+      ) : (
+        <section className="ppc-myweg-needs__view" aria-label={texts.viewCompare.sectionTitle}>
+          <div className="ppc-myweg-needs__view-heading">
+            <h2 className="ppc-myweg-needs__view-title">{texts.viewCompare.sectionTitle}</h2>
+            <HelpTooltip content={helpTooltips.mywegNeedsEvolution} trigger="icon" />
           </div>
 
-          <DataTableSection<MyWegNeedsRecord>
-            title={texts.tableTitle}
-            hint={texts.tableHint}
-            columns={columns}
-            rows={items?.items ?? []}
-            rowKey={(row) => row.id}
-            loading={loading}
-            refreshing={refreshing}
-            emptyMessage={texts.emptyItems}
-            columnPreferencesKey="production-control:myweg-needs:columns:v2"
-            serverPagination={{
-              page: items?.page ?? filters.page,
-              pageSize: items?.pageSize ?? filters.pageSize,
-              total: items?.total ?? 0,
-              onPageChange: (nextPage) =>
-                syncUrl({
-                  branch: "02",
-                  batchId,
-                  search,
-                  remessaFrom,
-                  remessaTo,
-                  page: nextPage,
-                }),
-              onPageSizeChange: () => {
-                /* pageSize fixo 50 nesta etapa */
-              },
-            }}
-          />
-        </>
-      ) : null}
+          {forbidden ? (
+            <div className="ppc-state ppc-state--error" role="alert">
+              {texts.forbidden}
+            </div>
+          ) : null}
+
+          {!forbidden && error && !loading && historyOptions.length === 0 ? (
+            <div className="ppc-state ppc-state--error" role="alert">
+              {error}
+            </div>
+          ) : null}
+
+          {!forbidden && historyOptions.length > 0 ? (
+            <MyWegPlanningEvolutionPanel
+              historyItems={historyOptions}
+              selectedBatchId={selected?.id ?? batchId}
+            />
+          ) : null}
+
+          {!forbidden && !loading && historyOptions.length === 0 ? (
+            <div className="ppc-state" role="status">
+              {texts.emptyCollections}
+            </div>
+          ) : null}
+        </section>
+      )}
     </div>
   );
 }

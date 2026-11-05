@@ -44,6 +44,7 @@ type PpcWorkspaceHeaderProps = {
   mywegNeedsRemessaFrom?: string | null;
   mywegNeedsRemessaTo?: string | null;
   mywegNeedsPage?: number | null;
+  mywegNeedsView?: "needs" | "compare" | null;
   /** Ações extras à direita do header (ex.: link discreto p/ área admin). */
   actions?: ReactNode;
   onRefresh?: () => void;
@@ -81,6 +82,7 @@ export function PpcWorkspaceHeader({
   mywegNeedsRemessaFrom,
   mywegNeedsRemessaTo,
   mywegNeedsPage,
+  mywegNeedsView,
   actions,
   onRefresh,
   refreshBusy,
@@ -111,6 +113,7 @@ export function PpcWorkspaceHeader({
         mywegNeedsRemessaFrom,
         mywegNeedsRemessaTo,
         mywegNeedsPage,
+        mywegNeedsView,
       }),
     );
   };

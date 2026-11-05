@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MyWegNeedsPage } from "./MyWegNeedsPage";
 
@@ -20,10 +20,37 @@ vi.mock("../utils/routeParser", async () => {
 
 vi.mock("../hooks/useMyWegNeeds", () => ({
   useMyWegNeeds: () => ({
-    latest: null,
-    selected: null,
-    history: null,
-    items: null,
+    latest: {
+      id: "batch-latest",
+      collectedAt: "2026-11-05T05:00:20-03:00",
+      recordCount: 496,
+      collectionDate: "2026-11-05",
+      totals: { quantidade_original_un: "100", quantidade_mi: "0.1" },
+    },
+    selected: {
+      id: "batch-latest",
+      collectedAt: "2026-11-05T05:00:20-03:00",
+      recordCount: 496,
+      collectionDate: "2026-11-05",
+      totals: { quantidade_original_un: "100", quantidade_mi: "0.1" },
+    },
+    history: {
+      items: [
+        {
+          id: "batch-latest",
+          collectedAt: "2026-11-05T05:00:20-03:00",
+          recordCount: 496,
+          collectionDate: "2026-11-05",
+        },
+        {
+          id: "batch-prev",
+          collectedAt: "2026-11-04T14:28:27-03:00",
+          recordCount: 532,
+          collectionDate: "2026-11-04",
+        },
+      ],
+    },
+    items: { items: [], page: 1, pageSize: 50, total: 0 },
     loading: false,
     refreshing: false,
     error: null,
@@ -36,6 +63,12 @@ vi.mock("../components/dataTableUi", () => ({
   DataTableSection: () => null,
 }));
 
+vi.mock("../components/MyWegPlanningEvolutionPanel", () => ({
+  MyWegPlanningEvolutionPanel: () => (
+    <div data-testid="myweg-compare-panel">compare-panel</div>
+  ),
+}));
+
 vi.mock("@delpi/plugin-ui/index", () => ({
   createDashboardLoadingActivityCard: () => () => null,
   DelpiLogoMark: () => null,
@@ -43,6 +76,10 @@ vi.mock("@delpi/plugin-ui/index", () => ({
 }));
 
 describe("MyWegNeedsPage", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     navigatePpc.mockReset();
     reload.mockReset();
@@ -57,6 +94,7 @@ describe("MyWegNeedsPage", () => {
         remessaFrom={null}
         remessaTo={null}
         page={null}
+        view={null}
       />,
     );
     expect(screen.getByText(/somente na filial 02/i)).toBeTruthy();
@@ -65,5 +103,56 @@ describe("MyWegNeedsPage", () => {
     const href = String(navigatePpc.mock.calls[0]?.[0] ?? "");
     expect(href).toContain("branch=02");
     expect(href).toContain("/myweg-needs");
+  });
+
+  it("mostra consulta por padrão e não monta comparação", () => {
+    render(
+      <MyWegNeedsPage
+        branch="02"
+        batchId={null}
+        search={null}
+        remessaFrom={null}
+        remessaTo={null}
+        page={null}
+        view={null}
+      />,
+    );
+    expect(screen.getByRole("heading", { name: /consulta da coleta/i })).toBeTruthy();
+    expect(screen.queryByTestId("myweg-compare-panel")).toBeNull();
+  });
+
+  it("card Comparar coletas navega para view=compare", () => {
+    render(
+      <MyWegNeedsPage
+        branch="02"
+        batchId={null}
+        search={null}
+        remessaFrom={null}
+        remessaTo={null}
+        page={null}
+        view={null}
+      />,
+    );
+    const compareCards = screen.getAllByRole("button", { name: /^comparar coletas$/i });
+    fireEvent.click(compareCards[0]);
+    expect(navigatePpc).toHaveBeenCalled();
+    const href = String(navigatePpc.mock.calls[0]?.[0] ?? "");
+    expect(href).toContain("view=compare");
+  });
+
+  it("view=compare monta o painel e esconde a tabela de necessidades", () => {
+    const { queryByTestId, getByTestId } = render(
+      <MyWegNeedsPage
+        branch="02"
+        batchId={null}
+        search={null}
+        remessaFrom={null}
+        remessaTo={null}
+        page={null}
+        view="compare"
+      />,
+    );
+    expect(getByTestId("myweg-compare-panel")).toBeTruthy();
+    expect(queryByTestId("myweg-needs-table")).toBeNull();
   });
 });

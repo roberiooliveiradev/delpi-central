@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState } from "react";
 
 import { fetchMyWegNeedBatchesCompare } from "../api/ppcApi";
@@ -61,6 +62,31 @@ function pickDefaultPair(
 function formatQty(value: string | null | undefined): string {
   if (value == null || value === "") return "—";
   return formatDecimalString(value);
+}
+
+function formatRemessaBr(value: string | null | undefined): string {
+  const text = (value ?? "").trim();
+  if (!text) return "—";
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
+    const [y, m, d] = text.slice(0, 10).split("-");
+    return `${d}/${m}/${y}`;
+  }
+  return text;
+}
+
+function movementClass(movement: string): string {
+  switch (movement) {
+    case "increased":
+      return "ppc-myweg-needs__movement ppc-myweg-needs__movement--up";
+    case "decreased":
+      return "ppc-myweg-needs__movement ppc-myweg-needs__movement--down";
+    case "appeared":
+      return "ppc-myweg-needs__movement ppc-myweg-needs__movement--in";
+    case "disappeared":
+      return "ppc-myweg-needs__movement ppc-myweg-needs__movement--out";
+    default:
+      return "ppc-myweg-needs__movement";
+  }
 }
 
 export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: Props) {
@@ -137,14 +163,15 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
       {
         key: "remessa",
         header: texts.columns.remessa,
-        render: (row) => row.remessa,
+        render: (row) => formatRemessaBr(row.remessa),
       },
       {
         key: "movement",
         header: texts.columns.movement,
         render: (row) => {
           const label = movementLabel(row.movement);
-          return row.inHorizon14d ? `${label} · ${texts.horizonBadge}` : label;
+          const text = row.inHorizon14d ? `${label} · ${texts.horizonBadge}` : label;
+          return <span className={movementClass(row.movement)}>{text}</span>;
         },
       },
       {
@@ -235,8 +262,10 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
   if (historyItems.length < 2) {
     return (
       <section className="ppc-myweg-needs__evolution" aria-label={texts.title}>
-        <h2>{texts.title}</h2>
-        <p className="ppc-myweg-needs__evolution-note">{texts.insufficient}</p>
+        <p className="ppc-myweg-needs__evolution-note">{texts.intro}</p>
+        <p className="ppc-myweg-needs__evolution-note" role="status">
+          {texts.insufficient}
+        </p>
       </section>
     );
   }
@@ -253,7 +282,6 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
 
   return (
     <section className="ppc-myweg-needs__evolution" aria-label={texts.title}>
-      <h2 title={helpTooltips.mywegNeedsEvolution}>{texts.title}</h2>
       <p className="ppc-myweg-needs__evolution-note">{texts.intro}</p>
 
       <div className="ppc-myweg-needs__toolbar">
@@ -267,7 +295,7 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
             <option value="">—</option>
             {historyItems.map((item) => (
               <option key={`from-${item.id}`} value={item.id}>
-                {item.collectionDate} · {item.recordCount} regs
+                {formatRemessaBr(item.collectionDate)} · {item.recordCount} regs
               </option>
             ))}
           </select>
@@ -281,7 +309,7 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
           >
             {historyItems.map((item) => (
               <option key={`to-${item.id}`} value={item.id}>
-                {item.collectionDate} · {item.recordCount} regs
+                {formatRemessaBr(item.collectionDate)} · {item.recordCount} regs
               </option>
             ))}
           </select>
@@ -309,7 +337,7 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
         >
           {copy.mywegNeeds.applyFilters}
         </button>
-        <label className="ppc-myweg-needs__history">
+        <label className="ppc-myweg-needs__history ppc-myweg-needs__billing-toggle">
           {texts.billingLabel}
           <select
             value={billingMode}
@@ -357,34 +385,85 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
           </p>
           <div className="ppc-myweg-needs__summary" aria-label={texts.summaryAria}>
             <article className="ppc-myweg-needs__kpi">
-              <h3>{texts.kpi.increased}</h3>
+              <h3>
+                {texts.kpi.increased}
+                <HelpTooltip content={helpTooltips.mywegNeedsKpiIncreased} trigger="icon" />
+              </h3>
               <p>{summary?.increased ?? 0}</p>
             </article>
             <article className="ppc-myweg-needs__kpi">
-              <h3>{texts.kpi.decreased}</h3>
+              <h3>
+                {texts.kpi.decreased}
+                <HelpTooltip content={helpTooltips.mywegNeedsKpiDecreased} trigger="icon" />
+              </h3>
               <p>{summary?.decreased ?? 0}</p>
             </article>
             <article className="ppc-myweg-needs__kpi">
-              <h3>{texts.kpi.appeared}</h3>
+              <h3>
+                {texts.kpi.appeared}
+                <HelpTooltip content={helpTooltips.mywegNeedsKpiAppeared} trigger="icon" />
+              </h3>
               <p>{summary?.appeared ?? 0}</p>
             </article>
             <article className="ppc-myweg-needs__kpi">
-              <h3>{texts.kpi.disappeared}</h3>
+              <h3>
+                {texts.kpi.disappeared}
+                <HelpTooltip content={helpTooltips.mywegNeedsKpiDisappeared} trigger="icon" />
+              </h3>
               <p>{summary?.disappeared ?? 0}</p>
             </article>
-            <article className="ppc-myweg-needs__kpi">
-              <h3>{texts.kpi.horizon}</h3>
+            <article className="ppc-myweg-needs__kpi ppc-myweg-needs__kpi--horizon">
+              <h3>
+                {texts.kpi.horizon}
+                <HelpTooltip content={helpTooltips.mywegNeedsKpiHorizon} trigger="icon" />
+              </h3>
               <p>{summary?.horizon_14d_changes ?? 0}</p>
             </article>
           </div>
           <p className="ppc-myweg-needs__evolution-note">{payload.observed.disclaimer}</p>
+          <p className="ppc-myweg-needs__legend" role="note">
+            <strong>{texts.legendTitle}:</strong> {helpTooltips.mywegNeedsEvolution}
+          </p>
 
-          <aside className="ppc-myweg-needs__billing" aria-label={texts.billingAria}>
-            <h3>{texts.billingTitle}</h3>
+          {(payload.totalChanges ?? 0) === 0 && (payload.total ?? 0) === 0 && !search ? (
+            <p role="status">{texts.noChanges}</p>
+          ) : (
+            <DataTableSection
+              title={texts.tableTitle}
+              rows={payload.items}
+              columns={columns}
+              rowKey={(row) => `${row.productKey}|${row.remessa}|${row.movement}`}
+              emptyMessage={
+                search
+                  ? copy.tableSection.emptyMessage
+                  : texts.noChanges
+              }
+              columnPreferencesKey="production-control:myweg-evolution:columns:v1"
+              serverPagination={{
+                page: payload.page,
+                pageSize: payload.pageSize,
+                total: payload.total,
+                onPageChange: (nextPage) => setPage(nextPage),
+                onPageSizeChange: () => {
+                  /* pageSize fixo 50 nesta etapa */
+                },
+              }}
+            />
+          )}
+
+          <aside
+            className={
+              billingMode === "none"
+                ? "ppc-myweg-needs__billing ppc-myweg-needs__billing--quiet"
+                : "ppc-myweg-needs__billing"
+            }
+            aria-label={texts.billingAria}
+          >
             {billingMode === "none" || billing?.status === "skipped" ? (
-              <p>{texts.billingSkipped}</p>
+              <p className="ppc-myweg-needs__billing-quiet">{texts.billingSkipped}</p>
             ) : (
               <>
+                <h3>{texts.billingTitle}</h3>
                 {billing?.period ? (
                   <p>
                     <strong>{texts.periodLabel}:</strong> {billing.period.start} →{" "}
@@ -433,32 +512,6 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
               </>
             )}
           </aside>
-
-          {(payload.totalChanges ?? 0) === 0 && (payload.total ?? 0) === 0 && !search ? (
-            <p role="status">{texts.noChanges}</p>
-          ) : (
-            <DataTableSection
-              title={texts.tableTitle}
-              rows={payload.items}
-              columns={columns}
-              rowKey={(row) => `${row.productKey}|${row.remessa}|${row.movement}`}
-              emptyMessage={
-                search
-                  ? copy.tableSection.emptyMessage
-                  : texts.noChanges
-              }
-              columnPreferencesKey="production-control:myweg-evolution:columns:v1"
-              serverPagination={{
-                page: payload.page,
-                pageSize: payload.pageSize,
-                total: payload.total,
-                onPageChange: (nextPage) => setPage(nextPage),
-                onPageSizeChange: () => {
-                  /* pageSize fixo 50 nesta etapa */
-                },
-              }}
-            />
-          )}
         </>
       ) : null}
     </section>

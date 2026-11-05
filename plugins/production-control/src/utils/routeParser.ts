@@ -1,6 +1,8 @@
 import { BRANCH_STORAGE_KEY, DEFAULT_BRANCH, DEFAULT_SUBPLUGIN, PPC_BASE_PATH } from "../constants/routes";
 import type { PpcBranch } from "../types";
 
+export type MyWegNeedsView = "needs" | "compare";
+
 export type PpcRoute = {
   subpluginId: string;
   detectorId: string | null;
@@ -26,6 +28,8 @@ export type PpcRoute = {
   mywegNeedsRemessaFrom: string | null;
   mywegNeedsRemessaTo: string | null;
   mywegNeedsPage: number | null;
+  /** Visão MyWEG: needs (padrão) | compare. Ausente na URL = needs. */
+  mywegNeedsView: MyWegNeedsView | null;
   branch: PpcBranch;
   pathname: string;
 };
@@ -90,6 +94,7 @@ function parseSearch(search: string): {
   mywegNeedsRemessaFrom: string | null;
   mywegNeedsRemessaTo: string | null;
   mywegNeedsPage: number | null;
+  mywegNeedsView: MyWegNeedsView | null;
   branch: PpcBranch | null;
 } {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
@@ -99,6 +104,7 @@ function parseSearch(search: string): {
   const reportRaw = params.get("report")?.trim() || "";
   const sharedSearch = params.get("q")?.trim() || null;
   const pageRaw = Number.parseInt(params.get("page")?.trim() || "", 10);
+  const viewRaw = params.get("view")?.trim().toLowerCase() || "";
   return {
     detectorId: params.get("detector")?.trim() || null,
     workCenter: params.get("ct")?.trim() || null,
@@ -126,8 +132,14 @@ function parseSearch(search: string): {
     mywegNeedsRemessaFrom: isoDateOrNull(params.get("remessaFrom")),
     mywegNeedsRemessaTo: isoDateOrNull(params.get("remessaTo")),
     mywegNeedsPage: Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : null,
+    mywegNeedsView: viewRaw === "needs" || viewRaw === "compare" ? viewRaw : null,
     branch: isBranch(branchRaw) ? branchRaw : null,
   };
+}
+
+/** Visão efetiva MyWEG — ausência de `view` abre a consulta de necessidades. */
+export function resolveMyWegNeedsView(view: MyWegNeedsView | null | undefined): MyWegNeedsView {
+  return view === "compare" ? "compare" : "needs";
 }
 
 export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBranch = DEFAULT_BRANCH): PpcRoute {
@@ -163,6 +175,7 @@ export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBra
     mywegNeedsRemessaFrom: query.mywegNeedsRemessaFrom,
     mywegNeedsRemessaTo: query.mywegNeedsRemessaTo,
     mywegNeedsPage: query.mywegNeedsPage,
+    mywegNeedsView: query.mywegNeedsView,
     branch: query.branch ?? storedBranch,
     pathname: path || PPC_BASE_PATH,
   };
@@ -205,6 +218,7 @@ export function buildPpcHref(input: {
   mywegNeedsRemessaFrom?: string | null;
   mywegNeedsRemessaTo?: string | null;
   mywegNeedsPage?: number | null;
+  mywegNeedsView?: MyWegNeedsView | null;
 }): string {
   const path =
     input.subpluginId === DEFAULT_SUBPLUGIN
@@ -238,6 +252,9 @@ export function buildPpcHref(input: {
   if (input.mywegNeedsRemessaTo) params.set("remessaTo", input.mywegNeedsRemessaTo);
   if (input.mywegNeedsPage && input.mywegNeedsPage > 1) {
     params.set("page", String(input.mywegNeedsPage));
+  }
+  if (input.mywegNeedsView === "compare" || input.mywegNeedsView === "needs") {
+    params.set("view", input.mywegNeedsView);
   }
   return `${path}?${params.toString()}`;
 }

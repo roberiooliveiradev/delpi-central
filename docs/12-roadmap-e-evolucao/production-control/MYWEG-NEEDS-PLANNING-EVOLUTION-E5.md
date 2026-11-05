@@ -18,7 +18,7 @@
 |---|---|
 | api-delpi | `POST /pedidos-venda-abertos/totvs-outbound-invoice-line-items` — itens SD2/SF2 com D2_FILIAL+CLIENTE+LOJA |
 | production-control-api | Motor puro `myweg_needs_comparison` + `GET /myweg/need-batches/compare` |
-| plugins/production-control | Painel «Evolução do planejamento» na tela MyWEG |
+| plugins/production-control | Visão «Comparação entre coletas» (`view=compare`) na tela MyWEG |
 
 ## Regra fundamental
 

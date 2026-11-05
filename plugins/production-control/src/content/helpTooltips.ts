@@ -37,7 +37,17 @@ export const helpTooltips = {
   mywegNeedsSb1:
     "Situação do vínculo com o cadastro SB1 do Protheus. Código informado na origem só vira confirmado após validação real. Divergência e ambiguidade mostram o motivo sem editar cadastro.",
   mywegNeedsEvolution:
-    "Compara duas fotografias da programação MyWEG. A variação observada é fato entre snapshots; o faturamento candidato e o FIFO são hipóteses separadas — nota DELPI não prova abatimento reconhecido pela WEG. A janela fiscal segue as duas coletas (não um lookback fixo). Antecipação/postergação são movimentos prováveis, não identidade de linha comprovada.",
+    "Compara duas fotografias da programação MyWEG. Escolha a coleta anterior e a atual. A variação observada é fato entre snapshots; o faturamento indicativo e o FIFO são hipóteses separadas — nota fiscal DELPI não prova abatimento reconhecido pela WEG. Uma mudança de data de remessa pode aparecer como saída + entrada. O indicador de 14 dias é um recorte das alterações, não uma categoria a somar aos demais.",
   mywegNeeds:
-    "Histórico de planejamento MyWEG da filial 02 (ES). Mostra a última coleta importada, totais em UN/MI e a lista paginada de necessidades. O campo «Código DELPI (origem)» reflete o valor informado na coleta (contrato E1: codigo_referencia_weg). O código verificado e a situação do vínculo vêm da consulta SB1 no Protheus — não confundir código informado com vínculo confirmado. Referência/material ausente aparece como «Não informado». Use o histórico e a evolução do planejamento para comparar coletas e consultar faturamento indicativo. Não é tempo real nem gera OP.",
+    "Módulo Necessidades WEG (filial 02 · ES). Use o card «Necessidades da coleta» para consultar materiais, quantidades e remessas de uma fotografia importada. Use «Comparação entre coletas» para ver aumentos, reduções, entradas e saídas entre duas datas. Código DELPI (origem) vem da coleta; o código verificado e a situação do vínculo vêm da SB1. Não é tempo real nem gera OP.",
+  mywegNeedsKpiIncreased:
+    "A mesma combinação produto/remessa existe nas duas coletas e a quantidade aumentou.",
+  mywegNeedsKpiDecreased:
+    "A mesma combinação produto/remessa existe nas duas coletas e a quantidade diminuiu. Redução observada não significa, por si só, que o material foi faturado ou atendido.",
+  mywegNeedsKpiAppeared:
+    "Combinações de produto e data de remessa que não existiam na coleta anterior. Não significa necessariamente produto novo — pode ser remessa que mudou de data.",
+  mywegNeedsKpiDisappeared:
+    "Combinações presentes na coleta anterior e ausentes na atual. Não significa automaticamente pedido cancelado — pode ser remessa que migrou para outra data.",
+  mywegNeedsKpiHorizon:
+    "Subconjunto das alterações cuja data de remessa está entre a data da coleta atual e os 14 dias seguintes. Não some este número aos outros indicadores.",
 } as const;
