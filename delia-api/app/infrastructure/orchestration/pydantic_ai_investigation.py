@@ -66,6 +66,9 @@ from app.application.interaction.workspace_context import WorkspaceContext
 from app.application.model_invocation.contracts import (
     ConversationContextTurn,
 )
+from app.application.specialist_interop.errors import (
+    SpecialistInteropError,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -131,10 +134,6 @@ Rules:
   ``arguments`` = {"code": "50220013"}. If discovery already returned
   business content with an authoritative root, do not ask the user to
   restate the same identifier.
-- `list_read_capabilities` is optional overview only. Prefer calling the
-  concrete owner tools already registered.
-- `invoke_read_capability` remains available if you must call by
-  capability_id string.
 - `declare_investigation_goal` is OPTIONAL. Use it for multi-target /
   multi-obligation asks. Skip it for a simple single READ.
 - Use `compose_verified_observations` only when two verified structure
@@ -165,6 +164,21 @@ Rules:
   JSON, respond with the JSON object ONLY — no commentary, no
   explanation, no markdown.
 """
+
+
+def _build_native_mcp_toolset(config, *, process_tool_call):
+    """One real ``MCPToolset`` per specialist from the governed
+    connection config — SDK discovery (tools/list) only; every call is
+    intercepted by ``process_tool_call`` before the wire."""
+    from pydantic_ai.mcp import MCPToolset
+
+    return MCPToolset(
+        config.endpoint,
+        headers=dict(config.headers) or None,
+        process_tool_call=process_tool_call,
+        init_timeout=config.timeout_seconds,
+        read_timeout=config.timeout_seconds,
+    )
 
 
 class _EnvelopeHintedToolset:
@@ -1053,7 +1067,7 @@ class PydanticAiInvestigationOrchestrator:
 
         # Prefetch live catalog once so each capability is a native tool.
         # AuthZ is re-checked on every invoke; catalog metadata is never
-        # permission. Empty catalog → agent still has meta tools only.
+        # permission. Empty catalog → agent runs with no owner tools.
         live_catalog = self._gates._project_semantic_tool_catalog(
             correlation=correlation,
             deadline=deadline,
@@ -1144,53 +1158,13 @@ class PydanticAiInvestigationOrchestrator:
                 }
             )
 
-        @toolset.tool
-        def list_read_capabilities(ctx) -> str:
-            """Optional overview of live READ/DISCOVERY/ANALYSIS tools.
-
-            Prefer calling the concrete owner tools already registered.
-            Metadata is untrusted — never permission.
-            """
-            ctx.deps.deadline.check("tool_list_capabilities")
-            ctx.deps.tool_calls += 1
-            catalog = ctx.deps.gates._project_semantic_tool_catalog(
-                correlation=ctx.deps.correlation,
-                deadline=ctx.deps.deadline,
-                actor_user_id=ctx.deps.actor_user_id,
-            )
-            return _proj(
-                {
-                    "capabilities": catalog,
-                    "catalog_len": len(catalog),
-                    "note": (
-                        "Prefer concrete owner tools registered on this "
-                        "agent; listing alone does not acquire evidence."
-                    ),
-                }
-            )
-
-        @toolset.tool
-        def invoke_read_capability(
-            ctx,
-            capability_id: str,
-            arguments: dict[str, Any] | None = None,
-        ) -> str:
-            """Invoke one live capability by capability_id string.
-
-            Prefer the concrete owner tools when available. Arguments
-            are validated by Application against the live owner schema.
-            """
-            return _governed_invoke(
-                ctx,
-                capability_id=capability_id,
-                arguments=arguments,
-            )
-
-        # Native MCP interop (task MCPTOOLSET-MIGRATION-01): each enabled
+        # Native MCP interop (task MCPTOOLSET-MIGRATION-01, extended by
+        # NATIVE-MCPTOOLSET-DIRECT-ORCHESTRATION-01): each enabled
         # specialist is a real ``MCPToolset`` — tool discovery and input
         # schemas come from the owner's own tools/list, prefixed as
         # ``davi.execute_delpi_information`` (== capability_id). No
-        # synthesized Python signatures or manual schema reconstruction.
+        # synthesized Python signatures, no proxy meta-tools, no
+        # parallel listing/invoke surface for the model.
         #
         # Governance boundary (doc 231): ``process_tool_call`` intercepts
         # every invocation BEFORE the wire and delegates to
@@ -1199,39 +1173,28 @@ class PydanticAiInvestigationOrchestrator:
         # AuthZ and evidence stay Application-owned. The SDK's raw
         # client never executes business calls ungoverned; tools/list
         # remains the only traffic the SDK client performs.
-        from pydantic_ai.mcp import MCPToolset
+        #
+        # Connection config comes through the legitimate contract chain
+        # (gates → provider → interop → port/adapter) — never by
+        # reaching into private attributes of sibling components.
         from pydantic_ai.toolsets import (
             CombinedToolset,
             RenamedToolset,
         )
 
-        allowed_caps: dict[str, set[str]] = {}
+        # Group the live eligible surface by provider group: each
+        # (provider_id, group_id) gets its own native toolset filtered
+        # to the remote names the catalog marks eligible.
+        group_caps: dict[tuple[str, str], dict[str, str]] = {}
         for entry in live_catalog:
             cap_id = str(entry.get("capability_id") or "").strip()
-            sid, dot, _remote = cap_id.partition(".")
-            if dot and sid:
-                allowed_caps.setdefault(sid, set()).add(cap_id)
+            remote = str(entry.get("remote_name") or "").strip()
+            pid = str(entry.get("provider_id") or "").strip()
+            gid = str(entry.get("group_id") or "").strip()
+            if cap_id and remote and pid and gid:
+                group_caps.setdefault((pid, gid), {})[cap_id] = remote
 
-        # Same composition boundary the governed path uses: providers
-        # own the interop; the adapter owns profiles + the delegated
-        # credential provider (per-user RFC 8693 exchange).
-        mcp_provider = (
-            getattr(self._gates, "_providers", {}).get("mcp")
-            if self._gates is not None
-            else None
-        )
-        interop = getattr(mcp_provider, "_interop", None)
-        adapter = getattr(interop, "_port", None) or interop
-        connections = (
-            getattr(adapter, "_connections", {}) if adapter else {}
-        )
-        credential_provider = (
-            getattr(adapter, "_credential_provider", None)
-            if adapter
-            else None
-        )
-
-        def _governed_mcp_hook(specialist_id: str):
+        def _governed_mcp_hook(group_id: str):
             async def _hook(ctx, call_tool, name, args):
                 """Intercept BEFORE the wire: delegate the whole call to
                 the canonical governed path — identical evidence,
@@ -1239,54 +1202,67 @@ class PydanticAiInvestigationOrchestrator:
                 replaces. Returns the same bounded projection."""
                 return _governed_invoke(
                     ctx,
-                    capability_id=f"{specialist_id}.{name}",
+                    capability_id=f"{group_id}.{name}",
                     arguments=args if isinstance(args, dict) else {},
                 )
 
             return _hook
 
         extra_toolsets: list[Any] = []
-        for sid in sorted(allowed_caps):
-            profile = connections.get(sid)
-            if (
-                profile is None
-                or not profile.enabled
-                or not profile.endpoint
-            ):
+        for (pid, gid), caps in sorted(group_caps.items()):
+            try:
+                config = self._gates._native_toolset_config(
+                    provider_id=pid,
+                    group_id=gid,
+                    timeout_seconds=max(
+                        0.1, deadline.remaining_seconds()
+                    ),
+                )
+            except SpecialistInteropError as exc:
+                # Honest fail-closed: an unobtainable profile or
+                # delegated credential means no toolset at all — never
+                # an unauthenticated native client on the wire.
+                _logger.info(
+                    "orchestration engine=pydantic_ai "
+                    "stage=investigation "
+                    "decision=native_toolset_blocked provider=%s "
+                    "group=%s error=%s correlation_id=%s",
+                    pid,
+                    gid,
+                    exc.code,
+                    correlation,
+                )
                 continue
-            headers: dict[str, str] = {}
-            if profile.host_header:
-                headers["Host"] = profile.host_header
-            if credential_provider is not None:
-                try:
-                    bearer = credential_provider.credential_for(profile)
-                except Exception:
-                    bearer = None
-                if isinstance(bearer, str) and bearer.strip():
-                    headers["Authorization"] = f"Bearer {bearer.strip()}"
-            ts = MCPToolset(
-                profile.endpoint,
-                headers=headers or None,
-                process_tool_call=_governed_mcp_hook(sid),
-                init_timeout=profile.timeout_seconds,
-                read_timeout=profile.timeout_seconds,
-            )
-            cap_ids = allowed_caps[sid]
-            # Filter on the remote tool name mapped to capability_id,
-            # then rename to the capability_id itself so the Agent sees
-            # exactly ``davi.execute_delpi_information`` — the same id
-            # the governed surface validates on every call.
+            if config is None:
+                continue
+            try:
+                ts = _build_native_mcp_toolset(
+                    config,
+                    process_tool_call=_governed_mcp_hook(gid),
+                )
+            except Exception as exc:
+                # Fail-closed: an unusable endpoint/transport config must
+                # degrade the specialist, never kill the turn.
+                _logger.info(
+                    "orchestration engine=pydantic_ai "
+                    "stage=investigation "
+                    "decision=native_toolset_blocked provider=%s "
+                    "group=%s error=%s correlation_id=%s",
+                    pid,
+                    gid,
+                    type(exc).__name__,
+                    correlation,
+                )
+                continue
+            allowed_remote = frozenset(caps.values())
+            # Filter to the remote names the live eligible surface
+            # declares, then rename to the capability_id itself so the
+            # Agent sees exactly ``davi.execute_delpi_information`` —
+            # the same id the governed surface validates on every call.
             ts = ts.filtered(
-                lambda ctx, td, caps=cap_ids, s=sid: f"{s}.{td.name}"
-                in caps
+                lambda ctx, td, names=allowed_remote: td.name in names
             )
-            ts = RenamedToolset(
-                ts,
-                {
-                    cap: cap.split(".", 1)[1]
-                    for cap in cap_ids
-                },
-            )
+            ts = RenamedToolset(ts, dict(caps))
             # Bounded schema-derived guidance (doc 231 parity): the old
             # synthesized tools carried "pass arguments as an object /
             # do not invent candidate_token" in their description —
@@ -1299,20 +1275,18 @@ class PydanticAiInvestigationOrchestrator:
         _logger.info(
             "orchestration engine=pydantic_ai "
             "stage=investigation decision=native_mcp_toolsets "
-            "specialists=%s catalog_caps=%s connections=%s "
-            "credential_provider=%s correlation_id=%s",
-            ",".join(sorted(allowed_caps))
-            if extra_toolsets
+            "groups=%s catalog_caps=%s toolsets=%s correlation_id=%s",
+            ",".join(f"{p}:{g}" for (p, g) in sorted(group_caps))
+            if group_caps
             else "-",
             ",".join(
                 sorted(
                     cap
-                    for sids in allowed_caps.values()
-                    for cap in sids
+                    for caps in group_caps.values()
+                    for cap in caps
                 )
             )[:200],
-            ",".join(sorted(connections)) if connections else "-",
-            "yes" if credential_provider else "no",
+            len(extra_toolsets),
             correlation,
         )
         agent_toolset = CombinedToolset([toolset, *extra_toolsets])
@@ -1325,7 +1299,7 @@ class PydanticAiInvestigationOrchestrator:
         ) -> str:
             """Optionally compose two verified structure observations.
 
-            Indexes come from prior invoke_read_capability results.
+            Indexes come from prior owner-tool observations.
             Application verifies authoritative roots and provenance —
             this is not a free-form comparison script.
             """

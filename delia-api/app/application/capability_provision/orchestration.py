@@ -5452,6 +5452,25 @@ class OperationalCapabilityOrchestrator:
         )
         return bounded
 
+    def _native_toolset_config(
+        self,
+        *,
+        provider_id: str,
+        group_id: str,
+        timeout_seconds: float | None = None,
+    ):
+        """Delegate native-discovery config to the owning provider.
+
+        Provider families without a native client surface simply
+        contribute no toolset — ``None`` is honest absence, never an
+        unauthenticated or synthesized config.
+        """
+        provider = self._providers.get(provider_id)
+        resolve = getattr(provider, "native_toolset_config", None)
+        if resolve is None:
+            return None
+        return resolve(group_id, timeout_seconds=timeout_seconds)
+
     def _governed_semantic_tool_invoke(
         self,
         *,

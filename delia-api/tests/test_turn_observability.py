@@ -630,7 +630,7 @@ def test_composition_elapsed_accumulates_honestly():
     )
     ops = (
         OperationalCallObservation(
-            capability="invoke_read_capability", duration_ms=20,
+            capability="alpha.search_items", duration_ms=20,
         ),
     )
     obs = build_turn_observability(

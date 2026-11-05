@@ -17,6 +17,7 @@ from typing import Mapping, Protocol
 from app.application.specialist_interop.contracts import (
     RemoteToolDescriptor,
     RemoteToolOutcome,
+    SpecialistToolsetConfig,
 )
 from app.domain.specialist_interop.model import SpecialistRef
 
@@ -52,4 +53,19 @@ class SpecialistInteropPort(Protocol):
         tools/list (unknown specialist/capability, PREPARE/ACT, phase
         gate) before any wire activity — invocation is the second
         enforcement boundary.
+        """
+
+    def native_toolset_config(
+        self,
+        specialist: SpecialistRef,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> SpecialistToolsetConfig:
+        """Connection config for a native discovery client, fail closed.
+
+        Implementations must refuse with a typed
+        ``SpecialistInteropError`` when the specialist cannot serve a
+        governed native session — unknown, unconfigured, disabled, or
+        delegated credential unavailable. The config is for owner tool
+        discovery only; call traffic stays on ``call_remote_tool``.
         """

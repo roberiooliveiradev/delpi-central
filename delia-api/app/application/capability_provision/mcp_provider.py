@@ -32,6 +32,7 @@ from app.application.specialist_interop.contracts import (
     DEFAULT_INVOCATION_TIMEOUT_SECONDS,
     SpecialistCatalogRequest,
     SpecialistInvocationRequest,
+    SpecialistToolsetConfig,
 )
 from app.application.specialist_interop.errors import (
     MCP_TIMEOUT,
@@ -151,6 +152,22 @@ class McpCapabilityProvider:
                 str(exc),
                 owner_hint=getattr(exc, "owner_hint", None),
             ) from exc
+
+    def native_toolset_config(
+        self,
+        group_id: str,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> SpecialistToolsetConfig:
+        """Native-discovery config for one specialist group.
+
+        Delegates to the interop boundary — the adapter remains the
+        sole owner of profiles and delegated credentials.
+        """
+        return self._interop.native_toolset_config(
+            group_id,
+            timeout_seconds=timeout_seconds,
+        )
 
     @staticmethod
     def _effective_timeout(timeout_seconds: float | None) -> float:

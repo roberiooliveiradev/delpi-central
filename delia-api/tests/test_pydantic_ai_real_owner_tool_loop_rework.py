@@ -34,10 +34,22 @@ from app.infrastructure.orchestration.pydantic_ai_investigation import (
 )
 from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
+from tests.support.native_mcp_fixtures import (
+    alpha_beta_servers,
+    native_toolset_stub,
+)
 from tests.test_pydantic_ai_semantic_rework import (
     _gates,
     _success_attempt,
 )
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _native_toolsets_stub():
+    with native_toolset_stub(alpha_beta_servers()):
+        yield
 
 
 def _final_answer(answer: str = "", status: str = "insufficient",
@@ -217,7 +229,7 @@ def test_dynamic_owner_tool_invokes_governed_path():
         if not any(isinstance(m, ModelResponse) for m in messages):
             return ModelResponse(
                 parts=[
-                    ToolCallPart("invoke_read_capability", {"capability_id": tool_name, "arguments": {"arguments": {}}})
+                    ToolCallPart(tool_name, {"arguments": {}})
                 ]
             )
         return _final_answer("done")
@@ -225,7 +237,8 @@ def test_dynamic_owner_tool_invokes_governed_path():
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=4
     )
-    engine.attempt("read something")
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("read something")
     assert calls and calls[0] == cap["capability_id"]
 
 
@@ -254,13 +267,14 @@ def test_usage_limit_finalizes_collected_evidence():
     def _fn(messages, _info):
         steps["n"] += 1
         return ModelResponse(
-            parts=[ToolCallPart("invoke_read_capability", {"capability_id": tool_name, "arguments": {"arguments": {}}})]
+            parts=[ToolCallPart(tool_name, {"arguments": {}})]
         )
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=1
     )
-    attempt = engine.attempt("estrutura 90260147")
+    with native_toolset_stub(alpha_beta_servers()):
+        attempt = engine.attempt("estrutura 90260147")
     assert attempt.error_code != "investigation_agent_error"
     assert "tool_calls_limit_reached" in attempt.limitations
     assert original is not None
@@ -338,7 +352,7 @@ def test_premature_clarification_is_rejected_when_identifiers_remain():
         steps["n"] += 1
         if steps["n"] == 1:
             return ModelResponse(
-                parts=[ToolCallPart("invoke_read_capability", {"capability_id": tool_name, "arguments": {"arguments": {}}})]
+                parts=[ToolCallPart(tool_name, {"arguments": {}})]
             )
         if steps["n"] == 2:
             return ModelResponse(
@@ -354,14 +368,15 @@ def test_premature_clarification_is_rejected_when_identifiers_remain():
             )
         if steps["n"] == 3:
             return ModelResponse(
-                parts=[ToolCallPart("invoke_read_capability", {"capability_id": tool_name, "arguments": {"arguments": {}}})]
+                parts=[ToolCallPart(tool_name, {"arguments": {}})]
             )
         return _final_answer("done")
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=6
     )
-    attempt = engine.attempt("Compare 90260147 e 90260148")
+    with native_toolset_stub(alpha_beta_servers()):
+        attempt = engine.attempt("Compare 90260147 e 90260148")
     assert attempt.status is not GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     assert len(calls) >= 2
 
@@ -394,7 +409,12 @@ def test_list_only_does_not_fabricate_business_success():
     def _fn(messages, _info):
         if not any(isinstance(m, ModelResponse) for m in messages):
             return ModelResponse(
-                parts=[ToolCallPart("list_read_capabilities", {})]
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {"goal_class": "read"},
+                    )
+                ]
             )
         return _final_answer("I listed tools")
 
@@ -676,14 +696,15 @@ def test_repeated_equivalent_failure_does_not_reinvoke_owner():
         steps["n"] += 1
         if steps["n"] < 3:
             return ModelResponse(
-                parts=[ToolCallPart("invoke_read_capability", {"capability_id": tool_name, "arguments": {"arguments": {"query": "x"}}})]
+                parts=[ToolCallPart(tool_name, {"arguments": {"query": "x"}})]
             )
         return _final_answer("stop")
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=6
     )
-    engine.attempt("consulta 90260147")
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("consulta 90260147")
     assert calls == [1]
 
 
@@ -704,7 +725,7 @@ def test_clarification_does_not_replace_collected_evidence():
         steps["n"] += 1
         if steps["n"] == 1:
             return ModelResponse(
-                parts=[ToolCallPart("invoke_read_capability", {"capability_id": tool_name, "arguments": {"arguments": {}}})]
+                parts=[ToolCallPart(tool_name, {"arguments": {}})]
             )
         if steps["n"] == 2:
             return ModelResponse(

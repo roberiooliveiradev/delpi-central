@@ -81,6 +81,22 @@ class RemoteToolOutcome:
 
 
 @dataclass(frozen=True, slots=True)
+class SpecialistToolsetConfig:
+    """Bounded connection config for a native owner-protocol client.
+
+    The native client (e.g. pydantic_ai ``MCPToolset``) performs owner
+    tool discovery only — business invocation always flows through the
+    governed port. ``headers`` may carry a delegated credential:
+    in-process secret material, never logged, never exposed to
+    model/prompt content.
+    """
+
+    endpoint: str
+    headers: Mapping[str, str]
+    timeout_seconds: float
+
+
+@dataclass(frozen=True, slots=True)
 class SpecialistCatalogResult:
     """Semantic projection of the specialist-owned catalog.
 

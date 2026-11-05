@@ -33,6 +33,9 @@ from app.application.interaction.turn_budget import TurnDeadline
 from app.application.interaction.workspace_context import (
     WorkspaceContext,
 )
+from app.application.specialist_interop.contracts import (
+    SpecialistToolsetConfig,
+)
 from app.application.model_invocation.contracts import (
     ConversationContextTurn,
 )
@@ -121,6 +124,24 @@ class SupportsGovernedStageGates(Protocol):
 
         Discovery-first candidate binding stays inside Application.
         PREPARE/ACT are rejected on this tool surface.
+        """
+        ...
+
+    def _native_toolset_config(
+        self,
+        *,
+        provider_id: str,
+        group_id: str,
+        timeout_seconds: float | None = None,
+    ) -> SpecialistToolsetConfig | None:
+        """Native-discovery client config for one provider group.
+
+        Returns ``None`` when the provider family exposes no native
+        client — the engine then registers no tools for that group.
+        Typed failures (unknown/disabled/credential) propagate as
+        ``SpecialistInteropError`` — fail-closed, never an
+        unauthenticated config. Discovery only: call traffic remains
+        governed by ``process_tool_call`` → ``_governed_semantic_tool_invoke``.
         """
         ...
 

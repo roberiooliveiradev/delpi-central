@@ -16,6 +16,21 @@ from app.application.capability_provision.contracts import (
     InvestigationAnswer,
     InvestigationAnswerStatus,
 )
+import pytest
+from tests.support.native_mcp_fixtures import (
+    alpha_beta_servers,
+    native_toolset_stub,
+)
+
+
+@pytest.fixture(autouse=True)
+def _native_toolsets_stub():
+    """Owner MCP surfaces in-process — native toolsets real, SDK wire
+    substituted; ``process_tool_call`` governance unchanged."""
+    with native_toolset_stub(alpha_beta_servers()):
+        yield
+
+
 from app.application.capability_provision.orchestration import (
     _apply_declared_answer,
 )
@@ -603,13 +618,7 @@ def test_engine_physical_requests_one_call_one_tool():
         if not any(isinstance(m, ModelResponse) for m in messages):
             return ModelResponse(
                 parts=[
-                    ToolCallPart(
-                        "invoke_read_capability",
-                        {
-                            "capability_id": read["capability_id"],
-                            "arguments": {"query": "terminal"},
-                        },
-                    )
+                    ToolCallPart(read["capability_id"], {"query": "terminal"})
                 ]
             )
         return _final_answer("done", status="insufficient")
@@ -654,13 +663,7 @@ def test_engine_tool_invocation_is_governed_not_multiplied():
         if not any(isinstance(m, ModelResponse) for m in messages):
             return ModelResponse(
                 parts=[
-                    ToolCallPart(
-                        "invoke_read_capability",
-                        {
-                            "capability_id": read["capability_id"],
-                            "arguments": {"query": "x"},
-                        },
-                    )
+                    ToolCallPart(read["capability_id"], {"query": "x"})
                 ]
             )
         return _final_answer("done", status="insufficient")
@@ -1285,13 +1288,7 @@ def test_agent_in_run_overflow_after_tool_result_no_second_call():
             return ModelResponse(
                 parts=[
                     TextPart("x" * 40000),
-                    ToolCallPart(
-                        "invoke_read_capability",
-                        {
-                            "capability_id": read["capability_id"],
-                            "arguments": {"query": "terminal"},
-                        },
-                    ),
+                    ToolCallPart(read["capability_id"], {"query": "terminal"}),
                 ]
             )
         return _final_answer("done", status="insufficient")
@@ -1349,14 +1346,7 @@ def test_governed_tool_invocation_real_and_request_counted():
         if not any(isinstance(m, ModelResponse) for m in messages):
             return ModelResponse(
                 parts=[
-                    ToolCallPart(
-                        "invoke_read_capability",
-                        {
-                            "capability_id": read["capability_id"],
-                            "arguments": {"query": "terminal"},
-                        },
-                        tool_call_id="call-e2e-1",
-                    )
+                    ToolCallPart(read["capability_id"], {"query": "terminal"}, tool_call_id="call-e2e-1",)
                 ]
             )
         return _final_answer("done", status="insufficient")
@@ -1422,13 +1412,7 @@ def test_agent_error_log_never_leaks_exception_content(caplog):
         if not any(isinstance(m, ModelResponse) for m in messages):
             return ModelResponse(
                 parts=[
-                    ToolCallPart(
-                        "invoke_read_capability",
-                        {
-                            "capability_id": read["capability_id"],
-                            "arguments": {"query": "terminal"},
-                        },
-                    )
+                    ToolCallPart(read["capability_id"], {"query": "terminal"})
                 ]
             )
         # model emits an invalid output that embeds a sentinel

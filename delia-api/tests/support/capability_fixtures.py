@@ -139,6 +139,20 @@ class FakeProvider:
             raise queued
         return queued
 
+    def native_toolset_config(self, group_id, *, timeout_seconds=None):
+        """Same public contract seam as the real MCP provider — the
+        endpoint marks the test transport substituted by
+        ``native_toolset_stub``; no private-attribute traversal."""
+        from app.application.specialist_interop.contracts import (
+            SpecialistToolsetConfig,
+        )
+
+        return SpecialistToolsetConfig(
+            endpoint=f"mcp-test://{group_id}",
+            headers={},
+            timeout_seconds=5.0,
+        )
+
 
 def _cap(group_id, provider_id, name, *, schema=None, op_class=None):
     return ProviderCapability(

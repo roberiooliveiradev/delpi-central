@@ -12,6 +12,21 @@ from __future__ import annotations
 
 import json
 
+import pytest
+from tests.support.native_mcp_fixtures import (
+    alpha_beta_servers,
+    native_toolset_stub,
+)
+
+
+@pytest.fixture(autouse=True)
+def _native_toolsets_stub():
+    """Owner MCP surfaces in-process — native toolsets real, SDK wire
+    substituted; ``process_tool_call`` governance unchanged."""
+    with native_toolset_stub(alpha_beta_servers()):
+        yield
+
+
 from app.application.capability_provision.orchestration import (
     OBLIGATION_SATISFIED,
     OBLIGATION_UNSATISFIED,
@@ -533,13 +548,7 @@ def test_r1_simple_read_never_calls_governed_owner_path():
         if sum(1 for m in messages if isinstance(m, ModelResponse)) == 1:
             return ModelResponse(
                 parts=[
-                    ToolCallPart(
-                        "invoke_read_capability",
-                        {
-                            "capability_id": read["capability_id"],
-                            "arguments": {},
-                        },
-                    )
+                    ToolCallPart(read["capability_id"], {})
                 ]
             )
         return _final_answer("done")

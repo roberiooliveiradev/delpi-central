@@ -31,3 +31,19 @@ owner-declared field. Bounded: value from user text, key from schema.
 - playlists → GROUNDED, RCA playlist real, prov vista/mcp
 - Full suite: green. Loop tests migrated to `invoke_read_capability`
   meta-tool (same `_governed_invoke` path).
+
+## SUPERSEDED/REMOVED (task NATIVE-MCPTOOLSET-DIRECT-ORCHESTRATION-01)
+- `invoke_read_capability` — REMOVED. Generic proxy invoking a
+  capability by textual id; native `MCPToolset` tools replace it.
+- `list_read_capabilities` — REMOVED. Parallel listing surface that
+  duplicated owner `tools/list`; eligibility stays internal via the
+  governed catalog, never exposed to the model.
+- Private-attribute config traversal (`_providers`/`_interop`/`_port`/
+  `_connections`/`_credential_provider`) — REMOVED. Replaced by the
+  legitimate contract chain `SupportsGovernedStageGates._native_toolset_config`
+  → `McpCapabilityProvider.native_toolset_config` →
+  `SpecialistInterop.native_toolset_config` →
+  `SpecialistInteropPort.native_toolset_config` →
+  `McpSpecialistAdapter` (profile + delegated credential, fail-closed).
+- `_governed_invoke` / `_governed_semantic_tool_invoke` — PRESERVED
+  (internal governance boundary, `process_tool_call` → governed path).

@@ -40,6 +40,7 @@ from app.application.specialist_interop.contracts import (
     SpecialistCatalogRequest,
     SpecialistCatalogResult,
     SpecialistInvocationRequest,
+    SpecialistToolsetConfig,
 )
 from app.application.specialist_interop.errors import (
     CAPABILITY_NOT_ALLOWED_IN_PHASE,
@@ -225,6 +226,24 @@ class SpecialistInterop:
         )
         return self._normalize_outcome(
             specialist, remote_name, request.correlation_id, outcome
+        )
+
+    def native_toolset_config(
+        self,
+        specialist_id: str,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> SpecialistToolsetConfig:
+        """Native-discovery connection config through the owned port.
+
+        Allowlist/profile/credential enforcement stays inside the
+        port — this is a delegation seam, not a second credential or
+        configuration authority.
+        """
+        specialist = self._require_specialist(specialist_id)
+        return self._port.native_toolset_config(
+            specialist,
+            timeout_seconds=timeout_seconds,
         )
 
     def _remote_tools(

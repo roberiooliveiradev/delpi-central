@@ -27,6 +27,7 @@ from app.application.interaction.turn_budget import remaining_budget
 from app.application.specialist_interop.contracts import (
     RemoteToolDescriptor,
     RemoteToolOutcome,
+    SpecialistToolsetConfig,
 )
 from app.application.specialist_interop.errors import (
     CAPABILITY_NOT_ALLOWED_IN_PHASE,
@@ -249,6 +250,39 @@ class McpSpecialistAdapter:
                 )
             raise
         return self._map_outcome(result)
+
+    def native_toolset_config(
+        self,
+        specialist: SpecialistRef,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> SpecialistToolsetConfig:
+        """Native-discovery connection config for one specialist.
+
+        Same fail-closed credential semantics as ``_connect``: no
+        delegated credential → ``MCP_AUTHENTICATION_FAILED``, never an
+        unauthenticated config. Used by the Agent runtime so the SDK
+        client performs owner tool discovery directly; call traffic
+        remains governed by ``process_tool_call`` → the port.
+        """
+        profile = self._profile(specialist.specialist_id)
+        if self._credential_provider is None:
+            raise SpecialistInteropError(
+                MCP_AUTHENTICATION_FAILED,
+                "no user-delegated credential provider for specialist",
+            )
+        bearer = self._credential_provider.credential_for(
+            profile,
+            timeout_seconds=timeout_seconds,
+        )
+        headers = {"Authorization": f"Bearer {bearer.strip()}"}
+        if profile.host_header:
+            headers["Host"] = profile.host_header
+        return SpecialistToolsetConfig(
+            endpoint=profile.endpoint,
+            headers=headers,
+            timeout_seconds=profile.timeout_seconds,
+        )
 
     def _connect(
         self,
