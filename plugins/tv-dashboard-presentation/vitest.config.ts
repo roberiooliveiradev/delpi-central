@@ -1,5 +1,5 @@
 import path from "node:path";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 import { pluginUiTestAliases, reactResolveAliases } from "../vite/federation.shared";
 
@@ -9,6 +9,7 @@ const pluginsRoot = path.resolve(pluginDir, "..");
 export default defineConfig({
   test: {
     environment: "jsdom",
+    exclude: [...configDefaults.exclude, "e2e/**"],
   },
   server: {
     /* Alias @delpi/plugin-ui aponta para sibling; Vite nega ?raw fora do root. */
