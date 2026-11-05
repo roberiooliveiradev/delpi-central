@@ -22,6 +22,8 @@ Fontes canônicas: [vista-capability-matrix](../../../tv-dashboard-api/docs/inte
 
 **Plano TARGET para evolução de KPIs componíveis e 100% orientados a DataModel:** [KPI-DATA-DRIVEN-COMPOSABLE-PLAN.md](./KPI-DATA-DRIVEN-COMPOSABLE-PLAN.md) — wireframes, contratos backend/frontend, visibilidade por parte, texto misto, meta dinâmica e fases E0–E7. É proposta de produto, não capability implementada.
 
+**Plano TARGET de Rótulos de dados / Número:** [CHART-DATA-LABELS-NUMBER-CANONICAL-MIGRATION-PLAN.md](./CHART-DATA-LABELS-NUMBER-CANONICAL-MIGRATION-PLAN.md) — retirar presets heterogêneos de conteúdo/formato dos contratos legados, preservar conteúdo e dados persistidos, centralizar formatação numérica em Número e validar editor/preview/TV antes de remover compatibilidade.
+
 ## Visão geral
 
 | Superfície | Quem usa | Onde | Login |
