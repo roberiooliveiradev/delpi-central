@@ -933,12 +933,14 @@ describe("DocumentDetailPanel — linha do tempo e avatares (UX-009)", () => {
           expect.anything(),
         ),
       );
-      const item = container.querySelector(
-        "li[data-author-src]",
-      ) as HTMLElement | null;
-      expect(item?.dataset.authorSrc).toBe(
-        "blob:http://localhost/photo-1",
-      );
+      await waitFor(() => {
+        const item = container.querySelector(
+          "li[data-author-src]",
+        ) as HTMLElement | null;
+        expect(item?.dataset.authorSrc).toBe(
+          "blob:http://localhost/photo-1",
+        );
+      });
       expect(screen.getByText(/Robério Oliveira/)).toBeTruthy();
     } finally {
       vi.unstubAllGlobals();

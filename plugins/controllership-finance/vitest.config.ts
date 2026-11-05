@@ -11,6 +11,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: "jsdom",
+    setupFiles: ["./src/test/resetReportQueryCache.ts"],
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
   },
   server: {

@@ -65,6 +65,11 @@ import {
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
+import {
+  invalidateP3,
+  invalidateReportMatrix,
+  invalidateVisibleReports,
+} from "../../app/reportQueryInvalidation";
 import { normalizeBasePath } from "../../app/pluginRoutes";
 import { CF_HELP } from "../../content/helpTooltips";
 import { DocumentDetailPanel } from "./DocumentDetailPanel";
@@ -480,22 +485,29 @@ export function MonthlyClosingPage({
     [base, period],
   );
 
-  const retry = useCallback(() => setRetryNonce((n) => n + 1), []);
+  const retry = useCallback(() => {
+    setRetryNonce((n) => n + 1);
+    if (period) invalidateVisibleReports(period);
+  }, [period]);
 
   const openCurrentMonth = useCallback(() => {
     if (!period || opening) return;
     setOpening(true);
     setOpenError(null);
     openCompetence(period)
-      .then(() => {
+      .then((competence) => {
         setOpening(false);
-        retry();
+        if (competence) {
+          invalidateP3(period);
+          invalidateReportMatrix(period);
+        }
+        setRetryNonce((n) => n + 1);
       })
       .catch((err: unknown) => {
         setOpening(false);
         setOpenError({ key: period, error: mapError(err) });
       });
-  }, [period, opening, retry]);
+  }, [period, opening]);
 
   // Competências formalmente abertas — lista real de atalhos da landing.
   useEffect(() => {
@@ -827,7 +839,6 @@ export function MonthlyClosingPage({
 
             {tab === "reports" ? (
               <MonthlyReportsPanel
-                refreshNonce={retryNonce}
                 period={period}
                 selectedReport={selectedReport}
                 onOpenReport={openReport}

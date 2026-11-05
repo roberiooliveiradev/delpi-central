@@ -33,6 +33,7 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import { ApiError } from "../../api/httpClient";
+import { invalidateReportMatrixIfPersisted } from "../../app/reportQueryInvalidation";
 import {
   getItemValidation,
   listCompetenceItems,
@@ -301,7 +302,8 @@ export function MonthlyDocumentsPanel({
         revision: card.revision,
         idempotencyKey: crypto.randomUUID(),
       })
-        .then(() => {
+        .then((document) => {
+          invalidateReportMatrixIfPersisted(period, document);
           setMutating(false);
           setFeedback({
             intent: "success",
@@ -336,7 +338,8 @@ export function MonthlyDocumentsPanel({
     cancelClosingDocument(period, card.documentId, {
       revision: card.revision,
     })
-      .then(() => {
+      .then((document) => {
+        invalidateReportMatrixIfPersisted(period, document);
         setMutating(false);
         setCancelTarget(null);
         setFeedback({

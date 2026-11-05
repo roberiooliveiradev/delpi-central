@@ -34,6 +34,7 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import { ApiError } from "../../api/httpClient";
+import { invalidateReportMatrixIfPersisted } from "../../app/reportQueryInvalidation";
 import {
   getCompetenceItem,
   type CompetenceChecklistItemDetail,
@@ -435,6 +436,7 @@ export function DocumentDetailPanel({
               : null,
       })
         .then((document) => {
+          invalidateReportMatrixIfPersisted(period, document);
           setUploading(false);
           if (isNew) {
             onOpenRef(document.document_id);
@@ -471,7 +473,8 @@ export function DocumentDetailPanel({
         revision: doc.revision,
         idempotencyKey: crypto.randomUUID(),
       })
-        .then(() => {
+        .then((document) => {
+          invalidateReportMatrixIfPersisted(period, document);
           setUploading(false);
           setFeedback({
             intent: "success",
@@ -519,7 +522,8 @@ export function DocumentDetailPanel({
     cancelClosingDocument(period, doc.document_id, {
       revision: doc.revision,
     })
-      .then(() => {
+      .then((document) => {
+        invalidateReportMatrixIfPersisted(period, document);
         setUploading(false);
         setCancelTarget(null);
         if (data?.kind === "document") {

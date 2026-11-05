@@ -23,6 +23,7 @@ import {
   type SourceState,
 } from "../../api/p3Api";
 import { useViewerCapabilities } from "../../app/ViewerContext";
+import { invalidateP3 } from "../../app/reportQueryInvalidation";
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
@@ -158,7 +159,8 @@ export function P3CutoffPanel({ period }: { period: string }) {
     setError(null);
     setFeedback(null);
     try {
-      await action();
+      const result = await action();
+      if (result != null) invalidateP3(period);
       setFeedback(okMessage);
       await reload();
     } catch (err) {

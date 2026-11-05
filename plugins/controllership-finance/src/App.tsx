@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { PluginErrorBoundary } from "@delpi/plugin-ui/index";
 
 import { configureHttpClient } from "./api/httpClient";
+import { ControllershipQueryProvider } from "./app/ControllershipQueryProvider";
 import { NotFoundPage } from "./app/NotFoundPage";
 import { PluginShell } from "./app/PluginShell";
 import { navigatePluginView } from "./app/pluginNavigation";
@@ -40,6 +41,9 @@ export type AppProps = {
   pathname?: string;
   basePath?: string;
   search?: string;
+  /** Já enviados pelo host federado. Discriminam o cache; não autorizam. */
+  permissions?: readonly string[];
+  isSuperadmin?: boolean;
 };
 
 const DRE_SURFACES = new Set(["home", "received_documents", "not_found"]);
@@ -167,6 +171,8 @@ export default function App({
   getFreshAccessToken,
   pathname,
   basePath,
+  permissions,
+  isSuperadmin,
 }: AppProps) {
   configureHttpClient(
     getAccessToken ?? (() => undefined),
@@ -175,8 +181,14 @@ export default function App({
   const base = normalizeBasePath(basePath);
 
   return (
-    <ViewerContextProvider>
-      <AppRoutes basePath={base} pathnameFromHost={pathname} />
-    </ViewerContextProvider>
+    <ControllershipQueryProvider
+      getAccessToken={getAccessToken}
+      permissions={permissions}
+      isSuperadmin={isSuperadmin}
+    >
+      <ViewerContextProvider>
+        <AppRoutes basePath={base} pathnameFromHost={pathname} />
+      </ViewerContextProvider>
+    </ControllershipQueryProvider>
   );
 }

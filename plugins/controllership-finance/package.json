@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@originjs/vite-plugin-federation": "^1.4.1",
+    "@tanstack/react-query": "^5.106.1",
     "lucide-react": "^0.576.0",
     "react": "19.2.7",
     "react-dom": "19.2.7"

@@ -27,11 +27,9 @@
  * «conferência não realizada» (P3/matriz 404); resultados são keyed
  * por período — dados de um mês nunca aparecem sob outro.
  */
+import { QueryClientProvider } from "@tanstack/react-query";
 import {
-  useCallback,
-  useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import {
@@ -52,29 +50,28 @@ import {
 } from "lucide-react";
 import { shouldHandleInlineNavClick } from "@delpi/plugin-ui/index";
 
-import { ApiError } from "../../api/httpClient";
 import {
-  getFinancialSettlementsSummary,
   type SettlementsSummaryPayload,
 } from "../../api/financialSettlementsApi";
 import {
-  getStockInventory,
   type StockInventoryPayload,
 } from "../../api/stockInventoryApi";
 import {
-  getStockReconciliation,
   type StockReconciliationPayload,
 } from "../../api/stockReconciliationApi";
 import {
-  getP3State,
   type P3Status,
   type ReconciliationDomain,
   type SourceState,
 } from "../../api/p3Api";
 import {
-  listReportMatrix,
   type ReportMatrix,
 } from "../../api/reportsApi";
+import { getReportQueryClient } from "../../app/reportQueryCache";
+import {
+  useMonthlyReportSources,
+  type ReportSource,
+} from "./useMonthlyReportSources";
 import {
   ReportsMatrixTable,
 } from "./ReportsMatrixPanel";
@@ -112,51 +109,7 @@ import {
 
 export type { ReportFamily };
 
-type PanelError = { status: number; code: string | null; message: string };
-
-const ERROR_MESSAGES: Record<string, string> = {
-  forbidden: "Você não tem autorização para esta consulta.",
-  unauthorized: "Sessão expirada — autentique-se novamente.",
-  competence_not_opened: "Competência não aberta.",
-  competence_not_found: "Competência não encontrada.",
-  not_found: "Competência não encontrada.",
-};
-
-const NOT_OPENED_CODES = new Set([
-  "competence_not_opened",
-  "competence_not_found",
-]);
-
-function mapError(error: unknown): PanelError {
-  if (error instanceof ApiError) {
-    return {
-      status: error.status,
-      code: error.code ?? null,
-      message: ERROR_MESSAGES[error.code ?? ""] ?? error.message,
-    };
-  }
-  return {
-    status: 0,
-    code: null,
-    message: "Falha de comunicação com a API.",
-  };
-}
-
-function isNotOpened(error: PanelError): boolean {
-  return (
-    (error.code !== null && NOT_OPENED_CODES.has(error.code)) ||
-    error.status === 404
-  );
-}
-
-// -- fontes ------------------------------------------------------------------
-
-type Source<T> =
-  | { kind: "ready"; data: T; at: Date }
-  | { kind: "not_opened" }
-  | { kind: "error"; error: PanelError };
-
-type Keyed<T> = { key: string; result: Source<T> };
+type Source<T> = ReportSource<T>;
 
 /** Metadados do catálogo — um cartão por relatório implementado. */
 const REPORT_META: Record<
@@ -341,18 +294,6 @@ const STOCK_STATUS_LABELS: Record<string, string> = {
   source_missing: "Posição histórica indisponível",
   no_matching_items: "Sem dados para o filtro",
 };
-
-function periodRange(period: string): {
-  startDate: string;
-  endDate: string;
-} {
-  const [year, month] = period.split("-").map(Number);
-  const lastDay = new Date(year, month, 0).getDate();
-  return {
-    startDate: `${period}-01`,
-    endDate: `${period}-${String(lastDay).padStart(2, "0")}`,
-  };
-}
 
 function formatPeriod(period: string): string {
   const [year, month] = period.split("-");
@@ -994,12 +935,11 @@ function AttentionRow({
 
 // -- painel principal ---------------------------------------------------------
 
-export function MonthlyReportsPanel({
+function MonthlyReportsPanelBody({
   period,
   selectedReport,
   onOpenReport,
   reportHref,
-  refreshNonce = 0,
 }: {
   period: string;
   selectedReport: ReportFamily | null;
@@ -1009,45 +949,26 @@ export function MonthlyReportsPanel({
    *  do catálogo (CF-PROC0072: navegação SPA + nova aba/compartilhar
    *  nativos do navegador). */
   reportHref: (key: ReportKey) => string;
-  /** Tick do refresh do hero — comando único de atualização
-   *  por contexto (CF-UX-031): o «Atualizar consulta» do hero
-   *  dispara todas as fontes do painel. */
-  refreshNonce?: number;
 }) {
-  const [nonce, setNonce] = useState(0);
-  const reload = useCallback(() => setNonce((n) => n + 1), []);
-
-  const [p3Result, setP3Result] = useState<Keyed<P3Status> | null>(null);
-  const [matrixResult, setMatrixResult] =
-    useState<Keyed<ReportMatrix> | null>(null);
-  const [setResult, setSetResult] =
-    useState<Keyed<SettlementsSummaryPayload> | null>(null);
-  const [stockResult, setStockResult] =
-    useState<Keyed<StockInventoryPayload> | null>(null);
-  const [reconResult, setReconResult] =
-    useState<Keyed<StockReconciliationPayload> | null>(null);
-
-  const p3Id = useRef(0);
-  const matrixId = useRef(0);
-  const setId = useRef(0);
-  const stockId = useRef(0);
-  const reconId = useRef(0);
-
-  const sourceKey = `${period}:${nonce}:${refreshNonce}`;
-  const { startDate, endDate } = useMemo(
-    () => periodRange(period),
-    [period],
-  );
-
-  const p3 = p3Result?.key === sourceKey ? p3Result.result : null;
-  const matrix =
-    matrixResult?.key === sourceKey ? matrixResult.result : null;
-  const settlements =
-    setResult?.key === sourceKey ? setResult.result : null;
-  const stock =
-    stockResult?.key === sourceKey ? stockResult.result : null;
-  const recon =
-    reconResult?.key === sourceKey ? reconResult.result : null;
+  const reports = useMonthlyReportSources(period);
+  const {
+    p3,
+    matrix,
+    settlements,
+    stock,
+    recon,
+    refreshError,
+    latestFetchedAt,
+    refetchAll,
+    sealed,
+    scopeReady,
+  } = reports;
+  const anyRefreshing =
+    reports.p3Fetching ||
+    reports.matrixFetching ||
+    reports.settlementsFetching ||
+    reports.stockFetching ||
+    reports.reconFetching;
   const anyLoading =
     p3 === null ||
     matrix === null ||
@@ -1071,147 +992,6 @@ export function MonthlyReportsPanel({
     `conciliação analítica — ${recon === null ? "consultando" : "concluída"}`,
   ].join(" · ");
 
-  useEffect(() => {
-    if (!period) return;
-    const id = ++p3Id.current;
-    const controller = new AbortController();
-    getP3State(period, controller.signal)
-      .then((data) => {
-        if (controller.signal.aborted || p3Id.current !== id) return;
-        if (data) {
-          setP3Result({
-            key: sourceKey,
-            result: { kind: "ready", data, at: new Date() },
-          });
-        } else {
-          setP3Result({ key: sourceKey, result: { kind: "not_opened" } });
-        }
-      })
-      .catch((err: unknown) => {
-        if (controller.signal.aborted || p3Id.current !== id) return;
-        const error = mapError(err);
-        setP3Result({
-          key: sourceKey,
-          result: isNotOpened(error)
-            ? { kind: "not_opened" }
-            : { kind: "error", error },
-        });
-      });
-    return () => controller.abort();
-  }, [period, sourceKey]);
-
-  useEffect(() => {
-    if (!period) return;
-    const id = ++matrixId.current;
-    const controller = new AbortController();
-    listReportMatrix(period, controller.signal)
-      .then((data) => {
-        if (controller.signal.aborted || matrixId.current !== id)
-          return;
-        if (data) {
-          setMatrixResult({
-            key: sourceKey,
-            result: { kind: "ready", data, at: new Date() },
-          });
-        } else {
-          setMatrixResult({
-            key: sourceKey,
-            result: { kind: "not_opened" },
-          });
-        }
-      })
-      .catch((err: unknown) => {
-        if (controller.signal.aborted || matrixId.current !== id)
-          return;
-        const error = mapError(err);
-        setMatrixResult({
-          key: sourceKey,
-          result: isNotOpened(error)
-            ? { kind: "not_opened" }
-            : { kind: "error", error },
-        });
-      });
-    return () => controller.abort();
-  }, [period, sourceKey]);
-
-  useEffect(() => {
-    if (!period) return;
-    const id = ++setId.current;
-    const controller = new AbortController();
-    getFinancialSettlementsSummary(
-      { startDate, endDate },
-      { signal: controller.signal },
-    )
-      .then((data) => {
-        if (controller.signal.aborted || setId.current !== id) return;
-        setSetResult({
-          key: sourceKey,
-          result: { kind: "ready", data, at: new Date() },
-        });
-      })
-      .catch((err: unknown) => {
-        if (controller.signal.aborted || setId.current !== id) return;
-        setSetResult({
-          key: sourceKey,
-          result: { kind: "error", error: mapError(err) },
-        });
-      });
-    return () => controller.abort();
-  }, [period, sourceKey, startDate, endDate]);
-
-  useEffect(() => {
-    if (!period) return;
-    const id = ++stockId.current;
-    const controller = new AbortController();
-    getStockInventory(
-      { period, page: 1, pageSize: 25 },
-      { signal: controller.signal },
-    )
-      .then((data) => {
-        if (controller.signal.aborted || stockId.current !== id) return;
-        setStockResult({
-          key: sourceKey,
-          result: { kind: "ready", data, at: new Date() },
-        });
-      })
-      .catch((err: unknown) => {
-        if (controller.signal.aborted || stockId.current !== id) return;
-        setStockResult({
-          key: sourceKey,
-          result: { kind: "error", error: mapError(err) },
-        });
-      });
-    return () => controller.abort();
-  }, [period, sourceKey]);
-
-  // Conciliação analítica (E/S − P7 − H02) — consulta operacional
-  // por mês de referência; não depende de competência aberta nem do
-  // fluxo documental (DEC-ANALYTICS-INDEPENDENCE).
-  useEffect(() => {
-    if (!period) return;
-    const id = ++reconId.current;
-    const controller = new AbortController();
-    getStockReconciliation(
-      { period },
-      { signal: controller.signal },
-    )
-      .then((data) => {
-        if (controller.signal.aborted || reconId.current !== id) return;
-        setReconResult({
-          key: sourceKey,
-          result: { kind: "ready", data, at: new Date() },
-        });
-      })
-      .catch((err: unknown) => {
-        if (controller.signal.aborted || reconId.current !== id) return;
-        setReconResult({
-          key: sourceKey,
-          result: { kind: "error", error: mapError(err) },
-        });
-      });
-    return () => controller.abort();
-  }, [period, sourceKey]);
-
   const attention = useMemo(
     () =>
       buildAttentionItems({ p3, matrix, settlements, stock, recon }),
@@ -1233,8 +1013,9 @@ export function MonthlyReportsPanel({
   // «Divergências identificadas» só exibe um número quando a contagem
   // é comprovada: zero com verificações pendentes seria um falso
   // negativo — INCONCLUSIVE/pendente nunca vira «0» (REWORK-011).
-  const divergenceValue =
-    divergenceCount > 0
+  const divergenceValue = anyLoading
+    ? "—"
+    : divergenceCount > 0
       ? String(divergenceCount)
       : divergenceUnknown || unverifiedCount > 0
         ? "—"
@@ -1301,6 +1082,17 @@ export function MonthlyReportsPanel({
     );
   }
 
+  if (sealed || !scopeReady) {
+    return (
+      <CfFeedbackMessage intent="warning" title="Sessão necessária">
+        Sessão expirada — autentique-se novamente. Os resultados
+        protegidos desta consulta foram descartados.
+      </CfFeedbackMessage>
+    );
+  }
+
+  const showRefreshing = anyRefreshing && !anyLoading;
+
   return (
     <div className="cf-page-stack" aria-label="Relatórios e divergências">
       <CfSectionCard
@@ -1308,6 +1100,22 @@ export function MonthlyReportsPanel({
         subtitle="Analise os resultados do mês e identifique o que precisa ser corrigido."
         hint={CF_HELP.monthlyClosing.reportsIndicators}
       >
+        {latestFetchedAt !== null ? (
+          <p>
+            Última consulta bem-sucedida:{" "}
+            {formatDateTime(new Date(latestFetchedAt).toISOString())}
+            {showRefreshing ? ". Atualizando consulta." : "."}
+          </p>
+        ) : null}
+        {refreshError ? (
+          <CfFeedbackMessage
+            intent="warning"
+            title="A atualização não foi concluída"
+          >
+            {refreshError.message} Os valores exibidos continuam os da
+            última consulta bem-sucedida deste mês.
+          </CfFeedbackMessage>
+        ) : null}
         <div
           className="cf-monthly-indicators"
           aria-label="Indicadores de relatórios"
@@ -1328,7 +1136,9 @@ export function MonthlyReportsPanel({
             onActivate={() => scrollTo("cf-reports-attention")}
           />
           <CfInteractiveDataCard
-            ariaLabel={`Relatórios disponíveis: ${availableReports}`}
+            ariaLabel={`Relatórios disponíveis: ${
+              anyLoading ? "—" : String(availableReports)
+            }`}
             fields={[
               {
                 id: "value",
@@ -1343,7 +1153,9 @@ export function MonthlyReportsPanel({
             onActivate={() => scrollTo("cf-reports-catalog")}
           />
           <CfInteractiveDataCard
-            ariaLabel={`Fontes não verificadas: ${unverifiedCount}`}
+            ariaLabel={`Fontes não verificadas: ${
+              anyLoading ? "—" : String(unverifiedCount)
+            }`}
             fields={[
               {
                 id: "value",
@@ -1577,7 +1389,7 @@ export function MonthlyReportsPanel({
             <CfQueryErrorBanner
               error={matrix.error}
               dataset="a matriz de relatórios"
-              onRetry={reload}
+              onRetry={refetchAll}
             />
           ) : (
             <CfLoadingCard
@@ -1588,5 +1400,20 @@ export function MonthlyReportsPanel({
         </div>
       </details>
     </div>
+  );
+}
+
+export function MonthlyReportsPanel(
+  props: {
+    period: string;
+    selectedReport: ReportFamily | null;
+    onOpenReport: (key: ReportKey) => void;
+    reportHref: (key: ReportKey) => string;
+  },
+) {
+  return (
+    <QueryClientProvider client={getReportQueryClient()}>
+      <MonthlyReportsPanelBody {...props} />
+    </QueryClientProvider>
   );
 }

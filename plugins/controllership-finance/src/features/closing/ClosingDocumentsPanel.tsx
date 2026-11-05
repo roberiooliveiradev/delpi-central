@@ -30,6 +30,7 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import { ApiError } from "../../api/httpClient";
+import { invalidateReportMatrixIfPersisted } from "../../app/reportQueryInvalidation";
 import {
   decideDocumentEvidence,
   type RejectionReason,
@@ -307,7 +308,8 @@ export function ClosingDocumentsPanel({
           snapshotItemId: snapshotItemId ?? null,
         },
       )
-        .then(() => {
+        .then((document) => {
+          invalidateReportMatrixIfPersisted(period, document);
           setUploading(false);
           setPending(null);
           refresh();
@@ -384,7 +386,8 @@ export function ClosingDocumentsPanel({
         revision,
         idempotencyKey: pendingMutation.idempotencyKey,
       })
-        .then(() => {
+        .then((document) => {
+          invalidateReportMatrixIfPersisted(period, document);
           setPendingReplace(null);
           refresh();
           onUploaded?.();
@@ -451,7 +454,8 @@ export function ClosingDocumentsPanel({
     cancelClosingDocument(period, doc.document_id, {
       revision: doc.revision,
     })
-      .then(() => {
+      .then((document) => {
+        invalidateReportMatrixIfPersisted(period, document);
         setCancelTarget(null);
         refresh();
         onUploaded?.();
@@ -484,7 +488,8 @@ export function ClosingDocumentsPanel({
       setMutating(true);
       setMutationError(null);
       decideDocumentEvidence(period, documentId, { decision, ...payload })
-        .then(() => {
+        .then((decision) => {
+          invalidateReportMatrixIfPersisted(period, decision);
           setRejectDocTarget(null);
           setRejectDocReason("");
           setRejectDocComment("");

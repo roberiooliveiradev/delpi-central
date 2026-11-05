@@ -214,6 +214,21 @@ grupos `receivedDocuments` e `dreHome`.
 - Origens de dados na BFF do produto: `GET /viewer-context`,
   `GET /closing/financial-settlements`, `GET /closing/financial-settlements/summary`
 
+## Cache de consultas — Relatórios e divergências
+
+As cinco leituras do hub (`p3`, matriz R01–R15, resumo de baixas, posição de estoque e conciliação analítica) usam TanStack Query v5, dependência privada deste MFE, fora do share scope da Module Federation. O cache é só de memória: F5 começa vazio; não há `localStorage`, IndexedDB nem Service Worker.
+
+| Fonte | Frescor | Permanência sem observador |
+|---|---|---|
+| P3 e matriz | 60 s | 30 min |
+| Baixas, estoque e conciliação analítica | 5 min | 30 min |
+
+`retry` automático está desligado. Revalidação em foco ou reconexão ocorre só quando a consulta já não está fresca e o contexto segue válido. A chave inclui `sub` (discriminador, não autorização), o fingerprint das `permissions` e de `isSuperadmin` já enviados pelo host, e uma geração local. Bearer não entra na chave. Logout (`DELPI_GLOBAL_LOGOUT`), ausência de `sub`, 401 e 403 descartam payloads financeiros. Uma resposta da geração anterior não é publicada.
+
+Invalidação depois de entidade persistida: abertura de competência atualiza P3 e a matriz daquele período; cutoff, conciliação e revalidação P3 atualizam só o P3; decisão, N/A, cancelamento, reversão, correção e item excepcional atualizam a matriz; upload, substituição e cancelamento de documento atualizam a matriz. Baixas, estoque e conciliação analítica não têm escrita neste Portal: entram de novo pelo botão «Atualizar consulta», por outra chave ou quando o frescor acaba.
+
+Limitação: mudança de escopo de filial que não altere `sub` nem as permissions recebidas pelo host não é observável no MFE. A BFF continua fail-closed em toda request nova. O frescor acima é o teto dessa janela, não uma autorização.
+
 ## Testes
 
 ```bash

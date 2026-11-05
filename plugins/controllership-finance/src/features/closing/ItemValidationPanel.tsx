@@ -17,6 +17,7 @@ import {
 import { ActionButton } from "@delpi/plugin-ui/index";
 
 import { ApiError } from "../../api/httpClient";
+import { invalidateReportMatrixIfPersisted } from "../../app/reportQueryInvalidation";
 import {
   cancelChecklistItem,
   decideDocumentEvidence,
@@ -293,7 +294,8 @@ export function ItemValidationPanel({ period, item, onChanged }: Props) {
       setBusy(true);
       setActionError(null);
       work()
-        .then(() => {
+        .then((entity) => {
+          invalidateReportMatrixIfPersisted(period, entity);
           setBusy(false);
           setNonce((n) => n + 1);
           onChanged();
@@ -305,7 +307,7 @@ export function ItemValidationPanel({ period, item, onChanged }: Props) {
           );
         });
     },
-    [onChanged],
+    [onChanged, period],
   );
 
   const decideDoc = useCallback(

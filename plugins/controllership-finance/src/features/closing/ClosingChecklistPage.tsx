@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError } from "../../api/httpClient";
+import { invalidateReportMatrixIfPersisted, invalidateP3, invalidateReportMatrix } from "../../app/reportQueryInvalidation";
 import {
   createExceptionalItem,
   getCompetenceItem,
@@ -295,8 +296,12 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
     if (!periodValid) return;
     setOpening(true);
     openCompetence(activePeriod)
-      .then(() => {
+      .then((competence) => {
         setOpening(false);
+        if (competence) {
+          invalidateP3(activePeriod);
+          invalidateReportMatrix(activePeriod);
+        }
         retry();
       })
       .catch((err: unknown) => {
@@ -333,7 +338,8 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
       justification: exJustification.trim(),
       applicability: exApplicability,
     })
-      .then(() => {
+      .then((item) => {
+        invalidateReportMatrixIfPersisted(activePeriod, item);
         setExceptionalBusy(false);
         setExceptionalOpen(false);
         setExName("");
