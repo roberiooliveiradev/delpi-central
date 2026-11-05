@@ -321,3 +321,19 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
 **TO_INVENTORY:** live status/current code SHA at execution, full consumer graph/AST, exact approved phase and CP mapping at new HEAD, authority for snapshot removal, proof of foundation C3-T5 if files removed, actual real-model generalization quality.
 
 **TEST_NOT_RUN:** No code/tests/evals/deploy were performed as part of doc256. This plan does not grant production authorization.
+
+---
+
+## 9. Execução parcial registrada (2026-11-05, commit `88a7c4e5`)
+
+**G2 concluído** (exclusão física dos dois módulos legados, decisão PO):
+
+- Deletados `capability_provision/outcome_assessment.py` (1805 linhas) e `paginated_result_semantics.py` (801 linhas). Ausentes de `git ls-files`; zero imports de produção.
+- Maquinaria semântica sem consumidor vivo removida: `assess_outcome`, `outcome_facts`, `OutcomeVerdict`, `EvidenceFacts`, `AnswerRequirements`, `GoalEvidenceJudgment`, `parse_goal_evidence_judgment`, `apply_verdict_limitation`, `OUTCOME_*`; classificadores regex (`classify_result_intent`, `classify_personal_ticket_scope`, `is_ticket_domain_inquiry`, `personal_scope_response`, `schema_supports_ticket_list_action`, `unique_structural_ticket_list_capability`, `arguments_include_*`); composer CRI (`compose_cri_response`, `ordering_presentation`, `_render_synthesis`, `_compose_answer`, `_proven/_selected_proven_differences`, `_insufficiency_content`, `CriComposition`, `_prior_supports_typed_attribute_compare`, `ordering_proof_fields`, `verified_ordering_event`, `distinct_delivered_count`, `_synthesis_selections`, `_wording_leaks_technical`).
+- Helpers determinísticos de projeção de payload do owner consolidados em `capability_provision/generic_evidence_renderer.py` (352→1929 linhas): bounds `MAX_*`, `extract_pagination_envelope`, `aggregate_paginated_pages`, `resolve_count_semantics`, `PaginationEnvelope`/`PageAggregationResult`/`CountResolution`/`CountResolutionKind`, mensagens de contagem, control-plane stripping, sanitização/redaction, entity-schema helpers, `_comparison_records`, temporal/ordering parse, contract/evidence rows, resolver/unwrap.
+- Consumidores corrigidos: `orchestration.py` (imports + `_project_paginated_personal_or_count` e call site + `_TurnGoal.answer_requirements` removidos), `conversational_response.py` (1330→689 — só render helpers), `handle_interactive_turn.py`, `interaction/argument_validation.py` — todos importando de `generic_evidence_renderer`.
+- Testes: removidos `test_c3_evidence_to_answer_isolation`, `test_cri_unified_presentation`, `test_q02c_b2_typed_comparison_outcome` (acoplados ao maquinário morto); `test_r45_pagination_integrity_rework`, `test_r4_presentation_parity`, `test_render_specialist_outcome_fidelity`, `test_c3_self_awareness_ptbr_labels` reescritos para o novo owner. 7 eval scripts obsoletos (CRI/judgment) removidos.
+- **Suíte `delia-api`: PASS (exit 0)** no SHA avaliado; `capability_provision` 11.207→9.802 linhas líquidas (−1.405; diff total −10.238/+1.591).
+- RQ-05, RQ-06 = IMPLEMENTED (deleção física + consumidores). RQ-07 = PARTIAL (cobertura factual de outcome já era determinística no finalize; typed output RQ-01..04 ainda pendente em G1).
+
+**Pendentes:** G1 (output_type nativo + acceptor), resto de G3 (orchestration/handler shrink), G4, G5, G6, G7, G8 — ver relatório de execução.

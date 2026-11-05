@@ -5741,3 +5741,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | Suíte delia-api | PASS — 1172 testes no SHA avaliado |
 | E01–E10 ao vivo | E05 PASS/GROUNDED (READ real `root=90260148`); demais NON_GROUNDED honestos; FALSE_GROUNDED=0; residual owner-binding aberto |
 | PRODUCTION_DEPLOY | NOT_AUTHORIZED |
+
+## DELIA-C3-CROSS-FOLDER-NATIVE-PYDANTIC-AI-CONSOLIDATED-LEGACY-CLEANUP-01 (doc 256 — fatia G2)
+
+| Campo | Valor |
+|---|---|
+| BASE_HEAD | `0152f67004ed11cbd893cdc4126705564000656b` |
+| Commit | `88a7c4e50ceaecbdd3234719db93d7777df85afc` |
+| G2 | CONCLUÍDO — `outcome_assessment.py` e `paginated_result_semantics.py` deletados; helpers determinísticos consolidados em `generic_evidence_renderer.py`; `conversational_response` 1330→689 |
+| Suíte | PASS (exit 0) |
+| Pendente | G1 typed output; resto de G3; G4; G5; G6; G7; G8 |
+| PRODUCTION_DEPLOY | NOT_AUTHORIZED |
