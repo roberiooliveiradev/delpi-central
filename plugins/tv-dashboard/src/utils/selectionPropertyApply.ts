@@ -20,6 +20,22 @@ export type SelectionPropertyApplyOptions = {
 };
 
 /**
+ * `bump_font_size` só conhece o bloco (`style` / contentRuns).
+ * Partes compostas e seleção parcial usam o patch tipográfico da seleção.
+ */
+export function fontSizeStepUsesBlockBump(params: {
+  targetMode: "block" | "part" | "complexGlobal" | "canvasCell";
+  partialTextSelection: boolean;
+  multiVisualBox: boolean;
+}): boolean {
+  return (
+    params.targetMode === "block" &&
+    !params.partialTextSelection &&
+    !params.multiVisualBox
+  );
+}
+
+/**
  * Remove `undefined` — exceto chaves clearable (`fillPaint`, sombra…),
  * onde `undefined` significa apagar no `applyComunicadoBlockStylePatch`.
  */

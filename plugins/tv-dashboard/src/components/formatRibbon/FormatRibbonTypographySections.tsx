@@ -20,11 +20,11 @@ import {
   Upload,
 } from "lucide-react";
 import {
+  CHART_PART_FONT_SIZE_DEFAULTS,
   COMUNICADO_FONT_FAMILIES,
   COMUNICADO_FONT_SIZE_MIN,
   COMUNICADO_FONT_SIZE_PRESETS,
   COMUNICADO_FONT_SIZE_STEP,
-  CHART_PART_FONT_SIZE_DEFAULTS,
   KPI_PART_FONT_SIZE_DEFAULTS,
   buildTextDecoration,
   clampFontSize,
@@ -44,6 +44,7 @@ import {
   resolveInputContrastBackground,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
+import { fontSizeStepUsesBlockBump } from "../../utils/selectionPropertyApply";
 import {
   NumberStepperControl,
   HintAction,
@@ -824,7 +825,13 @@ export function FormatRibbonTypographySections({
                 )
               }
               onStepDown={() => {
-                if (!partialTextSelectionActive && !multiVisualBox) {
+                if (
+                  fontSizeStepUsesBlockBump({
+                    targetMode: textFormatTarget.mode,
+                    partialTextSelection: partialTextSelectionActive,
+                    multiVisualBox,
+                  })
+                ) {
                   bumpSelectedFontSize(-1);
                   return;
                 }
@@ -837,7 +844,13 @@ export function FormatRibbonTypographySections({
                 );
               }}
               onStepUp={() => {
-                if (!partialTextSelectionActive && !multiVisualBox) {
+                if (
+                  fontSizeStepUsesBlockBump({
+                    targetMode: textFormatTarget.mode,
+                    partialTextSelection: partialTextSelectionActive,
+                    multiVisualBox,
+                  })
+                ) {
                   bumpSelectedFontSize(1);
                   return;
                 }

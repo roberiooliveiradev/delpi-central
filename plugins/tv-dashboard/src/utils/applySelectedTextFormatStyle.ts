@@ -483,8 +483,23 @@ export function buildSelectedTextFormatBlockPatch(params: {
   if (target.mode === "part" && target.source === "input" && selected.type === "input") {
     if (!isInputTextFormatPart(selectedInputPart) || !selectedInputPart) return null;
     const prev = getInputPartState(selected.inputParts, selectedInputPart)?.style;
+    const currentSize = resolveInputPartFontSize(selectedInputPart.kind, prev);
+    const nextFontSize = resolveFontSizeForTarget({
+      current: currentSize,
+      patch,
+      options: applyOptions,
+    });
     const nextParts = upsertInputPartState(selected.inputParts, selectedInputPart, {
-      style: mergeTypographyStyle(prev, patch) as AnyPartStyle,
+      style: mergeTypographyStyle(prev, patch, {
+        fontSizeAuto: patch.fontSizeAuto === true,
+        nextFontSize: patch.fontSizeAuto === true ? undefined : nextFontSize,
+        typographyMode:
+          patch.fontSizeAuto === true
+            ? "auto"
+            : nextFontSize != null
+              ? "fixed"
+              : prev?.typographyMode,
+      }) as AnyPartStyle,
     });
     return { inputParts: nextParts } as Partial<ComunicadoBlock>;
   }
@@ -498,8 +513,26 @@ export function buildSelectedTextFormatBlockPatch(params: {
     let nextParts = selected.tableParts;
     for (const part of applyTo) {
       const prev = getTablePartState(nextParts, part)?.style;
+      const currentSize =
+        typeof prev?.fontSize === "number" && Number.isFinite(prev.fontSize)
+          ? prev.fontSize
+          : 14;
+      const nextFontSize = resolveFontSizeForTarget({
+        current: currentSize,
+        patch,
+        options: applyOptions,
+      });
       nextParts = upsertTablePartState(nextParts, part, {
-        style: mergeTypographyStyle(prev, patch) as AnyPartStyle,
+        style: mergeTypographyStyle(prev, patch, {
+          fontSizeAuto: patch.fontSizeAuto === true,
+          nextFontSize: patch.fontSizeAuto === true ? undefined : nextFontSize,
+          typographyMode:
+            patch.fontSizeAuto === true
+              ? "auto"
+              : nextFontSize != null
+                ? "fixed"
+                : prev?.typographyMode,
+        }) as AnyPartStyle,
       });
     }
     return { tableParts: nextParts } as Partial<ComunicadoBlock>;

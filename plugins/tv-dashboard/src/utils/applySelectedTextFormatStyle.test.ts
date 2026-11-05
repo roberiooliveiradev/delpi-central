@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import { buildSelectedTextFormatBlockPatch } from "./applySelectedTextFormatStyle";
+import { fontSizeStepUsesBlockBump } from "./selectionPropertyApply";
 
 describe("buildSelectedTextFormatBlockPatch", () => {
   it("tipografia global da tabela grava tableOptions", () => {
@@ -213,5 +214,87 @@ describe("buildSelectedTextFormatBlockPatch", () => {
     });
     expect(patch?.cells?.[0]?.[0]?.style?.fontWeight).toBe("bold");
     expect(patch?.cells?.[0]?.[1]?.style?.fontWeight).toBeUndefined();
+  });
+
+  it("delta na parte Meta do KPI altera só target e acumula o passo", () => {
+    const selected = {
+      id: "k1",
+      type: "kpi_view",
+      frame: { x: 0, y: 0, w: 20, h: 12 },
+      kpiParts: {
+        title: { style: { fontSize: 16 } },
+        value: { style: { fontSize: 48 } },
+        target: { style: { fontSize: 28, typographyMode: "fixed" } },
+        hint: { style: { fontSize: 12 } },
+      },
+    } as ComunicadoBlock;
+    const once = buildSelectedTextFormatBlockPatch({
+      selected,
+      selectedKpiPart: { kind: "target" },
+      patch: { fontSizeAuto: false },
+      applyOptions: { fontSizeMode: "delta", fontSizeDelta: 2 },
+    });
+    expect(once?.kpiParts?.target?.style?.fontSize).toBe(30);
+    expect(once?.kpiParts?.title?.style?.fontSize).toBe(16);
+    expect(once?.kpiParts?.value?.style?.fontSize).toBe(48);
+    expect(once?.kpiParts?.hint?.style?.fontSize).toBe(12);
+    const twice = buildSelectedTextFormatBlockPatch({
+      selected: { ...selected, kpiParts: once?.kpiParts } as ComunicadoBlock,
+      selectedKpiPart: { kind: "target" },
+      patch: { fontSizeAuto: false },
+      applyOptions: { fontSizeMode: "delta", fontSizeDelta: -2 },
+    });
+    expect(twice?.kpiParts?.target?.style?.fontSize).toBe(28);
+  });
+
+  it("delta de célula de tabela altera só a parte selecionada", () => {
+    const selected = {
+      id: "tb1",
+      type: "table_view",
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+      tableParts: {
+        "headerCell:0": { style: { fontSize: 14 } },
+        "bodyCell:1": { style: { fontSize: 12 } },
+      },
+    } as ComunicadoBlock;
+    const patch = buildSelectedTextFormatBlockPatch({
+      selected,
+      selectedTablePart: { kind: "headerCell", colIndex: 0 },
+      patch: { fontSizeAuto: false },
+      applyOptions: { fontSizeMode: "delta", fontSizeDelta: 2 },
+    });
+    expect(patch?.tableParts?.["headerCell:0"]?.style?.fontSize).toBe(16);
+    expect(patch?.tableParts?.["bodyCell:1"]?.style?.fontSize).toBe(12);
+  });
+
+  it("passo de fonte do bloco só quando o alvo é o bloco inteiro", () => {
+    expect(
+      fontSizeStepUsesBlockBump({
+        targetMode: "block",
+        partialTextSelection: false,
+        multiVisualBox: false,
+      }),
+    ).toBe(true);
+    expect(
+      fontSizeStepUsesBlockBump({
+        targetMode: "part",
+        partialTextSelection: false,
+        multiVisualBox: false,
+      }),
+    ).toBe(false);
+    expect(
+      fontSizeStepUsesBlockBump({
+        targetMode: "complexGlobal",
+        partialTextSelection: false,
+        multiVisualBox: false,
+      }),
+    ).toBe(false);
+    expect(
+      fontSizeStepUsesBlockBump({
+        targetMode: "block",
+        partialTextSelection: true,
+        multiVisualBox: false,
+      }),
+    ).toBe(false);
   });
 });
