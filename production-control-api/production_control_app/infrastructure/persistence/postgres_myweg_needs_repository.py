@@ -252,7 +252,7 @@ class PostgresMyWegNeedsRepository:
                 rows = cursor.fetchall()
         return [dict(row) for row in rows]
 
-    def insert_sb1_resolution_run(
+    def persist_sb1_resolution_batch(
         self,
         *,
         run_id: str,
@@ -263,8 +263,10 @@ class PostgresMyWegNeedsRepository:
         counts: dict[str, Any],
         semantics_proven: bool,
         semantics_notes: str,
+        rows: list[dict[str, Any]],
     ) -> None:
-        query = f"""
+        """Persiste run + vínculos na mesma transação (commit único)."""
+        insert_run = f"""
             INSERT INTO {_SB1_RUNS} (
                 id, batch_id, dry_run, caller_app, started_at, finished_at,
                 status, counts_json, semantics_proven, semantics_notes
@@ -273,32 +275,7 @@ class PostgresMyWegNeedsRepository:
                 %s, %s::jsonb, %s, %s
             )
         """
-        with get_connection() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    query,
-                    (
-                        run_id,
-                        batch_id,
-                        dry_run,
-                        caller_app,
-                        status,
-                        Jsonb(counts),
-                        semantics_proven,
-                        semantics_notes,
-                    ),
-                )
-                connection.commit()
-
-    def upsert_sb1_resolutions(
-        self,
-        *,
-        resolution_run_id: str,
-        rows: list[dict[str, Any]],
-    ) -> None:
-        if not rows:
-            return
-        query = f"""
+        upsert_resolution = f"""
             INSERT INTO {_SB1_RESOLUTIONS} (
                 batch_id, record_id, line_fingerprint, status,
                 informed_product_code, customer_reference,
@@ -328,29 +305,46 @@ class PostgresMyWegNeedsRepository:
                 updated_at = NOW()
         """
         with get_connection() as connection:
-            with connection.cursor() as cursor:
-                for row in rows:
-                    verified_at = row["verified_at"]
+            try:
+                with connection.cursor() as cursor:
                     cursor.execute(
-                        query,
+                        insert_run,
                         (
-                            row["batch_id"],
-                            row["record_id"],
-                            row["line_fingerprint"],
-                            row["status"],
-                            row.get("informed_product_code"),
-                            row.get("customer_reference"),
-                            row.get("verified_product_code"),
-                            row.get("verified_description"),
-                            row.get("matched_by"),
-                            row.get("reason"),
-                            Jsonb(row.get("candidates") or []),
-                            row.get("source") or "api-delpi.lookup_products_sb1_identity",
-                            resolution_run_id,
-                            verified_at,
+                            run_id,
+                            batch_id,
+                            dry_run,
+                            caller_app,
+                            status,
+                            Jsonb(counts),
+                            semantics_proven,
+                            semantics_notes,
                         ),
                     )
+                    for row in rows:
+                        cursor.execute(
+                            upsert_resolution,
+                            (
+                                row["batch_id"],
+                                row["record_id"],
+                                row["line_fingerprint"],
+                                row["status"],
+                                row.get("informed_product_code"),
+                                row.get("customer_reference"),
+                                row.get("verified_product_code"),
+                                row.get("verified_description"),
+                                row.get("matched_by"),
+                                row.get("reason"),
+                                Jsonb(row.get("candidates") or []),
+                                row.get("source")
+                                or "api-delpi.lookup_products_sb1_identity",
+                                run_id,
+                                row["verified_at"],
+                            ),
+                        )
                 connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
 
     def list_batch_items(
         self,
@@ -384,7 +378,12 @@ class PostgresMyWegNeedsRepository:
             filters.append("r.data_remessa <= %s")
             params.append(remessa_to)
         where = " AND ".join(filters)
-        count_sql = f"SELECT COUNT(*) AS total FROM {_RECORDS} r WHERE {where}"
+        # count e list compartilham o mesmo FROM/JOIN — filtro em res.* exige o LEFT JOIN.
+        from_join = (
+            f"FROM {_RECORDS} r "
+            f"LEFT JOIN {_SB1_RESOLUTIONS} res ON res.record_id = r.id"
+        )
+        count_sql = f"SELECT COUNT(*) AS total {from_join} WHERE {where}"
         list_sql = f"""
             SELECT
                 r.id::text AS id,
@@ -411,8 +410,7 @@ class PostgresMyWegNeedsRepository:
                 res.reason AS sb1_reason,
                 res.informed_product_code AS sb1_informed_product_code,
                 res.candidates_json AS sb1_candidates_json
-            FROM {_RECORDS} r
-            LEFT JOIN {_SB1_RESOLUTIONS} res ON res.record_id = r.id
+            {from_join}
             WHERE {where}
             ORDER BY r.line_no ASC
             LIMIT %s OFFSET %s

@@ -45,6 +45,7 @@ class InMemorySb1Repo(InMemoryMyWegNeedsRepository):
         super().__init__()
         self.runs: dict[str, dict] = {}
         self.resolutions: dict[str, dict] = {}
+        self.fail_after_run_insert = False
 
     def list_all_batch_records(self, *, batch_id: str) -> list[dict]:
         with self._lock:
@@ -61,15 +62,91 @@ class InMemorySb1Repo(InMemoryMyWegNeedsRepository):
             for row in rows
         ]
 
-    def insert_sb1_resolution_run(self, **kwargs) -> None:
+    def persist_sb1_resolution_batch(self, **kwargs) -> None:
+        """Simula transação única: falha após run → nada permanece."""
+        run_id = kwargs["run_id"]
+        rows = list(kwargs.get("rows") or [])
         with self._lock:
-            self.runs[kwargs["run_id"]] = dict(kwargs)
-
-    def upsert_sb1_resolutions(self, *, resolution_run_id: str, rows: list[dict]) -> None:
-        with self._lock:
+            staged_run = {
+                "run_id": run_id,
+                "batch_id": kwargs["batch_id"],
+                "dry_run": kwargs["dry_run"],
+                "caller_app": kwargs.get("caller_app"),
+                "status": kwargs["status"],
+                "counts": dict(kwargs.get("counts") or {}),
+                "semantics_proven": kwargs.get("semantics_proven"),
+                "semantics_notes": kwargs.get("semantics_notes"),
+            }
+            if self.fail_after_run_insert:
+                raise RuntimeError("forced upsert failure after run insert")
+            self.runs[run_id] = staged_run
             for row in rows:
                 key = row["record_id"]
-                self.resolutions[key] = {**row, "resolution_run_id": resolution_run_id}
+                self.resolutions[key] = {**row, "resolution_run_id": run_id}
+
+    def list_batch_items(
+        self,
+        *,
+        batch_id: str,
+        search: str,
+        remessa_from,
+        remessa_to,
+        page: int,
+        page_size: int,
+    ) -> dict:
+        """Espelha filtros JWT incluindo código DELPI verificado na projeção."""
+        with self._lock:
+            rows = [dict(row) for row in self.records.get(batch_id, [])]
+            resolutions = dict(self.resolutions)
+        for row in rows:
+            res = resolutions.get(row["id"])
+            if res:
+                row["sb1_resolution"] = {
+                    "status": res.get("status"),
+                    "protheus_product_code": res.get("verified_product_code"),
+                    "matched_by": res.get("matched_by"),
+                    "resolved_at": res.get("verified_at"),
+                    "verified_description": res.get("verified_description"),
+                    "reason": res.get("reason"),
+                    "informed_product_code": res.get("informed_product_code"),
+                    "candidates": res.get("candidates") or [],
+                }
+        needle = (search or "").strip().lower()
+        if needle:
+            filtered = []
+            for row in rows:
+                res = row.get("sb1_resolution") or {}
+                hay = " ".join(
+                    [
+                        str(row.get("material_weg_tratado") or ""),
+                        str(row.get("codigo_referencia_weg") or ""),
+                        str(row.get("origem_material_weg") or ""),
+                        str(row.get("documento") or ""),
+                        str(res.get("protheus_product_code") or ""),
+                    ]
+                ).lower()
+                if needle in hay:
+                    filtered.append(row)
+            rows = filtered
+        if remessa_from is not None:
+            rows = [
+                row
+                for row in rows
+                if date.fromisoformat(str(row["data_remessa"])[:10]) >= remessa_from
+            ]
+        if remessa_to is not None:
+            rows = [
+                row
+                for row in rows
+                if date.fromisoformat(str(row["data_remessa"])[:10]) <= remessa_to
+            ]
+        offset = (page - 1) * page_size
+        return {
+            "page": page,
+            "pageSize": page_size,
+            "total": len(rows),
+            "items": rows[offset : offset + page_size],
+        }
 
 
 class FakeSb1Gateway:
@@ -332,3 +409,130 @@ def test_s2s_resolve_requires_service_token(monkeypatch) -> None:
 
 def test_auth_bypass_includes_sb1_resolve_path() -> None:
     assert _is_internal_integration("/integrations/myweg/need-batches/sb1-resolve")
+
+
+def test_ac_list_search_material_and_verified_code_totals() -> None:
+    """AC-01..AC-06 — filtros/paginação alinhados à projeção SB1."""
+    from production_control_app.core.security import (
+        PC_ACCESS,
+        PC_MYWEG_NEEDS_VIEW,
+        PC_VIEW_FILIAL_02,
+    )
+
+    repo = InMemorySb1Repo()
+    created = _seed_batch(repo, collection_id="col-e4-search")
+    records = repo.list_all_batch_records(batch_id=created["id"])
+    now = datetime.now(timezone.utc)
+    # Injeta projeção sem passar pelo gate de semântica (foco: filtros JWT).
+    repo.persist_sb1_resolution_batch(
+        run_id=str(uuid.uuid4()),
+        batch_id=created["id"],
+        dry_run=False,
+        caller_app="test",
+        status="completed",
+        counts={"confirmed": len(records)},
+        semantics_proven=True,
+        semantics_notes="fixture",
+        rows=[
+            {
+                "record_id": row["id"],
+                "batch_id": created["id"],
+                "line_fingerprint": row["line_fingerprint"],
+                "status": "confirmed",
+                "informed_product_code": row.get("codigo_referencia_weg"),
+                "customer_reference": row.get("material_weg_tratado"),
+                "verified_product_code": f"VER-{row['line_no']:04d}",
+                "verified_description": f"Desc {row['line_no']}",
+                "matched_by": "code_and_reference",
+                "reason": None,
+                "candidates": [],
+                "verified_at": now,
+            }
+            for row in records
+            if (row.get("codigo_referencia_weg") or "").strip()
+        ],
+    )
+
+    user = SimpleNamespace(
+        permissions={PC_ACCESS, PC_MYWEG_NEEDS_VIEW, PC_VIEW_FILIAL_02},
+        is_superadmin=False,
+    )
+    needs = MyWegNeedsService(repo)
+
+    by_material = needs.list_batch_items(
+        user, batch_id=created["id"], search="MAT-E4-0001", page=1, page_size=50
+    )
+    assert by_material["total"] == 1
+    assert by_material["items"][0]["material_weg_tratado"] == "MAT-E4-0001"
+
+    line_no = int(by_material["items"][0]["line_no"])
+    verified = by_material["items"][0]["sb1_resolution"]["protheus_product_code"]
+    assert verified == f"VER-{line_no:04d}"
+    by_verified = needs.list_batch_items(
+        user, batch_id=created["id"], search=verified, page=1, page_size=50
+    )
+    assert by_verified["total"] == 1
+    assert by_verified["total"] == len(by_verified["items"])
+
+    unfiltered = needs.list_batch_items(
+        user, batch_id=created["id"], search="", page=1, page_size=50
+    )
+    assert unfiltered["total"] == created["recordCount"]
+
+    zero = needs.list_batch_items(
+        user, batch_id=created["id"], search="ZZZ-NO-MATCH-999", page=1, page_size=50
+    )
+    assert zero["total"] == 0
+    assert zero["items"] == []
+
+    # Sem resolução persistida ainda funciona (lote novo).
+    repo2 = InMemorySb1Repo()
+    created2 = _seed_batch(repo2, collection_id="col-e4-no-res")
+    needs2 = MyWegNeedsService(repo2)
+    pending = needs2.list_batch_items(
+        user, batch_id=created2["id"], search="MAT-E4", page=1, page_size=50
+    )
+    assert pending["total"] >= 1
+    assert pending["items"][0]["sb1_resolution"]["status"] == "pending"
+
+
+def test_ac_persist_rollback_leaves_no_completed_run() -> None:
+    """AC-08/AC-09/AC-11 — falha no upsert não marca execução completed."""
+    repo = InMemorySb1Repo()
+    proof_records = [
+        {
+            "material_weg_tratado": f"MAT-TX-{i:04d}",
+            "codigo_referencia_weg": f"9{i:07d}",
+            "origem_material_weg": "MYWEG-ORIGEM",
+            "quantidade": "1000",
+            "unidade": "UN",
+            "data_remessa": "15/11/2026",
+            "documento": None,
+            "linha_fonte": i + 2,
+            "assinatura_registro": f"sig-tx-{i}",
+        }
+        for i in range(25)
+    ]
+    created = _seed_batch(repo, records=proof_records, collection_id="col-e4-tx")
+    repo.fail_after_run_insert = True
+    service = MyWegSb1ResolveService(repo, gateway=FakeSb1Gateway())
+    with pytest.raises(RuntimeError, match="forced upsert failure"):
+        service.resolve_batch(batch_id=created["id"], dry_run=False)
+    assert repo.runs == {}
+    assert repo.resolutions == {}
+
+
+def test_ac_count_sql_shares_left_join_with_list() -> None:
+    """AC estrutural — count_sql referencia res via o mesmo LEFT JOIN do list."""
+    from pathlib import Path
+
+    source = Path(
+        "production_control_app/infrastructure/persistence/postgres_myweg_needs_repository.py"
+    ).read_text(encoding="utf-8")
+    # Método list_batch_items deve construir from_join compartilhado.
+    assert "from_join" in source
+    assert "LEFT JOIN" in source
+    assert "COUNT(*) AS total {from_join}" in source or 'COUNT(*) AS total {from_join}' in source
+    assert "COALESCE(res.verified_product_code" in source
+    # Não pode haver count só sobre records sem join quando o filtro usa res.
+    assert "SELECT COUNT(*) AS total FROM {_RECORDS} r WHERE {where}" not in source

@@ -168,7 +168,8 @@ class MyWegSb1ResolveService:
             )
 
         run_id = str(uuid4())
-        self._repository.insert_sb1_resolution_run(
+        # Commit único: run + vínculos. persisted=true só após retorno sem exceção.
+        self._repository.persist_sb1_resolution_batch(
             run_id=run_id,
             batch_id=batch["id"],
             dry_run=False,
@@ -177,9 +178,6 @@ class MyWegSb1ResolveService:
             counts=counts,
             semantics_proven=True,
             semantics_notes=str(semantics.get("notes") or ""),
-        )
-        self._repository.upsert_sb1_resolutions(
-            resolution_run_id=run_id,
             rows=projected,
         )
         response["persisted"] = True
