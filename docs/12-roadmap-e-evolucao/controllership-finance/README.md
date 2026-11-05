@@ -1,5 +1,7 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
+> **R09 — verificação visual produtiva do modal `fit` (05/11/2026):** deploy técnico reportado do `plugin-ui` + MFE com commit funcional `19b2a4b74e`; captura autenticada enviada pelo PO mostra modal compacto para produto `90260190`/filial 01 (7 operações), sem a grande área vazia. **PASS visual no cenário observado**, não homologação integral: teclado/mobile/volume em prod TEST_NOT_RUN; divergência BFF sem sessão 200/401 INCONCLUSIVE. Ver [doc 154 §14](./154-auditoria-residuais-r09-master-detail-2026-11-04.md).
+
 > **Auditoria R09 — 04/11/2026 (NO_DEPLOY):** [Doc 154 — Correções pendentes do master/detail, riscos e critérios de aceite](./154-auditoria-residuais-r09-master-detail-2026-11-04.md). Review da implementação `b3435e7ec1`: perda de `costProduct`, busca por produto/descrição sem indexação correta, outras lacunas de qualidade/autoridade; **rework e decisões pendentes antes de produção**.
 
 > **Plano TARGET / design R09 — 04/11/2026:** [Doc 153 — Wireframes e plano completo de reorganização visual do Faturamento × MOD](./153-design-r09-faturamento-mod-wireframes-frontend-2026-11-04.md). Inventário de componentes `@delpi/plugin-ui` já reutilizados, wireframes desktop/tablet/mobile, mapeamento de payload e gates de aceite. **PLAN_ONLY / PENDING_PO_VISUAL_APPROVAL**, sem mudança no runtime.
