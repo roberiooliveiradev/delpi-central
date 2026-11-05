@@ -24,18 +24,26 @@
 
 button.delpi-ui-kpi-card--interactive,
 .delpi-ui-kpi-card--interactive[role="button"] {
-  appearance: none;
-  display: block;
-  width: 100%;
-  margin: 0;
-  font: inherit;
-  text-align: left;
   cursor: pointer;
   color: inherit;
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease,
     transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/**
+ * Reset de <button> nativo — apenas para elementos button reais.
+ * Elementos [role="button"] (ex.: <article>) mantêm o próprio layout
+ * flex do card; aplicar display:block aqui empilharia ícone e texto.
+ */
+button.delpi-ui-kpi-card--interactive {
+  appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0;
+  font: inherit;
+  text-align: left;
 }
 
 button.delpi-ui-kpi-card--interactive:hover,
