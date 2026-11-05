@@ -1522,6 +1522,13 @@
   color: var(--ppc-title, #003866);
 }
 
+.dashboard-production-control span.ppc-branch__btn {
+  display: inline-flex;
+  align-items: center;
+  cursor: default;
+  pointer-events: none;
+}
+
 .dashboard-production-control .ppc-branch__btn:focus-visible,
 .dashboard-production-control .ppc-icon-btn:focus-visible {
   outline: 2px solid #ffffff;

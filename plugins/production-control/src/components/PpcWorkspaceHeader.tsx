@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { DelpiLogoMark, HelpTooltip } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 
+import { useAllowedPpcBranches } from "../branchAccessContext";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import type { PpcBranch } from "../types";
@@ -85,6 +86,7 @@ export function PpcWorkspaceHeader({
   refreshBusy,
   onPeriodChange,
 }: PpcWorkspaceHeaderProps) {
+  const allowedBranches = useAllowedPpcBranches();
   const setBranch = (next: PpcBranch) => {
     storeBranch(next);
     navigatePpc(
@@ -153,21 +155,28 @@ export function PpcWorkspaceHeader({
 
         <div className="ppc-header__actions">
           {actions}
-          <div className="ppc-branch" role="group" aria-label={copy.branch.label}>
-            <span className="ppc-branch__label">{copy.branch.label}</span>
-            <HelpTooltip content={helpTooltips.branch} trigger="icon" />
-            {(["01", "02"] as const).map((code) => (
-              <button
-                key={code}
-                type="button"
-                className={`ppc-branch__btn${branch === code ? " ppc-branch__btn--on" : ""}`}
-                aria-pressed={branch === code}
-                onClick={() => setBranch(code)}
-              >
-                {copy.branch[code]}
-              </button>
-            ))}
-          </div>
+          {allowedBranches.length > 1 ? (
+            <div className="ppc-branch" role="group" aria-label={copy.branch.label}>
+              <span className="ppc-branch__label">{copy.branch.label}</span>
+              <HelpTooltip content={helpTooltips.branch} trigger="icon" />
+              {allowedBranches.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  className={`ppc-branch__btn${branch === code ? " ppc-branch__btn--on" : ""}`}
+                  aria-pressed={branch === code}
+                  onClick={() => setBranch(code)}
+                >
+                  {copy.branch[code]}
+                </button>
+              ))}
+            </div>
+          ) : allowedBranches.length === 1 ? (
+            <div className="ppc-branch" aria-label={copy.branch.label}>
+              <span className="ppc-branch__label">{copy.branch.label}</span>
+              <span className="ppc-branch__btn ppc-branch__btn--on">{copy.branch[allowedBranches[0]]}</span>
+            </div>
+          ) : null}
           {onRefresh ? (
             <button
               type="button"
