@@ -6,12 +6,20 @@ import { useAllowedPpcBranches } from "../branchAccessContext";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import type { PpcBranch } from "../types";
+import {
+  mywegHeaderBannerStyle,
+  PPC_MYWEG_HEADER_CLASS,
+} from "../utils/mywegHeaderBanner";
 import { buildPpcHref, navigatePpc, storeBranch } from "../utils/routeParser";
 import { PpcPeriodFilterButton } from "./PpcPeriodFilterButton";
 
 type PpcWorkspaceHeaderProps = {
   title: string;
   subtitle?: string;
+  /**
+   * Aparência do header. `myweg` aplica o banner WEG só no menu Necessidades WEG.
+   */
+  appearance?: "default" | "myweg";
   /** Período operacional (ex.: datas do overview) — uma linha só no header. */
   period?: string | null;
   /** ISO YYYY-MM-DD sugeridos no popover quando não há filtro na URL. */
@@ -56,6 +64,7 @@ type PpcWorkspaceHeaderProps = {
 export function PpcWorkspaceHeader({
   title,
   subtitle,
+  appearance = "default",
   period,
   periodDefaultStart,
   periodDefaultEnd,
@@ -121,8 +130,13 @@ export function PpcWorkspaceHeader({
     );
   };
 
+  const isMyWeg = appearance === "myweg";
+
   return (
-    <header className="ppc-header">
+    <header
+      className={isMyWeg ? `ppc-header ${PPC_MYWEG_HEADER_CLASS}` : "ppc-header"}
+      style={isMyWeg ? mywegHeaderBannerStyle() : undefined}
+    >
       <div className="ppc-header__inner">
         <div className="ppc-header__identity">
           <span className="ppc-header__logo" aria-hidden="true">

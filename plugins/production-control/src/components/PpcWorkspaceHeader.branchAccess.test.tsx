@@ -49,4 +49,26 @@ describe("PpcWorkspaceHeader — branch access", () => {
     expect(screen.getByRole("button", { name: "SC · 01" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "ES · 02" })).toBeTruthy();
   });
+
+  it("appearance myweg aplica a classe do banner só nesse menu", () => {
+    const { container, rerender } = render(
+      <PpcAllowedBranchesProvider allowedBranches={["02"]}>
+        <PpcWorkspaceHeader
+          title="Necessidades WEG"
+          branch="02"
+          subpluginId="myweg-needs"
+          appearance="myweg"
+        />
+      </PpcAllowedBranchesProvider>,
+    );
+
+    expect(container.querySelector("header.ppc-header--myweg")).toBeTruthy();
+
+    rerender(
+      <PpcAllowedBranchesProvider allowedBranches={["02"]}>
+        <PpcWorkspaceHeader title="Gestão à vista" branch="02" subpluginId="home" />
+      </PpcAllowedBranchesProvider>,
+    );
+    expect(container.querySelector("header.ppc-header--myweg")).toBeNull();
+  });
 });

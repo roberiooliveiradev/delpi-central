@@ -338,6 +338,7 @@ export function MyWegNeedsPage({
         <PpcWorkspaceHeader
           title={texts.title}
           subtitle={texts.subtitle}
+          appearance="myweg"
           titleHint={helpTooltips.mywegNeeds}
           branch={branch}
           subpluginId="myweg-needs"
@@ -360,6 +361,7 @@ export function MyWegNeedsPage({
       <PpcWorkspaceHeader
         title={texts.title}
         subtitle={texts.subtitle}
+        appearance="myweg"
         titleHint={helpTooltips.mywegNeeds}
         period={
           selected && activeView === "needs"
