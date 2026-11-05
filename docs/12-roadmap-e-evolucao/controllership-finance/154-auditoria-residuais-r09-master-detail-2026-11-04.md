@@ -315,3 +315,23 @@ Executor: Devin · HEAD de execução: `a3657c0699`+ · Commits: `8ab969db27` (R
 ## 13. Mudança de decisão visual do PO (04/11/2026) — row-click + modal
 
 Decisão explícita do PO (`CF-PROC0072-R09-ROW-DETAIL-MODAL-001`): o detalhamento **inline** deixa de ser o TARGET. Vigente: linha da master clicável (clique/Enter/Espaço, feedback visual do kit) abre `CfWideDialog` (`createHostContainedModalShell`, `variant: "wide"`, `containedLayout: "dialog"`, contido ao MFE) com a tabela de operações integral. Coluna «Detalhe» e botão «Ver» removidos. Correção de apresentação: `unit: ""` → «—» (payload preservado). Normalizador e contrato BFF inalterados. Help sincronizado. Testes com kit real cobrem abertura por clique/Enter/Espaço, fechamento por Escape/X, retorno de foco à linha, modal vazio factual, invalidação por filial/payload e ausência de overflow — 19/19 testes R09, suíte 450+1 flake pré-existente (`DocumentDetailPanel`, blob URL — classificada em R09-19, isolado 23/23). Deploy produtivo desta mudança: **não realizado nesta task** (aguarda gate de release próprio).
+
+
+---
+
+## 14. Verificação visual produtiva pós-deploy — variante fit (05/11/2026)
+
+**Origem da evidência:** captura da sessão autenticada do Portal enviada pelo PO nesta conversa em 05/11/2026, na rota `/apps/controllership-finance/closing/monthly-closing/2026-10/reports/billing-mod-breakdown`. Esta seção registra a observação visual comunicada; **o arquivo de imagem não foi anexado ao repositório** e a captura, por si só, não identifica o SHA da sessão do navegador. Relacionar com o relatório operacional `CF-PROC0072-R09-MODAL-SPACE-DEPLOY-001` (deploy reportado de `19b2a4b74e18915352a341d475b4540e56b1b287`).
+
+**Observado na captura:** janela `Operações MOD — 90260190`, filial 01, quantidade faturada 0,925 e **7 operações retornadas**. O diálogo ajusta a altura ao conteúdo, terminando pouco abaixo da tabela de sete registros, **sem a grande faixa vazia inferior** presente na captura anterior com a variante `wide`. A tabela utiliza largura ampliada; permanece uma barra de rolagem horizontal **dentro da área tabular**, necessária para alcançar as demais colunas. O contexto informa fontes ausentes ("taxa de MOD sem fonte comprovada" e "roteiro sem operações retornadas"); isso não implica que não haja operações, pois as sete estão exibidas.
+
+| Verificação | Estado | Limite da evidência |
+|---|---|---|
+| Correção do espaço vazio em janela com 7 operações | **PASS (OBSERVED, screenshot do PO)** | Não é o mesmo produto/quantidade da captura anterior; comprova o comportamento no cenário mostrado, não comparação pixel a pixel |
+| Diálogo contém tabela e ação de fechar visíveis | **PASS (OBSERVED)** | Não prova funcionamento de X/Escape |
+| Rolagem horizontal contida na tabela | **PASS (OBSERVED, barra visível)** | Não comprova chegada às 13 colunas |
+| 13 colunas, rolagem completa, teclado/foco, mobile, zoom, claro | **TEST_NOT_RUN nesta evidência** | Testes locais anteriores permanecem evidência separada |
+| Cenários 0 e 50 operações em produção | **TEST_NOT_RUN** | Não aparecem na captura |
+| Segurança BFF, divergência sem sessão HTTP 200/401 | **INCONCLUSIVE / TO_INVENTORY** | Não avaliada pela captura |
+
+**GPT REVIEW do resultado visual mostrado:** correção visual do excesso de altura **aceita para o cenário observado**, sem novo diff nem novo deploy solicitado. Estado global do gate: `ACCEPT_WITH_RESIDUAL`, pois o screenshot não substitui a matriz completa de smoke autenticado nem resolve a investigação da BFF. **Resíduos:** validar teclado/foco e mobile/zoom em produção quando necessário; owner de segurança/API deve classificar a divergência 200/401 mediante contrato, rota e corpo da resposta. Não promover estes itens a PASS por inferência.
