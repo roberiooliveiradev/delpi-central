@@ -983,6 +983,17 @@ O subplano **não é nova frente, serviço, camada, documento nem autorização 
 
 **VERDICT DE PLANEJAMENTO:** \`ACCEPT\` como direção de produto; **EXECUTION_STATUS:** \`IN_PROGRESS\` — ledger por ocorrência implementado no comparador canônico; qualidade oficial e E2E de runtime continuam pendentes.
 
+
+### 39.7 Verificação independente do consumidor MCP — gate de runtime do ledger (2026-11-05)
+
+**Escopo:** validação read-only do novo `structure_validation.v1` implementado no commit `01481495a2390b245138d53792befe3d8e741b38` e registrado no commit `a1c816c8da4ca8f1dd73f86ff24a36bd679d6779`. Não houve deploy nesta verificação e nenhum teste prova o SHA servido pelo runtime. **Gate operacional:** não tratar a versão antiga como validação do código novo nem publicar sem autorização operacional/caminho canônico.
+
+**Consumer independente `product.drawing_understanding`, produto `90263572`:** chamada autenticada `success=true`; `document_hash_sha256=9021fce05c608655e538f67cdaac08c7484ebbe16a8888e83fbeec9ecaa28d3e`, `same_document_verified=true`. `O0001` continua `MATCH_CANDIDATE` com `observed_value=10080004`, `source_kind=localized_ocr_recheck`, `page=2`, box/region/sha reais. **Mas `report.structure_validation` está AUSENTE** e não apareceu `bom_structure_comparison.validation_report` no envelope consultado; por isso `NEW_LEDGER_MCP_E2E=FAIL` quanto à disponibilidade do contrato, não quanto à correção do código. SHA em runtime = `UNVERIFIED`; ausência é consistente com deploy pendente, mas não comprova sozinha qual imagem/commit está servido. Não declarar regressão do comparador por esse resultado.
+
+**Demais desenhos `90264030`, `90264017`, `90263520`:** tentativa sequencial em uma única sessão excedeu timeout de execução da ferramenta, sem resultado individual confiável; `INCONCLUSIVE`, não `PASS`, nem `FAIL` funcional. **Corpus 13/13 no novo SHA:** `TEST_NOT_RUN`. **GT, quantidade/unidade, descrição semântica, efetividade/revisão, métricas e AuthZ live:** pendentes conforme §39.6.
+
+**Decisão:** `AC-E1-07=INCONCLUSIVE`, `AC-E1-10=PENDING`, `E1_FUNCTIONAL_CANDIDATE_PASS` ainda não demonstrado em runtime. **NEXT_BOUNDED_STEP (operação/Cursor autorizado):** verificar SHA/digest da Engineering API ativa; executar o procedimento canônico de deploy do commit `01481495a2` ou sucessor que o contenha, somente com autorização operacional e gates pré-deploy; executar os 4 regressores em série pelo caminho de job governado quando análise síncrona exceder timeout; verificar presença e conteúdo de `structure_validation.v1` por ocorrência, comparações, cobertura, falsos alarmes, limites e AuthZ. Atualizar somente Doc119 §39/Issue #131 com SHA, resultados e bloqueios. **VAL-01 permanece aberta.**
+
 ### 39.6 Execução Cursor — ledger de validação por ocorrência (2026-11-05)
 
 **DATA:** 2026-11-05. **BASE_HEAD inicial:** `7038168c71f4033625722f683e696a5f89143fb7`. **Revalidação antes do commit:** `6e8f2a6f22624c988d2d8c5cb55341998bb7e39e` (`main`, ancestral do início; commit PCP alheio). **FINAL_HEAD:** `01481495a2390b245138d53792befe3d8e741b38`. **BRANCH:** `main`. Alterações concorrentes fora deste pacote foram preservadas (DÉLIA, scripts de infra, plugin-ui, TV dashboard, travel-expenses).
