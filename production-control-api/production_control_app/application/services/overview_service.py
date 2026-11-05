@@ -20,7 +20,10 @@ from production_control_app.domain.services.current_month_period import (
     today_in_timezone,
 )
 from production_control_app.domain.services.delayed_order_mapper import map_delayed_order
-from production_control_app.domain.services.product_code_scope import product_code_matches_prefixes
+from production_control_app.domain.services.product_code_scope import (
+    product_code_excluded_by_prefixes,
+    product_code_matches_prefixes,
+)
 from production_control_app.domain.services.volume_view import (
     VolumeView,
     build_month_yoy_series,
@@ -144,6 +147,12 @@ class OverviewService:
         otd_page = _as_int(cfg.get("otdOrdersPageSize"), 1)
         raw_prefixes = cfg.get("delayedProductCodePrefixes")
         prefixes = [str(item).strip() for item in raw_prefixes] if isinstance(raw_prefixes, list) else ["8", "9"]
+        raw_excluded = cfg.get("excludedProductCodePrefixes")
+        excluded_prefixes = (
+            [str(item).strip() for item in raw_excluded]
+            if isinstance(raw_excluded, list)
+            else ["9035"]
+        )
         critical_days, title_template = delayed_order_settings()
         view = parse_volume_view(volume_view)
 
@@ -232,7 +241,10 @@ class OverviewService:
             if not isinstance(item, dict):
                 continue
             mapped = map_delayed_order(item, critical_days=critical_days, title_template=title_template)
-            if product_code_matches_prefixes(mapped.get("product_code"), prefixes):
+            code = mapped.get("product_code")
+            if product_code_matches_prefixes(code, prefixes) and not product_code_excluded_by_prefixes(
+                code, excluded_prefixes
+            ):
                 delayed_orders.append(mapped)
         delayed_orders.sort(key=lambda row: (-int(row.get("delay_days") or 0), str(row.get("id"))))
 

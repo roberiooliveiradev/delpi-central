@@ -4,5 +4,6 @@
   "delayedListPageSize": 100,
   "otdOrdersPageSize": 1,
   "delayedProductCodePrefixes": ["8", "9"],
+  "excludedProductCodePrefixes": ["9035"],
   "billingDueTodayClosedLookbackDays": 1
 }

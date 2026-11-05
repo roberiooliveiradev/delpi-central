@@ -430,10 +430,30 @@ def test_overview_delayed_ops_only_codes_starting_8_or_9() -> None:
                 "days_late": 1,
                 "pending_qty": 2,
             },
+            {
+                "production_order": "9OP",
+                "op_key": "01|9OP",
+                "product_code": "90263364",
+                "product_description": "PA 9",
+                "days_late": 3,
+                "pending_qty": 4,
+            },
         ]
     )
     service = OverviewService(gateway, branch_access=BranchAccessService())
     payload = service.build(_user(*FULL_PERMS), branch="01")
     codes = [row["product_code"] for row in payload["delayed_ops"]["items"]]
-    assert codes == ["90350341", "80012849"]
+    # 9035… é complemento — excluído; 5… fora do escopo 8/9; 8… e 9… (não 9035) entram.
+    assert codes == ["90263364", "80012849"]
     assert payload["delayed_ops"]["count"] == 2
+    assert "90350341" not in codes
+
+
+def test_product_code_9035_is_excluded_from_delayed_scope() -> None:
+    from production_control_app.domain.services.product_code_scope import (
+        product_code_excluded_by_prefixes,
+    )
+
+    assert product_code_excluded_by_prefixes("90350341", ["9035"]) is True
+    assert product_code_excluded_by_prefixes("90263364", ["9035"]) is False
+    assert product_code_excluded_by_prefixes("80012849", ["9035"]) is False

@@ -40,10 +40,11 @@ export const copy = {
     volumeViewDay: "Dia",
     volumeViewMonthYoy: "Mês × ano ant.",
     delayedTitle: "OPs em atraso",
-    delayedHint: "Ordens abertas atrasadas na view PCP, só produtos cujo código começa com 8 ou 9.",
+    delayedHint:
+      "Ordens abertas atrasadas na view PCP, só produtos cujo código começa com 8 ou 9 (exceto complementos 9035…).",
     delayedListTitle: "Fila de atraso",
     delayedListHint:
-      "Produto, OP e saldo pendente (códigos 8… e 9…). Clique para rastrear a OP na Carga máquina.",
+      "Produto, OP e saldo pendente (códigos 8… e 9…; sem complementos 9035…). Clique para rastrear a OP na Carga máquina.",
     delayedEmpty: "Nenhuma OP atrasada neste recorte.",
     billingDueTitle: "A faturar até hoje",
     billingDueHint:
