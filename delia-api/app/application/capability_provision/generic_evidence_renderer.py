@@ -878,6 +878,20 @@ _RESOLVER_ENTITY_KEYS = (
 _RESOLVER_ENVELOPE_KEYS = ("data", "result", "payload", "response")
 
 
+# Owner-declared identity fields — a Mapping value carrying any of
+# these is a single business entity, not metadata. Mirrors the
+# evidence code-key vocabulary already canonical in orchestration
+# (kept bounded and local: the renderer owns record extraction).
+_ENTITY_IDENTITY_KEYS = (
+    "code",
+    "product_code",
+    "component_code",
+    "item_code",
+    "material_code",
+    "codigo",
+)
+
+
 def _unwrap_owner_payload(node: object, depth: int = 0) -> object:
     """Unwrap neutral transport envelopes one level at a time."""
     if depth >= 2 or not isinstance(node, Mapping):
@@ -933,6 +947,16 @@ def _resolver_entities(structured: object) -> tuple[Mapping[str, Any], ...]:
                 entities = _mappings(value.get(key))
                 if entities:
                     return entities
+            # Single-entity owner shapes (``data.product``,
+            # ``data.record`` …) carry the same authoritative
+            # evidence as a one-item collection — an entity is
+            # recognized by an owner-declared code field, never by
+            # key name alone, and capability descriptors stay out.
+            if any(
+                value.get(code_key) not in (None, "")
+                for code_key in _ENTITY_IDENTITY_KEYS
+            ) and not _is_capability_descriptor(value):
+                return (value,)
     return ()
 
 

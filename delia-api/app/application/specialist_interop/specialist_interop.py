@@ -76,7 +76,18 @@ from app.domain.specialist_interop.rules import (
 # so repairability now requires BOTH the owner-typed argument code AND
 # an explicit ``recoverable: true`` — missing metadata fails closed,
 # same rule as the OpenAPI adapter.
-_OWNER_ARG_VALIDATION_CODES = frozenset({"ARGUMENT_VALIDATION"})
+# Owner-declared recoverable argument/selection errors: the owner
+# types the failed input vocabulary so the Agent may retry with
+# corrected values — never a protocol failure. ``recoverable:true``
+# remains mandatory so undeclared/unrecoverable errors stay terminal.
+_OWNER_ARG_VALIDATION_CODES = frozenset(
+    {
+        "ARGUMENT_VALIDATION",
+        "UNKNOWN_ENTITY",
+        "UNKNOWN_ACTION",
+        "UNKNOWN_OPERATION",
+    }
+)
 _OWNER_ERROR_CODE_MAP = {
     "AUTHENTICATION_REQUIRED": MCP_AUTHENTICATION_FAILED,
     "AUTHORIZATION_DENIED": MCP_AUTHORIZATION_DENIED,

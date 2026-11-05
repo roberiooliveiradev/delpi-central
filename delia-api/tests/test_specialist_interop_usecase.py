@@ -688,3 +688,66 @@ def test_typed_owner_execution_error_is_terminal():
         )
     )
     assert exc.code == "mcp_protocol_error"
+
+
+def test_unknown_entity_recoverable_is_argument_rejected():
+    """VISTA owner declares typed recoverable selection errors —
+    they are argument mistakes the model may repair, not protocol
+    failures (doc 289 residual A)."""
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="Entidade desconhecida.",
+            structured={
+                "code": "UNKNOWN_ENTITY",
+                "recoverable": True,
+                "message": "Entidade desconhecida para read: 'dashboard'.",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "owner_argument_rejected"
+
+
+def test_unknown_action_recoverable_is_argument_rejected():
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="Análise desconhecida.",
+            structured={
+                "code": "UNKNOWN_ACTION",
+                "recoverable": True,
+                "message": "Análise desconhecida: 'kpis'.",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "owner_argument_rejected"
+
+
+def test_unknown_operation_recoverable_is_argument_rejected():
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="Operação desconhecida.",
+            structured={
+                "code": "UNKNOWN_OPERATION",
+                "recoverable": True,
+                "message": "Operação desconhecida.",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "owner_argument_rejected"
+
+
+def test_unknown_entity_without_recoverable_stays_terminal():
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="Entidade desconhecida.",
+            structured={
+                "code": "UNKNOWN_ENTITY",
+                "recoverable": False,
+                "message": "Entidade desconhecida.",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "mcp_protocol_error"

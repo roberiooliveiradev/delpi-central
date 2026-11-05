@@ -38,7 +38,7 @@ assinatura nativa a partir do `input_schema` do owner:
   não confiável.
 - **`enum` não propagado** (defeito observado: `teo.read` falhava
   `owner_argument_rejected` porque o modelo adivinhava `entity`):
-  `enum`/`const` com até 64 opções vira `Literal[...]` → o JSON schema
+  `enum` com até 64 opções vira `Literal[...]` → o JSON schema
   entregue ao modelo carrega os valores válidos do owner. Confirmado em
   runtime: `teo.get_context(entity,section)` → SUCCESS.
 - Bound: máx. 24 propriedades (coerente com slim_props do catálogo);

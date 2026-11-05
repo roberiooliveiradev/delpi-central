@@ -5862,3 +5862,19 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | Eval real | A PASS GROUNDED+prov | B PASS (estrutura, code+max_depth) | C TÉO `teo.get_context` SUCCESS | D VISTA knowledge/get_context SUCCESS; read/analyze `mcp_protocol_error` owner-side | E PASS via context | F INCONCLUSIVE (registro existe no owner, coverage não vinculou) | G PASS clarificação honesta |
 | Residual | `vista.read`/`vista.analyze` mcp_protocol_error (owner tv-dashboard); coverage-binding de registro detalhado único (F); `davi.discover` falha transitória isolada |
 | PRODUCTION_DEPLOY | NOT_AUTHORIZED |
+
+## P1 VISTA protocol + DAVI coverage-binding (execução)
+
+| Campo | Valor |
+|---|---|
+| TASK_ID | `DELIA-C3-P1-VISTA-PROTOCOL-DAVI-COVERAGE-AND-REAL-EVAL-01` |
+| Base | `8ea4c07552` (origin/main sincronizado; inclui review doc 289) |
+| Trilha A causa | `_OWNER_ARG_VALIDATION_CODES` só tinha `ARGUMENT_VALIDATION` — códigos tipados/recoverable da VISTA (`UNKNOWN_ENTITY`/`UNKNOWN_ACTION`/`UNKNOWN_OPERATION`) caíam em `mcp_protocol_error` (terminal) em vez de `owner_argument_rejected` |
+| Trilha A fix | 3 códigos adicionados ao frozenset; 4 testes no `test_specialist_interop_usecase.py`; runtime `vista.read` (entity=playlist) → GROUNDED real |
+| Trilha B causa | `_resolver_entities` só extraía coleções; `data.product` (entidade única do `get_product_detail`) nunca virava evidence → `uncovered_identifier` → NON_GROUNDED |
+| Trilha B fix | `_ENTITY_IDENTITY_KEYS` + entidade única Mapping sob data → `(value,)`; `test_single_entity_coverage.py` (6); runtime 99999999 → GROUNDED |
+| Eval real | A 50220013 PASS GROUNDED 32s | B 99999999 PASS GROUNDED 60s | VISTA read PASS ×2 | N 00000000 NON_GROUNDED honesto | VA vista.analyze residual — `analysis` é string livre no schema publicado; owner rejeita valor com código não-recoverable → fallback vista.read GROUNDED c/ limitações declaradas |
+| Residual | `vista.analyze` — vocabulário de análises válidas não é publicado no schema do owner (gap contrato tv-dashboard-api) |
+| Doc fix | doc 288 `enum/const` → `enum` (const não implementado) |
+| Suíte | PASS (exit 0, completa) |
+| PRODUCTION_DEPLOY | NOT_AUTHORIZED |
