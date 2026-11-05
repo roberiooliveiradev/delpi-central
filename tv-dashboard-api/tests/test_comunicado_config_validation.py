@@ -37,6 +37,53 @@ def test_sanitize_strips_resolved_and_media_urls():
     assert "url" not in cleaned["background"]
 
 
+def test_sanitize_keeps_chart_authoring_and_drops_runtime_percentage():
+    cleaned = sanitize_comunicado_config(
+        {
+            "version": 4,
+            "blocks": [
+                {
+                    "id": "chart1",
+                    "type": "chart_view",
+                    "chartType": "pie",
+                    "chartOptions": {
+                        "decimalPlaces": 2,
+                        "displayValueFormat": {"category": "number", "decimalPlaces": 2},
+                        "dataLabels": {
+                            "showValue": True,
+                            "showCategoryName": True,
+                            "showPercentage": True,
+                            "position": "outsideEnd",
+                            "separator": "comma",
+                        },
+                    },
+                    "chartParts": {"marker:0:1": {"visible": False}},
+                    "resolved": {
+                        "chart": {
+                            "points": [
+                                {
+                                    "label": "A",
+                                    "value": 25,
+                                    "percentageOfTotal": 25,
+                                    "displayPercentageOfTotal": "25,00%",
+                                }
+                            ]
+                        }
+                    },
+                }
+            ],
+        }
+    )
+    block = cleaned["blocks"][0]
+    assert "resolved" not in block
+    assert block["chartOptions"]["dataLabels"]["showPercentage"] is True
+    assert block["chartOptions"]["dataLabels"]["position"] == "outsideEnd"
+    assert block["chartOptions"]["dataLabels"]["separator"] == "comma"
+    assert block["chartOptions"]["displayValueFormat"]["decimalPlaces"] == 2
+    assert block["chartParts"]["marker:0:1"]["visible"] is False
+    assert "displayPercentageOfTotal" not in block
+
+
 def test_validate_rejects_disallowed_operation():
     cfg = {
         "blocks": [

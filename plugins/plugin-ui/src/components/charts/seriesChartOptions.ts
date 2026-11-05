@@ -236,7 +236,21 @@ export type SeriesChartSeriesSpec = {
   color?: string;
   /** Eixo Y secundário (direita). */
   plotOn?: "primary" | "secondary";
+  /**
+   * Índice da série no payload/chartParts, antes de filtrar séries sem número
+   * ou reordenar a legenda. A posição visual do plot não substitui este índice.
+   */
+  sourceIndex?: number;
 };
+
+/** Índice de chartParts da série. Sem `sourceIndex`, vale a posição recebida. */
+export function seriesOriginIndex(
+  series: { sourceIndex?: number } | null | undefined,
+  visualIndex: number,
+): number {
+  const origin = series?.sourceIndex;
+  return typeof origin === "number" && Number.isFinite(origin) ? origin : visualIndex;
+}
 
 /** Tipos com paint SVG nativo (4H.7 + avançados). */
 export type SeriesChartKind =

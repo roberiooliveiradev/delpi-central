@@ -112,8 +112,12 @@ export function SeriesChartPrimitive({
   const config = mergeSeriesChartOptionsWithParts(options, chartParts);
   const normalizedSeries =
     seriesList && seriesList.length > 0
-      ? seriesList.map((series) => ({
+      ? seriesList.map((series, index) => ({
           ...series,
+          sourceIndex:
+            typeof series.sourceIndex === "number" && Number.isFinite(series.sourceIndex)
+              ? series.sourceIndex
+              : index,
           points: usableSeriesChartPoints(series.points),
         }))
       : undefined;

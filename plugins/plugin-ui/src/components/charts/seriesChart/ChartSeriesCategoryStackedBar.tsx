@@ -1,5 +1,5 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
-import type { SeriesChartSeriesSpec } from "../seriesChartOptions";
+import { seriesOriginIndex, type SeriesChartSeriesSpec } from "../seriesChartOptions";
 import {
   chartPartDomProps,
   isChartPartRefEqual,
@@ -42,7 +42,8 @@ export function ChartSeriesCategoryStackedBar({
         });
         return (
           <g key={`stack-col-${catIndex}`}>
-            {seriesList.map((series, seriesIndex) => {
+            {seriesList.map((series, visualIndex) => {
+              const seriesIndex = seriesOriginIndex(series, visualIndex);
               const point = series.points[catIndex];
               const raw = Number(point?.value);
               if (!Number.isFinite(raw) || raw <= 0) return null;

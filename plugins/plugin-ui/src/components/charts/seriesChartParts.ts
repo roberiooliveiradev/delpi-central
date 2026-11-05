@@ -1007,16 +1007,7 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
   if (gaugeLabel?.visible !== undefined) patch.showGaugeLabel = gaugeLabel.visible;
   if (dataTable?.visible !== undefined) patch.showDataTable = dataTable.visible;
 
-  const anyMarkerHidden = Object.keys(parts).some((key) => {
-    const ref = parseChartPartRef(key);
-    return ref?.kind === "marker" && parts[key]?.visible === false;
-  });
-  const anyMarkerShown = Object.keys(parts).some((key) => {
-    const ref = parseChartPartRef(key);
-    return ref?.kind === "marker" && parts[key]?.visible === true;
-  });
-  if (anyMarkerHidden && !anyMarkerShown) patch.showMarkers = false;
-
+  /* Um marcador oculto não desliga a camada inteira. `showMarkers` fica nas options. */
   return patch;
 }
 

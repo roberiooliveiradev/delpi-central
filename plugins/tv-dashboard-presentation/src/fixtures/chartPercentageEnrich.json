@@ -1,0 +1,166 @@
+{
+  "source": "DisplayFormatService.apply_to_resolved",
+  "decimalPlaces": 2,
+  "cases": [
+    {
+      "id": "quarters",
+      "chartType": "pie",
+      "decimalPlaces": 2,
+      "points": [
+        {
+          "label": "A",
+          "value": 25,
+          "percentageOfTotal": 25.0,
+          "displayPercentageOfTotal": "25,00%"
+        },
+        {
+          "label": "B",
+          "value": 75,
+          "percentageOfTotal": 75.0,
+          "displayPercentageOfTotal": "75,00%"
+        }
+      ]
+    },
+    {
+      "id": "one-and-three",
+      "chartType": "pie",
+      "decimalPlaces": 2,
+      "points": [
+        {
+          "label": "A",
+          "value": 1,
+          "percentageOfTotal": 25.0,
+          "displayPercentageOfTotal": "25,00%"
+        },
+        {
+          "label": "B",
+          "value": 3,
+          "percentageOfTotal": 75.0,
+          "displayPercentageOfTotal": "75,00%"
+        }
+      ]
+    },
+    {
+      "id": "zero-and-hundred",
+      "chartType": "pie",
+      "decimalPlaces": 2,
+      "points": [
+        {
+          "label": "A",
+          "value": 0,
+          "percentageOfTotal": 0.0,
+          "displayPercentageOfTotal": "0,00%"
+        },
+        {
+          "label": "B",
+          "value": 100,
+          "percentageOfTotal": 100.0,
+          "displayPercentageOfTotal": "100,00%"
+        }
+      ]
+    },
+    {
+      "id": "zero-denominator",
+      "chartType": "pie",
+      "decimalPlaces": 2,
+      "points": [
+        {
+          "label": "A",
+          "value": 0,
+          "percentageOfTotal": null,
+          "displayPercentageOfTotal": null
+        },
+        {
+          "label": "B",
+          "value": 0,
+          "percentageOfTotal": null,
+          "displayPercentageOfTotal": null
+        }
+      ]
+    },
+    {
+      "id": "null-and-hundred",
+      "chartType": "pie",
+      "decimalPlaces": 2,
+      "points": [
+        {
+          "label": "A",
+          "value": null,
+          "percentageOfTotal": null,
+          "displayPercentageOfTotal": null
+        },
+        {
+          "label": "B",
+          "value": 100,
+          "percentageOfTotal": 100.0,
+          "displayPercentageOfTotal": "100,00%"
+        }
+      ]
+    },
+    {
+      "id": "hidden-marker",
+      "chartType": "pie",
+      "decimalPlaces": 2,
+      "chartParts": {
+        "marker:0:1": {
+          "visible": false
+        }
+      },
+      "points": [
+        {
+          "label": "A",
+          "value": 25,
+          "percentageOfTotal": 100.0,
+          "displayPercentageOfTotal": "100,00%"
+        },
+        {
+          "label": "B",
+          "value": 75,
+          "percentageOfTotal": null,
+          "displayPercentageOfTotal": null
+        }
+      ]
+    },
+    {
+      "id": "per-series",
+      "chartType": "bar",
+      "decimalPlaces": 2,
+      "series": [
+        {
+          "name": "A",
+          "points": [
+            {
+              "label": "a1",
+              "value": 25,
+              "percentageOfTotal": 25.0,
+              "displayPercentageOfTotal": "25,00%"
+            },
+            {
+              "label": "a2",
+              "value": 75,
+              "percentageOfTotal": 75.0,
+              "displayPercentageOfTotal": "75,00%"
+            }
+          ]
+        },
+        {
+          "name": "B",
+          "points": [
+            {
+              "label": "b1",
+              "value": 10,
+              "percentageOfTotal": 50.0,
+              "displayPercentageOfTotal": "50,00%"
+            },
+            {
+              "label": "b2",
+              "value": 10,
+              "percentageOfTotal": 50.0,
+              "displayPercentageOfTotal": "50,00%"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

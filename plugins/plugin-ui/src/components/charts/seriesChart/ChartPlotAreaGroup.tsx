@@ -22,7 +22,9 @@ import { ChartSeriesWaterfall } from "./ChartSeriesWaterfall";
 import { ChartSeriesArea } from "./ChartSeriesArea";
 import { ChartValueLabels } from "./ChartValueLabels";
 import type { SeriesChartDataLabelsResolved } from "../seriesChartDataLabels";
+import { seriesOriginIndex } from "../seriesChartOptions";
 import {
+  getChartPartState,
   resolveSeriesPaintColor,
   type ChartPartsMap,
   type SeriesChartInteraction,
@@ -109,17 +111,24 @@ export function ChartPlotAreaGroup({
       {chartType === "bar" || chartType === "horizontal_bar" ? (
         multiBar && seriesList ? (
           <>
-            {seriesList.map((entry, index) => (
+            {seriesList.map((entry, index) => {
+              const origin = seriesOriginIndex(entry, index);
+              if (getChartPartState(chartParts, { kind: "series", seriesIndex: origin })?.visible === false) {
+                return null;
+              }
+              return (
               <ChartSeriesBar
-                key={`series-bar-${entry.name}-${index}`}
+                key={`series-bar-${entry.name}-${origin}`}
                 layout={layout}
                 points={entry.points}
-                seriesColor={resolveSeriesColor(index, entry.color)}
+                seriesColor={resolveSeriesColor(origin, entry.color)}
                 interaction={interaction}
-                seriesIndex={index}
+                seriesIndex={origin}
+                layoutSeriesIndex={index}
                 seriesCount={seriesList.length}
               />
-            ))}
+              );
+            })}
           </>
         ) : (
           <ChartSeriesBar
@@ -284,9 +293,13 @@ export function ChartPlotAreaGroup({
         multiLine && seriesList ? (
           <>
             {seriesList.map((series, index) => {
-              const color = resolveSeriesColor(index, series.color);
+              const origin = seriesOriginIndex(series, index);
+              if (getChartPartState(chartParts, { kind: "series", seriesIndex: origin })?.visible === false) {
+                return null;
+              }
+              const color = resolveSeriesColor(origin, series.color);
               return (
-                <g key={`series-line-${series.name}-${index}`}>
+                <g key={`series-line-${series.name}-${origin}`}>
                   <ChartSeriesLine
                     layout={layout}
                     points={series.points}
@@ -296,7 +309,7 @@ export function ChartPlotAreaGroup({
                     plotOn={series.plotOn}
                     interaction={interaction}
                     chartParts={chartParts}
-                    seriesIndex={index}
+                    seriesIndex={origin}
                   />
                   <ChartDataPoints
                     layout={layout}
@@ -306,7 +319,7 @@ export function ChartPlotAreaGroup({
                     mode={markerMode}
                     interaction={interaction}
                     chartParts={chartParts}
-                    seriesIndex={index}
+                    seriesIndex={origin}
                     plotOn={series.plotOn}
                   />
                 </g>
@@ -341,9 +354,10 @@ export function ChartPlotAreaGroup({
         <>
           {orderSeriesIndicesForOverlappingPaint(seriesList).map((index) => {
             const series = seriesList[index]!;
-            const color = resolveSeriesColor(index, series.color);
+            const origin = seriesOriginIndex(series, index);
+            const color = resolveSeriesColor(origin, series.color);
             return (
-              <g key={`series-area-${series.name}-${index}`}>
+              <g key={`series-area-${series.name}-${origin}`}>
                 <ChartSeriesArea
                   layout={layout}
                   points={series.points}
@@ -353,7 +367,7 @@ export function ChartPlotAreaGroup({
                   gradient={areaFillGradient}
                   interaction={interaction}
                   chartParts={chartParts}
-                  seriesIndex={index}
+                  seriesIndex={origin}
                 />
                 {showMarkers ? (
                   <ChartDataPoints
@@ -364,7 +378,7 @@ export function ChartPlotAreaGroup({
                     mode={markerMode}
                     interaction={interaction}
                     chartParts={chartParts}
-                    seriesIndex={index}
+                    seriesIndex={origin}
                   />
                 ) : null}
               </g>
@@ -464,9 +478,14 @@ export function ChartPlotAreaGroup({
       )}
 
       {showDataLabels && multiBar && seriesList ? (
-        seriesList.map((entry, index) => (
+        seriesList.map((entry, index) => {
+          const origin = seriesOriginIndex(entry, index);
+          if (getChartPartState(chartParts, { kind: "series", seriesIndex: origin })?.visible === false) {
+            return null;
+          }
+          return (
           <ChartValueLabels
-            key={`labels-bar-${entry.name}-${index}`}
+            key={`labels-bar-${entry.name}-${origin}`}
             chartType={chartType}
             layout={layout}
             points={entry.points}
@@ -475,16 +494,22 @@ export function ChartPlotAreaGroup({
             visible={showDataLabels}
             chartParts={chartParts}
             interaction={interaction}
-            seriesIndex={index}
+            seriesIndex={origin}
             seriesCount={seriesList.length}
             seriesName={entry.name}
             dataLabels={dataLabels}
           />
-        ))
+          );
+        })
       ) : showDataLabels && multiLine && seriesList ? (
-        seriesList.map((entry, index) => (
+        seriesList.map((entry, index) => {
+          const origin = seriesOriginIndex(entry, index);
+          if (getChartPartState(chartParts, { kind: "series", seriesIndex: origin })?.visible === false) {
+            return null;
+          }
+          return (
           <ChartValueLabels
-            key={`labels-line-${entry.name}-${index}`}
+            key={`labels-line-${entry.name}-${origin}`}
             chartType={chartType}
             layout={layout}
             points={entry.points}
@@ -493,11 +518,12 @@ export function ChartPlotAreaGroup({
             visible={showDataLabels}
             chartParts={chartParts}
             interaction={interaction}
-            seriesIndex={index}
+            seriesIndex={origin}
             seriesName={entry.name}
             dataLabels={dataLabels}
           />
-        ))
+          );
+        })
       ) : showDataLabels && !(multiStacked && seriesList) ? (
         <ChartValueLabels
           chartType={chartType}

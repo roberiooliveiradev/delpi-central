@@ -5,9 +5,9 @@ import { usePortalColorScheme } from "../theme/portalColorScheme";
 /**
  * Marca Delpi do relatório.
  * Fundo claro: PNG documental (`delpi-logo.png`).
- * Fundo escuro: a mesma arte cadastrada em
- * `plugins/tv-dashboard-presentation/src/assets/logoDelpiOnDark.png`
- * e em `tv-dashboard-api/tv_app/content/brand/logoDelpiOnDark.png`.
+ * Fundo escuro: a mesma arte da marca, também arquivada em
+ * `tv-dashboard-api/tv_app/content/brand/logoDelpiOnDark.png`.
+ * O arquivo local `delpi-logo-on-dark.png` é a cópia usada por este MFE.
  * A impressão isolada lê `data-print-src` e volta à logo clara.
  */
 

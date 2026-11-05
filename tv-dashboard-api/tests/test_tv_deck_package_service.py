@@ -435,3 +435,117 @@ def test_export_fails_when_media_missing_on_disk():
     )
     with pytest.raises(TvDeckPackageError, match="ausentes"):
         service.export_package(uuid4())
+
+
+def test_chart_authoring_survives_mdd_export_preview_apply_without_runtime_percentage():
+    asset_id = str(uuid4())
+    playlist = _build_playlist_fixture(asset_id)
+    section_id = str(uuid4())
+    chart_block = {
+        "id": "chart1",
+        "type": "chart_view",
+        "chartType": "pie",
+        "chartOptions": {
+            "decimalPlaces": 2,
+            "displayValueFormat": {"category": "number", "decimalPlaces": 2},
+            "dataLabels": {
+                "showValue": True,
+                "showCategoryName": True,
+                "showPercentage": True,
+                "position": "outsideEnd",
+                "separator": "comma",
+            },
+        },
+        "chartParts": {"marker:0:1": {"visible": False}, "series:1": {"style": {"stroke": "#ff00aa"}}},
+        "frame": {"x": 10, "y": 10, "w": 40, "h": 40},
+    }
+    slides = [
+        {
+            "id": str(uuid4()),
+            "sectionId": section_id,
+            "sortOrder": 0,
+            "slideType": "native",
+            "durationSec": 20,
+            "title": "Gráfico",
+            "nativeScreenKey": "custom_message",
+            "nativeConfig": {"version": 4, "blocks": [chart_block]},
+            "isActive": True,
+        }
+    ]
+    sections = [
+        {
+            "id": section_id,
+            "name": "Principal",
+            "sortOrder": 0,
+            "isCollapsed": False,
+            "isActive": True,
+            "isMain": True,
+            "masterConfig": {},
+        }
+    ]
+    storage = MagicMock()
+    storage.read.return_value = b"\x89PNG"
+    storage.save.return_value = ("newstored.png", "image/png", "image")
+    playlist_repo = MagicMock()
+    playlist_repo.get_by_id.return_value = playlist
+    playlist_repo.list_slides.return_value = slides
+    playlist_repo.list_sections.return_value = sections
+    created = {**playlist, "id": str(uuid4()), "ownerUserId": "user-b", "isActive": False}
+    playlist_repo.create.return_value = created
+    playlist_repo.update.return_value = created
+    playlist_repo.import_sections_from_deck.return_value = {section_id: str(uuid4())}
+    playlist_repo.import_slides_from_deck.return_value = []
+    media_repo = MagicMock()
+    media_repo.list_for_playlist.return_value = [
+        {
+            "id": asset_id,
+            "playlistId": playlist["id"],
+            "storedName": "logo.png",
+            "originalName": "logo.png",
+            "mimeType": "image/png",
+            "mediaKind": "image",
+            "fileSizeBytes": 4,
+        }
+    ]
+    media_repo.create.return_value = {
+        "id": str(uuid4()),
+        "storedName": "newstored.png",
+        "mimeType": "image/png",
+        "mediaKind": "image",
+    }
+    service = TvDeckPackageService(
+        playlist_repo=playlist_repo,
+        media_repo=media_repo,
+        media_storage=storage,
+        binding_validator=TvDeckBindingValidator(catalog=MagicMock()),
+        max_bytes=10 * 1024 * 1024,
+        preview_store=_PreviewStore(ttl_seconds=60),
+    )
+    payload, filename = service.export_package(uuid4(), exported_by="user-a")
+    assert filename.endswith(".mdd")
+    with zipfile.ZipFile(io.BytesIO(payload)) as zf:
+        exported_slides = json.loads(zf.read(SLIDES_PATH))
+    exported_block = exported_slides[0]["nativeConfig"]["blocks"][0]
+    assert exported_block["chartOptions"]["dataLabels"]["showPercentage"] is True
+    assert exported_block["chartOptions"]["dataLabels"]["position"] == "outsideEnd"
+    assert exported_block["chartOptions"]["displayValueFormat"]["decimalPlaces"] == 2
+    assert exported_block["chartParts"]["marker:0:1"]["visible"] is False
+    assert exported_block["chartParts"]["series:1"]["style"]["stroke"] == "#ff00aa"
+    assert "displayPercentageOfTotal" not in json.dumps(exported_slides)
+    assert "percentageOfTotal" not in json.dumps(exported_slides)
+
+    preview = service.preview_import(payload)
+    assert preview["valid"] is True
+    result = service.apply_import(
+        import_token=preview["importToken"],
+        created_by="user-b",
+        binding_policy="lenient",
+    )
+    assert result["accessRole"] == "owner"
+    applied = playlist_repo.import_slides_from_deck.call_args.args[1][0]["nativeConfig"]["blocks"][0]
+    assert applied["chartOptions"]["dataLabels"]["separator"] == "comma"
+    assert applied["chartOptions"]["dataLabels"]["showCategoryName"] is True
+    assert applied["chartOptions"]["dataLabels"]["showValue"] is True
+    assert applied["chartParts"]["series:1"]["style"]["stroke"] == "#ff00aa"
+    assert "resolved" not in applied
+    assert "displayPercentageOfTotal" not in json.dumps(applied)

@@ -17,6 +17,8 @@ import type { SeriesChartSharedProps } from "./types";
 export type ChartSeriesBarProps = Pick<SeriesChartSharedProps, "layout" | "points" | "seriesColor"> & {
   interaction?: SeriesChartInteraction | null;
   seriesIndex?: number;
+  /** Posição no grupo visível. `seriesIndex` permanece o índice de chartParts. */
+  layoutSeriesIndex?: number;
   /** Total de séries no grupo (barras lado a lado). Default 1 = ocupa a categoria inteira. */
   seriesCount?: number;
   /** Paleta por categoria / rampa semântica (série única). */
@@ -37,6 +39,7 @@ export function ChartSeriesBar({
   seriesColor,
   interaction,
   seriesIndex = 0,
+  layoutSeriesIndex,
   seriesCount = 1,
   categoryColors,
   colorScale,
@@ -120,7 +123,7 @@ export function ChartSeriesBar({
           layout,
           categoryIndex: slotIndex,
           categoryCount,
-          seriesIndex,
+          seriesIndex: layoutSeriesIndex ?? seriesIndex,
           seriesCount,
         });
         const fill = resolveFill(point, index);

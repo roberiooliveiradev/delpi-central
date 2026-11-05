@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from tv_app.application.services.data.display_format_service import (
     EMPTY_DISPLAY,
     DisplayFormatService,
@@ -443,6 +446,62 @@ def test_chart_percentage_negative_stays_out_of_the_denominator():
     )
     assert points[0]["displayPercentageOfTotal"] == "33%"
     assert points[1]["displayPercentageOfTotal"] == "100%"
+
+
+def test_chart_percentage_enrich_fixture_matches_service():
+    """A fixture versionada é a saída de apply_to_resolved, não um exemplo manual."""
+    payload = json.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "plugins"
+            / "tv-dashboard-presentation"
+            / "src"
+            / "fixtures"
+            / "chartPercentageEnrich.json"
+        ).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert payload["source"] == "DisplayFormatService.apply_to_resolved"
+    for case in payload["cases"]:
+        chart: dict = {"chartType": case["chartType"]}
+        if "points" in case:
+            chart["points"] = [
+                {"label": point["label"], "value": point["value"]} for point in case["points"]
+            ]
+        if "series" in case:
+            chart["series"] = [
+                {
+                    "name": series["name"],
+                    "points": [
+                        {"label": point["label"], "value": point["value"]}
+                        for point in series["points"]
+                    ],
+                }
+                for series in case["series"]
+            ]
+        block = {
+            "type": "chart_view",
+            "chartType": case["chartType"],
+            "chartOptions": {
+                "dataLabels": {"showPercentage": True},
+                "decimalPlaces": case["decimalPlaces"],
+            },
+        }
+        if "chartParts" in case:
+            block["chartParts"] = case["chartParts"]
+        out = DisplayFormatService.apply_to_resolved({"chart": chart}, block)["chart"]
+        if "points" in case:
+            for got, expected in zip(out["points"], case["points"], strict=True):
+                assert got["percentageOfTotal"] == expected["percentageOfTotal"]
+                assert got["displayPercentageOfTotal"] == expected["displayPercentageOfTotal"]
+        if "series" in case:
+            for got_series, expected_series in zip(out["series"], case["series"], strict=True):
+                for got, expected in zip(
+                    got_series["points"], expected_series["points"], strict=True
+                ):
+                    assert got["percentageOfTotal"] == expected["percentageOfTotal"]
+                    assert got["displayPercentageOfTotal"] == expected["displayPercentageOfTotal"]
 
 
 def test_chart_percentage_is_not_written_when_content_is_off():

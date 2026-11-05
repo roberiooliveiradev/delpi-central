@@ -5,6 +5,7 @@ import type {
   SeriesChartLegendLayoutResolved,
   SeriesChartLegendPosition,
 } from "../seriesChartOptions";
+import type { SeriesChartLegendItem } from "../seriesChartLegendItems";
 import {
   bindChartPartPointer,
   chartPartAllowsResize,
@@ -20,7 +21,7 @@ export type ChartLegendProps = {
   seriesName: string;
   seriesColor: string;
   /** Quando informado, renderiza uma entrada por série. */
-  items?: Array<{ name: string; color: string }>;
+  items?: SeriesChartLegendItem[];
   position: SeriesChartLegendPosition;
   /** Layout resolvido (`row` | `column`) — nunca `auto`. */
   layout?: SeriesChartLegendLayoutResolved;
@@ -120,7 +121,11 @@ export function ChartLegend({
       onDoubleClick={onDoubleClick}
     >
       {legendEntries.map((entry, seriesIndex) => {
-        const seriesRef = { kind: "series" as const, seriesIndex };
+        const partIndex =
+          typeof entry.sourceIndex === "number" && Number.isFinite(entry.sourceIndex)
+            ? entry.sourceIndex
+            : seriesIndex;
+        const seriesRef = { kind: "series" as const, seriesIndex: partIndex };
         const {
           selected: seriesSelected,
           editing: _seriesEditing,

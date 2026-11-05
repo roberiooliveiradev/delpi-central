@@ -1,5 +1,6 @@
 import {
   resolveSeriesChartLegendSort,
+  seriesOriginIndex,
   type SeriesChartColorScale,
   type SeriesChartKind,
   type SeriesChartLegendSort,
@@ -16,6 +17,8 @@ import {
 export type SeriesChartLegendItem = {
   name: string;
   color: string;
+  /** Índice de chartParts da série. Ausente = entrada de categoria. */
+  sourceIndex?: number;
 };
 
 /**
@@ -190,8 +193,13 @@ function sortLegendItemsByMeta(
   items: Array<SeriesChartLegendItem & { sortValue: number; sortName: string }>,
   sort: SeriesChartLegendSortResolved,
 ): SeriesChartLegendItem[] {
+  const project = (item: SeriesChartLegendItem): SeriesChartLegendItem => ({
+    name: item.name,
+    color: item.color,
+    ...(typeof item.sourceIndex === "number" ? { sourceIndex: item.sourceIndex } : {}),
+  });
   if (sort === "data" || items.length < 2) {
-    return items.map(({ name, color }) => ({ name, color }));
+    return items.map(project);
   }
   const copy = [...items];
   if (sort === "valueDesc") {
@@ -203,7 +211,7 @@ function sortLegendItemsByMeta(
   } else if (sort === "nameDesc") {
     copy.sort((a, b) => b.sortName.localeCompare(a.sortName, "pt-BR"));
   }
-  return copy.map(({ name, color }) => ({ name, color }));
+  return copy.map(project);
 }
 
 /**
@@ -248,18 +256,23 @@ export function buildSeriesChartLegendItems(args: {
   });
 
   if (multiSeries && seriesWithData) {
-    const items = seriesWithData.map((series, index) => ({
-      name: series.name?.trim() || `Série ${index + 1}`,
-      color: resolveSeriesPaintColor({
-        seriesIndex: index,
-        explicit: series.color,
-        seriesColor,
-        categoryColors,
-        parts: chartParts,
-      }),
-      sortValue: seriesSortTotal(series),
-      sortName: series.name?.trim() || `Série ${index + 1}`,
-    }));
+    const items = seriesWithData.map((series, index) => {
+      const origin = seriesOriginIndex(series, index);
+      const name = series.name?.trim() || `Série ${origin + 1}`;
+      return {
+        name,
+        color: resolveSeriesPaintColor({
+          seriesIndex: origin,
+          explicit: series.color,
+          seriesColor,
+          categoryColors,
+          parts: chartParts,
+        }),
+        sourceIndex: origin,
+        sortValue: seriesSortTotal(series),
+        sortName: name,
+      };
+    });
     return sortLegendItemsByMeta(items, resolvedSort);
   }
 

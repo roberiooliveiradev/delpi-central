@@ -151,8 +151,8 @@ describe("seriesChartLegendItems", () => {
       sort: "nameDesc",
     });
     expect(items).toEqual([
-      { name: "OTD", color: "#14b8a6" },
-      { name: "OEE", color: expect.any(String) },
+      { name: "OTD", color: "#14b8a6", sourceIndex: 1 },
+      { name: "OEE", color: expect.any(String), sourceIndex: 0 },
     ]);
   });
 });

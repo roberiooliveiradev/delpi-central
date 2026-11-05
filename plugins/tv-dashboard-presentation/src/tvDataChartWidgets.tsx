@@ -71,17 +71,19 @@ export function TvDataSeriesChartWidget({
     return mapped;
   };
   const seriesList = (resolved.chart?.series ?? [])
-    .filter((series) =>
+    .map((series, sourceIndex) => ({ series, sourceIndex }))
+    .filter(({ series }) =>
       Array.isArray(series.points) &&
       series.points.some((point) => {
         if (point.value == null || point.value === "") return false;
         return Number.isFinite(Number(point.value));
       }),
     )
-    .map((series) => ({
+    .map(({ series, sourceIndex }) => ({
       name: series.name,
       color: series.color,
       plotOn: series.plotOn,
+      sourceIndex,
       points: series.points.map(mapPoint),
     }));
   const points =

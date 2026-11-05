@@ -49,16 +49,20 @@ export function ChartDataPoints({
     <>
       {points.map((point, index) => {
         if (mode === "last" && index !== onlyIndex) return null;
-        const marker = resolveMarkerStyle(chartParts, seriesIndex, index, seriesColor);
+        const pointIndex =
+          typeof point.sourceIndex === "number" && Number.isFinite(point.sourceIndex)
+            ? point.sourceIndex
+            : index;
+        const marker = resolveMarkerStyle(chartParts, seriesIndex, pointIndex, seriesColor);
         if (!marker.visible) return null;
-        const ref = { kind: "marker" as const, seriesIndex, pointIndex: index };
+        const ref = { kind: "marker" as const, seriesIndex, pointIndex };
         const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(ref, interaction, {
           moveWhenSelected: false,
         });
         return (
           <circle
             key={`dot-${index}`}
-            cx={toX(index, points.length)}
+            cx={toX(pointIndex, points.length)}
             cy={mapY(Number(point.value))}
             r={marker.radius ?? CHART_MARKER_RADIUS}
             fill={marker.fill}
