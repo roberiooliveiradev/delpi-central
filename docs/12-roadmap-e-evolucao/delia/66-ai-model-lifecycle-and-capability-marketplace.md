@@ -138,6 +138,8 @@ approved model packages
 
 Marketplace is catalog/governance experience over owner-controlled assets. `publish != enable`, `enable != permission`, `install != authorization`.
 
+**Direção de produto 2026-11-05 (24 §5/CP-071):** catálogo pode apresentar agentes/perfis especializados selecionáveis e convidáveis na interface DÉLIA, além de MCPs/conectores. **Agente != MCP**: MCP TÉO pode ser ferramenta direta e também ferramenta de um agente TÉO com instruções aprovadas, expertise e conhecimento. Reutilizar Core para governança/acesso, owner MCP para capabilities, Expertise Studio/Knowledge para conteúdo e plugin-ui para navegação; cadastro/enablement user-facing permanece TARGET até contrato e evidência de runtime.
+
 ## 9. Marketplace lifecycle
 
 Possible candidate semantics:
