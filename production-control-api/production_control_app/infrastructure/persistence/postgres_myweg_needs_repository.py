@@ -252,6 +252,39 @@ class PostgresMyWegNeedsRepository:
                 rows = cursor.fetchall()
         return [dict(row) for row in rows]
 
+    def list_batch_records_for_compare(self, *, batch_id: str) -> list[dict[str, Any]]:
+        """Linhas + projeção SB1 para comparação entre coletas (sem paginação)."""
+        query = f"""
+            SELECT
+                r.id::text AS id,
+                r.batch_id::text AS batch_id,
+                r.line_no,
+                r.material_weg_tratado,
+                r.codigo_referencia_weg,
+                r.quantidade_original_un,
+                r.quantidade_mi,
+                r.data_remessa,
+                r.line_fingerprint,
+                COALESCE(res.status, r.sb1_status) AS sb1_status,
+                COALESCE(res.verified_product_code, r.sb1_protheus_product_code)
+                    AS sb1_protheus_product_code,
+                COALESCE(res.matched_by, r.sb1_matched_by) AS sb1_matched_by,
+                COALESCE(res.verified_at, r.sb1_resolved_at) AS sb1_resolved_at,
+                res.verified_description AS sb1_verified_description,
+                res.reason AS sb1_reason,
+                res.informed_product_code AS sb1_informed_product_code,
+                res.candidates_json AS sb1_candidates_json
+            FROM {_RECORDS} r
+            LEFT JOIN {_SB1_RESOLUTIONS} res ON res.record_id = r.id
+            WHERE r.batch_id = %s::uuid
+            ORDER BY r.line_no ASC
+        """
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, (batch_id,))
+                rows = cursor.fetchall()
+        return [self._map_record(row) for row in rows]
+
     def persist_sb1_resolution_batch(
         self,
         *,

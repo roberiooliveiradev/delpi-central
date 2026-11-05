@@ -579,6 +579,33 @@ class DelpiProductionGateway:
             },
         )
 
+    def list_customer_outbound_invoice_line_items(
+        self,
+        *,
+        branch: str,
+        customer_code: str,
+        customer_store: str,
+        issue_date_start: str,
+        issue_date_end: str,
+        product_codes: Sequence[str],
+        exclude_returns: bool = True,
+    ) -> dict[str, Any]:
+        """Itens de NF de saída (quantidade física) — lote por produtos DELPI."""
+        codes = [str(code or "").strip() for code in product_codes or ()]
+        return self._request(
+            "POST",
+            "/pedidos-venda-abertos/totvs-outbound-invoice-line-items",
+            json_body={
+                "branch": branch,
+                "customer_code": customer_code,
+                "customer_store": customer_store,
+                "issue_date_start": issue_date_start,
+                "issue_date_end": issue_date_end,
+                "product_codes": [code for code in codes if code],
+                "exclude_returns": exclude_returns,
+            },
+        )
+
     def fetch_product_inventory_blocks(
         self,
         *,

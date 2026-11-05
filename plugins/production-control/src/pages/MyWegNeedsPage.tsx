@@ -2,6 +2,7 @@ import { createDashboardLoadingActivityCard } from "@delpi/plugin-ui/index";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { DataTableSection, type DataTableColumn } from "../components/dataTableUi";
+import { MyWegPlanningEvolutionPanel } from "../components/MyWegPlanningEvolutionPanel";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
@@ -301,6 +302,13 @@ export function MyWegNeedsPage({
       />
 
       <p className="ppc-myweg-needs__planning-note">{texts.planningNote}</p>
+
+      {!forbidden && historyOptions.length > 0 ? (
+        <MyWegPlanningEvolutionPanel
+          historyItems={historyOptions}
+          selectedBatchId={selected?.id ?? batchId}
+        />
+      ) : null}
 
       {loading ? <LoadingCard title={texts.loading} description={texts.loadingHint} /> : null}
 

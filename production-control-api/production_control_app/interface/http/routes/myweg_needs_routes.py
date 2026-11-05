@@ -6,11 +6,15 @@ from datetime import date
 
 from fastapi import APIRouter, Query, Request
 
-from production_control_app.composition.pc_composer import build_myweg_needs_service
+from production_control_app.composition.pc_composer import (
+    build_myweg_needs_compare_service,
+    build_myweg_needs_service,
+)
 from production_control_app.core.responses import fail, ok
 from production_control_app.domain.errors import (
     BranchAccessDenied,
     MyWegNeedsBatchNotFound,
+    MyWegNeedsValidationFailed,
 )
 from production_control_app.interface.http.auth_http import resolve_user
 
@@ -42,6 +46,42 @@ def get_latest_myweg_need_batch(request: Request):
         data = build_myweg_needs_service().get_latest_batch(user)
     except MyWegNeedsBatchNotFound as exc:
         return fail(str(exc), 404)
+    except BranchAccessDenied as exc:
+        return fail(str(exc), 403)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    return ok(data)
+
+
+@router.get("/compare", operation_id="compare_myweg_need_batches")
+def compare_myweg_need_batches(
+    request: Request,
+    fromBatchId: str | None = Query(None, alias="fromBatchId"),
+    toBatchId: str | None = Query(None, alias="toBatchId"),
+    billingMode: str = Query("none", alias="billingMode"),
+    search: str = Query(""),
+    page: int = Query(1, ge=1),
+    pageSize: int = Query(50, alias="pageSize", ge=1, le=200),
+):
+    """Evolução do planejamento entre dois snapshots — faturamento só indicativo."""
+    user = resolve_user(request)
+    try:
+        data = build_myweg_needs_compare_service().compare(
+            user,
+            from_batch_id=fromBatchId,
+            to_batch_id=toBatchId,
+            billing_mode=billingMode,
+            product_search=search,
+            page=page,
+            page_size=pageSize,
+        )
+    except MyWegNeedsBatchNotFound as exc:
+        return fail(str(exc), 404)
+    except MyWegNeedsValidationFailed as exc:
+        status = 422
+        if any(i.get("code") == "insufficient_batches" for i in (exc.issues or [])):
+            status = 409
+        return fail(str(exc), status, data={"issues": exc.issues})
     except BranchAccessDenied as exc:
         return fail(str(exc), 403)
     except PermissionError as exc:

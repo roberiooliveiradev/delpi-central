@@ -1321,6 +1321,32 @@ export async function fetchMyWegNeedBatch(params: {
   return unwrapEnvelope(envelope, "Coleta MyWEG não encontrada.");
 }
 
+export async function fetchMyWegNeedBatchesCompare(params: {
+  fromBatchId?: string | null;
+  toBatchId?: string | null;
+  billingMode?: "none" | "indicative";
+  search?: string;
+  page?: number;
+  pageSize?: number;
+  signal?: AbortSignal;
+}): Promise<import("../types").MyWegComparePayload> {
+  const search = new URLSearchParams();
+  if (params.fromBatchId) search.set("fromBatchId", params.fromBatchId);
+  if (params.toBatchId) search.set("toBatchId", params.toBatchId);
+  search.set("billingMode", params.billingMode ?? "none");
+  if (params.search?.trim()) search.set("search", params.search.trim());
+  search.set("page", String(params.page ?? 1));
+  search.set("pageSize", String(params.pageSize ?? 50));
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: import("../types").MyWegComparePayload;
+  }>(ppcApiUrl(`/myweg/need-batches/compare?${search.toString()}`), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(envelope, "Não foi possível comparar as coletas MyWEG.");
+}
+
 export async function fetchMyWegNeedBatchItems(params: {
   batchId: string;
   search?: string;

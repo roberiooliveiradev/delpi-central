@@ -43,6 +43,7 @@ from app.composition.pedidos_venda_abertos_composer import (
     build_list_customer_billing_series_use_case,
     build_list_customer_open_order_metrics_use_case,
     build_list_customer_outbound_invoices_use_case,
+    build_list_customer_outbound_invoice_line_items_use_case,
     build_list_ops_abertas_use_case,
     build_list_pedidos_venda_abertos_use_case,
     build_manage_customer_avatar_use_case,
@@ -1014,6 +1015,56 @@ def _execute_outbound_invoices(
         operation_id=operation_id,
         message="Notas fiscais de saída do cliente carregadas com sucesso.",
     )
+
+
+class CustomerOutboundInvoiceLineItemsBatchRequest(BaseModel):
+    branch: str = Field(..., min_length=2, max_length=2)
+    customer_code: str = Field(..., min_length=1, max_length=20)
+    customer_store: str = Field(..., min_length=1, max_length=10)
+    issue_date_start: str = Field(..., min_length=8, max_length=10)
+    issue_date_end: str = Field(..., min_length=8, max_length=10)
+    product_codes: list[str] = Field(default_factory=list)
+    exclude_returns: bool = True
+
+
+@router.post(
+    "/totvs-outbound-invoice-line-items",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_customer_outbound_invoice_line_items",
+        path="/pedidos-venda-abertos/totvs-outbound-invoice-line-items",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def list_customer_outbound_invoice_line_items_route(
+    body: CustomerOutboundInvoiceLineItemsBatchRequest = Body(...),
+):
+    """Itens SD2/SF2 por filial+cliente+loja e lote de produtos — quantidade física."""
+    try:
+        result = build_list_customer_outbound_invoice_line_items_use_case().execute(
+            branch=body.branch,
+            customer_code=body.customer_code,
+            customer_store=body.customer_store,
+            issue_date_start=body.issue_date_start,
+            issue_date_end=body.issue_date_end,
+            product_codes=body.product_codes,
+            exclude_returns=body.exclude_returns,
+        )
+        return api_delpi_success(
+            result,
+            operation_id="list_customer_outbound_invoice_line_items",
+            entity="customer_outbound_invoice_line_item",
+            shape="list",
+            message="Itens de NF de saída carregados com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em totvs-outbound-invoice-line-items: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em totvs-outbound-invoice-line-items: {exc}")
+        return error_response(
+            "Erro interno ao carregar itens de NF de saída.",
+            status_code=500,
+        )
 
 
 @router.get(

@@ -115,6 +115,19 @@ def build_list_customer_outbound_invoices_use_case() -> ListCustomerOutboundInvo
     )
 
 
+def build_list_customer_outbound_invoice_line_items_use_case():
+    from app.application.use_cases.pedidos_venda_abertos.list_customer_outbound_invoice_line_items_use_case import (
+        ListCustomerOutboundInvoiceLineItemsUseCase,
+    )
+    from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_outbound_invoice_line_items_repository import (
+        CustomerOutboundInvoiceLineItemsRepository,
+    )
+
+    return ListCustomerOutboundInvoiceLineItemsUseCase(
+        repository=CustomerOutboundInvoiceLineItemsRepository(),
+    )
+
+
 def build_get_outbound_invoice_use_case() -> GetOutboundInvoiceUseCase:
     return GetOutboundInvoiceUseCase(
         repository=CustomerOutboundInvoicesRepository(),

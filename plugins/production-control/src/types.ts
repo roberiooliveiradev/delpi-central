@@ -1567,3 +1567,43 @@ export type MyWegNeedsItemsPayload = {
   total: number;
   items: MyWegNeedsRecord[];
 };
+
+export type MyWegCompareChange = {
+  productKey: string;
+  identityKind: string;
+  remessa: string;
+  inHorizon14d: boolean;
+  movement: string;
+  previousQuantityUn: string;
+  currentQuantityUn: string;
+  deltaQuantityUn: string;
+  materialWegTratado?: string | null;
+  verifiedProductCode?: string | null;
+  codigoReferenciaWeg?: string | null;
+};
+
+export type MyWegComparePayload = {
+  branch: string;
+  scope: {
+    customerName: string;
+    protheusCustomerCode: string;
+    protheusCustomerStore: string;
+  };
+  fromBatch: MyWegNeedsBatchSummary & { collectionId?: string };
+  toBatch: MyWegNeedsBatchSummary & { collectionId?: string };
+  observed: {
+    summary: Record<string, number>;
+    disclaimer: string;
+    horizonDays: number;
+    referenceDate: string;
+  };
+  billing: {
+    status: string;
+    disclaimer?: string;
+    reason?: string | null;
+  };
+  page: number;
+  pageSize: number;
+  total: number;
+  items: MyWegCompareChange[];
+};

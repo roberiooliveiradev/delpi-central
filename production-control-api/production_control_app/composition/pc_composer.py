@@ -324,6 +324,17 @@ def build_myweg_sb1_resolve_service(repository=None, gateway=None):
     )
 
 
+def build_myweg_needs_compare_service(repository=None, gateway=None):
+    from production_control_app.application.services.myweg_needs_compare_service import (
+        MyWegNeedsCompareService,
+    )
+
+    return MyWegNeedsCompareService(
+        repository or build_myweg_needs_repository(),
+        gateway=gateway,
+    )
+
+
 def build_line_feeder_service(
     gateway: DelpiProductionGateway | None = None,
     *,

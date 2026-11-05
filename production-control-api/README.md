@@ -68,9 +68,11 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | GET | `/myweg/need-batches/latest` | JWT — última coleta válida |
 | GET | `/myweg/need-batches/{batchId}` | JWT — resumo da coleta |
 | GET | `/myweg/need-batches/{batchId}/items` | JWT — itens paginados (`search`, `remessaFrom`, `remessaTo`) enriquecidos com projeção SB1 (V026) |
+| GET | `/myweg/need-batches/compare` | JWT — evolução entre duas coletas (`fromBatchId`, `toBatchId`, `billingMode=none\|indicative`) |
 
 Contrato e persistência: [MYWEG-NEEDS-INGESTION-E2.md](../docs/12-roadmap-e-evolucao/production-control/MYWEG-NEEDS-INGESTION-E2.md).  
-Matching Protheus (E4): [MYWEG-NEEDS-PROTHEUS-E4.md](../docs/12-roadmap-e-evolucao/production-control/MYWEG-NEEDS-PROTHEUS-E4.md).
+Matching Protheus (E4): [MYWEG-NEEDS-PROTHEUS-E4.md](../docs/12-roadmap-e-evolucao/production-control/MYWEG-NEEDS-PROTHEUS-E4.md).  
+Evolução (E5): [MYWEG-NEEDS-PLANNING-EVOLUTION-E5.md](../docs/12-roadmap-e-evolucao/production-control/MYWEG-NEEDS-PLANNING-EVOLUTION-E5.md).
 
 ### Integração Production Pulse (MES shadow)
 
