@@ -486,3 +486,59 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
 - **Segurança**: G2 negatives (15) + MCP fail-closed + snapshot (9) +
   OpenAPI C3-T5 (46) + STT streaming (4 reais) — preservados.
 - Suíte completa PASS (exit 0).
+
+## 20. G8 — residual closure & evidence (execução)
+
+### Residual search final (SHA `981360de`)
+
+| Alvo | Resultado |
+|---|---|
+| `outcome_assessment.py` / `paginated_result_semantics.py` | removidos fisicamente; zero consumidores ativos |
+| classificadores regex (`classify_*`, `is_ticket_domain*`) | ausentes |
+| CRI toggles (`response_intelligence*`, `COMPOSITION_CRI`, `cri_instructions`) | ausentes |
+| `requests.post/get` fora do transporte governado | zero (só docstring) |
+| imports Application→Infrastructure | zero |
+| segundo Agent/planner/runtime | ausente — `Agent(` único em pydantic_ai_investigation |
+| `last_agent_usage`/`started`/`_recovery_reuse_enabled` | ausentes |
+
+### Matriz RQ-01..28 (evidência por SHA/teste)
+
+| RQ | Status | Evidência |
+|---|---|---|
+| RQ-01 native typed output | IMPLEMENTED | `Agent(output_type=InvestigationAnswer)`; `a51c0c32`, `fe043324` |
+| RQ-02 structured contract | IMPLEMENTED | `InvestigationAnswer` frozen dataclass; testes G1 23/23 |
+| RQ-03 factual grounding gate | IMPLEMENTED | `_apply_declared_answer` fail-closed; prosa nunca substitui conteúdo verificado; `6b07992e` |
+| RQ-04 refs↔attempts reais | IMPLEMENTED | refs bound só a business evidence; `evidence_ref_unbound` |
+| RQ-05 delete paginated_result_semantics | IMPLEMENTED | removido em `88a7c4e5` |
+| RQ-06 delete outcome_assessment | IMPLEMENTED | removido em `88a7c4e5` |
+| RQ-07 clarification/partial preserved | IMPLEMENTED | partial-evidence clarification + `verified_evidence_preserved`; `fbb8d8e9` |
+| RQ-08 orchestration shrink | PARTIAL | −114 LOC (9 fns mortas); refine possível |
+| RQ-09 CRI retirement | IMPLEMENTED | flag/loader/label/resource/testes removidos; `fbb8d8e9` |
+| RQ-10 interaction cleanup | PARTIAL | handler/`_response_mode`/COMPOSITION_CRI limpos |
+| RQ-11 retry consolidation | PARTIAL | prova separação Agent vs governed_retries; `3d7c1cd5` |
+| RQ-12 single runtime | IMPLEMENTED | Agent Pydantic AI único; zero segundo runtime |
+| RQ-13 unified JSON config | IMPLEMENTED | JSON único; zero campos mortos |
+| RQ-14 observability/config | PARTIAL | usage medido vs estimado separado; last_agent_usage removido |
+| RQ-15 context budget | PARTIAL | context_budget KEEP; refinamento adicional |
+| RQ-16 MCP live boundary | IMPLEMENTED | zero dead code; KEEP integral |
+| RQ-17 snapshot boundary | IMPLEMENTED | Application→Infra corrigida; `9596570a` |
+| RQ-18 OpenAPI C3-T5 | IMPLEMENTED | foundation KEEP; 46 testes |
+| RQ-19 OpenAPI dead adapter | IMPLEMENTED | direct DELPI já aposentado |
+| RQ-20 interop fail-closed | IMPLEMENTED | snapshot tampered/missing fail-closed; 9/9 |
+| RQ-21 HTTP deadline | IMPLEMENTED | bounded_request+deadline_transport; keep |
+| RQ-22 STT streaming governed | IMPLEMENTED | deadline_scope no SSE; `f8ff2b6e`, `be1028f9` |
+| RQ-23 streaming defect fix | IMPLEMENTED | stall→PROVIDER_TIMEOUT; 4 testes reais |
+| RQ-24 G7 integrated eval | PARTIAL | provas executáveis feitas; E01–E10 TEST_NOT_RUN |
+| RQ-25 G8 residual | IMPLEMENTED | este documento |
+| RQ-26 evidence/ledger | IMPLEMENTED | doc 256 §1–§20 + ledger |
+| RQ-27 RQ matrix | IMPLEMENTED | esta tabela |
+| RQ-28 review disposition | PARTIAL | ACCEPT_WITH_RESIDUAL proposto; E01–E10 pendente |
+
+TOTAL_RQ=28 | IMPLEMENTED=18 | PARTIAL=10 | NOT_IMPLEMENTED=0 | BLOCKED=0
+TASK_VERIFIED_COVERAGE_PCT=64% (implemented) — partial=zero credito por regra
+E01–E10=TEST_NOT_RUN — ambiente autorizado (delpi-delia-api+Keycloak+owners MCP) indisponível; desbloqueio: stack dev autenticado no srv-api.
+
+### Veredicto proposto
+ACCEPT_WITH_RESIDUAL — revisão de código G1–G8 completa com provas;
+E01–E10 pendente de ambiente autorizado (não declara aceite integral).
+PRODUCTION_DEPLOY=NOT_AUTHORIZED.

@@ -5822,3 +5822,16 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | Suíte | PASS (exit 0) |
 | E01–E10 | TEST_NOT_RUN (G7) |
 | PRODUCTION_DEPLOY | NOT_AUTHORIZED |
+
+## G8 — residual closure & evidence (execução)
+
+| Campo | Valor |
+|---|---|
+| Base | `981360de` |
+| Residual | CLEAN — deleções confirmadas, zero consumidores, zero segundo runtime |
+| RQ | 18 IMPLEMENTED / 10 PARTIAL / 0 NOT_IMPLEMENTED / 0 BLOCKED |
+| Cobertura | 64% implemented (partial=zero credito) |
+| E01–E10 | TEST_NOT_RUN — ambiente autorizado indisponível |
+| Suíte | PASS (exit 0) |
+| Veredicto | ACCEPT_WITH_RESIDUAL proposto |
+| PRODUCTION_DEPLOY | NOT_AUTHORIZED |
