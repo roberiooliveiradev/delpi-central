@@ -1503,7 +1503,7 @@ export const copy = {
       verifiedCode: "Código DELPI verificado",
       verifiedDescription: "Descrição DELPI",
       documento: "Documento",
-      remessa: "Data remessa",
+      remessa: "Data",
       qtyUn: "Qtd. UN",
       qtyMi: "Qtd. MI",
       sb1: "Situação do vínculo",
@@ -1615,7 +1615,7 @@ export const copy = {
           details: "",
         },
         remessaColumns: {
-          remessa: "Remessa",
+          remessa: "Data",
           previous: "Anterior",
           current: "Atual",
           delta: "Diferença",
@@ -1663,7 +1663,7 @@ export const copy = {
       },
       columns: {
         product: "Produto",
-        remessa: "Remessa",
+        remessa: "Data",
         movement: "Movimento",
         previous: "Anterior",
         current: "Atual",

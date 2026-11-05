@@ -5,7 +5,6 @@ import {
 } from "@delpi/plugin-ui/index";
 import {
   ArrowRight,
-  Boxes,
   Building2,
   CalendarDays,
   ClipboardList,
@@ -480,12 +479,6 @@ export function MyWegNeedsPage({
                   title={texts.kpi.records}
                   icon={<Layers size={20} strokeWidth={1.75} />}
                   value={selected.recordCount.toLocaleString("pt-BR")}
-                />
-                <KpiCard
-                  className="ppc-board-card ppc-myweg-needs__kpi-card"
-                  title={texts.kpi.qtyUn}
-                  icon={<Boxes size={20} strokeWidth={1.75} />}
-                  value={formatDecimalString(selected.totals.quantidade_original_un)}
                 />
                 <KpiCard
                   className="ppc-board-card ppc-myweg-needs__kpi-card"

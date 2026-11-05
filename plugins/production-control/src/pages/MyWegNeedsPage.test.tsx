@@ -160,7 +160,7 @@ describe("MyWegNeedsPage", () => {
     );
     expect(screen.getByTestId("kpi-Data da coleta")).toBeTruthy();
     expect(screen.getByTestId("kpi-Registros")).toBeTruthy();
-    expect(screen.getByTestId("kpi-Total UN")).toBeTruthy();
+    expect(screen.queryByTestId("kpi-Total UN")).toBeNull();
     expect(screen.getByTestId("kpi-Total MI")).toBeTruthy();
     expect(screen.getByTestId("kpi-Filial")).toBeTruthy();
     expect(screen.getByTestId("myweg-history-chart")).toBeTruthy();
