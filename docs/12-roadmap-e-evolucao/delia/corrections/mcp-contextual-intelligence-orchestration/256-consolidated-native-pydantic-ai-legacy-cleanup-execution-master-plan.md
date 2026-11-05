@@ -543,3 +543,27 @@ E01–E10=TEST_NOT_RUN — ambiente autorizado (delpi-delia-api+Keycloak+owners 
 ACCEPT_WITH_RESIDUAL — revisão de código G1–G8 completa com provas;
 E01–E10 pendente de ambiente autorizado (não declara aceite integral).
 PRODUCTION_DEPLOY=NOT_AUTHORIZED.
+
+## 21. G7 live E01–E10 + defeito real de composition (execução)
+
+- **DEFEITO REAL (G3 regression)**: a remoção CRI comeu o bloco
+  `load_orchestration_instructions` em `root_composer.py` —
+  `orchestration_instructions` ficou `None` incondicional → `gates=None`
+  → `surface=absent` → caminho de capability inteiro morto. Detectado
+  pela matriz live: pré-fix todos E01–E10 `collected:null` NON_GROUNDED.
+  **Fix**: restaurado try/except `load_orchestration_instructions(
+  required_names=ORCHESTRATION_INSTRUCTION_KEYS)`; surface=configured.
+- **E01–E10 pós-fix (live, stack local autenticada)**: HTTP 200/10;
+  tool catalog projetado (10 caps, 3 owners davi/teo/vista); invocações
+  governadas reais (`davi.discover_delpi_information`,
+  `vista.get_context`, `teo.get_context`, `tool_calls=8, collected=4`);
+  finalize honesto `no_business_evidence`/`not_enumerable`.
+- **Outcome empresarial**: 0/10 grounded — nenhum owner retornou
+  evidência de negócio correspondente no ambiente dev (dados ausentes +
+  limite de contexto do modelo local 4096 em 1 caso). **0 false
+  grounded** — a DÉLIA nunca inventou dado; cada NON_GROUNDED é honesto.
+- EXECUTION_DRIFT: `DELIA_RUNTIME_SHA` env baked `c311e75e` (stale) vs
+  código montado `68500b7861`+fix.
+- Modelo: `qwen3:4b-instruct-2507-q4_K_M` (ollama local);
+  config fingerprint `2e3bb1c6ead760da`, profile `local_ollama`.
+- Suíte completa PASS (exit 0) pós-fix.

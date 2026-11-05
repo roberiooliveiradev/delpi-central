@@ -5835,3 +5835,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | Suíte | PASS (exit 0) |
 | Veredicto | ACCEPT_WITH_RESIDUAL proposto |
 | PRODUCTION_DEPLOY | NOT_AUTHORIZED |
+
+## G7 live E01–E10 + defect fix (execução)
+
+| Campo | Valor |
+|---|---|
+| Defeito | `load_orchestration_instructions` eaten pelo regex G3 → `surface=absent` (capability path morto) — fix restaurado, surface=configured |
+| E01–E10 | HTTP 200/10, NON_GROUNDED honesto; tool calls reais 3 owners; 0 false grounded; 0 grounded (dados dev insuficientes + 4096 ctx limit) |
+| Modelo | qwen3:4b-instruct-2507-q4_K_M / local_ollama / fp 2e3bb1c6 |
+| Drift | DELIA_RUNTIME_SHA stale vs mounted HEAD |
+| Suíte | PASS (exit 0) |
+| PRODUCTION_DEPLOY | NOT_AUTHORIZED |

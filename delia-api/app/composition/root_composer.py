@@ -417,6 +417,16 @@ def _compose_turn_handler(
             vocabulary.version,
             vocabulary.content_hash,
         )
+    try:
+        orchestration_instructions = load_orchestration_instructions(
+            _ORCHESTRATION_INSTRUCTIONS_PATH,
+            required_names=ORCHESTRATION_INSTRUCTION_KEYS,
+        ).instructions
+    except Exception:
+        _logger.warning(
+            "delia_orchestration_instructions decision=fail_closed "
+            "reason=resource_invalid"
+        )
         orchestration_instructions = None
     # Doc 231: engine selection is validated unconditionally — an
     # invalid DELIA_ORCHESTRATION_ENGINE fails startup even when no
