@@ -135,8 +135,7 @@ from app.application.capability_provision.conversational_response import (
     _md_leaf,
     field_display_label,
 )
-from app.application.capability_provision.outcome_assessment import (
-    AnswerRequirements,
+from app.application.capability_provision.generic_evidence_renderer import (
     MAX_DESCRIPTION_CHARS,
     MAX_OWNER_EVIDENCE_ENTRY_CHARS,
     MAX_RENDER_LIST_ITEMS,
@@ -153,20 +152,8 @@ from app.application.capability_provision.outcome_assessment import (
     _resolver_entities,
     _sanitize_renderable,
     _unwrap_owner_payload,
-    parse_temporal_value,
-)
-from app.application.capability_provision.paginated_result_semantics import (
-    PersonalTicketScope,
-    ResultIntent,
-    arguments_include_personal_assignee,
-    arguments_include_requester_filter,
-    classify_personal_ticket_scope,
-    classify_result_intent,
-    count_message_for_visible_query,
     extract_pagination_envelope,
-    personal_scope_response,
-    resolve_count_semantics,
-    unique_structural_ticket_list_capability,
+    parse_temporal_value,
 )
 from app.application.capability_provision.ports import (
     CapabilityProviderPort,
@@ -1042,61 +1029,6 @@ def _clarification_content(
 
 
 
-
-def _project_paginated_personal_or_count(
-    input_text: str,
-    structured: object,
-    *,
-    invocation_arguments: Mapping[str, Any] | None = None,
-) -> tuple[str, tuple[str, ...]] | None:
-    """Deterministic R4/R5 projection before model synthesis.
-
-    Returns a (content, limitations) pair when personal-scope gates or
-    count semantics apply; ``None`` leaves the ordinary synthesis /
-    deterministic render path unchanged.
-    """
-    scope = classify_personal_ticket_scope(input_text)
-    intent = classify_result_intent(input_text)
-    envelope = extract_pagination_envelope(structured)
-
-    if scope is PersonalTicketScope.MY_TICKETS_AMBIGUOUS and intent in {
-        ResultIntent.COUNT,
-        ResultIntent.LIST,
-    }:
-        text = personal_scope_response(scope)
-        if text:
-            return text, ()
-
-    if scope is PersonalTicketScope.ASSIGNED_TO_ME and intent in {
-        ResultIntent.COUNT,
-        ResultIntent.LIST,
-    }:
-        if not arguments_include_personal_assignee(invocation_arguments):
-            text = personal_scope_response(scope)
-            if text:
-                return text, ()
-
-    if scope is PersonalTicketScope.REQUESTED_BY_ME and intent in {
-        ResultIntent.COUNT,
-        ResultIntent.LIST,
-    }:
-        if not arguments_include_requester_filter(invocation_arguments):
-            text = personal_scope_response(scope)
-            if text:
-                return text, ()
-
-    if intent is ResultIntent.COUNT and envelope is not None:
-        resolution = resolve_count_semantics(envelope)
-        if scope in {
-            PersonalTicketScope.ALL_VISIBLE_TICKETS,
-            PersonalTicketScope.NOT_APPLICABLE,
-        }:
-            return count_message_for_visible_query(resolution), ()
-        # Personal scopes with proven filters: report count semantics
-        # without the visible-query disclaimer.
-        return resolution.message, ()
-
-    return None
 
 # Generic resolver-step helpers (§6.140): a RESOLVER is a role, never
 # a tool class — any non-mutating same-owner capability whose result
@@ -3042,20 +2974,6 @@ def render_specialist_outcome_rich(
     text = _redact_text(outcome.content_text or "").strip()
     structured = outcome.structured
     if isinstance(structured, Mapping) and structured:
-        if input_text:
-            paginated = _project_paginated_personal_or_count(
-                input_text,
-                structured,
-                invocation_arguments=invocation_arguments,
-            )
-            if paginated is not None:
-                body, extra = paginated
-                for item in extra:
-                    if item not in limitations:
-                        limitations.append(item)
-                return RenderedSpecialistOutcome(
-                    body, tuple(limitations)
-                )
         # I02: guidance-shaped structured data — prefer goal-aligned
         # section projection over truncating embedded content_text from
         # the front (which kept authority/meta and dropped methods).
@@ -3953,10 +3871,6 @@ class OperationalCapabilityOrchestrator:
         # True only when a validated proposal declares that prior
         # DELIA_RESULT content already answers without a new owner call.
         prior_evidence_sufficient: bool = False
-        # CRI E2: typed sufficiency requirements proposed by the SAME
-        # goal stage — a hypothesis validated against typed outcome
-        # evidence, never a fact. None when undeclared.
-        answer_requirements: AnswerRequirements | None = None
         # D5 evidence-intent correspondence (doc 124): True only when a
         # validated proposal declares the user asked about the published
         # contract/schema itself. Owner contract metadata composes an

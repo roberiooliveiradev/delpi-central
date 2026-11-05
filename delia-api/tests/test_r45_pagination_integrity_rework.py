@@ -12,14 +12,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.application.capability_provision.paginated_result_semantics import (
+from app.application.capability_provision.generic_evidence_renderer import (
     CountResolutionKind,
-    PersonalTicketScope,
     UNKNOWN_TOTAL_MESSAGE,
     aggregate_paginated_pages,
-    classify_personal_ticket_scope,
     extract_pagination_envelope,
-    personal_scope_response,
     resolve_count_semantics,
 )
 
@@ -218,33 +215,5 @@ def test_r45r_t15_concurrent_mutation_via_duplicate_overlap():
     assert resolve_count_semantics(None, aggregation=agg).total is None
 
 
-def test_r45r_t16_personal_scope_protection():
-    assert (
-        classify_personal_ticket_scope("Quantos chamados tem para mim?")
-        is PersonalTicketScope.MY_TICKETS_AMBIGUOUS
-    )
-    text = personal_scope_response(PersonalTicketScope.MY_TICKETS_AMBIGUOUS)
-    assert text
-    assert "10" not in text
-
-
-def test_r45r_t17_unrelated_paginated_domain():
-    # Generic product list envelope must not become personal ticket total.
-    payload = {
-        "items": [{"id": "p1"}, {"id": "p2"}],
-        "page": 1,
-        "page_size": 2,
-        "has_more": False,
-    }
-    envelope = extract_pagination_envelope(payload)
-    resolution = resolve_count_semantics(envelope)
-    assert resolution.total == 2
-    assert (
-        classify_personal_ticket_scope("liste produtos da página")
-        is PersonalTicketScope.NOT_APPLICABLE
-    )
-
-
 def test_r45r_t18_no_material_act():
     assert "ACT" not in UNKNOWN_TOTAL_MESSAGE
-    assert personal_scope_response(PersonalTicketScope.ASSIGNED_TO_ME)

@@ -28,10 +28,9 @@ from app.application.capability_provision.orchestration import (
 )
 from app.application.capability_provision.conversational_response import (
     _detail_lines,
-    _proven_field_differences,
 )
 
-from app.application.capability_provision.outcome_assessment import (
+from app.application.capability_provision.generic_evidence_renderer import (
     _canonical_key,
 )
 
@@ -138,24 +137,6 @@ def test_sa21b_baseline_without_vocabulary_stays_neutral():
     dump of English pseudo-labels either."""
     lines = _detail_lines([("descricao", "X"), ("b2_cm1", "7.5")])
     assert lines == ["- Descricao: X", "- b2_cm1: 7.5"]
-
-
-def test_sa22_proven_differences_verbatim_unknown():
-    """Field diffs keep the raw key for unknown fields — the
-    identifier is user-facing evidence, not prose to translate."""
-    left = (("b2_cm1", "7.5"),)
-    right = (("b2_cm1", "8.0"),)
-    lines = _proven_field_differences(left, right, field_labels=_LABELS)
-    assert lines == ["- b2_cm1: 7.5 → 8.0"]
-
-
-def test_sa22b_proven_differences_known_label():
-    """Known fields in the comparison path resolve through the same
-    governed label — one projection for every presentation path."""
-    left = (("quantidade", "3"),)
-    right = (("quantidade", "5"),)
-    lines = _proven_field_differences(left, right, field_labels=_LABELS)
-    assert lines == ["- Quantidade: 3 → 5"]
 
 
 def test_sa23_guidance_section_drops_technical_structure():

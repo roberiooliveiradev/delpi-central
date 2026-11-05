@@ -23,7 +23,7 @@ from app.application.capability_provision.conversational_response import (
     MAX_RENDER_CONTENT_CHARS,
 )
 
-from app.application.capability_provision.outcome_assessment import (
+from app.application.capability_provision.generic_evidence_renderer import (
     REDACTION_MARKER,
     _sanitize_renderable,
 )

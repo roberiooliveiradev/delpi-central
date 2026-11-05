@@ -26,7 +26,7 @@ from typing import Any, Mapping, Sequence
 from app.application.capability_provision.contracts import (
     ProviderCapability,
 )
-from app.application.capability_provision.outcome_assessment import (
+from app.application.capability_provision.generic_evidence_renderer import (
     MAX_MISSING_INPUTS,
     _canonical_key,
     _entity_payload_slot,

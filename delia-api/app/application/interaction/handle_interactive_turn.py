@@ -41,7 +41,7 @@ from app.application.interaction.contracts import (
     InteractiveTurnRequest,
     InteractiveTurnResult,
 )
-from app.application.capability_provision.outcome_assessment import (
+from app.application.capability_provision.generic_evidence_renderer import (
     _comparison_records,
 )
 from app.application.capability_provision.contracts import (
