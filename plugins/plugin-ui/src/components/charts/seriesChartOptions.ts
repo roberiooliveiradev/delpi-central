@@ -220,6 +220,13 @@ export type SeriesChartPoint = {
   sourceIndex?: number;
   /** Valor já formatado no enrich — paint-only (data labels / tabela do chart). */
   displayValue?: string;
+  /**
+   * Participação no total da série, em pontos percentuais (25 = 25%).
+   * `null` = enrich concluiu que não há participação (nulo ou denominador zero).
+   */
+  percentageOfTotal?: number | null;
+  /** Texto percentual pronto do enrich. Ausente = payload antigo; `null` = sem fatia. */
+  displayPercentageOfTotal?: string | null;
 };
 
 /** Série nomeada para gráficos multi-série (overlay). */

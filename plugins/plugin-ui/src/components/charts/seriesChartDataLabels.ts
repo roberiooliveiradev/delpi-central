@@ -148,6 +148,11 @@ export function formatSeriesChartDataLabelText(args: {
   displayValueFormat?: import("../../displayFormat/types").DisplayFormatSpec | null;
   /** Ready-to-paint value from enrich — skips client format when present. */
   displayValue?: string | null;
+  /**
+   * Texto de % do total já formatado.
+   * `undefined` = payload antigo (fallback). `null` = backend sem participação.
+   */
+  displayPercentageOfTotal?: string | null;
 }): string {
   const { config, value, total, valueFormat } = args;
   const parts: string[] = [];
@@ -167,8 +172,12 @@ export function formatSeriesChartDataLabelText(args: {
     );
   }
   if (config.showPercentage) {
-    const pct = total > 0 ? Math.round((Math.abs(value) / total) * 100) : 0;
-    parts.push(`${pct}%`);
+    if (typeof args.displayPercentageOfTotal === "string" && args.displayPercentageOfTotal) {
+      parts.push(args.displayPercentageOfTotal);
+    } else if (args.displayPercentageOfTotal === undefined) {
+      const pct = total > 0 ? Math.round((Math.abs(value) / total) * 100) : 0;
+      parts.push(`${pct}%`);
+    }
   }
   return parts.join(separatorToken(config.separator));
 }

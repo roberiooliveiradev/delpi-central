@@ -40,6 +40,46 @@ describe("seriesChartDataLabels", () => {
     expect(config.position).toBe("outsideEnd");
   });
 
+  it("usa o percentual pronto e não recalcula quando o enrich existe", () => {
+    const config = mergeSeriesChartDataLabels({
+      showCategoryName: true,
+      showValue: false,
+      showPercentage: true,
+    });
+    const text = formatSeriesChartDataLabelText({
+      config,
+      categoryLabel: "A",
+      value: 25,
+      total: 999,
+      valueFormat: "number",
+      displayPercentageOfTotal: "25%",
+    });
+    expect(text).toBe("A 25%");
+  });
+
+  it("percentual nulo do backend não vira 0%", () => {
+    const config = mergeSeriesChartDataLabels({ showPercentage: true, showValue: false });
+    const text = formatSeriesChartDataLabelText({
+      config,
+      value: 0,
+      total: 0,
+      valueFormat: "number",
+      displayPercentageOfTotal: null,
+    });
+    expect(text).toBe("");
+  });
+
+  it("payload antigo ainda calcula o percentual no fallback", () => {
+    const config = mergeSeriesChartDataLabels({ showPercentage: true, showValue: false });
+    const text = formatSeriesChartDataLabelText({
+      config,
+      value: 25,
+      total: 100,
+      valueFormat: "number",
+    });
+    expect(text).toBe("25%");
+  });
+
   it("valor pronto do backend não é reformatado no rótulo", () => {
     const config = mergeSeriesChartDataLabels({ showValue: true, showPercentage: false });
     const text = formatSeriesChartDataLabelText({

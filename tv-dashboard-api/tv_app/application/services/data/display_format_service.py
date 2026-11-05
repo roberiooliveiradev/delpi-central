@@ -2922,12 +2922,107 @@ class DisplayFormatService:
         effective_goal = cls._resolve_effective_chart_goal(options, next_chart)
         next_chart["effectiveGoal"] = effective_goal
         cls._apply_chart_axis_ticks(next_chart, value_spec, goal=effective_goal)
+        cls._apply_chart_percentage_of_total(next_chart, block, options)
         chart_type = str(block.get("chartType") or next_chart.get("chartType") or "").lower()
         if chart_type == "gauge":
             next_chart["gaugeModel"] = cls._build_gauge_model(
                 resolved, next_chart, options, effective_goal
             )
         resolved["chart"] = next_chart
+
+    @classmethod
+    def _chart_marker_hidden(cls, parts: Any, series_index: int, point_index: int) -> bool:
+        if not isinstance(parts, dict):
+            return False
+        state = parts.get(f"marker:{series_index}:{point_index}")
+        return isinstance(state, dict) and state.get("visible") is False
+
+    @classmethod
+    def _percentage_decimal_places(cls, options: dict[str, Any]) -> int:
+        """Precisão da seção Número, sem herdar moeda/unidade do valor."""
+        spec = options.get("displayValueFormat")
+        raw = spec.get("decimalPlaces") if isinstance(spec, dict) else None
+        if raw is None:
+            raw = options.get("decimalPlaces")
+        if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+            return 0
+        if not math.isfinite(float(raw)):
+            return 0
+        return max(0, min(6, int(raw)))
+
+    @classmethod
+    def _annotate_series_percentage(
+        cls,
+        points: list[Any],
+        series_index: int,
+        parts: Any,
+        spec: dict[str, Any],
+    ) -> list[Any]:
+        """Participação no total da série visível.
+
+        Denominador = soma de max(0, valor finito) dos pontos não ocultos.
+        Ausência (nulo, NaN, marcador oculto) fica fora do total e sem texto.
+        Denominador zero não inventa 0%. Negativo não entra no total; a fatia
+        usa |valor|. O número gravado está em pontos percentuais (25 → 25%),
+        porque o formatter canônico de percent não multiplica por 100.
+        """
+        shares: list[float | None] = []
+        copied: list[Any] = []
+        for index, point in enumerate(points):
+            if not isinstance(point, dict):
+                copied.append(point)
+                shares.append(None)
+                continue
+            copied.append(dict(point))
+            if cls._chart_marker_hidden(parts, series_index, index):
+                shares.append(None)
+                continue
+            shares.append(cls._as_finite_number(point.get("value")))
+        denominator = sum(max(0.0, value) for value in shares if value is not None)
+        for point, share in zip(copied, shares, strict=True):
+            if not isinstance(point, dict):
+                continue
+            if share is None or denominator <= 0:
+                point["percentageOfTotal"] = None
+                point["displayPercentageOfTotal"] = None
+                continue
+            percent_points = abs(share) / denominator * 100.0
+            point["percentageOfTotal"] = percent_points
+            point["displayPercentageOfTotal"] = cls.format_value(percent_points, spec)
+        return copied
+
+    @classmethod
+    def _apply_chart_percentage_of_total(
+        cls,
+        chart: dict[str, Any],
+        block: dict[str, Any],
+        options: dict[str, Any],
+    ) -> None:
+        data_labels = options.get("dataLabels") if isinstance(options.get("dataLabels"), dict) else {}
+        if data_labels.get("showPercentage") is not True:
+            return
+        spec = {
+            "category": "percent",
+            "presetId": "percent",
+            "decimalPlaces": cls._percentage_decimal_places(options),
+            "locale": "pt-BR",
+        }
+        parts = block.get("chartParts") if isinstance(block.get("chartParts"), dict) else {}
+        if isinstance(chart.get("points"), list):
+            chart["points"] = cls._annotate_series_percentage(chart["points"], 0, parts, spec)
+        series = chart.get("series")
+        if isinstance(series, list):
+            next_series: list[Any] = []
+            for index, entry in enumerate(series):
+                if not isinstance(entry, dict) or not isinstance(entry.get("points"), list):
+                    next_series.append(entry)
+                    continue
+                next_entry = dict(entry)
+                next_entry["points"] = cls._annotate_series_percentage(
+                    entry["points"], index, parts, spec
+                )
+                next_series.append(next_entry)
+            chart["series"] = next_series
 
     @classmethod
     def _resolve_effective_chart_goal(

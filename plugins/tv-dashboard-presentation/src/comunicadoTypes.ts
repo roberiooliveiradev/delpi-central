@@ -739,6 +739,10 @@ export type ComunicadoChartPoint = {
   displayLabel?: string;
   /** Valor já formatado no enrich (data labels). */
   displayValue?: string;
+  /** Participação no total da série, em pontos percentuais. Não persiste na autoria. */
+  percentageOfTotal?: number | null;
+  /** Texto percentual pronto do enrich. `null` = sem participação. */
+  displayPercentageOfTotal?: string | null;
 };
 
 export type ComunicadoDataResolved = {

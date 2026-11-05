@@ -370,3 +370,83 @@ def test_apply_canvas_table_source_map_materializes_display_runs():
     assert out["src-1"]["serverDisplayApplied"] is True
     assert out["src-1"]["displayRuns"]
     assert out["src-1"]["displayRuns"][0]["text"] == "41,7%"
+
+
+def _chart_percentage(points, **options):
+    resolved = {"chart": {"chartType": "pie", "points": points}}
+    block = {
+        "type": "chart_view",
+        "chartType": "pie",
+        "chartOptions": {"dataLabels": {"showPercentage": True}, **options},
+    }
+    out = DisplayFormatService.apply_to_resolved(resolved, block)
+    return out["chart"]["points"]
+
+
+def test_chart_percentage_of_total_quarters_and_precision():
+    points = _chart_percentage(
+        [{"label": "A", "value": 25}, {"label": "B", "value": 75}],
+        decimalPlaces=0,
+    )
+    assert points[0]["percentageOfTotal"] == 25
+    assert points[0]["displayPercentageOfTotal"] == "25%"
+    assert points[1]["displayPercentageOfTotal"] == "75%"
+    precise = _chart_percentage(
+        [{"label": "A", "value": 1}, {"label": "B", "value": 3}],
+        decimalPlaces=2,
+    )
+    assert precise[0]["displayPercentageOfTotal"] == "25,00%"
+    assert precise[1]["displayPercentageOfTotal"] == "75,00%"
+
+
+def test_chart_percentage_zero_share_null_and_zero_denominator():
+    zeros = _chart_percentage([{"label": "A", "value": 0}, {"label": "B", "value": 100}])
+    assert zeros[0]["displayPercentageOfTotal"] == "0%"
+    assert zeros[1]["displayPercentageOfTotal"] == "100%"
+    absent = _chart_percentage([{"label": "A", "value": None}, {"label": "B", "value": 100}])
+    assert absent[0]["percentageOfTotal"] is None
+    assert absent[0]["displayPercentageOfTotal"] is None
+    assert absent[1]["displayPercentageOfTotal"] == "100%"
+    empty = _chart_percentage([{"label": "A", "value": 0}, {"label": "B", "value": 0}])
+    assert empty[0]["displayPercentageOfTotal"] is None
+    assert empty[1]["displayPercentageOfTotal"] is None
+
+
+def test_chart_percentage_is_per_series_and_skips_hidden_markers():
+    resolved = {
+        "chart": {
+            "chartType": "bar",
+            "series": [
+                {"name": "S1", "points": [{"value": 25}, {"value": 75}]},
+                {"name": "S2", "points": [{"value": 10}, {"value": 10}]},
+            ],
+        }
+    }
+    block = {
+        "type": "chart_view",
+        "chartOptions": {"dataLabels": {"showPercentage": True}, "decimalPlaces": 0},
+        "chartParts": {"marker:0:1": {"visible": False}},
+    }
+    out = DisplayFormatService.apply_to_resolved(resolved, block)
+    first = out["chart"]["series"][0]["points"]
+    second = out["chart"]["series"][1]["points"]
+    assert first[0]["displayPercentageOfTotal"] == "100%"
+    assert first[1]["displayPercentageOfTotal"] is None
+    assert second[0]["displayPercentageOfTotal"] == "50%"
+    assert second[1]["displayPercentageOfTotal"] == "50%"
+
+
+def test_chart_percentage_negative_stays_out_of_the_denominator():
+    points = _chart_percentage(
+        [{"label": "A", "value": -10}, {"label": "B", "value": 30}],
+        decimalPlaces=0,
+    )
+    assert points[0]["displayPercentageOfTotal"] == "33%"
+    assert points[1]["displayPercentageOfTotal"] == "100%"
+
+
+def test_chart_percentage_is_not_written_when_content_is_off():
+    resolved = {"chart": {"points": [{"value": 25}, {"value": 75}]}}
+    block = {"type": "chart_view", "chartOptions": {"dataLabels": {"showPercentage": False}}}
+    out = DisplayFormatService.apply_to_resolved(resolved, block)
+    assert "displayPercentageOfTotal" not in out["chart"]["points"][0]

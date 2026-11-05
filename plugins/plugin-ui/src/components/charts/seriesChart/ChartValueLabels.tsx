@@ -168,6 +168,7 @@ export function ChartValueLabels({
       decimalPlaces: config.decimalPlaces,
       displayValueFormat: config.displayValueFormat,
       displayValue: point.displayValue,
+      displayPercentageOfTotal: point.displayPercentageOfTotal,
     });
 
   const categoryFill = (index: number) =>
