@@ -1,0 +1,31 @@
+# 283 — DÉLIA · Review G7: retry exhausted, gateway 504 e risco de dados em logs
+
+**DATA:** 2026-11-05  
+**REVIEWED_TASK:** `DELIA-C3-G7-STRUCTURED-OUTPUT-FAILURE-CAUSE-AND-LOCAL-DELIVERY-01`  
+**BASE_REPORTED:** `0e10e29559231ea0a64278043a3489d49873ed36`  
+**REVIEWED_SHA:** `8334c03f69f69defde02858063f53796d16a0f86`  
+**VERDICT:** `REWORK` for unsafe diagnostic observability; `INCONCLUSIVE` root-cause of full-context output validation; `FAIL` final answer delivery; `PRODUCTION_DEPLOY=BLOCKED`.
+
+## Independently verified GitHub facts
+
+- Exact commit changes **application code** only in `delia-api/app/infrastructure/orchestration/pydantic_ai_investigation.py` (+10/-2) plus docs256 and doc282. Base-to-final comparison also shows unrelated PCP frontend commits; they are not part of DÉLIA task.
+- New logging at `except Exception` in investigation branch stores `str(exc.__cause__)[:300]` and `str(exc.body)[:400]` in ordinary `_logger.info`, together with `str(exc)[:240]`. **Content/security issue:** exception body/cause/message can contain untrusted model output, business data, user inputs, identifiers, or secrets embedded in external/provider errors. Truncation is not sanitization. Project contract forbids secrets/tokens in common logs. Do not log raw `body`, `cause`, or arbitrary exception message; no sensitive payload in tests/log snapshots. This is a demonstrated code-level security risk, not proof that data were already exposed.
+- Proposed `body` instrumentation is not evidence of what the body actually contained: executor says added for *next cycle*; no captured sanitized failure class/output-schema path or provider stop/finish reason in report. `UnexpectedModelBehavior: Exceeded maximum output retries (2)` identifies exhausted native output retries, not exact reason for individual invalid outputs.
+- Executor reports direct real Ollama `Agent(output_type=InvestigationAnswer)` succeeds under simple prompt, while full investigation (10 tool schemas + results + instructions) fails with retry exhaustion. This argues against globally broken schema, but not enough to attribute failure exclusively to CPU or model ability without per-attempt validation and stop reason.
+- Executor reports some turns interrupted by gateway 504 before finalize; 504 does not itself establish server-side cancellation or cause of invalid structured output. Diagnose separately gateway proxy timeouts, cancellation and actual model native stop/retry results.
+- Reported DAVI discovery/READ `search_products` succeeds and product 50220013 is returned in three runs; final output/client delivery fails. Owner data/response/SourceRefs were not independently reproduced by reviewer. RQ24/RQ28 remain PARTIAL. No production deployment.
+- Local context 16384, CPU-only, approximate 6 tok/s small native probe and 6.8GB memory limit remain executor reported; final DÉLIA generation measured tokens/finish reason unavailable. App tests full PASS according to executor, not independently run. Prior history legacy remains retired; `context_budget.py` legitimate InvokeModel consumer.
+
+## Single bounded follow-up — security first, then structured-output characterization
+
+**TASK_ID:** `DELIA-C3-G7-SAFE-OUTPUT-DIAGNOSTICS-AND-FINALIZATION-ROOT-CAUSE-01`.
+
+1. Reanchor actual HEAD/status, Project Instructions/.cursor, authority 16→50→17→49→51→52→21→20→25, architecture/product/spec thematic/ledger, docs256/279–283 and security/observability contracts. Identify log owners/retention/access and active consumers.
+2. **Security RED→GREEN immediately:** replace raw `exc.body`, `str(__cause__)` and arbitrary `str(exc)` in *this diagnostic branch* with safe, bounded, typed categorical fields. Useful fields: exception class, cause class only, known retry reason category, stage, correlation ID, counted tools/model attempts, structured validation error location if genuinely safe, provider finish-reason enum and token/duration metadata when legitimately exposed; no raw model output, business data, token, user prompt, schema payload or provider error bodies. Add tests with sentinel secret in exception body/cause/message proving it never reaches logs; verify other log branches are not exposed through the same path. Do not use naive regex redaction as sole protection.
+3. Instrument through existing **Pydantic AI native callbacks/instrumentation**/Ollama usage metadata to classify malformed JSON, incomplete/truncated output, schema/type validation, retries exhausted, timeout, and finish reason. Never disable typed response validation or dump full output. Use framework APIs first, `EXISTING_EQUIVALENT=YES|TO_INVENTORY`, `REUSE_DECISION=REUSE|EXTEND` with evidence; no duplicated output engine.
+4. Run same authorized bounded READ with known-present product 50220013, inspect timing per stage, number of generated tokens and retries *for full DÉLIA run* (not small Ollama probe), native output failure category and ultimate client delivery; independently inspect gateway timeout vs backend cancellation/turn deadline. Do not claim gateway 504 proves server-side kill. Compare baseline and one justified inference configuration only if a measured rationale exists; avoid adding retries/timeouts or changing schema absent contract proof.
+5. If proven output defect: smallest replacement, RED→GREEN, remove physically retired legacy in same delivery, repair consumers/imports/config/tests, full backend and security regressions, residual search. Otherwise publish `INCONCLUSIVE` and exact blocker. Do not introduce manual JSON parser, provider-dependent planner branch or raw-text fallback in place of `InvestigationAnswer`.
+6. Production remains blocked until safe observability, a complete structured grounded client response, security/release/rollback gates and authorization. No production deploy or live ACT.
+7. Record `FINAL_SHA`, `LOG_SAFETY`, `OUTPUT_FAILURE_CATEGORY`, `GATEWAY_CAUSE`, `MEASURED_FULL_RUN_TOKENS`, `OWNER_READ`, `ANSWER_DELIVERED`, `LEGACY_REMOVED`, `FULL_REGRESSION`, `RQ24_RQ28` in doc256/ledger, commit and push only proven facts.
+
+**Review result:** Do not persist arbitrary exception bodies in common logs to diagnose structured output. Investigate native failure classification and client delivery independently.
