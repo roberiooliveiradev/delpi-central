@@ -19,6 +19,7 @@ def test_counts_for_quantity_includes_aprovado_and_implantado() -> None:
     assert counts_for_quantity("aprovado") is True
     assert counts_for_quantity("implantado") is True
     assert counts_for_quantity("recebido") is False
+    assert counts_for_quantity("reprovado") is False
     assert counts_for_quantity("cancelado") is False
 
 
@@ -58,6 +59,11 @@ def test_validate_status_dates_aprovado_requires_committee() -> None:
         validate_status_dates(status="aprovado", date_committee_approved=None)
 
 
+def test_validate_status_dates_reprovado_requires_committee() -> None:
+    with pytest.raises(KaizenStatusDateError, match="reunião do comitê"):
+        validate_status_dates(status="reprovado", date_committee_approved=None)
+
+
 def test_validate_status_dates_implantado_requires_implemented() -> None:
     with pytest.raises(KaizenStatusDateError, match="data de implantação"):
         validate_status_dates(status="implantado", date_implemented="")
@@ -66,6 +72,10 @@ def test_validate_status_dates_implantado_requires_implemented() -> None:
 def test_validate_status_dates_ok() -> None:
     validate_status_dates(
         status="aprovado",
+        date_committee_approved="2026-03-10",
+    )
+    validate_status_dates(
+        status="reprovado",
         date_committee_approved="2026-03-10",
     )
     validate_status_dates(

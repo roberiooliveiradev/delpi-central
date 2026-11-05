@@ -66,7 +66,7 @@ class KaizenParticipantBody(BaseModel):
     user_id: str | None = Field(default=None, max_length=100)
 
 
-_STATUS_PATTERN = "^(recebido|aprovado|implantado|descontinuado|cancelado)$"
+_STATUS_PATTERN = "^(recebido|aprovado|reprovado|implantado|descontinuado|cancelado)$"
 
 
 class KaizenRecordBody(BaseModel):

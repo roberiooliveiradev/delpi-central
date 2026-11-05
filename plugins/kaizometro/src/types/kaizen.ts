@@ -1,6 +1,6 @@
 export type SavingsType = "tempo" | "material" | "financeiro" | "qualitativo" | "misto";
 
-export type KaizenStatus = "recebido" | "aprovado" | "implantado" | "descontinuado" | "cancelado";
+export type KaizenStatus = "recebido" | "aprovado" | "reprovado" | "implantado" | "descontinuado" | "cancelado";
 
 export type ParticipantRole = "responsavel" | "participante" | "apoio";
 
@@ -163,6 +163,7 @@ export type KaizenSummary = {
   implantados: number;
   aprovados: number;
   recebidos: number;
+  reprovados: number;
   /** Recebidos no escopo da unidade, independente do período filtrado. */
   recebidos_total: number;
   descontinuados: number;

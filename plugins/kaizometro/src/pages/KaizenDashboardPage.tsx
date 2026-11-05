@@ -69,6 +69,7 @@ type Bucket = BarListBucket;
 const STATUS_TONE: Record<string, Tone> = {
   implantado: "success",
   aprovado: "accent",
+  reprovado: "danger",
   em_andamento: "accent",
   descontinuado: "muted",
   cancelado: "danger",

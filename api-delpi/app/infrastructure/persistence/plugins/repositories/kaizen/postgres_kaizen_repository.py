@@ -76,6 +76,7 @@ _VALID_PARTICIPANT_ROLES = {"responsavel", "participante", "apoio"}
 _VERSION_STATUSES = {
     "recebido",
     "aprovado",
+    "reprovado",
     "implantado",
     "descontinuado",
     "cancelado",
@@ -403,6 +404,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
             "implantados": status_count("implantado"),
             "aprovados": status_count("aprovado"),
             "recebidos": status_count("recebido"),
+            "reprovados": status_count("reprovado"),
             # Pendências no escopo da unidade, independente do período filtrado —
             # cadastros aguardando aprovação do comitê devem permanecer visíveis.
             "recebidos_total": sum(

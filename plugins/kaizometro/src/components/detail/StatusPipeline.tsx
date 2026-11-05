@@ -11,6 +11,7 @@ const FLOW: Array<{ value: KaizenStatus; label: string }> = [
 const TERMINALS: Record<string, { label: string; tone: "danger" | "muted" }> = {
   descontinuado: { label: "Descontinuado", tone: "muted" },
   cancelado: { label: "Cancelado", tone: "danger" },
+  reprovado: { label: "Reprovado", tone: "danger" },
 };
 
 type StatusPipelineProps = {

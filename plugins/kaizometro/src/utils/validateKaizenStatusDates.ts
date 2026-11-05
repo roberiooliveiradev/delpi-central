@@ -13,6 +13,9 @@ export function validateKaizenStatusDates(values: {
   if (status === "aprovado" && !committee) {
     return "Informe a data de aprovação no comitê para o status Aprovado.";
   }
+  if (status === "reprovado" && !committee) {
+    return "Informe a data da reunião do comitê para o status Reprovado.";
+  }
   if (status === "implantado" && !implemented) {
     return "Informe a data de implantação para o status Implantado.";
   }

@@ -60,6 +60,7 @@ export function visibleSavingsParamFields(type: SavingsType | ""): SavingsParamF
 export const KAIZEN_STATUSES = [
   { value: "recebido", label: "Recebido" },
   { value: "aprovado", label: "Aprovado" },
+  { value: "reprovado", label: "Reprovado" },
   { value: "implantado", label: "Implantado" },
   { value: "descontinuado", label: "Descontinuado" },
   { value: "cancelado", label: "Cancelado" },

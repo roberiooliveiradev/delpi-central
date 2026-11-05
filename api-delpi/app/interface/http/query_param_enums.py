@@ -80,6 +80,7 @@ INSPECOES_ENTRADA_HISTORICO_RESULT_VALUES = ("APROVADA", "REJEITADA")
 KAIZEN_STATUS_VALUES = (
     "recebido",
     "aprovado",
+    "reprovado",
     "implantado",
     "descontinuado",
     "cancelado",
