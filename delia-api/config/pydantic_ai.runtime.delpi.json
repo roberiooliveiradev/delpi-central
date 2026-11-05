@@ -20,7 +20,7 @@
         "llm_call_max_attempts": 3
       },
       "context": {
-        "effective_context_window_tokens": null,
+        "effective_context_window_tokens": 4096,
         "prior_turns_limit": 4,
         "prior_turn_max_chars": 400
       },

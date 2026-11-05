@@ -76,6 +76,7 @@ def _investigation_runtime_kwargs(settings: Settings) -> dict:
         ),
         "prior_turns_limit": settings.prior_turns_limit,
         "prior_turn_max_chars": settings.prior_turn_max_chars,
+        "context_window_tokens": settings.llm_context_tokens,
     }
 
 
@@ -93,6 +94,7 @@ def _resolve_orchestration_attempt(
     tool_projection_limit: int = 6000,
     prior_turns_limit: int = 4,
     prior_turn_max_chars: int = 400,
+    context_window_tokens: int | None = None,
 ):
     """Select ONE governed-attempt implementation for the composed
     application. Unknown identifiers fail closed — a misspelled
@@ -139,6 +141,7 @@ def _resolve_orchestration_attempt(
         tool_projection_limit=tool_projection_limit,
         prior_turns_limit=prior_turns_limit,
         prior_turn_max_chars=prior_turn_max_chars,
+        context_window_tokens=context_window_tokens,
     )
 # Governed declarative resource — fixed repo artifact, never a
 # request/env-supplied path.

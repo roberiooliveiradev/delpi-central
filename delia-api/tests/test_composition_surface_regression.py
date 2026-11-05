@@ -87,7 +87,9 @@ def test_composition_builds_governed_orchestration_with_valid_inputs():
     assert handler._capability_orchestration is not None
 
 
-def test_composition_missing_instructions_fails_closed_observably():
+def test_composition_missing_instructions_fails_closed_observably(
+    caplog,
+):
     """Invalid/absent instructions resource → capability orchestration
     absent, but composition still starts (fail-closed) — the missing
     resource is logged as a config failure, NOT confused with absent
@@ -100,12 +102,20 @@ def test_composition_missing_instructions_fails_closed_observably():
     original = rc.load_orchestration_instructions
     rc.load_orchestration_instructions = _boom
     try:
-        handler = _handler()
+        with caplog.at_level("WARNING", logger=rc._logger.name):
+            handler = _handler()
     finally:
         rc.load_orchestration_instructions = original
     # fail-closed: handler exists, but NO governed surface is wired
     assert handler is not None
     assert handler._capability_orchestration is None
+    # the config failure is OBSERVABLE — never confused with absent
+    # business data (doc 269 §2)
+    assert any(
+        "delia_orchestration_instructions" in r.getMessage()
+        and "fail_closed" in r.getMessage()
+        for r in caplog.records
+    )
 
 
 def test_orchestration_instructions_resource_covers_required_keys():

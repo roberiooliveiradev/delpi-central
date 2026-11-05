@@ -672,3 +672,83 @@ def test_engine_tool_invocation_is_governed_not_multiplied():
     # one tool call → exactly one governed owner invocation
     assert len(invocations) == 1
     assert invocations[0] == read["capability_id"]
+
+
+# ------------------------------------------------------------------
+# G7 (doc 269 §4): investigation Agent context window gate — the
+# Agent path must fail closed BEFORE run_sync when the assembled
+# context estimate exceeds the configured window (no second token
+# engine — reuses context_budget.estimate_text_tokens).
+# ------------------------------------------------------------------
+
+
+def test_context_window_gate_below_window_reaches_model():
+    """Estimated context below the configured window → the model is
+    actually invoked."""
+    from tests.test_pydantic_ai_semantic_rework import _gates
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from pydantic_ai.models.function import FunctionModel
+
+    calls = []
+
+    def _fn(messages, _info):
+        calls.append(len(messages))
+        return _final_answer("ok", status="insufficient")
+
+    engine = PydanticAiInvestigationOrchestrator(
+        _gates(),
+        model=FunctionModel(_fn),
+        context_window_tokens=1_000_000,
+    )
+    engine.attempt("oi")
+    assert calls  # model reached
+
+
+def test_context_window_gate_above_window_never_calls_model():
+    """Estimated context at/above the window → typed honest outcome
+    `investigation_context_overflow`, ZERO physical model requests —
+    never a raw ModelHTTPError leaking to the turn."""
+    from tests.test_pydantic_ai_semantic_rework import _gates
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from pydantic_ai.models.function import FunctionModel
+
+    calls = []
+
+    def _fn(messages, _info):
+        calls.append(len(messages))
+        return _final_answer("ok", status="insufficient")
+
+    engine = PydanticAiInvestigationOrchestrator(
+        _gates(),
+        model=FunctionModel(_fn),
+        context_window_tokens=1,  # any non-empty prompt exceeds it
+    )
+    attempt = engine.attempt("oi")
+    assert calls == []
+    assert attempt.error_code == "investigation_context_overflow"
+
+
+def test_context_window_gate_disabled_when_unset():
+    """window unset (None → profile effective_context_window_tokens
+    null) → enforcement off rather than guessing (doc 103)."""
+    from tests.test_pydantic_ai_semantic_rework import _gates
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from pydantic_ai.models.function import FunctionModel
+
+    calls = []
+
+    def _fn(messages, _info):
+        calls.append(len(messages))
+        return _final_answer("ok", status="insufficient")
+
+    engine = PydanticAiInvestigationOrchestrator(
+        _gates(), model=FunctionModel(_fn)
+    )
+    engine.attempt("oi")
+    assert calls

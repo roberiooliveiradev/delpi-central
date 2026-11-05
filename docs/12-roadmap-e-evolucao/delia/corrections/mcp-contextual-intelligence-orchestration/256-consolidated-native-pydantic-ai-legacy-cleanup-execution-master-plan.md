@@ -578,3 +578,27 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   `ORCHESTRATION_INSTRUCTION_KEYS`. Guarda a regressão do loader.
 - Controle positivo live + E01–E10 por-oráculo + contexto 4096:
   pendente de próxima fatia (ambiente autorizado).
+
+## 23. G7 rework — context gate + caplog + controle positivo (doc 269)
+
+- **caplog**: `test_composition_missing_instructions_...` agora
+  afirma o warning `delia_orchestration_instructions decision=
+  fail_closed` — falha de config observável, nunca confundida com
+  ausência de dados.
+- **Context gate (doc 269 §4)**: o Agent path não tinha orçamento —
+  `context_budget` só governava `invoke_model`. Novo gate pré-call no
+  engine reutilizando `estimate_text_tokens` + `llm_context_tokens`
+  (perfil `context.effective_context_window_tokens`): estimativa de
+  instructions+prompt ≥ window → `investigation_context_overflow`
+  fail-closed, ZERO requests ao modelo (nunca ModelHTTPError crua).
+  `local_ollama` profile: window=4096 (num_ctx efetivo do servidor —
+  medido pelo erro real, não arbitrário). 3 testes: below/at/above +
+  enforcement off quando unset.
+- **Controle positivo live** ("Qual a descrição do produto 90260147?")
+  no stack autenticado: admission→owner_surface→catalog(10 caps/3
+  owners)→`davi.discover_delpi_information`(288ms, arg 90260147)→
+  `davi.execute_delpi_information`→`tool_calls=8, collected=2`→
+  finalize `no_business_evidence` HONESTO. O registro não consta nos
+  dados dev do owner → controle positivo INCONCLUSIVE (sem registro
+  positivo confirmado no owner dev); plumbing ponta-a-ponta provado.
+- Suíte completa PASS (exit 0).

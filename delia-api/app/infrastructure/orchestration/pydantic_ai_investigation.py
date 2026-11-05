@@ -514,6 +514,7 @@ class PydanticAiInvestigationOrchestrator:
         tool_projection_limit: int = _DEFAULT_TOOL_PROJECTION_LIMIT,
         prior_turns_limit: int = _DEFAULT_PRIOR_TURNS_LIMIT,
         prior_turn_max_chars: int = _DEFAULT_PRIOR_TURN_MAX_CHARS,
+        context_window_tokens: int | None = None,
     ) -> None:
         if model is None and model_factory is None:
             raise ValueError("investigation model is required")
@@ -529,6 +530,11 @@ class PydanticAiInvestigationOrchestrator:
         self._prior_turns_limit = max(0, int(prior_turns_limit))
         self._prior_turn_max_chars = max(
             80, int(prior_turn_max_chars)
+        )
+        self._context_window_tokens = (
+            int(context_window_tokens)
+            if context_window_tokens
+            else None
         )
         self.last_node_trace: list[str] = []
 
@@ -1125,6 +1131,34 @@ class PydanticAiInvestigationOrchestrator:
             turns_limit=self._prior_turns_limit,
             max_chars=self._prior_turn_max_chars,
         ) + input_text
+        if self._context_window_tokens:
+            from app.application.model_invocation.context_budget import (
+                estimate_text_tokens,
+            )
+
+            estimated = estimate_text_tokens(
+                instructions
+            ) + estimate_text_tokens(prompt)
+            if estimated >= self._context_window_tokens:
+                _logger.info(
+                    "orchestration engine=pydantic_ai "
+                    "stage=investigation "
+                    "decision=context_budget_fail "
+                    "estimated=%d window=%d correlation_id=%s",
+                    estimated,
+                    self._context_window_tokens,
+                    correlation,
+                )
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                    correlation_id=correlation,
+                    error_code="investigation_context_overflow",
+                    admission_outcome=unbound_outcome,
+                    limitations=(
+                        "investigation_context_overflow:"
+                        f"{estimated}>={self._context_window_tokens}",
+                    ),
+                )
         result = None
         usage_limited = False
         try:
