@@ -23,6 +23,7 @@ import {
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import type { PpcBranch, SequencingBinding, SequencingProfile } from "../types";
+import { PPC_PAGE_SCENE_CLASS, ppcPageSceneStyle } from "../utils/ppcPageScene";
 import {
   applyBindingResult,
   buildCriteriaPayload,
@@ -306,7 +307,10 @@ export function SequencingProfilesPage({ branch, permissions, isSuperadmin }: Pr
   );
 
   return (
-    <div className="ppc-page-stack seq-page">
+    <div
+      className={`ppc-page-stack seq-page ${PPC_PAGE_SCENE_CLASS}`}
+      style={ppcPageSceneStyle()}
+    >
       <PpcWorkspaceHeader
         title={texts.title}
         subtitle={texts.subtitle}

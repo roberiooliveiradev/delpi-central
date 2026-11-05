@@ -24,6 +24,7 @@ import type {
 } from "../types";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
 import { billingDueInvoicedPercent } from "../utils/billingDueProgress";
+import { PPC_PAGE_SCENE_CLASS, ppcPageSceneStyle } from "../utils/ppcPageScene";
 import { buildPpcHref, navigatePpc } from "../utils/routeParser";
 
 const KpiCard = createDashboardKpiCard({
@@ -237,7 +238,10 @@ export function OverviewPage({
   const billingProgressPct = billingDueInvoicedPercent(billingInvoiced, billingTotal);
 
   return (
-    <div className="ppc-page-stack ppc-page-stack--home">
+    <div
+      className={`ppc-page-stack ppc-page-stack--home ${PPC_PAGE_SCENE_CLASS}`}
+      style={ppcPageSceneStyle()}
+    >
       <PpcWorkspaceHeader
         title={copy.home.title}
         subtitle={copy.home.heroLead}

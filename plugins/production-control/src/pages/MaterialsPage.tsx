@@ -28,6 +28,7 @@ import {
 import { downloadMaterialsExcel } from "../utils/materialsExcel";
 import { formatIsoDate } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
+import { PPC_PAGE_SCENE_CLASS, ppcPageSceneStyle } from "../utils/ppcPageScene";
 import {
   buildPpcHref,
   navigatePpc,
@@ -316,7 +317,10 @@ export function MaterialsPage({
   ];
 
   return (
-    <div className="ppc-page-stack ppc-page-stack--demand">
+    <div
+      className={`ppc-page-stack ppc-page-stack--demand ${PPC_PAGE_SCENE_CLASS}`}
+      style={ppcPageSceneStyle()}
+    >
       <PpcWorkspaceHeader
         title={materials.title}
         subtitle={materials.subtitle}
