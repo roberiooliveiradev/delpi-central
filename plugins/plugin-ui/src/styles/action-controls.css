@@ -32,11 +32,15 @@ a.delpi-ui-action-btn--link:visited {
 }
 
 .delpi-ui-action-btn:hover:not(:disabled):not(.delpi-ui-action-btn--disabled) {
-  border-color: color-mix(
-    in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 45%,
-    var(--delpi-ui-border, var(--border, #e5e7eb))
+  border-color: var(
+    --delpi-ui-action-hover-border,
+    color-mix(
+      in srgb,
+      var(--delpi-ui-accent, var(--primary, #089bdb)) 45%,
+      var(--delpi-ui-border, var(--border, #e5e7eb))
+    )
   );
+  background: var(--delpi-ui-action-hover-surface);
 }
 
 .delpi-ui-action-btn:focus-visible {

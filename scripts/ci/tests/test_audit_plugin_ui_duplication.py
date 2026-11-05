@@ -107,6 +107,22 @@ class AuditPluginUiDuplicationTest(unittest.TestCase):
         self.assertEqual(len(findings), 1)
         self.assertIn("preparePluginUiRemote()", findings[0].message)
 
+    def test_scan_integration_ignores_remote_call_inside_string(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            plugin_dir = Path(tmp) / "fake-mfe"
+            (plugin_dir / "src").mkdir(parents=True)
+            (plugin_dir / "src/bootstrap.tsx").write_text(
+                'import { FieldLabel } from "@delpi/plugin-ui/index";\n'
+                "await preparePluginUiRemote();\n",
+                encoding="utf-8",
+            )
+            (plugin_dir / "vite.config.ts").write_text(
+                'const note = "remotes: pluginUiRemote()";\nremotes: {},\n',
+                encoding="utf-8",
+            )
+            findings = scan_integration(plugin_dir)
+        self.assertTrue(any("pluginUiRemote()" in f.message for f in findings))
+
     def test_scan_integration_source_alias_does_not_replace_remote(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             plugin_dir = Path(tmp) / "fake-mfe"

@@ -283,8 +283,8 @@ _PLUGIN_UI_STYLE_IMPORT = re.compile(
 )
 
 
-def _strip_code_comments(source: str) -> str:
-    """Remove comentários JS/TS preservando strings e quebras de linha."""
+def _strip_code_comments(source: str, *, blank_strings: bool = False) -> str:
+    """Remove comentários JS/TS. Com blank_strings, o miolo de string não conta como código."""
     out: list[str] = []
     i = 0
     n = len(source)
@@ -311,13 +311,17 @@ def _strip_code_comments(source: str) -> str:
             i += 1
             while i < n:
                 if source[i] == "\\":
-                    out.append(source[i : i + 2])
+                    chunk = source[i : i + 2]
+                    out.append(" " * len(chunk) if blank_strings else chunk)
                     i += 2
                     continue
-                out.append(source[i])
                 if source[i] == quote:
+                    out.append(quote)
                     i += 1
                     break
+                out.append(" " if blank_strings else source[i])
+                if source[i] == "\n":
+                    out[-1] = "\n"
                 i += 1
             continue
         out.append(source[i])
@@ -359,7 +363,8 @@ def _package_role(plugin_dir: Path) -> str:
 
 
 def _federation_remote_configured(vite_text: str) -> bool:
-    return _FEDERATION_REMOTE_CALL.search(_strip_code_comments(vite_text)) is not None
+    code = _strip_code_comments(vite_text, blank_strings=True)
+    return _FEDERATION_REMOTE_CALL.search(code) is not None
 
 
 def _plugin_ui_styles_configured(entry_text: str) -> bool:

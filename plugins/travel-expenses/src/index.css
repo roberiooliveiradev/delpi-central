@@ -127,15 +127,12 @@
   outline: none;
 }
 
-.dashboard-travel-expenses .te-report-hero__toolbar-actions .delpi-ui-action-btn {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.dashboard-travel-expenses .te-report-hero__toolbar-actions .delpi-ui-action-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.5);
+.dashboard-travel-expenses .te-report-hero__toolbar-actions {
+  --delpi-ui-text: #ffffff;
+  --delpi-ui-border: rgba(255, 255, 255, 0.35);
+  --delpi-ui-surface: rgba(255, 255, 255, 0.08);
+  --delpi-ui-action-hover-border: rgba(255, 255, 255, 0.5);
+  --delpi-ui-action-hover-surface: rgba(255, 255, 255, 0.16);
 }
 
 .dashboard-travel-expenses .te-report-hero__identity {
