@@ -611,7 +611,7 @@ HEAD de inventário: `07c8e762f1` (documento já na `main`). Esta seção regist
 
 | ID | Decisão | Base |
 |---|---|---|
-| D-01 | Sem `KpiPartRef` novo. `kpiPresentation.targetDisplay` + `kpiOptions.showTarget` (omitido = oculto). | Invariante legado + showComparison |
+| D-01 (**SUPERSEDED na §18**) | Sem `KpiPartRef` novo. `kpiPresentation.targetDisplay` + `kpiOptions.showTarget` (omitido = oculto). | Decisão histórica E0; insuficiente para o requisito de edição integral |
 | D-02 | Misto multi-campo em partes KPI permanece no owner de `contentRuns`/`dataRef` de texto. Não estender nesta entrega. | STOP de engine nova |
 | D-03 | Legado não ganha meta visível. Novo KPI não liga `showTarget` sozinho. | Plano §8 |
 | D-04 | Status continua dentro da comparação. Período não vira part. | Partes atuais |
@@ -625,3 +625,56 @@ HEAD de inventário: `07c8e762f1` (documento já na `main`). Esta seção regist
 **Fora desta entrega (PENDING):** RQ-04 misto 2+ campos na mesma string de parte KPI, RQ-08 ícone, RQ-12 período=filtro, pixel editor≡TV, VISTA live, MDD apply isolado.
 
 **Nesta entrega:** `targetDisplay` no enrich e pintura somente com `showTarget=true`.
+
+
+## 18. Decisão de produto corrigida — Meta é um item padrão do KPI (2026-11-04)
+
+**STATUS: TARGET / DECISÃO DE PRODUTO.** Esta seção **substitui D-01 da §17** e prevalece sobre qualquer orientação anterior que trate a meta como slot de texto especial sem edição. A §17 permanece apenas como **histórico do E0**, não como instrução vigente de implementação de autoria.
+
+### 18.1 Problema e evidência
+
+O primeiro incremento adicionou \`kpiPresentation.targetDisplay\` e o controle \`kpiOptions.showTarget\`. A meta visível \`85,00%\` foi renderizada em \`.delpi-kpi-card__target\` com \`data-kpi-target\`, **fora** do sistema de subcomponentes selecionáveis \`data-kpi-part\`. Em HEAD consultado em 2026-11-04, \`KpiPartRef\` não declarava target, \`kpiPartSupportsTypography\` não aceitava a meta e o texto usava CSS de tipografia fixa. O menu "Itens do KPI" oferecia Título, Subtítulo, Ícone, Comparação, Progresso, Sparkline e Layout, mas não Meta. Portanto, o usuário não consegue selecionar, mover, formatar ou administrar a meta como as demais partes.
+
+**Causa comprovada neste snapshot:** lacuna de integração com o modelo existente de parts e authoring. Não é defeito de DataModel, \`targetField\` ou \`targetDisplay\`.
+
+### 18.2 Regra de produto vinculante
+
+1. **Todo item informacional do KPI é opcional, com exceção do VALOR principal, obrigatório.** O card/chrome é estrutura, não uma parte informacional a tratar como toggle opcional.
+2. **Meta é item padrão do KPI**, no mesmo sistema de partes que título, subtítulo/hint, ícone, comparação, progresso e sparkline. "Opcional" significa que pode ser exibido/ocultado/removido da composição, não que tenha menos recursos de edição.
+3. A meta deve aparecer no **menu Itens do KPI** da top bar/contextual e nos controles equivalentes da sidebar, seguindo o padrão de adicionar, remover, mostrar, ocultar e selecionar; não criar painel ou botão separado exclusivo da meta.
+4. Quando exibida, a meta deve ser selecionável diretamente no palco e oferecer os mesmos recursos aplicáveis às demais **partes textuais**: família/tamanho/peso/cor/alinhamento, modo tipográfico, posição, move/resize, chrome de seleção e persistência. Edição de aparência não edita o valor numérico.
+5. O backend continua sendo dono de \`targetValue\`, \`targetDisplay\`, \`targetField\`, agregação, comparação, progresso, cor e segurança. A fonte dinâmica não se transforma em literal.
+6. Visibilidade da meta **não** controla existência de binding; ocultá-la não desliga comparação, cores ou progresso que usem \`targetField\`. Desconectar campo é uma ação distinta.
+7. Valem as mesmas regras de composição e visibilidade das partes existentes, inclusive compatibilidade, desfazer/refazer, save, reabrir/F5, editor≡preview≡TV e MDD.
+
+### 18.3 Implementação-alvo mínima (condicionada ao inventário E0)
+
+**EXISTING_EQUIVALENT = YES** para o sistema de partes e seleção; **REUSE_DECISION = EXTEND** para incluir meta como parte padrão no mesmo sistema, preferindo os mecanismos que já existem:
+
+- Estender o vocabulário canônico existente de \`KpiPartRef\`, \`KpiPartsMap\`, capabilities, parse/serialize, hit-test/selection, visibilidade, layout/frame, tipografia, rich editing quando semanticamente aplicável e transformação de estado da UI **sem criar engine paralela**.
+- Integrar a meta ao \`DelpiKpiCard\` por \`KPI_PART_DATA_ATTR\`, \`bindKpiPartPointer\`, \`KpiPartResizeHandles\`, \`kpiPartSupportsTypography\`, \`resolveKpiPartTypographyStyle\` e equivalentes vigentes. Remover dependência de fonte fixa como controle de tipografia autoral.
+- Integrar o novo item à **mesma seção Itens do KPI**, top bar e sidebar, com o mesmo menu de ações, atalhos e inspector contextual. Usar nomenclatura amigável "Meta".
+- Definir uma **única precedência canônica de visibilidade** entre o estado de parts existente e \`showTarget\` legado. Sem duplicação permanente de source of truth. Manter slides gravados com \`showTarget=true\` mostrando a meta e \`showTarget\` ausente/false mantendo a aparência anterior, salvo mudança explícita do autor.
+- Respeitar variações hero, standard, compact, scorecard, sem overflow e com contraste adequado para 1080p. **Não transformar a meta em valor fixo** nem duplicar seu formatter.
+- Tratar o VALOR principal como obrigatório no novo modelo de autoria sem quebrar snapshots legados; inventariar e preservar compatibilidade antes de endurecer regra.
+
+**Não decidido sem inventário:** nome final da part (\`target\` é candidato coerente com o domínio atual), regra de leitura de \`showTarget\` e defaults/seed de layout. Fechar contrato explicitamente em E0/E1; não inventar uma nova propriedade se a atual puder ser adaptada.
+
+### 18.4 Critérios de aceite específicos
+
+- [ ] Selecionar o KPI apresenta "Meta" ao lado dos demais **Itens do KPI**, na top bar e sidebar.
+- [ ] Usuário consegue adicionar, mostrar, ocultar, remover da composição e restaurar a meta usando os fluxos padrão.
+- [ ] Clicar no número \`85,00%\` seleciona **a própria parte**, não apenas o bloco/card.
+- [ ] Ribbon/inspector permitem alterar tipografia, tamanho, peso, cor, alinhamento e posicionamento; mudanças sobrevivem a F5 e MDD.
+- [ ] Meta dinâmica continua vinda de \`comparable_goal\`; mudar meta de 85→95 reflete no texto, na comparação, no tom e no progresso sem alterar o slide.
+- [ ] Ocultar/remover meta visual mantém binding e cálculos de comparação/cor/progresso.
+- [ ] KPIs sem \`showTarget\` permanecem visualmente iguais; KPIs legados com \`showTarget=true\` não perdem meta ao migrar.
+- [ ] Valor principal continua obrigatório, sem proibir configuração de outros itens.
+- [ ] Seleção com mouse, teclado, multi-select quando suportado, mover, resize, undo/redo, revisão/CAS, preview e kiosk sem regressão.
+- [ ] Testes demonstram paridade editor/preview/TV (DOM e pixels), compatibilidade e ausência de segundo renderer, formatter e UI especial.
+
+### 18.5 Impacto em tarefas e PRs em andamento
+
+Esta decisão é **REWORK** do escopo de edição da meta. O incremento de exibição \`targetDisplay\` permanece útil e deve ser reutilizado. A correção tipográfica CSS isolada (ex.: PR #138) **não satisfaz este requisito**; avaliar sua necessidade/compatibilidade no conjunto de mudanças, sem aplicá-la como substituto do suporte nativo às parts.
+
+**STOP:** não aceitar solução que apenas aumente o font-size, acrescente \`showTarget\` em outra tela ou crie inspector próprio da meta. Não aceitar remover \`showTarget\` legado sem estratégia de compatibilidade. Devemos fazer a meta passar pela mesma capacidade canônica de seleção/authoring dos demais itens.
