@@ -93,16 +93,14 @@ const CHOICES_BY_ROOT: Record<keyof typeof ROOT_META, ChartAddElementFlyoutChoic
     { id: "gaugeLabel:none", label: "Nenhum", icon: X },
     { id: "gaugeLabel:show", label: "Mostrar", icon: Type },
   ],
+  // Flyout de inclusão: apenas visibilidade e posição.
+  // Modos de conteúdo/percentual continuam no contrato do gráfico, não nos atalhos.
   dataLabels: [
     { id: "dataLabels:none", label: "Nenhum", icon: X },
     { id: "dataLabels:center", label: "Centro", icon: Tags },
     { id: "dataLabels:insideEnd", label: "Dentro da extremidade", icon: ArrowDown },
     { id: "dataLabels:outsideEnd", label: "Fora da extremidade", icon: ArrowUp },
     { id: "dataLabels:bestFit", label: "Melhor ajuste", icon: CircleDot },
-    { id: "dataLabels:categoryPercent", label: "Categoria e %", icon: Type },
-    { id: "dataLabels:valuePercent", label: "Valor e %", icon: ListOrdered },
-    { id: "dataLabels:percent", label: "Somente %", icon: Heading },
-    { id: "dataLabels:category", label: "Categoria", icon: AlignLeft },
   ],
   dataTable: [
     { id: "dataTable:none", label: "Nenhum", icon: X },
