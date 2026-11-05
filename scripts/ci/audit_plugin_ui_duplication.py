@@ -275,41 +275,75 @@ def plugin_uses_plugin_ui(plugin_dir: Path) -> bool:
     return any("@delpi/plugin-ui" in chunk for chunk in haystack_parts)
 
 
+# Produção federada não declara alias de source. O marcador é o mesmo do gate Docker.
+FEDERATION_REMOTE_MARKERS = ("pluginUiRemote", "resolvePluginUiRemoteEntry")
+PLUGIN_UI_STYLE_MARKERS = (
+    "plugin-ui/src/styles.css",
+    "@delpi/plugin-ui/styles",
+    "preparePluginUiRemote",
+)
+
+
+def _vite_config_text(plugin_dir: Path) -> str:
+    for name in VITE_CONFIG_NAMES:
+        file_path = plugin_dir / name
+        if file_path.is_file():
+            return file_path.read_text(encoding="utf-8", errors="ignore")
+    return ""
+
+
+def _entry_text(plugin_dir: Path) -> str:
+    chunks: list[str] = []
+    for name in ENTRY_FILES:
+        file_path = plugin_dir / name
+        if file_path.is_file():
+            chunks.append(file_path.read_text(encoding="utf-8", errors="ignore"))
+    return "\n".join(chunks)
+
+
+def _plugin_ui_resolution_satisfied(vite_text: str) -> bool:
+    if re.search(r'["\']@delpi/plugin-ui["\']\s*:', vite_text):
+        return True
+    return any(marker in vite_text for marker in FEDERATION_REMOTE_MARKERS)
+
+
+def _plugin_ui_styles_satisfied(entry_text: str) -> bool:
+    return any(marker in entry_text for marker in PLUGIN_UI_STYLE_MARKERS)
+
+
 def scan_integration(plugin_dir: Path) -> list[Finding]:
     if not plugin_uses_plugin_ui(plugin_dir):
         return []
 
+    # Biblioteca sem app Vite (peer do host). O MFE dono declara o remote.
+    if not any((plugin_dir / name).is_file() for name in VITE_CONFIG_NAMES):
+        return []
+
     plugin_name = plugin_dir.name
     findings: list[Finding] = []
+    vite_text = _vite_config_text(plugin_dir)
 
-    vite_text = ""
-    for name in VITE_CONFIG_NAMES:
-        file_path = plugin_dir / name
-        if file_path.is_file():
-            vite_text = file_path.read_text(encoding="utf-8", errors="ignore")
-            break
-
-    if not re.search(r'["\']@delpi/plugin-ui["\']\s*:', vite_text):
+    if not _plugin_ui_resolution_satisfied(vite_text):
         findings.append(
             Finding(
                 level="error",
                 plugin=plugin_name,
-                message="consome @delpi/plugin-ui mas falta alias Vite em vite.config.*",
+                message=(
+                    "consome @delpi/plugin-ui mas falta alias Vite em vite.config.* "
+                    "ou remote pluginUiRemote()"
+                ),
             )
         )
 
-    entry_text = ""
-    for name in ENTRY_FILES:
-        file_path = plugin_dir / name
-        if file_path.is_file():
-            entry_text += file_path.read_text(encoding="utf-8", errors="ignore") + "\n"
-
-    if "plugin-ui/src/styles.css" not in entry_text:
+    if not _plugin_ui_styles_satisfied(_entry_text(plugin_dir)):
         findings.append(
             Finding(
                 level="error",
                 plugin=plugin_name,
-                message="consome @delpi/plugin-ui mas falta import plugin-ui/src/styles.css no entry",
+                message=(
+                    "consome @delpi/plugin-ui mas falta CSS no entry "
+                    "(plugin-ui/src/styles.css, @delpi/plugin-ui/styles ou preparePluginUiRemote)"
+                ),
             )
         )
 

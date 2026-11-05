@@ -69,6 +69,53 @@ class AuditPluginUiDuplicationTest(unittest.TestCase):
             (plugin_dir / "vite.config.ts").write_text("// sem alias\n", encoding="utf-8")
             findings = scan_integration(plugin_dir)
         self.assertTrue(any("alias Vite" in f.message for f in findings))
+        self.assertFalse(any("CSS no entry" in f.message for f in findings))
+
+    def test_scan_integration_accepts_federation_remote(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            plugin_dir = Path(tmp) / "fake-mfe"
+            (plugin_dir / "src").mkdir(parents=True)
+            (plugin_dir / "src/App.tsx").write_text(
+                'import { FieldLabel } from "@delpi/plugin-ui/index";\n',
+                encoding="utf-8",
+            )
+            (plugin_dir / "src/bootstrap.tsx").write_text(
+                "await preparePluginUiRemote();\n",
+                encoding="utf-8",
+            )
+            (plugin_dir / "vite.config.ts").write_text(
+                "remotes: pluginUiRemote(),\n",
+                encoding="utf-8",
+            )
+            findings = scan_integration(plugin_dir)
+        self.assertEqual(findings, [])
+
+    def test_scan_integration_federation_still_requires_styles(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            plugin_dir = Path(tmp) / "fake-mfe"
+            (plugin_dir / "src").mkdir(parents=True)
+            (plugin_dir / "src/bootstrap.tsx").write_text(
+                'import { FieldLabel } from "@delpi/plugin-ui/index";\n',
+                encoding="utf-8",
+            )
+            (plugin_dir / "vite.config.ts").write_text(
+                "remotes: pluginUiRemote(),\n",
+                encoding="utf-8",
+            )
+            findings = scan_integration(plugin_dir)
+        self.assertEqual(len(findings), 1)
+        self.assertIn("CSS no entry", findings[0].message)
+
+    def test_scan_integration_skips_library_without_vite_app(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            plugin_dir = Path(tmp) / "fake-lib"
+            (plugin_dir / "src").mkdir(parents=True)
+            (plugin_dir / "src/index.ts").write_text(
+                'import { FieldLabel } from "@delpi/plugin-ui/index";\n',
+                encoding="utf-8",
+            )
+            findings = scan_integration(plugin_dir)
+        self.assertEqual(findings, [])
 
     def test_audit_respects_allowlist(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
