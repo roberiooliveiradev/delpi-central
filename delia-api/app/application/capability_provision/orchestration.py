@@ -1980,6 +1980,25 @@ def _authoritative_structure_root(
     return code.strip()
 
 
+def _identifier_arg_keys(
+    properties: Mapping[str, Any],
+    names: list[str] | None,
+) -> list[str]:
+    """Identifier-shaped string fields among ``names`` (or all keys)."""
+    keys: list[str] = []
+    for key, node in properties.items():
+        if names is not None and str(key) not in names:
+            continue
+        if not _IDENTIFIER_ARG_KEY_RE.search(str(key)):
+            continue
+        if not isinstance(node, Mapping):
+            continue
+        if node.get("type") not in (None, "string"):
+            continue
+        keys.append(str(key))
+    return keys
+
+
 def _bind_identifier_args_from_utterance(
     schema: Mapping[str, Any] | None,
     input_text: str,
@@ -2001,22 +2020,24 @@ def _bind_identifier_args_from_utterance(
         if isinstance(required, (list, tuple))
         else []
     )
-    id_keys: list[str] = []
-    for key in required_names:
-        if not _IDENTIFIER_ARG_KEY_RE.search(key):
-            continue
-        node = properties.get(key)
-        if not isinstance(node, Mapping):
-            continue
-        node_type = node.get("type")
-        if node_type not in (None, "string"):
-            continue
-        id_keys.append(key)
-    if len(id_keys) != 1:
-        return None
     literals = _IDENTIFIER_LITERAL_RE.findall(input_text or "")
     unique = list(dict.fromkeys(str(item) for item in literals if item))
     if not unique:
+        return None
+    id_keys = _identifier_arg_keys(properties, required_names)
+    if not id_keys:
+        # Optional identifier fields (native MCP envelope path): the
+        # owner's schema may declare ``code`` without marking it
+        # required — the utterance literal still determines the value.
+        id_keys = _identifier_arg_keys(properties, None)
+        if len(id_keys) != 1:
+            exact = [
+                k
+                for k in id_keys
+                if re.fullmatch(r"(?i)code|id", str(k))
+            ]
+            id_keys = exact if len(exact) == 1 else []
+    if len(id_keys) != 1:
         return None
     # Prefer the longest literal (more specific business codes).
     value = max(unique, key=len)

@@ -29,7 +29,6 @@ from app.application.interaction.turn_budget import TurnDeadline
 from app.domain.evidence.model import SourceRef
 from app.infrastructure.orchestration.pydantic_ai_investigation import (
     PydanticAiInvestigationOrchestrator,
-    _safe_tool_name,
     focus_arguments_on_next_identifier,
     uncovered_user_identifiers,
 )
@@ -62,11 +61,6 @@ def _final_answer(answer: str = "", status: str = "insufficient",
         ]
     )
 
-
-def test_safe_tool_name_maps_capability_id():
-    assert _safe_tool_name("davi.discover_delpi_information") == (
-        "davi_discover_delpi_information"
-    )
 
 
 def test_e2_capability_name_does_not_satisfy_obligation():
@@ -209,7 +203,7 @@ def test_dynamic_owner_tool_invokes_governed_path():
     )
     assert catalog, "test providers must expose READ catalog"
     cap = catalog[0]
-    tool_name = _safe_tool_name(cap["capability_id"])
+    tool_name = cap["capability_id"]
     calls: list[str] = []
     original = gates._governed_semantic_tool_invoke
 
@@ -223,10 +217,7 @@ def test_dynamic_owner_tool_invokes_governed_path():
         if not any(isinstance(m, ModelResponse) for m in messages):
             return ModelResponse(
                 parts=[
-                    ToolCallPart(
-                        tool_name,
-                        {"arguments": {}},
-                    )
+                    ToolCallPart("invoke_read_capability", {"capability_id": tool_name, "arguments": {"arguments": {}}})
                 ]
             )
         return _final_answer("done")
@@ -251,7 +242,7 @@ def test_usage_limit_finalizes_collected_evidence():
     catalog = gates._project_semantic_tool_catalog(
         correlation="c", deadline=TurnDeadline.start(30.0)
     )
-    tool_name = _safe_tool_name(catalog[0]["capability_id"])
+    tool_name = catalog[0]["capability_id"]
     original = gates._governed_semantic_tool_invoke
 
     def _spy(**kwargs):
@@ -263,7 +254,7 @@ def test_usage_limit_finalizes_collected_evidence():
     def _fn(messages, _info):
         steps["n"] += 1
         return ModelResponse(
-            parts=[ToolCallPart(tool_name, {"arguments": {}})]
+            parts=[ToolCallPart("invoke_read_capability", {"capability_id": tool_name, "arguments": {"arguments": {}}})]
         )
 
     engine = PydanticAiInvestigationOrchestrator(
@@ -340,14 +331,14 @@ def test_premature_clarification_is_rejected_when_identifiers_remain():
     catalog = gates._project_semantic_tool_catalog(
         correlation="c", deadline=TurnDeadline.start(30.0)
     )
-    tool_name = _safe_tool_name(catalog[0]["capability_id"])
+    tool_name = catalog[0]["capability_id"]
     steps = {"n": 0}
 
     def _fn(messages, _info):
         steps["n"] += 1
         if steps["n"] == 1:
             return ModelResponse(
-                parts=[ToolCallPart(tool_name, {"arguments": {}})]
+                parts=[ToolCallPart("invoke_read_capability", {"capability_id": tool_name, "arguments": {"arguments": {}}})]
             )
         if steps["n"] == 2:
             return ModelResponse(
@@ -363,7 +354,7 @@ def test_premature_clarification_is_rejected_when_identifiers_remain():
             )
         if steps["n"] == 3:
             return ModelResponse(
-                parts=[ToolCallPart(tool_name, {"arguments": {}})]
+                parts=[ToolCallPart("invoke_read_capability", {"capability_id": tool_name, "arguments": {"arguments": {}}})]
             )
         return _final_answer("done")
 
@@ -667,7 +658,7 @@ def test_repeated_equivalent_failure_does_not_reinvoke_owner():
     catalog = gates._project_semantic_tool_catalog(
         correlation="c", deadline=TurnDeadline.start(30.0)
     )
-    tool_name = _safe_tool_name(catalog[0]["capability_id"])
+    tool_name = catalog[0]["capability_id"]
     calls: list[int] = []
 
     def _spy(**kwargs):
@@ -685,7 +676,7 @@ def test_repeated_equivalent_failure_does_not_reinvoke_owner():
         steps["n"] += 1
         if steps["n"] < 3:
             return ModelResponse(
-                parts=[ToolCallPart(tool_name, {"arguments": {"query": "x"}})]
+                parts=[ToolCallPart("invoke_read_capability", {"capability_id": tool_name, "arguments": {"arguments": {"query": "x"}}})]
             )
         return _final_answer("stop")
 
@@ -701,7 +692,7 @@ def test_clarification_does_not_replace_collected_evidence():
     catalog = gates._project_semantic_tool_catalog(
         correlation="c", deadline=TurnDeadline.start(30.0)
     )
-    tool_name = _safe_tool_name(catalog[0]["capability_id"])
+    tool_name = catalog[0]["capability_id"]
     gates._governed_semantic_tool_invoke = (  # type: ignore[method-assign]
         lambda **kwargs: _success_attempt(
             content="estrutura A", root="90260147"
@@ -713,7 +704,7 @@ def test_clarification_does_not_replace_collected_evidence():
         steps["n"] += 1
         if steps["n"] == 1:
             return ModelResponse(
-                parts=[ToolCallPart(tool_name, {"arguments": {}})]
+                parts=[ToolCallPart("invoke_read_capability", {"capability_id": tool_name, "arguments": {"arguments": {}}})]
             )
         if steps["n"] == 2:
             return ModelResponse(
