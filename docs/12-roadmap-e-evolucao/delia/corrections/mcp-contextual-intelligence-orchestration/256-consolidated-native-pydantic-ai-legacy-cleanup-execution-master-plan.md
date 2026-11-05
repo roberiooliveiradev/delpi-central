@@ -772,3 +772,20 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   lento em 6GB). Gate de contexto resolvido; latência do admission
   é o bloqueio seguinte — boundary separado, honestamente registrado.
 - CATALOG=10 caps presentes (api-delpi:2, teo:4, vista:4).
+
+## 34. G7 — latência admission medida + seleção MCP positiva (doc 280)
+
+- **ROOT CAUSE da latência (medido)**: modelo qwen3:4b 5.1GB em
+  container limitado a 4.5GB → 99.96% memória → thrashing →
+  COLD-load 70.7s > deadline 60s (modelo descarregava entre turns).
+  WARM: 1.0s small / 23.1s prompt-3k tok (gen ~6 tok/s CPU).
+- **FIX medido**: OLLAMA_MEMORY_LIMIT 4500M→6800M (única mudança;
+  modelo cabe + KV 16k). Container sem GPU por design (runc, 100% CPU).
+- **SELEÇÃO MCP POSITIVA LIVE**: admission ok (32s) → catalog 10 caps →
+  modelo selecionou `davi.discover_delpi_information` (provider_invoke
+  ok 248ms, arg query) → `davi.execute_delpi_information` (READ,
+  action=search_products, ok 423ms) → `uncovered=50220013` — owner
+  retornou evidência real do produto. Governed execute provado.
+- Residual: answer final não entregue antes do gateway/turn budget
+  (geração ~6 tok/s CPU para resposta longa) — boundary de latência
+  de geração, não de seleção/execução.
