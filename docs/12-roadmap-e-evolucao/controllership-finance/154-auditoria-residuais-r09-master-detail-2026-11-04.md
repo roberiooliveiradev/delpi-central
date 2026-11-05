@@ -295,4 +295,17 @@ Executor: Devin · HEAD de execução: `a3657c0699`+ · Commits: `8ab969db27` (R
 - **`IMPLEMENTED / CONTRACT_BOUNDARY_DECISION_PENDING`:** normalização no boundary do próprio MFE — `getBillingModBreakdown` mapeia `explodedProduct`→`product` e `unit`→`modUnit`, preservando os nomes originais via campos opcionais. Nenhuma alteração de contrato BFF, sem novo comportamento material, sem dados inventados. **Não existe registro de autorização formal de boundary** — a solução vigente é fato implementado, não decisão de owner homologada.
 - **`DECIDED — Opção B aprovada pelo PO (2026-11-04, CF-PROC0072-R09-FINAL-CORRECTION-PROD-SSH-001):** o adaptador MFE é a solução definitiva. Justificativa registrada: a BFF permanece pass-through fiel ao produtor (nomes `explodedProduct`/`unit` são o contrato honesto para consumers MCP/CLARA e futuros clientes); somente a visão do Portal precisa dos nomes `product`/`modUnit`, e o mapeamento é projeção de leitura do próprio consumidor — não regra de negócio migrada para o frontend. Zero mudança de contrato BFF, zero impacto nos demais consumers, release restrito ao MFE. Opção A (normalização na projeção BFF) fica descartada nesta rodada; se um segundo consumidor precisar dos nomes normalizados, reabrir como evolução de contrato aditiva.
 
+### 12. Registro de release — CF-PROC0072-R09-FINAL-CORRECTION-PROD-SSH-001 (2026-11-04)
+
+| Item | Valor |
+|---|---|
+| RELEASE_SHA | `6d291c03074a58ef0c273cb8ac4f83e939bbe878` (testado = publicado) |
+| PROD_BASE_SHA | `264bf3505fc9935a61ae3a4208e56258708d2382` |
+| Boundary | **Opção B aprovada pelo PO** — adaptador MFE definitivo; BFF inalterada |
+| Escopo do deploy | somente `controllership-finance` (MFE) — BFF/plugin-ui intactos |
+| Comando | `./infra/scripts/up-prod-sequential.sh --fase mfe --build controllership-finance` em `operador@srv-api` após `git pull --ff-only` |
+| Pós-deploy | container recriado e `Up`; gateway sem 502/503 (10 min); BFF `healthy`; `remoteEntry` e rota BFF respondem `401` sem sessão (fail-closed) |
+| Smoke autenticado prod | `INCONCLUSIVE` — requer sessão SSO de usuário autorizado em produção; release **não** declarado `OPERATIONALLY_VERIFIED` até esse smoke |
+| Rollback | praticável: `git checkout 264bf3505f` (ou `git revert` do commit único 6d291c03) + mesmo `--fase mfe --build controllership-finance`; sem migrations/dados envolvidos |
+
 **Prova:** `billingModBreakdownApi.test.ts` — fixture fiel ao produtor (sem `productDescription`: ausência real, não `null`) → normalização verificada; campos ausentes permanecem ausentes. `BillingModBreakdownFlow.realKit.test.tsx` — prova integrada produtor→projeção BFF→`getBillingModBreakdown`→`normalizePayload`→página→detalhe no **kit real**, incluindo cenário com resposta REAL sanitizada da BFF (`src/test/fixtures/billingModBreakdown.realBff.2026-09.json`, âncora 90260139 verbatim: 6 linhas, componente 50212205, unidades HR/H). Testes: vitest 449/449, estruturais 25/25, tsc limpo, build de produção OK; eslint sem erros novos (3 pré-existentes fora do diff). BFF `test_billing_mod_breakdown_routes.py` 10/10 (sem alteração na BFF).
