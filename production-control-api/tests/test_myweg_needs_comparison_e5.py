@@ -89,6 +89,110 @@ def test_ac04_probable_advancement_without_line_identity() -> None:
     assert result["probableDateShifts"][0]["confidence"] == "probable_not_proven"
 
 
+def test_probable_postponement_preserves_confidence() -> None:
+    prev = aggregate_needs(
+        [_row(material="M1", remessa="2026-11-08", qty_un="100", verified="P1", status="confirmed")]
+    )
+    curr = aggregate_needs(
+        [_row(material="M1", remessa="2026-11-13", qty_un="100", verified="P1", status="confirmed")]
+    )
+    result = compare_aggregated(prev, curr, reference_date=date(2026, 11, 4))
+    assert result["probableDateShifts"][0]["kind"] == "possible_postponement"
+    assert result["probableDateShifts"][0]["confidence"] == "probable_not_proven"
+    assert result["probableDateShifts"][0]["quantityUn"] == "100"
+    # Totais observados permanecem entradas/saídas — não viram "reprogramação confirmada".
+    assert result["summary"]["appeared"] == 1
+    assert result["summary"]["disappeared"] == 1
+    assert result["summary"]["increased"] == 0
+    assert result["summary"]["decreased"] == 0
+
+
+def test_probable_partial_pairing_and_multi_date_product() -> None:
+    # Exemplo operacional: 2 UN de 12/11 → 10/11 (antecipação parcial possível).
+    prev = aggregate_needs(
+        [
+            _row(
+                material="M800",
+                remessa="2026-11-12",
+                qty_un="2",
+                verified="80016354",
+                status="confirmed",
+            ),
+            _row(
+                material="M800",
+                remessa="2026-11-20",
+                qty_un="5",
+                verified="80016354",
+                status="confirmed",
+            ),
+        ]
+    )
+    curr = aggregate_needs(
+        [
+            _row(
+                material="M800",
+                remessa="2026-11-10",
+                qty_un="2",
+                verified="80016354",
+                status="confirmed",
+            ),
+            _row(
+                material="M800",
+                remessa="2026-11-20",
+                qty_un="3",
+                verified="80016354",
+                status="confirmed",
+            ),
+        ]
+    )
+    result = compare_aggregated(prev, curr, reference_date=date(2026, 11, 5))
+    shifts = result["probableDateShifts"]
+    assert any(
+        s["kind"] == "possible_advancement"
+        and s["fromRemessa"] == "2026-11-12"
+        and s["toRemessa"] == "2026-11-10"
+        and s["quantityUn"] == "2"
+        for s in shifts
+    )
+    # Redução residual em 20/11 (5→3) sem entrada correspondente → sem inventar shift.
+    assert not any(
+        s["fromRemessa"] == "2026-11-20" and s["quantityUn"] == "2" for s in shifts
+    )
+    assert result["summary"]["decreased"] == 1
+    assert result["summary"]["appeared"] == 1
+    assert result["summary"]["disappeared"] == 1
+
+
+def test_probable_no_candidates_when_only_appeared_or_disappeared() -> None:
+    prev = aggregate_needs(
+        [_row(material="M1", remessa="2026-11-12", qty_un="2", verified="P1", status="confirmed")]
+    )
+    curr_only_out = aggregate_needs([])
+    out_only = compare_aggregated(prev, curr_only_out, reference_date=date(2026, 11, 5))
+    assert out_only["probableDateShifts"] == []
+    assert out_only["summary"]["disappeared"] == 1
+
+    prev_empty = aggregate_needs([])
+    curr_only_in = aggregate_needs(
+        [_row(material="M1", remessa="2026-11-10", qty_un="2", verified="P1", status="confirmed")]
+    )
+    in_only = compare_aggregated(prev_empty, curr_only_in, reference_date=date(2026, 11, 5))
+    assert in_only["probableDateShifts"] == []
+    assert in_only["summary"]["appeared"] == 1
+
+
+def test_probable_no_shift_when_quantity_changes_same_date() -> None:
+    prev = aggregate_needs(
+        [_row(material="M1", remessa="2026-11-12", qty_un="2", verified="P1", status="confirmed")]
+    )
+    curr = aggregate_needs(
+        [_row(material="M1", remessa="2026-11-12", qty_un="5", verified="P1", status="confirmed")]
+    )
+    result = compare_aggregated(prev, curr, reference_date=date(2026, 11, 5))
+    assert result["probableDateShifts"] == []
+    assert result["summary"]["increased"] == 1
+
+
 def test_ac05_fifo_400_on_200_500_300() -> None:
     prev = aggregate_needs(
         [

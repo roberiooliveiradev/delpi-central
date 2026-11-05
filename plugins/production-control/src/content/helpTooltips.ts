@@ -37,9 +37,9 @@ export const helpTooltips = {
   mywegNeedsSb1:
     "Situação do vínculo com o cadastro SB1 do Protheus. Código informado na origem só vira confirmado após validação real. Divergência e ambiguidade mostram o motivo sem editar cadastro.",
   mywegNeedsEvolution:
-    "Compara duas fotografias da programação MyWEG. Escolha a coleta anterior e a atual. A variação observada é fato entre snapshots; o faturamento indicativo e o FIFO são hipóteses separadas — nota fiscal DELPI não prova abatimento reconhecido pela WEG. Uma mudança de data de remessa pode aparecer como saída + entrada. O indicador de 14 dias é um recorte das alterações, não uma categoria a somar aos demais.",
+    "Compara duas fotografias da programação MyWEG. Escolha a coleta anterior e a atual. A variação observada é fato entre snapshots; o faturamento indicativo e o FIFO são hipóteses separadas — nota fiscal DELPI não prova abatimento reconhecido pela WEG. Uma mudança de data de remessa pode aparecer como saída + entrada; a seção de possíveis reprogramações estima esse deslocamento sem confirmar pedido. O indicador de 14 dias é um recorte das alterações, não uma categoria a somar aos demais.",
   mywegNeeds:
-    "Módulo Necessidades WEG (filial 02 · ES). Use o card «Necessidades da coleta» para consultar materiais, quantidades e remessas de uma fotografia importada. Use «Comparação entre coletas» para ver aumentos, reduções, entradas e saídas entre duas datas. Código DELPI (origem) vem da coleta; o código verificado e a situação do vínculo vêm da SB1. Não é tempo real nem gera OP.",
+    "Módulo Necessidades WEG (filial 02 · ES). Use o card «Necessidades da coleta» para consultar materiais, quantidades e remessas de uma fotografia importada. Use «Comparação entre coletas» para ver movimentos e possíveis antecipações/postergações de remessa entre duas datas. Código DELPI (origem) vem da coleta; o código verificado e a situação do vínculo vêm da SB1. Não é tempo real nem gera OP.",
   mywegNeedsKpiIncreased:
     "A mesma combinação produto/remessa existe nas duas coletas e a quantidade aumentou.",
   mywegNeedsKpiDecreased:
@@ -50,4 +50,12 @@ export const helpTooltips = {
     "Combinações presentes na coleta anterior e ausentes na atual. Não significa automaticamente pedido cancelado — pode ser remessa que migrou para outra data.",
   mywegNeedsKpiHorizon:
     "Subconjunto das alterações cuja data de remessa está entre a data da coleta atual e os 14 dias seguintes. Não some este número aos outros indicadores.",
+  mywegNeedsProbableShifts:
+    "O sistema identifica possíveis mudanças de datas comparando quantidades do mesmo produto entre duas coletas. A correspondência é estimada e não confirma alteração de um pedido específico. Uma saída e uma entrada podem representar possível deslocamento de data; o pareamento pode ser parcial; o produto pode ter simultaneamente mudança de data e aumento/redução. Ocorrências não devem ser somadas aos indicadores de movimento. Não comprova faturamento nem abatimento reconhecido pela WEG.",
+  mywegNeedsProbableAdvancement:
+    "Quantidade do mesmo produto que diminuiu em uma data de remessa e aumentou em outra data anterior. Hipótese de antecipação — não prova identidade de pedido.",
+  mywegNeedsProbablePostponement:
+    "Quantidade do mesmo produto que diminuiu em uma data de remessa e aumentou em outra data posterior. Hipótese de postergação — não prova identidade de pedido.",
+  mywegNeedsProbableTotal:
+    "Total de pareamentos estimados entre datas (ocorrências, não pedidos distintos). Inclui antecipações, postergações e redistribuições na mesma data quando existirem.",
 } as const;

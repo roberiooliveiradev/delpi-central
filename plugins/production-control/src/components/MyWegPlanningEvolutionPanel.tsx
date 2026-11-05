@@ -12,6 +12,7 @@ import type {
 } from "../types";
 import { formatDecimalString } from "../utils/formatDecimalString";
 import { DataTableSection, type DataTableColumn } from "./dataTableUi";
+import { MyWegProbableDateShiftsSection } from "./MyWegProbableDateShiftsSection";
 
 type Props = {
   historyItems: MyWegNeedsBatchSummary[];
@@ -424,6 +425,11 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
           <p className="ppc-myweg-needs__legend" role="note">
             <strong>{texts.legendTitle}:</strong> {helpTooltips.mywegNeedsEvolution}
           </p>
+
+          <MyWegProbableDateShiftsSection
+            shifts={payload.observed.probableDateShifts}
+            resetKey={`${payload.fromBatch.id}|${payload.toBatch.id}|${payload.observed.referenceDate}`}
+          />
 
           {(payload.totalChanges ?? 0) === 0 && (payload.total ?? 0) === 0 && !search ? (
             <p role="status">{texts.noChanges}</p>
