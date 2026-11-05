@@ -5763,3 +5763,15 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | RQ corrigido | IMPLEMENTED=2, PARTIAL=4, NOT_IMPLEMENTED=22 → cobertura 7,14% |
 | Suíte | PASS (exit 0) |
 | PRODUCTION_DEPLOY | NOT_AUTHORIZED |
+
+## G1 — output estruturado nativo (doc 256, execução)
+
+| Campo | Valor |
+|---|---|
+| Base | `8d6b2be450` |
+| Agent | `output_type=InvestigationAnswer` + `output_validator` (forma) |
+| Acceptor | `_apply_declared_answer` — refs bound, COMPLETE só provado, downgrade honesto |
+| Testes | `test_g1_native_structured_output.py` — 8 PASS; suíte completa PASS |
+| RQ | RQ-01,02,03,05,06 impl (4+); RQ-04,07 parcial → cobertura 14,3% |
+| E01–E10 | TEST_NOT_RUN (G7) |
+| PRODUCTION_DEPLOY | NOT_AUTHORIZED |

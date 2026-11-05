@@ -345,3 +345,11 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
 - **Prune do consolidado**: helpers sem consumidor removidos de `generic_evidence_renderer.py` (1929→1679 linhas): `_comparable_scalar`, `_bound_owner_evidence`, `_candidate_contract_rows`, `_missing_inputs`, `_explicit_empty_business_collection`, `_bounded_subject_node`, `_result_contract_context`, `list_header_for_envelope`, `count_message_for_visible_query`, `_TECHNICAL_LEAK_MARKERS`, `_SNAKE_CASE_TOKEN_RE`, `GLPI_LINK_NO_COUNT`, `DEFAULT_PAGE_SIZE_CAP`. Mantidos os símbolos com consumidor vivo (test_r45: envelope/count contract) ou uso interno (`item_stable_id`, `_is_first_page`, `PageAggregationResult`, `aggregate_paginated_pages`, `resolve_count_semantics`).
 - Suíte `delia-api` completa: **PASS (exit 0)** no SHA avaliado. Residual menor: constantes `PRESENTATION_*`/`OMISSION_*` pré-existentes não inspecionadas (fora do escopo das ~1579 linhas movidas).
 - G1 (output_type nativo) prossegue como etapa independente.
+
+## 11. G1 — output estruturado nativo (execução)
+
+- `Agent(output_type=InvestigationAnswer)` — dataclass estrito em `capability_provision/contracts.py` (schema_version, status COMPLETE/PARTIAL/INSUFFICIENT/EMPTY/NO_EVIDENCE/NEEDS_CLARIFICATION, answer bounded, evidence_refs posicionais, unmet_obligations, limitations, clarification_question). Sem `extra`, sem `Any`, sem prompt-only JSON.
+- `output_validator` apenas de forma — nunca promove declaração a FACT nem autorização.
+- `_apply_declared_answer` (acceptor determinístico pós-finalize): refs ligam só a attempts de evidência de negócio reais (`_is_business_evidence_attempt`); COMPLETE só honrado com refs válidos + obrigações satisfeitas (`_evaluate_material_obligations`) + terminal SUCCESS; clarificação usa o path bounded existente; limitações/obrigações declaradas mergeam bounded; refs fabricadas reportadas `evidence_ref_unbound:N`.
+- RQ-01..RQ-04: IMPLEMENTED ao nível do gate — a resposta tipada nativa existe, é validada deterministicamente e nunca promove claims do modelo a FACT. Cobertura verificada plano: **4/28 = 14,3%** (RQ-01,02,03,05,06 impl; RQ-04,07 parcial).
+- Mocks migrados para a output tool `final_result`. Suíte PASS (exit 0).
