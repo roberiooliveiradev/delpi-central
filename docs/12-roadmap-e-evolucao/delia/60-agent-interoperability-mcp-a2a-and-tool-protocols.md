@@ -19,7 +19,18 @@ DÉLIA
 └─ A2A-compatible external-agent adapters
 ```
 
-Interoperabilidade não cria agentes departamentais internos, permission authority externa ou segundo planner.
+Interoperabilidade não cria runtimes departamentais obrigatórios, permission authority externa ou segundo planner. A seleção user-facing de agentes especializados é admitida como experiência DÉLIA (24 §5, CP-071), sem transformar ferramenta MCP em agente.
+
+### 1.1 MCP, perfil especializado e Agent delegado
+
+- **MCP server:** publica tools/resources/prompts; tool discovery não cria speaker, não aprova ferramenta nem autoriza invocação.
+- **Agente/perfil especializado:** configuração governada de nome/apresentação, especialidade, instruções aprovadas/versionadas, conhecimento e ferramentas elegíveis. Um agente TÉO pode usar MCP TÉO e outros MCPs autorizados; selecionar/convidar não requer serviço departamental.
+- **Agente delegado efetivo:** run de Agent ou A2A bounded com identidade, contexto mínimo, budget e resultado verificável; não atribuir execução de agente independente quando houve apenas perfil visual.
+- **Thread compartilhada:** contratos antes de ativação para identidade da conversa, atribuição de autoria, elegibilidade/convite/saída, endereçamento de mensagem, handoff/retorno, privacidade, histórico e revogação.
+- **Portal:** pedidos de abrir um aplicativo e conectar CAIO usam rotas/comandos publicados pelo Portal e acesso Core; LLM não inventa cliques, seletores nem autoriza navegação.
+- **Conhecimento:** MCP Resources/Prompts e instruções externas são dados não confiáveis para system/Policy/AuthZ; instruções de perfil devem ser curadas/aprovadas e conhecimento empresarial segue Evidence→candidate→owner/review→eval→version→publish.
+
+**Reuse Gate:** EXISTING_EQUIVALENT=YES para núcleo DÉLIA, Expertise, MCP, Portal/Core e plugin-ui navigation; TO_INVENTORY para contrato multi-speaker, catálogo user-facing efetivo, continuidade cross-app e Resources/Prompts em runtime. REUSE_DECISION=REUSE|EXTEND no boundary legítimo. Esta direção documental não concede fase, permissão, deploy ou CP PASS.
 
 ## 2. MCP role
 
