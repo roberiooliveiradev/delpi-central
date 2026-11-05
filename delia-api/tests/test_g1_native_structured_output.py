@@ -859,8 +859,12 @@ def test_history_processor_preserves_tool_call_return_pairs():
 
     msgs = [
         ModelRequest(parts=[UserPromptPart("x" * 3000)]),
-        ModelResponse(parts=[ToolCallPart("tool_a", {"a": 1})]),
-        ModelRequest(parts=[ToolReturnPart("tool_a", "y" * 3000)]),
+        ModelResponse(
+            parts=[ToolCallPart("tool_a", {"a": 1}, tool_call_id="c1")]
+        ),
+        ModelRequest(
+            parts=[ToolReturnPart("tool_a", "y" * 3000, tool_call_id="c1")]
+        ),
         ModelResponse(parts=[TextPart("interim")]),
         ModelRequest(parts=[UserPromptPart("next")]),
     ]
@@ -894,8 +898,14 @@ def test_current_turn_survives_compaction_prior_turn_dropped():
         ModelRequest(parts=[UserPromptPart("PERGUNTA_ANTIGA " + "z" * 8000)]),
         ModelResponse(parts=[TextPart("resposta antiga " + "w" * 8000)]),
         ModelRequest(parts=[UserPromptPart("PERGUNTA_ATUAL")]),
-        ModelResponse(parts=[ToolCallPart("tool_a", {"a": 1})]),
-        ModelRequest(parts=[ToolReturnPart("tool_a", "evidência")]),
+        ModelResponse(
+            parts=[ToolCallPart("tool_a", {"a": 1}, tool_call_id="c1")]
+        ),
+        ModelRequest(
+            parts=[
+                ToolReturnPart("tool_a", "evidência", tool_call_id="c1")
+            ]
+        ),
         ModelResponse(parts=[TextPart("parcial")]),
     ]
     survivors = _select_surviving_messages(msgs, window=1200)
@@ -1174,3 +1184,123 @@ def test_in_run_suffix_fits_when_evidence_bounded():
     ]
     out = _select_surviving_messages(msgs, window=2000)
     assert len(out) == 3  # nothing dropped — all mandatory survives
+
+
+def test_same_name_different_explicit_id_fails_integrity():
+    """Doc 275 §2: same tool_name but divergent EXPLICIT tool_call_id
+    fails — a name match never rescues an explicit-ID mismatch."""
+    import pytest
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        _history_units,
+        _InvestigationHistoryIntegrityError,
+    )
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        ToolCallPart,
+        ToolReturnPart,
+        UserPromptPart,
+    )
+
+    with pytest.raises(_InvestigationHistoryIntegrityError):
+        _history_units([
+            ModelRequest(parts=[UserPromptPart("q")]),
+            ModelResponse(
+                parts=[
+                    ToolCallPart("search", {"a": 1}, tool_call_id="id-A")
+                ]
+            ),
+            ModelRequest(
+                parts=[
+                    ToolReturnPart("search", "data", tool_call_id="id-B")
+                ]
+            ),
+        ])
+
+
+def test_duplicate_return_id_fails_integrity():
+    """Doc 275 §2: a second ToolReturnPart for the same tool_call_id
+    is rejected — one call produces at most one return."""
+    import pytest
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        _history_units,
+        _InvestigationHistoryIntegrityError,
+    )
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        ToolCallPart,
+        ToolReturnPart,
+        UserPromptPart,
+    )
+
+    with pytest.raises(_InvestigationHistoryIntegrityError):
+        _history_units([
+            ModelRequest(parts=[UserPromptPart("q")]),
+            ModelResponse(
+                parts=[
+                    ToolCallPart("search", {"a": 1}, tool_call_id="id-1")
+                ]
+            ),
+            ModelRequest(
+                parts=[
+                    ToolReturnPart("search", "r1", tool_call_id="id-1"),
+                    ToolReturnPart("search", "r2", tool_call_id="id-1"),
+                ]
+            ),
+        ])
+
+
+def test_agent_in_run_overflow_after_tool_result_no_second_call():
+    """Doc 275 §4: REAL Agent+ProcessHistory+FunctionModel — first
+    model request succeeds, the response contains a fat interim text
+    + tool call; after the governed tool result, the mandatory
+    current-turn suffix exceeds the window → the native processor
+    raises BEFORE the second model request: exactly ONE physical
+    call and typed investigation_context_overflow."""
+    from tests.test_pydantic_ai_semantic_rework import _gates
+    from app.application.interaction.turn_budget import TurnDeadline
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from pydantic_ai.messages import (
+        ModelResponse,
+        TextPart,
+        ToolCallPart,
+    )
+    from pydantic_ai.models.function import FunctionModel
+
+    gates = _gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    read = next(c for c in catalog if c["operation_class"] == "READ")
+    calls = []
+
+    def _fn(messages, _info):
+        calls.append(len(messages))
+        if not any(isinstance(m, ModelResponse) for m in messages):
+            # fat interim model text + a tool call — the model's own
+            # response content grows the mandatory suffix in-run
+            return ModelResponse(
+                parts=[
+                    TextPart("x" * 40000),
+                    ToolCallPart(
+                        "invoke_read_capability",
+                        {
+                            "capability_id": read["capability_id"],
+                            "arguments": {"query": "terminal"},
+                        },
+                    ),
+                ]
+            )
+        return _final_answer("done", status="insufficient")
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates,
+        model=FunctionModel(_fn),
+        context_window_tokens=12_000,
+    )
+    attempt = engine.attempt("consulte terminal")
+    assert len(calls) == 1, calls
+    assert attempt.error_code == "investigation_context_overflow"

@@ -536,19 +536,35 @@ def _history_units(messages):
                 for p in prior.parts
                 if isinstance(p, ToolCallPart)
             ]
-            ids = {c.tool_call_id for c in calls}
-            names = {c.tool_name for c in calls}
-            matched = all(
-                r.tool_call_id in ids or r.tool_name in names
-                for r in returns
-            )
-            if matched:
-                units[-1].append(msg)
-                continue
-            raise _InvestigationHistoryIntegrityError(
-                "tool_return without matching tool_call "
-                f"({[r.tool_name for r in returns]})"
-            )
+            call_ids = {c.tool_call_id for c in calls}
+            # Explicit IDs are the pairing key — a name match never
+            # rescues a divergent explicit ID (doc 275 §2). Name-only
+            # matching applies solely when the return lacks an
+            # explicit id and exactly one call by that name exists.
+            seen_return_ids: set[str] = set()
+            for r in returns:
+                rid = getattr(r, "tool_call_id", None)
+                if rid:
+                    if rid in seen_return_ids:
+                        raise _InvestigationHistoryIntegrityError(
+                            f"duplicate tool_return id {rid!r}"
+                        )
+                    seen_return_ids.add(rid)
+                    if rid not in call_ids:
+                        raise _InvestigationHistoryIntegrityError(
+                            f"tool_return id {rid!r} matches no call"
+                        )
+                    continue
+                candidates = [
+                    c for c in calls if c.tool_name == r.tool_name
+                ]
+                if len(candidates) != 1:
+                    raise _InvestigationHistoryIntegrityError(
+                        "tool_return without explicit id is not "
+                        f"uniquely matchable ({r.tool_name!r})"
+                    )
+            units[-1].append(msg)
+            continue
         if returns:
             raise _InvestigationHistoryIntegrityError(
                 "tool_return with no preceding unit"
@@ -1368,7 +1384,7 @@ class PydanticAiInvestigationOrchestrator:
                     limitations=(
                         (
                             "investigation_history_invalid:"
-                            + str(exc)[:200]
+                            + str(exc)[:200],
                         )
                         if integrity
                         else ("investigation_context_overflow:in-run",)

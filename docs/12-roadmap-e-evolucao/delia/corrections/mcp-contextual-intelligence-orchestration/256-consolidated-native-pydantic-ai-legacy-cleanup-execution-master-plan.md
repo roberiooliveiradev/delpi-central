@@ -698,3 +698,17 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   retorno é bounded; o processor cobre acúmulo multi-turno.
 - Pergunta atual + evidências + pares preservados; nada fabricado.
 - Suite completa PASS (exit 0); zero legacy reintroduzido.
+
+## 29. G7 closure — pareamento por ID + overflow in-run no Agent (doc 275)
+
+- **tool_call_id é a chave**: name match nunca resgata ID explícito
+  divergente; retorno duplicado para o mesmo ID → falha; retorno sem
+  ID só pareia quando exatamente uma call com o nome existe.
+- **limitations**: sempre tuple-shaped (integrity e overflow) —
+  bug de shape str corrigido.
+- **In-run no Agent real**: FunctionModel retorna interim TextPart
+  grande + ToolCall → resultado governed adiciona contexto →
+  ProcessHistory levanta `_InvestigationContextOverflow` ANTES do
+  2º request físico → `investigation_context_overflow` tipado,
+  calls==1. Prova que a falha in-run atravessa o fluxo real do Agent.
+- Suite completa PASS (exit 0); zero legado reintroduzido.
