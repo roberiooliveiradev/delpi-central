@@ -205,6 +205,8 @@ export type KpiCardFlatOptions = {
   /** Direção semântica do delta (↑ bom vs ↓ bom). */
   higherIsBetter?: boolean;
   showComparison?: boolean;
+  /** Exibe o número da meta já formatado. Omitido = oculto. */
+  showTarget?: boolean;
   showProgress?: boolean;
   showSparkline?: boolean;
   comparisonLabel?: string;

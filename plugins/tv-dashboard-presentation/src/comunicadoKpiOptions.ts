@@ -47,6 +47,11 @@ export type ComunicadoKpiOptions = {
   /** Direção semântica do delta (↑ bom vs ↓ bom). Default: true. */
   higherIsBetter?: boolean;
   showComparison?: boolean;
+  /**
+   * Exibe o número da meta (`kpiPresentation.targetDisplay`).
+   * Omitido/false = oculto (legado). Não apaga `target`/`targetField`.
+   */
+  showTarget?: boolean;
   showProgress?: boolean;
   showSparkline?: boolean;
   comparisonLabel?: string;

@@ -60,6 +60,7 @@ function EmptyKpiCard({
       interaction={interaction}
       comparisonText={presentation.comparisonText}
       comparisonTone={presentation.comparisonTone}
+      targetText={presentation.targetText}
       progressPct={presentation.progressPct}
       sparklinePoints={presentation.sparklinePoints}
       variant={presentation.variant ?? block.kpiOptions?.variant ?? null}
@@ -167,6 +168,7 @@ export function KpiViewBlockView({
         interaction={hasMulti ? null : kpiInteraction}
         comparisonText={presentation.comparisonText}
         comparisonTone={presentation.comparisonTone}
+        targetText={presentation.targetText}
         progressPct={presentation.progressPct}
         sparklinePoints={presentation.sparklinePoints}
         variant={presentation.variant ?? block.kpiOptions?.variant ?? null}

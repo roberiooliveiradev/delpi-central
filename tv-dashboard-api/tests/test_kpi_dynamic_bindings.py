@@ -53,6 +53,8 @@ def test_a_principal_value_meta_title_subtitle_comparison_and_color():
     DisplayFormatService._apply_kpi_presentation(resolved, block)
     pres = resolved["kpiPresentation"]
     assert pres["targetValue"] == 85.0
+    assert pres["targetDisplay"]
+    assert "85" in str(pres["targetDisplay"])
     assert pres["titleDisplay"] == "OEE"
     assert pres["subtitleDisplay"] == "Turno A"
     assert pres["progressPct"] is not None

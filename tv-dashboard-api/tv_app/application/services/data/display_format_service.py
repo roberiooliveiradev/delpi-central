@@ -2539,19 +2539,22 @@ class DisplayFormatService:
         comparison_display: str | None = None
         comparison_tone: str | None = None
         status_label: str | None = None
-        if show_comparison and numeric is not None and baseline is not None and baseline != 0:
-            value_spec = cls.resolve_spec(
-                display_format=primary_override.get("displayFormat")
-                or options.get("displayValueFormat"),
-                legacy_format=str(
-                    primary_override.get("format") or options.get("valueFormat") or ""
-                )
-                or None,
-                decimal_places=primary_override.get(
-                    "decimalPlaces", options.get("decimalPlaces")
-                ),
-                kind="kpi",
+        value_spec = cls.resolve_spec(
+            display_format=primary_override.get("displayFormat")
+            or options.get("displayValueFormat"),
+            legacy_format=str(
+                primary_override.get("format") or options.get("valueFormat") or ""
             )
+            or None,
+            decimal_places=primary_override.get(
+                "decimalPlaces", options.get("decimalPlaces")
+            ),
+            kind="kpi",
+        )
+        target_display = (
+            cls.format_value(target_n, value_spec) if target_n is not None else None
+        )
+        if show_comparison and numeric is not None and baseline is not None and baseline != 0:
             is_percent = value_spec.get("category") == "percent"
             # Métrica percentual vs meta/período compara em pontos
             # percentuais (p.p.), nunca em % relativo — spec PR-132/134.
@@ -2634,6 +2637,7 @@ class DisplayFormatService:
             "showProgress": show_progress,
             "showSparkline": options.get("showSparkline") is True,
             "targetValue": target_n,
+            "targetDisplay": target_display,
             "titleDisplay": title_display,
             "subtitleDisplay": subtitle_display,
             "resolvedColorRules": resolved_color_rules,

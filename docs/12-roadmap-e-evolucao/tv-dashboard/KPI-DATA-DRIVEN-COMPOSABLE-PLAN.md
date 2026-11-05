@@ -589,3 +589,39 @@ RESIDUAL SEARCH / UNRESOLVED GAPS / STOP CONDITION
 ---
 
 **Princípio final:** *qualquer parte informacional do KPI deve poder consumir valores dinâmicos quando semanticamente aplicável; todas as partes têm visibilidade independente; o backend resolve/autoriza e o palco único apresenta. Reutilizar contratos antes de inventar.*
+
+## 17. Evidência E0 e decisões fechadas por código (2026-11-04)
+
+HEAD de inventário: `07c8e762f1` (documento já na `main`). Esta seção registra fatos; não substitui schemas.
+
+| Capacidade | EXISTING_EQUIVALENT | REUSE |
+|---|---|---|
+| Valor via `metrics[].field` | YES | REUSE |
+| Meta numérica `targetField` → `targetValue` / comparação / progresso | YES | REUSE |
+| Texto formatado da meta no card | NO (`targetDisplay` ausente; hint é autoria) | EXTEND |
+| Visibilidade da meta independente da comparação | NO (não há part `target`) | EXTEND via `showTarget` (irmão de `showComparison`), default oculto |
+| Título/subtítulo dinâmicos | YES (`titleField`/`subtitleField`) | REUSE |
+| `contentRuns` de estilo em title/hint | YES | REUSE |
+| `dataRef` dentro de partes KPI | NO (dataRef resolve em bloco texto/forma) | TO_INVENTORY — não criar engine |
+| Cor `compareField` | YES | REUSE |
+| Período = filtros efetivos | TO_INVENTORY (`filter.*` em extract) | não auto-reescrever hint |
+| Ícone condicional | NO mapping tipado | DEFER (D-07) |
+
+**Causa do laboratório (PROVEN no código, não reexecutada no DOM desta sessão):** comparação usa `targetValue`; o card não pinta o número da meta. Não é falha de `targetField`.
+
+| ID | Decisão | Base |
+|---|---|---|
+| D-01 | Sem `KpiPartRef` novo. `kpiPresentation.targetDisplay` + `kpiOptions.showTarget` (omitido = oculto). | Invariante legado + showComparison |
+| D-02 | Misto multi-campo em partes KPI permanece no owner de `contentRuns`/`dataRef` de texto. Não estender nesta entrega. | STOP de engine nova |
+| D-03 | Legado não ganha meta visível. Novo KPI não liga `showTarget` sozinho. | Plano §8 |
+| D-04 | Status continua dentro da comparação. Período não vira part. | Partes atuais |
+| D-05 | `targetField` declarado e não resolvido → meta nula, sem cair no literal. | `_resolve_kpi_target_number` |
+| D-06 | Tipo pós-transform de `comparable_goal` | TO_INVENTORY — sem patch de schema |
+| D-07 | Ícone condicional | DEFER |
+| D-08 | Multi-linha segue agregação já persistida; default `first` do owner. Não rejeitar `first`. | Contrato vigente |
+| D-09 | Período automático | STOP até binding explícito de contexto |
+| D-10 | Campos opcionais; cliente antigo ignora `targetDisplay`/`showTarget`. | ADDITIVE |
+
+**Fora desta entrega (PENDING):** RQ-04 misto 2+ campos na mesma string de parte KPI, RQ-08 ícone, RQ-12 período=filtro, pixel editor≡TV, VISTA live, MDD apply isolado.
+
+**Nesta entrega:** `targetDisplay` no enrich e pintura somente com `showTarget=true`.

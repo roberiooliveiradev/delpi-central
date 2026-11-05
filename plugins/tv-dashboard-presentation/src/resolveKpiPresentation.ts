@@ -27,6 +27,8 @@ export type KpiViewPresentation = {
   showIcon: boolean;
   comparisonText?: string;
   comparisonTone?: DelpiKpiComparisonTone;
+  /** Número da meta já formatado pelo enrich. */
+  targetText?: string;
   progressPct?: number | null;
   sparklinePoints?: number[];
   /** Variante efetiva para o kit (hero|row|scorecard). */
@@ -149,6 +151,10 @@ export function resolveKpiViewPresentation(
     showIcon: options.showIcon !== false,
     comparisonText: comparison.comparisonText,
     comparisonTone: comparison.comparisonTone,
+    targetText:
+      typeof serverPres?.targetDisplay === "string" && serverPres.targetDisplay.trim()
+        ? serverPres.targetDisplay.trim()
+        : undefined,
     progressPct: comparison.progressPct,
     sparklinePoints:
       serverPres?.showSparkline === false

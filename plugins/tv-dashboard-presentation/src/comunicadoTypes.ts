@@ -824,6 +824,8 @@ export type ComunicadoDataResolved = {
     showSparkline?: boolean;
     /** Meta efetiva resolvida (literal ou targetField). */
     targetValue?: number | null;
+    /** Meta formatada para pintura. Visibilidade é `kpiOptions.showTarget` (default oculto). */
+    targetDisplay?: string | null;
     /** Título dinâmico materializado (titleField). */
     titleDisplay?: string | null;
     /** Subtítulo dinâmico materializado (subtitleField). */

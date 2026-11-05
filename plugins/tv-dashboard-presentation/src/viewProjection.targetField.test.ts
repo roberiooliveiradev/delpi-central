@@ -108,4 +108,19 @@ describe("resolveKpiViewPresentation — displays dinâmicos (I parity paint)", 
     expect(presentation.hint).toBe("Linha 2");
     expect(presentation.tone).toBe("positive");
   });
+
+  it("expõe targetDisplay do enrich sem recalcular a meta", () => {
+    const presentation = resolveKpiViewPresentation({
+      kpi: { value: 93.7, displayValue: "93,70%" },
+      kpiPresentation: {
+        valueDisplay: "93,70%",
+        targetDisplay: "85,00%",
+        targetValue: 85,
+        showComparison: true,
+        comparisonDisplay: "▲ +8,70 p.p. vs meta",
+      },
+    });
+    expect(presentation.targetText).toBe("85,00%");
+    expect(presentation.valueText).toBe("93,70%");
+  });
 });

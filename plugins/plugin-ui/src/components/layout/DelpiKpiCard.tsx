@@ -286,6 +286,8 @@ export type DelpiKpiCardProps = {
   /** Texto do delta (ex.: «▲ +3,2% vs meta»). */
   comparisonText?: string;
   comparisonTone?: DelpiKpiComparisonTone;
+  /** Meta formatada pelo enrich. Só pinta se `kpiOptions.showTarget`. */
+  targetText?: string;
   /** Progresso 0–100 até a meta. */
   progressPct?: number | null;
   /** Pontos da sparkline (ordem temporal). */
@@ -388,6 +390,7 @@ export function DelpiKpiCard({
   interaction = null,
   comparisonText,
   comparisonTone = "neutral",
+  targetText,
   progressPct = null,
   sparklinePoints = null,
   variant: variantProp = null,
@@ -800,6 +803,11 @@ export function DelpiKpiCard({
                   }
                 />
               </strong>
+            ) : null}
+            {kpiOptions?.showTarget === true && targetText?.trim() ? (
+              <p className="delpi-kpi-card__target" data-kpi-target="true">
+                {targetText.trim()}
+              </p>
             ) : null}
             {showComparison && comparisonContent ? (
               <p

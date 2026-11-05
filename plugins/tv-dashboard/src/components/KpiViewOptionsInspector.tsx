@@ -152,6 +152,19 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
         />
       ) : null}
 
+      <DeckField id="kpi-show-target" label="Exibir valor da meta">
+        <FormSelectControl
+          id="kpi-show-target"
+          ariaLabel="Exibir valor da meta"
+          value={options.showTarget === true ? "on" : "off"}
+          onChange={(value) => patch({ showTarget: value === "on" })}
+          options={[
+            { value: "off", label: "Oculta (binding preservado)" },
+            { value: "on", label: "Exibir número formatado" },
+          ]}
+        />
+      </DeckField>
+
       <DeckField id="kpi-higher-is-better" label="Direção">
         <FormSelectControl
           id="kpi-higher-is-better"
