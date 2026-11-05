@@ -298,7 +298,7 @@ export function ChartAxesProjectionEditor({
                         onChange={(value) =>
                           patchSeries(option.field, { color: value.trim() || undefined })
                         }
-                        ariaLabel={`Cor da série ${option.label}`}
+                        aria-label={`Cor da série ${option.label}`}
                       />
                       <FormSelectControl
                         id={`${idPrefix}-${option.field}-plot`}

@@ -32,6 +32,8 @@ export type InputPartStyle = {
   fontStyle?: string;
   textDecoration?: string;
   textAlign?: "left" | "center" | "right" | "justify";
+  /** Mesmo contrato do KPI: auto = FitText, fixed = fontSize em px. */
+  typographyMode?: "auto" | "fixed";
   opacity?: number;
   stroke?: string;
   strokeWidth?: number;

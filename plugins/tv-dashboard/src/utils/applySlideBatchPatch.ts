@@ -206,7 +206,7 @@ export function applySlideBatchPatch(
     let nativeTouched = false;
     if (isNativeOperationalSlide(slide) && (patch.branch !== undefined || patch.periodDays !== undefined)) {
       if (patch.branch !== undefined) {
-        if (patch.branch.trim()) nextNative.branch = patch.branch.trim();
+        if (patch.branch?.trim()) nextNative.branch = patch.branch.trim();
         else delete nextNative.branch;
       }
       if (patch.periodDays !== undefined) nextNative.periodDays = patch.periodDays;

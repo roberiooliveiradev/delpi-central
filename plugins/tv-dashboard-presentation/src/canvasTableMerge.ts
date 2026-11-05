@@ -144,7 +144,9 @@ export function expandSelectionToMerges(
   merges: readonly CanvasTableMerge[] | undefined,
 ): CanvasTableCellRef[] {
   if (!merges?.length || !cells.length) return [...cells];
-  const byKey = new Map(cells.map((cell) => [`${cell.row}:${cell.col}`, cell] as const));
+  const byKey = new Map<string, CanvasTableCellRef>(
+    cells.map((cell) => [`${cell.row}:${cell.col}`, cell]),
+  );
   let changed = true;
   while (changed) {
     changed = false;

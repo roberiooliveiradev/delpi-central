@@ -187,7 +187,7 @@ export function resolveSelectionSections(
       }),
     );
     const intersected = intersectOrderedIds(perBlock);
-    const withOrganizeActions = intersected.includes("organize")
+    const withOrganizeActions: SelectionSectionId[] = intersected.includes("organize")
       ? intersected
       : [...intersected.filter((id) => id !== "actions"), "organize", "actions"];
     return filterMultiExcludedSections(

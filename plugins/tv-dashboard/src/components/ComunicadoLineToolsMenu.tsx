@@ -63,7 +63,7 @@ export function ComunicadoLineToolsMenu({
             : `${tool.label}: disponível em breve (desenho no palco)`;
           return (
             <li key={tool.id}>
-              <HintAction hint={hint} ariaLabel={tool.label} placement="right">
+              <HintAction hint={hint} ariaLabel={tool.label}>
                 <button
                   type="button"
                   role="menuitem"

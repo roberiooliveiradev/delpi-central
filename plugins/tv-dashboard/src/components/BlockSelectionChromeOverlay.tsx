@@ -29,7 +29,7 @@ type Props = {
     mode: BlockDragMode,
   ) => void;
   onResizeHandleDoubleClick?: (
-    event: ReactPointerEvent<HTMLElement>,
+    event: React.MouseEvent<HTMLElement>,
     block: ComunicadoBlock,
     mode: Extract<BlockDragMode, `resize-${string}`>,
   ) => void;

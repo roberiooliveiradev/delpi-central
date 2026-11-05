@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { clampFontSize } from "./comunicadoHelpers";
 import type {
   ComunicadoContentRun,
@@ -145,7 +147,7 @@ export function transformContentRunsCase(
 
 export function applyBaselineShiftToCss(
   style: Pick<ComunicadoContentRunStyle, "baselineShift"> | undefined,
-  css: { verticalAlign?: string; fontSize?: string | number },
+  css: CSSProperties,
 ): void {
   if (!style?.baselineShift) return;
   if (style.baselineShift === "sub") {

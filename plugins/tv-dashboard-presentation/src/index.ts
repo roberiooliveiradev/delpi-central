@@ -655,7 +655,9 @@ export {
   frameStyle,
   normalizeIconBlockStyle,
   isDataBlockType,
+  isDataSourceBlock,
   isDataSourceBlockType,
+  isDataViewBlock,
   isDataViewBlockType,
   isDataBoundEditorBlockType,
   isTextDataBoundBlockType,
@@ -1193,6 +1195,7 @@ export {
   type ComunicadoChartPartFrame,
   type ComunicadoChartPartRef,
   type ComunicadoChartPartResizeHandle,
+  type ComunicadoChartPartStyle,
   type ComunicadoChartPartsMap,
   type ComunicadoChartTextPartKind,
 } from "./comunicadoChartParts";

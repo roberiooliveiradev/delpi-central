@@ -804,7 +804,7 @@ export type PreviewFilterOverrides = {
 };
 
 export type PreviewPayloadOptions = {
-  filters?: PreviewFilterOverrides | null;
+  filters?: PreviewFilterOverrides | InputFilterContributions | null;
   /** Enrich como TV pública (service auth). Default na página de prévia. */
   parity?: "tv";
 };
@@ -1395,7 +1395,7 @@ export async function updateSlide(
     title: string;
     durationSec: number | null;
     nativeConfig: Record<string, unknown>;
-    externalUrl: string;
+    externalUrl: string | null;
     isActive: boolean;
     transitionStyle: string | null;
     sectionId: string | null;

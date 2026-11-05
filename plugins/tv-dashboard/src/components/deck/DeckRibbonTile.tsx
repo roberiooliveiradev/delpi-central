@@ -8,7 +8,7 @@ type Props = {
   icon: LucideIcon;
   label: string;
   hint?: string;
-  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   active?: boolean;
   children?: ReactNode;

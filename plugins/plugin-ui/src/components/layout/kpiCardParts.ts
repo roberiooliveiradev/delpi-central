@@ -413,7 +413,12 @@ export function defaultKpiPartFrame(kind: KpiFramePartKind): KpiPartFrame {
   return { ...KPI_PART_DEFAULT_FRAMES[kind] };
 }
 
-export function clampKpiPartFrame(frame: KpiPartFrame): KpiPartFrame {
+export function clampKpiPartFrame(frame: KpiPartFrame): {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+} {
   const w = Math.max(4, Math.min(100, frame.w ?? KPI_ICON_DEFAULT_FRAME.w ?? 14));
   const h = Math.max(4, Math.min(100, frame.h ?? KPI_ICON_DEFAULT_FRAME.h ?? 28));
   return {

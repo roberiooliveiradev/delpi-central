@@ -1005,7 +1005,9 @@ export function useComunicadoEditorSelection({
         updateBlock: (blockId, patch) => {
           const current = configRef.current.blocks ?? [];
           updateBlocksRef.current(
-            current.map((block) => (block.id === blockId ? { ...block, ...patch } : block)),
+            current.map((block) =>
+              block.id === blockId ? ({ ...block, ...patch } as ComunicadoBlock) : block,
+            ),
           );
         },
       });

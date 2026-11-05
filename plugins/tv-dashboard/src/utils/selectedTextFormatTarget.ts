@@ -142,7 +142,9 @@ export function isChartTextFormatPart(part: ComunicadoChartPartRef | null | unde
   return chartPartAllowsEdit(part);
 }
 
-export function isInputTextFormatPart(part: ComunicadoInputPartRef | null | undefined): boolean {
+export function isInputTextFormatPart(
+  part: ComunicadoInputPartRef | null | undefined,
+): part is ComunicadoInputPartRef & { kind: "label" | "badge" | "control" } {
   return Boolean(part && isInputTextPartKind(part.kind));
 }
 

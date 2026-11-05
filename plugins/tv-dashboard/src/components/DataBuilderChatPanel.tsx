@@ -82,11 +82,11 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 function remapTransformSourceIds(
-  transform: DataTransform | undefined,
+  transform: { steps?: ReadonlyArray<unknown> } | undefined,
   idMap: Record<string, string>,
 ): DataTransform | undefined {
-  if (!transform || !("steps" in transform) || !Array.isArray(transform.steps)) {
-    return transform;
+  if (!transform || !Array.isArray(transform.steps)) {
+    return undefined;
   }
   const steps = transform.steps.map((step) => {
     if (!step || typeof step !== "object") return step;
@@ -381,25 +381,27 @@ export function DataBuilderChatPanel({
       }
 
       const idMap: Record<string, string> = {};
-      const prepared: ComunicadoDataSourceBlock[] = [];
+      const drafted: Array<{
+        block: ComunicadoDataSourceBlock;
+        transform?: { steps?: Array<Record<string, unknown>> };
+      }> = [];
       for (const block of blocks) {
-        if (!block || typeof block !== "object") continue;
-        const row = block as ComunicadoBlock;
-        if (row.type !== "data_source") continue;
-        const draftLocalId = String((row as { draftLocalId?: string }).draftLocalId || "");
-        const nextBlock = { ...row } as ComunicadoDataSourceBlock;
-        delete (nextBlock as { draftLocalId?: string }).draftLocalId;
-        prepared.push(nextBlock);
-        if (draftLocalId) idMap[draftLocalId] = nextBlock.id;
+        if (block.type !== "data_source") continue;
+        const nextBlock = createDataSourceBlock(block.dataBinding.operationId, {
+          label: block.dataBinding.label ?? block.queryName,
+          defaultParams: block.dataBinding.params,
+        });
+        drafted.push({ block: nextBlock, transform: block.dataTransform });
+        if (block.localId) idMap[block.localId] = nextBlock.id;
       }
 
-      const finalized =
-        prepared.length > 1
-          ? prepared.map((block) => {
-              const transform = remapTransformSourceIds(block.dataTransform, idMap);
-              return transform ? { ...block, dataTransform: transform } : block;
-            })
-          : prepared;
+      const finalized = drafted.map((item) => {
+        const transform = remapTransformSourceIds(
+          item.transform,
+          drafted.length > 1 ? idMap : {},
+        );
+        return transform ? { ...item.block, dataTransform: transform } : item.block;
+      });
 
       for (let index = 0; index < finalized.length; index += 1) {
         const nextBlock = finalized[index];
@@ -410,7 +412,6 @@ export function DataBuilderChatPanel({
         }
       }
 
-      if (result.session) applySession(result.session);
       onInserted?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : C.materializeError);

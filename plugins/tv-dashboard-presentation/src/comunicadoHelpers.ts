@@ -207,6 +207,7 @@ import type {
   ComunicadoInputValueSchema,
   ComunicadoTablePreset,
   ComunicadoFrame,
+  ComunicadoShapeBlock,
   ComunicadoGeometryVertex,
   ComunicadoGroupTransform,
   ComunicadoCustomFontRef,
@@ -253,7 +254,9 @@ import { normalizeFieldLabels } from "./fieldLabelRegistry";
 export {
   isCanvasTableDataBoundBlockType,
   isDataBoundEditorBlockType,
+  isDataSourceBlock,
   isDataSourceBlockType,
+  isDataViewBlock,
   isDataViewBlockType,
   isTextDataBoundBlockType,
   isFetchableDataBlockType,
@@ -1476,7 +1479,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
     const dataSourceId = typeof block.dataSourceId === "string" ? block.dataSourceId.trim() : undefined;
     const modelId = typeof block.modelId === "string" ? block.modelId.trim() : undefined;
     const textProjection = normalizeTextProjection(block.textProjection);
-    let shapeNorm = {
+    let shapeNorm: ComunicadoShapeBlock = {
       id,
       type: "shape" as const,
       frame,

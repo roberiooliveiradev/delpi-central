@@ -90,7 +90,7 @@ export function InputSelectionFloatToolbar({ block }: Props) {
             label="Moldura…"
             onClick={() => {
               selectInputPart(block.id, { kind: "frame" });
-              setSelectionPanelTab("format");
+              setSelectionPanelTab("element");
               close();
             }}
           />
@@ -98,7 +98,7 @@ export function InputSelectionFloatToolbar({ block }: Props) {
             label="Controle…"
             onClick={() => {
               selectInputPart(block.id, { kind: "control" });
-              setSelectionPanelTab("format");
+              setSelectionPanelTab("element");
               close();
             }}
           />

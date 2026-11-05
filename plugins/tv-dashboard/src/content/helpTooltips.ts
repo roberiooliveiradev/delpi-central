@@ -177,6 +177,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertIcon: "Ícones vetoriais prontos para o slide.",
     insertLineShape:
       "Linha livre: alças nas pontas. Arraste uma ponta até outro bloco para grudar (conector); os pontos de conexão aparecem ao aproximar.",
+    insertEfficiencyPin:
+      "Pin de centro de trabalho na planta — radar pela eficiência do dia.",
     insertLineTool:
       "Ferramentas de linha: linha, seta, conectores, curva, polilinha e rabisco.",
     iconEditor:

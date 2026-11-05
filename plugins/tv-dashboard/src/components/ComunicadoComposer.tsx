@@ -132,7 +132,7 @@ function useCanvasBackgroundPaint(
       ? resolveEditorMediaUrl(playlistId, background.assetId, background.url)
       : undefined;
   const { src: imageBlobUrl, loading: imageLoading } = useAuthenticatedBlobUrl(imageApiUrl);
-  const previousSrcRef = useRef<string | undefined>();
+  const previousSrcRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (imageBlobUrl) previousSrcRef.current = imageBlobUrl;
@@ -519,7 +519,7 @@ export function ComunicadoComposerCanvas() {
   /** Duplo clique no handle de resize → hug ao texto (Figma edge hug). */
   const hugSelectedVisualBoxToText = useCallback(
     (
-      event: React.PointerEvent<HTMLElement>,
+      event: React.MouseEvent<HTMLElement>,
       block: ComunicadoBlock,
       mode: Extract<BlockDragMode, `resize-${string}`>,
     ) => {

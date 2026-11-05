@@ -10,6 +10,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactElement,
   type ReactNode,
 } from "react";
 
@@ -26,7 +27,7 @@ export type DeckChromeTabsRowProps = {
   onSelect: (tab: DeckRibbonTabId) => void;
   isTabDisabled?: (tab: DeckRibbonTabMeta) => boolean;
   /** Ex.: DeckKeyTip em volta da célula. */
-  wrapTab?: (tab: DeckRibbonTabMeta, cell: ReactNode) => ReactNode;
+  wrapTab?: (tab: DeckRibbonTabMeta, cell: ReactElement) => ReactNode;
   className?: string;
   portalScopeClassName?: string;
   overflowEnabled?: boolean;

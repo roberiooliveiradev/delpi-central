@@ -29,6 +29,12 @@ export type TablePartStyle = {
   textDecoration?: string;
   textAlign?: "left" | "center" | "right" | "justify";
   verticalAlign?: "top" | "middle" | "bottom";
+  /** Mesmo contrato do KPI: auto = FitText, fixed = fontSize em px. */
+  typographyMode?: "auto" | "fixed";
+  textShadow?: string;
+  textStrokeColor?: string;
+  textStrokeWidth?: number;
+  textReflection?: boolean;
   /** Contorno da moldura (parte `frame`). */
   stroke?: string;
   strokeWidth?: number;

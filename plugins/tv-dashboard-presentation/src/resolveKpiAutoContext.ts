@@ -82,8 +82,7 @@ export function resolveKpiOptionsWithAutoContext(
     next.iconName = undefined;
   }
 
-  const preferScorecard =
-    variant === "scorecard" || (hasTarget && !hasSeries) || (hasTarget && variant === "scorecard");
+  const preferScorecard = variant === "scorecard" || (hasTarget && !hasSeries);
 
   if (preferScorecard && hasTarget) {
     next.showProgress = true;

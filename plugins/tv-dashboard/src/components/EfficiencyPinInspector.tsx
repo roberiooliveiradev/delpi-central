@@ -79,7 +79,7 @@ export function EfficiencyPinInspector({
       ? linkedSource.resolved
       : pin?.resolved;
 
-  const linkedInfo = useMemo(() => {
+  const linkedInfo = useMemo((): ComunicadoShapeBlock | null => {
     if (!pin || role === "info") return null;
     const linkedId = binding.linkedBlockId?.trim();
     if (linkedId) {
@@ -90,7 +90,7 @@ export function EfficiencyPinInspector({
     }
     return (
       blocks.find(
-        (block) =>
+        (block): block is ComunicadoShapeBlock =>
           isEfficiencyPinBlock(block) &&
           isEfficiencyPinInfoRole(block.efficiencyPin) &&
           block.efficiencyPin?.linkedBlockId === pin.id,
@@ -180,7 +180,7 @@ export function EfficiencyPinInspector({
             dataSourceId: trimmed || undefined,
             textProjection: undefined,
             efficiencyPin: {
-              ...(block.efficiencyPin ?? {}),
+              ...(isEfficiencyPinBlock(block) ? block.efficiencyPin ?? {} : {}),
               ...(inheritedBands ? { bands: inheritedBands } : {}),
             },
           } as typeof block)

@@ -85,13 +85,13 @@ export function ensureEfficiencyPinResizableFrame(
 }
 
 /** Migra todos os pins CT do slide (load / sync editor). */
-export function migrateEfficiencyPinBlocks<T extends { type?: string; shape?: ComunicadoShapeKind }>(
-  blocks: readonly T[],
+export function migrateEfficiencyPinBlocks(
+  blocks: readonly ComunicadoBlock[],
   defaultPinFrame: ComunicadoFrame,
-): T[] {
+): ComunicadoBlock[] {
   return blocks.map((block) => {
     if (!isEfficiencyPinBlock(block)) return block;
-    return ensureEfficiencyPinResizableFrame(block, defaultPinFrame) as T;
+    return ensureEfficiencyPinResizableFrame(block, defaultPinFrame);
   });
 }
 

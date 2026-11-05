@@ -21,7 +21,7 @@ import {
   CHART_PART_FONT_SIZE_DEFAULTS,
   INPUT_TEXT_PART_KINDS,
   KPI_TEXT_PART_KINDS,
-  type ChartTextPartKind,
+  type ComunicadoChartTextPartKind as ChartTextPartKind,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartPartStyle,
@@ -49,6 +49,8 @@ import {
 } from "./selectionPropertyApply";
 import { patchCanvasTableCellsStyle } from "./canvasTableSelectionCommands";
 
+type PartTypographyMode = "auto" | "fixed";
+
 type AnyPartStyle = {
   fontFamily?: string;
   fontSize?: number;
@@ -56,13 +58,13 @@ type AnyPartStyle = {
   fontStyle?: string;
   color?: string;
   textDecoration?: string;
-  textAlign?: string;
-  verticalAlign?: string;
+  textAlign?: "left" | "center" | "right" | "justify";
+  verticalAlign?: "top" | "middle" | "bottom";
   textShadow?: string;
   textStrokeColor?: string;
   textStrokeWidth?: number;
   textReflection?: boolean;
-  typographyMode?: string;
+  typographyMode?: PartTypographyMode;
 };
 
 function pickTextAlign(
@@ -96,7 +98,11 @@ function pickFontStyle(value: string | undefined): "italic" | "normal" | undefin
 function mergeTypographyStyle(
   prev: AnyPartStyle | null | undefined,
   patch: TextFormatStyleSnapshot,
-  opts?: { fontSizeAuto?: boolean; nextFontSize?: number | undefined; typographyMode?: string },
+  opts?: {
+    fontSizeAuto?: boolean;
+    nextFontSize?: number | undefined;
+    typographyMode?: PartTypographyMode;
+  },
 ): AnyPartStyle {
   const sparse = sparsePropertyPatch({
     fontFamily: patch.fontFamily,
@@ -562,6 +568,7 @@ export function buildSelectedTextFormatBlockPatch(params: {
           ? { fontSizeMode: "absolute" }
           : undefined,
     });
+    const tableAlign = pickTextAlign(patch.textAlign);
     const nextOptions = {
       ...current,
       ...(patch.fontFamily != null ? { fontFamily: patch.fontFamily } : {}),
@@ -571,8 +578,8 @@ export function buildSelectedTextFormatBlockPatch(params: {
       ...(patch.color != null
         ? { cellTextColor: patch.color, headerTextColor: patch.color }
         : {}),
-      ...(pickTextAlign(patch.textAlign)
-        ? { textAlign: pickTextAlign(patch.textAlign)! }
+      ...(tableAlign === "left" || tableAlign === "center" || tableAlign === "right"
+        ? { textAlign: tableAlign }
         : {}),
     };
     return {

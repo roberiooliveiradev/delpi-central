@@ -33,6 +33,18 @@ type RibbonEmbeddedTab =
   | "view"
   | "layers";
 
+function isRibbonEmbeddedTab(tab: string): tab is RibbonEmbeddedTab {
+  return (
+    tab === "insert" ||
+    tab === "element" ||
+    tab === "tableDesign" ||
+    tab === "tableLayout" ||
+    tab === "data" ||
+    tab === "view" ||
+    tab === "layers"
+  );
+}
+
 type Props = {
   labels?: Labels;
 };
@@ -91,7 +103,8 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
 
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab) || activeTab === "layers") {
-      setActiveTab(tabs.some((t) => t.id === "insert") ? "insert" : tabs[0]?.id ?? "insert");
+      const nextTab = tabs.some((tab) => tab.id === "insert") ? "insert" : tabs[0]?.id;
+      if (nextTab && isRibbonEmbeddedTab(nextTab)) setActiveTab(nextTab);
     }
   }, [activeTab, tabs]);
 

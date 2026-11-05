@@ -375,6 +375,10 @@ export type ComunicadoEditorContextValue = {
   /** Empilha undo do estado anterior após gesto live. */
   finalizeHistoryGesture: (before: ComunicadoConfig) => void;
   /** Aplica patches de vários blocos em um único commit de config/histórico. */
+  updateBlocks: (
+    blocks: ComunicadoBlock[],
+    configPatch?: Pick<ComunicadoConfig, "groupTransforms">,
+  ) => void;
   updateBlocksAtomically: (
     patches: ReadonlyArray<{ blockId: string; patch: Partial<ComunicadoBlock> }>,
   ) => void;
@@ -445,7 +449,11 @@ export type ComunicadoEditorContextValue = {
   clearRibbonTabRequest: () => void;
   replaceSelectedDataRoute: (block: ComunicadoBlock) => void;
   moveLayer: (direction: "up" | "down") => void;
-  reorderBlockLayer: (movedIds: string[], targetId: string) => void;
+  reorderBlockLayer: (
+    movedIds: string[],
+    targetId: string,
+    edge?: "before" | "after",
+  ) => void;
   nudgeSelected: (dx: number, dy: number) => void;
   undo: () => void;
   redo: () => void;

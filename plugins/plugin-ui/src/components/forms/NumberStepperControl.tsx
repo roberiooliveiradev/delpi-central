@@ -1,5 +1,5 @@
 import { Minus, Plus } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 import {
   ComboboxNumberControl,
@@ -15,11 +15,11 @@ export type NumberStepperControlProps = ComboboxNumberControlProps & {
   stepDownAriaLabel: string;
   stepUpAriaLabel: string;
   /** Envolve o botão − (ex.: HintAction). */
-  renderStepDown?: (button: ReactNode) => ReactNode;
+  renderStepDown?: (button: ReactElement) => ReactNode;
   /** Envolve o botão + (ex.: HintAction). */
-  renderStepUp?: (button: ReactNode) => ReactNode;
+  renderStepUp?: (button: ReactElement) => ReactNode;
   /** Envolve o combobox central (ex.: HintAction). */
-  renderValue?: (control: ReactNode) => ReactNode;
+  renderValue?: (control: ReactElement) => ReactNode;
   groupAriaLabel?: string;
 };
 

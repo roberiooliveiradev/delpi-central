@@ -2842,7 +2842,7 @@ export function PlaylistEditorPage({
         : slide.nativeConfig;
     slideClipboardRef.current = slidePayloadForClipboard({
       ...slide,
-      nativeConfig: liveConfig ?? null,
+      nativeConfig: liveConfig ?? undefined,
     });
     setSlideClipboardRevision((value) => value + 1);
   }
@@ -3097,7 +3097,7 @@ export function PlaylistEditorPage({
     onLongPressSelect: handleFilmstripLongPress,
     onClearMultiSelection: clearFilmstripMultiSelection,
     onDragStart: beginFilmstripDrag,
-    onDrop: (index, edge) => void handleDropSlide(index, edge),
+    onDrop: (index: number, edge?: ListDropEdge) => void handleDropSlide(index, edge),
     onDragEnd: endFilmstripDrag,
     onAdd: () => void handleAddCustomSlide(),
     onAddSection: () => void handleAddSection(),

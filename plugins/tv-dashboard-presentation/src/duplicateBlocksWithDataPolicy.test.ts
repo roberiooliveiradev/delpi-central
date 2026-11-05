@@ -126,4 +126,67 @@ describe("duplicateBlocksWithDataPolicy", () => {
     expect(pasted[1]?.groupId).toBe(pasted[0]?.groupId);
     expect(result.blocks.find((block) => block.id === "a")?.groupId).toBe("grp_orig");
   });
+
+  it("clone_source remapeia tabela, KPI, texto e grade para a fonte clonada", () => {
+    const source = sourceBlock("src-1");
+    const frame = { x: 10, y: 10, w: 20, h: 10 };
+    const views = [
+      { id: "table", type: "table_view" as const, dataSourceId: "src-1", frame },
+      { id: "kpi", type: "kpi_view" as const, dataSourceId: "src-1", frame },
+      { id: "label", type: "text" as const, content: "OTD", dataSourceId: "src-1", frame },
+      { id: "grid", type: "canvas_table" as const, dataSourceId: "src-1", frame, cells: [] },
+    ];
+    const result = duplicateBlocksWithDataPolicy([source], views, "clone_source");
+    const pasted = result.blocks.filter((block) => result.pastedIds.includes(block.id));
+    const clonedSource = result.blocks.find(
+      (block) => block.type === "data_source" && block.id !== "src-1",
+    );
+    expect(clonedSource?.id).toBeTruthy();
+    expect(clonedSource?.id).not.toBe("src-1");
+    for (const block of pasted) {
+      expect("dataSourceId" in block ? block.dataSourceId : null).toBe(clonedSource?.id);
+    }
+    expect(result.blocks.find((block) => block.id === "src-1")?.type).toBe("data_source");
+  });
+
+  it("conector sem ponta permanece vazio e a ponta ligada acompanha a cópia", () => {
+    const frame = { x: 10, y: 10, w: 20, h: 10 };
+    const origin = {
+      id: "origin",
+      type: "shape" as const,
+      shape: "rectangle" as const,
+      content: "",
+      frame,
+    };
+    const arrow = {
+      id: "arrow",
+      type: "shape" as const,
+      shape: "line" as const,
+      content: "",
+      frame,
+      connector: { fromBlockId: "origin", toBlockId: undefined },
+    };
+    const result = duplicateBlocksWithDataPolicy([], [origin, arrow], "share_source");
+    const pastedArrow = result.blocks.find(
+      (block) => result.pastedIds.includes(block.id) && block.type === "shape" && block.shape === "line",
+    );
+    const pastedOrigin = result.blocks.find(
+      (block) => result.pastedIds.includes(block.id) && block.id !== pastedArrow?.id,
+    );
+    expect(pastedArrow && pastedArrow.type === "shape" ? pastedArrow.connector?.fromBlockId : null).toBe(
+      pastedOrigin?.id,
+    );
+    expect(pastedArrow && pastedArrow.type === "shape" ? pastedArrow.connector?.toBlockId : "missing").toBeUndefined();
+  });
+
+  it("ícone sem fonte não cria data_source", () => {
+    const icon = {
+      id: "icon-1",
+      type: "icon" as const,
+      iconName: "Star",
+      frame: { x: 0, y: 0, w: 8, h: 8 },
+    };
+    const result = duplicateBlocksWithDataPolicy([], [icon], "clone_source");
+    expect(result.blocks.some((block) => block.type === "data_source")).toBe(false);
+  });
 });

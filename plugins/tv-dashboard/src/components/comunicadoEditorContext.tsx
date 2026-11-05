@@ -1382,6 +1382,7 @@ export function ComunicadoEditorProvider({
     setSpeakerNotes,
     updateSelected: blockActions.updateSelected,
     updateBlock: blockActions.updateBlock,
+    updateBlocks: blockActions.updateBlocks,
     updateBlockLive,
     snapshotEditorConfig,
     finalizeHistoryGesture,

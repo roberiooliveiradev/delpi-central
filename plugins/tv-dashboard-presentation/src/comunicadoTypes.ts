@@ -568,11 +568,14 @@ export type ComunicadoCanvasTableNumberFormat =
   | "currency";
 
 export type ComunicadoCanvasTableCellStyle = {
+  fontFamily?: string;
   fontSize?: number;
   fontWeight?: number;
+  fontStyle?: string;
   color?: string;
   backgroundColor?: string;
   textAlign?: "left" | "center" | "right";
+  verticalAlign?: "top" | "middle" | "bottom";
 };
 
 export type ComunicadoCanvasTableCell = {

@@ -104,7 +104,6 @@ export function consolidateTextBindingToProjection(
 ): ConsolidateTextBindingResult {
   const current = readEffectiveTextProjection(block);
   const next: ComunicadoTextProjection = {
-    field: current.field,
     ...current,
     ...patch,
   };
