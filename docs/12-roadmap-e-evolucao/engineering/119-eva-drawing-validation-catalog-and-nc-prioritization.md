@@ -885,3 +885,15 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **Evidência:** suíte overlay 275 testes PASS (incl. 62 `test_eva_mcp` com `asyncio_mode` correto); prod `delpi-engineering-api` healthy em `9976f441a6`.
 
 **Estado:** `MCP_DRAWING_UNDERSTANDING_NAMEERROR=FIXED` · `502_UPSTREAM=timeout gateway pipeline síncrono (documentado; caminho async via job segue canônico)` · `CHATGPT_CONSUMER_PASS=PENDING` (reteste: `product.drawing_understanding` `90263572` deve retornar `document`+`same_document_verified`+`guided_investigations` com `O0001 MATCH_CANDIDATE`).
+
+## 37. DEC-VAL-034 rev2 — PATH_DRIFT: recuperação ausente do caminho product.drawing_understanding (2026-11-05)
+
+**Causa-raiz (PROVEN):** reteste ChatGPT mostrou `O0001` `AMBIGUOUS`+`NO_CANDIDATE_REGION` em `product.drawing_understanding` válido (document+same_document_verified OK após `9976f441a6`). O caminho `drawing_understanding` executa `_produce_drawing_understanding`+`build_object_profiles` **sem** `analyze_product_drawing` — onde viviam recovery e `localized_recovery`. A evidência só existia no caminho `product.drawing_analysis` (job).
+
+**Correção (`f9d6ab73c9`, publicado como `abcdcc63f6`):** `apply_localized_recovery()` extraída para `drawing_investigation` (owner da recuperação) — computa faltantes, executa `recover_absent_table_cells`, registra em `tokens`/`code_contexts`/`localized_recovery`; chamada por ambos os caminhos (`analyze_product_drawing` e `_analyze_drawing_understanding` com `_prog` compartilhado). Aditivo, sem fabricação.
+
+**Evidência prod (`abcdcc63f6`, in-container, PDF `90263572` SHA …28d3e):** `O0001` → `MATCH_CANDIDATE`, `observed_value=10080004`, `evidence_refs` completos (`localized_ocr_recheck`, page 2, region_box [20,248,909,1038]@110dpi, box real [351.8,270.8,395.1,283.2], conf 0.9999, document_sha256 correto), `search_history=null` (sem contradição).
+
+**Testes:** 772/773 no overlay (falha isolada `test_lmp_domain` FileNotFound — fixture ausente no overlay, não-regressão). `90264030`: hierarquia/gate preservados (sem mudança de código do comparador nesta rev).
+
+**Estado:** `PATH_DRIFT=FIXED` · `DRAWING_UNDERSTANDING_PATH=RECOVERING` · `CHATGPT_CONSUMER_PASS=PENDING` (reteste: `product.drawing_understanding` `90263572` → O0001 MATCH_CANDIDATE + evidence_refs; `90264030` → 5 pais + 10 findings).

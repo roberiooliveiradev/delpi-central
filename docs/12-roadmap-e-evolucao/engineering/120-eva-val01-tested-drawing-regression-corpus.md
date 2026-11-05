@@ -230,3 +230,7 @@ Após executar os 13 testes, foi baixado novamente o **PDF oficial atual** `9026
 ## Log adicional — 2026-11-05 (DEC-VAL-034 aceite — diagnóstico 502/NameError)
 
 O consumidor ChatGPT encontrou `502 upstream_error` e depois erro interno. Diagnóstico real (logs `delpi-engineering-api`): `NameError: 'out'` no retorno de `product.drawing_understanding` + `ClientDisconnect`/timeout upstream na primeira tentativa (pipeline síncrono). Corrigido em `9976f441a6` — `document`/`same_document_verified` passam a viver no envelope `understanding`. A primeira tentativa sem resposta era timeout de gateway (análise leva minutos); caminho canônico de longa duração permanece `product.drawing_analysis` com `job_id` + poll.
+
+## Log adicional — 2026-11-05 (DEC-VAL-034 rev2 — PATH_DRIFT corrigido)
+
+O `drawing_understanding` síncrono nunca executava `recover_absent_table_cells` (só `product.drawing_analysis`). `apply_localized_recovery` agora roda em ambos os caminhos (`abcdcc63f6`). Verificado em prod: `O0001/10080004` → `MATCH_CANDIDATE` + `evidence_refs` completos (método, página, region_box, box real, SHA `9021fce0…`, conf 0.9999). 772/773 overlay (1 falha fixture lmp_domain não relacionada). `CHATGPT_CONSUMER_PASS` permanece PENDING até reteste independente.
