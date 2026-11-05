@@ -5752,3 +5752,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | Suíte | PASS (exit 0) |
 | Pendente | G1 typed output; resto de G3; G4; G5; G6; G7; G8 |
 | PRODUCTION_DEPLOY | NOT_AUTHORIZED |
+
+## G2 bounded rework — review 257 (execução)
+
+| Campo | Valor |
+|---|---|
+| Base | `495b2cfb9cceb5b4da738416db5eb900658a68c2` |
+| Testes negativos | `tests/test_g2_evidence_contract_regression.py` — 15 PASS |
+| Prune | 13 helpers/constantes mortas removidas de `generic_evidence_renderer.py` (1929→1679) |
+| RQ corrigido | IMPLEMENTED=2, PARTIAL=4, NOT_IMPLEMENTED=22 → cobertura 7,14% |
+| Suíte | PASS (exit 0) |
+| PRODUCTION_DEPLOY | NOT_AUTHORIZED |

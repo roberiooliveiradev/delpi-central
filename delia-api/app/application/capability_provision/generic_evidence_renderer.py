@@ -394,49 +394,8 @@ def _comparison_records(
     )
 
 
-def _comparable_scalar(value: object) -> str | None:
-    """Normalize a record leaf to a comparable scalar — numbers and
-    strings only; anything else is not comparable."""
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, (int, float)):
-        return repr(float(value))
-    if isinstance(value, str):
-        text = value.strip()
-        return text.casefold() if text else None
-    return None
 
 
-def _bound_owner_evidence(outcome: SpecialistOutcome) -> str:
-    """Sanitized, size-bounded projection of an owner DISCOVERY result.
-
-    The catalog is untrusted owner data: sensitive keys are redacted,
-    it is rendered as data (never instruction), and bounded before
-    reaching the argument prompt. Bounding is breadth-first — every
-    top-level and second-level entry keeps a bounded row so the whole
-    owner vocabulary stays visible; a single deep JSON truncation
-    would silently drop the operations the owner actually declares.
-    """
-    payload = (
-        outcome.structured
-        if isinstance(outcome.structured, Mapping)
-        else outcome.content_text
-    )
-    if isinstance(payload, str):
-        return _redact_text(payload)[:MAX_OWNER_EVIDENCE_CHARS]
-    sanitized = _sanitize_renderable(payload)
-    compacted = _compact_evidence(sanitized)
-    if not isinstance(compacted, Mapping):
-        return json.dumps(
-            compacted, ensure_ascii=False, default=str
-        )[:MAX_OWNER_EVIDENCE_CHARS]
-
-    lines: list[str] = []
-    for key, value in list(compacted.items())[:MAX_SURFACE_ENTRIES]:
-        _evidence_rows(str(key), value, lines, depth=0)
-        if sum(len(line) for line in lines) > MAX_OWNER_EVIDENCE_CHARS:
-            break
-    return "\n".join(lines)[:MAX_OWNER_EVIDENCE_CHARS]
 
 
 _EVIDENCE_DROPPED_KEYS = frozenset({"example", "examples"})
@@ -700,41 +659,6 @@ _CANDIDATE_CONTRACT_KEYS = (
 )
 
 
-def _candidate_contract_rows(
-    candidate: Mapping[str, Any] | None,
-) -> tuple[str, ...]:
-    """Bounded contract row for ONE owner-published candidate.
-
-    Relevance is the caller's gate — this projection itself stays
-    neutral. Legitimate only when a declared contract goal provably
-    bonds this specific candidate's published identity; the same
-    sanitize/redact/compact pipeline as ``_contract_fact_rows``
-    applies, so credentials, control-plane blobs and oversized
-    payloads stay out of user-facing content.
-    """
-    if not isinstance(candidate, Mapping):
-        return ()
-    sanitized = _sanitize_renderable(candidate)
-    if not isinstance(sanitized, Mapping):
-        return ()
-    action = sanitized.get("action_id") or sanitized.get("name")
-    descriptor = {
-        str(key): sanitized[key]
-        for key in _CANDIDATE_CONTRACT_KEYS
-        if isinstance(key, str)
-        and sanitized.get(key) is not None
-    }
-    if not isinstance(action, str) or not action.strip() or not descriptor:
-        return ()
-    text = json.dumps(
-        _without_control_plane(_compact_evidence(descriptor)),
-        ensure_ascii=False,
-        default=str,
-    )
-    return (
-        f"candidates.{action.strip()[:80]}: "
-        f"{text[:MAX_OWNER_EVIDENCE_ENTRY_CHARS]}",
-    )
 
 
 def _compact_evidence(value: Any, depth: int = 0) -> Any:
@@ -805,16 +729,6 @@ def _evidence_rows(
     lines.append(f"{key}: {text[:MAX_OWNER_EVIDENCE_ENTRY_CHARS]}")
 
 
-def _missing_inputs(raw: object) -> tuple[str, ...]:
-    """Bounded projection of model-declared missing owner inputs —
-    short names only, never values or instructions."""
-    if not isinstance(raw, (list, tuple)):
-        return ()
-    return tuple(
-        str(item).strip()[:80]
-        for item in list(raw)[:MAX_MISSING_INPUTS]
-        if str(item).strip()
-    )
 
 
 _ENTITY_SCHEMA_COLLECTION_KEYS = (
@@ -884,23 +798,8 @@ def _value_present(value: object) -> bool:
     return True
 
 
-_TECHNICAL_LEAK_MARKERS = (
-    "proposal_handle",
-    "candidate_token",
-    "idempotency",
-    "owner_vocabulary",
-    "bearer ",
-    "tools/list",
-    "endpoint",
-    "http://",
-    "https://",
-    "json",
-    "schema",
-    "mcp",
-)
 
 
-_SNAKE_CASE_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]+")
 _IDENTIFIER_KEYS = frozenset(
     {
         "id",
@@ -1069,48 +968,6 @@ _ENVELOPE_SCALAR_KEYS = frozenset(
 )
 
 
-def _explicit_empty_business_collection(structured: object) -> bool:
-    """Proven-empty business collection in a non-paginated payload.
-
-    A list-shaped business payload that is empty is a definitive empty
-    result — never inferred from scalars alone. Control-plane and
-    envelope keys are excluded from the judgment; a mapping of only
-    scalars is a record/envelope, not an empty collection.
-    """
-    doc = _unwrap_owner_payload(structured)
-    if isinstance(doc, (list, tuple)):
-        return not doc
-    if not isinstance(doc, Mapping):
-        return False
-    collections = [
-        value
-        for key, value in doc.items()
-        if isinstance(value, (list, tuple))
-        and _canonical_key(key) not in _CONTROL_PLANE_KEYS
-        and _canonical_key(key) not in _RESOLVER_ENVELOPE_KEYS
-    ]
-    scalars = [
-        value
-        for key, value in doc.items()
-        if not isinstance(value, (Mapping, list, tuple))
-        and value is not None
-        and str(value).strip()
-        and _canonical_key(key) not in _CONTROL_PLANE_KEYS
-        and _canonical_key(key) not in _ENVELOPE_SCALAR_KEYS
-    ]
-    mappings = [
-        key
-        for key, value in doc.items()
-        if isinstance(value, Mapping)
-        and _canonical_key(key) not in _CONTROL_PLANE_KEYS
-        and _canonical_key(key) not in _RESOLVER_ENVELOPE_KEYS
-    ]
-    return (
-        bool(collections)
-        and all(len(value) == 0 for value in collections)
-        and not scalars
-        and not mappings
-    )
 MAX_RENDER_LIST_ITEMS = 50
 
 
@@ -1289,83 +1146,8 @@ _RESULT_CONTEXT_SUBJECT_MAX_FIELDS = 12
 _RESULT_CONTEXT_SUBJECT_STR_MAX_CHARS = 80
 
 
-def _bounded_subject_node(node: object) -> Mapping[str, Any] | None:
-    """Bounded scalar projection of an owner-declared subject node.
-
-    The root/parent record binds *which* business subject the returned
-    collection belongs to — scalar leaves only, sanitized; nested
-    collections stay on the item records themselves.
-    """
-    if not isinstance(node, Mapping):
-        return None
-    bound: dict[str, Any] = {}
-    for key, value in _mapping_items_excluding_control(node)[
-        : _RESULT_CONTEXT_SUBJECT_MAX_FIELDS * 2
-    ]:
-        if len(bound) >= _RESULT_CONTEXT_SUBJECT_MAX_FIELDS:
-            break
-        if isinstance(value, str):
-            text = _redact_text(value)[
-                : _RESULT_CONTEXT_SUBJECT_STR_MAX_CHARS
-            ]
-            if text:
-                bound[key] = text
-        elif isinstance(value, bool):
-            bound[key] = value
-        elif isinstance(value, (int, float)):
-            bound[key] = value
-    return bound or None
 
 
-def _result_contract_context(
-    structured: object,
-) -> Mapping[str, Any] | None:
-    """Bounded owner-declared result contract for judgment context.
-
-    ``entity``/``shape`` labels and the subject node (``root``/
-    ``parent``/``subject``) are capability-level metadata the owner
-    itself publishes — bounded and sanitized, never treated as
-    records and never invented. ``None`` when the owner declares
-    nothing usable.
-    """
-    doc = _unwrap_owner_payload(structured)
-    if not isinstance(doc, Mapping):
-        return None
-    context: dict[str, Any] = {}
-    # Labels may live on the transport wrapper the unwrap step strips
-    # — scan the raw payload first, then the unwrapped document.
-    label_docs = [
-        node
-        for node in (structured, doc)
-        if isinstance(node, Mapping)
-    ]
-    for label_doc in label_docs:
-        for key, value in _mapping_items_excluding_control(label_doc):
-            canon = _canonical_key(key)
-            if canon in context:
-                continue
-            if canon not in _RESULT_CONTEXT_LABEL_KEYS:
-                continue
-            if isinstance(value, str) and value.strip():
-                context[canon] = value.strip()[
-                    : _RESULT_CONTEXT_LABEL_MAX_CHARS
-                ]
-    nodes: list[Mapping[str, Any]] = [doc]
-    for key in _RESULT_CONTEXT_INNER_KEYS:
-        inner = doc.get(key)
-        if isinstance(inner, Mapping):
-            nodes.append(inner)
-    for node in nodes:
-        for label in _RESULT_CONTEXT_SUBJECT_KEYS:
-            subject = _bounded_subject_node(node.get(label))
-            if subject is not None:
-                context[label] = subject
-                break
-        if any(
-            label in context for label in _RESULT_CONTEXT_SUBJECT_KEYS
-        ):
-            break
-    return context or None
 class CountResolutionKind(str, Enum):
     AUTHORITATIVE_TOTAL = "AUTHORITATIVE_TOTAL"
     COMPLETE_AGGREGATE = "COMPLETE_AGGREGATE"
@@ -1376,7 +1158,6 @@ class CountResolutionKind(str, Enum):
 
 # Default operational bound for governed page walks (R5).
 DEFAULT_MAX_PAGES = 20
-DEFAULT_PAGE_SIZE_CAP = 50
 
 _TOTAL_KEYS = ("total_count", "total", "totalcount", "count_total")
 _ID_KEYS = ("id", "ticket_id", "ticketid")
@@ -1418,10 +1199,6 @@ class CountResolution:
     has_more: bool | None
     message: str
 
-GLPI_LINK_NO_COUNT = (
-    "A consulta de chamados exige vinculação GLPI. Sem o vínculo "
-    "autorizado não apresento contagem nem lista pessoal."
-)
 
 UNKNOWN_TOTAL_MESSAGE = (
     "Consultei uma parte dos chamados, mas não tenho evidência "
@@ -1864,36 +1641,8 @@ def resolve_count_semantics(
         message=UNKNOWN_TOTAL_MESSAGE,
     )
 
-def list_header_for_envelope(
-    envelope: PaginationEnvelope,
-    *,
-    prior_excerpt: bool = False,
-) -> str:
-    """Honest list introduction — never equates page size to total."""
-    count = envelope.returned_count
-    if prior_excerpt:
-        noun = "itens" if count != 1 else "item"
-        return f"Recuperei {count} {noun} da orientação anterior:"
-    if envelope.has_more is True:
-        return PAGE_SLICE_LIST_HEADER.format(count=count)
-    noun = "registros" if count != 1 else "registro"
-    if envelope.has_more is False:
-        return f"Encontrei {count} {noun}:"
-    # Unknown pagination completeness — avoid total claim.
-    return (
-        f"Mostrando {count} {noun} retornados pela fonte "
-        f"(total não confirmado nesta página):"
-    )
 
 
-def count_message_for_visible_query(resolution: CountResolution) -> str:
-    """Count message for non-personal / all-visible authorized queries."""
-    if resolution.kind in {
-        CountResolutionKind.AUTHORITATIVE_TOTAL,
-        CountResolutionKind.COMPLETE_AGGREGATE,
-    }:
-        return resolution.message + VISIBLE_NOT_PERSONAL_NOTE
-    return resolution.message
 
 
 def _parse_temporal(value: object) -> datetime | None:

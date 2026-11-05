@@ -337,3 +337,11 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
 - RQ-05, RQ-06 = IMPLEMENTED (deleção física + consumidores). RQ-07 = PARTIAL (cobertura factual de outcome já era determinística no finalize; typed output RQ-01..04 ainda pendente em G1).
 
 **Pendentes:** G1 (output_type nativo + acceptor), resto de G3 (orchestration/handler shrink), G4, G5, G6, G7, G8 — ver relatório de execução.
+
+## 10. G2 bounded rework — review 257 (execução)
+
+- **Correção numérica do relatório G2**: IMPLEMENTED=2 (RQ-05, RQ-06), PARTIAL=4 (RQ-01, RQ-03, RQ-04, RQ-07), NOT_IMPLEMENTED=22. Cobertura verificada canônica = **2/28 = 7,14%** (parcial tem crédito zero).
+- **Testes negativos de invariantes** restaurados em `tests/test_g2_evidence_contract_regression.py` (15 casos): DISCOVERY metadata nunca vira evidência de negócio (`discovery_metadata_observation` → gate `_is_business_evidence_attempt`); página parcial (`has_more=True`) nunca resolve total (`PARTIAL_UNKNOWN`); agregação incompleta/falha → `total=None`; total só autoritativo quando declarado pelo owner; mensagem de contagem nunca afirma total não provado; valores sensíveis redigidos (`_sanitize_renderable`, `_redact_text`, `REDACTION_MARKER`); bearer tokens redigidos; chaves de control-plane (`agentdirectives`/`capabilitysurface`) excluídas; conteúdo/proveniência/outcome incompletos nunca promovidos; itens de página nunca promovidos a total.
+- **Prune do consolidado**: helpers sem consumidor removidos de `generic_evidence_renderer.py` (1929→1679 linhas): `_comparable_scalar`, `_bound_owner_evidence`, `_candidate_contract_rows`, `_missing_inputs`, `_explicit_empty_business_collection`, `_bounded_subject_node`, `_result_contract_context`, `list_header_for_envelope`, `count_message_for_visible_query`, `_TECHNICAL_LEAK_MARKERS`, `_SNAKE_CASE_TOKEN_RE`, `GLPI_LINK_NO_COUNT`, `DEFAULT_PAGE_SIZE_CAP`. Mantidos os símbolos com consumidor vivo (test_r45: envelope/count contract) ou uso interno (`item_stable_id`, `_is_first_page`, `PageAggregationResult`, `aggregate_paginated_pages`, `resolve_count_semantics`).
+- Suíte `delia-api` completa: **PASS (exit 0)** no SHA avaliado. Residual menor: constantes `PRESENTATION_*`/`OMISSION_*` pré-existentes não inspecionadas (fora do escopo das ~1579 linhas movidas).
+- G1 (output_type nativo) prossegue como etapa independente.
