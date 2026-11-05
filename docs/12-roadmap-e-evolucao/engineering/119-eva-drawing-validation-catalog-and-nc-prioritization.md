@@ -1070,3 +1070,20 @@ O subplano **não é nova frente, serviço, camada, documento nem autorização 
 | VOLUME | só `/opt/ocr-models` somente leitura; código vem da imagem, não de bind-mount |
 
 **Regressores `90263572`, `90264030`, `90264017`, `90263520`:** `TEST_NOT_RUN` por este executor. O caminho MCP público já serve o código novo; a validação independente dos quatro desenhos fica com o ChatGPT. **AC-E1-10** continua `PENDING` até esse E2E e o aceite da Engenharia. **READY_FOR_CHATGPT_E2E:** `YES`. **VAL-01** não está concluída.
+
+### 39.10 Reteste independente ChatGPT do ledger apos deploy (2026-11-05)
+
+**Escopo:** E2E autenticado read-only de product.drawing_understanding via conector EVA, quatro produtos em serie. Executor reportou deploy no SHA 1a5c75152fa739964eaa4362eda0d53fdf33095f (imagem local sha256:ee26acf6ea1f58af462f611aedcc087daaa127bca93e7bf3e9ba31977010e99c). O consumidor confirmou contrato novo, mas nao leu o SHA do processo. Nenhum deploy neste reteste.
+
+| Produto | Resultado independente | Novo contrato | Estado |
+|---|---|---|---|
+| 90263572 | success=true; PDF SHA 9021fce05c608655e538f67cdaac08c7484ebbe16a8888e83fbeec9ecaa28d3e; document verified | PASS | DRAFT/CANDIDATE; 56 expected, 35 observed, 33 match_candidates, 0 proven_matches, 0 candidate_divergences, global INCONCLUSIVE; O0001/10080004 MATCH_CANDIDATE, localized_ocr_recheck pagina 2, bbox/SHA reais. 24 token-only e 23 BOM ausencias nao demonstradas. |
+| 90264030 | Erro interno da ferramenta, sem envelope confiavel | INCONCLUSIVE | 5 pais e 10 findings historicos nao revalidados |
+| 90264017 | Erro interno da ferramenta, sem envelope confiavel | INCONCLUSIVE | Historico de revisao vs componente vigente nao revalidado |
+| 90263520 | success=true; PDF SHA 08bf68690401438ab09c0e7ffcd1126bf98b238de776bc680db587704e4fb200; document verified | PASS | DRAFT/CANDIDATE; 20 expected, 24 observed, 20 match_candidates, 0 candidate_divergences; findings=[]; global INCONCLUSIVE. |
+
+**Contrato e seguranca:** structure_validation.v1 PRESENTE nos 2 retornos validos; engineering_approval=NOT_APPROVED e automatic_nc=false no retorno detalhado de 90263572. Nao confundir candidatos com validacao da Engenharia. Estado AC-E1-07=INCONCLUSIVE (2/4), AC-E1-10=PARTIAL (E2E autenticado parcial), VAL01_COMPLETED=false.
+
+**Gap direcionado de evidencia:** no 90263572, ledger reporta match_candidates=33 e guided_investigations.summary.match_candidates=1; criterios/denominadores diferentes ate verificacao. O ledger O0001 reporta match de codigo com page/box nulos e source code_token, enquanto investigacao guiada oferece localized_ocr_recheck pagina 2 com bbox/SHA. Investigar se refs devem ser preservadas no ledger; nao afirmar que existe erro sem rastrear callsite.
+
+**Proximo passo unico:** operador/Cursor autorizado consultar logs para erro interno nos 90264030 e 90264017 e utilizar caminho de job governado para documentos longos; depois regressao dos 13 PDFs no novo SHA, sem novos documentos ou auditorias. Engenharia continua owner-blocked para quantidade/unidade, equivalencia de descricao, posicao BOM, revisao e GT/thresholds. Atualizar Doc 119 e Issue #131 com evidencias reais, sem abrir nova frente.
