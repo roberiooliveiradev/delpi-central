@@ -661,3 +661,22 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
 - Testes: pair integrity (4 units reais), message_history nativo
   chegando ao modelo, gate/envelope/composition. Suite PASS (exit 0).
 - Controle positivo: INCONCLUSIVE por dados dev.
+
+## 27. G7 rework — preservação do turno atual na compactação (doc 273)
+
+- **DEFEITO REAL (doc 273)**: `_trim_overflow` preservava `units[0]`
+  (podia ser turno ANTIGO de prior history) e a última unidade —
+  a pergunta atual podia cair como intermediária e ser descartada
+  enquanto histórico velho sobrevivia.
+- **FIX**: `_select_surviving_messages` (módulo, exercitável por
+  teste) — o objetivo atual é o SUFIXO que começa na última unidade
+  com `UserPromptPart`; unidades anteriores são droppable oldest-first
+  como UNIDADES inteiras (call/return nunca separados); se o sufixo
+  obrigatório exceder a janela → `investigation_context_overflow`
+  tipado (nunca descarta a pergunta nem fabrica resultado).
+- **Testes novos**: produção real — prior antigo dropado, pergunta
+  atual + evidência tool preservadas, call/return juntos, orphan
+  return anexa à unidade precedente, overflow tipado zero calls,
+  histórico+atual chegando como mensagens nativas.
+- Legado: nenhum reintroduzido; `context_budget.py` KEEP.
+- Suite completa PASS (exit 0).

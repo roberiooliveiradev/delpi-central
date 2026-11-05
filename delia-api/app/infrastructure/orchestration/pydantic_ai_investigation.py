@@ -540,6 +540,41 @@ def _estimate_history_tokens(messages):
     )
 
 
+def _select_surviving_messages(messages, window: int):
+    """Compaction policy (doc 273): the CURRENT objective is the
+    suffix starting at the last user-prompt unit — never presume
+    units[0] is current (it may be old prior conversation). Earlier
+    units drop oldest-first as WHOLE units; if the mandatory
+    current-turn suffix alone exceeds the window, raise
+    ``_InvestigationContextOverflow`` — never discard the current
+    question or fabricate."""
+    from pydantic_ai.messages import ModelRequest, UserPromptPart
+
+    units = _history_units(messages)
+    current_idx = 0
+    for idx, unit in enumerate(units):
+        head = unit[0]
+        if isinstance(head, ModelRequest) and any(
+            isinstance(p, UserPromptPart) for p in head.parts
+        ):
+            current_idx = idx
+    droppable = list(units[:current_idx])
+    mandatory = list(units[current_idx:])
+    while droppable and (
+        _estimate_history_tokens(
+            [m for u in droppable + mandatory for m in u]
+        )
+        > window
+    ):
+        droppable.pop(0)
+    flat = [m for u in droppable + mandatory for m in u]
+    if _estimate_history_tokens(flat) > window:
+        raise _InvestigationContextOverflow(
+            f"mandatory context > window ({window})"
+        )
+    return flat
+
+
 class _InvestigationContextOverflow(Exception):
     """Mandatory context exceeds the configured window — fail closed."""
 
@@ -1153,25 +1188,7 @@ class PydanticAiInvestigationOrchestrator:
             window = self._context_window_tokens - reserve
 
             def _trim_overflow(messages):
-                units = _history_units(messages)
-                # Keep the FIRST unit (original request anchor) and the
-                # LAST (current frontier); drop oldest in-between units
-                # whole — call/return pairs never split.
-                keep_min = 1 if len(units) <= 2 else 2
-                while (
-                    len(units) > keep_min
-                    and _estimate_history_tokens(
-                        [m for u in units for m in u]
-                    )
-                    > window
-                ):
-                    units.pop(1)
-                flat = [m for u in units for m in u]
-                if _estimate_history_tokens(flat) > window:
-                    raise _InvestigationContextOverflow(
-                        f"mandatory context > window ({window})"
-                    )
-                return flat
+                return _select_surviving_messages(messages, window)
 
             agent_capabilities = (
                 ProcessHistory(processor=_trim_overflow),

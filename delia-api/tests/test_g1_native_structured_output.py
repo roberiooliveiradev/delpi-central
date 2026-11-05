@@ -872,3 +872,159 @@ def test_history_processor_preserves_tool_call_return_pairs():
     flat = units[1]
     assert any(isinstance(p, ToolCallPart) for p in flat[0].parts)
     assert any(isinstance(p, ToolReturnPart) for p in flat[1].parts)
+
+
+def test_current_turn_survives_compaction_prior_turn_dropped():
+    """Doc 273 §2-3: under compaction pressure the CURRENT user
+    question (last user-prompt unit) survives while OLD prior turns
+    drop — production ``_select_surviving_messages``, not a copy."""
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        _select_surviving_messages,
+    )
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        TextPart,
+        ToolCallPart,
+        ToolReturnPart,
+        UserPromptPart,
+    )
+
+    msgs = [
+        ModelRequest(parts=[UserPromptPart("PERGUNTA_ANTIGA " + "z" * 8000)]),
+        ModelResponse(parts=[TextPart("resposta antiga " + "w" * 8000)]),
+        ModelRequest(parts=[UserPromptPart("PERGUNTA_ATUAL")]),
+        ModelResponse(parts=[ToolCallPart("tool_a", {"a": 1})]),
+        ModelRequest(parts=[ToolReturnPart("tool_a", "evidência")]),
+        ModelResponse(parts=[TextPart("parcial")]),
+    ]
+    survivors = _select_surviving_messages(msgs, window=1200)
+    texts = [
+        str(getattr(p, "content", "") or "")
+        for m in survivors
+        for p in m.parts
+    ]
+    joined = "|".join(texts)
+    # CURRENT objective preserved — question + its tool evidence
+    assert "PERGUNTA_ATUAL" in joined
+    assert "evidência" in joined
+    # OLD prior turn is droppable history
+    assert "PERGUNTA_ANTIGA" not in joined
+    # call/return stayed together (no orphan return)
+    call_idx = next(
+        i for i, m in enumerate(survivors)
+        if any(isinstance(p, ToolCallPart) for p in m.parts)
+    )
+    assert any(
+        isinstance(p, ToolReturnPart)
+        for p in survivors[call_idx + 1].parts
+    )
+
+
+def test_prior_and_current_arrive_natively_under_window():
+    """FunctionModel sees prior turns + current question as native
+    messages when the envelope fits — the migration path end-to-end."""
+    from tests.test_pydantic_ai_semantic_rework import _gates
+    from app.application.model_invocation.contracts import (
+        ConversationContextTurn,
+        TurnKind,
+    )
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from pydantic_ai.messages import ModelRequest
+    from pydantic_ai.models.function import FunctionModel
+
+    prompts = []
+
+    def _fn(messages, _info):
+        for m in messages:
+            if isinstance(m, ModelRequest):
+                prompts.extend(
+                    str(getattr(p, "content", ""))
+                    for p in m.parts
+                    if getattr(p, "part_kind", "") == "user-prompt"
+                )
+        return _final_answer("ok", status="insufficient")
+
+    prior = (
+        ConversationContextTurn(
+            kind=TurnKind.USER_INPUT,
+            content="turno anterior curto",
+            epistemic_class=None,
+            entity_refs=(),
+        ),
+        ConversationContextTurn(
+            kind=TurnKind.DELIA_RESULT,
+            content="resposta anterior curta",
+            epistemic_class=None,
+            entity_refs=(),
+        ),
+    )
+    engine = PydanticAiInvestigationOrchestrator(
+        _gates(),
+        model=FunctionModel(_fn),
+        context_window_tokens=60000,
+    )
+    engine.attempt("PERGUNTA_ATUAL", prior_turns=prior)
+    assert any("turno anterior curto" in p for p in prompts)
+    assert any("PERGUNTA_ATUAL" in p for p in prompts)
+
+
+def test_mandatory_overflow_returns_typed_outcome_no_model_calls():
+    """Doc 273 §3: when the mandatory current-turn context alone
+    exceeds the window → typed investigation_context_overflow, zero
+    model requests — never discard the question or fabricate."""
+    from tests.test_pydantic_ai_semantic_rework import _gates
+    from app.application.model_invocation.contracts import (
+        ConversationContextTurn,
+        TurnKind,
+    )
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from pydantic_ai.models.function import FunctionModel
+
+    calls = []
+
+    def _fn(messages, _info):
+        calls.append(len(messages))
+        return _final_answer("ok", status="insufficient")
+
+    # window smaller than instructions+prompt+catalog envelope →
+    # pre-call gate fires first (typed, no model call)
+    engine = PydanticAiInvestigationOrchestrator(
+        _gates(),
+        model=FunctionModel(_fn),
+        context_window_tokens=10,
+    )
+    attempt = engine.attempt("qualquer coisa")
+    assert calls == []
+    assert attempt.error_code == "investigation_context_overflow"
+
+
+def test_orphan_tool_return_groups_with_previous_unit():
+    """Doc 273 §4: a ToolReturn request without its call still
+    attaches to the previous unit — dropped/kept whole, never
+    orphaned into a dangling return."""
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        _history_units,
+    )
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        TextPart,
+        ToolReturnPart,
+        UserPromptPart,
+    )
+
+    msgs = [
+        ModelRequest(parts=[UserPromptPart("q")]),
+        ModelRequest(parts=[ToolReturnPart("orphan_tool", "data")]),
+        ModelResponse(parts=[TextPart("answer")]),
+    ]
+    units = _history_units(msgs)
+    # orphan return joined the user unit (attached to previous),
+    # interim response is its own unit → 2 units, never split
+    assert len(units) == 2
+    assert len(units[0]) == 2
