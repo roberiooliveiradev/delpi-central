@@ -348,8 +348,9 @@ def test_list_records_filters_multiple_date_columns_with_or() -> None:
     assert " OR " in query
 
 
-def test_list_records_default_date_column_is_implementation() -> None:
-    """Sem date_field, período filtra pela coluna de implantação (compat)."""
+def test_list_records_default_date_field_filters_all_columns() -> None:
+    """Sem date_field (vazio = todas), o período aplica OR em todas as
+    colunas de data — mesma semântica dos demais multi-selects."""
     repo = PostgresKaizenRepository(connection=MagicMock())
     captured: dict[str, object] = {}
     repo.fetch_one = MagicMock(return_value={"total": 0})
@@ -357,4 +358,8 @@ def test_list_records_default_date_column_is_implementation() -> None:
 
     repo.list_records(date_start="2026-01-01")
 
-    assert "k.date_implemented >= %s" in str(captured["query"])
+    query = str(captured["query"])
+    assert " OR " in query
+    assert "k.date_idea_received >= %s" in query
+    assert "k.date_implemented >= %s" in query
+    assert "k.updated_at >= %s" in query

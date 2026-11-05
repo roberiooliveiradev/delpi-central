@@ -1,6 +1,7 @@
 import { KAIZEN_DATE_FIELDS, KAIZEN_STATUSES, SAVINGS_TYPES } from "../constants/kaizen";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FilterInputField, FiltersRow, MultiSelectField } from "./ui";
+import { KZ_GHOST_BTN } from "./ui/ghostChrome";
 
 type KaizenRecordFiltersProps = {
   branches: string[];
@@ -19,6 +20,7 @@ type KaizenRecordFiltersProps = {
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onTitleChange: (value: string) => void;
+  onClear: () => void;
 };
 
 export function KaizenRecordFilters({
@@ -38,6 +40,7 @@ export function KaizenRecordFilters({
   onDateStartChange,
   onDateEndChange,
   onTitleChange,
+  onClear,
 }: KaizenRecordFiltersProps) {
   const showUnitFilter = allowAllBranches && branchOptions.length > 1;
 
@@ -71,11 +74,11 @@ export function KaizenRecordFilters({
       />
       <MultiSelectField
         label="Coluna de data"
-        hint="Em qual coluna de data o período será aplicado. Vazio = implantação."
+        hint="Em qual coluna de data o período será aplicado. Vazio = todas."
         options={[...KAIZEN_DATE_FIELDS]}
         selectedValues={dateFields}
         onChange={onDateFieldsChange}
-        emptyLabel="Implantação"
+        emptyLabel="Todas"
       />
       <FilterInputField
         id="kz-filter-date-start"
@@ -102,6 +105,9 @@ export function KaizenRecordFilters({
         placeholder="Buscar por título"
         onChange={onTitleChange}
       />
+      <button type="button" className={KZ_GHOST_BTN} onClick={onClear}>
+        Limpar filtros
+      </button>
     </FiltersRow>
   );
 }

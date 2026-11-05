@@ -120,7 +120,8 @@ class PostgresKaizenRepository(PluginBaseRepository):
         """Whitelist de colunas de data filtráveis na listagem (evita SQL injetável)."""
         requested = [date_field] if isinstance(date_field, str) else list(date_field or [])
         columns = [cls._LIST_DATE_COLUMNS[f] for f in requested if f in cls._LIST_DATE_COLUMNS]
-        return columns or [cls._LIST_DATE_COLUMNS["implantacao"]]
+        # Vazio = todas as colunas de data (mesma semântica dos demais multi-selects).
+        return columns or list(cls._LIST_DATE_COLUMNS.values())
 
     @staticmethod
     def _enrich_savings_validity(record: dict[str, Any] | None) -> dict[str, Any] | None:

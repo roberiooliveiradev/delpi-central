@@ -87,6 +87,17 @@ export function KaizenListPage({
     [dateStart, dateEnd],
   );
 
+  const clearFilters = useCallback(() => {
+    setStatuses([]);
+    setSavingsTypes([]);
+    setDateFields([]);
+    setDateStart("");
+    setDateEnd("");
+    setTitle("");
+    // Unidade volta ao padrão do usuário (sua filial de escrita, ou todas).
+    setBranches(defaultBranches.length === 1 ? [defaultBranches[0]] : []);
+  }, [defaultBranches]);
+
   const handleQuickPeriod = useCallback(
     (preset: typeof periodPreset) => {
       const range = resolvePeriodPreset(preset);
@@ -315,6 +326,7 @@ export function KaizenListPage({
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onTitleChange={setTitle}
+        onClear={clearFilters}
       />
 
       <QuickPeriodSelector
