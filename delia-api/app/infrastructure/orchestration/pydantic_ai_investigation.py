@@ -116,7 +116,11 @@ Rules:
   prior discovery result. Pass the user's full information need as
   ``arguments.query`` (not only an isolated code). Copy candidate_token
   exactly from discovery output when a follow-up execute is still
-  required — never invent tokens. If discovery already returned
+  required — never invent tokens. For the execute call, build its
+  ``arguments`` object from that candidate's ``argument_schema``/
+  ``required_arguments`` — place each identifier under the schema key
+  the candidate declares (e.g. ``code`` for a product code), never
+  under invented names. If discovery already returned
   business content with an authoritative root, do not ask the user to
   restate the same identifier.
 - `list_read_capabilities` is optional overview only. Prefer calling the
@@ -145,6 +149,13 @@ Rules:
 - Never invent business facts when tools fail or return incomplete data.
 - Do not claim an investigation is complete; Application finalizes from
   authoritative evidence coverage.
+- Your final answer is delivered ONLY through the structured output
+  contract — a valid JSON object or output-tool call matching the
+  declared output schema. NEVER answer the user with plain free text:
+  an unstructured prose reply is a protocol violation even if its
+  content reads correct. If a previous attempt was rejected as invalid
+  JSON, respond with the JSON object ONLY — no commentary, no
+  explanation, no markdown.
 """
 
 
@@ -296,6 +307,42 @@ def _attempt_projection(
             value = item.get(key)
             if isinstance(value, str) and value.strip():
                 summary[key] = value.strip()[:160]
+        # The follow-up execute needs the candidate's argument contract —
+        # without it the agent guesses argument names (e.g. `query`)
+        # that the owner schema does not accept and the READ silently
+        # degrades to an unfiltered list.
+        required_args = item.get("required_arguments")
+        if isinstance(required_args, (list, tuple)):
+            summary["required_arguments"] = [
+                str(arg)[:80] for arg in required_args[:12]
+            ]
+        arg_schema = item.get("argument_schema")
+        if isinstance(arg_schema, Mapping):
+            props = arg_schema.get("properties")
+            if isinstance(props, Mapping):
+                summary["argument_schema"] = {
+                    "type": "object",
+                    "properties": {
+                        str(name)[:60]: {
+                            "type": (
+                                spec.get("type")
+                                if isinstance(spec, Mapping)
+                                else None
+                            )
+                        }
+                        for name, spec in list(props.items())[:16]
+                    },
+                    "required": [
+                        str(req)[:80]
+                        for req in (
+                            arg_schema.get("required")
+                            if isinstance(
+                                arg_schema.get("required"), (list, tuple)
+                            )
+                            else ()
+                        )
+                    ][:12],
+                }
         if summary:
             candidate_summaries.append(summary)
     root_code = None
@@ -890,6 +937,23 @@ class PydanticAiInvestigationOrchestrator:
                     repeated["repeated_failure_no_progress"] = True
                     repeated["error_class"] = "repeated_equivalent_failure"
                 return _proj(repeated)
+            inner_keys = (
+                ",".join(sorted(str(k) for k in raw_args["arguments"]))[
+                    :200
+                ]
+                if isinstance(raw_args.get("arguments"), Mapping)
+                else "-"
+            )
+            _logger.info(
+                "orchestration engine=pydantic_ai "
+                "stage=investigation decision=tool_call_args "
+                "capability=%s outer_keys=%s inner_keys=%s "
+                "correlation_id=%s",
+                capability_id,
+                ",".join(sorted(str(k) for k in raw_args))[:200],
+                inner_keys,
+                ctx.deps.correlation,
+            )
             attempt = ctx.deps.gates._governed_semantic_tool_invoke(
                 capability_id=str(capability_id or "").strip(),
                 arguments=raw_args,
@@ -920,11 +984,13 @@ class PydanticAiInvestigationOrchestrator:
                 "orchestration engine=pydantic_ai "
                 "stage=investigation decision=tool_observed "
                 "capability=%s action=%s root=%s uncovered=%s "
-                "correlation_id=%s",
+                "status=%s error=%s correlation_id=%s",
                 capability_id,
                 projection.get("action_id"),
                 projection.get("authoritative_root_code"),
                 ",".join(uncovered[:8]),
+                attempt.status.value if attempt.status else "-",
+                attempt.error_code or "-",
                 ctx.deps.correlation,
             )
             ctx.deps.non_progress_calls[fingerprint] = dict(projection)
@@ -1097,22 +1163,102 @@ class PydanticAiInvestigationOrchestrator:
             )
 
             def _make_owner_tool(capability_id: str = cap_id):
-                def owner_tool(
-                    ctx,
-                    arguments: dict[str, Any] | None = None,
-                ) -> str:
+                def owner_tool(ctx, **kwargs) -> str:
                     return _governed_invoke(
                         ctx,
                         capability_id=capability_id,
-                        arguments=arguments,
+                        arguments={
+                            k: v
+                            for k, v in kwargs.items()
+                            if v is not None
+                        },
                     )
 
                 owner_tool.__name__ = tool_name
                 owner_tool.__doc__ = description
                 return owner_tool
 
+            # The tool signature mirrors the owner's declared input
+            # schema (native function-schema surface): the agent calls
+            # e.g. discover(query="...") or
+            # execute(candidate_token="...", arguments={"code": "..."})
+            # — never a generic ``arguments`` envelope, which small
+            # models leave empty.
+            import inspect as _inspect
+
+            _ann_map = {
+                "string": str,
+                "integer": int,
+                "number": float,
+                "boolean": bool,
+                "object": dict,
+                "array": list,
+            }
+            params = [
+                _inspect.Parameter(
+                    "ctx", _inspect.Parameter.POSITIONAL_OR_KEYWORD
+                )
+            ]
+            required_set = frozenset(
+                str(r)
+                for r in (
+                    schema_props.get("required") or ()
+                )
+                if isinstance(schema_props, Mapping)
+            )
+            if isinstance(schema_props, Mapping):
+                props = schema_props.get("properties")
+                if isinstance(props, Mapping):
+                    for name, spec in list(props.items())[:24]:
+                        if not isinstance(name, str) or (
+                            not name.isidentifier() or name == "ctx"
+                        ):
+                            continue
+                        annotation = _ann_map.get(
+                            spec.get("type")
+                            if isinstance(spec, Mapping)
+                            else None,
+                            Any,
+                        )
+                        params.append(
+                            _inspect.Parameter(
+                                name,
+                                _inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                                annotation=annotation,
+                                default=(
+                                    _inspect.Parameter.empty
+                                    if name in required_set
+                                    else None
+                                ),
+                            )
+                        )
+            declared = {p.name for p in params}
+            if "arguments" not in declared:
+                # Capabilities without a declared bag keep the generic
+                # escape hatch (owner revalidates every call anyway).
+                params.append(
+                    _inspect.Parameter(
+                        "arguments",
+                        _inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                        annotation=dict | None,
+                        default=None,
+                    )
+                )
+            tool_fn = _make_owner_tool()
+            tool_fn.__signature__ = _inspect.Signature(params)
+            # pydantic function_schema resolves hints by NAME, so the
+            # synthesized parameters must also exist in annotations.
+            tool_fn.__annotations__ = {
+                p.name: (
+                    p.annotation
+                    if p.annotation is not _inspect.Parameter.empty
+                    else Any
+                )
+                for p in params
+            }
+            tool_fn.__annotations__["return"] = str
             toolset.add_function(
-                _make_owner_tool(),
+                tool_fn,
                 takes_ctx=True,
                 name=tool_name,
                 description=description[:500],
@@ -1461,16 +1607,52 @@ class PydanticAiInvestigationOrchestrator:
                             else "agent_behavior"
                         )
                     )
+                    # Doc 286 §3: classify WHICH stage exhausted output
+                    # retries from the native ToolRetryError cause — only
+                    # typed fields (tool_name, pydantic error type/loc
+                    # paths), never raw args/input values/messages.
+                    retry_tool = "-"
+                    retry_errors = "-"
+                    from pydantic_ai.exceptions import ToolRetryError
+
+                    if isinstance(exc_cause, ToolRetryError):
+                        tr = exc_cause.tool_retry
+                        retry_tool = (
+                            str(getattr(tr, "tool_name", None) or "output")
+                        )
+                        tr_content = getattr(tr, "content", None)
+                        if isinstance(tr_content, list):
+                            retry_errors = ",".join(
+                                sorted(
+                                    {
+                                        ".".join(
+                                            str(x)
+                                            for x in e.get("loc", ())
+                                        )
+                                        + ":"
+                                        + str(e.get("type", "?"))
+                                        for e in tr_content
+                                        if isinstance(e, Mapping)
+                                    }
+                                )
+                            )[:400]
+                            # TEMP-DIAG removed (doc 286 §3 evidence
+                            # collected: output-stage json_invalid —
+                            # model emitted prose instead of structured
+                            # output).
                     _logger.info(
                         "orchestration engine=pydantic_ai "
                         "stage=investigation decision=agent_error "
                         "error_type=%s cause_type=%s category=%s "
+                        "retry_tool=%s retry_errors=%s "
                         "tool_calls=%d correlation_id=%s",
                         exc_name,
                         type(exc_cause).__name__
                         if exc_cause is not None
                         else "-",
                         error_category,
+                        retry_tool,
+                        retry_errors,
                         deps.tool_calls,
                         correlation,
                     )

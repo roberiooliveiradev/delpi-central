@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 from app.application.specialist_interop.errors import (
     OWNER_ARGUMENT_REJECTED,
@@ -165,7 +165,7 @@ class InvestigationAnswer:
     declaration.
     """
 
-    schema_version: str = "1"
+    schema_version: Literal["1"] = "1"
     status: InvestigationAnswerStatus = (
         InvestigationAnswerStatus.INSUFFICIENT
     )

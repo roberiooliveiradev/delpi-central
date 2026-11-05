@@ -5508,6 +5508,34 @@ class OperationalCapabilityOrchestrator:
         # turn ceiling is prepare_only — writes stay on confirmation
         # chain. prepare_only is recorded for audit only.
         args = dict(arguments or {})
+        # Candidate-bound capabilities declare ``candidate_token`` as a
+        # required input the agent relays verbatim — it is owner-issued
+        # opaque data, not an orchestration-control field the model
+        # could forge into state (the owner validates it downstream).
+        # ``validate_arguments`` denies ORCHESTRATED_FIELDS at the
+        # parameter boundary by design, so the token is extracted here
+        # as a bounded string and handed to ``_invoke_selected``, which
+        # passes it back to the owner unchanged.
+        relayed_candidate_token: str | None = None
+        if _is_candidate_bound(descriptor):
+            raw_token = args.get(CANDIDATE_TOKEN_FIELD)
+            if raw_token is not None:
+                if not (
+                    isinstance(raw_token, str)
+                    and raw_token.strip()
+                    and len(raw_token.encode("utf-8")) <= 4096
+                ):
+                    return GovernedCapabilityAttempt(
+                        status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                        correlation_id=correlation,
+                        error_code="arguments_schema_rejected",
+                    )
+                relayed_candidate_token = raw_token.strip()
+                args = {
+                    k: v
+                    for k, v in args.items()
+                    if k != CANDIDATE_TOKEN_FIELD
+                }
         # Generic schema binding: when the owner requires ``query`` and
         # the agent omitted it, bind the turn utterance. This does not
         # select a capability — the agent already chose the tool.
@@ -5532,6 +5560,8 @@ class OperationalCapabilityOrchestrator:
                     error_code="arguments_schema_rejected",
                 )
             args = dict(validated)
+        if relayed_candidate_token is not None:
+            args[CANDIDATE_TOKEN_FIELD] = relayed_candidate_token
         try:
             invoked = self._invoke_selected(
                 group_key,

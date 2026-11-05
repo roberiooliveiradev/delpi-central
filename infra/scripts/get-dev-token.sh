@@ -36,7 +36,8 @@ fetch_token() {
     -d "client_id=${CLIENT_ID}" \
     -d "username=${USERNAME}" \
     -d "password=${PASSWORD}" \
-    -d "grant_type=password"
+    -d "grant_type=password" \
+    -d "scope=openid profile email"
 }
 
 RESP=""
