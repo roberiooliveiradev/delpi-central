@@ -981,4 +981,39 @@ O subplano **não é nova frente, serviço, camada, documento nem autorização 
 
 **NEXT_BOUNDED_STEP (Cursor):** reancorar e executar **E1-A→E1-F** como **uma entrega vertical**, iniciando pelos atributos de ocorrência (item/código/descrição/quantidade/pai-filho) que ainda não possuem evidência de qualidade. Registrar primeiro o delta de AC no Doc 119/Issue #131; implementar o menor conjunto de mudanças que leva o resultado completo por ocorrência até o consumidor. Não executar novo audit Framework-First nem criar novo documento. **A ausência de GT/decisão de owner bloqueia qualidade oficial, não precisa bloquear implementação segura e claramente candidata.**
 
-**VERDICT DE PLANEJAMENTO:** \`ACCEPT\` como direção de produto; **EXECUTION_STATUS:** \`PLANNED\` até evidência de Cursor/código/testes/runtime.
+**VERDICT DE PLANEJAMENTO:** \`ACCEPT\` como direção de produto; **EXECUTION_STATUS:** \`IN_PROGRESS\` — ledger por ocorrência implementado no comparador canônico; qualidade oficial e E2E de runtime continuam pendentes.
+
+### 39.6 Execução Cursor — ledger de validação por ocorrência (2026-11-05)
+
+**DATA:** 2026-11-05. **BASE_HEAD inicial:** `7038168c71f4033625722f683e696a5f89143fb7`. **Revalidação antes do commit:** `6e8f2a6f22624c988d2d8c5cb55341998bb7e39e` (`main`, ancestral do início; commit PCP alheio). **BRANCH:** `main`. Alterações concorrentes fora deste pacote foram preservadas (DÉLIA, scripts de infra, plugin-ui, TV dashboard, travel-expenses).
+
+**RQ / AC atendidos neste pacote**
+
+| ID | Estado | Evidência |
+|---|---|---|
+| RQ-E1-05 / AC-E1-06 | `PASS` parcial, candidato | `validation_report` (`structure_validation.v1`) no retorno de `compare_bom_to_drawing` e em `report.structure_validation` do caminho `product.drawing_understanding` |
+| AC-E1-03 | `PASS` parcial, candidato | código, item, descrição literal e quantidade no mesmo registro; descrição ausente = `NOT_CHECKED`; diferença literal = `CONFLICT_CANDIDATE`, não NC |
+| AC-E1-04 | `PASS` parcial, candidato | ocorrências repetidas não colapsam; pai só `MATCH_CANDIDATE` quando verificado; sem pai, `NOT_CHECKED` |
+| AC-E1-05 | `PASS` parcial | `BOM_ONLY` continua exigindo cobertura; linhas não lidas ficam `NOT_CHECKED`; revisão isolada não entra como `DRAWING_ONLY` |
+| AC-E1-01 | `OWNER_BLOCKED` | quantidade/unidade, item de desenho × posição BOM, equivalência semântica de descrição, revisão e limiares de GT |
+| AC-E1-02 | `PENDING` | percepção existente reutilizada; células mescladas e blocos paralelos desta leitura = `INCONCLUSIVE` |
+| AC-E1-07 | `TEST_NOT_RUN` no runtime | regressão sintética dos invariantes passou; PDFs `90263572`, `90264030`, `90264017`, `90263520` não foram reexecutados neste SHA |
+| AC-E1-08 | `OWNER_BLOCKED` | sem limiar nem holdout aprovado pela Engenharia |
+| AC-E1-09 | `PASS` parcial | BOM indisponível → `INCONCLUSIVE` e ledger vazio; sem aprovação automática |
+| AC-E1-10 | `PENDING` | sem deploy nem E2E autenticado neste ciclo |
+
+**COMPORTAMENTO ANTERIOR:** o comparador emitia findings agregados (`DRAWING_ONLY` / `BOM_ONLY` / `PARENT_RELATION_MISMATCH`) e a investigação guiada marcava descrição como não verificável mesmo quando a BOM oficial já trazia `description`. O consumidor MCP `product.drawing_understanding` não recebia o diff estrutural.
+
+**ALTERAÇÃO:** projeção aditiva de `component_description` em `flatten_bom_occurrences` e no perfil BOM. `compare_bom_to_drawing` passa a devolver `validation_report` com um registro por ocorrência (esperado, observado, resultado, evidência, página/região, regra, incerteza, limitação, próxima ação) e o consolidado (esperadas, observadas, `proven_matches=0`, candidatos, divergências, ambíguas, relações não verificadas, atributos não comparáveis, cobertura, limitações, situação global, famílias `SUPPORTED` / `UNSUPPORTED` / `INCONCLUSIVE`). Quantidade, unidade e revisão permanecem `NOT_COMPARABLE`. Estado do relatório: `DRAFT/CANDIDATE`, `engineering_approval=NOT_APPROVED`, `automatic_nc=false`. O caminho de entendimento do desenho chama o mesmo comparador depois da recuperação localizada.
+
+**RESULTADO OBSERVADO:** testes novos cobrem correspondência literal, descrição ausente, diferença literal sem NC, BOM não lida sem `BOM_ONLY`, repetição não colapsada, código só em `revision_history` fora do ledger e BOM indisponível.
+
+**TESTES:** `tests/test_bom_structure_comparator.py` + `test_bom_structure_comparator_val027_029.py` + `test_drawing_investigation_r12.py` = 92 passed. `test_drawing_analysis*.py`, perfis, recuperação e MCP = 139 passed. Corpus real dos 13 PDFs: `TEST_NOT_RUN` neste ciclo (sem chamada à biblioteca oficial).
+
+**CORPUS / PDF SHA:** inalterado; Doc 120 não foi editado.
+
+**RUNTIME:** não implantado.
+
+**BLOQUEIOS:** `OWNER_BLOCKED` nas políticas de quantidade, unidade, equivalência de descrição, item de desenho e ground truth. `E2E` e aceite da Engenharia pendentes. `VAL01_COMPLETED` não declarado. E2–E7 permanecem congeladas.
+
+**PRÓXIMA AÇÃO:** reexecutar no runtime, com o SHA deste commit, os quatro regressores `90263572`, `90264030`, `90264017` e `90263520`, e só então pedir aceite de GT à Engenharia.

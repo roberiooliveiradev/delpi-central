@@ -611,6 +611,9 @@ def build_release_consolidation(
                         "consumption_quantity"
                     ),
                     "consumption_unit": o.attributes.get("consumption_unit"),
+                    "component_description": o.attributes.get(
+                        "component_description"
+                    ),
                     "source": o.document_identity,
                     "class": "FATO_OFICIAL",
                 },
@@ -828,10 +831,32 @@ def build_official_cross_check(
             None, "NOT_CHECKED",
             "sem campo tipado correspondente no desenho",
         ))
+        expected_desc = o.attributes.get("component_description")
+        observed_desc = (res.get("investigations") or [{}, {}])[1].get(
+            "observed", {}
+        ).get("description")
+        if expected_desc and observed_desc:
+            same = (
+                " ".join(str(expected_desc).split()).casefold()
+                == " ".join(str(observed_desc).split()).casefold()
+            )
+            desc_state = "MATCH_CANDIDATE" if same else "CONFLICT_CANDIDATE"
+            desc_reason = (
+                "igualdade literal normalizada — sem política semântica "
+                "aprovada; não é aprovação"
+                if same
+                else "textos diferem; equivalência semântica OWNER_BLOCKED "
+                "— candidato, não NC"
+            )
+        else:
+            desc_state = "NOT_CHECKED"
+            desc_reason = (
+                "descrição ausente em um dos lados — ausência de texto "
+                "não é divergência"
+            )
         verifications.append(_attr(
             oid, "description",
-            None, None, "NOT_CHECKED",
-            "ocorrência BOM não carrega descrição oficial comparável",
+            expected_desc, observed_desc, desc_state, desc_reason,
         ))
 
     # --- revisão: domínios distintos → NOT_COMPARABLE ------------------

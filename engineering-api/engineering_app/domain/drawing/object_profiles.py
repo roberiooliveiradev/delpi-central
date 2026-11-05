@@ -99,6 +99,7 @@ def bom_occurrence(
     object_id: str, *, component_code: str, parent_code: str | None,
     bom_level: int, bom_path: str, consumption_quantity: str | None,
     consumption_unit: str | None, document_sha: str | None = None,
+    component_description: str | None = None,
 ) -> DrawingObject:
     """Perfil A — ocorrência BOM (dado oficial, consumo ≠ montagem ≠ cota)."""
     return DrawingObject(
@@ -111,6 +112,7 @@ def bom_occurrence(
             "bom_path": bom_path,
             "consumption_quantity": consumption_quantity,
             "consumption_unit": consumption_unit,
+            "component_description": component_description,
         },
         document_identity=document_sha,
         observation_state=ObservationState.EXPECTED,

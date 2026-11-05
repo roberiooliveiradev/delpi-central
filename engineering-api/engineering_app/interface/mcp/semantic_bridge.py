@@ -1603,6 +1603,10 @@ async def _analyze_drawing_understanding(
         },
         "official_comparison": understanding.get("bom_comparison")
         or {"state": "NOT_CHECKED"},
+        "structure_validation": {
+            "state": "NOT_CHECKED",
+            "engineering_approval": "NOT_APPROVED",
+        },
         "alerts": {
             "ambiguous": understanding.get("ambiguous_fields") or [],
             "unassigned_tokens": (
@@ -1678,6 +1682,32 @@ async def _analyze_drawing_understanding(
             )
         ),
     )
+    from engineering_app.application.drawing.bom_structure_comparator import (  # noqa: E501
+        compare_bom_to_drawing,
+    )
+
+    _structure_ready = isinstance(structure, dict) and bool(structure)
+    _cmp = compare_bom_to_drawing(
+        product_code=code,
+        bom_occurrences=_bom_flat if _structure_ready else None,
+        component_table=understanding.get("component_table"),
+        tokens=tokens,
+        drawing_pages=(
+            (understanding.get("page_coverage") or {}).get("pdf_page_count")
+        ),
+        code_contexts=understanding.get("code_contexts"),
+        page_coverage=understanding.get("page_coverage"),
+        bom_error=(
+            None if _structure_ready else {"code": "structure_not_provided"}
+        ),
+    )
+    understanding["bom_structure_comparison"] = _cmp
+    understanding["report"]["structure_validation"] = _cmp.get(
+        "validation_report"
+    ) or {
+        "state": "DRAFT/CANDIDATE",
+        "engineering_approval": "NOT_APPROVED",
+    }
     understanding["object_profiles"] = build_object_profiles(
         bom_occurrences=_bom_flat,
         visual_observations=[],

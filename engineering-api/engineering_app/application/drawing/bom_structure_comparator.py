@@ -309,7 +309,9 @@ def _drawing_occurrences(
                     "parent_source": parent_source,
                     "extraction_source": "typed_table_cell",
                     "flaggable": code[:1] in _FLAGGABLE_PREFIXES,
+                    "item": row.get("item"),
                     "quantity": row.get("quantity"),
+                    "unit": row.get("unit"),
                     "y_px": row.get("y_px"),
                     "row": row.get("row"),
                     "page": page,
@@ -445,6 +447,22 @@ def compare_bom_to_drawing(
             "counts": {},
             "findings": [],
             "limitations": limitations,
+            "validation_report": _build_validation_report(
+                product_code=product_code,
+                status=_STATUS_INCONCLUSIVE,
+                bom_occurrences=[],
+                drawing_occ=[],
+                findings=[],
+                limitations=limitations,
+                matched=0,
+                ambiguous_pairs=[],
+                ambiguous_bom=set(),
+                unverified_relations=[],
+                coverage={"bom_available": False},
+                component_table=component_table,
+                page_coverage=page_coverage,
+                code_contexts=code_contexts,
+            ),
         }
 
     bom_by_code: dict[str, list[dict[str, Any]]] = {}
@@ -477,18 +495,35 @@ def compare_bom_to_drawing(
             "reconhecida ou sem códigos tipados — presença no desenho "
             "não pode ser afirmada nem negada."
         )
+        _unread_coverage = {
+            "bom_available": True,
+            "component_table_detected": bool(
+                table_meta.get("candidate")
+            ),
+            "drawing_occurrences_recognized": 0,
+        }
         return {
             "status": _STATUS_INCONCLUSIVE,
-            "coverage": {
-                "bom_available": True,
-                "component_table_detected": bool(
-                    table_meta.get("candidate")
-                ),
-                "drawing_occurrences_recognized": 0,
-            },
+            "coverage": _unread_coverage,
             "counts": {"bom_occurrences": len(bom_occurrences)},
             "findings": [],
             "limitations": limitations,
+            "validation_report": _build_validation_report(
+                product_code=product_code,
+                status=_STATUS_INCONCLUSIVE,
+                bom_occurrences=bom_occurrences,
+                drawing_occ=[],
+                findings=[],
+                limitations=limitations,
+                matched=0,
+                ambiguous_pairs=[],
+                ambiguous_bom=set(),
+                unverified_relations=[],
+                coverage=_unread_coverage,
+                component_table=component_table,
+                page_coverage=page_coverage,
+                code_contexts=code_contexts,
+            ),
         }
 
     # Cobertura integral exige tabela confiável E todas as páginas do
@@ -553,6 +588,8 @@ def compare_bom_to_drawing(
                 bom_remaining.pop(occ["item_code"])
             matched += 1
             occ["_matched"] = True
+            occ["_paired_bom"] = chosen
+            occ["_pair_rule"] = "code_and_verified_parent"
 
     # Passe 2: matches por código para ocorrências restantes.
     for occ in drawing_occ:
@@ -569,6 +606,7 @@ def compare_bom_to_drawing(
             # extra real: candidato a revisão, não prova de divergência.
             if code in bom_by_code:
                 occurrence_excess.append(code)
+                occ["_excess"] = True
                 continue
             page = _occurrence_page(occ, tokens)
             if page is None:
@@ -621,6 +659,10 @@ def compare_bom_to_drawing(
         if not candidates:
             bom_remaining.pop(code)
         matched += 1
+        occ["_paired_bom"] = chosen
+        occ["_pair_rule"] = (
+            "code_and_verified_parent" if same_parent else "code_only"
+        )
         # Divergência de relação só quando o pai do desenho é
         # VERIFICADO por evidência real (não heurística de grupo).
         # Pai inferido por agrupamento ou por continuação de conjunto
@@ -713,6 +755,8 @@ def compare_bom_to_drawing(
             if _near_code(d_code, b_code):
                 ambiguous_pairs.append((d_code, b_code))
                 break
+    ambiguous_d: set[str] = set()
+    ambiguous_b: set[str] = set()
     if ambiguous_pairs:
         ambiguous_d = {p[0] for p in ambiguous_pairs}
         ambiguous_b = {p[1] for p in ambiguous_pairs}
@@ -721,6 +765,12 @@ def compare_bom_to_drawing(
             if not (f["type"] == "DRAWING_ONLY"
                     and f["item_code"] in ambiguous_d)
         ]
+        for occ in drawing_occ:
+            if (
+                occ.get("item_code") in ambiguous_d
+                and not occ.get("_paired_bom")
+            ):
+                occ["_ambiguous"] = True
         for code, occs in list(bom_remaining.items()):
             if code in ambiguous_b:
                 bom_remaining.pop(code)
@@ -931,6 +981,634 @@ def compare_bom_to_drawing(
         "contextual_codes": contextual_codes,
         "findings": findings,
         "limitations": limitations,
+        "validation_report": _build_validation_report(
+            product_code=product_code,
+            status=status,
+            bom_occurrences=bom_occurrences,
+            drawing_occ=drawing_occ,
+            findings=findings,
+            limitations=limitations,
+            matched=matched,
+            ambiguous_pairs=ambiguous_pairs,
+            ambiguous_bom=ambiguous_b,
+            unverified_relations=unverified_relations,
+            coverage=coverage,
+            component_table=component_table,
+            page_coverage=page_coverage,
+            code_contexts=code_contexts,
+        ),
+    }
+
+
+_OWNER_BLOCKED = (
+    "quantity_unit_conversion",
+    "description_semantic_equivalence",
+    "drawing_item_vs_bom_position",
+    "revision_domain_equivalence",
+    "engineering_ground_truth_thresholds",
+)
+
+_QTY_LIMITATION = (
+    "sem regra oficial de unidade/conversão — quantidade de consumo "
+    "da BOM e quantidade de montagem do desenho não são comparáveis"
+)
+_QTY_NEXT = (
+    "aguardar política da Engenharia; não promover divergência de quantidade"
+)
+
+
+def _norm_desc(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = " ".join(str(value).split()).casefold()
+    return text or None
+
+
+def _attr_result(
+    attribute: str,
+    *,
+    expected: Any,
+    observed: Any,
+    result: str,
+    rule: str,
+    page: int | None = None,
+    region: str | None = None,
+    evidence: dict | None = None,
+    uncertainty: str | None = None,
+    limitation: str | None = None,
+    next_action: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "attribute": attribute,
+        "expected_value": expected,
+        "observed_value": observed,
+        "result": result,
+        "rule": rule,
+        "page": page,
+        "region": region,
+        "evidence": evidence or {},
+        "uncertainty": uncertainty,
+        "limitation": limitation,
+        "next_action": next_action,
+    }
+
+
+def _code_cell_box(occ: dict[str, Any] | None) -> list | None:
+    if not occ:
+        return None
+    code = occ.get("item_code")
+    for cell in occ.get("cells") or []:
+        if code and code in str(cell.get("text") or ""):
+            return cell.get("bounding_box_px")
+    for cell in occ.get("cells") or []:
+        if cell.get("bounding_box_px"):
+            return cell.get("bounding_box_px")
+    return None
+
+
+def _occurrence_attributes(
+    bom: dict[str, Any] | None,
+    drawing: dict[str, Any] | None,
+    *,
+    code_result: str,
+    code_uncertainty: str | None,
+    ambiguous: bool,
+) -> list[dict[str, Any]]:
+    """Atributos da mesma ocorrência. Ausência de política oficial
+    permanece NOT_COMPARABLE/NOT_CHECKED — nunca vira divergência."""
+    page = (drawing or {}).get("page")
+    region = (drawing or {}).get("region")
+    evidence = {
+        "extraction_source": (drawing or {}).get("extraction_source"),
+        "parent_source": (drawing or {}).get("parent_source"),
+        "bounding_box_px": _code_cell_box(drawing),
+        "row": (drawing or {}).get("row"),
+    }
+    expected_code = _norm_code((bom or {}).get("component_code")) or None
+    observed_code = (drawing or {}).get("item_code")
+    attrs = [
+        _attr_result(
+            "component_code",
+            expected=expected_code,
+            observed=observed_code,
+            result="AMBIGUOUS" if ambiguous else code_result,
+            rule="exact_component_code",
+            page=page,
+            region=region,
+            evidence=evidence,
+            uncertainty=code_uncertainty,
+            limitation=(
+                "ambiguidade de extração — par similar não é divergência"
+                if ambiguous else None
+            ),
+            next_action=(
+                "não escolher código arbitrariamente"
+                if ambiguous
+                else (
+                    "revisão humana do candidato — não é aprovação"
+                    if code_result == "MATCH_CANDIDATE"
+                    else (
+                        "revisão técnica — candidato, não NC formal"
+                        if code_result == "CONFLICT_CANDIDATE"
+                        else "não declarar ausência; leitura ou revisão visual"
+                    )
+                )
+            ),
+        )
+    ]
+    attrs.append(
+        _attr_result(
+            "item",
+            expected=None,
+            observed=(drawing or {}).get("item"),
+            result="NOT_CHECKED",
+            rule="bom_has_no_drawing_item_position",
+            page=page,
+            region=region,
+            evidence=evidence,
+            uncertainty=(
+                "item/posição do desenho não é nível nem ocorrência da BOM"
+            ),
+            limitation="OWNER_BLOCKED: drawing_item_vs_bom_position",
+            next_action="não comparar item de balão com posição de estrutura",
+        )
+    )
+    exp_desc = _norm_desc((bom or {}).get("component_description"))
+    obs_desc = _norm_desc((drawing or {}).get("item_description"))
+    if exp_desc and obs_desc and exp_desc == obs_desc:
+        desc_result, desc_limit, desc_unc = (
+            "MATCH_CANDIDATE",
+            "igualdade literal normalizada — sem política semântica aprovada",
+            None,
+        )
+    elif exp_desc and obs_desc:
+        desc_result, desc_limit, desc_unc = (
+            "CONFLICT_CANDIDATE",
+            "textos diferem; equivalência semântica é OWNER_BLOCKED — não é NC",
+            "diferença literal não prova descrição incorreta",
+        )
+    else:
+        desc_result, desc_limit, desc_unc = (
+            "NOT_CHECKED",
+            "um dos lados não trouxe descrição observável",
+            "descrição ausente não é divergência",
+        )
+    attrs.append(
+        _attr_result(
+            "description",
+            expected=(bom or {}).get("component_description"),
+            observed=(drawing or {}).get("item_description"),
+            result=desc_result,
+            rule="exact_normalized_text",
+            page=page,
+            region=region,
+            evidence=evidence,
+            uncertainty=desc_unc,
+            limitation=desc_limit,
+            next_action=(
+                "revisão humana do candidato — não é aprovação"
+                if desc_result == "MATCH_CANDIDATE"
+                else (
+                    "revisão técnica da diferença literal — não promover a NC"
+                    if desc_result == "CONFLICT_CANDIDATE"
+                    else "não inventar descrição ausente"
+                )
+            ),
+        )
+    )
+    attrs.append(
+        _attr_result(
+            "quantity",
+            expected=(bom or {}).get("quantity_raw"),
+            observed=(drawing or {}).get("quantity"),
+            result="NOT_COMPARABLE",
+            rule="consumption_quantity_vs_assembly_quantity",
+            page=page,
+            region=region,
+            evidence=evidence,
+            uncertainty="conceitos distintos",
+            limitation=_QTY_LIMITATION,
+            next_action=_QTY_NEXT,
+        )
+    )
+    unit_expected = (bom or {}).get("unit_raw")
+    unit_observed = (drawing or {}).get("unit")
+    attrs.append(
+        _attr_result(
+            "unit",
+            expected=unit_expected,
+            observed=unit_observed,
+            result=(
+                "NOT_COMPARABLE"
+                if unit_expected or unit_observed
+                else "NOT_CHECKED"
+            ),
+            rule="unit_conversion_pending_owner",
+            page=page,
+            region=region,
+            evidence=evidence,
+            limitation=_QTY_LIMITATION if (unit_expected or unit_observed) else None,
+            next_action=_QTY_NEXT,
+        )
+    )
+    exp_parent = (bom or {}).get("parent_code")
+    obs_parent = (drawing or {}).get("parent_code")
+    verified = bool((drawing or {}).get("parent_verified"))
+    source = (drawing or {}).get("parent_source")
+    if ambiguous or drawing is None or bom is None:
+        parent_result = "NOT_CHECKED" if not ambiguous else "AMBIGUOUS"
+        parent_unc = (
+            "relação não comparável sem os dois lados identificados"
+            if not ambiguous
+            else "ambiguidade de código impede relação"
+        )
+    elif verified and obs_parent and obs_parent == exp_parent:
+        parent_result, parent_unc = "MATCH_CANDIDATE", None
+    elif verified and source == "set_anchor" and obs_parent != exp_parent:
+        parent_result, parent_unc = (
+            "CONFLICT_CANDIDATE",
+            "pais verificados e diferentes — candidato, não fato",
+        )
+    else:
+        parent_result, parent_unc = (
+            "NOT_CHECKED",
+            "pai do desenho sem evidência verificada — raiz não atribuída",
+        )
+    attrs.append(
+        _attr_result(
+            "parent_relation",
+            expected=exp_parent,
+            observed=obs_parent,
+            result=parent_result,
+            rule="verified_parent_only",
+            page=page,
+            region=region,
+            evidence={**evidence, "parent_verified": verified},
+            uncertainty=parent_unc,
+            limitation=(
+                "PARENT_RELATION_MISMATCH só com os dois parentescos "
+                "comparáveis e contraditórios"
+            ),
+            next_action=(
+                "revisão técnica do parentesco candidato"
+                if parent_result == "CONFLICT_CANDIDATE"
+                else "não inventar pai nem promover inferência a divergência"
+            ),
+        )
+    )
+    attrs.append(
+        _attr_result(
+            "structural_level",
+            expected=(bom or {}).get("depth"),
+            observed=None,
+            result="NOT_CHECKED",
+            rule="drawing_level_not_independently_observed",
+            page=page,
+            region=region,
+            evidence=evidence,
+            uncertainty="nível visual não medido fora da relação pai verificada",
+            limitation="OWNER_BLOCKED: equivalência de nível de tabela e bom_level",
+            next_action="não inferir nível a partir do prefixo do código",
+        )
+    )
+    attrs.append(
+        _attr_result(
+            "revision_effectiveness",
+            expected=None,
+            observed=None,
+            result="NOT_COMPARABLE",
+            rule="revision_domains_distinct",
+            page=page,
+            region=region,
+            evidence=evidence,
+            limitation=(
+                "revisão TOTVS e revisão do desenho são domínios distintos"
+            ),
+            next_action="não tratar histórico de revisão como tabela vigente",
+        )
+    )
+    return attrs
+
+
+def _overall_result(attributes: list[dict[str, Any]]) -> str:
+    results = {a["result"] for a in attributes}
+    if "AMBIGUOUS" in results:
+        return "AMBIGUOUS"
+    if "CONFLICT_CANDIDATE" in results:
+        return "CONFLICT_CANDIDATE"
+    code = next(a for a in attributes if a["attribute"] == "component_code")
+    if code["result"] == "NOT_CHECKED":
+        return "NOT_CHECKED"
+    if code["result"] == "UNKNOWN":
+        return "UNKNOWN"
+    if results & {"NOT_CHECKED", "NOT_COMPARABLE"}:
+        return "INCONCLUSIVE"
+    return "MATCH_CANDIDATE"
+
+
+def _record_from(
+    *,
+    occurrence_id: str,
+    side: str,
+    bom: dict[str, Any] | None,
+    drawing: dict[str, Any] | None,
+    code_result: str,
+    code_uncertainty: str | None,
+    ambiguous: bool = False,
+) -> dict[str, Any]:
+    attributes = _occurrence_attributes(
+        bom, drawing,
+        code_result=code_result,
+        code_uncertainty=code_uncertainty,
+        ambiguous=ambiguous,
+    )
+    overall = _overall_result(attributes)
+    code = (
+        (drawing or {}).get("item_code")
+        or _norm_code((bom or {}).get("component_code"))
+    )
+    return {
+        "occurrence_id": occurrence_id,
+        "side": side,
+        "component_code": code or None,
+        "parent_component_code": (
+            (drawing or {}).get("parent_code")
+            if drawing and drawing.get("parent_verified")
+            else (bom or {}).get("parent_code")
+        ),
+        "page": (drawing or {}).get("page"),
+        "region": (drawing or {}).get("region"),
+        "result": overall,
+        "proven": False,
+        "attributes": attributes,
+        "evidence": {
+            "extraction_source": (drawing or {}).get("extraction_source"),
+            "bounding_box_px": _code_cell_box(drawing),
+            "row": (drawing or {}).get("row"),
+            "parent_source": (drawing or {}).get("parent_source"),
+        },
+        "uncertainty": code_uncertainty,
+        "limitation": (
+            "DRAFT/CANDIDATE — não aprovado tecnicamente pela Engenharia"
+        ),
+        "next_action": next(
+            a["next_action"]
+            for a in attributes
+            if a["attribute"] == "component_code"
+        ),
+    }
+
+
+def _representation_support(
+    component_table: dict | None,
+    page_coverage: dict | None,
+    drawing_occ: list[dict[str, Any]],
+    code_contexts: list[dict] | None,
+) -> list[dict[str, Any]]:
+    """Capacidade desta leitura. Não é cobertura da biblioteca nem GT."""
+    rows = (component_table or {}).get("rows") or []
+    sources = {o.get("parent_source") for o in drawing_occ}
+    codes = [o.get("item_code") for o in drawing_occ if o.get("item_code")]
+    repeated = len(codes) != len(set(codes))
+    pages = (page_coverage or {}).get("pdf_page_count")
+    missing = (page_coverage or {}).get("pages_not_processed") or []
+    regions = {
+        c.get("region") for c in (code_contexts or []) if c.get("region")
+    }
+    ambiguous_cells = any(
+        cell.get("ambiguous")
+        for row in rows
+        for cell in (row.get("cells") or [])
+    )
+    families = [
+        {
+            "family": "flat_component_table",
+            "support": "SUPPORTED" if rows else "INCONCLUSIVE",
+            "quality": "CANDIDATE",
+            "basis": "linhas tipadas entram no ledger por ocorrência",
+        },
+        {
+            "family": "multilevel_parent",
+            "support": (
+                "SUPPORTED"
+                if sources & {
+                    "set_anchor", "set_member", "set_span", "row_group",
+                }
+                else "INCONCLUSIVE"
+            ),
+            "quality": "CANDIDATE",
+            "basis": (
+                "âncora verificada nesta leitura"
+                if sources & {
+                    "set_anchor", "set_member", "set_span", "row_group",
+                }
+                else "esta leitura não exibiu conjunto verificável"
+            ),
+        },
+        {
+            "family": "repeated_components",
+            "support": "SUPPORTED" if repeated else "INCONCLUSIVE",
+            "quality": "CANDIDATE",
+            "basis": "ocorrências repetidas não são deduplicadas",
+        },
+        {
+            "family": "multipage",
+            "support": (
+                "SUPPORTED" if pages and int(pages) > 1 else "INCONCLUSIVE"
+            ),
+            "quality": "CANDIDATE",
+            "basis": (
+                f"páginas não lidas declaradas: {list(missing)}"
+                if pages and int(pages) > 1
+                else "documento de uma página ou cobertura de páginas ausente"
+            ),
+        },
+        {
+            "family": "revision_history_separated",
+            "support": (
+                "SUPPORTED" if "revision_history" in regions else "INCONCLUSIVE"
+            ),
+            "quality": "CANDIDATE",
+            "basis": (
+                "menção só em revision_history não é tabela vigente"
+                if "revision_history" in regions
+                else "esta leitura não trouxe contexto de revisão"
+            ),
+        },
+        {
+            "family": "merged_or_ambiguous_cells",
+            "support": "INCONCLUSIVE" if ambiguous_cells else "INCONCLUSIVE",
+            "quality": "CANDIDATE",
+            "basis": (
+                "célula ambígua nesta leitura — abstenção, sem heurística de span"
+                if ambiguous_cells
+                else "sem evidência de célula mesclada nesta leitura"
+            ),
+        },
+        {
+            "family": "parallel_table_blocks",
+            "support": "INCONCLUSIVE",
+            "quality": "CANDIDATE",
+            "basis": "sem ground truth de blocos paralelos para esta leitura",
+        },
+        {
+            "family": "quantity_and_unit",
+            "support": "UNSUPPORTED",
+            "quality": "OWNER_BLOCKED",
+            "basis": _QTY_LIMITATION,
+        },
+    ]
+    return families
+
+
+def _build_validation_report(
+    *,
+    product_code: str,
+    status: str,
+    bom_occurrences: list[dict[str, Any]],
+    drawing_occ: list[dict[str, Any]],
+    findings: list[dict[str, Any]],
+    limitations: list[str],
+    matched: int,
+    ambiguous_pairs: list[tuple[str, str]],
+    ambiguous_bom: set[str],
+    unverified_relations: list[str],
+    coverage: dict[str, Any],
+    component_table: dict | None,
+    page_coverage: dict | None,
+    code_contexts: list[dict] | None,
+) -> dict[str, Any]:
+    """Ledger por ocorrência + consolidado. Sempre DRAFT/CANDIDATE."""
+    finding_types = {
+        (f.get("type"), f.get("item_code")): f for f in findings
+    }
+    used_drawing: set[int] = set()
+    records: list[dict[str, Any]] = []
+    for bom in bom_occurrences:
+        oid = str(bom.get("occurrence_id") or "")
+        code = _norm_code(bom.get("component_code"))
+        paired = next(
+            (
+                (i, d)
+                for i, d in enumerate(drawing_occ)
+                if (d.get("_paired_bom") or {}).get("occurrence_id") == oid
+            ),
+            None,
+        )
+        if code in ambiguous_bom:
+            drawing = next(
+                (
+                    d for d in drawing_occ
+                    if d.get("_ambiguous") and not d.get("_paired_bom")
+                ),
+                None,
+            )
+            records.append(
+                _record_from(
+                    occurrence_id=oid or code,
+                    side="bom",
+                    bom=bom,
+                    drawing=drawing,
+                    code_result="AMBIGUOUS",
+                    code_uncertainty=(
+                        "par OCR similar — não é ausência nem componente extra"
+                    ),
+                    ambiguous=True,
+                )
+            )
+            continue
+        if paired:
+            idx, drawing = paired
+            used_drawing.add(idx)
+            records.append(
+                _record_from(
+                    occurrence_id=oid or code,
+                    side="bom",
+                    bom=bom,
+                    drawing=drawing,
+                    code_result="MATCH_CANDIDATE",
+                    code_uncertainty=None,
+                )
+            )
+            continue
+        bom_only = finding_types.get(("BOM_ONLY", code))
+        records.append(
+            _record_from(
+                occurrence_id=oid or code,
+                side="bom",
+                bom=bom,
+                drawing=None,
+                code_result=(
+                    "CONFLICT_CANDIDATE" if bom_only else "NOT_CHECKED"
+                ),
+                code_uncertainty=(
+                    "ausência candidata só com cobertura integral"
+                    if bom_only
+                    else "OCR incompleto não comprova ausência no desenho"
+                ),
+            )
+        )
+    for idx, drawing in enumerate(drawing_occ):
+        if idx in used_drawing or drawing.get("_paired_bom"):
+            continue
+        code = drawing.get("item_code")
+        if drawing.get("_ambiguous") or code in {
+            p[0] for p in ambiguous_pairs
+        }:
+            continue
+        drawing_only = finding_types.get(("DRAWING_ONLY", code))
+        if drawing.get("_excess"):
+            result, uncertainty = (
+                "AMBIGUOUS",
+                "mais ocorrências no desenho do que na BOM — não deduplicar",
+            )
+        elif drawing_only:
+            result, uncertainty = (
+                "CONFLICT_CANDIDATE",
+                "código na tabela vigente sem ocorrência BOM",
+            )
+        else:
+            result, uncertainty = (
+                "NOT_CHECKED",
+                "presença sem linha vigente comprovada não é DRAWING_ONLY",
+            )
+        records.append(
+            _record_from(
+                occurrence_id=(
+                    f"drawing:{code}:{drawing.get('page')}:"
+                    f"{drawing.get('row')}:{idx}"
+                ),
+                side="drawing",
+                bom=None,
+                drawing=drawing,
+                code_result=result,
+                code_uncertainty=uncertainty,
+            )
+        )
+    return {
+        "schema_version": "structure_validation.v1",
+        "state": "DRAFT/CANDIDATE",
+        "engineering_approval": "NOT_APPROVED",
+        "automatic_nc": False,
+        "product_code": product_code,
+        "expected_occurrences": len(bom_occurrences),
+        "observed_occurrences": len(drawing_occ),
+        "proven_matches": 0,
+        "match_candidates": matched,
+        "candidate_divergences": len(findings),
+        "ambiguous_occurrences": len(ambiguous_pairs),
+        "unverified_relations": len(unverified_relations),
+        "non_comparable_attributes": [
+            "quantity", "unit", "revision_effectiveness",
+        ],
+        "coverage": coverage,
+        "source_limitations": list(limitations),
+        "global_situation": status,
+        "representation_support": _representation_support(
+            component_table, page_coverage, drawing_occ, code_contexts
+        ),
+        "owner_blocked": list(_OWNER_BLOCKED),
+        "occurrence_records": records,
     }
 
 

@@ -552,3 +552,164 @@ def test_multi_anchor_row_keeps_association_ambiguous():
         f["type"] != "PARENT_RELATION_MISMATCH" for f in out["findings"]
     )
     assert out["coverage"]["unverified_parent_occurrences"] >= 1
+
+
+def _attrs(record: dict) -> dict:
+    return {a["attribute"]: a for a in record["attributes"]}
+
+
+def test_validation_report_stays_candidate_and_splits_attributes():
+    """Código e descrição literal podem ser candidatos; quantidade não."""
+    rows = [_row("50210001", 10, desc="CABO FLEX", qty="2")]
+    bom = _bom(("50210001", PRODUCT, 1))
+    bom[0]["component_description"] = "CABO FLEX"
+    bom[0]["quantity_raw"] = 500
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=_table(rows),
+        tokens=_tokens("50210001"),
+        drawing_pages=1,
+        page_coverage={"pdf_page_count": 1, "pages_attempted": [1]},
+    )
+    report = out["validation_report"]
+    assert report["schema_version"] == "structure_validation.v1"
+    assert report["state"] == "DRAFT/CANDIDATE"
+    assert report["engineering_approval"] == "NOT_APPROVED"
+    assert report["automatic_nc"] is False
+    assert report["proven_matches"] == 0
+    assert report["match_candidates"] == 1
+    assert "quantity" in report["non_comparable_attributes"]
+    rec = report["occurrence_records"][0]
+    attrs = _attrs(rec)
+    assert attrs["component_code"]["result"] == "MATCH_CANDIDATE"
+    assert attrs["component_code"]["observed_value"] == "50210001"
+    assert attrs["description"]["result"] == "MATCH_CANDIDATE"
+    assert attrs["quantity"]["result"] == "NOT_COMPARABLE"
+    assert attrs["quantity"]["expected_value"] == 500
+    assert attrs["quantity"]["observed_value"] == "2"
+    assert attrs["item"]["result"] == "NOT_CHECKED"
+    assert attrs["parent_relation"]["result"] == "MATCH_CANDIDATE"
+    assert rec["proven"] is False
+    assert rec["result"] == "INCONCLUSIVE"
+    assert any(
+        f["family"] == "quantity_and_unit" and f["support"] == "UNSUPPORTED"
+        for f in report["representation_support"]
+    )
+
+
+def test_missing_description_is_not_a_conflict():
+    rows = [_row("50210001", 10, desc=None)]
+    bom = _bom(("50210001", PRODUCT, 1))
+    bom[0]["component_description"] = "CABO FLEX"
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=_table(rows),
+        tokens=_tokens("50210001"),
+    )
+    attrs = _attrs(out["validation_report"]["occurrence_records"][0])
+    assert attrs["description"]["result"] == "NOT_CHECKED"
+    assert attrs["description"]["result"] != "CONFLICT_CANDIDATE"
+
+
+def test_literal_description_difference_is_candidate_not_nc():
+    rows = [_row("50210001", 10, desc="OUTRA PECA")]
+    bom = _bom(("50210001", PRODUCT, 1))
+    bom[0]["component_description"] = "CABO FLEX"
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=_table(rows),
+        tokens=_tokens("50210001"),
+    )
+    report = out["validation_report"]
+    attrs = _attrs(report["occurrence_records"][0])
+    assert attrs["description"]["result"] == "CONFLICT_CANDIDATE"
+    assert report["automatic_nc"] is False
+    assert report["occurrence_records"][0]["proven"] is False
+    assert all(f["type"] != "DRAWING_ONLY" for f in out["findings"])
+
+
+def test_unseen_bom_rows_stay_not_checked_without_bom_only():
+    """Cobertura insuficiente não transforma OCR faltante em ausência."""
+    bom = _bom(("10080004", PRODUCT, 1), ("10080005", PRODUCT, 1))
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=_table([], candidate=False),
+        tokens=[],
+        drawing_pages=2,
+        page_coverage={
+            "pdf_page_count": 2,
+            "pages_attempted": [1],
+            "pages_not_processed": [2],
+        },
+    )
+    report = out["validation_report"]
+    assert out["findings"] == []
+    assert report["expected_occurrences"] == 2
+    assert report["observed_occurrences"] == 0
+    assert [r["component_code"] for r in report["occurrence_records"]] == [
+        "10080004", "10080005",
+    ]
+    assert all(r["result"] == "NOT_CHECKED" for r in report["occurrence_records"])
+    assert all(r["proven"] is False for r in report["occurrence_records"])
+
+
+def test_repeated_bom_occurrences_are_not_collapsed():
+    row = _row("10020033", 10)
+    bom = _bom(("10020033", PRODUCT, 1))
+    second = dict(bom[0])
+    second["occurrence_id"] = "O0002"
+    second["path"] = f"{PRODUCT}/PI/10020033"
+    bom.append(second)
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=_table([row]),
+        tokens=_tokens("10020033"),
+        drawing_pages=1,
+        page_coverage={"pdf_page_count": 1, "pages_attempted": [1]},
+    )
+    records = [
+        r for r in out["validation_report"]["occurrence_records"]
+        if r["component_code"] == "10020033" and r["side"] == "bom"
+    ]
+    assert [r["occurrence_id"] for r in records] == ["O0001", "O0002"]
+    assert sum(1 for f in out["findings"] if f["type"] == "BOM_ONLY") == 0
+
+
+def test_revision_history_code_does_not_enter_the_ledger_as_drawing_only():
+    bom = _bom(("50210001", PRODUCT, 1))
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=_table([_row("50210001", 10)]),
+        tokens=_tokens("50210001", "10080535"),
+        code_contexts=[
+            {"code": "50210001", "region": "component_table", "page": 1},
+            {"code": "10080535", "region": "revision_history", "page": 2},
+        ],
+    )
+    codes = [
+        r["component_code"]
+        for r in out["validation_report"]["occurrence_records"]
+    ]
+    assert "10080535" not in codes
+    assert all(f.get("item_code") != "10080535" for f in out["findings"])
+
+
+def test_bom_unavailable_report_abstains():
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=None,
+        component_table=_table([_row("50210001", 10)]),
+        bom_error={"code": "structure_not_provided"},
+    )
+    report = out["validation_report"]
+    assert out["status"] == "INCONCLUSIVE"
+    assert report["occurrence_records"] == []
+    assert report["proven_matches"] == 0
+    assert report["engineering_approval"] == "NOT_APPROVED"
+    assert report["global_situation"] == "INCONCLUSIVE"

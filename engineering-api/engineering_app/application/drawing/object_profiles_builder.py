@@ -102,6 +102,7 @@ def build_object_profiles(
                 bom_path=str(occ.get("path") or ""),
                 consumption_quantity=occ.get("quantity_raw"),
                 consumption_unit=occ.get("unit_raw"),
+                component_description=occ.get("component_description"),
                 document_sha=official_source_ref,
             )
         )

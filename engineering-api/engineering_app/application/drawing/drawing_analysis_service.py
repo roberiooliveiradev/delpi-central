@@ -113,6 +113,7 @@ def flatten_bom_occurrences(
             "path": i.get("_path"),
             "quantity_raw": i.get("quantity"),
             "unit_raw": i.get("unit"),
+            "component_description": i.get("description"),
         }
         for i in items
     ]
