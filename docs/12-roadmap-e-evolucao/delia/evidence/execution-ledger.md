@@ -5878,3 +5878,10 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | Doc fix | doc 288 `enum/const` → `enum` (const não implementado) |
 | Suíte | PASS (exit 0, completa) |
 | PRODUCTION_DEPLOY | NOT_AUTHORIZED |
+
+
+## 2026-11-05 — Direção de produto: agentes especializados participativos e MCP distinto do agente
+
+- **DECISION:** seleção autorizada de agentes/perfis especializados (TÉO/CAIO etc.), convite como participantes na conversa, e agente delegado efetivo quando houver justificativa. A DÉLIA permanece produto e orquestradora central com runtime/governança compartilhados; MCP tools/resources/prompts são providers, não identidades de agentes. Um agente pode consumir o mesmo MCP que a DÉLIA utiliza diretamente.
+- **CANONICAL DOCS UPDATED:** 24 §5, 25 CP-071 (proibição histórica de seleção user-facing substituída explicitamente; ID preservado), 60 §1.1, 66 §8. Crosswalk anterior: doc 291. Reuse: Intelligence/Expertise/MCP/Portal/Core/plugin-ui existentes; contrato multi-speaker, catálogo executável e continuidade cross-app TO_INVENTORY.
+- **SCOPE:** DOCUMENTATION_ONLY / NO_RUNTIME_CHANGE / NO_NEW_SERVICE / NO_CP_PASS / NO_PHASE_ADVANCE / PRODUCTION_DEPLOY=NOT_AUTHORIZED. Contratos e gates (AuthZ, owner authority, Evidence/Outcome, knowledge promotion, delegated context minimization, Portal commands) permanecem obrigatórios. Implementação futura requer contract-first e validação no HEAD real.
