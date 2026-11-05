@@ -1600,6 +1600,20 @@ export type MyWegCompareIndicativeProduct = {
   reason?: string | null;
 };
 
+export type MyWegProbableDateShiftKind =
+  | "possible_advancement"
+  | "possible_postponement"
+  | "same_date_redistribution";
+
+export type MyWegProbableDateShift = {
+  productKey: string;
+  fromRemessa: string;
+  toRemessa: string;
+  quantityUn: string;
+  kind: MyWegProbableDateShiftKind | string;
+  confidence: string;
+};
+
 export type MyWegComparePayload = {
   branch: string;
   scope: {
@@ -1616,7 +1630,8 @@ export type MyWegComparePayload = {
     disclaimer: string;
     horizonDays: number;
     referenceDate: string;
-    probableDateShifts?: Array<Record<string, string>>;
+    /** Pareamentos prováveis no par completo — não filtrados pela paginação da tabela. */
+    probableDateShifts?: MyWegProbableDateShift[];
   };
   billing: {
     status: string;

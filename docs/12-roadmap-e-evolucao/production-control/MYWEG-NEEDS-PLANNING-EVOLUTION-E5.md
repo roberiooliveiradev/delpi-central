@@ -81,6 +81,29 @@ S2S api-delpi: token de serviço canônico (`apply_internal_service_headers`) �
 
 Campos novos relevantes: `totalCompared`, `totalChanges`, `billing.indicativeProducts`, `billing.period*`.
 
+### Reprogramações prováveis (`probableDateShifts`) — UX
+
+> **TASK:** `MYWEG-NEEDS-E5-PROBABLE-REPROGRAMMING-UX`  
+> **REUSE_DECISION:** REUSE — motor `_probable_date_shifts()` já existente; frontend apenas apresenta.
+
+O endpoint já devolve `observed.probableDateShifts[]` com:
+
+| Campo | Significado |
+|---|---|
+| `productKey` | Identidade agregada (`code:` / `ref:` / `informed:` / `unresolved:`) |
+| `fromRemessa` / `toRemessa` | Datas ISO da saída e da entrada pareadas |
+| `quantityUn` | Quantidade possivelmente movimentada (string decimal) |
+| `kind` | `possible_advancement` \| `possible_postponement` \| `same_date_redistribution` |
+| `confidence` | Sempre `probable_not_proven` |
+
+Leitura operacional na UI («Possíveis reprogramações de entrega»):
+
+- Antecipação / postergação são **hipóteses** de redistribuição entre datas do mesmo produto.
+- Não confirmar pedido, faturamento ou abatimento WEG.
+- Não somar esses indicadores aos aumentos/reduções/entradas/saídas — são camada explicativa dos mesmos movimentos.
+- A seção usa o array completo do par de coletas; a pesquisa/paginação da tabela de movimentos **não** filtra reprogramações.
+- Entradas e saídas continuam na tabela detalhada para rastreabilidade.
+
 ## Homologação operacional
 
 `REAL_TWO_BATCH_SMOKE`: **PENDING** até existir segunda coleta distinta homologada em produção.
