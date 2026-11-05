@@ -5,14 +5,19 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
+from zoneinfo import ZoneInfo
 
 try:
     import fcntl
 except ImportError:  # pragma: no cover — Windows
     fcntl = None  # type: ignore[assignment]
+
+_SAO_PAULO = ZoneInfo("America/Sao_Paulo")
+_SUCCESS_STATUSES = frozenset({"published", "idempotent"})
 
 
 class PublisherStateStore:
@@ -20,6 +25,7 @@ class PublisherStateStore:
         self._state_dir = state_dir
         self._path = state_dir / "publisher_state.json"
         self._lock_path = state_dir / "publisher_state.lock"
+        self._run_lock_path = state_dir / "publisher_run.lock"
 
     def record_attempt(
         self,
@@ -67,6 +73,56 @@ class PublisherStateStore:
                 return dict(item)
         return None
 
+    def get_success_for_collection(self, collection_id: str) -> dict[str, Any] | None:
+        """Último sucesso conhecido para o collection_id (autoridade local de tentativas)."""
+        data = self._read_unlocked()
+        for item in reversed(list(data.get("attempts") or [])):
+            if item.get("collection_id") != collection_id:
+                continue
+            if item.get("dry_run"):
+                continue
+            if str(item.get("status") or "") in _SUCCESS_STATUSES:
+                return dict(item)
+        return None
+
+    def get_activation_watermark(self) -> datetime | None:
+        data = self._read_unlocked()
+        activation = data.get("activation") or {}
+        raw = activation.get("collected_at_min")
+        if not raw:
+            return None
+        return _parse_iso(str(raw))
+
+    def set_activation_watermark(self, collected_at_min: datetime) -> None:
+        with self._locked():
+            data = self._read_unlocked()
+            data["activation"] = {
+                "collected_at_min": collected_at_min.isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+            self._write_atomic_unlocked(data)
+
+    @contextmanager
+    def acquire_run_lock(self) -> Iterator[bool]:
+        """Exclusão mútua entre execuções automáticas (flock não-bloqueante)."""
+        self._state_dir.mkdir(parents=True, exist_ok=True)
+        handle = self._run_lock_path.open("a+", encoding="utf-8")
+        acquired = False
+        try:
+            if fcntl is None:
+                acquired = True
+            else:
+                try:
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    acquired = True
+                except BlockingIOError:
+                    acquired = False
+            yield acquired
+        finally:
+            if acquired and fcntl is not None:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            handle.close()
+
     def _read_unlocked(self) -> dict[str, Any]:
         if not self._path.exists():
             return {"attempts": []}
@@ -113,3 +169,16 @@ class PublisherStateStore:
                 return False
 
         return _Guard()
+
+
+def _parse_iso(value: str) -> datetime | None:
+    text = value.strip().replace("Z", "+00:00")
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=_SAO_PAULO)
+    return parsed

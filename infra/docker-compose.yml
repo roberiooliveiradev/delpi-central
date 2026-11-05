@@ -3624,7 +3624,8 @@ services:
     networks:
       - delpi-network
 
-  # One-shot manual — NÃO sobe com `up` padrão (profiles: manual). Sem cron/timer.
+  # One-shot — NÃO sobe com `up` padrão (profiles: manual).
+  # Automação: systemd timer versionado chama --publish --publish-pending (ativação controlada).
   # Reutiliza a mesma imagem do production-control-api (evita imagem stale no run).
   myweg-needs-publisher:
     profiles: ["manual"]
@@ -3646,6 +3647,8 @@ services:
       MYWEG_PUBLISHER_TIMEOUT_SECONDS: ${MYWEG_PUBLISHER_TIMEOUT_SECONDS:-60}
       MYWEG_PUBLISHER_MAX_ATTEMPTS: ${MYWEG_PUBLISHER_MAX_ATTEMPTS:-3}
       MYWEG_PUBLISHER_STABILITY_WAIT_SECONDS: ${MYWEG_PUBLISHER_STABILITY_WAIT_SECONDS:-0.75}
+      MYWEG_PUBLISHER_MAX_BATCHES_PER_RUN: ${MYWEG_PUBLISHER_MAX_BATCHES_PER_RUN:-5}
+      MYWEG_PUBLISHER_ACTIVATION_COLLECTED_AT: ${MYWEG_PUBLISHER_ACTIVATION_COLLECTED_AT:-}
     volumes:
       - ${MYWEG_NORMALIZED_HOST_DIR:-/home/michael/.local/share/MyWEG-Automacao/normalizados}:/data/myweg/normalizados:ro
       - ${MYWEG_PUBLISHER_STATE_HOST_DIR:-/var/lib/delpi/myweg-publisher-state}:/data/myweg/publisher-state

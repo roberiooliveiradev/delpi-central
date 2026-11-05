@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
+
+_SAO_PAULO = ZoneInfo("America/Sao_Paulo")
 
 
 @dataclass(frozen=True)
@@ -17,6 +21,8 @@ class PublisherConfig:
     timeout_seconds: float
     max_attempts: int
     stability_wait_seconds: float
+    max_batches_per_run: int
+    activation_collected_at: datetime | None
     branch: str = "02"
 
     @classmethod
@@ -43,6 +49,8 @@ class PublisherConfig:
             or os.getenv("PRODUCTION_CONTROL_API_URL")
             or "http://production-control-api:8000"
         ).rstrip("/")
+        activation_raw = (os.getenv("MYWEG_PUBLISHER_ACTIVATION_COLLECTED_AT") or "").strip()
+        activation = _parse_activation(activation_raw) if activation_raw else None
         return cls(
             normalized_root=root,
             state_dir=state_dir,
@@ -56,4 +64,16 @@ class PublisherConfig:
             stability_wait_seconds=float(
                 os.getenv("MYWEG_PUBLISHER_STABILITY_WAIT_SECONDS") or "0.75"
             ),
+            max_batches_per_run=int(
+                os.getenv("MYWEG_PUBLISHER_MAX_BATCHES_PER_RUN") or "5"
+            ),
+            activation_collected_at=activation,
         )
+
+
+def _parse_activation(value: str) -> datetime:
+    text = value.strip().replace("Z", "+00:00")
+    parsed = datetime.fromisoformat(text)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=_SAO_PAULO)
+    return parsed

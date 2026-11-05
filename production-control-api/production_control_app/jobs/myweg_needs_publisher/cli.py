@@ -1,4 +1,4 @@
-"""CLI manual do publicador MyWEG Necessidades."""
+"""CLI do publicador MyWEG Necessidades (manual + pendências)."""
 
 from __future__ import annotations
 
@@ -6,8 +6,10 @@ import argparse
 import json
 import logging
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from production_control_app.jobs.myweg_needs_publisher.collection_reader import (
     CollectionIncompleteError,
@@ -22,9 +24,11 @@ from production_control_app.jobs.myweg_needs_publisher.http_client import (
 from production_control_app.jobs.myweg_needs_publisher.payload_builder import (
     build_ingest_payload,
 )
+from production_control_app.jobs.myweg_needs_publisher.pending import run_pending_publish
 from production_control_app.jobs.myweg_needs_publisher.state_store import PublisherStateStore
 
 logger = logging.getLogger("myweg_needs_publisher")
+_SAO_PAULO = ZoneInfo("America/Sao_Paulo")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,7 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="myweg-needs-publisher",
         description=(
             "Publica coletas MyWEG (filial 02) no Production Control. "
-            "Execução exclusivamente manual — sem cron."
+            "Modos manuais (--collection-id/--latest) ou pendências (--publish-pending)."
         ),
     )
     parser.add_argument(
@@ -53,6 +57,36 @@ def build_parser() -> argparse.ArgumentParser:
         "--latest",
         action="store_true",
         help="Seleciona a coleta elegível mais recente (nome de pasta).",
+    )
+    parser.add_argument(
+        "--publish-pending",
+        action="store_true",
+        help=(
+            "Processa coletas pendentes em ordem de collected_at "
+            "(limite max-batches; exige marco de ativação)."
+        ),
+    )
+    parser.add_argument(
+        "--max-batches",
+        type=int,
+        default=None,
+        help="Máximo de coletas elegíveis por execução pending (default env/5).",
+    )
+    parser.add_argument(
+        "--include-historical",
+        action="store_true",
+        help=(
+            "Permite recuperação explícita de coletas anteriores ao marco "
+            "(ainda limitada por --max-batches)."
+        ),
+    )
+    parser.add_argument(
+        "--set-activation-watermark",
+        metavar="ISO_DATETIME",
+        help=(
+            "Grava marco de ativação no estado (America/Sao_Paulo se naive) e encerra. "
+            "Não publica."
+        ),
     )
     parser.add_argument(
         "--normalized-root",
@@ -82,19 +116,26 @@ def main(argv: list[str] | None = None) -> int:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
+    if args.set_activation_watermark:
+        return _set_watermark(parser, args)
+
     if args.publish and args.dry_run:
         parser.error("Use --dry-run OU --publish, não ambos.")
     if not args.publish and not args.dry_run:
         parser.error("Informe --dry-run (simulação) ou --publish (envio real).")
-    if bool(args.collection_id) == bool(args.latest):
-        parser.error("Informe exatamente um de: --collection-id ou --latest.")
+
+    selectors = sum(
+        bool(x) for x in (args.collection_id, args.latest, args.publish_pending)
+    )
+    if selectors != 1:
+        parser.error(
+            "Informe exatamente um de: --collection-id, --latest ou --publish-pending."
+        )
 
     try:
         config = PublisherConfig.from_env()
     except ValueError as exc:
         if args.dry_run:
-            # Dry-run pode validar artefatos sem token se API não for chamada,
-            # mas a config exige token. Permitir token dummy só em dry-run via env.
             import os
 
             os.environ.setdefault("API_DELPI_INTERNAL_SERVICE_TOKEN", "dry-run-unused-token")
@@ -103,17 +144,68 @@ def main(argv: list[str] | None = None) -> int:
             _emit({"ok": False, "error": str(exc)}, as_json=args.json)
             return 2
 
-    if args.normalized_root:
-        config = _replace(config, normalized_root=Path(args.normalized_root))
-    if args.state_dir:
-        config = _replace(config, state_dir=Path(args.state_dir))
-    if args.api_url:
-        config = _replace(config, api_base_url=args.api_url.rstrip("/"))
+    config = _apply_overrides(config, args)
 
     if config.branch != "02":
         _emit({"ok": False, "error": "Escopo restrito à filial 02."}, as_json=args.json)
         return 2
 
+    if args.publish_pending:
+        max_batches = (
+            args.max_batches
+            if args.max_batches is not None
+            else config.max_batches_per_run
+        )
+        summary = run_pending_publish(
+            config=config,
+            dry_run=bool(args.dry_run),
+            max_batches=max(0, int(max_batches)),
+            include_historical=bool(args.include_historical),
+        )
+        _emit(summary, as_json=args.json)
+        if summary.get("status") == "busy":
+            return 0
+        if summary.get("status") == "activation_watermark_required":
+            return 2
+        return 0 if summary.get("ok") else 1
+
+    return _run_single(config=config, args=args)
+
+
+def _set_watermark(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
+    raw = str(args.set_activation_watermark or "").strip()
+    try:
+        watermark = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        parser.error("--set-activation-watermark exige datetime ISO.")
+    if watermark.tzinfo is None:
+        watermark = watermark.replace(tzinfo=_SAO_PAULO)
+
+    # Token não é necessário para gravar watermark; use dry-run token stub se ausente.
+    import os
+
+    os.environ.setdefault("API_DELPI_INTERNAL_SERVICE_TOKEN", "watermark-unused-token")
+    try:
+        config = PublisherConfig.from_env()
+    except ValueError as exc:
+        _emit({"ok": False, "error": str(exc)}, as_json=args.json)
+        return 2
+    config = _apply_overrides(config, args)
+    store = PublisherStateStore(config.state_dir)
+    store.set_activation_watermark(watermark)
+    _emit(
+        {
+            "ok": True,
+            "mode": "set-activation-watermark",
+            "activation_collected_at": watermark.isoformat(),
+            "state_dir": str(config.state_dir),
+        },
+        as_json=args.json,
+    )
+    return 0
+
+
+def _run_single(*, config: PublisherConfig, args: argparse.Namespace) -> int:
     try:
         directory = _resolve_directory(config.normalized_root, args)
         artifacts = load_collection(
@@ -141,6 +233,9 @@ def main(argv: list[str] | None = None) -> int:
         "source_files": {
             key: value[:12] + "…" for key, value in artifacts.file_hashes.items()
         },
+        "sb1_note": (
+            "Coleta entra com SB1 pending; matching persistido NÃO é disparado aqui."
+        ),
     }
 
     if args.dry_run:
@@ -160,7 +255,11 @@ def main(argv: list[str] | None = None) -> int:
         built["payload"],
         idempotency_key=built["idempotency_key"],
     )
-    status_label = "published" if result.ok else "failed"
+    status_label = "published" if result.ok and result.created else (
+        "idempotent" if result.ok else "failed"
+    )
+    if result.status_code == 409:
+        status_label = "conflict"
     state.record_attempt(
         collection_id=artifacts.collection_id,
         payload_sha256=built["batch"]["payload_sha256"],
@@ -198,6 +297,19 @@ def _resolve_directory(root: Path, args: argparse.Namespace) -> Path:
     return select_latest_eligible_dir(root)
 
 
+def _apply_overrides(config: PublisherConfig, args: argparse.Namespace) -> PublisherConfig:
+    changes: dict[str, Any] = {}
+    if args.normalized_root:
+        changes["normalized_root"] = Path(args.normalized_root)
+    if args.state_dir:
+        changes["state_dir"] = Path(args.state_dir)
+    if args.api_url:
+        changes["api_base_url"] = args.api_url.rstrip("/")
+    if not changes:
+        return config
+    return _replace(config, **changes)
+
+
 def _replace(config: PublisherConfig, **changes: Any) -> PublisherConfig:
     data = {
         "normalized_root": config.normalized_root,
@@ -208,6 +320,8 @@ def _replace(config: PublisherConfig, **changes: Any) -> PublisherConfig:
         "timeout_seconds": config.timeout_seconds,
         "max_attempts": config.max_attempts,
         "stability_wait_seconds": config.stability_wait_seconds,
+        "max_batches_per_run": config.max_batches_per_run,
+        "activation_collected_at": config.activation_collected_at,
         "branch": config.branch,
     }
     data.update(changes)
@@ -216,7 +330,6 @@ def _replace(config: PublisherConfig, **changes: Any) -> PublisherConfig:
 
 def _emit(payload: dict[str, Any], *, as_json: bool) -> None:
     text = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True)
-    # Defesa: nunca imprimir token mesmo se vazou em error strings.
     print(text if as_json else text)
 
 

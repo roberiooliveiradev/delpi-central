@@ -1,0 +1,15 @@
+[Unit]
+Description=Timer MyWEG Necessidades — tenta publicar pendências após a janela do ETL
+Documentation=file:docs/12-roadmap-e-evolucao/production-control/MYWEG-NEEDS-LINUX-PUBLISHER.md
+
+[Timer]
+# ETL costuma correr de madrugada; não fixar 05h00 como término.
+# Janela operacional: a cada 30 min entre 05:30 e 14:00 America/Sao_Paulo.
+OnCalendar=*-*-* 05:30:00
+OnCalendar=*-*-* 06..13:00/30:00
+Persistent=true
+RandomizedDelaySec=90
+Unit=myweg-needs-publisher.service
+
+[Install]
+WantedBy=timers.target
