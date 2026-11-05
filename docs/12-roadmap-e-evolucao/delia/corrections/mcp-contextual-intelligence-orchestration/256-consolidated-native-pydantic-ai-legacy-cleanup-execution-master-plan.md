@@ -827,3 +827,22 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   cancelamento server-side antes do finalize. NÃO atribuível só a
   CPU — as duas coexistem.
 - Cadeia governada provada 3×: discover→execute→uncovered=50220013.
+
+## 37. G7 — log safety + categoria da falha de saída (doc 283)
+
+- **SECURITY FIX**: `agent_error` agora loga só metadados tipados —
+  `error_type` (classe), `cause_type` (classe), `error_category`
+  (output_retries_exhausted/provider_error/agent_behavior),
+  `tool_calls`, `correlation_id`. Removido `str(exc)`, `exc.body`,
+  `str(__cause__)` — podiam vazar saída do modelo/dados/secrets.
+  Truncamento nunca é sanitização. Teste: sentinela na exceção
+  nunca chega aos logs (typed-only).
+- **OUTPUT_FAILURE_CATEGORY=output_retries_exhausted** — o schema
+  funciona isolado (COMPLETE direto); sob contexto cheio o modelo
+  esgota retries de validação.
+- **GATEWAY_TIMEOUT_CAUSE**: backend CONTINUA após o client 504 —
+  turn logou agent_error minutos depois do timeout do client (não
+  é cancelamento server-side; o 504 é só o timeout do gateway).
+- Cadeia governada: discover→execute→uncovered=50220013 (3×).
+- Stale fixes: context 16384, retries 2 (mudanças medidas).
+- Suite completa PASS (exit 0).

@@ -197,7 +197,7 @@ def test_settings_resolves_checked_in_profile(monkeypatch):
     assert settings.llm_provider == "openai_compatible"
     assert settings.llm_timeout_seconds == 60.0
     assert settings.llm_max_output_tokens is None
-    assert settings.llm_context_tokens == 4096
+    assert settings.llm_context_tokens == 16384
     assert settings.model_stage_timeout_seconds == 60.0
     assert settings.turn_budget_seconds == 300.0
     assert settings.interaction_total_budget_seconds == 300.0
@@ -206,7 +206,7 @@ def test_settings_resolves_checked_in_profile(monkeypatch):
     assert settings.interaction_call_timeout_seconds == 30.0
     assert settings.agent_request_limit == 12
     assert settings.agent_tool_calls_limit == 8
-    assert settings.agent_retries == 1
+    assert settings.agent_retries == 2
     assert settings.tool_result_max_projection_chars == 6000
     assert settings.runtime_profile == "local_ollama"
     assert settings.runtime_config_fingerprint
@@ -304,7 +304,7 @@ def test_composer_maps_snapshot_to_investigation_kwargs(monkeypatch):
     kwargs = _investigation_runtime_kwargs(Settings())
     assert kwargs["request_limit"] == 12
     assert kwargs["tool_calls_limit"] == 8
-    assert kwargs["agent_retries"] == 1
+    assert kwargs["agent_retries"] == 2
     assert kwargs["tool_projection_limit"] == 6000
     assert kwargs["prior_turns_limit"] == 4
 

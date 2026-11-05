@@ -1393,3 +1393,63 @@ def test_governed_tool_invocation_real_and_request_counted():
 
     assert attempt.error_code is None
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
+
+
+def test_agent_error_log_never_leaks_exception_content(caplog):
+    """Doc 283 §2: raw model output, exception bodies, causes and
+    messages must NEVER reach logs — only typed-safe metadata
+    (classes, category, counts). A sentinel secret inside the
+    exception message/body/cause stays out of log records."""
+    import logging
+    from tests.test_pydantic_ai_semantic_rework import _gates
+    from app.application.interaction.turn_budget import TurnDeadline
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from pydantic_ai.messages import ModelResponse, ToolCallPart
+    from pydantic_ai.models.function import FunctionModel
+
+    SENTINEL = "SECRET-SENTINEL-9f8e7d"
+    gates = _gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    read = next(c for c in catalog if c["operation_class"] == "READ")
+    calls = []
+
+    def _fn(messages, _info):
+        calls.append(len(messages))
+        if not any(isinstance(m, ModelResponse) for m in messages):
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "invoke_read_capability",
+                        {
+                            "capability_id": read["capability_id"],
+                            "arguments": {"query": "terminal"},
+                        },
+                    )
+                ]
+            )
+        # model emits an invalid output that embeds a sentinel
+        # secret — the error path must never log it
+        raise ValueError(f"invalid output {SENTINEL} embedded")
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn)
+    )
+    with caplog.at_level(logging.INFO):
+        attempt = engine.attempt("consulte terminal")
+    blob = "\n".join(
+        rec.getMessage() for rec in caplog.records
+    )
+    assert SENTINEL not in blob, (
+        "exception content leaked into logs"
+    )
+    # typed outcome present, no fabricated evidence
+    assert attempt.error_code in (
+        "investigation_agent_error",
+        "investigation_no_business_evidence",
+        "investigation_clarification_required",
+        None,
+    )

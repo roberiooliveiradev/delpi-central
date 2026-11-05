@@ -1430,20 +1430,31 @@ class PydanticAiInvestigationOrchestrator:
                     ):
                         raise cause from exc
                     exc_cause = getattr(exc, "__cause__", None)
-                    exc_body = getattr(exc, "body", None)
+                    # Typed-safe metadata only (doc 283 §2): exception
+                    # classes, stage, category and counts — never raw
+                    # model output, bodies, causes or messages, which
+                    # may carry business data, identifiers or secrets.
+                    exc_name = type(exc).__name__
+                    error_category = (
+                        "output_retries_exhausted"
+                        if exc_name == "UnexpectedModelBehavior"
+                        else (
+                            "provider_error"
+                            if exc_name
+                            in ("ModelHTTPError", "ModelAPIError")
+                            else "agent_behavior"
+                        )
+                    )
                     _logger.info(
                         "orchestration engine=pydantic_ai "
                         "stage=investigation decision=agent_error "
-                        "error_type=%s error=%s cause=%s body=%s "
+                        "error_type=%s cause_type=%s category=%s "
                         "tool_calls=%d correlation_id=%s",
-                        type(exc).__name__,
-                        str(exc)[:240],
-                        str(exc_cause)[:300]
+                        exc_name,
+                        type(exc_cause).__name__
                         if exc_cause is not None
                         else "-",
-                        str(exc_body)[:400]
-                        if exc_body is not None
-                        else "-",
+                        error_category,
                         deps.tool_calls,
                         correlation,
                     )
