@@ -30,6 +30,15 @@ describe("displayFormatSelection", () => {
       }),
     ).toBe("chartValue");
     expect(resolveDisplayFormatTarget({ selected: chart })).toBe("chartValue");
+    expect(
+      resolveDisplayFormatDescriptor({
+        selected: chart,
+        selectedChartPart: { kind: "dataLabels" },
+      }),
+    ).toMatchObject({
+      target: "chartValue",
+      hint: "Formato dos valores exibidos nos rótulos",
+    });
   });
 
   it("leitura: spec ganha do enum; gravação escreve spec + espelho", () => {

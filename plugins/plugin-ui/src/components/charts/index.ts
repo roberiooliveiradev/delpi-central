@@ -168,9 +168,7 @@ export {
 export {
   DEFAULT_SERIES_CHART_DATA_LABELS,
   dataLabelOutsideGutterPx,
-  dataLabelsConfigFromPreset,
   formatSeriesChartDataLabelText,
-  matchDataLabelsPreset,
   mergeSeriesChartDataLabels,
   resolveDataLabelPosition,
   resolveSeriesChartDataLabels,
@@ -178,7 +176,6 @@ export {
   type SeriesChartDataLabelPosition,
   type SeriesChartDataLabelSeparator,
   type SeriesChartDataLabelsConfig,
-  type SeriesChartDataLabelsPresetId,
   type SeriesChartDataLabelsResolved,
 } from "./seriesChartDataLabels";
 export {

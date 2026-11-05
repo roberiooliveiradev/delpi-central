@@ -3,9 +3,8 @@ import { chartElementPrimaryPartRef } from "./seriesChartElementCatalog";
 import type { SeriesChartOptions } from "./seriesChartOptions";
 import { mergeSeriesChartOptions } from "./seriesChartOptions";
 import {
-  dataLabelsConfigFromPreset,
-  matchDataLabelsPreset,
-  type SeriesChartDataLabelsPresetId,
+  mergeSeriesChartDataLabels,
+  type SeriesChartDataLabelPosition,
 } from "./seriesChartDataLabels";
 import {
   mergeChartPartsWithOptions,
@@ -30,10 +29,6 @@ export type ChartAddElementChoiceId =
   | "dataLabels:insideEnd"
   | "dataLabels:outsideEnd"
   | "dataLabels:bestFit"
-  | "dataLabels:categoryPercent"
-  | "dataLabels:valuePercent"
-  | "dataLabels:percent"
-  | "dataLabels:category"
   | "dataTable:none"
   | "dataTable:show"
   | "grid:none"
@@ -53,20 +48,14 @@ export type ChartAddElementChoiceId =
   | "smoothLines:none"
   | "smoothLines:show";
 
-const DATA_LABEL_CHOICE_PRESET: Record<
-  Extract<ChartAddElementChoiceId, `dataLabels:${string}`>,
-  SeriesChartDataLabelsPresetId
+const DATA_LABEL_POSITION_CHOICE: Partial<
+  Record<Extract<ChartAddElementChoiceId, `dataLabels:${string}`>, SeriesChartDataLabelPosition>
 > = {
-  "dataLabels:none": "none",
-  "dataLabels:show": "show",
+  "dataLabels:show": "center",
   "dataLabels:center": "center",
   "dataLabels:insideEnd": "insideEnd",
   "dataLabels:outsideEnd": "outsideEnd",
   "dataLabels:bestFit": "bestFit",
-  "dataLabels:categoryPercent": "categoryPercent",
-  "dataLabels:valuePercent": "valuePercent",
-  "dataLabels:percent": "percent",
-  "dataLabels:category": "category",
 };
 
 export function chartAddElementChoiceRootId(
@@ -100,17 +89,36 @@ function applyDataLabelsChoice(
   choiceId: Extract<ChartAddElementChoiceId, `dataLabels:${string}`>,
   base: SeriesChartOptions,
 ): SeriesChartOptions {
-  const preset = DATA_LABEL_CHOICE_PRESET[choiceId];
-  const next = dataLabelsConfigFromPreset(preset);
-  if (!next.showDataLabels) {
+  if (choiceId === "dataLabels:none") {
     /* Só desliga o flag — mantém dataLabels custom (categoria/%, posição, etc.). */
     return mergeSeriesChartOptions({ ...base, showDataLabels: false });
   }
+  const position = DATA_LABEL_POSITION_CHOICE[choiceId];
+  if (!position) {
+    return mergeSeriesChartOptions({ ...base, showDataLabels: true });
+  }
+  const previous = base.dataLabels ?? {};
+  const leaderLines =
+    previous.showLeaderLines == null && (position === "outsideEnd" || position === "bestFit")
+      ? true
+      : previous.showLeaderLines;
   return mergeSeriesChartOptions({
     ...base,
     showDataLabels: true,
-    dataLabels: next.dataLabels,
+    dataLabels: {
+      ...previous,
+      position,
+      ...(leaderLines != null ? { showLeaderLines: leaderLines } : {}),
+    },
   });
+}
+
+function dataLabelPositionActive(
+  options: SeriesChartOptions,
+  position: SeriesChartDataLabelPosition,
+): boolean {
+  if (options.showDataLabels === false) return false;
+  return mergeSeriesChartDataLabels(options.dataLabels).position === position;
 }
 
 /** Aplica preset flat; sincronizar parts via `applyChartAddElementChoiceWithParts`. */
@@ -172,10 +180,6 @@ export function applyChartAddElementChoice(
     case "dataLabels:insideEnd":
     case "dataLabels:outsideEnd":
     case "dataLabels:bestFit":
-    case "dataLabels:categoryPercent":
-    case "dataLabels:valuePercent":
-    case "dataLabels:percent":
-    case "dataLabels:category":
       return applyDataLabelsChoice(choiceId, base);
     case "dataTable:none":
       return mergeSeriesChartOptions({ ...base, showDataTable: false });
@@ -309,27 +313,16 @@ export function isChartAddElementChoiceActive(
     case "chartTitle:show":
       return base.showTitle !== false;
     case "dataLabels:none":
-      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "none";
+      return base.showDataLabels === false;
     case "dataLabels:show":
     case "dataLabels:center":
-      return (
-        matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "center" ||
-        matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "show"
-      );
+      return dataLabelPositionActive(base, "center");
     case "dataLabels:insideEnd":
-      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "insideEnd";
+      return dataLabelPositionActive(base, "insideEnd");
     case "dataLabels:outsideEnd":
-      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "outsideEnd";
+      return dataLabelPositionActive(base, "outsideEnd");
     case "dataLabels:bestFit":
-      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "bestFit";
-    case "dataLabels:categoryPercent":
-      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "categoryPercent";
-    case "dataLabels:valuePercent":
-      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "valuePercent";
-    case "dataLabels:percent":
-      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "percent";
-    case "dataLabels:category":
-      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "category";
+      return dataLabelPositionActive(base, "bestFit");
     case "dataTable:none":
       return !base.showDataTable;
     case "dataTable:show":

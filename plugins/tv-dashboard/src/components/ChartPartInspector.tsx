@@ -550,6 +550,137 @@ export function ChartPartInspector({ pane = false, block }: Props) {
         </>
       ) : null}
 
+      {selectedChartPart.kind === "dataLabels" ? (
+        <>
+          <DeckField id="td-chart-part-labels-show" label="Rótulos">
+            <NativeCheckboxControl
+              id="td-chart-part-labels-show"
+              checked={options.showDataLabels !== false}
+              label="Mostrar"
+              onChange={(checked) => persistOptions({ ...options, showDataLabels: checked })}
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-labels-value" label="Conteúdo do rótulo">
+            <NativeCheckboxControl
+              id="td-chart-part-labels-value"
+              checked={options.dataLabels?.showValue !== false}
+              label="Valor"
+              onChange={(checked) =>
+                persistOptions({
+                  ...options,
+                  showDataLabels: true,
+                  dataLabels: { ...options.dataLabels, showValue: checked },
+                })
+              }
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-labels-category" label="Categoria">
+            <NativeCheckboxControl
+              id="td-chart-part-labels-category"
+              checked={options.dataLabels?.showCategoryName === true}
+              label="Categoria"
+              onChange={(checked) =>
+                persistOptions({
+                  ...options,
+                  showDataLabels: true,
+                  dataLabels: { ...options.dataLabels, showCategoryName: checked },
+                })
+              }
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-labels-series" label="Série">
+            <NativeCheckboxControl
+              id="td-chart-part-labels-series"
+              checked={options.dataLabels?.showSeriesName === true}
+              label="Nome da série"
+              onChange={(checked) =>
+                persistOptions({
+                  ...options,
+                  showDataLabels: true,
+                  dataLabels: { ...options.dataLabels, showSeriesName: checked },
+                })
+              }
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-labels-percent" label="Participação">
+            <NativeCheckboxControl
+              id="td-chart-part-labels-percent"
+              checked={options.dataLabels?.showPercentage === true}
+              label="% do total"
+              onChange={(checked) =>
+                persistOptions({
+                  ...options,
+                  showDataLabels: true,
+                  dataLabels: { ...options.dataLabels, showPercentage: checked },
+                })
+              }
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-labels-position" label="Posição">
+            <FormSelectControl
+              id="td-chart-part-labels-position"
+              ariaLabel="Posição dos rótulos"
+              value={options.dataLabels?.position ?? "center"}
+              onChange={(value) =>
+                persistOptions({
+                  ...options,
+                  showDataLabels: true,
+                  dataLabels: {
+                    ...options.dataLabels,
+                    position: value as NonNullable<ComunicadoChartOptions["dataLabels"]>["position"],
+                  },
+                })
+              }
+              options={[
+                { value: "center", label: "Centro" },
+                { value: "insideEnd", label: "Dentro da extremidade" },
+                { value: "outsideEnd", label: "Fora da extremidade" },
+                { value: "bestFit", label: "Melhor ajuste" },
+              ]}
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-labels-separator" label="Separador">
+            <FormSelectControl
+              id="td-chart-part-labels-separator"
+              ariaLabel="Separador do rótulo"
+              value={options.dataLabels?.separator ?? "space"}
+              onChange={(value) =>
+                persistOptions({
+                  ...options,
+                  dataLabels: {
+                    ...options.dataLabels,
+                    separator: value as NonNullable<ComunicadoChartOptions["dataLabels"]>["separator"],
+                  },
+                })
+              }
+              options={[
+                { value: "space", label: "Espaço" },
+                { value: "comma", label: "Vírgula" },
+                { value: "semicolon", label: "Ponto e vírgula" },
+                { value: "newline", label: "Nova linha" },
+              ]}
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-labels-leaders" label="Linhas guia">
+            <NativeCheckboxControl
+              id="td-chart-part-labels-leaders"
+              checked={Boolean(options.dataLabels?.showLeaderLines)}
+              label="Mostrar linhas guia"
+              onChange={(checked) =>
+                persistOptions({
+                  ...options,
+                  dataLabels: { ...options.dataLabels, showLeaderLines: checked },
+                })
+              }
+            />
+          </DeckField>
+          <p className="td-deck-inspector__hint">
+            O formato do número (casas, percentual, moeda) fica na seção Número e vale para o valor
+            do rótulo. % do total escolhe o que entra no texto; não troca a unidade da métrica.
+          </p>
+        </>
+      ) : null}
+
       {selectedChartPart.kind === "grid" ? (
         <>
           <DeckField id="td-chart-part-grid-h" label="Grade horizontal">

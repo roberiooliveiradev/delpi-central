@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  dataLabelsConfigFromPreset,
   formatSeriesChartDataLabelText,
-  matchDataLabelsPreset,
   mergeSeriesChartDataLabels,
   resolveSeriesChartDataLabels,
   shouldHideDataLabel,
@@ -24,9 +22,13 @@ describe("seriesChartDataLabels", () => {
     expect(resolveSeriesChartDataLabels({ showDataLabels: false })).toBeNull();
   });
 
-  it("preset categoria+% formata como PPT", () => {
-    const { dataLabels } = dataLabelsConfigFromPreset("categoryPercent");
-    const config = mergeSeriesChartDataLabels(dataLabels);
+  it("categoria + percentual do total compõe o texto sem preset", () => {
+    const config = mergeSeriesChartDataLabels({
+      showCategoryName: true,
+      showValue: false,
+      showPercentage: true,
+      position: "outsideEnd",
+    });
     const text = formatSeriesChartDataLabelText({
       config,
       categoryLabel: "Pontual",
@@ -35,9 +37,19 @@ describe("seriesChartDataLabels", () => {
       valueFormat: "number",
     });
     expect(text).toBe("Pontual 57%");
-    expect(config.showLeaderLines).toBe(true);
     expect(config.position).toBe("outsideEnd");
-    expect(config.colorFromCategory).toBe(true);
+  });
+
+  it("valor pronto do backend não é reformatado no rótulo", () => {
+    const config = mergeSeriesChartDataLabels({ showValue: true, showPercentage: false });
+    const text = formatSeriesChartDataLabelText({
+      config,
+      value: 85,
+      total: 100,
+      valueFormat: "number",
+      displayValue: "85,0%",
+    });
+    expect(text).toBe("85,0%");
   });
 
   it("hideBelowPercent oculta fatias mínimas", () => {
@@ -46,8 +58,4 @@ describe("seriesChartDataLabels", () => {
     expect(shouldHideDataLabel({ config, value: 12, total: 100 })).toBe(false);
   });
 
-  it("matchDataLabelsPreset reconhece categoryPercent", () => {
-    const next = dataLabelsConfigFromPreset("categoryPercent");
-    expect(matchDataLabelsPreset(next.showDataLabels, next.dataLabels)).toBe("categoryPercent");
-  });
 });

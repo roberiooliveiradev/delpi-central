@@ -175,6 +175,12 @@ export function resolveDisplayFormatDescriptor(
         hint: resolveDisplayFormatTargetLabel("chartCategory"),
       };
     }
+    if (ctx.selectedChartPart?.kind === "dataLabels") {
+      return {
+        target: "chartValue",
+        hint: "Formato dos valores exibidos nos rótulos",
+      };
+    }
     return {
       target: "chartValue",
       hint: resolveDisplayFormatTargetLabel("chartValue"),
