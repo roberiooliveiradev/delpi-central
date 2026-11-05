@@ -755,3 +755,20 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   (egress guard) e não deve ir a produção; outcome empresarial
   positivo pendente.
 - Suite completa PASS (exit 0).
+
+## 33. G7 — diagnóstico zero-selection + contexto medido (doc 279)
+
+- **ROOT CAUSE do unbound**: `context_budget_fail` — envelope
+  estimado ~7.7k > window 4096 em TODOS os turns; o modelo nunca era
+  chamado (fail-closed correto, não defeito de seleção).
+- **Causa-raiz da janela**: `OLLAMA_CONTEXT_LENGTH=4096` no container
+  (modelo suporta 262144 nativamente; 6GB VRAM).
+- **FIX medido**: `OLLAMA_CONTEXT_LENGTH=16384` + profile
+  `effective_context_window_tokens=16384` (justificado: envelope
+  7.7k + reserve; hardware comporta KV de 16k). fp `646e19a0`.
+- **NOVO BOUNDARY pós-fix**: `model_propose timeout 60s` →
+  `interaction_admission budget_exhausted` — a chamada de admissão
+  do modelo 4B estoura o deadline de 60s no contexto maior (modelo
+  lento em 6GB). Gate de contexto resolvido; latência do admission
+  é o bloqueio seguinte — boundary separado, honestamente registrado.
+- CATALOG=10 caps presentes (api-delpi:2, teo:4, vista:4).
