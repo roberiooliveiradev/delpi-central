@@ -420,7 +420,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **7.4** | kaizen, a5s, maintenance, transformometro, financeiro-inadimplencia | Sem espelho BEM; inline → factory | ✅ kit: print help-tooltip, `analytics-kpi.css`, state-box dismiss/success, ghost `--active`, table ghost compact; MFEs zeraram `.delpi-ui-*` |
 | **7.5** | `inspecoes-processo` Pagination/EmptyState; SI DataTable | Thin wrappers / kit | ✅ CompactPagination (`disabled` + `hasNext` sintético); EmptyState dual `state-box--empty`; SI DataTable kit (CSS local removido) |
 | **7.6** | Família `dashboard-*` + MFEs P2 (filters/state-box/table mobile) | Padrão dept. alinhado a CR/tokens | ✅ kit: `stateBoxBemClasses` dual + placeholder/compact/positive; MFEs 0× `.delpi-ui-*`; ghost/state dual |
-| **7.7** | Gate CI (`audit_mfe_plugin_ui_css.py` — seletores `.delpi-ui-*` em CSS de MFE) | Falha CI se reintroduzir | ✅ ligado em `build-tv-dashboard.sh` |
+| **7.7** | Inventário (`audit_mfe_plugin_ui_css.py`) + regressão (`MFE_PLUGIN_UI_OVERRIDE`) | Inventário mostra a dívida; o diff falha se reintroduzir | ✅ build TV bloqueia só a regressão |
 | **7.8** | `cipa` — botões de ação e navegação voltar | `ActionButton` / `BackLink` no kit; sem `.cipa-btn` / `.cipa-link` | ✅ |
 | **7.9** | `cipa` — migração completa da UI base | `PageHeader`, cards, `DataTable`, estados, `NavigationCard`, `IconButton` e formulários no kit; CSS local só layout/domínio | ✅ |
 | **7.10** | `commercial` — concluir convergência do antigo fluxo de pedidos | Prefixo `cm`; 0 CSS `.delpi-ui-*`; 0 shell/helper morto; helps sem HTTP/Protheus | ✅ `sourceHygiene.test.mjs` + test/lint/build; auditor global sem ocorrência em `commercial` |

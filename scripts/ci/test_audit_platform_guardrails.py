@@ -136,6 +136,116 @@ class PlatformGuardrailsTest(unittest.TestCase):
         )
         self.assertEqual([item.rule for item in findings], ["AUTHZ_PRIMITIVE_DUPLICATION"])
 
+    def test_new_plugin_ui_selector_is_blocked_even_when_the_file_already_has_one(self):
+        source = [
+            ".dashboard-foo .delpi-ui-action-btn { color: white; }",
+            ".dashboard-foo .delpi-ui-card { padding: 4px; }",
+        ]
+        findings = mod.scan_mfe_css(
+            "plugins/foo/src/index.css",
+            {2: source[1]},
+            source,
+        )
+        self.assertEqual([item.rule for item in findings], ["MFE_PLUGIN_UI_OVERRIDE"])
+
+    def test_unchanged_override_is_not_a_new_violation(self):
+        self.assertEqual(mod.scan_mfe_css("plugins/foo/src/index.css", {}), [])
+
+    def test_removed_override_is_not_a_new_violation(self):
+        with patch.object(mod, "scan_migration_mutations", return_value=[]), patch.object(
+            mod, "added_lines", return_value={}
+        ):
+            self.assertEqual(mod.collect("delivery-start"), [])
+
+    def test_amplifying_an_existing_override_is_blocked(self):
+        source = [
+            ".dashboard-foo .delpi-ui-action-btn {",
+            "  color: white;",
+            "  padding: 8px;",
+            "}",
+        ]
+        findings = mod.scan_mfe_css(
+            "plugins/foo/src/index.css",
+            {3: "  padding: 8px;"},
+            source,
+        )
+        self.assertEqual([item.rule for item in findings], ["MFE_PLUGIN_UI_OVERRIDE"])
+
+    def test_amplifying_an_override_inside_media_is_blocked(self):
+        source = [
+            "@media (max-width: 768px) {",
+            "  .dashboard-foo .delpi-ui-action-btn {",
+            "    padding: 8px;",
+            "  }",
+            "}",
+        ]
+        findings = mod.scan_mfe_css(
+            "plugins/foo/src/index.css",
+            {3: "    padding: 8px;"},
+            source,
+        )
+        self.assertEqual([item.rule for item in findings], ["MFE_PLUGIN_UI_OVERRIDE"])
+
+    def test_token_inside_host_wrapper_is_allowed(self):
+        source = [
+            ".dashboard-foo {",
+            "  --delpi-ui-text: #ffffff;",
+            "}",
+        ]
+        findings = mod.scan_mfe_css(
+            "plugins/foo/src/index.css",
+            {2: "  --delpi-ui-text: #ffffff;"},
+            source,
+        )
+        self.assertEqual(findings, [])
+
+    def test_canonical_plugin_ui_css_is_not_an_mfe_override(self):
+        findings = mod.scan_mfe_css(
+            "plugins/plugin-ui/src/styles/action-controls.css",
+            {1: ".delpi-ui-action-btn { background: white; }"},
+        )
+        self.assertEqual(findings, [])
+
+    def test_tv_change_without_css_selector_is_not_an_override(self):
+        findings = mod.scan_mfe_css(
+            "plugins/tv-dashboard/src/App.tsx",
+            {4: "const marker = '.delpi-ui-card';"},
+        )
+        self.assertEqual(findings, [])
+
+    def test_delivery_range_blocks_selector_introduced_before_the_last_commit(self):
+        def fake_added(base: str):
+            if base == "delivery-start":
+                return {
+                    "plugins/foo/src/a.css": {3: ".dashboard-foo .delpi-ui-card { color: red; }"}
+                }
+            return {}
+
+        with patch.object(mod, "scan_migration_mutations", return_value=[]), patch.object(
+            mod, "added_lines", side_effect=fake_added
+        ), patch.object(mod, "worktree_lines", return_value=[]):
+            findings = mod.collect("delivery-start")
+        self.assertEqual([item.rule for item in findings], ["MFE_PLUGIN_UI_OVERRIDE"])
+
+    def test_css_rename_without_new_selector_keeps_historical_debt(self):
+        with patch.object(
+            mod,
+            "changed_paths",
+            return_value=[("R100", ["plugins/foo/src/old.css", "plugins/foo/src/new.css"])],
+        ), patch.object(mod, "added_lines", return_value={}), patch.object(
+            mod, "scan_migration_mutations", return_value=[]
+        ):
+            self.assertEqual(mod.collect("base"), [])
+
+    def test_css_rename_that_adds_a_selector_is_blocked(self):
+        with patch.object(mod, "scan_migration_mutations", return_value=[]), patch.object(
+            mod,
+            "added_lines",
+            return_value={"plugins/foo/src/new.css": {2: ".x .delpi-ui-icon-btn { }"}},
+        ), patch.object(mod, "worktree_lines", return_value=[]):
+            findings = mod.collect("base")
+        self.assertEqual([item.rule for item in findings], ["MFE_PLUGIN_UI_OVERRIDE"])
+
     def test_core_authz_primitive_is_allowed(self):
         findings = mod.scan_authz_primitive_duplication(
             "core-api/app/interfaces/http/security/authorization.py",

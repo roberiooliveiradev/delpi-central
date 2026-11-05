@@ -10,8 +10,25 @@ python3 "$ROOT/scripts/ci/check_plugin_docker_shared_libraries.py" --check
 echo "[CI] Gate duplicação @delpi/plugin-ui"
 python3 "$ROOT/scripts/ci/audit_plugin_ui_duplication.py" --check
 
-echo "[CI] Gate CSS kit nos MFEs (zero .delpi-ui-* fora de plugin-ui)"
-python3 "$ROOT/scripts/ci/audit_mfe_plugin_ui_css.py" --check
+resolve_regression_base() {
+  if [ -n "${PLATFORM_GUARDRAILS_BASE_SHA:-}" ]; then
+    printf '%s\n' "$PLATFORM_GUARDRAILS_BASE_SHA"
+    return
+  fi
+  if git -C "$ROOT" rev-parse --verify --quiet origin/main >/dev/null; then
+    git -C "$ROOT" merge-base HEAD origin/main
+    return
+  fi
+  git -C "$ROOT" rev-parse HEAD^
+}
+
+echo "[CI] Gate CSS — regressão incremental (MFE_PLUGIN_UI_OVERRIDE)"
+REGRESSION_BASE="$(resolve_regression_base)"
+echo "[CI] base da regressão: $REGRESSION_BASE"
+python3 "$ROOT/scripts/ci/audit_platform_guardrails.py" --check --base "$REGRESSION_BASE"
+
+echo "[CI] Inventário da dívida CSS histórica (não bloqueia este build)"
+python3 "$ROOT/scripts/ci/audit_mfe_plugin_ui_css.py" --base "$REGRESSION_BASE"
 
 PLUGIN_DIR="${PLUGIN_DIR:-$ROOT/plugins/tv-dashboard}"
 PRESENTATION_DIR="$ROOT/plugins/tv-dashboard-presentation"

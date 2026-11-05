@@ -78,7 +78,8 @@ python3 scripts/ci/check_plugin_docker_shared_libraries.py --check
 python3 scripts/ci/audit_plugin_ui_duplication.py --check          # bloqueia HelpTooltip local + integração
 python3 scripts/ci/audit_plugin_ui_duplication.py --check --strict # falha em toda duplicata catalogada
 python3 scripts/ci/audit_plugin_ui_native_form_controls.py --check # bloqueia <select>/<textarea> novos fora do pacote
-python3 scripts/ci/audit_mfe_plugin_ui_css.py --check              # bloqueia seletores .delpi-ui-* em CSS de MFE (Fase 7)
+python3 scripts/ci/audit_mfe_plugin_ui_css.py                 # inventário da dívida; OPEN enquanto o total for > 0
+python3 scripts/ci/audit_platform_guardrails.py --check --base <sha>  # bloqueia override novo no diff
 ```
 
 Relatório: [native-form-controls-audit.md](./native-form-controls-audit.md)

@@ -194,13 +194,61 @@ def is_mfe_css(path: str) -> bool:
     return plugin_name_from_path(path) is not None and path.lower().endswith(".css")
 
 
-def scan_mfe_css(path: str, lines: dict[int, str]) -> list[Violation]:
+def rule_selector_before(lines: list[str], line_no: int) -> str:
+    """Seletores abertos que contêm `line_no`, inclusive dentro de @media."""
+    depth = 0
+    pending = ""
+    stack: list[str] = []
+    for index, line in enumerate(lines, start=1):
+        if index == line_no:
+            return " ".join(stack) if depth > 0 else ""
+        i = 0
+        while i < len(line):
+            if line.startswith("/*", i):
+                end = line.find("*/", i + 2)
+                if end < 0:
+                    i = len(line)
+                    break
+                i = end + 2
+                continue
+            char = line[i]
+            if char == "{":
+                if depth == len(stack):
+                    stack.append(" ".join(pending.split()))
+                    pending = ""
+                depth += 1
+            elif char == "}":
+                if depth > 0:
+                    depth -= 1
+                if len(stack) > depth:
+                    stack.pop()
+                if depth == 0:
+                    pending = ""
+            elif depth == len(stack):
+                pending += char
+            i += 1
+    return ""
+
+
+def worktree_lines(path: str) -> list[str]:
+    file_path = ROOT / path
+    if not file_path.is_file():
+        return []
+    return file_path.read_text(encoding="utf-8", errors="replace").splitlines()
+
+
+def scan_mfe_css(
+    path: str,
+    lines: dict[int, str],
+    source_lines: list[str] | None = None,
+) -> list[Violation]:
     if not is_mfe_css(path):
         return []
     findings: list[Violation] = []
+    source = source_lines if source_lines is not None else []
     for line_no, line in lines.items():
         stripped = line.strip()
-        if not stripped or stripped.startswith("/*") or stripped.startswith("//"):
+        if not stripped or stripped.startswith("/*") or stripped.startswith("//") or stripped.startswith("*"):
             continue
         if GLOBAL_CSS_RE.search(line):
             findings.append(
@@ -218,6 +266,17 @@ def scan_mfe_css(path: str, lines: dict[int, str]) -> list[Violation]:
                     path,
                     line_no,
                     "classe .delpi-ui-* estilizada no MFE; corrija o componente em plugins/plugin-ui ou use tokens",
+                )
+            )
+            continue
+        selector = rule_selector_before(source, line_no) if source else ""
+        if ":" in stripped and PLUGIN_UI_CLASS_RE.search(selector):
+            findings.append(
+                Violation(
+                    "MFE_PLUGIN_UI_OVERRIDE",
+                    path,
+                    line_no,
+                    "declaração nova dentro de override .delpi-ui-* já existente; corrija o componente em plugins/plugin-ui ou use tokens",
                 )
             )
     return findings
@@ -327,7 +386,8 @@ def scan_authz_primitive_duplication(path: str, lines: dict[int, str]) -> list[V
 def collect(base: str) -> list[Violation]:
     findings = scan_migration_mutations(base)
     for path, lines in added_lines(base).items():
-        findings.extend(scan_mfe_css(path, lines))
+        source = worktree_lines(path) if is_mfe_css(path) else None
+        findings.extend(scan_mfe_css(path, lines, source))
         findings.extend(scan_mfe_own_api_bypass(path, lines))
         findings.extend(scan_jwt_verify_disabled(path, lines))
         findings.extend(scan_jwt_validator_duplication(path, lines))

@@ -63,6 +63,16 @@ Bloqueia seletor global novo em MFE (`body`, `html`, `:root` isolado, `#root`, `
 ### `MFE_PLUGIN_UI_OVERRIDE`
 Bloqueia estilização local de `.delpi-ui-*`; bug/comportamento do kit é corrigido em `plugins/plugin-ui`.
 
+A proibição arquitetural continua em `plugins-reusable-components.mdc`: o MFE não é dono do chrome `.delpi-ui-*`. Isso não é o mesmo critério que bloqueia um release.
+
+| Controle | Pergunta | Efeito |
+|---|---|---|
+| Proibição | O MFE pode estilizar o kit? | Não. Tokens e layout de página continuam permitidos. |
+| Gate de regressão | Este diff introduz ou amplia override? | Bloqueia. Seletor novo e declaração nova dentro de regra `.delpi-ui-*` falham. Dívida antiga inalterada, remoção e rename sem seletor novo não falham. CSS em `plugins/plugin-ui` não é override de MFE. A base é o intervalo `base..HEAD` (`merge-base` com `origin/main`, `PLATFORM_GUARDRAILS_BASE_SHA`, ou o `before` do push), não `HEAD^`. |
+| Inventário histórico | Quanto CSS de kit ainda existe nos MFEs? | `audit_mfe_plugin_ui_css.py` lista total, MFE, família, novas e removidas. `FULL_TREE_DEBT = OPEN` enquanto o total for maior que zero. `--check` só serve ao programa de quitação. |
+
+`scripts/ci/build-tv-dashboard.sh` executa o gate de regressão e o inventário. O inventário não reprova o build. Apagar a chamada do inventário ou trocá-la por `--check` quebra `scripts/ci/test_audit_mfe_plugin_ui_css.py`.
+
 ### `MFE_OWN_API_BYPASS`
 Se existem `plugins/<app>/` e `<app>-api/`, novo código do MFE não pode chamar `/apps/api-delpi` diretamente. O bounded context é derivado da estrutura do monorepo, sem lista manual.
 

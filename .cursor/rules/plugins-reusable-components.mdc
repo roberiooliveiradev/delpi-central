@@ -27,6 +27,14 @@ Complementa: `plugins-visual-design-system.mdc`, `plugins-frontend-build.mdc`, `
 
 **Regra absoluta:** se o pedaço de UI vem de `@delpi/plugin-ui` (ou dual-class `prefix` + `delpi-ui-*`), **não existe CSS desse componente no MFE**. Em hipótese alguma.
 
+### Enforcement e dívida histórica
+
+A proibição acima não se confunde com o que bloqueia um release:
+
+- Override **novo** ou regra antiga **ampliada** no diff falha em `MFE_PLUGIN_UI_OVERRIDE` (`audit_platform_guardrails.py --check --base`).
+- A dívida **já existente** permanece visível em `python3 scripts/ci/audit_mfe_plugin_ui_css.py`. Enquanto o total for maior que zero, o estado é `FULL_TREE_DEBT = OPEN`. Esse inventário não é pré-requisito automático de um release que não introduz override.
+- A quitação segue por família, no owner do kit: controles nativos, botões, conversação, cards, tabelas, modais. O inventário é o backlog vivo (total, MFE, família, novas, removidas). Não zerar a contagem por allowlist.
+
 Contrato canônico (jul/2026 — dual-class):
 
 1. O componente emite **prefixo do plugin** + **`.delpi-ui-*`** (`delpiUiClass` / `*BemClasses`).
