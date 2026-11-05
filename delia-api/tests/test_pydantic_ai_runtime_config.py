@@ -197,7 +197,7 @@ def test_settings_resolves_checked_in_profile(monkeypatch):
     assert settings.llm_provider == "openai_compatible"
     assert settings.llm_timeout_seconds == 60.0
     assert settings.llm_max_output_tokens is None
-    assert settings.llm_context_tokens is None
+    assert settings.llm_context_tokens == 4096
     assert settings.model_stage_timeout_seconds == 60.0
     assert settings.turn_budget_seconds == 300.0
     assert settings.interaction_total_budget_seconds == 300.0

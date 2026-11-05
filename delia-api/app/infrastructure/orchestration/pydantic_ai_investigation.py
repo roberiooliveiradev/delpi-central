@@ -1086,6 +1086,34 @@ class PydanticAiInvestigationOrchestrator:
             if self._model_factory is not None
             else self._model
         )
+        agent_capabilities = ()
+        if self._context_window_tokens:
+            from pydantic_ai.capabilities import ProcessHistory
+
+            # Native history boundary (doc 271 §4): the processor sees
+            # the REAL messages pydantic_ai will send — including tool
+            # results accumulated during the run, which no pre-call
+            # estimate can cap. Oldest non-anchor messages are dropped
+            # first; the initial request and latest context stay.
+            reserve = self._context_window_tokens // 5
+            window = self._context_window_tokens - reserve
+
+            def _trim_overflow(messages):
+                from app.application.model_invocation.context_budget import (
+                    estimate_text_tokens,
+                )
+
+                total = lambda ms: sum(
+                    estimate_text_tokens(str(m)) for m in ms
+                )
+                trimmed = list(messages)
+                while len(trimmed) > 2 and total(trimmed) > window:
+                    trimmed.pop(1)  # drop oldest after first request
+                return trimmed
+
+            agent_capabilities = (
+                ProcessHistory(processor=_trim_overflow),
+            )
         agent = Agent(
             model,
             deps_type=InvestigationDeps,
@@ -1093,6 +1121,7 @@ class PydanticAiInvestigationOrchestrator:
             instructions=instructions,
             retries=self._agent_retries,
             output_type=InvestigationAnswer,
+            capabilities=list(agent_capabilities),
         )
 
         # Shape-only validation (doc 256 G1): the validator enforces the

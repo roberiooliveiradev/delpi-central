@@ -617,3 +617,22 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   real (options bound), honest unbound; owners dev sem registro
   positivo confirmado → INCONCLUSIVE por dados, não código.
 - Suíte completa PASS (exit 0).
+
+## 25. G7 rework — native ProcessHistory (doc 271)
+
+- **Pydantic AI 2.50.0** — `capabilities=[ProcessHistory(processor)]`:
+  processor nativo recebe as mensagens REAIS antes de CADA request do
+  modelo (inclui tool results acumulados — crescimento que nenhum gate
+  pré-call consegue limitar). `_trim_overflow` descarta a mensagem
+  mais antiga após o primeiro request até caber na janela−reserva
+  (reserva=window/5); preserve instruções/último contexto.
+- Remove aproximações: `InvestigationAnswer.__dict__` nunca é schema
+  real; serialização do catálogo é estimativa rotulada. O envelope
+  real agora é visto no boundary nativo por request.
+- Fail-closed preservado (pre-call typed overflow; processor cobre
+  in-run growth).
+- Testes stale corrigidos (settings 4096, resolver signature,
+  caplog→spy determinístico). Suite completa PASS (exit 0).
+- Controle positivo: INCONCLUSIVE por dados dev (sem registro
+  positivo confirmado nos owners); clarificação estruturada real
+  provada.
