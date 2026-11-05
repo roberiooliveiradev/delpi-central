@@ -85,9 +85,13 @@ Same DÉLIA API/product identity/policy/evidence/work runtime.
 
 ## 5. DÉLIA única
 
-Uma DÉLIA dinamicamente especializada por Expertise Packs, Playbooks, Knowledge, Personal Memory, contexto atual e capabilities autorizadas. Sem runtime de agentes departamentais.
+Uma DÉLIA central, dinamicamente especializada por Expertise Packs, Playbooks, Knowledge, Personal Memory, contexto atual e capabilities autorizadas. Não criar runtimes departamentais obrigatórios, planner paralelo ou autoridade empresarial concorrente.
 
-External A2A agents são integrações, não alternativas user-facing à DÉLIA.
+**Evolução de produto aprovada em 2026-11-05 (CP-071):** o usuário pode conversar diretamente com a DÉLIA, selecionar um **agente/perfil especializado autorizado** (ex.: TÉO ou CAIO) ou convidá-lo como **participante identificado na conversa**. A DÉLIA mantém identidade de produto, runtime/orquestração compartilhados e governança. O perfil pode particularizar nome/apresentação, especialidade, instruções aprovadas/versionadas, fontes de conhecimento e ferramentas elegíveis. Selecionar um perfil não exige outro backend, banco, modelo ou planner.
+
+**Não confundir:** (1) **MCP** é provedor de tools/resources/prompts, não um agente conversacional; (2) **agente/perfil especializado** é uma configuração de interação/raciocínio capaz de usar um ou vários MCPs e outras capabilities; (3) **agente delegado efetivo** é uma execução delimitada de outro Agent ou agente externo A2A, sob gates. O mesmo TÉO pode existir como MCP consultável e como agente TÉO que utiliza esse MCP. Um participante visual não pode fingir uma delegação que não ocorreu.
+
+Agentes externos A2A continuam integrações governadas; quando expostos ao usuário, usam a experiência DÉLIA sem obter authority superior. Convite/retorno, identidade e autoria do speaker, contexto mínimo compartilhado, histórico, revogação e comandos do Portal requerem contratos antes do runtime. Seleção não concede autorização; MCP discovery não é approval; conhecimento e instruções externas não se sobrepõem a Policy/Core/Domain.
 
 ## 5.1 Diferencial: inteligência contextual com LLMs existentes
 
