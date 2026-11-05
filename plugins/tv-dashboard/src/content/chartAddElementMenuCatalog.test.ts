@@ -20,10 +20,26 @@ describe("resolveChartAddElementMenuRoots", () => {
     ]);
     const allIds = roots.flatMap((r) => r.choices.map((c) => c.id));
     expect(allIds).toContain("legend:left");
-    expect(allIds).toContain("dataLabels:categoryPercent");
     expect(allIds).toContain("dataLabels:outsideEnd");
+    expect(allIds).not.toContain("dataLabels:categoryPercent");
+    expect(allIds).not.toContain("dataLabels:valuePercent");
+    expect(allIds).not.toContain("dataLabels:percent");
+    expect(allIds).not.toContain("dataLabels:category");
     expect(allIds).not.toContain("trendline");
     expect(allIds).not.toContain("errorBars");
+  });
+
+
+  it("submenu Rótulos de dados contém só ocultar e posicionar", () => {
+    const roots = resolveChartAddElementMenuRoots("line");
+    const labels = roots.find((entry) => entry.elementId === "dataLabels");
+    expect(labels?.choices.map((choice) => choice.id)).toEqual([
+      "dataLabels:none",
+      "dataLabels:center",
+      "dataLabels:insideEnd",
+      "dataLabels:outsideEnd",
+      "dataLabels:bestFit",
+    ]);
   });
 
   it("ícones de Horizontal/Vertical alinham com o eixo (não seta/align)", () => {
