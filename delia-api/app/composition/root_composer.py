@@ -69,6 +69,7 @@ def _resolve_orchestration_attempt(
     gates,
     *,
     investigation_model=None,
+    investigation_model_factory=None,
     subobjective_fanout_enabled: bool = False,
     checkpoint_db_path: str | None = None,
 ):
@@ -110,6 +111,7 @@ def _resolve_orchestration_attempt(
         return PydanticAiInvestigationOrchestrator(
             gates,
             model=investigation_model,
+            model_factory=investigation_model_factory,
             recovery_reuse_enabled=True,
         )
     return gates
@@ -487,26 +489,33 @@ def _compose_turn_handler(
         else None
     )
     investigation_model = None
+    investigation_model_factory = None
     if (
         gates is not None
         and settings.orchestration_engine == "pydantic_ai"
     ):
         # Model construction stays inside the infrastructure adapter
         # module so composition never imports pydantic_ai SDK.
+        # A new client per turn avoids asyncio locks reused across loops.
         from app.infrastructure.orchestration.pydantic_ai_investigation import (
             build_openai_compatible_investigation_model,
         )
 
-        investigation_model = build_openai_compatible_investigation_model(
-            base_url=settings.llm_base_url,
-            api_key=settings.llm_api_key,
-            model=settings.llm_model,
-        )
+        def _investigation_model_factory():
+            return build_openai_compatible_investigation_model(
+                base_url=settings.llm_base_url,
+                api_key=settings.llm_api_key,
+                model=settings.llm_model,
+            )
+
+        investigation_model_factory = _investigation_model_factory
+        investigation_model = _investigation_model_factory()
     orchestration = (
         _resolve_orchestration_attempt(
             settings.orchestration_engine,
             gates,
             investigation_model=investigation_model,
+            investigation_model_factory=investigation_model_factory,
             subobjective_fanout_enabled=(
                 settings.subobjective_fanout_enabled
             ),

@@ -640,6 +640,7 @@ def test_engine_selection_is_config_gated_not_request_driven():
         "engine_name",
         "gates",
         "investigation_model",
+        "investigation_model_factory",
         "subobjective_fanout_enabled",
         "checkpoint_db_path",
     ]

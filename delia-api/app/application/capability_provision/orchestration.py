@@ -140,6 +140,7 @@ from app.application.capability_provision.contracts import (
     ProviderCapability,
 )
 from app.application.capability_provision.conversational_response import (
+    EMPTY_RESULT_TEXT,
     MAX_RENDER_CONTENT_CHARS,
     CriComposition,
     FieldLabels,
@@ -3564,6 +3565,13 @@ def _is_business_evidence_attempt(
     if attempt.provenance is None or not attempt.provenance.is_complete:
         return False
     if "discovery_metadata_observation" in attempt.limitations:
+        return False
+    # An owner miss ("no records") is not a business fact. Joining
+    # those texts must not become a grounded observation.
+    content = (attempt.content or "").strip()
+    if content == EMPTY_RESULT_TEXT or content.startswith(
+        f"{EMPTY_RESULT_TEXT}\n"
+    ):
         return False
     outcome = attempt.outcome
     if outcome is not None and not outcome.is_complete:
@@ -13390,7 +13398,7 @@ class OperationalCapabilityOrchestrator:
         is applied by ``_groups`` (request-scoped identity); the actor
         id is logged for audit lineage only.
         """
-        groups, _failures = self._groups(correlation, deadline)
+        groups, failures = self._groups(correlation, deadline)
         catalog: list[dict[str, Any]] = []
         for group in groups.values():
             for cap in group.capabilities:
@@ -13450,10 +13458,12 @@ class OperationalCapabilityOrchestrator:
         _logger.info(
             "orchestration stage=semantic_tool_catalog "
             "decision=project actor=%s catalog_len=%d "
-            "owners=%s correlation_id=%s",
+            "owners=%s failures=%s correlation_id=%s",
             (actor_user_id or "")[:64] or "-",
             len(bounded),
-            ",".join(f"{k}:{v}" for k, v in sorted(by_owner.items())[:12]),
+            ",".join(f"{k}:{v}" for k, v in sorted(by_owner.items())[:12])
+            or "-",
+            ",".join(str(item) for item in failures[:8]) or "-",
             correlation,
         )
         return bounded

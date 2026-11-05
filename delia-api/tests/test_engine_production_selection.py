@@ -119,6 +119,7 @@ class TestUntrustedSurfaces:
             "engine_name",
             "gates",
             "investigation_model",
+            "investigation_model_factory",
             "subobjective_fanout_enabled",
             "checkpoint_db_path",
         ]

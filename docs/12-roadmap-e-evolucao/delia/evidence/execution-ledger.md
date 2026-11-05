@@ -5673,4 +5673,24 @@ LIVE_E02=GROUNDED OBSERVATION; OWNER_READS discover+execute get_product_structur
 LIVE_MATRIX=E01 honest; E03/E04/E05/E10 residual unbound/clarify; E07/E08 NON_GROUNDED honest; NDJSON 11 lines OK; FALSE_GROUNDED=0.
 VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=YES (E02 owner READ gate).
 
+## Pydantic AI generalist multi-step investigation (2026-11-04)
+
+TASK=DELIA-C3-PYDANTIC-AI-GENERALIST-MULTISTEP-INVESTIGATION-AND-OUTCOME-01.
+REPORT=doc 240. BASE_HEAD=945036c6a1. PRODUCTION_DEPLOY=NOT_AUTHORIZED. PHASE_ADVANCE=NONE.
+EXISTING_EQUIVALENT=YES (Agent/FunctionToolset/gates/REF05/discovery-first).
+REUSE_DECISION=EXTEND (cobertura de identificadores, model_factory por turno, finalize em UsageLimitExceeded, vazio não é evidência de negócio, falhas do catálogo no log).
+EXECUTION_DRIFT=NONE. Nenhum planner novo, nenhum hardcode de produto/DAVI/compare, rollback `delia` mantido.
+LIVE_E02=GROUNDED raiz 90260147; discover→execute get_product_structure; HTTP 200 ~22788ms.
+LIVE_E03=GROUNDED duas observações; raízes 90260147 depois 90260148; collected=2 tool_calls=2; HTTP 200 ~43307ms; correlation f3daf363.
+LIVE_E05_ISOLATED=GROUNDED raiz 90260148; HTTP 200 35602ms; in=2376 out=60; correlation 445b3a40.
+LIVE_E05_OVERLOAD=NOT_APPLICABLE; admissão esgotou o prazo; catalog_len=8 sem api-delpi; correlation 5b5d468c.
+LIVE_E04=NOT_APPLICABLE; execute erro + resume; usage_limit; correlation ea23c62e.
+LIVE_E06=GROUNDED parcial em conhecimento; identificador 90260147 permaneceu descoberto; tool_calls_limit_reached.
+LIVE_E07=primeiro turno NON_GROUNDED sem esclarecimento; continuação com o código GROUNDED raiz 90260147.
+LIVE_E08=NON_GROUNDED owner_path_unbound; nenhuma escrita.
+LIVE_E09=NDJSON 10 linhas, terminal turn_result; a leitura embutida fechou raiz 90260147.
+LIVE_E10=NON_GROUNDED; identificadores permaneceram descobertos; usage_limit.
+FALSE_GROUNDED=0 para identidade de produto. REGRESSION=delia-api pytest tests/ GREEN antes do log de falhas do catálogo; suíte focada do tool loop GREEN depois.
+VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO para a matriz multi-step completa.
+
 

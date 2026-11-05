@@ -24,6 +24,7 @@ Layer position:
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import logging
 import os
@@ -35,8 +36,11 @@ from app.application.capability_provision.governed_stage_gates import (
     SupportsGovernedStageGates,
 )
 from app.application.capability_provision.orchestration import (
+    _IDENTIFIER_LITERAL_RE,
     _NATIVE_ASSESSMENT_LEDGER,
+    _authoritative_structure_root,
     _emit_activity,
+    _is_business_evidence_attempt,
 )
 from app.application.interaction.activity import (
     ActivityEventSink,
@@ -108,8 +112,12 @@ Rules:
   multi-obligation asks. Skip it for a simple single READ.
 - Use `compose_verified_observations` only when two verified structure
   observations should be compared deterministically.
-- If the user ask is ambiguous, call `request_user_clarification` and
-  stop. Do not invent missing identifiers.
+- If a tool result lists uncovered_user_identifiers, call an owner
+  tool again for each remaining identifier before you stop. One
+  observation does not finish a request that names several identifiers.
+- Call request_user_clarification only when a required identifier is
+  absent from the user request and from prior observations. Do not
+  ask the user to restate identifiers already supplied.
 - Never request PREPARE/ACT/write tools; they are not exposed.
 - Never invent business facts when tools fail or return incomplete data.
 - Do not claim an investigation is complete; Application finalizes from
@@ -317,6 +325,73 @@ def _attempt_projection(
     }
 
 
+def uncovered_user_identifiers(
+    input_text: str,
+    collected: list[GovernedCapabilityAttempt] | tuple[GovernedCapabilityAttempt, ...],
+) -> list[str]:
+    """Identifiers named by the user that no business observation roots.
+
+    Generic coverage hint for the model. Does not choose the next tool.
+    """
+    found = list(
+        dict.fromkeys(_IDENTIFIER_LITERAL_RE.findall(input_text or ""))
+    )
+    covered: set[str] = set()
+    for attempt in collected:
+        if not _is_business_evidence_attempt(attempt):
+            continue
+        root = _authoritative_structure_root(attempt)
+        if isinstance(root, str) and root.strip():
+            covered.add(root.strip().casefold())
+    return [item for item in found if item.casefold() not in covered]
+
+
+def focus_arguments_on_next_identifier(
+    arguments: Mapping[str, Any] | None,
+    *,
+    input_text: str,
+    collected: list[GovernedCapabilityAttempt] | tuple[GovernedCapabilityAttempt, ...],
+) -> dict[str, Any]:
+    """Narrow a multi-identifier query to the next uncovered literal.
+
+    The agent already chose the tool. When its query still names
+    several identifiers from the user text, the owner schema that
+    accepts one identifier at a time would otherwise repeat the same
+    miss. Identifiers are copied from the user text only.
+    """
+    args = dict(arguments or {})
+    uncovered = uncovered_user_identifiers(input_text, collected)
+    if not uncovered:
+        return args
+    source = str(args.get("query") or "").strip() or (input_text or "").strip()
+    query_ids = list(dict.fromkeys(_IDENTIFIER_LITERAL_RE.findall(source)))
+    uncovered_keys = {item.casefold() for item in uncovered}
+    if (
+        len(query_ids) == 1
+        and query_ids[0].casefold() in uncovered_keys
+    ):
+        return args
+    if len(query_ids) == 0:
+        return args
+    keep = uncovered[0]
+    keep_keys = {keep.casefold()}
+    # A repeated already-covered identifier is retargeted to the next
+    # uncovered literal. Wording around it stays; values come only
+    # from identifiers the user already named.
+    if len(query_ids) == 1:
+        keep_keys.add(query_ids[0].casefold())
+    narrowed = _IDENTIFIER_LITERAL_RE.sub(
+        lambda match: keep
+        if match.group(0).casefold() in keep_keys
+        else "",
+        source,
+    )
+    narrowed = " ".join(narrowed.split())
+    if narrowed:
+        args["query"] = narrowed
+    return args
+
+
 def _prior_context_block(
     prior_turns: tuple[ConversationContextTurn, ...],
 ) -> str:
@@ -351,15 +426,17 @@ class PydanticAiInvestigationOrchestrator:
         self,
         gates: SupportsGovernedStageGates,
         *,
-        model: Any,
+        model: Any = None,
+        model_factory: Callable[[], Any] | None = None,
         recovery_reuse_enabled: bool = True,
         request_limit: int = _DEFAULT_REQUEST_LIMIT,
         tool_calls_limit: int = _DEFAULT_TOOL_CALL_LIMIT,
     ) -> None:
-        if model is None:
+        if model is None and model_factory is None:
             raise ValueError("investigation model is required")
         self._gates = gates
         self._model = model
+        self._model_factory = model_factory
         self._recovery_reuse_enabled = recovery_reuse_enabled
         self._request_limit = max(1, int(request_limit))
         self._tool_calls_limit = max(1, int(tool_calls_limit))
@@ -538,13 +615,17 @@ class PydanticAiInvestigationOrchestrator:
         ) -> str:
             ctx.deps.deadline.check("tool_invoke_capability")
             ctx.deps.tool_calls += 1
-            raw_args: dict[str, Any] = (
-                arguments if isinstance(arguments, dict) else {}
+            raw_args = focus_arguments_on_next_identifier(
+                arguments if isinstance(arguments, dict) else {},
+                input_text=ctx.deps.input_text,
+                collected=ctx.deps.collected,
             )
+            focused_query = str(raw_args.get("query") or "").strip()
+            invoke_text = focused_query or ctx.deps.input_text
             attempt = ctx.deps.gates._governed_semantic_tool_invoke(
                 capability_id=str(capability_id or "").strip(),
                 arguments=raw_args,
-                input_text=ctx.deps.input_text,
+                input_text=invoke_text,
                 correlation=ctx.deps.correlation,
                 actor_user_id=ctx.deps.actor_user_id,
                 session_id=ctx.deps.session_id,
@@ -555,9 +636,30 @@ class PydanticAiInvestigationOrchestrator:
             )
             ctx.deps.collected.append(attempt)
             index = len(ctx.deps.collected) - 1
-            return _bounded_json(
-                _attempt_projection(attempt, observation_index=index)
+            projection = _attempt_projection(
+                attempt, observation_index=index
             )
+            uncovered = uncovered_user_identifiers(
+                ctx.deps.input_text, ctx.deps.collected
+            )
+            if uncovered:
+                projection["uncovered_user_identifiers"] = uncovered
+                projection["coverage_note"] = (
+                    "Named identifiers still lack an authoritative "
+                    "observation. Choose the next owner tool yourself."
+                )
+            _logger.info(
+                "orchestration engine=pydantic_ai "
+                "stage=investigation decision=tool_observed "
+                "capability=%s action=%s root=%s uncovered=%s "
+                "correlation_id=%s",
+                capability_id,
+                projection.get("action_id"),
+                projection.get("authoritative_root_code"),
+                ",".join(uncovered[:8]),
+                ctx.deps.correlation,
+            )
+            return _bounded_json(projection)
 
         # Prefetch live catalog once so each capability is a native tool.
         # AuthZ is re-checked on every invoke; catalog metadata is never
@@ -794,6 +896,25 @@ class PydanticAiInvestigationOrchestrator:
                     text = f"{text} ({aspects})".strip()
             if not text:
                 text = "Preciso de mais informações para continuar."
+            uncovered = uncovered_user_identifiers(
+                ctx.deps.input_text, ctx.deps.collected
+            )
+            if uncovered:
+                # The user already named concrete identifiers. Asking
+                # again would end the turn before the agent can choose
+                # the next tool. Do not record a terminal clarification.
+                return _bounded_json(
+                    {
+                        "status": "CONTINUE_REQUIRED",
+                        "error_code": "clarification_rejected_identifiers_present",
+                        "uncovered_user_identifiers": uncovered,
+                        "note": (
+                            "Do not ask the user to repeat identifiers "
+                            "already present. Call an owner tool for each "
+                            "remaining identifier."
+                        ),
+                    }
+                )
             ctx.deps.clarification_question = text[:800]
             return _bounded_json(
                 {
@@ -802,8 +923,15 @@ class PydanticAiInvestigationOrchestrator:
                 }
             )
 
+        # A fresh provider/client per turn avoids httpx/asyncio locks
+        # bound to a previous event loop (RuntimeError on the next turn).
+        model = (
+            self._model_factory()
+            if self._model_factory is not None
+            else self._model
+        )
         agent = Agent(
-            self._model,
+            model,
             deps_type=InvestigationDeps,
             toolsets=[toolset],
             instructions=_INVESTIGATION_INSTRUCTIONS,
@@ -818,6 +946,8 @@ class PydanticAiInvestigationOrchestrator:
             )
         started = time.monotonic()
         prompt = _prior_context_block(prior_turns) + input_text
+        result = None
+        usage_limited = False
         try:
             try:
                 result = agent.run_sync(
@@ -829,57 +959,68 @@ class PydanticAiInvestigationOrchestrator:
                     ),
                 )
             except Exception as exc:
-                from app.application.capability_provision.orchestration import (
-                    _StageDeadlineExceeded,
-                    _TurnCancelled,
-                )
-                from app.application.interaction.turn_budget import (
-                    TurnBudgetExhausted,
-                )
-
-                if isinstance(
-                    exc,
-                    (
+                if type(exc).__name__ == "UsageLimitExceeded":
+                    usage_limited = True
+                    _logger.info(
+                        "orchestration engine=pydantic_ai "
+                        "stage=investigation decision=usage_limit_finalize "
+                        "tool_calls=%d collected=%d correlation_id=%s",
+                        deps.tool_calls,
+                        len(deps.collected),
+                        correlation,
+                    )
+                else:
+                    from app.application.capability_provision.orchestration import (
                         _StageDeadlineExceeded,
-                        TurnBudgetExhausted,
                         _TurnCancelled,
-                    ),
-                ):
-                    raise
-                cause = getattr(exc, "__cause__", None)
-                if isinstance(
-                    cause,
-                    (
-                        _StageDeadlineExceeded,
+                    )
+                    from app.application.interaction.turn_budget import (
                         TurnBudgetExhausted,
-                        _TurnCancelled,
-                    ),
-                ):
-                    raise cause from exc
-                _logger.info(
-                    "orchestration engine=pydantic_ai "
-                    "stage=investigation decision=agent_error "
-                    "error_type=%s error=%s tool_calls=%d "
-                    "correlation_id=%s",
-                    type(exc).__name__,
-                    str(exc)[:240],
-                    deps.tool_calls,
-                    correlation,
-                )
-                return GovernedCapabilityAttempt(
-                    status=GovernedCapabilityStatus.PROCESSING_TIMEOUT
-                    if deadline.remaining_seconds() <= 2.0
-                    else GovernedCapabilityStatus.NOT_APPLICABLE,
-                    correlation_id=correlation,
-                    error_code="investigation_agent_error",
-                    admission_outcome=unbound_outcome,
-                    limitations=(
-                        "investigation_agent_error:"
-                        f"{type(exc).__name__}",
-                    ),
-                )
+                    )
 
-            usage = getattr(result, "usage", None)
+                    if isinstance(
+                        exc,
+                        (
+                            _StageDeadlineExceeded,
+                            TurnBudgetExhausted,
+                            _TurnCancelled,
+                        ),
+                    ):
+                        raise
+                    cause = getattr(exc, "__cause__", None)
+                    if isinstance(
+                        cause,
+                        (
+                            _StageDeadlineExceeded,
+                            TurnBudgetExhausted,
+                            _TurnCancelled,
+                        ),
+                    ):
+                        raise cause from exc
+                    _logger.info(
+                        "orchestration engine=pydantic_ai "
+                        "stage=investigation decision=agent_error "
+                        "error_type=%s error=%s tool_calls=%d "
+                        "correlation_id=%s",
+                        type(exc).__name__,
+                        str(exc)[:240],
+                        deps.tool_calls,
+                        correlation,
+                    )
+                    return GovernedCapabilityAttempt(
+                        status=GovernedCapabilityStatus.PROCESSING_TIMEOUT
+                        if deadline.remaining_seconds() <= 2.0
+                        else GovernedCapabilityStatus.NOT_APPLICABLE,
+                        correlation_id=correlation,
+                        error_code="investigation_agent_error",
+                        admission_outcome=unbound_outcome,
+                        limitations=(
+                            "investigation_agent_error:"
+                            f"{type(exc).__name__}",
+                        ),
+                    )
+
+            usage = getattr(result, "usage", None) if result is not None else None
             if usage is not None:
                 self.last_agent_usage = {
                     "input_tokens": getattr(usage, "input_tokens", None),
@@ -923,6 +1064,12 @@ class PydanticAiInvestigationOrchestrator:
                 correlation,
             )
 
+            if usage_limited:
+                terminal = dataclasses.replace(
+                    terminal,
+                    limitations=tuple(terminal.limitations)
+                    + ("tool_calls_limit_reached",),
+                )
             ledger = _NATIVE_ASSESSMENT_LEDGER.get()
             if ledger is not None:
                 self.last_node_trace = list(self.last_node_trace) + [

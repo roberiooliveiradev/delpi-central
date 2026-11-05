@@ -29,6 +29,8 @@ from app.domain.evidence.model import SourceRef
 from app.infrastructure.orchestration.pydantic_ai_investigation import (
     PydanticAiInvestigationOrchestrator,
     _safe_tool_name,
+    focus_arguments_on_next_identifier,
+    uncovered_user_identifiers,
 )
 from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
@@ -211,6 +213,165 @@ def test_dynamic_owner_tool_invokes_governed_path():
     )
     engine.attempt("read something")
     assert calls and calls[0] == cap["capability_id"]
+
+
+def test_empty_owner_result_is_not_business_evidence():
+    attempt = _success_attempt(
+        content="Nenhum resultado encontrado.",
+        root="90260147",
+    )
+    assert not _is_business_evidence_attempt(attempt)
+
+
+def test_usage_limit_finalizes_collected_evidence():
+    gates = _gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    tool_name = _safe_tool_name(catalog[0]["capability_id"])
+    original = gates._governed_semantic_tool_invoke
+
+    def _spy(**kwargs):
+        return _success_attempt(content="estrutura A", root="90260147")
+
+    gates._governed_semantic_tool_invoke = _spy  # type: ignore[method-assign]
+    steps = {"n": 0}
+
+    def _fn(messages, _info):
+        steps["n"] += 1
+        return ModelResponse(
+            parts=[ToolCallPart(tool_name, {"arguments": {}})]
+        )
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=1
+    )
+    attempt = engine.attempt("estrutura 90260147")
+    assert attempt.error_code != "investigation_agent_error"
+    assert "tool_calls_limit_reached" in attempt.limitations
+    assert original is not None
+
+
+def test_focus_query_targets_next_uncovered_identifier():
+    covered = _success_attempt(content="estrutura A", root="90260147")
+    first = focus_arguments_on_next_identifier(
+        {"query": "Compare 90260147 e 90260148"},
+        input_text="Compare 90260147 e 90260148",
+        collected=[],
+    )
+    assert "90260147" in first["query"]
+    assert "90260148" not in first["query"]
+    assert "Compare" in first["query"]
+    second = focus_arguments_on_next_identifier(
+        {"query": "Compare 90260147 e 90260148"},
+        input_text="Compare 90260147 e 90260148",
+        collected=[covered],
+    )
+    assert "90260148" in second["query"]
+    assert "90260147" not in second["query"]
+    kept = focus_arguments_on_next_identifier(
+        {"query": "90260148"},
+        input_text="Compare 90260147 e 90260148",
+        collected=[covered],
+    )
+    assert kept["query"] == "90260148"
+    repeated = focus_arguments_on_next_identifier(
+        {"query": "estrutura do produto 90260147"},
+        input_text="Compare 90260147 e 90260148",
+        collected=[covered],
+    )
+    assert "90260148" in repeated["query"]
+    assert "90260147" not in repeated["query"]
+    assert "estrutura" in repeated["query"]
+
+
+def test_uncovered_identifiers_ignore_observed_root():
+    covered = _success_attempt(content="estrutura", root="90260147")
+    pending = uncovered_user_identifiers(
+        "Compare 90260147 e 90260148",
+        [covered],
+    )
+    assert pending == ["90260148"]
+    assert (
+        uncovered_user_identifiers(
+            "Compare 90260147 e 90260148",
+            [
+                covered,
+                _success_attempt(content="b", root="90260148"),
+            ],
+        )
+        == []
+    )
+
+
+def test_premature_clarification_is_rejected_when_identifiers_remain():
+    gates = _gates()
+    calls: list[str] = []
+    original = gates._governed_semantic_tool_invoke
+
+    def _spy(**kwargs):
+        calls.append(str(kwargs.get("capability_id") or ""))
+        return _success_attempt(content="estrutura A", root="90260147")
+
+    gates._governed_semantic_tool_invoke = _spy  # type: ignore[method-assign]
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    tool_name = _safe_tool_name(catalog[0]["capability_id"])
+    steps = {"n": 0}
+
+    def _fn(messages, _info):
+        steps["n"] += 1
+        if steps["n"] == 1:
+            return ModelResponse(
+                parts=[ToolCallPart(tool_name, {"arguments": {}})]
+            )
+        if steps["n"] == 2:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "request_user_clarification",
+                        {
+                            "question": "Qual o segundo produto?",
+                            "missing_aspects": ["90260148"],
+                        },
+                    )
+                ]
+            )
+        if steps["n"] == 3:
+            return ModelResponse(
+                parts=[ToolCallPart(tool_name, {"arguments": {}})]
+            )
+        return ModelResponse(parts=[TextPart("done")])
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=6
+    )
+    attempt = engine.attempt("Compare 90260147 e 90260148")
+    assert attempt.status is not GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert len(calls) >= 2
+
+
+def test_model_factory_builds_a_client_per_attempt():
+    gates = _gates()
+    built: list[int] = []
+
+    def _factory():
+        built.append(1)
+
+        def _fn(messages, _info):
+            if not any(isinstance(m, ModelResponse) for m in messages):
+                return ModelResponse(parts=[TextPart("ok")])
+            return ModelResponse(parts=[TextPart("ok")])
+
+        return FunctionModel(_fn)
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model_factory=_factory, tool_calls_limit=2
+    )
+    engine.attempt("estrutura 11111")
+    engine.attempt("estrutura 22222")
+    assert len(built) == 2
 
 
 def test_list_only_does_not_fabricate_business_success():
