@@ -275,13 +275,54 @@ def plugin_uses_plugin_ui(plugin_dir: Path) -> bool:
     return any("@delpi/plugin-ui" in chunk for chunk in haystack_parts)
 
 
-# Produção federada não declara alias de source. O marcador é o mesmo do gate Docker.
-FEDERATION_REMOTE_MARKERS = ("pluginUiRemote", "resolvePluginUiRemoteEntry")
-PLUGIN_UI_STYLE_MARKERS = (
-    "plugin-ui/src/styles.css",
-    "@delpi/plugin-ui/styles",
-    "preparePluginUiRemote",
+# Chamada real na config. Comentário ou identificador solto não integra o remote.
+_FEDERATION_REMOTE_CALL = re.compile(r"remotes\s*:\s*pluginUiRemote\s*\(")
+_PREPARE_REMOTE_CALL = re.compile(r"\bpreparePluginUiRemote\s*\(")
+_PLUGIN_UI_STYLE_IMPORT = re.compile(
+    r"""import\s*(?:\(\s*)?['"](?:@delpi/plugin-ui/styles|[^'"]*plugin-ui/src/styles\.css)['"]"""
 )
+
+
+def _strip_code_comments(source: str) -> str:
+    """Remove comentários JS/TS preservando strings e quebras de linha."""
+    out: list[str] = []
+    i = 0
+    n = len(source)
+    while i < n:
+        if source.startswith("/*", i):
+            end = source.find("*/", i + 2)
+            if end < 0:
+                out.append("\n" * source[i:].count("\n"))
+                break
+            chunk = source[i : end + 2]
+            out.append("\n" * chunk.count("\n"))
+            i = end + 2
+            continue
+        if source.startswith("//", i):
+            end = source.find("\n", i)
+            if end < 0:
+                break
+            out.append("\n")
+            i = end + 1
+            continue
+        if source[i] in {"'", '"', "`"}:
+            quote = source[i]
+            out.append(quote)
+            i += 1
+            while i < n:
+                if source[i] == "\\":
+                    out.append(source[i : i + 2])
+                    i += 2
+                    continue
+                out.append(source[i])
+                if source[i] == quote:
+                    i += 1
+                    break
+                i += 1
+            continue
+        out.append(source[i])
+        i += 1
+    return "".join(out)
 
 
 def _vite_config_text(plugin_dir: Path) -> str:
@@ -290,6 +331,10 @@ def _vite_config_text(plugin_dir: Path) -> str:
         if file_path.is_file():
             return file_path.read_text(encoding="utf-8", errors="ignore")
     return ""
+
+
+def _has_vite_config(plugin_dir: Path) -> bool:
+    return any((plugin_dir / name).is_file() for name in VITE_CONFIG_NAMES)
 
 
 def _entry_text(plugin_dir: Path) -> str:
@@ -301,48 +346,70 @@ def _entry_text(plugin_dir: Path) -> str:
     return "\n".join(chunks)
 
 
-def _plugin_ui_resolution_satisfied(vite_text: str) -> bool:
-    if re.search(r'["\']@delpi/plugin-ui["\']\s*:', vite_text):
-        return True
-    return any(marker in vite_text for marker in FEDERATION_REMOTE_MARKERS)
+def _package_role(plugin_dir: Path) -> str:
+    """`mfe` declara Vite/bootstrap/Dockerfile. Biblioteca do manifesto ou peer sem app não declara remote."""
+    libraries = {entry["directory"] for entry in load_manifest().get("libraries", [])}
+    if plugin_dir.name in libraries:
+        return "library"
+    if _has_vite_config(plugin_dir):
+        return "mfe"
+    if (plugin_dir / "src" / "bootstrap.tsx").is_file() or (plugin_dir / "Dockerfile").is_file():
+        return "mfe"
+    return "library"
 
 
-def _plugin_ui_styles_satisfied(entry_text: str) -> bool:
-    return any(marker in entry_text for marker in PLUGIN_UI_STYLE_MARKERS)
+def _federation_remote_configured(vite_text: str) -> bool:
+    return _FEDERATION_REMOTE_CALL.search(_strip_code_comments(vite_text)) is not None
+
+
+def _plugin_ui_styles_configured(entry_text: str) -> bool:
+    code = _strip_code_comments(entry_text)
+    return (
+        _PREPARE_REMOTE_CALL.search(code) is not None
+        or _PLUGIN_UI_STYLE_IMPORT.search(code) is not None
+    )
 
 
 def scan_integration(plugin_dir: Path) -> list[Finding]:
     if not plugin_uses_plugin_ui(plugin_dir):
         return []
 
-    # Biblioteca sem app Vite (peer do host). O MFE dono declara o remote.
-    if not any((plugin_dir / name).is_file() for name in VITE_CONFIG_NAMES):
+    # Biblioteca (manifesto ou pacote sem app). O MFE hospedeiro declara o remote.
+    if _package_role(plugin_dir) == "library":
         return []
 
     plugin_name = plugin_dir.name
     findings: list[Finding] = []
-    vite_text = _vite_config_text(plugin_dir)
+    if not _has_vite_config(plugin_dir):
+        findings.append(
+            Finding(
+                level="error",
+                plugin=plugin_name,
+                message="MFE consome @delpi/plugin-ui mas não declara vite.config.*",
+            )
+        )
+        return findings
 
-    if not _plugin_ui_resolution_satisfied(vite_text):
+    if not _federation_remote_configured(_vite_config_text(plugin_dir)):
         findings.append(
             Finding(
                 level="error",
                 plugin=plugin_name,
                 message=(
-                    "consome @delpi/plugin-ui mas falta alias Vite em vite.config.* "
-                    "ou remote pluginUiRemote()"
+                    "consome @delpi/plugin-ui mas o vite.config.* não chama "
+                    "remotes: pluginUiRemote()"
                 ),
             )
         )
 
-    if not _plugin_ui_styles_satisfied(_entry_text(plugin_dir)):
+    if not _plugin_ui_styles_configured(_entry_text(plugin_dir)):
         findings.append(
             Finding(
                 level="error",
                 plugin=plugin_name,
                 message=(
-                    "consome @delpi/plugin-ui mas falta CSS no entry "
-                    "(plugin-ui/src/styles.css, @delpi/plugin-ui/styles ou preparePluginUiRemote)"
+                    "consome @delpi/plugin-ui mas o entry não chama preparePluginUiRemote() "
+                    "nem importa @delpi/plugin-ui/styles"
                 ),
             )
         )
