@@ -1,4 +1,4 @@
-import { KAIZEN_STATUSES, SAVINGS_TYPES } from "../constants/kaizen";
+import { KAIZEN_DATE_FIELDS, KAIZEN_STATUSES, SAVINGS_TYPES } from "../constants/kaizen";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FilterInputField, FiltersRow, MultiSelectField } from "./ui";
 
@@ -6,12 +6,18 @@ type KaizenRecordFiltersProps = {
   branches: string[];
   statuses: string[];
   savingsTypes: string[];
+  dateFields: string[];
+  dateStart: string;
+  dateEnd: string;
   title: string;
   branchOptions: Array<{ value: string; label: string }>;
   allowAllBranches?: boolean;
   onBranchesChange: (value: string[]) => void;
   onStatusesChange: (value: string[]) => void;
   onSavingsTypesChange: (value: string[]) => void;
+  onDateFieldsChange: (value: string[]) => void;
+  onDateStartChange: (value: string) => void;
+  onDateEndChange: (value: string) => void;
   onTitleChange: (value: string) => void;
 };
 
@@ -19,12 +25,18 @@ export function KaizenRecordFilters({
   branches,
   statuses,
   savingsTypes,
+  dateFields,
+  dateStart,
+  dateEnd,
   title,
   branchOptions,
   allowAllBranches = true,
   onBranchesChange,
   onStatusesChange,
   onSavingsTypesChange,
+  onDateFieldsChange,
+  onDateStartChange,
+  onDateEndChange,
   onTitleChange,
 }: KaizenRecordFiltersProps) {
   const showUnitFilter = allowAllBranches && branchOptions.length > 1;
@@ -56,6 +68,30 @@ export function KaizenRecordFilters({
         selectedValues={savingsTypes}
         onChange={onSavingsTypesChange}
         emptyLabel="Todos"
+      />
+      <MultiSelectField
+        label="Coluna de data"
+        hint="Em qual coluna de data o período será aplicado. Vazio = implantação."
+        options={[...KAIZEN_DATE_FIELDS]}
+        selectedValues={dateFields}
+        onChange={onDateFieldsChange}
+        emptyLabel="Implantação"
+      />
+      <FilterInputField
+        id="kz-filter-date-start"
+        label="Data inicial"
+        hint="Início do período aplicado à(s) coluna(s) de data selecionada(s)."
+        type="date"
+        value={dateStart}
+        onChange={onDateStartChange}
+      />
+      <FilterInputField
+        id="kz-filter-date-end"
+        label="Data final"
+        hint="Fim do período aplicado à(s) coluna(s) de data selecionada(s)."
+        type="date"
+        value={dateEnd}
+        onChange={onDateEndChange}
       />
       <FilterInputField
         id="kz-filter-title"

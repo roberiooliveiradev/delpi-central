@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  QuickPeriodSelector,
+  detectPeriodPreset,
+  resolvePeriodPreset,
+} from "@delpi/plugin-ui/index";
+
+import {
   exportKaizenRecords,
   fetchKaizenRecords,
   importKaizenRecords,
@@ -62,6 +68,9 @@ export function KaizenListPage({
     initialStatus ? [initialStatus] : [],
   );
   const [savingsTypes, setSavingsTypes] = useState<string[]>([]);
+  const [dateFields, setDateFields] = useState<string[]>([]);
+  const [dateStart, setDateStart] = useState("");
+  const [dateEnd, setDateEnd] = useState("");
   const [title, setTitle] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -73,6 +82,21 @@ export function KaizenListPage({
 
   const branchParam = branches.length === 1 ? branches[0] : undefined;
 
+  const periodPreset = useMemo(
+    () => detectPeriodPreset(dateStart, dateEnd),
+    [dateStart, dateEnd],
+  );
+
+  const handleQuickPeriod = useCallback(
+    (preset: typeof periodPreset) => {
+      const range = resolvePeriodPreset(preset);
+      if (!range) return;
+      setDateStart(range.dateStart);
+      setDateEnd(range.dateEnd);
+    },
+    [],
+  );
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -81,6 +105,9 @@ export function KaizenListPage({
         branch: branchParam,
         status: statuses.length ? statuses : undefined,
         savings_type: savingsTypes.length ? savingsTypes : undefined,
+        date_field: dateFields.length ? dateFields : undefined,
+        start_date: dateStart || undefined,
+        end_date: dateEnd || undefined,
         title: title || undefined,
         page_size: 200,
       });
@@ -90,7 +117,7 @@ export function KaizenListPage({
     } finally {
       setLoading(false);
     }
-  }, [branchParam, statuses, savingsTypes, title]);
+  }, [branchParam, statuses, savingsTypes, dateFields, dateStart, dateEnd, title]);
 
   useEffect(() => {
     void load();
@@ -275,13 +302,25 @@ export function KaizenListPage({
         branches={branches}
         statuses={statuses}
         savingsTypes={savingsTypes}
+        dateFields={dateFields}
+        dateStart={dateStart}
+        dateEnd={dateEnd}
         title={title}
         branchOptions={branchOptions}
         allowAllBranches={allowAllBranches}
         onBranchesChange={setBranches}
         onStatusesChange={setStatuses}
         onSavingsTypesChange={setSavingsTypes}
+        onDateFieldsChange={setDateFields}
+        onDateStartChange={setDateStart}
+        onDateEndChange={setDateEnd}
         onTitleChange={setTitle}
+      />
+
+      <QuickPeriodSelector
+        prefix="kz"
+        value={periodPreset}
+        onChange={handleQuickPeriod}
       />
 
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}

@@ -66,6 +66,16 @@ export const KAIZEN_STATUSES = [
   { value: "cancelado", label: "Cancelado" },
 ] as const;
 
+/** Colunas de data filtráveis na listagem (whitelist compartilhada com a API). */
+export const KAIZEN_DATE_FIELDS = [
+  { value: "recebimento", label: "Recebimento da ideia" },
+  { value: "aprovacao", label: "Aprovação no comitê" },
+  { value: "implantacao", label: "Implantação" },
+  { value: "descontinuacao", label: "Descontinuação" },
+  { value: "atualizacao", label: "Atualizado em" },
+  { value: "criacao", label: "Criação" },
+] as const;
+
 export const PARTICIPANT_ROLES: Array<{ value: ParticipantRole; label: string }> = [
   { value: "responsavel", label: "Responsável" },
   { value: "participante", label: "Participante" },

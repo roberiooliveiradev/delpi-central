@@ -644,6 +644,22 @@ def KAIZEN_SAVINGS_TYPE_QUERY():
     pattern=_enum_pattern(KAIZEN_SAVINGS_TYPE_VALUES),
     json_schema_extra={"enum": list(KAIZEN_SAVINGS_TYPE_VALUES)},
 )
+KAIZEN_DATE_FIELD_VALUES = (
+    "recebimento",
+    "aprovacao",
+    "implantacao",
+    "descontinuacao",
+    "atualizacao",
+    "criacao",
+)
+
+
+def KAIZEN_DATE_FIELD_LIST_QUERY():
+    return Query(
+    None,
+    description="Date column(s) for the period filter (repeatable): recebimento, aprovacao, implantacao, descontinuacao, atualizacao, criacao.",
+    json_schema_extra={"enum": list(KAIZEN_DATE_FIELD_VALUES)},
+)
 def KAIZEN_SAVINGS_TYPE_LIST_QUERY():
     return Query(
     None,

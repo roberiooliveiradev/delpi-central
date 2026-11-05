@@ -106,6 +106,22 @@ class PostgresKaizenRepository(PluginBaseRepository):
 
     # ------------------------------------------------------------------ validade da economia
 
+    _LIST_DATE_COLUMNS: dict[str, str] = {
+        "recebimento": "k.date_idea_received",
+        "aprovacao": "k.date_committee_approved",
+        "implantacao": "k.date_implemented",
+        "descontinuacao": "k.date_discontinued",
+        "atualizacao": "k.updated_at",
+        "criacao": "k.created_at",
+    }
+
+    @classmethod
+    def _list_date_columns(cls, date_field: str | list[str] | None) -> list[str]:
+        """Whitelist de colunas de data filtráveis na listagem (evita SQL injetável)."""
+        requested = [date_field] if isinstance(date_field, str) else list(date_field or [])
+        columns = [cls._LIST_DATE_COLUMNS[f] for f in requested if f in cls._LIST_DATE_COLUMNS]
+        return columns or [cls._LIST_DATE_COLUMNS["implantacao"]]
+
     @staticmethod
     def _enrich_savings_validity(record: dict[str, Any] | None) -> dict[str, Any] | None:
         """Anexa a validade da economia (regra de 1 ano) ao registro lido."""
@@ -139,6 +155,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         title: str | None = None,
         date_start: str | None = None,
         date_end: str | None = None,
+        date_field: str | list[str] | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
@@ -161,12 +178,20 @@ class PostgresKaizenRepository(PluginBaseRepository):
         if title:
             filters.append("k.title ILIKE %s")
             params.append(f"%{title.strip()}%")
-        if date_start:
-            filters.append("k.date_implemented >= %s")
-            params.append(date_start)
-        if date_end:
-            filters.append("k.date_implemented <= %s")
-            params.append(date_end)
+        date_columns = self._list_date_columns(date_field)
+        if date_start or date_end:
+            clauses = []
+            for column in date_columns:
+                if date_start and date_end:
+                    clauses.append(f"({column} >= %s AND {column} <= %s)")
+                    params.extend([date_start, date_end])
+                elif date_start:
+                    clauses.append(f"{column} >= %s")
+                    params.append(date_start)
+                else:
+                    clauses.append(f"{column} <= %s")
+                    params.append(date_end)
+            filters.append("(" + " OR ".join(clauses) + ")")
 
         where_clause = " AND ".join(filters)
         count_row = self.fetch_one(

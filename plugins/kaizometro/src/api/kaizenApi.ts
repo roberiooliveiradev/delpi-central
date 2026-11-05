@@ -31,6 +31,9 @@ type ListParams = {
   branch?: string;
   status?: string[];
   savings_type?: string[];
+  date_field?: string[];
+  start_date?: string;
+  end_date?: string;
   title?: string;
   page?: number;
   page_size?: number;
@@ -41,6 +44,9 @@ function buildQuery(params: ListParams): string {
   if (params.branch) search.set("branch", params.branch);
   for (const status of params.status ?? []) search.append("status", status);
   for (const type of params.savings_type ?? []) search.append("savings_type", type);
+  for (const field of params.date_field ?? []) search.append("date_field", field);
+  if (params.start_date) search.set("start_date", params.start_date);
+  if (params.end_date) search.set("end_date", params.end_date);
   if (params.title) search.set("title", params.title);
   if (params.page) search.set("page", String(params.page));
   if (params.page_size) search.set("page_size", String(params.page_size));

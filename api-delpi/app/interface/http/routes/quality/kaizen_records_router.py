@@ -49,6 +49,8 @@ from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     KAIZEN_EVIDENCE_STAGE_VALUES,
     KAIZEN_ROLE_VALUES,
+    KAIZEN_DATE_FIELD_LIST_QUERY,
+    KAIZEN_DATE_FIELD_VALUES,
     KAIZEN_SAVINGS_TYPE_LIST_QUERY,
     KAIZEN_SAVINGS_TYPE_QUERY,
     KAIZEN_SAVINGS_TYPE_VALUES,
@@ -233,6 +235,7 @@ def list_kaizen_records(
     title: str | None = Query(default=None),
     start_date: str | None = START_DATE_QUERY(),
     end_date: str | None = END_DATE_QUERY(),
+    date_field: list[str] | None = KAIZEN_DATE_FIELD_LIST_QUERY(),
     date_start: str | None = LEGACY_DATE_START_QUERY(),
     date_end: str | None = LEGACY_DATE_END_QUERY(),
     page: int = Query(1, ge=1),
@@ -273,6 +276,17 @@ def list_kaizen_records(
                 code="INVALID_SAVINGS_TYPE",
                 recoverable=False,
             )
+        date_fields = date_field if isinstance(date_field, list) else []
+        invalid_field = next(
+            (f for f in date_fields if f not in KAIZEN_DATE_FIELD_VALUES), None
+        )
+        if invalid_field is not None:
+            return error_response(
+                f"Coluna de data inválida para filtro: {invalid_field}.",
+                status_code=422,
+                code="INVALID_DATE_FIELD",
+                recoverable=False,
+            )
         repo = build_kaizen_repository()
         data = repo.list_records(
             branch_code=effective_branch,
@@ -281,6 +295,7 @@ def list_kaizen_records(
             title=title,
             date_start=start_date,
             date_end=end_date,
+            date_field=date_fields or None,
             page=page,
             page_size=page_size,
         )

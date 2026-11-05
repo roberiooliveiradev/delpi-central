@@ -327,3 +327,34 @@ def test_list_records_keeps_single_status_string_compatible() -> None:
     repo.list_records(status="recebido")
 
     assert ["recebido"] in captured["params"]
+
+
+def test_list_records_filters_multiple_date_columns_with_or() -> None:
+    """date_field multi-seleção: período aplica OR entre colunas whitelist."""
+    repo = PostgresKaizenRepository(connection=MagicMock())
+    captured: dict[str, object] = {}
+    repo.fetch_one = MagicMock(return_value={"total": 0})
+    repo.fetch_all = MagicMock(side_effect=lambda q, p=None: captured.update(query=q, params=p) or [])
+
+    repo.list_records(
+        date_field=["recebimento", "implantacao"],
+        date_start="2026-01-01",
+        date_end="2026-11-05",
+    )
+
+    query = str(captured["query"])
+    assert "k.date_idea_received >= %s AND k.date_idea_received <= %s" in query
+    assert "k.date_implemented >= %s AND k.date_implemented <= %s" in query
+    assert " OR " in query
+
+
+def test_list_records_default_date_column_is_implementation() -> None:
+    """Sem date_field, período filtra pela coluna de implantação (compat)."""
+    repo = PostgresKaizenRepository(connection=MagicMock())
+    captured: dict[str, object] = {}
+    repo.fetch_one = MagicMock(return_value={"total": 0})
+    repo.fetch_all = MagicMock(side_effect=lambda q, p=None: captured.update(query=q, params=p) or [])
+
+    repo.list_records(date_start="2026-01-01")
+
+    assert "k.date_implemented >= %s" in str(captured["query"])
