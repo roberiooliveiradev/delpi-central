@@ -3663,9 +3663,17 @@
     grid-template-columns: 1fr;
   }
 
-  .dashboard-production-control .ppc-page-stack--demand,
-  .dashboard-production-control .ppc-page-stack--myweg-needs {
+  .dashboard-production-control .ppc-page-stack--demand {
     padding: 8px 14px 20px;
+  }
+
+  .dashboard-production-control .ppc-page-stack--myweg-needs {
+    padding: 0 0 20px;
+  }
+
+  .dashboard-production-control .ppc-page-stack--myweg-needs > :not(.ppc-header) {
+    margin-left: 14px;
+    margin-right: 14px;
   }
 
   .dashboard-production-control .ppc-board-list {
