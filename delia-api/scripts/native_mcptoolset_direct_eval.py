@@ -64,9 +64,13 @@ def _env(name: str) -> str:
 
 
 def _subject_token() -> str:
-    token_url = _env("KEYCLOAK_URL").rstrip("/") + (
-        "/realms/delpi/protocol/openid-connect/token"
-    )
+    # Mint via the approved gateway surface — the real Portal path.
+    # The token-exchange validates the subject token's issuer; a token
+    # minted on the internal backchannel (keycloak:8080) carries
+    # iss=localhost:8080 and is rejected with "Invalid token".
+    token_url = (
+        _env("KC_GATEWAY_TOKEN_BASE") or "http://delpi-gateway/auth"
+    ).rstrip("/") + "/realms/delpi/protocol/openid-connect/token"
     data = urllib.parse.urlencode(
         {
             "grant_type": "password",
