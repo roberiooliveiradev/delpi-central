@@ -789,3 +789,23 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
 - Residual: answer final não entregue antes do gateway/turn budget
   (geração ~6 tok/s CPU para resposta longa) — boundary de latência
   de geração, não de seleção/execução.
+
+## 35. G7 — delivery de resposta + profiling de recursos (doc 281)
+
+- **Medições diretas Ollama**: COLD load=70.7s (modelo 5.1GB);
+  WARM 1.0s small / prompt_eval 3016@0.2s / eval 48@8.1s (~6 tok/s
+  CPU — geração é a fase lenta, não prefill).
+- **Recursos**: OLLAMA_MEMORY_LIMIT 4500M→6800M (modelo cabe; host
+  9.9GB RAM ~1.3GB free — limite honesto); container CPU-only por
+  design; KEEP_ALIVE=30m (warm entre turns).
+- **Cadeia governada provada 2×**: admission ok ~30s → catalog 10 →
+  davi.discover_delpi_information (ok) → davi.execute_delpi_
+  information → search_products → `uncovered=50220013` — owner
+  retornou dados reais do produto em ambos os turns.
+- **Residual**: `agent_error UnexpectedModelBehavior: Exceeded
+  maximum output retries (1)` na geração da resposta estruturada
+  final — o modelo 4B ~6 tok/s não produz o InvestigationAnswer
+  válido a tempo; retries 1→2 testado (fp f6736c4a) — a saída final
+  ainda não fechou dentro do budget de delivery.
+  Boundary = VELOCIDADE DE GERAÇÃO CPU na resposta estruturada final,
+  não seleção/execução/evidência — todas provadas.

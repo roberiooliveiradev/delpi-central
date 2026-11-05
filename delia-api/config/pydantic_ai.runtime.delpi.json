@@ -16,7 +16,7 @@
       "agent": {
         "request_limit": 12,
         "tool_calls_limit": 8,
-        "retries": 1,
+        "retries": 2,
         "llm_call_max_attempts": 3
       },
       "context": {
