@@ -45,7 +45,7 @@ export function computeKaizenFormCompletion(
     { id: "idea", label: "Recebimento da ideia", done: filled(values.date_idea_received) },
     {
       id: "committee",
-      label: "Aprovação no comitê",
+      label: "Data do comitê",
       done: filled(values.date_committee_approved),
     },
     { id: "date", label: "Implantação", done: filled(values.date_implemented) },

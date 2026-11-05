@@ -38,11 +38,11 @@ def validate_status_dates(
     normalized = _normalize_status(status)
     if normalized == "aprovado" and not _has_date(date_committee_approved):
         raise KaizenStatusDateError(
-            "Informe a data de aprovação no comitê para o status Aprovado."
+            "Informe a data do comitê para o status Aprovado."
         )
     if normalized == "reprovado" and not _has_date(date_committee_approved):
         raise KaizenStatusDateError(
-            "Informe a data da reunião do comitê para o status Reprovado."
+            "Informe a data do comitê para o status Reprovado."
         )
     if normalized == "implantado" and not _has_date(date_implemented):
         raise KaizenStatusDateError(

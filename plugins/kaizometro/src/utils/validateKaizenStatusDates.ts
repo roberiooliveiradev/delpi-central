@@ -11,10 +11,10 @@ export function validateKaizenStatusDates(values: {
   const implemented = String(values.date_implemented || "").trim();
 
   if (status === "aprovado" && !committee) {
-    return "Informe a data de aprovação no comitê para o status Aprovado.";
+    return "Informe a data do comitê para o status Aprovado.";
   }
   if (status === "reprovado" && !committee) {
-    return "Informe a data da reunião do comitê para o status Reprovado.";
+    return "Informe a data do comitê para o status Reprovado.";
   }
   if (status === "implantado" && !implemented) {
     return "Informe a data de implantação para o status Implantado.";

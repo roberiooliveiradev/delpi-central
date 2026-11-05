@@ -406,7 +406,7 @@ export function KaizenDashboardPage({ onNavigate, branchOptions, defaultUnits = 
                 tone="muted"
                 label="Kaizens recebidos"
                 value={formatInteger(summary.recebidos_total)}
-                sub="aguardando aprovação do comitê"
+                sub="aguardando decisão do comitê"
                 onClick={() =>
                   onNavigate(listPath({ status: "recebido", branch: branchParam }))
                 }

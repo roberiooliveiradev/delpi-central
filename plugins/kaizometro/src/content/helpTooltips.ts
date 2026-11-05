@@ -39,7 +39,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
     dateIdeaReceived:
       "Data em que a ideia de melhoria foi recebida ou registrada, antes da implantação.",
     dateCommitteeApproved:
-      "Data em que o comitê aprovou o kaizen. Obrigatória para o status Aprovado. Define o mês do indicador de quantidade (se vazia em registros legados, usa a data de implantação).",
+      "Data da reunião do comitê que decidiu o kaizen (aprovação ou reprovação). Obrigatória para os status Aprovado e Reprovado. Define o mês do indicador de quantidade (se vazia em registros legados, usa a data de implantação).",
     notes: "Notas livres, observações e detalhes que não se encaixam nos demais campos.",
     changeReason:
       "Descreva o porquê da correção. O texto fica registrado na trilha de auditoria da versão.",

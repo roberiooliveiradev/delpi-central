@@ -39,7 +39,7 @@ export const QUALITY_HELP_TOOLTIPS = {
     kaizenClosed: "Kaizens concluídos no período filtrado.",
     kaizenTotal: "Total de kaizens registrados no período conforme filtros aplicados.",
     kaizenIdeas:
-      "Quantidade de kaizens com status Aprovado ou Implantado no período, pela data de aprovação no comitê (ou data de implantação, se a aprovação não estiver cadastrada). Meta do indicador Ideias Aprovadas para Kaizen/mês (Indicadores Estratégicos).",
+      "Quantidade de kaizens com status Aprovado ou Implantado no período, pela data do comitê (ou data de implantação, se a data do comitê não estiver cadastrada). Meta do indicador Ideias Aprovadas para Kaizen/mês (Indicadores Estratégicos).",
     kaizenFinancialGains:
       "Ganhos financeiros do kaizen no período: soma de daily_savings × dias ativos apenas de melhorias com status Implantado. Status Aprovado conta na quantidade, mas não nos ganhos. Meta do indicador Ganhos Financeiros Kaizen/mês (Indicadores Estratégicos).",
     kaizenSavings:
@@ -57,9 +57,9 @@ export const QUALITY_HELP_TOOLTIPS = {
   charts: {
     ppmEvolution: "Evolução temporal do PPM conforme granularidade selecionada.",
     kaizenByStatus:
-      "Distribuição por status das ideias que entram no KPI do período (Aprovado ou Implantado pela data de aprovação no comitê). Não inclui implantados antigos que só geram ganho financeiro.",
+      "Distribuição por status das ideias que entram no KPI do período (Aprovado ou Implantado pela data do comitê). Não inclui implantados antigos que só geram ganho financeiro.",
     kaizenByPeriod:
-      "Contagem de ideias aprovadas/implantadas por período, usando a data de aprovação no comitê (ou implantação se a aprovação não estiver cadastrada) — a mesma âncora do KPI Ideias aprovadas.",
+      "Contagem de ideias aprovadas/implantadas por período, usando a data do comitê (ou implantação se a data do comitê não estiver cadastrada) — a mesma âncora do KPI Ideias aprovadas.",
     kaizenSavingsBySector:
       "Soma dos ganhos financeiros do período por setor (daily_savings × dias ativos), apenas de kaizens Implantados — a mesma base do KPI Ganhos financeiros.",
     audit5sEvolution: "Evolução das notas de auditoria 5S ao longo do tempo.",

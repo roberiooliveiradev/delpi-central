@@ -55,12 +55,12 @@ def test_date_in_range() -> None:
 
 
 def test_validate_status_dates_aprovado_requires_committee() -> None:
-    with pytest.raises(KaizenStatusDateError, match="aprovação no comitê"):
+    with pytest.raises(KaizenStatusDateError, match="data do comitê.*Aprovado"):
         validate_status_dates(status="aprovado", date_committee_approved=None)
 
 
 def test_validate_status_dates_reprovado_requires_committee() -> None:
-    with pytest.raises(KaizenStatusDateError, match="reunião do comitê"):
+    with pytest.raises(KaizenStatusDateError, match="data do comitê.*Reprovado"):
         validate_status_dates(status="reprovado", date_committee_approved=None)
 
 

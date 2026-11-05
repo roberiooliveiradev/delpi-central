@@ -101,7 +101,7 @@ export function buildKaizenDelpiDocumentSpec(record: KaizenRecord): DelpiDocumen
   ];
 
   pushDateLine(summaryLines, "Data da ideia", record.date_idea_received);
-  pushDateLine(summaryLines, "Aprovação comitê", record.date_committee_approved);
+  pushDateLine(summaryLines, "Data do comitê", record.date_committee_approved);
   pushDateLine(summaryLines, "Implantação", record.date_implemented);
   pushDateLine(summaryLines, "Descontinuação", record.date_discontinued);
 

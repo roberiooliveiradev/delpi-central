@@ -174,7 +174,7 @@ Tabela: `quality.kaizens` (migration `V027__create_kaizens.sql`).
 | `title` | string | Obrigatório |
 | `status` | `recebido`, `aprovado`, `implantado`, `descontinuado`, `cancelado` | Default `recebido` |
 | `date_idea_received` | date | Recebimento da ideia (V035) |
-| `date_committee_approved` | date | Aprovação no comitê (V042); obrigatória se status = aprovado |
+| `date_committee_approved` | date | Data do comitê (V042); obrigatória se status = aprovado ou reprovado |
 | `date_implemented` | date | Implantação — vigência da revisão + validade 1 ano da economia |
 | `date_discontinued` | date | Fim da operação |
 | `categories` | `TEXT[]` | Multi-categoria (V036); `category` = primeiro item |

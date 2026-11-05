@@ -680,7 +680,7 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
               value={formatDate(view.date_idea_received)}
             />
             <ReadOnlyField
-              label="Data aprovação no comitê"
+              label="Data do comitê"
               hint={KAIZEN_HELP_TOOLTIPS.fields.dateCommitteeApproved}
               value={formatDate(view.date_committee_approved)}
             />
@@ -716,12 +716,12 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
             <DateField
               id="kz-d-date-committee"
               label={
-                form.status === "aprovado"
-                  ? "Data aprovação no comitê *"
-                  : "Data aprovação no comitê"
+                form.status === "aprovado" || form.status === "reprovado"
+                  ? "Data do comitê *"
+                  : "Data do comitê"
               }
               hint={KAIZEN_HELP_TOOLTIPS.fields.dateCommitteeApproved}
-              required={form.status === "aprovado"}
+              required={form.status === "aprovado" || form.status === "reprovado"}
               value={form.date_committee_approved}
               onChange={(value) => updateField("date_committee_approved", value)}
             />

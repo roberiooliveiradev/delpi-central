@@ -135,7 +135,7 @@ A **validade de 1 ano** dos ganhos financeiros usa sempre `date_implemented` (`k
 | Campo | Uso |
 |-------|-----|
 | `date_idea_received` | Recebimento/registro da ideia (V035). Opcional. |
-| `date_committee_approved` | Aprovação no comitê (V042). Obrigatória se `status = aprovado`. âncora preferencial do indicador de quantidade. |
+| `date_committee_approved` | Data do comitê (V042) — reunião que decidiu a ideia. Obrigatória se `status = aprovado` ou `reprovado`. âncora preferencial do indicador de quantidade. |
 | `date_implemented` | **Data de implantação** — início da operação, validade de 1 ano da economia e vigência da revisão implantada. Obrigatória se `status = implantado`. |
 | `date_discontinued` | Fim da operação; interrompe contabilização. |
 

@@ -107,11 +107,9 @@ export function KaizenFormFields({
         <DateField
           id="kz-date-committee-approved"
           label={
-            values.status === "reprovado"
-              ? "Data reunião do comitê *"
-              : values.status === "aprovado"
-                ? "Data aprovação no comitê *"
-                : "Data aprovação no comitê"
+            values.status === "aprovado" || values.status === "reprovado"
+              ? "Data do comitê *"
+              : "Data do comitê"
           }
           hint={KAIZEN_HELP_TOOLTIPS.fields.dateCommitteeApproved}
           required={values.status === "aprovado" || values.status === "reprovado"}

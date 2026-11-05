@@ -69,7 +69,7 @@ export const KAIZEN_STATUSES = [
 /** Colunas de data filtráveis na listagem (whitelist compartilhada com a API). */
 export const KAIZEN_DATE_FIELDS = [
   { value: "recebimento", label: "Recebimento da ideia" },
-  { value: "aprovacao", label: "Aprovação no comitê" },
+  { value: "aprovacao", label: "Data do comitê" },
   { value: "implantacao", label: "Implantação" },
   { value: "descontinuacao", label: "Descontinuação" },
   { value: "atualizacao", label: "Atualizado em" },
