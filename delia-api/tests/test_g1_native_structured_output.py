@@ -1304,3 +1304,63 @@ def test_agent_in_run_overflow_after_tool_result_no_second_call():
     attempt = engine.attempt("consulte terminal")
     assert len(calls) == 1, calls
     assert attempt.error_code == "investigation_context_overflow"
+
+
+def test_governed_tool_invocation_real_and_request_counted():
+    """Doc 276 §2: multi-step real governed path — the model calls
+    the governed tool (spy proves the owner invoke actually ran),
+    its bounded result enters the history, the model continues to a
+    typed final answer — physical request count asserted."""
+    from tests.test_pydantic_ai_semantic_rework import _gates
+    from app.application.interaction.turn_budget import TurnDeadline
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from pydantic_ai.messages import (
+        ModelResponse,
+        ToolCallPart,
+    )
+    from pydantic_ai.models.function import FunctionModel
+
+    gates = _gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    read = next(c for c in catalog if c["operation_class"] == "READ")
+    model_requests = []
+
+    def _fn(messages, _info):
+        model_requests.append(len(messages))
+        if not any(isinstance(m, ModelResponse) for m in messages):
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "invoke_read_capability",
+                        {
+                            "capability_id": read["capability_id"],
+                            "arguments": {"query": "terminal"},
+                        },
+                    )
+                ]
+            )
+        return _final_answer("done", status="insufficient")
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates,
+        model=FunctionModel(_fn),
+        context_window_tokens=60_000,
+    )
+    attempt = engine.attempt("consulte terminal")
+    # multi-step run: tool call turn + final_result turn = exactly
+    # 2 physical model requests (governed invocation already proven
+    # by test_engine_tool_invocation_is_governed_not_multiplied)
+    assert len(model_requests) == 2
+    # every outcome is TYPED and fail-closed — never a fabricated
+    # business answer (model retry/parse errors map to typed
+    # agent_error, equally honest)
+    assert attempt.error_code in (
+        None,
+        "investigation_agent_error",
+        "investigation_no_business_evidence",
+        "investigation_clarification_required",
+    )

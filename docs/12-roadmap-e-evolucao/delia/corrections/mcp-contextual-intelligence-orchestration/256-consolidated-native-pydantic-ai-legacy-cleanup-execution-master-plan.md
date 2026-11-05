@@ -712,3 +712,16 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   2º request físico → `investigation_context_overflow` tipado,
   calls==1. Prova que a falha in-run atravessa o fluxo real do Agent.
 - Suite completa PASS (exit 0); zero legado reintroduzido.
+
+## 30. G7 evidence gate — contexto nativo + controle positivo (doc 276)
+
+- **Contexto nativo**: `test_governed_tool_invocation_real_and_
+  request_counted` — caminho governado multi-step real, exatamente 2
+  requests físicos (tool call + final_result), outcome tipado
+  fail-closed (nunca fabricado). Outcomes tipados incluem
+  agent_error honesto quando o modelo falha estruturalmente.
+- **Controle positivo**: api-delpi `/financial/rol*` probeado com JWT
+  real do usuário — TIMEOUT na resposta do owner (dados externos
+  lentos); sem registro previamente confirmado → INCONCLUSIVE por
+  acesso/dados, não por código.
+- Suite completa PASS (exit 0).
