@@ -1496,32 +1496,62 @@ async def _produce_drawing_understanding(context, code: str):
     return understanding, structure, best, tokens, _pdf_bytes
 
 
+def _understanding_job_running(job) -> CallToolResult:
+    return _ok(
+        {
+            "analysis_type": "product.drawing_understanding",
+            "status": "RUNNING",
+            "job_id": job.job_id,
+            "result_ready": False,
+            "retry": {
+                "analysis_type": "product.drawing_understanding",
+                "parameters": {
+                    "product_code": job.product_code,
+                    "job_id": job.job_id,
+                },
+            },
+            "note": (
+                "Leitura visual integral em execução prolongada; "
+                "repita a chamada com o job_id retornado. "
+                "Este envelope não é o relatório."
+            ),
+        },
+        "Leitura visual em execução — consulte o job_id.",
+    )
+
+
+def _understanding_job_terminal(job) -> CallToolResult:
+    if job.status == "FAILED":
+        err = job.error or {}
+        return _err(
+            err.get("message") or "Execução da leitura falhou.",
+            status_code=err.get("status_code", 500),
+            code=err.get("code") or "analysis_incomplete",
+        )
+    payload = dict(job.result or {})
+    payload["status"] = "COMPLETED"
+    payload["job_id"] = job.job_id
+    payload["result_ready"] = True
+    return _ok(
+        payload,
+        "Interpretação estrutural candidata do desenho oficial.",
+    )
+
+
 async def _analyze_drawing_understanding(
     context, params: dict, question: str | None
 ) -> CallToolResult:
-    """analyze(product.drawing_understanding) — R8 experimental:
-    candidatos estruturados (regiões/carimbo/tabela/cotas/revisão) a
-    partir da evidência OCR já governada. Perfil fixo visual; consumidor
-    não escolhe algoritmo; resultado permanece DRAFT/candidate."""
+    """analyze(product.drawing_understanding) — R8 experimental.
+
+    RES-01: a leitura síncrona de PDF longo era encerrada pelo cliente
+    MCP (gateway HTTP 499, 0 bytes, sem exceção da aplicação). O mesmo
+    AnalysisJobStore de DEC-VAL-030 devolve ``job_id`` na hora e o
+    consumidor recupera ``COMPLETED`` ou ``FAILED`` tipado. Não há
+    segunda fila.
+    """
     import os
 
-    from engineering_app.application.drawing.document_benchmark_service import (  # noqa: E501
-        run_official_document_benchmark,
-    )
-    from engineering_app.application.drawing.drawing_analysis_service import (  # noqa: E501
-        DrawingAnalysisError,
-        flatten_bom_occurrences,
-    )
-    from engineering_app.application.drawing.drawing_contracts import (
-        unwrap_delegated,
-    )
-    from engineering_app.application.drawing.object_profiles_builder import (
-        build_object_profiles,
-    )
-    from engineering_app.application.drawing.understanding import (
-        build_understanding,
-    )
-
+    code = str(params.get("product_code") or "").strip()
     if os.environ.get(_BENCHMARK_FLAG) != "true":
         return _err(
             "Benchmark experimental de desenho desabilitado neste "
@@ -1537,20 +1567,113 @@ async def _analyze_drawing_understanding(
             code="feature_disabled",
             data={"required_flag": _OCR_BENCHMARK_FLAG},
         )
-    code = str(params.get("product_code") or "").strip()
     if not code:
         return _err(
             "product_code obrigatório para product.drawing_understanding.",
             code="validation",
         )
-    try:
-        understanding, structure, best, tokens, _pdf_bytes = (
-            await _produce_drawing_understanding(context, code)
-        )
-    except DrawingAnalysisError as exc:
-        return _err(
-            str(exc), status_code=exc.status_code, code=exc.code
-        )
+    from engineering_app.application.drawing.analysis_jobs import (
+        analysis_job_store,
+    )
+    from engineering_app.application.drawing.drawing_analysis_service import (  # noqa: E501
+        DrawingAnalysisError,
+    )
+    import asyncio as _aio
+    import hashlib as _hl
+    import json as _js
+
+    ctx = bridge._source_context(context)
+    ident = _drawing_job_owner_fingerprint(ctx)
+    params_fp = _hl.sha256(
+        _js.dumps(
+            {"kind": "product.drawing_understanding", "code": code},
+            sort_keys=True,
+        ).encode()
+    ).hexdigest()[:20]
+    store = analysis_job_store()
+    requested = params.get("job_id")
+    if requested:
+        job = store.get_for_owner(str(requested), ident)
+        if job is None or job.product_code != code:
+            return _err(
+                "job_id não encontrado ou expirado.",
+                status_code=404,
+                code="job_not_found",
+            )
+        if job.status == "RUNNING":
+            return _understanding_job_running(job)
+        return _understanding_job_terminal(job)
+    job, created = store.get_or_start(
+        product_code=code,
+        identity_fingerprint=ident,
+        params_fingerprint=params_fp,
+    )
+    if not created:
+        if job.status == "RUNNING":
+            return _understanding_job_running(job)
+        return _understanding_job_terminal(job)
+
+    async def _run_job() -> None:
+        try:
+            payload = await _execute_drawing_understanding(
+                context, code, question
+            )
+            store.complete(
+                job.job_id, _compact_report_for_consumer(payload)
+            )
+        except DrawingAnalysisError as exc:
+            store.fail(
+                job.job_id,
+                exc.code,
+                str(exc),
+                status_code=exc.status_code,
+            )
+        except _aio.CancelledError:
+            store.fail(
+                job.job_id,
+                "cancelled",
+                "Execução cancelada.",
+                status_code=499,
+            )
+            raise
+        except Exception as exc:  # noqa: BLE001 — job nunca vaza 502
+            logger.exception(
+                "drawing_understanding_job_failed job_id=%s", job.job_id
+            )
+            store.fail(
+                job.job_id,
+                "analysis_incomplete",
+                f"{type(exc).__name__}: {exc}",
+                status_code=500,
+            )
+
+    _aio.create_task(_run_job())
+    return _understanding_job_running(job)
+
+
+async def _execute_drawing_understanding(
+    context, code: str, question: str | None
+) -> dict:
+    """Produz o payload de understanding. Só roda dentro do job."""
+    from engineering_app.application.drawing.document_benchmark_service import (  # noqa: E501
+        run_official_document_benchmark,
+    )
+    from engineering_app.application.drawing.drawing_analysis_service import (  # noqa: E501
+        flatten_bom_occurrences,
+    )
+    from engineering_app.application.drawing.drawing_contracts import (
+        unwrap_delegated,
+    )
+    from engineering_app.application.drawing.object_profiles_builder import (
+        build_object_profiles,
+    )
+    from engineering_app.application.drawing.understanding import (
+        build_understanding,
+    )
+
+    understanding, structure, best, tokens, _pdf_bytes = (
+        await _produce_drawing_understanding(context, code)
+    )
     # Relatório candidato consolidado (R10) — seções A–H do doc 116-B,
     # montado dos dados já governados; additive, DRAFT/CANDIDATE.
     _comp = (understanding.get("component_table") or {}).get("rows") or []
@@ -1726,24 +1849,21 @@ async def _analyze_drawing_understanding(
     understanding["report"]["object_profiles"] = understanding[
         "object_profiles"
     ]
-    return _ok(
-        {
-            "analysis_type": "product.drawing_understanding",
-            "question": question,
-            "document": understanding.get("document"),
-            "same_document_verified": understanding.get(
-                "same_document_verified"
-            ),
-            "understanding": understanding,
-            "quality_gate": "EVAL_PENDING",
-            "provenance": (
-                "api-delpi product/drawing/pdf (identidade delegada) → "
-                "PDFium render + local PaddleOCR (subprocess isolado) → "
-                "drawing_understanding.v1 deterministic rules"
-            ),
-        },
-        "Interpretação estrutural candidata do desenho oficial.",
-    )
+    return {
+        "analysis_type": "product.drawing_understanding",
+        "question": question,
+        "document": understanding.get("document"),
+        "same_document_verified": understanding.get(
+            "same_document_verified"
+        ),
+        "understanding": understanding,
+        "quality_gate": "EVAL_PENDING",
+        "provenance": (
+            "api-delpi product/drawing/pdf (identidade delegada) → "
+            "PDFium render + local PaddleOCR (subprocess isolado) → "
+            "drawing_understanding.v1 deterministic rules"
+        ),
+    }
 
 
 # --- knowledge --------------------------------------------------------------

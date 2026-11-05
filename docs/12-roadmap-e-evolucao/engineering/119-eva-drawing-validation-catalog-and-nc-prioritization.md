@@ -1087,3 +1087,47 @@ O subplano **não é nova frente, serviço, camada, documento nem autorização 
 **Gap direcionado de evidencia:** no 90263572, ledger reporta match_candidates=33 e guided_investigations.summary.match_candidates=1; criterios/denominadores diferentes ate verificacao. O ledger O0001 reporta match de codigo com page/box nulos e source code_token, enquanto investigacao guiada oferece localized_ocr_recheck pagina 2 com bbox/SHA. Investigar se refs devem ser preservadas no ledger; nao afirmar que existe erro sem rastrear callsite.
 
 **Proximo passo unico:** operador/Cursor autorizado consultar logs para erro interno nos 90264030 e 90264017 e utilizar caminho de job governado para documentos longos; depois regressao dos 13 PDFs no novo SHA, sem novos documentos ou auditorias. Engenharia continua owner-blocked para quantidade/unidade, equivalencia de descricao, posicao BOM, revisao e GT/thresholds. Atualizar Doc 119 e Issue #131 com evidencias reais, sem abrir nova frente.
+
+### 39.11 Correção residual RES-01/02/03 — jobs, proveniência e contadores (2026-11-05)
+
+**TASK_ID:** `EVA-VAL01-RESIDUAL-FIX-E2E-01`. Nenhum documento novo. VAL-01 não concluída. Quantidade, unidade, equivalência de descrição, posição BOM, revisão e ground truth continuam `OWNER_BLOCKED`.
+
+**RES-01**
+
+| | |
+|---|---|
+| DEFECT | `product.drawing_understanding` de `90264030` (13 páginas) e `90264017` (14 páginas) chegou ao consumidor como erro interno, sem envelope. |
+| ROOT_CAUSE | Gateway `delpi-gateway`, após o deploy das 22:42Z: vários `POST /apps/engineering-api/mcp` do `openai-mcp/1.0.0` com HTTP 499 e 0 bytes, espaçados cerca de 120s. No mesmo intervalo o processo só registrou fetch de `90263572` (resposta 200, ~44s, ~2,7 MB). Não há `Traceback` nem `eva_mcp_tool_error`. A leitura era síncrona; o cliente MCP desconectava antes de qualquer corpo. Não foi timeout de gateway 504, nem exceção de aplicação, nem falha de serialização observada. |
+| MINIMAL_DIFF | `product.drawing_understanding` passa a usar o `AnalysisJobStore` já existente (DEC-VAL-030). A primeira chamada devolve `RUNNING` + `job_id` + `result_ready=false`. A consulta devolve `COMPLETED` ou `FAILED` com código tipado (`document_unreadable`, `analysis_incomplete`, `timeout`, `cancelled`, `job_not_found`). Retry sem `job_id` reencontra o mesmo job. Dono continua sendo o subject, não o access token. Sem fila nova e sem aumento de timeout. |
+| TEST | `tests/test_drawing_understanding_jobs.py`: job antes do pipeline, falha tipada, outro usuário recebe `job_not_found`, exceção inesperada não vira sucesso. |
+| RUNTIME_SHA | A preencher após o deploy canônico deste commit. |
+| MCP_OUTCOME | Os quatro desenhos não foram reexecutados por este executor (sem token de usuário). O contrato de recuperação é o `job_id`. |
+| RESIDUAL | O resultado completo continua dependente de o consumidor repetir a chamada com o `job_id`. Corpus de 13 PDFs: `TEST_NOT_RUN`. |
+
+**RES-02**
+
+| | |
+|---|---|
+| DEFECT | `90263572` ocorrência `O0001` código `10080004`: investigação guiada com página 2, `localized_ocr_recheck`, bounding box, região e SHA; ledger com `page=null`, caixa nula e origem `code_token`. |
+| ROOT_CAUSE | `apply_localized_recovery` já gravava página, caixa e proveniência em `code_contexts` e tokens. O residual de `_drawing_occurrences` descartava esses campos e fixava `extraction_source=code_token`. `_code_cell_box` só lia `cells`, vazias nesse residual. A mesma ocorrência era pareada; a evidência se perdia na projeção, não na percepção. |
+| MINIMAL_DIFF | O residual copia página, região, caixa, proveniência, confiança e SHA somente quando a evidência comparável é unívoca. Várias páginas ou várias caixas na mesma página permanecem nulas. Menção só em `revision_history` / `notes` / `title_block` não entra na ocorrência vigente. SHA passa a ser registrado no `code_context` porque a recuperação já o possuía. |
+| TEST | `test_residual_localized_recovery_keeps_page_box_and_sha`, caixa ausente, duas páginas, duas caixas, e caixa de histórico que não cola na ocorrência BOM. |
+| RUNTIME_SHA | A preencher após o deploy canônico deste commit. |
+| MCP_OUTCOME | `TEST_NOT_RUN` neste executor. O caso sintético reproduz o shape de `O0001`. |
+| RESIDUAL | Confirmação no PDF real de `90263572` fica no reteste MCP. |
+
+**RES-03**
+
+| | |
+|---|---|
+| DEFECT | `90263572`: `validation_report.match_candidates=33` e `guided_investigations.summary.match_candidates=1`. |
+| ROOT_CAUSE | Denominadores diferentes, não erro aritmético. O do ledger conta ocorrências da BOM pareadas por código exato, inclusive token ou recuperação. O da investigação conta checks que chegaram a `MATCH_CANDIDATE`. O nome igual sugeria a mesma conta. |
+| MINIMAL_DIFF | `match_candidates` permanece (compatibilidade). O relatório passa a expor `code_pair_candidates` (mesmo número), `structural_pair_candidates`, `code_only_pair_candidates` e `counter_definitions`. `proven_matches` continua 0. Código solto não vira correspondência estrutural verificada. |
+| TEST | O relatório de BOM indisponível e o residual localizado afirmam as definições e `proven_matches=0`. |
+| RUNTIME_SHA | A preencher após o deploy canônico deste commit. |
+| MCP_OUTCOME | `TEST_NOT_RUN` neste executor. |
+| RESIDUAL | O número 33, se reaparecer, é contagem de pares por código, não validação comprovada. |
+
+**Invariantes preservados:** `engineering_approval=NOT_APPROVED`, `automatic_nc=false`, `DRAFT/CANDIDATE`, gate de `BOM_ONLY`, multiplicidade, histórico de revisão fora da tabela vigente, BOM somente leitura, AuthZ ao vivo, sem dependência do Chat legado.
+
+**Regressão local:** 138 testes dos módulos de comparador, jobs, investigação e entendimento. Corpus 13 e os quatro PDFs oficiais: `TEST_NOT_RUN` até o reteste autenticado no SHA implantado.

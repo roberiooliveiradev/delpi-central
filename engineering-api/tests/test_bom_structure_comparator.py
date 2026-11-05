@@ -713,3 +713,157 @@ def test_bom_unavailable_report_abstains():
     assert report["proven_matches"] == 0
     assert report["engineering_approval"] == "NOT_APPROVED"
     assert report["global_situation"] == "INCONCLUSIVE"
+    assert report["code_pair_candidates"] == report["match_candidates"]
+    assert report["proven_matches"] == 0
+    assert (
+        "guided_investigations_summary_match_candidates"
+        in report["counter_definitions"]
+    )
+
+
+def _record(out, code):
+    return next(
+        r
+        for r in out["validation_report"]["occurrence_records"]
+        if r["component_code"] == code
+    )
+
+
+def test_residual_localized_recovery_keeps_page_box_and_sha():
+    """O0001/10080004: a recuperação localizada já tinha página e caixa.
+
+    O residual do ledger não pode trocá-las por page nula e code_token.
+    """
+    box = [120, 340, 260, 368]
+    bom = _bom(("10080004", PRODUCT, 1), ("50210001", PRODUCT, 1))
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=_table([_row("50210001", 10)]),
+        tokens=_tokens("50210001"),
+        code_contexts=[
+            {
+                "code": "10080004",
+                "region": "component_table",
+                "page": 2,
+                "bounding_box_px": box,
+                "provenance": "localized_ocr_recheck",
+                "confidence": 0.91,
+                "pdf_sha256": "abc123",
+            }
+        ],
+        drawing_pages=2,
+        page_coverage={"pdf_page_count": 2, "pages_attempted": [1, 2]},
+    )
+    rec = _record(out, "10080004")
+    assert rec["occurrence_id"] == "O0001"
+    assert rec["page"] == 2
+    assert rec["region"] == "component_table"
+    assert rec["evidence"]["bounding_box_px"] == box
+    assert rec["evidence"]["extraction_source"] == "localized_ocr_recheck"
+    assert rec["evidence"]["pdf_sha256"] == "abc123"
+    assert rec["evidence"]["ocr_confidence"] == 0.91
+    assert rec["proven"] is False
+    report = out["validation_report"]
+    assert report["match_candidates"] == report["code_pair_candidates"]
+    assert report["code_only_pair_candidates"] >= 1
+    assert report["proven_matches"] == 0
+    assert report["structural_pair_candidates"] != report["match_candidates"]
+
+
+def test_residual_without_box_stays_null_and_code_token():
+    bom = _bom(("10080004", PRODUCT, 1))
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=_table([]),
+        code_contexts=[
+            {"code": "10080004", "region": "component_table", "page": 2}
+        ],
+    )
+    rec = _record(out, "10080004")
+    assert rec["page"] == 2
+    assert rec["evidence"]["bounding_box_px"] is None
+    assert rec["evidence"]["extraction_source"] == "code_token"
+    assert rec["evidence"]["pdf_sha256"] is None
+
+
+def test_two_pages_do_not_pick_a_box_or_a_page():
+    bom = _bom(("10080004", PRODUCT, 1))
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=_table([]),
+        code_contexts=[
+            {
+                "code": "10080004",
+                "region": "component_table",
+                "page": 2,
+                "bounding_box_px": [1, 2, 3, 4],
+                "provenance": "localized_ocr_recheck",
+            },
+            {
+                "code": "10080004",
+                "region": "component_table",
+                "page": 3,
+                "bounding_box_px": [5, 6, 7, 8],
+                "provenance": "localized_ocr_recheck",
+            },
+        ],
+    )
+    rec = _record(out, "10080004")
+    assert rec["page"] is None
+    assert rec["evidence"]["bounding_box_px"] is None
+
+
+def test_two_boxes_on_one_page_keep_the_page_and_drop_the_box():
+    bom = _bom(("10080004", PRODUCT, 1))
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=_table([]),
+        code_contexts=[
+            {
+                "code": "10080004",
+                "region": "component_table",
+                "page": 2,
+                "bounding_box_px": [1, 2, 3, 4],
+                "provenance": "localized_ocr_recheck",
+            },
+            {
+                "code": "10080004",
+                "region": "component_table",
+                "page": 2,
+                "bounding_box_px": [9, 9, 12, 12],
+                "provenance": "localized_ocr_recheck",
+            },
+        ],
+    )
+    rec = _record(out, "10080004")
+    assert rec["page"] == 2
+    assert rec["evidence"]["bounding_box_px"] is None
+    assert rec["evidence"]["extraction_source"] == "localized_ocr_recheck"
+
+
+def test_revision_history_box_is_not_copied_onto_the_bom_occurrence():
+    bom = _bom(("10080004", PRODUCT, 1))
+    out = compare_bom_to_drawing(
+        product_code=PRODUCT,
+        bom_occurrences=bom,
+        component_table=_table([]),
+        code_contexts=[
+            {
+                "code": "10080004",
+                "region": "revision_history",
+                "page": 2,
+                "bounding_box_px": [1, 2, 3, 4],
+                "provenance": "localized_ocr_recheck",
+                "pdf_sha256": "should-not-attach",
+            }
+        ],
+    )
+    rec = _record(out, "10080004")
+    assert rec["page"] is None
+    assert rec["evidence"]["bounding_box_px"] is None
+    assert rec["evidence"]["extraction_source"] is None
+    assert rec["evidence"]["pdf_sha256"] is None

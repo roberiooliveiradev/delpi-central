@@ -85,17 +85,93 @@ _FLAGGABLE_PREFIXES = frozenset("1579")
 def _code_region_index(
     code_contexts: list[dict] | None,
 ) -> dict[str, dict[str, Any]]:
-    """code → {regions:set, pages:set} a partir de code_contexts."""
+    """code → {regions, pages, evidence} a partir de code_contexts.
+
+    ``evidence`` guarda página, caixa e proveniência já observadas.
+    Não completa campo ausente.
+    """
     idx: dict[str, dict[str, Any]] = {}
     for c in code_contexts or []:
         code = _norm_code(c.get("code"))
         if not code:
             continue
-        e = idx.setdefault(code, {"regions": set(), "pages": set()})
-        e["regions"].add(c.get("region") or "unknown")
-        if c.get("page") is not None:
-            e["pages"].add(int(c["page"]))
+        e = idx.setdefault(
+            code, {"regions": set(), "pages": set(), "evidence": []}
+        )
+        region = c.get("region") or "unknown"
+        page = int(c["page"]) if c.get("page") is not None else None
+        e["regions"].add(region)
+        if page is not None:
+            e["pages"].add(page)
+        e["evidence"].append(
+            {
+                "region": region,
+                "page": page,
+                "bounding_box_px": c.get("bounding_box_px"),
+                "provenance": c.get("provenance"),
+                "confidence": c.get("confidence"),
+                "pdf_sha256": c.get("pdf_sha256"),
+            }
+        )
     return idx
+
+
+def _select_presence(rows: list[dict] | None) -> dict[str, Any]:
+    """Página e caixa só quando a evidência comparável é unívoca.
+
+    Várias páginas, ou várias caixas na mesma página, permanecem nulas.
+    Escolher uma delas fabricaria o vínculo com a ocorrência.
+    """
+    comparable = [
+        e
+        for e in (rows or [])
+        if (e.get("region") or "unknown") not in _NON_COMPARABLE_REGIONS
+    ]
+    pages = {e["page"] for e in comparable if e.get("page") is not None}
+    page = next(iter(pages)) if len(pages) == 1 else None
+    on_page = [
+        e for e in comparable if page is not None and e.get("page") == page
+    ]
+    boxes: list[Any] = []
+    for e in on_page:
+        box = e.get("bounding_box_px")
+        if box and box not in boxes:
+            boxes.append(box)
+    provs = {e.get("provenance") for e in on_page if e.get("provenance")}
+    regions = {e.get("region") for e in on_page if e.get("region")}
+    shas = {e.get("pdf_sha256") for e in on_page if e.get("pdf_sha256")}
+    confs = [
+        e.get("confidence")
+        for e in on_page
+        if e.get("confidence") is not None
+    ]
+    return {
+        "page": page,
+        "bounding_box_px": boxes[0] if len(boxes) == 1 else None,
+        "provenance": next(iter(provs)) if len(provs) == 1 else None,
+        "region": next(iter(regions)) if len(regions) == 1 else None,
+        "pdf_sha256": next(iter(shas)) if len(shas) == 1 else None,
+        "ocr_confidence": confs[0] if len(confs) == 1 else None,
+    }
+
+
+def _token_presence_rows(code: str, tokens: list[dict] | None) -> list[dict]:
+    rows: list[dict] = []
+    for t in tokens or []:
+        text = str(t.get("normalized_text") or t.get("text") or "")
+        if _norm_code(text) != code:
+            continue
+        rows.append(
+            {
+                "region": t.get("region") or "unknown",
+                "page": int(t["page"]) if t.get("page") is not None else None,
+                "bounding_box_px": t.get("bounding_box_px"),
+                "provenance": t.get("provenance"),
+                "confidence": t.get("confidence"),
+                "pdf_sha256": t.get("pdf_sha256"),
+            }
+        )
+    return rows
 
 
 def _row_page(row: dict[str, Any]) -> int | None:
@@ -358,6 +434,17 @@ def _drawing_occurrences(
                     }
                 )
                 continue
+            if code_contexts is not None:
+                presence = _select_presence((ctx or {}).get("evidence"))
+            else:
+                presence = _select_presence(
+                    _token_presence_rows(code, tokens)
+                )
+            source = (
+                "localized_ocr_recheck"
+                if presence["provenance"] == "localized_ocr_recheck"
+                else "code_token"
+            )
             occurrences.append(
                 {
                     "item_code": code,
@@ -366,11 +453,17 @@ def _drawing_occurrences(
                     "parent_code": None,
                     "parent_verified": False,
                     "parent_source": None,
-                    "extraction_source": "code_token",
+                    "extraction_source": source,
+                    "provenance": presence["provenance"],
                     "flaggable": False,
                     "quantity": None,
                     "y_px": None,
                     "row": None,
+                    "page": presence["page"],
+                    "region": presence["region"],
+                    "bounding_box_px": presence["bounding_box_px"],
+                    "pdf_sha256": presence["pdf_sha256"],
+                    "ocr_confidence": presence["ocr_confidence"],
                     "cells": [],
                 }
             )
@@ -886,7 +979,8 @@ def compare_bom_to_drawing(
     token_only = sum(
         1
         for o in drawing_occ
-        if o.get("extraction_source") == "code_token"
+        if o.get("extraction_source")
+        in {"code_token", "localized_ocr_recheck"}
     )
     verification_gaps = (
         bom_only_unverified
@@ -1059,11 +1153,27 @@ def _code_cell_box(occ: dict[str, Any] | None) -> list | None:
     code = occ.get("item_code")
     for cell in occ.get("cells") or []:
         if code and code in str(cell.get("text") or ""):
-            return cell.get("bounding_box_px")
+            box = cell.get("bounding_box_px")
+            if box:
+                return box
     for cell in occ.get("cells") or []:
         if cell.get("bounding_box_px"):
             return cell.get("bounding_box_px")
-    return None
+    direct = occ.get("bounding_box_px")
+    return direct or None
+
+
+def _drawing_evidence(drawing: dict[str, Any] | None) -> dict[str, Any]:
+    """Proveniência já ligada à ocorrência. Campo ausente permanece nulo."""
+    return {
+        "extraction_source": (drawing or {}).get("extraction_source"),
+        "parent_source": (drawing or {}).get("parent_source"),
+        "bounding_box_px": _code_cell_box(drawing),
+        "row": (drawing or {}).get("row"),
+        "provenance": (drawing or {}).get("provenance"),
+        "pdf_sha256": (drawing or {}).get("pdf_sha256"),
+        "ocr_confidence": (drawing or {}).get("ocr_confidence"),
+    }
 
 
 def _occurrence_attributes(
@@ -1078,12 +1188,7 @@ def _occurrence_attributes(
     permanece NOT_COMPARABLE/NOT_CHECKED — nunca vira divergência."""
     page = (drawing or {}).get("page")
     region = (drawing or {}).get("region")
-    evidence = {
-        "extraction_source": (drawing or {}).get("extraction_source"),
-        "parent_source": (drawing or {}).get("parent_source"),
-        "bounding_box_px": _code_cell_box(drawing),
-        "row": (drawing or {}).get("row"),
-    }
+    evidence = _drawing_evidence(drawing)
     expected_code = _norm_code((bom or {}).get("component_code")) or None
     observed_code = (drawing or {}).get("item_code")
     attrs = [
@@ -1341,12 +1446,7 @@ def _record_from(
         "result": overall,
         "proven": False,
         "attributes": attributes,
-        "evidence": {
-            "extraction_source": (drawing or {}).get("extraction_source"),
-            "bounding_box_px": _code_cell_box(drawing),
-            "row": (drawing or {}).get("row"),
-            "parent_source": (drawing or {}).get("parent_source"),
-        },
+        "evidence": _drawing_evidence(drawing),
         "uncertainty": code_uncertainty,
         "limitation": (
             "DRAFT/CANDIDATE — não aprovado tecnicamente pela Engenharia"
@@ -1595,6 +1695,43 @@ def _build_validation_report(
         "observed_occurrences": len(drawing_occ),
         "proven_matches": 0,
         "match_candidates": matched,
+        "code_pair_candidates": matched,
+        "structural_pair_candidates": sum(
+            1
+            for d in drawing_occ
+            if d.get("_pair_rule") == "code_and_verified_parent"
+        ),
+        "code_only_pair_candidates": sum(
+            1
+            for d in drawing_occ
+            if d.get("_pair_rule") == "code_only"
+        ),
+        "counter_definitions": {
+            "match_candidates": (
+                "Ocorrências da BOM pareadas por código exato com alguma "
+                "menção no desenho, inclusive token solto ou recuperação "
+                "localizada. Não é correspondência estrutural verificada "
+                "e não é o match_candidates de guided_investigations."
+            ),
+            "code_pair_candidates": (
+                "Mesmo denominador de match_candidates, com nome explícito."
+            ),
+            "structural_pair_candidates": (
+                "Pares com código e relação pai-filho verificada nesta "
+                "leitura. Continuam candidatos; proven_matches permanece 0."
+            ),
+            "code_only_pair_candidates": (
+                "Pares somente por código, sem relação estrutural verificada."
+            ),
+            "proven_matches": (
+                "Sempre 0 neste contrato. Candidato não é validação "
+                "comprovada nem aprovação da Engenharia."
+            ),
+            "guided_investigations_summary_match_candidates": (
+                "Outro denominador: checks da investigação guiada que "
+                "chegaram a MATCH_CANDIDATE. Não soma com match_candidates."
+            ),
+        },
         "candidate_divergences": len(findings),
         "ambiguous_occurrences": len(ambiguous_pairs),
         "unverified_relations": len(unverified_relations),

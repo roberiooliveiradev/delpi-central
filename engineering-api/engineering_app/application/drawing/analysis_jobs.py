@@ -117,6 +117,7 @@ class AnalysisJobStore:
     def get_for_owner(
         self, job_id: str, identity_fingerprint: str
     ) -> AnalysisJob | None:
+        self._sweep(time.time())
         job = self._jobs.get(job_id)
         if job is None:
             return None

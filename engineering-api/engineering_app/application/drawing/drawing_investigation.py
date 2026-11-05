@@ -1369,6 +1369,9 @@ def apply_localized_recovery(
                     "confidence": _rc["confidence"],
                     "bounding_box_px": _rc["box"],
                     "provenance": "localized_ocr_recheck",
+                    "pdf_sha256": (
+                        pdf_sha256 or u.get("document_hash_sha256")
+                    ),
                 }
             )
         _ctx_key = (_rc["code"], "component_table", _rc["page"])
@@ -1384,6 +1387,9 @@ def apply_localized_recovery(
                     "page": _rc["page"],
                     "bounding_box_px": _rc["box"],
                     "provenance": "localized_ocr_recheck",
+                    "pdf_sha256": (
+                        pdf_sha256 or u.get("document_hash_sha256")
+                    ),
                     "confidence": _rc["confidence"],
                     "observed_raw_value": _rc["observed_raw_value"],
                 }
