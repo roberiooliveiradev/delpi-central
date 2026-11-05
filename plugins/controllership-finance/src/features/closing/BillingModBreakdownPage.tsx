@@ -21,10 +21,10 @@ import {
   CfActionButton,
   CfLoadingCard,
   CfEmptyState,
-  CfSectionCard,
   CfSelectField,
   CfStateBanner,
   CfStatusBadge,
+  CfWideDialog,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
 import {
@@ -230,32 +230,8 @@ export function BillingModBreakdownPage({
             />
           ),
       },
-      {
-        key: "detail",
-        header: "Detalhe",
-        render: (row) => {
-          const key = anchorKey(row);
-          const active = key === selectedKey;
-          return (
-            <CfActionButton
-              variant={active ? "primary" : "ghost"}
-              type="button"
-              aria-label={`Ver operações MOD do produto ${row.product}${
-                row.branch ? `, filial ${row.branch}` : ""
-              }`}
-              aria-expanded={active}
-              aria-controls="cf-r09-anchor-detail"
-              onClick={() =>
-                setSelectedKey(active ? null : key)
-              }
-            >
-              {active ? "Ocultar" : "Ver"}
-            </CfActionButton>
-          );
-        },
-      },
     ],
-    [selectedKey],
+    [],
   );
 
   const selectedAnchor =
@@ -338,13 +314,21 @@ export function BillingModBreakdownPage({
             getSearchText={(row) =>
               `${row.product} ${row.productDescription ?? ""} ${row.branch ?? ""}`
             }
+            onRowClick={(row) => setSelectedKey(anchorKey(row))}
             loading={loading}
             emptyMessage="Nenhuma âncora faturada encontrada para a competência/filial selecionadas."
             columnPreferencesKey="cf:closing:billing-mod-breakdown:v1"
           />
 
           {selectedAnchor ? (
-            <AnchorDetail anchor={selectedAnchor} />
+            <CfWideDialog
+              open
+              title={`Operações MOD — ${selectedAnchor.product}`}
+              onClose={() => setSelectedKey(null)}
+              closeAriaLabel="Fechar detalhe de operações MOD"
+            >
+              <AnchorDetail anchor={selectedAnchor} />
+            </CfWideDialog>
           ) : null}
 
           {payload.parityEvidence ? (
@@ -413,8 +397,8 @@ export function BillingModBreakdownPage({
   );
 }
 
-/** Detalhe inline da âncora selecionada — operações MOD completas,
- *  com estados tipados (ausência nunca vira zero). */
+/** Detalhe da âncora selecionada (conteúdo do modal) — operações MOD
+ *  completas, com estados tipados (ausência nunca vira zero). */
 function AnchorDetail({ anchor }: { anchor: BillingModAnchor }) {
   const columns = useMemo<DataTableColumn<BillingModLine>[]>(
     () => [
@@ -460,7 +444,13 @@ function AnchorDetail({ anchor }: { anchor: BillingModAnchor }) {
           </div>
         ),
       },
-      { key: "modUnit", header: "Un. MOD", render: (row) => row.modUnit ?? "—" },
+      {
+        key: "modUnit",
+        header: "Un. MOD",
+        // `unit: ""` real (19 linhas em 2026-09) apresenta «—» — apenas
+        // apresentação; o payload original é preservado.
+        render: (row) => row.modUnit || "—",
+      },
       {
         key: "propagatedQty",
         header: "Qtd propagada",
@@ -503,13 +493,9 @@ function AnchorDetail({ anchor }: { anchor: BillingModAnchor }) {
   );
 
   return (
-    <CfSectionCard
-      title={`Operações MOD — ${anchor.product}${
-        anchor.branch ? ` / Filial ${anchor.branch}` : ""
-      }`}
-    >
-      <div id="cf-r09-anchor-detail">
+    <div id="cf-r09-anchor-detail">
       <p className="cf-muted">
+        {anchor.branch ? `Filial ${anchor.branch} · ` : ""}
         {anchor.productDescription ? `${anchor.productDescription} · ` : ""}
         Qtd faturada {fmtNumber(anchor.billedQty)} ·{" "}
         {anchor.modLines.length}{" "}
@@ -524,8 +510,7 @@ function AnchorDetail({ anchor }: { anchor: BillingModAnchor }) {
       </p>
       {anchor.modLines.length === 0 ? (
         <p className="cf-muted">
-          Nenhuma linha MOD retornada para esta âncora no payload da
-          competência.
+          Nenhuma linha MOD retornada para esta âncora na consulta.
         </p>
       ) : (
         <DataTableSection<BillingModLine>
@@ -540,8 +525,7 @@ function AnchorDetail({ anchor }: { anchor: BillingModAnchor }) {
           emptyMessage="Nenhuma operação retornada."
         />
       )}
-      </div>
-    </CfSectionCard>
+    </div>
   );
 }
 

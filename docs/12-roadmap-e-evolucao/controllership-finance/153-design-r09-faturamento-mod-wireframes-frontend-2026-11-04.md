@@ -403,3 +403,5 @@ Essas recomendações **não** autorizam implementação por si só. Sem decisã
 **Evidências RW02:** 12 testes com mock + 6 testes no `DataTableSection` real (busca/paginação), suíte 442/442 + 25 estruturais, capturas `/tmp/cf-cards-verify/out/r09-rw2/` (dados reais: 521 âncoras, 4.659 linhas MOD, 11 sem linhas — competência 09/2026), zero overflow de página em 1600px e 390px, 932 nós DOM (vs. DOM proporcional a todas as âncoras na versão cards).
 
 **Resíduos:** inventário fechado no doc 154 §10 — `R09-04/17` DECISION_REQUIRED, `R09-20` performance bytes/tempo `TO_INVENTORY`, `costProduct` nunca emitido pelo produtor (campo só de contrato, renderiza «—»).
+
+> **Adendo 2 (04/11/2026):** decisão visual do PO (`CF-PROC0072-R09-ROW-DETAIL-MODAL-001`) — o detalhe inline é substituído por **linha clicável + modal de operações MOD** (`CfWideDialog`, variante `wide`, host-contained). Coluna «Detalhe»/botão «Ver» removidos. Ver [doc 154 §13](./154-auditoria-residuais-r09-master-detail-2026-11-04.md).

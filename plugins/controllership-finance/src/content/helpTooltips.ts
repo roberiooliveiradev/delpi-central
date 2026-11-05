@@ -235,9 +235,9 @@ export const CF_HELP = {
     indicators:
       "Indicadores derivados dos registros retornados pela consulta ativa: âncoras produto/filial, total de linhas MOD e quantidade de âncoras sem linhas retornadas — sem deduplicação presumida e sem valores monetários inferidos.",
     table:
-      "Tabela principal por âncora (produto + filial): código, descrição, filial, quantidade faturada, contagem de linhas MOD e situação. «Ver» abre o detalhe das operações da âncora abaixo da tabela. Busca e paginação atuam sobre os registros retornados pela consulta.",
+      "Tabela principal por âncora (produto + filial): código, descrição, filial, quantidade faturada, contagem de linhas MOD e situação. Selecione uma linha para visualizar as operações MOD do produto e da filial em uma janela de detalhes — use Enter ou Espaço para abrir e Escape para fechar. Busca e paginação atuam sobre os registros retornados pela consulta.",
     detail:
-      "Operações MOD da âncora selecionada: nível, produto componente, operação, recurso, item MOD, unidade, quantidade propagada, tempo padrão, horas e custos — cada campo numérico preserva o estado da fonte («fonte ausente», «não aplicável», «indisponível») e valor ausente nunca aparece como zero.",
+      "Operações MOD da âncora selecionada, exibidas em janela de detalhes: nível, produto componente, operação, recurso, item MOD, unidade, quantidade propagada, tempo padrão, horas e custos — cada campo numérico preserva o estado da fonte («fonte ausente», «não aplicável», «indisponível») e valor ausente nunca aparece como zero.",
     historical:
       "Evidência histórica de paridade com o DLP204, referente exclusivamente ao recorte 09/2026 — cobertura de chaves e divergências do estudo. Não representa homologação da competência corrente.",
   },

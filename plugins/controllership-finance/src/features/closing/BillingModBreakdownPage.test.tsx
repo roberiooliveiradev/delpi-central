@@ -81,12 +81,25 @@ describe("R09 — Faturamento × MOD (master/detail)", () => {
         ],
       }),
     );
-    render(<BillingModBreakdownPage reportContext={CONTEXT} />);
+    const { container } = render(
+      <BillingModBreakdownPage reportContext={CONTEXT} />,
+    );
     await screen.findAllByText("P1");
-    const buttons = screen.getAllByRole("button", {
-      name: /Ver operações MOD do produto P1, filial/,
-    });
-    expect(buttons.length).toBe(2);
+    const rows = container.querySelectorAll("tbody tr");
+    expect(rows).toHaveLength(2);
+    // cada linha abre o modal da SUA filial
+    fireEvent.click(rows[0]);
+    expect(
+      (await screen.findByRole("dialog")).textContent,
+    ).toContain("Filial 01");
+    fireEvent.click(
+      screen.getByRole("button", { name: /fechar/i }),
+    );
+    const rows2 = container.querySelectorAll("tbody tr");
+    fireEvent.click(rows2[1]);
+    expect(
+      (await screen.findByRole("dialog")).textContent,
+    ).toContain("Filial 02");
   });
 
   it("selecionar âncora exibe detalhe com operações e estados tipados", async () => {
@@ -113,12 +126,11 @@ describe("R09 — Faturamento × MOD (master/detail)", () => {
         ],
       }),
     );
-    render(<BillingModBreakdownPage reportContext={CONTEXT} />);
-
-    const open = await screen.findByRole("button", {
-      name: /Ver operações MOD do produto P9/,
-    });
-    fireEvent.click(open);
+    const { container } = render(
+      <BillingModBreakdownPage reportContext={CONTEXT} />,
+    );
+    await screen.findAllByText("P9");
+    fireEvent.click(container.querySelector("tbody tr")!);
 
     await screen.findByText(/Operações MOD — P9/);
     expect(screen.getByText("INSPECIONAR")).toBeTruthy();
@@ -134,15 +146,18 @@ describe("R09 — Faturamento × MOD (master/detail)", () => {
     getMod.mockResolvedValue(
       payload({ anchors: [anchor({ product: "P0" })] }),
     );
-    render(<BillingModBreakdownPage reportContext={CONTEXT} />);
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: /Ver operações MOD do produto P0/,
-      }),
+    const { container } = render(
+      <BillingModBreakdownPage reportContext={CONTEXT} />,
     );
+    await screen.findAllByText("P0");
+    fireEvent.click(container.querySelector("tbody tr")!);
     expect(
-      await screen.findByText(/Nenhuma linha MOD retornada para esta âncora/),
-    ).toBeTruthy();
+      (
+        await screen.findAllByText(
+          /Nenhuma linha MOD retornada para esta âncora na consulta/,
+        )
+      ).length,
+    ).toBeGreaterThan(0);
     expect(screen.queryByText(/sem roteiro/)).toBeNull();
   });
 
@@ -229,12 +244,11 @@ describe("R09 — Faturamento × MOD (master/detail)", () => {
         ],
       }),
     );
-    render(<BillingModBreakdownPage reportContext={CONTEXT} />);
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: /Ver operações MOD do produto CP1/,
-      }),
+    const { container } = render(
+      <BillingModBreakdownPage reportContext={CONTEXT} />,
     );
+    await screen.findAllByText("CP1");
+    fireEvent.click(container.querySelector("tbody tr")!);
     await screen.findAllByText("Custo produto");
     expect(screen.getByText("1.234,5")).toBeTruthy();
     expect(screen.getAllByText("fonte ausente").length).toBeGreaterThan(0);
@@ -294,12 +308,11 @@ describe("R09 — Faturamento × MOD (master/detail)", () => {
         ],
       }),
     );
-    render(<BillingModBreakdownPage reportContext={CONTEXT} />);
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: /Ver operações MOD do produto SM1/,
-      }),
+    const { container } = render(
+      <BillingModBreakdownPage reportContext={CONTEXT} />,
     );
+    await screen.findAllByText("SM1");
+    fireEvent.click(container.querySelector("tbody tr")!);
     await screen.findByText(/Operações MOD — SM1/);
     // 0,00001 nunca renderiza como "0"
     expect(screen.getByText(/0,00001/)).toBeTruthy();
@@ -313,11 +326,8 @@ describe("R09 — Faturamento × MOD (master/detail)", () => {
     const { container } = render(
       <BillingModBreakdownPage reportContext={CONTEXT} />,
     );
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: /Ver operações MOD do produto B1/,
-      }),
-    );
+    await screen.findAllByText("B1");
+    fireEvent.click(container.querySelector("tbody tr")!);
     await screen.findByText(/Operações MOD — B1/);
     fireEvent.change(container.querySelector(".cf-hero-filters select")!, {
       target: { value: "02" },
@@ -340,11 +350,8 @@ describe("R09 — Faturamento × MOD (master/detail)", () => {
     const { container } = render(
       <BillingModBreakdownPage reportContext={CONTEXT} />,
     );
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: /Ver operações MOD do produto OLD1/,
-      }),
-    );
+    await screen.findAllByText("OLD1");
+    fireEvent.click(container.querySelector("tbody tr")!);
     await screen.findByText(/Operações MOD — OLD1/);
     fireEvent.change(container.querySelector(".cf-hero-filters select")!, {
       target: { value: "02" },

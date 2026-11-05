@@ -152,26 +152,25 @@ async function renderLoadedPage(anchorProduct = "80014579") {
     <BillingModBreakdownPage reportContext={CONTEXT} />,
   );
   await screen.findByText("Faturamento × MOD — R09");
-  await within(utils.container.querySelector("tbody")!).findAllByText(
-    anchorProduct,
-  );
+  // o produto só existe dentro de linha da tabela — espera o payload
+  await screen.findAllByText(anchorProduct);
   return utils;
 }
 
 async function openDetail(container: HTMLElement, anchorProduct = "80014579") {
-  fireEvent.click(
-    await screen.findByRole("button", {
-      name: new RegExp(
-        `Ver operações MOD do produto ${anchorProduct}, filial 01`,
-      ),
-    }),
-  );
-  await screen.findByText(
-    new RegExp(`Operações MOD — ${anchorProduct}`),
-  );
-  const region = container.querySelector("#cf-r09-anchor-detail");
+  const masterTbody = container.querySelector("tbody") as HTMLElement;
+  const row = within(masterTbody).getByText(anchorProduct).closest("tr")!;
+  fireEvent.click(row);
+  await screen.findByRole("dialog");
+  const region = document.querySelector("#cf-r09-anchor-detail");
   expect(region).not.toBeNull();
   return within(region as HTMLElement);
+}
+
+/** Linha clicável da master no kit real (tr com onClick/tabIndex). */
+function masterRow(container: HTMLElement, anchorProduct: string) {
+  const masterTbody = container.querySelector("tbody") as HTMLElement;
+  return within(masterTbody).getByText(anchorProduct).closest("tr")!;
 }
 
 beforeEach(() => {
@@ -186,10 +185,9 @@ describe("R09 — fluxo integrado produtor → BFF → normalize → página →
     const { container } = await renderLoadedPage();
     const detail = await openDetail(container);
 
-    // header do detalhe identifica âncora e filial (título do card)
-    screen.getByRole("heading", {
-      name: /Operações MOD — 80014579 \/ Filial 01/,
-    });
+    // título do modal identifica a âncora; filial vai na linha de contexto
+    screen.getByRole("heading", { name: /Operações MOD — 80014579/ });
+    detail.getByText(/Filial 01/);
     // produto componente do nível 04 é distinto da âncora (COMP-77)
     expect(detail.getAllByText("COMP-77").length).toBeGreaterThan(0);
     // unidade MOD normalizada (unit → modUnit) aparece nas duas linhas
@@ -203,7 +201,7 @@ describe("R09 — fluxo integrado produtor → BFF → normalize → página →
     // sourceOp preservado
     detail.getByText("000123");
     // nenhuma linha foi omitida pela normalização (2 linhas de dados)
-    const rows = (container.querySelector(
+    const rows = (document.querySelector(
       "#cf-r09-anchor-detail",
     ) as HTMLElement).querySelectorAll("tbody tr");
     expect(rows).toHaveLength(2);
@@ -221,7 +219,7 @@ describe("R09 — fluxo integrado produtor → BFF → normalize → página →
     expect(detail.getAllByText("fonte ausente").length).toBeGreaterThan(0);
     // costProduct não é emitido pelo produtor → «—» honesto
     const detailRows = Array.from(
-      (container.querySelector("#cf-r09-anchor-detail") as HTMLElement)
+      (document.querySelector("#cf-r09-anchor-detail") as HTMLElement)
         .querySelectorAll("tbody tr"),
     );
     for (const tr of detailRows) {
@@ -260,7 +258,7 @@ describe("R09 — fluxo integrado produtor → BFF → normalize → página →
     const detail = await openDetail(container, "90260139");
 
     // 6 linhas reais preservadas pela cadeia completa
-    const detailRows = (container.querySelector(
+    const detailRows = (document.querySelector(
       "#cf-r09-anchor-detail",
     ) as HTMLElement).querySelectorAll("tbody tr");
     expect(detailRows).toHaveLength(6);
@@ -286,6 +284,66 @@ describe("R09 — fluxo integrado produtor → BFF → normalize → página →
     expect(
       detail.getAllByTitle(/Taxa de MOD sem fonte comprovada/).length,
     ).toBeGreaterThan(0);
+  });
+
+  it("Enter e Espaço na linha abrem o modal; Escape e X fecham; foco retorna", async () => {
+    mockBffResponse();
+    const { container } = await renderLoadedPage();
+
+    // sem coluna "Detalhe" e sem botão "Ver" na master
+    expect(screen.queryByText("Detalhe")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Ver operações MOD/ }),
+    ).toBeNull();
+
+    // Enter abre (linha focada, como uso real por teclado)
+    const row = masterRow(container, "80014579") as HTMLElement;
+    row.focus();
+    fireEvent.keyDown(row, { key: "Enter" });
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("80014579");
+
+    // Escape fecha — linha continua focável/acionável
+    fireEvent.keyDown(document, { key: "Escape" });
+    await screen.findByText("Produtos faturados");
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    // Espaço abre
+    row.focus();
+    fireEvent.keyDown(row, { key: " " });
+    await screen.findByRole("dialog");
+
+    // foco volta para a linha de origem ao fechar via X
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Fechar detalhe de operações MOD/,
+      }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(
+      document.activeElement === row ||
+        row.contains(document.activeElement),
+    ).toBe(true);
+  });
+
+  it("âncora sem operações abre modal com estado vazio factual", async () => {
+    httpGetMock.mockResolvedValue({
+      success: true,
+      data: {
+        ...bffProjectedPayload(),
+        anchors: [
+          { ...PRODUCER_ANCHOR, modLines: [], sourceMissing: ["route_operations_missing"] },
+        ],
+      },
+    });
+    const { container } = await renderLoadedPage();
+    fireEvent.click(masterRow(container, "80014579"));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain(
+      "Nenhuma linha MOD retornada para esta âncora na consulta",
+    );
+    // sourceMissing continua exibido — sem inferir «sem roteiro»
+    expect(dialog.textContent).toContain("fontes ausentes");
   });
 
   it("envelope de erro tipado da BFF renderiza estado honesto, sem técnica exposta", async () => {
