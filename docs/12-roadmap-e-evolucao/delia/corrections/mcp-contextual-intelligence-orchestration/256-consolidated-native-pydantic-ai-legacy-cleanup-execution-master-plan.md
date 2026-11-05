@@ -534,8 +534,9 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
 | RQ-27 RQ matrix | IMPLEMENTED | esta tabela |
 | RQ-28 review disposition | PARTIAL | ACCEPT_WITH_RESIDUAL proposto; E01–E10 pendente |
 
-TOTAL_RQ=28 | IMPLEMENTED=18 | PARTIAL=10 | NOT_IMPLEMENTED=0 | BLOCKED=0
-TASK_VERIFIED_COVERAGE_PCT=64% (implemented) — partial=zero credito por regra
+TOTAL_RQ=28 | IMPLEMENTED=21 | PARTIAL=7 | NOT_IMPLEMENTED=0 | BLOCKED=0
+REPORTED_CLASSIFICATION_COVERAGE_PCT=75% (21/28; partial=zero crédito) — **contagem aritmética da tabela do executor, não aceite independente por RQ**.
+REVIEW_267=CORRECTION_REQUIRED — resumo G8 originalmente registrou 18/10 e 64%, divergindo dos 28 itens enumerados; correção numérica apenas, sem mudar statuses individuais ou certificar outcomes. E01–E10 permanecem TEST_NOT_RUN.
 E01–E10=TEST_NOT_RUN — ambiente autorizado (delpi-delia-api+Keycloak+owners MCP) indisponível; desbloqueio: stack dev autenticado no srv-api.
 
 ### Veredicto proposto
