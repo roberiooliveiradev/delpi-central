@@ -78,11 +78,13 @@ describe("DeckRevisionHistoryPanel", () => {
     };
 
     render(
-      <ConfirmDialogProvider>
-        <DeckEditorHistoryProvider value={value}>
-          <DeckRevisionHistoryPanel open playlistId="pl-1" onClose={vi.fn()} />
-        </DeckEditorHistoryProvider>
-      </ConfirmDialogProvider>,
+      <div className="dashboard-tv-dashboard">
+        <ConfirmDialogProvider>
+          <DeckEditorHistoryProvider value={value}>
+            <DeckRevisionHistoryPanel open playlistId="pl-1" onClose={vi.fn()} />
+          </DeckEditorHistoryProvider>
+        </ConfirmDialogProvider>
+      </div>,
     );
 
     expect(document.querySelector(".delpi-ui-timeline")).toBeTruthy();

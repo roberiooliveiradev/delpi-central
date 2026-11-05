@@ -119,6 +119,8 @@ export const DECK_RIBBON_COLLAPSE_ICONS: Readonly<Record<string, LucideIcon>> = 
   "data-refresh": RotateCw,
   "data-expression": Sigma,
   "data-more": SlidersHorizontal,
+  "kpi-appearance": SwatchBook,
+  "playlist-media": Clapperboard,
 };
 
 export function resolveDeckRibbonCollapseIcon(

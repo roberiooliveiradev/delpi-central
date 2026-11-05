@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { patchComunicadoFrame } from "@delpi/tv-dashboard-presentation";
+import {
+  COMUNICADO_FRAME_MIN_SIZE_PCT,
+  patchComunicadoFrame,
+} from "@delpi/tv-dashboard-presentation";
 
 describe("patchComunicadoFrame", () => {
   const base = { x: 10, y: 20, w: 30, h: 40 };
@@ -24,6 +27,6 @@ describe("patchComunicadoFrame", () => {
   });
 
   it("limita tamanho mínimo", () => {
-    expect(patchComunicadoFrame(base, "h", 0).h).toBe(0.5);
+    expect(patchComunicadoFrame(base, "h", 0).h).toBe(COMUNICADO_FRAME_MIN_SIZE_PCT);
   });
 });

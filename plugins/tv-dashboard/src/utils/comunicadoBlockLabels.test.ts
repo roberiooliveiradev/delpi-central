@@ -27,6 +27,7 @@ describe("comunicadoBlockSummary", () => {
         prefix: "Realizado ",
       },
       resolved: {
+        displayText: "Realizado 0,55",
         kpi: { value: 0.55, label: "value" },
         kpiMetrics: [{ field: "value", value: 0.55, label: "value" }],
       },

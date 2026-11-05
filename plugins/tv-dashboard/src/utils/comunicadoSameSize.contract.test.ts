@@ -14,7 +14,11 @@ describe("mesmo tamanho — contrato de source", () => {
     );
     expect(source).toContain("sameSizeSelected");
     expect(source).toContain('sameSizeSelected("both")');
-    expect(source.indexOf('label="Alinhar"')).toBeLessThan(source.indexOf("label={H.sameSize}"));
+    const alignAt = source.indexOf('label="Alinhar"');
+    const sameAt = source.indexOf('label="Igualar"');
+    expect(alignAt).toBeGreaterThanOrEqual(0);
+    expect(sameAt).toBeGreaterThan(alignAt);
+    expect(source.slice(sameAt, sameAt + 500)).toContain('sameSizeSelected("both")');
   });
 
   it("menu de contexto tem ContextMenuSub de Mesmo tamanho", () => {

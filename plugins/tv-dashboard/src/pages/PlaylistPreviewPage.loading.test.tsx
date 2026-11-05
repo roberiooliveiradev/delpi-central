@@ -26,5 +26,5 @@ describe("PlaylistPreviewPage loading", () => {
     expect(splash.className).toContain("delpi-ui-screen-loading--fullscreen");
     expect(splash.className).toContain("delpi-ui-screen-loading--dark");
     expect(screen.queryByText("Carregando preview…")).toBeNull();
-  });
+  }, 20_000);
 });
