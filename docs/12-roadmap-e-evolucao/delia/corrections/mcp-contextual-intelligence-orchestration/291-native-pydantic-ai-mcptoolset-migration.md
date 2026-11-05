@@ -47,3 +47,26 @@ owner-declared field. Bounded: value from user text, key from schema.
   `McpSpecialistAdapter` (profile + delegated credential, fail-closed).
 - `_governed_invoke` / `_governed_semantic_tool_invoke` — PRESERVED
   (internal governance boundary, `process_tool_call` → governed path).
+
+## Update — DIRECT-ORCHESTRATION-01 (commit 12bcde76a5)
+
+- `invoke_read_capability` / `list_read_capabilities`: **REMOVED** —
+  proxies MCP genéricos eliminados; o Agent chama tools do owner
+  diretamente (`davi.execute_delpi_information` = capability_id).
+- Private traversal (`_providers/_interop/_port/_connections/
+  _credential_provider`) substituído pela cadeia de contrato legítima:
+  `gates._native_toolset_config` → provider → interop → adapter
+  (`SpecialistToolsetConfig`, fail-closed `SpecialistInteropError`).
+- `_build_native_mcp_toolset` é o seam patchável (testes:
+  `native_toolset_stub` + servers in-process; 7 testes diretos
+  `test_native_mcp_direct_orchestration.py` — proxies ausentes,
+  capability-id names, process_tool_call→governed 1×, não-advertised
+  nunca chega ao wire, write-class nunca exposto, credencial falha =
+  fail-closed).
+- Build do toolset também fail-closed (`native_toolset_blocked`) —
+  endpoint inválido degrada o especialista, nunca mata o turno.
+- Evals reais: TÉO (indicadores engenharia) GROUNDED; VISTA (playlists)
+  GROUNDED; multi-MCP TÉO+VISTA GROUNDED com provenance separada;
+  DAVI 50220013 BLOCKED — TOTVS DB indisponível (ODBC login timeout,
+  ambiental; a mesma rota já provou GROUNDED com DB ativo).
+- Suíte delia-api: 100% verde.
