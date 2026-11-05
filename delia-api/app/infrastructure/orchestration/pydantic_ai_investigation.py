@@ -24,6 +24,7 @@ Layer position:
 
 from __future__ import annotations
 
+import asyncio
 import dataclasses
 import json
 import logging
@@ -37,6 +38,7 @@ from app.application.capability_provision.governed_stage_gates import (
 )
 from app.application.capability_provision.orchestration import (
     _IDENTIFIER_LITERAL_RE,
+    _LAST_CATALOG_FAILURES,
     _NATIVE_ASSESSMENT_LEDGER,
     _authoritative_structure_root,
     _emit_activity,
@@ -115,6 +117,14 @@ Rules:
 - If a tool result lists uncovered_user_identifiers, call an owner
   tool again for each remaining identifier before you stop. One
   observation does not finish a request that names several identifiers.
+  A knowledge or documentation read does not cover an identifier that
+  still lacks an authoritative owner root.
+- If a tool result says repeated_failure_no_progress, do not call that
+  tool again with the same arguments. Change the arguments or choose
+  another owner tool.
+- If the prompt says an owner failed to enumerate, that owner is
+  unavailable for this turn. Do not treat the smaller tool list as
+  proof that the capability does not exist.
 - Call request_user_clarification only when a required identifier is
   absent from the user request and from prior observations. Do not
   ask the user to restate identifiers already supplied.
@@ -161,6 +171,9 @@ class InvestigationDeps:
     investigation_plan: object | None = None
     clarification_question: str | None = None
     composed_attempt: GovernedCapabilityAttempt | None = None
+    non_progress_calls: dict[str, dict[str, Any]] = field(
+        default_factory=dict
+    )
 
 
 def _bounded_json(payload: Any, *, limit: int = 6000) -> str:
@@ -390,6 +403,47 @@ def focus_arguments_on_next_identifier(
     if narrowed:
         args["query"] = narrowed
     return args
+
+
+def _invocation_fingerprint(
+    capability_id: str, arguments: Mapping[str, Any]
+) -> str:
+    canonical = json.dumps(
+        arguments, sort_keys=True, ensure_ascii=False, default=str
+    )
+    return f"{capability_id}\x00{canonical}"
+
+
+def _close_investigation_client(model: Any) -> None:
+    """Close the HTTP client created for this turn.
+
+    The shared test model is left untouched. A factory-built provider
+    owns an AsyncOpenAI client whose lock must not leak into the next
+    event loop.
+    """
+    provider = getattr(model, "_provider", None)
+    client = getattr(provider, "client", None) if provider is not None else None
+    closer = getattr(client, "close", None)
+    if not callable(closer):
+        return
+    try:
+        result = closer()
+    except Exception:
+        _logger.info(
+            "orchestration engine=pydantic_ai "
+            "stage=investigation decision=client_close_failed"
+        )
+        return
+    if not asyncio.iscoroutine(result):
+        return
+    try:
+        asyncio.run(result)
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(result)
+        finally:
+            loop.close()
 
 
 def _prior_context_block(
@@ -622,6 +676,17 @@ class PydanticAiInvestigationOrchestrator:
             )
             focused_query = str(raw_args.get("query") or "").strip()
             invoke_text = focused_query or ctx.deps.input_text
+            fingerprint = _invocation_fingerprint(
+                str(capability_id or "").strip(), raw_args
+            )
+            previous = ctx.deps.non_progress_calls.get(fingerprint)
+            if previous is not None:
+                repeated = dict(previous)
+                repeated["repeated_equivalent_call"] = True
+                if not previous.get("authoritative_root_code"):
+                    repeated["repeated_failure_no_progress"] = True
+                    repeated["error_class"] = "repeated_equivalent_failure"
+                return _bounded_json(repeated)
             attempt = ctx.deps.gates._governed_semantic_tool_invoke(
                 capability_id=str(capability_id or "").strip(),
                 arguments=raw_args,
@@ -659,6 +724,7 @@ class PydanticAiInvestigationOrchestrator:
                 ",".join(uncovered[:8]),
                 ctx.deps.correlation,
             )
+            ctx.deps.non_progress_calls[fingerprint] = dict(projection)
             return _bounded_json(projection)
 
         # Prefetch live catalog once so each capability is a native tool.
@@ -669,6 +735,33 @@ class PydanticAiInvestigationOrchestrator:
             deadline=deadline,
             actor_user_id=actor_user_id,
         )
+        catalog_failures = tuple(_LAST_CATALOG_FAILURES.get())
+        instructions = _INVESTIGATION_INSTRUCTIONS
+        if catalog_failures:
+            instructions += (
+                "\nOwners that failed to enumerate this turn "
+                "(unavailable, not an authorization denial, not proof "
+                "they have no capabilities): "
+                + ", ".join(catalog_failures)
+                + ".\n"
+            )
+        prior_blob = " ".join(
+            str(
+                getattr(turn, "content", None)
+                or getattr(turn, "text", "")
+                or ""
+            )
+            for turn in prior_turns
+        )
+        if not _IDENTIFIER_LITERAL_RE.search(
+            input_text or ""
+        ) and not _IDENTIFIER_LITERAL_RE.search(prior_blob):
+            instructions += (
+                "\nThe user did not name an identifier and prior turns "
+                "do not either. If the request depends on a specific "
+                "record, call request_user_clarification before "
+                "spending owner tools.\n"
+            )
         _logger.info(
             "orchestration engine=pydantic_ai "
             "stage=investigation decision=dynamic_toolset "
@@ -915,6 +1008,20 @@ class PydanticAiInvestigationOrchestrator:
                         ),
                     }
                 )
+            if any(
+                _is_business_evidence_attempt(item)
+                for item in ctx.deps.collected
+            ):
+                return _bounded_json(
+                    {
+                        "status": "CLARIFICATION_REJECTED",
+                        "error_code": "clarification_rejected_evidence_present",
+                        "note": (
+                            "Verified owner evidence is already collected. "
+                            "Do not ask the user to confirm it."
+                        ),
+                    }
+                )
             ctx.deps.clarification_question = text[:800]
             return _bounded_json(
                 {
@@ -934,7 +1041,7 @@ class PydanticAiInvestigationOrchestrator:
             model,
             deps_type=InvestigationDeps,
             toolsets=[toolset],
-            instructions=_INVESTIGATION_INSTRUCTIONS,
+            instructions=instructions,
             retries=1,
         )
 
@@ -1040,6 +1147,19 @@ class PydanticAiInvestigationOrchestrator:
                     "tool_calls": deps.tool_calls,
                 }
 
+            if (
+                not deps.clarification_question
+                and not any(
+                    _is_business_evidence_attempt(item)
+                    for item in deps.collected
+                )
+                and not _IDENTIFIER_LITERAL_RE.search(input_text or "")
+                and not _IDENTIFIER_LITERAL_RE.search(prior_blob)
+            ):
+                deps.clarification_question = (
+                    "Preciso saber qual registro consultar. "
+                    "Informe o identificador ou descreva o item."
+                )
             terminal = self._gates._finalize_semantic_investigation(
                 input_text=input_text,
                 collected=tuple(deps.collected),
@@ -1051,25 +1171,46 @@ class PydanticAiInvestigationOrchestrator:
                 clarification_question=deps.clarification_question,
                 composed_attempt=deps.composed_attempt,
             )
+
+            extra_limitations: list[str] = []
+            if usage_limited:
+                extra_limitations.append("tool_calls_limit_reached")
+            if (
+                catalog_failures
+                and not any(
+                    _is_business_evidence_attempt(item)
+                    for item in deps.collected
+                )
+            ):
+                extra_limitations.extend(
+                    f"catalog_failure:{code}"
+                    for code in catalog_failures[:6]
+                )
+                if terminal.status is GovernedCapabilityStatus.NOT_APPLICABLE:
+                    terminal = dataclasses.replace(
+                        terminal,
+                        status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+                        error_code="catalog_owner_unavailable",
+                    )
+            if extra_limitations:
+                terminal = dataclasses.replace(
+                    terminal,
+                    limitations=tuple(terminal.limitations)
+                    + tuple(extra_limitations),
+                )
             _logger.info(
                 "orchestration engine=pydantic_ai "
                 "stage=investigation decision=finalized "
-                "status=%s collected=%d tool_calls=%d "
+                "status=%s error_code=%s collected=%d tool_calls=%d "
                 "clarification=%s composed=%s correlation_id=%s",
                 terminal.status.value,
+                terminal.error_code,
                 len(deps.collected),
                 deps.tool_calls,
                 bool(deps.clarification_question),
                 deps.composed_attempt is not None,
                 correlation,
             )
-
-            if usage_limited:
-                terminal = dataclasses.replace(
-                    terminal,
-                    limitations=tuple(terminal.limitations)
-                    + ("tool_calls_limit_reached",),
-                )
             ledger = _NATIVE_ASSESSMENT_LEDGER.get()
             if ledger is not None:
                 self.last_node_trace = list(self.last_node_trace) + [
@@ -1078,5 +1219,7 @@ class PydanticAiInvestigationOrchestrator:
                 ]
             return terminal
         finally:
+            if self._model_factory is not None:
+                _close_investigation_client(model)
             if ledger_token is not None:
                 _NATIVE_ASSESSMENT_LEDGER.reset(ledger_token)

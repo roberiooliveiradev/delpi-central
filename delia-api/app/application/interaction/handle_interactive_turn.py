@@ -193,6 +193,21 @@ OWNER_PATH_UNBOUND_MESSAGE = (
     "responda a esta solicitação agora. Nenhum dado operacional foi "
     "inventado — reformule ou especifique o pedido."
 )
+# Tools ran and returned no verifiable business evidence. That is not
+# the same fact as "no capability exists".
+EVIDENCE_GAP_ERROR_CODES = frozenset(
+    {
+        "investigation_no_business_evidence",
+        "investigation_incomplete_coverage",
+        "investigation_target_binding_failed",
+        "investigation_composition_unavailable",
+        "investigation_composition_unverified",
+    }
+)
+EVIDENCE_INSUFFICIENT_AFTER_CONSULTATION_MESSAGE = (
+    "As consultas autorizadas não produziram evidência suficiente "
+    "para concluir o pedido. Nenhum dado operacional foi inventado."
+)
 LIMITATION_OWNER_QUERY_MISS = "owner_query_miss"
 
 # S5-REWORK note: INVALID_MODEL_OUTPUT intentionally still propagates —
@@ -603,6 +618,70 @@ class HandleInteractiveConversationTurn:
         # the consulted miss, not a capability absence.
         if attempt is not None and (
             attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+            and attempt.error_code in EVIDENCE_GAP_ERROR_CODES
+        ):
+            # Consulted owners that did not cover the goal must not be
+            # narrated as a missing capability. Keep any owner text;
+            # otherwise state the evidence gap explicitly.
+            observed = attempt.content
+            has_observed = (
+                isinstance(observed, str) and bool(observed.strip())
+            )
+            if has_observed:
+                result = self._prior_continuation_result(
+                    session, user_turn, attempt
+                )
+            else:
+                limitations = tuple(attempt.limitations or ())
+                if LIMITATION_INSUFFICIENT_EVIDENCE not in limitations:
+                    limitations = limitations + (
+                        LIMITATION_INSUFFICIENT_EVIDENCE,
+                    )
+                result = self._honest_terminal_result(
+                    session,
+                    user_turn,
+                    EVIDENCE_INSUFFICIENT_AFTER_CONSULTATION_MESSAGE,
+                    LIMITATION_INSUFFICIENT_EVIDENCE,
+                    limitations=limitations,
+                )
+            _emit_terminal(
+                sink,
+                ActivityPhase.BLOCKED,
+                state=ActivityState.BLOCKED,
+            )
+            return self._with_observability(
+                result,
+                turn_deadline,
+                composition_mode=COMPOSITION_DETERMINISTIC,
+                governed_attempts=attempt.governed_attempts,
+            )
+
+        if attempt is not None and (
+            attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+            and attempt.error_code == "investigation_partial_coverage"
+            and isinstance(attempt.content, str)
+            and attempt.content.strip()
+        ):
+            # Partial owner evidence stays visible and NON_GROUNDED.
+            # Replacing it with the unbound sentence would hide the
+            # observations and look like a missing capability.
+            result = self._prior_continuation_result(
+                session, user_turn, attempt
+            )
+            _emit_terminal(
+                sink,
+                ActivityPhase.BLOCKED,
+                state=ActivityState.BLOCKED,
+            )
+            return self._with_observability(
+                result,
+                turn_deadline,
+                composition_mode=COMPOSITION_DETERMINISTIC,
+                governed_attempts=attempt.governed_attempts,
+            )
+
+        if attempt is not None and (
+            attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
             and attempt.admission_outcome == OWNER_PATH_UNBOUND
         ):
             if attempt.error_code == LIMITATION_OWNER_QUERY_MISS:
@@ -973,7 +1052,11 @@ class HandleInteractiveConversationTurn:
         limitations = attempt.limitations or (
             LIMITATION_PRIOR_TURN_CONTINUATION,
         )
-        if LIMITATION_PRIOR_TURN_CONTINUATION not in limitations:
+        if (
+            attempt.error_code != "investigation_partial_coverage"
+            and attempt.error_code not in EVIDENCE_GAP_ERROR_CODES
+            and LIMITATION_PRIOR_TURN_CONTINUATION not in limitations
+        ):
             limitations = limitations + (
                 LIMITATION_PRIOR_TURN_CONTINUATION,
             )
@@ -1373,10 +1456,12 @@ class HandleInteractiveConversationTurn:
         user_turn: InteractionTurn,
         content: str,
         limitation: str,
+        limitations: tuple[str, ...] | None = None,
     ) -> InteractiveTurnResult:
         """Deterministic honest terminal — declared limitation, no
         model invocation, never fabricated prose."""
         occurred = _now_utc()
+        declared = limitations or (limitation,)
         result_turn = InteractionTurn(
             turn_id=str(uuid.uuid4()),
             session_id=session.session_id,
@@ -1384,7 +1469,7 @@ class HandleInteractiveConversationTurn:
             content=content,
             occurred_at=occurred,
             epistemic_class=EpistemicClass.HYPOTHESIS,
-            limitations=(limitation,),
+            limitations=declared,
         )
         session, result_validation = record_interaction_turn(
             session, result_turn
@@ -1400,7 +1485,7 @@ class HandleInteractiveConversationTurn:
             result_turn_id=result_turn.turn_id,
             content=content,
             epistemic_class=EpistemicClass.HYPOTHESIS,
-            limitations=(limitation,),
+            limitations=declared,
             generated_at=occurred,
             model_invocation_id=None,
             grounding_status=GroundingStatus.NON_GROUNDED,

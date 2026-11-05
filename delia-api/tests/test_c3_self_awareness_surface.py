@@ -495,6 +495,44 @@ def test_sa15_handler_capability_unbound_is_deterministic_terminal():
     )
 
 
+def test_sa15c_consulted_evidence_gap_is_not_missing_capability():
+    """Tools that ran without verifiable evidence are an evidence gap.
+
+    The capability-absence sentence stays reserved for a path that
+    never bound a capability.
+    """
+    model = _SpyModel()
+    handler = HandleInteractiveConversationTurn(
+        InvokeModel(model),
+        capability_orchestration=_FixedOrchestration(
+            GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id="c",
+                error_code="investigation_no_business_evidence",
+                admission_outcome=OWNER_PATH_UNBOUND,
+                limitations=(
+                    "insufficient_evidence",
+                    "identifier_coverage_incomplete",
+                    "uncovered_identifier:90260147",
+                ),
+            )
+        ),
+    )
+    result = handler.execute(
+        InteractiveTurnRequest(
+            access_context=_context(),
+            input_text="Quais componentes diferem entre 90260147 e 90260148?",
+            command_type="MESSAGE",
+        )
+    )
+    assert model.requests == []
+    assert result.grounding_status is GroundingStatus.NON_GROUNDED
+    assert "capacidade" not in result.content.lower()
+    assert "evidência suficiente" in result.content.lower()
+    assert "uncovered_identifier:90260147" in result.limitations
+    assert "owner_path_unbound" not in result.limitations
+
+
 def test_sa15b_handler_owner_query_miss_reports_consulted_miss():
     """S5-REWORK D8: a bound owner query that returned nothing is a
     consulted miss — the deterministic terminal reports the absence,

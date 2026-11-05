@@ -5693,4 +5693,26 @@ LIVE_E10=NON_GROUNDED; identificadores permaneceram descobertos; usage_limit.
 FALSE_GROUNDED=0 para identidade de produto. REGRESSION=delia-api pytest tests/ GREEN antes do log de falhas do catálogo; suíte focada do tool loop GREEN depois.
 VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO para a matriz multi-step completa.
 
+## Pydantic AI investigation runtime reliability (2026-11-04)
+
+TASK=DELIA-C3-PYDANTIC-AI-INVESTIGATION-RUNTIME-RELIABILITY-AND-OUTCOME-COMPLETION-01.
+REPORT=doc 241. BASE_HEAD=82999eed900d1d74706275924b38a65b8cd8b09e. PRODUCTION_DEPLOY=NOT_AUTHORIZED. PHASE_ADVANCE=NONE.
+EXISTING_EQUIVALENT=YES (Agent, FunctionToolset, UsageLimits, retries, catalog live, Evidence/Outcome, esclarecimento, model_factory).
+REUSE_DECISION=EXTEND (retry de listagem transitória, fingerprint de chamada idêntica, esclarecimento rejeitado com evidência, cobertura parcial, gap de evidência distinto de capability ausente, fechamento do cliente HTTP).
+EXECUTION_DRIFT=NONE. Nenhum planner novo. DAVI não foi fixado no catálogo. Modelo de runtime não foi trocado. Documento 16 não foi reescrito.
+LIVE_CATALOG=10 em todos os turnos medidos; owners api-delpi:2, transformometro-api:4, tv-dashboard-api:4; failures=-.
+LIVE_E02=GROUNDED raiz 90260147; HTTP 200 33774ms.
+LIVE_E03=GROUNDED raízes 90260147 e 90260148; execute somente 90260147; composed=False; HTTP 200 39027ms.
+LIVE_E04=GROUNDED só a estrutura 90260147; guia não declarado como lacuna; HTTP 200 30233ms.
+LIVE_E05_ISOLATED=GROUNDED raiz 90260148; HTTP 200 30816ms.
+LIVE_E05_UNDER_LOAD=GROUNDED raiz 90260148; catalog_len=10; HTTP 200 42322ms. Timeout de admissão do doc 240 não reinduzido.
+LIVE_E06=NON_GROUNDED; uncovered_identifier:90260147; conteúdo de conhecimento preservado.
+LIVE_E07=E07a esclarecimento; E07b GROUNDED raiz 90260147.
+LIVE_E08=NON_GROUNDED; nenhuma escrita.
+LIVE_E09=NDJSON 11 linhas, terminal turn_result, HTTP 200 na releitura. Primeira tentativa HTTP 401 por token expirado.
+LIVE_E10=NON_GROUNDED; investigation_no_business_evidence; uncovered 90260147, 90260148, 50220013; tool_calls_limit_reached; HTTP 200 39349ms.
+FALSE_GROUNDED=0. PYDANTIC_AI=2.50.0. MODEL=qwen3:4b-instruct-2507-q4_K_M. MODEL_CONFIG_HASH=d382ec2d6fdc7d7d.
+REGRESSION=delia-api pytest tests/ --ignore=tests/live exit 0 no diff final.
+VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO para a matriz multi-step completa.
+
 

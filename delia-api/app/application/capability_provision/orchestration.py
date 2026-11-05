@@ -3798,8 +3798,6 @@ def _finalize_agent_collected_attempts(
     simple READ). Never classifies intent via regex or binds REF05 via
     rendered text mentions.
     """
-    del input_text  # identity/coverage come from plan + owner records
-
     if clarification_question:
         missing = _normalize_identity_tuple(
             plan.evidence_needed if plan is not None else ()
@@ -3820,6 +3818,30 @@ def _finalize_agent_collected_attempts(
     business = tuple(
         item for item in collected if _is_business_evidence_attempt(item)
     )
+
+    def _partial_coverage() -> GovernedCapabilityAttempt | None:
+        pending = _uncovered_named_identifiers(input_text, business)
+        if not pending:
+            return None
+        parts: list[str] = []
+        for index, item in enumerate(business):
+            body = (item.content or "").strip()
+            if body:
+                parts.append(f"[obs:{index}]\n{body}")
+        return GovernedCapabilityAttempt(
+            status=GovernedCapabilityStatus.NOT_APPLICABLE,
+            correlation_id=correlation,
+            content=(
+                "\n\n---\n\n".join(parts)[:MAX_RENDER_CONTENT_CHARS]
+                or None
+            ),
+            limitations=tuple(
+                ["identifier_coverage_incomplete"]
+                + [f"uncovered_identifier:{item}" for item in pending[:8]]
+            ),
+            error_code="investigation_partial_coverage",
+            admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+        )
     limitations: list[str] = []
     comparison = bool(
         plan is not None
@@ -4096,6 +4118,9 @@ def _finalize_agent_collected_attempts(
                     )[:24],
                     error_code="investigation_incomplete_coverage",
                 )
+        partial = _partial_coverage()
+        if partial is not None:
+            return partial
         return business[0]
 
     if business:
@@ -4122,6 +4147,9 @@ def _finalize_agent_collected_attempts(
                     )[:24],
                     error_code="investigation_incomplete_coverage",
                 )
+        partial = _partial_coverage()
+        if partial is not None:
+            return partial
         parts: list[str] = []
         for index, item in enumerate(business):
             body = (item.content or "").strip()
@@ -4151,16 +4179,28 @@ def _finalize_agent_collected_attempts(
         last.status.value,
         correlation,
     )
+    pending = _uncovered_named_identifiers(input_text, ())
+    gap_limitations = list(last.limitations) + [
+        LIMITATION_INSUFFICIENT_EVIDENCE
+    ]
+    if pending:
+        gap_limitations.append("identifier_coverage_incomplete")
+        gap_limitations.extend(
+            f"uncovered_identifier:{item}" for item in pending[:8]
+        )
     return GovernedCapabilityAttempt(
         status=last.status
         if last.status is not GovernedCapabilityStatus.SUCCESS
         else GovernedCapabilityStatus.NOT_APPLICABLE,
         correlation_id=correlation,
         content=last.content,
-        limitations=tuple(
-            list(last.limitations) + [LIMITATION_INSUFFICIENT_EVIDENCE]
-        )[:24],
-        error_code=last.error_code or "investigation_no_business_evidence",
+        limitations=tuple(dict.fromkeys(gap_limitations))[:24],
+        error_code=(
+            last.error_code
+            if last.error_code
+            in {"authz_denied", "owner_query_miss", "catalog_owner_unavailable"}
+            else "investigation_no_business_evidence"
+        ),
         admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
         provenance=last.provenance,
         outcome=last.outcome,
@@ -5254,6 +5294,9 @@ class _AttemptCheckpoint:
 # Request-scoped checkpoint binding — same ContextVar pattern as the
 # activity sink: the orchestrator instance is shared across threads,
 # so per-interaction state can NEVER live on `self`.
+_LAST_CATALOG_FAILURES: contextvars.ContextVar[tuple[str, ...]] = (
+    contextvars.ContextVar("_LAST_CATALOG_FAILURES", default=())
+)
 _RESUME_STATE: contextvars.ContextVar[_AttemptCheckpoint | None] = (
     contextvars.ContextVar("delia_resume_checkpoint", default=None)
 )
@@ -5526,6 +5569,44 @@ def _resume_stage_key(
             (instruction_id, input_text, block_tag, block_payload)
         ).encode("utf-8")
     ).hexdigest()
+
+def _listing_failure_is_transient(code: str) -> bool:
+    """Transport/timeout listing failures may be retried once.
+
+    Authorization and contract rejections are definitive for the turn.
+    """
+    folded = str(code or "").casefold()
+    if any(
+        token in folded
+        for token in ("denied", "forbidden", "unauthorized", "authz")
+    ):
+        return False
+    return any(
+        token in folded
+        for token in ("timeout", "unavailable", "transport", "connection")
+    )
+
+
+def _uncovered_named_identifiers(
+    input_text: str,
+    business: tuple[GovernedCapabilityAttempt, ...]
+    | list[GovernedCapabilityAttempt],
+) -> list[str]:
+    """User identifier literals with no authoritative owner root.
+
+    Coverage uses owner records only. Rendered text and capability
+    names do not satisfy an identifier.
+    """
+    found = list(
+        dict.fromkeys(_IDENTIFIER_LITERAL_RE.findall(input_text or ""))
+    )
+    covered: set[str] = set()
+    for attempt in business:
+        root = _authoritative_structure_root(attempt)
+        if isinstance(root, str) and root.strip():
+            covered.add(root.strip().casefold())
+    return [item for item in found if item.casefold() not in covered]
+
 
 def _resume_invoke_key(
     group_id: str, remote_name: str, arguments: Mapping[str, Any]
@@ -11084,8 +11165,29 @@ class OperationalCapabilityOrchestrator:
                     ),
                 )
             except CapabilityProviderError as exc:
-                failures.append(exc.code)
-                continue
+                # One bounded retry for a transient listing failure.
+                # A timeout is not proof the owner has no capabilities.
+                retried = False
+                if (
+                    deadline is not None
+                    and deadline.remaining_seconds() > 15
+                    and _listing_failure_is_transient(exc.code)
+                ):
+                    try:
+                        surface = provider.list_groups(
+                            correlation_id=correlation,
+                            timeout_seconds=min(
+                                15.0, deadline.remaining_seconds()
+                            ),
+                        )
+                        retried = True
+                    except CapabilityProviderError as retry_exc:
+                        failures.append(exc.code)
+                        failures.append(retry_exc.code)
+                        continue
+                if not retried:
+                    failures.append(exc.code)
+                    continue
             # A provider that overran the remaining budget may not
             # contribute results to this turn — fail truthfully.
             if deadline is not None:
@@ -11629,6 +11731,15 @@ class OperationalCapabilityOrchestrator:
                     int((time.monotonic() - started) * 1000),
                     correlation or "",
                 )
+                if (
+                    instruction_id == INTERACTION_ADMISSION_INSTRUCTION_ID
+                    and exc.code == TIMEOUT
+                ):
+                    # Admission is a classifier. A timeout already
+                    # consumed its useful bound; repeating it delays
+                    # the live catalog and the owner reads that must
+                    # still fit in the same turn.
+                    raise _StageDeadlineExceeded("model_timeout") from exc
                 if not call_retry_eligible(
                     exc.code, call_attempt, self._llm_call_max_attempts
                 ):
@@ -13465,6 +13576,9 @@ class OperationalCapabilityOrchestrator:
             or "-",
             ",".join(str(item) for item in failures[:8]) or "-",
             correlation,
+        )
+        _LAST_CATALOG_FAILURES.set(
+            tuple(str(item) for item in failures[:8])
         )
         return bounded
 

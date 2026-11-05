@@ -13,6 +13,7 @@ from app.application.capability_provision.orchestration import (
     _evaluate_material_obligations,
     _finalize_agent_collected_attempts,
     _is_business_evidence_attempt,
+    _listing_failure_is_transient,
 )
 from app.domain.specialist_interop.model import SpecialistOperationClass
 from tests.test_goal_evidence_relevance import FakeProvider, _cap, _group, _outcome
@@ -567,3 +568,159 @@ def test_pure_discovery_envelope_still_tagged_metadata():
     )
     assert "discovery_metadata_observation" in attempt.limitations
     assert not _is_business_evidence_attempt(attempt)
+
+
+def test_listing_timeout_is_transient_and_denial_is_not():
+    assert _listing_failure_is_transient("mcp_timeout")
+    assert _listing_failure_is_transient("provider_unavailable")
+    assert not _listing_failure_is_transient("authz_denied")
+
+
+def test_knowledge_does_not_complete_uncovered_identifier():
+    knowledge = _success_attempt(
+        content="Seção do guia metodológico.",
+        root="GUIDE",
+        structured={"data": {"section": "s0001"}},
+    )
+    result = _finalize_agent_collected_attempts(
+        _gates(),
+        input_text="Qual a estrutura do produto 90260147 e o guia?",
+        collected=(knowledge,),
+        correlation="c-partial",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=OWNER_PATH_UNBOUND,
+    )
+    assert result.error_code == "investigation_partial_coverage"
+    assert result.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert "guia" in (result.content or "").casefold() or "Seção" in (
+        result.content or ""
+    )
+    assert "uncovered_identifier:90260147" in result.limitations
+
+
+def test_consulted_miss_names_uncovered_identifiers():
+    miss = GovernedCapabilityAttempt(
+        status=GovernedCapabilityStatus.NOT_APPLICABLE,
+        correlation_id="c-miss",
+        content=None,
+        limitations=("discovery_metadata_observation",),
+        error_code="investigation_no_business_evidence",
+    )
+    result = _finalize_agent_collected_attempts(
+        _gates(),
+        input_text="Quais componentes diferem entre 90260147, 90260148 e 50220013?",
+        collected=(miss,),
+        correlation="c-miss",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=OWNER_PATH_UNBOUND,
+    )
+    assert result.error_code == "investigation_no_business_evidence"
+    assert "identifier_coverage_incomplete" in result.limitations
+    assert "uncovered_identifier:90260147" in result.limitations
+    assert "uncovered_identifier:90260148" in result.limitations
+    assert "uncovered_identifier:50220013" in result.limitations
+
+
+def test_two_authoritative_roots_stay_complete():
+    result = _finalize_agent_collected_attempts(
+        _gates(),
+        input_text="Compare 90260147 e 90260148",
+        collected=(
+            _success_attempt(content="estrutura A", root="90260147"),
+            _success_attempt(content="estrutura B", root="90260148"),
+        ),
+        correlation="c-both",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=None,
+    )
+    assert result.status is GovernedCapabilityStatus.SUCCESS
+    assert result.error_code != "investigation_partial_coverage"
+
+
+def test_repeated_equivalent_failure_does_not_reinvoke_owner():
+    gates = _gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    tool_name = _safe_tool_name(catalog[0]["capability_id"])
+    calls: list[int] = []
+
+    def _spy(**kwargs):
+        calls.append(1)
+        return GovernedCapabilityAttempt(
+            status=GovernedCapabilityStatus.NOT_APPLICABLE,
+            correlation_id="c",
+            error_code="arguments_schema_rejected",
+        )
+
+    gates._governed_semantic_tool_invoke = _spy  # type: ignore[method-assign]
+    steps = {"n": 0}
+
+    def _fn(messages, _info):
+        steps["n"] += 1
+        if steps["n"] < 3:
+            return ModelResponse(
+                parts=[ToolCallPart(tool_name, {"arguments": {"query": "x"}})]
+            )
+        return ModelResponse(parts=[TextPart("stop")])
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=6
+    )
+    engine.attempt("consulta 90260147")
+    assert calls == [1]
+
+
+def test_clarification_does_not_replace_collected_evidence():
+    gates = _gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    tool_name = _safe_tool_name(catalog[0]["capability_id"])
+    gates._governed_semantic_tool_invoke = (  # type: ignore[method-assign]
+        lambda **kwargs: _success_attempt(
+            content="estrutura A", root="90260147"
+        )
+    )
+    steps = {"n": 0}
+
+    def _fn(messages, _info):
+        steps["n"] += 1
+        if steps["n"] == 1:
+            return ModelResponse(
+                parts=[ToolCallPart(tool_name, {"arguments": {}})]
+            )
+        if steps["n"] == 2:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "request_user_clarification",
+                        {"question": "Confirma o produto?"},
+                    )
+                ]
+            )
+        return ModelResponse(parts=[TextPart("done")])
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    attempt = engine.attempt("estrutura 90260147")
+    assert attempt.status is not GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+
+
+def test_missing_identifier_without_evidence_asks_clarification():
+    gates = _gates()
+
+    def _fn(messages, _info):
+        return ModelResponse(parts=[TextPart("não sei")])
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    attempt = engine.attempt("Me mostre a estrutura desse produto")
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert "identificador" in (attempt.content or "").casefold()
