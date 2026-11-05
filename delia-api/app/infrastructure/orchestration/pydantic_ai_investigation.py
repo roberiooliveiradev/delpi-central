@@ -1429,13 +1429,21 @@ class PydanticAiInvestigationOrchestrator:
                         ),
                     ):
                         raise cause from exc
+                    exc_cause = getattr(exc, "__cause__", None)
+                    exc_body = getattr(exc, "body", None)
                     _logger.info(
                         "orchestration engine=pydantic_ai "
                         "stage=investigation decision=agent_error "
-                        "error_type=%s error=%s tool_calls=%d "
-                        "correlation_id=%s",
+                        "error_type=%s error=%s cause=%s body=%s "
+                        "tool_calls=%d correlation_id=%s",
                         type(exc).__name__,
                         str(exc)[:240],
+                        str(exc_cause)[:300]
+                        if exc_cause is not None
+                        else "-",
+                        str(exc_body)[:400]
+                        if exc_body is not None
+                        else "-",
                         deps.tool_calls,
                         correlation,
                     )

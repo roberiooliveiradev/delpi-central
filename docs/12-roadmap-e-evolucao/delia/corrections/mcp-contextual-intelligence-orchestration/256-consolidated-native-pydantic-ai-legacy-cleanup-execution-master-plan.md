@@ -809,3 +809,21 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   ainda não fechou dentro do budget de delivery.
   Boundary = VELOCIDADE DE GERAÇÃO CPU na resposta estruturada final,
   não seleção/execução/evidência — todas provadas.
+
+## 36. G7 — causa do output retries + delivery (doc 282)
+
+- **Schema funciona**: chamada direta `Agent(output_type=
+  InvestigationAnswer)` no Ollama real → `COMPLETE` válido — o schema
+  e o modelo suportam saída tipada em contexto simples.
+- **Na investigação real**: `UnexpectedModelBehavior: Exceeded
+  maximum output retries (2)` — sob o contexto completo (10 tool
+  schemas + tool results + instruções) o modelo 4B não produz o
+  InvestigationAnswer válido; retries esgotados. Instrumentado
+  `cause=`/`body=` no log de agent_error para capturar a resposta
+  bruta (UnexpectedModelBehavior.body existe no Pydantic AI 2.50).
+- **Causa dupla evidenciada**: (a) output-validation exhaustion sob
+  contexto cheio; (b) turns morrem no gateway 504 antes de completar
+  — a resposta final demora mais que o timeout do client → possível
+  cancelamento server-side antes do finalize. NÃO atribuível só a
+  CPU — as duas coexistem.
+- Cadeia governada provada 3×: discover→execute→uncovered=50220013.
