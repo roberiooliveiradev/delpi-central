@@ -48,8 +48,10 @@ from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     KAIZEN_EVIDENCE_STAGE_VALUES,
     KAIZEN_ROLE_VALUES,
+    KAIZEN_SAVINGS_TYPE_LIST_QUERY,
     KAIZEN_SAVINGS_TYPE_QUERY,
     KAIZEN_SAVINGS_TYPE_VALUES,
+    KAIZEN_STATUS_LIST_QUERY,
     KAIZEN_STATUS_QUERY,
     KAIZEN_STATUS_VALUES,
     KAIZEN_SERIES_GRANULARITY_QUERY,
@@ -210,8 +212,8 @@ def _require_record_branch(repo, record_id: str, *, with_participants: bool = Fa
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_records(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
-    status: list[str] | None = KAIZEN_STATUS_QUERY(),
-    savings_type: list[str] | None = KAIZEN_SAVINGS_TYPE_QUERY(),
+    status: list[str] | None = KAIZEN_STATUS_LIST_QUERY(),
+    savings_type: list[str] | None = KAIZEN_SAVINGS_TYPE_LIST_QUERY(),
     title: str | None = Query(default=None),
     start_date: str | None = START_DATE_QUERY(),
     end_date: str | None = END_DATE_QUERY(),
@@ -230,11 +232,36 @@ def list_kaizen_records(
         effective_branch, branch_err = resolve_query_branch(branch)
         if branch_err is not None:
             return branch_err
+        # Fora do pipeline FastAPI (handlers chamados diretamente) os defaults
+        # chegam como objetos Query — normaliza para lista antes de validar.
+        statuses = status if isinstance(status, list) else []
+        savings_types = savings_type if isinstance(savings_type, list) else []
+        invalid_status = next(
+            (s for s in statuses if s not in KAIZEN_STATUS_VALUES), None
+        )
+        if invalid_status is not None:
+            return error_response(
+                f"Status inválido para filtro: {invalid_status}.",
+                status_code=422,
+                code="INVALID_STATUS",
+                recoverable=False,
+            )
+        invalid_type = next(
+            (t for t in savings_types if t not in KAIZEN_SAVINGS_TYPE_VALUES),
+            None,
+        )
+        if invalid_type is not None:
+            return error_response(
+                f"Tipo de economia inválido para filtro: {invalid_type}.",
+                status_code=422,
+                code="INVALID_SAVINGS_TYPE",
+                recoverable=False,
+            )
         repo = build_kaizen_repository()
         data = repo.list_records(
             branch_code=effective_branch,
-            status=status,
-            savings_type=savings_type,
+            status=statuses or None,
+            savings_type=savings_types or None,
             title=title,
             date_start=start_date,
             date_end=end_date,

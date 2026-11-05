@@ -628,11 +628,25 @@ def KAIZEN_STATUS_QUERY():
     pattern=_enum_pattern(KAIZEN_STATUS_VALUES),
     json_schema_extra={"enum": list(KAIZEN_STATUS_VALUES)},
 )
+def KAIZEN_STATUS_LIST_QUERY():
+    # `pattern` não se aplica a `list[str]` (quebra o request parsing no FastAPI);
+    # valores são validados por item na rota.
+    return Query(
+    None,
+    description="Kaizen status filter (repeatable): recebido, aprovado, implantado, descontinuado or cancelado.",
+    json_schema_extra={"enum": list(KAIZEN_STATUS_VALUES)},
+)
 def KAIZEN_SAVINGS_TYPE_QUERY():
     return Query(
     None,
     description="Kaizen savings type: tempo, material, financeiro, qualitativo or misto.",
     pattern=_enum_pattern(KAIZEN_SAVINGS_TYPE_VALUES),
+    json_schema_extra={"enum": list(KAIZEN_SAVINGS_TYPE_VALUES)},
+)
+def KAIZEN_SAVINGS_TYPE_LIST_QUERY():
+    return Query(
+    None,
+    description="Kaizen savings type filter (repeatable): tempo, material, financeiro, qualitativo or misto.",
     json_schema_extra={"enum": list(KAIZEN_SAVINGS_TYPE_VALUES)},
 )
 def PAC_EVIDENCE_SECTION_QUERY():
