@@ -116,3 +116,52 @@ def test_aprovado_counts_investment_not_savings() -> None:
 
     assert result["points"][0]["savings"] == 0.0
     assert result["points"][0]["investment"] == pytest.approx(40.0)
+
+
+def test_recebido_investment_anchors_on_idea_received() -> None:
+    """Recebido sem marcos aloca investimento no mês do recebimento da ideia."""
+    result = build_savings_investment_series(
+        [
+            _row(
+                status="recebido",
+                date_committee_approved=None,
+                date_implemented=None,
+                date_idea_received=date(2026, 8, 12),
+                created_at=date(2026, 8, 12),
+                daily_savings=None,
+                investment=Decimal("35"),
+            )
+        ],
+        granularity="month",
+        date_start="2026-08-01",
+        date_end="2026-08-31",
+        today=date(2026, 8, 20),
+    )
+
+    assert result["points"][0]["periodo"] == "2026-08"
+    assert result["points"][0]["investment"] == pytest.approx(35.0)
+    assert result["points"][0]["savings"] == 0.0
+
+
+def test_recebido_outside_period_adds_no_investment() -> None:
+    """Negativo: recebido ancorado fora do recorte não gera ponto."""
+    result = build_savings_investment_series(
+        [
+            _row(
+                status="recebido",
+                date_committee_approved=None,
+                date_implemented=None,
+                date_idea_received=date(2025, 12, 15),
+                created_at=date(2025, 12, 15),
+                daily_savings=None,
+                investment=Decimal("35"),
+            )
+        ],
+        granularity="month",
+        date_start="2026-01-01",
+        date_end="2026-01-31",
+        today=date(2026, 1, 20),
+    )
+
+    assert result["total_investment"] == 0.0
+    assert result["points"][0]["investment"] == 0.0

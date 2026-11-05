@@ -6,6 +6,7 @@ from app.domain.services.kaizen.kaizen_indicator_eligibility import (
     counts_for_quantity,
     date_in_range,
     is_implemented_status,
+    period_anchor_date,
     quantity_anchor_date,
 )
 from app.domain.services.kaizen.kaizen_status_date_rules import (
@@ -30,6 +31,20 @@ def test_quantity_anchor_prefers_committee_date() -> None:
     assert quantity_anchor_date(date(2026, 3, 10), date(2026, 6, 1)) == date(2026, 3, 10)
     assert quantity_anchor_date(None, date(2026, 6, 1)) == date(2026, 6, 1)
     assert quantity_anchor_date(None, None) is None
+
+
+def test_period_anchor_prefers_milestones_then_idea_received_then_created() -> None:
+    assert period_anchor_date(
+        date(2026, 3, 10), date(2026, 6, 1), date(2026, 1, 5)
+    ) == date(2026, 3, 10)
+    assert period_anchor_date(None, date(2026, 6, 1), date(2026, 1, 5)) == date(
+        2026, 6, 1
+    )
+    assert period_anchor_date(None, None, date(2026, 8, 12)) == date(2026, 8, 12)
+    assert period_anchor_date(None, None, None, date(2026, 9, 10)) == date(
+        2026, 9, 10
+    )
+    assert period_anchor_date(None, None, None, None) is None
 
 
 def test_date_in_range() -> None:

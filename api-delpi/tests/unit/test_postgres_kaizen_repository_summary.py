@@ -139,3 +139,120 @@ def test_summary_period_savings_zero_for_future_competence(
     # Run-rate vigente continua refletindo kaizens ativos hoje.
     assert result["active_count"] == 1
     assert result["active_hours_saved_per_day"] == pytest.approx(0.1667, rel=1e-2)
+
+
+def test_summary_counts_recebido_by_idea_received_anchor() -> None:
+    """Caso original: recebido sem marcos entra nos totais do período pela
+    data de recebimento da ideia, na unidade correta."""
+    repo = PostgresKaizenRepository(connection=MagicMock())
+    repo.fetch_all = MagicMock(
+        return_value=[
+            _implanted_row(
+                status="recebido",
+                branch_code="02",
+                date_committee_approved=None,
+                date_implemented=None,
+                date_idea_received=date(2026, 8, 12),
+                created_at=date(2026, 8, 12),
+                daily_savings=None,
+                annual_savings=None,
+                investment=Decimal("0"),
+            )
+        ]
+    )
+
+    result = repo.summary(
+        branch_code="02",
+        date_start="2026-01-01",
+        date_end="2026-11-05",
+    )
+
+    assert result["total"] == 1
+    assert result["recebidos"] == 1
+    assert result["by_status"] == [{"key": "recebido", "value": 1}]
+    assert result["by_branch"] == [{"key": "02", "value": 1}]
+    # Não infla o indicador de quantidade (aprovados/implantados).
+    assert result["period_implanted_count"] == 0
+    assert result["aprovados"] == 0
+    assert result["implantados"] == 0
+
+
+def test_summary_counts_descontinuado_without_committee_by_idea_received() -> None:
+    """Irmão: descontinuado sem data de comitê ancora no recebimento da ideia."""
+    repo = PostgresKaizenRepository(connection=MagicMock())
+    repo.fetch_all = MagicMock(
+        return_value=[
+            _implanted_row(
+                status="descontinuado",
+                date_committee_approved=None,
+                date_implemented=None,
+                date_idea_received=date(2026, 3, 19),
+                created_at=date(2026, 7, 2),
+                daily_savings=None,
+                annual_savings=None,
+            )
+        ]
+    )
+
+    result = repo.summary(
+        branch_code="01",
+        date_start="2026-01-01",
+        date_end="2026-11-05",
+    )
+
+    assert result["total"] == 1
+    assert result["descontinuados"] == 1
+
+
+def test_summary_anchors_on_created_at_when_no_lifecycle_dates() -> None:
+    """Fallback: cadastro legado sem nenhuma data de ciclo ancora na criação."""
+    repo = PostgresKaizenRepository(connection=MagicMock())
+    repo.fetch_all = MagicMock(
+        return_value=[
+            _implanted_row(
+                status="recebido",
+                date_committee_approved=None,
+                date_implemented=None,
+                created_at=date(2026, 9, 10),
+                daily_savings=None,
+                annual_savings=None,
+            )
+        ]
+    )
+
+    result = repo.summary(
+        branch_code="01",
+        date_start="2026-09-01",
+        date_end="2026-09-30",
+    )
+
+    assert result["total"] == 1
+    assert result["recebidos"] == 1
+
+
+def test_summary_excludes_record_anchored_outside_period() -> None:
+    """Negativo: recebido anterior ao recorte continua fora dos totais."""
+    repo = PostgresKaizenRepository(connection=MagicMock())
+    repo.fetch_all = MagicMock(
+        return_value=[
+            _implanted_row(
+                status="recebido",
+                date_committee_approved=None,
+                date_implemented=None,
+                date_idea_received=date(2025, 12, 15),
+                created_at=date(2025, 12, 15),
+                daily_savings=None,
+                annual_savings=None,
+            )
+        ]
+    )
+
+    result = repo.summary(
+        branch_code="01",
+        date_start="2026-01-01",
+        date_end="2026-11-05",
+    )
+
+    assert result["total"] == 0
+    assert result["recebidos"] == 0
+    assert result["by_status"] == []

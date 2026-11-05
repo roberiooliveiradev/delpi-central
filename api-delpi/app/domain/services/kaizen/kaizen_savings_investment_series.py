@@ -6,8 +6,9 @@ Regras alinhadas ao ``PostgresKaizenRepository.summary``:
   em cada bucket, ``daily_savings × active_days_in_range`` (validade 1 ano,
   sem projetar dias futuros).
 - **Investimento** (``investment``): soma de ``investment`` alocada no bucket
-  da âncora ``COALESCE(date_committee_approved, date_implemented)`` — mesmo
-  conjunto de ``period_rows`` do summary.
+  da âncora de período ``COALESCE(date_committee_approved, date_implemented,
+  date_idea_received, created_at)`` — mesmo conjunto de ``period_rows`` do
+  summary (cadastros ``recebido``/sem marco ancoram no recebimento da ideia).
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ from decimal import Decimal
 from typing import Any, Literal
 
 from app.domain.services.kaizen.kaizen_indicator_eligibility import (
-    quantity_anchor_from_row,
+    period_anchor_from_row,
 )
 from app.domain.services.kaizen import kaizen_savings_validity
 from app.domain.services.kaizen.kaizen_savings_calculator import (
@@ -143,7 +144,7 @@ def build_savings_investment_series(
                 if days:
                     savings_by_key[key] += amount_for_active_calendar_days(daily, days)
 
-        anchor = quantity_anchor_from_row(row) or implemented
+        anchor = period_anchor_from_row(row)
         if anchor is None:
             continue
         if anchor < start or anchor > end:

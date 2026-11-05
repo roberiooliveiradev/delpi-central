@@ -17,6 +17,7 @@ from app.domain.services.kaizen.kaizen_categories import (
 )
 from app.domain.services.kaizen.kaizen_indicator_eligibility import (
     counts_for_quantity,
+    period_anchor_from_row,
     quantity_anchor_from_row,
 )
 from app.domain.services.kaizen.kaizen_savings_calculator import (
@@ -268,7 +269,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         def in_period(row: dict[str, Any]) -> bool:
             if not has_period:
                 return True
-            day = quantity_date(row) or implemented_date(row)
+            day = period_anchor_from_row(row)
             if day is None:
                 return False
             if start and day < start:

@@ -3,6 +3,10 @@
 - Quantidade (mês / período): status ``aprovado`` ou ``implantado``, âncora
   ``COALESCE(date_committee_approved, date_implemented)``.
 - Ganhos financeiros: somente ``implantado`` (ver ``kaizen_savings_validity``).
+- Existência no período (totais/situação/unidade do painel): âncora
+  ``COALESCE(date_committee_approved, date_implemented, date_idea_received,
+  created_at)`` — cadastros ainda sem marco de comitê/implantação (ex.:
+  ``recebido``) pertencem ao período em que a ideia foi recebida/registrada.
 """
 
 from __future__ import annotations
@@ -63,6 +67,34 @@ def quantity_anchor_from_row(row: dict[str, Any]) -> date | None:
     return quantity_anchor_date(
         row.get("date_committee_approved"),
         row.get("date_implemented"),
+    )
+
+
+def period_anchor_date(
+    date_committee_approved: Any = None,
+    date_implemented: Any = None,
+    date_idea_received: Any = None,
+    created_at: Any = None,
+) -> date | None:
+    """Data que situa o cadastro no recorte de período do painel.
+
+    Marcos de aprovação/implantação primeiro; depois o recebimento da ideia;
+    por fim a criação do registro (legado sem datas de ciclo de vida).
+    """
+    return (
+        _as_date(date_committee_approved)
+        or _as_date(date_implemented)
+        or _as_date(date_idea_received)
+        or _as_date(created_at)
+    )
+
+
+def period_anchor_from_row(row: dict[str, Any]) -> date | None:
+    return period_anchor_date(
+        row.get("date_committee_approved"),
+        row.get("date_implemented"),
+        row.get("date_idea_received"),
+        row.get("created_at"),
     )
 
 

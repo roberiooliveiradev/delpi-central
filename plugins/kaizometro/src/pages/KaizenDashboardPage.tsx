@@ -23,6 +23,7 @@ import { KaizenSavingsInvestmentChart } from "../components/KaizenSavingsInvestm
 import {
   EmptyHint,
   FilterInputField,
+  FilterSelectField,
   FiltersRow,
   KpiCard,
   MultiSelectField,
@@ -299,6 +300,16 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
             selectedValues={units}
             onChange={setUnits}
             emptyLabel="Todas"
+          />
+        ) : branchOptions.length === 1 ? (
+          <FilterSelectField
+            id="kz-dash-unit-fixed"
+            label="Unidade"
+            hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
+            value={branchOptions[0].value}
+            options={branchOptions}
+            onChange={() => undefined}
+            disabled
           />
         ) : null}
         <FilterInputField
