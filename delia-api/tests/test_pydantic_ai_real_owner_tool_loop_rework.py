@@ -1,0 +1,408 @@
+"""Doc 237 — real owner tool loop + evidence E1–E4 RED/GREEN."""
+
+from __future__ import annotations
+
+from app.application.capability_provision.orchestration import (
+    OBLIGATION_SATISFIED,
+    OBLIGATION_UNSATISFIED,
+    SemanticInvestigationPlan,
+    _attempt_satisfies_obligation,
+    _authoritative_structure_root,
+    _bind_identifier_args_from_utterance,
+    _bind_missing_required_query,
+    _evaluate_material_obligations,
+    _finalize_agent_collected_attempts,
+    _is_business_evidence_attempt,
+)
+from app.domain.specialist_interop.model import SpecialistOperationClass
+from tests.test_goal_evidence_relevance import FakeProvider, _cap, _group, _outcome
+from app.application.interaction.capability_attempt import (
+    OWNER_PATH_UNBOUND,
+    GovernedCapabilityAttempt,
+    GovernedCapabilityStatus,
+)
+from app.application.interaction.contracts import (
+    VerifiedCompositeEvidence,
+)
+from app.application.interaction.turn_budget import TurnDeadline
+from app.domain.evidence.model import SourceRef
+from app.infrastructure.orchestration.pydantic_ai_investigation import (
+    PydanticAiInvestigationOrchestrator,
+    _safe_tool_name,
+)
+from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
+from pydantic_ai.models.function import FunctionModel
+from tests.test_pydantic_ai_semantic_rework import (
+    _gates,
+    _success_attempt,
+)
+
+
+def test_safe_tool_name_maps_capability_id():
+    assert _safe_tool_name("davi.discover_delpi_information") == (
+        "davi_discover_delpi_information"
+    )
+
+
+def test_e2_capability_name_does_not_satisfy_obligation():
+    attempt = _success_attempt(
+        content="search hit",
+        root="OTHER",
+        structured={
+            "items": [{"code": "OTHER", "label": "x", "path": ["OTHER"]}]
+        },
+    )
+    assert not _attempt_satisfies_obligation(attempt, "search_items")
+    assert _attempt_satisfies_obligation(attempt, "OTHER")
+
+
+def test_e2_child_under_wrong_root_does_not_satisfy():
+    attempt = _success_attempt(
+        content="mentions product",
+        root="PARENT99",
+        structured={
+            "items": [
+                {
+                    "code": "PARENT99",
+                    "components": [
+                        {"code": "90260147", "label": "child"}
+                    ],
+                }
+            ]
+        },
+    )
+    assert not _attempt_satisfies_obligation(attempt, "90260147")
+    assert _attempt_satisfies_obligation(attempt, "PARENT99")
+
+
+def test_e1_composition_does_not_hide_missing_obligation_c():
+    gates = _gates()
+    plan = gates._accept_semantic_investigation_plan(
+        goal_class="compare",
+        comparison_requested=True,
+        target_identities=["A1", "B2"],
+        evidence_needed=["A1", "B2", "SPEC-C"],
+        correlation="c1",
+    )
+    assert plan is not None
+    composed = GovernedCapabilityAttempt(
+        status=GovernedCapabilityStatus.SUCCESS,
+        correlation_id="c1",
+        content="A vs B",
+        verified_composition=VerifiedCompositeEvidence(
+            source_roots=("A1", "B2"),
+            source_lineage=(
+                (
+                    SourceRef(
+                        source_id="A1",
+                        source_system="pa",
+                        provider_name="pa",
+                        observed_at="2026-01-01T00:00:00Z",
+                    ),
+                ),
+                (
+                    SourceRef(
+                        source_id="B2",
+                        source_system="pa",
+                        provider_name="pa",
+                        observed_at="2026-01-01T00:00:00Z",
+                    ),
+                ),
+            ),
+            observed_at="2026-01-01T00:00:00Z",
+            correlation_id="c1",
+            verdict="differences_found",
+        ),
+    )
+    a = _success_attempt(content="a", root="A1")
+    b = _success_attempt(content="b", root="B2")
+    result = _finalize_agent_collected_attempts(
+        gates,
+        input_text="compare A and B and include SPEC-C",
+        collected=(a, b),
+        correlation="c1",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=OWNER_PATH_UNBOUND,
+        plan=plan,
+        composed_attempt=composed,
+    )
+    assert result.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert "composition_does_not_satisfy_goal" in result.limitations
+    assert any("SPEC-C" in lim for lim in result.limitations)
+
+
+def test_e3_plan_omission_of_declared_obligation_blocks_success():
+    gates = _gates()
+    plan = gates._accept_semantic_investigation_plan(
+        goal_class="read",
+        comparison_requested=False,
+        target_identities=["P1"],
+        evidence_needed=["P1", "EXTRA-REQ"],
+        correlation="c1",
+    )
+    only = _success_attempt(content="p1", root="P1")
+    result = _finalize_agent_collected_attempts(
+        gates,
+        input_text="P1 with EXTRA-REQ",
+        collected=(only,),
+        correlation="c1",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=None,
+        plan=plan,
+    )
+    assert result.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert any("EXTRA-REQ" in lim for lim in result.limitations)
+
+
+def test_e4_multiple_observations_preserve_both_contents():
+    gates = _gates()
+    a = _success_attempt(content="fact-alpha-body", root="FA")
+    b = _success_attempt(content="fact-beta-body", root="FB")
+    result = _finalize_agent_collected_attempts(
+        gates,
+        input_text="two independent facts",
+        collected=(a, b),
+        correlation="c1",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=None,
+        plan=None,
+    )
+    assert result.status is GovernedCapabilityStatus.SUCCESS
+    assert result.verified_composition is None
+    assert "fact-alpha-body" in (result.content or "")
+    assert "fact-beta-body" in (result.content or "")
+    assert "multiple_observations_without_compose" in result.limitations
+
+
+def test_dynamic_owner_tool_invokes_governed_path():
+    gates = _gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    assert catalog, "test providers must expose READ catalog"
+    cap = catalog[0]
+    tool_name = _safe_tool_name(cap["capability_id"])
+    calls: list[str] = []
+    original = gates._governed_semantic_tool_invoke
+
+    def _spy(**kwargs):
+        calls.append(str(kwargs.get("capability_id") or ""))
+        return original(**kwargs)
+
+    gates._governed_semantic_tool_invoke = _spy  # type: ignore[method-assign]
+
+    def _fn(messages, _info):
+        if not any(isinstance(m, ModelResponse) for m in messages):
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        tool_name,
+                        {"arguments": {}},
+                    )
+                ]
+            )
+        return ModelResponse(parts=[TextPart("done")])
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    engine.attempt("read something")
+    assert calls and calls[0] == cap["capability_id"]
+
+
+def test_list_only_does_not_fabricate_business_success():
+    gates = _gates()
+
+    def _fn(messages, _info):
+        if not any(isinstance(m, ModelResponse) for m in messages):
+            return ModelResponse(
+                parts=[ToolCallPart("list_read_capabilities", {})]
+            )
+        return ModelResponse(parts=[TextPart("I listed tools")])
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    attempt = engine.attempt("estrutura 90260147")
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert attempt.error_code == "investigation_no_tool_observations"
+
+
+def test_bind_missing_required_query_from_utterance():
+    schema = {
+        "type": "object",
+        "properties": {"query": {"type": "string"}},
+        "required": ["query"],
+    }
+    bound = _bind_missing_required_query(
+        {},
+        input_schema=schema,
+        input_text="Qual a estrutura do produto 90260147?",
+    )
+    assert bound["query"].startswith("Qual a estrutura")
+    kept = _bind_missing_required_query(
+        {"query": "keep-me"},
+        input_schema=schema,
+        input_text="other",
+    )
+    assert kept["query"] == "keep-me"
+
+
+def test_bind_identifier_args_from_utterance_single_code():
+    schema = {
+        "type": "object",
+        "properties": {
+            "code": {"type": "string"},
+            "page": {"type": "integer", "default": 1},
+        },
+        "required": ["code"],
+    }
+    bound = _bind_identifier_args_from_utterance(
+        schema, "Qual a estrutura do produto 90260147?"
+    )
+    assert bound == {"code": "90260147"}
+    assert (
+        _bind_identifier_args_from_utterance(schema, "sem codigo") is None
+    )
+
+
+def test_declared_data_root_is_authoritative():
+    attempt = _success_attempt(
+        content="child rows only in text",
+        root="CHILD01",
+        structured={
+            "data": {
+                "root": {"code": "90260147", "path": ["90260147"]},
+                "items": [
+                    {
+                        "code": "CHILD01",
+                        "label": "c",
+                        "path": ["90260147", "CHILD01"],
+                    }
+                ],
+            }
+        },
+    )
+    assert _authoritative_structure_root(attempt) == "90260147"
+    assert _attempt_satisfies_obligation(attempt, "90260147")
+
+
+def test_discovery_chained_owner_read_counts_as_business_evidence():
+    schema = {
+        "type": "object",
+        "properties": {"query": {"type": "string"}},
+        "required": ["query"],
+    }
+    discover = _cap(
+        "alpha",
+        "pa",
+        "discover_items",
+        schema=schema,
+        op_class=SpecialistOperationClass.DISCOVERY,
+    )
+    provider = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [discover])],
+        outcomes={},
+    )
+    gates = _gates(providers=[provider])
+
+    def _chained(*_a, **_k):
+        return (
+            _outcome(
+                "estrutura 90260147",
+                structured={
+                    "action_id": "get_product_structure",
+                    "entity": "product_structure",
+                    "data": {
+                        "root": {"code": "90260147", "path": ["90260147"]},
+                        "items": [
+                            {
+                                "code": "90260147",
+                                "label": "PA",
+                                "path": ["90260147"],
+                            }
+                        ],
+                    },
+                },
+            ),
+            "get_product_structure",
+            "execute_items",
+        )
+
+    gates._invoke_selected = _chained  # type: ignore[method-assign]
+    attempt = gates._governed_semantic_tool_invoke(
+        capability_id=discover.capability_id,
+        arguments={},
+        input_text="Qual a estrutura do produto 90260147?",
+        correlation="c-chain",
+        actor_user_id="u1",
+        session_id="s1",
+        workspace_context=None,
+        prior_turns=(),
+        prepare_only=False,
+        deadline=TurnDeadline.start(30.0),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "discovery_metadata_observation" not in attempt.limitations
+    assert attempt.provenance is not None
+    assert attempt.provenance.is_complete
+    assert _is_business_evidence_attempt(attempt)
+    assert _attempt_satisfies_obligation(attempt, "90260147")
+
+
+def test_pure_discovery_envelope_still_tagged_metadata():
+    schema = {
+        "type": "object",
+        "properties": {"query": {"type": "string"}},
+        "required": ["query"],
+    }
+    discover = _cap(
+        "alpha",
+        "pa",
+        "discover_items",
+        schema=schema,
+        op_class=SpecialistOperationClass.DISCOVERY,
+    )
+    provider = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [discover])],
+        outcomes={},
+    )
+    gates = _gates(providers=[provider])
+
+    def _pure_discovery(*_a, **_k):
+        return (
+            _outcome(
+                "candidates only",
+                structured={
+                    "candidates": [
+                        {
+                            "candidate_token": "tok-1",
+                            "action_id": "get_product_structure",
+                        }
+                    ]
+                },
+            ),
+            "discover_items",
+            "discover_items",
+        )
+
+    gates._invoke_selected = _pure_discovery  # type: ignore[method-assign]
+    attempt = gates._governed_semantic_tool_invoke(
+        capability_id=discover.capability_id,
+        arguments={"query": "estrutura 90260147"},
+        input_text="estrutura 90260147",
+        correlation="c-meta",
+        actor_user_id="u1",
+        session_id="s1",
+        workspace_context=None,
+        prior_turns=(),
+        prepare_only=False,
+        deadline=TurnDeadline.start(30.0),
+    )
+    assert "discovery_metadata_observation" in attempt.limitations
+    assert not _is_business_evidence_attempt(attempt)

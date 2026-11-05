@@ -596,6 +596,41 @@ def _requires_field(descriptor: ProviderCapability, field: str) -> bool:
         names.update(str(name) for name in required)
     return field in names
 
+
+def _bind_missing_required_query(
+    arguments: Mapping[str, Any],
+    *,
+    input_schema: Mapping[str, Any] | None,
+    input_text: str,
+) -> dict[str, Any]:
+    """Fill omitted required ``query`` from the turn utterance.
+
+    Generic schema binding only — does not choose a capability or
+    invent business identifiers beyond the user text already present.
+    """
+    args = dict(arguments or {})
+    if not isinstance(input_schema, Mapping):
+        return args
+    properties = input_schema.get("properties")
+    required = input_schema.get("required")
+    if not isinstance(properties, Mapping) or "query" not in properties:
+        return args
+    required_names = (
+        {str(name) for name in required}
+        if isinstance(required, (list, tuple))
+        else set()
+    )
+    if "query" not in required_names:
+        return args
+    if str(args.get("query") or "").strip():
+        return args
+    utterance = (input_text or "").strip()
+    if not utterance:
+        return args
+    args["query"] = utterance[:MAX_RENDER_CONTENT_CHARS]
+    return args
+
+
 def _is_open_vocabulary(node: object, depth: int = 0) -> bool:
     """True when a schema node leaves its inner vocabulary owner-defined.
 
@@ -3542,6 +3577,8 @@ def _authoritative_structure_root(
     """REF05 oracle: unique min-depth structure root from owner records.
 
     Never derived from rendered content/Markdown/text mentions.
+    Prefer an owner-declared ``data.root.code`` when present — child
+    BOM rows alone must not redefine the product identity.
     """
     outcome = attempt.outcome
     if outcome is None or not outcome.is_complete:
@@ -3550,6 +3587,17 @@ def _authoritative_structure_root(
         return None
     if "discovery_metadata_observation" in attempt.limitations:
         return None
+    structured = outcome.structured
+    if isinstance(structured, Mapping):
+        data = structured.get("data")
+        if isinstance(data, Mapping):
+            declared = data.get("root")
+            if isinstance(declared, Mapping):
+                code = declared.get("code")
+                if isinstance(code, str) and code.strip():
+                    return code.strip()
+            elif isinstance(declared, str) and declared.strip():
+                return declared.strip()
     records = _comparison_records(outcome)
     if not records:
         return None
@@ -3564,6 +3612,49 @@ def _authoritative_structure_root(
     if not isinstance(code, str) or not code.strip():
         return None
     return code.strip()
+
+
+def _bind_identifier_args_from_utterance(
+    schema: Mapping[str, Any] | None,
+    input_text: str,
+) -> dict[str, Any] | None:
+    """Schema-driven fallback when candidate arggen fails.
+
+    Binds only when exactly one required identifier-shaped field is
+    declared and the utterance contains identifier literals. Does not
+    invent values beyond literals already present in the user text.
+    """
+    if not isinstance(schema, Mapping):
+        return None
+    properties = schema.get("properties")
+    required = schema.get("required")
+    if not isinstance(properties, Mapping):
+        return None
+    required_names = (
+        [str(name) for name in required]
+        if isinstance(required, (list, tuple))
+        else []
+    )
+    id_keys: list[str] = []
+    for key in required_names:
+        if not _IDENTIFIER_ARG_KEY_RE.search(key):
+            continue
+        node = properties.get(key)
+        if not isinstance(node, Mapping):
+            continue
+        node_type = node.get("type")
+        if node_type not in (None, "string"):
+            continue
+        id_keys.append(key)
+    if len(id_keys) != 1:
+        return None
+    literals = _IDENTIFIER_LITERAL_RE.findall(input_text or "")
+    unique = list(dict.fromkeys(str(item) for item in literals if item))
+    if not unique:
+        return None
+    # Prefer the longest literal (more specific business codes).
+    value = max(unique, key=len)
+    return {id_keys[0]: value}
 
 
 def _bind_attempt_to_target(
@@ -3605,30 +3696,39 @@ def _normalize_identity_tuple(raw: object) -> tuple[str, ...]:
 def _attempt_satisfies_obligation(
     attempt: GovernedCapabilityAttempt, obligation: str
 ) -> bool:
-    """Heterogeneous obligation match — root, source_id, or capability.
+    """Obligation match via owner-authoritative identity only.
 
-    Structure roots remain authoritative for BOM/product identities.
-    Non-structure owners bind via provenance source_id / remote /
-    action identifiers — never rendered text mentions.
+    Satisfied when the obligation equals the authoritative structure
+    root, or an owner-record code under a compatible root. Capability
+    names, specialist ids and provenance source_id alone never prove
+    that the requested business fact was acquired (doc 237 R-E2).
+    Child codes under a *different* root never satisfy REF05.
     """
     needle = (obligation or "").strip()
     if not needle:
         return False
     key = needle.casefold()
+    if not _is_business_evidence_attempt(attempt):
+        return False
     root = _authoritative_structure_root(attempt)
     if root is not None and root.casefold() == key:
         return True
-    prov = attempt.provenance
-    if prov is None:
+    outcome = attempt.outcome
+    if outcome is None or not outcome.is_complete:
         return False
-    for ref in prov.source_refs:
-        if (ref.source_id or "").strip().casefold() == key:
-            return True
-    if (prov.remote_capability or "").strip().casefold() == key:
-        return True
-    if (prov.action_id or "").strip().casefold() == key:
-        return True
-    if (prov.specialist_id or "").strip().casefold() == key:
+    records = _comparison_records(outcome)
+    if not records:
+        return False
+    rows = _flatten_evidence_records(records)
+    for row in rows:
+        code = row.get("code")
+        if not isinstance(code, str) or not code.strip():
+            continue
+        if code.strip().casefold() != key:
+            continue
+        # Wrong-root child mention is not the requested identity.
+        if root is not None and root.casefold() != key:
+            continue
         return True
     return False
 
@@ -3709,27 +3809,6 @@ def _finalize_agent_collected_attempts(
             admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
         )
 
-    if (
-        composed_attempt is not None
-        and composed_attempt.status is GovernedCapabilityStatus.SUCCESS
-        and composed_attempt.verified_composition is not None
-    ):
-        return composed_attempt
-
-    if not collected:
-        _logger.info(
-            "orchestration stage=semantic_finalize "
-            "decision=no_tool_observations correlation_id=%s",
-            correlation,
-        )
-        return GovernedCapabilityAttempt(
-            status=GovernedCapabilityStatus.NOT_APPLICABLE,
-            correlation_id=correlation,
-            admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
-            limitations=(LIMITATION_INSUFFICIENT_EVIDENCE,),
-            error_code="investigation_no_tool_observations",
-        )
-
     business = tuple(
         item for item in collected if _is_business_evidence_attempt(item)
     )
@@ -3747,6 +3826,54 @@ def _finalize_agent_collected_attempts(
         if plan is not None and plan.evidence_needed
         else targets
     )
+
+    # R-E1: agent-requested composition is partial observation — never
+    # terminal SUCCESS while declared material obligations remain open.
+    # Evaluated before the empty-collected gate so a verified compose
+    # with satisfied (or undeclared) obligations remains usable.
+    if (
+        composed_attempt is not None
+        and composed_attempt.status is GovernedCapabilityStatus.SUCCESS
+        and composed_attempt.verified_composition is not None
+    ):
+        if obligations:
+            coverage = _evaluate_material_obligations(
+                obligations=obligations,
+                business=business,
+            )
+            if any(state != OBLIGATION_SATISFIED for _, state in coverage):
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                    correlation_id=correlation,
+                    admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                    limitations=tuple(
+                        [LIMITATION_INSUFFICIENT_EVIDENCE]
+                        + ["material_obligations_incomplete"]
+                        + [
+                            f"obligation_{state.lower()}:{oid}"
+                            for oid, state in coverage
+                            if state != OBLIGATION_SATISFIED
+                        ]
+                        + ["composition_does_not_satisfy_goal"]
+                    )[:24],
+                    error_code="investigation_incomplete_coverage",
+                    verified_composition=composed_attempt.verified_composition,
+                )
+        return composed_attempt
+
+    if not collected:
+        _logger.info(
+            "orchestration stage=semantic_finalize "
+            "decision=no_tool_observations correlation_id=%s",
+            correlation,
+        )
+        return GovernedCapabilityAttempt(
+            status=GovernedCapabilityStatus.NOT_APPLICABLE,
+            correlation_id=correlation,
+            admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+            limitations=(LIMITATION_INSUFFICIENT_EVIDENCE,),
+            error_code="investigation_no_tool_observations",
+        )
 
     if comparison:
         if plan is None:
@@ -3964,11 +4091,42 @@ def _finalize_agent_collected_attempts(
         return business[0]
 
     if business:
+        # R-E4: preserve every verified observation — do not drop all
+        # but the last when no structure composition applies.
+        if obligations:
+            coverage = _evaluate_material_obligations(
+                obligations=obligations,
+                business=business,
+            )
+            if any(state != OBLIGATION_SATISFIED for _, state in coverage):
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                    correlation_id=correlation,
+                    admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                    limitations=tuple(
+                        [LIMITATION_INSUFFICIENT_EVIDENCE]
+                        + ["material_obligations_incomplete"]
+                        + [
+                            f"obligation_{state.lower()}:{oid}"
+                            for oid, state in coverage
+                            if state != OBLIGATION_SATISFIED
+                        ]
+                    )[:24],
+                    error_code="investigation_incomplete_coverage",
+                )
+        parts: list[str] = []
+        for index, item in enumerate(business):
+            body = (item.content or "").strip()
+            if not body:
+                continue
+            handle = f"obs:{index}"
+            parts.append(f"[{handle}]\n{body}")
+        joined = "\n\n---\n\n".join(parts)[:MAX_RENDER_CONTENT_CHARS]
         last = business[-1]
         return GovernedCapabilityAttempt(
-            status=last.status,
+            status=GovernedCapabilityStatus.SUCCESS,
             correlation_id=correlation,
-            content=last.content,
+            content=joined or last.content,
             limitations=tuple(
                 list(last.limitations)
                 + ["multiple_observations_without_compose"]
@@ -13232,12 +13390,6 @@ class OperationalCapabilityOrchestrator:
         is applied by ``_groups`` (request-scoped identity); the actor
         id is logged for audit lineage only.
         """
-        _logger.info(
-            "orchestration stage=semantic_tool_catalog "
-            "decision=project actor=%s correlation_id=%s",
-            (actor_user_id or "")[:64] or "-",
-            correlation,
-        )
         groups, _failures = self._groups(correlation, deadline)
         catalog: list[dict[str, Any]] = []
         for group in groups.values():
@@ -13290,7 +13442,21 @@ class OperationalCapabilityOrchestrator:
                         },
                     }
                 )
-        return catalog[:80]
+        bounded = catalog[:80]
+        by_owner: dict[str, int] = {}
+        for entry in bounded:
+            owner = str(entry.get("owner") or entry.get("provider_id") or "?")
+            by_owner[owner] = by_owner.get(owner, 0) + 1
+        _logger.info(
+            "orchestration stage=semantic_tool_catalog "
+            "decision=project actor=%s catalog_len=%d "
+            "owners=%s correlation_id=%s",
+            (actor_user_id or "")[:64] or "-",
+            len(bounded),
+            ",".join(f"{k}:{v}" for k, v in sorted(by_owner.items())[:12]),
+            correlation,
+        )
+        return bounded
 
     def _governed_semantic_tool_invoke(
         self,
@@ -13369,6 +13535,14 @@ class OperationalCapabilityOrchestrator:
         # turn ceiling is prepare_only — writes stay on confirmation
         # chain. prepare_only is recorded for audit only.
         args = dict(arguments or {})
+        # Generic schema binding: when the owner requires ``query`` and
+        # the agent omitted it, bind the turn utterance. This does not
+        # select a capability — the agent already chose the tool.
+        args = _bind_missing_required_query(
+            args,
+            input_schema=descriptor.input_schema,
+            input_text=input_text,
+        )
         if descriptor.input_schema is not None:
             try:
                 validated = _validate_instance(args, descriptor.input_schema)
@@ -13449,23 +13623,39 @@ class OperationalCapabilityOrchestrator:
             outcome=outcome,
             render=_render,
         )
-        # Tag discovery so goal finalization never treats catalog
-        # metadata as business evidence (R2).
+        # Tag pure discovery envelopes so finalize never treats catalog
+        # / candidate lists as business facts (R2). When discovery-first
+        # already chained to an owner READ (remote_used != discover
+        # remote), the attempt IS business evidence — do not mask it.
         if descriptor.operation_class is SpecialistOperationClass.DISCOVERY:
-            limitations = tuple(attempt.limitations) + (
-                "discovery_metadata_observation",
+            chained_owner_read = (
+                str(remote_used or "").strip()
+                and str(remote_used).strip() != str(descriptor.remote_name).strip()
             )
-            return GovernedCapabilityAttempt(
-                status=attempt.status,
-                correlation_id=attempt.correlation_id,
-                content=attempt.content,
-                limitations=limitations,
-                error_code=attempt.error_code,
-                provenance=attempt.provenance,
-                outcome=attempt.outcome,
-                markdown_content=attempt.markdown_content,
-                admission_outcome=attempt.admission_outcome,
-                verified_composition=attempt.verified_composition,
+            if not chained_owner_read:
+                limitations = tuple(attempt.limitations) + (
+                    "discovery_metadata_observation",
+                )
+                return GovernedCapabilityAttempt(
+                    status=attempt.status,
+                    correlation_id=attempt.correlation_id,
+                    content=attempt.content,
+                    limitations=limitations,
+                    error_code=attempt.error_code,
+                    provenance=attempt.provenance,
+                    outcome=attempt.outcome,
+                    markdown_content=attempt.markdown_content,
+                    admission_outcome=attempt.admission_outcome,
+                    verified_composition=attempt.verified_composition,
+                )
+            _logger.info(
+                "orchestration stage=semantic_tool_invoke "
+                "decision=discovery_chained_read "
+                "discover=%s read=%s action=%s correlation_id=%s",
+                descriptor.remote_name,
+                remote_used,
+                action_id,
+                correlation,
             )
         return attempt
 
@@ -15650,7 +15840,31 @@ class OperationalCapabilityOrchestrator:
                 )
             # No declared subject to rebind — the validated payload
             # passes through; the owner stays the final validator.
-        return second_validated
+        if second_validated is not None:
+            return second_validated
+        # LLM/arggen unavailable or invalid: bind a single required
+        # identifier field from utterance literals when the schema
+        # permits — Application schema binding, not capability choice.
+        fallback = _bind_identifier_args_from_utterance(
+            effective_schema, input_text
+        )
+        if fallback is None:
+            return None
+        fallback_validated = (
+            _validate_instance(fallback, effective_schema)
+            if effective_schema is not None
+            else fallback
+        )
+        if fallback_validated is None:
+            return None
+        _logger.info(
+            "orchestration stage=candidate_arguments "
+            "decision=utterance_identifier_bind keys=%s "
+            "correlation_id=%s",
+            ",".join(sorted(fallback_validated)),
+            correlation,
+        )
+        return dict(fallback_validated)
 
     def _propose_candidate_arguments(
         self,

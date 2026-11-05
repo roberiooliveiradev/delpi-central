@@ -5657,4 +5657,20 @@ LOCAL_RUNTIME_SHA=57ca0e2684 MATCHES EVALUATED after local `docker compose ... u
 E02_POST_METRICS=LLM≈1 in=1422 out=29 latency_ms≈8977 tool_calls=1 collected=0.
 VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
 
+## Pydantic AI real owner tool loop + evidence hardening (2026-11-04)
+
+TASK=DELIA-C3-PYDANTIC-AI-REAL-OWNER-TOOL-LOOP-AND-EVIDENCE-REWORK-01.
+PLAN=doc 237. REPORT=doc 238. PRODUCTION_DEPLOY=NOT_AUTHORIZED. PHASE_ADVANCE=NONE.
+EXISTING_EQUIVALENT=YES (Agent/FunctionToolset/gates/discovery-first/REF05/obligations).
+REUSE_DECISION=EXTEND (dynamic per-capability tools; discovery-chained READ evidence; query/identifier schema binding; E1–E4).
+EXECUTION_DRIFT=NONE.
+CAUSAL_E02=list-only → dynamic tools; chained execute masked as discovery_metadata; missing query / flaky candidate_arguments.
+NATIVE=pydantic-ai 2.50.0 dynamic FunctionToolset.add_function; no second planner.
+EVIDENCE=E1 compose≠goal; E2 capability≠fact; E3 plan obligations; E4 multi-obs preserve.
+REGRESSION=delia-api pytest tests/ GREEN; new `test_pydantic_ai_real_owner_tool_loop_rework.py`.
+LOCAL_STACK=docker-compose.dev.yml (volume-mounted; NOT up-prod-sequential).
+LIVE_E02=GROUNDED OBSERVATION; OWNER_READS discover+execute get_product_structure; SUCCESS; ~41140ms; in≈3197 out≈76.
+LIVE_MATRIX=E01 honest; E03/E04/E05/E10 residual unbound/clarify; E07/E08 NON_GROUNDED honest; NDJSON 11 lines OK; FALSE_GROUNDED=0.
+VERDICT=ACCEPT_WITH_RESIDUAL; FUNCTIONAL_ACCEPTANCE_CANDIDATE=YES (E02 owner READ gate).
+
 

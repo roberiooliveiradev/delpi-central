@@ -114,7 +114,7 @@ def test_agent_requested_composition_returned_by_finalize():
     assert result.verified_composition is not None
 
 
-def test_heterogeneous_obligation_matches_source_id():
+def test_heterogeneous_obligation_matches_authoritative_root_only():
     attempt = _success_attempt(
         content="inventory snapshot",
         root="OTHER",
@@ -122,13 +122,13 @@ def test_heterogeneous_obligation_matches_source_id():
             "items": [{"code": "OTHER", "label": "x", "path": ["OTHER"]}]
         },
     )
-    # Provenance source_id is the root from helper — also test remote match
     assert _attempt_satisfies_obligation(attempt, "OTHER")
+    # Capability / remote name is not business evidence (doc 237 R-E2).
     coverage = _evaluate_material_obligations(
         obligations=("search_items",),
         business=(attempt,),
     )
-    assert dict(coverage)["search_items"] == OBLIGATION_SATISFIED
+    assert dict(coverage)["search_items"] == OBLIGATION_UNSATISFIED
 
 
 def test_omitted_obligation_stays_unsatisfied():
