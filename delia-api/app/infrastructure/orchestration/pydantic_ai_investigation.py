@@ -500,26 +500,60 @@ def _prior_message_history(
     return history
 
 
+class _InvestigationHistoryIntegrityError(Exception):
+    """Malformed native history — orphan/mismatched tool results must
+    never be attached to an unrelated unit or treated as valid
+    business evidence (doc 274 §2)."""
+
+
 def _history_units(messages):
-    """Complete causal units — a ModelRequest containing a
-    UserPromptPart opens a new unit; ToolReturn requests join the
-    unit holding their ToolCall response (doc 272: never separate
-    call/return pairs)."""
-    from pydantic_ai.messages import ModelRequest, ToolReturnPart
+    """Complete causal units (doc 272/274): a ModelRequest containing
+    ToolReturnParts joins the preceding unit ONLY when that unit's
+    ModelResponses issued matching ``ToolCallPart``s — matched by
+    ``tool_call_id`` (fallback ``tool_name``) for EVERY return part.
+    An orphan or mismatched return raises
+    ``_InvestigationHistoryIntegrityError`` — never attached to an
+    unrelated user prompt, never relabeled valid evidence."""
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        ToolCallPart,
+        ToolReturnPart,
+    )
 
     units = []
     for msg in messages:
-        opens = not (
-            units
-            and isinstance(msg, ModelRequest)
-            and any(
-                isinstance(p, ToolReturnPart) for p in msg.parts
-            )
+        returns = (
+            [p for p in msg.parts if isinstance(p, ToolReturnPart)]
+            if isinstance(msg, ModelRequest)
+            else []
         )
-        if opens:
-            units.append([msg])
-        else:
-            units[-1].append(msg)
+        if returns and units:
+            calls = [
+                p
+                for prior in units[-1]
+                if isinstance(prior, ModelResponse)
+                for p in prior.parts
+                if isinstance(p, ToolCallPart)
+            ]
+            ids = {c.tool_call_id for c in calls}
+            names = {c.tool_name for c in calls}
+            matched = all(
+                r.tool_call_id in ids or r.tool_name in names
+                for r in returns
+            )
+            if matched:
+                units[-1].append(msg)
+                continue
+            raise _InvestigationHistoryIntegrityError(
+                "tool_return without matching tool_call "
+                f"({[r.tool_name for r in returns]})"
+            )
+        if returns:
+            raise _InvestigationHistoryIntegrityError(
+                "tool_return with no preceding unit"
+            )
+        units.append([msg])
     return units
 
 
@@ -1308,20 +1342,36 @@ class PydanticAiInvestigationOrchestrator:
                         tool_calls_limit=self._tool_calls_limit,
                     ),
                 )
-            except _InvestigationContextOverflow as exc:
+            except (
+                _InvestigationContextOverflow,
+                _InvestigationHistoryIntegrityError,
+            ) as exc:
+                integrity = isinstance(
+                    exc, _InvestigationHistoryIntegrityError
+                )
                 _logger.info(
                     "orchestration engine=pydantic_ai "
-                    "stage=investigation decision=context_overflow "
+                    "stage=investigation decision=%s "
                     "correlation_id=%s",
+                    "history_integrity" if integrity else "context_overflow",
                     correlation,
                 )
                 return GovernedCapabilityAttempt(
                     status=GovernedCapabilityStatus.NOT_APPLICABLE,
                     correlation_id=correlation,
-                    error_code="investigation_context_overflow",
+                    error_code=(
+                        "investigation_history_invalid"
+                        if integrity
+                        else "investigation_context_overflow"
+                    ),
                     admission_outcome=unbound_outcome,
                     limitations=(
-                        "investigation_context_overflow:in-run",
+                        (
+                            "investigation_history_invalid:"
+                            + str(exc)[:200]
+                        )
+                        if integrity
+                        else ("investigation_context_overflow:in-run",)
                     ),
                 )
             except Exception as exc:

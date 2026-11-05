@@ -680,3 +680,21 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   histórico+atual chegando como mensagens nativas.
 - Legado: nenhum reintroduzido; `context_budget.py` KEEP.
 - Suite completa PASS (exit 0).
+
+## 28. G7 rework — integridade de ToolReturn + overflow in-run (doc 274)
+
+- **ToolReturn órfão/mismatch (doc 274 §2)**: `_history_units` agora
+  pareia cada `ToolReturnPart` por `tool_call_id` (fallback
+  `tool_name`) com `ToolCallPart` da unidade precedente — órfão ou
+  mismatch → `_InvestigationHistoryIntegrityError` → typed
+  `investigation_history_invalid` (nunca anexa a pergunta alheia,
+  nunca relabela como evidência válida). Testes: órfão sem call,
+  id divergente, múltiplos calls/returns válidos (3 units).
+- **Overflow in-run (doc 274 §3-4)**: `_select_surviving_messages`
+  produção testado — sufixo obrigatório (pergunta+call+return) acima
+  da janela → `_InvestigationContextOverflow` tipado; sufixo cabível
+  retorna intacto (nada dropado). Nota honesta: retornos de tools
+  já são limitados por `tool_projection_limit` — crescimento por
+  retorno é bounded; o processor cobre acúmulo multi-turno.
+- Pergunta atual + evidências + pares preservados; nada fabricado.
+- Suite completa PASS (exit 0); zero legacy reintroduzido.

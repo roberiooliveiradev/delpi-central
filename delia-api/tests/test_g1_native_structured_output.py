@@ -1003,12 +1003,14 @@ def test_mandatory_overflow_returns_typed_outcome_no_model_calls():
     assert attempt.error_code == "investigation_context_overflow"
 
 
-def test_orphan_tool_return_groups_with_previous_unit():
-    """Doc 273 §4: a ToolReturn request without its call still
-    attaches to the previous unit — dropped/kept whole, never
-    orphaned into a dangling return."""
+def test_orphan_tool_return_fails_integrity_typed():
+    """Doc 274 §2: a ToolReturnPart with NO matching ToolCallPart
+    raises _InvestigationHistoryIntegrityError — never attached to an
+    unrelated user prompt or treated as valid evidence."""
+    import pytest
     from app.infrastructure.orchestration.pydantic_ai_investigation import (
         _history_units,
+        _InvestigationHistoryIntegrityError,
     )
     from pydantic_ai.messages import (
         ModelRequest,
@@ -1018,13 +1020,157 @@ def test_orphan_tool_return_groups_with_previous_unit():
         UserPromptPart,
     )
 
+    # orphan with no call at all
+    with pytest.raises(_InvestigationHistoryIntegrityError):
+        _history_units([
+            ModelRequest(parts=[UserPromptPart("q")]),
+            ModelRequest(
+                parts=[ToolReturnPart("orphan_tool", "data")]
+            ),
+            ModelResponse(parts=[TextPart("answer")]),
+        ])
+
+
+def test_mismatched_tool_return_id_fails_integrity():
+    """Doc 274 §2: a return whose tool_call_id/tool_name does not
+    match the preceding call fails closed."""
+    import pytest
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        _history_units,
+        _InvestigationHistoryIntegrityError,
+    )
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        ToolCallPart,
+        ToolReturnPart,
+        UserPromptPart,
+    )
+
+    with pytest.raises(_InvestigationHistoryIntegrityError):
+        _history_units([
+            ModelRequest(parts=[UserPromptPart("q")]),
+            ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "tool_a", {"a": 1}, tool_call_id="call-1"
+                    )
+                ]
+            ),
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "tool_b", "data", tool_call_id="other-id"
+                    )
+                ]
+            ),
+        ])
+
+
+def test_valid_call_return_pairs_pass_integrity():
+    """Doc 274 §2: matching tool_call_id pairs group into one causal
+    unit — multiple calls in one response and multiple returns in one
+    request handled correctly."""
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        _history_units,
+    )
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        ToolCallPart,
+        ToolReturnPart,
+        UserPromptPart,
+    )
+
     msgs = [
         ModelRequest(parts=[UserPromptPart("q")]),
-        ModelRequest(parts=[ToolReturnPart("orphan_tool", "data")]),
-        ModelResponse(parts=[TextPart("answer")]),
+        ModelResponse(
+            parts=[
+                ToolCallPart("tool_a", {"a": 1}, tool_call_id="c1"),
+                ToolCallPart("tool_b", {"b": 2}, tool_call_id="c2"),
+            ]
+        ),
+        ModelRequest(
+            parts=[
+                ToolReturnPart("tool_a", "ra", tool_call_id="c1"),
+                ToolReturnPart("tool_b", "rb", tool_call_id="c2"),
+            ]
+        ),
+        ModelResponse(parts=[ToolCallPart("tool_c", {"c": 3}, tool_call_id="c3")]),
+        ModelRequest(parts=[ToolReturnPart("tool_c", "rc", tool_call_id="c3")]),
     ]
     units = _history_units(msgs)
-    # orphan return joined the user unit (attached to previous),
-    # interim response is its own unit → 2 units, never split
-    assert len(units) == 2
-    assert len(units[0]) == 2
+    assert len(units) == 3
+    assert len(units[1]) == 2  # 2 calls + 2 returns one unit
+    assert len(units[2]) == 2  # 1 call + 1 return one unit
+
+
+def test_in_run_mandatory_suffix_overflow_raises_typed():
+    """Doc 274 §4: when the mandatory current-turn suffix — current
+    question + its tool call + returned evidence — exceeds the
+    window, the PRODUCTION compaction function raises
+    _InvestigationContextOverflow → typed investigation_context_
+    overflow; the question and evidence are never silently dropped
+    and nothing is fabricated (in-run growth, not pre-call)."""
+    import pytest
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        _InvestigationContextOverflow,
+        _select_surviving_messages,
+    )
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        ToolCallPart,
+        ToolReturnPart,
+        UserPromptPart,
+    )
+
+    fat_evidence = "x" * 40000  # ~10k tokens — mandatory suffix alone
+    msgs = [
+        ModelRequest(parts=[UserPromptPart("pergunta atual")]),
+        ModelResponse(
+            parts=[
+                ToolCallPart("invoke_read", {"q": "t"}, tool_call_id="c1")
+            ]
+        ),
+        ModelRequest(
+            parts=[
+                ToolReturnPart("invoke_read", fat_evidence, tool_call_id="c1")
+            ]
+        ),
+    ]
+    with pytest.raises(_InvestigationContextOverflow):
+        _select_surviving_messages(msgs, window=2000)
+
+
+def test_in_run_suffix_fits_when_evidence_bounded():
+    """Bounded tool evidence keeps the mandatory suffix inside the
+    window — compaction returns the FULL suffix untouched."""
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        _select_surviving_messages,
+    )
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        ToolCallPart,
+        ToolReturnPart,
+        UserPromptPart,
+    )
+
+    msgs = [
+        ModelRequest(parts=[UserPromptPart("pergunta atual")]),
+        ModelResponse(
+            parts=[
+                ToolCallPart("invoke_read", {"q": "t"}, tool_call_id="c1")
+            ]
+        ),
+        ModelRequest(
+            parts=[
+                ToolReturnPart(
+                    "invoke_read", "evidência pequena", tool_call_id="c1"
+                )
+            ]
+        ),
+    ]
+    out = _select_surviving_messages(msgs, window=2000)
+    assert len(out) == 3  # nothing dropped — all mandatory survives
