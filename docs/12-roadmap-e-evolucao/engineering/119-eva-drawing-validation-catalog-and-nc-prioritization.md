@@ -1053,3 +1053,20 @@ O subplano **não é nova frente, serviço, camada, documento nem autorização 
 **ROLLBACK:** inalterado — nenhum pull/build foi feito no `srv-api`.
 
 **PRÓXIMA AÇÃO:** operador com rota até `192.168.1.237` executa o script canônico acima a partir do HEAD que contém `01481495a2`, confirma `validation_report` / `structure_validation.v1` dentro de `delpi-engineering-api`, e só então os quatro desenhos em série. Issue #131 não foi comentada: este ambiente não tem token da API do GitHub.
+
+### 39.9 Deploy produtivo do ledger — Engineering API no srv-api (2026-11-05)
+
+**DATA:** 2026-11-05, container iniciado `2026-11-05T22:42:25Z`. A rota SSH para `operador@192.168.1.237` passou a responder. **Checkout antes:** `9395d34e3c81e881b47f0a2936894d9e20d225fa`, imagem `sha256:ce72f3428e736682b0e440c3f33fe4f357a06cd1d40c4feb4ef4bc062d10a5c1`, `structure_validation.v1` ausente no container. **Pull:** `git pull --ff-only origin main` → `1a5c75152fa739964eaa4362eda0d53fdf33095f`, que contém `01481495a2`. **Build:** `./infra/scripts/up-prod-sequential.sh --build engineering-api`. Nenhum outro container foi recriado (`delpi-core-api` segue desde `2026-11-01T22:11:04Z`).
+
+| Campo | Valor |
+|---|---|
+| DEPLOYED_SHA | `1a5c75152fa739964eaa4362eda0d53fdf33095f` |
+| IMAGE_ID | `sha256:ee26acf6ea1f58af462f611aedcc087daaa127bca93e7bf3e9ba31977010e99c` |
+| SERVICE | `delpi-engineering-api` (`engineering-api`) |
+| HEALTH | `healthy`; `GET /apps/engineering-api/health` → 200 `online` |
+| CONTRACT_PRESENT | sim — import no processo: `structure_validation.v1`, `DRAFT/CANDIDATE`, `engineering_approval=NOT_APPROVED`, `automatic_nc=false`, BOM ausente → `INCONCLUSIVE` e ledger vazio |
+| MCP_ROUTE | `semantic_bridge.py` no image atribui `report.structure_validation`; `POST /apps/engineering-api/mcp` sem token → 401 `invalid_token` |
+| ROLLBACK | imagem anterior `sha256:ce72f3428e73…` permanece no host; checkout anterior `9395d34e3c` |
+| VOLUME | só `/opt/ocr-models` somente leitura; código vem da imagem, não de bind-mount |
+
+**Regressores `90263572`, `90264030`, `90264017`, `90263520`:** `TEST_NOT_RUN` por este executor. O caminho MCP público já serve o código novo; a validação independente dos quatro desenhos fica com o ChatGPT. **AC-E1-10** continua `PENDING` até esse E2E e o aceite da Engenharia. **READY_FOR_CHATGPT_E2E:** `YES`. **VAL-01** não está concluída.
