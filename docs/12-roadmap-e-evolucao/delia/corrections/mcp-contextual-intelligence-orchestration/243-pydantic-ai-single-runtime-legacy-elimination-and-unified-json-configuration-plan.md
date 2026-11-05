@@ -111,3 +111,44 @@ AC8 Docs/ledger/report/push verified; production deploy NOT_AUTHORIZED.
 **Mandatory report:** TASK_ID; BASE_HEAD; FINAL_SHA; ORIGIN_MAIN; PUSH_VERIFIED; AUTHORITIES_READ; PHASE_CP_RQ; LEGACY_PATHS_REMOVED; CONFIG_JSON_PATH; CONFIG_SCHEMA_VERSION; CONFIG_EFFECTIVE_FINGERPRINT; MODEL_PROVIDER; MODEL_ID; TOKENS_INPUT_WINDOW; MAX_OUTPUT_TOKENS; REQUEST_LIMIT; TOOL_CALLS_LIMIT; RETRIES; TURN_BUDGET; SECRET_BINDINGS; VARIABLES_REMOVED; VARIABLES_KEPT_WITH_REASON; JSON_KEYS_CONSUMERS; FIXED_INVARIANTS; OWNERSHIP_GATES; FULL_SUITE; SECURITY; E01_E10; EVALUATED_SHA; LOCAL_RUNTIME_SHA; FALSE_GROUNDED; DOCS_LEDGER; EXECUTION_DRIFT; RESIDUAL; VERDICT; PRODUCTION_DEPLOY=NOT_AUTHORIZED.
 
 **Plan only. No implementation completed by this documentation change.**
+
+
+---
+
+## 6. EXECUTION-READY ADDENDUM — DEVIN (2026-11-05)
+
+**BASELINE CONFIRMED:** `79a0b60e73306a6b352033d831c42f4e95575ced` at the start of this addendum. Git status is NOT observable through GitHub API; Devin must read local status before any file write. The plan remains **PLANNED**, not implemented.
+
+### 6.1 Scope / explicit removal policy
+
+- **DELETE the alternate model inference runtime:** `settings.py` currently accepts `DELIA_MODEL_RUNTIME=legacy`; `root_composer.py` branches to `OpenAICompatibleModelInvocationAdapter` on that value. Remove executable legacy branch, configuration and fallback; choose Pydantic AI only. Verify actual consumers of `openai_compatible_adapter.py` before physical deletion; if no legitimate independent consumer, delete the file and its tests/flags. Do not confuse OpenAI-compatible protocol/endpoint with the obsolete OpenAICompatible *legacy adapter*: Pydantic AI may still speak that protocol.
+- `DELIA_ORCHESTRATION_ENGINE` can be retired as a selector if the one allowed value is `pydantic_ai`; startup must reject explicitly supplied obsolete choices. Eliminate duplicate source-of-truth for this runtime decision. Where a canonical decision requires a strict whitelist or setting for compatibility, keep only validation with no alternative execution path and document the exception.
+- Audit every direct and indirect model invocation consumer: admission, evidence composition, generic interaction, agent tool loop, dictation/STT and tests. **The model invocation adapter based on Pydantic AI is not itself legacy** if it serves legitimate separately governed model-call ports; do not delete it reflexively or reroute calls around governance.
+- **No runtime fallback to deterministic TestModel in production**; local/test-only substitution explicitly guarded. Remove obsolete alternate model implementations and config, not deterministic business validation.
+
+### 6.2 One configuration file — effective-value and secrets separation
+
+Implement **one canonical JSON artifact** at `delia-api/config/pydantic_ai.runtime.delpi.json` unless documented existing authoritative config path supersedes it. The JSON must carry all **non-secret, user-tunable intelligence values**, with strict typed validation in Infrastructure. Prefer a clear section for `model`, `generation`, `agent`, `context`, `budgets`, `tool_results`, `observability`, `schema_version`. All *active* runtime knobs must be represented and consumed exactly once.
+
+Mandatory fields to inventory and either (a) move to JSON, (b) retain as invariant, (c) classify independent concern, or (d) delete:
+`DELIA_LLM_PROVIDER`, `DELIA_LLM_MODEL`, `DELIA_LLM_MAX_OUTPUT_TOKENS`, `DELIA_LLM_CONTEXT_TOKENS`, `DELIA_LLM_TIMEOUT_SECONDS`, `DELIA_MODEL_STAGE_TIMEOUT_SECONDS`, `DELIA_LLM_CALL_MAX_ATTEMPTS`, `DELIA_TURN_BUDGET_SECONDS`, `DELIA_INTERACTION_TOTAL_BUDGET_SECONDS`, `DELIA_MAX_GOVERNED_ATTEMPTS`, `DELIA_MODEL_RUNTIME`, `DELIA_ORCHESTRATION_ENGINE`, `_DEFAULT_REQUEST_LIMIT`, `_DEFAULT_TOOL_CALL_LIMIT`, `retries=1`, `_bounded_json(limit=6000)` and all related model history/truncation/output/ctx budgets, native SDK call settings and Docker envs. Retain **credentials, API keys and sensitive endpoints** in deployment secrets/environment, never JSON plaintext. If model name is environment-dependent, define explicit profiles in the same JSON with one validated selection and clear resolved profile hash (no second independent env value overriding JSON silently).
+
+`null` output/context limits are **UNKNOWN / UNCONFIGURED**, not "unlimited" and not evidence of provider real capacity. Do not turn a 4B local model's nominal context into a claimed effective context window. Distinguish `max_output_tokens` from actual measured output tokens, request budget from tool calls, and per-model-call timeout from entire turn deadline. Enforce production-safe ceilings and coupling constraints; JSON cannot weaken irrevocable security/authorization caps.
+
+Startup validation must be strict (unknown keys/version, bad ranges, incompatible budgets, deleted legacy env values, missing profile, malformed JSON → fail closed). JSON must not contain instructions to grant permissions, provider tool allowlists as authority, token material, user-specific secrets or MCP discovery responses. One immutable effective config snapshot per process/session; log non-secret fingerprint and selected profile, including evaluated SHA/config in test/eval output. Inspect whether resource packages/working directory reliably locate JSON in Docker and test.
+
+### 6.3 Execution proof instead of cosmetic centralization
+
+Produce table `variable | old owner/file/env | consumers | effective value | new json key or invariant/exclusion | default | tests | deletion evidence`. Include runtime grep after changes for *all* old env names and literal limits; any residual string in live code needs justified classification. Tests must demonstrate altering JSON **actually changes** `Agent`, `UsageLimits`, provider request params, output cap, budgets and telemetry where applicable, not merely updates a parsed dictionary.
+
+Verify independently that `delia-api/app/infrastructure/model_invocation/pydantic_ai_adapter.py` shares the same resolved typed config and never reads alternate scattered runtime defaults. No new planner, semantic dispatcher, config registry or duplicate config service.
+
+### 6.4 Required verification / acceptance
+
+RED tests (before changes): legacy selection reachable, distributed limits; GREEN tests: unknown/legacy engine fails closed, only Pydantic AI, JSON valid/invalid/schema version, secrets excluded, full source-of-truth effect, typed caps, provider and local SDK signatures; owner READ E02/E03/E05, evidence E04/E06/E10 honest, clarification E07, denial E08, NDJSON E09; independent STT remains stable; complete backend tests **after last diff**, runtime rebuild and E01–E10 **on evaluated SHA**. No production deploy. If cannot run true E2E, mark `TEST_NOT_RUN` and verdict `ACCEPT_WITH_RESIDUAL` or `INCONCLUSIVE`, never `ACCEPT`.
+
+Critical condition: **Do not delete tests merely because they expose behavior still promised by product contracts**. Replace obsolete implementation-coupled tests with real native-path behavioral equivalents, including residual coverage of the 77 tests deleted in doc242.
+
+No stage phase advance by documentation. Document end-state, removed settings, all effective JSON settings, explicitly excluded security/secret/STT settings, file changes, tests, runtime SHA, commit/push, unresolved decisions. Update doc239 + ledger and publish next available numbered report after doc243. Avoid duplicated historical doc241 names by precise filename/links rather than silent renumbering.
+
+**EXECUTION ACCEPTANCE:** zero executable legacy intelligence runtime, exactly one canonical non-secret tuning JSON, native Pydantic AI using all effective tunables, no scattered duplicate defaults, no regressions in authority/evidence/Outcome, and independently verified local runtime results. Production deploy NOT_AUTHORIZED.
