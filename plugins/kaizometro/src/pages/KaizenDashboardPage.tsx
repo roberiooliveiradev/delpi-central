@@ -56,6 +56,8 @@ import { KZ_GHOST_BTN } from "../components/ui/ghostChrome";
 type Props = {
   onNavigate: (path: string) => void;
   branchOptions: BranchOption[];
+  /** Unidades com permissão de escrita — filtro padrão do usuário. */
+  defaultUnits?: string[];
 };
 
 function toKaizenSeriesGranularity(suggested: ChartGranularity): KaizenSeriesGranularity {
@@ -95,7 +97,7 @@ function withLabels(buckets: KaizenSummaryBucket[], labelOf: (key: string) => st
   return buckets.map((bucket) => ({ key: bucket.key, label: labelOf(bucket.key), value: bucket.value }));
 }
 
-export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
+export function KaizenDashboardPage({ onNavigate, branchOptions, defaultUnits = [] }: Props) {
   const initialFilters = useMemo(() => readDashboardFilters(), []);
   const multiUnit = isMultiUnitAccount(branchOptions);
   const allowedCodes = useMemo(
@@ -112,19 +114,18 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
       branchOptions.some((o) => o.value === code),
     );
     if (fromUrl.length) return fromUrl;
-    if (branchOptions.length === 1) return [branchOptions[0].value];
+    // Default = escopo de escrita do usuário (sua filial); quem escreve
+    // em todas as unidades começa em "Todas" (vazio = consolidado).
+    if (defaultUnits.length === 1) return [defaultUnits[0]];
     return [];
   });
 
   useEffect(() => {
     setUnits((current) => {
       const next = current.filter((code) => allowedCodes.has(code));
-      if (next.length === 0 && branchOptions.length === 1) {
-        return [branchOptions[0].value];
-      }
       return next.length === current.length ? current : next;
     });
-  }, [allowedCodes, branchOptions]);
+  }, [allowedCodes]);
 
   const {
     dateStart,

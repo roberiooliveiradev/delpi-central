@@ -37,11 +37,23 @@ def allowed_branch_codes() -> set[str]:
     return allowed
 
 
+def writable_branch_codes() -> set[str]:
+    """Unidades que o usuário pode alterar (write scope — JWT branch-*)."""
+    return allowed_branch_codes()
+
+
 def branch_view_allowed(branch: str) -> bool:
+    """Escopo de ESCRITA: usuário só altera kaizens das próprias unidades."""
     code = str(branch or "").strip()
     if code not in _ALL_BRANCHES:
         return False
     return code in allowed_branch_codes()
+
+
+def branch_read_allowed(branch: str) -> bool:
+    """Escopo de LEITURA: qualquer unidade conhecida do Kaizômetro."""
+    code = str(branch or "").strip()
+    return code in _ALL_BRANCHES
 
 
 def branch_access_error(branch: str):
@@ -65,25 +77,28 @@ def no_branch_scope_error():
     )
 
 
+def branch_write_error(branch: str):
+    """Gate de ESCRITA: usuário só altera kaizens das próprias unidades."""
+    return branch_access_error(branch)
+
+
 def resolve_query_branch(branch: str | None) -> tuple[str | None, object | None]:
-    """Resolve filtro de listagem/summary.
+    """Resolve filtro de listagem/summary (escopo de LEITURA).
 
     Returns:
         (branch_efetivo, erro_http). ``branch_efetivo`` None = todas as
-        unidades permitidas (usuário tem as duas).
+        unidades — leitura é permitida em qualquer filial; a restrição
+        RBAC por ``branch-*`` vale apenas para escrita.
     """
-    allowed = allowed_branch_codes()
-    if not allowed:
-        return None, no_branch_scope_error()
-
     requested = (branch or "").strip() or None
     if requested:
-        err = branch_access_error(requested)
-        if err is not None:
-            return None, err
+        if not branch_read_allowed(requested):
+            return None, error_response(
+                "Unidade desconhecida para o Kaizômetro.",
+                status_code=422,
+                code="INVALID_BRANCH",
+                recoverable=False,
+            )
         return requested, None
-
-    if len(allowed) == 1:
-        return next(iter(allowed)), None
 
     return None, None

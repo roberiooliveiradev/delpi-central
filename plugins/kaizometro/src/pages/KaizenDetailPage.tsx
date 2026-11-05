@@ -196,7 +196,9 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
       : selectedStatus === "recebido"
         ? "draft"
         : "readonly";
-  const editable = mode !== "readonly";
+  const writableCodes = new Set(unitEditOptions.map((o) => o.value));
+  const canWriteRecord = !record || writableCodes.has(record.branch_code);
+  const editable = mode !== "readonly" && canWriteRecord;
 
   // Deriva o formulário da versão selecionada (rascunho/histórico usam o snapshot).
   useEffect(() => {
@@ -431,6 +433,7 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
               <FileDown size={16} aria-hidden="true" />
               Exportar PDF
             </button>
+            {canWriteRecord ? (
             <button
               type="button"
               className="kz-danger-btn"
@@ -440,6 +443,7 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
               <Trash2 size={16} aria-hidden="true" />
               {deletingRecord ? "Excluindo…" : "Excluir"}
             </button>
+            ) : null}
           </>
         }
       />
@@ -453,12 +457,12 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
           selectedRevision={selectedRevision}
           showList={hasMultipleVersions}
           onSelect={setSelectedRevision}
-          onCreateVersion={() => void handleCreateVersion()}
+          onCreateVersion={canWriteRecord ? () => void handleCreateVersion() : undefined}
           creating={creating}
           mode={mode}
-          onImplement={() => void handleImplement()}
+          onImplement={canWriteRecord ? () => void handleImplement() : undefined}
           implementing={implementing}
-          onDelete={() => void handleDeleteVersion()}
+          onDelete={canWriteRecord ? () => void handleDeleteVersion() : undefined}
           deleting={deletingVersion}
         />
       ) : null}

@@ -25,12 +25,12 @@ type Props = {
   /** Exibe a lista de versões (pills). Com versão única, só o botão "Nova versão" aparece. */
   showList: boolean;
   onSelect: (revisionNumber: number) => void;
-  onCreateVersion: () => void;
+  onCreateVersion?: () => void;
   creating: boolean;
   mode: SelectionMode;
-  onImplement: () => void;
+  onImplement?: () => void;
   implementing: boolean;
-  onDelete: () => void;
+  onDelete?: () => void;
   deleting: boolean;
 };
 
@@ -64,15 +64,17 @@ export function KaizenVersionSwitcher({
             {ordered.length} {ordered.length === 1 ? "versão" : "versões"}
           </span>
         </div>
-        <button
-          type="button"
-          className="kz-primary-btn"
-          onClick={onCreateVersion}
-          disabled={creating}
-        >
-          <Plus size={14} aria-hidden="true" />
-          {creating ? "Criando cópia…" : "Nova versão"}
-        </button>
+        {onCreateVersion ? (
+          <button
+            type="button"
+            className="kz-primary-btn"
+            onClick={onCreateVersion}
+            disabled={creating}
+          >
+            <Plus size={14} aria-hidden="true" />
+            {creating ? "Criando cópia…" : "Nova versão"}
+          </button>
+        ) : null}
       </header>
 
       {showList ? (
@@ -127,29 +129,33 @@ export function KaizenVersionSwitcher({
             <strong>salve e torne esta versão ativa</strong>.
           </div>
           <div className="kz-versions__implement">
-            <HintAction
-              hint={KAIZEN_HELP_TOOLTIPS.improvements.implement}
-              ariaLabel="Ajuda: tornar versão ativa"
-            >
+            {onImplement ? (
+              <HintAction
+                hint={KAIZEN_HELP_TOOLTIPS.improvements.implement}
+                ariaLabel="Ajuda: tornar versão ativa"
+              >
+                <button
+                  type="button"
+                  className="kz-primary-btn"
+                  onClick={onImplement}
+                  disabled={implementing || deleting}
+                >
+                  <Rocket size={14} aria-hidden="true" />
+                  {implementing ? "Ativando…" : "Salvar e tornar ativa"}
+                </button>
+              </HintAction>
+            ) : null}
+            {onDelete ? (
               <button
                 type="button"
-                className="kz-primary-btn"
-                onClick={onImplement}
+                className="kz-danger-btn"
+                onClick={onDelete}
                 disabled={implementing || deleting}
               >
-                <Rocket size={14} aria-hidden="true" />
-                {implementing ? "Ativando…" : "Salvar e tornar ativa"}
+                <Trash2 size={14} aria-hidden="true" />
+                {deleting ? "Excluindo…" : "Excluir rascunho"}
               </button>
-            </HintAction>
-            <button
-              type="button"
-              className="kz-danger-btn"
-              onClick={onDelete}
-              disabled={implementing || deleting}
-            >
-              <Trash2 size={14} aria-hidden="true" />
-              {deleting ? "Excluindo…" : "Excluir rascunho"}
-            </button>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -162,15 +168,17 @@ export function KaizenVersionSwitcher({
             {STATUS_LABELS[versionStatus(selected!)]}) — somente leitura. Para mudanças, crie uma
             nova versão.
           </span>
-          <button
-            type="button"
-            className="kz-danger-btn"
-            onClick={onDelete}
-            disabled={deleting}
-          >
-            <Trash2 size={14} aria-hidden="true" />
-            {deleting ? "Excluindo…" : "Excluir versão"}
-          </button>
+          {onDelete ? (
+            <button
+              type="button"
+              className="kz-danger-btn"
+              onClick={onDelete}
+              disabled={deleting}
+            >
+              <Trash2 size={14} aria-hidden="true" />
+              {deleting ? "Excluindo…" : "Excluir versão"}
+            </button>
+          ) : null}
         </div>
       ) : null}
     </section>

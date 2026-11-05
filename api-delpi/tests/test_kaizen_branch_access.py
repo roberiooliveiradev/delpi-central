@@ -48,9 +48,10 @@ def test_branch_01_only() -> None:
         assert allowed_branch_codes() == {"01"}
         assert branch_view_allowed("01") is True
         assert branch_view_allowed("02") is False
+        # Leitura: filtro ausente resolve para "todas" (sem escopo forçado).
         branch, err = resolve_query_branch(None)
         assert err is None
-        assert branch == "01"
+        assert branch is None
 
 
 def test_both_branches_resolve_all() -> None:
@@ -66,14 +67,28 @@ def test_both_branches_resolve_all() -> None:
         assert branch is None
 
 
-def test_requested_branch_forbidden() -> None:
+def test_requested_branch_readable_but_not_writable() -> None:
+    """Filial fora do JWT: leitura liberada (resolve_query_branch),
+    escrita segue bloqueada (branch_access_error)."""
     user = SimpleNamespace(is_superadmin=False, permissions=[KAIZOMETRO_BRANCH_01])
     get_user, has_perm = _patch_user(user)
     with get_user, has_perm:
         branch, err = resolve_query_branch("02")
+        assert err is None
+        assert branch == "02"
+        assert branch_access_error("02") is not None
+        assert branch_access_error("02").status_code == 403
+        assert branch_access_error("01") is None
+
+
+def test_requested_branch_invalid() -> None:
+    user = SimpleNamespace(is_superadmin=True, permissions=[])
+    get_user, has_perm = _patch_user(user)
+    with get_user, has_perm:
+        branch, err = resolve_query_branch("99")
         assert branch is None
         assert err is not None
-        assert err.status_code == 403
+        assert err.status_code == 422
 
 
 def test_superadmin_allows_all() -> None:

@@ -18,6 +18,7 @@ from app.application.security.api_delpi_permissions import (
 from app.interface.http.routes.quality.kaizen_branch_access import (
     allowed_branch_codes,
     branch_access_error,
+    branch_read_allowed,
     resolve_query_branch,
 )
 from app.application.services.kaizen.kaizen_evidence_storage import KaizenEvidenceStorageError
@@ -198,13 +199,28 @@ def _gate_loaded_branch(record: dict | None):
 
 
 def _require_record_branch(repo, record_id: str, *, with_participants: bool = False):
-    """Retorna (record, error_response)."""
+    """Retorna (record, error_response) — gate de ESCRITA por unidade."""
     data = repo.get_record(record_id, with_participants=with_participants)
     if data is None:
         return None, not_found_response("Kaizen não encontrado.")
     err = _gate_loaded_branch(data)
     if err is not None:
         return None, err
+    return data, None
+
+
+def _require_record_read(repo, record_id: str, *, with_participants: bool = False):
+    """Retorna (record, error_response) — gate de LEITURA: qualquer unidade."""
+    data = repo.get_record(record_id, with_participants=with_participants)
+    if data is None:
+        return None, not_found_response("Kaizen não encontrado.")
+    if not branch_read_allowed(str(data.get("branch_code") or "")):
+        return None, error_response(
+            "Unidade desconhecida para o Kaizômetro.",
+            status_code=422,
+            code="INVALID_BRANCH",
+            recoverable=False,
+        )
     return data, None
 
 
@@ -458,7 +474,7 @@ def get_kaizen_savings_investment_series(
 def get_kaizen_record(record_id: str):
     try:
         repo = build_kaizen_repository()
-        data, err = _require_record_branch(repo, record_id, with_participants=True)
+        data, err = _require_record_read(repo, record_id, with_participants=True)
         if err is not None:
             return err
         return api_delpi_success(data, operation_id="get_kaizen_record")
@@ -534,7 +550,7 @@ def delete_kaizen_record(record_id: str):
 def list_kaizen_revisions(record_id: str):
     try:
         repo = build_kaizen_repository()
-        _rec, err = _require_record_branch(repo, record_id)
+        _rec, err = _require_record_read(repo, record_id)
         if err is not None:
             return err
         items = repo.list_revisions(record_id)
@@ -553,7 +569,7 @@ def list_kaizen_revisions(record_id: str):
 def get_kaizen_revision(record_id: str, revision_number: int):
     try:
         repo = build_kaizen_repository()
-        _rec, err = _require_record_branch(repo, record_id)
+        _rec, err = _require_record_read(repo, record_id)
         if err is not None:
             return err
         revision = repo.get_revision(record_id, revision_number)
@@ -570,7 +586,7 @@ def get_kaizen_revision(record_id: str, revision_number: int):
 def get_kaizen_at_date(record_id: str, date: str = Query(..., description="Data YYYY-MM-DD")):
     try:
         repo = build_kaizen_repository()
-        _rec, err = _require_record_branch(repo, record_id)
+        _rec, err = _require_record_read(repo, record_id)
         if err is not None:
             return err
         revision = repo.get_revision_at(record_id, date)
@@ -716,7 +732,7 @@ def implement_kaizen_version(
 def list_kaizen_history(record_id: str):
     try:
         repo = build_kaizen_repository()
-        _rec, err = _require_record_branch(repo, record_id)
+        _rec, err = _require_record_read(repo, record_id)
         if err is not None:
             return err
         items = repo.list_history(record_id)
@@ -735,7 +751,7 @@ def list_kaizen_history(record_id: str):
 def list_kaizen_audit_log(record_id: str):
     try:
         repo = build_kaizen_repository()
-        _rec, err = _require_record_branch(repo, record_id)
+        _rec, err = _require_record_read(repo, record_id)
         if err is not None:
             return err
         items = repo.list_audit_log(record_id)
@@ -766,7 +782,7 @@ def get_kaizen_savings_timeline(
             date_end=date_end,
         )
         repo = build_kaizen_repository()
-        _rec, err = _require_record_branch(repo, record_id)
+        _rec, err = _require_record_read(repo, record_id)
         if err is not None:
             return err
         data = repo.savings_timeline(record_id, date_start=start_date, date_end=end_date)
@@ -788,7 +804,7 @@ def get_kaizen_savings_timeline(
 def list_kaizen_evidences(record_id: str):
     try:
         record_repo = build_kaizen_repository()
-        _rec, err = _require_record_branch(record_repo, record_id)
+        _rec, err = _require_record_read(record_repo, record_id)
         if err is not None:
             return err
         repo = build_kaizen_evidence_repository()
@@ -872,7 +888,7 @@ async def attach_kaizen_evidence(
 def download_kaizen_evidence(record_id: str, evidence_id: str):
     try:
         record_repo = build_kaizen_repository()
-        _rec, err = _require_record_branch(record_repo, record_id)
+        _rec, err = _require_record_read(record_repo, record_id)
         if err is not None:
             return err
         repo = build_kaizen_evidence_repository()

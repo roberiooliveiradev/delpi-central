@@ -26,6 +26,8 @@ import type { BranchOption } from "../utils/kaizenBranchPermissions";
 type Props = {
   onNavigate: (path: string) => void;
   branchOptions: BranchOption[];
+  /** Filiais com permissão de escrita — filtro padrão do usuário. */
+  defaultBranches?: string[];
   initialStatus?: string;
   initialBranch?: string;
 };
@@ -33,10 +35,15 @@ type Props = {
 export function KaizenListPage({
   onNavigate,
   branchOptions,
+  defaultBranches = [],
   initialStatus,
   initialBranch,
 }: Props) {
   const allowAllBranches = branchOptions.length > 1;
+  const writableOptions = useMemo(
+    () => branchOptions.filter((o) => defaultBranches.includes(o.value)),
+    [branchOptions, defaultBranches],
+  );
   const [items, setItems] = useState<KaizenRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -47,9 +54,9 @@ export function KaizenListPage({
   const [branches, setBranches] = useState<string[]>(() =>
     initialBranch && branchOptions.some((o) => o.value === initialBranch)
       ? [initialBranch]
-      : allowAllBranches
-        ? []
-        : [branchOptions[0]?.value ?? ""].filter(Boolean),
+      : defaultBranches.length === 1
+        ? [defaultBranches[0]]
+        : [],
   );
   const [statuses, setStatuses] = useState<string[]>(() =>
     initialStatus ? [initialStatus] : [],
@@ -59,14 +66,10 @@ export function KaizenListPage({
   const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
-    if (
-      !allowAllBranches &&
-      branchOptions[0] &&
-      (branches.length !== 1 || branches[0] !== branchOptions[0].value)
-    ) {
-      setBranches([branchOptions[0].value]);
-    }
-  }, [allowAllBranches, branchOptions, branches]);
+    setBranches((current) =>
+      current.filter((code) => branchOptions.some((o) => o.value === code)),
+    );
+  }, [branchOptions]);
 
   const branchParam = branches.length === 1 ? branches[0] : undefined;
 
@@ -256,7 +259,7 @@ export function KaizenListPage({
       <KaizenShareSuggestionModal
         open={shareOpen}
         onClose={() => setShareOpen(false)}
-        branchOptions={branchOptions}
+        branchOptions={writableOptions}
         initialBranchCode={branchParam}
       />
 

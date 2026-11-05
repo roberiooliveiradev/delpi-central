@@ -5,6 +5,7 @@ import { navigateKaizen } from "../utils/navigation";
 import {
   branchOptionsForPermissions,
   defaultBranchCode,
+  viewableBranchOptions,
 } from "../utils/kaizenBranchPermissions";
 import { KaizenDashboardPage } from "./KaizenDashboardPage";
 import { KaizenDetailPage } from "./KaizenDetailPage";
@@ -26,6 +27,7 @@ export function CadastroKaizenPage({ pathname, permissions, isSuperadmin }: Prop
     () => branchOptionsForPermissions(permissions, isSuperadmin),
     [permissions, isSuperadmin],
   );
+  const viewableOptions = useMemo(() => viewableBranchOptions(), []);
   const defaultBranch = useMemo(
     () => defaultBranchCode(permissions, isSuperadmin),
     [permissions, isSuperadmin],
@@ -47,7 +49,8 @@ export function CadastroKaizenPage({ pathname, permissions, isSuperadmin }: Prop
     return (
       <KaizenDashboardPage
         onNavigate={handleNavigate}
-        branchOptions={branchOptions}
+        branchOptions={viewableOptions}
+        defaultUnits={branchOptions.map((o) => o.value)}
       />
     );
   }
@@ -78,7 +81,8 @@ export function CadastroKaizenPage({ pathname, permissions, isSuperadmin }: Prop
     <KaizenListPage
       key={`list|${externalRoute.status ?? ""}|${externalRoute.branch ?? ""}`}
       onNavigate={handleNavigate}
-      branchOptions={branchOptions}
+      branchOptions={viewableOptions}
+      defaultBranches={branchOptions.map((o) => o.value)}
       initialStatus={externalRoute.status}
       initialBranch={externalRoute.branch}
     />

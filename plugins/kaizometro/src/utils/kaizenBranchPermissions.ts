@@ -38,6 +38,24 @@ export function branchOptionsForPermissions(
   }));
 }
 
+/**
+ * Escopo de LEITURA: todas as unidades do Kaizômetro.
+ * A restrição `branch-*` vale apenas para escrita — qualquer usuário
+ * com acesso ao módulo pode visualizar kaizens de outras unidades.
+ */
+export function viewableBranchOptions(): BranchOption[] {
+  return BRANCHES.map((b) => ({ value: b.code, label: b.label }));
+}
+
+/** Escopo de ESCRITA: só unidades `branch-*` do JWT (ou superadmin). */
+export function canWriteBranch(
+  permissions: string[] | undefined,
+  isSuperadmin: boolean | undefined,
+  branchCode: string,
+): boolean {
+  return allowedBranchCodes(permissions, isSuperadmin).includes(branchCode);
+}
+
 /** Conta multi-unidade: mais de uma `branch-*` (ou superadmin com ambas). */
 export function isMultiUnitAccount(branchOptions: readonly BranchOption[]): boolean {
   return branchOptions.length > 1;
