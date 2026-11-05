@@ -285,6 +285,67 @@ class PostgresMyWegNeedsRepository:
                 rows = cursor.fetchall()
         return [self._map_record(row) for row in rows]
 
+    def get_sb1_resolution_coverage(self, *, batch_id: str) -> dict[str, Any]:
+        """Autoridade PG: lote já resolvido sem unavailable (evita reconsulta a cada timer)."""
+        coverage_sql = f"""
+            SELECT
+                (SELECT COUNT(*)::int FROM {_RECORDS} WHERE batch_id = %s::uuid) AS record_count,
+                (SELECT COUNT(*)::int FROM {_SB1_RESOLUTIONS} WHERE batch_id = %s::uuid) AS resolution_count,
+                (
+                    SELECT COUNT(*)::int FROM {_SB1_RESOLUTIONS}
+                    WHERE batch_id = %s::uuid AND status = 'unavailable'
+                ) AS unavailable_count,
+                (
+                    SELECT id::text FROM {_SB1_RUNS}
+                    WHERE batch_id = %s::uuid
+                      AND dry_run = FALSE
+                      AND status = 'completed'
+                      AND semantics_proven = TRUE
+                    ORDER BY finished_at DESC NULLS LAST, started_at DESC
+                    LIMIT 1
+                ) AS resolution_run_id,
+                (
+                    SELECT counts_json FROM {_SB1_RUNS}
+                    WHERE batch_id = %s::uuid
+                      AND dry_run = FALSE
+                      AND status = 'completed'
+                      AND semantics_proven = TRUE
+                    ORDER BY finished_at DESC NULLS LAST, started_at DESC
+                    LIMIT 1
+                ) AS counts_json
+        """
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    coverage_sql,
+                    (batch_id, batch_id, batch_id, batch_id, batch_id),
+                )
+                row = cursor.fetchone()
+        if row is None:
+            return {"complete": False}
+        data = dict(row)
+        record_count = int(data.get("record_count") or 0)
+        resolution_count = int(data.get("resolution_count") or 0)
+        unavailable_count = int(data.get("unavailable_count") or 0)
+        run_id = data.get("resolution_run_id")
+        counts = data.get("counts_json") or {}
+        if isinstance(counts, str):
+            counts = json.loads(counts)
+        complete = bool(
+            run_id
+            and record_count > 0
+            and resolution_count >= record_count
+            and unavailable_count == 0
+        )
+        return {
+            "complete": complete,
+            "record_count": record_count,
+            "resolution_count": resolution_count,
+            "unavailable_count": unavailable_count,
+            "resolution_run_id": run_id,
+            "counts": dict(counts) if isinstance(counts, dict) else {},
+        }
+
     def persist_sb1_resolution_batch(
         self,
         *,

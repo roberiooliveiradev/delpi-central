@@ -2,6 +2,7 @@
 
 > **TASK:** `MYWEG-NEEDS-E4-PROTHEUS-PRODUCT-MATCHING`  
 > **Rework:** `MYWEG-NEEDS-E4-REWORK-FINAL-HOMOLOGATION`  
+> **Automação:** `MYWEG-NEEDS-AUTOMATIC-SB1-RESOLUTION`  
 > **Escopo:** filial DELPI `02` · empresa MyWEG `1009` · centro `1106`  
 > **Somente leitura no Protheus.** Snapshots V025 imutáveis.
 
@@ -10,14 +11,14 @@
 | Decisão | Valor |
 |---|---|
 | EXISTING_EQUIVALENT | PARTIAL (`GET /products/search` é LIKE por prefixo; `fetch_product_by_*` é unitário TOP 1) |
-| REUSE_DECISION | EXTEND |
+| REUSE_DECISION | EXTEND — lookup tipado + resolve S2S + orquestração no publicador Linux |
 
 ## Owners
 
 | Owner | Responsabilidade |
 |---|---|
-| api-delpi | `POST /products/sb1-identity-lookup` (`lookup_products_sb1_identity`) — igualdade exata B1_COD/B1_REFEREN em lote + classificação |
-| production-control-api | Resolução manual S2S, projeção V026, consultas JWT enriquecidas |
+| api-delpi | `POST /products/sb1-identity-lookup` — igualdade exata + classificação; política 9/8 **opcional** via `disambiguation_policy` |
+| production-control-api | `MyWegSb1ResolveService`, projeção V026, S2S resolve, publicador que orquestra E2→E4 |
 | plugins/production-control | Labels e colunas da tela Necessidades WEG |
 | Core | Permissões existentes (`myweg-needs.view` + filial-02); resolve **não** usa view |
 
@@ -37,7 +38,9 @@ Persistência de vínculos exige `evaluate_field_semantics` com amostra ≥20 pa
 ### api-delpi — `POST /products/sb1-identity-lookup`
 
 - Auth: `api-delpi.access` (S2S service token ok)
-- Request: `{ branch, items[{ client_key, product_code?, customer_reference? }] }` (max 1000)
+- Request: `{ branch, items[{ client_key, product_code?, customer_reference? }], disambiguation_policy? }` (max 1000)
+- `disambiguation_policy` omitido = classificação neutra (demais consumidores)
+- `disambiguation_policy=prefer_production_over_sample` = política PCP MyWEG (ver abaixo)
 - Response: `results[]` com `match_status` ∈ confirmed|not_found|ambiguous|divergent|blocked|pending
 - Sem LIKE, sem TOP 1 que esconda ambiguidade, sem efeitos colaterais
 
@@ -46,12 +49,14 @@ Persistência de vínculos exige `evaluate_field_semantics` com amostra ≥20 pa
 `POST /integrations/myweg/need-batches/sb1-resolve`
 
 ```json
-{ "collection_id": "...", "dry_run": true }
+{ "collection_id": "...", "dry_run": true, "skip_if_complete": false }
 ```
 
 - Exige `X-Delpi-Service-Token`
 - `dry_run=true` (default): diagnóstico + contagens, sem persistir
 - `dry_run=false`: upsert atômico (run + vínculos na mesma transação) em `myweg_need_sb1_resolutions` **somente** se semântica comprovada
+- `skip_if_complete=true`: se PG já tem run completed + vínculos cobrindo o lote sem `unavailable`, retorna `skipped` sem reconsultar Protheus
+- MyWEG resolve sempre envia `prefer_production_over_sample` ao lookup
 
 URL no gateway:
 
@@ -59,6 +64,32 @@ URL no gateway:
 http://127.0.0.1/apps/production-control-api/integrations/myweg/need-batches/sb1-resolve
 ```
 
+### Automação diária (publicador)
+
+Após ingestão bem-sucedida (ou `already_published` no watermark), o job
+`myweg-needs-publisher` chama o mesmo endpoint com `dry_run=false` e
+`skip_if_complete=true`. Rollback: `MYWEG_PUBLISHER_AUTO_SB1_RESOLVE=false`.
+Detalhes operacionais: `MYWEG-NEEDS-LINUX-PUBLISHER.md`.
+
+## Regra PCP — códigos DELPI 8 e 9
+
+Informada pelo PCP; aplicada **somente** com `disambiguation_policy=prefer_production_over_sample`:
+
+| Prefixo | Significado |
+|---|---|
+| `8…` | Fase de amostra |
+| `9…` | Produto de produção |
+
+Regras:
+
+1. Mesma referência WEG (`B1_REFEREN`) com amostra e produção → priorizar o **único** código 9 elegível (não bloqueado).
+2. Sem 9 elegível e um único 8 elegível → confirmar 8 provisório (`provisional_sample_code_no_production`).
+3. Dois ou mais códigos 9 elegíveis → `ambiguous` (`multiple_production_codes`).
+4. Produto bloqueado (`B1_MSBLQL=1`) não é escolhido.
+5. Divergência real código×referência permanece `divergent` (sem associação arbitrária).
+6. Resposta preserva código informado (`product_code`), código verificado e `reason` / `matched_by` (`reference_prefer_production` quando houve desempate).
+
+Caso real: Material WEG `19106407` · informado `80015942` · produção `90264221` → verificado `90264221`.
 ## Migration
 
 `V026__myweg_need_sb1_resolutions.sql` — aditiva:
@@ -106,13 +137,16 @@ Contagens (desta coleta; **não** é invariante permanente):
 
 ### Persistência produtiva
 
-**PENDENTE de autorização explícita.** Não executar `dry_run=false` automaticamente.
+A automação do publicador executa `dry_run=false` **somente** quando
+`evaluate_field_semantics` comprova a hipótese e os gates S2S estão ok.
+Rollback: desligar `MYWEG_PUBLISHER_AUTO_SB1_RESOLVE` ou o timer.
 
-Procedimento após autorização:
+Homologação de uma **nova** coleta real pós-deploy da automação: **PENDING**
+até evidência AC-01/AC-02 (publicada + SB1 persistida sem ação humana).
 
-1. Repetir dry-run e confirmar 532 confirmed / `semantics.proven`
-2. Conferir amostra sanitizada (código origem, verificado, descrição SB1, `matched_by`)
-3. `dry_run=false` uma vez
-4. Reexecutar e confirmar idempotência (mesmo número de resoluções)
-5. Smoke JWT + Portal PCP
-6. Sem cron / sem backfill em massa
+Procedimento manual (diagnóstico / intervenção):
+
+1. Dry-run S2S e conferir `semantics.proven` + contagens
+2. `dry_run=false` uma vez se necessário
+3. Reexecutar com `skip_if_complete=true` e confirmar `skipped`
+4. Smoke JWT + Portal PCP / comparação E5

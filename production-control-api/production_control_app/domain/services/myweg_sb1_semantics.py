@@ -26,11 +26,16 @@ def evaluate_field_semantics(
         for row in pair_results
         if row.get("product_code") and row.get("customer_reference")
     ]
+    # code_and_reference = alinhamento direto; reference_prefer_production =
+    # mesmo B1_REFEREN com preferência PCP 9/8 (ainda prova o mapeamento dos campos).
+    _ALIGNED_MATCHED_BY = frozenset(
+        {"code_and_reference", "reference_prefer_production"}
+    )
     confirmed_aligned = [
         row
         for row in both_present
         if row.get("match_status") == "confirmed"
-        and row.get("matched_by") == "code_and_reference"
+        and row.get("matched_by") in _ALIGNED_MATCHED_BY
     ]
     divergent_mismatch = [
         row

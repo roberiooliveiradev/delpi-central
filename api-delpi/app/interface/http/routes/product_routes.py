@@ -296,6 +296,14 @@ class Sb1IdentityLookupBatchRequest(BaseModel):
 
     branch: str = Field(..., min_length=2, max_length=2)
     items: list[Sb1IdentityLookupItemBody] = Field(default_factory=list)
+    disambiguation_policy: str | None = Field(
+        default=None,
+        max_length=80,
+        description=(
+            "Política opcional de desempate. "
+            "prefer_production_over_sample = PCP 9 (produção) sobre 8 (amostra)."
+        ),
+    )
 
 
 _PHYSICAL_LOCATIONS_FIELDS = {
@@ -377,6 +385,7 @@ def lookup_products_sb1_identity(
                     )
                     for item in body.items
                 ),
+                disambiguation_policy=body.disambiguation_policy,
             )
         )
         return product_success(

@@ -1,4 +1,4 @@
-"""Descoberta e publicação sequencial de coletas pendentes (sem backfill em massa)."""
+"""Descoberta, publicação e resolução SB1 de coletas pendentes (sem backfill em massa)."""
 
 from __future__ import annotations
 
@@ -167,6 +167,9 @@ def run_pending_publish(
                 "rejected": 0,
                 "blocked": 0,
                 "skipped": 0,
+                "sb1_resolved": 0,
+                "sb1_skipped": 0,
+                "sb1_failed": 0,
                 "items": [],
             }
 
@@ -185,6 +188,9 @@ def run_pending_publish(
                 "rejected": 0,
                 "blocked": 0,
                 "skipped": 0,
+                "sb1_resolved": 0,
+                "sb1_skipped": 0,
+                "sb1_failed": 0,
                 "items": [],
             }
 
@@ -199,22 +205,30 @@ def run_pending_publish(
         eligible = [item for item in discovered if item.status == "eligible"]
         blocked = [item for item in discovered if item.status == "blocked"]
         conflicts = [item for item in discovered if item.status == "conflict"]
-        skipped = [
-            item
-            for item in discovered
-            if item.status in {"already_published", "before_watermark"}
+        already_published = [
+            item for item in discovered if item.status == "already_published"
+        ]
+        before_watermark = [
+            item for item in discovered if item.status == "before_watermark"
         ]
 
         to_process = eligible[: max(0, max_batches)]
         items: list[dict[str, Any]] = []
         published = 0
         rejected = 0
+        sb1_resolved = 0
+        sb1_skipped = 0
+        sb1_failed = 0
 
-        for candidate in blocked + conflicts + skipped:
+        for candidate in blocked + conflicts + before_watermark:
             items.append(_candidate_summary(candidate))
 
         http_client = client
-        if not dry_run and to_process and http_client is None:
+        needs_http = (not dry_run) and (
+            bool(to_process)
+            or (config.auto_sb1_resolve and bool(already_published))
+        )
+        if needs_http and http_client is None:
             http_client = MyWegNeedsPublisherClient(
                 base_url=config.api_base_url,
                 service_token=config.service_token,
@@ -230,12 +244,75 @@ def run_pending_publish(
                 state=state,
                 client=http_client,
                 stability_wait_seconds=config.stability_wait_seconds,
+                auto_sb1_resolve=config.auto_sb1_resolve,
             )
             items.append(detail)
             if detail.get("status") in {"published", "idempotent", "dry_run_ok"}:
                 published += 1
             elif detail.get("status") in {"failed", "conflict"}:
                 rejected += 1
+            sb1 = detail.get("sb1") or {}
+            if sb1.get("status") in {"resolved", "dry_run_ok"}:
+                sb1_resolved += 1
+            elif sb1.get("status") == "already_resolved":
+                sb1_skipped += 1
+            elif sb1.get("status") in {"failed", "auth_failed", "semantics_blocked"}:
+                sb1_failed += 1
+
+        # Recuperação E4: lotes already_published no watermark sem SB1 completa.
+        recovery_pool = [
+            item
+            for item in already_published
+            if activation is None
+            or include_historical
+            or item.collected_at >= activation
+        ]
+        recovery_limit = max(0, int(config.max_sb1_batches_per_run))
+        recovery_to_run = recovery_pool[:recovery_limit] if config.auto_sb1_resolve else []
+        recovery_deferred = recovery_pool[recovery_limit:] if config.auto_sb1_resolve else recovery_pool
+
+        for candidate in recovery_to_run:
+            detail = _candidate_summary(candidate)
+            if dry_run:
+                detail["sb1"] = {
+                    "status": "dry_run_ok",
+                    "ok": True,
+                    "mode": "recover-already-published",
+                    "note": "Would call sb1-resolve with skip_if_complete=true",
+                }
+                sb1_resolved += 1
+            else:
+                assert http_client is not None
+                sb1 = _resolve_sb1(
+                    client=http_client,
+                    collection_id=candidate.collection_id,
+                    state=state,
+                    payload_sha256=candidate.payload_sha256 or "unknown",
+                )
+                detail["sb1"] = sb1
+                if sb1.get("status") in {"resolved"}:
+                    sb1_resolved += 1
+                elif sb1.get("status") == "already_resolved":
+                    sb1_skipped += 1
+                elif sb1.get("status") in {"failed", "auth_failed", "semantics_blocked"}:
+                    sb1_failed += 1
+            items.append(detail)
+
+        for candidate in recovery_deferred:
+            items.append(
+                {
+                    **_candidate_summary(candidate),
+                    "sb1": {
+                        "status": "deferred_max_sb1_batches",
+                        "reason": (
+                            f"Limite max_sb1_batches_per_run="
+                            f"{config.max_sb1_batches_per_run}."
+                            if config.auto_sb1_resolve
+                            else "MYWEG_PUBLISHER_AUTO_SB1_RESOLVE desligado."
+                        ),
+                    },
+                }
+            )
 
         deferred = eligible[max(0, max_batches) :]
         for candidate in deferred:
@@ -248,21 +325,21 @@ def run_pending_publish(
             )
 
         return {
-            "ok": rejected == 0,
+            "ok": rejected == 0 and sb1_failed == 0,
             "mode": "dry-run-pending" if dry_run else "publish-pending",
             "status": "completed",
             "activation_collected_at": activation.isoformat() if activation else None,
             "max_batches": max_batches,
             "include_historical": include_historical,
+            "auto_sb1_resolve": config.auto_sb1_resolve,
             "pending": len(eligible),
             "published": published,
             "rejected": rejected,
             "blocked": len(blocked) + len(conflicts),
-            "skipped": len(skipped) + len(deferred),
-            "sb1_note": (
-                "Coletas novas entram com SB1 pending; dry_run=false de matching "
-                "NÃO é automatizado por este publicador."
-            ),
+            "skipped": len(before_watermark) + len(deferred),
+            "sb1_resolved": sb1_resolved,
+            "sb1_skipped": sb1_skipped,
+            "sb1_failed": sb1_failed,
             "items": items,
         }
 
@@ -274,6 +351,7 @@ def _process_one(
     state: PublisherStateStore,
     client: MyWegNeedsPublisherClient | None,
     stability_wait_seconds: float,
+    auto_sb1_resolve: bool,
 ) -> dict[str, Any]:
     base = _candidate_summary(candidate)
     try:
@@ -298,7 +376,14 @@ def _process_one(
     base["idempotency_key"] = built["idempotency_key"]
 
     if dry_run:
-        return {**base, "status": "dry_run_ok", "ok": True, "http": {"sent": False}}
+        out = {**base, "status": "dry_run_ok", "ok": True, "http": {"sent": False}}
+        if auto_sb1_resolve:
+            out["sb1"] = {
+                "status": "dry_run_ok",
+                "ok": True,
+                "note": "Would resolve SB1 after successful ingest",
+            }
+        return out
 
     assert client is not None
     result = client.publish(built["payload"], idempotency_key=built["idempotency_key"])
@@ -312,7 +397,7 @@ def _process_one(
             result=f"created={result.created}",
             dry_run=False,
         )
-        return {
+        out: dict[str, Any] = {
             **base,
             "status": label,
             "ok": True,
@@ -324,6 +409,16 @@ def _process_one(
                 "attempts": result.attempts,
             },
         }
+        if auto_sb1_resolve:
+            out["sb1"] = _resolve_sb1(
+                client=client,
+                collection_id=artifacts.collection_id,
+                state=state,
+                payload_sha256=sha,
+            )
+            # Ingestão permanece válida mesmo se SB1 falhar (RQ-05).
+            out["ok"] = True
+        return out
 
     status = "conflict" if result.status_code == 409 else "failed"
     state.record_attempt(
@@ -348,6 +443,111 @@ def _process_one(
             "error": result.error,
         },
     }
+
+
+def _resolve_sb1(
+    *,
+    client: MyWegNeedsPublisherClient,
+    collection_id: str,
+    state: PublisherStateStore,
+    payload_sha256: str,
+) -> dict[str, Any]:
+    result = client.resolve_sb1(
+        collection_id=collection_id,
+        dry_run=False,
+        skip_if_complete=True,
+    )
+    data = ((result.body or {}).get("data") or {}) if result.body else {}
+    counts = data.get("counts") or {}
+    base = {
+        "collection_id": collection_id,
+        "http_status": result.status_code,
+        "attempts": result.attempts,
+        "counts": counts,
+        "persisted": result.persisted,
+        "skipped": result.skipped,
+        "resolution_run_id": data.get("resolutionRunId") or data.get("resolution_run_id"),
+        "semantics_proven": (data.get("semantics") or {}).get("proven"),
+    }
+
+    if result.ok and result.skipped:
+        state.record_attempt(
+            collection_id=collection_id,
+            payload_sha256=payload_sha256,
+            status="sb1_already_resolved",
+            http_status=result.status_code,
+            result="skip_if_complete",
+            dry_run=False,
+        )
+        return {**base, "status": "already_resolved", "ok": True}
+
+    if result.ok and result.persisted:
+        state.record_attempt(
+            collection_id=collection_id,
+            payload_sha256=payload_sha256,
+            status="sb1_resolved",
+            http_status=result.status_code,
+            result=_summarize_counts(counts),
+            dry_run=False,
+        )
+        return {**base, "status": "resolved", "ok": True}
+
+    if result.ok and not result.persisted:
+        # dry-run remoto inesperado ou lookup unavailable sem persist
+        error = data.get("error") or "sb1_not_persisted"
+        state.record_attempt(
+            collection_id=collection_id,
+            payload_sha256=payload_sha256,
+            status="sb1_incomplete",
+            http_status=result.status_code,
+            result=str(error)[:300],
+            dry_run=False,
+        )
+        return {
+            **base,
+            "status": "incomplete",
+            "ok": False,
+            "error": error,
+            "reason": "Resolução SB1 não persistida — nova tentativa no próximo timer.",
+        }
+
+    status = "auth_failed" if result.status_code in {401, 403} else "failed"
+    if result.status_code == 422:
+        status = "semantics_blocked"
+    state.record_attempt(
+        collection_id=collection_id,
+        payload_sha256=payload_sha256,
+        status=f"sb1_{status}",
+        http_status=result.status_code,
+        result=(result.error or "")[:300],
+        dry_run=False,
+    )
+    return {
+        **base,
+        "status": status,
+        "ok": False,
+        "error": result.error,
+        "reason": (
+            "Falha SB1 não invalida a ingestão; recuperação no próximo disparo."
+        ),
+    }
+
+
+def _summarize_counts(counts: dict[str, Any]) -> str:
+    parts = [
+        f"{key}={counts.get(key, 0)}"
+        for key in (
+            "confirmed",
+            "ambiguous",
+            "divergent",
+            "not_found",
+            "blocked",
+            "unavailable",
+            "pending",
+        )
+        if counts.get(key)
+    ]
+    return ",".join(parts) if parts else "counts_empty"
 
 
 def _candidate_summary(candidate: PendingCandidate) -> dict[str, Any]:

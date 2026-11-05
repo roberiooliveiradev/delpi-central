@@ -26,6 +26,17 @@ class PublishHttpResult:
     attempts: int
 
 
+@dataclass(frozen=True)
+class Sb1ResolveHttpResult:
+    ok: bool
+    status_code: int | None
+    body: dict[str, Any] | None
+    error: str | None
+    attempts: int
+    skipped: bool
+    persisted: bool
+
+
 def redact_secrets(text: str, token: str) -> str:
     if not text:
         return text
@@ -149,6 +160,108 @@ class MyWegNeedsPublisherClient:
             body=last_body,
             error=last_error or "Falha transitória esgotou tentativas.",
             attempts=attempts,
+        )
+
+    def resolve_sb1(
+        self,
+        *,
+        collection_id: str,
+        dry_run: bool = False,
+        skip_if_complete: bool = True,
+    ) -> Sb1ResolveHttpResult:
+        """POST E4 S2S — resolução SB1 do lote já ingerido."""
+        url = f"{self._base_url}/integrations/myweg/need-batches/sb1-resolve"
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-Delpi-Service-Token": self._service_token,
+            "X-Delpi-Caller-App": self._caller_app,
+        }
+        payload = {
+            "collection_id": collection_id,
+            "dry_run": dry_run,
+            "skip_if_complete": skip_if_complete,
+        }
+        attempts = 0
+        last_error: str | None = None
+        last_status: int | None = None
+        last_body: dict[str, Any] | None = None
+
+        with httpx.Client(timeout=self._timeout, transport=self._transport) as client:
+            while attempts < self._max_attempts:
+                attempts += 1
+                try:
+                    response = client.post(url, json=payload, headers=headers)
+                except (httpx.TimeoutException, httpx.TransportError) as exc:
+                    last_error = redact_secrets(
+                        f"{exc.__class__.__name__}", self._service_token
+                    )
+                    logger.warning(
+                        "myweg_sb1_resolve_transient_error attempt=%s error=%s",
+                        attempts,
+                        last_error,
+                    )
+                    if attempts >= self._max_attempts:
+                        break
+                    self._backoff(attempts)
+                    continue
+
+                last_status = response.status_code
+                try:
+                    last_body = response.json()
+                except ValueError:
+                    last_body = None
+
+                if response.status_code in {200, 201}:
+                    data = (last_body or {}).get("data") or {}
+                    return Sb1ResolveHttpResult(
+                        ok=True,
+                        status_code=response.status_code,
+                        body=last_body,
+                        error=None,
+                        attempts=attempts,
+                        skipped=bool(data.get("skipped")),
+                        persisted=bool(data.get("persisted")),
+                    )
+
+                if response.status_code in _NO_RETRY_STATUS:
+                    message = (last_body or {}).get("message") or response.reason_phrase
+                    return Sb1ResolveHttpResult(
+                        ok=False,
+                        status_code=response.status_code,
+                        body=last_body,
+                        error=redact_secrets(str(message), self._service_token),
+                        attempts=attempts,
+                        skipped=False,
+                        persisted=False,
+                    )
+
+                if response.status_code in _TRANSIENT_STATUS:
+                    last_error = f"HTTP {response.status_code}"
+                    if attempts >= self._max_attempts:
+                        break
+                    self._backoff(attempts)
+                    continue
+
+                message = (last_body or {}).get("message") or response.reason_phrase
+                return Sb1ResolveHttpResult(
+                    ok=False,
+                    status_code=response.status_code,
+                    body=last_body,
+                    error=redact_secrets(str(message), self._service_token),
+                    attempts=attempts,
+                    skipped=False,
+                    persisted=False,
+                )
+
+        return Sb1ResolveHttpResult(
+            ok=False,
+            status_code=last_status,
+            body=last_body,
+            error=last_error or "Falha transitória SB1 esgotou tentativas.",
+            attempts=attempts,
+            skipped=False,
+            persisted=False,
         )
 
     def _backoff(self, attempt: int) -> None:

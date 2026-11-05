@@ -20,3 +20,5 @@ class Sb1IdentityLookupRequest:
 
     branch: str
     items: tuple[Sb1IdentityLookupItem, ...]
+    # Opcional — omitir preserva classificação neutra para demais consumidores.
+    disambiguation_policy: str | None = None

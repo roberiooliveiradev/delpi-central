@@ -23,6 +23,8 @@ class PublisherConfig:
     stability_wait_seconds: float
     max_batches_per_run: int
     activation_collected_at: datetime | None
+    auto_sb1_resolve: bool = True
+    max_sb1_batches_per_run: int = 5
     branch: str = "02"
 
     @classmethod
@@ -68,7 +70,24 @@ class PublisherConfig:
                 os.getenv("MYWEG_PUBLISHER_MAX_BATCHES_PER_RUN") or "5"
             ),
             activation_collected_at=activation,
+            auto_sb1_resolve=_env_bool(
+                "MYWEG_PUBLISHER_AUTO_SB1_RESOLVE", default=True
+            ),
+            max_sb1_batches_per_run=int(
+                os.getenv("MYWEG_PUBLISHER_MAX_SB1_BATCHES_PER_RUN") or "5"
+            ),
         )
+
+
+def _env_bool(name: str, *, default: bool) -> bool:
+    raw = (os.getenv(name) or "").strip().lower()
+    if not raw:
+        return default
+    if raw in {"1", "true", "yes", "on"}:
+        return True
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    return default
 
 
 def _parse_activation(value: str) -> datetime:

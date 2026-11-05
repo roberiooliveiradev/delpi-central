@@ -62,12 +62,21 @@ def resolve_myweg_need_batch_sb1(
     body: dict[str, Any] | None = None,
     caller_app: str | None = Header(default=None, alias="X-Delpi-Caller-App"),
 ):
-    """Resolução manual SB1 — S2S apenas (view JWT não dispara). dry_run default true."""
+    """Resolução SB1 — S2S apenas (view JWT não dispara). dry_run default true.
+
+    Automação do publicador: dry_run=false + skip_if_complete=true evita
+    reconsulta Protheus quando a projeção V026 já cobre o lote sem unavailable.
+    """
     denied = _deny_unless_internal(request)
     if denied is not None:
         return denied
     payload = body or {}
     dry_run = True if payload.get("dry_run") is None else bool(payload.get("dry_run"))
+    skip_if_complete = bool(
+        payload.get("skip_if_complete")
+        if payload.get("skip_if_complete") is not None
+        else payload.get("skipIfComplete")
+    )
     try:
         data = build_myweg_sb1_resolve_service().resolve_batch(
             batch_id=(payload.get("batch_id") or payload.get("batchId") or None),
@@ -76,6 +85,7 @@ def resolve_myweg_need_batch_sb1(
             ),
             dry_run=dry_run,
             caller_app=caller_app,
+            skip_if_complete=skip_if_complete,
         )
     except MyWegNeedsBatchNotFound as exc:
         return fail(str(exc), 404)

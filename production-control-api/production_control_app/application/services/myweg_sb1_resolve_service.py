@@ -1,6 +1,7 @@
-"""Resolução manual SB1 de um lote MyWEG — consulta api-delpi, projeta vínculos.
+"""Resolução SB1 de um lote MyWEG — consulta api-delpi, projeta vínculos V026.
 
-Não altera snapshots V025. Persistência só com semântica comprovada e dry_run=false.
+Usada pelo endpoint S2S e pelo publicador automático. Não altera snapshots V025.
+Persistência só com semântica comprovada e dry_run=false.
 """
 
 from __future__ import annotations
@@ -27,6 +28,8 @@ logger = logging.getLogger(__name__)
 STATUS_UNAVAILABLE = "unavailable"
 LOOKUP_SOURCE = "api-delpi.lookup_products_sb1_identity"
 LOOKUP_BATCH_SIZE = 400
+# Política MyWEG/PCP — não é default do lookup api-delpi (outros consumidores neutros).
+MYWEG_DISAMBIGUATION_POLICY = "prefer_production_over_sample"
 
 
 class MyWegSb1ResolveService:
@@ -47,6 +50,7 @@ class MyWegSb1ResolveService:
         collection_id: str | None = None,
         dry_run: bool = True,
         caller_app: str | None = None,
+        skip_if_complete: bool = False,
     ) -> dict[str, Any]:
         batch = self._load_batch(batch_id=batch_id, collection_id=collection_id)
         records = self._repository.list_all_batch_records(batch_id=batch["id"])
@@ -55,6 +59,26 @@ class MyWegSb1ResolveService:
                 "Lote sem registros para resolução SB1.",
                 issues=[{"code": "invalid_record", "message": "records vazio", "path": "records"}],
             )
+
+        if skip_if_complete and not dry_run:
+            coverage = self._resolution_coverage(batch_id=batch["id"], record_count=len(records))
+            if coverage.get("complete"):
+                return {
+                    "batchId": batch["id"],
+                    "collectionId": batch["collection_id"],
+                    "recordCount": len(records),
+                    "dryRun": False,
+                    "persisted": False,
+                    "skipped": True,
+                    "status": "already_resolved",
+                    "semantics": {
+                        "proven": True,
+                        "architecture_decision_required": False,
+                        "notes": "skip_if_complete",
+                    },
+                    "counts": coverage.get("counts") or {},
+                    "resolutionRunId": coverage.get("resolution_run_id"),
+                }
 
         # Hipótese operacional (rótulo E1 enganoso): codigo_referencia_weg ≈ B1_COD;
         # material_weg_tratado ≈ B1_REFEREN. Validada por evaluate_field_semantics.
@@ -74,6 +98,7 @@ class MyWegSb1ResolveService:
                 payload = self._gateway.lookup_products_sb1_identity(
                     branch=ALLOWED_BRANCH,
                     items=chunk,
+                    disambiguation_policy=MYWEG_DISAMBIGUATION_POLICY,
                 )
                 data = self._unwrap_gateway_data(payload)
                 chunk_results = list(data.get("results") or [])
@@ -181,8 +206,49 @@ class MyWegSb1ResolveService:
             rows=projected,
         )
         response["persisted"] = True
+        response["skipped"] = False
+        response["status"] = "resolved"
         response["resolutionRunId"] = run_id
         return response
+
+    def _resolution_coverage(
+        self, *, batch_id: str, record_count: int
+    ) -> dict[str, Any]:
+        getter = getattr(self._repository, "get_sb1_resolution_coverage", None)
+        if callable(getter):
+            return dict(getter(batch_id=batch_id) or {})
+        # Fallback in-memory / testes sem método dedicado.
+        resolutions = getattr(self._repository, "resolutions", None)
+        runs = getattr(self._repository, "runs", None)
+        if not isinstance(resolutions, dict) or not isinstance(runs, dict):
+            return {"complete": False}
+        batch_rows = [
+            row
+            for row in resolutions.values()
+            if str(row.get("batch_id")) == str(batch_id)
+        ]
+        if len(batch_rows) < record_count:
+            return {"complete": False, "counts": self._count_statuses(batch_rows)}
+        unavailable = sum(
+            1 for row in batch_rows if str(row.get("status") or "") == STATUS_UNAVAILABLE
+        )
+        completed_run = next(
+            (
+                run
+                for run in reversed(list(runs.values()))
+                if str(run.get("batch_id")) == str(batch_id)
+                and run.get("status") == "completed"
+                and run.get("semantics_proven")
+                and not run.get("dry_run")
+            ),
+            None,
+        )
+        complete = completed_run is not None and unavailable == 0
+        return {
+            "complete": complete,
+            "counts": self._count_statuses(batch_rows),
+            "resolution_run_id": (completed_run or {}).get("run_id"),
+        }
 
     def _load_batch(
         self,

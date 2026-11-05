@@ -36,7 +36,13 @@ def _copy_collection(dst_root: Path, *, collection_id: str) -> Path:
     return target
 
 
-def _config(tmp_path: Path, root: Path, *, activation: datetime | None) -> PublisherConfig:
+def _config(
+    tmp_path: Path,
+    root: Path,
+    *,
+    activation: datetime | None,
+    auto_sb1_resolve: bool = False,
+) -> PublisherConfig:
     return PublisherConfig(
         normalized_root=root,
         state_dir=tmp_path / "state",
@@ -48,6 +54,8 @@ def _config(tmp_path: Path, root: Path, *, activation: datetime | None) -> Publi
         stability_wait_seconds=0,
         max_batches_per_run=5,
         activation_collected_at=activation,
+        auto_sb1_resolve=auto_sb1_resolve,
+        max_sb1_batches_per_run=5,
         branch="02",
     )
 
@@ -260,3 +268,214 @@ def test_run_lock_busy(tmp_path):
     done.set()
     proc.join(5)
     assert proc.exitcode == 0
+
+
+def test_publish_then_auto_sb1_resolve(tmp_path):
+    root = tmp_path / "norm"
+    _copy_collection(root, collection_id=_COMPLETE_ID)
+    activation = datetime(2026, 11, 1, 0, 0, tzinfo=_SP)
+    config = _config(tmp_path, root, activation=activation, auto_sb1_resolve=True)
+    paths: list[str] = []
+
+    class DualTransport(httpx.BaseTransport):
+        def handle_request(self, request):  # noqa: ANN001
+            paths.append(request.url.path)
+            if request.url.path.endswith("/need-batches"):
+                return httpx.Response(
+                    201,
+                    json={
+                        "success": True,
+                        "data": {"created": True, "id": "b1", "recordCount": 3},
+                    },
+                )
+            assert request.url.path.endswith("/sb1-resolve")
+            body = json.loads(request.content.decode("utf-8"))
+            assert body["dry_run"] is False
+            assert body["skip_if_complete"] is True
+            return httpx.Response(
+                200,
+                json={
+                    "success": True,
+                    "data": {
+                        "persisted": True,
+                        "skipped": False,
+                        "status": "resolved",
+                        "counts": {"confirmed": 3, "ambiguous": 0},
+                        "semantics": {"proven": True},
+                        "resolutionRunId": "run-1",
+                    },
+                },
+            )
+
+    client = MyWegNeedsPublisherClient(
+        base_url="http://pc-api",
+        service_token="tok",
+        caller_app="pub",
+        transport=DualTransport(),
+        max_attempts=1,
+    )
+    result = run_pending_publish(
+        config=config, dry_run=False, max_batches=5, include_historical=False, client=client
+    )
+    assert result["published"] == 1
+    assert result["sb1_resolved"] == 1
+    assert result["sb1_failed"] == 0
+    assert paths[-2].endswith("/need-batches")
+    assert paths[-1].endswith("/sb1-resolve")
+    item = next(i for i in result["items"] if i.get("status") == "published")
+    assert item["sb1"]["status"] == "resolved"
+    state = PublisherStateStore(config.state_dir)
+    success = state.get_success_for_collection(_COMPLETE_ID)
+    assert success is not None
+    assert success["status"] == "published"
+    assert success["sb1_status"] == "sb1_resolved"
+
+
+def test_already_published_recovers_pending_sb1(tmp_path):
+    root = tmp_path / "norm"
+    _copy_collection(root, collection_id=_COMPLETE_ID)
+    activation = datetime(2026, 11, 1, 0, 0, tzinfo=_SP)
+    config = _config(tmp_path, root, activation=activation, auto_sb1_resolve=True)
+    state = PublisherStateStore(config.state_dir)
+    # Simula ingestão OK sem SB1 (bug pré-automação).
+    from production_control_app.jobs.myweg_needs_publisher.collection_reader import (
+        load_collection,
+    )
+    from production_control_app.jobs.myweg_needs_publisher.payload_builder import (
+        build_ingest_payload,
+    )
+
+    built = build_ingest_payload(
+        load_collection(root / _COMPLETE_ID, stability_wait_seconds=0)
+    )
+    state.record_attempt(
+        collection_id=_COMPLETE_ID,
+        payload_sha256=str(built["batch"]["payload_sha256"]),
+        status="published",
+        http_status=201,
+        result="created=true",
+    )
+
+    class ResolveOnlyTransport(httpx.BaseTransport):
+        def __init__(self):
+            self.calls = 0
+
+        def handle_request(self, request):  # noqa: ANN001
+            self.calls += 1
+            assert request.url.path.endswith("/sb1-resolve")
+            return httpx.Response(
+                200,
+                json={
+                    "success": True,
+                    "data": {
+                        "persisted": True,
+                        "skipped": False,
+                        "counts": {"confirmed": 495, "ambiguous": 1},
+                        "semantics": {"proven": True},
+                        "resolutionRunId": "run-recover",
+                    },
+                },
+            )
+
+    transport = ResolveOnlyTransport()
+    client = MyWegNeedsPublisherClient(
+        base_url="http://pc-api",
+        service_token="tok",
+        caller_app="pub",
+        transport=transport,
+        max_attempts=1,
+    )
+    result = run_pending_publish(
+        config=config, dry_run=False, max_batches=5, include_historical=False, client=client
+    )
+    assert result["published"] == 0
+    assert result["sb1_resolved"] == 1
+    assert transport.calls == 1
+
+
+def test_already_resolved_skips_without_failure(tmp_path):
+    root = tmp_path / "norm"
+    _copy_collection(root, collection_id=_COMPLETE_ID)
+    activation = datetime(2026, 11, 1, 0, 0, tzinfo=_SP)
+    config = _config(tmp_path, root, activation=activation, auto_sb1_resolve=True)
+    state = PublisherStateStore(config.state_dir)
+    from production_control_app.jobs.myweg_needs_publisher.collection_reader import (
+        load_collection,
+    )
+    from production_control_app.jobs.myweg_needs_publisher.payload_builder import (
+        build_ingest_payload,
+    )
+
+    built = build_ingest_payload(
+        load_collection(root / _COMPLETE_ID, stability_wait_seconds=0)
+    )
+    state.record_attempt(
+        collection_id=_COMPLETE_ID,
+        payload_sha256=str(built["batch"]["payload_sha256"]),
+        status="published",
+        http_status=201,
+        result="created=true",
+    )
+
+    class SkipTransport(httpx.BaseTransport):
+        def handle_request(self, request):  # noqa: ANN001
+            return httpx.Response(
+                200,
+                json={
+                    "success": True,
+                    "data": {
+                        "persisted": False,
+                        "skipped": True,
+                        "status": "already_resolved",
+                        "counts": {"confirmed": 496},
+                        "semantics": {"proven": True},
+                    },
+                },
+            )
+
+    client = MyWegNeedsPublisherClient(
+        base_url="http://pc-api",
+        service_token="tok",
+        caller_app="pub",
+        transport=SkipTransport(),
+        max_attempts=1,
+    )
+    result = run_pending_publish(
+        config=config, dry_run=False, max_batches=5, include_historical=False, client=client
+    )
+    assert result["sb1_skipped"] == 1
+    assert result["sb1_failed"] == 0
+    assert result["ok"] is True
+
+
+def test_sb1_auth_failure_does_not_erase_ingest(tmp_path):
+    root = tmp_path / "norm"
+    _copy_collection(root, collection_id=_COMPLETE_ID)
+    activation = datetime(2026, 11, 1, 0, 0, tzinfo=_SP)
+    config = _config(tmp_path, root, activation=activation, auto_sb1_resolve=True)
+
+    class AuthFailAfterPublish(httpx.BaseTransport):
+        def handle_request(self, request):  # noqa: ANN001
+            if request.url.path.endswith("/need-batches"):
+                return httpx.Response(
+                    201,
+                    json={"success": True, "data": {"created": True, "id": "b1"}},
+                )
+            return httpx.Response(401, json={"success": False, "message": "token inválido"})
+
+    client = MyWegNeedsPublisherClient(
+        base_url="http://pc-api",
+        service_token="tok",
+        caller_app="pub",
+        transport=AuthFailAfterPublish(),
+        max_attempts=1,
+    )
+    result = run_pending_publish(
+        config=config, dry_run=False, max_batches=5, include_historical=False, client=client
+    )
+    assert result["published"] == 1
+    assert result["sb1_failed"] == 1
+    state = PublisherStateStore(config.state_dir)
+    success = state.get_success_for_collection(_COMPLETE_ID)
+    assert success is not None
+    assert success["status"] == "published"

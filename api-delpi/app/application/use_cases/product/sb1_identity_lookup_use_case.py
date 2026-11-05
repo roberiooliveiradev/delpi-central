@@ -77,6 +77,7 @@ class Sb1IdentityLookupUseCase:
                 customer_reference=ref,
                 by_code=code_index.get(code) if code else None,
                 by_reference=ref_index.get(ref, []) if ref else [],
+                disambiguation_policy=request.disambiguation_policy,
             )
             status = str(classified["match_status"])
             if status in counts:

@@ -63,7 +63,7 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | PUT | `/integrations/mes/downtime-reasons/{code}` | S2S interno — administração: edita label/category/requiresNote/sortOrder (`code` imutável; 404 se inexistente) |
 | PATCH | `/integrations/mes/downtime-reasons/{code}/active` | S2S interno — administração: ativa/desativa motivo (`setup` protegido → 409) |
 | POST | `/integrations/myweg/need-batches` | S2S interno — ingestão de lote `myweg.needs.batch.v1` (filial 02; Idempotency-Key) |
-| POST | `/integrations/myweg/need-batches/sb1-resolve` | S2S interno — resolução SB1 manual (`dry_run` default true; não dispara por `myweg-needs.view`) |
+| POST | `/integrations/myweg/need-batches/sb1-resolve` | S2S interno — resolução SB1 (`dry_run` default true; publicador automatiza com `dry_run=false` + `skip_if_complete`; não dispara por `myweg-needs.view`) |
 | GET | `/myweg/need-batches` | JWT + `myweg-needs.view` + filial 02 — lista coletas aceitas |
 | GET | `/myweg/need-batches/latest` | JWT — última coleta válida |
 | GET | `/myweg/need-batches/{batchId}` | JWT — resumo da coleta |

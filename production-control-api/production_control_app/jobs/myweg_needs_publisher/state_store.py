@@ -18,6 +18,16 @@ except ImportError:  # pragma: no cover — Windows
 
 _SAO_PAULO = ZoneInfo("America/Sao_Paulo")
 _SUCCESS_STATUSES = frozenset({"published", "idempotent"})
+_SB1_STATUSES = frozenset(
+    {
+        "sb1_resolved",
+        "sb1_already_resolved",
+        "sb1_incomplete",
+        "sb1_failed",
+        "sb1_auth_failed",
+        "sb1_semantics_blocked",
+    }
+)
 
 
 class PublisherStateStore:
@@ -38,29 +48,47 @@ class PublisherStateStore:
         dry_run: bool = False,
     ) -> None:
         self._state_dir.mkdir(parents=True, exist_ok=True)
-        entry = {
-            "collection_id": collection_id,
-            "payload_sha256": payload_sha256,
-            "status": status,
-            "http_status": http_status,
-            "result": result,
-            "dry_run": dry_run,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
+        now = datetime.now(timezone.utc).isoformat()
         with self._locked():
             data = self._read_unlocked()
             attempts = list(data.get("attempts") or [])
-            attempts = [
-                item
-                for item in attempts
-                if not (
+            existing = None
+            kept: list[dict[str, Any]] = []
+            for item in attempts:
+                if (
                     item.get("collection_id") == collection_id
                     and item.get("payload_sha256") == payload_sha256
-                )
-            ]
-            attempts.append(entry)
+                ):
+                    existing = dict(item)
+                else:
+                    kept.append(item)
+
+            if status in _SB1_STATUSES and existing is not None:
+                # Preserva status de ingestão; SB1 é etapa complementar (RQ-05).
+                entry = {
+                    **existing,
+                    "sb1_status": status,
+                    "sb1_http_status": http_status,
+                    "sb1_result": result,
+                    "sb1_updated_at": now,
+                    "updated_at": now,
+                    "dry_run": bool(existing.get("dry_run")) or dry_run,
+                }
+                if str(existing.get("status") or "") not in _SUCCESS_STATUSES:
+                    entry["status"] = existing.get("status") or "published"
+            else:
+                entry = {
+                    "collection_id": collection_id,
+                    "payload_sha256": payload_sha256,
+                    "status": status,
+                    "http_status": http_status,
+                    "result": result,
+                    "dry_run": dry_run,
+                    "updated_at": now,
+                }
+            kept.append(entry)
             # Retém só as últimas 200 tentativas.
-            data["attempts"] = attempts[-200:]
+            data["attempts"] = kept[-200:]
             self._write_atomic_unlocked(data)
 
     def get_attempt(self, collection_id: str, payload_sha256: str) -> dict[str, Any] | None:

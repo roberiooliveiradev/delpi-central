@@ -559,6 +559,7 @@ class DelpiProductionGateway:
         *,
         branch: str,
         items: Sequence[dict[str, Any]],
+        disambiguation_policy: str | None = None,
     ) -> dict[str, Any]:
         """Identidade cadastral SB1 em lote — igualdade exata B1_COD/B1_REFEREN."""
         payload_items: list[dict[str, Any]] = []
@@ -570,13 +571,16 @@ class DelpiProductionGateway:
                     "customer_reference": item.get("customer_reference"),
                 }
             )
+        body: dict[str, Any] = {
+            "branch": branch,
+            "items": [item for item in payload_items if item["client_key"]],
+        }
+        if disambiguation_policy:
+            body["disambiguation_policy"] = disambiguation_policy
         return self._request(
             "POST",
             "/products/sb1-identity-lookup",
-            json_body={
-                "branch": branch,
-                "items": [item for item in payload_items if item["client_key"]],
-            },
+            json_body=body,
         )
 
     def list_customer_outbound_invoice_line_items(

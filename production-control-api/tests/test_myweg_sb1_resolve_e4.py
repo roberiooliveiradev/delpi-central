@@ -155,8 +155,15 @@ class FakeSb1Gateway:
         self.fail = fail
         self.calls = 0
 
-    def lookup_products_sb1_identity(self, *, branch: str, items: list[dict]):
+    def lookup_products_sb1_identity(
+        self,
+        *,
+        branch: str,
+        items: list[dict],
+        disambiguation_policy: str | None = None,
+    ):
         self.calls += 1
+        self.last_policy = disambiguation_policy
         if self.fail:
             raise DelpiGatewayError("api-delpi down", status_code=503)
         results = []
@@ -329,6 +336,39 @@ def test_persist_blocked_without_semantics() -> None:
     service = MyWegSb1ResolveService(repo, gateway=FakeSb1Gateway(results))
     with pytest.raises(MyWegNeedsValidationFailed):
         service.resolve_batch(batch_id=created["id"], dry_run=False)
+
+
+def test_skip_if_complete_avoids_second_lookup() -> None:
+    repo = InMemorySb1Repo()
+    proof_records = []
+    for i in range(25):
+        proof_records.append(
+            {
+                "material_weg_tratado": f"MAT-SKIP-{i:04d}",
+                "codigo_referencia_weg": f"9{i:07d}",
+                "origem_material_weg": "MYWEG-ORIGEM",
+                "quantidade": "1000",
+                "unidade": "UN",
+                "data_remessa": "15/11/2026",
+                "documento": None,
+                "linha_fonte": i + 2,
+                "assinatura_registro": f"sig-skip-{i}",
+            }
+        )
+    created = _seed_batch(repo, records=proof_records, collection_id="col-skip-001")
+    gateway = FakeSb1Gateway()
+    service = MyWegSb1ResolveService(repo, gateway=gateway)
+    first = service.resolve_batch(batch_id=created["id"], dry_run=False)
+    assert first["persisted"] is True
+    calls_after_first = gateway.calls
+    second = service.resolve_batch(
+        batch_id=created["id"], dry_run=False, skip_if_complete=True
+    )
+    assert second["skipped"] is True
+    assert second["persisted"] is False
+    assert second["status"] == "already_resolved"
+    assert gateway.calls == calls_after_first
+    assert gateway.last_policy == "prefer_production_over_sample"
 
 
 def test_persist_idempotent_when_semantics_proven() -> None:

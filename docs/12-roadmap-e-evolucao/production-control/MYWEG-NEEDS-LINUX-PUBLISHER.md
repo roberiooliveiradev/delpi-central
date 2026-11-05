@@ -1,18 +1,31 @@
 # MyWEG Necessidades — publicador Linux
 
-> **Status:** CLI one-shot versionada · modo pending + timer systemd **versionado** · ativação produtiva **PENDING**  
-> **TASK_ID:** `MYWEG-NEEDS-PUBLISHER-MORNING-SCHEDULE`  
-> **Owner:** `production-control-api` (job cliente S2S do contrato E1/E2)  
+> **Status:** CLI one-shot · pending + timer · **resolução SB1 automática (E4)** · ativação produtiva controlada  
+> **TASK_ID:** `MYWEG-NEEDS-AUTOMATIC-SB1-RESOLUTION`  
+> **Owner:** `production-control-api` (job cliente S2S dos contratos E1/E2/E4)  
 > **Não owner:** ETL `myweg_integrador` / coletor Windows (fora do monorepo; **não** modificar)
 
 ## EXISTING_EQUIVALENT / REUSE_DECISION
 
 | Item | Decisão |
 |------|--------|
-| EXISTING_EQUIVALENT | YES — `jobs/myweg_needs_publisher` (manual E1/E2) |
-| SCHEDULER_INVENTORY | Runtime srv-api **PENDING** (SSH sem chave neste agente). No Git: timer versionado reutilizado. |
-| REUSE_DECISION | EXTEND — `--publish-pending` + watermark + run lock + units systemd |
-| NÃO | daemon Python permanente, alterar ETL 05h00, `dry_run=false` SB1 automático, Docker socket no job, secret no unit file |
+| EXISTING_EQUIVALENT | YES — `jobs/myweg_needs_publisher` + `POST .../sb1-resolve` + `MyWegSb1ResolveService` |
+| REUSE_DECISION | EXTEND — após ingestão (ou recuperação de `already_published`) chama E4 S2S |
+| NÃO | segundo scheduler SB1, novo motor de matching, `dry_run=false` SB1 fora do serviço E4, alterar ETL 05h00 |
+
+## Sequência automática
+
+```text
+timer 06:00/15/30/45 America/Sao_Paulo
+  → discover pending (watermark + max_batches)
+  → POST /integrations/myweg/need-batches          # E2 ingest
+  → POST /integrations/myweg/need-batches/sb1-resolve
+       dry_run=false, skip_if_complete=true        # E4
+  → already_published no watermark sem SB1 completa
+       → mesmo sb1-resolve (recuperação; PG é autoridade)
+```
+
+Flag de rollback: `MYWEG_PUBLISHER_AUTO_SB1_RESOLVE=false`.
 
 ## Artefatos de origem (srv-api)
 
@@ -35,7 +48,7 @@ python -m production_control_app.jobs.myweg_needs_publisher \
   --collection-id <id> | --latest \
   [--json]
 
-# Pendências (novo) — ordem collected_at ASC, limite por execução
+# Pendências + SB1 automática (quando AUTO_SB1_RESOLVE=true)
 python -m production_control_app.jobs.myweg_needs_publisher \
   --dry-run|--publish \
   --publish-pending \
@@ -53,93 +66,68 @@ Compose (profile `manual` — **não** sobe no `up` padrão). Rodar a partir de 
 ```bash
 cd ~/projetos/delpi-central/infra
 
-# Dry-run (homologação / gates operacionais) — NÃO editar o script produtivo
+# Dry-run — NÃO editar o script produtivo
 docker compose -f docker-compose.yml --env-file .env --profile manual run --rm --no-deps \
   myweg-needs-publisher --dry-run --publish-pending --json
 
 # Publicação real (one-shot) — mesmo contrato do timer
-docker compose -f docker-compose.yml --env-file .env --profile manual run --rm --no-deps \
-  myweg-needs-publisher --publish --publish-pending --json
-# ou: ./scripts/run-myweg-needs-publisher-pending.sh
+./scripts/run-myweg-needs-publisher-pending.sh
 ```
 
 Env relevantes:
 
 | Variável | Papel |
 |---|---|
-| `MYWEG_PUBLISHER_ACTIVATION_COLLECTED_AT` | Marco ISO — só publica `collected_at >= marco` (salvo `--include-historical`) |
-| `MYWEG_PUBLISHER_MAX_BATCHES_PER_RUN` | Limite sequencial (default 5) |
+| `MYWEG_PUBLISHER_ACTIVATION_COLLECTED_AT` | Marco ISO — só publica `collected_at >= marco` |
+| `MYWEG_PUBLISHER_MAX_BATCHES_PER_RUN` | Limite de ingestões por execução (default 5) |
+| `MYWEG_PUBLISHER_MAX_SB1_BATCHES_PER_RUN` | Limite de recuperações SB1 em `already_published` (default 5) |
+| `MYWEG_PUBLISHER_AUTO_SB1_RESOLVE` | `true` (default) executa E4; `false` = só ingestão |
+| `MYWEG_PUBLISHER_TIMEOUT_SECONDS` | Timeout HTTP (default 180 — cobre lookup SB1) |
 | `API_DELPI_INTERNAL_SERVICE_TOKEN` | S2S (compose `.env`) |
 
 ## Agendamento (systemd)
 
-Arquivos versionados:
-
-- `infra/systemd/myweg-needs-publisher.service`
 - `infra/systemd/myweg-needs-publisher.timer` — **somente** 06:00, 06:15, 06:30 e 06:45 `America/Sao_Paulo`
-- `infra/scripts/run-myweg-needs-publisher-pending.sh` — flock host + compose one-shot (`--publish`)
-- `infra/scripts/install-myweg-needs-publisher-timer.sh` — instala units; **não** habilita
+- `Persistent=true` — catch-up após reboot pode sair da janela matinal (exceção)
+- Install **não** habilita: `sudo ./infra/scripts/install-myweg-needs-publisher-timer.sh`
 
-### Calendário
+## Resolução SB1 (E4)
 
-```ini
-OnCalendar=*-*-* 06:00:00 America/Sao_Paulo
-OnCalendar=*-*-* 06:15:00 America/Sao_Paulo
-OnCalendar=*-*-* 06:30:00 America/Sao_Paulo
-OnCalendar=*-*-* 06:45:00 America/Sao_Paulo
-RandomizedDelaySec=0
-AccuracySec=1min
-Persistent=true
-```
+- Serviço canônico: `MyWegSb1ResolveService` + projeção V026
+- Preferência PCP 9/8 via `disambiguation_policy=prefer_production_over_sample` (só no caminho MyWEG)
+- Persistência só com `evaluate_field_semantics` comprovada
+- `skip_if_complete=true`: se PG já tem run completed + vínculos sem `unavailable`, não reconsulta Protheus
+- Falha SB1 **não** apaga ingestão; próximo timer recupera
+- Ambiguous / not_found / divergent / blocked **não** viram confirmed
 
-- Horários explícitos em `America/Sao_Paulo` — independentes do timezone do host (`Etc/UTC` no srv-api).
-- Origem MyWEG envia às 05:00 SP; as quatro tentativas cobrem a janela matinal pós-ETL.
-- `Persistent=true` preserva recuperação após reinício: o catch-up pode ocorrer **fora** da janela 06:00–06:45 (exceção operacional, não horário nominal).
-
-Validação local:
-
-```bash
-systemd-analyze calendar '*-*-* 06:00:00 America/Sao_Paulo'
-systemd-analyze calendar '*-*-* 06:15:00 America/Sao_Paulo'
-systemd-analyze calendar '*-*-* 06:30:00 America/Sao_Paulo'
-systemd-analyze calendar '*-*-* 06:45:00 America/Sao_Paulo'
-systemd-analyze verify infra/systemd/myweg-needs-publisher.service \
-  infra/systemd/myweg-needs-publisher.timer
-```
-
-### Ativação controlada (srv-api) — NÃO habilitar sem gates
-
-1. `git pull --ff-only` após o push desta task.
-2. `sudo ./infra/scripts/install-myweg-needs-publisher-timer.sh` — instala units; **não** habilita o timer.
-3. Confirmar última coleta persistida (E2 / estado local) e permissões de `/var/lib/delpi/myweg-publisher-state`.
-4. Definir watermark a partir dessa coleta (`--set-activation-watermark` ou `MYWEG_PUBLISHER_ACTIVATION_COLLECTED_AT`).
-5. Dry-run via Compose (`--dry-run --publish-pending --json`) — **nunca** alterar temporariamente o script produtivo `run-myweg-needs-publisher-pending.sh`.
-6. Avaliar itens `eligible` / `blocked` / `conflict` / `before_watermark` / `already_published`.
-7. Somente então: `sudo systemctl enable --now myweg-needs-publisher.timer`.
-8. Desativar: `sudo systemctl disable --now myweg-needs-publisher.timer`.
-
-Se watermark, secrets, dry-run, integridade, permissões ou exclusão mútua falharem → **ACTIVATION_PENDING**.
-
-Não declarar automação homologada sem observar uma coleta real publicada (`REAL_NEW_BATCH_SMOKE`).
-
-## Concorrência e autoridade
-
-- Run lock no estado (`publisher_run.lock`) + flock no host script.
-- Estado local = tentativas operacionais.
-- Ingestão E2 + idempotency/hash = autoridade de lotes aceitos.
-- Mesmo `collection_id` com hash diferente → `conflict` (não sobrescreve).
-- SB1: coletas novas ficam `pending`; **não** há automação de `dry_run=false`.
+Ver detalhes e regra 8/9 em `MYWEG-NEEDS-PROTHEUS-E4.md`.
 
 ## Observabilidade
 
-Saída JSON: `pending`, `published`, `rejected`, `blocked`, `skipped`, itens com `status` (`eligible`/`blocked`/`conflict`/`already_published`/`before_watermark`/`published`/`idempotent`/`failed`/`busy`/…).
+JSON do pending inclui por item:
+
+- `status` da ingestão (`published` / `idempotent` / `already_published` / …)
+- `sb1.status` (`resolved` / `already_resolved` / `incomplete` / `failed` / `auth_failed` / `semantics_blocked`)
+- `sb1.counts` (confirmed / ambiguous / …)
+- totais: `sb1_resolved`, `sb1_skipped`, `sb1_failed`
+
+Estado local (`publisher_state.json`) guarda tentativas operacionais; **autoridade da resolução = PostgreSQL V026**.
+
+## Diagnóstico rápido (srv-api)
+
+```bash
+journalctl -u myweg-needs-publisher.service -n 120 --no-pager
+cd ~/projetos/delpi-central/infra
+docker compose -f docker-compose.yml --env-file .env --profile manual run --rm --no-deps \
+  myweg-needs-publisher --dry-run --publish-pending --json
+```
 
 ## Homologação
 
 | Item | Estado |
 |------|--------|
-| Código pending + timer matinal SP | esta task |
-| Agendamento produtivo (`enable --now`) | **ACTIVATION_PENDING** até watermark + dry-run + smoke |
-| SSH inventário runtime | **PENDING** (chave) |
-| REAL_NEW_BATCH_SMOKE | **PENDING** (primeira coleta automática prevista 05/11/2026) |
-| SB1 auto-persist | **FORA_DO_ESCOPO** (explícito) |
+| Código pending + SB1 automática | esta task |
+| Preferência 9/8 (19106407 → 90264221) | testes unitários |
+| Timer produtivo | habilitado (gates matutinos) |
+| AC-01/AC-02 smoke **nova** coleta real pós-deploy | **PENDING** |
+| SB1 auto fora do E4 | **FORA_DO_ESCOPO** |
