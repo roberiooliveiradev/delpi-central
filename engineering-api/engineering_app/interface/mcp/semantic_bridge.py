@@ -1391,6 +1391,13 @@ async def _produce_drawing_understanding(context, code: str):
         render_size_by_page=_render_by_page,
         graphic_primitives_by_page=_prims_by_page,
     )
+    # Identidade do documento oficial analisado — envelope do
+    # understanding; consumidores (report/response) não devem
+    # depender de `out` do benchmark, que fica fora de escopo aqui.
+    understanding["document"] = out["document"]
+    understanding["same_document_verified"] = out[
+        "same_document_verified"
+    ]
     _pdf_pages = best.get("pdf_page_count")
     _attempted = sorted(_page_status)
     _failed = [
@@ -1668,8 +1675,10 @@ async def _analyze_drawing_understanding(
         {
             "analysis_type": "product.drawing_understanding",
             "question": question,
-            "document": out["document"],
-            "same_document_verified": out["same_document_verified"],
+            "document": understanding.get("document"),
+            "same_document_verified": understanding.get(
+                "same_document_verified"
+            ),
             "understanding": understanding,
             "quality_gate": "EVAL_PENDING",
             "provenance": (
