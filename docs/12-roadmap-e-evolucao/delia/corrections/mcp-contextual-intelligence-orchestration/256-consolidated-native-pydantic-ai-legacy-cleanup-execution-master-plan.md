@@ -864,3 +864,22 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   ao client ainda é limitada pela velocidade de geração do modelo
   4B sem GPU no ambiente dev — recurso, não defeito de código.
 - Cadeia governada provada 3×: discover→execute→uncovered=50220013.
+
+## 39. P0 — recuperação funcional end-to-end (tarefa 284)
+
+- **GPU**: RTX 3050 6GB no host, mas `docker run --gpus all` falha —
+  `no known GPU vendor found` (NVIDIA Container Toolkit/CDI ausente)
+  → BLOCKED (mudança de host; não presumir suporte).
+- **Cadeia governada 100% provada** (3+ turns live autenticados):
+  admission ~30-44s → catalog 10 caps/3 owners → dynamic_toolset →
+  modelo seleciona `davi.discover_delpi_information` → invoke ok →
+  `davi.execute_delpi_information` → `search_products` →
+  `uncovered=50220013` — owner retorna dados reais do produto.
+  Modelo processa (Ollama task 3330 tok, ctx 16384).
+- **Delivery final**: ~6 tok/s CPU → a resposta estruturada longa
+  excede a paciência do gateway/client (turn não chega ao client
+  antes do 504, embora continue processando server-side). GPU em
+  Docker não disponível (toolkit ausente) — limite de RECURSO do
+  ambiente dev, não defeito de código/config já demonstrado.
+- Correções medidas entregues: contexto 16384, memória 6800M,
+  retries 2, thinking disable, log-safety tipada.
