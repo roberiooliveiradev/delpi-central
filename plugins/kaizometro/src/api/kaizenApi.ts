@@ -29,8 +29,8 @@ const API_BASE = "/apps/api-delpi/quality/kaizens/records";
 
 type ListParams = {
   branch?: string;
-  status?: string;
-  savings_type?: string;
+  status?: string[];
+  savings_type?: string[];
   title?: string;
   page?: number;
   page_size?: number;
@@ -39,8 +39,8 @@ type ListParams = {
 function buildQuery(params: ListParams): string {
   const search = new URLSearchParams();
   if (params.branch) search.set("branch", params.branch);
-  if (params.status) search.set("status", params.status);
-  if (params.savings_type) search.set("savings_type", params.savings_type);
+  for (const status of params.status ?? []) search.append("status", status);
+  for (const type of params.savings_type ?? []) search.append("savings_type", type);
   if (params.title) search.set("title", params.title);
   if (params.page) search.set("page", String(params.page));
   if (params.page_size) search.set("page_size", String(params.page_size));

@@ -210,8 +210,8 @@ def _require_record_branch(repo, record_id: str, *, with_participants: bool = Fa
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_records(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
-    status: str | None = KAIZEN_STATUS_QUERY(),
-    savings_type: str | None = KAIZEN_SAVINGS_TYPE_QUERY(),
+    status: list[str] | None = KAIZEN_STATUS_QUERY(),
+    savings_type: list[str] | None = KAIZEN_SAVINGS_TYPE_QUERY(),
     title: str | None = Query(default=None),
     start_date: str | None = START_DATE_QUERY(),
     end_date: str | None = END_DATE_QUERY(),

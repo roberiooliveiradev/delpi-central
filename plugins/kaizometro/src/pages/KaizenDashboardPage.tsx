@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 import {
   useChartGranularitySelection,
+  QuickPeriodSelector,
+  detectPeriodPreset,
+  resolvePeriodPreset,
   type ChartGranularity,
 } from "@delpi/plugin-ui/index";
 
@@ -219,6 +222,19 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
     (multiUnit && units.length) || dateStart || dateEnd || competence,
   );
 
+  const periodPreset = useMemo(
+    () => detectPeriodPreset(dateStart, dateEnd),
+    [dateStart, dateEnd],
+  );
+
+  const handleQuickPeriod = useCallback(
+    (preset: typeof periodPreset) => {
+      const range = resolvePeriodPreset(preset);
+      if (range) replaceAll(range);
+    },
+    [replaceAll],
+  );
+
   const clearFilters = useCallback(() => {
     setUnits([]);
     reset();
@@ -337,6 +353,12 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
           onChange={setDateEnd}
         />
       </FiltersRow>
+
+      <QuickPeriodSelector
+        prefix="kz"
+        value={periodPreset}
+        onChange={handleQuickPeriod}
+      />
 
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
       {loading && !summary ? <StateAlert>Carregando indicadores…</StateAlert> : null}

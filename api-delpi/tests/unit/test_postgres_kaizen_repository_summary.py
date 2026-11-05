@@ -288,3 +288,42 @@ def test_summary_recebidos_total_ignores_period() -> None:
     assert result["recebidos"] == 0
     # …mas continua pendente no escopo da unidade.
     assert result["recebidos_total"] == 1
+
+
+def test_list_records_filters_multiple_statuses_and_savings_types() -> None:
+    """Filtros multi-seleção da listagem: status e tipo de economia aceitam
+    listas (repeated query param) e isolam com ANY."""
+    repo = PostgresKaizenRepository(connection=MagicMock())
+    captured: dict[str, object] = {}
+
+    def _capture(query: str, params: object = None):
+        captured["query"] = query
+        captured["params"] = params
+        return {"total": 0} if "COUNT" in query else []
+
+    repo.fetch_one = MagicMock(side_effect=lambda q, p=None: {"total": 0})
+    repo.fetch_all = MagicMock(side_effect=lambda q, p=None: captured.update(query=q, params=p) or [])
+
+    repo.list_records(
+        status=["recebido", "aprovado"],
+        savings_type=["tempo", "material"],
+        title="fita",
+    )
+
+    assert "k.status = ANY(%s)" in str(captured["query"])
+    assert "k.savings_type = ANY(%s)" in str(captured["query"])
+    assert ["recebido", "aprovado"] in captured["params"]
+    assert ["tempo", "material"] in captured["params"]
+
+
+def test_list_records_keeps_single_status_string_compatible() -> None:
+    """Retrocompatibilidade: chamador com string única continua filtrando."""
+    repo = PostgresKaizenRepository(connection=MagicMock())
+    captured: dict[str, object] = {}
+
+    repo.fetch_one = MagicMock(return_value={"total": 0})
+    repo.fetch_all = MagicMock(side_effect=lambda q, p=None: captured.update(query=q, params=p) or [])
+
+    repo.list_records(status="recebido")
+
+    assert ["recebido"] in captured["params"]

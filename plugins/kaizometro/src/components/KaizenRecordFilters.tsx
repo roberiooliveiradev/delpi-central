@@ -1,30 +1,30 @@
 import { KAIZEN_STATUSES, SAVINGS_TYPES } from "../constants/kaizen";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FilterInputField, FilterSelectField, FiltersRow } from "./ui";
+import { FilterInputField, FiltersRow, MultiSelectField } from "./ui";
 
 type KaizenRecordFiltersProps = {
-  branch: string;
-  status: string;
-  savingsType: string;
+  branches: string[];
+  statuses: string[];
+  savingsTypes: string[];
   title: string;
   branchOptions: Array<{ value: string; label: string }>;
   allowAllBranches?: boolean;
-  onBranchChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
-  onSavingsTypeChange: (value: string) => void;
+  onBranchesChange: (value: string[]) => void;
+  onStatusesChange: (value: string[]) => void;
+  onSavingsTypesChange: (value: string[]) => void;
   onTitleChange: (value: string) => void;
 };
 
 export function KaizenRecordFilters({
-  branch,
-  status,
-  savingsType,
+  branches,
+  statuses,
+  savingsTypes,
   title,
   branchOptions,
   allowAllBranches = true,
-  onBranchChange,
-  onStatusChange,
-  onSavingsTypeChange,
+  onBranchesChange,
+  onStatusesChange,
+  onSavingsTypesChange,
   onTitleChange,
 }: KaizenRecordFiltersProps) {
   const showUnitFilter = allowAllBranches && branchOptions.length > 1;
@@ -32,33 +32,30 @@ export function KaizenRecordFilters({
   return (
     <FiltersRow ariaLabel="Filtros de kaizen">
       {showUnitFilter ? (
-        <FilterSelectField
-          id="kz-filter-branch"
+        <MultiSelectField
           label="Unidade"
-          hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
-          value={branch}
-          onChange={onBranchChange}
+          labelHint={KAIZEN_HELP_TOOLTIPS.fields.branch}
           options={branchOptions}
-          placeholderOption="Todas"
+          selectedValues={branches}
+          onChange={onBranchesChange}
+          emptyLabel="Todas"
         />
       ) : null}
-      <FilterSelectField
-        id="kz-filter-status"
+      <MultiSelectField
         label="Status"
-        hint={KAIZEN_HELP_TOOLTIPS.fields.status}
-        value={status}
-        onChange={onStatusChange}
-        options={KAIZEN_STATUSES}
-        placeholderOption="Todos"
+        labelHint={KAIZEN_HELP_TOOLTIPS.fields.status}
+        options={[...KAIZEN_STATUSES]}
+        selectedValues={statuses}
+        onChange={onStatusesChange}
+        emptyLabel="Todos"
       />
-      <FilterSelectField
-        id="kz-filter-savings-type"
+      <MultiSelectField
         label="Tipo de economia"
-        hint={KAIZEN_HELP_TOOLTIPS.fields.savingsType}
-        value={savingsType}
-        onChange={onSavingsTypeChange}
-        options={SAVINGS_TYPES}
-        placeholderOption="Todos"
+        labelHint={KAIZEN_HELP_TOOLTIPS.fields.savingsType}
+        options={[...SAVINGS_TYPES]}
+        selectedValues={savingsTypes}
+        onChange={onSavingsTypesChange}
+        emptyLabel="Todos"
       />
       <FilterInputField
         id="kz-filter-title"

@@ -44,32 +44,40 @@ export function KaizenListPage({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [branch, setBranch] = useState(() =>
+  const [branches, setBranches] = useState<string[]>(() =>
     initialBranch && branchOptions.some((o) => o.value === initialBranch)
-      ? initialBranch
+      ? [initialBranch]
       : allowAllBranches
-        ? ""
-        : branchOptions[0]?.value ?? "",
+        ? []
+        : [branchOptions[0]?.value ?? ""].filter(Boolean),
   );
-  const [status, setStatus] = useState(initialStatus ?? "");
-  const [savingsType, setSavingsType] = useState("");
+  const [statuses, setStatuses] = useState<string[]>(() =>
+    initialStatus ? [initialStatus] : [],
+  );
+  const [savingsTypes, setSavingsTypes] = useState<string[]>([]);
   const [title, setTitle] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
-    if (!allowAllBranches && branchOptions[0] && branch !== branchOptions[0].value) {
-      setBranch(branchOptions[0].value);
+    if (
+      !allowAllBranches &&
+      branchOptions[0] &&
+      (branches.length !== 1 || branches[0] !== branchOptions[0].value)
+    ) {
+      setBranches([branchOptions[0].value]);
     }
-  }, [allowAllBranches, branchOptions, branch]);
+  }, [allowAllBranches, branchOptions, branches]);
+
+  const branchParam = branches.length === 1 ? branches[0] : undefined;
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await fetchKaizenRecords({
-        branch: branch || undefined,
-        status: status || undefined,
-        savings_type: savingsType || undefined,
+        branch: branchParam,
+        status: statuses.length ? statuses : undefined,
+        savings_type: savingsTypes.length ? savingsTypes : undefined,
         title: title || undefined,
         page_size: 200,
       });
@@ -79,7 +87,7 @@ export function KaizenListPage({
     } finally {
       setLoading(false);
     }
-  }, [branch, status, savingsType, title]);
+  }, [branchParam, statuses, savingsTypes, title]);
 
   useEffect(() => {
     void load();
@@ -249,7 +257,7 @@ export function KaizenListPage({
         open={shareOpen}
         onClose={() => setShareOpen(false)}
         branchOptions={branchOptions}
-        initialBranchCode={branch || undefined}
+        initialBranchCode={branchParam}
       />
 
       <input
@@ -261,15 +269,15 @@ export function KaizenListPage({
       />
 
       <KaizenRecordFilters
-        branch={branch}
-        status={status}
-        savingsType={savingsType}
+        branches={branches}
+        statuses={statuses}
+        savingsTypes={savingsTypes}
         title={title}
         branchOptions={branchOptions}
         allowAllBranches={allowAllBranches}
-        onBranchChange={setBranch}
-        onStatusChange={setStatus}
-        onSavingsTypeChange={setSavingsType}
+        onBranchesChange={setBranches}
+        onStatusesChange={setStatuses}
+        onSavingsTypesChange={setSavingsTypes}
         onTitleChange={setTitle}
       />
 

@@ -133,8 +133,8 @@ class PostgresKaizenRepository(PluginBaseRepository):
         self,
         *,
         branch_code: str | None = None,
-        status: str | None = None,
-        savings_type: str | None = None,
+        status: str | list[str] | None = None,
+        savings_type: str | list[str] | None = None,
         title: str | None = None,
         date_start: str | None = None,
         date_end: str | None = None,
@@ -147,12 +147,16 @@ class PostgresKaizenRepository(PluginBaseRepository):
         if branch_code:
             filters.append("k.branch_code = %s")
             params.append(branch_code)
-        if status:
-            filters.append("k.status = %s")
-            params.append(status)
-        if savings_type:
-            filters.append("k.savings_type = %s")
-            params.append(savings_type)
+        statuses = [status] if isinstance(status, str) else list(status or [])
+        if statuses:
+            filters.append("k.status = ANY(%s)")
+            params.append(statuses)
+        savings_types = (
+            [savings_type] if isinstance(savings_type, str) else list(savings_type or [])
+        )
+        if savings_types:
+            filters.append("k.savings_type = ANY(%s)")
+            params.append(savings_types)
         if title:
             filters.append("k.title ILIKE %s")
             params.append(f"%{title.strip()}%")
