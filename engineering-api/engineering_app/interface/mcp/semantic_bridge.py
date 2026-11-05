@@ -1635,6 +1635,9 @@ async def _analyze_drawing_understanding(
     # R12.1 — sem fonte oficial carregada a comparação é fail-closed:
     # sem occurrence_results nem unmatched_drawing_candidates.
     _bom_flat = flatten_bom_occurrences(structure, code)
+    from engineering_app.application.drawing.drawing_investigation import (  # noqa: E501
+        apply_localized_recovery,
+    )
     from engineering_app.infrastructure.extraction.pdfium_adapter import (
         PdfiumExtractionAdapter,
     )
@@ -1642,6 +1645,39 @@ async def _analyze_drawing_understanding(
         PaddleOcrAdapter,
     )
 
+    _prog = {
+        "budget": {"max_crops": 8, "max_dpi": 300,
+                   "max_pixels": 4_000_000},
+        # R13 closure — ports reais do pipeline visual (lazy, sem
+        # reprocessar por ocorrência; orçamento governado).
+        "pdf_bytes": _pdf_bytes,
+        "renderer": PdfiumExtractionAdapter(),
+        "ocr": PaddleOcrAdapter(),
+        "page": 1,
+        "reference_dpi": int(best.get("dpi") or 200),
+        "reference_dpi_by_page": _render_dpi_by_page(best),
+    }
+    # DEC-VAL-034 — o caminho product.drawing_understanding executa
+    # build_object_profiles sem analyze_product_drawing: a recuperação
+    # localizada precisa rodar aqui também, senão localized_recovery
+    # nunca existe para a investigação guiada (causa do O0001
+    # AMBIGUOUS reportado pelo consumidor).
+    apply_localized_recovery(
+        understanding,
+        product_code=code,
+        bom_component_codes=[
+            str(it.get("component_code") or "").strip()
+            for it in _bom_flat
+        ],
+        opts=_prog,
+        tokens=tokens,
+        pdf_sha256=understanding.get("document_hash_sha256"),
+        source_revision=(
+            (understanding.get("document") or {}).get(
+                "drawing_library_revision"
+            )
+        ),
+    )
     understanding["object_profiles"] = build_object_profiles(
         bom_occurrences=_bom_flat,
         visual_observations=[],
@@ -1654,18 +1690,7 @@ async def _analyze_drawing_understanding(
             else ("EMPTY_CONFIRMED" if not _bom_flat else "AVAILABLE")
         ),
         product_code=code,
-        progressive={
-            "budget": {"max_crops": 8, "max_dpi": 300,
-                       "max_pixels": 4_000_000},
-            # R13 closure — ports reais do pipeline visual (lazy, sem
-            # reprocessar por ocorrência; orçamento governado).
-            "pdf_bytes": _pdf_bytes,
-            "renderer": PdfiumExtractionAdapter(),
-            "ocr": PaddleOcrAdapter(),
-            "page": 1,
-            "reference_dpi": int(best.get("dpi") or 200),
-            "reference_dpi_by_page": _render_dpi_by_page(best),
-        },
+        progressive=_prog,
         include_investigations=True,
     )
     understanding["report"]["object_profiles"] = understanding[

@@ -15,6 +15,9 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from engineering_app.application.drawing.bom_structure_comparator import (
+    _token_code_set,
+)
 from engineering_app.domain.drawing.object_profiles import (
     ObjectType,
     is_component_code,
@@ -1280,6 +1283,106 @@ def _merge(dst: list[float], rect: list[float]) -> None:
     dst[1] = min(dst[1], rect[1])
     dst[2] = max(dst[2], rect[2])
     dst[3] = max(dst[3], rect[3])
+
+
+def apply_localized_recovery(
+    u: dict,
+    *,
+    product_code: str,
+    bom_component_codes: list[str],
+    opts: dict,
+    tokens: list[dict] | None,
+    pdf_sha256: str | None = None,
+    source_revision: str | None = None,
+) -> list[dict]:
+    """DEC-VAL-034 — recuperação localizada + registro canônico da
+    evidência no entendimento.
+
+    Calcula os códigos oficiais ausentes da visão (células tipadas +
+    tokens), aciona `recover_absent_table_cells` e registra o resultado
+    nas três superfícies que consomem evidência:
+
+    - ``tokens`` (comparador BOM×desenho);
+    - ``u["code_contexts"]`` (contexto estrutural, dedup por
+      code+region+page);
+    - ``u["localized_recovery"]`` (contrato RQ-VAL-052 — consumido por
+      ``_check_component_code`` na investigação guiada).
+
+    Nunca fabrica evidência: só registra o que a percepção localizada
+    observou. Retorna a lista de ocorrências recuperadas.
+    """
+    if not isinstance(u, dict):
+        return []
+    ct = u.get("component_table") or {}
+    cell_codes = {
+        str(c.get("text") or "").strip()
+        for r in ct.get("rows") or []
+        for c in r.get("cells") or []
+        if is_component_code(c.get("text"))
+    }
+    visible = cell_codes | _token_code_set(tokens)
+    missing = [
+        str(c).strip()
+        for c in (bom_component_codes or [])
+        if str(c or "").strip() and str(c).strip() not in visible
+    ]
+    if not missing:
+        return []
+    recovered = recover_absent_table_cells(
+        missing_codes=missing,
+        component_table=ct,
+        opts=opts or {},
+        tokens=tokens,
+    )
+    for _rc in recovered:
+        if tokens is not None:
+            tokens.append(
+                {
+                    "normalized_text": _rc["code"],
+                    "raw_text": _rc["observed_raw_value"],
+                    "page": _rc["page"],
+                    "confidence": _rc["confidence"],
+                    "bounding_box_px": _rc["box"],
+                    "provenance": "localized_ocr_recheck",
+                }
+            )
+        _ctx_key = (_rc["code"], "component_table", _rc["page"])
+        _ctxs = u.setdefault("code_contexts", [])
+        if not any(
+            (c.get("code"), c.get("region"), c.get("page")) == _ctx_key
+            for c in _ctxs
+        ):
+            _ctxs.append(
+                {
+                    "code": _rc["code"],
+                    "region": "component_table",
+                    "page": _rc["page"],
+                    "bounding_box_px": _rc["box"],
+                    "provenance": "localized_ocr_recheck",
+                    "confidence": _rc["confidence"],
+                    "observed_raw_value": _rc["observed_raw_value"],
+                }
+            )
+        u.setdefault("localized_recovery", []).append(
+            {
+                "observed_code": _rc["code"],
+                "raw_text": _rc["observed_raw_value"],
+                "product_code": product_code,
+                "pdf_sha256": (
+                    pdf_sha256 or u.get("document_hash_sha256")
+                ),
+                "page": _rc["page"],
+                "region": "component_table",
+                "region_box": _rc.get("region"),
+                "region_ref_dpi": _rc.get("region_ref_dpi"),
+                "bounding_box": _rc["box"],
+                "coordinate_system": "pixels_pdfium_top_left",
+                "method": _rc["method"],
+                "confidence": _rc["confidence"],
+                "source_revision": source_revision,
+            }
+        )
+    return recovered
 
 
 def recover_absent_table_cells(

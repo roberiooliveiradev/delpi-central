@@ -472,103 +472,24 @@ async def analyze_product_drawing(
     # proveniência `localized_ocr_recheck` (conta presença, nunca
     # fabrica relação). Código esperado nunca é evidência por si só.
     if progressive and drawing_tokens is not None and bom_items:
-        from engineering_app.application.drawing.bom_structure_comparator import (  # noqa: E501
-            _token_code_set,
-        )
         from engineering_app.application.drawing.drawing_investigation import (  # noqa: E501
-            recover_absent_table_cells,
-        )
-        from engineering_app.domain.drawing.object_profiles import (
-            is_component_code,
+            apply_localized_recovery,
         )
 
-        _ct = (understanding or {}).get("component_table") or {}
-        _cell_codes = {
-            str(c.get("text") or "").strip()
-            for r in _ct.get("rows") or []
-            for c in r.get("cells") or []
-            if is_component_code(c.get("text"))
-        }
-        _visible = _cell_codes | _token_code_set(drawing_tokens)
-        _missing = [
-            str(it.get("component_code") or "").strip()
-            for it in bom_items
-            if str(it.get("component_code") or "").strip()
-            and str(it.get("component_code") or "").strip()
-            not in _visible
-        ]
-        if _missing:
-            _recovered = recover_absent_table_cells(
-                missing_codes=_missing,
-                component_table=_ct,
-                opts=progressive,
-                tokens=drawing_tokens,
-            )
-            for _rc in _recovered:
-                drawing_tokens.append(
-                    {
-                        "normalized_text": _rc["code"],
-                        "raw_text": _rc["observed_raw_value"],
-                        "page": _rc["page"],
-                        "confidence": _rc["confidence"],
-                        "bounding_box_px": _rc["box"],
-                        "provenance": "localized_ocr_recheck",
-                    }
-                )
-                # DEC-VAL-034 — a evidência perceptual deve chegar ao
-                # entendimento e à investigação guiada, não só ao
-                # comparador: code_contexts (visibilidade estrutural) +
-                # localized_recovery (contrato de evidência verificável).
-                if isinstance(understanding, dict):
-                    _ctx_key = (_rc["code"], "component_table", _rc["page"])
-                    _ctxs = understanding.setdefault("code_contexts", [])
-                    if not any(
-                        (c.get("code"), c.get("region"), c.get("page"))
-                        == _ctx_key
-                        for c in _ctxs
-                    ):
-                        _ctxs.append(
-                            {
-                                "code": _rc["code"],
-                                "region": "component_table",
-                                "page": _rc["page"],
-                                "bounding_box_px": _rc["box"],
-                                "provenance": "localized_ocr_recheck",
-                                "confidence": _rc["confidence"],
-                                "observed_raw_value": (
-                                    _rc["observed_raw_value"]
-                                ),
-                            }
-                        )
-                    understanding.setdefault(
-                        "localized_recovery", []
-                    ).append(
-                        {
-                            "observed_code": _rc["code"],
-                            "raw_text": _rc["observed_raw_value"],
-                            "product_code": official_code,
-                            "pdf_sha256": (
-                                getattr(extraction, "document_hash", None)
-                                or understanding.get(
-                                    "document_hash_sha256"
-                                )
-                            ),
-                            "page": _rc["page"],
-                            "region": "component_table",
-                            "region_box": _rc.get("region"),
-                            "region_ref_dpi": _rc.get("region_ref_dpi"),
-                            "bounding_box": _rc["box"],
-                            "coordinate_system": (
-                                "pixels_pdfium_top_left"
-                            ),
-                            "method": _rc["method"],
-                            "confidence": _rc["confidence"],
-                            "source_revision": (
-                                str(revision_meta)
-                                if revision_meta else None
-                            ),
-                        }
-                    )
+        apply_localized_recovery(
+            understanding,
+            product_code=official_code,
+            bom_component_codes=[
+                str(it.get("component_code") or "").strip()
+                for it in bom_items
+            ],
+            opts=progressive or {},
+            tokens=drawing_tokens,
+            pdf_sha256=getattr(extraction, "document_hash", None),
+            source_revision=(
+                str(revision_meta) if revision_meta else None
+            ),
+        )
     bom_structure_comparison = compare_bom_to_drawing(
         product_code=official_code,
         bom_occurrences=(
