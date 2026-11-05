@@ -40,9 +40,7 @@ MAX_STAGE_CHARS = 160
 # exists only so a pathological loop can never grow memory unboundedly.
 MAX_LEDGER_CALLS = 24
 
-# Effective composition of the answer the user received — requested vs
-# effective stay distinct (a startup flag is never proof of use).
-COMPOSITION_CRI = "cri"
+# Effective composition of the answer the user received.
 COMPOSITION_DETERMINISTIC = "deterministic"
 COMPOSITION_MODEL = "model"
 

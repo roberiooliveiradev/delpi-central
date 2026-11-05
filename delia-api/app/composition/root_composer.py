@@ -29,7 +29,6 @@ from app.infrastructure.http.deadline_transport import (
 from app.infrastructure.auth.core_platform_access import CorePlatformAccessAdapter
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.config.cri_instruction_resource import (
-    load_cri_instruction_clause,
     load_cri_presentation_vocabulary,
     load_orchestration_instructions,
 )
@@ -142,13 +141,8 @@ def _resolve_orchestration_attempt(
         prior_turns_limit=prior_turns_limit,
         prior_turn_max_chars=prior_turn_max_chars,
     )
-# CRI E2-R3/E3: governed declarative resources — fixed repo
-# artifacts, never request/env-supplied paths.
-_CRI_INSTRUCTIONS_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "config"
-    / "cri_instructions.delpi.json"
-)
+# Governed declarative resource — fixed repo artifact, never a
+# request/env-supplied path.
 _CRI_PRESENTATION_PATH = (
     Path(__file__).resolve().parents[2]
     / "config"
@@ -399,23 +393,10 @@ def _compose_turn_handler(
         providers.append(
             McpCapabilityProvider(interop, enabled_specialists)
         )
-    # CRI E2-R3/E3-G1: the declarative resources are loaded and
-    # validated only when the mode is REQUESTED. The *effective* mode
-    # is the single resolved truth propagated to both the handler
-    # (observability) and the orchestrator (behavior): requested ON
-    # with any absent/invalid resource resolves to baseline — CRI is
-    # never logged as executed when the fallback deactivated it.
-    cri_clause = None
-    cri_version = None
-    cri_vocabulary = None
-    field_labels = None
-    cri_requested = bool(settings.response_intelligence_enabled)
     # The presentation vocabulary is loaded unconditionally: its
     # ``field_labels`` govern baseline field-name presentation in
-    # every path, independent of the CRI activation flag. A missing
-    # or invalid resource degrades to neutral fallback labels; when
-    # CRI was requested it also disables the composed response —
-    # fail-closed, never partial.
+    # every path. A missing or invalid resource degrades to neutral
+    # fallback labels — fail-closed, never partial.
     vocabulary = None
     try:
         vocabulary = load_cri_presentation_vocabulary(
@@ -434,43 +415,7 @@ def _compose_turn_handler(
             vocabulary.version,
             vocabulary.content_hash,
         )
-    if cri_requested:
-        try:
-            clause = load_cri_instruction_clause(_CRI_INSTRUCTIONS_PATH)
-        except Exception:
-            _logger.warning(
-                "delia_response_intelligence decision=fail_closed "
-                "reason=cri_resource_invalid"
-            )
-        else:
-            if vocabulary is None:
-                _logger.warning(
-                    "delia_response_intelligence decision=fail_closed "
-                    "reason=cri_resource_invalid"
-                )
-            else:
-                cri_clause = clause.text
-                cri_version = clause.version
-                cri_vocabulary = vocabulary.sections
-                _logger.info(
-                    "cri_instruction_resource id=%s version=%s "
-                    "sha256=%s",
-                    clause.resource_id,
-                    clause.version,
-                    clause.content_hash,
-                )
-    try:
-        orchestration_instructions = load_orchestration_instructions(
-            _ORCHESTRATION_INSTRUCTIONS_PATH,
-            required_names=ORCHESTRATION_INSTRUCTION_KEYS,
-        ).instructions
-    except Exception:
-        _logger.warning(
-            "delia_orchestration_instructions decision=fail_closed "
-            "reason=resource_invalid"
-        )
         orchestration_instructions = None
-    cri_effective = cri_requested and cri_vocabulary is not None
     # Doc 231: engine selection is validated unconditionally — an
     # invalid DELIA_ORCHESTRATION_ENGINE fails startup even when no
     # capability surface is configured; nothing is silently selected.
@@ -568,24 +513,6 @@ def _compose_turn_handler(
             else "",
         ),
     )
-    # CRI E1 (doc 73 §7 / spec 75 §4.1): the single response-intelligence
-    # decision is resolved here from trusted runtime config — never from
-    # request, model, provider or frontend state. Invalid env values
-    # fail closed to baseline; the switch selects only the governed
-    # outcome → response boundary mode, it authorizes nothing.
-    _logger.info(
-        "delia_response_intelligence requested=%s effective=%s "
-        "config_source=%s runtime_sha=%s",
-        "cri" if cri_requested else "baseline",
-        "cri" if cri_effective else "baseline",
-        settings.response_intelligence_config_source,
-        settings.runtime_sha,
-    )
-    if settings.response_intelligence_config_invalid:
-        _logger.warning(
-            "delia_response_intelligence decision=fail_closed "
-            "reason=invalid_env_value"
-        )
     return HandleInteractiveConversationTurn(
         invoke_model,
         model_ref=model_ref,
@@ -593,7 +520,6 @@ def _compose_turn_handler(
         turn_budget_seconds=settings.turn_budget_seconds,
         timeout_seconds=settings.interaction_call_timeout_seconds,
         llm_call_max_attempts=settings.llm_call_max_attempts,
-        response_intelligence_enabled=cri_effective,
     )
 
 

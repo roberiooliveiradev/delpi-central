@@ -365,3 +365,12 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
 - Suíte `delia-api` completa: PASS (exit 0).
 - RQ-03: gate factual fechado → IMPLEMENTED; RQ-04, RQ-07 = PARTIAL. Cobertura verificada: 5/28 = 17,9%.
 - G1_REAL_MODEL_EVAL=TEST_NOT_RUN (E01–E10 pendente em G7).
+
+## 13. G3 — orchestration & interaction legacy shrink + residual G1 (execução)
+
+- **Residual G1 (doc 259 §25)**: `_apply_declared_answer` — NEEDS_CLARIFICATION declarado agora é honrado quando há evidência parcial + obrigações materiais não cumpridas → CLARIFICATION_REQUIRED com `verified_evidence_preserved` e outcome/provenance preservados; ignorado apenas quando não há necessidade provada (`declared_clarification_ignored`).
+- **orchestration.py**: 9 funções mortas removidas (_single_free_text_argument_from_input, _elide_unproven_optional_args, _drop_orchestration_field_args, _drop_null_literal_args, _deterministic_arguments_from_schema, _resolve_live_group_key, _truncate_text_field, _drop_block_fields, _omit_tail_entries) — ~114 linhas, zero consumidores.
+- **CRI aposentado removido**: `cri_clause`/`cri_version`/`cri_vocabulary` loading morto em root_composer; `DELIA_RESPONSE_INTELLIGENCE_ENABLED` env + `response_intelligence_*` fields em settings; `response_intelligence_enabled`/`_response_mode`/COMPOSITION_CRI label em handle_interactive_turn + turn_observability; `load_cri_instruction_clause`/`CriInstructionClause` em cri_instruction_resource; `cri_instructions.delpi.json` órfão; `test_cri_e1_response_intelligence_toggle.py` + 3 eval scripts CRI mortos.
+- Diff líquido: −856/+95 linhas; `orchestration.py` 6483→6369; `cri_instruction_resource.py` −51.
+- Suíte `delia-api` completa: PASS (exit 0). RQ-08..11 (G3) = PARTIAL → cobertura ~18%.
+- E01–E10: TEST_NOT_RUN (G7).

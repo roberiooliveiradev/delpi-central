@@ -27,7 +27,6 @@ from app.application.interaction.handle_interactive_turn import (
     serialize_result,
 )
 from app.application.interaction.turn_observability import (
-    COMPOSITION_CRI,
     COMPOSITION_DETERMINISTIC,
     COMPOSITION_MODEL,
     MAX_LEDGER_CALLS,
@@ -228,49 +227,6 @@ def test_partial_when_only_one_direction_reported():
 # --- projection shape / privacy --------------------------------------------
 
 
-def test_projection_is_bounded_and_never_carries_payload():
-    obs = build_turn_observability(
-        model_ref=ModelRef(
-            model_id="qwen2.5:3b" + "x" * MAX_STAGE_CHARS,
-            version="v1",
-            owner_ref="owner",
-            provider_ref="ollama",
-        ),
-        response_mode="cri",
-        composition_mode=COMPOSITION_CRI,
-        calls=(_obs(input_tokens=10, output_tokens=5),),
-        duration_ms=250,
-        governed_attempts=2,
-    )
-    assert obs["model"]["id"].endswith("x" * 40)
-    assert len(obs["model"]["id"]) <= MAX_STAGE_CHARS
-    # Provider identity never crosses the wire (canonical leak gate);
-    # owner attribution is the safe surface.
-    assert "provider" not in obs["model"]
-    assert obs["model"]["owner"] == "owner"
-    assert obs["composition_mode"] == COMPOSITION_CRI
-    assert obs["response_mode"] == "cri"
-    assert obs["duration_ms"] == 250
-    assert obs["governed_attempts"] == 2
-    assert obs["model_calls"] == 1
-    assert obs["cost"] == {"status": "unavailable"}
-    # No authority, credential, prompt, or raw payload surface.
-    forbidden = {
-        "prompt",
-        "instruction",
-        "instruction_content",
-        "input_text",
-        "chain_of_thought",
-        "api_key",
-        "token",
-        "secret",
-        "raw_payload",
-        "authorization",
-    }
-    assert forbidden.isdisjoint(obs.keys())
-    (call,) = obs["calls"]
-    assert forbidden.isdisjoint(call.keys())
-
 
 def test_projection_handles_absent_model_ref_and_missing_fields():
     obs = build_turn_observability(
@@ -467,44 +423,6 @@ def test_orchestrated_attempt_carries_composition_and_attempts():
     assert obs["governed_attempts"] == 2
 
 
-def test_cri_composition_mode_surfaces_when_marked():
-    from app.domain.specialist_interop.model import (
-        InteropProtocol,
-        SpecialistOutcome,
-        SpecialistResultProvenance,
-        SpecialistResultStatus,
-    )
-
-    class _Orchestration:
-        def attempt(self, *_args, **_kwargs):
-            outcome = SpecialistOutcome(
-                status=SpecialistResultStatus.COMPLETED,
-                provenance=SpecialistResultProvenance(
-                    specialist_id="sp",
-                    remote_name="cap",
-                    protocol=InteropProtocol.MCP,
-                    correlation_id="c1",
-                    observed_at="2026-01-01T00:00:00Z",
-                ),
-                content_text="resposta",
-            )
-            return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.SUCCESS,
-                correlation_id="c1",
-                outcome=outcome,
-                content="resposta",
-                composition_mode="cri",
-                governed_attempts=1,
-            )
-
-    handler = HandleInteractiveConversationTurn(
-        InvokeModel(DeterministicTestAdapter()),
-        capability_orchestration=_Orchestration(),
-    )
-    result = handler.execute(_request())
-    assert result.observability["composition_mode"] == "cri"
-
-
 def test_no_orchestration_conversational_model_mode():
     handler = HandleInteractiveConversationTurn(
         InvokeModel(DeterministicTestAdapter())
@@ -648,22 +566,6 @@ def test_timeout_source_coarse_and_once():
     )
     assert obs["timeout_source"] == "budget"
 
-
-def test_composition_elapsed_accumulates():
-    ledger = ModelCallLedger()
-    ledger.record_composition(4)
-    ledger.record_composition(2)
-    obs = build_turn_observability(
-        model_ref=None,
-        response_mode="cri",
-        composition_mode=COMPOSITION_CRI,
-        calls=(),
-        duration_ms=100,
-        governed_attempts=1,
-        composition_ms=ledger.composition_ms,
-    )
-    assert obs["elapsed_ms"]["composition"] == 6
-    assert obs["elapsed_ms"]["other"] == 94
 
 
 def test_elapsed_other_none_without_total():

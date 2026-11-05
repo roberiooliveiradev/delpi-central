@@ -102,7 +102,6 @@ from app.application.interaction.turn_budget import (
     TurnDeadline,
 )
 from app.application.interaction.turn_observability import (
-    COMPOSITION_CRI,
     COMPOSITION_DETERMINISTIC,
     COMPOSITION_MODEL,
     ModelCallLedger,
@@ -337,7 +336,6 @@ class HandleInteractiveConversationTurn:
         capability_orchestration: SupportsGovernedCapabilityAttempt | None = None,
         turn_budget_seconds: float = DEFAULT_TURN_BUDGET_SECONDS,
         llm_call_max_attempts: int = 1,
-        response_intelligence_enabled: bool = False,
     ) -> None:
         self._invoke_model = invoke_model
         self._model_ref = model_ref
@@ -363,13 +361,6 @@ class HandleInteractiveConversationTurn:
         # the PO-approved ceiling, never raised.
         self._llm_call_max_attempts = max(
             1, min(int(llm_call_max_attempts), LLM_CALL_MAX_ATTEMPTS)
-        )
-        # CRI E1 (doc 73 §7 / spec 75 §4.1): composition-resolved
-        # response mode at the governed-outcome → response boundary.
-        # It marks observability only in this gate — selection,
-        # authorization, evidence and presentation are unchanged.
-        self._response_mode = (
-            "cri" if response_intelligence_enabled else "baseline"
         )
 
     def execute(
@@ -469,16 +460,6 @@ class HandleInteractiveConversationTurn:
         sink: ActivityEventSink | None,
         cancel_check: Callable[[], bool] | None = None,
     ) -> InteractiveTurnResult:
-        # CRI E1 (doc 73 §7): one response-mode marker per processed
-        # turn at the governed-outcome → response boundary — identity
-        # fields only, never payload. E2/E3 attach at this point.
-        _logger.info(
-            "interaction stage=response_mode decision=%s "
-            "session_id=%s turn_id=%s",
-            self._response_mode,
-            session.session_id,
-            user_turn.turn_id,
-        )
         # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: the bounded
         # governed capability orchestration is tried first. Model
         # selection/answers never authorize anything — the fresh live
@@ -520,11 +501,7 @@ class HandleInteractiveConversationTurn:
             return self._with_observability(
                 result,
                 turn_deadline,
-                composition_mode=(
-                    COMPOSITION_CRI
-                    if attempt.composition_mode == COMPOSITION_CRI
-                    else COMPOSITION_DETERMINISTIC
-                ),
+                composition_mode=COMPOSITION_DETERMINISTIC,
                 governed_attempts=attempt.governed_attempts,
             )
 
@@ -851,7 +828,7 @@ class HandleInteractiveConversationTurn:
             result,
             observability=build_turn_observability(
                 model_ref=self._model_ref,
-                response_mode=self._response_mode,
+                response_mode="baseline",
                 composition_mode=composition_mode,
                 calls=calls,
                 duration_ms=duration_ms,

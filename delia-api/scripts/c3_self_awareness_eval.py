@@ -175,7 +175,6 @@ def _mint_subject_bearer() -> str:
 
 
 def _compose(cri: bool = True):
-    os.environ["DELIA_RESPONSE_INTELLIGENCE_ENABLED"] = "1" if cri else "0"
     settings = Settings()
     if settings.llm_egress_blocked_reason:
         raise SystemExit(f"refused: {settings.llm_egress_blocked_reason}")

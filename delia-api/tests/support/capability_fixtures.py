@@ -24,9 +24,6 @@ from app.application.capability_provision.contracts import (
 from app.application.model_invocation.contracts import (
     ProviderInvocationPayload,
 )
-from app.infrastructure.config.cri_instruction_resource import (
-    load_cri_instruction_clause,
-)
 from app.domain.evidence.model import (
     ModelRef,
     SourceRef,
@@ -177,16 +174,6 @@ def _group(provider_id, group_id, capabilities):
         ),
     )
 
-
-_CRI_RESOURCE_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "config"
-    / "cri_instructions.delpi.json"
-)
-
-
-def _cri_clause():
-    return load_cri_instruction_clause(_CRI_RESOURCE_PATH)
 
 
 def _query_cap():

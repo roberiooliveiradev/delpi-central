@@ -383,3 +383,57 @@ def test_answer_text_is_bounded():
         unbound_outcome=None,
     )
     assert len(out.content) <= 2000
+
+
+# ------------------------------------------------------------------
+# residual G1 (doc 259 §25): clarification with PARTIAL evidence
+# ------------------------------------------------------------------
+
+
+def test_clarification_applies_with_partial_evidence_and_unmet_obligations():
+    """Verified partial evidence coexisting with unmet material
+    obligations must NOT cause a declared clarification to be dropped —
+    the bounded clarification path applies while the verified evidence
+    is preserved, never discarded."""
+    class _Plan:
+        evidence_needed = ("price_check", "stock_check")
+
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.NEEDS_CLARIFICATION,
+        clarification_question="Qual armazém consultar para o estoque?",
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(_attempt(),),
+        plan=_Plan(),
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert out.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    # verified evidence preserved — never silently discarded
+    assert "verified_evidence_preserved" in out.limitations
+
+
+def test_clarification_ignored_only_when_obligations_fully_met():
+    """When material obligations are all satisfied, a declared
+    clarification is ignored — there is no proven unmet need."""
+    class _Plan:
+        evidence_needed = ()
+
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.NEEDS_CLARIFICATION,
+        clarification_question="Qual registro?",
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(_attempt(),),
+        plan=_Plan(),
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert out.status is GovernedCapabilityStatus.SUCCESS
+    assert "declared_clarification_ignored" in out.limitations

@@ -257,9 +257,6 @@ def run_corpus(
 ) -> dict[str, Any]:
     goal_text = instructions[GOAL_INSTRUCTION_ID]
     args_text = instructions[ARGUMENTS_INSTRUCTION_ID]
-    cri_clause = instructions.get("_cri_clause")
-    if cri_clause:
-        goal_text = goal_text + cri_clause
     rows: list[dict[str, Any]] = []
     totals = {"calls": 0, "in_tok": 0, "out_tok": 0, "ms": 0}
     for case in CORPUS:
@@ -391,10 +388,6 @@ def main() -> int:
     instructions = json.loads(
         Path(args.instructions).read_text(encoding="utf-8")
     )["instructions"]
-    if args.cri_clause:
-        instructions["_cri_clause"] = json.loads(
-            Path(args.cri_clause).read_text(encoding="utf-8")
-        )["instruction_text"].strip()
     schema = json.loads(Path(args.schema).read_text(encoding="utf-8"))
     descriptor = {
         "remote_name": args.descriptor_name,

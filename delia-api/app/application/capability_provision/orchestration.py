@@ -261,7 +261,7 @@ MAX_ARGUMENTS_BLOCK_CHARS = 14000
 # switch is ON, the SAME goal stage also proposes typed sufficiency
 # requirements — a hypothesis the runtime verifies against typed
 # evidence at the outcome edge. The clause itself is a governed
-# declarative resource (config/cri_instructions.delpi.json, E2-R3)
+# declarative resource (governed instruction resource)
 # injected by composition; baseline instructions stay byte-identical
 # and the mode deactivates when the resource is absent.
 
@@ -1753,23 +1753,6 @@ def _sole_unconstrained_string_field(
         return None
     return field
 
-def _single_free_text_argument_from_input(
-    input_text: str,
-    descriptor: ProviderCapability,
-) -> dict[str, Any] | None:
-    """Project user text into a sole free-string schema field.
-
-    Fail closed when the schema needs more than one material field or
-    the projected instance is schema-invalid.
-    """
-    text = (input_text or "").strip()
-    if not text:
-        return None
-    field = _sole_unconstrained_string_field(descriptor)
-    if field is None:
-        return None
-    candidate = {field: text[:MAX_DESCRIPTION_CHARS]}
-    return _validate_instance(candidate, descriptor.input_schema)
 
 
 
@@ -1865,49 +1848,6 @@ def _candidate_needs_missing_identifier(
 
 
 
-def _elide_unproven_optional_args(
-    arguments: Mapping[str, Any],
-    descriptor: ProviderCapability,
-    input_text: str,
-    workspace_context: WorkspaceContext | None,
-) -> dict[str, Any]:
-    """Elide OPTIONAL argument values the turn cannot support —
-    never rewrite, never invent.
-
-    The arguments contract forbids fabricated values; an optional
-    field carrying an empty string, a literal "none"/"null" marker,
-    or a value absent from every provenance source (user message,
-    workspace context, owner-declared schema literals) is an invented
-    constraint that would make the owner reject or mis-filter the
-    call. Free-text search fields are exempt — reformulating the
-    governed subject is their declared job. Required keys are
-    untouched — an unsatisfiable required input stays a
-    missing-input signal.
-    """
-
-    _, required = _schema_keys(descriptor)
-    haystack_parts = [input_text or ""]
-    if workspace_context is not None:
-        haystack_parts.append(workspace_context.to_prompt_block())
-    haystack_parts.append(_schema_declared_literals(descriptor))
-    haystack = "\n".join(haystack_parts)
-    cleaned: dict[str, Any] = {}
-    for key, value in list(arguments.items())[:MAX_ARGUMENT_KEYS]:
-        if str(key) in required:
-            cleaned[key] = value
-            continue
-        if isinstance(value, str):
-            stripped = value.strip()
-            if not stripped or stripped.lower() in {"none", "null"}:
-                continue
-            if _TEMPORAL_ARG_KEY_RE.search(str(key)) and (
-                parse_temporal_value(stripped) is not None
-                or str(key).endswith("_field")
-            ) and stripped not in haystack:
-                # Invented temporal/period filter — no provenance.
-                continue
-        cleaned[key] = value
-    return cleaned
 
 
 _NULL_LITERAL_ARG_VALUES = frozenset({"none", "null"})
@@ -1928,39 +1868,8 @@ _ORCHESTRATION_BLOCK_ARG_KEYS = frozenset(
 )
 
 
-def _drop_orchestration_field_args(
-    arguments: Mapping[str, Any],
-    schema: Mapping[str, Any] | None,
-) -> dict[str, Any]:
-    declared = (
-        schema.get("properties") if isinstance(schema, Mapping) else None
-    )
-    declared = declared if isinstance(declared, Mapping) else {}
-    return {
-        key: value
-        for key, value in list(arguments.items())[:MAX_ARGUMENT_KEYS]
-        if key in declared
-        or str(key) not in _ORCHESTRATION_BLOCK_ARG_KEYS
-    }
 
 
-def _drop_null_literal_args(
-    arguments: Mapping[str, Any],
-) -> dict[str, Any]:
-    """Drop literal ``None``/``"None"``/``"null"`` markers from a
-    proposal — model serialization artifacts, never business values.
-    Applied before schema validation so a required key carrying the
-    marker still surfaces as a missing input instead of reaching the
-    owner."""
-    return {
-        key: value
-        for key, value in list(arguments.items())[:MAX_ARGUMENT_KEYS]
-        if value is not None
-        and not (
-            isinstance(value, str)
-            and value.strip().lower() in _NULL_LITERAL_ARG_VALUES
-        )
-    }
 
 
 _TEMPORAL_ARG_KEY_RE = re.compile(
@@ -1970,54 +1879,6 @@ _TEMPORAL_ARG_KEY_RE = re.compile(
 )
 
 
-def _deterministic_arguments_from_schema(
-    descriptor: ProviderCapability,
-) -> dict[str, Any] | None:
-    """Build arguments without a model when every non-orchestrated key
-    is owner-closed (single enum/const or default) — never invent ids.
-
-    Returns None when any required/non-orchestrated field needs
-    interpretation (free string, multi-enum, opaque object/array).
-    """
-    keys, required = _schema_keys(descriptor)
-    material = (keys | required) - ORCHESTRATED_FIELDS
-    if not material:
-        return {}
-    schema = (
-        descriptor.input_schema
-        if isinstance(descriptor.input_schema, Mapping)
-        else None
-    )
-    arguments: dict[str, Any] = {}
-    for key in sorted(material)[:MAX_ARGUMENT_KEYS]:
-        node = _property_node(schema, key)
-        if node is None:
-            return None
-        if "const" in node:
-            value = node["const"]
-            if not isinstance(value, (str, int, float, bool)):
-                return None
-            arguments[key] = value
-            continue
-        enum_values = node.get("enum")
-        if isinstance(enum_values, (list, tuple)) and len(enum_values) == 1:
-            value = enum_values[0]
-            if not isinstance(value, (str, int, float, bool)):
-                return None
-            arguments[key] = value
-            continue
-        if "default" in node and key not in required:
-            value = node["default"]
-            if not isinstance(value, (str, int, float, bool)):
-                return None
-            arguments[key] = value
-            continue
-        # Free string / multi-enum / opaque → model or clarification.
-        return None
-    for key in required - ORCHESTRATED_FIELDS:
-        if key not in arguments:
-            return None
-    return arguments
 
 
 
@@ -2316,31 +2177,60 @@ def _apply_declared_answer(
 
     # Declared clarification may only fill a real gap: it never discards
     # a terminal already carrying verified business evidence (doc 258
-    # §5). Without verified evidence the existing bounded clarification
-    # path applies unchanged.
+    # §5). With verified evidence *and* still-unmet material
+    # obligations, partial evidence alone does not satisfy the goal —
+    # the bounded clarification applies while the verified evidence is
+    # preserved (doc 259 §25).
     if (
         declared_answer.status
         is InvestigationAnswerStatus.NEEDS_CLARIFICATION
         and declared_answer.clarification_question
     ):
+        unmet_obligations = False
         if (
             terminal.status is GovernedCapabilityStatus.SUCCESS
             and business
+            and plan is not None
+            and plan.evidence_needed
+        ):
+            coverage = _evaluate_material_obligations(
+                obligations=plan.evidence_needed,
+                business=business,
+            )
+            unmet_obligations = any(
+                state != OBLIGATION_SATISFIED for _, state in coverage
+            )
+        if (
+            terminal.status is GovernedCapabilityStatus.SUCCESS
+            and business
+            and not unmet_obligations
         ):
             return dataclasses.replace(
                 terminal,
                 limitations=tuple(terminal.limitations)
                 + ("declared_clarification_ignored",)[:24],
             )
+        partial_evidence = bool(business)
         return GovernedCapabilityAttempt(
             status=GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
             correlation_id=correlation,
             content=declared_answer.clarification_question[
                 :MAX_RENDER_CONTENT_CHARS
             ],
-            limitations=("agent_requested_clarification",),
+            limitations=(
+                ("agent_requested_clarification",)
+                + (
+                    ("verified_evidence_preserved",)
+                    if partial_evidence
+                    else ()
+                )
+            ),
             error_code="investigation_clarification_required",
             admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+            outcome=terminal.outcome if partial_evidence else None,
+            provenance=(
+                terminal.provenance if partial_evidence else None
+            ),
         )
 
     collected_count = len(collected)
@@ -2833,28 +2723,6 @@ def _finalize_agent_collected_attempts(
     )
 
 
-def _resolve_live_group_key(
-    proposed: str,
-    groups: Mapping[str, CapabilityGroup],
-) -> str | None:
-    """Map a model-proposed group id to exactly one live catalog key.
-
-    Exact catalog keys win. A bare ``group_id`` (or a unique
-    ``*:group_id`` suffix) is accepted only when membership is
-    unambiguous — never by display-name / lexical similarity.
-    """
-    if not proposed:
-        return None
-    if proposed in groups:
-        return proposed
-    matches = [
-        key
-        for key, group in groups.items()
-        if group.group_id == proposed or key.endswith(f":{proposed}")
-    ]
-    if len(matches) == 1:
-        return matches[0]
-    return None
 
 
 
@@ -2869,45 +2737,12 @@ def _json_block(block: Any) -> str:
     return json.dumps(block, ensure_ascii=False, default=str)
 
 
-def _truncate_text_field(
-    block: MutableMapping[str, Any], key: str, keep: int
-) -> bool:
-    """Structural reduction step: bound one text field in-place.
-
-    Only applied to fields that are already bounded excerpts —
-    never on required schema parts, identifiers, codes or record
-    values.
-    """
-    value = block.get(key)
-    if isinstance(value, str) and len(value) > keep:
-        block[key] = value[:keep]
-        return True
-    return False
 
 
 
 
-def _drop_block_fields(
-    block: MutableMapping[str, Any], *keys: str
-) -> bool:
-    """Structural step: drop optional fields entirely."""
-    changed = False
-    for key in keys:
-        if block.pop(key, None) is not None:
-            changed = True
-    return changed
 
 
-def _omit_tail_entries(
-    block: MutableMapping[str, Any], list_key: str, marker_key: str
-) -> bool:
-    """Structural step: drop one trailing entry, truthfully marked."""
-    entries = block.get(list_key)
-    if not isinstance(entries, list) or not entries:
-        return False
-    entries.pop()
-    block[marker_key] = block.get(marker_key, 0) + 1
-    return True
 
 
 def _fit_json_block(

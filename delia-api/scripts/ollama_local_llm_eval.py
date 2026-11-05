@@ -9,7 +9,6 @@ questions:
   O2: "2 exemplos de terminal bala"
   O3: "use o davi"
   O4: "o mcp davi"
-  O5: O1 again with DELIA_RESPONSE_INTELLIGENCE_ENABLED=0 (CRI OFF)
 
 Records per model-stage: call count, wall time, token units, finish
 status and the bounded structured decision; plus phases/CONTINUING events
@@ -114,7 +113,6 @@ def _context() -> PlatformAccessContext:
 
 
 def _compose(cri: bool = True):
-    os.environ["DELIA_RESPONSE_INTELLIGENCE_ENABLED"] = "1" if cri else "0"
     settings = Settings()
     if settings.llm_egress_blocked_reason:
         raise SystemExit(f"refused: {settings.llm_egress_blocked_reason}")

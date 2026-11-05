@@ -5786,3 +5786,15 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 | RQ-03 | IMPLEMENTED (gate factual fechado) |
 | E01–E10 | TEST_NOT_RUN (G7) |
 | PRODUCTION_DEPLOY | NOT_AUTHORIZED |
+
+## G3 — orchestration/interaction legacy shrink + residual G1 (doc 256)
+
+| Campo | Valor |
+|---|---|
+| Base | `6f69f8ac` |
+| G1 residual | clarificação com evidência parcial honrada (verified_evidence_preserved) |
+| Deletado | 9 fns mortas orchestration.py; CRI flag+loader+label+resource+tests+3 evals |
+| LOC | −856/+95 líquido |
+| Suíte | PASS (exit 0) |
+| E01–E10 | TEST_NOT_RUN (G7) |
+| PRODUCTION_DEPLOY | NOT_AUTHORIZED |

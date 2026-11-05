@@ -157,16 +157,6 @@ class CriInstructionResourceError(Exception):
 
 
 @dataclass(frozen=True)
-class CriInstructionClause:
-    """Validated instruction clause — typed content for the consumer."""
-
-    resource_id: str
-    version: str
-    text: str
-    content_hash: str
-
-
-@dataclass(frozen=True)
 class OrchestrationInstructions:
     """Validated orchestration instruction set — declarative text
     keyed by the typed instruction ids (plus the fused
@@ -234,47 +224,6 @@ def _validate_identity(
     return version
 
 
-def load_cri_instruction_clause(path: str | Path) -> CriInstructionClause:
-    """Load and validate the governed CRI instruction resource.
-
-    Fail-closed: every deviation — missing file, malformed JSON,
-    unsupported or missing fields, unknown kind or version, oversized
-    or empty text — raises CriInstructionResourceError. The clause is
-    returned whole or not at all.
-    """
-
-    data = _load_resource_object(path)
-    extra = set(data) - _RESOURCE_KEYS
-    if extra:
-        raise CriInstructionResourceError(
-            "cri_instruction_resource_invalid",
-            f"unsupported fields: {sorted(extra)}",
-        )
-    missing = {k for k in _REQUIRED_KEYS if not data.get(k)}
-    if missing:
-        raise CriInstructionResourceError(
-            "cri_instruction_resource_invalid",
-            f"missing fields: {sorted(missing)}",
-        )
-    version = _validate_identity(
-        data, kind=_RESOURCE_KIND, versions=_CLAUSE_VERSIONS
-    )
-    text = str(data["instruction_text"])
-    if not text.strip() or len(text.encode("utf-8")) > (
-        _MAX_INSTRUCTION_TEXT_BYTES
-    ):
-        raise CriInstructionResourceError(
-            "cri_instruction_resource_invalid",
-            "instruction_text empty or oversized",
-        )
-    return CriInstructionClause(
-        resource_id=str(data["resource_id"]),
-        version=version,
-        text=text,
-        content_hash=hashlib.sha256(
-            text.encode("utf-8")
-        ).hexdigest(),
-    )
 
 
 def _vocabulary_entries(
