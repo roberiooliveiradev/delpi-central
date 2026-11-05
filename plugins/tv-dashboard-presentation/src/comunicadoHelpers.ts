@@ -196,6 +196,7 @@ import type {
   ComunicadoCanvasTableBlock,
   ComunicadoConfig,
   ComunicadoDataBinding,
+  ComunicadoDataSourceBlock,
   ComunicadoDataBlockType,
   ComunicadoDataFilters,
   ComunicadoDataResolved,
@@ -368,7 +369,7 @@ export function createDataSourceBlock(
     defaultParams?: Record<string, string | number | boolean | null | ParamExpressionSpec>;
     refreshSec?: number;
   } = {},
-): ComunicadoBlock {
+): ComunicadoDataSourceBlock {
   return {
     id: newBlockId(),
     type: "data_source",

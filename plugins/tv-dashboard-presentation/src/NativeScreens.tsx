@@ -12,6 +12,8 @@ export type KpiScreenData = {
   branch?: string | null;
   error?: boolean;
   message?: string;
+  /** Detalhe do erro devolvido pela API nativa. */
+  detail?: string;
   seriesPoints?: Array<{
     label?: unknown;
     value?: unknown;

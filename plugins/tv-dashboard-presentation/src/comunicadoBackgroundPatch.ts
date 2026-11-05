@@ -21,16 +21,19 @@ function underlayToBackground(underlay: ComunicadoBackgroundUnderlay): Comunicad
 }
 
 function backgroundToUnderlay(background: ComunicadoBackground): ComunicadoBackgroundUnderlay {
+  if (background.type === "gradient") {
+    return {
+      type: "gradient",
+      from: background.from,
+      to: background.to,
+      angle: background.angle ?? 180,
+      ...(background.stops && background.stops.length >= 2 ? { stops: background.stops } : {}),
+    };
+  }
   if (background.type === "color") {
     return { type: "color", value: background.value };
   }
-  return {
-    type: "gradient",
-    from: background.from,
-    to: background.to,
-    angle: background.angle ?? 180,
-    ...(background.stops && background.stops.length >= 2 ? { stops: background.stops } : {}),
-  };
+  return background.underlay ?? { type: "color", value: background.value ?? "#ffffff" };
 }
 
 export function fillToBackgroundUnderlay(fill: DelpiFill): ComunicadoBackgroundUnderlay {

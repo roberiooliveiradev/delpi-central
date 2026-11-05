@@ -1,10 +1,10 @@
 import {
   isDataSourceBlockType,
-  isDataViewBlockType,
-  isCanvasTableDataBoundBlockType,
+  isDataViewBlock,
   isFetchableDataBlockType,
-  isTextDataBoundBlockType,
 } from "./comunicadoDataArchitecture";
+import { isCanvasTableDataBoundBlock } from "./canvasTableProjection";
+import { isTextDataBoundBlock } from "./textViewProjection";
 import { isComunicadoInputBlock } from "./comunicadoInputFilters";
 import { newBlockId, nextZIndex } from "./comunicadoHelpers";
 import type {
@@ -37,8 +37,12 @@ function remapShapeConnector(
     ...block,
     connector: {
       ...block.connector,
-      fromBlockId: idMap.get(block.connector.fromBlockId) ?? block.connector.fromBlockId,
-      toBlockId: idMap.get(block.connector.toBlockId) ?? block.connector.toBlockId,
+      fromBlockId: block.connector.fromBlockId
+        ? (idMap.get(block.connector.fromBlockId) ?? block.connector.fromBlockId)
+        : block.connector.fromBlockId,
+      toBlockId: block.connector.toBlockId
+        ? (idMap.get(block.connector.toBlockId) ?? block.connector.toBlockId)
+        : block.connector.toBlockId,
     },
   };
 }
@@ -47,13 +51,13 @@ function remapShapeConnector(
 export function referencedDataSourceIds(blocks: ComunicadoBlock[]): Set<string> {
   const ids = new Set<string>();
   for (const block of blocks) {
-    if (isDataViewBlockType(block.type) && block.dataSourceId?.trim()) {
+    if (isDataViewBlock(block) && block.dataSourceId?.trim()) {
       ids.add(block.dataSourceId.trim());
     }
-    if (isTextDataBoundBlockType(block.type) && block.dataSourceId?.trim()) {
+    if (isTextDataBoundBlock(block) && block.dataSourceId?.trim()) {
       ids.add(block.dataSourceId.trim());
     }
-    if (isCanvasTableDataBoundBlockType(block.type) && "dataSourceId" in block && block.dataSourceId?.trim()) {
+    if (isCanvasTableDataBoundBlock(block) && block.dataSourceId?.trim()) {
       ids.add(block.dataSourceId.trim());
     }
     if (isComunicadoInputBlock(block) && block.input.targetScope === "sources") {
@@ -93,13 +97,9 @@ export function needsDataSourceDuplicateChoice(sources: ComunicadoBlock[]): bool
   for (const block of sources) {
     if (isDataSourceBlockType(block.type)) return true;
     if (block.type.startsWith("data_")) return true;
-    if (isDataViewBlockType(block.type) && block.dataSourceId?.trim()) return true;
-    if (isTextDataBoundBlockType(block.type) && block.dataSourceId?.trim()) return true;
-    if (
-      isCanvasTableDataBoundBlockType(block.type) &&
-      "dataSourceId" in block &&
-      block.dataSourceId?.trim()
-    ) {
+    if (isDataViewBlock(block) && block.dataSourceId?.trim()) return true;
+    if (isTextDataBoundBlock(block) && block.dataSourceId?.trim()) return true;
+    if (isCanvasTableDataBoundBlock(block) && block.dataSourceId?.trim()) {
       return true;
     }
     if (
@@ -251,19 +251,15 @@ export function duplicateBlocksWithDataPolicy(
     }
 
     for (const copy of copies) {
-      if (isDataViewBlockType(copy.type) && copy.dataSourceId?.trim()) {
+      if (isDataViewBlock(copy) && copy.dataSourceId?.trim()) {
         const mapped = sourceIdMap.get(copy.dataSourceId.trim());
         if (mapped) copy.dataSourceId = mapped;
       }
-      if (isTextDataBoundBlockType(copy.type) && copy.dataSourceId?.trim()) {
+      if (isTextDataBoundBlock(copy) && copy.dataSourceId?.trim()) {
         const mapped = sourceIdMap.get(copy.dataSourceId.trim());
         if (mapped) copy.dataSourceId = mapped;
       }
-      if (
-        isCanvasTableDataBoundBlockType(copy.type) &&
-        "dataSourceId" in copy &&
-        copy.dataSourceId?.trim()
-      ) {
+      if (isCanvasTableDataBoundBlock(copy) && copy.dataSourceId?.trim()) {
         const mapped = sourceIdMap.get(copy.dataSourceId.trim());
         if (mapped) copy.dataSourceId = mapped;
       }

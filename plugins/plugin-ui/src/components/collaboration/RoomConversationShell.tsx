@@ -5,6 +5,7 @@ import type {
   UIEventHandler,
 } from "react";
 
+import { assignDomRef } from "../../utils/assignDomRef";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
   ConversationFileDropLayer,
@@ -67,7 +68,7 @@ export function RoomConversationChatColumn({
     <div className={classNames.stage}>
       <div
         className={classNames.msgs}
-        ref={msgsRef}
+        ref={assignDomRef(msgsRef)}
         onScroll={onMsgsScroll}
       >
         {children}

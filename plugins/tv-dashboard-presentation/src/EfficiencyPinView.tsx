@@ -50,12 +50,11 @@ function EfficiencyPinLabelCard({
     color: "#f8fafc",
     lineHeight: 1.15,
     textAlign: "center",
-    whiteSpace: "nowrap",
     boxShadow: "0 1px 4px rgba(0,0,0,0.35)",
     boxSizing: "border-box",
     ...(fill
-      ? { width: "100%", height: "100%", maxWidth: "100%", whiteSpace: "normal" }
-      : { maxWidth: "100%" }),
+      ? { width: "100%", height: "100%", maxWidth: "100%", whiteSpace: "normal" as const }
+      : { maxWidth: "100%", whiteSpace: "nowrap" as const }),
   };
   const pctText =
     pctDisplay ??

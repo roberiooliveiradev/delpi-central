@@ -1,5 +1,7 @@
 /** Filtro visual: ocultar sáb./dom. em séries diárias (não vai na query api-delpi). */
 
+import type { ComunicadoChartType } from "./comunicadoTypes";
+
 export const EXCLUDE_WEEKENDS_PARAM = "excludeWeekends";
 
 const DAILY_GRANULARITY = new Set(["day", "daily", "dia"]);
@@ -123,7 +125,7 @@ type ChartLike = {
     plotOn?: "primary" | "secondary";
     points: Array<{ label?: unknown; value?: unknown; size?: unknown }>;
   }>;
-  chartType?: "line" | "bar";
+  chartType?: ComunicadoChartType;
 };
 
 export function applyExcludeWeekendsToChart<T extends ChartLike>(chart: T | undefined): T | undefined {

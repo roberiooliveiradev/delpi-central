@@ -18,6 +18,13 @@ export function isDataSourceBlockType(type: string): type is "data_source" {
   return type === "data_source";
 }
 
+/** Estreita o bloco. O predicado em `block.type` não estreita a união. */
+export function isDataSourceBlock(
+  block: { type: string },
+): block is ComunicadoDataSourceBlock {
+  return isDataSourceBlockType(block.type);
+}
+
 /**
  * Bloco técnico de dados — objeto sem papel visual na apresentação.
  * `data_source` renderiza só o chip de authoring no editor; no palco/playback
@@ -67,6 +74,13 @@ export function dataModelOptionsForInspector(
 
 export function isDataViewBlockType(type: string): type is "chart_view" | "table_view" | "kpi_view" {
   return DATA_VIEW_BLOCK_TYPES.has(type);
+}
+
+/** Estreita o bloco. O predicado em `block.type` não estreita a união. */
+export function isDataViewBlock(
+  block: { type: string },
+): block is Extract<ComunicadoBlock, { type: "chart_view" | "table_view" | "kpi_view" }> {
+  return isDataViewBlockType(block.type);
 }
 
 export function isTextDataBoundBlockType(type: string): boolean {

@@ -1,5 +1,7 @@
 import type { ReactNode, Ref, UIEventHandler } from "react";
 
+import { assignDomRef } from "../../utils/assignDomRef";
+
 export type ConversationWorkspaceDensity = "comfortable" | "compact";
 
 export type ConversationWorkspaceProps = {
@@ -70,7 +72,7 @@ export function ConversationWorkspace({
       ) : null}
       <div
         className="delpi-ui-conversation-workspace__body"
-        ref={bodyRef}
+        ref={assignDomRef(bodyRef)}
         onScroll={onBodyScroll}
       >
         <div

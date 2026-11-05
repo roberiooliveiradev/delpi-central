@@ -409,6 +409,7 @@ export type ComunicadoEditorContextValue = {
       indentLevel?: number;
       paragraphSpacingBefore?: number;
       paragraphSpacingAfter?: number;
+      textCase?: string | null;
     },
     applyOptions?: import("../utils/selectionPropertyApply").SelectionPropertyApplyOptions,
   ) => void;

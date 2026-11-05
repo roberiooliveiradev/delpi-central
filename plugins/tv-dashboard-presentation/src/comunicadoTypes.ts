@@ -862,7 +862,7 @@ export type ComunicadoDataResolved = {
   fieldLabelsEffective?: Record<string, string>;
   chart?: {
     points?: ComunicadoChartPoint[];
-    chartType?: "line" | "bar";
+    chartType?: ComunicadoChartType;
     /** Multi-série (Fase 4); `points` permanece a 1ª série / fallback. */
     series?: Array<{
       name: string;

@@ -10,7 +10,7 @@ import {
   dataSourceOptionsForInspector,
   findSharedEfficiencyPinBands,
   findSharedEfficiencyPinDataSourceId,
-  isDataSourceBlockType,
+  isDataSourceBlock,
   isEfficiencyPinBlock,
   isEfficiencyPinInfoRole,
   listWorkCentersFromResolved,
@@ -115,13 +115,13 @@ export function EfficiencyPinInspector({
       const bBlock = blocks.find((block) => block.id === b.value);
       const aEff =
         aBlock &&
-        isDataSourceBlockType(aBlock.type) &&
+        isDataSourceBlock(aBlock) &&
         aBlock.dataBinding?.operationId === EFFICIENCY_PIN_OPERATION_ID
           ? 0
           : 1;
       const bEff =
         bBlock &&
-        isDataSourceBlockType(bBlock.type) &&
+        isDataSourceBlock(bBlock) &&
         bBlock.dataBinding?.operationId === EFFICIENCY_PIN_OPERATION_ID
           ? 0
           : 1;
@@ -248,7 +248,7 @@ export function EfficiencyPinInspector({
 
   const sourceHint =
     linkedSource &&
-    isDataSourceBlockType(linkedSource.type) &&
+    isDataSourceBlock(linkedSource) &&
     linkedSource.dataBinding?.operationId &&
     linkedSource.dataBinding.operationId !== EFFICIENCY_PIN_OPERATION_ID
       ? `Fonte atual: ${linkedSource.dataBinding.operationId}. Prefira ${EFFICIENCY_PIN_OPERATION_ID}.`
