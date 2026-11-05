@@ -725,3 +725,15 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   lentos); sem registro previamente confirmado → INCONCLUSIVE por
   acesso/dados, não por código.
 - Suite completa PASS (exit 0).
+
+## 31. G7 — proveniência tool→result→histórico + diagnóstico owner (doc 277)
+
+- `test_governed_tool_invocation_real_and_request_counted`
+  reforçado: spy prova exatamente 1 invocação governada; 2 requests
+  físicos; ToolCallPart+ToolReturnPart pareados por `tool_call_id`
+  com conteúdo bounded na 2ª request; outcome estrito
+  `SUCCESS`/`error_code=None` (stub owner real — não permissivo).
+- Diagnóstico owner: `/financial/rol*` — 401 anônimo (AuthZ ativo);
+  JWT válido → TIMEOUT (dependência externa lenta/indisponível —
+  NÃO ausência comprovada de registro). INCONCLUSIVE honesto.
+- Suite completa PASS (exit 0).

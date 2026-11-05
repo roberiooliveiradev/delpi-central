@@ -1307,18 +1307,24 @@ def test_agent_in_run_overflow_after_tool_result_no_second_call():
 
 
 def test_governed_tool_invocation_real_and_request_counted():
-    """Doc 276 §2: multi-step real governed path — the model calls
-    the governed tool (spy proves the owner invoke actually ran),
-    its bounded result enters the history, the model continues to a
-    typed final answer — physical request count asserted."""
-    from tests.test_pydantic_ai_semantic_rework import _gates
+    """Doc 277 §2: full causal chain — the model issues a ToolCall,
+    the GOVERNED boundary executes it exactly once (spy), a matching
+    ToolReturnPart with bounded content reaches the second model
+    request, and the attempt ends in ONE specific typed outcome —
+    no permissive allowlist."""
+    from tests.test_pydantic_ai_semantic_rework import (
+        _final_answer,
+        _gates,
+    )
     from app.application.interaction.turn_budget import TurnDeadline
     from app.infrastructure.orchestration.pydantic_ai_investigation import (
         PydanticAiInvestigationOrchestrator,
     )
     from pydantic_ai.messages import (
+        ModelRequest,
         ModelResponse,
         ToolCallPart,
+        ToolReturnPart,
     )
     from pydantic_ai.models.function import FunctionModel
 
@@ -1327,10 +1333,19 @@ def test_governed_tool_invocation_real_and_request_counted():
         correlation="c", deadline=TurnDeadline.start(30.0)
     )
     read = next(c for c in catalog if c["operation_class"] == "READ")
-    model_requests = []
+    invocations = []
+    original = gates._governed_semantic_tool_invoke
+
+    def _spy(**kw):
+        invocations.append(kw.get("capability_id"))
+        return original(**kw)
+
+    gates._governed_semantic_tool_invoke = _spy
+    request_messages: list[list] = []
+    seen_ids: list[str] = []
 
     def _fn(messages, _info):
-        model_requests.append(len(messages))
+        request_messages.append(list(messages))
         if not any(isinstance(m, ModelResponse) for m in messages):
             return ModelResponse(
                 parts=[
@@ -1340,27 +1355,41 @@ def test_governed_tool_invocation_real_and_request_counted():
                             "capability_id": read["capability_id"],
                             "arguments": {"query": "terminal"},
                         },
+                        tool_call_id="call-e2e-1",
                     )
                 ]
             )
         return _final_answer("done", status="insufficient")
 
     engine = PydanticAiInvestigationOrchestrator(
-        gates,
-        model=FunctionModel(_fn),
-        context_window_tokens=60_000,
+        gates, model=FunctionModel(_fn)
     )
     attempt = engine.attempt("consulte terminal")
-    # multi-step run: tool call turn + final_result turn = exactly
-    # 2 physical model requests (governed invocation already proven
-    # by test_engine_tool_invocation_is_governed_not_multiplied)
-    assert len(model_requests) == 2
-    # every outcome is TYPED and fail-closed — never a fabricated
-    # business answer (model retry/parse errors map to typed
-    # agent_error, equally honest)
-    assert attempt.error_code in (
-        None,
-        "investigation_agent_error",
-        "investigation_no_business_evidence",
-        "investigation_clarification_required",
+    # exactly one governed owner invocation through the real boundary
+    assert invocations == [read["capability_id"]]
+    # exactly two physical model requests
+    assert len(request_messages) == 2
+    # second request carries the matching call+return causal pair
+    second = request_messages[1]
+    calls = [
+        p for m in second if isinstance(m, ModelResponse)
+        for p in m.parts if isinstance(p, ToolCallPart)
+    ]
+    returns = [
+        p for m in second if isinstance(m, ModelRequest)
+        for p in m.parts if isinstance(p, ToolReturnPart)
+    ]
+    assert any(c.tool_call_id == "call-e2e-1" for c in calls)
+    assert any(
+        r.tool_call_id == "call-e2e-1" and r.content
+        for r in returns
     )
+    # ONE specific typed outcome: the governed owner attempt
+    # completes SUCCESS (stub provider returns real attempt data)
+    # — deterministic, never fabricated
+    from app.application.interaction.capability_attempt import (
+        GovernedCapabilityStatus,
+    )
+
+    assert attempt.error_code is None
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
