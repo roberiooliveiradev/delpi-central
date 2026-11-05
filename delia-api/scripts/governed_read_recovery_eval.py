@@ -58,8 +58,8 @@ from app.application.model_invocation.invoke_model import (  # noqa: E402
     InvokeModel,
 )
 from app.infrastructure.config.settings import Settings  # noqa: E402
-from app.infrastructure.model_invocation.openai_compatible_adapter import (  # noqa: E402
-    OpenAICompatibleModelInvocationAdapter,
+from app.infrastructure.model_invocation.pydantic_ai_adapter import (  # noqa: E402
+    PydanticAiModelInvocationAdapter,
 )
 from tests.conftest import (  # noqa: E402
     load_test_orchestration_instructions,
@@ -205,7 +205,7 @@ def _compose(provider, *, enabled=True):
             f"refused: {settings.llm_egress_blocked_reason}"
         )
     guarded = _GuardedAdapter(
-        OpenAICompatibleModelInvocationAdapter(
+        PydanticAiModelInvocationAdapter(
             base_url=settings.llm_base_url,
             api_key=settings.llm_api_key,
             model=settings.llm_model,
@@ -269,7 +269,7 @@ def main() -> int:
     groups = [
         _group("mcp", "alpha", [_search_cap(), _cap("alpha", "mcp", "read_items")])
     ]
-    out: dict = {"model": os.environ.get("DELIA_LLM_MODEL")}
+    out: dict = {"model": Settings().llm_model}
 
     relevant = _outcome(
         "ok",

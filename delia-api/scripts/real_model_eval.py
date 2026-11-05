@@ -6,7 +6,7 @@ OpenAI-compatible provider:
     PlatformAccessContext(delia.access)
     -> HandleInteractiveConversationTurn
     -> InvokeModel
-    -> OpenAICompatibleModelInvocationAdapter
+    -> PydanticAiModelInvocationAdapter
     -> {DELIA_LLM_BASE_URL}/chat/completions
 
 Config resolution uses DELIA_LLM_* only. C3-OLLAMA-LOCAL-LLM-TESTING-01:
@@ -44,19 +44,19 @@ from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.platform_access import PlatformAccessContext
 from app.domain.evidence.model import ModelRef
 from app.infrastructure.config.settings import llm_egress_blocked_reason
-from app.infrastructure.model_invocation.openai_compatible_adapter import (
-    OpenAICompatibleModelInvocationAdapter,
+from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+    PydanticAiModelInvocationAdapter,
 )
 from app.application.interaction.contracts import InteractiveTurnRequest
 
 
 def _resolve_config() -> dict:
     return {
-        "provider": (os.getenv("DELIA_LLM_PROVIDER") or "").strip(),
+        "provider": Settings().llm_provider,
         "base_url": (os.getenv("DELIA_LLM_BASE_URL") or "").strip(),
-        "model": (os.getenv("DELIA_LLM_MODEL") or "").strip(),
+        "model": Settings().llm_model,
         "api_key": (os.getenv("DELIA_LLM_API_KEY") or "").strip(),
-        "timeout": float(os.getenv("DELIA_LLM_TIMEOUT_SECONDS") or "30.0"),
+        "timeout": float(Settings().llm_timeout_seconds),
         "environment": os.getenv("DELIA_ENV", os.getenv("ENV", "development")),
     }
 
@@ -198,7 +198,7 @@ def main() -> int:
         print(f"REAL_MODEL_EVAL = TEST_NOT_RUN ({blocked})")
         return 2
 
-    adapter = OpenAICompatibleModelInvocationAdapter(
+    adapter = PydanticAiModelInvocationAdapter(
         base_url=cfg["base_url"],
         api_key=cfg["api_key"],
         model=cfg["model"],

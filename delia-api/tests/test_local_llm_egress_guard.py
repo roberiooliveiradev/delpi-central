@@ -49,9 +49,7 @@ MODEL = "qwen2.5:3b"
 
 def _env(monkeypatch, base_url, environment="development"):
     monkeypatch.setenv("DELIA_ENV", environment)
-    monkeypatch.setenv("DELIA_LLM_PROVIDER", "openai_compatible")
     monkeypatch.setenv("DELIA_LLM_BASE_URL", base_url)
-    monkeypatch.setenv("DELIA_LLM_MODEL", MODEL)
     monkeypatch.setenv("DELIA_LLM_API_KEY", KEY)
 
 

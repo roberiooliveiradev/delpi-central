@@ -44,8 +44,8 @@ from app.domain.model_invocation.model import (
     EvidenceRef,
     InstructionLineage,
 )
-from app.infrastructure.model_invocation.openai_compatible_adapter import (
-    OpenAICompatibleModelInvocationAdapter,
+from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+    PydanticAiModelInvocationAdapter,
 )
 
 OLLAMA_BASE_URL = "http://localhost:11434/v1"
@@ -401,7 +401,7 @@ def main() -> int:
         "description": schema["description"],
         "input_schema": schema["input_schema"],
     }
-    adapter = OpenAICompatibleModelInvocationAdapter(
+    adapter = PydanticAiModelInvocationAdapter(
         base_url=OLLAMA_BASE_URL,
         api_key="local-eval",
         model=EVAL_MODEL,

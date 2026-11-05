@@ -37,6 +37,10 @@ from types import SimpleNamespace
 
 sys.path.insert(0, "/app")
 
+from app.infrastructure.config.settings import (  # noqa: E402
+    Settings,
+)
+
 _R4_PATH = "/app/scripts/r4_authenticated_resume_eval.py"
 _spec = importlib.util.spec_from_file_location("r4_eval", _R4_PATH)
 r4 = importlib.util.module_from_spec(_spec)
@@ -314,7 +318,7 @@ def main() -> int:
 
     started = time.monotonic()
     out = {
-        "model": r4._env("DELIA_LLM_MODEL"),
+        "model": Settings().llm_model,
         "question": QUESTION,
         "deterministic": _deterministic(),
         "live": {},

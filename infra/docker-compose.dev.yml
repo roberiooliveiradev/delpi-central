@@ -1829,19 +1829,12 @@ services:
       DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
       DELIA_CORE_TIMEOUT_SECONDS: ${DELIA_CORE_TIMEOUT_SECONDS:-5.0}
 
-      # DÉLIA real-provider gate — DELIA_LLM_* only (materialized in .env;
-      # provider secret source never referenced at this boundary)
-      DELIA_LLM_PROVIDER: ${DELIA_LLM_PROVIDER:-}
+      # DÉLIA real-provider gate — secret/transport envs only; every
+      # intelligence tunable lives in delia-api/config/
+      # pydantic_ai.runtime.delpi.json (doc 243), selected by profile.
       DELIA_LLM_BASE_URL: ${DELIA_LLM_BASE_URL:-}
-      DELIA_LLM_MODEL: ${DELIA_LLM_MODEL:-}
       DELIA_LLM_API_KEY: ${DELIA_LLM_API_KEY:-}
-      # Doc 103 approved policy: each real LLM call may take up to 60s;
-      # the transport ceiling must not sit below the call budget.
-      DELIA_LLM_TIMEOUT_SECONDS: ${DELIA_LLM_TIMEOUT_SECONDS:-60}
-      # Effective input window honored by the runtime (tokens) — see
-      # docker-compose.yml comment; unset disables budget enforcement.
-      DELIA_LLM_CONTEXT_TOKENS: ${DELIA_LLM_CONTEXT_TOKENS:-}
-      DELIA_MODEL_STAGE_TIMEOUT_SECONDS: ${DELIA_MODEL_STAGE_TIMEOUT_SECONDS:-60}
+      DELIA_RUNTIME_PROFILE: ${DELIA_RUNTIME_PROFILE:-}
 
       # VD-F03 dictation.transcription.v1 — dedicated audio-capable model;
       # unset fails closed (dictation status unavailable).
@@ -1876,25 +1869,6 @@ services:
       DELIA_MCP_TEO_HOST_HEADER: ${DELIA_MCP_TEO_HOST_HEADER:-}
       DELIA_MCP_VISTA_HOST_HEADER: ${DELIA_MCP_VISTA_HOST_HEADER:-}
       DELIA_MCP_TIMEOUT_SECONDS: ${DELIA_MCP_TIMEOUT_SECONDS:-15}
-      # Doc 103: no artificial per-attempt wall — the turn deadline IS
-      # the monotonic global cap (300s), anchored at request start and
-      # never reset between stages, calls or retries. The 60s ceiling
-      # and max-3 retry apply per logical LLM call inside it.
-      DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-300}
-      # CP4 governed stage resume (docs 88 §10.2 / 90): dev-authorized
-      # — bounded whole-turn resume attempts under the monotonic
-      # interaction budget. Per-LLM-call retry (max 3) is a separate
-      # inner mechanism (doc 103), never a turn retry. Production
-      # default remains a single attempt.
-      DELIA_MAX_GOVERNED_ATTEMPTS: ${DELIA_MAX_GOVERNED_ATTEMPTS:-2}
-      # Doc 103 GATE 1: per-LOGICAL-CALL LLM retry limit — dev-authorized
-      # at the PO ceiling (3). Distinct from turn resume above; absent or
-      # invalid values fail closed to 1 (OFF).
-      DELIA_LLM_CALL_MAX_ATTEMPTS: ${DELIA_LLM_CALL_MAX_ATTEMPTS:-3}
-      DELIA_INTERACTION_TOTAL_BUDGET_SECONDS: ${DELIA_INTERACTION_TOTAL_BUDGET_SECONDS:-300}
-      # Doc 231+241: pydantic_ai is the only orchestration engine.
-      # `delia` rollback retired (engine deleted).
-      DELIA_ORCHESTRATION_ENGINE: ${DELIA_ORCHESTRATION_ENGINE:-pydantic_ai}
       # CRI E1: central ON/OFF for conversational response intelligence —
       # default OFF; fail-closed to baseline on invalid/absent resources.
       DELIA_RESPONSE_INTELLIGENCE_ENABLED: ${DELIA_RESPONSE_INTELLIGENCE_ENABLED:-}

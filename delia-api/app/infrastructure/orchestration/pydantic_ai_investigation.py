@@ -62,8 +62,15 @@ from app.application.model_invocation.contracts import (
 
 _logger = logging.getLogger(__name__)
 
+# Library defaults for direct unit construction only — production
+# composition always injects the validated runtime-config snapshot
+# (doc 243); these literals are never a second source of truth.
 _DEFAULT_REQUEST_LIMIT = 12
 _DEFAULT_TOOL_CALL_LIMIT = 8
+_DEFAULT_AGENT_RETRIES = 1
+_DEFAULT_TOOL_PROJECTION_LIMIT = 6000
+_DEFAULT_PRIOR_TURNS_LIMIT = 4
+_DEFAULT_PRIOR_TURN_MAX_CHARS = 400
 
 
 def build_openai_compatible_investigation_model(
@@ -167,6 +174,7 @@ class InvestigationDeps:
     collected: list[GovernedCapabilityAttempt] = field(
         default_factory=list
     )
+    tool_projection_limit: int = _DEFAULT_TOOL_PROJECTION_LIMIT
     tool_calls: int = 0
     investigation_plan: object | None = None
     clarification_question: str | None = None
@@ -448,17 +456,20 @@ def _close_investigation_client(model: Any) -> None:
 
 def _prior_context_block(
     prior_turns: tuple[ConversationContextTurn, ...],
+    *,
+    turns_limit: int = _DEFAULT_PRIOR_TURNS_LIMIT,
+    max_chars: int = _DEFAULT_PRIOR_TURN_MAX_CHARS,
 ) -> str:
     """Bounded prior-turn text for continuity — never authority."""
-    if not prior_turns:
+    if not prior_turns or turns_limit <= 0:
         return ""
     lines: list[str] = []
-    for turn in prior_turns[-4:]:
+    for turn in prior_turns[-turns_limit:]:
         role = getattr(turn, "role", None) or getattr(turn, "speaker", "")
         text = getattr(turn, "content", None) or getattr(turn, "text", "")
         if not text:
             continue
-        lines.append(f"{role}: {str(text)[:400]}")
+        lines.append(f"{role}: {str(text)[:max_chars]}")
     if not lines:
         return ""
     return (
@@ -493,6 +504,10 @@ class PydanticAiInvestigationOrchestrator:
 
         request_limit: int = _DEFAULT_REQUEST_LIMIT,
         tool_calls_limit: int = _DEFAULT_TOOL_CALL_LIMIT,
+        agent_retries: int = _DEFAULT_AGENT_RETRIES,
+        tool_projection_limit: int = _DEFAULT_TOOL_PROJECTION_LIMIT,
+        prior_turns_limit: int = _DEFAULT_PRIOR_TURNS_LIMIT,
+        prior_turn_max_chars: int = _DEFAULT_PRIOR_TURN_MAX_CHARS,
     ) -> None:
         if model is None and model_factory is None:
             raise ValueError("investigation model is required")
@@ -502,6 +517,14 @@ class PydanticAiInvestigationOrchestrator:
         self._recovery_reuse_enabled = recovery_reuse_enabled
         self._request_limit = max(1, int(request_limit))
         self._tool_calls_limit = max(1, int(tool_calls_limit))
+        self._agent_retries = max(0, int(agent_retries))
+        self._tool_projection_limit = max(
+            500, int(tool_projection_limit)
+        )
+        self._prior_turns_limit = max(0, int(prior_turns_limit))
+        self._prior_turn_max_chars = max(
+            80, int(prior_turn_max_chars)
+        )
         self.last_node_trace: list[str] = []
         self.last_agent_usage: Mapping[str, Any] | None = None
 
@@ -666,8 +689,16 @@ class PydanticAiInvestigationOrchestrator:
             prepare_only=prepare_only,
             unbound_outcome=unbound_outcome,
             deadline=deadline,
+            tool_projection_limit=self._tool_projection_limit,
         )
         toolset = FunctionToolset()
+
+        def _proj(payload):
+            """Tool-result projection bounded by the runtime-config
+            snapshot (doc 243) — one source for the char budget."""
+            return _bounded_json(
+                payload, limit=deps.tool_projection_limit
+            )
 
         def _governed_invoke(
             ctx,
@@ -694,7 +725,7 @@ class PydanticAiInvestigationOrchestrator:
                 if not previous.get("authoritative_root_code"):
                     repeated["repeated_failure_no_progress"] = True
                     repeated["error_class"] = "repeated_equivalent_failure"
-                return _bounded_json(repeated)
+                return _proj(repeated)
             attempt = ctx.deps.gates._governed_semantic_tool_invoke(
                 capability_id=str(capability_id or "").strip(),
                 arguments=raw_args,
@@ -733,7 +764,7 @@ class PydanticAiInvestigationOrchestrator:
                 ctx.deps.correlation,
             )
             ctx.deps.non_progress_calls[fingerprint] = dict(projection)
-            return _bounded_json(projection)
+            return _proj(projection)
 
         # Prefetch live catalog once so each capability is a native tool.
         # AuthZ is re-checked on every invoke; catalog metadata is never
@@ -812,13 +843,13 @@ class PydanticAiInvestigationOrchestrator:
             )
             ctx.deps.investigation_plan = plan
             if plan is None:
-                return _bounded_json(
+                return _proj(
                     {
                         "status": "INVALID_GOAL",
                         "error_code": "investigation_goal_rejected",
                     }
                 )
-            return _bounded_json(
+            return _proj(
                 {
                     "status": "ACCEPTED",
                     "goal_class": plan.goal.goal_class,
@@ -842,7 +873,7 @@ class PydanticAiInvestigationOrchestrator:
                 deadline=ctx.deps.deadline,
                 actor_user_id=ctx.deps.actor_user_id,
             )
-            return _bounded_json(
+            return _proj(
                 {
                     "capabilities": catalog,
                     "catalog_len": len(catalog),
@@ -942,7 +973,7 @@ class PydanticAiInvestigationOrchestrator:
                 left = collected[int(left_observation_index)]
                 right = collected[int(right_observation_index)]
             except (IndexError, TypeError, ValueError):
-                return _bounded_json(
+                return _proj(
                     {
                         "status": "INVALID_ARGUMENTS",
                         "error_code": "observation_index_invalid",
@@ -956,14 +987,14 @@ class PydanticAiInvestigationOrchestrator:
                 deadline=ctx.deps.deadline,
             )
             if composed is None:
-                return _bounded_json(
+                return _proj(
                     {
                         "status": "NOT_APPLICABLE",
                         "error_code": "composition_unavailable",
                     }
                 )
             ctx.deps.composed_attempt = composed
-            return _bounded_json(
+            return _proj(
                 {
                     "status": composed.status.value,
                     "has_verified_composition": True,
@@ -1004,7 +1035,7 @@ class PydanticAiInvestigationOrchestrator:
                 # The user already named concrete identifiers. Asking
                 # again would end the turn before the agent can choose
                 # the next tool. Do not record a terminal clarification.
-                return _bounded_json(
+                return _proj(
                     {
                         "status": "CONTINUE_REQUIRED",
                         "error_code": "clarification_rejected_identifiers_present",
@@ -1020,7 +1051,7 @@ class PydanticAiInvestigationOrchestrator:
                 _is_business_evidence_attempt(item)
                 for item in ctx.deps.collected
             ):
-                return _bounded_json(
+                return _proj(
                     {
                         "status": "CLARIFICATION_REJECTED",
                         "error_code": "clarification_rejected_evidence_present",
@@ -1031,7 +1062,7 @@ class PydanticAiInvestigationOrchestrator:
                     }
                 )
             ctx.deps.clarification_question = text[:800]
-            return _bounded_json(
+            return _proj(
                 {
                     "status": "CLARIFICATION_RECORDED",
                     "question": ctx.deps.clarification_question,
@@ -1050,12 +1081,16 @@ class PydanticAiInvestigationOrchestrator:
             deps_type=InvestigationDeps,
             toolsets=[toolset],
             instructions=instructions,
-            retries=1,
+            retries=self._agent_retries,
         )
 
         remaining = max(1.0, deadline.remaining_seconds())
         started = time.monotonic()
-        prompt = _prior_context_block(prior_turns) + input_text
+        prompt = _prior_context_block(
+            prior_turns,
+            turns_limit=self._prior_turns_limit,
+            max_chars=self._prior_turn_max_chars,
+        ) + input_text
         result = None
         usage_limited = False
         try:

@@ -1,0 +1,81 @@
+{
+  "resource_id": "delia.pydantic_ai.runtime",
+  "kind": "pydantic_ai_runtime",
+  "schema_version": 1,
+  "owner": "delia-api",
+  "default_profile": "local_ollama",
+  "profiles": {
+    "local_ollama": {
+      "model": {
+        "provider": "openai_compatible",
+        "model_name": "qwen3:4b-instruct-2507-q4_K_M"
+      },
+      "generation": {
+        "max_output_tokens": null
+      },
+      "agent": {
+        "request_limit": 12,
+        "tool_calls_limit": 8,
+        "retries": 1,
+        "llm_call_max_attempts": 3
+      },
+      "context": {
+        "effective_context_window_tokens": null,
+        "prior_turns_limit": 4,
+        "prior_turn_max_chars": 400
+      },
+      "budgets": {
+        "provider_call_timeout_seconds": 60.0,
+        "model_stage_timeout_seconds": 60.0,
+        "interaction_call_timeout_seconds": 30.0,
+        "turn_budget_seconds": 300.0,
+        "interaction_total_budget_seconds": 300.0,
+        "max_governed_attempts": 2
+      },
+      "tool_results": {
+        "max_projection_chars": 6000
+      },
+      "observability": {
+        "record_model_id": true,
+        "record_usage": true,
+        "record_config_fingerprint": true
+      }
+    },
+    "openrouter_kimi": {
+      "model": {
+        "provider": "openai_compatible",
+        "model_name": "moonshotai/kimi-k3"
+      },
+      "generation": {
+        "max_output_tokens": 2048
+      },
+      "agent": {
+        "request_limit": 12,
+        "tool_calls_limit": 8,
+        "retries": 1,
+        "llm_call_max_attempts": 3
+      },
+      "context": {
+        "effective_context_window_tokens": null,
+        "prior_turns_limit": 4,
+        "prior_turn_max_chars": 400
+      },
+      "budgets": {
+        "provider_call_timeout_seconds": 60.0,
+        "model_stage_timeout_seconds": 60.0,
+        "interaction_call_timeout_seconds": 30.0,
+        "turn_budget_seconds": 300.0,
+        "interaction_total_budget_seconds": 300.0,
+        "max_governed_attempts": 1
+      },
+      "tool_results": {
+        "max_projection_chars": 6000
+      },
+      "observability": {
+        "record_model_id": true,
+        "record_usage": true,
+        "record_config_fingerprint": true
+      }
+    }
+  }
+}

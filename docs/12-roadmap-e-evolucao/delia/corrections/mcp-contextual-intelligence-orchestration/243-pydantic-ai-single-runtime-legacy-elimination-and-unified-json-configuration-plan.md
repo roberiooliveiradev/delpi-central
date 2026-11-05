@@ -152,3 +152,18 @@ Critical condition: **Do not delete tests merely because they expose behavior st
 No stage phase advance by documentation. Document end-state, removed settings, all effective JSON settings, explicitly excluded security/secret/STT settings, file changes, tests, runtime SHA, commit/push, unresolved decisions. Update doc239 + ledger and publish next available numbered report after doc243. Avoid duplicated historical doc241 names by precise filename/links rather than silent renumbering.
 
 **EXECUTION ACCEPTANCE:** zero executable legacy intelligence runtime, exactly one canonical non-secret tuning JSON, native Pydantic AI using all effective tunables, no scattered duplicate defaults, no regressions in authority/evidence/Outcome, and independently verified local runtime results. Production deploy NOT_AUTHORIZED.
+
+---
+
+## 7. Execução concluída (2026-11-05, relatório 245)
+
+Decisões finais aplicadas:
+
+- **Artefato:** `delia-api/config/pydantic_ai.runtime.delpi.json` — schema v1, seções `model`/`generation`/`agent`/`context`/`budgets`/`tool_results`/`observability`, perfis `local_ollama` (default) e `openrouter_kimi`. Fingerprint efetivo local: `2e3bb1c6ead760da`.
+- **Loader:** `app/infrastructure/config/pydantic_ai_runtime_config.py` — snapshot tipado imutável, fail-closed integral (JSON, chaves, versão, ranges, budgets cruzados, tetos CP4/GATE 1, campos de segredo/endpoint, perfil).
+- **Seleção de perfil:** `DELIA_RUNTIME_PROFILE` (somente ponteiro; valores desconhecidos falham fechado).
+- **Envs aposentadas fail-closed:** `DELIA_LLM_PROVIDER`, `DELIA_LLM_MODEL`, `DELIA_LLM_TIMEOUT_SECONDS`, `DELIA_LLM_MAX_OUTPUT_TOKENS`, `DELIA_LLM_CONTEXT_TOKENS`, `DELIA_MODEL_STAGE_TIMEOUT_SECONDS`, `DELIA_TURN_BUDGET_SECONDS`, `DELIA_INTERACTION_TOTAL_BUDGET_SECONDS`, `DELIA_MAX_GOVERNED_ATTEMPTS`, `DELIA_LLM_CALL_MAX_ATTEMPTS`, `DELIA_MODEL_RUNTIME` (`pydantic_ai` é no-op; qualquer outro valor → ValueError).
+- **Permanecem env:** `DELIA_LLM_BASE_URL`, `DELIA_LLM_API_KEY` (segredo/transporte); `DELIA_STT_*` (contexto independente); `DELIA_ORCHESTRATION_ENGINE` (única opção `pydantic_ai`, inalterado).
+- **Wiring:** composer → adapter Pydantic AI, handler (turn/interaction-call/retry budgets), `_investigation_runtime_kwargs` → orquestrador (UsageLimits, Agent.retries, projeção, prior-turns).
+- **Defeitos latentes do baseline corrigidos:** `goal=None` residual em `_invoke_selected`; referência removida `_prior_result_turn` em `_prior_observation_context` (ambos crashavam todo owner READ ao vivo).
+- **Suíte:** 1172 testes GREEN no SHA avaliado. **E-matrix ao vivo:** E05 GROUNDED com READ real (`get_product_structure root=90260148`); demais NON_GROUNDED honestos (residual owner/modelo registrado no relatório 245). FALSE_GROUNDED_COUNT=0.

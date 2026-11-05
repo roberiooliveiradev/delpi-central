@@ -1634,8 +1634,16 @@ def _prior_observation_context(
     The model interprets references. This block does not count
     identifiers, detect list wording, or grant provenance.
     """
-    prior = OperationalCapabilityOrchestrator._prior_result_turn(
-        prior_turns
+    # Doc 242 leftover repair: the removed continuation machinery took
+    # `_prior_result_turn` with it — the prior observation is simply
+    # the latest DELIA_RESULT turn (untrusted context, never authority).
+    prior = next(
+        (
+            turn
+            for turn in reversed(prior_turns)
+            if getattr(turn, "kind", None) is TurnKind.DELIA_RESULT
+        ),
+        None,
     )
     if (
         prior is None
@@ -5662,7 +5670,6 @@ class OperationalCapabilityOrchestrator:
                 correlation,
                 prior_turns=prior_turns,
                 deadline=deadline,
-                goal=None,
                 workspace_context=workspace_context,
             )
         except CapabilityProviderError as exc:

@@ -13,6 +13,27 @@ import urllib.parse
 import urllib.request
 
 
+def _runtime_model_identity() -> tuple[str, str]:
+    """(provider, model_name) from the unified runtime JSON — probes
+    report the resolved snapshot, never a retired env var."""
+    import pathlib
+    data = json.loads(
+        (
+            pathlib.Path(__file__).resolve().parents[1]
+            / "config"
+            / "pydantic_ai.runtime.delpi.json"
+        ).read_text(encoding="utf-8")
+    )
+    profile = data["profiles"][
+        os.getenv("DELIA_RUNTIME_PROFILE") or data["default_profile"]
+    ]
+    return (
+        profile["model"]["provider"],
+        profile["model"]["model_name"],
+    )
+
+
+
 CASES = (
     ("e01_sipoc", "O que é SIPOC?"),
     ("e06_unavailable", "Consulte a estrutura do produto ZZZ99999inexistente."),
@@ -100,7 +121,7 @@ def _turn(token: str, text: str, *, timeout: float = 90.0) -> dict:
 def main() -> int:
     report: dict = {
         "runtime_sha_env": os.getenv("DELIA_RUNTIME_SHA"),
-        "model": os.getenv("DELIA_LLM_MODEL"),
+        "model": _runtime_model_identity()[1],
     }
     try:
         token = _mint()

@@ -74,8 +74,8 @@ from app.infrastructure.interoperability.config import (
 from app.infrastructure.interoperability.mcp.adapter import (
     McpSpecialistAdapter,
 )
-from app.infrastructure.model_invocation.openai_compatible_adapter import (
-    OpenAICompatibleModelInvocationAdapter,
+from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+    PydanticAiModelInvocationAdapter,
 )
 
 QUESTIONS = {
@@ -290,7 +290,7 @@ def _compose(inject_purpose=None, on_inject=None):
     else:
         interop = SpecialistInterop(mcp)
     guarded = _GuardedAdapter(
-        OpenAICompatibleModelInvocationAdapter(
+        PydanticAiModelInvocationAdapter(
             base_url=settings.llm_base_url,
             api_key=settings.llm_api_key,
             model=settings.llm_model,
@@ -440,7 +440,7 @@ def main() -> int:
         if not _env(required):
             return _fail(f"missing env {required}")
 
-    out = {"model": _env("DELIA_LLM_MODEL"), "scenarios": {}}
+    out = {"model": Settings().llm_model, "scenarios": {}}
 
     def _fresh(question, inject=None, on_inject=None, cancel_at=None):
         handler, guarded, mcp = _compose(

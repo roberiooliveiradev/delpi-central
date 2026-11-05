@@ -24,57 +24,14 @@ def test_testing_settings_disable_debug(monkeypatch):
     assert settings.debug is False
 
 
-def test_llm_max_output_tokens_defaults_to_unset(monkeypatch):
-    monkeypatch.delenv("DELIA_LLM_MAX_OUTPUT_TOKENS", raising=False)
-    assert Settings().llm_max_output_tokens is None
-
-
-def test_llm_max_output_tokens_parses_env(monkeypatch):
-    monkeypatch.setenv("DELIA_LLM_MAX_OUTPUT_TOKENS", "2048")
-    assert Settings().llm_max_output_tokens == 2048
-
-
-def test_model_stage_timeout_defaults_to_bounded_cap(monkeypatch):
-    # Doc 103: the approved per-LLM-call budget is 60s.
-    monkeypatch.delenv("DELIA_MODEL_STAGE_TIMEOUT_SECONDS", raising=False)
-    assert Settings().model_stage_timeout_seconds == 60.0
-
-
-def test_model_stage_timeout_parses_env(monkeypatch):
-    monkeypatch.setenv("DELIA_MODEL_STAGE_TIMEOUT_SECONDS", "30")
-    assert Settings().model_stage_timeout_seconds == 30.0
-
-
-def test_llm_call_max_attempts_defaults_to_off(monkeypatch):
-    # Doc 103 GATE 1: absent config fails closed to 1 — production
-    # never retries a logical LLM call involuntarily.
-    monkeypatch.delenv("DELIA_LLM_CALL_MAX_ATTEMPTS", raising=False)
+def test_llm_tuning_comes_from_runtime_json(monkeypatch):
+    # Doc 243: intelligence tunables resolve from the single JSON
+    # artifact — retired env values fail closed (covered by
+    # test_pydantic_ai_runtime_config).
     settings = Settings()
-    assert settings.llm_call_max_attempts == 1
-    assert settings.llm_call_max_attempts_config_source == "default"
-    assert settings.llm_call_max_attempts_config_invalid is False
-
-
-def test_llm_call_max_attempts_accepts_approved_range(monkeypatch):
-    for raw, expected in (("1", 1), ("2", 2), ("3", 3)):
-        monkeypatch.setenv("DELIA_LLM_CALL_MAX_ATTEMPTS", raw)
-        settings = Settings()
-        assert settings.llm_call_max_attempts == expected
-        assert settings.llm_call_max_attempts_config_source == (
-            "environment"
-        )
-        assert settings.llm_call_max_attempts_config_invalid is False
-
-
-def test_llm_call_max_attempts_invalid_values_fail_closed(monkeypatch):
-    # Zero, negative, above the PO-approved ceiling, non-numeric and
-    # empty all resolve to 1 (OFF) and are flagged invalid — never an
-    # involuntary retry enablement.
-    for raw in ("0", "-1", "4", "99", "abc", "", "  "):
-        monkeypatch.setenv("DELIA_LLM_CALL_MAX_ATTEMPTS", raw)
-        settings = Settings()
-        assert settings.llm_call_max_attempts == 1
-        assert settings.llm_call_max_attempts_config_invalid is True
+    assert settings.llm_max_output_tokens is None
+    assert settings.model_stage_timeout_seconds == 60.0
+    assert settings.llm_call_max_attempts == 3
 
 
 def test_no_direct_delpi_openapi_settings(monkeypatch):

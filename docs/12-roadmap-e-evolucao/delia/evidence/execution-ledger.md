@@ -5729,3 +5729,15 @@ KEPT=admissão tipada (1 _propose), compose_verified_observations (1 _propose + 
 REGRESSION=delia-api pytest tests/ --ignore=tests/live exit 0 no SHA avaliado (~1150 testes); 74 testes nativos de contrato PASS; test_v14_architecture_isolation PASS.
 E01_E10=TEST_NOT_RUN (runtime real exige rebuild do container local; não executado nesta sessão). FALSE_GROUNDED=0 na suíte executada.
 VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; gate de runtime real pendente; FUNCTIONAL_ACCEPTANCE_CANDIDATE=NO.
+
+## DELIA-C3-PYDANTIC-AI-ONLY-RUNTIME-AND-UNIFIED-INTELLIGENCE-CONFIG-01 (doc 243 → relatório 245)
+
+| Campo | Valor |
+|---|---|
+| BASE_HEAD | `9d28674cc0` (baseline spec `8a16ca69f6`; origin avançou com commits não relacionados — diff disjunto) |
+| Legacy runtime | REMOVIDO — `openai_compatible_adapter.py`, scripts/teste A/B, branch do composer, `DELIA_MODEL_RUNTIME` e 10 envs `DELIA_LLM_*` aposentadas fail-closed |
+| Config canônica | `delia-api/config/pydantic_ai.runtime.delpi.json` (schema v1, 2 perfis, fingerprint `2e3bb1c6ead760da`) + loader tipado `pydantic_ai_runtime_config.py` |
+| Defeitos baseline | 2 crashes latentes doc-242 corrigidos (`goal=` residual; `_prior_result_turn` removido) |
+| Suíte delia-api | PASS — 1172 testes no SHA avaliado |
+| E01–E10 ao vivo | E05 PASS/GROUNDED (READ real `root=90260148`); demais NON_GROUNDED honestos; FALSE_GROUNDED=0; residual owner-binding aberto |
+| PRODUCTION_DEPLOY | NOT_AUTHORIZED |

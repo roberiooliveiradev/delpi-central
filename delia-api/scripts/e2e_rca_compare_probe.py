@@ -15,6 +15,27 @@ import urllib.parse
 import urllib.request
 
 
+def _runtime_model_identity() -> tuple[str, str]:
+    """(provider, model_name) from the unified runtime JSON — probes
+    report the resolved snapshot, never a retired env var."""
+    import pathlib
+    data = json.loads(
+        (
+            pathlib.Path(__file__).resolve().parents[1]
+            / "config"
+            / "pydantic_ai.runtime.delpi.json"
+        ).read_text(encoding="utf-8")
+    )
+    profile = data["profiles"][
+        os.getenv("DELIA_RUNTIME_PROFILE") or data["default_profile"]
+    ]
+    return (
+        profile["model"]["provider"],
+        profile["model"]["model_name"],
+    )
+
+
+
 COMPARE_TEXT = (
     "Compare as estruturas de produto 90260147 e 90260148: "
     "itens comuns, exclusivos de cada uma e diferenças relevantes."
@@ -244,8 +265,8 @@ def _sanitize_turn(body: dict) -> dict:
 def main() -> int:
     report: dict = {
         "runtime_sha_env": os.getenv("DELIA_RUNTIME_SHA"),
-        "model": os.getenv("DELIA_LLM_MODEL"),
-        "provider": os.getenv("DELIA_LLM_PROVIDER"),
+        "model": _runtime_model_identity()[1],
+        "provider": _runtime_model_identity()[0],
     }
     try:
         token, claims = _mint()

@@ -32,8 +32,8 @@ from app.application.model_invocation.errors import ModelInvocationError
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.platform_access import PlatformAccessContext
 from app.domain.interaction.model import TurnKind
-from app.infrastructure.model_invocation.openai_compatible_adapter import (
-    OpenAICompatibleModelInvocationAdapter,
+from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+    PydanticAiModelInvocationAdapter,
 )
 from app.infrastructure.config.settings import llm_egress_blocked_reason
 
@@ -105,11 +105,11 @@ CASES = [
 
 def _resolve_config() -> dict:
     return {
-        "provider": os.environ.get("DELIA_LLM_PROVIDER", ""),
+        "provider": Settings().llm_provider,
         "base_url": os.environ.get("DELIA_LLM_BASE_URL", ""),
-        "model": os.environ.get("DELIA_LLM_MODEL", ""),
+        "model": Settings().llm_model,
         "api_key": os.environ.get("DELIA_LLM_API_KEY", ""),
-        "timeout": float(os.environ.get("DELIA_LLM_TIMEOUT_SECONDS", "30")),
+        "timeout": float(Settings().llm_timeout_seconds),
         "environment": os.environ.get(
             "DELIA_ENV", os.environ.get("ENV", "development")
         ),
@@ -267,7 +267,7 @@ def main() -> int:
         }))
         return 2
 
-    adapter = OpenAICompatibleModelInvocationAdapter(
+    adapter = PydanticAiModelInvocationAdapter(
         base_url=cfg["base_url"],
         api_key=cfg["api_key"],
         model=cfg["model"],

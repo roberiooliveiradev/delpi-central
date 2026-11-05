@@ -186,3 +186,17 @@ The **[doc 241 — full-folder inventory and native-first deletion plan](241-cap
 ## Architecture direction — zero legacy intelligence runtime and unified JSON (2026-11-05)
 
 [Doc 243 — Pydantic AI sole runtime + unified non-secret config JSON](243-pydantic-ai-single-runtime-legacy-elimination-and-unified-json-configuration-plan.md) records the user-approved target. Current code review at SHA `df76410c0e5aeb659fbc96ba9b0e209d905a6488` finds that `DELIA_MODEL_RUNTIME=legacy` and the `root_composer.py` legacy model invocation branch remain although the `delia` semantic orchestration engine was removed. Agent limits `request_limit=12`, `tool_calls_limit=8`, `retries=1` still sit in Python; LLM output/window and turn/retry budgets remain dispersed across Settings. **PLANNED, NOT IMPLEMENTED:** remove legacy model runtime after canonical consumer and frozen-decision audit; centralize all actual non-secret agent tunables in one strictly validated JSON, proposed `delia-api/config/pydantic_ai.runtime.delpi.json`. Secrets and AuthZ must never enter the JSON. Preserve model-independent security/evidence/Domain contracts. Real E01–E10 on rebuilt local runtime remains TEST_NOT_RUN for doc242 baseline.
+
+---
+
+## Registro de execução — runtime unificado + JSON único (2026-11-05, doc 245)
+
+Funcionalidades nativas Pydantic AI **efetivamente utilizadas** no SHA avaliado (`9d28674cc0`):
+
+- `Agent(model, deps_type, toolsets, instructions, retries=N)` — `retries` vem de `agent.retries` do JSON (não mais literal).
+- `FunctionToolset` com tools tipadas por `RunContext[InvestigationDeps]` — sem planner/seletor paralelo.
+- `UsageLimits(request_limit=…, tool_calls_limit=…)` — valores do perfil JSON (`agent.request_limit`/`agent.tool_calls_limit`); `UsageLimitExceeded` finaliza com evidência coletada.
+- `agent.run_sync` com deadline externo (TurnDeadline da Application) — sem thread nativa de timeout.
+- `ModelSettings`/`OpenAIChatModel` no adapter de proposta com `max_tokens` quando `generation.max_output_tokens` configurado.
+- `TestModel`/`FunctionModel` seguem confinados a testes — nunca fallback de produção.
+- Snapshot tipado `PydanticAiRuntimeConfig` (fingerprint SHA-256 de perfil) — telemetria de boot registra `model_id`/`config_profile`/`config_fingerprint` conforme flags `observability`.

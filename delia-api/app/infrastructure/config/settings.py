@@ -3,14 +3,42 @@ from __future__ import annotations
 import ipaddress
 import os
 import urllib.parse
+from pathlib import Path
 
-from app.application.model_invocation.governed_retries import (
-    LLM_CALL_MAX_ATTEMPTS,
+from app.infrastructure.config.pydantic_ai_runtime_config import (
+    PydanticAiRuntimeConfig,
+    load_pydantic_ai_runtime_config,
 )
 
 
 _ENV_FLAG_TRUE = frozenset({"1", "true", "yes", "on"})
 _ENV_FLAG_FALSE = frozenset({"0", "false", "no", "off"})
+
+# Doc 243: unified non-secret Pydantic AI runtime tuning artifact —
+# fixed repo path, never request/env-supplied. Loaded fail-closed.
+_RUNTIME_CONFIG_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "config"
+    / "pydantic_ai.runtime.delpi.json"
+)
+
+# Doc 243 §4/§6: environment variables whose authority moved to the
+# single runtime JSON. An explicitly set non-empty value is stale
+# configuration and fails closed — never a silent second source.
+_RETIRED_LLM_ENV_VARS = frozenset(
+    {
+        "DELIA_LLM_PROVIDER",
+        "DELIA_LLM_MODEL",
+        "DELIA_LLM_TIMEOUT_SECONDS",
+        "DELIA_LLM_MAX_OUTPUT_TOKENS",
+        "DELIA_LLM_CONTEXT_TOKENS",
+        "DELIA_MODEL_STAGE_TIMEOUT_SECONDS",
+        "DELIA_TURN_BUDGET_SECONDS",
+        "DELIA_INTERACTION_TOTAL_BUDGET_SECONDS",
+        "DELIA_MAX_GOVERNED_ATTEMPTS",
+        "DELIA_LLM_CALL_MAX_ATTEMPTS",
+    }
+)
 
 
 def _env_flag(name: str, default: bool = False) -> bool:
@@ -79,75 +107,117 @@ class Settings:
             or os.getenv("DELPI_AUTH_RBAC_TIMEOUT_SECONDS")
             or "5.0"
         )
-        # Real-provider gate (C3-IR-01R2). Incomplete config fails closed —
-        # never log or repr llm_api_key.
-        self.llm_provider = (os.getenv("DELIA_LLM_PROVIDER") or "").strip()
+        # Doc 243: every migrated tuning env fails closed when
+        # explicitly set — the single runtime JSON owns them now.
+        for retired in sorted(_RETIRED_LLM_ENV_VARS):
+            stale = os.getenv(retired)
+            if stale is not None and stale.strip():
+                raise ValueError(
+                    f"{retired} is retired: intelligence tuning lives "
+                    "in config/pydantic_ai.runtime.delpi.json — unset "
+                    "the variable"
+                )
+        # Doc 243: the legacy model runtime is removed. The variable is
+        # retired — only the single supported value is a harmless
+        # no-op; every explicit obsolete choice fails closed, never a
+        # fallback.
+        _retired_model_runtime = (
+            (os.getenv("DELIA_MODEL_RUNTIME") or "").strip().lower()
+        )
+        if _retired_model_runtime and _retired_model_runtime != (
+            "pydantic_ai"
+        ):
+            raise ValueError(
+                "DELIA_MODEL_RUNTIME is retired: pydantic_ai is the "
+                f"only intelligence runtime, got "
+                f"{_retired_model_runtime!r}"
+            )
+        # Doc 243: ONE validated non-secret JSON snapshot supplies all
+        # intelligence tunables. Secrets/transport (base URL, API key)
+        # remain environment bindings — never in the artifact.
+        runtime_config: PydanticAiRuntimeConfig = (
+            load_pydantic_ai_runtime_config(
+                _RUNTIME_CONFIG_PATH,
+                profile_selector=(
+                    os.getenv("DELIA_RUNTIME_PROFILE") or ""
+                ).strip(),
+            )
+        )
+        self.runtime_config = runtime_config
+        _profile = runtime_config.profile
+        self.runtime_profile = runtime_config.profile_name
+        self.runtime_config_fingerprint = runtime_config.fingerprint
+        # Real-provider gate (C3-IR-01R2). Incomplete secret/transport
+        # config fails closed — never log or repr llm_api_key.
+        self.llm_provider = _profile.model.provider
         self.llm_base_url = (os.getenv("DELIA_LLM_BASE_URL") or "").strip()
-        self.llm_model = (os.getenv("DELIA_LLM_MODEL") or "").strip()
+        self.llm_model = _profile.model.model_name
         self.llm_api_key = (os.getenv("DELIA_LLM_API_KEY") or "").strip()
-        self.llm_timeout_seconds = float(
-            os.getenv("DELIA_LLM_TIMEOUT_SECONDS") or "30.0"
+        self.llm_timeout_seconds = (
+            _profile.budgets.provider_call_timeout_seconds
         )
         # Optional provider-side output cap. Some providers reserve the
         # model's maximum output against the account balance when
         # max_tokens is absent, rejecting requests intermittently; a
-        # configured ceiling keeps the reservation bounded.
-        llm_max_output_tokens = (
-            os.getenv("DELIA_LLM_MAX_OUTPUT_TOKENS") or ""
-        ).strip()
+        # configured ceiling keeps the reservation bounded. ``None`` =
+        # unconfigured, never "unlimited".
         self.llm_max_output_tokens = (
-            int(llm_max_output_tokens) if llm_max_output_tokens else None
+            _profile.generation.max_output_tokens
         )
         # Declared effective input window in tokens — the runtime value
         # the provider actually honors (e.g. server-configured num_ctx),
-        # never the model's nominal capacity. Unset/invalid → unknown →
+        # never the model's nominal capacity. ``None`` → unknown →
         # pre-call budget enforcement stays off rather than guessing.
-        llm_context_tokens = (
-            os.getenv("DELIA_LLM_CONTEXT_TOKENS") or ""
-        ).strip()
-        try:
-            parsed_window = (
-                int(llm_context_tokens) if llm_context_tokens else None
-            )
-        except ValueError:
-            parsed_window = None
         self.llm_context_tokens = (
-            parsed_window
-            if isinstance(parsed_window, int) and parsed_window > 0
-            else None
+            _profile.context.effective_context_window_tokens
         )
-        # M5/M6: Pydantic AI is the default intelligence runtime.
-        # "legacy" remains ONLY as the explicitly-selected isolated
-        # rollback mechanism (per M6 drift correction) — one runtime
-        # per request, never both. Unknown values fail closed.
-        _allowed_model_runtimes = frozenset({"legacy", "pydantic_ai"})
-        _model_runtime = (
-            (os.getenv("DELIA_MODEL_RUNTIME") or "pydantic_ai")
-            .strip()
-            .lower()
+        # Governed per-LLM-call budgets (doc 103): the stage cap may
+        # never outlive the turn deadline; the interaction cap is the
+        # monotonic total across governed attempts.
+        self.model_stage_timeout_seconds = (
+            _profile.budgets.model_stage_timeout_seconds
         )
-        if _model_runtime not in _allowed_model_runtimes:
-            raise ValueError(
-                "DELIA_MODEL_RUNTIME must be one of "
-                f"{sorted(_allowed_model_runtimes)}, got "
-                f"{_model_runtime!r}"
-            )
-        self.model_runtime = _model_runtime
+        self.turn_budget_seconds = (
+            _profile.budgets.turn_budget_seconds
+        )
+        self.interaction_total_budget_seconds = (
+            _profile.budgets.interaction_total_budget_seconds
+        )
+        self.max_governed_attempts = (
+            _profile.budgets.max_governed_attempts
+        )
+        # Doc 103 GATE 1: per-LOGICAL-CALL retry limit — the JSON value
+        # is already clamped to the PO-approved ceiling at load time.
+        self.llm_call_max_attempts = _profile.agent.llm_call_max_attempts
+        # General interaction-path per-call cap (the non-orchestration
+        # model call) — previously a hidden Python constant.
+        self.interaction_call_timeout_seconds = (
+            _profile.budgets.interaction_call_timeout_seconds
+        )
+        # Pydantic AI investigation runtime knobs.
+        self.agent_request_limit = _profile.agent.request_limit
+        self.agent_tool_calls_limit = _profile.agent.tool_calls_limit
+        self.agent_retries = _profile.agent.retries
+        self.tool_result_max_projection_chars = (
+            _profile.tool_results.max_projection_chars
+        )
+        self.prior_turns_limit = _profile.context.prior_turns_limit
+        self.prior_turn_max_chars = _profile.context.prior_turn_max_chars
+        self.observability_record_model_id = (
+            _profile.observability.record_model_id
+        )
+        self.observability_record_usage = (
+            _profile.observability.record_usage
+        )
+        self.observability_record_config_fingerprint = (
+            _profile.observability.record_config_fingerprint
+        )
         # C3-OLLAMA-LOCAL-LLM-TESTING-01: when set, no real provider may be
         # wired — the configured endpoint is external and this environment
         # is not production. Composition stays fail-closed and eval
         # scripts must refuse before opening any socket.
         self.llm_egress_blocked_reason = llm_egress_blocked_reason(
             environment=self.environment, base_url=self.llm_base_url
-        )
-        # Doc 103 (approved): per-LLM-call budget for every model stage
-        # inside a turn — at most 60 real inference seconds per logical
-        # call, always clamped against the interaction deadline. Kept
-        # aligned with the provider timeout below it: the stage cap must
-        # never cut a legitimate call that the provider could still
-        # answer inside its own ceiling.
-        self.model_stage_timeout_seconds = float(
-            os.getenv("DELIA_MODEL_STAGE_TIMEOUT_SECONDS") or "60.0"
         )
         # C3-MCP-INTEROP-01: approved specialist MCP connections (DAVI/TÉO/
         # VISTA only). Static global user tokens were removed in R1A —
@@ -245,29 +315,6 @@ class Settings:
         ).strip() or "unknown"
         # DELIA_OPENAPI_TIMEOUT_SECONDS removed with the direct source
         # wiring — no OpenAPI source is composed from settings anymore.
-        # LOOP-03R2A / Stage 05 / doc 103: wall-clock budget for one
-        # interaction turn, shared by every governed stage. Under the
-        # approved 60s-per-LLM-call policy the turn deadline equals the
-        # monotonic global cap — 300s anchored at request start, never
-        # reset between stages, calls or retries. Stages are
-        # reduction-clamped only.
-        self.turn_budget_seconds = float(
-            os.getenv("DELIA_TURN_BUDGET_SECONDS") or "300.0"
-        )
-        # CP4 governed stage resume (docs 88 §10.2 / 90): OFF by
-        # default — a single attempt is the legacy behavior; setting
-        # 2 enables one bounded governed re-attempt of the whole turn
-        # under the remaining global budget (never a per-LLM-call
-        # retry — that inner mechanism is separate, doc 103).
-        self.max_governed_attempts = int(
-            os.getenv("DELIA_MAX_GOVERNED_ATTEMPTS") or "1"
-        )
-        # Doc 103 GATE 1 (coordination review, doc 104): per-LOGICAL-
-        # CALL LLM retry limit — a mechanism distinct from turn resume
-        # above. Fail-closed: absent or invalid values resolve to 1
-        # (retry OFF), so production can never retry involuntarily.
-        # The PO-approved capacity ceiling is LLM_CALL_MAX_ATTEMPTS=3;
-        # config can only lower it, never raise past it.
         # Doc 231+241: production orchestration-engine selection —
         # backend-controlled config ONLY; never request/model/
         # provider-sourced. `pydantic_ai` is the only supported engine;
@@ -294,35 +341,6 @@ class Settings:
         self.mcp_catalog_db = (
             os.getenv("DELIA_MCP_CATALOG_DB") or ""
         ).strip() or None
-        _call_attempts_raw = os.getenv("DELIA_LLM_CALL_MAX_ATTEMPTS")
-        self.llm_call_max_attempts_config_source = (
-            "environment"
-            if _call_attempts_raw is not None
-            else "default"
-        )
-        _call_attempts_parsed: int | None = None
-        if _call_attempts_raw is not None:
-            try:
-                _call_attempts_parsed = int(_call_attempts_raw.strip())
-            except ValueError:
-                _call_attempts_parsed = None
-        self.llm_call_max_attempts_config_invalid = (
-            _call_attempts_raw is not None
-            and (
-                _call_attempts_parsed is None
-                or not 1 <= _call_attempts_parsed <= LLM_CALL_MAX_ATTEMPTS
-            )
-        )
-        self.llm_call_max_attempts = (
-            _call_attempts_parsed
-            if _call_attempts_parsed is not None
-            and 1 <= _call_attempts_parsed <= LLM_CALL_MAX_ATTEMPTS
-            else 1
-        )
-        self.interaction_total_budget_seconds = float(
-            os.getenv("DELIA_INTERACTION_TOTAL_BUDGET_SECONDS")
-            or "300.0"
-        )
         # VD-F03 dictation.transcription.v1 — dedicated audio-capable
         # model behind the same approved OpenAI-compatible provider
         # family. Independent DELIA_STT_* set: incomplete config fails

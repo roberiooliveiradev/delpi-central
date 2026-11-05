@@ -46,8 +46,8 @@ from app.infrastructure.interoperability.config import (
 from app.infrastructure.interoperability.mcp.adapter import (
     McpSpecialistAdapter,
 )
-from app.infrastructure.model_invocation.openai_compatible_adapter import (
-    OpenAICompatibleModelInvocationAdapter,
+from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+    PydanticAiModelInvocationAdapter,
 )
 
 
@@ -79,9 +79,11 @@ def _context() -> PlatformAccessContext:
 
 
 def _compose(*, stage_timeout: str, max_attempts: str):
-    os.environ["DELIA_MODEL_STAGE_TIMEOUT_SECONDS"] = stage_timeout
-    os.environ["DELIA_MAX_GOVERNED_ATTEMPTS"] = max_attempts
     settings = Settings()
+    # Eval-only scenario knobs — the runtime JSON owns production
+    # values; the harness perturbs the snapshot attributes directly.
+    settings.model_stage_timeout_seconds = float(stage_timeout)
+    settings.max_governed_attempts = int(max_attempts)
     if settings.llm_egress_blocked_reason:
         raise SystemExit(
             f"refused: {settings.llm_egress_blocked_reason}"
@@ -95,7 +97,7 @@ def _compose(*, stage_timeout: str, max_attempts: str):
             ),
         )
     )
-    adapter = OpenAICompatibleModelInvocationAdapter(
+    adapter = PydanticAiModelInvocationAdapter(
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key,
         model=settings.llm_model,

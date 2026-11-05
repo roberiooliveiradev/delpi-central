@@ -64,6 +64,22 @@ _logger = logging.getLogger(__name__)
 _SUPPORTED_ORCHESTRATION_ENGINES = frozenset({"pydantic_ai"})
 
 
+def _investigation_runtime_kwargs(settings: Settings) -> dict:
+    """Map the validated runtime-config snapshot to the investigation
+    orchestrator kwargs — the single source for agent/tool/projection
+    tunables (doc 243)."""
+    return {
+        "request_limit": settings.agent_request_limit,
+        "tool_calls_limit": settings.agent_tool_calls_limit,
+        "agent_retries": settings.agent_retries,
+        "tool_projection_limit": (
+            settings.tool_result_max_projection_chars
+        ),
+        "prior_turns_limit": settings.prior_turns_limit,
+        "prior_turn_max_chars": settings.prior_turn_max_chars,
+    }
+
+
 def _resolve_orchestration_attempt(
     engine_name: str,
     gates,
@@ -72,6 +88,12 @@ def _resolve_orchestration_attempt(
     investigation_model_factory=None,
     subobjective_fanout_enabled: bool = False,
     checkpoint_db_path: str | None = None,
+    request_limit: int = 12,
+    tool_calls_limit: int = 8,
+    agent_retries: int = 1,
+    tool_projection_limit: int = 6000,
+    prior_turns_limit: int = 4,
+    prior_turn_max_chars: int = 400,
 ):
     """Select ONE governed-attempt implementation for the composed
     application. Unknown identifiers fail closed — a misspelled
@@ -113,6 +135,12 @@ def _resolve_orchestration_attempt(
         model=investigation_model,
         model_factory=investigation_model_factory,
         recovery_reuse_enabled=True,
+        request_limit=request_limit,
+        tool_calls_limit=tool_calls_limit,
+        agent_retries=agent_retries,
+        tool_projection_limit=tool_projection_limit,
+        prior_turns_limit=prior_turns_limit,
+        prior_turn_max_chars=prior_turn_max_chars,
     )
 # CRI E2-R3/E3: governed declarative resources — fixed repo
 # artifacts, never request/env-supplied paths.
@@ -514,16 +542,31 @@ def _compose_turn_handler(
                 settings.subobjective_fanout_enabled
             ),
             checkpoint_db_path=settings.checkpoint_db_path,
+            **_investigation_runtime_kwargs(settings),
         )
         if gates is not None
         else None
     )
     _logger.info(
         "delia_orchestration_engine selected=%s "
-        "surface=%s runtime_sha=%s",
+        "surface=%s runtime_sha=%s%s%s",
         settings.orchestration_engine,
         "configured" if orchestration is not None else "absent",
         settings.runtime_sha,
+        (
+            f" model_id={settings.llm_model}"
+            if settings.observability_record_model_id
+            else ""
+        ),
+        (
+            " config_profile=%s config_fingerprint=%s"
+            % (
+                settings.runtime_profile,
+                settings.runtime_config_fingerprint,
+            )
+            if settings.observability_record_config_fingerprint
+            else "",
+        ),
     )
     # CRI E1 (doc 73 §7 / spec 75 §4.1): the single response-intelligence
     # decision is resolved here from trusted runtime config — never from
@@ -543,18 +586,12 @@ def _compose_turn_handler(
             "delia_response_intelligence decision=fail_closed "
             "reason=invalid_env_value"
         )
-    # Doc 103 GATE 1: per-logical-call LLM retry limit — an invalid
-    # env value resolves to 1 (OFF), never to retries on.
-    if settings.llm_call_max_attempts_config_invalid:
-        _logger.warning(
-            "delia_llm_call_max_attempts decision=fail_closed "
-            "reason=invalid_env_value"
-        )
     return HandleInteractiveConversationTurn(
         invoke_model,
         model_ref=model_ref,
         capability_orchestration=orchestration,
         turn_budget_seconds=settings.turn_budget_seconds,
+        timeout_seconds=settings.interaction_call_timeout_seconds,
         llm_call_max_attempts=settings.llm_call_max_attempts,
         response_intelligence_enabled=cri_effective,
     )
@@ -656,34 +693,21 @@ def _wire_real_provider_handler(settings: Settings, interop, connections):
         and settings.llm_api_key
     ):
         return None
-    # M6: pydantic_ai is the governed default; "legacy" selects the
-    # isolated rollback adapter — never both in one request.
-    if settings.model_runtime == "legacy":
-        from app.infrastructure.model_invocation.openai_compatible_adapter import (
-            OpenAICompatibleModelInvocationAdapter,
-        )
+    # Doc 243: Pydantic AI is the only model invocation runtime — the
+    # retired alternate adapter branch and the DELIA_MODEL_RUNTIME
+    # selector are removed; stale env values fail closed in Settings.
+    from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+        PydanticAiModelInvocationAdapter,
+    )
 
-        adapter = OpenAICompatibleModelInvocationAdapter(
-            base_url=settings.llm_base_url,
-            api_key=settings.llm_api_key,
-            model=settings.llm_model,
-            timeout_seconds=settings.llm_timeout_seconds,
-            default_max_output_units=settings.llm_max_output_tokens,
-            context_window_tokens=settings.llm_context_tokens,
-        )
-    else:
-        from app.infrastructure.model_invocation.pydantic_ai_adapter import (
-            PydanticAiModelInvocationAdapter,
-        )
-
-        adapter = PydanticAiModelInvocationAdapter(
-            base_url=settings.llm_base_url,
-            api_key=settings.llm_api_key,
-            model=settings.llm_model,
-            timeout_seconds=settings.llm_timeout_seconds,
-            default_max_output_units=settings.llm_max_output_tokens,
-            context_window_tokens=settings.llm_context_tokens,
-        )
+    adapter = PydanticAiModelInvocationAdapter(
+        base_url=settings.llm_base_url,
+        api_key=settings.llm_api_key,
+        model=settings.llm_model,
+        timeout_seconds=settings.llm_timeout_seconds,
+        default_max_output_units=settings.llm_max_output_tokens,
+        context_window_tokens=settings.llm_context_tokens,
+    )
     model_ref = ModelRef(
         model_id=settings.llm_model,
         version="configured",

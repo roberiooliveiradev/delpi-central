@@ -282,26 +282,16 @@ def test_unknown_model_runtime_fails_closed(monkeypatch):
     assert "DELIA_MODEL_RUNTIME" in str(exc.value)
 
 
-def test_known_model_runtimes_accepted(monkeypatch):
-    """M5: pydantic_ai is the single runtime — the removed legacy
-    value fails closed like any unknown runtime."""
+def test_legacy_model_runtime_retired_fails_closed(monkeypatch):
+    """Doc 243: the legacy runtime is removed — an explicit `legacy`
+    value fails closed like any unknown runtime, never a fallback."""
     from app.infrastructure.config.settings import Settings
 
     monkeypatch.setenv("DELIA_MODEL_RUNTIME", "pydantic_ai")
-    assert Settings().model_runtime == "pydantic_ai"
+    assert Settings() is not None
     monkeypatch.setenv("DELIA_MODEL_RUNTIME", "legacy")
-    # M6: "legacy" remains accepted as the explicit isolated rollback
-    # — only unknown values fail closed.
-    assert Settings().model_runtime == "legacy"
-
-
-def test_model_runtime_defaults_to_pydantic_ai(monkeypatch):
-    """M4 cutover: pydantic_ai is the governed default; legacy exists
-    only as explicit rollback."""
-    from app.infrastructure.config.settings import Settings
-
-    monkeypatch.delenv("DELIA_MODEL_RUNTIME", raising=False)
-    assert Settings().model_runtime == "pydantic_ai"
+    with pytest.raises(ValueError):
+        Settings()
 
 
 # ---------- M6-FINAL: required-fields contract regression ----------

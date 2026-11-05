@@ -7,6 +7,28 @@ Runs inside the eval container against the local Ollama model.
 """
 import json
 import sys
+import os
+
+
+def _runtime_model_identity() -> tuple[str, str]:
+    """(provider, model_name) from the unified runtime JSON — probes
+    report the resolved snapshot, never a retired env var."""
+    import pathlib
+    data = json.loads(
+        (
+            pathlib.Path(__file__).resolve().parents[1]
+            / "config"
+            / "pydantic_ai.runtime.delpi.json"
+        ).read_text(encoding="utf-8")
+    )
+    profile = data["profiles"][
+        os.getenv("DELIA_RUNTIME_PROFILE") or data["default_profile"]
+    ]
+    return (
+        profile["model"]["provider"],
+        profile["model"]["model_name"],
+    )
+
 
 # The 15 causal cases: (scenario, capability, question snippet, rejected_args)
 CASES = [
@@ -133,7 +155,7 @@ def bench_pydantic(schema: dict, question: str) -> dict:
     from pydantic_ai.providers.openai import OpenAIProvider
     import os
     model = OpenAIChatModel(
-        os.environ.get("DELIA_LLM_MODEL", "qwen3:4b-instruct-2507-q4_K_M"),
+        _runtime_model_identity()[1],
         provider=OpenAIProvider(
             base_url=os.environ.get("DELIA_LLM_BASE_URL", "http://ollama:11434/v1")),
     )

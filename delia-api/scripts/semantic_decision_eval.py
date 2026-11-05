@@ -69,8 +69,8 @@ from app.domain.evidence.model import SourceRef as GroupSourceRef
 from app.domain.specialist_interop.model import (
     SpecialistOperationClass,
 )
-from app.infrastructure.model_invocation.openai_compatible_adapter import (
-    OpenAICompatibleModelInvocationAdapter,
+from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+    PydanticAiModelInvocationAdapter,
 )
 from datetime import datetime, timezone
 
@@ -346,7 +346,7 @@ def _invoke(
 ) -> tuple[dict[str, Any] | None, str | None, Any]:
     """Real adapter call → allowed_keys projection (the _propose
     contract tail). Returns (proposal, error_code, usage)."""
-    adapter = OpenAICompatibleModelInvocationAdapter(
+    adapter = PydanticAiModelInvocationAdapter(
         base_url=OLLAMA_BASE_URL,
         api_key="local-eval",
         model=EVAL_MODEL,

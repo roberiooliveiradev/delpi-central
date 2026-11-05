@@ -57,8 +57,8 @@ from app.infrastructure.auth.subject_bearer import (
 from app.infrastructure.interoperability.mcp.adapter import (
     McpSpecialistAdapter,
 )
-from app.infrastructure.model_invocation.openai_compatible_adapter import (
-    OpenAICompatibleModelInvocationAdapter,
+from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+    PydanticAiModelInvocationAdapter,
 )
 
 QUESTIONS = (
@@ -175,7 +175,6 @@ def _mint_subject_bearer() -> str:
 
 
 def _compose(cri: bool = True):
-    os.environ.setdefault("DELIA_MAX_GOVERNED_ATTEMPTS", "2")
     os.environ["DELIA_RESPONSE_INTELLIGENCE_ENABLED"] = "1" if cri else "0"
     settings = Settings()
     if settings.llm_egress_blocked_reason:
@@ -189,7 +188,7 @@ def _compose(cri: bool = True):
             ),
         )
     )
-    adapter = OpenAICompatibleModelInvocationAdapter(
+    adapter = PydanticAiModelInvocationAdapter(
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key,
         model=settings.llm_model,

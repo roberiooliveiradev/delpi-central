@@ -46,8 +46,8 @@ from app.infrastructure.interoperability.config import (
 from app.infrastructure.interoperability.mcp.adapter import (
     McpSpecialistAdapter,
 )
-from app.infrastructure.model_invocation.openai_compatible_adapter import (
-    OpenAICompatibleModelInvocationAdapter,
+from app.infrastructure.model_invocation.pydantic_ai_adapter import (
+    PydanticAiModelInvocationAdapter,
 )
 
 P1_QUESTION = "qual o ultimo processo cadastrado no transformometro?"
@@ -78,7 +78,6 @@ def _context() -> PlatformAccessContext:
 
 
 def _compose():
-    os.environ.setdefault("DELIA_MAX_GOVERNED_ATTEMPTS", "2")
     settings = Settings()
     if settings.llm_egress_blocked_reason:
         raise SystemExit(
@@ -93,7 +92,7 @@ def _compose():
             ),
         )
     )
-    adapter = OpenAICompatibleModelInvocationAdapter(
+    adapter = PydanticAiModelInvocationAdapter(
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key,
         model=settings.llm_model,
