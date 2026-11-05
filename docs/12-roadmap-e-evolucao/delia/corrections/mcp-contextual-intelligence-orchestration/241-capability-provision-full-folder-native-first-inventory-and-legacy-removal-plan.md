@@ -201,13 +201,13 @@ TASK_ID, BASE_HEAD, FINAL_SHA, ORIGIN_MAIN, PUSH_VERIFIED, AUTHORITIES_READ, PHA
 
 ## 10. SEGUNDA AUDITORIA OBRIGATÓRIA — LEITURA CONTÍNUA DA LINHA 1 À LINHA FINAL
 
-**Data:** 2026-11-04. **SHA de código revalidado:** \`3b6a73f1129a3ecfa08288509a66ada46482e80a\`. **Arquivo:** \`delia-api/app/application/capability_provision/orchestration.py\`. **Extensão:** 16.173 linhas de conteúdo retornado por API (inventário anterior 16.174 considerando newline); aprox. 645 KB. O arquivo inteiro foi lido em 17 faixas sequenciais [1–1000] ... [16001–fim], no mesmo SHA, com enumeração de declarações top-level e métodos indentados por bloco. Nenhuma faixa foi intencionalmente ignorada. A revisão aqui é **análise estática integral + inspeção dos trechos de ligação**, não prova de inexistência de consumidores dinâmicos.
+**Data:** 2026-11-04. **SHA de código revalidado:** `3b6a73f1129a3ecfa08288509a66ada46482e80a`. **Arquivo:** `delia-api/app/application/capability_provision/orchestration.py`. **Extensão:** 16.173 linhas de conteúdo retornado por API (inventário anterior 16.174 considerando newline); aprox. 645 KB. O arquivo inteiro foi lido em 17 faixas sequenciais [1–1000] ... [16001–fim], no mesmo SHA, com enumeração de declarações top-level e métodos indentados por bloco. Nenhuma faixa foi intencionalmente ignorada. A revisão aqui é **análise estática integral + inspeção dos trechos de ligação**, não prova de inexistência de consumidores dinâmicos.
 
 ### 10.1 Diagnóstico crítico comprovado por inspeção de chamadas
 
 **O runtime nativo Pydantic AI AINDA ATRAVESSA O MOTOR DE ORQUESTRAÇÃO ANTIGO, não apenas gates determinísticos:**
 
-\`\`\`text
+```text
 pydantic_ai_investigation.py
   → _governed_semantic_tool_invoke [orchestration.py:13471]
     → _invoke_selected [13573, implementation starts 14982]
@@ -220,9 +220,9 @@ pydantic_ai_investigation.py
       → _build_arguments [15176] for a recovery leg
       → _propose_candidate_arguments [15287] on chained read recovery
       → _invoke [15074, 15090, 15256, 15333, implementation 15980]
-\`\`\`
+```
 
-**Detalhe:** \`_resolve_candidate\` [15560] can call \`_select_candidate\` [15616]; \`_select_candidate\` [15626–15744] calls \`_model_stage_proposal\` [15708] using \`CANDIDATE_SELECTION_INSTRUCTION_ID\`. \`_propose_candidate_arguments\` [15879–15978] has both an arggen-Pydantic-specific branch and a second call to \`_model_stage_proposal\` [15952]. Native agent selected the capability, but Application still contains a **second semantic selection/generation loop** in the owner discovery/candidate/execute path. This is a concrete native-path overlap, not merely dead rollback code. It must be removed in favor of typed owner tool schemas + owner-issued candidate handles and explicitly bounded, deterministic binding; if candidate choice remains ambiguous, agent chooses via native tool call or clarification, never a second independent LLM controller. Preserve candidate_token trust boundary. \`_invoke\` [15980–16173] is real provider execution and **cannot simply be deleted**.
+**Detalhe:** `_resolve_candidate` [15560] can call `_select_candidate` [15616]; `_select_candidate` [15626–15744] calls `_model_stage_proposal` [15708] using `CANDIDATE_SELECTION_INSTRUCTION_ID`. `_propose_candidate_arguments` [15879–15978] has both an arggen-Pydantic-specific branch and a second call to `_model_stage_proposal` [15952]. Native agent selected the capability, but Application still contains a **second semantic selection/generation loop** in the owner discovery/candidate/execute path. This is a concrete native-path overlap, not merely dead rollback code. It must be removed in favor of typed owner tool schemas + owner-issued candidate handles and explicitly bounded, deterministic binding; if candidate choice remains ambiguous, agent chooses via native tool call or clarification, never a second independent LLM controller. Preserve candidate_token trust boundary. `_invoke` [15980–16173] is real provider execution and **cannot simply be deleted**.
 
 **Classification:** NATIVE-path overlap = PROVEN for these call edges, **whether a particular branch is triggered at runtime** depends on input/schema/owner response and is TO_VERIFY via trace. No fabricated claim that every turn executes model-stage proposal.
 
@@ -255,17 +255,17 @@ pydantic_ai_investigation.py
 
 ### 10.3 Path segregation for safe elimination
 
-**PATH A — current native agent:** live catalog → native FunctionToolset → \`_governed_semantic_tool_invoke\` → Application/Core/domain validated READ → provider/owner → Evidence → output. Preserve path and *eliminate embedded second LLM selectors*. Native prompt/history, validation, retries, output structures are exclusively Infrastructure/Pydantic.
+**PATH A — current native agent:** live catalog → native FunctionToolset → `_governed_semantic_tool_invoke` → Application/Core/domain validated READ → provider/owner → Evidence → output. Preserve path and *eliminate embedded second LLM selectors*. Native prompt/history, validation, retries, output structures are exclusively Infrastructure/Pydantic.
 
-**PATH B — legacy:** \`OperationalCapabilityOrchestrator.attempt\` → \`_attempt\` → \`_governed_owner_path\` → \`_select_group\`/\`_select_capability\`/\`_propose\`/plan/repair, plus subobjective scheduling and retrieval. **TARGET REMOVE** after reanchor/frozen decision and production configuration consumers are proven. Do not retain an alternate engine as precaution without explicit authoritative justification. A legacy rollback may require explicit architecture decision to retire; do not silently delete it.
+**PATH B — legacy:** `OperationalCapabilityOrchestrator.attempt` → `_attempt` → `_governed_owner_path` → `_select_group`/`_select_capability`/`_propose`/plan/repair, plus subobjective scheduling and retrieval. **TARGET REMOVE** after reanchor/frozen decision and production configuration consumers are proven. Do not retain an alternate engine as precaution without explicit authoritative justification. A legacy rollback may require explicit architecture decision to retire; do not silently delete it.
 
 **PATH C — business control:** confirmation PREPARE/ACT, live Core/Domain revalidation, idempotency/audit, budget/deadline/cancel, owner provenance, genuine source identity and obligation coverage, paging, safe rendering. **KEEP** irrespective of framework; consolidate into existing legitimate Application/Domain/Infrastructure boundaries. Pydantic output validation cannot grant permission or prove FACT.
 
 ### 10.4 Explicit deletion order and anti-pattern tests
 
 1. Capture initial grep/callgraph for all 90 methods and top-level symbols **including dynamic calls**; produce manifest by symbol (see §6). Add baseline tests for current native tool calls, multi-owner/candidate and protected writes; verify product/source identity, partial/non-grounded and NDJSON. Identify legacy engine users/config before deletion.
-2. First eliminate **native-path legacy model stages** in [14982–15979]. Use native tools + typed schemas and owner candidate handle. Ensure no \`_model_stage_proposal\`, \`_propose_candidate_arguments\`, \`_select_candidate\` reached inside a native READ. If deterministic entity binding cannot be proved, return clarification/inconclusive instead of arbitrary pick.
-3. Remove legacy \`_governed_owner_path\` [6051–7632] and all dependent selector/plan/subobjective/recovery functions after legitimate write/admission consumers are separated and rollback retirement is authorized. Then remove corresponding constants, instructions, config and \`capability_retrieval.py\` / \`subobjective_tracker.py\` if zero legitimate consumers.
+2. First eliminate **native-path legacy model stages** in [14982–15979]. Use native tools + typed schemas and owner candidate handle. Ensure no `_model_stage_proposal`, `_propose_candidate_arguments`, `_select_candidate` reached inside a native READ. If deterministic entity binding cannot be proved, return clarification/inconclusive instead of arbitrary pick.
+3. Remove legacy `_governed_owner_path` [6051–7632] and all dependent selector/plan/subobjective/recovery functions after legitimate write/admission consumers are separated and rollback retirement is authorized. Then remove corresponding constants, instructions, config and `capability_retrieval.py` / `subobjective_tracker.py` if zero legitimate consumers.
 4. Consolidate duplicate response/rendering/evidence/pagination helpers with an authoritative contract map; delete unnecessary code rather than copy functions into other files.
 5. Run import graph and all tests after final diff. On executed SHA measure actual deleted LOC, deleted semantic proposal stages, owner reads, token/latency, security, JSON/NDJSON, E01–E10 and no false grounded. No production deployment.
 
@@ -273,6 +273,6 @@ pydantic_ai_investigation.py
 
 ### 10.5 Updated verdict
 
-**Source audit:** \`PROVEN\` full file 1–16173 read at SHA, exact mixed native/legacy paths identified; **TO_INVENTORY** every transitive/dynamic caller and contract-specific owner; **PLANNED** physical deletion/refactor. This addition is NOT an implementation or a claim that all listed functions are currently invoked. **The strongest concrete finding is the call edge [13573]→[14982]→[15745]/[15879]/[15626]**. Executor must use this as the primary removal target instead of running another open-ended inventory.
+**Source audit:** `PROVEN` full file 1–16173 read at SHA, exact mixed native/legacy paths identified; **TO_INVENTORY** every transitive/dynamic caller and contract-specific owner; **PLANNED** physical deletion/refactor. This addition is NOT an implementation or a claim that all listed functions are currently invoked. **The strongest concrete finding is the call edge [13573]→[14982]→[15745]/[15879]/[15626]**. Executor must use this as the primary removal target instead of running another open-ended inventory.
 
 **Do not replace Pydantic AI with another framework or build a third orchestrator.**
