@@ -32,6 +32,28 @@ from tests.test_pydantic_ai_semantic_rework import (
 )
 
 
+def _final_answer(answer: str = "", status: str = "insufficient",
+                  refs: list | None = None) -> ModelResponse:
+    """Native typed output — the Agent now ends every run with a
+    ``final_result`` call carrying the strict InvestigationAnswer
+    shape instead of free text."""
+    return ModelResponse(
+        parts=[
+            ToolCallPart(
+                "final_result",
+                {
+                    "schema_version": "1",
+                    "status": status,
+                    "answer": answer,
+                    "evidence_refs": refs or [],
+                    "unmet_obligations": [],
+                    "limitations": [],
+                },
+            )
+        ]
+    )
+
+
 def test_simple_read_without_declare_goal_succeeds():
     gates = _gates()
     only = _success_attempt(content="estrutura MAT-1", root="MAT-1")
@@ -166,7 +188,7 @@ def test_request_clarification_tool_wires_into_finalize():
                     )
                 ]
             )
-        return ModelResponse(parts=[TextPart("waiting")])
+        return _final_answer("waiting")
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=4
@@ -197,7 +219,7 @@ def test_typed_invoke_arguments_dict_path():
                     )
                 ]
             )
-        return ModelResponse(parts=[TextPart("done")])
+        return _final_answer("done")
 
     # Spy invoke
     original = gates._governed_semantic_tool_invoke

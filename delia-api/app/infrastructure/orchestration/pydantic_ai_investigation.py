@@ -34,6 +34,13 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
+from app.application.capability_provision.contracts import (
+    InvestigationAnswer,
+    InvestigationAnswerStatus,
+)
+from app.application.capability_provision.conversational_response import (
+    MAX_RENDER_CONTENT_CHARS,
+)
 from app.application.capability_provision.governed_stage_gates import (
     SupportsGovernedStageGates,
 )
@@ -675,7 +682,7 @@ class PydanticAiInvestigationOrchestrator:
         deadline: TurnDeadline,
     ) -> GovernedCapabilityAttempt:
         os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")
-        from pydantic_ai import Agent, UsageLimits
+        from pydantic_ai import Agent, ModelRetry, RunContext, UsageLimits
         from pydantic_ai.toolsets import FunctionToolset
 
         deps = InvestigationDeps(
@@ -1082,7 +1089,38 @@ class PydanticAiInvestigationOrchestrator:
             toolsets=[toolset],
             instructions=instructions,
             retries=self._agent_retries,
+            output_type=InvestigationAnswer,
         )
+
+        # Shape-only validation (doc 256 G1): the validator enforces the
+        # bounded contract — bounded answer text, non-negative refs,
+        # no clarification text declared in a non-clarification status.
+        # It NEVER validates truth/authorization; the deterministic
+        # acceptor in the finalize binds refs and verifies coverage.
+        @agent.output_validator
+        def _investigation_answer_shape(
+            ctx: RunContext[InvestigationDeps],
+            output: InvestigationAnswer,
+        ) -> InvestigationAnswer:
+            if any(index < 0 for index in output.evidence_refs):
+                raise ModelRetry(
+                    "evidence_refs must be non-negative indexes into "
+                    "the collected tool observations"
+                )
+            if len(output.answer) > MAX_RENDER_CONTENT_CHARS:
+                return dataclasses.replace(
+                    output,
+                    answer=output.answer[:MAX_RENDER_CONTENT_CHARS],
+                )
+            if (
+                output.status
+                is not InvestigationAnswerStatus.NEEDS_CLARIFICATION
+                and output.clarification_question is not None
+            ):
+                return dataclasses.replace(
+                    output, clarification_question=None
+                )
+            return output
 
         remaining = max(1.0, deadline.remaining_seconds())
         started = time.monotonic()
@@ -1198,6 +1236,11 @@ class PydanticAiInvestigationOrchestrator:
                     "Preciso saber qual registro consultar. "
                     "Informe o identificador ou descreva o item."
                 )
+            declared_answer = None
+            if result is not None:
+                candidate_output = getattr(result, "output", None)
+                if isinstance(candidate_output, InvestigationAnswer):
+                    declared_answer = candidate_output
             terminal = self._gates._finalize_semantic_investigation(
                 input_text=input_text,
                 collected=tuple(deps.collected),
@@ -1208,6 +1251,7 @@ class PydanticAiInvestigationOrchestrator:
                 plan=deps.investigation_plan,
                 clarification_question=deps.clarification_question,
                 composed_attempt=deps.composed_attempt,
+                declared_answer=declared_answer,
             )
 
             extra_limitations: list[str] = []

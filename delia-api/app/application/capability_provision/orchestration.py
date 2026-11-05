@@ -122,6 +122,8 @@ from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.capability_provision.contracts import (
     CapabilityGroup,
     CapabilityProviderError,
+    InvestigationAnswer,
+    InvestigationAnswerStatus,
     ProviderCapability,
 )
 from app.application.capability_provision.conversational_response import (
@@ -2275,6 +2277,118 @@ def _evaluate_material_obligations(
             continue
         results.append((obligation, OBLIGATION_SATISFIED))
     return tuple(results)
+
+
+def _apply_declared_answer(
+    *,
+    terminal: GovernedCapabilityAttempt,
+    declared_answer: InvestigationAnswer | None,
+    collected: tuple[GovernedCapabilityAttempt, ...],
+    plan: "SemanticInvestigationPlan | None",
+    correlation: str,
+    unbound_outcome: str | None,
+) -> GovernedCapabilityAttempt:
+    """Bind the Agent's native typed output to verified evidence.
+
+    The declaration is a proposal, never authority (doc 256 G1):
+    every ``evidence_refs`` index must point to an actual collected
+    business-evidence attempt; a ``COMPLETE`` claim holds only when
+    declared material obligations are satisfied by real owner evidence;
+    declared unmet obligations/limitations merge into the terminal
+    honestly. Out-of-range or non-evidence refs are dropped and
+    reported — never silently trusted.
+    """
+    if declared_answer is None:
+        return terminal
+
+    # Declared clarification takes the existing bounded clarification
+    # path — the model asked for input, so the deterministic insufficiency
+    # answer is replaced by its own bounded question.
+    if (
+        declared_answer.status
+        is InvestigationAnswerStatus.NEEDS_CLARIFICATION
+        and declared_answer.clarification_question
+    ):
+        return GovernedCapabilityAttempt(
+            status=GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
+            correlation_id=correlation,
+            content=declared_answer.clarification_question[
+                :MAX_RENDER_CONTENT_CHARS
+            ],
+            limitations=("agent_requested_clarification",),
+            error_code="investigation_clarification_required",
+            admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+        )
+
+    business = tuple(
+        item for item in collected if _is_business_evidence_attempt(item)
+    )
+    collected_count = len(collected)
+
+    # Bind declared refs to real collected attempts.
+    accepted_refs = 0
+    dropped_refs: list[str] = []
+    for index in declared_answer.evidence_refs:
+        if (
+            0 <= index < collected_count
+            and _is_business_evidence_attempt(collected[index])
+        ):
+            accepted_refs += 1
+        else:
+            dropped_refs.append(f"evidence_ref_unbound:{index}")
+
+    extra_limitations = list(dropped_refs)
+    extra_limitations.extend(
+        f"declared_unmet_obligation:{item}"
+        for item in declared_answer.unmet_obligations[:8]
+    )
+    extra_limitations.extend(
+        f"declared_limitation:{item}"[:200]
+        for item in declared_answer.limitations[:8]
+    )
+
+    declared_complete = (
+        declared_answer.status is InvestigationAnswerStatus.COMPLETE
+    )
+    if declared_complete:
+        obligations_met = True
+        if (
+            plan is not None
+            and plan.evidence_needed
+        ):
+            coverage = _evaluate_material_obligations(
+                obligations=plan.evidence_needed,
+                business=business,
+            )
+            obligations_met = all(
+                state == OBLIGATION_SATISFIED for _, state in coverage
+            )
+        proven = (
+            terminal.status is GovernedCapabilityStatus.SUCCESS
+            and accepted_refs > 0
+            and obligations_met
+            and bool(declared_answer.answer.strip())
+        )
+        if proven:
+            return dataclasses.replace(
+                terminal,
+                content=declared_answer.answer[
+                    :MAX_RENDER_CONTENT_CHARS
+                ],
+                limitations=tuple(terminal.limitations)
+                + tuple(extra_limitations)[:24],
+            )
+        # Model declared COMPLETE but coverage/refs do not prove it —
+        # honest downgrade, never fabricated grounding.
+        extra_limitations.append("declared_status_overridden")
+
+    if extra_limitations:
+        return dataclasses.replace(
+            terminal,
+            limitations=tuple(terminal.limitations)
+            + tuple(extra_limitations)[:24],
+        )
+    return terminal
 
 
 def _finalize_agent_collected_attempts(
@@ -5788,9 +5902,10 @@ class OperationalCapabilityOrchestrator:
         plan: SemanticInvestigationPlan | None = None,
         clarification_question: str | None = None,
         composed_attempt: GovernedCapabilityAttempt | None = None,
+        declared_answer: InvestigationAnswer | None = None,
     ) -> GovernedCapabilityAttempt:
         """Conclude from typed coverage + authoritative evidence."""
-        return _finalize_agent_collected_attempts(
+        terminal = _finalize_agent_collected_attempts(
             self,
             input_text=input_text,
             collected=collected,
@@ -5801,6 +5916,14 @@ class OperationalCapabilityOrchestrator:
             plan=plan,
             clarification_question=clarification_question,
             composed_attempt=composed_attempt,
+        )
+        return _apply_declared_answer(
+            terminal=terminal,
+            declared_answer=declared_answer,
+            collected=collected,
+            plan=plan,
+            correlation=correlation,
+            unbound_outcome=unbound_outcome,
         )
 
 

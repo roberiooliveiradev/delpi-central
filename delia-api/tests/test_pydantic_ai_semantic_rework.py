@@ -62,6 +62,28 @@ from tests.support.capability_fixtures import (
 )
 
 
+def _final_answer(answer: str = "", status: str = "insufficient",
+                  refs: list | None = None) -> ModelResponse:
+    """Native typed output — the Agent now ends every run with a
+    ``final_result`` call carrying the strict InvestigationAnswer
+    shape instead of free text."""
+    return ModelResponse(
+        parts=[
+            ToolCallPart(
+                "final_result",
+                {
+                    "schema_version": "1",
+                    "status": status,
+                    "answer": answer,
+                    "evidence_refs": refs or [],
+                    "unmet_obligations": [],
+                    "limitations": [],
+                },
+            )
+        ]
+    )
+
+
 def _gates(providers=None, proposal=None):
     return OperationalCapabilityOrchestrator(
         providers or _providers(),
@@ -520,7 +542,7 @@ def test_r1_simple_read_never_calls_governed_owner_path():
                     )
                 ]
             )
-        return ModelResponse(parts=[TextPart("done")])
+        return _final_answer("done")
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=6
@@ -534,7 +556,7 @@ def test_r1_compare_never_calls_legacy_owner_path():
     assert not hasattr(gates, "_governed_owner_path")
 
     def _fn(messages, _info):
-        return ModelResponse(parts=[TextPart("no tools")])
+        return _final_answer("no tools")
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn)
@@ -596,7 +618,7 @@ def test_declare_goal_tool_wires_plan_into_finalize():
                     )
                 ]
             )
-        return ModelResponse(parts=[TextPart("done")])
+        return _final_answer("done")
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=4

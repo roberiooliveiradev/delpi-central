@@ -41,6 +41,28 @@ from tests.test_pydantic_ai_semantic_rework import (
 )
 
 
+def _final_answer(answer: str = "", status: str = "insufficient",
+                  refs: list | None = None) -> ModelResponse:
+    """Native typed output — the Agent now ends every run with a
+    ``final_result`` call carrying the strict InvestigationAnswer
+    shape instead of free text."""
+    return ModelResponse(
+        parts=[
+            ToolCallPart(
+                "final_result",
+                {
+                    "schema_version": "1",
+                    "status": status,
+                    "answer": answer,
+                    "evidence_refs": refs or [],
+                    "unmet_obligations": [],
+                    "limitations": [],
+                },
+            )
+        ]
+    )
+
+
 def test_safe_tool_name_maps_capability_id():
     assert _safe_tool_name("davi.discover_delpi_information") == (
         "davi_discover_delpi_information"
@@ -207,7 +229,7 @@ def test_dynamic_owner_tool_invokes_governed_path():
                     )
                 ]
             )
-        return ModelResponse(parts=[TextPart("done")])
+        return _final_answer("done")
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=4
@@ -343,7 +365,7 @@ def test_premature_clarification_is_rejected_when_identifiers_remain():
             return ModelResponse(
                 parts=[ToolCallPart(tool_name, {"arguments": {}})]
             )
-        return ModelResponse(parts=[TextPart("done")])
+        return _final_answer("done")
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=6
@@ -362,8 +384,8 @@ def test_model_factory_builds_a_client_per_attempt():
 
         def _fn(messages, _info):
             if not any(isinstance(m, ModelResponse) for m in messages):
-                return ModelResponse(parts=[TextPart("ok")])
-            return ModelResponse(parts=[TextPart("ok")])
+                return _final_answer("ok")
+            return _final_answer("ok")
 
         return FunctionModel(_fn)
 
@@ -383,7 +405,7 @@ def test_list_only_does_not_fabricate_business_success():
             return ModelResponse(
                 parts=[ToolCallPart("list_read_capabilities", {})]
             )
-        return ModelResponse(parts=[TextPart("I listed tools")])
+        return _final_answer("I listed tools")
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=4
@@ -665,7 +687,7 @@ def test_repeated_equivalent_failure_does_not_reinvoke_owner():
             return ModelResponse(
                 parts=[ToolCallPart(tool_name, {"arguments": {"query": "x"}})]
             )
-        return ModelResponse(parts=[TextPart("stop")])
+        return _final_answer("stop")
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=6
@@ -702,7 +724,7 @@ def test_clarification_does_not_replace_collected_evidence():
                     )
                 ]
             )
-        return ModelResponse(parts=[TextPart("done")])
+        return _final_answer("done")
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=4
@@ -716,7 +738,7 @@ def test_missing_identifier_without_evidence_asks_clarification():
     gates = _gates()
 
     def _fn(messages, _info):
-        return ModelResponse(parts=[TextPart("não sei")])
+        return _final_answer("não sei")
 
     engine = PydanticAiInvestigationOrchestrator(
         gates, model=FunctionModel(_fn), tool_calls_limit=4

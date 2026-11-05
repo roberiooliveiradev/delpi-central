@@ -19,6 +19,7 @@ Authority rules (binding):
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Mapping
 
 from app.application.specialist_interop.errors import (
@@ -131,3 +132,45 @@ class ProviderSurface:
 
     groups: tuple[CapabilityGroup, ...] = ()
     failures: tuple[str, ...] = ()
+
+
+class InvestigationAnswerStatus(str, Enum):
+    """Bounded outcome vocabulary the investigation Agent may declare.
+
+    A declaration is a *proposal*, never authority: the deterministic
+    acceptor re-validates every claim against the real collected
+    attempts before anything becomes observable. ``COMPLETE`` is
+    reserved for turns whose declared obligations were actually met by
+    verified owner evidence.
+    """
+
+    COMPLETE = "complete"
+    PARTIAL = "partial"
+    INSUFFICIENT = "insufficient"
+    EMPTY = "empty"
+    NO_EVIDENCE = "no_evidence"
+    NEEDS_CLARIFICATION = "needs_clarification"
+
+
+@dataclass(frozen=True, slots=True)
+class InvestigationAnswer:
+    """Native typed output of the Pydantic AI investigation Agent
+    (doc 256 G1). Strict shape — no ``extra`` fields, no ``Any``
+    business payload. The model declares what it produced, which
+    collected tool observations it grounds on (positional indexes into
+    the collected-attempt tuple), what remains unmet and whether it
+    needs clarification. It never grants authorization, never certifies
+    a FACT, and may never invent SourceRefs — the deterministic
+    acceptor binds every ref to an actual owner result or rejects the
+    declaration.
+    """
+
+    schema_version: str = "1"
+    status: InvestigationAnswerStatus = (
+        InvestigationAnswerStatus.INSUFFICIENT
+    )
+    answer: str = ""
+    evidence_refs: tuple[int, ...] = ()
+    unmet_obligations: tuple[str, ...] = ()
+    limitations: tuple[str, ...] = ()
+    clarification_question: str | None = None
