@@ -300,6 +300,24 @@ def _raise_credential(group_id, *, timeout_seconds=None):
     )
 
 
+def test_internal_obs_marker_is_stripped_from_user_answer():
+    """``[obs:N]`` is an internal evidence handle — never user-facing
+    answer text; the output validator normalizes it away."""
+    import re as _re
+
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        _INTERNAL_OBS_MARKER,
+    )
+
+    text = "[obs:0]\nDescrição real\n---\n[obs:1]\nPlaylist real"
+    cleaned = _INTERNAL_OBS_MARKER.sub("", text)
+    assert "[obs:" not in cleaned
+    assert "Descrição real" in cleaned and "Playlist real" in cleaned
+    # negative: legitimate bracketed text is untouched
+    keep = "ver [anexo] e [v2] para detalhes"
+    assert _INTERNAL_OBS_MARKER.sub("", keep) == keep
+
+
 def test_candidate_bound_execute_never_fabricates_token_success():
     """``candidate_token`` is owner-issued: a forged/absent token can
     never produce a successful business attempt — the governed path

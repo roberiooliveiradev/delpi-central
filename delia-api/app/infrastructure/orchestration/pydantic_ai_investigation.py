@@ -72,6 +72,8 @@ from app.application.specialist_interop.errors import (
 
 _logger = logging.getLogger(__name__)
 
+_INTERNAL_OBS_MARKER = __import__("re").compile(r"\[obs:\d+\]\s*")
+
 # Library defaults for direct unit construction only — production
 # composition always injects the validated runtime-config snapshot
 # (doc 243); these literals are never a second source of truth.
@@ -1456,10 +1458,16 @@ class PydanticAiInvestigationOrchestrator:
                     "evidence_refs must be non-negative indexes into "
                     "the collected tool observations"
                 )
-            if len(output.answer) > MAX_RENDER_CONTENT_CHARS:
-                return dataclasses.replace(
+            # Cosmetic normalization only — the internal evidence
+            # handle ``[obs:N]`` is an implementation detail, never
+            # user-facing answer text. Evidence binding is unchanged.
+            answer = _INTERNAL_OBS_MARKER.sub("", output.answer)
+            if answer != output.answer or len(answer) > (
+                MAX_RENDER_CONTENT_CHARS
+            ):
+                output = dataclasses.replace(
                     output,
-                    answer=output.answer[:MAX_RENDER_CONTENT_CHARS],
+                    answer=answer[:MAX_RENDER_CONTENT_CHARS],
                 )
             if (
                 output.status

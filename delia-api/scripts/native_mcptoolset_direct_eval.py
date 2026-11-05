@@ -177,13 +177,55 @@ def _run(handler, mcp, question: str, bearer: str) -> dict:
         "elapsed_s": round(time.monotonic() - started, 1),
         "error": error,
         "grounding": str(getattr(result, "grounding_status", "")),
-        "mcp_invoke_targets": mcp.invoke_targets[before:],
-        "content_head": (getattr(result, "content", "") or "")[:160],
+        "mcp_invoke_targets": [
+            t.split(":")[-2].split("'")[1] + ":" + t.split(":")[-1]
+            if "'" in t else t
+            for t in mcp.invoke_targets[before:]
+        ],
+        "content": getattr(result, "content", "") or "",
+        "epistemic_class": str(getattr(result, "epistemic_class", "")),
+        "provenance": _safe_provenance(result),
         "limitations": [
-            str(x)[:80]
+            str(x)
             for x in (getattr(result, "limitations", None) or ())
-        ][:6],
+        ],
     }
+
+
+def _safe_provenance(result) -> dict | None:
+    prov = getattr(result, "provenance", None)
+    if prov is None:
+        return None
+    sources = getattr(prov, "sources", None) or []
+    return {
+        "sources": [
+            {
+                "source_id": str(getattr(s, "source_id", "")),
+                "source_system": str(getattr(s, "source_system", "")),
+                "action_id": str(getattr(s, "action_id", "")),
+            }
+            for s in sources
+        ]
+    }
+
+
+def _write_artifact(scenario_id: str, question: str, res: dict) -> None:
+    """Persist the full answer + evidence in a local protected dir.
+
+    Never logs tokens/credentials; content is local-only business
+    evidence for the executor's semantic review — not committed."""
+    out_dir = os.environ.get(
+        "DELIA_EVAL_ARTIFACT_DIR", "/tmp/delia_eval_artifacts"
+    )
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, f"{scenario_id}.json")
+    payload = {
+        "scenario": scenario_id,
+        "question": question,
+        "result": res,
+    }
+    with open(path, "w") as fh:
+        json.dump(payload, fh, ensure_ascii=False, indent=1)
 
 
 QUESTIONS = {
@@ -202,6 +244,10 @@ QUESTIONS = {
     "E1_reword_davi": "me diz o que é o item 50220013",
     "E2_reword_vista": "liste para mim as playlists dos dashboards",
     "E3_absent_record": "Qual é a descrição do produto 00000000?",
+    "H1_data_formats": "Quais formatos de dados estão disponíveis?",
+    "H2_sipoc_concept": "O que é SIPOC?",
+    "H3_product_structure": "Mostre a estrutura do produto 90260921.",
+    "H4_other_product": "Qual é a descrição do produto 99999999?",
 }
 
 
@@ -221,8 +267,15 @@ def main() -> int:
             res = _run(handler, mcp, question, _subject_token())
         except Exception as exc:
             res = {"error": type(exc).__name__}
-        out["scenarios"][sid] = res
-        print(f"== {sid}: {json.dumps(res, ensure_ascii=False)}")
+        _write_artifact(sid, question, res)
+        out["scenarios"][sid] = {
+            k: (v[:160] if k == "content" else v)
+            for k, v in res.items()
+        }
+        print(
+            f"== {sid}: "
+            f"{json.dumps(out['scenarios'][sid], ensure_ascii=False)}"
+        )
     print(json.dumps(out, ensure_ascii=False, indent=1))
     return 0
 

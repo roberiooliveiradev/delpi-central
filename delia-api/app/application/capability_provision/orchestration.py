@@ -2357,10 +2357,10 @@ def _finalize_agent_collected_attempts(
         if not pending:
             return None
         parts: list[str] = []
-        for index, item in enumerate(business):
+        for item in business:
             body = (item.content or "").strip()
             if body:
-                parts.append(f"[obs:{index}]\n{body}")
+                parts.append(body)
         return GovernedCapabilityAttempt(
             status=GovernedCapabilityStatus.NOT_APPLICABLE,
             correlation_id=correlation,
@@ -2684,12 +2684,11 @@ def _finalize_agent_collected_attempts(
         if partial is not None:
             return partial
         parts: list[str] = []
-        for index, item in enumerate(business):
+        for item in business:
             body = (item.content or "").strip()
             if not body:
                 continue
-            handle = f"obs:{index}"
-            parts.append(f"[{handle}]\n{body}")
+            parts.append(body)
         joined = "\n\n---\n\n".join(parts)[:MAX_RENDER_CONTENT_CHARS]
         last = business[-1]
         return GovernedCapabilityAttempt(
