@@ -121,7 +121,8 @@ def _evidence_of(candidate: dict) -> list[dict]:
 
 
 def _check_component_code(
-    occ, plan, table_rows, idents, document_sha, product_code=None
+    occ, plan, table_rows, idents, document_sha, product_code=None,
+    recovery=None,
 ) -> dict:
     """I-01 — código do componente nas evidências da tabela/OCR."""
     code = plan["expected_value"]
@@ -169,6 +170,54 @@ def _check_component_code(
             for c in amb_rows
         ]
         check["uncertainty_reason"] = "linha com associação ambígua"
+        return check
+    # DEC-VAL-034 — evidência produzida por recuperação localizada
+    # dentro da faixa da tabela de componentes conta como observação
+    # estrutural: o crop é delimitado pela própria tabela tipada
+    # (faixa y) expandida por tokens na faixa — não é token solto.
+    rec_hits = [
+        r for r in (recovery or [])
+        if r.get("observed_code") == code
+    ]
+    if len(rec_hits) == 1:
+        r = rec_hits[0]
+        check["state"] = "MATCH_CANDIDATE"
+        check["observed_value"] = r.get("raw_text") or code
+        check["candidate_rows"] = [
+            {
+                "row": None,
+                "reason": "localized_ocr_recheck",
+                "page": r.get("page"),
+            }
+        ]
+        check["evidence_refs"] = [
+            {
+                "source_kind": "localized_ocr_recheck",
+                "raw_value": r.get("raw_text"),
+                "bounding_box": r.get("bounding_box"),
+                "coordinate_system": "pixels_pdfium_top_left",
+                "page": r.get("page"),
+                "region": r.get("region"),
+                "region_box": r.get("region_box"),
+                "region_ref_dpi": r.get("region_ref_dpi"),
+                "method": r.get("method"),
+                "confidence": r.get("confidence"),
+                "document_sha256": r.get("pdf_sha256"),
+                "source_revision": r.get("source_revision"),
+            }
+        ]
+        return check
+    if len(rec_hits) > 1:
+        check["state"] = "AMBIGUOUS"
+        check["observed_value"] = code
+        check["candidate_rows"] = [
+            {"row": None, "reason": "multiple_recovery_hits",
+             "page": r.get("page")}
+            for r in rec_hits
+        ]
+        check["uncertainty_reason"] = (
+            "código recuperado em múltiplas regiões localizadas"
+        )
         return check
     # código presente fora da tabela ≠ evidência de componente
     region_hits = {
@@ -966,7 +1015,8 @@ def execute_investigations(
             totals["not_comparable"] += 1
             continue
         c1 = _check_component_code(
-            occ, plan, table_rows, idents, document_sha, product_code
+            occ, plan, table_rows, idents, document_sha, product_code,
+            recovery=(u or {}).get("localized_recovery"),
         )
         checks.append(c1)
         row_ref = None
@@ -1340,7 +1390,8 @@ def recover_absent_table_cells(
         page_tokens = [
             (str(getattr(t, "text", "") or "").strip(),
              float(getattr(t, "confidence", 0.0) or 0.0),
-             getattr(t, "bounding_box_px", None))
+             getattr(t, "bounding_box_px", None)
+             or getattr(t, "box", None))
             for t in (getattr(res, "tokens", None) or [])
         ]
         for code in sorted(remaining):
@@ -1367,6 +1418,8 @@ def recover_absent_table_cells(
                         "page": page,
                         "confidence": hit[1],
                         "box": box or hit[2],
+                        "region": list(regions[page]),
+                        "region_ref_dpi": ref_dpi,
                         "observed_raw_value": hit[0],
                         "method": "localized_ocr_recheck",
                     }

@@ -11,6 +11,7 @@ from engineering_app.application.drawing.bom_structure_comparator import (
     compare_bom_to_drawing,
 )
 from engineering_app.application.drawing.drawing_investigation import (
+    _check_component_code,
     _rect_of,
     recover_absent_table_cells,
 )
@@ -255,3 +256,108 @@ def test_drawing_only_does_not_fabricate_root_parent():
     assert f["parent_code"] != "90264030"
     assert f["evidence"]["drawing_parent"] is None
     assert f["evidence"]["parent_verified"] is False
+
+
+# --------------------------------------------------------------------------
+# DEC-VAL-034 — evidência recuperada na investigação guiada
+# --------------------------------------------------------------------------
+
+def _plan(code="10080004"):
+    return {"expected_value": code, "search_strategy": "EXACT_THEN_CONTEXTUAL"}
+
+
+def _recovery(**kw):
+    base = {
+        "observed_code": "10080004",
+        "raw_text": "10080004",
+        "product_code": "90263572",
+        "pdf_sha256": "abc123",
+        "page": 2,
+        "region": "component_table",
+        "region_box": [20, 248, 909, 1022],
+        "region_ref_dpi": 110,
+        "bounding_box": [352.0, 269.0, 397.0, 284.0],
+        "coordinate_system": "pixels_pdfium_top_left",
+        "method": "localized_ocr_recheck",
+        "confidence": 0.9999,
+        "source_revision": "21",
+    }
+    base.update(kw)
+    return base
+
+
+def test_check_component_code_consumes_recovered_evidence():
+    """Evidência local_ocr_recheck promove I-01 a MATCH_CANDIDATE."""
+    idents = {"component_table": [{"text": "10060004",
+                                   "region": "component_table"}]}
+    check = _check_component_code(
+        None, _plan(), [], idents, "sha", "90263572",
+        recovery=[_recovery()],
+    )
+    assert check["state"] == "MATCH_CANDIDATE"
+    assert check["observed_value"] == "10080004"
+    ref = check["evidence_refs"][0]
+    assert ref["source_kind"] == "localized_ocr_recheck"
+    assert ref["page"] == 2
+    assert ref["region_box"] == [20, 248, 909, 1022]
+    assert ref["bounding_box"] == [352.0, 269.0, 397.0, 284.0]
+    assert ref["document_sha256"] == "abc123"
+    assert check["candidate_rows"][0]["reason"] == "localized_ocr_recheck"
+
+
+def test_check_component_code_recovery_without_box_kept():
+    """Sem bounding box a evidência não é descartada — null explícito."""
+    check = _check_component_code(
+        None, _plan(), [], {}, "sha", "90263572",
+        recovery=[_recovery(bounding_box=None)],
+    )
+    assert check["state"] == "MATCH_CANDIDATE"
+    assert check["evidence_refs"][0]["bounding_box"] is None
+    assert check["evidence_refs"][0]["region_box"]
+
+
+def test_check_component_code_multiple_recovery_ambiguous():
+    check = _check_component_code(
+        None, _plan(), [], {}, "sha", "90263572",
+        recovery=[_recovery(page=1), _recovery(page=2)],
+    )
+    assert check["state"] == "AMBIGUOUS"
+    assert "múltiplas" in (check["uncertainty_reason"] or "")
+
+
+def test_check_component_code_other_code_recovery_unaffected():
+    """Recuperação de outro código não promove — fluxo similar intacto."""
+    idents = {"component_table": [{"text": "10060004",
+                                   "region": "component_table"}]}
+    check = _check_component_code(
+        None, _plan(), [], idents, "sha", "90263572",
+        recovery=[_recovery(observed_code="10080032")],
+    )
+    assert check["state"] == "AMBIGUOUS"
+    assert check["similar_candidates"]
+
+
+def test_recovery_maps_token_box_attribute():
+    """Token OCR com attr ``box`` (não ``bounding_box_px``) produz box
+    convertido para o espaço da página — nunca null silencioso."""
+    class _BoxTok:
+        text = "10080004"
+        confidence = 0.99
+        box = [10, 0, 60, 0, 60, 20, 10, 20]  # 8-pt no espaço do crop
+
+    class _Ocr:
+        def extract_text(self, _img):
+            class _Res:
+                tokens = [_BoxTok()]
+            return _Res()
+
+    table = _table([[_cell("50213142")]])
+    found = recover_absent_table_cells(
+        missing_codes=["10080004"], component_table=table,
+        opts=_opts(renderer=_FakeRenderer(), ocr=_Ocr(),
+                   reference_dpi=100),
+    )
+    assert found and found[0]["code"] == "10080004"
+    assert found[0]["box"] is not None
+    assert found[0]["region"] is not None
+    assert found[0]["region_ref_dpi"] == 100

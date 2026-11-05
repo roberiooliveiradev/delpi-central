@@ -515,6 +515,60 @@ async def analyze_product_drawing(
                         "provenance": "localized_ocr_recheck",
                     }
                 )
+                # DEC-VAL-034 — a evidência perceptual deve chegar ao
+                # entendimento e à investigação guiada, não só ao
+                # comparador: code_contexts (visibilidade estrutural) +
+                # localized_recovery (contrato de evidência verificável).
+                if isinstance(understanding, dict):
+                    _ctx_key = (_rc["code"], "component_table", _rc["page"])
+                    _ctxs = understanding.setdefault("code_contexts", [])
+                    if not any(
+                        (c.get("code"), c.get("region"), c.get("page"))
+                        == _ctx_key
+                        for c in _ctxs
+                    ):
+                        _ctxs.append(
+                            {
+                                "code": _rc["code"],
+                                "region": "component_table",
+                                "page": _rc["page"],
+                                "bounding_box_px": _rc["box"],
+                                "provenance": "localized_ocr_recheck",
+                                "confidence": _rc["confidence"],
+                                "observed_raw_value": (
+                                    _rc["observed_raw_value"]
+                                ),
+                            }
+                        )
+                    understanding.setdefault(
+                        "localized_recovery", []
+                    ).append(
+                        {
+                            "observed_code": _rc["code"],
+                            "raw_text": _rc["observed_raw_value"],
+                            "product_code": official_code,
+                            "pdf_sha256": (
+                                getattr(extraction, "document_hash", None)
+                                or understanding.get(
+                                    "document_hash_sha256"
+                                )
+                            ),
+                            "page": _rc["page"],
+                            "region": "component_table",
+                            "region_box": _rc.get("region"),
+                            "region_ref_dpi": _rc.get("region_ref_dpi"),
+                            "bounding_box": _rc["box"],
+                            "coordinate_system": (
+                                "pixels_pdfium_top_left"
+                            ),
+                            "method": _rc["method"],
+                            "confidence": _rc["confidence"],
+                            "source_revision": (
+                                str(revision_meta)
+                                if revision_meta else None
+                            ),
+                        }
+                    )
     bom_structure_comparison = compare_bom_to_drawing(
         product_code=official_code,
         bom_occurrences=(
