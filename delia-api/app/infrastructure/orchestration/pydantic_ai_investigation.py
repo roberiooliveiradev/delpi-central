@@ -1120,7 +1120,6 @@ class PydanticAiInvestigationOrchestrator:
             return output
 
         remaining = max(1.0, deadline.remaining_seconds())
-        started = time.monotonic()
         prompt = _prior_context_block(
             prior_turns,
             turns_limit=self._prior_turns_limit,
@@ -1199,14 +1198,6 @@ class PydanticAiInvestigationOrchestrator:
                             f"{type(exc).__name__}",
                         ),
                     )
-
-            else:
-                self.last_agent_usage = {
-                    "duration_ms": int(
-                        (time.monotonic() - started) * 1000
-                    ),
-                    "tool_calls": deps.tool_calls,
-                }
 
             if (
                 not deps.clarification_question

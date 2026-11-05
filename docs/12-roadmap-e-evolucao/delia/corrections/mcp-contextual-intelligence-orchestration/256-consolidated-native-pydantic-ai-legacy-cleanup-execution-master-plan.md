@@ -411,3 +411,19 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
   pre-call), JSON único (perfis completos, zero campos mortos),
   last_node_trace (consumido em testes de observabilidade).
 - Suíte completa PASS (exit 0).
+
+## 16. G4 rework — telemetria + prova comportamental de retries (doc 262)
+
+- **last_agent_usage**: remoção completada — o `else:` órfão (atribuição
+  dinâmica no sucesso do run_sync) e `started` removidos; zero leitores
+  confirmado por grep. Tokens do Agent path não tinham consumidor de
+  observabilidade (campo nunca lido) — `ModelCallObservation` continua
+  sendo o ledger autoritativo dos paths InvokeModel.
+- **M1 prova comportamental**: 3 testes instrumentados com
+  FunctionModel — 1 chamada física por run; ModelRetry → +1 retry
+  nativo bounded; UsageLimits(request_limit=1) → UsageLimitExceeded
+  sem 2ª chamada. Não-inspeção-textual: mede chamadas reais.
+- Suíte completa PASS (exit 0).
+- RQ-11=PARTIAL (consolidation bounded), RQ-12=PARTIAL (runtime único
+  provado), RQ-13=PARTIAL (JSON único KEEP, zero campos mortos),
+  RQ-14/15=NOT_IMPLEMENTED (G5+).

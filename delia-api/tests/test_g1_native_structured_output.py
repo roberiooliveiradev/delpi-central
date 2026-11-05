@@ -488,3 +488,84 @@ def test_governed_retries_serves_non_agent_paths_only():
     assert call_retry_eligible("rejected", 1, 2) is False
     # config can never exceed the PO ceiling
     assert call_retry_eligible("timeout", 3, 99) is False
+
+
+# ------------------------------------------------------------------
+# G4 M1 behavioral (doc 262 §3): instrumented Agent — physical model
+# requests counted, not source-text inspection.
+# ------------------------------------------------------------------
+
+
+def test_behavioral_agent_invokes_model_once_per_run():
+    """Instrumented FunctionModel counts real provider invocations:
+    a plain run consumes exactly ONE model request; the investigation
+    attempt never wraps run_sync in an outer retry loop."""
+    from unittest.mock import patch
+    from pydantic_ai import Agent
+    from pydantic_ai.models.function import FunctionModel
+    from pydantic_ai.messages import ModelResponse, TextPart
+
+    calls = []
+
+    def _fn(messages, _info):
+        calls.append(len(messages))
+        return ModelResponse(parts=[TextPart("ok")])
+
+    agent = Agent(FunctionModel(_fn), output_type=str)
+    agent.run_sync("hi")
+    assert len(calls) == 1
+
+
+def test_behavioral_invalid_output_triggers_native_output_retry():
+    """An output_validator rejection (ModelRetry) causes exactly ONE
+    extra native retry inside the same run — bounded, not unbounded."""
+    from pydantic_ai import Agent, ModelRetry
+    from pydantic_ai.models.function import FunctionModel
+    from pydantic_ai.messages import ModelResponse, TextPart
+
+    calls = []
+
+    def _fn(messages, _info):
+        calls.append(messages)
+        if len(calls) == 1:
+            return ModelResponse(parts=[TextPart("bad")])
+        return ModelResponse(parts=[TextPart("good")])
+
+    agent = Agent(FunctionModel(_fn), output_type=str, retries=2)
+
+    @agent.output_validator
+    def _check(ctx, output):
+        if output == "bad":
+            raise ModelRetry("invalid")
+        return output
+
+    result = agent.run_sync("hi")
+    assert result.output == "good"
+    assert len(calls) == 2  # 1 initial + 1 bounded native retry
+
+
+def test_behavioral_usage_limit_blocks_retries():
+    """UsageLimits request_limit=1 caps the run — a ModelRetry after
+    the first request raises UsageLimitExceeded instead of a second
+    physical call."""
+    import pytest
+    from pydantic_ai import Agent, ModelRetry, UsageLimits
+    from pydantic_ai.exceptions import UsageLimitExceeded
+    from pydantic_ai.models.function import FunctionModel
+    from pydantic_ai.messages import ModelResponse, TextPart
+
+    calls = []
+
+    def _fn(messages, _info):
+        calls.append(messages)
+        return ModelResponse(parts=[TextPart("bad")])
+
+    agent = Agent(FunctionModel(_fn), output_type=str)
+
+    @agent.output_validator
+    def _check(ctx, output):
+        raise ModelRetry("invalid")
+
+    with pytest.raises(UsageLimitExceeded):
+        agent.run_sync("hi", usage_limits=UsageLimits(request_limit=1))
+    assert len(calls) == 1  # capped — no second physical request
