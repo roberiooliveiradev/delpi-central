@@ -875,3 +875,13 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **Preservado:** gate `BOM_ONLY` ≥0.9 (DEC-VAL-033) intacto; `90264030` 5/5 pais verificados e 10 findings candidatos mantidos; nenhuma NC automática.
 
 **Estado:** `OCR_A1_BACKEND_RECOVERY=PASS` · `REPORT_GROUNDING=PASS (evidência verificável no guided_investigations)` · `BOM_ONLY_GATE=PRESERVED` · `CHATGPT_CONSUMER_PASS=PENDING` (reteste: `compose_understanding` `90263572` → `guided_investigations` deve mostrar `O0001` MATCH_CANDIDATE + `evidence_refs` localized_ocr_recheck; `90264030` → 5 pais + 10 findings).
+
+## 36. DEC-VAL-034 — diagnóstico do 502/erro interno do MCP e correção de documento no envelope (2026-11-05)
+
+**Causa-raiz (PROVEN nos logs prod `delpi-engineering-api`):** `eva_mcp_tool_error` com `NameError: name 'out' is not defined` em `semantic_bridge.py:1671` — `_analyze_drawing_understanding` retornava `out["document"]`/`out["same_document_verified"]`, mas `out` vem de `run_official_document_benchmark` dentro de `_produce_drawing_understanding` (fora de escopo no caller, que recebe `(u, structure, best, tokens, pdf_bytes)`). O incidente reportado pelo consumidor teve 2 eventos: `502 upstream_error` (primeira tentativa — pipeline síncrono OCR+SLANet leva minutos, timeout de gateway/upstream) e erro interno da ferramenta (segunda — o NameError). **Logs do container:** nenhuma requisição de análise alcançou o handler entre as duas falhas? — requisições POST `/mcp/` 200 OK presentes com `ClientDisconnect` antes do trace — consiste com timeout upstream + NameError no final do caminho.
+
+**Correção (commit `9976f441a6`):** `_produce_drawing_understanding` anexa `document` e `same_document_verified` ao próprio `understanding` (identidade do documento oficial pertence ao envelope); o retorno usa `understanding.get(...)`. Efeito colateral corrigido: `report.identification.document_id` deixou de ser sempre `null`.
+
+**Evidência:** suíte overlay 275 testes PASS (incl. 62 `test_eva_mcp` com `asyncio_mode` correto); prod `delpi-engineering-api` healthy em `9976f441a6`.
+
+**Estado:** `MCP_DRAWING_UNDERSTANDING_NAMEERROR=FIXED` · `502_UPSTREAM=timeout gateway pipeline síncrono (documentado; caminho async via job segue canônico)` · `CHATGPT_CONSUMER_PASS=PENDING` (reteste: `product.drawing_understanding` `90263572` deve retornar `document`+`same_document_verified`+`guided_investigations` com `O0001 MATCH_CANDIDATE`).
