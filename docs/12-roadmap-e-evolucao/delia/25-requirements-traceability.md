@@ -172,7 +172,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-026 | RAG de procedimentos/documentos | DÉLIA Knowledge | grounding/security | LOCKED |
 | CP-028 | Redigir e-mail/texto | DÉLIA capability | faithfulness | LOCKED |
 | CP-053 | Send/stream parity | DÉLIA API/MFE | transport parity | LOCKED |
-| CP-071 | Uma única DÉLIA sem seleção de agente | DÉLIA API/MFE | no agent runtime | LOCKED |
+| CP-071 | Uma única DÉLIA como produto/orquestradora com seleção autorizada de agentes/perfis especializados e convite de participantes na conversa; MCP distinto do agente que o utiliza; delegação efetiva somente se justificada e governada, sem runtime departamental obrigatório | DÉLIA API/MFE + Portal/Core + owners MCP/A2A | catálogo aprovado por usuário; seleção/convite; speaker/autoria verdadeira; handoff de contexto mínimo; AuthZ/isolamento; no second planner | LOCKED — PRODUCT_DIRECTION_UPDATED_2026-11-05; substitui a proibição histórica de seleção user-facing; contratos e runtime PENDING, não CP PASS (24 §5; doc 291) |
 | CP-073 | Recuperação semântica de expertise | DÉLIA API | positive/sibling/negative | LOCKED |
 | CP-074 | Composição multi-expertise | DÉLIA Planner | cross-domain | LOCKED |
 | CP-078 | Multimodalidade sem agent dependency | DÉLIA Multimodal | attachment eval | LOCKED |
