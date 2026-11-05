@@ -10,6 +10,11 @@ import type {
   MyWegCompareProductsPayload,
 } from "../types";
 import { formatDecimalString } from "../utils/formatDecimalString";
+import { formatPercentDisplay } from "../utils/formatPercentDisplay";
+import {
+  deltaToneClass,
+  situationBadgeClass,
+} from "../utils/mywegSemanticTone";
 import { DataTableSection, type DataTableColumn } from "./dataTableUi";
 
 type Props = {
@@ -47,21 +52,6 @@ function situationLabel(situation: string): string {
       return texts.situation.disappeared;
     default:
       return situation;
-  }
-}
-
-function situationClass(situation: string): string {
-  switch (situation) {
-    case "increased":
-    case "appeared":
-      return "ppc-myweg-needs__movement ppc-myweg-needs__movement--up";
-    case "decreased":
-    case "disappeared":
-      return "ppc-myweg-needs__movement ppc-myweg-needs__movement--down";
-    case "stable_with_date_changes":
-      return "ppc-myweg-needs__movement ppc-myweg-needs__movement--in";
-    default:
-      return "ppc-myweg-needs__movement";
   }
 }
 
@@ -107,15 +97,20 @@ function ProductDetail({
 }) {
   return (
     <div className="ppc-myweg-needs__product-detail">
-      <p className="ppc-myweg-needs__evolution-note">
-        <strong>{texts.detailPair}:</strong> {fromLabel} → {toLabel}
-      </p>
-      <p className="ppc-myweg-needs__evolution-note">
-        <strong>{texts.detailTotals}:</strong>{" "}
-        {formatDecimalString(row.previousQuantityUn)} UN →{" "}
-        {formatDecimalString(row.currentQuantityUn)} UN (
-        {formatDecimalString(row.deltaQuantityUn)} UN)
-      </p>
+      <div className="ppc-myweg-needs__product-detail-meta">
+        <span>
+          <strong>{texts.detailPair}:</strong> {fromLabel} → {toLabel}
+        </span>
+        <span>
+          <strong>{texts.detailTotals}:</strong>{" "}
+          {formatDecimalString(row.previousQuantityUn)} →{" "}
+          {formatDecimalString(row.currentQuantityUn)} UN (
+          <span className={deltaToneClass(row.situation)}>
+            {formatDecimalString(row.deltaQuantityUn)}
+          </span>
+          )
+        </span>
+      </div>
       {!row.identityConfirmed ? (
         <p className="ppc-myweg-needs__evolution-note" role="status">
           {texts.identityUnconfirmed}
@@ -141,9 +136,13 @@ function ProductDetail({
                 <td>{formatRemessaBr(item.remessa)}</td>
                 <td>{formatDecimalString(item.previousQuantityUn)}</td>
                 <td>{formatDecimalString(item.currentQuantityUn)}</td>
-                <td>{formatDecimalString(item.deltaQuantityUn)}</td>
                 <td>
-                  <span className={situationClass(item.movement)}>
+                  <span className={deltaToneClass(item.movement)}>
+                    {formatDecimalString(item.deltaQuantityUn)}
+                  </span>
+                </td>
+                <td>
+                  <span className={situationBadgeClass(item.movement)}>
                     {movementLabel(item.movement)}
                   </span>
                 </td>
@@ -155,7 +154,9 @@ function ProductDetail({
       {row.probableDateShifts.length > 0 ? (
         <div className="ppc-myweg-needs__product-shifts">
           <h4>{texts.relatedShiftsTitle}</h4>
-          <p className="ppc-myweg-needs__evolution-note">{texts.relatedShiftsNote}</p>
+          <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
+            {texts.relatedShiftsNote}
+          </p>
           <ul>
             {row.probableDateShifts.map((shift, index) => (
               <li
@@ -242,21 +243,24 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
       {
         key: "previous",
         header: texts.columns.previous,
+        headerHint: "Necessidade total na coleta anterior (UN)",
         align: "right",
         render: (row) => formatDecimalString(row.previousQuantityUn),
       },
       {
         key: "current",
         header: texts.columns.current,
+        headerHint: "Necessidade total na coleta atual (UN)",
         align: "right",
         render: (row) => formatDecimalString(row.currentQuantityUn),
       },
       {
         key: "delta",
         header: texts.columns.delta,
+        headerHint: "Diferença líquida = atual − anterior (UN)",
         align: "right",
         render: (row) => (
-          <span className={situationClass(row.situation)}>
+          <span className={deltaToneClass(row.situation)}>
             {formatDecimalString(row.deltaQuantityUn)}
           </span>
         ),
@@ -264,15 +268,22 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
       {
         key: "percent",
         header: texts.columns.percent,
+        headerHint: "Variação percentual da necessidade total",
         align: "right",
-        render: (row) =>
-          row.percentChange == null ? "—" : `${formatDecimalString(row.percentChange)}%`,
+        render: (row) => (
+          <span className={deltaToneClass(row.situation)}>
+            {formatPercentDisplay(row.percentChange)}
+          </span>
+        ),
       },
       {
         key: "situation",
         header: texts.columns.situation,
+        headerHint: helpTooltips.mywegNeedsProductAnalysis,
         render: (row) => (
-          <span className={situationClass(row.situation)}>{situationLabel(row.situation)}</span>
+          <span className={situationBadgeClass(row.situation)}>
+            {situationLabel(row.situation)}
+          </span>
         ),
       },
       {
@@ -281,7 +292,7 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
         render: (row) => (
           <button
             type="button"
-            className="ppc-btn ppc-btn--secondary"
+            className="ppc-btn ppc-btn--ghost ppc-myweg-needs__details-btn"
             aria-expanded={expandedKey === row.productKey}
             onClick={() =>
               setExpandedKey((current) =>
@@ -321,6 +332,13 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
   const expanded = payload.items.find((row) => row.productKey === expandedKey) ?? null;
   const fromLabel = formatRemessaBr(payload.fromBatch.collectionDate);
   const toLabel = formatRemessaBr(payload.toBatch.collectionDate);
+  const netDelta = formatDecimalString(payload.totals.deltaQuantityUn);
+  const netToneClass = (() => {
+    const raw = (payload.totals.deltaQuantityUn ?? "").trim();
+    if (!raw || raw === "0") return "ppc-myweg-needs__delta";
+    if (raw.startsWith("-")) return "ppc-myweg-needs__delta ppc-myweg-needs__delta--down";
+    return "ppc-myweg-needs__delta ppc-myweg-needs__delta--up";
+  })();
 
   return (
     <section className="ppc-myweg-needs__products" aria-label={texts.title}>
@@ -329,15 +347,20 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
           {texts.title}
           <HelpTooltip content={helpTooltips.mywegNeedsProductAnalysis} trigger="icon" />
         </h3>
-        <p className="ppc-myweg-needs__evolution-note">{texts.intro}</p>
-        <p className="ppc-myweg-needs__evolution-note" role="status">
-          {texts.totalsHint(
-            payload.totalProductsCompared,
-            payload.totalProductsChanged,
-            formatDecimalString(payload.totals.deltaQuantityUn),
-          )}
+        <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
+          {texts.intro}
         </p>
-        <p className="ppc-myweg-needs__evolution-note">{payload.disclaimer}</p>
+        <div className="ppc-myweg-needs__products-stats" role="status">
+          <span className="ppc-myweg-needs__stat-chip">
+            {texts.statsChanged(payload.totalProductsChanged)}
+          </span>
+          <span className="ppc-myweg-needs__stat-chip">
+            {texts.statsCompared(payload.totalProductsCompared)}
+          </span>
+          <span className={`ppc-myweg-needs__stat-chip ${netToneClass}`}>
+            {texts.statsDelta(netDelta)}
+          </span>
+        </div>
       </header>
 
       <DataTableSection
@@ -346,6 +369,7 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
         columns={columns}
         rowKey={(row) => row.productKey}
         emptyMessage={search ? copy.tableSection.emptyMessage : texts.empty}
+        hideSearch
         columnPreferencesKey="production-control:myweg-products:columns:v1"
         getRowClassName={(row) =>
           row.productKey === expandedKey ? "ppc-myweg-needs__product-row--expanded" : undefined

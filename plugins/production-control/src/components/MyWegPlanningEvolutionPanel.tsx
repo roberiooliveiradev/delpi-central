@@ -11,6 +11,7 @@ import type {
   MyWegNeedsBatchSummary,
 } from "../types";
 import { formatDecimalString } from "../utils/formatDecimalString";
+import { deltaToneClass, movementBadgeClass } from "../utils/mywegSemanticTone";
 import {
   resolveMyWegCompareAnalysis,
   type MyWegCompareAnalysis,
@@ -80,21 +81,6 @@ function formatRemessaBr(value: string | null | undefined): string {
     return `${d}/${m}/${y}`;
   }
   return text;
-}
-
-function movementClass(movement: string): string {
-  switch (movement) {
-    case "increased":
-      return "ppc-myweg-needs__movement ppc-myweg-needs__movement--up";
-    case "decreased":
-      return "ppc-myweg-needs__movement ppc-myweg-needs__movement--down";
-    case "appeared":
-      return "ppc-myweg-needs__movement ppc-myweg-needs__movement--in";
-    case "disappeared":
-      return "ppc-myweg-needs__movement ppc-myweg-needs__movement--out";
-    default:
-      return "ppc-myweg-needs__movement";
-  }
 }
 
 export function MyWegPlanningEvolutionPanel({
@@ -192,7 +178,7 @@ export function MyWegPlanningEvolutionPanel({
         render: (row) => {
           const label = movementLabel(row.movement);
           const text = row.inHorizon14d ? `${label} · ${texts.horizonBadge}` : label;
-          return <span className={movementClass(row.movement)}>{text}</span>;
+          return <span className={movementBadgeClass(row.movement)}>{text}</span>;
         },
       },
       {
@@ -211,7 +197,11 @@ export function MyWegPlanningEvolutionPanel({
         key: "delta",
         header: texts.columns.delta,
         align: "right",
-        render: (row) => formatDecimalString(row.deltaQuantityUn),
+        render: (row) => (
+          <span className={deltaToneClass(row.movement)}>
+            {formatDecimalString(row.deltaQuantityUn)}
+          </span>
+        ),
       },
     ],
     [],
@@ -283,7 +273,6 @@ export function MyWegPlanningEvolutionPanel({
   if (historyItems.length < 2) {
     return (
       <section className="ppc-myweg-needs__evolution" aria-label={texts.title}>
-        <p className="ppc-myweg-needs__evolution-note">{texts.intro}</p>
         <p className="ppc-myweg-needs__evolution-note" role="status">
           {texts.insufficient}
         </p>
@@ -303,7 +292,10 @@ export function MyWegPlanningEvolutionPanel({
 
   return (
     <section className="ppc-myweg-needs__evolution" aria-label={texts.title}>
-      <p className="ppc-myweg-needs__evolution-note">{texts.intro}</p>
+      <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
+        {texts.intro}{" "}
+        <HelpTooltip content={helpTooltips.mywegNeedsEvolution} trigger="icon" />
+      </p>
 
       <div
         className="ppc-myweg-needs__analysis-toggle"
@@ -338,72 +330,83 @@ export function MyWegPlanningEvolutionPanel({
         </button>
       </div>
 
-      <div className="ppc-myweg-needs__toolbar">
-        <label className="ppc-myweg-needs__history">
-          {texts.fromLabel}
-          <select
-            value={fromId}
-            onChange={(event) => setFromId(event.target.value)}
-            aria-label={texts.fromLabel}
-          >
-            <option value="">—</option>
-            {historyItems.map((item) => (
-              <option key={`from-${item.id}`} value={item.id}>
-                {formatRemessaBr(item.collectionDate)} · {item.recordCount} regs
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ppc-myweg-needs__history">
-          {texts.toLabel}
-          <select
-            value={toId}
-            onChange={(event) => setToId(event.target.value)}
-            aria-label={texts.toLabel}
-          >
-            {historyItems.map((item) => (
-              <option key={`to-${item.id}`} value={item.id}>
-                {formatRemessaBr(item.collectionDate)} · {item.recordCount} regs
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ppc-myweg-needs__search">
-          {texts.searchLabel}
-          <input
-            type="search"
-            value={searchDraft}
-            placeholder={texts.searchPlaceholder}
-            onChange={(event) => setSearchDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                setSearch(searchDraft.trim());
-              }
-            }}
-            aria-label={texts.searchLabel}
-          />
-        </label>
-        <button
-          type="button"
-          className="ppc-btn ppc-btn--secondary"
-          onClick={() => setSearch(searchDraft.trim())}
-        >
-          {copy.mywegNeeds.applyFilters}
-        </button>
-        {activeAnalysis === "remessa" ? (
-          <label className="ppc-myweg-needs__history ppc-myweg-needs__billing-toggle">
-            {texts.billingLabel}
+      <div className="ppc-myweg-needs__filters" aria-label={texts.title}>
+        <div className="ppc-myweg-needs__filters-pair">
+          <label className="ppc-myweg-needs__history">
+            <span>{texts.fromLabel}</span>
             <select
-              value={billingMode}
-              onChange={(event) =>
-                setBillingMode(event.target.value === "indicative" ? "indicative" : "none")
-              }
+              value={fromId}
+              onChange={(event) => setFromId(event.target.value)}
+              aria-label={texts.fromLabel}
             >
-              <option value="none">{texts.billingNone}</option>
-              <option value="indicative">{texts.billingIndicative}</option>
+              <option value="">—</option>
+              {historyItems.map((item) => (
+                <option key={`from-${item.id}`} value={item.id}>
+                  {formatRemessaBr(item.collectionDate)} · {item.recordCount} regs
+                </option>
+              ))}
             </select>
           </label>
+          <label className="ppc-myweg-needs__history">
+            <span>{texts.toLabel}</span>
+            <select
+              value={toId}
+              onChange={(event) => setToId(event.target.value)}
+              aria-label={texts.toLabel}
+            >
+              {historyItems.map((item) => (
+                <option key={`to-${item.id}`} value={item.id}>
+                  {formatRemessaBr(item.collectionDate)} · {item.recordCount} regs
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="ppc-myweg-needs__filters-search">
+          <label className="ppc-myweg-needs__search">
+            <span>
+              {texts.searchLabel}{" "}
+              <HelpTooltip content={texts.searchHint} trigger="icon" />
+            </span>
+            <input
+              type="search"
+              value={searchDraft}
+              placeholder={texts.searchPlaceholder}
+              onChange={(event) => setSearchDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  setSearch(searchDraft.trim());
+                }
+              }}
+              aria-label={texts.searchLabel}
+            />
+          </label>
+          <button
+            type="button"
+            className="ppc-btn ppc-btn--secondary"
+            onClick={() => setSearch(searchDraft.trim())}
+          >
+            {copy.mywegNeeds.applyFilters}
+          </button>
+        </div>
+
+        {activeAnalysis === "remessa" ? (
+          <div className="ppc-myweg-needs__filters-extra">
+            <label className="ppc-myweg-needs__history ppc-myweg-needs__billing-toggle">
+              <span>{texts.billingLabel}</span>
+              <select
+                value={billingMode}
+                onChange={(event) =>
+                  setBillingMode(event.target.value === "indicative" ? "indicative" : "none")
+                }
+              >
+                <option value="none">{texts.billingNone}</option>
+                <option value="indicative">{texts.billingIndicative}</option>
+              </select>
+            </label>
+          </div>
         ) : null}
       </div>
 
@@ -444,37 +447,39 @@ export function MyWegPlanningEvolutionPanel({
 
       {activeAnalysis === "remessa" && payload && !loading ? (
         <>
-          <p className="ppc-myweg-needs__evolution-scope">
-            {payload.scope.customerName} · cliente {payload.scope.protheusCustomerCode}/
-            {payload.scope.protheusCustomerStore}
-          </p>
-          <p className="ppc-myweg-needs__evolution-note" role="status">
-            {texts.observedLabel}:{" "}
-            {texts.totalsHint(payload.totalCompared ?? 0, payload.totalChanges ?? 0)}
-          </p>
+          <div className="ppc-myweg-needs__evolution-meta">
+            <span className="ppc-myweg-needs__evolution-scope">
+              {payload.scope.customerName} · {payload.scope.protheusCustomerCode}/
+              {payload.scope.protheusCustomerStore}
+            </span>
+            <span className="ppc-myweg-needs__evolution-note" role="status">
+              {texts.totalsHint(payload.totalCompared ?? 0, payload.totalChanges ?? 0)}
+            </span>
+          </div>
+
           <div className="ppc-myweg-needs__summary" aria-label={texts.summaryAria}>
-            <article className="ppc-myweg-needs__kpi">
+            <article className="ppc-myweg-needs__kpi ppc-myweg-needs__kpi--up">
               <h3>
                 {texts.kpi.increased}
                 <HelpTooltip content={helpTooltips.mywegNeedsKpiIncreased} trigger="icon" />
               </h3>
               <p>{summary?.increased ?? 0}</p>
             </article>
-            <article className="ppc-myweg-needs__kpi">
+            <article className="ppc-myweg-needs__kpi ppc-myweg-needs__kpi--down">
               <h3>
                 {texts.kpi.decreased}
                 <HelpTooltip content={helpTooltips.mywegNeedsKpiDecreased} trigger="icon" />
               </h3>
               <p>{summary?.decreased ?? 0}</p>
             </article>
-            <article className="ppc-myweg-needs__kpi">
+            <article className="ppc-myweg-needs__kpi ppc-myweg-needs__kpi--up">
               <h3>
                 {texts.kpi.appeared}
                 <HelpTooltip content={helpTooltips.mywegNeedsKpiAppeared} trigger="icon" />
               </h3>
               <p>{summary?.appeared ?? 0}</p>
             </article>
-            <article className="ppc-myweg-needs__kpi">
+            <article className="ppc-myweg-needs__kpi ppc-myweg-needs__kpi--down">
               <h3>
                 {texts.kpi.disappeared}
                 <HelpTooltip content={helpTooltips.mywegNeedsKpiDisappeared} trigger="icon" />
@@ -489,9 +494,9 @@ export function MyWegPlanningEvolutionPanel({
               <p>{summary?.horizon_14d_changes ?? 0}</p>
             </article>
           </div>
-          <p className="ppc-myweg-needs__evolution-note">{payload.observed.disclaimer}</p>
-          <p className="ppc-myweg-needs__legend" role="note">
-            <strong>{texts.legendTitle}:</strong> {helpTooltips.mywegNeedsEvolution}
+
+          <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
+            {texts.disclaimerCompact}
           </p>
 
           <MyWegProbableDateShiftsSection
@@ -512,6 +517,7 @@ export function MyWegPlanningEvolutionPanel({
                   ? copy.tableSection.emptyMessage
                   : texts.noChanges
               }
+              hideSearch
               columnPreferencesKey="production-control:myweg-evolution:columns:v1"
               serverPagination={{
                 page: payload.page,
@@ -569,19 +575,15 @@ export function MyWegPlanningEvolutionPanel({
                   <p role="status">{texts.billingPartial}</p>
                 ) : null}
                 {showBillingTable ? (
-                  <>
-                    <p className="ppc-myweg-needs__evolution-note">
-                      {texts.candidateLabel} · {texts.fifoLabel} · {texts.residualLabel}
-                    </p>
-                    <DataTableSection
-                      title={texts.indicativeTableTitle}
-                      rows={indicativeRows}
-                      columns={indicativeColumns}
-                      rowKey={(row) => row.productCode}
-                      emptyMessage={texts.billingEmpty}
-                      columnPreferencesKey="production-control:myweg-evolution-billing:columns:v1"
-                    />
-                  </>
+                  <DataTableSection
+                    title={texts.indicativeTableTitle}
+                    rows={indicativeRows}
+                    columns={indicativeColumns}
+                    rowKey={(row) => row.productCode}
+                    emptyMessage={texts.billingEmpty}
+                    hideSearch
+                    columnPreferencesKey="production-control:myweg-evolution-billing:columns:v1"
+                  />
                 ) : null}
               </>
             )}

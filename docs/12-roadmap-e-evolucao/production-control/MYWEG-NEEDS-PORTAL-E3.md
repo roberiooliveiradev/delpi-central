@@ -2,6 +2,7 @@
 
 > **Status:** tela JWT no MFE Production Control  
 > **TASK_ID:** `MYWEG-NEEDS-E3-PORTAL-PCP` · UX `MYWEG-NEEDS-UX-CONSULTA-COMPARACAO`  
+> **UI polish:** [MYWEG-NEEDS-UI-UX-REFINEMENT.md](./MYWEG-NEEDS-UI-UX-REFINEMENT.md)  
 > **URL:** `/apps/production-control/myweg-needs?branch=02` (padrão `view=needs`)  
 > **Comparação:** `?view=compare` — ver [MYWEG-NEEDS-PLANNING-EVOLUTION-E5.md](./MYWEG-NEEDS-PLANNING-EVOLUTION-E5.md)  
 > **E4 (SB1):** ver [MYWEG-NEEDS-PROTHEUS-E4.md](./MYWEG-NEEDS-PROTHEUS-E4.md) — colunas de código verificado / situação do vínculo.

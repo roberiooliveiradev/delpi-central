@@ -368,7 +368,10 @@ export function MyWegNeedsPage({
         refreshBusy={refreshing}
       />
 
-      <p className="ppc-myweg-needs__planning-note">{texts.hubNote}</p>
+      <p className="ppc-myweg-needs__planning-note">
+        {texts.hubNote}{" "}
+        <HelpTooltip content={helpTooltips.mywegNeeds} trigger="icon" />
+      </p>
 
       <nav className="ppc-myweg-needs__hub" aria-label={texts.hubAria}>
         <button
@@ -378,24 +381,25 @@ export function MyWegNeedsPage({
               ? "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--active"
               : "ppc-myweg-needs__hub-card"
           }
-          aria-label={texts.viewNeeds.cardAction}
+          aria-label={`${texts.viewNeeds.cardTitle} — ${texts.viewNeeds.cardAction}`}
           aria-pressed={activeView === "needs"}
           onClick={() => setView("needs")}
         >
           <span className="ppc-myweg-needs__hub-icon" aria-hidden="true">
-            <ClipboardList size={22} strokeWidth={1.75} />
+            <ClipboardList size={20} strokeWidth={1.75} />
           </span>
           <span className="ppc-myweg-needs__hub-body">
-            <span className="ppc-myweg-needs__hub-title">{texts.viewNeeds.cardTitle}</span>
+            <span className="ppc-myweg-needs__hub-title-row">
+              <span className="ppc-myweg-needs__hub-title">{texts.viewNeeds.cardTitle}</span>
+              <span className="ppc-myweg-needs__hub-action">{texts.viewNeeds.cardAction}</span>
+            </span>
             <span className="ppc-myweg-needs__hub-desc">{texts.viewNeeds.cardDescription}</span>
             <span className="ppc-myweg-needs__hub-meta">
               {latestWhen
                 ? texts.viewNeeds.cardMetaLatest(latestWhen)
                 : texts.viewNeeds.cardMetaEmpty}
               {latest ? ` · ${texts.viewNeeds.cardMetaRecords(latest.recordCount)}` : ""}
-              {` · ${texts.viewNeeds.cardMetaBranch}`}
             </span>
-            <span className="ppc-myweg-needs__hub-action">{texts.viewNeeds.cardAction}</span>
           </span>
         </button>
 
@@ -406,25 +410,29 @@ export function MyWegNeedsPage({
               ? "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--active ppc-myweg-needs__hub-card--compare"
               : "ppc-myweg-needs__hub-card ppc-myweg-needs__hub-card--compare"
           }
-          aria-label={texts.viewCompare.cardAction}
+          aria-label={`${texts.viewCompare.cardTitle} — ${texts.viewCompare.cardAction}`}
           aria-pressed={activeView === "compare"}
           onClick={() => setView("compare")}
         >
           <span className="ppc-myweg-needs__hub-icon" aria-hidden="true">
-            <GitCompareArrows size={22} strokeWidth={1.75} />
+            <GitCompareArrows size={20} strokeWidth={1.75} />
           </span>
           <span className="ppc-myweg-needs__hub-body">
-            <span className="ppc-myweg-needs__hub-title">{texts.viewCompare.cardTitle}</span>
+            <span className="ppc-myweg-needs__hub-title-row">
+              <span className="ppc-myweg-needs__hub-title">{texts.viewCompare.cardTitle}</span>
+              <span className="ppc-myweg-needs__hub-action">{texts.viewCompare.cardAction}</span>
+            </span>
             <span className="ppc-myweg-needs__hub-desc">{texts.viewCompare.cardDescription}</span>
             <span className="ppc-myweg-needs__hub-meta">
-              {latestWhen ? texts.viewCompare.cardMetaCurrent(latestWhen) : texts.viewNeeds.cardMetaEmpty}
+              {latestWhen
+                ? texts.viewCompare.cardMetaCurrent(latestWhen)
+                : texts.viewNeeds.cardMetaEmpty}
               {` · ${
                 historyReady
                   ? texts.viewCompare.cardMetaHistoryReady
                   : texts.viewCompare.cardMetaHistoryShort
               }`}
             </span>
-            <span className="ppc-myweg-needs__hub-action">{texts.viewCompare.cardAction}</span>
           </span>
         </button>
       </nav>
@@ -547,6 +555,7 @@ export function MyWegNeedsPage({
                 loading={loading}
                 refreshing={refreshing}
                 emptyMessage={texts.emptyItems}
+                hideSearch
                 columnPreferencesKey="production-control:myweg-needs:columns:v2"
                 serverPagination={{
                   page: items?.page ?? filters.page,

@@ -136,7 +136,9 @@ describe("MyWegNeedsPage", () => {
         analysis={null}
       />,
     );
-    const compareCards = screen.getAllByRole("button", { name: /^comparar coletas$/i });
+    const compareCards = screen.getAllByRole("button", {
+      name: /comparação entre coletas/i,
+    });
     fireEvent.click(compareCards[0]);
     expect(navigatePpc).toHaveBeenCalled();
     const href = String(navigatePpc.mock.calls[0]?.[0] ?? "");

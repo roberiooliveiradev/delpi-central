@@ -37,9 +37,9 @@ export const helpTooltips = {
   mywegNeedsSb1:
     "Situação do vínculo com o cadastro SB1 do Protheus. Código informado na origem só vira confirmado após validação real. Divergência e ambiguidade mostram o motivo sem editar cadastro.",
   mywegNeedsEvolution:
-    "Compara duas fotografias da programação MyWEG. Escolha a coleta anterior e a atual. Use «Por remessa» para movimentos e reprogramações; use «Por produto» para totais consolidados (necessidade total e diferença líquida). A variação observada é fato entre snapshots; o faturamento indicativo e o FIFO são hipóteses separadas — nota fiscal DELPI não prova abatimento reconhecido pela WEG.",
+    "Compara duas fotografias MyWEG. «Por remessa» mostra movimentos e reprogramações; «Por produto» consolida totais e diferença líquida. Variação observada ≠ abatimento WEG. Faturamento/FIFO são hipóteses separadas.",
   mywegNeeds:
-    "Módulo Necessidades WEG (filial 02 · ES). Use o card «Necessidades da coleta» para consultar materiais, quantidades e remessas de uma fotografia importada. Use «Comparação entre coletas» (por remessa ou por produto) para ver movimentos, totais e possíveis antecipações/postergações entre duas datas. Código DELPI (origem) vem da coleta; o código verificado e a situação do vínculo vêm da SB1. Não é tempo real nem gera OP.",
+    "Necessidades WEG (filial 02 · ES). Card «Necessidades da coleta» consulta uma fotografia; «Comparação entre coletas» analisa mudanças entre duas datas (por remessa ou por produto). Código origem vem da coleta; verificado/vínculo vêm da SB1. Sem tempo real nem geração de OP.",
   mywegNeedsKpiIncreased:
     "A mesma combinação produto/remessa existe nas duas coletas e a quantidade aumentou.",
   mywegNeedsKpiDecreased:
