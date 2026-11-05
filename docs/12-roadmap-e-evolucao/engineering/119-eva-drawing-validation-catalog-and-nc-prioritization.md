@@ -1028,3 +1028,28 @@ O subplano **não é nova frente, serviço, camada, documento nem autorização 
 **BLOQUEIOS:** `OWNER_BLOCKED` nas políticas de quantidade, unidade, equivalência de descrição, item de desenho e ground truth. `E2E` e aceite da Engenharia pendentes. `VAL01_COMPLETED` não declarado. E2–E7 permanecem congeladas.
 
 **PRÓXIMA AÇÃO:** reexecutar no runtime, com o SHA deste commit, os quatro regressores `90263572`, `90264030`, `90264017` e `90263520`, e só então pedir aceite de GT à Engenharia.
+
+### 39.8 Tentativa de deploy produtivo do ledger — bloqueio de acesso ao srv-api (2026-11-05)
+
+**DATA:** 2026-11-05. **BASE_HEAD local:** `30651aa42357008b8a06ceab3c62344711cb6434` (`main` = `origin/main`). Esse HEAD **contém** `01481495a2390b245138d53792befe3d8e741b38`. Alterações concorrentes no working tree foram preservadas; nenhum arquivo de produção foi editado.
+
+**Autorização:** a task `EVA-VAL01-STRUCTURE-VALIDATION-DEPLOY-E2E-01` autoriza o procedimento canônico `git pull --ff-only` + `./infra/scripts/up-prod-sequential.sh --build engineering-api` em `operador@192.168.1.237:~/projetos/delpi-central`.
+
+**O que foi comprovado**
+
+| Sinal | Resultado |
+|---|---|
+| `ssh -o BatchMode=yes -o ConnectTimeout=15 operador@192.168.1.237` | `Connection timed out` nas duas tentativas. Deploy **não executado**. |
+| `https://minhadelpi.com.br` | DNS Cloudflare (`2606:4700:…`). `GET /apps/engineering-api/health` → HTTP 200 `{"status":"online","service":"engineering-api"}`. |
+| `POST /apps/engineering-api/mcp` sem token | HTTP 401 `{"detail":"Unauthorized"}`. Fail-closed do runtime **atual**, que a §39.7 já mostrou **sem** `structure_validation`. |
+| Container local `delpi-engineering-api` | Compose **dev** (`docker-compose.dev.yml`), bind-mount `engineering-api:/app`, processo iniciado `2026-11-05T21:57:27Z` **sem** `--reload`. Não publica porta no host e não é o MCP de `minhadelpi.com.br`. Não foi reiniciado. |
+
+**Não comprovado:** `DEPLOYED_SHA`, digest da imagem de produção, presença de `structure_validation.v1` no processo que o ChatGPT chama. HTTP 200 e container local com o arquivo no disco não contam como deploy.
+
+**Regressores `90263572`, `90264030`, `90264017`, `90263520`:** `TEST_NOT_RUN` neste ciclo. Reexecutar no runtime antigo repetiria a §39.7.
+
+**AC-E1-10:** permanece `PENDING`. **READY_FOR_CHATGPT_E2E:** `NO`.
+
+**ROLLBACK:** inalterado — nenhum pull/build foi feito no `srv-api`.
+
+**PRÓXIMA AÇÃO:** operador com rota até `192.168.1.237` executa o script canônico acima a partir do HEAD que contém `01481495a2`, confirma `validation_report` / `structure_validation.v1` dentro de `delpi-engineering-api`, e só então os quatro desenhos em série. Issue #131 não foi comentada: este ambiente não tem token da API do GitHub.
