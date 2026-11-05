@@ -32,6 +32,24 @@ describe("ChartAddElementMenu", () => {
     expect(onMoreOptions).toHaveBeenCalledWith("legend");
   });
 
+  it("submenu Rótulos de dados só oferece visibilidade e posição", () => {
+    render(
+      <ChartAddElementMenu
+        options={{ showDataLabels: true }}
+        chartKind="line"
+        onApplyChoice={() => undefined}
+        onMoreOptions={() => undefined}
+      />,
+    );
+    fireEvent.mouseEnter(screen.getByRole("menuitem", { name: /Rótulos de dados/i }).closest("li")!);
+    for (const label of ["Nenhum", "Centro", "Dentro da extremidade", "Fora da extremidade", "Melhor ajuste"]) {
+      expect(screen.getByRole("menuitemcheckbox", { name: label })).toBeTruthy();
+    }
+    for (const label of ["Categoria e %", "Valor e %", "Somente %", "Categoria"]) {
+      expect(screen.queryByRole("menuitemcheckbox", { name: label })).toBeNull();
+    }
+  });
+
   it("omite marcadores em gráfico de barras", () => {
     render(
       <ChartAddElementMenu
