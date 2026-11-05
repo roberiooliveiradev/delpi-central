@@ -1147,17 +1147,23 @@
   isolation: isolate;
   overflow: hidden;
   min-height: clamp(168px, 22vw, 220px);
-  background-color: #003866;
+  /* Base mais próxima do céu da foto; o fade escurece só a faixa do texto */
+  background-color: #2f8fc9;
   background-image:
-    /* Fade largo: azul → transparente, sem corte vertical nítido */
+    /*
+     * Transição cromática: navy (legibilidade) → azul PCP → céu da foto.
+     * Evita o “corte” navy sólido × céu claro.
+     */
     linear-gradient(
       90deg,
       #003866 0%,
-      #003866 32%,
-      rgba(0, 56, 102, 0.92) 42%,
-      rgba(0, 56, 102, 0.55) 58%,
-      rgba(0, 56, 102, 0.18) 74%,
-      transparent 92%
+      #054a7a 18%,
+      #0a6aa3 34%,
+      rgba(12, 122, 180, 0.88) 46%,
+      rgba(40, 150, 210, 0.55) 58%,
+      rgba(90, 180, 230, 0.28) 72%,
+      rgba(140, 200, 235, 0.1) 84%,
+      transparent 96%
     ),
     var(--ppc-myweg-header-banner);
   background-repeat: no-repeat;
