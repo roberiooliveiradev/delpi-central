@@ -1146,21 +1146,21 @@
 .dashboard-production-control .ppc-header--myweg {
   isolation: isolate;
   overflow: hidden;
-  min-height: clamp(148px, 18vw, 196px);
+  min-height: clamp(168px, 22vw, 220px);
   background-color: #003866;
   background-image:
     linear-gradient(
       90deg,
-      rgba(0, 56, 102, 0.92) 0%,
-      rgba(0, 56, 102, 0.72) 28%,
-      rgba(0, 56, 102, 0.28) 52%,
-      rgba(0, 56, 102, 0.08) 68%,
-      transparent 82%
+      rgba(0, 56, 102, 0.55) 0%,
+      rgba(0, 56, 102, 0.28) 34%,
+      rgba(0, 56, 102, 0.08) 58%,
+      transparent 78%
     ),
     var(--ppc-myweg-header-banner);
   background-repeat: no-repeat;
-  background-size: cover, cover;
-  background-position: center left, right center;
+  /* auto 100%: cabe a altura do header sem “crop” agressivo do cover */
+  background-size: auto 100%, auto 100%;
+  background-position: left center, right center;
   box-shadow: 0 12px 32px rgba(0, 40, 70, 0.28);
 }
 
@@ -1236,10 +1236,20 @@
   text-shadow: 0 1px 12px rgba(0, 30, 60, 0.4);
 }
 
+@media (max-width: 1100px) {
+  .dashboard-production-control .ppc-header--myweg {
+    /* um pouco mais alto + âncora à direita para preservar a fábrica */
+    min-height: clamp(152px, 26vw, 200px);
+    background-size: auto 110%, auto 110%;
+    background-position: left center, right 42%;
+  }
+}
+
 @media (max-width: 860px) {
   .dashboard-production-control .ppc-header--myweg {
-    min-height: 132px;
-    background-position: center left, 72% center;
+    min-height: 148px;
+    background-size: auto 125%, auto 125%;
+    background-position: left center, 82% 45%;
   }
 
   .dashboard-production-control .ppc-header--myweg .ppc-header__identity {
