@@ -95,6 +95,7 @@ describe("MyWegNeedsPage", () => {
         remessaTo={null}
         page={null}
         view={null}
+        analysis={null}
       />,
     );
     expect(screen.getByText(/somente na filial 02/i)).toBeTruthy();
@@ -115,6 +116,7 @@ describe("MyWegNeedsPage", () => {
         remessaTo={null}
         page={null}
         view={null}
+        analysis={null}
       />,
     );
     expect(screen.getByRole("heading", { name: /consulta da coleta/i })).toBeTruthy();
@@ -131,6 +133,7 @@ describe("MyWegNeedsPage", () => {
         remessaTo={null}
         page={null}
         view={null}
+        analysis={null}
       />,
     );
     const compareCards = screen.getAllByRole("button", { name: /^comparar coletas$/i });
@@ -150,6 +153,7 @@ describe("MyWegNeedsPage", () => {
         remessaTo={null}
         page={null}
         view="compare"
+        analysis={null}
       />,
     );
     expect(getByTestId("myweg-compare-panel")).toBeTruthy();

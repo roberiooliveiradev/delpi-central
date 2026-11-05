@@ -424,3 +424,68 @@ def test_compare_route_chronology_422(monkeypatch) -> None:
         params={"fromBatchId": second["id"], "toBatchId": first["id"]},
     )
     assert response.status_code == 422
+
+
+def test_compare_products_consolidates_all_remessas() -> None:
+    repo = CompareRepo()
+    first, second = _seed_two_batches(repo)
+    result = MyWegNeedsCompareService(repo, gateway=object()).compare_products(
+        _user(),
+        from_batch_id=first["id"],
+        to_batch_id=second["id"],
+        changes_only=False,
+    )
+    assert result["totalProductsCompared"] >= 1
+    assert "totals" in result
+    assert "previousQuantityUn" in result["totals"]
+    item = result["items"][0]
+    assert "remessas" in item
+    assert "situation" in item
+    remessa_prev = sum(Decimal(r["previousQuantityUn"]) for r in item["remessas"])
+    remessa_curr = sum(Decimal(r["currentQuantityUn"]) for r in item["remessas"])
+    assert remessa_prev == Decimal(item["previousQuantityUn"])
+    assert remessa_curr == Decimal(item["currentQuantityUn"])
+
+
+def test_compare_products_route_permission_negative(monkeypatch) -> None:
+    repo = CompareRepo()
+    _seed_two_batches(repo)
+    service = MyWegNeedsCompareService(repo)
+    app = FastAPI()
+    app.include_router(myweg_needs_routes.router)
+    monkeypatch.setattr(
+        myweg_needs_routes, "build_myweg_needs_compare_service", lambda: service
+    )
+    monkeypatch.setattr(
+        myweg_needs_routes,
+        "resolve_user",
+        lambda request: SimpleNamespace(
+            permissions={PC_ACCESS, PC_MYWEG_NEEDS_VIEW, PC_VIEW_FILIAL_01},
+            is_superadmin=False,
+        ),
+    )
+    client = TestClient(app)
+    response = client.get("/myweg/need-batches/compare/products")
+    assert response.status_code == 403
+
+
+def test_compare_products_route_ok(monkeypatch) -> None:
+    repo = CompareRepo()
+    first, second = _seed_two_batches(repo)
+    service = MyWegNeedsCompareService(repo)
+    app = FastAPI()
+    app.include_router(myweg_needs_routes.router)
+    monkeypatch.setattr(
+        myweg_needs_routes, "build_myweg_needs_compare_service", lambda: service
+    )
+    monkeypatch.setattr(myweg_needs_routes, "resolve_user", lambda request: _user())
+    client = TestClient(app)
+    response = client.get(
+        "/myweg/need-batches/compare/products",
+        params={"fromBatchId": first["id"], "toBatchId": second["id"]},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert "items" in body["data"]
+    assert "totalProductsCompared" in body["data"]

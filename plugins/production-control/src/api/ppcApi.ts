@@ -1349,6 +1349,32 @@ export async function fetchMyWegNeedBatchesCompare(params: {
   return unwrapEnvelope(envelope, "Não foi possível comparar as coletas MyWEG.");
 }
 
+export async function fetchMyWegNeedBatchesCompareProducts(params: {
+  fromBatchId?: string | null;
+  toBatchId?: string | null;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+  changesOnly?: boolean;
+  signal?: AbortSignal;
+}): Promise<import("../types").MyWegCompareProductsPayload> {
+  const search = new URLSearchParams();
+  if (params.fromBatchId) search.set("fromBatchId", params.fromBatchId);
+  if (params.toBatchId) search.set("toBatchId", params.toBatchId);
+  if (params.search?.trim()) search.set("search", params.search.trim());
+  search.set("page", String(params.page ?? 1));
+  search.set("pageSize", String(params.pageSize ?? 50));
+  search.set("changesOnly", String(params.changesOnly ?? true));
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: import("../types").MyWegCompareProductsPayload;
+  }>(ppcApiUrl(`/myweg/need-batches/compare/products?${search.toString()}`), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(envelope, "Não foi possível consolidar a análise por produto.");
+}
+
 export async function fetchMyWegNeedBatchItems(params: {
   batchId: string;
   search?: string;

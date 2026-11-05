@@ -14,7 +14,9 @@ import { formatRefreshedAt } from "../utils/formatRefreshedAt";
 import {
   buildPpcHref,
   navigatePpc,
+  resolveMyWegCompareAnalysis,
   resolveMyWegNeedsView,
+  type MyWegCompareAnalysis,
   type MyWegNeedsView,
 } from "../utils/routeParser";
 
@@ -35,6 +37,7 @@ type MyWegNeedsPageProps = {
   remessaTo: string | null;
   page: number | null;
   view: MyWegNeedsView | null;
+  analysis: MyWegCompareAnalysis | null;
 };
 
 function syncUrl(input: {
@@ -45,6 +48,7 @@ function syncUrl(input: {
   remessaTo?: string | null;
   page?: number | null;
   view?: MyWegNeedsView | null;
+  analysis?: MyWegCompareAnalysis | null;
 }) {
   navigatePpc(
     buildPpcHref({
@@ -56,6 +60,8 @@ function syncUrl(input: {
       mywegNeedsRemessaTo: input.remessaTo ?? null,
       mywegNeedsPage: input.page && input.page > 1 ? input.page : null,
       mywegNeedsView: input.view ?? null,
+      mywegNeedsAnalysis:
+        input.view === "compare" ? input.analysis ?? null : null,
     }),
   );
 }
@@ -110,9 +116,11 @@ export function MyWegNeedsPage({
   remessaTo,
   page,
   view,
+  analysis,
 }: MyWegNeedsPageProps) {
   const texts = copy.mywegNeeds;
   const activeView = resolveMyWegNeedsView(view);
+  const activeAnalysis = resolveMyWegCompareAnalysis(analysis);
   const [searchDraft, setSearchDraft] = useState(search ?? "");
   const [remessaFromDraft, setRemessaFromDraft] = useState(remessaFrom ?? "");
   const [remessaToDraft, setRemessaToDraft] = useState(remessaTo ?? "");
@@ -147,8 +155,9 @@ export function MyWegNeedsPage({
       remessaTo: remessaToDraft.trim() || null,
       page: 1,
       view: activeView,
+      analysis: activeView === "compare" ? activeAnalysis : null,
     });
-  }, [activeView, batchId, remessaFromDraft, remessaToDraft, searchDraft]);
+  }, [activeAnalysis, activeView, batchId, remessaFromDraft, remessaToDraft, searchDraft]);
 
   const clearFilters = useCallback(() => {
     setSearchDraft("");
@@ -162,8 +171,9 @@ export function MyWegNeedsPage({
       remessaTo: null,
       page: 1,
       view: activeView,
+      analysis: activeView === "compare" ? activeAnalysis : null,
     });
-  }, [activeView, batchId]);
+  }, [activeAnalysis, activeView, batchId]);
 
   const selectBatch = useCallback(
     (nextBatchId: string) => {
@@ -175,9 +185,10 @@ export function MyWegNeedsPage({
         remessaTo,
         page: 1,
         view: activeView,
+        analysis: activeView === "compare" ? activeAnalysis : null,
       });
     },
-    [activeView, latest?.id, remessaFrom, remessaTo, search],
+    [activeAnalysis, activeView, latest?.id, remessaFrom, remessaTo, search],
   );
 
   const setView = useCallback(
@@ -190,9 +201,26 @@ export function MyWegNeedsPage({
         remessaTo,
         page: activeView === "needs" ? page : 1,
         view: next,
+        analysis: next === "compare" ? activeAnalysis : null,
       });
     },
-    [batchId, remessaFrom, remessaTo, search, page, activeView],
+    [activeAnalysis, batchId, remessaFrom, remessaTo, search, page, activeView],
+  );
+
+  const setAnalysis = useCallback(
+    (next: MyWegCompareAnalysis) => {
+      syncUrl({
+        branch: "02",
+        batchId,
+        search: search ?? null,
+        remessaFrom,
+        remessaTo,
+        page: 1,
+        view: "compare",
+        analysis: next,
+      });
+    },
+    [batchId, remessaFrom, remessaTo, search],
   );
 
   const goToFilial02 = useCallback(() => {
@@ -204,6 +232,7 @@ export function MyWegNeedsPage({
       remessaTo: null,
       page: 1,
       view: "needs",
+      analysis: null,
     });
   }, []);
 
@@ -334,6 +363,7 @@ export function MyWegNeedsPage({
         mywegNeedsRemessaTo={remessaTo}
         mywegNeedsPage={page}
         mywegNeedsView={activeView}
+        mywegNeedsAnalysis={activeView === "compare" ? activeAnalysis : null}
         onRefresh={() => void reload()}
         refreshBusy={refreshing}
       />
@@ -564,6 +594,8 @@ export function MyWegNeedsPage({
             <MyWegPlanningEvolutionPanel
               historyItems={historyOptions}
               selectedBatchId={selected?.id ?? batchId}
+              analysis={activeAnalysis}
+              onAnalysisChange={setAnalysis}
             />
           ) : null}
 

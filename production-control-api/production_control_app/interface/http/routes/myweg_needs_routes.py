@@ -92,6 +92,43 @@ def compare_myweg_need_batches(
     return ok(data)
 
 
+@router.get("/compare/products", operation_id="compare_myweg_need_batches_by_product")
+def compare_myweg_need_batches_by_product(
+    request: Request,
+    fromBatchId: str | None = Query(None, alias="fromBatchId"),
+    toBatchId: str | None = Query(None, alias="toBatchId"),
+    search: str = Query(""),
+    page: int = Query(1, ge=1),
+    pageSize: int = Query(50, alias="pageSize", ge=1, le=200),
+    changesOnly: bool = Query(True, alias="changesOnly"),
+):
+    """Análise consolidada por produto entre dois snapshots (aditivo ao compare por remessa)."""
+    user = resolve_user(request)
+    try:
+        data = build_myweg_needs_compare_service().compare_products(
+            user,
+            from_batch_id=fromBatchId,
+            to_batch_id=toBatchId,
+            product_search=search,
+            page=page,
+            page_size=pageSize,
+            changes_only=changesOnly,
+        )
+    except MyWegNeedsBatchNotFound as exc:
+        return fail(str(exc), 404)
+    except MyWegNeedsValidationFailed as exc:
+        status = 422
+        issue_codes = {i.get("code") for i in (exc.issues or [])}
+        if "insufficient_batches" in issue_codes or "insufficient_operational_days" in issue_codes:
+            status = 409
+        return fail(str(exc), status, data={"issues": exc.issues})
+    except BranchAccessDenied as exc:
+        return fail(str(exc), 403)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    return ok(data)
+
+
 @router.get("/{batchId}", operation_id="get_myweg_need_batch")
 def get_myweg_need_batch(request: Request, batchId: str):
     user = resolve_user(request)

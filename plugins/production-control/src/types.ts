@@ -1614,6 +1614,73 @@ export type MyWegProbableDateShift = {
   confidence: string;
 };
 
+export type MyWegProductSituation =
+  | "increased"
+  | "decreased"
+  | "unchanged"
+  | "stable_with_date_changes"
+  | "appeared"
+  | "disappeared"
+  | string;
+
+export type MyWegProductRemessaDetail = {
+  remessa: string;
+  previousQuantityUn: string;
+  currentQuantityUn: string;
+  deltaQuantityUn: string;
+  movement: string;
+  previousLineCount?: number;
+  currentLineCount?: number;
+};
+
+export type MyWegProductConsolidation = {
+  productKey: string;
+  identityKind: string;
+  identityConfirmed: boolean;
+  identityReliable: boolean;
+  verifiedProductCode?: string | null;
+  materialWegTratado?: string | null;
+  codigoReferenciaWeg?: string | null;
+  previousQuantityUn: string;
+  currentQuantityUn: string;
+  deltaQuantityUn: string;
+  percentChange: string | null;
+  previousRemessaCount: number;
+  currentRemessaCount: number;
+  hasRemessaChanges: boolean;
+  situation: MyWegProductSituation;
+  remessas: MyWegProductRemessaDetail[];
+  probableDateShifts: MyWegProbableDateShift[];
+};
+
+export type MyWegCompareProductsPayload = {
+  branch: string;
+  scope: {
+    customerName: string;
+    protheusCustomerCode: string;
+    protheusCustomerStore: string;
+    mywegCompanyCode?: string;
+    mywegWorkCenter?: string;
+  };
+  fromBatch: MyWegNeedsBatchSummary & { collectionId?: string };
+  toBatch: MyWegNeedsBatchSummary & { collectionId?: string };
+  page: number;
+  pageSize: number;
+  total: number;
+  totalProductsCompared: number;
+  totalProductsChanged: number;
+  changesOnly: boolean;
+  search: string;
+  totals: {
+    previousQuantityUn: string;
+    currentQuantityUn: string;
+    deltaQuantityUn: string;
+  };
+  items: MyWegProductConsolidation[];
+  disclaimer: string;
+  referenceDate?: string;
+};
+
 export type MyWegComparePayload = {
   branch: string;
   scope: {

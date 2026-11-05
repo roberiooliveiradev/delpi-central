@@ -9,6 +9,7 @@ from production_control_app.domain.services.myweg_needs_comparison import (
     aggregate_needs,
     build_product_fifo_scenarios,
     compare_aggregated,
+    consolidate_by_product,
     simulate_fifo_abatement,
 )
 
@@ -252,3 +253,123 @@ def test_ac11_unresolved_identity_explicit() -> None:
     agg = aggregate_needs(rows)
     key = next(iter(agg))
     assert key.identity_kind == "unresolved"
+
+
+def test_consolidate_product_stable_total_with_date_change_80016354() -> None:
+    prev = aggregate_needs(
+        [
+            _row(
+                material="M800",
+                remessa="2026-11-12",
+                qty_un="2",
+                verified="80016354",
+                status="confirmed",
+            )
+        ]
+    )
+    curr = aggregate_needs(
+        [
+            _row(
+                material="M800",
+                remessa="2026-11-10",
+                qty_un="2",
+                verified="80016354",
+                status="confirmed",
+            )
+        ]
+    )
+    observed = compare_aggregated(prev, curr, reference_date=date(2026, 11, 5))
+    products = consolidate_by_product(
+        prev, curr, probable_date_shifts=observed["probableDateShifts"]
+    )
+    assert len(products) == 1
+    row = products[0]
+    assert row["verifiedProductCode"] == "80016354"
+    assert row["previousQuantityUn"] == "2"
+    assert row["currentQuantityUn"] == "2"
+    assert row["deltaQuantityUn"] == "0"
+    assert row["situation"] == "stable_with_date_changes"
+    assert {r["remessa"] for r in row["remessas"]} == {"2026-11-10", "2026-11-12"}
+    assert row["probableDateShifts"]
+    assert row["probableDateShifts"][0]["kind"] == "possible_advancement"
+    # Totais não mudam por causa do shift.
+    assert Decimal(row["deltaQuantityUn"]) == Decimal("0")
+
+
+def test_consolidate_product_net_reduction_90261883_fixture() -> None:
+    prev = aggregate_needs(
+        [
+            _row(material="M902", remessa="2026-11-03", qty_un="1066", verified="90261883", status="confirmed"),
+            _row(material="M902", remessa="2026-11-09", qty_un="1", verified="90261883", status="confirmed"),
+            _row(material="M902", remessa="2026-11-12", qty_un="1600", verified="90261883", status="confirmed"),
+        ]
+    )
+    curr = aggregate_needs(
+        [
+            _row(material="M902", remessa="2026-11-12", qty_un="1356", verified="90261883", status="confirmed"),
+            _row(material="M902", remessa="2026-11-16", qty_un="210", verified="90261883", status="confirmed"),
+        ]
+    )
+    observed = compare_aggregated(prev, curr, reference_date=date(2026, 11, 5))
+    products = consolidate_by_product(
+        prev, curr, probable_date_shifts=observed["probableDateShifts"]
+    )
+    row = products[0]
+    assert row["previousQuantityUn"] == "2667"
+    assert row["currentQuantityUn"] == "1566"
+    assert row["deltaQuantityUn"] == "-1101"
+    assert row["situation"] == "decreased"
+    remessa_sum_prev = sum(Decimal(r["previousQuantityUn"]) for r in row["remessas"])
+    remessa_sum_curr = sum(Decimal(r["currentQuantityUn"]) for r in row["remessas"])
+    assert remessa_sum_prev == Decimal("2667")
+    assert remessa_sum_curr == Decimal("1566")
+    # Shift eventual não elimina a redução líquida.
+    assert Decimal(row["deltaQuantityUn"]) == Decimal("-1101")
+
+
+def test_consolidate_includes_unchanged_remessa_in_detail() -> None:
+    prev = aggregate_needs(
+        [
+            _row(material="M1", remessa="2026-11-10", qty_un="50", verified="P1", status="confirmed"),
+            _row(material="M1", remessa="2026-11-12", qty_un="50", verified="P1", status="confirmed"),
+        ]
+    )
+    curr = aggregate_needs(
+        [
+            _row(material="M1", remessa="2026-11-10", qty_un="50", verified="P1", status="confirmed"),
+            _row(material="M1", remessa="2026-11-15", qty_un="50", verified="P1", status="confirmed"),
+        ]
+    )
+    products = consolidate_by_product(prev, curr)
+    row = products[0]
+    assert row["situation"] == "stable_with_date_changes"
+    by_date = {r["remessa"]: r for r in row["remessas"]}
+    assert by_date["2026-11-10"]["movement"] == "unchanged"
+    assert by_date["2026-11-12"]["movement"] == "disappeared"
+    assert by_date["2026-11-15"]["movement"] == "appeared"
+
+
+def test_consolidate_percent_none_when_previous_zero() -> None:
+    prev = aggregate_needs([])
+    curr = aggregate_needs(
+        [_row(material="M1", remessa="2026-11-10", qty_un="10", verified="P1", status="confirmed")]
+    )
+    row = consolidate_by_product(prev, curr)[0]
+    assert row["situation"] == "appeared"
+    assert row["percentChange"] is None
+    assert row["previousQuantityUn"] == "0"
+    assert row["currentQuantityUn"] == "10"
+
+
+def test_consolidate_unconfirmed_identity_not_verified() -> None:
+    prev = aggregate_needs(
+        [_row(material="MAT-X", remessa="2026-11-10", qty_un="5", status="pending")]
+    )
+    curr = aggregate_needs(
+        [_row(material="MAT-X", remessa="2026-11-10", qty_un="8", status="pending")]
+    )
+    row = consolidate_by_product(prev, curr)[0]
+    assert row["identityKind"] == "customer_reference"
+    assert row["identityConfirmed"] is False
+    assert row["verifiedProductCode"] is None
+    assert row["situation"] == "increased"

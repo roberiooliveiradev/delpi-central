@@ -250,6 +250,121 @@ def _probable_date_shifts(
     return out
 
 
+def consolidate_by_product(
+    previous: Mapping[NeedKey, AggregatedNeed],
+    current: Mapping[NeedKey, AggregatedNeed],
+    *,
+    probable_date_shifts: Sequence[Mapping[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Projeção consolidada por product_key — totais sobre todas as remessas.
+
+    Não altera ``compare_aggregated`` nem ``_probable_date_shifts``.
+    Totais líquidos ≠ reprogramações prováveis (camada explicativa).
+    """
+    shifts_by_product: dict[str, list[dict[str, Any]]] = {}
+    for shift in probable_date_shifts or ():
+        product = str(shift.get("productKey") or "").strip()
+        if not product:
+            continue
+        shifts_by_product.setdefault(product, []).append(dict(shift))
+
+    products = sorted({k.product_key for k in set(previous) | set(current)})
+    out: list[dict[str, Any]] = []
+    for product_key in products:
+        prev_rows = [v for k, v in previous.items() if k.product_key == product_key]
+        curr_rows = [v for k, v in current.items() if k.product_key == product_key]
+        sample = (curr_rows or prev_rows)[0]
+        identity_kind = sample.key.identity_kind
+
+        remessa_dates = sorted(
+            {v.key.remessa for v in prev_rows} | {v.key.remessa for v in curr_rows}
+        )
+        prev_by_date = {v.key.remessa: v for v in prev_rows}
+        curr_by_date = {v.key.remessa: v for v in curr_rows}
+
+        remessas: list[dict[str, Any]] = []
+        has_date_changes = False
+        for remessa in remessa_dates:
+            prev_need = prev_by_date.get(remessa)
+            curr_need = curr_by_date.get(remessa)
+            prev_un = prev_need.quantity_un if prev_need else ZERO
+            curr_un = curr_need.quantity_un if curr_need else ZERO
+            delta = curr_un - prev_un
+            if delta == ZERO and prev_need is not None and curr_need is not None:
+                movement = "unchanged"
+            elif prev_need is None:
+                movement = "appeared"
+                has_date_changes = True
+            elif curr_need is None:
+                movement = "disappeared"
+                has_date_changes = True
+            elif delta > ZERO:
+                movement = "increased"
+                has_date_changes = True
+            else:
+                movement = "decreased"
+                has_date_changes = True
+            remessas.append(
+                {
+                    "remessa": remessa.isoformat(),
+                    "previousQuantityUn": str(prev_un),
+                    "currentQuantityUn": str(curr_un),
+                    "deltaQuantityUn": str(delta),
+                    "movement": movement,
+                    "previousLineCount": prev_need.line_count if prev_need else 0,
+                    "currentLineCount": curr_need.line_count if curr_need else 0,
+                }
+            )
+
+        prev_total = sum((v.quantity_un for v in prev_rows), ZERO)
+        curr_total = sum((v.quantity_un for v in curr_rows), ZERO)
+        delta_total = curr_total - prev_total
+        has_prev = bool(prev_rows)
+        has_curr = bool(curr_rows)
+
+        if not has_prev and has_curr:
+            situation = "appeared"
+        elif has_prev and not has_curr:
+            situation = "disappeared"
+        elif delta_total > ZERO:
+            situation = "increased"
+        elif delta_total < ZERO:
+            situation = "decreased"
+        elif has_date_changes:
+            situation = "stable_with_date_changes"
+        else:
+            situation = "unchanged"
+
+        percent: str | None
+        if prev_total == ZERO:
+            percent = None
+        else:
+            percent = str((delta_total * Decimal("100")) / prev_total)
+
+        out.append(
+            {
+                "productKey": product_key,
+                "identityKind": identity_kind,
+                "identityConfirmed": identity_kind == "verified_code",
+                "identityReliable": identity_kind != "unresolved",
+                "verifiedProductCode": sample.verified_product_code,
+                "materialWegTratado": sample.material_weg_tratado,
+                "codigoReferenciaWeg": sample.codigo_referencia_weg,
+                "previousQuantityUn": str(prev_total),
+                "currentQuantityUn": str(curr_total),
+                "deltaQuantityUn": str(delta_total),
+                "percentChange": percent,
+                "previousRemessaCount": len(prev_rows),
+                "currentRemessaCount": len(curr_rows),
+                "hasRemessaChanges": has_date_changes,
+                "situation": situation,
+                "remessas": remessas,
+                "probableDateShifts": shifts_by_product.get(product_key, []),
+            }
+        )
+    return out
+
+
 def simulate_fifo_abatement(
     previous_needs: Mapping[NeedKey, AggregatedNeed],
     *,

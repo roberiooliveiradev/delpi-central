@@ -358,4 +358,20 @@ describe("line feeder deep link", () => {
     });
     expect(href).toBe("/apps/production-control/myweg-needs?branch=02&view=compare");
   });
+
+  it("reads and builds analysis=products for compare", () => {
+    const route = parsePpcPath(
+      "/apps/production-control/myweg-needs",
+      "?branch=02&view=compare&analysis=products",
+    );
+    expect(route.mywegNeedsAnalysis).toBe("products");
+    const href = buildPpcHref({
+      subpluginId: "myweg-needs",
+      branch: "02",
+      mywegNeedsView: "compare",
+      mywegNeedsAnalysis: "products",
+    });
+    expect(href).toContain("view=compare");
+    expect(href).toContain("analysis=products");
+  });
 });

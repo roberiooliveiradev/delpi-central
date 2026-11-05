@@ -2,6 +2,8 @@ import { BRANCH_STORAGE_KEY, DEFAULT_BRANCH, DEFAULT_SUBPLUGIN, PPC_BASE_PATH } 
 import type { PpcBranch } from "../types";
 
 export type MyWegNeedsView = "needs" | "compare";
+/** Análise dentro de compare: remessa (padrão) | products. */
+export type MyWegCompareAnalysis = "remessa" | "products";
 
 export type PpcRoute = {
   subpluginId: string;
@@ -30,6 +32,8 @@ export type PpcRoute = {
   mywegNeedsPage: number | null;
   /** Visão MyWEG: needs (padrão) | compare. Ausente na URL = needs. */
   mywegNeedsView: MyWegNeedsView | null;
+  /** Subvisão da comparação. Ausente = remessa. */
+  mywegNeedsAnalysis: MyWegCompareAnalysis | null;
   branch: PpcBranch;
   pathname: string;
 };
@@ -95,6 +99,7 @@ function parseSearch(search: string): {
   mywegNeedsRemessaTo: string | null;
   mywegNeedsPage: number | null;
   mywegNeedsView: MyWegNeedsView | null;
+  mywegNeedsAnalysis: MyWegCompareAnalysis | null;
   branch: PpcBranch | null;
 } {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
@@ -105,6 +110,7 @@ function parseSearch(search: string): {
   const sharedSearch = params.get("q")?.trim() || null;
   const pageRaw = Number.parseInt(params.get("page")?.trim() || "", 10);
   const viewRaw = params.get("view")?.trim().toLowerCase() || "";
+  const analysisRaw = params.get("analysis")?.trim().toLowerCase() || "";
   return {
     detectorId: params.get("detector")?.trim() || null,
     workCenter: params.get("ct")?.trim() || null,
@@ -133,6 +139,8 @@ function parseSearch(search: string): {
     mywegNeedsRemessaTo: isoDateOrNull(params.get("remessaTo")),
     mywegNeedsPage: Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : null,
     mywegNeedsView: viewRaw === "needs" || viewRaw === "compare" ? viewRaw : null,
+    mywegNeedsAnalysis:
+      analysisRaw === "products" || analysisRaw === "remessa" ? analysisRaw : null,
     branch: isBranch(branchRaw) ? branchRaw : null,
   };
 }
@@ -140,6 +148,13 @@ function parseSearch(search: string): {
 /** Visão efetiva MyWEG — ausência de `view` abre a consulta de necessidades. */
 export function resolveMyWegNeedsView(view: MyWegNeedsView | null | undefined): MyWegNeedsView {
   return view === "compare" ? "compare" : "needs";
+}
+
+/** Análise efetiva da comparação — ausência de `analysis` = por remessa. */
+export function resolveMyWegCompareAnalysis(
+  analysis: MyWegCompareAnalysis | null | undefined,
+): MyWegCompareAnalysis {
+  return analysis === "products" ? "products" : "remessa";
 }
 
 export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBranch = DEFAULT_BRANCH): PpcRoute {
@@ -176,6 +191,7 @@ export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBra
     mywegNeedsRemessaTo: query.mywegNeedsRemessaTo,
     mywegNeedsPage: query.mywegNeedsPage,
     mywegNeedsView: query.mywegNeedsView,
+    mywegNeedsAnalysis: query.mywegNeedsAnalysis,
     branch: query.branch ?? storedBranch,
     pathname: path || PPC_BASE_PATH,
   };
@@ -219,6 +235,7 @@ export function buildPpcHref(input: {
   mywegNeedsRemessaTo?: string | null;
   mywegNeedsPage?: number | null;
   mywegNeedsView?: MyWegNeedsView | null;
+  mywegNeedsAnalysis?: MyWegCompareAnalysis | null;
 }): string {
   const path =
     input.subpluginId === DEFAULT_SUBPLUGIN
@@ -255,6 +272,9 @@ export function buildPpcHref(input: {
   }
   if (input.mywegNeedsView === "compare" || input.mywegNeedsView === "needs") {
     params.set("view", input.mywegNeedsView);
+  }
+  if (input.mywegNeedsAnalysis === "products" || input.mywegNeedsAnalysis === "remessa") {
+    params.set("analysis", input.mywegNeedsAnalysis);
   }
   return `${path}?${params.toString()}`;
 }

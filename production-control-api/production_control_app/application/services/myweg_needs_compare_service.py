@@ -25,6 +25,7 @@ from production_control_app.domain.services.myweg_needs_comparison import (
     aggregate_needs,
     build_product_fifo_scenarios,
     compare_aggregated,
+    consolidate_by_product,
 )
 from production_control_app.infrastructure.gateways.delpi_production_gateway import (
     DelpiProductionGateway,
@@ -37,6 +38,15 @@ WEG_CUSTOMER_STORE = "09"
 SAO_PAULO = ZoneInfo("America/Sao_Paulo")
 LIST_PAGE_SIZE = 100
 LIST_MAX_PAGES = 20
+_ZERO = Decimal("0")
+
+
+def _as_dec(value: Any) -> Decimal:
+    if value is None or value == "":
+        return _ZERO
+    if isinstance(value, Decimal):
+        return value
+    return Decimal(str(value))
 
 
 class MyWegNeedsCompareService:
@@ -157,6 +167,113 @@ class MyWegNeedsCompareService:
             "dataFreshness": {
                 "comparedAt": datetime.now(timezone.utc).isoformat(),
                 "billingMode": mode,
+            },
+        }
+
+    def compare_products(
+        self,
+        user: object | None,
+        *,
+        from_batch_id: str | None,
+        to_batch_id: str | None,
+        product_search: str = "",
+        page: int = 1,
+        page_size: int = 50,
+        changes_only: bool = True,
+    ) -> dict[str, Any]:
+        """Análise consolidada por produto — totais sobre todas as remessas do par.
+
+        ``changesOnly=true`` exclui produtos com situation=unchanged
+        (total estável e sem mudanças de remessa). Não altera o motor de
+        movimentos por remessa nem ``probableDateShifts``.
+        """
+        self._assert_can_view(user)
+        from_batch, to_batch = self._resolve_pair(from_batch_id, to_batch_id)
+        self._assert_chronological_order(from_batch, to_batch)
+
+        from_rows = self._repository.list_batch_records_for_compare(batch_id=from_batch["id"])
+        to_rows = self._repository.list_batch_records_for_compare(batch_id=to_batch["id"])
+        previous = aggregate_needs(from_rows)
+        current = aggregate_needs(to_rows)
+        reference_date = self._collection_date(to_batch)
+        observed = compare_aggregated(
+            previous, current, reference_date=reference_date
+        )
+        products = consolidate_by_product(
+            previous,
+            current,
+            probable_date_shifts=observed.get("probableDateShifts") or [],
+        )
+
+        total_products_compared = len(products)
+        total_products_changed = sum(
+            1 for row in products if row.get("situation") != "unchanged"
+        )
+
+        prev_grand = sum((_as_dec(row["previousQuantityUn"]) for row in products), _ZERO)
+        curr_grand = sum((_as_dec(row["currentQuantityUn"]) for row in products), _ZERO)
+
+        needle = (product_search or "").strip().lower()
+        filtered = products
+        if needle:
+            filtered = [
+                row
+                for row in products
+                if needle in str(row.get("productKey") or "").lower()
+                or needle in str(row.get("materialWegTratado") or "").lower()
+                or needle in str(row.get("verifiedProductCode") or "").lower()
+                or needle in str(row.get("codigoReferenciaWeg") or "").lower()
+            ]
+        if changes_only:
+            filtered = [row for row in filtered if row.get("situation") != "unchanged"]
+
+        filtered = sorted(
+            filtered,
+            key=lambda row: (
+                0 if row.get("situation") != "unchanged" else 1,
+                -abs(_as_dec(row.get("deltaQuantityUn"))),
+                str(row.get("productKey") or ""),
+            ),
+        )
+        total = len(filtered)
+        page = max(1, int(page))
+        page_size = min(200, max(1, int(page_size)))
+        offset = (page - 1) * page_size
+        page_items = filtered[offset : offset + page_size]
+
+        return {
+            "branch": ALLOWED_BRANCH,
+            "scope": {
+                "customerName": "WEG Linhares Equipamentos Elétricos Ltda.",
+                "protheusCustomerCode": WEG_CUSTOMER_CODE,
+                "protheusCustomerStore": WEG_CUSTOMER_STORE,
+                "mywegCompanyCode": "1009",
+                "mywegWorkCenter": "1106",
+            },
+            "fromBatch": self._batch_summary(from_batch),
+            "toBatch": self._batch_summary(to_batch),
+            "page": page,
+            "pageSize": page_size,
+            "total": total,
+            "totalProductsCompared": total_products_compared,
+            "totalProductsChanged": total_products_changed,
+            "changesOnly": bool(changes_only),
+            "search": (product_search or "").strip(),
+            "totals": {
+                "previousQuantityUn": str(prev_grand),
+                "currentQuantityUn": str(curr_grand),
+                "deltaQuantityUn": str(curr_grand - prev_grand),
+            },
+            "items": page_items,
+            "disclaimer": (
+                "Totais consolidados por produto sobre todas as remessas do par. "
+                "Diferença líquida ≠ reprogramação confirmada de pedido. "
+                "Nota fiscal DELPI não comprova abatimento reconhecido pela WEG."
+            ),
+            "referenceDate": observed["referenceDate"],
+            "dataFreshness": {
+                "comparedAt": datetime.now(timezone.utc).isoformat(),
+                "analysis": "products",
             },
         }
 

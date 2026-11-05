@@ -110,6 +110,7 @@ export default function App({
         mywegNeedsRemessaTo: route.mywegNeedsRemessaTo,
         mywegNeedsPage: route.mywegNeedsPage,
         mywegNeedsView: route.mywegNeedsView,
+        mywegNeedsAnalysis: route.mywegNeedsAnalysis,
       }),
     );
   }, [activeBranch, route]);
@@ -194,6 +195,7 @@ export default function App({
         remessaTo={route.mywegNeedsRemessaTo}
         page={route.mywegNeedsPage}
         view={route.mywegNeedsView}
+        analysis={route.mywegNeedsAnalysis}
       />
     );
   }

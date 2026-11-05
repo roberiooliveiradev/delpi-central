@@ -11,12 +11,19 @@ import type {
   MyWegNeedsBatchSummary,
 } from "../types";
 import { formatDecimalString } from "../utils/formatDecimalString";
+import {
+  resolveMyWegCompareAnalysis,
+  type MyWegCompareAnalysis,
+} from "../utils/routeParser";
 import { DataTableSection, type DataTableColumn } from "./dataTableUi";
 import { MyWegProbableDateShiftsSection } from "./MyWegProbableDateShiftsSection";
+import { MyWegProductConsolidationPanel } from "./MyWegProductConsolidationPanel";
 
 type Props = {
   historyItems: MyWegNeedsBatchSummary[];
   selectedBatchId: string | null;
+  analysis?: MyWegCompareAnalysis | null;
+  onAnalysisChange?: (analysis: MyWegCompareAnalysis) => void;
 };
 
 const texts = copy.mywegNeeds.evolution;
@@ -90,7 +97,13 @@ function movementClass(movement: string): string {
   }
 }
 
-export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: Props) {
+export function MyWegPlanningEvolutionPanel({
+  historyItems,
+  selectedBatchId,
+  analysis,
+  onAnalysisChange,
+}: Props) {
+  const activeAnalysis = resolveMyWegCompareAnalysis(analysis);
   const [fromId, setFromId] = useState<string>("");
   const [toId, setToId] = useState<string>("");
   const [billingMode, setBillingMode] = useState<"none" | "indicative">("none");
@@ -116,6 +129,13 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
   }, [fromId, toId, billingMode, search]);
 
   useEffect(() => {
+    if (activeAnalysis !== "remessa") {
+      setPayload(null);
+      setLoading(false);
+      setError(null);
+      setStatus(null);
+      return;
+    }
     if (!fromId || !toId || fromId === toId) {
       setPayload(null);
       if (fromId && toId && fromId === toId) {
@@ -151,7 +171,7 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [fromId, toId, billingMode, search, page]);
+  }, [activeAnalysis, fromId, toId, billingMode, search, page]);
 
   const columns = useMemo<DataTableColumn<MyWegComparePayload["items"][number]>[]>(
     () => [
@@ -285,6 +305,39 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
     <section className="ppc-myweg-needs__evolution" aria-label={texts.title}>
       <p className="ppc-myweg-needs__evolution-note">{texts.intro}</p>
 
+      <div
+        className="ppc-myweg-needs__analysis-toggle"
+        role="group"
+        aria-label={texts.analysisToggleAria}
+      >
+        <button
+          type="button"
+          className={
+            activeAnalysis === "remessa"
+              ? "ppc-btn ppc-btn--secondary ppc-myweg-needs__analysis-toggle--active"
+              : "ppc-btn ppc-btn--secondary"
+          }
+          aria-pressed={activeAnalysis === "remessa"}
+          onClick={() => onAnalysisChange?.("remessa")}
+        >
+          {texts.analysisRemessa}
+          <HelpTooltip content={helpTooltips.mywegNeedsAnalysisRemessa} trigger="icon" />
+        </button>
+        <button
+          type="button"
+          className={
+            activeAnalysis === "products"
+              ? "ppc-btn ppc-btn--secondary ppc-myweg-needs__analysis-toggle--active"
+              : "ppc-btn ppc-btn--secondary"
+          }
+          aria-pressed={activeAnalysis === "products"}
+          onClick={() => onAnalysisChange?.("products")}
+        >
+          {texts.analysisProducts}
+          <HelpTooltip content={helpTooltips.mywegNeedsAnalysisProducts} trigger="icon" />
+        </button>
+      </div>
+
       <div className="ppc-myweg-needs__toolbar">
         <label className="ppc-myweg-needs__history">
           {texts.fromLabel}
@@ -338,43 +391,58 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
         >
           {copy.mywegNeeds.applyFilters}
         </button>
-        <label className="ppc-myweg-needs__history ppc-myweg-needs__billing-toggle">
-          {texts.billingLabel}
-          <select
-            value={billingMode}
-            onChange={(event) =>
-              setBillingMode(event.target.value === "indicative" ? "indicative" : "none")
-            }
-          >
-            <option value="none">{texts.billingNone}</option>
-            <option value="indicative">{texts.billingIndicative}</option>
-          </select>
-        </label>
+        {activeAnalysis === "remessa" ? (
+          <label className="ppc-myweg-needs__history ppc-myweg-needs__billing-toggle">
+            {texts.billingLabel}
+            <select
+              value={billingMode}
+              onChange={(event) =>
+                setBillingMode(event.target.value === "indicative" ? "indicative" : "none")
+              }
+            >
+              <option value="none">{texts.billingNone}</option>
+              <option value="indicative">{texts.billingIndicative}</option>
+            </select>
+          </label>
+        ) : null}
       </div>
 
-      {loading ? <p role="status">{texts.loading}</p> : null}
-      {status === 403 ? (
+      {activeAnalysis === "products" && fromId && toId && fromId !== toId ? (
+        <MyWegProductConsolidationPanel fromId={fromId} toId={toId} search={search} />
+      ) : null}
+      {activeAnalysis === "products" && fromId && toId && fromId === toId ? (
+        <div className="ppc-state ppc-state--error" role="alert">
+          {texts.chronoInvalid}
+        </div>
+      ) : null}
+
+      {activeAnalysis === "remessa" && loading ? <p role="status">{texts.loading}</p> : null}
+      {activeAnalysis === "remessa" && status === 403 ? (
         <div className="ppc-state ppc-state--error" role="alert">
           {texts.forbidden}
         </div>
       ) : null}
-      {status === 409 ? (
+      {activeAnalysis === "remessa" && status === 409 ? (
         <div className="ppc-state" role="status">
           {error || texts.insufficient}
         </div>
       ) : null}
-      {status === 422 ? (
+      {activeAnalysis === "remessa" && status === 422 ? (
         <div className="ppc-state ppc-state--error" role="alert">
           {error || texts.chronoInvalid}
         </div>
       ) : null}
-      {error && status !== 403 && status !== 409 && status !== 422 ? (
+      {activeAnalysis === "remessa" &&
+      error &&
+      status !== 403 &&
+      status !== 409 &&
+      status !== 422 ? (
         <div className="ppc-state ppc-state--error" role="alert">
           {error}
         </div>
       ) : null}
 
-      {payload && !loading ? (
+      {activeAnalysis === "remessa" && payload && !loading ? (
         <>
           <p className="ppc-myweg-needs__evolution-scope">
             {payload.scope.customerName} · cliente {payload.scope.protheusCustomerCode}/

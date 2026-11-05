@@ -81,6 +81,33 @@ S2S api-delpi: token de serviço canônico (`apply_internal_service_headers`) �
 
 Campos novos relevantes: `totalCompared`, `totalChanges`, `billing.indicativeProducts`, `billing.period*`.
 
+### Análise consolidada por produto — UX + contrato aditivo
+
+> **TASK:** `MYWEG-NEEDS-E5-PRODUCT-CONSOLIDATED-ANALYSIS`  
+> **EXISTING_EQUIVALENT:** PARTIAL  
+> **REUSE_DECISION:** EXTEND — `aggregate_needs` + `compare_aggregated` + novo `consolidate_by_product`
+
+Endpoint aditivo (não quebra `GET /compare`):
+
+`GET /myweg/need-batches/compare/products?fromBatchId=&toBatchId=&search=&page=&pageSize=&changesOnly=true`
+
+| Campo | Significado |
+|---|---|
+| `totals.*` | Soma global UN do par (antes de paginar) |
+| `totalProductsCompared` | Produtos no par completo |
+| `totalProductsChanged` | Produtos com `situation != unchanged` |
+| `items[].previousQuantityUn` / `currentQuantityUn` / `deltaQuantityUn` | Totais sobre **todas** as remessas |
+| `items[].percentChange` | `(delta/prev)*100` ou `null` se anterior = 0 |
+| `items[].situation` | `increased` \| `decreased` \| `unchanged` \| `stable_with_date_changes` \| `appeared` \| `disappeared` |
+| `items[].remessas[]` | Detalhe por data (inclui inalteradas) |
+| `items[].probableDateShifts[]` | Mesmo motor E5; **não** altera totais |
+
+Fórmula: `diferença líquida = total atual − total anterior` (Decimal, UN).
+
+`changesOnly=true` (padrão): exclui produtos `unchanged` (total estável **e** sem mudança de remessa).
+
+UI: toggle **Por remessa** / **Por produto** em `view=compare` (`analysis=products` opcional; padrão = remessa).
+
 ### Reprogramações prováveis (`probableDateShifts`) — UX
 
 > **TASK:** `MYWEG-NEEDS-E5-PROBABLE-REPROGRAMMING-UX`  
