@@ -841,3 +841,20 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **Evidência prod (`f5f27499c7`):** `status: INCONCLUSIVE`, `bom_only: 0`, `divergences: 0`, `bom_occurrences_unverified: 24` — ausência não declarada; `presence_by_token_only` e demais limitações preservadas; nenhum finding legítimo descartado.
 
 **Testes:** +3 (bloqueio a 57%, bloqueio com inflação por tokens, ausência legítima a ≥90%) — 23/23 comparator.
+
+## 34. DEC-VAL-033 evolução 2 (EVA #131) — percepção de células densas + proveniência de parentesco (2026-11-04)
+
+**Causa-raiz (PROVEN, 5 defeitos no caminho do crop localizado):**
+1. `render_region` do adaptador pdfium passava `crop` como retângulo absoluto; pypdfium2 espera **quantidade cortada por borda** `(left, bottom, right, top)` — crops sempre errados + `Crop exceeds page dimensions` não capturado.
+2. `reference_dpi` global (fallback 200) vs. dpi real por página (p2 `90263572` = 110 dpi).
+3. Região de recovery = união só das células tipadas — bloco `Item|QTD|Componente` do lado direito (onde a célula A1/`10080004` vive) nunca era inspecionado.
+4. Margem do crop ausente da estimativa de pixels → render pulado silenciosamente.
+5. `parent_code` de `DRAWING_ONLY` fazia fallback para a raiz (`or product_code`) — fabricava vínculo não comprovado.
+
+**Correções (commit `daf0a8e564`):** crop com semântica de borda correta + clamp à página; região = faixa da tabela tipada expandida por tokens na mesma faixa vertical; quadriláteros 8-pt normalizados; `reference_dpi_by_page` propagado do pipeline vencedor; dpi adaptativo com margem; falha de render/OCR degradável; `_targeted_recheck` usa a página da ocorrência. Parentesco: família `CONJ` (prefixo 7) como âncora — mesma linha (`row_group`) ou conjunto único da folha (`set_span`), ambos verificados; sem pai comprovado → `parent_code=null` + `parent_verified=false`.
+
+**Evidência prod (`daf0a8e564`, in-container):** `90263572` p2 A1 → `10080004` recuperado `localized_ocr_recheck` conf 0.9999 (antes OCR lia `10060004` e a célula estava fora da região). `90264030`: `10081686→70260049` (p7), `10080535→70260050/51/52/53` (p9–12) — 5/5 parentescos verificados pelo desenho. `10080292`/`10080438` ausentes de todos os tokens/células/contextos das folhas relevantes → BOM_ONLY permanece candidato legítimo (revisão Engenharia pendente, sem NC).
+
+**Testes:** +7 (região expandida, dpi por página, adaptativo, quad 8pt, falha de render, negativo, DRAWING_ONLY sem raiz); 3 fixtures legados alinhados ao gate ≥0.9. **102/102 PASS.**
+
+**Estado:** `OCR_CELL_RECOVERY_10080004=PASS` · `PARENT_PROVENANCE_90264030=PASS` · `BOM_ONLY_VALIDATION=CANDIDATES_KEPT` · `REGRESSION_SUITE=102/102` · `CHATGPT_CONSUMER_PASS=PENDING` (reteste independente obrigatório: `compose_understanding` em `90263572` e `90264030` → conferir `localized_ocr_recheck`/`parent_source` nos artefatos e os 10 findings com parentesco correto).
