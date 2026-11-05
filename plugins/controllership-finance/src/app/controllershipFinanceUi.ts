@@ -187,5 +187,5 @@ export const CfWideDialog = createHostContainedModalShell({
   prefix: UI_PREFIX,
   portalScopeClassName: CF_PORTAL_SCOPE,
   containedLayout: "dialog",
-  variant: "wide",
+  variant: "fit",
 });

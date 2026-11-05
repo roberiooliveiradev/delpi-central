@@ -340,7 +340,7 @@ export type DashboardModalShellProps = Omit<
   "classNames" | "overlayClassName" | "portalScopeClassName"
 >;
 
-export type ModalShellVariant = "default" | "wide" | "page";
+export type ModalShellVariant = "default" | "wide" | "page" | "fit";
 
 export type CreateModalShellConfig = {
   prefix: string;
@@ -373,7 +373,9 @@ export function createModalShell(config: CreateModalShellConfig) {
       ? withBemModifier(classNames.dialog, "page")
       : config.variant === "wide"
         ? withBemModifier(classNames.dialog, "wide")
-        : undefined;
+        : config.variant === "fit"
+          ? withBemModifier(classNames.dialog, "fit")
+          : undefined;
 
   return function DashboardModalShell(props: DashboardModalShellProps) {
     const mergedClassName = [variantClass, props.className].filter(Boolean).join(" ") || undefined;

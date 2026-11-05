@@ -133,6 +133,8 @@
 .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
   > .delpi-ui-modal--wide,
 .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+  > .delpi-ui-modal--fit,
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
   > .delpi-ui-modal--page {
   flex-shrink: 0;
   box-sizing: border-box;
@@ -164,6 +166,22 @@
   overflow: hidden;
 }
 
+/*
+ * Variante --fit: mesma caixa estável em largura, mas altura acompanha o
+ * conteúdo até o teto do host — sem área vazia quando há poucas linhas.
+ */
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+  > .delpi-ui-modal--fit {
+  width: min(1280px, 100%);
+  max-width: min(1280px, 100%);
+  min-width: min(1280px, 100%);
+  height: auto;
+  max-height: min(92%, 960px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
   > .delpi-ui-modal--wide
   > .delpi-ui-modal__body,
@@ -175,6 +193,12 @@
   > .delpi-ui-modal__body,
 .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
   > .delpi-ui-modal--page
+  > [class$="-modal__body"],
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+  > .delpi-ui-modal--fit
+  > .delpi-ui-modal__body,
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+  > .delpi-ui-modal--fit
   > [class$="-modal__body"] {
   flex: 1 1 auto;
   min-height: 0;
@@ -190,6 +214,16 @@
     max-width: 100%;
     min-width: 0;
     height: 100%;
+    max-height: 100%;
+    min-height: 0;
+  }
+
+  .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+    > .delpi-ui-modal--fit {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: auto;
     max-height: 100%;
     min-height: 0;
   }
