@@ -38,6 +38,7 @@ import type { ComunicadoSlideTheme } from "../content/comunicadoSlideThemes";
 import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
 import type { SameSizeAxis } from "../utils/comunicadoSameSize";
 import type { StageGroupGesture } from "../utils/stageGroupGesture";
+import type { ApplyDynamicContentResult } from "../utils/applyDynamicContent";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 import type { MediaLibraryTarget } from "./comunicadoEditorTypes";
 
@@ -428,7 +429,7 @@ export type ComunicadoEditorContextValue = {
   /** Aplica spec do fluxo de conteúdo dinâmico no alvo ativo (texto/forma/Grade). */
   applyDynamicContentSpec: (
     spec: import("@delpi/tv-dashboard-presentation").DynamicContentSpec,
-  ) => import("../utils/applyDynamicContent").ApplyDynamicContentResult;
+  ) => ApplyDynamicContentResult;
   removeSelected: () => void;
   duplicateSelected: () => void;
   cutSelected: () => void;
