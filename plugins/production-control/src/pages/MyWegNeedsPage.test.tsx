@@ -7,6 +7,7 @@ import { MyWegNeedsPage } from "./MyWegNeedsPage";
 
 const navigatePpc = vi.fn();
 const reload = vi.fn();
+const onSelectBatch = vi.fn();
 
 vi.mock("../utils/routeParser", async () => {
   const actual = await vi.importActual<typeof import("../utils/routeParser")>(
@@ -41,12 +42,14 @@ vi.mock("../hooks/useMyWegNeeds", () => ({
           collectedAt: "2026-11-05T05:00:20-03:00",
           recordCount: 496,
           collectionDate: "2026-11-05",
+          totals: { quantidade_original_un: "100", quantidade_mi: "0.1" },
         },
         {
           id: "batch-prev",
           collectedAt: "2026-11-04T14:28:27-03:00",
           recordCount: 532,
           collectionDate: "2026-11-04",
+          totals: { quantidade_original_un: "180", quantidade_mi: "0.2" },
         },
       ],
     },
@@ -60,7 +63,7 @@ vi.mock("../hooks/useMyWegNeeds", () => ({
 }));
 
 vi.mock("../components/dataTableUi", () => ({
-  DataTableSection: () => null,
+  DataTableSection: () => <div>table</div>,
 }));
 
 vi.mock("../components/MyWegPlanningEvolutionPanel", () => ({
@@ -69,8 +72,43 @@ vi.mock("../components/MyWegPlanningEvolutionPanel", () => ({
   ),
 }));
 
+vi.mock("../components/MyWegNeedsHistoryChart", () => ({
+  MyWegNeedsHistoryChart: ({
+    selectedBatchId,
+    onSelectBatch: select,
+  }: {
+    selectedBatchId: string | null;
+    onSelectBatch: (batchId: string) => void;
+  }) => (
+    <div data-testid="myweg-history-chart">
+      <button type="button" onClick={() => select("batch-prev")}>
+        select-prev
+      </button>
+      <span>{selectedBatchId}</span>
+    </div>
+  ),
+}));
+
 vi.mock("@delpi/plugin-ui/index", () => ({
   createDashboardLoadingActivityCard: () => () => null,
+  createDashboardKpiCard: () =>
+    function Kpi({
+      title,
+      value,
+      footer,
+    }: {
+      title: string;
+      value: string;
+      footer?: string;
+    }) {
+      return (
+        <div data-testid={`kpi-${title}`}>
+          <span>{title}</span>
+          <strong>{value}</strong>
+          {footer ? <em>{footer}</em> : null}
+        </div>
+      );
+    },
   DelpiLogoMark: () => null,
   HelpTooltip: () => null,
 }));
@@ -83,6 +121,7 @@ describe("MyWegNeedsPage", () => {
   beforeEach(() => {
     navigatePpc.mockReset();
     reload.mockReset();
+    onSelectBatch.mockReset();
   });
 
   it("AC-02: filial 01 não consulta e oferece ação explícita para a 02", () => {
@@ -106,7 +145,7 @@ describe("MyWegNeedsPage", () => {
     expect(href).toContain("/myweg-needs");
   });
 
-  it("mostra consulta por padrão e não monta comparação", () => {
+  it("mostra consulta por padrão com KPIs, histórico e filtros", () => {
     render(
       <MyWegNeedsPage
         branch="02"
@@ -119,11 +158,18 @@ describe("MyWegNeedsPage", () => {
         analysis={null}
       />,
     );
-    expect(screen.getByRole("heading", { name: /consulta da coleta/i })).toBeTruthy();
+    expect(screen.getByTestId("kpi-Data da coleta")).toBeTruthy();
+    expect(screen.getByTestId("kpi-Registros")).toBeTruthy();
+    expect(screen.getByTestId("kpi-Total UN")).toBeTruthy();
+    expect(screen.getByTestId("kpi-Total MI")).toBeTruthy();
+    expect(screen.getByTestId("kpi-Filial")).toBeTruthy();
+    expect(screen.getByTestId("myweg-history-chart")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /filtros de consulta/i })).toBeTruthy();
+    expect(screen.getByTestId("myweg-needs-table")).toBeTruthy();
     expect(screen.queryByTestId("myweg-compare-panel")).toBeNull();
   });
 
-  it("card Comparar coletas navega para view=compare", () => {
+  it("card Comparação navega para view=compare", () => {
     render(
       <MyWegNeedsPage
         branch="02"
@@ -143,6 +189,55 @@ describe("MyWegNeedsPage", () => {
     expect(navigatePpc).toHaveBeenCalled();
     const href = String(navigatePpc.mock.calls[0]?.[0] ?? "");
     expect(href).toContain("view=compare");
+  });
+
+  it("seleção no histórico atualiza batch na URL", () => {
+    render(
+      <MyWegNeedsPage
+        branch="02"
+        batchId={null}
+        search={null}
+        remessaFrom={null}
+        remessaTo={null}
+        page={null}
+        view={null}
+        analysis={null}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /select-prev/i }));
+    expect(navigatePpc).toHaveBeenCalled();
+    const href = String(navigatePpc.mock.calls[0]?.[0] ?? "");
+    expect(href).toContain("batch=batch-prev");
+  });
+
+  it("Aplicar filtros sincroniza search e remessa na URL", () => {
+    render(
+      <MyWegNeedsPage
+        branch="02"
+        batchId={null}
+        search={null}
+        remessaFrom={null}
+        remessaTo={null}
+        page={null}
+        view={null}
+        analysis={null}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText(/pesquisar necessidades WEG/i), {
+      target: { value: "ABC123" },
+    });
+    fireEvent.change(screen.getByLabelText(/^De$/i), {
+      target: { value: "2026-11-01" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Até$/i), {
+      target: { value: "2026-11-30" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /aplicar filtros/i }));
+    expect(navigatePpc).toHaveBeenCalled();
+    const href = String(navigatePpc.mock.calls[0]?.[0] ?? "");
+    expect(href).toContain("q=ABC123");
+    expect(href).toContain("remessaFrom=2026-11-01");
+    expect(href).toContain("remessaTo=2026-11-30");
   });
 
   it("view=compare monta o painel e esconde a tabela de necessidades", () => {
