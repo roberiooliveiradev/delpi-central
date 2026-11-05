@@ -32,6 +32,24 @@ describe("action-controls FormActions spacing", () => {
     );
   });
 
+  it("hover genérico usa o token e, sem ele, mantém o fundo de superfície", () => {
+    const hover = css.match(
+      /\.delpi-ui-action-btn:hover:not\(:disabled\):not\(\.delpi-ui-action-btn--disabled\)\s*\{[^}]+\}/,
+    )?.[0];
+    expect(hover).toMatch(
+      /background:\s*var\(\s*--delpi-ui-action-hover-surface,\s*var\(\s*--delpi-ui-surface,\s*var\(\s*--surface,\s*#ffffff\s*\)\s*\)\s*\)\s*;/,
+    );
+  });
+
+  it("ghost e link no hover não herdam o fundo de superfície quando o token não existe", () => {
+    expect(css).toMatch(
+      /\.delpi-ui-action-btn--ghost:hover:not\(:disabled\):not\(\.delpi-ui-action-btn--disabled\)\s*\{[^}]*background:\s*var\(\s*--delpi-ui-action-hover-surface,\s*transparent\s*\)/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-action-btn--link:hover:not\(:disabled\):not\(\.delpi-ui-action-btn--disabled\)\s*\{[^}]*background:\s*none/,
+    );
+  });
+
   it("no hover o primary mantém fundo e ícone, sem o reset global do portal", () => {
     expect(css).toMatch(
       /\.delpi-ui-icon-btn--primary:hover:not\(:disabled\)[\s\S]*?background:\s*var\(--delpi-ui-accent/,

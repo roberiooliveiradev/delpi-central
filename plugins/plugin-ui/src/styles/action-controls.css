@@ -40,7 +40,7 @@ a.delpi-ui-action-btn--link:visited {
       var(--delpi-ui-border, var(--border, #e5e7eb))
     )
   );
-  background: var(--delpi-ui-action-hover-surface);
+  background: var(--delpi-ui-action-hover-surface, var(--delpi-ui-surface, var(--surface, #ffffff)));
 }
 
 .delpi-ui-action-btn:focus-visible {
@@ -80,6 +80,10 @@ a.delpi-ui-action-btn--link:visited {
   background: transparent;
 }
 
+.delpi-ui-action-btn--ghost:hover:not(:disabled):not(.delpi-ui-action-btn--disabled) {
+  background: var(--delpi-ui-action-hover-surface, transparent);
+}
+
 .delpi-ui-action-btn--link {
   min-height: 0;
   padding: 0;
@@ -90,6 +94,7 @@ a.delpi-ui-action-btn--link:visited {
 }
 
 .delpi-ui-action-btn--link:hover:not(:disabled):not(.delpi-ui-action-btn--disabled) {
+  background: none;
   border: none;
   text-decoration: underline;
 }
