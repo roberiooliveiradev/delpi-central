@@ -1,5 +1,5 @@
 import { HelpTooltip } from "@delpi/plugin-ui/index";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { fetchMyWegNeedBatchesCompareProducts } from "../api/ppcApi";
 import { httpErrorStatus } from "../api/httpClient";
@@ -185,11 +185,21 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<number | null>(null);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const detailRef = useRef<HTMLDivElement | null>(null);
+
+  const toggleExpanded = (productKey: string) => {
+    setExpandedKey((current) => (current === productKey ? null : productKey));
+  };
 
   useEffect(() => {
     setPage(1);
     setExpandedKey(null);
   }, [fromId, toId, search]);
+
+  useEffect(() => {
+    if (!expandedKey || !detailRef.current) return;
+    detailRef.current.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
+  }, [expandedKey]);
 
   useEffect(() => {
     if (!fromId || !toId || fromId === toId) {
@@ -289,16 +299,18 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
       {
         key: "details",
         header: texts.columns.details,
+        interactive: true,
+        rowClick: "stop",
         render: (row) => (
           <button
             type="button"
-            className="ppc-btn ppc-btn--ghost ppc-myweg-needs__details-btn"
+            className="ppc-btn ppc-btn--secondary ppc-myweg-needs__details-btn"
             aria-expanded={expandedKey === row.productKey}
-            onClick={() =>
-              setExpandedKey((current) =>
-                current === row.productKey ? null : row.productKey,
-              )
-            }
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              toggleExpanded(row.productKey);
+            }}
           >
             {expandedKey === row.productKey ? texts.hideDetails : texts.showDetails}
           </button>
@@ -363,6 +375,24 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
         </div>
       </header>
 
+      {expanded ? (
+        <div ref={detailRef} className="ppc-myweg-needs__product-detail-anchor">
+          <div className="ppc-myweg-needs__product-detail-toolbar">
+            <h4 className="ppc-myweg-needs__product-detail-heading">
+              {texts.detailHeading(productLabel(expanded))}
+            </h4>
+            <button
+              type="button"
+              className="ppc-btn ppc-btn--ghost ppc-myweg-needs__details-btn"
+              onClick={() => setExpandedKey(null)}
+            >
+              {texts.hideDetails}
+            </button>
+          </div>
+          <ProductDetail row={expanded} fromLabel={fromLabel} toLabel={toLabel} />
+        </div>
+      ) : null}
+
       <DataTableSection
         title={texts.tableTitle}
         rows={payload.items}
@@ -370,7 +400,9 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
         rowKey={(row) => row.productKey}
         emptyMessage={search ? copy.tableSection.emptyMessage : texts.empty}
         hideSearch
+        interactive
         columnPreferencesKey="production-control:myweg-products:columns:v1"
+        onRowClick={(row) => toggleExpanded(row.productKey)}
         getRowClassName={(row) =>
           row.productKey === expandedKey ? "ppc-myweg-needs__product-row--expanded" : undefined
         }
@@ -378,16 +410,15 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
           page: payload.page,
           pageSize: payload.pageSize,
           total: payload.total,
-          onPageChange: (nextPage) => setPage(nextPage),
+          onPageChange: (nextPage) => {
+            setExpandedKey(null);
+            setPage(nextPage);
+          },
           onPageSizeChange: () => {
             /* pageSize fixo 50 nesta etapa */
           },
         }}
       />
-
-      {expanded ? (
-        <ProductDetail row={expanded} fromLabel={fromLabel} toLabel={toLabel} />
-      ) : null}
     </section>
   );
 }

@@ -1565,6 +1565,7 @@ export const copy = {
         tableTitle: "Necessidade consolidada",
         showDetails: "Detalhes",
         hideDetails: "Ocultar",
+        detailHeading: (product: string) => `Detalhe · ${product}`,
         detailPair: "Par de coletas",
         detailTotals: "Totais",
         remessaTableTitle: "Por data de remessa",

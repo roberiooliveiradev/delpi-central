@@ -7149,8 +7149,28 @@
   font-size: var(--ppc-font-xs);
 }
 
+.dashboard-production-control .ppc-myweg-needs__product-detail-anchor {
+  margin: 0 0 14px;
+}
+
+.dashboard-production-control .ppc-myweg-needs__product-detail-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.dashboard-production-control .ppc-myweg-needs__product-detail-heading {
+  margin: 0;
+  font-size: var(--ppc-font-md);
+  font-weight: 650;
+  color: var(--ppc-text);
+}
+
 .dashboard-production-control .ppc-myweg-needs__product-detail {
-  margin-top: 14px;
+  margin-top: 0;
   padding: 14px 16px;
   border: 1px solid var(--ppc-border);
   border-radius: 12px;
