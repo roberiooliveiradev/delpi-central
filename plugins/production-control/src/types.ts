@@ -1585,6 +1585,10 @@ export type MyWegCompareChange = {
 export type MyWegCompareIndicativeProduct = {
   productCode: string;
   unit?: string | null;
+  originalUnit?: string | null;
+  originalQuantity?: string | null;
+  originalFiscalLabel?: string | null;
+  conversionFactor?: string | null;
   candidateQuantityUn?: string | null;
   previousNeedUn: string;
   currentNeedUn: string;

@@ -2,6 +2,7 @@
 
 > **TASK:** `MYWEG-NEEDS-E5-PLANNING-EVOLUTION`  
 > **REWORK:** `MYWEG-NEEDS-E5-REWORK-FINAL-VALIDATION`  
+> **FIX UNIDADES:** `MYWEG-NEEDS-E5-FISCAL-UNIT-MI-CONVERSION`  
 > **Escopo:** WEG Linhares · filial DELPI `02` · Protheus `000001`/`09` · MyWEG `1009`/`1106`
 
 ## Reuse
@@ -49,7 +50,15 @@ Resposta de billing inclui: `period`, `periodCriterion`, `periodTimezone`, `peri
 
 - Autoridade da UM do item faturado: **`D2_UM`** (catálogo `B1_UM` só fallback).
 - JOIN SB1 restrito a `B1_FILIAL = D2_FILIAL` + dedup por identidade fiscal (filial+doc+série+item).
-- Necessidade MyWEG em **UN**: unidades diferentes (ex.: KG) → `comparable=false`, fora do FIFO, sem conversão inventada.
+- Necessidade MyWEG em **UN**.
+- Normalização por item **antes** da agregação (owner api-delpi, `fiscal_quantity_to_un`):
+  - `UN` / `UN.` → fator `1`
+  - `MI` → fator `1000` (1 MI = 1.000 UN; alinhado a `UN_TO_MI_DIVISOR` MyWEG)
+  - demais UMs (KG, CX, MT, …) → `comparable=false`, sem fator inventado
+- Campos brutos `quantity`/`unit` preservados; autoridade FIFO = `quantity_un`.
+- Production Control **não** reconverte: consome `quantity_un` do contrato.
+
+Homologação WEG Linhares (diagnóstico): 155 itens / 65 produtos com `D2_UM=MI` — antes rejeitados; após o fix, elegíveis quanto à unidade se demais requisitos ok.
 
 ## Contratos efetivos
 
@@ -59,7 +68,8 @@ Resposta de billing inclui: `period`, `periodCriterion`, `periodTimezone`, `peri
 
 Filtros: `branch=02`, `customer_code=000001`, `customer_store=09`, período do par, lote de `product_codes`, exclusão de devoluções (`F2_TIPO <> D`), soft-delete SF2/SD2.
 
-Quantidade: `D2_QUANT` como string decimal. Totais com `unit` + `comparable`.
+Quantidade bruta: `D2_QUANT` como string decimal.  
+Por item/total: `quantity_un`, `normalized_unit`, `conversion_factor`, `comparable`, `incompatibility_reason`, `original_units`.
 
 ### Comparação (PC JWT)
 
@@ -90,3 +100,11 @@ AC-01…AC-16 — ver relatório da task; testes automatizados cobrem janela, cr
 | MFE typecheck — erros pré-existentes LineFeeder/plugin-ui; nenhum em MyWEG Evolution | NO_MYWEG_TS_ERRORS |
 
 Pendências: `REAL_TWO_BATCH_SMOKE` até segunda coleta real; deploy canônico pós-push.
+
+## Fix MI → UN (`MYWEG-NEEDS-E5-FISCAL-UNIT-MI-CONVERSION`)
+
+| Campo | Valor |
+|---|---|
+| ROOT_CAUSE | `COMPARABLE_NEED_UNITS` / `COMPARABLE_UNITS` só aceitavam UN/UN. |
+| EXISTING_EQUIVALENT | PARTIAL (`UN_TO_MI_DIVISOR` MyWEG + `piecesFactor` MI=1000 em produção operacional) |
+| REUSE_DECISION | EXTEND (helper fiscal na api-delpi; PC só consome `quantity_un`) |

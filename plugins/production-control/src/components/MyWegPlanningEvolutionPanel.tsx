@@ -188,6 +188,17 @@ export function MyWegPlanningEvolutionPanel({ historyItems, selectedBatchId }: P
         render: (row) => formatQty(row.candidateQuantityUn),
       },
       {
+        key: "fiscalOrigin",
+        header: texts.columns.fiscalOrigin,
+        render: (row) => {
+          if (row.originalFiscalLabel) return row.originalFiscalLabel;
+          if (row.originalQuantity != null && row.originalUnit) {
+            return `${formatDecimalString(row.originalQuantity)} ${row.originalUnit}`;
+          }
+          return "—";
+        },
+      },
+      {
         key: "prevNeed",
         header: texts.columns.previousNeed,
         align: "right",

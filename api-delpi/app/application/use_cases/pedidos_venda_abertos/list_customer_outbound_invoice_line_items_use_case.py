@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from typing import Any
 
+from app.domain.services.pedidos_venda_abertos.fiscal_quantity_to_un import (
+    NORMALIZED_UNIT,
+    convert_fiscal_quantity_to_un,
+    decimal_to_plain_str,
+)
 from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_outbound_invoice_line_items_repository import (
     CustomerOutboundInvoiceLineItemsRepository,
 )
 
 MAX_PRODUCT_CODES = 500
 ALLOWED_BRANCHES = frozenset({"01", "02"})
-# Necessidades MyWEG são em UN; sem fator confiável, outras UMs não entram no FIFO.
-COMPARABLE_NEED_UNITS = frozenset({"UN", "UN."})
 
 
 class ListCustomerOutboundInvoiceLineItemsUseCase:
@@ -70,53 +73,116 @@ class ListCustomerOutboundInvoiceLineItemsUseCase:
             if key in seen_keys:
                 continue
             seen_keys.add(key)
-            unique_items.append(item)
+            unique_items.append(self._enrich_item(item))
 
         totals: dict[str, dict[str, Any]] = {}
         for item in unique_items:
             if item.get("is_return"):
                 continue
             code = item["product_code"]
-            unit = self._effective_unit(item)
-            try:
-                qty = Decimal(str(item.get("quantity") or "0"))
-            except (InvalidOperation, ValueError):
-                qty = Decimal("0")
             bucket = totals.get(code)
             if bucket is None:
-                totals[code] = {
-                    "quantity": qty,
-                    "unit": unit,
-                    "units_seen": {unit} if unit else set(),
-                    "comparable": unit in COMPARABLE_NEED_UNITS if unit else False,
+                bucket = {
+                    "original_quantity_by_unit": {},
+                    "quantity_un": Decimal("0"),
+                    "comparable_quantity_un": Decimal("0"),
+                    "units_seen": set(),
+                    "comparable_units": set(),
+                    "incomparable_count": 0,
+                    "comparable_item_count": 0,
+                    "reasons": [],
                 }
+                totals[code] = bucket
+
+            original_unit = str(item.get("unit") or "").strip().upper() or "?"
+            bucket["units_seen"].add(original_unit)
+            original_qty = item.get("quantity")
+            try:
+                original_dec = Decimal(str(original_qty)) if original_qty not in (None, "") else None
+            except Exception:
+                original_dec = None
+            if original_dec is not None:
+                by_unit = bucket["original_quantity_by_unit"]
+                by_unit[original_unit] = by_unit.get(original_unit, Decimal("0")) + original_dec
+
+            if item.get("comparable") and item.get("quantity_un") is not None:
+                qty_un = Decimal(str(item["quantity_un"]))
+                bucket["quantity_un"] += qty_un
+                bucket["comparable_quantity_un"] += qty_un
+                bucket["comparable_item_count"] += 1
+                bucket["comparable_units"].add(original_unit)
             else:
-                bucket["quantity"] = bucket["quantity"] + qty
-                if unit:
-                    bucket["units_seen"].add(unit)
-                if len(bucket["units_seen"]) > 1:
-                    bucket["comparable"] = False
-                    bucket["unit"] = "|".join(sorted(bucket["units_seen"]))
-                elif unit and unit not in COMPARABLE_NEED_UNITS:
-                    bucket["comparable"] = False
+                bucket["incomparable_count"] += 1
+                reason = str(item.get("incompatibility_reason") or "").strip()
+                if reason and reason not in bucket["reasons"]:
+                    bucket["reasons"].append(reason)
 
         totals_by_product: list[dict[str, Any]] = []
         for code, bucket in sorted(totals.items()):
-            comparable = bool(bucket["comparable"])
-            reason = None
-            if not comparable:
-                units = sorted(bucket["units_seen"]) or [bucket.get("unit") or ""]
+            units = sorted(bucket["units_seen"])
+            original_by_unit = bucket["original_quantity_by_unit"]
+            # quantity/unit brutos: só quando uma única unidade original (sem misturar MI+UN).
+            if len(original_by_unit) == 1:
+                only_unit = next(iter(original_by_unit))
+                raw_quantity = decimal_to_plain_str(original_by_unit[only_unit])
+                raw_unit = only_unit if only_unit != "?" else None
+            else:
+                raw_quantity = None
+                raw_unit = None
+
+            has_comparable = bucket["comparable_item_count"] > 0
+            has_incomparable = bucket["incomparable_count"] > 0
+            if has_comparable and not has_incomparable:
+                comparable = True
+                reason = None
+            elif has_comparable and has_incomparable:
+                comparable = True  # cobertura parcial — total_un só dos itens conversíveis
                 reason = (
-                    "Unidade fiscal incompatível ou mista sem fator de conversão "
-                    f"confiável para UN ({', '.join(u or '?' for u in units)})."
+                    "Cobertura parcial: alguns itens do produto não foram normalizados "
+                    "para UN; quantity_un soma apenas itens comparáveis. "
+                    + ("; ".join(bucket["reasons"]) if bucket["reasons"] else "")
+                ).strip()
+            else:
+                comparable = False
+                reason = (
+                    "; ".join(bucket["reasons"])
+                    if bucket["reasons"]
+                    else (
+                        "Unidade fiscal incompatível ou mista sem fator de conversão "
+                        f"confiável para UN ({', '.join(units)})."
+                    )
                 )
+
+            factors = sorted(
+                {
+                    str(item.get("conversion_factor"))
+                    for item in unique_items
+                    if item.get("product_code") == code
+                    and item.get("comparable")
+                    and item.get("conversion_factor") is not None
+                }
+            )
+            conversion_factor = factors[0] if len(factors) == 1 else (
+                None if not factors else "|".join(factors)
+            )
+
             totals_by_product.append(
                 {
                     "product_code": code,
-                    "quantity": str(bucket["quantity"]),
-                    "unit": bucket.get("unit") or None,
+                    "quantity": raw_quantity,
+                    "unit": raw_unit,
+                    "original_units": units,
+                    "quantity_un": (
+                        decimal_to_plain_str(bucket["comparable_quantity_un"])
+                        if has_comparable
+                        else None
+                    ),
+                    "normalized_unit": NORMALIZED_UNIT if has_comparable else None,
+                    "conversion_factor": conversion_factor,
                     "comparable": comparable,
                     "incompatibility_reason": reason,
+                    "comparable_item_count": bucket["comparable_item_count"],
+                    "incomparable_item_count": bucket["incomparable_count"],
                 }
             )
 
@@ -143,14 +209,40 @@ class ListCustomerOutboundInvoiceLineItemsUseCase:
                 "returns": "excluded" if exclude_returns else "included",
                 "quantity_authority": "D2_QUANT_as_decimal_string",
                 "unit_authority": "D2_UM_preferred_B1_UM_catalog_fallback",
+                "unit_normalization": "UN_and_MI_to_UN_factor_1000_per_item_before_aggregate",
                 "sb1_join": "B1_FILIAL=D2_FILIAL to avoid duplicate catalog rows",
                 "limitations": [
                     "Não prova reconhecimento do abatimento pela WEG.",
                     "Granularidade temporal é a data de emissão (sem horário de fechamento).",
-                    "Unidades diferentes de UN não são convertidas automaticamente.",
+                    "Somente UN/UN./MI têm fator validado para necessidades em UN; outras UMs ficam não comparáveis.",
+                    "quantity/unit permanecem brutos; quantity_un é a autoridade para FIFO.",
                 ],
             },
         }
+
+    def _enrich_item(self, item: dict[str, Any]) -> dict[str, Any]:
+        enriched = dict(item)
+        unit = self._effective_unit(item)
+        # Preserva unit efetiva (D2_UM) sem reescrever significado de quantity.
+        enriched["unit"] = unit
+        conversion = convert_fiscal_quantity_to_un(
+            quantity=item.get("quantity"),
+            unit=unit,
+        )
+        enriched["quantity_un"] = (
+            decimal_to_plain_str(conversion.quantity_un)
+            if conversion.quantity_un is not None
+            else None
+        )
+        enriched["normalized_unit"] = conversion.normalized_unit
+        enriched["conversion_factor"] = (
+            decimal_to_plain_str(conversion.conversion_factor)
+            if conversion.conversion_factor is not None
+            else None
+        )
+        enriched["comparable"] = conversion.comparable
+        enriched["incompatibility_reason"] = conversion.incompatibility_reason
+        return enriched
 
     @staticmethod
     def _effective_unit(item: dict[str, Any]) -> str:

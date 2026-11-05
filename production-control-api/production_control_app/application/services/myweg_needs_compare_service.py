@@ -35,7 +35,6 @@ logger = logging.getLogger(__name__)
 WEG_CUSTOMER_CODE = "000001"
 WEG_CUSTOMER_STORE = "09"
 SAO_PAULO = ZoneInfo("America/Sao_Paulo")
-COMPARABLE_UNITS = frozenset({"UN", "UN."})
 LIST_PAGE_SIZE = 100
 LIST_MAX_PAGES = 20
 
@@ -322,23 +321,56 @@ class MyWegNeedsCompareService:
                 if not code:
                     continue
                 unit = self._normalize_unit(row.get("unit") or row.get("invoice_unit"))
-                comparable = bool(row.get("comparable", True)) and unit in COMPARABLE_UNITS
-                quantity = str(row.get("quantity") or "0")
+                original_units = [
+                    self._normalize_unit(u)
+                    for u in (row.get("original_units") or ([unit] if unit else []))
+                    if self._normalize_unit(u)
+                ]
+                raw_quantity = row.get("quantity")
+                raw_quantity_str = (
+                    None if raw_quantity is None or raw_quantity == "" else str(raw_quantity)
+                )
+                # Autoridade FIFO: quantity_un do owner fiscal (já normalizado). Sem reconversão.
+                quantity_un_raw = row.get("quantity_un")
+                if quantity_un_raw is not None and str(quantity_un_raw).strip() != "":
+                    quantity_un = str(quantity_un_raw).strip()
+                    contract_comparable = bool(row.get("comparable", True))
+                elif unit in {"UN", "UN."} and raw_quantity_str is not None:
+                    # Fallback legado pré-normalização MI (somente UN bruto).
+                    quantity_un = raw_quantity_str
+                    contract_comparable = True
+                else:
+                    quantity_un = None
+                    contract_comparable = bool(row.get("comparable", False))
+                comparable = contract_comparable and quantity_un is not None
                 entry = {
                     "productCode": code,
-                    "quantityUn": quantity if comparable else None,
-                    "quantity": quantity,
-                    "unit": unit or None,
+                    "quantityUn": quantity_un if comparable else None,
+                    "quantity": raw_quantity_str,
+                    "unit": unit or (original_units[0] if original_units else None),
+                    "originalUnits": original_units or None,
+                    "normalizedUnit": row.get("normalized_unit") or ("UN" if comparable else None),
+                    "conversionFactor": (
+                        str(row.get("conversion_factor"))
+                        if row.get("conversion_factor") is not None
+                        else None
+                    ),
                     "comparable": comparable,
                     "reason": None
                     if comparable
                     else (
                         str(row.get("incompatibility_reason") or "").strip()
-                        or f"Unidade fiscal '{unit or '?'}' incompatível com necessidade em UN."
+                        or (
+                            "quantity_un ausente no contrato fiscal; "
+                            "não usar quantity bruto em MI."
+                            if unit == "MI"
+                            else f"Unidade fiscal '{unit or '?'}' incompatível com necessidade em UN."
+                        )
                     ),
                 }
                 if comparable:
-                    billing_by_product[f"code:{code}"] = Decimal(quantity)
+                    # Nunca multiplicar de novo — quantity_un já está em UN.
+                    billing_by_product[f"code:{code}"] = Decimal(quantity_un)
                     totals_out.append(entry)
                 else:
                     incompatible.append(entry)
@@ -496,11 +528,20 @@ class MyWegNeedsCompareService:
                 Decimal("0"),
             )
             residual = curr_total - hyp_total
+            original_label = None
+            if entry.get("quantity") is not None and entry.get("unit"):
+                original_label = f"{entry['quantity']} {entry['unit']}"
+            elif entry.get("originalUnits"):
+                original_label = ", ".join(entry["originalUnits"])
             rows.append(
                 {
                     "productCode": entry["productCode"],
-                    "unit": entry.get("unit") or "UN",
-                    "candidateQuantityUn": entry.get("quantityUn") or entry.get("quantity"),
+                    "unit": entry.get("normalizedUnit") or "UN",
+                    "originalUnit": entry.get("unit"),
+                    "originalQuantity": entry.get("quantity"),
+                    "originalFiscalLabel": original_label,
+                    "conversionFactor": entry.get("conversionFactor"),
+                    "candidateQuantityUn": entry.get("quantityUn"),
                     "previousNeedUn": str(prev_total),
                     "currentNeedUn": str(curr_total),
                     "hypotheticallyAbatedUn": str(applied),
@@ -517,6 +558,14 @@ class MyWegNeedsCompareService:
                 {
                     "productCode": entry["productCode"],
                     "unit": entry.get("unit"),
+                    "originalUnit": entry.get("unit"),
+                    "originalQuantity": entry.get("quantity"),
+                    "originalFiscalLabel": (
+                        f"{entry['quantity']} {entry['unit']}"
+                        if entry.get("quantity") is not None and entry.get("unit")
+                        else None
+                    ),
+                    "conversionFactor": entry.get("conversionFactor"),
                     "candidateQuantityUn": None,
                     "previousNeedUn": str(_sum_need(previous, product_key)),
                     "currentNeedUn": str(_sum_need(current, product_key)),

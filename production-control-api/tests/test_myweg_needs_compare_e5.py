@@ -272,6 +272,9 @@ def test_indicative_billing_builds_fifo_products() -> None:
                             "product_code": codes[0],
                             "quantity": "10",
                             "unit": "UN",
+                            "quantity_un": "10",
+                            "normalized_unit": "UN",
+                            "conversion_factor": "1",
                             "comparable": True,
                         }
                     ],
@@ -296,6 +299,53 @@ def test_indicative_billing_builds_fifo_products() -> None:
     )
 
 
+def test_ac04_mi_quantity_un_consumed_without_double_conversion() -> None:
+    """AC-04/AC-05: PC usa quantity_un; 2.5 MI → 2500 UN, sem *1000 de novo."""
+
+    class MiGateway:
+        def list_customer_outbound_invoice_line_items(self, **kwargs):
+            codes = list(kwargs.get("product_codes") or [])
+            return {
+                "data": {
+                    "totals_by_product": [
+                        {
+                            "product_code": codes[0],
+                            "quantity": "2.5",
+                            "unit": "MI",
+                            "original_units": ["MI"],
+                            "quantity_un": "2500",
+                            "normalized_unit": "UN",
+                            "conversion_factor": "1000",
+                            "comparable": True,
+                        }
+                    ],
+                    "returned_item_count": 1,
+                    "coverage": {},
+                }
+            }
+
+    repo = CompareRepo()
+    first, second = _seed_two_batches(repo)
+    result = MyWegNeedsCompareService(repo, gateway=MiGateway()).compare(
+        _user(),
+        from_batch_id=first["id"],
+        to_batch_id=second["id"],
+        billing_mode="indicative",
+    )
+    assert result["billing"]["status"] in {"indicative", "partial"}
+    product = result["billing"]["indicativeProducts"][0]
+    assert Decimal(product["candidateQuantityUn"]) == Decimal("2500")
+    assert product["originalQuantity"] == "2.5"
+    assert product["originalUnit"] == "MI"
+    assert product["conversionFactor"] == "1000"
+    # Sem conversão dupla: não 2_500_000
+    assert Decimal(product["candidateQuantityUn"]) != Decimal("2500000")
+    assert result["billing"]["fifoScenarios"]
+    assert Decimal(result["billing"]["fifoScenarios"][0]["candidateQuantityUn"]) == Decimal(
+        "2500"
+    )
+
+
 def test_incompatible_unit_excluded_from_fifo() -> None:
     class MixedGateway:
         def list_customer_outbound_invoice_line_items(self, **kwargs):
@@ -307,6 +357,7 @@ def test_incompatible_unit_excluded_from_fifo() -> None:
                             "product_code": codes[0],
                             "quantity": "10",
                             "unit": "KG",
+                            "quantity_un": None,
                             "comparable": False,
                             "incompatibility_reason": "KG vs UN",
                         }
