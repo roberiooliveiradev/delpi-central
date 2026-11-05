@@ -737,3 +737,21 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
   JWT válido → TIMEOUT (dependência externa lenta/indisponível —
   NÃO ausência comprovada de registro). INCONCLUSIVE honesto.
 - Suite completa PASS (exit 0).
+
+## 32. G7 — avaliação local Ollama+MCP e gate de produção (doc 278)
+
+- **Runtime**: código `b3da9b640c` montado; `surface=configured`;
+  config_fp `5ae38a6b007f9749`; DELIA_RUNTIME_SHA env baked stale
+  `c311e75e` → EXECUTION_DRIFT (resolve só com rebuild de imagem).
+- **Live eval (3 READ autenticadas)**: produto 50220013 (29s),
+  prazo cliente X (1.2s), produto inexistente 99999999 (1.5s) →
+  TODAS honest unbound ("capacidade não identificada nas superfícies
+  autoritativas — nenhum dado operacional inventado"). Zero fabricação.
+- **Config**: window=4096 mantido; sem ajuste arbitrário.
+- **Controle positivo**: INCONCLUSIVE — timeout de dependência no
+  owner dev (não ausência comprovada).
+- **Gate de produção**: NÃO SATISFEITO — PRODUCTION_DEPLOY
+  NOT_AUTHORIZED; perfil local_ollama é exclusivo do ambiente dev
+  (egress guard) e não deve ir a produção; outcome empresarial
+  positivo pendente.
+- Suite completa PASS (exit 0).
