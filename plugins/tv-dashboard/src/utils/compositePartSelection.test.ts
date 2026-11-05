@@ -4,6 +4,7 @@ import {
   isCompositeContentPart,
   isMolduraPartSelection,
   resolveCompositePartPointerAction,
+  resolveCompositeShiftIntent,
   shouldAttachCompositePartInteraction,
   shouldUsePartChromeInsteadOfBlock,
   toggleCompositePartSelection,
@@ -98,6 +99,32 @@ describe("isMolduraPartSelection / shouldUsePartChromeInsteadOfBlock", () => {
   it("sem parte = chrome global", () => {
     expect(shouldUsePartChromeInsteadOfBlock("chart_view", null)).toBe(false);
     expect(isMolduraPartSelection("input", null)).toBe(false);
+  });
+});
+
+describe("resolveCompositeShiftIntent", () => {
+  it("Shift em outro bloco seleciona macrocomponentes", () => {
+    expect(
+      resolveCompositeShiftIntent({ hitBlockId: "kpi-b", selectedIds: ["kpi-a"] }),
+    ).toBe("additive-block");
+    expect(
+      resolveCompositeShiftIntent({ hitBlockId: "chart", selectedIds: [] }),
+    ).toBe("additive-block");
+  });
+
+  it("Shift no único bloco já selecionado permanece nas partes", () => {
+    expect(
+      resolveCompositeShiftIntent({ hitBlockId: "kpi-a", selectedIds: ["kpi-a"] }),
+    ).toBe("additive-part");
+  });
+
+  it("vários blocos já selecionados alternam o bloco atingido", () => {
+    expect(
+      resolveCompositeShiftIntent({
+        hitBlockId: "kpi-b",
+        selectedIds: ["kpi-a", "kpi-b", "chart"],
+      }),
+    ).toBe("additive-block");
   });
 });
 

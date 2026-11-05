@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { describe, expect, it } from "vitest";
 import type { ComunicadoBlock, ComunicadoConfig } from "@delpi/tv-dashboard-presentation";
 
+import { resolveCompositeShiftIntent } from "../../utils/compositePartSelection";
 import { useComunicadoEditorSelection } from "./useComunicadoEditorSelection";
 
 const blocks: ComunicadoBlock[] = [
@@ -405,6 +406,46 @@ describe("useComunicadoEditorSelection", () => {
       result.current.selectKpiPart("a", { kind: "card" }, { additive: true });
     });
     expect(result.current.selectedKpiParts).toEqual([{ kind: "card" }]);
+  });
+
+  it("Shift de uma parte do KPI para outro bloco seleciona os dois macrocomponentes", () => {
+    const { result } = renderSelectionHook();
+
+    act(() => {
+      result.current.selectKpiPart("a", { kind: "target" });
+    });
+    expect(result.current.selectedIds).toEqual(["a"]);
+    expect(result.current.selectedKpiPart).toEqual({ kind: "target" });
+
+    const intent = resolveCompositeShiftIntent({
+      hitBlockId: "b",
+      selectedIds: result.current.selectedIds,
+    });
+    expect(intent).toBe("additive-block");
+    act(() => {
+      result.current.selectBlock("b", { additive: true });
+    });
+    expect(result.current.selectedIds).toEqual(["a", "b"]);
+    expect(result.current.selectedKpiPart).toBeNull();
+    expect(result.current.selectedKpiParts).toEqual([]);
+  });
+
+  it("Shift no mesmo KPI continua alternando partes", () => {
+    const { result } = renderSelectionHook();
+
+    act(() => {
+      result.current.selectKpiPart("a", { kind: "title" });
+    });
+    const intent = resolveCompositeShiftIntent({
+      hitBlockId: "a",
+      selectedIds: result.current.selectedIds,
+    });
+    expect(intent).toBe("additive-part");
+    act(() => {
+      result.current.selectKpiPart("a", { kind: "value" }, { additive: true });
+    });
+    expect(result.current.selectedIds).toEqual(["a"]);
+    expect(result.current.selectedKpiParts).toEqual([{ kind: "title" }, { kind: "value" }]);
   });
 
   it("enterTextEdit isola membro de grupo e ativa edição sem reexpandir", () => {

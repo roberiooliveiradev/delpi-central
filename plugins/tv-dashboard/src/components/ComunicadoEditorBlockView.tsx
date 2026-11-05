@@ -91,7 +91,7 @@ import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
-import { resolveCompositePartPointerAction, isCompositeContentPart, shouldAttachCompositePartInteraction } from "../utils/compositePartSelection";
+import { resolveCompositePartPointerAction, resolveCompositeShiftIntent, isCompositeContentPart, shouldAttachCompositePartInteraction } from "../utils/compositePartSelection";
 import { resolveCanvasTableCellPointerAction } from "../utils/canvasTableCellSelection";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { CanvasTableContextMenu } from "./CanvasTableContextMenu";
@@ -570,6 +570,21 @@ function EditorTableViewBlock({
       if (!event) return;
       const blockSelected = selectedId === block.id;
 
+      /*
+       * Shift em outro macrocomponente (ou com vários blocos já selecionados)
+       * promove o clique, mesmo se o ponto for célula/coluna.
+       */
+      if (
+        event.shiftKey &&
+        resolveCompositeShiftIntent({
+          hitBlockId: block.id,
+          selectedIds,
+        }) === "additive-block"
+      ) {
+        selectBlock(block.id, { additive: true });
+        return;
+      }
+
       /* Alt+célula → seleciona a linha (Excel-like). */
       if (ref.kind === "cell" && event.altKey && blockSelected) {
         selectTablePart(
@@ -796,6 +811,15 @@ function EditorKpiViewBlock({
     (part: ComunicadoKpiPartRef, event?: ReactPointerEvent) => {
       if (!event) return;
       if (event.shiftKey) {
+        if (
+          resolveCompositeShiftIntent({
+            hitBlockId: block.id,
+            selectedIds,
+          }) === "additive-block"
+        ) {
+          selectBlock(block.id, { additive: true });
+          return;
+        }
         selectKpiPart(block.id, part, { additive: true });
         if (part.kind === "metricCard") {
           requestRibbonTab("data", { blockId: block.id });
@@ -1298,6 +1322,15 @@ function EditorInputBlock({
     (part: ComunicadoInputPartRef, event?: ReactPointerEvent) => {
       if (!event) return;
       if (event.shiftKey) {
+        if (
+          resolveCompositeShiftIntent({
+            hitBlockId: block.id,
+            selectedIds,
+          }) === "additive-block"
+        ) {
+          selectBlock(block.id, { additive: true });
+          return;
+        }
         selectInputPart(block.id, part, { additive: true });
         return;
       }

@@ -10,6 +10,21 @@
 export type CompositePartPointerAction = "drag-block" | "part-move" | "select-part";
 
 /**
+ * Shift+clique entre blocos distintos seleciona os macrocomponentes.
+ * Shift dentro do único bloco já selecionado permanece na multi-seleção de partes.
+ */
+export type CompositeShiftIntent = "additive-block" | "additive-part";
+
+export function resolveCompositeShiftIntent(params: {
+  hitBlockId: string;
+  selectedIds: readonly string[];
+}): CompositeShiftIntent {
+  const sole =
+    params.selectedIds.length === 1 && params.selectedIds[0] === params.hitBlockId;
+  return sole ? "additive-part" : "additive-block";
+}
+
+/**
  * Widgets compostos no editor sempre expõem handlers de parte.
  * Clique simples → `resolveCompositePartPointerAction` → arrasta/seleciona o bloco;
  * parte só move quando já está selecionada (`part-move`).
