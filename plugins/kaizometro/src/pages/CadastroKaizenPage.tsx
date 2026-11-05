@@ -76,8 +76,11 @@ export function CadastroKaizenPage({ pathname, permissions, isSuperadmin }: Prop
 
   return (
     <KaizenListPage
+      key={`list|${externalRoute.status ?? ""}|${externalRoute.branch ?? ""}`}
       onNavigate={handleNavigate}
       branchOptions={branchOptions}
+      initialStatus={externalRoute.status}
+      initialBranch={externalRoute.branch}
     />
   );
 }

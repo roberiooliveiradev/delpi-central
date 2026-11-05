@@ -26,9 +26,16 @@ import type { BranchOption } from "../utils/kaizenBranchPermissions";
 type Props = {
   onNavigate: (path: string) => void;
   branchOptions: BranchOption[];
+  initialStatus?: string;
+  initialBranch?: string;
 };
 
-export function KaizenListPage({ onNavigate, branchOptions }: Props) {
+export function KaizenListPage({
+  onNavigate,
+  branchOptions,
+  initialStatus,
+  initialBranch,
+}: Props) {
   const allowAllBranches = branchOptions.length > 1;
   const [items, setItems] = useState<KaizenRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,9 +45,13 @@ export function KaizenListPage({ onNavigate, branchOptions }: Props) {
   const [success, setSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [branch, setBranch] = useState(() =>
-    allowAllBranches ? "" : branchOptions[0]?.value ?? "",
+    initialBranch && branchOptions.some((o) => o.value === initialBranch)
+      ? initialBranch
+      : allowAllBranches
+        ? ""
+        : branchOptions[0]?.value ?? "",
   );
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState(initialStatus ?? "");
   const [savingsType, setSavingsType] = useState("");
   const [title, setTitle] = useState("");
   const [shareOpen, setShareOpen] = useState(false);

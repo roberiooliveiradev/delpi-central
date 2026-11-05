@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 function readPathname(): string {
   if (typeof window === "undefined") return "";
-  return window.location.pathname;
+  return `${window.location.pathname}${window.location.search}`;
 }
 
 /** Mantém o pathname em sincronia com a URL do navegador (deep-link + popstate). */

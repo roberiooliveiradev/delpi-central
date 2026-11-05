@@ -399,6 +399,11 @@ class PostgresKaizenRepository(PluginBaseRepository):
             "implantados": status_count("implantado"),
             "aprovados": status_count("aprovado"),
             "recebidos": status_count("recebido"),
+            # Pendências no escopo da unidade, independente do período filtrado —
+            # cadastros aguardando aprovação do comitê devem permanecer visíveis.
+            "recebidos_total": sum(
+                1 for row in rows if row.get("status") == "recebido"
+            ),
             "descontinuados": status_count("descontinuado"),
             "cancelados": status_count("cancelado"),
             "period_savings": round(period_savings, 2),

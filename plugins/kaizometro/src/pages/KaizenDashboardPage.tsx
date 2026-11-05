@@ -29,7 +29,7 @@ import {
   MultiSelectField,
   StateAlert,
 } from "../components/ui";
-import { detailPath, newPath } from "../constants/kaizen";
+import { detailPath, listPath, newPath } from "../constants/kaizen";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { ANNUAL_BUSINESS_DAYS } from "../content/savingsConstants";
 import { useCompetenceLinkedDates } from "../hooks/useCompetenceLinkedDates";
@@ -239,7 +239,6 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
   const hasPeriod = summary?.has_period ?? false;
   const savingsHint = hasPeriod ? "no período selecionado" : "acumulado (validade de 1 ano)";
   const implantedHint = hasPeriod ? "no período selecionado" : "total aprovados/implantados";
-  const recebidosHint = hasPeriod ? "no período selecionado" : "aguardando aprovação do comitê";
 
   const total = summary?.total ?? 0;
   const showEmptyCatalog =
@@ -377,13 +376,17 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
               value={formatInteger(summary.period_implanted_count)}
               sub={implantedHint}
             />
-            {(summary.recebidos ?? 0) > 0 ? (
+            {(summary.recebidos_total ?? 0) > 0 ? (
               <KpiCard
                 icon={<Inbox size={22} />}
                 tone="muted"
                 label="Kaizens recebidos"
-                value={formatInteger(summary.recebidos)}
-                sub={recebidosHint}
+                value={formatInteger(summary.recebidos_total)}
+                sub="aguardando aprovação do comitê"
+                onClick={() =>
+                  onNavigate(listPath({ status: "recebido", branch: branchParam }))
+                }
+                aria-label="Ver kaizens recebidos na listagem de cadastros"
               />
             ) : null}
             <KpiCard

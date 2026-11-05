@@ -256,3 +256,35 @@ def test_summary_excludes_record_anchored_outside_period() -> None:
     assert result["total"] == 0
     assert result["recebidos"] == 0
     assert result["by_status"] == []
+
+
+def test_summary_recebidos_total_ignores_period() -> None:
+    """O card de pendências conta recebidos do escopo mesmo fora do recorte
+    de datas — um recebido antigo continua aguardando aprovação."""
+    repo = PostgresKaizenRepository(connection=MagicMock())
+    repo.fetch_all = MagicMock(
+        return_value=[
+            _implanted_row(
+                status="recebido",
+                branch_code="02",
+                date_committee_approved=None,
+                date_implemented=None,
+                date_idea_received=date(2025, 5, 10),
+                created_at=date(2025, 5, 10),
+                daily_savings=None,
+                annual_savings=None,
+            )
+        ]
+    )
+
+    result = repo.summary(
+        branch_code="02",
+        date_start="2026-01-01",
+        date_end="2026-11-05",
+    )
+
+    # Fora do período: não entra nos totais recortados…
+    assert result["total"] == 0
+    assert result["recebidos"] == 0
+    # …mas continua pendente no escopo da unidade.
+    assert result["recebidos_total"] == 1

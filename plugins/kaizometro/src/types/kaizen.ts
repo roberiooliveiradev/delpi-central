@@ -163,6 +163,8 @@ export type KaizenSummary = {
   implantados: number;
   aprovados: number;
   recebidos: number;
+  /** Recebidos no escopo da unidade, independente do período filtrado. */
+  recebidos_total: number;
   descontinuados: number;
   cancelados: number;
   period_savings: number;

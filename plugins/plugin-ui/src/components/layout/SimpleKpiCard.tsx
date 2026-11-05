@@ -168,6 +168,9 @@ export function createKaizenKpiCard(prefix = "kz") {
     sub,
     icon,
     className,
+    onClick,
+    "aria-label": ariaLabel,
+    pressed,
   }: {
     tone?: string;
     label: string;
@@ -175,6 +178,9 @@ export function createKaizenKpiCard(prefix = "kz") {
     sub?: string;
     icon: ReactNode;
     className?: string;
+    onClick?: () => void;
+    "aria-label"?: string;
+    pressed?: boolean;
   }) {
     const toneClass = tone ? simpleKpiKaizenToneClass(prefix, tone) : undefined;
     const mergedClassName = [toneClass, className].filter(Boolean).join(" ") || undefined;
@@ -188,6 +194,9 @@ export function createKaizenKpiCard(prefix = "kz") {
         valueTag="h3"
         classNames={classNames}
         className={mergedClassName}
+        onClick={onClick}
+        aria-label={ariaLabel}
+        pressed={pressed}
       />
     );
   };

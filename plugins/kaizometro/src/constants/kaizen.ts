@@ -208,10 +208,23 @@ export const APP_BASE = "/apps/kaizometro";
 
 export type View = "dashboard" | "list" | "new" | "edit" | "detail";
 
-export function parseRoute(pathname?: string): { view: View; id?: string } {
-  const path = (pathname ?? APP_BASE).replace(/\/+$/, "");
+export function parseRoute(pathname?: string): {
+  view: View;
+  id?: string;
+  status?: string;
+  branch?: string;
+} {
+  const [pathOnly, query] = (pathname ?? APP_BASE).split("?", 2);
+  const path = pathOnly.replace(/\/+$/, "");
   if (path === APP_BASE || path.endsWith("/dashboard")) return { view: "dashboard" };
-  if (path.endsWith("/cadastros")) return { view: "list" };
+  if (path.endsWith("/cadastros")) {
+    const params = new URLSearchParams(query ?? "");
+    return {
+      view: "list",
+      status: params.get("status") ?? undefined,
+      branch: params.get("branch") ?? undefined,
+    };
+  }
   if (path.endsWith("/novo")) return { view: "new" };
   const detailMatch = path.match(/\/detalhe\/([^/]+)$/);
   if (detailMatch) return { view: "detail", id: detailMatch[1] };
@@ -220,8 +233,12 @@ export function parseRoute(pathname?: string): { view: View; id?: string } {
   return { view: "dashboard" };
 }
 
-export function listPath(): string {
-  return `${APP_BASE}/cadastros`;
+export function listPath(filters?: { status?: string; branch?: string }): string {
+  const params = new URLSearchParams();
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.branch) params.set("branch", filters.branch);
+  const query = params.toString();
+  return `${APP_BASE}/cadastros${query ? `?${query}` : ""}`;
 }
 
 export function dashboardPath(): string {
