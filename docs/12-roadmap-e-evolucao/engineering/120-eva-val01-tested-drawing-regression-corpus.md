@@ -206,3 +206,13 @@ Após executar os 13 testes, foi baixado novamente o **PDF oficial atual** `9026
 **Bloqueio operacional:** primeira tentativa `90263572` falhou 502 na fonte; subsequente concluiu. Não classificar flutuação de disponibilidade como regressão de OCR. **Estados:** `PARENT_PROVENANCE=PASS`, `BOM_ONLY_VALIDATION=CANDIDATES_KEPT`, `MCP_CRITICAL_TWO_COMPLETED=PASS_AFTER_RETRY`, `OCR_A1_PERCEPTUAL_PROOF_IN_CONSUMER=PENDING`, `VAL01_TECHNICAL_APPROVAL=PENDING`.
 
 **Próximo gate:** localizar o evento `recovery[{code:10080004,page:2,confidence:0.9999,method:localized_ocr_recheck}]` alegado em runtime e provar que chega pelo contrato do consumidor com relação ao código, página, região, evidência de OCR e identidade do PDF, sem usar o código da BOM para criar a evidência. Retestar a partir do consumidor após correção/observabilidade. Preservar os dez findings como candidatos à revisão da Engenharia.
+
+## Log adicional — 2026-11-04 (EVA #131 / DEC-VAL-034 — evidência perceptual reconciliada ao relatório)
+
+**Contexto:** reteste independente anterior achou `O0001/10080004` `AMBIGUOUS` + `NO_CANDIDATE_REGION` no `guided_investigations`, apesar do backend recuperar o código — a evidência saía apenas ao comparador (`drawing_tokens`), nunca ao universo da investigação guiada. Commit **`6a7fdc65c1`**.
+
+**Correção:** `localized_recovery` no `drawing_understanding` + consumo na I-01 (`_check_component_code`) + `code_contexts` enriquecido + `box` do token OCR real lido (`box=null` era attr errado). Contrato RQ-VAL-052 com nulos explícitos, nada inventado.
+
+**Verificado em produção (`6a7fdc65c1`, `delpi-engineering-api` healthy):** `O0001/10080004` → `MATCH_CANDIDATE`, `observed_value=10080004`, `page=2`, `region_box=[20,248,909,1038]@110dpi`, `bounding_box` quad real em espaço de página, `method=localized_ocr_recheck`, `confidence=0.9999`, `document_sha256=9021fce0…28d3e`. Sem contradição `CODE_OBSERVED`×`NO_CANDIDATE_REGION`.
+
+**Suíte:** 107/107 PASS. Gate DEC-VAL-033 e corpus preservados. `REGRESSION_13_MCP` e `CHATGPT_CONSUMER_PASS` permanecem **PENDING** até reteste independente do relatório MCP.

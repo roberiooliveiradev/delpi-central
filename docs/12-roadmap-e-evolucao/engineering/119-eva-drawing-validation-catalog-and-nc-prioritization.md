@@ -858,3 +858,20 @@ Página/área de **Análise Técnica do Produto** dentro do Portal Engenharia: s
 **Testes:** +7 (região expandida, dpi por página, adaptativo, quad 8pt, falha de render, negativo, DRAWING_ONLY sem raiz); 3 fixtures legados alinhados ao gate ≥0.9. **102/102 PASS.**
 
 **Estado:** `OCR_CELL_RECOVERY_10080004=PASS` · `PARENT_PROVENANCE_90264030=PASS` · `BOM_ONLY_VALIDATION=CANDIDATES_KEPT` · `REGRESSION_SUITE=102/102` · `CHATGPT_CONSUMER_PASS=PENDING` (reteste independente obrigatório: `compose_understanding` em `90263572` e `90264030` → conferir `localized_ocr_recheck`/`parent_source` nos artefatos e os 10 findings com parentesco correto).
+
+## 35. DEC-VAL-034 (EVA #131) — evidência `localized_ocr_recheck` reconciliada na investigação guiada e no MCP (2026-11-04)
+
+**Causa-raiz (PROVEN ponta a ponta):** o token recuperado era anexado somente a `drawing_tokens` — o comparador o via (`bom_only=0`, falso BOM_ONLY suprimido), mas a investigação guiada (`guided_investigations`) opera sobre `component_table.rows` + `identifier_candidates`, que nunca recebiam a evidência → `O0001/10080004` reportada `AMBIGUOUS` + `NO_CANDIDATE_REGION` no MCP apesar do backend recuperar o código. Defeito secundário: `OcrToken.box` não era lido (código buscava `bounding_box_px`) → `box=null` na evidência.
+
+**Correção (commit `6a7fdc65c1`):**
+- `recover_absent_table_cells` lê `bounding_box_px` **ou** `box` e devolve `region`/`region_ref_dpi` (região efetivamente inspecionada).
+- `analyze_product_drawing` registra recuperados em `u["code_contexts"]` (`component_table`, dedup) e `u["localized_recovery"]` — contrato RQ-VAL-052: `observed_code`, `raw_text`, `product_code`, `pdf_sha256`, `page`, `region`/`region_box`, `bounding_box|null`, `coordinate_system`, `method`, `confidence`, `source_revision`. Nada fictício; nulos explícitos.
+- `_check_component_code`: após tipadas/ambíguas, consulta `localized_recovery` — hit único → `MATCH_CANDIDATE` com `evidence_refs` completos (método, página, region_box, box em espaço da página, SHA do documento); múltiplos hits → `AMBIGUOUS`; nenhum → fluxo inalterado. O crop é delimitado pela faixa da tabela tipada expandida por tokens na faixa → observação estrutural, não token solto. Contradição CODE_OBSERVED-backend × NO_CANDIDATE_REGION-MCP eliminada.
+
+**Evidência prod (`6a7fdc65c1`, in-container, PDF `90263572` SHA `9021fce0…28d3e`):** `O0001/10080004` → `overall_state=MATCH_CANDIDATE`, `observed_value=10080004`, `evidence_refs`: `source_kind=localized_ocr_recheck`, `page=2`, `region_box=[20,248,909,1038]@110dpi`, `bounding_box=[351.8,270.8,395.1,283.2]` (quad real convertido, não inventado), `confidence=0.9999`, `document_sha256=9021fce0…28d3e`.
+
+**Testes:** +5 (consumo na I-01, sem box, múltiplos hits, código diverso inalterado, attr `box` do token). **107/107 PASS.**
+
+**Preservado:** gate `BOM_ONLY` ≥0.9 (DEC-VAL-033) intacto; `90264030` 5/5 pais verificados e 10 findings candidatos mantidos; nenhuma NC automática.
+
+**Estado:** `OCR_A1_BACKEND_RECOVERY=PASS` · `REPORT_GROUNDING=PASS (evidência verificável no guided_investigations)` · `BOM_ONLY_GATE=PRESERVED` · `CHATGPT_CONSUMER_PASS=PENDING` (reteste: `compose_understanding` `90263572` → `guided_investigations` deve mostrar `O0001` MATCH_CANDIDATE + `evidence_refs` localized_ocr_recheck; `90264030` → 5 pais + 10 findings).
