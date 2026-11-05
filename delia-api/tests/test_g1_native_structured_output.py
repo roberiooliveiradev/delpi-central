@@ -19,6 +19,7 @@ from app.application.capability_provision.contracts import (
 from app.application.capability_provision.orchestration import (
     _apply_declared_answer,
 )
+from app.application.interaction.turn_budget import TurnDeadline
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityAttempt,
     GovernedCapabilityProvenance,
@@ -569,3 +570,105 @@ def test_behavioral_usage_limit_blocks_retries():
     with pytest.raises(UsageLimitExceeded):
         agent.run_sync("hi", usage_limits=UsageLimits(request_limit=1))
     assert len(calls) == 1  # capped — no second physical request
+
+
+# ------------------------------------------------------------------
+# G7 G4 (doc 265 §B): instrumented PydanticAiInvestigationOrchestrator
+# — real gates/toolset, physical model requests counted.
+# ------------------------------------------------------------------
+
+
+def test_engine_physical_requests_one_call_one_tool():
+    """Full engine path with real gates: one tool-call request + one
+    final_result request = 2 physical model calls — no external retry
+    multiplication, no extra run_sync."""
+    from tests.test_pydantic_ai_semantic_rework import _gates
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from pydantic_ai.messages import (
+        ModelResponse, ToolCallPart,
+    )
+    from pydantic_ai.models.function import FunctionModel
+
+    gates = _gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    read = next(c for c in catalog if c["operation_class"] == "READ")
+    model_calls = []
+
+    def _fn(messages, _info):
+        model_calls.append(len(messages))
+        if not any(isinstance(m, ModelResponse) for m in messages):
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "invoke_read_capability",
+                        {
+                            "capability_id": read["capability_id"],
+                            "arguments": {"query": "terminal"},
+                        },
+                    )
+                ]
+            )
+        return _final_answer("done", status="insufficient")
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    attempt = engine.attempt("liste terminais")
+    # exactly 2 physical model requests: tool call + final_result
+    assert len(model_calls) == 2
+    assert attempt.governed_attempts is not None
+
+
+def test_engine_tool_invocation_is_governed_not_multiplied():
+    """Each tool invocation passes through the governed stage gates —
+    count them via the catalog spy: one capability call = one
+    governed owner invocation, never retried by the Agent loop."""
+    from tests.test_pydantic_ai_semantic_rework import _gates
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from pydantic_ai.messages import (
+        ModelResponse, ToolCallPart,
+    )
+    from pydantic_ai.models.function import FunctionModel
+
+    gates = _gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    read = next(c for c in catalog if c["operation_class"] == "READ")
+    invocations = []
+    original = gates._governed_semantic_tool_invoke
+
+    def _spy(**kwargs):
+        invocations.append(kwargs.get("capability_id"))
+        return original(**kwargs)
+
+    gates._governed_semantic_tool_invoke = _spy
+
+    def _fn(messages, _info):
+        if not any(isinstance(m, ModelResponse) for m in messages):
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "invoke_read_capability",
+                        {
+                            "capability_id": read["capability_id"],
+                            "arguments": {"query": "x"},
+                        },
+                    )
+                ]
+            )
+        return _final_answer("done", status="insufficient")
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    engine.attempt("liste")
+    # one tool call → exactly one governed owner invocation
+    assert len(invocations) == 1
+    assert invocations[0] == read["capability_id"]

@@ -241,6 +241,7 @@ class OpenAICompatibleTranscriptionAdapter:
             raise
         except (
             BoundedHttpTimeout,
+            TimeoutError,
             requests.exceptions.Timeout,
         ) as exc:
             raise DictationError(
@@ -250,8 +251,18 @@ class OpenAICompatibleTranscriptionAdapter:
             BoundedHttpTransportError,
             requests.exceptions.RequestException,
         ) as exc:
+            # The deadline-wrapped socket fires a transport error when
+            # the absolute deadline kills a stalled read — a failure
+            # surfaced at/past the deadline IS the deadline, not a
+            # reachability problem (doc 265 residual 1).
+            if time.monotonic() >= deadline:
+                raise DictationError(
+                    PROVIDER_TIMEOUT,
+                    "transcription provider timed out",
+                ) from exc
             raise DictationError(
-                PROVIDER_UNAVAILABLE, "transcription provider unreachable"
+                PROVIDER_UNAVAILABLE,
+                "transcription provider unreachable",
             ) from exc
 
     @staticmethod

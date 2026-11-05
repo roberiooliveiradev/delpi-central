@@ -467,3 +467,22 @@ Only **one dependency freeze in G0**, then specific bounded diff. Do not repeat 
   auth/privacy, byte-line UTF-8, port de transcrição, bounded_request
   no path não-streaming. Zero segundo transporte.
 - Suíte completa PASS (exit 0).
+
+## 19. G7 — verificação integrada (execução, fatia executável)
+
+- **G6 residual (doc 265 §1-2)**: 4 testes REAIS com servidor HTTP local
+  (trickle, stall mid-stream, UTF-8 split, lifecycle pós-fechamento) —
+  DEFEITO REAL encontrado: stall mid-stream disparava erro de transporte
+  mapeado como `provider_unavailable`; corrigido para `provider_timeout`
+  quando a falha ocorre no/após o deadline (timeout honesto). Response
+  streaming lê normalmente após fechamento da Session (prova).
+- **G4 engine real**: 2 testes instrumentados no
+  PydanticAiInvestigationOrchestrator + gates reais — 2 requests físicos
+  por attempt (tool call + final_result), 1 invocação governada por
+  capability, zero multiplicação externa.
+- **E01–E10**: TEST_NOT_RUN — requer delpi-delia-api + Keycloak +
+  owners MCP no ambiente autorizado (harness doc243_e_matrix_probe.py
+  existe, env ausente). Sem mock apresentado como avaliação real.
+- **Segurança**: G2 negatives (15) + MCP fail-closed + snapshot (9) +
+  OpenAPI C3-T5 (46) + STT streaming (4 reais) — preservados.
+- Suíte completa PASS (exit 0).
