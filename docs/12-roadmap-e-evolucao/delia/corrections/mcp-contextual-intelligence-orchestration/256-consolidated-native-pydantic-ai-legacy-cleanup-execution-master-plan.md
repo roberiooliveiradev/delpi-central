@@ -846,3 +846,21 @@ PRODUCTION_DEPLOY=NOT_AUTHORIZED.
 - Cadeia governada: discover→execute→uncovered=50220013 (3×).
 - Stale fixes: context 16384, retries 2 (mudanças medidas).
 - Suite completa PASS (exit 0).
+
+## 38. P0 — thinking disable + delivery final (tarefa 283→P0)
+
+- **GPU**: RTX 3050 6GB existe no host mas `docker run --gpus all`
+  falha — `no known GPU vendor found` (NVIDIA Container Toolkit/CDI
+  não instalado) → GPU em Docker BLOCKED (mudança de host necessária,
+  fora do escopo desta task).
+- **Hipótese thinking**: qwen3 emite `<think>` reasoning que consome
+  geração e corrompe saída estruturada sob contexto cheio →
+  `enable_thinking: false` via `extra_body.chat_template_kwargs` no
+  `run_sync` (mechanismo nativo qwen3/Ollama; ignorado por providers
+  não-qwen3). `_investigation_model_settings()`.
+- **Estado**: o modelo processa (task 3588, 3330 tok, ctx 16384)
+  mas geração ~6 tok/s CPU → a resposta estruturada final continua
+  lenta. Gate de contexto, memória e thinking resolvidos; a entrega
+  ao client ainda é limitada pela velocidade de geração do modelo
+  4B sem GPU no ambiente dev — recurso, não defeito de código.
+- Cadeia governada provada 3×: discover→execute→uncovered=50220013.

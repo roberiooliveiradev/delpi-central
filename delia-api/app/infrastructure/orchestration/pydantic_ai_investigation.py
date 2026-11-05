@@ -500,6 +500,21 @@ def _prior_message_history(
     return history
 
 
+def _investigation_model_settings():
+    """Model settings for the investigation run — ``extra_body``
+    ``chat_template_kwargs.enable_thinking=False`` disables qwen3
+    ``<think>`` reasoning which otherwise consumes generation budget
+    and corrupts the strict structured output under full context.
+    Providers without this kwarg ignore it."""
+    from pydantic_ai.models.openai import OpenAIChatModelSettings
+
+    return OpenAIChatModelSettings(
+        extra_body={
+            "chat_template_kwargs": {"enable_thinking": False}
+        }
+    )
+
+
 class _InvestigationHistoryIntegrityError(Exception):
     """Malformed native history — orphan/mismatched tool results must
     never be attached to an unrelated unit or treated as valid
@@ -1353,6 +1368,7 @@ class PydanticAiInvestigationOrchestrator:
                     prompt,
                     message_history=message_history or None,
                     deps=deps,
+                    model_settings=_investigation_model_settings(),
                     usage_limits=UsageLimits(
                         request_limit=self._request_limit,
                         tool_calls_limit=self._tool_calls_limit,
