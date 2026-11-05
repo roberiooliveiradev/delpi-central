@@ -28,6 +28,7 @@ vi.mock("../../api/stockReconciliationApi", () => ({
 import { ApiError } from "../../api/httpClient";
 import { ControllershipQueryProvider } from "../../app/ControllershipQueryProvider";
 import {
+  getReportQueryClient,
   readTokenSubject,
   sealReportSession,
 } from "../../app/reportQueryCache";
@@ -479,6 +480,96 @@ describe("isolamento", () => {
     ).toBeTruthy();
     expect(screen.queryByText(/Sessão expirada/)).toBeNull();
     expect(screen.queryAllByText("Posição histórica indisponível")).toHaveLength(0);
+  });
+
+  it("403 concorrente não republica payload iniciado antes da negativa", async () => {
+    readyMocks();
+    let releaseStock: ((value: unknown) => void) | null = null;
+    let stockCalls = 0;
+    stockMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          stockCalls += 1;
+          releaseStock = resolve;
+        }),
+    );
+    let rejectP3: ((error: unknown) => void) | null = null;
+    p3Mock.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectP3 = reject;
+        }),
+    );
+    renderPanel();
+    await waitFor(() => expect(releaseStock).not.toBeNull());
+    await waitFor(() => expect(rejectP3).not.toBeNull());
+    await act(async () => {
+      rejectP3?.(new ApiError(403, "negado", "forbidden"));
+    });
+    await waitFor(() => {
+      const denied = getReportQueryClient()
+        .getQueryCache()
+        .getAll()
+        .some((query) => {
+          const data = query.state.data as { kind?: string } | undefined;
+          return data?.kind === "forbidden";
+        });
+      expect(denied).toBe(true);
+    });
+    const callsAtDenial = stockCalls;
+    await act(async () => {
+      releaseStock?.({
+        report: "stock_inventory",
+        period: PERIOD,
+        status: "available",
+        historicalTotal: "424242.42",
+        officialP7: false,
+        parityStatus: "PENDING",
+        pagination: { page: 1, page_size: 25, total_items: 1, total_pages: 1 },
+        items: [{ product: "MARCADOR-403-TARDIO" }],
+        summariesByType: [],
+        summariesByWarehouse: [],
+        branchesAvailable: [],
+        branchesMissing: ["MARCADOR-403-TARDIO"],
+      });
+    });
+
+    expect(
+      (await screen.findAllByText(/Você não tem autorização para esta consulta/)).length,
+    ).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText("Sessão necessária")).toBeNull();
+    expect(screen.getByText("Relatórios para análise")).toBeTruthy();
+    expect(screen.queryByText(/424\.242,42/)).toBeNull();
+    expect(screen.queryByText("MARCADOR-403-TARDIO")).toBeNull();
+    const cached = JSON.stringify(
+      getReportQueryClient()
+        .getQueryCache()
+        .getAll()
+        .map((query) => query.state.data),
+    );
+    expect(cached).not.toContain("424242.42");
+    expect(cached).not.toContain("MARCADOR-403-TARDIO");
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(stockCalls).toBe(callsAtDenial);
+  });
+
+  it("erro técnico só volta a consultar depois do frescor", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    readyMocks();
+    p3Mock.mockRejectedValue(new Error("fonte indisponível"));
+    const first = renderPanel();
+    expect((await screen.findAllByText(/Falha de comunicação com a API/)).length).toBeGreaterThan(0);
+    expect(p3Mock).toHaveBeenCalledTimes(1);
+    first.unmount();
+    const second = renderPanel();
+    expect((await screen.findAllByText(/Falha de comunicação com a API/)).length).toBeGreaterThan(0);
+    expect(p3Mock).toHaveBeenCalledTimes(1);
+    second.unmount();
+    await vi.advanceTimersByTimeAsync(61_000);
+    renderPanel();
+    await waitFor(() => expect(p3Mock).toHaveBeenCalledTimes(2));
   });
 
   it("resposta tardia da geração anterior não republica o valor", async () => {

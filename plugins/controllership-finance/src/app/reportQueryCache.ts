@@ -27,10 +27,35 @@ type ScopeListener = () => void;
 
 let client: QueryClient | null = null;
 let generation = 0;
+/**
+ * Barreira de publicação. 403 incrementa esta barreira sem selar a
+ * sessão e sem trocar a chave: consultas já iniciadas não gravam
+ * payload financeiro depois da negativa.
+ */
+let publicationEpoch = 0;
 let active: ReportCacheScope | null = null;
 let sealed = false;
 let sealedSubject: string | null = null;
 const listeners = new Set<ScopeListener>();
+
+function isProtectedDenial(data: unknown): boolean {
+  if (!data || typeof data !== "object") return false;
+  const kind = (data as { kind?: string }).kind;
+  return kind === "forbidden" || kind === "unauthorized";
+}
+
+/** Erro técnico volta a ser buscado só depois do frescor da própria fonte. */
+function retryTechnicalErrorOnMount(query: Query): boolean {
+  if (query.state.status !== "error") return true;
+  const staleTime = (query.options as { staleTime?: unknown }).staleTime;
+  const windowMs = typeof staleTime === "number" ? staleTime : 0;
+  return Date.now() - query.state.errorUpdatedAt >= windowMs;
+}
+
+/** 401/403 já gravados não disparam novo GET automático. */
+function refetchUnlessDenied(query: Query): boolean {
+  return !isProtectedDenial(query.state.data);
+}
 
 export function getReportQueryClient(): QueryClient {
   if (!client) client = createReportQueryClient();
@@ -42,10 +67,10 @@ export function createReportQueryClient(): QueryClient {
     defaultOptions: {
       queries: {
         retry: false,
-        retryOnMount: false,
-        refetchOnMount: true,
-        refetchOnWindowFocus: true,
-        refetchOnReconnect: true,
+        retryOnMount: retryTechnicalErrorOnMount,
+        refetchOnMount: refetchUnlessDenied,
+        refetchOnWindowFocus: refetchUnlessDenied,
+        refetchOnReconnect: refetchUnlessDenied,
         gcTime: REPORT_GC_TIME_MS,
         structuralSharing: true,
       },
@@ -165,6 +190,7 @@ export function resetReportQueryCacheForTests(): void {
   client?.clear();
   client = null;
   generation = 0;
+  publicationEpoch = 0;
   active = null;
   sealed = false;
   sealedSubject = null;
@@ -191,10 +217,15 @@ function discardOtherFinancialQueries(currentKey: QueryKey): void {
   });
 }
 
+function abortStalePublication(): never {
+  throw new DOMException("Aborted", "AbortError");
+}
+
 /**
  * Executa a leitura e só devolve payload financeiro se a geração
- * capturada ainda estiver ativa. 401 sela a sessão. 403 substitui
- * o payload desta chave e remove payloads financeiros das demais.
+ * e a barreira de publicação capturadas ainda forem as ativas.
+ * 401 sela a sessão. 403 preserva a sessão, descarta financeiros
+ * já gravados e impede que uma leitura anterior publique depois.
  */
 export async function guardReportQuery<T>(
   scope: ReportCacheScope,
@@ -204,31 +235,33 @@ export async function guardReportQuery<T>(
   options?: { notOpened?: (error: ApiError) => boolean; emptyIsNotOpened?: boolean },
 ): Promise<GuardedResult<T>> {
   const started = scope.generation;
-  if (sealed || started !== generation) {
-    throw new DOMException("Aborted", "AbortError");
-  }
+  const startedEpoch = publicationEpoch;
+  if (sealed || started !== generation) abortStalePublication();
   try {
     const data = await read(signal);
-    if (signal.aborted || sealed || started !== generation) {
-      throw new DOMException("Aborted", "AbortError");
-    }
+    if (sealed || started !== generation) abortStalePublication();
+    if (startedEpoch !== publicationEpoch) return { kind: "forbidden" };
+    if (signal.aborted) abortStalePublication();
     if (options?.emptyIsNotOpened && (data === null || data === undefined)) {
       return { kind: "not_opened" };
     }
     return { kind: "ready", data, fetchedAt: Date.now() };
   } catch (error) {
-    if (signal.aborted || isAbortError(error)) throw error;
-    if (sealed || started !== generation) {
-      throw new DOMException("Aborted", "AbortError");
-    }
+    if (isAbortError(error)) throw error;
+    if (sealed || started !== generation) abortStalePublication();
     if (error instanceof ApiError && error.status === 401) {
       sealReportSession(scope.subject);
       return { kind: "unauthorized" };
     }
     if (error instanceof ApiError && error.status === 403) {
-      discardOtherFinancialQueries(queryKey);
+      if (startedEpoch === publicationEpoch) {
+        publicationEpoch += 1;
+        discardOtherFinancialQueries(queryKey);
+      }
       return { kind: "forbidden" };
     }
+    if (startedEpoch !== publicationEpoch) return { kind: "forbidden" };
+    if (signal.aborted) abortStalePublication();
     if (
       error instanceof ApiError &&
       options?.notOpened?.(error)
