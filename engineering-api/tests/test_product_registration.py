@@ -17,14 +17,10 @@ from engineering_app.infrastructure.persistence.product_registration.in_memory_r
     InMemoryProductRegistrationRepository,
 )
 
-PR_READ = "engineering.product-registration.read"
-PR_CREATE = "engineering.product-registration.create"
-PR_PROCESS = "engineering.product-registration.process"
-PR_VERIFY = "engineering.product-registration.verify"
-PR_ADMIN = "engineering.product-registration.admin"
-
-ANALYST = [PR_READ, PR_CREATE, PR_PROCESS, PR_VERIFY]
-REQUESTER = [PR_READ, PR_CREATE]
+# Modelo de duas permissões (PO 2026-11-06): CRUD operacional = access.
+ENG_ACCESS = "engineering.access"
+ANALYST = [ENG_ACCESS]
+REQUESTER = [ENG_ACCESS]
 
 
 @pytest.fixture
@@ -148,6 +144,7 @@ def _product(**over):
         "unit": "UN",
         "material_type": "1",
         "customer_reference": "",
+        "accounting_account": "11401002",
     }
     product.update(over)
     return {
@@ -206,8 +203,9 @@ class TestIntake:
     def test_forbidden_without_create(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):
+        # Sem engineering.access → 403 (fail-closed); com access, CRUD abre.
         core_rbac["behavior"] = (
-            "data", rbac_payload(["engineering.access"])
+            "data", rbac_payload(["dashboard-engineering.view"])
         )
         resp = _post(
             client,
@@ -454,7 +452,7 @@ class TestWorkflow:
         assert detail["allowedActions"] == []
         assert detail["completedRecordId"] is None
 
-    def test_scope_requester_cannot_see_foreign(
+    def test_scope_access_sees_foreign_request(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):
         rid = _submit_create(
@@ -468,21 +466,20 @@ class TestWorkflow:
             f"/v1/product-registration/requests/{rid}",
             _token(jwks_env, "user-2"),
         )
-        assert resp.status_code == 403
+        assert resp.status_code == 200
 
-    def test_requester_queue_own_only(
+    def test_requester_without_access_denied(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):
         _submit_create(client, jwks_env, core_rbac, sub="user-1")
         core_rbac["behavior"] = (
-            "data", rbac_payload(REQUESTER, id="user-2")
+            "data", rbac_payload([], id="user-2")
         )
         resp = _get(
             client, "/v1/product-registration/requests",
             _token(jwks_env, "user-2"),
         )
-        assert resp.status_code == 200
-        assert resp.json()["data"]["total"] == 0
+        assert resp.status_code == 403
 
 
 class TestVerifyAndComplete:
@@ -548,10 +545,12 @@ class TestVerifyAndComplete:
     def test_unverifiable_field_blocks(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):
-        # accountingAccount: CONTRACT_GAP — view=engineering não retorna.
+        # Campo ausente no payload oficial → unverifiable (fail-closed).
+        product = _product()
+        product["product"].pop("accounting_account", None)
         rid, version = self._ready_request(
             client, jwks_env, core_rbac, prc_service_repo,
-            FakeReader(_product()),
+            FakeReader(product),
         )
         resp = _post(
             client,
@@ -651,13 +650,7 @@ class TestVerifyAndComplete:
             f"/v1/product-registration/requests/{rid}/actions/submit-review",
             tok, json={"expectedVersion": 2},
         )
-        # accountingAccount é CONTRACT_GAP (unverifiable) — o harness
-        # remove o campo do draft para provar o caminho de sucesso quando
-        # todos os campos verificáveis batem. O bloqueio pelo gap real é
-        # comprovado em test_unverifiable_field_blocks.
-        prc_service_repo["repo"]._drafts[rid][
-            "technical_data"
-        ].pop("accountingAccount", None)
+        # accountingAccount agora é verificável via view=engineering.
         resp = _post(
             client,
             f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
@@ -705,8 +698,9 @@ class TestReferenceData:
         spec = next(
             f for f in data["fields"] if f["path"] == "accountingAccount"
         )
-        assert spec["verifiable"] is False
+        assert spec["verifiable"] is True
         assert "suppliers" in data["editableDraftPaths"]
+        assert data["permissions"]["access"] == "engineering.access"
 
 
 class TestOutbound:

@@ -73,6 +73,8 @@ PRODUCT_DETAIL_ENGINEERING_FIELDS = (
     "current_revision",
     "last_revision_date",
     "net_weight",
+    # accounting (cadastro — decisão PO PRC-D3, read-only)
+    "accounting_account",
     # stock / logistics
     "default_warehouse",
     "package_quantity",

@@ -15,10 +15,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Body, Header, Path, Query
 from pydantic import BaseModel, Field
 
-from delpi_auth.authorization import (
-    require_all_permissions,
-    require_any_permission,
-)
+from delpi_auth.authorization import require_any_permission
 from delpi_auth.context_resolver import resolve_user_context
 
 from engineering_app.application.use_cases.product_registration.actor import (
@@ -37,22 +34,19 @@ from engineering_app.domain.product_registration.errors import (
     PrcUnverifiableFieldError,
     PrcValidationError,
 )
-from engineering_app.domain.product_registration.models import (
-    PR_ADMIN,
-    PR_CREATE,
-    PR_PROCESS,
-    PR_READ,
-    PR_VERIFY,
-)
+from engineering_app.domain.product_registration.models import ENG_ACCESS
 from engineering_app.middleware.request_observability_middleware import (
     get_request_id,
 )
 
 router = APIRouter()
 
-_READ_PERMS = [PR_READ, PR_PROCESS, PR_VERIFY, PR_ADMIN]
-_PROCESS_PERMS = [PR_PROCESS, PR_ADMIN]
-_CREATE_PERMS = [PR_CREATE, PR_ADMIN]
+# Modelo PO: `engineering.access` abre o CRUD operacional completo do
+# módulo (fail-closed). `engineering.manager` é reservado a administração
+# futura — nenhum endpoint o exige neste MVP.
+_READ_PERMS = [ENG_ACCESS]
+_PROCESS_PERMS = [ENG_ACCESS]
+_CREATE_PERMS = [ENG_ACCESS]
 
 
 def _user(operation_id: str):
@@ -485,7 +479,7 @@ async def prc_action_reject(
     operation_id="prc_action_verify_and_complete",
     summary="11 — Verificar no TOTVS e concluir (revisão imutável)",
 )
-@require_all_permissions([PR_PROCESS, PR_VERIFY])
+@require_any_permission(_PROCESS_PERMS)
 async def prc_action_verify_and_complete(
     request_id: str = Path(...),
     body: VerifyBody = Body(...),

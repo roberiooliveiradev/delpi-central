@@ -128,13 +128,12 @@ _PRODUCT_FIELDS: tuple[FieldSpec, ...] = (
         path="accountingAccount",
         kind="code",
         required_create_intake=True,
-        verifiable=False,  # CONTRACT_GAP: B1_CONTA existe no repositório
-        # mas é excluído por PRODUCT_DETAIL_ENGINEERING_FIELDS — gate D.
+        verifiable=True,  # B1_CONTA exposto na view=engineering (PO-D3).
         official_field="accounting_account",
         official_source="products.detail",
         max_length=40,
-        note="B1_CONTA — legado `cta_contabil`; sem leitura oficial "
-        "autorizada na view=engineering (gap de contrato).",
+        note="B1_CONTA — legado `cta_contabil`; leitura oficial "
+        "autorizada via view=engineering (PRC-D3).",
     ),
     FieldSpec(
         path="customerReference",

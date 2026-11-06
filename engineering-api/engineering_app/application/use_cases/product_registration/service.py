@@ -1006,11 +1006,8 @@ class ProductRegistrationService:
                 "optional": list(catalog.SUPPLIER_OPTIONAL_KEYS),
             },
             "permissions": {
-                "read": "engineering.product-registration.read",
-                "create": "engineering.product-registration.create",
-                "process": "engineering.product-registration.process",
-                "verify": "engineering.product-registration.verify",
-                "admin": "engineering.product-registration.admin",
+                "access": "engineering.access",
+                "manager": "engineering.manager",
             },
         }
 

@@ -65,7 +65,7 @@ export const ENGINEERING_CATALOG: readonly CatalogSection[] = [
         description:
           "Fila e atendimento de solicitações de cadastro e alteração de matérias-primas",
         target: { kind: "internal", view: "product-registration" },
-        requiredPermission: "engineering.product-registration.read",
+        requiredPermission: "engineering.access",
         keywords: [
           "cadastro",
           "produto",

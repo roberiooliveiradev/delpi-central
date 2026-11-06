@@ -12,7 +12,13 @@
     {
       "code": "engineering.access",
       "name": "Acessar Portal Engenharia",
-      "description": "Permite abrir a área de trabalho da Engenharia.",
+      "description": "Permite abrir a área de trabalho da Engenharia e operar o Controle e Cadastro de Produtos.",
+      "module": "engineering"
+    },
+    {
+      "code": "engineering.manager",
+      "name": "Administrar Portal Engenharia",
+      "description": "Funcionalidades administrativas do Portal Engenharia (sem operações expostas no MVP).",
       "module": "engineering"
     }
   ],

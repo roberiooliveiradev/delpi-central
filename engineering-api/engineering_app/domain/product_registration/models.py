@@ -24,19 +24,10 @@ TERMINAL_STATUSES: frozenset[str] = frozenset({"completed", "rejected"})
 
 REQUEST_TYPES: tuple[str, ...] = ("create", "update")
 
-# Permissões granulares do vertical (declaradas no manifest do plugin).
-PR_READ = "engineering.product-registration.read"
-PR_CREATE = "engineering.product-registration.create"
-PR_PROCESS = "engineering.product-registration.process"
-PR_VERIFY = "engineering.product-registration.verify"
-PR_ADMIN = "engineering.product-registration.admin"
-PRC_PERMISSIONS: tuple[str, ...] = (
-    PR_READ,
-    PR_CREATE,
-    PR_PROCESS,
-    PR_VERIFY,
-    PR_ADMIN,
-)
+# Modelo de acesso aprovado pelo PO (PRODUCT-REGISTRATION-PO-DECISIONS
+# -2026-11-06 §2): somente duas permissões funcionais do Portal.
+ENG_ACCESS = "engineering.access"
+ENG_MANAGER = "engineering.manager"
 
 # Transições de workflow — ação → (origens válidas, destino).
 _TRANSITIONS: dict[str, tuple[frozenset[str], str]] = {
@@ -75,15 +66,17 @@ _ACTIONS_BY_STATUS: dict[str, tuple[str, ...]] = {
     "rejected": (),
 }
 
-# Ação → permissão granular exigida (além de escopo do recurso).
+# Ação → permissão exigida — modelo de duas permissões (PO): todas as
+# operações do fluxo exigem ``engineering.access``; administração
+# (nenhuma exposta neste MVP) exigiria ``engineering.manager``.
 _ACTION_PERMISSION: dict[str, tuple[str, ...]] = {
-    "start": (PR_PROCESS,),
-    "edit_draft": (PR_PROCESS,),
-    "request_information": (PR_PROCESS,),
-    "resume": (PR_PROCESS,),
-    "submit_review": (PR_PROCESS,),
-    "reject": (PR_PROCESS,),
-    "verify_and_complete": (PR_PROCESS, PR_VERIFY),
+    "start": (ENG_ACCESS,),
+    "edit_draft": (ENG_ACCESS,),
+    "request_information": (ENG_ACCESS,),
+    "resume": (ENG_ACCESS,),
+    "submit_review": (ENG_ACCESS,),
+    "reject": (ENG_ACCESS,),
+    "verify_and_complete": (ENG_ACCESS,),
 }
 
 
@@ -107,35 +100,36 @@ class PrcActor:
         return self.is_superadmin or code in self.permissions
 
     @property
+    def _access(self) -> bool:
+        return self._has(ENG_ACCESS)
+
+    @property
     def can_create(self) -> bool:
-        return self._has(PR_CREATE) or self._has(PR_ADMIN)
+        return self._access
 
     @property
     def can_read(self) -> bool:
-        return any(
-            self._has(code)
-            for code in (PR_READ, PR_CREATE, PR_PROCESS, PR_VERIFY, PR_ADMIN)
-        )
+        return self._access
 
     @property
     def can_process(self) -> bool:
-        return self._has(PR_PROCESS) or self._has(PR_ADMIN)
+        return self._access
 
     @property
     def can_verify(self) -> bool:
-        return self.can_process and self._has(PR_VERIFY)
+        return self._access
 
     @property
     def is_analyst(self) -> bool:
-        """Escopo de fila global: analista = process|verify|admin.
+        """Fila global: todo portador de ``engineering.access`` opera o
+        CRUD do módulo (decisão PO — sem perfil oculto de analista)."""
+        return self._access
 
-        Regra de escopo formalizada do MVP: solicitante (read/create
-        apenas) enxerga somente as próprias solicitações; a fila global
-        é privilégio do analista autorizado — nunca inferida do legado.
-        """
-        return self.is_superadmin or any(
-            self._has(code) for code in (PR_PROCESS, PR_VERIFY, PR_ADMIN)
-        )
+    @property
+    def is_manager(self) -> bool:
+        """Administração do Portal — fail-closed até o contrato Core
+        de ``engineering.manager`` estar registrado."""
+        return self._has(ENG_MANAGER)
 
     def has_action_permission(self, action: str) -> bool:
         required = _ACTION_PERMISSION.get(action, ())
