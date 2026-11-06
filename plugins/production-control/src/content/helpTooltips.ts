@@ -37,9 +37,9 @@ export const helpTooltips = {
   mywegNeedsSb1:
     "Situação do vínculo com o cadastro SB1 do Protheus. Código informado na origem só vira confirmado após validação real. Divergência e ambiguidade mostram o motivo sem editar cadastro.",
   mywegNeedsEvolution:
-    "Compara duas fotografias MyWEG. «Por remessa» mostra movimentos e reprogramações; «Por produto» consolida totais e diferença líquida. Variação observada ≠ abatimento WEG. Faturamento/FIFO são hipóteses separadas.",
+    "Compara duas fotografias MyWEG. «Por remessa» mostra movimentos e reprogramações; «Por produto» consolida totais e diferença líquida. Em «Conciliação MyWEG» entram observações de NF do portal para explicar a variação — estimativa, sem baixa. Variação observada ≠ abatimento WEG. Faturamento/FIFO Protheus são hipóteses separadas da NF observada no portal.",
   mywegNeeds:
-    "Necessidades WEG (filial 02 · ES). «Consulta de necessidades» mostra KPIs, histórico e filtros. «Comparação entre coletas» usa cards Por remessa/Por produto, filtros do par e KPIs de variação. Clique nas barras do histórico na consulta para trocar a coleta. Sem tempo real nem geração de OP.",
+    "Necessidades WEG (filial 02 · ES). «Consulta de necessidades» mostra KPIs, histórico e filtros. «Comparação entre coletas» usa cards Por remessa/Por produto, filtros do par e KPIs de variação. Em Por produto, alterne Necessidades ou Conciliação MyWEG. Clique nas barras do histórico na consulta para trocar a coleta. Sem tempo real nem geração de OP.",
   mywegNeedsKpiIncreased:
     "A mesma combinação produto/remessa existe nas duas coletas e a quantidade aumentou.",
   mywegNeedsKpiDecreased:
@@ -60,8 +60,18 @@ export const helpTooltips = {
     "Total de pareamentos estimados entre datas (ocorrências, não pedidos distintos). Inclui antecipações, postergações e redistribuições na mesma data quando existirem.",
   mywegNeedsProductAnalysis:
     "Consolida a necessidade do produto somando todas as remessas das duas coletas. Diferença líquida = total atual − total anterior. Mudança só de datas com total estável aparece como «quantidade mantida, com alteração nas datas». Não afirma cadastro, cancelamento, faturamento ou atendimento. Reprogramações prováveis são complementares e não alteram os totais.",
+  mywegNeedsInvoiceReconciliation:
+    "A variação ajustada considera as notas fiscais registradas no MyWEG para ajudar a explicar mudanças nas necessidades. Esse cálculo é uma estimativa e não altera os pedidos ou as quantidades recebidas do cliente. A necessidade atual já incorpora descontos da WEG — a NF não é descontada de novo. Dia sem dados ≠ zero NF. Quantidade faturada não comprova abatimento por remessa. NF do portal ≠ faturamento indicativo Protheus.",
+  mywegNeedsObservedDelta:
+    "Variação observada = necessidade atual − necessidade anterior (já com descontos WEG refletidos na coleta). Não é abatimento fiscal.",
+  mywegNeedsPostedNf:
+    "Soma das quantidades de NF Emitidas observadas no MyWEG na janela entre as coletas, em UN, quando a cobertura fiscal está completa. Janela incompleta, pendente ou indisponível não deve ser lida como zero NF.",
+  mywegNeedsAdjustedDelta:
+    "Variação ajustada estimada = variação observada + NF MyWEG (UN). Serve para explicar a mudança; não executa baixa nem altera pedidos.",
+  mywegNeedsFiscalCoverage:
+    "Cobertura da janela fiscal entre as datas documento das coletas. Completa (com ou sem NF), parcial, aguardando importação, conflito ou indisponível. Sem cobertura completa o ajuste fica «Não disponível».",
   mywegNeedsAnalysisRemessa:
-    "Análise por combinação produto e data de remessa — movimentos observados (aumento, redução, entrada, saída) e possíveis reprogramações.",
+    "Análise por combinação produto e data de remessa — movimentos observados (aumento, redução, entrada, saída) e possíveis reprogramações. Faturamento indicativo Protheus, quando ativo, é hipótese separada da NF observada no portal MyWEG.",
   mywegNeedsAnalysisProducts:
-    "Análise consolidada por produto DELPI — totais e diferença líquida considerando todas as remessas, inclusive as inalteradas.",
+    "Análise consolidada por produto DELPI — totais e diferença líquida considerando todas as remessas. Modo Necessidades compara só necessidades; modo Conciliação MyWEG acrescenta observações fiscais do portal para explicar a variação.",
 } as const;

@@ -1633,6 +1633,73 @@ export type MyWegProductRemessaDetail = {
   currentLineCount?: number;
 };
 
+export type MyWegInvoiceMode = "none" | "portal";
+
+export type MyWegInvoiceCoverageStatus =
+  | "complete"
+  | "partial"
+  | "pending_invoice_ingestion"
+  | "conflict"
+  | "unavailable"
+  | string;
+
+export type MyWegInvoiceMatchStatus =
+  | "reconciled"
+  | "none"
+  | "ambiguous_identity"
+  | "attributed_elsewhere"
+  | "multi_material_key"
+  | "partial_coverage"
+  | "conflict"
+  | "unavailable"
+  | string;
+
+export type MyWegPortalInvoiceMaterial = {
+  materialWeg: string;
+  previousNeedUn?: string | null;
+  currentNeedUn?: string | null;
+  observedDeltaUn?: string | null;
+  postedQuantityUn?: string | null;
+  adjustedPlanningDeltaUn?: string | null;
+  compatibleReductionUn?: string | null;
+  invoiceMatchStatus?: MyWegInvoiceMatchStatus | null;
+  attributedToProductKey?: string | null;
+  sources?: string[];
+  note?: string | null;
+};
+
+export type MyWegPortalInvoiceCanonicalObservation = {
+  documentDate: string;
+  status: string;
+  observationId?: string | null;
+  collectionId?: string | null;
+  semanticSha256?: string | null;
+  observationStatus?: string | null;
+  reason?: string | null;
+};
+
+export type MyWegPortalInvoicesBlock = {
+  status: MyWegInvoiceCoverageStatus;
+  /** Status textual da cobertura (não é objeto aninhado). */
+  coverage: MyWegInvoiceCoverageStatus | string;
+  period?: {
+    fromDocumentDate?: string | null;
+    toDocumentDateExclusive?: string | null;
+    start?: string | null;
+    end?: string | null;
+    days?: string[];
+  };
+  coveredDates?: string[];
+  missingDates?: string[];
+  conflicts?: Array<Record<string, unknown>>;
+  coveredDayCount?: number | null;
+  missingDayCount?: number | null;
+  conflictDayCount?: number | null;
+  reason?: string | null;
+  disclaimer?: string | null;
+  canonicalObservations?: MyWegPortalInvoiceCanonicalObservation[];
+};
+
 export type MyWegProductConsolidation = {
   productKey: string;
   identityKind: string;
@@ -1651,6 +1718,15 @@ export type MyWegProductConsolidation = {
   situation: MyWegProductSituation;
   remessas: MyWegProductRemessaDetail[];
   probableDateShifts: MyWegProbableDateShift[];
+  /** Campos aditivos — presentes quando invoiceMode=portal. */
+  observedDeltaUn?: string | null;
+  postedQuantityUn?: string | null;
+  adjustedPlanningDeltaUn?: string | null;
+  compatibleReductionUn?: string | null;
+  invoiceMatchStatus?: MyWegInvoiceMatchStatus | null;
+  portalInvoiceMaterials?: MyWegPortalInvoiceMaterial[];
+  portalInvoiceSources?: string[];
+  portalInvoiceOrphan?: boolean;
 };
 
 export type MyWegCompareProductsPayload = {
@@ -1671,14 +1747,63 @@ export type MyWegCompareProductsPayload = {
   totalProductsChanged: number;
   changesOnly: boolean;
   search: string;
+  invoiceMode?: MyWegInvoiceMode;
   totals: {
     previousQuantityUn: string;
     currentQuantityUn: string;
     deltaQuantityUn: string;
+    postedQuantityUn?: string | null;
+    observedDeltaUn?: string | null;
+    adjustedPlanningDeltaUn?: string | null;
+    compatibleReductionUn?: string | null;
   };
+  portalInvoices?: MyWegPortalInvoicesBlock;
   items: MyWegProductConsolidation[];
   disclaimer: string;
   referenceDate?: string;
+};
+
+export type MyWegInvoiceObservationDetail = {
+  id: string;
+  collectionId: string;
+  branch: string;
+  status: string;
+  observationStatus: string;
+  documentDate: string;
+  observedAt?: string | null;
+  sourcePreparedAt?: string | null;
+  importedAt?: string | null;
+  recordCount: number;
+  totalQuantityUn: string;
+  sourceSha256?: string | null;
+  payloadSha256?: string;
+  semanticSha256?: string;
+};
+
+export type MyWegInvoiceObservationItem = {
+  id: string;
+  sourceLineNo: number;
+  invoiceNumber: string;
+  invoiceSeries: string;
+  materialWeg: string;
+  materialDescription?: string | null;
+  quantityOriginal: string;
+  sourceUnit: string;
+  quantityUn: string | null;
+  unitComparability: string;
+  departureDate: string;
+};
+
+export type MyWegInvoiceObservationItemsPayload = {
+  branch: string;
+  observationId: string;
+  collectionId: string;
+  documentDate: string;
+  observationStatus: string;
+  page: number;
+  pageSize: number;
+  total: number;
+  items: MyWegInvoiceObservationItem[];
 };
 
 export type MyWegComparePayload = {

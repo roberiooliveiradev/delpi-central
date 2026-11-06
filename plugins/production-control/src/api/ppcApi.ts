@@ -1481,6 +1481,7 @@ export async function fetchMyWegNeedBatchesCompareProducts(params: {
   page?: number;
   pageSize?: number;
   changesOnly?: boolean;
+  invoiceMode?: import("../types").MyWegInvoiceMode;
   signal?: AbortSignal;
 }): Promise<import("../types").MyWegCompareProductsPayload> {
   const search = new URLSearchParams();
@@ -1490,6 +1491,7 @@ export async function fetchMyWegNeedBatchesCompareProducts(params: {
   search.set("page", String(params.page ?? 1));
   search.set("pageSize", String(params.pageSize ?? 50));
   search.set("changesOnly", String(params.changesOnly ?? true));
+  if (params.invoiceMode) search.set("invoiceMode", params.invoiceMode);
   const envelope = await httpGet<{
     success: boolean;
     message?: string;
@@ -1498,6 +1500,50 @@ export async function fetchMyWegNeedBatchesCompareProducts(params: {
     signal: params.signal,
   });
   return unwrapEnvelope(envelope, "Não foi possível consolidar a análise por produto.");
+}
+
+export async function fetchMyWegInvoiceObservation(params: {
+  observationId: string;
+  signal?: AbortSignal;
+}): Promise<import("../types").MyWegInvoiceObservationDetail> {
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: import("../types").MyWegInvoiceObservationDetail;
+  }>(
+    ppcApiUrl(
+      `/myweg/invoice-observations/${encodeURIComponent(params.observationId)}`,
+    ),
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível carregar a observação fiscal MyWEG.");
+}
+
+export async function fetchMyWegInvoiceObservationItems(params: {
+  observationId: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+  signal?: AbortSignal;
+}): Promise<import("../types").MyWegInvoiceObservationItemsPayload> {
+  const search = new URLSearchParams();
+  if (params.search?.trim()) search.set("search", params.search.trim());
+  search.set("page", String(params.page ?? 1));
+  search.set("pageSize", String(params.pageSize ?? 50));
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: import("../types").MyWegInvoiceObservationItemsPayload;
+  }>(
+    ppcApiUrl(
+      `/myweg/invoice-observations/${encodeURIComponent(params.observationId)}/items?${search.toString()}`,
+    ),
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(
+    envelope,
+    "Não foi possível carregar os itens da observação fiscal MyWEG.",
+  );
 }
 
 export async function fetchMyWegNeedBatchItems(params: {

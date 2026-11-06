@@ -7574,6 +7574,81 @@
   box-shadow: 0 10px 24px rgb(0 0 0 / 28%);
 }
 
+.dashboard-production-control .ppc-myweg-needs__invoice-mode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-mode-btn {
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px solid var(--ppc-border);
+  border-radius: 999px;
+  background: var(--ppc-surface);
+  color: var(--ppc-text);
+  font-size: var(--ppc-font-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-mode-btn--active {
+  border-color: color-mix(in srgb, var(--ppc-title, #003866) 55%, var(--ppc-border));
+  background: color-mix(in srgb, var(--ppc-title, #003866) 10%, var(--ppc-surface));
+  color: var(--ppc-title, #003866);
+}
+
+.dashboard-production-control .ppc-myweg-needs__refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+}
+
+.dashboard-production-control .ppc-myweg-needs__portal-kpis {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard-production-control .ppc-myweg-needs__portal-kpi-grid {
+  margin: 0;
+}
+
+.dashboard-production-control .ppc-myweg-needs__fiscal-detail {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--ppc-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ppc-surface) 92%, var(--ppc-title, #003866));
+}
+
+.dashboard-production-control .ppc-myweg-needs__fiscal-detail h4,
+.dashboard-production-control .ppc-myweg-needs__fiscal-detail h5 {
+  margin: 0 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ppc-font-sm);
+  font-weight: 650;
+  color: var(--ppc-title, #003866);
+}
+
+.dashboard-production-control .ppc-myweg-needs__fiscal-summary {
+  margin: 0 0 10px;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  font-size: var(--ppc-font-sm);
+}
+
+.dashboard-production-control .ppc-myweg-needs__fiscal-materials ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: var(--ppc-font-sm);
+}
+
 .dashboard-production-control .ppc-myweg-needs__products-stats {
   display: flex;
   flex-wrap: wrap;
