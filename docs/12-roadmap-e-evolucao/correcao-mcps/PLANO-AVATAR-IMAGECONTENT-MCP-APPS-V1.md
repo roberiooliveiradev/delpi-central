@@ -1,7 +1,7 @@
 # PLANO DE IMPLEMENTAÇÃO — Avatares inline nos MCPs DELPI V1
 
 **Data:** 2026-11-06  
-**Estado:** PLANNED / TARGET; implementação e aceite visual ainda não executados.  
+**Estado:** **EXECUTADO em backend** (6/6 MCPs com `read(entity=avatar,action=get)` retornando `ImageContent` real + rotas públicas 200). Aceite visual no ChatGPT: `TEST_NOT_RUN` — pendente de validação manual na UI (ver §8).  
 **Owners:** TÉO (transformometro-api), VISTA (tv-dashboard-api), CLARA (controllership-finance-api), CAIO (commercial-api), SURI (supplies-api), EVA (engineering-api), DAVI (api-delpi; **bloqueado para mudanças durante refatoração**).  
 **Problema:** as fichas já guardam avatar oficial, mas o ChatGPT não apresenta necessariamente a imagem dentro da conversa; retornar `avatar_distribution.url` não é renderização inline.
 
@@ -98,3 +98,21 @@ Marcar `PROVEN`, `TO_INVENTORY`, `PLANNED`, `TARGET` e `PASS/FAIL/PENDING/INCONC
 `TRANSFORMÔMETRO EXECUTION REPORT` por owner: TASK, BASE HEAD, FINAL HEAD, STATUS, OWNER/SOURCE/CONTRACT, files, tests, OpenAPI/Actions, AuthZ, postcondition, read-back, residual search, gaps/risks, commit/push, deploy, manual GPT Builder/ChatGPT actions. Incluir matriz consolidada e status de **visual acceptance** separado de backend acceptance.
 
 **Regra final:** manter identidade e assets owner-local, não inventar fatos nem habilidades de UI, **provar antes de generalizar**.
+
+## 10. Execução (2026-11-06) — evidências
+
+| MCP | Read avatar (ImageContent) | Rota pública | avatar_distribution | Commit | Deploy |
+|---|---|---|---|---|---|
+| TÉO | ✅ `[Text,Image]` via `read(entity=avatar)` | `…/teo/avatar/avatar-v2.png` 200 PNG 1.04MB | já existia | `7c1bbee4b0`+helper | delpi-transformometro-api |
+| VISTA | ✅ `[Text,Image]` | `…/vista/avatar/avatar-v2.jpg` 200 JPEG 341KB | já existia | rollout | delpi-tv-dashboard-api |
+| CLARA | ✅ `[Text,Image]` (fix `parents[3]` → `1e061fdcb6`) | `…/clara/avatar/avatar-v1.jpg` 200 JPEG 288KB | já existia | rollout+fix | delpi-controllership-finance-api |
+| CAIO | ✅ `[Text,Image]` + `_wrap` agora preserva blocos não-texto | `…/caio/avatar/avatar-v1.jpg` 200 JPEG 379KB | já existia | rollout | delpi-commercial-api |
+| SURI | ✅ `[Text,Image]` + catalog `mcp.avatar_distribution` | `…/suri/avatar/avatar-preview-v1.png` 200 PNG 2.0MB (**novo**) | **implementado** | `b9ac3df704`/`d956fa369b` | delpi-supplies-api **e** delpi-supplies-mcp |
+| EVA | ✅ `[Text,Image]` (async handler; `_wrap` já preservava) | `…/eva/avatar/avatar-v1.jpg` 200 JPEG 433KB | já existia | rollout | delpi-engineering-api |
+| DAVI | **não alterado** — refatoração em andamento | — | — | — | — |
+
+**Arquitetura entregue:** mecânica canônica em `shared/delpi_mcp/avatar_image.py` (`build_avatar_delivery`, `approved_avatar_path`, `avatar_filename`, `avatar_mime`) — transport-neutral, allowlist `OFFICIAL_AVATAR_APPROVED`, sem path/URL de usuário. Cada owner registra sua capability `avatar.get` na própria superfície semântica (TÉO `_V3_READ_SPECIALIZED`; SURI `READ_ACTIONS_BY_ENTITY`; CLARA `READ_ACTIONS`; CAIO/EVA `SEMANTIC_ACTIONS`+`_READ_DISPATCH`; VISTA intercept no `tool_read`). CAIO `_wrap` corrigido para não descartar blocos não-texto.
+
+**Decisão ImageContent vs MCP Apps:** `ImageContent` implementado e provado no transporte (bytes reais, MIME, sha256, cap 8MB, fallback metadata). A exibição inline no ChatGPT **ainda não foi verificada visualmente** — `TEST_NOT_RUN`. Se a UI não renderizar o bloco, MCP Apps `ui://` permanece como plano B (§3.B).
+
+**Reteste ChatGPT manual (procedimento):** abrir a conexão de cada especialista e perguntar *"Mostre seu avatar"* — esperado: imagem oficial renderizada inline sem clique; *"Quais suas ferramentas?"* — não deve inserir imagem. Registrar resultado por MCP.

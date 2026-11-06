@@ -36,3 +36,13 @@ Todo acrônimo deve fazer sentido com a área de atuação do especialista. Alte
 
 - [Plano completo de implementação](./PLANO-AVATAR-IMAGECONTENT-MCP-APPS-V1.md) — POC TÉO, A/B ImageContent/MCP Apps, correção SURI, rollout, deploy e critérios de aceite.
 - [Prompt de execução para Devin](./PROMPT-DEVIN-AVATARES-INLINE-V1.md) — instruções de execução, commits, push, deploy, reteste no ChatGPT e relatório obrigatório. DAVI fora da implementação até terminar refatoração.
+
+### Reteste avatares — execução backend (2026-11-06)
+
+AVATAR-INLINE-MCP-V1 implementado: 6/6 MCPs servem o avatar oficial como
+`ImageContent` via `read(entity=avatar,action=get)` (helper canônico
+`delpi_mcp.avatar_image`), SURI com rota pública nova + `avatar_distribution`
+projetado; 6/6 rotas HTTPS públicas retornam 200 com MIME/sha corretos.
+Renderização inline no ChatGPT = `TEST_NOT_RUN` (ver
+[ACEITE-AVATARES](./ACEITE-AVATARES-MCP-2026-11-06.md) e
+[PLANO](./PLANO-AVATAR-IMAGECONTENT-MCP-APPS-V1.md) §10). DAVI fora de escopo.

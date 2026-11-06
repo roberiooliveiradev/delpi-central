@@ -58,3 +58,30 @@
 | Renderização da foto no corpo da conversa ChatGPT | TEST_NOT_RUN |
 | Uso automático da foto como ícone de plugin/GPT | TO_INVENTORY; não decorre da ficha |
 | Código corrigido/deploy de avatar | NOT_IMPLEMENTED nesta auditoria |
+
+## Reteste após implementação AVATAR-INLINE-MCP-V1 (2026-11-06)
+
+**Backend PROVEN em runtime nos 6 MCPs (DAVI fora de escopo — refatoração).**
+Mecânica canônica `shared/delpi_mcp/avatar_image.py`; cada owner expõe
+`read(entity=avatar, action=get)` retornando bloco `ImageContent` real
+(bytes do asset aprovado + MIME + sha256, cap 8MB, fallback metadata).
+
+| MCP | Tool ImageContent (container) | Rota pública HTTPS | avatar_distribution |
+|---|---|---|---|
+| TÉO | PASS `[Text,Image]` | 200 image/png ~1.0MB | existente |
+| VISTA | PASS `[Text,Image]` | 200 image/jpeg ~341KB | existente |
+| CLARA | PASS `[Text,Image]` | 200 image/jpeg ~288KB | existente |
+| CAIO | PASS `[Text,Image]` | 200 image/jpeg ~379KB | existente |
+| SURI | PASS `[Text,Image]` (supplies-mcp) | **200 image/png ~2.0MB — rota nova** | **implementado** |
+| EVA | PASS `[Text,Image]` | 200 image/jpeg ~433KB | existente |
+
+Negativos: `character_id`/filename inválidos → 404 (allowlist no
+basename do `avatar_reference` aprovado). SURI: middleware de auth
+isenta apenas `/public/characters/` (rota allowlisted ao asset aprovado).
+
+**Renderização visual no ChatGPT: `TEST_NOT_RUN`** — o cliente deve
+exibir o bloco `image` inline; comprovação visual depende da UI real.
+Procedimento manual por especialista: perguntar *"Mostre seu avatar"*
+(esperado: imagem oficial inline sem clique); *"Quais suas ferramentas?"*
+(não deve inserir imagem). Se o bloco não renderizar, MCP Apps `ui://`
+é o plano B documentado no plano §3.B.
