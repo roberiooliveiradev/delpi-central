@@ -209,16 +209,17 @@ def _page_batch_size() -> int:
     """Páginas por subprocesso filho — DEC-VAL-036 lifecycle fix.
 
     Cada filho morre ao fim do lote, devolvendo memória nativa do
-    Paddle/arrays ao OS. Default 4: bounded pelo observado (falha
-    nativa após ~4 páginas densas no mesmo address-space) e pelo
-    cap RLIMIT_AS — não pelo PDF de referência.
+    Paddle/arrays ao OS. Default 1: VMS do predictor cresce ~1-3.5GB
+    por chamada e NÃO é devolvido por reset de engine (medido em
+    prod-overlay); apenas a morte do processo libera address-space.
+    Um filho por página mantém VMS ≈ 8-12GB por lote sob o cap.
     """
     try:
         return max(1, min(25, int(os.environ.get(
-            "ENG_DRAWING_OCR_PAGE_BATCH", "4"
+            "ENG_DRAWING_OCR_PAGE_BATCH", "1"
         ))))
     except Exception:
-        return 4
+        return 1
 
 
 def _pdf_page_count(pdf_bytes: bytes) -> int | None:

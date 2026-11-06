@@ -2855,7 +2855,7 @@ services:
       # por diretório provisionado (sem download implícito em prod).
       ENG_DRAWING_OCR_ISOLATION: ${ENG_DRAWING_OCR_ISOLATION:-subprocess}
       ENG_DRAWING_OCR_MODEL_DIR: ${ENG_DRAWING_OCR_MODEL_DIR:-}
-      ENG_DRAWING_OCR_MAX_RSS_MB: ${ENG_DRAWING_OCR_MAX_RSS_MB:-12288}
+      ENG_DRAWING_OCR_MAX_RSS_MB: ${ENG_DRAWING_OCR_MAX_RSS_MB:-16384}
       # RQ-VAL-029 — cobertura multipágina real (≥14 páginas): o
       # RLIMIT_CPU do worker deve cobrir o documento inteiro, senão a
       # evidência é descartada por SIGXCPU antes da última página.
