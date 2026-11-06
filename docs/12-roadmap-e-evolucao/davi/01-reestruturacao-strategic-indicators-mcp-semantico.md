@@ -213,3 +213,77 @@ Este é o **único plano evolutivo principal**. A cada onda atualizar aqui: deci
 - Strategic Indicators integrada futuramente somente para usuários autorizados no aplicativo e no escopo da operação, com Core API + domain backend AuthZ.
 - Writes futuros usam PREPARE/ACT e pós-condição verificável, sem CRUD genérico.
 - Sem migração física involuntária, sem duplicação de auth/owner e com evidências persistentes de cada onda.
+
+
+## 12. Inventário de código — GitHub main, 2026-11-06 (DAVI-V2-SEMANTIC-TOOLS-INVENTORY-001)
+
+> **Escopo desta passagem:** leitura estática do `main` via GitHub e comparação de interfaces MCP de CAIO, CLARA, EVA, SURI e TÉO. Não executamos testes, não coletamos deployed SHA, não auditamos a working tree local e não alteramos runtime. `main` consultado inicialmente em `c6ba5b457039c79b0beaf7f8d2d32a9956701f33`; confirmar SHA final antes de qualquer execução. Inventário técnico PARCIAL por escopo do código inspecionado, não certificação completa de cada API.
+
+### 12.1 Mapa do DAVI comprovado por código
+
+- `api-delpi/app/interface/mcp/server.py`: `ApiDelpiMCPServer`, `list_tools()`, `call_tool()`, `create_mcp_server()`; registro apenas de `discover_delpi_information` e `execute_delpi_information` em operação normal. Ferramenta experimental de transporte documental pode ser registrada por flag isolada: avaliar como impacto da invariante de duas tools.
+- `api-delpi/app/interface/mcp/schemas.py`: Pydantic `extra="forbid"` para requests; `DiscoverDelpiInformationInput(query, top_k<=10)`; `ExecuteDelpiInformationInput(candidate_token, arguments)`; envelopes tipados de discovery/execute.
+- `api-delpi/app/application/external_capabilities/dynamic_information/{discover_service,retrieval,action_index,eligibility,catalog_builder,argument_validator}.py`: indexação de ações OpenAPI, filtragem elegível e recuperação semântica; discovery devolve candidatos, argumentos requeridos, schema, hints, score e `action_id` técnico.
+- `.../candidate_token.py`: HMAC-SHA256 sobre `action_id`, `actor_id`, emissão e expiração; comparação constante de assinatura, vínculo ao mesmo ator e prazo.
+- `.../execute_service.py`: revalida token, action elegível, argumentos e plano; executa `ApprovedCapabilityPlan` ou `CatalogActionPlan`, projeta campos aprovados e limita payload.
+- `app/composition/davi_dynamic_read_composer.py`: injeta runner `search_products` ou executor ASGI; authorization do usuário é associado ao request no boundary.
+- `app/infrastructure/davi/asgi_catalog_action_executor.py`: rejeita método distinto de GET e POST semanticamente READ explicitamente governado; resolve path a partir do catálogo confiável, repassa Authorization e mapeia erros.
+- `app/interface/mcp/oauth_contract.py`: `mcp-api-delpi`, resource exato `https://minhadelpi.com.br/apps/api-delpi/mcp`, scopes `openid profile email mcp:tools`; metadata e policies em `resource_metadata.py`, `asgi.py`.
+- `app/application/external_capabilities/davi_agent_intelligence_service.py` e `app/content/davi_agent_intelligence.json`: directives/knowledge orchestration projetadas no `capability_surface`, não fonte de autorização.
+- `app/application/use_cases/read_governed_technical_knowledge_use_case.py` + `app/infrastructure/knowledge/governed_knowledge_repository.py`: recuperação governada de corpus técnico; já existe base funcional para futura tool `knowledge`, sem criar fonte paralela.
+- `app/content/davi_dynamic_read_budgets.json`: `discover_default_top_k=5`, `discover_max_top_k=10`, `candidate_token_ttl_seconds=300`, `execute_max_items=50`, `execute_max_response_bytes=65536`, `projection_max_depth=8`, `max_page_size=50`, `execute_max_resultsets=8`, `execute_max_result_columns=64`.
+
+### 12.2 Código dos MCPs irmãos verificado
+
+- CAIO: `commercial-api/commercial_app/interface/mcp/server.py`
+- CLARA: `controllership-finance-api/controllership_finance_app/interface/mcp/server.py`
+- EVA: `engineering-api/engineering_app/interface/mcp/server.py`
+- SURI: `supplies-api/app/interfaces/mcp/server.py`
+- TÉO: `transformometro-api/tm_app/interface/mcp/server.py`
+- VISTA: nomes de tools observados no provider, mas o arquivo de registro ainda requer inspeção de código.
+
+Nos cinco arquivos de `server.py` efetivamente examinados, `get_context`, `read`, `analyze`, `knowledge` e `execute` são registradas diretamente com `@mcp.tool`. `delete` é registrada em CAIO/CLARA/EVA/TÉO, não SURI. `read` usa com frequência `entity + action` e filtros allowlisted; `knowledge` e `get_context` têm diferenças de schema legítimas (não copiar contrato literalmente). `execute` exige policy apropriada ao owner.
+
+### 12.3 Testes existentes identificados (NÃO EXECUTADOS)
+
+- `tests/test_davi_mcp_tool_surface_simplification.py`: duas tools, produto via broker, regressão.
+- `tests/test_davi_mcp_platform_conformance.py`: manifesto e conformance MCP compartilhada.
+- `tests/test_davi_dynamic_read.py`: tokens por ator, allowlist, argumento, exceções 401/403, projection, transport, paginação e SQL; **alguns nomes/asserções históricos são divergentes e precisam revisão**.
+- `tests/test_davi_knowledge_orchestration.py`, `test_davi_governed_knowledge_bundle.py`, `test_davi_live_governed_knowledge.py`, `test_davi_live_governed_knowledge_v2.py`: seleção, corpus, versionamento, provenance, falha segura.
+- `tests/test_mcp_auth_middleware.py`, `test_mcp_oauth_contract.py`, `test_mcp_mount_routing.py`: autenticação e roteamento.
+- `tests/test_sql_validator_security_hardening.py`: validação sintática e policy de SQL em modo teste.
+
+### 12.4 Divergências que exigem STOP antes da W1
+
+**GAP-SQL-001 — documentação versus teste:** README DAVI descreve `execute_readonly_sql` via broker, mas `test_davi_dynamic_read.py` possui `test_canonical_sql_route_bounded_not_generic_capability`, `test_sql_intent_queries_never_surface_sql_candidate` e `test_candidate_token_cannot_authorize_sql_route`, todos exigindo que a rota SQL **não** seja executável por discovery/execute. Não presumir resultado produtivo; reconciliar `openapi_baseline`, allowlist, testes, código e deployed SHA. Classificar a premissa de disponibilidade como `INCONCLUSIVE / EXECUTION_DRIFT candidate` até confirmação.
+
+**GAP-SQL-002 — tabela allowlist bypass:** `app/application/services/sql_validator.py` tem `DATA_SQL_SKIP_TABLE_WHITELIST` com default textual `true`; testes de hardening forçam `false`. Isso **não prova acesso indevido**, mas significa que SELECT-only não implica restrição de tabelas por default. Levantar configuração real, autorização efetiva e política aprovada antes de alegar proteção completa ou ampliar SQL na nova `read`.
+
+**GAP-TEST-001:** no arquivo `test_davi_dynamic_read.py` há testes históricos chamados `...ninety_three` com `assert len(eligible) == 94`, e outros nomes antigos referentes a três tools; atualizar nomenclatura apenas após avaliar se asserções são ainda executadas e relevantes. Não inferir falha sem `pytest`.
+
+**GAP-TOOL-001:** `read` no padrão irmão aceita frequentemente `entity/action`; o DAVI atual exige descoberta prévia, token HMAC e plano técnico aprovado. É necessária decisão de design para mapear resolução semântica sem permitir `action_id`/URL/SQL livre nem relaxar o gate do candidato.
+
+**GAP-KNOWLEDGE-001:** conhecimento DAVI já existe por use case/corpus e diretivas. Mapear claramente que parte deve ir à tool `knowledge` e que parte deve continuar em `get_context`/instructions, incluindo ACL, versão e provenance.
+
+**GAP-RUNTIME-001:** deployed SHA, owner parity, provider current discovery, rate policy e segundo usuário negativo não comprovados nesta passagem. `TEST_NOT_RUN` para testes e `STALE_EVIDENCE` para claims históricos sem revalidação.
+
+### 12.5 Proposed smallest diff / review gate
+
+1. Primeiro revalidar código/allowlist/SQL e baseline de testes no Cursor; resolver GAP-SQL antes de alterar `read`.
+2. Produzir contratos de `get_context` e `knowledge` adaptando, respectivamente, catalog/intelligence existente e corpus governado — sem duplicar lógica ou permitir acesso fora da autorização.
+3. Definir `read` como façade semanticamente fechada sobre mecanismo governado, com UX sem ambiguidade (preservar broker antigo até migração de clients/evals). Não apagar candidate-token lifecycle sem equivalente formalmente aprovado.
+4. Implementação incremental por tool com contrato/versionamento e testes de regressão e paridade de usuários, seguida de provider rediscovery e live positive/negative AuthZ.
+5. Não integrar Strategic Indicators neste mesmo diff. A integração futura exige Core app-permission + backend owner AuthZ, sem permissão herdada por DAVI.
+
+### 12.6 Status desta passagem
+
+| Evidência | Status |
+|---|---|
+| GitHub `main` lido, DAVI MCP e serviços inspecionados | PASS (source inspection) |
+| Cinco MCPs irmãos `server.py` inspecionados | PASS (source inspection) |
+| VISTA código source registration | PENDING |
+| Testes locais/CI executados nesta passagem | TEST_NOT_RUN |
+| Working tree local | INCONCLUSIVE |
+| Deployed SHA e provider live verificados nesta passagem | STALE_EVIDENCE |
+| Implementação/mudança runtime | NONE |
+| Próximo aceite | Reconciliation report SQL + W1 contract design |
