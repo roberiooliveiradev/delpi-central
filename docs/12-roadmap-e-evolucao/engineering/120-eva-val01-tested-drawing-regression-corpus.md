@@ -238,3 +238,25 @@ O `drawing_understanding` síncrono nunca executava `recover_absent_table_cells`
 ## Log adicional — 2026-11-05 (Framework-First SLANet — F1 trace + 2 fixes mínimos)
 
 Trace produtivo comprovado: células SLANet alimentam apenas o resumo do relatório; a grade `i//8` é código morto semântico (component_table vem de understanding.py). Defeitos reais corrigidos (`00befcff78`/`2cb89f61a3`): `association` (OCR↔célula) propagada — estava calculada e descartada; fallback de crop fixo → `NO_TABLE_REGION` fail-closed. 101/101 overlay. `90263572`/`90264030` comportamento de percepção inalterado (SLANet cells não entram no component_table). `CHATGPT_CONSUMER_PASS` PENDING.
+
+## Log adicional — 2026-11-06 (percepção nativa SLANet na imagem `6ffae36e`)
+
+Medição lateral no container `delpi-engineering-api` após o deploy de `9c59bab3ef` (checkout `92ae661d04`). Não é comparador BOM nem consumidor MCP. SHA de cada PDF coincidiu com este catálogo. A página pedida foi a processada. Grade HTML consistente em todos. `multi_code_cells` conta células com dois ou mais códigos de 8–11 dígitos; não é precisão.
+
+| Produto | Página | Linhas HTML | Células | Células com 2+ códigos |
+|---|---:|---:|---:|---:|
+| `90264302` | 1 | 4 | 36 | 1 |
+| `90264161` | 1 | 5 | 31 | 2 |
+| `90263520` | 1 | 15 | 174 | 1 |
+| `90261606` | 1 | 9 | 47 | 0 |
+| `90263572` | 2 | 44 | 252 | 1 |
+| `90264178` | 1 | 19 | 156 | 6 |
+| `90480120` | 1 | 6 | 36 | 2 |
+| `90264004` | 1 | 12 | 94 | 2 |
+| `90264014` | 1 | 7 | 60 | 3 |
+| `90264017` | 9 | 5 | 21 | 1 (três códigos na mesma célula) |
+| `90264030` | 2 | 1 | 5 | 2 |
+| `90264043` | 1 | 11 | 122 | 4 |
+| `90264050` | 1 | 4 | 12 | 3 |
+
+`90264017` página 9: `70260008` está numa célula `rowspan=16` misturada com as letras de item. Status `INCONCLUSIVE`, sem pai inventado. Recortes `title_block` da mesma página e de outros desenhos também receberam grade do mesmo SLANet, sem VAL-02. Uma sequência contínua de OCR falhou com `RuntimeError` do Paddle depois de dois arquivos; a repetição em processo novo concluiu o restante. `CORPUS_BOM_REGRESSION=TEST_NOT_RUN`. `MCP_E2E=TEST_NOT_RUN`. `VAL01_COMPLETED=false`.
