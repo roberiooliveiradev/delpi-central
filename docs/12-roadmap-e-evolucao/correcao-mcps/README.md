@@ -7,7 +7,8 @@ Levantamento iniciado em **2026-11-06**. A documentação registra decisões e l
 - [CLARA](./clara.md): acrônimo aprovado — **Controladoria, Leitura, Análise, Resultados e Acompanhamento**; publicação no MCP pendente.
 - **DAVI:** suspenso nesta rodada durante a refatoração das ferramentas.
 - [CAIO](./caio.md): **novo acrônimo aprovado — Consultor de Análise e Inteligência de Oportunidades**; runtime ainda usa 'Operacional'; migração e QA pendentes.
-- **SURI e EVA:** próximas revisões.
+- [SURI](./suri.md): acrônimo a definir; divergência crítica Knowledge read-only versus capabilities de escrita no catálogo.
+- **EVA:** próxima revisão.
 
 ## Governança
 Seguir OWNER → FONTE CANÔNICA → CONSUMERS → CONTRATO → IMPLEMENTAÇÃO → RUNTIME → EVIDÊNCIA. Separar aprovado para documentação, observado no catálogo, planejado, implementado e verificado. Ficha não concede AuthZ. Atualizações de runtime, Knowledge, Instructions ou OpenAPI devem ser propostas e testadas conforme a real alteração de cada artefato.
