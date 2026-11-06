@@ -548,3 +548,22 @@ todos:
 **PRC-N6 — Posterior, fora do MVP:** somente depois de sistema funcional e paridade, planejar integração com `requests-api` e/ou importação governada dos dados Controle MP (dry-run, idempotência, reconciliação, anexos, identificação/retention, cutover, rollback). Não realizar migração agora.
 
 **Gates de colaboração:** todo diff em arquivos compartilhados com VAL-01 fica para integrador designado e teste em SHA único. Não alterar drawing/OCR/SLANet/comparadores/jobs. **Esta revisão é apenas documental; não há deploy.**
+
+
+## ADENDO — PRC: verificação oficial obrigatória antes de Concluir (2026-11-06)
+
+> **Atualização executável dos gates PRC-N1–N5** conforme direção mais recente do Product Owner. O MVP roda dentro da `engineering-api` e `plugins/engineering`; `requests-api` e Controle MP não são downstreams runtime. O cadastro oficial no TOTVS é **manual** e a Engenharia somente lê/verifica o resultado antes de concluir.
+
+**N1 — contrato/schema.** Transpor o catálogo de 11 tags do inventário legado para schemas nativos de `create` e `update`: `codigo_atual`, `novo_codigo`, `grupo`, `descricao`, `tipo`, `armazem_padrao`, `unidade`, `produto_terceiro`, `cta_contabil`, `ref_cliente`, `fornecedores` incluindo `supplier_code/store/supplier_name/part_number/catalog_number`. Nome correto é **Part Number**; nome técnico `part_number`. Diferenciar required de intake, required para o analista e required para publicação; validar backend, sem herdar cegamente defaults ou restrições apenas visuais do legado. Contratos `intake` e `outbound` versionados, origin/actor, idempotência, AuthZ e errors. Aprovar mapeamento de cada campo ao retorno ERP antes de declarar contrato de conclusão pronto.
+
+**N2 — persistência.** Contexto de Engenharia: solicitações/casos, ficha JSONB com `schemaVersion`, base revision e change set seletivo, snapshots imutáveis, auditoria por campo, revisão vigente apontada apenas após confirmação; status intermediário explícito para cadastro ERP realizado/aguardando verificação. CAS/409 e idempotência de Concluir.
+
+**N3 — endpoints.** Porta de chegada versionada capaz de receber `create/update` de origem autenticada, mesmo sem connector externo; porta de saída versionada de leitura de resultado/status/revisão para consumidores autorizados; APIs internas da fila, detalhe, ações e consulta. Testes de intake por harness autenticado ou formulário **somente de teste**, sem registrar plugin externo. Sem chamadas à `requests-api` ou Flask.
+
+**N4 — UI.** Fila, detalhe, ficha, seleção de campos update e histórico; botão Concluir chama operação única backend de **verificar no TOTVS e concluir**. Se não houver produto/alteração oficial, UI mostra código/campos divergentes e mantém caso aberto; sem sucesso otimista. Sem chat legado. Revisar componente UI do form de teste para não criar rota pública sem permissão.
+
+**N5 — verificação e outcome.** Integrar somente contrato autorizado de leitura `api-delpi`/Domain API: lookup código + validação de valores campo a campo (inclusive `part_number` e fornecedores quando exigidos), normalização tipada documentada, sem assumir que existe endpoint que não foi comprovado. `create` exige produto oficial presente e ficha válida; `update` exige mudanças oficiais correspondentes. Falha/timeout/campo inacessível → não concluir. Aprovação humana/autorização live + read-back + audit/evidence da consulta antes de marcar `completed` e publicar snapshot como revisão vigente. Não fazer write ERP. EVA opcional candidata, sem confirmação automática.
+
+**Tests/quality gates:** inexistência código, código certo com descrição divergente, alteração de 1 de N campos, fornecedor/Part Number divergente, dois analistas, repetição de Concluir, stale baseRevision, 403, timeout/502, falta de campo no contrato API, fingerprint da evidência ERP, nenhuma revisão vigente em falha. Testes em SHA específico; rollback/revoke se necessário. **Shared-file gate** com VAL-01 para `main.py`, `config.py`, router, manifest e deploy.
+
+**Futuro:** integração a `requests-api`, fontes externas, similaridade no intake e automação de escrita TOTVS — tudo fora da etapa inicial.
