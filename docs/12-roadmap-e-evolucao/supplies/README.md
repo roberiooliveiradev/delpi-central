@@ -17,6 +17,10 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ---
 
+## PROC-0076.R13 — Decisão do PO: histórico persistente obrigatório (2026-11-03)
+
+**PRODUCT REQUIREMENT APPROVED:** a DELPI determinou que as cotações de metais sejam **persistidas em histórico PostgreSQL**, com atualização diária, sem depender apenas de cache TTL. **Não** classificar cache temporário como solução final. Essa decisão empresarial não altera automaticamente os direitos externos da MetalCharts (`store` permanece PENDING) nem desbloqueia o Sophos; a ativação é gated. [Decisão funcional, owners, AC e plano detalhado R13](../shared-integrations/PROC-0076-R13-PO-DECISION-PERSISTENT-METAL-HISTORY-20261103.md).
+
 ## PROC-0076.R11 — Cotação diária via /v1/prices + histórico persistente gated (2026-10-30)
 
 Novo feed `metals-prices-daily`: uma chamada diária `/v1/prices` (weight 1, ~31/mês) atualiza a cotação dos cinco metais com data de referência do provedor, base `*_last` honesta (nunca apresentada como fechamento) e precedência atômica de quote-basis — um "último negócio" não sobrescreve um fechamento no cache nem na tabela permanente. Persistência permanente autorizada pelo PO **mas bloqueada por direito do provedor** (`PROVIDER_PERMANENT_STORAGE_RIGHT=PENDING`): o caminho permanente existe e está testado, alcançável apenas quando o catálogo mudar para `observation_retention='permanent'` + `store` no escopo — fail-closed até lá.
