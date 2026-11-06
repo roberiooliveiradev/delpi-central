@@ -27,10 +27,6 @@ from app.application.external_capabilities.dynamic_information.argument_validato
     build_argument_json_schema,
     validate_arguments,
 )
-from app.application.external_capabilities.dynamic_information.candidate_token import (
-    CandidateTokenError,
-    mint_candidate_token,
-)
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     TechnicalAction,
     build_technical_actions_from_baseline,
@@ -43,9 +39,6 @@ from app.application.external_capabilities.dynamic_information.constants import 
     STATUS_NEEDS_BOUNDED_EXECUTION,
     STATUS_WRITE_OUT_OF_SCOPE,
 )
-from app.application.external_capabilities.dynamic_information.discover_service import (
-    discover_delpi_information,
-)
 from app.application.external_capabilities.dynamic_information.eligibility import (
     classify_operation,
     load_allowlist_operation_ids,
@@ -55,9 +48,6 @@ from app.application.external_capabilities.dynamic_information.retrieval import 
 )
 from app.application.external_capabilities.dynamic_information.errors import (
     GovernedExecutionError,
-)
-from app.application.external_capabilities.dynamic_information.execute_service import (
-    execute_delpi_information,
 )
 from app.application.use_cases.pedidos_venda_abertos.resolve_portfolio_scope_use_case import (
     PortfolioScope,
@@ -77,7 +67,6 @@ from app.infrastructure.persistence.totvs.product_repositories.product_sales_ope
 import app.interface.http.routes.product_routes as product_routes
 
 _ACTOR = "11111111-1111-4111-8111-111111111111"
-_SECRET = "test-secret-davi-product-master-sec"
 _CLAIMS = {
     "sub": _ACTOR,
     "email": "davi-sec@example.com",
@@ -894,100 +883,6 @@ def test_sec02_get_regression_still_works() -> None:
 # --- end-to-end execute (projection + actor binding) -------------------------
 
 
-def _mint(action_id: str, actor_id: str = _ACTOR) -> str:
-    return mint_candidate_token(
-        action_id=action_id, actor_id=actor_id, secret=_SECRET, ttl_seconds=120
-    )
-
-
-def test_sec02_execute_drops_unapproved_owner_fields() -> None:
-    """Projection parity with GET: extra owner payload fields are dropped."""
-
-    class _Exec:
-        def execute(self, *, action_id, validated_arguments):
-            return CatalogActionExecutionResult(
-                outcome="ok",
-                payload={
-                    "items": [
-                        {
-                            "product_code": "P1",
-                            "physical_location": "A-01",
-                            "internal_debug": True,
-                            "supplier_secret": "x",
-                        }
-                    ]
-                },
-            )
-
-    with patch(
-        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
-        return_value=_SECRET,
-    ):
-        result = execute_delpi_information(
-            candidate_token=_mint("list_product_physical_locations"),
-            arguments={"branch": "01", "product_codes": ["P1"]},
-            actor_id=_ACTOR,
-            catalog_action_executor=_Exec(),
-        )
-    assert result["status"] == "ok"
-    item = result["data"]["items"][0]
-    assert set(item) == {"product_code", "physical_location"}
-
-
-def test_sec02_execute_rejects_actor_mismatch() -> None:
-    """Candidate-token actor binding unchanged for POST actions."""
-
-    class _Exec:
-        def execute(self, *, action_id, validated_arguments):
-            return CatalogActionExecutionResult(outcome="ok", payload={})
-
-    with patch(
-        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
-        return_value=_SECRET,
-    ):
-        with pytest.raises(CandidateTokenError):
-            execute_delpi_information(
-                candidate_token=_mint(
-                    "list_product_physical_locations", actor_id="other-actor"
-                ),
-                arguments={"branch": "01", "product_codes": ["P1"]},
-                actor_id=_ACTOR,
-                catalog_action_executor=_Exec(),
-            )
-
-
-def test_sec02_execute_rejects_unknown_body_field_before_executor() -> None:
-    """POST-09 end-to-end: unknown field never reaches the executor."""
-
-    class _Exec:
-        called = False
-
-        def execute(self, *, action_id, validated_arguments):
-            _Exec.called = True
-            return CatalogActionExecutionResult(outcome="ok", payload={})
-
-    with patch(
-        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
-        return_value=_SECRET,
-    ):
-        with pytest.raises(GovernedExecutionError):
-            execute_delpi_information(
-                candidate_token=_mint("list_product_physical_locations"),
-                arguments={
-                    "branch": "01",
-                    "product_codes": ["P1"],
-                    "unknown": "x",
-                },
-                actor_id=_ACTOR,
-                catalog_action_executor=_Exec(),
-            )
-    assert _Exec.called is False
-
-
-# ---------------------------------------------------------------------------
-# SEC-02 corrective — body-contract support must gate eligibility end to end
-# ---------------------------------------------------------------------------
-
 _POST_NO_BODY_OPENAPI: dict[str, Any] = {
     "openapi": "3.1.0",
     "paths": {
@@ -1085,33 +980,6 @@ def test_semantic_post_unsupported_body_not_retrieved() -> None:
         "physical locations products", [allowed], top_k=5
     )
     assert [a.action_id for a, _ in ranked2] == ["list_product_physical_locations"]
-
-
-def test_semantic_post_missing_body_not_discovered(monkeypatch) -> None:
-    """discover must not emit a candidate_token for a body-missing POST."""
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
-    blocked = _build_fixture_action(_POST_NO_BODY_OPENAPI)
-    set_actions_for_tests([blocked])
-    result = discover_delpi_information(
-        query="physical locations products", top_k=5, actor_id=_ACTOR
-    )
-    assert result["eligible_action_count"] == 0
-    assert result["candidate_count"] == 0
-    assert result["candidates"] == []
-
-
-def test_semantic_post_unsupported_body_not_discovered(monkeypatch) -> None:
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
-    blocked = _build_fixture_action(_POST_UNSUPPORTED_BODY_OPENAPI)
-    set_actions_for_tests([blocked])
-    result = discover_delpi_information(
-        query="physical locations products", top_k=5, actor_id=_ACTOR
-    )
-    assert result["eligible_action_count"] == 0
-    assert result["candidate_count"] == 0
-    assert result["candidates"] == []
-
-
 def test_baseline_semantic_post_without_body_is_not_executable() -> None:
     """Baseline fallback carries no requestBody: governed POST must stay closed."""
     baseline = {

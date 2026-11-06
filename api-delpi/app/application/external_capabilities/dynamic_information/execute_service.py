@@ -11,13 +11,9 @@ from app.application.external_capabilities.dynamic_information.action_index impo
 from app.application.external_capabilities.dynamic_information.argument_validator import (
     ArgumentValidationError,
 )
-from app.application.external_capabilities.dynamic_information.candidate_token import (
-    CandidateTokenError,
-    parse_candidate_token,
-)
 from app.application.external_capabilities.dynamic_information.content_loader import (
-    candidate_token_secret,
-    load_dynamic_read_budgets,
+    
+    load_dynamic_read_budgets
 )
 from app.application.external_capabilities.dynamic_information.errors import (
     ARGUMENT_VALIDATION_CODE,
@@ -109,7 +105,7 @@ def execute_action_plan(
     catalog_action_executor: CatalogActionExecutorPort | None,
     search_products_runner: SearchProductsRunner | None,
     budgets: dict[str, Any] | None = None,
-    tool_name: str = "execute_delpi_information",
+    tool_name: str = "read",
 ) -> dict[str, Any]:
     """Dispatch a validated execution plan to its governed runner.
 
@@ -300,60 +296,4 @@ def davi_analyze(
             ),
         },
         "limitations": limitations,
-    }
-
-
-def execute_delpi_information(
-    *,
-    candidate_token: str,
-    arguments: dict[str, Any] | None = None,
-    actor_id: str | None = None,
-    catalog_action_executor: CatalogActionExecutorPort | None = None,
-    search_products_runner: SearchProductsRunner | None = None,
-) -> dict[str, Any]:
-    """Governed execute. Application never sees HTTP, headers, or status codes."""
-    if not candidate_token:
-        raise CandidateTokenError("candidate_token is required")
-    if not (actor_id or "").strip():
-        raise CandidateTokenError("actor_id is required")
-
-    budgets = load_dynamic_read_budgets()
-    secret = candidate_token_secret()
-    payload = parse_candidate_token(
-        candidate_token,
-        secret=secret,
-        expected_actor_id=actor_id,
-    )
-    action_id = str(payload["action_id"])
-    action = get_action_by_id(action_id)
-    if action is None or not action.executable:
-        raise GovernedExecutionError(
-            "Action is not DAVI-eligible",
-            code=CAPABILITY_NOT_ALLOWED_CODE,
-        )
-
-    try:
-        plan = build_execution_plan(action, arguments)
-    except ArgumentValidationError as exc:
-        raise GovernedExecutionError(
-            str(exc), code=ARGUMENT_VALIDATION_CODE
-        ) from exc
-
-    bounded = execute_action_plan(
-        action=action,
-        plan=plan,
-        catalog_action_executor=catalog_action_executor,
-        search_products_runner=search_products_runner,
-        budgets=budgets,
-    )
-
-    return {
-        "action_id": action.action_id,
-        "status": "ok",
-        "entity": action.entity,
-        "shape": action.shape,
-        "projection": "approved_fields"
-        if action.approved_response_fields
-        else "size_bound_only",
-        **bounded,
     }

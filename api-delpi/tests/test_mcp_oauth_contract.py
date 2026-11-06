@@ -10,7 +10,6 @@ import pytest
 from fastapi.responses import JSONResponse
 from starlette.requests import Request
 
-from app.application.external_capabilities.constants import MCP_TOOL_DISCOVER_DELPI_INFORMATION
 from app.interface.mcp.oauth_contract import (
     CANONICAL_MCP_RESOURCE_URL,
     KEYCLOAK_INTERNAL_AUDIENCE_CLIENT_SCOPE,
@@ -68,62 +67,6 @@ def test_security_schemes_are_oauth2_without_rbac_codes() -> None:
     assert "api-delpi.access" not in blob
     assert "dashboard-" not in blob
     assert "audience-delpi" not in blob
-
-
-def test_list_tools_exposes_top_level_security_schemes() -> None:
-    mcp = create_mcp_server()
-    tools = asyncio.run(mcp.list_tools())
-    assert len(tools) == 6
-    assert [t.name for t in tools] == [
-        "discover_delpi_information",
-        "execute_delpi_information",
-        "get_context",
-        "knowledge",
-        "read",
-        "analyze",
-    ]
-    for tool in tools:
-        dumped = tool.model_dump(by_alias=True)
-        assert dumped.get("securitySchemes") == SEARCH_PRODUCTS_SECURITY_SCHEMES
-        assert dumped.get("securitySchemes") == [
-            {"type": "oauth2", "scopes": list(MCP_OAUTH_SCOPES)}
-        ]
-        assert tool.annotations.read_only_hint is True
-        assert tool.annotations.destructive_hint is False
-        assert tool.annotations.open_world_hint is False
-        assert "ENGINEERING_LMP_ACCESS" not in json.dumps(dumped)
-
-
-@patch("app.interface.mcp.server._actor_id", return_value="u1")
-@patch(
-    "app.interface.mcp.server.execute_delpi_information_wired",
-    side_effect=PermissionError("Unauthorized"),
-)
-def test_execute_returns_mcp_www_authenticate_on_unauthorized(_wired, _actor) -> None:
-    mcp = create_mcp_server()
-    tool = mcp._tool_manager.get_tool("execute_delpi_information")
-    result = tool.fn(candidate_token="opaque.token", arguments={})
-    dumped = result.model_dump(by_alias=True)
-    assert dumped["isError"] is True
-    assert "mcp/www_authenticate" in dumped["_meta"]
-    assert "Authentication required" in dumped["content"][0]["text"]
-
-
-@patch("app.interface.mcp.server._actor_id", return_value="u1")
-@patch(
-    "app.interface.mcp.server.execute_delpi_information_wired",
-    side_effect=PermissionError("Forbidden"),
-)
-def test_execute_forbidden_does_not_oauth_challenge(_wired, _actor) -> None:
-    mcp = create_mcp_server()
-    tool = mcp._tool_manager.get_tool("execute_delpi_information")
-    result = tool.fn(candidate_token="opaque.token", arguments={})
-    dumped = result.model_dump(by_alias=True)
-    assert dumped["isError"] is True
-    assert dumped.get("_meta") in (None, {})
-    assert dumped["content"][0]["text"] == "Forbidden"
-
-
 def test_resource_metadata_scopes_and_resource(monkeypatch) -> None:
     monkeypatch.setenv("PUBLIC_BASE_URL", "https://minhadelpi.com.br")
     monkeypatch.setenv("KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi")

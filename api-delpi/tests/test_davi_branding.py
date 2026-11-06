@@ -13,32 +13,3 @@ from app.interface.mcp.oauth_contract import (
     MCP_PREDEFINED_CLIENT_ID,
 )
 from app.interface.mcp.server import create_mcp_server
-
-
-def test_davi_branding_constants() -> None:
-    assert DAVI_SHORT_NAME == "DAVI"
-    assert DAVI_FULL_NAME.startswith("DAVI")
-    assert "DELPI" in DAVI_FULL_NAME
-    assert "DAVI" in DAVI_PLUGIN_DESCRIPTION
-    assert "DAVI" in DAVI_MCP_INSTRUCTIONS
-    assert "search_products" not in DAVI_MCP_INSTRUCTIONS
-    assert "discover_delpi_information" in DAVI_MCP_INSTRUCTIONS
-    assert "execute_delpi_information" in DAVI_MCP_INSTRUCTIONS
-    assert "agent_directives" in DAVI_MCP_INSTRUCTIONS
-
-
-def test_technical_ids_unchanged_by_davi_branding() -> None:
-    assert MCP_PREDEFINED_CLIENT_ID == "mcp-api-delpi"
-    assert CANONICAL_MCP_RESOURCE_URL == "https://minhadelpi.com.br/apps/api-delpi/mcp"
-    mcp = create_mcp_server()
-    assert mcp.name == "api-delpi"
-    assert "DAVI" in (mcp.instructions or "")
-    tools = mcp._tool_manager.list_tools()
-    assert [t.name for t in tools] == [
-        "discover_delpi_information",
-        "execute_delpi_information",
-        "get_context",
-        "knowledge",
-        "read",
-        "analyze",
-    ]

@@ -18,9 +18,6 @@ from app.application.external_capabilities.dynamic_information.argument_validato
     build_argument_json_schema,
     validate_arguments,
 )
-from app.application.external_capabilities.dynamic_information.candidate_token import (
-    mint_candidate_token,
-)
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     TechnicalAction,
     build_technical_actions_from_baseline,
@@ -28,12 +25,6 @@ from app.application.external_capabilities.dynamic_information.catalog_builder i
 from app.application.external_capabilities.dynamic_information.content_loader import (
     load_dynamic_read_budgets,
     load_external_read_allowlist,
-)
-from app.application.external_capabilities.dynamic_information.discover_service import (
-    discover_delpi_information,
-)
-from app.application.external_capabilities.dynamic_information.execute_service import (
-    execute_delpi_information,
 )
 from app.application.external_capabilities.dynamic_information.projection import (
     apply_approved_field_projection,
@@ -145,97 +136,6 @@ def test_drawing_eligible_count_includes_seventeen_foundation():
     assert "get_product_inspection" in blocked
     assert "list_product_drawings" not in blocked
     assert "get_product_drawing" not in blocked
-
-
-def test_drawing_mcp_tools_wave001_four():
-    import asyncio
-    from app.interface.mcp.server import create_mcp_server
-
-    tools = asyncio.run(create_mcp_server().list_tools())
-    assert [t.name for t in tools] == [
-        "discover_delpi_information",
-        "execute_delpi_information",
-        "get_context",
-        "knowledge",
-        "read",
-        "analyze",
-    ]
-
-
-@pytest.mark.parametrize(
-    "query,expected",
-    [
-        ("desenho do produto 90261805", "list_product_drawings"),
-        ("desenho técnico do produto", "list_product_drawings"),
-        ("PDF do desenho", "list_product_drawings"),
-        ("listar desenhos do produto", "list_product_drawings"),
-        ("product drawing", "list_product_drawings"),
-        ("technical drawing", "list_product_drawings"),
-        ("drawing PDF", "list_product_drawings"),
-        ("metadados do desenho", "get_product_drawing"),
-        ("drawing metadata", "get_product_drawing"),
-        ("server-resolved drawing", "get_product_drawing"),
-    ],
-)
-def test_drawing_discovery_aliases(query: str, expected: str, monkeypatch):
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    set_actions_for_tests(_actions())
-    discovered = discover_delpi_information(query=query, actor_id="user-1")
-    assert discovered["eligible_action_count"] >= 53, query
-    ids = [c["action_id"] for c in discovered["candidates"]]
-    assert expected in ids
-
-
-@pytest.mark.parametrize(
-    "query,winner,loser",
-    [
-        ("desenho do produto", "list_product_drawings", "get_product_structure"),
-        ("desenho técnico", "list_product_drawings", "get_product_guide"),
-        ("estrutura do produto", "get_product_structure", "list_product_drawings"),
-        ("roteiro do produto", "get_product_guide", "list_product_drawings"),
-    ],
-)
-def test_drawing_retrieval_collision_regressions(
-    query: str, winner: str, loser: str, monkeypatch
-):
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    set_actions_for_tests(_actions())
-    discovered = discover_delpi_information(query=query, actor_id="user-1")
-    ids = [c["action_id"] for c in discovered["candidates"]]
-    assert winner in ids
-    if loser in ids:
-        assert ids.index(winner) < ids.index(loser)
-
-
-@pytest.mark.parametrize(
-    "query",
-    [
-        "substitua o desenho do produto",
-        "publique o desenho",
-        "aprove o desenho",
-        "libere o desenho",
-        "exclua o PDF do desenho",
-        "renomeie o desenho",
-        "atualize o arquivo no servidor",
-        "grave esta revisão do desenho",
-    ],
-)
-def test_drawing_write_guard_blocks_mutation_intents(query: str, monkeypatch):
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    set_actions_for_tests(_actions())
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="user-1")
-    assert discovered["candidate_count"] == 0, (query, discovered["candidates"])
-
-
 def test_catalog_require_code_and_reject_unknown_args():
     action = _action("list_product_drawings")
     schema = build_argument_json_schema(action)
@@ -344,80 +244,6 @@ def test_metadata_projection_no_path_leak():
     assert "absolute_path" not in dumped
     assert "message" not in dumped
     assert "/secret/" not in dumped
-
-
-def test_execute_catalog_and_metadata_generic_path(monkeypatch: pytest.MonkeyPatch):
-    set_actions_for_tests(_actions())
-    secret = "drawing-test-secret"
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
-        lambda: secret,
-    )
-    catalog_payload = {
-        "items": [
-            {
-                "product_code": "10000001",
-                "filename": "10000001.pdf",
-                "file_kind": "exact",
-                "revision": None,
-                "variant_suffix": None,
-                "size_bytes": 12,
-                "modified_at": "2026-01-01T00:00:00+00:00",
-                "media_type": "application/pdf",
-                "drawing_metadata_path": "/products/10000001/drawing",
-                "drawing_pdf_path": "/products/10000001/drawing/pdf",
-            }
-        ],
-        "page": 1,
-        "page_size": 50,
-        "total": 1,
-        "total_pages": 1,
-        "summary": {
-            "library_available": True,
-            "library_dir": "/secret",
-            "scanned_files": 1,
-            "matched_files": 1,
-        },
-    }
-    meta_payload = {
-        "found": True,
-        "product_code": "10000001",
-        "filename": "10000001.pdf",
-        "revision": None,
-        "variant_suffix": None,
-        "size_bytes": 12,
-        "modified_at": "2026-01-01T00:00:00+00:00",
-        "media_type": "application/pdf",
-        "path": "/secret/10000001.pdf",
-    }
-
-    for oid, payload in (
-        ("list_product_drawings", catalog_payload),
-        ("get_product_drawing", meta_payload),
-    ):
-        token = mint_candidate_token(
-            action_id=oid,
-            actor_id="actor-1",
-            secret=secret,
-            ttl_seconds=60,
-        )
-        result = execute_delpi_information(
-            candidate_token=token,
-            arguments={"code": "10000001"},
-            actor_id="actor-1",
-            catalog_action_executor=_PayloadExecutor(
-                {"success": True, "data": payload}
-            ),
-        )
-        assert result["status"] == "ok"
-        dumped = _dumped(result.get("data") or {})
-        assert "library_dir" not in dumped
-        assert "drawing_metadata_path" not in dumped
-        assert "drawing_pdf_path" not in dumped
-        assert "/secret" not in dumped
-        assert "pdf_base64" not in dumped
-
-
 def test_pdf_not_eligible_and_no_operation_specific_executor_branch():
     eligible = {a.operation_id for a in _actions() if a.executable}
     assert "get_product_drawing_pdf" not in eligible

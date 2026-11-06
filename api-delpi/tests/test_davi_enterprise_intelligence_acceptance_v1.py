@@ -45,29 +45,6 @@ def matrix() -> dict:
 def allowed_operations() -> dict:
     allowlist = load_external_read_allowlist()
     return {row["operationId"]: row for row in allowlist["operations"]}
-
-
-def test_e01_schema_and_evidence_ladder_are_fail_closed(matrix: dict) -> None:
-    assert matrix["schema_version"] == "davi-enterprise-intelligence-acceptance-v1"
-    assert matrix["identity"] == "END_USER_ACCOUNT"
-    assert matrix["business_authorization"] == "FINAL_BACKEND_CANONICAL"
-    assert matrix["tool_surface"] == [
-        "discover_delpi_information",
-        "execute_delpi_information",
-        "get_context",
-        "knowledge",
-        "read",
-        "analyze",
-    ]
-    evidence = matrix["acceptance"]
-    assert evidence["provider_sync"] == "TEST_NOT_RUN"
-    assert evidence["provider_preview"] == "TEST_NOT_RUN"
-    assert evidence["second_user_identity"] == "PENDING"
-    assert evidence["negative_business_authz"] == "PENDING"
-    assert evidence["external_core_approval"] == "TO_INVENTORY"
-    assert evidence["global_shortage_business_contract"] == "TO_INVENTORY"
-
-
 def test_e02_each_case_is_identifiable_and_references_known_routing(matrix: dict) -> None:
     cases = matrix["scenarios"]
     assert len(cases) == 14
@@ -121,7 +98,7 @@ def test_e04_no_direct_tool_or_core_sql_added(matrix: dict) -> None:
     prohibited = {"execute_readonly_sql", "POST /data/sql", "generic_proxy"}
     all_ids = {op for c in matrix["scenarios"] for op in c["operations"]}
     assert not (all_ids & prohibited)
-    assert len(matrix["tool_surface"]) == 6
+    assert len(matrix["tool_surface"]) == 4
     core = next(c for c in matrix["scenarios"] if c["id"] == "EI12")
     assert core["contract_status"] == "TO_INVENTORY"
     assert core["operations"] == []

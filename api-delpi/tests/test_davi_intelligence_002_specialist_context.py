@@ -134,16 +134,6 @@ def test_tsql_practices_are_projected() -> None:
     assert "zeros à esquerda" in blob
     assert "execute_readonly_sql" in blob
     assert "DML" in blob  # write verbs explicitly forbidden
-
-
-def test_table_discovery_pipeline_is_projected() -> None:
-    td = DaviAgentIntelligenceService.agent_directives()["table_discovery"]
-    pipeline = " ".join(td["pipeline"])
-    assert "search_tables_by_description" in pipeline
-    assert "discover_delpi_information" in pipeline
-    assert "não autoriza" in " ".join(td["rules"])
-
-
 def test_proactive_rules_are_bounded() -> None:
     pro = DaviAgentIntelligenceService.agent_directives()["proactive"]
     blob = json.dumps(pro, ensure_ascii=False)
@@ -323,6 +313,6 @@ def test_vista_handoff_document_exists_and_is_complete() -> None:
 def test_narrative_additions_keep_tools_and_authz_unchanged() -> None:
     directives = DaviAgentIntelligenceService.agent_directives()
     assert directives["read_only"] is True
-    assert directives["surface_parity"]["mcp_tools"] == 6
+    assert directives["surface_parity"]["mcp_tools"] == 4
     size = DaviAgentIntelligenceService.directives_serialized_size()
     assert size <= DAVI_AGENT_DIRECTIVES_MAX_BYTES, size

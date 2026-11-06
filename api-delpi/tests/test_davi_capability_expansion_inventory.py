@@ -7,10 +7,6 @@ import json
 import sys
 from pathlib import Path
 
-from app.application.external_capabilities.constants import (
-    MCP_TOOL_DISCOVER_DELPI_INFORMATION,
-    MCP_TOOL_EXECUTE_DELPI_INFORMATION,
-)
 from app.application.external_capabilities.dynamic_information.content_loader import (
     load_external_read_allowlist,
 )
@@ -162,28 +158,6 @@ def test_current_eligible_set_matches_allowlist() -> None:
     )
     assert eligible == _ELIGIBLE
     assert len(eligible) == 94
-
-
-def test_mcp_tools_wave001_four() -> None:
-    source = (_API_ROOT / "app/interface/mcp/server.py").read_text(encoding="utf-8")
-    assert source.count("@mcp.tool(") == 6
-    assert "name=MCP_TOOL_SEARCH_PRODUCTS" not in source
-    assert "name=MCP_TOOL_DISCOVER_DELPI_INFORMATION" in source
-    assert "name=MCP_TOOL_EXECUTE_DELPI_INFORMATION" in source
-    assert "name=MCP_TOOL_GET_CONTEXT" in source
-    assert "name=MCP_TOOL_KNOWLEDGE" in source
-    assert [
-        MCP_TOOL_DISCOVER_DELPI_INFORMATION,
-        MCP_TOOL_EXECUTE_DELPI_INFORMATION,
-    ] == [
-        "discover_delpi_information",
-        "execute_delpi_information",
-    ]
-    # Capability operationId remains allowlisted independently of MCP tools.
-    assert "search_products" in load_allowlist_operation_ids(load_external_read_allowlist())
-    assert load_allowlist_operation_ids(load_external_read_allowlist()) == _ALLOWLIST_IDS
-
-
 def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
     source_head = git_sha("HEAD")
     doc = build_inventory_document(source_head=source_head, origin_main=source_head)

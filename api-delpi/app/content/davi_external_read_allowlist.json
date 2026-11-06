@@ -5983,7 +5983,7 @@
       "operationId": "get_product_drawing_pdf",
       "coverageDisposition": "DEFER",
       "primaryBlocker": "NEEDS_GENERIC_DOCUMENT_BOUNDARY",
-      "reason": "Binary PDF document transport is not a JSON READ projection. Must not embed pdf_base64 in execute_delpi_information. Requires generic authorized document boundary (ARCHITECTURE_ESCALATION if new MCP tool/resource). AuthZ remains API_DELPI_ACCESS on the HTTP route."
+      "reason": "Binary PDF document transport is not a JSON READ projection. Must not embed pdf_base64 in the governed JSON read surface. Requires generic authorized document boundary (ARCHITECTURE_ESCALATION if new MCP tool/resource). AuthZ remains API_DELPI_ACCESS on the HTTP route."
     },
     {
       "operationId": "get_product_analyser",
@@ -6091,7 +6091,7 @@
       "operationId": "export_supplies_third_party_materials_returns",
       "coverageDisposition": "REJECT_FROM_JSON_READ_WAVE",
       "primaryBlocker": "STREAM_BINARY_OUT_OF_SCOPE",
-      "reason": "Binary/document export must not flow through execute_delpi_information JSON (no base64)."
+      "reason": "Binary/document export must not flow through the governed JSON read surface (no base64)."
     },
     {
       "operationId": "get_product_sales_billing",

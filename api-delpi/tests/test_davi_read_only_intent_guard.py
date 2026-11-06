@@ -18,9 +18,6 @@ from app.application.external_capabilities.dynamic_information.content_loader im
     load_dynamic_read_budgets,
     load_external_read_allowlist,
 )
-from app.application.external_capabilities.dynamic_information.discover_service import (
-    discover_delpi_information,
-)
 from app.application.external_capabilities.dynamic_information.eligibility import (
     load_allowlist_operation_ids,
 )
@@ -54,50 +51,6 @@ def _seed():
     load_external_read_allowlist.cache_clear()
     load_dynamic_read_budgets.cache_clear()
     clear_read_only_intent_guard_cache()
-
-
-@pytest.mark.parametrize(
-    "query",
-    [
-        "altere o produto 10080055",
-        "alterar o produto 10080055",
-        "atualize o produto 10080055",
-        "edite o produto 10080055",
-        "exclua o produto 10080055",
-        "crie um produto",
-        "cadastre um produto",
-        "remova o produto 10080055",
-        "salve a alteração do produto",
-        "delete the product 10080055",
-        "update the product 10080055",
-        "edit the product 10080055",
-        "pode alterar o produto 10080055",
-        "por favor altere o produto 10080055",
-        "quero alterar o produto 10080055",
-        "preciso atualizar o produto 10080055",
-        "gostaria de editar o produto 10080055",
-        "please update the product",
-        "can you delete the product",
-        "altere o status fabril do produto",
-        "atualize a expedição do produto",
-        "cadastre exclusividade de MP",
-        "insira um novo fornecedor",
-        "inserir um novo fornecedor",
-        "insira o item 10080055",
-        "inclua um registro",
-        "incluir um registro",
-    ],
-)
-def test_explicit_write_intent_returns_zero_candidates(query, monkeypatch):
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "test-secret-davi",
-    )
-    assert has_explicit_write_intent(query) is True
-    result = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
-    assert result["candidate_count"] == 0
-    assert result["candidates"] == []
-    assert result["eligible_action_count"] == 94
 
 
 @pytest.mark.parametrize(
@@ -143,47 +96,6 @@ def test_command_verbs_do_not_trigger_write_guard(query):
     authoritative KPI, so the mutation guard never fires on verb form alone.
     Candidate outcomes are decided by semantic retrieval, not by the verb."""
     assert has_explicit_write_intent(query) is False
-
-
-@pytest.mark.parametrize(
-    ("query", "action_id"),
-    [
-        ("buscar produto 10080055", "search_products"),
-        ("estoque do produto 10080055", "get_product_stock"),
-        ("fornecedores do produto 10080055", "get_product_suppliers"),
-        ("clientes do produto 10080055", "get_product_customers"),
-        ("compras do produto 10080055", "get_product_purchases"),
-        ("estrutura do produto 10080055", "get_product_structure"),
-        ("status de produção do produto 10080055", "get_product_production_status"),
-    ],
-)
-def test_read_queries_still_retrieve(query, action_id, monkeypatch):
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "test-secret-davi",
-    )
-    assert has_explicit_write_intent(query) is False
-    result = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
-    assert result["candidate_count"] >= 1
-    assert result["candidates"][0]["action_id"] == action_id
-    assert result["eligible_action_count"] == 94
-
-
-def test_bare_product_query_is_ambiguous_but_not_write(monkeypatch):
-    """Bare "produto X" is semantically ambiguous: search_products ties
-    lexically with other product actions and must not deterministically own
-    the intent — it only needs to remain a top candidate."""
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "test-secret-davi",
-    )
-    assert has_explicit_write_intent("produto 10080055") is False
-    result = discover_delpi_information(
-        query="produto 10080055", top_k=5, actor_id=_ACTOR
-    )
-    assert result["candidate_count"] >= 1
-    ids = [c["action_id"] for c in result["candidates"]]
-    assert "search_products" in ids
 
 
 def test_guard_runs_before_ranking():

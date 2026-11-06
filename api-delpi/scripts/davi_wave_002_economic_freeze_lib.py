@@ -34,8 +34,10 @@ CURRENT_ELIGIBLE = [
     "get_product_shipping_status",
 ]
 MCP_TOOLS = [
-    "discover_delpi_information",
-    "execute_delpi_information",
+    "get_context",
+    "knowledge",
+    "read",
+    "analyze",
 ]
 ECONOMIC_QUARANTINE_TOKENS = ["preco", "price", "pricing", "custo", "cost"]
 REQUIRED_FREEZE_FIELDS = (
@@ -1645,7 +1647,7 @@ def render_freeze_md(freeze: dict[str, Any]) -> str:
         "simulation != ACT, recommendation != authorization, calculation != persistence",
         "HTTP GET != semantic READ",
         "PREPARE = preview/draft/simulação sem persistir — not Wave 2 READ",
-        "MCP tools remain search_products + discover_delpi_information + execute_delpi_information",
+        "MCP tools are get_context + knowledge + read + analyze",
         "```",
         "",
         "## Primary decisions",

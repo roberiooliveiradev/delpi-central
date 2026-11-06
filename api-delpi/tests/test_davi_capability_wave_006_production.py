@@ -9,10 +9,7 @@ from typing import Any
 
 import pytest
 
-from app.application.external_capabilities.constants import (
-    MCP_TOOL_DISCOVER_DELPI_INFORMATION,
-    MCP_TOOL_EXECUTE_DELPI_INFORMATION,
-)
+import app.application.external_capabilities.dynamic_information.argument_validator as av
 from app.application.external_capabilities.dynamic_information.action_index import (
     reset_action_index_for_tests,
     set_actions_for_tests,
@@ -21,9 +18,6 @@ from app.application.external_capabilities.dynamic_information.argument_validato
     ArgumentValidationError,
     validate_arguments,
 )
-from app.application.external_capabilities.dynamic_information.candidate_token import (
-    mint_candidate_token,
-)
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     TechnicalAction,
     build_technical_actions_from_baseline,
@@ -31,12 +25,6 @@ from app.application.external_capabilities.dynamic_information.catalog_builder i
 from app.application.external_capabilities.dynamic_information.content_loader import (
     load_dynamic_read_budgets,
     load_external_read_allowlist,
-)
-from app.application.external_capabilities.dynamic_information.discover_service import (
-    discover_delpi_information,
-)
-from app.application.external_capabilities.dynamic_information.execute_service import (
-    execute_delpi_information,
 )
 from app.application.external_capabilities.dynamic_information.projection import (
     apply_approved_field_projection,
@@ -386,8 +374,6 @@ def test_wave006_mcp_tools_wave001_four():
 
     tools = asyncio.run(create_mcp_server().list_tools())
     assert [t.name for t in tools] == [
-        MCP_TOOL_DISCOVER_DELPI_INFORMATION,
-        MCP_TOOL_EXECUTE_DELPI_INFORMATION,
         "get_context",
         "knowledge",
         "read",
@@ -538,10 +524,7 @@ def test_wave006_machine_load_delivery_require_both_or_neither():
 
 def test_wave006_machine_load_scheduled_partial_still_accepted(monkeypatch):
     """Scheduled window keeps canonical open-bound resolution; DAVI does not inject."""
-    from app.application.external_capabilities.dynamic_information import (
-        argument_validator as av,
-    )
-
+    
     monkeypatch.setattr(av, "_constraint_today", lambda: date(2026, 1, 1))
     action = _action("get_production_machine_load_operations")
     cleaned_start = validate_arguments(action, {"scheduled_start": "2026-01-01"})
@@ -767,138 +750,10 @@ def test_wave006_canonical_authz_decorators_unchanged():
         assert "branch_access_error" not in text
 
 
-def _discover(query: str, monkeypatch) -> dict[str, Any]:
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    return discover_delpi_information(query=query, top_k=5, actor_id="u1")
 
 
-@pytest.mark.parametrize(
-    ("query", "expected"),
-    [
-        ("OEE", "get_overall_equipment_effectiveness_pct"),
-        ("OEE de produção", "get_overall_equipment_effectiveness_pct"),
-        ("eficiência geral dos equipamentos", "get_overall_equipment_effectiveness_pct"),
-        ("evolução do OEE", "get_production_oee_series"),
-        ("OTD de produção", "get_on_time_delivery_pct"),
-        ("OTD das OPs", "get_on_time_delivery_pct"),
-        ("OTD das ordens de produção", "get_on_time_delivery_pct"),
-        ("pontualidade da produção", "get_on_time_delivery_pct"),
-        ("OPs no prazo", "get_on_time_delivery_pct"),
-        ("OPs atrasadas", "get_on_time_delivery_pct"),
-        ("evolução do OTD de produção", "get_production_otd_series"),
-        ("carga de máquina", "get_production_machine_load_work_centers"),
-        ("carga por CT", "get_production_machine_load_work_centers"),
-        ("fila do CT", "get_production_machine_load_work_centers"),
-        ("operações programadas", "get_production_machine_load_operations"),
-        ("operações alocadas", "get_production_machine_load_operations"),
-        ("resumo dos apontamentos", "get_production_appointments_summary"),
-        ("apontamentos de produção resumidos", "get_production_appointments_summary"),
-        ("quantidade apontada por CT", "get_production_appointments_summary"),
-        ("quanto foi produzido", "get_production_appointments_produced_totals"),
-        ("quantidade produzida", "get_production_appointments_produced_totals"),
-        ("produção realizada no período", "get_production_appointments_produced_totals"),
-        ("total produzido", "get_production_appointments_produced_totals"),
-    ],
-)
-def test_wave006_retrieval_positive(query: str, expected: str, monkeypatch):
-    discovered = _discover(query, monkeypatch)
-    assert discovered["eligible_action_count"] >= 75, query
-    assert discovered["candidate_count"] >= 1, query
-    top = discovered["candidates"][0]["action_id"]
-    assert top == expected, (query, top, [c["action_id"] for c in discovered["candidates"][:3]])
 
 
-@pytest.mark.parametrize(
-    ("query", "forbidden_prefix"),
-    [
-        ("OTD comercial", "get_on_time_delivery_pct"),
-        ("OTD comercial", "get_production_otd"),
-        ("OTD de compras", "get_on_time_delivery_pct"),
-        ("OTD de compras", "get_production_otd"),
-        ("OTD suprimentos", "get_on_time_delivery_pct"),
-        ("OTD suprimentos", "get_production_otd"),
-        ("roteiro do produto", "get_production_machine_load"),
-        ("guia de fabricação", "get_production_machine_load"),
-        ("listar apontamentos brutos", "get_production_appointments_summary"),
-        ("apontamento do operador", "get_production_oee"),
-        ("status de produção do produto", "get_overall_equipment_effectiveness"),
-    ],
-)
-def test_wave006_retrieval_collisions(query: str, forbidden_prefix: str, monkeypatch):
-    discovered = _discover(query, monkeypatch)
-    if discovered["candidate_count"] == 0:
-        return
-    top = discovered["candidates"][0]["action_id"]
-    assert not top.startswith(forbidden_prefix), (query, top)
-
-
-@pytest.mark.parametrize(
-    ("query", "expected"),
-    [
-        ("OTD comercial", "get_sales_order_otd"),
-        ("OTD de pedidos de venda", "get_sales_order_otd"),
-        ("OTD de compras", "get_supplies_purchase_order_otd"),
-        ("OTD pedidos de compra", "get_supplies_purchase_order_otd"),
-        ("OTD suprimentos", "get_supplies_otd"),
-    ],
-)
-def test_wave006_qualified_otd_cross_family_regression(query: str, expected: str, monkeypatch):
-    discovered = _discover(query, monkeypatch)
-    assert discovered["candidate_count"] >= 1, query
-    top = discovered["candidates"][0]["action_id"]
-    assert top == expected, (query, top, [c["action_id"] for c in discovered["candidates"][:5]])
-    production = {
-        "get_on_time_delivery_pct",
-        "get_production_otd",
-        "get_production_otd_series",
-    }
-    assert top not in production
-
-
-def test_wave006_bare_otd_not_deterministic_production(monkeypatch):
-    """Bare OTD must not resolve deterministically to Production.
-
-    Governed via quarantine token ``otd`` owned only by matching multiword
-    aliases (OTD de produção / OTD comercial / OTD de compras / …).
-    """
-    discovered = _discover("OTD", monkeypatch)
-    production = {
-        "get_on_time_delivery_pct",
-        "get_production_otd",
-        "get_production_otd_series",
-    }
-    ids = [c["action_id"] for c in discovered.get("candidates") or []]
-    assert discovered["candidate_count"] == 0, (
-        "bare OTD must not deterministically resolve; expected zero candidates",
-        ids,
-    )
-    assert all(aid not in production for aid in ids)
-
-
-def test_wave006_bruto_quarantine_no_false_disable_of_prior_reads(monkeypatch):
-    """bruto/brutos quarantine must not wipe governed prior-53 family intents."""
-    probes = [
-        ("buscar produto 10080001", "search_products"),
-        ("estoque do produto 10080001", "get_product_stock"),
-        ("ROL comercial", "get_commercial_rol_summary"),
-        ("OTD comercial", "get_sales_order_otd"),
-        ("OTD de compras", "get_supplies_purchase_order_otd"),
-        ("resumo dos apontamentos", "get_production_appointments_summary"),
-    ]
-    for query, expected in probes:
-        discovered = _discover(query, monkeypatch)
-        assert discovered["candidate_count"] >= 1, query
-        assert discovered["candidates"][0]["action_id"] == expected, query
-
-    # Raw appointment intent remains blocked from summary.
-    raw = _discover("listar apontamentos brutos", monkeypatch)
-    if raw["candidate_count"] == 0:
-        return
-    assert raw["candidates"][0]["action_id"] != "get_production_appointments_summary"
 
 
 def test_wave006_coverage_decision_wording_mentions_machine_load_ops():
@@ -936,62 +791,6 @@ def test_wave006_coverage_decision_wording_mentions_machine_load_ops():
     )
     reason = str(coverage.get("reason") or "")
     assert "exclude appointment/OP/operator line detail" not in reason
-
-def test_wave006_execute_projection_end_to_end(monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    action = _action("get_production_oee")
-    token = mint_candidate_token(
-        action_id=action.action_id,
-        actor_id="u1",
-        secret="sec",
-        ttl_seconds=300,
-    )
-
-    class _Executor:
-        def execute(self, *, action_id: str, validated_arguments: dict[str, Any]):
-            assert action_id == "get_production_oee"
-            assert "operator_code" not in validated_arguments
-            return CatalogActionExecutionResult(
-                outcome="ok",
-                payload={
-                    "success": True,
-                    "data": {
-                        "branch": "01",
-                        "start_date": "2026-01-01",
-                        "end_date": "2026-01-31",
-                        "summary": {
-                            "oee_pct": None,
-                            "total_appointments": 0,
-                            "valid_appointments": 0,
-                            "outlier_appointments": 0,
-                            "outlier_percentage": 0.0,
-                        },
-                        "appointments": {
-                            "items": [{"operator_code": "SECRET", "appointment_id": 9}]
-                        },
-                    },
-                },
-            )
-
-    result = execute_delpi_information(
-        candidate_token=token,
-        arguments={
-            "start_date": "2026-01-01",
-            "end_date": "2026-01-31",
-            "branch": "01",
-        },
-        actor_id="u1",
-        catalog_action_executor=_Executor(),
-    )
-    data = result.get("data") or result
-    assert data.get("summary", {}).get("oee_pct") is None
-    assert "appointments" not in data
-
-
 def test_wave006_no_gpt_actions_impact():
     root = _API_ROOT
     hits = []

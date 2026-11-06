@@ -19,9 +19,6 @@ from app.application.external_capabilities.dynamic_information.argument_validato
     build_argument_json_schema,
     validate_arguments,
 )
-from app.application.external_capabilities.dynamic_information.candidate_token import (
-    mint_candidate_token,
-)
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     TechnicalAction,
     build_technical_actions_from_baseline,
@@ -29,12 +26,6 @@ from app.application.external_capabilities.dynamic_information.catalog_builder i
 from app.application.external_capabilities.dynamic_information.content_loader import (
     load_dynamic_read_budgets,
     load_external_read_allowlist,
-)
-from app.application.external_capabilities.dynamic_information.discover_service import (
-    discover_delpi_information,
-)
-from app.application.external_capabilities.dynamic_information.execute_service import (
-    execute_delpi_information,
 )
 from app.application.external_capabilities.dynamic_information.projection import (
     apply_approved_field_projection,
@@ -180,139 +171,6 @@ def test_wave2_eligible_count_exactly_thirteen():
         assert oid not in set(eligible)
         assert oid in blocked
     assert "get_product_last_purchase" not in blocked
-
-
-def test_wave2_mcp_tools_wave001_four():
-    import asyncio
-    from app.interface.mcp.server import create_mcp_server
-
-    tools = asyncio.run(create_mcp_server().list_tools())
-    assert [t.name for t in tools] == [
-        "discover_delpi_information",
-        "execute_delpi_information",
-        "get_context",
-        "knowledge",
-        "read",
-        "analyze",
-    ]
-
-
-@pytest.mark.parametrize(
-    ("query", "expected"),
-    [
-        ("preço do produto 10080055", "get_product_pricing"),
-        ("preço comercial do produto 10080055", "get_product_pricing"),
-        ("tabela de preço do produto 10080055", "get_product_pricing"),
-        ("histórico de preço de compra do produto 10080055", "get_product_purchase_price_history"),
-        ("evolução de preço de compra", "get_product_purchase_price_history"),
-        ("último preço de compra do produto 10080055", "get_product_last_purchase"),
-        ("última NF de compra", "get_product_last_purchase"),
-        ("estoque 10080001", "get_product_stock"),
-        ("fornecedores 10080055", "get_product_suppliers"),
-        ("compras do produto", "get_product_purchases"),
-        ("estrutura 90261805", "get_product_structure"),
-        ("status de produção 10080055", "get_product_production_status"),
-        ("status fabril do produto", "get_product_factory_status"),
-        ("factory status do produto", "get_product_factory_status"),
-        ("MP exclusiva", "get_product_structure_exclusivity"),
-        ("expedição", "get_product_shipping_status"),
-    ],
-)
-def test_wave2_and_current_ten_retrieval(query, expected, monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["eligible_action_count"] >= 53, query
-    assert discovered["candidate_count"] >= 1, query
-    assert discovered["candidates"][0]["action_id"] == expected, (
-        query,
-        [c["action_id"] for c in discovered["candidates"]],
-    )
-
-
-@pytest.mark.parametrize(
-    ("query", "expected", "forbidden"),
-    [
-        ("preço do produto", "get_product_pricing", "get_product_purchase_price_history"),
-        ("histórico de preço de compra", "get_product_purchase_price_history", "get_product_pricing"),
-        ("último preço de compra", "get_product_last_purchase", "get_product_purchase_price_history"),
-        ("compras do produto", "get_product_purchases", "get_product_purchase_price_history"),
-        ("fornecedores do produto", "get_product_suppliers", "get_product_last_purchase"),
-        ("estoque do produto", "get_product_stock", "get_product_pricing"),
-        ("estrutura do produto", "get_product_structure", "get_product_structure_exclusivity"),
-        ("status de produção", "get_product_production_status", "get_product_factory_status"),
-        ("status fabril", "get_product_factory_status", "get_product_shipping_status"),
-        ("expedição", "get_product_shipping_status", "get_product_production_status"),
-        ("MP exclusiva", "get_product_structure_exclusivity", "get_product_structure"),
-    ],
-)
-def test_wave2_sibling_disambiguation(query, expected, forbidden, monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    ids = [c["action_id"] for c in discovered["candidates"]]
-    assert ids, query
-    assert ids[0] == expected, (query, ids)
-    assert forbidden not in ids or ids.index(expected) < ids.index(forbidden), (query, ids)
-
-
-
-@pytest.mark.parametrize(
-    "query",
-    [
-        "preço",
-        "price",
-        "pricing",
-        "custo",
-        "cost",
-        "inteligência de preço de matéria-prima",
-        "impacto no custo",
-        "simulação de custo",
-        "preço e custo do produto",
-        "pricing cost",
-        "preço admin",
-        "price sql",
-        "factory sql",
-        "factory admin",
-    ],
-)
-def test_bare_economic_and_deferred_intents_remain_quarantined(query, monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["candidate_count"] == 0, (query, discovered["candidates"])
-
-
-@pytest.mark.parametrize(
-    "query",
-    [
-        "altere o preço do produto",
-        "cadastre um preço comercial",
-        "atualize o último preço de compra",
-        "edite o histórico de preço",
-        "altere o custo",
-        "simule e aplique novo custo",
-    ],
-)
-def test_wave2_write_intent_returns_zero(query, monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["candidate_count"] == 0, (query, discovered["candidates"])
-
-
 def test_economic_quarantine_tokens_remain_global():
     tokens = {
         str(t).lower()
@@ -628,51 +486,6 @@ def test_last_purchase_projection_drops_tax_id():
         "registered_last_purchase_price",
     ):
         assert sibling not in dumped
-
-
-def test_wave2_execute_projects_without_raw_fallback(monkeypatch):
-    set_actions_for_tests(_actions())
-    secret = "sec"
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
-        lambda: secret,
-    )
-    pricing = _action("get_product_pricing")
-    token = mint_candidate_token(
-        action_id=pricing.action_id, actor_id="u1", secret=secret, ttl_seconds=60
-    )
-    result = execute_delpi_information(
-        candidate_token=token,
-        arguments={"code": "10080055"},
-        actor_id="u1",
-        catalog_action_executor=_PayloadExecutor(
-            {
-                "success": True,
-                "data": {
-                    "product": {"code": "10080055", "description": "PA", "unit": "UN"},
-                    "prices": [
-                        {
-                            "table_code": "001",
-                            "table_description": "Padrao",
-                            "sale_price": 12.5,
-                            "currency": "1",
-                            "lot_quantity": 1.0,
-                            "valid_from": "20260101",
-                            "active": "S",
-                            "max_price": 99.0,
-                        }
-                    ],
-                },
-            }
-        ),
-    )
-    assert result["status"] == "ok"
-    assert result["truncated"] is False
-    assert result["data"]["prices"][0]["sale_price"] == 12.5
-    assert "max_price" not in _dumped(result["data"])
-    assert result["is_complete"] is True
-
-
 def test_no_per_operation_executor_or_economic_router():
     roots = [
         _API_ROOT / "app/application/external_capabilities",

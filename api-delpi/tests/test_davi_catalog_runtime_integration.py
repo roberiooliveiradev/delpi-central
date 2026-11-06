@@ -1,6 +1,6 @@
 """In-process runtime integration: DAVI catalog actions via real composition.
 
-Proves execute_delpi_information_wired → InProcessAsgiClient → canonical routes
+Proves davi_read_wired → InProcessAsgiClient → canonical routes
 without mocking CatalogActionExecutor. DB/use-case boundaries may be faked.
 """
 
@@ -19,9 +19,6 @@ from app.application.external_capabilities.dynamic_information.action_index impo
     reset_action_index_for_tests,
     set_actions_for_tests,
 )
-from app.application.external_capabilities.dynamic_information.candidate_token import (
-    mint_candidate_token,
-)
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     build_technical_actions_from_baseline,
 )
@@ -34,7 +31,7 @@ from app.application.external_capabilities.dynamic_information.eligibility impor
 from app.application.external_capabilities.dynamic_information.errors import (
     GovernedExecutionError,
 )
-from app.composition.davi_dynamic_read_composer import execute_delpi_information_wired
+from app.composition.davi_dynamic_read_composer import davi_read_wired
 from app.interface.mcp.server import create_mcp_server
 import app.interface.http.routes.product_routes as product_routes
 import app.interface.http.routes.product_drawing_routes as product_drawing_routes
@@ -43,7 +40,6 @@ _BASELINE = (
     Path(__file__).resolve().parents[1] / "app" / "content" / "openapi_baseline.json"
 )
 _ACTOR = "11111111-1111-4111-8111-111111111111"
-_SECRET = "test-secret-davi-catalog-runtime"
 _CLAIMS = {
     "sub": _ACTOR,
     "email": "davi-runtime@example.com",
@@ -706,12 +702,6 @@ def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[dict[str, Any]]:
         )
         stack.enter_context(
             patch(
-                "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
-                lambda: _SECRET,
-            )
-        )
-        stack.enter_context(
-            patch(
                 "app.application.external_capabilities.product_search_service.require_product_search_access",
                 lambda: None,
             )
@@ -725,27 +715,16 @@ def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[dict[str, Any]]:
         }
 
 
-def _mint(action_id: str) -> str:
-    return mint_candidate_token(
-        action_id=action_id,
-        actor_id=_ACTOR,
-        secret=_SECRET,
-        ttl_seconds=120,
-    )
-
-
 def _execute(action_id: str, arguments: dict[str, Any]) -> dict[str, Any]:
-    return execute_delpi_information_wired(
-        candidate_token=_mint(action_id),
+    return davi_read_wired(
+        capability=action_id,
         arguments=arguments,
-        actor_id=_ACTOR,
         authorization="Bearer end-user-token",
     )
 
 
 @pytest.mark.parametrize("action_id", _CATALOG_ACTIONS)
 def test_catalog_action_wired_execute_pass(action_id: str, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -759,7 +738,6 @@ def test_catalog_action_wired_execute_pass(action_id: str, monkeypatch: pytest.M
 
 
 def test_stock_projection_and_branch_filter(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -784,7 +762,6 @@ def test_stock_projection_and_branch_filter(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_structure_nested_projection(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -799,7 +776,6 @@ def test_structure_nested_projection(monkeypatch: pytest.MonkeyPatch):
 
 def test_nested_under_running_app_lifespan(monkeypatch: pytest.MonkeyPatch):
     """Regression for live Internal error: nested lifespan / MCP session manager."""
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -832,7 +808,6 @@ def test_nested_under_running_app_lifespan(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_backend_403_maps_to_forbidden(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -840,73 +815,9 @@ def test_backend_403_maps_to_forbidden(monkeypatch: pytest.MonkeyPatch):
     with _auth_and_domain_fakes(allowed=False):
         with pytest.raises(PermissionError, match="Forbidden"):
             _execute("get_product_stock", {"code": "10080055"})
-
-
-def test_search_products_discover_execute_still_pass(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
-    monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
-    monkeypatch.setenv(
-        "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
-    )
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: _SECRET,
-    )
-    from app.application.external_capabilities.dynamic_information.discover_service import (
-        discover_delpi_information,
-    )
-
-    with _auth_and_domain_fakes(allowed=True):
-        discovered = discover_delpi_information(
-            query="estoque do produto 10080055",
-            top_k=5,
-            actor_id=_ACTOR,
-        )
-        assert discovered["candidate_count"] >= 1
-        assert discovered["candidates"][0]["action_id"] == "get_product_stock"
-        token = discovered["candidates"][0]["candidate_token"]
-        executed = execute_delpi_information_wired(
-            candidate_token=token,
-            arguments={"code": "10080055"},
-            actor_id=_ACTOR,
-            authorization="Bearer end-user-token",
-        )
-        assert executed["status"] == "ok"
-        assert executed["action_id"] == "get_product_stock"
-
-        search_token = mint_candidate_token(
-            action_id="search_products",
-            actor_id=_ACTOR,
-            secret=_SECRET,
-            ttl_seconds=120,
-        )
-        search = execute_delpi_information_wired(
-            candidate_token=search_token,
-            arguments={"code": "10080055"},
-            actor_id=_ACTOR,
-            authorization="Bearer end-user-token",
-        )
-        assert search["status"] == "ok"
-        assert search["action_id"] == "search_products"
-
-
-def test_mcp_exposes_wave001_four_tools():
-    mcp = create_mcp_server()
-    tools = {t.name for t in mcp._tool_manager.list_tools()}
-    assert tools == {
-        "discover_delpi_information",
-        "execute_delpi_information",
-        "get_context",
-        "knowledge",
-        "read",
-        "analyze",
-    }
-
-
 def test_wave2_pricing_history_last_purchase_wired_projection(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -969,7 +880,6 @@ def test_wave2_pricing_history_last_purchase_wired_projection(
 
 
 def test_wave2_backend_403_maps_to_forbidden(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -987,7 +897,6 @@ def test_wave2_backend_403_maps_to_forbidden(monkeypatch: pytest.MonkeyPatch):
 def test_wave3a_guide_and_parents_wired_projection_and_defaults(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -1032,7 +941,6 @@ def test_wave3a_guide_and_parents_wired_projection_and_defaults(
 
 
 def test_wave3a_backend_403_maps_to_forbidden(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -1047,7 +955,6 @@ def test_pagination_completeness_where_used_multipage(
     monkeypatch: pytest.MonkeyPatch,
 ):
     """Live bug regression: multipage parents must not claim dataset completeness."""
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -1092,7 +999,6 @@ def test_pagination_completeness_stock_sibling_multi_and_single(
     monkeypatch: pytest.MonkeyPatch,
 ):
     """Sibling paginated capability proves transversal fix (not where-used-only)."""
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -1169,7 +1075,6 @@ def test_eligible_set_is_seventy_seven():
 def test_drawing_catalog_and_metadata_wired_projection(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -1200,7 +1105,6 @@ def test_drawing_catalog_and_metadata_wired_projection(
 
 
 def test_drawing_backend_403_maps_to_forbidden(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
     monkeypatch.setenv(
         "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
@@ -1212,7 +1116,6 @@ def test_drawing_backend_403_maps_to_forbidden(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_unknown_argument_still_rejected(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
     with _auth_and_domain_fakes(allowed=True):
         with pytest.raises(GovernedExecutionError):
             _execute(

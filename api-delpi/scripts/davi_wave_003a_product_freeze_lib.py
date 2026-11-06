@@ -31,8 +31,10 @@ CURRENT_ELIGIBLE = [
     "get_product_last_purchase",
 ]
 MCP_TOOLS = [
-    "discover_delpi_information",
-    "execute_delpi_information",
+    "get_context",
+    "knowledge",
+    "read",
+    "analyze",
 ]
 WAVE3A_OPS = (
     "get_product_guide",

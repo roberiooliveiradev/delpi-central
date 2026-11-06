@@ -9,16 +9,11 @@ from typing import Any
 import pytest
 
 from app.application.external_capabilities.constants import (
-    MCP_TOOL_DISCOVER_DELPI_INFORMATION,
-    MCP_TOOL_EXECUTE_DELPI_INFORMATION,
     MCP_TOOL_SEARCH_PRODUCTS,
 )
 from app.application.external_capabilities.dynamic_information.action_index import (
     reset_action_index_for_tests,
     set_actions_for_tests,
-)
-from app.application.external_capabilities.dynamic_information.candidate_token import (
-    mint_candidate_token,
 )
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     TechnicalAction,
@@ -27,12 +22,6 @@ from app.application.external_capabilities.dynamic_information.catalog_builder i
 from app.application.external_capabilities.dynamic_information.content_loader import (
     load_dynamic_read_budgets,
     load_external_read_allowlist,
-)
-from app.application.external_capabilities.dynamic_information.discover_service import (
-    discover_delpi_information,
-)
-from app.application.external_capabilities.dynamic_information.execute_service import (
-    execute_delpi_information,
 )
 from app.application.external_capabilities.dynamic_information.projection import (
     apply_approved_field_projection,
@@ -199,204 +188,11 @@ def test_wave005_mcp_tools_wave001_four():
 
     tools = asyncio.run(create_mcp_server().list_tools())
     assert [t.name for t in tools] == [
-        MCP_TOOL_DISCOVER_DELPI_INFORMATION,
-        MCP_TOOL_EXECUTE_DELPI_INFORMATION,
         "get_context",
         "knowledge",
         "read",
         "analyze",
     ]
-
-
-@pytest.mark.parametrize(
-    ("query", "expected"),
-    [
-        ("CPV suprimentos", "get_supplies_cpv"),
-        ("giro de estoque", "get_supplies_inventory_turnover"),
-        ("valor de estoque", "get_supplies_stock_value"),
-        ("economia de negociação", "get_supplies_negotiation_savings_summary"),
-        ("OTD suprimentos", "get_supplies_otd"),
-        ("OTD de compras", "get_supplies_purchase_order_otd"),
-        ("OTD pedidos de compra", "get_supplies_purchase_order_otd"),
-        ("OTD fornecedor", "get_supplies_purchase_order_otd"),
-        ("série OTD compras", "get_supplies_purchase_order_otd_series"),
-        ("evolução OTD de compras", "get_supplies_purchase_order_otd_series"),
-        ("estoque de segurança", "get_supplies_safety_stock_summary"),
-        ("itens de estoque de segurança", "get_supplies_safety_stock_items"),
-        ("análise de consumo estoque de segurança", "get_supplies_safety_stock_consumption_analysis_summary"),
-        ("saldo de estoque por depósito", "get_supplies_stock_balances_summary"),
-        ("resumo dos saldos de estoque por depósito", "get_supplies_stock_balances_summary"),
-        ("solicitações de compra", "list_supplies_purchase_request_lines"),
-        ("materiais em poder de terceiros", "get_supplies_third_party_materials_summary"),
-        ("histórico de preço por fornecedor", "get_supplies_safety_stock_supplier_purchase_price_history"),
-        ("fornecedores do item de estoque de segurança", "get_supplies_safety_stock_item_suppliers"),
-    ],
-)
-def test_wave005_supplies_retrieval_positive(query, expected, monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["eligible_action_count"] >= 53, query
-    assert discovered["candidate_count"] >= 1, query
-    assert discovered["candidates"][0]["action_id"] == expected, (
-        query,
-        [c["action_id"] for c in discovered["candidates"]],
-    )
-
-
-@pytest.mark.parametrize(
-    ("query", "expected"),
-    [
-        ("resumo dos saldos de estoque por depósito", "get_supplies_stock_balances_summary"),
-        ("resumo de estoque por depósito", "get_supplies_stock_balances_summary"),
-        ("consolidado de estoque por depósito", "get_supplies_stock_balances_summary"),
-        ("totais dos saldos por armazém", "get_supplies_stock_balances_summary"),
-        ("qual o valor total de estoque por depósito", "get_supplies_stock_balances_summary"),
-        ("liste os produtos em estoque por depósito", "get_supplies_stock_balances_items"),
-        ("quais itens existem no depósito 01", "get_supplies_stock_balances_items"),
-        ("itens de saldo de estoque", "get_supplies_stock_balances_items"),
-        ("lista de produtos por armazém", "get_supplies_stock_balances_items"),
-        ("mostrar itens dos saldos de estoque", "get_supplies_stock_balances_items"),
-        ("estoque do produto 10080001", "get_product_stock"),
-        ("saldo disponível do produto 10080001", "get_product_stock"),
-        ("estoque do código 10090043", "get_product_stock"),
-        ("saldo por filial do produto 10080055", "get_product_stock"),
-    ],
-)
-def test_wave005_stock_balance_retrieval_disambiguation(query, expected, monkeypatch):
-    """Summary vs items vs product-stock intents must rank without query hardcodes."""
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["candidates"][0]["action_id"] == expected, (
-        query,
-        [c["action_id"] for c in discovered["candidates"]],
-    )
-
-
-@pytest.mark.parametrize(
-    ("query", "expected", "forbidden"),
-    [
-        ("OTD comercial", "get_sales_order_otd", "get_supplies_purchase_order_otd"),
-        ("OTD de compras", "get_supplies_purchase_order_otd", "get_sales_order_otd"),
-        ("OTD fornecedor", "get_supplies_purchase_order_otd", "get_sales_order_otd"),
-        ("resumo do ROL", "get_commercial_rol_summary", "get_supplies_cpv"),
-        ("CPV suprimentos", "get_supplies_cpv", "get_commercial_rol_summary"),
-        ("estoque do produto", "get_product_stock", "get_supplies_stock_balances_items"),
-        ("saldo de estoque por depósito", "get_supplies_stock_balances_summary", "get_product_stock"),
-        ("solicitações de compra", "list_supplies_purchase_request_lines", "get_product_purchases"),
-        (
-            "histórico de preço de compra do produto",
-            "get_product_purchase_price_history",
-            "get_supplies_safety_stock_supplier_purchase_price_history",
-        ),
-        (
-            "histórico de preço por fornecedor",
-            "get_supplies_safety_stock_supplier_purchase_price_history",
-            "get_product_purchase_price_history",
-        ),
-        (
-            "materiais em poder de terceiros",
-            "get_supplies_third_party_materials_summary",
-            "get_product_stock",
-        ),
-        ("estoque de segurança", "get_supplies_safety_stock_summary", "get_product_stock"),
-    ],
-)
-def test_wave005_sibling_disambiguation(query, expected, forbidden, monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    ids = [c["action_id"] for c in discovered["candidates"]]
-    assert ids, query
-    assert ids[0] == expected, (query, ids)
-    assert forbidden not in ids or ids.index(expected) < ids.index(forbidden), (query, ids)
-
-
-@pytest.mark.parametrize(
-    "query",
-    [
-        "crie uma solicitação de compra",
-        "altere o estoque de segurança",
-        "aprove pedido de compra",
-        "cancele solicitação",
-        "registre recebimento",
-        "lançar título financeiro",
-    ],
-)
-def test_wave005_negative_write_intent(query, monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    executable = [
-        c for c in discovered.get("candidates") or [] if c.get("action_id") in _PROMOTED
-    ]
-    assert discovered["candidate_count"] == 0 or not executable, (
-        query,
-        [c["action_id"] for c in discovered.get("candidates") or []],
-    )
-
-
-def test_wave005_execute_projects_cpv(monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    action = _action("get_supplies_cpv")
-    token = mint_candidate_token(
-        action_id=action.action_id,
-        actor_id="u1",
-        secret="sec",
-        ttl_seconds=300,
-    )
-
-    class _Exec:
-        def execute(self, *, action_id: str, validated_arguments: dict[str, Any]):
-            assert action_id == "get_supplies_cpv"
-            return CatalogActionExecutionResult(
-                outcome="ok",
-                payload={
-                    "success": True,
-                    "data": {
-                        "branch": "01",
-                        "start_date": "2026-09-01",
-                        "end_date": "2026-09-30",
-                        "summary": {
-                            "cpv_total": 100.0,
-                            "rol": 200.0,
-                            "cpv_percentage": 50.0,
-                            "secret_cost_breakdown": 99.0,
-                        },
-                        "internal_sql": "SELECT 1",
-                    },
-                },
-            )
-
-    result = execute_delpi_information(
-        candidate_token=token,
-        arguments={"branch": "01", "start_date": "2026-09-01", "end_date": "2026-09-30"},
-        actor_id="u1",
-        catalog_action_executor=_Exec(),
-    )
-    assert result["status"] == "ok"
-    assert result["projection"] == "approved_fields"
-    body = result["data"]
-    assert body["summary"]["cpv_total"] == 100.0
-    assert "secret_cost_breakdown" not in body.get("summary", {})
-    assert "internal_sql" not in body
 
 
 def test_wave005_suppliers_drop_tax_document():
@@ -590,20 +386,6 @@ def test_stock_balances_items_already_preserves_branch():
 
 def test_wave005_drawing_pdf_still_not_executable():
     assert _action("get_product_drawing_pdf").executable is False
-
-
-def test_wave005_commercial_regression_still_discoverable(monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query="OTD comercial", top_k=5, actor_id="u1")
-    assert discovered["candidates"][0]["action_id"] == "get_sales_order_otd"
-    discovered = discover_delpi_information(query="ROL comercial", top_k=5, actor_id="u1")
-    assert discovered["candidates"][0]["action_id"] == "get_commercial_rol_summary"
-
-
 def test_wave005_agent_intelligence_unchanged():
     intel = json.loads(
         (_API_ROOT / "app/content/davi_agent_intelligence.json").read_text(encoding="utf-8")

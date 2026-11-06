@@ -21,9 +21,6 @@ from app.application.external_capabilities.dynamic_information.content_loader im
     load_dynamic_read_budgets,
     load_external_read_allowlist,
 )
-from app.application.external_capabilities.dynamic_information.discover_service import (
-    discover_delpi_information,
-)
 
 _API_ROOT = Path(__file__).resolve().parents[1]
 _ACTOR = "inventory-adjustment-discovery-test"
@@ -50,66 +47,6 @@ def _actions():
         baseline,
         allowlist=load_external_read_allowlist(),
     )
-
-
-def _discover(monkeypatch: pytest.MonkeyPatch, query: str):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information."
-        "discover_service.candidate_token_secret",
-        lambda: "inventory-discovery-secret",
-    )
-    return discover_delpi_information(
-        query=query,
-        top_k=5,
-        actor_id=_ACTOR,
-    )
-
-
-@pytest.mark.parametrize(
-    ("query", "expected_first"),
-    [
-        ("Ajuste de estoque da filial 01 este ano", _SUMMARY),
-        ("Qual foi o ajuste líquido do inventário?", _SUMMARY),
-        ("Sobra menos furo da filial 01", _SUMMARY),
-        ("Valor bruto dos ajustes de estoque", _SUMMARY),
-        ("Furo de estoque em 2026", _SUMMARY),
-        ("Sobra de inventário por filial", _SUMMARY),
-        ("Liste os produtos com ajuste de estoque", _LIST),
-        ("Detalhe os lançamentos de inventário", _LIST),
-    ],
-)
-def test_inventory_adjustment_natural_language_routes_first(
-    monkeypatch: pytest.MonkeyPatch,
-    query: str,
-    expected_first: str,
-) -> None:
-    discovered = _discover(monkeypatch, query)
-    assert discovered["candidate_count"] > 0, query
-    assert discovered["candidates"][0]["action_id"] == expected_first, query
-
-
-def test_regression_query_discovers_summary_and_preserves_existing_arguments(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    discovered = _discover(
-        monkeypatch,
-        (
-            "Qual é o ajuste de estoque da filial 01 neste ano de 2026, "
-            "de 2026-01-01 a 2026-10-07? Retornar sobra, furo, ajuste bruto "
-            "e ajuste líquido."
-        ),
-    )
-    assert discovered["candidate_count"] > 0
-    first = discovered["candidates"][0]
-    assert first["action_id"] == _SUMMARY
-
-    schema = first["argument_schema"]
-    props = schema["properties"]
-    assert {"start_date", "end_date", "branch", "warehouse", "product_code", "nature"} <= set(props)
-    assert set(schema["required"]) == {"start_date", "end_date"}
-    assert props["nature"]["enum"] == ["shortage", "surplus"]
-    assert "nature" not in schema["required"]
 
 
 def test_inventory_adjustment_nature_orchestration_contract() -> None:

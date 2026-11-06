@@ -1,4 +1,5 @@
-"""DAVI concept routing: presentation gate, not domain AuthZ or content lookup."""
+"""Concept-intent guard — pure knowledge questions must never surface
+operational business candidates."""
 
 from __future__ import annotations
 
@@ -9,9 +10,6 @@ from app.application.external_capabilities.dynamic_information.action_index impo
 )
 from app.application.external_capabilities.dynamic_information.concept_intent_guard import (
     is_pure_concept_intent,
-)
-from app.application.external_capabilities.dynamic_information.discover_service import (
-    discover_delpi_information,
 )
 from app.application.external_capabilities.dynamic_information.retrieval import (
     retrieve_eligible_actions,
@@ -68,45 +66,3 @@ def test_mixed_query_retains_approved_stock_discovery() -> None:
     query = "O que significa MI e qual o estoque do produto 10080010?"
     ranked = retrieve_eligible_actions(query, get_technical_actions(), top_k=10)
     assert "get_product_stock" in [action.operation_id for action, _ in ranked]
-
-
-def test_pure_concept_only_mints_governed_knowledge_candidate(monkeypatch) -> None:
-    # No production token or provider secret is used in this local test.
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "unit-only-concept-discovery-secret",
-    )
-    response = discover_delpi_information(
-        query="O que significa MI?", actor_id="test-only-actor", top_k=5
-    )
-    assert response["candidates"]
-    assert {c["action_id"] for c in response["candidates"]} == {
-        "read_governed_technical_knowledge"
-    }
-    directives = response["capability_surface"]["agent_directives"]
-    assert directives["knowledge_orchestration"]["routing"]["PURE_CONCEPT"][
-        "required"
-    ] == ["governed_knowledge"]
-
-
-def test_no_change_to_backend_authz_and_broker_tool_surface() -> None:
-    from app.application.external_capabilities.dynamic_information.candidate_token import (
-        mint_candidate_token,
-        parse_candidate_token,
-        CandidateTokenError,
-    )
-
-    token = mint_candidate_token(
-        action_id="synthetic-read",
-        actor_id="user-A",
-        secret="unit-test-secret",
-        ttl_seconds=120,
-        now=100,
-    )
-    assert parse_candidate_token(
-        token, secret="unit-test-secret", expected_actor_id="user-A", now=105
-    )["action_id"] == "synthetic-read"
-    with pytest.raises(CandidateTokenError, match="actor"):
-        parse_candidate_token(
-            token, secret="unit-test-secret", expected_actor_id="user-B", now=105
-        )

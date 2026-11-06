@@ -27,16 +27,6 @@ class Settings:
     # ==========================
     PORT: str = _get_env("PORT", "API_DELPI_PORT", default="8000")
     JWT_SECRET: str = _get_env("JWT_SECRET", "API_DELPI_JWT_SECRET", default="")
-    # Dedicated HMAC for DAVI opaque candidate tokens. Prefer this over JWT_SECRET.
-    # Compatibility fallback (when empty): JWT_SECRET — see content_loader.candidate_token_secret.
-    # Never log either value. Deploy: set DAVI_CANDIDATE_HMAC_SECRET in private/operator env.
-    DAVI_CANDIDATE_HMAC_SECRET: str = _get_env("DAVI_CANDIDATE_HMAC_SECRET", default="")
-    # Legacy broker tools (discover/execute_delpi_information). Default ON in
-    # prod. Set false in eval environments for semantic-only cutover simulation.
-    DAVI_LEGACY_BROKER_TOOLS_ENABLED: bool = (
-        _get_env("DAVI_LEGACY_BROKER_TOOLS_ENABLED", default="true").lower()
-        in ("true", "1", "yes", "on")
-    )
     # Isolated provider spike for MCP document transport. Default OFF. Never enable in prod compose.
     DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED: bool = (
         _get_env("DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", default="false").lower()

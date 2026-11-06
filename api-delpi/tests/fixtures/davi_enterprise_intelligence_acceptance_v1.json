@@ -5,8 +5,6 @@
   "identity": "END_USER_ACCOUNT",
   "business_authorization": "FINAL_BACKEND_CANONICAL",
   "tool_surface": [
-    "discover_delpi_information",
-    "execute_delpi_information",
     "get_context",
     "knowledge",
     "read",

@@ -43,22 +43,12 @@ from app.application.external_capabilities.dynamic_information.eligibility impor
 from app.application.external_capabilities.dynamic_information.projection import (  # noqa: E402
     apply_approved_field_projection,
 )
-from app.application.external_capabilities.dynamic_information.execute_service import (  # noqa: E402
-    execute_delpi_information,
-)
-from app.application.external_capabilities.dynamic_information.candidate_token import (  # noqa: E402
-    mint_candidate_token,
-    parse_candidate_token,
-)
 from app.application.external_capabilities.dynamic_information.content_loader import (  # noqa: E402
     load_dynamic_read_budgets,
     load_external_read_allowlist,
 )
 from app.application.external_capabilities.dynamic_information.action_index import (  # noqa: E402
     reset_action_index_for_tests,
-)
-from app.application.external_capabilities.dynamic_information.discover_service import (  # noqa: E402
-    discover_delpi_information,
 )
 from app.application.external_capabilities.dynamic_information.retrieval import (  # noqa: E402
     retrieve_eligible_actions,
@@ -287,55 +277,6 @@ def test_page02_davi_page_size_50_valid_and_default():
         action, {"start_date": "2026-01-01", "end_date": "2026-01-31"}
     )
     assert defaulted["page_size"] == 50
-
-
-def test_page03_davi_page_size_51_rejected_owner_never_called(monkeypatch):
-    action = _action("list_supplies_inventory_adjustments")
-    with pytest.raises(ArgumentValidationError):
-        validate_arguments(
-            action, {"start_date": "2026-01-01", "end_date": "2026-01-31",
-                     "page_size": 51}
-        )
-
-    class _Spy:
-        def __init__(self):
-            self.calls = []
-
-        def execute(self, *, action_id, validated_arguments):
-            self.calls.append(validated_arguments)
-            return CatalogActionExecutionResult(outcome="ok", payload={})
-
-    set_actions_for_tests(_actions())
-    secret = "sec"
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information."
-        "execute_service.candidate_token_secret",
-        lambda: secret,
-    )
-    token = mint_candidate_token(
-        action_id=action.action_id, actor_id="u1", secret=secret,
-        ttl_seconds=60,
-    )
-    spy = _Spy()
-    with pytest.raises(GovernedExecutionError):
-        execute_delpi_information(
-            candidate_token=token,
-            arguments={
-                "start_date": "2026-01-01",
-                "end_date": "2026-01-31",
-                "page_size": 51,
-            },
-            actor_id="u1",
-            catalog_action_executor=spy,
-        )
-    assert spy.calls == []
-
-
-# ---------------------------------------------------------------------------
-# TM — raw movement_type/cf/user_name not model-visible
-# ---------------------------------------------------------------------------
-
-
 def test_tm01_raw_fields_absent_after_projection():
     fields = tuple(
         _ops()["get_product_internal_movements"]["approvedResponseFields"]
@@ -456,61 +397,6 @@ def test_batch05_retrieval_never_returns_batch():
         a.operation_id == "list_production_order_operation_materials"
         for a, _ in single
     )
-
-
-def test_batch06_discover_mints_no_candidate_token_for_batch(monkeypatch):
-    set_actions_for_tests(_actions())
-    secret = "sec"
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information."
-        "discover_service.candidate_token_secret",
-        lambda: secret,
-    )
-    discovered = discover_delpi_information(
-        query="materiais de várias OPs", top_k=10, actor_id=_ACTOR
-    )
-    candidates = discovered.get("candidates") or []
-    assert all(c["action_id"] != _BATCH_ID for c in candidates)
-    # governed invariant: discovery never mints a token for the batch —
-    # decode every emitted token and pin the bound action.
-    for c in candidates:
-        payload = parse_candidate_token(
-            c["candidate_token"], secret=secret, expected_actor_id=_ACTOR
-        )
-        assert payload["action_id"] != _BATCH_ID
-
-
-def test_batch04_not_eligible_and_not_executable_through_broker(monkeypatch):
-    actions = _actions()
-    batch = next(a for a in actions if a.operation_id == _BATCH_ID)
-    assert batch.davi_status != STATUS_DAVI_ELIGIBLE_READ
-    assert not batch.executable
-
-    set_actions_for_tests(actions)
-    secret = "sec"
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information."
-        "execute_service.candidate_token_secret",
-        lambda: secret,
-    )
-    token = mint_candidate_token(
-        action_id=batch.action_id, actor_id="u1", secret=secret,
-        ttl_seconds=60,
-    )
-    with pytest.raises(GovernedExecutionError, match="not DAVI-eligible"):
-        execute_delpi_information(
-            candidate_token=token,
-            arguments={"branch": "01", "production_orders": ["OP1"]},
-            actor_id="u1",
-            catalog_action_executor=object(),
-        )
-
-
-# ---------------------------------------------------------------------------
-# COUNT — governance counts (allowlist / baseline / live are distinct)
-# ---------------------------------------------------------------------------
-
-
 def test_count01_allowlist_delta_exactly_expected():
     allow = _allow()
     assert allow["version"] == 30
@@ -581,31 +467,6 @@ def test_sql01_generic_sql_not_promoted():
     assert sql_ops == ["execute_readonly_sql"]
     for oid in ops:
         assert "data/sql" not in oid
-
-
-def test_mcp01_tool_count_wave001_four():
-    import asyncio
-
-    from app.interface.mcp.server import create_mcp_server
-
-    tools = asyncio.run(create_mcp_server().list_tools())
-    assert [t.name for t in tools] == [
-        "discover_delpi_information",
-        "execute_delpi_information",
-        "get_context",
-        "knowledge",
-        "read",
-        "analyze",
-    ]
-
-
-# ---------------------------------------------------------------------------
-# AUTHZ-02 — real FastAPI/TestClient runtime evidence (real middleware +
-# require_permission; only identity/RBAC and use cases are faked, per the
-# system-metadata convention in test_davi_system_metadata.py).
-# ---------------------------------------------------------------------------
-
-
 @contextmanager
 def _inventory_route_authz(*, permissions: list[str]) -> Iterator[Any]:
     """Real app + real auth middleware; non-superadmin user with `permissions`."""

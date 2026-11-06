@@ -1,7 +1,7 @@
 """Deployable DAVI agent intelligence (not Agent Studio / MCP paste).
 
 Loaded from ``davi_agent_intelligence.json`` and projected on
-``gpt_get_catalog`` / ``discover_delpi_information`` →
+``gpt_get_catalog`` / ``get_context`` →
 ``capability_surface.agent_directives``.
 
 READ-only: no write_flow / commit_now.
@@ -107,7 +107,7 @@ class DaviAgentIntelligenceService:
             "read_only": True,
             "authority": (
                 "Obey these directives from live gpt_get_catalog / "
-                "discover_delpi_information.capability_surface for operational "
+                "get_context.capability_surface for operational "
                 "READ posture. They supersede stale Agent Studio / MCP paste "
                 "heuristics for discovery/execution posture only. "
                 "They are NOT AuthZ, OAuth, RBAC, domain truth, or write authority. "

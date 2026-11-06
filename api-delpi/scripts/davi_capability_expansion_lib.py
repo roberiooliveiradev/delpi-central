@@ -15,10 +15,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from app.application.external_capabilities.constants import (
-    MCP_TOOL_DISCOVER_DELPI_INFORMATION,
-    MCP_TOOL_EXECUTE_DELPI_INFORMATION,
-)
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     TechnicalAction,
     build_technical_actions_from_baseline,
@@ -218,8 +214,10 @@ def build_actions(baseline: dict[str, Any] | None = None) -> list[TechnicalActio
 def mcp_tool_names() -> list[str]:
     """Canonical MCP tool surface from constants (not provider discovery)."""
     return [
-        MCP_TOOL_DISCOVER_DELPI_INFORMATION,
-        MCP_TOOL_EXECUTE_DELPI_INFORMATION,
+        "get_context",
+        "knowledge",
+        "read",
+        "analyze",
     ]
 
 
@@ -2500,7 +2498,7 @@ def render_freeze_markdown(doc: dict[str, Any]) -> str:
         "FILTER != AUTHORIZATION",
         "endpoint != capability",
         "backend AuthZ != raw model exposure",
-        "MCP tools remain search_products + discover_delpi_information + execute_delpi_information",
+        "MCP tools are get_context + knowledge + read + analyze",
         "```",
         "",
         "## Why this Wave 1 (not the seeded summary trio as-is)",

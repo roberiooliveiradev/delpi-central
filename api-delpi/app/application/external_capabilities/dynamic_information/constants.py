@@ -1,11 +1,6 @@
-"""Constants for DAVI dynamic governed READ (MCP broker tools)."""
+"""Constants for DAVI dynamic governed READ."""
 
 from __future__ import annotations
-
-MCP_TOOL_DISCOVER_DELPI_INFORMATION = "discover_delpi_information"
-MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE = "Discover DELPI information"
-MCP_TOOL_EXECUTE_DELPI_INFORMATION = "execute_delpi_information"
-MCP_TOOL_EXECUTE_DELPI_INFORMATION_TITLE = "Execute DELPI information"
 
 STATUS_DAVI_ELIGIBLE_READ = "DAVI_ELIGIBLE_READ"
 SEMANTIC_TRANSPORT_READ_POST = "SEMANTIC_READ_POST"

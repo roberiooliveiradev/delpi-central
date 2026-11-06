@@ -773,3 +773,72 @@ VERDICT                  = NOT_READY_FOR_RETIREMENT (bloqueios externos:
                            identidade B, endpoint isolado OAuth, provider
                            eval, plugin update)
 ```
+
+## 22. Wave 009 — Legacy broker retirement (DAVI-V2-WAVE-009)
+
+> 2026-11-08. Remoção definitiva do broker legado — superfície final de 4 tools.
+
+### 22.1 Removido (legacy-only)
+
+```text
+ARQUIVOS:
+  discover_service.py · candidate_token.py ·
+  scripts/evaluate_davi_discovery_quality.py
+CÓDIGO:
+  execute_delpi_information (execute_service) ·
+  execute_delpi_information_wired (composer) ·
+  candidate_token_secret (content_loader) ·
+  Discover*/Execute* input/output models + schema fns (schemas.py) ·
+  tool registrations + list/call branches + _LEGACY_BROKER_TOOLS (server.py) ·
+  MCP_TOOL_DISCOVER/EXECUTE_* constants + MCP_TOOL_CLASSES entries ·
+  DAVI_LEGACY_BROKER_TOOLS_ENABLED + DAVI_CANDIDATE_HMAC_SECRET (config) ·
+  _LEGACY_BROKER_TOOLS + legacy_broker_enabled param (context_service) ·
+  discover_*/candidate_token_ttl budget keys · broker instr. em branding.
+TESTES: 9 arquivos exclusivamente broker (contract v1, benchmark, retrieval
+  NL, similarity acceptance, detail similarity, product_master_extensions,
+  supplies_inventory_validation, discovery_knowledge_selection,
+  startup_bootstrap, system_metadata) + ~150 fns broker em arquivos mistos.
+MIGRADOS: catalog_runtime_integration → davi_read_wired (27 testes, caminho
+  semântico end-to-end preservado); guard/intent tests restaurados.
+```
+
+### 22.2 Dependências residuais investigadas
+
+```text
+ad_hoc_sql_read  = fluxo documental; política SQL inalterada (não-executável
+                   no catálogo elegível — sem dependência do broker).
+write_request    = documentação PREPARE; nenhuma capability ACT existe →
+                   nenhuma execução a migrar.
+RESIDUAL_LEGACY_FUNCTIONAL_DEPENDENCIES = 0
+```
+
+### 22.3 Superfície final
+
+```text
+tools/list = EXATAMENTE 4:
+  get_context · knowledge · read · analyze
+execute/delete = PLANNED_NOT_IMPLEMENTED em get_context.unavailable
+get_context coerente por construção (única fonte: _SEMANTIC_TOOLS)
+```
+
+### 22.4 Gates finais
+
+```text
+CAPABILITY_PARITY        = PASS (read 94/94, analyze 25/25 via mesma pipeline)
+GET_CONTEXT_CONSISTENCY  = PASS (superfície única, sem flag)
+NL_SELECTION_PARITY      = PARCIAL (catálogo equivalente; eval de modelo
+                           segue como atividade operacional, não gate de corte)
+CONSUMER_MIGRATION       = PASS-repo (SKILL.md/directives/docs 4 tools);
+                           plugin ChatGPT + GPT Actions = ação manual coordenada
+SECURITY_REGRESSION      = PASS (AuthZ/eligibility/projection inalteradas)
+NEGATIVE_MULTI_USER_AUTHZ= PENDING (identidade B — bloqueio externo
+                           documentado desde W4; não é gate de código)
+LIVE_SEMANTIC_ONLY_TESTS = PARCIAL (runtime provado; OAuth live pendente)
+PROVIDER_DISCOVERY       = PENDING (plugin update manual)
+ROLLBACK_READINESS       = PASS (SHA anterior + imagem anterior +
+                           script canônico; sem flag necessária)
+DECISÃO                  = GO — autorização do responsável + código limpo +
+                           consumidores internos migrados + rollback definido;
+                           pendências externas documentadas não bloqueiam
+                           (broker já era fallback declarado obsoleto)
+```

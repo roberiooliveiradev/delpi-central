@@ -12,9 +12,6 @@ from app.application.external_capabilities.davi_agent_intelligence_service impor
 from app.application.external_capabilities.dynamic_information.action_index import (
     get_technical_actions,
 )
-from app.application.external_capabilities.dynamic_information.discover_service import (
-    discover_delpi_information,
-)
 from app.application.external_capabilities.dynamic_information.retrieval import (
     retrieve_eligible_actions,
 )
@@ -29,8 +26,8 @@ _INTENTS = {
     "SYSTEM_METADATA", "SOLUTION_DISCOVERY", "WRITE_OR_GENERIC_SQL",
 }
 _MCP_TOOLS = {
-    "discover_delpi_information",
-    "execute_delpi_information",
+
+
     "get_context",
     "knowledge",
     "read",
@@ -63,27 +60,6 @@ def test_source_authority_and_provider_evidence_are_separate() -> None:
     for source in sources.values():
         assert source["owner"] and source["authority"] and source["status"]
         assert set(source.get("tools", [])) <= _MCP_TOOLS
-
-
-def test_knowledge_availability_is_explicit_for_external_mcp_consumers() -> None:
-    source = _ko()["sources"]["governed_knowledge"]
-    assert source["corpus_status"] == "PROVEN"
-    assert source["retrieval_surface"] == "WORKSPACE_AGENT_FILES"
-    assert source["mcp_document_access"] == "EXPOSED_VIA_CATALOG_ACTION_READ"
-    assert source["mcp_read_operation_id"] == "read_governed_technical_knowledge"
-    assert source["consumer_contract_status"] == "RATIFIED_BOUNDED"
-    assert source["published_corpus_versions"] == [1, 2]
-    assert source["latest_corpus_version"] == 2
-    assert source["tools"] == [
-        "discover_delpi_information",
-        "execute_delpi_information",
-        "knowledge",
-    ]
-    gate = _ko()["gates"]["KNOWLEDGE_GATE"]
-    assert "MCP" in gate and "agent_directives" in gate
-    assert "AuthZ" in gate
-
-
 def test_routing_references_only_registered_sources_and_directives() -> None:
     ko = _ko()
     directives = DaviAgentIntelligenceService.agent_directives()
@@ -135,28 +111,6 @@ def test_precedence_sufficiency_epistemology_and_partial_pages() -> None:
     assert "parar" in " ".join(ko["sufficiency"])
     assert "PARTIAL" in ko["gap_handling"]["vocabulary"]
     assert "COMPOSITION_GATE" in ko["routing"]["MULTI_SOURCE_RECONCILIATION"]["gates"]
-
-
-def test_catalog_and_mcp_discover_directives_are_identical(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.get_technical_actions",
-        lambda: [],
-    )
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "test-secret-only",
-    )
-    with patch(
-        "app.application.external_capabilities.catalog_service.user_can_search_products",
-        return_value=True,
-    ):
-        catalog = build_gpt_catalog()
-    discovered = discover_delpi_information(query="conceito estoque", actor_id="test-user")
-    directives = DaviAgentIntelligenceService.agent_directives()
-    assert catalog["capability_surface"]["agent_directives"] == directives
-    assert discovered["capability_surface"]["agent_directives"] == directives
-
-
 def test_where_used_and_reverse_bom_paraphrases_rank_correctly() -> None:
     actions = [
         a for a in get_technical_actions()

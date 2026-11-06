@@ -22,23 +22,6 @@ def _canonical_block() -> str:
     end = after.find("\n```", start)
     assert end > start
     return after[start:end]
-
-
-def test_canonical_agent_instructions_contain_stable_protocol() -> None:
-    block = _canonical_block()
-    for required in (
-        "discover_delpi_information",
-        "execute_delpi_information",
-        "Product Master",
-        "somente leitura",
-        "backend canônico",
-        "candidate_token",
-        "agent_directives",
-        "capability_surface",
-    ):
-        assert required in block, required
-
-
 def test_canonical_agent_instructions_omit_dynamic_inventory() -> None:
     block = _canonical_block().lower()
     # No current eligible count / business capability catalog in the prompt.
@@ -81,25 +64,6 @@ def test_canonical_agent_instructions_omit_mutable_intelligence_keys() -> None:
         "surface_parity",
     ):
         assert forbidden not in block, forbidden
-
-
-def test_canonical_agent_instructions_knowledge_live_separation() -> None:
-    """Governed-knowledge rule: semantics via files, operational via tools."""
-    block = _canonical_block().lower()
-    # Knowledge role exists and is bounded to semantics.
-    assert "conhecimento governado" in block
-    assert "não são fonte de verdade" in block
-    # Live routing preserved for operational values.
-    assert "discover_delpi_information" in block
-    assert "execute_delpi_information" in block
-    # Conflict precedence + non-override stated.
-    assert "vence" in block
-    assert "nunca sobrescreve" in block or "nunca sobrescrevem" in block
-    # Still no corpus enumeration in the prompt.
-    assert "supplies-inventory-adjustments" not in block
-    assert ".md" not in block
-
-
 def test_doc_marks_historical_preview_and_pending_studio_sync() -> None:
     text = _DOC.read_text(encoding="utf-8")
     assert "HISTORICAL / SUPERSEDED" in text

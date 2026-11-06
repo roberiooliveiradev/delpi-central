@@ -31,10 +31,6 @@ EXTERNAL_INTERNAL_ERROR_MESSAGE = "Internal error while processing the request."
 SEARCH_PRODUCTS_OPERATION_ID = "search_products"
 # Backward-compatible alias used by tests/libs that still import the historical name.
 MCP_TOOL_SEARCH_PRODUCTS = SEARCH_PRODUCTS_OPERATION_ID
-MCP_TOOL_DISCOVER_DELPI_INFORMATION = "discover_delpi_information"
-MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE = "Discover DELPI information"
-MCP_TOOL_EXECUTE_DELPI_INFORMATION = "execute_delpi_information"
-MCP_TOOL_EXECUTE_DELPI_INFORMATION_TITLE = "Execute DELPI information"
 MCP_TOOL_GET_CONTEXT = "get_context"
 MCP_TOOL_GET_CONTEXT_TITLE = "Get context and capability catalog"
 MCP_TOOL_KNOWLEDGE = "knowledge"
@@ -47,8 +43,6 @@ MCP_TOOL_ANALYZE_TITLE = "Analyze DELPI information"
 # _meta["delpi/toolClass"] (DELPI MCP vocabulary). Classification only —
 # never a permission grant for any consumer.
 MCP_TOOL_CLASSES: dict[str, str] = {
-    MCP_TOOL_DISCOVER_DELPI_INFORMATION: "DISCOVERY",
-    MCP_TOOL_EXECUTE_DELPI_INFORMATION: "READ",
     MCP_TOOL_GET_CONTEXT: "DISCOVERY",
     MCP_TOOL_KNOWLEDGE: "READ",
     MCP_TOOL_READ: "READ",

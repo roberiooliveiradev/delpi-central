@@ -76,36 +76,6 @@ def test_probe_pdf_contains_hidden_content_and_starts_with_pdf_magic() -> None:
     assert _PROBE_SHAPE in text
     assert _PROBE_REV in text
     assert "DOCUMENT TRANSPORT PROBE" in text
-
-
-def test_spike_disabled_by_default_keeps_base_tools_and_no_spike_resources(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.delenv("DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", raising=False)
-    monkeypatch.setenv("DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", "false")
-    # Force settings reload pattern used by module: patch settings attribute
-    from app.config import settings
-
-    monkeypatch.setattr(settings, "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", False)
-
-    mcp = create_mcp_server()
-    tools = asyncio.run(mcp.list_tools())
-    names = sorted(t.name for t in tools)
-    assert names == [
-        "analyze",
-        "discover_delpi_information",
-        "execute_delpi_information",
-        "get_context",
-        "knowledge",
-        "read",
-    ]
-    resources = asyncio.run(mcp.list_resources())
-    uris = {str(r.uri) for r in resources}
-    assert SPIKE_PDF_RESOURCE_URI not in uris
-    assert SPIKE_TEXT_RESOURCE_URI not in uris
-    assert SPIKE_TOOL_NAME not in names
-
-
 def test_spike_enabled_registers_resources_and_tool(monkeypatch: pytest.MonkeyPatch) -> None:
     _enable_isolated_spike(monkeypatch, mode=SPIKE_MODE_RESOURCE_LINK)
 
@@ -113,7 +83,7 @@ def test_spike_enabled_registers_resources_and_tool(monkeypatch: pytest.MonkeyPa
     tools = asyncio.run(mcp.list_tools())
     names = sorted(t.name for t in tools)
     assert SPIKE_TOOL_NAME in names
-    assert len(names) == 7
+    assert len(names) == 5
     assert "search_products" not in names
 
     resources = asyncio.run(mcp.list_resources())

@@ -12,9 +12,6 @@ from app.application.external_capabilities.dynamic_information.action_index impo
     reset_action_index_for_tests,
     seed_actions_from_openapi,
 )
-from app.application.external_capabilities.dynamic_information.discover_service import (
-    discover_delpi_information,
-)
 
 _OPERATION = "read_governed_technical_knowledge"
 
@@ -25,12 +22,7 @@ def knowledge_catalog(monkeypatch):
 
     reset_action_index_for_tests()
     seed_actions_from_openapi(app.openapi())
-    for module in ("discover_service", "execute_service"):
-        monkeypatch.setattr(
-            "app.application.external_capabilities.dynamic_information."
-            f"{module}.candidate_token_secret",
-            lambda: "synthetic-knowledge-contract-secret",
-        )
+
     yield app
     reset_action_index_for_tests()
 
@@ -40,21 +32,6 @@ def test_document_read_has_canonical_openapi_contract(knowledge_catalog):
         "/knowledge/technical-guides/{topic}", {}
     ).get("get")
     assert operation and operation["operationId"] == _OPERATION
-
-
-def test_real_discovery_exposes_guidance_without_document_content(knowledge_catalog):
-    result = discover_delpi_information(
-        query="guia tecnico cadastro produto", actor_id="offline-user", top_k=10
-    )
-    candidates = [c for c in result["candidates"] if c["action_id"] == _OPERATION]
-    assert candidates
-    assert "candidate_token" in candidates[0]
-    assert "topic" in candidates[0]["required_arguments"]
-    # No actual document payload leaks through discovery candidates — the
-    # term "excerpts" may legitimately appear inside argument-schema
-    # descriptions, so assert on payload fields, not raw serialization.
-    for field in ("excerpts", "content", "body", "text", "documents"):
-        assert field not in candidates[0], field
 
 
 @pytest.fixture()
@@ -158,35 +135,3 @@ def test_version_section_pagination_and_sizes(published_corpus):
     assert first["items"] != second["items"]
     assert first["has_more"] is True
     assert first["total"] == second["total"]
-
-
-def test_discover_execute_uses_real_route_and_existing_authz(knowledge_catalog, monkeypatch):
-    from fastapi import FastAPI
-    from fastapi.testclient import TestClient
-    from app.interface.http.routes.governed_knowledge_router import router
-    from app.infrastructure.davi.asgi_catalog_action_executor import AsgiCatalogActionExecutor
-    from app.application.external_capabilities.dynamic_information.execute_service import execute_delpi_information
-    from app.application.external_capabilities.dynamic_information.candidate_token import CandidateTokenError
-
-    user = SimpleNamespace(id="offline-user", permissions=["api-delpi.access"], is_superadmin=False)
-    monkeypatch.setattr("delpi_auth.authorization.resolve_user_context", lambda: user)
-    api = FastAPI()
-    api.include_router(router)
-    candidates = discover_delpi_information(
-        query="guia tecnico cadastro produto", actor_id=user.id, top_k=10
-    )["candidates"]
-    token = next(c["candidate_token"] for c in candidates if c["action_id"] == _OPERATION)
-    with TestClient(api, raise_server_exceptions=False) as client:
-        executor = AsgiCatalogActionExecutor(client, authorization="Bearer synthetic-only")
-        result = execute_delpi_information(
-            candidate_token=token, arguments={"topic": "product_master_sb1"},
-            actor_id=user.id, catalog_action_executor=executor,
-        )
-        assert result["status"] == "ok"
-        assert result["data"]["items"][0]["text"]
-        assert result["data"]["authority"] == "GUIDANCE_NOT_DOMAIN_TRUTH"
-        with pytest.raises(CandidateTokenError):
-            execute_delpi_information(candidate_token=token, arguments={"topic": "product_master_sb1"}, actor_id="another-user", catalog_action_executor=executor)
-        user.permissions = []
-        with pytest.raises(Exception):
-            execute_delpi_information(candidate_token=token, arguments={"topic": "product_master_sb1"}, actor_id=user.id, catalog_action_executor=executor)

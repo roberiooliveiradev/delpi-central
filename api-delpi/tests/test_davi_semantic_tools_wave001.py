@@ -17,8 +17,6 @@ from typing import Any
 import pytest
 
 from app.application.external_capabilities.constants import (
-    MCP_TOOL_DISCOVER_DELPI_INFORMATION,
-    MCP_TOOL_EXECUTE_DELPI_INFORMATION,
     MCP_TOOL_ANALYZE,
     MCP_TOOL_GET_CONTEXT,
     MCP_TOOL_KNOWLEDGE,
@@ -164,8 +162,6 @@ def test_surface_registers_six_tools_with_closed_schemas():
     tools = asyncio.run(create_mcp_server().list_tools())
     by_name = {t.name: t for t in tools}
     assert list(by_name) == [
-        MCP_TOOL_DISCOVER_DELPI_INFORMATION,
-        MCP_TOOL_EXECUTE_DELPI_INFORMATION,
         MCP_TOOL_GET_CONTEXT,
         MCP_TOOL_KNOWLEDGE,
         MCP_TOOL_READ,
@@ -196,38 +192,6 @@ def test_surface_registers_six_tools_with_closed_schemas():
 # ---------------------------------------------------------------------------
 # get_context
 # ---------------------------------------------------------------------------
-
-
-def test_get_context_context_reports_identity_actor_and_no_permission_grant():
-    _seed_actions()
-    data = davi_get_context(action="context", actor_id="u1")
-    assert data["status"] == "ok"
-    assert data["identity"]["server"] == "api-delpi"
-    assert data["actor"] == {"authenticated": True, "id": "u1"}
-    assert data["authority"]["catalog_is_not_permission"] is True
-    available = [t["name"] for t in data["tools"]["available"]]
-    assert available == [
-        "get_context",
-        "knowledge",
-        "read",
-        "analyze",
-        "discover_delpi_information",
-        "execute_delpi_information",
-    ]
-    unavailable = {t["name"]: t["status"] for t in data["tools"]["unavailable"]}
-    assert unavailable == {
-        "execute": "PLANNED_NOT_IMPLEMENTED",
-        "delete": "PLANNED_NOT_IMPLEMENTED",
-    }
-    assert data["versions"]["catalog_allowlist"]
-    assert data["versions"]["agent_intelligence"]
-    assert data["versions"]["knowledge_corpus_latest"] >= 1
-    assert data["limits"]["discover_max_top_k"] == 10
-    assert "agent_directives" in data["capability_surface"]
-    # Actor projection carries presence only — never permissions/scopes.
-    assert set(data["actor"]) == {"authenticated", "id"}
-
-
 def test_get_context_context_unauthenticated_actor_is_honest():
     data = davi_get_context(action="context", actor_id=None)
     assert data["actor"] == {"authenticated": False, "id": None}
@@ -494,27 +458,6 @@ async def test_knowledge_wire_validation_is_typed():
 # ---------------------------------------------------------------------------
 # Existing broker compatibility (unchanged external contract)
 # ---------------------------------------------------------------------------
-
-
-def test_broker_tools_remain_unchanged_on_the_wire():
-    tools = asyncio.run(create_mcp_server().list_tools())
-    by_name = {t.name: t for t in tools}
-    discover = by_name[MCP_TOOL_DISCOVER_DELPI_INFORMATION]
-    assert set(discover.input_schema["properties"]) == {"query", "top_k"}
-    assert discover.input_schema["required"] == ["query"]
-    execute = by_name[MCP_TOOL_EXECUTE_DELPI_INFORMATION]
-    assert set(execute.input_schema["properties"]) == {
-        "candidate_token",
-        "arguments",
-    }
-    assert execute.input_schema["required"] == ["candidate_token"]
-
-
-# ---------------------------------------------------------------------------
-# read — semantic façade over the governed catalog (Wave 002 pilot)
-# ---------------------------------------------------------------------------
-
-
 def test_read_executes_eligible_catalog_capability():
     _seed_actions()
     executor = _StubExecutor(
@@ -747,97 +690,3 @@ _NL_NEEDS = {
     "detalhe do produto": "get_product_detail",
     "conhecimento técnico documentado": "read_governed_technical_knowledge",
 }
-
-
-def test_semantic_substrate_covers_nl_needs_without_broker():
-    """For each real DELPI need, the catalog publishes the capability with
-    the same selection metadata discover returns (description, entity,
-    shape, tags) and get_context(schema) yields args+required — the model
-    gets an equivalent substrate without discover/candidate_token."""
-    actions = _seed_actions()
-    eligible_ids = {a.action_id for a in actions if a.executable}
-    data = davi_get_context(action="catalog")
-    catalog = {a["action_id"]: a for a in data["actions"]}
-    for need, capability in _NL_NEEDS.items():
-        assert capability in eligible_ids, f"{need}: {capability} not eligible"
-        entry = catalog[capability]
-        assert entry["description"] and entry["entity"] and entry["shape"]
-        schema = davi_get_context(action="schema", capability=capability)["capability"]
-        assert schema["available"] is True
-        assert schema["argument_schema"]["additionalProperties"] is False
-        assert "required_arguments" in schema
-
-# ---------------------------------------------------------------------------
-# Wave 006 — semantic-only cutover flag (DAVI_LEGACY_BROKER_TOOLS_ENABLED)
-# ---------------------------------------------------------------------------
-
-
-def test_legacy_broker_flag_off_exposes_semantic_only_surface(monkeypatch):
-    """Eval/cutover mode: broker hidden from tools/list and rejected on call —
-    the four semantic tools keep working against the same governed pipeline."""
-    from app.config import settings as _settings
-
-    monkeypatch.setattr(_settings, "DAVI_LEGACY_BROKER_TOOLS_ENABLED", False)
-    tools = asyncio.run(create_mcp_server().list_tools())
-    names = sorted(t.name for t in tools)
-    assert names == ["analyze", "get_context", "knowledge", "read"]
-
-    async def _call():
-        res = await create_mcp_server().call_tool(
-            "discover_delpi_information", {"query": "produto"}
-        )
-        return res
-
-    result = asyncio.run(_call())
-    assert result.is_error is True
-    assert result.structured_content["code"] == "CAPABILITY_NOT_ALLOWED"
-
-
-def test_legacy_broker_flag_default_keeps_six_tools(monkeypatch):
-    from app.config import settings as _settings
-
-    monkeypatch.setattr(_settings, "DAVI_LEGACY_BROKER_TOOLS_ENABLED", True)
-    tools = asyncio.run(create_mcp_server().list_tools())
-    assert len(tools) == 6
-
-
-def test_get_context_reports_broker_disabled_when_flag_off(monkeypatch):
-    """get_context must mirror the effective published surface — semantic-only
-    mode lists broker tools as DISABLED_BY_SURFACE_FLAG, never as available."""
-    from app.config import settings as _settings
-
-    monkeypatch.setattr(_settings, "DAVI_LEGACY_BROKER_TOOLS_ENABLED", False)
-    result = asyncio.run(
-        create_mcp_server().call_tool("get_context", {"action": "context"})
-    )
-    assert result.is_error is False
-    tools = result.structured_content["tools"]
-    assert [t["name"] for t in tools["available"]] == [
-        "get_context",
-        "knowledge",
-        "read",
-        "analyze",
-    ]
-    disabled = {t["name"]: t["status"] for t in tools["unavailable"]}
-    assert disabled["discover_delpi_information"] == "DISABLED_BY_SURFACE_FLAG"
-    assert disabled["execute_delpi_information"] == "DISABLED_BY_SURFACE_FLAG"
-    assert disabled["execute"] == "PLANNED_NOT_IMPLEMENTED"
-    assert disabled["delete"] == "PLANNED_NOT_IMPLEMENTED"
-
-
-def test_get_context_reports_broker_available_when_flag_on(monkeypatch):
-    from app.config import settings as _settings
-
-    monkeypatch.setattr(_settings, "DAVI_LEGACY_BROKER_TOOLS_ENABLED", True)
-    result = asyncio.run(
-        create_mcp_server().call_tool("get_context", {"action": "context"})
-    )
-    names = [t["name"] for t in result.structured_content["tools"]["available"]]
-    assert names == [
-        "get_context",
-        "knowledge",
-        "read",
-        "analyze",
-        "discover_delpi_information",
-        "execute_delpi_information",
-    ]

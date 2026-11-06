@@ -21,10 +21,6 @@ from pydantic import ConfigDict, ValidationError
 from app.application.external_capabilities.constants import (
     EXTERNAL_INTERNAL_ERROR_MESSAGE,
     MCP_TOOL_CLASSES,
-    MCP_TOOL_DISCOVER_DELPI_INFORMATION,
-    MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE,
-    MCP_TOOL_EXECUTE_DELPI_INFORMATION,
-    MCP_TOOL_EXECUTE_DELPI_INFORMATION_TITLE,
     MCP_TOOL_GET_CONTEXT,
     MCP_TOOL_GET_CONTEXT_TITLE,
     MCP_TOOL_KNOWLEDGE,
@@ -34,14 +30,8 @@ from app.application.external_capabilities.constants import (
     MCP_TOOL_READ,
     MCP_TOOL_READ_TITLE,
 )
-from app.application.external_capabilities.dynamic_information.candidate_token import (
-    CandidateTokenError,
-)
 from app.application.external_capabilities.dynamic_information.context_service import (
     davi_get_context,
-)
-from app.application.external_capabilities.dynamic_information.discover_service import (
-    discover_delpi_information,
 )
 from app.application.external_capabilities.dynamic_information.errors import (
     ARGUMENT_VALIDATION_CODE,
@@ -55,7 +45,6 @@ from app.composition.davi_dynamic_read_composer import (
     davi_analyze_wired,
     davi_knowledge_wired,
     davi_read_wired,
-    execute_delpi_information_wired,
 )
 from app.config import settings
 from app.interface.mcp.branding import DAVI_MCP_INSTRUCTIONS
@@ -69,16 +58,10 @@ from app.interface.mcp.oauth_contract import (
 )
 from app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interface.mcp.schemas import (
-    DiscoverDelpiInformationInput,
-    ExecuteDelpiInformationInput,
     GetContextInput,
     AnalyzeInput,
     KnowledgeInput,
     ReadInput,
-    discover_delpi_information_input_json_schema,
-    discover_delpi_information_output_json_schema,
-    execute_delpi_information_input_json_schema,
-    execute_delpi_information_output_json_schema,
     get_context_input_json_schema,
     get_context_output_json_schema,
     analyze_input_json_schema,
@@ -196,13 +179,8 @@ class ApiDelpiMCPServer(MCPServer):
 
     async def list_tools(self) -> list[MCPTool]:
         tools = self._tool_manager.list_tools()
-        legacy_visible = settings.DAVI_LEGACY_BROKER_TOOLS_ENABLED
         listed: list[MCPTool] = []
         for info in tools:
-            # Semantic-only eval/cutover mode: broker tools hidden, never
-            # removed — prod keeps the flag ON until the cutover wave.
-            if not legacy_visible and info.name in _LEGACY_BROKER_TOOLS:
-                continue
             meta = dict(info.meta or {})
             # Owner-typed operation class — catalog metadata for
             # consumers to project; never a permission grant. Default
@@ -213,13 +191,7 @@ class ApiDelpiMCPServer(MCPServer):
             schemes = meta.get("securitySchemes")
             input_schema = info.parameters
             output_schema = info.output_schema
-            if info.name == MCP_TOOL_DISCOVER_DELPI_INFORMATION:
-                input_schema = discover_delpi_information_input_json_schema()
-                output_schema = discover_delpi_information_output_json_schema()
-            elif info.name == MCP_TOOL_EXECUTE_DELPI_INFORMATION:
-                input_schema = execute_delpi_information_input_json_schema()
-                output_schema = execute_delpi_information_output_json_schema()
-            elif info.name == MCP_TOOL_GET_CONTEXT:
+            if info.name == MCP_TOOL_GET_CONTEXT:
                 input_schema = get_context_input_json_schema()
                 output_schema = get_context_output_json_schema()
             elif info.name == MCP_TOOL_KNOWLEDGE:
@@ -249,21 +221,8 @@ class ApiDelpiMCPServer(MCPServer):
     async def call_tool(
         self, name: str, arguments: dict[str, Any], context: Any = None
     ) -> Any:
-        if (
-            not settings.DAVI_LEGACY_BROKER_TOOLS_ENABLED
-            and name in _LEGACY_BROKER_TOOLS
-        ):
-            return typed_error_tool_result(
-                CAPABILITY_NOT_ALLOWED_CODE,
-                "Tool is not available on this MCP surface.",
-                recoverable=False,
-            )
         try:
-            if name == MCP_TOOL_DISCOVER_DELPI_INFORMATION:
-                DiscoverDelpiInformationInput.model_validate(arguments or {})
-            elif name == MCP_TOOL_EXECUTE_DELPI_INFORMATION:
-                ExecuteDelpiInformationInput.model_validate(arguments or {})
-            elif name == MCP_TOOL_GET_CONTEXT:
+            if name == MCP_TOOL_GET_CONTEXT:
                 GetContextInput.model_validate(arguments or {})
             elif name == MCP_TOOL_KNOWLEDGE:
                 KnowledgeInput.model_validate(arguments or {})
@@ -275,11 +234,6 @@ class ApiDelpiMCPServer(MCPServer):
             log_error(f"mcp {name} validation rejected error_count={exc.error_count()}")
             return validation_error_tool_result()
         return await super().call_tool(name, arguments, context)
-
-
-_LEGACY_BROKER_TOOLS = frozenset(
-    {MCP_TOOL_DISCOVER_DELPI_INFORMATION, MCP_TOOL_EXECUTE_DELPI_INFORMATION}
-)
 
 
 def davi_mcp_transport_security() -> TransportSecuritySettings:
@@ -295,108 +249,6 @@ def create_mcp_server() -> MCPServer:
         name="api-delpi",
         instructions=DAVI_MCP_INSTRUCTIONS,
     )
-
-    @mcp.tool(
-        name=MCP_TOOL_DISCOVER_DELPI_INFORMATION,
-        title=MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE,
-        description=(
-            "Discover governed DELPI business data — products, materials, parts, "
-            "registers, records and other entities exposed by eligible DELPI "
-            "read surfaces. Find the READ capability that best matches the "
-            "user's natural-language information need. Call this first. Returns "
-            "opaque candidate_token values for execute_delpi_information. "
-            "Does not accept URL, path, method, operationId, or SQL."
-        ),
-        annotations=ToolAnnotations.model_validate(
-            tool_annotations_payload(
-                MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE,
-                read_only=True,
-                destructive=False,
-            )
-        ),
-        meta=security_schemes_meta(DAVI_MCP_SECURITY_SCHEMES),
-        structured_output=True,
-    )
-    def discover_delpi_information_tool(
-        query: str,
-        top_k: int | None = None,
-    ) -> CallToolResult:
-        try:
-            params = DiscoverDelpiInformationInput(query=query, top_k=top_k)
-        except ValidationError:
-            return validation_error_tool_result("Invalid discovery parameters.")
-        try:
-            data = discover_delpi_information(
-                query=params.query,
-                top_k=params.top_k,
-                actor_id=_actor_id(),
-            )
-            return CallToolResult(
-                content=[TextContent(type="text", text="Discovery completed.")],
-                structuredContent=data,
-                isError=False,
-            )
-        except Exception as exc:
-            log_error(f"mcp discover_delpi_information failed: {exc}")
-            raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
-
-    @mcp.tool(
-        name=MCP_TOOL_EXECUTE_DELPI_INFORMATION,
-        title=MCP_TOOL_EXECUTE_DELPI_INFORMATION_TITLE,
-        description=(
-            "Execute one candidate returned by the current discover_delpi_information "
-            "call. Requires that candidate_token. Does not accept URL, path, method, "
-            "free operationId, or SQL. Backend AuthZ remains authoritative."
-        ),
-        annotations=ToolAnnotations.model_validate(
-            tool_annotations_payload(
-                MCP_TOOL_EXECUTE_DELPI_INFORMATION_TITLE,
-                read_only=True,
-                destructive=False,
-            )
-        ),
-        meta=security_schemes_meta(DAVI_MCP_SECURITY_SCHEMES),
-        structured_output=True,
-    )
-    def execute_delpi_information_tool(
-        candidate_token: str,
-        arguments: dict[str, Any] | None = None,
-    ) -> CallToolResult:
-        try:
-            params = ExecuteDelpiInformationInput(
-                candidate_token=candidate_token,
-                arguments=arguments,
-            )
-        except ValidationError:
-            return validation_error_tool_result("Invalid execute parameters.")
-        try:
-            data = execute_delpi_information_wired(
-                candidate_token=params.candidate_token,
-                arguments=params.arguments,
-                actor_id=_actor_id(),
-                authorization=_authorization(),
-            )
-            return CallToolResult(
-                content=[TextContent(type="text", text="Execution completed.")],
-                structuredContent=data,
-                isError=False,
-            )
-        except PermissionError as exc:
-            return _authz_error_result(exc)
-        except CandidateTokenError as exc:
-            return typed_error_tool_result(
-                CAPABILITY_NOT_ALLOWED_CODE,
-                str(exc) or "Invalid candidate token.",
-            )
-        except GovernedExecutionError as exc:
-            return typed_error_tool_result(
-                exc.code or OWNER_EXECUTION_ERROR_CODE,
-                str(exc) or "Execution rejected.",
-                recoverable=exc.code == ARGUMENT_VALIDATION_CODE,
-            )
-        except Exception as exc:
-            log_error(f"mcp execute_delpi_information failed: {exc}")
-            raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
 
     @mcp.tool(
         name=MCP_TOOL_GET_CONTEXT,
@@ -433,7 +285,6 @@ def create_mcp_server() -> MCPServer:
                 action=params.action,
                 capability=params.capability,
                 actor_id=_actor_id(),
-                legacy_broker_enabled=settings.DAVI_LEGACY_BROKER_TOOLS_ENABLED,
             )
             return CallToolResult(
                 content=[TextContent(type="text", text="Context resolved.")],

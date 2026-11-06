@@ -18,9 +18,6 @@ from app.application.external_capabilities.dynamic_information.argument_validato
     build_argument_json_schema,
     validate_arguments,
 )
-from app.application.external_capabilities.dynamic_information.candidate_token import (
-    mint_candidate_token,
-)
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     TechnicalAction,
     build_technical_actions_from_baseline,
@@ -28,12 +25,6 @@ from app.application.external_capabilities.dynamic_information.catalog_builder i
 from app.application.external_capabilities.dynamic_information.content_loader import (
     load_dynamic_read_budgets,
     load_external_read_allowlist,
-)
-from app.application.external_capabilities.dynamic_information.discover_service import (
-    discover_delpi_information,
-)
-from app.application.external_capabilities.dynamic_information.execute_service import (
-    execute_delpi_information,
 )
 from app.application.external_capabilities.dynamic_information.projection import (
     apply_approved_field_projection,
@@ -141,150 +132,6 @@ def test_wave3a_eligible_count_includes_wave3a_ops():
     assert "get_product_parents" not in blocked
     assert "get_product_drawing_pdf" in blocked
     assert "get_product_analyser" in blocked
-
-
-def test_wave3a_mcp_tools_wave001_four():
-    import asyncio
-    from app.interface.mcp.server import create_mcp_server
-
-    tools = asyncio.run(create_mcp_server().list_tools())
-    assert [t.name for t in tools] == [
-        "discover_delpi_information",
-        "execute_delpi_information",
-        "get_context",
-        "knowledge",
-        "read",
-        "analyze",
-    ]
-
-
-@pytest.mark.parametrize(
-    ("query", "expected"),
-    [
-        ("roteiro do produto 90261805", "get_product_guide"),
-        ("operações do produto 90261805", "get_product_guide"),
-        ("sequência de operações do produto 90261805", "get_product_guide"),
-        ("centros de trabalho do produto 90261805", "get_product_guide"),
-        ("onde o 10080055 é usado", "get_product_parents"),
-        ("onde a MP 10080055 é usada", "get_product_parents"),
-        ("quais PAs usam 10080055", "get_product_parents"),
-        ("BOM reversa do 10080055", "get_product_parents"),
-        ("estoque 10080001", "get_product_stock"),
-        ("fornecedores 10080055", "get_product_suppliers"),
-        ("clientes do produto", "get_product_customers"),
-        ("compras do produto", "get_product_purchases"),
-        ("estrutura do produto 90261805", "get_product_structure"),
-        ("status de produção 10080055", "get_product_production_status"),
-        ("status fabril do produto", "get_product_factory_status"),
-        ("MP exclusiva", "get_product_structure_exclusivity"),
-        ("expedição", "get_product_shipping_status"),
-        ("preço comercial do produto 10080055", "get_product_pricing"),
-        ("histórico de preço de compra", "get_product_purchase_price_history"),
-        ("último preço de compra", "get_product_last_purchase"),
-    ],
-)
-def test_wave3a_and_current_thirteen_retrieval(query, expected, monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["eligible_action_count"] >= 53, query
-    assert discovered["candidate_count"] >= 1, query
-    assert discovered["candidates"][0]["action_id"] == expected, (
-        query,
-        [c["action_id"] for c in discovered["candidates"]],
-    )
-
-
-@pytest.mark.parametrize(
-    ("query", "expected", "forbidden"),
-    [
-        ("roteiro do produto", "get_product_guide", "get_product_structure"),
-        ("sequência de operações", "get_product_guide", "get_product_production_status"),
-        ("onde o produto é usado", "get_product_parents", "get_product_structure"),
-        ("quais PAs usam esta MP", "get_product_parents", "get_product_structure_exclusivity"),
-        ("estrutura do produto", "get_product_structure", "get_product_parents"),
-        ("MP exclusiva", "get_product_structure_exclusivity", "get_product_parents"),
-        ("status de produção", "get_product_production_status", "get_product_guide"),
-        ("status fabril", "get_product_factory_status", "get_product_guide"),
-    ],
-)
-def test_wave3a_collision_disambiguation(query, expected, forbidden, monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    ids = [c["action_id"] for c in discovered["candidates"]]
-    assert ids, query
-    assert ids[0] == expected, (query, ids)
-    assert forbidden not in ids or ids.index(expected) < ids.index(forbidden), (query, ids)
-
-
-@pytest.mark.parametrize(
-    "query",
-    [
-        "preço",
-        "price",
-        "pricing",
-        "custo",
-        "cost",
-        "admin",
-        "inteligência de preço de matéria-prima",
-        "simulação de custo",
-    ],
-)
-def test_wave3a_quarantine_regression(query, monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["candidate_count"] == 0, (query, discovered["candidates"])
-
-
-def test_wave3a_sql_intent_routes_only_to_canonical_bounded_route(monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query="sql", top_k=5, actor_id="u1")
-    sql_like = {
-        c["action_id"] for c in discovered["candidates"] if "sql" in c["action_id"]
-    }
-    assert sql_like == set(), sql_like
-
-
-@pytest.mark.parametrize(
-    "query",
-    [
-        "altere o roteiro do produto",
-        "adicione uma operação ao roteiro",
-        "mude o centro de trabalho do produto",
-        "edite a sequência de operações",
-        "altere os produtos pai",
-        "mude onde esta MP é usada",
-        "corrija a BOM reversa",
-        "edite a estrutura desse componente",
-        "reserve matéria-prima",
-        "reprograme a OP",
-    ],
-)
-def test_wave3a_write_intent_returns_zero(query, monkeypatch):
-    set_actions_for_tests(_actions())
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "sec",
-    )
-    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["candidate_count"] == 0, (query, discovered["candidates"])
-
-
 def test_wave3a_inputs_outputs_and_constraints():
     guide = _allowlist_entry("get_product_guide")
     parents = _allowlist_entry("get_product_parents")
@@ -541,49 +388,6 @@ def test_where_used_projection_four_levels_and_drops_forbidden():
     for sibling in ("raw_sql", "record_id", "internal_debug", "legacy", "secret"):
         assert sibling not in dumped
     assert "L5" not in dumped
-
-
-def test_wave3a_execute_projects_without_raw_fallback(monkeypatch):
-    set_actions_for_tests(_actions())
-    secret = "sec"
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
-        lambda: secret,
-    )
-    guide = _action("get_product_guide")
-    token = mint_candidate_token(
-        action_id=guide.action_id, actor_id="u1", secret=secret, ttl_seconds=60
-    )
-    executor = _PayloadExecutor({"success": True, "data": _guide_raw_fixture()})
-    result = execute_delpi_information(
-        candidate_token=token,
-        arguments={"code": "90261805"},
-        actor_id="u1",
-        catalog_action_executor=executor,
-    )
-    assert result["status"] == "ok"
-    assert executor.calls[0][1]["page"] == 1
-    assert executor.calls[0][1]["page_size"] == 50
-    assert executor.calls[0][1]["max_depth"] == 8
-    assert "mandatory_operation" not in _dumped(result["data"])
-
-    parents = _action("get_product_parents")
-    token_p = mint_candidate_token(
-        action_id=parents.action_id, actor_id="u1", secret=secret, ttl_seconds=60
-    )
-    executor_p = _PayloadExecutor({"success": True, "data": _parents_raw_fixture()})
-    result_p = execute_delpi_information(
-        candidate_token=token_p,
-        arguments={"code": "10080055"},
-        actor_id="u1",
-        catalog_action_executor=executor_p,
-    )
-    assert result_p["status"] == "ok"
-    assert executor_p.calls[0][1]["max_depth"] == 4
-    assert "L5" not in _dumped(result_p["data"])
-    assert "secret" not in _dumped(result_p["data"])
-
-
 def test_shortages_promoted_by_inventory_material_flow_wave():
     # Wave-3a deferred shortages; DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001
     # (allowlist v18) later approved the bounded, projected contract.
