@@ -175,3 +175,18 @@ MCP Apps aguardam o ACK antes de entregar `tool-result` → timeout.
 **Runtime:** resource v2 + csp + outputTemplate v2 verificados no
 container; HTML contém handshake. ChatGPT visual: `TEST_NOT_RUN` —
 reconectar a conexão MCP e retestar "TÉO, mostre seu avatar".
+
+## HOTFIX MCP-AVATAR-UI-V2.3 (2026-11-06) — CSP do host + JS bloqueado
+
+**Evidência do Console (PROVEN):** `inline script violates script-src` e
+`img-src 'self' data:` bloqueava o PNG — a CSP **efetiva** é a do host
+ChatGPT; metatag no HTML só restringe, nunca amplia. `ui.csp` no
+resource meta não chegou ao host.
+**Correção:** (1) `_meta["openai/widgetCSP"]` no tool `show_avatar`
+(`resource_domains=[https://minhadelpi.com.br]`, `connect_domains=[]`) —
+chave documentada do Apps SDK; (2) card agora **100% estático** — sem
+`<script>` (img+nome+especialidade já embutidos no HTML; elimina a
+violação de script-src e a dependência de handshake JS); (3) URI →
+`ui://delpi/teo/avatar/v3`. `script-src 'none'` na metatag.
+**Runtime:** tool meta + resource v3 + HTML sem script verificados no
+container (1703B). ChatGPT visual: `TEST_NOT_RUN`.
