@@ -441,6 +441,50 @@ def tool_get_avatar() -> CallToolResult:
         return handle_tool_error(exc)
 
 
+def tool_show_avatar() -> CallToolResult:
+    """Approved official avatar for the MCP Apps visual surface
+    (MCP-AVATAR-UI-V2). Same delivery as read(avatar,get) plus the
+    validated public URL for the ``ui://`` component — read-only, same
+    view gate, never user-supplied path or URL."""
+    try:
+        request = build_mcp_request()
+        _dispatch._raise_http_err(require_transformometro_view_access(request))
+        from tm_app.application.gpt_actions.teo_agent_intelligence_service import (
+            TeoAgentIntelligenceService,
+        )
+
+        service = TeoAgentIntelligenceService
+        delivery = build_avatar_delivery(
+            service.character_profile(),
+            Path(__file__).resolve().parents[3],
+        )
+        if delivery.data is None:
+            return _error_result(
+                "Avatar oficial não aprovado/publicado para este especialista.",
+                status_code=404,
+                error_code="not_found",
+            )
+        data = dict(delivery.data)
+        distribution = service.avatar_distribution() or {}
+        if distribution.get("url"):
+            data["image_url"] = distribution["url"]
+        data["specialty"] = "Especialista em Transformação Digital"
+        if delivery.too_large:
+            return _ok_result(data, "Avatar excede o limite inline — metadata only.")
+        return mcp_tool_result(
+            data,
+            is_error=False,
+            text=(
+                f"Avatar oficial de {delivery.display_name} "
+                f"({data['mime_type']}, {data['bytes']} bytes) — "
+                "imagem entregue como bloco image."
+            ),
+            images=[delivery.image],
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
 def tool_get_product_guide(
     topic: str | None = None,
     section: str | None = None,

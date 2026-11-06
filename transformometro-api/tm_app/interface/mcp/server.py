@@ -27,8 +27,14 @@ from tm_app.interface.mcp.constants import (
     TOOL_CLASS,
 )
 from tm_app.interface.mcp.oauth_contract import TEO_MCP_SECURITY_SCHEMES
+from delpi_mcp.avatar_ui import (
+    AVATAR_UI_MIME,
+    avatar_ui_meta,
+    avatar_ui_resource_uri,
+    build_avatar_ui_html,
+)
 from tm_app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
-from tm_app.interface.mcp import tool_bridge_v3 as bridge_v3
+from tm_app.interface.mcp import tool_bridge, tool_bridge_v3 as bridge_v3
 
 logger = logging.getLogger(__name__)
 
@@ -556,6 +562,50 @@ def create_mcp_server() -> MCPServer:
             proposal_id=proposal_id,
             confirmation=confirmation,
         )
+
+    # --- visual avatar surface (MCP-AVATAR-UI-V2) -----------------------
+    # ui:// resource serves the shared avatar card; show_avatar links to
+    # it via _meta.ui.resourceUri and also returns the canonical
+    # ImageContent for hosts without MCP Apps support.
+    _avatar_uri = avatar_ui_resource_uri("teo")
+
+    @mcp.resource(
+        _avatar_uri,
+        name="teo-avatar-card",
+        title="Avatar oficial do TÉO",
+        description=(
+            "Cartão visual do avatar oficial aprovado do TÉO — "
+            "somente leitura, sem dados sensíveis."
+        ),
+        mime_type=AVATAR_UI_MIME,
+        meta=meta,
+    )
+    def teo_avatar_card() -> str:
+        from tm_app.application.gpt_actions.teo_agent_intelligence_service import (
+            TeoAgentIntelligenceService,
+        )
+
+        distribution = TeoAgentIntelligenceService.avatar_distribution() or {}
+        return build_avatar_ui_html(
+            display_name="TÉO — Especialista em Transformação Digital",
+            specialty="Transformação Digital",
+            image_url=distribution.get("url"),
+        )
+
+    @mcp.tool(
+        name="show_avatar",
+        title="Mostrar avatar oficial",
+        description=(
+            "Mostra a foto oficial aprovada do TÉO dentro da conversa — "
+            "usar quando o usuário pedir avatar, foto ou aparência visual. "
+            "Somente leitura; resolve somente a ficha canônica, nunca "
+            "URLs ou caminhos fornecidos pelo usuário."
+        ),
+        annotations=_annotations("show_avatar", "Show avatar"),
+        meta={**meta, **avatar_ui_meta(_avatar_uri)},
+    )
+    def show_avatar() -> CallToolResult:
+        return tool_bridge.tool_show_avatar()
 
     registered = {t.name for t in mcp._tool_manager.list_tools()}
     missing = set(MCP_TOOL_NAMES) - registered
