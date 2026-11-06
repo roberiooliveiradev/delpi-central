@@ -98,6 +98,8 @@ def run_pipeline_isolated(
     dpi: int = 200,
     timeout_s: float | None = None,
     correlation_id: str | None = None,
+    page_start: int | None = None,
+    page_end: int | None = None,
 ) -> dict[str, Any]:
     """Execute one visual pipeline in a bounded, killable subprocess."""
     limits = _limits()
@@ -126,6 +128,8 @@ def run_pipeline_isolated(
         "pipeline_id": pipeline_id,
         "dpi": dpi,
         "correlation_id": corr,
+        "page_start": page_start,
+        "page_end": page_end,
     }
     env = dict(os.environ)
     env.setdefault("DISABLE_MODEL_SOURCE_CHECK", "True")

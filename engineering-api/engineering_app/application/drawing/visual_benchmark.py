@@ -205,6 +205,110 @@ def _token_sample_entry(
     return entry
 
 
+def _page_batch_size() -> int:
+    """Páginas por subprocesso filho — DEC-VAL-036 lifecycle fix.
+
+    Cada filho morre ao fim do lote, devolvendo memória nativa do
+    Paddle/arrays ao OS. Default 4: bounded pelo observado (falha
+    nativa após ~4 páginas densas no mesmo address-space) e pelo
+    cap RLIMIT_AS — não pelo PDF de referência.
+    """
+    try:
+        return max(1, min(25, int(os.environ.get(
+            "ENG_DRAWING_OCR_PAGE_BATCH", "4"
+        ))))
+    except Exception:
+        return 4
+
+
+def _pdf_page_count(pdf_bytes: bytes) -> int | None:
+    try:
+        import pypdfium2 as pdfium  # type: ignore
+
+        doc = pdfium.PdfDocument(pdf_bytes)
+        try:
+            return len(doc)
+        finally:
+            doc.close()
+    except Exception:
+        return None
+
+
+def _merge_isolated_records(a: dict, b: dict) -> dict:
+    """Merge sequential page-batch run records for one pipeline.
+
+    Pages carry absolute page numbers — concatenation preserves
+    order/provenance; summary fields recomputed from merged pages.
+    """
+    pages = (a.get("pages") or []) + (b.get("pages") or [])
+    lim = list(
+        dict.fromkeys(
+            (a.get("limitations") or []) + (b.get("limitations") or [])
+        )
+    )
+    merged = dict(a)
+    merged["pages"] = pages
+    merged["pages_rendered"] = len(pages)
+    merged["text_chars"] = (a.get("text_chars") or 0) + (
+        b.get("text_chars") or 0
+    )
+    merged["token_count"] = (a.get("token_count") or 0) + (
+        b.get("token_count") or 0
+    )
+    merged["duration_ms"] = (a.get("duration_ms") or 0) + (
+        b.get("duration_ms") or 0
+    )
+    merged["memory_peak_kb"] = max(
+        a.get("memory_peak_kb") or 0, b.get("memory_peak_kb") or 0
+    )
+    merged["limitations"] = lim
+    merged["_text_blob"] = " ".join(
+        x for x in (a.get("_text_blob"), b.get("_text_blob")) if x
+    )
+    merged["_tokens_sample"] = (
+        (a.get("_tokens_sample") or []) + (b.get("_tokens_sample") or [])
+    )[: token_sample_limit()]
+    gpa = dict(a.get("_graphic_primitives_by_page") or {})
+    gpa.update(b.get("_graphic_primitives_by_page") or {})
+    merged["_graphic_primitives_by_page"] = gpa
+    merged["_graphic_primitives"] = (
+        a.get("_graphic_primitives") or b.get("_graphic_primitives")
+    )
+    merged["document_page_count"] = (
+        b.get("document_page_count") or a.get("document_page_count")
+    )
+    merged["worker_pids"] = [
+        w for w in (
+            (a.get("worker_pids") or [a.get("worker_pid")])
+            + [b.get("worker_pid")]
+        ) if w
+    ]
+    merged["batch_ranges"] = (a.get("batch_ranges") or []) + [
+        b.get("page_range")
+    ]
+    ok = sum(
+        1 for p in pages if (p.get("ocr") or {}).get("status") == "ok"
+    )
+    total = merged["document_page_count"] or len(pages)
+    if ok and ok == total:
+        merged["status"] = "ok"
+    elif ok:
+        merged["status"] = "partial"
+    else:
+        # Sem páginas OCR-ok: preserva o status de erro dos chunks
+        # (provider_error/extraction_error) em vez de reescrever.
+        merged["status"] = (
+            a.get("status")
+            if a.get("status") in {"provider_error", "extraction_error"}
+            else "error"
+        )
+    merged["coverage_status"] = (
+        "FULL" if (total and ok == total)
+        else ("PARTIAL" if ok else "NONE")
+    )
+    return merged
+
+
 def run_visual_benchmark(
     pdf_bytes: bytes,
     *,
@@ -213,6 +317,8 @@ def run_visual_benchmark(
     environment: str = "test",
     dpi: int = 200,
     isolation: str | None = None,
+    page_start: int | None = None,
+    page_end: int | None = None,
 ) -> list[dict[str, Any]]:
     """Execute visual pipelines over the same bytes → run records.
 
@@ -228,10 +334,43 @@ def run_visual_benchmark(
         )
 
         out: list[dict[str, Any]] = []
+        # DEC-VAL-036 — batches de páginas em filhos separados: cada
+        # filho morre devolvendo memória nativa (Paddle/arrays) ao OS.
+        # Sem isso, RuntimeError → reset → model_load MemoryError
+        # cascateia no mesmo address-space e derruba o restante do doc.
+        batch = _page_batch_size()
+        start = page_start or 1
         for pid in pipelines:
-            rec = run_pipeline_isolated(
-                pdf_bytes, pipeline_id=pid, dpi=dpi
-            )
+            merged = None
+            p_start = start
+            while True:
+                p_end = (
+                    min(page_end, p_start + batch - 1)
+                    if page_end
+                    else p_start + batch - 1
+                )
+                chunk = run_pipeline_isolated(
+                    pdf_bytes,
+                    pipeline_id=pid,
+                    dpi=dpi,
+                    page_start=p_start,
+                    page_end=p_end,
+                )
+                chunk["page_range"] = [p_start, p_end]
+                merged = (
+                    chunk
+                    if merged is None
+                    else _merge_isolated_records(merged, chunk)
+                )
+                total = chunk.get("document_page_count")
+                if (page_end and p_end >= page_end) or (
+                    total and p_end >= total
+                ):
+                    break
+                if p_end >= 500:  # guard duro — MAX_PAGES do worker
+                    break
+                p_start = p_end + 1
+            rec = merged
             rec.setdefault("run_id", uuid.uuid4().hex[:12])
             rec["corpus_id"] = corpus_id
             rec["environment"] = environment
@@ -296,7 +435,11 @@ def run_visual_benchmark(
         page_cap_hit = False
         limitations: list[str] = []
         try:
-            for page_no in range(1, max_render_pages() + 1):
+            _last = max_render_pages()
+            if page_end:
+                _last = min(_last, page_end)
+            rec["document_page_count"] = _pdf_page_count(pdf_bytes)
+            for page_no in range(page_start or 1, _last + 1):
                 try:
                     rendered = renderer.render_page(
                         pdf_bytes, page=page_no, dpi=dpi
@@ -509,6 +652,17 @@ def run_visual_benchmark(
         rec.update(
             {
                 "status": status,
+                "coverage_status": (
+                    "FULL"
+                    if (
+                        page_errors == 0
+                        and (
+                            rec.get("document_page_count") is None
+                            or rec["document_page_count"] == len(pages)
+                        )
+                    )
+                    else ("PARTIAL" if ocr_ok_pages else "NONE")
+                ),
                 "duration_ms": round((time.monotonic() - t0) * 1000),
                 "pages_rendered": len(pages),
                 "pages": pages,

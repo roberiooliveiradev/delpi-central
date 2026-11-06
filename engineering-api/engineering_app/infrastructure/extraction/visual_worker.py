@@ -120,6 +120,8 @@ def main() -> int:
         environment=str(request.get("environment") or "subprocess"),
         dpi=dpi,
         isolation="inprocess",
+        page_start=request.get("page_start"),
+        page_end=request.get("page_end"),
     )
     _emit(
         {
