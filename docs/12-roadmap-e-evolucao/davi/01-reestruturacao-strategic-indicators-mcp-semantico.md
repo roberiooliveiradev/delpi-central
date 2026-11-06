@@ -240,9 +240,9 @@ Este é o **único plano evolutivo principal**. A cada onda atualizar aqui: deci
 - EVA: `engineering-api/engineering_app/interface/mcp/server.py`
 - SURI: `supplies-api/app/interfaces/mcp/server.py`
 - TÉO: `transformometro-api/tm_app/interface/mcp/server.py`
-- VISTA: nomes de tools observados no provider, mas o arquivo de registro ainda requer inspeção de código.
+- VISTA: `tv-dashboard-api/tv_app/interface/mcp/server.py`; registro das seis tools verificado no código.
 
-Nos cinco arquivos de `server.py` efetivamente examinados, `get_context`, `read`, `analyze`, `knowledge` e `execute` são registradas diretamente com `@mcp.tool`. `delete` é registrada em CAIO/CLARA/EVA/TÉO, não SURI. `read` usa com frequência `entity + action` e filtros allowlisted; `knowledge` e `get_context` têm diferenças de schema legítimas (não copiar contrato literalmente). `execute` exige policy apropriada ao owner.
+Nos seis arquivos de `server.py` efetivamente examinados, `get_context`, `read`, `analyze`, `knowledge` e `execute` são registradas diretamente com `@mcp.tool`. `delete` é registrada em CAIO/CLARA/EVA/TÉO, não SURI. `read` usa com frequência `entity + action` e filtros allowlisted; `knowledge` e `get_context` têm diferenças de schema legítimas (não copiar contrato literalmente). `execute` exige policy apropriada ao owner.
 
 ### 12.3 Testes existentes identificados (NÃO EXECUTADOS)
 
@@ -280,8 +280,8 @@ Nos cinco arquivos de `server.py` efetivamente examinados, `get_context`, `read`
 | Evidência | Status |
 |---|---|
 | GitHub `main` lido, DAVI MCP e serviços inspecionados | PASS (source inspection) |
-| Cinco MCPs irmãos `server.py` inspecionados | PASS (source inspection) |
-| VISTA código source registration | PENDING |
+| Seis MCPs irmãos `server.py` inspecionados | PASS (source inspection) |
+| VISTA código source registration | PASS (source inspection) |
 | Testes locais/CI executados nesta passagem | TEST_NOT_RUN |
 | Working tree local | INCONCLUSIVE |
 | Deployed SHA e provider live verificados nesta passagem | STALE_EVIDENCE |
