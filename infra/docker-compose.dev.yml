@@ -2271,6 +2271,17 @@ services:
       ENG_NC_DB_PASSWORD: ${ENG_NC_DB_PASSWORD:-}
       ENG_NC_IMPORT_REPLACE_ENABLED: ${ENG_NC_IMPORT_REPLACE_ENABLED:-}
 
+      # Product Registration (PRC) — mesmo modelo ENG_NC_*: principal
+      # dedicado `eng_prc` (grants mínimos), nunca PLUGINS_DB_*.
+      ENG_PRC_REPOSITORY: ${ENG_PRC_REPOSITORY:-}
+      ENG_PRC_DB_DSN: ${ENG_PRC_DB_DSN:-}
+      ENG_PRC_DB_HOST: ${ENG_PRC_DB_HOST:-postgres-plugins}
+      ENG_PRC_DB_PORT: ${ENG_PRC_DB_PORT:-5432}
+      ENG_PRC_DB_NAME: ${ENG_PRC_DB_NAME:-plugins_hub}
+      ENG_PRC_DB_USER: ${ENG_PRC_DB_USER:-eng_prc}
+      ENG_PRC_DB_PASSWORD: ${ENG_PRC_DB_PASSWORD:-}
+      ENG_PRC_DB_SSLMODE: ${ENG_PRC_DB_SSLMODE:-}
+
       # EVA ACT (tools mutáveis MCP) — fail-closed sem opt-in; em dev
       # habilitar via infra/.env somente para homologação em dataset
       # isolado (doc 53, gates EVA-P3/P7).

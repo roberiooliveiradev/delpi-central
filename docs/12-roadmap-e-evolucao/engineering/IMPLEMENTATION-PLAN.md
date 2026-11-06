@@ -692,3 +692,14 @@ dois lados) — 34 PRC + 12 parity + PG-skip = 47 PASS, 0 regressões.
 fix, draft com PN vazio era rejeitado ("Fornecedor inválido"); o caso real de
 drift está resolvido. O request anterior `b867e2ff` (mismatch intencional)
 permanece under_review — evidência fail-closed preservada.
+
+
+## ADENDO — PRC-D5.5: deployment canônico integrado + bug runtime corrigido
+
+> **Status:** `CANONICAL DEPLOY PASS / FORWARD-REF FIX / JOURNEY VIA GATEWAY PASS / MCP TRANSPORT PENDING_KEYCLOAK`.
+
+- `engineering-api` já existia no compose dev (mount ../engineering-api:/app) mas sem ENG_PRC_* — adicionadas as envs canônicas `ENG_PRC_REPOSITORY/DB_*` ao `docker-compose.dev.yml` (padrão ENG_NC_*; principal dedicado eng_prc) e valores em `infra/.env` (dev). Container agora roda PostgreSQL real — sem deployment paralelo.
+- **Bug real de runtime:** `from __future__ import annotations` em product_registration_routes.py tornava `IntakeBody` ForwardRef não resolvível no pydantic 2.14 → 500 no intake em runtime (testes TestClient passavam). Removido; 35 testes PASS.
+- **Jornada canônica completa:** via gateway `/apps/engineering-api` com JWT real: intake→start→draft PATCH seletivo→submit-review→`verify_and_complete` → **completed** (RID `3bace5e3`, record `983f5735`, match real TOTVS produto `80016622`).
+- **MCP transport:** endpoint `/apps/engineering-api/mcp` responde RFC 9728 corretamente — 401 + WWW-Authenticate (`scope="mcp:tools"`) + `.well-known/oauth-protected-resource` válido. Token portal `delpi-central` não carrega a audience `mcp:tools` → `PENDING_KEYCLOAK_SETUP` (mapper do client; setup documentado em 28-eva-mcp-v1-keycloak-setup.md).
+- Portal: remoteEntry.js 200 via gateway; visibilidade do menu exige rebuild do MFE/bundle com a feature (operator).

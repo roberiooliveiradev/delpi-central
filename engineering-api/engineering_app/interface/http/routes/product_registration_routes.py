@@ -10,8 +10,6 @@ nunca vem do payload. Idempotency-Key em POST mutável; expectedVersion
 (CAS) em mudanças de estado/draft.
 """
 
-from __future__ import annotations
-
 from fastapi import APIRouter, Body, Header, Path, Query
 from pydantic import BaseModel, Field
 
