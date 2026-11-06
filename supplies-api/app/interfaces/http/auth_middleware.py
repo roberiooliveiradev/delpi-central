@@ -7,6 +7,10 @@ from app.domain.exceptions import AuthenticationError, CoreApiUnavailableError
 from app.infrastructure.security.jwt_validator import KeycloakJwtValidator
 
 PUBLIC_PATHS = frozenset({"/health", "/ready"})
+# Approved character avatars are intentionally public narrative assets —
+# the route itself allowlists to the OFFICIAL_AVATAR_APPROVED reference
+# only, so auth must not block the read (AVATAR-INLINE-MCP-V1).
+PUBLIC_PATH_PREFIXES = frozenset({"/public/characters/"})
 
 
 def _normalize_path(path: str) -> str:
@@ -19,7 +23,12 @@ def _normalize_path(path: str) -> str:
 
 
 def is_public_path(path: str) -> bool:
-    return _normalize_path(path) in PUBLIC_PATHS
+    normalized = _normalize_path(path)
+    if normalized in PUBLIC_PATHS:
+        return True
+    return any(
+        normalized.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES
+    )
 
 
 def register_auth_middleware(app) -> None:
