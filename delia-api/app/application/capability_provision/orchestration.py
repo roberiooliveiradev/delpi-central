@@ -2158,6 +2158,11 @@ def _evaluate_material_obligations(
     return tuple(results)
 
 
+# Concrete-value tokens in synthesized prose — numeric literals that
+# must be traceable verbatim to bound evidence before the model's
+# prose may be presented (doc 256 G1 prose-is-proposal contract).
+_CONCRETE_VALUE_TOKENS = re.compile(r"\d[\d.,/:%-]*")
+
 def _apply_declared_answer(
     *,
     terminal: GovernedCapabilityAttempt,
@@ -2308,28 +2313,80 @@ def _apply_declared_answer(
     declared_complete = (
         declared_answer.status is InvestigationAnswerStatus.COMPLETE
     )
+    declared_consistent = False
+    coverage_unknown = False
     if declared_complete:
         # A COMPLETE declaration is consistent only when EVERY declared
         # ref binds to real business evidence, at least one does, and
-        # material obligations are demonstrably satisfied. ``plan=None``
-        # means coverage is unknown — the claim can never be proven and
-        # is honestly downgraded (doc 258 §2/§4). Even a fully
-        # consistent COMPLETE never replaces the deterministic verified
-        # content: the model's prose stays a proposal, not the answer.
+        # material obligations are demonstrably satisfied or undeclared.
+        # ``plan=None`` means coverage is unknown — the claim can never
+        # be proven and is honestly reported as such.
         if dropped_refs or accepted_refs == 0:
             extra_limitations.append("declared_status_overridden")
         elif plan is None or not plan.evidence_needed:
-            extra_limitations.append("declared_status_overridden")
-            extra_limitations.append("coverage_unknown")
+            declared_consistent = True
+            coverage_unknown = True
         else:
             coverage = _evaluate_material_obligations(
                 obligations=plan.evidence_needed,
                 business=business,
             )
-            if not all(
+            if all(
                 state == OBLIGATION_SATISFIED for _, state in coverage
             ):
+                declared_consistent = True
+            else:
                 extra_limitations.append("declared_status_overridden")
+
+    # Intent-aware synthesis: a consistent declaration's ``answer`` is
+    # the model's intent-aware composition over verified evidence —
+    # present it instead of the deterministic field dump. Evidence and
+    # provenance stay bound via the attempt's provenance/outcome; the
+    # answer already passed the output validator's marker strip and the
+    # evidence_refs binding above. When coverage is unknown (no plan)
+    # it is honestly declared — never hidden by the accepted prose.
+    #
+    # Bounded hallucination guard: every concrete numeric token in the
+    # synthesized prose must appear verbatim in the bound evidence
+    # text — an invented value (e.g. a fabricated price) rejects the
+    # prose and keeps the deterministic evidence. Semantic expansions
+    # and labels the model legitimately composes ("PI — produto
+    # intermediário") carry no numeric tokens and pass.
+    if declared_consistent:
+        answer_text = declared_answer.answer.strip()
+        if answer_text:
+            evidence_text = "\n".join(
+                (item.content or "") for item in business
+            )
+            unverified = [
+                token
+                for token in _CONCRETE_VALUE_TOKENS.findall(answer_text)
+                if token not in evidence_text
+            ]
+            if unverified:
+                extra_limitations.append(
+                    "declared_status_overridden"
+                )
+                extra_limitations.append(
+                    f"declared_answer_unverified_values:"
+                    f"{','.join(unverified[:8])}"[:200]
+                )
+            else:
+                if coverage_unknown:
+                    # Prose is presented, but the COMPLETE claim stays
+                    # honestly marked unproven without a typed plan.
+                    extra_limitations.append(
+                        "declared_status_overridden"
+                    )
+                    extra_limitations.append("coverage_unknown")
+                synthesized = answer_text[:MAX_RENDER_CONTENT_CHARS]
+                return dataclasses.replace(
+                    terminal,
+                    content=synthesized,
+                    markdown_content=synthesized,
+                    limitations=tuple(terminal.limitations)
+                    + tuple(extra_limitations)[:24],
+                )
 
     if extra_limitations:
         return dataclasses.replace(

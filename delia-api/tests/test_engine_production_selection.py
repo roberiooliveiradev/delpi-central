@@ -120,4 +120,5 @@ class TestUntrustedSurfaces:
             "tool_projection_limit",
             "prior_turns_limit",
             "context_window_tokens",
+            "max_output_tokens",
         ]

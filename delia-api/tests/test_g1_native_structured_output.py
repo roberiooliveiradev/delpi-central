@@ -193,13 +193,19 @@ def test_real_but_irrelevant_evidence_does_not_ground_complete():
     )
     assert "declared_status_overridden" in out.limitations
     assert "coverage_unknown" in out.limitations
-    assert out.content == "deterministic content"
+    # Consistent prose is presented (intent-aware synthesis); the
+    # completeness claim stays honestly marked unproven, and the
+    # deterministic evidence remains bound via provenance/outcome.
+    assert out.content == "anything"
 
 
 def test_complete_proven_only_when_all_refs_bind_and_obligations_met():
-    """Fully consistent COMPLETE (all refs valid, obligations satisfied)
-    is accepted as consistent — but STILL never replaces the verified
-    deterministic content (doc 258 §1)."""
+    """Fully consistent COMPLETE (all refs valid, obligations
+    satisfied) is accepted — its intent-aware prose is presented
+    while the deterministic evidence stays bound via
+    provenance/outcome (doc 258 §1 evolved: prose consistent with
+    bound evidence is the answer; unverified numeric tokens reject
+    it back to the deterministic dump)."""
     class _Plan:
         evidence_needed = ()
 
@@ -218,9 +224,9 @@ def test_complete_proven_only_when_all_refs_bind_and_obligations_met():
         correlation="c1",
         unbound_outcome=None,
     )
-    # coverage_unknown (evidence_needed empty) — or consistent; either
-    # way the deterministic content stays authoritative
-    assert out.content == "deterministic content"
+    # coverage_unknown (evidence_needed empty) — consistent prose is
+    # presented; deterministic evidence remains bound.
+    assert out.content == "model wording"
 
 
 def test_unknown_schema_version_rejects_whole_declaration():
