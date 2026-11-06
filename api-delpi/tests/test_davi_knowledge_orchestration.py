@@ -28,7 +28,12 @@ _INTENTS = {
     "STRUCTURE_WHERE_USED", "INVENTORY_ADJUSTMENT", "MULTI_SOURCE_RECONCILIATION",
     "SYSTEM_METADATA", "SOLUTION_DISCOVERY", "WRITE_OR_GENERIC_SQL",
 }
-_MCP_TOOLS = {"discover_delpi_information", "execute_delpi_information"}
+_MCP_TOOLS = {
+    "discover_delpi_information",
+    "execute_delpi_information",
+    "get_context",
+    "knowledge",
+}
 
 
 def _ko() -> dict:
@@ -70,6 +75,7 @@ def test_knowledge_availability_is_explicit_for_external_mcp_consumers() -> None
     assert source["tools"] == [
         "discover_delpi_information",
         "execute_delpi_information",
+        "knowledge",
     ]
     gate = _ko()["gates"]["KNOWLEDGE_GATE"]
     assert "MCP" in gate and "agent_directives" in gate

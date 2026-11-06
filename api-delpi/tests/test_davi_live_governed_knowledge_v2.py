@@ -197,7 +197,7 @@ def test_discovery_exposes_mp_pi_semantically_not_lexically_hardcoded(monkeypatc
         reset_action_index_for_tests()
 
 
-def test_mcp_surface_unchanged_two_tools():
+def test_mcp_surface_wave001_four_tools():
     from app.interface.mcp.server import create_mcp_server
     import asyncio
 
@@ -206,4 +206,6 @@ def test_mcp_surface_unchanged_two_tools():
     assert sorted(t.name for t in tools) == [
         "discover_delpi_information",
         "execute_delpi_information",
+        "get_context",
+        "knowledge",
     ]

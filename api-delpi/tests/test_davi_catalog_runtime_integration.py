@@ -890,12 +890,14 @@ def test_search_products_discover_execute_still_pass(monkeypatch: pytest.MonkeyP
         assert search["action_id"] == "search_products"
 
 
-def test_mcp_still_exposes_exactly_two_tools():
+def test_mcp_exposes_wave001_four_tools():
     mcp = create_mcp_server()
     tools = {t.name for t in mcp._tool_manager.list_tools()}
     assert tools == {
         "discover_delpi_information",
         "execute_delpi_information",
+        "get_context",
+        "knowledge",
     }
 
 

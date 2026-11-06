@@ -9,7 +9,7 @@ Proves:
 - flat-list truncation completeness (>50 -> truncated/is_complete);
 - retrieval positives and data-access/SQL negatives;
 - candidate-token actor binding;
-- MCP surface stays at exactly 2 tools.
+- MCP surface stays at the Wave 001 approved four tools.
 """
 
 from __future__ import annotations
@@ -934,7 +934,7 @@ def test_candidate_token_user_b_denied(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_mcp_tools_remain_two():
+def test_mcp_tools_wave001_four():
     import asyncio
 
     from app.interface.mcp.server import create_mcp_server
@@ -943,6 +943,8 @@ def test_mcp_tools_remain_two():
     assert [t.name for t in tools] == [
         "discover_delpi_information",
         "execute_delpi_information",
+        "get_context",
+        "knowledge",
     ]
 
 

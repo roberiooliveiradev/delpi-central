@@ -112,12 +112,14 @@ def test_product_search_service_does_not_import_composition_root() -> None:
     assert "build_search_products_use_case" not in text
 
 
-def test_mcp_server_exposes_only_discover_execute_with_annotations() -> None:
+def test_mcp_server_exposes_wave001_surface_with_annotations() -> None:
     mcp = create_mcp_server()
     tools = mcp._tool_manager.list_tools()
     assert [t.name for t in tools] == [
         "discover_delpi_information",
         "execute_delpi_information",
+        "get_context",
+        "knowledge",
     ]
     assert MCP_TOOL_SEARCH_PRODUCTS not in [t.name for t in tools]
     for tool in tools:
@@ -135,6 +137,8 @@ async def test_mcp_tools_list_contract_has_discover_execute_schemas() -> None:
     assert [t.name for t in tools] == [
         "discover_delpi_information",
         "execute_delpi_information",
+        "get_context",
+        "knowledge",
     ]
     discover = tools[0]
     schema = discover.input_schema

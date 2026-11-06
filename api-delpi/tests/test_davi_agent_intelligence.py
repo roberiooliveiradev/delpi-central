@@ -294,10 +294,12 @@ async def test_mcp_tools_list_and_call_discover_contract(monkeypatch) -> None:
     assert names == [
         MCP_TOOL_DISCOVER_DELPI_INFORMATION,
         MCP_TOOL_EXECUTE_DELPI_INFORMATION,
+        "get_context",
+        "knowledge",
     ]
     assert "search_products" not in names
     directives = DaviAgentIntelligenceService.agent_directives()
-    assert directives["surface_parity"]["mcp_tools"] == 2
+    assert directives["surface_parity"]["mcp_tools"] == 4
     assert directives["flows"]["product_master_search"]["mcp_tools"] == [
         "discover_delpi_information",
         "execute_delpi_information",

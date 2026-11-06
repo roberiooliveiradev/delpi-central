@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.application.external_capabilities.constants import (
@@ -189,5 +191,121 @@ def execute_delpi_information_input_json_schema() -> dict:
 def execute_delpi_information_output_json_schema() -> dict:
     schema = ExecuteDelpiInformationOutput.model_json_schema()
     schema["title"] = "execute_delpi_informationOutput"
+    schema["additionalProperties"] = False
+    return schema
+
+
+class GetContextInput(BaseModel):
+    """Closed input for the get_context semantic entry point."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    action: Literal["context", "catalog", "schema"] = Field(
+        default="context",
+        description=(
+            "context: specialist identity, actor context, versions, limits "
+            "and live directives; catalog: compact eligible capability "
+            "list; schema: governed argument schema for one capability."
+        ),
+    )
+    capability: str | None = Field(
+        default=None,
+        max_length=128,
+        description="Technical action_id for action=schema (catalog metadata, not permission)",
+    )
+
+
+class GetContextOutput(BaseModel):
+    """Runtime envelope for get_context structuredContent."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    action: str
+    status: str
+    context: dict[str, Any] | None = None
+    catalog: dict[str, Any] | None = None
+    capability: dict[str, Any] | None = None
+
+
+class KnowledgeInput(BaseModel):
+    """Closed input for governed knowledge reads."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    action: Literal["search", "get", "sources"] = Field(
+        ...,
+        description=(
+            "search: ranked excerpts for topic (+ optional subject/section "
+            "narrowing); get: one section via topic+section; sources: "
+            "corpus topic index."
+        ),
+    )
+    topic: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Published corpus topic id (required for search/get)",
+    )
+    subject: str | None = Field(
+        default=None,
+        max_length=240,
+        description="Optional subject/designation to rank sections deterministically",
+    )
+    section: str | None = Field(
+        default=None,
+        max_length=8,
+        pattern=r"^s[0-9]{4}$",
+        description="Stable section id returned in excerpts (required for get)",
+    )
+    corpus_version: int | None = Field(
+        default=None,
+        ge=1,
+        le=1000,
+        description="Published corpus version (default: latest)",
+    )
+    page: int = Field(default=1, ge=1, le=10000)
+    page_size: int | None = Field(
+        default=None,
+        ge=1,
+        le=3,
+        description="Sections per page (1..3)",
+    )
+
+
+class KnowledgeOutput(BaseModel):
+    """Runtime envelope for knowledge structuredContent."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    action: str
+    status: str
+    action_id: str | None = None
+    sources: dict[str, Any] | None = None
+    knowledge: dict[str, Any] | None = None
+
+
+def get_context_input_json_schema() -> dict:
+    schema = GetContextInput.model_json_schema()
+    schema["title"] = "get_contextArguments"
+    schema["additionalProperties"] = False
+    return schema
+
+
+def get_context_output_json_schema() -> dict:
+    schema = GetContextOutput.model_json_schema()
+    schema["title"] = "get_contextOutput"
+    schema["additionalProperties"] = False
+    return schema
+
+
+def knowledge_input_json_schema() -> dict:
+    schema = KnowledgeInput.model_json_schema()
+    schema["title"] = "knowledgeArguments"
+    schema["additionalProperties"] = False
+    return schema
+
+
+def knowledge_output_json_schema() -> dict:
+    schema = KnowledgeOutput.model_json_schema()
+    schema["title"] = "knowledgeOutput"
     schema["additionalProperties"] = False
     return schema

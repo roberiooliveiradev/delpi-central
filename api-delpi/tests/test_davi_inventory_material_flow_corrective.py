@@ -583,7 +583,7 @@ def test_sql01_generic_sql_not_promoted():
         assert "data/sql" not in oid
 
 
-def test_mcp01_tool_count_exactly_two():
+def test_mcp01_tool_count_wave001_four():
     import asyncio
 
     from app.interface.mcp.server import create_mcp_server
@@ -592,6 +592,8 @@ def test_mcp01_tool_count_exactly_two():
     assert [t.name for t in tools] == [
         "discover_delpi_information",
         "execute_delpi_information",
+        "get_context",
+        "knowledge",
     ]
 
 

@@ -28,6 +28,40 @@ def _search_products_runner(**kwargs: Any) -> dict[str, Any]:
     )
 
 
+class _RequestBoundCatalogActionExecutor:
+    """Bind per-request Authorization into infrastructure (Composition only)."""
+
+    def __init__(self, authorization: str | None) -> None:
+        self._authorization = authorization
+
+    def execute(
+        self,
+        *,
+        action_id: str,
+        validated_arguments: dict[str, Any],
+    ):
+        from app.domain.ports.davi_catalog_action_executor_port import (
+            CatalogActionExecutionResult,
+        )
+        from app.infrastructure.davi.asgi_catalog_action_executor import (
+            AsgiCatalogActionExecutor,
+        )
+        from app.infrastructure.davi.in_process_asgi_client import (
+            open_in_process_asgi_client,
+        )
+        from app.main import app
+
+        if not self._authorization:
+            return CatalogActionExecutionResult(outcome="unauthorized")
+        with open_in_process_asgi_client(app) as client:
+            return AsgiCatalogActionExecutor(
+                client, authorization=self._authorization
+            ).execute(
+                action_id=action_id,
+                validated_arguments=validated_arguments,
+            )
+
+
 def execute_delpi_information_wired(
     *,
     authorization: str | None = None,
@@ -37,36 +71,29 @@ def execute_delpi_information_wired(
     from app.application.external_capabilities.dynamic_information.execute_service import (
         execute_delpi_information,
     )
-    from app.domain.ports.davi_catalog_action_executor_port import (
-        CatalogActionExecutionResult,
-    )
-    from app.infrastructure.davi.asgi_catalog_action_executor import (
-        AsgiCatalogActionExecutor,
-    )
-    from app.infrastructure.davi.in_process_asgi_client import (
-        open_in_process_asgi_client,
-    )
-    from app.main import app
-
-    class _RequestBoundCatalogActionExecutor:
-        def execute(
-            self,
-            *,
-            action_id: str,
-            validated_arguments: dict[str, Any],
-        ) -> CatalogActionExecutionResult:
-            if not authorization:
-                return CatalogActionExecutionResult(outcome="unauthorized")
-            with open_in_process_asgi_client(app) as client:
-                return AsgiCatalogActionExecutor(
-                    client, authorization=authorization
-                ).execute(
-                    action_id=action_id,
-                    validated_arguments=validated_arguments,
-                )
 
     return execute_delpi_information(
-        catalog_action_executor=_RequestBoundCatalogActionExecutor(),
+        catalog_action_executor=_RequestBoundCatalogActionExecutor(authorization),
         search_products_runner=_search_products_runner,
+        **kwargs,
+    )
+
+
+def davi_knowledge_wired(
+    *,
+    authorization: str | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Knowledge tool wiring: request-bound executor + published corpus index."""
+    from app.application.external_capabilities.dynamic_information.knowledge_service import (
+        davi_knowledge,
+    )
+    from app.composition.governed_knowledge_composer import (
+        published_knowledge_topics,
+    )
+
+    return davi_knowledge(
+        catalog_action_executor=_RequestBoundCatalogActionExecutor(authorization),
+        sources_provider=published_knowledge_topics,
         **kwargs,
     )

@@ -56,7 +56,7 @@ def _actions() -> list[TechnicalAction]:
     )
 
 
-def test_mcp_surface_is_exactly_two_tools_without_search_products():
+def test_mcp_surface_is_wave001_four_tools_without_search_products():
     import asyncio
 
     tools = asyncio.run(create_mcp_server().list_tools())
@@ -64,6 +64,8 @@ def test_mcp_surface_is_exactly_two_tools_without_search_products():
     assert names == [
         "discover_delpi_information",
         "execute_delpi_information",
+        "get_context",
+        "knowledge",
     ]
     assert SEARCH_PRODUCTS_OPERATION_ID not in names
 

@@ -42,6 +42,66 @@ from app.domain.ports.davi_catalog_action_executor_port import CatalogActionExec
 SearchProductsRunner = Callable[..., dict[str, Any]]
 
 
+def execute_catalog_read(
+    *,
+    action,
+    plan: CatalogActionPlan,
+    catalog_action_executor: CatalogActionExecutorPort | None,
+    budgets: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Shared governed catalog READ: bound plan → executor → projection → bound.
+
+    Single owner of the catalog_action semantics for every DAVI surface that
+    executes an eligible TechnicalAction (discover→execute broker and dedicated
+    semantic tools alike). Caller supplies the TechnicalAction, the
+    validated CatalogActionPlan and the request-bound executor port; actor
+    binding/AuthZ stay in the bound executor and backend.
+    """
+    budgets = budgets or load_dynamic_read_budgets()
+    if catalog_action_executor is None:
+        raise GovernedExecutionError(
+            "Catalog action executor is not configured",
+            code=OWNER_EXECUTION_ERROR_CODE,
+        )
+    result = catalog_action_executor.execute(
+        action_id=plan.action_id,
+        validated_arguments=plan.validated_arguments,
+    )
+    if result.outcome == "unauthorized":
+        raise PermissionError("Unauthorized")
+    if result.outcome == "forbidden":
+        raise PermissionError("Forbidden")
+    if result.outcome != "ok":
+        raise GovernedExecutionError(
+            result.error_message or "Catalog action execution failed",
+            code=OWNER_EXECUTION_ERROR_CODE,
+        )
+    if (
+        action.response_contract
+        == RESPONSE_CONTRACT_BOUNDED_DYNAMIC_RESULTSET
+    ):
+        body = apply_dynamic_resultset_projection(
+            unwrap_api_payload(result.payload),
+            max_resultsets=int(budgets.get("execute_max_resultsets") or 8),
+            max_columns=int(budgets.get("execute_max_result_columns") or 64),
+            max_array_items=int(budgets.get("execute_max_items") or 50),
+        )
+    else:
+        body = apply_approved_field_projection(
+            unwrap_api_payload(result.payload),
+            approved_fields=action.approved_response_fields,
+            list_key="items",
+            max_depth=int(budgets.get("projection_max_depth") or 8),
+            max_array_items=int(budgets.get("execute_max_items") or 50),
+            response_bindings=action.response_bindings,
+        )
+    return bound_response_payload(
+        body,
+        max_bytes=int(budgets.get("execute_max_response_bytes") or 65536),
+        max_items=int(budgets.get("execute_max_items") or 50),
+    )
+
+
 def execute_delpi_information(
     *,
     candidate_token: str,
@@ -100,55 +160,24 @@ def execute_delpi_information(
             or ("product_code", "description", "group_category"),
             list_key="items",
         )
-    elif isinstance(plan, CatalogActionPlan):
-        if catalog_action_executor is None:
-            raise GovernedExecutionError(
-                "Catalog action executor is not configured",
-                code=OWNER_EXECUTION_ERROR_CODE,
-            )
-        result = catalog_action_executor.execute(
-            action_id=plan.action_id,
-            validated_arguments=plan.validated_arguments,
+        bounded = bound_response_payload(
+            body,
+            max_bytes=int(budgets.get("execute_max_response_bytes") or 65536),
+            max_items=int(budgets.get("execute_max_items") or 50),
         )
-        if result.outcome == "unauthorized":
-            raise PermissionError("Unauthorized")
-        if result.outcome == "forbidden":
-            raise PermissionError("Forbidden")
-        if result.outcome != "ok":
-            raise GovernedExecutionError(
-                result.error_message or "Catalog action execution failed",
-                code=OWNER_EXECUTION_ERROR_CODE,
-            )
-        if (
-            action.response_contract
-            == RESPONSE_CONTRACT_BOUNDED_DYNAMIC_RESULTSET
-        ):
-            body = apply_dynamic_resultset_projection(
-                unwrap_api_payload(result.payload),
-                max_resultsets=int(budgets.get("execute_max_resultsets") or 8),
-                max_columns=int(budgets.get("execute_max_result_columns") or 64),
-                max_array_items=int(budgets.get("execute_max_items") or 50),
-            )
-        else:
-            body = apply_approved_field_projection(
-                unwrap_api_payload(result.payload),
-                approved_fields=action.approved_response_fields,
-                list_key="items",
-                max_depth=int(budgets.get("projection_max_depth") or 8),
-                max_array_items=int(budgets.get("execute_max_items") or 50),
-                response_bindings=action.response_bindings,
-            )
+    elif isinstance(plan, CatalogActionPlan):
+        bounded = execute_catalog_read(
+            action=action,
+            plan=plan,
+            catalog_action_executor=catalog_action_executor,
+            budgets=budgets,
+        )
     else:
         raise GovernedExecutionError(
             "Unsupported execution plan",
             code=OWNER_EXECUTION_ERROR_CODE,
         )
 
-    bounded = bound_response_payload(
-        body,
-        max_bytes=int(budgets.get("execute_max_response_bytes") or 65536),
-        max_items=int(budgets.get("execute_max_items") or 50),
-    )
     return {
         "action_id": action.action_id,
         "status": "ok",

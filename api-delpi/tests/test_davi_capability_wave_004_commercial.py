@@ -164,7 +164,7 @@ def test_wave004_deferred_and_out_of_wave_not_executable(oid: str):
     assert action.executable is False
 
 
-def test_wave004_mcp_tools_remain_two():
+def test_wave004_mcp_tools_wave001_four():
     import asyncio
 
     from app.interface.mcp.server import create_mcp_server
@@ -173,6 +173,8 @@ def test_wave004_mcp_tools_remain_two():
     assert [t.name for t in tools] == [
         MCP_TOOL_DISCOVER_DELPI_INFORMATION,
         MCP_TOOL_EXECUTE_DELPI_INFORMATION,
+        "get_context",
+        "knowledge",
     ]
 
 

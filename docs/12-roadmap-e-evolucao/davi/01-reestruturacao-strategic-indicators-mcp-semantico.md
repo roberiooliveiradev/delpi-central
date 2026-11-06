@@ -287,3 +287,63 @@ Nos seis arquivos de `server.py` efetivamente examinados, `get_context`, `read`,
 | Deployed SHA e provider live verificados nesta passagem | STALE_EVIDENCE |
 | Implementação/mudança runtime | NONE |
 | Próximo aceite | Reconciliation report SQL + W1 contract design |
+
+## 13. Wave 001 — Semantic Tools Foundation (DAVI-V2-WAVE-001-SEMANTIC-TOOLS-FOUNDATION)
+
+> Execução em 2026-11-06 pelo Cursor sobre `main`. Escopo W1 aprovado nesta onda: `get_context` + `knowledge` apenas; `read` fica para onda posterior (decisão do brief).
+
+### 13.1 Rebaseline e reconciliação
+
+```text
+BASE HEAD       = f9376621b979 (origin/main sync, working tree limpo p/ escopo)
+HEAD pré-commit = 0a25a1a4358f (commit concorrente DÉLIA, sem overlap de escopo)
+BRANCH          = main
+WORKING TREE    = alterações concorrentes de terceiros preservadas
+                  (delia docs, engineering-api, infra scripts — não staged)
+DEPLOYED SHA    = não acessível nesta sessão — STALE_EVIDENCE
+```
+
+**GAP-SQL-001 — reconciliado (sem mudança de política).** No seeding do OpenAPI live (`refresh_davi_action_index_from_live_openapi`, lifespan de `app.main`), `execute_readonly_sql` = `DAVI_ELIGIBLE_READ`/executable (requestBody `{sql:string}` normaliza `supported=True`); 97 ops elegíveis. No fallback baseline (`build_technical_actions_from_baseline`), `request_body_supported=False` → `NEEDS_BOUNDED_EXECUTION`/fail-closed — é esse caminho que os testes (`test_canonical_sql_route_bounded_not_generic_capability` etc.) provam. Documento README "restored" e testes não se contradizem: medem trilhas distintas do mesmo pipeline. Comentários de teste que dizem "DAVI surface is fail-closed" genericamente estão semanticamente datados — nenhuma política SQL alterada nesta onda.
+
+**GAP-SQL-002 — TO_INVENTORY, sem mudança.** `DATA_SQL_SKIP_TABLE_WHITELIST` default textual `true` segue política do SqlValidator da rota (`api-delpi.data` backend AuthZ); fora de escopo W1.
+
+**GAP-TEST-001 — resolvido nesta execução.** Todos os pins de superfície "exactly 2 tools" foram atualizados para o manifesto W1 aprovado (4 tools); nomes de teste datados renomeados (`*_wave001_four`); `surface_parity.mcp_tools` do content layer e fixture `tool_surface` alinhados a 4.
+
+### 13.2 Decisões ratificadas
+
+| DECISION | RATIONALE | OWNER |
+|---|---|---|
+| `get_context(action=context|catalog|schema)` | paridade semântica com CAIO/CLARA/EVA/SURI/TÉO/VISTA; catálogo real do Action Index, versões, limites, diretivas live; schema sob demanda só para capability elegível; planned tools reportadas `PLANNED_NOT_IMPLEMENTED` | aplicação `context_service.py` |
+| `knowledge(action=search|get|sources)` | façade semântica sobre a capability `read_governed_technical_knowledge` já elegível — zero reimplementação de corpus/index | aplicação `knowledge_service.py` |
+| Execução via `execute_catalog_read` compartilhado | knowledge reusa plano validado + `CatalogActionExecutorPort` request-bound → backend `api-delpi.access` AuthZ segue autoridade; sem candidate token porque a tool é a seleção fixa (mesmo boundary pós-discovery) | `execute_service.py` |
+| `sources` via `published_knowledge_topics` injetado | metadata de índice do corpus já publicada no OpenAPI da rota; conteúdo continua exigindo backend AuthZ | composition |
+| Sem segunda fonte de catálogo/conhecimento | reuso de `DaviAgentIntelligenceService`, Action Index, GovernedKnowledgeRepository | — |
+
+### 13.3 Implementação
+
+- `app/interface/mcp/server.py`: registro de `get_context` + `knowledge` (input fechado, outputSchema, `delpi/toolClass` DISCOVERY/READ, securitySchemes).
+- `app/interface/mcp/schemas.py`: `GetContextInput/Output`, `KnowledgeInput/Output` + JSON schemas (`extra="forbid"`).
+- `app/application/external_capabilities/constants.py`: nomes/títulos/classes das tools.
+- `app/application/external_capabilities/dynamic_information/context_service.py` (novo): context/catalog/schema bounded.
+- `app/application/external_capabilities/dynamic_information/knowledge_service.py` (novo): search/get/sources sobre pipeline governado.
+- `app/application/external_capabilities/dynamic_information/execute_service.py`: extração de `execute_catalog_read` (semântica catalog_action única).
+- `app/composition/davi_dynamic_read_composer.py`: executor request-bound compartilhado + `davi_knowledge_wired`.
+- `app/content/davi_agent_intelligence.json`: `surface_parity.mcp_tools` 2→4, `knowledge_orchestration.sources.governed_knowledge.tools` += `knowledge`, version 2026.11.06.1.
+- Docs de integração correntes atualizadas para superfície de 4 tools (`openai-plugin-mcp.md`, `keycloak-mcp-client-runbook.md`, `integrations/openai-plugin/README.md`).
+
+### 13.4 Testes
+
+```text
+pytest -k "davi or mcp"  → 1644 PASS (HEAD pré-commit)
+tests/test_davi_semantic_tools_wave001.py → 22 PASS (novo)
+Compatibilidade broker (discover/execute, search_products, candidate token,
+allowlist, projections, SQL bounded, auth middleware, oauth contract,
+mount routing) → PASS sem mudança de contrato externo.
+Live/provider/deploy → TEST_NOT_RUN / PENDING.
+```
+
+### 13.5 Pendências pós-W1
+
+- Provider rediscovery + live positive/negative AuthZ (segundo usuário) → PENDING.
+- `read` semântica (façade sobre broker governado) → próxima onda (GAP-TOOL-001 aberto como decisão de design registrada).
+- Avaliação de tool selection/ambiguidade da coexistência 4-tool → PENDING (eval de seleção).

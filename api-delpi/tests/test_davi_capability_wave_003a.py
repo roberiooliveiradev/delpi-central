@@ -143,7 +143,7 @@ def test_wave3a_eligible_count_includes_wave3a_ops():
     assert "get_product_analyser" in blocked
 
 
-def test_wave3a_mcp_tools_remain_two():
+def test_wave3a_mcp_tools_wave001_four():
     import asyncio
     from app.interface.mcp.server import create_mcp_server
 
@@ -151,6 +151,8 @@ def test_wave3a_mcp_tools_remain_two():
     assert [t.name for t in tools] == [
         "discover_delpi_information",
         "execute_delpi_information",
+        "get_context",
+        "knowledge",
     ]
 
 

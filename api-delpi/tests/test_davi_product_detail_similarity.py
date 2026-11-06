@@ -160,7 +160,7 @@ def test_detail_discovery(query, monkeypatch):
     assert discovered["candidates"][0]["action_id"] == _DETAIL, query
 
 
-def test_mcp_tools_remain_two():
+def test_mcp_tools_wave001_four():
     import asyncio
     from app.interface.mcp.server import create_mcp_server
 
@@ -168,6 +168,8 @@ def test_mcp_tools_remain_two():
     assert [t.name for t in tools] == [
         "discover_delpi_information",
         "execute_delpi_information",
+        "get_context",
+        "knowledge",
     ]
 
 

@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.30.3",
+  "version": "2026.11.06.1",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -55,9 +55,9 @@
     "authority": "Persona é UX: não concede permissão, não altera tools, contratos nem AuthZ."
   },
   "surface_parity": {
-    "mcp_tools": 2,
+    "mcp_tools": 4,
     "gpt_actions_legacy": 2,
-    "note": "Capability parity ≠ transport count. Product Master capability search_products remains behind discover→execute. Descriptive for the Agent, not alternate SoT (tool counts owned by MCP server / GPT façade). Same DaviAgentIntelligenceService. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only). Stock/BOM/shipping/etc. execute only via MCP discover→execute; gpt_get_catalog carries live directives, not those operations."
+    "note": "Capability parity ≠ transport count. W1 semantic tools added: get_context + knowledge join discover_delpi_information + execute_delpi_information (governed broker preserved; read/analyze/execute/delete remain PLANNED_NOT_IMPLEMENTED). Product Master capability search_products remains behind discover→execute. Descriptive for the Agent, not alternate SoT (tool counts owned by MCP server / GPT façade). Same DaviAgentIntelligenceService. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only). Stock/BOM/shipping/etc. execute only via MCP discover→execute; gpt_get_catalog carries live directives, not those operations."
   },
   "anti_patterns": [
     "Inventar estoque, preço, BOM, fornecedor ou status sem retorno de tool.",
@@ -111,7 +111,8 @@
         "consumer_contract_status": "RATIFIED_BOUNDED",
         "tools": [
           "discover_delpi_information",
-          "execute_delpi_information"
+          "execute_delpi_information",
+          "knowledge"
         ],
         "note": "Os 15 documentos V1 e os 17 documentos V2 (inclui normas completas MP/PI ratificadas) são lidos via capability READ canônica GET /knowledge/technical-guides/{topic} com seleção por corpus_version (default: latest). A superfície provider-native Workspace Agent Files é canal distinto e segue TEST_NOT_RUN.",
         "published_corpus_versions": [

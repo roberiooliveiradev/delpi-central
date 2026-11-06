@@ -601,7 +601,7 @@ def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
         assert expected_oid in action_ids, query
 
 
-def test_three_tool_invariant_with_v5_allowlist():
+def test_wave001_four_tool_manifest_with_v5_allowlist():
     import asyncio
     from app.interface.mcp.server import create_mcp_server
 
@@ -609,8 +609,10 @@ def test_three_tool_invariant_with_v5_allowlist():
     assert [t.name for t in tools] == [
         "discover_delpi_information",
         "execute_delpi_information",
+        "get_context",
+        "knowledge",
     ]
-    # Still exactly three MCP tools; allowlist is no longer search-only.
+    # Wave 001 semantic surface = 4 MCP tools; allowlist is no longer search-only.
     assert load_allowlist_operation_ids(load_external_read_allowlist()) == set(
         _ALLOWLIST_OPERATION_IDS
     )
@@ -2014,11 +2016,13 @@ def test_mcp_output_schemas_present_for_all_three_tools():
 
     mcp = create_mcp_server()
     tools = asyncio.run(mcp.list_tools())
-    assert len(tools) == 2
+    assert len(tools) == 4
     by_name = {t.name: t for t in tools}
     assert set(by_name) == {
         "discover_delpi_information",
         "execute_delpi_information",
+        "get_context",
+        "knowledge",
     }
     assert (
         by_name["discover_delpi_information"].output_schema

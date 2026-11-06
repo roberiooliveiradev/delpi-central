@@ -52,7 +52,10 @@ def test_e01_schema_and_evidence_ladder_are_fail_closed(matrix: dict) -> None:
     assert matrix["identity"] == "END_USER_ACCOUNT"
     assert matrix["business_authorization"] == "FINAL_BACKEND_CANONICAL"
     assert matrix["tool_surface"] == [
-        "discover_delpi_information", "execute_delpi_information"
+        "discover_delpi_information",
+        "execute_delpi_information",
+        "get_context",
+        "knowledge",
     ]
     evidence = matrix["acceptance"]
     assert evidence["provider_sync"] == "TEST_NOT_RUN"
@@ -116,7 +119,7 @@ def test_e04_no_direct_tool_or_core_sql_added(matrix: dict) -> None:
     prohibited = {"execute_readonly_sql", "POST /data/sql", "generic_proxy"}
     all_ids = {op for c in matrix["scenarios"] for op in c["operations"]}
     assert not (all_ids & prohibited)
-    assert len(matrix["tool_surface"]) == 2
+    assert len(matrix["tool_surface"]) == 4
     core = next(c for c in matrix["scenarios"] if c["id"] == "EI12")
     assert core["contract_status"] == "TO_INVENTORY"
     assert core["operations"] == []
