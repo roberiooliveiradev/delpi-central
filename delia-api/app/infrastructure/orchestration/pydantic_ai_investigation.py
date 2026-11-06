@@ -73,6 +73,9 @@ from app.application.specialist_interop.errors import (
 _logger = logging.getLogger(__name__)
 
 _INTERNAL_OBS_MARKER = __import__("re").compile(r"\[obs:\d+\]\s*")
+_LOOKS_LIKE_DICT_REPR = __import__("re").compile(
+    r"^\{[\s\S]{1,2000}:.*\}$"
+)
 
 # Library defaults for direct unit construction only — production
 # composition always injects the validated runtime-config snapshot
@@ -356,6 +359,19 @@ def _bounded_json(payload: Any, *, limit: int = 6000) -> str:
         "note": "tool_observation_exceeded_model_budget",
     }
     return json.dumps(overview, ensure_ascii=False, default=str)
+
+
+def _declared_container_only(declared: object) -> bool:
+    """True when the published schema requires an object/array that a
+    serialized string cannot satisfy (``string`` absent from union)."""
+    if declared in ("object", "array"):
+        return True
+    if isinstance(declared, (list, tuple)):
+        return (
+            ("object" in declared or "array" in declared)
+            and "string" not in declared
+        )
+    return False
 
 
 def _attempt_projection(
@@ -1024,6 +1040,80 @@ class PydanticAiInvestigationOrchestrator:
         ) -> str:
             ctx.deps.deadline.check("tool_invoke_capability")
             ctx.deps.tool_calls += 1
+            # Typed-argument gate (proven defect, diagnostic task):
+            # object/array-typed parameters serialized as strings
+            # reached the owner untouched — filters were silently
+            # ignored (unfiltered dumps → retries → tool_calls_limit).
+            # Reject BEFORE the governed invoke with a native
+            # recoverable ModelRetry; never parse/coerce the string.
+            declared = _schema_arg_types.get(
+                str(capability_id or "").strip(), {}
+            )
+            _logger.info(
+                "orchestration engine=pydantic_ai stage=investigation "
+                "decision=arg_type_gate capability=%s declared=%s "
+                "args=%s correlation_id=%s",
+                capability_id,
+                declared,
+                {
+                    k: type(v).__name__
+                    for k, v in (arguments or {}).items()
+                }
+                if isinstance(arguments, dict)
+                else type(arguments).__name__,
+                ctx.deps.correlation,
+            )
+            inner_args = (
+                arguments.get("arguments")
+                if (
+                    isinstance(arguments, dict)
+                    and isinstance(
+                        arguments.get("arguments"), Mapping
+                    )
+                )
+                else arguments
+            )
+            bad_types = [
+                name
+                for name, value in (
+                    inner_args.items()
+                    if isinstance(inner_args, Mapping)
+                    else ()
+                )
+                if isinstance(value, str)
+                and _declared_container_only(declared.get(name))
+            ]
+            # Schema-free shape check: published owner schemas
+            # sometimes leave params untyped, so a serialized dict
+            # repr ("{'a': 1}") can reach the wire undeclared — no
+            # contract to reject against. A braces-shaped string is
+            # almost always model serialization leakage; flag every
+            # occurrence — ModelRetry here is already bounded by the
+            # agent's native tool-retry budget (no local flag needed:
+            # a per-run flag let subsequent bad calls slip through).
+            if not bad_types:
+                suspects = [
+                    name
+                    for name, value in (
+                        inner_args.items()
+                        if isinstance(inner_args, Mapping)
+                        else ()
+                    )
+                    if isinstance(value, str)
+                    and _LOOKS_LIKE_DICT_REPR.match(value.strip())
+                ]
+                if suspects:
+                    raise ModelRetry(
+                        f"arguments {suspects} look like serialized "
+                        "dict strings — pass real JSON objects, not "
+                        "string representations."
+                    )
+            if bad_types:
+                raise ModelRetry(
+                    f"arguments {bad_types} must be real JSON "
+                    "objects/arrays as declared in the tool schema, "
+                    "not serialized strings — pass structured values."
+                )
             raw_args = focus_arguments_on_next_identifier(
                 arguments if isinstance(arguments, dict) else {},
                 input_text=ctx.deps.input_text,
@@ -1110,6 +1200,23 @@ class PydanticAiInvestigationOrchestrator:
             actor_user_id=actor_user_id,
         )
         catalog_failures = tuple(_LAST_CATALOG_FAILURES.get())
+        _schema_arg_types = {
+            str(entry.get("capability_id")): {
+                str(name): (
+                    spec.get("type")
+                    if isinstance(spec, Mapping)
+                    else None
+                )
+                for name, spec in (
+                    (entry.get("input_schema") or {}).get(
+                        "properties"
+                    )
+                    or {}
+                ).items()
+            }
+            for entry in live_catalog
+            if isinstance(entry, Mapping)
+        }
         instructions = _INVESTIGATION_INSTRUCTIONS
         if catalog_failures:
             instructions += (

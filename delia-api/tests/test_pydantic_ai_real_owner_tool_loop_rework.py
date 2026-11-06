@@ -882,3 +882,105 @@ def test_unbound_evidence_ref_triggers_one_shot_native_retry():
         for lim in attempt.limitations
     )
     assert "estrutura real 90260147" in (attempt.content or "")
+
+
+def test_string_params_never_reach_owner_native_retry():
+    """Object-typed argument sent as a serialized string is rejected by
+    the typed-argument gate with a recoverable ModelRetry — the owner
+    is never invoked with the invalid call."""
+    cap = _cap(
+        "alpha",
+        "pa",
+        "search_items",
+        schema={
+            "type": "object",
+            "properties": {"params": {"type": "object"}},
+        },
+    )
+    provider = FakeProvider(
+        "pa", [_group("pa", "alpha", [cap])], outcomes={}
+    )
+    gates = _gates(providers=[provider])
+    invoked: list[dict] = []
+
+    def _spy(**kwargs):
+        invoked.append(kwargs.get("arguments") or {})
+        return _success_attempt(content="read ok", root="X1")
+
+    gates._governed_semantic_tool_invoke = _spy  # type: ignore[method-assign]
+
+    def _fn(messages, _info):
+        retries = [
+            m for m in messages
+            if isinstance(m, ModelRequest)
+            and any(
+                isinstance(p, RetryPromptPart) for p in m.parts
+            )
+        ]
+        tool_returns = [
+            m for m in messages
+            if isinstance(m, ModelRequest)
+            and any(
+                isinstance(p, ToolReturnPart) for p in m.parts
+            )
+        ]
+        if not tool_returns:
+            if not retries:
+                return ModelResponse(
+                    parts=[
+                        ToolCallPart(
+                            cap.capability_id,
+                            {"params": "{'a': 1}"},
+                        )
+                    ]
+                )
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        cap.capability_id, {"params": {"a": 1}}
+                    )
+                ]
+            )
+        return _final_answer("done", status="complete", refs=[0])
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("read something")
+    assert invoked, "corrected call must reach the governed invoke"
+    assert all(
+        not isinstance(a.get("params"), str) for a in invoked
+    )
+
+
+def test_serialized_dict_repr_args_rejected_at_governed_boundary():
+    """A Python-dict repr in a tool argument is rejected at the
+    governed invoke boundary — the owner is never reached."""
+    cap = _cap(
+        "alpha",
+        "pa",
+        "search_items",
+        schema={
+            "type": "object",
+            "properties": {"params": {"type": "object"}},
+        },
+    )
+    provider = FakeProvider(
+        "pa", [_group("pa", "alpha", [cap])], outcomes={}
+    )
+    gates = _gates(providers=[provider])
+    attempt = gates._governed_semantic_tool_invoke(
+        capability_id=cap.capability_id,
+        arguments={"params": "{'filter': {'q': 'x'}}"},
+        input_text="read x",
+        correlation="c-repr",
+        actor_user_id="u1",
+        session_id="s1",
+        workspace_context=None,
+        prior_turns=(),
+        prepare_only=False,
+        deadline=TurnDeadline.start(30.0),
+    )
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert attempt.error_code == "arguments_schema_rejected"

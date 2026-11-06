@@ -2173,6 +2173,30 @@ class OperationalCapabilityOrchestrator:
                     str(name): {
                         "type": (
                             spec.get("type")
+                            if (
+                                isinstance(spec, Mapping)
+                                and spec.get("type") is not None
+                            )
+                            else (
+                                sorted(
+                                    {
+                                        str(variant.get("type"))
+                                        for union_key in (
+                                            "anyOf",
+                                            "oneOf",
+                                        )
+                                        for variant in (
+                                            spec.get(union_key)
+                                            or []
+                                        )
+                                        if isinstance(
+                                            variant, Mapping
+                                        )
+                                        and variant.get("type")
+                                    }
+                                )
+                                or None
+                            )
                             if isinstance(spec, Mapping)
                             else None
                         ),
@@ -2319,6 +2343,37 @@ class OperationalCapabilityOrchestrator:
         # turn ceiling is prepare_only — writes stay on confirmation
         # chain. prepare_only is recorded for audit only.
         args = dict(arguments or {})
+        # Serialized-dict guard (proven defect): models emit
+        # ``params="{'filter': ...}"`` — a Python-dict repr where the
+        # owner contract expects a JSON object — and loose published
+        # schemas let it through to silently drop every filter. The
+        # owner never sees a valid call; reject at the governed
+        # boundary with an explicit error the agent can correct on
+        # the next tool call (same arguments_schema_rejected family).
+        _repr_suspects = [
+            name
+            for name, value in (
+                args.get("arguments")
+                if isinstance(args.get("arguments"), Mapping)
+                else args
+            ).items()
+            if isinstance(value, str)
+            and __import__("re").match(
+                r"^\{[\s\S]{1,2000}:.*\}$", value.strip()
+            )
+        ]
+        if _repr_suspects:
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                content=(
+                    "INVALID_ARGUMENTS: fields "
+                    f"{_repr_suspects} were sent as serialized dict "
+                    "strings — pass real JSON objects, not string "
+                    "representations."
+                ),
+                error_code="arguments_schema_rejected",
+            )
         # Candidate-bound capabilities declare ``candidate_token`` as a
         # required input the agent relays verbatim — it is owner-issued
         # opaque data, not an orchestration-control field the model
