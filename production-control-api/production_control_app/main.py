@@ -28,6 +28,9 @@ from production_control_app.interface.http.routes.integration_mes_routes import 
 from production_control_app.interface.http.routes.integration_myweg_routes import (
     router as integration_myweg_router,
 )
+from production_control_app.interface.http.routes.myweg_invoice_observations_routes import (
+    router as myweg_invoice_observations_router,
+)
 from production_control_app.interface.http.routes.myweg_needs_routes import (
     router as myweg_needs_router,
 )
@@ -152,6 +155,7 @@ def health():
 app.include_router(integration_mes_router)
 app.include_router(integration_myweg_router)
 app.include_router(myweg_needs_router)
+app.include_router(myweg_invoice_observations_router)
 app.include_router(subplugin_router)
 app.include_router(overview_router)
 app.include_router(machine_load_router)

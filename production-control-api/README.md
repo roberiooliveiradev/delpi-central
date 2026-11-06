@@ -64,13 +64,18 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | PATCH | `/integrations/mes/downtime-reasons/{code}/active` | S2S interno — administração: ativa/desativa motivo (`setup` protegido → 409) |
 | POST | `/integrations/myweg/need-batches` | S2S interno — ingestão de lote `myweg.needs.batch.v1` (filial 02; Idempotency-Key) |
 | POST | `/integrations/myweg/need-batches/sb1-resolve` | S2S interno — resolução SB1 (`dry_run` default true; publicador automatiza com `dry_run=false` + `skip_if_complete`; não dispara por `myweg-needs.view`) |
+| POST | `/integrations/myweg/invoice-observations` | S2S interno — ingestão `myweg.invoice-observations.batch.v1` (filial 02; Idempotency-Key; sem abatimento) |
 | GET | `/myweg/need-batches` | JWT + `myweg-needs.view` + filial 02 — lista coletas aceitas |
 | GET | `/myweg/need-batches/latest` | JWT — última coleta válida |
 | GET | `/myweg/need-batches/{batchId}` | JWT — resumo da coleta |
 | GET | `/myweg/need-batches/{batchId}/items` | JWT — itens paginados (`search`, `remessaFrom`, `remessaTo`) enriquecidos com projeção SB1 (V026) |
 | GET | `/myweg/need-batches/compare` | JWT — evolução entre duas coletas (`fromBatchId`, `toBatchId`, `billingMode=none\|indicative`) |
+| GET | `/myweg/invoice-observations` | JWT + `myweg-needs.view` + filial 02 — lista observações de NF (`documentDate`, `observationStatus`) |
+| GET | `/myweg/invoice-observations/{observationId}` | JWT — detalhe da observação (hashes, manifesto, equivalência semântica) |
+| GET | `/myweg/invoice-observations/{observationId}/items` | JWT — itens paginados da observação |
 
 Contrato e persistência: [MYWEG-NEEDS-INGESTION-E2.md](../docs/12-roadmap-e-evolucao/production-control/MYWEG-NEEDS-INGESTION-E2.md).  
+NF Emitidas (E1): [MYWEG-INVOICE-OBSERVATIONS-E1.md](../docs/12-roadmap-e-evolucao/production-control/MYWEG-INVOICE-OBSERVATIONS-E1.md).  
 Matching Protheus (E4): [MYWEG-NEEDS-PROTHEUS-E4.md](../docs/12-roadmap-e-evolucao/production-control/MYWEG-NEEDS-PROTHEUS-E4.md).  
 Evolução (E5): [MYWEG-NEEDS-PLANNING-EVOLUTION-E5.md](../docs/12-roadmap-e-evolucao/production-control/MYWEG-NEEDS-PLANNING-EVOLUTION-E5.md).
 

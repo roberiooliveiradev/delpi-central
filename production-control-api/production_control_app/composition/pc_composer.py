@@ -313,6 +313,24 @@ def build_myweg_needs_service(repository=None):
     return MyWegNeedsService(repository or build_myweg_needs_repository())
 
 
+def build_myweg_invoice_observations_repository():
+    from production_control_app.infrastructure.persistence.postgres_myweg_invoice_observations_repository import (
+        PostgresMyWegInvoiceObservationsRepository,
+    )
+
+    return PostgresMyWegInvoiceObservationsRepository()
+
+
+def build_myweg_invoice_observations_service(repository=None):
+    from production_control_app.application.services.myweg_invoice_observations_service import (
+        MyWegInvoiceObservationsService,
+    )
+
+    return MyWegInvoiceObservationsService(
+        repository or build_myweg_invoice_observations_repository()
+    )
+
+
 def build_myweg_sb1_resolve_service(repository=None, gateway=None):
     from production_control_app.application.services.myweg_sb1_resolve_service import (
         MyWegSb1ResolveService,
