@@ -25,3 +25,8 @@ Todo acrônimo deve fazer sentido com a área de atuação do especialista. Alte
 ### Reteste após remediação — conexão ChatGPT (2026-11-06)
 
 **Atualização posterior ao incidente:** testes diretos no MCP conectado agora confirmam **SURI PASS** (`mcp.acronym` correto, Knowledge corpus 4 e `suri.boundaries` atualizado) e **EVA PASS** (`get_context(catalog)` e `knowledge(eva.usage)` respondem com acrônimo correto). Os resultados SURI FAIL e EVA INCONCLUSIVE acima são o **histórico do teste anterior**, não o estado mais recente desta conexão. Os seis especialistas passaram nos cenários de identidade/leitura efetivamente testados; **não significa aceite completo no GPT individual nem teste de writes**. DAVI não testado. Veja [reteste documentado](./ACEITE-MCP-2026-11-06.md).
+
+
+## Avatares MCP (2026-11-06)
+
+[Diagnóstico e gate de aceite dos avatares](./ACEITE-AVATARES-MCP-2026-11-06.md): cinco MCPs expõem metadados HTTPS na sessão; SURI possui avatar aprovado no owner mas não projeta sua URL; HTTP externo e renderização no ChatGPT ainda precisam de aceite. Não confundir avatar da ficha com ícone do plugin/GPT.
