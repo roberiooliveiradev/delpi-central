@@ -208,6 +208,29 @@ def test_e4_multiple_observations_preserve_both_contents():
     assert "multiple_observations_without_compose" in result.limitations
 
 
+def test_e4_identical_observations_render_once():
+    """Two attempts returning the SAME owner content (e.g. a repeat
+    page read) must render the block once — duplication in the final
+    answer is presentation noise, never extra evidence."""
+    gates = _gates()
+    a = _success_attempt(content="same-body", root="FA")
+    b = _success_attempt(content="same-body", root="FA")
+    c = _success_attempt(content="other-body", root="FB")
+    result = _finalize_agent_collected_attempts(
+        gates,
+        input_text="two independent facts",
+        collected=(a, b, c),
+        correlation="c1",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=None,
+        plan=None,
+    )
+    assert result.status is GovernedCapabilityStatus.SUCCESS
+    assert (result.content or "").count("same-body") == 1
+    assert "other-body" in (result.content or "")
+
+
 def test_dynamic_owner_tool_invokes_governed_path():
     gates = _gates()
     catalog = gates._project_semantic_tool_catalog(

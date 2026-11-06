@@ -2162,6 +2162,43 @@ def _evaluate_material_obligations(
 # must be traceable verbatim to bound evidence before the model's
 # prose may be presented (doc 256 G1 prose-is-proposal contract).
 _CONCRETE_VALUE_TOKENS = re.compile(r"\d[\d.,/:%-]*")
+_BR_DATE_TOKEN = re.compile(r"(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})")
+_ISO_DATE_TOKEN = re.compile(r"(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})")
+
+
+def _concrete_value_variants(token: str) -> tuple[str, ...]:
+    """Locale/format variants of one concrete token.
+
+    The anti-hallucination check compares the model's numeric tokens
+    against bound evidence — but the same value legitimately surfaces
+    with edge punctuation glued by the tokenizer ("50220013:"), decimal
+    comma instead of dot ("175,0" vs "175.0"), or a BR date where the
+    owner emitted ISO ("31/10/2003" vs "2003-10-31"). Only a value
+    whose every variant is absent from the evidence is unverified —
+    an invented number still has no variant to bind to.
+    """
+    stripped = token.strip(".,/:%-")
+    if not stripped:
+        return (token,)
+    variants = {
+        token,
+        stripped,
+        stripped.replace(",", "."),
+        stripped.replace(".", ","),
+    }
+    match = _BR_DATE_TOKEN.fullmatch(stripped)
+    if match:
+        day, month, year = match.groups()
+        variants.add(
+            f"{year}-{int(month):02d}-{int(day):02d}"
+        )
+    match = _ISO_DATE_TOKEN.fullmatch(stripped)
+    if match:
+        year, month, day = match.groups()
+        variants.add(
+            f"{int(day):02d}/{int(month):02d}/{year}"
+        )
+    return tuple(variants)
 
 def _apply_declared_answer(
     *,
@@ -2361,7 +2398,10 @@ def _apply_declared_answer(
             unverified = [
                 token
                 for token in _CONCRETE_VALUE_TOKENS.findall(answer_text)
-                if token not in evidence_text
+                if not any(
+                    variant in evidence_text
+                    for variant in _concrete_value_variants(token)
+                )
             ]
             if unverified:
                 extra_limitations.append(
@@ -2443,9 +2483,11 @@ def _finalize_agent_collected_attempts(
         if not pending:
             return None
         parts: list[str] = []
+        seen_bodies: set[str] = set()
         for item in business:
             body = (item.content or "").strip()
-            if body:
+            if body and body not in seen_bodies:
+                seen_bodies.add(body)
                 parts.append(body)
         return GovernedCapabilityAttempt(
             status=GovernedCapabilityStatus.NOT_APPLICABLE,
@@ -2770,10 +2812,12 @@ def _finalize_agent_collected_attempts(
         if partial is not None:
             return partial
         parts: list[str] = []
+        seen_bodies: set[str] = set()
         for item in business:
             body = (item.content or "").strip()
-            if not body:
+            if not body or body in seen_bodies:
                 continue
+            seen_bodies.add(body)
             parts.append(body)
         joined = "\n\n---\n\n".join(parts)[:MAX_RENDER_CONTENT_CHARS]
         last = business[-1]

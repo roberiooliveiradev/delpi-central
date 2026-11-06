@@ -199,6 +199,69 @@ def test_real_but_irrelevant_evidence_does_not_ground_complete():
     assert out.content == "anything"
 
 
+def test_locale_reformatted_values_still_bind_to_evidence():
+    """BR-locale renderings of the SAME evidence value must pass the
+    concrete-value check — ISO→BR dates, decimal comma, and edge
+    punctuation glued to a token are reformatting, never invented
+    values. Only a value absent from the bound evidence rejects."""
+    class _Plan:
+        evidence_needed = ()
+
+    evidence = (
+        "code=50220013 last_revision=2003-10-31 qty=175.0 wh=01"
+    )
+    attempt = dataclasses.replace(_attempt(), content=evidence)
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer=(
+            "O produto 50220013: teve última revisão em 31/10/2003, "
+            "quantidade 175,0 no armazém 01."
+        ),
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(attempt,),
+        plan=_Plan(),
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert not any(
+        "unverified_values" in item for item in out.limitations
+    )
+    assert out.content == declared.answer
+
+
+def test_fabricated_numeric_value_still_rejects_prose():
+    """The locale normalization must never admit an invented value —
+    a price absent from bound evidence still falls back to the
+    deterministic answer."""
+    class _Plan:
+        evidence_needed = ()
+
+    attempt = dataclasses.replace(
+        _attempt(), content="code=50220013 price=10.50"
+    )
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="O produto custa R$ 999,90 conforme cadastro.",
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(attempt,),
+        plan=_Plan(),
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert "999,90" not in (out.content or "")
+    assert out.content == "deterministic content"
+
+
 def test_complete_proven_only_when_all_refs_bind_and_obligations_met():
     """Fully consistent COMPLETE (all refs valid, obligations
     satisfied) is accepted — its intent-aware prose is presented
