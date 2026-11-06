@@ -60,6 +60,66 @@ def test_region_classification_deterministic():
     assert "10080106" not in by
 
 
+def test_dense_rows_stay_separate_component_lines():
+    """Três códigos empilhados mais perto que 2% da página são três linhas.
+
+    Reproduz a classe do finding em que 10081389, 10081685 e 10091368
+    caíam no mesmo campo item. Não cita o produto como exceção.
+    """
+    tokens = [
+        _tok("ITEM", 400, 80),
+        _tok("QTD", 460, 80),
+        _tok("COMPONENTE", 540, 80),
+        _tok("DESCRICAO", 700, 80),
+    ]
+    for i, (item, qty, code) in enumerate(
+        (("C", "6", "10081389"), ("D", "3", "10081685"), ("E", "2", "10091368"))
+    ):
+        y = 120 + i * 16
+        tokens.extend(
+            [
+                _tok(item, 400, y, w=16),
+                _tok(qty, 460, y, w=16),
+                _tok(code, 540, y, w=70),
+                _tok("TERM TUBULAR", 700, y, w=120),
+            ]
+        )
+    out = build_understanding(
+        tokens, document_hash="dense", render_size_px=(2000, 1400)
+    )
+    rows = out["component_table"]["rows"]
+    owners = []
+    for row in rows:
+        text = " ".join(c["text"] for c in row["cells"])
+        present = [
+            code for code in ("10081389", "10081685", "10091368")
+            if code in text
+        ]
+        assert len(present) <= 1
+        if present:
+            owners.append(present[0])
+            assert row["component_code"] == present[0]
+            assert present[0] not in str(row.get("item") or "")
+    assert owners == ["10081389", "10081685", "10091368"]
+
+
+def test_same_line_code_and_description_stay_one_row():
+    tokens = [
+        _tok("COMPONENTE", 540, 80),
+        _tok("DESCRICAO", 700, 80),
+        _tok("10070097", 540, 120, w=70),
+        _tok("CABO PP", 700, 122, w=80),
+        _tok("10071250", 540, 180, w=70),
+        _tok("CABO PP", 700, 181, w=80),
+    ]
+    out = build_understanding(
+        tokens, document_hash="same-line", render_size_px=(2000, 1400)
+    )
+    rows = out["component_table"]["rows"]
+    assert len(rows) == 2
+    assert {c["text"] for c in rows[0]["cells"]} >= {"10070097", "CABO PP"}
+
+
 def test_component_table_rows_and_cells():
     out = build_understanding(_TOKENS, document_hash="x")
     tbl = out["component_table"]

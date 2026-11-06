@@ -225,6 +225,31 @@ def _nearest_value_below(
     return best
 
 
+def _cluster_tolerance(
+    page_span: float, centers: list[float], *, page_fraction: float
+) -> float:
+    """Tolerância de agrupamento abaixo do passo mediano observado.
+
+    Uma fração fixa da página funde linhas de tabela densa e colunas
+    estreitas. O passo é a distância entre centros reais, ignorando
+    jitter menor que 0,5% da página. Sem passo observável, permanece
+    a fração da página.
+    """
+    page_tol = page_span * page_fraction
+    ordered = sorted(c for c in centers if c is not None)
+    noise = page_span * 0.005
+    gaps = [
+        b - a
+        for a, b in zip(ordered, ordered[1:])
+        if b - a > noise
+    ]
+    if not gaps:
+        return page_tol
+    gaps.sort()
+    pitch = gaps[len(gaps) // 2]
+    return min(page_tol, pitch * 0.45)
+
+
 def _cluster_y(
     tokens: list[dict], y_tol: float
 ) -> list[list[dict]]:
@@ -381,7 +406,11 @@ def _detect_component_table(
     ]
     if len(code_tokens) < 2:
         return None
-    x_tol = w * 0.045
+    x_tol = _cluster_tolerance(
+        w,
+        [_tok_center(t)[0] for t in code_tokens],
+        page_fraction=0.045,
+    )
     cols: list[list[dict]] = []
     for t in sorted(
         code_tokens, key=lambda t: _tok_center(t)[0]
@@ -405,7 +434,11 @@ def _detect_component_table(
     ]
     anchor_tokens = [t for c in anchor_cols for t in c]
     col_box = _box(anchor_tokens)
-    y_tol = h * 0.02
+    y_tol = _cluster_tolerance(
+        h,
+        [_tok_center(t)[1] for t in code_col],
+        page_fraction=0.02,
+    )
     # linhas da tabela = tokens na mesma faixa Y dos códigos (vizinhança)
     rows: list[list[dict]] = []
     for t in sorted(
@@ -475,11 +508,14 @@ def _structure_table(
 ) -> list[dict]:
     """Estrutura linhas/células: célula = token na linha, coluna por
     cluster X dos tokens da tabela; cabeçalho por proximidade."""
-    y_tol = h * 0.015
-    x_tol = w * 0.05
     all_toks = [
         t for r in table["rows"] for t in r["tokens"]
     ]
+    x_tol = _cluster_tolerance(
+        w,
+        [_tok_center(t)[0] for t in all_toks if _tok_center(t)],
+        page_fraction=0.05,
+    )
     col_centers: list[float] = []
     for t in sorted(
         all_toks, key=lambda t: _tok_center(t)[0]
@@ -526,7 +562,10 @@ def _structure_table(
             if _CODE_RE.match(_text_of(t)):
                 cnt["codes"] += 1
     for ci, cnt in content_counts.items():
-        if ci not in col_types and cnt["total"] and cnt["codes"] / cnt["total"] >= 0.5:
+        # Coluna cuja maioria são códigos 6–11 dígitos é componente,
+        # mesmo se o cabeçalho mais próximo foi Item/QTD. Cabeçalho
+        # desalinhado não pode concatenar vários códigos no campo item.
+        if cnt["total"] and cnt["codes"] / cnt["total"] >= 0.5:
             col_types[ci] = "component_code"
     # colunas conectadas à coluna de códigos — gap >12% da largura
     # rompe a faixa da tabela (campos administrativos ficam fora).

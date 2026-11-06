@@ -1192,3 +1192,25 @@ O checkout do `srv-api` já estava em `00e3882e` antes do build. A imagem anteri
 **BOM oficial:** leitura autenticada `product.structure(90264017)` retornou estrutura disponível; busca recursiva no payload de `items/components` não encontrou `10081389` (`0` ocorrências no payload consultado). Isso **não demonstra** identidade de revisão/efetividade com o PDF, nem suficiência de completude do contrato para uma conclusão técnica. **Inspeção visual direta do raster da página 9: TEST_NOT_RUN** nesta rodada. **P0 verdict=INCONCLUSIVE**: evidência positiva de OCR na região de tabela; hipótese de histórico de revisão enfraquecida, mas não refutada por revisão visual; compatibilidade BOM×PDF e parentesco lógico ainda exigem verificação.
 
 **NEXT:** inspecionar visualmente a página 9 do PDF SHA exato, distinguir a célula real da região de revisão, validar associação ao conjunto `70260008` e fingerprint temporal da BOM com owner; se falso positivo demonstrado, corrigir apenas a fronteira causal e regredir; caso contrário, manter finding candidato para revisão humana. Após P0, executar regressão de 13 PDFs no SHA implantado e organizar decisões técnicas de Engenharia. `VAL01_COMPLETED=false`; `E2–E7=FROZEN`; nenhuma nova abstração, documento ou plano.
+
+### 39.15 Inspeção visual da página 9 e separação de linhas densas (2026-11-06)
+
+**PDF oficial:** `/drawing-pdfs/90264017.pdf` na biblioteca da api-delpi. SHA-256 `5452aabd3ddf94d5d004fe5c4d27c2daca9fcf8759a0c1b849b415d4769e32ee`, igual ao registrado. 14 páginas. A camada de texto do PDFium na página 9 não contém os códigos da tabela; a leitura foi do raster em escala 8.
+
+**Tabela vigente, página 9, célula mesclada do conjunto `70260008` (CHICOTE BUHLER 0020/02934), linhas separadas:**
+
+| Item | Qtd | Componente | Descrição |
+|---|---|---|---|
+| C | 6 | `10081389` | TERM. TUBULAR 1,50MM2 |
+| D | 3 | `10081685` | TERM. TUBULAR DUPLO 1,50MM2 |
+| E | 2 | `10091368` | CONECTOR STOCK 3 VIAS |
+
+O histórico de revisão da mesma página não cita esses códigos. `10081389` é componente vigente, filho visual de `70260008`, não resíduo de revisão. O `DRAWING_ONLY` candidato permanece: a leitura anterior da BOM não encontrou o código, e esta rodada não reconsultou a estrutura oficial nem a efetividade. Não é não conformidade.
+
+**Causa raiz:** `ROW_ASSOCIATION_ERROR` e `COLUMN_ASSOCIATION_ERROR` em `understanding.py`. A tolerância de linha era 2% da altura da página, maior que o passo de uma tabela densa, e a de coluna era 5% da largura. Os três códigos caíam na mesma linha e, com o cabeçalho desalinhado, no campo `item`. O pai `70260008` por `set_span` coincide com a célula mesclada; o erro comprovado é a fusão de linhas e de coluna, não o histórico.
+
+**Correção:** `_cluster_tolerance` limita o agrupamento a 45% do passo mediano observado. Coluna cuja maioria são códigos 6–11 dígitos permanece `component_code` mesmo se o cabeçalho mais próximo for Item ou QTD. Sem exceção para `90264017` ou `10081389`.
+
+**Testes:** `test_dense_rows_stay_separate_component_lines` e `test_same_line_code_and_description_stay_one_row`, mais a suíte `test_drawing_understanding_r8.py` (18 passed). Corpus de 13 PDFs: `TEST_NOT_RUN`. Sem deploy nesta etapa.
+
+**Invariantes:** `DRAFT/CANDIDATE`, `engineering_approval=NOT_APPROVED`, `automatic_nc=false`, `proven_matches=0`. `VAL01_COMPLETED=false`. Quantidade, unidade, revisão e ground truth continuam com a Engenharia.
