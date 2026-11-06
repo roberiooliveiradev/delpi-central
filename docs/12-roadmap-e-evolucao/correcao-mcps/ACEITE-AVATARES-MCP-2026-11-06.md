@@ -85,3 +85,25 @@ Procedimento manual por especialista: perguntar *"Mostre seu avatar"*
 (esperado: imagem oficial inline sem clique); *"Quais suas ferramentas?"*
 (não deve inserir imagem). Se o bloco não renderizar, MCP Apps `ui://`
 é o plano B documentado no plano §3.B.
+
+
+## Reteste das conexões ChatGPT — após rollout (2026-11-06)
+
+**Escopo:** chamadas reais das ferramentas MCP conectadas neste chat, sem DAVI e sem writes. Comparar com PASS container acima; estado do cliente pode diferir de estado do servidor.
+
+| MCP | Chamado `read(entity=avatar,action=get)` | Observação | Aceite do transporte nesta conexão |
+|---|---|---|---|
+| TÉO | Retornou `content_items` com 2 blocos: `text` e `image` (`image/png`, 1.041.179 bytes conforme metadata) | A imagem oficial foi efetivamente encaminhada e exibida **nesta conversa** por operação explícita de visualização do bloco | **PASS** transporte; **PASS demonstração inline nesta conversa**, não comprova roteamento automático no GPT individual |
+| VISTA | 2 blocos (`text`, `image/jpeg`) | `content_delivery=image_block`; bytes retornados | **PASS** transporte, visual ChatGPT individual `TEST_NOT_RUN` |
+| CAIO | 2 blocos (`text`, `image/jpeg`) | `content_delivery=image_block` | **PASS** transporte, visual ChatGPT individual `TEST_NOT_RUN` |
+| EVA | 2 blocos (`text`, `image/jpeg`) | `content_delivery=image_block` | **PASS** transporte, visual ChatGPT individual `TEST_NOT_RUN` |
+| CLARA | `structuredContent` retornou metadata de avatar aprovado, `content_delivery=image_block`, porém a resposta da ferramenta **não continha `content_items` de imagem** na integração observada | Divergência entre container `[Text,Image]` reportado e wrapper/transport acessado nesta sessão | **INCONCLUSIVE/FAIL de paridade de entrega**: rastrear serialização e metadata do adapter; não assumir defeito no arquivo |
+| SURI | **Rejeitado antes do serviço**: enum do schema da tool `read` conectado não inclui `entity=avatar` | O servidor pode estar atualizado, mas o schema anunciado/armazenado no cliente não permite chamar o novo contrato | **FAIL do schema de integração cliente/MCP**: descobrir owner do schema e atualização/reconexão/reinstalação conforme política, sem modificar domínio por palpite |
+
+**Achados e ação recomendada:**
+1. SURI — inspecionar geração/publicação do JSON Schema da ferramenta `read` e atualização da conexão no ChatGPT; comparar registro real do servidor e schema do cliente. Não tratar o erro de validação como ausência de arquivo/rota.
+2. CLARA — investigar preservação dos `ImageContent` na serialização entre `read`, wrapper MCP, conector e host; confrontar wire response e projeção recebida no ChatGPT. Não alterar o arquivo da foto até comprovar causa.
+3. TÉO/VISTA/CAIO/EVA — transportar bytes foi comprovado; roteamento de intenção (`avatar`, `aparência`) e renderização automática nas sessões individuais ainda exigem aceite humano. Prova do TÉO nesta conversa veio do **encaminhamento explícito do bloco de imagem**, não de autopresentação automática do plugin.
+4. DAVI — não acionado nem alterado.
+
+**Evidência epistemológica:** relatório do Devin = PASS backend, confirmação local parcial; a experiência end-to-end de seis especialistas no ChatGPT permanece **PENDING**. Sem evidência de alteração no runtime ou de erro HTTP da imagem neste reteste.
