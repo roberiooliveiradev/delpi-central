@@ -786,10 +786,26 @@ async def _analyze_product_drawing(
         if _job_id:
             job = _store.get_for_owner(str(_job_id), _ident_fp)
             if job is None:
+                # Store processo-local: restart/deploy descarta jobs
+                # RUNNING/COMPLETED — informe que é re-submetível.
                 return _err(
-                    "job_id não encontrado ou expirado.",
+                    "job_id não encontrado ou expirado — o registro "
+                    "de jobs é processo-local e pode ter sido "
+                    "descartado por reinício do serviço; re-submeta "
+                    "a análise.",
                     status_code=404,
                     code="job_not_found",
+                    data={
+                        "retriable": True,
+                        "job_id": str(_job_id),
+                        "retry": {
+                            "analysis_type": "product.drawing_analysis",
+                            "parameters": {
+                                "product_code": code,
+                                "compose_understanding": True,
+                            },
+                        },
+                    },
                 )
             if job.status == "RUNNING":
                 return _ok(
@@ -938,6 +954,13 @@ async def _analyze_product_drawing(
                         },
                     )
                 except DrawingAnalysisError as exc:
+                    # Falha tipada também deve deixar rastro — só o
+                    # Exception genérico logava até aqui.
+                    logger.warning(
+                        "drawing_job_failed job_id=%s code=%s",
+                        job.job_id,
+                        exc.code,
+                    )
                     _store.fail(
                         job.job_id,
                         exc.code,
@@ -1654,10 +1677,25 @@ async def _analyze_drawing_understanding(
     if requested:
         job = store.get_for_owner(str(requested), ident)
         if job is None or job.product_code != code:
+            # O store é processo-local: um restart/deploy descarta jobs
+            # RUNNING/COMPLETED. O consumidor deve poder re-submeter a
+            # análise em vez de tratar o caso como erro fatal.
             return _err(
-                "job_id não encontrado ou expirado.",
+                "job_id não encontrado ou expirado — o registro de "
+                "jobs é processo-local e pode ter sido descartado por "
+                "reinício do serviço; re-submeta a análise.",
                 status_code=404,
                 code="job_not_found",
+                data={
+                    "retriable": True,
+                    "job_id": str(requested),
+                    "retry": {
+                        "analysis_type": (
+                            "product.drawing_understanding"
+                        ),
+                        "parameters": {"product_code": code},
+                    },
+                },
             )
         if job.status == "RUNNING":
             return _understanding_job_running(job)
@@ -1681,6 +1719,13 @@ async def _analyze_drawing_understanding(
                 job.job_id, _compact_report_for_consumer(payload)
             )
         except DrawingAnalysisError as exc:
+            # Falha tipada também deve deixar rastro — só o Exception
+            # genérico logava até aqui.
+            logger.warning(
+                "drawing_job_failed job_id=%s code=%s",
+                job.job_id,
+                exc.code,
+            )
             store.fail(
                 job.job_id,
                 exc.code,
