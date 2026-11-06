@@ -475,3 +475,55 @@ todos:
 ## 23. Primeiro próximo passo
 
 **Somente E0.S1:** revalidar inventário real da `main`, Core e contratos. Nenhum scaffold deve ser criado antes do baseline congelado.
+
+
+## ADENDO — PRC-N0–N6: plano executável do Product Registration nativo (2026-11-06)
+
+> **Status:** `PLANNED`. **Precedência:** para o vertical Controle e Cadastro de Produtos, este adendo operacionaliza o direcionamento do [ROADMAP.md](./ROADMAP.md) (adendo Native Product Registration). As fases E0–E13 antigas continuam históricas e não autorizam implementar o BFF legado, PRC-1a de token central ou um segundo Request Engine. [Inventário técnico](./PRODUCT-REGISTRATION-COMPLETE-INVENTORY.md) é baseline de paridade, não contrato final.
+
+### Gate zero (obrigatório; nenhum diff produtivo)
+
+- Revalidar `AGENTS.md`, `.cursor`, HEAD, status/worktrees, código real e owners no SHA atual. Planejar PRC em paths novos; **não tocar nos arquivos de desenho/OCR/SLANet/VAL-01**, nem commitar alterações preexistentes de outro agente.
+- Aplicar Abstraction Gate sobre `requests-api`: mapear consumers, capacidades de intake, filas, workflow, RBAC, comentários, attachments, schemas JSONB e versões já existentes; propor extensão/adapters em vez de novo engine quando suficiente. **Mudança de owner/source/workflow: `ARCHITECTURE_DECISION_REQUIRED` em Coordination**, com aceite formal antes de writes/migrations.
+- Confirmar owner de cadastro técnico e autoridade de produto oficial (TOTVS/Domain API), inclusive quem pode aprovar, publicar, alterar e revogar; não migrar essa autoridade para EVA ou para o frontend.
+
+### PRC-N1 — Contract-first
+
+- Contratos separados: `create` com campos mínimos obrigatórios de solicitação; `update` com `productId`, `baseRevision` e change set explícito por campo. Em update, **não exigir todos os campos**, nem aceitar replacement do objeto completo.
+- Definir `requesterSubject` (Keycloak `sub` ou identidade de origem governada), `externalSource`, `externalRequestId`, `sourceItemId`, idempotency, proveniência, response/status/error, live AuthZ e `allowedActions`.
+- Catálogo de campos JSONB com `schemaVersion`, validação por tipo/operador, caminhos autorizados, defaults não inventados, campos obrigatórios distintos em **intake vs aprovação/publicação**; confirmar nomenclatura/mapeamento do `compart number` com owner.
+- Estados governados e efeitos: `submitted`, `in_progress`, `under_review`, `needs_information`, `rejected`, `completed` (ou equivalentes aprovados); descrever `PREPARE/ACT`, auditoria e postcondition.
+- `AC`: create rejeita falta de campo de intake; update de um campo preserva os demais; stale version gera 409 sem write; sem AuthZ é 403; repetição de intake não duplica; rejeição não altera ficha vigente.
+
+### PRC-N2 — Domain + persistence
+
+- No bounded context/owner aprovado, separar solicitação/caso/draft/ficha/revisão. Colunas tipadas para ids/status/atores/códigos/tempo/concurrency; JSONB versionado para atributos variáveis.
+- Cada revisão é **snapshot imutável completo** + diff por `fieldPath` antes/depois, autor, timestamp, motivo, solicitação e evidência; rejeição preserva `currentRevision`. Use CAS/ETag/version constraint e audit append-only; não armazenar credenciais em payload.
+- Testar replay idempotente, concorrência, renomeação de schema, deep field updates, tipos/arrays/fornecedores e reconstrução íntegra de `N` e `N+1`.
+
+### PRC-N3 — Ingestão e API
+
+- Ingressos de fontes diversas só por portas e contratos autorizados; primeira origem pode ser Control MP, **mas sem dependência de runtime do DB/Flask**. Se exigida ponte temporária, adapter de importação governado é separado do owner do fluxo. Não criar dual-write indefinido.
+- Fila paginada/filtros/detalhe/atribuição, provenance e permissions aplicadas no backend; teste de isolamento por usuário, escopo e origem.
+- TOTVS permanece fonte oficial. Não declarar criação ou alteração ERP sem contrato de write e pós-condição confirmada.
+
+### PRC-N4 — Frontend nativo
+
+- `plugins/engineering` com área `product-registration` e duas jornadas núcleo: fila/detalhe para analista e solicitação `create/update` por campos autorizados, conforme origem disponível. Labels pt-BR, identifiers EN, `@delpi/plugin-ui`, acessibilidade, light/dark/mobile, reload/deep link/erro/403.
+- No formulário `update`, apresentar ficha atual e seleção explícita de campos; enviar somente changes e baseRevision. Não copiar interface/chat legado.
+
+### PRC-N5 — Assistência EVA e resultado governado
+
+- EVA apenas auxilia: valida descrição, consistência, padronização e possíveis problemas com fonte/limitações visíveis; resultado `DRAFT/CANDIDATE`. Sem aprovação automática, source of truth ou escrita oficial. A indisponibilidade da EVA não impede a avaliação humana quando permitido.
+- Aprovação humana + confirmação oficial (quando aplicável) precedem `completed`/revisão publicada; rastrear owner, código, evidências e read-back.
+
+### PRC-N6 — Paridade, migração, cutover
+
+- Usar inventário 51 rotas/11 tags e histórico como referência de paridade, **não reproduzir os defeitos legados**. Migrar dados por ETL versionada, dry-run e apply idempotente, preservando IDs legados, `sub`, snapshots originais, eventos, anexos/checksums, autoria e resultados; relatório de reconciliação.
+- Implantação nativa em piloto isolado, legado permanece autoridade até cutover assinado; congelamento de escrita ou delta auditado, validação por amostragem, rollback de operação e plano de retenção sem drop prematuro.
+
+### Sequência e responsabilidade
+
+`N0` → aceite arquitetural → `N1` contrato aprovado → `N2` domínio persistência → `N3` intake/API → `N4` UI → `N5` EVA assistiva/decisão → `N6` migração/cutover. Etapas podem ser desenvolvidas em branches separadas quando paths não colidem, mas somente promovidas após gates integrados.
+
+**Arquivos compartilhados** (`engineering-api/engineering_app/main.py`, `config.py`, `plugins/engineering/src/App.tsx`, `engineeringRoutes.ts`, `engineeringRouteCatalog.ts`, manifest, Core/RBAC e CI/deploy): serializar merge por integrador designado após a frente VAL-01. Testar ambos no mesmo SHA e registrar `HEAD/DIFF/TESTS/DEPLOY_DIGEST`. **Sem deploy autorizado por este adendo.**
