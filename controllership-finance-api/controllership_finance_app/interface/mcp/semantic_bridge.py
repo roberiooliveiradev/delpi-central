@@ -143,6 +143,7 @@ def _read_spec(
 
 
 READ_ACTIONS: dict[tuple[str, str], dict] = {
+    ("avatar", "get"): _read_spec(bridge.tool_get_avatar),
     ("competence", "list"): _read_spec(
         bridge.tool_list_competences
     ),

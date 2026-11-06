@@ -26,7 +26,10 @@ from starlette.requests import Request
 from starlette.responses import Response
 from mcp.types import CallToolResult
 
+from pathlib import Path
+
 from delpi_auth.authz_core import has_permission
+from delpi_mcp.avatar_image import build_avatar_delivery
 from delpi_mcp.errors import mcp_tool_result
 from delpi_mcp.identity import (
     build_mcp_request as _shared_build_request,
@@ -487,6 +490,43 @@ def _call_route(fn, request: Request, **params) -> CallToolResult:
             )
         return _ok(body)
     return _ok(result)
+
+
+def tool_get_avatar() -> CallToolResult:
+    """Approved official avatar as MCP ImageContent — narrative asset
+    only, never AuthZ (AVATAR-INLINE-MCP-V1; mechanics in
+    ``delpi_mcp.avatar_image``)."""
+    request, _user = _user_and_access()
+    del request
+    try:
+        delivery = build_avatar_delivery(
+            ClaraAgentIntelligenceService.character_profile(),
+            Path(__file__).resolve().parents[4],
+        )
+        if delivery.data is None:
+            return _error(
+                "Avatar oficial não aprovado/publicado para este especialista.",
+                status_code=404,
+                error_code="not_found",
+            )
+        if delivery.too_large:
+            return _ok(
+                delivery.data,
+                "Avatar excede o limite inline — metadata only.",
+            )
+        return mcp_tool_result(
+            delivery.data,
+            is_error=False,
+            text=(
+                f"Avatar oficial de {delivery.display_name} "
+                f"({delivery.data['mime_type']}, "
+                f"{delivery.data['bytes']} bytes) — imagem entregue como "
+                "bloco image."
+            ),
+            images=[delivery.image],
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
 
 
 def tool_list_competences() -> CallToolResult:
