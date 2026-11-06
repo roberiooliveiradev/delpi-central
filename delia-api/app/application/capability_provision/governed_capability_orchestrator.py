@@ -2034,21 +2034,32 @@ class OperationalCapabilityOrchestrator:
             "ambiguous",
         }:
             return None, False
-        if interaction_class == "surface_inquiry" and requires:
-            # Declared-invariant violation: the instruction defines
-            # surface_inquiry as "requires stays false" — a true flag
-            # in the same proposal makes the pair contradictory.
-            # One bounded re-proposal (same malformed-output precedent
-            # as the other stages); if the contradiction repeats, the
-            # instruction's own asymmetry rule applies — a missed
-            # owner path fabricates business facts — so it resolves
-            # to the owner path, never the listing.
-            _logger.info(
-                "orchestration stage=interaction_admission "
-                "decision=surface_inquiry_requires_contradiction "
-                "correlation_id=%s",
-                correlation,
-            )
+        if interaction_class == "surface_inquiry":
+            # A surface_inquiry declaration is the ONLY class that
+            # suppresses the owner path entirely — a false positive
+            # fabricates a non-answer while a false negative costs one
+            # bounded clarification. The canonical asymmetry therefore
+            # requires the pair (class, requires=false) to be confirmed
+            # by ONE bounded re-proposal (same malformed-output
+            # precedent as the other stages). Two coherent declarations
+            # stand; anything else — contradiction
+            # (surface_inquiry+requires=true), an inconclusive retry or
+            # a second classification that differs — resolves to the
+            # governed owner path, never the listing.
+            if requires:
+                _logger.info(
+                    "orchestration stage=interaction_admission "
+                    "decision=surface_inquiry_requires_contradiction "
+                    "correlation_id=%s",
+                    correlation,
+                )
+            else:
+                _logger.info(
+                    "orchestration stage=interaction_admission "
+                    "decision=surface_inquiry_confirm "
+                    "correlation_id=%s",
+                    correlation,
+                )
             try:
                 retry = self._propose(
                     input_text,
@@ -2092,19 +2103,10 @@ class OperationalCapabilityOrchestrator:
                     and r_class.strip().lower() == "surface_inquiry"
                     and r_raw is False
                 ):
-                    # The retry produced the coherent pair — the
+                    # Two independent coherent declarations — the
                     # surface listing stands.
                     return "surface_inquiry", True
-            # Persistent contradiction: the typed class is the
-            # semantic statement — the deterministic surface listing
-            # is bounded live metadata and never fabricates business
-            # facts, so it is the fail-safe resolution.
-            return "surface_inquiry", True
-        if interaction_class == "surface_inquiry":
-            # The typed class is the semantic statement: a surface
-            # inquiry is answered by the deterministic live-surface
-            # projection — bounded, read-only, never an invocation.
-            return interaction_class, True
+            return None, True
         if requires or interaction_class in {"operational", "ambiguous"}:
             _logger.info(
                 "orchestration stage=interaction_admission "
