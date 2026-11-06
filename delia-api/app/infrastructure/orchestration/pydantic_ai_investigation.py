@@ -618,18 +618,24 @@ def _prior_message_history(
     return history
 
 
-def _investigation_model_settings():
+def _investigation_model_settings(
+    max_output_tokens: int | None = None,
+):
     """Model settings for the investigation run — ``extra_body``
     ``chat_template_kwargs.enable_thinking=False`` disables qwen3
     ``<think>`` reasoning which otherwise consumes generation budget
     and corrupts the strict structured output under full context.
-    Providers without this kwarg ignore it."""
+    Providers without this kwarg ignore it. ``max_tokens`` carries
+    the runtime-profile generation budget — without it the provider
+    sees an unbounded request (model context size) and may reject it
+    (openrouter 402)."""
     from pydantic_ai.models.openai import OpenAIChatModelSettings
 
     return OpenAIChatModelSettings(
+        max_tokens=max_output_tokens,
         extra_body={
             "chat_template_kwargs": {"enable_thinking": False}
-        }
+        },
     )
 
 
@@ -790,6 +796,7 @@ class PydanticAiInvestigationOrchestrator:
         tool_projection_limit: int = _DEFAULT_TOOL_PROJECTION_LIMIT,
         prior_turns_limit: int = _DEFAULT_PRIOR_TURNS_LIMIT,
         context_window_tokens: int | None = None,
+        max_output_tokens: int | None = None,
     ) -> None:
         if model is None and model_factory is None:
             raise ValueError("investigation model is required")
@@ -806,6 +813,11 @@ class PydanticAiInvestigationOrchestrator:
         self._context_window_tokens = (
             int(context_window_tokens)
             if context_window_tokens
+            else None
+        )
+        self._max_output_tokens = (
+            int(max_output_tokens)
+            if max_output_tokens
             else None
         )
         self.last_node_trace: list[str] = []
@@ -1549,7 +1561,9 @@ class PydanticAiInvestigationOrchestrator:
                     prompt,
                     message_history=message_history or None,
                     deps=deps,
-                    model_settings=_investigation_model_settings(),
+                    model_settings=_investigation_model_settings(
+                        self._max_output_tokens
+                    ),
                     usage_limits=UsageLimits(
                         request_limit=self._request_limit,
                         tool_calls_limit=self._tool_calls_limit,
