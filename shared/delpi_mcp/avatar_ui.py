@@ -64,9 +64,10 @@ def build_avatar_ui_html(
     alt = html.escape(alt_text or f"Avatar oficial de {display_name}")
     origin = _origin(url)
     img_src = f"{origin} {url}".strip() if origin else url
+    csp_img = img_src or "'none'"
     csp = (
         "default-src 'none'; "
-        f"img-src {img_src or "'none'"}; "
+        f"img-src {csp_img}; "
         "style-src 'unsafe-inline'; "
         "script-src 'unsafe-inline'; "
         "connect-src 'none';"
