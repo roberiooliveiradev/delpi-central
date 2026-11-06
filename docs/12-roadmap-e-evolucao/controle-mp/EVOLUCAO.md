@@ -322,3 +322,12 @@ A direção anterior de migrar o workflow integral para `requests-api`/`my-reque
 **Dados legados:** preservar dados e anexos via migração validada (dry-run, IDs de origem, Keycloak `sub`, checagem de contagens e hashes, cutover controlado, retenção e rollback). Não acessar DB legado em runtime, não fazer dual-write perpétuo, não desligar o app anterior antes do aceite funcional.
 
 **Execução paralela:** esta frente não altera OCR, SLANet, drawing/comparator/AnalysisJobStore da VAL-01; merges em `engineering-api` bootstrap, router/manifest do Portal, auth e deploy devem ser serializados e testados no SHA integrado.
+
+
+## 12. Direcionamento Engineering-only / portas de entrada e saída (2026-11-06)
+
+> **Atualização de precedência:** o Product Owner definiu que o MVP de Controle e Cadastro de Produtos será construído nativamente **na Engineering API**, sem integração runtime com `requests-api`, `my-requests` ou API Flask Controle MP. Os planos anteriores de BFF/integração imediata são histórico, não backlog vigente. Ver [engineering/ROADMAP.md](../engineering/ROADMAP.md) e [engineering/IMPLEMENTATION-PLAN.md](../engineering/IMPLEMENTATION-PLAN.md).
+
+**Escopo atual:** Engenharia recebe solicitações autorizadas por uma porta de intake versionada, processa fila/validação e registra casos/ficha técnica com JSONB versionado, diffs por campo e auditoria; uma porta de saída expõe resultado/alterações somente para consumidores autorizados sob contrato. `create` usa mínimos de solicitação; `update` especifica somente mudanças selecionadas + `baseRevision`. EVA sugere, não aprova. TOTVS continua autoridade de cadastro oficial.
+
+**Futuro separado:** conectar `requests-api`, migrar cadastros e histórico do legado com ETL governado e cutover, permitir novas categorias e pesquisa de semelhantes. O Controle MP atual permanece operacional até substituição aprovada. Mudança de ownership do workflow requer `ARCHITECTURE_DECISION_REQUIRED`; não confundir aprovação do plano com aprovação de publicação ou escrita ERP. Nenhuma alteração produtiva nesta etapa.
