@@ -8,7 +8,7 @@ Levantamento iniciado em **2026-11-06**. A documentação registra decisões e l
 - **DAVI:** suspenso nesta rodada durante a refatoração das ferramentas.
 - [CAIO](./caio.md): **novo acrônimo aprovado — Consultor de Análise e Inteligência de Oportunidades**; runtime ainda usa 'Operacional'; migração e QA pendentes.
 - [SURI](./suri.md): acrônimo aprovado — **Suprimentos Unificados, Resultados e Inteligência**; publicação no MCP pendente; divergência crítica Knowledge read-only versus capacidades de escrita no catálogo.
-- **EVA:** próxima revisão.
+- [EVA](./eva.md): acrônimo existente **Engenharia Virtual Assistida**; plano de paridade, descoberta e QA registrado.
 
 ## Governança
 Seguir OWNER → FONTE CANÔNICA → CONSUMERS → CONTRATO → IMPLEMENTAÇÃO → RUNTIME → EVIDÊNCIA. Separar aprovado para documentação, observado no catálogo, planejado, implementado e verificado. Ficha não concede AuthZ. Atualizações de runtime, Knowledge, Instructions ou OpenAPI devem ser propostas e testadas conforme a real alteração de cada artefato.
