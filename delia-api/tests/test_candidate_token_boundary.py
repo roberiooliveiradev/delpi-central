@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.governed_capability_orchestrator import (
     OperationalCapabilityOrchestrator,
 )
 from app.application.interaction.turn_budget import TurnDeadline

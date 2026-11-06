@@ -44,7 +44,7 @@ from app.application.capability_provision.conversational_response import (
 from app.application.capability_provision.governed_stage_gates import (
     SupportsGovernedStageGates,
 )
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.semantic_capability_support import (
     _IDENTIFIER_LITERAL_RE,
     _LAST_CATALOG_FAILURES,
     _authoritative_structure_root,
@@ -1613,7 +1613,7 @@ class PydanticAiInvestigationOrchestrator:
                         correlation,
                     )
                 else:
-                    from app.application.capability_provision.orchestration import (
+                    from app.application.capability_provision.semantic_capability_support import (
                         _StageDeadlineExceeded,
                         _TurnCancelled,
                     )

@@ -31,7 +31,7 @@ from app.application.capability_provision.contracts import (
     ProviderCapability,
     ProviderSurface,
 )
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.governed_capability_orchestrator import (
     ARGUMENTS_INSTRUCTION_ID,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GOAL_INSTRUCTION_ID,

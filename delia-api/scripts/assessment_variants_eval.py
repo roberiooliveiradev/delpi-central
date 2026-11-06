@@ -38,7 +38,7 @@ from scripts.r4_authenticated_resume_eval import _compose  # noqa: E402
 from scripts.semantic_fidelity_eval import (  # noqa: E402
     _find_orchestrator,
 )
-from app.application.capability_provision.orchestration import (  # noqa: E402
+from app.application.capability_provision.governed_capability_orchestrator import (  # noqa: E402
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
     SELECTION_INSTRUCTION_VERSION,
     _lineage,

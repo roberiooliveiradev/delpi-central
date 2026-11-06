@@ -28,7 +28,7 @@ import time
 sys.path.insert(0, "/app")
 
 from app.application.interaction.turn_budget import TurnDeadline
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.governed_capability_orchestrator import (
     _StageDeadlineExceeded,
 )
 from app.application.model_invocation.errors import (

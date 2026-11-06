@@ -47,12 +47,12 @@ from app.application.interaction.presentation import (
     _KNOWN_MESSAGE_KINDS,
     compose_presentation,
 )
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.governed_capability_orchestrator import (
     render_specialist_outcome,
 )
 
 try:
-    from app.application.capability_provision.orchestration import (
+    from app.application.capability_provision.governed_capability_orchestrator import (
         render_specialist_outcome_rich,
     )
 except ImportError:  # RED — I1 projection not implemented yet

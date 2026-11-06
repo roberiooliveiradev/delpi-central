@@ -8,8 +8,10 @@ from flask import Flask
 from app.application.capability_provision.mcp_provider import (
     McpCapabilityProvider,
 )
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.governed_capability_orchestrator import (
     OperationalCapabilityOrchestrator,
+)
+from app.application.capability_provision.semantic_capability_support import (
     ORCHESTRATION_INSTRUCTION_KEYS,
 )
 from app.application.interaction.handle_interactive_turn import (

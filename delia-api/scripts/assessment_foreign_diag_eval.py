@@ -60,7 +60,7 @@ from scripts.downstream_causal_eval import (  # noqa: E402
     _spy_invokes_all,
 )
 from scripts import instruction_conflict_eval as conflict  # noqa: E402
-from app.application.capability_provision.orchestration import (  # noqa: E402
+from app.application.capability_provision.governed_capability_orchestrator import (  # noqa: E402
     _PATH_FOREIGN_CLASSES,
 )
 from app.infrastructure.auth.subject_bearer import (  # noqa: E402

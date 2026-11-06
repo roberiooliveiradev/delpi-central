@@ -9,7 +9,7 @@ from __future__ import annotations
 from tests.conftest import load_test_orchestration_instructions  # noqa: F401
 
 import json
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.governed_capability_orchestrator import (
     EVIDENCE_COMPOSITION_INSTRUCTION_ID,
     INTERACTION_ADMISSION_INSTRUCTION_ID,
 )

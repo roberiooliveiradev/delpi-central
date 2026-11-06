@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.governed_capability_orchestrator import (
     OperationalCapabilityOrchestrator, _verify_evidence_composition,
 )
 from app.application.interaction.capability_attempt import (

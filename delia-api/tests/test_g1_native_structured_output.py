@@ -31,7 +31,7 @@ def _native_toolsets_stub():
         yield
 
 
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.governed_capability_orchestrator import (
     _apply_declared_answer,
 )
 from app.application.interaction.turn_budget import TurnDeadline

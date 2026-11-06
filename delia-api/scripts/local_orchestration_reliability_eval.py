@@ -845,7 +845,7 @@ DOC211_CORPUS = [
 
 def _run_turn(handler, sc, bearer, stage_log, activity_log):
     logger = logging.getLogger(
-        "app.application.capability_provision.orchestration"
+        "app.application.capability_provision.governed_capability_orchestrator"
     )
     logger.addHandler(stage_log)
     started = time.monotonic()

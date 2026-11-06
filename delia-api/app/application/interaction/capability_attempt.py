@@ -1,6 +1,6 @@
 """Capability-neutral governed attempt semantics — shared skeleton.
 
-Consumer: capability_provision/orchestration.py — the provider-neutral
+Consumer: capability_provision/governed_capability_orchestrator.py — the provider-neutral
 operational capability orchestration
 (ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01, ledger §6.130;
 previously MCP-specialist orchestration, §6.126/§6.118). Only the
@@ -230,7 +230,7 @@ class SupportsGovernedCapabilityAttempt(Protocol):
     """Structural contract the interaction handler consumes.
 
     The provider-neutral operational orchestration
-    (capability_provision/orchestration.py) is the runtime
+    (capability_provision/governed_capability_orchestrator.py) is the runtime
     implementation; any governed-attempt producer must return a
     GovernedCapabilityAttempt.
     """

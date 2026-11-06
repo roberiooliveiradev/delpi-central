@@ -320,7 +320,7 @@ def test_resolve_orchestration_attempt_forwards_limits():
         FakeProposalModel,
         load_test_orchestration_instructions,
     )
-    from app.application.capability_provision.orchestration import (
+    from app.application.capability_provision.governed_capability_orchestrator import (
         OperationalCapabilityOrchestrator,
     )
     from app.application.model_invocation.invoke_model import InvokeModel

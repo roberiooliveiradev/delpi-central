@@ -27,7 +27,7 @@ def _native_toolsets_stub():
         yield
 
 
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.governed_capability_orchestrator import (
     OBLIGATION_SATISFIED,
     OBLIGATION_UNSATISFIED,
     OperationalCapabilityOrchestrator,
@@ -861,7 +861,14 @@ def test_module_has_no_run_governed_or_owner_path_fallthrough():
         / "app/infrastructure/orchestration/pydantic_ai_investigation.py"
     ).read_text(encoding="utf-8")
     orch = (
-        root / "app/application/capability_provision/orchestration.py"
+        root
+        / "app/application/capability_provision/"
+        "governed_capability_orchestrator.py"
+    ).read_text(encoding="utf-8")
+    orch += (
+        root
+        / "app/application/capability_provision/"
+        "semantic_capability_support.py"
     ).read_text(encoding="utf-8")
     assert "run_governed_investigation" not in inv
     assert not re.search(r"_governed_owner_path\s*\(", inv)

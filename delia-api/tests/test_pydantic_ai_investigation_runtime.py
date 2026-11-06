@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.governed_capability_orchestrator import (
     OperationalCapabilityOrchestrator,
 )
 from app.application.interaction.capability_attempt import (

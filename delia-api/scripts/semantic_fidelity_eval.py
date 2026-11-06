@@ -927,7 +927,7 @@ def hit_fake(content: str) -> bool:
 
 def _run_turn(handler, sc: Scenario, bearer, stage_log):
     logger = logging.getLogger(
-        "app.application.capability_provision.orchestration"
+        "app.application.capability_provision.governed_capability_orchestrator"
     )
     logger.addHandler(stage_log)
     started = time.monotonic()

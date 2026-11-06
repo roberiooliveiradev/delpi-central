@@ -22,7 +22,7 @@ from tests.support.capability_fixtures import (
 
 
 def _gates():
-    from app.application.capability_provision.orchestration import (
+    from app.application.capability_provision.governed_capability_orchestrator import (
         OperationalCapabilityOrchestrator,
     )
     from app.application.model_invocation.invoke_model import InvokeModel

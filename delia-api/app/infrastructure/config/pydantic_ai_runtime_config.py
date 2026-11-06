@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
 
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.semantic_capability_support import (
     MAX_GOVERNED_ATTEMPTS,
 )
 from app.application.model_invocation.governed_retries import (

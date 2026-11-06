@@ -22,7 +22,7 @@ from app.application.capability_provision.conversational_response import (
     field_display_label,
     presented_record,
 )
-from app.application.capability_provision.orchestration import (
+from app.application.capability_provision.governed_capability_orchestrator import (
     OperationalCapabilityOrchestrator,
     _render_guidance_value,
 )
