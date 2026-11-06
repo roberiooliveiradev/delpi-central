@@ -283,3 +283,19 @@ class MyWegNeedsValidationFailed(ProductionControlError):
     def __init__(self, message: str, *, issues: list[dict] | None = None) -> None:
         super().__init__(message)
         self.issues = issues or []
+
+
+class MyWegInvoiceObservationConflict(ProductionControlError):
+    """Mesmo collection_id com payload diferente — observação original preservada."""
+
+
+class MyWegInvoiceObservationNotFound(ProductionControlError):
+    """Observação MyWEG de NF inexistente no histórico da filial 02."""
+
+
+class MyWegInvoiceObservationValidationFailed(ProductionControlError):
+    """Observação MyWEG de NF rejeitada pela validação do contrato v1."""
+
+    def __init__(self, message: str, *, issues: list[dict] | None = None) -> None:
+        super().__init__(message)
+        self.issues = issues or []
