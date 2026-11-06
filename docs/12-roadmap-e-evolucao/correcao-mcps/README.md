@@ -20,3 +20,8 @@ Todo acrônimo deve fazer sentido com a área de atuação do especialista. Alte
 ## Testes diretos de aceite no ChatGPT (2026-11-06)
 
 [Relatório de aceite funcional](./ACEITE-MCP-2026-11-06.md): TÉO, VISTA, CLARA e CAIO PASS (somente leitura); **SURI FAIL/EXECUTION_DRIFT** (corpus 3 no MCP versus 4 no GitHub; catálogo sem acrônimo); **EVA INCONCLUSIVE** (erro interno das tools). DAVI não testado. Este resultado atual de conexão **não confirma** o aceite final dos seis serviços anunciado no relatório anterior. Nenhum teste de GPT individual ou escrita foi executado.
+
+
+### Reteste após remediação — conexão ChatGPT (2026-11-06)
+
+**Atualização posterior ao incidente:** testes diretos no MCP conectado agora confirmam **SURI PASS** (`mcp.acronym` correto, Knowledge corpus 4 e `suri.boundaries` atualizado) e **EVA PASS** (`get_context(catalog)` e `knowledge(eva.usage)` respondem com acrônimo correto). Os resultados SURI FAIL e EVA INCONCLUSIVE acima são o **histórico do teste anterior**, não o estado mais recente desta conexão. Os seis especialistas passaram nos cenários de identidade/leitura efetivamente testados; **não significa aceite completo no GPT individual nem teste de writes**. DAVI não testado. Veja [reteste documentado](./ACEITE-MCP-2026-11-06.md).
