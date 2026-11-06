@@ -1326,3 +1326,15 @@ O histórico de revisão da mesma página não cita esses códigos. `10081389` �
 **Evidência real (prod `47be2a8e0d`, PDF `5452aabd…32ee`, p9):** recorte `[1,56,1273,303]`; SLANet score 0.97; 68 células/11 linhas; códigos C/D/E em linhas separadas; `70260008` em célula própria; carimbo/histórico fora da grade. Residual: coluna item/qtd densa colapsa (`"C 6 D 3"`) — códigos e descrições corretos.
 
 **Testes:** 88/88 escopo overlay; +4 novos (crop exclui admin, coluna próxima dentro, títulos não criam crop, engine morto descartado). `CHATGPT_CONSUMER_PASS` PENDING.
+
+## 40. DEC-VAL-036 — diagnóstico do "erro interno" no poll do job MCP (2026-11-06)
+
+**Evidência (logs prod):** job `aj-2bae011fef854f09` criado → `RUNNING` → polls com erro. Sem `eva_mcp_tool_error`, sem atividade OCR/modelos no container atual — o job **não chegou ao estágio visual neste processo**. Mecanismos convergentes (ambos produzem "erro interno" no conector): (a) store process-local (`AnalysisJobStore`) perde jobs em restart/deploy — container recriado 16:03; (b) falha tipada cedo — `DrawingAnalysisError` em delegated fetch (janela do `401` às 16:29:53) → `_store.fail` **sem log** → poll retorna FAILED tipado.
+
+**Correção (`63211b907d`/`8494379aeb`, aditivo):**
+- `job_not_found` nos dois paths (`drawing_analysis`/`drawing_understanding`) agora informa process-localidade e retorna `retriable:true` + `retry` — consumidor pode re-submeter em vez de erro fatal.
+- `_run_job`: `DrawingAnalysisError` loga `drawing_job_failed` (antes só `Exception` genérico logava — falhas tipadas invisíveis).
+
+**Testes:** 142/142 (jobs + eva_mcp) overlay. Prod `8494379aeb` healthy.
+
+**Pendente arquitetural:** persistência do job store (sobreviver restart) — `ARCHITECTURE_DECISION_REQUIRED`, fora do escopo bounded.
