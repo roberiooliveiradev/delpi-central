@@ -467,7 +467,8 @@ def _compose_turn_handler(
     investigation_model = None
     investigation_model_factory = None
     if (
-        gates is not None
+        orchestration is None
+        and gates is not None
         and settings.orchestration_engine == "pydantic_ai"
     ):
         # Model construction stays inside the infrastructure adapter
@@ -486,7 +487,11 @@ def _compose_turn_handler(
 
         investigation_model_factory = _investigation_model_factory
         investigation_model = _investigation_model_factory()
-    elif gates is not None and settings.environment == "testing":
+    elif (
+        orchestration is None
+        and gates is not None
+        and settings.environment == "testing"
+    ):
         # Unit composition must not require live LLM credentials —
         # the governed gates are exercised through the same production
         # engine with a framework test model (doc 241).

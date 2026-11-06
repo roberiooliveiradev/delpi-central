@@ -128,3 +128,94 @@ def test_alternate_runtime_binds_at_composition_only():
     assert result.correlation_id == "corr-x"
     assert fake.seen["actor_user_id"] == "u1"
     assert fake.seen["session_id"] == "s1"
+
+
+def test_composed_handler_executes_alternate_runtime():
+    """REAL swap gate: compose `_compose_turn_handler` with a
+    framework-free fake bound ONLY at the composition seam, execute
+    the returned ``HandleInteractiveConversationTurn`` and prove the
+    alternate runtime receives the turn, context and correlation —
+    and that NO pydantic investigation model is instantiated.
+    """
+    from datetime import datetime, timezone
+
+    from app.application.interaction.contracts import (
+        InteractiveTurnRequest,
+        PlatformAccessContext,
+    )
+    from app.application.model_invocation.contracts import (
+        ProviderInvocationPayload,
+    )
+    from app.application.model_invocation.invoke_model import InvokeModel
+    from app.application.specialist_interop.specialist_interop import (
+        SpecialistInterop,
+    )
+    from app.composition.root_composer import _compose_turn_handler
+    from app.domain.evidence.model import ModelRef
+    from app.domain.model_invocation.model import (
+        InvocationFinishStatus,
+        ProviderExposureClass,
+    )
+    from app.infrastructure.config.settings import Settings
+    from tests.support.capability_fixtures import TEST_MODEL_REF
+
+    class _AdmissionModel:
+        """Routes admission to the owner surface — the question then
+        reaches whatever attempt the composition bound (the fake)."""
+
+        adapter_kind = "TEST_ONLY"
+        exposure_class = ProviderExposureClass.TEST_ONLY
+
+        def invoke(self, request):
+            purpose = getattr(request, "task_purpose_id", "") or ""
+            payload = (
+                {
+                    "requires_owner_surface": True,
+                    "interaction_class": "operational",
+                }
+                if purpose.endswith("interaction_admission")
+                else {"applicable": False}
+            )
+            return ProviderInvocationPayload(
+                structured_output=payload,
+                generated_at=datetime.now(timezone.utc).isoformat(),
+                finish_status=InvocationFinishStatus.COMPLETED,
+            )
+
+    captured = GovernedCapabilityAttempt(
+        status=GovernedCapabilityStatus.SUCCESS,
+        correlation_id=None,
+        content="resposta do adapter alternativo",
+        limitations=("fake_limited",),
+    )
+    fake = _FakeOrchestrationAttempt(captured)
+
+    settings = Settings()
+    handler = _compose_turn_handler(
+        InvokeModel(_AdmissionModel()),
+        TEST_MODEL_REF,
+        SpecialistInterop(lambda: ()),
+        settings,
+        {},
+        orchestration=fake,
+    )
+    result = handler.execute(
+        InteractiveTurnRequest(
+            access_context=PlatformAccessContext(
+                user_id="u-swap",
+                name="Swap User",
+                email="swap@example.com",
+                effective_permissions=("delia.access",),
+                is_superadmin=False,
+            ),
+            input_text="pergunta de troca de adapter",
+        )
+    )
+    # The alternate attempt ran — the turn reached it.
+    assert fake.seen.get("input_text") == "pergunta de troca de adapter"
+    assert fake.seen.get("actor_user_id") == "u-swap"
+    # The fake's typed result reached the interaction response.
+    assert getattr(result, "content", "") == (
+        "resposta do adapter alternativo"
+    )
+    assert "fake_limited" in list(getattr(result, "limitations", ()))
