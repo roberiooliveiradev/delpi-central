@@ -770,3 +770,89 @@ Decisões pendentes: owner funcional do cadastro, política de grupos `create/pr
 **Status factual:** `PLAN_UPDATED` (quando registrado no GitHub); `CODE_IMPLEMENTATION=NOT_STARTED`; `API_CONTRACT_REVIEW=PENDING`; `AUTHZ_DELEGATION=TO_INVENTORY`; `LEGACY_RUNTIME=PENDING_VERIFICATION`; `PRC_E2E=TEST_NOT_RUN`. VAL-01 continua com seu agente e seu plano independente; não alterar os seus critérios.
 
 Inventário de código (2026-11-06), sem reescrever as decisões deste adendo: [PRODUCT-REGISTRATION-COMPLETE-INVENTORY.md](./PRODUCT-REGISTRATION-COMPLETE-INVENTORY.md). Esse documento substitui `AUTHZ_DELEGATION=TO_INVENTORY` e `LEGACY_RUNTIME=PENDING_VERIFICATION` pela evidência das rotas, do workflow e do bloqueio de delegação. A implementação continua não autorizada por este adendo.
+
+
+## ADENDO — Native Product Registration / fluxo de criação e alteração por campo (2026-11-06)
+
+> **Status:** `TARGET / ARCHITECTURE_DECISION_REQUIRED` para ownership e fonte operacional; `PLANNED` para implementação; **não implementado, não implantado**. Direção funcional mais recente do Product Owner. **Este adendo substitui como target de produto o adendo anterior de BFF legado**; o inventário [PRODUCT-REGISTRATION-COMPLETE-INVENTORY.md](./PRODUCT-REGISTRATION-COMPLETE-INVENTORY.md) permanece evidência de paridade, **não** contrato a copiar. Preservar o registro das decisões anteriores para rastreabilidade, sem implementar as fases PRC-1a/PRC-2 anteriores automaticamente.
+
+### 1. Decisão de produto e escopo
+
+- Superfície: **Controle e Cadastro de Produtos**, dentro de `plugins/engineering` (`product-registration`; interface e ajuda em pt-BR; código, rotas, DTOs e IDs novos em inglês). **Primeiro tipo real:** `raw_material`. Outros tipos são `FUTURE`, sem generalizações hipotéticas que criem um segundo engine.
+- Uma solicitação pode chegar do Controle MP, de uma futura porta do Portal ou de outra aplicação autorizada. **Origens abertas por contrato de intake**, sem aceitar writes anônimos ou payload arbitrário. No primeiro ciclo, o solicitante **continua no fluxo existente**, enquanto a plataforma nativa é construída e homologada. O mecanismo definitivo de ingestão/cutover exige owner e AuthZ explícitos.
+- No Portal Engenharia, o analista encontra fila de **casos de cadastro**, examina ficha/proposta, trabalha nos campos, obtém pareceres opcionais da EVA, decide e registra o resultado. **Não portar chat ou Socket.IO como modelo de atendimento**. A comunicação de pendência pode usar campos de motivo, comentário/timeline e notificação governada.
+- **Criação `create`:** solicitante informa **campos de entrada obrigatórios para solicitar**, que podem ser menos que os obrigatórios para o cadastro oficial (descrição inicial, fornecedores, `compart number` informado pelo PO e demais campos após validação do inventário e owner). A Engenharia completa/normaliza a ficha e valida antes de decidir. **Não inventar nome/mapeamento do `compart number`: `TO_CONFIRM_WITH_OWNER`.**
+- **Alteração `update`:** solicitante localiza o cadastro vigente e escolhe **apenas os campos específicos** que quer modificar. Recebe a ficha de referência read-only, informa novos valores e justificativa. **Não exigir reenviar ou editar todos os campos**. O pedido carrega `baseRevision` e conjunto explícito de alterações; nenhum campo não selecionado sofre mutação. A Engenharia revisa os efeitos correlatos antes de aprovar.
+- **Busca de cadastros semelhantes e sugestões para o solicitante** = `FUTURE`, **fora do MVP**. EVA no atendimento do analista pode sugerir revisão de descrição/campos com `DRAFT/CANDIDATE`, fonte, incerteza e aceite humano; indisponibilidade da EVA não bloqueia fluxo humano se política de validação permitir.
+
+### 2. Modelo e fluxo alvo (contratos conceituais, não schema aprovado)
+
+```text
+origin(s) -> governed intake -> registration request -> engineering case/queue
+  -> technical draft -> optional EVA candidate -> authorized technical decision
+  -> confirmed official registration/change (owner ERP/domain)
+  -> immutable technical record revision + field-change ledger + audit
+```
+
+Separar entidades e authorities:
+- `ProductRegistrationRequest`: request id opaco, `externalSource`, `externalRequestId` + `sourceItemId`, `requestType`, `productId` quando update, `requesterSubject` (Keycloak sub ou identidade de origem mapeada), timestamp, payload recebido, evidência e idempotency key.
+- `ProductRegistrationCase`: fila, responsável, estado, decisões, justificativas, eventos, referências de aprovações e controlos de concorrência. **Owner do workflow a decidir comparando `requests-api` vs necessidade específica de Engenharia; não duplicar Request Engine por padrão.**
+- `TechnicalProductRecord`: projeção/catálogo técnico versionado, **não substitui TOTVS como autoridade do cadastro oficial**.
+- `TechnicalProductRevision`: snapshot JSONB completo imutável por revisão, autor, motivo, data, request/case de origem, `baseRevision`, `sourceRevision`, `officialProductCode` se confirmado, status `draft|approved|published` conforme authority; diferenças por caminho do campo (`fieldPath`, `before`, `after`, autoria e decisão) com auditoria append-only.
+- Persistir colunas tipadas para ids, status, actor, timestamps, constraints e chaves de busca; `JSONB` para ficha variável e propostas; validar schemas versionados conforme tipo. Impedir path arbitrário, alteração de campos proibidos, mass assignment e substituição cega do JSON completo.
+- **Criação e update não se confundem**: update usa change set contra revisão conhecida, com `compare-and-set`/ETag; campos não solicitados permanecem iguais; concorrência retorna conflito `409` com rebase explícito; nunca last-write-wins silencioso.
+- **Aprovação técnica ≠ criação oficial no ERP**: somente marcar `completed`/publicar revisão quando o owner confirmar a operação ou código oficial exigido pela política. Se há etapa externa pendente, registrar estado de integração e não inventar êxito. MVP pode limitar integração a validação/confirmação de cadastro oficial, se escrita ERP não autorizada.
+- Estados candidatos: `submitted` → `in_progress` → `under_review` → `completed`; `needs_information` com correção/retorno e `rejected`. Definir transições, `allowedActions`, autorização e audit no backend antes da implementação. Idempotência do intake por `(externalSource,externalRequestId,sourceItemId)` ou equivalente governado, sem inventar formato de identificador.
+
+### 3. Portas de entrada e distribuição de responsabilidades
+
+| Capacidade | Decisão de direção | Gate necessário |
+|---|---|---|
+| Solicitação por aplicações diversas | Endpoint/intake versionado com source provenance e idempotência | AuthN/AuthZ de cada source, ownership das filas, contrato e anti-replay |
+| Fila e análise técnica | Portal Engenharia; domínio/serviço autorizado | Ownership de caso/workflow face à `requests-api` |
+| Ficha técnica e revisão JSONB | Capacidade nativa de Engenharia **se aprovada como owner** | Modelo/schemas, retenção, integridade, política de publicação |
+| Validação EVA | Assistência sob demanda, `DRAFT/CANDIDATE` | permissões de leitura, grounding, audit, ausência de publicação pela IA |
+| Produto oficial | TOTVS / Domain API oficial | adapter aprovado, verificação pós-condição e decisão de owner |
+| Migração histórico legado | ETL controlado, dry-run/apply idempotente e cutover | paridade, identidade `sub`, anexos, revisões, hashes, retenção, rollback |
+| Solicitações corporativas transversais | `requests-api` já existente | **Abstraction Gate**: demonstrar por que sua extensão não atende; decisão explícita antes de criar workflow alternativo |
+
+### 4. Primeira entrega funcional (MVP) e fora de escopo
+
+**MVP:** intake governado de `raw_material` `create/update` (ou piloto com origem controlada), fila, detalhe, campos de criação obrigatórios de entrada, seleção de campos na alteração, ficha técnica em draft, edição/validação por analista, histórico de caso, assistência EVA opcional (sem dependência bloqueante), decisão humana e snapshots/revisões JSONB com diffs por campo, confirmação governada do resultado oficial e auditoria.
+
+**Não-MVP:** busca preventiva de matérias-primas semelhantes para solicitante; sugestões automáticas de preenchimento ao usuário; novos tipos de produtos; substituição imediata do Controle MP; migração de produção sem paridade; write direto no ERP; chatbot; novos serviços/frameworks sem Abstraction Gate.
+
+### 5. RQ e critérios de aceite específicos (a refinar antes de código)
+
+- `RQ-PRC-08`: `create` exige apenas intake mandatory fields aprovados por tipo; separá-los de mandatory fields de cadastro/publicação.
+- `RQ-PRC-09`: `update` por campo(s) selecionado(s), sem reenvio da ficha integral; base revision e before/after rastreáveis.
+- `RQ-PRC-10`: revisão JSONB imutável + diff por campo + ator, timestamp, motivo, origem e link à solicitação.
+- `RQ-PRC-11`: workflow mínimo de análise e decisão governadas; `allowedActions` server-side, idempotência e controle de concorrência.
+- `RQ-PRC-12`: EVA fornece sugestões opcionais, nunca aprova/publica; validade da fonte e incerteza legíveis.
+- `RQ-PRC-13`: sistema de origem substituível por intake e migração futura governada; sem dual-write permanente.
+- `AC-PRC-11`: create com campos obrigatórios de solicitação passa; falta de obrigatório falha; publicação exige critérios oficiais separados.
+- `AC-PRC-12`: update de um campo altera exatamente o caminho autorizado, mantém todos os demais bytes/valores semanticamente idênticos e gera um único conjunto de diferenças auditável; tentativa em campo proibido falha.
+- `AC-PRC-13`: update em `baseRevision` obsoleta retorna conflito e nenhuma escrita; re-submissão idempotente não cria solicitação duplicada.
+- `AC-PRC-14`: revisão `N` e `N+1` podem ser recuperadas, comparadas e auditadas; a rejeição não modifica a versão vigente.
+- `AC-PRC-15`: usuário sem permissão não lê/edita/aprova; backend fail-closed, inclusive por origem.
+- `AC-PRC-16`: EVA desligada/indisponível não gera aprovação e não impede fluxo humano autorizado.
+- `AC-PRC-17`: nenhum `completed` falsamente indica produto oficial criado; exige read-back/evidência do owner.
+- `AC-PRC-18`: dados legados e anexos preservados com reconciliação de IDs/contagens/checksums antes do cutover; rollback testado.
+
+### 6. Sequência de desenvolvimento revisada e gates de execução
+
+1. **PRC-N0 — Architecture Gate:** revisar evidências de `requests-api` já inventariadas e escolher owner real de intake/workflow/caso vs ficha técnica; resolver `ARCHITECTURE_DECISION_REQUIRED` sem criar novo source of truth por vontade do frontend. Verificar código/HEAD/runtime, owners, status de outra worktree.
+2. **PRC-N1 — Contract & Schema:** fechar contratos canônicos `create/update`, proposta de patch campo-a-campo, campo `compart number`, schemas versionados, estados, AuthZ, RQ/AC e envelope de erros. Separar `request`, `draft`, `revision` e `officialPublished`.
+3. **PRC-N2 — Domain/Persistence:** implementar somente no owner aprovado tabelas/migrations JSONB, histórico append-only, diffs, CAS, idempotência e testes; nenhum acesso ao DB legado em runtime.
+4. **PRC-N3 — API/Intake:** criar ports/adapters oficiais para sources e ERP; ingestão idempotente e fila com AuthZ; testes de contrato e segurança.
+5. **PRC-N4 — UI do Portal:** fila e detalhe técnico, criação/alteração por campos e histórico, kit-first, EN code/PT-BR UI, deep-links, responsividade, estados e permission gate.
+6. **PRC-N5 — Validation/Official Outcome:** integração assistiva EVA candidate e validação técnica governada, confirmação do registro oficial sem inventar sucesso, audit e read-back.
+7. **PRC-N6 — Legacy Parity & Migration:** comparar corpus de registros reais, fazer ETL dry-run, preservar ids legados e `sub`, anexos, contagens/revisões/hashes, dual-run controlado, soft/hard cutover e retenção do legado **somente com aceite funcional e Ops**.
+
+**Regra de execução paralela:** VAL-01 permanece dona da percepção documental; PRC não altera OCR/SLANet/drawing/AnalysisJobStore. Os pontos compartilhados `engineering-api/main.py`, `config.py`, router do MFE, Core/RBAC, CI e deploy só podem ser integrados serialmente por integrador designado e testados no SHA reunido, sem comitar diff alheio. Use diretórios de feature novos; evitar trabalhar no checkout sujo da EVA. Sem autorização para deploy neste adendo.
+
+### 7. Estado e decisões pendentes
+
+`PRODUCT_DIRECTION=CONFIRMED_BY_PO`; `ARCHITECTURE_OWNERSHIP=DECISION_REQUIRED`; `IMPLEMENTATION=NOT_STARTED`; `MIGRATION=PLANNED`; `EVA_ASSISTED_VALIDATION=TARGET`; `SIMILARITY_SEARCH_FOR_REQUESTER=FUTURE`.
+
+Pendências objetivas: ownership de workflow frente a `requests-api`, autoridade de publicação ERP e forma de confirmação, `compart number` significado/tag, campos required por tipo e ator, schema JSONB versionado, semântica de status, política de retenção e reconciliação, IAM/ACL dos múltiplos canais, concorrência e MVP exato de integração EVA. Antes de implementar, registrar o contrato e obter o aceite dos owners técnicos competentes.
