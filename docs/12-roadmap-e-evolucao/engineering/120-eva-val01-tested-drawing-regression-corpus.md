@@ -268,3 +268,7 @@ Medição lateral no container `delpi-engineering-api` após o deploy de `9c59ba
 ## Log adicional — 2026-11-06 (poll do job MCP — erro interno)
 
 Diagnóstico: job RUNNING virou erro no poll por store process-local (restart às 16:03 descartou) ou falha tipada silenciosa no delegated fetch (janela 401). Fix `63211b907d`/`8494379aeb`: `job_not_found` retriável + log de `DrawingAnalysisError`. 142/142. Reteste consumidor: criar NOVO job, aguardar COMPLETED, validar resultado + erro tipado se FAILED.
+
+## Log adicional — 2026-11-06 (event loop — offload asyncio.to_thread)
+
+Forense: `proc.communicate` síncrono no loop congelava a API inteira durante OCR isolado. Fix `5a9b86c6d2`: benchmarks via `to_thread`. Prod healthy. Reteste consumidor pendente — polls RUNNING durante OCR é o aceite funcional.

@@ -1338,3 +1338,13 @@ O histórico de revisão da mesma página não cita esses códigos. `10081389` �
 **Testes:** 142/142 (jobs + eva_mcp) overlay. Prod `8494379aeb` healthy.
 
 **Pendente arquitetural:** persistência do job store (sobreviver restart) — `ARCHITECTURE_DECISION_REQUIRED`, fora do escopo bounded.
+
+## 41. DEC-VAL-036 — event loop congelado por benchmark síncrono (causa-raiz forense + fix)
+
+**Causa-raiz (PROVEN):** `run_visual_benchmark` executava `run_pipeline_isolated` (Popen.communicate) **sincronamente dentro do event loop** — durante a análise visual (subprocesso `visual_worker` a 99% CPU) o servidor não respondia: healthchecks mortos (UNHEALTHY), polls MCP → "The tool failed internally" no conector. Evidência: `visual_worker` ativo + `/proc/1` sleeping + health interno TimeoutError(5s) + zero `eva_mcp_tool_error` (nenhuma resposta era produzida).
+
+**Correção (`5a9b86c6d2`):** `document_benchmark_service` executa ambos os benchmarks via `asyncio.to_thread` — loop responsivo enquanto o subprocesso isolado computa; lifecycle (timeout/kill) inalterado. Contrato zero, arquitetura zero.
+
+**Teste:** `test_async_benchmark_offload` prova progresso de coroutine concorrente durante benchmark bloqueante. 137/137 + 1 novo.
+
+**Prod:** `5a9b86c6d2` healthy. Reteste consumidor: job `drawing_understanding` 90264017 → polls devem retornar `RUNNING` durante OCR (não mais erro interno).
