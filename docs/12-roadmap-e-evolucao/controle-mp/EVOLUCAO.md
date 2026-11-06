@@ -288,3 +288,18 @@ Não são tarefas deste documento. São o que a evolução precisa atingir:
 | [conectar iframe](../../10-guias-operacionais/conectar-aplicacao-iframe.md) | Como o legado está no portal hoje |
 | `controle_mp` `docs/ARQUITETURA.md` | Stack Flask/React atual |
 | `requests-api` `V007__seed_raw_material_creation_request_type.sql` | Stub a evoluir, não a preservar como produto |
+
+
+## 10. Adendo de direcionamento — Portal Engenharia / Product Registration (2026-11-06)
+
+> **Status:** `PLANNED`, não implementado. **Plano mestre atualizado:** [Portal Engenharia — ROADMAP.md, adendo Product Registration](../engineering/ROADMAP.md). Este adendo reconcilia a decisão de experiência e **não apaga** a migração nativa anterior ou muda o owner de dados.
+
+O Product Owner direcionou uma **primeira etapa incremental** distinta da proposta das seções 1–8: o **solicitante permanece no Controle MP legado**; o **analista de Engenharia terá uma superfície dedicada no MFE `plugins/engineering`**, apresentada como **Controle e Cadastro de Produtos** (identificadores técnicos em inglês; rótulos pt-BR). A integração inicial será pelo **BFF `engineering-api` → API oficial do Controle MP**, respeitando contratos, identidade/escopo e AuthZ. Não criar acesso do MFE ao Flask, ao seu Postgres ou ao TOTVS diretamente; não recriar workflow na `engineering-api`.
+
+A direção anterior de migrar o workflow integral para `requests-api`/`my-requests` passa a ser **etapa futura sujeita a decisão de cutover e paridade**, não requisito para construir a primeira tela do analista. `requests-api` mantém seu ownership transversal e seu stub `raw-material-creation` **não** será usado como substituto prematuro do fluxo real. Sem dual-write.
+
+**Bloqueios antes de ações:** validar a delegação do usuário de Portal para a API legado, permissão por solicitação/conversa, tokens S2S apropriados, contratos de ação e o owner técnico de aprovação. SSO iframe existente **não** demonstra autorização backend-to-backend. Até esses contratos serem comprovados, apenas leitura autorizada (ou navegação ao legado se leitura também estiver bloqueada), sem simular aprovação. `ARCHITECTURE_DECISION_REQUIRED` para mudança material de authority/consumer e writes.
+
+**Execução paralela:** o agente de VAL-01 trabalha em percepção tabular da `engineering-api`. Esta frente deve usar worktree isolada, reservar paths distintos e serializar alterações em router, auth, bootstrap, manifests, shared modules e deploy sob integrador designado. Nenhuma edição nos módulos OCR/SLANet/drawing/AnalysisJobStore.
+
+**Próximo bounded step:** inventário `PROVEN` de rotas/auth/status da API Controle MP, de router/contratos da Engineering API e do MFE; definir RQ/AC e contrato read-only do novo consumer; implementar somente após gate. Não desativar legado nem migrar dados nesta etapa.
