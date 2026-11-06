@@ -25,3 +25,7 @@ Perguntas "Quem é você?", "O que significa VISTA?", "O que sabe fazer?", "Que 
 
 ## Implementação futura
 Confirmar owner, source e consumers (MCP, GPT, UI), smallest diff, testes e relatório de execução; alterar documentação compartilhada + publicação correta no catálogo; GPT Builder só se houver mudança em Instructions/Knowledge/OpenAPI correspondente.
+## Reconciliação com fontes existentes (GitHub, 2026-11-06)
+- **PROVEN (código):** tv-dashboard-api/tv_app/persona/vista_profile.py → tv_app/content/vista_agent_intelligence.json; ficha já existe; só a nova expansão aprovada carece de publicação.
+- Contrato já implementado: `shared/delpi_character_profiles` (estrutura), ficha owner-local (conteúdo), projeção no serviço do MCP (consumer). **Não criar uma segunda ficha nem registry em shared.**
+- Referência cruzada: [Inventário de fontes existentes](./INVENTARIO-FONTES-EXISTENTES.md). Validação de runtime, deploy e testes permanece **TEST_NOT_RUN/TO_INVENTORY** nesta auditoria.
