@@ -202,6 +202,7 @@ def tool_get_context(
 
 # entity vocabulary → (bridge function, allowed action set)
 _V3_READ_SPECIALIZED: dict[str, tuple[str, frozenset[str]]] = {
+    "avatar": ("tool_get_avatar", frozenset({"get"})),
     "process_context": ("tool_get_process_context", frozenset({"get"})),
     "process_timeline": ("tool_get_process_timeline", frozenset({"get"})),
     "solution": (

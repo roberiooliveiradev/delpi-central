@@ -677,3 +677,33 @@ def test_unknown_fact_ignored_but_vocabulary_discoverable() -> None:
         CONTEXT_FACTS
     )
     assert "multiple_cause_families" in CONTEXT_FACTS
+
+
+# ------------------------------------------------- avatar inline (POC)
+
+
+def test_avatar_read_returns_image_content_block() -> None:
+    """AVATAR-INLINE-MCP-V1 — read(entity=avatar) must return the approved
+    avatar bytes as an ImageContent block plus structured metadata."""
+    from mcp.types import ImageContent
+
+    tokens = _ctx()
+    try:
+        with patch(
+            "tm_app.interface.mcp.tool_bridge."
+            "require_transformometro_view_access",
+            return_value=None,
+        ):
+            from tm_app.interface.mcp.tool_bridge_v3 import tool_read
+
+            r = tool_read("avatar", "get")
+        assert r.is_error is False
+        kinds = [type(c).__name__ for c in r.content]
+        assert "ImageContent" in kinds
+        image = next(c for c in r.content if isinstance(c, ImageContent))
+        assert image.mime_type == "image/png"
+        assert image.data  # base64 bytes, non-empty
+        r_bad = tool_read("avatar", "bad_action")
+        assert r_bad.is_error is True
+    finally:
+        _reset(tokens)
