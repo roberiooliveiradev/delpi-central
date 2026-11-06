@@ -766,3 +766,36 @@ def test_semantic_substrate_covers_nl_needs_without_broker():
         assert schema["available"] is True
         assert schema["argument_schema"]["additionalProperties"] is False
         assert "required_arguments" in schema
+
+# ---------------------------------------------------------------------------
+# Wave 006 — semantic-only cutover flag (DAVI_LEGACY_BROKER_TOOLS_ENABLED)
+# ---------------------------------------------------------------------------
+
+
+def test_legacy_broker_flag_off_exposes_semantic_only_surface(monkeypatch):
+    """Eval/cutover mode: broker hidden from tools/list and rejected on call —
+    the four semantic tools keep working against the same governed pipeline."""
+    from app.config import settings as _settings
+
+    monkeypatch.setattr(_settings, "DAVI_LEGACY_BROKER_TOOLS_ENABLED", False)
+    tools = asyncio.run(create_mcp_server().list_tools())
+    names = sorted(t.name for t in tools)
+    assert names == ["analyze", "get_context", "knowledge", "read"]
+
+    async def _call():
+        res = await create_mcp_server().call_tool(
+            "discover_delpi_information", {"query": "produto"}
+        )
+        return res
+
+    result = asyncio.run(_call())
+    assert result.is_error is True
+    assert result.structured_content["code"] == "CAPABILITY_NOT_ALLOWED"
+
+
+def test_legacy_broker_flag_default_keeps_six_tools(monkeypatch):
+    from app.config import settings as _settings
+
+    monkeypatch.setattr(_settings, "DAVI_LEGACY_BROKER_TOOLS_ENABLED", True)
+    tools = asyncio.run(create_mcp_server().list_tools())
+    assert len(tools) == 6

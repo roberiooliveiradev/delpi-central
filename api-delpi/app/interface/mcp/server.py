@@ -57,6 +57,7 @@ from app.composition.davi_dynamic_read_composer import (
     davi_read_wired,
     execute_delpi_information_wired,
 )
+from app.config import settings
 from app.interface.mcp.branding import DAVI_MCP_INSTRUCTIONS
 from app.interface.mcp.document_transport_spike import (
     document_transport_spike_enabled,
@@ -195,8 +196,13 @@ class ApiDelpiMCPServer(MCPServer):
 
     async def list_tools(self) -> list[MCPTool]:
         tools = self._tool_manager.list_tools()
+        legacy_visible = settings.DAVI_LEGACY_BROKER_TOOLS_ENABLED
         listed: list[MCPTool] = []
         for info in tools:
+            # Semantic-only eval/cutover mode: broker tools hidden, never
+            # removed — prod keeps the flag ON until the cutover wave.
+            if not legacy_visible and info.name in _LEGACY_BROKER_TOOLS:
+                continue
             meta = dict(info.meta or {})
             # Owner-typed operation class — catalog metadata for
             # consumers to project; never a permission grant. Default
@@ -243,6 +249,15 @@ class ApiDelpiMCPServer(MCPServer):
     async def call_tool(
         self, name: str, arguments: dict[str, Any], context: Any = None
     ) -> Any:
+        if (
+            not settings.DAVI_LEGACY_BROKER_TOOLS_ENABLED
+            and name in _LEGACY_BROKER_TOOLS
+        ):
+            return typed_error_tool_result(
+                CAPABILITY_NOT_ALLOWED_CODE,
+                "Tool is not available on this MCP surface.",
+                recoverable=False,
+            )
         try:
             if name == MCP_TOOL_DISCOVER_DELPI_INFORMATION:
                 DiscoverDelpiInformationInput.model_validate(arguments or {})
@@ -260,6 +275,11 @@ class ApiDelpiMCPServer(MCPServer):
             log_error(f"mcp {name} validation rejected error_count={exc.error_count()}")
             return validation_error_tool_result()
         return await super().call_tool(name, arguments, context)
+
+
+_LEGACY_BROKER_TOOLS = frozenset(
+    {MCP_TOOL_DISCOVER_DELPI_INFORMATION, MCP_TOOL_EXECUTE_DELPI_INFORMATION}
+)
 
 
 def davi_mcp_transport_security() -> TransportSecuritySettings:

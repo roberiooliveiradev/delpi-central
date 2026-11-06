@@ -617,3 +617,61 @@ ROLLBACK READY               = PASS
 Segunda identidade organizacional indisponível nesta sessão → **PENDING**
 (bloqueio de credencial; responsável: responsável pelo ambiente/Keycloak).
 Rollout amplo segue condicionado a essa evidência.
+
+## 19. Wave 006 — Semantic cutover readiness (DAVI-V2-WAVE-006-SEMANTIC-CUTOVER-READINESS)
+
+> 2026-11-06. Entrega: flag de cutover simulado + baseline NL medido + gates classificados. Broker preservado.
+
+### 19.1 Cutover simulation mechanism (Frente C)
+
+```text
+DAVI_LEGACY_BROKER_TOOLS_ENABLED (default true)
+→ false: list_tools expõe só {get_context,knowledge,read,analyze};
+         call_tool nas legadas → CAPABILITY_NOT_ALLOWED tipado
+→ superfície produtiva inalterada (flag ON); eval isolado possível
+→ é o mecanismo oficial de cutover futuro sem redeploy de código
+```
+
+Testes: flag OFF → 4 tools + legada negada; flag ON → 6 tools.
+
+### 19.2 NL discovery — baseline medido (Frentes A/B)
+
+```text
+Golden queries offline (6 necessidades DELPI reais):
+discover top-3 hit-rate = 6/6 (baseline do ranking legado)
+Semantic path: substrate equivalente provado (W5) — seleção do MODELO
+sobre o catálogo não é medível sem LLM/provider → PENDING honesto.
+Critério de aceite definido: para cutover, eval provider deve mostrar
+tool/capability selection correta ≥ qualidade observada no broker.
+```
+
+### 19.3 Consumidores reavaliados
+
+```text
+SKILL.md          = MIGRATED | agent_directives = MIGRATED
+testes que chamam as tools = TEST_COMPATIBILITY (mantidos enquanto broker vivo)
+ChatGPT plugin    = EXTERNAL_DEPENDENCY (atualização manual pendente)
+GPT Actions legacy= EXTERNAL_DEPENDENCY (aposentadoria futura)
+runtime interno   = zero dependência das legadas pelas tools novas
+```
+
+### 19.4 Gates de retirada (estado)
+
+```text
+CAPABILITY_PARITY        = PASS (94/94 read; 25/25 analyze)
+NL_SELECTION_PARITY      = PASS-substrate + baseline legado 6/6 top-3
+                           registrado; eval do modelo = PENDING
+CONSUMER_MIGRATION       = PARCIAL (plugin/GPT Actions pendentes)
+SECURITY_REGRESSION      = PASS
+NEGATIVE_MULTI_USER_AUTHZ= PENDING (segunda identidade indisponível —
+                           BLOCKER=SECOND_TEST_IDENTITY_UNAVAILABLE,
+                           OWNER=identity/env owner)
+LIVE_FUNCTIONAL_TESTS    = TEST_NOT_RUN (OAuth end-user indisponível)
+PROVIDER_DISCOVERY       = PENDING
+ROLLBACK_READINESS       = PASS (flag + SHA anterior + script canônico)
+```
+
+Decisão: retirada NÃO autorizada — bloqueios = consumer migration externa,
+live tests, negative multi-user e provider eval. Menor trabalho para
+desbloquear: identidade de teste B + atualização manual do plugin + eval
+de seleção no provider com a flag OFF em ambiente de avaliação.
