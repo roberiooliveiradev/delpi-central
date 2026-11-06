@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+import threading
 import time
 from typing import Any, Mapping, Sequence
 
@@ -94,12 +95,30 @@ class McpCatalogStore:
 
     def __init__(self, db_path: str) -> None:
         self._db_path = db_path
-        self._conn = sqlite3.connect(db_path, isolation_level=None)
-        self._conn.row_factory = sqlite3.Row
-        self._conn.executescript(_DDL)
+        # Per-thread connections — gunicorn gthread workers call the
+        # catalog from threads other than the composing thread; sqlite
+        # objects are never shared across threads. Each thread gets its
+        # own connection; sqlite handles the file-level concurrency.
+        self._local = threading.local()
+        self._conn
+
+    @property
+    def _conn(self) -> sqlite3.Connection:
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            conn = sqlite3.connect(
+                self._db_path, isolation_level=None
+            )
+            conn.row_factory = sqlite3.Row
+            conn.executescript(_DDL)
+            self._local.conn = conn
+        return conn
 
     def close(self) -> None:
-        self._conn.close()
+        conn = getattr(self._local, "conn", None)
+        if conn is not None:
+            conn.close()
+            self._local.conn = None
 
     # ---- queries -----------------------------------------------------
 
