@@ -66,5 +66,7 @@ TEO_MCP_INSTRUCTIONS = (
     "Diagram node types only from get_context(section='catalog').diagram_catalog. "
     "TÉO capability <= authenticated user capability. Profile is not authorization. "
     "Never invent IDs or use execute_capability / generic SQL or HTTP. "
-    "Binary evidence upload remains UI-only / BLOCKED_BY_PLATFORM."
+    "Helpdesk ticket files: execute(capability='upload_attachment', "
+    "args={ticket_id, title?}, file=host-bound openai/fileParams). "
+    "Evidence and room binary upload remains UI-only / BLOCKED_BY_PLATFORM."
 )

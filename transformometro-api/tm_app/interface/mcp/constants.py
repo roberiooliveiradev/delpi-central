@@ -52,17 +52,6 @@ V3_TOOL_CLASS: dict[str, str] = {
 }
 V3_SEMANTIC_TOOL_NAMES: frozenset[str] = frozenset(V3_TOOL_CLASS)
 
-# Dedicated file-transport adapter (R4.6/R4.8). It is NOT a semantic
-# tool and NOT a second upload implementation: it delegates to the
-# same helpdesk_upload_attachment capability as execute(file=...).
-# R4.9 hold: ChatGPT has proven this adapter, not execute.file hydration.
-# Dropping it to restore a six-tool count is forbidden until
-# EXECUTE_FILE_HOST_BINDING becomes "PROVEN".
-EXECUTE_FILE_HOST_BINDING = "TEST_NOT_RUN"
-FILE_TRANSPORT_TOOL_CLASS: dict[str, str] = {
-    "helpdesk_upload_attachment": "ACT",
-}
-
 # Capability parity: GPT operationId → Semantic V3 tool names (1→N).
 # Derived from the canonical registry — an Actions op maps to the V3
 # tool(s) serving its bound capability route.
@@ -86,7 +75,7 @@ TOOL_TO_GPT_OPERATION: dict[str, str] = mcp_tool_to_actions()
 MCP_NATIVE_TOOLS: frozenset[str] = V3_SEMANTIC_TOOL_NAMES - {"analyze"}
 
 # READ | PREPARE | ACT | ANALYSIS (non-persist) | DISCOVERY
-TOOL_CLASS: dict[str, str] = {**V3_TOOL_CLASS, **FILE_TRANSPORT_TOOL_CLASS}
+TOOL_CLASS: dict[str, str] = dict(V3_TOOL_CLASS)
 
 # Destructive-capable public tools — truthful annotation.
 DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset({"delete"})
@@ -104,12 +93,11 @@ MCP_SURFACE_BUDGET = {
         "ACT": sum(1 for v in TOOL_CLASS.values() if v == "ACT"),
     },
     "principle": (
-        "Semantic V3: six semantic tools over the governed capability "
-        "surface — entity/action vocabulary rides inside typed "
-        "arguments; new capabilities ⇒ 0 new MCP tools. "
-        "helpdesk_upload_attachment stays public only while "
-        "EXECUTE_FILE_HOST_BINDING is TEST_NOT_RUN (proven host file "
-        "transport). It is the same upload capability, not a new one."
+        "Semantic V3 ONLY: six semantic tools over the governed "
+        "capability surface — entity/action vocabulary rides inside "
+        "typed arguments; new capabilities ⇒ 0 new MCP tools. "
+        "Helpdesk upload_attachment is an execute capability, not a "
+        "public tool."
     ),
 }
 

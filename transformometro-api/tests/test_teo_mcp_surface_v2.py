@@ -17,13 +17,11 @@ from tm_app.application.governed_writes.proposal_store import reset_proposal_sto
 from tm_app.interface.mcp.constants import (
     MCP_LEGACY_REMOVED_TOOLS,
     MCP_SURFACE_BUDGET,
-    FILE_TRANSPORT_TOOL_CLASS,
     MCP_TOOL_NAMES,
     MCP_V2_REMOVED_TOOLS,
     TEO_MCP_SURFACE,
     TOOL_CLASS,
     V3_SEMANTIC_TOOL_NAMES,
-    V3_TOOL_CLASS,
 )
 from tm_app.interface.mcp.server import create_mcp_server
 from tm_app.interface.mcp.tool_bridge import (
@@ -39,9 +37,8 @@ def test_surface_budget_and_taxonomy() -> None:
     assert TEO_MCP_SURFACE == "SEMANTIC_V3_ONLY"
     assert MCP_SURFACE_BUDGET["before_total"] == 33
     assert MCP_SURFACE_BUDGET["after_total"] == len(MCP_TOOL_NAMES)
-    assert set(MCP_TOOL_NAMES) == V3_SEMANTIC_TOOL_NAMES | set(
-        FILE_TRANSPORT_TOOL_CLASS
-    )
+    assert set(MCP_TOOL_NAMES) == V3_SEMANTIC_TOOL_NAMES
+    assert "helpdesk_upload_attachment" not in MCP_TOOL_NAMES
     assert TOOL_CLASS["get_context"] == "DISCOVERY"
     assert TOOL_CLASS["read"] == "READ"
     assert TOOL_CLASS["analyze"] == "ANALYSIS"
@@ -52,10 +49,7 @@ def test_surface_budget_and_taxonomy() -> None:
     assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 2
     assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 1
     assert sum(1 for v in TOOL_CLASS.values() if v == "PREPARE") == 0
-    assert sum(1 for v in V3_TOOL_CLASS.values() if v == "ACT") == 2
-    assert sum(1 for v in TOOL_CLASS.values() if v == "ACT") == (
-        2 + len(FILE_TRANSPORT_TOOL_CLASS)
-    )
+    assert sum(1 for v in TOOL_CLASS.values() if v == "ACT") == 2
     for name in MCP_LEGACY_REMOVED_TOOLS:
         assert name not in TOOL_CLASS
     for name in MCP_V2_REMOVED_TOOLS:

@@ -11,7 +11,6 @@ from tm_app.application.gpt_actions.improvement_package_contract import (
 from tm_app.application.gpt_actions.openapi_builder import GPT_ACTIONS_OPERATION_IDS
 from tm_app.application.gpt_actions.registration_guide import build_registration_guide
 from tm_app.interface.mcp.constants import (
-    FILE_TRANSPORT_TOOL_CLASS,
     MCP_LEGACY_REMOVED_TOOLS,
     MCP_SURFACE_BUDGET,
     MCP_TOOL_NAMES,
@@ -81,9 +80,8 @@ def test_mcp_surface_budget_matches_registration():
     assert TEO_MCP_SURFACE == "SEMANTIC_V3_ONLY"
     assert MCP_SURFACE_BUDGET["before_total"] == 33
     assert MCP_SURFACE_BUDGET["after_total"] == len(MCP_TOOL_NAMES)
-    assert set(MCP_TOOL_NAMES) == V3_SEMANTIC_TOOL_NAMES | set(
-        FILE_TRANSPORT_TOOL_CLASS
-    )
+    assert set(MCP_TOOL_NAMES) == V3_SEMANTIC_TOOL_NAMES
+    assert "helpdesk_upload_attachment" not in MCP_TOOL_NAMES
     assert "execute" in MCP_TOOL_NAMES
     assert "delete" in MCP_TOOL_NAMES
     for name in MCP_LEGACY_REMOVED_TOOLS:

@@ -253,15 +253,10 @@ def test_r3_sufficiency_stops_after_demand_grouping():
 def test_r3_no_new_tool_surface_for_demand():
     from tm_app.interface.mcp.constants import MCP_TOOL_NAMES
 
-    # Six semantic tools. The file-transport adapter is held, not a new capability.
-    from tm_app.interface.mcp.constants import (
-        FILE_TRANSPORT_TOOL_CLASS,
-        V3_SEMANTIC_TOOL_NAMES,
-    )
+    from tm_app.interface.mcp.constants import V3_SEMANTIC_TOOL_NAMES
 
-    assert set(MCP_TOOL_NAMES) == V3_SEMANTIC_TOOL_NAMES | set(
-        FILE_TRANSPORT_TOOL_CLASS
-    )
+    assert set(MCP_TOOL_NAMES) == V3_SEMANTIC_TOOL_NAMES
+    assert "helpdesk_upload_attachment" not in MCP_TOOL_NAMES
     forbidden = {"demand_analysis", "helpdesk_analysis", "cluster_tickets",
                  "ticket_insights", "find_process_from_ticket"}
     assert not forbidden.intersection(MCP_TOOL_NAMES)

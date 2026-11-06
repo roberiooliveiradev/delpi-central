@@ -717,7 +717,7 @@
           "HELPDESK_DEMAND_GATE",
           "read(action=ticket) — estado atual antes de mutar; delete_ticket exige ticket resolvido de forma única (nunca apagar por referência vaga)",
           "catalogs relevantes (users purpose=assignee, categories, ...) — nunca inferir ids",
-          "execute(capability=helpdesk_upload_attachment, args={ticket_id, title?}, file=objeto fileParams do host) é o caminho semântico do anexo. A tool pública helpdesk_upload_attachment permanece porque o binding do arquivo no execute ainda não foi comprovado no ChatGPT; use-a quando o host não hidratar file em execute. Nunca URL, path ou base64",
+          "execute(capability=upload_attachment, args={ticket_id, title?}, file=objeto fileParams do host) anexa ao chamado. Não existe tool pública dedicada. Nunca URL, path ou base64",
           "EXECUTION_CONTRACT_GATE",
           "execute — único ACT",
           "read(action=ticket|session) — read-back autoritativo",
@@ -808,7 +808,7 @@
     "tool_unavailable_after_attempt": "Após falha real: reportar erro + pedir reconectar OAuth se 401."
   },
   "not_exposed": {
-    "binary_upload": "UI-only / BLOCKED_BY_PLATFORM",
+    "binary_upload": "evidence and interaction-room binaries stay UI-only / BLOCKED_BY_PLATFORM. Helpdesk ticket files use execute(capability=upload_attachment, file=host fileParams), not a separate tool",
     "interaction_room_attachment_binary": "UI-only / BLOCKED_BY_PLATFORM (metadata via gpt_collaboration_read action=attachments / read action=attachments)",
     "generic_proxy": "FORBIDDEN",
     "signature_pdf": "NOT via GPT/MCP search path"
@@ -1142,8 +1142,7 @@
       ],
       "mcp_tools": [
         "read",
-        "execute",
-        "helpdesk_upload_attachment"
+        "execute"
       ],
       "pipeline": [
         "read(action=ticket) current state before mutation",

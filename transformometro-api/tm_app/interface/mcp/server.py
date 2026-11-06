@@ -480,47 +480,6 @@ def create_mcp_server() -> MCPServer:
         )
 
     @mcp.tool(
-        name="helpdesk_upload_attachment",
-        title="Upload ticket attachment",
-        description=(
-            "Typed adapter for helpdesk_upload_attachment (governed "
-            "AUTO_ACT write — same orchestrator, policy, idempotency "
-            "and read-back as execute). Sends ONE user-provided file "
-            "to a GLPI ticket via the Helpdesk BFF. file is bound by "
-            "the host as an openai/fileParams object — the caller must "
-            "NOT supply a path or URL."
-        ),
-        annotations=_annotations("helpdesk_upload_attachment", "Upload ticket attachment"),
-        meta={**meta, "openai/fileParams": ["file"]},
-    )
-    def helpdesk_upload_attachment(
-        ticket_id: Annotated[
-            int,
-            Field(description="Target GLPI ticket id."),
-        ],
-        file: Annotated[
-            _ChatGptFileParam,
-            Field(
-                description=(
-                    "Canonical openai/fileParams object bound by the "
-                    "host ({download_url, file_id, mime_type?, "
-                    "file_name?}). Never a sandbox path, local path or "
-                    "arbitrary URL."
-                )
-            ),
-        ],
-        title: Annotated[
-            str | None,
-            Field(description="Optional document title."),
-        ] = None,
-    ) -> CallToolResult:
-        return bridge_v3.tool_execute(
-            capability="upload_attachment",
-            args={"ticket_id": ticket_id, "title": title},
-            file=file.model_dump(exclude_none=True) if file else None,
-        )
-
-    @mcp.tool(
         name="delete",
         title="Delete",
         description=(

@@ -21,7 +21,6 @@ from tm_app.application.methodology.guide import (
     query_methodology_guide,
 )
 from tm_app.interface.mcp.constants import (
-    FILE_TRANSPORT_TOOL_CLASS,
     GPT_TO_MCP_TOOLS,
     MCP_NATIVE_TOOLS,
     MCP_TOOL_NAMES,
@@ -78,9 +77,7 @@ def test_method_catalog_matches_canonical_playbook_projection() -> None:
     )
     assert GPT_TO_MCP_TOOLS["gpt_get_methodology_guide"] == ("knowledge",)
     assert TOOL_CLASS["knowledge"] == "READ"
-    assert set(MCP_TOOL_NAMES) == V3_SEMANTIC_TOOL_NAMES | set(
-        FILE_TRANSPORT_TOOL_CLASS
-    )
+    assert set(MCP_TOOL_NAMES) == V3_SEMANTIC_TOOL_NAMES
 
 
 @pytest.mark.parametrize(

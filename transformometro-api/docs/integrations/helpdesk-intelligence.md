@@ -847,14 +847,21 @@ not source-code evidence. Status: ACCEPT / CLOSED.
   PENDING_RUNTIME_ACCEPTANCE (requires a real fileParams binding from
   the host — not mockable end-to-end).
 
-### 23.2 R4.9 — public tool hold
+### 23.2 R4.10 — dedicated public tool removed
 
-The dedicated public tool `helpdesk_upload_attachment` is a file-transport
-adapter over the same capability as `execute`. ChatGPT has proven upload
-through that adapter (closed `_ChatGptFileParam`, `openai/fileParams`,
-GLPI document, read-back, inline image). Host hydration of `execute.file`
-is `TEST_NOT_RUN`. The adapter stays registered until that binding is
-proven. The semantic target remains:
+ChatGPT proved `execute(capability="upload_attachment")` on 2026-11-06:
+GLPI ticket #1533, file `dark-1440-library(1).png`, outcome
+`executed_verified`, document id 1511, read-back PASS. Follow-up 749
+kept document 1511 in the message HTML. A visual Portal capture of that
+ticket was not recorded with this change.
+
+The public MCP tool of the same name is removed. The internal capability
+`helpdesk_upload_attachment` stays on workflow `helpdesk_change`, action
+`upload_attachment`, policy `auto_act`, owner `helpdesk-api`. Public
+tools are exactly `get_context`, `read`, `analyze`, `knowledge`,
+`execute` and `delete`. `execute.file` keeps the closed
+`_ChatGptFileParam` model and `_meta["openai/fileParams"] = ["file"]`.
+`file` stays a top-level argument. Other capabilities reject it.
 
 ```text
 execute(
@@ -863,12 +870,6 @@ execute(
   file=<host-bound _ChatGptFileParam>
 )
 ```
-
-`capability="helpdesk_upload_attachment"` resolves to the same write.
-`file` stays a top-level argument, not a field of `args`.
-
-`file` stays a top-level argument. Other capabilities reject it. Do not
-unpublish the adapter to force a six-tool count.
 
 ## 24. Requester identity corrective — authenticated session user = GLPI requester
 
