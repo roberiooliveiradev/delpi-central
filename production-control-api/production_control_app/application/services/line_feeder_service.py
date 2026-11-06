@@ -272,15 +272,10 @@ class LineFeederService:
                 )
 
         total_ops = sum(len(group["operations"]) for group in ordered_queues)
-        # Teto da fila publicada selecionada (não só do que as horas cobrem).
-        # Selecionar todos os postos da filial costuma passar de 500 — o teto
-        # acompanha o orçamento de empenhos (lotes × tamanho) sem abrir sem limite.
-        max_ops = setting_int("horizonMaxOperationsPerRequest", 2000)
-        if total_ops > max_ops:
-            raise ValueError(
-                f"A seleção excede o limite de {max_ops} operações por prévia. "
-                "Reduza os postos selecionados ou o horizonte de horas."
-            )
+        # Não rejeitar pela fila publicada inteira: com N postos a fila facilmente
+        # passa de milhares de ops, mas o orçamento de horas por CT (ex.: 3h)
+        # limita o que entra na prévia. O trabalho real é o alocador progressivo
+        # + teto de consultas de tempo padrão — não o tamanho bruto da seleção.
 
         phases = _PhaseTimer(logger, event="line_feeder_horizon_preview")
         phases.meta(
@@ -290,24 +285,27 @@ class LineFeederService:
             hours_per_work_center=hours,
         )
 
-        flat_ops = [
-            op for group in ordered_queues for op in group["operations"]
-        ]
         balances_as_of = datetime.now(timezone.utc).isoformat()
-        with phases.measure("fetch_operation_balances"):
-            balance_map = self._fetch_live_operation_balances(
-                branch=code, operations=flat_ops
-            )
-
+        balance_map: dict[tuple[str, str], dict[str, Any]] = {}
         st_cache: dict[tuple[str, str], dict[str, Any]] = {}
         st_calls = 0
         st_calls_avoided = 0
-        st_limit = setting_int("horizonMaxStandardTimeCalls", 200)
+        st_limit = setting_int("horizonMaxStandardTimeCalls", 400)
         ct_results: list[dict[str, Any]] = []
         operations_evaluated = 0
 
         with phases.measure("allocate_horizons"):
             for group in ordered_queues:
+                # Saldos por CT: evita um lote único gigante só porque a seleção
+                # inclui todos os postos; o horizonte ainda para quando as horas
+                # (ou o teto de ST) se esgotam.
+                with phases.measure("fetch_operation_balances"):
+                    balance_map.update(
+                        self._fetch_live_operation_balances(
+                            branch=code,
+                            operations=list(group.get("operations") or []),
+                        )
+                    )
                 (
                     payload,
                     st_calls,
