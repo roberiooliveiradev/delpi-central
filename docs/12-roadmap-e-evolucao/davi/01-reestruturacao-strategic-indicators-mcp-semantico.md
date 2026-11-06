@@ -548,3 +548,72 @@ consumer migration broker    = PENDING
 NL-retrieval equivalence     = decisão pendente na remoção
 execute/delete               = não implementar (writes exigem governança própria)
 ```
+
+## 18. Wave 005 — Semantic migration + legacy readiness (DAVI-V2-WAVE-005)
+
+> 2026-11-06. Decisão: **Alternativa A** — tools semânticas atuais bastam; nenhum componente novo.
+
+### 18.1 Reconciliação SHA W4
+
+```text
+0231b3aef12 = commit W4 real (testes cobertura analyze + paridade + plano §17)
+698916cf81  = HEAD reportado = rebase tip incluindo commits DÉLIA concorrentes
+DEPLOYED    = imagem contém todo o código até o SHA de deploy; W4 era só
+              test+doc → diff funcional zero — inconsistência DOCUMENTAL apenas
+EXECUTION_DRIFT = nenhum material
+```
+
+### 18.2 Paridade NL-discovery — avaliação
+
+```text
+discover hint payload  = {description, semantic_hints{entity,shape,tags},
+                         required_arguments, argument_schema, pagination_hints,
+                         retrieval_score, candidate_token}
+get_context substrate  = catalog{action_id,description,entity,shape,tags} +
+                         schema{argument_schema,required_arguments, available}
+VERDICT                = metadados de seleção IDÊNTICOS (entity/shape/tags/
+                         description); único delta real = ranking NL server-side
+                         (retrieval_score) e pagination_hints inline
+DECISÃO                = Alternativa A — o modelo seleciona sobre o catálogo
+                         completo; sem `search` dedicada, sem motor paralelo
+PROVA                  = test_semantic_substrate_covers_nl_needs_without_broker
+                         (7 necessidades DELPI reais → capability publicada +
+                         schema sob demanda, sem candidate token)
+RESIDUAL               = seleção pelo modelo ≠ ranking server — eval de
+                         tool selection no provider permanece PENDING
+```
+
+### 18.3 Consumidores do broker legado
+
+```text
+ChatGPT/plugin (externo)     = EXTERNAL_DEPENDENCY — SKILL.md migrado para
+                               semantic-first (fallback broker documentado);
+                               rediscovery manual do plugin = PENDING
+agent_directives JSON        = MIGRATED (W3: SEMANTIC_TOOLS_FIRST)
+GPT Actions legacy surface   = EXTERNAL_DEPENDENCY (surface_parity legacy=2 —
+                               aposentadoria coordenada futura)
+Docs de integração canônicos = MIGRATED (waves 1–4)
+delia battery artifacts      = identificados — fixtures de eval, não consumidores
+SURI inventory doc           = referência histórica — sem ação
+Código runtime do broker     = consumidores internos zerados (tools novas não
+                               dependem de discover/execute)
+```
+
+### 18.4 Gates de retirada — atualização
+
+```text
+CAPABILITY PARITY            = PASS (94/94 read; 25/25 analyze)
+NL DISCOVERY PARITY          = PASS-metadados / PENDING-provider-eval
+CONSUMER MIGRATION           = PARCIAL (SKILL.md + diretivas migradas;
+                               ChatGPT plugin e GPT Actions pendentes)
+SECURITY REGRESSION          = PASS
+LIVE FUNCTIONAL TESTS        = TEST_NOT_RUN (OAuth end-user indisponível)
+PROVIDER DISCOVERY           = PENDING
+ROLLBACK READY               = PASS
+```
+
+### 18.5 AuthZ multiusuário
+
+Segunda identidade organizacional indisponível nesta sessão → **PENDING**
+(bloqueio de credencial; responsável: responsável pelo ambiente/Keycloak).
+Rollout amplo segue condicionado a essa evidência.
