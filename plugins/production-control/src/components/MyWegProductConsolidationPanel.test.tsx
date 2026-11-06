@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { MyWegCompareProductsPayload } from "../types";
@@ -14,6 +15,28 @@ vi.mock("@delpi/plugin-ui/index", () => ({
 
 vi.mock("../api/ppcApi", () => ({
   fetchMyWegNeedBatchesCompareProducts: (...args: unknown[]) => fetchProducts(...args),
+}));
+
+vi.mock("./PpcConfirmModal", () => ({
+  HostContainedWideDialog: ({
+    open,
+    title,
+    children,
+    onClose,
+  }: {
+    open: boolean;
+    title: string;
+    children: ReactNode;
+    onClose: () => void;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label={title}>
+        <button type="button" onClick={onClose}>
+          Fechar
+        </button>
+        {children}
+      </div>
+    ) : null,
 }));
 
 vi.mock("./dataTableUi", () => ({
@@ -134,7 +157,7 @@ describe("MyWegProductConsolidationPanel", () => {
     fetchProducts.mockResolvedValue(payload);
   });
 
-  it("abre o detalhe acima da tabela ao clicar em Detalhes", async () => {
+  it("abre o detalhe em modal ao clicar em Detalhes", async () => {
     render(
       <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
     );
@@ -143,10 +166,30 @@ describe("MyWegProductConsolidationPanel", () => {
       expect(screen.getByTestId("products-table")).toBeTruthy();
     });
 
-    expect(screen.queryByText(/Detalhe · 80016354/i)).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /^detalhes$/i }));
-    expect(screen.getByText(/Detalhe · 80016354/i)).toBeTruthy();
+
+    const dialog = screen.getByRole("dialog", { name: /Detalhe · 80016354/i });
+    expect(dialog).toBeTruthy();
     expect(screen.getByText(/Por data de remessa/i)).toBeTruthy();
     expect(screen.getByText("12/11/2026")).toBeTruthy();
+    expect(screen.getByTestId("products-table")).toBeTruthy();
+  });
+
+  it("fecha o modal e mantém a lista visível", async () => {
+    render(
+      <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("products-table")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /^row-/i }));
+    expect(screen.getByRole("dialog")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /^fechar$/i }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByTestId("products-table")).toBeTruthy();
   });
 });

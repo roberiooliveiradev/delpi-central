@@ -28,6 +28,7 @@ Deixar a tela **Necessidades WEG** mais minimalista, escaneável e executiva par
 - Filtros da comparação agrupados (par de coletas · filtro de produto · faturamento).
 - Busca duplicada removida: filtro de produto fica na barra de análise; `hideSearch` nas `DataTableSection` MyWEG.
 - Análise por produto com título mais claro, chips de resumo e colunas enxutas.
+- Detalhe do produto abre em modal central (`HostContainedWideDialog`), sem expandir na lista.
 - Percentuais via `formatPercentDisplay` (máx. 2 casas, pt-BR).
 - Semântica visual verde/vermelho para aumentos/reduções (badges, deltas, KPIs).
 - KPIs de comparação com mais respiro e número em destaque.

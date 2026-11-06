@@ -1,5 +1,5 @@
 import { HelpTooltip } from "@delpi/plugin-ui/index";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { fetchMyWegNeedBatchesCompareProducts } from "../api/ppcApi";
 import { httpErrorStatus } from "../api/httpClient";
@@ -16,6 +16,7 @@ import {
   situationBadgeClass,
 } from "../utils/mywegSemanticTone";
 import { DataTableSection, type DataTableColumn } from "./dataTableUi";
+import { HostContainedWideDialog } from "./PpcConfirmModal";
 
 type Props = {
   fromId: string;
@@ -184,22 +185,20 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<number | null>(null);
-  const [expandedKey, setExpandedKey] = useState<string | null>(null);
-  const detailRef = useRef<HTMLDivElement | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
-  const toggleExpanded = (productKey: string) => {
-    setExpandedKey((current) => (current === productKey ? null : productKey));
+  const openDetail = (productKey: string) => {
+    setSelectedKey(productKey);
+  };
+
+  const closeDetail = () => {
+    setSelectedKey(null);
   };
 
   useEffect(() => {
     setPage(1);
-    setExpandedKey(null);
+    setSelectedKey(null);
   }, [fromId, toId, search]);
-
-  useEffect(() => {
-    if (!expandedKey || !detailRef.current) return;
-    detailRef.current.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
-  }, [expandedKey]);
 
   useEffect(() => {
     if (!fromId || !toId || fromId === toId) {
@@ -305,19 +304,20 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
           <button
             type="button"
             className="ppc-btn ppc-btn--secondary ppc-myweg-needs__details-btn"
-            aria-expanded={expandedKey === row.productKey}
+            aria-haspopup="dialog"
+            aria-expanded={selectedKey === row.productKey}
             onClick={(event) => {
               event.preventDefault();
               event.stopPropagation();
-              toggleExpanded(row.productKey);
+              openDetail(row.productKey);
             }}
           >
-            {expandedKey === row.productKey ? texts.hideDetails : texts.showDetails}
+            {texts.showDetails}
           </button>
         ),
       },
     ],
-    [expandedKey],
+    [selectedKey],
   );
 
   if (loading && !payload) {
@@ -341,7 +341,7 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
     return null;
   }
 
-  const expanded = payload.items.find((row) => row.productKey === expandedKey) ?? null;
+  const selected = payload.items.find((row) => row.productKey === selectedKey) ?? null;
   const fromLabel = formatRemessaBr(payload.fromBatch.collectionDate);
   const toLabel = formatRemessaBr(payload.toBatch.collectionDate);
   const netDelta = formatDecimalString(payload.totals.deltaQuantityUn);
@@ -351,6 +351,7 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
     if (raw.startsWith("-")) return "ppc-myweg-needs__delta ppc-myweg-needs__delta--down";
     return "ppc-myweg-needs__delta ppc-myweg-needs__delta--up";
   })();
+  const detailOpen = Boolean(selected);
 
   return (
     <section className="ppc-myweg-needs__products" aria-label={texts.title}>
@@ -375,24 +376,6 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
         </div>
       </header>
 
-      {expanded ? (
-        <div ref={detailRef} className="ppc-myweg-needs__product-detail-anchor">
-          <div className="ppc-myweg-needs__product-detail-toolbar">
-            <h4 className="ppc-myweg-needs__product-detail-heading">
-              {texts.detailHeading(productLabel(expanded))}
-            </h4>
-            <button
-              type="button"
-              className="ppc-btn ppc-btn--ghost ppc-myweg-needs__details-btn"
-              onClick={() => setExpandedKey(null)}
-            >
-              {texts.hideDetails}
-            </button>
-          </div>
-          <ProductDetail row={expanded} fromLabel={fromLabel} toLabel={toLabel} />
-        </div>
-      ) : null}
-
       <DataTableSection
         title={texts.tableTitle}
         rows={payload.items}
@@ -402,16 +385,16 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
         hideSearch
         interactive
         columnPreferencesKey="production-control:myweg-products:columns:v1"
-        onRowClick={(row) => toggleExpanded(row.productKey)}
+        onRowClick={(row) => openDetail(row.productKey)}
         getRowClassName={(row) =>
-          row.productKey === expandedKey ? "ppc-myweg-needs__product-row--expanded" : undefined
+          row.productKey === selectedKey ? "ppc-myweg-needs__product-row--selected" : undefined
         }
         serverPagination={{
           page: payload.page,
           pageSize: payload.pageSize,
           total: payload.total,
           onPageChange: (nextPage) => {
-            setExpandedKey(null);
+            setSelectedKey(null);
             setPage(nextPage);
           },
           onPageSizeChange: () => {
@@ -419,6 +402,17 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
           },
         }}
       />
+
+      <HostContainedWideDialog
+        open={detailOpen}
+        title={selected ? texts.detailHeading(productLabel(selected)) : texts.title}
+        onClose={closeDetail}
+        closeAriaLabel={texts.detailCloseAria}
+      >
+        {selected ? (
+          <ProductDetail row={selected} fromLabel={fromLabel} toLabel={toLabel} />
+        ) : null}
+      </HostContainedWideDialog>
     </section>
   );
 }
