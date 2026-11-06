@@ -38,6 +38,13 @@ from .auth import (
     is_mcp_data_path,
     mcp_transport_auth,
 )
+from .avatar_image import (
+    AvatarDelivery,
+    approved_avatar_path,
+    avatar_filename,
+    avatar_mime,
+    build_avatar_delivery,
+)
 from .errors import (
     INTERNAL_ERROR_MESSAGE,
     json_payload_text,
@@ -103,9 +110,14 @@ from .tool_validation import (
 )
 
 __all__ = [
+    "AvatarDelivery",
     "ConformanceReport",
     "ConformanceStatus",
     "DELPI_META_SECURITY_SCHEMES",
+    "approved_avatar_path",
+    "avatar_filename",
+    "avatar_mime",
+    "build_avatar_delivery",
     "DELPI_META_TOOL_CLASS",
     "DELPI_MCP_PROTOCOL_MINIMUM",
     "GateResult",

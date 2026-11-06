@@ -9,7 +9,7 @@ Material writes: PREPARE → opaque proposal_handle → commit_proposal
 
 from __future__ import annotations
 
-import hashlib
+
 import logging
 from pathlib import Path
 from typing import Any
@@ -19,6 +19,7 @@ from fastapi.responses import JSONResponse
 from mcp.types import CallToolResult
 from starlette.requests import Request
 
+from delpi_mcp.avatar_image import build_avatar_delivery
 from delpi_mcp.errors import kind_for_http_status, mcp_tool_result
 from delpi_mcp.identity import (
     build_mcp_request as _shared_build_request,
@@ -397,18 +398,11 @@ def tool_get_methodology_guide(
         return handle_tool_error(exc)
 
 
-_AVATAR_MIME_BY_SUFFIX = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
-# Avatar bytes travel as a canonical ImageContent block — same transport
-# discipline as helpdesk attachments (AVATAR-INLINE-MCP-V1 POC).
-_AVATAR_INLINE_MAX_BYTES = 8 * 1024 * 1024
-
-
 def tool_get_avatar() -> CallToolResult:
     """Approved official avatar as MCP ImageContent — narrative asset only.
 
-    READ-only, same view gate as other reads. The asset comes exclusively
-    from the canonical ficha's ``avatar_reference`` when
-    ``OFFICIAL_AVATAR_APPROVED`` — never from user-supplied path or URL.
+    READ-only, same view gate as other reads. Delivery mechanics live in
+    the canonical ``delpi_mcp.avatar_image`` helper (AVATAR-INLINE-MCP-V1).
     """
     try:
         request = build_mcp_request()
@@ -417,65 +411,31 @@ def tool_get_avatar() -> CallToolResult:
             TeoAgentIntelligenceService,
         )
 
-        profile = TeoAgentIntelligenceService.character_profile()
-        identity = profile.identity
-        appearance = profile.appearance
-        reference = (appearance.avatar_reference or "").strip()
-        if (
-            appearance.avatar_status != "OFFICIAL_AVATAR_APPROVED"
-            or not reference
-        ):
+        delivery = build_avatar_delivery(
+            TeoAgentIntelligenceService.character_profile(),
+            Path(__file__).resolve().parents[3],
+        )
+        if delivery.data is None:
             return _error_result(
                 "Avatar oficial não aprovado/publicado para este especialista.",
                 status_code=404,
                 error_code="not_found",
             )
-        root = Path(__file__).resolve().parents[3]
-        path = (root / reference).resolve()
-        if not path.is_file() or not path.is_relative_to(root):
-            return _error_result(
-                "Avatar aprovado não encontrado no serviço.",
-                status_code=404,
-                error_code="not_found",
-            )
-        content = path.read_bytes()
-        mime = _AVATAR_MIME_BY_SUFFIX.get(
-            path.suffix.lower(), "application/octet-stream"
-        )
-        data = {
-            "character_id": identity.character_id,
-            "display_name": identity.display_name or identity.name,
-            "avatar_status": appearance.avatar_status,
-            "avatar_reference": reference,
-            "mime_type": mime,
-            "bytes": len(content),
-            "sha256": hashlib.sha256(content).hexdigest(),
-            "content_delivery": "image_block",
-        }
-        if len(content) > _AVATAR_INLINE_MAX_BYTES:
-            data["content_delivery"] = "too_large"
+        if delivery.too_large:
             return _ok_result(
-                data,
+                delivery.data,
                 "Avatar excede o limite inline — metadata only.",
             )
-        import base64
-
-        from mcp.types import ImageContent
-
-        image = ImageContent(
-            type="image",
-            data=base64.b64encode(content).decode("ascii"),
-            mime_type=mime,
-        )
         return mcp_tool_result(
-            data,
+            delivery.data,
             is_error=False,
             text=(
-                f"Avatar oficial de {data['display_name']} "
-                f"({mime}, {len(content)} bytes) — imagem entregue como "
+                f"Avatar oficial de {delivery.display_name} "
+                f"({delivery.data['mime_type']}, "
+                f"{delivery.data['bytes']} bytes) — imagem entregue como "
                 "bloco image."
             ),
-            images=[image],
+            images=[delivery.image],
         )
     except Exception as exc:
         return handle_tool_error(exc)
