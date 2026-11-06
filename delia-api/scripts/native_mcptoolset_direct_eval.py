@@ -132,11 +132,28 @@ class _CountingMcpAdapter:
                 "target": target,
                 "elapsed_s": round(time.monotonic() - started, 2),
                 "args": {
-                    str(k): str(v)[:200]
+                    str(k): {
+                        "type": type(v).__name__,
+                        "json_kind": (
+                            "object"
+                            if isinstance(v, Mapping)
+                            else "array"
+                            if isinstance(v, (list, tuple))
+                            else "string"
+                            if isinstance(v, str)
+                            else "boolean"
+                            if isinstance(v, bool)
+                            else "number"
+                            if isinstance(v, (int, float))
+                            else "null"
+                            if v is None
+                            else type(v).__name__
+                        ),
+                    }
                     for k, v in call_args.items()
                 }
                 if isinstance(call_args, Mapping)
-                else str(call_args)[:400],
+                else {"type": type(call_args).__name__},
                 "result_snippet": str(result)[:2500],
             }
         )
