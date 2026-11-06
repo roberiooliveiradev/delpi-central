@@ -283,6 +283,10 @@ class InvestigationDeps:
     # extra investigation pass per run — a re-declared insufficiency
     # must never burn the whole retry budget as agent_error.
     insufficiency_retry_used: bool = False
+    # Same one-shot pattern: an unbound evidence_ref may recover once
+    # via ModelRetry; a second bad declaration is handled by the
+    # deterministic acceptor, never by burning more retry budget.
+    evidence_ref_retry_used: bool = False
 
 
 def _bounded_json(payload: Any, *, limit: int = 6000) -> str:
@@ -441,6 +445,11 @@ def _attempt_projection(
     return {
         "observation_index": observation_index,
         "evidence_handle": f"obs:{observation_index}",
+        # Same deterministic classification the governed acceptor
+        # applies: discovery metadata, errors and empty results are
+        # observations the model may READ, never citable business
+        # evidence. Report them under limitations instead.
+        "evidence_citable": _is_business_evidence_attempt(attempt),
         "status": attempt.status.value,
         "content": (attempt.content or "")[:2000] or None,
         "limitations": list(attempt.limitations)[:12],
@@ -1483,6 +1492,39 @@ class PydanticAiInvestigationOrchestrator:
                     "evidence_refs must be non-negative indexes into "
                     "the collected tool observations"
                 )
+            # Recoverable structural fix BEFORE the acceptor: refs
+            # must point at citable business evidence (the same
+            # classification exposed in each observation's
+            # evidence_citable flag). Discovery metadata, empty
+            # results and failed calls are informative observations —
+            # the model may report them in limitations, never cite
+            # them as evidence. One-shot per run; a persistent bad
+            # ref falls through to the deterministic acceptor, which
+            # drops it and marks the declaration honestly.
+            if not ctx.deps.evidence_ref_retry_used:
+                citable = [
+                    index
+                    for index, item in enumerate(ctx.deps.collected)
+                    if _is_business_evidence_attempt(item)
+                ]
+                bad_refs = [
+                    index
+                    for index in output.evidence_refs
+                    if index >= len(ctx.deps.collected)
+                    or not _is_business_evidence_attempt(
+                        ctx.deps.collected[index]
+                    )
+                ]
+                if bad_refs and citable:
+                    ctx.deps.evidence_ref_retry_used = True
+                    raise ModelRetry(
+                        f"evidence_refs {bad_refs} point to "
+                        "observations that are not citable business "
+                        "evidence (discovery metadata, empty result "
+                        "or failed call). Cite only indexes "
+                        f"{citable}; report the rest under "
+                        "limitations."
+                    )
             # Native technical retry (bounded by UsageLimits, one-shot
             # per run): a declaration of insufficiency while tool
             # budget remains may simply mean the selected capability

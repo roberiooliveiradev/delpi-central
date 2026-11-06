@@ -32,7 +32,14 @@ from app.infrastructure.orchestration.pydantic_ai_investigation import (
     focus_arguments_on_next_identifier,
     uncovered_user_identifiers,
 )
-from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
+from pydantic_ai.messages import (
+    ModelRequest,
+    ModelResponse,
+    RetryPromptPart,
+    TextPart,
+    ToolCallPart,
+    ToolReturnPart,
+)
 from pydantic_ai.models.function import FunctionModel
 from tests.support.native_mcp_fixtures import (
     alpha_beta_servers,
@@ -804,3 +811,74 @@ def test_missing_identifier_without_evidence_asks_clarification():
     attempt = engine.attempt("Me mostre a estrutura desse produto")
     assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     assert "identificador" in (attempt.content or "").casefold()
+
+
+def test_unbound_evidence_ref_triggers_one_shot_native_retry():
+    """Declared ref pointing at a non-citable observation recovers via
+    one ModelRetry; the corrected declaration then binds cleanly."""
+    gates = _gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    tool_name = catalog[0]["capability_id"]
+    attempts_queue = [
+        _success_attempt(
+            content="Nenhum resultado encontrado.", root="MISS"
+        ),
+        _success_attempt(content="estrutura real 90260147", root="90260147"),
+    ]
+
+    def _spy(**kwargs):
+        return attempts_queue.pop(0)
+
+    gates._governed_semantic_tool_invoke = _spy  # type: ignore[method-assign]
+    calls = {"n": 0}
+
+    def _fn(messages, _info):
+        calls["n"] += 1
+        tool_returns = [
+            m for m in messages
+            if isinstance(m, ModelRequest)
+            and any(
+                isinstance(p, ToolReturnPart) for p in m.parts
+            )
+        ]
+        retries = [
+            m for m in messages
+            if isinstance(m, ModelRequest)
+            and any(
+                isinstance(p, RetryPromptPart) for p in m.parts
+            )
+        ]
+        if len(tool_returns) < 2:
+            # Distinct args per call — identical invocations dedupe
+            # as non-progress and never reach ``collected``.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        tool_name,
+                        {"arguments": {"query": str(len(tool_returns))}},
+                    )
+                ]
+            )
+        if not retries:
+            # First declaration cites the empty-discovery observation.
+            return _final_answer(
+                "estrutura real 90260147", status="complete",
+                refs=[0, 1],
+            )
+        return _final_answer(
+            "estrutura real 90260147", status="complete", refs=[1]
+        )
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        attempt = engine.attempt("estrutura 90260147")
+    assert calls["n"] == 4
+    assert not any(
+        lim.startswith("evidence_ref_unbound")
+        for lim in attempt.limitations
+    )
+    assert "estrutura real 90260147" in (attempt.content or "")
