@@ -153,6 +153,7 @@ def test_wave3a_mcp_tools_wave001_four():
         "execute_delpi_information",
         "get_context",
         "knowledge",
+        "read",
     ]
 
 

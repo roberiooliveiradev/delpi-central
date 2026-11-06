@@ -309,3 +309,55 @@ def knowledge_output_json_schema() -> dict:
     schema["title"] = "knowledgeOutput"
     schema["additionalProperties"] = False
     return schema
+
+
+class ReadInput(BaseModel):
+    """Closed input for semantic reads over governed capabilities."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    capability: str = Field(
+        ...,
+        min_length=1,
+        max_length=128,
+        description=(
+            "Governed capability id published by get_context "
+            "action=catalog/schema — not a free operationId, URL, path, "
+            "method or SQL."
+        ),
+    )
+    arguments: dict[str, Any] | None = Field(
+        default=None,
+        description="Schema-bounded arguments for the capability (see its argument_schema)",
+    )
+
+
+class ReadOutput(BaseModel):
+    """Runtime envelope for read structuredContent."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    capability: str
+    status: str
+    action_id: str
+    entity: str | None = None
+    shape: str | None = None
+    projection: str
+    data: Any = None
+    truncated: bool
+    is_complete: bool
+    response_bytes: int | None = None
+
+
+def read_input_json_schema() -> dict:
+    schema = ReadInput.model_json_schema()
+    schema["title"] = "readArguments"
+    schema["additionalProperties"] = False
+    return schema
+
+
+def read_output_json_schema() -> dict:
+    schema = ReadOutput.model_json_schema()
+    schema["title"] = "readOutput"
+    schema["additionalProperties"] = False
+    return schema

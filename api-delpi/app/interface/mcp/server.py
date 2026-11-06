@@ -29,6 +29,8 @@ from app.application.external_capabilities.constants import (
     MCP_TOOL_GET_CONTEXT_TITLE,
     MCP_TOOL_KNOWLEDGE,
     MCP_TOOL_KNOWLEDGE_TITLE,
+    MCP_TOOL_READ,
+    MCP_TOOL_READ_TITLE,
 )
 from app.application.external_capabilities.dynamic_information.candidate_token import (
     CandidateTokenError,
@@ -49,6 +51,7 @@ from app.application.external_capabilities.dynamic_information.errors import (
 )
 from app.composition.davi_dynamic_read_composer import (
     davi_knowledge_wired,
+    davi_read_wired,
     execute_delpi_information_wired,
 )
 from app.interface.mcp.branding import DAVI_MCP_INSTRUCTIONS
@@ -66,6 +69,7 @@ from app.interface.mcp.schemas import (
     ExecuteDelpiInformationInput,
     GetContextInput,
     KnowledgeInput,
+    ReadInput,
     discover_delpi_information_input_json_schema,
     discover_delpi_information_output_json_schema,
     execute_delpi_information_input_json_schema,
@@ -74,6 +78,8 @@ from app.interface.mcp.schemas import (
     get_context_output_json_schema,
     knowledge_input_json_schema,
     knowledge_output_json_schema,
+    read_input_json_schema,
+    read_output_json_schema,
 )
 from app.utils.logger import log_error
 
@@ -207,6 +213,9 @@ class ApiDelpiMCPServer(MCPServer):
             elif info.name == MCP_TOOL_KNOWLEDGE:
                 input_schema = knowledge_input_json_schema()
                 output_schema = knowledge_output_json_schema()
+            elif info.name == MCP_TOOL_READ:
+                input_schema = read_input_json_schema()
+                output_schema = read_output_json_schema()
             payload: dict[str, Any] = {
                 "name": info.name,
                 "title": info.title,
@@ -234,6 +243,8 @@ class ApiDelpiMCPServer(MCPServer):
                 GetContextInput.model_validate(arguments or {})
             elif name == MCP_TOOL_KNOWLEDGE:
                 KnowledgeInput.model_validate(arguments or {})
+            elif name == MCP_TOOL_READ:
+                ReadInput.model_validate(arguments or {})
         except ValidationError as exc:
             log_error(f"mcp {name} validation rejected error_count={exc.error_count()}")
             return validation_error_tool_result()
@@ -476,6 +487,59 @@ def create_mcp_server() -> MCPServer:
             )
         except Exception as exc:
             log_error(f"mcp knowledge failed: {exc}")
+            raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
+
+    @mcp.tool(
+        name=MCP_TOOL_READ,
+        title=MCP_TOOL_READ_TITLE,
+        description=(
+            "Read DELPI business data through one governed capability. "
+            "capability: id published by get_context action=catalog/schema "
+            "(e.g. search_products, get_product_stock). arguments: bounded "
+            "fields from that capability's argument_schema. Only currently "
+            "eligible capabilities execute — unknown or unavailable ids fail "
+            "closed. Does not accept URL, path, method, operationId lookup "
+            "outside the catalog, or SQL. Backend AuthZ remains authoritative."
+        ),
+        annotations=ToolAnnotations.model_validate(
+            tool_annotations_payload(
+                MCP_TOOL_READ_TITLE,
+                read_only=True,
+                destructive=False,
+            )
+        ),
+        meta=security_schemes_meta(DAVI_MCP_SECURITY_SCHEMES),
+        structured_output=True,
+    )
+    def read_tool(
+        capability: str,
+        arguments: dict[str, Any] | None = None,
+    ) -> CallToolResult:
+        try:
+            params = ReadInput(capability=capability, arguments=arguments)
+        except ValidationError:
+            return validation_error_tool_result("Invalid read parameters.")
+        try:
+            data = davi_read_wired(
+                capability=params.capability,
+                arguments=params.arguments,
+                authorization=_authorization(),
+            )
+            return CallToolResult(
+                content=[TextContent(type="text", text="Read completed.")],
+                structuredContent=data,
+                isError=False,
+            )
+        except PermissionError as exc:
+            return _authz_error_result(exc)
+        except GovernedExecutionError as exc:
+            return typed_error_tool_result(
+                exc.code or OWNER_EXECUTION_ERROR_CODE,
+                str(exc) or "Read rejected.",
+                recoverable=exc.code == ARGUMENT_VALIDATION_CODE,
+            )
+        except Exception as exc:
+            log_error(f"mcp read failed: {exc}")
             raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
 
     if document_transport_spike_enabled():

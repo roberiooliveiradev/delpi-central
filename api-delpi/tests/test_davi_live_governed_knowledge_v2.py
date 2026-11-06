@@ -208,4 +208,5 @@ def test_mcp_surface_wave001_four_tools():
         "execute_delpi_information",
         "get_context",
         "knowledge",
+        "read",
     ]

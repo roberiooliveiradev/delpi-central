@@ -347,3 +347,68 @@ Live/provider/deploy → TEST_NOT_RUN / PENDING.
 - Provider rediscovery + live positive/negative AuthZ (segundo usuário) → PENDING.
 - `read` semântica (façade sobre broker governado) → próxima onda (GAP-TOOL-001 aberto como decisão de design registrada).
 - Avaliação de tool selection/ambiguidade da coexistência 4-tool → PENDING (eval de seleção).
+
+## 14. Execução DAVI-V2-VALIDATION-AND-SEMANTIC-EXPANSION-002
+
+> Executada em 2026-11-06 sobre `main`. W1 revalidada integralmente; `read` implementada como façade semântica sobre o pipeline governado (piloto GAP-TOOL-001 resolvido por decisão de design).
+
+### 14.1 Rebaseline
+
+```text
+BASE HEAD       = faf75fe8d3 (W1) → d398ae055d pós-rebase sobre concorrência
+BRANCH          = main
+WORKING TREE    = alterações de terceiros preservadas (delia/engineering/infra)
+DEPLOYED SHA    = container dev local pré-W1 — STALE_EVIDENCE
+```
+
+### 14.2 Wave 001 — validação integrada
+
+| Item | Resultado |
+|---|---|
+| 4 tools registradas, schemas fechados, outputSchema, annotations, securitySchemes, delpi/toolClass | PASS |
+| get_context context/catalog/schema + negative (capability inexistente/indisponível) | PASS |
+| knowledge sources/search/get, provenance, projeção allowlisted, corpus indisponível honesto, AuthZ propagada | PASS |
+| Broker discover→execute, search_products, candidate tokens, allowlist, projeções, SQL bounded | PASS (sem mudança de contrato) |
+| Catálogo não concede permissão | PASS (catalog_is_not_permission; backend AuthZ intacto) |
+| Live MCP/provider (OAuth, tools/list, second-user negative, agent preview) | TEST_NOT_RUN / PENDING (stack dev existe; container pré-W1; OAuth end-user indisponível na sessão) |
+| Tool selection/coexistência eval | PENDING (matriz abaixo; provider eval requer live) |
+
+Matriz de seleção esperada (para eval live pendente):
+
+```text
+"o que você consegue consultar?"     → get_context
+"regras de descrição de MP"          → knowledge (fonte+provenance)
+"cadastro do produto 10080010"       → read|discover→execute (AuthZ backend)
+"conceito + dados reais"             → knowledge + read separados, sem mistura
+"o que não tenho permissão"          → deny backend, sem vazamento
+```
+
+### 14.3 Wave 002 — tool `read`
+
+**Contrato:** `read(capability, arguments?)` — `capability` = action_id publicado pelo catálogo governado (`get_context` catalog/schema). Não é operationId livre: só ids que resolvem para TechnicalAction `executable` executam; demais → `CAPABILITY_NOT_ALLOWED`. Sem URL/path/method/SQL.
+
+**Decisão de design (GAP-TOOL-001 resolvido):** candidate token não é exigido porque a tool é a seleção fixa — mesmo boundary pós-discovery: `get_action_by_id` → `executable` → `build_execution_plan` → dispatch compartilhado `execute_action_plan` (ApprovedCapabilityPlan → search_products runner com enforce_authz; CatalogActionPlan → `execute_catalog_read` → executor request-bound → backend AuthZ → projeção aprovada → bounds). Nenhum registry semântico novo, nenhum mapeamento PT→operationId.
+
+**Reuso total:** Action Index, eligibility, argument validator, execution plan, CatalogActionExecutorPort, approved projection, response bounds, backend AuthZ.
+
+**Compatibilidade:** broker inalterado; `read` e `execute_delpi_information` compartilham `execute_action_plan`. Surface = 5 tools; `read` sai de `PLANNED` no `get_context`.
+
+### 14.4 Testes e gates
+
+```text
+tests/test_davi_semantic_tools_wave001.py: 29 PASS (5 novos read)
+pytest -k "davi or mcp": ver resultado final registrado em commit
+Pins de superfície: 4→5 tools (manifesto semantic waves aprovado)
+Content: surface_parity.mcp_tools=5, version 2026.11.06.2
+Docs de integração correntes: 5 tools
+```
+
+### 14.5 Pendências
+
+```text
+WAVE_001_LIVE_PROVIDER      = PENDING (deploy + rediscovery + negative AuthZ)
+WAVE_002_READ_LIVE_PROVIDER = PENDING
+TOOL_SELECTION_EVAL         = PENDING (matriz §14.2 definida; execução live)
+analyze/execute/delete      = PLANNED_NOT_IMPLEMENTED (ondas futuras, por capability aprovada)
+Strategic Indicators        = FUTURO (Core API + owner AuthZ — não nesta rodada)
+```

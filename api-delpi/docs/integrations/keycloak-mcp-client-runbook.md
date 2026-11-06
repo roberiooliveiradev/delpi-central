@@ -208,7 +208,7 @@ Extra legitimate audiences such as `account` are acceptable. Membership of both 
 6. Copy the ChatGPT-generated return URL into Keycloak.
 7. Save Keycloak client.
 8. Create or **Reconnect** the ChatGPT Plugin.
-9. After successful OAuth, ChatGPT must show the connected account and list exactly the 4 MCP tools (Wave 001 surface: `discover_delpi_information`, `execute_delpi_information`, `get_context`, `knowledge`):
+9. After successful OAuth, ChatGPT must show the connected account and list exactly the 5 MCP tools (semantic surface: `discover_delpi_information`, `execute_delpi_information`, `get_context`, `knowledge`, `read`):
    `discover_delpi_information`, `execute_delpi_information`.
    Product Master (`search_products`) is a governed capability reached through discover → execute — it is **not** a dedicated MCP tool.
    (HISTORICAL: earlier deployments listed 3 tools including a dedicated `search_products`; removed by `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`.)

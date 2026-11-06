@@ -85,7 +85,7 @@ def test_runtime_eligible_after_wave3a_and_drawing() -> None:
 
 def test_mcp_tools_wave001_four() -> None:
     source = (_API_ROOT / "app/interface/mcp/server.py").read_text(encoding="utf-8")
-    assert source.count("@mcp.tool(") == 4
+    assert source.count("@mcp.tool(") == 5
     assert set(MCP_TOOLS) <= {
         MCP_TOOL_DISCOVER_DELPI_INFORMATION,
         MCP_TOOL_EXECUTE_DELPI_INFORMATION,

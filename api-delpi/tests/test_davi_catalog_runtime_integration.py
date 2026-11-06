@@ -898,6 +898,7 @@ def test_mcp_exposes_wave001_four_tools():
         "execute_delpi_information",
         "get_context",
         "knowledge",
+        "read",
     }
 
 

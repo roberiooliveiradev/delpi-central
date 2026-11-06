@@ -203,6 +203,7 @@ def test_wave005_mcp_tools_wave001_four():
         MCP_TOOL_EXECUTE_DELPI_INFORMATION,
         "get_context",
         "knowledge",
+        "read",
     ]
 
 

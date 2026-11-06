@@ -611,6 +611,7 @@ def test_wave001_four_tool_manifest_with_v5_allowlist():
         "execute_delpi_information",
         "get_context",
         "knowledge",
+        "read",
     ]
     # Wave 001 semantic surface = 4 MCP tools; allowlist is no longer search-only.
     assert load_allowlist_operation_ids(load_external_read_allowlist()) == set(
@@ -2016,13 +2017,14 @@ def test_mcp_output_schemas_present_for_all_three_tools():
 
     mcp = create_mcp_server()
     tools = asyncio.run(mcp.list_tools())
-    assert len(tools) == 4
+    assert len(tools) == 5
     by_name = {t.name: t for t in tools}
     assert set(by_name) == {
         "discover_delpi_information",
         "execute_delpi_information",
         "get_context",
         "knowledge",
+        "read",
     }
     assert (
         by_name["discover_delpi_information"].output_schema

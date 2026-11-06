@@ -102,6 +102,117 @@ def execute_catalog_read(
     )
 
 
+def execute_action_plan(
+    *,
+    action,
+    plan,
+    catalog_action_executor: CatalogActionExecutorPort | None,
+    search_products_runner: SearchProductsRunner | None,
+    budgets: dict[str, Any] | None = None,
+    tool_name: str = "execute_delpi_information",
+) -> dict[str, Any]:
+    """Dispatch a validated execution plan to its governed runner.
+
+    Single owner of plan dispatch for every DAVI surface: approved external
+    capabilities (search_products runner) and catalog actions share the same
+    projection + bounds pipeline. Caller supplies the TechnicalAction and the
+    already-validated plan; actor binding/AuthZ stay in the runner/executor.
+    """
+    budgets = budgets or load_dynamic_read_budgets()
+    if isinstance(plan, ApprovedCapabilityPlan):
+        if search_products_runner is None:
+            raise GovernedExecutionError(
+                "Approved capability runner is not configured",
+                code=OWNER_EXECUTION_ERROR_CODE,
+            )
+        args = plan.arguments
+        body = search_products_runner(
+            code=args.get("code"),
+            description=args.get("description"),
+            group_code=args.get("group_code"),
+            page=args.get("page", 1),
+            page_size=args.get("page_size", 50),
+            enforce_authz=True,
+            tool_name=tool_name,
+        )
+        body = apply_approved_field_projection(
+            body,
+            approved_fields=action.approved_response_fields
+            or ("product_code", "description", "group_category"),
+            list_key="items",
+        )
+        return bound_response_payload(
+            body,
+            max_bytes=int(budgets.get("execute_max_response_bytes") or 65536),
+            max_items=int(budgets.get("execute_max_items") or 50),
+        )
+    if isinstance(plan, CatalogActionPlan):
+        return execute_catalog_read(
+            action=action,
+            plan=plan,
+            catalog_action_executor=catalog_action_executor,
+            budgets=budgets,
+        )
+    raise GovernedExecutionError(
+        "Unsupported execution plan",
+        code=OWNER_EXECUTION_ERROR_CODE,
+    )
+
+
+def davi_read(
+    *,
+    capability: str,
+    arguments: dict[str, Any] | None = None,
+    catalog_action_executor: CatalogActionExecutorPort | None = None,
+    search_products_runner: SearchProductsRunner | None = None,
+) -> dict[str, Any]:
+    """Semantic read — resolve one governed capability id and execute it.
+
+    ``capability`` is the technical action id published by the governed
+    catalog (``get_context`` action=catalog/schema). It is not a free
+    operationId: only ids resolving to a currently DAVI-eligible
+    TechnicalAction execute; everything else fails closed. No URL, path,
+    method or SQL is accepted. Backend AuthZ stays authoritative through
+    the request-bound executor/runner — same boundary as the broker.
+    """
+    requested = (capability or "").strip()
+    if not requested:
+        raise GovernedExecutionError(
+            "capability is required",
+            code=ARGUMENT_VALIDATION_CODE,
+        )
+    action = get_action_by_id(requested)
+    if action is None or not action.executable:
+        raise GovernedExecutionError(
+            "capability is not available on the governed DAVI surface",
+            code=CAPABILITY_NOT_ALLOWED_CODE,
+        )
+    try:
+        plan = build_execution_plan(action, arguments)
+    except ArgumentValidationError as exc:
+        raise GovernedExecutionError(
+            str(exc), code=ARGUMENT_VALIDATION_CODE
+        ) from exc
+    bounded = execute_action_plan(
+        action=action,
+        plan=plan,
+        catalog_action_executor=catalog_action_executor,
+        search_products_runner=search_products_runner,
+        tool_name="read",
+    )
+    return {
+        "capability": requested,
+        "status": "ok",
+        "action_id": action.action_id,
+        "entity": action.entity,
+        "shape": action.shape,
+        "projection": "approved_fields"
+        if action.approved_response_fields
+        else "size_bound_only",
+        **bounded,
+    }
+
+
 def execute_delpi_information(
     *,
     candidate_token: str,
@@ -138,45 +249,13 @@ def execute_delpi_information(
             str(exc), code=ARGUMENT_VALIDATION_CODE
         ) from exc
 
-    if isinstance(plan, ApprovedCapabilityPlan):
-        if search_products_runner is None:
-            raise GovernedExecutionError(
-                "Approved capability runner is not configured",
-                code=OWNER_EXECUTION_ERROR_CODE,
-            )
-        args = plan.arguments
-        body = search_products_runner(
-            code=args.get("code"),
-            description=args.get("description"),
-            group_code=args.get("group_code"),
-            page=args.get("page", 1),
-            page_size=args.get("page_size", 50),
-            enforce_authz=True,
-            tool_name="execute_delpi_information",
-        )
-        body = apply_approved_field_projection(
-            body,
-            approved_fields=action.approved_response_fields
-            or ("product_code", "description", "group_category"),
-            list_key="items",
-        )
-        bounded = bound_response_payload(
-            body,
-            max_bytes=int(budgets.get("execute_max_response_bytes") or 65536),
-            max_items=int(budgets.get("execute_max_items") or 50),
-        )
-    elif isinstance(plan, CatalogActionPlan):
-        bounded = execute_catalog_read(
-            action=action,
-            plan=plan,
-            catalog_action_executor=catalog_action_executor,
-            budgets=budgets,
-        )
-    else:
-        raise GovernedExecutionError(
-            "Unsupported execution plan",
-            code=OWNER_EXECUTION_ERROR_CODE,
-        )
+    bounded = execute_action_plan(
+        action=action,
+        plan=plan,
+        catalog_action_executor=catalog_action_executor,
+        search_products_runner=search_products_runner,
+        budgets=budgets,
+    )
 
     return {
         "action_id": action.action_id,

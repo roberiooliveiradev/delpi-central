@@ -39,4 +39,5 @@ def test_technical_ids_unchanged_by_davi_branding() -> None:
         "execute_delpi_information",
         "get_context",
         "knowledge",
+        "read",
     ]

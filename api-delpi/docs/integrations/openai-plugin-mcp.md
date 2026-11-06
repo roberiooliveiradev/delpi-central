@@ -35,7 +35,7 @@ DAVI is branding/orchestration identity — **not** an authorization authority.
 | Keycloak client | `mcp-api-delpi` |
 | MCP resource | `https://minhadelpi.com.br/apps/api-delpi/mcp` |
 | V1 Product Master capability | `search_products` (operationId; behind discover→execute) |
-| Dynamic READ MCP broker | `discover_delpi_information` + `execute_delpi_information` (**CURRENT PROVEN**); semantic tools `get_context` + `knowledge` added by `DAVI-V2-WAVE-001-SEMANTIC-TOOLS-FOUNDATION` (productive MCP surface = **exactly 4 tools**) |
+| Dynamic READ MCP broker | `discover_delpi_information` + `execute_delpi_information` (**CURRENT PROVEN**); semantic tools `get_context` + `knowledge` added by `DAVI-V2-WAVE-001-SEMANTIC-TOOLS-FOUNDATION` (productive MCP surface = **exactly 5 tools**) |
 
 ## Architecture status
 
@@ -457,7 +457,7 @@ The exact connector id is operational/provider configuration and is intentionall
 7. Copy the provider-generated return URL into Keycloak and save the client.
 8. Create/reconnect the Plugin.
 9. After deployment or auth/metadata changes, use **Reconnect** when needed and refresh Plugin actions.
-10. Acceptance evidence: ChatGPT shows the connection as connected and lists exactly the 4 MCP tools — `discover_delpi_information`, `execute_delpi_information`, `get_context`, `knowledge`. (HISTORICAL: earlier acceptance listed a dedicated `search_products` tool — removed by `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`; Product Master remains reachable via discover→execute; 2-tool surface extended to 4 by `DAVI-V2-WAVE-001-SEMANTIC-TOOLS-FOUNDATION`.)
+10. Acceptance evidence: ChatGPT shows the connection as connected and lists exactly the 5 MCP tools — `discover_delpi_information`, `execute_delpi_information`, `get_context`, `knowledge`, `read`. (HISTORICAL: earlier acceptance listed a dedicated `search_products` tool — removed by `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`; Product Master remains reachable via discover→execute; 2-tool surface extended to 4 by `DAVI-V2-WAVE-001-SEMANTIC-TOOLS-FOUNDATION`.)
 
 ## Why remote MCP needs `mcp:tools` (and dedicated audience)
 

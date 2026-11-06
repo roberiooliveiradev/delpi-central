@@ -33,6 +33,7 @@ _MCP_TOOLS = {
     "execute_delpi_information",
     "get_context",
     "knowledge",
+    "read",
 }
 
 

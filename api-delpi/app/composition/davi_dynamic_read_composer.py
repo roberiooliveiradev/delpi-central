@@ -79,6 +79,23 @@ def execute_delpi_information_wired(
     )
 
 
+def davi_read_wired(
+    *,
+    authorization: str | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Read tool wiring: request-bound executor + approved capability runner."""
+    from app.application.external_capabilities.dynamic_information.execute_service import (
+        davi_read,
+    )
+
+    return davi_read(
+        catalog_action_executor=_RequestBoundCatalogActionExecutor(authorization),
+        search_products_runner=_search_products_runner,
+        **kwargs,
+    )
+
+
 def davi_knowledge_wired(
     *,
     authorization: str | None = None,

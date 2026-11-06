@@ -66,6 +66,7 @@ def test_mcp_surface_is_wave001_four_tools_without_search_products():
         "execute_delpi_information",
         "get_context",
         "knowledge",
+        "read",
     ]
     assert SEARCH_PRODUCTS_OPERATION_ID not in names
 

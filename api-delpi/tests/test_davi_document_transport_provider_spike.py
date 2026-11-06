@@ -96,6 +96,7 @@ def test_spike_disabled_by_default_keeps_base_tools_and_no_spike_resources(
         "execute_delpi_information",
         "get_context",
         "knowledge",
+        "read",
     ]
     resources = asyncio.run(mcp.list_resources())
     uris = {str(r.uri) for r in resources}
@@ -111,7 +112,7 @@ def test_spike_enabled_registers_resources_and_tool(monkeypatch: pytest.MonkeyPa
     tools = asyncio.run(mcp.list_tools())
     names = sorted(t.name for t in tools)
     assert SPIKE_TOOL_NAME in names
-    assert len(names) == 5
+    assert len(names) == 6
     assert "search_products" not in names
 
     resources = asyncio.run(mcp.list_resources())

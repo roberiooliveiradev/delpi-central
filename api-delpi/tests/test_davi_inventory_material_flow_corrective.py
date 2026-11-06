@@ -594,6 +594,7 @@ def test_mcp01_tool_count_wave001_four():
         "execute_delpi_information",
         "get_context",
         "knowledge",
+        "read",
     ]
 
 

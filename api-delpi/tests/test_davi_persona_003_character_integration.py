@@ -211,7 +211,7 @@ def test_profile_contains_no_operational_fields() -> None:
 def test_no_new_tools_or_authz_surface() -> None:
     directives = DaviAgentIntelligenceService.agent_directives()
     assert directives["read_only"] is True
-    assert directives["surface_parity"]["mcp_tools"] == 4
+    assert directives["surface_parity"]["mcp_tools"] == 5
     assert "write_flow" not in directives
     assert "commit_now" not in directives
 
