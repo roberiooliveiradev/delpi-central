@@ -381,3 +381,8 @@ Arquivos compartilhados (um integrador, sequencial após VAL-01): \`engineering-
 6. \`PRC-C5\`: homologação com casos sintéticos no TOTVS, relatório de cobertura, paridade, build/deploy por SHA e owner Ops. Integrações com origem externa, Requests API, migração do legado e criação ERP por API são **fases posteriores**.
 
 **RESULT:** \`CONTRACT_SPECIFIED\`, \`IMPLEMENTATION_NOT_STARTED\`, \`DEPLOY_NOT_PERFORMED\`, \`ERP_FIELD_COVERAGE_NOT_PROVEN\`.
+
+
+## Plano transversal de capacidades EVA — Product Registration (2026-11-06)
+
+A paridade **Portal/REST/EVA** integra cada slice deste vertical: para cada capacidade legítima do usuário, conectar uma ação `(entity, action)` ao **mesmo caso de uso** nas **seis tools semânticas existentes**, sem nova tool nem bypass de Core/Domain AuthZ. Matriz das 18 rotas, ações `product_registration.*`, riscos `read/execute`, PREPARE/ACT, confirmação humana para rejeição/conclusão, testes e integração serializada com VAL-01 em [PRODUCT-REGISTRATION-EVA-SEMANTIC-INTEGRATION.md](./PRODUCT-REGISTRATION-EVA-SEMANTIC-INTEGRATION.md). O documento é `TARGET/PLANNED`, não evidência de runtime. EVA não aprova produto nem escreve no TOTVS e não pode contornar a verificação oficial na conclusão. A publicação de uma rota humana requer cobertura semântica testada ou `PARITY_GAP` explicitamente bloqueado/aceito em release governado.
