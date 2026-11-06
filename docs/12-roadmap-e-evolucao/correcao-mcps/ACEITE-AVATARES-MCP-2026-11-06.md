@@ -158,3 +158,20 @@ Adicionado `_meta["openai/outputTemplate"]=ui://delpi/teo/avatar/v1`
 (chave reconhecida pelo Apps SDK, além do `ui.resourceUri` genérico).
 **Read-back runtime:** exec 0.01s, payload 129B, meta OK, container
 healthy. Visual ChatGPT: `TEST_NOT_RUN` (reteste manual pendente).
+
+## HOTFIX MCP-AVATAR-UI-V2.2 (2026-11-06) — handshake MCP Apps
+
+**Hipótese fundamentada aplicada (menor diff):** o componente era
+estático — lia `window.openai` mas nunca respondia `ui/initialize` nem
+emitia `ui/notifications/initialized`; hosts que dirigem o lifecycle
+MCP Apps aguardam o ACK antes de entregar `tool-result` → timeout.
+**Correção:** `avatar_ui.py` agora implementa o ciclo `ui/initialize`
+(ACK `clientInfo`/`protocolVersion`) → `ui/notifications/initialized` →
+`ui/notifications/tool-result` (structuredContent) + fallback
+`window.openai`; recurso publica `_meta.ui.csp.resourceDomains`
+(`https://minhadelpi.com.br`); URI bump `ui://delpi/teo/avatar/v2`
+(cache do host). `show_avatar` segue metadata-only (129B);
+`read(avatar,get)` com ImageContent intacto.
+**Runtime:** resource v2 + csp + outputTemplate v2 verificados no
+container; HTML contém handshake. ChatGPT visual: `TEST_NOT_RUN` —
+reconectar a conexão MCP e retestar "TÉO, mostre seu avatar".
