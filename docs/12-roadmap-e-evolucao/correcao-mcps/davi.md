@@ -1,7 +1,13 @@
 # DAVI — Ficha-base provisória do especialista em Dados e Informações
 
 **Levantamento:** 2026-11-06  
-**Status:** FICHA PROVISÓRIA; acrônimo **APROVADO pelo usuário** para documentação; implementação da identidade **PENDING** e revisão técnica **SUSPENSA** enquanto ocorre refatoração das ferramentas. Não mudar código, runtime, MCP nem GPT Builder com base neste documento.
+**Status:** **PENDING — refatoração em andamento** (waves sendo commitadas nesta sessão: `faf75fe8d3`, `a38e679ea1`). Não alterado por segurança; mudança exata documentada abaixo para a próxima execução.
+
+## Mudança pendente documentada (aplicar após estabilização da refatoração)
+1. `api-delpi/app/content/davi_agent_intelligence.json`: a estrutura atual usa bloco `persona` (estilo VISTA); adicionar `"acronym": "Dados, Análises e Visão Inteligente"` dentro de `persona`.
+2. Projetar o acrônimo no serviço de inteligência do DAVI (o que quer que seja o `persona_context`/`agent_directives` vigente pós-refatoração) usando a chave aditiva owner-local `context["identity"]["acronym"]` — mesmo padrão aplicado em VISTA/CLARA/EVA/SURI; **não** alterar o contrato compartilhado `Identity`.
+3. Verificar onde a ficha `app/persona/davi_profile.py` lê o bloco `persona` pós-refatoração; testes: `tests/test_davi_persona_003_character_integration.py` e `test_davi_agent_intelligence.py`.
+4. Deploy `api-delpi` + verificação de runtime; aceite conversacional: "O que significa DAVI?" → **Dados, Análises e Visão Inteligente**.
 
 ## 1. Identidade observada (PROVEN na projeção do MCP consultada)
 - Nome: **DAVI**.
