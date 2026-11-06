@@ -1,4 +1,3 @@
-import { createDashboardLoadingActivityCard } from "@delpi/plugin-ui/index";
 import { PackageSearch, RefreshCw } from "lucide-react";
 import { useEffect, useState, type CSSProperties } from "react";
 
@@ -6,6 +5,7 @@ import warehouseSpoolsUrl from "../assets/line-feeder/warehouse-spools.png";
 import { LineFeederCollectModal } from "../components/LineFeederCollectModal";
 import { LineFeederIdleCard } from "../components/LineFeederIdleCard";
 import { LineFeederMaterialsPanel } from "../components/LineFeederMaterialsPanel";
+import { LineFeederPreviewProgress } from "../components/LineFeederPreviewProgress";
 import { LineFeederUrgentBell } from "../components/LineFeederUrgentBell";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { copy } from "../content/copy";
@@ -13,15 +13,6 @@ import { helpTooltips } from "../content/helpTooltips";
 import { useLineFeederMaterialsPreview } from "../hooks/useLineFeederMaterialsPreview";
 import type { PpcBranch } from "../types";
 import { buildPpcHref, navigatePpc } from "../utils/routeParser";
-
-const LoadingCard = createDashboardLoadingActivityCard({
-  prefix: "ppc",
-  labels: {
-    progressRemaining: (n) => `Faltam ${n}%`,
-    progressAriaDeterminate: (n) => `Faltam ${n} por cento`,
-    progressAriaIndeterminate: copy.lineFeeder.loading,
-  },
-});
 
 type LineFeederPageProps = {
   branch: PpcBranch;
@@ -109,7 +100,10 @@ export function LineFeederPage({ branch }: LineFeederPageProps) {
       ) : null}
 
       {preview.loading ? (
-        <LoadingCard title={texts.loading} description={texts.loadingHint} />
+        <LineFeederPreviewProgress
+          percent={preview.progressPercent}
+          logs={preview.progressLogs}
+        />
       ) : null}
 
       {errorMessage ? (

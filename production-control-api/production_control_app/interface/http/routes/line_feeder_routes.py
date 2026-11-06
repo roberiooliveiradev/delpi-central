@@ -1,13 +1,21 @@
 from __future__ import annotations
 
+import json
+import logging
+import queue
+import threading
+from collections.abc import Iterator
+from typing import Any
+
 from fastapi import APIRouter, Body, Path, Query, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from production_control_app.composition.pc_composer import (
     build_line_feeder_service,
     build_line_feeder_urgent_requests_service,
 )
-from production_control_app.core.responses import fail, ok
+from production_control_app.core.responses import fail, json_safe, ok
 from production_control_app.domain.errors import (
     BranchAccessDenied,
     DelpiGatewayError,
@@ -20,6 +28,7 @@ from production_control_app.domain.errors import (
 from production_control_app.interface.http.auth_http import resolve_user
 
 router = APIRouter(tags=["Line feeder"])
+logger = logging.getLogger(__name__)
 
 
 class PickPlanCreateBody(BaseModel):
@@ -44,28 +53,51 @@ class PickPlanCloseBody(BaseModel):
     model_config = {"populate_by_name": True}
 
 
-def _handle_line_feeder_errors(exc: Exception):
+def _line_feeder_error_status(exc: Exception) -> int | None:
     if isinstance(exc, InvalidBranch):
-        return fail(str(exc), 422)
+        return 422
     if isinstance(exc, BranchAccessDenied):
-        return fail(str(exc), 403)
+        return 403
     if isinstance(exc, PermissionError):
-        return fail(str(exc), 403)
+        return 403
     if isinstance(exc, SnapshotNotFound):
-        return fail(str(exc), 404)
+        return 404
     if isinstance(exc, OperatorFeedbackMaterialNotFound):
-        return fail(str(exc), 404)
+        return 404
     if isinstance(exc, OperatorFeedbackMaterialStateError):
-        return fail(str(exc), 409)
+        return 409
     if isinstance(exc, HorizonPreviewStale):
-        return fail(str(exc), 409)
+        return 409
     if isinstance(exc, LookupError):
-        return fail(str(exc), 404)
+        return 404
     if isinstance(exc, ValueError):
-        return fail(str(exc), 422)
+        return 422
     if isinstance(exc, DelpiGatewayError):
-        return fail(str(exc), 502)
-    raise exc
+        return 502
+    return None
+
+
+def _handle_line_feeder_errors(exc: Exception):
+    status = _line_feeder_error_status(exc)
+    if status is None:
+        raise exc
+    return fail(str(exc), status)
+
+
+def _sse_data(payload: dict[str, Any]) -> str:
+    return f"data: {json.dumps(json_safe(payload), ensure_ascii=False)}\n\n"
+
+
+def _materials_preview_error_event(exc: Exception) -> dict[str, Any]:
+    status = _line_feeder_error_status(exc)
+    if status is None:
+        logger.exception("line_feeder materials preview stream failed")
+        return {
+            "type": "error",
+            "message": "Não foi possível calcular a necessidade de materiais.",
+            "status": 500,
+        }
+    return {"type": "error", "message": str(exc), "status": status}
 
 
 class HorizonPreviewBody(BaseModel):
@@ -127,6 +159,94 @@ def preview_line_feeder_materials(
     except Exception as exc:
         return _handle_line_feeder_errors(exc)
     return ok(data)
+
+
+@router.post(
+    "/line-feeder/materials/preview/stream",
+    operation_id="preview_line_feeder_materials_stream",
+)
+def preview_line_feeder_materials_stream(
+    request: Request,
+    body: HorizonPreviewBody = Body(...),
+):
+    """Prévia de materiais com progresso SSE (progress* → result | error).
+
+    Mesmo body/auth do POST síncrono. O POST legado permanece para compat.
+    """
+    user = resolve_user(request)
+    service = build_line_feeder_service()
+    branch = body.branch
+    work_centers = list(body.work_centers)
+    hours = body.hours_per_work_center
+
+    def event_stream() -> Iterator[str]:
+        # Thread + queue: progresso em tempo real sem bloquear o ASGI loop.
+        # out.get SEM timeout trava o TestClient (e o cliente) se o worker
+        # morrer sem emitir "done" — por isso poll com timeout + join cuidadoso.
+        out: queue.Queue[tuple[str, Any]] = queue.Queue()
+        get_timeout_s = 1.0
+
+        def on_progress(event: dict[str, Any]) -> None:
+            out.put(("progress", event))
+
+        def worker() -> None:
+            try:
+                data = service.preview_materials(
+                    user,
+                    branch=branch,
+                    work_centers=work_centers,
+                    hours_per_work_center=hours,
+                    on_progress=on_progress,
+                )
+                out.put(("result", data))
+            except Exception as exc:  # noqa: BLE001 — mapeado para evento error
+                out.put(("error", exc))
+            finally:
+                out.put(("done", None))
+
+        thread = threading.Thread(
+            target=worker,
+            name="line-feeder-materials-preview-stream",
+            daemon=True,
+        )
+        thread.start()
+        try:
+            while True:
+                try:
+                    kind, payload = out.get(timeout=get_timeout_s)
+                except queue.Empty:
+                    if thread.is_alive():
+                        continue
+                    # Worker morreu sem "done" (não deveria) — encerra o stream.
+                    yield _sse_data(
+                        {
+                            "type": "error",
+                            "message": "Não foi possível calcular a necessidade de materiais.",
+                            "status": 500,
+                        }
+                    )
+                    break
+                if kind == "done":
+                    break
+                if kind == "progress" and isinstance(payload, dict):
+                    yield _sse_data(payload)
+                elif kind == "result":
+                    yield _sse_data({"type": "result", "data": payload})
+                elif kind == "error" and isinstance(payload, Exception):
+                    yield _sse_data(_materials_preview_error_event(payload))
+        finally:
+            # Não bloqueia o teardown do TestClient/ASGI se o worker ainda roda.
+            thread.join(timeout=1.0)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get(

@@ -20,6 +20,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
+from collections.abc import Callable
 from typing import Any, Sequence
 from uuid import UUID
 
@@ -39,6 +40,9 @@ from production_control_app.domain.errors import (
     DelpiGatewayError,
     HorizonPreviewStale,
     SnapshotNotFound,
+)
+from production_control_app.application.services.line_feeder_preview_progress import (
+    MaterialsPreviewProgress,
 )
 from production_control_app.domain.ports.line_feeder_pick_plan_repository import (
     LineFeederPickPlanRepositoryPort,
@@ -224,6 +228,7 @@ class LineFeederService:
         branch: str,
         work_centers: Sequence[str],
         hours_per_work_center: float,
+        on_progress: Callable[[dict[str, Any]], None] | None = None,
     ) -> dict[str, Any]:
         """Prévia somente leitura: produção contemplada por CT no horizonte.
 
@@ -296,6 +301,17 @@ class LineFeederService:
 
         with phases.measure("allocate_horizons"):
             for group in ordered_queues:
+                if on_progress is not None:
+                    on_progress(
+                        {
+                            "type": "progress",
+                            "step": "horizon.work_center",
+                            "percent": 0,
+                            "message": "",
+                            "workCenter": _text(group.get("work_center")),
+                            "detail": _text(group.get("work_center_name")) or None,
+                        }
+                    )
                 # Saldos por CT: evita um lote único gigante só porque a seleção
                 # inclui todos os postos; o horizonte ainda para quando as horas
                 # (ou o teto de ST) se esgotam.
@@ -385,12 +401,19 @@ class LineFeederService:
         branch: str,
         work_centers: Sequence[str],
         hours_per_work_center: float,
+        on_progress: Callable[[dict[str, Any]], None] | None = None,
     ) -> dict[str, Any]:
         """Prévia dinâmica de materiais — saldo real do ponto de uso (99).
 
         Reutiliza o horizonte (E2). Empenhos SD4 vigentes. Não persiste lista,
         não usa status de coleta e não desconta o almoxarifado (01) da falta.
         """
+        progress = MaterialsPreviewProgress(
+            on_progress,
+            work_center_count=len(work_centers),
+        )
+        progress.starting()
+        progress.reading_publication()
         phases = _PhaseTimer(logger, event="line_feeder_materials_preview")
         with phases.measure("preview_horizon"):
             horizon = self.preview_horizon(
@@ -398,7 +421,9 @@ class LineFeederService:
                 branch=branch,
                 work_centers=work_centers,
                 hours_per_work_center=hours_per_work_center,
+                on_progress=progress.as_horizon_callback(),
             )
+        progress.horizon_done()
         code = _text(horizon.get("branch"))
         expected_revision = _text(
             (horizon.get("publication") or {}).get("publication_revision")
@@ -437,6 +462,7 @@ class LineFeederService:
             # empenhos/estoque/localizações só para uma coleta já inválida.
             phases.meta(materials_skipped=True, skip_reason="horizon_incomplete")
             phases.emit()
+            progress.done()
             return {
                 "branch": code,
                 "hours_per_work_center": horizon.get("hours_per_work_center"),
@@ -512,11 +538,13 @@ class LineFeederService:
 
         commitments: dict[tuple[str, str], list[dict[str, Any]]] = {}
         commitments_ok = True
+        progress.fetching_commitments()
         if orders:
             with phases.measure("fetch_commitments"):
                 commitments, commitments_ok = self._fetch_commitments_for_materials(
                     branch=code, production_orders=orders
                 )
+        progress.commitments_done()
         with phases.measure("build_material_demands"):
             buckets, demand_warnings, demands_ok = build_material_demands(
                 covered_ops, commitments
@@ -534,6 +562,7 @@ class LineFeederService:
             ]
         product_codes = sorted({bucket.product_code for bucket in buckets})
         stock_as_of = datetime.now(timezone.utc).isoformat()
+        progress.fetching_stock()
         with phases.measure("fetch_stock_balances"):
             factory, source, balances_available, stock_complete = (
                 self._fetch_balances_for_materials(
@@ -548,7 +577,9 @@ class LineFeederService:
             inventory_blocks = self._fetch_inventory_blocks(
                 branch=code, product_codes=product_codes
             )
+        progress.stock_done()
 
+        progress.consolidating()
         with phases.measure("consolidate_materials"):
             items = apply_factory_stock(
                 buckets,
@@ -607,6 +638,7 @@ class LineFeederService:
             operational_list_safe=complete,
         )
         phases.emit()
+        progress.done()
 
         return {
             "branch": code,

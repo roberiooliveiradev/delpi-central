@@ -10,7 +10,7 @@ import { useLineFeederMaterialsPreview } from "./useLineFeederMaterialsPreview";
 const previewMock = vi.fn();
 
 vi.mock("../api/ppcApi", () => ({
-  previewLineFeederMaterials: (...args: unknown[]) => previewMock(...args),
+  previewLineFeederMaterialsStream: (...args: unknown[]) => previewMock(...args),
 }));
 
 function payload(
@@ -64,8 +64,16 @@ afterEach(() => {
 });
 
 describe("useLineFeederMaterialsPreview", () => {
-  it("envia branch, CTs e horas para materials/preview", async () => {
-    previewMock.mockResolvedValue(payload());
+  it("envia branch, CTs e horas para materials/preview/stream", async () => {
+    previewMock.mockImplementation(async (args: { onProgress?: (e: unknown) => void }) => {
+      args.onProgress?.({
+        type: "progress",
+        step: "horizon.work_center",
+        percent: 30,
+        message: "Calculando o horizonte do posto CT-A…",
+      });
+      return payload();
+    });
     const { result } = renderHook(() => useLineFeederMaterialsPreview("01"));
     await act(async () => {
       await result.current.run({
@@ -81,6 +89,10 @@ describe("useLineFeederMaterialsPreview", () => {
       }),
     );
     expect(result.current.data?.materials[0].to_collect_qty).toBe(60);
+    expect(result.current.progressPercent).toBe(100);
+    expect(result.current.progressLogs.some((log) => log.message.includes("CT-A"))).toBe(
+      true,
+    );
   });
 
   it("reconsulta com saldo atualizado sem reaproveitar valor anterior", async () => {
@@ -166,5 +178,30 @@ describe("useLineFeederMaterialsPreview", () => {
       resolveFirst?.(payload({ branch: "01" }));
     });
     expect(result.current.data).toBeNull();
+  });
+
+  it("não aplica resultado após abort", async () => {
+    let resolveStream: ((value: LineFeederMaterialsPreviewPayload) => void) | null =
+      null;
+    previewMock.mockImplementationOnce(
+      () =>
+        new Promise<LineFeederMaterialsPreviewPayload>((resolve) => {
+          resolveStream = resolve;
+        }),
+    );
+    const { result } = renderHook(() => useLineFeederMaterialsPreview("01"));
+    void act(() => {
+      void result.current.run({
+        workCenters: ["CT-A"],
+        hoursPerWorkCenter: 1,
+      });
+    });
+    await act(async () => {
+      result.current.clear();
+      resolveStream?.(payload());
+    });
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.progressLogs).toEqual([]);
   });
 });

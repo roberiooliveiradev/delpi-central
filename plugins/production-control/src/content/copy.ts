@@ -827,6 +827,16 @@ export const copy = {
       gateway:
         "A integração de empenhos ou estoque falhou. Tente novamente em instantes.",
     },
+    previewProgress: {
+      title: "Calculando a prévia…",
+      hint: "Acompanhe o que o sistema está fazendo nos postos e no estoque.",
+      waitingMessage: "Iniciando a consulta…",
+      regionAria: "Progresso da prévia de materiais",
+      barAria: "Progresso da prévia",
+      logsAria: "Etapas da prévia",
+      percentLabel: (n: number) => `${n}%`,
+      percentAria: (n: number) => `${n} por cento concluído`,
+    },
     pickPlan: {
       title: "Lista de coleta",
       hint: "Roteiro por produto: marque cada item ao separar e ao entregar nas bancadas.",

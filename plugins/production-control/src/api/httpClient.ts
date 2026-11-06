@@ -43,6 +43,13 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
+/** Headers autenticados para fetch manual (ex.: SSE). */
+export function ppcAuthHeaders(
+  extra?: Record<string, string>,
+): Record<string, string> {
+  return { ...authHeaders(), ...extra };
+}
+
 export class HttpRequestError extends Error {
   readonly status: number;
 

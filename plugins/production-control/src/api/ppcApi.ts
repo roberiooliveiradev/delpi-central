@@ -1,4 +1,16 @@
-import { httpDelete, httpGet, httpGetBlob, httpPatch, httpPost, httpPut, httpPutFormData, ppcApiUrl, unwrapEnvelope } from "./httpClient";
+import {
+  HttpRequestError,
+  httpDelete,
+  httpGet,
+  httpGetBlob,
+  httpPatch,
+  httpPost,
+  httpPut,
+  httpPutFormData,
+  ppcApiUrl,
+  ppcAuthHeaders,
+  unwrapEnvelope,
+} from "./httpClient";
 import type {
   MachineLoadProcessIssueResult,
   DeliveryMapPayload,
@@ -926,6 +938,119 @@ export async function previewLineFeederMaterials(params: {
     envelope,
     "Não foi possível calcular a necessidade de materiais.",
   );
+}
+
+export type LineFeederMaterialsProgressEvent = {
+  type: "progress";
+  step: string;
+  percent: number;
+  message: string;
+  workCenter?: string;
+  detail?: string;
+};
+
+type LineFeederMaterialsStreamEvent =
+  | LineFeederMaterialsProgressEvent
+  | { type: "result"; data: LineFeederMaterialsPreviewPayload }
+  | { type: "error"; message: string; status?: number };
+
+async function readSseJsonEvents(
+  response: Response,
+  onEvent: (event: LineFeederMaterialsStreamEvent) => void,
+): Promise<void> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error("Resposta sem corpo para o progresso da prévia.");
+  }
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const chunks = buffer.split("\n\n");
+    buffer = chunks.pop() ?? "";
+    for (const chunk of chunks) {
+      const data = chunk
+        .split("\n")
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).trimStart())
+        .join("\n");
+      if (!data) continue;
+      onEvent(JSON.parse(data) as LineFeederMaterialsStreamEvent);
+    }
+  }
+}
+
+/**
+ * Prévia de materiais com progresso SSE (UX Coletar).
+ * POST síncrono permanece para regressão/compat.
+ */
+export async function previewLineFeederMaterialsStream(params: {
+  branch: string;
+  workCenters: string[];
+  hoursPerWorkCenter: number;
+  signal?: AbortSignal;
+  onProgress?: (event: LineFeederMaterialsProgressEvent) => void;
+}): Promise<LineFeederMaterialsPreviewPayload> {
+  const fallback = "Não foi possível calcular a necessidade de materiais.";
+  const response = await fetch(
+    ppcApiUrl("/line-feeder/materials/preview/stream"),
+    {
+      method: "POST",
+      headers: ppcAuthHeaders({
+        Accept: "text/event-stream",
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify({
+        branch: params.branch,
+        workCenters: params.workCenters,
+        hoursPerWorkCenter: params.hoursPerWorkCenter,
+      }),
+      signal: params.signal,
+    },
+  );
+  if (!response.ok) {
+    let message = `Erro HTTP ${response.status}`;
+    try {
+      const body = (await response.json()) as { message?: string };
+      if (typeof body.message === "string" && body.message.trim()) {
+        message = body.message;
+      }
+    } catch {
+      // keep default
+    }
+    throw new HttpRequestError(message, response.status);
+  }
+
+  let result: LineFeederMaterialsPreviewPayload | null = null;
+  let streamError: HttpRequestError | null = null;
+
+  await readSseJsonEvents(response, (event) => {
+    if (!event || typeof event !== "object") return;
+    if (event.type === "progress") {
+      params.onProgress?.(event);
+      return;
+    }
+    if (event.type === "result") {
+      result = event.data;
+      return;
+    }
+    if (event.type === "error") {
+      const status =
+        typeof event.status === "number" && event.status > 0
+          ? event.status
+          : 500;
+      streamError = new HttpRequestError(
+        event.message?.trim() || fallback,
+        status,
+      );
+    }
+  });
+
+  if (streamError) throw streamError;
+  if (!result) throw new Error(fallback);
+  return result;
 }
 
 export async function fetchLineFeederRequirements(params: {

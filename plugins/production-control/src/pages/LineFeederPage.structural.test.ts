@@ -17,11 +17,13 @@ function sliceBetween(text: string, start: string, end: string): string {
 }
 
 describe("Line feeder E4 wiring", () => {
-  it("usa materials/preview e published-queue no fluxo principal", () => {
+  it("usa materials/preview/stream e published-queue no fluxo principal", () => {
     const page = source("./LineFeederPage.tsx");
     const api = source("../api/ppcApi.ts");
+    const hook = source("../hooks/useLineFeederMaterialsPreview.ts");
     expect(page).toMatch(/LineFeederCollectModal/);
     expect(page).toMatch(/LineFeederIdleCard/);
+    expect(page).toMatch(/LineFeederPreviewProgress/);
     expect(page).toMatch(/useLineFeederMaterialsPreview/);
     expect(page).toMatch(/LineFeederUrgentBell/);
     expect(page).not.toMatch(/LineFeederUrgentRequestsPanel/);
@@ -29,8 +31,11 @@ describe("Line feeder E4 wiring", () => {
     expect(page).not.toMatch(/createLineFeederPickPlan/);
     expect(page).not.toMatch(/patchLineFeederPickItem/);
     expect(page).not.toMatch(/closeLineFeederPickPlan/);
+    expect(hook).toMatch(/previewLineFeederMaterialsStream/);
+    expect(api).toMatch(/\/line-feeder\/materials\/preview\/stream/);
     expect(api).toMatch(/\/line-feeder\/materials\/preview/);
     expect(api).toMatch(/\/line-feeder\/published-queue/);
+    expect(source("../index.css")).toMatch(/ppc-feeder-progress__/);
   });
 
   it("idle state usa cartão Liquid Glass com CTA Coletar", () => {

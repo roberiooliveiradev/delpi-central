@@ -63,5 +63,17 @@
     "productNotInCutoff": "Este produto não faz parte do corte atual.",
     "productDetailStockUnavailable": "Não foi possível ler o saldo do almoxarifado agora.",
     "productDetailTransfersUnavailable": "Não foi possível ler as transferências recentes."
+  },
+  "progress": {
+    "starting": "Preparando a prévia de materiais…",
+    "readingPublication": "Lendo a programação publicada dos postos selecionados…",
+    "horizonWorkCenter": "Calculando o horizonte do posto {workCenter}…",
+    "horizonDone": "Horizonte calculado. Analisando empenhos das operações contempladas…",
+    "fetchCommitments": "Consultando empenhos (SD4) das ordens no horizonte…",
+    "commitmentsDone": "Empenhos carregados. Conferindo saldo no ponto de uso…",
+    "fetchStock": "Lendo estoque da bancada e local de retirada…",
+    "stockDone": "Saldos obtidos. Agrupando materiais por produto…",
+    "consolidate": "Consolidando a lista de coleta…",
+    "done": "Prévia pronta."
   }
 }

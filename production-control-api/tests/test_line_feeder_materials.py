@@ -812,6 +812,22 @@ def test_service_stale_after_materials() -> None:
         )
 
 
+def _parse_sse_events(body: str) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
+    for block in body.split("\n\n"):
+        data_lines = [
+            line[5:].lstrip()
+            for line in block.split("\n")
+            if line.startswith("data:")
+        ]
+        if not data_lines:
+            continue
+        import json
+
+        events.append(json.loads("\n".join(data_lines)))
+    return events
+
+
 def test_http_materials_preview() -> None:
     published = _payload([_op("CT-A", "OP1")])
     service = _service(
@@ -870,6 +886,184 @@ def test_http_materials_preview() -> None:
         assert body["data"]["materials"][0]["to_collect_qty"] == 6.0
     finally:
         line_feeder_routes.build_line_feeder_service = original  # type: ignore[assignment]
+
+
+def test_http_materials_preview_stream_progress_and_result() -> None:
+    published = _payload([_op("CT-A", "OP1"), _op("CT-B", "OP2")])
+    service = _service(
+        published=published,
+        balances_ops={
+            ("OP1", "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0},
+            ("OP2", "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0},
+        },
+        standard_times={
+            ("OP1", "01"): {
+                "ideal_cycle_seconds": 60,
+                "setup_seconds": 0,
+                "pieces_conversion_factor": 1,
+                "standard_time_source": "shy_tempad",
+                "data_quality": "complete",
+            },
+            ("OP2", "01"): {
+                "ideal_cycle_seconds": 60,
+                "setup_seconds": 0,
+                "pieces_conversion_factor": 1,
+                "standard_time_source": "shy_tempad",
+                "data_quality": "complete",
+            },
+        },
+        commitments=[
+            {
+                "production_order": "OP1",
+                "operation": "01",
+                "product_code": "MP1",
+                "description": "X",
+                "unit": "PC",
+                "product_type": "MP",
+                "open_qty": 10,
+            },
+            {
+                "production_order": "OP2",
+                "operation": "01",
+                "product_code": "MP1",
+                "description": "X",
+                "unit": "PC",
+                "product_type": "MP",
+                "open_qty": 10,
+            },
+        ],
+        factory_stock={"MP1": 4},
+        source_stock={"MP1": 100},
+    )
+    from production_control_app.interface.http.routes import line_feeder_routes
+
+    original = line_feeder_routes.build_line_feeder_service
+    line_feeder_routes.build_line_feeder_service = lambda: service  # type: ignore[assignment]
+    try:
+        app = FastAPI()
+
+        @app.middleware("http")
+        async def inject_user(request, call_next):  # noqa: ANN001
+            request.state.user = _user(*FULL_PERMS)
+            return await call_next(request)
+
+        app.include_router(line_feeder_routes.router)
+        client = TestClient(app)
+        resp = client.post(
+            "/line-feeder/materials/preview/stream",
+            json={
+                "branch": "01",
+                "workCenters": ["CT-A", "CT-B"],
+                "hoursPerWorkCenter": 1,
+            },
+        )
+        assert resp.status_code == 200
+        assert "text/event-stream" in resp.headers["content-type"]
+        events = _parse_sse_events(resp.text)
+        progress = [e for e in events if e.get("type") == "progress"]
+        results = [e for e in events if e.get("type") == "result"]
+        assert len(progress) >= 1
+        assert len(results) == 1
+        percents = [int(e["percent"]) for e in progress]
+        assert percents == sorted(percents)
+        assert results[0]["data"]["materials"][0]["to_collect_qty"] == 16.0
+        assert any("CT-A" in str(e.get("message") or "") for e in progress)
+    finally:
+        line_feeder_routes.build_line_feeder_service = original  # type: ignore[assignment]
+
+
+def test_http_materials_preview_stream_error_without_publication() -> None:
+    from production_control_app.application.services.line_feeder_service import (
+        _RequirementsCache,
+    )
+    from production_control_app.interface.http.routes import line_feeder_routes
+
+    service = LineFeederService(
+        FakeGateway(
+            balances_ops={},
+            standard_times={},
+            commitments=[],
+            factory_stock={},
+        ),
+        snapshots=FakeSnapshots(),  # type: ignore[arg-type]
+        pick_plans=MagicMock(),
+        publications=FakePublications(),  # type: ignore[arg-type]
+        branch_access=BranchAccessService(),
+        cache=_RequirementsCache(0),
+    )
+    original = line_feeder_routes.build_line_feeder_service
+    line_feeder_routes.build_line_feeder_service = lambda: service  # type: ignore[assignment]
+    try:
+        app = FastAPI()
+
+        @app.middleware("http")
+        async def inject_user(request, call_next):  # noqa: ANN001
+            request.state.user = _user(*FULL_PERMS)
+            return await call_next(request)
+
+        app.include_router(line_feeder_routes.router)
+        client = TestClient(app)
+        resp = client.post(
+            "/line-feeder/materials/preview/stream",
+            json={
+                "branch": "01",
+                "workCenters": ["CT-A"],
+                "hoursPerWorkCenter": 1,
+            },
+        )
+        assert resp.status_code == 200
+        events = _parse_sse_events(resp.text)
+        errors = [e for e in events if e.get("type") == "error"]
+        assert len(errors) == 1
+        assert errors[0]["status"] == 404
+        assert not any(e.get("type") == "result" for e in events)
+    finally:
+        line_feeder_routes.build_line_feeder_service = original  # type: ignore[assignment]
+
+
+def test_preview_materials_on_progress_callback() -> None:
+    published = _payload([_op("CT-A", "OP1")])
+    service = _service(
+        published=published,
+        balances_ops={
+            ("OP1", "01"): {"operation_pending_qty": 10, "operation_produced_qty": 0},
+        },
+        standard_times={
+            ("OP1", "01"): {
+                "ideal_cycle_seconds": 60,
+                "setup_seconds": 0,
+                "pieces_conversion_factor": 1,
+                "standard_time_source": "shy_tempad",
+                "data_quality": "complete",
+            },
+        },
+        commitments=[
+            {
+                "production_order": "OP1",
+                "operation": "01",
+                "product_code": "MP1",
+                "description": "X",
+                "unit": "PC",
+                "product_type": "MP",
+                "open_qty": 10,
+            }
+        ],
+        factory_stock={"MP1": 4},
+        source_stock={"MP1": 100},
+    )
+    events: list[dict[str, Any]] = []
+    data = service.preview_materials(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=1,
+        on_progress=events.append,
+    )
+    assert data["materials"][0]["to_collect_qty"] == 6.0
+    assert len(events) >= 3
+    assert events[0]["type"] == "progress"
+    assert events[-1]["percent"] == 100
+    assert all(events[i]["percent"] <= events[i + 1]["percent"] for i in range(len(events) - 1))
 
 
 def test_rbac_denied() -> None:
