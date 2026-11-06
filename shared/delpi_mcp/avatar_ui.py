@@ -73,6 +73,21 @@ def avatar_ui_resource_meta(image_url: str | None) -> dict:
     }
 
 
+def build_avatar_diagnostic_html(text: str) -> str:
+    """Minimal static diagnostic surface (MCP-AVATAR-UI-V2.4 exp A).
+
+    Text-only HTML — no image, no JS, no CSS, no external URL — used to
+    isolate whether the host can render an MCP Apps resource at all.
+    """
+    safe = html.escape(text)
+    return (
+        '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">'
+        "<title>Teste visual</title></head><body><p>"
+        + safe
+        + "</p></body></html>"
+    )
+
+
 def _origin(url: str) -> str:
     parts = urlsplit(url or "")
     if parts.scheme == "https" and parts.netloc:

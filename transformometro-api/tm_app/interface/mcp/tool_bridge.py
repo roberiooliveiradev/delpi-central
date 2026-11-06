@@ -485,6 +485,21 @@ def tool_show_avatar() -> CallToolResult:
         return handle_tool_error(exc)
 
 
+def tool_show_avatar_diagnostic() -> CallToolResult:
+    """V2.4 experiment A — minimal text-only MCP Apps surface. Same view
+    gate; returns a tiny payload pointing at the diagnostic resource."""
+    try:
+        request = build_mcp_request()
+        _dispatch._raise_http_err(require_transformometro_view_access(request))
+        return mcp_tool_result(
+            {"diagnostic": "avatar-ui-text-v1", "status": "success"},
+            is_error=False,
+            text="TÉO — Teste visual",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
 def tool_get_product_guide(
     topic: str | None = None,
     section: str | None = None,

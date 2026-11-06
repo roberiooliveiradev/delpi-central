@@ -46,6 +46,7 @@ V3_TOOL_CLASS: dict[str, str] = {
     "get_context": "DISCOVERY",
     "read": "READ",
     "show_avatar": "READ",
+    "show_avatar_diagnostic": "READ",
     "analyze": "ANALYSIS",
     "knowledge": "READ",
     "execute": "ACT",

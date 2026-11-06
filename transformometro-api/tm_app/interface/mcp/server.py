@@ -33,6 +33,7 @@ from delpi_mcp.avatar_ui import (
     avatar_ui_resource_meta,
     avatar_ui_resource_uri,
     avatar_ui_widget_csp,
+    build_avatar_diagnostic_html,
     build_avatar_ui_html,
 )
 from tm_app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
@@ -615,6 +616,36 @@ def create_mcp_server() -> MCPServer:
     )
     def show_avatar() -> CallToolResult:
         return tool_bridge.tool_show_avatar()
+
+    # --- V2.4 experiment A — isolated text-only diagnostic surface. ----
+    # Temporary: proves whether the host can render an MCP Apps resource
+    # at all (no image, no JS, no external URL). Removed after acceptance.
+    _diag_uri = "ui://delpi/teo/avatar-diagnostic/text-v1"
+
+    @mcp.resource(
+        _diag_uri,
+        name="teo-avatar-diagnostic-text",
+        title="Diagnóstico visual TÉO (texto)",
+        description="Recurso mínimo de diagnóstico MCP Apps — somente texto.",
+        mime_type=AVATAR_UI_MIME,
+        meta=meta,
+    )
+    def teo_avatar_diagnostic_text() -> str:
+        return build_avatar_diagnostic_html("TÉO — Teste visual")
+
+    @mcp.tool(
+        name="show_avatar_diagnostic",
+        title="Diagnóstico visual (texto)",
+        description=(
+            "Executa o teste visual mínimo do TÉO — apresenta apenas "
+            "o texto 'TÉO — Teste visual' em um componente MCP Apps. "
+            "Somente leitura, diagnóstico temporário."
+        ),
+        annotations=_annotations("show_avatar_diagnostic", "Diagnostic"),
+        meta={**meta, **avatar_ui_meta(_diag_uri)},
+    )
+    def show_avatar_diagnostic() -> CallToolResult:
+        return tool_bridge.tool_show_avatar_diagnostic()
 
     registered = {t.name for t in mcp._tool_manager.list_tools()}
     missing = set(MCP_TOOL_NAMES) - registered
