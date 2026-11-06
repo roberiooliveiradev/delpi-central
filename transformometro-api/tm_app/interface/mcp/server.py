@@ -32,6 +32,7 @@ from delpi_mcp.avatar_ui import (
     avatar_ui_meta,
     avatar_ui_resource_meta,
     avatar_ui_resource_uri,
+    avatar_ui_widget_csp,
     build_avatar_ui_html,
 )
 from tm_app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
@@ -576,7 +577,7 @@ def create_mcp_server() -> MCPServer:
     )
 
     _avatar_dist = _TeoSvc.avatar_distribution() or {}
-    _avatar_uri = avatar_ui_resource_uri("teo", version=2)
+    _avatar_uri = avatar_ui_resource_uri("teo", version=3)
 
     @mcp.resource(
         _avatar_uri,
@@ -606,7 +607,11 @@ def create_mcp_server() -> MCPServer:
             "URLs ou caminhos fornecidos pelo usuário."
         ),
         annotations=_annotations("show_avatar", "Show avatar"),
-        meta={**meta, **avatar_ui_meta(_avatar_uri)},
+        meta={
+            **meta,
+            **avatar_ui_meta(_avatar_uri),
+            **avatar_ui_widget_csp(_avatar_dist.get("url")),
+        },
     )
     def show_avatar() -> CallToolResult:
         return tool_bridge.tool_show_avatar()
