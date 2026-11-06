@@ -501,7 +501,7 @@ def tool_get_avatar() -> CallToolResult:
     try:
         delivery = build_avatar_delivery(
             ClaraAgentIntelligenceService.character_profile(),
-            Path(__file__).resolve().parents[4],
+            Path(__file__).resolve().parents[3],
         )
         if delivery.data is None:
             return _error(
