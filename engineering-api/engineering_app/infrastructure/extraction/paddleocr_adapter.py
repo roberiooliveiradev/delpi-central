@@ -212,11 +212,15 @@ class PaddleOcrAdapter:
         except concurrent.futures.TimeoutError as exc:
             future.cancel()
             executor.shutdown(wait=False)
+            self._engine = None
             raise PdfExtractionError(
                 f"ocr_timeout:{timeout_s:.0f}s_exceeded"
             ) from exc
         except Exception as exc:
             executor.shutdown(wait=False)
+            # O predictor Paddle permanece inválido depois de
+            # RuntimeError; a próxima página não reutiliza essa instância.
+            self._engine = None
             raise PdfExtractionError(
                 f"ocr_failed:{exc.__class__.__name__}"
             ) from exc

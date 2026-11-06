@@ -261,18 +261,21 @@ def test_understanding_no_vision_imports():
         assert bad not in src
 
 
-def test_unreliable_boundary_forces_not_comparable():
-    # R9.1/AC18: fronteira quase integral rejeitada → BOM fail-closed.
+def test_page_frame_does_not_replace_the_column_crop():
+    # A moldura quase integral não é a tabela. O recorte publicado é
+    # a extensão das colunas de código, e a comparação usa esse recorte.
     toks = [_tok('50226113', 600, 400), _tok('50226114', 600, 440)]
-    # simular moldura quase integral forçando area >60% da página
     fake_gp = {'rects': [[0, 0, 2330, 1650]]}
     out = build_understanding(
         toks, document_hash='x', bom_codes=['50226113'],
         product_code='90264161', render_size_px=(2339, 1653),
         graphic_primitives=fake_gp,
     )
-    b = out['bom_comparison']
-    assert out['component_table'].get('unreliable_boundary') is True
-    assert b['state'] == 'NOT_COMPARABLE'
-    assert b['matched'] == [] and b['missing_in_drawing_table'] == []
-    assert b['not_in_bom'] == [] and b['occurrence_mismatches'] == []
+    table = out['component_table']
+    assert table.get('unreliable_boundary') is False
+    assert table.get('boundary_source') == 'connected_columns'
+    assert table['box'][2] < 800
+    assert out['bom_comparison']['state'] == 'COMPARED_PARTIAL'
+    assert out['bom_comparison']['matched'] == [
+        {'code': '50226113', 'occurrences': 1}
+    ]

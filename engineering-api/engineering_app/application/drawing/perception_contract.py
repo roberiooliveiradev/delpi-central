@@ -21,7 +21,7 @@ from typing import Any, Protocol
 SCHEMA_VERSION = "drawing_perception_candidate.v1"
 # Identidade do job: uma observação nativa nova não reutiliza
 # COMPLETED produzido pela grade artificial anterior.
-TABLE_PERCEPTION_REVISION = "native_slanet_v1"
+TABLE_PERCEPTION_REVISION = "native_slanet_v2"
 TABLE_RENDER_DPI = 200
 TABLE_RENDER_SCALE = TABLE_RENDER_DPI / 72
 

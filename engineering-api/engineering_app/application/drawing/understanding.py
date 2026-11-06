@@ -170,6 +170,51 @@ def _page_size(
     return (maxx or 1.0, maxy or 1.0)
 
 
+def _polygon_extent(box: list | None) -> tuple[float, float, float, float] | None:
+    """Extensão de um polígono ou retângulo, sem inventar coordenadas."""
+    if not box or len(box) < 4:
+        return None
+    xs = [float(box[i]) for i in range(0, len(box), 2)]
+    ys = [float(box[i]) for i in range(1, len(box), 2)]
+    if not xs or not ys:
+        return None
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def _connected_column_crop(
+    rows: list[dict], w: float, h: float
+) -> list[float] | None:
+    """Recorte da tabela = células das colunas já conservadas.
+
+    O envelope de todos os tokens na mesma faixa Y, e a união de
+    retângulos de qualquer código da página, atravessam carimbo e
+    histórico. As colunas ligadas à coluna de códigos já excluem
+    esse vão. A margem é a altura mediana da célula, limitada a 2%
+    da página, para a borda imediata entrar no SLANet sem alcançar
+    uma região separada por esse vão.
+    """
+    extents = []
+    for row in rows:
+        for cell in row.get("cells") or []:
+            extent = _polygon_extent(cell.get("bounding_box_px"))
+            if extent and extent[2] > extent[0] and extent[3] > extent[1]:
+                extents.append(extent)
+    if not extents:
+        return None
+    heights = sorted(extent[3] - extent[1] for extent in extents)
+    pad = min(heights[len(heights) // 2], max(w, h) * 0.02)
+    return _clip_box(
+        [
+            min(extent[0] for extent in extents) - pad,
+            min(extent[1] for extent in extents) - pad,
+            max(extent[2] for extent in extents) + pad,
+            max(extent[3] for extent in extents) + pad,
+        ],
+        w,
+        h,
+    )
+
+
 def _clip_box(box: list[float] | None, w: float, h: float) -> list[float] | None:
     """AC04: todo bbox dentro de 0..w / 0..h; inválido → None."""
     if not box:
@@ -900,6 +945,19 @@ def build_understanding(
         table_rows, ambiguous_cells, col_types = _structure_table(
             table, w, h
         )
+        column_crop = _connected_column_crop(table_rows, w, h)
+        if column_crop:
+            table["box"] = column_crop
+            table["boundary_source"] = "connected_columns"
+            graphic_boundary = False
+            span = (column_crop[2] - column_crop[0]) * (
+                column_crop[3] - column_crop[1]
+            )
+            if span <= w * h * 0.60:
+                table["unreliable_boundary"] = False
+            for region in regions:
+                if region.get("type") == "component_table":
+                    region["box_px"] = column_crop
 
     # ---------- revisão contextual ----------
     revisions = _match_revisions(tokens, w, h)
@@ -1127,7 +1185,11 @@ def build_understanding(
                 table and table.get("unreliable_boundary")
             ),
             "boundary_source": (
-                "graphic_rects" if graphic_boundary else "tokens_inferred"
+                table.get("boundary_source")
+                if table and table.get("boundary_source")
+                else (
+                    "graphic_rects" if graphic_boundary else "tokens_inferred"
+                )
             ),
             "detection": "code_column_cluster + row_y_proximity",
             "confidence": "rule_based",

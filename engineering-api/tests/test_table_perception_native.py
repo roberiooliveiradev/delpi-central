@@ -298,3 +298,115 @@ def test_engine_rejects_missing_page_invalid_crop_and_scale(monkeypatch):
     )
     assert mismatch["error_kind"] == "COORDINATE_MISMATCH"
     assert "yes" not in called
+
+
+def _tok(text, x, y, w=40, h=12):
+    return {
+        "raw_text": text,
+        "normalized_text": text,
+        "bounding_box_px": [x, y, x + w, y, x + w, y + h, x, y + h],
+        "page": 1,
+    }
+
+
+def _component_region(result):
+    for region in result["regions"]:
+        if region["type"] == "component_table":
+            return region
+    return None
+
+
+def test_table_crop_excludes_admin_text_beyond_the_column_gap():
+    from engineering_app.application.drawing.understanding import (
+        build_understanding,
+    )
+
+    tokens = []
+    for index, (item, qty, code) in enumerate(
+        (("A", "1", "11111111"), ("C", "6", "22222222"), ("D", "3", "33333333"))
+    ):
+        y = 100 + index * 30
+        tokens.extend((
+            _tok(item, 200, y, 16),
+            _tok(qty, 250, y, 16),
+            _tok(code, 300, y, 70),
+            _tok("CABO", 420, y, 80),
+        ))
+    tokens.append(_tok("CLIENTE: BUHLER", 900, 130, 140))
+    result = build_understanding(
+        tokens, document_hash="x", page=1, render_size_px=(1100, 800),
+        graphic_primitives={"rects": [[0, 0, 1050, 280]]},
+    )
+    region = _component_region(result)
+    assert region is not None
+    assert region["box_px"][2] < 900
+    assert result["component_table"]["boundary_source"] == "connected_columns"
+
+
+def test_nearby_code_column_remains_inside_the_crop():
+    from engineering_app.application.drawing.understanding import (
+        build_understanding,
+    )
+
+    tokens = []
+    for index, (left, right) in enumerate(
+        (("11111111", "44444444"), ("22222222", "55555555"))
+    ):
+        y = 80 + index * 28
+        tokens.extend((
+            _tok(left, 200, y, 70),
+            _tok(right, 320, y, 70),
+        ))
+    result = build_understanding(
+        tokens, document_hash="x", page=1, render_size_px=(1000, 600),
+    )
+    region = _component_region(result)
+    assert region is not None
+    assert region["box_px"][0] < 220
+    assert region["box_px"][2] > 380
+
+
+def test_title_labels_alone_do_not_create_a_component_crop():
+    from engineering_app.application.drawing.understanding import (
+        build_understanding,
+    )
+
+    tokens = [
+        _tok("COD", 800, 100, 30),
+        _tok("REV", 800, 140, 30),
+        _tok("CLIENTE", 800, 180, 60),
+    ]
+    result = build_understanding(
+        tokens, document_hash="x", page=1, render_size_px=(1000, 600),
+    )
+    assert _component_region(result) is None
+
+
+def test_predict_failure_discards_cached_ocr_engine(monkeypatch):
+    from engineering_app.infrastructure.extraction import (
+        paddleocr_adapter as mod,
+    )
+
+    if mod.np is None or mod.cv2 is None:
+        return
+    adapter = mod.PaddleOcrAdapter()
+
+    class Dead:
+        def predict(self, _image):
+            raise RuntimeError("predictor")
+
+    adapter._engine = Dead()
+    monkeypatch.setattr(mod, "_CV2_AVAILABLE", True)
+    monkeypatch.setattr(mod, "_PADDLEOCR_AVAILABLE", True)
+    monkeypatch.setattr(mod.np, "frombuffer", lambda *_a, **_k: object())
+    monkeypatch.setattr(
+        mod.cv2, "imdecode", lambda *_a, **_k: mod.np.zeros((4, 4, 3))
+    )
+    try:
+        adapter.extract_text(b"png")
+        raised = False
+    except mod.PdfExtractionError as exc:
+        raised = True
+        assert "RuntimeError" in str(exc)
+    assert raised
+    assert adapter._engine is None

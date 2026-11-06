@@ -754,6 +754,9 @@ async def _analyze_product_drawing(
         from engineering_app.application.drawing.analysis_jobs import (
             analysis_job_store,
         )
+        from engineering_app.application.drawing.perception_contract import (
+            TABLE_PERCEPTION_REVISION,
+        )
         import asyncio as _aio
         import hashlib as _hl
         import json as _js
@@ -772,7 +775,7 @@ async def _analyze_product_drawing(
                     "progressive": bool(
                         params.get("progressive_investigation")
                     ),
-                    "table_perception": "native_slanet_v1",
+                    "table_perception": TABLE_PERCEPTION_REVISION,
                 },
                 sort_keys=True,
                 default=str,
@@ -1627,6 +1630,9 @@ async def _analyze_drawing_understanding(
     from engineering_app.application.drawing.drawing_analysis_service import (  # noqa: E501
         DrawingAnalysisError,
     )
+    from engineering_app.application.drawing.perception_contract import (
+        TABLE_PERCEPTION_REVISION,
+    )
     import asyncio as _aio
     import hashlib as _hl
     import json as _js
@@ -1638,7 +1644,7 @@ async def _analyze_drawing_understanding(
             {
                 "kind": "product.drawing_understanding",
                 "code": code,
-                "table_perception": "native_slanet_v1",
+                "table_perception": TABLE_PERCEPTION_REVISION,
             },
             sort_keys=True,
         ).encode()
