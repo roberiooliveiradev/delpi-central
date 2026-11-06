@@ -54,3 +54,10 @@ CLARA `_wrap` descartava `ImageContent` (commit `ac8136040f`); SURI schema
 `read` sem `avatar` no Literal (commit `5e5f56781c`, deploy `supplies-mcp`).
 Ambos retornam `[TextContent, ImageContent]` em runtime. Visual no
 ChatGPT: `TEST_NOT_RUN` (reteste manual documentado em ACEITE-AVATARES).
+
+### MCP-AVATAR-UI-V2 — piloto TÉO (2026-11-06)
+
+Superfície MCP Apps compartilhada (`delpi_mcp/avatar_ui.py`) + TÉO com
+`show_avatar`→`ui://delpi/teo/avatar/v1` verificado em runtime (resource
+HTML + CSP + meta). Visual no ChatGPT: `TEST_NOT_RUN` — reteste manual
+necessário antes do rollout dos demais MCPs.

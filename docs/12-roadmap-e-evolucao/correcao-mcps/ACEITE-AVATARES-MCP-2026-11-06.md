@@ -123,3 +123,26 @@ Procedimento manual por especialista: perguntar *"Mostre seu avatar"*
 - **Read-back container `delpi-supplies-mcp`:** `read(entity=avatar,action=get)` → `[TextContent, ImageContent]` mime `image/png`; rota pública e `mcp.avatar_distribution` intactos. Commit `5e5f56781c`; deploy `delpi-supplies-mcp`.
 
 **Visual acceptance ChatGPT:** `TEST_NOT_RUN` — reteste manual: "CLARA/SURI, mostre seu avatar" deve renderizar a foto oficial inline; "Quais ferramentas você possui?" não deve inserir imagem.
+
+## MCP-AVATAR-UI-V2 — piloto TÉO (MCP Apps) (2026-11-06)
+
+**Backend/transporte PROVEN em runtime.** `shared/delpi_mcp/avatar_ui.py`
+(cartão visual reutilizável: CSP restritiva ao origin da URL aprovada,
+light/dark, alt acessível, fallback textual) + TÉO registra:
+
+- resource `ui://delpi/teo/avatar/v1` → `read_resource` retorna HTML
+  completo `text/html;profile=mcp-app` com URL oficial avatar-v2.png
+  embutida e CSP `img-src` limitada ao origin aprovado;
+- tool `show_avatar` (READ, mesma view-gate) com `_meta.ui.resourceUri`
+  + payload `image_url`/mime/sha256 + `ImageContent` (fallback para
+  hosts sem MCP Apps); `read(entity=avatar)` preservado.
+
+Commits: `8fbacd7f17` (impl) + fix f-string py3.11 ×2; deploy
+`delpi-transformometro-api` healthy no HEAD.
+
+**Renderização visual ChatGPT: `TEST_NOT_RUN`** — a conexão precisa
+reler `tools/list`+`resources/list`; reteste manual: "TÉO, mostre seu
+avatar" deve renderizar o card com a foto inline; "TÉO, quais
+ferramentas você possui?" não deve montar o componente. Se o host não
+renderizar `ui://`, a limitação fica documentada (não é PASS visual).
+Rollout VISTA/CLARA/CAIO/SURI/EVA bloqueado até essa validação.
