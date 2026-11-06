@@ -44,3 +44,7 @@
 
 ## 5. Execução futura
 OWNER → FONTE CANÔNICA → CONSUMERS → CONTRATO → IMPLEMENTAÇÃO → RUNTIME → EVIDÊNCIA; `git status`, HEAD, menor diff, testes, residual search, rollout e relatório obrigatório. Não reimportar OpenAPI/Knowledge sem alteração relevante. Esta ficha é **documentação de plano**, não prova de correção implantada.
+## Reconciliação com fontes existentes (GitHub, 2026-11-06)
+- **PROVEN (código):** engineering-api/engineering_app/persona/eva_profile.py → engineering_app/content/eva_agent_intelligence.json; **acronym Engenharia Virtual Assistida já consta no JSON**.
+- Contrato já implementado: `shared/delpi_character_profiles` (estrutura), ficha owner-local (conteúdo), projeção no serviço do MCP (consumer). **Não criar uma segunda ficha nem registry em shared.**
+- Referência cruzada: [Inventário de fontes existentes](./INVENTARIO-FONTES-EXISTENTES.md). Validação de runtime, deploy e testes permanece **TEST_NOT_RUN/TO_INVENTORY** nesta auditoria.
