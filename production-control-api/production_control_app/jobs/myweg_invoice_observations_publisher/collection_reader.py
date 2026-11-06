@@ -66,6 +66,23 @@ class InvoiceCollectionIncompleteError(InvoiceCollectionReadError):
     """Pasta incompleta, instável ou ausente — NÃO é empty_signaled_by_sap."""
 
 
+def list_invoice_collection_dirs(root: Path) -> list[Path]:
+    """Lista pastas de coleta com manifesto.json sob a raiz histórica (somente leitura)."""
+    root = root.expanduser().resolve(strict=False)
+    if not root.is_dir():
+        return []
+    found: list[Path] = []
+    for manifesto in root.rglob("manifesto.json"):
+        parent = manifesto.parent
+        if not parent.is_dir():
+            continue
+        # Esperado: .../data-documento=YYYY-MM-DD/<collection_id>/manifesto.json
+        # Aceita também fixture flat (path_identity_soft).
+        found.append(parent)
+    found.sort(key=lambda path: (path.parent.name, path.name))
+    return found
+
+
 def resolve_collection_dir(
     root: Path,
     *,

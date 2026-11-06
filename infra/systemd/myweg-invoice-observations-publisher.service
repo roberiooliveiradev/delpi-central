@@ -1,0 +1,22 @@
+[Unit]
+Description=MyWEG NF Emitidas — publicador pending fiscal (one-shot Compose)
+Documentation=file:docs/12-roadmap-e-evolucao/production-control/MYWEG-INVOICE-OBSERVATIONS-E4.md
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=operador
+Group=operador
+WorkingDirectory=/home/operador/projetos/delpi-central/infra
+Environment=DOCKER_HOST=unix:///var/run/docker.sock
+# Não inicia o stack completo — apenas o profile manual one-shot.
+ExecStart=/home/operador/projetos/delpi-central/infra/scripts/run-myweg-invoice-observations-publisher-pending.sh
+Nice=10
+TimeoutStartSec=900
+
+# Sem secrets no unit file — o script usa infra/.env via docker compose.
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

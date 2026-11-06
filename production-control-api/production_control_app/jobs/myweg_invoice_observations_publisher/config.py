@@ -1,9 +1,10 @@
-"""Configuração de runtime do publicador manual de NF MyWEG."""
+"""Configuração de runtime do publicador de NF MyWEG (manual + pending)."""
 
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 from production_control_app.jobs.myweg_invoice_observations_publisher import (
@@ -14,12 +15,15 @@ from production_control_app.jobs.myweg_invoice_observations_publisher import (
 @dataclass(frozen=True)
 class InvoicePublisherConfig:
     invoice_root: Path
+    state_dir: Path
     api_base_url: str
     service_token: str
     caller_app: str
     timeout_seconds: float
     max_attempts: int
     stability_wait_seconds: float
+    max_batches_per_run: int = 5
+    activation_document_date: date | None = None
     branch: str = "02"
 
     @classmethod
@@ -32,13 +36,24 @@ class InvoicePublisherConfig:
         root = Path(
             os.getenv("MYWEG_INVOICE_ROOT", DEFAULT_INVOICE_ROOT)
         ).expanduser()
+        state_dir = Path(
+            os.getenv(
+                "MYWEG_INVOICE_PUBLISHER_STATE_DIR",
+                "/var/lib/delpi/myweg-invoice-publisher-state",
+            )
+        ).expanduser()
         api_base = (
             os.getenv("MYWEG_PC_API_URL")
             or os.getenv("PRODUCTION_CONTROL_API_URL")
             or "http://production-control-api:8000"
         ).rstrip("/")
+        activation_raw = (
+            os.getenv("MYWEG_INVOICE_PUBLISHER_ACTIVATION_DOCUMENT_DATE") or ""
+        ).strip()
+        activation = _parse_activation_date(activation_raw) if activation_raw else None
         return cls(
             invoice_root=root,
+            state_dir=state_dir,
             api_base_url=api_base,
             service_token=token,
             caller_app=(
@@ -54,4 +69,13 @@ class InvoicePublisherConfig:
             stability_wait_seconds=float(
                 os.getenv("MYWEG_INVOICE_PUBLISHER_STABILITY_WAIT_SECONDS") or "0.75"
             ),
+            max_batches_per_run=int(
+                os.getenv("MYWEG_INVOICE_PUBLISHER_MAX_BATCHES_PER_RUN") or "5"
+            ),
+            activation_document_date=activation,
         )
+
+
+def _parse_activation_date(value: str) -> date:
+    text = value.strip()[:10]
+    return date.fromisoformat(text)
