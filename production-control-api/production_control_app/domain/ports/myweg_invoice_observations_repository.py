@@ -64,3 +64,20 @@ class MyWegInvoiceObservationsRepositoryPort(Protocol):
         self, *, semantic_sha256: str, exclude_collection_id: str | None = None
     ) -> int:
         ...
+
+    def list_observations_for_document_date_range(
+        self,
+        *,
+        date_from: date,
+        date_to: date,
+    ) -> list[dict[str, Any]]:
+        """Observações no intervalo inclusivo de document_date (filial 02)."""
+        ...
+
+    def list_items_for_observation_ids(
+        self,
+        *,
+        observation_ids: list[str],
+    ) -> list[dict[str, Any]]:
+        """Itens de um conjunto de observações (sem paginação — conciliação)."""
+        ...

@@ -101,8 +101,13 @@ def compare_myweg_need_batches_by_product(
     page: int = Query(1, ge=1),
     pageSize: int = Query(50, alias="pageSize", ge=1, le=200),
     changesOnly: bool = Query(True, alias="changesOnly"),
+    invoiceMode: str = Query("none", alias="invoiceMode"),
 ):
-    """Análise consolidada por produto entre dois snapshots (aditivo ao compare por remessa)."""
+    """Análise consolidada por produto entre dois snapshots (aditivo ao compare por remessa).
+
+    ``invoiceMode=portal`` acrescenta conciliação analítica com NF MyWEG
+    (sem baixa; default ``none`` preserva contrato E5).
+    """
     user = resolve_user(request)
     try:
         data = build_myweg_needs_compare_service().compare_products(
@@ -113,6 +118,7 @@ def compare_myweg_need_batches_by_product(
             page=page,
             page_size=pageSize,
             changes_only=changesOnly,
+            invoice_mode=invoiceMode,
         )
     except MyWegNeedsBatchNotFound as exc:
         return fail(str(exc), 404)

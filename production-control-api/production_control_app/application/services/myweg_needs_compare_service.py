@@ -21,6 +21,20 @@ from production_control_app.domain.errors import (
     MyWegNeedsValidationFailed,
 )
 from production_control_app.domain.myweg_needs_contract import ALLOWED_BRANCH
+from production_control_app.domain.services.myweg_invoice_reconciliation import (
+    COVERAGE_COMPLETE,
+    COVERAGE_CONFLICT,
+    COVERAGE_UNAVAILABLE,
+    aggregate_need_quantity_by_material,
+    aggregate_posted_nf_by_material,
+    build_invoice_window,
+    build_reconciliations_for_materials,
+    enrich_products_with_portal_invoices,
+    evaluate_window_coverage,
+    materials_by_product_key,
+    product_has_invoice_signal,
+    select_canonical_observation_for_day,
+)
 from production_control_app.domain.services.myweg_needs_comparison import (
     aggregate_needs,
     build_product_fifo_scenarios,
@@ -54,8 +68,10 @@ class MyWegNeedsCompareService:
         self,
         repository: Any,
         gateway: DelpiProductionGateway | None = None,
+        invoice_repository: Any | None = None,
     ) -> None:
         self._repository = repository
+        self._invoice_repository = invoice_repository
         self._gateway = gateway or DelpiProductionGateway(
             caller_app="production-control-myweg-compare"
         )
@@ -180,14 +196,31 @@ class MyWegNeedsCompareService:
         page: int = 1,
         page_size: int = 50,
         changes_only: bool = True,
+        invoice_mode: str = "none",
     ) -> dict[str, Any]:
         """Análise consolidada por produto — totais sobre todas as remessas do par.
 
         ``changesOnly=true`` exclui produtos com situation=unchanged
         (total estável e sem mudanças de remessa). Não altera o motor de
         movimentos por remessa nem ``probableDateShifts``.
+
+        ``invoiceMode=portal`` acrescenta conciliação analítica com NF MyWEG
+        (sem baixa transacional; totais fiscais calculados antes da paginação).
         """
         self._assert_can_view(user)
+        mode = (invoice_mode or "none").strip().lower()
+        if mode not in {"none", "portal"}:
+            raise MyWegNeedsValidationFailed(
+                "invoiceMode inválido. Use none|portal.",
+                issues=[
+                    {
+                        "code": "invalid_record",
+                        "message": "invoiceMode",
+                        "path": "invoiceMode",
+                    }
+                ],
+            )
+
         from_batch, to_batch = self._resolve_pair(from_batch_id, to_batch_id)
         self._assert_chronological_order(from_batch, to_batch)
 
@@ -205,9 +238,26 @@ class MyWegNeedsCompareService:
             probable_date_shifts=observed.get("probableDateShifts") or [],
         )
 
+        portal_block: dict[str, Any] | None = None
+        invoice_totals: dict[str, Any] = {}
+        if mode == "portal":
+            products, portal_block, invoice_totals = self._apply_portal_invoices(
+                products=products,
+                from_rows=from_rows,
+                to_rows=to_rows,
+                from_batch=from_batch,
+                to_batch=to_batch,
+            )
+
         total_products_compared = len(products)
         total_products_changed = sum(
-            1 for row in products if row.get("situation") != "unchanged"
+            1
+            for row in products
+            if (
+                product_has_invoice_signal(row)
+                if mode == "portal"
+                else row.get("situation") != "unchanged"
+            )
         )
 
         prev_grand = sum((_as_dec(row["previousQuantityUn"]) for row in products), _ZERO)
@@ -225,7 +275,10 @@ class MyWegNeedsCompareService:
                 or needle in str(row.get("codigoReferenciaWeg") or "").lower()
             ]
         if changes_only:
-            filtered = [row for row in filtered if row.get("situation") != "unchanged"]
+            if mode == "portal":
+                filtered = [row for row in filtered if product_has_invoice_signal(row)]
+            else:
+                filtered = [row for row in filtered if row.get("situation") != "unchanged"]
 
         filtered = sorted(
             filtered,
@@ -241,7 +294,7 @@ class MyWegNeedsCompareService:
         offset = (page - 1) * page_size
         page_items = filtered[offset : offset + page_size]
 
-        return {
+        payload: dict[str, Any] = {
             "branch": ALLOWED_BRANCH,
             "scope": {
                 "customerName": "WEG Linhares Equipamentos Elétricos Ltda.",
@@ -259,10 +312,12 @@ class MyWegNeedsCompareService:
             "totalProductsChanged": total_products_changed,
             "changesOnly": bool(changes_only),
             "search": (product_search or "").strip(),
+            "invoiceMode": mode,
             "totals": {
                 "previousQuantityUn": str(prev_grand),
                 "currentQuantityUn": str(curr_grand),
                 "deltaQuantityUn": str(curr_grand - prev_grand),
+                **invoice_totals,
             },
             "items": page_items,
             "disclaimer": (
@@ -274,8 +329,255 @@ class MyWegNeedsCompareService:
             "dataFreshness": {
                 "comparedAt": datetime.now(timezone.utc).isoformat(),
                 "analysis": "products",
+                "invoiceMode": mode,
             },
         }
+        if portal_block is not None:
+            payload["portalInvoices"] = portal_block
+            payload["disclaimer"] = (
+                payload["disclaimer"]
+                + " Ajuste com NF portal é estimativa analítica condicionada ao "
+                "reconhecimento da WEG — não é baixa transacional."
+            )
+        return payload
+
+    def _apply_portal_invoices(
+        self,
+        *,
+        products: list[dict[str, Any]],
+        from_rows: list[dict[str, Any]],
+        to_rows: list[dict[str, Any]],
+        from_batch: dict[str, Any],
+        to_batch: dict[str, Any],
+    ) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
+        empty_totals = {
+            "postedQuantityUn": None,
+            "observedDeltaUn": None,
+            "adjustedPlanningDeltaUn": None,
+            "compatibleReductionUn": None,
+        }
+        from_day = self._collection_date(from_batch)
+        to_day = self._collection_date(to_batch)
+        window = build_invoice_window(from_date=from_day, to_date=to_day)
+        if window.status != "ok":
+            portal = {
+                "status": COVERAGE_PARTIAL if window.status == "same_day" else COVERAGE_UNAVAILABLE,
+                "coverage": window.status,
+                "period": {
+                    "fromDocumentDate": from_day.isoformat(),
+                    "toDocumentDateExclusive": to_day.isoformat(),
+                    "start": None,
+                    "end": None,
+                    "days": [],
+                },
+                "coveredDates": [],
+                "missingDates": [],
+                "conflicts": [],
+                "reason": window.reason,
+                "disclaimer": (
+                    "Janela fiscal indisponível para ajuste definitivo. "
+                    "Necessidades preservadas sem desconto de NF."
+                ),
+                "canonicalObservations": [],
+            }
+            # Mesmo sem janela, anexar campos nulos para contrato estável.
+            enriched = enrich_products_with_portal_invoices(
+                products,
+                reconciliations={},
+                materials_by_key=materials_by_product_key(from_rows + to_rows),
+                coverage_status=COVERAGE_UNAVAILABLE,
+            )
+            return enriched, portal, empty_totals
+
+        if self._invoice_repository is None:
+            portal = {
+                "status": COVERAGE_UNAVAILABLE,
+                "coverage": COVERAGE_UNAVAILABLE,
+                "period": {
+                    "fromDocumentDate": window.start.isoformat(),
+                    "toDocumentDateExclusive": to_day.isoformat(),
+                    "start": window.start.isoformat(),
+                    "end": window.end.isoformat(),
+                    "days": [d.isoformat() for d in window.days],
+                },
+                "coveredDates": [],
+                "missingDates": [d.isoformat() for d in window.days],
+                "conflicts": [],
+                "reason": "Repositório de observações NF indisponível.",
+                "disclaimer": "Falha técnica na leitura de NF portal.",
+                "canonicalObservations": [],
+            }
+            enriched = enrich_products_with_portal_invoices(
+                products,
+                reconciliations={},
+                materials_by_key=materials_by_product_key(from_rows + to_rows),
+                coverage_status=COVERAGE_UNAVAILABLE,
+            )
+            return enriched, portal, empty_totals
+
+        try:
+            observations = self._invoice_repository.list_observations_for_document_date_range(
+                date_from=window.start,
+                date_to=window.end,
+            )
+        except Exception as exc:  # noqa: BLE001 — falha de I/O → unavailable
+            logger.exception("myweg_portal_invoice_read_failed error=%s", exc)
+            portal = {
+                "status": COVERAGE_UNAVAILABLE,
+                "coverage": COVERAGE_UNAVAILABLE,
+                "period": {
+                    "fromDocumentDate": window.start.isoformat(),
+                    "toDocumentDateExclusive": to_day.isoformat(),
+                    "start": window.start.isoformat(),
+                    "end": window.end.isoformat(),
+                    "days": [d.isoformat() for d in window.days],
+                },
+                "coveredDates": [],
+                "missingDates": [d.isoformat() for d in window.days],
+                "conflicts": [],
+                "reason": "Falha técnica ao ler observações NF.",
+                "disclaimer": "Falha técnica na leitura de NF portal.",
+                "canonicalObservations": [],
+            }
+            enriched = enrich_products_with_portal_invoices(
+                products,
+                reconciliations={},
+                materials_by_key=materials_by_product_key(from_rows + to_rows),
+                coverage_status=COVERAGE_UNAVAILABLE,
+            )
+            return enriched, portal, empty_totals
+
+        selections = [
+            select_canonical_observation_for_day(observations, document_date=day)
+            for day in window.days
+        ]
+        coverage = evaluate_window_coverage(selections)
+        coverage_status = str(coverage["status"])
+
+        canonical_meta = []
+        source_ids: list[str] = []
+        for selection in selections:
+            entry = {
+                "documentDate": selection.document_date.isoformat(),
+                "status": selection.status,
+                "observationId": selection.observation_id,
+                "collectionId": selection.collection_id,
+                "semanticSha256": selection.semantic_sha256,
+                "observationStatus": selection.observation_status,
+                "reason": selection.reason,
+            }
+            canonical_meta.append(entry)
+            if selection.observation_id and selection.status in {
+                "selected",
+                "empty_signaled",
+            }:
+                source_ids.append(selection.observation_id)
+
+        posted_by_material: dict[str, Decimal] = {}
+        if coverage_status == COVERAGE_COMPLETE and source_ids:
+            try:
+                items = self._invoice_repository.list_items_for_observation_ids(
+                    observation_ids=source_ids
+                )
+                # Itens de empty_signaled não existem — ok.
+                posted_by_material = aggregate_posted_nf_by_material(items)
+            except ValueError:
+                coverage_status = COVERAGE_CONFLICT
+                coverage["status"] = COVERAGE_CONFLICT
+                coverage["conflicts"] = list(coverage.get("conflicts") or []) + [
+                    {
+                        "documentDate": "*",
+                        "reason": "Itens com unidade não comparável na janela.",
+                    }
+                ]
+                posted_by_material = {}
+            except Exception as exc:  # noqa: BLE001
+                logger.exception("myweg_portal_invoice_items_failed error=%s", exc)
+                coverage_status = COVERAGE_UNAVAILABLE
+                coverage["status"] = COVERAGE_UNAVAILABLE
+                posted_by_material = {}
+
+        previous_by_material = aggregate_need_quantity_by_material(from_rows)
+        current_by_material = aggregate_need_quantity_by_material(to_rows)
+        # Em cobertura incompleta, não usar parcial como total da janela.
+        effective_posted = (
+            posted_by_material if coverage_status == COVERAGE_COMPLETE else {}
+        )
+        reconciliations = build_reconciliations_for_materials(
+            previous_by_material=previous_by_material,
+            current_by_material=current_by_material,
+            posted_by_material=effective_posted,
+            coverage_status=coverage_status,
+            source_observation_ids=source_ids,
+        )
+        mats_by_key = materials_by_product_key(from_rows + to_rows)
+        enriched = enrich_products_with_portal_invoices(
+            products,
+            reconciliations=reconciliations,
+            materials_by_key=mats_by_key,
+            coverage_status=coverage_status,
+        )
+
+        if coverage_status == COVERAGE_COMPLETE:
+            posted_total = sum((r.posted_nf_un for r in reconciliations.values()), _ZERO)
+            observed_total = sum(
+                (r.observed_delta_un for r in reconciliations.values()), _ZERO
+            )
+            adjusted_total = sum(
+                (
+                    r.adjusted_planning_delta_un or _ZERO
+                    for r in reconciliations.values()
+                ),
+                _ZERO,
+            )
+            compatible_total = sum(
+                (
+                    r.compatible_reduction_un or _ZERO
+                    for r in reconciliations.values()
+                ),
+                _ZERO,
+            )
+            invoice_totals = {
+                "postedQuantityUn": str(posted_total),
+                "observedDeltaUn": str(observed_total),
+                "adjustedPlanningDeltaUn": str(adjusted_total),
+                "compatibleReductionUn": str(compatible_total),
+            }
+        else:
+            observed_total = sum(
+                (r.observed_delta_un for r in reconciliations.values()), _ZERO
+            )
+            invoice_totals = {
+                "postedQuantityUn": None,
+                "observedDeltaUn": str(observed_total),
+                "adjustedPlanningDeltaUn": None,
+                "compatibleReductionUn": None,
+            }
+
+        portal = {
+            "status": coverage_status,
+            "coverage": coverage_status,
+            "period": {
+                "fromDocumentDate": window.start.isoformat(),
+                "toDocumentDateExclusive": to_day.isoformat(),
+                "start": window.start.isoformat(),
+                "end": window.end.isoformat(),
+                "days": [d.isoformat() for d in window.days],
+            },
+            "coveredDates": coverage.get("coveredDates") or [],
+            "missingDates": coverage.get("missingDates") or [],
+            "conflicts": coverage.get("conflicts") or [],
+            "coveredDayCount": coverage.get("coveredDayCount"),
+            "missingDayCount": coverage.get("missingDayCount"),
+            "conflictDayCount": coverage.get("conflictDayCount"),
+            "canonicalObservations": canonical_meta,
+            "disclaimer": (
+                "Conciliação analítica por material WEG. "
+                "NF portal não é descontada da necessidade atual. "
+                "adjustedPlanningDeltaUn é estimativa condicionada ao reconhecimento WEG."
+            ),
+        }
+        return enriched, portal, invoice_totals
 
     def _resolve_pair(
         self,

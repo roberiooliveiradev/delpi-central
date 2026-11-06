@@ -45,6 +45,7 @@ Shell híbrido Linear (rail compacta) + MES (cards de exceção, semáforo). Hom
 - [E4 matching SB1](./MYWEG-NEEDS-PROTHEUS-E4.md)
 - [E5 evolução do planejamento](./MYWEG-NEEDS-PLANNING-EVOLUTION-E5.md)
 - [NF Emitidas E1 (observações)](./MYWEG-INVOICE-OBSERVATIONS-E1.md)
+- [NF Emitidas E2 (conciliação)](./MYWEG-INVOICE-OBSERVATIONS-E2.md)
 
 ## Wireframe v1
 
@@ -76,6 +77,7 @@ A Análise de problemas é **grade de detectores**: cada card é uma regra regis
 - Etapa 4 (matching SB1): [MYWEG-NEEDS-PROTHEUS-E4.md](./MYWEG-NEEDS-PROTHEUS-E4.md).
 - Etapa 5 (evolução + faturamento indicativo): [MYWEG-NEEDS-PLANNING-EVOLUTION-E5.md](./MYWEG-NEEDS-PLANNING-EVOLUTION-E5.md).
 - NF Emitidas Etapa 1 (contrato/persistência/consulta; sem abatimento): [MYWEG-INVOICE-OBSERVATIONS-E1.md](./MYWEG-INVOICE-OBSERVATIONS-E1.md).
+- NF Emitidas Etapa 2 (conciliação analítica no compare/products): [MYWEG-INVOICE-OBSERVATIONS-E2.md](./MYWEG-INVOICE-OBSERVATIONS-E2.md).
 
 ## Produto relacionado
 

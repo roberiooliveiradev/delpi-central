@@ -342,7 +342,9 @@ def build_myweg_sb1_resolve_service(repository=None, gateway=None):
     )
 
 
-def build_myweg_needs_compare_service(repository=None, gateway=None):
+def build_myweg_needs_compare_service(
+    repository=None, gateway=None, invoice_repository=None
+):
     from production_control_app.application.services.myweg_needs_compare_service import (
         MyWegNeedsCompareService,
     )
@@ -350,6 +352,9 @@ def build_myweg_needs_compare_service(repository=None, gateway=None):
     return MyWegNeedsCompareService(
         repository or build_myweg_needs_repository(),
         gateway=gateway,
+        invoice_repository=invoice_repository
+        if invoice_repository is not None
+        else build_myweg_invoice_observations_repository(),
     )
 
 

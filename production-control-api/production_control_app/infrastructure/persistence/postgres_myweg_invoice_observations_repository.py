@@ -315,6 +315,65 @@ class PostgresMyWegInvoiceObservationsRepository:
                 cursor.execute(query, params)
                 return int(cursor.fetchone()["total"])
 
+    def list_observations_for_document_date_range(
+        self,
+        *,
+        date_from: date,
+        date_to: date,
+    ) -> list[dict[str, Any]]:
+        query = f"""
+            SELECT {_OBS_COLUMNS}
+            FROM {_OBSERVATIONS}
+            WHERE document_date >= %s
+              AND document_date <= %s
+              AND branch = '02'
+            ORDER BY document_date ASC, source_prepared_at DESC, collection_id ASC
+        """
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, (date_from, date_to))
+                rows = cursor.fetchall()
+        return [self._map_observation(row) for row in rows if row]
+
+    def list_items_for_observation_ids(
+        self,
+        *,
+        observation_ids: list[str],
+    ) -> list[dict[str, Any]]:
+        if not observation_ids:
+            return []
+        query = f"""
+            SELECT
+                observation_id::text AS observation_id,
+                id::text AS id,
+                source_line_no,
+                invoice_number,
+                invoice_series,
+                material_weg,
+                material_description,
+                quantity_original,
+                source_unit,
+                quantity_un,
+                unit_comparability,
+                departure_date
+            FROM {_ITEMS}
+            WHERE observation_id = ANY(%s::uuid[])
+            ORDER BY observation_id, source_line_no ASC
+        """
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, (observation_ids,))
+                rows = cursor.fetchall()
+        items: list[dict[str, Any]] = []
+        for row in rows:
+            mapped = self._map_item(row)
+            mapped["observationId"] = row["observation_id"]
+            mapped["unit_comparability"] = row["unit_comparability"]
+            mapped["material_weg"] = row["material_weg"]
+            mapped["quantity_un"] = mapped.get("quantityUn")
+            items.append(mapped)
+        return items
+
     @staticmethod
     def _map_observation(row: Any | None) -> dict[str, Any] | None:
         if row is None:

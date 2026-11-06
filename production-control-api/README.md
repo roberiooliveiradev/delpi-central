@@ -70,6 +70,7 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | GET | `/myweg/need-batches/{batchId}` | JWT — resumo da coleta |
 | GET | `/myweg/need-batches/{batchId}/items` | JWT — itens paginados (`search`, `remessaFrom`, `remessaTo`) enriquecidos com projeção SB1 (V026) |
 | GET | `/myweg/need-batches/compare` | JWT — evolução entre duas coletas (`fromBatchId`, `toBatchId`, `billingMode=none\|indicative`) |
+| GET | `/myweg/need-batches/compare/products` | JWT — consolidado por produto (`invoiceMode=none\|portal`; portal = conciliação analítica NF MyWEG) |
 | GET | `/myweg/invoice-observations` | JWT + `myweg-needs.view` + filial 02 — lista observações de NF (`documentDate`, `observationStatus`) |
 | GET | `/myweg/invoice-observations/{observationId}` | JWT — detalhe da observação (hashes, manifesto, equivalência semântica) |
 | GET | `/myweg/invoice-observations/{observationId}/items` | JWT — itens paginados da observação |
