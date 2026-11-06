@@ -675,3 +675,46 @@ Decisão: retirada NÃO autorizada — bloqueios = consumer migration externa,
 live tests, negative multi-user e provider eval. Menor trabalho para
 desbloquear: identidade de teste B + atualização manual do plugin + eval
 de seleção no provider com a flag OFF em ambiente de avaliação.
+
+## 20. Wave 007 — Semantic cutover acceptance (DAVI-V2-WAVE-007)
+
+> 2026-11-06. Correção de consistência get_context + flag OFF provada em runtime real.
+
+### 20.1 Correção get_context (Frente A)
+
+```text
+PROBLEMA : flag OFF escondia broker do tools/list/call, mas get_context
+           reportava _AVAILABLE_TOOLS estático (6 tools) — divergência.
+FIX      : davi_get_context(..., legacy_broker_enabled) injetado pela
+           interface (server.py lê settings — Application livre de config).
+           Flag OFF → broker em unavailable: DISABLED_BY_SURFACE_FLAG;
+           flag ON → 6 disponíveis (comportamento preservado).
+PROVA    : testes unitários + runtime real (docker run imagem local):
+           tools_off=[analyze,get_context,knowledge,read];
+           ctx_avail idêntico; broker=DISABLED_BY_SURFACE_FLAG;
+           execute/delete=PLANNED_NOT_IMPLEMENTED.
+```
+
+### 20.2 Ambiente isolado semantic-only (Frente B)
+
+```text
+PASS parcial — prova em runtime real descartável (docker run -e flag=false
+na imagem atual). Endpoint HTTP MCP com OAuth em instância isolada =
+PENDING (menor infra: override compose dev com a flag; produção intocada).
+```
+
+### 20.3 Gates de retirada (atualização)
+
+```text
+CAPABILITY_PARITY        = PASS (94/94 read; 25/25 analyze)
+GET_CONTEXT_CONSISTENCY  = PASS (correção provada em runtime real)
+NL_SELECTION_PARITY      = PARCIAL (substrate + baseline legado 6/6;
+                           eval do modelo = PENDING provider)
+CONSUMER_MIGRATION       = PARCIAL (plugin/GPT Actions pendentes)
+SECURITY_REGRESSION      = PASS
+NEGATIVE_MULTI_USER_AUTHZ= PENDING (SECOND_TEST_IDENTITY_UNAVAILABLE)
+LIVE_SEMANTIC_ONLY_TESTS = PARCIAL (runtime flag-off provado; tools/call
+                           HTTP OAuth = TEST_NOT_RUN)
+PROVIDER_DISCOVERY       = PENDING
+ROLLBACK_READINESS       = PASS
+```

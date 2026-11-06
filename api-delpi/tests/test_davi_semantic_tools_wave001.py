@@ -799,3 +799,45 @@ def test_legacy_broker_flag_default_keeps_six_tools(monkeypatch):
     monkeypatch.setattr(_settings, "DAVI_LEGACY_BROKER_TOOLS_ENABLED", True)
     tools = asyncio.run(create_mcp_server().list_tools())
     assert len(tools) == 6
+
+
+def test_get_context_reports_broker_disabled_when_flag_off(monkeypatch):
+    """get_context must mirror the effective published surface — semantic-only
+    mode lists broker tools as DISABLED_BY_SURFACE_FLAG, never as available."""
+    from app.config import settings as _settings
+
+    monkeypatch.setattr(_settings, "DAVI_LEGACY_BROKER_TOOLS_ENABLED", False)
+    result = asyncio.run(
+        create_mcp_server().call_tool("get_context", {"action": "context"})
+    )
+    assert result.is_error is False
+    tools = result.structured_content["tools"]
+    assert [t["name"] for t in tools["available"]] == [
+        "get_context",
+        "knowledge",
+        "read",
+        "analyze",
+    ]
+    disabled = {t["name"]: t["status"] for t in tools["unavailable"]}
+    assert disabled["discover_delpi_information"] == "DISABLED_BY_SURFACE_FLAG"
+    assert disabled["execute_delpi_information"] == "DISABLED_BY_SURFACE_FLAG"
+    assert disabled["execute"] == "PLANNED_NOT_IMPLEMENTED"
+    assert disabled["delete"] == "PLANNED_NOT_IMPLEMENTED"
+
+
+def test_get_context_reports_broker_available_when_flag_on(monkeypatch):
+    from app.config import settings as _settings
+
+    monkeypatch.setattr(_settings, "DAVI_LEGACY_BROKER_TOOLS_ENABLED", True)
+    result = asyncio.run(
+        create_mcp_server().call_tool("get_context", {"action": "context"})
+    )
+    names = [t["name"] for t in result.structured_content["tools"]["available"]]
+    assert names == [
+        "get_context",
+        "knowledge",
+        "read",
+        "analyze",
+        "discover_delpi_information",
+        "execute_delpi_information",
+    ]

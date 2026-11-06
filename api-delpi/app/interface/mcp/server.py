@@ -433,6 +433,7 @@ def create_mcp_server() -> MCPServer:
                 action=params.action,
                 capability=params.capability,
                 actor_id=_actor_id(),
+                legacy_broker_enabled=settings.DAVI_LEGACY_BROKER_TOOLS_ENABLED,
             )
             return CallToolResult(
                 content=[TextContent(type="text", text="Context resolved.")],

@@ -43,14 +43,17 @@ from scripts.davi_governed_knowledge_bundle_lib import (
 
 _CONTEXT_ACTIONS = frozenset({"context", "catalog", "schema"})
 
-_AVAILABLE_TOOLS = (
+_SEMANTIC_TOOLS = (
     MCP_TOOL_GET_CONTEXT,
     MCP_TOOL_KNOWLEDGE,
     MCP_TOOL_READ,
     MCP_TOOL_ANALYZE,
+)
+_LEGACY_BROKER_TOOLS = (
     MCP_TOOL_DISCOVER_DELPI_INFORMATION,
     MCP_TOOL_EXECUTE_DELPI_INFORMATION,
 )
+_AVAILABLE_TOOLS = _SEMANTIC_TOOLS + _LEGACY_BROKER_TOOLS
 # Sibling-pattern tools decided for later waves — reported honestly as
 # unavailable so the model never invents them.
 _PLANNED_TOOLS = ("execute", "delete")
@@ -78,7 +81,23 @@ def _limits() -> dict[str, Any]:
     return {key: budgets.get(key) for key in _BUDGET_KEYS if key in budgets}
 
 
-def _context(actor_id: str | None) -> dict[str, Any]:
+def _context(
+    actor_id: str | None, *, legacy_broker_enabled: bool = True
+) -> dict[str, Any]:
+    _available_names = (
+        _SEMANTIC_TOOLS + _LEGACY_BROKER_TOOLS
+        if legacy_broker_enabled
+        else _SEMANTIC_TOOLS
+    )
+    unavailable = [
+        {"name": name, "status": "PLANNED_NOT_IMPLEMENTED"}
+        for name in _PLANNED_TOOLS
+    ]
+    if not legacy_broker_enabled:
+        unavailable.extend(
+            {"name": name, "status": "DISABLED_BY_SURFACE_FLAG"}
+            for name in _LEGACY_BROKER_TOOLS
+        )
     return {
         "action": "context",
         "status": "ok",
@@ -106,12 +125,9 @@ def _context(actor_id: str | None) -> dict[str, Any]:
         "tools": {
             "available": [
                 {"name": name, "class": MCP_TOOL_CLASSES[name]}
-                for name in _AVAILABLE_TOOLS
+                for name in _available_names
             ],
-            "unavailable": [
-                {"name": name, "status": "PLANNED_NOT_IMPLEMENTED"}
-                for name in _PLANNED_TOOLS
-            ],
+            "unavailable": unavailable,
         },
         "versions": {
             "catalog_allowlist": _catalog_version(),
@@ -200,6 +216,7 @@ def davi_get_context(
     action: str = "context",
     capability: str | None = None,
     actor_id: str | None = None,
+    legacy_broker_enabled: bool = True,
 ) -> dict[str, Any]:
     normalized = (action or "context").strip()
     if normalized not in _CONTEXT_ACTIONS:
@@ -212,4 +229,4 @@ def davi_get_context(
         return _capability_schema(capability)
     if normalized == "catalog":
         return _catalog()
-    return _context(actor_id)
+    return _context(actor_id, legacy_broker_enabled=legacy_broker_enabled)
