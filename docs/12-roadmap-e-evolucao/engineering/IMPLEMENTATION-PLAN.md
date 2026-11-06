@@ -567,3 +567,8 @@ todos:
 **Tests/quality gates:** inexistência código, código certo com descrição divergente, alteração de 1 de N campos, fornecedor/Part Number divergente, dois analistas, repetição de Concluir, stale baseRevision, 403, timeout/502, falta de campo no contrato API, fingerprint da evidência ERP, nenhuma revisão vigente em falha. Testes em SHA específico; rollback/revoke se necessário. **Shared-file gate** com VAL-01 para `main.py`, `config.py`, router, manifest e deploy.
 
 **Futuro:** integração a `requests-api`, fontes externas, similaridade no intake e automação de escrita TOTVS — tudo fora da etapa inicial.
+
+
+## Referência executável do vertical Product Registration — 2026-11-06
+
+A especificação de rotas, payloads, PostgreSQL/JSONB, regras de transição, verificação TOTVS e critérios de aceite do MVP Engineering-only está em [PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md](./PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md). **Para este vertical, o contrato mais recente prevalece sobre exemplos e premissas históricas de BFF legado, My Requests e proibições de persistir workflow do antigo Controle MP.** Não altera outros domínios; ownership ainda exige `ARCHITECTURE_DECISION_REQUIRED` e a escrita ERP continua fora do escopo. A fase atual é documentação, sem código ou deploy.
