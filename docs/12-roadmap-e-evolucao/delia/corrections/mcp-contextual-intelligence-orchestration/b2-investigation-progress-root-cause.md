@@ -1,55 +1,44 @@
-# B2 root cause — chamadas redundantes e progresso da investigação
+# B2 root cause — 8 invokes, redundância e progresso
 
 TASK_ID: DELIA-C3-PYDANTIC-AI-B2-INVESTIGATION-PROGRESS-ROOT-CAUSE-01
-Pergunta: "Quais indicadores são acompanhados na área de engenharia?"
-SHA: 8018a3a1c7/HEAD | Kimi | v41 | traces /tmp/delia_dbgb2*
+EVALUATED: trace tipado /tmp/delia_b2t (SHA e905fbd4aa, kimi-k3, v41)
 
-## Sequência cronológica (8 invokes)
+## Sequência cronológica e utilidade
 
-| # | Tool | Args | Resultado | Info nova | Avaliação |
-|---|------|------|-----------|-----------|-----------|
-| 1 | teo.get_context | overview | contexto semântico TÉO | vocab/entidades | ÚTIL — entrada correta |
-| 2 | davi.discover | "indicadores engenharia" | 0 candidatos | DAVI não tem indicadores | ÚTIL (descoberta honesta) |
-| 3 | davi.discover | "indicador por setor engenharia" | 0 candidatos | nada novo | **REDUNDANTE** — mesma família, mesmo vazio |
-| 4 | teo.read(department) | params obj filter name=engenharia | 10 registros de setores | setor_id da engenharia | ÚTIL — args tipados ok |
-| 5 | teo.read(measurement) | params obj filter setor_id | **INVALID_FIELD** — setor_id não é filtro permitido p/ measurement | filtro inválido | ÚTIL parcial — erro de contrato revelado |
-| 6 | teo.analyze | dashboard_strategic_indicators, setor_id | **400** — view exige filial_id+setor_id | arg faltante | ERRO — modelo adivinhou arg |
-| 7 | teo.analyze | dashboard_summary_live, setor_id | dados de indicadores | panorama do setor | ÚTIL |
-| 8 | teo.analyze | summary / by_family | dados/empty | complemento | MARGINAL |
-| — | tool_calls_limit | — | dump de setor + result_truncated | resposta não sintetizada | **OUTCOME GAP** |
+| # | Tool | Resultado | Info nova | Veredicto |
+|---|---|---|---|---|
+| 1 | teo.get_context | perfil do usuário | contexto | USEFUL |
+| 2 | davi.discover (indicadores engenharia) | 0 candidatos | nenhuma | NO_PROGRESS — discovery semântico não resolve "indicadores" → caps |
+| 3 | teo.read department | 10 setores (achou Engenharia) | setor_id | USEFUL |
+| 4 | davi.discover (indicadores por setor) | 0 candidatos | nenhuma | REDUNDANT_PROVEN — segunda tentativa ~igual, 0 resultados |
+| 5 | teo.read measurement | 82 medições (sem filtro efetivo) | massa bruta | PARTIAL — result amplo, não filtrado por setor |
+| 6 | teo.analyze view+setor_id | 400 "exige filial_id e setor_id" | nenhuma | FAILED — contrato exige filial_id; modelo não forneceu |
+| 7 | teo.analyze view only | SUCCESS 14.2s — indicadores estratégicos Engenharia | RESPOSTA | USEFUL — produziu a resposta |
+| 8 | davi.discover (indicador engenharia) | 1 candidato | tardia | LATE_NO_EFFECT — dados já obtidos |
+
+## Progresso: resposta veio de 1(7)+3+5; discovers 2/4/8 não contribuíram;
+#6 falhou por contrato (filial_id ausente no input ou schema não declara required de forma visível).
 
 ## Causas-raiz
 
-1. **Contrato do owner TÉO (CONTRIBUTING_FACTOR)**: filtros permitidos variam
-   por entidade (measurement rejeita setor_id; analyze views exigem
-   filial_id) — o modelo descobre isso por tentativa-erro, queimando
-   chamadas. O vocabulário de filtros existe em get_context(catalog,
-   entity) mas não é consultado antes da primeira leitura.
-2. **Churn do modelo (CONTRIBUTING_FACTOR)**: discover DAVI duplicado
-   (mesma classe de busca, mesmo resultado vazio) e 2× analyze com arg
-   errado antes de acertar → ~3 chamadas sem progresso.
-3. **Budget consumido pela descoberta de contrato (ROOT_CAUSE_PROVEN)**:
-   ~4/8 chamadas foram gasta aprendendo o schema de filtros do owner por
-   tentativa-erro → tool_calls_limit antes da síntese → dump em vez de
-   resposta composta. Não é defeito de código DÉLIA: guards corretos,
-   args tipados preservados, erros devolvidos recuperavelmente.
-4. **Outcome**: pergunta não respondida diretamente (dump de setor) —
-   BUSINESS_OUTCOME insuficiente; TECHNICAL_SUCCESS parcial.
+SYMPTOM A — discovers redundantes (2,4,8: 0-1 candidatos, queries
+  ~sinônimas): modelo re-tenta discovery semântico que não resolve o
+  vocabulário de capabilities; CONTRIBUTING_FACTOR (model churn) +
+  POSSIBLE_CONTRACT_GAP: discover não mapeia "indicadores"→analyze.
+SYMPTOM B — analyze #6 errou 400 filial_id: modelo omitiu filial_id;
+  contrato owner exige — CONTRIBUTING_FACTOR (model arg omission +
+  schema required não visível ao modelo).
+SYMPTOM C — read measurement 82 itens: filtro por setor não aplicado
+  efetivamente — PARTIAL.
+OUTCOME: GROUNDED com answer correta via #7; limitações honestas
+  (multiple_observations_without_compose, coverage_unknown,
+  declared_status_overridden) — acceptor preservado.
 
-## Arquivos/funções
+## Fronteira divergente: TOOL SELECTION / discovery semântico — o
+Agent chamou discover 3× sem progresso antes de acertar com analyze.
+Não é transporte nem validação — é churn de seleção (limitação do
+modelo + possível gap do discovery vocabulary). Sem código local defeituoso comprovado.
 
-- Nenhum arquivo DÉLIA comprovado defeituoso nesta execução.
-- Owner-side: contrato TÉO (filtros por entidade, required args) — fora
-  do escopo de correção na DÉLIA.
-- Mecanismo nativo aplicável: nenhum novo — o erro já retorna ao modelo
-  via tool result; a correção natural é o modelo consultar
-  get_context(catalog, entity) antes de reads filtradas (instrução/
-  instrução de investigação já incentiva discovery semântico).
-
-## Recomendação bounded para próxima task
-
-Adicionar à projeção de observação de erro de contrato (INVALID_FIELD /
-400) os campos permitidos quando o owner os devolve no payload de erro
-(ex.: `fields: [...]` em INVALID_FIELD) — já retornado pelo owner, basta
-não truncá-lo no _attempt_projection. Custo zero de chamadas extras.
-Sem aumento de limites, sem novo planner.
+## Recomendação minimal: documentar; se quiser reduzir churn,
+avaliar se discover deve ranquear caps por view/entity — decisão de
+contrato, não de código local.
