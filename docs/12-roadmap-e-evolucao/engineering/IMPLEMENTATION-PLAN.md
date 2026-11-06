@@ -630,3 +630,14 @@ Ambiente usado: stack dev local (containers delpi-*), banco descartável `plugin
 - Novo `tests/test_prc_postgres_integration.py` (skip sem `ENG_PRC_TEST_DSN`): fluxo completo real — create → start → CAS 409 → draft seletivo preservando campos → review → `complete_request` atômica (record+revision+verification+evento) → revision imutável persistida → timeline sequencial; unicidade de referência externa → `PrcDuplicateError`; idempotência roundtrip. **3/3 PASS em PostgreSQL 15 real.**
 - Core: `engineering.access` presente na tabela `permissions`; `engineering.manager` ausente → `PENDING_CORE_SYNC` (manifest declarado, sync pelo pipeline/owner Core).
 - Não executados (sem acesso autorizado nesta sessão): leitura TOTVS real via api-delpi (`B1_CONTA` em produção/HML real), browser E2E, transporte MCP/elicitation real.
+
+
+## ADENDO — PRC-D5.1: homologação operacional em dev-stack controlado
+
+> **Status:** `B1_CONTA LIVE-READ PASS / MANAGER REGISTERED(dev) / API-DELPI REBUILT(dev) / TOTVS-WRITE PENDING_OPERATOR / E2E+MCP TEST_NOT_RUN`.
+
+- `engineering.manager` registrada no Core dev (`permissions` INSERT — contrato manifest↔Core comprovado; sync canônica produtiva permanece owner Core).
+- api-delpi **rebuild em dev** (`infra-api-delpi:latest` em HEAD `949ef1b286`) e restart via compose — serviço healthy.
+- **Leitura real TOTVS comprovada**: `GET /products/90264270?view=engineering` com JWT real dev retornou `accounting_account = '11401006'` (B1_CONTA, CHICOTE DE LIGACAO) — chain completo Portal → gateway → api-delpi → TOTVS. Contract gap encerrado em runtime.
+- PostgreSQL: V012+grants confirmados em plugins_hub dev; suite real-PG 3/3 PASS (rodada anterior).
+- Não executados: cenários TOTVS manuais create/update (operador funcional), engineering-api no stack dev (serviço não provisionado), browser E2E, MCP transport/elicitation.
