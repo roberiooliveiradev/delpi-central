@@ -1417,10 +1417,10 @@ async def _produce_drawing_understanding(context, code: str):
     ]
     if not runs:
         raise DrawingAnalysisError(
+            "no_ocr_evidence",
             "Nenhum pipeline visual retornou evidência OCR para "
             "interpretação.",
             status_code=422,
-            code="no_ocr_evidence",
         )
     best = max(runs, key=lambda r: r.get("token_count") or 0)
     tokens = [
@@ -1505,6 +1505,16 @@ async def _produce_drawing_understanding(context, code: str):
     )
     understanding["page_coverage"] = {
         "pdf_page_count": _pdf_pages,
+        "coverage_status": (
+            "FULL"
+            if (
+                _pdf_pages
+                and not _failed
+                and not _not_processed
+                and len(_attempted) == _pdf_pages
+            )
+            else ("NONE" if not _attempted else "PARTIAL")
+        ),
         "pages_attempted": _attempted,
         "pages_ocr_ok": [
             p for p, s in sorted(_page_status.items())

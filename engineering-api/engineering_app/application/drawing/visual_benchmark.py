@@ -274,6 +274,9 @@ def _merge_isolated_records(a: dict, b: dict) -> dict:
     merged["_graphic_primitives"] = (
         a.get("_graphic_primitives") or b.get("_graphic_primitives")
     )
+    merged["has_positional_data"] = bool(
+        a.get("has_positional_data") or b.get("has_positional_data")
+    )
     merged["document_page_count"] = (
         b.get("document_page_count") or a.get("document_page_count")
     )
@@ -286,9 +289,9 @@ def _merge_isolated_records(a: dict, b: dict) -> dict:
     merged["batch_ranges"] = (a.get("batch_ranges") or []) + [
         b.get("page_range")
     ]
-    ok = sum(
-        1 for p in pages if (p.get("ocr") or {}).get("status") == "ok"
-    )
+    # Convenção do pipeline: página OCR-ok == possui chave "ocr"
+    # (a mesma usada na contagem in-process). Falhas ficam sem "ocr".
+    ok = sum(1 for p in pages if "ocr" in p)
     total = merged["document_page_count"] or len(pages)
     if ok and ok == total:
         merged["status"] = "ok"
