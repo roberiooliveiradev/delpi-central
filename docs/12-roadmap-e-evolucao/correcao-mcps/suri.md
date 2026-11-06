@@ -38,3 +38,7 @@ O item `suri.boundaries` diz textualmente que a versão não contém ferramentas
 
 ## Governança de implementação
 Respeitar OWNER → FONTE CANÔNICA → CONSUMERS → CONTRATO → IMPLEMENTAÇÃO → RUNTIME → EVIDÊNCIA. Antes do diff: git status, HEAD, Abstraction Gate, menor alteração, testes e residual search. Não mudar backend/GPT Builder/OpenAPI por reflexo. Elaborar relatório de execução completo com postconditions. **Este arquivo é o plano, não prova do fix.**
+## Reconciliação com fontes existentes (GitHub, 2026-11-06)
+- **PROVEN (código):** supplies-api/app/persona/suri_profile.py → app/content/suri_agent_intelligence.json; ficha já existe; a divergência de Knowledge sobre read-only é separada da ficha narrativa.
+- Contrato já implementado: `shared/delpi_character_profiles` (estrutura), ficha owner-local (conteúdo), projeção no serviço do MCP (consumer). **Não criar uma segunda ficha nem registry em shared.**
+- Referência cruzada: [Inventário de fontes existentes](./INVENTARIO-FONTES-EXISTENTES.md). Validação de runtime, deploy e testes permanece **TEST_NOT_RUN/TO_INVENTORY** nesta auditoria.
