@@ -351,3 +351,17 @@ def test_visual_self_review_projected_on_both_transports():
         assert directives["visual_self_review"]["principle"] == (
             "SELF_REVIEW_AFTER_VISUAL_MUTATION"
         ), transport
+
+
+def test_persona_context_projects_approved_acronym():
+    """VISTA-01 — approved name expansion echoes in the persona projection."""
+    context = VistaAgentIntelligenceService.persona_context()
+    assert context["identity"]["acronym"] == (
+        "Visão Inteligente de Sistemas, Telas e Apresentações"
+    )
+    directives = VistaAgentIntelligenceService.agent_directives(
+        transport="mcp"
+    )
+    assert directives["character"]["identity"]["acronym"] == (
+        "Visão Inteligente de Sistemas, Telas e Apresentações"
+    )

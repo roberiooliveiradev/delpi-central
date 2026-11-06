@@ -266,15 +266,17 @@ def _register_read_tools(mcp: MCPServer) -> None:
     mcp.add_tool(
         tool_delete,
         name="delete",
-        title="Exclusão semântica — somente block|section|slide",
+        title="Exclusão semântica governada",
         description=(
             "Exclusão governada em duas fases. phase=prepare: entity ∈ "
-            "{block,section,slide} + target (playlistId + id da entidade; "
-            "deleteSlides opcional para section) → proposal selado + "
-            "consentChallenge. phase=commit: proposal_handle + "
-            "idempotency_key + consent_artifact aprovado no canal humano "
-            "confiável + target_echo — sem booleano de confirmação nesta "
-            "superfície."
+            "{block,section,slide,data_model,playlist_share,edit_invite,"
+            "playlist,slide_template} + target (playlistId + id da "
+            "entidade — slideId|sectionId|blockId|templateId|targetUserId "
+            "conforme a entidade; deleteSlides opcional para section) → "
+            "proposal selado + consentChallenge. phase=commit: "
+            "proposal_handle + idempotency_key + consent_artifact "
+            "aprovado no canal humano confiável + target_echo — sem "
+            "booleano de confirmação nesta superfície."
         ),
         annotations=ann_act,
         meta=_meta("delete"),

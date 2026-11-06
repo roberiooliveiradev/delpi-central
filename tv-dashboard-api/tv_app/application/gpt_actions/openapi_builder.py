@@ -881,7 +881,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "vista_delete",
                 "summary": "Governed delete — PREPARE→COMMIT facade",
                 "description": (
-                    "Destructive ops only (entity in block|section|slide). "
+                    "Destructive ops only (entity enum = full approved set). "
                     "phase=prepare: entity + target -> sealed proposal_handle "
                     "+ consentChallenge. phase=commit: proposal_handle + "
                     "idempotency_key + consent_artifact + target_echo. Only "
@@ -909,7 +909,16 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "properties": {
                             "entity": {
                                 "type": "string",
-                                "enum": ["block", "section", "slide"],
+                                "enum": [
+                                    "block",
+                                    "section",
+                                    "slide",
+                                    "data_model",
+                                    "playlist_share",
+                                    "edit_invite",
+                                    "playlist",
+                                    "slide_template",
+                                ],
                             },
                             "phase": {
                                 "type": "string",

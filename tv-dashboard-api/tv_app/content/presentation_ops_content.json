@@ -1571,7 +1571,31 @@
           "enum": ["none", "target", "previous"]
          },
          "higherIsBetter": { "type": "boolean" },
-         "colorRules": { "type": "array" }
+         "colorRules": {
+          "type": "array",
+          "description": "Conditional colors. value=literal threshold OR compareField=DataModel field (BE resolves).",
+          "items": {
+           "type": "object",
+           "additionalProperties": true,
+           "properties": {
+            "op": {
+             "type": "string",
+             "enum": ["gt", "gte", "lt", "lte", "eq", "between"]
+            },
+            "value": { "type": "number" },
+            "valueTo": { "type": "number" },
+            "compareField": { "type": "string" },
+            "compareAggregation": {
+             "type": "string",
+             "enum": ["first", "sum", "avg", "min", "max", "count"]
+            },
+            "tone": {
+             "type": "string",
+             "enum": ["default", "positive", "negative", "warning"]
+            }
+           }
+          }
+         }
         }
        },
        "chartOptions": {

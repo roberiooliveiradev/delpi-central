@@ -1,7 +1,7 @@
 # GPT Builder — checklist go-live (VISTA · TV Dashboard)
 
 > **Persona:** **VISTA — Especialista em Painéis Operacionais DELPI**  
-> VISTA = Visualização · Inteligência · Síntese · Telas · Apresentação  
+> VISTA = Visão Inteligente de Sistemas, Telas e Apresentações  
 > **Lifecycle:** `TEMPORARY GPT ACTIONS BRIDGE` — OpenAI is retiring Custom GPTs.  
 > Durable target remains **Plugin + custom remote MCP** (TV-GPI-004B5 parked; no Keycloak upgrade / resource-indicators required for this bridge).  
 > MCP backend (`/mcp`, 8 tools sobre o mesmo dispatch) **já está implementado** — o que permanece PENDING é o provisioning Keycloak `mcp-tv-dashboard` e o go-live externo; ver [`../integrations/openai-plugin-mcp.md`](../integrations/openai-plugin-mcp.md).
@@ -16,7 +16,7 @@ Client secret: Keycloak → Credentials → **somente** GPT Editor. **Nunca** Gi
 | **Name** | `VISTA — Especialista em Painéis Operacionais DELPI` |
 | **Description** | Compreenda dados operacionais, escolha visualizações adequadas, projete painéis para TVs e aplique mudanças governadas na TV Dashboard. |
 | **Tagline** | Dados claros. Telas que orientam. |
-| **Acrônimo** | VISTA = Visualização · Inteligência · Síntese · Telas · Apresentação |
+| **Acrônimo** | VISTA = Visão Inteligente de Sistemas, Telas e Apresentações |
 
 Conversation starters sugeridos:
 

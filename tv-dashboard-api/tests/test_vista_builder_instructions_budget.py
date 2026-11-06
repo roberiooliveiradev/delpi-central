@@ -50,8 +50,7 @@ def test_vista_builder_instructions_fit_character_budget():
 def test_vista_identity_and_acronym_documented():
     text = DOC.read_text(encoding="utf-8")
     assert "VISTA — Especialista em Painéis Operacionais DELPI" in text
-    assert "Visualização" in text and "Inteligência" in text and "Síntese" in text
-    assert "Telas" in text and "Apresentação" in text
+    assert "Visão Inteligente de Sistemas, Telas e Apresentações" in text
 
 
 def test_vista_builder_core_keeps_required_invariants():

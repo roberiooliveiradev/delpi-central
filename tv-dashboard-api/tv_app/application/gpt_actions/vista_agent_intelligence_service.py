@@ -283,6 +283,14 @@ class VistaAgentIntelligenceService:
     def persona_context(cls) -> dict[str, Any]:
         """Compact narrative context from the ficha — MCP/agent echo."""
         context = project_persona_context(cls.character_profile())
+        # Owner-local additive key (same pattern as avatar_distribution —
+        # no shared-contract change): the approved name expansion lives in
+        # the content layer and is echoed inside the projected identity.
+        acronym = str(
+            (cls.document().get("persona") or {}).get("acronym") or ""
+        ).strip()
+        if acronym:
+            context.setdefault("identity", {})["acronym"] = acronym
         distribution = cls.avatar_distribution()
         if distribution:
             context["avatar_distribution"] = distribution
