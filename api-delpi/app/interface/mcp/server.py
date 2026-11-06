@@ -29,6 +29,8 @@ from app.application.external_capabilities.constants import (
     MCP_TOOL_GET_CONTEXT_TITLE,
     MCP_TOOL_KNOWLEDGE,
     MCP_TOOL_KNOWLEDGE_TITLE,
+    MCP_TOOL_ANALYZE,
+    MCP_TOOL_ANALYZE_TITLE,
     MCP_TOOL_READ,
     MCP_TOOL_READ_TITLE,
 )
@@ -50,6 +52,7 @@ from app.application.external_capabilities.dynamic_information.errors import (
     GovernedExecutionError,
 )
 from app.composition.davi_dynamic_read_composer import (
+    davi_analyze_wired,
     davi_knowledge_wired,
     davi_read_wired,
     execute_delpi_information_wired,
@@ -68,6 +71,7 @@ from app.interface.mcp.schemas import (
     DiscoverDelpiInformationInput,
     ExecuteDelpiInformationInput,
     GetContextInput,
+    AnalyzeInput,
     KnowledgeInput,
     ReadInput,
     discover_delpi_information_input_json_schema,
@@ -76,6 +80,8 @@ from app.interface.mcp.schemas import (
     execute_delpi_information_output_json_schema,
     get_context_input_json_schema,
     get_context_output_json_schema,
+    analyze_input_json_schema,
+    analyze_output_json_schema,
     knowledge_input_json_schema,
     knowledge_output_json_schema,
     read_input_json_schema,
@@ -216,6 +222,9 @@ class ApiDelpiMCPServer(MCPServer):
             elif info.name == MCP_TOOL_READ:
                 input_schema = read_input_json_schema()
                 output_schema = read_output_json_schema()
+            elif info.name == MCP_TOOL_ANALYZE:
+                input_schema = analyze_input_json_schema()
+                output_schema = analyze_output_json_schema()
             payload: dict[str, Any] = {
                 "name": info.name,
                 "title": info.title,
@@ -245,6 +254,8 @@ class ApiDelpiMCPServer(MCPServer):
                 KnowledgeInput.model_validate(arguments or {})
             elif name == MCP_TOOL_READ:
                 ReadInput.model_validate(arguments or {})
+            elif name == MCP_TOOL_ANALYZE:
+                AnalyzeInput.model_validate(arguments or {})
         except ValidationError as exc:
             log_error(f"mcp {name} validation rejected error_count={exc.error_count()}")
             return validation_error_tool_result()
@@ -540,6 +551,58 @@ def create_mcp_server() -> MCPServer:
             )
         except Exception as exc:
             log_error(f"mcp read failed: {exc}")
+            raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
+
+    @mcp.tool(
+        name=MCP_TOOL_ANALYZE,
+        title=MCP_TOOL_ANALYZE_TITLE,
+        description=(
+            "Produce a governed analysis from an authorized backend-computed "
+            "report or aggregate. capability: analytic capability id published "
+            "by get_context action=catalog/schema (report/aggregate shapes "
+            "only). Returns facts, completeness and provenance — no "
+            "recomputation, no extrapolation, no inferred totals, no writes. "
+            "Backend AuthZ remains authoritative."
+        ),
+        annotations=ToolAnnotations.model_validate(
+            tool_annotations_payload(
+                MCP_TOOL_ANALYZE_TITLE,
+                read_only=True,
+                destructive=False,
+            )
+        ),
+        meta=security_schemes_meta(DAVI_MCP_SECURITY_SCHEMES),
+        structured_output=True,
+    )
+    def analyze_tool(
+        capability: str,
+        arguments: dict[str, Any] | None = None,
+    ) -> CallToolResult:
+        try:
+            params = AnalyzeInput(capability=capability, arguments=arguments)
+        except ValidationError:
+            return validation_error_tool_result("Invalid analyze parameters.")
+        try:
+            data = davi_analyze_wired(
+                capability=params.capability,
+                arguments=params.arguments,
+                authorization=_authorization(),
+            )
+            return CallToolResult(
+                content=[TextContent(type="text", text="Analysis completed.")],
+                structuredContent=data,
+                isError=False,
+            )
+        except PermissionError as exc:
+            return _authz_error_result(exc)
+        except GovernedExecutionError as exc:
+            return typed_error_tool_result(
+                exc.code or OWNER_EXECUTION_ERROR_CODE,
+                str(exc) or "Analysis rejected.",
+                recoverable=exc.code == ARGUMENT_VALIDATION_CODE,
+            )
+        except Exception as exc:
+            log_error(f"mcp analyze failed: {exc}")
             raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
 
     if document_transport_spike_enabled():

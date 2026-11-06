@@ -73,13 +73,14 @@ def test_security_schemes_are_oauth2_without_rbac_codes() -> None:
 def test_list_tools_exposes_top_level_security_schemes() -> None:
     mcp = create_mcp_server()
     tools = asyncio.run(mcp.list_tools())
-    assert len(tools) == 5
+    assert len(tools) == 6
     assert [t.name for t in tools] == [
         "discover_delpi_information",
         "execute_delpi_information",
         "get_context",
         "knowledge",
         "read",
+        "analyze",
     ]
     for tool in tools:
         dumped = tool.model_dump(by_alias=True)

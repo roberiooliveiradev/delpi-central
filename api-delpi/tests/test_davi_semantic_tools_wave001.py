@@ -19,6 +19,7 @@ import pytest
 from app.application.external_capabilities.constants import (
     MCP_TOOL_DISCOVER_DELPI_INFORMATION,
     MCP_TOOL_EXECUTE_DELPI_INFORMATION,
+    MCP_TOOL_ANALYZE,
     MCP_TOOL_GET_CONTEXT,
     MCP_TOOL_KNOWLEDGE,
     MCP_TOOL_READ,
@@ -38,6 +39,7 @@ from app.application.external_capabilities.dynamic_information.context_service i
     davi_get_context,
 )
 from app.application.external_capabilities.dynamic_information.execute_service import (
+    davi_analyze,
     davi_read,
 )
 from app.application.external_capabilities.dynamic_information.errors import (
@@ -158,7 +160,7 @@ _KNOWLEDGE_PAYLOAD = {
 # ---------------------------------------------------------------------------
 
 
-def test_wave001_surface_registers_five_tools_with_closed_schemas():
+def test_surface_registers_six_tools_with_closed_schemas():
     tools = asyncio.run(create_mcp_server().list_tools())
     by_name = {t.name: t for t in tools}
     assert list(by_name) == [
@@ -167,7 +169,13 @@ def test_wave001_surface_registers_five_tools_with_closed_schemas():
         MCP_TOOL_GET_CONTEXT,
         MCP_TOOL_KNOWLEDGE,
         MCP_TOOL_READ,
+        MCP_TOOL_ANALYZE,
     ]
+    az = by_name[MCP_TOOL_ANALYZE]
+    assert az.input_schema["additionalProperties"] is False
+    assert set(az.input_schema["properties"]) == {"capability", "arguments"}
+    assert az.output_schema is not None
+    assert az.annotations.read_only_hint is True
     ctx = by_name[MCP_TOOL_GET_CONTEXT]
     assert ctx.input_schema["additionalProperties"] is False
     assert set(ctx.input_schema["properties"]) == {"action", "capability"}
@@ -202,12 +210,12 @@ def test_get_context_context_reports_identity_actor_and_no_permission_grant():
         "get_context",
         "knowledge",
         "read",
+        "analyze",
         "discover_delpi_information",
         "execute_delpi_information",
     ]
     unavailable = {t["name"]: t["status"] for t in data["tools"]["unavailable"]}
     assert unavailable == {
-        "analyze": "PLANNED_NOT_IMPLEMENTED",
         "execute": "PLANNED_NOT_IMPLEMENTED",
         "delete": "PLANNED_NOT_IMPLEMENTED",
     }
@@ -586,5 +594,92 @@ async def test_read_wire_requires_authentication():
 @pytest.mark.asyncio
 async def test_read_wire_validation_is_typed():
     result = await create_mcp_server().call_tool("read", {"capability": ""})
+    assert result.is_error is True
+    assert result.structured_content["code"] == "ARGUMENT_VALIDATION"
+
+
+# ---------------------------------------------------------------------------
+# analyze — governed analytic façade over backend-computed reports (Wave 003)
+# ---------------------------------------------------------------------------
+
+_REPORT_PAYLOAD = {
+    "success": True,
+    "data": {
+        "period": {"from": "2026-10-01", "to": "2026-10-31"},
+        "totals": {"appointments": 42, "produced_qty": 1280.5},
+    },
+    "meta": {},
+}
+
+
+def test_analyze_executes_analytic_shape_capability():
+    _seed_actions()
+    executor = _StubExecutor(payload=_REPORT_PAYLOAD)
+    out = davi_analyze(
+        capability="get_production_appointments_summary",
+        arguments={"start_date": "2026-10-01", "end_date": "2026-10-31"},
+        catalog_action_executor=executor,
+    )
+    assert out["status"] == "ok"
+    assert out["action"] == "analyze"
+    assert out["capability"] == "get_production_appointments_summary"
+    assert out["facts"]["shape"] == "playbook_report"
+    assert out["provenance"]["calculation_authority"] == "backend"
+    assert executor.calls[0]["action_id"] == "get_production_appointments_summary"
+
+
+def test_analyze_rejects_non_analytic_capabilities():
+    _seed_actions()
+    # eligible but non-analytic shape (single_product_snapshot)
+    with pytest.raises(GovernedExecutionError) as exc:
+        davi_analyze(
+            capability="get_product_stock",
+            catalog_action_executor=_StubExecutor(),
+        )
+    assert exc.value.code == CAPABILITY_NOT_ALLOWED_CODE
+    for capability in ("execute_readonly_sql", "not_a_real_action"):
+        with pytest.raises(GovernedExecutionError) as exc:
+            davi_analyze(capability=capability, catalog_action_executor=_StubExecutor())
+        assert exc.value.code == CAPABILITY_NOT_ALLOWED_CODE
+
+
+def test_analyze_argument_validation_fail_closed():
+    _seed_actions()
+    with pytest.raises(GovernedExecutionError) as exc:
+        davi_analyze(capability="", catalog_action_executor=_StubExecutor())
+    assert exc.value.code == ARGUMENT_VALIDATION_CODE
+    with pytest.raises(GovernedExecutionError) as exc:
+        davi_analyze(
+            capability="get_production_appointments_summary",
+            arguments={"bogus_arg": 1},
+            catalog_action_executor=_StubExecutor(),
+        )
+    assert exc.value.code == ARGUMENT_VALIDATION_CODE
+
+
+def test_analyze_authz_outcomes_propagate():
+    _seed_actions()
+    for outcome, msg in (("unauthorized", "Unauthorized"), ("forbidden", "Forbidden")):
+        with pytest.raises(PermissionError) as exc:
+            davi_analyze(
+                capability="get_production_appointments_summary",
+                arguments={"start_date": "2026-10-01", "end_date": "2026-10-31"},
+                catalog_action_executor=_StubExecutor(outcome=outcome),
+            )
+        assert str(exc.value) == msg
+
+
+@pytest.mark.asyncio
+async def test_analyze_wire_requires_authentication():
+    result = await create_mcp_server().call_tool(
+        "analyze", {"capability": "get_production_appointments_summary"}
+    )
+    assert result.is_error is True
+    assert result.structured_content["code"] == "AUTHENTICATION_REQUIRED"
+
+
+@pytest.mark.asyncio
+async def test_analyze_wire_validation_is_typed():
+    result = await create_mcp_server().call_tool("analyze", {"capability": ""})
     assert result.is_error is True
     assert result.structured_content["code"] == "ARGUMENT_VALIDATION"

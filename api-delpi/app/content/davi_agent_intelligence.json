@@ -1,5 +1,5 @@
 {
-  "version": "2026.11.06.2",
+  "version": "2026.11.06.3",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -16,13 +16,14 @@
     ]
   },
   "discovery": {
-    "principle": "DISCOVER_THEN_EXECUTE",
+    "principle": "SEMANTIC_TOOLS_FIRST_DISCOVER_FALLBACK",
     "rules": [
-      "Necessidade de informação DELPI → discover_delpi_information com descrição natural.",
-      "Execute somente candidate_token retornado pelo discovery atual via execute_delpi_information.",
-      "Product Master (código/descrição/grupo) também entra via discover→execute — não há MCP tool dedicada.",
-      "Search miss / zero candidates != prova de ausência no ERP — reporte o retorno tipado.",
-      "Nunca invente URL, path, operationId, SQL ou candidate_token."
+      "Known governed capability id (from get_context) → read for data, analyze for authorized reports/aggregates, knowledge for governed documentation.",
+      "Information need without a known capability → discover_delpi_information with a natural-language description.",
+      "Execute discovery candidates only via candidate_token returned by the current discover → execute_delpi_information.",
+      "Product Master (code/description/group) via read(search_products) or discover→execute — no dedicated MCP tool.",
+      "Search miss / zero candidates != proof of absence in the ERP — report the typed outcome.",
+      "Never invent URL, path, operationId, SQL or candidate_token."
     ]
   },
   "execution_posture": {
@@ -55,7 +56,7 @@
     "authority": "Persona é UX: não concede permissão, não altera tools, contratos nem AuthZ."
   },
   "surface_parity": {
-    "mcp_tools": 5,
+    "mcp_tools": 6,
     "gpt_actions_legacy": 2,
     "note": "Capability parity ≠ transport count. W1 semantic tools added: get_context + knowledge join discover_delpi_information + execute_delpi_information (governed broker preserved; read/analyze/execute/delete remain PLANNED_NOT_IMPLEMENTED). Product Master capability search_products remains behind discover→execute. Descriptive for the Agent, not alternate SoT (tool counts owned by MCP server / GPT façade). Same DaviAgentIntelligenceService. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only). Stock/BOM/shipping/etc. execute only via MCP discover→execute; gpt_get_catalog carries live directives, not those operations."
   },

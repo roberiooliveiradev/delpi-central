@@ -34,6 +34,7 @@ _MCP_TOOLS = {
     "get_context",
     "knowledge",
     "read",
+    "analyze",
 }
 
 

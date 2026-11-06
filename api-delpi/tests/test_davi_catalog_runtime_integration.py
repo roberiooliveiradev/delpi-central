@@ -899,6 +899,7 @@ def test_mcp_exposes_wave001_four_tools():
         "get_context",
         "knowledge",
         "read",
+        "analyze",
     }
 
 

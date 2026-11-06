@@ -14,7 +14,7 @@ Portable Agent Plugins 1.0 package for ChatGPT / Codex.
 | `mcp.json` | Streamable HTTP MCP server URL |
 | `skills/api-delpi/SKILL.md` | DAVI workflow guidance |
 
-Capability: **Read-only** governed READ via `discover_delpi_information` → `execute_delpi_information`, plus semantic tools `get_context`, `knowledge` and `read` (exactly 5 MCP tools — DAVI-V2 semantic waves). Product Master capability `search_products` remains allowlisted behind discover→execute.
+Capability: **Read-only** governed READ via `discover_delpi_information` → `execute_delpi_information`, plus semantic tools `get_context`, `knowledge`, `read` and `analyze` (exactly 6 MCP tools — DAVI-V2 semantic waves). Product Master capability `search_products` remains allowlisted behind discover→execute.
 
 ## Developer-mode test (manual)
 

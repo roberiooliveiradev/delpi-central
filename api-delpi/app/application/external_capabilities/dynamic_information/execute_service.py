@@ -213,6 +213,96 @@ def davi_read(
     }
 
 
+ANALYZE_ELIGIBLE_SHAPES = frozenset(
+    {"playbook_report", "composite_analysis"}
+)
+
+
+def davi_analyze(
+    *,
+    capability: str,
+    arguments: dict[str, Any] | None = None,
+    catalog_action_executor: CatalogActionExecutorPort | None = None,
+    search_products_runner: SearchProductsRunner | None = None,
+) -> dict[str, Any]:
+    """Governed analysis — analytic-shape capabilities only.
+
+    Same resolution boundary as ``read``: capability id must map to an
+    executable TechnicalAction whose shape is an authoritative
+    backend-computed report/aggregate (never recomputed over paged rows).
+    Output separates facts, completeness and provenance; the data itself
+    is the owner-approved projection — nothing is invented or extrapolated.
+    """
+    requested = (capability or "").strip()
+    if not requested:
+        raise GovernedExecutionError(
+            "capability is required",
+            code=ARGUMENT_VALIDATION_CODE,
+        )
+    action = get_action_by_id(requested)
+    if (
+        action is None
+        or not action.executable
+        or (action.shape or "") not in ANALYZE_ELIGIBLE_SHAPES
+    ):
+        raise GovernedExecutionError(
+            "capability is not an eligible governed analysis",
+            code=CAPABILITY_NOT_ALLOWED_CODE,
+        )
+    try:
+        plan = build_execution_plan(action, arguments)
+    except ArgumentValidationError as exc:
+        raise GovernedExecutionError(
+            str(exc), code=ARGUMENT_VALIDATION_CODE
+        ) from exc
+    bounded = execute_action_plan(
+        action=action,
+        plan=plan,
+        catalog_action_executor=catalog_action_executor,
+        search_products_runner=search_products_runner,
+        tool_name="analyze",
+    )
+    limitations: list[str] = []
+    if not bounded.get("is_complete", True):
+        limitations.append(
+            "partial coverage — the authorized window does not cover the full population"
+        )
+    if bounded.get("truncated"):
+        limitations.append(
+            "result bounded by governed limits — values reflect the returned window only"
+        )
+    return {
+        "action": "analyze",
+        "status": "ok",
+        "capability": requested,
+        "facts": {
+            "action_id": action.action_id,
+            "entity": action.entity,
+            "shape": action.shape,
+            "projection": "approved_fields"
+            if action.approved_response_fields
+            else "size_bound_only",
+            "data": bounded.get("data"),
+        },
+        "completeness": {
+            "is_complete": bounded.get("is_complete"),
+            "truncated": bounded.get("truncated"),
+            "response_bytes": bounded.get("response_bytes"),
+        },
+        "provenance": {
+            "source": "api-delpi",
+            "calculation_authority": "backend",
+            "knowledge_kind": "ANALYTIC_READ",
+            "note": (
+                "facts are the owner-approved projection of an authorized "
+                "backend report; no recomputation, no extrapolation, "
+                "no inferred totals"
+            ),
+        },
+        "limitations": limitations,
+    }
+
+
 def execute_delpi_information(
     *,
     candidate_token: str,

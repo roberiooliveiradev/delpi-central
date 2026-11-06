@@ -323,6 +323,6 @@ def test_vista_handoff_document_exists_and_is_complete() -> None:
 def test_narrative_additions_keep_tools_and_authz_unchanged() -> None:
     directives = DaviAgentIntelligenceService.agent_directives()
     assert directives["read_only"] is True
-    assert directives["surface_parity"]["mcp_tools"] == 5
+    assert directives["surface_parity"]["mcp_tools"] == 6
     size = DaviAgentIntelligenceService.directives_serialized_size()
     assert size <= DAVI_AGENT_DIRECTIVES_MAX_BYTES, size

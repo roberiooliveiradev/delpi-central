@@ -40,4 +40,5 @@ def test_technical_ids_unchanged_by_davi_branding() -> None:
         "get_context",
         "knowledge",
         "read",
+        "analyze",
     ]

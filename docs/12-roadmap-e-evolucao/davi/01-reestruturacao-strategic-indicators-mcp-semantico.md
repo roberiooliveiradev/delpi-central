@@ -439,3 +439,43 @@ tools/call end-user OAuth = TEST_NOT_RUN (token de usuário indisponível na ses
 negative multi-user AuthZ = PENDING
 plugin ChatGPT update     = PENDING — etapa manual do responsável (não nesta execução)
 ```
+
+## 16. Wave 003 — Governed Analysis (DAVI-V2-WAVE-003-GOVERNED-ANALYSIS)
+
+> 2026-11-06. `analyze` implementada como façade semântica sobre capacidades analíticas já elegíveis — sem recomputação sobre dados paginados.
+
+### 16.1 Decisão de contrato
+
+```text
+CONTRATO   = analyze(capability, arguments?)
+CAPABILITY = action_id publicado pelo catálogo governado (get_context)
+ELIGÍVEL   = executable AND shape ∈ {playbook_report, composite_analysis}
+             — só relatórios/agregados computados no backend autoritativo
+NEGATIVA   = CAPABILITY_NOT_ALLOWED para single/list shapes, SQL, ids desconhecidos
+SAÍDA      = {facts{action_id,entity,shape,projection,data},
+             completeness{is_complete,truncated,response_bytes},
+             provenance{source:api-delpi, calculation_authority:backend,
+                        ANALYTIC_READ, note:no-recompute},
+             limitations[]}
+```
+
+**Piloto ratificado:** `get_production_appointments_summary` — backend aggregation (appointments summary), já `DAVI_ELIGIBLE_READ` na allowlist v30, shape `playbook_report`. Owner de cálculo = backend api-delpi; a tool não inventa totais nem extrapola janelas.
+
+**Diretivas alinhadas:** `discovery.principle` DISCOVER_THEN_EXECUTE → `SEMANTIC_TOOLS_FIRST_DISCOVER_FALLBACK` (read/analyze/knowledge para capability conhecida; broker para descoberta de candidato). `read` saiu de PLANNED; surface = 6 tools; `analyze` fora de `_PLANNED_TOOLS` (restam execute/delete).
+
+### 16.2 Segurança preservada
+
+Mesmo boundary do `read`: `get_action_by_id` → `executable` + shape gate → `build_execution_plan` → `execute_action_plan` → executor request-bound → backend AuthZ → projeção aprovada → bounds. Sem SQL genérico, sem operationId livre, sem recompute de agregações, sem writes. `tool_name="analyze"` no runner auditável.
+
+### 16.3 Decisão permanente — tools legadas
+
+`discover_delpi_information` + `execute_delpi_information` **serão removidas após migração completa e comprovada** — exige inventário de capabilities legadas, equivalência semântica, migração de consumidores, positive/negative tests, validação no ChatGPT, deploy controlado e rollback plan. Preservadas na W3. `execute`/`delete` não serão implementadas por completude — writes exigem governança própria e aprovação prévia.
+
+### 16.4 Pendências
+
+```text
+LIVE MCP/PROVIDER W3   = PENDING (deploy controlado + tools/call OAuth)
+NEGATIVE multi-user    = PENDING
+TOOL SELECTION eval    = PENDING
+execute/delete         = não implementar sem governança de writes
+```

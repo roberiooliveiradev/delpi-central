@@ -361,3 +361,51 @@ def read_output_json_schema() -> dict:
     schema["title"] = "readOutput"
     schema["additionalProperties"] = False
     return schema
+
+
+class AnalyzeInput(BaseModel):
+    """Closed input for governed analyses over analytic-shape capabilities."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    capability: str = Field(
+        ...,
+        min_length=1,
+        max_length=128,
+        description=(
+            "Governed analytic capability id published by get_context "
+            "action=catalog/schema (report/aggregate shapes only)."
+        ),
+    )
+    arguments: dict[str, Any] | None = Field(
+        default=None,
+        description="Schema-bounded filters/params for the capability",
+    )
+
+
+class AnalyzeOutput(BaseModel):
+    """Runtime envelope for analyze structuredContent."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    action: str
+    status: str
+    capability: str
+    facts: dict[str, Any] | None = None
+    completeness: dict[str, Any] | None = None
+    provenance: dict[str, Any] | None = None
+    limitations: list[str] | None = None
+
+
+def analyze_input_json_schema() -> dict:
+    schema = AnalyzeInput.model_json_schema()
+    schema["title"] = "analyzeArguments"
+    schema["additionalProperties"] = False
+    return schema
+
+
+def analyze_output_json_schema() -> dict:
+    schema = AnalyzeOutput.model_json_schema()
+    schema["title"] = "analyzeOutput"
+    schema["additionalProperties"] = False
+    return schema

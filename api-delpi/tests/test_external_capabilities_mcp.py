@@ -121,6 +121,7 @@ def test_mcp_server_exposes_wave001_surface_with_annotations() -> None:
         "get_context",
         "knowledge",
         "read",
+        "analyze",
     ]
     assert MCP_TOOL_SEARCH_PRODUCTS not in [t.name for t in tools]
     for tool in tools:
@@ -141,6 +142,7 @@ async def test_mcp_tools_list_contract_has_discover_execute_schemas() -> None:
         "get_context",
         "knowledge",
         "read",
+        "analyze",
     ]
     discover = tools[0]
     schema = discover.input_schema

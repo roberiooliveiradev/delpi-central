@@ -41,6 +41,8 @@ MCP_TOOL_KNOWLEDGE = "knowledge"
 MCP_TOOL_KNOWLEDGE_TITLE = "DELPI governed knowledge"
 MCP_TOOL_READ = "read"
 MCP_TOOL_READ_TITLE = "Read DELPI information"
+MCP_TOOL_ANALYZE = "analyze"
+MCP_TOOL_ANALYZE_TITLE = "Analyze DELPI information"
 # Owner-typed operation classes, emitted on the wire as
 # _meta["delpi/toolClass"] (DELPI MCP vocabulary). Classification only —
 # never a permission grant for any consumer.
@@ -50,6 +52,7 @@ MCP_TOOL_CLASSES: dict[str, str] = {
     MCP_TOOL_GET_CONTEXT: "DISCOVERY",
     MCP_TOOL_KNOWLEDGE: "READ",
     MCP_TOOL_READ: "READ",
+    MCP_TOOL_ANALYZE: "ANALYSIS",
 }
 MCP_GATEWAY_PATH = "/mcp"
 MCP_GATEWAY_ROOT = "/apps/api-delpi"

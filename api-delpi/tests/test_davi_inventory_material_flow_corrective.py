@@ -595,6 +595,7 @@ def test_mcp01_tool_count_wave001_four():
         "get_context",
         "knowledge",
         "read",
+        "analyze",
     ]
 
 

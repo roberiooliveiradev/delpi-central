@@ -204,6 +204,7 @@ def test_mcp_surface_wave001_four_tools():
     server = create_mcp_server()
     tools = asyncio.run(server.list_tools())
     assert sorted(t.name for t in tools) == [
+        "analyze",
         "discover_delpi_information",
         "execute_delpi_information",
         "get_context",

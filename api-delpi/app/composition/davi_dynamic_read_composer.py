@@ -96,6 +96,23 @@ def davi_read_wired(
     )
 
 
+def davi_analyze_wired(
+    *,
+    authorization: str | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Analyze tool wiring: request-bound executor + approved capability runner."""
+    from app.application.external_capabilities.dynamic_information.execute_service import (
+        davi_analyze,
+    )
+
+    return davi_analyze(
+        catalog_action_executor=_RequestBoundCatalogActionExecutor(authorization),
+        search_products_runner=_search_products_runner,
+        **kwargs,
+    )
+
+
 def davi_knowledge_wired(
     *,
     authorization: str | None = None,

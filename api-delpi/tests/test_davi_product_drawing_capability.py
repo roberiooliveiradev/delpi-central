@@ -158,6 +158,7 @@ def test_drawing_mcp_tools_wave001_four():
         "get_context",
         "knowledge",
         "read",
+        "analyze",
     ]
 
 
