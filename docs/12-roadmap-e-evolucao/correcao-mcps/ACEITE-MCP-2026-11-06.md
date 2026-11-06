@@ -58,3 +58,18 @@ TÉO/VISTA/CLARA/CAIO: PASS limitado — GPT conversacional real `TEST_NOT_RUN`.
 | SURI | **Remediado em runtime** — reteste ChatGPT pendente |
 | EVA | **Server-side OK** — falha de transporte/auth; reteste ChatGPT pendente |
 | DAVI | Fora de escopo (refatoração em andamento) |
+
+
+## Reteste real da conexão MCP no ChatGPT — após remediação (2026-11-06)
+
+**PROVEN nesta sessão, chamadas somente leitura; DAVI não chamado.**
+
+| Serviço | Chamada | Resultado |
+|---|---|---|
+| SURI | `get_context(action=catalog)` | **PASS:** `mcp.acronym=Suprimentos Unificados, Resultados e Inteligência`; catálogo v16; `execute` com operações fechadas |
+| SURI | `knowledge(action=sources)` | **PASS:** `corpus_version=4`, 182 itens |
+| SURI | `knowledge(action=get,knowledge_id=suri.boundaries)` | **PASS:** corpus 4; `evidence_class=PROVEN`; descreve corretamente `execute` e AuthZ, não afirma mais somente leitura |
+| EVA | `get_context(topic=catalog)` | **PASS:** `agent_directives.character.identity.acronym=Engenharia Virtual Assistida`; `act_tiers.import=false` preservado |
+| EVA | `knowledge(topic=eva.usage)` | **PASS:** guia versionado 1.3 retornado sem erro interno |
+
+**Conclusão:** os problemas anteriormente registrados **não se reproduziram** nesta conexão do ChatGPT após remediação. SURI e EVA passam no **aceite MCP de descoberta/conhecimento efetivamente executado**. O diagnóstico anterior permanece como histórico e não deve ser apagado. **Não** foram testados nesta sessão: GPTs especialistas individuais, escrita, exclusão, consentimento, deploy, logs ou todas as suítes automatizadas; esses itens continuam `TEST_NOT_RUN` quando aplicável. Não equiparar `PASS` de leitura a aceite integral end-to-end.

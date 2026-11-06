@@ -331,3 +331,16 @@ A direção anterior de migrar o workflow integral para `requests-api`/`my-reque
 **Escopo atual:** Engenharia recebe solicitações autorizadas por uma porta de intake versionada, processa fila/validação e registra casos/ficha técnica com JSONB versionado, diffs por campo e auditoria; uma porta de saída expõe resultado/alterações somente para consumidores autorizados sob contrato. `create` usa mínimos de solicitação; `update` especifica somente mudanças selecionadas + `baseRevision`. EVA sugere, não aprova. TOTVS continua autoridade de cadastro oficial.
 
 **Futuro separado:** conectar `requests-api`, migrar cadastros e histórico do legado com ETL governado e cutover, permitir novas categorias e pesquisa de semelhantes. O Controle MP atual permanece operacional até substituição aprovada. Mudança de ownership do workflow requer `ARCHITECTURE_DECISION_REQUIRED`; não confundir aprovação do plano com aprovação de publicação ou escrita ERP. Nenhuma alteração produtiva nesta etapa.
+
+
+## 13. Contrato de verificação TOTVS e Part Number (2026-11-06)
+
+> **Direção mais recente do Product Owner; TARGET, não implementada.** A Engenharia constrói fluxo nativo isolado, sem BFF runtime com Controle MP e sem integração `requests-api` no MVP. A aplicação Controle MP é referência de paridade e fonte de migração futura, não fonte operacional da primeira etapa.
+
+O analista atende a solicitação no Portal, **faz o cadastro/alteração manual no TOTVS** e só conclui na Engenharia após operação de verificação pela API de leitura oficial. Em `create`, exigir código oficial encontrado **e** atributos necessários correspondentes; em `update`, verificar **os campos efetivamente alterados** e não apenas existência do produto. Falha, divergência, timeout ou campo sem leitura oficial verificável → manter aberto e informar ao usuário, sem publicar revisão como vigente. Nenhum write ao ERP nesta etapa.
+
+**Nome correto:** **Part Number**, campo `part_number` por fornecedor, relacionado no inventário a `A5_CODPRF` (SA5); `catalog_number` é campo distinto (`A5_CODPRCA`). Preservar o catálogo de 11 tags mapeadas no legado; a obrigatoriedade de front legado deve ser formalizada no backend nativo, distinguindo solicitação, análise e publicação. Novas entradas chegam por porta versionada da `engineering-api`; saída retorna estado/resultado/revisão aos consumidores autorizados; harness autenticado de teste permitido, sem integração externa imediata.
+
+**Consulta oficial:** o fato de o legado consultar SQL SB1/SA5 não prova que `api-delpi` exponha os mesmos campos. Verificar os contratos autorizados e ampliar no owner de dados se necessário; não criar SQL paralelo na `engineering-api`. Ver [engineering/ROADMAP.md](../engineering/ROADMAP.md) e [engineering/IMPLEMENTATION-PLAN.md](../engineering/IMPLEMENTATION-PLAN.md).
+
+A migração do banco legado e integrações futuras permanecem fora do MVP.
