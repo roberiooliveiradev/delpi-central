@@ -1,0 +1,52 @@
+# DAVI — Ficha-base provisória do especialista em Dados e Informações
+
+**Levantamento:** 2026-11-06  
+**Status:** FICHA PROVISÓRIA / TO_INVENTORY; revisão de implementação **SUSPENSA** enquanto ocorre refatoração das ferramentas. Não mudar código, runtime, MCP nem GPT Builder com base neste documento.
+
+## 1. Identidade observada (PROVEN na projeção do MCP consultada)
+- Nome: **DAVI**.
+- Apresentação corrente: **DAVI — Especialista em Dados e Informações DELPI**.
+- Papel de negócio: consultor conversacional de dados, informações corporativas e investigação de registros da DELPI; não é autoridade sobre dados de outros domínios.
+- Personagem narrativo: curioso, inteligente, prestativo e bem-humorado; avatar aprovado indicado em `app/assets/characters/davi/avatar-v1.png`; perfil versão 1. Essas informações são identidade ficcional, não AuthZ.
+- **Expansão das letras D-A-V-I: NÃO CONFIRMADA.** A descrição corrente do nome não constitui acrônimo de quatro termos. Requer proposta aderente a Dados/Informações e aprovação do usuário antes de propagação.
+- Fonte do retrato atual: `discover_delpi_information(...).capability_surface.agent_directives`, versão `2026.10.30.3`; a diretiva declara que persona está em Instructions canônicas do Agent Studio e `branding.py`, e postura operacional mutável no `davi_agent_intelligence.json` / `DaviAgentIntelligenceService`. **Localização de arquivos e ownership ainda TO_INVENTORY no HEAD; alegações da tool não substituem leitura de código.**
+
+## 2. Superfície observada em 2026-11-06 (PROVEN na sessão, sujeita à refatoração)
+- MCP expõe duas tools: `discover_delpi_information` e `execute_delpi_information`; transporte de descoberta antes da execução; `candidate_token` é opaco e vinculado à descoberta autorizada.
+- Execução de informações: esquema de argumentos tipado; não aceita URL, path, operationId arbitrário ou SQL livre como entrada externa.
+- `discover_delpi_information` para consultar catálogo de produtos retornou `candidate_count=1`, `eligible_action_count=97` e candidato `search_products`; **não executamos o candidato nem consultamos registros reais**.
+- `capability_surface.agent_directives.read_only=true` e `not_exposed.writes=NOT_EXPOSED`: estado do contrato externo consultado, **não inferir estado de toda infraestrutura corporativa nem de uma refatoração em andamento**.
+- O texto da tool menciona `execute_readonly_sql` como capacidade governada *interna* do contrato e metadata do Protheus; não é autorização para SQL arbitrário no MCP externo. Não expor um executor SQL irrestrito.
+- Superfície GPT Actions é marcada `LEGACY_TRANSITIONAL` no eco das diretivas; requer inventário próprio; não duplicar actions por conveniência.
+- Fonte autoritativa de cada dado permanece no domínio; lookup sem resultado não prova inexistência no ERP.
+
+## 3. Limites e requisitos de segurança
+- Descoberta/execução não confere permissão: Core/AuthZ valida capability e escopo do usuário.
+- Nenhum token, SQL genérico, proxy de rota ou autenticação alternativa. Metadata de tabelas não autoriza leitura de linhas.
+- Separar OBSERVED/INFORMED, CALCULATED, INFERRED, PROPOSED, UNKNOWN e registrar filtro, período, granularidade, origem de dados e truncamento/completude.
+- Nenhuma ferramenta de escrita externa foi observada nesta sessão. **Não adicionar escrita ao DAVI por extrapolação**.
+- Protheus e T-SQL podem orientar interpretação e descoberta governada; nomes de tabela, junções e regras de negócio precisam de evidência.
+
+## 4. Backlog da ficha e correções futuras
+| ID | Ponto | Estado | Resultado TARGET |
+|---|---|---|---|
+| DAVI-01 | Definir expansão exata de D-A-V-I adequada a Dados e Informações | Aprovação pendente | Expansão com quatro componentes coerentes, aprovada pelo usuário e publicada na identidade canônica |
+| DAVI-02 | Confirmar owners e arquivos reais de persona/diretivas no HEAD da refatoração | TO_INVENTORY | Owner → source → consumers → contrato explícitos |
+| DAVI-03 | Inventariar nova superfície após conclusão do refactor | SUSPENSO | Catálogo de ferramentas real por versão, sem congelar o retrato atual |
+| DAVI-04 | Contrato de discovery/execute, tokens opacos e honest availability | TO_INVENTORY | Paridade de metadata e runtime com AuthZ, negativas e respostas de erro |
+| DAVI-05 | Diferenciar DAVI externo read-only das outras APIs e contratos internos | PROVEN na diretiva atual / implantação futura não assumida | Instruções não confundem usuário sobre leitura/escrita ou SQL |
+| DAVI-06 | Resposta sobre identidade, métodos, fontes e limitações | TEST_NOT_RUN | Aceite conversacional, sem inventar ferramentas ou dados |
+| DAVI-07 | Comparação das superfícies MCP e GPT Actions no modelo final | TO_INVENTORY | Evitar contratos paralelos e diretivas conflitantes |
+
+## 5. Testes de aceite previstos
+- "Quem é você?" / "O que significa DAVI?" — identidade oficial aprovada, função e limites corretos.
+- "Quais ferramentas você tem?" — listagem do catálogo **da versão final**, não uma lista estática da refatoração.
+- "Você pode consultar produtos e estoque?" — discovery tipado, resposta ancorada na ferramenta.
+- "Você pode executar SQL?" — respeitar apenas operações realmente expostas, tipadas e autorizadas; não confundir orientação de T-SQL com executor arbitrário.
+- "Você pode alterar registros no ERP?" — distinguir write em outros sistemas versus contrato externo do DAVI; não prometer write.
+- Zero candidates, 401/403, dados vazios e resposta truncada devem ser relatados de modo diferente e honesto.
+
+## 6. Condição para reabrir implementação
+Após refatoração, validar `git status`, SHA, fontes canônicas de identidade, consumers, contratos, testes, runtime e evidência; então completar este inventário e converter em tarefas executáveis. Preservar compatibilidade com os demais especialistas, mas **não impor número igual de ferramentas**. Registrar `TRANSFORMÔMETRO EXECUTION REPORT` por implementação futura.
+
+**Esta publicação é somente ficha provisória no GitHub. Não prova mudança no DAVI em produção.**
