@@ -1,7 +1,17 @@
 # CLARA — Plano de correção da ficha técnica e autoconhecimento
 
 **Data:** 2026-11-06  
-**Estado:** acrônimo aprovado nesta conversa; documentação atualizada; publicação no runtime **PENDING**.
+**Estado:** EXECUTADO 2026-11-06.
+
+## Resultado da execução (2026-11-06)
+| ID | Resultado | Evidência |
+|---|---|---|
+| CLARA-01 | **CORRIGIDO** — acrônimo já existia no JSON canônico (`identity.acronym`), mas `agent_directives.character` (projeção `project_persona_context`) não o transportava; chave aditiva owner-local em `persona_context` agora ecoa `identity.acronym` no MCP/GPT — mesmo padrão de `avatar_distribution`, contrato compartilhado não alterado | `agent_intelligence_service.py`; assert em `test_agent_directives_integrate_character_on_mcp` |
+| CLARA-02/05 | **PROVEN** — fonte canônica: `controllership_finance_app/content/clara_agent_intelligence.json` + `persona/clara_profile.py`; consumo via `capability_surface.agent_directives` | inventário |
+| CLARA-03 | **VERIFICADO** — superfície MCP/catálogo coberta pela suíte existente (283 pass no escopo clara/mcp/character) | pytest |
+| CLARA-04 | **TEST_NOT_RUN** — aceite conversacional no GPT real pendente de ambiente do agente | — |
+
+**Arquivos alterados:** `controllership_finance_app/application/clara/agent_intelligence_service.py`, `tests/test_clara_character_profile.py`, este arquivo. Nenhuma mudança em OpenAPI/Actions/Knowledge/Instructions.
 
 ## Definição institucional aprovada pelo usuário (não é prova de runtime)
 - **CLARA = Controladoria, Leitura, Análise, Resultados e Acompanhamento.**

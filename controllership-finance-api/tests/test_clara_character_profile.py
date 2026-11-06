@@ -299,6 +299,11 @@ def test_agent_directives_integrate_character_on_mcp():
     ch = directives.get("character") or {}
     assert ch["identity"]["character_id"] == "clara"
     assert ch["identity"]["narrative_age"] == "34 anos"
+    # CLARA-01 — approved expansion already lived in the canonical JSON;
+    # the projection now echoes it to MCP/GPT consumers.
+    assert ch["identity"]["acronym"] == (
+        "Controladoria · Leitura · Análise · Resultados · Acompanhamento"
+    )
     assert ch["narrative_classification"] == "FICTION_IDENTITY_ONLY"
     # Operational directives preserved — narrative never replaces them.
     for key in ("read_first", "citations", "confirmation"):
