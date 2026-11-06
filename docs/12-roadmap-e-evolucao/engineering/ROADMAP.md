@@ -856,3 +856,39 @@ Separar entidades e authorities:
 `PRODUCT_DIRECTION=CONFIRMED_BY_PO`; `ARCHITECTURE_OWNERSHIP=DECISION_REQUIRED`; `IMPLEMENTATION=NOT_STARTED`; `MIGRATION=PLANNED`; `EVA_ASSISTED_VALIDATION=TARGET`; `SIMILARITY_SEARCH_FOR_REQUESTER=FUTURE`.
 
 Pendências objetivas: ownership de workflow frente a `requests-api`, autoridade de publicação ERP e forma de confirmação, `compart number` significado/tag, campos required por tipo e ator, schema JSONB versionado, semântica de status, política de retenção e reconciliação, IAM/ACL dos múltiplos canais, concorrência e MVP exato de integração EVA. Antes de implementar, registrar o contrato e obter o aceite dos owners técnicos competentes.
+
+
+## ADENDO — Product Registration Engineering-first, sem Requests API na fase inicial (2026-11-06)
+
+> **Direção atual do Product Owner / TARGET.** Este adendo tem precedência sobre indicações anteriores de integrar ou reutilizar `requests-api` durante PRC-N0–N5, e sobre o BFF para a API Flask do Controle MP. É uma definição de escopo, **não** evidência de implementação nem aprovação de mudança de authority. Preservar os adendos anteriores como histórico e não tratá-los como próximos passos executáveis.
+
+### Escopo de primeira implementação
+
+- Desenvolver `product-registration` **inteiramente no bounded context de Engenharia**, com UI no `plugins/engineering` e aplicação, domínio, HTTP, persistência e adapters próprios sob `engineering-api`. **Não conectar, consultar, importar, criar adapter para, nem depender da `requests-api` ou do MFE `my-requests` no MVP.** Também não construir BFF runtime para a API Flask do Controle MP.
+- Duas interfaces externas explícitas do novo módulo: **porta de entrada** versionada para receber solicitações de criação/alteração, com identidade do solicitante e origem, autenticação/autorização, validação de schema, deduplicação/idempotência, source IDs e provenance; **porta de saída** versionada para disponibilizar/comunicar status, decisões e resultado a consumidores autorizados. Contratos de saída devem especificar se serão consulta, eventos/outbox ou callback; não presumir entrega a outro sistema sem consumidor e autorização identificados.
+- Dentro da `engineering-api`, a Engenharia gerencia recebimento, fila, atendimento, montagem da ficha, validação humana, histórico e versões. A EVA só produz sugestões `DRAFT/CANDIDATE`, nunca decisão final. O TOTVS/Domain API segue a autoridade oficial para cadastro/alteração real do produto; a ficha versionada da Engenharia é registro técnico operacional e **não** substitui cadastro oficial.
+- `create`: intake com apenas campos obrigatórios de solicitação (descrição inicial, fornecedores, "compart number" a confirmar, outros campos após definição de schema), posteriormente completados/validados pelo analista; distinguir required de intake e de publicação.
+- `update`: selecionar apenas campos a mudar contra ficha vigente, `baseRevision`, change set explícito e justificativa; preservar demais campos, CAS/409 quando stale e diff por campo no histórico.
+- Persistência no contexto da Engenharia: IDs/status/atores/códigos em colunas tipadas; payload técnico em JSONB com schema versionado; snapshots imutáveis por revisão, before/after, motivo, ator, source, tempo, auditoria append-only.
+- O Controle MP legado permanece operante e sem migração automática enquanto o produto nativo é desenvolvido. A conexão futura à `requests-api` e a migração/ETL/cutover serão **programas posteriores, com decisão e contrato próprios**; não permitir dual-write.
+- Busca de semelhantes durante a solicitação e ampliação para outros tipos de produtos são `FUTURE`.
+
+### Arquitetura alvo da primeira etapa
+
+```text
+Authorized source(s) -> Engineering API / product-registration intake (versioned)
+  -> Engineering-owned request/case and queue (governed AuthZ)
+  -> technical draft (JSONB) -> optional EVA candidate -> authorized analyst decision
+  -> official ERP/domain verification/operation only via approved contract
+  -> immutable revision + audit
+  -> Engineering API / product-registration outbound contract (authorized consumers)
+Portal Engenharia / product-registration UI -> Engineering API only
+Requests API / My Requests -> NO RUNTIME INTEGRATION IN MVP
+Legacy Controle MP -> NO RUNTIME INTEGRATION IN MVP
+```
+
+### Decisão, contrato e segurança
+
+A escolha de concentrar intake/workflow/registro técnico na `engineering-api` muda os boundaries descritos nos planos anteriores e exige **`ARCHITECTURE_DECISION_REQUIRED` em Coordination** para formalizar ownership de solicitações de cadastro em Engenharia (sem alterar propriedade da verdade oficial do produto). O gate não é autorização para conectar a `requests-api` agora: a decisão deve avaliar e documentar o trade-off, mas o escopo autorizado é Engineering-only. Antes de implementar: definir contratos de entrada/saída (consumer, request/response, errors, AuthN/AuthZ, limits, observabilidade, idempotência, postcondition e compatibilidade), estados/transições, data model, aprovação técnica, política de publicação, rollback/revoke e RQ/AC verificáveis.
+
+**Concorrência de agentes:** PRC não toca código da percepção documental/OCR/SLANet/VAL-01; shared files (`main.py`, `config.py`, router do Portal, manifests, Core/RBAC e deploy) serão integrados serialmente e testados num SHA conjunto. Nenhum deploy ou alteração de código é autorizado por este adendo.
