@@ -1218,6 +1218,27 @@ class PydanticAiInvestigationOrchestrator:
             if isinstance(entry, Mapping)
         }
         instructions = _INVESTIGATION_INSTRUCTIONS
+        if __import__("os").environ.get(
+            "DELIA_INSTRUCTION_VARIANT"
+        ) == "v42-experimental":
+            instructions += (
+                "\n- When a tool call fails, first identify which "
+                "condition blocked progress from the reported error. "
+                "Before retrying the same operation, decide whether "
+                "the new attempt actually resolves that condition: "
+                "if the failure names a missing identifier or "
+                "requirement, obtain it through an authorized READ "
+                "capability, select a different legitimate view or "
+                "scope, or ask the user — do not resubmit variants "
+                "of the same failing call. If several consecutive "
+                "calls fail with the same error, change strategy "
+                "instead of repeating the class of attempt.\n- Before "
+                "each new call, consider what is already observed: "
+                "avoid calls that add no evidence toward the user's "
+                "goal; when evidence suffices, conclude; when a "
+                "legitimate blocker remains, state the limitation "
+                "honestly instead of continuing to explore tools."
+            )
         if catalog_failures:
             instructions += (
                 "\nOwners that failed to enumerate this turn "
