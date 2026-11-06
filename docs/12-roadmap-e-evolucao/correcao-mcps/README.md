@@ -46,3 +46,11 @@ projetado; 6/6 rotas HTTPS públicas retornam 200 com MIME/sha corretos.
 Renderização inline no ChatGPT = `TEST_NOT_RUN` (ver
 [ACEITE-AVATARES](./ACEITE-AVATARES-MCP-2026-11-06.md) e
 [PLANO](./PLANO-AVATAR-IMAGECONTENT-MCP-APPS-V1.md) §10). DAVI fora de escopo.
+
+### HOTFIX AVATAR-INLINE-V1 — CLARA + SURI (2026-11-06)
+
+Duas falhas do aceite real ChatGPT corrigidas e verificadas em runtime:
+CLARA `_wrap` descartava `ImageContent` (commit `ac8136040f`); SURI schema
+`read` sem `avatar` no Literal (commit `5e5f56781c`, deploy `supplies-mcp`).
+Ambos retornam `[TextContent, ImageContent]` em runtime. Visual no
+ChatGPT: `TEST_NOT_RUN` (reteste manual documentado em ACEITE-AVATARES).

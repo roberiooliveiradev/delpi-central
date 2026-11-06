@@ -107,3 +107,19 @@ Procedimento manual por especialista: perguntar *"Mostre seu avatar"*
 4. DAVI — não acionado nem alterado.
 
 **Evidência epistemológica:** relatório do Devin = PASS backend, confirmação local parcial; a experiência end-to-end de seis especialistas no ChatGPT permanece **PENDING**. Sem evidência de alteração no runtime ou de erro HTTP da imagem neste reteste.
+
+## HOTFIX AVATAR-INLINE-V1 (2026-11-06) — CLARA + SURI
+
+**Teste real ChatGPT revelou duas falhas pós-rollout — corrigidas e verificadas em runtime.**
+
+### CLARA — ImageContent descartado pelo envelope `_wrap`
+- **Root cause PROVEN:** `controllership_finance_app/interface/mcp/semantic_bridge.py::_wrap` re-empacotava `mcp_tool_result(payload)` descartando blocos não-texto — o handler retornava `[Text,Image]` mas o envelope emitia só texto (metadados chegavam; imagem não). Mesmo defeito já corrigido no CAIO.
+- **Fix:** `_wrap` agora carrega blocos `ImageContent` (`images=...`) — regressão `test_avatar_read_returns_image_content_block` valida o caminho completo `tool_read(avatar,get)`.
+- **Read-back container:** `read(entity=avatar,action=get)` → `[TextContent, ImageContent]` mime `image/jpeg`. Commit `ac8136040f`; deploy `delpi-controllership-finance-api`.
+
+### SURI — schema `read` sem entity `avatar` no tools/list
+- **Root cause PROVEN:** `app/interfaces/mcp/server.py` declara o tool `read` com `entity: Literal[...]` fechado que não incluía `"avatar"` — o JSON Schema publicado rejeitava `'avatar' is not one of [...]` antes de chegar ao dispatcher (que já suportava a entidade).
+- **Fix:** `"avatar"` adicionado ao Literal de `entity` (action `get` já existia). Regressão `tests/interface/suri_mcp/test_avatar.py`: schema anuncia `avatar` + `avatar.get` retorna `ImageContent image/png`.
+- **Read-back container `delpi-supplies-mcp`:** `read(entity=avatar,action=get)` → `[TextContent, ImageContent]` mime `image/png`; rota pública e `mcp.avatar_distribution` intactos. Commit `5e5f56781c`; deploy `delpi-supplies-mcp`.
+
+**Visual acceptance ChatGPT:** `TEST_NOT_RUN` — reteste manual: "CLARA/SURI, mostre seu avatar" deve renderizar a foto oficial inline; "Quais ferramentas você possui?" não deve inserir imagem.

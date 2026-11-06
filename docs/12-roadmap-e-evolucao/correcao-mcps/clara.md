@@ -59,3 +59,6 @@ Antes de qualquer mudança: inventariar `git status`, HEAD, owner, source, consu
 - Referência cruzada: [Inventário de fontes existentes](./INVENTARIO-FONTES-EXISTENTES.md). Validação de runtime, deploy e testes permanece **TEST_NOT_RUN/TO_INVENTORY** nesta auditoria.
 
 **Retificação do backlog CLARA-01:** a tarefa de 'publicar acrônimo na fonte canônica' já está atendida no JSON. A única verificação residual pertinente é se o campo já é transportado e respondido corretamente pelas superfícies MCP/GPT; não implementar mudança sem falha comprovada no consumer.
+
+## HOTFIX AVATAR-INLINE-V1 (2026-11-06)
+`_wrap` do semantic_bridge descartava `ImageContent` (metadados OK, imagem ausente no cliente). Corrigido para preservar blocos não-texto + regressão avatar read. Verificado em container: `[TextContent, ImageContent]` jpeg. Commit `ac8136040f`.

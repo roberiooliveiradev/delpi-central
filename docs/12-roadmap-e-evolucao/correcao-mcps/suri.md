@@ -57,3 +57,6 @@ Respeitar OWNER → FONTE CANÔNICA → CONSUMERS → CONTRATO → IMPLEMENTAÇ�
 - **PROVEN (código):** supplies-api/app/persona/suri_profile.py → app/content/suri_agent_intelligence.json; ficha já existe; a divergência de Knowledge sobre read-only é separada da ficha narrativa.
 - Contrato já implementado: `shared/delpi_character_profiles` (estrutura), ficha owner-local (conteúdo), projeção no serviço do MCP (consumer). **Não criar uma segunda ficha nem registry em shared.**
 - Referência cruzada: [Inventário de fontes existentes](./INVENTARIO-FONTES-EXISTENTES.md). Validação de runtime, deploy e testes permanece **TEST_NOT_RUN/TO_INVENTORY** nesta auditoria.
+
+## HOTFIX AVATAR-INLINE-V1 (2026-11-06)
+Schema `read` (`entity: Literal[...]` em server.py) não anunciava `avatar` — cliente rejeitava antes do dispatcher. `"avatar"` adicionado ao enum; regressão `test_avatar.py` (schema + ImageContent). Verificado em `delpi-supplies-mcp`: `[TextContent, ImageContent]` png. Commit `5e5f56781c`.
