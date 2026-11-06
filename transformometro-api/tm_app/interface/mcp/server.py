@@ -27,17 +27,8 @@ from tm_app.interface.mcp.constants import (
     TOOL_CLASS,
 )
 from tm_app.interface.mcp.oauth_contract import TEO_MCP_SECURITY_SCHEMES
-from delpi_mcp.avatar_ui import (
-    AVATAR_UI_MIME,
-    avatar_ui_meta,
-    avatar_ui_resource_meta,
-    avatar_ui_resource_uri,
-    avatar_ui_widget_csp,
-    build_avatar_diagnostic_html,
-    build_avatar_ui_html,
-)
 from tm_app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
-from tm_app.interface.mcp import tool_bridge, tool_bridge_v3 as bridge_v3
+from tm_app.interface.mcp import tool_bridge_v3 as bridge_v3
 
 logger = logging.getLogger(__name__)
 
@@ -565,87 +556,6 @@ def create_mcp_server() -> MCPServer:
             proposal_id=proposal_id,
             confirmation=confirmation,
         )
-
-    # --- visual avatar surface (MCP-AVATAR-UI-V2) -----------------------
-    # ui:// resource serves the shared avatar card; show_avatar links to
-    # it via _meta.ui.resourceUri and also returns the canonical
-    # ImageContent for hosts without MCP Apps support. V2.2: uri bumped
-    # to v2 (host may cache v1's pre-handshake component) and the
-    # resource meta declares ui.csp resourceDomains for the iframe
-    # sandbox.
-    from tm_app.application.gpt_actions.teo_agent_intelligence_service import (
-        TeoAgentIntelligenceService as _TeoSvc,
-    )
-
-    _avatar_dist = _TeoSvc.avatar_distribution() or {}
-    _avatar_uri = avatar_ui_resource_uri("teo", version=3)
-
-    @mcp.resource(
-        _avatar_uri,
-        name="teo-avatar-card",
-        title="Avatar oficial do TÉO",
-        description=(
-            "Cartão visual do avatar oficial aprovado do TÉO — "
-            "somente leitura, sem dados sensíveis."
-        ),
-        mime_type=AVATAR_UI_MIME,
-        meta={**meta, **avatar_ui_resource_meta(_avatar_dist.get("url"))},
-    )
-    def teo_avatar_card() -> str:
-        return build_avatar_ui_html(
-            display_name="TÉO — Especialista em Transformação Digital",
-            specialty="Transformação Digital",
-            image_url=_avatar_dist.get("url"),
-        )
-
-    @mcp.tool(
-        name="show_avatar",
-        title="Mostrar avatar oficial",
-        description=(
-            "Mostra a foto oficial aprovada do TÉO dentro da conversa — "
-            "usar quando o usuário pedir avatar, foto ou aparência visual. "
-            "Somente leitura; resolve somente a ficha canônica, nunca "
-            "URLs ou caminhos fornecidos pelo usuário."
-        ),
-        annotations=_annotations("show_avatar", "Show avatar"),
-        meta={
-            **meta,
-            **avatar_ui_meta(_avatar_uri),
-            **avatar_ui_widget_csp(_avatar_dist.get("url")),
-        },
-    )
-    def show_avatar() -> CallToolResult:
-        return tool_bridge.tool_show_avatar()
-
-    # --- V2.4 experiment A — isolated text-only diagnostic surface. ----
-    # Temporary: proves whether the host can render an MCP Apps resource
-    # at all (no image, no JS, no external URL). Removed after acceptance.
-    _diag_uri = "ui://delpi/teo/avatar-diagnostic/text-v1"
-
-    @mcp.resource(
-        _diag_uri,
-        name="teo-avatar-diagnostic-text",
-        title="Diagnóstico visual TÉO (texto)",
-        description="Recurso mínimo de diagnóstico MCP Apps — somente texto.",
-        mime_type=AVATAR_UI_MIME,
-        meta=meta,
-    )
-    def teo_avatar_diagnostic_text() -> str:
-        return build_avatar_diagnostic_html("TÉO — Teste visual")
-
-    @mcp.tool(
-        name="show_avatar_diagnostic",
-        title="Diagnóstico visual (texto)",
-        description=(
-            "Executa o teste visual mínimo do TÉO — apresenta apenas "
-            "o texto 'TÉO — Teste visual' em um componente MCP Apps. "
-            "Somente leitura, diagnóstico temporário."
-        ),
-        annotations=_annotations("show_avatar_diagnostic", "Diagnostic"),
-        meta={**meta, **avatar_ui_meta(_diag_uri)},
-    )
-    def show_avatar_diagnostic() -> CallToolResult:
-        return tool_bridge.tool_show_avatar_diagnostic()
 
     registered = {t.name for t in mcp._tool_manager.list_tools()}
     missing = set(MCP_TOOL_NAMES) - registered
