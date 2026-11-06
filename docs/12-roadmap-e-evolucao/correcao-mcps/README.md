@@ -61,3 +61,12 @@ Superfície MCP Apps compartilhada (`delpi_mcp/avatar_ui.py`) + TÉO com
 `show_avatar`→`ui://delpi/teo/avatar/v1` verificado em runtime (resource
 HTML + CSP + meta). Visual no ChatGPT: `TEST_NOT_RUN` — reteste manual
 necessário antes do rollout dos demais MCPs.
+
+### DELPI MCP SEMANTIC SELF-DESCRIPTION V1 (2026-11-06)
+
+Padronização governada da autodescrição — documento canônico:
+[DELPI-MCP-SEMANTIC-SELF-DESCRIPTION-V1](./DELPI-MCP-SEMANTIC-SELF-DESCRIPTION-V1.md).
+Contratos `get_context` por MCP, vocabulário comum (read/analyze/execute/
+delete/knowledge/context; implemented|planned|unavailable|deprecated),
+regras de AuthZ e evolução. 6/7 conformes; DAVI PENDING (refatoração
+`external_capabilities`). Zero alteração de código — menor diff.
