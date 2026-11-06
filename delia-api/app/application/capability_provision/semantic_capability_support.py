@@ -51,6 +51,7 @@ import re
 import time
 import unicodedata
 import uuid
+from decimal import Decimal, InvalidOperation
 from typing import (
     Any,
     Callable,
@@ -2166,39 +2167,64 @@ _BR_DATE_TOKEN = re.compile(r"(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})")
 _ISO_DATE_TOKEN = re.compile(r"(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})")
 
 
-def _concrete_value_variants(token: str) -> tuple[str, ...]:
-    """Locale/format variants of one concrete token.
+def _numeric_canonical(text: str) -> "Decimal | None":
+    """Canonical numeric value of one separator-formatted literal.
 
-    The anti-hallucination check compares the model's numeric tokens
-    against bound evidence — but the same value legitimately surfaces
-    with edge punctuation glued by the tokenizer ("50220013:"), decimal
-    comma instead of dot ("175,0" vs "175.0"), or a BR date where the
-    owner emitted ISO ("31/10/2003" vs "2003-10-31"). Only a value
-    whose every variant is absent from the evidence is unverified —
-    an invented number still has no variant to bind to.
+    pt-BR/en-US ambiguity is resolved structurally: when both ``,`` and
+    ``.`` appear, the LAST separator is the decimal mark and earlier
+    ones are thousands; with a single separator kind, every group after
+    the first must be exactly three digits to read as thousands —
+    otherwise the separator is decimal. ``None`` when not numeric.
+    """
+    if "," in text and "." in text:
+        last = max(text.rfind(","), text.rfind("."))
+        text = text[:last].replace(",", "").replace(".", "") + (
+            "." + text[last + 1 :]
+        )
+    else:
+        for sep in (",", "."):
+            if sep in text:
+                parts = text.split(sep)
+                text = (
+                    "".join(parts)
+                    if len(parts) > 1
+                    and all(len(group) == 3 for group in parts[1:])
+                    else text.replace(sep, ".")
+                )
+                break
+    try:
+        return Decimal(text)
+    except InvalidOperation:
+        return None
+
+
+def _concrete_value_canonical(token: str) -> frozenset:
+    """Canonical comparison forms of one concrete token — set-based.
+
+    Token-level canonical equality replaces substring matching:
+    ``175,0`` must equal ``175.0`` but never ``1175.0``; ``31/10/2003``
+    must equal ``2003-10-31`` but never ``30/10/2003``; ``50220013:``
+    must equal ``50220013`` but never ``502200130``. Dates canonically
+    map to ISO day; numbers compare as ``Decimal``; anything else
+    compares as its stripped literal.
     """
     stripped = token.strip(".,/:%-")
     if not stripped:
-        return (token,)
-    variants = {
-        token,
-        stripped,
-        stripped.replace(",", "."),
-        stripped.replace(".", ","),
-    }
+        return frozenset()
+    out: set = set()
     match = _BR_DATE_TOKEN.fullmatch(stripped)
     if match:
         day, month, year = match.groups()
-        variants.add(
-            f"{year}-{int(month):02d}-{int(day):02d}"
-        )
+        out.add(("date", f"{year}-{int(month):02d}-{int(day):02d}"))
     match = _ISO_DATE_TOKEN.fullmatch(stripped)
     if match:
         year, month, day = match.groups()
-        variants.add(
-            f"{int(day):02d}/{int(month):02d}/{year}"
-        )
-    return tuple(variants)
+        out.add(("date", f"{year}-{int(month):02d}-{int(day):02d}"))
+    number = _numeric_canonical(stripped)
+    if number is not None:
+        out.add(("num", number))
+    out.add(("str", stripped))
+    return frozenset(out)
 
 def _apply_declared_answer(
     *,
@@ -2374,6 +2400,19 @@ def _apply_declared_answer(
                 declared_consistent = True
             else:
                 extra_limitations.append("declared_status_overridden")
+    elif declared_answer.status in (
+        InvestigationAnswerStatus.PARTIAL,
+        InvestigationAnswerStatus.INSUFFICIENT,
+    ):
+        # A PARTIAL/INSUFFICIENT label is model self-report, never the
+        # coverage verdict: when declared refs bind to real evidence
+        # the grounded portion may still be presented — honestly marked
+        # as coverage-unknown, never promoted to complete.
+        if dropped_refs or accepted_refs == 0:
+            extra_limitations.append("declared_status_overridden")
+        else:
+            declared_consistent = True
+            coverage_unknown = True
 
     # Intent-aware synthesis: a consistent declaration's ``answer`` is
     # the model's intent-aware composition over verified evidence —
@@ -2395,12 +2434,18 @@ def _apply_declared_answer(
             evidence_text = "\n".join(
                 (item.content or "") for item in business
             )
+            evidence_values: set = set()
+            for evidence_token in _CONCRETE_VALUE_TOKENS.findall(
+                evidence_text
+            ):
+                evidence_values.update(
+                    _concrete_value_canonical(evidence_token)
+                )
             unverified = [
                 token
                 for token in _CONCRETE_VALUE_TOKENS.findall(answer_text)
-                if not any(
-                    variant in evidence_text
-                    for variant in _concrete_value_variants(token)
+                if not (
+                    _concrete_value_canonical(token) & evidence_values
                 )
             ]
             if unverified:
@@ -2821,6 +2866,21 @@ def _finalize_agent_collected_attempts(
             parts.append(body)
         joined = "\n\n---\n\n".join(parts)[:MAX_RENDER_CONTENT_CHARS]
         last = business[-1]
+        provenance = last.provenance
+        if provenance is not None and len(business) > 1:
+            # Dedup removes visual blocks, never lineage: every bound
+            # observation keeps its SourceRef in the final provenance.
+            merged_refs = tuple(
+                dict.fromkeys(
+                    ref
+                    for item in business
+                    if item.provenance is not None
+                    for ref in item.provenance.source_refs
+                )
+            )
+            provenance = dataclasses.replace(
+                provenance, source_refs=merged_refs
+            )
         return GovernedCapabilityAttempt(
             status=GovernedCapabilityStatus.SUCCESS,
             correlation_id=correlation,
@@ -2829,7 +2889,7 @@ def _finalize_agent_collected_attempts(
                 list(last.limitations)
                 + ["multiple_observations_without_compose"]
             )[:24],
-            provenance=last.provenance,
+            provenance=provenance,
             outcome=last.outcome,
             markdown_content=last.markdown_content,
         )

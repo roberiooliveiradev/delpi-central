@@ -234,6 +234,123 @@ def test_locale_reformatted_values_still_bind_to_evidence():
     assert out.content == declared.answer
 
 
+def test_numeric_substring_coincidence_rejects_prose():
+    """``175,0`` must not bind to evidence ``1175.0`` — substring
+    coincidence is not value equivalence."""
+    class _Plan:
+        evidence_needed = ()
+
+    attempt = dataclasses.replace(
+        _attempt(), content="code=1 qty=1175.0 wh=01"
+    )
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="Quantidade disponível: 175,0 unidades.",
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(attempt,),
+        plan=_Plan(),
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert any(
+        "unverified_values" in item for item in out.limitations
+    )
+    assert out.content == "deterministic content"
+
+
+def test_wrong_date_rejects_prose():
+    """``30/10/2003`` must not bind to evidence ``2003-10-31``."""
+    class _Plan:
+        evidence_needed = ()
+
+    attempt = dataclasses.replace(
+        _attempt(), content="code=1 last_revision=2003-10-31"
+    )
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="Última revisão em 30/10/2003.",
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(attempt,),
+        plan=_Plan(),
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert any(
+        "unverified_values" in item for item in out.limitations
+    )
+    assert out.content == "deterministic content"
+
+
+def test_longer_identifier_does_not_bind_shorter():
+    """Evidence ``502200130`` must not satisfy declared ``50220013``."""
+    class _Plan:
+        evidence_needed = ()
+
+    attempt = dataclasses.replace(
+        _attempt(), content="code=502200130 desc=X"
+    )
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="O produto 50220013 existe.",
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(attempt,),
+        plan=_Plan(),
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert any(
+        "unverified_values" in item for item in out.limitations
+    )
+    assert out.content == "deterministic content"
+
+
+def test_partial_declaration_presents_grounded_prose():
+    """A PARTIAL declaration with bound refs + verified values presents
+    its grounded answer (honestly marked coverage-unknown) instead of
+    an automatic full dump."""
+    class _Plan:
+        evidence_needed = ()
+
+    attempt = dataclasses.replace(
+        _attempt(),
+        content="Produto code=99999999 desc=PRODUTO GENERICO tipo=MP",
+    )
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.PARTIAL,
+        answer=(
+            "Resumo: produto 99999999 (PRODUTO GENERICO), tipo MP; "
+            "campos opcionais não verificados."
+        ),
+        evidence_refs=(0,),
+    )
+    out = _apply_declared_answer(
+        terminal=_terminal(),
+        declared_answer=declared,
+        collected=(attempt,),
+        plan=_Plan(),
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert out.content == declared.answer
+    assert "coverage_unknown" in out.limitations
+
+
 def test_fabricated_numeric_value_still_rejects_prose():
     """The locale normalization must never admit an invented value —
     a price absent from bound evidence still falls back to the
@@ -1426,8 +1543,10 @@ def test_governed_tool_invocation_real_and_request_counted():
     attempt = engine.attempt("consulte terminal")
     # exactly one governed owner invocation through the real boundary
     assert invocations == [read["capability_id"]]
-    # exactly two physical model requests
-    assert len(request_messages) == 2
+    # prompt + answer + ONE bounded insufficiency retry (the validator
+    # buys a single extra pass when insufficient is declared with tool
+    # budget remaining — the re-declared answer then settles)
+    assert len(request_messages) == 3
     # second request carries the matching call+return causal pair
     second = request_messages[1]
     calls = [

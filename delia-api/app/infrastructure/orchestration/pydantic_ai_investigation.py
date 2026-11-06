@@ -220,20 +220,29 @@ class _EnvelopeHintedToolset:
                 if isinstance(schema, Mapping)
                 else None
             )
-            if (
-                tdef is not None
-                and isinstance(props, Mapping)
-                and "candidate_token" in props
-            ):
+            if tdef is not None and isinstance(props, Mapping):
                 desc = (tdef.description or "").strip()
-                hint = (
-                    " Arguments: pass candidate_token verbatim from a "
-                    "prior discovery result (never invent it) and "
-                    "arguments as a non-empty object built from that "
-                    "candidate's argument_schema/required_arguments "
-                    "(e.g. {\"code\": \"50220013\"})."
-                )
-                if hint.strip() not in desc:
+                hints: list[str] = []
+                if "candidate_token" in props:
+                    hints.append(
+                        " Arguments: pass candidate_token verbatim "
+                        "from a prior discovery result (never invent "
+                        "it) and arguments as a non-empty object built "
+                        "from that candidate's "
+                        "argument_schema/required_arguments "
+                        "(e.g. {\"code\": \"50220013\"})."
+                    )
+                if any(
+                    isinstance(prop, Mapping)
+                    and prop.get("type") == "object"
+                    for prop in props.values()
+                ):
+                    hints.append(
+                        " Object-typed parameters must be real JSON "
+                        "objects — never JSON-encoded strings."
+                    )
+                hint = "".join(hints)
+                if hint and hint.strip() not in desc:
                     tt = _dc.replace(
                         tt,
                         tool_def=_dc.replace(
@@ -270,6 +279,10 @@ class InvestigationDeps:
     non_progress_calls: dict[str, dict[str, Any]] = field(
         default_factory=dict
     )
+    # One-shot flag: the insufficiency ModelRetry may buy a single
+    # extra investigation pass per run — a re-declared insufficiency
+    # must never burn the whole retry budget as agent_error.
+    insufficiency_retry_used: bool = False
 
 
 def _bounded_json(payload: Any, *, limit: int = 6000) -> str:
@@ -1469,6 +1482,30 @@ class PydanticAiInvestigationOrchestrator:
                 raise ModelRetry(
                     "evidence_refs must be non-negative indexes into "
                     "the collected tool observations"
+                )
+            # Native technical retry (bounded by UsageLimits, one-shot
+            # per run): a declaration of insufficiency while tool
+            # budget remains may simply mean the selected capability
+            # projected a subset — the model may call another owner
+            # tool before settling. The verdict stays in the
+            # deterministic acceptor; this only buys ONE more pass.
+            if (
+                output.status
+                in (
+                    InvestigationAnswerStatus.INSUFFICIENT,
+                    InvestigationAnswerStatus.NO_EVIDENCE,
+                    InvestigationAnswerStatus.EMPTY,
+                )
+                and output.answer.strip()
+                and not ctx.deps.insufficiency_retry_used
+                and ctx.deps.tool_calls < self._tool_calls_limit
+            ):
+                ctx.deps.insufficiency_retry_used = True
+                raise ModelRetry(
+                    "You declared insufficient evidence while tool "
+                    "calls remain. If another listed owner capability "
+                    "could supply the missing data, call it now; "
+                    "otherwise re-declare."
                 )
             # Cosmetic normalization only — the internal evidence
             # handle ``[obs:N]`` is an implementation detail, never

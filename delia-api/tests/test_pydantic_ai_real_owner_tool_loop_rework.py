@@ -208,6 +208,29 @@ def test_e4_multiple_observations_preserve_both_contents():
     assert "multiple_observations_without_compose" in result.limitations
 
 
+def test_e4_dedup_preserves_all_source_lineage():
+    """Visual dedup never drops lineage: identical bodies from two
+    distinct sources keep BOTH SourceRefs in final provenance."""
+    gates = _gates()
+    a = _success_attempt(content="same-body", root="FA")
+    b = _success_attempt(content="same-body", root="FB")
+    result = _finalize_agent_collected_attempts(
+        gates,
+        input_text="one fact",
+        collected=(a, b),
+        correlation="c1",
+        workspace_context=None,
+        deadline=TurnDeadline.start(30.0),
+        unbound_outcome=None,
+        plan=None,
+    )
+    assert result.status is GovernedCapabilityStatus.SUCCESS
+    assert (result.content or "").count("same-body") == 1
+    refs = result.provenance.source_refs if result.provenance else ()
+    ref_ids = {getattr(r, "source_id", None) for r in refs}
+    assert {"FA", "FB"} <= ref_ids
+
+
 def test_e4_identical_observations_render_once():
     """Two attempts returning the SAME owner content (e.g. a repeat
     page read) must render the block once — duplication in the final
