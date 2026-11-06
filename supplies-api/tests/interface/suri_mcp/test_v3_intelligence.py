@@ -95,7 +95,7 @@ CORPUS = json.load(open("app/content/suri_knowledge.json",
 
 
 def test_v3_corpus_shape():
-    assert CORPUS["corpus_version"] == 3
+    assert CORPUS["corpus_version"] == 4
     kinds = {}
     for it in CORPUS["items"]:
         kinds[it["kind"]] = kinds.get(it["kind"], 0) + 1

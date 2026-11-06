@@ -1,7 +1,19 @@
 # SURI — Plano de correção da ficha técnica e autoconhecimento
 
 **Inventário:** 2026-11-06
-**Estado:** acrônimo **APROVADO PELO USUÁRIO** para a documentação; publicação na identidade canônica do MCP/GPT **PENDING**. Runtime e GPT não alterados.
+**Estado:** EXECUTADO 2026-11-06.
+
+## Resultado da execução (2026-11-06)
+| ID | Resultado | Evidência |
+|---|---|---|
+| SURI-01 | **CORRIGIDO** — `SURI_ACRONYM = "Suprimentos Unificados, Resultados e Inteligência"` em `app/interfaces/mcp/branding.py`, projetado em `get_context(action=catalog) → mcp.acronym`; `persona.acronym` também gravado na ficha canônica JSON | `branding.py`, `tool_bridge.py`, `suri_agent_intelligence.json` |
+| SURI-02 | **CORRIGIDO** — `suri.boundaries` reescrito para o contrato vigente: read + analyze + knowledge + escritas governadas via `execute` em registro fechado (suppliers.create/update, comex, enrichment, session, users); `evidence_class` OWNER_REPORTED→PROVEN, source aponta `constants.py EXECUTE_ACTIONS_BY_ENTITY`; `corpus_version` 3→4 | `suri_knowledge.json` |
+| SURI-03 | **CORRIGIDO** — catálogo `mcp.acronym` expõe a identidade de forma leve (SURI não usa `agent_directives.character`) | `tool_bridge.py` |
+| SURI-04/07 | **VERIFICADO** — registro fechado `EXECUTE_ACTIONS_BY_ENTITY` confirma suppliers/comex/enrichment/session/users; semântica de resultado já no conhecimento corrigido | `constants.py` |
+| SURI-05/06 | **TEST_NOT_RUN** — writes reais e aceite conversacional não executados por segurança | — |
+| Pré-existente | `tests/interface/suri_mcp/test_tool_bridge.py` contém **marcadores de conflito commitados** (snapshot multi-agente `07a6b44278`); arquivo inteiro inválido em main — não resolvido aqui (trabalho paralelo) | leitura do arquivo |
+
+**Arquivos alterados:** `app/interfaces/mcp/branding.py`, `app/interfaces/mcp/tool_bridge.py`, `app/content/suri_agent_intelligence.json`, `app/content/suri_knowledge.json` (corpus_version 3→4), 3 arquivos de teste (asserts corpus_version 4), este arquivo.
 
 ## Identidade e contrato observados (PROVEN)
 - Persona no catálogo: **SURI — Especialista em Suprimentos da Minha DELPI**.

@@ -1,5 +1,5 @@
 {
-  "corpus_version": 3,
+  "corpus_version": 4,
   "schema_version": "suri-knowledge-v3",
   "sources": [
     {
@@ -280,8 +280,8 @@
     {
       "knowledge_id": "suri.boundaries",
       "title": "SURI — limites desta versão",
-      "summary": "Esta versão da SURI é somente leitura: descoberta, consultas governadas, knowledge e análise determinística — nenhuma operação de escrita.",
-      "content": "As tools implementadas refletem contratos read-only do Portal Suprimentos com a mesma autorização efetiva do usuário. Não existem tools de escrita, aprovação, cancelamento ou CRUD nesta release — análises são rotuladas FACT/CALCULATION/RECOMMENDATION e recomendações nunca executam.",
+      "summary": "A SURI cobre leitura, análise e knowledge, e também escritas governadas via tool execute num registro fechado (entity, action) — incluindo suppliers.create/update, comex, enrichment e preferências.",
+      "content": "Leituras (read), análises (analyze) e knowledge refletem contratos do Portal Suprimentos com a mesma autorização efetiva do usuário. Escritas existem somente via a tool execute num registro fechado (entity, action): suppliers.create/update, comex.ncm_request/ncm_transition/view_create/view_update/view_delete, enrichment.review_create/decide/decide_bulk/prepare_update, session.preferences_update, users.profile_update. Não há executor genérico, URL/método arbitrário nem substituição de identidade — o Bearer token do próprio usuário autoriza cada operação, sujeita a AuthZ do backend e feature gates do owner. Resultados de escrita exigem verificação de estado (confirmed/acknowledged/sent/rejected/indeterminate/replayed); indeterminate exige investigação, nunca retry cego.",
       "topic": "suri",
       "keywords": [
         "SURI",
@@ -290,10 +290,10 @@
         "leitura",
         "permissão"
       ],
-      "evidence_class": "OWNER_REPORTED",
+      "evidence_class": "PROVEN",
       "source": {
-        "file": "supplies-api/docs/SURI-S1-CONTRACT-FREEZE.md",
-        "locator": "§2 tools congeladas"
+        "file": "supplies-api/app/interfaces/mcp/constants.py",
+        "locator": "EXECUTE_ACTIONS_BY_ENTITY — registro fechado de writes governados"
       },
       "kind": "topic"
     },

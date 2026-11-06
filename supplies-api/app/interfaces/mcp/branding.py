@@ -8,6 +8,7 @@ from __future__ import annotations
 
 SURI_SHORT_NAME = "SURI"
 SURI_FULL_NAME = "SURI — Especialista em Suprimentos da Minha DELPI"
+SURI_ACRONYM = "Suprimentos Unificados, Resultados e Inteligência"
 SURI_MISSION = (
     "Ajudar o usuário a acompanhar compras, fornecedores, entregas e "
     "estoques com o mesmo acesso que ele já tem no Portal Suprimentos — "

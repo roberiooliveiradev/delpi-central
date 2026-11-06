@@ -126,7 +126,11 @@ from app.interfaces.mcp import (
     personal_execute,
     supplier_execute,
 )
-from app.interfaces.mcp.branding import SURI_FULL_NAME, SURI_MISSION
+from app.interfaces.mcp.branding import (
+    SURI_ACRONYM,
+    SURI_FULL_NAME,
+    SURI_MISSION,
+)
 from app.interfaces.mcp.constants import (
     PROCUREMENT_DIAGNOSTIC_FILTER_KEYS,
     ANALYSIS_KINDS,
@@ -461,6 +465,7 @@ def tool_get_catalog() -> CallToolResult:
             "mcp": {
                 "name": "supplies",
                 "persona": SURI_FULL_NAME,
+                "acronym": SURI_ACRONYM,
                 "mission": SURI_MISSION,
                 "catalog_version": CATALOG_VERSION,
             },
