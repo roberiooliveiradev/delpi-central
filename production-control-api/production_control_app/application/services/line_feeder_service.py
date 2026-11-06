@@ -272,10 +272,14 @@ class LineFeederService:
                 )
 
         total_ops = sum(len(group["operations"]) for group in ordered_queues)
-        max_ops = setting_int("horizonMaxOperationsPerRequest", 500)
+        # Teto da fila publicada selecionada (não só do que as horas cobrem).
+        # Selecionar todos os postos da filial costuma passar de 500 — o teto
+        # acompanha o orçamento de empenhos (lotes × tamanho) sem abrir sem limite.
+        max_ops = setting_int("horizonMaxOperationsPerRequest", 2000)
         if total_ops > max_ops:
             raise ValueError(
-                f"A seleção excede o limite de {max_ops} operações por prévia."
+                f"A seleção excede o limite de {max_ops} operações por prévia. "
+                "Reduza os postos selecionados ou o horizonte de horas."
             )
 
         phases = _PhaseTimer(logger, event="line_feeder_horizon_preview")

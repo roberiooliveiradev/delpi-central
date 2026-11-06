@@ -13,8 +13,8 @@
   "productDetailTransferPageSize": 20,
   "horizonMaxHoursPerWorkCenter": 24,
   "horizonMaxWorkCenters": 40,
-  "horizonMaxOperationsPerRequest": 500,
-  "horizonMaxStandardTimeCalls": 200,
+  "horizonMaxOperationsPerRequest": 2000,
+  "horizonMaxStandardTimeCalls": 400,
   "horizonStandardTimeWorkers": 6,
   "didactic": {
     "title": "Como o cockpit calcula",

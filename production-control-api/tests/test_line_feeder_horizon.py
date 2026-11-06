@@ -968,3 +968,56 @@ def test_progressive_reuses_standard_time_cache_across_cts() -> None:
     )
     assert gateway.st_calls == 1
     assert data["standard_time_calls"] == 1
+
+
+def test_preview_horizon_allows_select_all_above_legacy_500_cap(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Selecionar todos os postos costuma passar de 500 ops na fila publicada."""
+    ops = [
+        _op_row(work_center="CT-A", order=f"OP{i:04d}")
+        for i in range(1, 602)
+    ]
+    balances = {
+        (f"OP{i:04d}", "01"): {"operation_pending_qty": 1, "operation_produced_qty": 0}
+        for i in range(1, 602)
+    }
+    st = {
+        (f"OP{i:04d}", "01"): _complete_st(60)
+        for i in range(1, 602)
+    }
+    service, *_ = _service(
+        published=_payload(ops), balances=balances, standard_times=st
+    )
+
+    def _settings(key: str, default: int) -> int:
+        if key == "horizonMaxOperationsPerRequest":
+            return 2000
+        if key == "horizonMaxStandardTimeCalls":
+            return 400
+        return default
+
+    monkeypatch.setattr(
+        "production_control_app.application.services.line_feeder_service.setting_int",
+        _settings,
+    )
+    data = service.preview_horizon(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_centers=["CT-A"],
+        hours_per_work_center=1,
+    )
+    assert data["branch"] == "01"
+    assert len(data["work_centers"][0]["operations"]) >= 1
+
+    monkeypatch.setattr(
+        "production_control_app.application.services.line_feeder_service.setting_int",
+        lambda key, default: 500 if key == "horizonMaxOperationsPerRequest" else default,
+    )
+    with pytest.raises(ValueError, match="excede o limite de 500"):
+        service.preview_horizon(
+            _user(*FULL_PERMS),
+            branch="01",
+            work_centers=["CT-A"],
+            hours_per_work_center=1,
+        )
