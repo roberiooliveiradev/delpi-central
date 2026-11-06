@@ -190,3 +190,15 @@ violação de script-src e a dependência de handshake JS); (3) URI →
 `ui://delpi/teo/avatar/v3`. `script-src 'none'` na metatag.
 **Runtime:** tool meta + resource v3 + HTML sem script verificados no
 container (1703B). ChatGPT visual: `TEST_NOT_RUN`.
+
+## MCP-AVATAR-UI-V2.4 (2026-11-06) — experimento diagnóstico isolado
+
+**Exp A publicado:** resource `ui://delpi/teo/avatar-diagnostic/text-v1`
+(HTML texto mínimo — sem JS/imagem/CSS/URL) + tool
+`show_avatar_diagnostic` (READ, mesmo gate). `show_avatar`/`v3` intactos.
+**Runtime verificado:** tool registrada, resource listado, HTML texto
+servido sem script/img.
+**Reteste ChatGPT manual:** "TÉO, execute show_avatar_diagnostic e
+mostre o componente 'TÉO — Teste visual'". Se o texto mínimo falhar →
+o bloqueio está no host/contrato (cenário 1); se passar → avançar para
+miniatura `data:` embutida (exp B). ChatGPT: `TEST_NOT_RUN`.
