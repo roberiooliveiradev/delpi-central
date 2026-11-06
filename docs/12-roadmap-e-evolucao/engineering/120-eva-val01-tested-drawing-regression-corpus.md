@@ -276,3 +276,7 @@ Forense: `proc.communicate` síncrono no loop congelava a API inteira durante OC
 ## Log adicional — 2026-11-06 (multipage OCR lifecycle — batch isolation)
 
 Sequência 4-OK→RuntimeError→9×MemoryError: um filho só com RLIMIT_AS 12GB + reset de engine sem liberação nativa. Fix `216ee5fd8d`: batches de 4 páginas por filho (memória devolvida por morte do processo) + merge determinístico + coverage_status. Deploy healthy. Regressão 13 PDFs pendente no consumidor.
+
+## Log adicional — 2026-11-06 (estabilidade nativa — batch=1 + RLIMIT 16GB)
+
+Medição provou que VMS Paddle só é devolvido por morte do processo (reset in-process inútil: 16.1GB). Fix `cf4c4362d3`: filho por página + cap 16GB. Job anterior provou 12/14 com PARTIAL honesto; batch=1 isola falha por página. Regressão 13 PDFs pendente no consumidor.

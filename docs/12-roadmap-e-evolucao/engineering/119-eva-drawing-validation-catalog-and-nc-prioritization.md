@@ -1367,3 +1367,16 @@ O histórico de revisão da mesma página não cita esses códigos. `10081389` �
 **Validação real (PDF 5452aabd, prod-overlay):** 4 batches `[1-4][5-8][9-12][13-16]` executaram — **14/14 páginas, 1533 tokens, 12693 chars**. Batch isolation funciona; o `error` reportado era defeito de contagem do merge, não da execução. `coverage_status` aditivo em `page_coverage` MCP (FULL/PARTIAL/NONE).
 
 **Testes:** 89/89. Prod healthy. Reteste consumidor: job deve completar com cobertura integral ou falha tipada real (não TypeError).
+
+## 44. DEC-VAL-036 — estabilidade nativa multipágina: batch=1 + VMS por morte do filho
+
+**Medição decisiva (docker exec, PDF 5452aabd):** VMS do predictor PaddleOCR cresce ~1-3.5GB por `predict` e **não** é devolvido por reset de engine in-process (medido: 16.1GB após 4 resets). `FLAGS_*` do alocador não altera. RuntimeError surge no limiar ~11.7GB VMS; MemoryError quando alocação cruza `RLIMIT_AS`. Só a morte do processo devolve address-space.
+
+**Correção (`cf4c4362d3`):**
+- `_page_batch_size` default 4→**1** — um filho por página; cada filho morre devolvendo VMS completo; falha de página fica isolada àquela página (sem cascata).
+- `ENG_DRAWING_OCR_MAX_RSS_MB` compose default 12288→**16384** — headroom para páginas densas (~12GB VMS engine+1pág), bounded pelo máx. existente.
+- Per-call engine reset **revertido** (prova: inútil, VMS não volta).
+
+**Custo:** ~12-25s/página (reload por filho) — bounded no budget do job. **Incidente:** probe in-container em paralelo com job real saturou RAM do host (2 pipelines ~12GB VMS) — mitigado por restart; probes agora fora de janela de jobs.
+
+**Testes:** 89/89 escopo. Prod `cf4c4362d3` healthy, `MAX_RSS_MB=16384` live. Reteste consumidor: 14 filhos sequenciais → cobertura FULL esperada ou falha tipada isolada.
