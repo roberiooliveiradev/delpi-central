@@ -16,7 +16,7 @@ from __future__ import annotations
 import pytest
 from unittest.mock import MagicMock
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Query
 
 from controllership_finance_app.application.clara import (
     governed_writes as gw,
@@ -85,6 +85,79 @@ def test_call_route_http_exception_propagates_to_guard():
 
     with pytest.raises(HTTPException):
         tool_bridge._call_route(route, None)
+
+
+def test_call_route_materializes_query_page_defaults():
+    seen: dict = {}
+
+    def route(
+        _request,
+        period: str,
+        limit: int = Query(default=100, ge=1, le=100),
+        offset: int = Query(default=0, ge=0),
+    ):
+        seen["period"] = period
+        seen["limit"] = limit
+        seen["offset"] = offset
+        return {"items": []}
+
+    res = tool_bridge._call_route(route, None, period="2026-10")
+    assert res.is_error is False
+    assert seen == {"period": "2026-10", "limit": 100, "offset": 0}
+
+
+def test_call_route_keeps_explicit_page_bounds():
+    seen: dict = {}
+
+    def route(
+        _request,
+        limit: int = Query(default=100),
+        offset: int = Query(default=0),
+    ):
+        seen["limit"] = limit
+        seen["offset"] = offset
+        return {"items": []}
+
+    tool_bridge._call_route(route, None, limit=25, offset=10)
+    assert seen == {"limit": 25, "offset": 10}
+
+
+def test_document_messages_route_receives_integer_bounds(monkeypatch):
+    from controllership_finance_app.interface.http.routes import (
+        documents_routes,
+    )
+
+    seen: dict = {}
+
+    class _Service:
+        def list_document_messages(self, **kwargs):
+            seen.update(kwargs)
+            return {
+                "items": [],
+                "total": 0,
+                "limit": kwargs["limit"],
+                "offset": kwargs["offset"],
+            }
+
+    monkeypatch.setattr(documents_routes, "_service", lambda: _Service())
+    monkeypatch.setattr(
+        documents_routes, "authorized_user", lambda _request: MagicMock()
+    )
+    monkeypatch.setattr(
+        documents_routes, "actor_subject", lambda _user: "subject-1"
+    )
+    res = tool_bridge._call_route(
+        documents_routes.list_document_messages,
+        MagicMock(),
+        period="2026-10",
+        document_id="11111111-1111-1111-1111-111111111111",
+        branch_scope=None,
+    )
+    assert res.is_error is False
+    assert seen["limit"] == 100
+    assert seen["offset"] == 0
+    assert isinstance(seen["limit"], int)
+    assert isinstance(seen["offset"], int)
 
 
 def test_authz_literal_maps_to_permission_error():

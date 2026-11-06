@@ -20,6 +20,8 @@ import json
 import logging
 from typing import Any
 
+from fastapi.params import Param
+from pydantic_core import PydanticUndefined
 from starlette.requests import Request
 from starlette.responses import Response
 from mcp.types import CallToolResult
@@ -432,7 +434,27 @@ def _route_fail_status(result: Response) -> int:
         return 500
 
 
+def _declared_route_params(fn, provided: dict) -> dict:
+    """A rota do Portal recebe inteiros porque o FastAPI materializa
+    `Query(default=…)`. A CLARA chama a mesma função direto: sem essa
+    resolução, `limit`/`offset` seguem como objeto Query e a consulta
+    estoura antes de devolver o documento."""
+    resolved = dict(provided)
+    for name, param in inspect.signature(fn).parameters.items():
+        if name in resolved:
+            continue
+        default = param.default
+        if not isinstance(default, Param):
+            continue
+        value = default.default
+        if value is PydanticUndefined:
+            continue
+        resolved[name] = value
+    return resolved
+
+
 def _call_route(fn, request: Request, **params) -> CallToolResult:
+    params = _declared_route_params(fn, params)
     try:
         result = fn(request, **params)
     except Exception as exc:  # noqa: BLE001 — literals canônicos authz
