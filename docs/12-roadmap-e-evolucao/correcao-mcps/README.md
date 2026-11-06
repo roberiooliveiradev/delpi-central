@@ -17,3 +17,6 @@ Seguir OWNER → FONTE CANÔNICA → CONSUMERS → CONTRATO → IMPLEMENTAÇÃO 
 
 ## Critério de identidade aprovado
 Todo acrônimo deve fazer sentido com a área de atuação do especialista. Alterações propostas só passam a ser fatos de runtime depois da publicação na fonte canônica, integração e teste de aceite.
+## Testes diretos de aceite no ChatGPT (2026-11-06)
+
+[Relatório de aceite funcional](./ACEITE-MCP-2026-11-06.md): TÉO, VISTA, CLARA e CAIO PASS (somente leitura); **SURI FAIL/EXECUTION_DRIFT** (corpus 3 no MCP versus 4 no GitHub; catálogo sem acrônimo); **EVA INCONCLUSIVE** (erro interno das tools). DAVI não testado. Este resultado atual de conexão **não confirma** o aceite final dos seis serviços anunciado no relatório anterior. Nenhum teste de GPT individual ou escrita foi executado.
