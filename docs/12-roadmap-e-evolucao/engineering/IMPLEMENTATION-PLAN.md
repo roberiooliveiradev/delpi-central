@@ -617,3 +617,16 @@ Fluxo autorizado: `Portal ou EVA -> Engineering API (REST ou mesma application u
 **PRC-D3 (B1_CONTA):** `accounting_account` incluído em `PRODUCT_DETAIL_ENGINEERING_FIELDS` (api-delpi, owner autorizado); já era retornado pelo SQL (`SB1.B1_CONTA AS accounting_account`). `accountingAccount` virou `verifiable=True` no catálogo PRC — `verify_and_complete` agora compara a conta contábil. BFF inalterado: Portal/EVA → Engineering API → api-delpi → TOTVS. 51 testes api-delpi da família passaram.
 
 **Pendente:** migration V012 + grants em HML por operador (`PENDING_OPERATOR`); homologação TOTVS real e E2E browser/MCP transport (`TEST_NOT_RUN`); promoção incremental das 13 ações EVA `planned`; required fields/freshness (gates C/F do PO).
+
+
+## ADENDO — PRC-D4/D5: validação HML (dev stack) em PostgreSQL real (SHA pendente)
+
+> **Status:** `POSTGRES V012+GRANTS APPLIED (dev plugins_hub) / REAL-PG TESTS PASS / CORE manager PENDING_SYNC / TOTVS real + browser + MCP transport TEST_NOT_RUN`.
+
+Ambiente usado: stack dev local (containers delpi-*), banco descartável `plugins_hub` — equivale ao gate de HML autorizado para evidência técnica, **não** homologação de produção.
+
+- `V012` aplicada via psql no `plugins_hub` e registrada em `engineering.schema_migrations` (checksum sha256 do arquivo). 7 tabelas `product_registration_*` existentes.
+- `eng_prc_grants.sql` aplicado — role `eng_prc` criada com grants mínimos. Verificado no DB: `UPDATE` em `product_registration_revisions` por `eng_prc` → **permission denied** (append-only real, não só por contrato).
+- Novo `tests/test_prc_postgres_integration.py` (skip sem `ENG_PRC_TEST_DSN`): fluxo completo real — create → start → CAS 409 → draft seletivo preservando campos → review → `complete_request` atômica (record+revision+verification+evento) → revision imutável persistida → timeline sequencial; unicidade de referência externa → `PrcDuplicateError`; idempotência roundtrip. **3/3 PASS em PostgreSQL 15 real.**
+- Core: `engineering.access` presente na tabela `permissions`; `engineering.manager` ausente → `PENDING_CORE_SYNC` (manifest declarado, sync pelo pipeline/owner Core).
+- Não executados (sem acesso autorizado nesta sessão): leitura TOTVS real via api-delpi (`B1_CONTA` em produção/HML real), browser E2E, transporte MCP/elicitation real.
