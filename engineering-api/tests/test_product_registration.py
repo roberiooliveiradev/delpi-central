@@ -1,0 +1,727 @@
+"""PRC-C1/C2/C3 — testes do vertical Product Registration.
+
+Cobertura dos AC-PRC-MVP-* executáveis neste ciclo: intake, identidade,
+idempotência, alteração seletiva, workflow, CAS, escopo, verificação
+oficial (not_found/mismatch/unverifiable/unavailable/timeout),
+conclusão única, rejeição sem side-effect, permissões granulares.
+"""
+
+from __future__ import annotations
+
+import pytest
+
+from tests.conftest import rbac_payload
+
+from engineering_app.composition import prc_composer
+from engineering_app.infrastructure.persistence.product_registration.in_memory_repository import (
+    InMemoryProductRegistrationRepository,
+)
+
+PR_READ = "engineering.product-registration.read"
+PR_CREATE = "engineering.product-registration.create"
+PR_PROCESS = "engineering.product-registration.process"
+PR_VERIFY = "engineering.product-registration.verify"
+PR_ADMIN = "engineering.product-registration.admin"
+
+ANALYST = [PR_READ, PR_CREATE, PR_PROCESS, PR_VERIFY]
+REQUESTER = [PR_READ, PR_CREATE]
+
+
+@pytest.fixture
+def prc_service_repo(monkeypatch):
+    """Service singleton com repo in-memory + reader injetável."""
+    prc_composer.reset_prc_singletons()
+    repo = InMemoryProductRegistrationRepository()
+    state = {"reader": None, "repo": repo}
+
+    class _ReaderProxy:
+        async def read_product(self, *, access_token, request_id,
+                               official_code):
+            return await state["reader"].read_product(
+                access_token=access_token,
+                request_id=request_id,
+                official_code=official_code,
+            )
+
+    from engineering_app.application.use_cases.product_registration.service import (  # noqa: E501
+        ProductRegistrationService,
+    )
+
+    prc_composer.set_prc_service_for_tests(
+        ProductRegistrationService(repo, official_reader=_ReaderProxy())
+    )
+    yield state
+    prc_composer.reset_prc_singletons()
+    prc_composer.set_prc_service_for_tests(None)
+
+
+def _create_body(**over):
+    body = {
+        "source": "engineering-test",
+        "externalRequestId": "ext-1",
+        "requestType": "create",
+        "productType": "raw_material",
+        "schemaVersion": 1,
+        "requestedData": {
+            "description": "MATERIAL TESTE",
+            "group": "1001",
+            "productKind": "MP",
+            "defaultWarehouse": "01",
+            "unit": "UN",
+            "thirdPartyProduct": "1",
+            "accountingAccount": "11401002",
+            "customerReference": "",
+            "suppliers": [
+                {
+                    "supplierCode": "000001",
+                    "store": "01",
+                    "supplierName": "FORNECEDOR X",
+                    "partNumber": "PN-1",
+                    "catalogNumber": None,
+                }
+            ],
+        },
+    }
+    body.update(over)
+    return body
+
+
+def _token(jwks_env, sub="user-1"):
+    return jwks_env["make_token"](sub=sub)
+
+
+def _post(client, url, token, json=None, headers=None):
+    h = {"Authorization": f"Bearer {token}"}
+    if headers:
+        h.update(headers)
+    return client.post(url, json=json or {}, headers=h)
+
+
+def _get(client, url, token):
+    return client.get(url, headers={"Authorization": f"Bearer {token}"})
+
+
+def _submit_create(client, jwks_env, core_rbac, sub="user-1"):
+    core_rbac["behavior"] = ("data", rbac_payload(ANALYST, id=sub))
+    return _post(
+        client,
+        "/v1/product-registration/intake/requests",
+        _token(jwks_env, sub),
+        json=_create_body(),
+        headers={"Idempotency-Key": "k-1"},
+    )
+
+
+def _advance_to_review(client, jwks_env, core_rbac, rid, sub="analyst-1"):
+    core_rbac["behavior"] = ("data", rbac_payload(ANALYST, id=sub))
+    tok = _token(jwks_env, sub)
+    r = _post(
+        client,
+        f"/v1/product-registration/requests/{rid}/actions/start",
+        tok, json={"expectedVersion": 1},
+    )
+    assert r.status_code == 200, r.text
+    r = _post(
+        client,
+        f"/v1/product-registration/requests/{rid}/actions/submit-review",
+        tok, json={"expectedVersion": 2},
+    )
+    assert r.status_code == 200, r.text
+    return r.json()["data"]["caseVersion"]
+
+
+class FakeReader:
+    def __init__(self, result):
+        self._result = result
+
+    async def read_product(self, *, access_token, request_id, official_code):
+        return self._result
+
+
+def _product(**over):
+    product = {
+        "code": "001234",
+        "description": "MATERIAL TESTE",
+        "group_code": "1001",
+        "type": "MP",
+        "default_warehouse": "01",
+        "unit": "UN",
+        "material_type": "1",
+        "customer_reference": "",
+    }
+    product.update(over)
+    return {
+        "status": "available",
+        "product": product,
+        "suppliers": [
+            {
+                "supplier_code": "000001",
+                "supplier_store": "01",
+                "supplier_name": "FORNECEDOR X",
+                "supplier_part_number": "PN-1",
+                "catalog_code": None,
+            }
+        ],
+    }
+
+
+class TestIntake:
+    def test_create_happy_path(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        resp = _submit_create(client, jwks_env, core_rbac)
+        assert resp.status_code == 201, resp.text
+        data = resp.json()["data"]
+        assert data["caseStatus"] == "submitted"
+        assert data["requestType"] == "create"
+        assert data["caseVersion"] == 1
+
+    def test_idempotent_replay_same_key(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        first = _submit_create(client, jwks_env, core_rbac)
+        assert first.status_code == 201
+        second = _submit_create(client, jwks_env, core_rbac)
+        assert second.status_code == 200
+        assert second.json()["data"]["requestId"] == (
+            first.json()["data"]["requestId"]
+        )
+
+    def test_same_key_different_payload_409(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        _submit_create(client, jwks_env, core_rbac)
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        resp = _post(
+            client,
+            "/v1/product-registration/intake/requests",
+            _token(jwks_env),
+            json=_create_body(
+                requestedData={"description": "OUTRO"}
+            ),
+            headers={"Idempotency-Key": "k-1"},
+        )
+        assert resp.status_code == 409
+
+    def test_forbidden_without_create(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        core_rbac["behavior"] = (
+            "data", rbac_payload(["engineering.access"])
+        )
+        resp = _post(
+            client,
+            "/v1/product-registration/intake/requests",
+            _token(jwks_env),
+            json=_create_body(),
+        )
+        assert resp.status_code == 403
+
+    def test_source_not_allowlisted(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        resp = _post(
+            client,
+            "/v1/product-registration/intake/requests",
+            _token(jwks_env),
+            json=_create_body(source="evil-origin"),
+        )
+        assert resp.status_code == 403
+
+    def test_missing_required_field_422(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        payload = _create_body()
+        del payload["requestedData"]["unit"]
+        resp = _post(
+            client,
+            "/v1/product-registration/intake/requests",
+            _token(jwks_env),
+            json=payload,
+        )
+        assert resp.status_code == 422
+        assert "unit" in str(resp.json()["data"]["fields"])
+
+    def test_requester_is_jwt_sub_not_body(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        resp = _submit_create(client, jwks_env, core_rbac, sub="real-user")
+        rid = resp.json()["data"]["requestId"]
+        detail = _get(
+            client,
+            f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env, "real-user"),
+        )
+        assert detail.json()["data"]["requester"]["subject"] == "real-user"
+
+
+class TestUpdate:
+    def _update_body(self, changes, code="001234", base=1):
+        return {
+            "source": "engineering-test",
+            "requestType": "update",
+            "productType": "raw_material",
+            "schemaVersion": 1,
+            "officialProductCode": code,
+            "baseRevision": base,
+            "changes": changes,
+        }
+
+    def test_update_requires_changes(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        resp = _post(
+            client,
+            "/v1/product-registration/intake/requests",
+            _token(jwks_env),
+            json=self._update_body(changes=[], base=None),
+        )
+        assert resp.status_code == 422
+
+    def test_update_single_field_no_record(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        resp = _post(
+            client,
+            "/v1/product-registration/intake/requests",
+            _token(jwks_env),
+            json=self._update_body(
+                changes=[
+                    {
+                        "path": "description",
+                        "proposedValue": "NOVA DESC",
+                        "reason": "correção",
+                    }
+                ],
+                base=None,
+            ),
+        )
+        assert resp.status_code == 201, resp.text
+        rid = resp.json()["data"]["requestId"]
+        detail = _get(
+            client,
+            f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env),
+        ).json()["data"]
+        assert detail["technicalDraft"]["description"] == "NOVA DESC"
+        assert detail["technicalDraft"]["officialProductCode"] == "001234"
+
+    def test_unknown_path_rejected(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        resp = _post(
+            client,
+            "/v1/product-registration/intake/requests",
+            _token(jwks_env),
+            json=self._update_body(
+                changes=[
+                    {
+                        "path": "internalSecret",
+                        "proposedValue": "x",
+                        "reason": "r",
+                    }
+                ],
+                base=None,
+            ),
+        )
+        assert resp.status_code == 422
+
+
+class TestWorkflow:
+    def test_full_workflow_and_cas(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid = _submit_create(client, jwks_env, core_rbac).json()["data"][
+            "requestId"
+        ]
+        version = _advance_to_review(client, jwks_env, core_rbac, rid)
+        detail = _get(
+            client,
+            f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        assert detail["status"] == "under_review"
+        assert version == 3
+        # stale version → 409
+        core_rbac["behavior"] = (
+            "data", rbac_payload(ANALYST, id="analyst-1")
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/reject",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": 1, "reason": "stale"},
+        )
+        assert resp.status_code == 409
+
+    def test_draft_patch_only_in_progress(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid = _submit_create(client, jwks_env, core_rbac).json()["data"][
+            "requestId"
+        ]
+        core_rbac["behavior"] = (
+            "data", rbac_payload(ANALYST, id="analyst-1")
+        )
+        tok = _token(jwks_env, "analyst-1")
+        _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/start",
+            tok, json={"expectedVersion": 1},
+        )
+        resp = client.patch(
+            f"/v1/product-registration/requests/{rid}/draft",
+            json={
+                "expectedVersion": 2,
+                "changes": [
+                    {
+                        "path": "description",
+                        "proposedValue": "DESC CORRIGIDA",
+                        "reason": "padronização",
+                    }
+                ],
+            },
+            headers={"Authorization": f"Bearer {tok}"},
+        )
+        assert resp.status_code == 200, resp.text
+        assert (
+            resp.json()["data"]["technicalDraft"]["description"]
+            == "DESC CORRIGIDA"
+        )
+
+    def test_needs_information_resume(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid = _submit_create(client, jwks_env, core_rbac).json()["data"][
+            "requestId"
+        ]
+        core_rbac["behavior"] = (
+            "data", rbac_payload(ANALYST, id="analyst-1")
+        )
+        tok = _token(jwks_env, "analyst-1")
+        _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/start",
+            tok, json={"expectedVersion": 1},
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/request-information",
+            tok,
+            json={
+                "expectedVersion": 2,
+                "reason": "falta ficha técnica",
+                "pendingFields": ["unit"],
+            },
+        )
+        assert resp.status_code == 200
+        assert resp.json()["data"]["status"] == "needs_information"
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/resume",
+            tok, json={"expectedVersion": 3},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["data"]["status"] == "in_progress"
+
+    def test_reject_does_not_touch_record(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid = _submit_create(client, jwks_env, core_rbac).json()["data"][
+            "requestId"
+        ]
+        core_rbac["behavior"] = (
+            "data", rbac_payload(ANALYST, id="analyst-1")
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/reject",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": 1, "reason": "duplicada"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["data"]["status"] == "rejected"
+        detail = _get(
+            client,
+            f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        assert detail["allowedActions"] == []
+        assert detail["completedRecordId"] is None
+
+    def test_scope_requester_cannot_see_foreign(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid = _submit_create(
+            client, jwks_env, core_rbac, sub="user-1"
+        ).json()["data"]["requestId"]
+        core_rbac["behavior"] = (
+            "data", rbac_payload(REQUESTER, id="user-2")
+        )
+        resp = _get(
+            client,
+            f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env, "user-2"),
+        )
+        assert resp.status_code == 403
+
+    def test_requester_queue_own_only(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        _submit_create(client, jwks_env, core_rbac, sub="user-1")
+        core_rbac["behavior"] = (
+            "data", rbac_payload(REQUESTER, id="user-2")
+        )
+        resp = _get(
+            client, "/v1/product-registration/requests",
+            _token(jwks_env, "user-2"),
+        )
+        assert resp.status_code == 200
+        assert resp.json()["data"]["total"] == 0
+
+
+class TestVerifyAndComplete:
+    def _ready_request(
+        self, client, jwks_env, core_rbac, prc_service_repo, reader
+    ):
+        prc_service_repo["reader"] = reader
+        rid = _submit_create(client, jwks_env, core_rbac).json()["data"][
+            "requestId"
+        ]
+        version = _advance_to_review(client, jwks_env, core_rbac, rid)
+        return rid, version
+
+    def test_not_found_does_not_complete(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid, version = self._ready_request(
+            client, jwks_env, core_rbac, prc_service_repo,
+            FakeReader({"status": "not_found"}),
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": version, "officialCode": "001234"},
+        )
+        assert resp.status_code == 409
+        assert resp.json()["data"]["code"] == "erp_mismatch"
+        detail = _get(
+            client,
+            f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        assert detail["status"] == "under_review"
+        verifs = _get(
+            client,
+            f"/v1/product-registration/requests/{rid}/verifications",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]["items"]
+        assert verifs[-1]["result"] == "not_found"
+
+    def test_mismatched_description_blocks(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid, version = self._ready_request(
+            client, jwks_env, core_rbac, prc_service_repo,
+            FakeReader(_product(description="OUTRA DESCRICAO")),
+        )
+        # Remove o campo CONTRACT_GAP para isolar a divergência real.
+        prc_service_repo["repo"]._drafts[rid][
+            "technical_data"
+        ].pop("accountingAccount", None)
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": version, "officialCode": "001234"},
+        )
+        assert resp.status_code == 409
+        fields = resp.json()["data"]["fieldResults"]
+        assert fields["description"]["result"] == "mismatched"
+
+    def test_unverifiable_field_blocks(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        # accountingAccount: CONTRACT_GAP — view=engineering não retorna.
+        rid, version = self._ready_request(
+            client, jwks_env, core_rbac, prc_service_repo,
+            FakeReader(_product()),
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": version, "officialCode": "001234"},
+        )
+        assert resp.status_code == 422
+        assert resp.json()["data"]["code"] == "unverifiable_field"
+
+    def test_supplier_part_number_mismatch_blocks(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid, version = self._ready_request(
+            client, jwks_env, core_rbac, prc_service_repo,
+            FakeReader(
+                {
+                    "status": "available",
+                    "product": {
+                        "code": "001234",
+                        "description": "MATERIAL TESTE",
+                        "group_code": "1001",
+                        "type": "MP",
+                        "default_warehouse": "01",
+                        "unit": "UN",
+                        "material_type": "1",
+                        "customer_reference": "",
+                    },
+                    "suppliers": [
+                        {
+                            "supplier_code": "000001",
+                            "supplier_store": "01",
+                            "supplier_name": "FORNECEDOR X",
+                            "supplier_part_number": "OUTRO-PN",
+                            "catalog_code": None,
+                        }
+                    ],
+                }
+            ),
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": version, "officialCode": "001234"},
+        )
+        assert resp.status_code == 422
+
+    def test_unavailable_blocks(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid, version = self._ready_request(
+            client, jwks_env, core_rbac, prc_service_repo,
+            FakeReader({"status": "unavailable"}),
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": version, "officialCode": "001234"},
+        )
+        assert resp.status_code == 503
+
+    def test_timeout_blocks(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid, version = self._ready_request(
+            client, jwks_env, core_rbac, prc_service_repo,
+            FakeReader({"status": "timeout"}),
+        )
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": version, "officialCode": "001234"},
+        )
+        assert resp.status_code == 504
+
+    def test_full_match_completes_once(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        # Remove accountingAccount do draft para fechar com contrato atual.
+        repo = prc_service_repo["reader"] = FakeReader(_product())
+        resp = _submit_create(client, jwks_env, core_rbac)
+        rid = resp.json()["data"]["requestId"]
+        core_rbac["behavior"] = (
+            "data", rbac_payload(ANALYST, id="analyst-1")
+        )
+        tok = _token(jwks_env, "analyst-1")
+        _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/start",
+            tok, json={"expectedVersion": 1},
+        )
+        _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/submit-review",
+            tok, json={"expectedVersion": 2},
+        )
+        # accountingAccount é CONTRACT_GAP (unverifiable) — o harness
+        # remove o campo do draft para provar o caminho de sucesso quando
+        # todos os campos verificáveis batem. O bloqueio pelo gap real é
+        # comprovado em test_unverifiable_field_blocks.
+        prc_service_repo["repo"]._drafts[rid][
+            "technical_data"
+        ].pop("accountingAccount", None)
+        resp = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            tok,
+            json={"expectedVersion": 3, "officialCode": "001234"},
+        )
+        assert resp.status_code == 200, resp.text
+        data = resp.json()["data"]
+        assert data["status"] == "completed"
+        assert data["revisionNumber"] == 1
+        record_id = data["recordId"]
+        # terminal: segunda conclusão → 409
+        resp2 = _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            tok,
+            json={"expectedVersion": 4, "officialCode": "001234"},
+        )
+        assert resp2.status_code == 409
+        # revisão imutável consultável
+        rev = _get(
+            client,
+            f"/v1/product-registration/technical-records/{record_id}",
+            tok,
+        )
+        assert rev.status_code == 200
+        assert rev.json()["data"]["official_product_code"] == "001234"
+
+
+class TestReferenceData:
+    def test_reference_data_fields(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        core_rbac["behavior"] = ("data", rbac_payload(REQUESTER))
+        resp = _get(
+            client,
+            "/v1/product-registration/reference-data",
+            _token(jwks_env),
+        )
+        assert resp.status_code == 200
+        data = resp.json()["data"]
+        paths = {f["path"] for f in data["fields"]}
+        assert "partNumber" not in paths
+        assert "accountingAccount" in paths
+        spec = next(
+            f for f in data["fields"] if f["path"] == "accountingAccount"
+        )
+        assert spec["verifiable"] is False
+        assert "suppliers" in data["editableDraftPaths"]
+
+
+class TestOutbound:
+    def test_outbound_request(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        rid = _submit_create(client, jwks_env, core_rbac).json()["data"][
+            "requestId"
+        ]
+        resp = _get(
+            client,
+            f"/v1/product-registration/outbound/requests/{rid}",
+            _token(jwks_env),
+        )
+        assert resp.status_code == 200
+        data = resp.json()["data"]
+        assert data["status"] == "submitted"
+        assert "technicalDraft" not in data

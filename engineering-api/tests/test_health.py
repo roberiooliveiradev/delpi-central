@@ -61,6 +61,25 @@ def test_only_authorized_business_routes_exposed(client):
         "/v1/nonconformities/export",
         "/v1/nonconformities/import",
         "/v1/nonconformities/prepare",
+        # PRC-C2/C3 — Product Registration (18 operações do contrato §4).
+        "/v1/product-registration/intake/requests",
+        "/v1/product-registration/requests",
+        "/v1/product-registration/requests/{request_id}",
+        "/v1/product-registration/requests/{request_id}/timeline",
+        "/v1/product-registration/requests/{request_id}/draft",
+        "/v1/product-registration/requests/{request_id}/actions/start",
+        "/v1/product-registration/requests/{request_id}/actions/resume",
+        "/v1/product-registration/requests/{request_id}/actions/submit-review",
+        "/v1/product-registration/requests/{request_id}/actions/request-information",
+        "/v1/product-registration/requests/{request_id}/actions/reject",
+        "/v1/product-registration/requests/{request_id}/actions/verify-and-complete",
+        "/v1/product-registration/requests/{request_id}/verifications",
+        "/v1/product-registration/technical-records/{record_id}",
+        "/v1/product-registration/technical-records/{record_id}/revisions",
+        "/v1/product-registration/technical-records/{record_id}/revisions/{revision_number}",
+        "/v1/product-registration/reference-data",
+        "/v1/product-registration/outbound/requests",
+        "/v1/product-registration/outbound/requests/{request_id}",
     }
     assert set(spec["paths"].keys()) == allowed
 

@@ -484,6 +484,131 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "confirmation — the sealed proposal handle is.",
         ),
     ),
+    # --- product_registration (PRC — matriz 18 operações do contrato §4) --------
+    # Status="planned": catálogo honesto — NUNCA executável até o
+    # dispatch estar integrado e testado no mesmo SHA (PARITY_GAP de
+    # integração serializada com VAL-01 em semantic_bridge.py).
+    _a(
+        "product_registration", "list", "read",
+        "Product-registration case queue with authorized scope filters "
+        "(status, type, assignee, source, search, period).",
+        "read", status="planned", paginated=True,
+        fields=("status", "type", "assignee", "source", "search",
+                "dateFrom", "dateTo"),
+    ),
+    _a(
+        "product_registration", "detail", "read",
+        "Case detail: original payload, technical draft, version, "
+        "allowedActions and verification summary.",
+        "read", status="planned", ref_arg="request_id",
+        ref_description="Request UUID.",
+    ),
+    _a(
+        "product_registration", "timeline", "read",
+        "Append-only case timeline (actions and decisions).",
+        "read", status="planned", ref_arg="request_id", paginated=True,
+    ),
+    _a(
+        "product_registration", "verifications", "read",
+        "Official TOTVS verification attempts and divergences.",
+        "read", status="planned", ref_arg="request_id",
+    ),
+    _a(
+        "product_registration", "record", "read",
+        "Current verified technical record (official code + revision "
+        "pointer + freshness).",
+        "read", status="planned", ref_arg="record_id",
+    ),
+    _a(
+        "product_registration", "revisions", "read",
+        "Immutable revision index of a technical record.",
+        "read", status="planned", ref_arg="record_id", paginated=True,
+    ),
+    _a(
+        "product_registration", "revision", "read",
+        "Immutable snapshot of a single revision + per-field diff.",
+        "read", status="planned", ref_arg="record_id",
+        fields=("revision_number",),
+    ),
+    _a(
+        "product_registration", "reference_data", "read",
+        "Field catalog, schema version, statuses, sources and "
+        "verifiability policy.",
+        "read", status="planned",
+    ),
+    _a(
+        "product_registration", "outbound_result", "read",
+        "Outbound contract: status/result of a case for its origin.",
+        "read", status="planned", ref_arg="request_id",
+    ),
+    _a(
+        "product_registration", "submit", "execute",
+        "Create/update intake request — requester is always the human "
+        "principal; source attributed by the system.",
+        "moderate", status="planned", phases=("act", "prepare"),
+        requires=("payload",),
+    ),
+    _a(
+        "product_registration", "start", "execute",
+        "Start processing a submitted case (assigns the analyst).",
+        "moderate", status="planned", phases=("act", "prepare"),
+        ref_arg="request_id", requires=("expected_version",),
+    ),
+    _a(
+        "product_registration", "update_draft", "execute",
+        "Field-by-field draft changes — catalog allowlist + CAS + "
+        "mandatory reason.",
+        "moderate", status="planned", phases=("act", "prepare"),
+        ref_arg="request_id", requires=("changes", "expected_version"),
+    ),
+    _a(
+        "product_registration", "request_information", "execute",
+        "Mark case needs_information with reason + pending fields.",
+        "moderate", status="planned", phases=("act", "prepare"),
+        ref_arg="request_id",
+        requires=("reason", "expected_version"),
+    ),
+    _a(
+        "product_registration", "resume", "execute",
+        "Resume a needs_information case back to in_progress.",
+        "moderate", status="planned", phases=("act", "prepare"),
+        ref_arg="request_id", requires=("expected_version",),
+    ),
+    _a(
+        "product_registration", "submit_review", "execute",
+        "Submit the technical draft for review — completeness check, "
+        "does NOT approve or complete.",
+        "moderate", status="planned", phases=("act", "prepare"),
+        ref_arg="request_id", requires=("expected_version",),
+    ),
+    _a(
+        "product_registration", "reject", "execute",
+        "Terminal rejection — sealed proposal + verifiable human "
+        "confirmation before commit; never touches the live record.",
+        "moderate", status="planned", phases=("prepare", "commit"),
+        ref_arg="request_id",
+        requires=("reason", "expected_version"),
+        notes=(
+            "Terminal: PREPARE seals target/impact; commit exige "
+            "proposal_ref + confirmação humana verificável (elicitation)."
+        ),
+    ),
+    _a(
+        "product_registration", "verify_and_complete", "execute",
+        "Verify the product in TOTVS (read-only official contract) and "
+        "complete — publishes the immutable revision ONLY on full "
+        "match. EVA nunca declara produto criado/alterado sem a "
+        "verificação oficial no ACT.",
+        "moderate", status="planned", phases=("prepare", "commit"),
+        ref_arg="request_id",
+        requires=("expected_version",),
+        fields=("official_code", "reason"),
+        notes=(
+            "Terminal/high-impact: PREPARE prova readiness; ACT exige "
+            "confirmação humana verificável + leitura oficial fresca — "
+            "mismatch/unverifiable/unavailable nunca conclui."
+        ),
+    ),
 )
 
 _ACTION_INDEX: dict[tuple[str, str], SemanticAction] = {
