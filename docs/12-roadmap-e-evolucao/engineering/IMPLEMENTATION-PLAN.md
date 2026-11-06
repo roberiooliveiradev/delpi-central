@@ -658,3 +658,8 @@ Ambiente usado: stack dev local (containers delpi-*), banco descartável `plugin
 - Postconditions DB: requests=2, revisions=2, verifications=3, events=13 (append-only).
 
 **Drift de contrato descoberto (registrar p/ owner):** `partNumber` é required não-vazio no draft de suppliers, mas o SA5 real pode ter `A5_CODPRF` vazio (produto 90264270/WEG). Produto com fornecedor sem PN jamais completa — decisão necessária: permitir `partNumber` vazio no contrato draft, ou exigir preenchimento em TOTVS antes da conclusão (regra de negócio — owner Engenharia).
+
+
+## Decisão PO vigente — SA5 Part Number vazio (2026-11-06)
+
+**Contrato aprovado:** [PRODUCT-REGISTRATION-PO-DECISIONS-2026-11-06.md](./PRODUCT-REGISTRATION-PO-DECISIONS-2026-11-06.md#decisão-adicional-aprovada--part-number-opcional-quando-ausente-no-totvs-2026-11-06). `suppliers[].partNumber` (`SA5.A5_CODPRF`) **não é required não-vazio** quando a fonte oficial TOTVS retorna Part Number vazio; qualquer regra histórica contrária deste documento está substituída. Aceitar no intake/draft `partNumber` omitido, `null` ou `""` e normalizar de forma consistente. **Não confundir campo oficial ausente (unverifiable) com valor oficial vazio (verificável).** Quando informado não vazio ou explicitamente selecionado para alteração, comparar o valor final exato com SA5 via `Engineering API -> api-delpi -> TOTVS`; mismatch continua bloqueando publicação. Remoção explícita para vazio é delta auditável, distinta de omissão de alteração. Comparar identidade do vínculo por supplierCode/store, sem ignorar PN informado ou ambiguidade/duplicata; preservar CAS, revisão imutável, provenance e AuthZ. **Status: decisão aprovada, implementação/testes ainda pendentes; não declarar deploy ou HML PASS.**
