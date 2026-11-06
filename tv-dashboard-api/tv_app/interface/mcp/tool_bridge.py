@@ -12,6 +12,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from pathlib import Path
+
+from delpi_mcp.avatar_image import build_avatar_delivery
 from delpi_mcp.errors import kind_for_http_status, mcp_tool_result
 from delpi_mcp.identity import (
     build_mcp_request as _shared_build_request,
@@ -21,6 +24,7 @@ from fastapi import Request
 from mcp.types import CallToolResult, Tool as _Tool
 from mcp.server.mcpserver.exceptions import ToolError
 
+from tv_app.persona.vista_profile import get_vista_profile
 from tv_app.application.gpt_actions.commit_service import TvGptCommitService
 from tv_app.application.gpt_actions.dispatch_service import GptActionsDispatchService
 from tv_app.application.gpt_actions.errors import GptActionsError
@@ -374,14 +378,40 @@ def tool_read(
     """READ — closed (entity, action) vocabulary over canonical handlers.
 
     Entities: playlist (list|get|context), playlist_history (history),
-    data_route (search), data_model (inspect), product_guide (guide).
+    data_route (search), data_model (inspect), product_guide (guide),
+    avatar (get — official avatar as ImageContent).
     Unknown entity/action or undeclared filter key fails typed.
     """
     try:
         user, auth = _authed_context()
+        entity_key = str(entity or "").strip()
+        action_key = str(action or "").strip().lower()
+        if entity_key == "avatar" and action_key == "get":
+            # AVATAR-INLINE-MCP-V1 — approved avatar bytes ride a canonical
+            # ImageContent block; mechanics live in delpi_mcp.avatar_image.
+            delivery = build_avatar_delivery(
+                get_vista_profile(),
+                Path(__file__).resolve().parents[3],
+            )
+            if delivery.data is None:
+                return _error_result(
+                    status="error",
+                    http_status=404,
+                    error_kind="client",
+                    code="NOT_FOUND",
+                    message=(
+                        "Avatar oficial não aprovado/publicado para este "
+                        "especialista."
+                    ),
+                )
+            if delivery.too_large:
+                return _ok_result(delivery.data)
+            return _ok_result(
+                delivery.data, images=[delivery.image]
+            )
         out = _dispatch.semantic_read(
             user=user,
-            entity=entity,
+            entity=entity_key or entity,
             action=action,
             ref=ref,
             filters=filters if isinstance(filters, dict) else None,
