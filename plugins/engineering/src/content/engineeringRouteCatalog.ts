@@ -60,6 +60,21 @@ export const ENGINEERING_CATALOG: readonly CatalogSection[] = [
         keywords: ["nc", "nao conformidade", "defeito", "qualidade", "problema"],
       },
       {
+        id: "product-registration",
+        label: "Controle e Cadastro de Produtos",
+        description:
+          "Fila e atendimento de solicitações de cadastro e alteração de matérias-primas",
+        target: { kind: "internal", view: "product-registration" },
+        requiredPermission: "engineering.product-registration.read",
+        keywords: [
+          "cadastro",
+          "produto",
+          "materia-prima",
+          "part number",
+          "totvs",
+        ],
+      },
+      {
         id: "products",
         label: "Produtos",
         description:

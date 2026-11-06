@@ -145,7 +145,7 @@ export type ApiFailBody = {
 };
 
 async function sendJson<T>(
-  method: "POST" | "PUT" | "DELETE",
+  method: "POST" | "PUT" | "PATCH" | "DELETE",
   path: string,
   body?: unknown,
   signal?: AbortSignal,
@@ -211,6 +211,14 @@ export async function putJson<T>(
   signal?: AbortSignal,
 ): Promise<T> {
   return sendJson<T>("PUT", path, body, signal);
+}
+
+export async function patchJson<T>(
+  path: string,
+  body?: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
+  return sendJson<T>("PATCH", path, body, signal);
 }
 
 export async function deleteJson<T>(
