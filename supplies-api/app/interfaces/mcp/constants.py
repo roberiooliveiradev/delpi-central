@@ -90,6 +90,7 @@ EXECUTE_IDEMPOTENCY_TTL_HOURS = 24
 # reuses the canonical BFF service/gateway — no new entity without owner
 # contract + tests.
 READ_ACTIONS_BY_ENTITY: dict[str, frozenset[str]] = {
+    "avatar": frozenset({"get"}),
     "purchase_orders": frozenset({"search", "get", "export"}),
     "purchase_requests": frozenset(
         {

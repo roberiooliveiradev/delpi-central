@@ -14,6 +14,7 @@ import hashlib
 import json
 import re
 import logging
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
 
@@ -62,6 +63,7 @@ from app.application.services.comex_analysis_service import (
     ComexNotFoundError,
     ComexValidationError,
 )
+from app.infrastructure.config.settings import Settings
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
 from app.application.services.otd_aggregate_service import OtdAggregateService
 from app.application.services.otd_series_service import OtdSeriesService
@@ -458,17 +460,125 @@ def tool_get_my_context() -> CallToolResult:
     )
 
 
+_AVATAR_MIME_BY_SUFFIX = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+}
+_AVATAR_INLINE_MAX_BYTES = 8 * 1024 * 1024
+
+
+def _avatar_asset() -> tuple[Any, Any]:
+    """Approved avatar path from the canonical ficha — None when not
+    approved or missing (safe fail: no URL/bytes for unapproved assets)."""
+    from app.persona.suri_profile import get_suri_profile
+
+    profile = get_suri_profile()
+    appearance = profile.appearance
+    reference = (appearance.avatar_reference or "").strip()
+    if (
+        appearance.avatar_status != "OFFICIAL_AVATAR_APPROVED"
+        or not reference
+    ):
+        return profile, None
+    root = Path(__file__).resolve().parents[3]
+    path = (root / reference).resolve()
+    if not path.is_file() or not path.is_relative_to(root):
+        return profile, None
+    return profile, path
+
+
+def avatar_distribution() -> dict[str, Any] | None:
+    """Owner-local HTTPS discovery metadata for the official avatar
+    (AVATAR-INLINE-MCP-V1 — same additive key pattern as TÉO/EVA)."""
+    profile, path = _avatar_asset()
+    if path is None:
+        return None
+    base = (Settings.PUBLIC_BASE_URL or "").rstrip("/")
+    if not base:
+        return None
+    reference = (profile.appearance.avatar_reference or "").strip()
+    filename = reference.rsplit("/", 1)[-1]
+    return {
+        "kind": "public_https",
+        "url": (
+            f"{base}{Settings.ROOT_PATH}/public/characters/"
+            f"{profile.identity.character_id}/avatar/{filename}"
+        ),
+        "mime_type": _AVATAR_MIME_BY_SUFFIX.get(
+            path.suffix.lower(), "application/octet-stream"
+        ),
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    }
+
+
+def tool_get_avatar() -> CallToolResult:
+    """Approved official avatar as MCP ImageContent — narrative asset only,
+    never AuthZ (AVATAR-INLINE-MCP-V1)."""
+    try:
+        _effective_user()
+        profile, path = _avatar_asset()
+        if path is None:
+            return _error(
+                "Avatar oficial não aprovado/publicado para este especialista.",
+                status_code=404,
+                error_code="not_found",
+            )
+        content = path.read_bytes()
+        mime = _AVATAR_MIME_BY_SUFFIX.get(
+            path.suffix.lower(), "application/octet-stream"
+        )
+        identity = profile.identity
+        data = {
+            "character_id": identity.character_id,
+            "display_name": identity.display_name or identity.name,
+            "avatar_status": profile.appearance.avatar_status,
+            "mime_type": mime,
+            "bytes": len(content),
+            "sha256": hashlib.sha256(content).hexdigest(),
+            "content_delivery": "image_block",
+        }
+        if len(content) > _AVATAR_INLINE_MAX_BYTES:
+            data["content_delivery"] = "too_large"
+            return _ok(data, "Avatar excede o limite inline — metadata only.")
+        import base64
+
+        from mcp.types import ImageContent
+
+        image = ImageContent(
+            type="image",
+            data=base64.b64encode(content).decode("ascii"),
+            mime_type=mime,
+        )
+        return mcp_tool_result(
+            data,
+            is_error=False,
+            text=(
+                f"Avatar oficial de {data['display_name']} "
+                f"({mime}, {len(content)} bytes) — imagem entregue como "
+                "bloco image."
+            ),
+            images=[image],
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
 def tool_get_catalog() -> CallToolResult:
     _effective_user()
+    mcp: dict[str, Any] = {
+        "name": "supplies",
+        "persona": SURI_FULL_NAME,
+        "acronym": SURI_ACRONYM,
+        "mission": SURI_MISSION,
+        "catalog_version": CATALOG_VERSION,
+    }
+    distribution = avatar_distribution()
+    if distribution:
+        mcp["avatar_distribution"] = distribution
     return _ok(
         {
-            "mcp": {
-                "name": "supplies",
-                "persona": SURI_FULL_NAME,
-                "acronym": SURI_ACRONYM,
-                "mission": SURI_MISSION,
-                "catalog_version": CATALOG_VERSION,
-            },
+            "mcp": mcp,
             "tools": [
                 {"name": name, "tool_class": TOOL_CLASS[name]}
                 for name in sorted(TOOL_CLASS)
@@ -1353,6 +1463,8 @@ def tool_read(
         return _dispatch_users_read(
             normalized_action, filter_payload, identity_payload
         )
+    if normalized_entity == "avatar":
+        return tool_get_avatar()
 
     if normalized_action == "search":
         if identity_payload:

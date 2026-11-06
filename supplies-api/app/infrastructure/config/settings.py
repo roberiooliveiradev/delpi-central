@@ -6,6 +6,7 @@ class Settings:
     ENV = os.getenv("ENV", os.getenv("FLASK_ENV", "development"))
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     ROOT_PATH = os.getenv("SUPPLIES_API_ROOT_PATH", "/apps/supplies-api")
+    PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "")
 
     KEYCLOAK_JWKS_URL = os.getenv("KEYCLOAK_JWKS_URL", "")
     KEYCLOAK_ISSUER = os.getenv("KEYCLOAK_ISSUER", "")
