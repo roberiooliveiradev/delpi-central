@@ -31,7 +31,12 @@ def avatar_ui_meta(resource_uri: str) -> dict:
     Merge into the tool's existing ``_meta`` (e.g. vendor-namespaced
     securitySchemes): ``{**meta, **avatar_ui_meta(uri)}``.
     """
-    return {"ui": {"resourceUri": resource_uri}}
+    # ui.resourceUri — generic MCP Apps link; openai/outputTemplate —
+    # the key ChatGPT's Apps SDK recognizes for widget rendering (V2.1).
+    return {
+        "ui": {"resourceUri": resource_uri},
+        "openai/outputTemplate": resource_uri,
+    }
 
 
 def _origin(url: str) -> str:

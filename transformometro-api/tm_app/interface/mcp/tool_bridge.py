@@ -469,17 +469,17 @@ def tool_show_avatar() -> CallToolResult:
         if distribution.get("url"):
             data["image_url"] = distribution["url"]
         data["specialty"] = "Especialista em Transformação Digital"
-        if delivery.too_large:
-            return _ok_result(data, "Avatar excede o limite inline — metadata only.")
+        # V2.1 hotfix: show_avatar stays metadata-only — the ~1.4MB
+        # base64 ImageContent timed the MCP Apps surface out; raw bytes
+        # remain available via read(entity=avatar, action=get).
         return mcp_tool_result(
             data,
             is_error=False,
             text=(
                 f"Avatar oficial de {delivery.display_name} "
                 f"({data['mime_type']}, {data['bytes']} bytes) — "
-                "imagem entregue como bloco image."
+                "imagem servida pelo componente visual."
             ),
-            images=[delivery.image],
         )
     except Exception as exc:
         return handle_tool_error(exc)
