@@ -333,7 +333,8 @@ async def _terminal(
         expected_capability=entry.capability,
         expected_target_ref=ref,
     )
-    sealed = proposal.change or {}
+    # A proposta selada armazena apenas o fingerprint da mudança — os
+    # parâmetros do ACT são revalidados contra ele abaixo.
     if fingerprint(
         {"action": entry.action, "reason": reason,
          "official_code": official_code,
@@ -360,7 +361,7 @@ async def _terminal(
     if entry.action == "reject":
         data = svc.reject_request(
             ref, actor=actor, expected_version=version,
-            reason=reason or sealed.get("reason") or "",
+            reason=reason or "",
             idempotency_key=idempotency_key,
         )
     else:
@@ -368,7 +369,7 @@ async def _terminal(
         data = await svc.verify_and_complete(
             ref, actor=actor, expected_version=version,
             official_code=official_code,
-            reason=reason or sealed.get("reason"),
+            reason=reason,
             access_token=token,
             correlation_id=proposal.proposal_id,
             idempotency_key=idempotency_key,
