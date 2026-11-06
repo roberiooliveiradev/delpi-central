@@ -21,10 +21,19 @@ from tm_app.application.methodology.guide import (
     AUTHORITY,
     EVIDENCE_STATES,
     INVARIANTS,
+    _ALIASES,
     _METHODS,
     _norm,
-    _resolve_method,
     list_method_ids,
+)
+from tm_app.application.methodology.lean_six_sigma import (
+    LEAN_SIX_SIGMA_FAMILY,
+    LSS_ALIASES,
+    LSS_COMPOSITION_EDGES,
+    LSS_CONTEXT_FACTS,
+    LSS_METHOD_IDS,
+    LSS_METHODS,
+    LSS_SEMANTICS,
 )
 
 GUIDE_VERSION_V1 = "teo-method-playbooks-v1"
@@ -150,6 +159,7 @@ CONTEXT_FACT_SCHEMA: dict[str, dict[str, Any]] = {
         "accepted_values": _BIN,
     },
 }
+CONTEXT_FACT_SCHEMA.update(LSS_CONTEXT_FACTS)
 
 CONTEXT_FACTS = tuple(CONTEXT_FACT_SCHEMA)
 
@@ -500,6 +510,33 @@ _COMPOSITION_BY_SOURCE: dict[str, list[dict[str, Any]]] = {}
 for _edge in COMPOSITION_EDGES:
     _COMPOSITION_BY_SOURCE.setdefault(_edge["source_method"], []).append(_edge)
 
+# V1 semantics stay the frozen authority for the original 13 methods.
+# Lean Six Sigma is an additive V2 family. Routing reads the merged view.
+_V2_METHODS: dict[str, dict[str, Any]] = {**_METHODS, **LSS_METHODS}
+_V2_SEMANTICS: dict[str, dict[str, Any]] = {**_METHOD_SEMANTICS, **LSS_SEMANTICS}
+_V2_EDGES: tuple[dict[str, Any], ...] = COMPOSITION_EDGES + LSS_COMPOSITION_EDGES
+_V2_COMPOSITION_BY_SOURCE: dict[str, list[dict[str, Any]]] = {}
+for _edge in _V2_EDGES:
+    _V2_COMPOSITION_BY_SOURCE.setdefault(_edge["source_method"], []).append(_edge)
+
+
+def list_v2_method_ids() -> tuple[str, ...]:
+    return tuple(_V2_METHODS)
+
+
+def _resolve_v2_method(method: str | None) -> str | None:
+    """V1 aliases plus Lean Six Sigma aliases. V1 query does not use this."""
+    key = _norm(method)
+    if key is None:
+        return None
+    key = LSS_ALIASES.get(key, _ALIASES.get(key, key))
+    if key not in _V2_METHODS:
+        known = ", ".join(list_v2_method_ids())
+        raise ValueError(
+            f"Unknown methodology method '{method}'. Known methods: {known}."
+        )
+    return key
+
 # Meta-routing rules for intent=improve — ordered; first satisfied wins.
 _IMPROVE_RULES = (
     {
@@ -508,10 +545,49 @@ _IMPROVE_RULES = (
         "note": "Strategic question detected — route to strategic_analysis.",
     },
     {
+        "when": {"mapping_only": ("yes",)},
+        "resolves_intent": "map",
+        "candidate_hint": "as_is",
+        "note": "User asked only to organize steps — smallest map, not a DMAIC project.",
+    },
+    {
+        "when": {"improvement_regressed": ("yes",)},
+        "resolves_intent": "measure",
+        "candidate_hint": "control_plan",
+        "note": "An implemented change is slipping — check baseline, indicator and reaction.",
+    },
+    {
+        "when": {"administrative_delay": ("yes",)},
+        "resolves_intent": "map",
+        "candidate_hint": "end_to_end",
+        "note": "Approval or handoff delay — map the path before statistics.",
+    },
+    {
+        "when": {
+            "quality_variation": ("yes",),
+            "measurement_system_trusted": ("no", "unknown"),
+        },
+        "resolves_intent": "measure",
+        "candidate_hint": "msa",
+        "note": "Variation reported and the measurement system is not trusted — MSA before capability.",
+    },
+    {
         "when": {"problem_defined": ("yes",), "candidate_cause": ("yes", "inferred", "proposed")},
         "resolves_intent": "diagnose",
         "candidate_hint": "five_whys",
         "note": "Defined effect plus one candidate line — diagnose via 5 Whys.",
+    },
+    {
+        "when": {"problem_defined": ("yes",), "defect_concentration": ("yes",)},
+        "resolves_intent": "diagnose",
+        "candidate_hint": "pareto",
+        "note": "Counts concentrate in a few categories — Pareto before declaring a cause.",
+    },
+    {
+        "when": {"problem_defined": ("yes",), "structured_improvement": ("yes",)},
+        "resolves_intent": "diagnose",
+        "candidate_hint": "dmaic",
+        "note": "Structured project requested — DMAIC, still not a proven cause.",
     },
     {
         "when": {"problem_defined": ("yes",)},
@@ -561,8 +637,8 @@ def _satisfied(req: Mapping[str, Any], context: Mapping[str, Any]) -> str:
 
 def evaluate_readiness(method_id: str, context: Mapping[str, Any] | None) -> dict[str, Any]:
     """Tri-state-plus readiness for one method. UNKNOWN != NOT_READY."""
-    method_id = _resolve_method(method_id)
-    semantics = _METHOD_SEMANTICS[method_id]
+    method_id = _resolve_v2_method(method_id)
+    semantics = _V2_SEMANTICS[method_id]
     context = context or {}
     unmet: list[str] = []
     missing: list[str] = []
@@ -601,7 +677,7 @@ def _signal_active(fact: str, context: Mapping[str, Any], accepts=("yes",)) -> b
 
 
 def _candidate_rank(method_id: str, context: Mapping[str, Any]) -> dict[str, Any]:
-    semantics = _METHOD_SEMANTICS[method_id]
+    semantics = _V2_SEMANTICS[method_id]
     context = context or {}
     favored_all = semantics.get("favored_all", ())
     favored_any = semantics.get("favored_any", ())
@@ -623,8 +699,8 @@ def _candidate_rank(method_id: str, context: Mapping[str, Any]) -> dict[str, Any
 
 def _method_card_v2(method_id: str) -> dict[str, Any]:
     """V1 prose card + V2 semantic layer — same method id, two projections."""
-    item = _METHODS[method_id]
-    semantics = _METHOD_SEMANTICS[method_id]
+    item = _V2_METHODS[method_id]
+    semantics = _V2_SEMANTICS[method_id]
     return {
         "id": method_id,
         "name": item["name"],
@@ -636,7 +712,7 @@ def _method_card_v2(method_id: str) -> dict[str, Any]:
         "epistemic_constraints": list(semantics["epistemic_constraints"]),
         "sufficiency": dict(semantics["sufficiency"]),
         "suggested_next": [
-            dict(edge) for edge in _COMPOSITION_BY_SOURCE.get(method_id, ())
+            dict(edge) for edge in _V2_COMPOSITION_BY_SOURCE.get(method_id, ())
         ],
     }
 
@@ -646,7 +722,7 @@ def _questions_for(
     readiness: Mapping[str, Any],
     recorded_unknowns: frozenset[str] = frozenset(),
 ) -> list[dict[str, Any]]:
-    semantics = _METHOD_SEMANTICS[method_id]
+    semantics = _V2_SEMANTICS[method_id]
     gap_qs = {q["resolves"]: q for q in semantics.get("gap_questions", ())}
     # A fact the user already declared UNKNOWN is a recorded gap — surface it
     # once as metadata, never re-ask it in a loop.
@@ -655,7 +731,7 @@ def _questions_for(
         for f in readiness.get("unmet_facts", ())
         if f in gap_qs and f not in recorded_unknowns
     ]
-    for q in _METHODS[method_id].get("questions", ())[:1]:
+    for q in _V2_METHODS[method_id].get("questions", ())[:1]:
         out.append(
             {
                 "id": f"deepen_{method_id}",
@@ -724,7 +800,7 @@ def evaluate_sufficiency(
     remaining UNKNOWNs are non-blocking and the next question has low
     materiality.
     """
-    _resolve_method(method_id)
+    _resolve_v2_method(method_id)
     signals = signals or {}
     if not signals:
         return {"sufficiency": "UNKNOWN", "stop_reasons": []}
@@ -813,22 +889,22 @@ def query_methodology_guide_v2(
     if unknown_facts:
         base["ignored_context_facts"] = unknown_facts
 
-    method_key = _resolve_method(method) if method else None
+    method_key = _resolve_v2_method(method) if method else None
     if method_key:
         readiness = evaluate_readiness(method_key, context)
         payload = dict(base)
         payload["selection"] = "method"
         payload["method"] = {
-            **_METHODS[method_key],
+            **_V2_METHODS[method_key],
             "minimum_information": [
-                dict(r) for r in _METHOD_SEMANTICS[method_key]["minimum_information"]
+                dict(r) for r in _V2_SEMANTICS[method_key]["minimum_information"]
             ],
             "epistemic_constraints": list(
-                _METHOD_SEMANTICS[method_key]["epistemic_constraints"]
+                _V2_SEMANTICS[method_key]["epistemic_constraints"]
             ),
-            "sufficiency": dict(_METHOD_SEMANTICS[method_key]["sufficiency"]),
+            "sufficiency": dict(_V2_SEMANTICS[method_key]["sufficiency"]),
             "suggested_next": [
-                dict(e) for e in _COMPOSITION_BY_SOURCE.get(method_key, ())
+                dict(e) for e in _V2_COMPOSITION_BY_SOURCE.get(method_key, ())
             ],
             "readiness": readiness["readiness"],
             "missing_information": readiness["unmet_facts"],
@@ -838,7 +914,7 @@ def query_methodology_guide_v2(
         )
         if intent_key:
             payload["intent"] = intent_key
-            payload["serves_intent"] = intent_key in _METHOD_SEMANTICS[method_key]["intents"]
+            payload["serves_intent"] = intent_key in _V2_SEMANTICS[method_key]["intents"]
         return payload
 
     if intent_key == "improve":
@@ -872,14 +948,15 @@ def query_methodology_guide_v2(
         "rule": "Declare intent (or legacy task). Use the smallest sufficient method; composition is optional.",
         "intents": {
             intent_id: [
-                mid for mid, s in _METHOD_SEMANTICS.items() if intent_id in s["intents"]
+                mid for mid, s in _V2_SEMANTICS.items() if intent_id in s["intents"]
             ]
             for intent_id in INTENT_IDS
             if intent_id != "improve"
         },
         "meta_intents": {"improve": "Resolves to the best-fit intent from available context."},
-        "methods": [_method_card_v2(mid) for mid in list_method_ids()],
-        "composition_edges": [dict(e) for e in COMPOSITION_EDGES],
+        "lean_six_sigma": dict(LEAN_SIX_SIGMA_FAMILY),
+        "methods": [_method_card_v2(mid) for mid in list_v2_method_ids()],
+        "composition_edges": [dict(e) for e in _V2_EDGES],
         "readiness_states": list(READINESS_STATES),
         "sufficiency_states": list(SUFFICIENCY_STATES),
         "stop_reasons": list(STOP_REASONS),
@@ -896,7 +973,7 @@ def _intent_payload(
     recorded_unknowns: frozenset[str] = frozenset(),
 ) -> dict[str, Any]:
     member_ids = [
-        mid for mid, s in _METHOD_SEMANTICS.items() if intent_key in s["intents"]
+        mid for mid, s in _V2_SEMANTICS.items() if intent_key in s["intents"]
     ]
     candidates = []
     questions: list[dict[str, Any]] = []
@@ -940,14 +1017,27 @@ def render_v2_markdown() -> str:
     ]
     for intent in INTENT_IDS:
         members = [
-            mid for mid, s in _METHOD_SEMANTICS.items() if intent in s["intents"]
+            mid for mid, s in _V2_SEMANTICS.items() if intent in s["intents"]
         ]
         note = " (meta-routing)" if intent == "improve" else ""
         lines.append("- " + bt + intent + bt + note + ": " + (", ".join(members) or "—"))
-    lines += ["", "## Methods", ""]
-    for mid in list_method_ids():
-        item = _METHODS[mid]
-        sem = _METHOD_SEMANTICS[mid]
+    lines += [
+        "",
+        "## Lean Six Sigma",
+        "",
+        LEAN_SIX_SIGMA_FAMILY["note"],
+        "",
+        "Frameworks: " + ", ".join(LEAN_SIX_SIGMA_FAMILY["frameworks"]),
+        "Competence references: " + ", ".join(LEAN_SIX_SIGMA_FAMILY["competence"]),
+        "Added tools: " + ", ".join(LEAN_SIX_SIGMA_FAMILY["tools"]),
+        "Reused V1 tools: " + ", ".join(LEAN_SIX_SIGMA_FAMILY["existing_tools_reused"]),
+        "",
+        "## Methods",
+        "",
+    ]
+    for mid in list_v2_method_ids():
+        item = _V2_METHODS[mid]
+        sem = _V2_SEMANTICS[mid]
         lines.append("### " + mid + " — " + item["name"])
         lines.append("")
         lines.append("Purpose: " + item["purpose"])
@@ -971,7 +1061,7 @@ def render_v2_markdown() -> str:
         for c in sem["sufficiency"]["not_sufficient_when"]:
             lines.append("- " + c)
         lines.append("")
-        edges = _COMPOSITION_BY_SOURCE.get(mid, ())
+        edges = _V2_COMPOSITION_BY_SOURCE.get(mid, ())
         if edges:
             lines.append("Soft composition (optional):")
             for e in edges:
@@ -981,7 +1071,7 @@ def render_v2_markdown() -> str:
         "## Composition edges (all optional)",
         "",
     ]
-    for e in COMPOSITION_EDGES:
+    for e in _V2_EDGES:
         lines.append(
             "- " + bt + e["source_method"] + bt + " -> " + bt + e["target_method"]
             + bt + " — " + e["condition"]

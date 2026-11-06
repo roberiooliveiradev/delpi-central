@@ -1020,7 +1020,8 @@
         "read_guide"
       ],
       "confirmation_policy": "read_only",
-      "knowledge": "teo-method-playbooks.md"
+      "knowledge": "teo-method-playbooks.md",
+      "notes": "Wire default v1 keeps the original methods. Lean Six Sigma (DMAIC, Pareto, MSA, FMEA, belts as competence) is teo-method-playbooks-v2. Do not invent statistical results. TÉO does not certify."
     },
     "product_usage_guides": {
       "gpt_operations": [

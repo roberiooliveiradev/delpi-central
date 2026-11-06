@@ -332,7 +332,12 @@ def create_mcp_server() -> MCPServer:
             "Versioned knowledge — guidance, never domain truth or AuthZ. "
             "source=methodology: TÉO process-methodology playbooks "
             "(params: method, task, guide_version v1|v2, intent, context "
-            "facts). source=product_guide: Portal/Transformômetro usage "
+            "facts). Omit guide_version for the frozen v1 catalog. "
+            "teo-method-playbooks-v2 adds Lean Six Sigma (DMAIC, Pareto, "
+            "MSA, FMEA and the other family tools) without replacing "
+            "SIPOC, Lean, Ishikawa or 5 Whys. Belts are competence "
+            "references, not certifications. Do not invent statistical "
+            "results. source=product_guide: Portal/Transformômetro usage "
             "guides (params: topic, section)."
         ),
         annotations=_annotations("knowledge", "Knowledge"),
