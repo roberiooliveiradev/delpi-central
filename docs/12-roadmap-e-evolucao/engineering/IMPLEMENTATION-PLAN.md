@@ -527,3 +527,24 @@ todos:
 `N0` → aceite arquitetural → `N1` contrato aprovado → `N2` domínio persistência → `N3` intake/API → `N4` UI → `N5` EVA assistiva/decisão → `N6` migração/cutover. Etapas podem ser desenvolvidas em branches separadas quando paths não colidem, mas somente promovidas após gates integrados.
 
 **Arquivos compartilhados** (`engineering-api/engineering_app/main.py`, `config.py`, `plugins/engineering/src/App.tsx`, `engineeringRoutes.ts`, `engineeringRouteCatalog.ts`, manifest, Core/RBAC e CI/deploy): serializar merge por integrador designado após a frente VAL-01. Testar ambos no mesmo SHA e registrar `HEAD/DIFF/TESTS/DEPLOY_DIGEST`. **Sem deploy autorizado por este adendo.**
+
+
+## ADENDO — PRC Engineering-only: execução sem Requests API no MVP (2026-11-06)
+
+> **Precedência operacional:** atualiza PRC-N0–N6. O roadmap mestre [ROADMAP.md](./ROADMAP.md) determina **Engineering API como contexto de implementação inicial**, sem conexão runtime com `requests-api`, `my-requests` ou API Flask do Controle MP. Não executar PRC-1a de delegação de JWT do legado. Os documentos anteriores ficam apenas como evidência histórica e base de migração futura.
+
+**PRC-N0 — Architecture/Contract Gate:** confirmar propriedade de intake, fila, casos, histórico e ficha técnica **em Engenharia**, registrar `ARCHITECTURE_DECISION_REQUIRED` para nova autoridade de workflow, sem transferir authority de cadastro oficial do TOTVS; não criar dependências de runtime de Requests API. Inventariar equivalentes já encontrados apenas como avaliação de duplicação; não ampliar scope. Ler HEAD/status e isolar arquivos em paralelo à VAL-01.
+
+**PRC-N1 — Contract-first:** duas portas versionadas da `engineering-api`: intake (`create` e `update` por campo, solicitante/origem/idempotency) e outbound de status/resultado (consulta e/ou notificação conforme consumidor real). Definir schemas JSONB versionados, required intake vs required official registration, states, allowedActions, AuthZ live, concorrência CAS/ETag, errors, auditoria, idempotência, rate/size limits, observabilidade, revisões. Confirmar significado de "compart number" com owner.
+
+**PRC-N2 — Domain/Persistence:** criar módulo próprio da `engineering-api` para requests/cases/drafts/technical records/revisions, snapshots JSONB imutáveis, diff por campo e ledger append-only; migrations exclusivas da Engenharia, sem copiar banco legado; testes de replay/CAS/isolamento.
+
+**PRC-N3 — HTTP/API:** implementar intake e saída oficiais, além de listagem/detalhe/ações internas autorizadas para analistas. Nenhum endpoint da Requests API como downstream do MVP; nenhum BFF legado. Confirmar critérios de source identity e postcondition.
+
+**PRC-N4 — Frontend:** no `plugins/engineering`, fila, detalhe, create com obrigatórios de solicitação e update seletivo por field path, histórico/revisões, mensagens pt-BR e rotas técnicas em inglês. UI chama somente `engineering-api`.
+
+**PRC-N5 — Técnico/resultado:** assistência EVA `DRAFT/CANDIDATE` opcional, decisão do analista, confirmação oficial por Domain API autorizada; não marcar `completed` nem publicar revisão oficial sem evidência do resultado.
+
+**PRC-N6 — Posterior, fora do MVP:** somente depois de sistema funcional e paridade, planejar integração com `requests-api` e/ou importação governada dos dados Controle MP (dry-run, idempotência, reconciliação, anexos, identificação/retention, cutover, rollback). Não realizar migração agora.
+
+**Gates de colaboração:** todo diff em arquivos compartilhados com VAL-01 fica para integrador designado e teste em SHA único. Não alterar drawing/OCR/SLANet/comparadores/jobs. **Esta revisão é apenas documental; não há deploy.**
