@@ -1,21 +1,15 @@
 [Unit]
-Description=Timer MyWEG NF Emitidas — publica pendências fiscais (horário comercial America/Sao_Paulo)
-Documentation=file:docs/12-roadmap-e-evolucao/production-control/MYWEG-INVOICE-OBSERVATIONS-E4.md
+Description=Timer MyWEG NF Emitidas — publica pendências fiscais às 06:50 America/Sao_Paulo
+Documentation=file:///home/operador/projetos/delpi-central/docs/12-roadmap-e-evolucao/production-control/MYWEG-INVOICE-OBSERVATIONS-E4.md
 
 [Timer]
-# Evidência 06/11/2026: coletas fiscais chegaram em horário comercial (não na janela 06h das necessidades).
-# Cadência moderada a cada 2h durante o expediente SP; não copia o timer matinal de necessidades.
-OnCalendar=*-*-* 08:00:00 America/Sao_Paulo
-OnCalendar=*-*-* 10:00:00 America/Sao_Paulo
-OnCalendar=*-*-* 12:00:00 America/Sao_Paulo
-OnCalendar=*-*-* 14:00:00 America/Sao_Paulo
-OnCalendar=*-*-* 16:00:00 America/Sao_Paulo
-OnCalendar=*-*-* 18:00:00 America/Sao_Paulo
-# Persistent=true: após reinício, systemd pode disparar catch-up fora da janela
-# (recuperação excepcional; não é o horário nominal do agendamento).
-Persistent=true
-RandomizedDelaySec=30
-AccuracySec=1min
+# Uma execução diária às 06:50 SP, após a janela matinal de necessidades (06:00–06:45).
+# Persistent=false: se o host estiver desligado às 06:50, não há catch-up no mesmo dia;
+# pendências permanecem para a próxima execução agendada.
+OnCalendar=*-*-* 06:50:00 America/Sao_Paulo
+Persistent=false
+RandomizedDelaySec=0
+AccuracySec=1s
 Unit=myweg-invoice-observations-publisher.service
 
 [Install]

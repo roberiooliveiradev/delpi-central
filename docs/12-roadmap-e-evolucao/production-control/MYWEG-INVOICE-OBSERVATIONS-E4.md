@@ -56,7 +56,8 @@ docker compose -f docker-compose.yml --env-file .env --profile manual \
 
 Arquivos: `infra/systemd/myweg-invoice-observations-publisher.{service,timer}`  
 Instalador: `infra/scripts/install-myweg-invoice-observations-publisher-timer.sh`  
-**Não habilita** o timer. Cadência: 08/10/12/14/16/18 America/Sao_Paulo.
+**Não habilita** o timer. Cadência: **06:50** America/Sao_Paulo (uma vez ao dia).  
+`Persistent=false`: se o servidor estiver desligado às 06:50, não há execução atrasada naquele dia; as pendências seguem para a próxima execução.
 
 Ativar só após watermark + dry-run + autorização explícita:
 

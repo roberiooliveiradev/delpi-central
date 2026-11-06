@@ -26,8 +26,8 @@ cat <<EOF
 Installed units in ${TARGET_DIR}.
 Timer NOT enabled yet (ACTIVATION_PENDING until watermark + dry-run smoke).
 
-Schedule (America/Sao_Paulo): 08:00, 10:00, 12:00, 14:00, 16:00, 18:00.
-Persistent=true may catch-up outside that window after reboot (exceptional).
+Schedule (America/Sao_Paulo): 06:50 once daily.
+Persistent=false — sem catch-up se o host estiver desligado às 06:50; pendências seguem para o próximo dia.
 Independent from myweg-needs-publisher.timer / state.
 
 Next steps (operador@srv-api):

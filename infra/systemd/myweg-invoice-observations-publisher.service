@@ -1,6 +1,6 @@
 [Unit]
 Description=MyWEG NF Emitidas — publicador pending fiscal (one-shot Compose)
-Documentation=file:docs/12-roadmap-e-evolucao/production-control/MYWEG-INVOICE-OBSERVATIONS-E4.md
+Documentation=file:///home/operador/projetos/delpi-central/docs/12-roadmap-e-evolucao/production-control/MYWEG-INVOICE-OBSERVATIONS-E4.md
 After=network-online.target docker.service
 Wants=network-online.target
 
