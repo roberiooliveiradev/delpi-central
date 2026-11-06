@@ -48,7 +48,7 @@ def test_profile_carries_only_approved_facts():
     profile = build_caio_profile()
     assert profile.identity.character_id == "caio"
     assert profile.identity.organization == "DELPI"
-    assert "Análise e Inteligência Operacional" in (
+    assert "Análise e Inteligência de Oportunidades" in (
         profile.identity.display_name
     )
     # Unapproved narrative stays empty — never silently canonical.

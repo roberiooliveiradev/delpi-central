@@ -61,6 +61,14 @@ class CaioAgentService:
     def persona_context(cls) -> dict[str, Any]:
         """Compact narrative context from the ficha — MCP/agent echo."""
         context = project_persona_context(cls.character_profile())
+        # Owner-local additive key (same pattern as avatar_distribution —
+        # no shared-contract change): the approved name expansion is the
+        # display_name suffix, echoed inside the projected identity.
+        display = cls.character_profile().identity.display_name or ""
+        if "—" in display:
+            context.setdefault("identity", {})["acronym"] = (
+                display.split("—", 1)[1].strip()
+            )
         distribution = cls.avatar_distribution()
         if distribution:
             context["avatar_distribution"] = distribution

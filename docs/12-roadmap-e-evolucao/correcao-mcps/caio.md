@@ -1,8 +1,20 @@
 # CAIO — Plano de correção da ficha técnica e autoconhecimento
 
 **Inventário:** 2026-11-06  
-**Estado:** acrônimo novo APROVADO pelo usuário para a documentação; implantação no MCP/GPT **PENDING**. **Sem alteração de runtime, Instructions ou API**.
+**Estado:** EXECUTADO 2026-11-06.
 **Fonte observada:** `mcp__CAIO___Especialista_Comercial_DELPI__get_context`, `knowledge` e validação de roteamento `read`.
+
+## Resultado da execução (2026-11-06)
+| ID | Resultado | Evidência |
+|---|---|---|
+| CAIO-01 | **CORRIGIDO** — `Inteligência Operacional` → `Inteligência de Oportunidades` em todas as superfícies: `caio_profile.py` display_name, `branding.py` (`CAIO_FULL_NAME`, `CAIO_MCP_INSTRUCTIONS`), comentário em `constants.py`, assert em `test_caio_character.py`; `character_id=caio` e especialidade preservados | sed + residual search limpo |
+| Acrônimo na projeção | **ADICIONADO** — `persona_context` ecoa `identity.acronym` derivado do sufixo do `display_name` (fonte única; chave aditiva owner-local, mesmo padrão de `avatar_distribution`) | `caio_agent_service.py` |
+| CAIO-02/03/04 | **SEM MUDANÇA** — projeções de contexto/catálogo existentes adequadas; guide `caio.usage` cobre explicação de ferramentas | inventário |
+| CAIO-05/07 | **TEST_NOT_RUN** — paridade de operações governadas e aceite conversacional pendente | — |
+| CAIO-06 | **PROVEN** — ficha canônica em `commercial_app/persona/caio_profile.py` (approach Python válido, sem migração para JSON) | inventário |
+| Residual | **NÃO RELACIONADO** — `test_portfolio_customer_coverage_passes_tuple_pairs_not_dataclasses` falha igualmente no HEAD limpo | stash + rerun |
+
+**Arquivos alterados:** `commercial_app/persona/caio_profile.py`, `commercial_app/interface/mcp/branding.py`, `commercial_app/interface/mcp/constants.py`, `commercial_app/application/caio/caio_agent_service.py`, `tests/test_caio_character.py`, este arquivo.
 
 ## 1. Identidade proposta e evidência atual
 - **TARGET aprovado pelo usuário em 2026-11-06:** **CAIO = Consultor de Análise e Inteligência de Oportunidades**; C = Consultor, A = Análise, I = Inteligência, O = Oportunidades. Definição com aderência explícita ao domínio Comercial.

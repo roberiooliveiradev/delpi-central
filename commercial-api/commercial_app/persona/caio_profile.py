@@ -59,7 +59,7 @@ def build_caio_profile() -> CharacterProfile:
         identity=Identity(
             character_id="caio",
             name="CAIO",
-            display_name="CAIO — Consultor de Análise e Inteligência Operacional",
+            display_name="CAIO — Consultor de Análise e Inteligência de Oportunidades",
             title="Especialista Comercial",
             role="Especialista Comercial da DELPI",
             organization="DELPI",

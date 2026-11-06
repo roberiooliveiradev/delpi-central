@@ -1,7 +1,7 @@
 """CAIO MCP contract constants (Plugin / Agent surface).
 
 Technical ids are not branding. CAIO — Consultor de Análise e
-Inteligência Operacional — é o especialista Comercial exposto via MCP
+Inteligência de Oportunidades — é o especialista Comercial exposto via MCP
 governado da commercial-api (mesmo padrão TÉO/VISTA/DAVI/EVA/CLARA:
 superfície MCP do próprio owner do domínio).
 """
