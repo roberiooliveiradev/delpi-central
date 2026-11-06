@@ -718,3 +718,58 @@ LIVE_SEMANTIC_ONLY_TESTS = PARCIAL (runtime flag-off provado; tools/call
 PROVIDER_DISCOVERY       = PENDING
 ROLLBACK_READINESS       = PASS
 ```
+
+## 21. Wave 008 — Operational cutover acceptance (DAVI-V2-WAVE-008)
+
+> 2026-11-07. Reconciliação de diretivas residuais para semantic-first; gates externos seguem pendentes por credencial/provider.
+
+### 21.1 Frente A — diretivas reconciliadas
+
+```text
+RESÍDUOS CORRIGIDOS (davi_agent_intelligence.json v2026.11.06.4):
+- ~15 referências que apresentavam discover→execute como transporte
+  obrigatório → read/analyze; política de transporte centralizada nas
+  discovery rules (broker = fallback único, sem parênteses duplicados
+  por flow — budget 32646/32768 restaurado).
+- flows.*.mcp_tools: semantic-first com broker após — product_master,
+  stock_and_supply, structure_bom, product_master_extensions,
+  system_metadata, similarity_dedup. ad_hoc_sql_read/write_request
+  permanecem broker-scoped (política SQL/write inalterada).
+- knowledge_orchestration.sources: live_capability_catalog+=get_context;
+  domain_runtime+=read,analyze.
+- context_service schema_on_demand: aponta read/analyze; broker só
+  como fallback temporário.
+- SKILL.md já estava semantic-first (W5). Testes de asserção
+  atualizados sem relaxar budget.
+```
+
+### 21.2 Frentes externas (sem fabricação)
+
+```text
+B (endpoint isolado HTTP+OAuth): PENDING — prova runtime flag-off já
+   obtida via docker run (W7); endpoint autenticado isolado exige
+   resource/client dedicado → decisão arquitetural, não improvisada.
+C (eval modelo real): TEST_NOT_RUN — provider indisponível na sessão.
+E (tools/call autenticadas): TEST_NOT_RUN — mesma dependência.
+F (negative multi-user): PENDING — SECOND_TEST_IDENTITY_UNAVAILABLE.
+G (consumidores): repo migrado (SKILL.md/directives/docs); ChatGPT
+   plugin + GPT Actions = EXTERNAL_DEPENDENCY (ação manual coordenada).
+```
+
+### 21.3 Gates de retirada (atualização)
+
+```text
+CAPABILITY_PARITY        = PASS · GET_CONTEXT_CONSISTENCY = PASS
+NL_SELECTION_PARITY      = PARCIAL (instruções reconciliadas; eval
+                           do modelo pendente)
+CONSUMER_MIGRATION       = PARCIAL (externos pendentes)
+SECURITY_REGRESSION      = PASS
+NEGATIVE_MULTI_USER_AUTHZ= PENDING
+LIVE_SEMANTIC_ONLY_TESTS = PARCIAL (runtime flag-off provado; HTTP
+                           OAuth isolado pendente)
+PROVIDER_DISCOVERY       = PENDING
+ROLLBACK_READINESS       = PASS
+VERDICT                  = NOT_READY_FOR_RETIREMENT (bloqueios externos:
+                           identidade B, endpoint isolado OAuth, provider
+                           eval, plugin update)
+```
