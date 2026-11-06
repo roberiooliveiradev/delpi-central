@@ -260,3 +260,7 @@ Medição lateral no container `delpi-engineering-api` após o deploy de `9c59ba
 | `90264050` | 1 | 4 | 12 | 3 |
 
 `90264017` página 9: `70260008` está numa célula `rowspan=16` misturada com as letras de item. Status `INCONCLUSIVE`, sem pai inventado. Recortes `title_block` da mesma página e de outros desenhos também receberam grade do mesmo SLANet, sem VAL-02. Uma sequência contínua de OCR falhou com `RuntimeError` do Paddle depois de dois arquivos; a repetição em processo novo concluiu o restante. `CORPUS_BOM_REGRESSION=TEST_NOT_RUN`. `MCP_E2E=TEST_NOT_RUN`. `VAL01_COMPLETED=false`.
+
+## Log adicional — 2026-11-06 (DEC-VAL-036 — recorte por colunas conectadas)
+
+`90264017` p9 antes: célula `rowspan=16` misturando itens+códigos+carimbo. Depois (`native_slanet_v2`): recorte `[1,56,1273,303]` derivado das colunas de códigos; 11 linhas; `10081389`/`10081685`/`10091368` separados; `70260008` isolado; histórico excluído. Residual: item/qtd denso colapsa parcialmente. Deploy `47be2a8e0d` healthy.

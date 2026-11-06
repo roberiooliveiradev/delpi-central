@@ -1313,3 +1313,16 @@ O histórico de revisão da mesma página não cita esses códigos. `10081389` �
 **Corpus.** Percepção de uma página por PDF, SHA conferido com o Doc 120, sem comparador BOM e sem ground truth de célula. Todos os 13 produziram grade consistente na página medida. Vários têm célula com dois ou mais códigos. `90264030` página 2 devolveu só 1 linha e 5 células: medição insuficiente, não uma regressão de BOM. Uma execução contínua de OCR quebrou com `RuntimeError` do Paddle a partir do terceiro arquivo; processos separados concluíram o restante. A API permaneceu healthy. Memória do serviço após as medições: cerca de 250 MiB. Não há percentual de acerto inventado.
 
 **MCP.** POST anônimo em `/apps/engineering-api/mcp` retornou 401. Não houve token de usuário, então não existe `JOB_ID` novo. O resultado `aj-13b745a9e5ce4c01` continua sendo da imagem antiga. `VAL01_COMPLETED=false`.
+
+## 39. DEC-VAL-036 — recorte da tabela derivado de colunas conectadas (2026-11-06)
+
+**Causa-raiz (medida em `90264017` p9):** o recorte ao SLANet era o envelope de todos os tokens da faixa/retângulos gráficos — misturava component_table + carimbo (`70260008`/`CHICOTE BUHLER`/cliente) + histórico. SLANet estruturava a mistura numa grade única: `rowspan=16` com `A B C D E 70260008 CHICOTE BUHLER…` e células artificialmente mescladas (`10081389 10081685 10091368 2`).
+
+**Correção (`47be2a8e0d`):**
+- `understanding._connected_column_crop`: recorte = extensão das células das colunas ligadas à coluna de códigos (regra de gap já existente); margem = altura mediana da célula ≤2% página; `boundary_source="connected_columns"`; `unreliable_boundary=false` se span ≤60%.
+- `paddleocr_adapter`: `self._engine=None` após timeout/RuntimeError — elimina RuntimeError em multipágina (predictor morto reutilizado).
+- `TABLE_PERCEPTION_REVISION="native_slanet_v2"` (job não reutiliza COMPLETED v1); bridge usa a constante nos dois paths.
+
+**Evidência real (prod `47be2a8e0d`, PDF `5452aabd…32ee`, p9):** recorte `[1,56,1273,303]`; SLANet score 0.97; 68 células/11 linhas; códigos C/D/E em linhas separadas; `70260008` em célula própria; carimbo/histórico fora da grade. Residual: coluna item/qtd densa colapsa (`"C 6 D 3"`) — códigos e descrições corretos.
+
+**Testes:** 88/88 escopo overlay; +4 novos (crop exclui admin, coluna próxima dentro, títulos não criam crop, engine morto descartado). `CHATGPT_CONSUMER_PASS` PENDING.
