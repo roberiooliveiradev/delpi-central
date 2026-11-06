@@ -768,3 +768,5 @@ Este direcionamento **altera D-07 e o plano Controle MP anterior** (antes: anali
 Decisões pendentes: owner funcional do cadastro, política de grupos `create/process`, como o backend legado autoriza o BFF em nome do usuário, ACL por item/conversa, semântica de `FRACASSADO`, comentários pós-devolução, campos de ficha e validação de fornecedores, coexistência com `my-requests`, critérios de cutover e escala de rollout. Resolver no menor boundary antes de writes.
 
 **Status factual:** `PLAN_UPDATED` (quando registrado no GitHub); `CODE_IMPLEMENTATION=NOT_STARTED`; `API_CONTRACT_REVIEW=PENDING`; `AUTHZ_DELEGATION=TO_INVENTORY`; `LEGACY_RUNTIME=PENDING_VERIFICATION`; `PRC_E2E=TEST_NOT_RUN`. VAL-01 continua com seu agente e seu plano independente; não alterar os seus critérios.
+
+Inventário de código (2026-11-06), sem reescrever as decisões deste adendo: [PRODUCT-REGISTRATION-COMPLETE-INVENTORY.md](./PRODUCT-REGISTRATION-COMPLETE-INVENTORY.md). Esse documento substitui `AUTHZ_DELEGATION=TO_INVENTORY` e `LEGACY_RUNTIME=PENDING_VERIFICATION` pela evidência das rotas, do workflow e do bloqueio de delegação. A implementação continua não autorizada por este adendo.
