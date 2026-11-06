@@ -562,3 +562,16 @@ Traces `source→OCR→SLANet→understanding→comparison→report→MCP/UI`; c
 **Entrega mínima:** relatório funcional demonstrado em runtime real para os dois desenhos, exemplares sanitizados, API/contrato e UI/consumidor em produção quando aplicável, testes e evidência de deploy, e backlog de GT/qualidade não bloqueante claramente separado.
 
 **Nota de status:** este adendo é uma **decisão de planejamento** e não afirma que a funcionalidade já foi implementada, que o legado foi localizado, que o GT está aprovado ou que a produção está modificada.
+
+
+## B.8 Diretriz transversal — percepcao tabular reutilizavel (2026-11-06)
+
+**Decisao de arquitetura e planejamento, nao implementacao.** Referencia executavel unica: **Doc 119 §39.17 (DEC-VAL-036)**, mantido como plano central da VAL-01 e acompanhado pela Issue #131. Este adendo somente alinha o plano mestre M1/M2/M4 ao requisito de **reuso da percepcao estrutural**; nao cria tarefa, novo bounded context, engine, microservico, source of truth nem novo documento.
+
+**Capability horizontal:** a mesma observacao de tabela (regiao, linhas/colunas, celulas, spans, texto OCR associado, posicoes, confianca, proveniencia e incerteza) deve ser aproveitavel por consumidores semanticos diferentes. O consumer **BOM/component_table** permanece no escopo ativo E1; **carimbo/title_block, historico de revisao e futuras tabelas** sao exemplos de reuso e permanecem em suas fases congeladas. "Carimbo e um tipo de tabela" e uma hipotese de reuso de **estrutura visual**, nao equivalencia de campos, revisao, regras oficiais ou approval entre regioes.
+
+**Framework-first:** testar SLANet/PaddleOCR/PDFium ja presentes e o uso real das celulas pelo Understanding; somente se a qualidade medida nao bastar, comparar recursos nativos da versao instalada de PaddleOCR (incluindo PP-TableMagic quando disponivel) e, condicionalmente, PP-StructureV3. Nenhum framework adicional aprovado para producao ate benchmark e gates. Evitar regex/heuristicas por produto como mecanismo primario de parser de tabelas. Dominio/application consomem representacao neutra por contratos/adapters existentes.
+
+**Gates de aceite:** rastrear a primeira perda no fluxo PDF→render→OCR→estrutura tabular→celulas/associacoes→consumidor semantico→comparacao; medir precisao de linhas/colunas, spans, relacoes campo-ocorrencia, duplicacoes/fusoes, ambiguidade, generalizacao por layouts nao vistos e custo operacional; preservar `DRAFT/CANDIDATE`, `NOT_APPROVED`, `automatic_nc=false`, AuthZ e rules do Engineering owner. Um artefato estrutural de carimbo pode ser usado como teste de independencia sem iniciar VAL-02. Regressao dos 13 PDFs e GT/threshold/aceite tecnicos ainda pendentes.
+
+**Estado:** `PLANNED`; `BENCHMARK=TEST_NOT_RUN`; `VAL01_COMPLETED=false`; E2–E7 congeladas. O detalhamento e a execucao ficam somente no Doc 119 §39.17.
