@@ -7,6 +7,7 @@ paths. Bytes fetched once; every provider processes the identical hash.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 from typing import Any
 
@@ -76,14 +77,21 @@ async def run_official_document_benchmark(
             run_visual_benchmark,
         )
 
-        runs = run_visual_benchmark(
+        # DEC-VAL-036 — o benchmark executa subprocessos visuais e
+        # communicate() síncrono; dentro do event loop isso congela a
+        # API inteira (healthchecks/polls morrem). Offload para thread
+        # dedicada mantém o loop responsivo; o lifecycle do
+        # subprocesso continua idêntico (timeout/kill já no executor).
+        runs = await asyncio.to_thread(
+            run_visual_benchmark,
             bytes(content),
             pipelines=visual_pipelines,
             corpus_id=corpus_id,
             environment=environment,
         )
     else:
-        runs = run_extraction_benchmark(
+        runs = await asyncio.to_thread(
+            run_extraction_benchmark,
             bytes(content),
             providers=providers or ["pypdf_baseline"],
             corpus_id=corpus_id,
