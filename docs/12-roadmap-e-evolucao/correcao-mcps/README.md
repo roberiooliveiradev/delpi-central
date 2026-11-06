@@ -7,7 +7,7 @@ Levantamento iniciado em **2026-11-06**. A documentação registra decisões e l
 - [CLARA](./clara.md): acrônimo aprovado — **Controladoria, Leitura, Análise, Resultados e Acompanhamento**; publicação no MCP pendente.
 - **DAVI:** suspenso nesta rodada durante a refatoração das ferramentas.
 - [CAIO](./caio.md): **novo acrônimo aprovado — Consultor de Análise e Inteligência de Oportunidades**; runtime ainda usa 'Operacional'; migração e QA pendentes.
-- [SURI](./suri.md): acrônimo a definir; divergência crítica Knowledge read-only versus capabilities de escrita no catálogo.
+- [SURI](./suri.md): acrônimo aprovado — **Suprimentos Unificados, Resultados e Inteligência**; publicação no MCP pendente; divergência crítica Knowledge read-only versus capacidades de escrita no catálogo.
 - **EVA:** próxima revisão.
 
 ## Governança
