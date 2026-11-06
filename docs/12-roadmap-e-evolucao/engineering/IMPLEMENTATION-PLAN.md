@@ -663,3 +663,32 @@ Ambiente usado: stack dev local (containers delpi-*), banco descartável `plugin
 ## Decisão PO vigente — SA5 Part Number vazio (2026-11-06)
 
 **Contrato aprovado:** [PRODUCT-REGISTRATION-PO-DECISIONS-2026-11-06.md](./PRODUCT-REGISTRATION-PO-DECISIONS-2026-11-06.md#decisão-adicional-aprovada--part-number-opcional-quando-ausente-no-totvs-2026-11-06). `suppliers[].partNumber` (`SA5.A5_CODPRF`) **não é required não-vazio** quando a fonte oficial TOTVS retorna Part Number vazio; qualquer regra histórica contrária deste documento está substituída. Aceitar no intake/draft `partNumber` omitido, `null` ou `""` e normalizar de forma consistente. **Não confundir campo oficial ausente (unverifiable) com valor oficial vazio (verificável).** Quando informado não vazio ou explicitamente selecionado para alteração, comparar o valor final exato com SA5 via `Engineering API -> api-delpi -> TOTVS`; mismatch continua bloqueando publicação. Remoção explícita para vazio é delta auditável, distinta de omissão de alteração. Comparar identidade do vínculo por supplierCode/store, sem ignorar PN informado ou ambiguidade/duplicata; preservar CAS, revisão imutável, provenance e AuthZ. **Status: decisão aprovada, implementação/testes ainda pendentes; não declarar deploy ou HML PASS.**
+
+
+## ADENDO — PRC-D5.4: Part Number opcional (decisão PO implementada)
+
+> **Status:** `IMPLEMENTED + TESTED + LIVE-PROVEN`.
+
+Regra: `suppliers[].partNumber` (A5_CODPRF) opcional — aceita `""`/null/omissão,
+normalizado para `""`. Identidade do vínculo SA5 = (supplierCode, store); PN
+comparado como atributo: vazio↔vazio matched; vazio↔preenchido mismatched;
+preenchido↔divergente mismatched; atributo ausente no payload oficial →
+unverifiable; vínculo ausente/ambíguo → mismatched (nunca aceita a 1ª ocorrência).
+catalogNumber não substitui partNumber.
+
+Mudanças: catalog.py — SUPPLIER_REQUIRED_KEYS sem partNumber (vira opcional),
+validate_supplier normaliza PN→"", supplier_link_key (code,store),
+compare_suppliers por vínculo + PN como atributo com unverifiable/ambiguous;
+reference-data `required` reflete automaticamente. UI sem flag required
+(validation backend-driven). EVA paridade automática via service.
+
+Testes: +10 casos em TestSupplierPartNumber (intake vazio/null/omitido; match
+vazio↔vazio e preenchido; divergências C/D; unverifiable E; ambiguidade nos
+dois lados) — 34 PRC + 12 parity + PG-skip = 47 PASS, 0 regressões.
+
+**Live proof (dev-stack real):** request `e5aef257` — produto real TOTVS
+`90264270` cujo SA5 (WEG 000089/01) tem `A5_CODPRF` vazio → `verify_and_complete`
+= completed, revision 1 (record `0dc0b8b7`, verification `ed5aacee`). Antes do
+fix, draft com PN vazio era rejeitado ("Fornecedor inválido"); o caso real de
+drift está resolvido. O request anterior `b867e2ff` (mismatch intencional)
+permanece under_review — evidência fail-closed preservada.

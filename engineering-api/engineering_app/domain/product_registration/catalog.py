@@ -153,7 +153,8 @@ _PRODUCT_FIELDS: tuple[FieldSpec, ...] = (
         verifiable=True,
         official_field="suppliers",
         official_source="products.suppliers",
-        note="SA5 — chave composta (supplierCode, store, partNumber).",
+        note="SA5 — vínculo por (supplierCode, store); partNumber "
+        "opcional (A5_CODPRF pode ser vazio — PO-D5.4).",
     ),
 )
 
@@ -176,9 +177,14 @@ SUPPLIER_REQUIRED_KEYS: tuple[str, ...] = (
     "supplierCode",
     "store",
     "supplierName",
-    "partNumber",  # Part Number (A5_CODPRF) — correto; NÃO é catalogNumber
 )
-SUPPLIER_OPTIONAL_KEYS: tuple[str, ...] = ("catalogNumber",)  # A5_CODPRCA
+# PO-D5.4: partNumber (A5_CODPRF) é opcional — aceita vazio/null/omitido
+# quando o cadastro oficial TOTVS não possui o valor. Quando informado,
+# a verificação oficial continua obrigatória (nunca wildcard).
+SUPPLIER_OPTIONAL_KEYS: tuple[str, ...] = (
+    "catalogNumber",  # A5_CODPRCA
+    "partNumber",  # A5_CODPRF
+)
 SUPPLIER_ALLOWED_KEYS: frozenset[str] = frozenset(
     SUPPLIER_REQUIRED_KEYS + SUPPLIER_OPTIONAL_KEYS
 )
@@ -254,6 +260,11 @@ def validate_supplier(item: Any) -> dict[str, Any]:
         out["catalogNumber"] = str(catalog).strip()[:80]
     else:
         out["catalogNumber"] = None
+    part_number = item.get("partNumber")
+    if part_number is not None and str(part_number).strip():
+        out["partNumber"] = str(part_number).strip()[:80]
+    else:
+        out["partNumber"] = ""
     if fields:
         raise PrcValidationError("Fornecedor inválido.", fields=fields)
     return out
@@ -429,84 +440,115 @@ def scalar_values_match(spec: FieldSpec, expected: Any, observed: Any) -> bool:
     )
 
 
-def supplier_key(supplier: dict[str, Any], *, official: bool) -> tuple[str, str, str]:
-    """Chave composta de vínculo: (código, loja, Part Number)."""
+def supplier_link_key(supplier: dict[str, Any], *, official: bool) -> tuple[str, str]:
+    """Identidade do vínculo produto×fornecedor: (supplierCode, store).
+
+    PO-D5.4: partNumber NÃO compõe a chave — é atributo comparado depois
+    de localizada a relação (A5_CODPRF pode ser vazio no TOTVS).
+    """
     if official:
         return (
             _norm_for_compare("code", supplier.get("supplier_code")),
             _norm_for_compare("code", supplier.get("supplier_store")),
-            _norm_for_compare("text", supplier.get("supplier_part_number")),
         )
     return (
         _norm_for_compare("code", supplier.get("supplierCode")),
         _norm_for_compare("code", supplier.get("store")),
-        _norm_for_compare("text", supplier.get("partNumber")),
     )
 
 
 def compare_suppliers(
     expected: list[dict[str, Any]], observed: list[dict[str, Any]]
 ) -> dict[str, Any]:
-    """Compara relação de fornecedores por chave composta (ordem livre).
+    """Compara relação de fornecedores por vínculo (código, loja).
 
-    Retorna ``{"result": matched|mismatched, "detail": [...]}``.
+    partNumber (A5_CODPRF) é atributo comparado: vazio↔vazio matched;
+    vazio↔preenchido mismatched (D); preenchido↔divergente mismatched
+    (C); atributo ausente no payload oficial → unverifiable (E).
+    Vínculos duplicados/ambíguos nunca aceitam a primeira ocorrência.
+    Retorna ``{"result": matched|mismatched|unverifiable, "detail": []}``.
     """
-    observed_by_key: dict[tuple[str, str, str], dict] = {}
+    observed_by_link: dict[tuple[str, str], list[dict]] = {}
     for item in observed or []:
         if isinstance(item, dict):
-            observed_by_key[supplier_key(item, official=True)] = item
-    expected_keys = {
-        supplier_key(item, official=False)
+            observed_by_link.setdefault(
+                supplier_link_key(item, official=True), []
+            ).append(item)
+    expected_links: list[tuple[str, str]] = [
+        supplier_link_key(item, official=False)
         for item in expected or []
         if isinstance(item, dict)
-    }
+    ]
     detail: list[dict[str, Any]] = []
     mismatched = False
+    unverifiable = False
+    seen_links: set[tuple[str, str]] = set()
     for item in expected or []:
         if not isinstance(item, dict):
             continue
-        key = supplier_key(item, official=False)
-        found = observed_by_key.get(key)
-        if found is None:
+        key = supplier_link_key(item, official=False)
+        label = ".".join(key)
+        if key in seen_links:
+            mismatched = True
+            detail.append({"key": label, "result": "ambiguous_expected"})
+            continue
+        seen_links.add(key)
+        found_list = observed_by_link.get(key, [])
+        if not found_list:
             mismatched = True
             detail.append(
-                {"key": ".".join(key), "result": "missing_in_official"}
+                {"key": label, "result": "missing_in_official"}
             )
             continue
+        if len(found_list) > 1:
+            mismatched = True
+            detail.append({"key": label, "result": "ambiguous_official"})
+            continue
+        found = found_list[0]
         name_ok = _norm_for_compare("text", item.get("supplierName")) == (
             _norm_for_compare("text", found.get("supplier_name"))
         )
+        exp_pn = _norm_for_compare("text", item.get("partNumber"))
         exp_catalog = _norm_for_compare("text", item.get("catalogNumber"))
         obs_catalog = _norm_for_compare("text", found.get("catalog_code"))
-        if not name_ok or (exp_catalog and exp_catalog != obs_catalog):
+        fields_bad = [
+            f
+            for f, ok_flag in (
+                ("supplierName", name_ok),
+                (
+                    "catalogNumber",
+                    not exp_catalog or exp_catalog == obs_catalog,
+                ),
+            )
+            if not ok_flag
+        ]
+        if "supplier_part_number" not in found:
+            unverifiable = True
+            detail.append(
+                {"key": label, "result": "unverifiable",
+                 "fields": ["partNumber"]}
+            )
+            continue
+        obs_pn = _norm_for_compare("text", found.get("supplier_part_number"))
+        if obs_pn != exp_pn:
+            fields_bad.append("partNumber")
+        if fields_bad:
             mismatched = True
             detail.append(
-                {
-                    "key": ".".join(key),
-                    "result": "mismatched",
-                    "fields": [
-                        f
-                        for f, ok_flag in (
-                            ("supplierName", name_ok),
-                            (
-                                "catalogNumber",
-                                not exp_catalog or exp_catalog == obs_catalog,
-                            ),
-                        )
-                        if not ok_flag
-                    ],
-                }
+                {"key": label, "result": "mismatched", "fields": fields_bad}
             )
         else:
-            detail.append({"key": ".".join(key), "result": "matched"})
+            detail.append({"key": label, "result": "matched"})
     unexpected = [
         {"key": ".".join(key), "result": "unexpected_in_official"}
-        for key in set(observed_by_key) - expected_keys
+        for key in set(observed_by_link) - set(expected_links)
     ]
     if unexpected:
         mismatched = True
         detail.extend(unexpected)
-    return {
-        "result": "mismatched" if mismatched else "matched",
-        "detail": detail,
-    }
+    result = "matched"
+    if mismatched:
+        result = "mismatched"
+    elif unverifiable:
+        result = "unverifiable"
+    return {"result": result, "detail": detail}

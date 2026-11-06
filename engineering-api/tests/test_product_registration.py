@@ -719,3 +719,151 @@ class TestOutbound:
         data = resp.json()["data"]
         assert data["status"] == "submitted"
         assert "technicalDraft" not in data
+
+
+def _create_body_with_suppliers(suppliers):
+    body = _create_body()
+    body["requestedData"]["suppliers"] = suppliers
+    return body
+
+
+class TestSupplierPartNumber:
+    """PO-D5.4: partNumber (A5_CODPRF) opcional — identidade por (code,store)."""
+
+    def _submit(self, client, jwks_env, core_rbac, suppliers, sub="user-1"):
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST, id=sub))
+        return _post(
+            client, "/v1/product-registration/intake/requests",
+            _token(jwks_env, sub),
+            json=_create_body_with_suppliers(suppliers),
+            headers={"Idempotency-Key": "k-pn-" + sub + str(len(suppliers))},
+        )
+
+    def _sup(self, **kw):
+        s = {"supplierCode": "000001", "store": "01",
+             "supplierName": "FORNECEDOR X", "partNumber": "PN-1",
+             "catalogNumber": None}
+        s.update(kw)
+        return s
+
+    def _verify(self, client, jwks_env, core_rbac, prc_service_repo,
+                suppliers, observed):
+        prc_service_repo["reader"] = FakeReader(
+            {"status": "available",
+             "product": _product()["product"], "suppliers": observed})
+        rid = self._submit(
+            client, jwks_env, core_rbac, suppliers).json()["data"]["requestId"]
+        v = _advance_to_review(client, jwks_env, core_rbac, rid)
+        return _post(
+            client,
+            f"/v1/product-registration/requests/{rid}/actions/verify-and-complete",
+            _token(jwks_env, "analyst-1"),
+            json={"expectedVersion": v, "officialCode": "001234"}), rid
+
+    # --- intake validation -------------------------------------------------
+    def test_intake_pn_empty_accepted(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        r = self._submit(client, jwks_env, core_rbac,
+                         [self._sup(partNumber="")])
+        assert r.status_code == 201, r.text
+        draft = r.json()["data"].get("draft", {})
+        # normalized canonical representation is ""
+        assert draft.get("suppliers", [{}])[0].get("partNumber", "") == ""
+
+    def test_intake_pn_omitted_accepted(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        s = self._sup(); s.pop("partNumber")
+        r = self._submit(client, jwks_env, core_rbac, [s])
+        assert r.status_code == 201, r.text
+
+    def test_intake_pn_null_accepted(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        r = self._submit(client, jwks_env, core_rbac,
+                         [self._sup(partNumber=None)])
+        assert r.status_code == 201, r.text
+
+    # --- official comparison ------------------------------------------------
+    def test_match_empty_pn_vs_empty_official(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        # Cenário A — exp "" + obs "" → completed (caso real 90264270/WEG)
+        obs = [{"supplier_code": "000001", "supplier_store": "01",
+                "supplier_name": "FORNECEDOR X",
+                "supplier_part_number": "", "catalog_code": None}]
+        r, _ = self._verify(
+            client, jwks_env, core_rbac, prc_service_repo,
+            [self._sup(partNumber="")], obs)
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["status"] == "completed"
+
+    def test_match_filled_pn(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        obs = [{"supplier_code": "000001", "supplier_store": "01",
+                "supplier_name": "FORNECEDOR X",
+                "supplier_part_number": "PN-1", "catalog_code": None}]
+        r, _ = self._verify(
+            client, jwks_env, core_rbac, prc_service_repo,
+            [self._sup()], obs)
+        assert r.status_code == 200, r.text
+
+    def test_mismatch_filled_pn_differs(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        obs = [{"supplier_code": "000001", "supplier_store": "01",
+                "supplier_name": "FORNECEDOR X",
+                "supplier_part_number": "PN-OUTRO", "catalog_code": None}]
+        r, _ = self._verify(
+            client, jwks_env, core_rbac, prc_service_repo,
+            [self._sup()], obs)
+        assert r.status_code == 409
+
+    def test_mismatch_empty_pn_vs_filled_official(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        # Cenário D — ficha aprovada diz vazio; oficial tem PN → mismatch.
+        obs = [{"supplier_code": "000001", "supplier_store": "01",
+                "supplier_name": "FORNECEDOR X",
+                "supplier_part_number": "PN-1", "catalog_code": None}]
+        r, _ = self._verify(
+            client, jwks_env, core_rbac, prc_service_repo,
+            [self._sup(partNumber="")], obs)
+        assert r.status_code == 409
+
+    def test_unverifiable_when_official_attr_absent(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        # Cenário E — campo omitido no payload oficial → unverifiable.
+        obs = [{"supplier_code": "000001", "supplier_store": "01",
+                "supplier_name": "FORNECEDOR X", "catalog_code": None}]
+        r, rid = self._verify(
+            client, jwks_env, core_rbac, prc_service_repo,
+            [self._sup()], obs)
+        assert r.status_code == 409
+        verif = r.json()["data"]["verification"]
+        assert verif["field_results"]["suppliers"]["result"] == "unverifiable"
+
+    def test_ambiguous_official_link(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        row = {"supplier_code": "000001", "supplier_store": "01",
+               "supplier_name": "FORNECEDOR X",
+               "supplier_part_number": "PN-1", "catalog_code": None}
+        r, _ = self._verify(
+            client, jwks_env, core_rbac, prc_service_repo,
+            [self._sup()], [row, dict(row)])
+        assert r.status_code == 409
+
+    def test_ambiguous_expected_link(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        obs = [{"supplier_code": "000001", "supplier_store": "01",
+                "supplier_name": "FORNECEDOR X",
+                "supplier_part_number": "PN-1", "catalog_code": None}]
+        r, _ = self._verify(
+            client, jwks_env, core_rbac, prc_service_repo,
+            [self._sup(), self._sup()], obs)
+        assert r.status_code == 409
