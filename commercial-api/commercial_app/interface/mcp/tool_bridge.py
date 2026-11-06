@@ -12,11 +12,13 @@ não é autoridade; escopo de carteira segue o resolver oficial.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
 from mcp.types import CallToolResult
 
 from delpi_auth.authz_core import has_any_permission
+from delpi_mcp.avatar_image import build_avatar_delivery
 from delpi_mcp.errors import mcp_tool_result
 from delpi_mcp.identity import (
     build_mcp_request as _shared_build_request,
@@ -211,6 +213,44 @@ def _require_commercial_human():
     ):
         raise PermissionError("Forbidden")
     return context
+
+
+def tool_get_avatar() -> CallToolResult:
+    """Approved official avatar as MCP ImageContent — narrative asset
+    only, never AuthZ (AVATAR-INLINE-MCP-V1; mechanics in
+    ``delpi_mcp.avatar_image``). Caller already passed the commercial
+    human gate in ``semantic_bridge.tool_read``."""
+    try:
+        from commercial_app.persona.caio_profile import get_caio_profile
+
+        delivery = build_avatar_delivery(
+            get_caio_profile(),
+            Path(__file__).resolve().parents[3],
+        )
+        if delivery.data is None:
+            return _error_result(
+                "Avatar oficial não aprovado/publicado para este especialista.",
+                status_code=404,
+                error_code="not_found",
+            )
+        if delivery.too_large:
+            return _ok(
+                delivery.data,
+                "Avatar excede o limite inline — metadata only.",
+            )
+        return mcp_tool_result(
+            delivery.data,
+            is_error=False,
+            text=(
+                f"Avatar oficial de {delivery.display_name} "
+                f"({delivery.data['mime_type']}, "
+                f"{delivery.data['bytes']} bytes) — imagem entregue como "
+                "bloco image."
+            ),
+            images=[delivery.image],
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
 
 
 def _ok(data: Any, message: str = "ok") -> CallToolResult:

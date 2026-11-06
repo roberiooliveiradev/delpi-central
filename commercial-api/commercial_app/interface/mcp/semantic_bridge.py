@@ -85,11 +85,20 @@ def _err(
 
 def _wrap(entity: str, action: str, result: CallToolResult) -> CallToolResult:
     """Semantic envelope — action/entity stamped on top of the official
-    result payload; underlying success/error semantics preserved."""
+    result payload; underlying success/error semantics preserved.
+    Non-text content blocks (e.g. ImageContent) are carried through —
+    the envelope never drops canonical content blocks."""
     payload = dict(getattr(result, "structured_content", None) or {})
     payload.setdefault("entity", entity)
     payload.setdefault("action", action)
-    return mcp_tool_result(payload, is_error=bool(result.is_error))
+    images = [
+        c
+        for c in (result.content or [])
+        if type(c).__name__ == "ImageContent"
+    ]
+    return mcp_tool_result(
+        payload, is_error=bool(result.is_error), images=images or None
+    )
 
 
 def _handle_error(exc: Exception) -> CallToolResult:
@@ -343,6 +352,7 @@ def tool_read(
 
 
 _READ_DISPATCH = {
+    ("avatar", "get"): lambda a: bridge.tool_get_avatar(),
     ("portfolio", "me"): lambda a: bridge.tool_portfolio_me(),
     ("portfolio", "get"): lambda a: parity.tool_portfolio_get(**a),
     ("portfolio", "list"): lambda a: parity.tool_portfolio_list(**a),
