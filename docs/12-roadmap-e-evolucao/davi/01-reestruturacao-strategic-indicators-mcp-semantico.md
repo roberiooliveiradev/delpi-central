@@ -1,242 +1,215 @@
-# DAVI V2 — Plano mestre de reestruturação: Strategic Indicators + MCP semântico + ações governadas
+# DAVI V2 — Plano mestre de evolução do MCP semântico e integração de fontes
 
-> **Status:** PLANNED / ARCHITECTURE_DECISION_REQUIRED. Documento de planejamento; **não autoriza implementação, mudança de OAuth ou deploy**.
-> **Data:** 2026-11-06.
-> **Sponsor / direção de produto:** centralizar a orquestração DAVI junto à API de Indicadores Estratégicos, mantendo a API DELPI como fonte autoritativa consumida por contrato, padronizando tools semânticas e habilitando alterações de indicadores/metas e futuras ações governadas.
-> **Authority:** `docs/12-roadmap-e-evolucao/davi/README.md`, regras `.cursor`, contratos dos domain owners, documentação de integração e evidência runtime. Este plano é subordinado a essas fontes.
-> **Snapshot consultado:** `docs/12-roadmap-e-evolucao/davi/README.md` e `api-delpi/docs/integrations/openai-plugin-mcp.md` na branch padrão, 2026-11-06. HEAD/working tree/deployed SHA **não integralmente validados**; revalidar antes de qualquer execução.
+> **Status:** PRODUCT_DIRECTION_ACCEPTED / IMPLEMENTATION_PENDING. Revisão consolidada em 2026-11-06.
+> **Documento único de execução/decisão desta iniciativa.** Atualizar este arquivo nas próximas fases em vez de criar planos paralelos; histórico recuperável por Git.
+> **Direção corrigida:** DAVI **permanece no contexto técnico `api-delpi`** e no MCP/resource atuais. Prioridade 1 = padronizar as tools semânticas sem regressão. Prioridade 2 = permitir consumo governado de Strategic Indicators, quando houver contratos e segurança aprovados. **Não transferir o DAVI para Strategic Indicators nem criar container, MCP ou BFF SQL novo nesta fase.**
+> **Authority:** `docs/12-roadmap-e-evolucao/davi/README.md`, regras `.cursor`, contratos dos owners, Core API/governança, evidências runtime. Documento de plano não é prova de deploy e não autoriza implementação antes dos gates.
+> **Snapshot:** repositório/documentação consultados em 2026-11-06; HEAD local, working tree, code-path e SHA de deploy ainda exigem validação no Cursor antes de código.
 
-## 1. Resultado de produto desejado
+## 1. Decisões congeladas nesta revisão
 
-O DAVI será a interface inteligente de consulta, explicação, composição e, quando explicitamente autorizado, preparação/execução de alterações sobre indicadores e outras capacidades aprovadas da DELPI.
+1. DAVI continua como especialista em dados/informações DELPI, com seu módulo/adapter MCP atualmente hospedado em `api-delpi`; **não migrar código ou domínio para API Strategic Indicators**.
+2. Manter, por enquanto, `mcp-api-delpi`, `END_USER_ACCOUNT`, OAuth Authorization Code + PKCE S256 e `https://minhadelpi.com.br/apps/api-delpi/mcp`. Sem renomear client, resource ou ingress em produção por organização.
+3. Refatorar a **surface MCP** seguindo invariantes reais de MCPs irmãos: `get_context`, `read`, `knowledge` prioritárias, `analyze` depois, `execute` e `delete` apenas por capabilities ACT aprovadas. Não é obrigatório publicar seis tools sem semântica funcional.
+4. Preservar a operação atual do DAVI para usuários existentes, suas consultas, allowlists, candidate tokens, SQL SELECT canônico, end-user identity, context budget, provenance e backend AuthZ.
+5. Strategic Indicators é **futura fonte / bounded context**; DAVI poderá consumir capabilities autorizadas por contrato estável, sem import de internals nem acesso direto ao banco da API vizinha.
+6. **Core API permanece responsável pela governança de acesso aos aplicativos e permissões da plataforma**. Ter acesso ao DAVI **não concede** acesso a Strategic Indicators. A API/owner de Indicadores Estratégicos deve exigir o contexto/permissões efetivas da Core API, além das regras de negócio pertinentes ao owner, em cada consulta ou alteração. Sem autorização efetiva para o aplicativo/escopo correspondente, resultado é **deny/fail-closed**, inclusive para READ, knowledge sensível, PREPARE e ACT.
+7. **Sem segundo RBAC local DAVI**: MCP metadata, tool discovery, OAuth scopes, Agent instructions, claims isoladas, frontend ou Memory não autorizam negócio. A avaliação efetiva ocorre no boundary canônico do backend por usuário e recurso; o desenho de propagação/validação cross-API continua TO_INVENTORY.
+8. Ajuste de metas/CRUD de Indicadores Estratégicos = TARGET posterior, em capabilities específicas, com PREPARE/ACT, AuthZ, policy, idempotência, OCC quando aplicável, auditoria e postcondition. Não habilitar executor de escrita genérico.
+9. Container DAVI próprio, mudança de Keycloak client ou hosting, segundo MCP, mudança de domínio físico, nova BFF SQL: **DEFERRED**. Só reabrir mediante evidência de isolamento, escalabilidade, ownership ou operação e ADR própria.
+10. Manter **este arquivo** como plano mestre. Evidências técnicas podem permanecer nos runbooks canônicos de seus donos, mas decisões, fases, gaps e aceite desta iniciativa devem ser atualizados aqui, não espalhados por novos roadmaps.
 
-Objetivos independentes:
-1. **Realocação física/operacional:** avaliar migração do adapter/runtime MCP DAVI hoje hospedado em `api-delpi` para o contexto da API de Indicadores Estratégicos (nome, diretório, deploy e owner técnico exatos = **TO_INVENTORY**).
-2. **Continuidade cross-API:** manter acesso às capacidades operacionais aprovadas da `api-delpi`, por contratos estáveis, sem acoplamento por imports internos ou banco compartilhado.
-3. **Interface semântica MCP:** alinhar a superfície de tools ao padrão corporativo (nomes propostos `read`, `knowledge` e eventuais outras ferramentas), sem confundir verbo/tool com capability, autorização ou catálogo mecânico.
-4. **Ações de negócio governadas:** permitir casos de uso de ajuste de metas e CRUD específico quando ratificados pelo owner; futuramente outras APIs, somente após gates próprios.
-5. **Conhecimento e inteligência:** preservar e migrar, somente se autorizado por ownership e evidência, as diretivas, explicações, mapeamento semântico e proveniência hoje utilizadas pelo DAVI; não transformar memória, prompt ou conteúdo do agent em fonte operacional.
-
-Não objetivo: migrar dados ou regras proprietárias da API DELPI para Strategic Indicators, habilitar CRUD genérico, expor SQL/HTTP arbitrário, construir segundo RBAC, promover ao vivo sem testes ou quebrar conectores existentes.
-
-## 2. Current evidence / baseline de comparação
-
-| Item | Estado | Evidência / ressalva |
-|---|---|---|
-| MCP DAVI sediado em `api-delpi`, resource `/apps/api-delpi/mcp` | PROVEN documental | Integration runbook; revalidar runtime |
-| Tools produtivas `discover_delpi_information` e `execute_delpi_information` | PROVEN documental | Runbook e DAVI README; discovery atual necessita refresh |
-| `search_products` | PROVEN documental como operação atrás de discover→execute | Não supor tool dedicada |
-| Broker READ com catálogo e allowlist governada | PROVEN documental | README indica v30, 94 elegíveis (índice live 97); reconciliar contagem com código/deploy |
-| Layering drift `external_capabilities → composition` | RESOLVED documental | `DAVI-ARCH-RUNTIME-001`; conferir testes atuais |
-| OAuth end-user, PKCE e AuthZ final do backend owner | PROVEN documental como modelo atual | Qualquer mudança de resource/client exige migration/negative testing |
-| Hosting real da API Strategic Indicators, rotas, ownership, contratos e CRUD de metas | TO_INVENTORY | Não inferir de nome da API |
-| Equivalência semântica de `read` / `knowledge` em MCPs irmãos | TO_INVENTORY | Inventariar schemas, semântica, versionamento, limites, consentimento e clients |
-| Novo MCP DAVI em Strategic Indicators | TARGET | Não implementado por este documento |
-| Escrita de metas e CRUD cross-API via DAVI | TARGET | NÃO autorizado até owner/security/contract/ACT gate |
-
-**Atenção:** os arquivos históricos anexados ao ChatGPT Project descrevem uma V1 menor e um drift em aberto. O README e runbook mais recentes do repositório registram broker de duas tools e drift resolvido. Não usar o snapshot antigo como contrato de migração; reconciliar com HEAD e live antes da execução.
-
-## 3. Separação crítica: hosting versus autoridade
-
-Duas decisões distintas exigem ratificação:
-
-- **Hosting/entrypoint:** onde opera o MCP, sua composição, discovery, OAuth resource, deploy, logs e lifecycle.
-- **Authority/ownership:** quem é dono de cada indicador, meta, produto, estoque ou outra informação e quem efetua AuthZ e grava alterações.
-
-Arquitetura-alvo conceitual, **sujeita ao gate de boundary/owner**:
+## 2. Modelo de autoridade e arquitetura
 
 ```text
-Workspace Agent DAVI / provider
-  -> App / OAuth end-user
-  -> DAVI MCP semantic adapter (hosting candidate: Strategic Indicators API)
-  -> orchestration/resolution bounded by authorized capability
-       |-> Strategic Indicators authoritative contract/use case
-       |      -> its own business AuthZ -> indicator/target source
-       |-> API DELPI stable service contract
-       |      -> api-delpi business AuthZ -> operational source
-       |-> other owner contracts, only when separately approved
-  -> bounded response + provenance + completeness
+Workspace Agent DAVI
+  -> App / user OAuth -> MCP DAVI (continua hospedado em api-delpi)
+  -> semantic capability selection + bounded adapter
+       |-> API DELPI canonical use cases / policies
+       |     -> authoritative AuthZ + operational sources
+       |-> FUTURE stable Strategic Indicators API contract
+             -> Core API platform app/permission governance (canonical)
+             -> Strategic Indicators owner business AuthZ/rules
+             -> authoritative indicator and target data
 ```
 
-Se o MCP residir fisicamente em Strategic Indicators, **separar orquestração cross-domain de regras do domínio de indicadores**. O produto DAVI não se torna owner de API DELPI, de dados de outros bounded contexts ou de tabelas de terceiros. Avaliar se hospedar um orchestrator de múltiplos domínios dentro de um owner de KPIs é realmente o menor boundary correto; alternativa de manter interface owner-neutral com integração por contratos precisa ser comparada, sem construir serviço novo prematuramente.
+**Atenção:** o diagrama expressa responsabilidade, não uma ordem HTTP necessariamente sequencial. Inventariar se a API de Indicadores utiliza Core resolver, middleware, claims canônicas ou outro mecanismo oficial; não duplicar a verificação na camada DAVI e não confiar apenas numa consulta inicial de permissões. **Core governa acesso da plataforma; o owner de domínio executa sua AuthZ final de negócio**. Checagens devem acontecer na operação efetiva, não apenas em `get_context`.
 
-## 4. Decisões pendentes de arquitetura (ADRs antes do código)
+Exemplo negativo obrigatório: usuário A possui acesso ao DAVI, mas não ao aplicativo Strategic Indicators. Se ele solicitar KPI/meta via DAVI, o backend deverá negar qualquer leitura, alteração ou inferência de valor protegido. Os READs da API DELPI que o ator já tem direito de acessar não são automaticamente revogados por essa negativa. Usuário B autorizado a indicadores só vê o escopo efetivamente permitido (filial, área, indicador, ação, conforme contrato do owner).
 
-| ID | Questão | Gate |
+## 3. Baseline conhecido e lacunas
+
+| Elemento | Evidência / status |
+|---|---|
+| DAVI MCP atual hospedado em `api-delpi`, resource e client atuais | PROVEN documental, runtime recheck PENDING |
+| Tools atuais `discover_delpi_information` e `execute_delpi_information` | PROVEN provider discovery desta sessão e documentação |
+| `search_products` atrás do broker, não tool dedicada | PROVEN documental |
+| Broker READ, HMAC candidate token, allowlists e projections | PROVEN documental; código/deploy atual TO_INVENTORY |
+| README descreve allowlist v30, 94 elegíveis e índice live 97 | Snapshot documental; reconciliar source e provider |
+| `execute_readonly_sql` em `POST /data/sql` via broker e validador canônico | PROVEN documental; não criar novo BFF/SQL executor |
+| Layering drift `Application → Composition Root` | RESOLVED documental (`DAVI-ARCH-RUNTIME-001`); regressão recheck pendente |
+| Strategic Indicators: owner, contratos, permissões Core e resolvers | TO_INVENTORY; **integração não implementada por este plano** |
+| Schema detalhado e diferenças das tools semânticas dos outros MCPs | TO_INVENTORY; nomes/descrições descobertos nesta sessão |
+| Segundo usuário / negative business AuthZ, rate policy, rollout amplo | PENDING conforme documentação; revalidar |
+| Nova interface DAVI, conexão cross-API e writes | TARGET / TEST_NOT_RUN |
+
+A documentação mais atual do repo prevalece sobre snapshots antigos anexados ao Project para retratar source; **runtime só se prova em runtime/provider**.
+
+## 4. Inventário das tools dos MCPs irmãos — provider discovery de 06/11/2026
+
+| MCP | get_context | read | analyze | knowledge | execute | delete | extra | total |
+|---|---|---|---|---|---|---|---|---|
+| CAIO | SIM | SIM | SIM | SIM | SIM | SIM | — | 6 |
+| CLARA | SIM | SIM | SIM | SIM | SIM | SIM | — | 6 |
+| EVA | SIM | SIM | SIM | SIM | SIM | SIM | — | 6 |
+| SURI | SIM | SIM | SIM | SIM | SIM | NAO | — | 5 |
+| TÉO | SIM | SIM | SIM | SIM | SIM | SIM | `helpdesk_upload_attachment` | 7 |
+| VISTA | SIM | SIM | SIM | SIM | SIM | SIM | — | 6 |
+| DAVI | NAO | NAO | NAO | NAO | NAO | NAO | `discover_delpi_information`, `execute_delpi_information` | 2 |
+
+Esta matriz prova **somente nomes e descrições anunciados ao ChatGPT nesta sessão**, não uso funcional nem implantação de cada ação. Ausência de tool física não prova ausência da capacidade subjacente.
+
+Padrões observados:
+- `get_context`: contexto, catálogo, entidade/ação, versão, schema on demand; discovery nunca é AuthZ.
+- `read`: READ por entidade e ação fechadas, filtros, identificação e paginação allowlisted; source e owner AuthZ.
+- `analyze`: análises tipadas com evidência, provenance e distinção fato/cálculo/inferência/recomendação; sem side effect.
+- `knowledge`: guias, corpus/itens versionados e, onde existente, `search|get|sources`; não substitui fonte operacional atual.
+- `execute`: ações de escrita governadas; políticas de PREPARE/ACT, consentimento e replay **diferem entre owners**, portanto não copiar mecanicamente.
+- `delete`: destruição separada em cinco MCPs, geralmente proposta selada e confirmação segura.
+- TÉO usa tool dedicada de upload por binding especializado: seis nomes comuns **não** impõem interface rígida.
+
+**A investigar em código:** input/output schemas, envelopes, errors, pagination, contracts, permission checks, provider compatibility, taxas e limites, versioning e observabilidade de cada family.
+
+## 5. Tool surface alvo DAVI (por ondas)
+
+| Wave | Tool | Responsabilidade e gate |
 |---|---|---|
-| ADR-01 | Boundary real do hosting: módulo owner-local Strategic Indicators, adapter separado ou manutenção do hosting atual? | owners, consumers, contratos, deployment lifecycle, security, Abstraction Gate |
-| ADR-02 | Novo MCP resource/OAuth: URL, client, audiences, scopes, callback, coexistência/rollback | Security + provider compatibility |
-| ADR-03 | Modelo de `read` / `knowledge`: tools físicas, discovery/execute, contratos, parâmetros, limites, conteúdo de conhecimento | Inventário dos MCPs existentes + consumer e eval |
-| ADR-04 | Knowledge owner: quais assets DAVI são directives/UX, quais são documentação, quais são dados de domínio, como versionar/freshness/provenance? | Classificação + access + owner |
-| ADR-05 | Ações/CRUD em Strategic Indicators: casos de uso explícitos, owner de metas, permissions, policy, PREPARE/ACT | Ratificação domain/security |
-| ADR-06 | Cross-API actor propagation e policy: modelo de end-user delegation/claims, menor privilégio, erro, auditoria | AuthZ por owner; nunca token de service account para user parity |
-| ADR-07 | Compatibilidade/retirada: clients atuais, legacy Actions, dual run, cutover e rollback | Release + aceite |
+| W1 | `get_context` | Descoberta limitada do catálogo e schemas sem conceder permissão; disponibilidades reais, por ator, sem expor detalhes protegidos indevidamente |
+| W1 | `read` | Consultas semânticas autorizadas; **preservar regras do broker atual** (candidate token e allowlists, SQL SELECT via backend, field projections, paging/completeness, no arbitrary SQL/HTTP) |
+| W1 | `knowledge` | Orientação/metodologia governada com owner, versão, fonte, classificação, provenance e tratamento anti-injection; knowledge não é dado operacional live |
+| W2 | `analyze` | Análises específicas e reprodutíveis quando houver caso, owner e contrato; sem SQL livre disfarçado |
+| W3+ | `execute` | ACT específico e autorizado, inicialmente somente após capability aprovada; PREPARE != ACT |
+| W3+ | `delete` | Exclusões destrutivas específicas e raras, com confirmação verificável e authoritative postcondition |
 
-Nenhum ADR é aprovado apenas pelo texto deste plano.
+Não registrar `execute/delete` vazios por aparência de padronização. Nome de tool não é permission nem capability. `read` não pode executar SQL mutável nem permitir bypass de seus fluxos internos. `get_context` pode substituir a descoberta externa para o modelo, mas a escolha do candidato técnico e a validação de execução não podem ser simplesmente removidas.
 
-## 5. Workstreams e fases (ordem executável por dependência, não pela ordem da solicitação)
+## 6. Sequência de implementação controlada
 
-### Fase 0 — Inventário e rebaseline obrigatório (P0)
+### Fase 0 — Rebaseline e inventário técnico (PRÓXIMA, READ-ONLY)
 
-**Saída:** `DAVI-V2-INVENTORY-REPORT` com HEAD e owner map.
+- Cursor: `git fetch origin`; `git rev-parse HEAD`; `git rev-parse origin/main`; `git status --short`; `git branch --show-current`, deployed SHA/fingerprint quando acessível.
+- Ler README DAVI, `.cursor` arquitetura, security, contracts, MCP, testing e context budget; runbook `api-delpi/docs/integrations/openai-plugin-mcp.md`.
+- Inventariar código das duas tools DAVI: rota, schemas, HMAC candidate tokens, allowlist, projections, SQL SELECT, throttling, intelligence/knowledge, consumers, constraints e testes.
+- Inspecionar código/docs dos MCPs CAIO, CLARA, EVA, SURI, TÉO e VISTA; comparar contratos, não só nomes.
+- Mapear golden prompts/casos reais e baseline de latência, compatibilidade, erros e isolamento de usuários.
+- Entregar `DAVI-V2-SEMANTIC-TOOLS-INVENTORY-001` com evidência, opções para W1, impacto em contrato e risco. **Não implementar runtime.**
 
-- `git fetch origin`, `git rev-parse HEAD`, `git rev-parse origin/main`, `git status --short`; conferir SHA de deploy por serviço.
-- Ler `.cursor` transversal e DAVI README; mapear diretorios reais de `api-delpi`, Strategic Indicators e MCPs irmãos (inclusive TÉO/VISTA); distinguir modules/contexts/deploys.
-- Inventariar duas tools DAVI atuais, schemas, metadados OAuth, candidate tokens, source allowlists e mecanismos de knowledge/intelligence.
-- Inventariar `read`, `knowledge`, `analyze`, `get_context` ou similares nos MCPs irmãos **sem assumir nomes/semântica universais**.
-- Mapear consumers, clients, testes, snapshots, docs, deploy pipeline, ingress, secrets, observabilidade, UI/provider config e aplicações impactadas.
-- Inventariar contratos/capacidades da API Strategic Indicators: leitura, metas, mutações, restrições, versionamento, auditoria, owner e permissões reais.
-- Reconciliar allowlist/contagens no código, no deploy e no provider; registrar `PROVEN/TO_INVENTORY` e `PASS/FAIL/PENDING/INCONCLUSIVE/TEST_NOT_RUN/STALE_EVIDENCE`.
-- Reportar divergências entre premissas e implementação como `EXECUTION_DRIFT`; parar mudanças onde houver conflito de authority.
+**Exit:** architecture review + spec W1 aceitos, source/owner/consumers identificados. Se premissa invalidada, `EXECUTION_DRIFT`.
 
-**Exit:** evidência objetiva suficiente para avaliar ADR-01 a ADR-07. **Sem código de runtime nesta fase.**
+### Fase 1 — Contratos semânticos W1 e UX de transição
 
-### Fase 1 — Product/source capability ratification (P0)
+- Desenhar `get_context`, `read`, `knowledge` com schema mínimo, erros tipados, atores, bounds, output, provenance e segurança.
+- Definir se `read` faz resolução/discovery interna do catálogo atual, usa tokens bound ou envelope equivalente; nunca bypass.
+- Classificar o conhecimento existente (persona/directives, docs, data domain, provider prompt); atribuir owner e freshness.
+- Definir testes de golden queries, eval de seleção de tools, contexto e não regressão.
+- Manter `discover_delpi_information` e `execute_delpi_information` durante piloto; se coexistência causar ambiguidade, validar switchover versionado com rollback e consumer proof.
+- Mudanças pequenas por contrato/teste, sem alterar OAuth/client/resource, SQL owner ou backend AuthZ.
 
-Para cada necessidade, registrar business question, owner, source of truth, consumer, READ/PREPARE/ACT, grain, request/response/errors, classification, allowlist, paginação, provenance/freshness, authorization, observability e critérios de aceite.
+**Exit:** tool surface W1 validada localmente e no provider, com resultados comparáveis e usuários autorizados/negativos; deprecar legacy apenas se consumer impact aprovado.
 
-Pacotes candidatos (não capabilities aprovadas):
-- A: consultar indicadores estratégicos, períodos, fórmulas, metas, evidências e significado;
-- B: explicar desvio de indicador com dados operacionais obtidos por contratos da API DELPI;
-- C: pesquisar produtos/estoque e outros READs DAVI existentes, mantendo projeções e isolamento;
-- D: consultar conhecimento governado sobre indicadores, definições, owner e metodologia;
-- E: PREPARE de alteração de meta com diff/impacto/política;
-- F: ACT de alteração de meta, com postcondition autoritativa;
-- G: outras operações de criar/editar/excluir indicadores, quando comprovadamente suportadas e aprovadas.
-  
-**Exit:** Capability Decisions aprovadas por Product + domain owners + Security; nenhuma rota/tool definida apenas por existência técnica.
+### Fase 2 — Análises semânticas
 
-### Fase 2 — Blueprint de MCP semântico (P1)
+- Inventariar quais análises possuem consumidores e contrato real.
+- Incorporar `analyze` com provas de amostragem/completude, cálculo, métricas, escopo e rotulagem de incerteza.
+- Evitar promover cálculos de negócio do owner para DAVI.
 
-- Definir semantic purpose de `read` e `knowledge`: por exemplo, consulta de dados autorizados versus consulta de conhecimento governado; **sem congelar** nomes e contratos antes de avaliar padrão real.
-- Se `read` for broker, impor seleção por catálogo elegível, consultas pequenas, argumentos fechados, escopo do ator, projeção allowlisted, tokens de candidatos bound, paginação/completeness e limites de contexto.
-- Se `knowledge` existir, permitir somente conteúdo approved/authorized, versioned/freshness/provenance, protegido contra prompt injection; conhecimento não fornece business permissions nem valores operacionais atuais.
-- Separar discovery/planning de execução quando necessário; `read` não pode executar ACT.
-- Definir tools adicionais somente para intent semântico com contratos e usuários reais; não mapear automaticamente cada endpoint nem disponibilizar CRUD/execute universal.
-- Fazer adapter/provider independente do Domain/Application; construir contract tests e evals de recuperação, tool selection, recusa e não regressão.
+**Exit:** análise específica aceita; não exigir publicação da tool sem capability.
 
-**Exit:** ADR-03/04 e spec versionado de tool surface, com análise de compatibilidade do broker atual.
+### Fase 3 — Strategic Indicators como nova source (FUTURO)
 
-### Fase 3 — Strategic Indicators contract & cross-API integration (P1)
+- Ratificar necessidades, owner humano/técnico, source of truth, API stable contract, consumers, field allowlist, freshness, classificação e budgets.
+- Inventariar Core API: app access, permission resolver, vínculo entre usuário, escopo e capability, como Strategic Indicators aplica Core governance e sua própria business AuthZ.
+- **Teste negativo inegociável:** usuário autenticado autorizado no DAVI mas SEM acesso a Strategic Indicators obtém deny em `read`, `knowledge` protegida, `analyze`, PREPARE e ACT relativos a indicadores. Deny em outras combinações de escopo e ações também.
+- Escolher integração por HTTP/contrato estável ou mecanismo oficial aprovado; nunca importar domain/application de Strategic Indicators para `api-delpi` nem acessar banco direto.
+- Validar propagação da identidade end-user, audience/delegation, fail-closed, proteção contra confused deputy e cross-user privilege inheritance.
+- Integrar somente capabilities READ ratificadas; preservar consultas DELPI existentes.
 
-- Implementar/adaptar apenas os owner contracts aprovados.
-- Conectar a API DELPI por seu boundary público/estável autorizado, sem imports cross-context de application/domain e sem acessar diretamente banco/TOTVS.
-- Preservar a identidade do usuário e a AuthZ final **em cada API dona**; validar audience/token exchange/delegation conforme desenho aprovado, nunca confiar em header livre do Agent.
-- Evitar duplicar lógica de KPI, cálculo de meta, regras Protheus ou autorização no adapter MCP.
-- Projetar resultados model-safe com owner, source, período, unidade, completude, timestamp e limitações aplicáveis.
-- Criar testes de isolamento entre usuários e entre contexts, timeout, falha parcial, retry e não vazamento de dados.
+**Exit:** positive e negative AuthZ e provider calls comprovados para fonte Strategic Indicators, com proveniência e sem regressão.
 
-**Exit:** integração contratual em ambiente de teste, sem migrar provider/cutover.
+### Fase 4 — PREPARE / ACT e alterações de metas (FUTURO, GATE INDEPENDENTE)
 
-### Fase 4 — Hosting/entrypoint migration (P1, condicionada ao ADR-01/02)
+- Ratificar individualmente cada ação (ex.: ajustar meta), sem CRUD genérico, com authority owner, payload, permission e escopo da Core API e backend.
+- `PREPARE`: preview/diff, verificação de target/version e policy, sem persistir.
+- `ACT`: authenticated user, Core platform permission + owner final business AuthZ, policy/consent verificável, idempotência, OCC quando aplicável, audit/correlation e authoritative postcondition.
+- `delete` somente se owner suportar política destrutiva explícita e confirmação confiável.
+- Testes positivos/negativos por usuário e ação, bypass, replay, staleness, conflito de versão e rollback.
 
-- Mover/implantar adapter somente após prova da vantagem de hosted Strategic Indicators; **não** apenas mover diretório mantendo imports indevidos.
-- Mapear antiga→nova configuração: MCP URL/resource, nome técnico, plugin manifest, OAuth client, issuer/audiences, PKCE/callback, secrets, ingress, DNS/Origin, session manager, health, dashboards, runbooks, URLs de consumidores.
-- Preferir implantação paralela com contrato versionado e reconexão controlada; não retirar `/apps/api-delpi/mcp` até provar migração e rollback.
-- Revalidar provider tools/list e chamadas end-user no destino; comparar output e AuthZ ao comportamento anterior.
-- Garantir estratégia para sessões/conectores já vinculados e compatibilidade de clients.
+**Exit:** cada capability ACT aceita individualmente. `2xx` ou tool discovery não provam negócio.
 
-**Exit:** staging e piloto privado PASS, com rollback ensaiado e rastreio de configuração.
+### Fase 5 — Avaliar extração física, novos MCPs e container (DEFERRED)
 
-### Fase 5 — Governed write: metas e CRUD específico (P2; gate separado)
+Somente se evidência comprovar benefício real de deployment/escala/isolamento/ownership. Não mover DAVI do `api-delpi` por mera nomenclatura. Qualquer novo MCP resource, OAuth client, audiences, callback e plugin exigirá ADR, migração, live evidence, pilot e rollback; não é parte desta iniciativa atual.
 
-- Inventariar owner real, recursos e regras para **cada** caso: alterar meta, criar indicador, editar fórmula, excluir indicador etc.; não inferir operações pelo nome CRUD.
-- Separar `READ` de `PREPARE` (validação, diff, versão, impactos, preview sem persistência) e `ACT` (efeito persistente).
-- Exigir authenticated actor, final owner business AuthZ, policy/confirmation, idempotency key, optimistic concurrency/version (quando aplicável), auditoria/correlation, limites e authoritative read-after-write/postcondition.
-- Para exclusão: inventariar soft delete, dependências, histórico, restauração, policy adicional, retenção e impossibilidade de reversão.
-- Para outros contexts: repetir integralmente o gate; não obter permissão por herança do acesso ao MCP.
-- Negative tests: usuário sem permissão, escopo/filial incorreto, versão conflitante, duplicata de requisição, stale confirmation, payload adulterado, token inválido, fail-closed.
-
-**Exit:** capability ACT individualmente aceita; 2xx, tool discovery ou confirmação do Agent isolados **não** provam resultado de negócio.
-
-### Fase 6 — Provider UX, release e decommission (P2)
-
-- Revalidar provider UI/connector, schemas e refresh/reconnect; atualizar Agent directives somente após live tools/contratos provados.
-- Executar matrix de regressão para todos os usos DAVI acordados: consultas de produtos, estoque, explicação de indicadores, knowledge, casos de erro e outputs.
-- Executar ladder: source → local tests → public HTTP → OAuth discovery → connection → initialize → tools/list → provider discovery → authenticated call → projection → negative business AuthZ → Agent preview → deploy fingerprint.
-- Exigir piloto com segundo usuário de autorização diferente, decisão formal de rate/abuse policy, auditoria/telemetria sem secrets e plano de compartilhamento.
-- Atualizar README DAVI, runbooks do novo owner, docs da API DELPI e migration guide; só então retirar recursos legados mediante evidência de ausência de consumidores.
-
-**Exit:** go-live autorizado e decommission separado, nunca por inferência.
-
-## 6. Dependências / prioridades
+## 7. Sequência de dependências
 
 ```text
-Fase 0 Inventory
-   -> Fase 1 Capability + owner/security ratification
-      -> ADRs (hosting, semantic tools, OAuth, knowledge)
-         |-> Fase 2 semantic-tool design
-         |-> Fase 3 cross-API contracts
-         |     -> Fase 4 hosting migration (if accepted)
-         |-> Fase 5 write capabilities (independent gated track)
-         -> Fase 6 release/retirement after verified evidence
+F0 inventário
+ -> F1 W1 semantic tools (get_context/read/knowledge) + regression
+ -> F2 analyze por caso concreto
+ -> F3 Strategic Indicators READ via contratos + Core AuthZ
+ -> F4 ACT metas por capability governada
+ -> F5 container/MCP/keycloak re-evaluation somente se justificado
 ```
 
-A mudança da superfície das tools e a migração física **não precisam compartilhar o mesmo release**. Preferir diffs independentes e rollback por fatia.
+F2 e F3 podem ser ajustadas na ordem após review; F3 requer foundation de segurança, não necessariamente todas as análises. Sempre diff pequeno, deploy controlado e evidência.
 
-## 7. No-regression contract
+## 8. Guardrails e acceptance gates
 
-Preservar, até mudança aprovada:
-- searches e READs governados já utilizados pelo DAVI, incluindo broker `discover_delpi_information` / `execute_delpi_information`;
-- output allowlists, completude, paginação, limits e error handling existentes;
-- identity = end-user, sem autoridade herdada entre usuários;
-- backend owner AuthZ e source-of-truth boundaries;
-- GPT Actions como bridge legada, sem expansão oportunista;
-- instruções/knowledge do Agent como UX, nunca fonte live ou autorização;
-- compatibilidade dos consumidores ativos, ou cutover explícito e testado.
+- **Business access:** usuário com acesso ao DAVI não herda acesso a Strategic Indicators. Core API governa acesso/app; backend do owner revalida business AuthZ final. Sem permissões efetivas: no protected data, no target value inference, no write.
+- **Identity:** end-user token e resource binding; não usar service account para user-parity, nem confiar na existência da tool em `tools/list`.
+- **Bounded exposure:** no generic SQL/HTTP/expose-all; SQL READ atual apenas por use case canônico e SqlValidator; fields/projections allowlisted e paginação/completeness explícitas.
+- **Compatibility:** clientes produtivos, consumers, schemas e golden queries; rollout paralelo quando cabível, migração com rollback, sem drop abrupto do broker.
+- **Knowledge:** guidance jamais autoridade, fonte live ou direito de acesso; proteger contra prompt injection.
+- **Observability/security:** audit, rate policy, error handling fail-closed, redaction, no secrets.
+- **Ladder:** source → local tests → public HTTP → OAuth discovery/user connection → MCP initialize/tools/list → provider discovery → authenticated call → field allowlist → negative business AuthZ (incl. Core app access) → Agent preview → deploy SHA → postcondition se ACT.
+- Classificações: `PROVEN | TO_INVENTORY | PLANNED | TARGET`; execução `PASS | FAIL | PENDING | INCONCLUSIVE | TEST_NOT_RUN | STALE_EVIDENCE`; premissa invalidada `EXECUTION_DRIFT`.
 
-Definir golden queries e evidências before/after; regressão funcional ou de segurança bloqueia cutover.
+## 9. Governança e documentação compacta
 
-## 8. Riscos e mitigação
+Este é o **único plano evolutivo principal**. A cada onda atualizar aqui: decisões, owners, fonte, contratos, checks, status, bloqueios, evidência/SHAs, mudanças de prioridade e próxima fase. Referenciar runbooks e contratos canônicos, não duplicá-los integralmente; handoff/evidence report de execução podem residir no fluxo Cursor/GitHub conforme necessário, mas **não produzir novos roadmaps paralelos**.
 
-| Risco | Tratamento obrigatório |
-|---|---|
-| API de KPIs vira proxy universal de todas as APIs | ADR-01 + Abstraction Gate + contratos estáveis por owner |
-| Migração confunde hosting com domain ownership | owner/source matrix e testes cross-context |
-| CRUD genérico / tool universal de escrita | capability ACT específica + backend AuthZ + confirmação/policy |
-| Novo OAuth resource quebra usuários e sessions | ADR-02, staging, coexistência, reconexão controlada, rollback |
-| Ferramentas `read` e `knowledge` mudam semântica sem versionamento | inventário dos MCPs irmãos, contract/eval e compatibilidade |
-| Knowledge stale ou instrução injetada se passa por dado oficial | provenance, classification, sanitização e source authoritative |
-| Perda das consultas DELPI e da inteligência existente | golden regression matrix, migration inventory, parity gates |
-| Dual auth / token forwarding inseguro | Security review, audience/delegation, fail-closed e negative tests |
-| 2xx ou testes locais confundidos com go-live | deployed SHA + provider discovery + AuthZ + postcondition |
-| Integração de múltiplos contexts cria acoplamento | ports/adapters, contracts, no cross-context imports |
+- GPT Architecture / Coordination: owner/boundary decisions, briefs, review/acceptance.
+- Cursor: code inventory, minimal diff, testing, residual search e evidence report.
+- Core API: authority de acesso/plataforma, app permissions e resolução canônica, quando aplicável.
+- Strategic Indicators: authoritative indicator/target data, business use cases e final domain policy.
+- API DELPI: authoritative operational sources/use cases, inclusive SQL SELECT.
+- Security/Testing/Operations: OAuth/cross-API, negative tests, deployment/provenance, release.
 
-## 9. Governança e handoff
+**Não abrir nova frente cross-cutting sem voltar a Architecture / Coordination.**
 
-| Frente | Responsabilidade de revisão |
-|---|---|
-| Architecture / Coordination | ADR-01/02/07, boundaries, freeze, aceitação |
-| Capability Expansion / Product | semantic intent, consumers, source/owner, projeções |
-| Security / Identity / Privacy | OAuth, end-user, business AuthZ, privacy, ACT controls |
-| Owner Strategic Indicators | contrato e autoridade de indicadores/metas (owner humano/técnico exato TO_INVENTORY) |
-| API DELPI / Backend / Contracts | manter e validar contratos DELPI já existentes |
-| MCP / OAuth / OpenAI Integration | tools, transport, provider, redirect/reconnect |
-| Testing / Acceptance / Evals | paridade, regressão, negative tests, evidence |
-| Operations / Documentation / Release | deploy, rollback, docs, decommission |
+## 10. Próximo brief — DAVI-V2-SEMANTIC-TOOLS-INVENTORY-001
 
-GPT define brief/review/aceite; Cursor inventaria, implementa menor diff, testa e emite evidence report; GitHub persiste contratos/docs/SHAs. Para cada fase: `BASE HEAD`, `FINAL HEAD`, arquivos alterados, testes, residual search, impacto contratual, evidência runtime/provider, gaps e status.
+**SCOPE:** READ-ONLY INVENTORY, nenhuma implementação.
 
-## 10. Próximo passo autorizado (somente leitura/inventário)
+**RQ-1:** revalidar HEAD/working tree e deployed SHA, lendo `.cursor` e as fontes canônicas.
 
-Emitir **DAVI-V2-INVENTORY-001**, sem mudanças no runtime:
+**RQ-2:** inventariar schemas exatos `get_context/read/knowledge/analyze/execute/delete` de CAIO, CLARA, EVA, SURI, TÉO, VISTA; mapear semelhanças e diferenças justificadas de inputs, outputs, status, boundaries e auth.
 
-1. verificar `origin/main`, HEAD, working tree e deployed SHA;
-2. descobrir nome/caminho/owner da API Strategic Indicators e contratos de indicadores/metas;
-3. inventariar estrutura e wiring do MCP DAVI atual e suas duas tools;
-4. comparar MCPs irmãos para semântica e contratos reais de `read` / `knowledge`;
-5. mapear AuthN/AuthZ, migration cost e compatibilidade provider;
-6. identificar o que é conteúdo/persona/conhecimento DAVI, seu owner e sua fonte;
-7. devolver opções ADR-01 (pelo menos hosting no owner Strategic Indicators vs manter boundary atual), trade-offs e sequência recomendada;
-8. **STOP** se owner, source, contract ou AuthZ contradizerem o plano; registrar `EXECUTION_DRIFT`.
+**RQ-3:** mapear implementação `discover_delpi_information → candidate_token → execute_delpi_information`, catálogo, SQL read-only, intelligence, allowlist, consumidores e tests.
 
-**Acceptance:** relatório verificável sem inferir APIs, ferramentas, permissões, operações CRUD ou deploy inexistentes. Nenhum código/recurso migrado nesta etapa.
+**RQ-4:** produzir spec proposta de W1 sem bypass, com estratégia de coexistência/cutover e matriz de golden queries/negative tests; NÃO codificar.
 
-## 11. Critérios de sucesso final (TARGET)
+**RQ-5:** listar risco de integração futura Strategic Indicators via Core API (sem implementá-la), identificando os pontos de backend AuthZ e informação ainda TO_INVENTORY.
 
-- DAVI consulta indicadores e os explica por evidências rastreáveis da API Strategic Indicators e de fontes operacionais autorizadas.
-- Recupera informações da API DELPI sem perder os READs já aprovados e sem violar ownership.
-- Oferece interface semântica consistente com padrões MCP comprovados e contratos específicos.
-- Executa **somente** ações de indicadores/metas explicitamente aprovadas, com PREPARE/ACT, AuthZ negativa e postcondition.
-- End-user isolation, replay/idempotency, auditing, data minimization e rollback são comprovados.
-- Novo provider, deploy e consumo real estão provados, com documentação atualizada e sem divergência material de autoridade.
+**RETURN:** BASE HEAD, FINAL HEAD, branch, working tree, files inspected, source/owner/contracts map, contract impact, tests (ou TEST_NOT_RUN), deploy/provider evidence, gaps, drift, recomendação de próximo menor diff.
+
+**STOP:** conflito de owner, permissão ou autoridade; registrar `EXECUTION_DRIFT` e remeter à coordenação.
+
+## 11. Critérios de sucesso (TARGET)
+
+- DAVI segue atendendo usuários atuais sem regressão.
+- Tools semânticas padronizadas com capabilities governadas e descoberta/uso comprovados.
+- SQL READ existente preservado sem execução irrestrita.
+- Strategic Indicators integrada futuramente somente para usuários autorizados no aplicativo e no escopo da operação, com Core API + domain backend AuthZ.
+- Writes futuros usam PREPARE/ACT e pós-condição verificável, sem CRUD genérico.
+- Sem migração física involuntária, sem duplicação de auth/owner e com evidências persistentes de cada onda.
