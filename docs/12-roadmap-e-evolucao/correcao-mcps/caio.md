@@ -48,3 +48,7 @@ O significado precisa ter conexão explícita com a especialidade e com os proce
 
 ## 6. Instruções de execução futura
 Antes de qualquer código: `git status`, HEAD, fontes canônicas, owner, consumer, runtime, Abstraction Gate. Corrigir o menor diff com testes e residual search. Alterar Builder/Knowledge/OpenAPI somente quando o artefato correspondente mudar; documentar `TRANSFORMÔMETRO EXECUTION REPORT`. Não confundir **plano registrado** com **melhoria implementada**.
+## Reconciliação com fontes existentes (GitHub, 2026-11-06)
+- **PROVEN (código):** commercial-api/commercial_app/persona/caio_profile.py é fonte local preenchida em Python; display_name antigo e assert associado em tests/test_caio_character.py deverão ser reconciliados.
+- Contrato já implementado: `shared/delpi_character_profiles` (estrutura), ficha owner-local (conteúdo), projeção no serviço do MCP (consumer). **Não criar uma segunda ficha nem registry em shared.**
+- Referência cruzada: [Inventário de fontes existentes](./INVENTARIO-FONTES-EXISTENTES.md). Validação de runtime, deploy e testes permanece **TEST_NOT_RUN/TO_INVENTORY** nesta auditoria.
