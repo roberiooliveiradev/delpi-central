@@ -683,3 +683,52 @@ async def test_analyze_wire_validation_is_typed():
     result = await create_mcp_server().call_tool("analyze", {"capability": ""})
     assert result.is_error is True
     assert result.structured_content["code"] == "ARGUMENT_VALIDATION"
+
+# ---------------------------------------------------------------------------
+# Wave 004 — analytic coverage proof over the full eligible catalog
+# ---------------------------------------------------------------------------
+
+
+def test_analyze_gate_admits_all_eligible_analytic_actions():
+    """Every executable playbook_report/composite_analysis action is admitted
+    by the analyze shape gate — expansion proven, no reimplementation."""
+    from app.application.external_capabilities.dynamic_information.execute_service import (
+        ANALYZE_ELIGIBLE_SHAPES,
+    )
+
+    actions = _seed_actions()
+    eligible = [a for a in actions if a.executable]
+    analytic = [a for a in eligible if (a.shape or "") in ANALYZE_ELIGIBLE_SHAPES]
+    non_analytic = [a for a in eligible if (a.shape or "") not in ANALYZE_ELIGIBLE_SHAPES]
+    assert len(analytic) >= 20  # coverage floor — do not shrink silently
+    assert len(analytic) < len(eligible)  # gate is selective, not pass-through
+    for a in analytic:
+        executor = _StubExecutor(payload={"success": True, "data": {}})
+        try:
+            davi_analyze(capability=a.action_id, arguments={}, catalog_action_executor=executor)
+        except GovernedExecutionError as exc:
+            assert exc.code == ARGUMENT_VALIDATION_CODE, (
+                f"{a.action_id}: analytic eligible action must not fail at the "
+                f"shape gate ({exc.code})"
+            )
+    for a in non_analytic:
+        with pytest.raises(GovernedExecutionError) as exc:
+            davi_analyze(capability=a.action_id, arguments={}, catalog_action_executor=_StubExecutor())
+        assert exc.value.code == CAPABILITY_NOT_ALLOWED_CODE
+
+
+def test_read_covers_every_eligible_capability_parity():
+    """Broker parity: every executable catalog action resolves through read
+    (argument errors ok — the capability gate itself must admit them)."""
+    actions = _seed_actions()
+    eligible = [a for a in actions if a.executable]
+    assert len(eligible) >= 90  # parity floor vs broker surface
+    for a in eligible:
+        try:
+            davi_read(capability=a.action_id, arguments={}, catalog_action_executor=_StubExecutor())
+        except GovernedExecutionError as exc:
+            assert exc.code in (ARGUMENT_VALIDATION_CODE, "OWNER_EXECUTION_ERROR"), (
+                f"{a.action_id} rejected at the capability gate: {exc.code}"
+            )
+        except PermissionError:
+            pass

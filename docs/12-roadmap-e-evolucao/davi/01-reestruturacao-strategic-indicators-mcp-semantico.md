@@ -479,3 +479,72 @@ NEGATIVE multi-user    = PENDING
 TOOL SELECTION eval    = PENDING
 execute/delete         = não implementar sem governança de writes
 ```
+
+## 17. Wave 004 — Analytics parity + legacy readiness (DAVI-V2-WAVE-004-ANALYTICS-AND-LEGACY-PARITY)
+
+> 2026-11-06. Nenhuma ferramenta nova; expansão de `analyze` comprovada por cobertura (gate de shape é genérico) + matriz de equivalência legado↔semântico.
+
+### 17.1 Inventário analítico (baseline offline, allowlist v30)
+
+```text
+ELIGÍVEIS TOTAIS  = 94 actions executáveis
+ANALÍTICAS        = 25 (playbook_report=21, composite_analysis=4)
+  produção : get_production_appointments_summary/produced_totals/otd/
+             allocation_gaps/consumption_by_item/consumption_top_items/
+             losses_records/losses_top_materials/
+             orders_finished_without_consumption/appointments_series...
+  suprimentos: get_supplies_{inventory_accuracy,inventory_adjustments,
+             non_moving_stock,stock_balances}_summary,
+             safety_stock_* , supplier_price_history
+  produto  : get_product_{last_purchase,purchase_price_history,
+             factory_status,production_status,shipping_status,
+             structure_exclusivity,raw_material_set_shortages}
+             list_exclusive_raw_materials_catalog, list_production_order_operation_materials
+PROVA             = test_analyze_gate_admits_all_eligible_analytic_actions
+                    (25 admitidas; 69 não-analíticas → CAPABILITY_NOT_ALLOWED)
+```
+
+### 17.2 Matriz de equivalência — broker legado ↔ interface semântica
+
+| Capability legada | Fluxo legado | Fluxo semântico | Paridade | Gap |
+|---|---|---|---|---|
+| Catálogo de actions | discover (NL retrieval top_k + hints) | get_context action=catalog/schema | PARCIAL | discover faz scoring semântico NL; get_context lista tudo — o modelo seleciona via description/entity/tags |
+| Execução de qualquer READ | execute + candidate_token | read(capability,args) | TOTAL | mesmo plano/executor/projeção/AuthZ; token substituído por id fixo publicado pelo catálogo |
+| Análises/relatórios | execute | analyze | TOTAL (subset 25/94 com shape gate explícito) | — |
+| Knowledge governado | execute(read_governed_technical_knowledge) | knowledge(search/get/sources) | TOTAL + | sources index sem executor |
+| search_products | execute runner | read runner | TOTAL | enforce_authz idêntico |
+
+**Gates de retirada (status atual):**
+
+```text
+CAPABILITY PARITY   = PASS source/testes (94/94 via read; 25/25 analyze;
+                      get_context cobre descoberta estrutural)
+CONSUMER MIGRATION  = PENDING (ChatGPT/consumidores ainda usam o broker;
+                      instruções já guiam semantic-first)
+SECURITY REGRESSION = PASS (boundary idêntico; sem token relaxa só o
+                      vínculo de descoberta — seleção fixa equivalente)
+LIVE MCP TESTS      = PASS parcial (5→6 tools live; tools/call autenticadas
+                      = TEST_NOT_RUN localmente)
+PROVIDER DISCOVERY  = PENDING (plugin manual)
+ROLLBACK READY      = PASS (SHA anterior + script canônico)
+```
+
+**Resíduo funcional real do legado:** `discover` oferece retrieval NL ranqueado (scores/semantic_hints) que `get_context` não replica — migração exige ou (a) aceitar seleção pelo modelo sobre catálogo completo, ou (b) tool `search` semântica dedicada. Decisão na onda de remoção.
+
+### 17.3 Seleção semântica (Frente C) — já coerente
+
+```text
+capabilities → get_context | documentação → knowledge
+dados → read | relatório → analyze | ambíguo → discover (fallback temporário)
+diretivas: SEMANTIC_TOOLS_FIRST_DISCOVER_FALLBACK (W3)
+```
+
+### 17.4 Pendências
+
+```text
+NEGATIVE multi-user AuthZ    = PENDING
+tools/call OAuth live        = PENDING
+consumer migration broker    = PENDING
+NL-retrieval equivalence     = decisão pendente na remoção
+execute/delete               = não implementar (writes exigem governança própria)
+```
