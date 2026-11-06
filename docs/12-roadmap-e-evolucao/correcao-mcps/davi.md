@@ -51,3 +51,7 @@
 Após refatoração, validar `git status`, SHA, fontes canônicas de identidade, consumers, contratos, testes, runtime e evidência; então completar este inventário e converter em tarefas executáveis. Preservar compatibilidade com os demais especialistas, mas **não impor número igual de ferramentas**. Registrar `TRANSFORMÔMETRO EXECUTION REPORT` por implementação futura.
 
 **Esta publicação é somente ficha provisória no GitHub. Não prova mudança no DAVI em produção.**
+## Reconciliação com fontes existentes (GitHub, 2026-11-06)
+- **PROVEN (código):** api-delpi/app/persona/davi_profile.py → app/content/davi_agent_intelligence.json; ficha já existe; aguardar a refatoração para projetar novo acrônimo.
+- Contrato já implementado: `shared/delpi_character_profiles` (estrutura), ficha owner-local (conteúdo), projeção no serviço do MCP (consumer). **Não criar uma segunda ficha nem registry em shared.**
+- Referência cruzada: [Inventário de fontes existentes](./INVENTARIO-FONTES-EXISTENTES.md). Validação de runtime, deploy e testes permanece **TEST_NOT_RUN/TO_INVENTORY** nesta auditoria.
