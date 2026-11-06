@@ -412,3 +412,30 @@ TOOL_SELECTION_EVAL         = PENDING (matriz §14.2 definida; execução live)
 analyze/execute/delete      = PLANNED_NOT_IMPLEMENTED (ondas futuras, por capability aprovada)
 Strategic Indicators        = FUTURO (Core API + owner AuthZ — não nesta rodada)
 ```
+
+## 15. Deploy controlado W1+W2 (DAVI-V2-WAVE-001-002-PRODUCTION-DEPLOY)
+
+> 2026-11-06 — `up-prod-sequential.sh --build api-delpi` em `operador@192.168.1.237`.
+
+```text
+ENVIRONMENT         = produção (srv-api 192.168.1.237)
+PREVIOUS_DEPLOY_SHA = 47be2a8e0d02 (git já continha W2; container rodava imagem pré-W1 — 2 tools)
+TARGET_DEPLOY_SHA   = a38e679ea1 (rebuild da imagem infra-api-delpi)
+DEPLOY_METHOD       = git pull (já aplicado por outra frente) + build + recreate seletivo api-delpi + nginx reload
+ROLLBACK            = rebuild da imagem anterior / SHA anterior via mesmo script — DISPONÍVEL, não executado
+HEALTH              = container healthy; GET /apps/api-delpi/health = 200
+502 transitório no healthcheck do script durante boot de migrations — resolvido sozinho
+```
+
+Validação pós-deploy:
+
+```text
+tools list in-container  = [discover_delpi_information, execute_delpi_information,
+                            get_context, knowledge, read] — 5 tools, sem spike/experimental
+public /mcp GET+POST     = 401 OAuth challenge (não 307/403)
+resource metadata        = resource/scopes canônicos (mcp:tools; aud/resource inalterados)
+OAuth/Keycloak/client    = inalterados
+tools/call end-user OAuth = TEST_NOT_RUN (token de usuário indisponível na sessão)
+negative multi-user AuthZ = PENDING
+plugin ChatGPT update     = PENDING — etapa manual do responsável (não nesta execução)
+```
