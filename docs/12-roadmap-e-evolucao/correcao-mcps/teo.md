@@ -1,7 +1,20 @@
 # TÉO — Plano de correção da ficha e autoconhecimento
 
 **Data do levantamento:** 2026-11-06  
-**Status:** TO_INVENTORY / implementação PENDING. Fonte consultada: MCP TÉO, `get_context(section=catalog)` e `knowledge`.
+**Status:** EXECUTADO 2026-11-06 (commit local; deploy pendente de acesso ao srv-api).
+
+## Resultado da execução (2026-11-06)
+| ID | Resultado | Evidência |
+|---|---|---|
+| Acrônimo | **ALREADY_CORRECT** — `Transformação · Eficiência · Otimização` publicado em `tm_app/content/teo_agent_intelligence.json → identity.acronym`, projetado via `capability_surface.agent_directives.identity` | leitura da fonte + `teo_agent_intelligence_service.agent_directives` |
+| TEO-01 | **CORRIGIDO** — `resolve_guide_version` agora aceita os aliases anunciados `v1`/`v2` (`GUIDE_VERSION_ALIASES`); ids canônicos continuam o contrato | `guide_v2.py`; regressão em `test_teo_methodology_v2.py` (`test_resolve_version_advertised_aliases`, `test_alias_v2_returns_v2_guide`) |
+| TEO-02 | **INTENCIONAL — sem mudança** — `wire_default_version=v1` documentado: "Post-acceptance cutover: recommendation is V2; wire default stays V1" | `test_teo_methodology_v2.py` (asserção existente) |
+| TEO-03 | **CORRIGIDO (descoberta leve)** — `discovery_hint` do `get_context` overview agora aponta `catalog.agent_directives (identity/character)` como morada da identidade; sem duplicar autoridade | `tool_bridge_v3.py` |
+| TEO-04 | **CORRIGIDO** — ADR `adr-diagramas-processo.md` recebeu nota de atualização datada: convergência BPMN nativo, `flowchart_v1` legado read-only/fonte de migração; histórico preservado | ADR → `teo-capability-matrix.md` |
+| TEO-05 | **PROVEN** — ficha em `tm_app/persona/teo_profile.py` + JSON canônico; nenhuma segunda fonte criada | inventário |
+| TEO-06 | **TEST_NOT_RUN** (conversacional GPT real) — testes unitários/de superfície executados: **186 pass, 0 fail** no escopo TÉO; falha pré-existente não relacionada: `test_gpt_validation_error_context.py::test_create_shared_resource_validation_exposes_fields_to_gpt` (falha também no HEAD limpo — residual fora do escopo) | pytest |
+
+**Arquivos alterados:** `tm_app/application/methodology/guide_v2.py`, `tm_app/interface/mcp/tool_bridge_v3.py`, `tests/test_teo_methodology_v2.py`, `docs/architecture/adr-diagramas-processo.md`, este arquivo.
 
 ## PROVEN: dados publicados no catálogo vivo
 - Nome: **TÉO — Especialista em Transformação Digital**.

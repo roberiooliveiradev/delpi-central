@@ -186,6 +186,27 @@ def test_resolve_version_defaults() -> None:
     assert resolve_guide_version("teo-method-playbooks-v2") == GUIDE_VERSION_V2
 
 
+def test_resolve_version_advertised_aliases() -> None:
+    # The MCP knowledge tool advertises ``guide_version v1|v2`` — the
+    # aliases must resolve to the canonical ids, not fail closed.
+    assert resolve_guide_version("v1") == GUIDE_VERSION_V1
+    assert resolve_guide_version("v2") == GUIDE_VERSION_V2
+    assert resolve_guide_version(" V2 ") == GUIDE_VERSION_V2
+
+
+def test_alias_v2_returns_v2_guide() -> None:
+    tokens = _ctx()
+    try:
+        with _allow():
+            r = tool_get_methodology_guide(guide_version="v2")
+        assert r.is_error is False
+        data = r.structured_content["data"]
+        assert data["guide_version"] == "teo-method-playbooks-v2"
+        assert data["wire_default_version"] == "teo-method-playbooks-v1"
+    finally:
+        _reset(tokens)
+
+
 # --------------------------------------------------- contract / structural
 
 

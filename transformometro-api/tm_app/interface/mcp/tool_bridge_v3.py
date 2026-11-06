@@ -186,7 +186,9 @@ def tool_get_context(
             "discovery_hint": (
                 "get_context(section='catalog') for the full capability "
                 "catalog (entities, workflows, write schemas, policies); "
-                "entity=<name> filters a single entity contract."
+                "entity=<name> filters a single entity contract. TÉO "
+                "identity and agent directives live in "
+                "catalog.agent_directives (identity/character)."
             ),
         }
         return _b._ok_result(

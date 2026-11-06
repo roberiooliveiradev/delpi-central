@@ -42,6 +42,14 @@ SUPPORTED_GUIDE_VERSIONS = (GUIDE_VERSION_V1, GUIDE_VERSION_V2)
 WIRE_DEFAULT_GUIDE_VERSION = GUIDE_VERSION_V1
 RECOMMENDED_GUIDE_VERSION = GUIDE_VERSION_V2
 
+# Short aliases advertised by the MCP knowledge tool description
+# (``guide_version v1|v2``). Canonical ids remain the contract;
+# aliases only resolve to them — never a third version axis.
+GUIDE_VERSION_ALIASES = {
+    "v1": GUIDE_VERSION_V1,
+    "v2": GUIDE_VERSION_V2,
+}
+
 INTENT_IDS = (
     "discover",
     "map",
@@ -823,11 +831,15 @@ def resolve_guide_version(guide_version: str | None) -> str:
         return WIRE_DEFAULT_GUIDE_VERSION
     key = _norm(guide_version)
     by_norm = {_norm(v): v for v in SUPPORTED_GUIDE_VERSIONS}
+    by_norm.update(
+        {_norm(alias): v for alias, v in GUIDE_VERSION_ALIASES.items()}
+    )
     if key in by_norm:
         return by_norm[key]
     raise ValueError(
         f"Unknown guide_version '{guide_version}'. "
-        f"Supported: {list(SUPPORTED_GUIDE_VERSIONS)}."
+        f"Supported: {list(SUPPORTED_GUIDE_VERSIONS)} "
+        f"(aliases: {sorted(GUIDE_VERSION_ALIASES)})."
     )
 
 

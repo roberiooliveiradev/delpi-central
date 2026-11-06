@@ -1,6 +1,16 @@
 # ADR — Diagramas de processo (Playbook 19)
 
-**Status:** implementado (jul/2026)  
+**Status:** implementado (jul/2026) — **legado; ver atualização abaixo**  
+
+> **Atualização (nov/2026):** convergência para **BPMN nativo**.
+> Novos diagramas são documentos BPMN nativos; os artefatos
+> `flowchart_v1` / `flowchart_overlay_v1` descritos neste ADR tornaram-se
+> **legados read-only / fonte de migração**. A migração governada é
+> `migrate_legacy_diagram_to_native_bpmn`
+> (`tm_app/domain/diagram/legacy_bpmn_migration.py`), e BPMN nunca
+> converte de volta para `flowchart_v1`. Autoridade vigente:
+> [`../integrations/teo-capability-matrix.md`](../integrations/teo-capability-matrix.md).
+> Este documento permanece como registro histórico da decisão original.
 **Contexto:** [`PLAYBOOK-19-diagramas-processo-revisao-escopo.md`](../../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-19-diagramas-processo-revisao-escopo.md)  
 **Status técnico:** [`playbook-19-implementation-status.md`](../archive/playbooks/playbook-19-implementation-status.md)
 
