@@ -218,3 +218,20 @@ read]`; resources vazio; `read(avatar)` → ImageContent OK.
 **ChatGPT visual:** `TEST_NOT_RUN` — reteste: "TÉO, mostre seu avatar"
 deve acionar `read(entity=avatar)` e renderizar o PNG nativamente pelo
 host (entrega de bytes governada; apresentação é do ChatGPT).
+
+## MCP IMAGE DELIVERY V3.1 (2026-11-06) — rollout nativo verificado
+
+**Matriz runtime (read-back container, HEAD atual):**
+
+| MCP | read(entity=avatar,get) | ImageContent | Residual | Status |
+|---|---|---|---|---|
+| TÉO | ✅ [Text,Image] png | PASS | show_avatar/resources removidos | PASS |
+| VISTA | ✅ [Text,Image] jpeg | PASS | — | PASS |
+| CLARA | ✅ [Text,Image] jpeg | PASS | _wrap preserva blocos | PASS |
+| CAIO | ✅ [Text,Image] jpeg | PASS | _wrap corrigido | PASS |
+| SURI | ✅ [Text,Image] png (supplies-mcp) | PASS | schema literal inclui avatar | PASS |
+| EVA | ✅ [Text,Image] jpeg | PASS | — | PASS |
+| DAVI | PENDING — contrato `read(capability)` via `davi_read_wired`, área `external_capabilities` em refatoração ativa; integração de avatar exige registrar capability de leitura (não tool nova) — aguardar convergência da refatoração | — | — | PENDING |
+
+**Residual search:** zero `show_avatar|avatar_ui|avatar-diagnostic|ui://delpi|widgetCSP` em todos os serviços.
+**ChatGPT visual:** `TEST_NOT_RUN` — reteste por especialista: "mostre sua imagem oficial" → host deve renderizar `ImageContent` nativamente.
