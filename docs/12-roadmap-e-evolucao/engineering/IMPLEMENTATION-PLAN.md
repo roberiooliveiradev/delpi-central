@@ -641,3 +641,20 @@ Ambiente usado: stack dev local (containers delpi-*), banco descartável `plugin
 - **Leitura real TOTVS comprovada**: `GET /products/90264270?view=engineering` com JWT real dev retornou `accounting_account = '11401006'` (B1_CONTA, CHICOTE DE LIGACAO) — chain completo Portal → gateway → api-delpi → TOTVS. Contract gap encerrado em runtime.
 - PostgreSQL: V012+grants confirmados em plugins_hub dev; suite real-PG 3/3 PASS (rodada anterior).
 - Não executados: cenários TOTVS manuais create/update (operador funcional), engineering-api no stack dev (serviço não provisionado), browser E2E, MCP transport/elicitation.
+
+
+## ADENDO — PRC-D5.3: Core AuthZ corrigido + jornada real end-to-end
+
+> **Status:** `CORE_AUTHZ PASS / JOURNEY READ-BACK PASS / NEGATIVE(mismatch) PASS / AUTH 401 PASS / DB POSTCONDITIONS PASS`.
+
+**Root cause do "Authorization service unavailable":** `DELPI_AUTH_CORE_API_URL` apontado ao prefixo público do gateway (`/apps/core-api`) — que resolve para o SPA do Portal (HTML), não para a API Core. O contrato real do `delpi_auth` é `{CORE_API_URL}/me` retornando JSON RBAC. Correção: apontar à base interna do serviço `delpi-core-api` (network interna :8000). Em deployments canônicos, a env deve referenciar o service name interno, não o prefixo de app do gateway.
+
+**Evidências runtime (dev-stack, PostgreSQL real + TOTVS real):**
+- engineering-api rodando (health online), JWT real Keycloak → Core `/me` real (rober, superadmin) → autorização resolvida.
+- `POST /intake/requests` → 201 persistido em `plugins_hub` (2 requests).
+- Journey completo (`e30dfee1`): start→submit-review→`verify_and_complete` → **completed**, revision 1 publicada (record b8049160, verification 827cffab) — read-back oficial api-delpi/TOTVS matched em TODOS os campos verificáveis incl. `accountingAccount=B1_CONTA`.
+- Negativo real (`b867e2ff`, produto 90264270): suppliers divergentes → `erp_mismatch`, verification persistida `mismatched`, nenhuma revisão — fail-closed em runtime.
+- Token inválido/ausente → 401.
+- Postconditions DB: requests=2, revisions=2, verifications=3, events=13 (append-only).
+
+**Drift de contrato descoberto (registrar p/ owner):** `partNumber` é required não-vazio no draft de suppliers, mas o SA5 real pode ter `A5_CODPRF` vazio (produto 90264270/WEG). Produto com fornecedor sem PN jamais completa — decisão necessária: permitir `partNumber` vazio no contrato draft, ou exigir preenchimento em TOTVS antes da conclusão (regra de negócio — owner Engenharia).
