@@ -1198,6 +1198,28 @@ def gpt_collaboration_read(
     task_id: str | None = Query(None),
     processo_id: str | None = Query(None),
     status: str = Query("pending"),
+    scope: str = Query(
+        "received",
+        description=(
+            "my_tasks only. received (default): assigned to the caller. "
+            "delegated: created by the caller and assigned to someone else. "
+            "created: every task created by the caller, including self-assigned. "
+            "visible: assignee or creator, deduplicated — not the whole organization."
+        ),
+    ),
+    page: int | None = Query(None, ge=1),
+    page_size: int | None = Query(None, ge=1, le=100),
+    overdue: bool | None = Query(
+        None,
+        description="my_tasks only. true keeps overdue items inside the authorized scope.",
+    ),
+    q: str | None = Query(
+        None,
+        description=(
+            "my_tasks only. Case-insensitive match on title, description and "
+            "context inside the authorized scope. Not an organization-wide search."
+        ),
+    ),
     room_id: str | None = Query(None),
     inbox_filter: str = Query("all"),
     limit: int = Query(50),
@@ -1215,8 +1237,16 @@ def gpt_collaboration_read(
             )
         if action_norm == "my_tasks":
             return ok(
-                _dispatch.list_my_tasks(request, status=status),
-                "Tarefas do usuário autenticado.",
+                _dispatch.list_my_tasks(
+                    request,
+                    status=status,
+                    scope=scope,
+                    page=page,
+                    page_size=page_size,
+                    overdue=overdue,
+                    q=q,
+                ),
+                "Tarefas do escopo autorizado do usuário autenticado.",
             )
         if action_norm == "process_tasks":
             if not str(processo_id or "").strip():

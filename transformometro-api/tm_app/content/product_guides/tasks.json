@@ -22,7 +22,8 @@
     "Atualize campos pelo update; conclua com complete; cancele apenas quando o trabalho deixou de existir",
     "cancel_task é descarte (confirm_before_act) — preferir complete quando o trabalho foi feito",
     "Assinaturas pendentes de ata aparecem em Minhas tarefas, mas se assinam na ata — não são tarefa editável",
-    "Tarefas que você delegou a outras pessoas aparecem no contexto Atribuídas por mim — Recebidas mostra só o que é seu"
+    "Tarefas que você delegou a outras pessoas aparecem no contexto Atribuídas por mim — Recebidas mostra só o que é seu",
+    "Na capability, my_tasks sem scope continua sendo só o que está atribuído ao usuário (received). created lista o que ele criou, inclusive para outras pessoas. visible junta as duas visões sem duplicar e sem abrir tarefas da organização"
   ],
   "field_guidance": [
     {"field": "title", "guidance": "Verbo + objeto + contexto, ex.: 'Revisar fluxo de aprovação do processo X'", "contract_ref": "workflows.manage_task"},

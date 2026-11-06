@@ -275,7 +275,7 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                     "(send|finalize|cancel|resend|create_version|set_participants|"
                     "set_signers) → gpt_commit_proposal.",
                     "Tasks + interaction rooms (collaboration family): "
-                    "gpt_collaboration_read (my_tasks|task|process_tasks|rooms|"
+                    "gpt_collaboration_read (my_tasks scope=received|delegated|created|visible, default received; task|process_tasks|rooms|"
                     "room|messages|attachments|room_links|room_participants|"
                     "room_impact|resolve_room) + gpt_prepare_collaboration_change "
                     "(create_task|update_task|complete_task|cancel_task|"

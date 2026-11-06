@@ -433,7 +433,14 @@ def test_http_my_tasks_scope_param():
         invalid = task_routes.list_my_tasks(request, scope="invalid")
     assert resp.status_code == 200
     list_items.execute.assert_any_call(
-        request.state.user, status="all", scope="delegated", authorization=""
+        request.state.user,
+        status="all",
+        scope="delegated",
+        authorization="",
+        page=None,
+        page_size=None,
+        overdue=None,
+        q=None,
     )
     # A sessão externa segue para a autoridade canônica da sala (vínculos
     # Helpdesk dependem dela para confirmar visibilidade).
@@ -442,6 +449,10 @@ def test_http_my_tasks_scope_param():
         status="all",
         scope="delegated",
         authorization="Bearer token-xyz",
+        page=None,
+        page_size=None,
+        overdue=None,
+        q=None,
     )
     assert invalid.status_code == 400
 

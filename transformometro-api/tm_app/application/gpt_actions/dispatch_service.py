@@ -2454,14 +2454,29 @@ class GptActionsDispatchService:
             return GptActionsError(str(exc), 409)
         return GptActionsError(str(exc), 500)
 
-    def list_my_tasks(self, request: Request, *, status: str = "pending") -> dict[str, Any]:
+    def list_my_tasks(
+        self,
+        request: Request,
+        *,
+        status: str = "pending",
+        scope: str = "received",
+        page: int | None = None,
+        page_size: int | None = None,
+        overdue: bool | None = None,
+        q: str | None = None,
+    ) -> dict[str, Any]:
         try:
             return self._task_items.execute(
                 request.state.user,
                 status=status,
+                scope=scope,
                 authorization=str(
                     request.headers.get("authorization") or ""
                 ).strip(),
+                page=page,
+                page_size=page_size,
+                overdue=overdue,
+                q=q,
             )
         except Exception as exc:
             raise self._map_task_room_exc(exc) from exc

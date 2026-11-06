@@ -66,7 +66,15 @@ def _handle(exc: Exception):
 
 
 @router.get("/my-tasks", operation_id="list_my_transformometro_tasks")
-def list_my_tasks(request: Request, status: str = "pending", scope: str = "received"):
+def list_my_tasks(
+    request: Request,
+    status: str = "pending",
+    scope: str = "received",
+    page: int | None = None,
+    page_size: int | None = None,
+    overdue: bool | None = None,
+    q: str | None = None,
+):
     try:
         return ok(
             _list_items.execute(
@@ -74,6 +82,10 @@ def list_my_tasks(request: Request, status: str = "pending", scope: str = "recei
                 status=status,
                 scope=scope,
                 authorization=_authorization(request),
+                page=page,
+                page_size=page_size,
+                overdue=overdue,
+                q=q,
             )
         )
     except Exception as exc:

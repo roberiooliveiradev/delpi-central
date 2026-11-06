@@ -24,6 +24,10 @@ from __future__ import annotations
 import copy
 from typing import Any
 
+from tm_app.application.use_cases.list_my_task_items import (
+    DEFAULT_MY_TASK_SCOPE,
+    MY_TASK_SCOPES,
+)
 from tm_app.application.governed_writes.confirmation_policy import (
     CONFIRM_BEFORE_ACT,
     execution_policy_for_capability,
@@ -459,7 +463,12 @@ def _canonical_catalog() -> dict[str, Any]:
             "description": (
                 "Transformômetro tasks (Portal parity) — collaboration "
                 "family: create_task|update_task|complete_task|cancel_task "
-                "via TaskCommandUseCases; reads via collaboration_read."
+                "via TaskCommandUseCases; reads via collaboration_read. "
+                "my_tasks scope defaults to received (assigned to the "
+                "caller). created lists tasks the caller created, including "
+                "those assigned to other people. visible is the authorized "
+                "personal union, not every task in the organization. "
+                "can_* flags do not grant writes; the use case revalidates."
             ),
             "read_write": "MIXED",
             "read_operation": "collaboration_read",
@@ -686,10 +695,70 @@ def _canonical_catalog() -> dict[str, Any]:
             "description": (
                 "Transformômetro task reads — collaboration family: "
                 "my_tasks | task | process_tasks (same "
-                "ListMyTaskItemsUseCase/TaskCommandUseCases as Portal)."
+                "ListMyTaskItemsUseCase/TaskCommandUseCases as Portal). "
+                "my_tasks without scope stays received (assigned to the "
+                "authenticated user). It does not list every organizational "
+                "task. Direct task read and writes keep Portal AuthZ: "
+                "creator, assignee, or transformometro.manage where the "
+                "domain rule already allows it."
             ),
             "read_only": True,
             "operation": "collaboration_read",
+            "my_tasks_contract": {
+                "default_scope": DEFAULT_MY_TASK_SCOPE,
+                "scope": {
+                    "enum": list(MY_TASK_SCOPES),
+                    "received": (
+                        "Tasks assigned to the authenticated user, plus "
+                        "pending meeting-minute signatures. Portal tab "
+                        "Recebidas. Default when scope is omitted."
+                    ),
+                    "delegated": (
+                        "Tasks the user created and assigned to someone "
+                        "else. Excludes self-assigned. Portal tab "
+                        "Atribuídas por mim."
+                    ),
+                    "created": (
+                        "Every task created by the user, including "
+                        "self-assigned. Self-assigned tasks also appear "
+                        "in received."
+                    ),
+                    "visible": (
+                        "Authorized personal union of received and "
+                        "created, deduplicated by task id. Not the team "
+                        "and not the organization. transformometro.manage "
+                        "does not widen this list; direct get still "
+                        "follows can_view_task."
+                    ),
+                },
+                "status": ["pending", "completed", "cancelled", "all"],
+                "filters": {
+                    "q": (
+                        "Optional text match inside the authorized scope "
+                        "(title, description, context, source label). "
+                        "Not an organization-wide search."
+                    ),
+                    "overdue": (
+                        "true keeps only overdue items inside the scope. "
+                        "Omit to keep every status match."
+                    ),
+                    "page": "1-based. Omit with page_size for the full list.",
+                    "page_size": "1-100. total is the filtered count before paging.",
+                },
+                "item_fields": {
+                    "viewer_relation": [
+                        "assignee",
+                        "creator",
+                        "assignee_and_creator",
+                        "pending_signature",
+                    ],
+                    "actions": (
+                        "can_open, can_edit, can_complete, can_cancel are "
+                        "hints computed by the same domain rules as the "
+                        "Portal. Writes revalidate authorization."
+                    ),
+                },
+            },
         },
         {
             "id": "interaction_room_read",

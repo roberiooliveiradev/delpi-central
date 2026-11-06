@@ -1210,6 +1210,11 @@ def tool_collaboration_read(
     before_id: str | None = None,
     entity_type: str | None = None,
     entity_key: str | None = None,
+    scope: str = "received",
+    page: int | None = None,
+    page_size: int | None = None,
+    overdue: bool | None = None,
+    q: str | None = None,
 ) -> CallToolResult:
     """READ: tasks (my_tasks|task|process_tasks) and rooms
     (rooms|room|messages|attachments metadata|room_links|
@@ -1226,8 +1231,16 @@ def tool_collaboration_read(
         request = build_mcp_request()
         if action_norm == "my_tasks":
             return _ok_result(
-                _dispatch.list_my_tasks(request, status=status),
-                "Tarefas do usuário autenticado.",
+                _dispatch.list_my_tasks(
+                    request,
+                    status=status,
+                    scope=scope,
+                    page=page,
+                    page_size=page_size,
+                    overdue=overdue,
+                    q=q,
+                ),
+                "Tarefas do escopo autorizado do usuário autenticado.",
             )
         if action_norm == "process_tasks":
             if not str(processo_id or "").strip():
@@ -1491,6 +1504,11 @@ def tool_task_read(
     task_id: str | None = None,
     processo_id: str | None = None,
     status: str = "pending",
+    scope: str = "received",
+    page: int | None = None,
+    page_size: int | None = None,
+    overdue: bool | None = None,
+    q: str | None = None,
 ) -> CallToolResult:
     """LEGACY alias — use collaboration_read."""
     action_norm = _LEGACY_TASK_READ_ACTION.get(str(action or "").strip().lower())
@@ -1503,7 +1521,15 @@ def tool_task_read(
             error_code="validation",
         )
     return tool_collaboration_read(
-        action_norm, task_id=task_id, processo_id=processo_id, status=status
+        action_norm,
+        task_id=task_id,
+        processo_id=processo_id,
+        status=status,
+        scope=scope,
+        page=page,
+        page_size=page_size,
+        overdue=overdue,
+        q=q,
     )
 
 

@@ -59,7 +59,7 @@ mesma policy por ação, mesmo `commit_proposal` como ACT único.
 | `gpt_get_process_timeline` | `GET .../processes/{id}/timeline` | READ |
 | `gpt_meeting_minute_read` | `POST .../meeting-minutes/read` | READ (action=pending_signatures\|audit\|versions\|participants\|signers\|generate_from_transcript) |
 | `gpt_prepare_meeting_minute_change` | `POST .../meeting-minutes/prepare` | WORKFLOW PREPARE (action=send\|finalize\|cancel\|resend\|create_version\|set_participants\|set_signers) |
-| `gpt_collaboration_read` | `GET .../collaboration` | READ (action=my_tasks\|task\|process_tasks\|rooms\|room\|messages\|attachments) |
+| `gpt_collaboration_read` | `GET .../collaboration` | READ (action=my_tasks scope=received\|delegated\|created\|visible, default received; task\|process_tasks\|rooms\|room\|messages\|attachments) |
 | `gpt_prepare_collaboration_change` | `POST .../collaboration/prepare` | WORKFLOW PREPARE (action=create_task\|update_task\|complete_task\|cancel_task\|open_room\|post_message\|edit_message\|delete_message\|toggle_reaction\|pin_message\|unpin_message\|mark_room_read) |
 | `gpt_helpdesk_read` | `GET .../helpdesk` | HELPDESK READ (action=session\|capabilities\|tickets\|ticket\|catalog) — GLPI truth via BFF |
 

@@ -30,6 +30,10 @@ from tm_app.application.gpt_actions.improvement_package_contract import (
 from tm_app.application.gpt_actions.record_write_contract import (
     openapi_record_data_properties,
 )
+from tm_app.application.use_cases.list_my_task_items import (
+    DEFAULT_MY_TASK_SCOPE,
+    MY_TASK_SCOPES,
+)
 
 GPT_ACTIONS_BASE_PATH = "/transformometro/gpt-actions/v1"
 GPT_ACTIONS_GATEWAY_ROOT = "/apps/transformometro-api"
@@ -1557,7 +1561,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "READ collaboration family (tasks + interaction rooms)",
                 "description": (
                     "Same canonical use cases as the Portal. action=my_tasks "
-                    "| process_tasks | task | rooms | room | messages | "
+                    "(see scope) | process_tasks | task | rooms | room | messages | "
                     "attachments (metadata only) | room_links | "
                     "room_participants | room_impact | resolve_room "
                     "(entity_type + entity_key; read-only)."
@@ -1588,7 +1592,29 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     },
                     {"name": "task_id", "in": "query", "required": False, "schema": {"type": "string"}},
                     {"name": "processo_id", "in": "query", "required": False, "schema": {"type": "string"}},
-                    {"name": "status", "in": "query", "required": False, "schema": {"type": "string"}},
+                    {"name": "status", "in": "query", "required": False, "schema": {"type": "string", "enum": ["pending", "completed", "cancelled", "all"], "default": "pending"}},
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "required": False,
+                        "schema": {
+                            "type": "string",
+                            "enum": list(MY_TASK_SCOPES),
+                            "default": DEFAULT_MY_TASK_SCOPE,
+                        },
+                        "description": (
+                            "my_tasks. received (default): assigned to the "
+                            "caller. delegated: created by the caller for "
+                            "someone else. created: all tasks the caller "
+                            "created. visible: assignee or creator, "
+                            "deduplicated — not the organization. "
+                            "viewer_relation is a hint; writes recheck AuthZ."
+                        ),
+                    },
+                    {"name": "page", "in": "query", "required": False, "schema": {"type": "integer", "minimum": 1}, "description": "my_tasks page (1-based). Omit with page_size for the full list."},
+                    {"name": "page_size", "in": "query", "required": False, "schema": {"type": "integer", "minimum": 1, "maximum": 100}, "description": "my_tasks page size 1-100. total is pre-page."},
+                    {"name": "overdue", "in": "query", "required": False, "schema": {"type": "boolean"}, "description": "my_tasks. true = overdue only, inside the scope."},
+                    {"name": "q", "in": "query", "required": False, "schema": {"type": "string"}, "description": "my_tasks text match inside the authorized scope, not org-wide."},
                     {"name": "room_id", "in": "query", "required": False, "schema": {"type": "string"}},
                     {"name": "inbox_filter", "in": "query", "required": False, "schema": {"type": "string"}},
                     {"name": "limit", "in": "query", "required": False, "schema": {"type": "integer"}},
