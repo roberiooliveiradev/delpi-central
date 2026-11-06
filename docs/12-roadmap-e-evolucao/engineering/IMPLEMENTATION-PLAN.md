@@ -577,3 +577,14 @@ A especificação de rotas, payloads, PostgreSQL/JSONB, regras de transição, v
 ## Plano transversal de capacidades EVA — Product Registration (2026-11-06)
 
 A paridade **Portal/REST/EVA** integra cada slice deste vertical: para cada capacidade legítima do usuário, conectar uma ação `(entity, action)` ao **mesmo caso de uso** nas **seis tools semânticas existentes**, sem nova tool nem bypass de Core/Domain AuthZ. Matriz das 18 rotas, ações `product_registration.*`, riscos `read/execute`, PREPARE/ACT, confirmação humana para rejeição/conclusão, testes e integração serializada com VAL-01 em [PRODUCT-REGISTRATION-EVA-SEMANTIC-INTEGRATION.md](./PRODUCT-REGISTRATION-EVA-SEMANTIC-INTEGRATION.md). O documento é `TARGET/PLANNED`, não evidência de runtime. EVA não aprova produto nem escreve no TOTVS e não pode contornar a verificação oficial na conclusão. A publicação de uma rota humana requer cobertura semântica testada ou `PARITY_GAP` explicitamente bloqueado/aceito em release governado.
+
+
+## ADENDO — PRC-C0..C3: primeira entrega executável do Product Registration (2026-11-06, SHA 773332c110)
+
+> **Status:** `PRC-C1..C3 IMPLEMENTED / TESTED / PUSHED`; `PRC-C4 PARITY_GAP (dispatch EVA + UI + manifest)`; `PRC-C5 PENDING`; `DEPLOY_NOT_AUTHORIZED`.
+
+**PRC-C0 gates:** B (persistência/migrations) `PROVEN` — schema `engineering` no plugins_hub, runner de checksum (`api-delpi/migrations/plugins/engineering`, V012 criada), role dedicada `eng_prc` (`db/eng_prc_grants.sql`), adapters `ENG_PRC_REPOSITORY`/`ENG_PRC_DB_*`. A (ownership operacional) `ARCHITECTURE_DECISION_REQUIRED` registrado. D (contrato TOTVS) `CONTRACT_GAP_PARTIAL` — `view=engineering` cobre descrição/tipo/grupo/unidade/TPMAT/armazém/ref-cliente + SA5 (partNumber/catalog); `accountingAccount` (B1_CONTA) fora da view → `unverifiable`. E (permissões) `AUTHZ_CONTRACT_PENDING` — códigos `engineering.product-registration.{read,create,process,verify,admin}` implementados fail-closed; registro no manifest pendente. C/F `OWNER_SIGNOFF_PENDING`.
+
+**Entregue:** domínio (catálogo de campos, state machine, comparação oficial), ports, adapters Postgres/in-memory/unavailable, `OfficialProductReader` delegado (SB1+SA5, read-only, sem escrita ERP), service com intake/queue/workflow/verify/outbound, 18 rotas REST `/v1/product-registration`, registro EVA `product_registration.*` (18 ações, `status=planned` — não executáveis até dispatch integrado). 25 testes novos + 98 no conjunto de regressão executado — `PASS`.
+
+**Pendente (próximo incremento seguro):** dispatch EVA em `semantic_bridge.py`/`tool_bridge.py` (serialização VAL-01), UI em `plugins/engineering`, permissões no `engineering.manifest.json`, grants/migration aplicados pelo operador, homologação TOTVS real (PRC-C5).
