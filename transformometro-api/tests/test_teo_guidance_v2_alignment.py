@@ -11,10 +11,12 @@ from tm_app.application.gpt_actions.improvement_package_contract import (
 from tm_app.application.gpt_actions.openapi_builder import GPT_ACTIONS_OPERATION_IDS
 from tm_app.application.gpt_actions.registration_guide import build_registration_guide
 from tm_app.interface.mcp.constants import (
+    FILE_TRANSPORT_TOOL_CLASS,
     MCP_LEGACY_REMOVED_TOOLS,
     MCP_SURFACE_BUDGET,
     MCP_TOOL_NAMES,
     TEO_MCP_SURFACE,
+    V3_SEMANTIC_TOOL_NAMES,
 )
 
 
@@ -78,8 +80,10 @@ def test_mcp_surface_budget_matches_registration():
     # semantic tools are registered; V2 family names are tombstoned.
     assert TEO_MCP_SURFACE == "SEMANTIC_V3_ONLY"
     assert MCP_SURFACE_BUDGET["before_total"] == 33
-    assert MCP_SURFACE_BUDGET["after_total"] == 6
-    assert len(MCP_TOOL_NAMES) == 6
+    assert MCP_SURFACE_BUDGET["after_total"] == len(MCP_TOOL_NAMES)
+    assert set(MCP_TOOL_NAMES) == V3_SEMANTIC_TOOL_NAMES | set(
+        FILE_TRANSPORT_TOOL_CLASS
+    )
     assert "execute" in MCP_TOOL_NAMES
     assert "delete" in MCP_TOOL_NAMES
     for name in MCP_LEGACY_REMOVED_TOOLS:

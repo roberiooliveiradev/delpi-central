@@ -847,6 +847,29 @@ not source-code evidence. Status: ACCEPT / CLOSED.
   PENDING_RUNTIME_ACCEPTANCE (requires a real fileParams binding from
   the host — not mockable end-to-end).
 
+### 23.2 R4.9 — public tool hold
+
+The dedicated public tool `helpdesk_upload_attachment` is a file-transport
+adapter over the same capability as `execute`. ChatGPT has proven upload
+through that adapter (closed `_ChatGptFileParam`, `openai/fileParams`,
+GLPI document, read-back, inline image). Host hydration of `execute.file`
+is `TEST_NOT_RUN`. The adapter stays registered until that binding is
+proven. The semantic target remains:
+
+```text
+execute(
+  capability="upload_attachment",
+  args={"ticket_id": <int>, "title": "<optional>"},
+  file=<host-bound _ChatGptFileParam>
+)
+```
+
+`capability="helpdesk_upload_attachment"` resolves to the same write.
+`file` stays a top-level argument, not a field of `args`.
+
+`file` stays a top-level argument. Other capabilities reject it. Do not
+unpublish the adapter to force a six-tool count.
+
 ## 24. Requester identity corrective — authenticated session user = GLPI requester
 
 **Defect (evidence: GLPI #1303)**: tickets created via `POST /tickets`

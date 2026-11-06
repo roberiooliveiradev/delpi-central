@@ -26,6 +26,8 @@ from tm_app.application.governed_writes.proposal_store import (
     reset_proposal_store_for_tests,
 )
 from tm_app.interface.mcp.constants import (
+    EXECUTE_FILE_HOST_BINDING,
+    FILE_TRANSPORT_TOOL_CLASS,
     MCP_TOOL_NAMES,
     TOOL_CLASS,
     V3_SEMANTIC_TOOL_NAMES,
@@ -63,7 +65,10 @@ def _cleanup(tokens):
 def test_v3_tools_registered_semantic_only() -> None:
     names = {t.name for t in asyncio.run(create_mcp_server().list_tools())}
     assert V3_SEMANTIC_TOOL_NAMES <= names
-    assert len(names) == len(MCP_TOOL_NAMES) == 7
+    assert EXECUTE_FILE_HOST_BINDING == "TEST_NOT_RUN"
+    assert set(names) == set(MCP_TOOL_NAMES) == (
+        V3_SEMANTIC_TOOL_NAMES | set(FILE_TRANSPORT_TOOL_CLASS)
+    )
     assert TOOL_CLASS["get_context"] == "DISCOVERY"
     assert TOOL_CLASS["read"] == "READ"
     assert TOOL_CLASS["analyze"] == "ANALYSIS"
@@ -835,3 +840,12 @@ def test_file_param_schema_is_closed_fileparams_model() -> None:
         assert set(node["required"]) >= {"download_url", "file_id"}
         assert {"download_url", "file_id", "mime_type", "file_name"} <= set(node["properties"])
         assert "_meta" in tools[name] and tools[name]["_meta"].get("openai/fileParams") == ["file"]
+        assert "file" in schema["properties"]
+    execute_required = set(tools["execute"]["inputSchema"].get("required") or [])
+    dedicated_required = set(
+        tools["helpdesk_upload_attachment"]["inputSchema"].get("required") or []
+    )
+    # Generic execute must not force a file. The proven host tool must.
+    assert "file" not in execute_required
+    assert "file" in dedicated_required
+    assert EXECUTE_FILE_HOST_BINDING == "TEST_NOT_RUN"

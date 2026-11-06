@@ -21,10 +21,12 @@ from tm_app.application.methodology.guide import (
     query_methodology_guide,
 )
 from tm_app.interface.mcp.constants import (
+    FILE_TRANSPORT_TOOL_CLASS,
     GPT_TO_MCP_TOOLS,
     MCP_NATIVE_TOOLS,
     MCP_TOOL_NAMES,
     TOOL_CLASS,
+    V3_SEMANTIC_TOOL_NAMES,
 )
 from tm_app.interface.mcp.server import create_mcp_server
 from tm_app.interface.mcp.tool_bridge import tool_get_methodology_guide
@@ -76,7 +78,9 @@ def test_method_catalog_matches_canonical_playbook_projection() -> None:
     )
     assert GPT_TO_MCP_TOOLS["gpt_get_methodology_guide"] == ("knowledge",)
     assert TOOL_CLASS["knowledge"] == "READ"
-    assert len(MCP_TOOL_NAMES) == 6
+    assert set(MCP_TOOL_NAMES) == V3_SEMANTIC_TOOL_NAMES | set(
+        FILE_TRANSPORT_TOOL_CLASS
+    )
 
 
 @pytest.mark.parametrize(
@@ -135,7 +139,7 @@ def test_unknown_task_is_governed_validation() -> None:
 def test_tool_registered_read_only_and_not_an_act() -> None:
     mcp = create_mcp_server()
     tools = {tool.name: tool for tool in asyncio.run(mcp.list_tools())}
-    assert len(tools) == 6
+    assert set(tools) == set(MCP_TOOL_NAMES)
     guide = tools["knowledge"]
     assert guide.annotations is not None
     assert guide.annotations.read_only_hint is True

@@ -17,10 +17,12 @@ from tm_app.interface.mcp.constants import (
     GPT_TO_MCP_TOOLS,
     MCP_NATIVE_TOOLS,
     MCP_PREDEFINED_CLIENT_ID,
+    FILE_TRANSPORT_TOOL_CLASS,
     MCP_TOOL_NAMES,
     MCP_V2_REMOVED_TOOLS,
     TEO_MCP_SURFACE,
     TOOL_CLASS,
+    V3_SEMANTIC_TOOL_NAMES,
     V3_TOOL_TO_GPT_OPS,
 )
 from tm_app.interface.mcp.oauth_contract import (
@@ -102,7 +104,9 @@ def test_tool_parity_with_gpt_actions_operation_ids() -> None:
     assert MCP_V2_REMOVED_TOOLS.isdisjoint(TOOL_CLASS)
     # Gate: no capability loss — every Actions op still has a route.
     assert len(GPT_ACTIONS_OPERATION_IDS) == len(GPT_TO_MCP_TOOLS)
-    assert len(MCP_TOOL_NAMES) == 6
+    assert set(MCP_TOOL_NAMES) == V3_SEMANTIC_TOOL_NAMES | set(
+        FILE_TRANSPORT_TOOL_CLASS
+    )
 
 
 def test_security_schemes_have_no_rbac_codes() -> None:
@@ -117,9 +121,10 @@ def test_list_tools_exposes_semantic_v3_only() -> None:
     tools = asyncio.run(mcp.list_tools())
     names = [t.name for t in tools]
     assert set(names) == set(MCP_TOOL_NAMES)
-    # SEMANTIC_V3_ONLY: exactly the six semantic tools — the 22 V2
-    # family names are tombstoned, never discoverable.
-    assert len(names) == 6
+    # Six semantic tools, plus the held file-transport adapter.
+    # V2 family names stay tombstoned.
+    assert V3_SEMANTIC_TOOL_NAMES <= set(names)
+    assert set(FILE_TRANSPORT_TOOL_CLASS) <= set(names)
     for v3_name in ("get_context", "read", "analyze", "knowledge",
                     "execute", "delete"):
         assert v3_name in names

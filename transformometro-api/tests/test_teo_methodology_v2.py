@@ -420,7 +420,9 @@ def test_unknown_context_facts_ignored_not_fatal() -> None:
 def test_mcp_tool_projects_version_and_intent() -> None:
     mcp = create_mcp_server()
     tools = {t.name: t for t in asyncio.run(mcp.list_tools())}
-    assert len(tools) == 6  # SEMANTIC_V3_ONLY (#124 — final cutover)
+    from tm_app.interface.mcp.constants import MCP_TOOL_NAMES
+
+    assert set(tools) == set(MCP_TOOL_NAMES)
     guide = tools["knowledge"]
     props = guide.input_schema["properties"]
     # Methodology version/intent ride inside the source-scoped params

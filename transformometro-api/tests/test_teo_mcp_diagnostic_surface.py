@@ -63,11 +63,13 @@ from tm_app.application.gpt_actions.openapi_builder import (
     GPT_ACTIONS_OPERATION_IDS,
 )
 from tm_app.interface.mcp.constants import (
+    FILE_TRANSPORT_TOOL_CLASS,
     GPT_TO_MCP_TOOLS,
     MCP_NATIVE_TOOLS,
     MCP_TOOL_NAMES,
     PREPARE_TOOL_CAPABILITY,
     TOOL_CLASS,
+    V3_TOOL_CLASS,
 )
 from tm_app.interface.mcp.server import create_mcp_server
 from tm_app.interface.mcp import tool_bridge as bridge
@@ -269,8 +271,12 @@ class TestSurfaceRegistration:
         }
 
     def test_execute_and_delete_are_the_only_act_tools(self):
-        act_tools = sorted(n for n, c in TOOL_CLASS.items() if c == "ACT")
-        assert act_tools == ["delete", "execute"]
+        semantic_act = sorted(n for n, c in V3_TOOL_CLASS.items() if c == "ACT")
+        assert semantic_act == ["delete", "execute"]
+        public_act = sorted(n for n, c in TOOL_CLASS.items() if c == "ACT")
+        assert public_act == sorted(
+            [*semantic_act, *FILE_TRANSPORT_TOOL_CLASS]
+        )
 
     def test_no_diagnostic_act_or_generic_executor(self):
         forbidden = {

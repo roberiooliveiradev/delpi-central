@@ -717,7 +717,7 @@
           "HELPDESK_DEMAND_GATE",
           "read(action=ticket) — estado atual antes de mutar; delete_ticket exige ticket resolvido de forma única (nunca apagar por referência vaga)",
           "catalogs relevantes (users purpose=assignee, categories, ...) — nunca inferir ids",
-          "execute(action=...) - delete_ticket|unlink_glpi_session sempre confirm_before_act; upload_attachment usa o file entregue pelo host (fileParams) - nunca URL/path arbitrario",
+          "execute(capability=helpdesk_upload_attachment, args={ticket_id, title?}, file=objeto fileParams do host) é o caminho semântico do anexo. A tool pública helpdesk_upload_attachment permanece porque o binding do arquivo no execute ainda não foi comprovado no ChatGPT; use-a quando o host não hidratar file em execute. Nunca URL, path ou base64",
           "EXECUTION_CONTRACT_GATE",
           "execute — único ACT",
           "read(action=ticket|session) — read-back autoritativo",
@@ -1142,7 +1142,8 @@
       ],
       "mcp_tools": [
         "read",
-        "execute"
+        "execute",
+        "helpdesk_upload_attachment"
       ],
       "pipeline": [
         "read(action=ticket) current state before mutation",
