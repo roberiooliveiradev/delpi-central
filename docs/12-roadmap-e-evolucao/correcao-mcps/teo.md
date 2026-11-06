@@ -34,3 +34,7 @@
 
 ## Gates para implementação
 Inventariar repositório, arquivos responsáveis, consumidores e SHA antes do diff; usar menor alteração; testes, residual search e relatório `TRANSFORMÔMETRO EXECUTION REPORT`. Não editar GPT Builder/OpenAPI/Knowledge por reflexo: apenas quando seu artefato realmente mudou.
+## Reconciliação com fontes existentes (GitHub, 2026-11-06)
+- **PROVEN (código):** transformometro-api/tm_app/persona/teo_profile.py → tm_app/content/teo_agent_intelligence.json; acrônimo já presente na fonte.
+- Contrato já implementado: `shared/delpi_character_profiles` (estrutura), ficha owner-local (conteúdo), projeção no serviço do MCP (consumer). **Não criar uma segunda ficha nem registry em shared.**
+- Referência cruzada: [Inventário de fontes existentes](./INVENTARIO-FONTES-EXISTENTES.md). Validação de runtime, deploy e testes permanece **TEST_NOT_RUN/TO_INVENTORY** nesta auditoria.
