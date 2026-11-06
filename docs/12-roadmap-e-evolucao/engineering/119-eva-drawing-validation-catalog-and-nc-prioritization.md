@@ -1348,3 +1348,11 @@ O histórico de revisão da mesma página não cita esses códigos. `10081389` �
 **Teste:** `test_async_benchmark_offload` prova progresso de coroutine concorrente durante benchmark bloqueante. 137/137 + 1 novo.
 
 **Prod:** `5a9b86c6d2` healthy. Reteste consumidor: job `drawing_understanding` 90264017 → polls devem retornar `RUNNING` durante OCR (não mais erro interno).
+
+## 42. DEC-VAL-036 — multipage OCR: batch isolation por faixa de páginas
+
+**Causa-raiz (confirmada):** o `visual_worker` processava TODAS as 14 páginas num único filho (RLIMIT_AS=12GB). `RuntimeError` transitório (p5) → reset `_engine=None` sem liberar memória nativa Paddle → cada `model_load` seguinte alocava engine novo no mesmo address-space → `MemoryError` em cascata (páginas 6–14).
+
+**Correção (`8dad962414`/`216ee5fd8d`):** `page_start`/`page_end` aditivos no contrato `drawing_ocr_execution.v1`; `run_visual_benchmark` itera batches de `ENG_DRAWING_OCR_PAGE_BATCH` (default 4) em filhos separados — cada filho morre devolvendo nativo ao OS; `_merge_isolated_records` recompõe páginas por número absoluto, proveniência/bboxes/status; `coverage_status` FULL/PARTIAL/NONE aditivo nos records. Campo `coverage_status` no `page_coverage` MCP fica local (aguarda commit do WIP PRC no mesmo arquivo).
+
+**Testes:** 200/201 + 35/35 (isolation, benchmark, jobs, mcp, r7). Prod `216ee5fd8d` healthy. Reteste: 14/14 páginas tentadas; falha num batch não derruba o seguinte.

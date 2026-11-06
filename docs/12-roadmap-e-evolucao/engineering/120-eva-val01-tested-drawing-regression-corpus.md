@@ -272,3 +272,7 @@ Diagnóstico: job RUNNING virou erro no poll por store process-local (restart à
 ## Log adicional — 2026-11-06 (event loop — offload asyncio.to_thread)
 
 Forense: `proc.communicate` síncrono no loop congelava a API inteira durante OCR isolado. Fix `5a9b86c6d2`: benchmarks via `to_thread`. Prod healthy. Reteste consumidor pendente — polls RUNNING durante OCR é o aceite funcional.
+
+## Log adicional — 2026-11-06 (multipage OCR lifecycle — batch isolation)
+
+Sequência 4-OK→RuntimeError→9×MemoryError: um filho só com RLIMIT_AS 12GB + reset de engine sem liberação nativa. Fix `216ee5fd8d`: batches de 4 páginas por filho (memória devolvida por morte do processo) + merge determinístico + coverage_status. Deploy healthy. Regressão 13 PDFs pendente no consumidor.
