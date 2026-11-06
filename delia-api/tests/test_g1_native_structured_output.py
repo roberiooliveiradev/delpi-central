@@ -1437,3 +1437,61 @@ def test_agent_error_log_never_leaks_exception_content(caplog):
         "investigation_clarification_required",
         None,
     )
+
+
+# ------------------------------------------------------------------
+# R3 — model-declared unmet obligations vs verified evidence
+# ------------------------------------------------------------------
+
+
+def test_unmet_declared_contradicted_by_complete_bound_evidence():
+    """COMPLETE + every ref bound to business evidence makes a declared
+    unmet_obligation self-contradictory — overridden, never relayed."""
+    terminal = _terminal()
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.COMPLETE,
+        answer="synthesized",
+        evidence_refs=(0,),
+        unmet_obligations=("description of product 50220013",),
+    )
+    out = _apply_declared_answer(
+        terminal=terminal,
+        declared_answer=declared,
+        collected=(_attempt(),),
+        plan=None,
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert not any(
+        str(lim).startswith("declared_unmet_obligation:")
+        for lim in out.limitations
+    )
+    assert "declared_unmet_overridden" in out.limitations
+
+
+def test_unmet_declared_preserved_when_answer_is_incomplete():
+    """An INCOMPLETE self-report stays honest — without provable
+    coverage the declared unmet obligation is the only signal and must
+    not be hidden."""
+    terminal = _terminal()
+    declared = InvestigationAnswer(
+        schema_version="1",
+        status=InvestigationAnswerStatus.PARTIAL,
+        answer="partial",
+        evidence_refs=(0,),
+        unmet_obligations=("second product not consulted",),
+    )
+    out = _apply_declared_answer(
+        terminal=terminal,
+        declared_answer=declared,
+        collected=(_attempt(),),
+        plan=None,
+        correlation="c1",
+        unbound_outcome=None,
+    )
+    assert any(
+        str(lim).startswith("declared_unmet_obligation:")
+        for lim in out.limitations
+    )
+    assert "declared_unmet_overridden" not in out.limitations

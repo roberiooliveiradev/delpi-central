@@ -39,6 +39,7 @@ from app.application.capability_provision.generic_evidence_renderer import (
     MAX_RENDER_LIST_ITEMS,
     parse_temporal_value,
     _CONTROL_PLANE_KEYS,
+    _IDENTITY_FIRST_KEYS,
     _RESOLVER_ENVELOPE_KEYS,
     _UUID_VALUE_RE,
     _canonical_key,
@@ -358,7 +359,15 @@ def _format_structured(
         return []
     if isinstance(node, Mapping):
         lines: list[str] = []
-        for key, value in node.items():
+        # Presentation ordering only — business-identity fields lead,
+        # technical metadata follows; every owner field still renders.
+        ordered = sorted(
+            node.items(),
+            key=lambda kv: 0
+            if _canonical_key(kv[0]) in _IDENTITY_FIRST_KEYS
+            else 1,
+        )
+        for key, value in ordered:
             key = str(key)
             canon = _canonical_key(key)
             # Owner control-plane metadata (agent directives, the
@@ -405,7 +414,12 @@ def _format_list(
     for item in items:
         if isinstance(item, Mapping):
             first = True
-            for key, value in item.items():
+            for key, value in sorted(
+                item.items(),
+                key=lambda kv: 0
+                if _canonical_key(kv[0]) in _IDENTITY_FIRST_KEYS
+                else 1,
+            ):
                 canon = _canonical_key(key)
                 if canon in _CONTROL_PLANE_KEYS:
                     continue
@@ -594,7 +608,12 @@ def _md_format_list(
     for item in items:
         if isinstance(item, Mapping):
             first = True
-            for key, value in item.items():
+            for key, value in sorted(
+                item.items(),
+                key=lambda kv: 0
+                if _canonical_key(kv[0]) in _IDENTITY_FIRST_KEYS
+                else 1,
+            ):
                 canon = _canonical_key(key)
                 if canon in _CONTROL_PLANE_KEYS:
                     continue

@@ -252,6 +252,14 @@ def _render_node(
     presented = 0
     if isinstance(value, Mapping):
         members = list(value.items())
+        # Presentation ordering only: business-identity fields render
+        # before technical metadata so the answer leads with the
+        # entity's name/description — every owner field still renders.
+        members.sort(
+            key=lambda kv: 0
+            if _canonical_key(kv[0]) in _IDENTITY_FIRST_KEYS
+            else 1
+        )
         for index, (key, child) in enumerate(members):
             if not budget.consume():
                 budget.omit(
@@ -399,6 +407,16 @@ def _comparison_records(
 
 
 _EVIDENCE_DROPPED_KEYS = frozenset({"example", "examples"})
+
+# Canonical business-identity keys rendered ahead of technical
+# metadata (presentation order only — never a data drop). Owner
+# attributes like revision/access role still render, just later.
+_IDENTITY_FIRST_KEYS = frozenset(
+    {
+        "name", "nome", "title", "titulo", "label",
+        "descricao", "description", "code", "codigo",
+    }
+)
 
 
 MAX_EVIDENCE_SCALAR_LIST = 48

@@ -101,6 +101,7 @@ from app.application.interaction.pending_proposals import (
 from app.application.model_invocation.contracts import (
     ConversationContextTurn,
     ModelInvocationRequest,
+    TurnKind,
 )
 from app.application.interaction.turn_budget import (
     DEFAULT_TURN_BUDGET_SECONDS,
@@ -2266,11 +2267,39 @@ def _apply_declared_answer(
         else:
             dropped_refs.append(f"evidence_ref_unbound:{index}")
 
-    extra_limitations = list(dropped_refs)
-    extra_limitations.extend(
-        f"declared_unmet_obligation:{item}"
-        for item in declared_answer.unmet_obligations[:8]
+    # Declared unmet obligations are model self-report — untrusted.
+    # When the typed plan exists and deterministic coverage proves
+    # every material obligation SATISFIED, a declared unmet item
+    # contradicts verified evidence and must not surface as a
+    # limitation; it is recorded once as an overridden declaration.
+    declared_complete_answer = (
+        declared_answer.status is InvestigationAnswerStatus.COMPLETE
     )
+    declared_unmet_overridden = False
+    if declared_answer.unmet_obligations and business:
+        if plan is not None and plan.evidence_needed:
+            coverage = _evaluate_material_obligations(
+                obligations=plan.evidence_needed,
+                business=business,
+            )
+            declared_unmet_overridden = all(
+                state == OBLIGATION_SATISFIED
+                for _, state in coverage
+            )
+        elif declared_complete_answer and not dropped_refs:
+            # COMPLETE + every declared ref bound to verified business
+            # evidence is self-contradictory with an unmet obligation —
+            # overridden, never relayed as a real limitation.
+            declared_unmet_overridden = True
+
+    extra_limitations = list(dropped_refs)
+    if declared_unmet_overridden:
+        extra_limitations.append("declared_unmet_overridden")
+    else:
+        extra_limitations.extend(
+            f"declared_unmet_obligation:{item}"
+            for item in declared_answer.unmet_obligations[:8]
+        )
     extra_limitations.extend(
         f"declared_limitation:{item}"[:200]
         for item in declared_answer.limitations[:8]
