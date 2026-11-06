@@ -202,3 +202,19 @@ servido sem script/img.
 mostre o componente 'TÉO — Teste visual'". Se o texto mínimo falhar →
 o bloqueio está no host/contrato (cenário 1); se passar → avançar para
 miniatura `data:` embutida (exp B). ChatGPT: `TEST_NOT_RUN`.
+
+## MCP IMAGE DELIVERY V3 (2026-11-06) — descontinuação do MCP Apps
+
+**Decisão:** a estratégia MCP Apps `ui://` (V2–V2.4) não renderiza no
+ChatGPT — até o componente texto mínimo (`text-v1`) excedeu o tempo
+limite. Backend provado; host não suporta a superfície nesta conexão.
+**Removido (TÉO only):** `show_avatar`, `show_avatar_diagnostic`,
+resources `ui://delpi/teo/*`, `delpi_mcp/avatar_ui.py`, handlers e
+entradas de registry. **Preservado:** `read(entity=avatar,action=get)`
+→ `[TextContent, ImageContent]` nos 6 MCPs + `delpi_mcp.avatar_image`
++ `avatar_distribution` + rotas públicas.
+**Runtime:** tools = `[analyze,delete,execute,get_context,knowledge,
+read]`; resources vazio; `read(avatar)` → ImageContent OK.
+**ChatGPT visual:** `TEST_NOT_RUN` — reteste: "TÉO, mostre seu avatar"
+deve acionar `read(entity=avatar)` e renderizar o PNG nativamente pelo
+host (entrega de bytes governada; apresentação é do ChatGPT).
