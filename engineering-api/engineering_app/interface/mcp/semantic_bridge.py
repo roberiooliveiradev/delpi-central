@@ -772,6 +772,7 @@ async def _analyze_product_drawing(
                     "progressive": bool(
                         params.get("progressive_investigation")
                     ),
+                    "table_perception": "native_slanet_v1",
                 },
                 sort_keys=True,
                 default=str,
@@ -1286,6 +1287,31 @@ def _structure_codes(payload: dict) -> list[str]:
     return codes
 
 
+def _table_engine_summary(result: dict) -> dict:
+    table = (result.get("tables") or [{}])[0]
+    cells = result.get("cells") or []
+    render = result.get("render") or {}
+    return {
+        "provider_id": result.get("provider_id"),
+        "model_version": result.get("model_version"),
+        "executed": not result.get("error_kind"),
+        "error_kind": result.get("error_kind"),
+        "structure_score": table.get("structure_score"),
+        "structure_consistent": table.get("structure_consistent"),
+        "row_count": table.get("row_count"),
+        "cells": cells,
+        "cell_count": len(cells),
+        "cells_with_text": sum(
+            1 for cell in cells if cell.get("normalized_text")
+        ),
+        "requested_page": render.get("requested_page"),
+        "processed_page": render.get("processed_page"),
+        "pdf_sha_match": result.get("pdf_sha_match"),
+        "duration_ms": result.get("duration_ms"),
+        "state": "CANDIDATE_GENERATED",
+    }
+
+
 async def _produce_drawing_understanding(context, code: str):
     """Produção compartilhada de evidência visual (R12.1) — caso de uso
     interno do bridge, NÃO um handler MCP. Chamável por composição
@@ -1444,45 +1470,68 @@ async def _produce_drawing_understanding(context, code: str):
     except Exception:
         _pdf_bytes = None
     try:
+        from engineering_app.application.drawing.understanding import (
+            apply_native_table_observations,
+        )
         from engineering_app.infrastructure.extraction.engine_adapters import (
             TableStructureEngine,
         )
 
-        _tbl_box = (
-            understanding.get("component_table") or {}
-        ).get("box") or None
-        _sl = TableStructureEngine().run(
-            bytes(_pdf_bytes) if _pdf_bytes else b"",
-            document_hash_sha256=best.get("document_hash") or "",
-            product_code=code,
-            crop_box=_tbl_box,
-        )
-        understanding["table_structure_engines"] = [
-            {
-                "provider_id": _sl.get("provider_id"),
-                "model_version": _sl.get("model_version"),
-                "executed": not _sl.get("error_kind"),
-                "error_kind": _sl.get("error_kind"),
-                "structure_score": (
-                    (_sl.get("tables") or [{}])[0].get("structure_score")
-                    if _sl.get("tables")
-                    else None
-                ),
-                "row_count": (
-                    (_sl.get("tables") or [{}])[0].get("row_count")
-                    if _sl.get("tables")
-                    else None
-                ),
-                "cells": _sl.get("cells"),
-                "cell_count": len(_sl.get("cells") or []),
-                "cells_with_text": sum(
-                    1 for c in (_sl.get("cells") or [])
-                    if c.get("normalized_text")
-                ),
-                "duration_ms": _sl.get("duration_ms"),
-                "state": "CANDIDATE_GENERATED",
-            }
+        _engine = TableStructureEngine()
+        _regions = [
+            region for region in (understanding.get("regions") or [])
+            if region.get("type") in {"component_table", "title_block"}
+            and region.get("box_px")
         ]
+        _regions.sort(
+            key=lambda region: 0
+            if region.get("type") == "component_table" else 1
+        )
+        _observations = []
+        _summaries = []
+        if not _regions:
+            _sl = _engine.run(
+                bytes(_pdf_bytes) if _pdf_bytes else b"",
+                document_hash_sha256=best.get("document_hash") or "",
+                product_code=code,
+                pages=[1],
+                crop_box=None,
+                ocr_tokens=tokens,
+            )
+            _observations.append(
+                {
+                    "region_type": "component_table",
+                    "page": 1,
+                    "result": _sl,
+                }
+            )
+            _summaries.append(_table_engine_summary(_sl))
+        for region in _regions:
+            _page = int(region.get("page") or understanding.get("page") or 1)
+            _sl = _engine.run(
+                bytes(_pdf_bytes) if _pdf_bytes else b"",
+                document_hash_sha256=best.get("document_hash") or "",
+                product_code=code,
+                pages=[_page],
+                crop_box=region.get("box_px"),
+                ocr_tokens=[
+                    token for token in tokens
+                    if int(token.get("page") or 1) == _page
+                ],
+                expected_render_px=_render_by_page.get(_page),
+            )
+            _observations.append(
+                {
+                    "region_type": region.get("type"),
+                    "page": _page,
+                    "result": _sl,
+                }
+            )
+            _summaries.append(_table_engine_summary(_sl))
+        understanding = apply_native_table_observations(
+            understanding, _observations
+        )
+        understanding["table_structure_engines"] = _summaries
     except Exception as _sl_exc:
         understanding["table_structure_engines"] = [
             {
@@ -1586,7 +1635,11 @@ async def _analyze_drawing_understanding(
     ident = _drawing_job_owner_fingerprint(ctx)
     params_fp = _hl.sha256(
         _js.dumps(
-            {"kind": "product.drawing_understanding", "code": code},
+            {
+                "kind": "product.drawing_understanding",
+                "code": code,
+                "table_perception": "native_slanet_v1",
+            },
             sort_keys=True,
         ).encode()
     ).hexdigest()[:20]

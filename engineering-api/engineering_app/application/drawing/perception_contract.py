@@ -15,9 +15,15 @@ Princípios:
 from __future__ import annotations
 
 import hashlib
+import re
 from typing import Any, Protocol
 
 SCHEMA_VERSION = "drawing_perception_candidate.v1"
+# Identidade do job: uma observação nativa nova não reutiliza
+# COMPLETED produzido pela grade artificial anterior.
+TABLE_PERCEPTION_REVISION = "native_slanet_v1"
+TABLE_RENDER_DPI = 200
+TABLE_RENDER_SCALE = TABLE_RENDER_DPI / 72
 
 REGION_TYPES = frozenset(
     {
@@ -37,6 +43,8 @@ ERROR_KINDS = frozenset(
         "UNSUPPORTED_INPUT", "MODEL_NOT_PROVISIONED", "POLICY_DENIED",
         "TIMEOUT", "RESOURCE_LIMIT", "INVALID_PROVIDER_OUTPUT",
         "INCOMPLETE_COVERAGE", "UNAVAILABLE",
+        "NO_TABLE_REGION", "PAGE_NOT_IN_DOCUMENT", "INVALID_CROP",
+        "COORDINATE_MISMATCH",
     }
 )
 QUALITY_STATES = frozenset(
@@ -94,10 +102,14 @@ def make_cell(
     col_type: str | None = None,
     token_refs: list[int] | None = None,
     ambiguous: bool = False,
+    rowspan: int = 1,
+    colspan: int = 1,
 ) -> dict:
     return {
         "row": row,
         "col": col,
+        "rowspan": max(1, int(rowspan or 1)),
+        "colspan": max(1, int(colspan or 1)),
         "text": text,
         "normalized_text": " ".join((text or "").split()).strip(),
         "col_type": col_type,
@@ -264,4 +276,145 @@ def associate_tokens_to_cells(
         "conflicts": conflicts,
         "unassigned": unassigned,
         "method": "center_containment",
+    }
+
+
+def resolve_requested_page(
+    pages: list[int] | None, page_count: int
+) -> tuple[int | None, str | None]:
+    """Página 1-based a renderizar.
+
+    A omissão pede a página 1 e registra isso. Página fora do
+    documento não cai na página zero. Mais de uma página na mesma
+    chamada não é multipágina: só a primeira é processada e as
+    demais ficam para o chamador repetir a chamada.
+    """
+    if page_count < 1:
+        return None, "PAGE_NOT_IN_DOCUMENT"
+    if not pages:
+        requested = 1
+    else:
+        try:
+            requested = int(pages[0])
+        except (TypeError, ValueError):
+            return None, "PAGE_NOT_IN_DOCUMENT"
+    if requested < 1 or requested > page_count:
+        return None, "PAGE_NOT_IN_DOCUMENT"
+    return requested, None
+
+
+def validate_crop_box(
+    crop: list | None, width: float, height: float
+) -> str | None:
+    """Recorte em pixels da página. Ausência não vira recorte fixo."""
+    if crop is None:
+        return "NO_TABLE_REGION"
+    if not isinstance(crop, (list, tuple)) or len(crop) < 4:
+        return "INVALID_CROP"
+    try:
+        x1, y1, x2, y2 = (float(crop[0]), float(crop[1]), float(crop[2]), float(crop[3]))
+    except (TypeError, ValueError):
+        return "INVALID_CROP"
+    if x2 <= x1 or y2 <= y1:
+        return "INVALID_CROP"
+    if x1 < -1 or y1 < -1 or x2 > width + 1 or y2 > height + 1:
+        return "INVALID_CROP"
+    return None
+
+
+def render_matches_tokens(
+    image_size: tuple[int, int],
+    expected_size: tuple[int, int] | None,
+) -> bool:
+    """Largura, altura. Sem tamanho esperado não há o que contradizer."""
+    if not expected_size:
+        return True
+    width, height = image_size
+    expected_w, expected_h = expected_size
+    return abs(int(width) - int(expected_w)) <= 2 and abs(
+        int(height) - int(expected_h)
+    ) <= 2
+
+
+_SPAN_ATTR_RE = re.compile(
+    r'(rowspan|colspan)\s*=\s*"(\d+)"', re.IGNORECASE
+)
+
+
+def cells_from_html_structure(
+    structure: str | list | None, bboxes: list | None
+) -> dict:
+    """Topologia declarada pelo HTML do framework.
+
+    A ordem dos ``<td>`` acompanha a ordem dos bboxes. Rowspan e
+    colspan ocupam a grade. Conflito de span ou contagem divergente
+    permanece como limitação; a função não completa a grade.
+    """
+    if isinstance(structure, str):
+        html = structure
+    else:
+        html = "".join(str(part) for part in (structure or []))
+    boxes = list(bboxes or [])
+    limitations: list[str] = []
+    if not html.strip():
+        limitations.append("empty_structure")
+    occupied: dict[tuple[int, int], int] = {}
+    cells: list[dict] = []
+    row = -1
+    col_cursor = 0
+    td_index = 0
+    for match in re.finditer(r"</?tr\b|<td\b([^>]*)>", html, re.IGNORECASE):
+        tag = match.group(0)
+        if tag.lower().startswith("</tr"):
+            continue
+        if tag.lower().startswith("<tr"):
+            row += 1
+            col_cursor = 0
+            continue
+        attrs = match.group(1) or ""
+        if row < 0:
+            limitations.append("td_outside_row")
+            row = 0
+        spans = {
+            name.lower(): int(value)
+            for name, value in _SPAN_ATTR_RE.findall(attrs)
+        }
+        rowspan = max(1, spans.get("rowspan", 1))
+        colspan = max(1, spans.get("colspan", 1))
+        while (row, col_cursor) in occupied:
+            col_cursor += 1
+        conflict = False
+        for dr in range(rowspan):
+            for dc in range(colspan):
+                key = (row + dr, col_cursor + dc)
+                if key in occupied:
+                    conflict = True
+                    limitations.append("span_conflict")
+                occupied[key] = td_index
+        cells.append(
+            {
+                "row": row,
+                "col": col_cursor,
+                "rowspan": rowspan,
+                "colspan": colspan,
+                "bbox_index": td_index,
+                "span_conflict": conflict,
+            }
+        )
+        col_cursor += colspan
+        td_index += 1
+    if boxes and td_index != len(boxes):
+        limitations.append("bbox_count_mismatch")
+    if not cells and "empty_structure" not in limitations:
+        limitations.append("empty_structure")
+    # uma ocorrência de span_conflict basta
+    deduped: list[str] = []
+    for item in limitations:
+        if item not in deduped:
+            deduped.append(item)
+    return {
+        "cells": cells,
+        "limitations": deduped,
+        "td_count": td_index,
+        "consistent": not deduped,
     }

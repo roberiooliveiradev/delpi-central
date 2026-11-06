@@ -1131,6 +1131,8 @@ def build_understanding(
             ),
             "detection": "code_column_cluster + row_y_proximity",
             "confidence": "rule_based",
+            "box": list(table["box"]) if table and table.get("box") else None,
+            "topology_source": "token_cluster",
         },
         "identifier_candidates": fields,
         "code_contexts": code_contexts,
@@ -1238,6 +1240,8 @@ def build_document_understanding(
                     ct.get("unreliable_boundary")
                 ),
                 "col_types": ct.get("col_types") or {},
+                "box": ct.get("box"),
+                "topology_source": ct.get("topology_source") or "token_cluster",
             }
         )
         for r in ct.get("rows") or []:
@@ -1299,6 +1303,7 @@ def build_document_understanding(
         "tables_by_page": tables_by_page,
         "detection": "code_column_cluster + row_y_proximity (per page)",
         "confidence": "rule_based",
+        "topology_source": "token_cluster",
     }
 
     out: dict[str, Any] = {
@@ -1350,3 +1355,219 @@ def build_document_understanding(
         ],
     }
     return out
+
+
+def _cell_mixes_quantity_and_code(text: str) -> bool:
+    parts = _norm(text).split()
+    has_code = any(_CODE_FIND_RE.fullmatch(part) for part in parts)
+    has_quantity = any(
+        _NUM_RE.fullmatch(part) and not _CODE_FIND_RE.fullmatch(part)
+        for part in parts
+    )
+    return has_code and has_quantity
+
+
+def rows_from_native_cells(
+    cells: list[dict], *, page: int
+) -> tuple[list[dict], dict[str, str]]:
+    """Linhas do Understanding a partir da grade nativa.
+
+    O índice de linha é o do framework. Texto de uma célula com
+    rowspan permanece na linha âncora. Quantidade e código na mesma
+    célula não são separados: a associação de atributos fica
+    inconclusiva.
+    """
+    grouped: dict[int, list[dict]] = {}
+    for cell in cells:
+        grouped.setdefault(int(cell.get("row") or 0), []).append(cell)
+    header_row = None
+    header_score = 0
+    for row_index, row_cells in grouped.items():
+        score = sum(
+            1
+            for cell in row_cells
+            if _header_type(_norm(str(cell.get("text") or "")))
+        )
+        if score > header_score:
+            header_score = score
+            header_row = row_index
+    col_types: dict[int, str] = {}
+    if header_row is not None:
+        for cell in grouped[header_row]:
+            kind = _header_type(_norm(str(cell.get("text") or "")))
+            if kind:
+                col_types[int(cell.get("col") or 0)] = kind
+    content_counts: dict[int, Counter] = {}
+    for row_index, row_cells in grouped.items():
+        if row_index == header_row:
+            continue
+        for cell in row_cells:
+            col = int(cell.get("col") or 0)
+            bucket = content_counts.setdefault(col, Counter())
+            bucket["total"] += 1
+            if _CODE_RE.search(_norm(str(cell.get("text") or ""))):
+                bucket["codes"] += 1
+    for col, bucket in content_counts.items():
+        if bucket["total"] and bucket["codes"] / bucket["total"] >= 0.5:
+            col_types[col] = "component_code"
+    rows_out: list[dict] = []
+    for row_index in sorted(grouped):
+        if row_index == header_row:
+            continue
+        row_cells = sorted(
+            grouped[row_index], key=lambda cell: int(cell.get("col") or 0)
+        )
+        if not any(_norm(str(cell.get("text") or "")) for cell in row_cells):
+            continue
+        fields: dict[str, dict] = {}
+        published = []
+        inconclusive = False
+        for cell in row_cells:
+            text = _norm(str(cell.get("text") or ""))
+            col = int(cell.get("col") or 0)
+            kind = col_types.get(col)
+            mixed = _cell_mixes_quantity_and_code(text)
+            if mixed or cell.get("ambiguous"):
+                inconclusive = True
+            published.append(
+                {
+                    "text": text,
+                    "col": col,
+                    "row": row_index,
+                    "rowspan": cell.get("rowspan") or 1,
+                    "colspan": cell.get("colspan") or 1,
+                    "bounding_box_px": cell.get("bounding_box_px"),
+                    "col_type": kind,
+                    "page": page,
+                    "token_refs": cell.get("token_refs") or [],
+                    "ambiguous": bool(cell.get("ambiguous") or mixed),
+                }
+            )
+            if not kind or mixed:
+                continue
+            if kind not in fields:
+                fields[kind] = {
+                    "raw_text": text,
+                    "normalized_value": text,
+                    "bounding_box_px": cell.get("bounding_box_px"),
+                    "col": col,
+                    "association_method": "native_cell",
+                    "association_state": "FIELD_IDENTIFIED",
+                }
+            else:
+                # Outra célula da mesma classe não é fundida no campo.
+                # O texto permanece na célula; a associação fica
+                # inconclusiva em vez de virar uma ocorrência só.
+                inconclusive = True
+                fields[kind]["association_state"] = "FIELD_AMBIGUOUS"
+        rows_out.append(
+            {
+                "row": row_index,
+                "page": page,
+                "cells": published,
+                "fields": fields,
+                "col_types": {str(k): v for k, v in col_types.items()},
+                "item": fields.get("item", {}).get("normalized_value"),
+                "quantity": fields.get("quantity", {}).get(
+                    "normalized_value"
+                ),
+                "component_code": fields.get("component_code", {}).get(
+                    "normalized_value"
+                ),
+                "description": fields.get("description", {}).get(
+                    "normalized_value"
+                ),
+                "association_status": (
+                    "INCONCLUSIVE" if inconclusive else (
+                        "FIELD_IDENTIFIED" if fields else "UNRESOLVED"
+                    )
+                ),
+                "topology_source": "native_table_cells",
+            }
+        )
+    return rows_out, {str(k): v for k, v in col_types.items()}
+
+
+def apply_native_table_observations(
+    understanding: dict, observations: list[dict]
+) -> dict:
+    """Substitui linhas agrupadas quando a grade nativa tem texto.
+
+    Região que não é tabela de componentes fica só na observação
+    neutra. Grade sem texto, inconsistente ou com erro não apaga as
+    linhas já lidas e não fabrica parentesco.
+    """
+    table = dict(understanding.get("component_table") or {})
+    rows = list(table.get("rows") or [])
+    limitations = list(understanding.get("limitations") or [])
+    perceptions: list[dict] = []
+    replaced_pages: set[int] = set()
+    for obs in observations or []:
+        result = obs.get("result") or {}
+        render = result.get("render") or {}
+        page = int(obs.get("page") or render.get("processed_page") or 1)
+        native_cells = result.get("cells") or []
+        consistent = False
+        if result.get("tables"):
+            consistent = bool(
+                result["tables"][0].get("structure_consistent")
+            )
+        perceptions.append(
+            {
+                "region_type": obs.get("region_type"),
+                "page": page,
+                "processed_pages": result.get("processed_pages") or [],
+                "requested_pages": result.get("requested_pages") or [],
+                "pdf_sha_match": result.get("pdf_sha_match"),
+                "source_pdf_sha256": result.get("source_pdf_sha256"),
+                "render": result.get("render"),
+                "error_kind": result.get("error_kind"),
+                "structure_consistent": consistent,
+                "cells": native_cells,
+                "association": result.get("association"),
+                "limitations": result.get("limitations") or [],
+                "engineering_validated": False,
+            }
+        )
+        if obs.get("region_type") != "component_table":
+            continue
+        if result.get("error_kind") or not consistent:
+            limitations.append(
+                "table_perception:"
+                + str(result.get("error_kind") or "structure_incomplete")
+            )
+            continue
+        if not any(
+            _norm(str(cell.get("text") or "")) for cell in native_cells
+        ):
+            limitations.append("table_perception:structure_without_text")
+            continue
+        native_rows, col_types = rows_from_native_cells(
+            native_cells, page=page
+        )
+        if not native_rows:
+            limitations.append("table_perception:no_text_rows")
+            continue
+        rows = [
+            row for row in rows
+            if int(row.get("page") or page) != page
+        ]
+        rows.extend(native_rows)
+        replaced_pages.add(page)
+        per_page = dict(table.get("col_types") or {})
+        if per_page and all(isinstance(v, dict) for v in per_page.values()):
+            per_page[str(page)] = col_types
+            table["col_types"] = per_page
+        else:
+            table["col_types"] = col_types
+    table["rows"] = rows
+    table["row_count"] = len(rows)
+    table["perception_pages"] = sorted(replaced_pages)
+    if replaced_pages:
+        table["topology_source"] = "native_table_cells"
+        table["detection"] = "native_table_cells"
+    updated = dict(understanding)
+    updated["component_table"] = table
+    updated["table_perception"] = perceptions
+    updated["limitations"] = limitations
+    return updated

@@ -13,10 +13,16 @@ import time
 from typing import Any
 
 from engineering_app.application.drawing.perception_contract import (
+    TABLE_RENDER_DPI,
+    TABLE_RENDER_SCALE,
     capability_descriptor,
+    cells_from_html_structure,
     make_cell,
     make_region,
     make_result,
+    render_matches_tokens,
+    resolve_requested_page,
+    validate_crop_box,
 )
 
 
@@ -483,6 +489,43 @@ class DoclingEngine:
 ENGINES["docling"] = DoclingEngine()
 
 
+def _open_pdf_document(pdf_bytes: bytes):
+    """Abre o PDF. O chamador fecha o documento e remove o arquivo."""
+    import tempfile
+
+    import pypdfium2 as pdfium
+
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as handle:
+        handle.write(pdf_bytes)
+        tmp = handle.name
+    return pdfium.PdfDocument(tmp), tmp
+
+
+def _render_page(pdf, page_index: int) -> dict:
+    import numpy as np
+
+    image = np.array(
+        pdf[page_index].render(scale=TABLE_RENDER_SCALE).to_pil()
+    )
+    return {"image": image, "page_index": page_index}
+
+
+def _predict_table_structure(crop):
+    from paddleocr import TableStructureRecognition
+
+    return TableStructureRecognition().predict(input=crop)
+
+
+def _offset_box(box, origin_x: float, origin_y: float):
+    if not box:
+        return None
+    values = [float(v) for v in box]
+    return [
+        value + (origin_x if index % 2 == 0 else origin_y)
+        for index, value in enumerate(values)
+    ]
+
+
 class TableStructureEngine:
     """Motor D — PaddleOCR TableStructureRecognition (SLANet) isolado.
 
@@ -500,10 +543,46 @@ class TableStructureEngine:
                 "pdf_native": False, "ocr": False, "layout": False,
                 "tables": True, "cells": True, "figures": False,
                 "symbols": False, "coords": True, "multipage": False,
-                "page_select": False, "local": True, "gpu_required": False,
+                "page_select": True, "local": True, "gpu_required": False,
                 "graphic_primitives": False,
             },
-            notes=["SLANet — estrutura de tabela sobre crop da regiao"],
+            notes=[
+                "SLANet — uma página por chamada, crop da região, "
+                "rowspan/colspan do HTML nativo"
+            ],
+        )
+
+    def _fail(
+        self,
+        document_hash_sha256: str,
+        product_code: str | None,
+        error_kind: str,
+        detail: str,
+        started: float,
+        *,
+        total_pages: int = 1,
+        pages: list[int] | None = None,
+        width: float | None = None,
+        height: float | None = None,
+    ) -> dict:
+        return make_result(
+            provider_id=self.provider_id,
+            provider_version="slanet_7.67MB",
+            document_hash_sha256=document_hash_sha256,
+            product_code=product_code,
+            model_version="SLANet",
+            execution_mode="local_isolated",
+            page_width_px=width,
+            page_height_px=height,
+            dpi=TABLE_RENDER_DPI,
+            total_pages=total_pages,
+            requested_pages=pages or [1],
+            processed_pages=[],
+            failed_pages=pages or [],
+            error_kind=error_kind,
+            error_detail=detail,
+            quality_status="FAILED",
+            duration_ms=round((time.monotonic() - started) * 1000, 1),
         )
 
     def run(
@@ -514,102 +593,172 @@ class TableStructureEngine:
         product_code: str | None = None,
         pages: list[int] | None = None,
         crop_box: list | None = None,
+        ocr_tokens: list | None = None,
+        expected_render_px: tuple[int, int] | None = None,
     ) -> dict:
         t0 = time.monotonic()
         try:
             import os
-            import tempfile
 
-            import numpy as np
-            import pypdfium2 as pdfium
-            from paddleocr import TableStructureRecognition
-
-            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                f.write(pdf_bytes)
-                tmp = f.name
+            pdf, tmp_pdf = _open_pdf_document(pdf_bytes)
             try:
-                pdf = pdfium.PdfDocument(tmp)
-                img = np.array(pdf[0].render(scale=2.7778).to_pil())
+                page_count = len(pdf)
+                page, page_error = resolve_requested_page(pages, page_count)
+                if page_error:
+                    return self._fail(
+                        document_hash_sha256, product_code, page_error,
+                        "Página solicitada não existe neste PDF.",
+                        t0, total_pages=page_count, pages=pages,
+                    )
+                rendered = _render_page(pdf, page - 1)
             finally:
+                close = getattr(pdf, "close", None)
+                if callable(close):
+                    close()
                 try:
-                    os.unlink(tmp)
+                    os.unlink(tmp_pdf)
                 except OSError:
                     pass
-            cb = crop_box
-            if cb is None:
-                # Fail-closed: sem região de tabela detectada por
-                # evidência, coordenadas fixas fabricariam estrutura em
-                # área arbitrária da folha.
-                return make_result(
-                    provider_id=self.provider_id,
-                    provider_version="slanet_7.67MB",
-                    document_hash_sha256=document_hash_sha256,
-                    product_code=product_code,
-                    model_version="SLANet",
-                    execution_mode="local_isolated",
-                    error_kind="NO_TABLE_REGION",
-                    error_detail=(
-                        "Sem região de tabela detectada — recorte "
-                        "arbitrário removido (região deve derivar de "
-                        "evidência, não de coordenadas fixas)"
-                    ),
-                    quality_status="FAILED",
-                    duration_ms=round((time.monotonic() - t0) * 1000, 1),
+            img = rendered["image"]
+            height, width = int(img.shape[0]), int(img.shape[1])
+            if not render_matches_tokens(
+                (width, height), expected_render_px
+            ):
+                return self._fail(
+                    document_hash_sha256, product_code,
+                    "COORDINATE_MISMATCH",
+                    "Raster da página não coincide com o espaço dos tokens OCR.",
+                    t0, total_pages=page_count, pages=[page],
+                    width=width, height=height,
                 )
-            crop = img[cb[1] : cb[3], cb[0] : cb[2]]
-            # RQ-01: tokens OCR reais via pipeline governado (não só amostra)
-            from engineering_app.infrastructure.extraction.subprocess_executor import (  # noqa: E501
-                run_pipeline_isolated,
+            crop_error = validate_crop_box(crop_box, width, height)
+            if crop_error:
+                detail = (
+                    "Sem região de tabela detectada — recorte "
+                    "arbitrário removido (região deve derivar de "
+                    "evidência, não de coordenadas fixas)"
+                    if crop_error == "NO_TABLE_REGION"
+                    else "Recorte fora da página ou com ordenação inválida."
+                )
+                return self._fail(
+                    document_hash_sha256, product_code, crop_error, detail,
+                    t0, total_pages=page_count, pages=[page],
+                    width=width, height=height,
+                )
+            x1, y1, x2, y2 = (
+                int(round(float(crop_box[0]))),
+                int(round(float(crop_box[1]))),
+                int(round(float(crop_box[2]))),
+                int(round(float(crop_box[3]))),
             )
-            from engineering_app.application.drawing.perception_contract import (
-                associate_tokens_to_cells,
-            )
-            rec = run_pipeline_isolated(
-                pdf_bytes, pipeline_id="pdfium_render_paddleocr", timeout_s=190
-            )
-            ocr_tokens = rec.get("_tokens_sample") or []
-            eng = TableStructureRecognition()
-            out = eng.predict(input=crop)
+            crop = img[y1:y2, x1:x2]
+            if crop.size == 0:
+                return self._fail(
+                    document_hash_sha256, product_code, "INVALID_CROP",
+                    "Recorte vazio depois da conversão para pixels.",
+                    t0, total_pages=page_count, pages=[page],
+                    width=width, height=height,
+                )
+            if ocr_tokens is None:
+                from engineering_app.infrastructure.extraction.subprocess_executor import (  # noqa: E501
+                    run_pipeline_isolated,
+                )
+                rec = run_pipeline_isolated(
+                    pdf_bytes,
+                    pipeline_id="pdfium_render_paddleocr",
+                    timeout_s=190,
+                )
+                ocr_tokens = rec.get("_tokens_sample") or []
+            page_tokens = [
+                t for t in ocr_tokens
+                if isinstance(t, dict)
+                and (
+                    t.get("page") is None or int(t.get("page") or 0) == page
+                )
+            ]
+            out = _predict_table_structure(crop)
             tables = []
             cells = []
-            cell_bboxes = []
+            limitations = [
+                "candidates only",
+                "estrutura tabular sem texto — OCR associa depois",
+            ]
+            association = {
+                "unassigned": [],
+                "conflicts": [],
+                "method": "center_containment",
+            }
             for res in out or []:
                 r = res if isinstance(res, dict) else res.json
-                st = r.get("structure") or []
+                structure = r.get("structure") or []
+                raw_boxes = [
+                    _to_native(bb) for bb in (r.get("bbox") or [])
+                ]
+                parsed = cells_from_html_structure(structure, raw_boxes)
+                limitations.extend(parsed["limitations"])
+                page_boxes = [
+                    _offset_box(bb, x1, y1) for bb in raw_boxes
+                ]
+                from engineering_app.application.drawing.perception_contract import (  # noqa: E501
+                    associate_tokens_to_cells,
+                )
+                assoc = associate_tokens_to_cells(
+                    page_tokens, page_boxes, crop_offset=(0.0, 0.0)
+                )
+                association = {
+                    "unassigned": assoc.get("unassigned") or [],
+                    "conflicts": assoc.get("conflicts") or [],
+                    "method": assoc.get("method"),
+                }
+                html = (
+                    structure if isinstance(structure, str)
+                    else "".join(str(part) for part in structure)
+                )
                 tables.append(
                     {
-                        "row_count": st.count("<tr>"),
+                        "row_count": html.lower().count("<tr"),
                         "headers": [],
                         "structure_score": _to_native(
                             r.get("structure_score")
                         ),
+                        "structure_consistent": parsed["consistent"],
+                        "structure_limitations": parsed["limitations"],
                     }
                 )
-                for bb in r.get("bbox") or []:
-                    cell_bboxes.append(bb)
-            # RQ-02: associação OCR↔célula determinística
-            assoc = associate_tokens_to_cells(
-                ocr_tokens, cell_bboxes, crop_offset=(cb[0], cb[1])
-            )
-            cmap = assoc["cell_token_map"]
-            for i, bb in enumerate(cell_bboxes):
-                tis = cmap.get(str(i)) or []
-                text = " ".join(
-                    (ocr_tokens[ti].get("raw_text") or ocr_tokens[ti].get("normalized_text") or "")
-                    for ti in tis
-                    if ti < len(ocr_tokens)
-                ).strip()
-                cells.append(
-                    make_cell(
-                        row=i // 8,
-                        col=i % 8,
-                        text=text,
-                        bounding_box_px=list(bb) if bb else None,
-                        ambiguous=bool(
-                            any(c["token_index"] in tis for c in assoc["conflicts"])
-                        ),
+                cmap = assoc["cell_token_map"]
+                for spec in parsed["cells"]:
+                    bi = spec["bbox_index"]
+                    bb = page_boxes[bi] if bi < len(page_boxes) else None
+                    tis = cmap.get(str(bi)) or []
+                    text = " ".join(
+                        (
+                            page_tokens[ti].get("raw_text")
+                            or page_tokens[ti].get("normalized_text")
+                            or page_tokens[ti].get("text")
+                            or ""
+                        )
+                        for ti in tis
+                        if ti < len(page_tokens)
+                    ).strip()
+                    conflict_tokens = {
+                        c["token_index"] for c in assoc["conflicts"]
+                    }
+                    cells.append(
+                        make_cell(
+                            row=spec["row"],
+                            col=spec["col"],
+                            rowspan=spec["rowspan"],
+                            colspan=spec["colspan"],
+                            text=text,
+                            bounding_box_px=bb,
+                            token_refs=list(tis),
+                            ambiguous=bool(
+                                spec["span_conflict"]
+                                or any(ti in conflict_tokens for ti in tis)
+                            ),
+                        )
                     )
-                )
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
             _res = make_result(
                 provider_id=self.provider_id,
                 provider_version="slanet_7.67MB",
@@ -617,23 +766,51 @@ class TableStructureEngine:
                 product_code=product_code,
                 model_version="SLANet",
                 execution_mode="local_isolated",
+                page_width_px=float(width),
+                page_height_px=float(height),
+                dpi=TABLE_RENDER_DPI,
+                total_pages=page_count,
+                requested_pages=[page],
+                processed_pages=[page],
+                regions=[
+                    make_region(
+                        region_id="table_crop",
+                        region_type="table",
+                        page=page,
+                        bounding_box_px=[x1, y1, x2, y2],
+                        evidence=["caller_region"],
+                    )
+                ],
                 tables=tables,
                 cells=cells,
-                provenance="api-delpi pdf → render → table crop → SLANet → OCR-cell assoc → v1",
-                limitations=[
-                    "candidates only",
-                    "estrutura tabular sem texto — OCR associa depois",
-                ],
+                provenance=(
+                    "api-delpi pdf → page render → table crop → "
+                    "SLANet HTML → OCR-cell assoc → v1"
+                ),
+                limitations=limitations,
                 duration_ms=round((time.monotonic() - t0) * 1000, 1),
-                quality_status="EVAL_PENDING",
+                quality_status=(
+                    "PARTIAL" if any(
+                        item != "candidates only"
+                        and not str(item).startswith("estrutura tabular")
+                        for item in limitations
+                    ) else "EVAL_PENDING"
+                ),
             )
-            # DEC-VAL-034/FF-01 — a associação OCR↔célula era calculada
-            # e descartada; o relatório já lê association.unassigned /
-            # .conflicts. Propagar o que o framework produziu.
-            _res["association"] = {
-                "unassigned": assoc.get("unassigned") or [],
-                "conflicts": assoc.get("conflicts") or [],
+            _res["association"] = association
+            _res["render"] = {
+                "scale": TABLE_RENDER_SCALE,
+                "dpi": TABLE_RENDER_DPI,
+                "requested_page": page,
+                "processed_page": page,
+                "page_index": page - 1,
+                "coordinate_system": "pixels_top_left",
             }
+            _res["source_pdf_sha256"] = digest
+            _res["pdf_sha_match"] = (
+                digest == document_hash_sha256
+                if document_hash_sha256 else None
+            )
             return _res
         except ImportError as exc:
             return make_result(
