@@ -1,12 +1,12 @@
 # SURI — Plano de correção da ficha técnica e autoconhecimento
 
 **Inventário:** 2026-11-06
-**Estado:** levantamento/documentação; runtime e GPT não alterados. Acrônimo **não definido**, aguardando aprovação.
+**Estado:** acrônimo **APROVADO PELO USUÁRIO** para a documentação; publicação na identidade canônica do MCP/GPT **PENDING**. Runtime e GPT não alterados.
 
 ## Identidade e contrato observados (PROVEN)
 - Persona no catálogo: **SURI — Especialista em Suprimentos da Minha DELPI**.
 - Missão: ajudar no acompanhamento de compras, fornecedores, entregas e estoques com o mesmo escopo e acesso do usuário ao Portal Suprimentos.
-- **Acrônimo S-U-R-I: TO_INVENTORY / aprovação pendente**. Não publicar expansão inventada como oficial. Critério: representar compras, Suprimentos, fornecedores e/ou inteligência de abastecimento.
+- **Acrônimo aprovado em 2026-11-06 (DECISÃO DO USUÁRIO / TARGET): SURI — Suprimentos Unificados, Resultados e Inteligência.** S = Suprimentos; U = Unificados; R = Resultados; I = Inteligência. Representa integração das rotinas de Suprimentos, indicadores e análise de resultados. **Não é ainda um fato de runtime.**
 - MCP: `get_context`, `read`, `analyze`, `knowledge`, `execute` (cinco ferramentas; **não** exigir `delete` por padronização artificial).
 - `get_context(action=catalog)`: `catalog_version=16`; leitura de pedidos, solicitações, fornecedores, estoque, OTD, mercado, comércio exterior, usuário etc; 4 análises, `knowledge(search|get|sources)`; escrita por `execute` com entidades/ações explicitamente registradas.
 - `get_context(action=context)`: contexto do principal, capabilities e unidades autorizadas; **não é ficha de identidade nem AuthZ por si só**.
@@ -21,7 +21,7 @@ O item `suri.boundaries` diz textualmente que a versão não contém ferramentas
 ## Plano de correção
 | ID | Achado | Estado | Proposta |
 |---|---|---|---|
-| SURI-01 | Acrônimo não identificado no catálogo | TO_INVENTORY | Definir com o usuário nome que represente Suprimentos; atualizar fonte canônica e consumers após aceite |
+| SURI-01 | Catálogo ainda não expõe expansão oficial do acrônimo, agora aprovada pelo usuário | **APPROVED/TARGET; publicação PENDING** | Publicar exatamente **Suprimentos Unificados, Resultados e Inteligência** na fonte canônica de identidade e consumidores após inventário; testar resposta MCP/GPT |
 | SURI-02 | `suri.boundaries` afirma read-only apesar de catálogo com write | **FAIL de consistência**, PROVEN nas respostas consultadas | Localizar owner de `SURI-S1-CONTRACT-FREEZE.md`, versão corrente e corpus; corrigir orientação obsoleta sem apagar histórico, reindexar e testar |
 | SURI-03 | `get_context(context)` não expõe ficha de identidade | PROVEN, melhoria TARGET | Descoberta leve de identidade por fonte única, sem usar perfil do usuário como identidade do agente |
 | SURI-04 | Catalog/tool/knowledge não reconciliados para capacidades | TO_INVENTORY | Inventariar os cinco tools, entidades, actions, variantes de autorização e retorno; validar contratos e consumidores |
@@ -30,7 +30,7 @@ O item `suri.boundaries` diz textualmente que a versão não contém ferramentas
 | SURI-07 | Regras de execução e estado de resultado de fornecedor precisam ser distinguidas | TARGET | Explicar `confirmed/acknowledged/sent/rejected/indeterminate/replayed`; `indeterminate` precisa investigação, nunca retry cego |
 
 ## Critérios de aceite
-1. Perguntas "Quem é você?", "O que significa SURI?", "Quais ferramentas tem?", "Você cadastra fornecedores?", "Quais são seus limites?" são respondidas com fonte canônica e autorização correta.
+1. Perguntas "Quem é você?", "O que significa SURI?", "Quais ferramentas tem?", "Você cadastra fornecedores?", "Quais são seus limites?" são respondidas com fonte canônica e autorização correta. Após publicação, **"O que significa SURI?" deve responder exatamente "Suprimentos Unificados, Resultados e Inteligência"**.
 2. Knowledge não contradiz catálogo vivo; `suri.boundaries` é atualizado ou explicitamente classificado como histórico.
 3. `execute` de fornecedores é descrito corretamente, sem simular execução ou declarar persistência sem confirmação autoritativa.
 4. Resposta é proporcional ao pedido: entender/consultar/analisar/recomendar/escrever autorizado/resultado verificado são coisas distintas.
