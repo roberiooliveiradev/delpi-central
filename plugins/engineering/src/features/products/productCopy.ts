@@ -27,9 +27,15 @@ export const PRODUCT_COPY = {
 
 export const PRODUCT_HELP = {
   search:
-    "Busca no catálogo oficial (TOTVS SB1) por código, descrição, grupo, subgrupo, tipo ou referência do cliente.",
+    "Busca reativa no catálogo oficial (TOTVS SB1) — os filtros disparam a consulta automaticamente.",
   productType:
-    "Tipo do produto (SB1.B1_TIPO) — códigos de 2 caracteres separados por vírgula (ex.: MP,PI,PA).",
+    "Tipos do produto (SB1.B1_TIPO) — selecione um ou mais valores oficiais (ex.: MP, PI, PA).",
+  groups:
+    "Grupos do produto (SB1.B1_GRUPO) — selecione um ou mais códigos oficiais; a busca combina com OU.",
+  clearFilters:
+    "Remove todos os filtros e parâmetros da URL, restaurando a primeira página.",
+  nonInformativeDescription:
+    "Valor oficial gravado no cadastro (SB1.B1_DESC) sem conteúdo descritivo.",
   code: "Código DELPI do produto no catálogo oficial (SB1.B1_COD).",
   description: "Descrição cadastral do produto (SB1.B1_DESC).",
   type: "Tipo do produto no cadastro TOTVS (ex.: MP, PI, PA).",
@@ -67,6 +73,27 @@ export const PRODUCT_TYPE_LABELS: Record<string, string> = {
 export function productTypeLabel(type: string | null): string {
   if (!type) return "—";
   return PRODUCT_TYPE_LABELS[type] ?? type;
+}
+
+/** Descrições placeholder gravadas na fonte oficial (ex.: "#", "###")
+ * são exibidas como estão — sem inventar texto — mas sinalizadas como
+ * não informativas para a UI não as confundir com descrição real. */
+const NON_INFORMATIVE_DESCRIPTION = /^#+\s*$/;
+
+export type ProductDescriptionDisplay = {
+  text: string;
+  informative: boolean;
+};
+
+export function productDescriptionDisplay(
+  description: string | null | undefined,
+): ProductDescriptionDisplay {
+  const text = (description ?? "").trim();
+  if (!text) return { text: "—", informative: false };
+  if (NON_INFORMATIVE_DESCRIPTION.test(text)) {
+    return { text, informative: false };
+  }
+  return { text, informative: true };
 }
 
 export function formatProductDate(

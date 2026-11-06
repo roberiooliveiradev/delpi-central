@@ -1,12 +1,12 @@
 {
-  "version": "2026.11.06.3",
+  "version": "2026.11.06.4",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
   "actions_runtime": {
     "principle": "TRY_TOOL_BEFORE_CLAIMING_UNAVAILABLE",
     "rules": [
-      "Antes de dizer que não consegue consultar / tools indisponíveis: TENTAR neste turno discover_delpi_information (ou gpt_get_catalog) e a tool tipada.",
+      "Antes de dizer que não consegue consultar / tools indisponíveis: TENTAR neste turno get_context + tool semântica tipada (read/analyze/knowledge).",
       "Só declare indisponibilidade depois de falha REAL neste turno (tool error, timeout, 401/403/5xx) ou discovery com zero candidates elegíveis.",
       "401 → pedir reconectar OAuth / End-user account. 403 → AuthZ do usuário. Gap de capability → informar gap tipado — nunca fingir indisponibilidade geral."
     ],
@@ -19,7 +19,7 @@
     "principle": "SEMANTIC_TOOLS_FIRST_DISCOVER_FALLBACK",
     "rules": [
       "Known governed capability id (from get_context) → read for data, analyze for authorized reports/aggregates, knowledge for governed documentation.",
-      "Information need without a known capability → discover_delpi_information with a natural-language description.",
+      "Information need without a known capability → get_context(catalog) to select; broker only as fallback.",
       "Execute discovery candidates only via candidate_token returned by the current discover → execute_delpi_information.",
       "Product Master (code/description/group) via read(search_products) or discover→execute — no dedicated MCP tool.",
       "Search miss / zero candidates != proof of absence in the ERP — report the typed outcome.",
@@ -40,7 +40,7 @@
     ]
   },
   "modes": {
-    "QUICK_LOOKUP": "Consulta pontual (código/descrição/KPI) via discover→execute.",
+    "QUICK_LOOKUP": "Consulta pontual (código/descrição/KPI) via read/analyze.",
     "MULTI_SOURCE_RECONCILE": "Cruzar famílias READ elegíveis (estoque, estrutura, compras) sem inventar junções.",
     "EXPLAIN_GAP": "Capability ausente ou zero candidates → explicar gap tipado; não improvisar dados."
   },
@@ -58,7 +58,7 @@
   "surface_parity": {
     "mcp_tools": 6,
     "gpt_actions_legacy": 2,
-    "note": "Capability parity ≠ transport count. W1 semantic tools added: get_context + knowledge join discover_delpi_information + execute_delpi_information (governed broker preserved; read/analyze/execute/delete remain PLANNED_NOT_IMPLEMENTED). Product Master capability search_products remains behind discover→execute. Descriptive for the Agent, not alternate SoT (tool counts owned by MCP server / GPT façade). Same DaviAgentIntelligenceService. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only). Stock/BOM/shipping/etc. execute only via MCP discover→execute; gpt_get_catalog carries live directives, not those operations."
+    "note": "Capability parity ≠ transport count. W1 semantic tools added: get_context + knowledge join discover_delpi_information + execute_delpi_information (governed broker preserved; read/analyze/execute/delete remain PLANNED_NOT_IMPLEMENTED). Product Master capability search_products via read/analyze. Descriptive for the Agent, not alternate SoT (tool counts owned by MCP server / GPT façade). Same DaviAgentIntelligenceService. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only). Stock/BOM/shipping/etc. via MCP read/analyze; gpt_get_catalog carries live directives, not those operations."
   },
   "anti_patterns": [
     "Inventar estoque, preço, BOM, fornecedor ou status sem retorno de tool.",
@@ -89,6 +89,7 @@
         "authority": "ELIGIBILITY_AND_ARGUMENT_SCHEMA_NOT_BUSINESS_AUTHZ",
         "status": "PROVEN",
         "tools": [
+          "get_context",
           "discover_delpi_information"
         ]
       },
@@ -97,6 +98,8 @@
         "authority": "AUTHORITATIVE_ONLY_AFTER_BACKEND_AUTHZ_AND_SUCCESSFUL_READ",
         "status": "PROVEN",
         "tools": [
+          "read",
+          "analyze",
           "execute_delpi_information"
         ]
       },
@@ -169,7 +172,7 @@
         "directives": [
           "execution_posture"
         ],
-        "rule": "Conceito puro (MI, estoque físico/reservado): recuperar documento via read_governed_technical_knowledge (discover→execute); não descobrir uma action operacional por coincidência lexical. Se o tópico não estiver publicado no índice V1, informar gap."
+        "rule": "Conceito puro (MI, estoque físico/reservado): recuperar documento via read_governed_technical_knowledge (knowledge MCP tool; broker discover→execute = fallback); não descobrir uma action operacional por coincidência lexical. Se o tópico não estiver publicado no índice V1, informar gap."
       },
       "SIMPLE_DOMAIN_READ": {
         "required": [
@@ -187,7 +190,7 @@
           "discovery",
           "execution_posture"
         ],
-        "rule": "discover→execute; usar apenas retorno autorizado e completude."
+        "rule": "read/analyze; usar apenas retorno autorizado e completude."
       },
       "CONCEPT_AND_CURRENT_DATA": {
         "required": [
@@ -363,6 +366,7 @@
   "flows": {
     "product_master_search": {
       "mcp_tools": [
+        "read",
         "discover_delpi_information",
         "execute_delpi_information"
       ],
@@ -377,10 +381,12 @@
         "report_fields_returned"
       ],
       "confirmation_policy": "read_only",
-      "note": "MCP: Product Master via discover→execute only. GPT Actions gpt_search_products remains LEGACY_TRANSITIONAL on a separate transport."
+      "note": "MCP: Product Master via read/analyze. GPT Actions gpt_search_products remains LEGACY_TRANSITIONAL on a separate transport."
     },
     "stock_and_supply": {
       "mcp_tools": [
+        "read",
+        "analyze",
         "discover_delpi_information",
         "execute_delpi_information"
       ],
@@ -411,10 +417,11 @@
         "supplies.inventory.accuracy",
         "supplies.stock.non_moving"
       ],
-      "note": "Inventory & Material Flow: discover→execute; backend é autoridade. Movimentação kind: warehouse_transfer | inventory_adjustment | production_receipt | production_consumption; não classificar por TM/CF bruto. Ajustes: get_supplies_inventory_adjustments_summary (agregado), list_supplies_inventory_adjustments (detalhe). Sem nature explícita: summary.net_value = surplus_value - shortage_value; reportar surplus_value, shortage_value, gross_value = surplus_value + shortage_value, quantidades e contagens. net_value positivo = sobra líquida; negativo = furo líquido; nunca apresente gross_value como líquido. Pedido de furo → nature=shortage; pedido de sobra → nature=surplus. INVENT nunca é transferência. committed_quantity/reserved_quantity = empenho/reserva; estimation.* em supplies.stock.value informa método/fechamento SB9; expor data_quality_warning. Perdas: loss_type=refugo|scrap|both. Acuracidade: get_supplies_inventory_accuracy_summary/items (contagens oficiais), não ajustes. Sem giro: get_supplies_non_moving_stock_summary/items, não valor de estoque isolado. Validar resumo/detalhe com mesmo período/filiais; declarar filtros exclusivos e paginação parcial. Sem giro usa snapshot atual SB2 com janela histórica de consumo; histórico insuficiente não é sem giro. Erro não é lista vazia. Sem cálculo local por TM/CF, inferência de permissão ou SQL genérico."
+      "note": "Inventory & Material Flow: read/analyze; backend é autoridade. Movimentação kind: warehouse_transfer | inventory_adjustment | production_receipt | production_consumption; não classificar por TM/CF bruto. Ajustes: get_supplies_inventory_adjustments_summary (agregado), list_supplies_inventory_adjustments (detalhe). Sem nature explícita: summary.net_value = surplus_value - shortage_value; reportar surplus_value, shortage_value, gross_value = surplus_value + shortage_value, quantidades e contagens. net_value positivo = sobra líquida; negativo = furo líquido; nunca apresente gross_value como líquido. Pedido de furo → nature=shortage; pedido de sobra → nature=surplus. INVENT nunca é transferência. committed_quantity/reserved_quantity = empenho/reserva; estimation.* em supplies.stock.value informa método/fechamento SB9; expor data_quality_warning. Perdas: loss_type=refugo|scrap|both. Acuracidade: get_supplies_inventory_accuracy_summary/items (contagens oficiais), não ajustes. Sem giro: get_supplies_non_moving_stock_summary/items, não valor de estoque isolado. Validar resumo/detalhe com mesmo período/filiais; declarar filtros exclusivos e paginação parcial. Sem giro usa snapshot atual SB2 com janela histórica de consumo; histórico insuficiente não é sem giro. Erro não é lista vazia. Sem cálculo local por TM/CF, inferência de permissão ou SQL genérico."
     },
     "structure_bom": {
       "mcp_tools": [
+        "read",
         "discover_delpi_information",
         "execute_delpi_information"
       ],
@@ -430,6 +437,7 @@
     },
     "product_master_extensions": {
       "mcp_tools": [
+        "read",
         "discover_delpi_information",
         "execute_delpi_information"
       ],
@@ -452,7 +460,7 @@
         "report_or_gap"
       ],
       "confirmation_policy": "read_only",
-      "note": "Product Master extended READs via discover→execute only; semantic capabilities are catalog metadata, not endpoints/operationIds/tools. product.invoice.history resolves direction semanticamente: entrada → inbound, saída → outbound — nunca aceite selector arbitrário do caller. Local físico != saldo em estoque; bloqueio de inventário != disponibilidade; pedidos de venda em aberto != pedidos de compra / ordens de produção; NF de entrada/saída != relatório financeiro; movimentação interna != faturamento; part number do fornecedor != histórico de preço. Zero linhas / agregado zero = resposta canônica, nunca prova de inexistência do produto."
+      "note": "Product Master extended READs via read/analyze; semantic capabilities are catalog metadata, not endpoints/operationIds/tools. product.invoice.history resolves direction semanticamente: entrada → inbound, saída → outbound — nunca aceite selector arbitrário do caller. Local físico != saldo em estoque; bloqueio de inventário != disponibilidade; pedidos de venda em aberto != pedidos de compra / ordens de produção; NF de entrada/saída != relatório financeiro; movimentação interna != faturamento; part number do fornecedor != histórico de preço. Zero linhas / agregado zero = resposta canônica, nunca prova de inexistência do produto."
     },
     "write_request": {
       "mcp_tools": [
@@ -470,6 +478,7 @@
     },
     "system_metadata": {
       "mcp_tools": [
+        "read",
         "discover_delpi_information",
         "execute_delpi_information"
       ],
@@ -487,7 +496,7 @@
         "report_or_gap"
       ],
       "confirmation_policy": "read_only",
-      "note": "Dicionário Protheus (SX2/SX3/sys.tables) via discover→execute only. Metadata naming a table grants ZERO authority over its rows — nome de tabela retornado NÃO autoriza ler registros de negócio dela. Backend SYSTEM_METADATA_ACCESS is final AuthZ; generic API access alone is not sufficient."
+      "note": "Dicionário Protheus (SX2/SX3/sys.tables) via read/analyze. Metadata naming a table grants ZERO authority over its rows — nome de tabela retornado NÃO autoriza ler registros de negócio dela. Backend SYSTEM_METADATA_ACCESS is final AuthZ; generic API access alone is not sufficient."
     },
     "ad_hoc_sql_read": {
       "mcp_tools": [
@@ -515,6 +524,7 @@
     },
     "similarity_dedup_check": {
       "mcp_tools": [
+        "read",
         "discover_delpi_information",
         "execute_delpi_information"
       ],

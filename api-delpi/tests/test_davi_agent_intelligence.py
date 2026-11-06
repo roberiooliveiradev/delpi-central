@@ -303,11 +303,12 @@ async def test_mcp_tools_list_and_call_discover_contract(monkeypatch) -> None:
     directives = DaviAgentIntelligenceService.agent_directives()
     assert directives["surface_parity"]["mcp_tools"] == 6
     assert directives["flows"]["product_master_search"]["mcp_tools"] == [
+        "read",
         "discover_delpi_information",
         "execute_delpi_information",
     ]
     assert "QUICK_LOOKUP" in directives["modes"]
-    assert "discover→execute" in directives["modes"]["QUICK_LOOKUP"]
+    assert "read/analyze" in directives["modes"]["QUICK_LOOKUP"]
     assert all("fast path" not in rule.lower() for rule in directives["discovery"]["rules"])
     discover = next(t for t in tools if t.name == MCP_TOOL_DISCOVER_DELPI_INFORMATION)
     out = discover.output_schema or {}

@@ -164,8 +164,9 @@ def _catalog() -> dict[str, Any]:
         ],
         "schema_on_demand": (
             "get_context action=schema with capability=<action_id> returns "
-            "the governed argument schema; discover_delpi_information "
-            "resolves natural-language needs into candidate tokens."
+            "the governed argument schema; then call read/analyze with that "
+            "capability id. Legacy discover_delpi_information remains only "
+            "as a temporary fallback while published."
         ),
         "authority": "catalog metadata — not permission",
     }
