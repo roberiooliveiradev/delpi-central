@@ -30,3 +30,9 @@ Todo acrônimo deve fazer sentido com a área de atuação do especialista. Alte
 ## Avatares MCP (2026-11-06)
 
 [Diagnóstico e gate de aceite dos avatares](./ACEITE-AVATARES-MCP-2026-11-06.md): cinco MCPs expõem metadados HTTPS na sessão; SURI possui avatar aprovado no owner mas não projeta sua URL; HTTP externo e renderização no ChatGPT ainda precisam de aceite. Não confundir avatar da ficha com ícone do plugin/GPT.
+
+
+## Implementação de avatares inline — handoff para Devin
+
+- [Plano completo de implementação](./PLANO-AVATAR-IMAGECONTENT-MCP-APPS-V1.md) — POC TÉO, A/B ImageContent/MCP Apps, correção SURI, rollout, deploy e critérios de aceite.
+- [Prompt de execução para Devin](./PROMPT-DEVIN-AVATARES-INLINE-V1.md) — instruções de execução, commits, push, deploy, reteste no ChatGPT e relatório obrigatório. DAVI fora da implementação até terminar refatoração.
