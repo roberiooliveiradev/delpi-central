@@ -303,3 +303,22 @@ A direção anterior de migrar o workflow integral para `requests-api`/`my-reque
 **Execução paralela:** o agente de VAL-01 trabalha em percepção tabular da `engineering-api`. Esta frente deve usar worktree isolada, reservar paths distintos e serializar alterações em router, auth, bootstrap, manifests, shared modules e deploy sob integrador designado. Nenhuma edição nos módulos OCR/SLANet/drawing/AnalysisJobStore.
 
 **Próximo bounded step:** inventário `PROVEN` de rotas/auth/status da API Controle MP, de router/contratos da Engineering API e do MFE; definir RQ/AC e contrato read-only do novo consumer; implementar somente após gate. Não desativar legado nem migrar dados nesta etapa.
+
+
+## 11. Nova direção — cadastro técnico nativo e alteração seletiva (2026-11-06)
+
+> **Direção funcional atual do Product Owner — TARGET, não implementação.** Referência de desenvolvimento: [engineering/ROADMAP.md — Native Product Registration](../engineering/ROADMAP.md) e [engineering/IMPLEMENTATION-PLAN.md — PRC-N0–N6](../engineering/IMPLEMENTATION-PLAN.md). O levantamento factual de 51 rotas permanece em [PRODUCT-REGISTRATION-COMPLETE-INVENTORY.md](../engineering/PRODUCT-REGISTRATION-COMPLETE-INVENTORY.md).
+
+**Substitui a estratégia operacional de fase inicial da seção 10 (BFF permanente para API Controle MP):** construir capacidade de cadastro técnico nativa da Engenharia, recebendo solicitações de origens autorizadas mediante contrato de intake; o Controle MP permanece operacional para solicitantes enquanto o novo sistema está sendo construído e até migração/cutover aprovados. Não duplicar workflows corporativos: ownership ante `requests-api` é `ARCHITECTURE_DECISION_REQUIRED`. O catálogo oficial segue pertencendo ao TOTVS/Domain APIs; ficha técnica versionada da Engenharia não se torna cadastro ERP oficial automaticamente.
+
+**Criação (`create`):** dados obrigatórios de solicitação devem incluir somente os requisitos aprovados para intake (ex.: descrição inicial, fornecedores e `compart number` informado pelo PO, com mapeamento a confirmar). A Engenharia completa/valida o registro. Campos de solicitação não equivalem a campos obrigatórios para publicação.
+
+**Alteração (`update`):** solicitante consulta a ficha atual, escolhe somente os campos a alterar e informa valores propostos/justificativa. Pedido guarda `productId`, `baseRevision` e change set com `fieldPath`/antes/depois; **não força o preenchimento de toda a ficha**, e uma mudança aprovada preserva todos os campos não escolhidos. Aplicar CAS/controle de concorrência.
+
+**Histórico:** ficha técnica variável em JSONB versionado, snapshot imutável por revisão + diferenças por campo com autoria, origem, momento, motivo, evidência e aceite. Rejeições não alteram a revisão vigente; nenhum `completed` falso sem confirmação oficial necessária.
+
+**Atendimento:** fila e detalhe de análise no Portal Engenharia, sem replicar o chat legado; EVA auxilia na descrição e validação, `DRAFT/CANDIDATE` até decisão de analista autorizado. A busca de semelhantes e sugestão automática para o solicitante são **FUTURE** e ficam fora do MVP.
+
+**Dados legados:** preservar dados e anexos via migração validada (dry-run, IDs de origem, Keycloak `sub`, checagem de contagens e hashes, cutover controlado, retenção e rollback). Não acessar DB legado em runtime, não fazer dual-write perpétuo, não desligar o app anterior antes do aceite funcional.
+
+**Execução paralela:** esta frente não altera OCR, SLANet, drawing/comparator/AnalysisJobStore da VAL-01; merges em `engineering-api` bootstrap, router/manifest do Portal, auth e deploy devem ser serializados e testados no SHA integrado.
