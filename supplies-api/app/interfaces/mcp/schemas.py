@@ -9,10 +9,17 @@ a generic dict.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.application.security.supplies_permissions import OPERATIONAL_UNITS
+from app.application.services.safety_stock_service import (
+    ALLOWED_SORT_DIRECTIONS,
+    ALLOWED_SORT_FIELDS,
+    ALLOWED_STATUSES,
+    BRANCH_SCOPES,
+)
 from app.interfaces.mcp.constants import (
     DEFAULT_PAGE_SIZE,
     DEFAULT_SAMPLE_SIZE,
@@ -348,20 +355,30 @@ class InventoryItemsFilters(_ClosedModel):
     page_size: int | None = Field(default=None, ge=1, le=500)
     sort: str | None = None
 
+# Closed safety_stock vocabularies — derived from the BFF contract owner
+# (safety_stock_service) so the wire schema stays a projection of the
+# canonical allowlists, never a second hardcoded list.
+SafetyStockStatus = Literal[*sorted(ALLOWED_STATUSES)]
+SafetyStockBranchScope = Literal[*sorted(BRANCH_SCOPES)]
+SafetyStockBranch = Literal[*sorted(OPERATIONAL_UNITS)]
+SafetyStockSortField = Literal[*sorted(ALLOWED_SORT_FIELDS)]
+SafetyStockSortDirection = Literal[*sorted(ALLOWED_SORT_DIRECTIONS)]
+
+
 class SafetyStockScopeFilters(_ClosedModel):
     """read(safety_stock,filters)."""
-    branch: str | None = None
+    branch: SafetyStockBranchScope | None = None
     includeBlocked: bool | None = None
 
 
 class SafetyStockSummaryFilters(_ClosedModel):
     """read(safety_stock,summary)."""
-    branch: str | None = None
+    branch: SafetyStockBranchScope | None = None
     includeBlocked: bool | None = None
     productGroup: str | None = None
     unit: str | None = None
     search: str | None = None
-    status: str | None = None
+    status: SafetyStockStatus | None = None
     includeWithoutSafetyStock: bool | None = None
 
 
@@ -369,14 +386,14 @@ class SafetyStockItemsFilters(SafetyStockSummaryFilters):
     """read(safety_stock,items)."""
     page: int | None = Field(default=None, ge=1)
     page_size: int | None = Field(default=None, ge=1, le=200)
-    sortBy: str | None = None
-    sortDirection: str | None = None
+    sortBy: SafetyStockSortField | None = None
+    sortDirection: SafetyStockSortDirection | None = None
 
 
 class SafetyStockItemIdentity(_ClosedModel):
     """read(safety_stock,details|suppliers)."""
     code: str = Field(min_length=1)
-    branch: str | None = None
+    branch: SafetyStockBranch | None = None
 
 class OtdAggregateFilters(_ClosedModel):
     """read(otd,aggregate) — GET /analytics/otd."""

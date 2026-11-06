@@ -46,6 +46,8 @@ ALLOWED_SORT_FIELDS = frozenset(
     }
 )
 
+ALLOWED_SORT_DIRECTIONS = frozenset({"asc", "desc"})
+
 DEFAULT_PAGE = 1
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 200
@@ -190,7 +192,7 @@ class SafetyStockService:
         if resolved_sort not in ALLOWED_SORT_FIELDS:
             raise ValueError("Invalid sort_by")
         direction = (sort_direction or "asc").strip().lower()
-        if direction not in {"asc", "desc"}:
+        if direction not in ALLOWED_SORT_DIRECTIONS:
             raise ValueError("Invalid sort_direction")
 
         return self.delpi_reads.get_safety_stock_items(

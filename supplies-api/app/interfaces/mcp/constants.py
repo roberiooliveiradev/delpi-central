@@ -38,7 +38,10 @@ MCP_AUTH_MODEL = "TRANSPORT_REQUIRES_OAUTH"
 # rev.13 = enrichment governed writes review_create/decide/decide_bulk/prepare_update (W-03..W-05);
 # rev.14 = session preferences_update + users profile_update (W-01, W-02);
 # rev.15 = comex view_delete (W-09) — confirmation-required.
-CATALOG_VERSION = 15
+# rev.16 = safety_stock closed vocabularies typed on the wire —
+# status/branch/sortBy/sortDirection publish the canonical enums the
+# BFF owner already enforces (derived, never duplicated).
+CATALOG_VERSION = 16
 
 # DISCOVERY | READ | ANALYSIS | ACT — frozen semantic tool classes.
 # Metadata describes semantics; it NEVER authorizes execution.
