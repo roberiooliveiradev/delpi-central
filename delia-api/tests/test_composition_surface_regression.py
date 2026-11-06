@@ -123,9 +123,9 @@ def test_orchestration_instructions_resource_covers_required_keys():
     required by the orchestrator — a regression guard that would have
     caught the G3 loader removal (doc 268 §3)."""
     import json
-    from app.application.capability_provision.governed_capability_orchestrator import (
-        ORCHESTRATION_INSTRUCTION_KEYS,
-    )
+    from app.application.capability_provision.semantic_capability_support import (
+    ORCHESTRATION_INSTRUCTION_KEYS,
+)
 
     data = json.load(
         open("config/orchestration_instructions.delpi.json")

@@ -40,9 +40,7 @@ from scripts.assessment_foreign_diag_eval import (  # noqa: E402
     _scenarios,
     _verdict,
 )
-from app.application.capability_provision.governed_capability_orchestrator import (  # noqa: E402
-    NATIVE_ASSESSMENT_INSTRUCTION_ID,
-)
+
 from app.infrastructure.auth.subject_bearer import (  # noqa: E402
     bind_subject_bearer,
     unbind_subject_bearer,

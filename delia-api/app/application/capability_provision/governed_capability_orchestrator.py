@@ -181,7 +181,6 @@ PROPOSAL_HANDLE_FIELD = "proposal_handle"
 # generic orchestration-control semantics (collapses PREPARE+ACT,
 # bypassing the DÉLIA confirmation gate).
 
-from app.application.capability_provision import semantic_capability_support as _support
 from app.application.capability_provision.semantic_capability_support import (
     CANDIDATE_TOKEN_FIELD,
     CONFIRMATION_POLICY_CONFIRM,
@@ -311,12 +310,9 @@ from app.application.capability_provision.semantic_capability_support import (
 )
 
 
-# Compatibility delegation: any support-contract name not listed
-# above resolves from its canonical owner module — consumers
-# migrating off the retired orchestration import surface find
-# every helper here exactly once.
-def __getattr__(name: str):
-    return getattr(_support, name)
+# Imports are explicit — every support-contract name this module
+# consumes resolves from its canonical owner at load time; no
+# dynamic delegation hides the dependency surface.
 
 
 class OperationalCapabilityOrchestrator:

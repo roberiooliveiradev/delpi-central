@@ -32,13 +32,15 @@ from app.application.capability_provision.contracts import (
     ProviderSurface,
 )
 from app.application.capability_provision.governed_capability_orchestrator import (
+    OperationalCapabilityOrchestrator,
+)
+from app.application.capability_provision.semantic_capability_support import (
     ARGUMENTS_INSTRUCTION_ID,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     INTERACTION_ADMISSION_INSTRUCTION_ID,
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
-    OperationalCapabilityOrchestrator,
 )
 from app.application.interaction.handle_interactive_turn import (
     HandleInteractiveConversationTurn,

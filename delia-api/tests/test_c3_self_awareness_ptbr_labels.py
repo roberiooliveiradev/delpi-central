@@ -24,6 +24,8 @@ from app.application.capability_provision.conversational_response import (
 )
 from app.application.capability_provision.governed_capability_orchestrator import (
     OperationalCapabilityOrchestrator,
+)
+from app.application.capability_provision.semantic_capability_support import (
     _render_guidance_value,
 )
 from app.application.capability_provision.conversational_response import (

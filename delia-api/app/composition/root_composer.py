@@ -368,6 +368,7 @@ def _compose_turn_handler(
     interop: SpecialistInterop,
     settings: Settings,
     connections,
+    orchestration: "SupportsGovernedCapabilityAttempt | None" = None,
 ) -> HandleInteractiveConversationTurn:
     """Compose the turn handler with the specialist-owned live read.
 
@@ -494,7 +495,12 @@ def _compose_turn_handler(
         )
 
         investigation_model = build_test_investigation_model()
-    orchestration = (
+    # Orchestration runtime is bound ONLY here — the composition
+    # seam. An explicit override (alternate engine, framework fake)
+    # replaces the pydantic adapter without touching any consumer:
+    # every downstream object depends on the
+    # SupportsGovernedCapabilityAttempt port, never the adapter.
+    orchestration = orchestration or (
         _resolve_orchestration_attempt(
             settings.orchestration_engine,
             gates,

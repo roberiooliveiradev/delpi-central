@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.application.capability_provision.governed_capability_orchestrator import (
+from app.application.capability_provision.semantic_capability_support import (
     OBLIGATION_SATISFIED,
     OBLIGATION_UNSATISFIED,
     SemanticInvestigationPlan,

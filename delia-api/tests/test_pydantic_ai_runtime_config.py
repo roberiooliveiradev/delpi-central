@@ -321,8 +321,8 @@ def test_resolve_orchestration_attempt_forwards_limits():
         load_test_orchestration_instructions,
     )
     from app.application.capability_provision.governed_capability_orchestrator import (
-        OperationalCapabilityOrchestrator,
-    )
+    OperationalCapabilityOrchestrator,
+)
     from app.application.model_invocation.invoke_model import InvokeModel
 
     gates = OperationalCapabilityOrchestrator(

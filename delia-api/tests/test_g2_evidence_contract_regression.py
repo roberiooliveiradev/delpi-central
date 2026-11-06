@@ -27,7 +27,7 @@ from app.application.capability_provision.generic_evidence_renderer import (
     extract_pagination_envelope,
     resolve_count_semantics,
 )
-from app.application.capability_provision.governed_capability_orchestrator import (
+from app.application.capability_provision.semantic_capability_support import (
     _is_business_evidence_attempt,
 )
 from app.application.interaction.capability_attempt import (

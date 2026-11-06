@@ -47,14 +47,14 @@ from app.application.interaction.presentation import (
     _KNOWN_MESSAGE_KINDS,
     compose_presentation,
 )
-from app.application.capability_provision.governed_capability_orchestrator import (
+from app.application.capability_provision.semantic_capability_support import (
     render_specialist_outcome,
 )
 
 try:
-    from app.application.capability_provision.governed_capability_orchestrator import (
-        render_specialist_outcome_rich,
-    )
+    from app.application.capability_provision.semantic_capability_support import (
+    render_specialist_outcome_rich,
+)
 except ImportError:  # RED — I1 projection not implemented yet
     def render_specialist_outcome_rich(*args, **kwargs):  # type: ignore[misc]
         pytest.fail("render_specialist_outcome_rich not implemented")

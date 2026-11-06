@@ -31,7 +31,7 @@ from app.application.interaction.handle_interactive_turn import (
     serialize_result,
 )
 from app.application.interaction.presentation import compose_presentation
-from app.application.capability_provision.governed_capability_orchestrator import (
+from app.application.capability_provision.semantic_capability_support import (
     render_specialist_outcome_rich,
 )
 from app.domain.evidence.model import EpistemicClass, SourceRef

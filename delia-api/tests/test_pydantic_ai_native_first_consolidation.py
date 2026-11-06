@@ -22,7 +22,7 @@ def _native_toolsets_stub():
         yield
 
 
-from app.application.capability_provision.governed_capability_orchestrator import (
+from app.application.capability_provision.semantic_capability_support import (
     OBLIGATION_SATISFIED,
     OBLIGATION_UNSATISFIED,
     _attempt_satisfies_obligation,

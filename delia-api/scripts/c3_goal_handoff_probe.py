@@ -21,7 +21,7 @@ from app.application.interaction.contracts import InteractiveTurnRequest
 from app.application.model_invocation.contracts import (
     ConversationContextTurn,
 )
-from app.application.capability_provision.governed_capability_orchestrator import (
+from app.application.capability_provision.semantic_capability_support import (
     MAX_SURFACE_CHARS,
 )
 from app.domain.evidence.model import EpistemicClass

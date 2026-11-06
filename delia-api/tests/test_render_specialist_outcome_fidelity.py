@@ -16,7 +16,7 @@ fields such as ``token_count`` / ``token_value`` remain intact.
 
 from __future__ import annotations
 
-from app.application.capability_provision.governed_capability_orchestrator import (
+from app.application.capability_provision.semantic_capability_support import (
     render_specialist_outcome,
 )
 from app.application.capability_provision.conversational_response import (

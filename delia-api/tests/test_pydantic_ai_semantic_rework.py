@@ -28,9 +28,11 @@ def _native_toolsets_stub():
 
 
 from app.application.capability_provision.governed_capability_orchestrator import (
+    OperationalCapabilityOrchestrator,
+)
+from app.application.capability_provision.semantic_capability_support import (
     OBLIGATION_SATISFIED,
     OBLIGATION_UNSATISFIED,
-    OperationalCapabilityOrchestrator,
     SemanticInvestigationPlan,
     _authoritative_structure_root,
     _bind_attempt_to_target,

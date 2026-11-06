@@ -74,9 +74,9 @@ def load_test_orchestration_instructions() -> dict:
     resource — tests load it through the canonical fail-closed
     loader; never a second copy and never a test-local snapshot of
     the text itself."""
-    from app.application.capability_provision.governed_capability_orchestrator import (
-        ORCHESTRATION_INSTRUCTION_KEYS,
-    )
+    from app.application.capability_provision.semantic_capability_support import (
+    ORCHESTRATION_INSTRUCTION_KEYS,
+)
     from app.infrastructure.config.cri_instruction_resource import (
         load_orchestration_instructions,
     )
