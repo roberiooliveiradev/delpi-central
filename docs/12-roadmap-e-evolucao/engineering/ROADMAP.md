@@ -676,3 +676,95 @@ O Portal só pode ser considerado pronto quando:
 - migração automática de legados sem homologação;
 - permissões finais não comprovadas no Core;
 - qualquer integração baseada somente em nome de pasta/hipótese.
+
+
+## ADENDO — Product Registration & Control / Integração incremental (2026-11-06)
+
+> **Status:** `PLANNED / ARCHITECTURE_DECISION_RECORDED / CONTRACT_AND_AUTHZ_PENDING`. Novo direcionamento do Product Owner nesta data, **não representa código implementado nem deploy**. Este adendo é o **plano mestre** do vertical na frente Portal Engenharia. Os registros anteriores D-07, RQ-07, E10.S1, `engineering/README.md` e `controle-mp/EVOLUCAO.md` refletem uma **decisão anterior** (Portal apenas deep-link para `my-requests`); onde divergirem sobre a **primeira superfície de atendimento**, prevalece este adendo **após review dos boundaries**. Não apagar o histórico ou desativar `my-requests`.
+
+### 1. Produto e semântica de nomenclatura
+
+- **Nome de apresentação:** **Controle e Cadastro de Produtos**.
+- **Nome técnico candidato (EN-only):** `product-registration` (área do MFE existente `plugins/engineering`, não um novo MFE). Rota relativa alvo **candidata**: `/product-registration`; rota publicada sob o Portal: `/apps/engineering/product-registration`. Paths finais dependem do router/manifest/contratos vigentes no HEAD.
+- **Objetivo MVP:** analistas de Engenharia encontram solicitações do Controle MP, consultam fila/detalhe, dados técnicos, fornecedores, comentários/pendências e executam somente as decisões **autorizadas pelo owner**, sem abrir o iframe para trabalhar. O **solicitante continua criando/acompanhar pelo Controle MP legado** no primeiro momento.
+- **Generalização:** o nome e a composição da UX devem admitir, futuramente, diferentes tipos de cadastro de produtos. Não criar `ProductRegistrationEngine`, schemas genéricos ou outros tipos de produto sem consumer, contrato, dados e owner reais. O fluxo de matéria-prima é **um caso concreto do vertical** (`raw-material`); novos tipos só via contracts e RQ/AC próprios.
+- **Idioma:** identificadores de código, routes, contracts, operationIds e novos nomes técnicos em **inglês**; textos, labels, ajuda e mensagens visíveis ao usuário em **pt-BR**. Preservar nomes legados de endpoints existentes quando consumidos; não renomear API externa para cumprir nomenclatura.
+
+### 2. Fronteiras e arquitetura de transição
+
+```text
+Requester (phase 1)  --> Existing Control MP frontend --> Control MP API --> legacy-owned DB/workflow
+Analyst (phase 1)    --> Portal Engenharia / product-registration
+                       --> engineering-api (BFF / anti-corruption adapter)
+                       --> Control MP API (official contract, backend-to-backend)
+                       --> SAME legacy-owned request/workflow
+Future governed cutover --> approved owner requests-api / my-requests (separate decision)
+```
+
+**Crítico:** a expressão do Product Owner "BFF entre duas APIs" é interpretada aqui como **adapter/BFF na `engineering-api` entre o MFE e a API legada**, com eventual migração de source para `requests-api` em fase futura; **não** uma chamada direta, circular ou sincronização bidirecional de bancos/workflows entre APIs. Não criar fluxo `Control MP API → Engineering API` como dependência de runtime sem use case oficial e contrato explícito.
+
+**Ownership de fase 1:** Controle MP API/DB seguem owners de solicitações e suas transições; `engineering-api` é façade/consumer de contracts, nunca source of truth, workflow engine ou aprovação final. Keycloak identidade; Core apps/rotas/RBAC; Portal Engenharia UX; responsável de Engenharia decide tecnicamente conforme política validada. Os campos `allowed_actions` da fonte e autorização **live** do Core/domain (quando writes) determinam ações; papel de frontend/claim JWT/iframe SSO não habilita decisão.
+
+**O que não fazer:** ler Postgres do Controle MP; importar internals da API Flask; duplicar workflow/status/histórico em `engineering-api`; criar mirror local authoritative; chamada direta do MFE ao Flask/TOTVS; dual-write permanente com `requests-api`; expor tokens de integração ou local JWT no browser; migração/ativação de RequestType existente sem prova de paridade.
+
+### 3. Descobertas comprovadas / restrições de coexistência
+
+- Repositório `roberiooliveiradev/controle_mp`: Flask/PostgreSQL/Socket.IO + React/Vite, solicitações `CRIAR/ALTERAR`, papéis `ADMIN/ANALYST/USER`, status `CRIADO / EM PROCESSO / DEVOLVIDO / FINALIZADO / REJEITADO / FRACASSADO`, chat/anexos, read-only de TOTVS; SSO embedded existente é prova de autenticação, **não** contrato BFF ou delegação de write.
+- `controle-mp/EVOLUCAO.md` (2026-09-11) já planejava migração nativa para `my-requests` e descrevia paridade, `raw-material-creation/update`, ETL e cutover; essa **continua sendo a direção futura a reconciliar**, mas não a superfície inicial de analista escolhida agora.
+- `plugins/my-requests` e `requests-api` possuem motor transversal, mas seed `V007 raw-material-creation` tem só `description/unit/notes` e `destination_config.adapter=none`; **não equivale ao processo real**. Não trocar a fonte prematuramente.
+- `plugins/engineering/engineering.manifest.json` existe no Git (v0.2.0); inventariar seu router e os endpoints reais da `engineering-api` antes de implementar. A documentação histórica que os declara inexistentes está **STALE_EVIDENCE**.
+- TÉO `PROC-0078` confirma processo de negócio Solicitação, Análise e Cadastro de Matérias-Primas, ainda com owner formal de Engenharia pendente. GLPI #1272 registra necessidade de comentários de solicitante após correção; validar paridade na nova experiência.
+
+### 4. BFF: contratos mínimos candidatos (não tratar paths como PROVEN)
+
+Sobre `/apps/engineering-api/v1`, prefixo de **planejamento** `/product-registration`:
+
+| Método | Rota proposta | Responsabilidade |
+|---|---|---|
+| GET | `/product-registration/requests` | Fila paginada, escopo, filtros, source/status/type, total e links autorizados |
+| GET | `/product-registration/requests/{requestId}` | Detalhe com itens/campos, revisões relevantes, responsáveis, comentários/anexos e ações disponíveis **quando fonte expuser** |
+| GET | `/product-registration/reference-data` | Metadados/tipos/campos/fornecedores via endpoints existentes autorizados; sem conexão direta UI→ERP |
+| POST/PATCH | `/product-registration/requests/{requestId}/actions` | **TARGET ONLY**: iniciar, devolver, rejeitar, finalizar; contrato explícito por ação, live AuthZ, proteção de concorrência/idempotência, audit, read-back; **não implementar na fase de leitura** |
+| GET | `/product-registration/requests/{requestId}/attachments/{attachmentId}` | **TARGET ONLY**: download seguro e auditado com IDs opacos, somente se fonte oferecer autorização de anexo |
+
+**Contract gate por operação:** owner/consumer, request/response, source IDs, map de status sem perda, casos de paginação/filtro, 401/403/404/409/422/429/502/504, timeout/retry read-only, downstream auth, Core+domain AuthZ, escopo por usuário, audit/redaction, observabilidade, idempotência (writes), optimistic concurrency e authoritative postcondition. **Verificar se Control MP oferece delegação backend-to-backend preservando identidade/autorização do usuário.** SSO local (`sso-login`) não prova essa delegação; não substituir por token de admin nem permitir que a BFF contorne autorização. Sem contrato de auth seguro: **reads/writes remotos bloqueados**, usar navegação legítima ao legado até solução aprovada. Não assumir APIs `GET /requests` ou `GET /requests/items` satisfazem filtro/autorização sem inspecionar o backend.
+
+### 5. UX inicial, usando o MFE engineering existente
+
+- Página/área **Controle e Cadastro de Produtos**, com **fila de solicitações**, filtros (pendência, tipo, status e busca), indicadores só quando deriváveis de fontes autorizadas, detalhe técnico, fornecedores, comunicação e evidências.
+- Vistas separadas para solicitante e analista **por contexto e permissão**, mas fase 1 **não** retira solicitação do app Controle MP; oferecer caminho ao legado para solicitações novas e link ao item quando apropriado.
+- Ações de decisão somente onde contrato de escrita e autorização de domínio estiverem **PROVEN**; enquanto isso, detalhe read-only e caminho à ação oficial no legado (não simular botões funcionais).
+- Reaproveitar shell, composição, loading/error/empty/forbidden, breadcrumbs, tema, responsividade, deep-link/F5, `@delpi/plugin-ui` e localização PT-BR do Portal. Não criar outra TopBar/host/MFE.
+- Nome técnico não determina schema/fonte; a experiência será preparada para múltiplos tipos por composição de metadados, sem abstração especulativa.
+
+### 6. Sequência bounded e AC (sujeita a aceite de contrato antes de implementação)
+
+| Fase | Trabalho | Gate / evidência de saída |
+|---|---|---|
+| PRC-0 Inventory | Verificar `origin/main`/HEAD/status/owners, router/manifests, Engineering API, Control MP API (routes+auth+AuthZ+DTO), Core e rotas, concorrência de agentes | Mapa owner→source→consumer→contract; arquivo/endpoint inventory `PROVEN`; nenhum write |
+| PRC-1 Contract | Definir DTO provider-neutral, BFF read-only, estratégia de identidade/filtro e erros; confirmar owners e `RQ-PRC-*` / `AC-PRC-*` antes do diff | Contract review, AuthZ read fail-closed, risk/idempotency decision, paths revisados |
+| PRC-2 Read MVP | BFF de leituras autorizadas e página do Portal com fila e detalhe (sem status-changing), link ao Controle MP | Testes de contrato, isolamento por usuário, paginação, 401/403/timeout/partial, UX PT-BR |
+| PRC-3 Governed actions | Somente após prova de delegação/permissions: iniciar, devolver/retrabalhar, rejeitar, finalizar com validação oficial de código TOTVS e read-back | Live AuthZ, domain owner signoff, concurrency/idempotency, audit, testes negativos; nunca criar produto diretamente na engineering-api |
+| PRC-4 Generalize | Validar contrato e navegação com categoria futura real **somente após owner e use case**, mantendo matéria-prima como baseline | Sem nomes/acoplamentos hardcoded na capa horizontal, sem categorias fictícias |
+| PRC-5 Migration decision | Comparar paridade e aprovar cutover futuro para `requests-api`, ETL/dry-run, contratos, retenção e rollback; manter legacy source até decisão | Não migrar dados nem ativar dual-write nesta frente inicial |
+
+**RQ propostos:** `RQ-PRC-01` área em Portal Engineering; `02` ingestão de solicitações legadas por BFF; `03` neutralidade da UI por tipo de cadastro; `04` contratos/segurança e não duplicação de owner; `05` fluxo de análise e decisões governadas; `06` coexistência/cutover; `07` isolamento de desenvolvimento paralelo.
+**AC propostos:** `AC-PRC-01` usuário sem autorização recebe 403 no backend; `02` analista autorizado vê somente seus registros autorizados e detalhe consistente; `03` UI não busca API legado diretamente; `04` filtros/página/error states/deep links; `05` nenhum write na leitura inicial; `06` source IDs e provenance preservados; `07` tentativa de ação sem delegação validada fail-closed; `08` testes contract+integration+E2E no mesmo SHA; `09` sem regressão EVA; `10` disponibilidade/rollback e owner acceptance.
+
+### 7. Protocolo de colaboração paralela: PRC vs VAL-01
+
+**Agente VAL-01 em execução:** percepção tabular, SLANet/PaddleOCR, desenho×BOM na `engineering-api`. **Agente PRC:** inicialmente somente inventário/documentação; na implementação, `plugins/engineering` em diretório novo isolado da feature + adapters/rotas novas e não invasivas da `engineering-api` **depois de confirmar paths exclusivos**. A API é recurso compartilhado, não autorização para alterações concorrentes.
+
+- Antes de cada diff: ver `origin/main`, `HEAD`, `git status`, commits posteriores e arquivos editados pelo outro agente; criar **worktree/branch isolada** para PRC. Não commitar, cherry-pick, resetar, stashear nem formatar arquivos do VAL-01.
+- Reservar ownership de arquivos: PRC não toca OCR, `drawing_*`, `understanding.py`, comparador, `AnalysisJobStore`, SLANet, jobs, contratos `structure_validation.v1`; VAL-01 não toca `product-registration` e contratos Control MP.
+- **Shared-touch gate:** router principal, composition root, app manifest, `engineering-api` bootstrap, auth middleware, Core permissions, plugin host, CI/deploy e documentação topo devem ter **um integrador designado**; se ambos precisarem do mesmo arquivo, registrar colisão, serializar merge e revalidar testes depois. Não editar simultaneamente.
+- Deploy: build de um SHA fixo e conferido, diff de todos os commits incluídos, regressão EVA e PRC, AuthZ, rollback da versão anterior, autorização Ops; nunca promover `origin/main` mutável que contenha código de outro agente não validado.
+- Evidência final: `BASE_SHA / FINAL_SHA / FILES_CHANGED / FOREIGN_COMMITS / TESTS / CONTRACT_IMPACT / OUTCOME / EXECUTION_DRIFT`.
+
+### 8. Decisão arquitetural e bloqueios
+
+Este direcionamento **altera D-07 e o plano Controle MP anterior** (antes: analista somente em `my-requests`; agora: analista em `plugins/engineering` com façade `engineering-api` consultando a API Controle MP). Coordination reconhece o novo objetivo do usuário; **a mudança de consumer/authority operacional exige `ARCHITECTURE_DECISION_REQUIRED` para os contratos de ação, delegação de identidade e futuro cutover**. **Nenhum novo owner nem source of truth é criado nesta fase.**
+
+Decisões pendentes: owner funcional do cadastro, política de grupos `create/process`, como o backend legado autoriza o BFF em nome do usuário, ACL por item/conversa, semântica de `FRACASSADO`, comentários pós-devolução, campos de ficha e validação de fornecedores, coexistência com `my-requests`, critérios de cutover e escala de rollout. Resolver no menor boundary antes de writes.
+
+**Status factual:** `PLAN_UPDATED` (quando registrado no GitHub); `CODE_IMPLEMENTATION=NOT_STARTED`; `API_CONTRACT_REVIEW=PENDING`; `AUTHZ_DELEGATION=TO_INVENTORY`; `LEGACY_RUNTIME=PENDING_VERIFICATION`; `PRC_E2E=TEST_NOT_RUN`. VAL-01 continua com seu agente e seu plano independente; não alterar os seus critérios.
