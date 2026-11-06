@@ -218,6 +218,7 @@ def create_mcp_server() -> MCPServer:
     )
     def read(
         entity: Literal[
+            "avatar",
             "purchase_orders",
             "purchase_requests",
             "suppliers",
