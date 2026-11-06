@@ -500,7 +500,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "product_registration", "detail", "read",
         "Case detail: original payload, technical draft, version, "
         "allowedActions and verification summary.",
-        "read", status="planned", ref_arg="request_id",
+        "read", status="proven", ref_arg="request_id",
         ref_description="Request UUID.",
     ),
     _a(
@@ -551,7 +551,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     _a(
         "product_registration", "start", "execute",
         "Start processing a submitted case (assigns the analyst).",
-        "moderate", status="planned", phases=("act", "prepare"),
+        "moderate", status="proven", phases=("act", "prepare"),
         ref_arg="request_id", requires=("expected_version",),
     ),
     _a(
@@ -585,7 +585,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "product_registration", "reject", "execute",
         "Terminal rejection — sealed proposal + verifiable human "
         "confirmation before commit; never touches the live record.",
-        "moderate", status="planned", phases=("prepare", "commit"),
+        "moderate", status="proven", phases=("prepare", "commit"),
         ref_arg="request_id",
         requires=("reason", "expected_version"),
         notes=(
@@ -599,7 +599,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "complete — publishes the immutable revision ONLY on full "
         "match. EVA nunca declara produto criado/alterado sem a "
         "verificação oficial no ACT.",
-        "moderate", status="planned", phases=("prepare", "commit"),
+        "moderate", status="proven", phases=("prepare", "commit"),
         ref_arg="request_id",
         requires=("expected_version",),
         fields=("official_code", "reason"),

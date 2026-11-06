@@ -58,6 +58,7 @@ _MAP_DOMAIN = {
     "PrcDuplicateError": ("duplicate_external_reference", 409),
     "PrcRepositoryError": ("unavailable", 503),
     "PrcOfficialError": ("official_error", 409),
+    "EvaProposalError": ("proposal_error", 400),
 }
 
 
