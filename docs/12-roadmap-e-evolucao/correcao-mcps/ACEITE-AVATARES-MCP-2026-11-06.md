@@ -146,3 +146,15 @@ avatar" deve renderizar o card com a foto inline; "TÉO, quais
 ferramentas você possui?" não deve montar o componente. Se o host não
 renderizar `ui://`, a limitação fica documentada (não é PASS visual).
 Rollout VISTA/CLARA/CAIO/SURI/EVA bloqueado até essa validação.
+
+## HOTFIX MCP-AVATAR-UI-V2.1 (2026-11-06) — timeout do componente TÉO
+
+**Sintoma:** "Mostrar avatar oficial excedeu o tempo limite" no ChatGPT.
+**Causa-raiz medida:** `show_avatar` executava em 0.01s mas transportava
+o PNG inteiro (~1.39MB base64) no payload — latência/limite no caminho da
+UI. **Fix:** `show_avatar` agora retorna metadados+`image_url` apenas
+(129B); bytes seguem em `read(entity=avatar,action=get)` inalterado.
+Adicionado `_meta["openai/outputTemplate"]=ui://delpi/teo/avatar/v1`
+(chave reconhecida pelo Apps SDK, além do `ui.resourceUri` genérico).
+**Read-back runtime:** exec 0.01s, payload 129B, meta OK, container
+healthy. Visual ChatGPT: `TEST_NOT_RUN` (reteste manual pendente).
