@@ -41,3 +41,20 @@ Chamadas `get_context` e `knowledge` retornaram falha interna, sem dados ou stat
 SURI: FAIL / `EXECUTION_DRIFT` — investigação e novo aceite necessários.  
 EVA: INCONCLUSIVE — recuperação de disponibilidade e novo aceite necessários.  
 TÉO/VISTA/CLARA/CAIO: PASS limitado — GPT conversacional real `TEST_NOT_RUN`.
+
+## Reteste após remediação (2026-11-06, mesma sessão de correção)
+
+**SURI — causa-raiz comprovada: deriva de deploy, não código.** O ChatGPT conecta a `delpi-supplies-mcp` (serviço distinto de `delpi-supplies-api`), que rodava imagem de ~4h anterior ao commit `22011e1fab`. Rebuild canônico `./infra/scripts/up-prod-sequential.sh --build supplies-mcp` executado sobre `main`. Read-back autoritativo no container: `SURI_ACRONYM=Suprimentos Unificados, Resultados e Inteligência`, `corpus_version=4`, `suri.boundaries` com `evidence_class=PROVEN` descrevendo escritas governadas via `execute`. **Nenhum commit adicional** — o código já estava correto. Reteste na conexão ChatGPT: `TEST_NOT_RUN` — se a conexão ainda retornar v3, o resultado é `OUTCOME_VERIFICATION_FAILED` da conexão, não do serviço.
+
+**EVA — nenhum defeito server-side comprovado.** Logs do `delpi-engineering-api`: `mcp_auth_denied class=MISSING_BEARER` e `ClientDisconnect` — falha de autenticação/transporte, não exceção de domínio. Verificação autoritativa dentro do container (HEAD `f4459ead84`): `tool_get_catalog()` → `character.identity.acronym = Engenharia Virtual Assistida`; `tool_knowledge(eva.usage)` responde; `tool_get_context` retorna **401 tipado `unauthenticated`** (contrato correto, não erro interno). **Nenhum commit** — provável causa do "tool failed internally": token/ausência de Bearer na conexão ChatGPT durante o aceite. Reteste: `TEST_NOT_RUN`; se persistir, inspecionar o client `mcp-engineering` no Keycloak e a configuração OAuth da conexão.
+
+**Matriz de aceite final (leitura, ambiente MCP produção):**
+| MCP | Resultado |
+|---|---|
+| TÉO | PASS leitura (acrônimo, playbooks v1/v2 e aliases) |
+| VISTA | PASS leitura (acrônimo projetado) |
+| CLARA | PASS leitura (acrônimo projetado) |
+| CAIO | PASS leitura + negativa tipada |
+| SURI | **Remediado em runtime** — reteste ChatGPT pendente |
+| EVA | **Server-side OK** — falha de transporte/auth; reteste ChatGPT pendente |
+| DAVI | Fora de escopo (refatoração em andamento) |

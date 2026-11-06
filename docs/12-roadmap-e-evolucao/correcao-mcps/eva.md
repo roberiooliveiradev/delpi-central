@@ -13,6 +13,9 @@
 | Trabalho paralelo | Commit isolado: somente arquivos EVA no stage; mudanças concorrentes de drawing/perception preservadas no working tree | git status |
 
 **Arquivos alterados:** `engineering_app/application/eva/agent_intelligence_service.py`, `tests/test_eva_character_profile.py`, este arquivo.
+
+## Reteste após remediação (2026-11-06)
+**Diagnóstico do INTERNAL ERROR:** logs do `delpi-engineering-api` mostram `mcp_auth_denied MISSING_BEARER` + `ClientDisconnect` (transporte/auth), nenhuma exceção de domínio. Verificação autoritativa no container: `tool_get_catalog()` retorna `character.identity.acronym = Engenharia Virtual Assistida`; `tool_knowledge(eva.usage)` responde; `tool_get_context` retorna 401 tipado `unauthenticated` (não erro interno). **Nenhum defeito server-side comprovado — nenhum commit.** Causa provável do aceite: falha de autenticação/transporte da conexão MCP durante a sessão. Reteste na conexão ChatGPT: pendente (TEST_NOT_RUN); se persistir, inspecionar token/cliente `mcp-engineering` no Keycloak — documento de instrução manual.
 **Origem consultada:** MCP EVA, `get_context(topic=catalog|persona|identity)`, `knowledge(topic=eva.usage|lmp.guide)`.
 
 ## 1. Identidade publicada (PROVEN)

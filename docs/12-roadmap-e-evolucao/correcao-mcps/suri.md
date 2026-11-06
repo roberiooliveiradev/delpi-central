@@ -13,6 +13,9 @@
 | SURI-05/06 | **TEST_NOT_RUN** — writes reais e aceite conversacional não executados por segurança | — |
 | Pré-existente | `tests/interface/suri_mcp/test_tool_bridge.py` contém **marcadores de conflito commitados** (snapshot multi-agente `07a6b44278`); arquivo inteiro inválido em main — não resolvido aqui (trabalho paralelo) | leitura do arquivo |
 
+## Reteste após remediação (2026-11-06)
+**Causa-raiz do FAIL:** `delpi-supplies-mcp` (endpoint real do ChatGPT) rodava imagem de 4h anterior ao commit — só `delpi-supplies-api` havia sido rebuildado. **EXECUTION_DRIFT de deploy, sem defeito de código — nenhum commit adicional.** Rebuild canônico `--build supplies-mcp` executado; verificação em runtime: `SURI_ACRONYM` presente, `corpus_version=4`, `suri.boundaries` PROVEN com escritas governadas. Read-back autoritativo no container: OK. Reteste na conexão ChatGPT: pendente (TEST_NOT_RUN).
+
 **Arquivos alterados:** `app/interfaces/mcp/branding.py`, `app/interfaces/mcp/tool_bridge.py`, `app/content/suri_agent_intelligence.json`, `app/content/suri_knowledge.json` (corpus_version 3→4), 3 arquivos de teste (asserts corpus_version 4), este arquivo.
 
 ## Identidade e contrato observados (PROVEN)
