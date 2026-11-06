@@ -43,3 +43,9 @@ Não interpretar essa redação proposta como resposta comprovada de GPT.
 
 ## Gates de implementação
 Antes de qualquer mudança: inventariar `git status`, HEAD, owner, source, consumers, contrato, implementação e runtime; escolher menor diff; testar e fazer residual search. Publicar o acrônimo na origem correta; modificar GPT Builder/OpenAPI/Knowledge somente se seus artefatos mudarem. Retornar relatório de execução completo. **Nenhum código, MCP ou GPT Builder foi alterado nesta revisão documental.**
+## Reconciliação com fontes existentes (GitHub, 2026-11-06)
+- **PROVEN (código):** controllership-finance-api/controllership_finance_app/persona/clara_profile.py → controllership_finance_app/content/clara_agent_intelligence.json; **acronym já consta no JSON** com o texto aprovado; não cadastrar novamente.
+- Contrato já implementado: `shared/delpi_character_profiles` (estrutura), ficha owner-local (conteúdo), projeção no serviço do MCP (consumer). **Não criar uma segunda ficha nem registry em shared.**
+- Referência cruzada: [Inventário de fontes existentes](./INVENTARIO-FONTES-EXISTENTES.md). Validação de runtime, deploy e testes permanece **TEST_NOT_RUN/TO_INVENTORY** nesta auditoria.
+
+**Retificação do backlog CLARA-01:** a tarefa de 'publicar acrônimo na fonte canônica' já está atendida no JSON. A única verificação residual pertinente é se o campo já é transportado e respondido corretamente pelas superfícies MCP/GPT; não implementar mudança sem falha comprovada no consumer.
