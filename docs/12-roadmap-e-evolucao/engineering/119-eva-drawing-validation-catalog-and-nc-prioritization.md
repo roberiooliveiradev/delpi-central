@@ -1356,3 +1356,14 @@ O histórico de revisão da mesma página não cita esses códigos. `10081389` �
 **Correção (`8dad962414`/`216ee5fd8d`):** `page_start`/`page_end` aditivos no contrato `drawing_ocr_execution.v1`; `run_visual_benchmark` itera batches de `ENG_DRAWING_OCR_PAGE_BATCH` (default 4) em filhos separados — cada filho morre devolvendo nativo ao OS; `_merge_isolated_records` recompõe páginas por número absoluto, proveniência/bboxes/status; `coverage_status` FULL/PARTIAL/NONE aditivo nos records. Campo `coverage_status` no `page_coverage` MCP fica local (aguarda commit do WIP PRC no mesmo arquivo).
 
 **Testes:** 200/201 + 35/35 (isolation, benchmark, jobs, mcp, r7). Prod `216ee5fd8d` healthy. Reteste: 14/14 páginas tentadas; falha num batch não derruba o seguinte.
+
+## 43. DEC-VAL-036 — TypeError mascarando falha real + merge de batch com status correto
+
+**Job aj-b027153fdfe14be1:** `analysis_incomplete` com `TypeError: DrawingAnalysisError.__init__() got multiple values for argument 'code'` — dois defeitos provados:
+
+1. `semantic_bridge:1419` passava `code=` kwarg colidindo com o posicional → TypeError no `except Exception` genérico → falha real (`no_ocr_evidence`, 422) invisível. Fix: code posicional.
+2. `_merge_isolated_records` contava `p["ocr"]["status"]` — a convenção real é presença da chave `ocr`. Todo merge reportava `error/NONE` mesmo com evidência plena. Fix: `"ocr" in p` + OR de `has_positional_data`.
+
+**Validação real (PDF 5452aabd, prod-overlay):** 4 batches `[1-4][5-8][9-12][13-16]` executaram — **14/14 páginas, 1533 tokens, 12693 chars**. Batch isolation funciona; o `error` reportado era defeito de contagem do merge, não da execução. `coverage_status` aditivo em `page_coverage` MCP (FULL/PARTIAL/NONE).
+
+**Testes:** 89/89. Prod healthy. Reteste consumidor: job deve completar com cobertura integral ou falha tipada real (não TypeError).
