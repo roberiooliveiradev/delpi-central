@@ -60,6 +60,7 @@ from engineering_app.composition.lmp_composer import (
     build_get_lmp_summary_use_case,
 )
 from engineering_app.interface.mcp import tool_bridge as bridge
+from engineering_app.interface.mcp import prc_semantic
 from engineering_app.interface.mcp.branding import EVA_FULL_NAME
 from engineering_app.interface.mcp.constants import SEMANTIC_TOOL_CLASS
 
@@ -487,7 +488,46 @@ _READ_DISPATCH = {
     ("nonconformity", "export"): (
         lambda a: bridge.tool_export_nonconformities()
     ),
+    # PRC — handlers isolados em prc_semantic (mesmos use cases da REST).
+    ("product_registration", "list"): (
+        lambda a: _prc_read("list", a)
+    ),
+    ("product_registration", "detail"): (
+        lambda a: _prc_read("detail", a)
+    ),
+    ("product_registration", "timeline"): (
+        lambda a: _prc_read("timeline", a)
+    ),
+    ("product_registration", "verifications"): (
+        lambda a: _prc_read("verifications", a)
+    ),
+    ("product_registration", "record"): (
+        lambda a: _prc_read("record", a)
+    ),
+    ("product_registration", "revisions"): (
+        lambda a: _prc_read("revisions", a)
+    ),
+    ("product_registration", "revision"): (
+        lambda a: _prc_read("revision", a)
+    ),
+    ("product_registration", "reference_data"): (
+        lambda a: _prc_read("reference_data", a)
+    ),
+    ("product_registration", "outbound_result"): (
+        lambda a: _prc_read("outbound_result", a)
+    ),
 }
+
+
+async def _prc_read(action: str, args: dict) -> CallToolResult:
+    """Bridge READ → prc_semantic com contexto humano obrigatório."""
+    from types import SimpleNamespace
+
+    context = bridge._require_engineering_human()
+    entry = SimpleNamespace(
+        action=action, capability=f"product_registration.{action}"
+    )
+    return await prc_semantic.read_action(context, entry, args)
 
 # --- analyze --------------------------------------------------------------
 
@@ -2257,6 +2297,21 @@ _EXECUTE_DISPATCH = {
     ("nonconformity", "create"): _exec_nc_create,
     ("nonconformity", "update"): _exec_nc_update,
     ("nonconformity", "import"): _exec_nc_import,
+    # PRC — moderate (act|prepare) e terminais (prepare|commit selado).
+    ("product_registration", "submit"): prc_semantic.execute_action,
+    ("product_registration", "start"): prc_semantic.execute_action,
+    ("product_registration", "update_draft"): prc_semantic.execute_action,
+    ("product_registration", "request_information"): (
+        prc_semantic.execute_action
+    ),
+    ("product_registration", "resume"): prc_semantic.execute_action,
+    ("product_registration", "submit_review"): (
+        prc_semantic.execute_action
+    ),
+    ("product_registration", "reject"): prc_semantic.execute_action,
+    ("product_registration", "verify_and_complete"): (
+        prc_semantic.execute_action
+    ),
 }
 
 
