@@ -30,6 +30,7 @@ from tm_app.interface.mcp.oauth_contract import TEO_MCP_SECURITY_SCHEMES
 from delpi_mcp.avatar_ui import (
     AVATAR_UI_MIME,
     avatar_ui_meta,
+    avatar_ui_resource_meta,
     avatar_ui_resource_uri,
     build_avatar_ui_html,
 )
@@ -566,8 +567,16 @@ def create_mcp_server() -> MCPServer:
     # --- visual avatar surface (MCP-AVATAR-UI-V2) -----------------------
     # ui:// resource serves the shared avatar card; show_avatar links to
     # it via _meta.ui.resourceUri and also returns the canonical
-    # ImageContent for hosts without MCP Apps support.
-    _avatar_uri = avatar_ui_resource_uri("teo")
+    # ImageContent for hosts without MCP Apps support. V2.2: uri bumped
+    # to v2 (host may cache v1's pre-handshake component) and the
+    # resource meta declares ui.csp resourceDomains for the iframe
+    # sandbox.
+    from tm_app.application.gpt_actions.teo_agent_intelligence_service import (
+        TeoAgentIntelligenceService as _TeoSvc,
+    )
+
+    _avatar_dist = _TeoSvc.avatar_distribution() or {}
+    _avatar_uri = avatar_ui_resource_uri("teo", version=2)
 
     @mcp.resource(
         _avatar_uri,
@@ -578,18 +587,13 @@ def create_mcp_server() -> MCPServer:
             "somente leitura, sem dados sensíveis."
         ),
         mime_type=AVATAR_UI_MIME,
-        meta=meta,
+        meta={**meta, **avatar_ui_resource_meta(_avatar_dist.get("url"))},
     )
     def teo_avatar_card() -> str:
-        from tm_app.application.gpt_actions.teo_agent_intelligence_service import (
-            TeoAgentIntelligenceService,
-        )
-
-        distribution = TeoAgentIntelligenceService.avatar_distribution() or {}
         return build_avatar_ui_html(
             display_name="TÉO — Especialista em Transformação Digital",
             specialty="Transformação Digital",
-            image_url=distribution.get("url"),
+            image_url=_avatar_dist.get("url"),
         )
 
     @mcp.tool(
