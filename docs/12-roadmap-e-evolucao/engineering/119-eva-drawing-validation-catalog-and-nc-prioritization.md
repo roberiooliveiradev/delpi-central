@@ -1214,3 +1214,18 @@ O histórico de revisão da mesma página não cita esses códigos. `10081389` �
 **Testes:** `test_dense_rows_stay_separate_component_lines` e `test_same_line_code_and_description_stay_one_row`, mais a suíte `test_drawing_understanding_r8.py` (18 passed). Corpus de 13 PDFs: `TEST_NOT_RUN`. Sem deploy nesta etapa.
 
 **Invariantes:** `DRAFT/CANDIDATE`, `engineering_approval=NOT_APPROVED`, `automatic_nc=false`, `proven_matches=0`. `VAL01_COMPLETED=false`. Quantidade, unidade, revisão e ground truth continuam com a Engenharia.
+
+
+### 39.16 Reteste MCP do caso 90264017 apos correcao de linhas densas (2026-11-05/06)
+
+**Natureza:** execucao autenticada somente leitura pelo consumidor ChatGPT/EVA, sem deploy. **Codigo em GitHub:** commit `367a73209e24a66fc0696af18c75417e179b3a51` inclui correcao de `_cluster_tolerance` e coluna com maioria de codigos. A comparacao `367a732...main` revelou apenas um commit adicional no modulo DÉLIA, nao Engenharia. **Runtime SHA/container/digest:** `NOT_VERIFIED`.
+
+**Fonte BOM:** `read(product,structure,ref=90264017)` = `success=true`, `status=available`; o codigo `10081389` nao aparece no payload consultado. Essa ausencia nao prova divergencia de revisao/efetividade comparavel; a API nao demonstrou fingerprint temporal compativel com o PDF.
+
+**Execucao:** `analyze(product.drawing_understanding,{product_code:90264017})` retornou `RUNNING`, `job_id=aj-6a88304ab0864c45`; consulta com o `job_id` retornou `COMPLETED`, `result_ready=true`, `same_document_verified=true`, PDF SHA-256 `5452aabd3ddf94d5d004fe5c4d27c2daca9fcf8759a0c1b849b415d4769e32ee`.
+
+**Resultado observado em `understanding.component_table.rows`, pagina 9:** **FAIL funcional para o contrato esperado depois do fix**: uma unica linha logica `row=1` com `item="d e c 6 3 2 10081389 10081685 10091368"`, `component_code=null`, `description=null`; o campo `quantity` agrega descricoes dos tres componentes. Portanto o consumidor ainda observa fusao C/D/E, apesar do commit ja existir no GitHub. **Nao atribuir root cause ao codigo corrigido** sem verificar SHA do processo e se o job foi produzido/reutilizado antes do deploy; o `AnalysisJobStore` pode devolver um job ja existente da mesma identidade/parametros. Este resultado **nao comprova** que o novo algoritmo falha no PDF real, pois nao ha evidência de que ele foi executado.
+
+**Resultado de aceite:** `MCP_PDF_90264017_POST_FIX=FAIL_OBSERVED / RUNTIME_IDENTITY_UNVERIFIED`; `REGRESSION_13=TEST_NOT_RUN`; `VAL01_COMPLETED=false`. Nao executar regressao integral e atribui-la ao novo SHA enquanto runtime nao for confirmado. Sem NC automatica.
+
+**Proximo passo bloqueado:** operador autorizado verificar imagem SHA efetiva, reinicio e identidade do job/processo, confirmar que o commit `367a732` entrou no build; somente apos os gates normais realizar deploy canônico autorizado, iniciar job novo com identificador de versao reconhecido ou ciclo correto do store, provar linhas C/D/E separadas no mesmo PDF e seguir a regressao dos 13 PDFs do Doc 120, performance, AuthZ e politicas oficiais. Atualizar Issue #131 com as evidencias. 
