@@ -72,60 +72,81 @@ def build_avatar_ui_html(
         "script-src 'unsafe-inline'; "
         "connect-src 'none';"
     )
-    return f"""<!DOCTYPE html>
+    img_tag = ""
+    if url:
+        img_tag = (
+            '<img id="avatar-img" src="'
+            + safe_url
+            + '" alt="'
+            + alt
+            + '">'
+        )
+    desc_tag = '<p class="desc">' + desc + "</p>" if desc else ""
+    fallback_tag = "" if url else (
+        '<p class="fallback">Avatar oficial indisponível no momento.</p>'
+    )
+    template = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="{csp}">
-<title>{name}</title>
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>__NAME__</title>
 <style>
-  :root {{ color-scheme: light dark; }}
-  body {{ margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }}
-  figure {{ margin: 0; padding: 0; }}
-  .card {{ display: flex; flex-direction: column; align-items: center;
-          padding: 12px; gap: 10px; max-width: 520px; margin: 0 auto; }}
-  .card img {{ width: 100%; height: auto; max-height: 560px; object-fit: contain;
-              border-radius: 12px; display: block; }}
-  .cap {{ text-align: center; }}
-  .cap strong {{ display: block; font-size: 1rem; }}
-  .cap span {{ display: block; font-size: 0.85rem; opacity: 0.8; margin-top: 2px; }}
-  .desc {{ font-size: 0.85rem; opacity: 0.85; text-align: center; margin: 0; }}
-  .fallback {{ font-size: 0.85rem; opacity: 0.8; padding: 16px; text-align: center; }}
+  :root { color-scheme: light dark; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+  figure { margin: 0; padding: 0; }
+  .card { display: flex; flex-direction: column; align-items: center;
+          padding: 12px; gap: 10px; max-width: 520px; margin: 0 auto; }
+  .card img { width: 100%; height: auto; max-height: 560px; object-fit: contain;
+              border-radius: 12px; display: block; }
+  .cap { text-align: center; }
+  .cap strong { display: block; font-size: 1rem; }
+  .cap span { display: block; font-size: 0.85rem; opacity: 0.8; margin-top: 2px; }
+  .desc { font-size: 0.85rem; opacity: 0.85; text-align: center; margin: 0; }
+  .fallback { font-size: 0.85rem; opacity: 0.8; padding: 16px; text-align: center; }
 </style>
 </head>
 <body>
 <figure class="card" id="avatar-card">
-  {"<img id=\"avatar-img\" src=\"" + safe_url + "\" alt=\"" + alt + "\">" if url else ""}
+  __IMG_TAG__
   <figcaption class="cap">
-    <strong id="avatar-name">{name}</strong>
-    <span id="avatar-specialty">{spec}</span>
+    <strong id="avatar-name">__NAME__</strong>
+    <span id="avatar-specialty">__SPEC__</span>
   </figcaption>
-  {"<p class=\"desc\">" + desc + "</p>" if desc else ""}
-  {"" if url else "<p class=\"fallback\">Avatar oficial indisponível no momento.</p>"}
+  __DESC_TAG__
+  __FALLBACK_TAG__
 </figure>
 <script>
-(function () {{
-  try {{
+(function () {
+  try {
     var o = (typeof window !== "undefined") && window.openai;
     var out = o && (o.toolOutput || o.toolInput || null);
     if (!out || typeof out !== "object") return;
     var img = document.getElementById("avatar-img");
     var u = out.image_url || out.url;
-    if (u && img && /^https:\\/\\//.test(u)) img.src = u;
+    if (u && img && /^https:\/\//.test(u)) img.src = u;
     var n = out.display_name || out.name;
-    if (n) {{
+    if (n) {
       var el = document.getElementById("avatar-name");
       if (el) el.textContent = n;
       if (img) img.alt = "Avatar oficial de " + n;
-    }}
+    }
     var s = out.specialty;
-    if (s) {{
+    if (s) {
       var se = document.getElementById("avatar-specialty");
       if (se) se.textContent = s;
-    }}
-  }} catch (_) {{ /* render-only: never fail the host */ }}
-}})();
+    }
+  } catch (_) { /* render-only: never fail the host */ }
+})();
 </script>
 </body>
 </html>"""
+    return (
+        template.replace("__CSP__", csp)
+        .replace("__NAME__", name)
+        .replace("__SPEC__", spec)
+        .replace("__IMG_TAG__", img_tag)
+        .replace("__DESC_TAG__", desc_tag)
+        .replace("__FALLBACK_TAG__", fallback_tag)
+    )
