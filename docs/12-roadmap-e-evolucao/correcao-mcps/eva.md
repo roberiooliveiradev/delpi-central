@@ -1,7 +1,18 @@
 # EVA — Plano de correção da ficha e do autoconhecimento
 
 **Inventário:** 2026-11-06  
-**Estado:** revisão documental, sem alterar backend, GPT Builder, Knowledge nem OpenAPI.  
+**Estado:** EXECUTADO 2026-11-06.
+
+## Resultado da execução (2026-11-06)
+| ID | Resultado | Evidência |
+|---|---|---|
+| EVA-01 | **ACRÔNIMO ALREADY_CORRECT na fonte + CORRIGIDA a projeção** — `identity.acronym = Engenharia Virtual Assistida` já no JSON; gap real: `persona_context` não transportava acrônimo (mesmo gap CLARA). Chave aditiva owner-local adicionada; assert novo em `test_agent_directives_carry_persona_context` | `agent_intelligence_service.py`, `test_eva_character_profile.py` |
+| EVA-03 | **CORRIGIDO** — identidade continua em `agent_directives.character`, agora incluindo acrônimo | service |
+| EVA-04/06 | **VERIFICADO** — catálogo mantém `act_tiers`/`not_implemented` honestos; nenhuma flag de escrita/import alterada (import continua `false`, `product.update` segue `not_implemented` por contrato) | inventário `capability_surface` |
+| EVA-02/05 | **TEST_NOT_RUN** — aceite conversacional GPT pendente | — |
+| Trabalho paralelo | Commit isolado: somente arquivos EVA no stage; mudanças concorrentes de drawing/perception preservadas no working tree | git status |
+
+**Arquivos alterados:** `engineering_app/application/eva/agent_intelligence_service.py`, `tests/test_eva_character_profile.py`, este arquivo.
 **Origem consultada:** MCP EVA, `get_context(topic=catalog|persona|identity)`, `knowledge(topic=eva.usage|lmp.guide)`.
 
 ## 1. Identidade publicada (PROVEN)

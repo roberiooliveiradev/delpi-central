@@ -258,6 +258,7 @@ def test_agent_directives_carry_persona_context():
     character = d["character"]
     assert character["identity"]["character_id"] == "eva"
     assert character["identity"]["name"] == "EVA"
+    assert character["identity"]["acronym"] == "Engenharia Virtual Assistida"
     assert character["narrative_classification"] == FICTION_IDENTITY_ONLY
 
 
