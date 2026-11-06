@@ -122,6 +122,13 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "phases and honest availability — call before any other tool.",
         "read",
     ),
+    # --- read: avatar (narrative asset — AVATAR-INLINE-MCP-V1) ------------
+    _a(
+        "avatar", "get", "read",
+        "Official approved avatar image of the specialist — narrative "
+        "asset returned as an ImageContent block, never authorization.",
+        "read",
+    ),
     # --- read: engineering ------------------------------------------------
     _a(
         "engineering", "home", "read",

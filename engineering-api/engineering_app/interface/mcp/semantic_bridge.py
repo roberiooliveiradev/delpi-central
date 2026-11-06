@@ -421,6 +421,7 @@ async def tool_read(
 
 
 _READ_DISPATCH = {
+    ("avatar", "get"): lambda a: bridge.tool_get_avatar(),
     ("engineering", "home"): lambda a: bridge.tool_get_engineering_home(),
     ("engineering", "overview"): (
         lambda a: bridge.tool_get_engineering_overview(**a)
