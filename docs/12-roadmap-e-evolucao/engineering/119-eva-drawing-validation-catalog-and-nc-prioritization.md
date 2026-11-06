@@ -1100,7 +1100,7 @@ O subplano **não é nova frente, serviço, camada, documento nem autorização 
 | ROOT_CAUSE | Gateway `delpi-gateway`, após o deploy das 22:42Z: vários `POST /apps/engineering-api/mcp` do `openai-mcp/1.0.0` com HTTP 499 e 0 bytes, espaçados cerca de 120s. No mesmo intervalo o processo só registrou fetch de `90263572` (resposta 200, ~44s, ~2,7 MB). Não há `Traceback` nem `eva_mcp_tool_error`. A leitura era síncrona; o cliente MCP desconectava antes de qualquer corpo. Não foi timeout de gateway 504, nem exceção de aplicação, nem falha de serialização observada. |
 | MINIMAL_DIFF | `product.drawing_understanding` passa a usar o `AnalysisJobStore` já existente (DEC-VAL-030). A primeira chamada devolve `RUNNING` + `job_id` + `result_ready=false`. A consulta devolve `COMPLETED` ou `FAILED` com código tipado (`document_unreadable`, `analysis_incomplete`, `timeout`, `cancelled`, `job_not_found`). Retry sem `job_id` reencontra o mesmo job. Dono continua sendo o subject, não o access token. Sem fila nova e sem aumento de timeout. |
 | TEST | `tests/test_drawing_understanding_jobs.py`: job antes do pipeline, falha tipada, outro usuário recebe `job_not_found`, exceção inesperada não vira sucesso. |
-| RUNTIME_SHA | A preencher após o deploy canônico deste commit. |
+| RUNTIME_SHA | Checkout `00e3882e0ece827ca0f5b6fd7b29d4c2b3e50d6d`, que contém `8a027c4fe6302171c3cb1859884a057e5b7216c9`. Imagem `sha256:f64d495a04634e0c34e2325ed492b3217b2a7fc3cad642237246ca96cbe80ea3`, processo iniciado `2026-11-06T00:52:02Z`. |
 | MCP_OUTCOME | Os quatro desenhos não foram reexecutados por este executor (sem token de usuário). O contrato de recuperação é o `job_id`. |
 | RESIDUAL | O resultado completo continua dependente de o consumidor repetir a chamada com o `job_id`. Corpus de 13 PDFs: `TEST_NOT_RUN`. |
 
@@ -1112,7 +1112,7 @@ O subplano **não é nova frente, serviço, camada, documento nem autorização 
 | ROOT_CAUSE | `apply_localized_recovery` já gravava página, caixa e proveniência em `code_contexts` e tokens. O residual de `_drawing_occurrences` descartava esses campos e fixava `extraction_source=code_token`. `_code_cell_box` só lia `cells`, vazias nesse residual. A mesma ocorrência era pareada; a evidência se perdia na projeção, não na percepção. |
 | MINIMAL_DIFF | O residual copia página, região, caixa, proveniência, confiança e SHA somente quando a evidência comparável é unívoca. Várias páginas ou várias caixas na mesma página permanecem nulas. Menção só em `revision_history` / `notes` / `title_block` não entra na ocorrência vigente. SHA passa a ser registrado no `code_context` porque a recuperação já o possuía. |
 | TEST | `test_residual_localized_recovery_keeps_page_box_and_sha`, caixa ausente, duas páginas, duas caixas, e caixa de histórico que não cola na ocorrência BOM. |
-| RUNTIME_SHA | A preencher após o deploy canônico deste commit. |
+| RUNTIME_SHA | Checkout `00e3882e0ece827ca0f5b6fd7b29d4c2b3e50d6d`, que contém `8a027c4fe6302171c3cb1859884a057e5b7216c9`. Imagem `sha256:f64d495a04634e0c34e2325ed492b3217b2a7fc3cad642237246ca96cbe80ea3`, processo iniciado `2026-11-06T00:52:02Z`. |
 | MCP_OUTCOME | `TEST_NOT_RUN` neste executor. O caso sintético reproduz o shape de `O0001`. |
 | RESIDUAL | Confirmação no PDF real de `90263572` fica no reteste MCP. |
 
@@ -1124,10 +1124,43 @@ O subplano **não é nova frente, serviço, camada, documento nem autorização 
 | ROOT_CAUSE | Denominadores diferentes, não erro aritmético. O do ledger conta ocorrências da BOM pareadas por código exato, inclusive token ou recuperação. O da investigação conta checks que chegaram a `MATCH_CANDIDATE`. O nome igual sugeria a mesma conta. |
 | MINIMAL_DIFF | `match_candidates` permanece (compatibilidade). O relatório passa a expor `code_pair_candidates` (mesmo número), `structural_pair_candidates`, `code_only_pair_candidates` e `counter_definitions`. `proven_matches` continua 0. Código solto não vira correspondência estrutural verificada. |
 | TEST | O relatório de BOM indisponível e o residual localizado afirmam as definições e `proven_matches=0`. |
-| RUNTIME_SHA | A preencher após o deploy canônico deste commit. |
+| RUNTIME_SHA | Checkout `00e3882e0ece827ca0f5b6fd7b29d4c2b3e50d6d`, que contém `8a027c4fe6302171c3cb1859884a057e5b7216c9`. Imagem `sha256:f64d495a04634e0c34e2325ed492b3217b2a7fc3cad642237246ca96cbe80ea3`, processo iniciado `2026-11-06T00:52:02Z`. |
 | MCP_OUTCOME | `TEST_NOT_RUN` neste executor. |
 | RESIDUAL | O número 33, se reaparecer, é contagem de pares por código, não validação comprovada. |
 
 **Invariantes preservados:** `engineering_approval=NOT_APPROVED`, `automatic_nc=false`, `DRAFT/CANDIDATE`, gate de `BOM_ONLY`, multiplicidade, histórico de revisão fora da tabela vigente, BOM somente leitura, AuthZ ao vivo, sem dependência do Chat legado.
 
 **Regressão local:** 138 testes dos módulos de comparador, jobs, investigação e entendimento. Corpus 13 e os quatro PDFs oficiais: `TEST_NOT_RUN` até o reteste autenticado no SHA implantado.
+
+### 39.12 Deploy das correções residuais — Engineering API (2026-11-06)
+
+**TASK_ID:** `EVA-VAL01-RESIDUAL-DEPLOY-RETEST-01`. Nenhum serviço além de `engineering-api` foi reconstruído. `delpi-core-api` permanece iniciado em `2026-11-01T22:11:04Z`. VAL-01 não concluída.
+
+```text
+BASE_HEAD=00e3882e0ece827ca0f5b6fd7b29d4c2b3e50d6d
+DEPLOYED_SHA=00e3882e0ece827ca0f5b6fd7b29d4c2b3e50d6d
+FIX_COMMIT=8a027c4fe6302171c3cb1859884a057e5b7216c9
+IMAGE_DIGEST=sha256:f64d495a04634e0c34e2325ed492b3217b2a7fc3cad642237246ca96cbe80ea3
+DEPLOY_TIMESTAMP=2026-11-06T00:52:02Z
+SERVICE_HEALTH=healthy
+MCP_ANONYMOUS_NEGATIVE=HTTP 401 realm=engineering-mcp request_id=320a41b5-cef7-4dc6-80a7-0bc934514f78
+OAUTH_METADATA=HTTP 200
+PUBLIC_HEALTH=HTTP 200
+ROLLBACK_IMAGE=sha256:ee26acf6ea1f58af462f611aedcc087daaa127bca93e7bf3e9ba31977010e99c
+```
+
+O checkout do `srv-api` já estava em `00e3882e` antes do build. A imagem anterior `ee26acf6` não continha `result_ready`. O build canônico copiou `engineering-api` de novo e recriou só `delpi-engineering-api`.
+
+**Contrato no processo implantado:** smoke in-process, sem OCR e sem token de usuário.
+
+| Verificação | Resultado |
+|---|---|
+| ASYNC_JOB_CONTRACT | Envelope `RUNNING`, `job_id`, `result_ready=false`, sem relatório. Falha `analysis_incomplete` com `success=false`. |
+| JOB_RECOVERY | Mesma identidade e mesmos parâmetros reencontram o job. `COMPLETED` devolve o payload. `FAILED` guarda código tipado e não devolve resultado. |
+| JOB_ISOLATION | `get_for_owner` de outra identidade devolve ausência. |
+| PROVENANCE_CONTRACT | Ocorrência unívoca preserva página 2, região, caixa, `localized_ocr_recheck`, confiança e SHA. Duas páginas deixam página e caixa nulas. |
+| COUNTER_DEFINITIONS | `match_candidates`, `code_pair_candidates`, `structural_pair_candidates`, `code_only_pair_candidates`, `counter_definitions`, `proven_matches=0`. Estado `DRAFT/CANDIDATE`, `engineering_approval=NOT_APPROVED`, `automatic_nc=false`. |
+| TEST_RESULTS | 61 testes locais no HEAD `00e3882e` (jobs, comparador, entendimento). Quatro PDFs e corpus 13: `TEST_NOT_RUN` por este executor. |
+| MCP_AUTHENTICATED | Gate OAuth no ar. Chamada positiva com token de usuário não executada aqui; o consumidor ChatGPT é quem a faz. |
+
+**READY_FOR_CHATGPT_RETEST:** `YES` para o contrato corrigido. A primeira chamada de `product.drawing_understanding` devolve `job_id`; o relatório candidato só aparece na consulta até `COMPLETED` ou `FAILED`. Não tratar `RUNNING` como o ledger. **VAL01_COMPLETED:** `false`. Quantidade, unidade, equivalência de descrição, posição BOM, revisão e ground truth continuam com a Engenharia.
