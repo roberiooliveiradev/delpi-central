@@ -604,3 +604,16 @@ Fluxo autorizado: `Portal ou EVA -> Engineering API (REST ou mesma application u
 ## Decisão aprovada do Product Owner — PRC RBAC, BFF e HML (2026-11-06; vigente)
 
 **Leia antes de implementar:** [PRODUCT-REGISTRATION-PO-DECISIONS-2026-11-06.md](./PRODUCT-REGISTRATION-PO-DECISIONS-2026-11-06.md). Esta decisão **substitui** as propostas anteriores de cinco permissões `engineering.product-registration.*` e a premissa de que `engineering.access` não autoriza o CRUD do módulo. Modelo vigente: `engineering.access` para CRUD/workflow operacional e `engineering.manager` para administração, com AuthZ backend live, escopo/identidade e invariantes de domínio intactos. **Ainda não implementado no PRC/Core; não alegar RBAC pronto.** Engenharia é owner do workflow e `api-delpi` é owner da leitura oficial TOTVS; autorizado estender `B1_CONTA` na `api-delpi` (inclusive SQL interno, sem bypass pela Engenharia). HML autorizada **condicionalmente** à execução por operadores habilitados, gates e testes; produção não autorizada. Merge markers PRODUCTS corrigidos na `main`, porém build/typecheck completos devem ser executados para comprovar integração.
+
+
+## ADENDO — PRC-D1..D3: decisões PO implementadas (2026-11-06, SHA 949ef1b286)
+
+> **Status:** `PRC-D1 PASS / PRC-D2 IMPLEMENTED+TESTED / PRC-D3 IMPLEMENTED+TESTED / PRC-D4 PENDING_OPERATOR / PRC-D5 PARTIAL / PROD NOT_AUTHORIZED`.
+
+**PRC-D1 (build):** conflito PRODUCTS corrigido pelo owner (4 arquivos); `index.css` continha 5º marker commitado — resolvido preservando `Updated upstream` + regras únicas do lado stash (`.engineering-product-tree*`, `.engineering-product-drawing-frame`) que a página de detalhe usa. Arquivos de suporte products (api/copy/types) restaurados ao estado consistente com as páginas upstream. Resultado: `typecheck PASS`, `vite build PASS`, vitest `199/199 PASS`.
+
+**PRC-D2 (RBAC):** modelo de duas permissões implementado conforme decisão PO — `engineering.access` abre consulta/criação/draft/workflow/verify-and-complete; `engineering.manager` declarado em `engineering.manifest.json` (admin fail-closed, sem operação exposta). Removidas as cinco `engineering.product-registration.*` de rotas, ator, catálogo, reference-data e testes. Fila global para todo portador de access (sem perfil oculto). Sem-access → 403 (fail-closed, testado).
+
+**PRC-D3 (B1_CONTA):** `accounting_account` incluído em `PRODUCT_DETAIL_ENGINEERING_FIELDS` (api-delpi, owner autorizado); já era retornado pelo SQL (`SB1.B1_CONTA AS accounting_account`). `accountingAccount` virou `verifiable=True` no catálogo PRC — `verify_and_complete` agora compara a conta contábil. BFF inalterado: Portal/EVA → Engineering API → api-delpi → TOTVS. 51 testes api-delpi da família passaram.
+
+**Pendente:** migration V012 + grants em HML por operador (`PENDING_OPERATOR`); homologação TOTVS real e E2E browser/MCP transport (`TEST_NOT_RUN`); promoção incremental das 13 ações EVA `planned`; required fields/freshness (gates C/F do PO).
