@@ -932,3 +932,8 @@ A escolha de concentrar intake/workflow/registro técnico na `engineering-api` m
 ## Referência executável do vertical Product Registration — 2026-11-06
 
 A especificação de rotas, payloads, PostgreSQL/JSONB, regras de transição, verificação TOTVS e critérios de aceite do MVP Engineering-only está em [PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md](./PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md). **Para este vertical, o contrato mais recente prevalece sobre exemplos e premissas históricas de BFF legado, My Requests e proibições de persistir workflow do antigo Controle MP.** Não altera outros domínios; ownership ainda exige `ARCHITECTURE_DECISION_REQUIRED` e a escrita ERP continua fora do escopo. A fase atual é documentação, sem código ou deploy.
+
+
+## Plano transversal de capacidades EVA — Product Registration (2026-11-06)
+
+A paridade **Portal/REST/EVA** integra cada slice deste vertical: para cada capacidade legítima do usuário, conectar uma ação `(entity, action)` ao **mesmo caso de uso** nas **seis tools semânticas existentes**, sem nova tool nem bypass de Core/Domain AuthZ. Matriz das 18 rotas, ações `product_registration.*`, riscos `read/execute`, PREPARE/ACT, confirmação humana para rejeição/conclusão, testes e integração serializada com VAL-01 em [PRODUCT-REGISTRATION-EVA-SEMANTIC-INTEGRATION.md](./PRODUCT-REGISTRATION-EVA-SEMANTIC-INTEGRATION.md). O documento é `TARGET/PLANNED`, não evidência de runtime. EVA não aprova produto nem escreve no TOTVS e não pode contornar a verificação oficial na conclusão. A publicação de uma rota humana requer cobertura semântica testada ou `PARITY_GAP` explicitamente bloqueado/aceito em release governado.
