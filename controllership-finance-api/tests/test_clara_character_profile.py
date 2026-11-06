@@ -362,3 +362,25 @@ def test_build_from_explicit_doc_roundtrip():
     p = build_clara_profile()
     assert p.identity.character_id == "clara"
     assert validate_profile(p) == []
+
+
+def test_avatar_read_returns_image_content_block() -> None:
+    """AVATAR-INLINE-V1 hotfix — read(avatar,get) must carry the approved
+    avatar bytes as ImageContent THROUGH the semantic _wrap envelope."""
+    from unittest.mock import patch
+
+    from mcp.types import ImageContent
+
+    from controllership_finance_app.interface.mcp import semantic_bridge
+    from controllership_finance_app.interface.mcp import tool_bridge
+
+    with patch.object(
+        tool_bridge, "_user_and_access", return_value=(object(), object())
+    ):
+        result = semantic_bridge.tool_read(entity="avatar", action="get")
+    assert result.is_error is False
+    kinds = [type(c).__name__ for c in result.content]
+    assert "ImageContent" in kinds
+    image = next(c for c in result.content if isinstance(c, ImageContent))
+    assert image.mime_type == "image/jpeg"
+    assert image.data

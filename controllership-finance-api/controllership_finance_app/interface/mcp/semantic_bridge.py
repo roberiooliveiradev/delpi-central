@@ -76,13 +76,22 @@ def _wrap(
     entity: str, action: str, result: CallToolResult
 ) -> CallToolResult:
     """Envelope semântico — entity/action carimbados sobre o payload
-    oficial; semântica de sucesso/erro do handler preservada."""
+    oficial; semântica de sucesso/erro do handler preservada.
+    Blocos não-texto (ex.: ImageContent) são carregados — o envelope
+    nunca descarta blocos canônicos de conteúdo."""
     payload = dict(
         getattr(result, "structured_content", None) or {}
     )
     payload.setdefault("entity", entity)
     payload.setdefault("action", action)
-    return mcp_tool_result(payload, is_error=bool(result.is_error))
+    images = [
+        c
+        for c in (result.content or [])
+        if type(c).__name__ == "ImageContent"
+    ]
+    return mcp_tool_result(
+        payload, is_error=bool(result.is_error), images=images or None
+    )
 
 
 def _clean(params: dict | None) -> dict:
