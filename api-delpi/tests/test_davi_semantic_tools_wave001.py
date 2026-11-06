@@ -732,3 +732,37 @@ def test_read_covers_every_eligible_capability_parity():
             )
         except PermissionError:
             pass
+
+
+# ---------------------------------------------------------------------------
+# Wave 005 — semantic selection substrate parity (NL needs → catalog+schema)
+# ---------------------------------------------------------------------------
+
+_NL_NEEDS = {
+    "produto por código": "search_products",
+    "estoque do produto": "get_product_stock",
+    "estrutura do produto": "get_product_structure",
+    "apontamentos de produção": "get_production_appointments_summary",
+    "faltas de matéria-prima": "get_product_raw_material_set_shortages",
+    "detalhe do produto": "get_product_detail",
+    "conhecimento técnico documentado": "read_governed_technical_knowledge",
+}
+
+
+def test_semantic_substrate_covers_nl_needs_without_broker():
+    """For each real DELPI need, the catalog publishes the capability with
+    the same selection metadata discover returns (description, entity,
+    shape, tags) and get_context(schema) yields args+required — the model
+    gets an equivalent substrate without discover/candidate_token."""
+    actions = _seed_actions()
+    eligible_ids = {a.action_id for a in actions if a.executable}
+    data = davi_get_context(action="catalog")
+    catalog = {a["action_id"]: a for a in data["actions"]}
+    for need, capability in _NL_NEEDS.items():
+        assert capability in eligible_ids, f"{need}: {capability} not eligible"
+        entry = catalog[capability]
+        assert entry["description"] and entry["entity"] and entry["shape"]
+        schema = davi_get_context(action="schema", capability=capability)["capability"]
+        assert schema["available"] is True
+        assert schema["argument_schema"]["additionalProperties"] is False
+        assert "required_arguments" in schema
