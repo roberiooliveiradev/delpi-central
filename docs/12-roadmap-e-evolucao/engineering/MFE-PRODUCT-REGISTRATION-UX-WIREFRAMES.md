@@ -270,3 +270,8 @@ Portal Engenharia / Caminhos e funcionalidades / Trabalho
 **UX-5:** QA por browser real (desktop/tablet/mobile), acessibilidade, regressão REST/EVA, screenshots e aceite PO.  
 
 Cada incremento deve apresentar before/after, componente reutilizado, lacunas reais do kit, testes e outcomes. Nenhum deploy produtivo por este plano.
+
+
+## Trilha executável Devin — refatoração integral do MFE (2026-11-07)
+
+**Plano canônico de execução:** [MFE-PRODUCT-REGISTRATION-DEVIN-IMPLEMENTATION-PLAN.md](./MFE-PRODUCT-REGISTRATION-DEVIN-IMPLEMENTATION-PLAN.md), cobrindo `MFE-PRC-UX0..UX5`, componentes confirmados em `@delpi/plugin-ui`/façade `engineeringUi.ts`, wireframes 01–07, mapa de arquivos, REST real (inclusive intake CREATE/UPDATE), responsividade, testes, screenshots e critérios de aceite. O executor Devin deve implementar a trilha inteira em DEV, com backend e owners preservados, sem inventar API/export. **`PRODUCTION_DEPLOY_SUSPENDED` até refatoração + QA visual real + aceite PO e gates funcionais separados.** Este adendo é documentação/plano, não implementação nem autorização produtiva.
