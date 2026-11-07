@@ -703,3 +703,13 @@ permanece under_review — evidência fail-closed preservada.
 - **Jornada canônica completa:** via gateway `/apps/engineering-api` com JWT real: intake→start→draft PATCH seletivo→submit-review→`verify_and_complete` → **completed** (RID `3bace5e3`, record `983f5735`, match real TOTVS produto `80016622`).
 - **MCP transport:** endpoint `/apps/engineering-api/mcp` responde RFC 9728 corretamente — 401 + WWW-Authenticate (`scope="mcp:tools"`) + `.well-known/oauth-protected-resource` válido. Token portal `delpi-central` não carrega a audience `mcp:tools` → `PENDING_KEYCLOAK_SETUP` (mapper do client; setup documentado em 28-eva-mcp-v1-keycloak-setup.md).
 - Portal: remoteEntry.js 200 via gateway; visibilidade do menu exige rebuild do MFE/bundle com a feature (operator).
+
+
+## ADENDO — PRC-D5.6: MFE publicado + transporte MCP real + audience mcp:tools
+
+> **Status:** `MFE REBUILT+DEPLOYED(dev) / KEYCLOAK mcp:tools PASS / MCP TRANSPORT PASS (initialize+tools/list+read) / TOTVS manual PENDING_OPERATOR / BROWSER E2E TEST_NOT_RUN`.
+
+- MFE: `infra-engineering` rebuilt (vite build via compose canônico) e delpi-engineering recriado — bundle novo contém `product-registration` (App-*.js); remoteEntry 200. Menu/visibilidade passa pelo host do Portal com a nova federation manifest.
+- Keycloak: `mcp-engineering` já existia no realm dev com `mcp:tools` + `mcp-audience-engineering` + `audience-delpi`; habilitado `directAccessGrantsEnabled` em DEV para token de homologação (client confidencial — secret via admin API). Token resultante: `aud=[http://localhost/apps/engineering-api/mcp, delpi-central, https://minhadelpi.com.br/apps/engineering-api/mcp]`, `scope=openid mcp:tools ...`.
+- **MCP transport real provado**: POST /apps/engineering-api/mcp com token legítimo → `initialize` (SSE, capabilities EVA) → `notifications/initialized` 200 → `tools/list` = exatamente 6 tools (get_context, read, analyze, knowledge, execute, delete) → `tools/call read product_registration.list` → resposta JSON-RPC estruturada com envelope da ação.
+- Antes do fix: token `delpi-central` recebia 401 RESOURCE_AUDIENCE_MISMATCH (correto — RFC 9728 enforcement).
