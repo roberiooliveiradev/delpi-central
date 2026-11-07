@@ -715,3 +715,10 @@ permanece under_review — evidência fail-closed preservada.
 - Antes do fix: token `delpi-central` recebia 401 RESOURCE_AUDIENCE_MISMATCH (correto — RFC 9728 enforcement).
 
 - **PREPARE terminal via transporte real:** `execute product_registration.reject prepare` retornou proposta selada (proposal_ref, terminal=true, expected_postcondition read_back_status=rejected) sobre request real — fluxo PREPARE→confirmação→commit verificável em transporte autêntico.
+
+
+## Gate UX do MFE Product Registration — redesign aprovado (2026-11-07)
+
+**Produção suspensa pelo PO até redesenho e aceite visual.** Wireframes detalhados de **sete áreas da experiência** (fila, nova solicitação, detalhe/workflow, ficha técnica, verificação TOTVS, histórico/revisões, acompanhamento) e regras de layout/fluxos: [MFE-PRODUCT-REGISTRATION-UX-WIREFRAMES.md](./MFE-PRODUCT-REGISTRATION-UX-WIREFRAMES.md). **Matriz de componentes reais do `@delpi/plugin-ui` via `plugins/engineering/src/ui/engineeringUi.ts`, estado dos exports, estados UI, responsividade e plano de QA:** [MFE-PRODUCT-REGISTRATION-COMPONENTS-AND-ACCEPTANCE.md](./MFE-PRODUCT-REGISTRATION-COMPONENTS-AND-ACCEPTANCE.md).
+
+**Gates:** `MFE-PRC-UX0..UX5`. Frontend PRC atual está implementado funcionalmente mas usa majoritariamente HTML básico e **não foi aceito visualmente**; as sete áreas são desenho `TARGET`, não sete rotas implementadas. Reutilizar kit/fáçade, preservar os use cases e seis tools EVA, não inventar componentes/endpoints/novo RBAC, validar screenshots reais DEV/HML e obter aceite PO. **Nenhum deploy em produção autorizado nesta etapa.** A autorização produtiva discutida anteriormente fica substituída por esta suspensão expressa do PO.
