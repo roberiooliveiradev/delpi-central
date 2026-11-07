@@ -32,6 +32,7 @@ export function HelpPage({ basePath }: HelpPageProps) {
     { id: "start", title: "Página Início" },
     { id: "overview", title: "Visão geral" },
     { id: "nonconformities", title: "Não conformidades" },
+    { id: "product-registration", title: "Cadastro de produtos" },
     { id: "paths", title: "Caminhos e funcionalidades" },
     { id: "search", title: "Busca e favoritos" },
     { id: "states", title: "Estados das informações" },
@@ -194,6 +195,40 @@ export function HelpPage({ basePath }: HelpPageProps) {
                   term: "Registro legado",
                   meaning:
                     "O aplicativo legado de não conformidades permanece operacional durante a migração governada — o acesso fica disponível na própria área de LMPs.",
+                },
+              ]}
+            />
+          </EngineeringSectionCard>
+        </Manual.Section>
+
+        <Manual.Section id="manual-product-registration">
+          <EngineeringSectionCard title="Controle e Cadastro de Produtos">
+            <Manual.Concepts
+              items={[
+                {
+                  term: "Central de solicitações",
+                  meaning:
+                    "Fila de solicitações de criação e alteração de matérias-primas. Busca e filtros ficam no endereço da página e a paginação vem da Engineering API.",
+                },
+                {
+                  term: "Nova solicitação",
+                  meaning:
+                    "Abertura guiada em três etapas: identificação, ficha técnica e revisão. Enviar a solicitação registra o pedido para atendimento — não cadastra nem altera o produto no TOTVS.",
+                },
+                {
+                  term: "Ficha técnica",
+                  meaning:
+                    "Cada alteração exige justificativa e é verificada contra a versão atual do caso — se outra pessoa alterou antes, o portal avisa e recarrega os dados.",
+                },
+                {
+                  term: "Verificação TOTVS",
+                  meaning:
+                    "Na conclusão, a Engineering API relê o cadastro oficial e compara campo a campo. A solicitação só é concluída quando todos os campos verificáveis correspondem; a revisão publicada é imutável.",
+                },
+                {
+                  term: "Histórico e revisões",
+                  meaning:
+                    "A aba Histórico mostra os eventos reais do atendimento; a aba Revisões exibe os snapshots publicados, somente para consulta.",
                 },
               ]}
             />

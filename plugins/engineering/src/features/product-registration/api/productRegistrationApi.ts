@@ -63,12 +63,30 @@ export type PrcTimelineEvent = {
   next_status?: string | null;
 };
 
+/** Resultado por campo devolvido pelo backend em `field_results` —
+ * o MFE nunca calcula match próprio. */
+export type PrcFieldResult = {
+  result?: string;
+  officialField?: string | null;
+  expected?: unknown;
+  observed?: unknown;
+  reason?: string;
+  fields?: string[];
+  detail?: Array<{ key: string; result: string; fields?: string[] }>;
+};
+
 export type PrcVerification = {
   id: string;
+  request_id?: string;
   official_product_code: string;
+  requested_by_subject?: string;
   checked_at: string;
+  official_source?: string;
   result: string;
-  field_results: Record<string, unknown>;
+  expected_fields?: string[];
+  field_results: Record<string, PrcFieldResult>;
+  evidence_fingerprint?: string;
+  correlation_id?: string;
   error_code?: string | null;
 };
 
@@ -80,10 +98,22 @@ export type PrcRecord = {
   official_source: string;
 };
 
-export type PrcRevision = {
+/** Índice de revisões (rota 14) — sem snapshot. */
+export type PrcRevisionSummary = {
+  revisionNumber: number;
+  requestId: string;
+  approvedBy: string;
+  approvedAt: string;
+  changedPaths: string[];
+};
+
+/** Snapshot imutável (rota 15) — read-only. */
+export type PrcRevisionDetail = {
   id: string;
+  record_id: string;
   revision_number: number;
   request_id: string;
+  schema_version: number;
   technical_snapshot: Record<string, unknown>;
   changes: Array<{
     path: string;
@@ -91,8 +121,10 @@ export type PrcRevision = {
     after: unknown;
     reason: string;
   }>;
+  official_evidence_id?: string;
   approved_by_subject: string;
   approved_at: string;
+  created_at?: string;
 };
 
 export type PrcFieldSpec = {
@@ -165,8 +197,19 @@ export async function fetchPrcRecord(
 export async function fetchPrcRevisions(
   recordId: string,
   signal?: AbortSignal,
-): Promise<Envelope<{ items: PrcRevision[]; total: number }>> {
+): Promise<Envelope<{ items: PrcRevisionSummary[]; total: number }>> {
   return getJson(`${BASE}/technical-records/${recordId}/revisions`, signal);
+}
+
+export async function fetchPrcRevision(
+  recordId: string,
+  revisionNumber: number,
+  signal?: AbortSignal,
+): Promise<Envelope<PrcRevisionDetail>> {
+  return getJson(
+    `${BASE}/technical-records/${recordId}/revisions/${revisionNumber}`,
+    signal,
+  );
 }
 
 export async function fetchPrcReferenceData(
@@ -175,25 +218,66 @@ export async function fetchPrcReferenceData(
   return getJson(`${BASE}/reference-data`, signal);
 }
 
+/** Intake 01 — POST create/update. `Idempotency-Key` é contrato
+ * obrigatório para retry seguro (replay retorna o mesmo caso). */
+export type PrcIntakeBody = {
+  source: string;
+  externalRequestId?: string | null;
+  externalItemId?: string | null;
+  requestType: "create" | "update";
+  productType: string;
+  schemaVersion: number;
+  requestedData?: Record<string, unknown> | null;
+  officialProductCode?: string | null;
+  baseRevision?: number | null;
+  changes?: Array<{ path: string; proposedValue: unknown; reason: string }> | null;
+};
+
+export type PrcIntakeResult = {
+  requestId: string;
+  caseStatus: string;
+  createdAt: string;
+  source: string;
+  requestType: string;
+  caseVersion: number;
+};
+
+export async function prcIntakeSubmit(
+  body: PrcIntakeBody,
+  idempotencyKey: string,
+): Promise<Envelope<PrcIntakeResult>> {
+  return postJson(`${BASE}/intake/requests`, body, undefined, {
+    headers: { "Idempotency-Key": idempotencyKey },
+  });
+}
+
 export async function prcAction(
   requestId: string,
   actionPath: string,
   body: Record<string, unknown>,
   idempotencyKey?: string,
 ): Promise<Envelope<PrcRequestDetail>> {
-  const suffix = idempotencyKey
-    ? `${actionPath}?`
-    : actionPath;
-  void suffix;
   return postJson(
     `${BASE}/requests/${requestId}/actions/${actionPath}`,
     body,
+    undefined,
+    idempotencyKey
+      ? { headers: { "Idempotency-Key": idempotencyKey } }
+      : undefined,
   );
 }
 
 export async function prcUpdateDraft(
   requestId: string,
   body: { expectedVersion: number; changes: Array<{ path: string; proposedValue: unknown; reason: string }> },
+  idempotencyKey?: string,
 ): Promise<Envelope<PrcRequestDetail>> {
-  return patchJson(`${BASE}/requests/${requestId}/draft`, body);
+  return patchJson(
+    `${BASE}/requests/${requestId}/draft`,
+    body,
+    undefined,
+    idempotencyKey
+      ? { headers: { "Idempotency-Key": idempotencyKey } }
+      : undefined,
+  );
 }

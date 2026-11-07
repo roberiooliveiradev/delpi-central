@@ -327,6 +327,7 @@ declare module "@delpi/plugin-ui/index" {
     children: ReactNode;
     variant?: ActionButtonVariant;
     disabled?: boolean;
+    softDisabled?: boolean;
     className?: string;
     "aria-label"?: string;
     title?: string;
@@ -661,7 +662,14 @@ declare module "@delpi/plugin-ui/index" {
   };
 
   export type DashboardFiltersKit = {
-    FiltersRow: ComponentType<{ children?: ReactNode; trailing?: ReactNode }>;
+    FiltersRow: ComponentType<{
+      children?: ReactNode;
+      trailing?: ReactNode;
+      ariaLabel?: string;
+      variant?: "default" | "extended";
+      compact?: boolean;
+      className?: string;
+    }>;
     FilterInputField: ComponentType<FilterInputFieldProps>;
     FilterSelectField: ComponentType<FilterSelectFieldProps>;
   };
@@ -724,6 +732,8 @@ declare module "@delpi/plugin-ui/index" {
     onClose: () => void;
     children: ReactNode;
     closeAriaLabel?: string;
+    className?: string;
+    closeOnOverlayClick?: boolean;
   };
 
   export function createHostContainedModalShell(config: {
@@ -2365,3 +2375,108 @@ declare module "@delpi/plugin-ui/index" {
 }
 
 declare module "@delpi/plugin-ui/styles" {}
+
+declare module "@delpi/plugin-ui/index" {
+  // Complementos do kit usados pelo MFE (UnderlineNav tabs, campos de
+  // formulário nativos, painel de confirmação) — espelham os exports
+  // reais verificados em plugins/plugin-ui/src.
+  import type { ComponentType, ReactElement, ReactNode } from "react";
+
+  export type DashboardUnderlineNavItem = {
+    id: string;
+    label: ReactNode;
+    icon?: ReactNode;
+    count?: number;
+    title?: string;
+    iconOnly?: boolean;
+    controlId?: string;
+    tabId?: string;
+    onSelect?: () => void;
+  };
+  export type DashboardUnderlineNavProps = {
+    items: DashboardUnderlineNavItem[];
+    activeId: string;
+    mode?: "navigation" | "tabs";
+    layout?: "row" | "wrap";
+    density?: "default" | "compact";
+    className?: string;
+    "aria-label"?: string;
+  };
+  export function createDashboardUnderlineNav(config: {
+    prefix: string;
+  }): ComponentType<DashboardUnderlineNavProps>;
+
+  export type FormFieldShellClassNames = Record<string, string>;
+  export function formFieldShellBemClasses(
+    prefix: string,
+  ): FormFieldShellClassNames;
+
+  type PrcBaseNativeFieldProps = {
+    id: string;
+    label: string;
+    hint?: string;
+    span?: boolean;
+    required?: boolean;
+    disabled?: boolean;
+    readOnly?: boolean;
+    className?: string;
+    onBlur?: () => void;
+  };
+  export type DashboardNativeTextFieldProps = PrcBaseNativeFieldProps & {
+    value: string;
+    onChange: (value: string) => void;
+    type?: string;
+    placeholder?: string;
+    maxLength?: number;
+    inputMode?: "decimal" | "numeric";
+    autoFocus?: boolean;
+  };
+  export type DashboardNativeSelectFieldProps = PrcBaseNativeFieldProps & {
+    value: string;
+    onChange: (value: string) => void;
+    options: readonly { value: string; label: string }[];
+    placeholderOption?: string;
+  };
+  export type DashboardNativeTextAreaFieldProps =
+    PrcBaseNativeFieldProps & {
+      value: string;
+      onChange: (value: string) => void;
+      placeholder?: string;
+      rows?: number;
+      maxLength?: number;
+    };
+  export function createDashboardNativeFormFields(config: {
+    classNames: FormFieldShellClassNames;
+  }): {
+    FormFieldShell: ComponentType<{
+      id: string;
+      label: string;
+      hint?: string;
+      required?: boolean;
+      children?: ReactNode;
+    }>;
+    TextField: ComponentType<DashboardNativeTextFieldProps>;
+    SelectField: ComponentType<DashboardNativeSelectFieldProps>;
+    TextAreaField: ComponentType<DashboardNativeTextAreaFieldProps>;
+  };
+
+  export type ConfirmModalClassNames = Record<string, string>;
+  export function confirmModalBemClasses(
+    prefix: string,
+    options?: { actionsBlock?: string; actionsAlign?: "start" | "end" },
+  ): ConfirmModalClassNames;
+  export function ConfirmModalPanel(props: {
+    message: ReactNode;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    secondaryLabel?: string;
+    confirmBusy?: boolean;
+    confirmBusyLabel?: string;
+    variant?: "default" | "danger";
+    showCancel?: boolean;
+    onConfirm: () => void;
+    onCancel: () => void;
+    onSecondary?: () => void;
+    classNames: ConfirmModalClassNames;
+  }): ReactElement;
+}

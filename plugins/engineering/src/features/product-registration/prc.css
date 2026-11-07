@@ -1,0 +1,144 @@
+/* Product Registration — somente layout de página/composição.
+ * Todo visual de componente vem do kit `.delpi-ui-*` (tokens já mapeados
+ * em `.portal-engineering`); aqui não existe CSS de componente do kit. */
+
+.engineering-prc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--en-section-gap);
+}
+
+.engineering-prc__muted {
+  color: var(--en-text-muted);
+  font-size: 0.85rem;
+}
+
+.engineering-prc__detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--en-grid-gap);
+  align-items: start;
+}
+
+.engineering-prc__overview,
+.engineering-prc__sheet,
+.engineering-prc__verification,
+.engineering-prc__revisions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--en-grid-gap);
+}
+
+.engineering-prc__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.engineering-prc__confirm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.engineering-prc__field-error {
+  color: var(--en-danger);
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.engineering-prc__change-notes {
+  margin: var(--en-grid-gap) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--en-text-muted);
+  font-size: 0.82rem;
+}
+
+.engineering-prc__edit-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--en-grid-gap);
+}
+
+.engineering-prc__edit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-block-end: 8px;
+  border-bottom: 1px solid var(--en-border);
+}
+
+.engineering-prc__edit-row:last-child {
+  border-bottom: 0;
+}
+
+.engineering-prc__edit-row-label {
+  font-weight: 600;
+}
+
+.engineering-prc__edit-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.engineering-prc__edit-suppliers {
+  margin-top: var(--en-grid-gap);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.engineering-prc__edit-suppliers-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.engineering-prc__supplier-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  padding-block-end: 12px;
+  border-bottom: 1px solid var(--en-border);
+}
+
+.engineering-prc__supplier-add {
+  display: flex;
+}
+
+.engineering-prc__supplier-diff {
+  margin: 0;
+  padding-inline-start: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.engineering-prc__verify-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 1100px) {
+  .engineering-prc__detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .engineering-prc__supplier-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .engineering-prc__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

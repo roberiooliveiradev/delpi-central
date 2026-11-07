@@ -141,7 +141,16 @@ export async function getBlob(path: string, signal?: AbortSignal): Promise<Blob>
 export type ApiFailBody = {
   success?: boolean;
   message?: string;
-  data?: { fields?: Record<string, string> } | null;
+  data?: {
+    code?: string;
+    fields?: Record<string, string>;
+  } & Record<string, unknown> | null;
+};
+
+export type SendJsonOptions = {
+  /** Cabeçalhos extras da chamada (ex.: `Idempotency-Key` em mutações
+   * sujeitas a retry — contrato PRC exige o header, não query). */
+  headers?: Record<string, string>;
 };
 
 async function sendJson<T>(
@@ -149,6 +158,7 @@ async function sendJson<T>(
   path: string,
   body?: unknown,
   signal?: AbortSignal,
+  options?: SendJsonOptions,
 ): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -159,7 +169,11 @@ async function sendJson<T>(
   try {
     response = await fetch(path, {
       method,
-      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      headers: {
+        ...authHeaders(),
+        "Content-Type": "application/json",
+        ...(options?.headers ?? {}),
+      },
       credentials: "same-origin",
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
@@ -182,14 +196,27 @@ async function sendJson<T>(
     } catch {
       /* envelope inesperado — cai no erro por status */
     }
-    if (response.status === 400 || response.status === 409) {
+    if (
+      response.status === 400 ||
+      response.status === 409 ||
+      response.status === 422
+    ) {
       const err = new HomeApiError(
-        response.status === 409 ? "contract_error" : "contract_error",
+        "contract_error",
         failBody?.message || "Os dados enviados foram recusados.",
         response.status,
       );
-      (err as { fields?: Record<string, string> }).fields =
-        failBody?.data?.fields;
+      const ext = err as {
+        fields?: Record<string, string>;
+        code?: string;
+        data?: Record<string, unknown> | null;
+      };
+      ext.fields = failBody?.data?.fields;
+      ext.code =
+        typeof failBody?.data?.code === "string"
+          ? failBody.data.code
+          : undefined;
+      ext.data = failBody?.data ?? null;
       throw err;
     }
     throw errorForStatus(response.status);
@@ -201,24 +228,27 @@ export async function postJson<T>(
   path: string,
   body?: unknown,
   signal?: AbortSignal,
+  options?: SendJsonOptions,
 ): Promise<T> {
-  return sendJson<T>("POST", path, body, signal);
+  return sendJson<T>("POST", path, body, signal, options);
 }
 
 export async function putJson<T>(
   path: string,
   body?: unknown,
   signal?: AbortSignal,
+  options?: SendJsonOptions,
 ): Promise<T> {
-  return sendJson<T>("PUT", path, body, signal);
+  return sendJson<T>("PUT", path, body, signal, options);
 }
 
 export async function patchJson<T>(
   path: string,
   body?: unknown,
   signal?: AbortSignal,
+  options?: SendJsonOptions,
 ): Promise<T> {
-  return sendJson<T>("PATCH", path, body, signal);
+  return sendJson<T>("PATCH", path, body, signal, options);
 }
 
 export async function deleteJson<T>(

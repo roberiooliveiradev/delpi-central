@@ -1,196 +1,382 @@
-/** Fila do Controle e Cadastro de Produtos — escopo vem da API. */
+/** Central de solicitações PRC — hero canônico, filtros oficiais,
+ * DataTableSection com paginação do servidor e estados honestos.
+ * Nenhum dado é inventado: agregados/KPIs só existiriam se a API
+ * fornecesse totais por status (ela não fornece → omitidos). */
 
-import { useCallback, useEffect, useState } from "react";
-import { fetchPrcQueue, type PrcRequestSummary } from "../api/productRegistrationApi";
-import { navigatePrc } from "../prcNavigate";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-const STATUS_LABELS: Record<string, string> = {
-  submitted: "Enviada",
-  in_progress: "Em atendimento",
-  needs_information: "Aguardando informações",
-  under_review: "Em revisão",
-  completed: "Concluída",
-  rejected: "Rejeitada",
-};
+import { HomeApiError } from "../../../api/httpClient";
+import { navigateEngineeringView } from "../../../app/engineeringRoutes";
+import {
+  EngineeringActionButton,
+  EngineeringEmptyState,
+  EngineeringFilterInput,
+  EngineeringFilterSelect,
+  EngineeringFiltersRow,
+  EngineeringLoadingActivityCard,
+  EngineeringPageHero,
+  EngineeringPagePath,
+  EngineeringStateBanner,
+} from "../../../ui/engineeringUi";
+import type { DataTableColumn } from "../../lmps/components/dataTableUi";
+import { DataTableSection } from "../../lmps/components/DataTableSection";
+import {
+  fetchPrcQueue,
+  type PrcRequestSummary,
+} from "../api/productRegistrationApi";
+import {
+  buildPrcQueueUrl,
+  navigatePrc,
+  navigatePrcHref,
+  parsePrcQueueUrl,
+  useLocationSearch,
+  PRC_PATHS,
+  type PrcQueueUrlState,
+} from "../prcNavigate";
+import {
+  PRC_COPY,
+  PRC_STATUS_LABELS,
+  PRC_TYPE_LABELS,
+  prcPersonLabel,
+  prcRequesterLabel,
+  prcShortId,
+} from "../prcCopy";
+import { PrcStatusBadge } from "../components/PrcStatusBadge";
 
-const TYPE_LABELS: Record<string, string> = {
-  create: "Criação",
-  update: "Alteração",
-};
+const PAGE_SIZE = 25;
+const SEARCH_DEBOUNCE_MS = 400;
+
+const STATUS_OPTIONS = [
+  { value: "", label: "Todos os status" },
+  ...Object.entries(PRC_STATUS_LABELS).map(([value, label]) => ({
+    value,
+    label,
+  })),
+];
+
+const TYPE_OPTIONS = [
+  { value: "", label: "Todos os tipos" },
+  ...Object.entries(PRC_TYPE_LABELS).map(([value, label]) => ({
+    value,
+    label,
+  })),
+];
 
 export function PrcQueuePage({ basePath }: { basePath: string }) {
-  const [items, setItems] = useState<PrcRequestSummary[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [status, setStatus] = useState("");
-  const [type, setType] = useState("");
-  const [search, setSearch] = useState("");
-  const [state, setState] = useState<"loading" | "ok" | "error" | "forbidden">(
-    "loading",
+  const search = useLocationSearch();
+  const applied = useMemo(() => parsePrcQueueUrl(search), [search]);
+
+  /** Draft da busca — digitado aqui, commitado na URL após debounce. */
+  const [searchDraft, setSearchDraft] = useState(applied.search);
+  const [prevApplied, setPrevApplied] = useState(applied);
+  if (prevApplied !== applied) {
+    setPrevApplied(applied);
+    setSearchDraft(applied.search);
+  }
+
+  const [list, setList] = useState<{
+    items: PrcRequestSummary[];
+    total: number;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<{
+    status: number | null;
+    message: string;
+  } | null>(null);
+  const requestSeq = useRef(0);
+
+  const commit = useCallback(
+    (state: PrcQueueUrlState, options?: { replace?: boolean }) => {
+      navigatePrcHref(buildPrcQueueUrl(basePath, state), {
+        replace: options?.replace ?? true,
+      });
+    },
+    [basePath],
   );
-  const [error, setError] = useState("");
-  const pageSize = 25;
 
   const load = useCallback(
-    async (p = page) => {
-      setState("loading");
+    async (state: PrcQueueUrlState, signal: AbortSignal) => {
+      const seq = ++requestSeq.current;
+      setLoading(true);
+      setError(null);
       try {
-        const env = await fetchPrcQueue({
-          status, type, search, page: p, pageSize,
-        });
-        setItems(env.data.items);
-        setTotal(env.data.total);
-        setState("ok");
+        const env = await fetchPrcQueue(
+          {
+            status: state.status,
+            type: state.type,
+            search: state.search,
+            page: state.page,
+            pageSize: PAGE_SIZE,
+          },
+          signal,
+        );
+        if (seq !== requestSeq.current || signal.aborted) return;
+        setList({ items: env.data.items, total: env.data.total });
       } catch (e) {
-        const err = e as { status?: number; message?: string };
-        setError(err.message || "Falha ao carregar a fila.");
-        setState(err.status === 403 ? "forbidden" : "error");
+        if (seq !== requestSeq.current || signal.aborted) return;
+        const err = e as HomeApiError;
+        setError({
+          status: err.status ?? null,
+          message: err.message || "Falha ao carregar a fila.",
+        });
+        setList(null);
+      } finally {
+        if (seq === requestSeq.current && !signal.aborted) {
+          setLoading(false);
+        }
       }
     },
-    [status, type, search, page],
+    [],
   );
 
   useEffect(() => {
-    load(page);
-  }, [status, type, page]);
+    const controller = new AbortController();
+    void load(applied, controller.signal);
+    return () => controller.abort();
+  }, [applied, load]);
 
-  const pages = Math.max(1, Math.ceil(total / pageSize));
+  /* Debounce da busca → URL (replace, sem poluir histórico). */
+  useEffect(() => {
+    if (searchDraft === applied.search) return undefined;
+    const timer = window.setTimeout(() => {
+      commit({ ...applied, search: searchDraft.trim(), page: 1 });
+    }, SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [searchDraft, applied, commit]);
 
-  if (state === "forbidden") {
-    return (
-      <section className="engineering-page" role="alert">
-        <h2>Acesso restrito</h2>
-        <p>
-          Você não possui permissão para acessar o Controle e Cadastro de
-          Produtos.
-        </p>
-      </section>
-    );
-  }
+  const hasActiveFilters =
+    applied.status !== "" ||
+    applied.type !== "" ||
+    applied.search !== "" ||
+    searchDraft !== applied.search;
+
+  const clearFilters = useCallback(() => {
+    setSearchDraft("");
+    commit({ status: "", type: "", search: "", page: 1 });
+  }, [commit]);
+
+  const openDetail = useCallback(
+    (row: PrcRequestSummary) => {
+      navigatePrc(PRC_PATHS.detail(row.id), basePath);
+    },
+    [basePath],
+  );
+
+  const columns = useMemo<DataTableColumn<PrcRequestSummary>[]>(
+    () => [
+      {
+        key: "id",
+        header: "Nº",
+        render: (row) => (
+          <span title={`ID completo: ${row.id}`}>{prcShortId(row.id)}</span>
+        ),
+      },
+      {
+        key: "type",
+        header: "Tipo",
+        render: (row) => PRC_TYPE_LABELS[row.requestType] || row.requestType,
+      },
+      {
+        key: "requester",
+        header: "Solicitante",
+        render: (row) => prcRequesterLabel(row.requester),
+      },
+      {
+        key: "officialCode",
+        header: "Código oficial",
+        render: (row) =>
+          row.officialCode ? (
+            row.officialCode
+          ) : (
+            <span className="engineering-prc__muted">
+              {PRC_COPY.awaitingCode}
+            </span>
+          ),
+      },
+      {
+        key: "createdAt",
+        header: "Abertura",
+        render: (row) => new Date(row.createdAt).toLocaleString("pt-BR"),
+      },
+      {
+        key: "status",
+        header: "Status",
+        render: (row) => <PrcStatusBadge status={row.status} />,
+      },
+      {
+        key: "assignedTo",
+        header: "Responsável",
+        render: (row) => prcPersonLabel(row.assignedTo),
+      },
+      {
+        key: "open",
+        header: "",
+        interactive: true,
+        render: (row) => (
+          <EngineeringActionButton
+            variant="link"
+            title={`${PRC_COPY.openRequest} ${prcShortId(row.id)}`}
+            onClick={() => openDetail(row)}
+          >
+            Abrir
+          </EngineeringActionButton>
+        ),
+      },
+    ],
+    [openDetail],
+  );
+
+  const forbidden = error?.status === 403;
+  const notFound = error?.status === 404;
 
   return (
-    <section className="engineering-page">
-      <header>
-        <h2>Controle e Cadastro de Produtos</h2>
-        <p className="engineering-subtitle">
-          Fila de solicitações de cadastro e alteração de matérias-primas
-        </p>
-      </header>
+    <main className="engineering-prc">
+      <EngineeringPagePath
+        back={{
+          label: PRC_COPY.breadcrumbHome,
+          href: basePath,
+          onNavigate: (event) => {
+            event.preventDefault();
+            navigateEngineeringView("home", { basePath });
+          },
+        }}
+        items={[]}
+        current={PRC_COPY.breadcrumbRoot}
+      />
 
-      <div className="engineering-filters" role="search">
-        <input
-          type="search"
-          placeholder="Buscar por código ou descrição"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              setPage(1);
-              load(1);
+      <EngineeringPageHero
+        eyebrow="Portal Engenharia"
+        title={PRC_COPY.listTitle}
+        description={PRC_COPY.listDescription}
+        actions={
+          <>
+            {hasActiveFilters ? (
+              <EngineeringActionButton
+                variant="ghost"
+                onClick={clearFilters}
+              >
+                {PRC_COPY.clearFilters}
+              </EngineeringActionButton>
+            ) : null}
+            <EngineeringActionButton
+              variant="primary"
+              title="Abrir uma nova solicitação de cadastro ou alteração"
+              onClick={() => navigatePrc(PRC_PATHS.create, basePath)}
+            >
+              {PRC_COPY.newRequest}
+            </EngineeringActionButton>
+          </>
+        }
+      >
+        <EngineeringFiltersRow ariaLabel="Filtros da fila de solicitações">
+          <EngineeringFilterInput
+            label="Buscar"
+            type="search"
+            value={searchDraft}
+            onChange={setSearchDraft}
+            placeholder="Nº, código oficial ou descrição"
+          />
+          <EngineeringFilterSelect
+            label="Status"
+            value={applied.status}
+            onChange={(value) =>
+              commit({ ...applied, status: value, page: 1 })
             }
-          }}
-          aria-label="Buscar solicitação"
+            options={STATUS_OPTIONS}
+          />
+          <EngineeringFilterSelect
+            label="Tipo"
+            value={applied.type}
+            onChange={(value) => commit({ ...applied, type: value, page: 1 })}
+            options={TYPE_OPTIONS}
+          />
+        </EngineeringFiltersRow>
+      </EngineeringPageHero>
+
+      {forbidden ? (
+        <>
+          <EngineeringStateBanner variant="error">
+            {PRC_COPY.forbidden}
+          </EngineeringStateBanner>
+          <EngineeringActionButton
+            variant="primary"
+            onClick={() => navigateEngineeringView("home", { basePath })}
+          >
+            Voltar ao início
+          </EngineeringActionButton>
+        </>
+      ) : null}
+
+      {!forbidden && error ? (
+        <>
+          <EngineeringStateBanner variant="error">
+            {notFound
+              ? "Fila de solicitações não encontrada."
+              : `Fila de solicitações indisponível — ${error.message}`}
+          </EngineeringStateBanner>
+          <EngineeringActionButton
+            variant="primary"
+            onClick={() => {
+              const controller = new AbortController();
+              void load(applied, controller.signal);
+            }}
+          >
+            Tentar novamente
+          </EngineeringActionButton>
+        </>
+      ) : null}
+
+      {!forbidden && !error && loading && !list ? (
+        <EngineeringLoadingActivityCard
+          title="Carregando solicitações"
+          description="Consultando a Engineering API com seus filtros."
         />
-        <select
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
-            setPage(1);
-          }}
-          aria-label="Filtrar por status"
-        >
-          <option value="">Todos os status</option>
-          {Object.entries(STATUS_LABELS).map(([v, l]) => (
-            <option key={v} value={v}>
-              {l}
-            </option>
-          ))}
-        </select>
-        <select
-          value={type}
-          onChange={(e) => {
-            setType(e.target.value);
-            setPage(1);
-          }}
-          aria-label="Filtrar por tipo"
-        >
-          <option value="">Todos os tipos</option>
-          <option value="create">Criação</option>
-          <option value="update">Alteração</option>
-        </select>
-        <button type="button" onClick={() => load()}>
-          Atualizar
-        </button>
-      </div>
-
-      {state === "loading" ? <p role="status">Carregando…</p> : null}
-      {state === "error" ? <p role="alert">{error}</p> : null}
-      {state === "ok" && items.length === 0 ? (
-        <p>Nenhuma solicitação no escopo atual.</p>
       ) : null}
 
-      {items.length > 0 ? (
-        <div className="engineering-table-wrapper">
-          <table className="engineering-table">
-            <thead>
-              <tr>
-                <th>Solicitação</th>
-                <th>Tipo</th>
-                <th>Solicitante</th>
-                <th>Origem</th>
-                <th>Código oficial</th>
-                <th>Abertura</th>
-                <th>Status</th>
-                <th>Responsável</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <button
-                      type="button"
-                      className="engineering-link"
-                      onClick={() =>
-                        navigatePrc(`product-registration/${item.id}`, basePath)
-                      }
-                    >
-                      {item.id.slice(0, 8)}
-                    </button>
-                  </td>
-                  <td>{TYPE_LABELS[item.requestType] || item.requestType}</td>
-                  <td>{item.requester.displayName || item.requester.subject}</td>
-                  <td>{item.source}</td>
-                  <td>{item.officialCode || "—"}</td>
-                  <td>{new Date(item.createdAt).toLocaleString("pt-BR")}</td>
-                  <td>{STATUS_LABELS[item.status] || item.status}</td>
-                  <td>{item.assignedTo || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {!forbidden && !error && !loading && list && list.items.length === 0 ? (
+        <EngineeringEmptyState
+          message={
+            hasActiveFilters ? PRC_COPY.emptyFiltered : PRC_COPY.emptyQueue
+          }
+        >
+          {hasActiveFilters ? (
+            <EngineeringActionButton variant="ghost" onClick={clearFilters}>
+              {PRC_COPY.clearFilters}
+            </EngineeringActionButton>
+          ) : null}
+        </EngineeringEmptyState>
       ) : null}
 
-      <nav className="engineering-pagination" aria-label="Paginação">
-        <button
-          type="button"
-          disabled={page <= 1}
-          onClick={() => setPage((p) => p - 1)}
-        >
-          Anterior
-        </button>
-        <span>
-          Página {page} de {pages} ({total} itens)
-        </span>
-        <button
-          type="button"
-          disabled={page >= pages}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Próxima
-        </button>
-      </nav>
-    </section>
+      {!forbidden && !error && list && list.items.length > 0 ? (
+        <DataTableSection
+          title={PRC_COPY.listTitle}
+          columns={columns}
+          rows={list.items}
+          rowKey={(row) => row.id}
+          loading={loading}
+          hideSearch
+          emptyMessage={PRC_COPY.emptyFiltered}
+          serverPagination={{
+            page: applied.page,
+            pageSize: PAGE_SIZE,
+            total: list.total,
+            onPageChange: (page) => commit({ ...applied, page }),
+          }}
+          onRowClick={openDetail}
+          toolbarActions={
+            <EngineeringActionButton
+              variant="ghost"
+              softDisabled={loading}
+              onClick={() => {
+                const controller = new AbortController();
+                void load(applied, controller.signal);
+              }}
+            >
+              {PRC_COPY.refresh}
+            </EngineeringActionButton>
+          }
+        />
+      ) : null}
+    </main>
   );
 }

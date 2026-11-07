@@ -16,6 +16,11 @@ import {
   createDashboardMetricStrip,
   createDashboardMultiSelectField,
   createDashboardDateField,
+  createDashboardNativeFormFields,
+  createDashboardProgressTracker,
+  createDashboardSegmentToggle,
+  createDashboardUnderlineNav,
+  createHostContainedModalShell,
   createInitialsAvatar,
   createTimeline,
   FieldLabel,
@@ -25,6 +30,8 @@ import {
   dateFieldBemClasses,
   delpiUiClass,
   detailCardRichBemClasses,
+  formActionsBemClasses,
+  formFieldShellBemClasses,
   ghostBtnBemClasses,
   createDashboardPageHero,
   createDashboardPagePath,
@@ -44,6 +51,8 @@ import {
   sectionRouteCardBemClasses,
   stateBannerBemClasses,
   stateBoxPlaceholderBemClasses,
+  createDashboardFormActions,
+  NativeCheckboxControl,
   type ChartCardProps as DelpiChartCardProps,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ComponentProps } from "react";
@@ -285,5 +294,51 @@ export const ENGINEERING_DATA_TABLE_LABELS = {
 
 export const ENGINEERING_DATA_TABLE_SECTION_CLASSES =
   dataTableSectionBemClasses(ENG_UI_PREFIX);
+
+/* --- Navegação por abas, stepper e formulários (PRC/intake) ---------- */
+
+/** Abas acessíveis do kit (`mode="tabs"`: role=tablist, setas/Home/End,
+ * `aria-selected`/`aria-controls`) — mesmo componente canônico usado
+ * pelos demais MFEs para seções internas de uma página. */
+export const EngineeringTabs = createDashboardUnderlineNav({
+  prefix: ENG_UI_PREFIX,
+});
+
+/** Stepper/progresso linear do kit — wizard de intake e andamento do
+ * workflow PRC (estados de domínio, não percentual inventado). */
+export const EngineeringProgressTracker = createDashboardProgressTracker({
+  prefix: ENG_UI_PREFIX,
+});
+
+/** Toggle segmentado (ex.: escolha Criação × Alteração no intake). */
+export const EngineeringSegmentToggle =
+  createDashboardSegmentToggle(ENG_UI_PREFIX);
+
+/** Campos de formulário nativos do kit — label+hint+shell canônicos. */
+const engineeringNativeFormFields = createDashboardNativeFormFields({
+  classNames: formFieldShellBemClasses(ENG_UI_PREFIX),
+});
+
+export const EngineeringFormFieldShell = engineeringNativeFormFields.FormFieldShell;
+export const EngineeringTextField = engineeringNativeFormFields.TextField;
+export const EngineeringSelectField = engineeringNativeFormFields.SelectField;
+export const EngineeringTextAreaField = engineeringNativeFormFields.TextAreaField;
+
+/** Checkbox nativo do kit (seleção explícita de paths em UPDATE). */
+export const EngineeringCheckboxControl = NativeCheckboxControl;
+
+/** Barra de ações de formulário (alinha botões do wizard/editor). */
+export const EngineeringFormActions = createDashboardFormActions({
+  classNames: formActionsBemClasses(ENG_UI_PREFIX),
+});
+
+/** Modal contido no host `.portal-engineering` — nunca cobre a sidebar
+ * do portal (regra mfe-modal-host-contained). Base dos diálogos de
+ * confirmação PRC. */
+export const EngineeringHostDialog = createHostContainedModalShell({
+  prefix: ENG_UI_PREFIX,
+  portalScopeClassName: ENG_PORTAL_SCOPE,
+  containedLayout: "dialog",
+});
 
 
