@@ -131,3 +131,82 @@ RESUMO DAS MUDANÇAS
 - Caso implique novo bounded context, owner ou source of truth: **`ARCHITECTURE_DECISION_REQUIRED`** para Coordination.
 
 **Próximo incremento sugerido:** `ENG-PRC-D12-GRANULAR-SUPPLIER-LINK-CHANGE-CONTRACT-AND-UX`. Implementação somente após fechamento do contrato pelos owners. Não confundir documento PLANNED com capacidade PROVEN.
+
+
+## 7. REF-012-A — Valor oficial atual visível antes de alterar
+
+**Decisão complementar PO (2026-11-08): requisito obrigatório do modo UPDATE.** O usuário não deve adivinhar os valores vigentes. Ao informar o código oficial do produto, a Engineering API consulta **via api-delpi** os dados oficiais atuais de SB1 e os vínculos SA5 e apresenta-os como contexto de leitura autorizado, antes de o usuário escolher o que alterar. Esta leitura **não** altera TOTVS nem valida por si a futura publicação.
+
+### 7.1 Contrato de leitura e origem
+
+- Identificação do produto: consultar por código oficial; recuperar campos autorizados pela view `engineering` de `api-delpi GET /products/{code}?view=engineering` e os vínculos oficiais por `GET /products/{code}/suppliers?view=engineering`; expor à UI **somente através da Engineering API**.
+- Valor de referência exibido = **valor oficial efetivamente retornado** pelo TOTVS, não valor do formulário, snapshot de solicitação anterior, fixture ou valor presumido. Apresentar também origem `TOTVS`, momento `consultadoEm` (timestamp da resposta de leitura efetiva, não alegar instante de alteração no ERP), e estado da leitura. Validade/freshness de snapshot requer política do owner da integração.
+- Diferenciar três fatos: **valor oficial atual**, **valor proposto** e **última revisão técnica Engenharia**. A revisão-base continua automática no backend e não é campo para o usuário preencher.
+- Conferir se a projeção oficial contém cada atributo; campo ausente deve exibir `Não disponível na consulta oficial`, nunca `—` entendido como vazio ou `0` arbitrário. `null` e vazio legítimo devem ter semântica diferenciada quando crítica.
+- Chamada autenticada, backend AuthZ `engineering.access`, nenhuma integração direta frontend–api-delpi, nenhum SQL em Engineering API, nenhum write TOTVS. Contrato aditivo, com erros/limites/cache e compatibilidade REST/EVA explicitados.
+
+### 7.2 Wireframe UPDATE por campo individual
+
+```text
+ALTERAÇÃO DO PRODUTO [código oficial]      Fonte: TOTVS · Consultado em 08/11/2026 10:30*
+[Atualizar dados oficiais]  [indicador de leitura válida/indisponível]
+
+CAMPO                  VALOR ATUAL NO TOTVS                   NOVO VALOR                      AÇÃO
+Descrição              CHICOTE ELÉTRICO SENSOR ...            [Não alterar             ]      [Editar]
+Grupo                  8001 — Componentes ...                 [Não alterar             ]      [Editar]
+Tipo                   PA — Produto acabado                    [Não alterar             ]      [Editar]
+Unidade                MI — Metro ...                          [Não alterar             ]      [Editar]
+Conta contábil         11401006 — ...                          [Conta oficial: escolher ]      [Editar]
+
+Ao ativar um campo:
+  [✓] Alterar Conta contábil
+  Atual no TOTVS: 11401006 — [descrição oficial se fornecida]
+  Novo valor: [Select pesquisável do catálogo oficial]
+  Justificativa: [................................]
+  [Descartar mudança] [Adicionar mudança à solicitação]
+```
+
+*O timestamp é ilustrativo; no sistema usar o horário real da consulta autenticada. Nunca inferir descrição, conta ou classificação ausentes da API.
+
+- Na abertura da tela UPDATE: exibir `loading` até carregar leitura oficial; 404 produto não encontrado; 401/403 sem acesso; 503 origem indisponível + retry; erro de campo individual = não editável sem contexto confiável, salvo exceção formal do owner.
+- Campos não selecionados continuam **read-only** e **não** entram no change set. Somente `path + proposedValue + reason` do campo selecionado, com `before` capturado no snapshot governado para a auditoria; nunca transportar valores oficiais como mudanças para todos os paths.
+- Mostre o valor atual mesmo ao editar, com contraste explícito `Atual (TOTVS)` x `Novo valor proposto`. Prefill do novo valor só para facilitar escolha, mas não marcar mudança se valor não foi modificado; nenhuma mudança silenciosa ao navegar.
+- Se dado oficial mudar enquanto o usuário prepara a solicitação, o backend deve detectar mudança relevante no read-back/concorrência, sinalizar conflito, preservar draft, exigir reavaliação/justificativa; não rebase silencioso de alteração já solicitada.
+
+### 7.3 Wireframe UPDATE de amarração específica SA5
+
+```text
+VÍNCULOS OFICIAIS DO PRODUTO (SA5)      Fonte TOTVS · Consultado em [horário]
+[+ Adicionar vínculo]      [Atualizar vínculo selecionado]
+
+[⌕] CÓDIGO LOJA  RAZÃO SOCIAL           PN ATUAL       CATÁLOGO ATUAL    AÇÃO
+[⌕] 000089 01    WEG ...                (vazio)        CAT-001          [Editar vínculo]
+[⌕] 001572 01    3RHO ...               PN-A           CAT-002          [Editar vínculo]
+
+Editar vínculo 000089/01:
+  [ ] Alterar Part Number      Atual TOTVS: (vazio)     Novo: [................]
+  [ ] Alterar Catálogo         Atual TOTVS: CAT-001     Novo: [................]
+  Justificativa desta operação: [.............................................]
+  [Cancelar]                                            [Aplicar à solicitação]
+
+Resumo: UPDATE do vínculo 000089/01, somente partNumber (vazio → X)
+Os demais vínculos permanecem inalterados.
+```
+
+- Consulta SA5 identifica o vínculo pela chave oficial validada, não pelo índice da linha ou razão social. Só itens existentes permitem `update`; `add` seleciona SA2 oficial e propõe uma **nova** amarração, sem sobrescrever outras.
+- Campos atuais de fornecedor/loja/razão social/PN/catálogo precisam vir de projeção oficial, distinguindo mestre SA2 e relacionamento SA5. Se PN/catálogo não forem expostos, inventariar e estender **api-delpi no owner correto** antes de prometer essa comparação.
+- **Part Number vazio é legítimo**. Limpar explicitamente PN exige proposta de mudança, e não pode ser confundido com campo omitido (sem alteração).
+- Ao editar somente PN, `catalogNumber` não entra em `fields`; ao editar somente Catálogo, `partNumber` não entra; outros vínculos nunca integram o diff.
+- O backend `verify_and_complete` reconsulta os mesmos dados oficiais depois da alteração manual no ERP e verifica os paths/atributos **explicitamente propostos**. Erros ou ausência de evidência impedem publicação da revisão; capturar before/after, source e timestamp da leitura para rastreabilidade.
+
+### 7.4 Critérios de aceite adicionais (bloqueantes)
+
+- [ ] Um UPDATE de produto existente mostra **os valores oficiais atuais** em cada campo disponível antes de editar; nenhum usuário precisa saber a última revisão.
+- [ ] O usuário altera apenas um campo SB1 e o resumo contém só esse path, justificativa e valores **antes → proposto**; demais campos não são reenviados como mudanças.
+- [ ] A tabela SA5 mostra os vínculos atuais e PN/Catálogo oficiais separados; linha selecionada mostra **Atual TOTVS** vs **Novo valor**.
+- [ ] Alteração de PN de um fornecedor entre N preserva todos os demais vínculos e atributos. Adição cria somente candidato para novo vínculo.
+- [ ] Falhas 401/403/404/503 e atributos não verificáveis têm estado honesto, retry quando adequado e **fail-closed**; jamais mostrar dados mockados como oficiais.
+- [ ] Testes REST+EVA, PostgreSQL, comparação seletiva, CAS/idempotência, read-back TOTVS, browser Playwright (desktop/tablet/mobile) e screenshots antes/depois com atributos reais autorizados; sem ERP writes.
+- [ ] Nenhuma publicação em produção sem aceite funcional, contrato e aprovação do owner.
+
+**A implementação segue pendente** até inventário/contrato e aprovação dos owners requeridos. O novo requisito **faz parte obrigatória** de `ENG-PRC-D12-GRANULAR-SUPPLIER-LINK-CHANGE-CONTRACT-AND-UX`; não tratar como refinamento decorativo de UI.
