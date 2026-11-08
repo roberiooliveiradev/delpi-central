@@ -21,9 +21,11 @@ function useSupplierSearch(query: string) {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<LookupState>("idle");
   const seq = useRef(0);
+  const aborter = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const q = query.trim();
+    aborter.current?.abort();
     if (q.length < 2) {
       setItems([]);
       setOpen(false);
@@ -31,10 +33,14 @@ function useSupplierSearch(query: string) {
       return undefined;
     }
     const current = ++seq.current;
+    /* loading desde a mudança do termo — nunca exibir "nenhum
+     * resultado" nem lista obsoleta enquanto a busca remota segue. */
+    setState("loading");
+    const controller = new AbortController();
+    aborter.current = controller;
     const timer = window.setTimeout(async () => {
-      setState("loading");
       try {
-        const env = await searchPrcSuppliers(q);
+        const env = await searchPrcSuppliers(q, controller.signal);
         if (current !== seq.current) return;
         setItems(env.data.items || []);
         setOpen(true);
@@ -45,7 +51,10 @@ function useSupplierSearch(query: string) {
         setOpen(false);
       }
     }, 300);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, [query]);
 
   return { items, open, state, setOpen, setItems };
@@ -347,12 +356,12 @@ export function PrcSupplierCellLookup({
         </span>
       ) : null}
       <SupplierSuggestPanel
-        open={open && !selected}
+        open={open && !selected && state !== "loading"}
         anchorRef={anchorRef}
         listId={listId}
         items={visible}
         activeIndex={activeIndex}
-        emptyText="Nenhum fornecedor encontrado."
+        emptyText="Nenhum fornecedor encontrado para o termo pesquisado."
         showEmpty={open && !visible.length && state === "idle"}
         onChoose={choose}
         onDismiss={() => setOpen(false)}

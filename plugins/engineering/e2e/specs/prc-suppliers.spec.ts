@@ -57,18 +57,17 @@ test("busca SA2 abre dropdown visível e seleciona fornecedor oficial", async ({
   await expect(input).toBeVisible();
   await shot("one-row");
 
-  /* Busca por código — dropdown 100% visível (sem clipping). */
+  /* Busca por código — dropdown 100% visível com opção real SA2. */
   await input.fill("0001");
   const listbox = page.getByRole("listbox", {
     name: "Fornecedores sugeridos",
   });
-  await expect(listbox).toBeVisible({ timeout: 15_000 });
   const firstOption = listbox.getByRole("option").first();
-  await expect(firstOption).toBeVisible();
+  await expect(firstOption).toBeVisible({ timeout: 15_000 });
   await expectWithinViewport(listbox);
   await shot("dropdown-open");
 
-  /* Seleção preenche código + loja + nome oficiais. */
+  /* Seleção preenche código + loja + razão social oficiais. */
   await firstOption.click();
   await expect(page.getByRole("listbox")).toHaveCount(0);
   const selected = page
@@ -77,15 +76,31 @@ test("busca SA2 abre dropdown visível e seleciona fornecedor oficial", async ({
   await expect(selected).toContainText(/\d+ \/ \d+ — .+/);
   await shot("supplier-selected");
 
-  /* Segunda linha — dropdown na última linha continua dentro do viewport. */
+  /* Segunda linha — busca por trecho de razão social fora da primeira
+   * página: "TRES RIOS" casa BRITAGEM TRES RIOS LTDA (remoto, não
+   * filtro local). Prova que a consulta roda antes da paginação. */
   await page.getByRole("button", { name: "+ Adicionar fornecedor" }).click();
   const inputs = page.getByRole("textbox", {
     name: "Buscar fornecedor por código ou nome",
   });
-  await inputs.last().fill("BRUDDEN");
-  await expect(listbox).toBeVisible({ timeout: 15_000 });
+  await inputs.last().fill("TRES RIOS");
+  const legalOption = listbox.getByRole("option", {
+    name: /BRITAGEM TRES RIOS/,
+  });
+  await expect(
+    legalOption,
+    "razão social fora da página 1 deve aparecer",
+  ).toBeVisible({ timeout: 15_000 });
   await expectWithinViewport(listbox);
   await shot("dropdown-last-row");
+
+  /* Seleção confirma identidade oficial (código, loja, razão social). */
+  await legalOption.click();
+  const secondRow = page
+    .locator(".engineering-prc__lookup-selected")
+    .nth(1);
+  await expect(secondRow).toContainText(/BRITAGEM TRES RIOS/);
+  await expect(secondRow).toContainText(/\d+ \/ \d+/);
 
   /* Escape fecha o painel. */
   await page.keyboard.press("Escape");
