@@ -163,7 +163,8 @@ class PydanticAiModelInvocationAdapter:
     def invoke(
         self, request: ModelInvocationRequest
     ) -> ProviderInvocationPayload:
-        from pydantic_ai import Agent
+        from pydantic_ai.output import PromptedOutput
+from pydantic_ai import Agent
         from pydantic_ai.messages import (
             ModelRequest,
             ModelResponse,
@@ -190,7 +191,7 @@ class PydanticAiModelInvocationAdapter:
         ).strip()
         agent = Agent(
             self._model_impl,
-            output_type=_proposal_model(tuple(request.expected_fields)),
+            output_type=PromptedOutput(_proposal_model(tuple(request.expected_fields))),
             instructions=stage_instructions,
         )
         history: list[Any] = []
