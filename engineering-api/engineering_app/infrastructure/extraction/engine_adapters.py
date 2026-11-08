@@ -510,10 +510,27 @@ def _render_page(pdf, page_index: int) -> dict:
     return {"image": image, "page_index": page_index}
 
 
-def _predict_table_structure(crop):
-    from paddleocr import TableStructureRecognition
+_TABLE_STRUCTURE_ENGINE = None
 
-    return TableStructureRecognition().predict(input=crop)
+
+def _predict_table_structure(crop):
+    """SLANet predict — instância única por processo.
+
+    Instanciar TableStructureRecognition a cada chamada carrega o
+    modelo nativo (~1GB VMS) no processo inteiro por região — sob
+    pressão de memória a 2ª instanciação falhava como UNAVAILABLE.
+    Singleton reutiliza o modelo; em falha, descarta para retry limpo.
+    """
+    global _TABLE_STRUCTURE_ENGINE
+    try:
+        if _TABLE_STRUCTURE_ENGINE is None:
+            from paddleocr import TableStructureRecognition
+
+            _TABLE_STRUCTURE_ENGINE = TableStructureRecognition()
+        return _TABLE_STRUCTURE_ENGINE.predict(input=crop)
+    except Exception:
+        _TABLE_STRUCTURE_ENGINE = None
+        raise
 
 
 def _offset_box(box, origin_x: float, origin_y: float):
