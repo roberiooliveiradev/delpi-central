@@ -284,50 +284,63 @@ export function MyWegInvoiceObservationsPanel() {
   return (
     <section className="ppc-myweg-needs__invoices" aria-label={texts.sectionAria}>
       <div className="ppc-myweg-needs__invoice-toolbar">
-        <MyWegInvoiceMonthCalendar
-          selectedIso={appliedDate}
-          onSelectDate={onSelectDate}
-          viewYear={viewYear}
-          viewMonth={viewMonth}
-          onViewChange={({ year, month }) => {
-            setViewYear(year);
-            setViewMonth(month);
-          }}
-        />
+        <p className="ppc-myweg-needs__invoice-toolbar-note">
+          {texts.introCompact}{" "}
+          <HelpTooltip content={helpTooltips.mywegNeedsInvoices} trigger="icon" />
+        </p>
 
-        <div className="ppc-myweg-needs__invoice-toolbar-main">
-          <p className="ppc-myweg-needs__invoice-toolbar-note">
-            {texts.introCompact}{" "}
-            <HelpTooltip content={helpTooltips.mywegNeedsInvoices} trigger="icon" />
-          </p>
-          <div className="ppc-myweg-needs__invoice-search-row">
-            <label className="ppc-myweg-needs__invoice-search">
-              <span className="ppc-sr-only">{texts.searchLabel}</span>
+        <div className="ppc-myweg-needs__invoice-toolbar-row">
+          <MyWegInvoiceMonthCalendar
+            selectedIso={appliedDate}
+            onSelectDate={onSelectDate}
+            viewYear={viewYear}
+            viewMonth={viewMonth}
+            onViewChange={({ year, month }) => {
+              setViewYear(year);
+              setViewMonth(month);
+            }}
+          />
+
+          <div className="ppc-myweg-needs__invoice-toolbar-controls">
+            <label className="ppc-myweg-needs__invoice-date">
+              <span>{texts.documentDateLabel}</span>
               <input
-                type="search"
-                value={searchDraft}
-                placeholder={texts.searchPlaceholder}
-                onChange={(event) => setSearchDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") applyItemSearch();
+                type="date"
+                value={appliedDate}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  if (parseLocalIsoDate(next)) onSelectDate(next);
                 }}
-                aria-label={texts.searchAria}
-                disabled={!selectedObservationId}
+                aria-label={texts.documentDateLabel}
               />
             </label>
-            <button
-              type="button"
-              className="ppc-btn ppc-btn--primary ppc-btn--compact"
-              onClick={applyItemSearch}
-              disabled={!selectedObservationId}
-            >
-              <Search size={15} strokeWidth={1.75} aria-hidden />
-              {texts.applyItemSearch}
-            </button>
+
+            <div className="ppc-myweg-needs__invoice-search-row">
+              <label className="ppc-myweg-needs__invoice-search">
+                <span className="ppc-sr-only">{texts.searchLabel}</span>
+                <input
+                  type="search"
+                  value={searchDraft}
+                  placeholder={texts.searchPlaceholder}
+                  onChange={(event) => setSearchDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") applyItemSearch();
+                  }}
+                  aria-label={texts.searchAria}
+                  disabled={!selectedObservationId}
+                />
+              </label>
+              <button
+                type="button"
+                className="ppc-btn ppc-btn--primary ppc-btn--compact"
+                onClick={applyItemSearch}
+                disabled={!selectedObservationId}
+              >
+                <Search size={15} strokeWidth={1.75} aria-hidden />
+                {texts.applyItemSearch}
+              </button>
+            </div>
           </div>
-          <p className="ppc-myweg-needs__invoice-selected-day">
-            {texts.selectedDay(formatIsoDateBr(appliedDate))}
-          </p>
         </div>
       </div>
 

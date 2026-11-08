@@ -1533,11 +1533,11 @@ export const copy = {
     invoices: {
       sectionAria: "Notas fiscais emitidas observadas no MyWEG",
       introCompact:
-        "NF observadas no MyWEG — clique no dia do calendário para carregar.",
+        "NF observadas no MyWEG — escolha a data no calendário ou no campo ao lado.",
+      documentDateLabel: "Data do documento",
       calendarAria: "Calendário de datas do documento",
       calendarPrevMonth: "Mês anterior",
       calendarNextMonth: "Próximo mês",
-      selectedDay: (when: string) => `Dia selecionado: ${when}`,
       searchLabel: "NF, série, material ou descrição",
       searchPlaceholder: "NF, série, material…",
       searchAria: "Pesquisar itens da observação fiscal",
