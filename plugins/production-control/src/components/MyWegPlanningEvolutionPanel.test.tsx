@@ -114,7 +114,7 @@ describe("MyWegPlanningEvolutionPanel", () => {
     expect(
       screen.getByRole("button", { name: /^Por produto —/i }),
     ).toBeTruthy();
-    expect(screen.getByRole("heading", { name: /filtros da comparação/i })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /comparação de coletas/i })).toBeTruthy();
     expect(await screen.findByTestId("kpi-Aumentos")).toBeTruthy();
     expect(screen.getByTestId("kpi-Reduções")).toBeTruthy();
     expect(screen.getByTestId("shifts")).toBeTruthy();
