@@ -49,7 +49,7 @@ function scoreTone(score: number): string {
 
 const WORKFLOW_STEPS = [
   { step: 1, label: "Registrar plano" },
-  { step: 2, label: "Anexar evidências" },
+  { step: 2, label: "Evidências (opcional)" },
   { step: 3, label: "Finalizar ação" },
 ];
 
