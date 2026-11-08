@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { forceCloseNcWithoutTreatment, reopenNcAction, type AuditArea, type AuditListItem } from "../api/audit5sApi";
+import { cancelNcCandidate, forceCloseNcWithoutTreatment, reopenNcAction, type AuditArea, type AuditListItem } from "../api/audit5sApi";
 import type { NcBoardItem } from "../types/ncManagement";
 import { formatRelativeUpdate } from "../utils/auditNc";
 import { NcBoardNotesModal } from "../components/NcBoardNotesModal";
@@ -39,6 +39,7 @@ export function NcManagementPage({
   const [modalState, setModalState] = useState<NcBoardModalState>(null);
   const [pendingReopen, setPendingReopen] = useState<NcBoardItem | null>(null);
   const [pendingForceClose, setPendingForceClose] = useState<NcBoardItem | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
   const [reopening, setReopening] = useState(false);
   const [forceClosing, setForceClosing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -95,8 +96,17 @@ export function NcManagementPage({
     setForceClosing(true);
     setActionError(null);
     try {
-      await forceCloseNcWithoutTreatment(pendingForceClose.id);
+      if (pendingForceClose.is_registered === false) {
+        await cancelNcCandidate(
+          pendingForceClose.audit_id,
+          pendingForceClose.response_id,
+          cancelReason.trim(),
+        );
+      } else {
+        await forceCloseNcWithoutTreatment(pendingForceClose.id);
+      }
       setPendingForceClose(null);
+      setCancelReason("");
       await reload();
     } catch (err) {
       setActionError(
@@ -183,6 +193,7 @@ export function NcManagementPage({
                 canAdmin
                   ? (item) => {
                       setActionError(null);
+                      setCancelReason("");
                       setPendingForceClose(item);
                     }
                   : undefined
@@ -260,7 +271,12 @@ export function NcManagementPage({
         <div
           className="a5s-confirm-overlay"
           role="presentation"
-          onClick={() => !forceClosing && setPendingForceClose(null)}
+          onClick={() => {
+            if (!forceClosing) {
+              setPendingForceClose(null);
+              setCancelReason("");
+            }
+          }
         >
           <div
             className="a5s-confirm-dialog"
@@ -275,22 +291,37 @@ export function NcManagementPage({
             </h2>
             <p id="a5s-force-close-nc-desc" className="a5s-confirm-dialog__text">
               A NC da auditoria <strong>{pendingForceClose.audit_code}</strong> será cancelada sem
-              concluir o plano de ação, as evidências ou o tratamento. O status passará para{" "}
-              <strong>Cancelada</strong>. Esta ação administrativa não pode ser desfeita.
+              tratamento. O registro permanecerá disponível para rastreabilidade.
             </p>
+            {pendingForceClose.is_registered === false ? (
+              <label className="a5s-nc-ficha__field">
+                <span className="a5s-nc-ficha__field-label">Justificativa do cancelamento (obrigatória)</span>
+                <textarea
+                  className="a5s-nc-input"
+                  rows={3}
+                  maxLength={1000}
+                  value={cancelReason}
+                  onChange={(event) => setCancelReason(event.target.value)}
+                  placeholder="Explique por que a NC não seguirá para plano de ação..."
+                />
+              </label>
+            ) : null}
             <div className="a5s-confirm-dialog__actions">
               <button
                 type="button"
                 className="a5s-btn a5s-btn--ghost"
                 disabled={forceClosing}
-                onClick={() => setPendingForceClose(null)}
+                onClick={() => {
+                  setPendingForceClose(null);
+                  setCancelReason("");
+                }}
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 className="a5s-btn a5s-btn--danger"
-                disabled={forceClosing}
+                disabled={forceClosing || (pendingForceClose.is_registered === false && cancelReason.trim().length < 5)}
                 onClick={() => void handleConfirmForceClose()}
               >
                 {forceClosing ? "Encerrando…" : "Encerrar NC"}
