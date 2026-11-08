@@ -1,9 +1,9 @@
-export type InspecoesEntradaTab = "overview" | "historico";
+export type InspecoesEntradaTab = "overview" | "historico" | "fornecedores";
 
 export function tabFromSearch(search?: string): InspecoesEntradaTab {
   const query = search ?? (typeof window !== "undefined" ? window.location.search : "");
   const value = new URLSearchParams(query).get("tab");
-  return value === "historico" ? "historico" : "overview";
+  return value === "historico" || value === "fornecedores" ? value : "overview";
 }
 
 export function syncTabInUrl(tab: InspecoesEntradaTab): void {
@@ -13,7 +13,7 @@ export function syncTabInUrl(tab: InspecoesEntradaTab): void {
   if (tab === "overview") {
     url.searchParams.delete("tab");
   } else {
-    url.searchParams.set("tab", "historico");
+    url.searchParams.set("tab", tab);
   }
 
   const next = `${url.pathname}${url.search}${url.hash}`;
