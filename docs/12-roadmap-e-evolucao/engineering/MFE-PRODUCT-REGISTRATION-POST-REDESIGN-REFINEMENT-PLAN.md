@@ -265,6 +265,56 @@ breadcrumb: ← Solicitações / #3bace5e3
 
 **Status:** `PO_APPROVED / TO_IMPLEMENT`; não implementado por esta documentação. **Produção continua suspensa.**
 
-## PRC-REF-008 e seguintes — próximas observações
+## PRC-REF-008 — Identidade visual de quem executou cada evento do Histórico
 
-`AWAITING_USER_FEEDBACK`. Preservar REF-001..007, sem iniciar implementação em lote até finalizar a coleta de refinamentos com o PO.
+**Decisão PO (2026-11-08, aprovada, implementação pendente):** na aba **Histórico**, cada evento deve apresentar **avatar, nome e e-mail do ator que executou a ação**, além de título, detalhes, transição de estado e data/hora. Substituir o texto genérico "Ator registrado no Portal" quando a identidade real puder ser resolvida com permissão.
+
+**Inventário de contrato (GitHub):** `PrcTimelineEvent` no cliente expõe `actor_subject`, mas **não** expõe `displayName`, e-mail ou avatar. `PrcTimelineSection.tsx` usa hoje `EngineeringTimeline` e gera `actorLabel(subject)`. `EngineeringInitialsAvatar = createInitialsAvatar(ENG_UI_PREFIX)` já existe em `engineeringUi.ts`. Portanto, **não inventar nome/e-mail a partir de UUID nem usar identidade do usuário logado como se fosse o ator de todos os eventos**. A API de Engenharia ou um contrato oficial autorizado de identidade precisará fornecer a apresentação do ator; o Core/Keycloak permanece owner de identidade. Para eventos históricos sem associação resolvível, apresentar fallback honesto.
+
+**Wireframe:**
+```text
+● [avatar] Nome real do ator                                  06/11/2026 16:42
+           email@dominio (somente com dado autorizado)
+  Ficha técnica alterada
+  Em atendimento → Em atendimento
+  Campos/justificativa comprovados · Canal: portal
+```
+
+**Implementação/authority:** verificar primeiro contrato oficial existente de resolução `actor_subject -> displayName,email,avatar`; preferir payload enriquecido/DTO governado pela Engineering API para consumidor com `engineering.access`, com live AuthZ e políticas de minimização de dados. Não consultar base de identidade diretamente pelo MFE, não derivar e-mail, não registrar PII extra em ledger técnico apenas por decoração. URL de avatar externa somente se fonte autorizada e segura; avatar por iniciais com `EngineeringInitialsAvatar` se nome válido, fallback neutro se não. Reutilizar `EngineeringTimeline` e seus slots/props reais; se API não suporta, marcar `CONTRACT_GAP/PENDING_OWNER`, sem mascarar com dados fictícios.
+
+**AC:** evento mostra avatar+nome+e-mail quando disponíveis/autorizados, fallback quando não; timestamp preservado, ação humanizada (inclusive `verify_and_complete`), transição, motivo e ordem do ledger; sem UUID cru como identidade principal; a11y/responsividade/testes de atores diferentes, indisponibilidade da fonte, anonimização/ausência, 403 e dados históricos.
+
+**Status:** `PO_APPROVED / CONTRACT_DEPENDENCY / TO_IMPLEMENT`.
+
+## PRC-REF-009 — Avatar e nome de Solicitante e Responsável na fila
+
+**Decisão PO (2026-11-08, aprovada, implementação pendente):** nas colunas **Solicitante** e **Responsável** da tabela de solicitações mostrar uma composição humana com **avatar + nome** alinhados na mesma célula, seguindo o padrão do plugin-ui. A captura atual exibe texto puro `Rober Dev`, `PG Test`, `Responsável não identificado` e `analyst-pg`. O usuário quer identidade visual, não identificadores crus.
+
+**Inventário real:** `PrcRequestSummary.requester` atualmente contém `subject` e `displayName?`; `assignedTo` é apenas `string | null` (subject, que pode ser login/ID). Na fila `PrcQueuePage.tsx` a coluna solicitante usa `prcRequesterLabel(row.requester)` e responsável usa `prcPersonLabel(row.assignedTo)`. A façade `engineeringUi.ts` já possui `EngineeringInitialsAvatar`, reutilizável sem nova dependência. **Não assumir que há e-mail/foto no payload da fila.**
+
+**Wireframe da linha:**
+```text
+Nº          TIPO      SOLICITANTE               STATUS         RESPONSÁVEL
+#3bace5e3   Criação   [RD] Rober Dev            Concluída      [avatar] Nome real
+#978351f6   Criação   [PT] PG Test              Enviada        [neutro] Não atribuído
+#...        Alteração [--] Não identificado    Em revisão     [neutro] Não identificado
+```
+(Avatar de exemplo por iniciais; usar foto somente com URL contratual autorizada.)
+
+**Componentes:** `EngineeringInitialsAvatar` via façade `engineeringUi.ts`; opcionalmente bloco local mínimo `PrcActorCell` se compartilhado entre fila/histórico/revisões e com semântica real. Reutilizar `DataTableSection` para layout e `DataTableColumn.mobileLabel` quando aplicável. **Não copiar componentes de domínio do Comercial**; seguir padrão de identidade do plugin-ui/Portal.
+
+**Regras de resolução:**
+- Solicitante: usar `requester.displayName` quando existir e autorizado; quando não, resolver por contrato oficial autorizado ou mostrar fallback `Solicitante não identificado`, sem inventar nome.
+- Responsável: `assignedTo == null` -> **Não atribuído**, avatar neutro; subject presente + dados de exibição resolvidos -> avatar e nome; subject presente sem display resolvível -> **Responsável não identificado**, avatar neutro. Não mostrar GUID cru como nome, nem assumir que o usuário logado é responsável.
+- Evitar N chamadas individuais de identidade por linha (N+1); preferir retorno governado na lista ou batch autorizado, com escopo de acesso correto, caching seguro e fallback em indisponibilidade.
+- E-mail no **Histórico (REF-008)** quando disponível e autorizado; na fila priorizar **avatar e nome**, sem exigir e-mail em todas as linhas.
+- Célula de avatar/nome é conteúdo da **linha clicável** conforme REF-003; clique na linha abre detalhe, sem botão `Abrir`.
+
+**AC:** solicitante e responsável apresentam avatar+nome quando houver identidade resolvida; ator sem nome tem fallback honesto; pessoa não atribuída distinguida de pessoa não identificada; loading e largura de coluna não quebram layout; não exibir UUID/login técnico; ordenação de responsável/solicitante apenas quando suportada de verdade pelo backend (REF-005); vista Cards/Kanban deve usar a mesma identidade resolvida; foco/teclado e responsividade; testes com identidade completa, somente displayName, somente subject e null.
+
+**Status:** `PO_APPROVED / CONTRACT_DEPENDENCY_ASSIGNEE / TO_IMPLEMENT`.
+
+## PRC-REF-010 e seguintes — próximas observações
+
+`AWAITING_USER_FEEDBACK`. REF-001..009 preservados. Continuar coletando antes de gerar rodada consolidada de implementação; deploy produtivo permanece suspenso.
+
