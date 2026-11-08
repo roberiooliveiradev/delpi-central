@@ -106,3 +106,106 @@ A revisão técnica de referência será identificada automaticamente.
 4. QA real DEV/HML por screenshots e tarefas executadas; aceite do PO em separado.
 
 **Status de projeto:** `VISUAL_REFINEMENT_IN_PROGRESS / PRC-REF-001_APPROVED / PRODUCTION_DEPLOY_SUSPENDED`.
+
+
+## PRC-REF-002 — Ícone do acesso na home
+
+**Decisão PO (2026-11-08; aprovado, a implementar):** o acesso **Controle e Cadastro de Produtos** na área **Trabalho** da home de Engenharia deve possuir ícone consistente com as demais entradas (Minhas solicitações, LMPs, Não conformidades, Produtos). A captura DEV mostra esse item sem ícone, gerando inconsistência visual.
+
+**Fonte identificada:** `plugins/engineering/src/content/engineeringRouteCatalog.ts` contém `id: "product-registration"` com label, description, target internal, permission `engineering.access` e keywords; identificar como o ícone é definido no catálogo/resolver/componente compartilhado antes de modificar. Não concluir de antemão que existe campo `icon` no catálogo — verificar contrato real e mapping para os demais acessos.
+
+**Visual alvo:**
+```text
+TRABALHO
+  [ícone] Minhas solicitações
+  [ícone] LMPs
+  [ícone] Não conformidades
+  [ícone] Controle e Cadastro de Produtos  ← adicionar ícone coerente
+  [ícone] Produtos
+```
+
+**AC:** ícone distinto e semanticamente adequado (cadastro/clipboard de produto, conforme iconografia real do kit), mesmo alinhamento, tamanho, cor e estados de hover/foco dos itens vizinhos; sem SVG ad hoc, emojis, CSS paralelo ou alteração do acesso `Produtos`. Respeitar tema, teclado e busca/favoritos. **Status:** `PO_APPROVED / TO_IMPLEMENT`.
+
+## PRC-REF-003 — Linha inteira da fila abre o detalhe; remover “Abrir”
+
+**Decisão PO (aprovada):** retirar coluna/link/botão **Abrir** da tabela; **clique em qualquer área não interativa da linha** deverá abrir a solicitação correspondente. Reutilizar `DataTableSection` com prop `onRowClick` já comprovada em `plugins/engineering/src/features/lmps/components/DataTableSection.tsx`.
+
+**Alvo:**
+```text
+┌ #3bace5e3 │ Criação │ Solicitante │ 80016622 │ Concluída │ Responsável ┐
+│              linha inteira navegável; foco/Enter acessível              │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+**Comportamento:** cursor/hover/focus e feedback semântico de item clicável; Enter/Space quando padrão do DataTable permitir, respeitando HTML/ARIA acessível. Não colocar handlers concorrentes sobre checkbox, seletor de colunas, links, menu de contexto ou seleção de texto; click nesses controles não deve navegar. Ao abrir, preservar back/forward, filtros e paginação da fila. Não transformar `<tr>` em botão inválido nem criar overlay que capture foco. Usar `onRowClick` e capacidades oficiais antes de extensão.
+
+**AC:** sem coluna `Abrir`; abrir detalhe por mouse e teclado; click em controles internos não navega; sem regressão mobile/cards/kanban; navegação de volta preserva contexto. **Status:** `PO_APPROVED / TO_IMPLEMENT`.
+
+## PRC-REF-004 — Seletor de colunas e reordenação
+
+**Decisão PO (aprovada):** permitir exibir/ocultar e reordenar colunas da visão Tabela, com preferência persistida por usuário/navegador conforme mecanismo oficial do kit.
+
+**Referências PROVEN CODE:** `plugins/commercial/src/components/TableColumnSettings.tsx` (usa `TableColumnVisibilityMenu` e `DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS` de `@delpi/plugin-ui/index`); `plugins/commercial/src/components/OpenOrdersTable.tsx`; `plugins/engineering/src/features/lmps/components/DataTableSection.tsx` já oferece `columnPreferencesKey`, `defaultColumnVisibility` e `onVisibleColumnKeysChange`, com `useTableColumnVisibility` e gestão de colunas.
+
+**Abordagem preferida:** usar os recursos `columnPreferencesKey` e toolbar já existentes em `DataTableSection` na lista PRC antes de recriar `TableColumnSettings`. Chave de storage isolada, por exemplo `engineering:prc:requests:columns`, sem reutilizar preferências do Comercial. Verificar possibilidade de pin/locked de uma coluna identificadora (código/número) pelo próprio kit; caso não suporte, manter alternativa robusta e garantir ao menos uma coluna de identificação visível. Reset restaura configuração inicial.
+
+**Colunas a configurar:** Nº da solicitação, tipo, solicitante, código oficial, abertura, status, responsável; outras somente se os campos já vierem do contrato PRC.
+
+**AC:** menu `Colunas` acessível; ocultar/exibir, reordenar e restaurar; persiste após F5; nenhum dado fora de permission scope; tabela e exportação (se existente, não criar) coerentes. **Status:** `PO_APPROVED / TO_IMPLEMENT`.
+
+## PRC-REF-005 — Ordenação por colunas e ordenação consistente nos três layouts
+
+**Decisão PO (aprovada):** ordenar dados por colunas no modo tabela (clicar cabeçalhos), incluindo direção ascendente/descendente; oferecer ordenação apropriada também em Cards/Kanban segundo os campos legitimamente suportados.
+
+**Referência PROVEN CODE:** `DataTableSection` de Engenharia já dispõe de `clientSort` e `serverSort`; `plugins/commercial/src/components/OpenOrdersTable.tsx` tem `sortKey`, `sortDirection`, `onSort`, `CommercialDataCardsSortBar`, e indicadores de ordenação.
+
+**CONTRACT GAP identificado:** `GET /v1/product-registration/requests` atualmente aceita `status,type,assignee,source,search,dateFrom,dateTo,page,pageSize`, mas **não expõe `sortBy`/`sortDir`**. Com paginação no servidor, ordenar apenas as linhas carregadas **NÃO** é ordenação global correta. O Devin deve primeiro confirmar contrato e capabilities atuais e propor menor extensão governada pelo owner Engineering API com allowlist de sort keys, defaults determinísticos/tiebreaker e parâmetros versionados/compatíveis. Não adicionar query params ignorados pela API; não ordenar uma única página alegando ordem global. Se backend extension ainda não for autorizada pelo owner, marcar `CONTRACT_GAP / PENDING_OWNER`, não prometer sort global, podendo implementar uma affordance explicitamente limitada aos itens carregados somente com rótulo honesto e aceite específico. **Não bloquear refinamentos independentes.**
+
+**Campos candidatos:** abertura, número, tipo, status, solicitante e código oficial se garantidos pelo contrato. Não ordenar por label resolvido client-side como se backend possuísse esse dado sem checagem. Preferência `sortBy/sortDir` preservada em URL/persistência com padrão estável.
+
+**AC:** cabeçalhos clicáveis e indicadores de direção, ordenação global coerente com paginação e filtros; F5 mantém preferência; Cards/board seguem mesma ordem validada; novos registros e estados não quebram sort. **Status:** `PO_APPROVED / CONTRACT_EXTENSION_TO_VALIDATE / TO_IMPLEMENT`.
+
+## PRC-REF-006 — Alternar Tabela / Cards / Kanban conforme Portal Comercial
+
+**Decisão PO (aprovada):** adicionar seletor de apresentação à fila de solicitações com três modos:
+
+```text
+Solicitações de produtos                    [Tabela | Cards | Kanban] [Colunas] [Atualizar]
+  Tabela: linhas + colunas configuráveis + sorting
+  Cards: grid responsivo; card inteiro abre detalhe
+  Kanban: colunas por estado do workflow; card inteiro abre detalhe;
+          somente leitura, sem drag/drop ou transição automática de estado.
+```
+
+**Referências PROVEN CODE no MFE Comercial:**
+- `plugins/commercial/src/components/OpenOrdersTable.tsx`: `usePersistedViewLayout` com `storageKey`, `SegmentToggle` de `table/cards/board`, `CommercialDataCardsGrid`, `CommercialDataCardsSortBar`, `TableColumnSettings` e `OpenOrdersKanbanBoardView`.
+- `plugins/commercial/src/components/OpenOrdersKanbanBoard.tsx`: board via `CommercialKanbanBoard` + cards da façade `commercialUi.ts`.
+- `plugins/commercial/src/app/commercialUi.ts`: factories reais `createDashboardDataCardsGrid`, `createDashboardDataCardsSortBar`, `createDashboardInteractiveDataCard`, `createDashboardKanbanBoard`; hook `usePersistedViewLayout`.
+- `plugins/plugin-ui/src/components/data/KanbanBoard.tsx`: componente **read-only**, sem drag-and-drop; colunas com título, count opcional e card slots. Usar esse contrato para não permitir mudança de estado visual sem autorização.
+- `plugins/engineering/src/ui/engineeringUi.ts`: verificar exports atuais para `EngineeringSegmentToggle` e criar façade enxuta para cards/kanban através das factories do kit se ainda não expostas, aplicando Abstraction Gate. **Não importar componentes específicos de negócio do Comercial** para Engenharia: referenciar a composição, reusar apenas a biblioteca compartilhada.
+
+**Tabela:** `DataTableSection` e estados/filtros existentes; `onRowClick`; colunas e sort.
+
+**Cards:** usar `createDashboardDataCardsGrid` + `createDashboardInteractiveDataCard` com título Nº e tipo, status `EngineeringStatusBadge`, código oficial, solicitante, abertura, responsável legível e navegação acessível; sem mostrar UUID como nome; grid fluido desktop/tablet/mobile.
+
+**Kanban:** usar `createDashboardKanbanBoard` com colunas mapeadas aos estados reais: Enviada (`submitted`), Em atendimento (`in_progress`), Aguardando informações (`needs_information`), Em revisão (`under_review`), Concluída (`completed`) e Rejeitada (`rejected`), ou agrupamentos mais compactos com rótulos claros e sem perda de estado. Cards são links para detalhe, não draggable. Contagens somente se realmente abrangem todo o escopo autorizado.
+
+**PAGINAÇÃO / COMPLETUDE — GATE IMPORTANTE:** a fila atual é paginada; um board feito com os 25 registros da primeira página **não representa o Kanban completo**, nem permite contagens verdadeiras. Antes de implementar board com escopo geral, negociar contrato mínimo BFF (agregados por estado/consulta de colunas paginadas ou view multi-status com cursores), com limites e AuthZ de dados; não baixar milhares de casos em loop para montar board e não afirmar contagens globais a partir do chunk local. Se não houver extensão de API aprovada, apresentar apenas itens da página explicitamente rotulados `Exibindo somente itens carregados` e preservar paginação/contexto; o modo Kanban global fica `PENDING_CONTRACT`. Manter status enum do backend e movimentação unicamente via workflow autorizado do detalhe.
+
+**Preferência:** `usePersistedViewLayout({storageKey:"engineering:prc:requests:layout"})` (nome proposto, validar política); `view=table|cards|board` opcional em URL apenas seguindo padrão real de navegação (em Comercial há deep link state). Troca modo não deve perder filtro, página ou ordem; back/forward/F5 consistentes.
+
+**AC:** alternância imediata e persistida, mesmas solicitações autorizadas e mesmas semânticas em todos layouts, sem fake counts, cards e board acessíveis, sem DnD, sem mudança de status no MFE, browser DEV screenshots desktop/tablet/mobile, testes de seleção/sort/filtros/paginação. **Status:** `PO_APPROVED / CONTRACT_DEPENDENCIES_TO_VALIDATE / TO_IMPLEMENT`.
+
+## PRC-REF-007 e seguintes — próximas observações do PO
+
+**Status:** `AWAITING_USER_FEEDBACK`. Continuar anexando observações, sem encerrar coleta e sem começar deploy. Avaliar com o PO se refatoração final será executada em lote após nova revisão visual.
+
+## Integração ao plano e gates
+
+- `REF-002` e `REF-003`: mudanças frontend pequenas, independentes.
+- `REF-004`: utilizar imediatamente DataTableSection existente; não criar menu duplicado.
+- `REF-005`: **ordenação global necessita contrato backend** se ainda não existente; owner Engineering API decide menor extensão, testar repository PostgreSQL e AuthZ/limit.
+- `REF-006`: composição UI usa kit, mas **Kanban do escopo completo necessita plano de paginação/agregados**; apenas carregados pode ser alternativa honesta, não prometer falso global.
+- Não alterar Core permissions, TOTVS, api-delpi nem autorizar DnD.
+- Não alterar RQ-001: revisão-base automática continua como decisão aprovada pendente.
+- Gates gerais: `UI_REFINEMENT_COLLECTING / PO_APPROVED / IMPLEMENTATION_PENDING / PRODUCTION_DEPLOY_SUSPENDED`.
