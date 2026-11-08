@@ -149,3 +149,8 @@ Bloqueio específico sem credencial/owner: deixar função dependente `PENDING_O
 | DEV | containers realmente atualizados, bundle fingerprint validado, Gateway JWT real; sem PROD |
 
 **Status:** decisão UX aprovada, implementação pendente. A mudança de `remove` exige fechar regra de negócio e postcondition dentro dos owners já existentes; se alterar authority, `ARCHITECTURE_DECISION_REQUIRED` antes da operação proibida.
+
+
+## 9. D14 — Justificativas individuais opcionais e busca V2 completa
+
+[D14 — contrato canônico de busca colapsável e justificativas por atributo](./MFE-PRC-D14-COMPLETE-SUPPLIER-LOOKUP-AND-OPTIONAL-REASONS.md). **D14 supersede** qualquer frase anterior que exija motivo obrigatório por alteração de campo ou fornecedor, salvo política técnica explícita de owner para operação de remoção. Cada campo SB1 e cada PN/Catálogo SA5 tem botão independente, textarea opcional de 250 caracteres, contador, recolher/remover; operation ADD/REMOVE possui razão separada. Não reaproveitar supplierReason geral. O modo UPDATE segue edição direta e diff automático, e CREATE recebe a mesma tabela de busca colapsável. D13 no código deve ser revisado para garantir verificação SA5-only fail-closed e baseline antes/depois de ADD/REMOVE. **D14_IMPLEMENTATION_PENDING; produção suspensa.**
