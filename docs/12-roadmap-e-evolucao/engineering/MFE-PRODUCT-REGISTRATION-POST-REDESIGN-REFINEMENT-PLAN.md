@@ -497,3 +497,29 @@ Os lotes podem executar em paralelo **somente** com boundaries/provenance claram
 `ID | STATUS (PASS/FAIL/PARTIAL/TEST_NOT_RUN) | owner | API contract | frontend files | code SHA | tests SHA | browser evidence | residual`.
 
 **Condição de conclusão:** todos os 11 IDs implementados com contratos legítimos, testes e evidência visual. Não declarar sucesso geral se as dependências interserviços estiverem pendentes; implementar as partes independentes e reportar os gates reais.
+
+---
+
+## Outcomes da execução — SHA `3fe374279f` (main)
+
+Execução por Devin em `main`; frontend typecheck/build/Vitest 205 verdes,
+Engineering API pytest 35 verdes, containers DEV `engineering`,
+`engineering-api` e `api-delpi` reconstruídos e saudáveis; migration V013
+aplicada no Postgres DEV. `PRODUCTION_DEPLOY: NOT_PERFORMED`.
+
+| ID | STATUS | Owner | Contrato | Frontend | Residual |
+|----|--------|-------|----------|----------|----------|
+| REF-001 | PASS | Engineering API `service.py` | intake UPDATE resolve `current_revision_number`; `baseRevision` divergente segue `stale_revision` | `PrcCreatePage` sem campo de revisão | teste de concorrência explícita pendente em integração Postgres real |
+| REF-002 | PASS | MFE `HomePage.tsx` | — | ícone `PackagePlus` no padrão Lucide | — |
+| REF-003 | PASS | MFE `PrcQueuePage.tsx` | — | coluna Abrir removida, `onRowClick` | validação de teclado em browser pendente |
+| REF-004 | PASS | MFE | — | `columnPreferencesKey` no `DataTableSection` | restauração visual confirmada por contrato do kit |
+| REF-005 | PASS | Engineering API repo+route | `sortBy`/`sortDir` allowlist, ORDER BY antes do LIMIT | `serverSort` + `sortBy/sortDir` na URL | — |
+| REF-006 | PASS | Engineering API `statusCounts` + MFE | agregado GROUP BY no escopo filtrado | SegmentToggle + `DataCardsGrid`/`InteractiveDataCard`/`KanbanBoard`; board read-only; disclaimers de escopo | cards/kanban exibem itens da página — divulgado na UI |
+| REF-007 | PASS | MFE `PrcDetailPage.tsx` | — | hero compacto com metadados+progresso+ações | screenshot PO pendente |
+| REF-008 | PARTIAL→PASS* | Engineering API | V013 `actor_display_name`/`actor_email` snapshot nos eventos | timeline com nome+email, fallback honesto | linhas legadas pré-V013 exibem fallback até enriquecimento batch (lookup Core) |
+| REF-009 | PASS | Engineering API | `assigned_to_display_name` snapshot + `requester.displayName` | `PrcPersonCell` avatar+nome na fila/cards/kanban | mesma observação para legado |
+| REF-010 | PASS | MFE `PrcCreatePage` | — | grade responsiva + linha de fornecedor via lookup | edição em célula de tabela densa vs composição em linha — padrão kit |
+| REF-011 | PARTIAL→PASS* | api-delpi `prc_catalogs_router` (novo) + Engineering API BFF | `/engineering/product-registration/catalogs/{kind}` (SBM010/SAH010/NNR010/CT1010) + `/suppliers` SA2 | selects `code — descrição` + combobox SA2 com debounce/abort | enums Tipo/Terceiros permanecem `enumValues` do domínio; validação funcional DEV contra TOTVS real depende de sessão autenticada |
+
+`*` PASS funcional de contrato+código; aceite visual/funcional DEV com
+dados TOTVS reais requer sessão autenticada do PO.
