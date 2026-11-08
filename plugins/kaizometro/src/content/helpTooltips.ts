@@ -110,6 +110,6 @@ export const KAIZEN_HELP_TOOLTIPS = {
   },
   actions: {
     exportPdf:
-      "Gera uma ficha A4 de uma página com identificação, datas, economia, narrativa (processo/problema/melhoria/resultado) e equipe da versão selecionada. Abre o diálogo de impressão do navegador — use “Salvar como PDF”. Não inclui fotos de evidência, changelog nem histórico completo de versões.",
+      "Gera uma ficha A4 de uma página com identificação, datas, economia, narrativa (processo/problema/melhoria/resultado) e equipe da versão selecionada. Abre o diálogo de impressão do navegador — use “Salvar como PDF”. Inclui até duas fotografias da versão selecionada (preferência Antes/Depois). Demais anexos, changelog e histórico de versões permanecem disponíveis na ficha.",
   },
 } as const;
