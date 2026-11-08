@@ -46,16 +46,16 @@
         "model_name": "moonshotai/kimi-k3"
       },
       "generation": {
-        "max_output_tokens": 2048
+        "max_output_tokens": 8192
       },
       "agent": {
         "request_limit": 12,
         "tool_calls_limit": 8,
-        "retries": 1,
+        "retries": 2,
         "llm_call_max_attempts": 3
       },
       "context": {
-        "effective_context_window_tokens": null,
+        "effective_context_window_tokens": 32768,
         "prior_turns_limit": 4
       },
       "budgets": {
@@ -64,7 +64,7 @@
         "interaction_call_timeout_seconds": 30.0,
         "turn_budget_seconds": 300.0,
         "interaction_total_budget_seconds": 300.0,
-        "max_governed_attempts": 1
+        "max_governed_attempts": 2
       },
       "tool_results": {
         "max_projection_chars": 6000

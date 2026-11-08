@@ -134,3 +134,44 @@ def test_orchestration_instructions_resource_covers_required_keys():
         data["instructions"]
     )
     assert not missing
+
+
+def test_runtime_profiles_share_execution_policy():
+    """Unified model policy (DELIA-C3-UNIFIED-MODEL-RUNTIME): model
+    profiles may differ ONLY in technical-capability fields —
+    provider/model_name, context window, output budget. Execution
+    policy (limits, retries, timeouts, governed attempts, history)
+    must be identical across profiles so a model swap never changes
+    investigation rules."""
+    import json
+    from pathlib import Path
+
+    data = json.loads(
+        Path("config/pydantic_ai.runtime.delpi.json").read_text()
+    )
+    technical = {
+        ("model",), ("generation",), ("context", "effective_context_window_tokens"),
+    }
+    profiles = data["profiles"]
+    assert len(profiles) >= 2
+
+    def policy_fields(section, prefix=()):
+        out = {}
+        for k, v in section.items():
+            path = prefix + (k,)
+            if path in technical:
+                continue
+            out[path] = (
+                policy_fields(v, path) if isinstance(v, dict) else v
+            )
+        return out
+
+    flattened = {
+        name: policy_fields(p) for name, p in profiles.items()
+    }
+    reference = flattened["local_ollama"]
+    for name, fields in flattened.items():
+        assert fields == reference, (
+            f"profile {name} diverges in execution policy: "
+            f"{set(fields.items()) ^ set(reference.items())}"
+        )

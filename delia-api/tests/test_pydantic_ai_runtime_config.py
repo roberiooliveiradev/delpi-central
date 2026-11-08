@@ -57,8 +57,8 @@ def test_profile_selector_resolves_named_profile():
     )
     assert config.profile_name == "openrouter_kimi"
     assert config.profile.model.model_name == "moonshotai/kimi-k3"
-    assert config.profile.generation.max_output_tokens == 2048
-    assert config.profile.budgets.max_governed_attempts == 1
+    assert config.profile.generation.max_output_tokens == 8192
+    assert config.profile.budgets.max_governed_attempts == 2
 
 
 def test_unknown_profile_selector_fails_closed(tmp_path):
@@ -217,8 +217,8 @@ def test_settings_profile_selector_env(monkeypatch):
     settings = Settings()
     assert settings.runtime_profile == "openrouter_kimi"
     assert settings.llm_model == "moonshotai/kimi-k3"
-    assert settings.llm_max_output_tokens == 2048
-    assert settings.max_governed_attempts == 1
+    assert settings.llm_max_output_tokens == 8192
+    assert settings.max_governed_attempts == 2
 
 
 def test_settings_unknown_profile_env_fails_closed(monkeypatch):
