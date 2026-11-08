@@ -153,6 +153,8 @@ class InMemoryProductRegistrationRepository:
         global_scope: bool = False,
         page: int = 1,
         page_size: int = 25,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
     ) -> dict[str, Any]:
         items = list(self._requests.values())
         if not global_scope:
@@ -186,8 +188,22 @@ class InMemoryProductRegistrationRepository:
             items = [r for r in items if r["created_at"] >= date_from]
         if date_to:
             items = [r for r in items if r["created_at"] <= date_to]
+        status_counts: dict[str, int] = {}
+        for r in items:
+            status_counts[r["status"]] = status_counts.get(r["status"], 0) + 1
+        sort_keys = {
+            "createdAt": "created_at",
+            "requestType": "request_type",
+            "status": "status",
+            "officialCode": "official_product_code",
+            "requester": "requester_display_name",
+            "assignedTo": "assigned_to_subject",
+            "id": "id",
+        }
+        col = sort_keys.get(sort_by or "", "created_at")
         items.sort(
-            key=lambda r: (r["created_at"], r["id"]), reverse=True
+            key=lambda r: (str(r.get(col) or ""), r["id"]),
+            reverse=(sort_dir != "asc"),
         )
         total = len(items)
         start = (page - 1) * page_size
@@ -197,6 +213,7 @@ class InMemoryProductRegistrationRepository:
             "page": page,
             "pageSize": page_size,
             "total": total,
+            "statusCounts": status_counts,
         }
 
     @staticmethod
@@ -212,6 +229,7 @@ class InMemoryProductRegistrationRepository:
             "source": req["source"],
             "createdAt": req["created_at"],
             "assignedTo": req.get("assigned_to_subject"),
+            "assignedToDisplayName": req.get("assigned_to_display_name"),
             "officialCode": req.get("official_product_code"),
             "caseVersion": req["row_version"],
         }
@@ -238,6 +256,7 @@ class InMemoryProductRegistrationRepository:
         allowed_from: frozenset[str],
         actor_label: str,
         actor_subject: str,
+        actor_email: str | None = None,
         event_type: str,
         next_status: str,
         set_fields: dict[str, Any],
@@ -260,6 +279,8 @@ class InMemoryProductRegistrationRepository:
             {
                 "event_type": event_type,
                 "actor_subject": actor_subject,
+                "actor_display_name": actor_label,
+                "actor_email": actor_email,
                 "reason": reason,
                 "metadata": dict(event_meta),
                 "previous_status": prev,
@@ -276,6 +297,8 @@ class InMemoryProductRegistrationRepository:
         actor_subject: str,
         changes: list[dict[str, Any]],
         event_meta: dict[str, Any],
+        actor_display_name: str | None = None,
+        actor_email: str | None = None,
     ) -> dict[str, Any]:
         req = self._require_request(request_id)
         self._check_cas(req, expected_version, frozenset({"in_progress"}))
@@ -309,6 +332,8 @@ class InMemoryProductRegistrationRepository:
             {
                 "event_type": "draft_changed",
                 "actor_subject": actor_subject,
+                "actor_display_name": actor_display_name,
+                "actor_email": actor_email,
                 "reason": None,
                 "metadata": {"changes": applied, **event_meta},
                 "previous_status": req["status"],
@@ -359,6 +384,8 @@ class InMemoryProductRegistrationRepository:
         request_id: str,
         expected_version: int,
         actor_subject: str,
+        actor_display_name: str | None = None,
+        actor_email: str | None = None,
         official_code: str,
         official_source: str,
         base_revision: int | None,
@@ -429,6 +456,8 @@ class InMemoryProductRegistrationRepository:
             {
                 "event_type": "verify_and_complete",
                 "actor_subject": actor_subject,
+                "actor_display_name": actor_display_name,
+                "actor_email": actor_email,
                 "reason": reason,
                 "metadata": {
                     "official_code": official_code,

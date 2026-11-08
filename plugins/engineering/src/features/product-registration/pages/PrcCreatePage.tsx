@@ -25,11 +25,13 @@ import {
   EngineeringTextField,
 } from "../../../ui/engineeringUi";
 import {
+  fetchPrcCatalog,
   fetchPrcReferenceData,
   prcIntakeSubmit,
   type PrcIntakeBody,
   type PrcReferenceData,
 } from "../api/productRegistrationApi";
+import { PrcSupplierLookup } from "../components/PrcSupplierLookup";
 import {
   buildPrcQueueUrl,
   EMPTY_PRC_QUEUE_URL,
@@ -78,6 +80,9 @@ function newIdemKey(): string {
 
 export function PrcCreatePage({ basePath }: { basePath: string }) {
   const [refData, setRefData] = useState<PrcReferenceData | null>(null);
+  const [catalogs, setCatalogs] = useState<
+    Record<string, { value: string; label: string }[]>
+  >({});
   const [loadError, setLoadError] = useState("");
   const [step, setStep] = useState(0);
 
@@ -85,7 +90,6 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
     "create",
   );
   const [officialCode, setOfficialCode] = useState("");
-  const [baseRevision, setBaseRevision] = useState("");
 
   const [values, setValues] = useState<Record<string, string>>({});
   const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
@@ -112,6 +116,28 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
           );
         }
       });
+    /* Catálogos TOTVS via BFF (REF-011) — indisponibilidade não bloqueia
+     * o formulário; campos voltam a texto livre honesto. */
+    const kinds: Record<string, string> = {
+      group: "product-groups",
+      unit: "units",
+      defaultWarehouse: "warehouses",
+      accountingAccount: "accounting-accounts",
+    };
+    for (const [path, kind] of Object.entries(kinds)) {
+      fetchPrcCatalog(kind, undefined, controller.signal)
+        .then((env) => {
+          if (controller.signal.aborted) return;
+          setCatalogs((s) => ({
+            ...s,
+            [path]: env.data.items.map((i) => ({
+              value: i.code,
+              label: `${i.code} — ${i.label}`,
+            })),
+          }));
+        })
+        .catch(() => undefined);
+    }
     return () => controller.abort();
   }, []);
 
@@ -137,9 +163,6 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
       if (requestType === "update") {
         if (!officialCode.trim())
           return "Informe o código oficial do produto a alterar.";
-        const rev = Number.parseInt(baseRevision, 10);
-        if (!Number.isFinite(rev) || rev < 1)
-          return "Informe a revisão-base vigente do produto (número ≥ 1).";
       }
       return "";
     }
@@ -250,7 +273,6 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
       productType: refData?.productTypes?.[0] || "raw_material",
       schemaVersion: refData?.schemaVersion || 1,
       officialProductCode: officialCode.trim(),
-      baseRevision: Number.parseInt(baseRevision, 10),
       changes,
     };
   };
@@ -300,7 +322,22 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
         ) : null}
         {selected ? (
           <div className="engineering-prc__edit-controls">
-            {spec?.enumValues?.length ? (
+            {catalogs[path]?.length ? (
+              <EngineeringSelectField
+                id={`prc-new-${path}`}
+                label={label}
+                hint={spec?.note || "Catálogo oficial TOTVS"}
+                value={values[path] || ""}
+                onChange={(v) => setValue(path, v)}
+                options={catalogs[path]}
+                placeholderOption="Selecionar…"
+                required={
+                  requestType === "create" &&
+                  Boolean(spec?.requiredCreateIntake)
+                }
+                disabled={busy}
+              />
+            ) : spec?.enumValues?.length ? (
               <EngineeringSelectField
                 id={`prc-new-${path}`}
                 label={label}
@@ -478,17 +515,10 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                 required
                 disabled={busy}
               />
-              <EngineeringTextField
-                id="prc-new-base-revision"
-                label="Revisão-base"
-                hint="Revisão vigente publicada no Portal — necessária para conciliar alterações."
-                value={baseRevision}
-                onChange={setBaseRevision}
-                type="text"
-                inputMode="numeric"
-                required
-                disabled={busy}
-              />
+              <p className="engineering-prc__muted">
+                A revisão técnica de referência é identificada automaticamente
+                pela Engineering API — não é preciso informá-la.
+              </p>
             </div>
           ) : null}
         </EngineeringSectionCard>
@@ -548,47 +578,34 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               <>
                 {suppliers.map((row, index) => (
                   <div key={index} className="engineering-prc__supplier-row">
-                    <EngineeringTextField
-                      id={`prc-new-sup-code-${index}`}
-                      label={PRC_SUPPLIER_LABELS.supplierCode}
-                      value={row.supplierCode}
-                      onChange={(v) =>
+                    <PrcSupplierLookup
+                      id={`prc-new-sup-${index}`}
+                      value={
+                        row.supplierCode
+                          ? `${row.supplierCode} / ${row.store} — ${row.supplierName}`
+                          : ""
+                      }
+                      disabled={busy}
+                      onSelect={(hit) =>
                         setSuppliers((rows) =>
                           rows.map((r, i) =>
-                            i === index ? { ...r, supplierCode: v } : r,
+                            i === index
+                              ? {
+                                  ...r,
+                                  supplierCode: String(
+                                    hit.supplier_code ?? r.supplierCode,
+                                  ),
+                                  store: String(
+                                    hit.supplier_store ?? r.store,
+                                  ),
+                                  supplierName: String(
+                                    hit.supplier_name ?? r.supplierName,
+                                  ),
+                                }
+                              : r,
                           ),
                         )
                       }
-                      required
-                      disabled={busy}
-                    />
-                    <EngineeringTextField
-                      id={`prc-new-sup-store-${index}`}
-                      label={PRC_SUPPLIER_LABELS.store}
-                      value={row.store}
-                      onChange={(v) =>
-                        setSuppliers((rows) =>
-                          rows.map((r, i) =>
-                            i === index ? { ...r, store: v } : r,
-                          ),
-                        )
-                      }
-                      required
-                      disabled={busy}
-                    />
-                    <EngineeringTextField
-                      id={`prc-new-sup-name-${index}`}
-                      label={PRC_SUPPLIER_LABELS.supplierName}
-                      value={row.supplierName}
-                      onChange={(v) =>
-                        setSuppliers((rows) =>
-                          rows.map((r, i) =>
-                            i === index ? { ...r, supplierName: v } : r,
-                          ),
-                        )
-                      }
-                      required
-                      disabled={busy}
                     />
                     <EngineeringTextField
                       id={`prc-new-sup-pn-${index}`}
@@ -671,10 +688,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                     : "Alteração de produto",
               },
               ...(requestType === "update"
-                ? [
-                    { label: "Código oficial", value: officialCode },
-                    { label: "Revisão-base", value: `R${baseRevision}` },
-                  ]
+                ? [{ label: "Código oficial", value: officialCode }]
                 : []),
               ...reviewItems,
               {

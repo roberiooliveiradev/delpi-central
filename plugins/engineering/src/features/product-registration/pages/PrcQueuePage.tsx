@@ -9,14 +9,19 @@ import { HomeApiError } from "../../../api/httpClient";
 import { navigateEngineeringView } from "../../../app/engineeringRoutes";
 import {
   EngineeringActionButton,
+  EngineeringDataCardsGrid,
   EngineeringEmptyState,
   EngineeringFilterInput,
   EngineeringFilterSelect,
   EngineeringFiltersRow,
+  EngineeringInteractiveDataCard,
+  EngineeringKanbanBoard,
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
   EngineeringPagePath,
+  EngineeringSegmentToggle,
   EngineeringStateBanner,
+  usePersistedViewLayout,
 } from "../../../ui/engineeringUi";
 import type { DataTableColumn } from "../../lmps/components/dataTableUi";
 import { DataTableSection } from "../../lmps/components/DataTableSection";
@@ -37,11 +42,10 @@ import {
   PRC_COPY,
   PRC_STATUS_LABELS,
   PRC_TYPE_LABELS,
-  prcPersonLabel,
-  prcRequesterLabel,
   prcShortId,
 } from "../prcCopy";
 import { PrcStatusBadge } from "../components/PrcStatusBadge";
+import { PrcPersonCell } from "../components/PrcPersonCell";
 
 const PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -77,6 +81,7 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
   const [list, setList] = useState<{
     items: PrcRequestSummary[];
     total: number;
+    statusCounts: Record<string, number>;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{
@@ -107,11 +112,17 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
             search: state.search,
             page: state.page,
             pageSize: PAGE_SIZE,
+            sortBy: state.sortBy || undefined,
+            sortDir: state.sortBy ? state.sortDir : undefined,
           },
           signal,
         );
         if (seq !== requestSeq.current || signal.aborted) return;
-        setList({ items: env.data.items, total: env.data.total });
+        setList({
+          items: env.data.items,
+          total: env.data.total,
+          statusCounts: env.data.statusCounts || {},
+        });
       } catch (e) {
         if (seq !== requestSeq.current || signal.aborted) return;
         const err = e as HomeApiError;
@@ -152,7 +163,7 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
 
   const clearFilters = useCallback(() => {
     setSearchDraft("");
-    commit({ status: "", type: "", search: "", page: 1 });
+    commit({ status: "", type: "", search: "", page: 1, sortBy: "", sortDir: "desc" });
   }, [commit]);
 
   const openDetail = useCallback(
@@ -162,11 +173,17 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
     [basePath],
   );
 
+  const { layout, setLayout } = usePersistedViewLayout({
+    storageKey: "engineering:prc:requests:layout",
+    defaultMode: "table",
+  });
+
   const columns = useMemo<DataTableColumn<PrcRequestSummary>[]>(
     () => [
       {
         key: "id",
         header: "Nº",
+        sortable: true,
         render: (row) => (
           <span title={`ID completo: ${row.id}`}>{prcShortId(row.id)}</span>
         ),
@@ -174,16 +191,24 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
       {
         key: "type",
         header: "Tipo",
+        sortable: true,
         render: (row) => PRC_TYPE_LABELS[row.requestType] || row.requestType,
       },
       {
         key: "requester",
         header: "Solicitante",
-        render: (row) => prcRequesterLabel(row.requester),
+        sortable: true,
+        render: (row) => (
+          <PrcPersonCell
+            subject={row.requester.subject}
+            displayName={row.requester.displayName}
+          />
+        ),
       },
       {
         key: "officialCode",
         header: "Código oficial",
+        sortable: true,
         render: (row) =>
           row.officialCode ? (
             row.officialCode
@@ -196,30 +221,25 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
       {
         key: "createdAt",
         header: "Abertura",
+        sortable: true,
         render: (row) => new Date(row.createdAt).toLocaleString("pt-BR"),
       },
       {
         key: "status",
         header: "Status",
+        sortable: true,
         render: (row) => <PrcStatusBadge status={row.status} />,
       },
       {
         key: "assignedTo",
         header: "Responsável",
-        render: (row) => prcPersonLabel(row.assignedTo),
-      },
-      {
-        key: "open",
-        header: "",
-        interactive: true,
+        sortable: true,
         render: (row) => (
-          <EngineeringActionButton
-            variant="link"
-            title={`${PRC_COPY.openRequest} ${prcShortId(row.id)}`}
-            onClick={() => openDetail(row)}
-          >
-            Abrir
-          </EngineeringActionButton>
+          <PrcPersonCell
+            subject={row.assignedTo}
+            displayName={row.assignedToDisplayName}
+            emptyLabel={PRC_COPY.unassigned}
+          />
         ),
       },
     ],
@@ -348,22 +368,18 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
       ) : null}
 
       {!forbidden && !error && list && list.items.length > 0 ? (
-        <DataTableSection
-          title={PRC_COPY.listTitle}
-          columns={columns}
-          rows={list.items}
-          rowKey={(row) => row.id}
-          loading={loading}
-          hideSearch
-          emptyMessage={PRC_COPY.emptyFiltered}
-          serverPagination={{
-            page: applied.page,
-            pageSize: PAGE_SIZE,
-            total: list.total,
-            onPageChange: (page) => commit({ ...applied, page }),
-          }}
-          onRowClick={openDetail}
-          toolbarActions={
+        <div className="engineering-prc__queue-view">
+          <div className="engineering-prc__view-toolbar">
+            <EngineeringSegmentToggle
+              ariaLabel="Modo de apresentação da fila"
+              value={layout}
+              onChange={setLayout}
+              options={[
+                { value: "table", label: "Tabela" },
+                { value: "cards", label: "Cards" },
+                { value: "board", label: "Kanban" },
+              ]}
+            />
             <EngineeringActionButton
               variant="ghost"
               softDisabled={loading}
@@ -374,8 +390,156 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
             >
               {PRC_COPY.refresh}
             </EngineeringActionButton>
-          }
-        />
+          </div>
+
+          {layout === "table" ? (
+            <DataTableSection
+              title={PRC_COPY.listTitle}
+              columns={columns}
+              rows={list.items}
+              rowKey={(row) => row.id}
+              loading={loading}
+              hideSearch
+              emptyMessage={PRC_COPY.emptyFiltered}
+              columnPreferencesKey="engineering:prc:requests:columns"
+              serverPagination={{
+                page: applied.page,
+                pageSize: PAGE_SIZE,
+                total: list.total,
+                onPageChange: (page) => commit({ ...applied, page }),
+              }}
+              serverSort={{
+                sortKey: applied.sortBy || null,
+                sortDirection: applied.sortDir,
+                onSortChange: (columnKey) =>
+                  commit({
+                    ...applied,
+                    sortBy: columnKey,
+                    sortDir:
+                      applied.sortBy === columnKey &&
+                      applied.sortDir === "desc"
+                        ? "asc"
+                        : "desc",
+                    page: 1,
+                  }),
+              }}
+              onRowClick={openDetail}
+            />
+          ) : null}
+
+          {layout === "cards" ? (
+            <>
+              <EngineeringDataCardsGrid
+                ariaLabel="Solicitações em cards"
+                empty={<EngineeringEmptyState message={PRC_COPY.emptyFiltered} />}
+              >
+                {list.items.map((row) => (
+                  <EngineeringInteractiveDataCard
+                    key={row.id}
+                    interactive
+                    onActivate={() => openDetail(row)}
+                    ariaLabel={`Solicitação ${prcShortId(row.id)}`}
+                    fields={[
+                      {
+                        label: "Tipo",
+                        value:
+                          PRC_TYPE_LABELS[row.requestType] || row.requestType,
+                      },
+                      { label: "Status", value: <PrcStatusBadge status={row.status} /> },
+                      {
+                        label: "Código oficial",
+                        value: row.officialCode || PRC_COPY.awaitingCode,
+                      },
+                      {
+                        label: "Solicitante",
+                        value: (
+                          <PrcPersonCell
+                            subject={row.requester.subject}
+                            displayName={row.requester.displayName}
+                          />
+                        ),
+                      },
+                      {
+                        label: "Responsável",
+                        value: (
+                          <PrcPersonCell
+                            subject={row.assignedTo}
+                            displayName={row.assignedToDisplayName}
+                            emptyLabel={PRC_COPY.unassigned}
+                          />
+                        ),
+                      },
+                      {
+                        label: "Abertura",
+                        value: new Date(row.createdAt).toLocaleString("pt-BR"),
+                      },
+                    ]}
+                  >
+                    <strong>{prcShortId(row.id)}</strong>
+                  </EngineeringInteractiveDataCard>
+                ))}
+              </EngineeringDataCardsGrid>
+              <p className="engineering-prc__muted">
+                Página {applied.page} · {list.total} solicitação(ões) no
+                escopo.
+              </p>
+            </>
+          ) : null}
+
+          {layout === "board" ? (
+            <>
+              <EngineeringKanbanBoard
+                ariaLabel="Kanban das solicitações por status"
+                columns={Object.entries(PRC_STATUS_LABELS).map(
+                  ([status, label]) => ({
+                    id: status,
+                    title: label,
+                    count: list.statusCounts[status] ?? 0,
+                    empty: <span className="engineering-prc__muted">—</span>,
+                    children: list.items
+                      .filter((r) => r.status === status)
+                      .map((row) => (
+                        <EngineeringInteractiveDataCard
+                          key={row.id}
+                          interactive
+                          onActivate={() => openDetail(row)}
+                          ariaLabel={`Solicitação ${prcShortId(row.id)}`}
+                          fields={[
+                            {
+                              label: "Tipo",
+                              value:
+                                PRC_TYPE_LABELS[row.requestType] ||
+                                row.requestType,
+                            },
+                            {
+                              label: "Código",
+                              value: row.officialCode || PRC_COPY.awaitingCode,
+                            },
+                            {
+                              label: "Solicitante",
+                              value: (
+                                <PrcPersonCell
+                                  subject={row.requester.subject}
+                                  displayName={row.requester.displayName}
+                                />
+                              ),
+                            },
+                          ]}
+                        >
+                          <strong>{prcShortId(row.id)}</strong>
+                        </EngineeringInteractiveDataCard>
+                      )),
+                  }),
+                )}
+              />
+              <p className="engineering-prc__muted">
+                Contagens por status calculadas pela Engineering API sobre o
+                escopo filtrado; os cards exibidos são os itens carregados
+                desta página.
+              </p>
+            </>
+          ) : null}
+        </div>
       ) : null}
     </main>
   );

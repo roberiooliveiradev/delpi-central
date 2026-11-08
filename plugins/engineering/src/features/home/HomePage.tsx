@@ -18,6 +18,7 @@ import {
   House,
   LifeBuoy,
   Package,
+  PackagePlus,
   RefreshCw,
 
 } from "lucide-react";
@@ -68,6 +69,7 @@ const ROUTE_ICONS: Record<string, ReactNode> = {
   my_requests: <ClipboardList size={16} aria-hidden="true" />,
   lmps: <ClipboardCheck size={16} aria-hidden="true" />,
   nonconformities: <ClipboardX size={16} aria-hidden="true" />,
+  "product-registration": <PackagePlus size={16} aria-hidden="true" />,
   products: <Package size={16} aria-hidden="true" />,
   overview: <ChartColumn size={16} aria-hidden="true" />,
   dashboard: <ChartNoAxesCombined size={16} aria-hidden="true" />,

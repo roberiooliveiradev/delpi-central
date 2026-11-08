@@ -2374,6 +2374,65 @@ declare module "@delpi/plugin-ui/index" {
   ): void;
 }
 
+declare module "@delpi/plugin-ui/index" {
+  import type { ComponentType, ReactNode } from "react";
+
+  export type InteractiveDataCardField = {
+    label: string;
+    value: ReactNode;
+  };
+  export type DashboardInteractiveDataCardProps = {
+    fields?: InteractiveDataCardField[];
+    children?: ReactNode;
+    actions?: ReactNode;
+    openHint?: ReactNode;
+    ariaLabel?: string;
+    onActivate?: () => void;
+    interactive?: boolean;
+    className?: string;
+  };
+  export function createDashboardInteractiveDataCard(config: {
+    prefix: string;
+  }): ComponentType<DashboardInteractiveDataCardProps>;
+
+  export type DashboardDataCardsGridProps = {
+    children?: ReactNode;
+    empty?: ReactNode;
+    ariaLabel?: string;
+    className?: string;
+    style?: Record<string, string>;
+  };
+  export function createDashboardDataCardsGrid(config: {
+    prefix: string;
+  }): ComponentType<DashboardDataCardsGridProps>;
+
+  export type KanbanBoardColumn = {
+    id: string;
+    title: ReactNode;
+    count?: number | string;
+    summary?: ReactNode;
+    children?: ReactNode;
+    empty?: ReactNode;
+  };
+  export type DashboardKanbanBoardProps = {
+    columns: KanbanBoardColumn[];
+    ariaLabel?: string;
+  };
+  export function createDashboardKanbanBoard(config: {
+    prefix: string;
+  }): ComponentType<DashboardKanbanBoardProps>;
+
+  export function usePersistedViewLayout(options: {
+    storageKey: string;
+    defaultMode?: "table" | "cards" | "board";
+    mobileMaxWidthPx?: number;
+    enabled?: boolean;
+  }): {
+    layout: "table" | "cards" | "board";
+    setLayout: (mode: "table" | "cards" | "board") => void;
+  };
+}
+
 declare module "@delpi/plugin-ui/styles" {}
 
 declare module "@delpi/plugin-ui/index" {

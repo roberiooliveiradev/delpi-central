@@ -114,6 +114,7 @@ def _request_detail(request: dict, actor: PrcActor) -> dict[str, Any]:
             "displayName": request.get("requester_display_name"),
         },
         "assignedTo": request.get("assigned_to_subject"),
+        "assignedToDisplayName": request.get("assigned_to_display_name"),
         "officialCode": request.get("official_product_code"),
         "baseRevision": request.get("base_revision_number"),
         "requestedChanges": request["requested_payload"],
@@ -306,8 +307,13 @@ class ProductRegistrationService:
             )
             if record is not None:
                 current = int(record["current_revision_number"])
-                if base_revision is None or base_revision != current:
+                # REF-001: a revisão-base é resolvida pelo backend — o
+                # solicitante nunca digita a revisão. Se um consumidor
+                # legado informar revisão divergente da corrente, o CAS
+                # ainda falha fechado com stale_revision.
+                if base_revision is not None and base_revision != current:
                     raise PrcConcurrencyError("stale_revision")
+                base_revision = current
                 base = self._repo.get_revision(
                     record["id"], current
                 )
@@ -363,6 +369,8 @@ class ProductRegistrationService:
         event = {
             "event_type": "submitted",
             "actor_subject": actor.user_id,
+            "actor_display_name": actor.label,
+            "actor_email": actor.email,
             "reason": None,
             "metadata": {
                 "source": source,
@@ -423,6 +431,8 @@ class ProductRegistrationService:
             global_scope=actor.is_analyst,
             page=int(filters.get("page", 1)),
             page_size=int(filters.get("pageSize", 25)),
+            sort_by=filters.get("sortBy"),
+            sort_dir=filters.get("sortDir"),
         )
 
     def _get_scoped(self, request_id: str, actor: PrcActor) -> dict[str, Any]:
@@ -539,6 +549,7 @@ class ProductRegistrationService:
         fields = dict(set_fields or {})
         if action == "start":
             fields["assigned_to_subject"] = actor.user_id
+            fields["assigned_to_display_name"] = actor.label
         meta = {"action": action, "channel": actor.channel}
         meta.update(event_meta or {})
         updated = self._repo.apply_transition(
@@ -547,6 +558,7 @@ class ProductRegistrationService:
             allowed_from=frozenset({request["status"]}),
             actor_label=actor.label or actor.user_id,
             actor_subject=actor.user_id,
+            actor_email=actor.email,
             event_type=_EVENT_TYPE_BY_ACTION.get(action, action),
             next_status=next_status,
             set_fields=fields,
@@ -674,6 +686,8 @@ class ProductRegistrationService:
             actor_subject=actor.user_id,
             changes=validated,
             event_meta={"channel": actor.channel},
+            actor_display_name=actor.label,
+            actor_email=actor.email,
         )
         response = _request_detail({**updated, "verifications": []}, actor)
         self._idempotent_store(
@@ -798,6 +812,8 @@ class ProductRegistrationService:
                 request_id=request_id,
                 expected_version=expected_version,
                 actor_subject=actor.user_id,
+                actor_display_name=actor.label,
+                actor_email=actor.email,
                 official_code=code,
                 official_source=catalog.OFFICIAL_SOURCE,
                 base_revision=request.get("base_revision_number"),

@@ -238,6 +238,16 @@ class PostgresProductRegistrationRepository:
             ).fetchone()
         return self.get_request(str(row["id"])) if row else None
 
+    _SORT_COLUMNS = {
+        "createdAt": "created_at",
+        "requestType": "request_type",
+        "status": "status",
+        "officialCode": "official_product_code",
+        "requester": "requester_display_name",
+        "assignedTo": "assigned_to_subject",
+        "id": "id",
+    }
+
     def list_requests(
         self,
         *,
@@ -245,6 +255,7 @@ class PostgresProductRegistrationRepository:
         search=None, date_from=None, date_to=None,
         requester_subject=None, global_scope=False,
         page=1, page_size=25,
+        sort_by=None, sort_dir=None,
     ) -> dict[str, Any]:
         where = ["1=1"]
         params: list[Any] = []
@@ -272,18 +283,28 @@ class PostgresProductRegistrationRepository:
             like = f"%{search}%"
             params += [like, like, like]
         sql_where = " AND ".join(where)
+        sort_col = self._SORT_COLUMNS.get(sort_by or "", "created_at")
+        direction = "ASC" if sort_dir == "asc" else "DESC"
         with self._conn() as conn:
             total = conn.execute(
                 f"SELECT count(*) AS c FROM {_T_REQ} WHERE {sql_where}",
                 params,
             ).fetchone()["c"]
+            status_counts = {
+                r["status"]: int(r["c"])
+                for r in conn.execute(
+                    f"SELECT status, count(*) AS c FROM {_T_REQ}"
+                    f" WHERE {sql_where} GROUP BY status",
+                    params,
+                ).fetchall()
+            }
             rows = conn.execute(
                 f"SELECT id, request_type, status, source,"
                 " requester_subject, requester_display_name,"
-                " assigned_to_subject, official_product_code,"
-                " row_version, created_at"
+                " assigned_to_subject, assigned_to_display_name,"
+                " official_product_code, row_version, created_at"
                 f" FROM {_T_REQ} WHERE {sql_where}"
-                " ORDER BY created_at DESC, id DESC"
+                f" ORDER BY {sort_col} {direction}, id DESC"
                 " LIMIT %s OFFSET %s",
                 params + [page_size, (page - 1) * page_size],
             ).fetchall()
@@ -300,6 +321,9 @@ class PostgresProductRegistrationRepository:
                     "source": r["source"],
                     "createdAt": _iso(r["created_at"]),
                     "assignedTo": r["assigned_to_subject"],
+                    "assignedToDisplayName": r.get(
+                        "assigned_to_display_name"
+                    ),
                     "officialCode": r["official_product_code"],
                     "caseVersion": r["row_version"],
                 }
@@ -308,6 +332,7 @@ class PostgresProductRegistrationRepository:
             "page": page,
             "pageSize": page_size,
             "total": int(total),
+            "statusCounts": status_counts,
         }
 
     def list_events(
@@ -367,12 +392,16 @@ class PostgresProductRegistrationRepository:
         conn.execute(
             f"INSERT INTO {_T_EVT}"
             " (id, request_id, sequence_number, event_type,"
-            "  actor_subject, occurred_at, reason, metadata,"
+            "  actor_subject, actor_display_name, actor_email,"
+            "  occurred_at, reason, metadata,"
             "  previous_status, next_status)"
-            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (
                 _uuid(), request_id, seq, event["event_type"],
-                event["actor_subject"], _now(), event.get("reason"),
+                event["actor_subject"],
+                event.get("actor_display_name"),
+                event.get("actor_email"),
+                _now(), event.get("reason"),
                 json.dumps(event.get("metadata") or {}),
                 event.get("previous_status"), event.get("next_status"),
             ),
@@ -386,6 +415,7 @@ class PostgresProductRegistrationRepository:
         allowed_from: frozenset[str],
         actor_label: str,
         actor_subject: str,
+        actor_email: str | None = None,
         event_type: str,
         next_status: str,
         set_fields: dict[str, Any],
@@ -418,6 +448,8 @@ class PostgresProductRegistrationRepository:
                 {
                     "event_type": event_type,
                     "actor_subject": actor_subject,
+                    "actor_display_name": actor_label,
+                    "actor_email": actor_email,
                     "reason": reason,
                     "metadata": event_meta,
                     "previous_status": row["status"],
@@ -434,6 +466,8 @@ class PostgresProductRegistrationRepository:
         actor_subject: str,
         changes: list[dict[str, Any]],
         event_meta: dict[str, Any],
+        actor_display_name: str | None = None,
+        actor_email: str | None = None,
     ) -> dict[str, Any]:
         with self._conn() as conn:
             row = self._lock_and_check(
@@ -480,6 +514,8 @@ class PostgresProductRegistrationRepository:
                 {
                     "event_type": "draft_changed",
                     "actor_subject": actor_subject,
+                    "actor_display_name": actor_display_name,
+                    "actor_email": actor_email,
                     "reason": None,
                     "metadata": {"changes": applied, **event_meta},
                     "previous_status": row["status"],
@@ -598,6 +634,8 @@ class PostgresProductRegistrationRepository:
         request_id: str,
         expected_version: int,
         actor_subject: str,
+        actor_display_name: str | None = None,
+        actor_email: str | None = None,
         official_code: str,
         official_source: str,
         base_revision: int | None,
@@ -694,6 +732,8 @@ class PostgresProductRegistrationRepository:
                 {
                     "event_type": "verify_and_complete",
                     "actor_subject": actor_subject,
+                    "actor_display_name": actor_display_name,
+                    "actor_email": actor_email,
                     "reason": reason,
                     "metadata": {
                         "official_code": official_code,

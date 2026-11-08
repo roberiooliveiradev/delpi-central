@@ -10,7 +10,10 @@ import {
   createDashboardDetailFieldGrid,
   createDashboardEmptyState,
   createDashboardEventsSection,
+  createDashboardDataCardsGrid,
   createDashboardFiltersKit,
+  createDashboardInteractiveDataCard,
+  createDashboardKanbanBoard,
   createDashboardKpiCard,
   createDashboardLoadingActivityCard,
   createDashboardMetricStrip,
@@ -53,6 +56,7 @@ import {
   stateBoxPlaceholderBemClasses,
   createDashboardFormActions,
   NativeCheckboxControl,
+  usePersistedViewLayout,
   type ChartCardProps as DelpiChartCardProps,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ComponentProps } from "react";
@@ -331,6 +335,19 @@ export const EngineeringCheckboxControl = NativeCheckboxControl;
 export const EngineeringFormActions = createDashboardFormActions({
   classNames: formActionsBemClasses(ENG_UI_PREFIX),
 });
+
+/** Visões alternativas da fila (REF-006) — mesmas factories do kit
+ * usadas pelo Portal Comercial. */
+export const EngineeringDataCardsGrid = createDashboardDataCardsGrid({
+  prefix: ENG_UI_PREFIX,
+});
+export const EngineeringInteractiveDataCard =
+  createDashboardInteractiveDataCard({ prefix: ENG_UI_PREFIX });
+export const EngineeringKanbanBoard = createDashboardKanbanBoard({
+  prefix: ENG_UI_PREFIX,
+});
+
+export { usePersistedViewLayout };
 
 /** Modal contido no host `.portal-engineering` — nunca cobre a sidebar
  * do portal (regra mfe-modal-host-contained). Base dos diálogos de

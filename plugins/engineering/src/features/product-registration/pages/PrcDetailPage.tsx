@@ -372,9 +372,29 @@ export function PrcDetailPage({
             </EngineeringActionButton>
           ) : null
         }
-      />
-
-      <PrcWorkflowProgress status={detail.status} />
+      >
+        <div className="engineering-prc__hero-meta">
+          <EngineeringDetailFieldGrid fields={identification} />
+        </div>
+        <div className="engineering-prc__hero-progress">
+          <PrcWorkflowProgress status={detail.status} />
+        </div>
+        {detail.allowedActions.length ? (
+          <div className="engineering-prc__hero-actions">
+            <PrcActionBar
+              allowedActions={detail.allowedActions}
+              busy={busy}
+              officialCode={detail.officialCode || ""}
+              onRunAction={runAction}
+              onEditDraft={() => selectTab("draft")}
+            />
+          </div>
+        ) : (
+          <p className="engineering-prc__muted">
+            Solicitação encerrada — nenhuma ação disponível.
+          </p>
+        )}
+      </EngineeringPageHero>
 
       {feedback ? (
         <EngineeringStateBanner
@@ -383,33 +403,6 @@ export function PrcDetailPage({
           {feedback.text}
         </EngineeringStateBanner>
       ) : null}
-
-      <div className="engineering-prc__detail-grid">
-        <EngineeringDetailCard title="Identificação">
-          <EngineeringDetailFieldGrid fields={identification} />
-        </EngineeringDetailCard>
-
-        <EngineeringDetailCard title="Próximas ações">
-          {detail.allowedActions.length ? (
-            <>
-              <p className="engineering-prc__muted">
-                Ações disponíveis neste estado, segundo a Engineering API.
-              </p>
-              <PrcActionBar
-                allowedActions={detail.allowedActions}
-                busy={busy}
-                officialCode={detail.officialCode || ""}
-                onRunAction={runAction}
-                onEditDraft={() => selectTab("draft")}
-              />
-            </>
-          ) : (
-            <p className="engineering-prc__muted">
-              Solicitação encerrada — nenhuma ação disponível.
-            </p>
-          )}
-        </EngineeringDetailCard>
-      </div>
 
       <EngineeringTabs
         mode="tabs"

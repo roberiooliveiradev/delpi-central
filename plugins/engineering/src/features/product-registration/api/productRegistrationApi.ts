@@ -12,6 +12,14 @@ export type Envelope<T> = {
   data: T;
 };
 
+export type PrcQueueResult = {
+  items: PrcRequestSummary[];
+  page: number;
+  pageSize: number;
+  total: number;
+  statusCounts?: Record<string, number>;
+};
+
 export type PrcRequestSummary = {
   id: string;
   requestType: "create" | "update";
@@ -20,6 +28,7 @@ export type PrcRequestSummary = {
   source: string;
   createdAt: string;
   assignedTo?: string | null;
+  assignedToDisplayName?: string | null;
   officialCode?: string | null;
   caseVersion: number;
 };
@@ -33,6 +42,7 @@ export type PrcRequestDetail = {
   externalRequestId?: string | null;
   requester: { subject: string; displayName?: string | null };
   assignedTo?: string | null;
+  assignedToDisplayName?: string | null;
   officialCode?: string | null;
   baseRevision?: number | null;
   requestedChanges: Record<string, unknown>;
@@ -56,6 +66,8 @@ export type PrcTimelineEvent = {
   sequence_number: number;
   event_type: string;
   actor_subject: string;
+  actor_display_name?: string | null;
+  actor_email?: string | null;
   occurred_at: string;
   reason?: string | null;
   metadata: Record<string, unknown>;
@@ -162,8 +174,47 @@ function qs(params: Record<string, unknown>): string {
 export async function fetchPrcQueue(
   filters: Record<string, unknown>,
   signal?: AbortSignal,
-): Promise<Envelope<{ items: PrcRequestSummary[]; page: number; pageSize: number; total: number }>> {
+): Promise<Envelope<PrcQueueResult>> {
   return getJson(`${BASE}/requests${qs(filters)}`, signal);
+}
+
+export type PrcCatalogItem = {
+  code: string;
+  label: string;
+  disabled?: number;
+};
+
+export async function fetchPrcCatalog(
+  catalog: string,
+  query?: string,
+  signal?: AbortSignal,
+): Promise<Envelope<{ items: PrcCatalogItem[]; hasMore: boolean }>> {
+  const qs = new URLSearchParams();
+  if (query) qs.set("query", query);
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return getJson(
+    `${BASE}/reference-data/catalogs/${catalog}${suffix}`,
+    signal,
+  );
+}
+
+export type PrcSupplierHit = {
+  supplier_code?: string;
+  supplier_store?: string;
+  supplier_name?: string;
+  supplier_short_name?: string;
+  [key: string]: unknown;
+};
+
+export async function searchPrcSuppliers(
+  query: string,
+  signal?: AbortSignal,
+): Promise<Envelope<{ items: PrcSupplierHit[]; total?: number }>> {
+  const qs = new URLSearchParams({ query });
+  return getJson(
+    `${BASE}/reference-data/suppliers/search?${qs.toString()}`,
+    signal,
+  );
 }
 
 export async function fetchPrcRequest(
@@ -229,6 +280,7 @@ export type PrcIntakeBody = {
   schemaVersion: number;
   requestedData?: Record<string, unknown> | null;
   officialProductCode?: string | null;
+  /** REF-001 — resolvido pela Engineering API; nunca pedido ao usuário. */
   baseRevision?: number | null;
   changes?: Array<{ path: string; proposedValue: unknown; reason: string }> | null;
 };

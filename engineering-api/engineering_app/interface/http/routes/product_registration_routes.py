@@ -262,6 +262,11 @@ async def prc_list_requests(
     dateTo: str | None = Query(default=None, max_length=40),
     page: int = Query(default=1, ge=1),
     pageSize: int = Query(default=25, ge=1, le=100),
+    sortBy: str | None = Query(
+        default=None,
+        pattern="^(createdAt|requestType|status|officialCode|requester|assignedTo|id)$",
+    ),
+    sortDir: str | None = Query(default=None, pattern="^(asc|desc)$"),
 ):
     op = "prc_list_requests"
     user, denied = _user(op)
@@ -275,6 +280,7 @@ async def prc_list_requests(
                 "source": source, "search": search,
                 "dateFrom": dateFrom, "dateTo": dateTo,
                 "page": page, "pageSize": pageSize,
+                "sortBy": sortBy, "sortDir": sortDir,
             },
         )
     except Exception as exc:
@@ -628,6 +634,90 @@ async def prc_reference_data():
         return _err(exc, op)
     return ok(data, message="Dados de referência carregados.",
               operation_id=op)
+
+
+# --- 16b reference-data: catálogos TOTVS e busca SA2 via api-delpi ---------
+
+_PRC_CATALOG_KINDS = {
+    "product-groups", "units", "warehouses", "accounting-accounts"
+}
+
+
+async def _delegated_get(user, op: str, path: str, params: dict):
+    """Delega o Bearer humano à rota engineering da api-delpi."""
+    from engineering_app.config import settings
+    from engineering_app.infrastructure.gateways.downstream_client import (
+        DownstreamClient,
+    )
+
+    access_token = str(getattr(user, "access_token", "") or "")
+    if not access_token:
+        return None, fail(
+            "Token de acesso indisponível para consulta oficial.",
+            401, operation_id=op,
+        )
+    client = DownstreamClient(settings.DELPI_API_URL, timeout_seconds=15.0)
+    try:
+        return await client.get(
+            path, params=params,
+            access_token=access_token, request_id=get_request_id(),
+        ), None
+    except Exception as exc:
+        return None, fail(
+            "Fonte oficial indisponível.", 503, operation_id=op,
+        )
+
+
+@router.get(
+    "/v1/product-registration/reference-data/catalogs/{catalog}",
+    operation_id="prc_catalog_items",
+    summary="16b — Catálogos TOTVS read-only da ficha técnica",
+)
+@require_any_permission(_READ_PERMS + _CREATE_PERMS)
+async def prc_catalog_items(
+    catalog: str = Path(...),
+    query: str | None = Query(default=None, max_length=60),
+    limit: int = Query(default=200, ge=1, le=500),
+):
+    op = "prc_catalog_items"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    if catalog not in _PRC_CATALOG_KINDS:
+        return fail("Catálogo não suportado.", 404, operation_id=op)
+    data, denied = await _delegated_get(
+        user, op,
+        f"/engineering/product-registration/catalogs/{catalog}",
+        {"query": query, "limit": limit},
+    )
+    if denied is not None:
+        return denied
+    return ok(data, message="Catálogo carregado.", operation_id=op)
+
+
+@router.get(
+    "/v1/product-registration/reference-data/suppliers/search",
+    operation_id="prc_supplier_search",
+    summary="16c — Busca de fornecedores SA2 (código ou nome)",
+)
+@require_any_permission(_READ_PERMS + _CREATE_PERMS)
+async def prc_supplier_search(
+    query: str = Query(..., min_length=2, max_length=80),
+    page: int = Query(default=1, ge=1),
+    pageSize: int = Query(default=20, ge=1, le=100),
+):
+    op = "prc_supplier_search"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    data, denied = await _delegated_get(
+        user, op,
+        "/engineering/product-registration/suppliers",
+        {"query": query, "page": page, "page_size": pageSize},
+    )
+    if denied is not None:
+        return denied
+    return ok(data, message="Fornecedores carregados.", operation_id=op)
 
 
 # --- 17-18 outbound ------------------------------------------------------------------

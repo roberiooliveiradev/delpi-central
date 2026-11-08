@@ -9,13 +9,10 @@ import {
   prcStatusLabel,
 } from "../prcCopy";
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function actorLabel(subject: string): string {
-  return UUID_RE.test(subject)
-    ? "Ator registrado no Portal"
-    : subject || prcPersonLabel(null);
+function actorLabel(ev: PrcTimelineEvent): string {
+  const name = (ev.actor_display_name || "").trim();
+  if (name) return name;
+  return prcPersonLabel(ev.actor_subject, null);
 }
 
 export function PrcTimelineSection({
@@ -47,7 +44,7 @@ export function PrcTimelineSection({
             {ev.reason ? <span>{ev.reason}</span> : null}
           </>
         ),
-        meta: `${actorLabel(ev.actor_subject)}${channel ? ` · canal ${channel}` : ""}`,
+        meta: `${actorLabel(ev)}${ev.actor_email ? ` · ${ev.actor_email}` : ""}${channel ? ` · canal ${channel}` : ""}`,
       };
     });
 

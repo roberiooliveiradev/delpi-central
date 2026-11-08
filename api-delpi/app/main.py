@@ -85,6 +85,7 @@ from app.interface.http.routes.production import production_order_sets_router
 from app.interface.http.routes.production import shared_structure_intermediates_router
 from app.interface.http.routes.purchases import purchases_router
 from app.interface.http.routes.engineering import engineering_router
+from app.interface.http.routes.engineering import prc_catalogs_router
 from app.interface.http.routes.quality import quality_router
 from app.interface.http.routes.quality import quality_labels_public_router
 from app.interface.http.routes.quality import kaizen_public_router
@@ -340,6 +341,7 @@ app.include_router(shared_structure_intermediates_router.router)
 app.include_router(production_appointments_router.router)
 app.include_router(purchases_router.router)
 app.include_router(engineering_router.router)
+app.include_router(prc_catalogs_router.router)
 app.include_router(quality_router.router)
 app.include_router(quality_labels_public_router.router)
 app.include_router(kaizen_public_router.router)

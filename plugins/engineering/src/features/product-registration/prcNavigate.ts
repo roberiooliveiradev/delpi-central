@@ -81,6 +81,8 @@ export type PrcQueueUrlState = {
   type: string;
   search: string;
   page: number;
+  sortBy: string;
+  sortDir: "asc" | "desc";
 };
 
 export const EMPTY_PRC_QUEUE_URL: PrcQueueUrlState = {
@@ -88,17 +90,28 @@ export const EMPTY_PRC_QUEUE_URL: PrcQueueUrlState = {
   type: "",
   search: "",
   page: 1,
+  sortBy: "",
+  sortDir: "desc",
 };
+
+const SORT_KEYS = new Set([
+  "createdAt", "requestType", "status", "officialCode", "requester",
+  "assignedTo", "id",
+]);
 
 export function parsePrcQueueUrl(search: string): PrcQueueUrlState {
   const p = new URLSearchParams(search);
   const page = Math.max(1, Number.parseInt(p.get("page") ?? "1", 10) || 1);
   const type = p.get("type") ?? "";
+  const sortBy = p.get("sortBy") ?? "";
+  const sortDir = p.get("sortDir") === "asc" ? "asc" : "desc";
   return {
     status: p.get("status") ?? "",
     type: type === "create" || type === "update" ? type : "",
     search: p.get("search") ?? "",
     page: Number.isFinite(page) ? page : 1,
+    sortBy: SORT_KEYS.has(sortBy) ? sortBy : "",
+    sortDir,
   };
 }
 
@@ -111,6 +124,10 @@ export function buildPrcQueueUrl(
   if (state.type) p.set("type", state.type);
   if (state.search) p.set("search", state.search);
   if (state.page > 1) p.set("page", String(state.page));
+  if (state.sortBy) {
+    p.set("sortBy", state.sortBy);
+    p.set("sortDir", state.sortDir);
+  }
   const q = p.toString();
   return `${basePath}/${PRC_PATHS.queue}${q ? `?${q}` : ""}`;
 }

@@ -64,6 +64,8 @@ describe("prcNavigate url state", () => {
       type: "create",
       search: "abc",
       page: 3,
+      sortBy: "",
+      sortDir: "desc",
     });
   });
 
@@ -73,6 +75,8 @@ describe("prcNavigate url state", () => {
       type: "",
       search: "",
       page: 1,
+      sortBy: "",
+      sortDir: "desc",
     });
   });
 
@@ -83,6 +87,8 @@ describe("prcNavigate url state", () => {
         type: "",
         search: "",
         page: 1,
+        sortBy: "",
+        sortDir: "desc",
       }),
     ).toBe("/apps/engineering/product-registration?status=in_progress");
   });
