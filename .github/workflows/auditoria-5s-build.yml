@@ -1,0 +1,41 @@
+name: Auditoria 5S - Build
+
+on:
+  pull_request:
+    paths:
+      - "plugins/auditoria-5s/**"
+      - "plugins/vite/**"
+      - ".github/workflows/auditoria-5s-build.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "plugins/auditoria-5s/**"
+      - "plugins/vite/**"
+      - ".github/workflows/auditoria-5s-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-auditoria-5s:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: plugins/auditoria-5s/package-lock.json
+
+      - name: Install dependencies
+        working-directory: plugins/auditoria-5s
+        run: npm ci
+
+      - name: TypeScript and Vite build
+        working-directory: plugins/auditoria-5s
+        run: npm run build
