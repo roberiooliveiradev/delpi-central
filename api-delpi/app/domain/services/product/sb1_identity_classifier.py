@@ -252,6 +252,27 @@ def _apply_production_preference(
     if status in {MATCH_DIVERGENT, MATCH_PENDING, MATCH_NOT_FOUND}:
         return result
 
+    informed = normalize_sb1_token(result.get("product_code"))
+    verified = normalize_sb1_token(result.get("verified_product_code"))
+
+    # Prioridade 1: código DELPI de produção (9…) informado e validado pelo par
+    # B1_COD + B1_REFEREN — não sobrescrever com multiple_production_codes.
+    if (
+        status == MATCH_CONFIRMED
+        and _is_production_code(informed)
+        and informed == verified
+        and result.get("matched_by") == MATCHED_BY_CODE_AND_REFERENCE
+    ):
+        return result
+
+    # Código 9 informado e bloqueado: manter blocked (não trocar por outro 9 elegível).
+    if (
+        status == MATCH_BLOCKED
+        and _is_production_code(informed)
+        and informed == verified
+    ):
+        return result
+
     # Inclui o produto do código informado quando a lista por referência veio vazia
     # (ex.: lookup só por código) — preferência exige o universo da referência.
     universe = list(ref_products)

@@ -338,6 +338,71 @@ def test_persist_blocked_without_semantics() -> None:
         service.resolve_batch(batch_id=created["id"], dry_run=False)
 
 
+def test_informed_production_9_propagates_confirmed_despite_shared_reference() -> None:
+    """Regressão MyWEG: código 9 informado válido permanece confirmed na resolução PC."""
+    repo = InMemorySb1Repo()
+    cases = (
+        ("11403512", "90261614", "Produto 90261614"),
+        ("12322556", "90262016", "Produto 90262016"),
+    )
+    seed_rows = [
+        {
+            "material_weg_tratado": material,
+            "codigo_referencia_weg": code,
+            "origem_material_weg": "MYWEG-ORIGEM",
+            "quantidade": "1000",
+            "unidade": "UN",
+            "data_remessa": "15/11/2026",
+            "documento": f"DOC-{code}",
+            "linha_fonte": index + 2,
+            "assinatura_registro": f"sig-informed-9-{code}",
+        }
+        for index, (material, code, _desc) in enumerate(cases)
+    ]
+    created = _seed_batch(
+        repo, records=seed_rows, collection_id="col-informed-9-priority"
+    )
+    records = repo.list_all_batch_records(batch_id=created["id"])
+    by_material = {row["material_weg_tratado"]: row for row in records}
+    seeded: dict[str, dict] = {}
+    for material, code, description in cases:
+        record = by_material[material]
+        seeded[record["id"]] = {
+            "match_status": "confirmed",
+            "product_code": code,
+            "customer_reference": material,
+            "verified_product_code": code,
+            "verified_description": description,
+            "matched_by": "code_and_reference",
+            "reason": None,
+            "candidates": [
+                {
+                    "product_code": code,
+                    "customer_reference": material,
+                    "description": description,
+                },
+                {
+                    "product_code": "90269999",
+                    "customer_reference": material,
+                    "description": "Contrapeca",
+                },
+            ],
+        }
+
+    service = MyWegSb1ResolveService(repo, gateway=FakeSb1Gateway(seeded))
+    result = service.resolve_batch(batch_id=created["id"], dry_run=True)
+    assert result["persisted"] is False
+    assert result["counts"]["confirmed"] == 2
+    by_key = {item["customer_reference"]: item for item in result["items"]}
+    for material, code, description in cases:
+        item = by_key[material]
+        assert item["status"] == "confirmed"
+        assert item["verified_product_code"] == code
+        assert item["verified_description"] == description
+        assert item["matched_by"] == "code_and_reference"
+        assert item["informed_product_code"] == code
+
+
 def test_skip_if_complete_avoids_second_lookup() -> None:
     repo = InMemorySb1Repo()
     proof_records = []

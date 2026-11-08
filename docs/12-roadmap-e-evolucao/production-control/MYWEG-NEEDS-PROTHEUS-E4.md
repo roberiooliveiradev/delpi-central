@@ -84,12 +84,33 @@ Regras:
 
 1. Mesma referência WEG (`B1_REFEREN`) com amostra e produção → priorizar o **único** código 9 elegível (não bloqueado).
 2. Sem 9 elegível e um único 8 elegível → confirmar 8 provisório (`provisional_sample_code_no_production`).
-3. Dois ou mais códigos 9 elegíveis → `ambiguous` (`multiple_production_codes`).
-4. Produto bloqueado (`B1_MSBLQL=1`) não é escolhido.
+3. Dois ou mais códigos 9 elegíveis → `ambiguous` (`multiple_production_codes`),
+   **exceto** quando o código DELPI de origem já é produção (`9…`), existe no SB1,
+   não está bloqueado e o par `B1_COD + B1_REFEREN` confere exatamente — nesse caso
+   permanece `confirmed` com o código informado (`matched_by=code_and_reference`).
+   Contrapeças/variações que compartilham a referência não invalidam essa confirmação.
+4. Produto bloqueado (`B1_MSBLQL=1`) não é escolhido; código 9 informado e bloqueado
+   permanece `blocked` (não é substituído por outro 9 elegível).
 5. Divergência real código×referência permanece `divergent` (sem associação arbitrária).
 6. Resposta preserva código informado (`product_code`), código verificado e `reason` / `matched_by` (`reference_prefer_production` quando houve desempate).
 
-Caso real: Material WEG `19106407` · informado `80015942` · produção `90264221` → verificado `90264221`.
+Casos reais:
+
+- Material WEG `19106407` · informado `80015942` · produção única `90264221` → verificado `90264221`.
+- Material WEG `11403512` · informado `90261614` · outros 9 na mesma referência → verificado `90261614`.
+- Material WEG `12322556` · informado `90262016` · outros 9 na mesma referência → verificado `90262016`.
+
+### Recuperação de lotes já persistidos como `ambiguous`
+
+`skip_if_complete=true` na automação pode ignorar lotes que já têm resolução (mesmo
+`ambiguous`). Após esta correção no classificador:
+
+1. Identificar lotes afetados (consulta JWT / itens `ambiguous` com código 9 informado).
+2. Prévia: `POST .../sb1-resolve` com `dry_run=true` e `skip_if_complete=false`.
+3. Comparar status anterior × novo; confirmar os exemplos acima quando SB1 validar.
+4. Persistência produtiva só com autorização explícita + `skip_if_complete=false`.
+5. Não fazer UPDATE manual nas tabelas; não alterar V025/V026; não reprocessar histórico em massa.
+
 ## Migration
 
 `V026__myweg_need_sb1_resolutions.sql` — aditiva:

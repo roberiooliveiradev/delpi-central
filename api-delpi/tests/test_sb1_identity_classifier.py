@@ -184,6 +184,126 @@ def test_multiple_production_codes_remain_ambiguous() -> None:
     assert result["reason"] == "multiple_production_codes"
 
 
+def test_informed_production_9_keeps_confirmed_despite_multiple_9() -> None:
+    """Casos reais 11403512→90261614 e 12322556→90262016: código 9 válido vence ambiguidade."""
+    for code, reference, description in (
+        ("90261614", "11403512", "Producao 90261614"),
+        ("90262016", "12322556", "Producao 90262016"),
+    ):
+        result = classify_sb1_identity_pair(
+            product_code=code,
+            customer_reference=reference,
+            by_code=_row(code, reference, description=description),
+            by_reference=[
+                _row(code, reference, description=description),
+                _row("90269999", reference, description="Contrapeca"),
+                _row("80010001", reference, description="Amostra"),
+            ],
+            disambiguation_policy=DISAMBIGUATION_PREFER_PRODUCTION_OVER_SAMPLE,
+        )
+        assert result["match_status"] == MATCH_CONFIRMED
+        assert result["verified_product_code"] == code
+        assert result["verified_description"] == description
+        assert result["matched_by"] == MATCHED_BY_CODE_AND_REFERENCE
+        assert result["reason"] is None
+
+
+def test_informed_production_9_with_sample_and_other_variants_confirmed() -> None:
+    result = classify_sb1_identity_pair(
+        product_code="90261614",
+        customer_reference="11403512",
+        by_code=_row("90261614", "11403512", description="Producao"),
+        by_reference=[
+            _row("90261614", "11403512", description="Producao"),
+            _row("80016161", "11403512", description="Amostra"),
+            _row("90268888", "11403512", description="Variacao"),
+        ],
+        disambiguation_policy=DISAMBIGUATION_PREFER_PRODUCTION_OVER_SAMPLE,
+    )
+    assert result["match_status"] == MATCH_CONFIRMED
+    assert result["verified_product_code"] == "90261614"
+    assert result["matched_by"] == MATCHED_BY_CODE_AND_REFERENCE
+
+
+def test_informed_production_9_missing_does_not_confirm() -> None:
+    result = classify_sb1_identity_pair(
+        product_code="90261614",
+        customer_reference="11403512",
+        by_code=None,
+        by_reference=[
+            _row("90269999", "11403512"),
+            _row("90268888", "11403512"),
+        ],
+        disambiguation_policy=DISAMBIGUATION_PREFER_PRODUCTION_OVER_SAMPLE,
+    )
+    assert result["match_status"] == MATCH_AMBIGUOUS
+    assert result["verified_product_code"] is None
+    assert result["reason"] == "product_code_not_found_reference_ambiguous"
+
+
+def test_informed_production_9_divergent_reference() -> None:
+    result = classify_sb1_identity_pair(
+        product_code="90261614",
+        customer_reference="OTHER-REF",
+        by_code=_row("90261614", "11403512"),
+        by_reference=[
+            _row("90269999", "OTHER-REF"),
+            _row("90268888", "OTHER-REF"),
+        ],
+        disambiguation_policy=DISAMBIGUATION_PREFER_PRODUCTION_OVER_SAMPLE,
+    )
+    assert result["match_status"] == MATCH_DIVERGENT
+    assert result["reason"] == "informed_code_reference_mismatch"
+
+
+def test_informed_production_9_blocked_stays_blocked_with_other_productions() -> None:
+    result = classify_sb1_identity_pair(
+        product_code="90261614",
+        customer_reference="11403512",
+        by_code=_row("90261614", "11403512", blocked="1", description="Bloqueado"),
+        by_reference=[
+            _row("90261614", "11403512", blocked="1", description="Bloqueado"),
+            _row("90269999", "11403512", description="Outra producao"),
+        ],
+        disambiguation_policy=DISAMBIGUATION_PREFER_PRODUCTION_OVER_SAMPLE,
+    )
+    assert result["match_status"] == MATCH_BLOCKED
+    assert result["verified_product_code"] == "90261614"
+    assert result["reason"] == "product_blocked"
+
+
+def test_informed_sample_8_with_multiple_9_remains_ambiguous() -> None:
+    result = classify_sb1_identity_pair(
+        product_code="80015942",
+        customer_reference="19106407",
+        by_code=_row("80015942", "19106407"),
+        by_reference=[
+            _row("80015942", "19106407"),
+            _row("90264221", "19106407"),
+            _row("90264222", "19106407"),
+        ],
+        disambiguation_policy=DISAMBIGUATION_PREFER_PRODUCTION_OVER_SAMPLE,
+    )
+    assert result["match_status"] == MATCH_AMBIGUOUS
+    assert result["verified_product_code"] is None
+    assert result["reason"] == "multiple_production_codes"
+
+
+def test_informed_production_9_without_policy_keeps_confirmed() -> None:
+    result = classify_sb1_identity_pair(
+        product_code="90261614",
+        customer_reference="11403512",
+        by_code=_row("90261614", "11403512"),
+        by_reference=[
+            _row("90261614", "11403512"),
+            _row("90269999", "11403512"),
+        ],
+    )
+    assert result["match_status"] == MATCH_CONFIRMED
+    assert result["verified_product_code"] == "90261614"
+    assert result["matched_by"] == MATCHED_BY_CODE_AND_REFERENCE
+
+
 def test_blocked_production_falls_back_to_unique_sample() -> None:
     result = classify_sb1_identity_pair(
         product_code="80015942",
