@@ -10,6 +10,12 @@ export type SupplierRow = {
   catalogNumber: string;
   /** Texto de busca SA2 da linha (só enquanto não há seleção oficial). */
   query: string;
+  /** D14 — busca colapsável: aberta só quando a lupa foi acionada. */
+  searchOpen?: boolean;
+  /** D14 — justificativas individuais opcionais (≤250). */
+  pnReason?: string;
+  catReason?: string;
+  opReason?: string;
 };
 
 export function toSupplierRows(value: unknown): SupplierRow[] {

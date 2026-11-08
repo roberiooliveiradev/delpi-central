@@ -71,6 +71,7 @@ import {
   emptySupplierRow,
   type SupplierRow,
 } from "../prcSuppliers";
+import { PrcReasonField } from "../components/PrcReasonField";
 import { PrcSupplierCellLookup } from "../components/PrcSupplierLookup";
 
 const STEPS = [
@@ -125,7 +126,6 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
   const [reasons, setReasons] = useState<Record<string, string>>({});
-  const [supplierReason, setSupplierReason] = useState("");
   const [editCtx, setEditCtx] = useState<PrcEditContext | null>(null);
   const [editCtxState, setEditCtxState] = useState<
     "idle" | "loading" | "error" | "not_found"
@@ -199,15 +199,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
         if (!scalarDiff.length && !linkOps.length) {
           return "Nenhuma alteração identificada — edite um campo, vínculo ou adicione um fornecedor.";
         }
-        for (const change of scalarDiff) {
-          if (!(reasons[change.path] || "").trim()) {
-            return `Informe a justificativa para «${PRC_FIELD_LABELS[change.path] || change.path}».`;
-          }
-        }
-        if (linkOps.some((o) => o.operation === "remove") &&
-            !supplierReason.trim()) {
-          return "Informe a justificativa para a remoção solicitada.";
-        }
+
       }
       const bad = suppliers.findIndex(
         (r) => !r.supplierCode.trim() || !r.store.trim() || !r.supplierName.trim(),
@@ -218,11 +210,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
       if (duplicateSupplierIndexes(suppliers).size > 0) {
         return PRC_SUPPLIER_HELP.duplicate;
       }
-      if (requestType === "update" && supplierTouched &&
-          !linkOps.some((o) => o.operation === "remove") &&
-          !supplierReason.trim()) {
-        return "Informe a justificativa da alteração de fornecedores.";
-      }
+
       return "";
     }
     return "";
@@ -247,8 +235,6 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
     requestType === "update" && editCtx
       ? computeLinkDiff(editCtx.links || [], suppliers, removeMarks)
       : [];
-  const supplierTouched =
-    requestType === "create" ? false : linkOps.length > 0;
 
   const next = () => {
     const msg = validateStep(step);
@@ -341,13 +327,29 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
       proposedValue: change.after,
       reason: (reasons[change.path] || "").trim(),
     }));
+    const rowByKey = new Map(
+      suppliers.map((r) => [linkKeyOf(r.supplierCode, r.store), r]),
+    );
     const supplierLinkChanges: PrcSupplierLinkChange[] = linkOps.map(
-      (op) => ({
-        operation: op.operation,
-        key: op.key,
-        fields: op.operation === "remove" ? {} : op.fields,
-        reason: supplierReason.trim(),
-      }),
+      (op) => {
+        const row = rowByKey.get(
+          linkKeyOf(op.key.supplierCode, op.key.store),
+        );
+        const fieldReasons: Record<string, string> = {};
+        if (row?.pnReason?.trim())
+          fieldReasons.partNumber = row.pnReason.trim();
+        if (row?.catReason?.trim())
+          fieldReasons.catalogNumber = row.catReason.trim();
+        return {
+          operation: op.operation,
+          key: op.key,
+          fields: op.operation === "remove" ? {} : op.fields,
+          reason: (row?.opReason || "").trim(),
+          ...(Object.keys(fieldReasons).length
+            ? { fieldReasons }
+            : {}),
+        };
+      },
     );
     return {
       source: PORTAL_SOURCE,
@@ -524,15 +526,12 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               </p>
             ) : null}
             {requestType === "update" ? (
-              <EngineeringTextField
+              <PrcReasonField
                 id={`prc-new-reason-${path}`}
-                label="Justificativa"
                 value={reasons[path] || ""}
                 onChange={(v) =>
                   setReasons((s) => ({ ...s, [path]: v }))
                 }
-                required
-                maxLength={500}
                 disabled={busy}
               />
             ) : null}
@@ -759,6 +758,9 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                               className={missing || dup ? "engineering-prc__supplier-tr--error" : rowClass}
                             >
                               <td data-label="Fornecedor">
+                                {row.supplierCode ? (
+                                  <span>{row.supplierCode}</span>
+                                ) : row.searchOpen ? (
                                 <PrcSupplierCellLookup
                                   id={`prc-new-sup-${index}`}
                                   displayValue={
@@ -791,6 +793,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                                 hit.supplier_name ?? "",
                                               ),
                                               query: "",
+                                              searchOpen: false,
                                             }
                                           : r,
                                       ),
@@ -812,6 +815,24 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                     )
                                   }
                                 />
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="engineering-prc__lookup-clear"
+                                    aria-label="Buscar fornecedor por código, razão social ou nome fantasia"
+                                    onClick={() =>
+                                      setSuppliers((rows) =>
+                                        rows.map((r, i) =>
+                                          i === index
+                                            ? { ...r, searchOpen: true }
+                                            : r,
+                                        ),
+                                      )
+                                    }
+                                  >
+                                    🔍
+                                  </button>
+                                )}
                                 {missing ? (
                                   <span className="engineering-prc__field-error" role="alert">
                                     Selecione um fornecedor oficial.
@@ -844,6 +865,18 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                     )
                                   }
                                 />
+                                <PrcReasonField
+                                  id={`prc-sup-pn-reason-${index}`}
+                                  value={row.pnReason || ""}
+                                  onChange={(v) =>
+                                    setSuppliers((rows) =>
+                                      rows.map((r, i) =>
+                                        i === index ? { ...r, pnReason: v } : r,
+                                      ),
+                                    )
+                                  }
+                                  disabled={busy}
+                                />
                               </td>
                               <td data-label={PRC_SUPPLIER_LABELS.catalogNumber}>
                                 <input
@@ -865,6 +898,18 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                       ),
                                     )
                                   }
+                                />
+                                <PrcReasonField
+                                  id={`prc-sup-cat-reason-${index}`}
+                                  value={row.catReason || ""}
+                                  onChange={(v) =>
+                                    setSuppliers((rows) =>
+                                      rows.map((r, i) =>
+                                        i === index ? { ...r, catReason: v } : r,
+                                      ),
+                                    )
+                                  }
+                                  disabled={busy}
                                 />
                               </td>
                               <td data-label="Ações">
@@ -911,10 +956,26 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                   </EngineeringActionButton>
                                 )}
                                 {markedRemove ? (
-                                  <p className="engineering-prc__remove-tag">
-                                    Remoção solicitada — será proposta ao
-                                    TOTVS.
-                                  </p>
+                                  <>
+                                    <p className="engineering-prc__remove-tag">
+                                      Remoção solicitada — será proposta ao
+                                      TOTVS.
+                                    </p>
+                                    <PrcReasonField
+                                      id={`prc-sup-rm-reason-${index}`}
+                                      value={row.opReason || ""}
+                                      onChange={(v) =>
+                                        setSuppliers((rows) =>
+                                          rows.map((r, i) =>
+                                            i === index
+                                              ? { ...r, opReason: v }
+                                              : r,
+                                          ),
+                                        )
+                                      }
+                                      disabled={busy}
+                                    />
+                                  </>
                                 ) : null}
                                 {!isOfficial &&
                                 requestType === "update" ? (
@@ -935,17 +996,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                     Nenhum fornecedor adicionado.
                   </p>
                 ) : null}
-                {requestType === "update" ? (
-                  <EngineeringTextField
-                    id="prc-new-sup-reason"
-                    label="Justificativa da alteração de fornecedores"
-                    value={supplierReason}
-                    onChange={setSupplierReason}
-                    required
-                    maxLength={500}
-                    disabled={busy}
-                  />
-                ) : null}
+
               </>
             ) : (
               <p className="engineering-prc__muted">

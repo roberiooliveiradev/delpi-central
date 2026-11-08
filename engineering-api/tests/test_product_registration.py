@@ -1016,3 +1016,52 @@ def test_d13_remove_op_validation():
           "key": {"supplierCode": "000972", "store": "01"},
           "fields": {"partNumber": "x"}, "reason": "r"}])
     assert err is not None
+
+
+def test_d14_optional_reasons_and_field_reasons():
+    from engineering_app.domain.product_registration import catalog
+    # ausente e vazia são válidas
+    ops, err = catalog.validate_supplier_link_changes(
+        [{"operation": "update",
+          "key": {"supplierCode": "000002", "store": "01"},
+          "fields": {"partNumber": "P", "catalogNumber": "C"},
+          "fieldReasons": {"partNumber": "Ref nova",
+                           "catalogNumber": "Cat atualizado"}}])
+    assert err is None
+    assert ops[0]["fieldReasons"] == {
+        "partNumber": "Ref nova", "catalogNumber": "Cat atualizado"}
+    # 250 exato ok; 251 falha
+    ops, err = catalog.validate_supplier_link_changes(
+        [{"operation": "update",
+          "key": {"supplierCode": "1", "store": "1"},
+          "fields": {"partNumber": "x"}, "reason": "a" * 250}])
+    assert err is None
+    _, err = catalog.validate_supplier_link_changes(
+        [{"operation": "update",
+          "key": {"supplierCode": "1", "store": "1"},
+          "fields": {"partNumber": "x"}, "reason": "a" * 251}])
+    assert err is not None
+    _, err = catalog.validate_supplier_link_changes(
+        [{"operation": "update",
+          "key": {"supplierCode": "1", "store": "1"},
+          "fields": {"partNumber": "x"},
+          "fieldReasons": {"partNumber": "b" * 251}}])
+    assert err is not None
+
+
+def test_d14_scalar_reason_optional():
+    from engineering_app.domain.product_registration import catalog
+    # sem reason → aceito
+    out = catalog.validate_update_changes(
+        [{"path": "accountingAccount", "proposedValue": "11401007"}])
+    assert out[0]["reason"] == ""
+    # 250 ok, 251 falha
+    out = catalog.validate_update_changes(
+        [{"path": "accountingAccount", "proposedValue": "x",
+          "reason": "a" * 250}])
+    assert out[0]["reason"] == "a" * 250
+    import pytest as _pt
+    with _pt.raises(Exception):
+        catalog.validate_update_changes(
+            [{"path": "accountingAccount", "proposedValue": "x",
+              "reason": "a" * 251}])

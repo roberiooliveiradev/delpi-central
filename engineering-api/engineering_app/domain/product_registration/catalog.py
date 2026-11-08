@@ -412,12 +412,14 @@ def validate_update_changes(changes: Any) -> list[dict[str, Any]]:
                 fields={path: "duplicate"},
             )
         seen.add(path)
+        # D14 — justificativa individual opcional (máx 250). Ausente ou
+        # vazia é válida; acima do limite falha com 422, nunca trunca.
         reason = item.get("reason")
-        reason_text = str(reason).strip()[:500] if reason else ""
-        if not reason_text:
+        reason_text = str(reason).strip() if reason else ""
+        if len(reason_text) > 250:
             raise PrcValidationError(
-                "Toda alteração exige justificativa (reason).",
-                fields={path: "reason_required"},
+                "Justificativa excede 250 caracteres.",
+                fields={path: "reason_too_long"},
             )
         out.append({"path": path, "proposedValue": value, "reason": reason_text})
     return out
@@ -618,8 +620,29 @@ def validate_supplier_link_changes(
                 f"editável: {sorted(unknown)}."
             )
         reason = str(op.get("reason") or "").strip()
-        if not reason:
-            return [], f"supplierLinkChanges[{i}].reason é obrigatória."
+        if len(reason) > 250:
+            return [], (
+                f"supplierLinkChanges[{i}].reason excede 250 "
+                "caracteres."
+            )
+        field_reasons = op.get("fieldReasons") or {}
+        if not isinstance(field_reasons, dict):
+            return [], f"supplierLinkChanges[{i}].fieldReasons inválido."
+        fr_out: dict[str, str] = {}
+        for fr_key, fr_val in field_reasons.items():
+            if fr_key not in SUPPLIER_LINK_EDITABLE_FIELDS:
+                return [], (
+                    f"supplierLinkChanges[{i}].fieldReasons contém "
+                    f"campo não editável: {fr_key}."
+                )
+            txt = str(fr_val or "").strip()
+            if len(txt) > 250:
+                return [], (
+                    f"supplierLinkChanges[{i}].fieldReasons."
+                    f"{fr_key} excede 250 caracteres."
+                )
+            if txt:
+                fr_out[fr_key] = txt
         if (code, store) in seen:
             return [], (
                 f"supplierLinkChanges[{i}] duplica o vínculo "
@@ -635,6 +658,7 @@ def validate_supplier_link_changes(
                     for k in fields
                 },
                 "reason": reason,
+                "fieldReasons": fr_out,
             }
         )
     return out, None

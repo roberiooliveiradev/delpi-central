@@ -246,7 +246,8 @@ export type PrcSupplierLinkChange = {
   operation: "update" | "add" | "remove";
   key: { supplierCode: string; store: string };
   fields: { partNumber?: string; catalogNumber?: string };
-  reason: string;
+  reason?: string;
+  fieldReasons?: { partNumber?: string; catalogNumber?: string };
 };
 
 export async function fetchPrcEditContext(
