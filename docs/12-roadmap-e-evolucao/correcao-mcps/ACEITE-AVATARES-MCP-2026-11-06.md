@@ -289,3 +289,29 @@ não recebeu bloco de imagem acessível.
 Plugin/app (fronteira "OpenAI Plugin adapter"), ele pode expor apenas
 `structuredContent` ao consumidor — comportamento não comprovável pelo
 repositório. `CHATGPT_VISUAL: TEST_NOT_RUN` — reteste manual V1–V12.
+
+## DELPI MCP MULTIMODAL DELIVERY PARITY V1 (2026-11-08) — outputSchema
+
+**Sintoma:** mesmo com `[Text,Image]` no wire, o consumidor ChatGPT via
+apenas `structuredContent` do DAVI; TÉO na mesma conversa exibia
+`content`/`content_items` com a imagem.
+
+**Diagnóstico (comparação wire `tools/list` TÉO/VISTA/CAIO/SURI×DAVI):**
+`_meta`, `securitySchemes`, annotations e `icons` idênticos — o único
+discriminador era `outputSchema`: todos os irmãos anunciam
+`outputSchema: null` e só o DAVI anunciava `readOutput` tipado.
+Evidência pública do mecanismo (host structured-first esconde
+`content[]` quando `outputSchema` declara saída estruturada):
+`openai/codex#10334`, `anthropics/claude-code#54737`,
+`openai-apps-sdk-examples#144`.
+
+**Fix (menor diff, owner-local):** `read` do DAVI não anuncia mais
+`outputSchema` no `tools/list` — a tool é multimodal e a declaração
+typed-only era contrato enganoso para hosts que preferem o caminho
+estruturado. `structuredContent` (envelope readOutput) **permanece**
+no resultado; `get_context`/`knowledge`/`analyze` mantêm seus schemas
+tipados. `ReadOutput` segue como modelo de validação interna.
+Regressão pinada: `read.output_schema is None` + demais tools intactas.
+
+**CHATGPT_VISUAL: `TEST_NOT_RUN`** — reteste manual V7 ("DAVI, mostre
+seu avatar oficial"): esperado `content_items` com `image` acessível.

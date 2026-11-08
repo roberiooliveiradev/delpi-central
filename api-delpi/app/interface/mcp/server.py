@@ -69,7 +69,6 @@ from app.interface.mcp.schemas import (
     knowledge_input_json_schema,
     knowledge_output_json_schema,
     read_input_json_schema,
-    read_output_json_schema,
 )
 from app.utils.logger import log_error
 
@@ -199,7 +198,9 @@ class ApiDelpiMCPServer(MCPServer):
                 output_schema = knowledge_output_json_schema()
             elif info.name == MCP_TOOL_READ:
                 input_schema = read_input_json_schema()
-                output_schema = read_output_json_schema()
+                # read is multimodal: structuredContent stays in the result,
+                # but no outputSchema is advertised — structured-only hosts
+                # must not hide content[] (ImageContent) behind a typed contract.
             elif info.name == MCP_TOOL_ANALYZE:
                 input_schema = analyze_input_json_schema()
                 output_schema = analyze_output_json_schema()

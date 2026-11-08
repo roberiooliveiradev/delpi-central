@@ -108,3 +108,16 @@ async def test_read_tool_surface_unchanged() -> None:
         "knowledge",
         "read",
     ]
+
+
+@pytest.mark.asyncio
+async def test_read_declares_no_output_schema_on_wire() -> None:
+    """DELPI MCP MULTIMODAL DELIVERY PARITY V1 — read is multimodal
+    (ImageContent): the wire advertises no outputSchema, matching the
+    sibling MCPs; structured-first hosts must not hide content[].
+    The typed output contracts of the other tools stay intact."""
+    tools = {t.name: t for t in await create_mcp_server().list_tools()}
+    assert tools["read"].output_schema is None
+    assert tools["get_context"].output_schema is not None
+    assert tools["knowledge"].output_schema is not None
+    assert tools["analyze"].output_schema is not None

@@ -80,3 +80,12 @@ Fix DAVI: metadata do avatar conforme `outputSchema readOutput`
 (`structuredContent.data.*`) — única divergência de contrato vs. irmãos.
 Playbook V2 ganhou `VISUAL IDENTITY & OFFICIAL AVATAR` + patch de
 Instructions (~2.6k). ChatGPT visual: `TEST_NOT_RUN` (V1–V12).
+
+### DELPI MCP MULTIMODAL DELIVERY PARITY V1 (2026-11-08)
+
+DAVI era o único MCP anunciando `outputSchema` tipado no `read` —
+hosts structured-first escondem `content[]` (incl. `ImageContent`)
+quando o caminho estruturado é declarado (evidência: `openai/codex#10334`).
+Fix: `read` passa a anunciar `outputSchema: null` como os 6 irmãos;
+`structuredContent` readOutput permanece no resultado; demais tools
+mantêm schemas tipados. Reteste ChatGPT V7: `TEST_NOT_RUN`.
