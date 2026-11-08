@@ -27,7 +27,9 @@ Para cada correção: RESPONSABILIDADE → OWNER → FONTE CANÔNICA → CONSUME
 - **Owner inicial:** TÉO — contrato `read` e Domain API; DÉLIA somente consumidora; comportamento de modelo permanece possível.
 - **Diagnóstico bounded:** correlacionar description/schema em `tools/list` com validador real por entidade/action; distinguir erro de modelo de descrição ambígua. Não duplicar validação do domínio nem introduzir filtro universal fictício.
 - **Aceite:** schema/descrição publicados e validados por testes positivos/negativos + B1/C1 real; queda de erros evitáveis com Outcome preservado.
-- **Estado:** OPEN; erros `PROVEN`, causa contratual `TO_INVENTORY`.
+- **Resolução (4f9→fcf3ae9):** causa = **Case A** — domínio validava corretamente (`ENTITY_FILTERABLE_FIELDS`: department só `filial_id`, branch nenhum, process `q`/`page`/`page_size`), mas a descrição `read` não declarava o contrato por entidade nem que `get` exige `params.id`. Fix mínimo: descrição publicada (server.py) declara `search|get`, `get` requer `params.id`, campos por entidade, INVALID_FIELD para campos não suportados, get_context entity=<name>. `_sig_kwargs` mantido (descarte limitado à assinatura; INVALID_FIELD vem do validador autoritativo). Default `get` preservado (compat).
+- **Evidência:** teste contratual novo PASS; 89 MCP tests PASS; tools/list wire desc hash `b5e88a85c17854af`; prod imagem `31c2fa932dc1` deployed health 200. Evals reais: Kimi B1 8/0, B1_r2 8/0, C1 8/2 (classes diferentes: page_size-range, scope), C1_r2 8/0 — **0 INVALID_FIELD, 0 get-sem-id** (baseline: 3 get-sem-id Qwen, 2 INVALID_FIELD Kimi); Qwen B1 0-call NON_GROUNDED (R01 variance), C1 idem.
+- **Estado:** RESOLVED_WITH_RESIDUAL — contrato corrigido e publicado; erros-alvo R02 zerados nos runs Kimi; comportamento de não-uso de tools do Qwen é R01, não R02.
 
 ### R03 — Limite compartilhado de oito tool calls interrompe investigações [P2]
 
