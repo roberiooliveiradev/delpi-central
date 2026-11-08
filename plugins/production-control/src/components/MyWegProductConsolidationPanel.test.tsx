@@ -478,15 +478,15 @@ describe("MyWegProductConsolidationPanel", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("col-managerial").textContent).toMatch(/Faturado/i);
+      expect(screen.getByTestId("col-posted").textContent).toContain("2.450");
     });
-    expect(screen.getByTestId("col-posted").textContent).toContain("2.450");
     expect(screen.getByTestId("col-residual").textContent).toContain("0");
     expect(screen.getByTestId("col-observed").innerHTML).toContain("delta--invoiced");
 
     fireEvent.click(screen.getByRole("button", { name: /^detalhes$/i }));
 
     await waitFor(() => {
+      expect(screen.getByText(/^Faturado$/i)).toBeTruthy();
       expect(
         screen.getByText(/integralmente compatível com a NF MyWEG/i),
       ).toBeTruthy();
@@ -543,14 +543,12 @@ describe("MyWegProductConsolidationPanel", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("col-managerial").textContent).toMatch(
-        /Faturamento parcial/i,
-      );
+      expect(screen.getByTestId("col-residual").textContent).toContain("1.450");
     });
-    expect(screen.getByTestId("col-residual").textContent).toContain("1.450");
 
     fireEvent.click(screen.getByRole("button", { name: /^detalhes$/i }));
     await waitFor(() => {
+      expect(screen.getByText(/Faturamento parcial/i)).toBeTruthy();
       expect(screen.getByText(/residual de 1450 UN/i)).toBeTruthy();
     });
   });
@@ -645,9 +643,11 @@ describe("MyWegProductConsolidationPanel", () => {
         "Não disponível",
       );
     });
-    expect(screen.getByTestId("col-managerial").textContent).toMatch(
-      /Conciliação pendente/i,
-    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^detalhes$/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Conciliação pendente/i)).toBeTruthy();
+    });
   });
 
   it("trata importação pendente, conflito e indisponível como conciliação pendente", async () => {
@@ -692,9 +692,11 @@ describe("MyWegProductConsolidationPanel", () => {
         <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
       );
       await waitFor(() => {
-        expect(screen.getByTestId("col-managerial").textContent).toMatch(
-          /Conciliação pendente/i,
-        );
+        expect(screen.getByTestId("products-table")).toBeTruthy();
+      });
+      fireEvent.click(screen.getByRole("button", { name: /^detalhes$/i }));
+      await waitFor(() => {
+        expect(screen.getByText(/Conciliação pendente/i)).toBeTruthy();
       });
     }
   });

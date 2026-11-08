@@ -616,22 +616,6 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
         ),
       },
       {
-        key: "managerial",
-        header: texts.columns.managerial,
-        headerHint: helpTooltips.mywegNeedsInvoiceReconciliation,
-        render: (row) => {
-          const hint = managerialStatusHint(row.managerialStatus);
-          return (
-            <span
-              className={managerialBadgeClass(row.managerialStatus)}
-              title={hint || undefined}
-            >
-              {managerialStatusLabel(row.managerialStatus)}
-            </span>
-          );
-        },
-      },
-      {
         key: "previous",
         header: texts.columns.previous,
         headerHint: "Necessidade total na coleta anterior (UN)",
@@ -813,7 +797,7 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
           emptyMessage={search ? copy.tableSection.emptyMessage : texts.empty}
           hideSearch
           interactive
-          columnPreferencesKey="production-control:myweg-products:columns:v2"
+          columnPreferencesKey="production-control:myweg-products:columns:v3"
           onRowClick={(row) => openDetail(row.productKey)}
           getRowClassName={(row) =>
             row.productKey === selectedKey

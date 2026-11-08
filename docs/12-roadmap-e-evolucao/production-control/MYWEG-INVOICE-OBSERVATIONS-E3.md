@@ -24,7 +24,7 @@ Botão discreto **Atualizar conciliação** preserva refresh/polling.
 
 - Consome `GET /myweg/need-batches/compare/products?invoiceMode=portal`
 - Resumo da aba: apenas Alterados / Comparados / Diferença líquida (sem grade de KPIs fiscais)
-- Colunas prioritárias: status gerencial, anterior, atual, NF MyWEG, residual, variação observada
+- Colunas prioritárias: anterior, atual, NF MyWEG, residual, variação observada (status gerencial no modal)
 - Modal redesenhado: badge gerencial, 4 indicadores, explicação operacional, remessas
   com contexto «Compatível com faturamento» (sem rateio NF×remessa), seção
   **Notas fiscais relacionadas** sob demanda
