@@ -1,5 +1,5 @@
 import { HelpTooltip } from "@delpi/plugin-ui/index";
-import { Eraser, FileText, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
@@ -14,8 +14,12 @@ import type {
   MyWegInvoiceObservationSummary,
 } from "../types";
 import { formatDecimalStringFixed } from "../utils/formatDecimalString";
-import { previousCalendarDayIso } from "../utils/mywegInvoiceDocumentDate";
+import {
+  parseLocalIsoDate,
+  previousCalendarDayIso,
+} from "../utils/mywegInvoiceDocumentDate";
 import { DataTableSection, type DataTableColumn } from "./dataTableUi";
+import { MyWegInvoiceMonthCalendar } from "./MyWegInvoiceMonthCalendar";
 
 const texts = copy.mywegNeeds.invoices;
 const PAGE_SIZE = 50;
@@ -80,8 +84,12 @@ function pickDefaultObservation(
 
 export function MyWegInvoiceObservationsPanel() {
   const initialDate = useMemo(() => previousCalendarDayIso(), []);
-  const [documentDate, setDocumentDate] = useState(initialDate);
+  const initialParsed = parseLocalIsoDate(initialDate);
   const [appliedDate, setAppliedDate] = useState(initialDate);
+  const [viewYear, setViewYear] = useState(initialParsed?.year ?? new Date().getFullYear());
+  const [viewMonth, setViewMonth] = useState(
+    initialParsed?.month ?? new Date().getMonth() + 1,
+  );
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
   const [listLoading, setListLoading] = useState(false);
@@ -98,7 +106,6 @@ export function MyWegInvoiceObservationsPanel() {
   const [observationStatus, setObservationStatus] = useState<string | null>(null);
   const [selectedInvoiceKey, setSelectedInvoiceKey] = useState<string | null>(null);
   const [itemPage, setItemPage] = useState(1);
-  const [reloadToken, setReloadToken] = useState(0);
 
   const selectedObservation = useMemo(
     () => observations.find((row) => row.id === selectedObservationId) ?? null,
@@ -166,7 +173,7 @@ export function MyWegInvoiceObservationsPanel() {
     })();
 
     return () => controller.abort();
-  }, [appliedDate, reloadToken]);
+  }, [appliedDate]);
 
   useEffect(() => {
     if (!selectedObservationId) {
@@ -181,7 +188,6 @@ export function MyWegInvoiceObservationsPanel() {
     setItemPage(1);
     void (async () => {
       try {
-        // Busca páginas até cobrir o total da observação (máx. 500 linhas na UI).
         const first = await fetchMyWegInvoiceObservationItems({
           observationId: selectedObservationId,
           search,
@@ -218,23 +224,19 @@ export function MyWegInvoiceObservationsPanel() {
     return () => controller.abort();
   }, [search, selectedObservationId]);
 
-  const onDocumentDateChange = useCallback((value: string) => {
-    setDocumentDate(value);
-    if (value.trim()) {
-      setAppliedDate(value.trim());
+  const onSelectDate = useCallback((iso: string) => {
+    setAppliedDate(iso);
+    const parsed = parseLocalIsoDate(iso);
+    if (parsed) {
+      setViewYear(parsed.year);
+      setViewMonth(parsed.month);
     }
   }, []);
 
-  const clearFilters = () => {
-    const d1 = previousCalendarDayIso();
-    setDocumentDate(d1);
-    setAppliedDate(d1);
-    setSearchDraft("");
-    setSearch("");
-    setListError(null);
-    setItemsError(null);
-    setReloadToken((token) => token + 1);
-  };
+  const applyItemSearch = useCallback(() => {
+    setSearch(searchDraft.trim());
+    setItemPage(1);
+  }, [searchDraft]);
 
   const columns = useMemo<DataTableColumn<MyWegInvoiceObservationItem>[]>(
     () => [
@@ -281,71 +283,53 @@ export function MyWegInvoiceObservationsPanel() {
 
   return (
     <section className="ppc-myweg-needs__invoices" aria-label={texts.sectionAria}>
-      <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
-        {texts.intro}{" "}
-        <HelpTooltip content={helpTooltips.mywegNeedsInvoices} trigger="icon" />
-      </p>
+      <div className="ppc-myweg-needs__invoice-toolbar">
+        <MyWegInvoiceMonthCalendar
+          selectedIso={appliedDate}
+          onSelectDate={onSelectDate}
+          viewYear={viewYear}
+          viewMonth={viewMonth}
+          onViewChange={({ year, month }) => {
+            setViewYear(year);
+            setViewMonth(month);
+          }}
+        />
 
-      <section className="ppc-myweg-needs__filters-card" aria-label={texts.filtersAria}>
-        <header className="ppc-myweg-needs__filters-header">
-          <span className="ppc-myweg-needs__filters-icon" aria-hidden="true">
-            <FileText size={18} strokeWidth={1.75} />
-          </span>
-          <h3 className="ppc-myweg-needs__filters-title">{texts.filtersTitle}</h3>
-        </header>
-
-        <div className="ppc-myweg-needs__filters-grid">
-          <label className="ppc-myweg-needs__date">
-            <span>{texts.documentDateLabel}</span>
-            <input
-              type="date"
-              value={documentDate}
-              onChange={(event) => onDocumentDateChange(event.target.value)}
-              aria-label={texts.documentDateLabel}
-              aria-describedby="ppc-myweg-invoice-date-hint"
-            />
-            <span id="ppc-myweg-invoice-date-hint" className="ppc-myweg-needs__date-hint">
-              {texts.documentDateHint}
-            </span>
-          </label>
-          <label className="ppc-myweg-needs__search ppc-myweg-needs__filters-search">
-            <span>{texts.searchLabel}</span>
-            <input
-              type="search"
-              value={searchDraft}
-              placeholder={texts.searchPlaceholder}
-              onChange={(event) => setSearchDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  setSearch(searchDraft.trim());
-                  setItemPage(1);
-                }
-              }}
-              aria-label={texts.searchAria}
+        <div className="ppc-myweg-needs__invoice-toolbar-main">
+          <p className="ppc-myweg-needs__invoice-toolbar-note">
+            {texts.introCompact}{" "}
+            <HelpTooltip content={helpTooltips.mywegNeedsInvoices} trigger="icon" />
+          </p>
+          <div className="ppc-myweg-needs__invoice-search-row">
+            <label className="ppc-myweg-needs__invoice-search">
+              <span className="ppc-sr-only">{texts.searchLabel}</span>
+              <input
+                type="search"
+                value={searchDraft}
+                placeholder={texts.searchPlaceholder}
+                onChange={(event) => setSearchDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") applyItemSearch();
+                }}
+                aria-label={texts.searchAria}
+                disabled={!selectedObservationId}
+              />
+            </label>
+            <button
+              type="button"
+              className="ppc-btn ppc-btn--primary ppc-btn--compact"
+              onClick={applyItemSearch}
               disabled={!selectedObservationId}
-            />
-          </label>
+            >
+              <Search size={15} strokeWidth={1.75} aria-hidden />
+              {texts.applyItemSearch}
+            </button>
+          </div>
+          <p className="ppc-myweg-needs__invoice-selected-day">
+            {texts.selectedDay(formatIsoDateBr(appliedDate))}
+          </p>
         </div>
-
-        <div className="ppc-myweg-needs__filters-actions">
-          <button type="button" className="ppc-btn ppc-btn--ghost" onClick={clearFilters}>
-            <Eraser size={15} strokeWidth={1.75} aria-hidden />
-            {texts.resetToYesterday}
-          </button>
-          <button
-            type="button"
-            className="ppc-btn ppc-btn--primary"
-            onClick={() => {
-              setSearch(searchDraft.trim());
-              setItemPage(1);
-            }}
-            disabled={!selectedObservationId}
-          >
-            <Search size={15} strokeWidth={1.75} aria-hidden />
-            {texts.applyItemSearch}
-          </button>
-        </div>
-      </section>
+      </div>
 
       {listLoading ? (
         <div className="ppc-state" role="status">
@@ -494,7 +478,9 @@ export function MyWegInvoiceObservationsPanel() {
               />
             ) : null}
 
-            {selectedObservation && !itemsLoading && allItems.length === 0 &&
+            {selectedObservation &&
+            !itemsLoading &&
+            allItems.length === 0 &&
             observationStatus === "with_records" &&
             !itemsError ? (
               <div className="ppc-state" role="status">

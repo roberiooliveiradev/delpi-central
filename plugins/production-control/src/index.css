@@ -7019,6 +7019,158 @@
   opacity: 0.78;
 }
 
+.dashboard-production-control .ppc-myweg-needs__invoice-toolbar {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 0.85rem 1rem;
+  align-items: start;
+  margin-bottom: 0.85rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-toolbar-main {
+  display: grid;
+  gap: 0.55rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-toolbar-note {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-search {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-search input {
+  width: 100%;
+  min-height: 2.1rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--delpi-border, #d8dee6);
+  background: var(--delpi-surface, #fff);
+  color: inherit;
+}
+
+.dashboard-production-control .ppc-btn--compact {
+  min-height: 2.1rem;
+  padding-inline: 0.75rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__invoice-selected-day {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal {
+  width: 220px;
+  border: 1px solid var(--delpi-border, #d8dee6);
+  border-radius: 12px;
+  padding: 0.55rem 0.55rem 0.65rem;
+  background: var(--delpi-surface, #fff);
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-header {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr 1.6rem;
+  align-items: center;
+  gap: 0.2rem;
+  margin-bottom: 0.4rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-title {
+  margin: 0;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-nav:hover,
+.dashboard-production-control .ppc-myweg-needs__month-cal-nav:focus-visible {
+  background: color-mix(in srgb, var(--delpi-accent, #2563eb) 12%, transparent);
+  outline: none;
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-weekdays,
+.dashboard-production-control .ppc-myweg-needs__month-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.12rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-weekdays {
+  margin-bottom: 0.2rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-weekdays span {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-day {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-day:hover,
+.dashboard-production-control .ppc-myweg-needs__month-cal-day:focus-visible {
+  background: color-mix(in srgb, var(--delpi-accent, #2563eb) 12%, transparent);
+  outline: none;
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-day--muted {
+  opacity: 0.38;
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-day--today {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--delpi-accent, #2563eb) 55%, transparent);
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-day--selected {
+  background: var(--delpi-accent, #2563eb);
+  color: #fff;
+  font-weight: 650;
+}
+
+.dashboard-production-control .ppc-myweg-needs__month-cal-day--selected:hover,
+.dashboard-production-control .ppc-myweg-needs__month-cal-day--selected:focus-visible {
+  background: var(--delpi-accent, #2563eb);
+  color: #fff;
+}
+
 .dashboard-production-control .ppc-myweg-needs__invoice-layout {
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
@@ -7104,6 +7256,10 @@
 }
 
 @media (max-width: 900px) {
+  .dashboard-production-control .ppc-myweg-needs__invoice-toolbar {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-production-control .ppc-myweg-needs__invoice-layout {
     grid-template-columns: 1fr;
   }
