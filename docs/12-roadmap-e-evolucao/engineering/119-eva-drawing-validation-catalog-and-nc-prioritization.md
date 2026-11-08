@@ -1390,3 +1390,11 @@ O histórico de revisão da mesma página não cita esses códigos. `10081389` �
 **Correção (`f9d824ebb1`):** singleton `_TABLE_STRUCTURE_ENGINE` com descarte em exceção (mesmo padrão do PaddleOcrAdapter). Uma instância por processo, reutilizada por região/job — elimina recarga mid-job e falha por pressão de VMS.
 
 **Testes:** 27/27. Prod healthy. Reteste: `table_perception` deve mostrar `cells>0` e `error_kind=None` com OCR FULL.
+
+## 46. DEC-VAL-036 — SLANet: observabilidade de UNAVAILABLE + prova do caminho integrado
+
+**Repro integrado (container, PDF 5452aabd):** benchmark batch=1 14/14 + `eng.run` component_table e title_block → **68 células por região, error_kind=None**. O mecanismo funciona sob contexto de memória acumulado — a falha UNAVAILABLE no job `aj-3bd92c11b7ce4632` ainda não foi reproduzida (janela/host).
+
+**Correção (`ec67d8ca00`):** `apply_native_table_observations` propaga `error_detail` (aditivo) — o catch-all já produzia `Tipo:mensagem`; agora o consumidor recebe a causa real em vez de UNAVAILABLE opaco.
+
+**Reteste:** se recorrer, `error_detail` indica a exceção real (memória/render/tokens) — caso contrário, cells>0 + FULL.
