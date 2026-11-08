@@ -156,3 +156,31 @@ export async function fetchInspecoesEntradaHistoricoDetalhe(
     "Não foi possível carregar o detalhe da inspeção.",
   );
 }
+
+/** Lista NCs do Protheus QI2 exclusivamente do tipo Fornecedor (QI2_TIPO=3).
+ * Escopo e permissões por filial são validados no servidor. */
+export async function fetchInspecoesEntradaNcsFornecedores(
+  filters: import("../types/fornecedoresNc").FornecedoresNcFilters,
+  signal?: AbortSignal,
+): Promise<import("../types/fornecedoresNc").FornecedoresNcResponse> {
+  const query = new URLSearchParams({
+    branch: filters.branch,
+    page: String(filters.page),
+    page_size: String(filters.page_size),
+  });
+  for (const key of ["start_date", "end_date", "status", "item_code", "description"] as const) {
+    const value = filters[key]?.trim();
+    if (value) query.set(key, value);
+  }
+
+  const response = await httpGet<ApiSuccessResponse<
+    import("../types/fornecedoresNc").FornecedoresNcResponse
+  >>(
+    `${INSPECOES_ENTRADA_API_BASE}/ncs-fornecedores?${query}`,
+    { signal },
+  );
+  return unwrapApiDelpiEnvelope(
+    response,
+    "Não foi possível carregar as NCs de fornecedores.",
+  );
+}

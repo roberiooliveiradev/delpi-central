@@ -33,6 +33,7 @@ Documentação oficial: [api-delpi/docs/api/inspecoes-entrada.md](../../../api-d
 
 | Função no plugin | Método | Rota | Query params principais |
 |---|---|---|---|
+| `fetchInspecoesEntradaNcsFornecedores` | GET | `/ncs-fornecedores` | `branch` (obrigatório 01/02), `start_date`, `end_date`, `status`, `item_code`, `description`, `page`, `page_size` |
 | `fetchInspecoesEntradaResumo` | GET | `/resumo` | `branch` |
 | `fetchInspecoesEntradaPendentes` | GET | `/pendentes` | `branch`, `page`, `page_size` |
 | `fetchInspecoesEntradaPendentesFornecedor` | GET | `/pendentes-fornecedor` | `branch` |

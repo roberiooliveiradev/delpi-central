@@ -762,3 +762,41 @@
   padding-top: 10px;
   border-top: 1px solid var(--ie-border);
 }
+
+
+/* NCs fornecedor: area de consulta dedicada ao almoxarifado. */
+.ie-nc-area { display:flex; flex-direction:column; gap:16px; }
+.ie-nc-intro { padding:20px; display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.ie-nc-intro h2 { margin:0; color:var(--ie-blue-900); font-size:20px; }
+.ie-nc-intro p { margin:5px 0 0; color:var(--ie-muted); font-size:13px; }
+.ie-nc-total { font-size:25px; font-weight:700; white-space:nowrap; color:var(--ie-blue-900); }
+.ie-nc-total span { font-size:12px; font-weight:500; color:var(--ie-muted); }
+.ie-nc-filters { padding:14px; display:grid; grid-template-columns:repeat(5,minmax(130px,1fr)) auto; gap:10px; align-items:end; }
+.ie-nc-filters label, .ie-nc-footer label { display:flex; flex-direction:column; gap:6px; color:var(--ie-muted); font-size:12px; }
+.ie-nc-filters input, .ie-nc-filters select, .ie-nc-footer select {
+  width:100%; min-width:0; min-height:40px; padding:6px 10px; border:1px solid var(--ie-border);
+  border-radius:var(--ie-control-radius); background:var(--ie-surface); color:var(--ie-text);
+}
+.ie-nc-filters .ie-btn { white-space:nowrap; }
+.ie-nc-table-card { overflow:hidden; }
+.ie-nc-table-scroll { width:100%; overflow-x:auto; }
+.ie-nc-table { width:100%; border-collapse:collapse; text-align:left; font-size:13px; }
+.ie-nc-table th { padding:12px; background:var(--ie-table-head-bg); color:var(--ie-blue-900); white-space:nowrap; font-weight:700; }
+.ie-nc-table td { padding:11px 12px; border-top:1px solid var(--ie-border); vertical-align:top; }
+.ie-nc-table__description { min-width:180px; max-width:320px; overflow-wrap:anywhere; }
+.ie-nc-table td:last-child { min-width:115px; }
+.ie-nc-detail { min-width:245px; margin-top:8px; padding:10px; border:1px solid var(--ie-border); border-radius:10px; background:var(--ie-surface); }
+.ie-nc-detail__field { display:flex; flex-direction:column; gap:2px; margin:0 0 10px; overflow-wrap:anywhere; }
+.ie-nc-detail__field:last-child { margin-bottom:0; }
+.ie-nc-detail__field span { color:var(--ie-muted); font-size:11px; }
+.ie-nc-detail__field strong { font-weight:600; font-size:12px; white-space:pre-wrap; }
+.ie-nc-footer { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:12px 16px; border-top:1px solid var(--ie-border); }
+.ie-nc-footer label { flex-direction:row; align-items:center; }
+.ie-nc-footer select { width:auto; min-height:34px; }
+.ie-nc-footer > div { display:flex; gap:8px; }
+@media(max-width:1200px) { .ie-nc-filters { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(max-width:640px) {
+ .ie-nc-filters { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .ie-nc-filters .ie-btn { grid-column:1/-1; }
+ .ie-nc-intro { align-items:flex-start; flex-direction:column; }
+}

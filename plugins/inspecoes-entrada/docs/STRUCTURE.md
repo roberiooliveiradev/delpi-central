@@ -62,6 +62,7 @@ api-delpi/app/
 FilialAppPage
   ├─ tab overview → DashboardPage → useInspecoesEntradaDashboard
   │     → resumo | pendentes | pendentes-fornecedor | rejeitadas-produto
+  ├─ tab fornecedores → FornecedoresNcPage → GET /ncs-fornecedores (QI2_TIPO=3)
   └─ tab historico → HistoricoPage → useInspecoesEntradaHistorico
         → historico (+ modal → useInspecoesEntradaHistoricoDetalhe)
 ```

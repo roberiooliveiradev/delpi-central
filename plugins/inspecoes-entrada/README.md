@@ -24,10 +24,10 @@ Gateway → /apps/api-delpi/inspecoes-entrada/*
 
 | Path | Tela |
 |------|------|
-| `/apps/inspecoes-entrada/filial-01` | Painel filial 01 (SC) — abas **Visão geral** e **Histórico** |
+| `/apps/inspecoes-entrada/filial-01` | Painel filial 01 (SC) — abas **Visão geral**, **Histórico** e **NCs de fornecedores** |
 | `/apps/inspecoes-entrada/filial-02` | Painel filial 02 (ES) — mesma estrutura |
 
-A aba ativa sincroniza com a query `?tab=historico` (Visão geral = sem parâmetro).
+A aba ativa sincroniza com a query `?tab=historico` ou `?tab=fornecedores` (Visão geral = sem parâmetro).
 
 ## API (gateway)
 
@@ -35,6 +35,7 @@ Base HTTP: **`/apps/api-delpi/inspecoes-entrada`**
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
+| GET | `/ncs-fornecedores` | NCs TOTVS QI2 (tipo Fornecedor), filtradas por filial e período; RBAC de Inspeções de Entrada |
 | GET | `/resumo` | KPIs da filial (pendentes, aprovadas, taxa, tempo médio) |
 | GET | `/pendentes` | Listagem paginada de inspeções aguardando laudo |
 | GET | `/pendentes-fornecedor` | Ranking de fornecedores com pendências |

@@ -4,6 +4,7 @@ import { branchFromPathname } from "../constants/branch";
 import { AppHeader } from "../components/AppHeader";
 import { DashboardPage } from "./DashboardPage";
 import { HistoricoPage } from "./HistoricoPage";
+import { FornecedoresNcPage } from "./FornecedoresNcPage";
 import { syncTabInUrl, tabFromSearch, type InspecoesEntradaTab } from "../utils/tabs";
 
 type FilialAppPageProps = {
@@ -70,6 +71,12 @@ export function FilialAppPage({ pathname, search }: FilialAppPageProps) {
             refreshToken={refreshToken}
             onLoadingChange={setLoading}
             onLastUpdated={setLastUpdatedAt}
+          />
+        ) : activeTab === "fornecedores" ? (
+          <FornecedoresNcPage
+            branch={branch}
+            refreshToken={refreshToken}
+            onLoadingChange={setLoading}
           />
         ) : (
           <HistoricoPage
