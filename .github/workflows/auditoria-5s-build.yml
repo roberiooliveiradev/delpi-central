@@ -36,6 +36,9 @@ jobs:
         working-directory: plugins/auditoria-5s
         run: npm ci
 
-      - name: TypeScript and Vite build
+      # Reproduz a etapa RUN npx vite build do Dockerfile de produção.
+      # tsc -b fica fora deste job: carrega o source do plugin-ui e exige
+      # dependências próprias do plugin-ui, que não integram o Docker MFE.
+      - name: Vite production build
         working-directory: plugins/auditoria-5s
-        run: npm run build
+        run: npx vite build
