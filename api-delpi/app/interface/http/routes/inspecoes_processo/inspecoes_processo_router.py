@@ -527,8 +527,20 @@ def get_inspecoes_processo_auditoria_apontamentos_route(
         default=None,
         description="Data de produção (YYYY-MM-DD). Default: hoje.",
     ),
+    start_date: str | None = Query(
+        default=None,
+        description="Inclusive production start date (YYYY-MM-DD). Use with end_date.",
+    ),
+    end_date: str | None = Query(
+        default=None,
+        description="Inclusive production end date (YYYY-MM-DD), up to 31 days.",
+    ),
     inspecao_status: str = INSPECOES_PROCESSO_AUDITORIA_STATUS_QUERY(),
     shift: str | None = FACTORY_SHIFT_QUERY(),
+    export_all: bool = Query(
+        default=False,
+        description="Return all filtered rows for Excel export (max. 10000).",
+    ),
     page: int = Query(default=1, ge=1),
     page_size: int = PAGE_SIZE_QUERY("page_50_100"),
 ):
@@ -541,10 +553,13 @@ def get_inspecoes_processo_auditoria_apontamentos_route(
         result = use_case.execute(
             branch=branch,
             data=data,
+            start_date=start_date,
+            end_date=end_date,
             page=page,
             page_size=page_size,
             status=inspecao_status,
             shift=shift,
+            export_all=export_all,
         )
 
         return api_delpi_success(

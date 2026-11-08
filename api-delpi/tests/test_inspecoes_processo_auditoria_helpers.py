@@ -49,11 +49,13 @@ def test_mark_auditoria_same_operator_by_login() -> None:
     ensaiador = _index_ensaiador_map(
         [
             {
+                "Filial": "02",
                 "Matricula_Ensaiador": "20115",
                 "Login_Ensaiador": "ANDIA.GONCALVES",
                 "Nome_Ensaiador": "ANDIA GOMES GONCALVES",
             },
             {
+                "Filial": "02",
                 "Matricula_Ensaiador": "20145",
                 "Login_Ensaiador": "CARLA.JESUS",
                 "Nome_Ensaiador": "CARLA SOARES DE JESUS",
@@ -65,6 +67,7 @@ def test_mark_auditoria_same_operator_by_login() -> None:
             {
                 "Ordem_Producao": "10543901002",
                 "Operacao": "01",
+                "Filial": "02",
                 "Matricula_Ensaiador": "20115",
             }
         ]
@@ -72,6 +75,7 @@ def test_mark_auditoria_same_operator_by_login() -> None:
     qpk = _index_qpk_rows(
         [
             {
+                "Filial": "02",
                 "Ordem_Producao": "10543901002",
                 "Codigo_Produto": "P1",
                 "Revisao": "03",
@@ -94,6 +98,7 @@ def test_mark_auditoria_same_operator_by_login() -> None:
             {
                 "Ordem_Producao": "10543901002",
                 "Operacao": "01",
+                "Filial": "02",
                 "Matricula_Ensaiador": "20145",
             }
         ]
@@ -128,6 +133,7 @@ def test_mark_auditoria_usa_revisao_do_qpk_nao_a_mais_nova() -> None:
     qpk = _index_qpk_rows(
         [
             {
+                "Filial": "02",
                 "Ordem_Producao": "10627201002",
                 "Codigo_Produto": "50212720",
                 "Revisao": "00",
@@ -171,7 +177,7 @@ def test_mark_auditoria_com_cadastro_na_revisao_da_op_e_pendente() -> None:
         ensaiador_by_matricula={},
         qpr_by_op_oper={},
         qpk_by_op={
-            "10543901002": {"product": "P1", "revision": "03"},
+            ("02", "10543901002"): {"product": "P1", "revision": "03"},
         },
         specs_by_product_rev_oper={("P1", "03", "01")},
     )
@@ -274,3 +280,54 @@ def test_filter_auditoria_by_status_keeps_matching_keys() -> None:
     assert len(_filter_auditoria_by_status(rows, "inspecionou")) == 1
     assert len(_filter_auditoria_by_status(rows, "sem_cadastro")) == 1
     assert _filter_auditoria_by_status(rows, "nao_inspecionou")[0] is rows[1]
+
+
+def test_auditoria_aggregation_separates_dates_and_shifts() -> None:
+    rows = _aggregate_auditoria_apontamentos([
+        _apontamento_row(Data_Producao="2026-08-12", Hora_Inicio="080000"),
+        _apontamento_row(Data_Producao="2026-08-12", Hora_Inicio="090000"),
+        _apontamento_row(Data_Producao="2026-08-13", Hora_Inicio="080000"),
+        _apontamento_row(Data_Producao="2026-08-13", Hora_Inicio="150000"),
+    ])
+    assert len(rows) == 3
+    assert sorted(row["Qtde_Apontamentos"] for row in rows) == [1, 1, 2]
+
+
+def test_auditoria_summary_reconciles_all_three_statuses() -> None:
+    rows = [
+        {"Filial": "02", "Ordem_Producao": f"OP{i}", "Operacao": "01",
+         "Cod_Operador": f"USR{i}", "Operador_Inspecionou": int(i < 170),
+         "Tem_Inspecao_Amarrada": int(170 <= i < 179),
+         "Tem_Inspecao_Na_Op_Operacao": 0}
+        for i in range(200)
+    ]
+    summary = _summarize_auditoria_rows(rows)
+    assert summary["Apontamentos_Total"] == 200
+    assert summary["Apontamentos_Com_Inspecao"] == 170
+    assert summary["Apontamentos_Pendentes"] == 9
+    assert summary["Apontamentos_Sem_Cadastro"] == 21
+
+
+def test_auditoria_prevents_cross_branch_operator_matches() -> None:
+    aggregated = _aggregate_auditoria_apontamentos([
+        _apontamento_row(Filial="01"),
+        _apontamento_row(Filial="02"),
+    ])
+    inspectors = _index_ensaiador_map([
+        {"Filial": "01", "Matricula_Ensaiador": "20145",
+         "Login_Ensaiador": "CARLA.JESUS", "Nome_Ensaiador": "CARLA SOARES DE JESUS"},
+        {"Filial": "02", "Matricula_Ensaiador": "20145",
+         "Login_Ensaiador": "OUTRO.USUARIO", "Nome_Ensaiador": "OUTRO USUARIO"},
+    ])
+    qpr = _index_qpr_rows([
+        {"Filial": "01", "Ordem_Producao": "10543901002", "Operacao": "01",
+         "Matricula_Ensaiador": "20145"}
+    ])
+    marked = _mark_auditoria_rows(
+        aggregated, ensaiador_by_matricula=inspectors,
+        qpr_by_op_oper=qpr, qpk_by_op={}, specs_by_product_rev_oper=set(),
+    )
+    by_branch = {row["Filial"]: row for row in marked}
+    assert by_branch["01"]["Operador_Inspecionou"] == 1
+    assert by_branch["02"]["Operador_Inspecionou"] == 0
+    assert _auditoria_status_key(by_branch["02"]) == "sem_cadastro"

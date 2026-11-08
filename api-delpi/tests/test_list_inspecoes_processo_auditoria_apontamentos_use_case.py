@@ -51,6 +51,8 @@ def test_list_auditoria_apontamentos_normalizes_rows() -> None:
 
     assert result.data == "2026-07-13"
     assert result.summary.apontamentos_total == 4
+    assert result.start_date == "2026-07-13"
+    assert result.end_date == "2026-07-13"
     assert result.summary.apontamentos_pendentes == 1
     item = result.items[0]
     assert item.login_operador == "CARLA.JESUS"
@@ -60,7 +62,8 @@ def test_list_auditoria_apontamentos_normalizes_rows() -> None:
     assert item.tem_inspecao_executada is False
     repository.list_auditoria_apontamentos_page.assert_called_once_with(
         "02",
-        data="2026-07-13",
+        start_date="2026-07-13",
+        end_date="2026-07-13",
         offset=0,
         fetch_next=51,
         status="all",
@@ -85,7 +88,8 @@ def test_list_auditoria_apontamentos_passes_status_filter() -> None:
 
     repository.list_auditoria_apontamentos_page.assert_called_once_with(
         "01",
-        data="2026-07-13",
+        start_date="2026-07-13",
+        end_date="2026-07-13",
         offset=0,
         fetch_next=51,
         status="nao_inspecionou",
@@ -108,7 +112,8 @@ def test_list_auditoria_apontamentos_passes_shift_filter() -> None:
 
     repository.list_auditoria_apontamentos_page.assert_called_once_with(
         "01",
-        data="2026-07-13",
+        start_date="2026-07-13",
+        end_date="2026-07-13",
         offset=0,
         fetch_next=51,
         status="all",
@@ -180,3 +185,50 @@ def test_list_auditoria_apontamentos_detects_has_next() -> None:
         "page_size": 2,
         "is_complete": False,
     }
+
+
+def test_auditoria_period_valid_and_bounded() -> None:
+    repository = MagicMock()
+    repository.list_auditoria_apontamentos_page.return_value = ({}, [])
+    use_case = ListInspecoesProcessoAuditoriaApontamentosUseCase(repository)
+    result = use_case.execute(branch="02", start_date="2026-08-01", end_date="2026-08-31")
+    assert result.start_date == "2026-08-01"
+    assert result.end_date == "2026-08-31"
+    repository.list_auditoria_apontamentos_page.assert_called_once_with(
+        "02", start_date="2026-08-01", end_date="2026-08-31",
+        offset=0, fetch_next=51, status="all", shifts=None,
+    )
+
+
+@pytest.mark.parametrize("start,end,message", [
+    ("2026-09-01", "2026-08-31", "data inicial"),
+    ("2026-08-01", "2026-09-01", "Período máximo"),
+    ("2026-02-30", "2026-03-01", "data inválida"),
+])
+def test_auditoria_rejects_invalid_ranges(start: str, end: str, message: str) -> None:
+    case = ListInspecoesProcessoAuditoriaApontamentosUseCase(MagicMock())
+    with pytest.raises(ValueError, match=message):
+        case.execute(branch="02", start_date=start, end_date=end)
+
+
+def test_auditoria_rejects_ambiguous_or_partial_dates() -> None:
+    case = ListInspecoesProcessoAuditoriaApontamentosUseCase(MagicMock())
+    with pytest.raises(ValueError, match="não ambos"):
+        case.execute(branch="02", data="2026-08-01", start_date="2026-08-01", end_date="2026-08-02")
+    with pytest.raises(ValueError, match="Informe start_date e end_date"):
+        case.execute(branch="02", start_date="2026-08-01")
+
+
+def test_auditoria_export_all_fetches_once_and_rejects_truncation() -> None:
+    repository = MagicMock()
+    repository.list_auditoria_apontamentos_page.return_value = ({}, [])
+    case = ListInspecoesProcessoAuditoriaApontamentosUseCase(repository)
+    result = case.execute(branch="02", data="2026-08-12", export_all=True, page=5)
+    assert result.items == []
+    repository.list_auditoria_apontamentos_page.assert_called_once_with(
+        "02", start_date="2026-08-12", end_date="2026-08-12",
+        offset=0, fetch_next=10001, status="all", shifts=None,
+    )
+    repository.list_auditoria_apontamentos_page.return_value = ({}, [{}] * 10001)
+    with pytest.raises(ValueError, match="Exportação limitada"):
+        case.execute(branch="02", data="2026-08-12", export_all=True)

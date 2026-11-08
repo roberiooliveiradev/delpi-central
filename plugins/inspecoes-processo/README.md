@@ -43,16 +43,19 @@ Período da Visão Geral (query, compartilhavel):
 | `period=all` | Todo o histórico (views pré-agregadas). |
 | Atalhos na UI | Este mês, 30 dias, 6 meses, 12 meses (máx. 12 meses) |
 
-O período não se aplica à Auditoria (filtro de um dia) nem ao Histórico (exige OP ou produto).
+O período da Visão Geral é independente da Auditoria. O Histórico exige OP ou produto.
 
 ### Auditoria
 
-Lista apontamentos produtivos do dia e confronta se o **mesmo operador** inspecionou a mesma OP+operação no QIP (`QPR_ENSR` → login via ranking por ensaiador). Também distingue OP/operação **sem inspeção amarrada** (QPK + QP7/QP8 na revisão `QPK_REVI`).
+Lista apontamentos produtivos no período e confronta se o **mesmo operador** inspecionou a mesma OP+operação no QIP (`QPR_ENSR` → login via ranking por ensaiador). Também distingue OP/operação **sem inspeção amarrada** (QPK + QP7/QP8 na revisão `QPK_REVI`).
 
-- Filtro de data (default: hoje)
-- Filtro de status (default UI: **Não inspecionou**; opções: Todos / Não inspecionou / Inspecionou / Sem cadastro)
-- KPIs: total no dia, pendentes (só quando havia inspeção exigível), operadores pendentes, OK — sempre do dia completo
-- Status: inspecionou / não inspecionou / não possui inspeção cadastrada
+- Filtros de **data inicial e final** inclusivas; padrão: hoje; máximo: **31 dias**.
+- Turno (todos, primeiro, segundo, terceiro); os KPIs respeitam período e turno.
+- Filtro de status (default UI: **Não inspecionou**; Todos / Não inspecionou / Inspecionou / Sem cadastro). O status restringe somente a tabela e não os KPIs.
+- KPIs: total, pendentes, **sem inspeção cadastrada**, operadores pendentes e OK. As três classes de status fecham o total.
+- Exportação **Excel** de todos os registros filtrados (inclusive páginas adicionais), com limite de 10 mil linhas.
+- Agrupamento por filial, data, turno, operador, OP, produto e operação. A identidade de QPR/QPK inclui filial.
+- Status: inspecionou / não inspecionou / não possui inspeção cadastrada.
 
 Regra detalhada: [ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md](../../docs/12-roadmap-e-evolucao/inspecoes-processo/ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md).
 

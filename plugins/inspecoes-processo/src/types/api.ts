@@ -238,6 +238,7 @@ export type InspecoesProcessoAuditoriaApontamentosSummary = {
   apontamentos_pendentes: number;
   ops_operacoes_pendentes: number;
   apontamentos_com_inspecao: number;
+  apontamentos_sem_cadastro: number;
   apontamentos_total: number;
 };
 
@@ -249,11 +250,16 @@ export type InspecoesProcessoAuditoriaApontamentosResponse = {
   has_next: boolean;
   pagination?: InspecoesProcessoPagination;
   data: string;
+  start_date: string;
+  end_date: string;
 };
 
 export type FetchAuditoriaApontamentosParams = {
   branch: string;
-  data?: string;
+  data?: string; // Legacy single-day query
+  start_date?: string;
+  end_date?: string;
+  export_all?: boolean;
   /** Query OpenAPI: inspecao_status */
   inspecao_status?: string;
   /** Query OpenAPI: shift — turno de fábrica 1|2|3 */

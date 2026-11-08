@@ -29,7 +29,7 @@ def _branch_pred(column: str, scope: str) -> tuple[str, list]:
 
 
 def build_auditoria_apontamentos_base_sql(branch: str) -> tuple[str, list]:
-    """Params: branch params (0–1) + data."""
+    """Params: branch params (0–1) + start_date + end_date (inclusive)."""
     branch_pred, branch_params = _branch_pred("EF.FILIAL", branch)
     sql = f"""
 SELECT
@@ -47,7 +47,8 @@ SELECT
     EF.HORA_FINAL AS Hora_Final
 FROM {EFICIENCIA_VIEW} EF WITH (NOLOCK)
 WHERE {branch_pred}
-  AND EF.DATA_PRODUCAO = ?
+  AND EF.DATA_PRODUCAO >= ?
+  AND EF.DATA_PRODUCAO < DATEADD(day, 1, CAST(? AS DATE))
   AND EF.STATUS_REGISTRO = '{STATUS_REGISTRO_OK}'
   AND RTRIM(ISNULL(EF.FILIAL, '')) <> ''
   AND RTRIM(ISNULL(EF.OP, '')) <> ''
@@ -62,6 +63,7 @@ def build_auditoria_ensaiador_map_sql(branch: str) -> tuple[str, list]:
     branch_pred, branch_params = _branch_pred("PE.Filial", branch)
     sql = f"""
 SELECT DISTINCT
+    RTRIM(PE.Filial) AS Filial,
     RTRIM(PE.Matricula_Ensaiador) AS Matricula_Ensaiador,
     UPPER(RTRIM(ISNULL(PE.Login_Ensaiador, ''))) AS Login_Ensaiador,
     UPPER(RTRIM(ISNULL(PE.Nome_Ensaiador, ''))) AS Nome_Ensaiador
@@ -80,6 +82,7 @@ def build_qpr_for_ops_sql(op_count: int, branch: str = "01") -> tuple[str, list]
     likes = " OR ".join(["QPR.QPR_OP LIKE ?" for _ in range(op_count)])
     sql = f"""
 SELECT DISTINCT
+    RTRIM(QPR.QPR_FILIAL) AS Filial,
     RTRIM(QPR.QPR_OP) AS Ordem_Producao,
     RTRIM(QPR.QPR_OPERAC) AS Operacao,
     RTRIM(QPR.QPR_ENSR) AS Matricula_Ensaiador
@@ -103,6 +106,7 @@ def build_qpk_for_ops_sql(op_count: int, branch: str = "01") -> tuple[str, list]
     likes = " OR ".join(["QPK.QPK_OP LIKE ?" for _ in range(op_count)])
     sql = f"""
 SELECT
+    RTRIM(QPK.QPK_FILIAL) AS Filial,
     RTRIM(QPK.QPK_OP) AS Ordem_Producao,
     RTRIM(QPK.QPK_PRODUT) AS Codigo_Produto,
     RTRIM(ISNULL(QPK.QPK_REVI, '')) AS Revisao

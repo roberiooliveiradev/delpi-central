@@ -14,7 +14,7 @@ import { httpGet } from "./httpClient";
 
 export const INSPECOES_PROCESSO_API_BASE = "/apps/api-delpi/inspecoes-processo";
 
-function buildQuery(params: Record<string, string | number | undefined>): string {
+function buildQuery(params: Record<string, string | number | boolean | undefined>): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === "") continue;

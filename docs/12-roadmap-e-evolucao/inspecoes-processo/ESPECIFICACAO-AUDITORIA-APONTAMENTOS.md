@@ -4,13 +4,13 @@
 
 ## Objetivo
 
-Listar os **apontamentos produtivos do dia** e cobrar o operador quando ele apontou uma OP+operação e **ele mesmo** não lançou a inspeção de processo correspondente no QIP.
+Listar os **apontamentos produtivos do período** e cobrar o operador quando ele apontou uma OP+operação e **ele mesmo** não lançou a inspeção de processo correspondente no QIP.
 
 ## Regra canônica
 
 ```text
-Apontamento do dia (EF, STATUS_REGISTRO = OK, CTs produtivos)
-  → agrega por operador + OP + operação
+Apontamento do período (EF, STATUS_REGISTRO = OK, CTs produtivos)
+  → agrega por filial + data + turno + operador + OP + produto + operação
   → mesmo operador inspecionou?
        EXISTS QPR010 (filial + OP + operação)
        AND matrícula QPR_ENSR mapeia para o mesmo login/nome do apontamento
@@ -36,9 +36,15 @@ QPR_ENSR
 | Há inspeção exigível (QPK+QP7/QP8 na revisão da OP, ou QPR de outra pessoa) e o operador não lançou | Não inspecionou | vermelho | sim |
 | Sem inspeção amarrada na OP+operação (sem QPK/revisão com essa operação e sem QPR) | Não possui inspeção cadastrada | cinza | não |
 
-A tabela pode filtrar por status via query `inspecao_status` (`all` | `nao_inspecionou` | `inspecionou` | `sem_cadastro`). Na UI o padrão inicial é **Não inspecionou**. Também aceita `shift` (`1` | `2` | `3`) — mesmos turnos canônicos do Eficiência Fabril (`factory_shifts.py`), classificados pelo `hora_inicio` mínimo do grupo operador+OP+operação. Os KPIs do summary continuam do dia inteiro; só a lista/página é filtrada. Sem filtro de status (`all`), a ordenação é: pendências reais primeiro; depois sem cadastro; depois ok.
+A tabela pode filtrar por status via query `inspecao_status` (`all` | `nao_inspecionou` | `inspecionou` | `sem_cadastro`). Na UI o padrão inicial é **Não inspecionou**. Também aceita `shift` (`1` | `2` | `3`) — mesmos turnos canônicos do Eficiência Fabril (`factory_shifts.py`), classificados pelo `hora_inicio` mínimo do grupo operador+OP+operação. Os KPIs do summary respeitam **datas e turno**, porém incluem todos os status. Só a lista/página é filtrada pelo status. O período é inclusivo, máximo 31 dias. A exportação Excel usa `export_all=true`, com teto de 10 mil registros e erro explícito se excedido. A ligação por QPR/QPK inclui filial para evitar confundir chaves de OP entre unidades. Sem filtro de status (`all`), a ordenação é: pendências reais primeiro; depois sem cadastro; depois ok.
 
 Campo de contrato: `tem_inspecao_amarrada` = a OP tem cabeçalho QPK **e** a revisão amarrada (`QPK_REVI`) possui ensaio QP7/QP8 para aquela operação (não usar `MAX(QP6_REVI)` do produto — a OP pode estar em revisão antiga sem a operação apontada).
+
+## Reconciliação dos indicadores
+
+`apontamentos_total = apontamentos_com_inspecao + apontamentos_pendentes + apontamentos_sem_cadastro`.
+
+O resumo mostra grupos agregados, não linhas brutas de SH6. O vínculo da inspeção é pela OP/operação, sem filtrar a data da medição QPR. Uma inspeção feita em outro dia pode atender o apontamento conforme a regra atual.
 
 ## Fontes TOTVS
 

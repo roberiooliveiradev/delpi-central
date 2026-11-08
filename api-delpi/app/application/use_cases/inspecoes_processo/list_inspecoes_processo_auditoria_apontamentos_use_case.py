@@ -28,6 +28,8 @@ MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_100") or 0)
 ALLOWED_STATUS = frozenset(
     {"all", "nao_inspecionou", "inspecionou", "sem_cadastro"}
 )
+MAX_AUDITORIA_RANGE_DAYS = 31
+MAX_AUDITORIA_EXPORT_ROWS = 10000
 
 
 def _as_int(value: Any) -> int:
@@ -89,9 +91,31 @@ def _parse_data(value: str | None) -> str:
         return date.today().isoformat()
     text = str(value).strip()
     try:
-        return date.fromisoformat(text[:10]).isoformat()
+        if len(text) != 10:
+            raise ValueError("Formato de data incorreto")
+        return date.fromisoformat(text).isoformat()
     except ValueError as exc:
         raise ValueError("data inválida. Use YYYY-MM-DD.") from exc
+
+
+def _parse_auditoria_period(
+    data: str | None, start_date: str | None, end_date: str | None
+) -> tuple[str, str]:
+    if start_date is None and end_date is None:
+        single = _parse_data(data)
+        return single, single
+    if data is not None and str(data).strip():
+        raise ValueError("Use data ou start_date/end_date, não ambos.")
+    if not start_date or not end_date:
+        raise ValueError("Informe start_date e end_date para filtrar por período.")
+    start = _parse_data(start_date)
+    end = _parse_data(end_date)
+    if start > end:
+        raise ValueError("A data inicial não pode ser posterior à final.")
+    duration = (date.fromisoformat(end) - date.fromisoformat(start)).days + 1
+    if duration > MAX_AUDITORIA_RANGE_DAYS:
+        raise ValueError(f"Período máximo da auditoria: {MAX_AUDITORIA_RANGE_DAYS} dias.")
+    return start, end
 
 
 def _parse_status(value: str | None) -> str:
@@ -148,6 +172,7 @@ def _normalize_summary(
         apontamentos_pendentes=_as_int(row.get("Apontamentos_Pendentes")),
         ops_operacoes_pendentes=_as_int(row.get("Ops_Operacoes_Pendentes")),
         apontamentos_com_inspecao=_as_int(row.get("Apontamentos_Com_Inspecao")),
+        apontamentos_sem_cadastro=_as_int(row.get("Apontamentos_Sem_Cadastro")),
         apontamentos_total=_as_int(row.get("Apontamentos_Total")),
     )
 
@@ -161,24 +186,32 @@ class ListInspecoesProcessoAuditoriaApontamentosUseCase:
         *,
         branch: str | None,
         data: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         page: int = DEFAULT_PAGE,
         page_size: int = DEFAULT_PAGE_SIZE,
         status: str | None = None,
         shift: str | None = None,
+        export_all: bool = False,
     ) -> InspecoesProcessoAuditoriaApontamentosResponse:
         normalized_branch = normalize_optional_branch(branch)
 
-        resolved_data = _parse_data(data)
+        resolved_start, resolved_end = _parse_auditoria_period(data, start_date, end_date)
         resolved_status = _parse_status(status)
         resolved_shifts = parse_factory_shift_filter(shift)
-        resolved_page = max(int(page), 1)
-        resolved_page_size = min(max(int(page_size), 1), MAX_PAGE_SIZE)
+        resolved_page = 1 if export_all else max(int(page), 1)
+        resolved_page_size = (
+            MAX_AUDITORIA_EXPORT_ROWS
+            if export_all
+            else min(max(int(page_size), 1), MAX_PAGE_SIZE)
+        )
         offset = (resolved_page - 1) * resolved_page_size
         fetch_next = resolved_page_size + 1
 
         summary_row, rows = self._repository.list_auditoria_apontamentos_page(
             normalized_branch,
-            data=resolved_data,
+            start_date=resolved_start,
+            end_date=resolved_end,
             offset=offset,
             fetch_next=fetch_next,
             status=resolved_status,
@@ -186,6 +219,10 @@ class ListInspecoesProcessoAuditoriaApontamentosUseCase:
         )
 
         has_next = len(rows) > resolved_page_size
+        if export_all and has_next:
+            raise ValueError(
+                f"Exportação limitada a {MAX_AUDITORIA_EXPORT_ROWS} registros. Reduza o período ou os filtros."
+            )
         items = [
             _normalize_item(row, normalized_branch)
             for row in rows[:resolved_page_size]
@@ -196,5 +233,7 @@ class ListInspecoesProcessoAuditoriaApontamentosUseCase:
             page=resolved_page,
             page_size=resolved_page_size,
             has_next=has_next,
-            data=resolved_data,
+            data=resolved_start,
+            start_date=resolved_start,
+            end_date=resolved_end,
         )

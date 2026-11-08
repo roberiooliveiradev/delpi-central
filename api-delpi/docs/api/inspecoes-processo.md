@@ -76,7 +76,9 @@ Sem OP nem produto a API rejeita a busca (evita full scan no TOTVS). A UI exibe 
 | Parâmetro | Obrigatório | Descrição |
 |---|---|---|
 | `branch` | não | `all` \| `01` \| `02` |
-| `data` | não | Data de produção `YYYY-MM-DD` (default: hoje) |
+| `data` | não | Data única de produção `YYYY-MM-DD` (legado, default: hoje) |
+| `start_date` / `end_date` | não | Datas de produção inclusivas, usar ambas e não combinar com `data`; máximo 31 dias |
+| `export_all` | não | `true` retorna todas as linhas filtradas, até 10.000; erro 400 se excedido |
 | `inspecao_status` | não | `all` \| `nao_inspecionou` \| `inspecionou` \| `sem_cadastro` (default API: `all`; UI inicia em `nao_inspecionou`) |
 | `shift` | não | Turno de fábrica `1` \| `2` \| `3` (mesmas faixas do Eficiência Fabril; classifica pelo `hora_inicio`) |
 | `page` | não | Página (≥ 1, default 1) |
@@ -96,11 +98,13 @@ Sem OP nem produto a API rejeita a busca (evita full scan no TOTVS). A UI exibe 
 | `summary.apontamentos_pendentes` | Linhas em que o mesmo operador não inspecionou **e** havia cadastro/QPR |
 | `summary.ops_operacoes_pendentes` | Pares OP+operação com pelo menos uma pendência |
 | `summary.apontamentos_com_inspecao` | Linhas em que o mesmo operador inspecionou |
+| `summary.apontamentos_sem_cadastro` | Linhas sem inspeção cadastrada/exigível; não são pendências |
 | `items[]` | Apontamentos do dia (filtrados por `inspecao_status` e opcionalmente `shift`; pendências primeiro quando `all`) |
-| `data` | Data efetiva da consulta |
+| `data` | Data inicial efetiva (campo legado) |
+| `start_date` / `end_date` | Período efetivo aplicado |
 | `page` / `page_size` / `has_next` | Paginação |
 
-Campos principais de cada item: `cod_operador`, `login_operador`, `nome_operador`, `op`, `produto`, `operacao`, `centro_trabalho`, `hora_inicio`, `hora_final`, `turno`, `turno_label`, `qtd_apontamentos`, `operador_inspecionou`, `tem_inspecao_na_op_operacao`, `tem_inspecao_amarrada` (especificação QP7/QP8 cadastrada). Os KPIs do `summary` continuam do dia inteiro.
+Campos principais de cada item: `cod_operador`, `login_operador`, `nome_operador`, `op`, `produto`, `operacao`, `centro_trabalho`, `hora_inicio`, `hora_final`, `turno`, `turno_label`, `qtd_apontamentos`, `operador_inspecionou`, `tem_inspecao_na_op_operacao`, `tem_inspecao_amarrada` (especificação QP7/QP8 cadastrada). Os KPIs do `summary` consideram todas as classes de status no período e turno solicitados; `inspecao_status` restringe apenas `items`. Agrupamento por filial, data, turno, operador, OP, produto e operação. `summary.apontamentos_total = summary.apontamentos_com_inspecao + summary.apontamentos_pendentes + summary.apontamentos_sem_cadastro`. A consulta mantém a regra de QPR por OP/operação sem restringir o dia do ensaio.
 
 ### Exemplo
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from app.domain.ports.inspecoes_processo.inspecoes_processo_repository_port import (
     InspecoesProcessoRepositoryPort,
 )
-from app.domain.production.factory_shifts import matches_factory_shift_filter
+from app.domain.production.factory_shifts import factory_shift_id, matches_factory_shift_filter
 from app.domain.totvs.protheus_branches import (
     branch_filter_sql,
     is_all_branches,
@@ -48,10 +48,13 @@ def _as_text(value: object) -> str:
 
 
 def _aggregate_auditoria_apontamentos(rows: list[dict]) -> list[dict]:
-    buckets: dict[tuple[str, str, str, str, str], dict] = {}
+    # Periodo + turno fazem parte da identidade da linha agregada.
+    buckets: dict[tuple[str, str, str, str, str, str, str], dict] = {}
     for row in rows:
         key = (
             _as_text(row.get("Filial")),
+            _as_text(row.get("Data_Producao"))[:10],
+            factory_shift_id(_as_text(row.get("Hora_Inicio"))) or "",
             _as_text(row.get("Cod_Operador")),
             _as_text(row.get("Ordem_Producao")),
             _as_text(row.get("Codigo_Produto")),
@@ -61,14 +64,14 @@ def _aggregate_auditoria_apontamentos(rows: list[dict]) -> list[dict]:
         if current is None:
             buckets[key] = {
                 "Filial": key[0],
-                "Cod_Operador": key[1],
+                "Cod_Operador": key[3],
                 "Login_Operador": _as_text(row.get("Login_Operador")),
                 "Nome_Operador": _as_text(row.get("Nome_Operador")),
-                "Ordem_Producao": key[2],
-                "Codigo_Produto": key[3],
+                "Ordem_Producao": key[4],
+                "Codigo_Produto": key[5],
                 "Descricao_Produto": _as_text(row.get("Descricao_Produto")),
                 "Revisao_Produto": "",
-                "Operacao": key[4],
+                "Operacao": key[6],
                 "Centro_Trabalho": _as_text(row.get("Centro_Trabalho")),
                 "Data_Producao": row.get("Data_Producao"),
                 "Hora_Inicio": row.get("Hora_Inicio"),
@@ -98,40 +101,43 @@ def _aggregate_auditoria_apontamentos(rows: list[dict]) -> list[dict]:
     return list(buckets.values())
 
 
-def _index_ensaiador_map(rows: list[dict]) -> dict[str, dict[str, str]]:
-    indexed: dict[str, dict[str, str]] = {}
+def _index_ensaiador_map(rows: list[dict]) -> dict[tuple[str, str], dict[str, str]]:
+    indexed: dict[tuple[str, str], dict[str, str]] = {}
     for row in rows:
+        branch = _as_text(row.get("Filial"))
         matricula = _as_text(row.get("Matricula_Ensaiador"))
-        if not matricula:
+        if not branch or not matricula:
             continue
-        indexed[matricula] = {
+        indexed[(branch, matricula)] = {
             "login": _as_text(row.get("Login_Ensaiador")).upper(),
             "nome": _as_text(row.get("Nome_Ensaiador")).upper(),
         }
     return indexed
 
 
-def _index_qpr_rows(rows: list[dict]) -> dict[tuple[str, str], set[str]]:
-    indexed: dict[tuple[str, str], set[str]] = {}
+def _index_qpr_rows(rows: list[dict]) -> dict[tuple[str, str, str], set[str]]:
+    indexed: dict[tuple[str, str, str], set[str]] = {}
     for row in rows:
+        branch = _as_text(row.get("Filial"))
         op = _as_text(row.get("Ordem_Producao"))
         operacao = _as_text(row.get("Operacao"))
         matricula = _as_text(row.get("Matricula_Ensaiador"))
-        if not op or not operacao or not matricula:
+        if not branch or not op or not operacao or not matricula:
             continue
-        indexed.setdefault((op, operacao), set()).add(matricula)
+        indexed.setdefault((branch, op, operacao), set()).add(matricula)
     return indexed
 
 
-def _index_qpk_rows(rows: list[dict]) -> dict[str, dict[str, str]]:
-    """OP → produto/revisão do cabeçalho QPK (inspeção amarrada à OP)."""
-    indexed: dict[str, dict[str, str]] = {}
+def _index_qpk_rows(rows: list[dict]) -> dict[tuple[str, str], dict[str, str]]:
+    """(filial, OP) -> produto/revisao do cabecalho QPK."""
+    indexed: dict[tuple[str, str], dict[str, str]] = {}
     for row in rows:
+        branch = _as_text(row.get("Filial"))
         op = _as_text(row.get("Ordem_Producao"))
         product = _as_text(row.get("Codigo_Produto"))
-        if not op or not product:
+        if not branch or not op or not product:
             continue
-        indexed[op] = {
+        indexed[(branch, op)] = {
             "product": product,
             "revision": _as_text(row.get("Revisao")),
         }
@@ -224,22 +230,23 @@ def _auditoria_sort_bucket(row: dict) -> int:
 def _mark_auditoria_rows(
     rows: list[dict],
     *,
-    ensaiador_by_matricula: dict[str, dict[str, str]],
-    qpr_by_op_oper: dict[tuple[str, str], set[str]],
-    qpk_by_op: dict[str, dict[str, str]] | None = None,
+    ensaiador_by_matricula: dict[tuple[str, str], dict[str, str]],
+    qpr_by_op_oper: dict[tuple[str, str, str], set[str]],
+    qpk_by_op: dict[tuple[str, str], dict[str, str]] | None = None,
     specs_by_product_rev_oper: set[tuple[str, str, str]] | None = None,
 ) -> list[dict]:
     specs = specs_by_product_rev_oper or set()
     qpk_map = qpk_by_op or {}
     marked: list[dict] = []
     for row in rows:
+        branch = _as_text(row.get("Filial"))
         op = _as_text(row.get("Ordem_Producao"))
         operacao = _as_text(row.get("Operacao"))
         login = _as_text(row.get("Login_Operador")).upper()
         nome = _as_text(row.get("Nome_Operador")).upper()
-        matriculas = qpr_by_op_oper.get((op, operacao), set())
+        matriculas = qpr_by_op_oper.get((branch, op, operacao), set())
         tem_inspecao = 1 if matriculas else 0
-        qpk = qpk_map.get(op)
+        qpk = qpk_map.get((branch, op))
         tem_cadastro = 0
         if qpk is not None:
             tem_cadastro = (
@@ -254,7 +261,7 @@ def _mark_auditoria_rows(
             )
         operador_inspecionou = 0
         for matricula in matriculas:
-            identity = ensaiador_by_matricula.get(matricula)
+            identity = ensaiador_by_matricula.get((branch, matricula))
             if identity is None:
                 continue
             if login and identity["login"] and identity["login"] == login:
@@ -278,20 +285,23 @@ def _mark_auditoria_rows(
 def _summarize_auditoria_rows(rows: list[dict]) -> dict:
     pendentes = [row for row in rows if _is_auditoria_pendente(row)]
     com_inspecao = [row for row in rows if row.get("Operador_Inspecionou")]
+    sem_cadastro = [row for row in rows if _auditoria_status_key(row) == "sem_cadastro"]
     operadores = {
-        _as_text(row.get("Cod_Operador"))
+        (_as_text(row.get("Filial")), _as_text(row.get("Cod_Operador")))
         for row in pendentes
         if _as_text(row.get("Cod_Operador"))
     }
     ops_ops = {
-        f"{_as_text(row.get('Ordem_Producao'))}|{_as_text(row.get('Operacao'))}"
+        (_as_text(row.get("Filial")), _as_text(row.get("Ordem_Producao")), _as_text(row.get("Operacao")))
         for row in pendentes
     }
+    assert len(rows) == len(pendentes) + len(com_inspecao) + len(sem_cadastro)
     return {
         "Operadores_Pendentes": len(operadores),
         "Apontamentos_Pendentes": len(pendentes),
         "Ops_Operacoes_Pendentes": len(ops_ops),
         "Apontamentos_Com_Inspecao": len(com_inspecao),
+        "Apontamentos_Sem_Cadastro": len(sem_cadastro),
         "Apontamentos_Total": len(rows),
     }
 
@@ -1069,7 +1079,8 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         self,
         branch: str,
         *,
-        data: str,
+        start_date: str,
+        end_date: str,
         offset: int,
         fetch_next: int,
         status: str | None = None,
@@ -1082,6 +1093,7 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
             "Apontamentos_Pendentes": 0,
             "Ops_Operacoes_Pendentes": 0,
             "Apontamentos_Com_Inspecao": 0,
+            "Apontamentos_Sem_Cadastro": 0,
             "Apontamentos_Total": 0,
         }
 
@@ -1093,7 +1105,7 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         with self:
             raw_rows = self.execute_query(
                 base_sql,
-                (*base_branch_params, data),
+                (*base_branch_params, start_date, end_date),
             )
             if not raw_rows:
                 return empty_summary, []
@@ -1160,9 +1172,10 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
             qpk_by_op=qpk_by_op,
             specs_by_product_rev_oper=specs_by_product_rev_oper,
         )
-        summary = _summarize_auditoria_rows(marked)
-        filtered = _filter_auditoria_by_status(marked, status)
-        filtered = _filter_auditoria_by_shift(filtered, shifts)
+        # Summary e status compartilham o mesmo escopo temporal e de turno.
+        scoped = _filter_auditoria_by_shift(marked, shifts)
+        summary = _summarize_auditoria_rows(scoped)
+        filtered = _filter_auditoria_by_status(scoped, status)
         filtered.sort(
             key=lambda row: (
                 _auditoria_sort_bucket(row),

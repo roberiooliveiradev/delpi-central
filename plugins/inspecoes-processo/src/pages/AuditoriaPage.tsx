@@ -1,5 +1,5 @@
-import { Users, ClipboardList, CheckCircle2, AlertTriangle, ListChecks } from "lucide-react";
-import { useEffect } from "react";
+import { Users, ClipboardList, CheckCircle2, AlertTriangle, ListChecks, FileSpreadsheet, ClipboardX } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { AuditoriaTable } from "../components/AuditoriaTable";
 import { EmptyState } from "../components/EmptyState";
@@ -19,6 +19,8 @@ import {
 } from "../constants/factoryShifts";
 import { IP_HELP } from "../content/helpTooltips";
 import { useInspecoesProcessoAuditoria } from "../hooks/useInspecoesProcessoAuditoria";
+import { getAuditoriaApontamentos } from "../api/inspecoesProcessoApi";
+import { exportAuditWorkbook } from "../utils/exportAuditWorkbook";
 import { formatNumber } from "../utils/format";
 
 type AuditoriaPageProps = {
@@ -35,8 +37,11 @@ export function AuditoriaPage({
   onLoadingChange,
 }: AuditoriaPageProps) {
   const {
-    data,
-    setData,
+    startDate,
+    endDate,
+    setStartDate,
+    setEndDate,
+    rangeError,
     status,
     setStatus,
     shift,
@@ -53,6 +58,30 @@ export function AuditoriaPage({
     error,
     reload,
   } = useInspecoesProcessoAuditoria(branch, refreshToken);
+
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  const handleExport = async () => {
+    if (rangeError || loading || exporting) return;
+    setExporting(true);
+    setExportError(null);
+    try {
+      const response = await getAuditoriaApontamentos({
+        branch,
+        start_date: startDate,
+        end_date: endDate,
+        inspecao_status: status,
+        ...(shift ? { shift } : {}),
+        export_all: true,
+      });
+      await exportAuditWorkbook(response.items, branch, startDate, endDate);
+    } catch (reason) {
+      setExportError(reason instanceof Error ? reason.message : "Não foi possível exportar os dados.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const statusLabel =
     AUDITORIA_STATUS_OPTIONS.find((option) => option.value === status)?.label ??
@@ -75,26 +104,26 @@ export function AuditoriaPage({
   return (
     <PageShell
       title="Auditoria"
-      description={`Apontamentos do dia em ${branchLabel(branch)} confrontados com inspeção pelo mesmo operador (OP + operação).`}
+      description={`Apontamentos em ${branchLabel(branch)} confrontados com inspeção pelo mesmo operador (OP + operação).`}
     >
       <form
         className="ip-filters"
         aria-label="Filtros da auditoria"
         onSubmit={(event) => {
           event.preventDefault();
-          reload();
+          if (!rangeError) reload();
         }}
       >
         <div className="ip-filters__grid">
           <label className="ip-field">
-            <span className="ip-field__label">Data de produção</span>
-            <input
-              className="ip-input"
-              type="date"
-              value={data}
-              onChange={(event) => setData(event.target.value)}
-              required
-            />
+            <span className="ip-field__label" title={IP_HELP.auditoria.period}>Data inicial</span>
+            <input className="ip-input" type="date" value={startDate}
+              onChange={(event) => setStartDate(event.target.value)} required />
+          </label>
+          <label className="ip-field">
+            <span className="ip-field__label" title={IP_HELP.auditoria.period}>Data final</span>
+            <input className="ip-input" type="date" value={endDate}
+              onChange={(event) => setEndDate(event.target.value)} required />
           </label>
           <label className="ip-field">
             <span className="ip-field__label">Status</span>
@@ -137,29 +166,35 @@ export function AuditoriaPage({
             </select>
           </label>
         </div>
+        {rangeError ? <p className="ip-period-error" role="alert">{rangeError}</p> : null}
         <p className="ip-auditoria-hint">
-          Cada linha é um apontamento (operador + OP + operação). Status indica se esse
-          mesmo operador lançou ensaio no QIP para a mesma OP e operação. Quando a OP
-          não tem inspeção amarrada naquela operação (revisão do QPK sem QP7/QP8), o
-          status é «Não possui inspeção cadastrada» — não conta como pendência do
-          operador.
+          Cada linha agrupa apontamentos por data, turno, operador, OP e operação.
+          "Sem inspeção cadastrada" não significa pendência do operador.
+          Os indicadores consideram o período e o turno; o status filtra somente a tabela.
         </p>
         <div className="ip-filters__actions">
+          <button type="button" className="ip-button" disabled={loading || exporting || !!rangeError}
+            onClick={() => void handleExport()} title={IP_HELP.auditoria.export}>
+            <FileSpreadsheet size={17} aria-hidden="true" />
+            {exporting ? "Exportando…" : "Exportar Excel"}
+          </button>
           <button
             type="submit"
             className="ip-button ip-button--primary"
-            disabled={loading}
+            disabled={loading || !!rangeError}
           >
             Atualizar
           </button>
         </div>
       </form>
 
-      <div className="ip-kpi-grid">
+      {exportError ? <div className="ip-alert ip-alert--error" role="alert">{exportError}</div> : null}
+
+      <div className="ip-kpi-grid ip-kpi-grid--auditoria">
         <KpiCard
-          title="Apontamentos no dia"
+          title="Apontamentos no período"
           value={formatNumber(summary.apontamentos_total)}
-          subtitle="Operador + OP + operação"
+          subtitle="Grupos por data e turno"
           icon={<ListChecks size={22} strokeWidth={1.75} aria-hidden="true" />}
         />
         <KpiCard
@@ -169,6 +204,12 @@ export function AuditoriaPage({
           icon={
             <AlertTriangle size={22} strokeWidth={1.75} aria-hidden="true" />
           }
+        />
+        <KpiCard
+          title="Sem inspeção cadastrada"
+          value={formatNumber(summary.apontamentos_sem_cadastro)}
+          subtitle="Sem exigência amarrada à OP"
+          icon={<ClipboardX size={22} strokeWidth={1.75} aria-hidden="true" />}
         />
         <KpiCard
           title="Operadores pendentes"
@@ -210,12 +251,12 @@ export function AuditoriaPage({
                 : shift !== AUDITORIA_SHIFT_ALL
                   ? `Nenhum apontamento no ${shiftLabel}`
                   : `Nenhum apontamento com status «${statusLabel}»`
-              : "Nenhum apontamento nesta data"
+              : "Nenhum apontamento neste período"
           }
           description={
             emptyFiltered
-              ? "Os KPIs acima consideram o dia inteiro. Altere o filtro de status/turno ou escolha «Todos» para ver a lista completa."
-              : "Não há apontamentos produtivos (STATUS OK) para a filial e data selecionadas."
+              ? "Os KPIs acima consideram todos os status do período e turno selecionados. Altere o status para «Todos» para ver a lista completa."
+              : "Não há apontamentos produtivos (STATUS OK) para a filial, período e turno selecionados."
           }
         />
       ) : null}

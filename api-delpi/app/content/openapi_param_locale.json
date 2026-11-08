@@ -5051,6 +5051,18 @@
         }
       }
     },
+    "export_all": {
+      "locale": {
+        "en": {
+          "label": "Export all",
+          "description": "Return every filtered audit record for Excel export, limited to 10,000 rows."
+        },
+        "pt-BR": {
+          "label": "Exportar todos",
+          "description": "Retorna todos os registros filtrados para exportação Excel, até 10 mil linhas."
+        }
+      }
+    },
     "export_format": {
       "locale": {
         "en": {

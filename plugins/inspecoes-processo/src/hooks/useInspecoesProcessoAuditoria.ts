@@ -14,6 +14,7 @@ import type {
   InspecoesProcessoAuditoriaApontamentosSummary,
 } from "../types/api";
 import { resolveHasNext } from "../utils/format";
+import { validateAuditRange } from "../utils/auditRange";
 
 export const AUDITORIA_DEFAULT_PAGE_SIZE = 50;
 export const AUDITORIA_MAX_PAGE_SIZE = 100;
@@ -24,6 +25,7 @@ const EMPTY_SUMMARY: InspecoesProcessoAuditoriaApontamentosSummary = {
   apontamentos_pendentes: 0,
   ops_operacoes_pendentes: 0,
   apontamentos_com_inspecao: 0,
+  apontamentos_sem_cadastro: 0,
   apontamentos_total: 0,
 };
 
@@ -41,8 +43,11 @@ function clampPageSize(value: number): number {
 }
 
 type UseInspecoesProcessoAuditoriaResult = {
-  data: string;
-  setData: (value: string) => void;
+  startDate: string;
+  endDate: string;
+  setStartDate: (value: string) => void;
+  setEndDate: (value: string) => void;
+  rangeError: string | null;
   status: AuditoriaInspecaoStatus;
   setStatus: (value: AuditoriaInspecaoStatus) => void;
   shift: AuditoriaShiftFilter;
@@ -64,7 +69,9 @@ export function useInspecoesProcessoAuditoria(
   branch: string,
   refreshToken = 0,
 ): UseInspecoesProcessoAuditoriaResult {
-  const [data, setDataState] = useState(todayIso);
+  const [startDate, setStartDateState] = useState(todayIso);
+  const [endDate, setEndDateState] = useState(todayIso);
+  const rangeError = validateAuditRange(startDate, endDate);
   const [status, setStatusState] = useState<AuditoriaInspecaoStatus>(
     AUDITORIA_DEFAULT_STATUS,
   );
@@ -82,8 +89,12 @@ export function useInspecoesProcessoAuditoria(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const setData = useCallback((value: string) => {
-    setDataState(value);
+  const setStartDate = useCallback((value: string) => {
+    setStartDateState(value);
+    setPageState(1);
+  }, []);
+  const setEndDate = useCallback((value: string) => {
+    setEndDateState(value);
     setPageState(1);
   }, []);
 
@@ -113,7 +124,8 @@ export function useInspecoesProcessoAuditoria(
   const [trackedBranch, setTrackedBranch] = useState(branch);
   if (branch !== trackedBranch) {
     setTrackedBranch(branch);
-    setDataState(todayIso());
+    setStartDateState(todayIso());
+    setEndDateState(todayIso());
     setStatusState(AUDITORIA_DEFAULT_STATUS);
     setShiftState(AUDITORIA_SHIFT_ALL);
     setPageState(1);
@@ -130,10 +142,19 @@ export function useInspecoesProcessoAuditoria(
     async function run() {
       setLoading(true);
       setError(null);
+      if (rangeError) {
+        setItems([]);
+        setSummary(EMPTY_SUMMARY);
+        setHasNext(false);
+        setError(rangeError);
+        setLoading(false);
+        return;
+      }
       try {
         const response = await getAuditoriaApontamentos({
           branch,
-          data,
+          start_date: startDate,
+          end_date: endDate,
           inspecao_status: status,
           ...(shift ? { shift } : {}),
           page,
@@ -144,10 +165,7 @@ export function useInspecoesProcessoAuditoria(
         setItems(Array.isArray(response.items) ? response.items : []);
         setSummary(response.summary ?? EMPTY_SUMMARY);
         setHasNext(resolveHasNext(response));
-        if (response.data && response.data !== data) {
-          setDataState(response.data);
-        }
-        setError(null);
+         setError(null);
       } catch (err) {
         if (cancelled || controller.signal.aborted) return;
         setItems([]);
@@ -171,11 +189,14 @@ export function useInspecoesProcessoAuditoria(
       cancelled = true;
       controller.abort();
     };
-  }, [branch, data, status, shift, page, pageSize, reloadKey, refreshToken]);
+  }, [branch, startDate, endDate, rangeError, status, shift, page, pageSize, reloadKey, refreshToken]);
 
   return {
-    data,
-    setData,
+    startDate,
+    endDate,
+    setStartDate,
+    setEndDate,
+    rangeError,
     status,
     setStatus,
     shift,

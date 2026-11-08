@@ -61,6 +61,7 @@ class InspecoesProcessoAuditoriaApontamentosSummaryResponse:
     apontamentos_pendentes: int = 0
     ops_operacoes_pendentes: int = 0
     apontamentos_com_inspecao: int = 0
+    apontamentos_sem_cadastro: int = 0
     apontamentos_total: int = 0
 
     def to_dict(self) -> dict:
@@ -69,6 +70,7 @@ class InspecoesProcessoAuditoriaApontamentosSummaryResponse:
             "apontamentos_pendentes": self.apontamentos_pendentes,
             "ops_operacoes_pendentes": self.ops_operacoes_pendentes,
             "apontamentos_com_inspecao": self.apontamentos_com_inspecao,
+            "apontamentos_sem_cadastro": self.apontamentos_sem_cadastro,
             "apontamentos_total": self.apontamentos_total,
         }
 
@@ -81,6 +83,8 @@ class InspecoesProcessoAuditoriaApontamentosResponse:
     page_size: int
     has_next: bool
     data: str
+    start_date: str
+    end_date: str
 
     def to_dict(self) -> dict:
         return {
@@ -95,4 +99,6 @@ class InspecoesProcessoAuditoriaApontamentosResponse:
                 has_next=self.has_next,
             ),
             "data": self.data,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
         }
