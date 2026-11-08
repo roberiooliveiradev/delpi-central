@@ -477,9 +477,14 @@ export function Audit5sPage({ pathname, search }: Props) {
     setError(null);
     try {
       const existing = responseMap.get(criterionId);
+      const observation = normalizeObservation(getObservationValue(criterionId, existing));
+      if (!payload.is_not_applicable && (payload.score === 1 || payload.score === 3) && (!observation || observation.length < 3)) {
+        setError("Informe o motivo da NC no campo de observação antes de selecionar nota 1 ou 3.");
+        return;
+      }
       const result = await saveResponse(selectedAudit.id, criterionId, {
         ...payload,
-        observation: normalizeObservation(getObservationValue(criterionId, existing)),
+        observation,
         version: existing?.version ?? null,
       });
       setSelectedAudit(result.audit);
@@ -510,6 +515,10 @@ export function Audit5sPage({ pathname, search }: Props) {
     }
 
     const nextObservation = normalizeObservation(getObservationValue(criterionId, existing));
+    if ((existing.score === 1 || existing.score === 3) && (!nextObservation || nextObservation.length < 3)) {
+      setError("O motivo da NC deve ter pelo menos 3 caracteres para nota 1 ou 3.");
+      return;
+    }
     const currentObservation = normalizeObservation(existing.observation ?? "");
     if (nextObservation === currentObservation) {
       return;
@@ -807,9 +816,6 @@ export function Audit5sPage({ pathname, search }: Props) {
             {(criteriaBySenso.get(activeSenso) ?? []).map((criterion: Criterion) => {
               const response = responseMap.get(criterion.id);
               const disabled = !canEditEvaluation(selectedAudit.status);
-              const hasScore = Boolean(
-                response && (response.is_not_applicable || response.score != null),
-              );
               const observationValue = getObservationValue(criterion.id, response);
               const scoreTone = getScoreTone(response?.score, Boolean(response?.is_not_applicable));
               const scoreSummary = getScoreSummaryLabel(
@@ -859,18 +865,14 @@ export function Audit5sPage({ pathname, search }: Props) {
                     />
                     <AuditNativeTextAreaField
                       id={`obs-${criterion.id}`}
-                      label="Observação (opcional)"
+                      label={response?.score === 1 || response?.score === 3 ? "Motivo da NC (obrigatório)" : "Observação (obrigatória para notas 1 e 3)"}
                       span={false}
                       rows={2}
-                      placeholder={
-                        hasScore
-                          ? "Comentário sobre este critério..."
-                          : "Informe a nota antes de adicionar observação."
-                      }
+                      placeholder="Descreva o motivo da NC antes de selecionar nota 1 ou 3."
                       value={observationValue}
-                      disabled={disabled || !hasScore}
+                      disabled={disabled}
                       onFocus={() => {
-                        if (!disabled && hasScore) {
+                        if (!disabled) {
                           signalObservationTyping(criterion.id);
                         }
                       }}
@@ -879,7 +881,7 @@ export function Audit5sPage({ pathname, search }: Props) {
                           ...prev,
                           [criterion.id]: value,
                         }));
-                        if (!disabled && hasScore) {
+                        if (!disabled) {
                           signalObservationTyping(criterion.id);
                         }
                       }}
