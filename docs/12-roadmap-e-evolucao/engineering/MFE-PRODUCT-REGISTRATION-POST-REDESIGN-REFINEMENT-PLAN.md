@@ -372,8 +372,92 @@ Nº          TIPO      SOLICITANTE               STATUS         RESPONSÁVEL
 
 **Status:** `PO_APPROVED / TO_IMPLEMENT`; este registro não implementa o visual. **Produção continua suspensa.**
 
-## PRC-REF-011 e seguintes — próximas observações
 
-`AWAITING_USER_FEEDBACK`. Preservar REF-001..010; continuar coleta de refinamentos e preparar rodada Devin consolidada somente quando o PO encerrar as observações.
+
+## PRC-REF-011 — Catálogos oficiais TOTVS e busca assistida de fornecedores
+
+**Decisão PO (2026-11-08, aprovada para planejamento; implementação pendente):** no wizard **Nova solicitação → Ficha técnica**, substituir os inputs livres de **Grupo, Tipo, Unidade, Armazém padrão, Conta contábil e Produto de terceiros** por **selects/comboboxes alimentados com opções oficiais do TOTVS**, exibindo `código — descrição` quando houver descrição oficial. Na tabela de **Fornecedores** (REF-010), permitir buscar fornecedor **pelo código ou nome**, selecionar o registro oficial (código + loja + nome) e então preencher **Part Number (opcional)** e **Catálogo (opcional)** associados ao vínculo. Nada de digitar manualmente códigos mestres quando a lookup estiver disponível.
+
+**Objetivo da experiência:** dados técnicos consistentes com o ERP, menos erros de digitação, sem criar cadastros paralelos nem permitir o MFE consultar TOTVS ou Suprimentos diretamente.
+
+### 1. Padrão REAL já existente em Suprimentos — evidência do GitHub
+
+- `plugins/supplies/src/features/suppliers/SupplierFormFields.tsx`: campos com catálogo oficial, `SuppliesSelectField` pesquisável, `useCatalogSearch` com lista remota, seleção de opção com código/descrição e estados loading/empty/error.
+- `plugins/supplies/src/features/suppliers/supplierCatalogs.ts`: cache de rótulos, `PRELOAD_CATALOG_LIMIT`, `REMOTE_CATALOG_LIMIT`, busca por `query`, parâmetros dependentes, `httpGet` por BFF (`/suppliers/catalogs/{kind}`).
+- `supplies-api/app/interfaces/http/routes/suppliers_routes.py`: `GET /suppliers` consulta `api-delpi` e devolve resultado paginado; política `supplies.access` é **daquele bounded context, NÃO autoridade de Engenharia**.
+- `api-delpi/app/interface/http/routes/supplies/suppliers_router.py`: `GET /supplies/suppliers` com `query`, paginação e mapeamento controlado; **acesso S2S atualmente restrito ao client `supplies-api` e scope `suppliers.read`**.
+- `api-delpi/app/infrastructure/persistence/totvs/supplier_repositories/totvs_supplier_repository.py`: leitura SA2 `A2_COD`, `A2_LOJA`, `A2_NOME` (inclusive nome fantasia), busca por código/nome e paginação, com origem oficial/proteção.
+- **Reuso correto:** reutilizar design pattern e contratos oficiais da `api-delpi` (após owner autorizar consumer Engenharia), **NÃO** importar components de negócio `plugins/supplies` em runtime, não chamar `supplies-api` pela Engenharia, não copiar SQL/ODBC para Engineering API e não copiar permissões `supplies.access`. Se necessário ampliar allowlist de consumer/scope, isso exige contrato e aprovação do owner `api-delpi`/Identidade/Core; não alterar unilateralmente o boundary.
+- O contrato `engineering-api/.../domain/product_registration/catalog.py` possui tipos `code/text/enum/suppliers` e `enum_values` estáticos para parte dos campos. **Esses enums e a resposta atual `reference-data` não comprovam por si só listas oficiais dinâmicas para grupo, unidade, armazém, contas etc.** Inventariar origem/endpoint real de cada catálogo.
+
+### 2. Wireframe alvo — campos oficiais por seção (desktop)
+
+```text
+┌ IDENTIFICAÇÃO E CLASSIFICAÇÃO ──────────────────────────────────────────────┐
+│ Descrição [.............................................................] │
+│ Grupo [🔎 Pesquisar grupo no TOTVS ▼]   Tipo [Tipo de produto ▼]          │
+│ Unidade [🔎 Pesquisar unidade ▼]        ...                                │
+└───────────────────────────────────────────────────────────────────────────┘
+┌ ESTOQUE E CONTABILIDADE ───────────────────────────────────────────────────┐
+│ Armazém padrão [🔎 Código ou descrição ▼]  Conta contábil [🔎 Pesquisar ▼]│
+│ Produto de terceiros [Seleção de domínio ▼] Referência cliente [.........]│
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌ FORNECEDORES ──────────────────────────────────── [+ Adicionar fornecedor]┐
+│ FORNECEDOR (busca por código ou nome) │ LOJA │ PART NUMBER │ CATÁLOGO │  │
+│ [🔎 Código / nome ...           ▼]    │ 01   │ [opcional]  │ [opcional]│ ×│
+│  → 000089 / 01 — WEG EQUIPAMENTOS... (escolher registro exato)            │
+│ [🔎 ...                         ▼]    │ ..   │ [opcional]  │ [opcional]│ ×│
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+**Interação fornecedores:**
+1. Clicar `+ Adicionar fornecedor` cria linha local vazia na tabela (REF-010).
+2. Focar combobox/lookup `Fornecedor`; aceitar busca textual por **código** ou **nome** (e, se contrato oficial suportar, nome fantasia).
+3. Buscar **assincronamente pelo BFF Engenharia** com debounce, cancelamento de requisições obsoletas e paginação/limite (não carregar todos os fornecedores do TOTVS em memória).
+4. Mostrar `código / loja — razão social` em resultados; códigos como strings, preservar zeros à esquerda; tratar múltiplas lojas do mesmo fornecedor (seleção deve identificar exatamente `supplierCode+store`).
+5. Ao escolher, preencher de forma **atômica** código, loja e nome oficiais, como campos read-only/ligados à seleção; permitir limpar/trocar fornecedor com confirmação se houver Part Number/catálogo digitado, sem troca silenciosa de vínculo.
+6. **Part Number e Catálogo permanecem editáveis pelo usuário**; não preenchê-los artificialmente e não buscá-los na SA5 como valor obrigatório do cadastro do fornecedor. Se houver dado oficial já associado ao produto, somente mostrar preenchimento inicial quando o contrato e a intenção de alteração justificarem. Part Number vazio legítimo; preenchido deve ser comparado com `A5_CODPRF` pelo backend na conclusão.
+7. Impedir seleção duplicada de `(supplierCode,store)` na mesma tabela, com erro junto à linha; no UPDATE manter seleção de `suppliers`, justificação e PATCH seletivo já definidos.
+8. Consulta autorizada falhou/403/sem resultados: erro honesto, retry; nunca converter código parcial não validado em fornecedor selecionado sem conferência pela Engineering API.
+
+### 3. Contratos a inventariar e implementar pelo owner
+
+| Campo do wizard | Apresentação alvo | Origem/contrato | Gate |
+|---|---|---|---|
+| Grupo | Combo buscável `código — descrição` | Catálogo de grupos de produtos no TOTVS, via `api-delpi`; endpoint específico **TO_INVENTORY** | não presumir tabela/endpoints |
+| Tipo | Select com rótulos reais e códigos da ficha | Enum oficial/domínio B1_TIPO, através do catálogo autorizado; validar se `enumValues` atual é suficiente ou se há catálogo oficial | owner define |
+| Unidade | Combo `código — descrição` | Lista de unidades oficiais, via `api-delpi`; contrato **TO_INVENTORY** | codes/string |
+| Armazém padrão | Combo de armazéns válidos | Catálogo de armazéns TOTVS, considerando unidade/filial quando aplicável | não misturar escopos |
+| Conta contábil | Lookup pesquisável com `código — descrição` | Contas oficiais autorizadas para o contexto de produto, via `api-delpi`; contrato **TO_INVENTORY** | confidencialidade/escopo |
+| Produto de terceiros | Select legível `Sim/Não` ou semântica oficial correspondente | Regra de domínio/enum oficial existente, não necessariamente tabela dinâmica; preservar `1/2` ou mapeamento comprovado | não inventar rótulos |
+| Fornecedor | Combobox remoto `código/loja/nome` | SA2 real **PROVEN na api-delpi**, contrato atual S2S scoped Suprimentos — necessitar consumer Engineering | **CROSS_OWNER_CONTRACT** |
+
+**Contrato Engineering API candidato (NÃO implementado por esta decisão):** endpoints read-only sob `/v1/product-registration/reference-data/... ` para catálogos tipados e `/v1/product-registration/suppliers/search?query=...&page=... ` apenas se o inventário provar necessidade e owner Engenharia aprovar. Antes: owner → fonte canônica → consumidor → DTO, query/response, AuthN/AuthZ, limites, sorting/paging, idempotência N/A, erros, observabilidade e testes. **Não anunciar paths exemplificativos como rotas existentes.** Preferir expansão mínima do reference-data atual quando adequada; não criar abstração genérica de catálogo sem consumer real.
+
+**Segurança e limites:** `engineering.access` + live Core authorization no Engineering API, delegação com credencial S2S individual e bearer humano onde contratualmente exigido, `api-delpi` autoriza consumer e acessa TOTVS; nenhum atalho por MFE, SQL direto, serviço de Suprimentos ou MCP. Menor privilégio. Não exibir opções fora do acesso efetivo, nem transportar tokens/segredos para frontend.
+
+**Estados UI obrigatórios:** seleção carregando, busca vazia ou curta, resultados, sem resultados, erro, 403, timeout, selected item mantido na etapa 3, busca abortada, dados de referência stale e seleção inválida; evitar opção livre que se faça passar por catálogo verificado. O browser deve usar `EngineeringSelectField`, `EngineeringFieldLabel`, `EngineeringStateBanner`, `EngineeringActionButton` e combobox/lookup real do `plugin-ui` (inventariar props); não importar `SuppliesSelectField` como componente de outro bounded context. Form grid e tabela fornecedores seguem REF-010.
+
+### 4. Critérios de aceite
+
+- [ ] Grupo, Tipo, Unidade, Armazém, Conta e Produto de terceiros têm seletores com opções e labels oficiais verificáveis; quando não houver catálogo TOTVS necessário, enum de domínio legítimo e aprovado. Nenhuma lista hardcoded por conveniência.
+- [ ] Consultas de referência passam pelo BFF Engenharia e pela `api-delpi`, respeitando Core/SSO, limites e fonte canônica.
+- [ ] Seleção guarda **código oficial** (string, zeros preservados), apresenta descrição oficial e mantém valor no resumo; entrada livre inválida não passa como código selecionado.
+- [ ] Fornecedor pesquisável por código ou nome, lista código+loja+nome, seleciona vínculo real SA2 e popula os três campos; PN e Catálogo permanecem editáveis/independentes.
+- [ ] Duplicata de fornecedor+loja bloqueada; alternar fornecedor não apaga PN/catálogo sem intenção.
+- [ ] CREATE e UPDATE funcionam, com seleção explícita e motivo de alterações; REF-001 revisão-base automática não conflita; PN opcional e CAS mantidos.
+- [ ] Testes do contrato api-delpi/Engineering API, fallbacks fail-closed, UI com loading/erro/seleção/múltiplas lojas, race conditions, debounce e cache; browser desktop/tablet/mobile DEV.
+- [ ] Nenhuma escrita no TOTVS; nenhuma dependência runtime de Suprimentos; nenhum escopo/permissão emprestado de outro owner.
+- [ ] Se algum catálogo não estiver exposto no contrato oficial, marcar `TO_INVENTORY / PENDING_OWNER` e implementar os campos independentes; **não inventar código/descrição nem afirmar que TOTVS foi consultado**.
+
+**Implementação planejada:** adicionar read adapters/contratos pelo owner `api-delpi` quando faltarem; Engineering API consome por gateway/ports; frontend compõe selectors e lookup na `PrcCreatePage.tsx`, `productRegistrationApi.ts` e eventuais componentes PRC mínimos, sem novo sistema de referência. Atualizar documentação de source mapping/provenance e QA.
+
+**Status:** `PO_APPROVED / CONTRACT_INVENTORY_REQUIRED / IMPLEMENTATION_PENDING / PRODUCTION_DEPLOY_SUSPENDED`.
+
+## PRC-REF-012 e seguintes — próximas observações
+
+`AWAITING_USER_FEEDBACK`. Preservar REF-001..011. Não iniciar deploy produtivo; consolidar implementação em lote quando o PO terminar a coleta.
+
 
 
