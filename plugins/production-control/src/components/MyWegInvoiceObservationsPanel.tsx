@@ -1,5 +1,5 @@
 import { HelpTooltip } from "@delpi/plugin-ui/index";
-import { Search } from "lucide-react";
+import { Filter, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
@@ -283,66 +283,72 @@ export function MyWegInvoiceObservationsPanel() {
 
   return (
     <section className="ppc-myweg-needs__invoices" aria-label={texts.sectionAria}>
-      <div className="ppc-myweg-needs__invoice-toolbar">
-        <div className="ppc-myweg-needs__invoice-toolbar-cluster">
-          <MyWegInvoiceMonthCalendar
-            selectedIso={appliedDate}
-            onSelectDate={onSelectDate}
-            viewYear={viewYear}
-            viewMonth={viewMonth}
-            onViewChange={({ year, month }) => {
-              setViewYear(year);
-              setViewMonth(month);
+      <div
+        className="ppc-myweg-needs__invoice-filter-bar"
+        role="search"
+        aria-label={texts.sectionAria}
+      >
+        <MyWegInvoiceMonthCalendar
+          selectedIso={appliedDate}
+          onSelectDate={onSelectDate}
+          viewYear={viewYear}
+          viewMonth={viewMonth}
+          onViewChange={({ year, month }) => {
+            setViewYear(year);
+            setViewMonth(month);
+          }}
+        />
+
+        <span className="ppc-myweg-needs__invoice-filter-divider" aria-hidden="true" />
+
+        <label className="ppc-myweg-needs__invoice-date">
+          <span className="ppc-myweg-needs__invoice-date-label">
+            {texts.documentDateLabel}
+            <HelpTooltip content={helpTooltips.mywegNeedsInvoices} trigger="icon" />
+          </span>
+          <input
+            type="date"
+            value={appliedDate}
+            onChange={(event) => {
+              const next = event.target.value;
+              if (parseLocalIsoDate(next)) onSelectDate(next);
             }}
+            aria-label={texts.documentDateLabel}
           />
+        </label>
 
-          <div className="ppc-myweg-needs__invoice-toolbar-controls">
-            <p className="ppc-myweg-needs__invoice-toolbar-note">
-              {texts.introCompact}{" "}
-              <HelpTooltip content={helpTooltips.mywegNeedsInvoices} trigger="icon" />
-            </p>
+        <span className="ppc-myweg-needs__invoice-filter-divider" aria-hidden="true" />
 
-            <div className="ppc-myweg-needs__invoice-fields">
-              <label className="ppc-myweg-needs__invoice-date">
-                <span>{texts.documentDateLabel}</span>
-                <input
-                  type="date"
-                  value={appliedDate}
-                  onChange={(event) => {
-                    const next = event.target.value;
-                    if (parseLocalIsoDate(next)) onSelectDate(next);
-                  }}
-                  aria-label={texts.documentDateLabel}
-                />
-              </label>
+        <label className="ppc-myweg-needs__invoice-search">
+          <span className="ppc-sr-only">{texts.searchLabel}</span>
+          <Search
+            className="ppc-myweg-needs__invoice-search-icon"
+            size={15}
+            strokeWidth={1.85}
+            aria-hidden
+          />
+          <input
+            type="search"
+            value={searchDraft}
+            placeholder={texts.searchPlaceholder}
+            onChange={(event) => setSearchDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") applyItemSearch();
+            }}
+            aria-label={texts.searchAria}
+            disabled={!selectedObservationId}
+          />
+        </label>
 
-              <label className="ppc-myweg-needs__invoice-search">
-                <span className="ppc-sr-only">{texts.searchLabel}</span>
-                <input
-                  type="search"
-                  value={searchDraft}
-                  placeholder={texts.searchPlaceholder}
-                  onChange={(event) => setSearchDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") applyItemSearch();
-                  }}
-                  aria-label={texts.searchAria}
-                  disabled={!selectedObservationId}
-                />
-              </label>
-
-              <button
-                type="button"
-                className="ppc-btn ppc-btn--primary ppc-btn--compact"
-                onClick={applyItemSearch}
-                disabled={!selectedObservationId}
-              >
-                <Search size={15} strokeWidth={1.75} aria-hidden />
-                {texts.applyItemSearch}
-              </button>
-            </div>
-          </div>
-        </div>
+        <button
+          type="button"
+          className="ppc-btn ppc-btn--primary ppc-btn--compact ppc-myweg-needs__invoice-filter-btn"
+          onClick={applyItemSearch}
+          disabled={!selectedObservationId}
+        >
+          <Filter size={14} strokeWidth={2} aria-hidden />
+          {texts.applyItemSearch}
+        </button>
       </div>
 
       {listLoading ? (

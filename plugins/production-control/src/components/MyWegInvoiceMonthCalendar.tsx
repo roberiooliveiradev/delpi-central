@@ -54,14 +54,14 @@ export function MyWegInvoiceMonthCalendar({
       role="group"
       aria-label={texts.calendarAria}
     >
-      <header className="ppc-myweg-needs__month-cal-header">
+      <div className="ppc-myweg-needs__month-cal-nav-col">
         <button
           type="button"
           className="ppc-myweg-needs__month-cal-nav"
           aria-label={texts.calendarPrevMonth}
           onClick={() => onViewChange(shiftMonth(viewYear, viewMonth, -1))}
         >
-          <ChevronLeft size={16} strokeWidth={2} aria-hidden />
+          <ChevronLeft size={14} strokeWidth={2.25} aria-hidden />
         </button>
         <strong className="ppc-myweg-needs__month-cal-title">
           {monthTitle(viewYear, viewMonth)}
@@ -72,53 +72,55 @@ export function MyWegInvoiceMonthCalendar({
           aria-label={texts.calendarNextMonth}
           onClick={() => onViewChange(shiftMonth(viewYear, viewMonth, 1))}
         >
-          <ChevronRight size={16} strokeWidth={2} aria-hidden />
+          <ChevronRight size={14} strokeWidth={2.25} aria-hidden />
         </button>
-      </header>
-
-      <div className="ppc-myweg-needs__month-cal-weekdays" aria-hidden="true">
-        {WEEKDAYS.map((label, index) => (
-          <span key={`${label}-${index}`}>{label}</span>
-        ))}
       </div>
 
-      <div className="ppc-myweg-needs__month-cal-grid" role="grid">
-        {cells.map((cell) => {
-          const selectedDay =
-            selected != null &&
-            cell.iso ===
-              `${selected.year}-${String(selected.month).padStart(2, "0")}-${String(selected.day).padStart(2, "0")}`;
-          const isToday = cell.iso === todayIso;
-          const className = [
-            "ppc-myweg-needs__month-cal-day",
-            cell.inMonth ? "" : "ppc-myweg-needs__month-cal-day--muted",
-            selectedDay ? "ppc-myweg-needs__month-cal-day--selected" : "",
-            isToday ? "ppc-myweg-needs__month-cal-day--today" : "",
-          ]
-            .filter(Boolean)
-            .join(" ");
+      <div className="ppc-myweg-needs__month-cal-body">
+        <div className="ppc-myweg-needs__month-cal-weekdays" aria-hidden="true">
+          {WEEKDAYS.map((label, index) => (
+            <span key={`${label}-${index}`}>{label}</span>
+          ))}
+        </div>
 
-          return (
-            <button
-              key={cell.iso}
-              type="button"
-              className={className}
-              aria-label={cell.iso}
-              aria-pressed={selectedDay}
-              onClick={() => {
-                onSelectDate(cell.iso);
-                if (!cell.inMonth) {
-                  const parsed = parseLocalIsoDate(cell.iso);
-                  if (parsed) {
-                    onViewChange({ year: parsed.year, month: parsed.month });
+        <div className="ppc-myweg-needs__month-cal-grid" role="grid">
+          {cells.map((cell) => {
+            const selectedDay =
+              selected != null &&
+              cell.iso ===
+                `${selected.year}-${String(selected.month).padStart(2, "0")}-${String(selected.day).padStart(2, "0")}`;
+            const isToday = cell.iso === todayIso;
+            const className = [
+              "ppc-myweg-needs__month-cal-day",
+              cell.inMonth ? "" : "ppc-myweg-needs__month-cal-day--muted",
+              selectedDay ? "ppc-myweg-needs__month-cal-day--selected" : "",
+              isToday ? "ppc-myweg-needs__month-cal-day--today" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+
+            return (
+              <button
+                key={cell.iso}
+                type="button"
+                className={className}
+                aria-label={cell.iso}
+                aria-pressed={selectedDay}
+                onClick={() => {
+                  onSelectDate(cell.iso);
+                  if (!cell.inMonth) {
+                    const parsed = parseLocalIsoDate(cell.iso);
+                    if (parsed) {
+                      onViewChange({ year: parsed.year, month: parsed.month });
+                    }
                   }
-                }
-              }}
-            >
-              {cell.day}
-            </button>
-          );
-        })}
+                }}
+              >
+                {cell.day}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

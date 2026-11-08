@@ -1532,8 +1532,6 @@ export const copy = {
     },
     invoices: {
       sectionAria: "Notas fiscais emitidas observadas no MyWEG",
-      introCompact:
-        "Escolha a data no calendário ou no campo.",
       documentDateLabel: "Data do documento",
       calendarAria: "Calendário de datas do documento",
       calendarPrevMonth: "Mês anterior",
