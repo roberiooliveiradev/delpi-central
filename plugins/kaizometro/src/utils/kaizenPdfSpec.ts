@@ -68,7 +68,10 @@ function pushDateLine(
   lines.push({ label, value: formatDate(value) });
 }
 
-export function buildKaizenDelpiDocumentSpec(record: KaizenRecord): DelpiDocumentSpec {
+export function buildKaizenDelpiDocumentSpec(
+  record: KaizenRecord,
+  photos?: { dataUrl: string; photoCount: number } | null,
+): DelpiDocumentSpec {
   const title = truncateKaizenPdfText(record.title, KAIZEN_PDF_TITLE_MAX_CHARS, "Kaizen sem título");
   const status = statusLabel(record.status);
   const categories = formatCategoriesDisplay(categoriesFromRecord(record));
@@ -106,6 +109,8 @@ export function buildKaizenDelpiDocumentSpec(record: KaizenRecord): DelpiDocumen
   pushDateLine(summaryLines, "Descontinuação", record.date_discontinued);
 
   const participants = record.participants ?? [];
+  // Compacta a narrativa apenas quando há fotos, mantendo a ficha legível em A4.
+  const narrativeLimit = photos ? 180 : KAIZEN_PDF_NARRATIVE_MAX_CHARS;
   const tables =
     participants.length > 0
       ? [
@@ -133,24 +138,28 @@ export function buildKaizenDelpiDocumentSpec(record: KaizenRecord): DelpiDocumen
     textSections: [
       {
         title: "Processo",
-        body: truncateKaizenPdfText(record.process_description, KAIZEN_PDF_NARRATIVE_MAX_CHARS),
+        body: truncateKaizenPdfText(record.process_description, narrativeLimit),
       },
       {
         title: "Problema",
-        body: truncateKaizenPdfText(record.problem_description, KAIZEN_PDF_NARRATIVE_MAX_CHARS),
+        body: truncateKaizenPdfText(record.problem_description, narrativeLimit),
       },
       {
         title: "Melhoria",
-        body: truncateKaizenPdfText(record.improvement_description, KAIZEN_PDF_NARRATIVE_MAX_CHARS),
+        body: truncateKaizenPdfText(record.improvement_description, narrativeLimit),
       },
       {
         title: "Resultado esperado",
-        body: truncateKaizenPdfText(record.expected_result, KAIZEN_PDF_NARRATIVE_MAX_CHARS),
+        body: truncateKaizenPdfText(record.expected_result, narrativeLimit),
       },
     ],
     tables,
-    footerNote:
-      "Ficha resumida em uma página. Evidências, histórico de versões e changelog não entram neste PDF.",
+    imageSections: photos
+      ? [{ title: "Evidências fotográficas", dataUrl: photos.dataUrl, alt: "Fotografias do Kaizen" }]
+      : undefined,
+    footerNote: photos
+      ? "Ficha resumida. Fotos selecionadas da versão exibida; demais anexos e histórico disponíveis no Kaizômetro."
+      : "Ficha resumida. Sem fotografias nesta versão; histórico e anexos disponíveis no Kaizômetro.",
     footerContext: title,
   };
 }
