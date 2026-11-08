@@ -12,17 +12,13 @@ type NcBoardProgressSource = Pick<
   | "has_after_evidence"
 >;
 
-/**
- * Checklist alinhado a `is_nc_plan_complete` (API) + foto do antes
- * exigida para finalizar a ação (depois é opcional).
- */
+/** O progresso depende apenas do plano obrigatório; fotos são opcionais. */
 const NC_BOARD_PROGRESS_CHECKS: Array<(item: NcBoardProgressSource) => boolean> = [
   (item) => (item.description ?? "").trim().length >= 3,
   (item) => (item.root_cause ?? "").trim().length >= 3,
   (item) => (item.corrective_action ?? "").trim().length >= 3,
   (item) => (item.responsible_name ?? "").trim().length >= 2,
   (item) => Boolean(item.due_date),
-  (item) => Boolean(item.has_before_evidence),
 ];
 
 export const NC_BOARD_PROGRESS_STEP_COUNT = NC_BOARD_PROGRESS_CHECKS.length;
