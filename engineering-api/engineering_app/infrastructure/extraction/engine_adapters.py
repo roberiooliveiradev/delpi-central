@@ -798,6 +798,60 @@ class TableStructureEngine:
                     bi = spec["bbox_index"]
                     bb = page_boxes[bi] if bi < len(page_boxes) else None
                     tis = cmap.get(str(bi)) or []
+                    # Bandas Y dos tokens da célula: quando a célula
+                    # nativa cobre mais de uma linha visual (ex.: colunas
+                    # estreitas de item/qtd com passo ~20px), o texto
+                    # agregado funde linhas distintas ("C 6 D 3").
+                    # Preservar o texto por banda geométrica em
+                    # ``line_texts`` — o consumer decide se pode
+                    # distribuir pelo rowspan nativo.
+                    _tok_geom = []
+                    for ti in tis:
+                        if ti >= len(page_tokens):
+                            continue
+                        tb = page_tokens[ti].get("bounding_box_px") or []
+                        if len(tb) >= 4:
+                            _tok_geom.append(
+                                (
+                                    (float(tb[1]) + float(tb[3])) / 2.0,
+                                    (float(tb[0]) + float(tb[2])) / 2.0,
+                                    float(tb[3]) - float(tb[1]),
+                                    ti,
+                                )
+                            )
+                    line_texts: list[str] = []
+                    if len(_tok_geom) > 1:
+                        _hs = sorted(g[2] for g in _tok_geom if g[2] > 0)
+                        _med = _hs[len(_hs) // 2] if _hs else 0.0
+                        _bands: list[list[tuple]] = []
+                        for g in sorted(_tok_geom):
+                            if (
+                                _bands
+                                and _med
+                                and g[0] - max(b[0] for b in _bands[-1])
+                                > 0.6 * _med
+                            ):
+                                _bands.append([])
+                            if not _bands:
+                                _bands.append([])
+                            _bands[-1].append(g)
+                        if len(_bands) > 1:
+                            for band in _bands:
+                                line_texts.append(
+                                    " ".join(
+                                        str(
+                                            page_tokens[g[3]].get("raw_text")
+                                            or page_tokens[g[3]].get(
+                                                "normalized_text"
+                                            )
+                                            or page_tokens[g[3]].get("text")
+                                            or ""
+                                        )
+                                        for g in sorted(
+                                            band, key=lambda x: x[1]
+                                        )
+                                    ).strip()
+                                )
                     text = " ".join(
                         (
                             page_tokens[ti].get("raw_text")
@@ -811,21 +865,23 @@ class TableStructureEngine:
                     conflict_tokens = {
                         c["token_index"] for c in assoc["conflicts"]
                     }
-                    cells.append(
-                        make_cell(
-                            row=spec["row"],
-                            col=spec["col"],
-                            rowspan=spec["rowspan"],
-                            colspan=spec["colspan"],
-                            text=text,
-                            bounding_box_px=bb,
-                            token_refs=list(tis),
-                            ambiguous=bool(
-                                spec["span_conflict"]
-                                or any(ti in conflict_tokens for ti in tis)
-                            ),
-                        )
+                    _cell_out = make_cell(
+                        row=spec["row"],
+                        col=spec["col"],
+                        rowspan=spec["rowspan"],
+                        colspan=spec["colspan"],
+                        text=text,
+                        bounding_box_px=bb,
+                        token_refs=list(tis),
+                        ambiguous=bool(
+                            spec["span_conflict"]
+                            or len(line_texts) > 1
+                            or any(ti in conflict_tokens for ti in tis)
+                        ),
                     )
+                    if len(line_texts) > 1:
+                        _cell_out["line_texts"] = line_texts
+                    cells.append(_cell_out)
             _res = make_result(
                 provider_id=self.provider_id,
                 provider_version="slanet_7.67MB",

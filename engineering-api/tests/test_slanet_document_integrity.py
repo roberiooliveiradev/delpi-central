@@ -354,3 +354,26 @@ def test_produce_understanding_never_calls_pdfium_on_fetch_failure(
         )
     assert excinfo.value.code == "drawing_pdf_unavailable"
     assert source.pdf_calls == 1
+
+
+def test_line_texts_distributed_across_span_rows():
+    """Célula rowspan=2 com duas bandas Y ('C 6 D 3') → duas linhas."""
+    cells = [
+        {"row": 0, "col": 0, "text": "Item", "rowspan": 1, "colspan": 1},
+        {"row": 0, "col": 1, "text": "Codigo", "rowspan": 1, "colspan": 1},
+        {
+            "row": 1, "col": 0, "rowspan": 2, "colspan": 1,
+            "text": "C 6 D 3", "line_texts": ["C 6", "D 3"],
+        },
+        {"row": 1, "col": 1, "text": "10081389", "rowspan": 1, "colspan": 1},
+        {"row": 2, "col": 1, "text": "10081685", "rowspan": 1, "colspan": 1},
+    ]
+    from engineering_app.application.drawing.understanding import (
+        rows_from_native_cells,
+    )
+    rows, _ = rows_from_native_cells(cells, page=9)
+    assert [r["item"] for r in rows] == ["C", "D"]
+    assert [r["quantity"] for r in rows] == ["6", "3"]
+    assert [r["component_code"] for r in rows] == [
+        "10081389", "10081685",
+    ]

@@ -1442,6 +1442,24 @@ def rows_from_native_cells(
     grouped: dict[int, list[dict]] = {}
     for cell in cells:
         grouped.setdefault(int(cell.get("row") or 0), []).append(cell)
+    # Célula nativa cobrindo N linhas visuais (bandas Y distintas dos
+    # tokens) com rowspan nativo igual → distribui o texto por linha
+    # na linha âncora+i. Só quando a geometria coincide com o span —
+    # divergência permanece ambígua, nunca distribuída à força.
+    for row_index, row_cells in list(grouped.items()):
+        for cell in row_cells:
+            lines = cell.get("line_texts") or []
+            span = int(cell.get("rowspan") or 1)
+            if len(lines) > 1 and len(lines) == span:
+                cell["_split_text"] = lines[0]
+                cell["line_texts"] = []
+                for offset in range(1, span):
+                    virtual = dict(cell)
+                    virtual["_split_text"] = lines[offset]
+                    virtual["line_texts"] = []
+                    grouped.setdefault(row_index + offset, []).append(
+                        virtual
+                    )
     header_row = None
     header_score = 0
     for row_index, row_cells in grouped.items():
@@ -1485,7 +1503,9 @@ def rows_from_native_cells(
         published = []
         inconclusive = False
         for cell in row_cells:
-            text = _norm(str(cell.get("text") or ""))
+            text = _norm(
+                str(cell.get("_split_text") or cell.get("text") or "")
+            )
             col = int(cell.get("col") or 0)
             kind = col_types.get(col)
             mixed = _cell_mixes_quantity_and_code(text)
@@ -1522,6 +1542,59 @@ def rows_from_native_cells(
                 # inconclusiva em vez de virar uma ocorrência só.
                 inconclusive = True
                 fields[kind]["association_state"] = "FIELD_AMBIGUOUS"
+        # Coluna nativa fundindo item+quantidade (colunas estreitas
+        # adjacentes): após o split geométrico por linha, cada célula
+        # carrega "ITEM QTD" de UMA linha — parse de campo só nessa
+        # forma canônica e apenas quando a coluna não foi tipada.
+        if "item" not in fields or "quantity" not in fields:
+            import re as _re
+
+            for cell in row_cells:
+                if col_types.get(int(cell.get("col") or 0)) in (
+                    "component_code",
+                    "description",
+                ):
+                    continue
+                m = _re.fullmatch(
+                    r"([A-Za-z]{1,3})\s+(\d+(?:[.,]\d+)?)",
+                    _norm(
+                        str(
+                            cell.get("_split_text")
+                            or cell.get("text")
+                            or ""
+                        )
+                    ),
+                )
+                if not m:
+                    continue
+                for kind, value in (
+                    ("item", m.group(1)),
+                    ("quantity", m.group(2)),
+                ):
+                    _cur = fields.get(kind) or {}
+                    if kind not in fields or _cur.get(
+                        "normalized_value"
+                    ) in {
+                        _norm(
+                            str(
+                                cell.get("_split_text")
+                                or cell.get("text")
+                                or ""
+                            )
+                        )
+                    }:
+                        fields[kind] = {
+                            "raw_text": value,
+                            "normalized_value": value,
+                            "bounding_box_px": cell.get(
+                                "bounding_box_px"
+                            ),
+                            "col": int(cell.get("col") or 0),
+                            "association_method": (
+                                "native_cell_line_split"
+                            ),
+                            "association_state": "FIELD_IDENTIFIED",
+                        }
         rows_out.append(
             {
                 "row": row_index,
