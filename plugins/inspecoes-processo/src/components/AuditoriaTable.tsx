@@ -41,7 +41,7 @@ export function AuditoriaTable({ items }: AuditoriaTableProps) {
         <tbody>
           {items.map((item) => (
             <tr
-              key={`${item.cod_operador}-${item.op}-${item.operacao}-${item.produto}`}
+              key={`${item.filial}-${item.data_producao}-${item.turno ?? "?"}-${item.cod_operador}-${item.op}-${item.operacao}-${item.produto}`}
             >
               <td>
                 <span className={statusClass(item)}>{statusLabel(item)}</span>
