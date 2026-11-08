@@ -1567,6 +1567,7 @@ export const copy = {
         material: "Material WEG",
         delpiCode: "Código DELPI",
         description: "Descrição",
+        qty: "Qtd",
         qtyUn: "Qtd. UN",
         unit: "Unidade",
         departure: "Saída/remessa",

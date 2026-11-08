@@ -246,11 +246,6 @@ export function MyWegInvoiceObservationsPanel() {
         render: (row) => row.invoiceNumber || "—",
       },
       {
-        key: "invoiceSeries",
-        header: texts.columns.invoiceSeries,
-        render: (row) => row.invoiceSeries || "—",
-      },
-      {
         key: "materialWeg",
         header: texts.columns.material,
         render: (row) => row.materialWeg || "—",
@@ -265,21 +260,11 @@ export function MyWegInvoiceObservationsPanel() {
           "—",
       },
       {
-        key: "materialDescription",
-        header: texts.columns.description,
-        render: (row) => row.materialDescription?.trim() || "—",
-      },
-      {
         key: "quantityUn",
-        header: texts.columns.qtyUn,
+        header: texts.columns.qty,
         align: "right",
         render: (row) =>
           formatDecimalStringFixed(row.quantityUn ?? row.quantityOriginal, 3),
-      },
-      {
-        key: "sourceUnit",
-        header: texts.columns.unit,
-        render: (row) => row.sourceUnit || "—",
       },
       {
         key: "departureDate",
