@@ -8,6 +8,8 @@ export type SupplierRow = {
   supplierName: string;
   partNumber: string;
   catalogNumber: string;
+  /** Texto de busca SA2 da linha (só enquanto não há seleção oficial). */
+  query: string;
 };
 
 export function toSupplierRows(value: unknown): SupplierRow[] {
@@ -23,6 +25,7 @@ export function toSupplierRows(value: unknown): SupplierRow[] {
       supplierName: String(v.supplierName ?? ""),
       partNumber: v.partNumber == null ? "" : String(v.partNumber),
       catalogNumber: v.catalogNumber == null ? "" : String(v.catalogNumber),
+      query: "",
     }));
 }
 
@@ -34,4 +37,35 @@ export function supplierRowsToPayload(rows: SupplierRow[]) {
     partNumber: r.partNumber.trim() || "",
     catalogNumber: r.catalogNumber.trim() || null,
   }));
+}
+
+/** Linha em branco para "Adicionar fornecedor". */
+export function emptySupplierRow(): SupplierRow {
+  return {
+    supplierCode: "",
+    store: "",
+    supplierName: "",
+    partNumber: "",
+    catalogNumber: "",
+    query: "",
+  };
+}
+
+/** Índices de linhas duplicadas pela chave oficial (code, store). */
+export function duplicateSupplierIndexes(rows: SupplierRow[]): Set<number> {
+  const seen = new Map<string, number>();
+  const dups = new Set<number>();
+  rows.forEach((r, i) => {
+    const code = r.supplierCode.trim();
+    const store = r.store.trim();
+    if (!code || !store) return;
+    const key = `${code}|${store}`;
+    if (seen.has(key)) {
+      dups.add(seen.get(key) as number);
+      dups.add(i);
+    } else {
+      seen.set(key, i);
+    }
+  });
+  return dups;
 }

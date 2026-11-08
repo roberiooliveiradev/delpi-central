@@ -38,6 +38,7 @@ export const PRC_EVENT_LABELS: Record<string, string> = {
   rejected: "Solicitação rejeitada",
   completed: "Solicitação concluída",
   verification_attempted: "Verificação oficial executada",
+  verify_and_complete: "Verificação oficial e conclusão",
 };
 
 export const PRC_RESULT_LABELS: Record<string, string> = {

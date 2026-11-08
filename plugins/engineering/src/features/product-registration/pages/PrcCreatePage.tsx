@@ -13,6 +13,7 @@ import {
   EngineeringCheckboxControl,
   EngineeringDetailCard,
   EngineeringDetailFieldGrid,
+  EngineeringFieldLabel,
   EngineeringFormActions,
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
@@ -31,7 +32,6 @@ import {
   type PrcIntakeBody,
   type PrcReferenceData,
 } from "../api/productRegistrationApi";
-import { PrcSupplierLookup } from "../components/PrcSupplierLookup";
 import {
   buildPrcQueueUrl,
   EMPTY_PRC_QUEUE_URL,
@@ -44,7 +44,12 @@ import {
   PRC_FIELD_LABELS,
   PRC_SUPPLIER_LABELS,
 } from "../prcCopy";
-import type { SupplierRow } from "../prcSuppliers";
+import {
+  duplicateSupplierIndexes,
+  emptySupplierRow,
+  type SupplierRow,
+} from "../prcSuppliers";
+import { PrcSupplierCellLookup } from "../components/PrcSupplierLookup";
 
 const STEPS = [
   { id: "identify", label: "Identificação" },
@@ -79,10 +84,43 @@ function newIdemKey(): string {
 }
 
 export function PrcCreatePage({ basePath }: { basePath: string }) {
+  const CATALOG_KINDS: Record<string, string> = {
+    group: "product-groups",
+    unit: "units",
+    defaultWarehouse: "warehouses",
+    accountingAccount: "accounting-accounts",
+  };
+
   const [refData, setRefData] = useState<PrcReferenceData | null>(null);
   const [catalogs, setCatalogs] = useState<
     Record<string, { value: string; label: string }[]>
   >({});
+  const [catalogState, setCatalogState] = useState<
+    Record<string, "loading" | "ready" | "error">
+  >({});
+
+  const loadCatalog = useCallback(
+    async (path: string, signal?: AbortSignal) => {
+      const kind = CATALOG_KINDS[path];
+      if (!kind) return;
+      setCatalogState((s) => ({ ...s, [path]: "loading" }));
+      try {
+        const env = await fetchPrcCatalog(kind, undefined, signal);
+        setCatalogs((s) => ({
+          ...s,
+          [path]: env.data.items.map((i) => ({
+            value: i.code,
+            label: `${i.code} — ${i.label}`,
+          })),
+        }));
+        setCatalogState((s) => ({ ...s, [path]: "ready" }));
+      } catch {
+        setCatalogState((s) => ({ ...s, [path]: "error" }));
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
   const [loadError, setLoadError] = useState("");
   const [step, setStep] = useState(0);
 
@@ -116,27 +154,9 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
           );
         }
       });
-    /* Catálogos TOTVS via BFF (REF-011) — indisponibilidade não bloqueia
-     * o formulário; campos voltam a texto livre honesto. */
-    const kinds: Record<string, string> = {
-      group: "product-groups",
-      unit: "units",
-      defaultWarehouse: "warehouses",
-      accountingAccount: "accounting-accounts",
-    };
-    for (const [path, kind] of Object.entries(kinds)) {
-      fetchPrcCatalog(kind, undefined, controller.signal)
-        .then((env) => {
-          if (controller.signal.aborted) return;
-          setCatalogs((s) => ({
-            ...s,
-            [path]: env.data.items.map((i) => ({
-              value: i.code,
-              label: `${i.code} — ${i.label}`,
-            })),
-          }));
-        })
-        .catch(() => undefined);
+    /* Catálogos TOTVS via BFF — falha vira estado de erro explícito. */
+    for (const path of Object.keys(CATALOG_KINDS)) {
+      void loadCatalog(path, controller.signal);
     }
     return () => controller.abort();
   }, []);
@@ -190,7 +210,10 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
         (r) => !r.supplierCode.trim() || !r.store.trim() || !r.supplierName.trim(),
       );
       if (bad >= 0) {
-        return `Fornecedor ${bad + 1}: código, loja e nome são obrigatórios.`;
+        return `Fornecedor ${bad + 1}: selecione um fornecedor oficial pela busca (código, loja e nome).`;
+      }
+      if (duplicateSupplierIndexes(suppliers).size > 0) {
+        return "Há fornecedores duplicados (mesmo código e loja) — remova uma das linhas.";
       }
       if (requestType === "update" && !supplierReason.trim() && supplierTouched) {
         return "Informe a justificativa da alteração de fornecedores.";
@@ -322,7 +345,52 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
         ) : null}
         {selected ? (
           <div className="engineering-prc__edit-controls">
-            {catalogs[path]?.length ? (
+            {catalogState[path] === "error" ? (
+              <div className="engineering-prc__catalog-error">
+                <EngineeringFieldLabel
+                  htmlFor={`prc-new-${path}`}
+                  label={label}
+                />
+                <p className="engineering-prc__field-error" role="alert">
+                  Catálogo oficial indisponível — tente novamente. Valor
+                  selecionado é preservado.
+                </p>
+                <EngineeringActionButton
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => void loadCatalog(path)}
+                >
+                  Tentar novamente
+                </EngineeringActionButton>
+              </div>
+            ) : CATALOG_KINDS[path] ? (
+              <EngineeringSelectField
+                id={`prc-new-${path}`}
+                label={label}
+                hint={
+                  catalogState[path] === "loading"
+                    ? "Carregando catálogo oficial TOTVS…"
+                    : catalogs[path]?.length
+                      ? spec?.note || "Catálogo oficial TOTVS"
+                      : "Catálogo oficial sem itens disponíveis."
+                }
+                value={values[path] || ""}
+                onChange={(v) => setValue(path, v)}
+                options={catalogs[path] || []}
+                placeholderOption={
+                  catalogState[path] === "loading"
+                    ? "Carregando catálogo…"
+                    : catalogs[path]?.length
+                      ? "Selecionar…"
+                      : "Nenhum item no catálogo"
+                }
+                required={
+                  requestType === "create" &&
+                  Boolean(spec?.requiredCreateIntake)
+                }
+                disabled={busy || catalogState[path] !== "ready"}
+              />
+            ) : catalogs[path]?.length ? (
               <EngineeringSelectField
                 id={`prc-new-${path}`}
                 label={label}
@@ -528,8 +596,19 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
         <>
           {FIELD_GROUPS.map((group) => (
             <EngineeringSectionCard key={group.title} title={group.title}>
-              <div className="engineering-prc__edit-list">
-                {group.paths.map(renderSheetField)}
+              <div className="engineering-prc__form-grid">
+                {group.paths.map((path) => (
+                  <div
+                    key={path}
+                    className={
+                      path === "description" || path === "officialProductCode"
+                        ? "engineering-prc__form-grid--wide"
+                        : ""
+                    }
+                  >
+                    {renderSheetField(path)}
+                  </div>
+                ))}
               </div>
             </EngineeringSectionCard>
           ))}
@@ -541,18 +620,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               <EngineeringActionButton
                 variant="ghost"
                 disabled={busy}
-                onClick={() =>
-                  setSuppliers((rows) => [
-                    ...rows,
-                    {
-                      supplierCode: "",
-                      store: "",
-                      supplierName: "",
-                      partNumber: "",
-                      catalogNumber: "",
-                    },
-                  ])
-                }
+                onClick={() => setSuppliers((rows) => [...rows, emptySupplierRow()])}
               >
                 + Adicionar fornecedor
               </EngineeringActionButton>
@@ -576,77 +644,164 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
             ) : null}
             {requestType === "create" || selectedPaths.has("suppliers") ? (
               <>
-                {suppliers.map((row, index) => (
-                  <div key={index} className="engineering-prc__supplier-row">
-                    <PrcSupplierLookup
-                      id={`prc-new-sup-${index}`}
-                      value={
-                        row.supplierCode
-                          ? `${row.supplierCode} / ${row.store} — ${row.supplierName}`
-                          : ""
-                      }
-                      disabled={busy}
-                      onSelect={(hit) =>
-                        setSuppliers((rows) =>
-                          rows.map((r, i) =>
-                            i === index
-                              ? {
-                                  ...r,
-                                  supplierCode: String(
-                                    hit.supplier_code ?? r.supplierCode,
-                                  ),
-                                  store: String(
-                                    hit.supplier_store ?? r.store,
-                                  ),
-                                  supplierName: String(
-                                    hit.supplier_name ?? r.supplierName,
-                                  ),
-                                }
-                              : r,
-                          ),
-                        )
-                      }
-                    />
-                    <EngineeringTextField
-                      id={`prc-new-sup-pn-${index}`}
-                      label={`${PRC_SUPPLIER_LABELS.partNumber} (opcional)`}
-                      hint="Pode ficar vazio quando a fonte oficial também está vazia."
-                      value={row.partNumber}
-                      onChange={(v) =>
-                        setSuppliers((rows) =>
-                          rows.map((r, i) =>
-                            i === index ? { ...r, partNumber: v } : r,
-                          ),
-                        )
-                      }
-                      disabled={busy}
-                    />
-                    <EngineeringTextField
-                      id={`prc-new-sup-cat-${index}`}
-                      label={PRC_SUPPLIER_LABELS.catalogNumber}
-                      value={row.catalogNumber}
-                      onChange={(v) =>
-                        setSuppliers((rows) =>
-                          rows.map((r, i) =>
-                            i === index ? { ...r, catalogNumber: v } : r,
-                          ),
-                        )
-                      }
-                      disabled={busy}
-                    />
-                    <EngineeringActionButton
-                      variant="ghost"
-                      disabled={busy}
-                      onClick={() =>
-                        setSuppliers((rows) =>
-                          rows.filter((_, i) => i !== index),
-                        )
-                      }
-                    >
-                      Remover
-                    </EngineeringActionButton>
+                {suppliers.length ? (
+                  <div className="engineering-prc__supplier-table-wrap">
+                    <table className="engineering-prc__supplier-table">
+                      <caption className="engineering-prc__sr-only">
+                        Vínculos de fornecedores do produto
+                      </caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">Fornecedor</th>
+                          <th scope="col">Loja</th>
+                          <th scope="col">Nome oficial</th>
+                          <th scope="col">{PRC_SUPPLIER_LABELS.partNumber}</th>
+                          <th scope="col">{PRC_SUPPLIER_LABELS.catalogNumber}</th>
+                          <th scope="col">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {suppliers.map((row, index) => {
+                          const missing =
+                            !row.supplierCode.trim() ||
+                            !row.store.trim() ||
+                            !row.supplierName.trim();
+                          const dup =
+                            duplicateSupplierIndexes(suppliers).has(index);
+                          return (
+                            <tr
+                              key={index}
+                              className={missing || dup ? "engineering-prc__supplier-tr--error" : ""}
+                            >
+                              <td data-label="Fornecedor">
+                                <PrcSupplierCellLookup
+                                  id={`prc-new-sup-${index}`}
+                                  displayValue={
+                                    row.supplierCode
+                                      ? `${row.supplierCode} / ${row.store} — ${row.supplierName}`
+                                      : ""
+                                  }
+                                  query={row.query}
+                                  disabled={busy}
+                                  onQueryChange={(v) =>
+                                    setSuppliers((rows) =>
+                                      rows.map((r, i) =>
+                                        i === index ? { ...r, query: v } : r,
+                                      ),
+                                    )
+                                  }
+                                  onSelect={(hit) =>
+                                    setSuppliers((rows) =>
+                                      rows.map((r, i) =>
+                                        i === index
+                                          ? {
+                                              ...r,
+                                              supplierCode: String(
+                                                hit.supplier_code ?? "",
+                                              ),
+                                              store: String(
+                                                hit.supplier_store ?? "",
+                                              ),
+                                              supplierName: String(
+                                                hit.supplier_name ?? "",
+                                              ),
+                                              query: "",
+                                            }
+                                          : r,
+                                      ),
+                                    )
+                                  }
+                                  onClear={() =>
+                                    setSuppliers((rows) =>
+                                      rows.map((r, i) =>
+                                        i === index
+                                          ? {
+                                              ...r,
+                                              supplierCode: "",
+                                              store: "",
+                                              supplierName: "",
+                                              query: "",
+                                            }
+                                          : r,
+                                      ),
+                                    )
+                                  }
+                                />
+                                {missing ? (
+                                  <span className="engineering-prc__field-error" role="alert">
+                                    Selecione um fornecedor oficial.
+                                  </span>
+                                ) : null}
+                                {dup && !missing ? (
+                                  <span className="engineering-prc__field-error" role="alert">
+                                    Vínculo duplicado (mesmo código e loja).
+                                  </span>
+                                ) : null}
+                              </td>
+                              <td data-label="Loja">{row.store || "—"}</td>
+                              <td data-label="Nome oficial">{row.supplierName || "—"}</td>
+                              <td data-label={PRC_SUPPLIER_LABELS.partNumber}>
+                                <input
+                                  id={`prc-new-sup-pn-${index}`}
+                                  type="text"
+                                  className="engineering-prc__cell-input"
+                                  aria-label={`${PRC_SUPPLIER_LABELS.partNumber} (opcional)`}
+                                  title="Opcional — pode ficar vazio quando a fonte oficial também está vazia."
+                                  value={row.partNumber}
+                                  disabled={busy}
+                                  onChange={(e) =>
+                                    setSuppliers((rows) =>
+                                      rows.map((r, i) =>
+                                        i === index
+                                          ? { ...r, partNumber: e.target.value }
+                                          : r,
+                                      ),
+                                    )
+                                  }
+                                />
+                              </td>
+                              <td data-label={PRC_SUPPLIER_LABELS.catalogNumber}>
+                                <input
+                                  id={`prc-new-sup-cat-${index}`}
+                                  type="text"
+                                  className="engineering-prc__cell-input"
+                                  aria-label={PRC_SUPPLIER_LABELS.catalogNumber}
+                                  value={row.catalogNumber}
+                                  disabled={busy}
+                                  onChange={(e) =>
+                                    setSuppliers((rows) =>
+                                      rows.map((r, i) =>
+                                        i === index
+                                          ? {
+                                              ...r,
+                                              catalogNumber: e.target.value,
+                                            }
+                                          : r,
+                                      ),
+                                    )
+                                  }
+                                />
+                              </td>
+                              <td data-label="Ações">
+                                <EngineeringActionButton
+                                  variant="ghost"
+                                  disabled={busy}
+                                  onClick={() =>
+                                    setSuppliers((rows) =>
+                                      rows.filter((_, i) => i !== index),
+                                    )
+                                  }
+                                >
+                                  Remover
+                                </EngineeringActionButton>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
+                ) : null}
                 {!suppliers.length ? (
                   <p className="engineering-prc__muted">
                     Nenhum fornecedor adicionado.

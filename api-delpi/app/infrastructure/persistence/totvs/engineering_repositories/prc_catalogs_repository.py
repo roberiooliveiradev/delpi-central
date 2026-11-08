@@ -5,7 +5,7 @@ allowlist ``_SOURCES``, consultas parametrizadas, limitadas e excluindo
 registros logicamente removidos (``D_E_L_E_T_ = ''``).
 
 - ``product-groups``       → SBM010  (B1_GRUPO, BM_GRUPO + BM_DESC)
-- ``units``                → SAH010  (B1_UM, AH_UNIMES + AH_DESCPO)
+- ``units``                → SAH010  (B1_UM, AH_UNIMED + AH_DESCPO)
 - ``warehouses``           → NNR010  (B1_LOCPAD, NNR_CODIGO + NNR_DESCRI)
 - ``accounting-accounts``  → CT1010  (B1_CONTA, CT1_CONTA + CT1_DESC01)
 """
@@ -37,12 +37,12 @@ _SOURCES: dict[str, dict[str, str]] = {
         "order": "BM_GRUPO",
     },
     "units": {
-        "select": "RTRIM(AH_UNIMES) AS code, RTRIM(AH_DESCPO) AS label, 0 AS disabled",
+        "select": "RTRIM(AH_UNIMED) AS code, RTRIM(AH_DESCPO) AS label, 0 AS disabled",
         "from": "SAH010",
         "where": "AH_FILIAL = ''",
-        "code_col": "AH_UNIMES",
+        "code_col": "AH_UNIMED",
         "label_col": "AH_DESCPO",
-        "order": "AH_UNIMES",
+        "order": "AH_UNIMED",
     },
     "warehouses": {
         "select": "RTRIM(NNR_CODIGO) AS code, RTRIM(NNR_DESCRI) AS label, 0 AS disabled",
@@ -98,7 +98,8 @@ class PrcCatalogsRepository(BaseRepository):
             f"WHERE {' AND '.join(where)} "
             f"ORDER BY {source['order']}"
         )
-        rows = self.execute_query(sql, tuple(params))
+        with self as repo:
+            rows = repo.execute_query(sql, tuple(params))
         has_more = len(rows) > limit
         items = rows[:limit]
         return items, has_more

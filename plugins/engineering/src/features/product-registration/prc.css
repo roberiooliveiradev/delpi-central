@@ -217,3 +217,119 @@
     align-items: stretch;
   }
 }
+
+.engineering-prc__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.engineering-prc__catalog-error {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.engineering-prc__supplier-table-wrap {
+  overflow-x: auto;
+}
+
+.engineering-prc__supplier-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.engineering-prc__supplier-table th {
+  text-align: left;
+  padding: 6px 10px;
+  color: var(--en-text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--en-border);
+  white-space: nowrap;
+}
+
+.engineering-prc__supplier-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--en-border);
+  vertical-align: top;
+}
+
+.engineering-prc__supplier-tr--error td {
+  background: rgba(176, 0, 32, 0.04);
+}
+
+.engineering-prc__cell-input,
+.engineering-prc__lookup-input {
+  width: 100%;
+  min-width: 120px;
+  padding: 6px 8px;
+  border: 1px solid var(--en-border);
+  border-radius: 6px;
+  font: inherit;
+  background: var(--en-surface);
+  color: var(--en-text);
+}
+
+.engineering-prc__cell-input:focus-visible,
+.engineering-prc__lookup-input:focus-visible {
+  outline: 2px solid var(--en-accent);
+  outline-offset: 1px;
+}
+
+.engineering-prc__lookup-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.engineering-prc__lookup-clear {
+  border: 0;
+  background: none;
+  color: var(--en-accent);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+}
+
+.engineering-prc__lookup-clear:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .engineering-prc__supplier-table thead {
+    display: none;
+  }
+  .engineering-prc__supplier-table,
+  .engineering-prc__supplier-table tbody,
+  .engineering-prc__supplier-table tr,
+  .engineering-prc__supplier-table td {
+    display: block;
+    width: 100%;
+  }
+  .engineering-prc__supplier-table tr {
+    border: 1px solid var(--en-border);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 6px;
+  }
+  .engineering-prc__supplier-table td {
+    border-bottom: 0;
+    padding: 4px 6px;
+  }
+  .engineering-prc__supplier-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--en-text-muted);
+    margin-bottom: 2px;
+  }
+}

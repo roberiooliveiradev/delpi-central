@@ -1,7 +1,10 @@
 /** Histórico do caso — ledger append-only mapeado para
  * EngineeringTimeline (ordem real de sequence_number). */
 
-import { EngineeringTimeline } from "../../../ui/engineeringUi";
+import {
+  EngineeringInitialsAvatar,
+  EngineeringTimeline,
+} from "../../../ui/engineeringUi";
 import type { PrcTimelineEvent } from "../api/productRegistrationApi";
 import {
   PRC_EVENT_LABELS,
@@ -36,6 +39,9 @@ export function PrcTimelineSection({
       return {
         id: ev.id,
         title: PRC_EVENT_LABELS[ev.event_type] || ev.event_type,
+        marker: (
+          <EngineeringInitialsAvatar name={actorLabel(ev)} size="sm" />
+        ),
         occurredAt: ev.occurred_at,
         timeLabel: new Date(ev.occurred_at).toLocaleString("pt-BR"),
         detail: (

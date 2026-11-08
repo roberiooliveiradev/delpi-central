@@ -476,6 +476,7 @@ export function PrcTechnicalSheet({
                           supplierName: "",
                           partNumber: "",
                           catalogNumber: "",
+                          query: "",
                         },
                       ])
                     }

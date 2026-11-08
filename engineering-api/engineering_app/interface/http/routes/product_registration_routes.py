@@ -33,6 +33,13 @@ from engineering_app.domain.product_registration.errors import (
     PrcValidationError,
 )
 from engineering_app.domain.product_registration.models import ENG_ACCESS
+from engineering_app.infrastructure.gateways.core_identity_lookup import (
+    collect_identity_subjects,
+    enrich_queue_items,
+    enrich_request_identity,
+    enrich_timeline_events,
+    lookup_display_identities,
+)
 from engineering_app.middleware.request_observability_middleware import (
     get_request_id,
 )
@@ -59,6 +66,23 @@ def _user(operation_id: str):
 
 def _actor(user, channel: str = "portal"):
     return prc_actor_from_principal(user, channel=channel)
+
+
+async def _enrich_identity(user, payload, kind: str, apply_fn):
+    """Resolução batch governada (Core directory lookup) para linhas
+    sem snapshot de nome — best-effort: falha retorna payload intacto."""
+    subjects = collect_identity_subjects(payload, kind)
+    if not subjects:
+        return payload
+    access_token = str(getattr(user, "access_token", "") or "")
+    if not access_token:
+        return payload
+    identities = await lookup_display_identities(
+        subjects, access_token=access_token
+    )
+    if not identities:
+        return payload
+    return apply_fn(payload, identities)
 
 
 def _err(exc: Exception, operation_id: str):
@@ -285,6 +309,7 @@ async def prc_list_requests(
         )
     except Exception as exc:
         return _err(exc, op)
+    data = await _enrich_identity(user, data, "queue", enrich_queue_items)
     return ok(data, message="Fila carregada.", operation_id=op)
 
 
@@ -309,6 +334,7 @@ async def prc_get_request(request_id: str = Path(...)):
         data = build_prc_service().get_request_detail(rid, actor=_actor(user))
     except Exception as exc:
         return _err(exc, op)
+    data = await _enrich_identity(user, data, "detail", enrich_request_identity)
     return ok(data, message="Solicitação carregada.", operation_id=op)
 
 
@@ -339,6 +365,7 @@ async def prc_get_timeline(
         )
     except Exception as exc:
         return _err(exc, op)
+    data = await _enrich_identity(user, data, "timeline", enrich_timeline_events)
     return ok(data, message="Timeline carregada.", operation_id=op)
 
 

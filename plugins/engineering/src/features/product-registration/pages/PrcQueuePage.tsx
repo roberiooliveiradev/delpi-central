@@ -429,10 +429,7 @@ export function PrcQueuePage({ basePath }: { basePath: string }) {
 
           {layout === "cards" ? (
             <>
-              <EngineeringDataCardsGrid
-                ariaLabel="Solicitações em cards"
-                empty={<EngineeringEmptyState message={PRC_COPY.emptyFiltered} />}
-              >
+              <EngineeringDataCardsGrid ariaLabel="Solicitações em cards">
                 {list.items.map((row) => (
                   <EngineeringInteractiveDataCard
                     key={row.id}
