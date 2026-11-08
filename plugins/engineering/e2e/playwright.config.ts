@@ -17,6 +17,11 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "off",
+    /* Permite apontar para um chrome já instalado quando o headless
+     * shell do playwright não está baixado (dev local). */
+    launchOptions: process.env.PLAYWRIGHT_CHROME_PATH
+      ? { executablePath: process.env.PLAYWRIGHT_CHROME_PATH }
+      : {},
   },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },

@@ -3,6 +3,7 @@ import {
   catalogSearchBarBemClasses,
   ChartCard as DelpiChartCard,
   chartCardBemClasses,
+  createDashboardSelectField,
   createDashboardCatalogSearchBar,
   createDashboardChartToolbarKit,
   createDashboardCommandPalette,
@@ -38,6 +39,7 @@ import {
   ghostBtnBemClasses,
   createDashboardPageHero,
   createDashboardPagePath,
+  selectFieldPacClasses,
   createDashboardRecentAccessStrip,
   createDashboardSectionCard,
   createDashboardSectionRouteCard,
@@ -327,6 +329,26 @@ export const EngineeringFormFieldShell = engineeringNativeFormFields.FormFieldSh
 export const EngineeringTextField = engineeringNativeFormFields.TextField;
 export const EngineeringSelectField = engineeringNativeFormFields.SelectField;
 export const EngineeringTextAreaField = engineeringNativeFormFields.TextAreaField;
+
+/** Select rico do kit (trigger + painel ancorado, busca por label,
+ * listbox a11y) — componente canônico para campos com opções reais
+ * (catálogos TOTVS, enums de domínio). O `<select>` nativo acima só
+ * deve ser usado para opções triviais sem busca. */
+const engineeringSelectClasses = selectFieldPacClasses(ENG_UI_PREFIX);
+export const EngineeringSearchableSelect = createDashboardSelectField({
+  field: engineeringSelectClasses.field,
+  control: engineeringSelectClasses.control,
+  labels: {
+    placeholder: "Selecionar…",
+    emptyLabel: "Nenhuma opção",
+    control: {
+      searchPlaceholder: "Buscar por código ou descrição…",
+      emptyOptions: "Nenhum item encontrado.",
+      searchAriaLabel: (label) =>
+        label ? `Buscar em ${label}` : "Buscar opções",
+    },
+  },
+});
 
 /** Checkbox nativo do kit (seleção explícita de paths em UPDATE). */
 export const EngineeringCheckboxControl = NativeCheckboxControl;

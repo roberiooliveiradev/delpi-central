@@ -90,6 +90,11 @@ _PRODUCT_FIELDS: tuple[FieldSpec, ...] = (
         verifiable=True,
         official_field="type",
         official_source="products.detail",
+        # Opções oficiais do domínio (protheus_product_types da plataforma):
+        # MP matéria-prima · PA produto acabado · PI produto intermediário.
+        # `kind` permanece "code" — o backend não rejeita outros B1_TIPO
+        # legados válidos (MC, II, …); enumValues só anuncia as opções.
+        enum_values=("MP", "PA", "PI"),
         max_length=8,
         note="B1_TIPO — legado `tipo` (ex.: MP).",
     ),

@@ -495,13 +495,19 @@ declare module "@delpi/plugin-ui/index" {
   };
 
   export type DashboardSelectFieldProps = {
+    id?: string;
     label: string;
     value: string;
     onChange: (value: string) => void;
     options: readonly SelectFieldOption[];
     hint?: string;
     disabled?: boolean;
+    required?: boolean;
     searchable?: boolean;
+    placeholder?: string;
+    allowEmpty?: boolean;
+    emptyLabel?: string;
+    className?: string;
   };
 
   export function createDashboardSelectField(config: {

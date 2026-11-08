@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
+from app.interface.http.routes.engineering import prc_catalogs_router
 from app.infrastructure.persistence.totvs.engineering_repositories.prc_catalogs_repository import (
     PRC_CATALOG_KINDS,
     PrcCatalogsRepository,
 )
+from delpi_auth.request_context import clear_current_user, set_current_user
 
 
 class _FakeRepo(PrcCatalogsRepository):
@@ -87,3 +91,45 @@ class TestCatalogKinds:
             "warehouses",
             "accounting-accounts",
         }
+
+
+class TestRepositoryIsolation:
+    """Regressão D7: o router mantinha ``_CATALOG_REPOSITORY`` singleton.
+    ``BaseRepository`` guarda conexão/cursor em ``self`` — com a página
+    disparando os 4 catálogos em paralelo, o ``__exit__`` de uma request
+    zerava o cursor da outra → ``'NoneType' object has no attribute
+    'fetchall'`` → 500 → BFF 503. Cada request deve instanciar o
+    repositório."""
+
+    def test_router_creates_fresh_repository_per_request(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        created: list[object] = []
+
+        class _CountingRepo:
+            def __init__(self) -> None:
+                created.append(self)
+
+            def list_catalog_items(self, catalog, *, query=None, limit=200):
+                return [], False
+
+        monkeypatch.setattr(
+            prc_catalogs_router, "PrcCatalogsRepository", _CountingRepo
+        )
+        set_current_user(SimpleNamespace(is_superadmin=True))
+        try:
+            prc_catalogs_router.list_prc_catalog_items("units")
+            prc_catalogs_router.list_prc_catalog_items("product-groups")
+        finally:
+            clear_current_user()
+
+        assert len(created) == 2
+        assert created[0] is not created[1]
+
+    def test_router_module_has_no_shared_repository(self):
+        shared = [
+            name
+            for name, value in vars(prc_catalogs_router).items()
+            if isinstance(value, PrcCatalogsRepository)
+        ]
+        assert shared == []

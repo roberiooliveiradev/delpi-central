@@ -699,6 +699,17 @@ class TestReferenceData:
             f for f in data["fields"] if f["path"] == "accountingAccount"
         )
         assert spec["verifiable"] is True
+        kind_spec = next(
+            f for f in data["fields"] if f["path"] == "productKind"
+        )
+        # Enum oficial do domínio (B1_TIPO canônico) anunciado ao MFE;
+        # kind permanece "code" — backend não rejeita outros tipos legados.
+        assert kind_spec["kind"] == "code"
+        assert kind_spec["enumValues"] == ["MP", "PA", "PI"]
+        third_party = next(
+            f for f in data["fields"] if f["path"] == "thirdPartyProduct"
+        )
+        assert third_party["enumValues"] == ["1", "2"]
         assert "suppliers" in data["editableDraftPaths"]
         assert data["permissions"]["access"] == "engineering.access"
 

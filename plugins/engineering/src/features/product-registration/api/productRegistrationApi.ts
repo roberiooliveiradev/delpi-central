@@ -188,9 +188,11 @@ export async function fetchPrcCatalog(
   catalog: string,
   query?: string,
   signal?: AbortSignal,
+  limit?: number,
 ): Promise<Envelope<{ items: PrcCatalogItem[]; hasMore: boolean }>> {
   const qs = new URLSearchParams();
   if (query) qs.set("query", query);
+  if (limit) qs.set("limit", String(limit));
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
   return getJson(
     `${BASE}/reference-data/catalogs/${catalog}${suffix}`,

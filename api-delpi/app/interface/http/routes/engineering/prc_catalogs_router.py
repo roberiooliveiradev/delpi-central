@@ -31,8 +31,6 @@ router = APIRouter(
     tags=["Engineering — Product Registration"],
 )
 
-_CATALOG_REPOSITORY = PrcCatalogsRepository()
-
 
 @router.get("/catalogs/{catalog}", operation_id="prc_catalog_items")
 @require_any_permission(ENGINEERING_LMP_ACCESS)
@@ -50,7 +48,10 @@ def list_prc_catalog_items(
             "Catálogo não suportado.", status_code=404
         )
     try:
-        items, has_more = _CATALOG_REPOSITORY.list_catalog_items(
+        # Instância por request: BaseRepository guarda conexão/cursor em
+        # self — compartilhar singleton entre requests concorrentes faz uma
+        # thread zerar o cursor da outra ('NoneType' … 'fetchall').
+        items, has_more = PrcCatalogsRepository().list_catalog_items(
             catalog, query=query, limit=limit
         )
         return api_delpi_success(

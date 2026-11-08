@@ -5,7 +5,14 @@
  * `requesterSubject` nunca é forjado — o backend deriva do JWT.
  * `source` vem da allowlist do reference-data ("portal-engineering"). */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import { HomeApiError } from "../../../api/httpClient";
 import {
@@ -13,20 +20,25 @@ import {
   EngineeringCheckboxControl,
   EngineeringDetailCard,
   EngineeringDetailFieldGrid,
-  EngineeringFieldLabel,
   EngineeringFormActions,
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
   EngineeringPagePath,
   EngineeringProgressTracker,
+  EngineeringSearchableSelect,
   EngineeringSectionCard,
   EngineeringSegmentToggle,
-  EngineeringSelectField,
   EngineeringStateBanner,
   EngineeringTextField,
 } from "../../../ui/engineeringUi";
 import {
-  fetchPrcCatalog,
+  enumOptions,
+  PRC_CATALOG_KINDS,
+  PrcCatalogStore,
+  withSelectedOption,
+  type PrcCatalogView,
+} from "../prcCatalogs";
+import {
   fetchPrcReferenceData,
   prcIntakeSubmit,
   type PrcIntakeBody,
@@ -84,42 +96,13 @@ function newIdemKey(): string {
 }
 
 export function PrcCreatePage({ basePath }: { basePath: string }) {
-  const CATALOG_KINDS: Record<string, string> = {
-    group: "product-groups",
-    unit: "units",
-    defaultWarehouse: "warehouses",
-    accountingAccount: "accounting-accounts",
-  };
-
   const [refData, setRefData] = useState<PrcReferenceData | null>(null);
-  const [catalogs, setCatalogs] = useState<
-    Record<string, { value: string; label: string }[]>
-  >({});
-  const [catalogState, setCatalogState] = useState<
-    Record<string, "loading" | "ready" | "error">
-  >({});
-
-  const loadCatalog = useCallback(
-    async (path: string, signal?: AbortSignal) => {
-      const kind = CATALOG_KINDS[path];
-      if (!kind) return;
-      setCatalogState((s) => ({ ...s, [path]: "loading" }));
-      try {
-        const env = await fetchPrcCatalog(kind, undefined, signal);
-        setCatalogs((s) => ({
-          ...s,
-          [path]: env.data.items.map((i) => ({
-            value: i.code,
-            label: `${i.code} — ${i.label}`,
-          })),
-        }));
-        setCatalogState((s) => ({ ...s, [path]: "ready" }));
-      } catch {
-        setCatalogState((s) => ({ ...s, [path]: "error" }));
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+  /* Store estável por instância — init lazy via useState (nunca recriado
+   * em re-render; o estado dos catálogos vive fora do React state). */
+  const [catalogStore] = useState(() => new PrcCatalogStore());
+  const catalogViews = useSyncExternalStore(
+    catalogStore.subscribe,
+    catalogStore.getSnapshot,
   );
   const [loadError, setLoadError] = useState("");
   const [step, setStep] = useState(0);
@@ -154,12 +137,14 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
           );
         }
       });
-    /* Catálogos TOTVS via BFF — falha vira estado de erro explícito. */
-    for (const path of Object.keys(CATALOG_KINDS)) {
-      void loadCatalog(path, controller.signal);
-    }
-    return () => controller.abort();
-  }, []);
+    /* Catálogos TOTVS via BFF — `idle → loading → success|empty|error`;
+     * requests obsoletas são abortadas no unmount e nunca gravam estado. */
+    catalogStore.loadAll(Object.keys(PRC_CATALOG_KINDS), controller.signal);
+    return () => {
+      controller.abort();
+      catalogStore.abortAll();
+    };
+  }, [catalogStore]);
 
   const specByPath = useMemo(
     () => new Map((refData?.fields || []).map((s) => [s.path, s] as const)),
@@ -320,6 +305,77 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
     }
   };
 
+  const renderCatalogField = (
+    path: string,
+    spec: PrcReferenceData["fields"][number] | undefined,
+    label: string,
+  ) => {
+    const view: PrcCatalogView =
+      catalogViews.get(path) ?? {
+        status: "idle",
+        options: [],
+        hasMore: false,
+      };
+    const selected = values[path] || "";
+    const options = withSelectedOption(view.options, selected);
+    const loading = view.status === "loading" || view.status === "idle";
+    const hint = loading
+      ? "Carregando catálogo oficial TOTVS…"
+      : view.status === "empty"
+        ? "Catálogo oficial sem itens disponíveis."
+        : view.status === "error"
+          ? "Falha ao consultar o catálogo oficial TOTVS."
+          : spec?.note || "Catálogo oficial TOTVS";
+    return (
+      <>
+        <EngineeringSearchableSelect
+          id={`prc-new-${path}`}
+          label={label}
+          hint={hint}
+          searchable
+          value={selected}
+          onChange={(v) => setValue(path, v)}
+          options={options}
+          placeholder={
+            loading ? "Carregando catálogo…" : "Selecionar…"
+          }
+          required={
+            requestType === "create" &&
+            Boolean(spec?.requiredCreateIntake)
+          }
+          disabled={
+            busy ||
+            loading ||
+            view.status === "empty" ||
+            (view.status === "error" && !options.length)
+          }
+        />
+        {view.status === "error" ? (
+          <div className="engineering-prc__catalog-error">
+            <p className="engineering-prc__field-error" role="alert">
+              {selected
+                ? "Catálogo oficial indisponível — valor selecionado preservado, ainda não revalidado."
+                : "Catálogo oficial indisponível — tente novamente."}
+            </p>
+            <EngineeringActionButton
+              variant="ghost"
+              disabled={busy}
+              onClick={() => catalogStore.retry(path)}
+            >
+              Tentar novamente
+            </EngineeringActionButton>
+          </div>
+        ) : null}
+        {view.hasMore ? (
+          <p className="engineering-prc__muted">
+            Exibindo os primeiros {view.options.length} itens — refine
+            pela busca.
+          </p>
+        ) : null}
+      </>
+    );
+  };
+
   const renderSheetField = (path: string) => {
     const spec = specByPath.get(path);
     const label = PRC_FIELD_LABELS[path] || path;
@@ -345,77 +401,17 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
         ) : null}
         {selected ? (
           <div className="engineering-prc__edit-controls">
-            {catalogState[path] === "error" ? (
-              <div className="engineering-prc__catalog-error">
-                <EngineeringFieldLabel
-                  htmlFor={`prc-new-${path}`}
-                  label={label}
-                />
-                <p className="engineering-prc__field-error" role="alert">
-                  Catálogo oficial indisponível — tente novamente. Valor
-                  selecionado é preservado.
-                </p>
-                <EngineeringActionButton
-                  variant="ghost"
-                  disabled={busy}
-                  onClick={() => void loadCatalog(path)}
-                >
-                  Tentar novamente
-                </EngineeringActionButton>
-              </div>
-            ) : CATALOG_KINDS[path] ? (
-              <EngineeringSelectField
-                id={`prc-new-${path}`}
-                label={label}
-                hint={
-                  catalogState[path] === "loading"
-                    ? "Carregando catálogo oficial TOTVS…"
-                    : catalogs[path]?.length
-                      ? spec?.note || "Catálogo oficial TOTVS"
-                      : "Catálogo oficial sem itens disponíveis."
-                }
-                value={values[path] || ""}
-                onChange={(v) => setValue(path, v)}
-                options={catalogs[path] || []}
-                placeholderOption={
-                  catalogState[path] === "loading"
-                    ? "Carregando catálogo…"
-                    : catalogs[path]?.length
-                      ? "Selecionar…"
-                      : "Nenhum item no catálogo"
-                }
-                required={
-                  requestType === "create" &&
-                  Boolean(spec?.requiredCreateIntake)
-                }
-                disabled={busy || catalogState[path] !== "ready"}
-              />
-            ) : catalogs[path]?.length ? (
-              <EngineeringSelectField
-                id={`prc-new-${path}`}
-                label={label}
-                hint={spec?.note || "Catálogo oficial TOTVS"}
-                value={values[path] || ""}
-                onChange={(v) => setValue(path, v)}
-                options={catalogs[path]}
-                placeholderOption="Selecionar…"
-                required={
-                  requestType === "create" &&
-                  Boolean(spec?.requiredCreateIntake)
-                }
-                disabled={busy}
-              />
+            {PRC_CATALOG_KINDS[path] ? (
+              renderCatalogField(path, spec, label)
             ) : spec?.enumValues?.length ? (
-              <EngineeringSelectField
+              <EngineeringSearchableSelect
                 id={`prc-new-${path}`}
                 label={label}
                 hint={spec.note || undefined}
                 value={values[path] || ""}
                 onChange={(v) => setValue(path, v)}
-                options={spec.enumValues.map((v) => ({
-                  value: v,
-                  label: v,
-                }))}
+                options={enumOptions(path, spec.enumValues)}
+                placeholder="Selecionar…"
                 required={Boolean(spec.requiredCreateIntake)}
                 disabled={busy}
               />

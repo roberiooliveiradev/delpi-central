@@ -89,6 +89,23 @@ export const PRC_SUPPLIER_LABELS: Record<string, string> = {
   catalogNumber: "Catálogo",
 };
 
+/** Rótulos funcionais pt-BR dos enums de domínio (códigos vêm do
+ * catálogo canônico do backend; descrições são conteúdo de UI). */
+export const PRC_ENUM_OPTION_LABELS: Record<
+  string,
+  Record<string, string>
+> = {
+  productKind: {
+    MP: "Matéria-prima",
+    PA: "Produto acabado",
+    PI: "Produto intermediário",
+  },
+  thirdPartyProduct: {
+    "1": "Não",
+    "2": "Sim",
+  },
+};
+
 export const PRC_COPY = {
   breadcrumbHome: "Início",
   breadcrumbRoot: "Controle e Cadastro de Produtos",
