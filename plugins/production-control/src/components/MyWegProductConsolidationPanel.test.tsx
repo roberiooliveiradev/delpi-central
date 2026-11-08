@@ -14,14 +14,6 @@ const fetchObservationItems = vi.fn();
 
 vi.mock("@delpi/plugin-ui/index", () => ({
   HelpTooltip: () => null,
-  createDashboardKpiCard: () =>
-    function MockKpiCard({ title, value }: { title: string; value: string }) {
-      return (
-        <div data-testid={`kpi-${title}`}>
-          {title}: {value}
-        </div>
-      );
-    },
 }));
 
 vi.mock("../api/ppcApi", () => ({
@@ -563,7 +555,7 @@ describe("MyWegProductConsolidationPanel", () => {
     });
   });
 
-  it("exibe cobertura completa sem NF e ajuste nulo como Não disponível", async () => {
+  it("exibe NF zero como fato e ajuste nulo como Não disponível na tabela", async () => {
     fetchProducts.mockResolvedValue(
       portalPayload({
         totals: {
@@ -588,6 +580,7 @@ describe("MyWegProductConsolidationPanel", () => {
             observedDeltaUn: "0",
             postedQuantityUn: "0",
             adjustedPlanningDeltaUn: null,
+            residualUnexplainedUn: null,
             invoiceMatchStatus: "none",
             managerialStatus: "other_movement",
             portalInvoiceMaterials: [],
@@ -602,11 +595,9 @@ describe("MyWegProductConsolidationPanel", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("kpi-Cobertura fiscal").textContent).toMatch(
-        /Sem NF confirmado/i,
-      );
+      expect(screen.getByTestId("col-posted").textContent).toContain("0");
     });
-    expect(screen.getByTestId("kpi-Variação ajustada estimada").textContent).toContain(
+    expect(screen.getByTestId("col-residual").textContent).toContain(
       "Não disponível",
     );
   });
@@ -650,23 +641,20 @@ describe("MyWegProductConsolidationPanel", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("kpi-NF MyWEG no período").textContent).toContain(
+      expect(screen.getByTestId("col-posted").textContent).toContain(
         "Não disponível",
       );
     });
-    expect(screen.getByTestId("kpi-Cobertura fiscal").textContent).toContain(
-      "Cobertura parcial",
-    );
     expect(screen.getByTestId("col-managerial").textContent).toMatch(
       /Conciliação pendente/i,
     );
   });
 
-  it("trata importação pendente, conflito e indisponível", async () => {
-    for (const [status, label] of [
-      ["pending_invoice_ingestion", "Aguardando importação fiscal"],
-      ["conflict", "Divergência entre observações"],
-      ["unavailable", "Dados fiscais indisponíveis"],
+  it("trata importação pendente, conflito e indisponível como conciliação pendente", async () => {
+    for (const status of [
+      "pending_invoice_ingestion",
+      "conflict",
+      "unavailable",
     ] as const) {
       cleanup();
       fetchProducts.mockResolvedValue(
@@ -685,14 +673,27 @@ describe("MyWegProductConsolidationPanel", () => {
             coveredDayCount: 0,
             missingDayCount: 1,
           },
+          items: [
+            {
+              ...basePayload.items[0],
+              managerialStatus: "reconciliation_pending",
+              postedQuantityUn: null,
+              invoiceMatchStatus:
+                status === "conflict"
+                  ? "conflict"
+                  : status === "unavailable"
+                    ? "unavailable"
+                    : "partial_coverage",
+            },
+          ],
         }),
       );
       render(
         <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
       );
       await waitFor(() => {
-        expect(screen.getByTestId("kpi-Cobertura fiscal").textContent).toContain(
-          label,
+        expect(screen.getByTestId("col-managerial").textContent).toMatch(
+          /Conciliação pendente/i,
         );
       });
     }
@@ -895,11 +896,12 @@ describe("MyWegProductConsolidationPanel", () => {
     resolveFirst(basePayload);
 
     await waitFor(() => {
-      expect(screen.getByTestId("kpi-NF MyWEG no período")).toBeTruthy();
+      expect(screen.getByTestId("products-table")).toBeTruthy();
     });
     expect(screen.getByText("Diferença líquida")).toBeTruthy();
     expect(
       screen.getByText((_, node) => node?.textContent?.trim() === "0 UN"),
     ).toBeTruthy();
+    expect(screen.getByTestId("col-posted").textContent).toContain("10");
   });
 });

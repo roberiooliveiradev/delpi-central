@@ -1,18 +1,5 @@
-import {
-  createDashboardKpiCard,
-  HelpTooltip,
-} from "@delpi/plugin-ui/index";
-import {
-  ArrowLeftRight,
-  CalendarDays,
-  Check,
-  FileText,
-  Layers,
-  RefreshCw,
-  ShieldAlert,
-  TrendingDown,
-  TrendingUp,
-} from "lucide-react";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { ArrowLeftRight, Check, Layers, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -33,11 +20,7 @@ import { formatDecimalString } from "../utils/formatDecimalString";
 import { formatPercentDisplay } from "../utils/formatPercentDisplay";
 import {
   canShowPostedAsFact,
-  completeCoverageDetailLabel,
-  coverageStatusLabel,
   formatNullableDecimal,
-  isCoverageComplete,
-  lastCoveredDocumentDate,
   managerialBadgeClass,
   managerialStatusHint,
   managerialStatusLabel,
@@ -62,11 +45,6 @@ const texts = copy.mywegNeeds.evolution.products;
 const PAGE_SIZE = 50;
 const PENDING_POLL_MS = 60_000;
 const MAX_ITEM_PAGES = 10;
-
-const KpiCard = createDashboardKpiCard({
-  prefix: "ppc",
-  labels: copy.kpi,
-});
 
 function formatRemessaBr(value: string | null | undefined): string {
   const text = (value ?? "").trim();
@@ -761,25 +739,6 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
     : null;
   const netToneClass = nullableDeltaToneClass(payload?.totals.deltaQuantityUn);
   const detailOpen = Boolean(selected);
-  const portal = payload?.portalInvoices;
-  const coveredCount =
-    portal?.coveredDayCount ?? portal?.coveredDates?.length ?? null;
-  const missingCount =
-    portal?.missingDayCount ?? portal?.missingDates?.length ?? null;
-  const lastFiscal = lastCoveredDocumentDate({
-    coveredDates: portal?.coveredDates,
-    canonicalObservations: portal?.canonicalObservations,
-  });
-  const coverageLabel =
-    isCoverageComplete(coverageStatus) &&
-    canShowPostedAsFact(coverageStatus, payload?.totals.postedQuantityUn)
-      ? completeCoverageDetailLabel(payload?.totals.postedQuantityUn) === "Com NF"
-        ? texts.coverageCompleteWithNf
-        : texts.coverageCompleteWithoutNf
-      : coverageStatusLabel(coverageStatus);
-  const periodFrom = portal?.period?.fromDocumentDate ?? portal?.period?.start;
-  const periodToExclusive =
-    portal?.period?.toDocumentDateExclusive ?? portal?.period?.end;
 
   return (
     <section className="ppc-myweg-needs__products" aria-label={texts.title}>
@@ -844,92 +803,6 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
         </div>
       ) : null}
       {loading && !payload ? <p role="status">{texts.loading}</p> : null}
-
-      {payload && portal ? (
-        <div
-          className="ppc-myweg-needs__portal-kpis"
-          aria-label="Resumo da conciliação fiscal"
-        >
-          <div className="ppc-kpi-grid ppc-myweg-needs__portal-kpi-grid">
-            <KpiCard
-              className="ppc-board-card ppc-myweg-needs__kpi-card"
-              title={texts.kpiPosted}
-              titleHint={helpTooltips.mywegNeedsPostedNf}
-              icon={<FileText size={20} strokeWidth={1.75} />}
-              value={
-                canShowPostedAsFact(coverageStatus, payload.totals.postedQuantityUn)
-                  ? `${formatDecimalString(payload.totals.postedQuantityUn)} UN`
-                  : texts.unavailableValue
-              }
-            />
-            <KpiCard
-              className="ppc-board-card ppc-myweg-needs__kpi-card"
-              title={texts.kpiObserved}
-              titleHint={helpTooltips.mywegNeedsObservedDelta}
-              icon={<TrendingDown size={20} strokeWidth={1.75} />}
-              value={(() => {
-                const observed =
-                  payload.totals.observedDeltaUn ?? payload.totals.deltaQuantityUn;
-                if (observed == null || String(observed).trim() === "") {
-                  return texts.unavailableValue;
-                }
-                return `${formatDecimalString(observed)} UN`;
-              })()}
-            />
-            <KpiCard
-              className="ppc-board-card ppc-myweg-needs__kpi-card"
-              title={texts.kpiAdjusted}
-              titleHint={helpTooltips.mywegNeedsAdjustedDelta}
-              icon={<TrendingUp size={20} strokeWidth={1.75} />}
-              value={
-                payload.totals.adjustedPlanningDeltaUn == null ||
-                String(payload.totals.adjustedPlanningDeltaUn).trim() === ""
-                  ? texts.unavailableValue
-                  : `${formatDecimalString(payload.totals.adjustedPlanningDeltaUn)} UN`
-              }
-            />
-            <KpiCard
-              className="ppc-board-card ppc-myweg-needs__kpi-card"
-              title={texts.kpiCoverage}
-              titleHint={helpTooltips.mywegNeedsFiscalCoverage}
-              icon={<ShieldAlert size={20} strokeWidth={1.75} />}
-              value={coverageLabel}
-            />
-            <KpiCard
-              className="ppc-board-card ppc-myweg-needs__kpi-card"
-              title={texts.kpiCoveredDays}
-              titleHint={helpTooltips.mywegNeedsFiscalCoverage}
-              icon={<CalendarDays size={20} strokeWidth={1.75} />}
-              value={coveredCount == null ? "—" : String(coveredCount)}
-            />
-            <KpiCard
-              className="ppc-board-card ppc-myweg-needs__kpi-card"
-              title={texts.kpiMissingDays}
-              titleHint={helpTooltips.mywegNeedsFiscalCoverage}
-              icon={<CalendarDays size={20} strokeWidth={1.75} />}
-              value={missingCount == null ? "—" : String(missingCount)}
-            />
-            <KpiCard
-              className="ppc-board-card ppc-myweg-needs__kpi-card"
-              title={texts.kpiLastFiscalDate}
-              titleHint={helpTooltips.mywegNeedsFiscalCoverage}
-              icon={<CalendarDays size={20} strokeWidth={1.75} />}
-              value={formatRemessaBr(lastFiscal)}
-            />
-          </div>
-          {periodFrom || periodToExclusive ? (
-            <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
-              {texts.fiscalPeriodLabel}: {formatRemessaBr(periodFrom)} até antes de{" "}
-              {formatRemessaBr(periodToExclusive)}
-            </p>
-          ) : null}
-          {portal.disclaimer ? (
-            <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
-              {portal.disclaimer}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
 
       {payload && status !== 403 ? (
         <DataTableSection
