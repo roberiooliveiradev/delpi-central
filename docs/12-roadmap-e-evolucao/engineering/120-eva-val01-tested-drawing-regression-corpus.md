@@ -294,3 +294,28 @@ Diagnóstico visual p9 `90264017`: células `rowspan` fundiam item/qtd de duas l
 ## Log adicional — 2026-11-08 (DEC-VAL-039 — fix real da reconstrução de linhas)
 
 Bugs quad (`bb[3]-bb[1]=0`) impediam `line_texts`; fix `0a6d468f07` (cy/h por min/max + contenção em faixa-Y). Prova real p9 `90264017`: C/6/10081389, D/3/10081685, E/2/10091368 reconstruídos; F/G/K INCONCLUSIVE; FALSE_PROMOTED=0. 13 PDFs + job MCP: TEST_NOT_RUN (consumidor).
+
+
+## Log adicional — 2026-11-08 (DEC-VAL-040 — evidência MCP 14p + 1p, plano de regressão de grade lógica)
+
+**Planejamento canônico:** Doc 119 §50 (\`DEC-VAL-040\`). **Status:** \`PLANNED\` para a correção geral; não representa implementação ou aprovação técnica. Os SHAs abaixo foram verificados no consumidor ao executar os documentos oficiais; os dados de linhas são **candidatos**, com revisão visual assistida e sem aprovação formal pelo owner.
+
+| Produto | SHA PDF conferido | Job MCP autenticado | Resultado de percepção | Limitações de associação |
+|---|---|---|---|---|
+| \`90264017\` (14p) | \`5452aabd3ddf94d5d004fe5c4d27c2daca9fcf8759a0c1b849b415d4769e32ee\` | \`aj-8e1513f273cf44ec\` | \`COMPLETED\`, OCR FULL 14/14; SLANet p9 68 células tabela + 14 carimbo, erro nulo; C/6/\`10081389\`, D/3/\`10081685\`, E/2/\`10091368\` tipados | \`description=null\`, \`association_status=INCONCLUSIVE\` mesmo em C/D/E; F/9 separado do código \`10110676\`, G/K inconclusivos. **Correção local parcial, generalização não demonstrada** |
+| \`90264004\` (1p) | \`5b6717dfa7b8dcdc18f81b4657e1dcdf3410b9af42c8cf3109214df2f66719f4\` | \`aj-69310253b0f842d4\` | \`COMPLETED\`, OCR FULL 1/1, 172 tokens; SLANet 60 células tabela + 20 carimbo, erro nulo, SHA correspondente | \`item=null\`, \`quantity=null\`, \`description=null\` em linhas; A7/A8: native col4 \`10110092/10110093\`, native col5 contém descrições \`ETIQUETA ACETATO DE RAYON 1TB1/1TB2\`, mas saída tipa **descrição como component_code**. **Semantic column role=FAIL** |
+
+**Inspeção visual direta do PDF oficial \`90264004\`:** as seis colunas lógicas são \`Código | Descrição | Item | QTD. | Comp. | Descrição\`. **Ground truth candidato sujeito a Engenharia:** A1/1/\`10110081\`, A2/1/\`10110082\`, A3/1/\`10110083\`, A4/1/\`10110087\`, A5/1/\`10110088\`, A6/1/\`10110091\`, A7/1/\`10110092\`, A8/1/\`10110093\`, com descrições distintas de etiquetas. Subconjunto \`50225478\` abrange A9/2/\`10080065\` e AA/2/\`10400035\`; subconjunto \`50225479\` abrange A9/6/\`10080065\` e AA/6/\`10400035\`. São **ocorrências candidatas separadas**, não prova de vínculos na BOM oficial.
+
+**Matriz focal de regressão a executar (não confundir com resultado atual):**
+
+| Caso | Falha baseline a reproduzir | Critério de aceite com ground truth aprovado |
+|---|---|---|
+| \`90264017\` p9 | C/D/E recuperados parcialmente; F/G/K e descrições sem associação completa | Não regredir C/D/E; resolver outros campos somente com divisórias/tokens/células que sustentem a associação; ambiguidades restantes explícitas |
+| \`90264004\` A1–A8 | Item/qtd/descrição nulos e A7/A8 com descrição projetada como código | Identificar papéis funcionais apesar da troca de índices SLANet; separar \`10110092/10110093\` das descrições; zero falso código |
+| \`90264004\` grupos | \`50225478\` e \`50225479\` com itens A9/AA repetidos | Preservar pai **candidato**, grupo, quantidade e identidade de cada ocorrência; não agregar por código |
+| Demais desenhos (13 PDFs Doc120) | Layouts, células mescladas, colunas variáveis e tabelas extensas | Executar regressão por SHA/runtime, coletar erros por tipo/false promotions e separar holdouts; ausência de GT implica \`INCONCLUSIVE\`, não PASS |
+
+**Gates do plano:** fixture real red→green pré-deploy, inspeção visual revisável, classes positivas/negativas, integração PDF original, teste de AuthZ/contratos, corpus 13 e holdouts, \`FALSE_PROMOTED_ASSOCIATIONS=0\`, aceite MCP pós-deploy para 1p+14p. Se os gates críticos não forem satisfeitos, **não fazer deploy**. Balões/E4, E2–E7 e VAL-02 permanecem congelados. \`ENGINEERING_APPROVAL=NOT_APPROVED\`; \`VAL01_COMPLETED=false\`.
+
+**Evidências de conversa registradas na Issue #131:** comentários \`6727567112\`, \`6727591666\`, \`6727617764\`. Este log é aditivo: não sobrescreve entradas antigas nem transforma resultados históricos em execução do corpus no SHA atual.
