@@ -597,7 +597,14 @@ def test_preview_sb2_error_does_not_invent_coverage() -> None:
     service, user = _preview_service(stock_error=True, stock_rows=[])
     preview = service.build_preview(user, branch="02")
     assert preview["stock"]["incomplete"] is True
-    assert preview["scenarios"]["myweg_only"]["line_count"] == 0
+    # Necessidade permanece; cobertura por estoque não é inventada.
+    assert preview["scenarios"]["myweg_only"]["line_count"] == 1
+    assert preview["scenarios"]["myweg_only"]["summary"]["covered_by_stock"] == pytest.approx(
+        0.0
+    )
+    assert preview["scenarios"]["myweg_only"]["summary"]["uncovered_quantity"] == pytest.approx(
+        1.5
+    )
     assert preview["quantities_mi"]["myweg_pending_missing_stock_source"] == pytest.approx(
         1.5
     )
@@ -674,7 +681,8 @@ def test_sb2_rejects_wrong_branch_warehouse_unit_duplicate() -> None:
     )
     p4 = service4.build_preview(user4, branch="02")
     assert "90260001" in p4["stock"]["sb2_diagnostics"]["duplicate_products"]
-    assert p4["scenarios"]["myweg_only"]["line_count"] == 0
+    assert p4["scenarios"]["myweg_only"]["line_count"] == 1
+    assert p4["scenarios"]["myweg_only"]["summary"]["covered_by_stock"] == pytest.approx(0.0)
 
 
 def test_sb2_zero_confirmed_vs_absent() -> None:
@@ -701,7 +709,10 @@ def test_sb2_zero_confirmed_vs_absent() -> None:
     assert "90260001" in p2["stock"]["sb2_diagnostics"]["zero_vs_absent"][
         "absent_or_invalid"
     ]
-    assert p2["scenarios"]["myweg_only"]["line_count"] == 0
+    assert p2["scenarios"]["myweg_only"]["line_count"] == 1
+    assert p2["scenarios"]["myweg_only"]["summary"]["uncovered_quantity"] == pytest.approx(
+        1.5
+    )
 
 
 def test_invalid_sales_payload_blocks_reliable_preview() -> None:
@@ -987,7 +998,10 @@ def test_residual_sb2_duplicate_across_pages() -> None:
 
     assert "90260001" in preview["stock"]["sb2_diagnostics"]["duplicate_products"]
     assert preview["stock"]["sb2_complete"] is False
-    assert preview["scenarios"]["myweg_only"]["line_count"] == 0
+    assert preview["scenarios"]["myweg_only"]["line_count"] == 1
+    assert preview["scenarios"]["myweg_only"]["summary"]["covered_by_stock"] == pytest.approx(
+        0.0
+    )
 
 
 def test_residual_sb2_incomplete_without_error_is_unreliable() -> None:

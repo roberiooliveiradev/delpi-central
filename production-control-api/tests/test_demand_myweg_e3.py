@@ -349,3 +349,97 @@ def test_e3_pagination_not_preview_sample() -> None:
     assert len(page1["items"]) == 10
     page3 = service.list_demand(user, branch="02", origin=ORIGIN_MYWEG, page=3, page_size=10)
     assert len(page3["items"]) == 5
+
+
+def test_e3_both_degrades_to_protheus_when_myweg_fails() -> None:
+    class _BoomGateway(_FakeGateway):
+        def fetch_open_sales_orders(self) -> dict[str, Any]:
+            raise RuntimeError("sales boom")
+
+    sales = [_protheus_sale()]
+    # DemandService Protheus path uses same gateway — need Protheus load to work
+    # while MyWEG resolve fails. Fail only inside myweg resolve via broken stock+sales
+    # on the coverage service by stubbing resolve.
+    service, user = _svc(sales=sales)
+    calls = {"n": 0}
+
+    def _boom(*_a: Any, **_k: Any) -> dict[str, Any]:
+        calls["n"] += 1
+        raise RuntimeError("myweg resolve failed")
+
+    service._myweg_coverage.resolve_demand_origin_lines = _boom  # type: ignore[method-assign]
+    data = service.list_demand(user, branch="02", origin=ORIGIN_BOTH)
+    assert data["filters"]["origin"] == ORIGIN_PROTHEUS
+    assert data["myweg"]["myweg_degraded"] is True
+    assert data["myweg"]["myweg_skipped"] == "myweg_source_failed"
+    assert data["summary"]["official_aggregate"] is True
+    assert all(item["source"] == "protheus" for item in data["items"])
+    assert data["pagination"]["total"] >= 1
+    assert calls["n"] == 1
+
+
+def test_e3_myweg_lines_remain_when_sb2_unavailable() -> None:
+    service, user = _svc(
+        sales=[_protheus_sale()],
+        stock=[],  # produto exclusivo ausente no SB2
+    )
+    # Forçar erro SB2
+    def _sb2_fail(**_kwargs: Any) -> dict[str, Any]:
+        raise RuntimeError("sb2 down")
+
+    service._myweg_coverage._gateway.fetch_stock_balances_items = _sb2_fail  # type: ignore[method-assign]
+    data = service.list_demand(user, branch="02", origin=ORIGIN_MYWEG)
+    assert data["pagination"]["total"] == 1
+    item = data["items"][0]
+    assert item["source"] == "myweg"
+    assert item["open_quantity"] == pytest.approx(1.5)
+    assert item["allocated_stock"] == pytest.approx(0.0)
+    assert item["uncovered_quantity"] == pytest.approx(1.5)
+    assert data["myweg"]["pending_without_stock_source_count"] == 1
+    assert data["myweg"]["stock_incomplete"] is True
+
+
+def test_e3_myweg_cache_reused_across_pages() -> None:
+    rows = [
+        {
+            "id": f"r{i}",
+            "line_no": i,
+            "material_weg_tratado": f"M{i}",
+            "codigo_referencia_weg": f"90260{i:03d}",
+            "data_remessa": "2026-11-15",
+            "quantidade_original_un": "1000",
+            "quantidade_mi": "1",
+            "sb1_resolution": {
+                "status": "confirmed",
+                "protheus_product_code": f"90260{i:03d}",
+                "matched_by": "code_and_reference",
+            },
+        }
+        for i in range(1, 6)
+    ]
+    stock = [
+        {
+            "product_code": f"90260{i:03d}",
+            "quantity": 0.0,
+            "unit_of_measure": "MI",
+            "branch": "02",
+            "warehouse": "01",
+        }
+        for i in range(1, 6)
+    ]
+    service, user = _svc(sales=[_protheus_sale()], myweg_rows=rows, stock=stock)
+    resolve_calls = {"n": 0}
+    original = service._myweg_coverage.resolve_demand_origin_lines
+
+    def _counted(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        resolve_calls["n"] += 1
+        return original(*args, **kwargs)
+
+    service._myweg_coverage.resolve_demand_origin_lines = _counted  # type: ignore[method-assign]
+    # Cache com TTL > 0 para reutilizar entre páginas.
+    service._cache = _DemandSnapshotCache(120)
+    p1 = service.list_demand(user, branch="02", origin=ORIGIN_MYWEG, page=1, page_size=2)
+    p2 = service.list_demand(user, branch="02", origin=ORIGIN_MYWEG, page=2, page_size=2)
+    assert p1["pagination"]["total"] == 5
+    assert len(p2["items"]) == 2
+    assert resolve_calls["n"] == 1

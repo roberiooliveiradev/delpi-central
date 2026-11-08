@@ -639,6 +639,8 @@ export const copy = {
       "Volumes MyWEG são planejamento do cliente. O total misturado não é demanda oficial consolidada enquanto a decisão arquitetural estiver pendente.",
     mywegUpdated: (when: string) => `Última coleta MyWEG: ${when}`,
     mywegIncomplete: "Estoque ou identidade MyWEG incompletos — confira pendências na cobertura.",
+    mywegDegraded:
+      "Não foi possível carregar o planejamento MyWEG agora. A carteira Protheus continua disponível.",
     exportLabel: "Exportar Excel",
     exportFileName: (branch: string) => `demanda-filial-${branch}`,
     exportSheetTitle: "Demanda",

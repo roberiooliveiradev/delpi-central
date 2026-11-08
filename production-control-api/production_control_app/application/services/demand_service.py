@@ -87,20 +87,32 @@ class _DemandSnapshotCache:
 
     def __init__(self, ttl_seconds: int) -> None:
         self._ttl = max(ttl_seconds, 0)
-        self._entries: dict[str, tuple[float, list[DemandLine]]] = {}
+        # (stored_at, lines, meta)
+        self._entries: dict[str, tuple[float, list[DemandLine], dict[str, Any] | None]] = {}
 
     def get(self, key: str) -> list[DemandLine] | None:
+        entry = self.get_entry(key)
+        return None if entry is None else entry[0]
+
+    def get_entry(
+        self, key: str
+    ) -> tuple[list[DemandLine], dict[str, Any] | None] | None:
         entry = self._entries.get(key)
         if entry is None:
             return None
-        stored_at, lines = entry
+        stored_at, lines, meta = entry
         if self._ttl and (time.monotonic() - stored_at) > self._ttl:
             self._entries.pop(key, None)
             return None
-        return lines
+        return lines, meta
 
-    def set(self, key: str, lines: list[DemandLine]) -> None:
-        self._entries[key] = (time.monotonic(), lines)
+    def set(
+        self,
+        key: str,
+        lines: list[DemandLine],
+        meta: dict[str, Any] | None = None,
+    ) -> None:
+        self._entries[key] = (time.monotonic(), lines, meta)
 
     def clear(self) -> None:
         self._entries.clear()
@@ -213,29 +225,46 @@ class DemandService:
             }
 
         if self._myweg_coverage is None:
+            if origin == ORIGIN_BOTH:
+                return self._load_protheus_lines(branch, refresh=refresh), {
+                    "origin": ORIGIN_PROTHEUS,
+                    "official_aggregate": True,
+                    "myweg_skipped": "integration_unavailable",
+                    "myweg_degraded": True,
+                    "adr_status": "ARCHITECTURE_DECISION_REQUIRED",
+                }
             raise DelpiGatewayError("Integração MyWEG na Demanda indisponível.")
 
         cache_key = self._cache_key(branch, origin)
         if not refresh:
-            cached = self._cache.get(cache_key)
-            if cached is not None:
-                # Meta não fica no cache de linhas — reconsulta leve via resolve.
-                pass
+            cached_entry = self._cache.get_entry(cache_key)
+            if cached_entry is not None:
+                return cached_entry
 
         try:
             resolved = self._myweg_coverage.resolve_demand_origin_lines(
                 user, branch=branch, origin=origin
             )
-        except DelpiGatewayError:
-            raise
         except Exception as exc:  # noqa: BLE001
+            # Em "Ambas", a carteira Protheus permanece acessível se MyWEG falhar.
+            if origin == ORIGIN_BOTH:
+                return self._load_protheus_lines(branch, refresh=refresh), {
+                    "origin": ORIGIN_PROTHEUS,
+                    "official_aggregate": True,
+                    "myweg_skipped": "myweg_source_failed",
+                    "myweg_degraded": True,
+                    "myweg_error_type": type(exc).__name__,
+                    "adr_status": "ARCHITECTURE_DECISION_REQUIRED",
+                }
+            if isinstance(exc, DelpiGatewayError):
+                raise
             raise DelpiGatewayError(
                 "Não foi possível carregar necessidades MyWEG para a Demanda."
             ) from exc
 
         lines = list(resolved.get("lines") or [])
         meta = dict(resolved.get("meta") or {})
-        self._cache.set(cache_key, lines)
+        self._cache.set(cache_key, lines, meta)
         return lines, meta
 
     # ------------------------------------------------------------ filtering

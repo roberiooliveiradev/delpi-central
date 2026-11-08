@@ -524,6 +524,8 @@ export type DemandPayload = {
       weg_linhares_store?: string;
     };
     myweg_skipped?: string;
+    myweg_degraded?: boolean;
+    myweg_error_type?: string;
     unit?: string;
   } | null;
 };

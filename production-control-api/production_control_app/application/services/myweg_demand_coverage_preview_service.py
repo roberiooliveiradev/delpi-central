@@ -267,11 +267,17 @@ class MyWegDemandCoveragePreviewService:
         for line in eligible:
             assert line.product_code
             key = (code, line.product_code)
-            if key not in stock["pool"] and line.product_code in stock["missing_sb2_products"]:
+            stock_unavailable = (
+                key not in stock["pool"]
+                and line.product_code in stock["missing_sb2_products"]
+            )
+            if stock_unavailable:
                 blocked_stock_products.append(line.product_code)
                 pending_stock_qty_mi += float(line.open_quantity) / 1000.0
-                continue
-            product_stock = float(stock["pool"].get(key, 0.0))
+                product_stock = 0.0
+            else:
+                product_stock = float(stock["pool"].get(key, 0.0))
+            # Mantém a necessidade na prévia mesmo sem fonte SB2 (cobertura pendente).
             myweg_inputs.append(
                 projection_to_coverage_input(line, product_stock_mi=product_stock)
             )
@@ -573,14 +579,23 @@ class MyWegDemandCoveragePreviewService:
         for line in eligible:
             assert line.product_code
             key = (code, line.product_code)
-            if key not in stock["pool"] and line.product_code in stock["missing_sb2_products"]:
-                pending_without_stock += 1
-                continue
-            myweg_inputs.append(
-                projection_to_coverage_input(
-                    line, product_stock_mi=float(stock["pool"].get(key, 0.0))
-                )
+            stock_unavailable = (
+                key not in stock["pool"]
+                and line.product_code in stock["missing_sb2_products"]
             )
+            # Necessidade permanece na Demanda mesmo sem SB2 consultável:
+            # entra com estoque 0 (cobertura pendente), sem omitir o volume.
+            product_stock = (
+                0.0
+                if stock_unavailable
+                else float(stock["pool"].get(key, 0.0))
+            )
+            if stock_unavailable:
+                pending_without_stock += 1
+            item = projection_to_coverage_input(line, product_stock_mi=product_stock)
+            if stock_unavailable:
+                item["_preview_stock_source_pending"] = True
+            myweg_inputs.append(item)
         myweg_inputs = apply_pool_stock_to_inputs(myweg_inputs, stock["pool"], branch=code)
 
         if origin_norm == "myweg":

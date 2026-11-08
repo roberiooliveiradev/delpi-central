@@ -25,6 +25,9 @@ Resposta aditiva: `source`/`planning` por item; `filters.origin`; `summary.offic
 - Pool único estoque; Linhares Protheus aberto → overlap (não soma).
 - OP MyWEG: `OP_UNIT_UNVERIFIED` (somente estoque).
 - `summary.official_aggregate=false` em myweg/both; banner na UI.
+- Em `origin=both`, falha MyWEG **degrada** para Protheus (`myweg_degraded`) — não derruba a tela.
+- Necessidade MyWEG sem SB2 consultável **permanece** na tabela (estoque 0 / descoberta), sem omitir volume.
+- Cache por `filial|origem` reutilizado entre filtros/páginas (TTL Demanda).
 
 ## UI
 

@@ -215,6 +215,12 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
 
       {data ? (
         <>
+          {showMywegUi && data.myweg?.myweg_degraded ? (
+            <div className="ppc-demand-banner" role="status">
+              <p>{demand.mywegDegraded}</p>
+            </div>
+          ) : null}
+
           {showMywegUi && summary?.official_aggregate === false ? (
             <div className="ppc-demand-banner" role="status">
               <p>{demand.planningBanner}</p>
