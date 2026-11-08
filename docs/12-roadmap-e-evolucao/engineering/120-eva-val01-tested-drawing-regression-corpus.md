@@ -290,3 +290,7 @@ Medição provou que VMS Paddle só é devolvido por morte do processo (reset in
 ## Log adicional — 2026-11-08 (DEC-VAL-038 — reconstrução geométrica de linhas SLANet)
 
 Diagnóstico visual p9 `90264017`: células `rowspan` fundiam item/qtd de duas linhas (`"C 6 D 3"`). Correção `84b87d636b`: `line_texts` por bandas Y + distribuição pelo rowspan nativo. Caso sintético `C/6/10081389`+`D/3/10081685` PASS. Regressão 13 PDFs, balões e job MCP autenticado no SHA novo: `TEST_NOT_RUN` — próxima rodada pelo consumidor.
+
+## Log adicional — 2026-11-08 (DEC-VAL-039 — fix real da reconstrução de linhas)
+
+Bugs quad (`bb[3]-bb[1]=0`) impediam `line_texts`; fix `0a6d468f07` (cy/h por min/max + contenção em faixa-Y). Prova real p9 `90264017`: C/6/10081389, D/3/10081685, E/2/10091368 reconstruídos; F/G/K INCONCLUSIVE; FALSE_PROMOTED=0. 13 PDFs + job MCP: TEST_NOT_RUN (consumidor).

@@ -1429,3 +1429,15 @@ O histórico de revisão da mesma página não cita esses códigos. `10081389` �
 **M2 — correção genérica:** `line_texts` por bandas Y de tokens (>0.6×altura mediana) na célula; `rows_from_native_cells` distribui pelas linhas do `rowspan` só quando a contagem coincide; item/qtd em célula fundida só na forma `ITEM QTD`. Sem evidência → `INCONCLUSIVE`. Teste: `C/6/10081389` e `D/3/10081685` separados; 42/42 foco.
 
 **M3/M4 — balões e associação: `TO_INVENTORY`/`TEST_NOT_RUN`.** Não implementado neste pacote — detector, contrato e corpus ficam para pacote próprio com gates B/C/D. Probe OCR-faixa-p9 não retornou tokens (parâmetro do executor) — prova real pós-deploy fica para o job do consumidor.
+
+## 49. DEC-VAL-039 — Reconstrução geométrica real de linhas (fix do split) (2026-11-08)
+
+**TASK_ID:** `EVA-VAL01-REAL-GEOMETRY-ROW-RECONSTRUCTION-PRODUCTION`. **Commit:** `0a6d468f07`. **Deploy:** imagem `sha256:4f9f75ae0ffe…`, `delpi-engineering-api` healthy.
+
+**Causa-raiz dupla (PROVEN em dados reais):** (a) geometria de token usava `bb[3]-bb[1]` → 0 para bboxes quad (8 valores) → `_med=0` → bandas nunca formavam, `line_texts` ausente; (b) centroide de linha idem. Fix: cy/h por min/max dos 4 ys do quad + faixa-Y de linha excluindo células `line_texts`/`rowspan>1`.
+
+**Distribuição (independe de rowspan):** banda → linha nativa cuja faixa-Y de célula confiável contém o cy; fallback centroide. Sem evidência → INCONCLUSIVE.
+
+**Prova integrada REAL** (container descartável, imagem prod, PDF oficial `90264017` sha `5452aabd`, OCR p9): **C/6/10081389, D/3/10081685, E/2/10091368** reconstruídos (antes null); F item+qtd sem código falso; G/K INCONCLUSIVE. `FALSE_PROMOTED=0`. 44/44 testes.
+
+**Residual:** F/G/K dependem de detecção de réguas horizontais (OpenCV) — a topologia SLANet da metade inferior não alinha bandas às linhas de código. Próximo passo limitado: visual-row detection por separadores. `VAL01_COMPLETED=false`.
