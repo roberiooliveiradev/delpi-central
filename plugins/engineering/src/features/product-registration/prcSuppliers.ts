@@ -70,15 +70,37 @@ export function duplicateSupplierIndexes(rows: SupplierRow[]): Set<number> {
   return dups;
 }
 
-/** Rótulo único de um hit SA2 — `code / store — name` (identidade do
- * vínculo é sempre (supplierCode, store), zeros preservados). */
+/** Hit SA2 — razão social (`A2_NOME`) é sempre a linha principal;
+ * código, loja e nome fantasia (`A2_NREDUZ`) vão na linha secundária.
+ * Identidade do vínculo é sempre (supplierCode, store), zeros
+ * preservados; nunca trocar A2_NOME por A2_NREDUZ no payload. */
 export function supplierHitLabel(hit: {
   supplier_code?: string;
   supplier_store?: string;
   supplier_name?: string;
 }): string {
+  return supplierHitMain(hit);
+}
+
+export function supplierHitMain(hit: {
+  supplier_name?: string;
+}): string {
+  return String(hit.supplier_name ?? "").trim();
+}
+
+export function supplierHitSecondary(hit: {
+  supplier_code?: string;
+  supplier_store?: string;
+  supplier_short_name?: string;
+  supplier_name?: string;
+}): string {
   const code = String(hit.supplier_code ?? "");
   const store = String(hit.supplier_store ?? "");
-  const name = String(hit.supplier_name ?? "");
-  return `${code} / ${store} — ${name}`.trim();
+  const trade = String(hit.supplier_short_name ?? "").trim();
+  const legal = String(hit.supplier_name ?? "").trim();
+  const parts = [`Código: ${code}`, `Loja: ${store}`];
+  if (trade && trade.toUpperCase() !== legal.toUpperCase()) {
+    parts.push(`Fantasia: ${trade}`);
+  }
+  return parts.join(" · ");
 }

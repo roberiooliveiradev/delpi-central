@@ -84,10 +84,58 @@ export const PRC_FIELD_LABELS: Record<string, string> = {
 export const PRC_SUPPLIER_LABELS: Record<string, string> = {
   supplierCode: "Código",
   store: "Loja",
-  supplierName: "Nome",
+  supplierName: "Razão social",
   partNumber: "Part Number",
   catalogNumber: "Catálogo",
 };
+
+/** Helps funcionais por path da ficha — significado real do campo
+ * TOTVS em linguagem de Engenharia (nunca nome de tabela como
+ * explicação). Quando presente, prevalece sobre `spec.note`. */
+export const PRC_FIELD_HELP: Record<string, string> = {
+  description:
+    "Informe uma descrição clara e padronizada do material, permitindo sua identificação no cadastro oficial.",
+  group:
+    "Selecione o grupo de produtos correspondente à classificação do material no TOTVS.",
+  productKind:
+    "Selecione o tipo de produto conforme sua classificação oficial.",
+  unit:
+    "Escolha a unidade de medida utilizada para controlar o material, como unidade, metro ou quilograma, conforme as opções disponíveis no TOTVS.",
+  defaultWarehouse:
+    "Selecione o armazém padrão associado ao produto para as operações de estoque.",
+  accountingAccount:
+    "Selecione a conta contábil indicada para a classificação do produto. Pesquise por código ou descrição para localizar a conta desejada.",
+  thirdPartyProduct:
+    "Indique se o material pertence a terceiros, conforme a classificação utilizada no TOTVS.",
+  customerReference:
+    "Informe a referência utilizada pelo cliente para identificar este material, quando aplicável.",
+};
+
+/** Textos da busca assistida SA2 (código / razão social / fantasia). */
+export const PRC_SUPPLIER_HELP = {
+  placeholder: "Buscar por código, razão social ou nome fantasia",
+  search:
+    "Pesquise o fornecedor cadastrado no TOTVS e selecione a razão social e a loja correspondentes.",
+  storeHint:
+    "Identifica a unidade cadastral do fornecedor. Será preenchida automaticamente após a seleção.",
+  legalNameHint:
+    "Nome oficial do fornecedor, preenchido automaticamente a partir do TOTVS.",
+  partNumberHint:
+    "Informe o código pelo qual o fornecedor identifica este material. Pode ficar vazio quando não houver Part Number.",
+  catalogHint:
+    "Informe a referência de catálogo do fornecedor para este material, quando disponível.",
+  selectRequired:
+    "Escolha um fornecedor na lista de resultados para confirmar o código e a loja.",
+  duplicate:
+    "Este fornecedor e esta loja já foram adicionados à solicitação.",
+} as const;
+
+/** Mensagens de validação acionáveis da ficha (sem jargão técnico). */
+export const PRC_VALIDATION = {
+  selectOptionRequired: "Selecione uma opção para continuar.",
+  catalogUnavailable:
+    "Não foi possível consultar as opções oficiais no TOTVS. Tente novamente.",
+} as const;
 
 /** Rótulos funcionais pt-BR dos enums de domínio (códigos vêm do
  * catálogo canônico do backend; descrições são conteúdo de UI). */

@@ -53,8 +53,11 @@ import {
 } from "../prcNavigate";
 import {
   PRC_COPY,
+  PRC_FIELD_HELP,
   PRC_FIELD_LABELS,
+  PRC_SUPPLIER_HELP,
   PRC_SUPPLIER_LABELS,
+  PRC_VALIDATION,
 } from "../prcCopy";
 import {
   duplicateSupplierIndexes,
@@ -195,10 +198,10 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
         (r) => !r.supplierCode.trim() || !r.store.trim() || !r.supplierName.trim(),
       );
       if (bad >= 0) {
-        return `Fornecedor ${bad + 1}: selecione um fornecedor oficial pela busca (código, loja e nome).`;
+        return `Fornecedor ${bad + 1}: ${PRC_SUPPLIER_HELP.selectRequired}`;
       }
       if (duplicateSupplierIndexes(suppliers).size > 0) {
-        return "Há fornecedores duplicados (mesmo código e loja) — remova uma das linhas.";
+        return PRC_SUPPLIER_HELP.duplicate;
       }
       if (requestType === "update" && !supplierReason.trim() && supplierTouched) {
         return "Informe a justificativa da alteração de fornecedores.";
@@ -325,7 +328,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
         ? "Catálogo oficial sem itens disponíveis."
         : view.status === "error"
           ? "Falha ao consultar o catálogo oficial TOTVS."
-          : spec?.note || "Catálogo oficial TOTVS";
+          : PRC_FIELD_HELP[path] || spec?.note || "Catálogo oficial TOTVS";
     return (
       <>
         <EngineeringSearchableSelect
@@ -354,8 +357,8 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
           <div className="engineering-prc__catalog-error">
             <p className="engineering-prc__field-error" role="alert">
               {selected
-                ? "Catálogo oficial indisponível — valor selecionado preservado, ainda não revalidado."
-                : "Catálogo oficial indisponível — tente novamente."}
+                ? `${PRC_VALIDATION.catalogUnavailable} O valor selecionado foi preservado, mas ainda não foi revalidado.`
+                : PRC_VALIDATION.catalogUnavailable}
             </p>
             <EngineeringActionButton
               variant="ghost"
@@ -407,7 +410,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               <EngineeringSearchableSelect
                 id={`prc-new-${path}`}
                 label={label}
-                hint={spec.note || undefined}
+                hint={PRC_FIELD_HELP[path] || spec.note || undefined}
                 value={values[path] || ""}
                 onChange={(v) => setValue(path, v)}
                 options={enumOptions(path, spec.enumValues)}
@@ -419,7 +422,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               <EngineeringTextField
                 id={`prc-new-${path}`}
                 label={label}
-                hint={spec?.note || undefined}
+                hint={PRC_FIELD_HELP[path] || spec?.note || undefined}
                 value={values[path] || ""}
                 onChange={(v) => setValue(path, v)}
                 required={
@@ -650,7 +653,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                         <tr>
                           <th scope="col">Fornecedor</th>
                           <th scope="col">Loja</th>
-                          <th scope="col">Nome oficial</th>
+                          <th scope="col">Razão social</th>
                           <th scope="col">{PRC_SUPPLIER_LABELS.partNumber}</th>
                           <th scope="col">{PRC_SUPPLIER_LABELS.catalogNumber}</th>
                           <th scope="col">Ações</th>
@@ -735,14 +738,14 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                 ) : null}
                               </td>
                               <td data-label="Loja">{row.store || "—"}</td>
-                              <td data-label="Nome oficial">{row.supplierName || "—"}</td>
+                              <td data-label="Razão social">{row.supplierName || "—"}</td>
                               <td data-label={PRC_SUPPLIER_LABELS.partNumber}>
                                 <input
                                   id={`prc-new-sup-pn-${index}`}
                                   type="text"
                                   className="engineering-prc__cell-input"
                                   aria-label={`${PRC_SUPPLIER_LABELS.partNumber} (opcional)`}
-                                  title="Opcional — pode ficar vazio quando a fonte oficial também está vazia."
+                                  title={PRC_SUPPLIER_HELP.partNumberHint}
                                   value={row.partNumber}
                                   disabled={busy}
                                   onChange={(e) =>

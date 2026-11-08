@@ -4,21 +4,42 @@ import {
   duplicateSupplierIndexes,
   emptySupplierRow,
   supplierHitLabel,
+  supplierHitMain,
+  supplierHitSecondary,
 } from "./prcSuppliers";
 
-describe("supplierHitLabel", () => {
-  it("monta `code / store — name` preservando zeros à esquerda", () => {
-    expect(
-      supplierHitLabel({
-        supplier_code: "000101",
-        supplier_store: "01",
-        supplier_name: "FORNECEDOR INDUSTRIAL",
-      }),
-    ).toBe("000101 / 01 — FORNECEDOR INDUSTRIAL");
+const hit = (over = {}) => ({
+  supplier_code: "000101",
+  supplier_store: "01",
+  supplier_name: "FORNECEDOR INDUSTRIAL",
+  supplier_short_name: "FORNEX",
+  ...over,
+});
+
+describe("supplierHitLabel/Main", () => {
+  it("razão social (A2_NOME) é a linha principal — nunca a fantasia", () => {
+    expect(supplierHitMain(hit())).toBe("FORNECEDOR INDUSTRIAL");
+    expect(supplierHitLabel(hit())).toBe("FORNECEDOR INDUSTRIAL");
+  });
+});
+
+describe("supplierHitSecondary", () => {
+  it("linha secundária traz código, loja e fantasia distinta", () => {
+    expect(supplierHitSecondary(hit())).toBe(
+      "Código: 000101 · Loja: 01 · Fantasia: FORNEX",
+    );
   });
 
-  it("tolera campos ausentes sem inventar conteúdo", () => {
-    expect(supplierHitLabel({ supplier_code: "07" })).toBe("07 /  —");
+  it("omite fantasia quando igual à razão social", () => {
+    expect(
+      supplierHitSecondary(hit({ supplier_short_name: "fornecedor industrial" })),
+    ).toBe("Código: 000101 · Loja: 01");
+  });
+
+  it("omite fantasia quando vazia", () => {
+    expect(
+      supplierHitSecondary(hit({ supplier_short_name: " " })),
+    ).toBe("Código: 000101 · Loja: 01");
   });
 });
 

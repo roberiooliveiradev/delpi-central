@@ -5,11 +5,12 @@ import {
   EngineeringTextField,
   ENGINEERING_PORTAL_SCOPE,
 } from "../../../ui/engineeringUi";
+import { PRC_SUPPLIER_HELP } from "../prcCopy";
 import {
   searchPrcSuppliers,
   type PrcSupplierHit,
 } from "../api/productRegistrationApi";
-import { supplierHitLabel } from "../prcSuppliers";
+import { supplierHitMain, supplierHitSecondary } from "../prcSuppliers";
 
 const MAX_VISIBLE = 8;
 
@@ -115,7 +116,12 @@ function SupplierSuggestPanel({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onChoose(hit)}
             >
-              {supplierHitLabel(hit)}
+              <span className="engineering-prc__lookup-legal">
+                {supplierHitMain(hit)}
+              </span>
+              <span className="engineering-prc__lookup-meta">
+                {supplierHitSecondary(hit)}
+              </span>
             </button>
           </li>
         ))}
@@ -212,14 +218,14 @@ export function PrcSupplierLookup({
       <EngineeringTextField
         id={id}
         label="Fornecedor"
-        hint="Busque por código ou nome — código e loja oficiais"
+        hint={PRC_SUPPLIER_HELP.search}
         value={value || query}
         onChange={(v) => {
           setQuery(v);
           onSelect({ supplier_code: "", supplier_store: "", supplier_name: v });
         }}
         disabled={disabled}
-        placeholder="Código ou nome do fornecedor"
+        placeholder={PRC_SUPPLIER_HELP.placeholder}
       />
       {state === "loading" ? (
         <span className="engineering-prc__muted">Buscando…</span>
@@ -316,7 +322,7 @@ export function PrcSupplierCellLookup({
           id={id}
           type="text"
           className="engineering-prc__lookup-input"
-          placeholder="Código ou nome"
+          placeholder={PRC_SUPPLIER_HELP.placeholder}
           value={query}
           disabled={disabled}
           aria-label="Buscar fornecedor por código ou nome"

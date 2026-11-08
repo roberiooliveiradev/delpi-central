@@ -214,6 +214,19 @@
   outline: none;
 }
 
+.engineering-prc__lookup-legal {
+  display: block;
+  font-weight: 600;
+  white-space: normal;
+}
+
+.engineering-prc__lookup-meta {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--en-text-muted);
+  white-space: normal;
+}
+
 .engineering-prc__lookup-empty {
   padding: 10px 12px;
   font-size: 0.85rem;
