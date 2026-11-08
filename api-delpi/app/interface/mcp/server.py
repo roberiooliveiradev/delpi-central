@@ -403,6 +403,42 @@ def create_mcp_server() -> MCPServer:
         except ValidationError:
             return validation_error_tool_result("Invalid read parameters.")
         try:
+            if params.capability.strip().lower() == "avatar":
+                # DAVI-PROFILE-V1 — official approved avatar delivered as a
+                # canonical ImageContent block (shared helper; same
+                # ImageContent pattern as the sibling MCPs). Static ficha
+                # asset — no catalog action, no data mutation, same read
+                # authorization context already enforced above.
+                from app.persona.davi_profile import get_davi_profile
+                from delpi_mcp.avatar_image import build_avatar_delivery
+                from pathlib import Path
+
+                delivery = build_avatar_delivery(
+                    get_davi_profile(), Path(__file__).resolve().parents[3]
+                )
+                if delivery.data is None:
+                    return CallToolResult(
+                        content=[
+                            TextContent(
+                                type="text",
+                                text="Avatar oficial não aprovado/publicado.",
+                            )
+                        ],
+                        isError=True,
+                    )
+                content: list[Any] = [
+                    TextContent(
+                        type="text",
+                        text="Avatar oficial do DAVI (metadata + imagem).",
+                    )
+                ]
+                if delivery.image is not None:
+                    content.append(delivery.image)
+                return CallToolResult(
+                    content=content,
+                    structuredContent=delivery.data,
+                    isError=False,
+                )
             data = davi_read_wired(
                 capability=params.capability,
                 arguments=params.arguments,

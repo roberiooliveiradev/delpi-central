@@ -82,10 +82,14 @@ def _context(actor_id: str | None) -> dict[str, Any]:
         "status": "ok",
         "identity": {
             "specialist": "DAVI — Especialista em Dados e Informações DELPI",
+            "acronym": "Dados, Análises e Visão Inteligente",
             "server": "api-delpi",
             "mission": (
                 "consultar informações autorizadas da DELPI respeitando a "
                 "identidade e as permissões do usuário"
+            ),
+            "avatar_distribution": (
+                DaviAgentIntelligenceService.avatar_distribution()
             ),
         },
         "actor": {

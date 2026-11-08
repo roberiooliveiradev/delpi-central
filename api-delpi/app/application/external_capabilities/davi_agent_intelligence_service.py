@@ -151,6 +151,11 @@ class DaviAgentIntelligenceService:
     def persona_context(cls) -> dict[str, Any]:
         """Compact narrative context from the ficha — MCP/agent echo."""
         context = project_persona_context(cls.character_profile())
+        acronym = str(
+            (cls.document().get("persona") or {}).get("acronym") or ""
+        )
+        if acronym:
+            context.setdefault("identity", {})["acronym"] = acronym
         distribution = cls.avatar_distribution()
         if distribution:
             context["avatar_distribution"] = distribution
