@@ -1,5 +1,6 @@
 import {
   ActionButton,
+  AnchoredPanelPortal,
   catalogSearchBarBemClasses,
   ChartCard as DelpiChartCard,
   chartCardBemClasses,
@@ -379,5 +380,11 @@ export const EngineeringHostDialog = createHostContainedModalShell({
   portalScopeClassName: ENG_PORTAL_SCOPE,
   containedLayout: "dialog",
 });
+
+/** Painel ancorado em portal (body) do kit — dropdowns dentro de
+ * containers com overflow/clip (tabelas editáveis) ficam visíveis,
+ * com flip/clamp de viewport e dismiss por Escape/clique fora. */
+export const EngineeringAnchoredPanel = AnchoredPanelPortal;
+export { ENG_PORTAL_SCOPE as ENGINEERING_PORTAL_SCOPE };
 
 

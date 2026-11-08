@@ -69,3 +69,16 @@ export function duplicateSupplierIndexes(rows: SupplierRow[]): Set<number> {
   });
   return dups;
 }
+
+/** Rótulo único de um hit SA2 — `code / store — name` (identidade do
+ * vínculo é sempre (supplierCode, store), zeros preservados). */
+export function supplierHitLabel(hit: {
+  supplier_code?: string;
+  supplier_store?: string;
+  supplier_name?: string;
+}): string {
+  const code = String(hit.supplier_code ?? "");
+  const store = String(hit.supplier_store ?? "");
+  const name = String(hit.supplier_name ?? "");
+  return `${code} / ${store} — ${name}`.trim();
+}

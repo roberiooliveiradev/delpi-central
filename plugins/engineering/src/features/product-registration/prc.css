@@ -168,33 +168,56 @@
   position: relative;
 }
 
-.engineering-prc__lookup-list {
-  position: absolute;
-  inset-inline: 0;
-  top: 100%;
-  z-index: 40;
-  margin: 4px 0 0;
-  padding: 4px;
-  list-style: none;
+/* Dropdown de fornecedores: renderizado via AnchoredPanelPortal (body)
+ * — a superfície/sombra vive no painel do portal, nunca dentro do
+ * overflow do wrapper da tabela (causa do clipping D8). */
+.engineering-prc__lookup-panel {
+  min-width: 280px;
+  max-width: min(420px, calc(100vw - 24px));
   background: var(--en-surface);
   border: 1px solid var(--en-border);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+.engineering-prc__lookup-list {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
   max-height: 260px;
   overflow-y: auto;
 }
 
 .engineering-prc__lookup-item {
-  padding: 8px 10px;
   border-radius: 6px;
-  cursor: pointer;
   font-size: 0.85rem;
 }
 
-.engineering-prc__lookup-item:hover,
-.engineering-prc__lookup-item:focus-visible {
+.engineering-prc__lookup-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--en-text);
+  font: inherit;
+  cursor: pointer;
+  white-space: normal;
+}
+
+.engineering-prc__lookup-option:hover,
+.engineering-prc__lookup-option:focus-visible,
+.engineering-prc__lookup-item--active .engineering-prc__lookup-option {
   background: var(--en-surface-muted);
   outline: none;
+}
+
+.engineering-prc__lookup-empty {
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  color: var(--en-text-muted);
 }
 
 .engineering-prc__form-grid {
@@ -242,8 +265,20 @@
 
 .engineering-prc__supplier-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.85rem;
+}
+
+.engineering-prc__supplier-table th:nth-child(1) { width: 34%; }
+.engineering-prc__supplier-table th:nth-child(2) { width: 8%; }
+.engineering-prc__supplier-table th:nth-child(3) { width: 24%; }
+.engineering-prc__supplier-table th:nth-child(4) { width: 14%; }
+.engineering-prc__supplier-table th:nth-child(5) { width: 12%; }
+.engineering-prc__supplier-table th:nth-child(6) { width: 8%; }
+
+.engineering-prc__supplier-table td {
+  overflow-wrap: anywhere;
 }
 
 .engineering-prc__supplier-table th {
