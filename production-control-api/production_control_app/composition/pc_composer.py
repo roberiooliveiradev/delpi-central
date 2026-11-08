@@ -368,6 +368,21 @@ def build_myweg_demand_source_service(repository=None):
     return MyWegDemandSourceService(repository or build_myweg_needs_repository())
 
 
+def build_myweg_demand_coverage_preview_service(
+    gateway: DelpiProductionGateway | None = None,
+    repository=None,
+):
+    """Prévia E2 MyWEG+Demanda — inerte; não altera GET /demand."""
+    from production_control_app.application.services.myweg_demand_coverage_preview_service import (
+        MyWegDemandCoveragePreviewService,
+    )
+
+    return MyWegDemandCoveragePreviewService(
+        gateway or DelpiProductionGateway(),
+        myweg_source=build_myweg_demand_source_service(repository),
+    )
+
+
 def build_line_feeder_service(
     gateway: DelpiProductionGateway | None = None,
     *,

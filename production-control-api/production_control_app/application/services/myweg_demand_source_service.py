@@ -27,6 +27,7 @@ from production_control_app.domain.myweg_demand_source_contract import (
 from production_control_app.domain.myweg_needs_contract import ALLOWED_BRANCH, FORBIDDEN_BRANCH
 from production_control_app.domain.ports.myweg_needs_repository import MyWegNeedsRepositoryPort
 from production_control_app.domain.services.myweg_demand_projection import (
+    MyWegDemandProjectionLine,
     project_myweg_demand_lines,
     summarize_projection,
 )
@@ -36,19 +37,14 @@ class MyWegDemandSourceService:
     def __init__(self, repository: MyWegNeedsRepositoryPort) -> None:
         self._repository = repository
 
-    def project_latest(
+    def project_latest_lines(
         self,
         user: object | None,
         *,
         branch: str,
         require_demand_permission: bool = True,
-    ) -> dict[str, Any]:
-        """Monta a projeção interna da última coleta MyWEG da filial 02.
-
-        ``require_demand_permission`` permanece True por padrão: a origem só deve
-        ser consumida por quem já pode ver Demanda + Necessidades WEG. Em testes
-        unitários do projetor puro, use o domínio diretamente.
-        """
+    ) -> tuple[dict[str, Any], list[MyWegDemandProjectionLine]]:
+        """Retorna metadados do lote + linhas tipadas (consumo interno E2)."""
         code = str(branch or "").strip()
         if code == FORBIDDEN_BRANCH:
             raise InvalidBranch(
@@ -80,19 +76,38 @@ class MyWegDemandSourceService:
             collected_at=batch.get("collected_at"),
             branch=ALLOWED_BRANCH,
         )
+        meta = {
+            "id": batch_id,
+            "collection_id": batch.get("collection_id"),
+            "collected_at": batch.get("collected_at"),
+            "imported_at": batch.get("imported_at"),
+            "collection_date": batch.get("collection_date"),
+            "record_count": int(batch.get("record_count") or 0),
+            "status": batch.get("status"),
+        }
+        return meta, lines
+
+    def project_latest(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        require_demand_permission: bool = True,
+    ) -> dict[str, Any]:
+        """Monta a projeção interna da última coleta MyWEG da filial 02.
+
+        ``require_demand_permission`` permanece True por padrão: a origem só deve
+        ser consumida por quem já pode ver Demanda + Necessidades WEG. Em testes
+        unitários do projetor puro, use o domínio diretamente.
+        """
+        batch, lines = self.project_latest_lines(
+            user, branch=branch, require_demand_permission=require_demand_permission
+        )
         return {
             "source": SOURCE_MYWEG,
             "branch": ALLOWED_BRANCH,
             "wired_to_demand_endpoint": False,
-            "batch": {
-                "id": batch_id,
-                "collection_id": batch.get("collection_id"),
-                "collected_at": batch.get("collected_at"),
-                "imported_at": batch.get("imported_at"),
-                "collection_date": batch.get("collection_date"),
-                "record_count": int(batch.get("record_count") or 0),
-                "status": batch.get("status"),
-            },
+            "batch": batch,
             "items": [line.to_dict() for line in lines],
             "summary": summarize_projection(lines),
         }

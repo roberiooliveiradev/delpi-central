@@ -128,33 +128,25 @@ Mecanismos autorizados (somente leitura):
    `/pedidos-venda-abertos/totvs-open-orders`, recorte
    `filial=02` + `codigo_cadastro=000001` + `loja_cadastro=09` + `tipo_entidade=CLIENTE`.
 
-| Leitura exigida | Resultado nesta execução |
+| Leitura exigida | Resultado |
 |---|---|
-| Última coleta MyWEG aceita + linhas SB1 | **INCONCLUSIVE** — ambiente do agente sem Docker/gateway local; SSH `operador@192.168.1.237` → `Permission denied (publickey)` |
-| Carteira aberta Protheus WEG Linhares | **INCONCLUSIVE** — mesma indisponibilidade |
-| Contagens exclusivos / overlap / não confirmados | **não fabricadas** |
+| Última coleta MyWEG + SB1 | **CONFIRMADO** (08/11/2026 srv-api): collection `20261108_080025_…` · 464/464 confirmed · 157 produtos · 680.325 UN |
+| Carteira Protheus `000001`/`09` | **CONFIRMADO** (mesma data): **0** linhas abertas Linhares; não confundir lojas 11/14 |
+| Estoque SB2×`no_estoque` | **PARCIAL**: 157/157 com registro wh=01; amostra 8 coincidiu; equivalência universal ainda HIPOTESE |
+| Contagens exclusivos / overlap | Linhares sem pedido aberto → overlap cartão vazio na foto; exclusivos MyWEG = elegíveis sem linha 09 |
 
-Leituras que faltam (exatas):
+Fotografia ≠ invariante. Detalhe e prévia E2: [MYWEG-DEMAND-COVERAGE-E2.md](./MYWEG-DEMAND-COVERAGE-E2.md).
 
-```text
-1. PG plugins: SELECT latest batch WHERE branch='02' ORDER BY collected_at DESC
-2. PG plugins: list_batch_records_for_compare(batch_id) com sb1_resolution
-3. api-delpi S2S/JWT: GET /pedidos-venda-abertos/totvs-open-orders
-4. Filtro em memória: filial=02, codigo_cadastro=000001, loja_cadastro=09
-5. Cruzamento por product_code verified (não por produto+data sozinho)
-```
+### Matriz de classificação
 
-### Matriz de classificação (modelo — volumes = INCONCLUSIVE até amostra live)
-
-| Classe | Critério | Ação E2 proposta | Estado evidência |
+| Classe | Critério | Ação E2 prévia | Estado evidência 08/11 |
 |---|---|---|---|
-| Exclusivo MyWEG | P verificado na coleta; ausente na carteira filtrada | Incluir linha MyWEG | modelo |
-| Exclusivo Protheus | linha carteira; P ausente na projeção elegível | Manter linha Protheus | modelo |
-| Sobreposição comprovada | evidência documental (pedido↔necessidade) além de P | **nunca somar**; ADR decide fonte | bloqueado sem amostra |
-| Sobreposição provável | mesmo P; datas próximas; sem documento | `overlap_pending` | bloqueado sem amostra |
-| Compromisso adicional | pedido com P/data sem contraparte MyWEG confiável | incluir Protheus | modelo |
-| Inconclusivo | identidade fraca / datas divergentes | pendência explícita | modelo |
-| DELPI não confirmado | `coverage_eligible=false` | diagnóstico MyWEG; não cobre | CONFIRMADO_NO_CODIGO |
+| Exclusivo MyWEG | P verificado; ausente na carteira filtrada | Incluir MyWEG | esperado (0 linhas loja 09) |
+| Exclusivo Protheus | linha carteira outros clientes/lojas | Manter Protheus | 50 linhas filial 02 (não Linhares) |
+| Sobreposição comprovada | evidência documental além de P | **nunca somar** | sem caso Linhares na foto |
+| Sobreposição provável | mesmo P; datas próximas | `overlap_pending` | fixture E2 |
+| Compromisso adicional | pedido sem contraparte MyWEG | incluir Protheus | lojas 11/14 ≠ Linhares |
+| DELPI não confirmado | `coverage_eligible=false` | diagnóstico | 0 na foto (464 confirmed) |
 
 **Regra essencial (CONFIRMADO_NO_CONTRATO / código comparação):** não somar MyWEG+Protheus
 sobrepostos; não abater NF da necessidade atual.
@@ -205,9 +197,9 @@ distribui FIFO por data de entrega.
 |---|---|
 | Ambos descrevem quantidade física na filial | CONFIRMADO_EM_DOCUMENTACAO |
 | DDL da view / `B2_LOCAL` usado em `no_estoque` | **não auditado no repo** (DDL ilegível / não versionado) |
-| `no_estoque` ≡ `B2_QATU` armazém `01` | **HIPOTESE_A_VALIDAR** |
-| Comparação live produtos nas duas fontes | **INCONCLUSIVE** (mesma indisponibilidade de ambiente) |
-| Usar SB2 sem validar = risco de estoque duplo/distinto | CONFIRMADO (risco) |
+| `no_estoque` ≡ `B2_QATU` armazém `01` | **HIPOTESE_A_VALIDAR** (amostra 8/08/11 favorável, não universal) |
+| Comparação live produtos nas duas fontes | **PARCIAL** — 8 coincidiram; 157 MyWEG com registro SB2 wh=01 |
+| Usar SB2 sem validar = risco de estoque duplo/distinto | CONFIRMADO (risco) — prévia E2 **não soma** fontes |
 
 ### Estratégia segura (bloqueada até prova)
 
@@ -293,8 +285,8 @@ Regressão: suíte MyWEG existente + `test_demand.py` (motor intacto).
 | Identidade / amostras provisórias | **PRONTO** |
 | Contrato interno + Port compare | **PRONTO** |
 | Política auth proposta | **DOCUMENTADA** (não ACCEPTED) |
-| Consolidação MyWEG×Protheus | **BLOQUEADO** — amostra live + ADR |
-| Estoque exclusivos MyWEG | **BLOQUEADO** — equivalência `no_estoque`×SB2 não demonstrada |
+| Consolidação MyWEG×Protheus | **PRÉVIA E2 pronta** · ADR ainda **não ACCEPTED** · produtivo bloqueado |
+| Estoque exclusivos MyWEG | **PRÉVIA E2** usa SB2 wh=01 sem somar `no_estoque` · equivalência universal pendente |
 | Wiring `GET /demand` / UI / KPIs | **BLOQUEADO** |
 | Pedidos fictícios / write Protheus | **FORA DE ESCOPO** |
 
