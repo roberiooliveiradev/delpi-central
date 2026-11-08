@@ -461,3 +461,39 @@ Nº          TIPO      SOLICITANTE               STATUS         RESPONSÁVEL
 
 
 
+
+
+## Consolidação executiva REF-001..011 — trilha para Devin (2026-11-08)
+
+**Status:** `PO_FEEDBACK_CONSOLIDATED / IMPLEMENTATION_REQUESTED / PROD_DEPLOY_SUSPENDED`. Este apêndice **supersede os placeholders “aguardando novas observações”** anteriores para fins de execução, mas não apaga histórico. Os refinamentos REF-001..011 estão aprovados como alvo UX; as mudanças cross-owner ainda exigem autorização/contrato específico no boundary correto. Nenhum item está `PROVEN_IMPLEMENTED` por esta documentação.
+
+### Agrupamento de execução e sequência crítica
+
+| Lote | IDs | Primeira entrega | Dependências |
+|---|---|---|---|
+| 0 / Baseline | todos | Revalidar HEAD, AGENTS, shas, refs/props kit, contratos e testes | preservar diffs concorrentes |
+| 1 / UX independente | REF-002, REF-003, REF-004, REF-007, REF-010 | ícone home; linha clicável; colunas; hero compacto; grid e tabela fornecedor | plugin-ui já inventariado; UI sem backend novo |
+| 2 / Application contract | REF-001, REF-005, REF-006 | revisão-base automática, consulta ordenada paginada, Kanban com escopo verdadeiro | Engineering API owner; CAS/PG/AuthZ/compatibilidade |
+| 3 / Reference data and identity | REF-008, REF-009, REF-011 | timeline/fila com identidade governada, combos TOTVS, busca SA2 | Core/Keycloak owner identity; api-delpi owner reads and S2S allowlist |
+| 4 / Integration and QA | todos | UX integrados, testes contrato/backend/front, browser desktop/tablet/mobile, screenshots | live DEV/HML autorizado, PO visual aceite |
+
+Os lotes podem executar em paralelo **somente** com boundaries/provenance claramente separados. Deve-se evitar entregar visual fake no lote 1 quando o lote 3 exige catálogo oficial: layout editável pode existir sem inventar opções, mas um select sem catálogo não equivale a REF-011 concluído.
+
+### Contratos / decisões sem ambiguidades
+
+1. `baseRevision` (REF-001): user não digita, Engineering API resolve última revisão técnica. O backend atual exige base explícita quando record existe: corrigir use case e testes; CAS/idempotência/compatibilidade com consumidores existentes.
+2. `sort` (REF-005): rota `GET /v1/product-registration/requests` não expõe sorting; implementar mínima allowlist no owner Engineering API antes de anunciar sort global. Ordenação só do page slice **não é** equivalente.
+3. `kanban` (REF-006): estados do workflow, board **read-only**, sem DnD/alteração de status; contagens/itens globais apenas com contrato paginado/agregado legítimo. Caso contrato completo inviável, manter status explícito `PARTIAL` e visual `somente itens carregados`, não preencher com dados inventados.
+4. `identity` (REF-008/009): payload de timeline traz `actor_subject`, `assignedTo` não inclui apresentação. Implementar resolução governada (preferencial DTO/batch) com autorização, sem consultar tabela Core ou Keycloak diretamente a partir do MFE/Eng API; sem email inventado ou exposição de UUID.
+5. `catalogs/supplier` (REF-011): padrão de Suprimentos é REFERÊNCIA de UX, não integração runtime. SA2 supplier search EXISTE na api-delpi sob consumer `supplies-api`/scope `suppliers.read`; novo consumer Engineering requer contrato e segurança pelo owner api-delpi. Catalogar grupo, unidade, armazém, contas: `TO_INVENTORY` antes de novos endpoints. Tipo e terceiros podem ser enums oficiais, **não obrigatoriamente lookup dinâmica**. `Portal -> Engineering API -> api-delpi -> TOTVS`; nenhuma escrita ERP.
+6. `select/reference values`: tipos/códigos/labels reais, zeros à esquerda, loading/403/timeout e valor de origem preservados; nunca hardcode de opções fictícias.
+7. `suppliers`: tabela editável com busca código/nome, escolha `supplierCode+store`, nome oficial, PN/catalog editáveis; PN opcional, não wildcard.
+8. `plugin-ui`: usar façade Engenharia e kit para PageHero, StatusBadge, DataTableSection, SegmentToggle, usePersistedViewLayout, TableColumnVisibilityMenu, cards/kanban factories, Timeline e InitialsAvatar; conferir imports e props em HEAD. Sem dependência de domínio Comercial/Suprimentos.
+9. `UX accessibility`: table row keyboard, tabs, modal, combobox, grid/form, zoom 200%, browser real. Release fechado até aceite PO e gates HML funcionais independentes.
+10. `PRODUCTION_DEPLOY_SUSPENDED`: inclusive migrations/Keycloak/Core PROD; somente DEV/HML autorizado e testes seguidos de evidência. `engineering.access` operacional e `engineering.manager` admin, sem cinco permissões antigas.
+
+### Obrigação de relatório por REF
+
+`ID | STATUS (PASS/FAIL/PARTIAL/TEST_NOT_RUN) | owner | API contract | frontend files | code SHA | tests SHA | browser evidence | residual`.
+
+**Condição de conclusão:** todos os 11 IDs implementados com contratos legítimos, testes e evidência visual. Não declarar sucesso geral se as dependências interserviços estiverem pendentes; implementar as partes independentes e reportar os gates reais.
