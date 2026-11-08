@@ -118,6 +118,7 @@ describe("MyWegPlanningEvolutionPanel", () => {
     expect(await screen.findByTestId("kpi-Aumentos")).toBeTruthy();
     expect(screen.getByTestId("kpi-Reduções")).toBeTruthy();
     expect(screen.getByTestId("shifts")).toBeTruthy();
+    expect(screen.queryByTestId("myweg-compare-table")).toBeNull();
   });
 
   it("card Por produto troca a análise", () => {

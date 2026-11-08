@@ -1628,7 +1628,8 @@ export const copy = {
       },
       analysisToggleAria: "Tipo de análise da comparação",
       analysisRemessa: "Por remessa",
-      analysisRemessaDesc: "Movimentos por produto e data de remessa entre as duas coletas.",
+      analysisRemessaDesc:
+        "Possíveis reprogramações de entrega detectadas entre as duas coletas.",
       analysisProducts: "Por produto",
       analysisProductsDesc: "Totais consolidados por produto DELPI em todas as remessas.",
       filtersTitle: "Comparação de coletas",

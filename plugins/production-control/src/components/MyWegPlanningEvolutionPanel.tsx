@@ -26,7 +26,6 @@ import type {
   MyWegNeedsBatchSummary,
 } from "../types";
 import { formatDecimalString } from "../utils/formatDecimalString";
-import { deltaToneClass, movementBadgeClass } from "../utils/mywegSemanticTone";
 import {
   resolveMyWegCompareAnalysis,
   type MyWegCompareAnalysis,
@@ -51,23 +50,6 @@ const KpiCard = createDashboardKpiCard({
   prefix: "ppc",
   labels: copy.kpi,
 });
-
-function movementLabel(movement: string): string {
-  switch (movement) {
-    case "increased":
-      return texts.movement.increased;
-    case "decreased":
-      return texts.movement.decreased;
-    case "appeared":
-      return texts.movement.appeared;
-    case "disappeared":
-      return texts.movement.disappeared;
-    case "unchanged":
-      return texts.movement.unchanged;
-    default:
-      return movement;
-  }
-}
 
 function pickDefaultPair(
   historyItems: MyWegNeedsBatchSummary[],
@@ -116,7 +98,6 @@ export function MyWegPlanningEvolutionPanel({
   const [billingMode, setBillingMode] = useState<"none" | "indicative">("none");
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
   const [payload, setPayload] = useState<MyWegComparePayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,14 +107,9 @@ export function MyWegPlanningEvolutionPanel({
     const pair = pickDefaultPair(historyItems, selectedBatchId);
     setFromId(pair.fromId);
     setToId(pair.toId);
-    setPage(1);
     setSearch("");
     setSearchDraft("");
   }, [historyItems, selectedBatchId]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [fromId, toId, billingMode, search]);
 
   useEffect(() => {
     if (activeAnalysis !== "remessa") {
@@ -160,7 +136,7 @@ export function MyWegPlanningEvolutionPanel({
       toBatchId: toId,
       billingMode,
       search,
-      page,
+      page: 1,
       pageSize: PAGE_SIZE,
       changesOnly: true,
       signal: controller.signal,
@@ -178,55 +154,7 @@ export function MyWegPlanningEvolutionPanel({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [activeAnalysis, fromId, toId, billingMode, search, page]);
-
-  const columns = useMemo<DataTableColumn<MyWegComparePayload["items"][number]>[]>(
-    () => [
-      {
-        key: "product",
-        header: texts.columns.product,
-        render: (row) =>
-          row.verifiedProductCode || row.materialWegTratado || row.productKey || "—",
-      },
-      {
-        key: "remessa",
-        header: texts.columns.remessa,
-        render: (row) => formatRemessaBr(row.remessa),
-      },
-      {
-        key: "movement",
-        header: texts.columns.movement,
-        render: (row) => {
-          const label = movementLabel(row.movement);
-          const text = row.inHorizon14d ? `${label} · ${texts.horizonBadge}` : label;
-          return <span className={movementBadgeClass(row.movement)}>{text}</span>;
-        },
-      },
-      {
-        key: "prev",
-        header: texts.columns.previous,
-        align: "right",
-        render: (row) => formatDecimalString(row.previousQuantityUn),
-      },
-      {
-        key: "curr",
-        header: texts.columns.current,
-        align: "right",
-        render: (row) => formatDecimalString(row.currentQuantityUn),
-      },
-      {
-        key: "delta",
-        header: texts.columns.delta,
-        align: "right",
-        render: (row) => (
-          <span className={deltaToneClass(row.movement)}>
-            {formatDecimalString(row.deltaQuantityUn)}
-          </span>
-        ),
-      },
-    ],
-    [],
-  );
+  }, [activeAnalysis, fromId, toId, billingMode, search]);
 
   const indicativeColumns = useMemo<DataTableColumn<MyWegCompareIndicativeProduct>[]>(
     () => [
@@ -601,33 +529,6 @@ export function MyWegPlanningEvolutionPanel({
             shifts={payload.observed.probableDateShifts}
             resetKey={`${payload.fromBatch.id}|${payload.toBatch.id}|${payload.observed.referenceDate}`}
           />
-
-          {(payload.totalChanges ?? 0) === 0 && (payload.total ?? 0) === 0 && !search ? (
-            <p role="status">{texts.noChanges}</p>
-          ) : (
-            <div data-testid="myweg-compare-table">
-              <DataTableSection
-                title={texts.tableTitle}
-                rows={payload.items}
-                columns={columns}
-                rowKey={(row) => `${row.productKey}|${row.remessa}|${row.movement}`}
-                emptyMessage={
-                  search ? copy.tableSection.emptyMessage : texts.noChanges
-                }
-                hideSearch
-                columnPreferencesKey="production-control:myweg-evolution:columns:v1"
-                serverPagination={{
-                  page: payload.page,
-                  pageSize: payload.pageSize,
-                  total: payload.total,
-                  onPageChange: (nextPage) => setPage(nextPage),
-                  onPageSizeChange: () => {
-                    /* pageSize fixo 50 nesta etapa */
-                  },
-                }}
-              />
-            </div>
-          )}
 
           <aside
             className={

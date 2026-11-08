@@ -71,7 +71,7 @@ export const helpTooltips = {
   mywegNeedsFiscalCoverage:
     "Cobertura da janela fiscal entre as datas documento das coletas. Completa (com ou sem NF), parcial, aguardando importação, conflito ou indisponível. Sem cobertura completa o ajuste fica «Não disponível».",
   mywegNeedsAnalysisRemessa:
-    "Análise por combinação produto e data de remessa — movimentos observados (aumento, redução, entrada, saída) e possíveis reprogramações. Faturamento indicativo Protheus, quando ativo, é hipótese separada da NF observada no portal MyWEG.",
+    "Aba de possíveis reprogramações de entrega entre as duas coletas. Hipóteses complementares — não alteram totais. Faturamento indicativo Protheus, quando ativo, é hipótese separada da NF observada no portal MyWEG.",
   mywegNeedsAnalysisProducts:
     "Análise consolidada por produto DELPI — totais e diferença líquida considerando todas as remessas. Modo Necessidades compara só necessidades; modo Conciliação MyWEG acrescenta observações fiscais do portal para explicar a variação.",
   mywegNeedsInvoices:
