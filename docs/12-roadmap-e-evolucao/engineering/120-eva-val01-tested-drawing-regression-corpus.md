@@ -280,3 +280,9 @@ Sequência 4-OK→RuntimeError→9×MemoryError: um filho só com RLIMIT_AS 12GB
 ## Log adicional — 2026-11-06 (estabilidade nativa — batch=1 + RLIMIT 16GB)
 
 Medição provou que VMS Paddle só é devolvido por morte do processo (reset in-process inútil: 16.1GB). Fix `cf4c4362d3`: filho por página + cap 16GB. Job anterior provou 12/14 com PARTIAL honesto; batch=1 isola falha por página. Regressão 13 PDFs pendente no consumidor.
+
+## Log adicional — 2026-11-08 (DEC-VAL-037 — integridade documental SLANet, `a9fa4e6307`)
+
+**Causa-raiz do `PdfiumError: Data format error` no job `aj-03ac71384ba140f9` (página 9):** refetch redundante do PDF após o OCR; falha chegava como dict sem `content` → `b""` → PDFium. Corrigido por **reuso dos bytes oficiais do benchmark** (um fetch por execução, SHA idêntico por construção) + gates tipados de entrada (`DOCUMENT_CONTENT_MISSING`/`DOCUMENT_HASH_MISMATCH`/`DOCUMENT_CONTENT_INVALID`/`PDF_OPEN_FAILED`) + cleanup de tmp na abertura.
+
+**Deploy `a9fa4e6307`** (imagem `sha256:253de3fb…`, healthy): prova in-container sobre PDF oficial `90264017` (SHA `5452aabd…32ee` conferido com o índice): `component_table` p9 → **68 células nativas**, `error_kind=None`, `pdf_sha_match=true`. Corpus de 13 PDFs no novo SHA e job MCP autenticado pós-deploy: `TEST_NOT_RUN` neste executor — próxima rodada pelo consumidor ChatGPT.

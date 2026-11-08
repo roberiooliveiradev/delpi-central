@@ -1398,3 +1398,24 @@ O histórico de revisão da mesma página não cita esses códigos. `10081389` �
 **Correção (`ec67d8ca00`):** `apply_native_table_observations` propaga `error_detail` (aditivo) — o catch-all já produzia `Tipo:mensagem`; agora o consumidor recebe a causa real em vez de UNAVAILABLE opaco.
 
 **Reteste:** se recorrer, `error_detail` indica a exceção real (memória/render/tokens) — caso contrário, cells>0 + FULL.
+
+## 47. DEC-VAL-037 — Integridade documental do caminho SLANet: refetch→b"" eliminado (2026-11-08)
+
+**TASK_ID:** `EVA-VAL01-SLANET-PDF-SOURCE-INTEGRITY-FIX-PROD`. **Commit:** `a9fa4e6307`. **Deploy:** checkout `a9fa4e6307`, imagem `sha256:253de3fb104936abc615afaf4ec7938098bfb21c6fa43e694fd4567342676ea2`, `delpi-engineering-api` iniciado `2026-11-08T17:30:19Z`, healthy. `VAL01_COMPLETED=false`; `ENGINEERING_APPROVAL=NOT_APPROVED`.
+
+**Causa-raiz (PROVEN no código, cadeia completa):** `_produce_drawing_understanding` refazia `fetch_product_drawing_pdf` **depois** do benchmark OCR multipágina (minutos de execução). O contrato delegado nunca levanta exceção: qualquer falha (timeout 30s sob concorrência, 401 por Bearer expirado mid-job, upstream 5xx) chega como dict `{"status":"unavailable"/"forbidden"/"not_found"}` **sem** a chave `content`. O código lia `_pdf_raw.get("content")` → `None` → `bytes(_pdf_bytes) if _pdf_bytes else b""` → `_open_pdf_document(b"")` gravava arquivo de 0 bytes → `pdfium.PdfDocument` lançava `PdfiumError: Data format error` → catch-all → `error_kind=UNAVAILABLE`. Exatamente o `error_detail` observado no job `aj-03ac71384ba140f9` (página 9, ambas as regiões). O job produzia OCR 14/14 FULL porque o benchmark executa sobre os bytes do **primeiro** fetch (token ainda válido); o SLANet quebrava no **segundo**.
+
+**Defeitos secundários comprovados:** (a) `_open_pdf_document` vazava o arquivo temporário quando `PdfDocument` falhava — reproduzido em teste (órfão em /tmp); (b) `ERROR_KINDS` fechado descartava kinds desconhecidos para `None` — novos kinds de documento precisavam entrar no conjunto.
+
+**Correção (menor diff, fronteira defeituosa, sem nova abstração):**
+- `run_official_document_benchmark` devolve `out["_pdf_bytes"]` — o mesmo conteúdo já validado (não-vazio, sha256) consumido pelo OCR. `_produce_drawing_understanding` **não refaz o fetch**: OCR e SLANet operam sobre o MESMO documento, mesma execução autorizada, sem cache/estado novo. `OCR_PDF_SHA256 == SLANET_PDF_SHA256` por construção.
+- `TableStructureEngine.run` tipa falhas de ENTRADA antes do PDFium: `DOCUMENT_CONTENT_MISSING` (ausente/vazio), `DOCUMENT_HASH_MISMATCH` (divergente do oficial), `DOCUMENT_CONTENT_INVALID` (sem magic %PDF- nos 1KB iniciais), `PDF_OPEN_FAILED` (PdfDocument falhou) — aditivo em `ERROR_KINDS`; `UNAVAILABLE` volta a significar falha de motor/modelo.
+- `_open_pdf_document` remove o tmp também no caminho de exceção de abertura.
+- `_table_engine_summary` propaga `error_detail`.
+- `TABLE_PERCEPTION_REVISION=native_slanet_v3` — job não reutiliza COMPLETED stale.
+
+**Evidência integrada (container descartável, imagem prod, PDF oficial `90264017` SHA `5452aabd…32ee`, 2.443.597 B):** gates tipados respondem antes do PDFium; `component_table` p9 crop `[1,56,1273,303]` → `error_kind=None`, **68 células nativas**, 11 linhas, score 0.973, `pdf_sha_match=true`. Repetido **dentro do container implantado**: `DOCUMENT_CONTENT_MISSING` + 68 células/sha_match.
+
+**Testes:** `tests/test_slanet_document_integrity.py` (10 casos: missing/invalid/mismatch/open-fail/cleanup/válido/propagação `table_perception`/fetch único/falha tipada de fonte); 2 testes existentes ajustados ao contrato estrito. 24/24 foco; suite engineering-api **859 pass / 3 fail pré-existentes fora do escopo** (allowlist OpenAPI do WIP PRC concorrente; `_normalize_box` sem cv2 na venv).
+
+**Residuais:** job MCP autenticado pós-deploy (`component_table`+`title_block` cells>0 no consumidor, OCR 14/14, `table_perception.source_pdf_sha256`) — pendente do consumidor ChatGPT com token de usuário; corpus de 13 PDFs no novo SHA: `TEST_NOT_RUN`; a segunda obtenção `_pf["pdf_result"]` do path `drawing_analysis` permanece (contrato prefetch DEC-VAL-032, já fail-closed em `analyze_product_drawing`).
