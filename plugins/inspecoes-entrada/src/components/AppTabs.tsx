@@ -8,6 +8,7 @@ type AppTabsProps = {
 const TABS: Array<{ id: InspecoesEntradaTab; label: string }> = [
   { id: "overview", label: "Visão Geral" },
   { id: "historico", label: "Histórico" },
+  { id: "fornecedores", label: "NCs de fornecedores" },
 ];
 
 export function AppTabs({ activeTab, onChange }: AppTabsProps) {
