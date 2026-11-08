@@ -7766,6 +7766,12 @@
   color: #0f766e;
 }
 
+.dashboard-production-control .ppc-myweg-needs__mgr-badge--difference {
+  background: color-mix(in srgb, #d97706 12%, #fff);
+  border-color: color-mix(in srgb, #d97706 28%, var(--ppc-border));
+  color: #b45309;
+}
+
 .dashboard-production-control .ppc-myweg-needs__mgr-badge--partial {
   background: color-mix(in srgb, #d97706 14%, #fff);
   border-color: color-mix(in srgb, #d97706 30%, var(--ppc-border));
@@ -7833,6 +7839,15 @@
   background: color-mix(in srgb, #dc2626 8%, #fff);
 }
 
+.dashboard-production-control .ppc-myweg-needs__product-summary-kpi--excess {
+  border-color: color-mix(in srgb, #d97706 30%, var(--ppc-border));
+  background: color-mix(in srgb, #d97706 10%, #fff);
+}
+
+.dashboard-production-control .ppc-myweg-needs__product-summary-kpi--excess strong {
+  color: #b45309;
+}
+
 .dashboard-production-control .ppc-myweg-needs__product-explanation {
   margin: 0 0 0.9rem;
   padding: 0.55rem 0.75rem;
@@ -7841,6 +7856,11 @@
   background: color-mix(in srgb, #0f766e 8%, #fff);
   font-size: var(--ppc-font-sm);
   color: var(--ppc-text);
+}
+
+.dashboard-production-control .ppc-myweg-needs__product-explanation--difference {
+  border-left-color: #d97706;
+  background: color-mix(in srgb, #d97706 8%, #fff);
 }
 
 .dashboard-production-control .ppc-myweg-needs__related-invoices {

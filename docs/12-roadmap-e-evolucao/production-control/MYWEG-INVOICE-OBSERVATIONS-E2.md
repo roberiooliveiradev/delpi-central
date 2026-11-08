@@ -39,18 +39,25 @@ Campos aditivos por produto (não substituem brutos):
 
 | Campo | Uso |
 |---|---|
-| `managerialStatus` | `invoiced` \| `partial_invoicing` \| `reduction_to_investigate` \| `reconciliation_pending` \| `other_movement` |
+| `managerialStatus` | `invoiced` \| `invoicing_with_difference` \| `partial_invoicing` \| `reduction_to_investigate` \| `reconciliation_pending` \| `other_movement` |
 | `managerialReason` / `managerialExplanation` | Motivo e frase operacional |
 | `residualUnexplainedUn` | Residual da redução sem NF compatível |
+| `fiscalExcessUn` | Excedente analítico `posted − \|observed\|` quando NF cobre a redução com sobra |
 | `remessaInvoicingContext` / `managerialRemessaContext` | Contexto visual nas remessas — **sem rateio** |
 
 **Faturado** exige cobertura completa + identidade confiável + NF positiva +
 `compatibleReductionUn == |observedDelta|` + `adjustedPlanningDeltaUn == 0`
 (Decimal exato). `invoiceMatchStatus=reconciled` isolado **não** basta.
 
-Remessas reduzidas só recebem `compatible_with_invoicing` quando o produto está
-Faturado, a soma das reduções fecha com o observado e **não** há aumentos
-simultâneos. Não há FIFO nem atribuição NF→data.
+**Faturamento com diferença** (`invoicing_with_difference`): mesmas condições de
+cobertura/identidade, redução observada, NF positiva e
+`compatibleReductionUn == |observedDelta|`, porém `posted > |observed|`.
+Excedente = `posted − |observed|` — diferença analítica a verificar, **não**
+cancelamento nem crédito automático. Não vira `invoiced` por tolerância.
+
+Remessas reduzidas recebem `compatible_with_invoicing` quando o produto está
+`invoiced` **ou** `invoicing_with_difference`, a soma das reduções fecha com o
+observado e **não** há aumentos simultâneos. Não há FIFO nem atribuição NF→data.
 
 ## Fora de escopo
 

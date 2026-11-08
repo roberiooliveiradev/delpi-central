@@ -42,5 +42,8 @@ Segundo motor de conciliação, migrations, Protheus, timers, Windows, baixas, E
 
 ## Smoke E2 real
 
-Fixture de regressão UI: produto `90263746` / material `17382643` / NF `000017061`
-(redução 2.450 UN integralmente conciliada → status **Faturado**).
+Fixtures de regressão UI:
+
+- `90263746` / material `17382643` / NF `000017061` — redução 2.450 = NF 2.450 → **Faturado**.
+- `90261791` / material `10432172` / NF `000017062` — redução 1.494, NF 1.500 →
+  **Faturamento com diferença** (excedente 6 UN).

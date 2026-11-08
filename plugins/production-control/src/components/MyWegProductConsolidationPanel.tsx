@@ -244,12 +244,17 @@ function ProductDetail({
   const showPosted = canShowPostedAsFact(coverageStatus, row.postedQuantityUn);
   const managerial = row.managerialStatus;
   const residual = row.residualUnexplainedUn;
+  const fiscalExcess = row.fiscalExcessUn;
   const showResidual =
     residual != null &&
     String(residual).trim() !== "" &&
     String(residual).trim() !== "0" &&
     String(residual).trim() !== "0.0" &&
     String(residual).trim() !== "0.00";
+  const showFiscalExcess =
+    managerial === "invoicing_with_difference" &&
+    fiscalExcess != null &&
+    String(fiscalExcess).trim() !== "";
   const hint = managerialStatusHint(managerial);
 
   return (
@@ -298,7 +303,12 @@ function ProductDetail({
               : texts.unavailableValue}
           </strong>
         </div>
-        {showResidual || managerial === "partial_invoicing" ? (
+        {showFiscalExcess ? (
+          <div className="ppc-myweg-needs__product-summary-kpi ppc-myweg-needs__product-summary-kpi--excess">
+            <span>{texts.kpiFiscalExcess}</span>
+            <strong>+{formatDecimalString(fiscalExcess)} UN</strong>
+          </div>
+        ) : showResidual || managerial === "partial_invoicing" ? (
           <div className="ppc-myweg-needs__product-summary-kpi ppc-myweg-needs__product-summary-kpi--residual">
             <span>{texts.kpiResidualUnexplained}</span>
             <strong>
@@ -316,7 +326,14 @@ function ProductDetail({
       </div>
 
       {row.managerialExplanation ? (
-        <p className="ppc-myweg-needs__product-explanation" role="status">
+        <p
+          className={
+            managerial === "invoicing_with_difference"
+              ? "ppc-myweg-needs__product-explanation ppc-myweg-needs__product-explanation--difference"
+              : "ppc-myweg-needs__product-explanation"
+          }
+          role="status"
+        >
           {row.managerialExplanation}
         </p>
       ) : null}

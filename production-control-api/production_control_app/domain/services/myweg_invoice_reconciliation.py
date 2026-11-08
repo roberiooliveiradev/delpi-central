@@ -37,10 +37,16 @@ MATCH_PARTIAL = "partial_coverage"
 MATCH_CONFLICT = "conflict"
 
 MANAGERIAL_INVOICED = "invoiced"
+MANAGERIAL_WITH_DIFFERENCE = "invoicing_with_difference"
 MANAGERIAL_PARTIAL = "partial_invoicing"
 MANAGERIAL_INVESTIGATE = "reduction_to_investigate"
 MANAGERIAL_PENDING = "reconciliation_pending"
 MANAGERIAL_OTHER = "other_movement"
+
+# Status que permitem contexto visual de remessa «compatível com faturamento».
+MANAGERIAL_REMESSA_ELIGIBLE = frozenset(
+    {MANAGERIAL_INVOICED, MANAGERIAL_WITH_DIFFERENCE}
+)
 
 MANAGERIAL_PENDING_MATCHES = frozenset(
     {
@@ -570,6 +576,7 @@ def classify_managerial_status(
                 if compatible is not None and reduction > compatible
                 else (decimal_to_canonical_str(reduction) if reduction > _ZERO else None)
             ),
+            "fiscalExcessUn": None,
             "remessaInvoicingContext": "product_only",
         }
 
@@ -590,6 +597,29 @@ def classify_managerial_status(
                 "compatível com a NF MyWEG observada. Nenhuma redução residual identificada."
             ),
             "residualUnexplainedUn": decimal_to_canonical_str(_ZERO),
+            "fiscalExcessUn": decimal_to_canonical_str(_ZERO),
+            "remessaInvoicingContext": "eligible",
+        }
+
+    if (
+        posted is not None
+        and posted > _ZERO
+        and observed < _ZERO
+        and compatible is not None
+        and compatible == reduction
+        and posted > reduction
+    ):
+        excess = posted - reduction
+        return {
+            "managerialStatus": MANAGERIAL_WITH_DIFFERENCE,
+            "managerialReason": "nf_covers_reduction_with_excess",
+            "managerialExplanation": (
+                f"NF MyWEG de {decimal_to_canonical_str(posted)} UN cobre a redução "
+                f"observada de {decimal_to_canonical_str(reduction)} UN. Diferença de "
+                f"{decimal_to_canonical_str(excess)} UN a verificar."
+            ),
+            "residualUnexplainedUn": decimal_to_canonical_str(_ZERO),
+            "fiscalExcessUn": decimal_to_canonical_str(excess),
             "remessaInvoicingContext": "eligible",
         }
 
@@ -611,6 +641,7 @@ def classify_managerial_status(
                 "explicação fiscal."
             ),
             "residualUnexplainedUn": decimal_to_canonical_str(residual),
+            "fiscalExcessUn": None,
             "remessaInvoicingContext": "product_only",
         }
 
@@ -622,6 +653,7 @@ def classify_managerial_status(
                 "Redução observada sem NF MyWEG compatível na janela — exige análise."
             ),
             "residualUnexplainedUn": decimal_to_canonical_str(reduction),
+            "fiscalExcessUn": None,
             "remessaInvoicingContext": "product_only",
         }
 
@@ -630,6 +662,7 @@ def classify_managerial_status(
         "managerialReason": "non_reduction_or_neutral",
         "managerialExplanation": None,
         "residualUnexplainedUn": None,
+        "fiscalExcessUn": None,
         "remessaInvoicingContext": "product_only",
     }
 
@@ -642,7 +675,7 @@ def annotate_remessas_managerial_context(row: dict[str, Any]) -> dict[str, Any]:
     remessas = [dict(item) for item in (row.get("remessas") or [])]
     context = str(row.get("remessaInvoicingContext") or "")
     if (
-        row.get("managerialStatus") != MANAGERIAL_INVOICED
+        row.get("managerialStatus") not in MANAGERIAL_REMESSA_ELIGIBLE
         or context != "eligible"
         or not remessas
     ):

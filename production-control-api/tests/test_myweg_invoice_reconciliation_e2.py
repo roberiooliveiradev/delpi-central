@@ -28,6 +28,7 @@ from production_control_app.domain.services.myweg_invoice_reconciliation import 
     MANAGERIAL_OTHER,
     MANAGERIAL_PARTIAL,
     MANAGERIAL_PENDING,
+    MANAGERIAL_WITH_DIFFERENCE,
     aggregate_need_quantity_by_material,
     aggregate_posted_nf_by_material,
     apply_managerial_classification,
@@ -705,7 +706,95 @@ def test_managerial_partial_and_excess_nf():
         ),
         coverage_status=COVERAGE_COMPLETE,
     )
+    assert excess["managerialStatus"] == MANAGERIAL_WITH_DIFFERENCE
+    assert excess["fiscalExcessUn"] == "550"
+    assert excess["residualUnexplainedUn"] == "0"
     assert excess["managerialStatus"] != MANAGERIAL_INVOICED
+
+
+def test_managerial_invoicing_with_difference_case_90261791():
+    """AC-01/AC-02: NF 1500 cobre redução 1494; excedente 6; remessas compatíveis."""
+    remessas = [
+        {
+            "remessa": "2026-11-06",
+            "previousQuantityUn": "452",
+            "currentQuantityUn": "0",
+            "deltaQuantityUn": "-452",
+            "movement": "disappeared",
+        },
+        {
+            "remessa": "2026-11-10",
+            "previousQuantityUn": "36",
+            "currentQuantityUn": "0",
+            "deltaQuantityUn": "-36",
+            "movement": "disappeared",
+        },
+        {
+            "remessa": "2026-11-11",
+            "previousQuantityUn": "414",
+            "currentQuantityUn": "0",
+            "deltaQuantityUn": "-414",
+            "movement": "disappeared",
+        },
+        {
+            "remessa": "2026-11-12",
+            "previousQuantityUn": "246",
+            "currentQuantityUn": "0",
+            "deltaQuantityUn": "-246",
+            "movement": "disappeared",
+        },
+        {
+            "remessa": "2026-11-17",
+            "previousQuantityUn": "702",
+            "currentQuantityUn": "356",
+            "deltaQuantityUn": "-346",
+            "movement": "decreased",
+        },
+    ]
+    classified = apply_managerial_classification(
+        {
+            "productKey": "code:90261791",
+            "identityReliable": True,
+            "identityConfirmed": True,
+            "previousQuantityUn": "4094",
+            "currentQuantityUn": "2600",
+            "deltaQuantityUn": "-1494",
+            "observedDeltaUn": "-1494",
+            "postedQuantityUn": "1500",
+            "compatibleReductionUn": "1494",
+            "adjustedPlanningDeltaUn": "6",
+            "invoiceMatchStatus": "reconciled",
+            "remessas": remessas,
+        },
+        coverage_status=COVERAGE_COMPLETE,
+    )
+    assert classified["managerialStatus"] == MANAGERIAL_WITH_DIFFERENCE
+    assert classified["fiscalExcessUn"] == "6"
+    assert classified["residualUnexplainedUn"] == "0"
+    explanation = classified["managerialExplanation"]
+    assert "1500" in explanation and "1494" in explanation and "6" in explanation
+    assert classified["remessaInvoicingContext"] == "compatible_on_reduced_lines"
+    contexts = [
+        item.get("managerialRemessaContext") for item in classified["remessas"]
+    ]
+    assert contexts == ["compatible_with_invoicing"] * 5
+
+
+def test_managerial_nf_without_reduction_is_not_invoicing():
+    """AC-06: NF positiva sem redução não explica faturamento de queda."""
+    result = classify_managerial_status(
+        _managerial_base(
+            observedDeltaUn="0",
+            deltaQuantityUn="0",
+            postedQuantityUn="1500",
+            compatibleReductionUn="0",
+            adjustedPlanningDeltaUn="1500",
+        ),
+        coverage_status=COVERAGE_COMPLETE,
+    )
+    assert result["managerialStatus"] == MANAGERIAL_OTHER
+    assert result["managerialStatus"] != MANAGERIAL_WITH_DIFFERENCE
+    assert result["managerialStatus"] != MANAGERIAL_INVOICED
 
 
 def test_managerial_pending_and_other_movements():

@@ -54,14 +54,26 @@ describe("mywegInvoiceReconciliationUi", () => {
 
   it("rotula classificação gerencial e evita vermelho em faturado", () => {
     expect(managerialStatusLabel("invoiced")).toBe("Faturado");
+    expect(managerialStatusLabel("invoicing_with_difference")).toBe(
+      "Faturamento com diferença",
+    );
     expect(managerialStatusLabel("partial_invoicing")).toBe("Faturamento parcial");
     expect(managerialStatusLabel("reduction_to_investigate")).toBe(
       "Redução a investigar",
     );
     expect(managerialBadgeClass("invoiced")).toContain("mgr-badge--invoiced");
+    expect(managerialBadgeClass("invoicing_with_difference")).toContain(
+      "mgr-badge--difference",
+    );
     expect(
       observedDeltaToneClass({
         managerialStatus: "invoiced",
+        situationOrMovement: "decreased",
+      }),
+    ).toContain("delta--invoiced");
+    expect(
+      observedDeltaToneClass({
+        managerialStatus: "invoicing_with_difference",
         situationOrMovement: "decreased",
       }),
     ).toContain("delta--invoiced");

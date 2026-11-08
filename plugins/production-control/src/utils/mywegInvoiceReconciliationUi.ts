@@ -124,6 +124,8 @@ export function managerialStatusLabel(
   switch ((status ?? "").trim()) {
     case "invoiced":
       return "Faturado";
+    case "invoicing_with_difference":
+      return "Faturamento com diferença";
     case "partial_invoicing":
       return "Faturamento parcial";
     case "reduction_to_investigate":
@@ -143,6 +145,8 @@ export function managerialStatusHint(
   switch ((status ?? "").trim()) {
     case "invoiced":
       return "Faturamento conciliado";
+    case "invoicing_with_difference":
+      return "NF cobre a redução, com excedente a verificar";
     case "partial_invoicing":
       return "Parte da redução compatível com NF";
     case "reduction_to_investigate":
@@ -161,6 +165,8 @@ export function managerialBadgeClass(
   switch ((status ?? "").trim()) {
     case "invoiced":
       return "ppc-myweg-needs__mgr-badge ppc-myweg-needs__mgr-badge--invoiced";
+    case "invoicing_with_difference":
+      return "ppc-myweg-needs__mgr-badge ppc-myweg-needs__mgr-badge--difference";
     case "partial_invoicing":
       return "ppc-myweg-needs__mgr-badge ppc-myweg-needs__mgr-badge--partial";
     case "reduction_to_investigate":
@@ -177,10 +183,11 @@ export function observedDeltaToneClass(params: {
   managerialStatus?: MyWegManagerialStatus | null;
   situationOrMovement: string;
 }): string {
-  if ((params.managerialStatus ?? "").trim() === "invoiced") {
+  const managerial = (params.managerialStatus ?? "").trim();
+  if (managerial === "invoiced" || managerial === "invoicing_with_difference") {
     return "ppc-myweg-needs__delta ppc-myweg-needs__delta--invoiced";
   }
-  if ((params.managerialStatus ?? "").trim() === "partial_invoicing") {
+  if (managerial === "partial_invoicing") {
     return "ppc-myweg-needs__delta ppc-myweg-needs__delta--partial";
   }
   // deferred import-free: mirror nullable/situation tones via classes already used

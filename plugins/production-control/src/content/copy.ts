@@ -1692,6 +1692,7 @@ export const copy = {
         kpiPreviousNeed: "Necessidade anterior",
         kpiCurrentNeed: "Necessidade atual",
         kpiResidualUnexplained: "Redução sem explicação fiscal",
+        kpiFiscalExcess: "Diferença fiscal",
         fiscalPeriodLabel: "Período fiscal (data documento)",
         fiscalSectionTitle: "Conciliação com NF MyWEG",
         fiscalMaterialsTitle: "Materiais WEG considerados",

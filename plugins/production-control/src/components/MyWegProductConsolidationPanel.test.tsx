@@ -502,6 +502,127 @@ describe("MyWegProductConsolidationPanel", () => {
     expect(screen.getByText("Notas fiscais relacionadas")).toBeTruthy();
   });
 
+  it("exibe Faturamento com diferença no caso 90261791 com excedente 6 UN", async () => {
+    fetchProducts.mockResolvedValue(
+      portalPayload({
+        totals: {
+          previousQuantityUn: "4094",
+          currentQuantityUn: "2600",
+          deltaQuantityUn: "-1494",
+          observedDeltaUn: "-1494",
+          postedQuantityUn: "1500",
+          compatibleReductionUn: "1494",
+          adjustedPlanningDeltaUn: "6",
+        },
+        items: [
+          {
+            productKey: "code:90261791",
+            identityKind: "verified_code",
+            identityConfirmed: true,
+            identityReliable: true,
+            verifiedProductCode: "90261791",
+            materialWegTratado: "10432172",
+            previousQuantityUn: "4094",
+            currentQuantityUn: "2600",
+            deltaQuantityUn: "-1494",
+            percentChange: "-36.49",
+            previousRemessaCount: 5,
+            currentRemessaCount: 1,
+            hasRemessaChanges: true,
+            situation: "decreased",
+            observedDeltaUn: "-1494",
+            postedQuantityUn: "1500",
+            compatibleReductionUn: "1494",
+            adjustedPlanningDeltaUn: "6",
+            invoiceMatchStatus: "reconciled",
+            managerialStatus: "invoicing_with_difference",
+            managerialReason: "nf_covers_reduction_with_excess",
+            managerialExplanation:
+              "NF MyWEG de 1500 UN cobre a redução observada de 1494 UN. Diferença de 6 UN a verificar.",
+            residualUnexplainedUn: "0",
+            fiscalExcessUn: "6",
+            remessaInvoicingContext: "compatible_on_reduced_lines",
+            portalInvoiceMaterials: [
+              {
+                materialWeg: "10432172",
+                postedQuantityUn: "1500",
+                attributedToProductKey: "code:90261791",
+              },
+            ],
+            portalInvoiceSources: ["obs-1"],
+            remessas: [
+              {
+                remessa: "2026-11-06",
+                previousQuantityUn: "452",
+                currentQuantityUn: "0",
+                deltaQuantityUn: "-452",
+                movement: "disappeared",
+                managerialRemessaContext: "compatible_with_invoicing",
+              },
+              {
+                remessa: "2026-11-10",
+                previousQuantityUn: "36",
+                currentQuantityUn: "0",
+                deltaQuantityUn: "-36",
+                movement: "disappeared",
+                managerialRemessaContext: "compatible_with_invoicing",
+              },
+              {
+                remessa: "2026-11-11",
+                previousQuantityUn: "414",
+                currentQuantityUn: "0",
+                deltaQuantityUn: "-414",
+                movement: "disappeared",
+                managerialRemessaContext: "compatible_with_invoicing",
+              },
+              {
+                remessa: "2026-11-12",
+                previousQuantityUn: "246",
+                currentQuantityUn: "0",
+                deltaQuantityUn: "-246",
+                movement: "disappeared",
+                managerialRemessaContext: "compatible_with_invoicing",
+              },
+              {
+                remessa: "2026-11-17",
+                previousQuantityUn: "702",
+                currentQuantityUn: "356",
+                deltaQuantityUn: "-346",
+                movement: "decreased",
+                managerialRemessaContext: "compatible_with_invoicing",
+              },
+            ],
+            probableDateShifts: [],
+          },
+        ],
+      }),
+    );
+
+    render(
+      <MyWegProductConsolidationPanel fromId="from" toId="to" search="" />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("col-posted").textContent).toContain("1.500");
+    });
+    expect(screen.getByTestId("col-residual").textContent).toContain("0");
+    expect(screen.getByTestId("col-observed").innerHTML).toContain("delta--invoiced");
+
+    fireEvent.click(screen.getByRole("button", { name: /^detalhes$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Faturamento com diferença/i)).toBeTruthy();
+      expect(
+        screen.getByText(/Diferença de 6 UN a verificar/i),
+      ).toBeTruthy();
+    });
+    expect(screen.getByText(/Diferença fiscal/i)).toBeTruthy();
+    expect(screen.getByText(/^\+6 UN$/)).toBeTruthy();
+    expect(screen.getAllByText(/Compatível com faturamento/i).length).toBeGreaterThanOrEqual(
+      5,
+    );
+  });
+
   it("destaca residual em faturamento parcial", async () => {
     fetchProducts.mockResolvedValue(
       portalPayload({

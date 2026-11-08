@@ -1625,6 +1625,7 @@ export type MyWegProductSituation =
 
 export type MyWegManagerialStatus =
   | "invoiced"
+  | "invoicing_with_difference"
   | "partial_invoicing"
   | "reduction_to_investigate"
   | "reconciliation_pending"
@@ -1741,6 +1742,8 @@ export type MyWegProductConsolidation = {
   managerialReason?: string | null;
   managerialExplanation?: string | null;
   residualUnexplainedUn?: string | null;
+  /** Excedente fiscal analítico (NF − redução) quando status = invoicing_with_difference. */
+  fiscalExcessUn?: string | null;
   remessaInvoicingContext?: string | null;
 };
 
