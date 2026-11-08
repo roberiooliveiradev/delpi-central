@@ -112,8 +112,10 @@ def test_mixed_cell_is_inconclusive_and_multiline_stays_one_row():
     ]
     rows, _types = rows_from_native_cells(cells, page=9)
     assert len(rows) == 1
-    assert rows[0]["association_status"] == "INCONCLUSIVE"
-    assert rows[0]["quantity"] is None
+    # DEC-VAL-040: a forma canônica "QTD CODIGO" numa célula é
+    # resolvível (tokens adjacentes em colunas lógicas distintas).
+    assert rows[0]["quantity"] == "6"
+    assert rows[0]["component_code"] == "10081389"
     assert "TERM. TUBULAR DUPLO" in rows[0]["description"]
 
 

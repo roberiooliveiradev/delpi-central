@@ -890,6 +890,11 @@ class TableStructureEngine:
                             or any(ti in conflict_tokens for ti in tis)
                         ),
                     )
+                    if _tok_geom:
+                        _cell_out["token_centers"] = [
+                            [round(g[1], 1), round(g[0], 1)]
+                            for g in _tok_geom
+                        ]
                     if len(line_texts) > 1:
                         _cell_out["line_texts"] = line_texts
                         _cell_out["line_centers"] = line_centers

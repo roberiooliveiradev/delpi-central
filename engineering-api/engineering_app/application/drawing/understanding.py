@@ -1429,6 +1429,62 @@ def _cell_mixes_quantity_and_code(text: str) -> bool:
     return has_code and has_quantity
 
 
+# Papéis funcionais por célula — o conteúdo vence o índice de coluna
+# (SLANet desloca papéis entre linhas: a mesma coluna pode receber
+# código numa linha e descrição na seguinte).
+# Identificador de item: 1–2 letras com dígitos opcionais (C, A9, AA)
+# OU 3–4 letras exigindo dígito (ABC1) — palavras de 3–4 letras sem
+# dígito ("CABO", "CAPA") são texto, nunca item.
+_ITEM_IDENT_RE = re.compile(
+    r"^[A-Za-z]{1,2}\d{0,3}$|^[A-Za-z]{3,4}\d+$"
+)
+_ITEM_BODY = r"[A-Za-z]{1,2}\d{0,3}|[A-Za-z]{3,4}\d+"
+_ITEM_QTY_RE = re.compile(
+    r"^(" + _ITEM_BODY + r")\s+(\d{1,4}(?:[.,]\d+)?)$"
+)
+_QTY_CODE_RE = re.compile(r"^(\d{1,4}(?:[.,]\d+)?)\s+(\d{6,11})$")
+_CODE_TAIL_RE = re.compile(r"^(\d{6,11})\s+(\S.*)$")
+_ITEM_TAIL_RE = re.compile(r"^(" + _ITEM_BODY + r")\s+(\S.*)$")
+_GROUP_CODE_RE = re.compile(r"^(\d{6,11})\b")
+
+
+def _cell_role(text: str) -> str | None:
+    """Papel funcional de UMA célula pelo seu conteúdo — semântica,
+    não posição. Nunca promove descrição a código nem vice-versa."""
+    if _CODE_FIND_RE.fullmatch(text):
+        return "component_code"
+    if _ITEM_IDENT_RE.fullmatch(text):
+        return "item"
+    if _NUM_RE.fullmatch(text):
+        return "quantity"
+    if len(text) > 3 and re.search(r"[A-Za-zÀ-ÿ]", text):
+        return "description"
+    return None
+
+
+def _cell_cx(cell: dict) -> float | None:
+    b = cell.get("bounding_box_px") or []
+    if len(b) >= 8:
+        xs = [b[0], b[2], b[4], b[6]]
+    elif len(b) >= 4:
+        xs = [b[0], b[2]]
+    else:
+        return None
+    return (float(min(xs)) + float(max(xs))) / 2.0
+
+
+def _role_band(xs: list[float], pad: float = 12.0):
+    """Banda-X do papel funcional — núcleo das colunas observadas
+    (descarta ~16% das caudas), para rejeitar células do papel certo
+    na posição errada (ex.: item solto na coluna de produto)."""
+    if len(xs) < 4:
+        return None
+    s = sorted(xs)
+    i = max(1, len(s) // 6)
+    core = s[i:len(s) - i] if len(s) - 2 * i > 0 else s
+    return (min(core) - pad, max(core) + pad)
+
+
 def rows_from_native_cells(
     cells: list[dict], *, page: int
 ) -> tuple[list[dict], dict[str, str]]:
@@ -1467,6 +1523,12 @@ def rows_from_native_cells(
             lo, hi = float(min(_ys)), float(max(_ys))
             cys.append((lo + hi) / 2.0)
             row_spans.setdefault(row_index, []).append((lo, hi))
+            # token_centers (cy por token) — âncora visual mais precisa
+            # que o polígono da célula nativa.
+            tcs = c.get("token_centers") or []
+            for tc in tcs:
+                if isinstance(tc, (list, tuple)) and len(tc) >= 2:
+                    cys.append(float(tc[1]))
         if cys:
             row_cy[row_index] = sum(cys) / len(cys)
     for row_index, row_cells in list(grouped.items()):
@@ -1490,19 +1552,33 @@ def rows_from_native_cells(
                     target = min(
                         row_cy, key=lambda r: abs(row_cy[r] - cy)
                     )
+                    # Evidência distante indica 2ª linha da mesma
+                    # célula (multilinha), não outra linha física.
+                    _steps = sorted(row_cy.values())
+                    _step = (
+                        _steps[len(_steps) // 2] - _steps[0]
+                        if len(_steps) > 1 else 0.0
+                    )
+                    if (
+                        _step
+                        and abs(row_cy[target] - cy) > 0.6 * _step
+                    ):
+                        target = row_index
                 else:
                     target = row_index
                 targets.setdefault(target, []).append(line)
             if len(targets) < 2:
                 continue
+            cell["_split_done"] = True
             cell["_split_text"] = " ".join(
                 targets.get(row_index, [])
-            ) or None
+            )
             cell["line_texts"] = []
             for target, tlines in targets.items():
                 if target == row_index:
                     continue
                 virtual = dict(cell)
+                virtual["_split_done"] = True
                 virtual["_split_text"] = " ".join(tlines)
                 virtual["line_texts"] = []
                 grouped.setdefault(target, []).append(virtual)
@@ -1536,6 +1612,41 @@ def rows_from_native_cells(
     for col, bucket in content_counts.items():
         if bucket["total"] and bucket["codes"] / bucket["total"] >= 0.5:
             col_types[col] = "component_code"
+    # Bandas-X por papel funcional — conteúdo primeiro, posição como
+    # salvaguarda contra papel certo na posição errada.
+    role_x: dict[str, list[float]] = {}
+    for row_index, row_cells in grouped.items():
+        if row_index == header_row:
+            continue
+        for c in row_cells:
+            t = _norm(
+                str(c.get("_split_text") or c.get("text") or "")
+            )
+            r = _cell_role(t)
+            cx = _cell_cx(c)
+            if r and cx is not None:
+                role_x.setdefault(r, []).append(cx)
+    role_bands = {r: _role_band(xs) for r, xs in role_x.items()}
+    # Âncoras de grupo: célula rowspan>1 iniciando por código longo.
+    # Linhas abaixo herdam a âncora vigente; sobreposição resolve-se
+    # pela âncora mais recente (subconjunto aninhado).
+    group_anchors: list[tuple[int, str, int]] = []
+    group_anchor_ids: set[int] = set()
+    for row_index, row_cells in grouped.items():
+        if row_index == header_row:
+            continue
+        for c in row_cells:
+            if int(c.get("rowspan") or 1) <= 1:
+                continue
+            m = _GROUP_CODE_RE.match(
+                _norm(str(c.get("text") or ""))
+            )
+            if m:
+                group_anchors.append(
+                    (row_index, m.group(1), int(c.get("rowspan") or 1))
+                )
+                group_anchor_ids.add(id(c))
+    group_anchors.sort()
     rows_out: list[dict] = []
     for row_index in sorted(grouped):
         if row_index == header_row:
@@ -1548,15 +1659,50 @@ def rows_from_native_cells(
         fields: dict[str, dict] = {}
         published = []
         inconclusive = False
+        def _put(kind: str, value: str, cell: dict, method: str) -> None:
+            nonlocal inconclusive
+            if kind not in fields:
+                fields[kind] = {
+                    "raw_text": value,
+                    "normalized_value": value,
+                    "bounding_box_px": cell.get("bounding_box_px"),
+                    "col": int(cell.get("col") or 0),
+                    "association_method": method,
+                    "association_state": "FIELD_IDENTIFIED",
+                }
+            elif fields[kind].get("normalized_value") != value:
+                inconclusive = True
+                fields[kind]["association_state"] = "FIELD_AMBIGUOUS"
+
         for cell in row_cells:
             text = _norm(
-                str(cell.get("_split_text") or cell.get("text") or "")
+                str(
+                    cell["_split_text"]
+                    if cell.get("_split_done")
+                    else (cell.get("text") or "")
+                )
             )
             col = int(cell.get("col") or 0)
-            kind = col_types.get(col)
             mixed = _cell_mixes_quantity_and_code(text)
-            if mixed or cell.get("ambiguous"):
+            if cell.get("ambiguous"):
                 inconclusive = True
+            role = _cell_role(text)
+            if id(cell) in group_anchor_ids:
+                # Célula-âncora de grupo é estrutura, não campo da linha.
+                role = None
+                kind = None
+            elif role:
+                band = role_bands.get(role)
+                cx = _cell_cx(cell)
+                # Banda-X só veta o papel 'item' (ruído de rótulos soltos
+                # na coluna de produto). Código/descrição seguem o
+                # conteúdo — fullmatch de código é evidência forte.
+                if role == "item" and band is not None and cx is not None:
+                    kind = role if band[0] <= cx <= band[1] else col_types.get(col)
+                else:
+                    kind = role
+            else:
+                kind = col_types.get(col)
             published.append(
                 {
                     "text": text,
@@ -1568,79 +1714,49 @@ def rows_from_native_cells(
                     "col_type": kind,
                     "page": page,
                     "token_refs": cell.get("token_refs") or [],
-                    "ambiguous": bool(cell.get("ambiguous") or mixed),
+                    "ambiguous": bool(
+                        cell.get("ambiguous")
+                        or (mixed and kind not in ("quantity",))
+                    ),
                 }
             )
+            if id(cell) in group_anchor_ids:
+                continue
+            # Formas canônicas de célula fundida — a divisão de campos
+            # segue a geometria da célula (mesmo retângulo, tokens
+            # adjacentes), nunca a string esperada.
+            m = _ITEM_QTY_RE.fullmatch(text)
+            if m:
+                _put("item", m.group(1), cell, "native_cell_pair")
+                _put("quantity", m.group(2), cell, "native_cell_pair")
+                continue
+            m = _QTY_CODE_RE.fullmatch(text)
+            if m:
+                _put("quantity", m.group(1), cell, "native_cell_pair")
+                _put(
+                    "component_code", m.group(2), cell,
+                    "native_cell_pair",
+                )
+                continue
+            m = _CODE_TAIL_RE.fullmatch(text)
+            if m and re.search(r"[A-Za-zÀ-ÿ]", m.group(2)):
+                _put(
+                    "component_code", m.group(1), cell,
+                    "native_cell_pair",
+                )
+                _put("description", m.group(2), cell, "native_cell_pair")
+                continue
+            m = _ITEM_TAIL_RE.fullmatch(text)
+            if m and _ITEM_IDENT_RE.fullmatch(m.group(1)):
+                _put("item", m.group(1), cell, "native_cell_partial")
+                continue
             if not kind or mixed:
                 continue
-            if kind not in fields:
-                fields[kind] = {
-                    "raw_text": text,
-                    "normalized_value": text,
-                    "bounding_box_px": cell.get("bounding_box_px"),
-                    "col": col,
-                    "association_method": "native_cell",
-                    "association_state": "FIELD_IDENTIFIED",
-                }
-            else:
-                # Outra célula da mesma classe não é fundida no campo.
-                # O texto permanece na célula; a associação fica
-                # inconclusiva em vez de virar uma ocorrência só.
-                inconclusive = True
-                fields[kind]["association_state"] = "FIELD_AMBIGUOUS"
-        # Coluna nativa fundindo item+quantidade (colunas estreitas
-        # adjacentes): após o split geométrico por linha, cada célula
-        # carrega "ITEM QTD" de UMA linha — parse de campo só nessa
-        # forma canônica e apenas quando a coluna não foi tipada.
-        if "item" not in fields or "quantity" not in fields:
-            import re as _re
-
-            for cell in row_cells:
-                if col_types.get(int(cell.get("col") or 0)) in (
-                    "component_code",
-                    "description",
-                ):
-                    continue
-                m = _re.fullmatch(
-                    r"([A-Za-z]{1,3})\s+(\d+(?:[.,]\d+)?)",
-                    _norm(
-                        str(
-                            cell.get("_split_text")
-                            or cell.get("text")
-                            or ""
-                        )
-                    ),
-                )
-                if not m:
-                    continue
-                for kind, value in (
-                    ("item", m.group(1)),
-                    ("quantity", m.group(2)),
-                ):
-                    _cur = fields.get(kind) or {}
-                    if kind not in fields or _cur.get(
-                        "normalized_value"
-                    ) in {
-                        _norm(
-                            str(
-                                cell.get("_split_text")
-                                or cell.get("text")
-                                or ""
-                            )
-                        )
-                    }:
-                        fields[kind] = {
-                            "raw_text": value,
-                            "normalized_value": value,
-                            "bounding_box_px": cell.get(
-                                "bounding_box_px"
-                            ),
-                            "col": int(cell.get("col") or 0),
-                            "association_method": (
-                                "native_cell_line_split"
-                            ),
-                            "association_state": "FIELD_IDENTIFIED",
-                        }
+            _put(kind, text, cell, "native_cell")
+        group = None
+        for arow, acode, aspan in group_anchors:
+            if arow <= row_index < arow + aspan:
+                group = acode
         rows_out.append(
             {
                 "row": row_index,
@@ -1648,6 +1764,7 @@ def rows_from_native_cells(
                 "cells": published,
                 "fields": fields,
                 "col_types": {str(k): v for k, v in col_types.items()},
+                "parent_group_candidate": group,
                 "item": fields.get("item", {}).get("normalized_value"),
                 "quantity": fields.get("quantity", {}).get(
                     "normalized_value"
