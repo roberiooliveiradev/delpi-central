@@ -209,3 +209,62 @@ Solicitações de produtos                    [Tabela | Cards | Kanban] [Colunas
 - Não alterar Core permissions, TOTVS, api-delpi nem autorizar DnD.
 - Não alterar RQ-001: revisão-base automática continua como decisão aprovada pendente.
 - Gates gerais: `UI_REFINEMENT_COLLECTING / PO_APPROVED / IMPLEMENTATION_PENDING / PRODUCTION_DEPLOY_SUSPENDED`.
+
+
+## PRC-REF-007 — Consolidar identificação, andamento e ações no hero do detalhe
+
+**Decisão PO (2026-11-08, aprovada para planejamento):** Na página de detalhe de solicitação, **todas as informações atualmente apresentadas entre o hero principal e a segunda barra de navegação (abas)** devem ser consolidadas em uma composição compacta **dentro do próprio hero**, para reduzir de forma significativa a altura acima do conteúdo da aba. Evidência: captura DEV em `/apps/engineering/product-registration/{requestId}` exibindo hero "Solicitação #...", progress tracker isolado, cards separados "Identificação" / "Próximas ações" e então tabs "Visão geral | Ficha técnica | Verificação TOTVS | Histórico | Revisões". O PO quer eliminar esta duplicação/verticalidade.
+
+### Wireframe alvo desktop
+
+```text
+breadcrumb: ← Solicitações / #3bace5e3
+┌ HERO / CONTROLE E CADASTRO DE PRODUTOS ──────────────────────────────────────────┐
+│ SOLICITAÇÃO #3bace5e3  [Concluída]          [Ação primária contextual, se houver]│
+│ Criação · Matéria-prima · v5                         [Mais ações, quando válidas]│
+│                                                                               │
+│ Solicitante: Rober Dev       Responsável: não identificado                     │
+│ Código TOTVS: 80016622     Abertura: 06/11/2026 16:42                       │
+│                                                                               │
+│ [✓ Enviada] ── [✓ Atendimento] ── [✓ Revisão] ── [✓ Conclusão]                │
+└───────────────────────────────────────────────────────────────────────────────┘
+[Visão geral] [Ficha técnica] [Verificação TOTVS] [Histórico] [Revisões]
+┌ Conteúdo da aba ───────────────────────────────────────────────────────────────┐
+│ Dados específicos desta aba; sem replicar todos os metadados do hero          │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+**O que vai para o hero:** tipo e produto; status semântico; versão da solicitação (somente leitura); solicitante; responsável (display honesto, sem UUID); código oficial TOTVS ou "Aguardando cadastro"; abertura; origem e revisão-base **somente se úteis ao contexto** como metadados secundários/expandíveis — não pedir revisão-base manual; sequência de workflow; ações legítimas, com motivo/confirm quando requeridas. Não incluir histórico completo, ficha técnica nem tabela de verificação no hero. O caso encerrado deve dizer em texto discreto que não há mais ações, **sem card alto separado "Próximas ações"**.
+
+**Redundância a eliminar:** cards fixos "Identificação" e "Próximas ações" que repetem informações do hero, progress tracker em linha solta, repetição desnecessária do mesmo status em várias superfícies. A aba "Visão geral" deve trazer **informação complementar** ao hero (resumo da solicitação, finalidade, verificação oficial, próxima ação ou destaque real), não repetir todos os atributos e status já legíveis no cabeçalho.
+
+**Componentes do kit (inventário/props no SHA antes de editar):**
+- `EngineeringPageHero` como base visual única; verificar se admite slots, content/children, actions e conteúdo complementar; se não admitir, envolver o hero + metadados + progress em **um único contêiner visual** com `EngineeringSectionCard` e grid local, preservando tipografia/tokens oficiais, sem forçar children em componente incompatível e sem segundo design system.
+- `EngineeringStatusBadge` para status.
+- `EngineeringDetailFieldGrid` para metadados em apresentação compacta.
+- `EngineeringProgressTracker`/componente já integrado ao MFE, reaproveitado numa faixa do hero.
+- `EngineeringActionButton` e diálogo host-contained para ações permitidas por `allowedActions`, com CAS, motivo e confirmação terminal.
+- `EngineeringUnderlineNav`/tabs oficial usado na refatoração; **posicionar logo abaixo do novo hero**.
+
+**Layout responsivo:** desktop: título+badge+ação na mesma faixa, metadados em grid compacto e progresso horizontal; tablet: wrap de ações, 2–3 colunas nos metadados; mobile: titulo e badge em linha/quebra, metadados em coluna/duas, tracker compacto acessível e actions sem obstruir abas; reduzir altura sem esconder contexto obrigatório. Não transformar altura mínima em valor fixo que corte conteúdo.
+
+**Comportamento/autoridade:** mesmo conteúdo de backend e mesmas ações permitidas; não inferir autorização por status visual; não remover dados importantes ou ocultar erros; `needs_information`/rejected não devem ser forçados em linha progressiva de sucesso. Revisão-base é governada pela decisão REF-001 e não é input de usuário. Os códigos de domínio/caso de uso e backend continuam intactos nesta refatoração visual.
+
+### Critérios de aceite
+
+- [ ] O espaço entre o fim do hero e a barra das cinco abas é eliminado ou reduzido ao espaçamento do design system; o tracker fica no hero.
+- [ ] Solicitação, status, tipo, código oficial, solicitante, responsável e data ficam visíveis/legíveis no hero, sem cartões independentes redundantes.
+- [ ] "Próximas ações" passa a uma área compacta de ações contextuais no hero; em caso concluído não gera card vazio.
+- [ ] As abas começam imediatamente após o hero (respeitando margin/gap oficial), e permanecem acessíveis por teclado, deep link `?tab=` e refresh.
+- [ ] Aba Visão geral não duplica metadados; apresenta dados de valor complementar.
+- [ ] Caso enviado, em atendimento, aguardando informações, em revisão, concluído e rejeitado são legíveis; ações preservam `allowedActions`/CAS/confirm.
+- [ ] Screenshots de antes/depois em DEV e browser desktop/tablet/mobile mostram redução real de altura e ausência de clipping/overlap.
+- [ ] Componente kit-first, sem CSS global novo; typecheck/build/Vitest e testes de navegação no SHA final.
+
+**Arquivos-alvo:** `plugins/engineering/src/features/product-registration/pages/PrcDetailPage.tsx`; `PrcWorkflowProgress.tsx`, `PrcActionBar.tsx` e `prc.css` conforme nomes reais; façade `engineeringUi.ts` somente se slot/adaptação necessária e com contrato verificado.
+
+**Status:** `PO_APPROVED / TO_IMPLEMENT`; não implementado por esta documentação. **Produção continua suspensa.**
+
+## PRC-REF-008 e seguintes — próximas observações
+
+`AWAITING_USER_FEEDBACK`. Preservar REF-001..007, sem iniciar implementação em lote até finalizar a coleta de refinamentos com o PO.
