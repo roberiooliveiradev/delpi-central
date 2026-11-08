@@ -1,12 +1,15 @@
 """Classificação de correspondência SB1 por igualdade exata (sem LIKE/prefixo).
 
 Estados:
-- confirmed: único produto elegível alinhado ao par informado
+- confirmed: produto elegível alinhado (par informado ou desempate por política)
 - not_found: nenhum produto
-- ambiguous: dois ou mais produtos para a referência
+- ambiguous: dois ou mais produtos sem desempate válido
 - divergent: código informado não corresponde à referência
-- blocked: único candidato com B1_MSBLQL = '1'
+- blocked: candidato informado/único com B1_MSBLQL = '1'
 - pending: sem código e sem referência (nada a consultar)
+
+Com disambiguation_policy=prefer_production_over_sample: entre elegíveis da
+mesma B1_REFEREN, escolhe o maior B1_COD numérico priorizando prefixo 9 sobre 8.
 """
 
 from __future__ import annotations
@@ -238,13 +241,55 @@ def _is_sample_code(code: str | None) -> bool:
     return bool(code) and str(code).startswith(_SAMPLE_PREFIX)
 
 
+def _numeric_code_value(code: str | None) -> int | None:
+    """Valor numérico para desempate; None se não for dígitos puros."""
+    text = normalize_sb1_token(code)
+    if text is None or not text.isdigit():
+        return None
+    return int(text)
+
+
+def _dedupe_by_product_code(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[str] = set()
+    unique: list[dict[str, Any]] = []
+    for row in rows:
+        code = normalize_sb1_token(row.get("product_code")) or ""
+        if not code or code in seen:
+            continue
+        seen.add(code)
+        unique.append(dict(row))
+    return unique
+
+
+def _select_highest_numeric_code(
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any] | None:
+    """Maior B1_COD numérico; None se não houver candidato numérico inequívoco."""
+    scored: list[tuple[int, dict[str, Any]]] = []
+    for row in rows:
+        value = _numeric_code_value(row.get("product_code"))
+        if value is None:
+            continue
+        scored.append((value, dict(row)))
+    if not scored:
+        return None
+    max_value = max(value for value, _ in scored)
+    winners = [row for value, row in scored if value == max_value]
+    winner_codes = {
+        normalize_sb1_token(row.get("product_code")) for row in winners
+    } - {None}
+    if len(winner_codes) != 1:
+        return None
+    return winners[0]
+
+
 def _apply_production_preference(
     result: dict[str, Any],
     *,
     ref_products: Sequence[Mapping[str, Any]],
     policy: str | None,
 ) -> dict[str, Any]:
-    """Preferência PCP 9/8 — só com política explícita; não altera divergent/not_found."""
+    """Preferência PCP 9/8 — maior código numérico elegível; só com política explícita."""
     if policy != DISAMBIGUATION_PREFER_PRODUCTION_OVER_SAMPLE:
         return result
 
@@ -254,18 +299,9 @@ def _apply_production_preference(
 
     informed = normalize_sb1_token(result.get("product_code"))
     verified = normalize_sb1_token(result.get("verified_product_code"))
+    reference = normalize_sb1_token(result.get("customer_reference"))
 
-    # Prioridade 1: código DELPI de produção (9…) informado e validado pelo par
-    # B1_COD + B1_REFEREN — não sobrescrever com multiple_production_codes.
-    if (
-        status == MATCH_CONFIRMED
-        and _is_production_code(informed)
-        and informed == verified
-        and result.get("matched_by") == MATCHED_BY_CODE_AND_REFERENCE
-    ):
-        return result
-
-    # Código 9 informado e bloqueado: manter blocked (não trocar por outro 9 elegível).
+    # Código 9 informado e bloqueado: manter blocked (não trocar por outro elegível).
     if (
         status == MATCH_BLOCKED
         and _is_production_code(informed)
@@ -273,73 +309,81 @@ def _apply_production_preference(
     ):
         return result
 
-    # Inclui o produto do código informado quando a lista por referência veio vazia
-    # (ex.: lookup só por código) — preferência exige o universo da referência.
-    universe = list(ref_products)
+    # Universo da referência WEG; inclui candidatos quando a lista por referência veio vazia.
+    universe = [dict(row) for row in ref_products]
     if not universe and result.get("candidates"):
-        universe = list(result["candidates"])
+        universe = [dict(row) for row in result["candidates"]]
+    if reference is not None:
+        universe = [
+            row
+            for row in universe
+            if normalize_sb1_token(row.get("customer_reference")) == reference
+        ]
+    universe = _dedupe_by_product_code(universe)
     if not universe:
         return result
 
-    eligible = [dict(row) for row in universe if not row.get("blocked")]
-    productions = [row for row in eligible if _is_production_code(row.get("product_code"))]
+    eligible = [row for row in universe if not row.get("blocked")]
+    productions = [
+        row for row in eligible if _is_production_code(row.get("product_code"))
+    ]
     samples = [row for row in eligible if _is_sample_code(row.get("product_code"))]
 
-    if len(productions) > 1:
-        return {
-            **result,
-            "match_status": MATCH_AMBIGUOUS,
-            "verified_product_code": None,
-            "verified_description": None,
-            "matched_by": None,
-            "candidates": list(universe),
-            "reason": "multiple_production_codes",
-        }
-
-    if len(productions) == 1:
-        chosen = productions[0]
-        verified = chosen.get("product_code") or None
-        informed = result.get("product_code")
-        already = (
-            status == MATCH_CONFIRMED
-            and result.get("verified_product_code") == verified
-            and not (_is_sample_code(informed) and verified != informed)
-        )
-        if already and not samples:
-            return result
-        reason = "prefer_unique_production_code_over_sample"
-        if informed and _is_production_code(informed) and informed == verified:
-            reason = None
+    if productions:
+        chosen = _select_highest_numeric_code(productions)
+        if chosen is None:
+            return {
+                **result,
+                "match_status": MATCH_AMBIGUOUS,
+                "verified_product_code": None,
+                "verified_description": None,
+                "matched_by": None,
+                "candidates": list(universe),
+                "reason": "multiple_production_codes",
+            }
+        selected = normalize_sb1_token(chosen.get("product_code"))
+        exact = bool(informed and selected and informed == selected)
         return {
             **result,
             "match_status": MATCH_CONFIRMED,
-            "verified_product_code": verified,
+            "verified_product_code": selected,
             "verified_description": chosen.get("description") or None,
             "matched_by": (
                 MATCHED_BY_CODE_AND_REFERENCE
-                if informed and informed == verified
+                if exact
                 else MATCHED_BY_REFERENCE_PREFER_PRODUCTION
             ),
             "candidates": list(universe),
-            "reason": reason,
+            "reason": None if exact else "prefer_highest_production_code",
         }
 
-    # Sem código 9 elegível: amostra 8 provisória somente se for o único elegível.
-    if len(samples) == 1 and len(eligible) == 1:
-        chosen = samples[0]
+    # Sem produção elegível: maior amostra 8 numérica (provisória).
+    if samples:
+        chosen = _select_highest_numeric_code(samples)
+        if chosen is None:
+            return result
+        selected = normalize_sb1_token(chosen.get("product_code"))
+        exact = bool(
+            informed
+            and selected
+            and informed == selected
+            and result.get("customer_reference")
+        )
+        reason = (
+            "provisional_sample_code_no_production"
+            if len(samples) == 1
+            else "provisional_highest_sample_code_no_production"
+        )
         return {
             **result,
             "match_status": MATCH_CONFIRMED,
-            "verified_product_code": chosen.get("product_code") or None,
+            "verified_product_code": selected,
             "verified_description": chosen.get("description") or None,
             "matched_by": (
-                MATCHED_BY_CODE_AND_REFERENCE
-                if result.get("product_code") == chosen.get("product_code")
-                and result.get("customer_reference")
-                else MATCHED_BY_REFERENCE_ONLY
+                MATCHED_BY_CODE_AND_REFERENCE if exact else MATCHED_BY_REFERENCE_ONLY
             ),
             "candidates": list(universe),
-            "reason": "provisional_sample_code_no_production",
+            "reason": reason,
         }
 
     return result

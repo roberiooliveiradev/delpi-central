@@ -26,8 +26,9 @@ def evaluate_field_semantics(
         for row in pair_results
         if row.get("product_code") and row.get("customer_reference")
     ]
-    # code_and_reference = alinhamento direto; reference_prefer_production =
-    # mesmo B1_REFEREN com preferência PCP 9/8 (ainda prova o mapeamento dos campos).
+    # code_and_reference = par origem==verificado; reference_prefer_production =
+    # mesmo B1_REFEREN com desempate PCP (maior 9 numérico). Ambos provam o mapeamento
+    # dos campos; não confundir seleção por referência com prova do código de origem.
     _ALIGNED_MATCHED_BY = frozenset(
         {"code_and_reference", "reference_prefer_production"}
     )

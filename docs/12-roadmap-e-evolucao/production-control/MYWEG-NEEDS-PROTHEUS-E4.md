@@ -29,7 +29,7 @@
 | `material_weg_tratado` | `B1_REFEREN` | Material WEG |
 | `codigo_referencia_weg` | `B1_COD` (rótulo E1 enganoso) | Código DELPI (origem) |
 
-Persistência de vínculos exige `evaluate_field_semantics` com amostra ≥20 pares e ≥80% `confirmed` com `matched_by=code_and_reference`. Caso contrário: `ARCHITECTURE_DECISION_REQUIRED` (dry-run livre; persist bloqueado).
+Persistência de vínculos exige `evaluate_field_semantics` com amostra ≥20 pares e ≥80% `confirmed` com `matched_by` em `{code_and_reference, reference_prefer_production}`. Caso contrário: `ARCHITECTURE_DECISION_REQUIRED` (dry-run livre; persist bloqueado).
 
 **Atenção:** a prova é do cadastro **atual** no momento da verificação (`verified_at`). Não comprova o estado histórico na data da coleta.
 
@@ -82,34 +82,41 @@ Informada pelo PCP; aplicada **somente** com `disambiguation_policy=prefer_produ
 
 Regras:
 
-1. Mesma referência WEG (`B1_REFEREN`) com amostra e produção → priorizar o **único** código 9 elegível (não bloqueado).
-2. Sem 9 elegível e um único 8 elegível → confirmar 8 provisório (`provisional_sample_code_no_production`).
-3. Dois ou mais códigos 9 elegíveis → `ambiguous` (`multiple_production_codes`),
-   **exceto** quando o código DELPI de origem já é produção (`9…`), existe no SB1,
-   não está bloqueado e o par `B1_COD + B1_REFEREN` confere exatamente — nesse caso
-   permanece `confirmed` com o código informado (`matched_by=code_and_reference`).
-   Contrapeças/variações que compartilham a referência não invalidam essa confirmação.
-4. Produto bloqueado (`B1_MSBLQL=1`) não é escolhido; código 9 informado e bloqueado
-   permanece `blocked` (não é substituído por outro 9 elegível).
-5. Divergência real código×referência permanece `divergent` (sem associação arbitrária).
-6. Resposta preserva código informado (`product_code`), código verificado e `reason` / `matched_by` (`reference_prefer_production` quando houve desempate).
+1. Filtrar candidatos elegíveis (não bloqueados) com a mesma referência WEG (`B1_REFEREN`).
+2. Se houver produção (`9…`) elegível → selecionar o **maior `B1_COD` numérico**
+   (`prefer_highest_production_code`). O código de origem MyWEG é rastreável
+   (`product_code`), mas **não** tem prioridade absoluta — mesmo quando for outro `9` válido.
+3. Sem produção elegível e com amostra (`8…`) → selecionar o maior `B1_COD` numérico de
+   amostra (`provisional_highest_sample_code_no_production`; único elegível usa
+   `provisional_sample_code_no_production`).
+4. Comparação estritamente numérica (não lexicográfica). Códigos não numéricos não entram
+   no desempate; sem vencedor inequívoco → `ambiguous` (`multiple_production_codes`).
+5. Produto bloqueado (`B1_MSBLQL=1`) não é escolhido; código `9` informado e bloqueado
+   permanece `blocked` (não é substituído silenciosamente).
+6. Divergência / código informado inexistente / referência incompatível permanecem
+   `divergent` / `ambiguous` / `not_found` conforme a classificação base (sem “adivinhar”).
+7. `matched_by=code_and_reference` **somente** quando o verificado coincide com o informado;
+   desempate por referência usa `reference_prefer_production` (produção) ou `reference_only`
+   (amostra provisória). Não consultar `B1_REVATU` / `B1_UREV`.
 
 Casos reais:
 
-- Material WEG `19106407` · informado `80015942` · produção única `90264221` → verificado `90264221`.
-- Material WEG `11403512` · informado `90261614` · outros 9 na mesma referência → verificado `90261614`.
-- Material WEG `12322556` · informado `90262016` · outros 9 na mesma referência → verificado `90262016`.
+- Material WEG `18765646` · informado `80015414` · candidatos `80015414`, `80015629`,
+  `90264125`, `90264263` → verificado `90264263`.
+- Material WEG `19740817` · sem origem · candidatos `80016662`, `80016673` →
+  verificado `80016673` (amostra provisória).
+- Materiais com origem `9` menor que outro `9` elegível na mesma referência → passam a
+  verificar o maior código (ex.: origem `90261614` com candidato maior elegível).
 
-### Recuperação de lotes já persistidos como `ambiguous`
+### Recuperação de lotes já persistidos
 
-`skip_if_complete=true` na automação pode ignorar lotes que já têm resolução (mesmo
-`ambiguous`). Após esta correção no classificador:
+`skip_if_complete=true` na automação pode ignorar lotes já resolvidos (inclusive
+`ambiguous` ou confirmações pela origem antiga). Após esta regra:
 
-1. Identificar lotes afetados (consulta JWT / itens `ambiguous` com código 9 informado).
-2. Prévia: `POST .../sb1-resolve` com `dry_run=true` e `skip_if_complete=false`.
-3. Comparar status anterior × novo; confirmar os exemplos acima quando SB1 validar.
-4. Persistência produtiva só com autorização explícita + `skip_if_complete=false`.
-5. Não fazer UPDATE manual nas tabelas; não alterar V025/V026; não reprocessar histórico em massa.
+1. Homologar com `dry_run=true` e `skip_if_complete=false` no `collection_id` alvo.
+2. Comparar resolução anterior × nova (códigos substituídos pelo maior elegível).
+3. Persistência produtiva só com autorização explícita + `skip_if_complete=false`.
+4. Não fazer UPDATE manual; não alterar V025/V026; não reprocessar histórico em massa.
 
 ## Migration
 

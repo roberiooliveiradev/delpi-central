@@ -338,54 +338,66 @@ def test_persist_blocked_without_semantics() -> None:
         service.resolve_batch(batch_id=created["id"], dry_run=False)
 
 
-def test_informed_production_9_propagates_confirmed_despite_shared_reference() -> None:
-    """Regressão MyWEG: código 9 informado válido permanece confirmed na resolução PC."""
+def test_highest_production_propagates_to_resolve_service() -> None:
+    """Regressão MyWEG: maior produção elegível propaga verified_* e motivo no PC."""
     repo = InMemorySb1Repo()
     cases = (
-        ("11403512", "90261614", "Produto 90261614"),
-        ("12322556", "90262016", "Produto 90262016"),
+        # Caso A: origem 8 → maior 9
+        (
+            "18765646",
+            "80015414",
+            "90264263",
+            "Producao maior",
+            "reference_prefer_production",
+            "prefer_highest_production_code",
+        ),
+        # Caso B: sem origem → maior amostra provisória
+        (
+            "19740817",
+            "",
+            "80016673",
+            "Amostra maior",
+            "reference_only",
+            "provisional_highest_sample_code_no_production",
+        ),
     )
     seed_rows = [
         {
             "material_weg_tratado": material,
-            "codigo_referencia_weg": code,
+            "codigo_referencia_weg": origin,
             "origem_material_weg": "MYWEG-ORIGEM",
             "quantidade": "1000",
             "unidade": "UN",
             "data_remessa": "15/11/2026",
-            "documento": f"DOC-{code}",
+            "documento": f"DOC-{material}",
             "linha_fonte": index + 2,
-            "assinatura_registro": f"sig-informed-9-{code}",
+            "assinatura_registro": f"sig-highest-{material}",
         }
-        for index, (material, code, _desc) in enumerate(cases)
+        for index, (material, origin, *_rest) in enumerate(cases)
     ]
     created = _seed_batch(
-        repo, records=seed_rows, collection_id="col-informed-9-priority"
+        repo, records=seed_rows, collection_id="col-highest-code-priority"
     )
     records = repo.list_all_batch_records(batch_id=created["id"])
     by_material = {row["material_weg_tratado"]: row for row in records}
     seeded: dict[str, dict] = {}
-    for material, code, description in cases:
+    for material, origin, verified, description, matched_by, reason in cases:
         record = by_material[material]
+        origin_norm = origin or None
         seeded[record["id"]] = {
             "match_status": "confirmed",
-            "product_code": code,
+            "product_code": origin_norm,
             "customer_reference": material,
-            "verified_product_code": code,
+            "verified_product_code": verified,
             "verified_description": description,
-            "matched_by": "code_and_reference",
-            "reason": None,
+            "matched_by": matched_by,
+            "reason": reason,
             "candidates": [
                 {
-                    "product_code": code,
+                    "product_code": verified,
                     "customer_reference": material,
                     "description": description,
-                },
-                {
-                    "product_code": "90269999",
-                    "customer_reference": material,
-                    "description": "Contrapeca",
-                },
+                }
             ],
         }
 
@@ -394,13 +406,14 @@ def test_informed_production_9_propagates_confirmed_despite_shared_reference() -
     assert result["persisted"] is False
     assert result["counts"]["confirmed"] == 2
     by_key = {item["customer_reference"]: item for item in result["items"]}
-    for material, code, description in cases:
+    for material, origin, verified, description, matched_by, reason in cases:
         item = by_key[material]
         assert item["status"] == "confirmed"
-        assert item["verified_product_code"] == code
+        assert item["verified_product_code"] == verified
         assert item["verified_description"] == description
-        assert item["matched_by"] == "code_and_reference"
-        assert item["informed_product_code"] == code
+        assert item["matched_by"] == matched_by
+        assert item["reason"] == reason
+        assert item["informed_product_code"] == (origin or None)
 
 
 def test_skip_if_complete_avoids_second_lookup() -> None:
