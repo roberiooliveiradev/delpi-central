@@ -29,7 +29,9 @@ COVERAGE_UNIT_MI = "MI"
 SOURCE_PROTHEUS = "protheus"
 OVERLAP_PENDING = "overlap_pending"
 RECONCILIATION_BLOCKED = "reconciliation_blocked"
+CUSTOMER_IDENTITY_PENDING = "customer_identity_pending"
 STOCK_WAREHOUSE_DEFAULT = "01"
+OP_UNIT_UNVERIFIED = "OP_UNIT_UNVERIFIED"
 
 
 def un_to_mi(quantity_un: Decimal | str | int | float) -> Decimal:
@@ -47,10 +49,33 @@ def mi_to_float_for_coverage(quantity_mi: Decimal) -> float:
     return float(quantized)
 
 
+def customer_cadastro_code(item: Mapping[str, Any]) -> str:
+    """Código do cliente no cadastro do pedido — nunca ``codigo_cliente`` (ref. produto)."""
+    return str(item.get("codigo_cadastro") or "").strip()
+
+
+def customer_store(item: Mapping[str, Any]) -> str:
+    return str(item.get("loja_cadastro") or "").strip()
+
+
 def is_linhares_open_order(item: Mapping[str, Any]) -> bool:
-    code = str(item.get("codigo_cadastro") or item.get("codigo_cliente") or "").strip()
-    store = str(item.get("loja_cadastro") or "").strip()
-    return code == WEG_LINHARES_CUSTOMER_CODE and store == WEG_LINHARES_CUSTOMER_STORE
+    """WEG Linhares só por cadastro autoritativo + loja 09."""
+    return (
+        customer_cadastro_code(item) == WEG_LINHARES_CUSTOMER_CODE
+        and customer_store(item) == WEG_LINHARES_CUSTOMER_STORE
+    )
+
+
+def is_ambiguous_linhares_identity(item: Mapping[str, Any]) -> bool:
+    """``codigo_cliente`` preenchido como se fosse cadastro, sem ``codigo_cadastro``."""
+    if customer_cadastro_code(item):
+        return False
+    product_ref = str(item.get("codigo_cliente") or "").strip()
+    store = customer_store(item)
+    return (
+        product_ref == WEG_LINHARES_CUSTOMER_CODE
+        and store == WEG_LINHARES_CUSTOMER_STORE
+    )
 
 
 def order_unit(item: Mapping[str, Any]) -> str:
@@ -64,6 +89,43 @@ def is_unit_compatible_with_mi(unit: str) -> bool:
     return unit == COVERAGE_UNIT_MI
 
 
+def summarize_units(items: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Resumo de unidades da carteira — não rotula MI se houver PC não convertida."""
+    counts: dict[str, int] = {}
+    qty_by_unit: dict[str, float] = {}
+    for item in items:
+        unit = order_unit(item) or "UNSPECIFIED"
+        counts[unit] = counts.get(unit, 0) + 1
+        qty_by_unit[unit] = qty_by_unit.get(unit, 0.0) + float(item.get("saldo") or 0.0)
+    distinct = sorted(counts.keys())
+    mi_only = distinct == [COVERAGE_UNIT_MI] or distinct == ["UNSPECIFIED"] or distinct == [
+        COVERAGE_UNIT_MI,
+        "UNSPECIFIED",
+    ]
+    if not distinct:
+        label = COVERAGE_UNIT_MI
+        mixed = False
+    elif len(distinct) == 1 and distinct[0] == COVERAGE_UNIT_MI:
+        label = COVERAGE_UNIT_MI
+        mixed = False
+    elif len(distinct) == 1 and distinct[0] == "UNSPECIFIED":
+        label = "UNSPECIFIED"
+        mixed = False
+    else:
+        label = "MIXED"
+        mixed = True
+    return {
+        "unit_label": label,
+        "mixed": mixed,
+        "mi_only": bool(mi_only and COVERAGE_UNIT_MI in distinct and not mixed),
+        "counts": counts,
+        "open_quantity_by_unit": {k: round(v, 3) for k, v in qty_by_unit.items()},
+        "blocked_non_mi_line_count": sum(
+            n for u, n in counts.items() if u not in (COVERAGE_UNIT_MI, "UNSPECIFIED")
+        ),
+    }
+
+
 def projection_to_coverage_input(
     line: MyWegDemandProjectionLine,
     *,
@@ -72,7 +134,6 @@ def projection_to_coverage_input(
     """Monta dict no shape esperado por DemandCoverageService._build_lines."""
     qty_mi = un_to_mi(line.open_quantity)
     saldo = mi_to_float_for_coverage(qty_mi)
-    # Pedido exibido = MyWEG; chave técnica usa prefixo + record_id (não colide com SC5).
     return {
         "filial": line.branch,
         "pedido": DISPLAY_ORDER_MYWEG,
@@ -91,7 +152,6 @@ def projection_to_coverage_input(
         "data_despacho": None,
         "no_estoque": float(product_stock_mi),
         "unidade": COVERAGE_UNIT_MI,
-        # Metadados de auditoria (ignorados pelo motor; propagados na prévia).
         "_preview_source": SOURCE_MYWEG,
         "_preview_id": line.id,
         "_preview_batch_id": line.batch_id,
@@ -110,13 +170,14 @@ def classify_consolidation(
     """Classifica linhas Protheus vs MyWEG sem somar sobreposições.
 
     - Demais clientes/lojas: entram no consolidado.
-    - WEG Linhares (000001/09): se houver pedido aberto, marca overlap_pending e
-      NÃO entra no consolidado definitivo (MyWEG é a previsão principal).
-    - Unidade incompatível (ex.: PC): reconciliation_blocked para aquela linha.
+    - WEG Linhares (000001/09 via codigo_cadastro): overlap_pending.
+    - Identidade ambígua (só codigo_cliente): customer_identity_pending.
+    - Unidade incompatível (ex.: PC): reconciliation_blocked.
     """
     keep: list[dict[str, Any]] = []
     overlap: list[dict[str, Any]] = []
     blocked: list[dict[str, Any]] = []
+    identity_pending: list[dict[str, Any]] = []
     for raw in protheus_items:
         item = dict(raw)
         unit = order_unit(item)
@@ -125,11 +186,17 @@ def classify_consolidation(
             item["_preview_block_reason"] = f"unidade_incompativel:{unit or 'vazia'}"
             blocked.append(item)
             continue
+        if is_ambiguous_linhares_identity(item):
+            item["_preview_source"] = CUSTOMER_IDENTITY_PENDING
+            item["_preview_block_reason"] = (
+                "codigo_cadastro_ausente;codigo_cliente_nao_e_cadastro"
+            )
+            identity_pending.append(item)
+            continue
         if is_linhares_open_order(item):
             product = str(item.get("produto") or "").strip()
             item["_preview_source"] = OVERLAP_PENDING
             item["_preview_overlap_product_in_myweg"] = product in myweg_eligible_products
-            # Mesmo sem prova documental, não somamos Linhares Protheus + MyWEG.
             overlap.append(item)
             continue
         item["_preview_source"] = SOURCE_PROTHEUS
@@ -138,6 +205,7 @@ def classify_consolidation(
         "protheus_for_coverage": keep,
         "overlap_pending": overlap,
         "reconciliation_blocked": blocked,
+        "customer_identity_pending": identity_pending,
         "has_linhares_protheus_open": bool(overlap),
     }
 
@@ -244,15 +312,17 @@ def conservation_check(lines: Sequence[Any]) -> dict[str, Any]:
         orders += covered_op
         uncovered += Decimal(str(getattr(line, "uncovered_quantity", 0)))
     allocated = stock + orders + uncovered
-    delta = (demanded - allocated).copy_abs()
-    # Motor atual arredonda a 3 casas por linha; tolera 0.002 por linha.
-    tolerance = _QTY_QUANTIZE * max(len(lines), 1) * Decimal("2")
+    # Compara totais quantizados a 3 casas — sem tolerância que cresce com N linhas.
+    demanded_q = demanded.quantize(_QTY_QUANTIZE, rounding=ROUND_HALF_UP)
+    allocated_q = allocated.quantize(_QTY_QUANTIZE, rounding=ROUND_HALF_UP)
+    delta = (demanded_q - allocated_q).copy_abs()
+    tolerance = _QTY_QUANTIZE
     return {
-        "demanded": float(demanded),
-        "covered_by_stock": float(stock),
-        "covered_by_orders": float(orders),
-        "uncovered": float(uncovered),
-        "allocated_sum": float(allocated),
+        "demanded": float(demanded_q),
+        "covered_by_stock": float(stock.quantize(_QTY_QUANTIZE, rounding=ROUND_HALF_UP)),
+        "covered_by_orders": float(orders.quantize(_QTY_QUANTIZE, rounding=ROUND_HALF_UP)),
+        "uncovered": float(uncovered.quantize(_QTY_QUANTIZE, rounding=ROUND_HALF_UP)),
+        "allocated_sum": float(allocated_q),
         "delta_abs": float(delta),
         "tolerance": float(tolerance),
         "ok": delta <= tolerance,

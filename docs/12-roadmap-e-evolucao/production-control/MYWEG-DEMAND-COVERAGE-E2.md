@@ -1,7 +1,7 @@
 # MyWEG → Demanda PCP — Etapa 2 (prévia de cobertura)
 
-> **TASK_ID:** `PCP-DEMAND-MYWEG-E2-COVERAGE-PREVIEW`  
-> **Status:** prévia interna implementada · **produtivo bloqueado** · `GET /demand` inalterado  
+> **TASK_ID:** `PCP-DEMAND-MYWEG-E2-COVERAGE-PREVIEW` (+ rework `…-E2-COVERAGE-PREVIEW-REWORK`)  
+> **Status:** prévia interna corrigida · **produtivo bloqueado** · `GET /demand` inalterado  
 > **Escopo:** filial `02` · WEG Linhares `000001`/`09`  
 > **Owner:** `production-control-api`  
 > **EXISTING_EQUIVALENT:** `YES` · **REUSE_DECISION:** `EXTEND`
@@ -21,23 +21,24 @@ Fonte: consultas somente leitura no `srv-api` (operador). **Não** são invarian
 | Conversão | `UN_TO_MI_DIVISOR = 1000` confirmada |
 | Protheus abertos | 280 total · 50 filial 02 · **0** linhas `000001`/`09` · lojas 11/14 são outras WEG |
 | SB2 wh=01 filial 02 | 157 produtos com registro · 74 >0 · 83 =0 · UM SB1 `MI` · amostra 8 `no_estoque`≡`SB2.quantity` |
-| OPs | 330 OPs · 104 produtos com OP · 53 sem OP · todas com data prevista |
+| OPs | 330 OPs · endpoint **sem** `B1_UM` no payload |
 
 Amostra de 8 produtos favorece equivalência `no_estoque`×`SB2@01`, **sem** prova universal.
 
 ## 3. Arquitetura da prévia
 
 ```text
+ACCESS_TOKEN (JWT) → delpi_auth.validate_token + Core /me RBAC
+        │
 MyWegDemandSourceService.project_latest_lines
         │
         ▼
-adapter UN→MI + classify_consolidation + stock pool
+adapter UN→MI + classify_consolidation + stock pool (SB2 validado)
         │
         ▼
 DemandCoverageService.build  (REUSE — sem segundo motor)
-        │
-        ▼
-DemandService._summary / _horizon (REUSE)
+  · Protheus parity: OPs como hoje
+  · MyWEG / parcela MyWEG do consolidado: OPs desligadas (OP_UNIT_UNVERIFIED)
         │
         ▼
 MyWegDemandCoveragePreviewService.build_preview
@@ -49,43 +50,66 @@ MyWegDemandCoveragePreviewService.build_preview
 Composer: `build_myweg_demand_coverage_preview_service()`.  
 CLI: `python -m production_control_app.jobs.myweg_demand_coverage_preview`.
 
-## 4. Normalização de unidades
+## 4. Unidades
 
-| Etapa | Regra |
+| Etapa | Regra comprovada |
 |---|---|
-| Necessidade MyWEG | `quantidade_original_un` |
-| Cobertura | `qty_mi = qty_un / 1000` (`UN_TO_MI_DIVISOR`) |
-| Estoque / OP | tratados em MI (paridade motor atual) |
-| Linha Protheus `unidade=PC` | `reconciliation_blocked` — não entra no consolidado |
-| OP `saldo_op` | endpoint sem B1_UM → `ASSUMED_PRODUCT_UM` (mesmo que Demanda hoje) |
+| Necessidade MyWEG | `quantidade_original_un` → cobertura `÷ 1000` (`UN_TO_MI_DIVISOR`) |
+| Estoque SB2 exclusivo | exige UM `MI`; filial `02`; armazém `01`; sem somar duplicatas |
+| Linha Protheus `PC` | `reconciliation_blocked` no consolidado; cenário `protheus_only` rotula `MIXED` se MI+PC |
+| OP `saldo_op` | **HIPOTESE_A_VALIDAR** — `ops_abertas_sql` não seleciona `B1_UM`; status `OP_UNIT_UNVERIFIED` |
 
-Exemplo canônico: 1.500 UN → 1,500 MI; estoque 0,500 + OP 0,700 → descoberto 0,300 MI.
+Não declarar cobertura MyWEG por OP como confirmada enquanto a unidade da OP não for comprovada.
 
 ## 5. Consolidação
 
 | Classe | Tratamento na prévia |
 |---|---|
 | Demais clientes/lojas Protheus | entram |
-| `000001`/`09` aberto | `overlap_pending` — **não soma** com MyWEG |
-| MyWEG elegível | entra (previsão principal Linhares) |
-| SB1 não elegível / amostra provisória | pendência de identidade |
+| `000001`/`09` via **`codigo_cadastro` + `loja_cadastro`** | `overlap_pending` — **não soma** com MyWEG |
+| `codigo_cliente` (ref. produto) ≠ cadastro | nunca identifica Linhares |
+| Cadastro ausente + `codigo_cliente=000001`/`09` | `customer_identity_pending` |
+| Lojas `11` e `14` | independentes |
 | Unidade incompatível | `reconciliation_blocked` |
+| NF | **não** abatida automaticamente |
 
-Total definitivo consolidado **não** é publicado (`definitive_total_published=false`) enquanto ADR não for ACCEPTED.
+Total definitivo consolidado **não** é publicado enquanto ADR ≠ ACCEPTED.
 
-## 6. Estoque
+## 6. Estoque SB2
 
 Pool único `(filial, produto)`:
 
 1. Produto na carteira → só `no_estoque`.
 2. Exclusivo MyWEG → `fetch_stock_balances_items(branch=02, warehouse=01, only_positive=false)`.
 3. Nunca `no_estoque + SB2`.
-4. Erro/ausência SB2 → incompleto; **não** vira zero silencioso.
+4. Distingue: zero confirmado · produto ausente · UM incompatível · duplicata · paginação incompleta · falha de comunicação.
+5. `sb2_complete=true` só sem rejeições/incompletude.
+6. Payload inválido **não** vira lista vazia silenciosa (`PreviewPayloadError`).
 
-## 7. Autorização
+## 7. Autorização operacional (CLI)
 
-Prévia exige `access` + `demand.view` + `myweg-needs.view` + `view.filial-02`.  
-Filial 01 rejeitada. Sem mudança Keycloak/Core/manifest.
+Prévia exige permissões efetivas (Core `/me` após JWT válido):
+
+- `production-control.access`
+- `production-control.demand.view`
+- `production-control.myweg-needs.view`
+- `production-control.view.filial-02`
+
+**Removido:** `--user-json` / `is_superadmin` sintético.
+
+### Homologação segura no srv-api
+
+```bash
+# 1) JWT de usuário real (Portal) — NÃO imprimir o token em logs/tickets
+export ACCESS_TOKEN='<jwt>'
+
+# 2) Dentro do container production-control-api (após pull + rebuild inerte):
+python -m production_control_app.jobs.myweg_demand_coverage_preview \
+  --branch 02 --warehouse 01
+```
+
+Sem `ACCESS_TOKEN` válido + RBAC Core: execução live **bloqueada** (`LIVE_EXECUTION_BLOCKED`).  
+Não criar endpoint público só para teste. Não inventar token S2S como “usuário”.
 
 ## 8. Isolamento
 
@@ -95,24 +119,15 @@ Filial 01 rejeitada. Sem mudança Keycloak/Core/manifest.
 | MFE / Excel / KPIs | **inalterados** |
 | Rota HTTP pública prévia | **não criada** |
 | Ativação produtiva | **bloqueada** |
+| Contratos públicos `api-delpi` | **inalterados** nesta etapa |
 
-## 9. Comandos no srv-api
+## 9. Testes
 
-```bash
-# Dentro do container production-control-api (após git pull + rebuild inerte):
-python -m production_control_app.jobs.myweg_demand_coverage_preview \
-  --user-json '{"is_superadmin":true}'
-```
+`tests/test_myweg_demand_coverage_preview_e2.py` — auth negativa CLI, SB2 (filial/armazém/UM/duplicata/paginação/payload), OP não confirmada, MI+PC, Linhares 09/11/14, `codigo_cadastro` vs `codigo_cliente`, conservação, regressão Demanda/MyWEG.
 
-Alternativa: script Python chamando `build_myweg_demand_coverage_preview_service().build_preview(user)`.
+## 10. Pendências
 
-## 10. Testes
-
-`tests/test_myweg_demand_coverage_preview_e2.py` — UN/MI, FIFO estoque/OP, overlap loja 09 vs 11, PC bloqueado, SB2 erro, auth, conservação.
-
-## 11. Pendências para ativação futura
-
-1. ADR consolidação ACCEPTED pela authority.
-2. Homologação live da prévia no srv-api (snapshot muda).
-3. Decisão OP UM explícita se divergir de SB1.
-4. Gate de feature + contrato público (fora desta etapa).
+1. ADR consolidação ACCEPTED.
+2. Homologação live com JWT real (RBAC Core alcançável no container).
+3. Decisão de expor `B1_UM` (ou equivalente) em ops-abertas — **somente** com análise de consumidores/compatibilidade.
+4. Gate de feature + contrato público (Etapa 3 — **não iniciada**).

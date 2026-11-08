@@ -6,6 +6,7 @@ ADR de consolidação permanece ARCHITECTURE_DECISION_REQUIRED.
 
 from __future__ import annotations
 
+import math
 from datetime import date
 from typing import Any
 
@@ -40,6 +41,8 @@ from production_control_app.domain.services.demand_coverage_service import (
 )
 from production_control_app.domain.services.myweg_demand_coverage_adapter import (
     COVERAGE_UNIT_MI,
+    CUSTOMER_IDENTITY_PENDING,
+    OP_UNIT_UNVERIFIED,
     OVERLAP_PENDING,
     RECONCILIATION_BLOCKED,
     SOURCE_PROTHEUS,
@@ -49,14 +52,12 @@ from production_control_app.domain.services.myweg_demand_coverage_adapter import
     classify_consolidation,
     conservation_check,
     projection_to_coverage_input,
+    summarize_units,
 )
 
 
-def _unwrap(payload: Any, key: str) -> list[Any]:
-    data = payload.get("data") if isinstance(payload, dict) else None
-    source = data if isinstance(data, dict) else payload
-    items = source.get(key) if isinstance(source, dict) else None
-    return items if isinstance(items, list) else []
+class PreviewPayloadError(DelpiGatewayError):
+    """Payload de fonte com shape inválido ou incompleto (≠ lista vazia legítima)."""
 
 
 def _text(value: Any) -> str:
@@ -68,6 +69,51 @@ def _number(value: Any) -> float:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _finite_number(value: Any) -> float | None:
+    try:
+        qty = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(qty):
+        return None
+    return qty
+
+
+def require_items_list(payload: Any, key: str, *, source_name: str) -> list[Any]:
+    """Exige shape ``{data:{items:[...]}}`` ou ``{items:[...]}``. Lista vazia é válida."""
+    if not isinstance(payload, dict):
+        raise PreviewPayloadError(
+            f"Resposta inválida de {source_name}: envelope não é objeto."
+        )
+    data = payload.get("data")
+    source = data if isinstance(data, dict) else payload
+    if not isinstance(source, dict):
+        raise PreviewPayloadError(
+            f"Resposta inválida de {source_name}: data não é objeto."
+        )
+    if key not in source:
+        raise PreviewPayloadError(
+            f"Resposta inválida de {source_name}: chave {key!r} ausente."
+        )
+    items = source.get(key)
+    if not isinstance(items, list):
+        raise PreviewPayloadError(
+            f"Resposta inválida de {source_name}: {key!r} não é lista."
+        )
+    return items
+
+
+def _pagination_meta(payload: Any) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    data = payload.get("data")
+    source = data if isinstance(data, dict) else payload
+    if not isinstance(source, dict):
+        return {}
+    pagination = source.get("pagination")
+    return pagination if isinstance(pagination, dict) else {}
 
 
 class MyWegDemandCoveragePreviewService:
@@ -89,7 +135,6 @@ class MyWegDemandCoveragePreviewService:
         self._myweg_source = myweg_source
         self._today = today
         self._coverage = coverage or DemandCoverageService(today=today)
-        # Reusa summary/horizon do DemandService sem carregar carteira.
         self._presenter = demand_presenter or DemandService(
             gateway, today=today, coverage=self._coverage
         )
@@ -106,6 +151,11 @@ class MyWegDemandCoveragePreviewService:
             raise InvalidBranch("Prévia MyWEG Demanda não se aplica à filial 01.")
         if code != DEMAND_SOURCE_BRANCH:
             raise InvalidBranch(f"Filial inválida para prévia MyWEG Demanda: {branch!r}.")
+        warehouse_code = _text(warehouse) or STOCK_WAREHOUSE_DEFAULT
+        if warehouse_code != STOCK_WAREHOUSE_DEFAULT:
+            raise InvalidBranch(
+                f"Armazém {warehouse_code!r} não homologado nesta prévia (somente 01)."
+            )
         self._assert_authorized(user)
 
         batch_meta, projected = self._myweg_source.project_latest_lines(user, branch=code)
@@ -113,17 +163,49 @@ class MyWegDemandCoveragePreviewService:
         eligible = [line for line in projected if line.coverage_eligible and line.product_code]
         pending_identity = [line for line in projected if not line.coverage_eligible]
 
+        source_errors: list[str] = []
+        sales_all: list[dict[str, Any]] = []
+        ops_all: list[dict[str, Any]] = []
         try:
             sales_payload = self._gateway.fetch_open_sales_orders()
-            ops_payload = self._gateway.fetch_open_production_orders()
-        except DelpiGatewayError:
-            raise
+            sales_raw = require_items_list(
+                sales_payload, "items", source_name="open_sales_orders"
+            )
+            sales_all = [item for item in sales_raw if isinstance(item, dict)]
+        except PreviewPayloadError as exc:
+            source_errors.append(str(exc))
+        except DelpiGatewayError as exc:
+            source_errors.append(f"open_sales_orders:{exc}")
         except Exception as exc:  # noqa: BLE001
-            raise DelpiGatewayError("Não foi possível carregar carteira/OPs para a prévia.") from exc
+            source_errors.append(f"open_sales_orders:falha_comunicacao:{type(exc).__name__}")
 
-        sales_all = [item for item in _unwrap(sales_payload, "items") if isinstance(item, dict)]
+        try:
+            ops_payload = self._gateway.fetch_open_production_orders()
+            ops_raw = require_items_list(
+                ops_payload, "items", source_name="open_production_orders"
+            )
+            ops_all = [item for item in ops_raw if isinstance(item, dict)]
+        except PreviewPayloadError as exc:
+            source_errors.append(str(exc))
+        except DelpiGatewayError as exc:
+            source_errors.append(f"open_production_orders:{exc}")
+        except Exception as exc:  # noqa: BLE001
+            source_errors.append(
+                f"open_production_orders:falha_comunicacao:{type(exc).__name__}"
+            )
+
+        if source_errors:
+            return self._blocked_preview(
+                branch=code,
+                warehouse=warehouse_code,
+                batch_meta=batch_meta,
+                pending_identity=pending_identity,
+                source_errors=source_errors,
+                reason="source_read_failed",
+            )
+
         sales_branch = [item for item in sales_all if _text(item.get("filial")) == code]
-        ops_all = [item for item in _unwrap(ops_payload, "items") if isinstance(item, dict)]
+        protheus_units = summarize_units(sales_branch)
 
         myweg_products = {line.product_code for line in eligible if line.product_code}
         consolidation = classify_consolidation(
@@ -139,8 +221,8 @@ class MyWegDemandCoveragePreviewService:
                 for item in consolidation["protheus_for_coverage"]
             )
         )
-        sb2_map, sb2_complete, sb2_error = self._fetch_sb2_stock(
-            branch=code, warehouse=warehouse, product_codes=exclusive
+        sb2_map, sb2_meta = self._fetch_sb2_stock(
+            branch=code, warehouse=warehouse_code, product_codes=exclusive
         )
         stock = build_stock_pool_mi(
             branch=code,
@@ -148,25 +230,43 @@ class MyWegDemandCoveragePreviewService:
             + consolidation["overlap_pending"],
             myweg_product_codes=myweg_products,
             sb2_quantities=sb2_map,
-            sb2_complete=sb2_complete,
-            sb2_error=sb2_error,
+            sb2_complete=bool(sb2_meta.get("complete")),
+            sb2_error=sb2_meta.get("error"),
         )
 
-        # --- Cenário 1: só Protheus (paridade Demanda atual da filial) ---
+        # ops-abertas não expõe B1_UM — não confirmar cobertura por OP na prévia MyWEG.
+        op_unit = {
+            "status": OP_UNIT_UNVERIFIED,
+            "evidence": (
+                "CONFIRMADO_NO_CODIGO: ops_abertas_sql seleciona C2_QUANT/C2_QUJE/saldo_op "
+                "sem B1_UM. Contrato atual de /pedidos-venda-abertos/ops-abertas não inclui unidade."
+            ),
+            "myweg_op_allocation": "disabled",
+            "protheus_parity_op_allocation": "enabled_unchanged",
+            "potential_ops_count": len(ops_all),
+            "note": (
+                "Cobertura por OP não é classificada como confirmada para necessidades MyWEG. "
+                "Prévia parcial por estoque válido permanece. Unidade da OP = HIPOTESE_A_VALIDAR."
+            ),
+        }
+
+        # --- Cenário 1: só Protheus (paridade Demanda atual; OP inalterada) ---
         protheus_lines = self._coverage.build(
             open_sales_orders=sales_branch,
             open_production_orders=ops_all,
             branch=code,
         )
 
-        # --- Cenário 2: só MyWEG elegível ---
+        # --- Cenário 2: só MyWEG elegível (estoque validado; sem OP confirmada) ---
         myweg_inputs = []
         blocked_stock_products: list[str] = []
+        pending_stock_qty_mi = 0.0
         for line in eligible:
             assert line.product_code
             key = (code, line.product_code)
             if key not in stock["pool"] and line.product_code in stock["missing_sb2_products"]:
                 blocked_stock_products.append(line.product_code)
+                pending_stock_qty_mi += float(line.open_quantity) / 1000.0
                 continue
             product_stock = float(stock["pool"].get(key, 0.0))
             myweg_inputs.append(
@@ -175,46 +275,87 @@ class MyWegDemandCoveragePreviewService:
         myweg_inputs = apply_pool_stock_to_inputs(myweg_inputs, stock["pool"], branch=code)
         myweg_lines = self._coverage.build(
             open_sales_orders=myweg_inputs,
-            open_production_orders=ops_all,
+            open_production_orders=[],  # OP_UNIT_UNVERIFIED
             branch=code,
         )
 
-        # --- Cenário 3: consolidação proposta (não produtiva / ADR pendente) ---
-        # MyWEG primário para Linhares; demais clientes Protheus; overlap não some.
-        consolidated_inputs = list(consolidation["protheus_for_coverage"]) + myweg_inputs
-        consolidated_inputs = apply_pool_stock_to_inputs(
-            consolidated_inputs, stock["pool"], branch=code
-        )
-        consolidated_lines = self._coverage.build(
-            open_sales_orders=consolidated_inputs,
+        # --- Cenário 3: consolidação proposta (ADR pendente) ---
+        # Protheus (não-Linhares) com OP de paridade; MyWEG só estoque.
+        protheus_kept_lines = self._coverage.build(
+            open_sales_orders=apply_pool_stock_to_inputs(
+                consolidation["protheus_for_coverage"], stock["pool"], branch=code
+            ),
             open_production_orders=ops_all,
             branch=code,
         )
+        consolidated_lines = list(protheus_kept_lines) + list(myweg_lines)
 
         today = self._today or date.today()
         adr_accepted = False
-        consolidation_blocked = (not adr_accepted) or bool(
-            consolidation["reconciliation_blocked"]
-        ) or bool(stock["incomplete"] and exclusive)
+        consolidation_blocked = (
+            (not adr_accepted)
+            or bool(consolidation["reconciliation_blocked"])
+            or bool(consolidation["customer_identity_pending"])
+            or bool(stock["incomplete"] and exclusive)
+            or bool(protheus_units["mixed"])
+        )
 
         return {
             "preview": True,
             "wired_to_demand_endpoint": False,
             "productive_activation_blocked": True,
+            "reliable": not source_errors and not sb2_meta.get("error"),
             "adr_status": "ARCHITECTURE_DECISION_REQUIRED",
             "branch": code,
             "customer_scope": {
                 "weg_linhares_code": WEG_LINHARES_CUSTOMER_CODE,
                 "weg_linhares_store": WEG_LINHARES_CUSTOMER_STORE,
+                "identification": "codigo_cadastro+loja_cadastro",
+                "codigo_cliente_is_product_reference": True,
             },
             "coverage_unit": COVERAGE_UNIT_MI,
             "batch": batch_meta,
+            "protheus_units": protheus_units,
+            "quantities_mi": {
+                "myweg_eligible_demanded": round(
+                    sum(float(line.open_quantity) / 1000.0 for line in eligible), 3
+                ),
+                "myweg_covered_by_validated_stock": round(
+                    sum(line.allocated_stock for line in myweg_lines), 3
+                ),
+                "myweg_covered_by_verified_op": 0.0,
+                "myweg_uncovered_confirmed": round(
+                    sum(line.uncovered_quantity for line in myweg_lines), 3
+                ),
+                "myweg_pending_missing_stock_source": round(pending_stock_qty_mi, 3),
+                "overlap_retained_protheus_open": round(
+                    sum(_number(item.get("saldo")) for item in consolidation["overlap_pending"]),
+                    3,
+                ),
+                "reconciliation_blocked_open": round(
+                    sum(
+                        _number(item.get("saldo"))
+                        for item in consolidation["reconciliation_blocked"]
+                    ),
+                    3,
+                ),
+            },
             "stock": {
-                "warehouse": warehouse,
+                "warehouse": warehouse_code,
                 "unit": COVERAGE_UNIT_MI,
                 "incomplete": stock["incomplete"],
                 "sb2_complete": stock["sb2_complete"],
                 "sb2_error": stock["sb2_error"],
+                "sb2_diagnostics": {
+                    "zero_vs_absent": {
+                        "zero_confirmed": stock["zero_confirmed_products"][:50],
+                        "absent_or_invalid": stock["missing_sb2_products"][:50],
+                    },
+                    "rejected_rows": sb2_meta.get("rejected_rows", [])[:20],
+                    "duplicate_products": sb2_meta.get("duplicate_products", [])[:20],
+                    "pages_read": sb2_meta.get("pages_read"),
+                    "rows_accepted": sb2_meta.get("rows_accepted"),
+                },
                 "exclusive_product_count": len(stock["exclusive_myweg_products"]),
                 "missing_sb2_count": len(stock["missing_sb2_products"]),
                 "zero_confirmed_count": len(stock["zero_confirmed_products"]),
@@ -246,9 +387,25 @@ class MyWegDemandCoveragePreviewService:
                         "open_quantity": _number(item.get("saldo")),
                         "unit": _text(item.get("unidade")) or None,
                         "due_date": _text(item.get("data_entrega"))[:10] or None,
+                        "codigo_cadastro": _text(item.get("codigo_cadastro")) or None,
+                        "loja_cadastro": _text(item.get("loja_cadastro")) or None,
                         "product_in_myweg": bool(item.get("_preview_overlap_product_in_myweg")),
                     }
                     for item in consolidation["overlap_pending"][:50]
+                ],
+            },
+            "customer_identity_pending": {
+                "line_count": len(consolidation["customer_identity_pending"]),
+                "items": [
+                    {
+                        "source": CUSTOMER_IDENTITY_PENDING,
+                        "sales_order": _text(item.get("pedido")),
+                        "product_code": _text(item.get("produto")),
+                        "reason": item.get("_preview_block_reason"),
+                        "codigo_cliente_product_ref": _text(item.get("codigo_cliente")) or None,
+                        "loja_cadastro": _text(item.get("loja_cadastro")) or None,
+                    }
+                    for item in consolidation["customer_identity_pending"][:50]
                 ],
             },
             "reconciliation_blocked": {
@@ -260,23 +417,38 @@ class MyWegDemandCoveragePreviewService:
                         "product_code": _text(item.get("produto")),
                         "reason": item.get("_preview_block_reason"),
                         "unit": _text(item.get("unidade")) or None,
+                        "open_quantity": _number(item.get("saldo")),
                     }
                     for item in consolidation["reconciliation_blocked"][:50]
                 ],
             },
             "scenarios": {
                 "protheus_only": self._scenario_payload(
-                    protheus_lines, today, source_label=SOURCE_PROTHEUS
+                    protheus_lines,
+                    today,
+                    source_label=SOURCE_PROTHEUS,
+                    unit_meta=protheus_units,
+                    sales_reference_line_count=len(sales_branch),
                 ),
-                "myweg_only": self._scenario_payload(
-                    myweg_lines, today, source_label="myweg"
-                ),
+                "myweg_only": {
+                    **self._scenario_payload(
+                        myweg_lines, today, source_label="myweg", force_unit=COVERAGE_UNIT_MI
+                    ),
+                    "op_coverage_confirmed": False,
+                    "op_unit_status": OP_UNIT_UNVERIFIED,
+                    "pending_without_stock_source_mi": round(pending_stock_qty_mi, 3),
+                },
                 "consolidated_proposed": {
                     **self._scenario_payload(
-                        consolidated_lines, today, source_label="consolidated"
+                        consolidated_lines,
+                        today,
+                        source_label="consolidated",
+                        force_unit=None if consolidation_blocked else COVERAGE_UNIT_MI,
+                        incomplete=True,
                     ),
                     "definitive_total_published": False,
                     "blocked": consolidation_blocked,
+                    "op_coverage_confirmed_for_myweg": False,
                     "block_reasons": [
                         reason
                         for reason, flag in (
@@ -290,25 +462,57 @@ class MyWegDemandCoveragePreviewService:
                                 "linhares_protheus_overlap_present",
                                 bool(consolidation["overlap_pending"]),
                             ),
+                            (
+                                "customer_identity_pending",
+                                bool(consolidation["customer_identity_pending"]),
+                            ),
+                            ("protheus_units_mixed", bool(protheus_units["mixed"])),
+                            ("op_unit_unverified_myweg", True),
                         )
                         if flag
                     ],
                 },
             },
-            "op_unit_assumption": {
-                "status": "ASSUMED_PRODUCT_UM",
-                "note": (
-                    "Endpoint ops-abertas não expõe B1_UM; o motor atual de Demanda "
-                    "já aloca saldo_op com no_estoque sem conversão. Prévia MyWEG "
-                    "normaliza necessidade UN→MI (÷1000) alinhada à UM SB1 MI "
-                    "homologada. Se a UM da OP divergir, a alocação fica sob "
-                    "HIPOTESE_A_VALIDAR."
-                ),
-            },
+            "op_unit_assumption": op_unit,
+        }
+
+    def _blocked_preview(
+        self,
+        *,
+        branch: str,
+        warehouse: str,
+        batch_meta: dict[str, Any] | None,
+        pending_identity: list[Any],
+        source_errors: list[str],
+        reason: str,
+    ) -> dict[str, Any]:
+        return {
+            "preview": True,
+            "wired_to_demand_endpoint": False,
+            "productive_activation_blocked": True,
+            "reliable": False,
+            "blocked": True,
+            "block_reason": reason,
+            "source_errors": source_errors[:10],
+            "adr_status": "ARCHITECTURE_DECISION_REQUIRED",
+            "branch": branch,
+            "batch": batch_meta,
+            "stock": {"warehouse": warehouse, "incomplete": True, "sb2_complete": False},
+            "identity_pending": {"line_count": len(pending_identity), "items": []},
+            "scenarios": {},
+            "op_unit_assumption": {"status": OP_UNIT_UNVERIFIED},
         }
 
     def _scenario_payload(
-        self, lines: list[DemandLine], today: date, *, source_label: str
+        self,
+        lines: list[DemandLine],
+        today: date,
+        *,
+        source_label: str,
+        unit_meta: dict[str, Any] | None = None,
+        force_unit: str | None = COVERAGE_UNIT_MI,
+        incomplete: bool = False,
+        sales_reference_line_count: int | None = None,
     ) -> dict[str, Any]:
         covered_stock = round(sum(line.allocated_stock for line in lines), 3)
         covered_op = round(
@@ -323,14 +527,32 @@ class MyWegDemandCoveragePreviewService:
         for line in lines:
             by_status[line.status] = by_status.get(line.status, 0) + 1
         horizon = self._presenter._horizon(lines)
-        for bucket in horizon:
-            bucket["unit"] = COVERAGE_UNIT_MI
         summary = self._presenter._summary(lines)
-        summary["unit"] = COVERAGE_UNIT_MI
         summary["covered_by_stock"] = covered_stock
         summary["covered_by_orders"] = covered_op
         summary["source"] = source_label
-        return {
+        summary["incomplete"] = incomplete
+
+        if unit_meta is not None:
+            summary["unit"] = unit_meta["unit_label"]
+            summary["units"] = unit_meta
+            summary["global_total_authoritative"] = not unit_meta["mixed"]
+            if unit_meta["mixed"]:
+                # Evita total global artificial MI+PC.
+                summary["open_quantity_mixed"] = True
+                summary["open_quantity_by_unit"] = unit_meta["open_quantity_by_unit"]
+            for bucket in horizon:
+                bucket["unit"] = unit_meta["unit_label"]
+        elif force_unit:
+            summary["unit"] = force_unit
+            for bucket in horizon:
+                bucket["unit"] = force_unit
+        else:
+            summary["unit"] = "INCOMPLETE"
+            for bucket in horizon:
+                bucket["unit"] = "INCOMPLETE"
+
+        payload: dict[str, Any] = {
             "summary": summary,
             "horizon": horizon,
             "status_counts": by_status,
@@ -338,6 +560,9 @@ class MyWegDemandCoveragePreviewService:
             "line_count": len(lines),
             "items_sample": [line.to_dict(today) for line in lines[:20]],
         }
+        if sales_reference_line_count is not None:
+            payload["protheus_sales_reference_line_count"] = sales_reference_line_count
+        return payload
 
     def _fetch_sb2_stock(
         self,
@@ -345,13 +570,24 @@ class MyWegDemandCoveragePreviewService:
         branch: str,
         warehouse: str,
         product_codes: list[str],
-    ) -> tuple[dict[str, float | None], bool, str | None]:
+    ) -> tuple[dict[str, float | None], dict[str, Any]]:
+        meta: dict[str, Any] = {
+            "complete": True,
+            "error": None,
+            "rejected_rows": [],
+            "duplicate_products": [],
+            "pages_read": 0,
+            "rows_accepted": 0,
+        }
         if not product_codes:
-            return {}, True, None
+            return {}, meta
+
         balances: dict[str, float | None] = {code: None for code in product_codes}
+        allowed = set(product_codes)
+        seen_counts: dict[str, int] = {}
+
         try:
             page = 1
-            complete = True
             while page <= self.STOCK_MAX_PAGES:
                 payload = self._gateway.fetch_stock_balances_items(
                     branch=branch,
@@ -361,30 +597,122 @@ class MyWegDemandCoveragePreviewService:
                     page_size=self.STOCK_PAGE_SIZE,
                     product_codes=product_codes,
                 )
-                rows = _unwrap(payload, "items")
+                rows = require_items_list(
+                    payload, "items", source_name="stock_balances_items"
+                )
+                meta["pages_read"] = page
+                pagination = _pagination_meta(payload)
+
                 for row in rows:
                     if not isinstance(row, dict):
+                        meta["rejected_rows"].append({"reason": "row_not_object"})
+                        meta["complete"] = False
                         continue
                     code = _text(row.get("product_code"))
-                    if code not in balances:
+                    row_branch = _text(row.get("branch") or row.get("filial"))
+                    row_wh = _text(row.get("warehouse") or row.get("armazem"))
+                    uom = _text(row.get("unit_of_measure") or row.get("unidade")).upper()
+                    qty = _finite_number(row.get("quantity"))
+
+                    if code not in allowed:
+                        meta["rejected_rows"].append(
+                            {"reason": "product_not_requested", "product_code": code}
+                        )
+                        meta["complete"] = False
                         continue
-                    current = balances[code]
-                    qty = _number(row.get("quantity"))
-                    balances[code] = qty if current is None else float(current) + qty
-                if len(rows) < self.STOCK_PAGE_SIZE:
+                    if row_branch and row_branch != branch:
+                        meta["rejected_rows"].append(
+                            {
+                                "reason": "branch_mismatch",
+                                "product_code": code,
+                                "branch": row_branch,
+                            }
+                        )
+                        meta["complete"] = False
+                        continue
+                    if row_wh and row_wh != warehouse:
+                        meta["rejected_rows"].append(
+                            {
+                                "reason": "warehouse_mismatch",
+                                "product_code": code,
+                                "warehouse": row_wh,
+                            }
+                        )
+                        meta["complete"] = False
+                        continue
+                    if uom and uom != COVERAGE_UNIT_MI:
+                        meta["rejected_rows"].append(
+                            {
+                                "reason": "unit_incompatible",
+                                "product_code": code,
+                                "unit": uom,
+                            }
+                        )
+                        # Produto permanece None (ausente/inválido) — não zera.
+                        meta["complete"] = False
+                        continue
+                    if qty is None:
+                        meta["rejected_rows"].append(
+                            {"reason": "quantity_invalid", "product_code": code}
+                        )
+                        meta["complete"] = False
+                        continue
+
+                    seen_counts[code] = seen_counts.get(code, 0) + 1
+                    if seen_counts[code] > 1:
+                        # Duplicidade indevida: não soma. Marca inválido.
+                        if code not in meta["duplicate_products"]:
+                            meta["duplicate_products"].append(code)
+                        balances[code] = None
+                        meta["complete"] = False
+                        meta["rejected_rows"].append(
+                            {"reason": "duplicate_product", "product_code": code}
+                        )
+                        continue
+
+                    balances[code] = qty
+                    meta["rows_accepted"] += 1
+
+                total = pagination.get("total")
+                if isinstance(total, int) and total >= 0:
+                    expected_pages = max(1, (total + self.STOCK_PAGE_SIZE - 1) // self.STOCK_PAGE_SIZE)
+                    if page >= expected_pages:
+                        break
+                    if len(rows) == 0 and page < expected_pages:
+                        meta["complete"] = False
+                        meta["error"] = "pagination_incomplete"
+                        break
+                elif len(rows) < self.STOCK_PAGE_SIZE:
                     break
+
                 if page == self.STOCK_MAX_PAGES:
-                    complete = False
+                    meta["complete"] = False
+                    meta["error"] = "pagination_max_pages"
                     break
                 page += 1
-            # Códigos pedidas sem linha: None permanece (≠ zero confirmado).
-            for code, value in list(balances.items()):
-                if value is None:
-                    # only_positive=false deveria retornar 0; ausência = missing.
-                    continue
-            return balances, complete, None
+
+            if meta["duplicate_products"] or any(
+                r.get("reason") in {
+                    "branch_mismatch",
+                    "warehouse_mismatch",
+                    "unit_incompatible",
+                    "quantity_invalid",
+                    "row_not_object",
+                    "product_not_requested",
+                }
+                for r in meta["rejected_rows"]
+            ):
+                meta["complete"] = False
+
+            return balances, meta
+        except PreviewPayloadError as exc:
+            return {}, {**meta, "complete": False, "error": str(exc)[:200]}
         except Exception as exc:  # noqa: BLE001
-            return {}, False, str(exc)[:200]
+            return {}, {
+                **meta,
+                "complete": False,
+                "error": f"falha_comunicacao:{type(exc).__name__}",
+            }
 
     @staticmethod
     def _assert_authorized(user: object | None) -> None:
