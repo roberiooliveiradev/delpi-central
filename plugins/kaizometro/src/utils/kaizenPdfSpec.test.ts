@@ -92,6 +92,18 @@ describe("buildKaizenDelpiDocumentSpec", () => {
     expect(spec.tables?.[0]?.rows).toHaveLength(2);
   });
 
+  it("inclui fotografias na ficha quando disponíveis", () => {
+    const spec = buildKaizenDelpiDocumentSpec(sampleRecord(), {
+      dataUrl: "data:image/jpeg;base64,ZmFrZQ==",
+      photoCount: 2,
+    });
+    expect(spec.imageSections).toHaveLength(1);
+    expect(spec.imageSections?.[0].title).toBe("Evidências fotográficas");
+    expect(spec.imageSections?.[0].dataUrl).toContain("data:image/jpeg");
+    expect(spec.textSections?.[0].body.length).toBeLessThanOrEqual(180);
+    expect(spec.footerNote).toContain("Fotos selecionadas");
+  });
+
   it("marca cancelado como rejected e trunca narrativa longa", () => {
     const long = "x".repeat(KAIZEN_PDF_NARRATIVE_MAX_CHARS + 40);
     const spec = buildKaizenDelpiDocumentSpec(
