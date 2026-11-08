@@ -207,6 +207,7 @@ export function ncBoardStatusVariant(
   status: string,
   isRegistered = true,
 ): "draft" | "pending-nc" | "nc" | "closed" | "default" {
+  if (status === "cancelled") return "closed";
   if (!isRegistered || status === "pending") {
     return "pending-nc";
   }
