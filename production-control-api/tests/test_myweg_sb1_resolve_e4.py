@@ -339,10 +339,19 @@ def test_persist_blocked_without_semantics() -> None:
 
 
 def test_highest_production_propagates_to_resolve_service() -> None:
-    """Regressão MyWEG: maior produção elegível propaga verified_* e motivo no PC."""
+    """Regressão MyWEG: origem 9 válida e fallbacks 8/sem-código propagam no PC."""
     repo = InMemorySb1Repo()
     cases = (
-        # Caso A: origem 8 → maior 9
+        # AC-01: origem 9 válida vence contrapeça maior
+        (
+            "11403512",
+            "90261614",
+            "90261614",
+            "Origem",
+            "code_and_reference",
+            None,
+        ),
+        # AC-03: origem 8 → maior 9
         (
             "18765646",
             "80015414",
@@ -351,7 +360,7 @@ def test_highest_production_propagates_to_resolve_service() -> None:
             "reference_prefer_production",
             "prefer_highest_production_code",
         ),
-        # Caso B: sem origem → maior amostra provisória
+        # AC-04: sem origem → maior amostra provisória
         (
             "19740817",
             "",
@@ -404,7 +413,7 @@ def test_highest_production_propagates_to_resolve_service() -> None:
     service = MyWegSb1ResolveService(repo, gateway=FakeSb1Gateway(seeded))
     result = service.resolve_batch(batch_id=created["id"], dry_run=True)
     assert result["persisted"] is False
-    assert result["counts"]["confirmed"] == 2
+    assert result["counts"]["confirmed"] == 3
     by_key = {item["customer_reference"]: item for item in result["items"]}
     for material, origin, verified, description, matched_by, reason in cases:
         item = by_key[material]

@@ -8,8 +8,10 @@ Estados:
 - blocked: candidato informado/único com B1_MSBLQL = '1'
 - pending: sem código e sem referência (nada a consultar)
 
-Com disambiguation_policy=prefer_production_over_sample: entre elegíveis da
-mesma B1_REFEREN, escolhe o maior B1_COD numérico priorizando prefixo 9 sobre 8.
+Com disambiguation_policy=prefer_production_over_sample:
+1) código 9 de origem validado pelo par B1_COD+B1_REFEREN tem prioridade absoluta;
+2) senão, entre elegíveis da mesma B1_REFEREN, escolhe o maior B1_COD numérico
+   priorizando prefixo 9 sobre 8.
 """
 
 from __future__ import annotations
@@ -289,7 +291,7 @@ def _apply_production_preference(
     ref_products: Sequence[Mapping[str, Any]],
     policy: str | None,
 ) -> dict[str, Any]:
-    """Preferência PCP 9/8 — maior código numérico elegível; só com política explícita."""
+    """Preferência PCP 9/8 — origem 9 válida vence; senão maior código numérico."""
     if policy != DISAMBIGUATION_PREFER_PRODUCTION_OVER_SAMPLE:
         return result
 
@@ -322,6 +324,24 @@ def _apply_production_preference(
     universe = _dedupe_by_product_code(universe)
     if not universe:
         return result
+
+    # Prioridade absoluta: origem 9 confirmada pelo par B1_COD + B1_REFEREN.
+    # Contrapeças com código maior NÃO sobrescrevem essa confirmação.
+    if (
+        status == MATCH_CONFIRMED
+        and _is_production_code(informed)
+        and informed == verified
+        and result.get("matched_by") == MATCHED_BY_CODE_AND_REFERENCE
+    ):
+        return {
+            **result,
+            "match_status": MATCH_CONFIRMED,
+            "verified_product_code": informed,
+            "verified_description": result.get("verified_description"),
+            "matched_by": MATCHED_BY_CODE_AND_REFERENCE,
+            "candidates": list(universe),
+            "reason": None,
+        }
 
     eligible = [row for row in universe if not row.get("blocked")]
     productions = [

@@ -178,24 +178,44 @@ def test_prefer_highest_sample_when_no_production() -> None:
     assert result["reason"] == "provisional_highest_sample_code_no_production"
 
 
-def test_prefer_highest_production_when_informed_9_is_smaller() -> None:
-    """Origem 9 válida não impede produção numericamente maior."""
+def test_informed_production_9_beats_higher_counterpiece() -> None:
+    """AC-01: origem 90261614 vence contrapeça 90262555 na mesma referência."""
     result = classify_sb1_identity_pair(
         product_code="90261614",
         customer_reference="11403512",
         by_code=_row("90261614", "11403512", description="Origem"),
         by_reference=[
             _row("90261614", "11403512", description="Origem"),
-            _row("90269999", "11403512", description="Maior"),
+            _row("90262555", "11403512", description="Contrapeca"),
             _row("80010001", "11403512", description="Amostra"),
         ],
         disambiguation_policy=DISAMBIGUATION_PREFER_PRODUCTION_OVER_SAMPLE,
     )
     assert result["match_status"] == MATCH_CONFIRMED
     assert result["product_code"] == "90261614"
-    assert result["verified_product_code"] == "90269999"
-    assert result["matched_by"] == MATCHED_BY_REFERENCE_PREFER_PRODUCTION
-    assert result["reason"] == "prefer_highest_production_code"
+    assert result["verified_product_code"] == "90261614"
+    assert result["verified_description"] == "Origem"
+    assert result["matched_by"] == MATCHED_BY_CODE_AND_REFERENCE
+    assert result["reason"] is None
+    assert any(c["product_code"] == "90262555" for c in result["candidates"])
+
+
+def test_informed_production_9_beats_sibling_production() -> None:
+    """AC-02: origem 90262016 permanece mesmo com 90262084 na referência."""
+    result = classify_sb1_identity_pair(
+        product_code="90262016",
+        customer_reference="12322556",
+        by_code=_row("90262016", "12322556", description="Origem"),
+        by_reference=[
+            _row("90262016", "12322556", description="Origem"),
+            _row("90262084", "12322556", description="Outro produto"),
+        ],
+        disambiguation_policy=DISAMBIGUATION_PREFER_PRODUCTION_OVER_SAMPLE,
+    )
+    assert result["match_status"] == MATCH_CONFIRMED
+    assert result["verified_product_code"] == "90262016"
+    assert result["matched_by"] == MATCHED_BY_CODE_AND_REFERENCE
+    assert result["reason"] is None
 
 
 def test_prefer_highest_production_without_origin_code() -> None:
