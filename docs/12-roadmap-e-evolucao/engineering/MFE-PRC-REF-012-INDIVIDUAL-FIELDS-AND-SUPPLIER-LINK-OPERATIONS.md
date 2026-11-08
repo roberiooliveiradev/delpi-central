@@ -210,3 +210,8 @@ Os demais vínculos permanecem inalterados.
 - [ ] Nenhuma publicação em produção sem aceite funcional, contrato e aprovação do owner.
 
 **A implementação segue pendente** até inventário/contrato e aprovação dos owners requeridos. O novo requisito **faz parte obrigatória** de `ENG-PRC-D12-GRANULAR-SUPPLIER-LINK-CHANGE-CONTRACT-AND-UX`; não tratar como refinamento decorativo de UI.
+
+
+## 8. Mapa de rotas, api-delpi e trilha de implementação D12
+
+**Documento de execução obrigatório:** [MFE-PRC-D12-ROUTES-API-DELPI-IMPLEMENTATION-BLUEPRINT.md](./MFE-PRC-D12-ROUTES-API-DELPI-IMPLEMENTATION-BLUEPRINT.md). O blueprint inventaria rotas Engenharia existentes, `api-delpi GET /products/{code}?view=engineering`, `GET /products/{code}/suppliers?view=engineering` (SA5), busca SA2, catálogos oficiais, e define **TARGET**, não PROVEN: `GET /reference-data/products/{officialCode}/edit-context` (BFF somente leitura) + extensão versionada de `POST /intake/requests` e `PATCH /requests/{id}/draft` com operações individuais `supplierLinkChanges[]`. Reutilizar `verify-and-complete` com comparação seletiva, sem criar escrita ERP. **O owner deve fechar contrato/schema/freshness/completude SA5 antes de implementação produtiva.**
