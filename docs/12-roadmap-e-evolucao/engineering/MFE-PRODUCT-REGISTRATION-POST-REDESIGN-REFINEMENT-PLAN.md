@@ -523,3 +523,8 @@ aplicada no Postgres DEV. `PRODUCTION_DEPLOY: NOT_PERFORMED`.
 
 `*` PASS funcional de contrato+código; aceite visual/funcional DEV com
 dados TOTVS reais requer sessão autenticada do PO.
+
+
+## Revisão crítica pós-DEV (2026-11-08) — aceite visual reprovado
+
+**EXECUTION_DRIFT / VISUAL_ACCEPTANCE_FAIL / REMEDIATION_REQUIRED.** A entrega 1f1c09f288 reportou 11 refinamentos concluídos, mas capturas DEV e inspeção do código mostram: REF-006 Cards vazio quando Tabela/Kanban exibem registros; REF-010 ficha técnica vertical e fornecedores sem tabela editável; REF-011 selects oficiais substituídos silenciosamente por inputs quando catálogos não chegam; REF-008 timeline sem avatar e evento técnico sem tradução; REF-009 responsável com identidade incompleta. A classificação PASS anterior não corresponde ao aceite UX/runtime. Ler a [auditoria e plano corretivo](./MFE-PRODUCT-REGISTRATION-VISUAL-GAP-AUDIT-2026-11-08.md) e reabrir os gates com screenshots e interações DEV. **PRODUCTION_DEPLOY_SUSPENDED**.
