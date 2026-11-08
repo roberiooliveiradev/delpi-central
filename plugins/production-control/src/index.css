@@ -6876,7 +6876,7 @@
 
 /* —— Necessidades WEG (MyWEG) —— */
 .dashboard-production-control .ppc-page-stack--myweg-needs {
-  gap: 16px;
+  gap: 6px;
   padding: 0 0 24px;
   box-sizing: border-box;
 }
@@ -6886,14 +6886,9 @@
   margin-right: 20px;
 }
 
-.dashboard-production-control .ppc-myweg-needs__planning-note {
-  margin: 0 0 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  color: var(--ppc-text-muted);
-  font-size: var(--ppc-font-sm);
+.dashboard-production-control .ppc-page-stack--myweg-needs > .ppc-underline-nav,
+.dashboard-production-control .ppc-page-stack--myweg-needs > nav.ppc-underline-nav {
+  margin-top: 0;
 }
 
 .dashboard-production-control .ppc-myweg-needs__hub {
@@ -7023,10 +7018,10 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.55rem 0.7rem;
+  gap: 0.65rem 0.8rem;
   width: 100%;
   margin-bottom: 0.75rem;
-  padding: 0.45rem 0.65rem;
+  padding: 0.55rem 0.8rem;
   border: 1px solid var(--delpi-border, #d8dee6);
   border-radius: 12px;
   background: var(--delpi-surface, #fff);
@@ -7038,15 +7033,15 @@
   flex: 0 0 auto;
   align-self: stretch;
   width: 1px;
-  min-height: 2.4rem;
-  margin-block: 0.15rem;
+  min-height: 3rem;
+  margin-block: 0.2rem;
   background: var(--delpi-border, #d8dee6);
 }
 
 .dashboard-production-control .ppc-myweg-needs__invoice-date {
   display: grid;
-  gap: 0.2rem;
-  width: 10.25rem;
+  gap: 0.25rem;
+  width: 11.5rem;
   flex: 0 0 auto;
 }
 
@@ -7054,7 +7049,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--ppc-title, #003866);
   line-height: 1.2;
@@ -7062,28 +7057,28 @@
 
 .dashboard-production-control .ppc-myweg-needs__invoice-date input[type="date"] {
   width: 100%;
-  min-height: 2rem;
-  padding: 0.2rem 0.4rem;
+  min-height: 2.35rem;
+  padding: 0.3rem 0.45rem;
   border-radius: 8px;
   border: 1px solid var(--delpi-border, #d8dee6);
   background: var(--delpi-surface, #fff);
   color: inherit;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
 .dashboard-production-control .ppc-myweg-needs__invoice-search {
   position: relative;
   display: block;
-  flex: 1 1 12rem;
-  min-width: 10rem;
-  max-width: 28rem;
+  flex: 1 1 14rem;
+  min-width: 11rem;
+  max-width: 30rem;
 }
 
 .dashboard-production-control .ppc-myweg-needs__invoice-search-icon {
   position: absolute;
-  left: 0.55rem;
+  left: 0.65rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--ppc-text-muted, rgba(17, 17, 17, 0.55));
@@ -7092,39 +7087,39 @@
 
 .dashboard-production-control .ppc-myweg-needs__invoice-search input {
   width: 100%;
-  min-height: 2rem;
-  padding: 0.3rem 0.65rem 0.3rem 1.85rem;
+  min-height: 2.35rem;
+  padding: 0.35rem 0.75rem 0.35rem 2.05rem;
   border-radius: 999px;
   border: 1px solid var(--delpi-border, #d8dee6);
   background: var(--delpi-surface, #fff);
   color: inherit;
-  font-size: 0.84rem;
+  font-size: 0.9rem;
 }
 
 .dashboard-production-control .ppc-myweg-needs__invoice-filter-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   flex: 0 0 auto;
   border-radius: 999px;
 }
 
 .dashboard-production-control .ppc-btn--compact {
-  min-height: 2rem;
-  padding-inline: 0.85rem;
+  min-height: 2.35rem;
+  padding-inline: 0.95rem;
 }
 
 .dashboard-production-control .ppc-myweg-needs__month-cal {
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.55rem;
   flex: 0 0 auto;
   max-width: 100%;
   overflow: hidden;
   contain: layout paint;
   isolation: isolate;
-  padding: 0.1rem 0.15rem;
+  padding: 0.15rem 0.2rem;
   background: transparent;
   border: 0;
 }
@@ -7134,18 +7129,18 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
-  width: 5.6rem;
+  gap: 0.2rem;
+  width: 6.5rem;
   flex: 0 0 auto;
 }
 
 .dashboard-production-control .ppc-myweg-needs__month-cal-title {
   margin: 0;
   text-align: center;
-  font-size: 0.66rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: capitalize;
-  line-height: 1.15;
+  line-height: 1.2;
   color: var(--ppc-title, #003866);
   max-width: 100%;
   overflow: hidden;
@@ -7158,10 +7153,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.2rem;
-  height: 1.2rem;
+  width: 1.45rem;
+  height: 1.45rem;
   min-width: 0;
-  max-width: 1.2rem;
+  max-width: 1.45rem;
   padding: 0;
   border: 0;
   border-radius: 999px;
@@ -7178,7 +7173,7 @@
 
 .dashboard-production-control .ppc-myweg-needs__month-cal-body {
   display: grid;
-  gap: 0.1rem;
+  gap: 0.12rem;
   flex: 0 0 auto;
   min-width: 0;
 }
@@ -7186,10 +7181,10 @@
 .dashboard-production-control .ppc-myweg-needs__month-cal-weekdays,
 .dashboard-production-control .ppc-myweg-needs__month-cal-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1.15rem);
+  grid-template-columns: repeat(7, 1.45rem);
   justify-content: start;
-  gap: 0.04rem;
-  width: calc(7 * 1.15rem + 6 * 0.04rem);
+  gap: 0.08rem;
+  width: calc(7 * 1.45rem + 6 * 0.08rem);
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -7200,9 +7195,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.15rem;
+  width: 1.45rem;
   text-align: center;
-  font-size: 0.55rem;
+  font-size: 0.66rem;
   font-weight: 650;
   opacity: 0.7;
   line-height: 1;
@@ -7210,10 +7205,10 @@
 
 .dashboard-production-control .ppc-myweg-needs__month-cal-day {
   box-sizing: border-box;
-  width: 1.15rem !important;
+  width: 1.45rem !important;
   min-width: 0 !important;
-  max-width: 1.15rem !important;
-  height: 1.15rem !important;
+  max-width: 1.45rem !important;
+  height: 1.45rem !important;
   min-height: 0 !important;
   margin: 0;
   padding: 0 !important;
@@ -7222,7 +7217,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.58rem !important;
+  font-size: 0.72rem !important;
   line-height: 1;
   cursor: pointer;
   display: inline-flex;

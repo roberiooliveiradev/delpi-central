@@ -1434,7 +1434,6 @@ export const copy = {
   mywegNeeds: {
     title: "Necessidades WEG",
     subtitle: "Programação MyWEG · filial Espírito Santo",
-    hubNote: "Fotografias históricas — sem tempo real nem geração de OP.",
     hubAria: "Navegação Necessidades WEG",
     tabsAria: "Abas Necessidades WEG",
     tabs: {

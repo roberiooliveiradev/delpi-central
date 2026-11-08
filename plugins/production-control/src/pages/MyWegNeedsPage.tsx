@@ -1,7 +1,6 @@
 import {
   createDashboardKpiCard,
   createDashboardLoadingActivityCard,
-  HelpTooltip,
   UnderlineNav,
   underlineNavBemClasses,
 } from "@delpi/plugin-ui/index";
@@ -398,11 +397,6 @@ export function MyWegNeedsPage({
         onRefresh={() => void reload()}
         refreshBusy={refreshing}
       />
-
-      <p className="ppc-myweg-needs__planning-note">
-        {texts.hubNote}{" "}
-        <HelpTooltip content={helpTooltips.mywegNeedsTabs} trigger="icon" />
-      </p>
 
       <UnderlineNav
         items={tabItems}
