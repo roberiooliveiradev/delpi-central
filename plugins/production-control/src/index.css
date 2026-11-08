@@ -7011,6 +7011,14 @@
   font-weight: 650;
 }
 
+.dashboard-production-control .ppc-myweg-needs__date-hint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  opacity: 0.78;
+}
+
 .dashboard-production-control .ppc-myweg-needs__invoice-layout {
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);

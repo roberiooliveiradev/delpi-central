@@ -14,6 +14,7 @@ import type {
   MyWegInvoiceObservationSummary,
 } from "../types";
 import { formatDecimalStringFixed } from "../utils/formatDecimalString";
+import { previousCalendarDayIso } from "../utils/mywegInvoiceDocumentDate";
 import { DataTableSection, type DataTableColumn } from "./dataTableUi";
 
 const texts = copy.mywegNeeds.invoices;
@@ -69,9 +70,18 @@ function groupItemsByInvoice(items: MyWegInvoiceObservationItem[]): InvoiceGroup
   });
 }
 
+function pickDefaultObservation(
+  items: MyWegInvoiceObservationSummary[],
+): string | null {
+  if (items.length === 0) return null;
+  const withRecords = items.find((row) => row.observationStatus === "with_records");
+  return (withRecords ?? items[0]).id;
+}
+
 export function MyWegInvoiceObservationsPanel() {
-  const [documentDate, setDocumentDate] = useState("");
-  const [appliedDate, setAppliedDate] = useState("");
+  const initialDate = useMemo(() => previousCalendarDayIso(), []);
+  const [documentDate, setDocumentDate] = useState(initialDate);
+  const [appliedDate, setAppliedDate] = useState(initialDate);
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
   const [listLoading, setListLoading] = useState(false);
@@ -88,6 +98,7 @@ export function MyWegInvoiceObservationsPanel() {
   const [observationStatus, setObservationStatus] = useState<string | null>(null);
   const [selectedInvoiceKey, setSelectedInvoiceKey] = useState<string | null>(null);
   const [itemPage, setItemPage] = useState(1);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const selectedObservation = useMemo(
     () => observations.find((row) => row.id === selectedObservationId) ?? null,
@@ -110,7 +121,18 @@ export function MyWegInvoiceObservationsPanel() {
     return selectedInvoiceItems.slice(start, start + PAGE_SIZE);
   }, [itemPage, selectedInvoiceItems]);
 
-  const loadObservations = useCallback(async (date: string) => {
+  useEffect(() => {
+    const date = appliedDate.trim();
+    if (!date) {
+      setObservations([]);
+      setSelectedObservationId(null);
+      setAllItems([]);
+      setObservationStatus(null);
+      setSelectedInvoiceKey(null);
+      return;
+    }
+
+    const controller = new AbortController();
     setListLoading(true);
     setListError(null);
     setObservations([]);
@@ -118,27 +140,33 @@ export function MyWegInvoiceObservationsPanel() {
     setAllItems([]);
     setObservationStatus(null);
     setSelectedInvoiceKey(null);
-    try {
-      const payload = await fetchMyWegInvoiceObservations({
-        documentDate: date || null,
-        page: 1,
-        pageSize: 50,
-      });
-      setObservations(payload.items);
-      if (payload.items.length === 1) {
-        setSelectedObservationId(payload.items[0].id);
+
+    void (async () => {
+      try {
+        const payload = await fetchMyWegInvoiceObservations({
+          documentDate: date,
+          page: 1,
+          pageSize: 50,
+          signal: controller.signal,
+        });
+        if (controller.signal.aborted) return;
+        setObservations(payload.items);
+        setSelectedObservationId(pickDefaultObservation(payload.items));
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        setListError(
+          err instanceof Error ? err.message : texts.loadListError,
+        );
+        if (httpErrorStatus(err) === 403) {
+          setListError(copy.mywegNeeds.forbidden);
+        }
+      } finally {
+        if (!controller.signal.aborted) setListLoading(false);
       }
-    } catch (err) {
-      setListError(
-        err instanceof Error ? err.message : texts.loadListError,
-      );
-      if (httpErrorStatus(err) === 403) {
-        setListError(copy.mywegNeeds.forbidden);
-      }
-    } finally {
-      setListLoading(false);
-    }
-  }, []);
+    })();
+
+    return () => controller.abort();
+  }, [appliedDate, reloadToken]);
 
   useEffect(() => {
     if (!selectedObservationId) {
@@ -190,24 +218,22 @@ export function MyWegInvoiceObservationsPanel() {
     return () => controller.abort();
   }, [search, selectedObservationId]);
 
-  const applyDate = () => {
-    const next = documentDate.trim();
-    setAppliedDate(next);
-    void loadObservations(next);
-  };
+  const onDocumentDateChange = useCallback((value: string) => {
+    setDocumentDate(value);
+    if (value.trim()) {
+      setAppliedDate(value.trim());
+    }
+  }, []);
 
   const clearFilters = () => {
-    setDocumentDate("");
-    setAppliedDate("");
+    const d1 = previousCalendarDayIso();
+    setDocumentDate(d1);
+    setAppliedDate(d1);
     setSearchDraft("");
     setSearch("");
-    setObservations([]);
-    setSelectedObservationId(null);
-    setAllItems([]);
-    setObservationStatus(null);
-    setSelectedInvoiceKey(null);
     setListError(null);
     setItemsError(null);
+    setReloadToken((token) => token + 1);
   };
 
   const columns = useMemo<DataTableColumn<MyWegInvoiceObservationItem>[]>(
@@ -274,9 +300,13 @@ export function MyWegInvoiceObservationsPanel() {
             <input
               type="date"
               value={documentDate}
-              onChange={(event) => setDocumentDate(event.target.value)}
+              onChange={(event) => onDocumentDateChange(event.target.value)}
               aria-label={texts.documentDateLabel}
+              aria-describedby="ppc-myweg-invoice-date-hint"
             />
+            <span id="ppc-myweg-invoice-date-hint" className="ppc-myweg-needs__date-hint">
+              {texts.documentDateHint}
+            </span>
           </label>
           <label className="ppc-myweg-needs__search ppc-myweg-needs__filters-search">
             <span>{texts.searchLabel}</span>
@@ -300,36 +330,22 @@ export function MyWegInvoiceObservationsPanel() {
         <div className="ppc-myweg-needs__filters-actions">
           <button type="button" className="ppc-btn ppc-btn--ghost" onClick={clearFilters}>
             <Eraser size={15} strokeWidth={1.75} aria-hidden />
-            {texts.clearFilters}
+            {texts.resetToYesterday}
           </button>
           <button
             type="button"
             className="ppc-btn ppc-btn--primary"
-            onClick={applyDate}
-            disabled={!documentDate.trim()}
-          >
-            <Search size={15} strokeWidth={1.75} aria-hidden />
-            {texts.applyFilters}
-          </button>
-          <button
-            type="button"
-            className="ppc-btn ppc-btn--ghost"
             onClick={() => {
               setSearch(searchDraft.trim());
               setItemPage(1);
             }}
             disabled={!selectedObservationId}
           >
+            <Search size={15} strokeWidth={1.75} aria-hidden />
             {texts.applyItemSearch}
           </button>
         </div>
       </section>
-
-      {!appliedDate && !listLoading ? (
-        <div className="ppc-state" role="status">
-          {texts.pickDateHint}
-        </div>
-      ) : null}
 
       {listLoading ? (
         <div className="ppc-state" role="status">
