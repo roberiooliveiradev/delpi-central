@@ -255,3 +255,17 @@ def test_semantic_v3_tool_descriptions_document_governance() -> None:
     assert "confirm" in delete_desc.lower() or "proposal" in delete_desc.lower()
     assert "execute_capability" not in tools
     assert "invoke_tool" not in tools
+
+
+def test_read_description_documents_search_get_and_entity_scoped_filters() -> None:
+    """R02 — the published read contract must tell callers that search
+    filters are entity-scoped and get requires an id."""
+    mcp = create_mcp_server()
+    tools = {t.name: t for t in asyncio.run(mcp.list_tools())}
+    desc = tools["read"].description or ""
+    assert "action=search|get" in desc
+    assert "params.id" in desc
+    assert "INVALID_FIELD" in desc
+    assert "get_context" in desc
+    # Pagination is NOT universal: department only accepts filial_id.
+    assert "department: filial_id only" in desc
