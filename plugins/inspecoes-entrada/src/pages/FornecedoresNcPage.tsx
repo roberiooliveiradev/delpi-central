@@ -168,7 +168,7 @@ export function FornecedoresNcPage({ branch, refreshToken, onLoadingChange }: Pr
         <div className="ie-card ie-nc-table-card">
           <div className="ie-nc-table-scroll"><table className="ie-nc-table">
             <thead><tr>
-              <th>NC</th><th>Ocorrência</th><th>Registro</th><th>Item</th>
+              <th>NC</th><th>Ocorrência</th><th>Registro</th><th>Fornecedor</th><th>Item</th>
               <th>Descrição</th><th>Situação</th><th>Qtd. devolvida</th><th></th>
             </tr></thead>
             <tbody>{items.map((row, index) => {
@@ -179,6 +179,7 @@ export function FornecedoresNcPage({ branch, refreshToken, onLoadingChange }: Pr
                   <td className="ie-cell-mono">{formatText(row.code_display || row.code)}</td>
                   <td>{formatDate(row.occurrence_date)}</td>
                   <td>{formatDate(row.registered_date)}</td>
+                  <td className="ie-cell-mono">{formatText([row.supplier_code, row.supplier_store].filter(Boolean).join("/"))}</td>
                   <td className="ie-cell-mono">{formatText(row.item_code)}</td>
                   <td className="ie-nc-table__description" title={row.description || ""}>{formatText(row.description)}</td>
                   <td><span className={`ie-badge ie-badge--${statusTone(row.status_code)}`}>{formatText(row.status_label)}</span></td>
