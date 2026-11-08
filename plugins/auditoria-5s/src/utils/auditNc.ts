@@ -173,6 +173,6 @@ export function formsEqual(a: NcFormState, b: NcFormState): boolean {
 
 export function ncWorkflowStep(status: string | undefined): 1 | 2 | 3 {
   if (status === "closed") return 3;
-  if (status === "in_progress") return 2;
+  if (status === "in_progress") return 3;
   return 1;
 }
