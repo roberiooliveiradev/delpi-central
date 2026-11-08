@@ -1419,3 +1419,13 @@ O histórico de revisão da mesma página não cita esses códigos. `10081389` �
 **Testes:** `tests/test_slanet_document_integrity.py` (10 casos: missing/invalid/mismatch/open-fail/cleanup/válido/propagação `table_perception`/fetch único/falha tipada de fonte); 2 testes existentes ajustados ao contrato estrito. 24/24 foco; suite engineering-api **859 pass / 3 fail pré-existentes fora do escopo** (allowlist OpenAPI do WIP PRC concorrente; `_normalize_box` sem cv2 na venv).
 
 **Residuais:** job MCP autenticado pós-deploy (`component_table`+`title_block` cells>0 no consumidor, OCR 14/14, `table_perception.source_pdf_sha256`) — pendente do consumidor ChatGPT com token de usuário; corpus de 13 PDFs no novo SHA: `TEST_NOT_RUN`; a segunda obtenção `_pf["pdf_result"]` do path `drawing_analysis` permanece (contrato prefetch DEC-VAL-032, já fail-closed em `analyze_product_drawing`).
+
+## 48. DEC-VAL-038 — Reconstrução geométrica de linhas SLANet (M1+M2) (2026-11-08)
+
+**TASK_ID:** `EVA-VAL01-TABLE-ROW-RECONSTRUCTION-BALLOON-ASSOCIATION-E2E`. **Commit:** `84b87d636b`. **Deploy:** imagem `sha256:b0bf650912d0d31e965402d539e6af22ba64583bfe2f8e6dc82b4bd6c2d5eef7`, `delpi-engineering-api` healthy `2026-11-08T19:12:57Z`. `VAL01_COMPLETED=false`.
+
+**M1 — diagnóstico visual (PROVEN):** render p9 do PDF oficial — réguas de linha íntegras, passo ~20px; o SLANet funde pares de linhas nas colunas estreitas item/qtd em células `rowspan=2` com texto agregado (`"C 6 D 3"`, `"E 2 F 9"`), enquanto separa os códigos. Layout correto, perda na projeção.
+
+**M2 — correção genérica:** `line_texts` por bandas Y de tokens (>0.6×altura mediana) na célula; `rows_from_native_cells` distribui pelas linhas do `rowspan` só quando a contagem coincide; item/qtd em célula fundida só na forma `ITEM QTD`. Sem evidência → `INCONCLUSIVE`. Teste: `C/6/10081389` e `D/3/10081685` separados; 42/42 foco.
+
+**M3/M4 — balões e associação: `TO_INVENTORY`/`TEST_NOT_RUN`.** Não implementado neste pacote — detector, contrato e corpus ficam para pacote próprio com gates B/C/D. Probe OCR-faixa-p9 não retornou tokens (parâmetro do executor) — prova real pós-deploy fica para o job do consumidor.

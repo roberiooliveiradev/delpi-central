@@ -286,3 +286,7 @@ Medição provou que VMS Paddle só é devolvido por morte do processo (reset in
 **Causa-raiz do `PdfiumError: Data format error` no job `aj-03ac71384ba140f9` (página 9):** refetch redundante do PDF após o OCR; falha chegava como dict sem `content` → `b""` → PDFium. Corrigido por **reuso dos bytes oficiais do benchmark** (um fetch por execução, SHA idêntico por construção) + gates tipados de entrada (`DOCUMENT_CONTENT_MISSING`/`DOCUMENT_HASH_MISMATCH`/`DOCUMENT_CONTENT_INVALID`/`PDF_OPEN_FAILED`) + cleanup de tmp na abertura.
 
 **Deploy `a9fa4e6307`** (imagem `sha256:253de3fb…`, healthy): prova in-container sobre PDF oficial `90264017` (SHA `5452aabd…32ee` conferido com o índice): `component_table` p9 → **68 células nativas**, `error_kind=None`, `pdf_sha_match=true`. Corpus de 13 PDFs no novo SHA e job MCP autenticado pós-deploy: `TEST_NOT_RUN` neste executor — próxima rodada pelo consumidor ChatGPT.
+
+## Log adicional — 2026-11-08 (DEC-VAL-038 — reconstrução geométrica de linhas SLANet)
+
+Diagnóstico visual p9 `90264017`: células `rowspan` fundiam item/qtd de duas linhas (`"C 6 D 3"`). Correção `84b87d636b`: `line_texts` por bandas Y + distribuição pelo rowspan nativo. Caso sintético `C/6/10081389`+`D/3/10081685` PASS. Regressão 13 PDFs, balões e job MCP autenticado no SHA novo: `TEST_NOT_RUN` — próxima rodada pelo consumidor.
