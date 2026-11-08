@@ -242,3 +242,17 @@ host (entrega de bytes governada; apresentação é do ChatGPT).
 `get_context` com `identity.acronym` + `avatar_distribution` — verificado
 em `delpi-api-delpi` (commit `f48feb6834`). 7/7 MCPs com entrega de imagem.
 ChatGPT visual: `TEST_NOT_RUN`.
+
+## CHARACTER PROFILE COMPLETENESS AUDIT V1 (2026-11-08) — SURI
+
+**Lacuna comprovada:** `get_context(action="catalog")` publicava só
+`mcp.persona/acronym/mission/avatar_distribution` — sem `character`
+(estrutura que TÉO/VISTA/CLARA/CAIO/EVA/DAVI já projetam).
+**Fix menor:** `mcp["character"] = _suri_character()` (helper
+`project_persona_context(get_suri_profile())`) no catalog + `character`
+em `action="context"`. Campos projetados: identity, appearance_summary,
+avatar_status/reference, personality_summary, communication, expertise,
+conduct, coexistence, relationships, narrative_classification,
+profile_version. **Runtime `delpi-supplies-mcp`:** catalog retorna
+character com os 12+ campos + acronym correto. Demais 6: já conformes
+(verificado pela evidência do usuário + código). Commit impl.
