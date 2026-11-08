@@ -319,3 +319,7 @@ Bugs quad (`bb[3]-bb[1]=0`) impediam `line_texts`; fix `0a6d468f07` (cy/h por mi
 **Gates do plano:** fixture real red→green pré-deploy, inspeção visual revisável, classes positivas/negativas, integração PDF original, teste de AuthZ/contratos, corpus 13 e holdouts, \`FALSE_PROMOTED_ASSOCIATIONS=0\`, aceite MCP pós-deploy para 1p+14p. Se os gates críticos não forem satisfeitos, **não fazer deploy**. Balões/E4, E2–E7 e VAL-02 permanecem congelados. \`ENGINEERING_APPROVAL=NOT_APPROVED\`; \`VAL01_COMPLETED=false\`.
 
 **Evidências de conversa registradas na Issue #131:** comentários \`6727567112\`, \`6727591666\`, \`6727617764\`. Este log é aditivo: não sobrescreve entradas antigas nem transforma resultados históricos em execução do corpus no SHA atual.
+
+## Log adicional — 2026-11-08 (DEC-VAL-040 — reconstrução lógica, `862b12ce34`)
+
+Fixtures reais: 90264004 (A7/A8 descrição→código) e 90264017 (F/G/K). Prova: A2–A8 completos, A9/AA por grupo, descrições vinculadas; C/D/E preservados. Resíduo: A1/A5, F/G/K, 13 PDFs, job MCP — TEST_NOT_RUN.

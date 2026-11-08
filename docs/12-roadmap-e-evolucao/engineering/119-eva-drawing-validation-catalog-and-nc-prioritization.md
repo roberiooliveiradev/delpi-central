@@ -1480,3 +1480,13 @@ Não criar nova source of truth, banco, serviço ou MFE; não fazer import entre
 **Saídas auditáveis:** baseline SHA, fixture origin/SHA/versão do motor, ground truth visual com reviewer e limites, matriz por linha/coluna/grupo, testes e falhas negativas, contadores de ambiguidades e falsos vínculos, resultados de corpus/holdouts, AuthZ, contrato/compatibilidade, SHA de deploy, jobs pós-deploy, rollback. Estados: \`PROVEN | TO_INVENTORY | PLANNED | TARGET\` e \`PASS | FAIL | PENDING | INCONCLUSIVE | TEST_NOT_RUN | STALE_EVIDENCE\`. Não transformar \`EVAL_PENDING\` ou \`COMPLETED\` em aprovação técnica. \`ENGINEERING_APPROVAL=NOT_APPROVED\`; \`VAL01_COMPLETED=false\`.
 
 **Referências de evidência:** Issue #131 comentários \`6727567112\` (retorno terminal 14p), \`6727591666\` (teste 1p), \`6727617764\` (inspeção visual 1p), Doc120 (corpus). Próximo passo executável: **P0 (reprodução/ground truth e contrato), sem implementar balões ou publicar BOM**.
+
+## 50. DEC-VAL-040 — Reconstrução lógica de tabelas (papéis por célula, splits, grupos) (2026-11-08)
+
+**TASK_ID:** `EVA-VAL01-DEC040-LOGICAL-TABLE-RECONSTRUCTION-E2E`. **Commit:** `862b12ce34`. **Deploy:** imagem `sha256:d2408fdf149c…`, `delpi-engineering-api` healthy. `VAL01_COMPLETED=false`.
+
+**Causas-raiz (PROVEN em fixtures reais dos dois PDFs):** (a) tipagem por índice de coluna — SLANet desloca papéis entre linhas → descrição publicada como `component_code` (90264004 A7/A8); (b) formas canônicas fundidas não resolvidas (`A6 1`, `2 10080065`); (c) células-âncora de grupo disputavam campos; (d) padrão de item aceitava palavras (`CABO`,`CAPA`); (e) `_split_text` fallback devolvia texto completo quando bandas migravam.
+
+**Correção (application layer, genérica):** papel por célula (conteúdo vence índice), banda-X só vetando `item`; splits `ITEM QTD`/`QTD CÓDIGO`/`CÓDIGO+desc`/`ITEM resto`; âncoras de grupo excluídas dos campos e herdadas como `parent_group_candidate`; `token_centers` como âncora visual de linha; banda migra só com evidência próxima.
+
+**Prova integrada real (container prod):** 90264004 — A2–A8 item/qtd/código/descrição corretos; zero descrição→código; A9/AA por grupo (50225478/79). 90264017 — C/D/E preservados, descrições agora vinculadas, F/G/K INCONCLUSIVE sem promoção falsa. Residuais: A1 código e A5 item não resolvidos (evidência insuficiente), F/G/K, regressão 13 PDFs e job MCP pós-deploy `TEST_NOT_RUN` (consumidor).
