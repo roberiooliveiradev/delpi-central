@@ -46,6 +46,7 @@ Shell híbrido Linear (rail compacta) + MES (cards de exceção, semáforo). Hom
 - [E5 evolução do planejamento](./MYWEG-NEEDS-PLANNING-EVOLUTION-E5.md)
 - [NF Emitidas E1 (observações)](./MYWEG-INVOICE-OBSERVATIONS-E1.md)
 - [NF Emitidas E2 (conciliação)](./MYWEG-INVOICE-OBSERVATIONS-E2.md)
+- [Demanda ← MyWEG Etapa 1 (origem preparada)](./MYWEG-DEMAND-SOURCE-E1.md)
 
 ## Wireframe v1
 
@@ -78,6 +79,7 @@ A Análise de problemas é **grade de detectores**: cada card é uma regra regis
 - Etapa 5 (evolução + faturamento indicativo): [MYWEG-NEEDS-PLANNING-EVOLUTION-E5.md](./MYWEG-NEEDS-PLANNING-EVOLUTION-E5.md).
 - NF Emitidas Etapa 1 (contrato/persistência/consulta; sem abatimento): [MYWEG-INVOICE-OBSERVATIONS-E1.md](./MYWEG-INVOICE-OBSERVATIONS-E1.md).
 - NF Emitidas Etapa 2 (conciliação analítica no compare/products): [MYWEG-INVOICE-OBSERVATIONS-E2.md](./MYWEG-INVOICE-OBSERVATIONS-E2.md).
+- Demanda ← MyWEG Etapa 1 (projeção interna; sem wiring em `GET /demand`): [MYWEG-DEMAND-SOURCE-E1.md](./MYWEG-DEMAND-SOURCE-E1.md).
 
 ## Produto relacionado
 

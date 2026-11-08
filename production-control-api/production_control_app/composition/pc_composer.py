@@ -359,6 +359,15 @@ def build_myweg_needs_compare_service(
     )
 
 
+def build_myweg_demand_source_service(repository=None):
+    """Projeção interna MyWEG→Demanda (Etapa 1) — sem rota HTTP pública."""
+    from production_control_app.application.services.myweg_demand_source_service import (
+        MyWegDemandSourceService,
+    )
+
+    return MyWegDemandSourceService(repository or build_myweg_needs_repository())
+
+
 def build_line_feeder_service(
     gateway: DelpiProductionGateway | None = None,
     *,
