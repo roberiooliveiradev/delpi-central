@@ -314,7 +314,66 @@ Nº          TIPO      SOLICITANTE               STATUS         RESPONSÁVEL
 
 **Status:** `PO_APPROVED / CONTRACT_DEPENDENCY_ASSIGNEE / TO_IMPLEMENT`.
 
-## PRC-REF-010 e seguintes — próximas observações
+## PRC-REF-010 — Ficha técnica compacta em colunas e fornecedores em tabela editável
 
-`AWAITING_USER_FEEDBACK`. REF-001..009 preservados. Continuar coletando antes de gerar rodada consolidada de implementação; deploy produtivo permanece suspenso.
+**Decisão PO (2026-11-08; aprovada para planejamento):** na etapa **Nova solicitação → Ficha técnica**, reorganizar todos os campos em **grade responsiva com múltiplas colunas** que aproveite a largura disponível, evitando um input de largura total por campo, separadores redundantes e rolagem exagerada. A seção **Fornecedores** deve ser uma **tabela editável**: cada fornecedor ocupa **uma linha** e os atributos ficam em **colunas**, não uma sequência vertical de cinco inputs e um botão “Remover” largo.
+
+**Evidência visual DEV:** capturas do formulário `/apps/engineering/product-registration/new` (passo 2) mostram “Descrição / Grupo / Tipo / Unidade” e “Armazém padrão / Conta contábil / Produto de terceiros / Referência do cliente” verticalizados, seguidos de “Fornecedores” com código, loja, nome, Part Number e catálogo em cinco linhas independentes. O mesmo padrão desperdiça espaço em telas desktop.
+
+**Inventário de implementação verificado:** `plugins/engineering/src/features/product-registration/pages/PrcCreatePage.tsx` renderiza `FIELD_GROUPS.map` com `EngineeringSectionCard` e `className="engineering-prc__edit-list"`, contendo `renderSheetField`; fornecedores usam `suppliers.map` com `className="engineering-prc__supplier-row"` e `EngineeringTextField`, além de `EngineeringCheckboxControl` para UPDATE. `prc.css` já contém `engineering-prc__supplier-row` (CSS grid), mas a experiência vista no navegador ainda aparece verticalizada: **não presumir que definir grid basta; investigar wrappers, larguras, breakpoints, CSS específico e especificidade real no runtime**. Reutilizar o formulário do kit por meio de `engineeringUi.ts`. Para tabela de formulários inspecionar props do `DataTableSection` e componentes de tabela do `@delpi/plugin-ui`; se não suportarem células editáveis sem violar acessibilidade/estado, compor uma tabela semântica simples com os inputs oficiais do kit (sem nova biblioteca, sem segundo design system).
+
+### Wireframe desktop — passo 2
+
+```text
+[Nova solicitação]     ✓ Identificação ── ● Ficha técnica ── ○ Revisar e enviar
+┌ IDENTIFICAÇÃO E CLASSIFICAÇÃO ──────────────────────────────────────────────┐
+│ Descrição [.............................................................] │
+│ Grupo [..................]  Tipo [................]  Unidade [...........] │
+└───────────────────────────────────────────────────────────────────────────┘
+┌ ESTOQUE E CONTABILIDADE ───────────────────────────────────────────────────┐
+│ Armazém padrão [........]  Conta contábil [..............]                │
+│ Produto de terceiros [Sim/Não oficial]  Referência cliente [...........] │
+└───────────────────────────────────────────────────────────────────────────┘
+┌ FORNECEDORES ───────────────────────────────────── [+ Adicionar fornecedor]┐
+│ Código       Loja       Nome do fornecedor      Part Number      Catálogo │
+│ [........]   [....]     [...................]   [...........]    [......] │
+│ [........]   [....]     [...................]   [...........]    [......] │
+│                                                        [Remover] por linha │
+│ Nenhum fornecedor: empty state explicativo quando aplicável               │
+└───────────────────────────────────────────────────────────────────────────┘
+                                             [Cancelar] [Voltar] [Avançar]
+```
+
+**Regras de distribuição dos campos:** descrição deve ocupar largura principal ou `grid-column: span 2/3` conforme tamanho; grupo/tipo/unidade em uma mesma linha quando houver largura; armazém e conta contábil lado a lado; produto de terceiros como seleção booleana com rótulo humano (sem texto cru `1` se kit/contrato permitir), referência do cliente ao lado. Distribuição baseada em intenção e comprimento esperado, evitando cinco colunas iguais para campos com tamanhos distintos. Não alterar tipos, limites e required do `reference-data`.
+
+**Fornecedores como tabela editável:**
+- Cabeçalho: **Código, Loja, Nome, Part Number (opcional), Catálogo (opcional), Ações**. Cada vínculo = uma linha; botão `Adicionar fornecedor` adiciona uma nova linha em branco e foca o primeiro campo; ação `Remover` pequena por linha, com rótulo acessível e sem deslocar as outras linhas.
+- `supplierCode`, `store`, `supplierName` mantêm validação; PN vazio/omitido continua legítimo, nunca wildcard; não confundir PN com catálogo; identidade composta `supplierCode+store` e erros por linha/campo.
+- Em UPDATE, preservar seleção explícita de `suppliers` e justificativa obrigatória do change-set. A tabela só é editável quando `allowedActions`/estado/seleção autorizarem; `suppliers[]` substituído por inteiro somente sob a regra do contrato vigente, sem apagar vínculos sem intenção. Tratamento de duplicatas e conflitos é do backend e refletido na UI.
+- Inputs por célula com labels acessíveis (headers + `aria-label` incluindo linha e campo), erros próximos ao input ou linha e foco no primeiro inválido. Evitar tabela com altura dinâmica que perca foco ao adicionar/remover; usar keys estáveis por identidade local, não somente index se reordenação puder ocorrer.
+- Se for necessário pesquisar fornecedores, **não criar lookup TOTVS direto pelo MFE**. Consumir somente Engineering API BFF quando contrato oficial existente; ausência de contrato = campo digitável, sem autocomplete fictício.
+
+**Responsividade obrigatória:** desktop ≥ largura útil do kit: colunas proporcionais, sem inputs full-width isolados; tablet: grid de 2 colunas e fornecedores com scroll horizontal **somente no container da tabela**, mantendo cabeçalhos/campos acessíveis; mobile: form em coluna única e cada fornecedor apresentado em **card editável semanticamente equivalente** ou tabela com rolagem controlada, com todos os rótulos visíveis, ações acessíveis e sem overflow da página. Não usar breakpoints hardcoded em substituição aos tokens do kit.
+
+**Componentes e superfícies:** `EngineeringSectionCard`, `EngineeringFieldLabel`, `EngineeringTextField` e demais campos `NativeFormFields` realmente exportados, `EngineeringActionButton`, `EngineeringCheckboxControl`, `EngineeringStateBanner`, `EngineeringFormActions` (confirmar nome/props na façade), layout CSS local e, se suportado, `DataTableSection` para fornecedores editáveis. Não forçar DataTableSection se sua tabela não aceitar edição controlada sem conflitos; preferir tabela semântica com componentes oficiais de formulário.
+
+### Critérios de aceite
+
+- [ ] Desktop: **Descrição** em linha ampla; **Grupo, Tipo e Unidade** alinhados em colunas; **Armazém e Conta contábil** alinhados; **Produto de terceiros e Referência** em colunas coerentes.
+- [ ] Nenhum campo ocupa uma linha inteira por padrão salvo necessidade semântica/responsiva; altura do passo 2 significativamente menor do que a captura atual.
+- [ ] Fornecedores são visualizados/editados em tabela com cabeçalhos e uma linha por vínculo; adicionar/remover linha funciona sem perda de valores ou foco.
+- [ ] Erros de Código/Loja/Nome, duplicação, Part Number, catálogos e limites vinculados ao campo correto; foco e leitores de tela testados.
+- [ ] PN vazio aceito com fonte vazia, PN preenchido comparado pelo backend; UPDATE mantém checkbox, motivo por campo/delta, CAS/idempotência sem alterar contrato.
+- [ ] Desktop/tablet/mobile e zoom 200% sem overflow horizontal da página; scroll horizontal contido apenas na tabela quando necessário.
+- [ ] Etapas 1/2/3 preservam valores e botão `Voltar/Avançar`; estados loading/erro preservados.
+- [ ] Browser DEV real com screenshots de **formulário sem fornecedor, com um, com múltiplos e com erro**, antes/depois; teste typecheck/build/Vitest; sem alteração de backend apenas por estética.
+
+**Arquivos-alvo:** `PrcCreatePage.tsx`, `prc.css` e componentes PRC de formulário caso haja necessidade comprovada. Estender a mesma composição à edição da ficha técnica quando fizer sentido, sem quebrar `PrcTechnicalSheet` ou contratos existentes.
+
+**Status:** `PO_APPROVED / TO_IMPLEMENT`; este registro não implementa o visual. **Produção continua suspensa.**
+
+## PRC-REF-011 e seguintes — próximas observações
+
+`AWAITING_USER_FEEDBACK`. Preservar REF-001..010; continuar coleta de refinamentos e preparar rodada Devin consolidada somente quando o PO encerrar as observações.
+
 
