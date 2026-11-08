@@ -46,6 +46,11 @@ router = APIRouter(
     tags=["Inspeções de Entrada"],
 )
 
+from app.interface.http.routes.inspecoes_entrada.ncs_fornecedores_router import (
+    router as ncs_fornecedores_router,
+)
+router.include_router(ncs_fornecedores_router)
+
 
 @router.get(
     "/resumo",
