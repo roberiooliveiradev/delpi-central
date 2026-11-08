@@ -6,6 +6,7 @@ import {
   ArrowRight,
   CalendarClock,
   Eraser,
+  Filter,
   LogIn,
   LogOut,
   Package,
@@ -317,11 +318,20 @@ export function MyWegPlanningEvolutionPanel({
     indicativeRows.length > 0;
 
   return (
-    <section className="ppc-myweg-needs__evolution" aria-label={texts.title}>
-      <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
-        {texts.intro}{" "}
-        <HelpTooltip content={helpTooltips.mywegNeedsEvolution} trigger="icon" />
-      </p>
+    <section
+      className={
+        hideAnalysisHub
+          ? "ppc-myweg-needs__evolution ppc-myweg-needs__evolution--compact"
+          : "ppc-myweg-needs__evolution"
+      }
+      aria-label={texts.title}
+    >
+      {!hideAnalysisHub ? (
+        <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
+          {texts.intro}{" "}
+          <HelpTooltip content={helpTooltips.mywegNeedsEvolution} trigger="icon" />
+        </p>
+      ) : null}
 
       {!hideAnalysisHub ? (
         <div
@@ -383,16 +393,26 @@ export function MyWegPlanningEvolutionPanel({
         </div>
       ) : null}
 
-      <section className="ppc-myweg-needs__filters-card" aria-label={texts.filtersAria}>
-        <header className="ppc-myweg-needs__filters-header">
-          <span className="ppc-myweg-needs__filters-icon" aria-hidden="true">
-            <Search size={18} strokeWidth={1.75} />
-          </span>
-          <h3 className="ppc-myweg-needs__filters-title">{texts.filtersTitle}</h3>
-        </header>
+      <section
+        className={
+          hideAnalysisHub
+            ? "ppc-myweg-needs__filters-card ppc-myweg-needs__filters-card--toolbar"
+            : "ppc-myweg-needs__filters-card"
+        }
+        aria-label={texts.filtersAria}
+      >
+        <div className="ppc-myweg-needs__filters-toolbar">
+          <header className="ppc-myweg-needs__filters-header">
+            <span className="ppc-myweg-needs__filters-icon" aria-hidden="true">
+              <Filter size={16} strokeWidth={1.85} />
+            </span>
+            <h3 className="ppc-myweg-needs__filters-title">{texts.filtersTitle}</h3>
+            {hideAnalysisHub ? (
+              <HelpTooltip content={helpTooltips.mywegNeedsEvolution} trigger="icon" />
+            ) : null}
+          </header>
 
-        <div className="ppc-myweg-needs__filters-grid ppc-myweg-needs__filters-grid--compare">
-          <div className="ppc-myweg-needs__filters-pair">
+          <div className="ppc-myweg-needs__filters-toolbar-fields">
             <label className="ppc-myweg-needs__history">
               <span>{texts.fromLabel}</span>
               <select
@@ -422,53 +442,61 @@ export function MyWegPlanningEvolutionPanel({
                 ))}
               </select>
             </label>
+
+            <label className="ppc-myweg-needs__search ppc-myweg-needs__filters-search">
+              <span>
+                {texts.productSearchLabel}{" "}
+                <HelpTooltip content={texts.searchHint} trigger="icon" />
+              </span>
+              <span className="ppc-myweg-needs__filters-search-wrap">
+                <Search
+                  className="ppc-myweg-needs__filters-search-icon"
+                  size={14}
+                  strokeWidth={1.85}
+                  aria-hidden
+                />
+                <input
+                  type="search"
+                  value={searchDraft}
+                  placeholder={texts.searchPlaceholder}
+                  onChange={(event) => setSearchDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      applySearch();
+                    }
+                  }}
+                  aria-label={texts.searchLabel}
+                />
+              </span>
+            </label>
+
+            {activeAnalysis === "remessa" ? (
+              <label className="ppc-myweg-needs__history ppc-myweg-needs__billing-toggle">
+                <span>{texts.billingLabel}</span>
+                <select
+                  value={billingMode}
+                  onChange={(event) =>
+                    setBillingMode(event.target.value === "indicative" ? "indicative" : "none")
+                  }
+                >
+                  <option value="none">{texts.billingNone}</option>
+                  <option value="indicative">{texts.billingIndicative}</option>
+                </select>
+              </label>
+            ) : null}
           </div>
 
-          <label className="ppc-myweg-needs__search ppc-myweg-needs__filters-search">
-            <span>
-              {texts.searchLabel}{" "}
-              <HelpTooltip content={texts.searchHint} trigger="icon" />
-            </span>
-            <input
-              type="search"
-              value={searchDraft}
-              placeholder={texts.searchPlaceholder}
-              onChange={(event) => setSearchDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  applySearch();
-                }
-              }}
-              aria-label={texts.searchLabel}
-            />
-          </label>
-
-          {activeAnalysis === "remessa" ? (
-            <label className="ppc-myweg-needs__history ppc-myweg-needs__billing-toggle">
-              <span>{texts.billingLabel}</span>
-              <select
-                value={billingMode}
-                onChange={(event) =>
-                  setBillingMode(event.target.value === "indicative" ? "indicative" : "none")
-                }
-              >
-                <option value="none">{texts.billingNone}</option>
-                <option value="indicative">{texts.billingIndicative}</option>
-              </select>
-            </label>
-          ) : null}
-        </div>
-
-        <div className="ppc-myweg-needs__filters-actions">
-          <button type="button" className="ppc-btn ppc-btn--ghost" onClick={clearSearch}>
-            <Eraser size={15} strokeWidth={1.75} aria-hidden />
-            {texts.clearFilters}
-          </button>
-          <button type="button" className="ppc-btn ppc-btn--primary" onClick={applySearch}>
-            <Search size={15} strokeWidth={1.75} aria-hidden />
-            {texts.applyFilters}
-          </button>
+          <div className="ppc-myweg-needs__filters-actions">
+            <button type="button" className="ppc-btn ppc-btn--ghost" onClick={clearSearch}>
+              <Eraser size={15} strokeWidth={1.75} aria-hidden />
+              {texts.clearFilters}
+            </button>
+            <button type="button" className="ppc-btn ppc-btn--primary" onClick={applySearch}>
+              <Search size={15} strokeWidth={1.75} aria-hidden />
+              {texts.applyFilters}
+            </button>
+          </div>
         </div>
       </section>
 

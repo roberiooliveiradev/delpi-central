@@ -3,8 +3,11 @@ import {
   HelpTooltip,
 } from "@delpi/plugin-ui/index";
 import {
+  ArrowLeftRight,
   CalendarDays,
+  Check,
   FileText,
+  Layers,
   RefreshCw,
   ShieldAlert,
   TrendingDown,
@@ -793,20 +796,47 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
   return (
     <section className="ppc-myweg-needs__products" aria-label={texts.title}>
       <header className="ppc-myweg-needs__products-header">
-        <h3 className="ppc-myweg-needs__shifts-title">
-          {texts.title}
-          <HelpTooltip
-            content={
-              invoiceMode === "portal"
-                ? helpTooltips.mywegNeedsInvoiceReconciliation
-                : helpTooltips.mywegNeedsProductAnalysis
-            }
-            trigger="icon"
-          />
-        </h3>
-        <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
-          {invoiceMode === "portal" ? texts.invoiceModeIntro : texts.intro}
-        </p>
+        <div className="ppc-myweg-needs__products-summary">
+          <div className="ppc-myweg-needs__products-summary-copy">
+            <h3 className="ppc-myweg-needs__shifts-title">
+              <Layers size={18} strokeWidth={1.85} aria-hidden />
+              {texts.title}
+              <HelpTooltip
+                content={
+                  invoiceMode === "portal"
+                    ? helpTooltips.mywegNeedsInvoiceReconciliation
+                    : helpTooltips.mywegNeedsProductAnalysis
+                }
+                trigger="icon"
+              />
+            </h3>
+            <p className="ppc-myweg-needs__evolution-note ppc-myweg-needs__evolution-note--compact">
+              {invoiceMode === "portal" ? texts.invoiceModeIntro : texts.intro}
+            </p>
+          </div>
+
+          {payload ? (
+            <div className="ppc-myweg-needs__products-stats" role="status">
+              <div className="ppc-myweg-needs__stat-card ppc-myweg-needs__stat-card--changed">
+                <ArrowLeftRight size={16} strokeWidth={1.85} aria-hidden />
+                <strong>{payload.totalProductsChanged.toLocaleString("pt-BR")}</strong>
+                <span>{texts.statsChangedLabel}</span>
+              </div>
+              <div className="ppc-myweg-needs__stat-card ppc-myweg-needs__stat-card--compared">
+                <Check size={16} strokeWidth={2} aria-hidden />
+                <strong>{payload.totalProductsCompared.toLocaleString("pt-BR")}</strong>
+                <span>{texts.statsComparedLabel}</span>
+              </div>
+              <div
+                className={`ppc-myweg-needs__stat-card ppc-myweg-needs__stat-card--delta ${netToneClass}`}
+              >
+                <Layers size={16} strokeWidth={1.85} aria-hidden />
+                <strong>{netDelta ?? "—"} UN</strong>
+                <span>{texts.statsDeltaLabel}</span>
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         <div
           className="ppc-myweg-needs__invoice-mode"
@@ -849,20 +879,6 @@ export function MyWegProductConsolidationPanel({ fromId, toId, search }: Props) 
             </button>
           ) : null}
         </div>
-
-        {payload ? (
-          <div className="ppc-myweg-needs__products-stats" role="status">
-            <span className="ppc-myweg-needs__stat-chip">
-              {texts.statsChanged(payload.totalProductsChanged)}
-            </span>
-            <span className="ppc-myweg-needs__stat-chip">
-              {texts.statsCompared(payload.totalProductsCompared)}
-            </span>
-            <span className={`ppc-myweg-needs__stat-chip ${netToneClass}`}>
-              {texts.statsDelta(netDelta ?? "—")}
-            </span>
-          </div>
-        ) : null}
       </header>
 
       {status === 403 ? (

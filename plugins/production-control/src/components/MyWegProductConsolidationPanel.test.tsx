@@ -633,6 +633,9 @@ describe("MyWegProductConsolidationPanel", () => {
     await waitFor(() => {
       expect(screen.getByTestId("kpi-NF MyWEG no período")).toBeTruthy();
     });
-    expect(screen.queryByText(/Diferença líquida 0 UN/i)).toBeTruthy();
+    expect(screen.getByText("Diferença líquida")).toBeTruthy();
+    expect(
+      screen.getByText((_, node) => node?.textContent?.trim() === "0 UN"),
+    ).toBeTruthy();
   });
 });

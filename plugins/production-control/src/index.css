@@ -7409,10 +7409,41 @@
   box-shadow: 0 8px 22px color-mix(in srgb, var(--ppc-title, #003866) 5%, transparent);
 }
 
+.dashboard-production-control .ppc-myweg-needs__filters-card--toolbar {
+  gap: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.55rem 0.75rem;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-toolbar-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.5rem 0.65rem;
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
 .dashboard-production-control .ppc-myweg-needs__filters-header {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__filters-header {
+  flex: 0 0 auto;
+  align-self: center;
+  min-width: 9.5rem;
+  margin-right: 0.15rem;
 }
 
 .dashboard-production-control .ppc-myweg-needs__filters-icon {
@@ -7426,11 +7457,66 @@
   color: var(--ppc-title, #003866);
 }
 
+.dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__filters-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 8px;
+}
+
 .dashboard-production-control .ppc-myweg-needs__filters-title {
   margin: 0;
   font-size: var(--ppc-font-md);
   font-weight: 700;
   color: var(--ppc-title, #003866);
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__filters-title {
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__history,
+.dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__search {
+  flex: 1 1 9.5rem;
+  max-width: 14rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__filters-search {
+  flex: 1 1 12rem;
+  max-width: 18rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-search-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-search-icon {
+  position: absolute;
+  left: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ppc-text-muted);
+  pointer-events: none;
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-search-wrap input {
+  padding-left: 1.85rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__filters-actions {
+  margin-top: 0;
+  align-self: end;
+  flex: 0 0 auto;
+}
+
+.dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-btn {
+  min-height: 2.1rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__evolution--compact {
+  gap: 10px;
 }
 
 .dashboard-production-control .ppc-myweg-needs__filters-grid {
@@ -7826,6 +7912,11 @@
   gap: 10px;
 }
 
+.dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__history select,
+.dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__search input {
+  min-height: 2.1rem;
+}
+
 .dashboard-production-control .ppc-myweg-needs__history {
   display: flex;
   flex-direction: column;
@@ -7883,6 +7974,27 @@
   .dashboard-production-control .ppc-myweg-needs__filters-grid--compare .ppc-myweg-needs__filters-pair {
     grid-template-columns: 1fr;
   }
+
+  .dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__filters-header {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__history,
+  .dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__search,
+  .dashboard-production-control .ppc-myweg-needs__filters-card--toolbar .ppc-myweg-needs__filters-search {
+    max-width: none;
+    flex: 1 1 100%;
+  }
+
+  .dashboard-production-control .ppc-myweg-needs__products-summary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-production-control .ppc-myweg-needs__products-stats {
+    width: 100%;
+  }
 }
 
 :root[data-theme="dark"] .dashboard-production-control .ppc-myweg-needs__billing,
@@ -7901,28 +8013,57 @@
   margin-bottom: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 16px;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
   border: 1px solid var(--ppc-border);
-  border-radius: 16px;
+  border-radius: 12px;
   background: var(--ppc-surface);
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--ppc-title, #003866) 5%, transparent);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 :root[data-theme="dark"] .dashboard-production-control .ppc-myweg-needs__products-header {
   box-shadow: 0 10px 24px rgb(0 0 0 / 28%);
 }
 
+.dashboard-production-control .ppc-myweg-needs__products-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-myweg-needs__products-summary-copy {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__products-summary-copy .ppc-myweg-needs__shifts-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.dashboard-production-control .ppc-myweg-needs__products-summary-copy .ppc-myweg-needs__evolution-note {
+  margin: 0;
+  max-width: 34rem;
+}
+
 .dashboard-production-control .ppc-myweg-needs__invoice-mode {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 0.4rem;
 }
 
 .dashboard-production-control .ppc-myweg-needs__invoice-mode-btn {
-  min-height: 36px;
-  padding: 6px 14px;
+  min-height: 2rem;
+  padding: 0.3rem 0.9rem;
   border: 1px solid var(--ppc-border);
   border-radius: 999px;
   background: var(--ppc-surface);
@@ -7933,9 +8074,9 @@
 }
 
 .dashboard-production-control .ppc-myweg-needs__invoice-mode-btn--active {
-  border-color: color-mix(in srgb, var(--ppc-title, #003866) 55%, var(--ppc-border));
-  background: color-mix(in srgb, var(--ppc-title, #003866) 10%, var(--ppc-surface));
-  color: var(--ppc-title, #003866);
+  border-color: transparent;
+  background: var(--ppc-title, #003866);
+  color: #fff;
 }
 
 .dashboard-production-control .ppc-myweg-needs__refresh-btn {
@@ -7991,7 +8132,9 @@
 .dashboard-production-control .ppc-myweg-needs__products-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.45rem;
+  flex: 0 1 auto;
+  justify-content: flex-end;
 }
 
 .dashboard-production-control .ppc-myweg-needs__stat-chip {
@@ -8004,6 +8147,55 @@
   font-size: var(--ppc-font-xs);
   font-weight: 600;
   color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-myweg-needs__stat-card {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto;
+  column-gap: 0.4rem;
+  row-gap: 0.05rem;
+  align-items: center;
+  min-width: 7.5rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 0.72rem;
+  line-height: 1.15;
+}
+
+.dashboard-production-control .ppc-myweg-needs__stat-card > svg {
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.dashboard-production-control .ppc-myweg-needs__stat-card strong {
+  font-size: 0.92rem;
+  font-weight: 750;
+  color: var(--ppc-title, #003866);
+}
+
+.dashboard-production-control .ppc-myweg-needs__stat-card span {
+  color: var(--ppc-text-muted);
+  font-weight: 600;
+}
+
+.dashboard-production-control .ppc-myweg-needs__stat-card--changed {
+  background: color-mix(in srgb, #2563eb 12%, #fff);
+  border-color: color-mix(in srgb, #2563eb 22%, var(--ppc-border));
+  color: #1d4ed8;
+}
+
+.dashboard-production-control .ppc-myweg-needs__stat-card--compared {
+  background: color-mix(in srgb, #16a34a 12%, #fff);
+  border-color: color-mix(in srgb, #16a34a 22%, var(--ppc-border));
+  color: #15803d;
+}
+
+.dashboard-production-control .ppc-myweg-needs__stat-card--delta {
+  background: color-mix(in srgb, #7c3aed 12%, #fff);
+  border-color: color-mix(in srgb, #7c3aed 22%, var(--ppc-border));
+  color: #6d28d9;
 }
 
 .dashboard-production-control .ppc-myweg-needs__stat-chip.ppc-myweg-needs__delta--up,

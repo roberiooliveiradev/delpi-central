@@ -1631,10 +1631,11 @@ export const copy = {
       analysisRemessaDesc: "Movimentos por produto e data de remessa entre as duas coletas.",
       analysisProducts: "Por produto",
       analysisProductsDesc: "Totais consolidados por produto DELPI em todas as remessas.",
-      filtersTitle: "Filtros da comparação",
+      filtersTitle: "Comparação de coletas",
       filtersAria: "Selecionar coletas e filtrar a comparação",
-      clearFilters: "Limpar busca",
+      clearFilters: "Limpar",
       applyFilters: "Aplicar",
+      productSearchLabel: "Produto",
       products: {
         title: "Análise por produto",
         intro: "Totais por produto DELPI em todas as remessas do par.",
@@ -1656,6 +1657,9 @@ export const copy = {
         shiftPostponement: "Postergação",
         shiftOther: "Redistribuição",
         identityUnconfirmed: "código não confirmado",
+        statsChangedLabel: "Alterados",
+        statsComparedLabel: "Comparados",
+        statsDeltaLabel: "Diferença líquida",
         statsChanged: (n: number) =>
           `${n} alterado${n === 1 ? "" : "s"}`,
         statsCompared: (n: number) =>
