@@ -462,8 +462,17 @@ def tool_get_my_context() -> CallToolResult:
             },
             "allowed_units": _AUTHZ.allowed_units(user),
             "mcp": {"name": "supplies", "catalog_version": CATALOG_VERSION},
+            # AUDIT-V1 — canonical ficha projection (shared contract).
+            "character": _suri_character(),
         }
     )
+
+
+def _suri_character() -> dict[str, Any]:
+    from app.persona.suri_profile import get_suri_profile
+    from delpi_character_profiles.projection import project_persona_context
+
+    return project_persona_context(get_suri_profile())
 
 
 def _avatar_asset() -> tuple[Any, Any]:
@@ -545,6 +554,9 @@ def tool_get_catalog() -> CallToolResult:
     distribution = avatar_distribution()
     if distribution:
         mcp["avatar_distribution"] = distribution
+    # AUDIT-V1 — canonical ficha projection (shared contract), same
+    # ``character`` shape published by sibling MCPs.
+    mcp["character"] = _suri_character()
     return _ok(
         {
             "mcp": mcp,
