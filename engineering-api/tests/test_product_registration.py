@@ -878,3 +878,79 @@ class TestSupplierPartNumber:
             client, jwks_env, core_rbac, prc_service_repo,
             [self._sup(), self._sup()], obs)
         assert r.status_code == 409
+
+
+# --- D12 — supplierLinkChanges + verificação seletiva + edit-context -----------
+
+
+def test_d12_link_ops_validation():
+    from engineering_app.domain.product_registration import catalog
+    ops, err = catalog.validate_supplier_link_changes([
+        {"operation": "update",
+         "key": {"supplierCode": "000089", "store": "01"},
+         "fields": {"partNumber": "PN-2"}, "reason": "correção"},
+        {"operation": "add",
+         "key": {"supplierCode": "001572", "store": "01"},
+         "fields": {"catalogNumber": "CAT-1"}, "reason": "nova fonte"},
+    ])
+    assert err is None and len(ops) == 2
+    _, err = catalog.validate_supplier_link_changes(
+        [{"operation": "remove",
+          "key": {"supplierCode": "1", "store": "01"},
+          "fields": {"partNumber": "x"}, "reason": "r"}])
+    assert err is not None
+    _, err = catalog.validate_supplier_link_changes(
+        [{"operation": "update",
+          "key": {"supplierCode": "1", "store": "01"},
+          "fields": {"partNumber": "x"}, "reason": "r"},
+         {"operation": "update",
+          "key": {"supplierCode": "1", "store": "01"},
+          "fields": {"catalogNumber": "y"}, "reason": "r"}])
+    assert "duplica" in err
+    _, err = catalog.validate_supplier_link_changes(
+        [{"operation": "update",
+          "key": {"supplierCode": "1", "store": "01"},
+          "fields": {"supplierName": "x"}, "reason": "r"}])
+    assert err is not None
+
+
+def test_d12_compare_link_ops():
+    from engineering_app.application.use_cases.product_registration.service import (
+        compare_link_ops,
+    )
+    observed = [
+        {"supplier_code": "000089", "supplier_store": "01",
+         "supplier_part_number": "PN-2", "catalog_code": ""},
+        {"supplier_code": "000010", "supplier_store": "01",
+         "supplier_part_number": "PN-A", "catalog_code": "C1"},
+    ]
+    ok = compare_link_ops(
+        [{"operation": "update",
+          "key": {"supplierCode": "000089", "store": "01"},
+          "fields": {"partNumber": "PN-2"}, "reason": "r"}],
+        observed)
+    assert ok["result"] == "matched"
+    bad = compare_link_ops(
+        [{"operation": "update",
+          "key": {"supplierCode": "000089", "store": "01"},
+          "fields": {"partNumber": "PN-9"}, "reason": "r"}],
+        observed)
+    assert bad["result"] == "mismatched"
+    missing = compare_link_ops(
+        [{"operation": "add",
+          "key": {"supplierCode": "999999", "store": "01"},
+          "fields": {"partNumber": "P"}, "reason": "r"}],
+        observed)
+    assert missing["result"] == "mismatched"
+    incomplete = compare_link_ops(
+        [{"operation": "update",
+          "key": {"supplierCode": "000089", "store": "01"},
+          "fields": {"partNumber": "PN-2"}, "reason": "r"}],
+        observed, complete=False)
+    assert incomplete["result"] == "unverifiable"
+    # vínculos fora do change set não reprovam
+    assert compare_link_ops(
+        [{"operation": "update",
+          "key": {"supplierCode": "000089", "store": "01"},
+          "fields": {"catalogNumber": ""}, "reason": "r"}],
+        observed)["result"] == "matched"

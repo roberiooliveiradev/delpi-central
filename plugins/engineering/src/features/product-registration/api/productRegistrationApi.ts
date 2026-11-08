@@ -219,6 +219,48 @@ export async function searchPrcSuppliers(
   );
 }
 
+export type PrcEditContextField = {
+  value: unknown;
+  officialField?: string | null;
+};
+
+export type PrcEditContextLink = {
+  supplierCode: string;
+  store: string;
+  supplierName: string;
+  supplierShortName?: string;
+  partNumber: string;
+  catalogNumber: string;
+};
+
+export type PrcEditContext = {
+  status: string;
+  officialCode: string;
+  readAt?: string;
+  fields: Record<string, PrcEditContextField>;
+  links: PrcEditContextLink[];
+  linksComplete?: boolean;
+};
+
+export type PrcSupplierLinkChange = {
+  operation: "update" | "add";
+  key: { supplierCode: string; store: string };
+  fields: { partNumber?: string; catalogNumber?: string };
+  reason: string;
+};
+
+export async function fetchPrcEditContext(
+  officialCode: string,
+  signal?: AbortSignal,
+): Promise<Envelope<PrcEditContext>> {
+  return getJson(
+    `${BASE}/reference-data/products/${encodeURIComponent(
+      officialCode.trim(),
+    )}/edit-context`,
+    signal,
+  );
+}
+
 export async function fetchPrcRequest(
   requestId: string,
   signal?: AbortSignal,
@@ -285,6 +327,8 @@ export type PrcIntakeBody = {
   /** REF-001 — resolvido pela Engineering API; nunca pedido ao usuário. */
   baseRevision?: number | null;
   changes?: Array<{ path: string; proposedValue: unknown; reason: string }> | null;
+  /** D12 — operações granulares de vínculo SA5 (update/add). */
+  supplierLinkChanges?: PrcSupplierLinkChange[] | null;
 };
 
 export type PrcIntakeResult = {

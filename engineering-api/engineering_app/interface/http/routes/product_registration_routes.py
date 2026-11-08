@@ -182,6 +182,7 @@ class IntakeBody(BaseModel):
     officialProductCode: str | None = Field(default=None, max_length=100)
     baseRevision: int | None = Field(default=None, ge=1)
     changes: list[dict] | None = None
+    supplierLinkChanges: list[dict] | None = None
 
 
 class ActionBody(BaseModel):
@@ -249,6 +250,7 @@ async def prc_intake_submit(
                 "officialProductCode": body.officialProductCode,
                 "baseRevision": body.baseRevision,
                 "changes": body.changes,
+                "supplierLinkChanges": body.supplierLinkChanges,
             },
             idempotency_key=idempotency_key,
         )
@@ -693,6 +695,48 @@ async def _delegated_get(user, op: str, path: str, params: dict):
         return None, fail(
             "Fonte oficial indisponível.", 503, operation_id=op,
         )
+
+
+@router.get(
+    "/v1/product-registration/reference-data/products/{official_code}/edit-context",
+    operation_id="prc_edit_context",
+    summary="16a — Contexto oficial de edição (SB1 + SA5)",
+)
+@require_any_permission(_READ_PERMS + _CREATE_PERMS)
+async def prc_edit_context(
+    official_code: str = Path(..., max_length=60),
+):
+    op = "prc_edit_context"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    access_token = str(getattr(user, "access_token", "") or "")
+    if not access_token:
+        return fail(
+            "Token de acesso indisponível para consulta oficial.",
+            401, operation_id=op,
+        )
+    try:
+        data = await build_prc_service().edit_context(
+            actor=_actor(user),
+            official_code=official_code,
+            access_token=access_token,
+            correlation_id=get_request_id(),
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    if data.get("status") != "available":
+        kind = str(data.get("status") or "unavailable")
+        code = {
+            "not_found": 404, "forbidden": 403,
+            "timeout": 503, "contract_error": 502,
+        }.get(kind, 503)
+        return fail(
+            f"Fonte oficial indisponível ({kind}).", code,
+            data={"code": kind, "officialCode": data.get("officialCode")},
+            operation_id=op,
+        )
+    return ok(data, message="Contexto oficial carregado.", operation_id=op)
 
 
 @router.get(

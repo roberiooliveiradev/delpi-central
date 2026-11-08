@@ -301,6 +301,13 @@ class ProductRegistrationService:
                         fields={"baseRevision": "invalid"},
                     )
             changes = catalog.validate_update_changes(payload.get("changes"))
+            link_ops, link_err = catalog.validate_supplier_link_changes(
+                payload.get("supplierLinkChanges")
+            )
+            if link_err:
+                raise PrcValidationError(
+                    link_err, fields={"supplierLinkChanges": "invalid"}
+                )
             record = self._repo.get_record_by_official_code(
                 official_source=catalog.OFFICIAL_SOURCE,
                 official_code=official_code,
@@ -327,11 +334,18 @@ class ProductRegistrationService:
             changed_paths = [
                 {"path": c["path"], "reason": c["reason"]} for c in changes
             ]
+            draft_data["supplierLinkChanges"] = link_ops
             stored_payload = {
                 "officialProductCode": official_code,
                 "baseRevision": base_revision,
                 "changes": changes,
+                "supplierLinkChanges": link_ops,
             }
+            if not changes and not link_ops:
+                raise PrcValidationError(
+                    "UPDATE exige ao menos uma alteração efetiva.",
+                    fields={"changes": "required"},
+                )
 
         request_id = _uuid()
         now = _now()
@@ -881,9 +895,16 @@ class ProductRegistrationService:
                 has_unverifiable = True
                 continue
             if spec.kind == "suppliers":
-                comparison = catalog.compare_suppliers(
-                    draft_data.get(path) or [], suppliers
-                )
+                link_ops = draft_data.get("supplierLinkChanges")
+                if link_ops:
+                    comparison = compare_link_ops(
+                        link_ops, suppliers,
+                        complete=observed.get("suppliers_complete", True),
+                    )
+                else:
+                    comparison = catalog.compare_suppliers(
+                        draft_data.get(path) or [], suppliers
+                    )
                 field_results[path] = {
                     "result": comparison["result"],
                     "officialField": "SA5",
@@ -992,6 +1013,71 @@ class ProductRegistrationService:
 
     # --- REFERENCE DATA + OUTBOUND ---------------------------------------------------
 
+    async def edit_context(
+        self,
+        *,
+        actor: PrcActor,
+        official_code: str,
+        access_token: str,
+        correlation_id: str,
+    ) -> dict[str, Any]:
+        """Contexto oficial de edição (D12): valores atuais SB1 +
+        vínculos SA5 completos, via leitor oficial delegado."""
+        _require_actor_read(actor)
+        code = official_code.strip()
+        if not code:
+            raise PrcValidationError(
+                "officialCode é obrigatório.",
+                fields={"officialCode": "required"},
+            )
+        if self._reader is None:
+            raise PrcOfficialError(
+                "unavailable", "Leitor oficial não configurado."
+            )
+        observed = await self._reader.read_product(
+            access_token=access_token,
+            request_id=correlation_id,
+            official_code=code,
+        )
+        if observed.get("status") != "available":
+            return {
+                "status": observed.get("status"),
+                "reason": observed.get("reason"),
+                "officialCode": code,
+            }
+        product = observed.get("product") or {}
+        links = [
+            {
+                "supplierCode": str(i.get("supplier_code") or ""),
+                "store": str(i.get("supplier_store") or ""),
+                "supplierName": str(i.get("supplier_name") or ""),
+                "supplierShortName": str(
+                    i.get("supplier_short_name") or ""
+                ),
+                "partNumber": str(i.get("supplier_part_number") or ""),
+                "catalogNumber": str(i.get("catalog_code") or ""),
+            }
+            for i in (observed.get("suppliers") or [])
+            if isinstance(i, dict)
+        ]
+        fields = {
+            spec.path: {
+                "value": product.get(spec.official_field),
+                "officialField": spec.official_field,
+            }
+            for spec in catalog.FIELD_SPECS
+            if spec.official_field and spec.kind != "suppliers"
+        }
+        return {
+            "status": "available",
+            "officialCode": code,
+            "readAt": _now(),
+            "officialSource": catalog.OFFICIAL_SOURCE,
+            "fields": fields,
+            "links": links,
+            "linksComplete": bool(observed.get("suppliers_complete")),
+        }
+
     def reference_data(self, *, actor: PrcActor) -> dict[str, Any]:
         _require_actor_read(actor)
         return {
@@ -1092,3 +1178,74 @@ class ProductRegistrationService:
             "pageSize": result["pageSize"],
             "total": result["total"],
         }
+
+
+_FIELD_MAP = {
+    "partNumber": "supplier_part_number",
+    "catalogNumber": "catalog_code",
+}
+
+
+def compare_link_ops(
+    ops: list[dict[str, Any]],
+    observed: list[dict[str, Any]],
+    *,
+    complete: bool = True,
+) -> dict[str, Any]:
+    """Verificação seletiva de ops granulares SA5 (D12).
+
+    `update`: o vínculo oficial deve existir único e cada atributo
+    informado deve bater. `add`: o vínculo deve existir (criado
+    manualmente) com os atributos propostos. Vínculos fora do change
+    set nunca reprovam a verificação. Conjunto oficial incompleto →
+    unverifiable (não é possível comprovar a relação).
+    """
+    detail: list[dict[str, Any]] = []
+    result = "matched"
+    if not complete:
+        return {
+            "result": "unverifiable",
+            "detail": [{"result": "official_links_incomplete"}],
+        }
+    by_key: dict[tuple[str, str], list[dict]] = {}
+    for item in observed or []:
+        if isinstance(item, dict):
+            key = (
+                str(item.get("supplier_code") or "").strip(),
+                str(item.get("supplier_store") or "").strip(),
+            )
+            by_key.setdefault(key, []).append(item)
+    for i, op in enumerate(ops or []):
+        key = (
+            str(op["key"]["supplierCode"]).strip(),
+            str(op["key"]["store"]).strip(),
+        )
+        label = f"{op['operation']}:{key[0]}.{key[1]}"
+        found = by_key.get(key, [])
+        if not found:
+            result = "mismatched"
+            detail.append({"key": label, "result": "missing_in_official"})
+            continue
+        if len(found) > 1:
+            result = "mismatched"
+            detail.append({"key": label, "result": "ambiguous_official"})
+            continue
+        link = found[0]
+        bad = []
+        for field, official_key in _FIELD_MAP.items():
+            if field not in op["fields"]:
+                continue
+            if official_key not in link:
+                result = "mismatched"
+                bad.append(f"{field}:unverifiable")
+                continue
+            exp = (op["fields"][field] or "").strip()
+            obs = str(link.get(official_key) or "").strip()
+            if exp != obs:
+                bad.append(f"{field}:mismatched")
+        if bad:
+            result = "mismatched"
+            detail.append({"key": label, "result": ",".join(bad)})
+        else:
+            detail.append({"key": label, "result": "matched"})
+    return {"result": result, "detail": detail}

@@ -381,3 +381,28 @@
     margin-bottom: 2px;
   }
 }
+
+/* D12 — contexto oficial de edição + ops de vínculo SA5 */
+.engineering-prc__official-now {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--en-text-muted);
+}
+
+.engineering-prc__official-now strong {
+  color: var(--en-text);
+  font-weight: 600;
+}
+
+.engineering-prc__link-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+}
+
+.engineering-prc__link-edit-flags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

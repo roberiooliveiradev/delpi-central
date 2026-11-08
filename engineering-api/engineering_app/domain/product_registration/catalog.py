@@ -557,3 +557,77 @@ def compare_suppliers(
     elif unverifiable:
         result = "unverifiable"
     return {"result": result, "detail": detail}
+
+
+# --- supplierLinkChanges (D12) -------------------------------------------------
+# Operações granulares sobre vínculos produto×fornecedor (SA5). A chave é
+# sempre (supplierCode, store) oficial; nunca razão social nem posição.
+# "remove" de vínculo oficial não é autorizado.
+SUPPLIER_LINK_OPERATIONS = ("update", "add")
+SUPPLIER_LINK_EDITABLE_FIELDS = ("partNumber", "catalogNumber")
+
+
+def validate_supplier_link_changes(
+    ops: Any,
+) -> tuple[list[dict[str, Any]], str | None]:
+    """Valida o shape de ``supplierLinkChanges``.
+
+    Regras de existência/duplicidade são autoritativas no verify oficial
+    (o estado pode ter mudado entre a leitura do contexto e a aplicação).
+    Retorna ``(ops_normalizadas, erro|None)``.
+    """
+    if ops is None:
+        return [], None
+    if not isinstance(ops, list):
+        return [], "supplierLinkChanges deve ser uma lista."
+    out: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for i, op in enumerate(ops):
+        if not isinstance(op, dict):
+            return [], f"supplierLinkChanges[{i}] deve ser objeto."
+        operation = str(op.get("operation") or "").strip()
+        if operation not in SUPPLIER_LINK_OPERATIONS:
+            return [], (
+                f"supplierLinkChanges[{i}].operation deve ser "
+                "'update' ou 'add'."
+            )
+        key = op.get("key") or {}
+        code = str(key.get("supplierCode") or "").strip()
+        store = str(key.get("store") or "").strip()
+        if not code or not store:
+            return [], (
+                f"supplierLinkChanges[{i}].key exige supplierCode e store."
+            )
+        fields = op.get("fields")
+        if not isinstance(fields, dict) or not fields:
+            return [], (
+                f"supplierLinkChanges[{i}].fields deve conter ao menos "
+                "um atributo."
+            )
+        unknown = set(fields) - set(SUPPLIER_LINK_EDITABLE_FIELDS)
+        if unknown:
+            return [], (
+                f"supplierLinkChanges[{i}].fields contém atributo não "
+                f"editável: {sorted(unknown)}."
+            )
+        reason = str(op.get("reason") or "").strip()
+        if not reason:
+            return [], f"supplierLinkChanges[{i}].reason é obrigatória."
+        if (code, store) in seen:
+            return [], (
+                f"supplierLinkChanges[{i}] duplica o vínculo "
+                f"{code}/{store}."
+            )
+        seen.add((code, store))
+        out.append(
+            {
+                "operation": operation,
+                "key": {"supplierCode": code, "store": store},
+                "fields": {
+                    k: ("" if fields[k] is None else str(fields[k]))
+                    for k in fields
+                },
+                "reason": reason,
+            }
+        )
+    return out, None

@@ -42,20 +42,36 @@ class ApiDelpiOfficialProductReader:
                 "reason": detail.get("reason"),
             }
         product = (detail.get("data") or {}).get("product") or {}
-        suppliers_result = await self._aux.fetch_product_suppliers(
-            ctx, code=official_code, page=1, page_size=500
-        )
-        sup_status = suppliers_result.get("status")
-        if sup_status != "available":
-            return {
-                "status": _map_status(sup_status),
-                "reason": suppliers_result.get("reason"),
-            }
-        suppliers = (suppliers_result.get("data") or {}).get("items") or []
+        # SA5 completa: pagina até esgotar (defesa máx 5000 vínculos).
+        # Uma página parcial não pode ser tratada como universo — o
+        # verify de ops granulares depende de conhecer todos os vínculos.
+        suppliers: list[dict[str, Any]] = []
+        complete = True
+        page, page_size, max_items = 1, 500, 5000
+        while True:
+            result = await self._aux.fetch_product_suppliers(
+                ctx, code=official_code, page=page, page_size=page_size
+            )
+            if result.get("status") != "available":
+                return {
+                    "status": _map_status(result.get("status")),
+                    "reason": result.get("reason"),
+                }
+            body = result.get("data") or {}
+            items = body.get("items") or []
+            suppliers.extend(items)
+            total = int(body.get("total") or 0)
+            if len(suppliers) >= total or not items:
+                break
+            if len(suppliers) >= max_items:
+                complete = False
+                break
+            page += 1
         return {
             "status": "available",
             "product": product,
             "suppliers": suppliers,
+            "suppliers_complete": complete and len(suppliers) >= total,
         }
 
 

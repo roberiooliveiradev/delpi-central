@@ -39,10 +39,13 @@ import {
   type PrcCatalogView,
 } from "../prcCatalogs";
 import {
+  fetchPrcEditContext,
   fetchPrcReferenceData,
   prcIntakeSubmit,
+  type PrcEditContext,
   type PrcIntakeBody,
   type PrcReferenceData,
+  type PrcSupplierLinkChange,
 } from "../api/productRegistrationApi";
 import {
   buildPrcQueueUrl,
@@ -120,6 +123,13 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [supplierReason, setSupplierReason] = useState("");
+  const [editCtx, setEditCtx] = useState<PrcEditContext | null>(null);
+  const [editCtxState, setEditCtxState] = useState<
+    "idle" | "loading" | "error" | "not_found"
+  >("idle");
+  const [linkEdits, setLinkEdits] = useState<
+    Record<string, { pn?: string; cat?: string; reason: string }>
+  >({});
 
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -221,6 +231,26 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
       return;
     }
     setError("");
+    if (requestType === "update" && step === 0) {
+      setEditCtxState("loading");
+      fetchPrcEditContext(officialCode)
+        .then((env) => {
+          const d = env.data as PrcEditContext;
+          if (d.status !== "available") {
+            setEditCtx(null);
+            setEditCtxState(
+              d.status === "not_found" ? "not_found" : "error",
+            );
+            return;
+          }
+          setEditCtx(d);
+          setEditCtxState("idle");
+        })
+        .catch(() => {
+          setEditCtx(null);
+          setEditCtxState("error");
+        });
+    }
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   };
 
@@ -265,17 +295,39 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
         proposedValue: (values[path] || "").trim(),
         reason: (reasons[path] || "").trim(),
       }));
+    const supplierLinkChanges: PrcSupplierLinkChange[] = [];
     if (selectedPaths.has("suppliers") || supplierTouched) {
-      changes.push({
-        path: "suppliers",
-        proposedValue: suppliers.map((r) => ({
-          supplierCode: r.supplierCode.trim(),
-          store: r.store.trim(),
-          supplierName: r.supplierName.trim(),
-          partNumber: r.partNumber.trim() || "",
-          catalogNumber: r.catalogNumber.trim() || null,
-        })),
-        reason: supplierReason.trim(),
+      Object.entries(linkEdits).forEach(([key, edit]) => {
+        const [supplierCode, store] = key.split("|");
+        const fields: Record<string, string> = {};
+        if (edit.pn !== undefined) fields.partNumber = edit.pn;
+        if (edit.cat !== undefined) fields.catalogNumber = edit.cat;
+        if (!Object.keys(fields).length) return;
+        supplierLinkChanges.push({
+          operation: "update",
+          key: { supplierCode, store },
+          fields,
+          reason: edit.reason.trim() || supplierReason.trim(),
+        });
+      });
+      suppliers.forEach((r) => {
+        if (!r.supplierCode.trim() || !r.store.trim()) return;
+        supplierLinkChanges.push({
+          operation: "add",
+          key: {
+            supplierCode: r.supplierCode.trim(),
+            store: r.store.trim(),
+          },
+          fields: {
+            ...(r.partNumber.trim()
+              ? { partNumber: r.partNumber.trim() }
+              : {}),
+            ...(r.catalogNumber.trim()
+              ? { catalogNumber: r.catalogNumber.trim() }
+              : {}),
+          },
+          reason: supplierReason.trim(),
+        });
       });
     }
     return {
@@ -285,6 +337,7 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
       schemaVersion: refData?.schemaVersion || 1,
       officialProductCode: officialCode.trim(),
       changes,
+      supplierLinkChanges,
     };
   };
 
@@ -384,10 +437,15 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
     const label = PRC_FIELD_LABELS[path] || path;
     const selected =
       requestType === "create" ? true : selectedPaths.has(path);
+    const officialNow =
+      requestType === "update" && editCtx
+        ? editCtx.fields?.[path]?.value
+        : undefined;
     return (
       <div key={path} className="engineering-prc__edit-row">
         {requestType === "update" ? (
-          <EngineeringCheckboxControl
+          <>
+            <EngineeringCheckboxControl
             checked={selected}
             disabled={busy}
             onChange={(v) =>
@@ -401,6 +459,21 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
             label={label}
             hint={spec?.note || undefined}
           />
+            {editCtxState === "loading" ? (
+              <p className="engineering-prc__muted">
+                Consultando valor oficial…
+              </p>
+            ) : officialNow !== undefined && officialNow !== null &&
+              officialNow !== "" ? (
+              <p className="engineering-prc__official-now">
+                Atual no TOTVS: <strong>{String(officialNow)}</strong>
+              </p>
+            ) : editCtx ? (
+              <p className="engineering-prc__muted">
+                Sem valor atual no TOTVS.
+              </p>
+            ) : null}
+          </>
         ) : null}
         {selected ? (
           <div className="engineering-prc__edit-controls">
@@ -626,20 +699,185 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
             }
           >
             {requestType === "update" ? (
-              <EngineeringCheckboxControl
-                checked={selectedPaths.has("suppliers")}
-                disabled={busy}
-                onChange={(v) =>
-                  setSelectedPaths((prev) => {
-                    const next = new Set(prev);
-                    if (v) next.add("suppliers");
-                    else next.delete("suppliers");
-                    return next;
-                  })
-                }
-                label="Alterar vínculos de fornecedores"
-                hint="A lista informada substitui os vínculos desta solicitação."
-              />
+              <>
+                <EngineeringCheckboxControl
+                  checked={selectedPaths.has("suppliers")}
+                  disabled={busy}
+                  onChange={(v) =>
+                    setSelectedPaths((prev) => {
+                      const next = new Set(prev);
+                      if (v) next.add("suppliers");
+                      else next.delete("suppliers");
+                      return next;
+                    })
+                  }
+                  label="Alterar vínculos de fornecedores"
+                  hint="Edite Part Number ou Catálogo por vínculo, ou adicione um novo vínculo — os demais permanecem intactos."
+                />
+                {editCtx && (editCtx.links || []).length ? (
+                  <div className="engineering-prc__supplier-table-wrap">
+                    <table className="engineering-prc__supplier-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Código</th>
+                          <th scope="col">Loja</th>
+                          <th scope="col">Razão social</th>
+                          <th scope="col">PN atual</th>
+                          <th scope="col">Catálogo atual</th>
+                          <th scope="col">Editar vínculo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editCtx.links.map((lnk) => {
+                          const key = `${lnk.supplierCode}|${lnk.store}`;
+                          const edit = linkEdits[key];
+                          return (
+                            <tr key={key}>
+                              <td data-label="Código">{lnk.supplierCode}</td>
+                              <td data-label="Loja">{lnk.store}</td>
+                              <td data-label="Razão social">
+                                {lnk.supplierName}
+                              </td>
+                              <td data-label="PN atual">
+                                {lnk.partNumber || "—"}
+                              </td>
+                              <td data-label="Catálogo atual">
+                                {lnk.catalogNumber || "—"}
+                              </td>
+                              <td data-label="Editar vínculo">
+                                {edit ? (
+                                  <div className="engineering-prc__link-edit">
+                                    {edit.pn !== undefined ? (
+                                      <input
+                                        type="text"
+                                        className="engineering-prc__cell-input"
+                                        placeholder="Novo Part Number"
+                                        value={edit.pn}
+                                        disabled={busy}
+                                        aria-label={`Novo Part Number ${lnk.supplierCode}`}
+                                        onChange={(e) =>
+                                          setLinkEdits((prev) => ({
+                                            ...prev,
+                                            [key]: {
+                                              ...prev[key],
+                                              pn: e.target.value,
+                                            },
+                                          }))
+                                        }
+                                      />
+                                    ) : null}
+                                    {edit.cat !== undefined ? (
+                                      <input
+                                        type="text"
+                                        className="engineering-prc__cell-input"
+                                        placeholder="Novo Catálogo"
+                                        value={edit.cat}
+                                        disabled={busy}
+                                        aria-label={`Novo Catálogo ${lnk.supplierCode}`}
+                                        onChange={(e) =>
+                                          setLinkEdits((prev) => ({
+                                            ...prev,
+                                            [key]: {
+                                              ...prev[key],
+                                              cat: e.target.value,
+                                            },
+                                          }))
+                                        }
+                                      />
+                                    ) : null}
+                                    {!edit.pn && !edit.cat ? (
+                                      <span className="engineering-prc__muted">
+                                        Marque o atributo a alterar:
+                                      </span>
+                                    ) : null}
+                                    <div className="engineering-prc__link-edit-flags">
+                                      {edit.pn === undefined ? (
+                                        <button
+                                          type="button"
+                                          className="engineering-prc__lookup-clear"
+                                          onClick={() =>
+                                            setLinkEdits((prev) => ({
+                                              ...prev,
+                                              [key]: {
+                                                ...prev[key],
+                                                pn: lnk.partNumber,
+                                              },
+                                            }))
+                                          }
+                                        >
+                                          + PN
+                                        </button>
+                                      ) : null}
+                                      {edit.cat === undefined ? (
+                                        <button
+                                          type="button"
+                                          className="engineering-prc__lookup-clear"
+                                          onClick={() =>
+                                            setLinkEdits((prev) => ({
+                                              ...prev,
+                                              [key]: {
+                                                ...prev[key],
+                                                cat: lnk.catalogNumber,
+                                              },
+                                            }))
+                                          }
+                                        >
+                                          + Catálogo
+                                        </button>
+                                      ) : null}
+                                      <button
+                                        type="button"
+                                        className="engineering-prc__lookup-clear"
+                                        onClick={() =>
+                                          setLinkEdits((prev) => {
+                                            const next = { ...prev };
+                                            delete next[key];
+                                            return next;
+                                          })
+                                        }
+                                      >
+                                        Cancelar
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="engineering-prc__lookup-clear"
+                                    disabled={busy}
+                                    onClick={() =>
+                                      setLinkEdits((prev) => ({
+                                        ...prev,
+                                        [key]: { reason: "" },
+                                      }))
+                                    }
+                                  >
+                                    Editar
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    {editCtx.linksComplete === false ? (
+                      <p className="engineering-prc__field-error" role="alert">
+                        A lista de vínculos pode estar incompleta — revise
+                        antes de propor alterações.
+                      </p>
+                    ) : null}
+                    <p className="engineering-prc__muted">
+                      Novos vínculos adicionados abaixo não substituem os
+                      existentes — só acrescentam.
+                    </p>
+                  </div>
+                ) : editCtx ? (
+                  <p className="engineering-prc__muted">
+                    Nenhum vínculo oficial cadastrado para este produto.
+                  </p>
+                ) : null}
+              </>
             ) : null}
             {requestType === "create" || selectedPaths.has("suppliers") ? (
               <>
@@ -842,7 +1080,18 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                     : "Alteração de produto",
               },
               ...(requestType === "update"
-                ? [{ label: "Código oficial", value: officialCode }]
+                ? [
+                    { label: "Código oficial", value: officialCode },
+                    ...(Object.keys(linkEdits).length ||
+                    suppliers.length
+                      ? [
+                          {
+                            label: "Operações de vínculo",
+                            value: `${Object.keys(linkEdits).length} alteração(ões) + ${suppliers.length} adição(ões)`,
+                          },
+                        ]
+                      : []),
+                  ]
                 : []),
               ...reviewItems,
               {
