@@ -68,3 +68,19 @@ Executar browser E2E real em DEV com JWT de usuário autorizado, screenshots em 
 ## 4. Outcome corrigido
 
 **Não classificar os 11 itens como PASS.** Estado `EXECUTION_DRIFT` entre “entregue” e “comportamento observado”; revisar matriz REF por evidência. `BUILD_PASS` e `VITEST_PASS` não substituem captura/browser runtime. **Próxima tarefa:** `ENG-PRC-D6-REMEDIATE-VISUAL-AND-RUNTIME-GAPS`, somente DEV, com P0 antes de P1 e evidência de regressão.
+
+---
+
+## 5. Remediação aplicada — SHA `ef559adda5` (main)
+
+| Gap | Causa raiz encontrada | Correção | Verificação |
+|---|---|---|---|
+| G-01 Cards vazio | `DataCardsGrid` renderiza `empty` sempre que não-nulo (slot substituto) — passado incondicionalmente | prop removida | mesmas 6 solicitações agora nos 3 modos |
+| G-02 Ficha vertical | `form-grid` nunca foi aplicada ao wrapper real de `FIELD_GROUPS` | grid aplicada; descrição/código wide | colunas lado a lado |
+| G-03 Fornecedores em divs | requisito de tabela semântica não atendido | `<table>` thead/tbody + lookup SA2 por célula + erros/duplicados por linha | estrutura real com caption/a11y |
+| G-04 Catálogos falham | **2 bugs reais**: `BaseRepository` sem `with self` (cursor None → 500) e coluna `AH_UNIMES`→`AH_UNIMED` | ambos corrigidos; FE agora exibe loading/erro+retry | 4/4 catálogos 200 com dados TOTVS reais (BD BALDE, 0001 Plastico, etc.) |
+| G-05 Timeline sem identidade | sem marker/avatar; eventos legados sem snapshot | `EngineeringInitialsAvatar` em `marker` + lookup Core batch | `Rober Dev`/`rober@dev.local` em runtime |
+| G-06 Assignee sem nome | linhas pré-V013 sem `assigned_to_display_name` | `core_identity_lookup.py` — batch `/me/directory/users/lookup` com Bearer delegado | fila exibe "Rober Dev" resolvido |
+| G-07 Cobertura | router api-delpi sem testes | `test_prc_catalogs.py` (10 testes) | 10/10 PASS |
+
+Runtime autenticado verificado via curl com token DEV real: catalogs (4/4 = 200 + dados TOTVS), SA2 (200 + fornecedores reais), fila com `assignedToDisplayName` resolvido, timeline com `actor_display_name`/`actor_email`. Browser visual do PO: `PO_ACCEPTANCE_PENDING`.
