@@ -1,0 +1,44 @@
+name: Auditoria 5S - Build
+
+on:
+  pull_request:
+    paths:
+      - "plugins/auditoria-5s/**"
+      - "plugins/vite/**"
+      - ".github/workflows/auditoria-5s-build.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "plugins/auditoria-5s/**"
+      - "plugins/vite/**"
+      - ".github/workflows/auditoria-5s-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-auditoria-5s:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: plugins/auditoria-5s/package-lock.json
+
+      - name: Install dependencies
+        working-directory: plugins/auditoria-5s
+        run: npm ci
+
+      # Reproduz a etapa RUN npx vite build do Dockerfile de produção.
+      # tsc -b fica fora deste job: carrega o source do plugin-ui e exige
+      # dependências próprias do plugin-ui, que não integram o Docker MFE.
+      - name: Vite production build
+        working-directory: plugins/auditoria-5s
+        run: npx vite build
