@@ -9,7 +9,9 @@ export const helpTooltips = {
   quantityMismatches:
     "Compara a quantidade de cada intermediário com OP no conjunto à necessidade da estrutura para a quantidade da OP mãe. Abaixo = OP filha menor que o esperado. Acima = OP filha maior. Só entram códigos que já existem no conjunto; falta de OP fica no detector de conjuntos incompletos.",
   uncoveredDemand:
-    "Mesma regra da aba Demanda: saldo aberto sem estoque nem OP suficiente (sem cobertura), ou OP prevista só depois da entrega ao cliente. Atrasadas com buraco também aparecem aqui.",
+    "Mesma regra da aba Demanda: saldo aberto sem estoque nem OP suficiente (sem cobertura), ou OP prevista só depois da entrega ao cliente. Atrasadas com buraco também aparecem aqui. Na filial 02, a Demanda também mostra planejamento MyWEG (WEG Linhares 000001/09) com filtro de origem; MyWEG não cria pedido Protheus e a OP ainda não conta como cobertura confirmada.",
+  demand:
+    "Carteira a entregar da filial. Na 02, use Origem (Protheus / MyWEG / Todas) para ver pedidos TOTVS e o planejamento MyWEG da última coleta aceita. Busque WEG Linhares por cliente 000001 e loja 09. Volumes MyWEG aparecem em MI e como planejamento — o total misturado não é consolidação oficial até decisão da autoridade. Cobertura MyWEG usa estoque (pool único); OP fica pendente de verificação de unidade.",
   sharedStructureIntermediates:
     "Intermediários PI/PA da estrutura vigente hoje que aparecem em mais de um PA com apontamento produtivo nos últimos 12 meses. Alteração de engenharia nesse código impacta todos os acabados listados.",
   machineLoad:

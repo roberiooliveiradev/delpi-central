@@ -86,6 +86,9 @@ class DemandLine:
     uncovered_quantity: float = 0.0
     coverage_date: date | None = None
     status: str = STATUS_AT_RISK
+    # Origem da linha na Demanda integrada (default = carteira Protheus).
+    source: str = "protheus"
+    planning: bool = False
 
     @property
     def key(self) -> str:
@@ -124,6 +127,8 @@ class DemandLine:
             "coverage_date": self.coverage_date.isoformat() if self.coverage_date else None,
             "status": self.status,
             "days_late": self.days_late(today),
+            "source": self.source or "protheus",
+            "planning": bool(self.planning),
         }
 
 
@@ -148,6 +153,13 @@ class DemandCoverageService:
                 continue
             if not is_customer_sales_entity(item.get("tipo_entidade")):
                 continue
+            raw_source = _text(
+                item.get("source") or item.get("_preview_source") or item.get("tipo_pedido")
+            ).lower()
+            if raw_source == "myweg":
+                source = "myweg"
+            else:
+                source = "protheus"
             lines.append(
                 DemandLine(
                     branch=_text(item.get("filial")),
@@ -166,6 +178,8 @@ class DemandCoverageService:
                     due_date=_iso_date(item.get("data_entrega")),
                     dispatch_date=_iso_date(item.get("data_despacho")),
                     product_stock=_number(item.get("no_estoque")),
+                    source=source,
+                    planning=source == "myweg",
                 )
             )
         return lines

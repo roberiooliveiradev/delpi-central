@@ -7,6 +7,7 @@ import type { DemandPayload, PpcBranch } from "../types";
 export type DemandFilters = {
   search: string;
   status: string;
+  origin: string;
   dueFrom: string;
   dueTo: string;
   page: number;
@@ -18,6 +19,7 @@ export type DemandFilters = {
 export const DEMAND_DEFAULT_FILTERS: DemandFilters = {
   search: "",
   status: "",
+  origin: "protheus",
   dueFrom: "",
   dueTo: "",
   page: 1,
@@ -48,6 +50,7 @@ export function useDemand(branch: PpcBranch, filters: DemandFilters) {
       branch,
       search: filters.search,
       status: filters.status,
+      origin: filters.origin || "protheus",
       dueFrom: filters.dueFrom || null,
       dueTo: filters.dueTo || null,
       sort: filters.sort,
@@ -75,6 +78,7 @@ export function useDemand(branch: PpcBranch, filters: DemandFilters) {
     filters.direction,
     filters.dueFrom,
     filters.dueTo,
+    filters.origin,
     filters.page,
     filters.pageSize,
     filters.search,

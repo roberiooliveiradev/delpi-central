@@ -1,9 +1,11 @@
 """Demanda — orquestração da carteira a entregar para o PCP.
 
 A api-delpi entrega o dump TOTVS inteiro, sem filtro nem paginação. Todo o
-recorte (filial, busca, status, janela de entrega), a ordenação, a página e os
-KPIs são resolvidos aqui, sobre um cache curto por processo — assim navegar
-entre páginas e filtros não repete a consulta pesada.
+recorte (filial, origem, busca, status, janela de entrega), a ordenação, a
+página e os KPIs são resolvidos aqui, sobre um cache curto por processo.
+
+Etapa 3: ``origin=protheus|myweg|both`` (default ``protheus`` = compatível).
+MyWEG reusa source + adapter + ``DemandCoverageService`` (estoque; OP off).
 """
 
 from __future__ import annotations
@@ -18,8 +20,13 @@ from production_control_app.application.services.demand_settings import (
     setting_list,
     setting_str,
 )
-from production_control_app.core.security import PC_DEMAND_VIEW, can
-from production_control_app.domain.errors import DelpiGatewayError
+from production_control_app.core.security import (
+    PC_DEMAND_VIEW,
+    PC_MYWEG_NEEDS_VIEW,
+    can,
+)
+from production_control_app.domain.errors import DelpiGatewayError, InvalidBranch
+from production_control_app.domain.myweg_demand_source_contract import DEMAND_SOURCE_BRANCH
 from production_control_app.domain.ports.production_orders_gateway import (
     ProductionOrdersGateway,
 )
@@ -34,6 +41,10 @@ from production_control_app.domain.services.demand_coverage_service import (
 )
 
 _FAR_FUTURE = date(9999, 12, 31)
+ORIGIN_PROTHEUS = "protheus"
+ORIGIN_MYWEG = "myweg"
+ORIGIN_BOTH = "both"
+ALLOWED_ORIGINS = frozenset({ORIGIN_PROTHEUS, ORIGIN_MYWEG, ORIGIN_BOTH})
 
 
 def _unwrap(payload: Any, key: str) -> list[Any]:
@@ -68,10 +79,11 @@ class DemandQuery:
     direction: str = "asc"
     page: int = 1
     page_size: int = 0
+    origin: str = ORIGIN_PROTHEUS
 
 
 class _DemandSnapshotCache:
-    """Cache por filial com TTL — evita repetir o dump a cada filtro/página."""
+    """Cache por chave (filial|origem) com TTL — evita repetir o dump a cada filtro/página."""
 
     def __init__(self, ttl_seconds: int) -> None:
         self._ttl = max(ttl_seconds, 0)
@@ -104,6 +116,7 @@ class DemandService:
         *,
         branch_access: BranchAccessService | None = None,
         coverage: DemandCoverageService | None = None,
+        myweg_coverage: Any | None = None,
         today: date | None = None,
         cache: _DemandSnapshotCache | None = None,
     ) -> None:
@@ -111,6 +124,7 @@ class DemandService:
         self._branch_access = branch_access or BranchAccessService()
         self._today = today
         self._coverage = coverage or DemandCoverageService(today=today)
+        self._myweg_coverage = myweg_coverage
         self._cache = cache if cache is not None else _SNAPSHOT_CACHE
 
     # ------------------------------------------------------------- helpers
@@ -123,9 +137,15 @@ class DemandService:
         if not can(user, PC_DEMAND_VIEW):
             raise PermissionError("Você não tem permissão para ver a demanda.")
 
-    def _load_lines(self, branch: str, *, refresh: bool = False) -> list[DemandLine]:
+    def _cache_key(self, branch: str, origin: str) -> str:
+        if origin == ORIGIN_PROTHEUS:
+            return branch
+        return f"{branch}|{origin}"
+
+    def _load_protheus_lines(self, branch: str, *, refresh: bool = False) -> list[DemandLine]:
+        key = self._cache_key(branch, ORIGIN_PROTHEUS)
         if not refresh:
-            cached = self._cache.get(branch)
+            cached = self._cache.get(key)
             if cached is not None:
                 return cached
         try:
@@ -141,12 +161,82 @@ class DemandService:
             open_production_orders=production_orders,
             branch=branch,
         )
-        self._cache.set(branch, lines)
+        for line in lines:
+            line.source = ORIGIN_PROTHEUS
+            line.planning = False
+        self._cache.set(key, lines)
         return lines
+
+    def _load_lines(self, branch: str, *, refresh: bool = False) -> list[DemandLine]:
+        """Compat: snapshot Protheus da filial (detectores / overview)."""
+        return self._load_protheus_lines(branch, refresh=refresh)
 
     def branch_lines(self, branch: str, *, refresh: bool = False) -> list[DemandLine]:
         """Snapshot da filial sem RBAC — uso interno (detectores / overview)."""
         return self._load_lines(branch, refresh=refresh)
+
+    def _load_origin_lines(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        origin: str,
+        refresh: bool = False,
+    ) -> tuple[list[DemandLine], dict[str, Any] | None]:
+        """Carrega linhas conforme origem. Retorna (lines, myweg_meta|None)."""
+        if origin == ORIGIN_PROTHEUS:
+            return self._load_protheus_lines(branch, refresh=refresh), None
+
+        if branch != DEMAND_SOURCE_BRANCH:
+            if origin == ORIGIN_MYWEG:
+                raise InvalidBranch(
+                    "Necessidades MyWEG na Demanda estão disponíveis apenas na filial 02."
+                )
+            # both fora da 02 → degrada a Protheus oficial.
+            return self._load_protheus_lines(branch, refresh=refresh), {
+                "origin": ORIGIN_PROTHEUS,
+                "official_aggregate": True,
+                "myweg_skipped": "branch_not_02",
+                "adr_status": "ARCHITECTURE_DECISION_REQUIRED",
+            }
+
+        if not can(user, PC_MYWEG_NEEDS_VIEW):
+            if origin == ORIGIN_MYWEG:
+                raise PermissionError(
+                    "Você não tem permissão para consultar Necessidades WEG."
+                )
+            return self._load_protheus_lines(branch, refresh=refresh), {
+                "origin": ORIGIN_PROTHEUS,
+                "official_aggregate": True,
+                "myweg_skipped": "missing_myweg_permission",
+                "adr_status": "ARCHITECTURE_DECISION_REQUIRED",
+            }
+
+        if self._myweg_coverage is None:
+            raise DelpiGatewayError("Integração MyWEG na Demanda indisponível.")
+
+        cache_key = self._cache_key(branch, origin)
+        if not refresh:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                # Meta não fica no cache de linhas — reconsulta leve via resolve.
+                pass
+
+        try:
+            resolved = self._myweg_coverage.resolve_demand_origin_lines(
+                user, branch=branch, origin=origin
+            )
+        except DelpiGatewayError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise DelpiGatewayError(
+                "Não foi possível carregar necessidades MyWEG para a Demanda."
+            ) from exc
+
+        lines = list(resolved.get("lines") or [])
+        meta = dict(resolved.get("meta") or {})
+        self._cache.set(cache_key, lines)
+        return lines, meta
 
     # ------------------------------------------------------------ filtering
 
@@ -165,9 +255,12 @@ class DemandService:
             haystack = " ".join(
                 (
                     line.customer_name,
+                    line.customer_code,
+                    line.customer_store,
                     line.sales_order,
                     line.customer_order,
                     line.product_code,
+                    line.source,
                 )
             ).upper()
             if needle not in haystack:
@@ -181,6 +274,8 @@ class DemandService:
             return lambda line: (line.product_code, line.due_date or _FAR_FUTURE)
         if field == "open_quantity":
             return lambda line: (line.open_quantity, line.due_date or _FAR_FUTURE)
+        if field == "source":
+            return lambda line: (line.source, line.due_date or _FAR_FUTURE)
         if field == "status":
             order = {
                 STATUS_LATE: 0,
@@ -211,7 +306,9 @@ class DemandService:
             "next_due_date": next_due.isoformat() if next_due else None,
         }
 
-    def _horizon(self, lines: Iterable[DemandLine]) -> list[dict[str, Any]]:
+    def _horizon(
+        self, lines: Iterable[DemandLine], *, split_origin: bool = False
+    ) -> list[dict[str, Any]]:
         """Saldo agrupado por semana de entrega; o atraso vira o primeiro balde."""
         today = self._reference_date()
         buckets: dict[str, dict[str, Any]] = {}
@@ -231,12 +328,18 @@ class DemandService:
                     "label": label,
                     "start_date": start.isoformat() if start else None,
                     "open_quantity": 0.0,
+                    "open_quantity_protheus": 0.0,
+                    "open_quantity_myweg": 0.0,
                     "line_count": 0,
                     "late": start is None,
                 },
             )
             bucket["open_quantity"] += line.open_quantity
             bucket["line_count"] += 1
+            if line.source == ORIGIN_MYWEG:
+                bucket["open_quantity_myweg"] += line.open_quantity
+            else:
+                bucket["open_quantity_protheus"] += line.open_quantity
 
         ordered = sorted(
             buckets.values(),
@@ -246,6 +349,11 @@ class DemandService:
         trimmed = ordered[: limit + 1] if limit else ordered
         for bucket in trimmed:
             bucket["open_quantity"] = round(bucket["open_quantity"], 3)
+            bucket["open_quantity_protheus"] = round(bucket["open_quantity_protheus"], 3)
+            bucket["open_quantity_myweg"] = round(bucket["open_quantity_myweg"], 3)
+            if not split_origin:
+                bucket.pop("open_quantity_protheus", None)
+                bucket.pop("open_quantity_myweg", None)
         return trimmed
 
     # --------------------------------------------------------------- public
@@ -264,9 +372,14 @@ class DemandService:
         page: int = 1,
         page_size: int | None = None,
         refresh: bool = False,
+        origin: str | None = None,
     ) -> dict[str, Any]:
         code = self._branch_access.assert_valid_branch(branch)
         self._authorize(user, branch=code)
+
+        requested_origin = _text(origin).lower() or ORIGIN_PROTHEUS
+        if requested_origin not in ALLOWED_ORIGINS:
+            requested_origin = ORIGIN_PROTHEUS
 
         allowed_statuses = setting_list("statuses")
         requested_status = _text(status)
@@ -274,6 +387,8 @@ class DemandService:
             requested_status = ""
 
         allowed_sorts = setting_list("sortFields")
+        if "source" not in allowed_sorts:
+            allowed_sorts = list(allowed_sorts) + ["source"]
         requested_sort = _text(sort) or setting_str("defaultSort", "due_date")
         if requested_sort not in allowed_sorts:
             requested_sort = setting_str("defaultSort", "due_date")
@@ -293,9 +408,20 @@ class DemandService:
             direction="desc" if _text(direction).lower() == "desc" else "asc",
             page=resolved_page,
             page_size=resolved_size,
+            origin=requested_origin,
         )
 
-        all_lines = self._load_lines(code, refresh=refresh)
+        all_lines, myweg_meta = self._load_origin_lines(
+            user, branch=code, origin=requested_origin, refresh=refresh
+        )
+        effective_origin = (
+            _text((myweg_meta or {}).get("origin")).lower()
+            if myweg_meta and myweg_meta.get("myweg_skipped")
+            else requested_origin
+        )
+        if effective_origin not in ALLOWED_ORIGINS:
+            effective_origin = requested_origin
+
         filtered = [line for line in all_lines if self._matches(line, query)]
         filtered.sort(key=self._sort_key(query.sort), reverse=query.direction == "desc")
 
@@ -305,11 +431,32 @@ class DemandService:
         page_items = filtered[start : start + query.page_size]
         today = self._reference_date()
 
-        return {
+        split_origin = effective_origin in {ORIGIN_MYWEG, ORIGIN_BOTH} and not (
+            myweg_meta or {}
+        ).get("myweg_skipped")
+        official = effective_origin == ORIGIN_PROTHEUS and not split_origin
+        summary = self._summary(filtered)
+        summary["official_aggregate"] = official
+        if split_origin:
+            summary["by_origin"] = {
+                ORIGIN_PROTHEUS: self._summary(
+                    [line for line in filtered if line.source == ORIGIN_PROTHEUS]
+                ),
+                ORIGIN_MYWEG: self._summary(
+                    [line for line in filtered if line.source == ORIGIN_MYWEG]
+                ),
+            }
+            summary["aggregate_policy"] = "ARCHITECTURE_DECISION_REQUIRED"
+            summary["unit"] = "MI"
+        else:
+            summary["by_origin"] = None
+            summary["aggregate_policy"] = "protheus_official"
+
+        payload: dict[str, Any] = {
             "branch": code,
             "items": [line.to_dict(today) for line in page_items],
-            "summary": self._summary(filtered),
-            "horizon": self._horizon(filtered),
+            "summary": summary,
+            "horizon": self._horizon(filtered, split_origin=split_origin),
             "filters": {
                 "search": query.search,
                 "status": query.status,
@@ -317,7 +464,10 @@ class DemandService:
                 "due_to": query.due_to.isoformat() if query.due_to else None,
                 "sort": query.sort,
                 "direction": query.direction,
+                "origin": effective_origin,
+                "requested_origin": requested_origin,
                 "statuses": list(allowed_statuses),
+                "origins": [ORIGIN_PROTHEUS, ORIGIN_MYWEG, ORIGIN_BOTH],
             },
             "pagination": {
                 "page": query.page,
@@ -326,4 +476,6 @@ class DemandService:
                 "total_pages": total_pages,
                 "is_complete": query.page >= total_pages if total_pages else True,
             },
+            "myweg": myweg_meta,
         }
+        return payload

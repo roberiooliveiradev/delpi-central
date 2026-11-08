@@ -791,6 +791,37 @@
   color: #027a48;
 }
 
+.dashboard-production-control .ppc-demand-banner {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--ppc-accent, #1f4b7a);
+  background: color-mix(in srgb, var(--ppc-accent, #1f4b7a) 8%, transparent);
+  border-radius: 0 0.35rem 0.35rem 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.dashboard-production-control .ppc-demand-banner p {
+  margin: 0.25rem 0 0;
+}
+
+.dashboard-production-control .ppc-demand-banner p:first-child {
+  margin-top: 0;
+}
+
+.dashboard-production-control .ppc-demand__origin {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ppc-muted, #5b6570);
+}
+
+.dashboard-production-control .ppc-demand__origin--myweg {
+  color: var(--ppc-accent, #1f4b7a);
+}
+
 .dashboard-production-control .ppc-demand-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

@@ -1,7 +1,8 @@
-"""Prévia interna Demanda MyWEG + Protheus — motor DemandCoverageService.
+"""Prévia / integração MyWEG × Demanda — motor DemandCoverageService.
 
-Inerte para usuários: não altera GET /demand, UI ou KPIs produtivos.
-ADR de consolidação permanece ARCHITECTURE_DECISION_REQUIRED.
+E2: prévia operacional (CLI). E3: ``resolve_demand_origin_lines`` alimenta
+``GET /demand`` com origem myweg|both. Consolidação oficial permanece
+``ARCHITECTURE_DECISION_REQUIRED`` (sem total agregado definitivo).
 """
 
 from __future__ import annotations
@@ -28,6 +29,8 @@ from production_control_app.domain.errors import (
 )
 from production_control_app.domain.myweg_demand_source_contract import (
     DEMAND_SOURCE_BRANCH,
+    DISPLAY_ORDER_MYWEG,
+    SOURCE_MYWEG,
     WEG_LINHARES_CUSTOMER_CODE,
     WEG_LINHARES_CUSTOMER_STORE,
 )
@@ -499,6 +502,142 @@ class MyWegDemandCoveragePreviewService:
                 },
             },
             "op_unit_assumption": op_unit,
+        }
+
+    def resolve_demand_origin_lines(
+        self,
+        user: object | None,
+        *,
+        branch: str = DEMAND_SOURCE_BRANCH,
+        origin: str,
+        warehouse: str = STOCK_WAREHOUSE_DEFAULT,
+    ) -> dict[str, Any]:
+        """Linhas completas para ``GET /demand`` (origin=myweg|both).
+
+        Reusa o mesmo pool/adapter da prévia E2. Sem OP confirmada
+        (``OP_UNIT_UNVERIFIED``). Consolidação não é total oficial.
+        """
+        code = _text(branch)
+        if code == FORBIDDEN_BRANCH:
+            raise InvalidBranch("MyWEG na Demanda não se aplica à filial 01.")
+        if code != DEMAND_SOURCE_BRANCH:
+            raise InvalidBranch(f"Filial inválida para MyWEG na Demanda: {branch!r}.")
+        warehouse_code = _text(warehouse) or STOCK_WAREHOUSE_DEFAULT
+        if warehouse_code != STOCK_WAREHOUSE_DEFAULT:
+            raise InvalidBranch(
+                f"Armazém {warehouse_code!r} não homologado (somente 01)."
+            )
+        origin_norm = _text(origin).lower()
+        if origin_norm not in {"myweg", "both"}:
+            raise ValueError(f"origin inválida para integração MyWEG: {origin!r}")
+        self._assert_authorized(user)
+
+        batch_meta, projected = self._myweg_source.project_latest_lines(user, branch=code)
+        eligible = [line for line in projected if line.coverage_eligible and line.product_code]
+
+        sales_payload = self._gateway.fetch_open_sales_orders()
+        sales_raw = require_items_list(
+            sales_payload, "items", source_name="open_sales_orders"
+        )
+        sales_all = [item for item in sales_raw if isinstance(item, dict)]
+        sales_branch = [item for item in sales_all if _text(item.get("filial")) == code]
+
+        myweg_products = {line.product_code for line in eligible if line.product_code}
+        consolidation = classify_consolidation(
+            protheus_items=sales_branch,
+            myweg_eligible_products=myweg_products,
+        )
+        exclusive = sorted(
+            code_p
+            for code_p in myweg_products
+            if not any(
+                _text(item.get("produto")) == code_p and _text(item.get("filial")) == code
+                for item in consolidation["protheus_for_coverage"]
+            )
+        )
+        sb2_map, sb2_meta = self._fetch_sb2_stock(
+            branch=code, warehouse=warehouse_code, product_codes=exclusive
+        )
+        stock = build_stock_pool_mi(
+            branch=code,
+            protheus_items=consolidation["protheus_for_coverage"]
+            + consolidation["overlap_pending"],
+            myweg_product_codes=myweg_products,
+            sb2_quantities=sb2_map,
+            sb2_complete=bool(sb2_meta.get("complete")),
+            sb2_error=sb2_meta.get("error"),
+        )
+
+        myweg_inputs: list[dict[str, Any]] = []
+        pending_without_stock = 0
+        for line in eligible:
+            assert line.product_code
+            key = (code, line.product_code)
+            if key not in stock["pool"] and line.product_code in stock["missing_sb2_products"]:
+                pending_without_stock += 1
+                continue
+            myweg_inputs.append(
+                projection_to_coverage_input(
+                    line, product_stock_mi=float(stock["pool"].get(key, 0.0))
+                )
+            )
+        myweg_inputs = apply_pool_stock_to_inputs(myweg_inputs, stock["pool"], branch=code)
+
+        if origin_norm == "myweg":
+            lines = self._coverage.build(
+                open_sales_orders=myweg_inputs,
+                open_production_orders=[],
+                branch=code,
+            )
+        else:
+            consolidated_inputs = apply_pool_stock_to_inputs(
+                list(consolidation["protheus_for_coverage"]) + list(myweg_inputs),
+                stock["pool"],
+                branch=code,
+            )
+            lines = self._coverage.build(
+                open_sales_orders=consolidated_inputs,
+                open_production_orders=[],
+                branch=code,
+            )
+
+        for line in lines:
+            if line.source == SOURCE_MYWEG or line.sales_order == DISPLAY_ORDER_MYWEG:
+                line.source = SOURCE_MYWEG
+                line.planning = True
+            else:
+                line.source = SOURCE_PROTHEUS
+                line.planning = False
+
+        stock_data_complete = bool(sb2_meta.get("complete")) and not sb2_meta.get("error")
+        if exclusive and stock["incomplete"]:
+            stock_data_complete = False
+
+        return {
+            "lines": lines,
+            "meta": {
+                "origin": origin_norm,
+                "branch": code,
+                "adr_status": "ARCHITECTURE_DECISION_REQUIRED",
+                "official_aggregate": False,
+                "op_unit_status": OP_UNIT_UNVERIFIED,
+                "coverage_mode": "stock_only",
+                "productive_activation_blocked": True,
+                "stock_data_complete": stock_data_complete,
+                "stock_incomplete": bool(stock["incomplete"]),
+                "pending_without_stock_source_count": pending_without_stock,
+                "overlap_pending_count": len(consolidation["overlap_pending"]),
+                "reconciliation_blocked_count": len(consolidation["reconciliation_blocked"]),
+                "customer_identity_pending_count": len(
+                    consolidation["customer_identity_pending"]
+                ),
+                "batch": batch_meta,
+                "customer_scope": {
+                    "weg_linhares_code": WEG_LINHARES_CUSTOMER_CODE,
+                    "weg_linhares_store": WEG_LINHARES_CUSTOMER_STORE,
+                },
+                "unit": COVERAGE_UNIT_MI,
+            },
         }
 
     def _blocked_preview(

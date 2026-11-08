@@ -198,6 +198,8 @@ export type DemandCoveringOrder = {
   expected_date: string | null;
 };
 
+export type DemandOrigin = "protheus" | "myweg" | "both";
+
 export type DemandLine = {
   id: string;
   branch: string;
@@ -222,6 +224,10 @@ export type DemandLine = {
   coverage_date: string | null;
   status: DemandStatus;
   days_late: number;
+  /** Origem da linha — default Protheus quando ausente (compat). */
+  source?: DemandOrigin | "protheus" | "myweg";
+  /** Necessidade MyWEG = planejamento do cliente (não pedido Protheus). */
+  planning?: boolean;
 };
 
 export type DemandHorizonBucket = {
@@ -229,6 +235,8 @@ export type DemandHorizonBucket = {
   label: string;
   start_date: string | null;
   open_quantity: number;
+  open_quantity_protheus?: number;
+  open_quantity_myweg?: number;
   line_count: number;
   late: boolean;
 };
@@ -451,18 +459,28 @@ export type DeliveryMapProgressPayload = {
   polled_at: string;
 };
 
+export type DemandSummarySlice = {
+  line_count: number;
+  open_quantity: number;
+  late_line_count: number;
+  at_risk_line_count: number;
+  uncovered_quantity: number;
+  customer_count: number;
+  product_count: number;
+  next_due_date: string | null;
+};
+
 export type DemandPayload = {
   branch: string;
   items: DemandLine[];
-  summary: {
-    line_count: number;
-    open_quantity: number;
-    late_line_count: number;
-    at_risk_line_count: number;
-    uncovered_quantity: number;
-    customer_count: number;
-    product_count: number;
-    next_due_date: string | null;
+  summary: DemandSummarySlice & {
+    official_aggregate?: boolean;
+    aggregate_policy?: string;
+    unit?: string;
+    by_origin?: {
+      protheus: DemandSummarySlice;
+      myweg: DemandSummarySlice;
+    } | null;
   };
   horizon: DemandHorizonBucket[];
   filters: {
@@ -472,7 +490,10 @@ export type DemandPayload = {
     due_to: string | null;
     sort: string;
     direction: "asc" | "desc";
+    origin?: DemandOrigin;
+    requested_origin?: DemandOrigin;
     statuses: DemandStatus[];
+    origins?: DemandOrigin[];
   };
   pagination: {
     page: number;
@@ -481,6 +502,30 @@ export type DemandPayload = {
     total_pages: number;
     is_complete: boolean;
   };
+  myweg?: {
+    origin?: string;
+    adr_status?: string;
+    official_aggregate?: boolean;
+    op_unit_status?: string;
+    coverage_mode?: string;
+    productive_activation_blocked?: boolean;
+    stock_data_complete?: boolean;
+    stock_incomplete?: boolean;
+    pending_without_stock_source_count?: number;
+    overlap_pending_count?: number;
+    batch?: {
+      collection_id?: string;
+      collected_at?: string;
+      collection_date?: string;
+      record_count?: number;
+    } | null;
+    customer_scope?: {
+      weg_linhares_code?: string;
+      weg_linhares_store?: string;
+    };
+    myweg_skipped?: string;
+    unit?: string;
+  } | null;
 };
 
 export type VolumeView = "day" | "month_yoy";

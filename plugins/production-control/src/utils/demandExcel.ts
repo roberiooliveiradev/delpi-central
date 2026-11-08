@@ -18,6 +18,7 @@ export function buildDemandExcelPayload(lines: readonly DemandLine[]): DemandExc
   return {
     title: copy.demand.exportSheetTitle,
     columns: [
+      { key: "origin", label: columns.origin },
       { key: "dispatch", label: columns.dispatch },
       { key: "due", label: columns.due },
       { key: "customer", label: columns.customer },
@@ -32,6 +33,10 @@ export function buildDemandExcelPayload(lines: readonly DemandLine[]): DemandExc
       { key: "status", label: columns.status },
     ],
     rows: lines.map((line) => ({
+      origin:
+        line.source === "myweg"
+          ? copy.demand.originBadgeMyweg
+          : copy.demand.originBadgeProtheus,
       dispatch: line.dispatch_date ? formatIsoDate(line.dispatch_date) : "",
       due: line.due_date ? formatIsoDate(line.due_date) : "",
       customer: line.customer_name || "",

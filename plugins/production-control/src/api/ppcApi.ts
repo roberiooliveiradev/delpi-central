@@ -210,6 +210,7 @@ export async function fetchDemand(params: {
   branch: string;
   search?: string;
   status?: string;
+  origin?: string;
   dueFrom?: string | null;
   dueTo?: string | null;
   sort?: string | null;
@@ -222,6 +223,7 @@ export async function fetchDemand(params: {
   const search = new URLSearchParams({ branch: params.branch });
   if (params.search) search.set("search", params.search);
   if (params.status) search.set("status", params.status);
+  if (params.origin) search.set("origin", params.origin);
   if (params.dueFrom) search.set("dueFrom", params.dueFrom);
   if (params.dueTo) search.set("dueTo", params.dueTo);
   if (params.sort) search.set("sort", params.sort);

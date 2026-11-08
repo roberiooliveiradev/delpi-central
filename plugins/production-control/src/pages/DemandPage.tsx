@@ -43,24 +43,33 @@ type DemandPageProps = {
   status: string | null;
 };
 
+function originBadgeLabel(source: string | undefined): string {
+  return source === "myweg" ? copy.demand.originBadgeMyweg : copy.demand.originBadgeProtheus;
+}
+
 export function DemandPage({ branch, search, status }: DemandPageProps) {
   const [filters, setFilters] = useState<DemandFilters>({
     ...DEMAND_DEFAULT_FILTERS,
     search: search ?? "",
     status: status ?? "",
+    origin: branch === "02" ? "both" : "protheus",
   });
   const [searchDraft, setSearchDraft] = useState(filters.search);
   const [selected, setSelected] = useState<DemandLine | null>(null);
   const statusFieldId = useId();
+  const originFieldId = useId();
 
   const { data, loading, refreshing, error, reload } = useDemand(branch, filters);
   const demand = copy.demand;
 
   useEffect(() => {
-    setFilters((current) => ({ ...current, page: 1 }));
+    setFilters((current) => ({
+      ...current,
+      page: 1,
+      origin: branch === "02" ? current.origin || "both" : "protheus",
+    }));
   }, [branch]);
 
-  // A busca só vai ao BFF quando o usuário para de digitar.
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setFilters((current) =>
@@ -75,9 +84,23 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
 
   const summary = data?.summary;
   const rows = data?.items ?? [];
+  const showMywegUi = branch === "02";
+  const splitChart = Boolean(
+    showMywegUi &&
+      (data?.filters.origin === "both" || data?.filters.origin === "myweg") &&
+      !data?.myweg?.myweg_skipped,
+  );
   const statusOptions = useMemo(
     () => demandStatusOptions(data?.filters.statuses ?? []),
     [data?.filters.statuses],
+  );
+  const originOptions = useMemo(
+    () => [
+      { value: "both", label: demand.originAll },
+      { value: "protheus", label: demand.originProtheus },
+      { value: "myweg", label: demand.originMyweg },
+    ],
+    [demand.originAll, demand.originMyweg, demand.originProtheus],
   );
 
   const chartRows = useMemo(
@@ -87,14 +110,40 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
           ? demand.chart.lateLabel
           : demand.chart.weekLabel(formatIsoDate(bucket.start_date)),
         saldo: bucket.open_quantity,
+        saldo_protheus: bucket.open_quantity_protheus ?? 0,
+        saldo_myweg: bucket.open_quantity_myweg ?? 0,
       })),
     [data?.horizon, demand.chart],
   );
 
   const filtersActive =
-    Boolean(filters.search) || Boolean(filters.status) || Boolean(filters.dueFrom) || Boolean(filters.dueTo);
+    Boolean(filters.search) ||
+    Boolean(filters.status) ||
+    Boolean(filters.dueFrom) ||
+    Boolean(filters.dueTo) ||
+    (showMywegUi && filters.origin !== "both");
+
+  const mywegUpdatedLabel = useMemo(() => {
+    const batch = data?.myweg?.batch;
+    if (!batch) return null;
+    const when = batch.collected_at || batch.collection_date || batch.collection_id;
+    return when ? demand.mywegUpdated(formatIsoDate(String(when).slice(0, 10)) || String(when)) : null;
+  }, [data?.myweg?.batch, demand]);
 
   const columns = [
+    {
+      key: "source",
+      header: demand.columns.origin,
+      render: (row: DemandLine) => (
+        <span
+          className={
+            row.source === "myweg" ? "ppc-demand__origin ppc-demand__origin--myweg" : "ppc-demand__origin"
+          }
+        >
+          {originBadgeLabel(row.source)}
+        </span>
+      ),
+    },
     {
       key: "due_date",
       header: demand.columns.due,
@@ -111,7 +160,9 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
       render: (row: DemandLine) => (
         <span className="ppc-demand__customer">
           <strong>{row.customer_name || "—"}</strong>
-          {row.customer_order ? <span>{row.customer_order}</span> : null}
+          <span>
+            {[row.customer_code, row.customer_store].filter(Boolean).join(" / ") || row.customer_order || ""}
+          </span>
         </span>
       ),
     },
@@ -164,6 +215,16 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
 
       {data ? (
         <>
+          {showMywegUi && summary?.official_aggregate === false ? (
+            <div className="ppc-demand-banner" role="status">
+              <p>{demand.planningBanner}</p>
+              {mywegUpdatedLabel ? <p>{mywegUpdatedLabel}</p> : null}
+              {data.myweg?.stock_incomplete || data.myweg?.stock_data_complete === false ? (
+                <p>{demand.mywegIncomplete}</p>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="ppc-demand-kpi-grid" aria-label={demand.kpi.sectionAria}>
             <KpiCard
               className="ppc-board-card"
@@ -175,6 +236,16 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
                 summary?.customer_count ?? 0,
               )} · ${demand.kpi.products(summary?.product_count ?? 0)}`}
             />
+            {showMywegUi && summary?.by_origin?.myweg ? (
+              <KpiCard
+                className="ppc-board-card"
+                title={demand.kpi.mywegPlanned}
+                titleHint={demand.kpi.mywegPlannedHint}
+                icon={<PackageSearch size={20} strokeWidth={1.75} />}
+                value={formatOpQuantity(summary.by_origin.myweg.open_quantity)}
+                footer={demand.kpi.lines(summary.by_origin.myweg.line_count)}
+              />
+            ) : null}
             <KpiCard
               className="ppc-board-card"
               title={demand.kpi.lateLines}
@@ -211,17 +282,32 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
                 <MultiTypeSeriesChart
                   data={chartRows}
                   categoryKey="periodo"
-                  series={[
-                    {
-                      dataKey: "saldo",
-                      name: demand.chart.series,
-                      fill: CHART_COLORS_DEPARTMENTAL[0],
-                    },
-                  ]}
-                  chartType="column"
+                  series={
+                    splitChart
+                      ? [
+                          {
+                            dataKey: "saldo_protheus",
+                            name: demand.chart.seriesProtheus,
+                            fill: CHART_COLORS_DEPARTMENTAL[0],
+                          },
+                          {
+                            dataKey: "saldo_myweg",
+                            name: demand.chart.seriesMyweg,
+                            fill: CHART_COLORS_DEPARTMENTAL[1],
+                          },
+                        ]
+                      : [
+                          {
+                            dataKey: "saldo",
+                            name: demand.chart.series,
+                            fill: CHART_COLORS_DEPARTMENTAL[0],
+                          },
+                        ]
+                  }
+                  chartType={splitChart ? "stacked_bar" : "column"}
                   height={DEMAND_CHART_HEIGHT}
-                  showLegend={false}
-                  showValueLabels
+                  showLegend={splitChart}
+                  showValueLabels={!splitChart}
                   formatY={formatOpQuantity}
                   formatTooltipValue={formatOpQuantity}
                   margin={{ top: 28, right: 8, left: 0, bottom: 0 }}
@@ -240,7 +326,7 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
             refreshing={refreshing}
             emptyMessage={demand.empty}
             searchPlaceholder={demand.searchPlaceholder}
-            columnPreferencesKey="production-control:demand:columns:v1"
+            columnPreferencesKey="production-control:demand:columns:v2"
             onRowClick={setSelected}
             serverSearch={{ value: searchDraft, onChange: setSearchDraft }}
             serverSort={{
@@ -262,6 +348,16 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
             }}
             toolbarExtra={
               <>
+                {showMywegUi ? (
+                  <NativeSelectField
+                    id={originFieldId}
+                    label={demand.originLabel}
+                    value={filters.origin}
+                    options={originOptions}
+                    onChange={(value) => patch({ origin: value || "both" })}
+                    classNames={fieldClasses}
+                  />
+                ) : null}
                 <NativeSelectField
                   id={statusFieldId}
                   label={demand.columns.status}
@@ -293,7 +389,10 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
                     className="ppc-ghost-btn"
                     onClick={() => {
                       setSearchDraft("");
-                      setFilters({ ...DEMAND_DEFAULT_FILTERS });
+                      setFilters({
+                        ...DEMAND_DEFAULT_FILTERS,
+                        origin: branch === "02" ? "both" : "protheus",
+                      });
                     }}
                   >
                     {demand.clearFilters}

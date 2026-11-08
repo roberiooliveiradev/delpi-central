@@ -138,4 +138,4 @@ Não criar endpoint público só para teste. Não inventar token S2S como “usu
 1. ADR consolidação ACCEPTED.
 2. Homologação live com JWT real (RBAC Core alcançável no container).
 3. Decisão de expor `B1_UM` (ou equivalente) em ops-abertas — **somente** com análise de consumidores/compatibilidade.
-4. Gate de feature + contrato público (Etapa 3 — **não iniciada**).
+4. Etapa 3 (`GET /demand` + UI) — ver `MYWEG-DEMAND-E3-INTEGRATION.md` (consolidação oficial permanece bloqueada).

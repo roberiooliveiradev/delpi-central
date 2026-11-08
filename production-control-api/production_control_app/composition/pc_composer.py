@@ -206,9 +206,11 @@ def build_overview_service(
 def build_demand_service(
     gateway: DelpiProductionGateway | None = None,
 ) -> DemandService:
+    gw = gateway or DelpiProductionGateway()
     return DemandService(
-        gateway or DelpiProductionGateway(),
+        gw,
         branch_access=build_branch_access_service(),
+        myweg_coverage=build_myweg_demand_coverage_preview_service(gateway=gw),
     )
 
 
@@ -372,7 +374,7 @@ def build_myweg_demand_coverage_preview_service(
     gateway: DelpiProductionGateway | None = None,
     repository=None,
 ):
-    """Prévia E2 MyWEG+Demanda — inerte; não altera GET /demand."""
+    """Prévia E2 + resolução de linhas para GET /demand (E3, origin myweg|both)."""
     from production_control_app.application.services.myweg_demand_coverage_preview_service import (
         MyWegDemandCoveragePreviewService,
     )
