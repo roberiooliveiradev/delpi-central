@@ -1584,6 +1584,7 @@ def apply_native_table_observations(
                 "source_pdf_sha256": result.get("source_pdf_sha256"),
                 "render": result.get("render"),
                 "error_kind": result.get("error_kind"),
+                "error_detail": result.get("error_detail"),
                 "structure_consistent": consistent,
                 "cells": native_cells,
                 "association": result.get("association"),
