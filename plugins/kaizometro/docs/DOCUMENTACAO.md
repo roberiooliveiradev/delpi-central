@@ -176,7 +176,7 @@ Na ficha (`KaizenDetailPage`), **Exportar PDF** monta um `DelpiDocumentSpec` (`k
 
 | Inclui | Não inclui |
 |--------|------------|
-| Identificação, datas, economia, narrativa 2×2, equipe | Fotos de evidência, changelog, histórico completo de versões |
+| Identificação, datas, economia, narrativa 2×2, equipe, até duas fotos (preferência Antes/Depois) da versão | Outros anexos, changelog, histórico completo de versões |
 
 Exporta o **estado visualizado** (versão ativa ou snapshot da revisão selecionada). Textos longos são truncados para caber em uma página. Ajuda: `KAIZEN_HELP_TOOLTIPS.actions.exportPdf`.
 

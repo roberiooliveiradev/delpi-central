@@ -40,7 +40,7 @@ Navegação interna via estado do MFE (`CadastroKaizenPage`); o Portal monta o p
 
 ### Exportar PDF da ficha (1 folha)
 
-Na tela de detalhe, o botão **Exportar PDF** gera uma ficha A4 (layout certificado DELPI via `@delpi/plugin-ui`) com identificação, datas, economia, narrativa (processo / problema / melhoria / resultado) e equipe da **versão selecionada**. Abre o diálogo de impressão do navegador — use **Salvar como PDF**. Não inclui fotos de evidência, changelog nem histórico completo de versões.
+Na tela de detalhe, o botão **Exportar PDF** gera uma ficha A4 (layout certificado DELPI via `@delpi/plugin-ui`) com identificação, datas, economia, narrativa (processo / problema / melhoria / resultado) e equipe da **versão selecionada**. Abre o diálogo de impressão do navegador — use **Salvar como PDF**. Inclui até duas fotografias da versão selecionada, priorizando Antes e Depois, sem distorcer as imagens. Não inclui outros anexos, changelog nem histórico completo de versões. Falhas no carregamento das fotos impedem a exportação e exibem um erro.
 
 Arquivos: `src/utils/kaizenPdfSpec.ts`, `src/utils/exportKaizenPdf.ts`.
 

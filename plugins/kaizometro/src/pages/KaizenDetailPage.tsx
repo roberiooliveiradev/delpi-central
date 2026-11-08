@@ -126,6 +126,7 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
   const [implementing, setImplementing] = useState(false);
   const [deletingVersion, setDeletingVersion] = useState(false);
   const [deletingRecord, setDeletingRecord] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [changeReason, setChangeReason] = useState("");
@@ -423,15 +424,30 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
               type="button"
               className={KZ_GHOST_BTN}
               title={KAIZEN_HELP_TOOLTIPS.actions.exportPdf}
-              onClick={() =>
-                exportKaizenPdf({
-                  ...view,
-                  participants: viewParticipants,
-                })
-              }
+              disabled={exportingPdf}
+              onClick={() => {
+                if (exportingPdf) return;
+                setExportingPdf(true);
+                setError(null);
+                void exportKaizenPdf(
+                  { ...view, participants: viewParticipants },
+                  evidenceRevisionId,
+                )
+                  .then((ok) => {
+                    if (!ok) setError("Não foi possível abrir a impressão da ficha Kaizen.");
+                  })
+                  .catch((err: unknown) => {
+                    setError(
+                      err instanceof Error
+                        ? `Não foi possível exportar a ficha: ${err.message}`
+                        : "Não foi possível exportar a ficha com fotografias.",
+                    );
+                  })
+                  .finally(() => setExportingPdf(false));
+              }}
             >
               <FileDown size={16} aria-hidden="true" />
-              Exportar PDF
+              {exportingPdf ? "Preparando PDF…" : "Exportar PDF"}
             </button>
             {canWriteRecord ? (
             <button
