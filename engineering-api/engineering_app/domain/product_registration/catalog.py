@@ -563,7 +563,7 @@ def compare_suppliers(
 # Operações granulares sobre vínculos produto×fornecedor (SA5). A chave é
 # sempre (supplierCode, store) oficial; nunca razão social nem posição.
 # "remove" de vínculo oficial não é autorizado.
-SUPPLIER_LINK_OPERATIONS = ("update", "add")
+SUPPLIER_LINK_OPERATIONS = ("update", "add", "remove")
 SUPPLIER_LINK_EDITABLE_FIELDS = ("partNumber", "catalogNumber")
 
 
@@ -598,11 +598,18 @@ def validate_supplier_link_changes(
             return [], (
                 f"supplierLinkChanges[{i}].key exige supplierCode e store."
             )
-        fields = op.get("fields")
-        if not isinstance(fields, dict) or not fields:
+        fields = op.get("fields") or {}
+        if not isinstance(fields, dict):
+            return [], f"supplierLinkChanges[{i}].fields inválido."
+        if not fields and operation != "remove":
             return [], (
                 f"supplierLinkChanges[{i}].fields deve conter ao menos "
                 "um atributo."
+            )
+        if fields and operation == "remove":
+            return [], (
+                f"supplierLinkChanges[{i}].fields não se aplica a "
+                "'remove' — a remoção é integral do vínculo."
             )
         unknown = set(fields) - set(SUPPLIER_LINK_EDITABLE_FIELDS)
         if unknown:

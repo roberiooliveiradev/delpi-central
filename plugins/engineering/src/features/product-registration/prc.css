@@ -406,3 +406,46 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+
+/* D13 — edição direta + diff automático */
+.engineering-prc__edit-row--changed {
+  border-left: 3px solid var(--en-accent);
+  padding-left: 10px;
+}
+
+.engineering-prc__diff-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 0.78rem;
+}
+
+.engineering-prc__diff-tag {
+  background: var(--en-accent);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+
+.engineering-prc__supplier-tr--remove td {
+  background: rgba(176, 0, 32, 0.06);
+  text-decoration: line-through;
+  text-decoration-color: rgba(176, 0, 32, 0.4);
+}
+
+.engineering-prc__supplier-tr--added td {
+  background: rgba(21, 128, 61, 0.06);
+}
+
+.engineering-prc__remove-tag,
+.engineering-prc__add-tag {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.engineering-prc__remove-tag { color: var(--en-danger); }
+.engineering-prc__add-tag { color: var(--en-success); }

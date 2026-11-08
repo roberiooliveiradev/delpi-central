@@ -954,3 +954,65 @@ def test_d12_compare_link_ops():
           "key": {"supplierCode": "000089", "store": "01"},
           "fields": {"catalogNumber": ""}, "reason": "r"}],
         observed)["result"] == "matched"
+
+
+def test_d13_expected_paths_sa5_only():
+    """P0: UPDATE só-SA5 deve entrar no conjunto de verificação."""
+    from engineering_app.application.use_cases.product_registration.service import (  # noqa: E501
+        ProductRegistrationService,
+    )
+    svc = ProductRegistrationService(
+        InMemoryProductRegistrationRepository(), official_reader=None
+    )
+    request = {
+        "request_type": "update",
+        "draft": {"changed_paths": []},
+    }
+    paths = svc._expected_verify_paths(
+        request, {"supplierLinkChanges": [{"operation": "update"}]}
+    )
+    assert "suppliers" in paths
+    paths = svc._expected_verify_paths(request, {})
+    assert "suppliers" not in paths
+
+
+def test_d13_compare_link_ops_remove():
+    from engineering_app.application.use_cases.product_registration.service import (
+        compare_link_ops,
+    )
+    observed = [
+        {"supplier_code": "000089", "supplier_store": "01",
+         "supplier_part_number": "PN", "catalog_code": ""},
+    ]
+    gone = compare_link_ops(
+        [{"operation": "remove",
+          "key": {"supplierCode": "000972", "store": "01"},
+          "fields": {}, "reason": "desvincular"}],
+        observed)
+    assert gone["result"] == "matched"
+    still = compare_link_ops(
+        [{"operation": "remove",
+          "key": {"supplierCode": "000089", "store": "01"},
+          "fields": {}, "reason": "desvincular"}],
+        observed)
+    assert still["result"] == "mismatched"
+    incomplete = compare_link_ops(
+        [{"operation": "remove",
+          "key": {"supplierCode": "000972", "store": "01"},
+          "fields": {}, "reason": "r"}],
+        observed, complete=False)
+    assert incomplete["result"] == "unverifiable"
+
+
+def test_d13_remove_op_validation():
+    from engineering_app.domain.product_registration import catalog
+    ops, err = catalog.validate_supplier_link_changes(
+        [{"operation": "remove",
+          "key": {"supplierCode": "000972", "store": "01"},
+          "fields": {}, "reason": "desvincular fornecedor"}])
+    assert err is None and ops[0]["operation"] == "remove"
+    _, err = catalog.validate_supplier_link_changes(
+        [{"operation": "remove",
+          "key": {"supplierCode": "000972", "store": "01"},
+          "fields": {"partNumber": "x"}, "reason": "r"}])
+    assert err is not None

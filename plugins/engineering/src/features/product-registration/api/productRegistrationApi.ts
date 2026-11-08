@@ -243,7 +243,7 @@ export type PrcEditContext = {
 };
 
 export type PrcSupplierLinkChange = {
-  operation: "update" | "add";
+  operation: "update" | "add" | "remove";
   key: { supplierCode: string; store: string };
   fields: { partNumber?: string; catalogNumber?: string };
   reason: string;

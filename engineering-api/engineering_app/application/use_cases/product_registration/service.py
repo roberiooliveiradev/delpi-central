@@ -300,7 +300,6 @@ class ProductRegistrationService:
                         "baseRevision deve ser >= 1.",
                         fields={"baseRevision": "invalid"},
                     )
-            changes = catalog.validate_update_changes(payload.get("changes"))
             link_ops, link_err = catalog.validate_supplier_link_changes(
                 payload.get("supplierLinkChanges")
             )
@@ -308,6 +307,14 @@ class ProductRegistrationService:
                 raise PrcValidationError(
                     link_err, fields={"supplierLinkChanges": "invalid"}
                 )
+            # D13: UPDATE só-SA5 é legítimo — changes pode ser vazio
+            # quando há ops de vínculo; o requisito "1+ alteração" é
+            # garantido pelo check conjunto logo abaixo.
+            raw_changes = payload.get("changes")
+            if raw_changes or not link_ops:
+                changes = catalog.validate_update_changes(raw_changes)
+            else:
+                changes = []
             record = self._repo.get_record_by_official_code(
                 official_source=catalog.OFFICIAL_SOURCE,
                 official_code=official_code,
@@ -743,6 +750,14 @@ class ProductRegistrationService:
         draft = request.get("draft") or {}
         data = draft.get("technical_data") or {}
         expected_paths = self._expected_verify_paths(request, data)
+        if not expected_paths and (
+            (draft.get("changed_paths") or [])
+            or (data.get("supplierLinkChanges") or [])
+        ):
+            raise PrcStateConflictError(
+                "integrity_error: solicitação com mudanças efetivas sem "
+                "conjunto de verificação."
+            )
         observed = await self._reader.read_product(
             access_token=access_token,
             request_id=correlation_id,
@@ -861,7 +876,7 @@ class ProductRegistrationService:
                 if spec.path != "officialProductCode"
                 and spec.path in draft_data
             ]
-        return [
+        paths = [
             spec.path
             for spec in catalog.FIELD_SPECS
             if spec.path != "officialProductCode"
@@ -870,6 +885,13 @@ class ProductRegistrationService:
                 for c in (request.get("draft") or {}).get("changed_paths", [])
             )
         ]
+        # P0-D13: ops SA5 entram no conjunto obrigatório de verificação
+        # mesmo sem change escalar "suppliers" — senão a solicitação
+        # concluiria sem nenhuma comparação.
+        if (draft_data.get("supplierLinkChanges")
+                and "suppliers" not in paths):
+            paths.append("suppliers")
+        return paths
 
     def _compare(
         self,
@@ -1222,6 +1244,16 @@ def compare_link_ops(
         )
         label = f"{op['operation']}:{key[0]}.{key[1]}"
         found = by_key.get(key, [])
+        if op["operation"] == "remove":
+            # pós-condição da remoção: ausência oficial comprovada.
+            if not found:
+                detail.append({"key": label, "result": "matched"})
+            else:
+                result = "mismatched"
+                detail.append(
+                    {"key": label, "result": "still_present_official"}
+                )
+            continue
         if not found:
             result = "mismatched"
             detail.append({"key": label, "result": "missing_in_official"})

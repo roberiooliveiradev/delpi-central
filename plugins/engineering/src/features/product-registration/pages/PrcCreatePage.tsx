@@ -17,7 +17,6 @@ import {
 import { HomeApiError } from "../../../api/httpClient";
 import {
   EngineeringActionButton,
-  EngineeringCheckboxControl,
   EngineeringDetailCard,
   EngineeringDetailFieldGrid,
   EngineeringFormActions,
@@ -62,6 +61,11 @@ import {
   PRC_SUPPLIER_LABELS,
   PRC_VALIDATION,
 } from "../prcCopy";
+import {
+  computeLinkDiff,
+  computeScalarDiff,
+  linkKeyOf,
+} from "../prcDiff";
 import {
   duplicateSupplierIndexes,
   emptySupplierRow,
@@ -120,16 +124,13 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
 
   const [values, setValues] = useState<Record<string, string>>({});
   const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
-  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [supplierReason, setSupplierReason] = useState("");
   const [editCtx, setEditCtx] = useState<PrcEditContext | null>(null);
   const [editCtxState, setEditCtxState] = useState<
     "idle" | "loading" | "error" | "not_found"
   >("idle");
-  const [linkEdits, setLinkEdits] = useState<
-    Record<string, { pn?: string; cat?: string; reason: string }>
-  >({});
+  const [removeMarks, setRemoveMarks] = useState<Set<string>>(new Set());
 
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -195,13 +196,17 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
           }
         }
       } else {
-        if (!selectedPaths.size && suppliers === null) {
-          return "Selecione ao menos um campo para alterar.";
+        if (!scalarDiff.length && !linkOps.length) {
+          return "Nenhuma alteração identificada — edite um campo, vínculo ou adicione um fornecedor.";
         }
-        for (const path of selectedPaths) {
-          if (!(reasons[path] || "").trim()) {
-            return `Informe a justificativa para «${PRC_FIELD_LABELS[path] || path}».`;
+        for (const change of scalarDiff) {
+          if (!(reasons[change.path] || "").trim()) {
+            return `Informe a justificativa para «${PRC_FIELD_LABELS[change.path] || change.path}».`;
           }
+        }
+        if (linkOps.some((o) => o.operation === "remove") &&
+            !supplierReason.trim()) {
+          return "Informe a justificativa para a remoção solicitada.";
         }
       }
       const bad = suppliers.findIndex(
@@ -213,7 +218,9 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
       if (duplicateSupplierIndexes(suppliers).size > 0) {
         return PRC_SUPPLIER_HELP.duplicate;
       }
-      if (requestType === "update" && !supplierReason.trim() && supplierTouched) {
+      if (requestType === "update" && supplierTouched &&
+          !linkOps.some((o) => o.operation === "remove") &&
+          !supplierReason.trim()) {
         return "Informe a justificativa da alteração de fornecedores.";
       }
       return "";
@@ -221,8 +228,27 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
     return "";
   };
 
+  const baselineFields: Record<string, unknown> = {};
+  Object.entries(editCtx?.fields || {}).forEach(([p, f]) => {
+    baselineFields[p] = f?.value;
+  });
+  const scalarPaths = (refData?.fields || [])
+    .filter((spec) => spec.kind !== "suppliers" && spec.path !== "officialProductCode")
+    .map((spec) => spec.path);
+  const scalarDiff =
+    requestType === "update" && editCtx
+      ? computeScalarDiff(baselineFields, values, scalarPaths)
+      : [];
+  const changedPaths = new Set(scalarDiff.map((c) => c.path));
+  const officialKeys = new Set(
+    (editCtx?.links || []).map((l) => linkKeyOf(l.supplierCode, l.store)),
+  );
+  const linkOps =
+    requestType === "update" && editCtx
+      ? computeLinkDiff(editCtx.links || [], suppliers, removeMarks)
+      : [];
   const supplierTouched =
-    requestType === "create" ? false : suppliers.length > 0 || selectedPaths.has("suppliers");
+    requestType === "create" ? false : linkOps.length > 0;
 
   const next = () => {
     const msg = validateStep(step);
@@ -245,6 +271,28 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
           }
           setEditCtx(d);
           setEditCtxState("idle");
+          /* D13 — working copy semeada do baseline oficial: o usuário
+           * edita diretamente os valores reais, e o diff é automático. */
+          setValues(
+            Object.fromEntries(
+              Object.entries(d.fields || {}).map(([path, f]) => [
+                path,
+                f?.value === null || f?.value === undefined
+                  ? ""
+                  : String(f.value),
+              ]),
+            ),
+          );
+          setSuppliers(
+            (d.links || []).map((l) => ({
+              ...emptySupplierRow(),
+              supplierCode: l.supplierCode,
+              store: l.store,
+              supplierName: l.supplierName,
+              partNumber: l.partNumber || "",
+              catalogNumber: l.catalogNumber || "",
+            })),
+          );
         })
         .catch(() => {
           setEditCtx(null);
@@ -288,48 +336,19 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
       path: string;
       proposedValue: unknown;
       reason: string;
-    }> = [...selectedPaths]
-      .filter((p) => p !== "suppliers")
-      .map((path) => ({
-        path,
-        proposedValue: (values[path] || "").trim(),
-        reason: (reasons[path] || "").trim(),
-      }));
-    const supplierLinkChanges: PrcSupplierLinkChange[] = [];
-    if (selectedPaths.has("suppliers") || supplierTouched) {
-      Object.entries(linkEdits).forEach(([key, edit]) => {
-        const [supplierCode, store] = key.split("|");
-        const fields: Record<string, string> = {};
-        if (edit.pn !== undefined) fields.partNumber = edit.pn;
-        if (edit.cat !== undefined) fields.catalogNumber = edit.cat;
-        if (!Object.keys(fields).length) return;
-        supplierLinkChanges.push({
-          operation: "update",
-          key: { supplierCode, store },
-          fields,
-          reason: edit.reason.trim() || supplierReason.trim(),
-        });
-      });
-      suppliers.forEach((r) => {
-        if (!r.supplierCode.trim() || !r.store.trim()) return;
-        supplierLinkChanges.push({
-          operation: "add",
-          key: {
-            supplierCode: r.supplierCode.trim(),
-            store: r.store.trim(),
-          },
-          fields: {
-            ...(r.partNumber.trim()
-              ? { partNumber: r.partNumber.trim() }
-              : {}),
-            ...(r.catalogNumber.trim()
-              ? { catalogNumber: r.catalogNumber.trim() }
-              : {}),
-          },
-          reason: supplierReason.trim(),
-        });
-      });
-    }
+    }> = scalarDiff.map((change) => ({
+      path: change.path,
+      proposedValue: change.after,
+      reason: (reasons[change.path] || "").trim(),
+    }));
+    const supplierLinkChanges: PrcSupplierLinkChange[] = linkOps.map(
+      (op) => ({
+        operation: op.operation,
+        key: op.key,
+        fields: op.operation === "remove" ? {} : op.fields,
+        reason: supplierReason.trim(),
+      }),
+    );
     return {
       source: PORTAL_SOURCE,
       requestType: "update",
@@ -435,45 +454,38 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
   const renderSheetField = (path: string) => {
     const spec = specByPath.get(path);
     const label = PRC_FIELD_LABELS[path] || path;
-    const selected =
-      requestType === "create" ? true : selectedPaths.has(path);
-    const officialNow =
-      requestType === "update" && editCtx
-        ? editCtx.fields?.[path]?.value
-        : undefined;
+    const selected = true;
+    const changed = requestType === "update" && changedPaths.has(path);
+    const baseline = baselineFields[path];
     return (
-      <div key={path} className="engineering-prc__edit-row">
-        {requestType === "update" ? (
-          <>
-            <EngineeringCheckboxControl
-            checked={selected}
-            disabled={busy}
-            onChange={(v) =>
-              setSelectedPaths((prev) => {
-                const next = new Set(prev);
-                if (v) next.add(path);
-                else next.delete(path);
-                return next;
-              })
-            }
-            label={label}
-            hint={spec?.note || undefined}
-          />
-            {editCtxState === "loading" ? (
-              <p className="engineering-prc__muted">
-                Consultando valor oficial…
-              </p>
-            ) : officialNow !== undefined && officialNow !== null &&
-              officialNow !== "" ? (
-              <p className="engineering-prc__official-now">
-                Atual no TOTVS: <strong>{String(officialNow)}</strong>
-              </p>
-            ) : editCtx ? (
-              <p className="engineering-prc__muted">
-                Sem valor atual no TOTVS.
-              </p>
-            ) : null}
-          </>
+      <div
+        key={path}
+        className={`engineering-prc__edit-row${
+          changed ? " engineering-prc__edit-row--changed" : ""
+        }`}
+      >
+        {requestType === "update" && changed ? (
+          <div className="engineering-prc__diff-badge">
+            <span className="engineering-prc__diff-tag">Alterado</span>
+            <span className="engineering-prc__muted">
+              Anterior no TOTVS:{" "}
+              <strong>{String(baseline ?? "") || "vazio"}</strong>
+            </span>
+            <button
+              type="button"
+              className="engineering-prc__lookup-clear"
+              onClick={() =>
+                setValue(
+                  path,
+                  baseline === null || baseline === undefined
+                    ? ""
+                    : String(baseline),
+                )
+              }
+            >
+              Desfazer
+            </button>
+          </div>
         ) : null}
         {selected ? (
           <div className="engineering-prc__edit-controls">
@@ -540,11 +552,9 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
             label: PRC_FIELD_LABELS[path] || path,
             value: v,
           }))
-      : [...selectedPaths]
-          .filter((p) => p !== "suppliers")
-          .map((path) => ({
-            label: PRC_FIELD_LABELS[path] || path,
-            value: `${values[path] || ""} — ${reasons[path] || ""}`,
+      : scalarDiff.map((change) => ({
+            label: `${PRC_FIELD_LABELS[change.path] || change.path} (alterado)`,
+            value: `${change.before || "vazio"} → ${change.after || "vazio"} — ${reasons[change.path] || ""}`,
           }));
 
   if (loadError) {
@@ -698,188 +708,18 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               </EngineeringActionButton>
             }
           >
-            {requestType === "update" ? (
-              <>
-                <EngineeringCheckboxControl
-                  checked={selectedPaths.has("suppliers")}
-                  disabled={busy}
-                  onChange={(v) =>
-                    setSelectedPaths((prev) => {
-                      const next = new Set(prev);
-                      if (v) next.add("suppliers");
-                      else next.delete("suppliers");
-                      return next;
-                    })
-                  }
-                  label="Alterar vínculos de fornecedores"
-                  hint="Edite Part Number ou Catálogo por vínculo, ou adicione um novo vínculo — os demais permanecem intactos."
-                />
-                {editCtx && (editCtx.links || []).length ? (
-                  <div className="engineering-prc__supplier-table-wrap">
-                    <table className="engineering-prc__supplier-table">
-                      <thead>
-                        <tr>
-                          <th scope="col">Código</th>
-                          <th scope="col">Loja</th>
-                          <th scope="col">Razão social</th>
-                          <th scope="col">PN atual</th>
-                          <th scope="col">Catálogo atual</th>
-                          <th scope="col">Editar vínculo</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {editCtx.links.map((lnk) => {
-                          const key = `${lnk.supplierCode}|${lnk.store}`;
-                          const edit = linkEdits[key];
-                          return (
-                            <tr key={key}>
-                              <td data-label="Código">{lnk.supplierCode}</td>
-                              <td data-label="Loja">{lnk.store}</td>
-                              <td data-label="Razão social">
-                                {lnk.supplierName}
-                              </td>
-                              <td data-label="PN atual">
-                                {lnk.partNumber || "—"}
-                              </td>
-                              <td data-label="Catálogo atual">
-                                {lnk.catalogNumber || "—"}
-                              </td>
-                              <td data-label="Editar vínculo">
-                                {edit ? (
-                                  <div className="engineering-prc__link-edit">
-                                    {edit.pn !== undefined ? (
-                                      <input
-                                        type="text"
-                                        className="engineering-prc__cell-input"
-                                        placeholder="Novo Part Number"
-                                        value={edit.pn}
-                                        disabled={busy}
-                                        aria-label={`Novo Part Number ${lnk.supplierCode}`}
-                                        onChange={(e) =>
-                                          setLinkEdits((prev) => ({
-                                            ...prev,
-                                            [key]: {
-                                              ...prev[key],
-                                              pn: e.target.value,
-                                            },
-                                          }))
-                                        }
-                                      />
-                                    ) : null}
-                                    {edit.cat !== undefined ? (
-                                      <input
-                                        type="text"
-                                        className="engineering-prc__cell-input"
-                                        placeholder="Novo Catálogo"
-                                        value={edit.cat}
-                                        disabled={busy}
-                                        aria-label={`Novo Catálogo ${lnk.supplierCode}`}
-                                        onChange={(e) =>
-                                          setLinkEdits((prev) => ({
-                                            ...prev,
-                                            [key]: {
-                                              ...prev[key],
-                                              cat: e.target.value,
-                                            },
-                                          }))
-                                        }
-                                      />
-                                    ) : null}
-                                    {!edit.pn && !edit.cat ? (
-                                      <span className="engineering-prc__muted">
-                                        Marque o atributo a alterar:
-                                      </span>
-                                    ) : null}
-                                    <div className="engineering-prc__link-edit-flags">
-                                      {edit.pn === undefined ? (
-                                        <button
-                                          type="button"
-                                          className="engineering-prc__lookup-clear"
-                                          onClick={() =>
-                                            setLinkEdits((prev) => ({
-                                              ...prev,
-                                              [key]: {
-                                                ...prev[key],
-                                                pn: lnk.partNumber,
-                                              },
-                                            }))
-                                          }
-                                        >
-                                          + PN
-                                        </button>
-                                      ) : null}
-                                      {edit.cat === undefined ? (
-                                        <button
-                                          type="button"
-                                          className="engineering-prc__lookup-clear"
-                                          onClick={() =>
-                                            setLinkEdits((prev) => ({
-                                              ...prev,
-                                              [key]: {
-                                                ...prev[key],
-                                                cat: lnk.catalogNumber,
-                                              },
-                                            }))
-                                          }
-                                        >
-                                          + Catálogo
-                                        </button>
-                                      ) : null}
-                                      <button
-                                        type="button"
-                                        className="engineering-prc__lookup-clear"
-                                        onClick={() =>
-                                          setLinkEdits((prev) => {
-                                            const next = { ...prev };
-                                            delete next[key];
-                                            return next;
-                                          })
-                                        }
-                                      >
-                                        Cancelar
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    className="engineering-prc__lookup-clear"
-                                    disabled={busy}
-                                    onClick={() =>
-                                      setLinkEdits((prev) => ({
-                                        ...prev,
-                                        [key]: { reason: "" },
-                                      }))
-                                    }
-                                  >
-                                    Editar
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                    {editCtx.linksComplete === false ? (
-                      <p className="engineering-prc__field-error" role="alert">
-                        A lista de vínculos pode estar incompleta — revise
-                        antes de propor alterações.
-                      </p>
-                    ) : null}
-                    <p className="engineering-prc__muted">
-                      Novos vínculos adicionados abaixo não substituem os
-                      existentes — só acrescentam.
-                    </p>
-                  </div>
-                ) : editCtx ? (
-                  <p className="engineering-prc__muted">
-                    Nenhum vínculo oficial cadastrado para este produto.
-                  </p>
-                ) : null}
-              </>
+            {requestType === "update" && editCtxState === "loading" ? (
+              <p className="engineering-prc__muted">
+                Consultando vínculos oficiais…
+              </p>
             ) : null}
-            {requestType === "create" || selectedPaths.has("suppliers") ? (
+            {editCtx && editCtx.linksComplete === false ? (
+              <p className="engineering-prc__field-error" role="alert">
+                A lista de vínculos pode estar incompleta — revise
+                antes de propor alterações.
+              </p>
+            ) : null}
+            {requestType === "create" || requestType === "update" ? (
               <>
                 {suppliers.length ? (
                   <div className="engineering-prc__supplier-table-wrap">
@@ -905,10 +745,18 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                             !row.supplierName.trim();
                           const dup =
                             duplicateSupplierIndexes(suppliers).has(index);
+                          const key = linkKeyOf(row.supplierCode, row.store);
+                          const isOfficial = officialKeys.has(key);
+                          const markedRemove = removeMarks.has(key);
+                          const rowClass = markedRemove
+                            ? "engineering-prc__supplier-tr--remove"
+                            : isOfficial && requestType === "update"
+                              ? ""
+                              : "engineering-prc__supplier-tr--added";
                           return (
                             <tr
                               key={index}
-                              className={missing || dup ? "engineering-prc__supplier-tr--error" : ""}
+                              className={missing || dup ? "engineering-prc__supplier-tr--error" : rowClass}
                             >
                               <td data-label="Fornecedor">
                                 <PrcSupplierCellLookup
@@ -1020,17 +868,60 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
                                 />
                               </td>
                               <td data-label="Ações">
-                                <EngineeringActionButton
-                                  variant="ghost"
-                                  disabled={busy}
-                                  onClick={() =>
-                                    setSuppliers((rows) =>
-                                      rows.filter((_, i) => i !== index),
-                                    )
-                                  }
-                                >
-                                  Remover
-                                </EngineeringActionButton>
+                                {requestType === "update" && isOfficial ? (
+                                  markedRemove ? (
+                                    <EngineeringActionButton
+                                      variant="ghost"
+                                      disabled={busy}
+                                      onClick={() =>
+                                        setRemoveMarks((prev) => {
+                                          const next = new Set(prev);
+                                          next.delete(key);
+                                          return next;
+                                        })
+                                      }
+                                    >
+                                      Desfazer remoção
+                                    </EngineeringActionButton>
+                                  ) : (
+                                    <EngineeringActionButton
+                                      variant="ghost"
+                                      disabled={busy}
+                                      aria-label={`Solicitar remoção do vínculo ${row.supplierCode}/${row.store}`}
+                                      onClick={() =>
+                                        setRemoveMarks((prev) =>
+                                          new Set(prev).add(key),
+                                        )
+                                      }
+                                    >
+                                      Remover
+                                    </EngineeringActionButton>
+                                  )
+                                ) : (
+                                  <EngineeringActionButton
+                                    variant="ghost"
+                                    disabled={busy}
+                                    onClick={() =>
+                                      setSuppliers((rows) =>
+                                        rows.filter((_, i) => i !== index),
+                                      )
+                                    }
+                                  >
+                                    Remover
+                                  </EngineeringActionButton>
+                                )}
+                                {markedRemove ? (
+                                  <p className="engineering-prc__remove-tag">
+                                    Remoção solicitada — será proposta ao
+                                    TOTVS.
+                                  </p>
+                                ) : null}
+                                {!isOfficial &&
+                                requestType === "update" ? (
+                                  <p className="engineering-prc__add-tag">
+                                    Adicionado
+                                  </p>
+                                ) : null}
                               </td>
                             </tr>
                           );
@@ -1082,25 +973,32 @@ export function PrcCreatePage({ basePath }: { basePath: string }) {
               ...(requestType === "update"
                 ? [
                     { label: "Código oficial", value: officialCode },
-                    ...(Object.keys(linkEdits).length ||
-                    suppliers.length
-                      ? [
-                          {
-                            label: "Operações de vínculo",
-                            value: `${Object.keys(linkEdits).length} alteração(ões) + ${suppliers.length} adição(ões)`,
-                          },
-                        ]
-                      : []),
+                    {
+                      label: "Operações de vínculo",
+                      value: linkOps.length
+                        ? linkOps
+                            .map((o) => {
+                              const k = `${o.key.supplierCode}/${o.key.store}`;
+                              if (o.operation === "add")
+                                return `+ ${k}`;
+                              if (o.operation === "remove")
+                                return `− ${k} (remoção solicitada)`;
+                              const parts = Object.keys(o.fields)
+                                .join("+");
+                              return `~ ${k} (${parts})`;
+                            })
+                            .join(" · ")
+                        : "Não alterado",
+                    },
                   ]
                 : []),
               ...reviewItems,
               {
                 label: "Fornecedores",
                 value:
-                  requestType === "create" ||
-                  selectedPaths.has("suppliers")
+                  requestType === "create"
                     ? `${suppliers.length} vínculo(s)`
-                    : "Não alterado",
+                    : `${linkOps.length} operação(ões)`,
               },
             ]}
           />
