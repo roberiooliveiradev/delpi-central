@@ -78,7 +78,7 @@ def test_resolve_nc_workflow_evidence_step() -> None:
         has_before_evidence=False,
         has_after_evidence=False,
     )
-    assert result == {"plan_started": True, "workflow_step": 2}
+    assert result == {"plan_started": True, "workflow_step": 3}
 
 
 def test_resolve_nc_workflow_ready_to_finalize_with_before_only() -> None:

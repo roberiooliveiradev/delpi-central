@@ -131,6 +131,10 @@ class UpsertResponseBody(BaseModel):
     version: int | None = None
 
 
+class CancelNcCandidateBody(BaseModel):
+    reason: str = Field(..., min_length=5, max_length=1000)
+
+
 class CreateNonconformityBody(BaseModel):
     response_id: str
     description: str = Field(..., min_length=3)
@@ -1082,6 +1086,54 @@ def list_nc_candidates(audit_id: str):
     except Exception as exc:
         log_error(f"Erro ao listar NC candidatas 5S: {exc}")
         return error_response("Erro interno ao listar NC candidatas.", status_code=500)
+
+
+@router.post(
+    "/audits/{audit_id}/nc-candidates/{response_id}/cancel",
+    operation_id="cancel_audit_5s_nc_candidate_without_plan",
+)
+@require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
+async def cancel_nc_candidate(
+    audit_id: str,
+    response_id: str,
+    body: CancelNcCandidateBody = Body(...),
+):
+    """Admin cancela NC sem plano, com justificativa e sem alterar a nota."""
+    try:
+        repo = build_audit_5s_repository()
+        audit = repo.get_audit(audit_id.strip())
+        if not audit:
+            return error_response("Auditoria não encontrada.", status_code=404)
+        branch_error = branch_access_error(audit["branch_code"], require_admin=True)
+        if branch_error is not None:
+            return branch_error
+
+        data = repo.cancel_nc_candidate(
+            audit_id=audit_id.strip(),
+            response_id=response_id.strip(),
+            reason=body.reason,
+            actor_user_id=_current_user_id(),
+        )
+        try:
+            await publish_audit_updated(
+                audit_id=audit_id.strip(),
+                audit=audit,
+                event_type="nc_candidate_cancelled",
+                actor_user_id=_current_user_id(),
+                actor_display_name=_current_user_name(),
+            )
+        except Exception as publish_exc:
+            log_error(f"Falha ao publicar cancelamento da NC candidata 5S: {publish_exc}")
+        return api_delpi_success(
+            data,
+            operation_id="cancel_audit_5s_nc_candidate_without_plan",
+            message="Não conformidade cancelada sem plano de ação.",
+        )
+    except PluginsRepositoryError as exc:
+        return error_response(str(exc), status_code=422)
+    except Exception as exc:
+        log_error(f"Erro ao cancelar NC candidata 5S: {exc}")
+        return error_response("Erro interno ao cancelar NC.", status_code=500)
 
 
 @router.get("/audits/{audit_id}/nonconformities", operation_id="list_audit_5s_nonconformities")

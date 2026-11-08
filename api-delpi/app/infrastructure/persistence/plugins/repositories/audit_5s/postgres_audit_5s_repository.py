@@ -911,6 +911,10 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             raise PluginsRepositoryError("Auditoria não encontrada.")
         if audit["status"] != AUDIT_STATUS_DRAFT:
             raise PluginsRepositoryError("Auditoria não está em fase de avaliação.")
+        if is_nc_candidate(score, is_not_applicable) and len(str(observation or "").strip()) < 3:
+            raise PluginsRepositoryError(
+                "Informe o motivo da NC (mínimo de 3 caracteres) ao registrar nota 1 ou 3."
+            )
 
         existing = self.fetch_one(
             """
@@ -936,6 +940,30 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                     """,
                     (str(existing["id"]),),
                 )
+
+            # Cancelamentos sem plano são preservados, mas a mudança de nota
+            # invalida o cancelamento anterior para permitir nova análise.
+            if existing:
+                waiver = self.fetch_one(
+                    """
+                    SELECT id, score_at_cancellation
+                      FROM quality.audit_5s_nc_candidate_cancellations
+                     WHERE response_id = %s AND revoked_at IS NULL
+                    """,
+                    (str(existing["id"]),),
+                )
+                if waiver and (
+                    is_not_applicable or score != waiver["score_at_cancellation"]
+                ):
+                    self.execute(
+                        """
+                        UPDATE quality.audit_5s_nc_candidate_cancellations
+                           SET revoked_at = NOW()
+                         WHERE id = %s AND revoked_at IS NULL
+                        """,
+                        (str(waiver["id"]),),
+                        auto_commit=False,
+                    )
 
             if linked_nc and nc_cleared_by_score(score, is_not_applicable):
                 nc_status = str(linked_nc.get("status") or "").strip().lower()
@@ -1454,10 +1482,29 @@ class PostgresAudit5sRepository(PluginBaseRepository):
 
         candidates: list[dict[str, Any]] = []
         response_by_criterion = {str(row["criterion_id"]): row for row in audit["responses"]}
+        waived_ids = {
+            str(row["response_id"])
+            for row in self.fetch_all(
+                """
+                SELECT response_id
+                  FROM quality.audit_5s_nc_candidate_cancellations
+                 WHERE audit_id = %s AND revoked_at IS NULL
+                """,
+                (audit_id,),
+            )
+        }
+        cancelled_nc_ids = {
+            str(nc["response_id"])
+            for nc in self.list_nonconformities(audit_id)
+            if str(nc.get("status") or "").lower() == "cancelled"
+        }
 
         for criterion in audit["criteria"]:
             response = response_by_criterion.get(str(criterion["id"]))
             if not response:
+                continue
+            response_id = str(response["id"])
+            if response_id in waived_ids or response_id in cancelled_nc_ids:
                 continue
             if is_nc_candidate(response.get("score"), bool(response.get("is_not_applicable"))):
                 candidates.append({**criterion, "response": response})
@@ -1727,6 +1774,21 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         # devolve a conexão ao pool com rollback — o INSERT da NC some e o
         # evento seguinte falha com FK («Falha ao executar comando…»).
         with self.db():
+            # Serializa criação de plano e cancelamento de candidata pelo response_id.
+            self.fetch_one(
+                "SELECT id FROM quality.audit_5s_responses WHERE id = %s FOR UPDATE",
+                (response_id,),
+            )
+            if self.fetch_one(
+                """
+                SELECT id FROM quality.audit_5s_nc_candidate_cancellations
+                 WHERE response_id = %s AND revoked_at IS NULL
+                """,
+                (response_id,),
+            ):
+                raise PluginsRepositoryError(
+                    "Esta NC foi cancelada antes do plano de ação. Reabra a avaliação para revisar a nota."
+                )
             if existing and str(existing.get("status") or "").strip().lower() == "cancelled":
                 row = self.execute_returning_one(
                     """
@@ -2397,13 +2459,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 "Preencha descrição, causa, ação corretiva, responsável e prazo antes de finalizar."
             )
 
-        attachments = self.list_nc_attachments(nonconformity_id)
-        has_before = any(item["attachment_type"] == "before" for item in attachments)
-        if not has_before:
-            raise PluginsRepositoryError(
-                "Anexe a foto do antes para finalizar a ação."
-            )
-
+        # Fotos são evidências opcionais; o plano completo é o requisito de finalização.
         with self.db():
             row = self._update_nonconformity_row(
                 nonconformity_id=nonconformity_id,
@@ -2498,6 +2554,76 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             self.commit()
         return self._get_nonconformity_by_id(nonconformity_id) or row
 
+    def cancel_nc_candidate(
+        self,
+        *,
+        audit_id: str,
+        response_id: str,
+        reason: str,
+        actor_user_id: str,
+    ) -> dict[str, Any]:
+        """Cancela NC candidata sem plano, preservando nota e trilha de auditoria."""
+        reason = str(reason or "").strip()
+        if len(reason) < 5 or len(reason) > 1000:
+            raise PluginsRepositoryError("Informe uma justificativa de 5 a 1000 caracteres.")
+
+        with self.db():
+            audit = self.fetch_one(
+                "SELECT id, status FROM quality.audit_5s_audits WHERE id = %s",
+                (audit_id,),
+            )
+            if not audit:
+                raise PluginsRepositoryError("Auditoria não encontrada.")
+            if audit["status"] not in ("evaluation_complete", "nc_in_progress"):
+                raise PluginsRepositoryError("Auditoria não está em fase de tratamento de NCs.")
+
+            response = self.fetch_one(
+                """
+                SELECT id, score, is_not_applicable
+                  FROM quality.audit_5s_responses
+                 WHERE id = %s AND audit_id = %s
+                 FOR UPDATE
+                """,
+                (response_id, audit_id),
+            )
+            if not response:
+                raise PluginsRepositoryError("Critério da auditoria não encontrado.")
+            if not is_nc_candidate(
+                response.get("score"), bool(response.get("is_not_applicable"))
+            ):
+                raise PluginsRepositoryError("O critério não possui NC pendente.")
+
+            if self.fetch_one(
+                "SELECT id FROM quality.audit_5s_nonconformities WHERE response_id = %s",
+                (response_id,),
+            ):
+                raise PluginsRepositoryError("O plano dessa NC já existe. Use o encerramento de NC cadastrada.")
+            if self.fetch_one(
+                """
+                SELECT id FROM quality.audit_5s_nc_candidate_cancellations
+                 WHERE response_id = %s AND revoked_at IS NULL
+                """,
+                (response_id,),
+            ):
+                raise PluginsRepositoryError("Essa NC já foi cancelada.")
+
+            cancellation = self.execute_returning_one(
+                """
+                INSERT INTO quality.audit_5s_nc_candidate_cancellations (
+                    audit_id, response_id, score_at_cancellation,
+                    reason, created_by_user_id
+                ) VALUES (%s, %s, %s, %s, %s)
+                RETURNING id, audit_id, response_id, reason,
+                          created_by_user_id, created_at
+                """,
+                (audit_id, response_id, response["score"], reason, actor_user_id),
+                auto_commit=False,
+            )
+            if not cancellation:
+                raise PluginsRepositoryError("Falha ao registrar cancelamento da NC.")
+            self.commit()
+        return {**cancellation, "status": "cancelled"}
+
     def force_close_nc_without_treatment(
         self,
         *,
@@ -2557,15 +2683,18 @@ class PostgresAudit5sRepository(PluginBaseRepository):
 
         candidates = self.list_nc_candidates(audit_id)
         ncs = self.list_nonconformities(audit_id)
-        if candidates and len(ncs) < len(candidates):
+        by_response_id = {str(nc["response_id"]): nc for nc in ncs}
+        if any(str(item["response"]["id"]) not in by_response_id for item in candidates):
             raise PluginsRepositoryError(
-                "Registre NC para todos os critérios abaixo da nota máxima antes de encerrar."
+                "Registre NC para todos os critérios pendentes antes de encerrar."
             )
 
-        pending = [item for item in ncs if item.get("status") != "closed"]
+        pending = [
+            item for item in ncs if item.get("status") not in ("closed", "cancelled")
+        ]
         if pending:
             raise PluginsRepositoryError(
-                "Finalize todas as ações corretivas com evidências antes de encerrar a auditoria."
+                "Finalize as ações corretivas pendentes antes de encerrar a auditoria."
             )
 
         self.execute(
@@ -3157,7 +3286,9 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         ]
         items = self._sort_nc_board_items(items, request.sort)
 
-        pending_count = len(candidate_rows)
+        pending_count = sum(
+            1 for row in candidate_rows if not row.get("cancellation_reason")
+        )
         registered_open = sum(1 for row in registered_rows if row.get("status") == "open")
         registered_in_progress = sum(
             1 for row in registered_rows if row.get("status") == "in_progress"
@@ -3261,6 +3392,9 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                    a.id AS audit_id,
                    r.observation,
                    r.score,
+                   canc.reason AS cancellation_reason,
+                   canc.created_at AS cancelled_at,
+                   canc.created_by_user_id AS cancelled_by_user_id,
                    a.audit_code,
                    a.audit_date,
                    a.branch_code,
@@ -3275,8 +3409,11 @@ class PostgresAudit5sRepository(PluginBaseRepository):
               JOIN quality.audit_5s_areas ar ON ar.id = a.area_id
               JOIN quality.audit_5s_criteria c ON c.id = r.criterion_id
               JOIN quality.audit_5s_sensos s ON s.id = c.senso_id
+              LEFT JOIN quality.audit_5s_nc_candidate_cancellations canc
+                ON canc.response_id = r.id AND canc.revoked_at IS NULL
              WHERE {where_sql}
-               AND a.status IN ('evaluation_complete', 'nc_in_progress')
+               AND (a.status IN ('evaluation_complete', 'nc_in_progress')
+                    OR canc.id IS NOT NULL)
                AND COALESCE(r.is_not_applicable, FALSE) = FALSE
                AND r.score IN (1, 3)
                AND NOT EXISTS (
@@ -3299,7 +3436,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             return False
         if request.priority or request.responsible or request.responsible_user_id:
             return False
-        if request.status in ("in_progress", "closed", "cancelled"):
+        if request.status in ("in_progress", "closed"):
             return False
         return True
 
@@ -3331,6 +3468,10 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         if request.shift:
             conditions.append("a.shift = %s")
             params.append(request.shift)
+        if request.status == "cancelled":
+            conditions.append("canc.id IS NOT NULL")
+        elif request.status or request.pending_only:
+            conditions.append("canc.id IS NULL")
         if request.senso_order:
             conditions.append("s.sort_order = %s")
             params.append(request.senso_order)
@@ -3342,10 +3483,11 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 "ar.name ILIKE %s OR "
                 "c.code ILIKE %s OR "
                 "c.description ILIKE %s OR "
-                "r.observation ILIKE %s"
+                "r.observation ILIKE %s OR "
+                "canc.reason ILIKE %s"
                 ")"
             )
-            params.extend([term, term, term, term, term])
+            params.extend([term, term, term, term, term, term])
         if not conditions:
             conditions.append("TRUE")
         return " AND ".join(conditions), params
@@ -3389,6 +3531,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         observation = str(row.get("observation") or "").strip()
         description = observation or None
         response_id = str(row["response_id"])
+        cancelled = bool(row.get("cancellation_reason"))
         return {
             "id": f"candidate:{response_id}",
             "audit_id": str(row["audit_id"]),
@@ -3400,9 +3543,12 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             "responsible_user_id": None,
             "due_date": None,
             "priority": None,
-            "status": "pending",
-            "created_at": None,
-            "updated_at": None,
+            "status": "cancelled" if cancelled else "pending",
+            "created_at": row.get("cancelled_at") if cancelled else None,
+            "updated_at": row.get("cancelled_at") if cancelled else None,
+            "cancellation_reason": row.get("cancellation_reason"),
+            "cancelled_by_user_id": row.get("cancelled_by_user_id"),
+            "cancelled_at": row.get("cancelled_at"),
             "audit_code": row.get("audit_code"),
             "audit_date": str(row.get("audit_date"))[:10] if row.get("audit_date") else None,
             "area_name": row.get("area_name"),
