@@ -61,3 +61,22 @@ Após refatoração, validar `git status`, SHA, fontes canônicas de identidade,
 - **PROVEN (código):** api-delpi/app/persona/davi_profile.py → app/content/davi_agent_intelligence.json; ficha já existe; aguardar a refatoração para projetar novo acrônimo.
 - Contrato já implementado: `shared/delpi_character_profiles` (estrutura), ficha owner-local (conteúdo), projeção no serviço do MCP (consumer). **Não criar uma segunda ficha nem registry em shared.**
 - Referência cruzada: [Inventário de fontes existentes](./INVENTARIO-FONTES-EXISTENTES.md). Validação de runtime, deploy e testes permanece **TEST_NOT_RUN/TO_INVENTORY** nesta auditoria.
+
+## DAVI CHARACTER PROFILE INTEGRATION V1 (2026-11-08)
+
+Ficha integrada aos contratos semânticos existentes — zero tools novas:
+
+- `persona.acronym` = "Dados, Análises e Visão Inteligente" adicionado ao
+  JSON canônico; projetado em `get_context(action="context").identity.acronym`
+  e em `persona_context().identity.acronym`.
+- `identity.avatar_distribution` (URL+mime+sha256 do asset aprovado)
+  adicionada ao `get_context` — já existia via `avatar_distribution()`.
+- `read(capability="avatar")` → `[TextContent, ImageContent]` via helper
+  compartilhado `delpi_mcp.avatar_image` (asset `avatar-v1.png`, 475KB PNG).
+  Intercept no `read_tool` antes de `davi_read_wired` — asset estático de
+  ficha, não consulta de dados; catálogo técnico intacto.
+
+**Runtime:** `delpi-api-delpi` healthy; `davi_get_context` retorna acrônimo
++ avatar_distribution; delivery → ImageContent mime `image/png`.
+Commit `f48feb6834`. ChatGPT visual: `TEST_NOT_RUN` — reteste manual
+"DAVI, o que significa seu nome?" / "DAVI, mostre seu avatar".

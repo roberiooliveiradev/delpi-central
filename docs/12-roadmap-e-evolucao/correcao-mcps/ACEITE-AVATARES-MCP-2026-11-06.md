@@ -235,3 +235,10 @@ host (entrega de bytes governada; apresentação é do ChatGPT).
 
 **Residual search:** zero `show_avatar|avatar_ui|avatar-diagnostic|ui://delpi|widgetCSP` em todos os serviços.
 **ChatGPT visual:** `TEST_NOT_RUN` — reteste por especialista: "mostre sua imagem oficial" → host deve renderizar `ImageContent` nativamente.
+
+## DAVI — integração completada (2026-11-08)
+
+`read(capability="avatar")` → `[TextContent, ImageContent]` (475KB png),
+`get_context` com `identity.acronym` + `avatar_distribution` — verificado
+em `delpi-api-delpi` (commit `f48feb6834`). 7/7 MCPs com entrega de imagem.
+ChatGPT visual: `TEST_NOT_RUN`.
